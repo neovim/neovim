@@ -2706,6 +2706,11 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                                 "hl_group" is used as highlight for the cchar
                                 if provided, otherwise it defaults to
                                 |hl-Conceal|.
+                              • ui_watched: boolean that indicates the mark
+                                should be drawn by a UI. When set, the UI will
+                                receive win_extmark events. Note: the mark is
+                                positioned by virt_text attributes. Can be
+                                used together with virt_text.
 
                 Return: ~
                     Id of the created/updated extmark
