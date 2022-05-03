@@ -460,7 +460,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
       cb.data.luaref = api_new_luaref(callback->data.luaref);
     } else if (callback->type == kObjectTypeString) {
       cb.type = kCallbackFuncref;
-      cb.data.funcref = vim_strsave((char_u *)callback->data.string.data);
+      cb.data.funcref = (char_u *)string_to_cstr(callback->data.string);
     } else {
       api_set_error(err,
                     kErrorTypeException,
@@ -474,7 +474,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     Object *command = &opts->command;
     if (command->type == kObjectTypeString) {
       aucmd.type = CALLABLE_EX;
-      aucmd.callable.cmd = vim_strsave((char_u *)command->data.string.data);
+      aucmd.callable.cmd = (char_u *)string_to_cstr(command->data.string);
     } else {
       api_set_error(err,
                     kErrorTypeValidation,
@@ -814,7 +814,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
       goto cleanup;
     }
 
-    pattern = vim_strsave((char_u *)opts->pattern.data.string.data);
+    pattern = (char_u *)string_to_cstr(opts->pattern.data.string);
     set_pattern = true;
   }
 

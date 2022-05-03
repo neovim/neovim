@@ -1647,9 +1647,7 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***resul
       goto cleanup_array;
     }
 
-    GA_APPEND(char_u *,
-              &result_array,
-              vim_strsave((char_u *)v.data.string.data));
+    GA_APPEND(char_u *, &result_array, (char_u *)string_to_cstr(v.data.string));
   }
 
   xp->xp_pattern += prefix_len;

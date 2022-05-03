@@ -488,6 +488,16 @@ String cstr_to_string(const char *str)
   };
 }
 
+/// Copies a String to an allocated, NUL-terminated C string.
+///
+/// @param str the String to copy
+/// @return the resulting C string
+char *string_to_cstr(String str)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return xstrndup(str.data, str.size);
+}
+
 /// Copies buffer to an allocated String.
 /// The resulting string is also NUL-terminated, to facilitate interoperating
 /// with code using C strings.
@@ -628,7 +638,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
                      (char_u *)rhs.data, rhs.size, lua_funcref,
                      CPO_TO_CPO_FLAGS, &parsed_args);
   if (opts != NULL && opts->desc.type == kObjectTypeString) {
-    parsed_args.desc = xstrdup(opts->desc.data.string.data);
+    parsed_args.desc = string_to_cstr(opts->desc.data.string);
   } else {
     parsed_args.desc = NULL;
   }
