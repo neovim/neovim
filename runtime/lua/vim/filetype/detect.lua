@@ -1,11 +1,6 @@
 local M = {}
 
 ---@private
-local function countlines(bufnr)
-  return vim.api.nvim_buf_line_count(bufnr)
-end
-
----@private
 local function getlines(bufnr, start_lnum, end_lnum, opts)
   if not end_lnum then
     -- Return a single line as a string
@@ -26,6 +21,9 @@ local function findany(s, patterns)
   end
   return false
 end
+
+-- luacheck: push no unused args
+-- luacheck: push ignore 122
 
 function M.asm(path, bufnr) end
 
@@ -408,5 +406,8 @@ function M.y(bufnr)
   end
   vim.bo[bufnr].filetype = "yacc"
 end
+
+-- luacheck: pop
+-- luacheck: pop
 
 return M
