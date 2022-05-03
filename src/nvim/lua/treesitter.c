@@ -1122,7 +1122,7 @@ static int node_rawquery(lua_State *L)
   // TODO(clason): API introduced after tree-sitter release 0.19.5
   // remove guard when minimum ts version is bumped to 0.19.6+
 #ifdef NVIM_TS_HAS_SET_MATCH_LIMIT
-  ts_query_cursor_set_match_limit(cursor, 32);
+  ts_query_cursor_set_match_limit(cursor, 64);
 #endif
   ts_query_cursor_exec(cursor, query, node);
 
