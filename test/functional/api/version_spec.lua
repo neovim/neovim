@@ -33,9 +33,11 @@ describe("api_info()['version']", function()
     local major   = version['major']
     local minor   = version['minor']
     local patch   = version['patch']
+    local prerelease = version['prerelease']
     eq("number", type(major))
     eq("number", type(minor))
     eq("number", type(patch))
+    eq("boolean", type(prerelease))
     eq(1, funcs.has("nvim-"..major.."."..minor.."."..patch))
     eq(0, funcs.has("nvim-"..major.."."..minor.."."..(patch + 1)))
     eq(0, funcs.has("nvim-"..major.."."..(minor + 1).."."..patch))
