@@ -277,15 +277,14 @@ function TSHighlighter._on_line(_, _win, buf, line, _)
 
       local hl = highlighter_query.hl_cache[capture]
 
-      if hl and end_row >= line then
-        a.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-          end_line = end_row,
-          end_col = end_col,
-          hl_group = hl,
-          ephemeral = true,
-          priority = tonumber(metadata.priority) or 100, -- Low but leaves room below
-          conceal = metadata.conceal,
-        })
+      if hl then
+        a.nvim_buf_set_extmark(buf, ns, start_row, start_col,
+                               { end_line = end_row, end_col = end_col,
+                                 hl_group = hl,
+                                 ephemeral = true,
+                                 priority = tonumber(metadata.priority) or 100, -- Low but leaves room below
+                                 conceal = metadata.conceal,
+                                })
       end
     end
   end, true)
