@@ -3372,7 +3372,7 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
   // The work is split up in a few parts to avoid having to export
   // suginfo_T.
   // First evaluate the expression and get the resulting list.
-  list_T *const list = eval_spell_expr(su->su_badword, expr);
+  list_T *const list = eval_spell_expr((char *)su->su_badword, (char *)expr);
   if (list != NULL) {
     // Loop over the items in the list.
     TV_LIST_ITER(list, li, {

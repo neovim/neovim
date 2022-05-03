@@ -4275,7 +4275,7 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
       api_clear_error(&err);
     }
   } else {
-    p = eval_to_string(expr, NULL, false);
+    p = (char_u *)eval_to_string((char *)expr, NULL, false);
     xfree(expr);
   }
   textlock--;

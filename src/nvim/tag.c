@@ -1182,7 +1182,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
                flags & TAG_REGEXP   ? "r": "");
 
   save_pos = curwin->w_cursor;
-  result = call_vim_function(curbuf->b_p_tfu, 3, args, &rettv);
+  result = call_vim_function((char *)curbuf->b_p_tfu, 3, args, &rettv);
   curwin->w_cursor = save_pos;  // restore the cursor position
   d->dv_refcount--;
 

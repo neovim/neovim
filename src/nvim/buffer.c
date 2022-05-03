@@ -3421,7 +3421,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
     };
     set_var(S_LEN("g:statusline_winid"), &tv, false);
 
-    usefmt = eval_to_string_safe(fmt + 2, NULL, use_sandbox);
+    usefmt = (char_u *)eval_to_string_safe((char *)fmt + 2, NULL, use_sandbox);
     if (usefmt == NULL) {
       usefmt = fmt;
     }
@@ -3878,9 +3878,9 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
 
       // Store the current buffer number as a string variable
       vim_snprintf(buf_tmp, sizeof(buf_tmp), "%d", curbuf->b_fnum);
-      set_internal_string_var("g:actual_curbuf", (char_u *)buf_tmp);
+      set_internal_string_var("g:actual_curbuf", buf_tmp);
       vim_snprintf((char *)win_tmp, sizeof(win_tmp), "%d", curwin->handle);
-      set_internal_string_var("g:actual_curwin", win_tmp);
+      set_internal_string_var("g:actual_curwin", (char *)win_tmp);
 
       buf_T *const save_curbuf = curbuf;
       win_T *const save_curwin = curwin;
@@ -3893,7 +3893,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
       }
 
       // Note: The result stored in `t` is unused.
-      str = (char *)eval_to_string_safe(out_p, &t, use_sandbox);
+      str = eval_to_string_safe((char *)out_p, (char **)&t, use_sandbox);
 
       curwin = save_curwin;
       curbuf = save_curbuf;

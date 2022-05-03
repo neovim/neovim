@@ -4028,7 +4028,7 @@ static void expand_by_function(int type, char_u *base)
   curbuf_save = curbuf;
 
   // Call a function, which returns a list or dict.
-  if (call_vim_function(funcname, 2, args, &rettv) == OK) {
+  if (call_vim_function((char *)funcname, 2, args, &rettv) == OK) {
     switch (rettv.v_type) {
     case VAR_LIST:
       matchlist = rettv.vval.v_list;
@@ -5311,7 +5311,7 @@ static int ins_complete(int c, bool enable_pum)
       pos = curwin->w_cursor;
       curwin_save = curwin;
       curbuf_save = curbuf;
-      int col = call_func_retnr(funcname, 2, args);
+      int col = call_func_retnr((char *)funcname, 2, args);
 
       State = save_State;
       if (curwin_save != curwin || curbuf_save != curbuf) {

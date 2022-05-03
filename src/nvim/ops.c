@@ -774,7 +774,7 @@ char_u *get_expr_line(void)
   }
 
   nested++;
-  rv = eval_to_string(expr_copy, NULL, true);
+  rv = (char_u *)eval_to_string((char *)expr_copy, NULL, true);
   nested--;
   xfree(expr_copy);
   return rv;
@@ -4441,7 +4441,7 @@ int fex_format(linenr_T lnum, long count, int c)
   if (use_sandbox) {
     sandbox++;
   }
-  r = (int)eval_to_number(fex);
+  r = (int)eval_to_number((char *)fex);
   if (use_sandbox) {
     sandbox--;
   }
@@ -6192,7 +6192,7 @@ static void op_function(const oparg_T *oap)
     // Reset finish_op so that mode() returns the right value.
     finish_op = false;
 
-    (void)call_func_retnr(p_opfunc, 1, argv);
+    (void)call_func_retnr((char *)p_opfunc, 1, argv);
 
     virtual_op = save_virtual_op;
     finish_op = save_finish_op;

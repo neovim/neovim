@@ -1816,7 +1816,7 @@ bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io, bool f
     // set v:cmdarg (only when there is a matching pattern)
     save_cmdbang = (long)get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
-      save_cmdarg = set_cmdarg(eap, NULL);
+      save_cmdarg = (char_u *)set_cmdarg(eap, NULL);
       set_vim_var_nr(VV_CMDBANG, (long)eap->forceit);
     } else {
       save_cmdarg = NULL;  // avoid gcc warning
@@ -1845,7 +1845,7 @@ bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io, bool f
 
 
     if (eap != NULL) {
-      (void)set_cmdarg(NULL, save_cmdarg);
+      (void)set_cmdarg(NULL, (char *)save_cmdarg);
       set_vim_var_nr(VV_CMDBANG, save_cmdbang);
     }
     // delete from active_apc_list

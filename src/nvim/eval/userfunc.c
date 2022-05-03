@@ -132,7 +132,7 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
         p = skipwhite(p) + 1;
         p = skipwhite(p);
         char_u *expr = p;
-        if (eval1(&p, &rettv, false) != FAIL) {
+        if (eval1((char **)&p, &rettv, false) != FAIL) {
           ga_grow(default_args, 1);
 
           // trim trailing whitespace
@@ -253,7 +253,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   // Get the start and the end of the expression.
   *arg = skipwhite(*arg + 1);
   s = *arg;
-  ret = skip_expr(arg);
+  ret = skip_expr((char **)arg);
   if (ret == FAIL) {
     goto errret;
   }
@@ -372,7 +372,7 @@ char_u *deref_func_name(const char *name, int *lenp, partial_T **const partialp,
     if (partialp != NULL) {
       *partialp = pt;
     }
-    char_u *s = partial_name(pt);
+    char_u *s = (char_u *)partial_name(pt);
     *lenp = (int)STRLEN(s);
     return s;
   }
@@ -426,7 +426,7 @@ int get_func_tv(const char_u *name, int len, typval_T *rettv, char_u **arg, func
     if (*argp == ')' || *argp == ',' || *argp == NUL) {
       break;
     }
-    if (eval1(&argp, &argvars[argcount], funcexe->evaluate) == FAIL) {
+    if (eval1((char **)&argp, &argvars[argcount], funcexe->evaluate) == FAIL) {
       ret = FAIL;
       break;
     }
@@ -941,7 +941,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
         default_expr = ((char_u **)(fp->uf_def_args.ga_data))
                        [ai + fp->uf_def_args.ga_len];
-        if (eval1(&default_expr, &def_rettv, true) == FAIL) {
+        if (eval1((char **)&default_expr, &def_rettv, true) == FAIL) {
           default_arg_err = true;
           break;
         }
@@ -1103,7 +1103,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     // A Lambda always has the command "return {expr}".  It is much faster
     // to evaluate {expr} directly.
     ex_nesting_level++;
-    (void)eval1(&p, rettv, true);
+    (void)eval1((char **)&p, rettv, true);
     ex_nesting_level--;
   } else {
     // call do_cmdline() to execute the lines
@@ -1150,18 +1150,18 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       smsg(_("%s returning #%" PRId64 ""),
            sourcing_name, (int64_t)fc->rettv->vval.v_number);
     } else {
-      char_u buf[MSG_BUF_LEN];
+      char buf[MSG_BUF_LEN];
 
       // The value may be very long.  Skip the middle part, so that we
       // have some idea how it starts and ends. smsg() would always
       // truncate it at the end. Don't want errors such as E724 here.
       emsg_off++;
-      char_u *s = (char_u *)encode_tv2string(fc->rettv, NULL);
-      char_u *tofree = s;
+      char *s = encode_tv2string(fc->rettv, NULL);
+      char *tofree = s;
       emsg_off--;
       if (s != NULL) {
-        if (vim_strsize(s) > MSG_BUF_CLEN) {
-          trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
+        if (vim_strsize((char_u *)s) > MSG_BUF_CLEN) {
+          trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN, MSG_BUF_LEN);
           s = buf;
         }
         smsg(_("%s returning %s"), sourcing_name, s);
@@ -1724,8 +1724,8 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
   }
 
   // Note that TFN_ flags use the same values as GLV_ flags.
-  end = get_lval((char_u *)start, NULL, &lv, false, skip, flags | GLV_READ_ONLY,
-                 lead > 2 ? 0 : FNE_CHECK_START);
+  end = (char_u *)get_lval((char *)start, NULL, &lv, false, skip, flags | GLV_READ_ONLY,
+                           lead > 2 ? 0 : FNE_CHECK_START);
   if (end == start) {
     if (!skip) {
       emsg(_("E129: Function name required"));
@@ -1743,7 +1743,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
         semsg(_(e_invarg2), start);
       }
     } else {
-      *pp = (char_u *)find_name_end(start, NULL, NULL, FNE_INCL_BR);
+      *pp = (char_u *)find_name_end((char *)start, NULL, NULL, FNE_INCL_BR);
     }
     goto theend;
   }
@@ -1751,7 +1751,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
   if (lv.ll_tv != NULL) {
     if (fdp != NULL) {
       fdp->fd_dict = lv.ll_dict;
-      fdp->fd_newkey = lv.ll_newkey;
+      fdp->fd_newkey = (char_u *)lv.ll_newkey;
       lv.ll_newkey = NULL;
       fdp->fd_di = lv.ll_di;
     }
@@ -1770,7 +1770,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
         memcpy(name, end + 1, (size_t)len);
         *pp = (char_u *)end + 1 + len;
       } else {
-        name = vim_strsave(partial_name(lv.ll_tv->vval.v_partial));
+        name = vim_strsave((char_u *)partial_name(lv.ll_tv->vval.v_partial));
         *pp = (char_u *)end;
       }
       if (partial != NULL) {
@@ -2873,7 +2873,7 @@ void ex_return(exarg_T *eap)
 
   eap->nextcmd = NULL;
   if ((*arg != NUL && *arg != '|' && *arg != '\n')
-      && eval0(arg, &rettv, &eap->nextcmd, !eap->skip) != FAIL) {
+      && eval0((char *)arg, &rettv, (char **)&eap->nextcmd, !eap->skip) != FAIL) {
     if (!eap->skip) {
       returning = do_return(eap, false, true, &rettv);
     } else {
@@ -2926,7 +2926,7 @@ void ex_call(exarg_T *eap)
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
     emsg_skip++;
-    if (eval0(eap->arg, &rettv, &eap->nextcmd, false) != FAIL) {
+    if (eval0((char *)eap->arg, &rettv, (char **)&eap->nextcmd, false) != FAIL) {
       tv_clear(&rettv);
     }
     emsg_skip--;
@@ -2995,7 +2995,7 @@ void ex_call(exarg_T *eap)
 
     // Handle a function returning a Funcref, Dictionary or List.
     if (handle_subscript((const char **)&arg, &rettv, true, true,
-                         (const char_u *)name, (const char_u **)&name)
+                         (const char *)name, (const char **)&name)
         == FAIL) {
       failed = true;
       break;
