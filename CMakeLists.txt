@@ -367,7 +367,7 @@ endif()
 
 option(CI_BUILD "CI, extra flags will be set" OFF)
 
-if(CI_BUILD)
+if(CI_BUILD AND NOT WIN32)
   message(STATUS "CI build enabled")
   add_compile_options(-Werror)
   if(DEFINED ENV{BUILD_UCHAR})

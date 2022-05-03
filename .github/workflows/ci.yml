@@ -237,7 +237,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config: [ MINGW_64-gcov, MSVC_64 ]
+        config: [ 'MSVC_64' ]
     name: windows (${{ matrix.config }})
     steps:
       - uses: actions/checkout@v2
@@ -251,3 +251,63 @@ jobs:
         run: powershell ci\build.ps1
         env:
           CONFIGURATION: ${{ matrix.config }}
+
+  windows-mys2:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    if: github.event.pull_request.draft == false
+
+    env:
+      DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
+      DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sys: mingw64
+            env: x86_64
+    defaults:
+      run:
+        shell: msys2 {0}
+    name: windows (${{ matrix.sys }})
+    steps:
+      - name: Install msys packages
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: ${{matrix.sys}}
+          install: >-
+            git
+            gperf
+            mingw-w64-${{matrix.env}}-toolchain
+            mingw-w64-${{matrix.env}}-ccache
+            mingw-w64-${{matrix.env}}-ninja
+            mingw-w64-${{matrix.env}}-cmake
+            mingw-w64-${{matrix.env}}-diffutils
+
+      - uses: actions/checkout@v2
+
+      - name: Setup common environment variables
+        run: ./.github/workflows/env.sh
+
+      - uses: actions/cache@v2
+        with:
+          path: ${{ env.DEPS_BUILD_DIR }}
+          key: ${{ matrix.sys }}-${{ hashFiles('third-party/**') }}
+
+      - name: Build third-party
+        run: ./ci/before_script.sh
+
+      - name: Build
+        run: ./ci/run_tests.sh build_nvim
+
+      - if: "!cancelled()"
+        name: Functionaltests
+        run: ./ci/run_tests.sh functionaltests
+
+      - if: "!cancelled()"
+        name: Oldtests
+        run: ./ci/run_tests.sh oldtests
+
+      - name: Cache dependencies
+        run: ./ci/before_cache.sh
