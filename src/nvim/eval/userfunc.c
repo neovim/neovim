@@ -1953,7 +1953,7 @@ void ex_function(exarg_T *eap)
         }
       }
     }
-    eap->nextcmd = check_nextcmd(eap->arg);
+    eap->nextcmd = (char *)check_nextcmd((char_u *)eap->arg);
     return;
   }
 
@@ -1961,13 +1961,13 @@ void ex_function(exarg_T *eap)
    * ":function /pat": list functions matching pattern.
    */
   if (*eap->arg == '/') {
-    p = skip_regexp(eap->arg + 1, '/', TRUE, NULL);
+    p = skip_regexp((char_u *)eap->arg + 1, '/', true, NULL);
     if (!eap->skip) {
       regmatch_T regmatch;
 
       c = *p;
       *p = NUL;
-      regmatch.regprog = vim_regcomp(eap->arg + 1, RE_MAGIC);
+      regmatch.regprog = vim_regcomp((char_u *)eap->arg + 1, RE_MAGIC);
       *p = c;
       if (regmatch.regprog != NULL) {
         regmatch.rm_ic = p_ic;
@@ -1989,7 +1989,7 @@ void ex_function(exarg_T *eap)
     if (*p == '/') {
       ++p;
     }
-    eap->nextcmd = check_nextcmd(p);
+    eap->nextcmd = (char *)check_nextcmd(p);
     return;
   }
 
@@ -2007,7 +2007,7 @@ void ex_function(exarg_T *eap)
   //             "fudi.fd_di" set, "fudi.fd_newkey" == NULL
   // s:func      script-local function name
   // g:func      global function name, same as "func"
-  p = eap->arg;
+  p = (char_u *)eap->arg;
   name = trans_function_name(&p, eap->skip, TFN_NO_AUTOLOAD, &fudi, NULL);
   paren = (vim_strchr(p, '(') != NULL);
   if (name == NULL && (fudi.fd_dict == NULL || !paren) && !eap->skip) {
@@ -2043,7 +2043,7 @@ void ex_function(exarg_T *eap)
       emsg(_(e_trailing));
       goto ret_free;
     }
-    eap->nextcmd = check_nextcmd(p);
+    eap->nextcmd = (char *)check_nextcmd(p);
     if (eap->nextcmd != NULL) {
       *p = NUL;
     }
@@ -2289,10 +2289,10 @@ void ex_function(exarg_T *eap)
           // Another command follows. If the line came from "eap" we
           // can simply point into it, otherwise we need to change
           // "eap->cmdlinep".
-          eap->nextcmd = nextcmd;
+          eap->nextcmd = (char *)nextcmd;
           if (line_to_free != NULL) {
             xfree(*eap->cmdlinep);
-            *eap->cmdlinep = line_to_free;
+            *eap->cmdlinep = (char *)line_to_free;
             line_to_free = NULL;
           }
         }
@@ -2693,7 +2693,7 @@ void ex_delfunction(exarg_T *eap)
   char_u *name;
   funcdict_T fudi;
 
-  p = eap->arg;
+  p = (char_u *)eap->arg;
   name = trans_function_name(&p, eap->skip, 0, &fudi, NULL);
   xfree(fudi.fd_newkey);
   if (name == NULL) {
@@ -2707,7 +2707,7 @@ void ex_delfunction(exarg_T *eap)
     emsg(_(e_trailing));
     return;
   }
-  eap->nextcmd = check_nextcmd(p);
+  eap->nextcmd = (char *)check_nextcmd(p);
   if (eap->nextcmd != NULL) {
     *p = NUL;
   }
@@ -2858,7 +2858,7 @@ static int can_free_funccal(funccall_T *fc, int copyID)
 /// ":return [expr]"
 void ex_return(exarg_T *eap)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   typval_T rettv;
   int returning = FALSE;
 
@@ -2873,7 +2873,7 @@ void ex_return(exarg_T *eap)
 
   eap->nextcmd = NULL;
   if ((*arg != NUL && *arg != '|' && *arg != '\n')
-      && eval0((char *)arg, &rettv, (char **)&eap->nextcmd, !eap->skip) != FAIL) {
+      && eval0((char *)arg, &rettv, &eap->nextcmd, !eap->skip) != FAIL) {
     if (!eap->skip) {
       returning = do_return(eap, false, true, &rettv);
     } else {
@@ -2896,7 +2896,7 @@ void ex_return(exarg_T *eap)
   if (returning) {
     eap->nextcmd = NULL;
   } else if (eap->nextcmd == NULL) {          // no argument
-    eap->nextcmd = check_nextcmd(arg);
+    eap->nextcmd = (char *)check_nextcmd(arg);
   }
 
   if (eap->skip) {
@@ -2909,7 +2909,7 @@ void ex_return(exarg_T *eap)
 /// ":1,25call func(arg1, arg2)" function call.
 void ex_call(exarg_T *eap)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *startarg;
   char_u *name;
   char_u *tofree;
@@ -2926,7 +2926,7 @@ void ex_call(exarg_T *eap)
     // instead to skip to any following command, e.g. for:
     //   :if 0 | call dict.foo().bar() | endif.
     emsg_skip++;
-    if (eval0((char *)eap->arg, &rettv, (char **)&eap->nextcmd, false) != FAIL) {
+    if (eval0(eap->arg, &rettv, &eap->nextcmd, false) != FAIL) {
       tv_clear(&rettv);
     }
     emsg_skip--;
@@ -3025,7 +3025,7 @@ void ex_call(exarg_T *eap)
         emsg(_(e_trailing));
       }
     } else {
-      eap->nextcmd = check_nextcmd(arg);
+      eap->nextcmd = (char *)check_nextcmd(arg);
     }
   }
 

@@ -145,7 +145,7 @@ void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
 {
   // Default: expand subcommands.
   xp->xp_context = EXPAND_CSCOPE;
-  xp->xp_pattern = (char_u *)arg;
+  xp->xp_pattern = (char *)arg;
   expand_what = ((cmdidx == CMD_scscope)
                  ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD);
 
@@ -153,8 +153,8 @@ void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
   if (*arg != NUL) {
     const char *p = (const char *)skiptowhite((const char_u *)arg);
     if (*p != NUL) {  // Past first word.
-      xp->xp_pattern = skipwhite((const char_u *)p);
-      if (*skiptowhite(xp->xp_pattern) != NUL) {
+      xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+      if (*skiptowhite((char_u *)xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
       } else if (STRNICMP(arg, "add", p - arg) == 0) {
         xp->xp_context = EXPAND_FILES;
@@ -224,8 +224,8 @@ void ex_cstag(exarg_T *eap)
   switch (p_csto) {
   case 0:
     if (cs_check_for_connections()) {
-      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, false,
-                           false, *eap->cmdlinep);
+      ret = cs_find_common("g", eap->arg, eap->forceit, false,
+                           false, (char_u *)(*eap->cmdlinep));
       if (ret == false) {
         cs_free_tags();
         if (msg_col) {
@@ -233,32 +233,32 @@ void ex_cstag(exarg_T *eap)
         }
 
         if (cs_check_for_tags()) {
-          ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
+          ret = do_tag((char_u *)eap->arg, DT_JUMP, 0, eap->forceit, false);
         }
       }
     } else if (cs_check_for_tags()) {
-      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
+      ret = do_tag((char_u *)eap->arg, DT_JUMP, 0, eap->forceit, false);
     }
     break;
   case 1:
     if (cs_check_for_tags()) {
-      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
-      if (ret == FALSE) {
+      ret = do_tag((char_u *)eap->arg, DT_JUMP, 0, eap->forceit, false);
+      if (ret == false) {
         if (msg_col) {
           msg_putchar('\n');
         }
 
         if (cs_check_for_connections()) {
-          ret = cs_find_common("g", (char *)(eap->arg), eap->forceit,
-                               false, false, *eap->cmdlinep);
+          ret = cs_find_common("g", eap->arg, eap->forceit,
+                               false, false, (char_u *)(*eap->cmdlinep));
           if (ret == false) {
             cs_free_tags();
           }
         }
       }
     } else if (cs_check_for_connections()) {
-      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, false,
-                           false, *eap->cmdlinep);
+      ret = cs_find_common("g", eap->arg, eap->forceit, false,
+                           false, (char_u *)(*eap->cmdlinep));
       if (ret == false) {
         cs_free_tags();
       }
@@ -899,7 +899,7 @@ static int cs_find(exarg_T *eap)
   }
 
   pat = opt + strlen(opt) + 1;
-  if (pat >= (char *)eap->arg + eap_arg_len) {
+  if (pat >= eap->arg + eap_arg_len) {
     cs_usage_msg(Find);
     return false;
   }
@@ -915,7 +915,7 @@ static int cs_find(exarg_T *eap)
   }
 
   return cs_find_common(opt, pat, eap->forceit, true,
-                        eap->cmdidx == CMD_lcscope, *eap->cmdlinep);
+                        eap->cmdidx == CMD_lcscope, (char_u *)(*eap->cmdlinep));
 }
 
 
@@ -1210,7 +1210,7 @@ static cscmd_T *cs_lookup_cmd(exarg_T *eap)
   // Store length of eap->arg before it gets modified by strtok().
   eap_arg_len = (int)STRLEN(eap->arg);
 
-  if ((stok = strtok((char *)(eap->arg), (const char *)" ")) == NULL) {
+  if ((stok = strtok(eap->arg, (const char *)" ")) == NULL) {  // NOLINT(runtime/threadsafe_fn)
     return NULL;
   }
 

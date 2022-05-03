@@ -1419,7 +1419,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
 /// ":sign" command
 void ex_sign(exarg_T *eap)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *p;
   int idx;
   sign_T *sp;
@@ -1785,7 +1785,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   // Default: expand subcommands.
   xp->xp_context = EXPAND_SIGN;
   expand_what = EXP_SUBCMD;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char *)arg;
 
   end_subcmd = skiptowhite(arg);
   if (*end_subcmd == NUL) {
@@ -1822,7 +1822,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   //                            last     p
   if (p == NULL) {
     // Expand last argument name (before equal sign).
-    xp->xp_pattern = last;
+    xp->xp_pattern = (char *)last;
     switch (cmd_idx) {
     case SIGNCMD_DEFINE:
       expand_what = EXP_DEFINE;
@@ -1852,7 +1852,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     }
   } else {
     // Expand last argument value (after equal sign).
-    xp->xp_pattern = p + 1;
+    xp->xp_pattern = (char *)p + 1;
     switch (cmd_idx) {
     case SIGNCMD_DEFINE:
       if (STRNCMP(last, "texthl", 6) == 0

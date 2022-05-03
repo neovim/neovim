@@ -19,13 +19,13 @@ typedef struct {
 
   int n_commands;                       // no. of commands from + or -c
   char *commands[MAX_ARG_CMDS];         // commands from + or -c arg
-  char_u cmds_tofree[MAX_ARG_CMDS];     // commands that need free()
+  char cmds_tofree[MAX_ARG_CMDS];       // commands that need free()
   int n_pre_commands;                   // no. of commands from --cmd
   char *pre_commands[MAX_ARG_CMDS];     // commands from --cmd argument
 
   int edit_type;                        // type of editing to do
-  char_u *tagname;                      // tag from -t argument
-  char_u *use_ef;                       // 'errorfile' from -q argument
+  char *tagname;                        // tag from -t argument
+  char *use_ef;                         // 'errorfile' from -q argument
 
   bool input_isatty;                    // stdin is a terminal
   bool output_isatty;                   // stdout is a terminal

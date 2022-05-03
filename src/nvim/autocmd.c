@@ -972,7 +972,7 @@ int do_autocmd_event(event_T event, char_u *pat, bool once, int nested, char_u *
     if (is_adding_cmd) {
       AucmdExecutable exec = AUCMD_EXECUTABLE_INIT;
       exec.type = CALLABLE_EX;
-      exec.callable.cmd = cmd;
+      exec.callable.cmd = (char *)cmd;
       autocmd_register(0, event, pat, patlen, group, once, nested, NULL, exec);
     }
 
@@ -1240,7 +1240,7 @@ void ex_doautoall(exarg_T *eap)
 {
   int retval = OK;
   aco_save_T aco;
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   int call_do_modelines = check_nomodeline(&arg);
   bufref_T bufref;
   bool did_aucmd;
@@ -2142,7 +2142,7 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
     //          However, my expectation would be that could be expensive.
     retval = vim_strsave((char_u *)"");
   } else {
-    retval = vim_strsave(ac->exec.callable.cmd);
+    retval = vim_strsave((char_u *)ac->exec.callable.cmd);
   }
 
   // Remove one-shot ("once") autocmd in anticipation of its execution.
@@ -2241,7 +2241,7 @@ char_u *set_context_in_autocmd(expand_T *xp, char_u *arg, int doautocmd)
       autocmd_include_groups = true;
     }
     xp->xp_context = EXPAND_EVENTS;  // expand event name
-    xp->xp_pattern = arg;
+    xp->xp_pattern = (char *)arg;
     return NULL;
   }
 
@@ -2501,7 +2501,7 @@ char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
 {
   switch (acc.type) {
   case CALLABLE_EX:
-    return (char *)acc.callable.cmd;
+    return acc.callable.cmd;
   case CALLABLE_CB:
     return ac->desc;
   case CALLABLE_NONE:
@@ -2534,7 +2534,7 @@ AucmdExecutable aucmd_exec_copy(AucmdExecutable src)
   switch (src.type) {
   case CALLABLE_EX:
     dest.type = CALLABLE_EX;
-    dest.callable.cmd = vim_strsave(src.callable.cmd);
+    dest.callable.cmd = xstrdup(src.callable.cmd);
     return dest;
   case CALLABLE_CB:
     dest.type = CALLABLE_CB;

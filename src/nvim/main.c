@@ -513,7 +513,7 @@ int main(int argc, char **argv)
 
   // Need to jump to the tag before executing the '-c command'.
   // Makes "vim -c '/return' -t main" work.
-  handle_tag(params.tagname);
+  handle_tag((char_u *)params.tagname);
 
   // Execute any "+", "-c" and "-S" arguments.
   if (params.n_commands > 0) {
@@ -1131,7 +1131,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         parmp->edit_type = EDIT_QF;
         if (argv[0][argv_idx]) {  // "-q{errorfile}"
-          parmp->use_ef = (char_u *)argv[0] + argv_idx;
+          parmp->use_ef = argv[0] + argv_idx;
           argv_idx = -1;
         } else if (argc > 1) {    // "-q {errorfile}"
           want_argument = true;
@@ -1160,7 +1160,7 @@ static void command_line_scan(mparm_T *parmp)
         }
         parmp->edit_type = EDIT_TAG;
         if (argv[0][argv_idx]) {  // "-t{tag}"
-          parmp->tagname = (char_u *)argv[0] + argv_idx;
+          parmp->tagname = argv[0] + argv_idx;
           argv_idx = -1;
         } else {  // "-t {tag}"
           want_argument = true;
@@ -1272,7 +1272,7 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         case 'q':    // "-q {errorfile}" QuickFix mode
-          parmp->use_ef = (char_u *)argv[0];
+          parmp->use_ef = argv[0];
           break;
 
         case 'i':    // "-i {shada}" use for shada
@@ -1313,7 +1313,7 @@ scripterror:
         }
 
         case 't':    // "-t {tag}"
-          parmp->tagname = (char_u *)argv[0];
+          parmp->tagname = argv[0];
           break;
         case 'u':    // "-u {vimrc}" vim inits file
           parmp->use_vimrc = argv[0];
@@ -1507,7 +1507,7 @@ static void handle_quickfix(mparm_T *paramp)
 {
   if (paramp->edit_type == EDIT_QF) {
     if (paramp->use_ef != NULL) {
-      set_string_option_direct("ef", -1, paramp->use_ef, OPT_FREE, SID_CARG);
+      set_string_option_direct("ef", -1, (char_u *)paramp->use_ef, OPT_FREE, SID_CARG);
     }
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
     if (qf_init(NULL, (char *)p_ef, p_efm, true, (char *)IObuff, (char *)p_menc) < 0) {

@@ -2622,7 +2622,7 @@ void buflist_list(exarg_T *eap)
   garray_T buflist;
   buf_T **buflist_data = NULL;
 
-  if (vim_strchr(eap->arg, 't')) {
+  if (vim_strchr((char_u *)eap->arg, 't')) {
     ga_init(&buflist, sizeof(buf_T *), 50);
     for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
       ga_grow(&buflist, 1);
@@ -2645,21 +2645,21 @@ void buflist_list(exarg_T *eap)
     const bool job_running = buf->terminal && terminal_running(buf->terminal);
 
     // skip unspecified buffers
-    if ((!buf->b_p_bl && !eap->forceit && !vim_strchr(eap->arg, 'u'))
-        || (vim_strchr(eap->arg, 'u') && buf->b_p_bl)
-        || (vim_strchr(eap->arg, '+')
+    if ((!buf->b_p_bl && !eap->forceit && !vim_strchr((char_u *)eap->arg, 'u'))
+        || (vim_strchr((char_u *)eap->arg, 'u') && buf->b_p_bl)
+        || (vim_strchr((char_u *)eap->arg, '+')
             && ((buf->b_flags & BF_READERR) || !bufIsChanged(buf)))
-        || (vim_strchr(eap->arg, 'a')
+        || (vim_strchr((char_u *)eap->arg, 'a')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows == 0))
-        || (vim_strchr(eap->arg, 'h')
+        || (vim_strchr((char_u *)eap->arg, 'h')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows != 0))
-        || (vim_strchr(eap->arg, 'R') && (!is_terminal || !job_running))
-        || (vim_strchr(eap->arg, 'F') && (!is_terminal || job_running))
-        || (vim_strchr(eap->arg, '-') && buf->b_p_ma)
-        || (vim_strchr(eap->arg, '=') && !buf->b_p_ro)
-        || (vim_strchr(eap->arg, 'x') && !(buf->b_flags & BF_READERR))
-        || (vim_strchr(eap->arg, '%') && buf != curbuf)
-        || (vim_strchr(eap->arg, '#')
+        || (vim_strchr((char_u *)eap->arg, 'R') && (!is_terminal || !job_running))
+        || (vim_strchr((char_u *)eap->arg, 'F') && (!is_terminal || job_running))
+        || (vim_strchr((char_u *)eap->arg, '-') && buf->b_p_ma)
+        || (vim_strchr((char_u *)eap->arg, '=') && !buf->b_p_ro)
+        || (vim_strchr((char_u *)eap->arg, 'x') && !(buf->b_flags & BF_READERR))
+        || (vim_strchr((char_u *)eap->arg, '%') && buf != curbuf)
+        || (vim_strchr((char_u *)eap->arg, '#')
             && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
     }
@@ -2700,7 +2700,7 @@ void buflist_list(exarg_T *eap)
     do {
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);
-    if (vim_strchr(eap->arg, 't') && buf->b_last_used) {
+    if (vim_strchr((char_u *)eap->arg, 't') && buf->b_last_used) {
       undo_fmt_time(IObuff + len, (size_t)(IOSIZE - len), buf->b_last_used);
     } else {
       vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), _("line %" PRId64),

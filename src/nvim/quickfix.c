@@ -3174,7 +3174,7 @@ void qf_list(exarg_T *eap)
   int i;
   int idx1 = 1;
   int idx2 = -1;
-  char *arg = (char *)eap->arg;
+  char *arg = eap->arg;
   int all = eap->forceit;     // if not :cl!, only show
                               // recognised errors
   qf_info_T *qi;
@@ -4392,7 +4392,7 @@ void ex_make(exarg_T *eap)
   }
   os_remove(fname);  // in case it's not unique
 
-  char *const cmd = make_get_fullcmd((char *)eap->arg, fname);
+  char *const cmd = make_get_fullcmd(eap->arg, fname);
 
   do_shell(cmd, 0);
 
@@ -4401,7 +4401,7 @@ void ex_make(exarg_T *eap)
   res = qf_init(wp, fname, (eap->cmdidx != CMD_make
                             && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm,
                 (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd),
-                qf_cmdtitle((char *)(*eap->cmdlinep)), enc);
+                qf_cmdtitle(*eap->cmdlinep), enc);
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
     if (qi == NULL) {
@@ -5112,7 +5112,7 @@ void ex_cfile(exarg_T *eap)
     }
   }
   if (*eap->arg != NUL) {
-    set_string_option_direct("ef", -1, eap->arg, OPT_FREE, 0);
+    set_string_option_direct("ef", -1, (char_u *)eap->arg, OPT_FREE, 0);
   }
 
   char *enc = (*curbuf->b_p_menc != NUL) ? (char *)curbuf->b_p_menc : (char *)p_menc;
@@ -5133,7 +5133,7 @@ void ex_cfile(exarg_T *eap)
   // quickfix list then a new list is created.
   int res = qf_init(wp, (char *)p_ef, p_efm, (eap->cmdidx != CMD_caddfile
                                               && eap->cmdidx != CMD_laddfile),
-                    qf_cmdtitle((char *)(*eap->cmdlinep)), enc);
+                    qf_cmdtitle(*eap->cmdlinep), enc);
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
     if (qi == NULL) {
@@ -5385,7 +5385,7 @@ static void vgr_jump_to_match(qf_info_T *qi, int forceit, bool *redraw_for_dummy
   // Jump to the directory used after loading the buffer.
   if (curbuf == first_match_buf && target_dir != NULL) {
     exarg_T ea = {
-      .arg = (char_u *)target_dir,
+      .arg = target_dir,
       .cmdidx = CMD_lcd,
     };
     ex_cd(&ea);
@@ -5414,7 +5414,7 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
   memset(args, 0, sizeof(*args));
 
   args->regmatch.regprog = NULL;
-  args->qf_title = xstrdup(qf_cmdtitle((char *)(*eap->cmdlinep)));
+  args->qf_title = xstrdup(qf_cmdtitle(*eap->cmdlinep));
 
   if (eap->addr_count > 0) {
     args->tomatch = eap->line2;
@@ -5423,7 +5423,7 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
   }
 
   // Get the search pattern: either white-separated or enclosed in //
-  char *p = skip_vimgrep_pat((char *)eap->arg, &args->spat, &args->flags);
+  char *p = skip_vimgrep_pat(eap->arg, &args->spat, &args->flags);
   if (p == NULL) {
     emsg(_(e_invalpat));
     return FAIL;
@@ -5682,7 +5682,7 @@ static void restore_start_dir(char *dirname_start)
     // If the directory has changed, change it back by building up an
     // appropriate ex command and executing it.
     exarg_T ea = {
-      .arg = (char_u *)dirname_start,
+      .arg = dirname_start,
       .cmdidx = (curwin->w_localdir == NULL) ? CMD_cd : CMD_lcd,
     };
     ex_cd(&ea);
@@ -6887,8 +6887,8 @@ static int cbuffer_process_args(exarg_T *eap, buf_T **bufp, linenr_T *line1, lin
 
   if (*eap->arg == NUL) {
     buf = curbuf;
-  } else if (*skipwhite(skipdigits(eap->arg)) == NUL) {
-    buf = buflist_findnr(atoi((char *)eap->arg));
+  } else if (*skipwhite(skipdigits((char_u *)eap->arg)) == NUL) {
+    buf = buflist_findnr(atoi(eap->arg));
   }
 
   if (buf == NULL) {
@@ -6949,7 +6949,7 @@ void ex_cbuffer(exarg_T *eap)
     return;
   }
 
-  qf_title = qf_cmdtitle((char *)(*eap->cmdlinep));
+  qf_title = qf_cmdtitle(*eap->cmdlinep);
 
   if (buf->b_sfname) {
     vim_snprintf((char *)IObuff, IOSIZE, "%s (%s)",
@@ -7035,7 +7035,7 @@ void ex_cexpr(exarg_T *eap)
   // Evaluate the expression.  When the result is a string or a list we can
   // use it to fill the errorlist.
   typval_T tv;
-  if (eval0((char *)eap->arg, &tv, (char **)&eap->nextcmd, true) != FAIL) {
+  if (eval0(eap->arg, &tv, &eap->nextcmd, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
         || tv.v_type == VAR_LIST) {
       incr_quickfix_busy();
@@ -7043,7 +7043,7 @@ void ex_cexpr(exarg_T *eap)
                             (eap->cmdidx != CMD_caddexpr
                              && eap->cmdidx != CMD_laddexpr),
                             (linenr_T)0, (linenr_T)0,
-                            qf_cmdtitle((char *)(*eap->cmdlinep)), NULL);
+                            qf_cmdtitle(*eap->cmdlinep), NULL);
       if (qf_stack_empty(qi)) {
         decr_quickfix_busy();
         goto cleanup;
@@ -7238,14 +7238,14 @@ void ex_helpgrep(exarg_T *eap)
   incr_quickfix_busy();
 
   // Check for a specified language
-  char *const lang = check_help_lang((char *)eap->arg);
+  char *const lang = check_help_lang(eap->arg);
   regmatch_T regmatch = {
-    .regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING),
+    .regprog = vim_regcomp((char_u *)eap->arg, RE_MAGIC + RE_STRING),
     .rm_ic = false,
   };
   if (regmatch.regprog != NULL) {
     // Create a new quickfix list.
-    qf_new_list(qi, qf_cmdtitle((char *)(*eap->cmdlinep)));
+    qf_new_list(qi, qf_cmdtitle(*eap->cmdlinep));
     qf_list_T *const qfl = qf_get_curlist(qi);
 
     hgr_search_in_rtp(qfl, &regmatch, lang);

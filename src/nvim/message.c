@@ -631,7 +631,7 @@ static bool emsg_multiline(const char *s, bool multiline)
      * when the message should be ignored completely (used for the
      * interrupt message).
      */
-    if (cause_errthrow((char_u *)s, severe, &ignore)) {
+    if (cause_errthrow(s, severe, &ignore)) {
       if (!ignore) {
         did_emsg++;
       }

@@ -1453,8 +1453,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
       }
     }
 
-    (void)syn_list_header(didh, (int)(vim_strsize((char_u *)ts) + (int)STRLEN(name)
-                                      + 1), id, false);
+    (void)syn_list_header(didh, vim_strsize((char_u *)ts) + (int)STRLEN(name) + 1, id, false);
     didh = true;
     if (!got_int) {
       if (*name != NUL) {
@@ -1973,7 +1972,7 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 {
   // Default: expand group names.
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = (char_u *)arg;
+  xp->xp_pattern = (char *)arg;
   include_link = 2;
   include_default = 1;
 
@@ -1984,7 +1983,7 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
       include_default = 0;
       if (strncmp("default", arg, (unsigned)(p - arg)) == 0) {
         arg = (const char *)skipwhite((const char_u *)p);
-        xp->xp_pattern = (char_u *)arg;
+        xp->xp_pattern = (char *)arg;
         p = (const char *)skiptowhite((const char_u *)arg);
       }
       if (*p != NUL) {                          // past group name
@@ -1994,11 +1993,11 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
         }
         if (strncmp("link", arg, (unsigned)(p - arg)) == 0
             || strncmp("clear", arg, (unsigned)(p - arg)) == 0) {
-          xp->xp_pattern = skipwhite((const char_u *)p);
-          p = (const char *)skiptowhite(xp->xp_pattern);
+          xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+          p = (const char *)skiptowhite((char_u *)xp->xp_pattern);
           if (*p != NUL) {  // Past first group name.
-            xp->xp_pattern = skipwhite((const char_u *)p);
-            p = (const char *)skiptowhite(xp->xp_pattern);
+            xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+            p = (const char *)skiptowhite((char_u *)xp->xp_pattern);
           }
         }
         if (*p != NUL) {  // Past group name(s).

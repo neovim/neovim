@@ -366,7 +366,7 @@ void ex_debug(exarg_T *eap)
   int debug_break_level_save = debug_break_level;
 
   debug_break_level = 9999;
-  do_cmdline_cmd((char *)eap->arg);
+  do_cmdline_cmd(eap->arg);
   debug_break_level = debug_break_level_save;
 }
 
@@ -563,7 +563,7 @@ void ex_breakadd(exarg_T *eap)
     gap = &prof_ga;
   }
 
-  if (dbg_parsearg(eap->arg, gap) == OK) {
+  if (dbg_parsearg((char_u *)eap->arg, gap) == OK) {
     struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
     bp->dbg_forceit = eap->forceit;
 
@@ -618,7 +618,7 @@ void ex_breakdel(exarg_T *eap)
 
   if (ascii_isdigit(*eap->arg)) {
     // ":breakdel {nr}"
-    int nr = atoi((char *)eap->arg);
+    int nr = atoi(eap->arg);
     for (int i = 0; i < gap->ga_len; i++) {
       if (DEBUGGY(gap, i).dbg_nr == nr) {
         todel = i;
@@ -630,7 +630,7 @@ void ex_breakdel(exarg_T *eap)
     del_all = true;
   } else {
     // ":breakdel {func|file|expr} [lnum] {name}"
-    if (dbg_parsearg(eap->arg, gap) == FAIL) {
+    if (dbg_parsearg((char_u *)eap->arg, gap) == FAIL) {
       return;
     }
     bp = &DEBUGGY(gap, gap->ga_len);

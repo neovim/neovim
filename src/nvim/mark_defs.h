@@ -42,7 +42,7 @@ typedef struct filemark {
 /// Structure defining extended mark (mark with file name attached)
 typedef struct xfilemark {
   fmark_T fmark;       ///< Actual mark.
-  char_u *fname;  ///< File name, used when fnum == 0.
+  char *fname;  ///< File name, used when fnum == 0.
 } xfmark_T;
 
 #endif // NVIM_MARK_DEFS_H

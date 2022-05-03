@@ -100,8 +100,8 @@ void ex_profile(exarg_T *eap)
   char_u *e;
   int len;
 
-  e = skiptowhite(eap->arg);
-  len = (int)(e - eap->arg);
+  e = skiptowhite((char_u *)eap->arg);
+  len = (int)(e - (char_u *)eap->arg);
   e = skipwhite(e);
 
   if (len == 5 && STRNCMP(eap->arg, "start", 5) == 0 && *e != NUL) {
@@ -218,7 +218,7 @@ void set_context_in_profile_cmd(expand_T *xp, const char *arg)
   // Default: expand subcommands.
   xp->xp_context = EXPAND_PROFILE;
   pexpand_what = PEXP_SUBCMD;
-  xp->xp_pattern = (char_u *)arg;
+  xp->xp_pattern = (char *)arg;
 
   char_u *const end_subcmd = skiptowhite((const char_u *)arg);
   if (*end_subcmd == NUL) {
@@ -227,7 +227,7 @@ void set_context_in_profile_cmd(expand_T *xp, const char *arg)
 
   if ((const char *)end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
     xp->xp_context = EXPAND_FILES;
-    xp->xp_pattern = skipwhite((const char_u *)end_subcmd);
+    xp->xp_pattern = (char *)skipwhite((const char_u *)end_subcmd);
     return;
   }
 
@@ -1191,7 +1191,7 @@ void ex_next(exarg_T *eap)
                         | (eap->forceit ? CCGD_FORCEIT : 0)
                         | CCGD_EXCMD)) {
     if (*eap->arg != NUL) {                 // redefine file list
-      if (do_arglist(eap->arg, AL_SET, 0, true) == FAIL) {
+      if (do_arglist((char_u *)eap->arg, AL_SET, 0, true) == FAIL) {
         return;
       }
       i = 0;
@@ -1209,7 +1209,7 @@ void ex_argedit(exarg_T *eap)
   // Whether curbuf will be reused, curbuf->b_ffname will be set.
   bool curbuf_is_reusable = curbuf_reusable();
 
-  if (do_arglist(eap->arg, AL_ADD, i, true) == FAIL) {
+  if (do_arglist((char_u *)eap->arg, AL_ADD, i, true) == FAIL) {
     return;
   }
   maketitle();
@@ -1228,7 +1228,7 @@ void ex_argedit(exarg_T *eap)
 /// ":argadd"
 void ex_argadd(exarg_T *eap)
 {
-  do_arglist(eap->arg, AL_ADD,
+  do_arglist((char_u *)eap->arg, AL_ADD,
              eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1,
              false);
   maketitle();
@@ -1277,7 +1277,7 @@ void ex_argdelete(exarg_T *eap)
       }
     }
   } else {
-    do_arglist(eap->arg, AL_DEL, 0, false);
+    do_arglist((char_u *)eap->arg, AL_DEL, 0, false);
   }
   maketitle();
 }
@@ -1427,7 +1427,7 @@ void ex_listdo(exarg_T *eap)
       i++;
       // execute the command
       if (execute) {
-        do_cmdline((char *)eap->arg, eap->getline, eap->cookie, DOCMD_VERBOSE + DOCMD_NOWAIT);
+        do_cmdline(eap->arg, eap->getline, eap->cookie, DOCMD_VERBOSE + DOCMD_NOWAIT);
       }
 
       if (eap->cmdidx == CMD_bufdo) {
@@ -1657,7 +1657,7 @@ void ex_options(exarg_T *eap)
 /// ":source [{fname}]"
 void ex_source(exarg_T *eap)
 {
-  cmd_source(eap->arg, eap);
+  cmd_source((char_u *)eap->arg, eap);
 }
 
 static void cmd_source(char_u *fname, exarg_T *eap)
@@ -2207,7 +2207,7 @@ void ex_scriptnames(exarg_T *eap)
     if (eap->line2 < 1 || eap->line2 > script_items.ga_len) {
       emsg(_(e_invarg));
     } else {
-      eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+      eap->arg = (char *)SCRIPT_ITEM(eap->line2).sn_name;
       do_exedit(eap, NULL);
     }
     return;
@@ -2575,16 +2575,16 @@ void ex_scriptencoding(exarg_T *eap)
   }
 
   if (*eap->arg != NUL) {
-    name = enc_canonize(eap->arg);
+    name = enc_canonize((char_u *)eap->arg);
   } else {
-    name = eap->arg;
+    name = (char_u *)eap->arg;
   }
 
   // Setup for conversion from the specified encoding to 'encoding'.
   sp = (struct source_cookie *)getline_cookie(eap->getline, eap->cookie);
   convert_setup(&sp->conv, name, p_enc);
 
-  if (name != eap->arg) {
+  if (name != (char_u *)eap->arg) {
     xfree(name);
   }
 }
@@ -2786,26 +2786,26 @@ void ex_language(exarg_T *eap)
 #  define VIM_LC_MESSAGES 6789
 # endif
 
-  name = eap->arg;
+  name = (char_u *)eap->arg;
 
   // Check for "messages {name}", "ctype {name}" or "time {name}" argument.
   // Allow abbreviation, but require at least 3 characters to avoid
   // confusion with a two letter language name "me" or "ct".
-  p = skiptowhite(eap->arg);
-  if ((*p == NUL || ascii_iswhite(*p)) && p - eap->arg >= 3) {
-    if (STRNICMP(eap->arg, "messages", p - eap->arg) == 0) {
+  p = skiptowhite((char_u *)eap->arg);
+  if ((*p == NUL || ascii_iswhite(*p)) && p - (char_u *)eap->arg >= 3) {
+    if (STRNICMP(eap->arg, "messages", p - (char_u *)eap->arg) == 0) {
       what = VIM_LC_MESSAGES;
       name = skipwhite(p);
       whatstr = "messages ";
-    } else if (STRNICMP(eap->arg, "ctype", p - eap->arg) == 0) {
+    } else if (STRNICMP(eap->arg, "ctype", p - (char_u *)eap->arg) == 0) {
       what = LC_CTYPE;
       name = skipwhite(p);
       whatstr = "ctype ";
-    } else if (STRNICMP(eap->arg, "time", p - eap->arg) == 0) {
+    } else if (STRNICMP(eap->arg, "time", p - (char_u *)eap->arg) == 0) {
       what = LC_TIME;
       name = skipwhite(p);
       whatstr = "time ";
-    } else if (STRNICMP(eap->arg, "collate", p - eap->arg) == 0) {
+    } else if (STRNICMP(eap->arg, "collate", p - (char_u *)eap->arg) == 0) {
       what = LC_COLLATE;
       name = skipwhite(p);
       whatstr = "collate ";
@@ -2999,7 +2999,7 @@ static void script_host_execute_file(char *name, exarg_T *eap)
 {
   if (!eap->skip) {
     uint8_t buffer[MAXPATHL];
-    vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
+    vim_FullName(eap->arg, (char *)buffer, sizeof(buffer), false);
 
     list_T *args = tv_list_alloc(3);
     // filename
@@ -3036,7 +3036,7 @@ void ex_drop(exarg_T *eap)
   // and mostly only one file is dropped.
   // This also ignores wildcards, since it is very unlikely the user is
   // editing a file name with a wildcard character.
-  do_arglist(eap->arg, AL_SET, 0, false);
+  do_arglist((char_u *)eap->arg, AL_SET, 0, false);
 
   // Expanding wildcards may result in an empty argument list.  E.g. when
   // editing "foo.pyc" and ".pyc" is in 'wildignore'.  Assume that we

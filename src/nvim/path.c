@@ -503,7 +503,7 @@ char *save_abs_path(const char *name)
   if (!path_is_absolute((char_u *)name)) {
     return FullName_save(name, true);
   }
-  return (char *)vim_strsave((char_u *)name);
+  return xstrdup(name);
 }
 
 /// Checks if a path has a wildcard character including '~', unless at the end.

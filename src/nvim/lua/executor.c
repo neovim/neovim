@@ -1873,7 +1873,7 @@ void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
     char *buf = xcalloc(length, sizeof(char));
     bool done = false;
     while (!done) {
-      done = uc_split_args_iter(eap->arg, length, &end, buf, &len);
+      done = uc_split_args_iter((char_u *)eap->arg, length, &end, buf, &len);
       if (len > 0) {
         lua_pushlstring(lstate, buf, len);
         lua_rawseti(lstate, -2, i);

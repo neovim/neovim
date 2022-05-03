@@ -651,7 +651,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
  */
 void ex_marks(exarg_T *eap)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   int i;
   char_u *name;
   pos_T *posp, *startp, *endp;
@@ -668,7 +668,7 @@ void ex_marks(exarg_T *eap)
     if (namedfm[i].fmark.fnum != 0) {
       name = fm_getname(&namedfm[i].fmark, 15);
     } else {
-      name = namedfm[i].fname;
+      name = (char_u *)namedfm[i].fname;
     }
     if (name != NULL) {
       show_one_mark(i >= NMARKS ? i - NMARKS + '0' : i + 'A',
@@ -767,7 +767,7 @@ void ex_delmarks(exarg_T *eap)
     emsg(_(e_argreq));
   } else {
     // clear specified marks only
-    for (p = eap->arg; *p != NUL; ++p) {
+    for (p = (char_u *)eap->arg; *p != NUL; p++) {
       lower = ASCII_ISLOWER(*p);
       digit = ascii_isdigit(*p);
       if (lower || digit || ASCII_ISUPPER(*p)) {
@@ -1311,7 +1311,7 @@ void copy_jumplist(win_T *from, win_T *to)
   for (i = 0; i < from->w_jumplistlen; ++i) {
     to->w_jumplist[i] = from->w_jumplist[i];
     if (from->w_jumplist[i].fname != NULL) {
-      to->w_jumplist[i].fname = vim_strsave(from->w_jumplist[i].fname);
+      to->w_jumplist[i].fname = xstrdup(from->w_jumplist[i].fname);
     }
   }
   to->w_jumplistlen = from->w_jumplistlen;
@@ -1665,7 +1665,7 @@ void get_global_marks(list_T *l)
     if (namedfm[i].fmark.fnum != 0) {
       name = (char *)buflist_nr2name(namedfm[i].fmark.fnum, true, true);
     } else {
-      name = (char *)namedfm[i].fname;
+      name = namedfm[i].fname;
     }
     if (name != NULL) {
       mname[1] = i >= NMARKS ? (char)(i - NMARKS + '0') : (char)(i + 'A');
