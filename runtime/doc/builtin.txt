@@ -158,7 +158,6 @@ foldclosedend({lnum})		Number	last line of fold at {lnum} if closed
 foldlevel({lnum})		Number	fold level at {lnum}
 foldtext()			String	line displayed for closed fold
 foldtextresult({lnum})		String	text for closed fold at {lnum}
-foreground()			Number	bring the Vim window to the foreground
 fullcommand({name})		String	get full command from {name}
 funcref({name} [, {arglist}] [, {dict}])
 				Funcref	reference to function {name}
@@ -352,16 +351,6 @@ reg_recording()			String	get the recording register name
 reltime([{start} [, {end}]])	List	get time value
 reltimefloat({time})		Float	turn the time value into a Float
 reltimestr({time})		String	turn time value into a String
-remote_expr({server}, {string} [, {idvar} [, {timeout}]])
-				String	send expression
-remote_foreground({server})	Number	bring Vim server to the foreground
-remote_peek({serverid} [, {retvar}])
-				Number	check for reply string
-remote_read({serverid} [, {timeout}])
-				String	read reply string
-remote_send({server}, {string} [, {idvar}])
-				String	send key sequence
-remote_startserver({name})	none	become server {name}
 remove({list}, {idx} [, {end}])	any/List
 					remove items {idx}-{end} from {list}
 remove({blob}, {idx} [, {end}])	Number/Blob
@@ -395,8 +384,6 @@ searchpairpos({start}, {middle}, {end} [, {flags} [, {skip} [...]]])
 				List	search for other end of start/end pair
 searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 				List	search for {pattern}
-server2client({clientid}, {string})
-				Number	send reply string
 serverlist()			String	get a list of available servers
 setbufline({expr}, {lnum}, {text})
 				Number	set line {lnum} to {text} in buffer
@@ -1974,7 +1961,7 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 			<cword>		word under the cursor
 			<cWORD>		WORD under the cursor
 			<client>	the {clientid} of the last received
-					message |server2client()|
+					message
 		Modifiers:
 			:p		expand to full path
 			:h		head (last path component removed)
@@ -2409,14 +2396,6 @@ foldtextresult({lnum})					*foldtextresult()*
 		Can also be used as a |method|: >
 			GetLnum()->foldtextresult()
 <
-							*foreground()*
-foreground()	Move the Vim window to the foreground.  Useful when sent from
-		a client to a Vim server. |remote_send()|
-		On Win32 systems this might not work, the OS does not always
-		allow a window to bring itself to the foreground.  Use
-		|remote_foreground()| instead.
-		{only in the Win32 GUI and console version}
-
 fullcommand({name})						*fullcommand()*
 		Get the full command name from a short abbreviated command
 		name; see |20.2| for details on command abbreviations.
@@ -4280,6 +4259,15 @@ jobstart({cmd} [, {opts}])				*jobstart()*
 		    by CommandLineToArgvW https://msdn.microsoft.com/bb776391
 		    unless cmd[0] is some form of "cmd.exe".
 
+							*jobstart-env*
+		The job environment is initialized as follows:
+		  $NVIM                is set to |v:servername| of the parent Nvim
+		  $NVIM_LISTEN_ADDRESS is unset
+		  $NVIM_LOG_FILE       is unset
+		  $VIM                 is unset
+		  $VIMRUNTIME          is unset
+		You can set these with the `env` option.
+
 							*jobstart-options*
 		{opts} is a dictionary with these keys:
 		  clear_env:  (boolean) `env` defines the job environment
@@ -4290,8 +4278,8 @@ jobstart({cmd} [, {opts}])				*jobstart()*
 			      killed when Nvim exits. If the process exits
 			      before Nvim, `on_exit` will be invoked.
 		  env:	      (dict) Map of environment variable name:value
-			      pairs extending (or replacing if |clear_env|)
-			      the current environment.
+			      pairs extending (or replacing with |clear_env|)
+			      the current environment. |jobstart-env|
 		  height:     (number) Height of the `pty` terminal.
 		  |on_exit|:    (function) Callback invoked when the job exits.
 		  |on_stdout|:  (function) Callback invoked when the job emits
@@ -4305,8 +4293,8 @@ jobstart({cmd} [, {opts}])				*jobstart()*
 			      platforms, this option is silently ignored.)
 		  pty:	      (boolean) Connect the job to a new pseudo
 			      terminal, and its streams to the master file
-			      descriptor. Then  `on_stderr` is ignored,
-			      `on_stdout` receives all output.
+			      descriptor. `on_stdout` receives all output,
+			      `on_stderr` is ignored. |terminal-start|
 		  rpc:	      (boolean) Use |msgpack-rpc| to communicate with
 			      the job over stdio. Then `on_stdout` is ignored,
 			      but `on_stderr` can still be used.
@@ -5242,9 +5230,8 @@ mode([expr])	Return a string that indicates the current mode.
 		   !	    Shell or external command is executing
 		   t	    Terminal mode: keys go to the job
 
-		This is useful in the 'statusline' option or when used
-		with |remote_expr()| In most other places it always returns
-		"c" or "n".
+		This is useful in the 'statusline' option or RPC calls. In
+		most other places it always returns "c" or "n".
 		Note that in the future more modes and more specific modes may
 		be added. It's better not to compare the whole string but only
 		the leading character(s).
@@ -5964,107 +5951,6 @@ reltimestr({time})				*reltimestr()*
 		Can also be used as a |method|: >
 			reltime(start)->reltimestr()
 <
-							*remote_expr()* *E449*
-remote_expr({server}, {string} [, {idvar} [, {timeout}]])
-		Send the {string} to {server}.  The {server} argument is a
-		string, also see |{server}|.
-
-		The string is sent as an expression and the result is returned
-		after evaluation.  The result must be a String or a |List|.  A
-		|List| is turned into a String by joining the items with a
-		line break in between (not at the end), like with join(expr,
-		"\n").
-
-		If {idvar} is present and not empty, it is taken as the name
-		of a variable and a {serverid} for later use with
-		|remote_read()| is stored there.
-
-		If {timeout} is given the read times out after this many
-		seconds.  Otherwise a timeout of 600 seconds is used.
-
-		See also |clientserver| |RemoteReply|.
-		This function is not available in the |sandbox|.
-		Note: Any errors will cause a local error message to be issued
-		and the result will be the empty string.
-
-		Variables will be evaluated in the global namespace,
-		independent of a function currently being active.  Except
-		when in debug mode, then local function variables and
-		arguments can be evaluated.
-
-		Examples: >
-			:echo remote_expr("gvim", "2+2")
-			:echo remote_expr("gvim1", "b:current_syntax")
-<
-
-remote_foreground({server})				*remote_foreground()*
-		Move the Vim server with the name {server} to the foreground.
-		The {server} argument is a string, also see |{server}|.
-		This works like: >
-			remote_expr({server}, "foreground()")
-<		Except that on Win32 systems the client does the work, to work
-		around the problem that the OS doesn't always allow the server
-		to bring itself to the foreground.
-		Note: This does not restore the window if it was minimized,
-		like foreground() does.
-		This function is not available in the |sandbox|.
-		{only in the Win32 GUI and the Win32 console version}
-
-
-remote_peek({serverid} [, {retvar}])		*remote_peek()*
-		Returns a positive number if there are available strings
-		from {serverid}.  Copies any reply string into the variable
-		{retvar} if specified.  {retvar} must be a string with the
-		name of a variable.
-		Returns zero if none are available.
-		Returns -1 if something is wrong.
-		See also |clientserver|.
-		This function is not available in the |sandbox|.
-		Examples: >
-			:let repl = ""
-			:echo "PEEK: " .. remote_peek(id, "repl") .. ": " .. repl
-
-remote_read({serverid}, [{timeout}])			*remote_read()*
-		Return the oldest available reply from {serverid} and consume
-		it.  Unless a {timeout} in seconds is given, it blocks until a
-		reply is available.
-		See also |clientserver|.
-		This function is not available in the |sandbox|.
-		Example: >
-			:echo remote_read(id)
-<
-							*remote_send()* *E241*
-remote_send({server}, {string} [, {idvar}])
-		Send the {string} to {server}.  The {server} argument is a
-		string, also see |{server}|.
-
-		The string is sent as input keys and the function returns
-		immediately.  At the Vim server the keys are not mapped
-		|:map|.
-
-		If {idvar} is present, it is taken as the name of a variable
-		and a {serverid} for later use with remote_read() is stored
-		there.
-
-		See also |clientserver| |RemoteReply|.
-		This function is not available in the |sandbox|.
-
-		Note: Any errors will be reported in the server and may mess
-		up the display.
-		Examples: >
-		:echo remote_send("gvim", ":DropAndReply " .. file, "serverid") ..
-		 \ remote_read(serverid)
-
-		:autocmd NONE RemoteReply *
-		 \ echo remote_read(expand("<amatch>"))
-		:echo remote_send("gvim", ":sleep 10 | echo " ..
-		 \ 'server2client(expand("<client>"), "HELLO")<CR>')
-<
-					*remote_startserver()* *E941* *E942*
-remote_startserver({name})
-		Become the server {name}.  This fails if already running as a
-		server, when |v:servername| is not empty.
-
 remove({list}, {idx} [, {end}])				*remove()*
 		Without {end}: Remove the item at {idx} from |List| {list} and
 		return the item.
@@ -6648,21 +6534,6 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout} [, {skip}]]]])
 		Can also be used as a |method|: >
 			GetPattern()->searchpos()
 
-server2client({clientid}, {string})			*server2client()*
-		Send a reply string to {clientid}.  The most recent {clientid}
-		that sent a string can be retrieved with expand("<client>").
-		Note:
-		Returns zero for success, -1 for failure.
-		This id has to be stored before the next command can be
-		received.  I.e. before returning from the received command and
-		before calling any commands that waits for input.
-		See also |clientserver|.
-		Example: >
-			:echo server2client(expand("<client>"), "HELLO")
-
-<		Can also be used as a |method|: >
-			GetClientId()->server2client(string)
-<
 serverlist()						*serverlist()*
 		Returns a list of server addresses, or empty if all servers
 		were stopped. |serverstart()| |serverstop()|
@@ -6672,7 +6543,9 @@ serverlist()						*serverlist()*
 serverstart([{address}])				*serverstart()*
 		Opens a socket or named pipe at {address} and listens for
 		|RPC| messages. Clients can send |API| commands to the address
-		to control Nvim. Returns the address string.
+		to control Nvim.
+
+		Returns the address string.
 
 		If {address} does not contain a colon ":" it is interpreted as
 		a named pipe or Unix domain socket path.
@@ -6694,14 +6567,11 @@ serverstart([{address}])				*serverstart()*
 		If no address is given, it is equivalent to: >
 			:call serverstart(tempname())
 
-< 		|$NVIM_LISTEN_ADDRESS| is set to {address} if not already set.
-
 serverstop({address})					*serverstop()*
 		Closes the pipe or socket at {address}.
 		Returns TRUE if {address} is valid, else FALSE.
-		If |$NVIM_LISTEN_ADDRESS| is stopped it is unset.
 		If |v:servername| is stopped it is set to the next available
-		address returned by |serverlist()|.
+		address in |serverlist()|.
 
 setbufline({buf}, {lnum}, {text})			*setbufline()*
 		Set line {lnum} to {text} in buffer {buf}.  This works like
@@ -8281,19 +8151,15 @@ tempname()					*tempname()* *temp-file-name*
 
 termopen({cmd} [, {opts}])			*termopen()*
 		Spawns {cmd} in a new pseudo-terminal session connected
-		to the current buffer.  {cmd} is the same as the one passed to
-		|jobstart()|.  This function fails if the current buffer is
-		modified (all buffer contents are destroyed).
-
-		The {opts} dict is similar to the one passed to |jobstart()|,
-		but the `pty`, `width`, `height`, and `TERM` fields are
-		ignored: `height`/`width` are taken from the current window
-		and `$TERM` is set to "xterm-256color".
+		to the current (unmodified) buffer. Parameters and behavior
+		are the same as |jobstart()| except "pty", "width", "height",
+		and "TERM" are ignored: "height" and "width" are taken from
+		the current window.
 		Returns the same values as |jobstart()|.
 
-		See |terminal| for more information.
-
-test_ functions are documented here: |test-functions-details|
+		Terminal environment is initialized as in ||jobstart-env|,
+		except $TERM is set to "xterm-256color". Full behavior is
+		described in |terminal|.
 
 tan({expr})						*tan()*
 		Return the tangent of {expr}, measured in radians, as a |Float|

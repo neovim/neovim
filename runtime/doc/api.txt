@@ -59,7 +59,7 @@ Nvim instance:
     # trailing '&' which is required since Nvim won't process events while
     # running a blocking command):
     #
-    #	:!./hello.rb &
+    #   :!./hello.rb &
     #
     # Or from another shell by setting NVIM_LISTEN_ADDRESS:
     # $ NVIM_LISTEN_ADDRESS=[address] ./hello.rb

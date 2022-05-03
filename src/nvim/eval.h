@@ -164,7 +164,7 @@ typedef enum {
   VV_ARGV,
   VV_COLLATE,
   VV_EXITING,
-  // Neovim
+  // Nvim
   VV_STDERR,
   VV_MSGPACK_TYPES,
   VV__NULL_STRING,  // String with NULL value. For test purposes only.

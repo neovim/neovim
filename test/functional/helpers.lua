@@ -782,7 +782,7 @@ function module.pathroot()
   return iswin() and (module.nvim_dir:sub(1,2)..pathsep) or '/'
 end
 
--- Returns a valid, platform-independent $NVIM_LISTEN_ADDRESS.
+-- Returns a valid, platform-independent Nvim listen address.
 -- Useful for communicating with child instances.
 function module.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.

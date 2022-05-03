@@ -75,7 +75,7 @@ local busted = require('busted')
 local deepcopy = helpers.deepcopy
 local shallowcopy = helpers.shallowcopy
 local concat_tables = helpers.concat_tables
-local request, run_session = helpers.request, helpers.run_session
+local run_session = helpers.run_session
 local eq = helpers.eq
 local dedent = helpers.dedent
 local get_session = helpers.get_session
@@ -89,8 +89,6 @@ end
 
 local Screen = {}
 Screen.__index = Screen
-
-local debug_screen
 
 local default_timeout_factor = 1
 if os.getenv('VALGRIND') then
@@ -121,18 +119,6 @@ do
   session:close()
   Screen.colors = colors
   Screen.colornames = colornames
-end
-
-function Screen.debug(command)
-  if not command then
-    command = 'pynvim -n -c '
-  end
-  command = command .. request('vim_eval', '$NVIM_LISTEN_ADDRESS')
-  if debug_screen then
-    debug_screen:close()
-  end
-  debug_screen = io.popen(command, 'r')
-  debug_screen:read()
 end
 
 function Screen.new(width, height)
