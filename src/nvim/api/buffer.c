@@ -519,7 +519,8 @@ end:
 /// lines.
 ///
 /// Row indices are zero-based and end-inclusive. Column indices are zero-based,
-/// end-exclusive, and correspond to bytes, not display columns.
+/// end-exclusive, and correspond to bytes, not character columns (see |col()|
+/// vs. |charcol()|).
 ///
 /// To insert text at a given `(row, column)` location, use `start_row = end_row
 /// = row` and `start_col = end_col = col`. To delete the text in a range, use
@@ -762,7 +763,8 @@ end:
 /// portions of a line.
 ///
 /// Row indices are zero-based and end-inclusive. Column indices are zero-based,
-/// end-exclusive, and correspond to bytes, not display columns.
+/// end-exclusive, and correspond to bytes, not character columns (see |col()|
+/// vs. |charcol()|).
 ///
 /// Prefer |nvim_buf_get_lines()| when retrieving entire lines.
 ///

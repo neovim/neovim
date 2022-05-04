@@ -2270,7 +2270,7 @@ nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
 
                 Row indices are zero-based and end-inclusive. Column indices
                 are zero-based, end-exclusive, and correspond to bytes, not
-                display columns.
+                character columns (see |col()| vs. |charcol()|).
 
                 Prefer |nvim_buf_get_lines()| when retrieving entire lines.
 
@@ -2415,7 +2415,7 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
 
                 Row indices are zero-based and end-inclusive. Column indices
                 are zero-based, end-exclusive, and correspond to bytes, not
-                display columns.
+                character columns (see |col()| vs. |charcol()|).
 
                 To insert text at a given `(row, column)` location, use
                 `start_row = end_row = row` and `start_col = end_col = col`.
