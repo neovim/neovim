@@ -35,23 +35,6 @@ The following command line arguments are available:
 				this use >
 				 nvim --remote-send "<C-\><C-N>:n filename<CR>"
 <
-   --remote-silent [+{cmd}] {file} ...			*--remote-silent*
-				As above, but don't complain if there is no
-				server and the file is edited locally.
-							*--remote-tab*
-   --remote-tab			Like --remote but open each file in a new
-				tabpage.
-							*--remote-tab-silent*
-   --remote-tab-silent		Like --remote-silent but open each file in a
-				new tabpage.
-								*--remote-send*
-   --remote-send {keys}		Send {keys} to server and exit.  The {keys}
-   				are not mapped.  Special key names are
-				recognized, e.g., "<CR>" results in a CR
-				character.
-								*--remote-expr*
-   --remote-expr {expr}		Evaluate {expr} in server and print the result
-				on stdout.
 								*--server*
    --server {addr}		Connect to the named pipe or socket at the
 				given address for executing remote commands.
@@ -80,45 +63,6 @@ rest of the command line and sent as described above.
 Note that the --remote and --remote-wait arguments will consume the rest of
 the command line.  I.e. all remaining arguments will be regarded as filenames.
 You can not put options there!
-
-
-==============================================================================
-2. Missing functionality			*E5600* *clientserver-missing*
-
-Vim supports additional functionality in clientserver that's not yet
-implemented in Nvim. In particular, none of the "wait" variants are supported
-yet. The following command line arguments are not yet available:
-
-    argument			meaning	~
-
-   --remote-wait [+{cmd}] {file} ...				*--remote-wait*
-				Not yet supported by Nvim.
-				As --remote, but wait for files to complete
-				(unload) in remote Vim.
-   --remote-wait-silent [+{cmd}] {file} ...		*--remote-wait-silent*
-				Not yet supported by Nvim.
-				As --remote-wait, but don't complain if there
-				is no server.
-							*--remote-tab-wait*
-   --remote-tab-wait		Not yet supported by Nvim.
-				Like --remote-wait but open each file in a new
-				tabpage.
-						*--remote-tab-wait-silent*
-   --remote-tab-wait-silent	Not yet supported by Nvim.
-				Like --remote-wait-silent but open each file
-				in a new tabpage.
-							    *--servername*
-   --servername {name}          Not yet supported by Nvim.
-				Become the server {name}.  When used together
-                                with one of the --remote commands: connect to
-                                server {name} instead of the default (see
-                                below).  The name used will be uppercase.
-
-								*--serverlist*
-   --serverlist			Not yet supported by Nvim.
-				Output a list of server names.
-
-
 
 
 SERVER NAME						*client-server-name*

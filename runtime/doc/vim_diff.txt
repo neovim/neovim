@@ -570,6 +570,30 @@ Startup:
   Restricted mode: rview, rvim, nvim -Z
   Vi mode: nvim -v
 
+                                                *E5600* *clientserver-missing*
+*--remote-expr*                 Removed. Use |-es| |-V1| instead. >
+                              nvim -V1 -Es --remote … "+echo 1+1" +q
+*--remote-send*                 Removed. Use "|-s| -" or |nvim_input()| instead: >
+                              echo "ifoo" | nvim -s - --remote …
+                              nvim --remote … "+call nvim_input('ifoo')"
+*--remote-silent*               Removed. Use |-Es| instead: >
+                              nvim -Es --remote …
+*--remote-tab*                  Removed. Use |-p| instead: >
+                              nvim -p --remote …
+*--remote-tab-silent*           Removed. Use |-Es| |-p| instead: >
+                              nvim -Es -p --remote …
+*--remote-wait*                 Removed. Use |--remote| instead.
+*--remote-wait-silent*          Removed. Use |-Es| |-p| instead: >
+                              nvim -Es -p --remote …
+*--remote-tab-wait*             Removed. Use |-p| instead: >
+                              nvim -p --remote …
+*--remote-tab-wait-silent*      Removed. Use |-Es| |-p| instead: >
+                              nvim -Es -p --remote … +0cq
+*--serverlist*                  Removed. Use instead: >
+                              nvim -es -V1 --server … --remote '+echom serverlist()'
+*--servername*                  Removed.
+
+
 Test functions:
   test_alloc_fail()
   test_autochdir()
