@@ -440,7 +440,7 @@ static void insert_enter(InsertState *s)
       if (s->ptr[1] == NUL) {
         curwin->w_cursor.col++;
       } else {
-        s->i = utfc_ptr2len(s->ptr);
+        s->i = utfc_ptr2len((char *)s->ptr);
         if (s->ptr[s->i] == NUL) {
           curwin->w_cursor.col += s->i;
         }
@@ -727,7 +727,7 @@ static int insert_execute(VimState *state, int key)
 
         if (str != NULL) {
           for (p = str; *p != NUL; MB_PTR_ADV(p)) {
-            ins_compl_addleader(utf_ptr2char(p));
+            ins_compl_addleader(utf_ptr2char((char *)p));
           }
           xfree(str);
         } else {
@@ -1332,7 +1332,7 @@ normalchar:
         if (*str != NUL && stop_arrow() != FAIL) {
           // Insert the new value of v:char literally.
           for (p = str; *p != NUL; MB_PTR_ADV(p)) {
-            s->c = utf_ptr2char(p);
+            s->c = utf_ptr2char((char *)p);
             if (s->c == CAR || s->c == K_KENTER || s->c == NL) {
               ins_eol(s->c);
             } else {
@@ -1891,7 +1891,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
     while (vcol <= (int)curwin->w_virtcol) {
       last_vcol = vcol;
       if (new_cursor_col >= 0) {
-        new_cursor_col += utfc_ptr2len(ptr + new_cursor_col);
+        new_cursor_col += utfc_ptr2len((char *)ptr + new_cursor_col);
       } else {
         new_cursor_col++;
       }
@@ -2061,7 +2061,7 @@ static bool del_char_after_col(int limit_col)
     // composing character.
     mb_adjust_cursor();
     while (curwin->w_cursor.col < (colnr_T)limit_col) {
-      int l = utf_ptr2len(get_cursor_pos_ptr());
+      int l = utf_ptr2len((char *)get_cursor_pos_ptr());
 
       if (l == 0) {  // end of line
         break;
@@ -2566,8 +2566,8 @@ static void ins_compl_longest_match(compl_T *match)
     p = compl_leader;
     s = match->cp_str;
     while (*p != NUL) {
-      c1 = utf_ptr2char(p);
-      c2 = utf_ptr2char(s);
+      c1 = utf_ptr2char((char *)p);
+      c2 = utf_ptr2char((char *)s);
 
       if ((match->cp_flags & CP_ICASE)
           ? (mb_tolower(c1) != mb_tolower(c2))
@@ -3108,7 +3108,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
             // different classes, only separate words
             // with single-byte non-word characters.
             while (*ptr != NUL) {
-              const int l = utfc_ptr2len(ptr);
+              const int l = utfc_ptr2len((char *)ptr);
 
               if (l < 2 && !vim_iswordc(*ptr)) {
                 break;
@@ -3150,7 +3150,7 @@ char_u *find_word_start(char_u *ptr)
   FUNC_ATTR_PURE
 {
   while (*ptr != NUL && *ptr != '\n' && mb_get_class(ptr) <= 1) {
-    ptr += utfc_ptr2len(ptr);
+    ptr += utfc_ptr2len((char *)ptr);
   }
   return ptr;
 }
@@ -3165,7 +3165,7 @@ char_u *find_word_end(char_u *ptr)
   const int start_class = mb_get_class(ptr);
   if (start_class > 1) {
     while (*ptr != NUL) {
-      ptr += utfc_ptr2len(ptr);
+      ptr += utfc_ptr2len((char *)ptr);
       if (mb_get_class(ptr) != start_class) {
         break;
       }
@@ -3602,7 +3602,7 @@ static void ins_compl_addfrommatch(void)
     }
   }
   p += len;
-  c = utf_ptr2char(p);
+  c = utf_ptr2char((char *)p);
   ins_compl_addleader(c);
 }
 
@@ -5251,10 +5251,10 @@ static int ins_complete(int c, bool enable_pum)
         char_u *p = line + startcol;
 
         MB_PTR_BACK(line, p);
-        while (p > line && vim_isfilec(utf_ptr2char(p))) {
+        while (p > line && vim_isfilec(utf_ptr2char((char *)p))) {
           MB_PTR_BACK(line, p);
         }
-        if (p == line && vim_isfilec(utf_ptr2char(p))) {
+        if (p == line && vim_isfilec(utf_ptr2char((char *)p))) {
           startcol = 0;
         } else {
           startcol = (int)(p - line) + 1;
@@ -5590,7 +5590,7 @@ static unsigned quote_meta(char_u *dest, char_u *src, int len)
       *dest++ = *src;
     }
     // Copy remaining bytes of a multibyte character.
-    const int mb_len = utfc_ptr2len(src) - 1;
+    const int mb_len = utfc_ptr2len((char *)src) - 1;
     if (mb_len > 0 && len >= mb_len) {
       for (int i = 0; i < mb_len; i++) {
         len--;
@@ -5759,9 +5759,8 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
  */
 #define ISSPECIAL(c)   ((c) < ' ' || (c) >= DEL || (c) == '0' || (c) == '^')
 
-#define WHITECHAR(cc) ( \
-                        ascii_iswhite(cc) \
-                        && !utf_iscomposing(utf_ptr2char(get_cursor_pos_ptr() + 1)))
+#define WHITECHAR(cc) (ascii_iswhite(cc) \
+                       && !utf_iscomposing(utf_ptr2char((char *)get_cursor_pos_ptr() + 1)))
 
 ///
 /// "flags": INSCHAR_FORMAT - force formatting
@@ -6903,7 +6902,7 @@ int oneright(void)
 
     // Adjust for multi-wide char (excluding TAB)
     ptr = get_cursor_pos_ptr();
-    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))) ?
+    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char((char *)ptr))) ?
                               ptr2cells(ptr) : 1));
     curwin->w_set_curswant = true;
     // Return OK if the cursor moved, FAIL otherwise (at window edge).
@@ -6916,7 +6915,7 @@ int oneright(void)
     return FAIL;            // already at the very end
   }
 
-  l = utfc_ptr2len(ptr);
+  l = utfc_ptr2len((char *)ptr);
 
   // move "l" bytes right, but don't end up on the NUL, unless 'virtualedit'
   // contains "onemore".
@@ -6957,7 +6956,7 @@ int oneleft(void)
 
       // Adjust for multi-wide char (not a TAB)
       ptr = get_cursor_pos_ptr();
-      if (*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))
+      if (*ptr != TAB && vim_isprintc(utf_ptr2char((char *)ptr))
           && ptr2cells(ptr) > 1) {
         curwin->w_cursor.coladd = 0;
       }
@@ -7249,7 +7248,7 @@ void replace_push(int c)
  */
 int replace_push_mb(char_u *p)
 {
-  int l = utfc_ptr2len(p);
+  int l = utfc_ptr2len((char *)p);
   int j;
 
   for (j = l - 1; j >= 0; --j) {
@@ -7337,7 +7336,7 @@ static void mb_replace_pop_ins(int cc)
     for (i = 1; i < n; i++) {
       buf[i] = (char_u)replace_pop();
     }
-    if (utf_iscomposing(utf_ptr2char(buf))) {
+    if (utf_iscomposing(utf_ptr2char((char *)buf))) {
       ins_bytes_len(buf, (size_t)n);
     } else {
       // Not a composing char, put it back.
@@ -7403,7 +7402,7 @@ static void replace_do_bs(int limit_col)
       vcol = start_vcol;
       for (i = 0; i < ins_len; i++) {
         vcol += win_chartabsize(curwin, p + i, vcol);
-        i += utfc_ptr2len(p) - 1;
+        i += utfc_ptr2len((char *)p) - 1;
       }
       vcol -= start_vcol;
 
@@ -8796,7 +8795,7 @@ static void ins_right(void)
     if (virtual_active()) {
       oneright();
     } else {
-      curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
+      curwin->w_cursor.col += utfc_ptr2len((char *)get_cursor_pos_ptr());
     }
 
     revins_legal++;
@@ -9305,7 +9304,7 @@ int ins_copychar(linenr_T lnum)
     ptr = prev_ptr;
   }
 
-  c = utf_ptr2char(ptr);
+  c = utf_ptr2char((char *)ptr);
   if (c == NUL) {
     vim_beep(BO_COPY);
   }

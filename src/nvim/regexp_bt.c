@@ -1895,8 +1895,8 @@ collection:
           } else {
             // produce a multibyte character, including any
             // following composing characters.
-            startc = utf_ptr2char(regparse);
-            int len = utfc_ptr2len(regparse);
+            startc = utf_ptr2char((char *)regparse);
+            int len = utfc_ptr2len((char *)regparse);
             if (utf_char2len(startc) != len) {
               // composing chars
               startc = -1;
@@ -1953,11 +1953,11 @@ do_multibyte:
 
           // Need to get composing character too.
           for (;; ) {
-            l = utf_ptr2len(regparse);
+            l = utf_ptr2len((char *)regparse);
             if (!utf_composinglike(regparse, regparse + l)) {
               break;
             }
-            regmbc(utf_ptr2char(regparse));
+            regmbc(utf_ptr2char((char *)regparse));
             skipchr();
           }
         }
@@ -2403,7 +2403,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
     }
 
     if (OP(scan) == EXACTLY) {
-      r->regstart = utf_ptr2char(OPERAND(scan));
+      r->regstart = utf_ptr2char((char *)OPERAND(scan));
     } else if (OP(scan) == BOW
                || OP(scan) == EOW
                || OP(scan) == NOTHING
@@ -2411,7 +2411,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
       char_u *regnext_scan = regnext(scan);
       if (OP(regnext_scan) == EXACTLY) {
-        r->regstart = utf_ptr2char(OPERAND(regnext_scan));
+        r->regstart = utf_ptr2char((char *)OPERAND(regnext_scan));
       }
     }
 
@@ -2614,7 +2614,7 @@ regrepeat(
   case SIDENT:
   case SIDENT + ADD_NL:
     while (count < maxcount) {
-      if (vim_isIDc(utf_ptr2char(scan)) && (testval || !ascii_isdigit(*scan))) {
+      if (vim_isIDc(utf_ptr2char((char *)scan)) && (testval || !ascii_isdigit(*scan))) {
         MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || rex.lnum > rex.reg_maxline
@@ -2671,7 +2671,7 @@ regrepeat(
   case SFNAME:
   case SFNAME + ADD_NL:
     while (count < maxcount) {
-      if (vim_isfilec(utf_ptr2char(scan)) && (testval || !ascii_isdigit(*scan))) {
+      if (vim_isfilec(utf_ptr2char((char *)scan)) && (testval || !ascii_isdigit(*scan))) {
         MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || rex.lnum > rex.reg_maxline
@@ -2709,7 +2709,7 @@ regrepeat(
         if (got_int) {
           break;
         }
-      } else if (vim_isprintc(utf_ptr2char(scan)) == 1
+      } else if (vim_isprintc(utf_ptr2char((char *)scan)) == 1
                  && (testval || !ascii_isdigit(*scan))) {
         MB_PTR_ADV(scan);
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
@@ -2737,7 +2737,7 @@ do_class:
         if (got_int) {
           break;
         }
-      } else if ((l = utfc_ptr2len(scan)) > 1) {
+      } else if ((l = utfc_ptr2len((char *)scan)) > 1) {
         if (testval != 0) {
           break;
         }
@@ -2852,18 +2852,18 @@ do_class:
 
     // Safety check (just in case 'encoding' was changed since
     // compiling the program).
-    if ((len = utfc_ptr2len(opnd)) > 1) {
+    if ((len = utfc_ptr2len((char *)opnd)) > 1) {
       if (rex.reg_ic) {
-        cf = utf_fold(utf_ptr2char(opnd));
+        cf = utf_fold(utf_ptr2char((char *)opnd));
       }
-      while (count < maxcount && utfc_ptr2len(scan) >= len) {
+      while (count < maxcount && utfc_ptr2len((char *)scan) >= len) {
         for (i = 0; i < len; i++) {
           if (opnd[i] != scan[i]) {
             break;
           }
         }
         if (i < len && (!rex.reg_ic
-                        || utf_fold(utf_ptr2char(scan)) != cf)) {
+                        || utf_fold(utf_ptr2char((char *)scan)) != cf)) {
           break;
         }
         scan += len;
@@ -2894,8 +2894,8 @@ do_class:
         }
       } else if (rex.reg_line_lbr && *scan == '\n' && WITH_NL(OP(p))) {
         scan++;
-      } else if ((len = utfc_ptr2len(scan)) > 1) {
-        if ((cstrchr(opnd, utf_ptr2char(scan)) == NULL) == testval) {
+      } else if ((len = utfc_ptr2len((char *)scan)) > 1) {
+        if ((cstrchr(opnd, utf_ptr2char((char *)scan)) == NULL) == testval) {
           break;
         }
         scan += len;
@@ -3106,7 +3106,7 @@ static bool regmatch(
         if (WITH_NL(op)) {
           op -= ADD_NL;
         }
-        c = utf_ptr2char(rex.input);
+        c = utf_ptr2char((char *)rex.input);
         switch (op) {
         case BOL:
           if (rex.input != rex.line) {
@@ -3308,7 +3308,7 @@ static bool regmatch(
           break;
 
         case PRINT:
-          if (!vim_isprintc(utf_ptr2char(rex.input))) {
+          if (!vim_isprintc(utf_ptr2char((char *)rex.input))) {
             status = RA_NOMATCH;
           } else {
             ADVANCE_REGINPUT();
@@ -3316,7 +3316,7 @@ static bool regmatch(
           break;
 
         case SPRINT:
-          if (ascii_isdigit(*rex.input) || !vim_isprintc(utf_ptr2char(rex.input))) {
+          if (ascii_isdigit(*rex.input) || !vim_isprintc(utf_ptr2char((char *)rex.input))) {
             status = RA_NOMATCH;
           } else {
             ADVANCE_REGINPUT();
@@ -3507,25 +3507,25 @@ static bool regmatch(
           const char_u *opnd = OPERAND(scan);
             // Safety check (just in case 'encoding' was changed since
             // compiling the program).
-          if ((len = utfc_ptr2len(opnd)) < 2) {
+          if ((len = utfc_ptr2len((char *)opnd)) < 2) {
             status = RA_NOMATCH;
             break;
           }
-          const int opndc = utf_ptr2char(opnd);
+          const int opndc = utf_ptr2char((char *)opnd);
           if (utf_iscomposing(opndc)) {
               // When only a composing char is given match at any
               // position where that composing char appears.
             status = RA_NOMATCH;
             for (i = 0; rex.input[i] != NUL;
-                 i += utf_ptr2len(rex.input + i)) {
-              const int inpc = utf_ptr2char(rex.input + i);
+                 i += utf_ptr2len((char *)rex.input + i)) {
+              const int inpc = utf_ptr2char((char *)rex.input + i);
               if (!utf_iscomposing(inpc)) {
                 if (i > 0) {
                   break;
                 }
               } else if (opndc == inpc) {
                   // Include all following composing chars.
-                len = i + utfc_ptr2len(rex.input + i);
+                len = i + utfc_ptr2len((char *)rex.input + i);
                 status = RA_MATCH;
                 break;
               }
@@ -3545,7 +3545,7 @@ static bool regmatch(
         case RE_COMPOSING:
         {
             // Skip composing characters.
-          while (utf_iscomposing(utf_ptr2char(rex.input))) {
+          while (utf_iscomposing(utf_ptr2char((char *)rex.input))) {
             MB_CPTR_ADV(rex.input);
           }
         }
@@ -4495,7 +4495,7 @@ static long bt_regexec_both(char_u *line,
 
   // If there is a "must appear" string, look for it.
   if (prog->regmust != NULL) {
-    int c = utf_ptr2char(prog->regmust);
+    int c = utf_ptr2char((char *)prog->regmust);
     s = line + col;
 
     // This is used very often, esp. for ":global".  Use two versions of
@@ -4526,7 +4526,7 @@ static long bt_regexec_both(char_u *line,
 
   // Simplest case: Anchored match need be tried only once.
   if (prog->reganch) {
-    int c = utf_ptr2char(rex.line + col);
+    int c = utf_ptr2char((char *)rex.line + col);
     if (prog->regstart == NUL
         || prog->regstart == c
         || (rex.reg_ic
@@ -4570,7 +4570,7 @@ static long bt_regexec_both(char_u *line,
       if (rex.line[col] == NUL) {
         break;
       }
-      col += utfc_ptr2len(rex.line + col);
+      col += utfc_ptr2len((char *)rex.line + col);
       // Check for timeout once in a twenty times to avoid overhead.
       if (tm != NULL && ++tm_count == 20) {
         tm_count = 0;

@@ -2656,7 +2656,7 @@ bool next_for_item(void *fi_void, char *arg)
   }
 
   if (fi->fi_string != NULL) {
-    const int len = utfc_ptr2len((char_u *)fi->fi_string + fi->fi_byte_idx);
+    const int len = utfc_ptr2len(fi->fi_string + fi->fi_byte_idx);
     if (len == 0) {
       return false;
     }
@@ -7681,7 +7681,7 @@ int buf_byteidx_to_charidx(buf_T *buf, int lnum, int byteidx)
   char *t = str;
   int count;
   for (count = 0; *t != NUL && t <= str + byteidx; count++) {
-    t += utfc_ptr2len((char_u *)t);
+    t += utfc_ptr2len(t);
   }
 
   // In insert mode, when the cursor is at the end of a non-empty line,
@@ -7714,7 +7714,7 @@ int buf_charidx_to_byteidx(buf_T *buf, int lnum, int charidx)
   // Convert the character offset to a byte offset
   char *t = str;
   while (*t != NUL && --charidx > 0) {
-    t += utfc_ptr2len((char_u *)t);
+    t += utfc_ptr2len(t);
   }
 
   return t - str;
@@ -10409,7 +10409,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
       if (regmatch.startp[0] == regmatch.endp[0]) {
         if ((char_u *)zero_width == regmatch.startp[0]) {
           // avoid getting stuck on a match with an empty string
-          int i = utfc_ptr2len((char_u *)tail);
+          int i = utfc_ptr2len(tail);
           memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
           ga.ga_len += i;
           tail += i;

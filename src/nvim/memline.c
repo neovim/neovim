@@ -1823,7 +1823,7 @@ int gchar_pos(pos_T *pos)
   if (pos->col == MAXCOL) {
     return NUL;
   }
-  return utf_ptr2char(ml_get_pos(pos));
+  return utf_ptr2char((char *)ml_get_pos(pos));
 }
 
 /// @param will_change  true mark the buffer dirty (chars in the line will be changed)
@@ -4206,7 +4206,7 @@ int inc(pos_T *lp)
   if (lp->col != MAXCOL) {
     const char_u *const p = ml_get_pos(lp);
     if (*p != NUL) {  // still within line, move to next char (may be NUL)
-      const int l = utfc_ptr2len(p);
+      const int l = utfc_ptr2len((char *)p);
 
       lp->col += l;
       return ((p[l] != NUL) ? 0 : 2);

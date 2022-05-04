@@ -719,10 +719,10 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
           // Special case for a double-quoted string
           off = l = 2;
         } else {
-          l = utfc_ptr2len(last_dash + 1);
+          l = utfc_ptr2len((char *)last_dash + 1);
         }
         if (modifiers != 0 && last_dash[l + 1] == '>') {
-          key = utf_ptr2char(last_dash + off);
+          key = utf_ptr2char((char *)last_dash + off);
         } else {
           key = get_special_key_code(last_dash + off);
           if (!(flags & FSK_KEEP_X_KEY)) {

@@ -408,7 +408,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
     }
     len += n;
     buf[e] = s[e];
-    for (n = utfc_ptr2len(s + e); --n > 0;) {
+    for (n = utfc_ptr2len((char *)s + e); --n > 0;) {
       if (++e == buflen) {
         break;
       }
@@ -421,7 +421,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
   for (;;) {
     do {
       half = half - utf_head_off(s, s + half - 1) - 1;
-    } while (half > 0 && utf_iscomposing(utf_ptr2char(s + half)));
+    } while (half > 0 && utf_iscomposing(utf_ptr2char((char *)s + half)));
     n = ptr2cells(s + half);
     if (len + n > room || half == 0) {
       break;
@@ -882,8 +882,8 @@ char_u *msg_may_trunc(bool force, char_u *s)
     }
     int n;
     for (n = 0; size >= room;) {
-      size -= utf_ptr2cells(s + n);
-      n += utfc_ptr2len(s + n);
+      size -= utf_ptr2cells((char *)s + n);
+      n += utfc_ptr2len((char *)s + n);
     }
     n--;
     s += n;
@@ -1480,7 +1480,7 @@ char_u *msg_outtrans_one(char_u *p, int attr)
 {
   int l;
 
-  if ((l = utfc_ptr2len(p)) > 1) {
+  if ((l = utfc_ptr2len((char *)p)) > 1) {
     msg_outtrans_len_attr(p, l, attr);
     return p + l;
   }
@@ -1509,7 +1509,7 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
 
   // If the string starts with a composing character first draw a space on
   // which the composing char can be drawn.
-  if (utf_iscomposing(utf_ptr2char(msgstr))) {
+  if (utf_iscomposing(utf_ptr2char((char *)msgstr))) {
     msg_puts_attr(" ", attr);
   }
 
@@ -1521,10 +1521,10 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
     // Don't include composing chars after the end.
     mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
     if (mb_l > 1) {
-      c = utf_ptr2char((char_u *)str);
+      c = utf_ptr2char(str);
       if (vim_isprintc(c)) {
         // Printable multi-byte char: count the cells.
-        retval += utf_ptr2cells((char_u *)str);
+        retval += utf_ptr2cells(str);
       } else {
         // Unprintable multi-byte char: print the printable chars so
         // far and the translation of the unprintable char.
@@ -1624,7 +1624,7 @@ int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
     }
     // Highlight special keys
     msg_puts_attr(text, (len > 1
-                         && utfc_ptr2len((char_u *)text) <= 1
+                         && utfc_ptr2len(text) <= 1
                          ? attr : 0));
     retval += len;
   }
@@ -1705,7 +1705,7 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
     const char *p = mb_unescape(sp);
 
     if (p == NULL) {
-      const int len = utf_ptr2len((const char_u *)str);
+      const int len = utf_ptr2len(str);
       // Check for an illegal byte.
       if (MB_BYTE2LEN((uint8_t)(*str)) > len) {
         transchar_nonprint(curbuf, (char_u *)buf, c);
@@ -1717,7 +1717,7 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
     }
     // Since 'special' is true the multi-byte character 'c' will be
     // processed by get_special_key_name().
-    c = utf_ptr2char((const char_u *)p);
+    c = utf_ptr2char(p);
   } else {
     *sp = str + 1;
   }
@@ -1813,16 +1813,16 @@ void msg_prt_line(char_u *s, int list)
         assert(p_extra != NULL);
         c = *p_extra++;
       }
-    } else if ((l = utfc_ptr2len(s)) > 1) {
-      col += utf_ptr2cells(s);
+    } else if ((l = utfc_ptr2len((char *)s)) > 1) {
+      col += utf_ptr2cells((char *)s);
       char buf[MB_MAXBYTES + 1];
       if (l >= MB_MAXBYTES) {
         xstrlcpy(buf, "?", sizeof(buf));
       } else if (curwin->w_p_lcs_chars.nbsp != NUL && list
-                 && (utf_ptr2char(s) == 160
-                     || utf_ptr2char(s) == 0x202f)) {
+                 && (utf_ptr2char((char *)s) == 160
+                     || utf_ptr2char((char *)s) == 0x202f)) {
         utf_char2bytes(curwin->w_p_lcs_chars.nbsp, (char_u *)buf);
-        buf[utfc_ptr2len((char_u *)buf)] = NUL;
+        buf[utfc_ptr2len(buf)] = NUL;
       } else {
         memmove(buf, s, (size_t)l);
         buf[l] = NUL;
@@ -1913,7 +1913,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), attr);
 
   msg_didout = true;            // remember that line is not empty
-  cw = utf_ptr2cells(s);
+  cw = utf_ptr2cells((char *)s);
   if (cw > 1
       && (cmdmsg_rl ? msg_col <= 1 : msg_col == Columns - 1)) {
     // Doesn't fit, print a highlighted '>' to fill it up.
@@ -2116,12 +2116,12 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
         && (*s == '\n' || (cmdmsg_rl
                            ? (msg_col <= 1
                               || (*s == TAB && msg_col <= 7)
-                              || (utf_ptr2cells(s) > 1
+                              || (utf_ptr2cells((char *)s) > 1
                                   && msg_col <= 2))
                            : ((*s != '\r' && msg_col + t_col >= Columns - 1)
                               || (*s == TAB
                                   && msg_col + t_col >= ((Columns - 1) & ~7))
-                              || (utf_ptr2cells(s) > 1
+                              || (utf_ptr2cells((char *)s) > 1
                                   && msg_col + t_col >= Columns - 2))))) {
       // The screen is scrolled up when at the last row (some terminals
       // scroll automatically, some don't.  To avoid problems we scroll
@@ -2151,7 +2151,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
           // Avoid including composing chars after the end.
           l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
         } else {
-          l = utfc_ptr2len(s);
+          l = utfc_ptr2len((char *)s);
         }
         s = screen_puts_mbyte((char_u *)s, l, attr);
         did_last_char = true;
@@ -2206,7 +2206,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
 
     wrap = *s == '\n'
            || msg_col + t_col >= Columns
-           || (utf_ptr2cells(s) > 1
+           || (utf_ptr2cells((char *)s) > 1
                && msg_col + t_col >= Columns - 1)
     ;
     if (t_col > 0 && (wrap || *s == '\r' || *s == '\b'
@@ -2243,12 +2243,12 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
     } else if (*s == BELL) {  // beep (from ":sh")
       vim_beep(BO_SH);
     } else if (*s >= 0x20) {  // printable char
-      cw = utf_ptr2cells(s);
+      cw = utf_ptr2cells((char *)s);
       if (maxlen >= 0) {
         // avoid including composing chars after the end
         l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
       } else {
-        l = utfc_ptr2len(s);
+        l = utfc_ptr2len((char *)s);
       }
       // When drawing from right to left or when a double-wide character
       // doesn't fit, draw a single character here.  Otherwise collect
@@ -2609,7 +2609,7 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
   *t_col = 0;
   // If the string starts with a composing character don't increment the
   // column position for it.
-  if (utf_iscomposing(utf_ptr2char(t_s))) {
+  if (utf_iscomposing(utf_ptr2char((char *)t_s))) {
     msg_col--;
   }
   if (msg_col >= Columns) {
@@ -2645,7 +2645,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
   }
 
   while ((maxlen < 0 || s - str < maxlen) && *s != NUL) {
-    int len = utf_ptr2len((const char_u *)s);
+    int len = utf_ptr2len(s);
     if (!(silent_mode && p_verbose == 0)) {
       // NL --> CR NL translation (for Unix, not for "--version")
       p = &buf[0];
@@ -2661,7 +2661,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
       }
     }
 
-    int cw = utf_char2cells(utf_ptr2char((const char_u *)s));
+    int cw = utf_char2cells(utf_ptr2char(s));
     // primitive way to compute the current column
     if (cmdmsg_rl) {
       if (*s == '\r' || *s == '\n') {
@@ -3473,10 +3473,10 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
       c = mb_tolower(c);
       retval = 1;
       for (i = 0; hotkeys[i]; i++) {
-        if (utf_ptr2char(hotkeys + i) == c) {
+        if (utf_ptr2char((char *)hotkeys + i) == c) {
           break;
         }
-        i += utfc_ptr2len(hotkeys + i) - 1;
+        i += utfc_ptr2len((char *)hotkeys + i) - 1;
         retval++;
       }
       if (hotkeys[i]) {
@@ -3508,10 +3508,10 @@ static int copy_char(const char_u *from, char_u *to, bool lowercase)
   FUNC_ATTR_NONNULL_ALL
 {
   if (lowercase) {
-    int c = mb_tolower(utf_ptr2char(from));
+    int c = mb_tolower(utf_ptr2char((char *)from));
     return utf_char2bytes(c, to);
   }
-  int len = utfc_ptr2len(from);
+  int len = utfc_ptr2len((char *)from);
   memmove(to, from, (size_t)len);
   return len;
 }

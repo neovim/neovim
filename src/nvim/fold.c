@@ -1798,10 +1798,10 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldin
       // Replace unprintable characters, if there are any.  But
       // replace a TAB with a space.
       for (p = text; *p != NUL; p++) {
-        int len = utfc_ptr2len(p);
+        int len = utfc_ptr2len((char *)p);
 
         if (len > 1) {
-          if (!vim_isprintc(utf_ptr2char(p))) {
+          if (!vim_isprintc(utf_ptr2char((char *)p))) {
             break;
           }
           p += len - 1;

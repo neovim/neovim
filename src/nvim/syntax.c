@@ -2968,7 +2968,7 @@ static int check_keyword_id(char_u *const line, const int startcol, int *const e
   char_u *const kwp = line + startcol;
   int kwlen = 0;
   do {
-    kwlen += utfc_ptr2len(kwp + kwlen);
+    kwlen += utfc_ptr2len((char *)kwp + kwlen);
   } while (vim_iswordp_buf(kwp + kwlen, syn_buf));
 
   if (kwlen > MAXKEYWLEN) {
@@ -4178,8 +4178,8 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
       }
     } else if (flagtab[fidx].argtype == 11 && arg[5] == '=') {
       // cchar=?
-      *conceal_char = utf_ptr2char(arg + 6);
-      arg += utfc_ptr2len(arg + 6) - 1;
+      *conceal_char = utf_ptr2char((char *)arg + 6);
+      arg += utfc_ptr2len((char *)arg + 6) - 1;
       if (!vim_isprintc_strict(*conceal_char)) {
         emsg(_("E844: invalid cchar value"));
         return NULL;
@@ -4416,7 +4416,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
               kw = p + 1;
               break;   // skip over the "]"
             }
-            const int l = utfc_ptr2len(p + 1);
+            const int l = utfc_ptr2len((char *)p + 1);
 
             memmove(p, p + 1, l);
             p += l;

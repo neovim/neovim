@@ -1111,8 +1111,8 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
   }
 
   for (i = 0, j = 0; s1[i] != NUL && s2[j] != NUL;) {
-    c1 = utf_ptr2char(s1 + i);
-    c2 = utf_ptr2char(s2 + j);
+    c1 = utf_ptr2char((char *)s1 + i);
+    c2 = utf_ptr2char((char *)s2 + j);
 
     if ((p_fic ? mb_tolower(c1) != mb_tolower(c2) : c1 != c2)
         && (prev1 != '*' || prev2 != '*')) {
@@ -1121,8 +1121,8 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
     prev2 = prev1;
     prev1 = c1;
 
-    i += utfc_ptr2len(s1 + i);
-    j += utfc_ptr2len(s2 + j);
+    i += utfc_ptr2len((char *)s1 + i);
+    j += utfc_ptr2len((char *)s2 + j);
   }
   return s1[i] == s2[j];
 }

@@ -884,11 +884,11 @@ static int sign_define_init_text(sign_T *sp, char_u *text)
   }
   // Count cells and check for non-printable chars
   cells = 0;
-  for (s = text; s < endp; s += utfc_ptr2len(s)) {
-    if (!vim_isprintc(utf_ptr2char(s))) {
+  for (s = text; s < endp; s += utfc_ptr2len((char *)s)) {
+    if (!vim_isprintc(utf_ptr2char((char *)s))) {
       break;
     }
-    cells += utf_ptr2cells(s);
+    cells += utf_ptr2cells((char *)s);
   }
   // Currently must be empty, one or two display cells
   if (s != endp || cells > 2) {

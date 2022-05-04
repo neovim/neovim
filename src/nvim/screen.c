@@ -1860,8 +1860,8 @@ static int compute_foldcolumn(win_T *wp, int col)
 static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, bool rl, int vcol)
 {
   const char_u *p = (char_u *)s->p;
-  int cells = utf_ptr2cells(p);
-  int c_len = utfc_ptr2len(p);
+  int cells = utf_ptr2cells((char *)p);
+  int c_len = utfc_ptr2len((char *)p);
   int u8c, u8cc[MAX_MCO];
   if (cells > maxcells) {
     return -1;
@@ -1888,7 +1888,7 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
       if (rl) {
         pc = s->prev_c;
         pc1 = s->prev_c1;
-        nc = utf_ptr2char(p + c_len);
+        nc = utf_ptr2char((char *)p + c_len);
         s->prev_c1 = u8cc[0];
       } else {
         pc = utfc_ptr2char(p + c_len, pcc);
@@ -2536,7 +2536,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       ptr = prev_ptr;
       // If the character fits on the screen, don't need to skip it.
       // Except for a TAB.
-      if (utf_ptr2cells(ptr) >= c || *ptr == TAB) {
+      if (utf_ptr2cells((char *)ptr) >= c || *ptr == TAB) {
         n_skip = v - vcol;
       }
     }
@@ -2960,7 +2960,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // handle Visual or match highlighting in this line
       if (vcol == fromcol
           || (vcol + 1 == fromcol && n_extra == 0
-              && utf_ptr2cells(ptr) > 1)
+              && utf_ptr2cells((char *)ptr) > 1)
           || ((int)vcol_prev == fromcol_prev
               && vcol_prev < vcol               // not at margin
               && vcol < tocol)) {
@@ -3060,7 +3060,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         mb_c = c;
         // If the UTF-8 character is more than one byte:
         // Decode it into "mb_c".
-        mb_l = utfc_ptr2len(p_extra);
+        mb_l = utfc_ptr2len((char *)p_extra);
         mb_utf8 = false;
         if (mb_l > n_extra) {
           mb_l = 1;
@@ -3113,7 +3113,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       mb_c = c;
       // If the UTF-8 character is more than one byte: Decode it
       // into "mb_c".
-      mb_l = utfc_ptr2len(ptr);
+      mb_l = utfc_ptr2len((char *)ptr);
       mb_utf8 = false;
       if (mb_l > 1) {
         mb_c = utfc_ptr2char(ptr, u8cc);
@@ -3171,7 +3171,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         if (wp->w_p_rl) {
           pc = prev_c;
           pc1 = prev_c1;
-          nc = utf_ptr2char(ptr + mb_l);
+          nc = utf_ptr2char((char *)ptr + mb_l);
           prev_c1 = u8cc[0];
         } else {
           pc = utfc_ptr2char(ptr + mb_l, pcc);
@@ -5074,7 +5074,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
       for (; *s != NUL; ++s) {
         s += skip_status_match_char(xp, s);
         clen += ptr2cells(s);
-        if ((l = utfc_ptr2len(s)) > 1) {
+        if ((l = utfc_ptr2len((char *)s)) > 1) {
           STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
           s += l - 1;
           len += l;
@@ -5234,8 +5234,8 @@ static void win_redr_status(win_T *wp)
       // Find first character that will fit.
       // Going from start to end is much faster for DBCS.
       for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
-           i += utfc_ptr2len(p + i)) {
-        clen -= utf_ptr2cells(p + i);
+           i += utfc_ptr2len((char *)p + i)) {
+        clen -= utf_ptr2cells((char *)p + i);
       }
       len = clen;
       if (i > 0) {
@@ -5885,7 +5885,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
     if (len > 0) {
       mbyte_blen = utfc_ptr2len_len(ptr, (int)((text + len) - ptr));
     } else {
-      mbyte_blen = utfc_ptr2len(ptr);
+      mbyte_blen = utfc_ptr2len((char *)ptr);
     }
     if (len >= 0) {
       u8c = utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr));
@@ -6508,7 +6508,7 @@ void setcursor(void)
       // With 'rightleft' set and the cursor on a double-wide character,
       // position it on the leftmost column.
       col = curwin->w_width_inner - curwin->w_wcol
-            - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
+            - ((utf_ptr2cells((char *)get_cursor_pos_ptr()) == 2
                 && vim_isprintc(gchar_cursor())) ? 2 : 1);
     }
 
@@ -7373,8 +7373,8 @@ static void win_redr_ruler(win_T *wp, bool always)
       }
       // Truncate at window boundary.
       o = 0;
-      for (i = 0; buffer[i] != NUL; i += utfc_ptr2len(buffer + i)) {
-        o += utf_ptr2cells(buffer + i);
+      for (i = 0; buffer[i] != NUL; i += utfc_ptr2len((char *)buffer + i)) {
+        o += utf_ptr2cells((char *)buffer + i);
         if (this_ru_col + o > width) {
           buffer[i] = NUL;
           break;

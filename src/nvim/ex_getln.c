@@ -1780,7 +1780,7 @@ static int command_line_handle_key(CommandLineState *s)
         }
 
         if (mb_get_class(p) != i) {
-          p += utfc_ptr2len(p);
+          p += utfc_ptr2len((char *)p);
         }
       }
 
@@ -1964,7 +1964,7 @@ static int command_line_handle_key(CommandLineState *s)
       }
 
       ccline.cmdspos += cells;
-      ccline.cmdpos += utfc_ptr2len(ccline.cmdbuff + ccline.cmdpos);
+      ccline.cmdpos += utfc_ptr2len((char *)ccline.cmdbuff + ccline.cmdpos);
     } while ((s->c == K_S_RIGHT || s->c == K_C_RIGHT
               || (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)))
              && ccline.cmdbuff[ccline.cmdpos] != ' ');
@@ -2039,7 +2039,7 @@ static int command_line_handle_key(CommandLineState *s)
 
       // Count ">" for double-wide char that doesn't fit.
       correct_screencol(ccline.cmdpos, cells, &ccline.cmdspos);
-      ccline.cmdpos += utfc_ptr2len(ccline.cmdbuff + ccline.cmdpos) - 1;
+      ccline.cmdpos += utfc_ptr2len((char *)ccline.cmdbuff + ccline.cmdpos) - 1;
       ccline.cmdspos += cells;
     }
     return command_line_not_changed(s);
@@ -2571,7 +2571,7 @@ static int cmd_screencol(int bytepos)
   }
 
   for (int i = 0; i < ccline.cmdlen && i < bytepos;
-       i += utfc_ptr2len(ccline.cmdbuff + i)) {
+       i += utfc_ptr2len((char *)ccline.cmdbuff + i)) {
     int c = cmdline_charsize(i);
     // Count ">" for double-wide multi-byte char that doesn't fit.
     correct_screencol(i, c, &col);
@@ -2590,8 +2590,8 @@ static int cmd_screencol(int bytepos)
 /// character that doesn't fit, so that a ">" must be displayed.
 static void correct_screencol(int idx, int cells, int *col)
 {
-  if (utfc_ptr2len(ccline.cmdbuff + idx) > 1
-      && utf_ptr2cells(ccline.cmdbuff + idx) > 1
+  if (utfc_ptr2len((char *)ccline.cmdbuff + idx) > 1
+      && utf_ptr2cells((char *)ccline.cmdbuff + idx) > 1
       && (*col) % Columns + cells > Columns) {
     (*col)++;
   }
@@ -2996,7 +2996,7 @@ static void draw_cmdline(int start, int len)
   if (cmdline_star > 0) {
     for (int i = 0; i < len; i++) {
       msg_putchar('*');
-      i += utfc_ptr2len(ccline.cmdbuff + start + i) - 1;
+      i += utfc_ptr2len((char *)ccline.cmdbuff + start + i) - 1;
     }
   } else if (p_arshape && !p_tbidi && len > 0) {
     bool do_arabicshape = false;
@@ -3029,7 +3029,7 @@ static void draw_cmdline(int start, int len)
     }
 
     int newlen = 0;
-    if (utf_iscomposing(utf_ptr2char(ccline.cmdbuff + start))) {
+    if (utf_iscomposing(utf_ptr2char((char *)ccline.cmdbuff + start))) {
       // Prepend a space to draw the leading composing char on.
       arshape_buf[0] = ' ';
       newlen = 1;
@@ -3055,7 +3055,7 @@ static void draw_cmdline(int start, int len)
           if (i + mb_l >= start + len) {
             nc = NUL;
           } else {
-            nc = utf_ptr2char(p + mb_l);
+            nc = utf_ptr2char((char *)p + mb_l);
           }
         } else {
           // Displaying from left to right.
@@ -3261,7 +3261,7 @@ void unputcmdline(void)
   if (ccline.cmdlen == ccline.cmdpos && !ui_has(kUICmdline)) {
     msg_putchar(' ');
   } else {
-    draw_cmdline(ccline.cmdpos, utfc_ptr2len(ccline.cmdbuff + ccline.cmdpos));
+    draw_cmdline(ccline.cmdpos, utfc_ptr2len((char *)ccline.cmdbuff + ccline.cmdpos));
   }
   msg_no_more = false;
   cursorcmd();
@@ -3297,13 +3297,13 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   } else {
     // Count nr of characters in the new string.
     m = 0;
-    for (i = 0; i < len; i += utfc_ptr2len(str + i)) {
+    for (i = 0; i < len; i += utfc_ptr2len((char *)str + i)) {
       m++;
     }
     // Count nr of bytes in cmdline that are overwritten by these
     // characters.
     for (i = ccline.cmdpos; i < ccline.cmdlen && m > 0;
-         i += utfc_ptr2len(ccline.cmdbuff + i)) {
+         i += utfc_ptr2len((char *)ccline.cmdbuff + i)) {
       m--;
     }
     if (i < ccline.cmdlen) {
@@ -3321,17 +3321,17 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     // When the inserted text starts with a composing character,
     // backup to the character before it.  There could be two of them.
     i = 0;
-    c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
+    c = utf_ptr2char((char *)ccline.cmdbuff + ccline.cmdpos);
     while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
       i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
       ccline.cmdpos -= i;
       len += i;
-      c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
+      c = utf_ptr2char((char *)ccline.cmdbuff + ccline.cmdpos);
     }
     if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
       // Check the previous character for Arabic combining pair.
       i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
-      if (arabic_combine(utf_ptr2char(ccline.cmdbuff + ccline.cmdpos - i), c)) {
+      if (arabic_combine(utf_ptr2char((char *)ccline.cmdbuff + ccline.cmdpos - i), c)) {
         ccline.cmdpos -= i;
         len += i;
       } else {
@@ -3379,7 +3379,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     if (ccline.cmdspos + c < m) {
       ccline.cmdspos += c;
     }
-    c = utfc_ptr2len(ccline.cmdbuff + ccline.cmdpos) - 1;
+    c = utfc_ptr2len((char *)ccline.cmdbuff + ccline.cmdpos) - 1;
     if (c > len - i - 1) {
       c = len - i - 1;
     }
@@ -3464,7 +3464,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
       // Locate start of last word in the cmd buffer.
       for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff;) {
         len = utf_head_off(ccline.cmdbuff, w - 1) + 1;
-        if (!vim_iswordc(utf_ptr2char(w - len))) {
+        if (!vim_iswordc(utf_ptr2char((char *)w - len))) {
           break;
         }
         w -= len;
@@ -4025,10 +4025,10 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
     size_t len = 0;
 
     for (size_t mb_len; xp->xp_files[0][len]; len += mb_len) {
-      mb_len = (size_t)utfc_ptr2len((char_u *)&xp->xp_files[0][len]);
-      int c0 = utf_ptr2char((char_u *)&xp->xp_files[0][len]);
+      mb_len = (size_t)utfc_ptr2len(&xp->xp_files[0][len]);
+      int c0 = utf_ptr2char(&xp->xp_files[0][len]);
       for (i = 1; i < xp->xp_numfiles; i++) {
-        int ci = utf_ptr2char((char_u *)&xp->xp_files[i][len]);
+        int ci = utf_ptr2char(&xp->xp_files[i][len]);
 
         if (p_fic && (xp->xp_context == EXPAND_DIRECTORIES
                       || xp->xp_context == EXPAND_FILES

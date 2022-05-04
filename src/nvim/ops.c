@@ -381,7 +381,7 @@ static void shift_block(oparg_T *oap, int amount)
     colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
     char_u *old_textstart = bd.textstart;
     if (bd.startspaces) {
-      if (utfc_ptr2len(bd.textstart) == 1) {
+      if (utfc_ptr2len((char *)bd.textstart) == 1) {
         bd.textstart++;
       } else {
         ws_vcol = 0;
@@ -2034,7 +2034,7 @@ static int op_replace(oparg_T *oap, int c)
       n = gchar_cursor();
       if (n != NUL) {
         int new_byte_len = utf_char2len(c);
-        int old_byte_len = utfc_ptr2len(get_cursor_pos_ptr());
+        int old_byte_len = utfc_ptr2len((char *)get_cursor_pos_ptr());
 
         if (new_byte_len > 1 || old_byte_len > 1) {
           // This is slow, but it handles replacing a single-byte
@@ -2195,7 +2195,7 @@ static int swapchars(int op_type, pos_T *pos, int length)
   int did_change = 0;
 
   for (int todo = length; todo > 0; todo--) {
-    const int len = utfc_ptr2len(ml_get_pos(pos));
+    const int len = utfc_ptr2len((char *)ml_get_pos(pos));
 
     // we're counting bytes, not characters
     if (len > 0) {
@@ -2256,7 +2256,7 @@ bool swapchar(int op_type, pos_T *pos)
 
       curwin->w_cursor = *pos;
       // don't use del_char(), it also removes composing chars
-      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), false, false);
+      del_bytes(utf_ptr2len((char *)get_cursor_pos_ptr()), false, false);
       ins_char(nc);
       curwin->w_cursor = sp;
     } else {
@@ -3076,7 +3076,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         bool one_past_line = (*cursor_pos == NUL);
         bool eol = false;
         if (!one_past_line) {
-          eol = (*(cursor_pos + utfc_ptr2len(cursor_pos)) == NUL);
+          eol = (*(cursor_pos + utfc_ptr2len((char *)cursor_pos)) == NUL);
         }
 
         bool ve_allows = (cur_ve_flags == VE_ALL || cur_ve_flags == VE_ONEMORE);
@@ -3291,7 +3291,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
 
       // move to start of next multi-byte character
-      curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
+      curwin->w_cursor.col += utfc_ptr2len((char *)get_cursor_pos_ptr());
       col++;
     } else {
       getvcol(curwin, &curwin->w_cursor, &col, NULL, &endcol2);
@@ -3466,7 +3466,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       // if type is kMTCharWise, FORWARD is the same as BACKWARD on the next
       // char
       if (dir == FORWARD && gchar_cursor() != NUL) {
-        int bytelen = utfc_ptr2len(get_cursor_pos_ptr());
+        int bytelen = utfc_ptr2len((char *)get_cursor_pos_ptr());
 
         // put it on the next of the multi-byte character.
         col += bytelen;
@@ -3898,7 +3898,7 @@ void ex_display(exarg_T *eap)
             n -= 2;
           }
           for (p = yb->y_array[j]; *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
-            clen = utfc_ptr2len(p);
+            clen = utfc_ptr2len((char *)p);
             msg_outtrans_len(p, clen);
             p += clen - 1;
           }
@@ -3976,7 +3976,7 @@ static void dis_msg(const char_u *p, bool skip_esc)
   while (*p != NUL
          && !(*p == ESC && skip_esc && *(p + 1) == NUL)
          && (n -= ptr2cells(p)) >= 0) {
-    if ((l = utfc_ptr2len(p)) > 1) {
+    if ((l = utfc_ptr2len((char *)p)) > 1) {
       msg_outtrans_len(p, l);
       p += l;
     } else {
@@ -4120,11 +4120,11 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
           && sumsize != 0
           && endcurr1 != TAB
           && (!has_format_option(FO_MBYTE_JOIN)
-              || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
+              || (utf_ptr2char((char *)curr) < 0x100 && endcurr1 < 0x100))
           && (!has_format_option(FO_MBYTE_JOIN2)
-              || (utf_ptr2char(curr) < 0x100 && !utf_eat_space(endcurr1))
+              || (utf_ptr2char((char *)curr) < 0x100 && !utf_eat_space(endcurr1))
               || (endcurr1 < 0x100
-                  && !utf_eat_space(utf_ptr2char(curr))))) {
+                  && !utf_eat_space(utf_ptr2char((char *)curr))))) {
         // don't add a space if the line is ending in a space
         if (endcurr1 == ' ') {
           endcurr1 = endcurr2;
@@ -4151,10 +4151,10 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     if (insert_space && currsize > 0) {
       cend = curr + currsize;
       MB_PTR_BACK(curr, cend);
-      endcurr1 = utf_ptr2char(cend);
+      endcurr1 = utf_ptr2char((char *)cend);
       if (cend > curr) {
         MB_PTR_BACK(curr, cend);
-        endcurr2 = utf_ptr2char(cend);
+        endcurr2 = utf_ptr2char((char *)cend);
       }
     }
     line_breakcheck();
@@ -5117,7 +5117,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   if (visual) {
     while (ptr[col] != NUL && length > 0 && !ascii_isdigit(ptr[col])
            && !(do_alpha && ASCII_ISALPHA(ptr[col]))) {
-      int mb_len = utfc_ptr2len(ptr + col);
+      int mb_len = utfc_ptr2len((char *)ptr + col);
 
       col += mb_len;
       length -= mb_len;
@@ -5842,7 +5842,7 @@ static varnumber_T line_count_info(char_u *line, varnumber_T *wc, varnumber_T *c
       is_word = 1;
     }
     chars++;
-    i += utfc_ptr2len(line + i);
+    i += utfc_ptr2len((char *)line + i);
   }
 
   if (is_word) {
@@ -6592,7 +6592,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     // Include the trailing byte of a multi-byte char.
     if (oap->inclusive) {
-      const int l = utfc_ptr2len(ml_get_pos(&oap->end));
+      const int l = utfc_ptr2len((char *)ml_get_pos(&oap->end));
       if (l > 1) {
         oap->end.col += l - 1;
       }

@@ -6534,7 +6534,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
       // Skip over the "\" in "\ ".
       ++len;
     }
-    len += (size_t)(utfc_ptr2len(ptr + len));
+    len += (size_t)(utfc_ptr2len((char *)ptr + len));
   }
 
   /*

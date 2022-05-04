@@ -2583,7 +2583,7 @@ static int parse_match(char_u *lbuf, tagptrs_T *tagp)
       if (*p++ == TAB) {
         // Accept ASCII alphabetic kind characters and any multi-byte
         // character.
-        while (ASCII_ISALPHA(*p) || utfc_ptr2len(p) > 1) {
+        while (ASCII_ISALPHA(*p) || utfc_ptr2len((char *)p) > 1) {
           if (STRNCMP(p, "kind:", 5) == 0) {
             tagp->tagkind = p + 5;
           } else if (STRNCMP(p, "user_data:", 10) == 0) {

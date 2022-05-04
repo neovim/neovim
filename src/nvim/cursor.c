@@ -459,7 +459,7 @@ bool leftcol_changed(void)
 
 int gchar_cursor(void)
 {
-  return utf_ptr2char(get_cursor_pos_ptr());
+  return utf_ptr2char((char *)get_cursor_pos_ptr());
 }
 
 /// Write a character at the current cursor position.

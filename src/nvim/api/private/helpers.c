@@ -654,9 +654,9 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
   char *p = (mode.size) ? mode.data : "m";
   if (STRNCMP(p, "!", 2) == 0) {
-    mode_val = get_map_mode((char_u **)&p, true);  // mapmode-ic
+    mode_val = get_map_mode(&p, true);  // mapmode-ic
   } else {
-    mode_val = get_map_mode((char_u **)&p, false);
+    mode_val = get_map_mode(&p, false);
     if ((mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING)
         && mode.size > 0) {
       // get_map_mode() treats unrecognized mode shortnames as ":map".
@@ -1128,7 +1128,7 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
 
   // Convert the string mode to the integer mode
   // that is stored within each mapblock
-  char_u *p = (char_u *)mode.data;
+  char *p = mode.data;
   int int_mode = get_map_mode(&p, 0);
 
   // Determine the desired buffer value
@@ -1666,11 +1666,11 @@ int init_sign_text(char **sign_text, char *text)
 
   // Count cells and check for non-printable chars
   int cells = 0;
-  for (s = text; s < endp; s += utfc_ptr2len((char_u *)s)) {
-    if (!vim_isprintc(utf_ptr2char((char_u *)s))) {
+  for (s = text; s < endp; s += utfc_ptr2len(s)) {
+    if (!vim_isprintc(utf_ptr2char(s))) {
       break;
     }
-    cells += utf_ptr2cells((char_u *)s);
+    cells += utf_ptr2cells(s);
   }
   // Currently must be empty, one or two display cells
   if (s != endp || cells > 2) {

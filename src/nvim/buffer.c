@@ -3456,7 +3456,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
     wp->w_cursor.coladd = 0;
     byteval = 0;
   } else {
-    byteval = utf_ptr2char(line_ptr + wp->w_cursor.col);
+    byteval = utf_ptr2char((char *)line_ptr + wp->w_cursor.col);
   }
 
   int groupdepth = 0;
@@ -3616,7 +3616,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
         long n = 0;
         while (group_len >= stl_items[stl_groupitems[groupdepth]].maxwid) {
           group_len -= ptr2cells(t + n);
-          n += utfc_ptr2len(t + n);
+          n += utfc_ptr2len((char *)t + n);
         }
         // }
 
@@ -4176,7 +4176,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
       if (l > maxwid) {
         while (l >= maxwid) {
           l -= ptr2cells(t);
-          t += utfc_ptr2len(t);
+          t += utfc_ptr2len((char *)t);
         }
 
         // Early out if there isn't enough room for the truncation marker
@@ -4374,7 +4374,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
 
         // Note: Only advance the pointer if the next
         //       character will fit in the available output space
-        trunc_p += utfc_ptr2len(trunc_p);
+        trunc_p += utfc_ptr2len((char *)trunc_p);
       }
 
       // Ignore any items in the statusline that occur after
@@ -4396,7 +4396,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
       long trunc_len = 0;
       while (width >= maxwidth) {
         width     -= ptr2cells(trunc_p + trunc_len);
-        trunc_len += utfc_ptr2len(trunc_p + trunc_len);
+        trunc_len += utfc_ptr2len((char *)trunc_p + trunc_len);
       }
       // }
 

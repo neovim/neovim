@@ -144,7 +144,7 @@ int get_keystroke(MultiQueue *events)
       continue;
     }
     buf[len >= buflen ? buflen - 1 : len] = NUL;
-    n = utf_ptr2char(buf);
+    n = utf_ptr2char((char *)buf);
     break;
   }
   xfree(buf);
