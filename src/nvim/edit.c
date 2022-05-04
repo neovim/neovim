@@ -553,7 +553,7 @@ static int insert_check(VimState *state)
     Insstart_orig = Insstart;
   }
 
-  if (stop_insert_mode && !pum_visible()) {
+  if (stop_insert_mode && !compl_started) {
     // ":stopinsert" used or 'insertmode' reset
     s->count = 0;
     return 0;  // exit insert mode
