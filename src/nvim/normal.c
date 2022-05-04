@@ -7123,37 +7123,15 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // do_put(), which requires the visual selection to still be active.
       if (!VIsual_active || VIsual_mode == 'V' || regname != '.') {
         // Now delete the selected text. Avoid messages here.
-        yankreg_T *old_y_previous, *old_clipboard;
-        if (save_unnamed) {
-          old_y_previous = get_y_previous();
-
-          if (cb_flags & CB_UNNAMEDPLUS) {
-            old_clipboard = copy_register('+');
-          } else if (cb_flags & CB_UNNAMED) {
-            old_clipboard = copy_register('*');
-          }
-        }
 
         cap->cmdchar = 'd';
         cap->nchar = NUL;
-        cap->oap->regname = NUL;
+        cap->oap->regname = save_unnamed ? '_' : NUL;
         msg_silent++;
         nv_operator(cap);
         do_pending_operator(cap, 0, false);
         empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
         msg_silent--;
-
-        if (save_unnamed) {
-          set_y_previous(old_y_previous);
-
-          if (cb_flags & CB_UNNAMEDPLUS) {
-            set_clipboard('+', old_clipboard);
-            free_register(old_clipboard);
-          } else if (cb_flags & CB_UNNAMED) {
-            set_clipboard('*', old_clipboard);
-            free_register(old_clipboard);
-          }
-        }
 
         // delete PUT_LINE_BACKWARD;
         cap->oap->regname = regname;

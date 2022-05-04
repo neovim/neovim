@@ -1357,11 +1357,11 @@ func Test_visual_paste()
     call setreg('-', 'bar')
     normal gg0vP
     call assert_equal('foo', @")
-    call assert_equal('x', @-)
+    call assert_equal('bar', @-)
     call assert_equal('fooxxx', getline(1))
     normal $vP
     call assert_equal('foo', @")
-    call assert_equal('x', @-)
+    call assert_equal('bar', @-)
     call assert_equal('fooxxfoo', getline(1))
     " Test with a different register as unnamed register.
     call setline(2, ['baz'])
@@ -1369,11 +1369,11 @@ func Test_visual_paste()
     call assert_equal('baz', @")
     normal gg0vP
     call assert_equal('baz', @")
-    call assert_equal('f', @-)
+    call assert_equal('bar', @-)
     call assert_equal('bazooxxfoo', getline(1))
     normal $vP
     call assert_equal('baz', @")
-    call assert_equal('o', @-)
+    call assert_equal('bar', @-)
     call assert_equal('bazooxxfobaz', getline(1))
 
     " Test for unnamed clipboard
@@ -1384,7 +1384,7 @@ func Test_visual_paste()
     call setreg('*', 'baz')
     normal gg0vP
     call assert_equal('foo', @")
-    call assert_equal('x', @-)
+    call assert_equal('bar', @-)
     call assert_equal('baz', @*)
     call assert_equal('bazxxx', getline(1))
 
@@ -1396,7 +1396,7 @@ func Test_visual_paste()
     call setreg('+', 'baz')
     normal gg0vP
     call assert_equal('foo', @")
-    call assert_equal('x', @-)
+    call assert_equal('bar', @-)
     call assert_equal('baz', @+)
     call assert_equal('bazxxx', getline(1))
   endif
