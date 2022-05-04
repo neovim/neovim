@@ -2268,9 +2268,8 @@ nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 This differs from |nvim_buf_get_lines()| in that it allows
                 retrieving only portions of a line.
 
-                Row indices are zero-based and end-inclusive. Column indices
-                are zero-based, end-exclusive, and correspond to bytes, not
-                character columns (see |col()| vs. |charcol()|).
+                Indexing is zero-based. Row indices are end-inclusive, and
+                column indices are end-exclusive.
 
                 Prefer |nvim_buf_get_lines()| when retrieving entire lines.
 
@@ -2414,9 +2413,8 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 modifying parts of a line, as extmarks will be preserved on
                 non-modified parts of the touched lines.
 
-                Row indices are zero-based and end-inclusive. Column indices
-                are zero-based, end-exclusive, and correspond to bytes, not
-                character columns (see |col()| vs. |charcol()|).
+                Indexing is zero-based. Row indices are end-inclusive, and
+                column indices are end-exclusive.
 
                 To insert text at a given `(row, column)` location, use
                 `start_row = end_row = row` and `start_col = end_col = col`.
