@@ -531,9 +531,9 @@ end:
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
-/// @param start_col        Starting byte offset of first line
+/// @param start_col        Starting column (byte offset) on first line
 /// @param end_row          Last line index, inclusive
-/// @param end_col          Ending byte offset of last line, exclusive
+/// @param end_col          Ending column (byte offset) on last line, exclusive
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
 void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, Integer start_col,
@@ -771,9 +771,9 @@ end:
 /// @param channel_id
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param start_row  First line index
-/// @param start_col  Starting byte offset of first line
+/// @param start_col  Starting column (byte offset) on first line
 /// @param end_row    Last line index, inclusive
-/// @param end_col    Ending byte offset of last line, exclusive
+/// @param end_col    Ending column (byte offset) on last line, exclusive
 /// @param opts       Optional parameters. Currently unused.
 /// @param[out] err   Error details, if any
 /// @return Array of lines, or empty array for unloaded buffer.

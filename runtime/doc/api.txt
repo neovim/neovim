@@ -2277,9 +2277,10 @@ nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 Parameters: ~
                     {buffer}     Buffer handle, or 0 for current buffer
                     {start_row}  First line index
-                    {start_col}  Starting byte offset of first line
+                    {start_col}  Starting column (byte offset) on first line
                     {end_row}    Last line index, inclusive
-                    {end_col}    Ending byte offset of last line, exclusive
+                    {end_col}    Ending column (byte offset) on last line,
+                                 exclusive
                     {opts}       Optional parameters. Currently unused.
 
                 Return: ~
@@ -2427,9 +2428,10 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 Parameters: ~
                     {buffer}       Buffer handle, or 0 for current buffer
                     {start_row}    First line index
-                    {start_col}    Starting byte offset of first line
+                    {start_col}    Starting column (byte offset) on first line
                     {end_row}      Last line index, inclusive
-                    {end_col}      Ending byte offset of last line, exclusive
+                    {end_col}      Ending column (byte offset) on last line,
+                                   exclusive
                     {replacement}  Array of lines to use as replacement
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
