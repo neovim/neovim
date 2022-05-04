@@ -7183,7 +7183,7 @@ err:
   return false;
 }
 
-static void set_clipboard(int name, yankreg_T *reg)
+void set_clipboard(int name, yankreg_T *reg)
 {
   if (!adjust_clipboard_name(&name, false, true)) {
     return;

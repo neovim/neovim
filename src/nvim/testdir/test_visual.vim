@@ -1375,6 +1375,30 @@ func Test_visual_paste()
     call assert_equal('baz', @")
     call assert_equal('o', @-)
     call assert_equal('bazooxxfobaz', getline(1))
+
+    " Test for unnamed clipboard
+    set clipboard=unnamed
+    call setline(1, ['xxxx'])
+    call setreg('"', 'foo')
+    call setreg('-', 'bar')
+    call setreg('*', 'baz')
+    normal gg0vP
+    call assert_equal('foo', @")
+    call assert_equal('x', @-)
+    call assert_equal('baz', @*)
+    call assert_equal('bazxxx', getline(1))
+
+    " Test for unnamedplus clipboard
+    set clipboard=unnamedplus
+    call setline(1, ['xxxx'])
+    call setreg('"', 'foo')
+    call setreg('-', 'bar')
+    call setreg('+', 'baz')
+    normal gg0vP
+    call assert_equal('foo', @")
+    call assert_equal('x', @-)
+    call assert_equal('baz', @+)
+    call assert_equal('bazxxx', getline(1))
   endif
 
   bwipe!
