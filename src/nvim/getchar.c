@@ -2902,7 +2902,8 @@ void set_maparg_lhs_rhs(const char_u *const orig_lhs, const size_t orig_lhs_len,
       replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
                                    REPTERM_DO_LT | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
       mapargs->rhs_len = STRLEN(replaced);
-      mapargs->rhs_is_noop = false;
+      // XXX: even when orig_rhs is non-empty, replace_termcodes may produce an empty string.
+      mapargs->rhs_is_noop = orig_rhs[0] != NUL && mapargs->rhs_len == 0;
       mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
       STRLCPY(mapargs->rhs, replaced, mapargs->rhs_len + 1);
     }
@@ -3765,12 +3766,7 @@ static void showmap(mapblock_T *mp, bool local)
   } else if (mp->m_str[0] == NUL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
-    // Remove escaping of K_SPECIAL, because "m_str" is in a format to be used
-    // as typeahead.
-    char_u *s = vim_strsave(mp->m_str);
-    vim_unescape_ks(s);
-    msg_outtrans_special(s, false, 0);
-    xfree(s);
+    msg_outtrans_special(mp->m_str, false, 0);
   }
 
   if (mp->m_desc != NULL) {
