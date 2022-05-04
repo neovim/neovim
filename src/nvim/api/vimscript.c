@@ -747,13 +747,12 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
 /// @param[out] err  Error details, if any.
 /// @return Dictionary containing command information, with these keys:
 ///         - cmd: (string) Command name.
-///         - range: (number) Number of items in the command |<range>|. Can be 0, 1 or 2.
-///         - line1: (number) Starting line of command |<range>|. -1 if command cannot take a range.
-///                           |<line1>|
-///         - line2: (number) Final line of command |<range>|. -1 if command cannot take a range.
-///                           |<line2>|
+///         - range: (array) Command <range>. Can have 0-2 elements depending on how many items the
+///                          range contains. Has no elements if command doesn't accept a range or if
+///                          no range was specified, one element if only a single range item was
+///                          specified and two elements if both range items were specified.
 ///         - count: (number) Any |<count>| that was supplied to the command. -1 if command cannot
-///                           take a count.
+///                           take a count. Mutually exclusive with "range".
 ///         - reg: (number) The optional command |<register>|, if specified. Empty string if not
 ///                         specified or if command cannot take a register.
 ///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
@@ -849,15 +848,24 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     PUT(result, "cmd", CSTR_TO_OBJ((char *)get_command_name(NULL, ea.cmdidx)));
   }
 
-  PUT(result, "range", INTEGER_OBJ(ea.addr_count));
-  PUT(result, "line1", INTEGER_OBJ((ea.argt & EX_RANGE) ? ea.line1 : -1));
-  PUT(result, "line2", INTEGER_OBJ((ea.argt & EX_RANGE) ? ea.line2 : -1));
+  if ((ea.argt & EX_RANGE) && !(ea.argt & EX_COUNT) && ea.addr_count > 0) {
+    Array range = ARRAY_DICT_INIT;
+    if (ea.addr_count > 1) {
+      ADD(range, INTEGER_OBJ(ea.line1));
+    }
+    ADD(range, INTEGER_OBJ(ea.line2));
+    PUT(result, "range", ARRAY_OBJ(range));;
+  } else {
+    PUT(result, "range", ARRAY_OBJ(ARRAY_DICT_INIT));
+  }
 
   if (ea.argt & EX_COUNT) {
-    if (ea.addr_count > 0 || cmd == NULL) {
+    if (ea.addr_count > 0) {
       PUT(result, "count", INTEGER_OBJ(ea.line2));
-    } else {
+    } else if (cmd != NULL) {
       PUT(result, "count", INTEGER_OBJ(cmd->uc_def));
+    } else {
+      PUT(result, "count", INTEGER_OBJ(0));
     }
   } else {
     PUT(result, "count", INTEGER_OBJ(-1));

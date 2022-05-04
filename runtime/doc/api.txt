@@ -1775,14 +1775,15 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
                     Dictionary containing command information, with these
                     keys:
                     • cmd: (string) Command name.
-                    • range: (number) Number of items in the command
-                      |<range>|. Can be 0, 1 or 2.
-                    • line1: (number) Starting line of command |<range>|. -1
-                      if command cannot take a range. |<line1>|
-                    • line2: (number) Final line of command |<range>|. -1 if
-                      command cannot take a range. |<line2>|
+                    • range: (array) Command <range>. Can have 0-2 elements
+                      depending on how many items the range contains. Has no
+                      elements if command doesn't accept a range or if no
+                      range was specified, one element if only a single range
+                      item was specified and two elements if both range items
+                      were specified.
                     • count: (number) Any |<count>| that was supplied to the
-                      command. -1 if command cannot take a count.
+                      command. -1 if command cannot take a count. Mutually
+                      exclusive with "range".
                     • reg: (number) The optional command |<register>|, if
                       specified. Empty string if not specified or if command
                       cannot take a register.
