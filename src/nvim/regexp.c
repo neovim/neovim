@@ -1629,7 +1629,7 @@ static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv,
       s = vim_strnsave(s, rsm.sm_match->endp[i] - s);
     }
     TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-    TV_LIST_ITEM_TV(li)->vval.v_string = s;
+    TV_LIST_ITEM_TV(li)->vval.v_string = (char *)s;
     li = TV_LIST_ITEM_NEXT(argv->vval.v_list, li);
   }
   return argskip + 1;
@@ -1785,7 +1785,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         funcexe.argv_func = fill_submatch_list;
         funcexe.evaluate = true;
         if (expr->v_type == VAR_FUNC) {
-          s = expr->vval.v_string;
+          s = (char_u *)expr->vval.v_string;
           call_func(s, -1, &rettv, 1, argv, &funcexe);
         } else if (expr->v_type == VAR_PARTIAL) {
           partial_T *partial = expr->vval.v_partial;

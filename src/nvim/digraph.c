@@ -1934,7 +1934,7 @@ void f_digraph_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   char_u buf[NUMBUFLEN];
   buf[utf_char2bytes(code, buf)] = NUL;
-  rettv->vval.v_string = vim_strsave(buf);
+  rettv->vval.v_string = (char *)vim_strsave(buf);
 }
 
 /// "digraph_getlist()" function

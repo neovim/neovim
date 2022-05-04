@@ -460,7 +460,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
       cb.data.luaref = api_new_luaref(callback->data.luaref);
     } else if (callback->type == kObjectTypeString) {
       cb.type = kCallbackFuncref;
-      cb.data.funcref = (char_u *)string_to_cstr(callback->data.string);
+      cb.data.funcref = string_to_cstr(callback->data.string);
     } else {
       api_set_error(err,
                     kErrorTypeException,

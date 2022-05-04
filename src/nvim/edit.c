@@ -1685,9 +1685,9 @@ static void init_prompt(int cmdchar_todo)
   if (STRNCMP(text, prompt, STRLEN(prompt)) != 0) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
-      ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
+      ml_replace(curbuf->b_ml.ml_line_count, (char *)prompt, true);
     } else {
-      ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
+      ml_append(curbuf->b_ml.ml_line_count, (char *)prompt, 0, false);
     }
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(MAXCOL);
@@ -1985,7 +1985,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
     int new_col = curwin->w_cursor.col;
 
     // Put back original line
-    ml_replace(curwin->w_cursor.lnum, orig_line, false);
+    ml_replace(curwin->w_cursor.lnum, (char *)orig_line, false);
     curwin->w_cursor.col = orig_col;
 
     curbuf_splice_pending++;
@@ -4021,7 +4021,7 @@ static void expand_by_function(int type, char_u *base)
   args[1].v_type = VAR_STRING;
   args[2].v_type = VAR_UNKNOWN;
   args[0].vval.v_number = 0;
-  args[1].vval.v_string = base != NULL ? base : (char_u *)"";
+  args[1].vval.v_string = base != NULL ? (char *)base : "";
 
   pos = curwin->w_cursor;
   curwin_save = curwin;
@@ -5306,7 +5306,7 @@ static int ins_complete(int c, bool enable_pum)
       args[1].v_type = VAR_STRING;
       args[2].v_type = VAR_UNKNOWN;
       args[0].vval.v_number = 1;
-      args[1].vval.v_string = (char_u *)"";
+      args[1].vval.v_string = "";
 
       pos = curwin->w_cursor;
       curwin_save = curwin;
@@ -6478,7 +6478,7 @@ void auto_format(bool trailblank, bool prev_line)
       pnew = vim_strnsave(new, len + 2);
       pnew[len] = ' ';
       pnew[len + 1] = NUL;
-      ml_replace(curwin->w_cursor.lnum, pnew, false);
+      ml_replace(curwin->w_cursor.lnum, (char *)pnew, false);
       // remove the space later
       did_add_space = true;
     } else {

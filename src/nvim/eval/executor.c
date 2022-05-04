@@ -114,7 +114,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
                                                                                     numbuf));
         tv_clear(tv1);
         tv1->v_type = VAR_STRING;
-        tv1->vval.v_string = (char_u *)s;
+        tv1->vval.v_string = s;
       }
       return OK;
     case VAR_FLOAT: {

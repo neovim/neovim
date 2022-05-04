@@ -508,7 +508,7 @@ static void shift_block(oparg_T *oap, int amount)
     STRMOVE(newp + verbatim_diff + fill, non_white);
   }
   // replace the line
-  ml_replace(curwin->w_cursor.lnum, newp, false);
+  ml_replace(curwin->w_cursor.lnum, (char *)newp, false);
   changed_bytes(curwin->w_cursor.lnum, bd.textcol);
   extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, startcol,
                       oldlen, newlen,
@@ -614,7 +614,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
     }
     STRMOVE(newp + offset, oldp);
 
-    ml_replace(lnum, newp, false);
+    ml_replace(lnum, (char *)newp, false);
     extmark_splice_cols(curbuf, (int)lnum - 1, startcol,
                         skipped, offset - startcol, kExtmarkUndo);
 
@@ -1650,7 +1650,7 @@ int op_delete(oparg_T *oap)
       oldp += bd.textcol + bd.textlen;
       STRMOVE(newp + bd.textcol + bd.startspaces + bd.endspaces, oldp);
       // replace the line
-      ml_replace(lnum, newp, false);
+      ml_replace(lnum, (char *)newp, false);
 
       extmark_splice_cols(curbuf, (int)lnum - 1, bd.textcol,
                           bd.textlen, bd.startspaces + bd.endspaces,
@@ -2001,11 +2001,11 @@ static int op_replace(oparg_T *oap, int c)
         newrows = 1;
       }
       // replace the line
-      ml_replace(curwin->w_cursor.lnum, newp, false);
+      ml_replace(curwin->w_cursor.lnum, (char *)newp, false);
       curbuf_splice_pending++;
       linenr_T baselnum = curwin->w_cursor.lnum;
       if (after_p != NULL) {
-        ml_append(curwin->w_cursor.lnum++, after_p, (int)after_p_len, false);
+        ml_append(curwin->w_cursor.lnum++, (char *)after_p, (int)after_p_len, false);
         appended_lines_mark(curwin->w_cursor.lnum, 1L);
         oap->end.lnum++;
         xfree(after_p);
@@ -2597,7 +2597,7 @@ int op_change(oparg_T *oap)
           offset += ins_len;
           oldp += bd.textcol;
           STRMOVE(newp + offset, oldp);
-          ml_replace(linenr, newp, false);
+          ml_replace(linenr, (char *)newp, false);
           extmark_splice_cols(curbuf, (int)linenr - 1, bd.textcol,
                               0, vpos.coladd + (int)ins_len, kExtmarkUndo);
         }
@@ -3185,7 +3185,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         MB_PTR_ADV(p);
       }
       ptr = vim_strsave(p);
-      ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, false);
+      ml_append(curwin->w_cursor.lnum, (char *)ptr, (colnr_T)0, false);
       xfree(ptr);
 
       oldp = get_cursor_line_ptr();
@@ -3194,7 +3194,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         MB_PTR_ADV(p);
       }
       ptr = vim_strnsave(oldp, (size_t)(p - oldp));
-      ml_replace(curwin->w_cursor.lnum, ptr, false);
+      ml_replace(curwin->w_cursor.lnum, (char *)ptr, false);
       nr_lines++;
       dir = FORWARD;
     }
@@ -3331,7 +3331,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
       // add a new line
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        if (ml_append(curbuf->b_ml.ml_line_count, (char_u *)"",
+        if (ml_append(curbuf->b_ml.ml_line_count, "",
                       (colnr_T)1, false) == FAIL) {
           break;
         }
@@ -3425,7 +3425,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       int columns = (int)oldlen - bd.textcol - delcount + 1;
       assert(columns >= 0);
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
-      ml_replace(curwin->w_cursor.lnum, newp, false);
+      ml_replace(curwin->w_cursor.lnum, (char *)newp, false);
       extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, bd.textcol,
                           delcount, addcount, kExtmarkUndo);
 
@@ -3543,7 +3543,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             ptr += yanklen;
           }
           STRMOVE(ptr, oldp + col);
-          ml_replace(lnum, newp, false);
+          ml_replace(lnum, (char *)newp, false);
 
           // compute the byte offset for the last character
           first_byte_off = utf_head_off(newp, ptr - 1);
@@ -3596,7 +3596,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           STRCPY(newp, y_array[y_size - 1]);
           STRCAT(newp, ptr);
           // insert second line
-          ml_append(lnum, newp, (colnr_T)0, false);
+          ml_append(lnum, (char *)newp, (colnr_T)0, false);
           new_lnum++;
           xfree(newp);
 
@@ -3606,7 +3606,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           memmove(newp, oldp, (size_t)col);
           // append to first line
           memmove(newp + col, y_array[0], (size_t)yanklen + 1);
-          ml_replace(lnum, newp, false);
+          ml_replace(lnum, (char *)newp, false);
 
           curwin->w_cursor.lnum = lnum;
           i = 1;
@@ -3614,7 +3614,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
         for (; i < y_size; i++) {
           if ((y_type != kMTCharWise || i < y_size - 1)) {
-            if (ml_append(lnum, y_array[i], (colnr_T)0, false) == FAIL) {
+            if (ml_append(lnum, (char *)y_array[i], (colnr_T)0, false) == FAIL) {
               goto error;
             }
             new_lnum++;
@@ -4214,7 +4214,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     currsize = (int)STRLEN(curr);
   }
 
-  ml_replace(curwin->w_cursor.lnum, newp, false);
+  ml_replace(curwin->w_cursor.lnum, (char *)newp, false);
 
   if (setmark && !cmdmod.lockmarks) {
     // Set the '] mark.
@@ -6179,7 +6179,7 @@ static void op_function(const oparg_T *oap)
     argv[0].v_type = VAR_STRING;
     argv[1].v_type = VAR_UNKNOWN;
     argv[0].vval.v_string =
-      (char_u *)(((const char *const[]) {
+      (char *)(((const char *const[]) {
       [kMTBlockWise] = "block",
       [kMTLineWise] = "line",
       [kMTCharWise] = "char",
@@ -7090,7 +7090,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     if (TV_LIST_ITEM_TV(tv_list_last(res))->v_type != VAR_STRING) {
       goto err;
     }
-    char_u *regtype = TV_LIST_ITEM_TV(tv_list_last(res))->vval.v_string;
+    char_u *regtype = (char_u *)TV_LIST_ITEM_TV(tv_list_last(res))->vval.v_string;
     if (regtype == NULL || STRLEN(regtype) > 1) {
       goto err;
     }

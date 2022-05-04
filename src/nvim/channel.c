@@ -739,13 +739,13 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
     tv_list_ref(argv[1].vval.v_list);
     ga_clear(&reader->buffer);
     cb = &reader->cb;
-    argv[2].vval.v_string = (char_u *)reader->type;
+    argv[2].vval.v_string = (char *)reader->type;
   } else {
     argv[1].v_type = VAR_NUMBER;
     argv[1].v_lock = VAR_UNLOCKED;
     argv[1].vval.v_number = chan->exit_status;
     cb = &chan->on_exit;
-    argv[2].vval.v_string = (char_u *)"exit";
+    argv[2].vval.v_string = "exit";
   }
 
   argv[2].v_type = VAR_STRING;

@@ -353,7 +353,7 @@ int set_indent(int size, int flags)
     const colnr_T new_offset = (colnr_T)(s - newline);
 
     // this may free "newline"
-    ml_replace(curwin->w_cursor.lnum, newline, false);
+    ml_replace(curwin->w_cursor.lnum, (char *)newline, false);
     if (!(flags & SIN_NOMARK)) {
       extmark_splice_cols(curbuf,
                           (int)curwin->w_cursor.lnum - 1,

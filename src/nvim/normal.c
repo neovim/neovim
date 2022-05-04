@@ -1747,24 +1747,24 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
             .v_lock = VAR_FIXED,
             .v_type = VAR_STRING,
             .vval = {
-              .v_string = (char_u *)(which_button == MOUSE_LEFT
-                                     ? "l"
-                                     : (which_button == MOUSE_RIGHT
-                                        ? "r"
-                                        : (which_button == MOUSE_MIDDLE
-                                           ? "m"
-                                           : "?")))
+              .v_string = (which_button == MOUSE_LEFT
+                           ? "l"
+                           : (which_button == MOUSE_RIGHT
+                              ? "r"
+                              : (which_button == MOUSE_MIDDLE
+                                 ? "m"
+                                 : "?")))
             },
           },
           {
             .v_lock = VAR_FIXED,
             .v_type = VAR_STRING,
             .vval = {
-              .v_string = (char_u[]) {
-                (char_u)(mod_mask & MOD_MASK_SHIFT ? 's' : ' '),
-                (char_u)(mod_mask & MOD_MASK_CTRL ? 'c' : ' '),
-                (char_u)(mod_mask & MOD_MASK_ALT ? 'a' : ' '),
-                (char_u)(mod_mask & MOD_MASK_META ? 'm' : ' '),
+              .v_string = (char[]) {
+                (char)(mod_mask & MOD_MASK_SHIFT ? 's' : ' '),
+                (char)(mod_mask & MOD_MASK_CTRL ? 'c' : ' '),
+                (char)(mod_mask & MOD_MASK_ALT ? 'a' : ' '),
+                (char)(mod_mask & MOD_MASK_META ? 'm' : ' '),
                 NUL
               }
             },

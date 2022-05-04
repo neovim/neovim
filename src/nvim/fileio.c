@@ -1584,7 +1584,7 @@ rewind_retry:
           if (skip_count == 0) {
             *ptr = NUL;                     // end of line
             len = (colnr_T)(ptr - line_start + 1);
-            if (ml_append(lnum, line_start, len, newfile) == FAIL) {
+            if (ml_append(lnum, (char *)line_start, len, newfile) == FAIL) {
               error = true;
               break;
             }
@@ -1640,7 +1640,7 @@ rewind_retry:
                 ff_error = EOL_DOS;
               }
             }
-            if (ml_append(lnum, line_start, len, newfile) == FAIL) {
+            if (ml_append(lnum, (char *)line_start, len, newfile) == FAIL) {
               error = true;
               break;
             }
@@ -1688,7 +1688,7 @@ failed:
     }
     *ptr = NUL;
     len = (colnr_T)(ptr - line_start + 1);
-    if (ml_append(lnum, line_start, len, newfile) == FAIL) {
+    if (ml_append(lnum, (char *)line_start, len, newfile) == FAIL) {
       error = true;
     } else {
       if (read_undo_file) {
@@ -4872,7 +4872,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   curbuf = tobuf;
   for (lnum = 1; lnum <= frombuf->b_ml.ml_line_count; lnum++) {
     p = vim_strsave(ml_get_buf(frombuf, lnum, false));
-    if (ml_append(lnum - 1, p, 0, false) == FAIL) {
+    if (ml_append(lnum - 1, (char *)p, 0, false) == FAIL) {
       xfree(p);
       retval = FAIL;
       break;

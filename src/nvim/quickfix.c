@@ -1029,7 +1029,7 @@ static int qf_setup_state(qfstate_T *pstate, char *restrict enc, const char *res
 
   if (tv != NULL) {
     if (tv->v_type == VAR_STRING) {
-      pstate->p_str = (char *)tv->vval.v_string;
+      pstate->p_str = tv->vval.v_string;
     } else if (tv->v_type == VAR_LIST) {
       pstate->p_li = tv_list_first(tv->vval.v_list);
     }
@@ -3937,7 +3937,7 @@ bool qf_process_qftf_option(void)
     // treat everything else as a function name string
     tv = xcalloc(1, sizeof(*tv));
     tv->v_type = VAR_STRING;
-    tv->vval.v_string = vim_strsave(p_qftf);
+    tv->vval.v_string = (char *)vim_strsave(p_qftf);
   }
 
   if (!callback_from_typval(&cb, tv)) {
@@ -5977,7 +5977,7 @@ static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
           || efm_di->di_tv.vval.v_string == NULL) {
         return FAIL;
       }
-      errorformat = (char *)efm_di->di_tv.vval.v_string;
+      errorformat = efm_di->di_tv.vval.v_string;
     }
 
     list_T *l = tv_list_alloc(kListLenMayKnow);
@@ -6602,7 +6602,7 @@ static int qf_setprop_items_from_lines(qf_info_T *qi, int qf_idx, const dict_T *
         || efm_di->di_tv.vval.v_string == NULL) {
       return FAIL;
     }
-    errorformat = (char *)efm_di->di_tv.vval.v_string;
+    errorformat = efm_di->di_tv.vval.v_string;
   }
 
   // Only a List value is supported

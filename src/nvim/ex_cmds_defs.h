@@ -125,7 +125,7 @@ typedef char_u *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
 typedef struct cmdname {
-  char_u *cmd_name;    ///< Name of the command.
+  char *cmd_name;    ///< Name of the command.
   ex_func_T cmd_func;  ///< Function with implementation of this command.
   uint32_t cmd_argt;     ///< Relevant flags from the declared above.
   cmd_addr_T cmd_addr_type;  ///< Flag for address type

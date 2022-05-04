@@ -2793,7 +2793,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
   bool arg_allocated = false;
   typval_T arg = {
     .v_type = VAR_STRING,
-    .vval.v_string = colored_ccline->cmdbuff,
+    .vval.v_string = (char *)colored_ccline->cmdbuff,
   };
   typval_T tv = { .v_type = VAR_UNKNOWN };
 
@@ -2954,7 +2954,7 @@ color_cmdline_end:
   // Note: errors “output” is cached just as well as regular results.
   ccline_colors->prompt_id = colored_ccline->prompt_id;
   if (arg_allocated) {
-    ccline_colors->cmdbuff = (char *)arg.vval.v_string;
+    ccline_colors->cmdbuff = arg.vval.v_string;
   } else {
     ccline_colors->cmdbuff = xmemdupz((const char *)colored_ccline->cmdbuff,
                                       (size_t)colored_ccline->cmdlen);
@@ -5317,8 +5317,8 @@ static void *call_user_expand_func(user_expand_func_T user_expand_func, expand_T
   args[1].v_type = VAR_STRING;
   args[2].v_type = VAR_NUMBER;
   args[3].v_type = VAR_UNKNOWN;
-  args[0].vval.v_string = pat;
-  args[1].vval.v_string = (char_u *)xp->xp_line;
+  args[0].vval.v_string = (char *)pat;
+  args[1].vval.v_string = xp->xp_line;
   args[2].vval.v_number = xp->xp_col;
 
   current_sctx = xp->xp_script_ctx;
@@ -6430,7 +6430,7 @@ static int open_cmdwin(void)
           i = 0;
         }
         if (history[histtype][i].hisstr != NULL) {
-          ml_append(lnum++, history[histtype][i].hisstr, (colnr_T)0, false);
+          ml_append(lnum++, (char *)history[histtype][i].hisstr, (colnr_T)0, false);
         }
       } while (i != hisidx[histtype]);
     }
@@ -6438,7 +6438,7 @@ static int open_cmdwin(void)
 
   // Replace the empty last line with the current command-line and put the
   // cursor there.
-  ml_replace(curbuf->b_ml.ml_line_count, ccline.cmdbuff, true);
+  ml_replace(curbuf->b_ml.ml_line_count, (char *)ccline.cmdbuff, true);
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();

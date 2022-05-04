@@ -2706,7 +2706,7 @@ void ex_diffgetput(exarg_T *eap)
           break;
         }
         p = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx_from], nr, false));
-        ml_append(lnum + i - 1, p, 0, false);
+        ml_append(lnum + i - 1, (char *)p, 0, false);
         xfree(p);
         added++;
         if (buf_empty && (curbuf->b_ml.ml_line_count == 2)) {

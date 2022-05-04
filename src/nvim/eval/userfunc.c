@@ -359,7 +359,7 @@ char_u *deref_func_name(const char *name, int *lenp, partial_T **const partialp,
       return (char_u *)"";
     }
     *lenp = (int)STRLEN(v->di_tv.vval.v_string);
-    return v->di_tv.vval.v_string;
+    return (char_u *)v->di_tv.vval.v_string;
   }
 
   if (v != NULL && v->di_tv.v_type == VAR_PARTIAL) {
@@ -1756,7 +1756,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
       fdp->fd_di = lv.ll_di;
     }
     if (lv.ll_tv->v_type == VAR_FUNC && lv.ll_tv->vval.v_string != NULL) {
-      name = vim_strsave(lv.ll_tv->vval.v_string);
+      name = vim_strsave((char_u *)lv.ll_tv->vval.v_string);
       *pp = (char_u *)end;
     } else if (lv.ll_tv->v_type == VAR_PARTIAL
                && lv.ll_tv->vval.v_partial != NULL) {
@@ -2530,7 +2530,7 @@ void ex_function(exarg_T *eap)
         tv_clear(&fudi.fd_di->di_tv);
       }
       fudi.fd_di->di_tv.v_type = VAR_FUNC;
-      fudi.fd_di->di_tv.vval.v_string = vim_strsave(name);
+      fudi.fd_di->di_tv.vval.v_string = (char *)vim_strsave(name);
 
       // behave like "dict" was used
       flags |= FC_DICT;
@@ -3219,7 +3219,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
     fp = rettv->vval.v_partial->pt_func;
   } else {
     fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
-                                      ? rettv->vval.v_string
+                                      ? (char_u *)rettv->vval.v_string
                                       : rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
     fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
@@ -3236,7 +3236,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
     pt->pt_auto = true;
     if (rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING) {
       // Just a function: Take over the function name and use selfdict.
-      pt->pt_name = rettv->vval.v_string;
+      pt->pt_name = (char_u *)rettv->vval.v_string;
     } else {
       partial_T *ret_pt = rettv->vval.v_partial;
       int i;
