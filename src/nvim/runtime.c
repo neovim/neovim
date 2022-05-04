@@ -35,7 +35,7 @@ void runtime_init(void)
 /// ":runtime [what] {name}"
 void ex_runtime(exarg_T *eap)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *p = skiptowhite(arg);
   ptrdiff_t len = p - arg;
   int flags = eap->forceit ? DIP_ALL : 0;

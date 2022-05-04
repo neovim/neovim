@@ -1296,7 +1296,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
     // The amount of indentation trimmed is the same as the indentation of
     // the first line after the :let command line.  To find the end marker
     // the indent of the :let command line is trimmed.
-    p = (char *)(*eap->cmdlinep);
+    p = *eap->cmdlinep;
     while (ascii_iswhite(*p)) {
       p++;
       marker_indent_len++;
@@ -1389,7 +1389,7 @@ void ex_let(exarg_T *eap)
 
 static void ex_let_const(exarg_T *eap, const bool is_const)
 {
-  char *arg = (char *)eap->arg;
+  char *arg = eap->arg;
   char *expr = NULL;
   typval_T rettv;
   int i;
@@ -1425,7 +1425,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       list_func_vars(&first);
       list_vim_vars(&first);
     }
-    eap->nextcmd = check_nextcmd((char_u *)arg);
+    eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
   } else if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
     // HERE document
     list_T *l = heredoc_get(eap, expr + 3);
@@ -1434,7 +1434,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       if (!eap->skip) {
         op[0] = '=';
         op[1] = NUL;
-        (void)ex_let_vars((char *)eap->arg, &rettv, false, semicolon, var_count,
+        (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
                           is_const, (char *)op);
       }
       tv_clear(&rettv);
@@ -1457,14 +1457,14 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     if (eap->skip) {
       ++emsg_skip;
     }
-    i = eval0(expr, &rettv, (char **)&eap->nextcmd, !eap->skip);
+    i = eval0(expr, &rettv, &eap->nextcmd, !eap->skip);
     if (eap->skip) {
       if (i != FAIL) {
         tv_clear(&rettv);
       }
       emsg_skip--;
     } else if (i != FAIL) {
-      (void)ex_let_vars((char *)eap->arg, &rettv, false, semicolon, var_count,
+      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
                         is_const, (char *)op);
       tv_clear(&rettv);
     }
@@ -2715,7 +2715,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
     if (strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#") == NULL) {
       // ":let var1 var2 ...": find last space.
       for (p = arg + STRLEN(arg); p >= arg;) {
-        xp->xp_pattern = (char_u *)p;
+        xp->xp_pattern = p;
         MB_PTR_BACK(arg, p);
         if (ascii_iswhite(*p)) {
           break;
@@ -2727,10 +2727,10 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
     xp->xp_context = cmdidx == CMD_call ? EXPAND_FUNCTIONS
                                         : EXPAND_EXPRESSION;
   }
-  while ((xp->xp_pattern = (char_u *)strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#")) != NULL) {
-    c = *xp->xp_pattern;
+  while ((xp->xp_pattern = strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#")) != NULL) {
+    c = (uint8_t)(*xp->xp_pattern);
     if (c == '&') {
-      c = xp->xp_pattern[1];
+      c = (uint8_t)xp->xp_pattern[1];
       if (c == '&') {
         ++xp->xp_pattern;
         xp->xp_context = cmdidx != CMD_let || got_eq
@@ -2753,12 +2753,12 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
       break;
     } else if ((c == '<' || c == '#')
                && xp->xp_context == EXPAND_FUNCTIONS
-               && vim_strchr(xp->xp_pattern, '(') == NULL) {
+               && vim_strchr((char_u *)xp->xp_pattern, '(') == NULL) {
       // Function name can start with "<SNR>" and contain '#'.
       break;
     } else if (cmdidx != CMD_let || got_eq) {
       if (c == '"') {               // string
-        while ((c = *++xp->xp_pattern) != NUL && c != '"') {
+        while ((c = (uint8_t)(*++xp->xp_pattern)) != NUL && c != '"') {
           if (c == '\\' && xp->xp_pattern[1] != NUL) {
             xp->xp_pattern++;
           }
@@ -2766,7 +2766,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
         xp->xp_context = EXPAND_NOTHING;
       } else if (c == '\'') {     // literal string
         // Trick: '' is like stopping and starting a literal string.
-        while ((c = *++xp->xp_pattern) != NUL && c != '\'') {}
+        while ((c = (uint8_t)(*++xp->xp_pattern)) != NUL && c != '\'') {}
         xp->xp_context = EXPAND_NOTHING;
       } else if (c == '|') {
         if (xp->xp_pattern[1] == '|') {
@@ -2783,7 +2783,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
       // anyway.
       xp->xp_context = EXPAND_EXPRESSION;
     }
-    arg = (char *)xp->xp_pattern;
+    arg = xp->xp_pattern;
     if (*arg != NUL) {
       while ((c = (char_u)(*++arg)) != NUL && (c == ' ' || c == '\t')) {}
     }
@@ -2805,13 +2805,13 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
     }
   }
 
-  xp->xp_pattern = (char_u *)arg;
+  xp->xp_pattern = arg;
 }
 
 /// ":unlet[!] var1 ... " command.
 void ex_unlet(exarg_T *eap)
 {
-  ex_unletlock(eap, (char *)eap->arg, 0, do_unlet_var);
+  ex_unletlock(eap, eap->arg, 0, do_unlet_var);
 }
 
 // TODO(ZyX-I): move to eval/ex_cmds
@@ -2819,7 +2819,7 @@ void ex_unlet(exarg_T *eap)
 /// ":lockvar" and ":unlockvar" commands
 void ex_lockvar(exarg_T *eap)
 {
-  char *arg = (char *)eap->arg;
+  char *arg = eap->arg;
   int deep = 2;
 
   if (eap->forceit) {
@@ -2894,7 +2894,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
     arg = (char *)skipwhite((char_u *)name_end);
   } while (!ends_excmd(*arg));
 
-  eap->nextcmd = check_nextcmd((char_u *)arg);
+  eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
 }
 
 // TODO(ZyX-I): move to eval/ex_cmds
@@ -9422,7 +9422,7 @@ int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *c
 /// ":echon expr1 ..."   print each argument plain.
 void ex_echo(exarg_T *eap)
 {
-  char *arg = (char *)eap->arg;
+  char *arg = eap->arg;
   typval_T rettv;
   bool atstart = true;
   bool need_clear = true;
@@ -9478,7 +9478,7 @@ void ex_echo(exarg_T *eap)
     tv_clear(&rettv);
     arg = (char *)skipwhite((char_u *)arg);
   }
-  eap->nextcmd = check_nextcmd((char_u *)arg);
+  eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
 
   if (eap->skip) {
     emsg_skip--;
@@ -9496,7 +9496,7 @@ void ex_echo(exarg_T *eap)
 /// ":echohl {name}".
 void ex_echohl(exarg_T *eap)
 {
-  echo_attr = syn_name2attr(eap->arg);
+  echo_attr = syn_name2attr((char_u *)eap->arg);
 }
 
 /// ":execute expr1 ..." execute the result of an expression.
@@ -9506,7 +9506,7 @@ void ex_echohl(exarg_T *eap)
 /// echo commands
 void ex_execute(exarg_T *eap)
 {
-  char *arg = (char *)eap->arg;
+  char *arg = eap->arg;
   typval_T rettv;
   int ret = OK;
   garray_T ga;
@@ -9576,7 +9576,7 @@ void ex_execute(exarg_T *eap)
     --emsg_skip;
   }
 
-  eap->nextcmd = check_nextcmd((char_u *)arg);
+  eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
 }
 
 /// Skip over the name of an option: "&option", "&g:option" or "&l:option".

@@ -641,15 +641,15 @@ void ex_hardcopy(exarg_T *eap)
     char *errormsg = NULL;
 
     // Expand things like "%.ps".
-    if (expand_filename(eap, eap->cmdlinep, &errormsg) == FAIL) {
+    if (expand_filename(eap, (char_u **)eap->cmdlinep, &errormsg) == FAIL) {
       if (errormsg != NULL) {
         emsg(errormsg);
       }
       return;
     }
-    settings.outfile = skipwhite(eap->arg + 1);
+    settings.outfile = skipwhite((char_u *)eap->arg + 1);
   } else if (*eap->arg != NUL) {
-    settings.arguments = eap->arg;
+    settings.arguments = (char_u *)eap->arg;
   }
 
   /*

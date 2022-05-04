@@ -827,7 +827,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     bool done = false;
 
     while (!done) {
-      done = uc_split_args_iter(ea.arg, length, &end, buf, &len);
+      done = uc_split_args_iter((char_u *)ea.arg, length, &end, buf, &len);
       if (len > 0) {
         ADD(args, STRING_OBJ(cstrn_to_string(buf, len)));
       }

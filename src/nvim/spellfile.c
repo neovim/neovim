@@ -4874,7 +4874,7 @@ void ex_mkspell(exarg_T *eap)
 {
   int fcount;
   char_u **fnames;
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   bool ascii = false;
 
   if (STRNCMP(arg, "-ascii", 6) == 0) {
@@ -5501,7 +5501,7 @@ static void spell_message(const spellinfo_T *spin, char_u *str)
 // ":[count]spellrare  {word}"
 void ex_spell(exarg_T *eap)
 {
-  spell_add_word(eap->arg, (int)STRLEN(eap->arg),
+  spell_add_word((char_u *)eap->arg, (int)STRLEN(eap->arg),
                  eap->cmdidx == CMD_spellwrong ? SPELL_ADD_BAD :
                  eap->cmdidx == CMD_spellrare ? SPELL_ADD_RARE : SPELL_ADD_GOOD,
                  eap->forceit ? 0 : (int)eap->line2,

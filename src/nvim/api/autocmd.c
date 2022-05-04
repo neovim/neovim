@@ -474,7 +474,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     Object *command = &opts->command;
     if (command->type == kObjectTypeString) {
       aucmd.type = CALLABLE_EX;
-      aucmd.callable.cmd = (char_u *)string_to_cstr(command->data.string);
+      aucmd.callable.cmd = string_to_cstr(command->data.string);
     } else {
       api_set_error(err,
                     kErrorTypeValidation,
@@ -657,8 +657,6 @@ void nvim_clear_autocmds(Dict(clear_autocmds) *opts, Error *err)
 cleanup:
   api_free_array(event_array);
   api_free_array(patterns);
-
-  return;
 }
 
 /// Create or get an autocommand group |autocmd-groups|.

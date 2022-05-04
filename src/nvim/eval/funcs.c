@@ -2194,7 +2194,7 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   exarg_T eap = {
     .cmd = (char *)cmdstr,
-    .arg = cmdstr,
+    .arg = (char *)cmdstr,
     .usefilter = false,
     .nextcmd = NULL,
     .cmdidx = CMD_USER,
@@ -3246,7 +3246,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   ExpandInit(&xpc);
-  xpc.xp_pattern = (char_u *)pattern;
+  xpc.xp_pattern = (char *)pattern;
   xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   xpc.xp_context = cmdcomplete_str_to_type(type);
   if (xpc.xp_context == EXPAND_NOTHING) {
@@ -3255,7 +3255,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (xpc.xp_context == EXPAND_MENUS) {
-    set_context_in_menu_cmd(&xpc, "menu", (char *)xpc.xp_pattern, false);
+    set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
@@ -3265,12 +3265,12 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (xpc.xp_context == EXPAND_SIGN) {
-    set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
+    set_context_in_sign_cmd(&xpc, (char_u *)xpc.xp_pattern);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
 theend:
-  pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
+  pat = addstar((char_u *)xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
   ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
   tv_list_alloc_ret(rettv, xpc.xp_numfiles);
 
@@ -3528,7 +3528,7 @@ static void f_getjumplist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     tv_dict_add_nr(d, S_LEN("coladd"), wp->w_jumplist[i].fmark.mark.coladd);
     tv_dict_add_nr(d, S_LEN("bufnr"), wp->w_jumplist[i].fmark.fnum);
     if (wp->w_jumplist[i].fname != NULL) {
-      tv_dict_add_str(d, S_LEN("filename"), (char *)wp->w_jumplist[i].fname);
+      tv_dict_add_str(d, S_LEN("filename"), wp->w_jumplist[i].fname);
     }
   }
 }
@@ -10994,7 +10994,6 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 error:
   semsg(_(e_invarg2), fromstr);
   ga_clear(&ga);
-  return;
 }
 
 /// "trim({expr})" function

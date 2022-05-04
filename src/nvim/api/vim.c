@@ -2210,7 +2210,7 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
     allocated = true;
     // Marks comes from shada
   } else {
-    filename = (char *)mark.fname;
+    filename = mark.fname;
     bufnr = 0;
   }
 

@@ -3830,7 +3830,7 @@ void ex_display(exarg_T *eap)
   char_u *p;
   yankreg_T *yb;
   int name;
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   int clen;
   int type;
 

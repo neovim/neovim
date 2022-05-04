@@ -3938,7 +3938,7 @@ char_u *set_context_in_map_cmd(expand_T *xp, char_u *cmd, char_u *arg, bool forc
       }
       break;
     }
-    xp->xp_pattern = arg;
+    xp->xp_pattern = (char *)arg;
   }
 
   return NULL;

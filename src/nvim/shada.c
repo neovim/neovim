@@ -1289,9 +1289,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         XFREE_CLEAR(cur_entry.data.filemark.fname);
       }
       xfmark_T fm = (xfmark_T) {
-        .fname = (char_u *)(buf == NULL
-                               ? cur_entry.data.filemark.fname
-                               : NULL),
+        .fname = buf == NULL ? cur_entry.data.filemark.fname : NULL,
         .fmark = {
           .mark = cur_entry.data.filemark.mark,
           .fnum = (buf == NULL ? 0 : buf->b_fnum),
@@ -4027,9 +4025,9 @@ static inline size_t shada_init_jumps(PossiblyFreedShadaEntry *jumps,
         : fm.fmark.fnum != 0) {
       continue;
     }
-    const char *const fname = (char *)(fm.fmark.fnum == 0
-                                        ? (fm.fname == NULL ? NULL : fm.fname)
-                                                            : buf ? buf->b_ffname : NULL);
+    const char *const fname =
+      (char *)(fm.fmark.fnum ==
+               0 ? (fm.fname == NULL ? NULL : (char_u *)fm.fname) : buf ? buf->b_ffname : NULL);
     if (fname == NULL) {
       continue;
     }

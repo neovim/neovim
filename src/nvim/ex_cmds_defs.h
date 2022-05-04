@@ -114,7 +114,7 @@ typedef struct aucmd_executable_t AucmdExecutable;
 struct aucmd_executable_t {
   AucmdExecutableType type;
   union {
-    char_u *cmd;
+    char *cmd;
     Callback cb;
   } callable;
 };
@@ -174,10 +174,10 @@ enum {
 
 /// Arguments used for Ex commands.
 struct exarg {
-  char_u *arg;             ///< argument of the command
-  char_u *nextcmd;         ///< next command (NULL if none)
-  char *cmd;               ///< the name of the command (except for :make)
-  char_u **cmdlinep;       ///< pointer to pointer of allocated cmdline
+  char *arg;                    ///< argument of the command
+  char *nextcmd;                ///< next command (NULL if none)
+  char *cmd;                    ///< the name of the command (except for :make)
+  char **cmdlinep;              ///< pointer to pointer of allocated cmdline
   cmdidx_T cmdidx;              ///< the index for the command
   uint32_t argt;                ///< flags for the command
   int skip;                     ///< don't execute the command, only parse it
@@ -187,7 +187,7 @@ struct exarg {
   linenr_T line2;               ///< the second line number or count
   cmd_addr_T addr_type;         ///< type of the count/range
   int flags;                    ///< extra flags after count: EXFLAG_
-  char_u *do_ecmd_cmd;     ///< +command arg to be used in edited file
+  char *do_ecmd_cmd;            ///< +command arg to be used in edited file
   linenr_T do_ecmd_lnum;        ///< the line number in an edited file
   int append;                   ///< TRUE with ":w >>file" command
   int usefilter;                ///< TRUE with ":w !command" and ":r!command"
@@ -201,7 +201,7 @@ struct exarg {
   int useridx;                  ///< user command index
   char *errmsg;                 ///< returned error message
   LineGetter getline;           ///< Function used to get the next line
-  void *cookie;               ///< argument for getline()
+  void *cookie;                 ///< argument for getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.
   long verbose_save;            ///< saved value of p_verbose
   int save_msg_silent;          ///< saved value of msg_silent
@@ -219,10 +219,10 @@ struct exarg {
 
 // used for completion on the command line
 struct expand {
-  char_u *xp_pattern;           // start of item to expand
+  char *xp_pattern;             // start of item to expand
   int xp_context;               // type of expansion
   size_t xp_pattern_len;        // bytes in xp_pattern before cursor
-  char_u *xp_arg;               // completion function
+  char *xp_arg;                 // completion function
   LuaRef xp_luaref;             // Ref to Lua completion function
   sctx_T xp_script_ctx;         // SCTX for completion function
   int xp_backslash;             // one of the XP_BS_ values
@@ -232,8 +232,8 @@ struct expand {
 #endif
   int xp_numfiles;              // number of files found by file name completion
   int xp_col;                   // cursor position in line
-  char_u **xp_files;            // list of files
-  char_u *xp_line;              // text being completed
+  char **xp_files;              // list of files
+  char *xp_line;                // text being completed
 };
 
 // values for xp_backslash
@@ -256,7 +256,7 @@ typedef struct {
   bool keeppatterns;           ///< true when ":keeppatterns" was used
   bool lockmarks;              ///< true when ":lockmarks" was used
   bool noswapfile;             ///< true when ":noswapfile" was used
-  char_u *save_ei;             ///< saved value of 'eventignore'
+  char *save_ei;               ///< saved value of 'eventignore'
   regmatch_T filter_regmatch;  ///< set by :filter /pat/
   bool filter_force;           ///< set for :filter!
 } cmdmod_T;

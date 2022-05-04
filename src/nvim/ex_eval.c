@@ -148,7 +148,7 @@ int aborted_in_try(void)
 /// When several messages appear in the same command, the first is usually the
 /// most specific one and used as the exception value.  The "severe" flag can be
 /// set to true, if a later but severer message should be used instead.
-bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
+bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
   FUNC_ATTR_NONNULL_ALL
 {
   struct msglist *elem;
@@ -197,7 +197,7 @@ bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
    * interrupt exception is catchable by the innermost try conditional and
    * not replaced by an interrupt message error exception.
    */
-  if (mesg == (char_u *)_(e_interr)) {
+  if (mesg == _(e_interr)) {
     *ignore = true;
     return true;
   }
@@ -255,7 +255,7 @@ bool cause_errthrow(const char_u *mesg, bool severe, bool *ignore)
       }
 
       elem = xmalloc(sizeof(struct msglist));
-      elem->msg = (char *)vim_strsave(mesg);
+      elem->msg = xstrdup(mesg);
       elem->next = NULL;
       elem->throw_msg = NULL;
       *plist = elem;
@@ -305,7 +305,7 @@ void free_global_msglist(void)
 /// Throw the message specified in the call to cause_errthrow() above as an
 /// error exception.  If cstack is NULL, postpone the throw until do_cmdline()
 /// has returned (see do_one_cmd()).
-void do_errthrow(cstack_T *cstack, char_u *cmdname)
+void do_errthrow(cstack_T *cstack, char *cmdname)
 {
   /*
    * Ensure that all commands in nested function calls and sourced files
@@ -382,7 +382,7 @@ int do_intthrow(cstack_T *cstack)
 }
 
 /// Get an exception message that is to be stored in current_exception->value.
-char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int *should_free)
+char *get_exception_string(void *value, except_type_T type, char *cmdname, int *should_free)
 {
   char *ret, *mesg;
   char *p, *val;
@@ -446,7 +446,7 @@ char *get_exception_string(void *value, except_type_T type, char_u *cmdname, int
 ///
 /// @return  FAIL when out of memory or it was tried to throw an illegal user
 ///          exception.
-static int throw_exception(void *value, except_type_T type, char_u *cmdname)
+static int throw_exception(void *value, except_type_T type, char *cmdname)
 {
   except_T *excp;
   int should_free;
@@ -479,8 +479,7 @@ static int throw_exception(void *value, except_type_T type, char_u *cmdname)
   }
 
   excp->type = type;
-  excp->throw_name = vim_strsave(sourcing_name == NULL
-      ? (char_u *)"" : sourcing_name);
+  excp->throw_name = (char *)vim_strsave(sourcing_name == NULL ? (char_u *)"" : sourcing_name);
   excp->throw_lnum = sourcing_lnum;
 
   if (p_verbose >= 13 || debug_break_level > 0) {
@@ -525,7 +524,7 @@ fail:
 /// caught and the catch clause has been ended normally.
 static void discard_exception(except_T *excp, bool was_finished)
 {
-  char_u *saved_IObuff;
+  char *saved_IObuff;
 
   if (current_exception == excp) {
     current_exception = NULL;
@@ -538,7 +537,7 @@ static void discard_exception(except_T *excp, bool was_finished)
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;
 
-    saved_IObuff = vim_strsave(IObuff);
+    saved_IObuff = (char *)vim_strsave(IObuff);
     if (debug_break_level > 0) {
       msg_silent = FALSE;               // display messages
     } else {
@@ -801,7 +800,7 @@ void ex_eval(exarg_T *eap)
 {
   typval_T tv;
 
-  if (eval0((char *)eap->arg, &tv, (char **)&eap->nextcmd, !eap->skip) == OK) {
+  if (eval0(eap->arg, &tv, &eap->nextcmd, !eap->skip) == OK) {
     tv_clear(&tv);
   }
 }
@@ -822,7 +821,7 @@ void ex_if(exarg_T *eap)
     skip = CHECK_SKIP;
 
     bool error;
-    result = eval_to_bool((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
+    result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
 
     if (!skip && !error) {
       if (result) {
@@ -911,7 +910,7 @@ void ex_else(exarg_T *eap)
 
   if (eap->cmdidx == CMD_elseif) {
     bool error;
-    result = eval_to_bool((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
+    result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
     // When throwing error exceptions, we want to throw always the first
     // of several errors in a row.  This is what actually happens when
     // a conditional error was detected above and there is another failure
@@ -962,7 +961,7 @@ void ex_while(exarg_T *eap)
       /*
        * ":while bool-expr"
        */
-      result = eval_to_bool((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
+      result = eval_to_bool(eap->arg, &error, &eap->nextcmd, skip);
     } else {
       void *fi;
 
@@ -976,13 +975,13 @@ void ex_while(exarg_T *eap)
         error = FALSE;
       } else {
         // Evaluate the argument and get the info in a structure.
-        fi = eval_for_line((char *)eap->arg, &error, (char **)&eap->nextcmd, skip);
+        fi = eval_for_line(eap->arg, &error, &eap->nextcmd, skip);
         cstack->cs_forinfo[cstack->cs_idx] = fi;
       }
 
       // use the element at the start of the list and advance
       if (!error && fi != NULL && !skip) {
-        result = next_for_item(fi, (char *)eap->arg);
+        result = next_for_item(fi, eap->arg);
       } else {
         result = FALSE;
       }
@@ -1283,13 +1282,13 @@ void ex_catch(exarg_T *eap)
   bool give_up = false;
   bool skip = false;
   bool caught = false;
-  char_u *end;
-  char_u save_char = 0;
-  char_u *save_cpo;
+  char *end;
+  char save_char = 0;
+  char *save_cpo;
   regmatch_T regmatch;
   int prev_got_int;
   cstack_T *const cstack = eap->cstack;
-  char_u *pat;
+  char *pat;
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
     eap->errmsg = N_("E603: :catch without :try");
@@ -1318,12 +1317,12 @@ void ex_catch(exarg_T *eap)
   }
 
   if (ends_excmd(*eap->arg)) {  // no argument, catch all errors
-    pat = (char_u *)".*";
+    pat = ".*";
     end = NULL;
-    eap->nextcmd = find_nextcmd(eap->arg);
+    eap->nextcmd = (char *)find_nextcmd((char_u *)eap->arg);
   } else {
     pat = eap->arg + 1;
-    end = skip_regexp(pat, *eap->arg, TRUE, NULL);
+    end = (char *)skip_regexp((char_u *)pat, *eap->arg, true, NULL);
   }
 
   if (!give_up) {
@@ -1343,7 +1342,7 @@ void ex_catch(exarg_T *eap)
      */
     if (!skip && (cstack->cs_flags[idx] & CSF_THROWN)
         && !(cstack->cs_flags[idx] & CSF_CAUGHT)) {
-      if (end != NULL && *end != NUL && !ends_excmd(*skipwhite(end + 1))) {
+      if (end != NULL && *end != NUL && !ends_excmd(*skipwhite((char_u *)end + 1))) {
         emsg(_(e_trailing));
         return;
       }
@@ -1362,18 +1361,18 @@ void ex_catch(exarg_T *eap)
           save_char = *end;
           *end = NUL;
         }
-        save_cpo  = p_cpo;
+        save_cpo = (char *)p_cpo;
         p_cpo = (char_u *)"";
         // Disable error messages, it will make current exception
         // invalid
         emsg_off++;
-        regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
+        regmatch.regprog = vim_regcomp((char_u *)pat, RE_MAGIC + RE_STRING);
         emsg_off--;
         regmatch.rm_ic = false;
         if (end != NULL) {
           *end = save_char;
         }
-        p_cpo = save_cpo;
+        p_cpo = (char_u *)save_cpo;
         if (regmatch.regprog == NULL) {
           semsg(_(e_invarg2), pat);
         } else {
@@ -1426,7 +1425,7 @@ void ex_catch(exarg_T *eap)
   }
 
   if (end != NULL) {
-    eap->nextcmd = find_nextcmd(end);
+    eap->nextcmd = (char *)find_nextcmd((char_u *)end);
   }
 }
 
@@ -2036,7 +2035,7 @@ void ex_endfunction(exarg_T *eap)
 }
 
 /// @return  TRUE if the string "p" looks like a ":while" or ":for" command.
-int has_loop_cmd(char_u *p)
+int has_loop_cmd(char *p)
 {
   int len;
 
@@ -2045,7 +2044,7 @@ int has_loop_cmd(char_u *p)
     while (*p == ' ' || *p == '\t' || *p == ':') {
       ++p;
     }
-    len = modifier_len((char *)p);
+    len = modifier_len(p);
     if (len == 0) {
       break;
     }

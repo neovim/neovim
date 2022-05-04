@@ -76,8 +76,8 @@ void ex_menu(exarg_T *eap)
                                   // kFalse for "menu disable
   vimmenu_T menuarg;
 
-  modes = get_menu_cmd_modes((char *)eap->cmd, eap->forceit, &noremap, &unmenu);
-  arg = (char *)eap->arg;
+  modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
+  arg = eap->arg;
 
   for (;;) {
     if (STRNCMP(arg, "<script>", 8) == 0) {
@@ -1022,7 +1022,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
     xfree(path_name);
 
     xp->xp_context = expand_menus ? EXPAND_MENUNAMES : EXPAND_MENUS;
-    xp->xp_pattern = (char_u *)after_dot;
+    xp->xp_pattern = after_dot;
     expand_menu = menu;
   } else {                      // We're in the mapping part
     xp->xp_context = EXPAND_NOTHING;
@@ -1470,7 +1470,7 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
 // execute it.
 void ex_emenu(exarg_T *eap)
 {
-  char *saved_name = xstrdup((char *)eap->arg);
+  char *saved_name = xstrdup(eap->arg);
   vimmenu_T *menu = *get_root_menu(saved_name);
   char *name = saved_name;
   while (*name) {
@@ -1531,7 +1531,7 @@ static garray_T menutrans_ga = GA_EMPTY_INIT_VALUE;
  */
 void ex_menutranslate(exarg_T *eap)
 {
-  char *arg = (char *)eap->arg;
+  char *arg = eap->arg;
   char *from, *from_noamp, *to;
 
   if (menutrans_ga.ga_itemsize == 0) {

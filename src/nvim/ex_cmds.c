@@ -245,7 +245,7 @@ void ex_align(exarg_T *eap)
     }
   }
 
-  width = atoi((char *)eap->arg);
+  width = atoi(eap->arg);
   save_curpos = curwin->w_cursor;
   if (eap->cmdidx == CMD_left) {    // width is used for new indent
     if (width >= 0) {
@@ -484,7 +484,7 @@ void ex_sort(exarg_T *eap)
   size_t format_found = 0;
   bool change_occurred = false;   // Buffer contents changed.
 
-  for (p = (char *)eap->arg; *p != NUL; p++) {
+  for (p = eap->arg; *p != NUL; p++) {
     if (ascii_iswhite(*p)) {
       // Skip
     } else if (*p == 'i') {
@@ -514,7 +514,7 @@ void ex_sort(exarg_T *eap)
       // comment start
       break;
     } else if (check_nextcmd((char_u *)p) != NULL) {
-      eap->nextcmd = check_nextcmd((char_u *)p);
+      eap->nextcmd = (char *)check_nextcmd((char_u *)p);
       break;
     } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
       s = (char *)skip_regexp((char_u *)p + 1, *p, true, NULL);
@@ -746,8 +746,8 @@ void ex_retab(exarg_T *eap)
   save_list = curwin->w_p_list;
   curwin->w_p_list = 0;             // don't want list mode here
 
-  new_ts_str = (char *)eap->arg;
-  if (!tabstop_set(eap->arg, &new_vts_array)) {
+  new_ts_str = eap->arg;
+  if (!tabstop_set((char_u *)eap->arg, &new_vts_array)) {
     return;
   }
   while (ascii_isdigit(*(eap->arg)) || *(eap->arg) == ',') {
@@ -761,7 +761,7 @@ void ex_retab(exarg_T *eap)
     new_vts_array = curbuf->b_p_vts_array;
     new_ts_str = NULL;
   } else {
-    new_ts_str = xstrnsave(new_ts_str, eap->arg - (char_u *)new_ts_str);
+    new_ts_str = xstrnsave(new_ts_str, eap->arg - new_ts_str);
   }
   for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     ptr = (char *)ml_get(lnum);
@@ -1129,7 +1129,7 @@ void free_prev_shellcmd(void)
 void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *arg = (char *)eap->arg;             // command
+  char *arg = eap->arg;             // command
   linenr_T line1 = eap->line1;        // start of range
   linenr_T line2 = eap->line2;        // end of range
   char *newcmd = NULL;              // the new command
@@ -1755,7 +1755,7 @@ void ex_file(exarg_T *eap)
   }
 
   if (*eap->arg != NUL || eap->addr_count == 1) {
-    if (rename_buffer((char *)eap->arg) == FAIL) {
+    if (rename_buffer(eap->arg) == FAIL) {
       return;
     }
     redraw_tabline = true;
@@ -1811,7 +1811,7 @@ int do_write(exarg_T *eap)
     return FAIL;
   }
 
-  ffname = (char *)eap->arg;
+  ffname = eap->arg;
   if (*ffname == NUL) {
     if (eap->cmdidx == CMD_saveas) {
       emsg(_(e_argreq));
@@ -2307,7 +2307,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   long *so_ptr = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
 
   if (eap != NULL) {
-    command = (char *)eap->do_ecmd_cmd;
+    command = eap->do_ecmd_cmd;
   }
 
   set_bufref(&old_curbuf, curbuf);
@@ -2961,15 +2961,15 @@ void ex_append(exarg_T *eap)
       if (eap->nextcmd == NULL || *eap->nextcmd == NUL) {
         break;
       }
-      p = (char *)vim_strchr(eap->nextcmd, NL);
+      p = (char *)vim_strchr((char_u *)eap->nextcmd, NL);
       if (p == NULL) {
-        p = (char *)eap->nextcmd + STRLEN(eap->nextcmd);
+        p = eap->nextcmd + STRLEN(eap->nextcmd);
       }
-      theline = (char *)vim_strnsave(eap->nextcmd, (char_u *)p - eap->nextcmd);
+      theline = xstrnsave(eap->nextcmd, p - eap->nextcmd);
       if (*p != NUL) {
         p++;
       }
-      eap->nextcmd = (char_u *)p;
+      eap->nextcmd = p;
     } else {
       // Set State to avoid the cursor shape to be set to INSERT mode
       // when getline() returns.
@@ -3105,7 +3105,7 @@ void ex_z(exarg_T *eap)
     bigness = 1;
   }
 
-  x = (char *)eap->arg;
+  x = eap->arg;
   kind = x;
   if (*kind == '-' || *kind == '+' || *kind == '='
       || *kind == '^' || *kind == '.') {
@@ -3463,7 +3463,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   bool got_quit = false;
   bool got_match = false;
   int which_pat;
-  char *cmd = (char *)eap->arg;
+  char *cmd = eap->arg;
   linenr_T first_line = 0;  // first changed line
   linenr_T last_line= 0;    // below last changed line AFTER the change
   linenr_T old_line_count = curbuf->b_ml.ml_line_count;
@@ -3519,7 +3519,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (char_u)(*cmd++);                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
-      cmd = (char *)skip_regexp((char_u *)cmd, delimiter, p_magic, &eap->arg);
+      cmd = (char *)skip_regexp((char_u *)cmd, delimiter, p_magic, (char_u **)&eap->arg);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
         has_second_delim = true;
@@ -3592,7 +3592,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
    */
   cmd = (char *)skipwhite((char_u *)cmd);
   if (*cmd && *cmd != '"') {        // if not end-of-line or comment
-    eap->nextcmd = check_nextcmd((char_u *)cmd);
+    eap->nextcmd = (char *)check_nextcmd((char_u *)cmd);
     if (eap->nextcmd == NULL) {
       emsg(_(e_trailing));
       return NULL;
@@ -4570,7 +4570,7 @@ void ex_global(exarg_T *eap)
   } else {
     type = (uint8_t)(*eap->cmd);
   }
-  cmd = (char *)eap->arg;
+  cmd = eap->arg;
   which_pat = RE_LAST;              // default: use last used regexp
 
   /*
@@ -4600,7 +4600,7 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    cmd = (char *)skip_regexp((char_u *)cmd, delim, p_magic, &eap->arg);
+    cmd = (char *)skip_regexp((char_u *)cmd, delim, p_magic, (char_u **)&eap->arg);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }
@@ -4776,15 +4776,15 @@ void ex_help(exarg_T *eap)
      * A ":help" command ends at the first LF, or at a '|' that is
      * followed by some text.  Set nextcmd to the following command.
      */
-    for (arg = (char *)eap->arg; *arg; arg++) {
+    for (arg = eap->arg; *arg; arg++) {
       if (*arg == '\n' || *arg == '\r'
           || (*arg == '|' && arg[1] != NUL && arg[1] != '|')) {
         *arg++ = NUL;
-        eap->nextcmd = (char_u *)arg;
+        eap->nextcmd = arg;
         break;
       }
     }
-    arg = (char *)eap->arg;
+    arg = eap->arg;
 
     if (eap->forceit && *arg == NUL && !curbuf->b_help) {
       emsg(_("E478: Don't panic!"));
@@ -5835,7 +5835,7 @@ void ex_helptags(exarg_T *eap)
   // Check for ":helptags ++t {dir}".
   if (STRNCMP(eap->arg, "++t", 3) == 0 && ascii_iswhite(eap->arg[3])) {
     add_help_tags = true;
-    eap->arg = skipwhite(eap->arg + 3);
+    eap->arg = (char *)skipwhite((char_u *)eap->arg + 3);
   }
 
   if (STRCMP(eap->arg, "ALL") == 0) {
@@ -5843,7 +5843,7 @@ void ex_helptags(exarg_T *eap)
   } else {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_DIRECTORIES;
-    dirname = (char *)ExpandOne(&xpc, eap->arg, NULL,
+    dirname = (char *)ExpandOne(&xpc, (char_u *)eap->arg, NULL,
                                 WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
     if (dirname == NULL || !os_isdir((char_u *)dirname)) {
       semsg(_("E150: Not a directory: %s"), eap->arg);
@@ -6060,7 +6060,7 @@ void ex_substitute(exarg_T *eap)
 
   block_autocmds();           // Disable events during command preview.
 
-  char *save_eap = (char *)eap->arg;
+  char *save_eap = eap->arg;
   garray_T save_view;
   win_size_save(&save_view);  // Save current window sizes.
   save_search_patterns();
@@ -6101,7 +6101,7 @@ void ex_substitute(exarg_T *eap)
   curbuf->b_p_ul = save_b_p_ul;
   curwin->w_p_cul = save_w_p_cul;   // Restore 'cursorline'
   curwin->w_p_cuc = save_w_p_cuc;   // Restore 'cursorcolumn'
-  eap->arg = (char_u *)save_eap;
+  eap->arg = save_eap;
   restore_search_patterns();
   win_size_restore(&save_view);
   ga_clear(&save_view);
@@ -6204,7 +6204,7 @@ void ex_oldfiles(exarg_T *eap)
           return;
         }
         char *const s = (char *)expand_env_save((char_u *)p);
-        eap->arg = (char_u *)s;
+        eap->arg = s;
         eap->cmdidx = CMD_edit;
         cmdmod.browse = false;
         do_exedit(eap, NULL);

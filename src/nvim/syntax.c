@@ -3032,10 +3032,10 @@ static keyentry_T *match_keyword(char_u *keyword, hashtab_T *ht, stateitem_T *cu
  */
 static void syn_cmd_conceal(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *next;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -3061,10 +3061,10 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
  */
 static void syn_cmd_case(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *next;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -3088,10 +3088,10 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
 /// Handle ":syntax foldlevel" command.
 static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *arg_end;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -3129,10 +3129,10 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
  */
 static void syn_cmd_spell(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *next;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -3164,7 +3164,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
 /// Handle ":syntax iskeyword" command.
 static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u save_chartab[32];
   char_u *save_isk;
 
@@ -3336,11 +3336,11 @@ static void syn_clear_cluster(synblock_T *block, int i)
  */
 static void syn_cmd_clear(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *arg_end;
   int id;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -3440,7 +3440,7 @@ static void syn_cmd_on(exarg_T *eap, int syncing)
  */
 static void syn_cmd_reset(exarg_T *eap, int syncing)
 {
-  eap->nextcmd = check_nextcmd(eap->arg);
+  eap->nextcmd = (char *)check_nextcmd((char_u *)eap->arg);
   if (!eap->skip) {
     init_highlight(true, true);
   }
@@ -3465,7 +3465,7 @@ static void syn_cmd_off(exarg_T *eap, int syncing)
 static void syn_cmd_onoff(exarg_T *eap, char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  eap->nextcmd = check_nextcmd(eap->arg);
+  eap->nextcmd = (char *)check_nextcmd((char_u *)eap->arg);
   if (!eap->skip) {
     did_syntax_onoff = true;
     char buf[100];
@@ -3479,7 +3479,7 @@ void syn_maybe_enable(void)
 {
   if (!did_syntax_onoff) {
     exarg_T ea;
-    ea.arg = (char_u *)"";
+    ea.arg = "";
     ea.skip = false;
     syn_cmd_on(&ea, false);
   }
@@ -3490,10 +3490,10 @@ void syn_maybe_enable(void)
 /// @param syncing  when TRUE: list syncing items
 static void syn_cmd_list(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *arg_end;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -3569,7 +3569,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
       arg = skipwhite(arg_end);
     }
   }
-  eap->nextcmd = check_nextcmd(arg);
+  eap->nextcmd = (char *)check_nextcmd(arg);
 }
 
 static void syn_lines_msg(void)
@@ -4261,7 +4261,7 @@ static void syn_incl_toplevel(int id, int *flagsp)
  */
 static void syn_cmd_include(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   int sgl_id = 1;
   char_u *group_name_end;
   char_u *rest;
@@ -4270,7 +4270,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   int prev_syn_inc_tag;
   bool source = false;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -4287,7 +4287,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
       return;
     }
     // separate_nextcmd() and expand_filename() depend on this
-    eap->arg = rest;
+    eap->arg = (char *)rest;
   }
 
   /*
@@ -4296,7 +4296,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
    */
   eap->argt |= (EX_XFILE | EX_NOSPC);
   separate_nextcmd(eap);
-  if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute(eap->arg)) {
+  if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute((char_u *)eap->arg)) {
     // For an absolute path, "$VIM/..." or "<sfile>.." we ":source" the
     // file.  Need to expand the file name first.  In other cases
     // ":runtime!" is used.
@@ -4322,8 +4322,8 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   prev_toplvl_grp = curwin->w_s->b_syn_topgrp;
   curwin->w_s->b_syn_topgrp = sgl_id;
   if (source
-      ? do_source((char *)eap->arg, false, DOSO_NONE) == FAIL
-      : source_runtime((char *)eap->arg, DIP_ALL) == FAIL) {
+      ? do_source(eap->arg, false, DOSO_NONE) == FAIL
+      : source_runtime(eap->arg, DIP_ALL) == FAIL) {
     semsg(_(e_notopen), eap->arg);
   }
   curwin->w_s->b_syn_topgrp = prev_toplvl_grp;
@@ -4335,7 +4335,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
  */
 static void syn_cmd_keyword(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *group_name_end;
   int syn_id;
   char_u *rest;
@@ -4432,7 +4432,7 @@ error:
   }
 
   if (rest != NULL) {
-    eap->nextcmd = check_nextcmd(rest);
+    eap->nextcmd = (char *)check_nextcmd(rest);
   } else {
     semsg(_(e_invarg2), arg);
   }
@@ -4448,7 +4448,7 @@ error:
 /// @param syncing  TRUE for ":syntax sync match .. "
 static void syn_cmd_match(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *group_name_end;
   char_u *rest;
   synpat_T item;                // the item found in the line
@@ -4485,7 +4485,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
     /*
      * Check for trailing command and illegal trailing arguments.
      */
-    eap->nextcmd = check_nextcmd(rest);
+    eap->nextcmd = (char *)check_nextcmd(rest);
     if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
     } else {
@@ -4546,7 +4546,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
 /// @param syncing  TRUE for ":syntax sync region .."
 static void syn_cmd_region(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *group_name_end;
   char_u *rest;                    // next arg, NULL on error
   char_u *key_end;
@@ -4692,7 +4692,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
      * Check for trailing garbage or command.
      * If OK, add the item.
      */
-    eap->nextcmd = check_nextcmd(rest);
+    eap->nextcmd = (char *)check_nextcmd(rest);
     if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
     } else {
@@ -4990,14 +4990,14 @@ static int syn_add_cluster(char_u *name)
  */
 static void syn_cmd_cluster(exarg_T *eap, int syncing)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *group_name_end;
   char_u *rest;
   bool got_clstr = false;
   int opt_len;
   int list_op;
 
-  eap->nextcmd = find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -5167,7 +5167,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
  */
 static void syn_cmd_sync(exarg_T *eap, int syncing)
 {
-  char_u *arg_start = eap->arg;
+  char_u *arg_start = (char_u *)eap->arg;
   char_u *arg_end;
   char_u *key = NULL;
   char_u *next_arg;
@@ -5267,7 +5267,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
       }
       next_arg = skipwhite(arg_end + 1);
     } else {
-      eap->arg = next_arg;
+      eap->arg = (char *)next_arg;
       if (STRCMP(key, "MATCH") == 0) {
         syn_cmd_match(eap, TRUE);
       } else if (STRCMP(key, "REGION") == 0) {
@@ -5286,7 +5286,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   if (illegal) {
     semsg(_("E404: Illegal arguments: %s"), arg_start);
   } else if (!finished) {
-    eap->nextcmd = check_nextcmd(arg_start);
+    eap->nextcmd = (char *)check_nextcmd(arg_start);
     redraw_curbuf_later(SOME_VALID);
     syn_stack_free_all(curwin->w_s);            // Need to recompute all syntax.
   }
@@ -5614,10 +5614,10 @@ static struct subcommand subcommands[] =
  */
 void ex_syntax(exarg_T *eap)
 {
-  char_u *arg = eap->arg;
+  char_u *arg = (char_u *)eap->arg;
   char_u *subcmd_end;
 
-  syn_cmdlinep = eap->cmdlinep;
+  syn_cmdlinep = (char_u **)eap->cmdlinep;
 
   // isolate subcommand name
   for (subcmd_end = arg; ASCII_ISALPHA(*subcmd_end); subcmd_end++) {}
@@ -5631,8 +5631,8 @@ void ex_syntax(exarg_T *eap)
       break;
     }
     if (STRCMP(subcmd_name, (char_u *)subcommands[i].name) == 0) {
-      eap->arg = skipwhite(subcmd_end);
-      (subcommands[i].func)(eap, FALSE);
+      eap->arg = (char *)skipwhite(subcmd_end);
+      (subcommands[i].func)(eap, false);
       break;
     }
   }
@@ -5669,7 +5669,7 @@ void ex_ownsyntax(exarg_T *eap)
   }
 
   // Apply the "syntax" autocommand event, this finds and loads the syntax file.
-  apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, true, curbuf);
+  apply_autocmds(EVENT_SYNTAX, (char_u *)eap->arg, curbuf->b_fname, true, curbuf);
 
   // Move value of b:current_syntax to w:current_syntax.
   new_value = get_var_value("b:current_syntax");
@@ -5718,7 +5718,7 @@ void reset_expand_highlight(void)
 void set_context_in_echohl_cmd(expand_T *xp, const char *arg)
 {
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = (char_u *)arg;
+  xp->xp_pattern = (char *)arg;
   include_none = 1;
 }
 
@@ -5730,7 +5730,7 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   // Default: expand subcommands.
   xp->xp_context = EXPAND_SYNTAX;
   expand_what = EXP_SUBCMD;
-  xp->xp_pattern = (char_u *)arg;
+  xp->xp_pattern = (char *)arg;
   include_link = 0;
   include_default = 0;
 
@@ -5738,8 +5738,8 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   if (*arg != NUL) {
     const char *p = (const char *)skiptowhite((const char_u *)arg);
     if (*p != NUL) {  // Past first word.
-      xp->xp_pattern = skipwhite((const char_u *)p);
-      if (*skiptowhite(xp->xp_pattern) != NUL) {
+      xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+      if (*skiptowhite((char_u *)xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
       } else if (STRNICMP(arg, "case", p - arg) == 0) {
         expand_what = EXP_CASE;
