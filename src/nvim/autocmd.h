@@ -18,7 +18,7 @@ typedef struct {
   handle_T new_curwin_handle;     ///< ID of new curwin
   handle_T save_prevwin_handle;   ///< ID of saved prevwin
   bufref_T new_curbuf;            ///< new curbuf
-  char_u *globaldir;              ///< saved value of globaldir
+  char *globaldir;                ///< saved value of globaldir
   bool save_VIsual_active;        ///< saved VIsual_active
 } aco_save_T;
 
@@ -36,7 +36,7 @@ typedef struct AutoCmd {
 typedef struct AutoPat {
   struct AutoPat *next;                 // next AutoPat in AutoPat list; MUST
                                         // be the first entry
-  char_u *pat;                          // pattern as typed (NULL when pattern
+  char *pat;                            // pattern as typed (NULL when pattern
                                         // has been removed)
   regprog_T *reg_prog;                  // compiled regprog for pattern
   AutoCmd *cmds;                        // list of commands to do
@@ -51,14 +51,13 @@ typedef struct AutoPat {
 typedef struct AutoPatCmd {
   AutoPat *curpat;          // next AutoPat to examine
   AutoCmd *nextcmd;         // next AutoCmd to execute
-  int group;                    // group being used
-  char_u *fname;           // fname to match with
-  char_u *sfname;          // sfname to match with
-  char_u *tail;            // tail of fname
-  event_T event;                // current event
-  int arg_bufnr;                // initially equal to <abuf>, set to zero when
-                                // buf is deleted
-  struct AutoPatCmd *next;    // chain of active apc-s for auto-invalidation
+  int group;                // group being used
+  char *fname;              // fname to match with
+  char *sfname;             // sfname to match with
+  char *tail;               // tail of fname
+  event_T event;            // current event
+  int arg_bufnr;            // initially equal to <abuf>, set to zero when buf is deleted
+  struct AutoPatCmd *next;  // chain of active apc-s for auto-invalidation
 } AutoPatCmd;
 
 

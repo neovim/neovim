@@ -810,4 +810,3 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
   UIData *data = ui->data;
   PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
 }
-

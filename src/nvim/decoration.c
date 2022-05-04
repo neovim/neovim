@@ -1,8 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include "nvim/buffer.h"
 #include "nvim/api/ui.h"
+#include "nvim/buffer.h"
 #include "nvim/decoration.h"
 #include "nvim/extmark.h"
 #include "nvim/highlight.h"
@@ -535,8 +535,8 @@ bool decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr, int eol_col)
   return has_virttext;
 }
 
-void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
-                         Decoration *decor, uint64_t ns_id, uint64_t mark_id)
+void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col, Decoration *decor,
+                         uint64_t ns_id, uint64_t mark_id)
 {
   if (end_row == -1) {
     end_row = start_row;

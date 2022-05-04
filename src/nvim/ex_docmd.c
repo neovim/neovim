@@ -3665,11 +3665,11 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     }
     break;
   case CMD_autocmd:
-    return (const char *)set_context_in_autocmd(xp, (char_u *)arg, false);
+    return (const char *)set_context_in_autocmd(xp, (char *)arg, false);
 
   case CMD_doautocmd:
   case CMD_doautoall:
-    return (const char *)set_context_in_autocmd(xp, (char_u *)arg, true);
+    return (const char *)set_context_in_autocmd(xp, (char *)arg, true);
   case CMD_set:
     set_context_in_set_cmd(xp, (char_u *)arg, 0);
     break;
@@ -5136,9 +5136,9 @@ static void ex_autocmd(exarg_T *eap)
     secure = 2;
     eap->errmsg = e_curdir;
   } else if (eap->cmdidx == CMD_autocmd) {
-    do_autocmd((char_u *)eap->arg, eap->forceit);
+    do_autocmd(eap->arg, eap->forceit);
   } else {
-    do_augroup((char_u *)eap->arg, eap->forceit);
+    do_augroup(eap->arg, eap->forceit);
   }
 }
 
@@ -5146,10 +5146,10 @@ static void ex_autocmd(exarg_T *eap)
 static void ex_doautocmd(exarg_T *eap)
 {
   char *arg = eap->arg;
-  int call_do_modelines = check_nomodeline((char_u **)&arg);
+  int call_do_modelines = check_nomodeline(&arg);
   bool did_aucmd;
 
-  (void)do_doautocmd((char_u *)arg, false, &did_aucmd);
+  (void)do_doautocmd(arg, false, &did_aucmd);
   // Only when there is no <nomodeline>.
   if (call_do_modelines && did_aucmd) {
     do_modelines(0);
@@ -9669,7 +9669,7 @@ static void ex_filetype(exarg_T *eap)
       }
     }
     if (*arg == 'd') {
-      (void)do_doautocmd((char_u *)"filetypedetect BufRead", true, NULL);
+      (void)do_doautocmd("filetypedetect BufRead", true, NULL);
       do_modelines(0);
     }
   } else if (STRCMP(arg, "off") == 0) {
