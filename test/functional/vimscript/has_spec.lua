@@ -68,4 +68,11 @@ describe('has()', function()
       eq(0, funcs.has('wsl'))
     end
   end)
+
+  it('does not change v:shell_error', function()
+    local nvim_prog = helpers.nvim_prog
+    funcs.system({nvim_prog, '-es', '+73cquit'})
+    funcs.has('python3') -- use a call whose implementation shells out
+    eq(73, funcs.eval('v:shell_error'))
+  end)
 end)
