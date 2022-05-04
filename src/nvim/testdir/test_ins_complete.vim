@@ -516,6 +516,15 @@ func Test_pum_stopped_by_timer()
   call delete('Xpumscript')
 endfunc
 
+func Test_complete_stopinsert_startinsert()
+  nnoremap <F2> <Cmd>startinsert<CR>
+  inoremap <F2> <Cmd>stopinsert<CR>
+  " This just checks if this causes an error
+  call feedkeys("i\<C-X>\<C-N>\<F2>\<F2>", 'x')
+  nunmap <F2>
+  iunmap <F2>
+endfunc
+
 func Test_pum_with_folds_two_tabs()
   CheckScreendump
 
