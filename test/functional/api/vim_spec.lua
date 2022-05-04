@@ -3133,7 +3133,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('echo foo', {}))
     end)
@@ -3171,7 +3171,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('4,6s/math.random/math.max/', {}))
     end)
@@ -3209,7 +3209,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('buffer 1', {}))
     end)
@@ -3247,7 +3247,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('put +', {}))
     end)
@@ -3285,7 +3285,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         },
       }, meths.parse_cmd('w!', {}))
     end)
@@ -3362,7 +3362,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('4,6MyCommand! test it', {}))
     end)
@@ -3400,7 +3400,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('argadd a.txt | argadd b.txt', {}))
     end)
@@ -3439,7 +3439,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('MyCommand test it', {}))
     end)
@@ -3479,7 +3479,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('MyCommand', {}))
     end)

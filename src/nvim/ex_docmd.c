@@ -1405,6 +1405,8 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
   if (eap->verbose_save != -1) {
     cmdinfo->verbose = p_verbose;
     p_verbose = eap->verbose_save;
+  } else {
+    cmdinfo->verbose = -1;
   }
   cmdinfo->cmdmod = cmdmod;
   cmdmod = save_cmdmod;

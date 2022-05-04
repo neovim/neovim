@@ -782,7 +782,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
 ///             - lockmarks: (boolean) |:lockmarks|.
 ///             - noswapfile: (boolean) |:noswapfile|.
 ///             - tab: (integer) |:tab|.
-///             - verbose: (integer) |:verbose|.
+///             - verbose: (integer) |:verbose|. -1 when omitted.
 ///             - vertical: (boolean) |:vertical|.
 ///             - split: (string) Split modifier string, is an empty string when there's no split
 ///                               modifier. If there is a split modifier it can be one of:
