@@ -1295,7 +1295,7 @@ void ex_listdo(exarg_T *eap)
   if (eap->cmdidx != CMD_windo && eap->cmdidx != CMD_tabdo) {
     // Don't do syntax HL autocommands.  Skipping the syntax file is a
     // great speed improvement.
-    save_ei = au_event_disable(",Syntax");
+    save_ei = (char_u *)au_event_disable(",Syntax");
 
     FOR_ALL_BUFFERS(buf) {
       buf->b_flags &= ~BF_SYN_SET;
@@ -1508,7 +1508,7 @@ void ex_listdo(exarg_T *eap)
     buf_T *bnext;
     aco_save_T aco;
 
-    au_event_restore(save_ei);
+    au_event_restore((char *)save_ei);
 
     for (buf_T *buf = firstbuf; buf != NULL; buf = bnext) {
       bnext = buf->b_next;

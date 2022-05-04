@@ -3797,7 +3797,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
   // Do filetype detection now if 'filetype' is empty.
   if (*curbuf->b_p_ft == NUL) {
     if (augroup_exists("filetypedetect")) {
-      (void)do_doautocmd((char_u *)"filetypedetect BufRead", false, NULL);
+      (void)do_doautocmd("filetypedetect BufRead", false, NULL);
     }
     do_modelines(0);
   }

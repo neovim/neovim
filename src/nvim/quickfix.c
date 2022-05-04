@@ -5229,7 +5229,7 @@ static buf_T *vgr_load_dummy_buf(char *fname, char *dirname_start, char *dirname
 {
   // Don't do Filetype autocommands to avoid loading syntax and
   // indent scripts, a great speed improvement.
-  char *save_ei = (char *)au_event_disable(",Filetype");
+  char *save_ei = au_event_disable(",Filetype");
 
   long save_mls = p_mls;
   p_mls = 0;
@@ -5239,7 +5239,7 @@ static buf_T *vgr_load_dummy_buf(char *fname, char *dirname_start, char *dirname
   buf_T *buf = load_dummy_buffer(fname, dirname_start, dirname_now);
 
   p_mls = save_mls;
-  au_event_restore((char_u *)save_ei);
+  au_event_restore(save_ei);
 
   return buf;
 }
