@@ -9,6 +9,30 @@ func Test_help_restore_snapshot()
   helpclose
 endfunc
 
+func Test_help_restore_snapshot_split()
+  " Squeeze the unnamed buffer, Xfoo and the help one side-by-side and focus
+  " the first one before calling :help.
+  let bnr = bufnr()
+  botright vsp Xfoo
+  wincmd h
+  help
+  wincmd L
+  let g:did_bufenter = v:false
+  augroup T
+    au!
+    au BufEnter Xfoo let g:did_bufenter = v:true
+  augroup END
+  helpclose
+  augroup! T
+  " We're back to the unnamed buffer.
+  call assert_equal(bnr, bufnr())
+  " No BufEnter was triggered for Xfoo.
+  call assert_equal(v:false, g:did_bufenter)
+
+  close!
+  bwipe!
+endfunc
+
 func Test_help_errors()
   call assert_fails('help doesnotexist', 'E149:')
   call assert_fails('help!', 'E478:')
