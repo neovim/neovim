@@ -16,6 +16,7 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
+#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vimscript.c.generated.h"
@@ -735,4 +736,232 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
   viml_pexpr_free_ast(east);
   viml_parser_destroy(&pstate);
   return ret;
+}
+
+/// Parse command line.
+///
+/// Doesn't check the validity of command arguments.
+///
+/// @param str       Command line string to parse. Cannot contain "\n".
+/// @param opts      Optional parameters. Reserved for future use.
+/// @param[out] err  Error details, if any.
+/// @return Dictionary containing command information, with these keys:
+///         - cmd: (string) Command name.
+///         - range: (number) Number of items in the command |<range>|. Can be 0, 1 or 2.
+///         - line1: (number) Starting line of command |<range>|. -1 if command cannot take a range.
+///                           |<line1>|
+///         - line2: (number) Final line of command |<range>|. -1 if command cannot take a range.
+///                           |<line2>|
+///         - count: (number) Any |<count>| that was supplied to the command. -1 if command cannot
+///                           take a count.
+///         - reg: (number) The optional command |<register>|, if specified. Empty string if not
+///                         specified or if command cannot take a register.
+///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
+///         - args: (array) Command arguments.
+///         - addr: (string) Value of |:command-addr|. Uses short name.
+///         - nargs: (string) Value of |:command-nargs|.
+///         - nextcmd: (string) Next command if there are multiple commands separated by a |:bar|.
+///                             Empty if there isn't a next command.
+///         - magic: (dictionary) Which characters have special meaning in the command arguments.
+///             - file: (boolean) The command expands filenames. Which means characters such as "%",
+///                               "#" and wildcards are expanded.
+///             - bar: (boolean) The "|" character is treated as a command separator and the double
+///                              quote character (\") is treated as the start of a comment.
+///         - mods: (dictionary) |:command-modifiers|.
+///             - silent: (boolean) |:silent|.
+///             - emsg_silent: (boolean) |:silent!|.
+///             - sandbox: (boolean) |:sandbox|.
+///             - noautocmd: (boolean) |:noautocmd|.
+///             - browse: (boolean) |:browse|.
+///             - confirm: (boolean) |:confirm|.
+///             - hide: (boolean) |:hide|.
+///             - keepalt: (boolean) |:keepalt|.
+///             - keepjumps: (boolean) |:keepjumps|.
+///             - keepmarks: (boolean) |:keepmarks|.
+///             - keeppatterns: (boolean) |:keeppatterns|.
+///             - lockmarks: (boolean) |:lockmarks|.
+///             - noswapfile: (boolean) |:noswapfile|.
+///             - tab: (integer) |:tab|.
+///             - verbose: (integer) |:verbose|. -1 when omitted.
+///             - vertical: (boolean) |:vertical|.
+///             - split: (string) Split modifier string, is an empty string when there's no split
+///                               modifier. If there is a split modifier it can be one of:
+///               - "aboveleft": |:aboveleft|.
+///               - "belowright": |:belowright|.
+///               - "topleft": |:topleft|.
+///               - "botright": |:botright|.
+Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
+  FUNC_API_SINCE(10) FUNC_API_FAST
+{
+  Dictionary result = ARRAY_DICT_INIT;
+
+  if (opts.size > 0) {
+    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
+    return result;
+  }
+
+  // Parse command line
+  exarg_T ea;
+  CmdParseInfo cmdinfo;
+  char_u *cmdline = (char_u *)string_to_cstr(str);
+
+  if (!parse_cmdline(cmdline, &ea, &cmdinfo)) {
+    api_set_error(err, kErrorTypeException, "Error while parsing command line");
+    goto end;
+  }
+
+  // Parse arguments
+  Array args = ARRAY_DICT_INIT;
+  size_t length = STRLEN(ea.arg);
+
+  // For nargs = 1 or '?', pass the entire argument list as a single argument,
+  // otherwise split arguments by whitespace.
+  if (ea.argt & EX_NOSPC) {
+    if (*ea.arg != NUL) {
+      ADD(args, STRING_OBJ(cstrn_to_string((char *)ea.arg, length)));
+    }
+  } else {
+    size_t end = 0;
+    size_t len = 0;
+    char *buf = xcalloc(length, sizeof(char));
+    bool done = false;
+
+    while (!done) {
+      done = uc_split_args_iter(ea.arg, length, &end, buf, &len);
+      if (len > 0) {
+        ADD(args, STRING_OBJ(cstrn_to_string(buf, len)));
+      }
+    }
+
+    xfree(buf);
+  }
+
+  ucmd_T *cmd = NULL;
+  if (ea.cmdidx == CMD_USER) {
+    cmd = USER_CMD(ea.useridx);
+  } else if (ea.cmdidx == CMD_USER_BUF) {
+    cmd = USER_CMD_GA(&curbuf->b_ucmds, ea.useridx);
+  }
+
+  if (cmd != NULL) {
+    PUT(result, "cmd", CSTR_TO_OBJ((char *)cmd->uc_name));
+  } else {
+    PUT(result, "cmd", CSTR_TO_OBJ((char *)get_command_name(NULL, ea.cmdidx)));
+  }
+
+  PUT(result, "range", INTEGER_OBJ(ea.addr_count));
+  PUT(result, "line1", INTEGER_OBJ((ea.argt & EX_RANGE) ? ea.line1 : -1));
+  PUT(result, "line2", INTEGER_OBJ((ea.argt & EX_RANGE) ? ea.line2 : -1));
+
+  if (ea.argt & EX_COUNT) {
+    if (ea.addr_count > 0 || cmd == NULL) {
+      PUT(result, "count", INTEGER_OBJ(ea.line2));
+    } else {
+      PUT(result, "count", INTEGER_OBJ(cmd->uc_def));
+    }
+  } else {
+    PUT(result, "count", INTEGER_OBJ(-1));
+  }
+
+  char reg[2];
+  reg[0] = (char)ea.regname;
+  reg[1] = '\0';
+  PUT(result, "reg", CSTR_TO_OBJ(reg));
+
+  PUT(result, "bang", BOOLEAN_OBJ(ea.forceit));
+  PUT(result, "args", ARRAY_OBJ(args));
+
+  char nargs[2];
+  if (ea.argt & EX_EXTRA) {
+    if (ea.argt & EX_NOSPC) {
+      if (ea.argt & EX_NEEDARG) {
+        nargs[0] = '1';
+      } else {
+        nargs[0] = '?';
+      }
+    } else if (ea.argt & EX_NEEDARG) {
+      nargs[0] = '+';
+    } else {
+      nargs[0] = '*';
+    }
+  } else {
+    nargs[0] = '0';
+  }
+  nargs[1] = '\0';
+  PUT(result, "nargs", CSTR_TO_OBJ(nargs));
+
+  const char *addr;
+  switch (ea.addr_type) {
+  case ADDR_LINES:
+    addr = "line";
+    break;
+  case ADDR_ARGUMENTS:
+    addr = "arg";
+    break;
+  case ADDR_BUFFERS:
+    addr = "buf";
+    break;
+  case ADDR_LOADED_BUFFERS:
+    addr = "load";
+    break;
+  case ADDR_WINDOWS:
+    addr = "win";
+    break;
+  case ADDR_TABS:
+    addr = "tab";
+    break;
+  case ADDR_QUICKFIX:
+    addr = "qf";
+    break;
+  case ADDR_NONE:
+    addr = "none";
+    break;
+  default:
+    addr = "?";
+    break;
+  }
+  PUT(result, "addr", CSTR_TO_OBJ(addr));
+  PUT(result, "nextcmd", CSTR_TO_OBJ((char *)ea.nextcmd));
+
+  Dictionary mods = ARRAY_DICT_INIT;
+  PUT(mods, "silent", BOOLEAN_OBJ(cmdinfo.silent));
+  PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.emsg_silent));
+  PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.sandbox));
+  PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.noautocmd));
+  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.tab));
+  PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.verbose));
+  PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.browse));
+  PUT(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.confirm));
+  PUT(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.hide));
+  PUT(mods, "keepalt", BOOLEAN_OBJ(cmdinfo.cmdmod.keepalt));
+  PUT(mods, "keepjumps", BOOLEAN_OBJ(cmdinfo.cmdmod.keepjumps));
+  PUT(mods, "keepmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.keepmarks));
+  PUT(mods, "keeppatterns", BOOLEAN_OBJ(cmdinfo.cmdmod.keeppatterns));
+  PUT(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.lockmarks));
+  PUT(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.noswapfile));
+  PUT(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.split & WSP_VERT));
+
+  const char *split;
+  if (cmdinfo.cmdmod.split & WSP_BOT) {
+    split = "botright";
+  } else if (cmdinfo.cmdmod.split & WSP_TOP) {
+    split = "topleft";
+  } else if (cmdinfo.cmdmod.split & WSP_BELOW) {
+    split = "belowright";
+  } else if (cmdinfo.cmdmod.split & WSP_ABOVE) {
+    split = "aboveleft";
+  } else {
+    split = "";
+  }
+  PUT(mods, "split", CSTR_TO_OBJ(split));
+
+  PUT(result, "mods", DICTIONARY_OBJ(mods));
+
+  Dictionary magic = ARRAY_DICT_INIT;
+  PUT(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
+  PUT(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
+  PUT(result, "magic", DICTIONARY_OBJ(magic));
+end:
+  xfree(cmdline);
+  return result;
 }

@@ -3104,8 +3104,11 @@ describe('API', function()
         cmd = 'echo',
         args = { 'foo' },
         bang = false,
-        line1 = 1,
-        line2 = 1,
+        line1 = -1,
+        line2 = -1,
+        range = 0,
+        count = -1,
+        reg = '',
         addr = 'none',
         magic = {
             file = false,
@@ -3130,7 +3133,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('echo foo', {}))
     end)
@@ -3141,6 +3144,9 @@ describe('API', function()
         bang = false,
         line1 = 4,
         line2 = 6,
+        range = 2,
+        count = -1,
+        reg = '',
         addr = 'line',
         magic = {
             file = false,
@@ -3165,9 +3171,85 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('4,6s/math.random/math.max/', {}))
+    end)
+    it('works with count', function()
+      eq({
+        cmd = 'buffer',
+        args = {},
+        bang = false,
+        line1 = 1,
+        line2 = 1,
+        range = 1,
+        count = 1,
+        reg = '',
+        addr = 'buf',
+        magic = {
+            file = false,
+            bar = true
+        },
+        nargs = '*',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = -1
+        }
+      }, meths.parse_cmd('buffer 1', {}))
+    end)
+    it('works with register', function()
+      eq({
+        cmd = 'put',
+        args = {},
+        bang = false,
+        line1 = 1,
+        line2 = 1,
+        range = 0,
+        count = -1,
+        reg = '+',
+        addr = 'line',
+        magic = {
+            file = false,
+            bar = true
+        },
+        nargs = '0',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = -1
+        }
+      }, meths.parse_cmd('put +', {}))
     end)
     it('works with bang', function()
       eq({
@@ -3176,6 +3258,9 @@ describe('API', function()
         bang = true,
         line1 = 1,
         line2 = 1,
+        range = 0,
+        count = -1,
+        reg = '',
         addr = 'line',
         magic = {
             file = true,
@@ -3200,7 +3285,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         },
       }, meths.parse_cmd('w!', {}))
     end)
@@ -3211,6 +3296,9 @@ describe('API', function()
         bang = false,
         line1 = 1,
         line2 = 1,
+        range = 0,
+        count = -1,
+        reg = '',
         addr = '?',
         magic = {
             file = true,
@@ -3247,6 +3335,9 @@ describe('API', function()
         bang = true,
         line1 = 4,
         line2 = 6,
+        range = 2,
+        count = -1,
+        reg = '',
         addr = 'line',
         magic = {
             file = false,
@@ -3271,7 +3362,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('4,6MyCommand! test it', {}))
     end)
@@ -3282,6 +3373,9 @@ describe('API', function()
         bang = false,
         line1 = 0,
         line2 = 0,
+        range = 0,
+        count = -1,
+        reg = '',
         addr = 'arg',
         magic = {
             file = true,
@@ -3306,7 +3400,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('argadd a.txt | argadd b.txt', {}))
     end)
@@ -3316,8 +3410,11 @@ describe('API', function()
         cmd = 'MyCommand',
         args = { 'test it' },
         bang = false,
-        line1 = 1,
-        line2 = 1,
+        line1 = -1,
+        line2 = -1,
+        range = 0,
+        count = -1,
+        reg = '',
         addr = 'none',
         magic = {
             file = false,
@@ -3342,7 +3439,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('MyCommand test it', {}))
     end)
@@ -3355,6 +3452,9 @@ describe('API', function()
         bang = false,
         line1 = 1,
         line2 = 2,
+        range = 0,
+        count = -1,
+        reg = '',
         addr = 'buf',
         magic = {
             file = false,
@@ -3379,7 +3479,7 @@ describe('API', function()
           vertical = false,
           split = "",
           tab = 0,
-          verbose = 0
+          verbose = -1
         }
       }, meths.parse_cmd('MyCommand', {}))
     end)
