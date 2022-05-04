@@ -7108,7 +7108,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // overwrites if the old contents is being put.
       was_visual = true;
       regname = cap->oap->regname;
-      bool save_unnamed = cap->cmdchar == 'P';
+      bool keep_registers = cap->cmdchar == 'P';
       // '+' and '*' could be the same selection
       bool clipoverwrite = (regname == '+' || regname == '*') && (cb_flags & CB_UNNAMEDMASK);
       if (regname == 0 || regname == '"' || clipoverwrite
@@ -7126,7 +7126,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
 
         cap->cmdchar = 'd';
         cap->nchar = NUL;
-        cap->oap->regname = save_unnamed ? '_' : NUL;
+        cap->oap->regname = keep_registers ? '_' : NUL;
         msg_silent++;
         nv_operator(cap);
         do_pending_operator(cap, 0, false);
