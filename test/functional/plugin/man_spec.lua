@@ -2,13 +2,19 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local command, eval, rawfeed = helpers.command, helpers.eval, helpers.rawfeed
 local clear = helpers.clear
+local funcs = helpers.funcs
+local nvim_prog = helpers.nvim_prog
+local matches = helpers.matches
 
 describe(':Man', function()
+  before_each(function()
+    clear()
+  end)
+
   describe('man.lua: highlight_line()', function()
     local screen
 
     before_each(function()
-      clear()
       command('syntax on')
       command('set filetype=man')
       command('syntax off')  -- Ignore syntax groups
@@ -136,5 +142,11 @@ describe(':Man', function()
                                                            |
       ]])
     end)
+  end)
+
+  it('q quits in "$MANPAGER mode" (:Man!) #18281', function()
+    -- This will hang if #18281 regresses.
+    local args = {nvim_prog, '--headless', '+autocmd VimLeave * echo "quit works!!"', '+Man!', '+call nvim_input("q")'}
+    matches('quit works!!', funcs.system(args, {'manpage contents'}))
   end)
 end)

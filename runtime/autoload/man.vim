@@ -125,9 +125,7 @@ endfunction
 function! s:set_options(pager) abort
   setlocal noswapfile buftype=nofile bufhidden=hide
   setlocal nomodified readonly nomodifiable
-  if a:pager
-    nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
-  endif
+  let b:pager = a:pager
   setlocal filetype=man
 endfunction
 
