@@ -64,6 +64,7 @@ static int64_t next_autocmd_id = 1;
 ///         containing the following fields:
 ///             - id (number): the autocommand id (only when defined with the API).
 ///             - group (integer): the autocommand group id.
+///             - group_name (string): the autocommand group name.
 ///             - desc (string): the autocommand description.
 ///             - event (string): the autocommand event.
 ///             - command (string): the autocommand command.
@@ -269,6 +270,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
 
         if (ap->group != AUGROUP_DEFAULT) {
           PUT(autocmd_info, "group", INTEGER_OBJ(ap->group));
+          PUT(autocmd_info, "group_name", CSTR_TO_OBJ(augroup_name(ap->group)));
         }
 
         if (ac->id > 0) {
