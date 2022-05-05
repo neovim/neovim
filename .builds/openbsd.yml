@@ -23,6 +23,11 @@ environment:
   CMAKE_EXTRA_FLAGS: -DCI_BUILD=ON -DMIN_LOG_LEVEL=3
 
 tasks:
+- should-run: |
+    if ! git -C neovim diff --name-only HEAD^! | grep -E -v "^(.github|runtime/doc/.*)" >/dev/null; then
+      echo "Skipping build because only ignored files were changed"
+      complete-build
+    fi
 - build-deps: |
     export AUTOCONF_VERSION=2.71
     export AUTOMAKE_VERSION=1.16
