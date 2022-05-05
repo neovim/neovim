@@ -2395,9 +2395,9 @@ static void u_undoredo(int undo, bool do_buf_event)
          * should get rid of, by replacing it with the new line
          */
         if (empty_buffer && lnum == 0) {
-          ml_replace((linenr_T)1, uep->ue_array[i], true);
+          ml_replace((linenr_T)1, (char *)uep->ue_array[i], true);
         } else {
-          ml_append(lnum, uep->ue_array[i], (colnr_T)0, false);
+          ml_append(lnum, (char *)uep->ue_array[i], (colnr_T)0, false);
         }
         xfree(uep->ue_array[i]);
       }
@@ -3108,7 +3108,7 @@ void u_undoline(void)
   }
 
   oldp = u_save_line(curbuf->b_u_line_lnum);
-  ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, true);
+  ml_replace(curbuf->b_u_line_lnum, (char *)curbuf->b_u_line_ptr, true);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum - 1, 0, (colnr_T)STRLEN(oldp),
                       (colnr_T)STRLEN(curbuf->b_u_line_ptr), kExtmarkUndo);

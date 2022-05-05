@@ -565,7 +565,7 @@ void tv_list_append_allocated_string(list_T *const l, char *const str)
   tv_list_append_owned_tv(l, (typval_T) {
     .v_type = VAR_STRING,
     .v_lock = VAR_UNLOCKED,
-    .vval.v_string = (char_u *)str,
+    .vval.v_string = str,
   });
 }
 
@@ -1139,7 +1139,7 @@ void callback_free(Callback *callback)
 {
   switch (callback->type) {
   case kCallbackFuncref:
-    func_unref(callback->data.funcref);
+    func_unref((char_u *)callback->data.funcref);
     xfree(callback->data.funcref);
     break;
   case kCallbackPartial:
@@ -1167,8 +1167,8 @@ void callback_put(Callback *cb, typval_T *tv)
     break;
   case kCallbackFuncref:
     tv->v_type = VAR_FUNC;
-    tv->vval.v_string = vim_strsave(cb->data.funcref);
-    func_ref(cb->data.funcref);
+    tv->vval.v_string = xstrdup(cb->data.funcref);
+    func_ref((char_u *)cb->data.funcref);
     break;
   case kCallbackLua:
   // TODO(tjdevries): Unified Callback.
@@ -1193,8 +1193,8 @@ void callback_copy(Callback *dest, Callback *src)
     dest->data.partial->pt_refcount++;
     break;
   case kCallbackFuncref:
-    dest->data.funcref = vim_strsave(src->data.funcref);
-    func_ref(src->data.funcref);
+    dest->data.funcref = xstrdup(src->data.funcref);
+    func_ref((char_u *)src->data.funcref);
     break;
   case kCallbackLua:
     dest->data.luaref = api_new_luaref(src->data.luaref);
@@ -1288,7 +1288,7 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key, typval_T 
   argv[0].vval.v_dict = dict;
   argv[1].v_type = VAR_STRING;
   argv[1].v_lock = VAR_UNLOCKED;
-  argv[1].vval.v_string = (char_u *)xstrdup(key);
+  argv[1].vval.v_string = xstrdup(key);
   argv[2].v_type = VAR_DICT;
   argv[2].v_lock = VAR_UNLOCKED;
   argv[2].vval.v_dict = tv_dict_alloc();
@@ -1906,7 +1906,7 @@ int tv_dict_add_allocated_str(dict_T *const d, const char *const key, const size
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   item->di_tv.v_type = VAR_STRING;
-  item->di_tv.vval.v_string = (char_u *)val;
+  item->di_tv.vval.v_string = val;
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
@@ -2532,7 +2532,7 @@ void tv_free(typval_T *tv)
       partial_unref(tv->vval.v_partial);
       break;
     case VAR_FUNC:
-      func_unref(tv->vval.v_string);
+      func_unref((char_u *)tv->vval.v_string);
       FALLTHROUGH;
     case VAR_STRING:
       xfree(tv->vval.v_string);
@@ -2583,9 +2583,9 @@ void tv_copy(const typval_T *const from, typval_T *const to)
   case VAR_STRING:
   case VAR_FUNC:
     if (from->vval.v_string != NULL) {
-      to->vval.v_string = vim_strsave(from->vval.v_string);
+      to->vval.v_string = xstrdup(from->vval.v_string);
       if (from->v_type == VAR_FUNC) {
-        func_ref(to->vval.v_string);
+        func_ref((char_u *)to->vval.v_string);
       }
     }
     break;
@@ -3071,7 +3071,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   case VAR_STRING: {
     varnumber_T n = 0;
     if (tv->vval.v_string != NULL) {
-      vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0,
+      vim_str2nr((char_u *)tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0,
                  false);
     }
     return n;

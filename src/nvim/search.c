@@ -5120,7 +5120,7 @@ static void fuzzy_match_in_list(list_T *const l, char_u *const str, const bool m
     rettv.v_type = VAR_UNKNOWN;
     const typval_T *const tv = TV_LIST_ITEM_TV(li);
     if (tv->v_type == VAR_STRING) {  // list of strings
-      itemstr = tv->vval.v_string;
+      itemstr = (char_u *)tv->vval.v_string;
     } else if (tv->v_type == VAR_DICT && (key != NULL || item_cb->type != kCallbackNone)) {
       // For a dict, either use the specified key to lookup the string or
       // use the specified callback function to get the string.
@@ -5136,7 +5136,7 @@ static void fuzzy_match_in_list(list_T *const l, char_u *const str, const bool m
         argv[1].v_type = VAR_UNKNOWN;
         if (callback_call(item_cb, 1, argv, &rettv)) {
           if (rettv.v_type == VAR_STRING) {
-            itemstr = rettv.vval.v_string;
+            itemstr = (char_u *)rettv.vval.v_string;
           }
         }
         tv_dict_unref(tv->vval.v_dict);

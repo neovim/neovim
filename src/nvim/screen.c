@@ -1983,7 +1983,7 @@ static inline void provider_err_virt_text(linenr_T lnum, char *err)
   kv_push(err_decor.virt_text,
           ((VirtTextChunk){ .text = provider_err,
                             .hl_id = hl_err }));
-  err_decor.virt_text_width = mb_string2cells((char_u *)err);
+  err_decor.virt_text_width = mb_string2cells(err);
   decor_add_ephemeral(lnum - 1, 0, lnum - 1, 0, &err_decor, 0, 0);
 }
 
@@ -4513,10 +4513,10 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
 
           // TODO(oni-link): Is sign text already extended to
           // full cell width?
-          assert((size_t)win_signcol_width(wp) >= mb_string2cells(*pp_extra));
+          assert((size_t)win_signcol_width(wp) >= mb_string2cells((char *)(*pp_extra)));
           // symbol(s) bytes + (filling spaces) (one byte each)
           *n_extrap = symbol_blen +
-                      (win_signcol_width(wp) - mb_string2cells(*pp_extra));
+                      (win_signcol_width(wp) - mb_string2cells((char *)(*pp_extra)));
 
           assert(extra_size > (size_t)symbol_blen);
           memset(extra, ' ', extra_size);
@@ -5229,7 +5229,7 @@ static void win_redr_status(win_T *wp)
       int clen = 0, i;
 
       // Count total number of display cells.
-      clen = (int)mb_string2cells(p);
+      clen = (int)mb_string2cells((char *)p);
 
       // Find first character that will fit.
       // Going from start to end is much faster for DBCS.

@@ -1533,7 +1533,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
   int row_offset = term->sb_pending;
   while (term->sb_pending > 0 && buf->b_ml.ml_line_count < height) {
     fetch_row(term, term->sb_pending - row_offset - 1, width);
-    ml_append(0, (uint8_t *)term->textbuf, 0, false);
+    ml_append(0, term->textbuf, 0, false);
     appended_lines(0, 1);
     term->sb_pending--;
   }
@@ -1551,7 +1551,7 @@ static void refresh_scrollback(Terminal *term, buf_T *buf)
     }
     fetch_row(term, -term->sb_pending - row_offset, width);
     int buf_index = (int)buf->b_ml.ml_line_count - height;
-    ml_append(buf_index, (uint8_t *)term->textbuf, 0, false);
+    ml_append(buf_index, term->textbuf, 0, false);
     appended_lines(buf_index, 1);
     term->sb_pending--;
   }
@@ -1591,10 +1591,10 @@ static void refresh_screen(Terminal *term, buf_T *buf)
     fetch_row(term, r, width);
 
     if (linenr <= buf->b_ml.ml_line_count) {
-      ml_replace(linenr, (uint8_t *)term->textbuf, true);
+      ml_replace(linenr, term->textbuf, true);
       changed++;
     } else {
-      ml_append(linenr - 1, (uint8_t *)term->textbuf, 0, false);
+      ml_append(linenr - 1, term->textbuf, 0, false);
       added++;
     }
   }

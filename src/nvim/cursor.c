@@ -171,7 +171,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         memcpy(newline, line, (size_t)idx);
         memset(newline + idx, ' ', (size_t)correct);
 
-        ml_replace(pos->lnum, newline, false);
+        ml_replace(pos->lnum, (char *)newline, false);
         inserted_bytes(pos->lnum, (colnr_T)idx, 0, correct);
         idx += correct;
         col = wcol;
@@ -197,7 +197,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         STRICT_SUB(n, 1, &n, size_t);
         memcpy(newline + idx + csize, line + idx + 1, n);
 
-        ml_replace(pos->lnum, newline, false);
+        ml_replace(pos->lnum, (char *)newline, false);
         inserted_bytes(pos->lnum, idx, 1, csize);
         idx += (csize - 1 + correct);
         col += correct;

@@ -2187,7 +2187,7 @@ doend:
   }
   do_errthrow(cstack,
               (ea.cmdidx != CMD_SIZE
-               && !IS_USER_CMDIDX(ea.cmdidx)) ? (char *)cmdnames[(int)ea.cmdidx].cmd_name : NULL);
+               && !IS_USER_CMDIDX(ea.cmdidx)) ? cmdnames[(int)ea.cmdidx].cmd_name : NULL);
 
   undo_cmdmod(&ea, save_msg_scroll);
   cmdmod = save_cmdmod;
@@ -3079,7 +3079,7 @@ int cmd_exists(const char *const name)
 void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   exarg_T ea;
-  char *name = (char *)argvars[0].vval.v_string;
+  char *name = argvars[0].vval.v_string;
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
@@ -3099,9 +3099,10 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  rettv->vval.v_string = vim_strsave(IS_USER_CMDIDX(ea.cmdidx)
-                                     ? (char_u *)get_user_command_name(ea.useridx, ea.cmdidx)
-                                     : cmdnames[ea.cmdidx].cmd_name);
+  rettv->vval.v_string = (char *)vim_strsave(IS_USER_CMDIDX(ea.cmdidx)
+                                             ? (char_u *)get_user_command_name(ea.useridx,
+                                                                               ea.cmdidx)
+                                             : (char_u *)cmdnames[ea.cmdidx].cmd_name);
 }
 
 /// This is all pretty much copied from do_one_cmd(), with all the extra stuff
@@ -5315,7 +5316,7 @@ char_u *get_command_name(expand_T *xp, int idx)
   if (idx >= CMD_SIZE) {
     return (char_u *)expand_user_command_name(idx);
   }
-  return cmdnames[idx].cmd_name;
+  return (char_u *)cmdnames[idx].cmd_name;
 }
 
 /// Check for a valid user command name
@@ -9011,7 +9012,7 @@ static void ex_findpat(exarg_T *eap)
 static void ex_ptag(exarg_T *eap)
 {
   g_do_tagpreview = (int)p_pvh;    // will be reset to 0 in ex_tag_cmd()
-  ex_tag_cmd(eap, (char *)cmdnames[eap->cmdidx].cmd_name + 1);
+  ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name + 1);
 }
 
 /// ":pedit"
@@ -9041,7 +9042,7 @@ static void ex_stag(exarg_T *eap)
   postponed_split = -1;
   postponed_split_flags = cmdmod.split;
   postponed_split_tab = cmdmod.tab;
-  ex_tag_cmd(eap, (char *)cmdnames[eap->cmdidx].cmd_name + 1);
+  ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name + 1);
   postponed_split_flags = 0;
   postponed_split_tab = 0;
 }
@@ -9049,7 +9050,7 @@ static void ex_stag(exarg_T *eap)
 /// ":tag", ":tselect", ":tjump", ":tnext", etc.
 static void ex_tag(exarg_T *eap)
 {
-  ex_tag_cmd(eap, (char *)cmdnames[eap->cmdidx].cmd_name);
+  ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name);
 }
 
 static void ex_tag_cmd(exarg_T *eap, char *name)

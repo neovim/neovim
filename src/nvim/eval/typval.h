@@ -77,7 +77,7 @@ typedef enum {
 
 typedef struct {
   union {
-    char_u *funcref;
+    char *funcref;
     partial_T *partial;
     LuaRef luaref;
   } data;
@@ -133,19 +133,19 @@ typedef enum {
 
 /// Structure that holds an internal variable value
 typedef struct {
-  VarType v_type;  ///< Variable type.
-  VarLockStatus v_lock;  ///< Variable lock status.
+  VarType v_type;               ///< Variable type.
+  VarLockStatus v_lock;         ///< Variable lock status.
   union typval_vval_union {
-    varnumber_T v_number;  ///< Number, for VAR_NUMBER.
+    varnumber_T v_number;       ///< Number, for VAR_NUMBER.
     BoolVarValue v_bool;        ///< Bool value, for VAR_BOOL
     SpecialVarValue v_special;  ///< Special value, for VAR_SPECIAL.
-    float_T v_float;  ///< Floating-point number, for VAR_FLOAT.
-    char_u *v_string;  ///< String, for VAR_STRING and VAR_FUNC, can be NULL.
-    list_T *v_list;  ///< List for VAR_LIST, can be NULL.
-    dict_T *v_dict;  ///< Dictionary for VAR_DICT, can be NULL.
-    partial_T *v_partial;  ///< Closure: function with args.
-    blob_T *v_blob;  ///< Blob for VAR_BLOB, can be NULL.
-  } vval;  ///< Actual value.
+    float_T v_float;            ///< Floating-point number, for VAR_FLOAT.
+    char *v_string;             ///< String, for VAR_STRING and VAR_FUNC, can be NULL.
+    list_T *v_list;             ///< List for VAR_LIST, can be NULL.
+    dict_T *v_dict;             ///< Dictionary for VAR_DICT, can be NULL.
+    partial_T *v_partial;       ///< Closure: function with args.
+    blob_T *v_blob;             ///< Blob for VAR_BLOB, can be NULL.
+  } vval;                       ///< Actual value.
 } typval_T;
 
 /// Values for (struct dictvar_S).dv_scope

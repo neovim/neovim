@@ -669,7 +669,7 @@ void ex_sort(exarg_T *eap)
       // Copy the line into a buffer, it may become invalid in
       // ml_append(). And it's needed for "unique".
       STRCPY(sortbuf1, s);
-      if (ml_append(lnum++, (char_u *)sortbuf1, (colnr_T)0, false) == FAIL) {
+      if (ml_append(lnum++, sortbuf1, (colnr_T)0, false) == FAIL) {
         break;
       }
       new_count += bytelen;
@@ -825,7 +825,7 @@ void ex_retab(exarg_T *eap)
             for (col = 0; col < len; col++) {
               ptr[col] = (col < num_tabs) ? '\t' : ' ';
             }
-            if (ml_replace(lnum, (char_u *)new_line, false) == OK) {
+            if (ml_replace(lnum, new_line, false) == OK) {
               // "new_line" may have been copied
               new_line = (char *)curbuf->b_ml.ml_line_ptr;
               extmark_splice_cols(curbuf, lnum - 1, 0, (colnr_T)old_len,
@@ -947,7 +947,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
   for (extra = 0, l = line1; l <= line2; l++) {
     str = (char *)vim_strsave(ml_get(l + extra));
-    ml_append(dest + l - line1, (char_u *)str, (colnr_T)0, false);
+    ml_append(dest + l - line1, str, (colnr_T)0, false);
     xfree(str);
     if (dest < line1) {
       extra++;
@@ -1088,7 +1088,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
     // need to use vim_strsave() because the line will be unlocked within
     // ml_append()
     p = (char *)vim_strsave(ml_get(line1));
-    ml_append(curwin->w_cursor.lnum, (char_u *)p, (colnr_T)0, false);
+    ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, false);
     xfree(p);
 
     // situation 2: skip already copied lines
@@ -3008,7 +3008,7 @@ void ex_append(exarg_T *eap)
     }
 
     did_undo = true;
-    ml_append(lnum, (char_u *)theline, (colnr_T)0, false);
+    ml_append(lnum, theline, (colnr_T)0, false);
     if (empty) {
       // there are no marks below the inserted lines
       appended_lines(lnum, 1L);
@@ -3912,7 +3912,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
                 // before the cursor.
                 len_change = (int)STRLEN(new_line) - (int)STRLEN(orig_line);
                 curwin->w_cursor.col += len_change;
-                ml_replace(lnum, (char_u *)new_line, false);
+                ml_replace(lnum, new_line, false);
               }
 
               search_match_lines = regmatch.endpos[0].lnum
@@ -3959,7 +3959,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
 
               // restore the line
               if (orig_line != NULL) {
-                ml_replace(lnum, (char_u *)orig_line, false);
+                ml_replace(lnum, orig_line, false);
               }
             }
 
@@ -4156,7 +4156,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
             } else if (*p1 == CAR) {
               if (u_inssub(lnum) == OK) {             // prepare for undo
                 *p1 = NUL;                            // truncate up to the CR
-                ml_append(lnum - 1, (char_u *)new_start,
+                ml_append(lnum - 1, new_start,
                           (colnr_T)(p1 - new_start + 1), false);
                 mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, kExtmarkNOOP);
 
@@ -4250,7 +4250,7 @@ skip:
             if (u_savesub(lnum) != OK) {
               break;
             }
-            ml_replace(lnum, (char_u *)new_start, true);
+            ml_replace(lnum, new_start, true);
 
             if (nmatch_tl > 0) {
               /*
@@ -5492,7 +5492,7 @@ void fix_help_buffer(void)
                 }
                 convert_setup(&vc, NULL, NULL);
 
-                ml_append(lnum, (char_u *)cp, (colnr_T)0, false);
+                ml_append(lnum, cp, (colnr_T)0, false);
                 if ((char_u *)cp != IObuff) {
                   xfree(cp);
                 }
@@ -5998,9 +5998,9 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines
         snprintf(str, line_size, "|%*ld| %s", col_width - 3,
                  next_linenr, line);
         if (linenr_preview == 0) {
-          ml_replace(1, (char_u *)str, true);
+          ml_replace(1, str, true);
         } else {
-          ml_append(linenr_preview, (char_u *)str, (colnr_T)line_size, false);
+          ml_append(linenr_preview, str, (colnr_T)line_size, false);
         }
         linenr_preview += 1;
       }

@@ -750,11 +750,11 @@ static int pum_set_selected(int n, int repeat)
           for (p = pum_array[pum_selected].pum_info; *p != NUL;) {
             e = vim_strchr(p, '\n');
             if (e == NULL) {
-              ml_append(lnum++, p, 0, false);
+              ml_append(lnum++, (char *)p, 0, false);
               break;
             } else {
               *e = NUL;
-              ml_append(lnum++, p, (int)(e - p + 1), false);
+              ml_append(lnum++, (char *)p, (int)(e - p + 1), false);
               *e = '\n';
               p = e + 1;
             }

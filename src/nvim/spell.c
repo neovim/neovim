@@ -3063,7 +3063,7 @@ void spell_suggest(int count)
     AppendCharToRedobuff(ESC);
 
     // "p" may be freed here
-    ml_replace(curwin->w_cursor.lnum, p, false);
+    ml_replace(curwin->w_cursor.lnum, (char *)p, false);
     curwin->w_cursor.col = c;
 
     inserted_bytes(curwin->w_cursor.lnum, c, stp->st_orglen, stp->st_wordlen);
@@ -3177,7 +3177,7 @@ void ex_spellrepall(exarg_T *eap)
       memmove(p, line, curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
-      ml_replace(curwin->w_cursor.lnum, p, false);
+      ml_replace(curwin->w_cursor.lnum, (char *)p, false);
       changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
       if (curwin->w_cursor.lnum != prev_lnum) {
@@ -6964,7 +6964,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
   if (do_region && region_names != NULL) {
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "/regions=%s", region_names);
-      ml_append(lnum++, IObuff, (colnr_T)0, false);
+      ml_append(lnum++, (char *)IObuff, (colnr_T)0, false);
     }
   } else {
     do_region = false;
@@ -6980,7 +6980,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
 
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "# file: %s", slang->sl_fname);
-      ml_append(lnum++, IObuff, (colnr_T)0, false);
+      ml_append(lnum++, (char *)IObuff, (colnr_T)0, false);
     }
 
     // When matching with a pattern and there are no prefixes only use
@@ -7151,7 +7151,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
       }
     }
 
-    ml_append(lnum, p, (colnr_T)0, false);
+    ml_append(lnum, (char *)p, (colnr_T)0, false);
   } else if (((dumpflags & DUMPFLAG_ICASE)
               ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
               : STRNCMP(p, pat, STRLEN(pat)) == 0)

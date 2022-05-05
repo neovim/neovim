@@ -474,7 +474,7 @@ Integer nvim_strwidth(String text, Error *err)
     return 0;
   }
 
-  return (Integer)mb_string2cells((char_u *)text.data);
+  return (Integer)mb_string2cells(text.data);
 }
 
 /// Gets the paths contained in 'runtimepath'.

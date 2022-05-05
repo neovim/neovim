@@ -452,7 +452,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
       goto end;
     }
 
-    if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
+    if (ml_replace((linenr_T)lnum, lines[i], false) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to replace line");
       goto end;
     }
@@ -472,7 +472,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
       goto end;
     }
 
-    if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
+    if (ml_append((linenr_T)lnum, lines[i], 0, false) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to insert line");
       goto end;
     }
@@ -692,7 +692,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
       goto end;
     }
 
-    if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
+    if (ml_replace((linenr_T)lnum, lines[i], false) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to replace line");
       goto end;
     }
@@ -710,7 +710,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
       goto end;
     }
 
-    if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
+    if (ml_append((linenr_T)lnum, lines[i], 0, false) == FAIL) {
       api_set_error(err, kErrorTypeException, "Failed to insert line");
       goto end;
     }

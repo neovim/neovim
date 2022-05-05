@@ -562,11 +562,11 @@ int utf_ptr2cells_len(const char_u *p, int size)
 /// @param str The source string, may not be NULL, must be a NUL-terminated
 ///            string.
 /// @return The number of cells occupied by string `str`
-size_t mb_string2cells(const char_u *str)
+size_t mb_string2cells(const char *str)
 {
   size_t clen = 0;
 
-  for (const char_u *p = str; *p != NUL; p += utfc_ptr2len(p)) {
+  for (const char_u *p = (char_u *)str; *p != NUL; p += utfc_ptr2len(p)) {
     clen += utf_ptr2cells(p);
   }
 

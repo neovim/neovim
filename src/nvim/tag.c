@@ -1156,9 +1156,9 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
   }
 
   args[0].v_type = VAR_STRING;
-  args[0].vval.v_string = pat;
+  args[0].vval.v_string = (char *)pat;
   args[1].v_type = VAR_STRING;
-  args[1].vval.v_string = flagString;
+  args[1].vval.v_string = (char *)flagString;
 
   // create 'info' dict argument
   dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
@@ -1229,20 +1229,20 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
 
       len += STRLEN(tv->vval.v_string) + 1;   // Space for "\tVALUE"
       if (!STRCMP(dict_key, "name")) {
-        res_name = tv->vval.v_string;
+        res_name = (char_u *)tv->vval.v_string;
         continue;
       }
       if (!STRCMP(dict_key, "filename")) {
-        res_fname = tv->vval.v_string;
+        res_fname = (char_u *)tv->vval.v_string;
         continue;
       }
       if (!STRCMP(dict_key, "cmd")) {
-        res_cmd = tv->vval.v_string;
+        res_cmd = (char_u *)tv->vval.v_string;
         continue;
       }
       has_extra = 1;
       if (!STRCMP(dict_key, "kind")) {
-        res_kind = tv->vval.v_string;
+        res_kind = (char_u *)tv->vval.v_string;
         continue;
       }
       // Other elements will be stored as "\tKEY:VALUE"

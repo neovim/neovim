@@ -2856,13 +2856,13 @@ int fix_input_buffer(char_u *buf, int len)
 /// @param[in] orig_rhs_len   `strlen` of orig_rhs.
 /// @param[in] cpo_flags  See param docs for @ref replace_termcodes.
 /// @param[out] mapargs   MapArguments struct holding the replaced strings.
-void set_maparg_lhs_rhs(const char_u *const orig_lhs, const size_t orig_lhs_len,
-                        const char_u *const orig_rhs, const size_t orig_rhs_len,
-                        const LuaRef rhs_lua, const int cpo_flags, MapArguments *const mapargs)
+void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
+                        const char *const orig_rhs, const size_t orig_rhs_len, const LuaRef rhs_lua,
+                        const int cpo_flags, MapArguments *const mapargs)
 {
-  char_u *lhs_buf = NULL;
-  char_u *alt_lhs_buf = NULL;
-  char_u *rhs_buf = NULL;
+  char *lhs_buf = NULL;
+  char *alt_lhs_buf = NULL;
+  char *rhs_buf = NULL;
 
   // If mapping has been given as ^V<C_UP> say, then replace the term codes
   // with the appropriate two bytes. If it is a shifted special key, unshift
@@ -2874,13 +2874,15 @@ void set_maparg_lhs_rhs(const char_u *const orig_lhs, const size_t orig_lhs_len,
   // If something like <C-H> is simplified to 0x08 then mark it as simplified.
   bool did_simplify = false;
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
-  char_u *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &lhs_buf, flags, &did_simplify,
-                                       cpo_flags);
+  char *replaced = (char *)replace_termcodes((char_u *)orig_lhs, orig_lhs_len, (char_u **)&lhs_buf,
+                                             flags, &did_simplify,
+                                             cpo_flags);
   mapargs->lhs_len = STRLEN(replaced);
   STRLCPY(mapargs->lhs, replaced, sizeof(mapargs->lhs));
   if (did_simplify) {
-    replaced = replace_termcodes(orig_lhs, orig_lhs_len, &alt_lhs_buf, flags | REPTERM_NO_SIMPLIFY,
-                                 NULL, cpo_flags);
+    replaced = (char *)replace_termcodes((char_u *)orig_lhs, orig_lhs_len, (char_u **)&alt_lhs_buf,
+                                         flags | REPTERM_NO_SIMPLIFY,
+                                         NULL, cpo_flags);
     mapargs->alt_lhs_len = STRLEN(replaced);
     STRLCPY(mapargs->alt_lhs, replaced, sizeof(mapargs->alt_lhs));
   } else {
@@ -2899,8 +2901,8 @@ void set_maparg_lhs_rhs(const char_u *const orig_lhs, const size_t orig_lhs_len,
       mapargs->rhs_len = 0;
       mapargs->rhs_is_noop = true;
     } else {
-      replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
-                                   REPTERM_DO_LT | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
+      replaced = (char *)replace_termcodes((char_u *)orig_rhs, orig_rhs_len, (char_u **)&rhs_buf,
+                                           REPTERM_DO_LT | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
       mapargs->rhs_len = STRLEN(replaced);
       // XXX: even when orig_rhs is non-empty, replace_termcodes may produce an empty string.
       mapargs->rhs_is_noop = orig_rhs[0] != NUL && mapargs->rhs_len == 0;
@@ -3027,8 +3029,8 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
   STRLCPY(lhs_to_replace, to_parse, orig_lhs_len + 1);
 
   size_t orig_rhs_len = STRLEN(rhs_start);
-  set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,
-                     rhs_start, orig_rhs_len, LUA_NOREF,
+  set_maparg_lhs_rhs((char *)lhs_to_replace, orig_lhs_len,
+                     (char *)rhs_start, orig_rhs_len, LUA_NOREF,
                      CPO_TO_CPO_FLAGS, &parsed_args);
 
   xfree(lhs_to_replace);

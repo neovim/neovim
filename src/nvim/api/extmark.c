@@ -688,8 +688,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (opts->sign_text.type == kObjectTypeString) {
-    if (!init_sign_text(&decor.sign_text,
-                        (char_u *)opts->sign_text.data.string.data)) {
+    if (!init_sign_text((char **)&decor.sign_text,
+                        opts->sign_text.data.string.data)) {
       api_set_error(err, kErrorTypeValidation, "sign_text is not a valid value");
       goto error;
     }

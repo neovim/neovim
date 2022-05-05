@@ -634,8 +634,8 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
   parsed_args.buffer = !global;
 
-  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
-                     (char_u *)rhs.data, rhs.size, lua_funcref,
+  set_maparg_lhs_rhs(lhs.data, lhs.size,
+                     rhs.data, rhs.size, lua_funcref,
                      CPO_TO_CPO_FLAGS, &parsed_args);
   if (opts != NULL && opts->desc.type == kObjectTypeString) {
     parsed_args.desc = string_to_cstr(opts->desc.data.string);
@@ -652,16 +652,16 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
-  char_u *p = (char_u *)((mode.size) ? mode.data : "m");
+  char *p = (mode.size) ? mode.data : "m";
   if (STRNCMP(p, "!", 2) == 0) {
-    mode_val = get_map_mode(&p, true);  // mapmode-ic
+    mode_val = get_map_mode((char_u **)&p, true);  // mapmode-ic
   } else {
-    mode_val = get_map_mode(&p, false);
+    mode_val = get_map_mode((char_u **)&p, false);
     if ((mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING)
         && mode.size > 0) {
       // get_map_mode() treats unrecognized mode shortnames as ":map".
       // This is an error unless the given shortname was empty string "".
-      api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", (char *)p);
+      api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", p);
       goto fail_and_free;
     }
   }
@@ -1269,7 +1269,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
     }
 
     char *text = transstr(str.size > 0 ? str.data : "", false);  // allocates
-    w += (int)mb_string2cells((char_u *)text);
+    w += (int)mb_string2cells(text);
 
     kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
   }
@@ -1658,19 +1658,19 @@ sctx_T api_set_sctx(uint64_t channel_id)
 
 // adapted from sign.c:sign_define_init_text.
 // TODO(lewis6991): Consider merging
-int init_sign_text(char_u **sign_text, char_u *text)
+int init_sign_text(char **sign_text, char *text)
 {
-  char_u *s;
+  char *s;
 
-  char_u *endp = text + (int)STRLEN(text);
+  char *endp = text + (int)STRLEN(text);
 
   // Count cells and check for non-printable chars
   int cells = 0;
-  for (s = text; s < endp; s += utfc_ptr2len(s)) {
-    if (!vim_isprintc(utf_ptr2char(s))) {
+  for (s = text; s < endp; s += utfc_ptr2len((char_u *)s)) {
+    if (!vim_isprintc(utf_ptr2char((char_u *)s))) {
       break;
     }
-    cells += utf_ptr2cells(s);
+    cells += utf_ptr2cells((char_u *)s);
   }
   // Currently must be empty, one or two display cells
   if (s != endp || cells > 2) {
@@ -1683,7 +1683,7 @@ int init_sign_text(char_u **sign_text, char_u *text)
   // Allocate one byte more if we need to pad up
   // with a space.
   size_t len = (size_t)(endp - text + ((cells == 1) ? 1 : 0));
-  *sign_text = vim_strnsave(text, len);
+  *sign_text = xstrnsave(text, len);
 
   if (cells == 1) {
     STRCPY(*sign_text + len - 1, " ");

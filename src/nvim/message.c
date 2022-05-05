@@ -2637,7 +2637,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
     typval_T argv[1];
     argv[0].v_type = VAR_STRING;
     argv[0].v_lock = VAR_UNLOCKED;
-    argv[0].vval.v_string = (char_u *)str;
+    argv[0].vval.v_string = (char *)str;
     typval_T rettv = TV_INITIAL_VALUE;
     callback_call(&on_print, 1, argv, &rettv);
     tv_clear(&rettv);

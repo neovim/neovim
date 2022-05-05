@@ -353,9 +353,10 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
   case kObjectTypeLuaRef: {
     LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
     state->lua_callable.func_ref = api_new_luaref(obj.data.luaref);
-    char_u *name = register_cfunc(&nlua_CFunction_func_call, &nlua_CFunction_func_free, state);
+    char *name =
+      (char *)register_cfunc(&nlua_CFunction_func_call, &nlua_CFunction_func_free, state);
     tv->v_type = VAR_FUNC;
-    tv->vval.v_string = vim_strsave(name);
+    tv->vval.v_string = xstrdup(name);
     break;
   }
 
