@@ -444,6 +444,7 @@ describe('autocmd api', function()
 
         eq(1, #aus)
         eq([[:echo "GroupOne:1"]], aus[1].command)
+        eq("GroupOne", aus[1].group_name)
       end)
 
       it('should return only the group specified, multiple values', function()
@@ -454,7 +455,9 @@ describe('autocmd api', function()
 
         eq(2, #aus)
         eq([[:echo "GroupTwo:2"]], aus[1].command)
+        eq("GroupTwo", aus[1].group_name)
         eq([[:echo "GroupTwo:3"]], aus[2].command)
+        eq("GroupTwo", aus[2].group_name)
       end)
     end)
 

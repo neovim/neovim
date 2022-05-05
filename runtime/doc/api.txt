@@ -3508,6 +3508,7 @@ nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
                     • id (number): the autocommand id (only when defined with
                       the API).
                     • group (integer): the autocommand group id.
+                    • group_name (string): the autocommand group name.
                     • desc (string): the autocommand description.
                     • event (string): the autocommand event.
                     • command (string): the autocommand command.
