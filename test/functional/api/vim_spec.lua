@@ -3426,10 +3426,15 @@ describe('API', function()
       }, meths.parse_cmd('MyCommand test it', {}))
     end)
     it('errors for invalid command', function()
-      eq('Error while parsing command line', pcall_err(meths.parse_cmd, 'Fubar', {}))
+      eq('Error while parsing command line', pcall_err(meths.parse_cmd, '', {}))
+      eq('Error while parsing command line', pcall_err(meths.parse_cmd, '" foo', {}))
+      eq('Error while parsing command line: E492: Not an editor command: Fubar',
+         pcall_err(meths.parse_cmd, 'Fubar', {}))
       command('command! Fubar echo foo')
-      eq('Error while parsing command line', pcall_err(meths.parse_cmd, 'Fubar!', {}))
-      eq('Error while parsing command line', pcall_err(meths.parse_cmd, '4,6Fubar', {}))
+      eq('Error while parsing command line: E477: No ! allowed',
+         pcall_err(meths.parse_cmd, 'Fubar!', {}))
+      eq('Error while parsing command line: E481: No range allowed',
+         pcall_err(meths.parse_cmd, '4,6Fubar', {}))
     end)
   end)
 end)

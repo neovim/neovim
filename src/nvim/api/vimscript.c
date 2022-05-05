@@ -802,10 +802,15 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   // Parse command line
   exarg_T ea;
   CmdParseInfo cmdinfo;
-  char_u *cmdline = (char_u *)string_to_cstr(str);
+  char *cmdline = string_to_cstr(str);
+  char *errormsg = NULL;
 
-  if (!parse_cmdline(cmdline, &ea, &cmdinfo)) {
-    api_set_error(err, kErrorTypeException, "Error while parsing command line");
+  if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
+    if (errormsg != NULL) {
+      api_set_error(err, kErrorTypeException, "Error while parsing command line: %s", errormsg);
+    } else {
+      api_set_error(err, kErrorTypeException, "Error while parsing command line");
+    }
     goto end;
   }
 
