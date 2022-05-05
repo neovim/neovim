@@ -562,10 +562,25 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
   FUNC_API_FAST
 {
   bool is_lua = api_object_to_bool(opts->is_lua, "is_lua", false, err);
+  bool source = api_object_to_bool(opts->do_source, "do_source", false, err);
+  if (source && !nlua_is_deferred_safe()) {
+    api_set_error(err, kErrorTypeValidation, "'do_source' cannot be used in fast callback");
+  }
+
   if (ERROR_SET(err)) {
     return (Array)ARRAY_DICT_INIT;
   }
-  return runtime_get_named(is_lua, pat, all);
+
+  ArrayOf(String) res = runtime_get_named(is_lua, pat, all);
+
+  if (source) {
+    for (size_t i = 0; i < res.size; i++) {
+      String name = res.items[i].data.string;
+      (void)do_source(name.data, false, DOSO_NONE);
+    }
+  }
+
+  return res;
 }
 
 /// Changes the global working directory.
