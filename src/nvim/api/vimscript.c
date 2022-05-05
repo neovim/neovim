@@ -854,7 +854,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
       ADD(range, INTEGER_OBJ(ea.line1));
     }
     ADD(range, INTEGER_OBJ(ea.line2));
-    PUT(result, "range", ARRAY_OBJ(range));;
+    PUT(result, "range", ARRAY_OBJ(range));
   } else {
     PUT(result, "range", ARRAY_OBJ(ARRAY_DICT_INIT));
   }

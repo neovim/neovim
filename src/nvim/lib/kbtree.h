@@ -103,11 +103,11 @@
       int mid = (begin + end) >> 1; \
       if (__cmp(__KB_KEY(key_t, x)[mid], *k) < 0) begin = mid + 1; \
       else end = mid; \
-      } \
-      if (begin == x->n) { *rr = 1; return x->n - 1; } \
-      if ((*rr = __cmp(*k, __KB_KEY(key_t, x)[begin])) < 0) --begin; \
-      return begin; \
-      }
+    } \
+    if (begin == x->n) { *rr = 1; return x->n - 1; } \
+    if ((*rr = __cmp(*k, __KB_KEY(key_t, x)[begin])) < 0) --begin; \
+    return begin; \
+  }
 
 #define __KB_GET(name, key_t, kbnode_t) \
   static key_t *kb_getp_##name(kbtree_##name##_t *b, key_t * __restrict k) \
@@ -195,34 +195,34 @@
       if (__KB_PTR(b, x)[i]->n == 2 * T - 1) { \
         __kb_split_##name(b, x, i, __KB_PTR(b, x)[i]); \
         if (__cmp(*k, __KB_KEY(key_t, x)[i]) > 0) ++i; \
-        } \
-        ret = __kb_putp_aux_##name(b, __KB_PTR(b, x)[i], k); \
       } \
-      return ret; \
+      ret = __kb_putp_aux_##name(b, __KB_PTR(b, x)[i], k); \
     } \
-    static inline key_t *kb_putp_##name(kbtree_##name##_t *b, key_t * __restrict k) \
-    { \
-      if (!b->root) { \
-        b->root = (kbnode_t *)xcalloc(1, ILEN); \
-        ++b->n_nodes; \
-      } \
-      kbnode_t *r, *s; \
-      ++b->n_keys; \
-      r = b->root; \
-      if (r->n == 2 * T - 1) { \
-        ++b->n_nodes; \
-        s = (kbnode_t *)xcalloc(1, ILEN); \
-        b->root = s; s->is_internal = 1; s->n = 0; \
-        __KB_PTR(b, s)[0] = r; \
-        __kb_split_##name(b, s, 0, r); \
-        r = s; \
-      } \
-      return __kb_putp_aux_##name(b, r, k); \
+    return ret; \
+  } \
+  static inline key_t *kb_putp_##name(kbtree_##name##_t *b, key_t * __restrict k) \
+  { \
+    if (!b->root) { \
+      b->root = (kbnode_t *)xcalloc(1, ILEN); \
+      ++b->n_nodes; \
     } \
-    static inline void kb_put_##name(kbtree_##name##_t *b, key_t k) \
-    { \
-      kb_putp_##name(b, &k); \
-    }
+    kbnode_t *r, *s; \
+    ++b->n_keys; \
+    r = b->root; \
+    if (r->n == 2 * T - 1) { \
+      ++b->n_nodes; \
+      s = (kbnode_t *)xcalloc(1, ILEN); \
+      b->root = s; s->is_internal = 1; s->n = 0; \
+      __KB_PTR(b, s)[0] = r; \
+      __kb_split_##name(b, s, 0, r); \
+      r = s; \
+    } \
+    return __kb_putp_aux_##name(b, r, k); \
+  } \
+  static inline void kb_put_##name(kbtree_##name##_t *b, key_t k) \
+  { \
+    kb_putp_##name(b, &k); \
+  }
 
 
 #define __KB_DEL(name, key_t, kbnode_t, T) \
@@ -380,58 +380,58 @@
       } \
       --itr->p; \
       if (itr->p->x && itr->p->i < itr->p->x->n) return 1; \
+    } \
+  } \
+  static inline int kb_itr_prev_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
+  { \
+    if (itr->p == NULL) return 0; \
+    for (;;) { \
+      while (itr->p->x && itr->p->i >= 0) { \
+        itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
+        itr->p[1].i = itr->p[1].x ? itr->p[1].x->n : -1; \
+        ++itr->p; \
       } \
+      if (itr->p == itr->stack) { \
+        itr->p = NULL; \
+        return 0; \
       } \
-      static inline int kb_itr_prev_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
-      { \
-        if (itr->p == NULL) return 0; \
-        for (;;) { \
-          while (itr->p->x && itr->p->i >= 0) { \
-            itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
-            itr->p[1].i = itr->p[1].x ? itr->p[1].x->n : -1; \
-            ++itr->p; \
-          } \
-          if (itr->p == itr->stack) { \
-            itr->p = NULL; \
-            return 0; \
-          } \
-          --itr->p; \
-          --itr->p->i; \
-          if (itr->p->x && itr->p->i >= 0) return 1; \
-          } \
-          } \
-          static inline int kb_itr_getp_##name(kbtree_##name##_t *b, key_t * __restrict k, \
-                                               kbitr_##name##_t *itr) \
-          { \
-            if (b->n_keys == 0) { \
-              itr->p = NULL; \
-              return 0; \
-            } \
-            int i, r = 0; \
-            itr->p = itr->stack; \
-            itr->p->x = b->root; \
-            while (itr->p->x) { \
-              i = __kb_getp_aux_##name(itr->p->x, k, &r); \
-              itr->p->i = i; \
-              if (i >= 0 && r == 0) return 1; \
-              ++itr->p->i; \
-              assert(itr->p->i <= 21); \
-              itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[i + 1] : 0; \
-              ++itr->p; \
-            } \
-            itr->p->i = 0; \
-            return 0; \
-          } \
-          static inline int kb_itr_get_##name(kbtree_##name##_t *b, key_t k, kbitr_##name##_t *itr) \
-          { \
-            return kb_itr_getp_##name(b, &k, itr); \
-          } \
-          static inline void kb_del_itr_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
-          { \
-            key_t k = kb_itr_key(itr); \
-            kb_delp_##name(b, &k); \
-            kb_itr_getp_##name(b, &k, itr); \
-          }
+      --itr->p; \
+      --itr->p->i; \
+      if (itr->p->x && itr->p->i >= 0) return 1; \
+    } \
+  } \
+  static inline int kb_itr_getp_##name(kbtree_##name##_t *b, key_t * __restrict k, \
+                                       kbitr_##name##_t *itr) \
+  { \
+    if (b->n_keys == 0) { \
+      itr->p = NULL; \
+      return 0; \
+    } \
+    int i, r = 0; \
+    itr->p = itr->stack; \
+    itr->p->x = b->root; \
+    while (itr->p->x) { \
+      i = __kb_getp_aux_##name(itr->p->x, k, &r); \
+      itr->p->i = i; \
+      if (i >= 0 && r == 0) return 1; \
+      ++itr->p->i; \
+      assert(itr->p->i <= 21); \
+      itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[i + 1] : 0; \
+      ++itr->p; \
+    } \
+    itr->p->i = 0; \
+    return 0; \
+  } \
+  static inline int kb_itr_get_##name(kbtree_##name##_t *b, key_t k, kbitr_##name##_t *itr) \
+  { \
+    return kb_itr_getp_##name(b, &k, itr); \
+  } \
+  static inline void kb_del_itr_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
+  { \
+    key_t k = kb_itr_key(itr); \
+    kb_delp_##name(b, &k); \
+    kb_itr_getp_##name(b, &k, itr); \
+  }
 
 #define KBTREE_INIT(name, key_t, __cmp, T) \
   KBTREE_INIT_IMPL(name, key_t, kbnode_##name##_t, __cmp, T, \
