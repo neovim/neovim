@@ -222,10 +222,6 @@ function tests.prepare_rename_error()
       expect_request('textDocument/prepareRename', function()
         return {}, nil
       end)
-      expect_request('textDocument/rename', function(params)
-        assert_eq(params.newName, 'renameto')
-        return nil, nil
-      end)
       notify('shutdown')
     end;
   }

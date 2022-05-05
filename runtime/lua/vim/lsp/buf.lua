@@ -359,50 +359,128 @@ end
 
 --- Renames all references to the symbol under the cursor.
 ---
----@param new_name (string) If not provided, the user will be prompted for a new
----name using |vim.ui.input()|.
-function M.rename(new_name)
-  local opts = {
-    prompt = "New Name: "
-  }
+---@param new_name string|nil If not provided, the user will be prompted for a new
+---                name using |vim.ui.input()|.
+---@param options table|nil additional options
+---     - filter (function|nil):
+---         Predicate to filter clients used for rename.
+---         Receives the attached clients as argument and must return a list of
+---         clients.
+---     - name (string|nil):
+---         Restrict clients used for rename to ones where client.name matches
+---         this field.
+function M.rename(new_name, options)
+  options = options or {}
+  local bufnr = options.bufnr or vim.api.nvim_get_current_buf()
+  local clients = vim.lsp.buf_get_clients(bufnr)
 
-  ---@private
-  local function on_confirm(input)
-    if not (input and #input > 0) then return end
-    local params = util.make_position_params()
-    params.newName = input
-    request('textDocument/rename', params)
+  if options.filter then
+    clients = options.filter(clients)
+  elseif options.name then
+    clients = vim.tbl_filter(
+      function(client) return client.name == options.name end,
+      clients
+    )
   end
 
+  if #clients == 0 then
+    vim.notify("[LSP] Rename request failed, no matching language servers.")
+  end
+
+  local win = vim.api.nvim_get_current_win()
+
+  -- Compute early to account for cursor movements after going async
+  local cword = vfn.expand('<cword>')
+
   ---@private
-  local function prepare_rename(err, result)
-    if err == nil and result == nil then
-      vim.notify('nothing to rename', vim.log.levels.INFO)
+  local function get_text_at_range(range)
+    return vim.api.nvim_buf_get_text(
+      bufnr,
+      range.start.line,
+      range.start.character,
+      range['end'].line,
+      range['end'].character,
+      {}
+    )[1]
+  end
+
+  local try_use_client
+  try_use_client = function(idx, client)
+    if not client then
       return
     end
-    if result and result.placeholder then
-      opts.default = result.placeholder
-      if not new_name then npcall(vim.ui.input, opts, on_confirm) end
-    elseif result and result.start and result['end'] and
-      result.start.line == result['end'].line then
-      local line = vfn.getline(result.start.line+1)
-      local start_char = result.start.character+1
-      local end_char = result['end'].character
-      opts.default = string.sub(line, start_char, end_char)
-      if not new_name then npcall(vim.ui.input, opts, on_confirm) end
-    else
-      -- fallback to guessing symbol using <cword>
-      --
-      -- this can happen if the language server does not support prepareRename,
-      -- returns an unexpected response, or requests for "default behavior"
-      --
-      -- see https://microsoft.github.io/language-server-protocol/specification#textDocument_prepareRename
-      opts.default = vfn.expand('<cword>')
-      if not new_name then npcall(vim.ui.input, opts, on_confirm) end
+
+    ---@private
+    local function rename(name)
+      local params = util.make_position_params(win, client.offset_encoding)
+      params.newName = name
+      local handler = client.handlers['textDocument/rename'] or vim.lsp.handlers['textDocument/rename']
+      client.request('textDocument/rename', params, function(...)
+        handler(...)
+        try_use_client(next(clients, idx))
+      end, bufnr)
     end
-    if new_name then on_confirm(new_name) end
+
+    if client.supports_method("textDocument/prepareRename") then
+      local params = util.make_position_params(win, client.offset_encoding)
+      client.request('textDocument/prepareRename', params, function(err, result)
+        if err or result == nil then
+          if next(clients, idx) then
+            try_use_client(next(clients, idx))
+          else
+            local msg = err and ('Error on prepareRename: ' .. (err.message or '')) or 'Nothing to rename'
+            vim.notify(msg, vim.log.levels.INFO)
+          end
+          return
+        end
+
+        if new_name then
+          rename(new_name)
+          return
+        end
+
+        local prompt_opts = {
+          prompt = "New Name: "
+        }
+        -- result: Range | { range: Range, placeholder: string }
+        if result.placeholder then
+          prompt_opts.default = result.placeholder
+        elseif result.start then
+          prompt_opts.default = get_text_at_range(result)
+        elseif result.range then
+          prompt_opts.default = get_text_at_range(result.range)
+        else
+          prompt_opts.default = cword
+        end
+        vim.ui.input(prompt_opts, function(input)
+          if not input or #input == 0 then
+            return
+          end
+          rename(input)
+        end)
+      end, bufnr)
+    elseif client.supports_method("textDocument/rename") then
+      if new_name then
+        rename(new_name)
+        return
+      end
+
+      local prompt_opts = {
+        prompt = "New Name: ",
+        default = cword
+      }
+      vim.ui.input(prompt_opts, function(input)
+        if not input or #input == 0 then
+          return
+        end
+        rename(input)
+      end)
+    else
+      vim.notify('Client ' .. client.id .. '/' .. client.name .. ' has no rename capability')
+    end
   end
-  request('textDocument/prepareRename', util.make_position_params(), prepare_rename)
+
+  try_use_client(next(clients))
 end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.

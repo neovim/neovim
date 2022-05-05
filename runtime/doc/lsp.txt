@@ -1216,13 +1216,21 @@ remove_workspace_folder({workspace_folder})
                 {path} is not provided, the user will be prompted for a path
                 using |input()|.
 
-rename({new_name})                                      *vim.lsp.buf.rename()*
+rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                 Renames all references to the symbol under the cursor.
 
                 Parameters: ~
-                    {new_name}  (string) If not provided, the user will be
+                    {new_name}  string|nil If not provided, the user will be
                                 prompted for a new name using
                                 |vim.ui.input()|.
+                    {options}   table|nil additional options
+                                • filter (function|nil): Predicate to filter
+                                  clients used for rename. Receives the
+                                  attached clients as argument and must return
+                                  a list of clients.
+                                • name (string|nil): Restrict clients used for
+                                  rename to ones where client.name matches
+                                  this field.
 
 server_ready()                                    *vim.lsp.buf.server_ready()*
                 Checks whether the language servers attached to the current
