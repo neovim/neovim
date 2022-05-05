@@ -1,4 +1,5 @@
 local util = require('vim.lsp.util')
+local log = require('vim.lsp.log')
 local api = vim.api
 local M = {}
 
@@ -214,7 +215,11 @@ end
 --- |lsp-handler| for the method `textDocument/codeLens`
 ---
 function M.on_codelens(err, result, ctx, _)
-  assert(not err, vim.inspect(err))
+  if err then
+    active_refreshes[ctx.bufnr] = nil
+    local _ = log.error() and log.error("codelens", err)
+    return
+  end
 
   M.save(result, ctx.bufnr, ctx.client_id)
 
@@ -222,8 +227,8 @@ function M.on_codelens(err, result, ctx, _)
   -- once resolved.
   M.display(result, ctx.bufnr, ctx.client_id)
   resolve_lenses(result, ctx.bufnr, ctx.client_id, function()
-    M.display(result, ctx.bufnr, ctx.client_id)
     active_refreshes[ctx.bufnr] = nil
+    M.display(result, ctx.bufnr, ctx.client_id)
   end)
 end
 
@@ -245,7 +250,7 @@ function M.refresh()
     return
   end
   active_refreshes[bufnr] = true
-  vim.lsp.buf_request(0, 'textDocument/codeLens', params)
+  vim.lsp.buf_request(0, 'textDocument/codeLens', params, M.on_codelens)
 end
 
 
