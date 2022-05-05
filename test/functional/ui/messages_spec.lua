@@ -12,6 +12,7 @@ local nvim_prog = helpers.nvim_prog
 local iswin = helpers.iswin
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
+local poke_eventloop = helpers.poke_eventloop
 
 describe('ui/ext_messages', function()
   local screen
@@ -1111,6 +1112,8 @@ describe('ui/ext_messages', function()
       [3] = {bold = true},
       [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
       [5] = {foreground = Screen.colors.Blue1},
+      [6] = {reverse = true},
+      [7] = {bold = true, reverse = true},
     })
   end)
 
@@ -1201,6 +1204,109 @@ describe('ui/ext_messages', function()
     ]], messages={
       {content = { { "Press ENTER or type command to continue", 4 } }, kind = "return_prompt" }
     }}
+  end)
+
+  it('supports global statusline', function()
+    feed(":set laststatus=3<cr>")
+    feed(":sp<cr>")
+    feed("<c-l>")
+    feed(":set cmdheight<cr>")
+    screen:expect({grid=[[
+      ^                                                                                |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {6:────────────────────────────────────────────────────────────────────────────────}|
+                                                                                      |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {7:[No Name]                                                                       }|
+    ]], messages={
+      {content = { { "  cmdheight=0" } }, kind = "" }
+    }})
+
+    feed("<c-w>+")
+    feed("<c-l>")
+    feed(":set cmdheight<cr>")
+    screen:expect({grid=[[
+      ^                                                                                |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {6:────────────────────────────────────────────────────────────────────────────────}|
+                                                                                      |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {7:[No Name]                                                                       }|
+    ]], messages={
+      {content = { { "  cmdheight=0" } }, kind = "" }
+    }})
+
+    feed(":set mouse=a<cr>")
+    meths.input_mouse('left', 'press', '', 0, 12, 10)
+    poke_eventloop()
+    meths.input_mouse('left', 'drag', '', 0, 12, 10)
+    meths.input_mouse('left', 'drag', '', 0, 11, 10)
+    feed("<c-l>")
+    feed(":set cmdheight<cr>")
+    screen:expect({grid=[[
+      ^                                                                                |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {6:────────────────────────────────────────────────────────────────────────────────}|
+                                                                                      |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {7:[No Name]                                                                       }|
+    ]], messages={
+      {content = { { "  cmdheight=0" } }, kind = "" }
+    }})
   end)
 end)
 
