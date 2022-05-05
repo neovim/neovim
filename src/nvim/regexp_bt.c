@@ -522,7 +522,7 @@ static void regmbc(int c)
   if (regcode == JUST_CALC_SIZE) {
     regsize += utf_char2len(c);
   } else {
-    regcode += utf_char2bytes(c, regcode);
+    regcode += utf_char2bytes(c, (char *)regcode);
   }
 }
 

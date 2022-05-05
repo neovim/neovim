@@ -550,7 +550,7 @@ void ins_bytes_len(char_u *p, size_t len)
 void ins_char(int c)
 {
   char_u buf[MB_MAXBYTES + 1];
-  size_t n = (size_t)utf_char2bytes(c, buf);
+  size_t n = (size_t)utf_char2bytes(c, (char *)buf);
 
   // When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
   // Happens for CTRL-Vu9900.
@@ -1010,7 +1010,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       && !(State & VREPLACE_FLAG)) {
     p_extra = saved_line + curwin->w_cursor.col;
     if (do_si) {  // need first char after new line break
-      p = skipwhite(p_extra);
+      p = (char_u *)skipwhite((char *)p_extra);
       first_char = *p;
     }
     extra_len = (int)STRLEN(p_extra);
@@ -1077,7 +1077,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           //      */
           //     #define IN_THE_WAY
           //     This should line up here;
-          p = skipwhite(ptr);
+          p = (char_u *)skipwhite((char *)ptr);
           if (p[0] == '/' && p[1] == '*') {
             p++;
           }
@@ -1160,7 +1160,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             newindent = get_indent();
           }
         }
-        p = skipwhite(ptr);
+        p = (char_u *)skipwhite((char *)ptr);
         if (*p == '}') {            // if line starts with '}': do indent
           did_si = true;
         } else {                    // can delete indent when '{' typed
@@ -1296,7 +1296,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // Remember where the end is, might want to use it to find the
         // start (for C-comments).
         if (dir == FORWARD) {
-          comment_end = skipwhite(saved_line);
+          comment_end = (char_u *)skipwhite((char *)saved_line);
           lead_len = 0;
           break;
         }
@@ -1426,7 +1426,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             }
           }
         } else {  // left adjusted leader
-          p = skipwhite(leader);
+          p = (char_u *)skipwhite((char *)leader);
           // Compute the length of the replaced characters in
           // screen characters, not bytes. Move the part that is
           // not to be overwritten.
@@ -1500,7 +1500,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         while (off > 0 && lead_len > 0
                && leader[lead_len - 1] == ' ') {
           // Don't do it when there is a tab before the space
-          if (vim_strchr(skipwhite(leader), '\t') != NULL) {
+          if (vim_strchr((char_u *)skipwhite((char *)leader), '\t') != NULL) {
             break;
           }
           lead_len--;

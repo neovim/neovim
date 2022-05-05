@@ -1339,7 +1339,7 @@ normalchar:
               ins_char(s->c);
             }
           }
-          AppendToRedobuffLit(str, -1);
+          AppendToRedobuffLit((char *)str, -1);
         }
         xfree(str);
         s->c = NUL;
@@ -2354,7 +2354,7 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
       char_u *p = IObuff;
       i = 0;
       while (i < actual_len && (p - IObuff + 6) < IOSIZE) {
-        p += utf_char2bytes(wca[i++], p);
+        p += utf_char2bytes(wca[i++], (char *)p);
       }
       *p = NUL;
     }
@@ -3515,7 +3515,7 @@ static void ins_compl_addleader(int c)
   if ((cc = utf_char2len(c)) > 1) {
     char_u buf[MB_MAXBYTES + 1];
 
-    utf_char2bytes(c, buf);
+    utf_char2bytes(c, (char *)buf);
     buf[cc] = NUL;
     ins_char_bytes(buf, (size_t)cc);
   } else {
@@ -3939,7 +3939,7 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
   } else {
     len = 0;
   }
-  AppendToRedobuffLit(ptr + len, -1);
+  AppendToRedobuffLit((char *)ptr + len, -1);
 }
 
 /*
@@ -4513,7 +4513,7 @@ static int ins_compl_get_exp(pos_T *ini)
             }
             ptr = ml_get_buf(ins_buf, pos->lnum + 1, false);
             if (!p_paste) {
-              ptr = skipwhite(ptr);
+              ptr = (char_u *)skipwhite((char *)ptr);
             }
           }
           len = (int)STRLEN(ptr);
@@ -4541,7 +4541,7 @@ static int ins_compl_get_exp(pos_T *ini)
               // compl_length, so the next STRNCPY always works -- Acevedo
               STRNCPY(IObuff, ptr, len);
               ptr = ml_get_buf(ins_buf, pos->lnum + 1, false);
-              tmp_ptr = ptr = skipwhite(ptr);
+              tmp_ptr = ptr = (char_u *)skipwhite((char *)ptr);
               // Find start of next word.
               tmp_ptr = find_word_start(tmp_ptr);
               // Find end of next word.
@@ -5126,8 +5126,9 @@ static int ins_complete(int c, bool enable_pum)
            * mode but first we need to redefine compl_startpos */
           if (compl_cont_status & CONT_S_IPOS) {
             compl_cont_status |= CONT_SOL;
-            compl_startpos.col = (colnr_T)(skipwhite(line + compl_length
-                                                     + compl_startpos.col) - line);
+            compl_startpos.col = (colnr_T)((char_u *)skipwhite((char *)line
+                                                               + compl_length
+                                                               + compl_startpos.col) - line);
           }
           compl_col = compl_startpos.col;
         }
@@ -5739,8 +5740,8 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
       }
       p[len - 1] = NUL;
       ins_str(p);
-      AppendToRedobuffLit(p, -1);
-      ctrlv = FALSE;
+      AppendToRedobuffLit((char *)p, -1);
+      ctrlv = false;
     }
   }
   if (stop_arrow() == OK) {
@@ -5942,7 +5943,7 @@ void insertchar(int c, int flags, int second_indent)
       i = 0;
     }
     if (buf[i] != NUL) {
-      AppendToRedobuffLit(buf + i, -1);
+      AppendToRedobuffLit((char *)buf + i, -1);
     }
   } else {
     int cc;
@@ -5950,7 +5951,7 @@ void insertchar(int c, int flags, int second_indent)
     if ((cc = utf_char2len(c)) > 1) {
       char_u buf[MB_MAXBYTES + 1];
 
-      utf_char2bytes(c, buf);
+      utf_char2bytes(c, (char *)buf);
       buf[cc] = NUL;
       ins_char_bytes(buf, (size_t)cc);
       AppendCharToRedobuff(c);
@@ -6853,7 +6854,7 @@ char_u *add_char2buf(int c, char_u *s)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char_u temp[MB_MAXBYTES + 1];
-  const int len = utf_char2bytes(c, temp);
+  const int len = utf_char2bytes(c, (char *)temp);
   for (int i = 0; i < len; i++) {
     c = temp[i];
     // Need to escape K_SPECIAL like in the typeahead buffer.
@@ -7557,7 +7558,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     } else if (*look == 'e') {
       if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
         p = get_cursor_line_ptr();
-        if (skipwhite(p) == p + curwin->w_cursor.col - 4
+        if ((char_u *)skipwhite((char *)p) == p + curwin->w_cursor.col - 4
             && STRNCMP(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
           return true;
         }
@@ -8226,7 +8227,7 @@ static void ins_shift(int c, int lastc)
     change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
   }
 
-  if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL) {
+  if (did_ai && *skipwhite((char *)get_cursor_line_ptr()) != NUL) {
     did_ai = false;
   }
   did_si = false;
@@ -9413,7 +9414,7 @@ static void ins_try_si(int c)
         old_pos = curwin->w_cursor;
         i = get_indent();
         while (curwin->w_cursor.lnum > 1) {
-          ptr = skipwhite(ml_get(--(curwin->w_cursor.lnum)));
+          ptr = (char_u *)skipwhite((char *)ml_get(--(curwin->w_cursor.lnum)));
 
           // ignore empty lines and lines starting with '#'.
           if (*ptr != '#' && *ptr != NUL) {
@@ -9479,7 +9480,7 @@ static char_u *do_insert_char_pre(int c)
   if (!has_event(EVENT_INSERTCHARPRE)) {
     return NULL;
   }
-  buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
+  buf[utf_char2bytes(c, buf)] = NUL;
 
   // Lock the text to avoid weird things from happening.
   textlock++;

@@ -1775,7 +1775,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         funcexe.firstline = curwin->w_cursor.lnum;
         funcexe.lastline = curwin->w_cursor.lnum;
         funcexe.evaluate = true;
-        (void)call_func((char_u *)tab_page_click_defs[mouse_col].func, -1,
+        (void)call_func(tab_page_click_defs[mouse_col].func, -1,
                         &rettv, ARRAY_SIZE(argv), argv, &funcexe);
         tv_clear(&rettv);
         break;
@@ -3035,7 +3035,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   } else {
     par_pos = curwin->w_cursor;
     while (curwin->w_cursor.lnum > 1
-           && *skipwhite(get_cursor_line_ptr()) != NUL) {
+           && *skipwhite((char *)get_cursor_line_ptr()) != NUL) {
       curwin->w_cursor.lnum--;
     }
   }
@@ -4108,7 +4108,7 @@ static void nv_ident(cmdarg_T *cap)
   assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
   bool kp_help = (STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
-  if (kp_help && *skipwhite(ptr) == NUL) {
+  if (kp_help && *skipwhite((char *)ptr) == NUL) {
     emsg(_(e_noident));   // found white space only
     return;
   }

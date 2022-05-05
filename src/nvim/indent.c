@@ -243,7 +243,7 @@ int set_indent(int size, int flags)
   if (flags & SIN_INSERT) {
     p = oldline;
   } else {
-    p = skipwhite(p);
+    p = (char_u *)skipwhite((char *)p);
   }
   line_len = (int)STRLEN(p) + 1;
 
@@ -325,7 +325,7 @@ int set_indent(int size, int flags)
         todo -= tab_pad;
         ind_done += tab_pad;
       }
-      p = skipwhite(p);
+      p = (char_u *)skipwhite((char *)p);
     }
 
     for (;;) {

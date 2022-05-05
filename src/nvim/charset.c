@@ -488,7 +488,7 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
           }
         }
       }
-      (void)utf_char2bytes(lc, STR_PTR(i));
+      (void)utf_char2bytes(lc, (char *)STR_PTR(i));
     }
 
     // skip to next multi-byte char
@@ -1144,11 +1144,11 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right
 /// @param[in]  p  String to skip in.
 ///
 /// @return Pointer to character after the skipped whitespace.
-char_u *skipwhite(const char_u *const p)
+char *skipwhite(const char *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
-  return skipwhite_len(p, STRLEN(p));
+  return (char *)skipwhite_len((char_u *)p, STRLEN(p));
 }
 
 /// Like `skipwhite`, but skip up to `len` characters.
@@ -1179,7 +1179,7 @@ intptr_t getwhitecols_curline(void)
 intptr_t getwhitecols(const char_u *p)
   FUNC_ATTR_PURE
 {
-  return skipwhite(p) - p;
+  return (char_u *)skipwhite((char *)p) - p;
 }
 
 /// Skip over digits
@@ -1400,7 +1400,7 @@ long getdigits_long(char_u **pp, bool strict, long def)
 bool vim_isblankline(char_u *lbuf)
   FUNC_ATTR_PURE
 {
-  char_u *p = skipwhite(lbuf);
+  char_u *p = (char_u *)skipwhite((char *)lbuf);
   return *p == NUL || *p == '\r' || *p == '\n';
 }
 

@@ -1401,7 +1401,7 @@ retry:
           assert(u8c <= INT_MAX);
           // produce UTF-8
           dest -= utf_char2len((int)u8c);
-          (void)utf_char2bytes((int)u8c, dest);
+          (void)utf_char2bytes((int)u8c, (char *)dest);
         }
 
         // move the linerest to before the converted characters
@@ -3943,8 +3943,8 @@ static int buf_write_bytes(struct bw_info *ip)
        * Convert latin1 in the buffer to UTF-8 in the file.
        */
       p = ip->bw_conv_buf;              // translate to buffer
-      for (wlen = 0; wlen < len; ++wlen) {
-        p += utf_char2bytes(buf[wlen], p);
+      for (wlen = 0; wlen < len; wlen++) {
+        p += utf_char2bytes(buf[wlen], (char *)p);
       }
       buf = ip->bw_conv_buf;
       len = (int)(p - ip->bw_conv_buf);

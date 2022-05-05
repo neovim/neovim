@@ -245,11 +245,11 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_ks)
   if (escape_ks) {
     // Need to escape K_SPECIAL before putting the string in the
     // typeahead buffer.
-    keys_esc = (char *)vim_strsave_escape_ks((char_u *)keys.data);
+    keys_esc = vim_strsave_escape_ks(keys.data);
   } else {
     keys_esc = keys.data;
   }
-  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+  ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
               insert ? 0 : typebuf.tb_len, !typed, false);
   if (vgetc_busy) {
     typebuf_was_filled = true;
@@ -416,7 +416,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
   }
 
   char *ptr = NULL;
-  replace_termcodes((char_u *)str.data, str.size, (char_u **)&ptr, flags, NULL, CPO_TO_CPO_FLAGS);
+  replace_termcodes(str.data, str.size, &ptr, flags, NULL, CPO_TO_CPO_FLAGS);
   return cstr_as_string(ptr);
 }
 
@@ -513,14 +513,13 @@ ArrayOf(String) nvim_get_runtime_file(String name, Boolean all, Error *err)
 
   TRY_WRAP({
     try_start();
-    do_in_runtimepath((char_u *)(name.size ? name.data : ""),
-                      flags, find_runtime_cb, &rv);
+    do_in_runtimepath((name.size ? name.data : ""), flags, find_runtime_cb, &rv);
     try_end(err);
   });
   return rv;
 }
 
-static void find_runtime_cb(char_u *fname, void *cookie)
+static void find_runtime_cb(char *fname, void *cookie)
 {
   Array *rv = (Array *)cookie;
   if (fname != NULL) {
@@ -563,13 +562,13 @@ void nvim_set_current_dir(String dir, Error *err)
     return;
   }
 
-  char_u string[MAXPATHL];
+  char string[MAXPATHL];
   memcpy(string, dir.data, dir.size);
   string[dir.size] = NUL;
 
   try_start();
 
-  if (!changedir_func((char *)string, kCdScopeGlobal)) {
+  if (!changedir_func(string, kCdScopeGlobal)) {
     if (!try_end(err)) {
       api_set_error(err, kErrorTypeException, "Failed to change directory");
     }
@@ -722,7 +721,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
 
   long numval = 0;
   char *stringval = NULL;
-  switch (get_option_value(name.data, &numval, (char_u **)&stringval, scope)) {
+  switch (get_option_value(name.data, &numval, &stringval, scope)) {
   case 0:
     rv = STRING_OBJ(cstr_as_string(stringval));
     break;
@@ -1339,7 +1338,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
     for (size_t i = 0; i < lines.size; i++) {
       String s = lines.items[i].data.string;
       assert(s.size <= INT_MAX);
-      AppendToRedobuffLit((char_u *)s.data, (int)s.size);
+      AppendToRedobuffLit(s.data, (int)s.size);
       // readfile()-style: "\n" is indicated by presence of N+1 item.
       if (i + 1 < lines.size) {
         AppendCharToRedobuff(NL);
@@ -1392,7 +1391,7 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after, Boolean follow,
       goto cleanup;
     }
     String line = lines.items[i].data.string;
-    reg->y_array[i] = (char_u *)xmemdupz(line.data, line.size);
+    reg->y_array[i] = xmemdupz(line.data, line.size);
     memchrsub(reg->y_array[i], NUL, NL, line.size);
   }
 
@@ -2352,9 +2351,9 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   ewp->w_p_crb = false;
 
   int width = build_stl_str_hl(ewp,
-                               (char_u *)buf,
+                               buf,
                                sizeof(buf),
-                               (char_u *)str.data,
+                               str.data,
                                false,
                                fillchar,
                                maxwidth,

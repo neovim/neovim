@@ -1501,7 +1501,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
       start = pos->lnum;
     }
     ptr = ml_get_buf(buf, pos->lnum, false);
-    p = skipwhite(ptr);
+    p = (char_u *)skipwhite((char *)ptr);
     pos->col = (colnr_T)(p - ptr);
 
     // when adding lines the matching line may be empty but it is not
@@ -1549,13 +1549,13 @@ int searchc(cmdarg_T *cap, int t_cmd)
       *lastc = c;
       set_csearch_direction(dir);
       set_csearch_until(t_cmd);
-      lastc_bytelen = utf_char2bytes(c, lastc_bytes);
+      lastc_bytelen = utf_char2bytes(c, (char *)lastc_bytes);
       if (cap->ncharC1 != 0) {
         lastc_bytelen += utf_char2bytes(cap->ncharC1,
-                                        lastc_bytes + lastc_bytelen);
+                                        (char *)lastc_bytes + lastc_bytelen);
         if (cap->ncharC2 != 0) {
           lastc_bytelen += utf_char2bytes(cap->ncharC2,
-                                          lastc_bytes + lastc_bytelen);
+                                          (char *)lastc_bytes + lastc_bytelen);
         }
       }
     }
@@ -1835,9 +1835,9 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
        */
       if (!cpo_match) {
         // Are we before or at #if, #else etc.?
-        ptr = skipwhite(linep);
+        ptr = (char_u *)skipwhite((char *)linep);
         if (*ptr == '#' && pos.col <= (colnr_T)(ptr - linep)) {
-          ptr = skipwhite(ptr + 1);
+          ptr = (char_u *)skipwhite((char *)ptr + 1);
           if (STRNCMP(ptr, "if", 2) == 0
               || STRNCMP(ptr, "endif", 5) == 0
               || STRNCMP(ptr, "el", 2) == 0) {
@@ -1893,7 +1893,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         }
         if (!findc) {
           // no brace in the line, maybe use "  #if" then
-          if (!cpo_match && *skipwhite(linep) == '#') {
+          if (!cpo_match && *skipwhite((char *)linep) == '#') {
             hash_dir = 1;
           } else {
             return NULL;
@@ -1918,7 +1918,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         oap->motion_type = kMTLineWise;  // Linewise for this case only
       }
       if (initc != '#') {
-        ptr = skipwhite(skipwhite(linep) + 1);
+        ptr = (char_u *)skipwhite(skipwhite((char *)linep) + 1);
         if (STRNCMP(ptr, "if", 2) == 0 || STRNCMP(ptr, "el", 2) == 0) {
           hash_dir = 1;
         } else if (STRNCMP(ptr, "endif", 5) == 0) {
@@ -1939,12 +1939,12 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         pos.lnum += hash_dir;
         linep = ml_get(pos.lnum);
         line_breakcheck();              // check for CTRL-C typed
-        ptr = skipwhite(linep);
+        ptr = (char_u *)skipwhite((char *)linep);
         if (*ptr != '#') {
           continue;
         }
         pos.col = (colnr_T)(ptr - linep);
-        ptr = skipwhite(ptr + 1);
+        ptr = (char_u *)skipwhite((char *)ptr + 1);
         if (hash_dir > 0) {
           if (STRNCMP(ptr, "if", 2) == 0) {
             count++;
@@ -4476,7 +4476,7 @@ int linewhite(linenr_T lnum)
 {
   char_u *p;
 
-  p = skipwhite(ml_get(lnum));
+  p = (char_u *)skipwhite((char *)ml_get(lnum));
   return *p == NUL;
 }
 
@@ -5029,7 +5029,7 @@ bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matc
       complete = true;
     } else {
       // Extract one word from the pattern (separated by space)
-      p = skipwhite(p);
+      p = (char_u *)skipwhite((char *)p);
       if (*p == NUL) {
         break;
       }
@@ -5607,7 +5607,7 @@ search_line:
         if (define_matched
             || (compl_cont_status & CONT_SOL)) {
           // compare the first "len" chars from "ptr"
-          startp = skipwhite(p);
+          startp = (char_u *)skipwhite((char *)p);
           if (p_ic) {
             matched = !mb_strnicmp(startp, ptr, len);
           } else {
@@ -5626,7 +5626,7 @@ search_line:
           // is not considered to be a comment line.
           if (skip_comments) {
             if ((*line != '#'
-                 || STRNCMP(skipwhite(line + 1), "define", 6) != 0)
+                 || STRNCMP(skipwhite((char *)line + 1), "define", 6) != 0)
                 && get_leader_len(line, NULL, false, true)) {
               matched = false;
             }
@@ -5637,7 +5637,7 @@ search_line:
              * * /" when looking for "normal".
              * Note: Doesn't skip "/ *" in comments.
              */
-            p = skipwhite(line);
+            p = (char_u *)skipwhite((char *)line);
             if (matched
                 || (p[0] == '/' && p[1] == '*') || p[0] == '*') {
               for (p = line; *p && p < startp; ++p) {
@@ -5701,7 +5701,7 @@ search_line:
           // we read a line, set "already" to check this "line" later
           // if depth >= 0 we'll increase files[depth].lnum far
           // below  -- Acevedo
-          already = aux = p = skipwhite(line);
+          already = aux = p = (char_u *)skipwhite((char *)line);
           p = find_word_start(p);
           p = find_word_end(p);
           if (p > aux) {

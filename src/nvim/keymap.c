@@ -538,7 +538,7 @@ char_u *get_special_key_name(int c, int modifiers)
     } else {
       // Not a special key, only modifiers, output directly.
       if (utf_char2len(c) > 1) {
-        idx += utf_char2bytes(c, string + idx);
+        idx += utf_char2bytes(c, (char *)string + idx);
       } else if (vim_isprintc(c)) {
         string[idx++] = (char_u)c;
       } else {
@@ -611,7 +611,7 @@ unsigned int special_to_buf(int key, int modifiers, bool escape_ks, char_u *dst)
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
     dlen = (unsigned int)(after - dst);
   } else {
-    dlen += (unsigned int)utf_char2bytes(key, dst + dlen);
+    dlen += (unsigned int)utf_char2bytes(key, (char *)dst + dlen);
   }
 
   return dlen;
@@ -884,8 +884,8 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see CPO_TO_CPO_FLAGS.
 ///
 /// @return  Pointer to an allocated memory, which is also saved to "bufp".
-char_u *replace_termcodes(const char_u *const from, const size_t from_len, char_u **const bufp,
-                          const int flags, bool *const did_simplify, const int cpo_flags)
+char *replace_termcodes(const char *const from, const size_t from_len, char **const bufp,
+                        const int flags, bool *const did_simplify, const int cpo_flags)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ssize_t i;
@@ -893,7 +893,7 @@ char_u *replace_termcodes(const char_u *const from, const size_t from_len, char_
   char_u key;
   size_t dlen = 0;
   const char_u *src;
-  const char_u *const end = from + from_len - 1;
+  const char_u *const end = (char_u *)from + from_len - 1;
   char_u *result;          // buffer for resulting string
 
   const bool do_backslash = !(cpo_flags & FLAG_CPO_BSLASH);  // backslash is a special character
@@ -904,7 +904,7 @@ char_u *replace_termcodes(const char_u *const from, const size_t from_len, char_
   const size_t buf_len = from_len * 6 + 1;
   result = xmalloc(buf_len);
 
-  src = from;
+  src = (char_u *)from;
 
   // Check for #n at start only: function key n
   if ((flags & REPTERM_FROM_PART) && from_len > 1 && src[0] == '#'

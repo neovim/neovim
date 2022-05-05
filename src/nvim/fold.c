@@ -1840,7 +1840,7 @@ void foldtext_cleanup(char_u *str)
   bool did2 = false;
 
   // Ignore leading and trailing white space in 'commentstring'.
-  char_u *cms_start = skipwhite(curbuf->b_p_cms);
+  char_u *cms_start = (char_u *)skipwhite((char *)curbuf->b_p_cms);
   size_t cms_slen = STRLEN(cms_start);
   while (cms_slen > 0 && ascii_iswhite(cms_start[cms_slen - 1])) {
     --cms_slen;
@@ -1859,7 +1859,7 @@ void foldtext_cleanup(char_u *str)
     }
 
     // skip "%s" and white space after it
-    s = skipwhite(cms_end + 2);
+    s = (char_u *)skipwhite((char *)cms_end + 2);
     cms_elen -= (size_t)(s - cms_end);
     cms_end = s;
   }
@@ -2907,7 +2907,7 @@ static void foldlevelIndent(fline_T *flp)
   linenr_T lnum = flp->lnum + flp->off;
 
   buf = flp->wp->w_buffer;
-  s = skipwhite(ml_get_buf(buf, lnum, false));
+  s = (char_u *)skipwhite((char *)ml_get_buf(buf, lnum, false));
 
   // empty line or lines starting with a character in 'foldignore': level
   // depends on surrounding lines

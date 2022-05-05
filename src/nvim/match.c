@@ -912,7 +912,7 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (cur->conceal_char) {
       char buf[MB_MAXBYTES + 1];
 
-      buf[utf_char2bytes(cur->conceal_char, (char_u *)buf)] = NUL;
+      buf[utf_char2bytes(cur->conceal_char, buf)] = NUL;
       tv_dict_add_str(dict, S_LEN("conceal"), buf);
     }
 
@@ -1185,7 +1185,7 @@ void ex_match(exarg_T *eap)
     if (!eap->skip) {
       g = vim_strnsave((char_u *)eap->arg, (size_t)(p - (char_u *)eap->arg));
     }
-    p = skipwhite(p);
+    p = (char_u *)skipwhite((char *)p);
     if (*p == NUL) {
       // There must be two arguments.
       xfree(g);
@@ -1194,7 +1194,7 @@ void ex_match(exarg_T *eap)
     }
     end = skip_regexp(p + 1, *p, true, NULL);
     if (!eap->skip) {
-      if (*end != NUL && !ends_excmd(*skipwhite(end + 1))) {
+      if (*end != NUL && !ends_excmd(*skipwhite((char *)end + 1))) {
         xfree(g);
         eap->errmsg = e_trailing;
         return;

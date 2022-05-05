@@ -1265,7 +1265,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         }
       }
       if (!op_reg_set(cur_entry.data.reg.name, (yankreg_T) {
-        .y_array = (char_u **)cur_entry.data.reg.contents,
+        .y_array = cur_entry.data.reg.contents,
         .y_size = cur_entry.data.reg.contents_size,
         .y_type = cur_entry.data.reg.type,
         .y_width = (colnr_T)cur_entry.data.reg.width,
@@ -2398,7 +2398,7 @@ static inline void shada_initialize_registers(WriteMergerState *const wms, int m
         .timestamp = reg.timestamp,
         .data = {
           .reg = {
-            .contents = (char **)reg.y_array,
+            .contents = reg.y_array,
             .contents_size = reg.y_size,
             .type = reg.y_type,
             .width = (size_t)(reg.y_type == kMTBlockWise ? reg.y_width : 0),

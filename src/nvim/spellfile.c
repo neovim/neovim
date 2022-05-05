@@ -1507,7 +1507,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
       if (c == '?' || c == '+' || c == '~') {
         *pp++ = '\\';               // "a?" becomes "a\?", "a+" becomes "a\+"
       }
-      pp += utf_char2bytes(c, pp);
+      pp += utf_char2bytes(c, (char *)pp);
     }
   }
 
@@ -3141,7 +3141,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   spin->si_msg_count = 999999;
 
   // Read and ignore the first line: word count.
-  if (vim_fgets(line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite(line))) {
+  if (vim_fgets(line, MAXLINELEN, fd) || !ascii_isdigit(*skipwhite((char *)line))) {
     semsg(_("E760: No word count in %s"), fname);
   }
 
@@ -4410,7 +4410,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     // Form the <folchars> string first, we need to know its length.
     size_t l = 0;
     for (size_t i = 128; i < 256; i++) {
-      l += (size_t)utf_char2bytes(spelltab.st_fold[i], folchars + l);
+      l += (size_t)utf_char2bytes(spelltab.st_fold[i], (char *)folchars + l);
     }
     put_bytes(fd, 1 + 128 + 2 + l, 4);                  // <sectionlen>
 
@@ -4879,7 +4879,7 @@ void ex_mkspell(exarg_T *eap)
 
   if (STRNCMP(arg, "-ascii", 6) == 0) {
     ascii = true;
-    arg = skipwhite(arg + 6);
+    arg = (char_u *)skipwhite((char *)arg + 6);
   }
 
   // Expand all the remaining arguments (e.g., $VIMRUNTIME).
@@ -5867,9 +5867,9 @@ static void set_map_str(slang_T *lp, char_u *map)
         hashitem_T *hi;
 
         b = xmalloc(cl + headcl + 2);
-        utf_char2bytes(c, b);
+        utf_char2bytes(c, (char *)b);
         b[cl] = NUL;
-        utf_char2bytes(headc, b + cl + 1);
+        utf_char2bytes(headc, (char *)b + cl + 1);
         b[cl + 1 + headcl] = NUL;
         hash = hash_hash(b);
         hi = hash_lookup(&lp->sl_map_hash, (const char *)b, STRLEN(b), hash);

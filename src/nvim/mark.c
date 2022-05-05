@@ -632,7 +632,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   }
   assert(Columns >= 0);
   // Allow for up to 5 bytes per character.
-  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
+  s = vim_strnsave((char_u *)skipwhite((char *)ml_get(mp->lnum)), (size_t)Columns * 5);
 
   // Truncate the line to fit it in the window
   len = 0;

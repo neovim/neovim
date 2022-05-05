@@ -1394,7 +1394,7 @@ static int expand_backtick(garray_T *gap, char_u *pat, int flags)
 
   cmd = buffer;
   while (*cmd != NUL) {
-    cmd = skipwhite(cmd);               // skip over white space
+    cmd = (char_u *)skipwhite((char *)cmd);               // skip over white space
     p = cmd;
     while (*p != NUL && *p != '\r' && *p != '\n') {  // skip over entry
       ++p;

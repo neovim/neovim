@@ -754,7 +754,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
           c = utf_fold(c);
         }
         const int orig_len = utfc_ptr2len((char *)s);
-        if (utf_char2bytes(c, cbuf) != orig_len) {
+        if (utf_char2bytes(c, (char *)cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
           memmove(ptr + len, s, (size_t)orig_len);
         } else {
@@ -1970,7 +1970,7 @@ static bool diff_equal_char(const char_u *const p1, const char_u *const p2, int 
 static int diff_cmp(char_u *s1, char_u *s2)
 {
   if ((diff_flags & DIFF_IBLANK)
-      && (*skipwhite(s1) == NUL || *skipwhite(s2) == NUL)) {
+      && (*(char_u *)skipwhite((char *)s1) == NUL || *skipwhite((char *)s2) == NUL)) {
     return 0;
   }
 
@@ -1991,8 +1991,8 @@ static int diff_cmp(char_u *s1, char_u *s2)
          && ascii_iswhite(*p1) && ascii_iswhite(*p2))
         || ((diff_flags & DIFF_IWHITEALL)
             && (ascii_iswhite(*p1) || ascii_iswhite(*p2)))) {
-      p1 = skipwhite(p1);
-      p2 = skipwhite(p2);
+      p1 = (char_u *)skipwhite((char *)p1);
+      p2 = (char_u *)skipwhite((char *)p2);
     } else {
       int l;
       if (!diff_equal_char(p1, p2, &l)) {
@@ -2004,8 +2004,8 @@ static int diff_cmp(char_u *s1, char_u *s2)
   }
 
   // Ignore trailing white space.
-  p1 = skipwhite(p1);
-  p2 = skipwhite(p2);
+  p1 = (char_u *)skipwhite((char *)p1);
+  p2 = (char_u *)skipwhite((char *)p2);
 
   if ((*p1 != NUL) || (*p2 != NUL)) {
     return 1;
@@ -2334,8 +2334,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
             || ((diff_flags & DIFF_IWHITEALL)
                 && (ascii_iswhite(line_org[si_org])
                     || ascii_iswhite(line_new[si_new])))) {
-          si_org = (int)(skipwhite(line_org + si_org) - line_org);
-          si_new = (int)(skipwhite(line_new + si_new) - line_new);
+          si_org = (int)((char_u *)skipwhite((char *)line_org + si_org) - line_org);
+          si_new = (int)((char_u *)skipwhite((char *)line_new + si_new) - line_new);
         } else {
           if (!diff_equal_char(line_org + si_org, line_new + si_new, &l)) {
             break;

@@ -1377,8 +1377,7 @@ static void fetch_row(Terminal *term, int row, int end_col)
     int cell_len = 0;
     if (cell.chars[0]) {
       for (int i = 0; cell.chars[i]; i++) {
-        cell_len += utf_char2bytes((int)cell.chars[i],
-                                   (uint8_t *)ptr + cell_len);
+        cell_len += utf_char2bytes((int)cell.chars[i], ptr + cell_len);
       }
     } else {
       *ptr = ' ';

@@ -552,7 +552,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
   p = start->out->out;     /* skip first char, it goes into regstart */
   s = ret;
   while (p->c > 0) {
-    s += utf_char2bytes(p->c, s);
+    s += utf_char2bytes(p->c, (char *)s);
     p = p->out;
   }
   *s = NUL;

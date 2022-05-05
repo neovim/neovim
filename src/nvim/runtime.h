@@ -5,7 +5,7 @@
 
 #include "nvim/ex_docmd.h"
 
-typedef void (*DoInRuntimepathCB)(char_u *, void *);
+typedef void (*DoInRuntimepathCB)(char *, void *);
 
 typedef struct {
   char *path;

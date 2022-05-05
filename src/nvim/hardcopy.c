@@ -569,8 +569,8 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
     printer_page_num = pagenum;
 
     use_sandbox = was_set_insecurely(curwin, "printheader", 0);
-    build_stl_str_hl(curwin, tbuf, (size_t)width + IOSIZE,
-                     p_header, use_sandbox,
+    build_stl_str_hl(curwin, (char *)tbuf, (size_t)width + IOSIZE,
+                     (char *)p_header, use_sandbox,
                      ' ', width, NULL, NULL);
 
     // Reset line numbers
@@ -647,7 +647,7 @@ void ex_hardcopy(exarg_T *eap)
       }
       return;
     }
-    settings.outfile = skipwhite((char_u *)eap->arg + 1);
+    settings.outfile = (char_u *)skipwhite(eap->arg + 1);
   } else if (*eap->arg != NUL) {
     settings.arguments = (char_u *)eap->arg;
   }
@@ -698,7 +698,7 @@ void ex_hardcopy(exarg_T *eap)
    * Estimate the total lines to be printed
    */
   for (lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    bytes_to_print += STRLEN(skipwhite(ml_get(lnum)));
+    bytes_to_print += STRLEN(skipwhite((char *)ml_get(lnum)));
   }
   if (bytes_to_print == 0) {
     msg(_("No text to be printed"));
@@ -806,7 +806,7 @@ void ex_hardcopy(exarg_T *eap)
             if (prtpos.column == 0) {
               // finished a file line
               prtpos.bytes_printed +=
-                STRLEN(skipwhite(ml_get(prtpos.file_line)));
+                STRLEN(skipwhite((char *)ml_get(prtpos.file_line)));
               if (++prtpos.file_line > eap->line2) {
                 break;                 // reached the end
               }
@@ -1563,7 +1563,7 @@ static void prt_flush_buffer(void)
   }
 }
 
-static void prt_resource_name(char_u *filename, void *cookie)
+static void prt_resource_name(char *filename, void *cookie)
 {
   char_u *resource_filename = cookie;
 
@@ -1588,7 +1588,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   STRLCAT(buffer, name, MAXPATHL);
   STRLCAT(buffer, ".ps", MAXPATHL);
   resource->filename[0] = NUL;
-  retval = (do_in_runtimepath(buffer, 0, prt_resource_name, resource->filename)
+  retval = (do_in_runtimepath((char *)buffer, 0, prt_resource_name, resource->filename)
             && resource->filename[0] != NUL);
   xfree(buffer);
   return retval;

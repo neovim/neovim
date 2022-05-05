@@ -1946,7 +1946,7 @@ static size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_
       symbol = '>';
     }
 
-    len = utf_char2bytes(symbol, &p[char_counter]);
+    len = utf_char2bytes(symbol, (char *)&p[char_counter]);
     char_counter += len;
     if (first_level + i >= level) {
       i++;
@@ -1960,7 +1960,7 @@ static size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_
       char_counter -= len;
       memset(&p[char_counter], ' ', len);
     }
-    len = utf_char2bytes(wp->w_p_fcs_chars.foldclosed, &p[char_counter]);
+    len = utf_char2bytes(wp->w_p_fcs_chars.foldclosed, (char *)&p[char_counter]);
     char_counter += len;
   }
 
@@ -2727,9 +2727,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
               }
               if (wp->w_p_rl) {                       // reverse line numbers
                 // like rl_mirror(), but keep the space at the end
-                char_u *p2 = skipwhite(extra);
+                char_u *p2 = (char_u *)skipwhite((char *)extra);
                 p2 = skiptowhite(p2) - 1;
-                for (char_u *p1 = skipwhite(extra); p1 < p2; p1++, p2--) {
+                for (char_u *p1 = (char_u *)skipwhite((char *)extra); p1 < p2; p1++, p2--) {
                   const int t = *p1;
                   *p1 = *p2;
                   *p2 = t;
@@ -3525,7 +3525,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
               if (wp->w_p_lcs_chars.tab3 && i == tab_len - 1) {
                 lcs = wp->w_p_lcs_chars.tab3;
               }
-              p += utf_char2bytes(lcs, p);
+              p += utf_char2bytes(lcs, (char *)p);
               n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
             }
             p_extra = p_extra_free;
@@ -4275,7 +4275,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   }     // for every character in the line
 
   // After an empty line check first word for capital.
-  if (*skipwhite(line) == NUL) {
+  if (*skipwhite((char *)line) == NUL) {
     capcol_lnum = lnum + 1;
     cap_col = 0;
   }
@@ -4507,7 +4507,6 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
     }
   }
 }
-
 
 
 /*
@@ -5328,7 +5327,7 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
    * might change the option value and free the memory. */
   stl = vim_strsave(stl);
   width =
-    build_stl_str_hl(ewp, buf, sizeof(buf), stl, use_sandbox,
+    build_stl_str_hl(ewp, (char *)buf, sizeof(buf), (char *)stl, use_sandbox,
                      fillchar, maxwidth, &hltab, &tabtab);
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
@@ -5341,7 +5340,7 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
 
   // fill up with "fillchar"
   while (width < maxwidth && len < (int)sizeof(buf) - 1) {
-    len += utf_char2bytes(fillchar, buf + len);
+    len += utf_char2bytes(fillchar, (char *)buf + len);
     width++;
   }
   buf[len] = NUL;
@@ -5484,7 +5483,6 @@ static void end_search_hl(void)
     search_hl.rm.regprog = NULL;
   }
 }
-
 
 
 /// Check if there should be a delay.  Used before clearing or redrawing the
@@ -6620,7 +6618,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     if (this_ru_col + o < width) {
       // Need at least 3 chars left for get_rel_pos() + NUL.
       while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
-        i += utf_char2bytes(fillchar, buffer + i);
+        i += utf_char2bytes(fillchar, (char *)buffer + i);
         o++;
       }
       get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);

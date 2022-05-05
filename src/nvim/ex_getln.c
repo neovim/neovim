@@ -301,7 +301,7 @@ static char_u *get_healthcheck_names(expand_T *xp, int idx)
                           "lua/**/**/health.lua" };  // NOLINT
     for (int i = 0; i < 3; i++) {
       struct healthchecks_cookie hcookie = { .names = &healthchecks.names, .is_lua = i != 0 };
-      do_in_runtimepath((char_u *)patterns[i], DIP_ALL, get_healthcheck_cb, &hcookie);
+      do_in_runtimepath(patterns[i], DIP_ALL, get_healthcheck_cb, &hcookie);
 
       if (healthchecks.names.ga_len > 0) {
         ga_remove_duplicate_strings(&healthchecks.names);
@@ -319,7 +319,7 @@ static char_u *get_healthcheck_names(expand_T *xp, int idx)
 /// Used as a callback for do_in_runtimepath
 /// @param[in] path  Expanded path to a possible healthcheck.
 /// @param[out] cookie  Array where names will be inserted.
-static void get_healthcheck_cb(char_u *path, void *cookie)
+static void get_healthcheck_cb(char *path, void *cookie)
 {
   if (path != NULL) {
     struct healthchecks_cookie *hcookie = (struct healthchecks_cookie *)cookie;
@@ -335,7 +335,7 @@ static void get_healthcheck_cb(char_u *path, void *cookie)
       pattern = ".*[\\/]\\([^\\/]*\\)\\.vim$";
     }
 
-    res = (char_u *)do_string_sub((char *)path, pattern, sub, NULL, "g");
+    res = (char_u *)do_string_sub(path, pattern, sub, NULL, "g");
     if (hcookie->is_lua && res != NULL) {
       // Replace slashes with dots as represented by the healthcheck plugin.
       char_u *ares = (char_u *)do_string_sub((char *)res, "[\\/]", ".", NULL, "g");
@@ -403,7 +403,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
 
   // Skip over "substitute" to find the pattern separator.
   for (p = cmd; ASCII_ISALPHA(*p); p++) {}
-  if (*skipwhite(p) == NUL) {
+  if (*skipwhite((char *)p) == NUL) {
     goto theend;
   }
 
@@ -419,9 +419,9 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   } else if (STRNCMP(cmd, "sort", MAX(p - cmd, 3)) == 0) {
     // skip over ! and flags
     if (*p == '!') {
-      p = skipwhite(p + 1);
+      p = (char_u *)skipwhite((char *)p + 1);
     }
-    while (ASCII_ISALPHA(*(p = skipwhite(p)))) {
+    while (ASCII_ISALPHA(*(p = (char_u *)skipwhite((char *)p)))) {
       p++;
     }
     if (*p == NUL) {
@@ -435,7 +435,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     // skip over "!/".
     if (*p == '!') {
       p++;
-      if (*skipwhite(p) == NUL) {
+      if (*skipwhite((char *)p) == NUL) {
         goto theend;
       }
     }
@@ -446,7 +446,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     goto theend;
   }
 
-  p = skipwhite(p);
+  p = (char_u *)skipwhite((char *)p);
   delim = (delim_optional && vim_isIDc(*p)) ? ' ' : *p++;
   *search_delim = delim;
   end = skip_regexp(p, delim, p_magic, NULL);
@@ -2276,7 +2276,7 @@ static int command_line_handle_key(CommandLineState *s)
   if (IS_SPECIAL(s->c) || mod_mask != 0) {
     put_on_cmdline(get_special_key_name(s->c, mod_mask), -1, true);
   } else {
-    int j = utf_char2bytes(s->c, IObuff);
+    int j = utf_char2bytes(s->c, (char *)IObuff);
     IObuff[j] = NUL;                // exclude composing chars
     put_on_cmdline(IObuff, j, true);
   }
@@ -3073,11 +3073,11 @@ static void draw_cmdline(int start, int len)
 
         u8c = arabic_shape(u8c, NULL, &u8cc[0], pc, pc1, nc);
 
-        newlen += utf_char2bytes(u8c, arshape_buf + newlen);
+        newlen += utf_char2bytes(u8c, (char *)arshape_buf + newlen);
         if (u8cc[0] != 0) {
-          newlen += utf_char2bytes(u8cc[0], arshape_buf + newlen);
+          newlen += utf_char2bytes(u8cc[0], (char *)arshape_buf + newlen);
           if (u8cc[1] != 0) {
-            newlen += utf_char2bytes(u8cc[1], arshape_buf + newlen);
+            newlen += utf_char2bytes(u8cc[1], (char *)arshape_buf + newlen);
           }
         }
       } else {
@@ -6233,20 +6233,20 @@ int get_list_range(char_u **str, int *num1, int *num2)
   int first = false;
   varnumber_T num;
 
-  *str = skipwhite(*str);
+  *str = (char_u *)skipwhite((char *)(*str));
   if (**str == '-' || ascii_isdigit(**str)) {  // parse "from" part of range
     vim_str2nr(*str, NULL, &len, 0, &num, NULL, 0, false);
     *str += len;
     *num1 = (int)num;
     first = true;
   }
-  *str = skipwhite(*str);
+  *str = (char_u *)skipwhite((char *)(*str));
   if (**str == ',') {                   // parse "to" part of range
-    *str = skipwhite(*str + 1);
+    *str = (char_u *)skipwhite((char *)(*str) + 1);
     vim_str2nr(*str, NULL, &len, 0, &num, NULL, 0, false);
     if (len > 0) {
       *num2 = (int)num;
-      *str = skipwhite(*str + len);
+      *str = (char_u *)skipwhite((char *)(*str) + len);
     } else if (!first) {                  // no number given at all
       return FAIL;
     }
@@ -6639,10 +6639,7 @@ char *script_get(exarg_T *const eap, size_t *const lenp)
     ga_init(&ga, 1, 0x400);
   }
 
-  const char *const end_pattern = (
-                                   cmd[2] != NUL
-      ? (const char *)skipwhite((const char_u *)cmd + 2)
-      : ".");
+  const char *const end_pattern = (cmd[2] != NUL ? (const char *)skipwhite(cmd + 2) : ".");
   for (;;) {
     char *const theline = (char *)eap->getline(eap->cstack->cs_looplevel > 0 ? -1 :
                                                NUL, eap->cookie, 0, true);
