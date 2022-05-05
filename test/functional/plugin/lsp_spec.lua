@@ -2636,10 +2636,8 @@ describe('LSP', function()
         name = "prepare_rename_error",
         expected_handlers = {
           {NIL, {}, {method="shutdown", client_id=1}};
-          {NIL, NIL, {method="textDocument/rename", client_id=1, bufnr=1}};
           {NIL, {}, {method="start", client_id=1}};
         },
-        expected_text = "two", -- see test case
       },
     }) do
     it(test.it, function()
