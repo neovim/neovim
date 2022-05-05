@@ -151,8 +151,8 @@ typedef enum {
   kSDItemBufferList = 9,     ///< Buffer list.
   kSDItemLocalMark = 10,     ///< Buffer-local mark.
   kSDItemChange = 11,        ///< Item from buffer change list.
-#define SHADA_LAST_ENTRY ((uint64_t)kSDItemChange)
 } ShadaEntryType;
+#define SHADA_LAST_ENTRY ((uint64_t)kSDItemChange)
 
 /// Possible results when reading ShaDa file
 typedef enum {
