@@ -1350,34 +1350,74 @@ func Test_visual_paste()
   call assert_equal('x', @-)
   call assert_equal('bazooxxf', getline(1))
 
-  if has('clipboard')
-    " v_P does not overwrite unnamed register.
+  bwipe!
+endfunc
+
+func Test_visual_paste_clipboard()
+  CheckFeature clipboard_working
+
+  if has('gui')
+    " auto select feature breaks tests
+    set guioptions-=a
+  endif
+
+  " v_P does not overwrite unnamed register.
+  call setline(1, ['xxxx'])
+  call setreg('"', 'foo')
+  call setreg('-', 'bar')
+  normal gg0vP
+  call assert_equal('foo', @")
+  call assert_equal('bar', @-)
+  call assert_equal('fooxxx', getline(1))
+  normal $vP
+  call assert_equal('foo', @")
+  call assert_equal('bar', @-)
+  call assert_equal('fooxxfoo', getline(1))
+  " Test with a different register as unnamed register.
+  call setline(2, ['baz'])
+  normal 2gg0"rD
+  call assert_equal('baz', @")
+  normal gg0vP
+  call assert_equal('baz', @")
+  call assert_equal('bar', @-)
+  call assert_equal('bazooxxfoo', getline(1))
+  normal $vP
+  call assert_equal('baz', @")
+  call assert_equal('bar', @-)
+  call assert_equal('bazooxxfobaz', getline(1))
+
+  " Test for unnamed clipboard
+  set clipboard=unnamed
+  call setline(1, ['xxxx'])
+  call setreg('"', 'foo')
+  call setreg('-', 'bar')
+  call setreg('*', 'baz')
+  normal gg0vP
+  call assert_equal('foo', @")
+  call assert_equal('bar', @-)
+  call assert_equal('baz', @*)
+  call assert_equal('bazxxx', getline(1))
+
+  " Test for unnamedplus clipboard
+  if has('unnamedplus')
+    set clipboard=unnamedplus
     call setline(1, ['xxxx'])
     call setreg('"', 'foo')
     call setreg('-', 'bar')
+    call setreg('+', 'baz')
     normal gg0vP
     call assert_equal('foo', @")
-    call assert_equal('x', @-)
-    call assert_equal('fooxxx', getline(1))
-    normal $vP
-    call assert_equal('foo', @")
-    call assert_equal('x', @-)
-    call assert_equal('fooxxfoo', getline(1))
-    " Test with a different register as unnamed register.
-    call setline(2, ['baz'])
-    normal 2gg0"rD
-    call assert_equal('baz', @")
-    normal gg0vP
-    call assert_equal('baz', @")
-    call assert_equal('f', @-)
-    call assert_equal('bazooxxfoo', getline(1))
-    normal $vP
-    call assert_equal('baz', @")
-    call assert_equal('o', @-)
-    call assert_equal('bazooxxfobaz', getline(1))
+    call assert_equal('bar', @-)
+    call assert_equal('baz', @+)
+    call assert_equal('bazxxx', getline(1))
   endif
 
+  set clipboard&
+  if has('gui')
+    set guioptions&
+  endif
   bwipe!
 endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

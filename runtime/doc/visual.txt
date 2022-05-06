@@ -255,7 +255,7 @@ Additionally the following commands can be used:
 	X	delete (2)					|v_X|
 	Y	yank (2)					|v_Y|
 	p	put						|v_p|
-	P	put without unnamed register overwrite		|v_P|
+	P	put without overwriting registers		|v_P|
 	J	join (1)					|v_J|
 	U	make uppercase					|v_U|
 	u	make lowercase					|v_u|
