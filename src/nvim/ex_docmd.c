@@ -1359,12 +1359,17 @@ static int parse_count(exarg_T *eap, char **errormsg)
 
 /// Parse command line and return information about the first command.
 ///
+/// @param cmdline Command line string
+/// @param[out] eap Ex command arguments
+/// @param[out] cmdinfo Command parse information
+/// @param[out] errormsg Error message, if any
+///
 /// @return Success or failure
-bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
+bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **errormsg)
 {
-  char *errormsg = NULL;
   char *cmd;
   char *p;
+  char *after_modifier = NULL;
   cmdmod_T save_cmdmod = cmdmod;
 
   // Initialize cmdinfo
@@ -1374,15 +1379,17 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
   memset(eap, 0, sizeof(*eap));
   eap->line1 = 1;
   eap->line2 = 1;
-  eap->cmd = (char *)cmdline;
-  eap->cmdlinep = (char **)&cmdline;
+  eap->cmd = cmdline;
+  eap->cmdlinep = &cmdline;
   eap->getline = NULL;
   eap->cookie = NULL;
 
   // Parse command modifiers
-  if (parse_command_modifiers(eap, &errormsg, false) == FAIL) {
+  if (parse_command_modifiers(eap, errormsg, false) == FAIL) {
     return false;
   }
+  after_modifier = eap->cmd;
+
   // Revert the side-effects of `parse_command_modifiers`
   if (eap->save_msg_silent != -1) {
     cmdinfo->silent = !!msg_silent;
@@ -1422,7 +1429,7 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
   // Set command attribute type and parse command range
   set_cmd_addr_type(eap, (char_u *)p);
   eap->cmd = cmd;
-  if (parse_cmd_address(eap, &errormsg, false) == FAIL) {
+  if (parse_cmd_address(eap, errormsg, false) == FAIL) {
     return false;
   }
 
@@ -1434,6 +1441,11 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
+    STRCPY(IObuff, _("E492: Not an editor command"));
+    // If the modifier was parsed OK the error must be in the following command
+    char *cmdname = after_modifier ? after_modifier : cmdline;
+    append_command(cmdname);
+    *errormsg = (char *)IObuff;
     return false;
   }
 
@@ -1472,10 +1484,12 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
   }
   // Fail if command doesn't support bang but is used with a bang
   if (!(eap->argt & EX_BANG) && eap->forceit) {
+    *errormsg = _(e_nobang);
     return false;
   }
   // Fail if command doesn't support a range but it is given a range
   if (!(eap->argt & EX_RANGE) && eap->addr_count > 0) {
+    *errormsg = _(e_norange);
     return false;
   }
   // Set default range for command if required
@@ -1485,7 +1499,7 @@ bool parse_cmdline(char_u *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo)
 
   // Parse register and count
   parse_register(eap);
-  if (parse_count(eap, NULL) == FAIL) {
+  if (parse_count(eap, errormsg) == FAIL) {
     return false;
   }
 
