@@ -2170,7 +2170,7 @@ static char *qf_push_dir(char *dirbuf, struct dir_stack_T **stackptr, bool is_fi
   // store directory on the stack
   if (vim_isAbsName((char_u *)dirbuf)
       || (*stackptr)->next == NULL
-      || (*stackptr && is_file_stack)) {
+      || is_file_stack) {
     (*stackptr)->dirname = xstrdup(dirbuf);
   } else {
     // Okay we don't have an absolute path.
