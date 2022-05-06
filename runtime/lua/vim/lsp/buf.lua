@@ -383,8 +383,14 @@ function M.rename(new_name, options)
     )
   end
 
+  -- Clients must at least support rename, prepareRename is optional
+  clients = vim.tbl_filter(
+    function(client) return client.supports_method("textDocument/rename") end,
+    clients
+  )
+
   if #clients == 0 then
-    vim.notify("[LSP] Rename request failed, no matching language servers.")
+    vim.notify("[LSP] Rename, no matching language servers with rename capability.")
   end
 
   local win = vim.api.nvim_get_current_win()
@@ -459,7 +465,8 @@ function M.rename(new_name, options)
           rename(input)
         end)
       end, bufnr)
-    elseif client.supports_method("textDocument/rename") then
+    else
+      assert(client.supports_method("textDocument/rename"), 'Client must support textDocument/rename')
       if new_name then
         rename(new_name)
         return
@@ -475,8 +482,6 @@ function M.rename(new_name, options)
         end
         rename(input)
       end)
-    else
-      vim.notify('Client ' .. client.id .. '/' .. client.name .. ' has no rename capability')
     end
   end
 
