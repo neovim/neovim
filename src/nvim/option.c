@@ -3382,7 +3382,7 @@ ambw_end:
   check_redraw(options[opt_idx].flags);
 
   return errmsg;
-}  // NOLINT(readability/fn_size)
+}
 
 /// Simple int comparison function for use with qsort()
 static int int_cmp(const void *a, const void *b)

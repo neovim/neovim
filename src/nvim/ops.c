@@ -3761,7 +3761,7 @@ end:
 
   // If the cursor is past the end of the line put it at the end.
   adjust_cursor_eol();
-}  // NOLINT(readability/fn_size)
+}
 
 /*
  * When the cursor is on the NUL past the end of the line and it should not be

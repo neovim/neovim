@@ -4467,7 +4467,7 @@ skip:
   return preview_buf;
 #undef ADJUST_SUB_FIRSTLNUM
 #undef PUSH_PREVIEW_LINES
-}  // NOLINT(readability/fn_size)
+}
 
 /// Give message for number of substitutions.
 /// Can also be used after a ":global" command.

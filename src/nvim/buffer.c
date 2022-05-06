@@ -4544,7 +4544,7 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt, int use
   }
 
   return width;
-}  // NOLINT(readability/fn_size)
+}
 
 /// Get relative cursor position in window into "buf[buflen]", in the form 99%,
 /// using "Top", "Bot" or "All" when appropriate.
