@@ -9711,25 +9711,24 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (*curwin->w_s->b_p_spl != NUL) {
-    const char *const str = tv_get_string(&argvars[0]);
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      maxcount = tv_get_number_chk(&argvars[1], &typeerr);
-      if (maxcount <= 0) {
+  const char *const str = tv_get_string(&argvars[0]);
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    maxcount = tv_get_number_chk(&argvars[1], &typeerr);
+    if (maxcount <= 0) {
+      goto f_spellsuggest_return;
+    }
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      need_capital = tv_get_number_chk(&argvars[2], &typeerr);
+      if (typeerr) {
         goto f_spellsuggest_return;
       }
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        need_capital = tv_get_number_chk(&argvars[2], &typeerr);
-        if (typeerr) {
-          goto f_spellsuggest_return;
-        }
-      }
-    } else {
-      maxcount = 25;
     }
-
-    spell_suggest_list(&ga, (char_u *)str, maxcount, need_capital, false);
+  } else {
+    maxcount = 25;
   }
+
+  spell_suggest_list(&ga, (char_u *)str, maxcount, need_capital, false);
+
 
 f_spellsuggest_return:
   tv_list_alloc_ret(rettv, (ptrdiff_t)ga.ga_len);
