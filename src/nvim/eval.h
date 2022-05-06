@@ -185,8 +185,8 @@ typedef enum {
   kMPArray,
   kMPMap,
   kMPExt,
-#define LAST_MSGPACK_TYPE kMPExt
 } MessagePackType;
+#define LAST_MSGPACK_TYPE kMPExt
 
 /// Array mapping values from MessagePackType to corresponding list pointers
 extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
