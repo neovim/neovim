@@ -104,7 +104,7 @@ get_vim_sources() {
     if ! [ -d ".git" ] \
         && ! [ "$(git rev-parse --show-toplevel)" = "${VIM_SOURCE_DIR}" ]; then
       msg_err "${VIM_SOURCE_DIR} does not appear to be a git repository."
-      echo "  Please remove it and try again."
+      echo "  Remove it and try again."
       exit 1
     fi
     echo "Updating Vim sources: ${VIM_SOURCE_DIR}"

@@ -2097,6 +2097,11 @@ v:operator	The last operator given in Normal mode.  This is a single
 		commands.
 		Read-only.
 
+					*v:parent* *parent-variable*
+v:parent	|RPC| channel to the parent Nvim, established at startup if
+		the current Nvim process is a child of another Nvim process,
+		determined by the presence of |$NVIM|.
+
 					*v:prevcount* *prevcount-variable*
 v:prevcount	The count given for the last but one Normal mode command.
 		This is the v:count value of the previous command.  Useful if
@@ -2143,14 +2148,13 @@ v:servername	Primary listen-address of the current Nvim instance, the first
 		Read-only.
 
 								       *$NVIM*
-		$NVIM is set by |terminal| and |jobstart()|, and is thus
-		a hint that the current environment is a subprocess of Nvim.
-		Example: >
+		$NVIM is set by |terminal| and |jobstart()| to v:servername,
+		and is thus a strong hint that the current environment is
+		a child of Nvim. Nvim automatically sets |v:parent| at startup
+		if $NVIM is a valid server. Example: >
 		    if $NVIM
-		      echo nvim_get_chan_info(v:parent)
+		      echo v:parent
 		    endif
-
-<		Note the contents of $NVIM may change in the future.
 
 v:searchforward			*v:searchforward* *searchforward-variable*
 		Search direction:  1 after a forward search, 0 after a

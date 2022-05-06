@@ -249,6 +249,7 @@ static struct vimvar {
   VV(VV__NULL_DICT,       "_null_dict",       VAR_DICT, VV_RO),
   VV(VV__NULL_BLOB,       "_null_blob",       VAR_BLOB, VV_RO),
   VV(VV_LUA,              "lua",              VAR_PARTIAL, VV_RO),
+  VV(VV_PARENT,           "parent",           VAR_DICT, VV_RO),
 };
 #undef VV
 
@@ -414,6 +415,7 @@ void eval_init(void)
 
   set_vim_var_dict(VV_MSGPACK_TYPES, msgpack_types_dict);
   set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc_lock(VAR_FIXED));
+  set_vim_var_dict(VV_PARENT, tv_dict_alloc_lock(VAR_FIXED));
 
   set_vim_var_dict(VV_EVENT, tv_dict_alloc_lock(VAR_FIXED));
   set_vim_var_list(VV_ERRORS, tv_list_alloc(kListLenUnknown));

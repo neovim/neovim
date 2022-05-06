@@ -1,13 +1,12 @@
 -- Nvim-Lua stdlib: the `vim` module (:help lua-stdlib)
 --
 -- Lua code lives in one of three places:
---    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
---       `inspect` and `lpeg` modules.
---    2. runtime/lua/vim/shared.lua: pure lua functions which always
---       are available. Used in the test runner, as well as worker threads
---       and processes launched from Nvim.
---    3. runtime/lua/vim/_editor.lua: Code which directly interacts with
---       the Nvim editor state. Only available in the main thread.
+--    1. runtime/lua/vim/shared.lua: pure Lua functions which are always
+--       available. Used in the test runner, and worker threads and processes
+--       launched from Nvim.
+--    2. runtime/lua/vim/_editor.lua: Code which directly interacts with the
+--       Nvim editor state. Only available in the main thread.
+--    3. runtime/lua/vim/* (the runtime): all other modules
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
@@ -122,7 +121,33 @@ function vim._os_proc_children(ppid)
   return children
 end
 
--- TODO(ZyX-I): Create compatibility layer.
+-- Initializes v:parent (from server.c).
+function vim._server_init()
+  if not vim.env.NVIM or vim.env.NVIM:len() <= 0 then
+    return
+  end
+  local parent = vim.fn.sockconnect('pipe', vim.env.NVIM, {rpc=true})
+  local api = vim.fn.api_info()
+  -- XXX: nvim_set_client_info "version.prerelease" field is a string.
+  api['version']['prerelease'] = api['version']['prerelease'] and 'dev' or nil
+  vim.fn.rpcnotify(parent, 'nvim_set_client_info',
+    'nvim-child',
+    api['version'],
+    'remote',  -- TODO: do we want a "child" or "nvim" client type?
+    vim.empty_dict(),  -- TODO: Need api.functions dict (not list): https://github.com/neovim/neovim/pull/12040
+    vim.empty_dict())
+  -- VV_PARENT is declared VV_RO so we need to use extend() instead of assignment.
+  -- But then we need to use Vimscript to avoid bridge marshalling.
+  vim.api.nvim_exec([[call extend(v:parent, nvim_get_chan_info(]]..parent..[[), 'force')]], false)
+end
+
+-- Disposes v:parent (from server.c).
+function vim._server_teardown()
+  local chan = vim.v.parent.id
+  if chan and chan > 0 then
+    vim.fn.chanclose(chan)
+  end
+end
 
 --- Return a human-readable representation of the given object.
 ---

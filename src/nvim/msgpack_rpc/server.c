@@ -6,12 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/eval.h"
 #include "nvim/event/socket.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
+#include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
@@ -30,10 +32,24 @@ static garray_T watchers = GA_EMPTY_INIT_VALUE;
 # include "msgpack_rpc/server.c.generated.h"
 #endif
 
-/// Initializes the module
+/// Initializes Nvim server features: --listen, v:servername, v:parent.
 bool server_init(const char *listen_addr)
 {
   ga_init(&watchers, sizeof(SocketWatcher *), 1);
+
+  // Set v:parent.
+  if (os_env_exists(ENV_NVIM)) {
+    DLOG("v:parent init from $NVIM");
+    dict_T *v_parent = get_vim_var_dict(VV_PARENT);
+    v_parent->dv_lock = VAR_UNLOCKED;
+    Error err = ERROR_INIT;
+    nlua_exec(STATIC_CSTR_AS_STRING("return vim._server_init()"), (Array)ARRAY_DICT_INIT, &err);
+    if (ERROR_SET(&err)) {
+      ELOG("v:parent init failed: %s", err.msg);
+    }
+    v_parent->dv_lock = VAR_FIXED;
+    tv_dict_set_keys_readonly(v_parent);
+  }
 
   // $NVIM_LISTEN_ADDRESS (deprecated)
   if (!listen_addr && os_env_exists(ENV_LISTEN)) {
@@ -82,6 +98,13 @@ static void set_vservername(garray_T *srvs)
 /// Teardown the server module
 void server_teardown(void)
 {
+  DLOG("v:parent dispose");
+  Error err = ERROR_INIT;
+  nlua_exec(STATIC_CSTR_AS_STRING("return vim._server_teardown()"), (Array)ARRAY_DICT_INIT, &err);
+  if (ERROR_SET(&err)) {
+    ELOG("v:parent dispose failed: %s", err.msg);
+  }
+
   GA_DEEP_CLEAR(&watchers, SocketWatcher *, close_socket_watcher);
 }
 

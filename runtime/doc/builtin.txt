@@ -4327,8 +4327,6 @@ jobstart({cmd} [, {opts}])				*jobstart()*
 							*jobstart-env*
 		The job environment is initialized as follows:
 		  $NVIM                is set to |v:servername| of the parent Nvim
-		  $NVIM_LISTEN_ADDRESS is unset
-		  $NVIM_LOG_FILE       is unset
 		  $VIM                 is unset
 		  $VIMRUNTIME          is unset
 		You can set these with the `env` option.

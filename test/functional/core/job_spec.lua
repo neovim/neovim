@@ -648,10 +648,10 @@ describe('jobs', function()
   end)
 
   it('jobstart() environment: $NVIM, $NVIM_LISTEN_ADDRESS #11009', function()
-    local function get_env_in_child_job(envname, env)
+    local function get_child_env(cmdtype, envname, env)
       return exec_lua([[
-        local envname, env = ...
-        local join = function(s) return vim.fn.join(s, '') end
+        local cmdtype, envname, env = ...
+        local join = function(s) return (vim.fn.join(s, ''):gsub('[\r\n]', '')) end
         local stdout = {}
         local stderr = {}
         local opt = {
@@ -661,10 +661,15 @@ describe('jobs', function()
           on_stderr = function(chan, data, name) stderr = data end,
           on_stdout = function(chan, data, name) stdout = data end,
         }
-        local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1',( '+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' }, opt)
-        vim.fn.jobwait({ j1 }, 10000)
+        local echocmd = vim.fn.has('win32') == 1 and 'echo %'..envname..'%' or 'echo $'..envname
+        local cmd = (cmdtype == 'echo'
+          and echocmd
+          or { vim.v.progpath, '-es', '-V1', ('+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' })
+        local j1 = vim.fn.jobstart(cmd, opt)
+        vim.fn.jobwait({ j1 }, 5000)
         return join({ join(stdout), join(stderr) })
       ]],
+      cmdtype,
       envname,
       env)
     end
@@ -674,14 +679,16 @@ describe('jobs', function()
     -- $NVIM is _not_ defined in the top-level Nvim process.
     eq('', eval('$NVIM'))
     -- jobstart() shares its v:servername with the child via $NVIM.
-    eq('NVIM='..addr, get_env_in_child_job('NVIM'))
+    -- Must use "echo" (not "nvim") because Nvim unsets $NVIM at startup.
+    eq(addr, get_child_env('echo', 'NVIM'))
+    -- eq('NVIM='..addr, get_child_env('nvim', 'NVIM'))
     -- $NVIM_LISTEN_ADDRESS is unset by server_init in the child.
-    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS'))
-    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS',
+    eq('NVIM_LISTEN_ADDRESS=null', get_child_env('nvim', 'NVIM_LISTEN_ADDRESS'))
+    eq('NVIM_LISTEN_ADDRESS=null', get_child_env('nvim', 'NVIM_LISTEN_ADDRESS',
       { NVIM_LISTEN_ADDRESS='Xtest_jobstart_env' }))
     -- User can explicitly set $NVIM_LOG_FILE, $VIM, $VIMRUNTIME.
     eq('NVIM_LOG_FILE=Xtest_jobstart_env',
-      get_env_in_child_job('NVIM_LOG_FILE', { NVIM_LOG_FILE='Xtest_jobstart_env' }))
+      get_child_env('nvim', 'NVIM_LOG_FILE', { NVIM_LOG_FILE='Xtest_jobstart_env' }))
     os.remove('Xtest_jobstart_env')
   end)
 
