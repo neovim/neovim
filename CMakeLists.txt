@@ -370,7 +370,7 @@ option(CI_BUILD "CI, extra flags will be set" OFF)
 if(CI_BUILD)
   message(STATUS "CI build enabled")
   add_compile_options(-Werror)
-  if(DEFINED ENV{BUILD_32BIT})
+  if(DEFINED ENV{BUILD_UCHAR})
     # Get some test coverage for unsigned char
     add_compile_options(-funsigned-char)
   endif()

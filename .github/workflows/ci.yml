@@ -119,6 +119,10 @@ jobs:
             cc: clang-13
             runner: ubuntu-20.04
             os: linux
+          - flavor: uchar
+            cc: gcc
+            runner: ubuntu-20.04
+            os: linux
           - cc: clang
             runner: macos-10.15
             os: osx
