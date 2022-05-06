@@ -927,7 +927,7 @@ tag		command	      note action in Visual mode	~
 |v_K|		K		   run 'keywordprg' on the highlighted area
 |v_O|		O		   move horizontally to other corner of area
 |v_P|		P		   replace highlighted area with register
-				   contents; unnamed register is unchanged
+				   contents; registers are unchanged
 		Q		   does not start Ex mode
 |v_R|		R		2  delete the highlighted lines and start
 				   insert
