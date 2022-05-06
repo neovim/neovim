@@ -6632,7 +6632,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
     // input() with a third argument: completion
     const int xp_namelen = (int)strlen(xp_name);
 
-    uint32_t argt;
+    uint32_t argt = 0;
     if (parse_compl_arg(xp_name, xp_namelen, &xp_type,
                         &argt, &xp_arg) == FAIL) {
       return;
