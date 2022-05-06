@@ -583,7 +583,7 @@ void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
 // itr functions
 
 // TODO(bfredl): static inline?
-bool marktree_itr_get(MarkTree *b, int row, int col, MarkTreeIter *itr)
+bool marktree_itr_get(MarkTree *b, int32_t row, int col, MarkTreeIter *itr)
 {
   return marktree_itr_get_ext(b, (mtpos_t){ row, col },
                               itr, false, false, NULL);
@@ -832,7 +832,7 @@ static void itr_swap(MarkTreeIter *itr1, MarkTreeIter *itr2)
   rawkey(itr2).pos = key2.pos;
 }
 
-bool marktree_splice(MarkTree *b, int start_line, int start_col, int old_extent_line,
+bool marktree_splice(MarkTree *b, int32_t start_line, int start_col, int old_extent_line,
                      int old_extent_col, int new_extent_line, int new_extent_col)
 {
   mtpos_t start = { start_line, start_col };

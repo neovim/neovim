@@ -408,7 +408,7 @@ size_t xstrnlen(const char *s, size_t n)
   if (end == NULL) {
     return n;
   }
-  return end - s;
+  return (size_t)(end - s);
 }
 #endif
 
