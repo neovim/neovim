@@ -2586,7 +2586,7 @@ ret_free:
   if (show_block) {
     ui_ext_cmdline_block_leave();
   }
-}  // NOLINT(readability/fn_size)
+}
 
 /// @return  5 if "p" starts with "<SID>" or "<SNR>" (ignoring case).
 ///          2 if "p" starts with "s:".

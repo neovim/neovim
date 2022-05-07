@@ -1748,7 +1748,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   if (!got_int) {
     got_int = save_got_int;
   }
-}  // NOLINT(readability/fn_size)
+}
 
 /// Returns width of the signcolumn that should be used for the whole window
 ///

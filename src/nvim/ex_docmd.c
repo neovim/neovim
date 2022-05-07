@@ -2219,7 +2219,7 @@ doend:
   --ex_nesting_level;
 
   return ea.nextcmd;
-}  // NOLINT(readability/fn_size)
+}
 
 static char ex_error_buf[MSG_BUF_LEN];
 

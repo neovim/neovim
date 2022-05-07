@@ -3067,7 +3067,7 @@ viml_pexpr_parse_end:
   }
   kvi_destroy(ast_stack);
   return ast;
-}  // NOLINT(readability/fn_size)
+}
 
 #undef NEW_NODE
 #undef HL

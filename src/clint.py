@@ -44,7 +44,6 @@ same line, but it is far from perfect (in either direction).
 import codecs
 import copy
 import getopt
-import math  # for log
 import os
 import re
 import sre_compile
@@ -183,7 +182,6 @@ _ERROR_CATEGORIES = [
     'readability/alt_tokens',
     'readability/bool',
     'readability/braces',
-    'readability/fn_size',
     'readability/multiline_comment',
     'readability/multiline_string',
     'readability/nul',
@@ -641,32 +639,6 @@ class _FunctionState:
         """Count line in current function body."""
         if self.in_a_function:
             self.lines_in_function += 1
-
-    def Check(self, error, filename, linenum):
-        """Report if too many lines in function body.
-
-        Args:
-          error: The function to call with any errors found.
-          filename: The name of the current file.
-          linenum: The number of the line to check.
-        """
-        if Match(r'T(EST|est)', self.current_function):
-            base_trigger = self._TEST_TRIGGER
-        else:
-            base_trigger = self._NORMAL_TRIGGER
-        trigger = base_trigger * 2**_VerboseLevel()
-
-        if self.lines_in_function > trigger:
-            error_level = int(
-                math.log(self.lines_in_function / base_trigger, 2))
-            # 50 => 0, 100 => 1, 200 => 2, 400 => 3, 800 => 4, 1600 => 5, ...
-            if error_level > 5:
-                error_level = 5
-            error(filename, linenum, 'readability/fn_size', error_level,
-                  'Small and focused functions are preferred:'
-                  ' %s has %d non-comment lines'
-                  ' (error triggered by exceeding %d lines).' % (
-                      self.current_function, self.lines_in_function, trigger))
 
     def End(self):
         """Stop analyzing function body."""
@@ -1887,7 +1859,6 @@ def CheckForFunctionLengths(filename, clean_lines, linenum,
             error(filename, linenum, 'readability/fn_size', 5,
                   'Lint failed to find start of function body.')
     elif Match(r'^\}\s*$', line):  # function end
-        function_state.Check(error, filename, linenum)
         function_state.End()
     elif not Match(r'^\s*$', line):
         function_state.Count()  # Count non-blank/non-comment lines.

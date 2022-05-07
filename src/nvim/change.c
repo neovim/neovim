@@ -1802,7 +1802,7 @@ theend:
   xfree(next_line);
   xfree(allocated);
   return retval;
-}  // NOLINT(readability/fn_size)
+}
 
 /// Delete from cursor to end of line.
 /// Caller must have prepared for undo.
