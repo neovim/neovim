@@ -4710,7 +4710,22 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
 
   ptr = ml_get(lnum);
   if (do_comments) {
-    *leader_len = get_leader_len(ptr, leader_flags, false, true);
+    char_u *line = ml_get_curline();
+
+    leader_len = get_leader_len(line, NULL, FALSE, TRUE);
+    if (leader_len == 0 && curbuf->b_p_cin) {
+      int comment_start;
+
+      // Check for a line comment after code.
+      comment_start = check_linecomment(line);
+      if (comment_start != MAXCOL) {
+        leader_len = get_leader_len(
+            line + comment_start, NULL, FALSE, TRUE);
+        if (leader_len != 0) {
+          leader_len += comment_start;
+        }
+      }
+    }
   } else {
     *leader_len = 0;
   }
