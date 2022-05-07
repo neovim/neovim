@@ -45,6 +45,11 @@ TSAN_OPTIONS=log_path=$GITHUB_WORKSPACE/build/log/tsan
 CLANG_SANITIZER=TSAN
 EOF
     ;;
+  uchar)
+    cat <<EOF >> "$GITHUB_ENV"
+BUILD_UCHAR=1
+EOF
+    ;;
   lint)
 # Re-enable once system deps are available
 #    BUILD_FLAGS="$BUILD_FLAGS -DLIBLUV_LIBRARY:FILEPATH=/usr/lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH)/lua/5.1/luv.so -DLIBLUV_INCLUDE_DIR:PATH=/usr/include/lua5.1"
