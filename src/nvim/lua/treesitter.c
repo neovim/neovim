@@ -391,7 +391,7 @@ static int parser_parse(lua_State *L)
     return luaL_error(L, "An error occurred when parsing.");
   }
 
-  // The new tree will be pushed to the stack, without copy, owwership is now to
+  // The new tree will be pushed to the stack, without copy, ownership is now to
   // the lua GC.
   // Old tree is still owned by the lua GC.
   uint32_t n_ranges = 0;
