@@ -1511,7 +1511,7 @@ static void adjust_scrollback(Terminal *term, buf_T *buf)
       term->sb_current--;
       xfree(term->sb_buffer[term->sb_current]);
     }
-    deleted_lines(1, (long)diff);
+    deleted_lines(1, (linenr_T)diff);
   }
 
   // Resize the scrollback storage.

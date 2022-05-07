@@ -5933,7 +5933,7 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
     if (action == ACTION_SHOW_ALL) {
       snprintf((char *)IObuff, IOSIZE, "%3ld: ", count);  // Show match nr.
       msg_puts((const char *)IObuff);
-      snprintf((char *)IObuff, IOSIZE, "%4ld", *lnum);  // Show line nr.
+      snprintf((char *)IObuff, IOSIZE, "%4" PRIdLINENR, *lnum);  // Show line nr.
       // Highlight line numbers.
       msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
       msg_puts(" ");

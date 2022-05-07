@@ -248,7 +248,7 @@ void diff_invalidate(buf_T *buf)
 /// @param line2
 /// @param amount
 /// @param amount_after
-void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
+void diff_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after)
 {
   // Handle all tab pages that use the current buffer in a diff.
   FOR_ALL_TABS(tp) {
@@ -272,8 +272,8 @@ void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
 /// @param line2
 /// @param amount
 /// @amount_after
-static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T line2, long amount,
-                                long amount_after)
+static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T line2,
+                                linenr_T amount, linenr_T amount_after)
 {
   if (diff_internal()) {
     // Will update diffs before redrawing.  Set _invalid to update the
@@ -284,8 +284,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     tp->tp_diff_update = true;
   }
 
-  long inserted;
-  long deleted;
+  linenr_T inserted;
+  linenr_T deleted;
   if (line2 == MAXLNUM) {
     // mark_adjust(99, MAXLNUM, 9, 0): insert lines
     inserted = amount;
@@ -1539,7 +1539,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
   diffout_T *dout = &dio->dio_diff;
   char_u linebuf[LBUFLEN];  // only need to hold the diff line
   char_u *line;
-  long off;
+  linenr_T off;
   int i;
   int notset = true;  // block "*dp" not set yet
   diffhunk_T *hunk = NULL;  // init to avoid gcc warning
@@ -1662,14 +1662,14 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
           }
         }
         dp->df_lnum[idx_new] = hunk->lnum_new;
-        dp->df_count[idx_new] = hunk->count_new;
+        dp->df_count[idx_new] = (linenr_T)hunk->count_new;
       } else if (notset) {
         // new block inside existing one, adjust new block
         dp->df_lnum[idx_new] = hunk->lnum_new + off;
-        dp->df_count[idx_new] = hunk->count_new - off;
+        dp->df_count[idx_new] = (linenr_T)hunk->count_new - off;
       } else {
         // second overlap of new block with existing block
-        dp->df_count[idx_new] += hunk->count_new - hunk->count_orig
+        dp->df_count[idx_new] += (linenr_T)hunk->count_new - (linenr_T)hunk->count_orig
                                  + dpl->df_lnum[idx_orig] +
                                  dpl->df_count[idx_orig]
                                  - (dp->df_lnum[idx_orig] +
@@ -1678,7 +1678,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
 
       // Adjust the size of the block to include all the lines to the
       // end of the existing block or the new diff, whatever ends last.
-      off = (hunk->lnum_orig + hunk->count_orig)
+      off = (hunk->lnum_orig + (linenr_T)hunk->count_orig)
             - (dpl->df_lnum[idx_orig] + dpl->df_count[idx_orig]);
 
       if (off < 0) {
@@ -1711,9 +1711,9 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
       dp = diff_alloc_new(curtab, dprev, dp);
 
       dp->df_lnum[idx_orig] = hunk->lnum_orig;
-      dp->df_count[idx_orig] = hunk->count_orig;
+      dp->df_count[idx_orig] = (linenr_T)hunk->count_orig;
       dp->df_lnum[idx_new] = hunk->lnum_new;
-      dp->df_count[idx_new] = hunk->count_new;
+      dp->df_count[idx_new] = (linenr_T)hunk->count_new;
 
       // Set values for other buffers, these must be equal to the
       // original buffer, otherwise there would have been a change
@@ -1754,7 +1754,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
 /// @param idx_new
 static void diff_copy_entry(diff_T *dprev, diff_T *dp, int idx_orig, int idx_new)
 {
-  long off;
+  linenr_T off;
 
   if (dprev == NULL) {
     off = 0;
@@ -1896,7 +1896,7 @@ int diff_check(win_T *wp, linenr_T lnum)
       maxcount = dp->df_count[i];
     }
   }
-  return (int)(maxcount - dp->df_count[idx]);
+  return maxcount - dp->df_count[idx];
 }
 
 /// Compare two entries in diff "dp" and return true if they are equal.
@@ -2097,7 +2097,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
             towin->w_topfill = fromwin->w_topfill;
           } else {
             // fromwin has some diff lines
-            towin->w_topfill = (int)(dp->df_lnum[fromidx] + max_count - lnum);
+            towin->w_topfill = dp->df_lnum[fromidx] + max_count - lnum;
           }
         }
       }
@@ -2670,7 +2670,7 @@ void ex_diffgetput(exarg_T *eap)
           // range ends above end of current/from diff block
           if (idx_cur == idx_from) {
             // :diffput
-            i = (int)(dp->df_count[idx_cur] - start_skip - end_skip);
+            i = dp->df_count[idx_cur] - start_skip - end_skip;
 
             if (count > i) {
               count = i;
@@ -2745,7 +2745,7 @@ void ex_diffgetput(exarg_T *eap)
 
       // Adjust marks.  This will change the following entries!
       if (added != 0) {
-        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added,
+        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, added,
                     kExtmarkUndo);
         if (curwin->w_cursor.lnum >= lnum) {
           // Adjust the cursor position if it's in/after the changed
@@ -2757,7 +2757,7 @@ void ex_diffgetput(exarg_T *eap)
           }
         }
       }
-      changed_lines(lnum, 0, lnum + count, (long)added, true);
+      changed_lines(lnum, 0, lnum + count, added, true);
 
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.
@@ -3044,7 +3044,7 @@ static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
   // append: {first}a{first}[,{last}]
   // delete: {first}[,{last}]d{first}
   char_u *p = line;
-  long f1 = getdigits(&p, true, 0);
+  linenr_T f1 = getdigits_int32((char **)&p, true, 0);
   if (*p == ',') {
     p++;
     l1 = getdigits(&p, true, 0);
@@ -3074,10 +3074,10 @@ static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
     hunk->count_orig = l1 - f1 + 1;
   }
   if (difftype == 'd') {
-    hunk->lnum_new = f2 + 1;
+    hunk->lnum_new = (linenr_T)f2 + 1;
     hunk->count_new = 0;
   } else {
-    hunk->lnum_new = f2;
+    hunk->lnum_new = (linenr_T)f2;
     hunk->count_new = l2 - f2 + 1;
   }
   return OK;
@@ -3125,9 +3125,9 @@ static int parse_diff_unified(char_u *line, diffhunk_T *hunk)
       newline = 1;
     }
 
-    hunk->lnum_orig = oldline;
+    hunk->lnum_orig = (linenr_T)oldline;
     hunk->count_orig = oldcount;
-    hunk->lnum_new = newline;
+    hunk->lnum_new = (linenr_T)newline;
     hunk->count_new = newcount;
 
     return OK;
@@ -3146,9 +3146,9 @@ static int xdiff_out(long start_a, long count_a, long start_b, long count_b, voi
   diffhunk_T *p = xmalloc(sizeof(*p));
 
   ga_grow(&dout->dout_ga, 1);
-  p->lnum_orig  = start_a + 1;
+  p->lnum_orig  = (linenr_T)start_a + 1;
   p->count_orig = count_a;
-  p->lnum_new   = start_b + 1;
+  p->lnum_new   = (linenr_T)start_b + 1;
   p->count_new  = count_b;
   ((diffhunk_T **)dout->dout_ga.ga_data)[dout->dout_ga.ga_len++] = p;
   return 0;

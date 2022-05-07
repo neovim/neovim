@@ -727,7 +727,7 @@ static void sign_list_placed(buf_T *rbuf, char_u *sign_group)
 }
 
 /// Adjust a placed sign for inserted/deleted lines.
-void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
+void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after)
 {
   sign_entry_T *sign;           // a sign in a b_signlist
   sign_entry_T *next;           // the next sign in a b_signlist

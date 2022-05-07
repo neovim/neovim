@@ -1146,8 +1146,8 @@ bool scrollup(long line_count, int byfold)
     curwin->w_botline += lnum - curwin->w_topline;
     curwin->w_topline = lnum;
   } else {
-    curwin->w_topline += line_count;
-    curwin->w_botline += line_count;            // approximate w_botline
+    curwin->w_topline += (linenr_T)line_count;
+    curwin->w_botline += (linenr_T)line_count;            // approximate w_botline
   }
 
   if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
@@ -1903,7 +1903,7 @@ int onepage(Direction dir, long count)
         if (p_window <= 2) {
           ++curwin->w_topline;
         } else {
-          curwin->w_topline += p_window - 2;
+          curwin->w_topline += (linenr_T)p_window - 2;
         }
         if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
           curwin->w_topline = curbuf->b_ml.ml_line_count;
@@ -1939,12 +1939,12 @@ int onepage(Direction dir, long count)
         if (p_window <= 2) {
           --curwin->w_topline;
         } else {
-          curwin->w_topline -= p_window - 2;
+          curwin->w_topline -= (linenr_T)p_window - 2;
         }
         if (curwin->w_topline < 1) {
           curwin->w_topline = 1;
         }
-        curwin->w_cursor.lnum = curwin->w_topline + p_window - 1;
+        curwin->w_cursor.lnum = curwin->w_topline + (linenr_T)p_window - 1;
         if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
           curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
         }

@@ -732,7 +732,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
       }
       msg_putchar('\n');
       if (!got_int) {
-        snprintf((char *)IObuff, IOSIZE, " %c %6ld %4d ", c, p->lnum, p->col);
+        snprintf((char *)IObuff, IOSIZE, " %c %6" PRIdLINENR " %4d ", c, p->lnum, p->col);
         msg_outtrans(IObuff);
         if (name != NULL) {
           msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
@@ -860,12 +860,10 @@ void ex_jumps(exarg_T *eap)
         xfree(name);
         break;
       }
-      sprintf((char *)IObuff, "%c %2d %5ld %4d ",
-              i == curwin->w_jumplistidx ? '>' : ' ',
-              i > curwin->w_jumplistidx ? i - curwin->w_jumplistidx
-                                        : curwin->w_jumplistidx - i,
-              curwin->w_jumplist[i].fmark.mark.lnum,
-              curwin->w_jumplist[i].fmark.mark.col);
+      snprintf((char *)IObuff, IOSIZE, "%c %2d %5" PRIdLINENR " %4d ",
+               i == curwin->w_jumplistidx ? '>' : ' ',
+               i > curwin->w_jumplistidx ? i - curwin->w_jumplistidx : curwin->w_jumplistidx - i,
+               curwin->w_jumplist[i].fmark.mark.lnum, curwin->w_jumplist[i].fmark.mark.col);
       msg_outtrans(IObuff);
       msg_outtrans_attr(name,
                         curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
@@ -963,7 +961,8 @@ void ex_changes(exarg_T *eap)
  * Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
  *                                 or: mark_adjust(56, 55, MAXLNUM, 2);
  */
-void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after, ExtmarkOp op)
+void mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after,
+                 ExtmarkOp op)
 {
   mark_adjust_internal(line1, line2, amount, amount_after, true, op);
 }
@@ -973,14 +972,14 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after,
 // This is only useful when folds need to be moved in a way different to
 // calling foldMarkAdjust() with arguments line1, line2, amount, amount_after,
 // for an example of why this may be necessary, see do_move().
-void mark_adjust_nofold(linenr_T line1, linenr_T line2, long amount, long amount_after,
+void mark_adjust_nofold(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after,
                         ExtmarkOp op)
 {
   mark_adjust_internal(line1, line2, amount, amount_after, false, op);
 }
 
-static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, long amount_after,
-                                 bool adjust_folds, ExtmarkOp op)
+static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount,
+                                 linenr_T amount_after, bool adjust_folds, ExtmarkOp op)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1153,7 +1152,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
 // position.
 // "spaces_removed" is the number of spaces that were removed, matters when the
 // cursor is inside them.
-void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount,
+void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long col_amount,
                      int spaces_removed)
 {
   int i;

@@ -420,7 +420,7 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
     goto end;
   }
 
-  bcount_t deleted_bytes = get_region_bytecount(curbuf, start, end, 0, 0);
+  bcount_t deleted_bytes = get_region_bytecount(curbuf, (linenr_T)start, (linenr_T)end, 0, 0);
 
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
@@ -490,14 +490,14 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   mark_adjust((linenr_T)start,
               (linenr_T)(end - 1),
               MAXLNUM,
-              (long)extra,
+              (linenr_T)extra,
               kExtmarkNOOP);
 
   extmark_splice(curbuf, (int)start - 1, 0, (int)(end - start), 0,
                  deleted_bytes, (int)new_len, 0, inserted_bytes,
                  kExtmarkUndo);
 
-  changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
+  changed_lines((linenr_T)start, 0, (linenr_T)end, (linenr_T)extra, true);
   fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
 
 end:
@@ -564,13 +564,13 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     return;
   }
 
-  char *str_at_start = (char *)ml_get_buf(buf, start_row, false);
+  char *str_at_start = (char *)ml_get_buf(buf, (linenr_T)start_row, false);
   if (start_col < 0 || (size_t)start_col > strlen(str_at_start)) {
     api_set_error(err, kErrorTypeValidation, "start_col out of bounds");
     return;
   }
 
-  char *str_at_end = (char *)ml_get_buf(buf, end_row, false);
+  char *str_at_end = (char *)ml_get_buf(buf, (linenr_T)end_row, false);
   size_t len_at_end = strlen(str_at_end);
   if (end_col < 0 || (size_t)end_col > len_at_end) {
     api_set_error(err, kErrorTypeValidation, "end_col out of bounds");
@@ -600,7 +600,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     for (int64_t i = 1; i < end_row - start_row; i++) {
       int64_t lnum = start_row + i;
 
-      const char *bufline = (char *)ml_get_buf(buf, lnum, false);
+      const char *bufline = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
       old_byte += (bcount_t)(strlen(bufline)) + 1;
     }
     old_byte += (bcount_t)end_col + 1;
@@ -725,7 +725,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   mark_adjust((linenr_T)start_row,
               (linenr_T)end_row,
               MAXLNUM,
-              (long)extra,
+              (linenr_T)extra,
               kExtmarkNOOP);
 
   colnr_T col_extent = (colnr_T)(end_col
@@ -735,8 +735,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
                  (int)new_len - 1, (colnr_T)last_item.size, new_byte,
                  kExtmarkUndo);
 
-  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row + 1,
-                (long)extra, true);
+  changed_lines((linenr_T)start_row, 0, (linenr_T)end_row + 1, (linenr_T)extra, true);
 
   // adjust cursor like an extmark ( i e it was inside last_part_len)
   if (curwin->w_cursor.lnum == end_row && curwin->w_cursor.col > end_col) {

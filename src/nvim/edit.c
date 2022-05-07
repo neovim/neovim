@@ -6956,7 +6956,7 @@ int cursor_up(long n, int upd_topline)
         lnum = 1;
       }
     } else {
-      lnum -= n;
+      lnum -= (linenr_T)n;
     }
     curwin->w_cursor.lnum = lnum;
   }
@@ -7007,7 +7007,7 @@ int cursor_down(long n, int upd_topline)
         lnum = curbuf->b_ml.ml_line_count;
       }
     } else {
-      lnum += n;
+      lnum += (linenr_T)n;
     }
     curwin->w_cursor.lnum = lnum;
   }

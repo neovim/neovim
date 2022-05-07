@@ -637,8 +637,8 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   // Save for undo.  Do this once for all lines, much faster than doing this
   // for each line separately, especially when undoing.
-  if (u_savecommon(curbuf, start_lnum - 1, start_lnum + oap->line_count,
-                   start_lnum + oap->line_count, false) == OK) {
+  if (u_savecommon(curbuf, start_lnum - 1, start_lnum + (linenr_T)oap->line_count,
+                   start_lnum + (linenr_T)oap->line_count, false) == OK) {
     for (i = oap->line_count - 1; i >= 0 && !got_int; i--) {
       // it's a slow thing to do, so give feedback so there's no worry
       // that the computer's just hung.
@@ -681,7 +681,7 @@ void op_reindent(oparg_T *oap, Indenter how)
    * there is no change still need to remove the Visual highlighting. */
   if (last_changed != 0) {
     changed_lines(first_changed, 0,
-                  oap->is_VIsual ? start_lnum + oap->line_count :
+                  oap->is_VIsual ? start_lnum + (linenr_T)oap->line_count :
                   last_changed + 1, 0L, true);
   } else if (oap->is_VIsual) {
     redraw_curbuf_later(INVERTED);
@@ -2954,7 +2954,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   int incr = 0;
   struct block_def bd;
   char_u **y_array = NULL;
-  long nr_lines = 0;
+  linenr_T nr_lines = 0;
   pos_T new_cursor;
   int indent;
   int orig_indent = 0;                  // init for gcc
@@ -3395,7 +3395,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     }
 
     changed_lines(lnum, 0, curbuf->b_op_start.lnum + (linenr_T)y_size
-                  - (linenr_T)nr_lines, nr_lines, true);
+                  - nr_lines, nr_lines, true);
 
     // Set '[ mark.
     curbuf->b_op_start = curwin->w_cursor;
@@ -4151,7 +4151,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     const int spaces_removed = (int)((curr - curr_start) - spaces[t]);
     linenr_T lnum = curwin->w_cursor.lnum + t;
     colnr_T mincol = (colnr_T)0;
-    long lnum_amount = -t;
+    linenr_T lnum_amount = -t;
     long col_amount = (cend - newp - spaces_removed);
 
     mark_col_adjust(lnum, mincol, lnum_amount, col_amount, spaces_removed);
@@ -4292,7 +4292,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
 /// @param keep_cursor  keep cursor on same text char
 static void op_format(oparg_T *oap, int keep_cursor)
 {
-  long old_line_count = curbuf->b_ml.ml_line_count;
+  linenr_T old_line_count = curbuf->b_ml.ml_line_count;
 
   // Place the cursor where the "gq" or "gw" command was given, so that "u"
   // can put it back there.
@@ -4320,7 +4320,7 @@ static void op_format(oparg_T *oap, int keep_cursor)
     saved_cursor = oap->cursor_start;
   }
 
-  format_lines(oap->line_count, keep_cursor);
+  format_lines((linenr_T)oap->line_count, keep_cursor);
 
   /*
    * Leave the cursor at the first non-blank of the last formatted line.
@@ -6452,7 +6452,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
             resel_VIsual_vcol = oap->end_vcol;
           }
         }
-        resel_VIsual_line_count = oap->line_count;
+        resel_VIsual_line_count = (linenr_T)oap->line_count;
       }
 
       // can't redo yank (unless 'y' is in 'cpoptions') and ":"
@@ -6827,7 +6827,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         VIsual_active = true;
         curwin->w_p_lbr = lbr_saved;
-        op_addsub(oap, cap->count1, redo_VIsual_arg);
+        op_addsub(oap, (linenr_T)cap->count1, redo_VIsual_arg);
         VIsual_active = false;
       }
       check_cursor_col();

@@ -439,7 +439,7 @@ static int sort_compare(const void *s1, const void *s2)
 
   // If two lines have the same value, preserve the original line order.
   if (result == 0) {
-    return (int)(l1.lnum - l2.lnum);
+    return l1.lnum - l2.lnum;
   }
   return result;
 }
@@ -451,7 +451,7 @@ void ex_sort(exarg_T *eap)
   int len;
   linenr_T lnum;
   long maxlen = 0;
-  size_t count = (size_t)(eap->line2 - eap->line1 + 1);
+  size_t count = eap->line2 - eap->line1 + 1;
   size_t i;
   char *p;
   char *s;
@@ -5934,7 +5934,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
           }
         }
         // Put "|lnum| line" into `str` and append it to the preview buffer.
-        snprintf(str, line_size, "|%*ld| %s", col_width - 3,
+        snprintf(str, line_size, "|%*" PRIdLINENR "| %s", col_width - 3,
                  next_linenr, line);
         // Temporarily switch to preview buffer
         aucmd_prepbuf(&aco, cmdpreview_buf);
