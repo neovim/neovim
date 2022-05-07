@@ -3176,7 +3176,7 @@ describe('API', function()
         cmd = 'buffer',
         args = {},
         bang = false,
-        range = {},
+        range = { 1 },
         count = 1,
         reg = '',
         addr = 'buf',
@@ -3242,6 +3242,42 @@ describe('API', function()
           verbose = -1
         }
       }, meths.parse_cmd('put +', {}))
+    end)
+    it('works with range, count and register', function()
+      eq({
+        cmd = 'delete',
+        args = {},
+        bang = false,
+        range = { 3, 7 },
+        count = 7,
+        reg = '*',
+        addr = 'line',
+        magic = {
+            file = false,
+            bar = true
+        },
+        nargs = '0',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = -1
+        }
+      }, meths.parse_cmd('1,3delete * 5', {}))
     end)
     it('works with bang', function()
       eq({

@@ -752,7 +752,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
 ///                          no range was specified, one element if only a single range item was
 ///                          specified and two elements if both range items were specified.
 ///         - count: (number) Any |<count>| that was supplied to the command. -1 if command cannot
-///                           take a count. Mutually exclusive with "range".
+///                           take a count.
 ///         - reg: (number) The optional command |<register>|, if specified. Empty string if not
 ///                         specified or if command cannot take a register.
 ///         - bang: (boolean) Whether command contains a |<bang>| (!) modifier.
@@ -853,7 +853,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     PUT(result, "cmd", CSTR_TO_OBJ((char *)get_command_name(NULL, ea.cmdidx)));
   }
 
-  if ((ea.argt & EX_RANGE) && !(ea.argt & EX_COUNT) && ea.addr_count > 0) {
+  if ((ea.argt & EX_RANGE) && ea.addr_count > 0) {
     Array range = ARRAY_DICT_INIT;
     if (ea.addr_count > 1) {
       ADD(range, INTEGER_OBJ(ea.line1));
