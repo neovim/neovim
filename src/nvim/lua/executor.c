@@ -14,6 +14,7 @@
 #include "nvim/assert.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
+#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
@@ -1908,4 +1909,186 @@ void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
   if (nlua_pcall(lstate, 1, 0)) {
     nlua_error(lstate, _("Error executing Lua callback: %.*s"));
   }
+}
+
+void ex_lsp(exarg_T *eap)
+{
+  lua_State *const lstate = global_lstate;
+
+  lua_getglobal(lstate, "require");
+  if (lua_type(lstate, -1) != LUA_TFUNCTION) {
+    lua_pop(lstate, 1);
+    emsg(_("require is not a function"));
+    return;
+  }
+
+  lua_pushstring(lstate, "vim.lsp.command");
+  if (nlua_pcall(lstate, 1, 1) != 0) {
+    nlua_error(lstate, _("Error executing vim.lsp.command: %.*s"));
+    return;
+  }
+  if (lua_type(lstate, -1) != LUA_TTABLE) {
+    lua_pop(lstate, 1);
+    emsg(_("vim.lsp.command is not a table"));
+    return;
+  }
+
+  lua_getfield(lstate, -1, "run");
+  if (lua_type(lstate, -1) != LUA_TFUNCTION) {
+    lua_pop(lstate, 1);
+    emsg(_("vim.lsp.command.run is not a function"));
+    return;
+  }
+
+  lua_pushlstring(lstate, (const char *)eap->arg, STRLEN(eap->arg));
+
+  lua_newtable(lstate);
+  lua_pushinteger(lstate, curbuf->handle);
+  lua_setfield(lstate, -2, "buf");
+  lua_pushboolean(lstate, eap->forceit);
+  lua_setfield(lstate, -2, "bang");
+  if (eap->addr_count > 0) {
+    lua_pushinteger(lstate, eap->line1);
+    lua_setfield(lstate, -2, "line1");
+    lua_pushinteger(lstate, eap->addr_count > 1 ? eap->line2 : eap->line1);
+    lua_setfield(lstate, -2, "line2");
+    lua_pushinteger(lstate, eap->addr_count);
+    lua_setfield(lstate, -2, "range");
+  }
+  // TODO: add command modifiers
+
+  if (nlua_pcall(lstate, 2, 0) != 0) {
+    nlua_error(lstate, _("Error executing vim.lsp.command.run: %.*s"));
+  }
+}
+
+int nlua_expand_lsp(expand_T *xp, char_u *pat, int *num_results, char_u ***results)
+{
+  lua_State *const lstate = global_lstate;
+
+  // Remove leading "^" from pattern.
+  size_t pat_len = STRLEN(pat);
+  if (pat_len > 0) {
+    pat_len--;
+    pat++;
+  }
+
+  lua_getglobal(lstate, "require");
+  // [ require ]
+  if (lua_type(lstate, -1) != LUA_TFUNCTION) {
+    lua_pop(lstate, 1);
+    return FAIL;
+  }
+
+  lua_pushstring(lstate, "vim.lsp.command");
+  // [ require "vim.lsp.command" ]
+  if (lua_pcall(lstate, 1, 1, 0) != 0) {
+    lua_pop(lstate, 1);
+    return FAIL;
+  }
+  if (lua_type(lstate, -1) != LUA_TTABLE) {
+    lua_pop(lstate, 1);
+    return FAIL;
+  }
+
+  lua_getfield(lstate, -1, "expand");
+  // [ vim.lsp.command.expand ]
+  if (lua_type(lstate, -1) != LUA_TFUNCTION) {
+    lua_pop(lstate, 1);
+    return FAIL;
+  }
+
+  lua_pushlstring(lstate, (const char *)pat, pat_len);
+
+  lua_newtable(lstate);
+  lua_pushinteger(lstate, curbuf->handle);
+  lua_setfield(lstate, -2, "buf");
+
+  {
+    // TODO: parse command modifiers
+    // Parse range
+    const char *cmd = skip_range((char *)xp->xp_line, NULL);
+    if (*cmd == '*') {
+      cmd = (const char *)skipwhite((const char_u *)cmd + 1);
+    }
+    for (const char *p = (char *)xp->xp_line; p != cmd; p++) {
+      // Is there *anything* before the command name? Probably a range.
+      if (!ascii_iswhite(*p)) {
+        // Completion does not need to know actual range values, just set it to true.
+        lua_pushboolean(lstate, true);
+        lua_setfield(lstate, -2, "line1");
+        lua_pushboolean(lstate, true);
+        lua_setfield(lstate, -2, "line2");
+        lua_pushboolean(lstate, true);
+        lua_setfield(lstate, -2, "range");
+        break;
+      }
+    }
+
+    // Skip command name and get arguments
+    if (*(cmd++) == 'l' && *(cmd++) == 's' && *(cmd++) == 'p') {
+      // Parse bang
+      const bool bang = *cmd == '!';
+      lua_pushboolean(lstate, bang);
+      lua_setfield(lstate, -2, "bang");
+      if (bang) {
+        cmd++;
+      }
+
+      // Temporarily trim command line to the start of pattern,
+      // to let completion know what is the context.
+      char_u saved = *xp->xp_pattern;
+      *xp->xp_pattern = '\0';
+      cmd = (const char *)skipwhite((const char_u *)cmd);
+      // Set "args" field only if there are any actual arguments before pattern.
+      for (const char *p = cmd; *p != '\0'; p++) {
+        if (!ascii_iswhite(*p)) {
+          lua_pushlstring(lstate, cmd, STRLEN(cmd));
+          lua_setfield(lstate, -2, "args");
+          break;
+        }
+      }
+      *xp->xp_pattern = saved;
+    }
+  }
+
+  // [ vim.lsp.command.expand pat ctx ]
+  if (lua_pcall(lstate, 2, 2, 0) != 0) {
+    lua_pop(lstate, 1);
+    return FAIL;
+  }
+  // [ completions prefix_len ]
+
+  int prefix_len = 0;
+  if (lua_type(lstate, -1) == LUA_TNUMBER) {
+    const lua_Number n = lua_tonumber(lstate, -1);
+    if (n > 0 && n <= INT_MAX) {
+      prefix_len = MIN((int)n, (int)pat_len);
+    }
+  }
+  lua_pop(lstate, 1);
+
+  typval_T rettv;
+  nlua_pop_typval(lstate, &rettv);
+  if (rettv.v_type != VAR_LIST) {
+    tv_clear(&rettv);
+    return FAIL;
+  }
+
+  list_T *const retlist = rettv.vval.v_list;
+  garray_T ga;
+  ga_init(&ga, (int)sizeof(char *), 3);
+  // Loop over the items in the list.
+  TV_LIST_ITER_CONST(retlist, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type == VAR_STRING
+        && TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
+      GA_APPEND(char *, &ga, xstrdup((const char *)TV_LIST_ITEM_TV(li)->vval.v_string));
+    }
+  });
+  tv_list_unref(retlist);
+
+  xp->xp_pattern += prefix_len;
+  *results = ga.ga_data;
+  *num_results = ga.ga_len;
+  return OK;
 }

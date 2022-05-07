@@ -4985,6 +4985,9 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
   if (xp->xp_context == EXPAND_PACKADD) {
     return ExpandPackAddDir(pat, num_file, file);
   }
+  if (xp->xp_context == EXPAND_LSP) {
+    return nlua_expand_lsp(xp, pat, num_file, file);
+  }
 
   // When expanding a function name starting with s:, match the <SNR>nr_
   // prefix.

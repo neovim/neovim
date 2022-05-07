@@ -3955,6 +3955,10 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     xp->xp_context = EXPAND_LUA;
     break;
 
+  case CMD_lsp:
+    xp->xp_context = EXPAND_LSP;
+    break;
+
   default:
     break;
   }

@@ -1656,6 +1656,12 @@ module.cmds = {
     func='buflist_list',
   },
   {
+    command='lsp',
+    flags=bit.bor(BANG, RANGE, DFLALL, EXTRA, TRLBAR, BANG),
+    addr_type='ADDR_LINES',
+    func='ex_lsp',
+  },
+  {
     command='move',
     flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, TRLBAR, CMDWIN, MODIFY),
     addr_type='ADDR_LINES',
