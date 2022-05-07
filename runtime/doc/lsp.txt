@@ -588,6 +588,19 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
                     error, returns `(nil, err)` where `err` is a string
                     describing the failure reason.
 
+buf_start({bufnr}, {server})                             *vim.lsp.buf_start()*
+                Start (or attach) an LSP client in the current buffer.
+
+                Use this function to manually start an LSP client configured
+                with |vim.lsp.config()| when "autostart" is not enabled.
+
+                Parameters: ~
+                    {bufnr}   (number) Buffer number
+                    {server}  (string|nil) Attach a client associated with
+                              {server} as specified in |vim.lsp.config()|.
+                              When omitted, all servers that support the
+                              buffer's filetype will be attached.
+
 client()                                                      *vim.lsp.client*
                 LSP client object. You can get an active client object via
                 |vim.lsp.get_client_by_id()| or
@@ -662,6 +675,119 @@ client_is_stopped({client_id})                   *vim.lsp.client_is_stopped()*
 
                 Return: ~
                     true if client is stopped, false otherwise.
+
+config({config})                                            *vim.lsp.config()*
+                Frontend for LSP configuration.
+
+                This is a high-level configuration function that creates the
+                necessary plumbing for automatically creating and configuring
+                LSP clients for a given filetype.
+
+                When called without arguments, this function returns a copy of
+                the current LSP configuration table.
+
+                This function can be called more than once and each call will
+                modify the options given in prior calls. The exception is the
+                "servers" option (see below), which is always additive. The
+                Nvim LSP subsystem uses a concept of "root directories" that
+                group together related files. Two buffers with the same
+                filetype that fall under the same root directory will attach
+                to the same client. Root directories are determined in one of
+                two ways:
+
+                1. Explicitly by specifying a "root_dir" parameter to a server
+                   configuration. This can be useful in project local
+                   configuration files when all buffers of a given filetype
+                   should use the same root directory.
+                2. Passing a list of root markers to the "root_markers"
+                   parameter in a server configuration. When a buffer is
+                   opened Nvim will recursively ascend the filesystem starting
+                   from the buffer's directory. The first directory found that
+                   contains any of the file or directory names listed in
+                   "root_markers" is considered the root directory.
+
+                Example: >
+
+                 vim.lsp.config({
+                   defaults = {
+                     autostart = false,
+                     flags = { allow_incremental_sync = true },
+                   },
+                   servers = {
+                     clangd = {
+                       filetypes = { 'c', 'cpp' },
+                       autostart = true,
+                       cmd = { 'clangd', '--background-index' },
+                       root_markers = { 'compile_commands.json', 'compile_flags.txt' },
+                     },
+                     ['lua-language-server'] = {
+                       filetypes = { 'lua' },
+                       cmd = { 'lua-language-server' },
+                       root_markers = { '.luarc.json', 'luarc.json' },
+                       single_file_support = true,
+                     },
+                     gopls = {
+                       filetypes = { 'go', 'gomod' },
+                       cmd = { 'gopls' },
+                       root_markers = { 'go.mod' },
+                       settings = {
+                         gopls = {
+                           analyses = {
+                             unusedparams = true,
+                           },
+                         },
+                       },
+                     },
+                   }
+                 })
+<
+
+                Parameters: ~
+                    {config}  (table|nil) Configuration table with two keys:
+                              "defaults" and "servers". The "servers" table
+                              takes a list of key-value pairs mapping
+                              (arbitrary) server names to server
+                              configurations. Both the "defaults" table as
+                              well as the individual server configuration
+                              tables accept any of the keys listed in
+                              |vim.lsp.start_client()|. The keys specified in
+                              "defaults" will act as default values for all
+                              servers unless overriden by a configuration in
+                              "servers". The "root_dir" option can also be a
+                              function, in which case it is passed the file
+                              path and buffer number of the buffer and should
+                              return the root directory to use. In addition to
+                              the keys listed in |vim.lsp.start_client()| the
+                              following keys are recognized:
+                              • filetypes (table): This option is only valid
+                                for server configurations in "servers". A list
+                                of filetypes for which this server
+                                configuration should map to.
+                              • autostart (boolean or function, default true):
+                                Automatically start or attach an LSP client
+                                for new buffers. When a function, it is called
+                                with the file name and buffer number of the
+                                buffer and should return a boolean indicating
+                                if the client should autostart. When autostart
+                                is false, a configured LSP server can be
+                                started manually using |vim.lsp.buf_start()|.
+                              • root_markers (table): A list of file or
+                                directory names which indicate the root of a
+                                "project". The default value uses ".git",
+                                ".hg", and ".svn" as root markers, but
+                                typically LSP servers will specify their own
+                                root markers. This option is mutually
+                                exclusive with "root_dir".
+                              • single_file_support (boolean, default false):
+                                If true, then the buffer will still attach to
+                                its own unique LSP client even when a root
+                                directory could not be found. Otherwise, if a
+                                root directory is not found then no LSP client
+                                will be attached.
+
+                Return: ~
+                    Current configuration table if called without arguments,
+                    otherwise nil
 
                                             *vim.lsp.for_each_buffer_client()*
 for_each_buffer_client({bufnr}, {fn})

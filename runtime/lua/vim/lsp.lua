@@ -1,5 +1,3 @@
-local if_nil = vim.F.if_nil
-
 local default_handlers = require 'vim.lsp.handlers'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
@@ -8,11 +6,17 @@ local util = require 'vim.lsp.util'
 local sync = require 'vim.lsp.sync'
 
 local vim = vim
-local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
-  = vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
+local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_buf_get_name =
+  vim.api.nvim_err_writeln,
+  vim.api.nvim_buf_get_lines,
+  vim.api.nvim_command,
+  vim.api.nvim_buf_get_option,
+  vim.api.nvim_buf_get_name
 local uv = vim.loop
+local api = vim.api
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
+local if_nil = vim.F.if_nil
 
 local lsp = {
   protocol = protocol;
@@ -1881,25 +1885,25 @@ function lsp._with_extend(name, options, user_config)
 end
 
 
---- Registry for client side commands.
---- This is an extension point for plugins to handle custom commands which are
---- not part of the core language server protocol specification.
----
---- The registry is a table where the key is a unique command name,
---- and the value is a function which is called if any LSP action
---- (code action, code lenses, ...) triggers the command.
----
---- If a LSP response contains a command for which no matching entry is
---- available in this registry, the command will be executed via the LSP server
---- using `workspace/executeCommand`.
----
---- The first argument to the function will be the `Command`:
----   Command
----     title: String
----     command: String
----     arguments?: any[]
----
---- The second argument is the `ctx` of |lsp-handler|
+-- Registry for client side commands.
+-- This is an extension point for plugins to handle custom commands which are
+-- not part of the core language server protocol specification.
+--
+-- The registry is a table where the key is a unique command name,
+-- and the value is a function which is called if any LSP action
+-- (code action, code lenses, ...) triggers the command.
+--
+-- If a LSP response contains a command for which no matching entry is
+-- available in this registry, the command will be executed via the LSP server
+-- using `workspace/executeCommand`.
+--
+-- The first argument to the function will be the `Command`:
+--   Command
+--     title: String
+--     command: String
+--     arguments?: any[]
+--
+-- The second argument is the `ctx` of |lsp-handler|
 lsp.commands = setmetatable({}, {
   __newindex = function(tbl, key, value)
     assert(type(key) == 'string', "The key for commands in `vim.lsp.commands` must be a string")
@@ -1908,6 +1912,268 @@ lsp.commands = setmetatable({}, {
   end;
 })
 
+--- Frontend for LSP configuration.
+---
+--- This is a high-level configuration function that creates the necessary
+--- plumbing for automatically creating and configuring LSP clients for a given
+--- filetype.
+---
+--- When called without arguments, this function returns a copy of the current
+--- LSP configuration table.
+---
+--- This function can be called more than once and each call will modify the
+--- options given in prior calls. The exception is the "servers" option (see
+--- below), which is always additive.
+
+--- The Nvim LSP subsystem uses a concept of "root directories" that group
+--- together related files. Two buffers with the same filetype that fall under
+--- the same root directory will attach to the same client. Root directories are
+--- determined in one of two ways:
+---
+---   1. Explicitly by specifying a "root_dir" parameter to a server
+---      configuration. This can be useful in project local configuration
+---      files when all buffers of a given filetype should use the same root
+---      directory.
+---   2. Passing a list of root markers to the "root_markers" parameter in a
+---      server configuration. When a buffer is opened Nvim will recursively
+---      ascend the filesystem starting from the buffer's directory. The first
+---      directory found that contains any of the file or directory names listed
+---      in "root_markers" is considered the root directory.
+---
+--- Example:
+--- <pre>
+--- vim.lsp.config({
+---   defaults = {
+---     autostart = false,
+---     flags = { allow_incremental_sync = true },
+---   },
+---   servers = {
+---     clangd = {
+---       filetypes = { 'c', 'cpp' },
+---       autostart = true,
+---       cmd = { 'clangd', '--background-index' },
+---       root_markers = { 'compile_commands.json', 'compile_flags.txt' },
+---     },
+---     ['lua-language-server'] = {
+---       filetypes = { 'lua' },
+---       cmd = { 'lua-language-server' },
+---       root_markers = { '.luarc.json', 'luarc.json' },
+---       single_file_support = true,
+---     },
+---     gopls = {
+---       filetypes = { 'go', 'gomod' },
+---       cmd = { 'gopls' },
+---       root_markers = { 'go.mod' },
+---       settings = {
+---         gopls = {
+---           analyses = {
+---             unusedparams = true,
+---           },
+---         },
+---       },
+---     },
+---   }
+--- })
+--- </pre>
+---
+---@param config (table|nil) Configuration table with two keys: "defaults" and
+---              "servers". The "servers" table takes a list of key-value pairs
+---              mapping (arbitrary) server names to server configurations. Both
+---              the "defaults" table as well as the individual server
+---              configuration tables accept any of the keys listed in
+---              |vim.lsp.start_client()|. The keys specified in "defaults" will
+---              act as default values for all servers unless overriden by a
+---              configuration in "servers". The "root_dir" option can also be a
+---              function, in which case it is passed the file path and buffer
+---              number of the buffer and should return the root directory to
+---              use. In addition to the keys listed in |vim.lsp.start_client()|
+---              the following keys are recognized:
+---                - filetypes (table): This option is only valid for server
+---                            configurations in "servers". A list of filetypes
+---                            for which this server configuration should map
+---                            to.
+---                - autostart (boolean or function, default true):
+---                            Automatically start or attach an LSP client for
+---                            new buffers. When a function, it is called with
+---                            the file name and buffer number of the buffer and
+---                            should return a boolean indicating if the client
+---                            should autostart. When autostart is false, a
+---                            configured LSP server can be started manually
+---                            using |vim.lsp.buf_start()|.
+---                - root_markers (table): A list of file or directory names
+---                               which indicate the root of a "project". The
+---                               default value uses ".git", ".hg", and ".svn"
+---                               as root markers, but typically LSP servers
+---                               will specify their own root markers. This
+---                               option is mutually exclusive with "root_dir".
+---                - single_file_support (boolean, default false): If true, then
+---                                      the buffer will still attach to its own
+---                                      unique LSP client even when a root
+---                                      directory could not be found.
+---                                      Otherwise, if a root directory is not
+---                                      found then no LSP client will be
+---                                      attached.
+---
+---@returns Current configuration table if called without arguments, otherwise
+---         nil
+function lsp.config(config)
+  return require('vim.lsp.config')(config)
+end
+
+do
+  -- Two-level mapping from filetype -> root dir -> client
+  local client_map = {}
+
+  ---@private
+  local function make_client_config(name, opts, defaults)
+    local config = vim.tbl_deep_extend('keep', opts, defaults, {
+      name = name,
+    })
+
+    config.on_init = (function(f)
+      return function(client, result)
+        if result.offsetEncoding then
+          client.offset_encoding = result.offsetEncoding
+        end
+
+        if client.config.settings then
+          client.notify('workspace/didChangeConfiguration', {
+            settings = client.config.settings,
+          })
+        end
+
+        if f then
+          f(client, result)
+        end
+      end
+    end)(config.on_init)
+
+    return config
+  end
+
+  --- Find the first ancestor directory starting from {path} that contains any
+  --- of the file or directory names listed in {markers}.
+  ---
+  --- TODO(gpanders): This function (or something like it) should probably be
+  --- promoted to the stdlib, as it's useful in a variety of situations beyond
+  --- just LSP and is also useful for users/plugins
+  ---
+  ---@param path (string) Start directory
+  ---@param markers (table) A list of file or directory names that are searched
+  ---               for recursively upward.
+  ---@param stop (string|nil) Stop searching when traversal reaches this directory. Defaults to the
+  --             value of $HOME.
+  ---@return (string|nil) The first ancestor directory containing one of the file or
+  ---        directory names listed in {markers}, or nil if no directory was
+  ---        found.
+  ---@private
+  local function find_root(path, markers, stop)
+    validate({
+      path = { path, 's' },
+      markers = { markers, vim.tbl_islist, 'a list of root markers' },
+      stop = { stop, 's', true },
+    })
+
+    stop = stop or vim.env.HOME
+
+    local curdir = path
+    while true do
+      for _, v in ipairs(markers) do
+        if vim.fn.globpath(curdir, v) ~= '' then
+          return curdir
+        end
+      end
+
+      local parent = vim.fn.fnamemodify(curdir, ':h')
+      if parent == stop or parent == curdir then
+        return nil
+      end
+      curdir = parent
+    end
+  end
+
+  --- Start (or attach) an LSP client in the current buffer.
+  ---
+  --- Use this function to manually start an LSP client configured with
+  --- |vim.lsp.config()| when "autostart" is not enabled.
+  ---
+  ---@param bufnr (number) Buffer number
+  ---@param server (string|nil) Attach a client associated with {server} as
+  ---              specified in |vim.lsp.config()|. When omitted, all servers
+  ---              that support the buffer's filetype will be attached.
+  function lsp.buf_start(bufnr, server)
+    validate({
+      bufnr = { bufnr, 'n' },
+      server = { server, 's', true },
+    })
+
+    bufnr = resolve_bufnr(bufnr)
+    if not api.nvim_buf_is_valid(bufnr) or not api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
+
+    local config = lsp.config()
+    local servers = config.servers
+    local filetype = nvim_buf_get_option(bufnr, 'filetype')
+
+    if not server then
+      for k, v in pairs(servers) do
+        if vim.tbl_contains(v.filetypes, filetype) then
+          lsp.buf_start(bufnr, k)
+        end
+      end
+      return
+    end
+
+    local opts = servers[server]
+    if not opts then
+      return
+    end
+
+    local defaults = config.defaults
+
+    local path = nvim_buf_get_name(bufnr)
+    if not opts.root_dir then
+      if opts.find_root then
+        opts.root_dir = opts.find_root(path, bufnr)
+      else
+        local root_markers = opts.root_markers or defaults.root_markers
+        opts.root_dir = find_root(path, root_markers)
+      end
+    end
+
+    if type(opts.root_dir) == 'function' then
+      opts.root_dir = opts.root_dir(path, bufnr)
+    end
+
+    if not opts.root_dir and if_nil(opts.single_file_support, defaults.single_file_support) ~= true then
+      return
+    end
+
+    if not client_map[filetype] then
+      client_map[filetype] = {}
+    end
+
+    local clients = client_map[filetype]
+    local client_id = clients[opts.root_dir]
+    if not client_id or lsp.client_is_stopped(client_id) then
+      local client_config = make_client_config(server, opts, defaults)
+      client_id = lsp.start_client(client_config)
+      if opts.root_dir then
+        clients[opts.root_dir] = client_id
+      end
+    end
+
+    if not lsp.buf_attach_client(bufnr, client_id) then
+      api.nvim_echo({
+        {
+          string.format('LSP client %s failed to attach to buffer %d', server, bufnr),
+          'WarningMsg',
+        },
+      }, true, {})
+    end
+  end
+end
 
 return lsp
 -- vim:sw=2 ts=2 et
