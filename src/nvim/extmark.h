@@ -29,7 +29,7 @@ typedef ptrdiff_t bcount_t;
 
 // delete the columns between mincol and endcol
 typedef struct {
-  linenr_T start_row;
+  int start_row;
   colnr_T start_col;
   int old_row;
   colnr_T old_col;

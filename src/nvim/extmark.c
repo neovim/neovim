@@ -417,7 +417,7 @@ static void u_extmark_set(buf_T *buf, uint64_t mark, int row, colnr_T col)
 ///
 /// useful when we cannot simply reverse the operation. This will do nothing on
 /// redo, enforces correct position when undo.
-void u_extmark_copy(buf_T *buf, linenr_T l_row, colnr_T l_col, linenr_T u_row, colnr_T u_col)
+void u_extmark_copy(buf_T *buf, int l_row, colnr_T l_col, int u_row, colnr_T u_col)
 {
   u_header_T *uhp = u_force_get_undo_header(buf);
   if (!uhp) {
@@ -553,7 +553,7 @@ void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, long amount, lon
 //                      the end column of the new region.
 // @param new_byte    Byte extent of the new region.
 // @param undo
-void extmark_splice(buf_T *buf, linenr_T start_row, colnr_T start_col, int old_row, colnr_T old_col,
+void extmark_splice(buf_T *buf, int start_row, colnr_T start_col, int old_row, colnr_T old_col,
                     bcount_t old_byte, int new_row, colnr_T new_col, bcount_t new_byte,
                     ExtmarkOp undo)
 {
@@ -573,7 +573,7 @@ void extmark_splice(buf_T *buf, linenr_T start_row, colnr_T start_col, int old_r
                       undo);
 }
 
-void extmark_splice_impl(buf_T *buf, linenr_T start_row, colnr_T start_col, bcount_t start_byte,
+void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t start_byte,
                          int old_row, colnr_T old_col, bcount_t old_byte, int new_row,
                          colnr_T new_col, bcount_t new_byte, ExtmarkOp undo)
 {
@@ -588,7 +588,7 @@ void extmark_splice_impl(buf_T *buf, linenr_T start_row, colnr_T start_col, bcou
     // beginning and right-gravity at the end need not be preserved.
     // Also be smart about marks that already have been saved (important for
     // merge!)
-    linenr_T end_row = start_row + old_row;
+    int end_row = start_row + old_row;
     int end_col = (old_row ? 0 : start_col) + old_col;
     u_extmark_copy(buf, start_row, start_col, end_row, end_col);
   }
@@ -656,7 +656,7 @@ void extmark_splice_impl(buf_T *buf, linenr_T start_row, colnr_T start_col, bcou
   }
 }
 
-void extmark_splice_cols(buf_T *buf, linenr_T start_row, colnr_T start_col, colnr_T old_col,
+void extmark_splice_cols(buf_T *buf, int start_row, colnr_T start_col, colnr_T old_col,
                          colnr_T new_col, ExtmarkOp undo)
 {
   extmark_splice(buf, start_row, start_col,

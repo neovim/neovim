@@ -2002,7 +2002,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
     // TODO(bfredl): test for crazy edge cases, like we stand on a TAB or
     // something? does this even do the right text change then?
     int delta = orig_col - new_col;
-    extmark_splice_cols(curbuf, curwin->w_cursor.lnum - 1, new_col,
+    extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, new_col,
                         delta < 0 ? -delta : 0,
                         delta > 0 ? delta : 0,
                         kExtmarkUndo);
@@ -9118,7 +9118,7 @@ static bool ins_tab(void)
           }
         }
         if (!(State & VREPLACE_FLAG)) {
-          extmark_splice_cols(curbuf, fpos.lnum - 1, change_col,
+          extmark_splice_cols(curbuf, (int)fpos.lnum - 1, change_col,
                               cursor->col - change_col, fpos.col - change_col,
                               kExtmarkUndo);
         }
