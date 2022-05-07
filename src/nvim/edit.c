@@ -6030,7 +6030,18 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
 
     // Don't break until after the comment leader
     if (do_comments) {
-      leader_len = get_leader_len(get_cursor_line_ptr(), NULL, false, true);
+      char_u *line = get_cursor_line_ptr();
+      leader_len = get_leader_len(line, NULL, false, true);
+      if (leader_len == 0 && curbuf->b_p_cin) {
+        // Check for a line comment after code.
+        int comment_start = check_linecomment(line);
+        if (comment_start != MAXCOL) {
+          leader_len = get_leader_len(line + comment_start, NULL, false, true);
+          if (leader_len != 0) {
+            leader_len += comment_start;
+          }
+        }
+      }
     } else {
       leader_len = 0;
     }

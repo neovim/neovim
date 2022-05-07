@@ -342,6 +342,18 @@ func Test_format_c_comment()
   END
   call assert_equal(expected, getline(1, '$'))
 
+  " typing comment text auto-wraps
+  %del
+  call setline(1, text)
+  exe "normal! 2GA blah more text blah.\<Esc>"
+  let expected =<< trim END
+      {
+         val = val;      // This is a comment
+                         // blah more text
+                         // blah.
+  END
+  call assert_equal(expected, getline(1, '$'))
+
   bwipe!
 endfunc
 
