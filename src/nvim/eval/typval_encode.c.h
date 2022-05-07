@@ -250,6 +250,8 @@
 #include "nvim/func_attr.h"
 #include "nvim/lib/kvec.h"
 
+// -V::1063
+
 /// Dummy variable used because some macros need lvalue
 ///
 /// Must not be written to, if needed one must check that address of the
