@@ -275,7 +275,7 @@ void trans_characters(char_u *buf, int bufsize)
   while (*buf != 0) {
     int trs_len;      // length of trs[]
     // Assume a multi-byte character doesn't need translation.
-    if ((trs_len = utfc_ptr2len(buf)) > 1) {
+    if ((trs_len = utfc_ptr2len((char *)buf)) > 1) {
       len -= trs_len;
     } else {
       trs = transchar_byte(*buf);
@@ -311,7 +311,7 @@ size_t transstr_len(const char *const s, bool untab)
   size_t len = 0;
 
   while (*p) {
-    const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
+    const size_t l = (size_t)utfc_ptr2len(p);
     if (l > 1) {
       int pcc[MAX_MCO + 1];
       pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
@@ -354,7 +354,7 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len, bool
   char *const buf_e = buf_p + len - 1;
 
   while (*p != NUL && buf_p < buf_e) {
-    const size_t l = (size_t)utfc_ptr2len((const char_u *)p);
+    const size_t l = (size_t)utfc_ptr2len(p);
     if (l > 1) {
       if (buf_p + l > buf_e) {
         break;  // Exceeded `buf` size.
@@ -424,7 +424,7 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   int i;
   int len = orglen;
 
-#define GA_CHAR(i) ((char_u *)ga.ga_data)[i]
+#define GA_CHAR(i) ((char *)ga.ga_data)[i]
 #define GA_PTR(i) ((char_u *)ga.ga_data + (i))
 #define STR_CHAR(i) (buf == NULL ? GA_CHAR(i) : buf[i])
 #define STR_PTR(i) (buf == NULL ? GA_PTR(i) : buf + (i))
@@ -453,8 +453,8 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   // Make each character lower case.
   i = 0;
   while (STR_CHAR(i) != NUL) {
-    int c = utf_ptr2char(STR_PTR(i));
-    int olen = utf_ptr2len(STR_PTR(i));
+    int c = utf_ptr2char((char *)STR_PTR(i));
+    int olen = utf_ptr2len((char *)STR_PTR(i));
     int lc = mb_tolower(c);
 
     // Only replace the character when it is not an invalid
@@ -492,7 +492,7 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
     }
 
     // skip to next multi-byte char
-    i += utfc_ptr2len(STR_PTR(i));
+    i += utfc_ptr2len((char *)STR_PTR(i));
   }
 
 
@@ -693,7 +693,7 @@ int ptr2cells(const char_u *p)
 {
   // For UTF-8 we need to look at more bytes if the first byte is >= 0x80.
   if (*p >= 0x80) {
-    return utf_ptr2cells(p);
+    return utf_ptr2cells((char *)p);
   }
 
   // For DBCS we can tell the cell count from the first byte.
@@ -727,7 +727,7 @@ int vim_strnsize(char_u *s, int len)
   assert(s != NULL);
   int size = 0;
   while (*s != NUL && --len >= 0) {
-    int l = utfc_ptr2len(s);
+    int l = utfc_ptr2len((char *)s);
     size += ptr2cells(s);
     s += l;
     len -= l - 1;
@@ -806,7 +806,7 @@ bool vim_iswordp_buf(const char_u *const p, buf_T *const buf)
   int c = *p;
 
   if (MB_BYTE2LEN(c) > 1) {
-    c = utf_ptr2char(p);
+    c = utf_ptr2char((char *)p);
   }
   return vim_iswordc_buf(c, buf);
 }
@@ -957,7 +957,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
         // For utf-8, if the byte is >= 0x80, need to look at
         // further bytes to find the cell width.
         if (c >= 0x80) {
-          incr = utf_ptr2cells(ptr);
+          incr = utf_ptr2cells((char *)ptr);
         } else {
           incr = g_chartab[c] & CT_CELL_MASK;
         }
@@ -1070,7 +1070,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     char_u *ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
     if (pos->col < (colnr_T)STRLEN(ptr)) {
-      int c = utf_ptr2char(ptr + pos->col);
+      int c = utf_ptr2char((char *)ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(char2cells(c) - 1);
         if (coladd > endadd) {

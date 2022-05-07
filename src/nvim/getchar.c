@@ -700,7 +700,7 @@ static int read_redo(bool init, bool old_redo)
     buf[i] = (char_u)c;
     if (i == n - 1) {         // last byte of a character
       if (n != 1) {
-        c = utf_ptr2char(buf);
+        c = utf_ptr2char((char *)buf);
       }
       break;
     }
@@ -1624,7 +1624,7 @@ int vgetc(void)
           }
         }
         no_mapping--;
-        c = utf_ptr2char(buf);
+        c = utf_ptr2char((char *)buf);
       }
 
       if (vgetc_char == 0) {
@@ -1935,7 +1935,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
         char_u *p1 = mp->m_keys;
         char_u *p2 = (char_u *)mb_unescape((const char **)&p1);
 
-        if (p2 != NULL && MB_BYTE2LEN(tb_c1) > utfc_ptr2len(p2)) {
+        if (p2 != NULL && MB_BYTE2LEN(tb_c1) > utfc_ptr2len((char *)p2)) {
           mlen = 0;
         }
 
@@ -2450,7 +2450,7 @@ static int vgetorpeek(bool advance)
                     curwin->w_wcol = vcol;
                   }
                   vcol += lbr_chartabsize(ptr, ptr + col, vcol);
-                  col += utfc_ptr2len(ptr + col);
+                  col += utfc_ptr2len((char *)ptr + col);
                 }
                 curwin->w_wrow = curwin->w_cline_row
                                  + curwin->w_wcol / curwin->w_width_inner;
@@ -2471,7 +2471,7 @@ static int vgetorpeek(bool advance)
               // of a double-wide character.
               ptr = get_cursor_line_ptr();
               col -= utf_head_off(ptr, ptr + col);
-              if (utf_ptr2cells(ptr + col) > 1) {
+              if (utf_ptr2cells((char *)ptr + col) > 1) {
                 curwin->w_wcol--;
               }
             }
@@ -3137,7 +3137,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
 
         const int first = vim_iswordp(lhs);
         int last = first;
-        p = lhs + utfc_ptr2len(lhs);
+        p = lhs + utfc_ptr2len((char *)lhs);
         n = 1;
         while (p < lhs + len) {
           n++;                                  // nr of (multi-byte) chars
@@ -3145,7 +3145,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
           if (same == -1 && last != first) {
             same = n - 1;                       // count of same char type
           }
-          p += utfc_ptr2len(p);
+          p += utfc_ptr2len((char *)p);
         }
         if (last && n > 2 && same >= 0 && same < n - 1) {
           retval = 1;
@@ -3543,14 +3543,14 @@ static void validate_maphash(void)
 /*
  * Get the mapping mode from the command name.
  */
-int get_map_mode(char_u **cmdp, bool forceit)
+int get_map_mode(char **cmdp, bool forceit)
 {
-  char_u *p;
+  char *p;
   int modec;
   int mode;
 
   p = *cmdp;
-  modec = *p++;
+  modec = (uint8_t)(*p++);
   if (modec == 'i') {
     mode = INSERT;                              // :imap
   } else if (modec == 'l') {
@@ -3597,7 +3597,7 @@ void map_clear_mode(char_u *cmdp, char_u *arg, int forceit, int abbr)
     return;
   }
 
-  mode = get_map_mode(&cmdp, forceit);
+  mode = get_map_mode((char **)&cmdp, forceit);
   map_clear_int(curbuf, mode,
                 local,
                 abbr);
@@ -3894,7 +3894,7 @@ char_u *set_context_in_map_cmd(expand_T *xp, char_u *cmd, char_u *arg, bool forc
     xp->xp_context = EXPAND_NOTHING;
   } else {
     if (isunmap) {
-      expand_mapmodes = get_map_mode(&cmd, forceit || isabbrev);
+      expand_mapmodes = get_map_mode((char **)&cmd, forceit || isabbrev);
     } else {
       expand_mapmodes = INSERT + CMDLINE;
       if (!isabbrev) {
@@ -4117,7 +4117,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
     while (p > ptr + mincol) {
       p = mb_prevptr(ptr, p);
       if (ascii_isspace(*p) || (!vim_abbr && is_id != vim_iswordp(p))) {
-        p += utfc_ptr2len(p);
+        p += utfc_ptr2len((char *)p);
         break;
       }
       ++clen;
@@ -4310,8 +4310,8 @@ char_u *vim_strsave_escape_ks(char_u *p)
     } else {
       // Add character, possibly multi-byte to destination, escaping
       // K_SPECIAL. Be careful, it can be an illegal byte!
-      d = add_char2buf(utf_ptr2char(s), d);
-      s += utf_ptr2len(s);
+      d = add_char2buf(utf_ptr2char((char *)s), d);
+      s += utf_ptr2len((char *)s);
     }
   }
   *d = NUL;

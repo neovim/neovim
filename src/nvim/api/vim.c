@@ -2287,12 +2287,12 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
   if (HAS_KEY(opts->fillchar)) {
     if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size == 0
-        || ((size_t)utf_ptr2len((char_u *)opts->fillchar.data.string.data)
+        || ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
             != opts->fillchar.data.string.size)) {
       api_set_error(err, kErrorTypeValidation, "fillchar must be a single character");
       return result;
     }
-    fillchar = utf_ptr2char((char_u *)opts->fillchar.data.string.data);
+    fillchar = utf_ptr2char(opts->fillchar.data.string.data);
   }
 
   if (HAS_KEY(opts->highlights)) {

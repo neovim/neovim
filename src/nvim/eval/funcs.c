@@ -733,9 +733,9 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
       return;
     }
     if (comp) {
-      t += utf_ptr2len((const char_u *)t);
+      t += utf_ptr2len(t);
     } else {
-      t += utfc_ptr2len((const char_u *)t);
+      t += utfc_ptr2len(t);
     }
   }
   rettv->vval.v_number = (varnumber_T)(t - str);
@@ -894,7 +894,7 @@ static void f_char2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  rettv->vval.v_number = utf_ptr2char((const char_u *)tv_get_string(&argvars[0]));
+  rettv->vval.v_number = utf_ptr2char(tv_get_string(&argvars[0]));
 }
 
 /// Get the current cursor column and store it in 'rettv'.
@@ -925,7 +925,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
         if (curwin->w_cursor.coladd >=
             (colnr_T)win_chartabsize(curwin, p, curwin->w_virtcol - curwin->w_cursor.coladd)) {
           int l;
-          if (*p != NUL && p[(l = utfc_ptr2len(p))] == NUL) {
+          if (*p != NUL && p[(l = utfc_ptr2len((char *)p))] == NUL) {
             col += l;
           }
         }
@@ -968,7 +968,7 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  int (*ptr2len)(const char_u *);
+  int (*ptr2len)(const char *);
   if (countcc) {
     ptr2len = utf_ptr2len;
   } else {
@@ -981,7 +981,7 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (*p == NUL) {
       return;
     }
-    p += ptr2len((const char_u *)p);
+    p += ptr2len(p);
   }
 
   rettv->vval.v_number = len > 0 ? len - 1 : 0;
@@ -5691,7 +5691,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     return;
   }
 
-  mode = get_map_mode((char_u **)&which, 0);
+  mode = get_map_mode((char **)&which, 0);
 
   char_u *keys_simplified
     = replace_termcodes(keys, STRLEN(keys), &keys_buf, flags, &did_simplify, CPO_TO_CPO_FLAGS);
@@ -5894,7 +5894,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         idx++;
       } else {
         startcol = (colnr_T)(regmatch.startp[0]
-                             + utfc_ptr2len(regmatch.startp[0]) - str);
+                             + utfc_ptr2len((char *)regmatch.startp[0]) - str);
         if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
           match = false;
           break;
@@ -8062,7 +8062,7 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     ScreenGrid *grid = &default_grid;
     screenchar_adjust_grid(&grid, &row, &col);
-    c = utf_ptr2char(grid->chars[grid->line_offset[row] + col]);
+    c = utf_ptr2char((char *)grid->chars[grid->line_offset[row] + col]);
   }
   rettv->vval.v_number = c;
 }
@@ -8660,7 +8660,7 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (csearch != NULL) {
       int pcc[MAX_MCO];
       const int c = utfc_ptr2char(csearch, pcc);
-      set_last_csearch(c, csearch, utfc_ptr2len(csearch));
+      set_last_csearch(c, csearch, utfc_ptr2len((char *)csearch));
     }
 
     di = tv_dict_find(d, S_LEN("forward"));
@@ -9796,7 +9796,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         col = 0;
       } else {
         // Don't get stuck at the same match.
-        col = utfc_ptr2len(regmatch.endp[0]);
+        col = utfc_ptr2len((char *)regmatch.endp[0]);
       }
       str = (const char *)regmatch.endp[0];
     }
@@ -9856,8 +9856,8 @@ static void f_str2list(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, kListLenUnknown);
   const char_u *p = (const char_u *)tv_get_string(&argvars[0]);
 
-  for (; *p != NUL; p += utf_ptr2len(p)) {
-    tv_list_append_number(rettv->vval.v_list, utf_ptr2char(p));
+  for (; *p != NUL; p += utf_ptr2len((char *)p)) {
+    tv_list_append_number(rettv->vval.v_list, utf_ptr2char((char *)p));
   }
 }
 
@@ -9976,11 +9976,11 @@ static void f_strgetchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   while (charidx >= 0 && byteidx < len) {
     if (charidx == 0) {
-      rettv->vval.v_number = utf_ptr2char((const char_u *)str + byteidx);
+      rettv->vval.v_number = utf_ptr2char(str + byteidx);
       break;
     }
     charidx--;
-    byteidx += utf_ptr2len((const char_u *)str + byteidx);
+    byteidx += utf_ptr2len(str + byteidx);
   }
 }
 
@@ -10085,7 +10085,7 @@ static void f_strcharpart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!error) {
     if (nchar > 0) {
       while (nchar > 0 && (size_t)nbyte < slen) {
-        nbyte += utf_ptr2len((const char_u *)p + nbyte);
+        nbyte += utf_ptr2len(p + nbyte);
         nchar--;
       }
     } else {
@@ -10101,7 +10101,7 @@ static void f_strcharpart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (off < 0) {
         len += 1;
       } else {
-        len += utf_ptr2len((const char_u *)p + off);
+        len += utf_ptr2len(p + off);
       }
       charlen--;
     }
@@ -10164,7 +10164,7 @@ static void f_strpart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     // length in characters
     for (off = n; off < (int)slen && len > 0; len--) {
-      off += utfc_ptr2len((char_u *)p + off);
+      off += utfc_ptr2len(p + off);
     }
     len = off - n;
   }
@@ -10935,16 +10935,16 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool first = true;
   while (*in_str != NUL) {
     const char *cpstr = in_str;
-    const int inlen = utfc_ptr2len((const char_u *)in_str);
+    const int inlen = utfc_ptr2len(in_str);
     int cplen = inlen;
     int idx = 0;
     int fromlen;
     for (const char *p = fromstr; *p != NUL; p += fromlen) {
-      fromlen = utfc_ptr2len((const char_u *)p);
+      fromlen = utfc_ptr2len(p);
       if (fromlen == inlen && STRNCMP(in_str, p, inlen) == 0) {
         int tolen;
         for (p = tostr; *p != NUL; p += tolen) {
-          tolen = utfc_ptr2len((const char_u *)p);
+          tolen = utfc_ptr2len(p);
           if (idx-- == 0) {
             cplen = tolen;
             cpstr = (char *)p;
@@ -10966,7 +10966,7 @@ static void f_tr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       first = false;
       int tolen;
       for (const char *p = tostr; *p != NUL; p += tolen) {
-        tolen = utfc_ptr2len((const char_u *)p);
+        tolen = utfc_ptr2len(p);
         idx--;
       }
       if (idx != 0) {
@@ -11029,14 +11029,14 @@ static void f_trim(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (dir == 0 || dir == 1) {
     // Trim leading characters
     while (*head != NUL) {
-      c1 = utf_ptr2char(head);
+      c1 = utf_ptr2char((char *)head);
       if (mask == NULL) {
         if (c1 > ' ' && c1 != 0xa0) {
           break;
         }
       } else {
         for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
-          if (c1 == utf_ptr2char(p)) {
+          if (c1 == utf_ptr2char((char *)p)) {
             break;
           }
         }
@@ -11054,14 +11054,14 @@ static void f_trim(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     for (; tail > head; tail = prev) {
       prev = tail;
       MB_PTR_BACK(head, prev);
-      c1 = utf_ptr2char(prev);
+      c1 = utf_ptr2char((char *)prev);
       if (mask == NULL) {
         if (c1 > ' ' && c1 != 0xa0) {
           break;
         }
       } else {
         for (p = mask; *p != NUL; MB_PTR_ADV(p)) {
-          if (c1 == utf_ptr2char(p)) {
+          if (c1 == utf_ptr2char((char *)p)) {
             break;
           }
         }

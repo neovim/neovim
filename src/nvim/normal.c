@@ -2094,7 +2094,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
           find_start_of_word(&VIsual);
           if (*p_sel == 'e' && *get_cursor_pos_ptr() != NUL) {
             curwin->w_cursor.col +=
-              utfc_ptr2len(get_cursor_pos_ptr());
+              utfc_ptr2len((char *)get_cursor_pos_ptr());
           }
           find_end_of_word(&curwin->w_cursor);
         }
@@ -2157,7 +2157,7 @@ static void find_end_of_word(pos_T *pos)
   }
   cclass = get_mouse_class(line + pos->col);
   while (line[pos->col] != NUL) {
-    col = pos->col + utfc_ptr2len(line + pos->col);
+    col = pos->col + utfc_ptr2len((char *)line + pos->col);
     if (get_mouse_class(line + col) != cclass) {
       if (*p_sel == 'e') {
         pos->col = col;
@@ -2340,7 +2340,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **te
       if (this_class != 0 && (i == 1 || this_class != 1)) {
         break;
       }
-      col += utfc_ptr2len(ptr + col);
+      col += utfc_ptr2len((char *)ptr + col);
     }
 
     // When starting on a ']' count it, so that we include the '['.
@@ -2408,7 +2408,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **te
              || ((find_type & FIND_EVAL)
                  && col <= (int)startcol
                  && find_is_eval_item(ptr + col, &col, &bn, FORWARD)))) {
-    col += utfc_ptr2len(ptr + col);
+    col += utfc_ptr2len((char *)ptr + col);
   }
 
   assert(col >= 0);
@@ -2585,7 +2585,7 @@ void clear_showcmd(void)
         e = ml_get_pos(&VIsual);
       }
       while ((*p_sel != 'e') ? s <= e : s < e) {
-        l = utfc_ptr2len(s);
+        l = utfc_ptr2len((char *)s);
         if (l == 0) {
           bytes++;
           chars++;
@@ -3262,7 +3262,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
       virtcol -= vim_strsize(get_showbreak_value(curwin));
     }
 
-    int c = utf_ptr2char(get_cursor_pos_ptr());
+    int c = utf_ptr2char((char *)get_cursor_pos_ptr());
     if (dir == FORWARD && virtcol < curwin->w_curswant
         && (curwin->w_curswant <= (colnr_T)width1)
         && !vim_isprintc(c) && c > 255) {
@@ -4239,7 +4239,7 @@ static void nv_ident(cmdarg_T *cap)
       }
       // When current byte is a part of multibyte character, copy all
       // bytes of that character.
-      const size_t len = (size_t)(utfc_ptr2len(ptr) - 1);
+      const size_t len = (size_t)(utfc_ptr2len((char *)ptr) - 1);
       for (size_t i = 0; i < len && n > 0; i++, n--) {
         *p++ = *ptr++;
       }
@@ -4308,7 +4308,7 @@ bool get_visual_text(cmdarg_T *cap, char_u **pp, size_t *lenp)
     }
     if (*lenp > 0) {
       // Correct the length to include all bytes of the last character.
-      *lenp += (size_t)(utfc_ptr2len(*pp + (*lenp - 1)) - 1);
+      *lenp += (size_t)(utfc_ptr2len((char *)(*pp) + (*lenp - 1)) - 1);
     }
   }
   reset_VIsual_and_resel();
@@ -4470,7 +4470,7 @@ static void nv_right(cmdarg_T *cap)
       if (virtual_active()) {
         oneright();
       } else {
-        curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
+        curwin->w_cursor.col += utfc_ptr2len((char *)get_cursor_pos_ptr());
       }
     }
   }
@@ -4521,7 +4521,7 @@ static void nv_left(cmdarg_T *cap)
           char_u *cp = get_cursor_pos_ptr();
 
           if (*cp != NUL) {
-            curwin->w_cursor.col += utfc_ptr2len(cp);
+            curwin->w_cursor.col += utfc_ptr2len((char *)cp);
           }
           cap->retval |= CA_NO_ADJ_OP_END;
         }

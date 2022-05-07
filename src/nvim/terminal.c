@@ -673,8 +673,8 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
       char_u *dst = buff;
       char_u *src = y_array[j];
       while (*src != '\0') {
-        len = (size_t)utf_ptr2len(src);
-        int c = utf_ptr2char(src);
+        len = (size_t)utf_ptr2len((char *)src);
+        int c = utf_ptr2char((char *)src);
         if (!is_filter_char(c)) {
           memcpy(dst, src, len);
           dst += len;

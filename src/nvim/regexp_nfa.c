@@ -1465,7 +1465,7 @@ static int nfa_regatom(void)
       return FAIL;
     }
     for (lp = reg_prev_sub; *lp != NUL; MB_CPTR_ADV(lp)) {
-      EMIT(utf_ptr2char(lp));
+      EMIT(utf_ptr2char((char *)lp));
       if (lp != reg_prev_sub) {
         EMIT(NFA_CONCAT);
       }
@@ -1902,7 +1902,7 @@ collection:
 
         // Normal printable char
         if (startc == -1) {
-          startc = utf_ptr2char(regparse);
+          startc = utf_ptr2char((char *)regparse);
         }
 
         /* Previous char was '-', so this char is end of range. */
@@ -2007,7 +2007,7 @@ collection:
 
 nfa_do_multibyte:
     // plen is length of current char with composing chars
-    if (utf_char2len(c) != (plen = utfc_ptr2len(old_regparse))
+    if (utf_char2len(c) != (plen = utfc_ptr2len((char *)old_regparse))
         || utf_iscomposing(c)) {
       int i = 0;
 
@@ -2025,7 +2025,7 @@ nfa_do_multibyte:
           EMIT(NFA_CONCAT);
         if ((i += utf_char2len(c)) >= plen)
           break;
-        c = utf_ptr2char(old_regparse + i);
+        c = utf_ptr2char((char *)old_regparse + i);
       }
       EMIT(NFA_COMPOSING);
       regparse = old_regparse + plen;
@@ -5167,17 +5167,17 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 #define PTR2LEN(x) utf_ptr2len(x)
 
   colnr_T col = startcol;
-  int regstart_len = PTR2LEN(rex.line + startcol);
+  int regstart_len = PTR2LEN((char *)rex.line + startcol);
 
   for (;;) {
     bool match = true;
     char_u *s1 = match_text;
     char_u *s2 = rex.line + col + regstart_len;  // skip regstart
     while (*s1) {
-      int c1_len = PTR2LEN(s1);
-      int c1 = utf_ptr2char(s1);
-      int c2_len = PTR2LEN(s2);
-      int c2 = utf_ptr2char(s2);
+      int c1_len = PTR2LEN((char *)s1);
+      int c1 = utf_ptr2char((char *)s1);
+      int c2_len = PTR2LEN((char *)s2);
+      int c2 = utf_ptr2char((char *)s2);
 
       if ((c1 != c2 && (!rex.reg_ic || utf_fold(c1) != utf_fold(c2)))
           || c1_len != c2_len) {
@@ -5189,7 +5189,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     }
     if (match
         // check that no composing char follows
-        && !utf_iscomposing(utf_ptr2char(s2))) {
+        && !utf_iscomposing(utf_ptr2char((char *)s2))) {
       cleanup_subexpr();
       if (REG_MULTI) {
         rex.reg_startpos[0].lnum = rex.lnum;
@@ -5343,8 +5343,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
    * Run for each character.
    */
   for (;; ) {
-    int curc = utf_ptr2char(rex.input);
-    int clen = utfc_ptr2len(rex.input);
+    int curc = utf_ptr2char((char *)rex.input);
+    int clen = utfc_ptr2len((char *)rex.input);
     if (curc == NUL) {
       clen = 0;
       go_to_nextline = false;
@@ -5822,7 +5822,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           // We don't care about the order of composing characters.
           // Get them into cchars[] first.
           while (len < clen) {
-            mc = utf_ptr2char(rex.input + len);
+            mc = utf_ptr2char((char *)rex.input + len);
             cchars[ccount++] = mc;
             len += utf_char2len(mc);
             if (ccount == MAX_MCO) {
@@ -5987,12 +5987,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         break;
 
       case NFA_PRINT:           //  \p
-        result = vim_isprintc(utf_ptr2char(rex.input));
+        result = vim_isprintc(utf_ptr2char((char *)rex.input));
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_SPRINT:          //  \P
-        result = !ascii_isdigit(curc) && vim_isprintc(utf_ptr2char(rex.input));
+        result = !ascii_isdigit(curc) && vim_isprintc(utf_ptr2char((char *)rex.input));
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -6346,7 +6346,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
         // If rex.reg_icombine is not set only skip over the character
         // itself.  When it is set skip over composing characters.
         if (result && !rex.reg_icombine) {
-          clen = utf_ptr2len(rex.input);
+          clen = utf_ptr2len((char *)rex.input);
         }
 
         ADD_STATE_IF_MATCH(t->state);
@@ -6494,7 +6494,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           } else {
             // Checking if the required start character matches is
             // cheaper than adding a state that won't match.
-            const int c = utf_ptr2char(rex.input + clen);
+            const int c = utf_ptr2char((char *)rex.input + clen);
             if (c != prog->regstart
                 && (!rex.reg_ic
                     || utf_fold(c) != utf_fold(prog->regstart))) {

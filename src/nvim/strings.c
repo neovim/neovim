@@ -98,7 +98,7 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars, c
    */
   size_t length = 1;                    // count the trailing NUL
   for (const char_u *p = string; *p; p++) {
-    const size_t l = (size_t)(utfc_ptr2len(p));
+    const size_t l = (size_t)(utfc_ptr2len((char *)p));
     if (l > 1) {
       length += l;                      // count a multibyte char
       p += l - 1;
@@ -113,7 +113,7 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars, c
   char_u *escaped_string = xmalloc(length);
   char_u *p2 = escaped_string;
   for (const char_u *p = string; *p; p++) {
-    const size_t l = (size_t)(utfc_ptr2len(p));
+    const size_t l = (size_t)(utfc_ptr2len((char *)p));
     if (l > 1) {
       memcpy(p2, p, l);
       p2 += l;
@@ -357,8 +357,8 @@ char *strcase_save(const char *const orig, bool upper)
 
   char *p = res;
   while (*p != NUL) {
-    int c = utf_ptr2char((const char_u *)p);
-    int l = utf_ptr2len((const char_u *)p);
+    int c = utf_ptr2char(p);
+    int l = utf_ptr2len(p);
     if (c == 0) {
       // overlong sequence, use only the first byte
       c = (char_u)(*p);
@@ -1011,8 +1011,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
             char_u *p1;
             size_t i;
 
-            for (i = 0, p1 = (char_u *)str_arg; *p1; p1 += utfc_ptr2len(p1)) {
-              size_t cell = (size_t)utf_ptr2cells(p1);
+            for (i = 0, p1 = (char_u *)str_arg; *p1; p1 += utfc_ptr2len((char *)p1)) {
+              size_t cell = (size_t)utf_ptr2cells((char *)p1);
               if (precision_specified && i + cell > precision) {
                 break;
               }

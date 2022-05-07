@@ -2504,19 +2504,19 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
             // be empty or start with the same letter.
             if (aff_entry->ae_chop != NULL
                 && aff_entry->ae_add != NULL
-                && aff_entry->ae_chop[utfc_ptr2len(aff_entry->ae_chop)] ==
+                && aff_entry->ae_chop[utfc_ptr2len((char *)aff_entry->ae_chop)] ==
                 NUL) {
               int c, c_up;
 
-              c = utf_ptr2char(aff_entry->ae_chop);
+              c = utf_ptr2char((char *)aff_entry->ae_chop);
               c_up = SPELL_TOUPPER(c);
               if (c_up != c
                   && (aff_entry->ae_cond == NULL
-                      || utf_ptr2char(aff_entry->ae_cond) == c)) {
+                      || utf_ptr2char((char *)aff_entry->ae_cond) == c)) {
                 p = aff_entry->ae_add
                     + STRLEN(aff_entry->ae_add);
                 MB_PTR_BACK(aff_entry->ae_add, p);
-                if (utf_ptr2char(p) == c_up) {
+                if (utf_ptr2char((char *)p) == c_up) {
                   upper = true;
                   aff_entry->ae_chop = NULL;
                   *p = NUL;

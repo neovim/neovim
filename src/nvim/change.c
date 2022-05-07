@@ -599,7 +599,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
         if (vcol > new_vcol && oldp[col + oldlen] == TAB) {
           break;
         }
-        oldlen += (size_t)utfc_ptr2len(oldp + col + oldlen);
+        oldlen += (size_t)utfc_ptr2len((char *)oldp + col + oldlen);
         // Deleted a bit too much, insert spaces.
         if (vcol > new_vcol) {
           newlen += (size_t)(vcol - new_vcol);
@@ -608,7 +608,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       curwin->w_p_list = old_list;
     } else if (oldp[col] != NUL) {
       // normal replace
-      oldlen = (size_t)utfc_ptr2len(oldp + col);
+      oldlen = (size_t)utfc_ptr2len((char *)oldp + col);
     }
 
 
@@ -655,7 +655,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
   if (p_sm && (State & INSERT)
       && msg_silent == 0
       && !ins_compl_active()) {
-    showmatch(utf_ptr2char(buf));
+    showmatch(utf_ptr2char((char *)buf));
   }
 
   if (!p_ri || (State & REPLACE_FLAG)) {
@@ -715,7 +715,7 @@ int del_chars(long count, int fixpos)
   int bytes = 0;
   char_u *p = get_cursor_pos_ptr();
   for (long i = 0; i < count && *p != NUL; i++) {
-    int l = utfc_ptr2len(p);
+    int l = utfc_ptr2len((char *)p);
     bytes += l;
     p += l;
   }
@@ -756,7 +756,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   // If 'delcombine' is set and deleting (less than) one character, only
   // delete the last combining character.
   if (p_deco && use_delcombine
-      && utfc_ptr2len(oldp + col) >= count) {
+      && utfc_ptr2len((char *)oldp + col) >= count) {
     int cc[MAX_MCO];
 
     (void)utfc_ptr2char(oldp + col, cc);
@@ -765,7 +765,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
       int n = col;
       do {
         col = n;
-        count = utf_ptr2len(oldp + n);
+        count = utf_ptr2len((char *)oldp + n);
         n += count;
       } while (utf_composinglike(oldp + col, oldp + n));
       fixpos = false;
@@ -1436,7 +1436,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             int l;
 
             for (i = 0; i < lead_len && p[i] != NUL; i += l) {
-              l = utfc_ptr2len(p + i);
+              l = utfc_ptr2len((char *)p + i);
               if (vim_strnsize(p, i + l) > repl_size) {
                 break;
               }
@@ -1459,7 +1459,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
                 lead_len--;
                 memmove(p, p + 1, (size_t)(leader + lead_len - p));
               } else {
-                int l = utfc_ptr2len(p);
+                int l = utfc_ptr2len((char *)p);
 
                 if (l > 1) {
                   if (ptr2cells(p) > 1) {
@@ -1565,7 +1565,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     }
     if (curbuf->b_p_ai || (flags & OPENLINE_DELSPACES)) {
       while ((*p_extra == ' ' || *p_extra == '\t')
-             && !utf_iscomposing(utf_ptr2char(p_extra + 1))) {
+             && !utf_iscomposing(utf_ptr2char((char *)p_extra + 1))) {
         if (REPLACE_NORMAL(State)) {
           replace_push(*p_extra);
         }

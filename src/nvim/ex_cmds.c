@@ -850,7 +850,7 @@ void ex_retab(exarg_T *eap)
         emsg(_(e_resulting_text_too_long));
         break;
       }
-      col += utfc_ptr2len((char_u *)ptr + col);
+      col += utfc_ptr2len(ptr + col);
     }
     if (new_line == NULL) {                 // out of memory
       break;
@@ -3785,7 +3785,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
             skip_match = true;
           } else {
             // search for a match at next column
-            matchcol += utfc_ptr2len((char_u *)sub_firstline + matchcol);
+            matchcol += utfc_ptr2len(sub_firstline + matchcol);
           }
           // match will be pushed to preview_lines, bring it into a proper state
           current_match.start.col = matchcol;
@@ -4179,7 +4179,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
                 p1 = new_start - 1;
               }
             } else {
-              p1 += utfc_ptr2len((char_u *)p1) - 1;
+              p1 += utfc_ptr2len(p1) - 1;
             }
           }
           size_t new_endcol = STRLEN(new_start);
@@ -5464,7 +5464,7 @@ void fix_help_buffer(void)
                   // illegal byte sequence is found.
                   if ((char_u)(*s) >= 0x80 && this_utf != kFalse) {
                     this_utf = kTrue;
-                    const int l = utf_ptr2len((char_u *)s);
+                    const int l = utf_ptr2len(s);
                     if (l == 1) {
                       this_utf = kFalse;
                     }
@@ -5613,7 +5613,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         for (s = (char *)IObuff; *s != NUL; s++) {
           if ((char_u)(*s) >= 0x80) {
             this_utf8 = kTrue;
-            const int l = utf_ptr2len((char_u *)s);
+            const int l = utf_ptr2len(s);
             if (l == 1) {
               // Illegal UTF-8 byte sequence.
               this_utf8 = kFalse;

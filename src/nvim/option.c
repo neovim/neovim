@@ -1502,7 +1502,7 @@ int do_set(char_u *arg, int opt_flags)
                     ) {
                   arg++;                        // remove backslash
                 }
-                i = utfc_ptr2len(arg);
+                i = utfc_ptr2len((char *)arg);
                 if (i > 1) {
                   // copy multibyte char
                   memmove(s, arg, (size_t)i);
@@ -2664,13 +2664,13 @@ ambw_end:
       int x2 = -1;
       int x3 = -1;
 
-      p += utfc_ptr2len(p);
+      p += utfc_ptr2len((char *)p);
       if (*p != NUL) {
         x2 = *p++;
       }
       if (*p != NUL) {
-        x3 = utf_ptr2char(p);
-        p += utfc_ptr2len(p);
+        x3 = utf_ptr2char((char *)p);
+        p += utfc_ptr2len((char *)p);
       }
       if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
         errmsg = e_invarg;
@@ -3526,7 +3526,7 @@ static int get_encoded_char_adv(char_u **p)
   }
 
   // TODO(bfredl): use schar_T representation and utfc_ptr2len
-  int clen = utf_ptr2len(s);
+  int clen = utf_ptr2len((char *)s);
   int c = mb_cptr2char_adv((const char_u **)p);
   if (clen == 1 && c > 127) {  // Invalid UTF-8 byte
     return 0;
@@ -7140,7 +7140,7 @@ static void langmap_set(void)
       if (p[0] == '\\' && p[1] != NUL) {
         p++;
       }
-      from = utf_ptr2char(p);
+      from = utf_ptr2char((char *)p);
       to = NUL;
       if (p2 == NULL) {
         MB_PTR_ADV(p);
@@ -7148,14 +7148,14 @@ static void langmap_set(void)
           if (p[0] == '\\') {
             p++;
           }
-          to = utf_ptr2char(p);
+          to = utf_ptr2char((char *)p);
         }
       } else {
         if (p2[0] != ',') {
           if (p2[0] == '\\') {
             p2++;
           }
-          to = utf_ptr2char(p2);
+          to = utf_ptr2char((char *)p2);
         }
       }
       if (to == NUL) {

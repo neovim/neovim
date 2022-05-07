@@ -1579,7 +1579,7 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
     // double-wide character.
     if (lp->coladd == 1
         && p[lp->col] != TAB
-        && vim_isprintc(utf_ptr2char(p + lp->col))
+        && vim_isprintc(utf_ptr2char((char *)p + lp->col))
         && ptr2cells(p + lp->col) > 1) {
       lp->coladd = 0;
     }

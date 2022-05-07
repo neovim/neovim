@@ -1377,7 +1377,7 @@ retry:
             } else {
               len = utf_head_off(ptr, p);
               p -= len;
-              u8c = utf_ptr2char(p);
+              u8c = utf_ptr2char((char *)p);
               if (len == 0) {
                 // Not a valid UTF-8 character, retry with
                 // another fenc when possible, otherwise just
@@ -3982,7 +3982,7 @@ static int buf_write_bytes(struct bw_info *ip)
             break;
           }
           if (n > 1) {
-            c = utf_ptr2char(ip->bw_rest);
+            c = utf_ptr2char((char *)ip->bw_rest);
           } else {
             c = ip->bw_rest[0];
           }
@@ -4010,7 +4010,7 @@ static int buf_write_bytes(struct bw_info *ip)
             break;
           }
           if (n > 1) {
-            c = utf_ptr2char(buf + wlen);
+            c = utf_ptr2char((char *)buf + wlen);
           } else {
             c = buf[wlen];
           }

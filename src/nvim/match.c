@@ -93,7 +93,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   m->match.rmm_maxcol = 0;
   m->conceal_char = 0;
   if (conceal_char != NULL) {
-    m->conceal_char = utf_ptr2char((const char_u *)conceal_char);
+    m->conceal_char = utf_ptr2char(conceal_char);
   }
 
   // Set up position matches
@@ -447,7 +447,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
         shl->lnum = 0;
         break;
       }
-      matchcol += utfc_ptr2len(ml);
+      matchcol += utfc_ptr2len((char *)ml);
     } else {
       matchcol = shl->rm.endpos[0].col;
     }
@@ -634,7 +634,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
       // Highlight one character for an empty match.
       if (shl->startcol == shl->endcol) {
         if ((*line)[shl->endcol] != NUL) {
-          shl->endcol += utfc_ptr2len(*line + shl->endcol);
+          shl->endcol += utfc_ptr2len((char *)(*line) + shl->endcol);
         } else {
           shl->endcol++;
         }
@@ -688,7 +688,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
       if (shl->startcol != MAXCOL
           && col >= shl->startcol
           && col < shl->endcol) {
-        int next_col = col + utfc_ptr2len(*line + col);
+        int next_col = col + utfc_ptr2len((char *)(*line) + col);
 
         if (shl->endcol < next_col) {
           shl->endcol = next_col;
@@ -736,7 +736,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
 
           if (shl->startcol == shl->endcol) {
             // highlight empty match, try again after it
-            shl->endcol += utfc_ptr2len(*line + shl->endcol);
+            shl->endcol += utfc_ptr2len((char *)(*line) + shl->endcol);
           }
 
           // Loop to check if the match starts at the

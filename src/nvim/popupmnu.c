@@ -521,7 +521,7 @@ void pum_redraw(void)
 
               if (size > pum_width) {
                 do {
-                  size -= utf_ptr2cells(rt);
+                  size -= utf_ptr2cells((char *)rt);
                   MB_PTR_ADV(rt);
                 } while (size > pum_width);
 

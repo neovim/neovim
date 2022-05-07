@@ -665,7 +665,7 @@ static void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startc
       remote_ui_cursor_goto(ui, row, startcol + i);
       remote_ui_highlight_set(ui, attrs[i]);
       remote_ui_put(ui, (const char *)chunk[i]);
-      if (utf_ambiguous_width(utf_ptr2char(chunk[i]))) {
+      if (utf_ambiguous_width(utf_ptr2char((char *)chunk[i]))) {
         data->client_col = -1;  // force cursor update
       }
     }

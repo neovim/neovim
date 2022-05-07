@@ -750,10 +750,10 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
           c = NUL;
         } else {
           // xdiff doesn't support ignoring case, fold-case the text.
-          c = utf_ptr2char(s);
+          c = utf_ptr2char((char *)s);
           c = utf_fold(c);
         }
-        const int orig_len = utfc_ptr2len(s);
+        const int orig_len = utfc_ptr2len((char *)s);
         if (utf_char2bytes(c, cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
           memmove(ptr + len, s, (size_t)orig_len);
@@ -1937,15 +1937,15 @@ static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
 // ignoring case) return true and set "len" to the number of bytes.
 static bool diff_equal_char(const char_u *const p1, const char_u *const p2, int *const len)
 {
-  const int l = utfc_ptr2len(p1);
+  const int l = utfc_ptr2len((char *)p1);
 
-  if (l != utfc_ptr2len(p2)) {
+  if (l != utfc_ptr2len((char *)p2)) {
     return false;
   }
   if (l > 1) {
     if (STRNCMP(p1, p2, l) != 0
         && (!(diff_flags & DIFF_ICASE)
-            || utf_fold(utf_ptr2char(p1)) != utf_fold(utf_ptr2char(p2)))) {
+            || utf_fold(utf_ptr2char((char *)p1)) != utf_fold(utf_ptr2char((char *)p2)))) {
       return false;
     }
     *len = l;

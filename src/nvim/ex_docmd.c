@@ -3381,7 +3381,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     xp->xp_pattern = (char *)skipwhite((const char_u *)arg);
     p = (const char *)xp->xp_pattern;
     while (*p != NUL) {
-      c = utf_ptr2char((const char_u *)p);
+      c = utf_ptr2char(p);
       if (c == '\\' && p[1] != NUL) {
         p++;
       } else if (c == '`') {
@@ -3399,11 +3399,11 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
                || ascii_iswhite(c)) {
         len = 0;          // avoid getting stuck when space is in 'isfname'
         while (*p != NUL) {
-          c = utf_ptr2char((const char_u *)p);
+          c = utf_ptr2char(p);
           if (c == '`' || vim_isfilec_or_wc(c)) {
             break;
           }
-          len = (size_t)utfc_ptr2len((const char_u *)p);
+          len = (size_t)utfc_ptr2len(p);
           MB_PTR_ADV(p);
         }
         if (in_quote) {
@@ -6030,7 +6030,7 @@ static char *uc_split_args(char *arg, size_t *lenp)
       }
       len += 3;       // ","
     } else {
-      const int charlen = utfc_ptr2len((char_u *)p);
+      const int charlen = utfc_ptr2len(p);
 
       len += charlen;
       p += charlen;
@@ -8167,7 +8167,7 @@ static void do_exmap(exarg_T *eap, int isabbrev)
 {
   int mode;
   char *cmdp = eap->cmd;
-  mode = get_map_mode((char_u **)&cmdp, eap->forceit || isabbrev);
+  mode = get_map_mode(&cmdp, eap->forceit || isabbrev);
 
   switch (do_map((*cmdp == 'n') ? 2 : (*cmdp == 'u'),
                  (char_u *)eap->arg, mode, isabbrev)) {
@@ -8828,7 +8828,7 @@ static void ex_normal(exarg_T *eap)
 
     // Count the number of characters to be escaped.
     for (p = eap->arg; *p != NUL; p++) {
-      for (l = utfc_ptr2len((char_u *)p) - 1; l > 0; l--) {
+      for (l = utfc_ptr2len(p) - 1; l > 0; l--) {
         if (*++p == (char)K_SPECIAL) {  // trailbyte K_SPECIAL
           len += 2;
         }
@@ -8839,7 +8839,7 @@ static void ex_normal(exarg_T *eap)
       len = 0;
       for (p = eap->arg; *p != NUL; p++) {
         arg[len++] = *p;
-        for (l = utfc_ptr2len((char_u *)p) - 1; l > 0; l--) {
+        for (l = utfc_ptr2len(p) - 1; l > 0; l--) {
           arg[len++] = *++p;
           if (*p == (char)K_SPECIAL) {
             arg[len++] = (char)KS_SPECIAL;

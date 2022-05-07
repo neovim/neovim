@@ -586,7 +586,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     String c = opts->conceal.data.string;
     decor.conceal = true;
     if (c.size) {
-      decor.conceal_char = utf_ptr2char((const char_u *)c.data);
+      decor.conceal_char = utf_ptr2char(c.data);
     }
     has_decor = true;
   } else if (HAS_KEY(opts->conceal)) {
