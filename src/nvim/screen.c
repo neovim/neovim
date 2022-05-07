@@ -64,6 +64,9 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
+#if USE_TRACY
+#include <TracyC.h>
+#endif
 
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
@@ -306,6 +309,9 @@ void redraw_win_signcol(win_T *wp)
 /// @param type set to a NOT_VALID to force redraw of entire screen
 int update_screen(int type)
 {
+  #if USE_TRACY
+  TracyCFrameMark;
+  #endif
   static bool did_intro = false;
   bool is_stl_global = global_stl_height() > 0;
 

@@ -30,6 +30,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/lua/stdlib.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/lua/perf_annotations.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memline.h"
@@ -646,6 +647,9 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
+
+  // internal vim._treesitter... API
+  nlua_add_perf_annotations(lstate);
 
   nlua_state_add_stdlib(lstate, false);
 
@@ -1589,6 +1593,18 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, tslua_get_minimum_language_version);
   lua_setfield(lstate, -2, "_ts_get_minimum_language_version");
+}
+
+static void nlua_add_perf_annotations(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  lua_pushcfunction(lstate, nlua_perf_range_push);
+  lua_setfield(lstate, -2, "_perf_range_push");
+
+  lua_pushcfunction(lstate, nlua_perf_range_pop);
+  lua_setfield(lstate, -2, "_perf_range_pop");
+
+  lua_pushcfunction(lstate, nlua_perf_event);
+  lua_setfield(lstate, -2, "_perf_event");
 }
 
 int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***results)

@@ -312,12 +312,15 @@ end
 
 ---@private
 function TSHighlighter._on_line(_, _win, buf, line, _)
+  vim._perf_range_push('on_line')
   local self = TSHighlighter.active[buf]
   if not self then
+    vim._perf_range_pop()
     return
   end
 
   on_line_impl(self, buf, line)
+  vim._perf_range_pop()
 end
 
 ---@private

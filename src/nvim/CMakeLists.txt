@@ -818,3 +818,31 @@ add_subdirectory(po)
 
 include(GetCompileFlags)
 get_compile_flags(NVIM_VERSION_CFLAGS)
+
+option(USE_NVTX "Use NVTX to set profiling markers (https://docs.nvidia.com/gameworks/content/gameworkslibrary/nvtx/nvidia_tools_extension_library_nvtx.htm)" OFF)
+if(USE_NVTX)
+  find_package(CUDAToolkit REQUIRED)
+  target_link_libraries(nvim CUDA::nvToolsExt)
+  target_compile_definitions(nvim PRIVATE USE_NVTX=1)
+endif()
+
+option(USE_TRACY "Use Tracy to set profiling markers (https://github.com/wolfpld/tracy)" OFF)
+if(USE_TRACY)
+  enable_language(CXX)
+
+  option(TRACY_ENABLE "" ON)
+  option(TRACY_ON_DEMAND "" OFF)
+  option(FETCHCONTENT_QUIET OFF)
+  include(FetchContent)
+  FetchContent_Declare (
+    tracy
+    GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+    GIT_TAG v0.8.1
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+    )
+  FetchContent_MakeAvailable(tracy)
+
+  target_link_libraries(nvim Tracy::TracyClient)
+  target_compile_definitions(nvim PRIVATE USE_TRACY=1)
+endif()

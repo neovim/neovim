@@ -20,7 +20,7 @@ function LanguageTree.new(source, lang, opts)
   opts = opts or {}
 
   if opts.queries then
-    a.nvim_err_writeln("'queries' is no longer supported. Use 'injections' now")
+    a.nvim_err_writeln "'queries' is no longer supported. Use 'injections' now"
     opts.injections = opts.queries
   end
 
@@ -97,7 +97,9 @@ end
 --- This will run the injection query for this language to
 --- determine if any child languages should be created.
 function LanguageTree:parse()
+  vim._perf_range_push("LanguageTree:parse " .. self:lang())
   if self._valid then
+    vim._perf_range_pop()
     return self._trees
   end
 
@@ -114,15 +116,23 @@ function LanguageTree:parse()
       local old_tree = old_trees[i]
       parser:set_included_ranges(ranges)
 
-      local tree, tree_changes = parser:parse(old_tree, self._source)
-      self:_do_callback('changedtree', tree_changes, tree)
+      local ok, tree, tree_changes = pcall(parser.parse, parser, old_tree, self._source)
+      if not ok then
+        vim._perf_range_pop()
+        return
+      end
+      self:_do_callback("changedtree", tree_changes, tree)
 
       table.insert(self._trees, tree)
       vim.list_extend(changes, tree_changes)
     end
   else
-    local tree, tree_changes = parser:parse(old_trees[1], self._source)
-    self:_do_callback('changedtree', tree_changes, tree)
+    local ok, tree, tree_changes = pcall(parser.parse, parser, old_trees[1], self._source)
+    if not ok then
+      vim._perf_range_pop()
+      return
+    end
+    self:_do_callback("changedtree", tree_changes, tree)
 
     table.insert(self._trees, tree)
     vim.list_extend(changes, tree_changes)
@@ -146,7 +156,11 @@ function LanguageTree:parse()
 
       child:set_included_regions(injection_ranges)
 
-      local _, child_changes = child:parse()
+      local ok, _, child_changes = pcall(child.parse, child)
+      if not ok then
+        vim._perf_range_pop()
+        return
+      end
 
       -- Propagate any child changes so they are included in the
       -- the change list for the callback.
@@ -166,6 +180,7 @@ function LanguageTree:parse()
 
   self._valid = true
 
+  vim._perf_range_pop()
   return self._trees, changes
 end
 
@@ -212,7 +227,7 @@ function LanguageTree:add_child(lang)
   self._children[lang] = LanguageTree.new(self._source, lang, self._opts)
 
   self:invalidate()
-  self:_do_callback('child_added', self._children[lang])
+  self:_do_callback("child_added", self._children[lang])
 
   return self._children[lang]
 end
@@ -227,7 +242,7 @@ function LanguageTree:remove_child(lang)
     self._children[lang] = nil
     child:destroy()
     self:invalidate()
-    self:_do_callback('child_removed', child)
+    self:_do_callback("child_removed", child)
   end
 end
 
@@ -303,7 +318,9 @@ end
 ---       instead of using the entire nodes range.
 ---@private
 function LanguageTree:_get_injections()
+  vim._perf_range_push("_get_injections " .. self:lang())
   if not self._injection_query then
+    vim._perf_range_pop()
     return {}
   end
 
@@ -407,6 +424,7 @@ function LanguageTree:_get_injections()
     end
   end
 
+  vim._perf_range_pop()
   return result
 end
 
@@ -476,7 +494,7 @@ end
 ---@private
 function LanguageTree:_on_detach(...)
   self:invalidate(true)
-  self:_do_callback('detach', ...)
+  self:_do_callback("detach", ...)
 end
 
 --- Registers callbacks for the parser.

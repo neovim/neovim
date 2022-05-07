@@ -19,6 +19,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/memline.h"
+#include "nvim/perf_annotations.h"
 #include "tree_sitter/api.h"
 
 #define TS_META_PARSER "treesitter_parser"
@@ -35,7 +36,7 @@ typedef struct {
 } TSLua_cursor;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/treesitter.c.generated.h"
+#  include "lua/treesitter.c.generated.h"
 #endif
 
 static struct luaL_Reg parser_meta[] = {
@@ -292,7 +293,8 @@ static int parser_tostring(lua_State *L)
 static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position,
                             uint32_t *bytes_read)
 {
-  buf_T *bp  = payload;
+  perf_range_push("input_cb");
+  buf_T *bp = payload;
 #define BUFSIZE 256
   static char buf[BUFSIZE];
 
@@ -318,6 +320,7 @@ static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position
     buf[tocopy] = '\n';
     (*bytes_read)++;
   }
+  perf_range_pop();
   return buf;
 #undef BUFSIZE
 }
@@ -342,10 +345,12 @@ static void push_ranges(lua_State *L, const TSRange *ranges, const unsigned int 
 
 static int parser_parse(lua_State *L)
 {
+  perf_range_push("parser_parse");
   TSParser **p = parser_check(L, 1);
   if (!p || !(*p)) {
     return 0;
   }
+  /*ts_parser_set_timeout_micros(*p, 10000);*/
 
   TSTree *old_tree = NULL;
   if (!lua_isnil(L, 2)) {
@@ -373,15 +378,18 @@ static int parser_parse(lua_State *L)
     buf = handle_get_buffer(bufnr);
 
     if (!buf) {
+      perf_range_pop();
       return luaL_error(L, "invalid buffer handle: %d", bufnr);
     }
 
     input = (TSInput){ (void *)buf, input_cb, TSInputEncodingUTF8 };
+    perf_range_push("ts_parser_parse");
     new_tree = ts_parser_parse(*p, old_tree, input);
-
+    perf_range_pop();
     break;
 
   default:
+    perf_range_pop();
     return luaL_error(L, "invalid argument to parser:parse()");
   }
 
@@ -395,13 +403,16 @@ static int parser_parse(lua_State *L)
   // the lua GC.
   // Old tree is still owned by the lua GC.
   uint32_t n_ranges = 0;
-  TSRange *changed = old_tree ?  ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
+  perf_range_push("ts_tree_get_changed_ranges");
+  TSRange *changed = old_tree ? ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
+  perf_range_pop();
 
   push_tree(L, new_tree, false);  // [tree]
 
   push_ranges(L, changed, n_ranges);  // [tree, ranges]
 
   xfree(changed);
+  perf_range_pop();
   return 2;
 }
 
@@ -1172,6 +1183,7 @@ static int querycursor_gc(lua_State *L)
 
 int tslua_parse_query(lua_State *L)
 {
+  perf_range_push("tslua_parse_query");
   if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
     return luaL_error(L, "string expected");
   }
@@ -1179,6 +1191,7 @@ int tslua_parse_query(lua_State *L)
   const char *lang_name = lua_tostring(L, 1);
   TSLanguage *lang = pmap_get(cstr_t)(&langs, lang_name);
   if (!lang) {
+    perf_range_pop();
     return luaL_error(L, "no such language: %s", lang_name);
   }
 
@@ -1190,14 +1203,16 @@ int tslua_parse_query(lua_State *L)
   TSQuery *query = ts_query_new(lang, src, len, &error_offset, &error_type);
 
   if (!query) {
-    return luaL_error(L, "query: %s at position %d",
-                      query_err_string(error_type), (int)error_offset);
+    perf_range_pop();
+    return luaL_error(
+      L, "query: %s at position %d", query_err_string(error_type), (int)error_offset);
   }
 
   TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
   *ud = query;
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_QUERY);  // [udata, meta]
-  lua_setmetatable(L, -2);  // [udata]
+  lua_setmetatable(L, -2);                            // [udata]
+  perf_range_pop();
   return 1;
 }
 
