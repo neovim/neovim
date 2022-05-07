@@ -1704,12 +1704,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
   wp->w_old_botfill = wp->w_botfill;
 
   // Send win_extmarks if needed
-  if (kv_size(win_extmark_arr) > 0) {
-    for (size_t n = 0; n < kv_size(win_extmark_arr); n++) {
-      ui_call_win_extmark(wp->w_grid_alloc.handle, wp->handle,
-                          kv_A(win_extmark_arr, n).ns_id, kv_A(win_extmark_arr, n).mark_id,
-                          kv_A(win_extmark_arr, n).win_row, kv_A(win_extmark_arr, n).win_col);
-    }
+  for (size_t n = 0; n < kv_size(win_extmark_arr); n++) {
+    ui_call_win_extmark(wp->w_grid_alloc.handle, wp->handle,
+                        kv_A(win_extmark_arr, n).ns_id, kv_A(win_extmark_arr, n).mark_id,
+                        kv_A(win_extmark_arr, n).win_row, kv_A(win_extmark_arr, n).win_col);
   }
 
   if (dollar_vcol == -1) {

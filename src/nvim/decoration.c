@@ -74,8 +74,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
     }
   }
 
-  if (decor && (kv_size(decor->virt_text)
-                || decor->ui_watched)) {
+  if (decor && decor_virt_pos(*decor)) {
     redraw_buf_line_later(buf, row1 + 1);
   }
 
@@ -175,6 +174,12 @@ Decoration get_decor(mtkey_t mark)
   }
 }
 
+/// @return true if decor has a virtual position (virtual text or ui_watched)
+static bool decor_virt_pos(Decoration decor)
+{
+  return kv_size(decor.virt_text) || decor.ui_watched;
+}
+
 
 bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
 {
@@ -196,22 +201,11 @@ bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
 
     Decoration decor = get_decor(mark);
 
-    // Exclude non-paired marks unless they contain virt_text or a sign
-    // or they are ui-watched
-    if (!mt_paired(mark)
-        && !kv_size(decor.virt_text)
-        && !decor_has_sign(&decor)
-        && !decor.ui_watched) {
-      goto next_mark;
-    }
-
     mtpos_t altpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
 
     // Exclude start marks if the end mark position is above the top row
     // Exclude end marks if we have already added the start mark
-    if ((mt_start(mark) && altpos.row < top_row
-         && !kv_size(decor.virt_text)
-         && !decor.ui_watched)
+    if ((mt_start(mark) && altpos.row < top_row && !decor_virt_pos(decor))
         || (mt_end(mark) && altpos.row >= top_row)) {
       goto next_mark;
     }
@@ -301,13 +295,6 @@ int decor_redraw_col(buf_T *buf, int col, int win_col, bool hidden, DecorState *
       endpos = mark.pos;
     }
 
-    if (endpos.row < mark.pos.row
-        || (endpos.row == mark.pos.row && endpos.col <= mark.pos.col)) {
-      if (!kv_size(decor.virt_text) && !decor.ui_watched) {
-        goto next_mark;
-      }
-    }
-
     decor_add(state, mark.pos.row, mark.pos.col, endpos.row, endpos.col,
               &decor, false, mark.ns, mark.id);
 
@@ -326,8 +313,7 @@ next_mark:
     bool active = false, keep = true;
     if (item.end_row < state->row
         || (item.end_row == state->row && item.end_col <= col)) {
-      if (!(item.start_row >= state->row
-            && (kv_size(item.decor.virt_text) || item.decor.ui_watched))) {
+      if (!(item.start_row >= state->row && decor_virt_pos(item.decor))) {
         keep = false;
       }
     } else {
@@ -355,7 +341,7 @@ next_mark:
       }
     }
     if ((item.start_row == state->row && item.start_col <= col)
-        && (kv_size(item.decor.virt_text) || item.decor.ui_watched)
+        && decor_virt_pos(item.decor)
         && item.decor.virt_text_pos == kVTOverlay && item.win_col == -1) {
       item.win_col = (item.decor.virt_text_hide && hidden) ? -2 : win_col;
     }
@@ -523,8 +509,7 @@ bool decor_redraw_eol(buf_T *buf, DecorState *state, int *eol_attr, int eol_col)
   bool has_virttext = false;
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
-    if (item.start_row == state->row
-        && (kv_size(item.decor.virt_text) || item.decor.ui_watched)) {
+    if (item.start_row == state->row && decor_virt_pos(item.decor)) {
       has_virttext = true;
     }
 
