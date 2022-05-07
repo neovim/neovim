@@ -177,20 +177,15 @@ end
 ---     - bufnr (number|nil):
 ---         Restrict formatting to the clients attached to the given buffer, defaults to the current
 ---         buffer (0).
+---
 ---     - filter (function|nil):
----         Predicate to filter clients used for formatting. Receives the list of clients attached
----         to bufnr as the argument and must return the list of clients on which to request
----         formatting. Example:
+---         Predicate used to filter clients. Receives a client as argument and must return a
+---         boolean. Clients matching the predicate are included. Example:
 ---
 ---         <pre>
 ---         -- Never request typescript-language-server for formatting
 ---         vim.lsp.buf.format {
----           filter = function(clients)
----             return vim.tbl_filter(
----               function(client) return client.name ~= "tsserver" end,
----               clients
----             )
----           end
+---           filter = function(client) return client.name ~= "tsserver" end
 ---         }
 ---         </pre>
 ---
@@ -207,18 +202,14 @@ end
 function M.format(options)
   options = options or {}
   local bufnr = options.bufnr or vim.api.nvim_get_current_buf()
-  local clients = vim.lsp.buf_get_clients(bufnr)
+  local clients = vim.lsp.get_active_clients({
+    id = options.id,
+    bufnr = bufnr,
+    name = options.name,
+  })
 
   if options.filter then
-    clients = options.filter(clients)
-  elseif options.id then
-    clients = vim.tbl_filter(function(client)
-      return client.id == options.id
-    end, clients)
-  elseif options.name then
-    clients = vim.tbl_filter(function(client)
-      return client.name == options.name
-    end, clients)
+    clients = vim.tbl_filter(options.filter, clients)
   end
 
   clients = vim.tbl_filter(function(client)
