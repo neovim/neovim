@@ -67,6 +67,7 @@
 #define FO_WRAP_COMS    'c'
 #define FO_RET_COMS     'r'
 #define FO_OPEN_COMS    'o'
+#define FO_NO_OPEN_COMS '/'
 #define FO_Q_COMS       'q'
 #define FO_Q_NUMBER     'n'
 #define FO_Q_SECOND     '2'
@@ -85,7 +86,7 @@
 
 #define DFLT_FO_VI      "vt"
 #define DFLT_FO_VIM     "tcqj"
-#define FO_ALL          "tcroq2vlb1mMBn,aw]jp"   // for do_set()
+#define FO_ALL          "tcro/q2vlb1mMBn,aw]jp"   // for do_set()
 
 // characters for the p_cpo option:
 #define CPO_ALTREAD     'a'     // ":read" sets alternate file name
@@ -118,7 +119,7 @@
 #define CPO_REMMARK     'R'     // remove marks when filtering
 #define CPO_BUFOPT      's'
 #define CPO_BUFOPTGLOB  'S'
-#define CPO_TAGPAT      't'
+#define CPO_TAGPAT      't'     // tag pattern is used for "n"
 #define CPO_UNDO        'u'     // "u" undoes itself
 #define CPO_BACKSPACE   'v'     // "v" keep deleted text
 #define CPO_FWRITE      'W'     // "w!" doesn't overwrite readonly files

@@ -1586,11 +1586,10 @@ You can use the 'formatoptions' option  to influence how Vim formats text.
 can separate the option letters with commas for readability.
 
 letter	 meaning when present in 'formatoptions'    ~
-
 							*fo-t*
-t	Auto-wrap text using textwidth
+t	Auto-wrap text using 'textwidth'
 							*fo-c*
-c	Auto-wrap comments using textwidth, inserting the current comment
+c	Auto-wrap comments using 'textwidth', inserting the current comment
 	leader automatically.
 							*fo-r*
 r	Automatically insert the current comment leader after hitting
@@ -1599,6 +1598,9 @@ r	Automatically insert the current comment leader after hitting
 o	Automatically insert the current comment leader after hitting 'o' or
 	'O' in Normal mode.  In case comment is unwanted in a specific place
 	use CTRL-U to quickly delete it. |i_CTRL-U|
+							*fo-/*
+/	When 'o' is included: do not insert the comment leader for a //
+	comment after a statement, only when // is at the start of the line.
 							*fo-q*
 q	Allow formatting of comments with "gq".
 	Note that formatting will not change blank lines or lines containing
@@ -1661,8 +1663,8 @@ B	When joining lines, don't insert a space between two multibyte
 1	Don't break a line after a one-letter word.  It's broken before it
 	instead (if possible).
 							*fo-]*
-]	Respect textwidth rigorously. With this flag set, no line can be
-	longer than textwidth, unless line-break-prohibition rules make this
+]	Respect 'textwidth' rigorously. With this flag set, no line can be
+	longer than 'textwidth', unless line-break-prohibition rules make this
 	impossible.  Mainly for CJK scripts and works only if 'encoding' is
 	"utf-8".
 							*fo-j*
