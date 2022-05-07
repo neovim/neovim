@@ -1782,8 +1782,7 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
                       item was specified and two elements if both range items
                       were specified.
                     • count: (number) Any |<count>| that was supplied to the
-                      command. -1 if command cannot take a count. Mutually
-                      exclusive with "range".
+                      command. -1 if command cannot take a count.
                     • reg: (number) The optional command |<register>|, if
                       specified. Empty string if not specified or if command
                       cannot take a register.

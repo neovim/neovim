@@ -1320,7 +1320,7 @@ static void parse_register(exarg_T *eap)
   }
 }
 
-static int parse_count(exarg_T *eap, char **errormsg)
+static int parse_count(exarg_T *eap, char **errormsg, bool validate)
 {
   // Check for a count.  When accepting a EX_BUFNAME, don't use "123foo" as a
   // count, it's a buffer name.
@@ -1348,7 +1348,7 @@ static int parse_count(exarg_T *eap, char **errormsg)
       eap->line2 += n - 1;
       eap->addr_count++;
       // Be vi compatible: no error message for out of range.
-      if (eap->line2 > curbuf->b_ml.ml_line_count) {
+      if (validate && eap->line2 > curbuf->b_ml.ml_line_count) {
         eap->line2 = curbuf->b_ml.ml_line_count;
       }
     }
@@ -1426,7 +1426,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   p = find_command(eap, NULL);
 
-  // Set command attribute type and parse command range
+  // Set command address type and parse command range
   set_cmd_addr_type(eap, (char_u *)p);
   eap->cmd = cmd;
   if (parse_cmd_address(eap, errormsg, false) == FAIL) {
@@ -1499,7 +1499,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
 
   // Parse register and count
   parse_register(eap);
-  if (parse_count(eap, errormsg) == FAIL) {
+  if (parse_count(eap, errormsg, false) == FAIL) {
     return false;
   }
 
@@ -1981,7 +1981,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   // Parse register and count
   parse_register(&ea);
-  if (parse_count(&ea, &errormsg) == FAIL) {
+  if (parse_count(&ea, &errormsg, true) == FAIL) {
     goto doend;
   }
 
