@@ -1703,7 +1703,7 @@ open_floating_preview({contents}, {syntax}, {opts})
                                 • width: (number) width of floating window
                                 • wrap: (boolean, default true) wrap long
                                   lines
-                                • wrap_at: (string) character to wrap at for
+                                • wrap_at: (number) character to wrap at for
                                   computing height when wrap is enabled
                                 • max_width: (number) maximal width of
                                   floating window

@@ -1384,7 +1384,7 @@ end
 ---             - height: (number) height of floating window
 ---             - width: (number) width of floating window
 ---             - wrap: (boolean, default true) wrap long lines
----             - wrap_at: (string) character to wrap at for computing height when wrap is enabled
+---             - wrap_at: (number) character to wrap at for computing height when wrap is enabled
 ---             - max_width: (number) maximal width of floating window
 ---             - max_height: (number) maximal height of floating window
 ---             - pad_top: (number) number of lines to pad contents at top
