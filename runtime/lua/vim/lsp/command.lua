@@ -1,8 +1,12 @@
 local M = {}
 
 local ERR_NO_COMMAND            = 'lsp: Not a command: %s'
-local ERR_NO_CLIENT             = 'lsp: LSP client not attached to this buffer'
+local ERR_INVALID               = 'lsp: Invalid argument'
+local ERR_NO_CLIENT             = 'lsp: No client with this id'
+local ERR_NOT_ATTACHED          = 'lsp: No attached clients'
+local ERR_ALREADY_ATTACHED      = 'lsp: Buffer already attached to this client'
 local ERR_NO_CAPABILITY         = 'lsp: No server with support for this capability found'
+local ERR_ARGS_REQUIRED         = 'lsp: Argument required'
 local ERR_ARGS_NOT_ALLOWED      = 'lsp: Arguments not allowed for this command'
 local ERR_RANGE_NOT_ALLOWED     = 'lsp: Range not allowed for this command'
 local ERR_OPT_INVALID           = 'lsp: Invalid option: %s'
@@ -179,7 +183,7 @@ local function check_err(ctx, what)
   elseif what.no_args and ctx.args then
     return ERR_ARGS_NOT_ALLOWED
   elseif what.attached and not is_attached(ctx) then
-    return ERR_NO_CLIENT
+    return ERR_NOT_ATTACHED
   elseif what.capability and not get_capabilities(ctx.buf)[what.capability] then
     return ERR_NO_CAPABILITY
   else
@@ -338,7 +342,7 @@ M.commands = {
           elseif #opt.value ~= 1 or not #opt.value[1]:match('^[1-9][0-9]*$') then
             return echoerr(ERR_OPT_VALUE_INVALID:format(opt.key))
           else
-            async = tonumber(opt.value[1])
+            async = assert(tonumber(opt.value[1]))
           end
         else
             return echoerr(ERR_OPT_INVALID:format(opt.key))
@@ -387,23 +391,96 @@ M.commands = {
   make_basic_command('incomingcalls', 'incoming_calls', 'callHierarchyProvider'),
   make_basic_command('outgoingcalls', 'outgoing_calls', 'callHierarchyProvider'),
 
-  -- {
-  --   name = 'attach',
-  --   check = make_check_function {
-  --     no_range = true,
-  --   },
-  --   -- TODO: run
-  --   -- TODO: expand
-  -- },
+  {
+    name = 'attach',
+    check = make_check_function {
+      no_range = true,
+    },
+    run = function(ctx)
+      if not ctx.args then
+        return echoerr(ERR_ARGS_REQUIRED)
+      end
 
-  -- {
-  --   name = 'detach',
-  --   check = make_check_function {
-  --     no_range = true,
-  --   },
-  --   -- TODO: run
-  --   -- TODO: expand
-  -- },
+      local id = ctx.args:match('^%d+$') or ctx.args:match('^[%a%d_-]*%((%d+)%)$')
+      if not id then
+        return echoerr(ERR_INVALID)
+      end
+      id = assert(tonumber(id))
+
+      local client = vim.lsp.get_client_by_id(id)
+      if not client then
+        return echoerr(ERR_NO_CLIENT)
+      elseif client.attached_buffers[ctx.buf] then
+        return echoerr(ERR_ALREADY_ATTACHED)
+      end
+      vim.lsp.buf_attach_client(ctx.buf, id)
+    end,
+    expand = function(pat, ctx)
+      local res = {}
+      for id, client in pairs(vim.lsp.get_active_clients()) do
+        if not client.attached_buffers[ctx.buf] then
+          table.insert(res, client.name..'('..id..')')
+        end
+      end
+      return filter(pat, res)
+    end,
+  },
+
+  {
+    name = 'detach',
+    check = make_check_function {
+      no_range = true,
+      attached = true,
+    },
+    run = function(ctx)
+      if not ctx.args then
+        local detached = false
+        for id in pairs(vim.lsp.buf_get_clients(ctx.buf)) do
+          vim.lsp.buf_detach_client(ctx.buf, id)
+          detached = true
+        end
+        if not detached then
+          return echoerr(ERR_NOT_ATTACHED)
+        end
+        return
+      end
+
+      local id = ctx.args:match('^%d+$') or ctx.args:match('^[%a%d_-]*%((%d+)%)$')
+      if id then
+        id = assert(tonumber(id))
+        local client = vim.lsp.get_client_by_id(id)
+        if not client then
+          return echoerr(ERR_NO_CLIENT)
+        elseif not client.attached_buffers[ctx.buf] then
+          return echoerr(ERR_NOT_ATTACHED)
+        else
+          vim.lsp.buf_detach_client(ctx.buf, id)
+        end
+      elseif ctx.args:match('^%S+$') then
+        local detached = false
+        for id2, client in pairs(vim.lsp.buf_get_clients(ctx.buf)) do
+          if client.name == ctx.args then
+            vim.lsp.buf_detach_client(ctx.buf, id2)
+            detached = true
+          end
+        end
+        if not detached then
+          return echoerr(ERR_NOT_ATTACHED)
+        end
+      else
+        return echoerr(ERR_INVALID)
+      end
+    end,
+    expand = function(pat, ctx)
+      local res = {}
+      for id, client in pairs(vim.lsp.buf_get_clients(ctx.buf)) do
+        if client.attached_buffers[ctx.buf] then
+          table.insert(res, client.name..'('..id..')')
+        end
+      end
+      return filter(pat, res)
+    end,
+  },
 
 }
 
