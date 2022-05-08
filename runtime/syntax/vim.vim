@@ -120,9 +120,6 @@ else
  com! -nargs=*	VimFoldt	<args>
 endif
 
-" commands not picked up by the generator (due to non-standard format) {{{2
-syn keyword vimCommand contained	py3
-
 " Deprecated variable options {{{2
 if exists("g:vim_minlines")
  let g:vimsyn_minlines= g:vim_minlines
