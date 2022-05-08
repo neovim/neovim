@@ -301,9 +301,14 @@ jobs:
       - name: Build
         run: ./ci/run_tests.sh build_nvim
 
-      - if: "!cancelled()"
-        name: Functionaltests
-        run: ./ci/run_tests.sh functionaltests
+      # - if: "!cancelled()"
+      #   name: Functionaltests
+      #   run: ./ci/run_tests.sh functionaltests
+
+      - name: Run tests
+        run: powershell ./ci/run_tests.ps1
+        env:
+          CONFIGURATION: MINGW_64-gcov
 
       - if: "!cancelled()"
         name: Oldtests
