@@ -1,10 +1,10 @@
 local M = {}
 
 local ERR_NO_COMMAND            = 'lsp: Not a command: %s'
-local ERR_NO_ARGS               = 'lsp: Arguments not allowed for this command'
 local ERR_NO_CLIENT             = 'lsp: LSP client not attached to this buffer'
-local ERR_RANGE_NOT_ALLOWED     = 'lsp: Range not allowed for this command'
 local ERR_NO_CAPABILITY         = 'lsp: No server with support for this capability found'
+local ERR_ARGS_NOT_ALLOWED      = 'lsp: Arguments not allowed for this command'
+local ERR_RANGE_NOT_ALLOWED     = 'lsp: Range not allowed for this command'
 local ERR_OPT_INVALID           = 'lsp: Invalid option: %s'
 local ERR_OPT_DUPLICATE         = 'lsp: Duplicate option: %s'
 local ERR_OPT_VALUE_MISSING     = 'lsp: Expected value for option: %s'
@@ -138,7 +138,7 @@ local function check_err(ctx, what)
   if what.no_range and ctx.line1 then
     return ERR_RANGE_NOT_ALLOWED
   elseif what.no_args and ctx.args then
-    return ERR_NO_ARGS
+    return ERR_ARGS_NOT_ALLOWED
   elseif what.attached and not is_attached(ctx) then
     return ERR_NO_CLIENT
   elseif what.capability and not get_capabilities(ctx.buf)[what.capability] then
