@@ -418,7 +418,8 @@ void check_cursor_moved(win_T *wp)
 {
   if (wp->w_cursor.lnum != wp->w_valid_cursor.lnum) {
     wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL
-                     |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE);
+                     |VALID_CHEIGHT|VALID_CROW|VALID_TOPLINE
+                     |VALID_BOTLINE|VALID_BOTLINE_AP);
     wp->w_valid_cursor = wp->w_cursor;
     wp->w_valid_leftcol = wp->w_leftcol;
     wp->w_viewport_invalid = true;
