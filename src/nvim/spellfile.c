@@ -575,7 +575,7 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
   char_u *p;
   int n;
   int len;
-  char_u *save_sourcing_name = sourcing_name;
+  char_u *save_sourcing_name = (char_u *)sourcing_name;
   linenr_T save_sourcing_lnum = sourcing_lnum;
   slang_T *lp = NULL;
   int c = 0;
@@ -605,13 +605,13 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
     lp->sl_fname = vim_strsave(fname);
 
     // Check for .add.spl.
-    lp->sl_add = strstr((char *)path_tail(fname), SPL_FNAME_ADD) != NULL;
+    lp->sl_add = strstr(path_tail((char *)fname), SPL_FNAME_ADD) != NULL;
   } else {
     lp = old_lp;
   }
 
   // Set sourcing_name, so that error messages mention the file name.
-  sourcing_name = fname;
+  sourcing_name = (char *)fname;
   sourcing_lnum = 0;
 
   // <HEADER>: <fileID>
@@ -809,7 +809,7 @@ endOK:
   if (fd != NULL) {
     fclose(fd);
   }
-  sourcing_name = save_sourcing_name;
+  sourcing_name = (char *)save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
 
   return lp;
@@ -2251,7 +2251,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         }
       } else if (is_aff_rule(items, itemcnt, "COMPOUNDRULE", 2)) {
         // Don't use the first rule if it is a number.
-        if (compflags != NULL || *skipdigits(items[1]) != NUL) {
+        if (compflags != NULL || *skipdigits((char *)items[1]) != NUL) {
           // Concatenate this string to previously defined ones,
           // using a slash to separate them.
           l = (int)STRLEN(items[1]) + 1;
@@ -4401,7 +4401,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
   // Also skip this for an .add.spl file, the main spell file must contain
   // the table (avoids that it conflicts).  File is shorter too.
   if (!spin->si_ascii && !spin->si_add) {
-    char_u folchars[128 * 8];
+    char folchars[128 * 8];
     int flags;
 
     putc(SN_CHARFLAGS, fd);                             // <sectionID>
@@ -5320,19 +5320,19 @@ static void mkspell(int fcount, char_u **fnames, bool ascii, bool over_write, bo
     }
 
     // Check for .ascii.spl.
-    if (strstr((char *)path_tail(wfname), SPL_FNAME_ASCII) != NULL) {
+    if (strstr(path_tail((char *)wfname), SPL_FNAME_ASCII) != NULL) {
       spin.si_ascii = true;
     }
 
     // Check for .add.spl.
-    if (strstr((char *)path_tail(wfname), SPL_FNAME_ADD) != NULL) {
+    if (strstr(path_tail((char *)wfname), SPL_FNAME_ADD) != NULL) {
       spin.si_add = true;
     }
   }
 
   if (incount <= 0) {
     emsg(_(e_invarg));          // need at least output and input names
-  } else if (vim_strchr(path_tail(wfname), '_') != NULL) {
+  } else if (vim_strchr((char_u *)path_tail((char *)wfname), '_') != NULL) {
     emsg(_("E751: Output file name must not have region name"));
   } else if (incount > MAXREGIONS) {
     semsg(_("E754: Only up to %d regions supported"), MAXREGIONS);
@@ -5357,7 +5357,7 @@ static void mkspell(int fcount, char_u **fnames, bool ascii, bool over_write, bo
 
       if (incount > 1) {
         len = (int)STRLEN(innames[i]);
-        if (STRLEN(path_tail(innames[i])) < 5
+        if (STRLEN(path_tail((char *)innames[i])) < 5
             || innames[i][len - 3] != '_') {
           semsg(_("E755: Invalid region in %s"), innames[i]);
           goto theend;
@@ -5725,7 +5725,7 @@ static void init_spellfile(void)
                 ->lp_slang->sl_fname;
         vim_snprintf((char *)buf + l, MAXPATHL - l, ".%s.add",
                      ((fname != NULL
-                       && strstr((char *)path_tail(fname), ".ascii.") != NULL)
+                       && strstr(path_tail((char *)fname), ".ascii.") != NULL)
                       ? "ascii"
                       : (const char *)spell_enc()));
         set_option_value("spellfile", 0L, (const char *)buf, OPT_LOCAL);
@@ -5862,7 +5862,7 @@ static void set_map_str(slang_T *lp, char_u *map)
       if (c >= 256) {
         int cl = utf_char2len(c);
         int headcl = utf_char2len(headc);
-        char_u *b;
+        char *b;
         hash_T hash;
         hashitem_T *hi;
 
@@ -5871,10 +5871,10 @@ static void set_map_str(slang_T *lp, char_u *map)
         b[cl] = NUL;
         utf_char2bytes(headc, (char *)b + cl + 1);
         b[cl + 1 + headcl] = NUL;
-        hash = hash_hash(b);
+        hash = hash_hash((char_u *)b);
         hi = hash_lookup(&lp->sl_map_hash, (const char *)b, STRLEN(b), hash);
         if (HASHITEM_EMPTY(hi)) {
-          hash_add_item(&lp->sl_map_hash, hi, b, hash);
+          hash_add_item(&lp->sl_map_hash, hi, (char_u *)b, hash);
         } else {
           // This should have been checked when generating the .spl
           // file.

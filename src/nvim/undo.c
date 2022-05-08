@@ -702,7 +702,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
       const size_t ffname_len = strlen(ffname);
       undo_file_name = xmalloc(ffname_len + 6);
       memmove(undo_file_name, ffname, ffname_len + 1);
-      char *const tail = (char *)path_tail((char_u *)undo_file_name);
+      char *const tail = path_tail(undo_file_name);
       const size_t tail_len = strlen(tail);
       memmove(tail + 1, tail, tail_len + 1);
       *tail = '.';

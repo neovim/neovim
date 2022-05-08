@@ -884,7 +884,7 @@ yankreg_T *copy_register(int name)
   if (copy->y_size == 0) {
     copy->y_array = NULL;
   } else {
-    copy->y_array = xcalloc(copy->y_size, sizeof(char_u *));
+    copy->y_array = xcalloc(copy->y_size, sizeof(char *));
     for (size_t i = 0; i < copy->y_size; i++) {
       copy->y_array[i] = xstrdup(reg->y_array[i]);
     }
@@ -1161,7 +1161,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
      * Insert lines into typeahead buffer, from last one to first one.
      */
     put_reedit_in_typebuf(silent);
-    char_u *escaped;
+    char *escaped;
     for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
       // insert NL between lines and after last line if type is kMTLineWise
       if (reg->y_type == kMTLineWise || i < reg->y_size - 1 || addcr) {
@@ -1180,7 +1180,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
           free_str = true;
         }
       }
-      escaped = (char_u *)vim_strsave_escape_ks((char *)str);
+      escaped = vim_strsave_escape_ks((char *)str);
       if (free_str) {
         xfree(str);
       }
@@ -1237,12 +1237,12 @@ static int put_in_typebuf(char_u *s, bool esc, bool colon, int silent)
     retval = ins_typebuf("\n", REMAP_NONE, 0, true, silent);
   }
   if (retval == OK) {
-    char_u *p;
+    char *p;
 
     if (esc) {
-      p = (char_u *)vim_strsave_escape_ks((char *)s);
+      p = vim_strsave_escape_ks((char *)s);
     } else {
-      p = s;
+      p = (char *)s;
     }
     if (p == NULL) {
       retval = FAIL;
@@ -2679,7 +2679,7 @@ bool op_yank(oparg_T *oap, bool message)
 static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 {
   yankreg_T newreg;  // new yank register when appending
-  char_u **new_ptr;
+  char **new_ptr;
   linenr_T lnum;     // current line number
   size_t j;
   MotionType yank_type = oap->motion_type;
@@ -2713,7 +2713,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   reg->y_size = yanklines;
   reg->y_type = yank_type;  // set the yank register type
   reg->y_width = 0;
-  reg->y_array = xcalloc(yanklines, sizeof(char_u *));
+  reg->y_array = xcalloc(yanklines, sizeof(char *));
   reg->additional_data = NULL;
   reg->timestamp = os_time();
 
@@ -2808,10 +2808,10 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   if (curr != reg) {      // append the new block to the old block
     new_ptr = xmalloc(sizeof(char_u *) * (curr->y_size + reg->y_size));
     for (j = 0; j < curr->y_size; j++) {
-      new_ptr[j] = (char_u *)curr->y_array[j];
+      new_ptr[j] = curr->y_array[j];
     }
     xfree(curr->y_array);
-    curr->y_array = (char **)new_ptr;
+    curr->y_array = new_ptr;
 
     if (yank_type == kMTLineWise) {
       // kMTLineWise overrides kMTCharWise and kMTBlockWise
@@ -5777,7 +5777,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
 
       // When appending, copy the previous line and free it after.
       size_t extra = append ? STRLEN(pp[--lnum]) : 0;
-      char_u *s = xmallocz(line_len + extra);
+      char *s = xmallocz(line_len + extra);
       if (extra > 0) {
         memcpy(s, pp[lnum], extra);
       }
@@ -5788,7 +5788,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
         xfree(pp[lnum]);
         append = false;  // only first line is appended
       }
-      pp[lnum] = s;
+      pp[lnum] = (char_u *)s;
 
       // Convert NULs to '\n' to prevent truncation.
       memchrsub(pp[lnum], NUL, '\n', s_len);
@@ -7120,7 +7120,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_type = kMTUnknown;
   }
 
-  reg->y_array = xcalloc((size_t)tv_list_len(lines), sizeof(char_u *));
+  reg->y_array = xcalloc((size_t)tv_list_len(lines), sizeof(char *));
   reg->y_size = (size_t)tv_list_len(lines);
   reg->additional_data = NULL;
   reg->timestamp = 0;

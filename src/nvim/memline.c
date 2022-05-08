@@ -992,7 +992,7 @@ void ml_recover(bool checkext)
    * 'fileencoding', etc.  Ignore errors.  The text itself is not used.
    */
   if (curbuf->b_ffname != NULL) {
-    orig_file_status = readfile(curbuf->b_ffname, NULL, (linenr_T)0,
+    orig_file_status = readfile((char *)curbuf->b_ffname, NULL, (linenr_T)0,
                                 (linenr_T)0, (linenr_T)MAXLNUM, NULL, READ_NEW, false);
   }
 
@@ -1066,7 +1066,7 @@ void ml_recover(bool checkext)
              */
             if (!cannot_open) {
               line_count = pp->pb_pointer[idx].pe_line_count;
-              if (readfile(curbuf->b_ffname, NULL, lnum,
+              if (readfile((char *)curbuf->b_ffname, NULL, lnum,
                            pp->pb_pointer[idx].pe_old_lnum - 1, line_count,
                            NULL, 0, false) != OK) {
                 cannot_open = true;
@@ -1338,8 +1338,8 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
           tail = (char_u *)make_percent_swname((char *)dir_name,
                                                (char *)fname_res);
         } else {
-          tail = path_tail(fname_res);
-          tail = (char_u *)concat_fnames((char *)dir_name, (char *)tail, TRUE);
+          tail = (char_u *)path_tail((char *)fname_res);
+          tail = (char_u *)concat_fnames((char *)dir_name, (char *)tail, true);
         }
         num_names = recov_file_names(names, tail, FALSE);
         xfree(tail);
@@ -1418,7 +1418,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
           // print the swap file name
           msg_outnum((long)++file_count);
           msg_puts(".    ");
-          msg_puts((const char *)path_tail(files[i]));
+          msg_puts((const char *)path_tail((char *)files[i]));
           msg_putchar('\n');
           (void)swapfile_info(files[i]);
         }
@@ -3204,7 +3204,7 @@ int resolve_symlink(const char_u *fname, char_u *buf)
     if (path_is_absolute(buf)) {
       STRCPY(tmp, buf);
     } else {
-      char_u *tail = path_tail(tmp);
+      char_u *tail = (char_u *)path_tail((char *)tmp);
       if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL) {
         return FAIL;
       }
@@ -3283,7 +3283,7 @@ char_u *get_file_in_dir(char_u *fname, char_u *dname)
   char_u *retval;
   int save_char;
 
-  tail = path_tail(fname);
+  tail = (char_u *)path_tail((char *)fname);
 
   if (dname[0] == '.' && dname[1] == NUL) {
     retval = vim_strsave(fname);
@@ -3482,8 +3482,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             // buffer don't compare the directory names, they can
             // have a different mountpoint.
             if (b0.b0_flags & B0_SAME_DIR) {
-              if (FNAMECMP(path_tail(buf->b_ffname),
-                           path_tail(b0.b0_fname)) != 0
+              if (FNAMECMP(path_tail((char *)buf->b_ffname),
+                           path_tail((char *)b0.b0_fname)) != 0
                   || !same_directory((char_u *)fname, buf->b_ffname)) {
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the
@@ -3528,7 +3528,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
           // response, trigger it.  It may return 0 to ask the user anyway.
           if (choice == 0
               && swap_exists_action != SEA_NONE
-              && has_autocmd(EVENT_SWAPEXISTS, (char_u *)buf_fname, buf)) {
+              && has_autocmd(EVENT_SWAPEXISTS, buf_fname, buf)) {
             choice = do_swapexists(buf, (char_u *)fname);
           }
 

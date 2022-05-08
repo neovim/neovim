@@ -744,7 +744,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
     for (char_u *s = ml_get_buf(buf, lnum, false); *s != NUL;) {
       if (diff_flags & DIFF_ICASE) {
         int c;
-        char_u cbuf[MB_MAXBYTES + 1];
+        char cbuf[MB_MAXBYTES + 1];
 
         if (*s == NL) {
           c = NUL;
@@ -794,7 +794,7 @@ static int diff_write(buf_T *buf, diffin_T *din)
   // Writing the buffer is an implementation detail of performing the diff,
   // so it shouldn't update the '[ and '] marks.
   cmdmod.lockmarks = true;
-  int r = buf_write(buf, din->din_fname, NULL,
+  int r = buf_write(buf, (char *)din->din_fname, NULL,
                     (linenr_T)1, buf->b_ml.ml_line_count,
                     NULL, false, false, false, true);
   cmdmod.lockmarks = save_lockmarks;
@@ -1178,7 +1178,7 @@ void ex_diffpatch(exarg_T *eap)
   }
 
   // Write the current buffer to "tmp_orig".
-  if (buf_write(curbuf, tmp_orig, NULL,
+  if (buf_write(curbuf, (char *)tmp_orig, NULL,
                 (linenr_T)1, curbuf->b_ml.ml_line_count,
                 NULL, false, false, false, true) == FAIL) {
     goto theend;
@@ -1982,8 +1982,8 @@ static int diff_cmp(char_u *s1, char_u *s2)
     return mb_stricmp((const char *)s1, (const char *)s2);
   }
 
-  char_u *p1 = s1;
-  char_u *p2 = s2;
+  char *p1 = (char *)s1;
+  char *p2 = (char *)s2;
 
   // Ignore white space changes and possibly ignore case.
   while (*p1 != NUL && *p2 != NUL) {
@@ -1991,11 +1991,11 @@ static int diff_cmp(char_u *s1, char_u *s2)
          && ascii_iswhite(*p1) && ascii_iswhite(*p2))
         || ((diff_flags & DIFF_IWHITEALL)
             && (ascii_iswhite(*p1) || ascii_iswhite(*p2)))) {
-      p1 = (char_u *)skipwhite((char *)p1);
-      p2 = (char_u *)skipwhite((char *)p2);
+      p1 = skipwhite(p1);
+      p2 = skipwhite(p2);
     } else {
       int l;
-      if (!diff_equal_char(p1, p2, &l)) {
+      if (!diff_equal_char((char_u *)p1, (char_u *)p2, &l)) {
         break;
       }
       p1 += l;
@@ -2004,8 +2004,8 @@ static int diff_cmp(char_u *s1, char_u *s2)
   }
 
   // Ignore trailing white space.
-  p1 = (char_u *)skipwhite((char *)p1);
-  p2 = (char_u *)skipwhite((char *)p2);
+  p1 = skipwhite(p1);
+  p2 = skipwhite(p2);
 
   if ((*p1 != NUL) || (*p2 != NUL)) {
     return 1;

@@ -930,7 +930,7 @@ void ex_mkrc(exarg_T *eap)
     viewFile = fname;
     using_vdir = true;
   } else if (*eap->arg != NUL) {
-    fname = (char *)eap->arg;
+    fname = eap->arg;
   } else if (eap->cmdidx == CMD_mkvimrc) {
     fname = VIMRC_FILE;
   } else if (eap->cmdidx == CMD_mksession) {

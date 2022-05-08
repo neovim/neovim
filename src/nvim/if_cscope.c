@@ -80,7 +80,7 @@ static enum {
  * Function given to ExpandGeneric() to obtain the cscope command
  * expansion.
  */
-char_u *get_cscope_name(expand_T *xp, int idx)
+char *get_cscope_name(expand_T *xp, int idx)
 {
   int current_idx;
 
@@ -88,7 +88,7 @@ char_u *get_cscope_name(expand_T *xp, int idx)
   case EXP_CSCOPE_SUBCMD:
     // Complete with sub-commands of ":cscope":
     // add, find, help, kill, reset, show
-    return (char_u *)cs_cmds[idx].name;
+    return cs_cmds[idx].name;
   case EXP_SCSCOPE_SUBCMD: {
     // Complete with sub-commands of ":scscope": same sub-commands as
     // ":cscope" but skip commands which don't support split windows
@@ -100,7 +100,7 @@ char_u *get_cscope_name(expand_T *xp, int idx)
         }
       }
     }
-    return (char_u *)cs_cmds[i].name;
+    return cs_cmds[i].name;
   }
   case EXP_CSCOPE_FIND: {
     const char *query_type[] =
@@ -112,7 +112,7 @@ char_u *get_cscope_name(expand_T *xp, int idx)
     // {query_type} can be letters (c, d, ... a) or numbers (0, 1,
     // ..., 9) but only complete with letters, since numbers are
     // redundant.
-    return (char_u *)query_type[idx];
+    return (char *)query_type[idx];
   }
   case EXP_CSCOPE_KILL: {
     static char connection[5];
@@ -128,10 +128,10 @@ char_u *get_cscope_name(expand_T *xp, int idx)
       }
       if (current_idx++ == idx) {
         vim_snprintf(connection, sizeof(connection), "%zu", i);
-        return (char_u *)connection;
+        return connection;
       }
     }
-    return (current_idx == idx && idx > 0) ? (char_u *)"-1" : NULL;
+    return (current_idx == idx && idx > 0) ? "-1" : NULL;
   }
   default:
     return NULL;
@@ -2008,8 +2008,8 @@ static char *cs_resolve_file(size_t i, char *name)
     // path in path resolution.
     csdir = xmalloc(MAXPATHL);
     STRLCPY(csdir, csinfo[i].fname,
-            path_tail((char_u *)csinfo[i].fname)
-            - (char_u *)csinfo[i].fname + 1);
+            path_tail(csinfo[i].fname)
+            - csinfo[i].fname + 1);
     len += STRLEN(csdir);
   }
 

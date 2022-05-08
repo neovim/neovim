@@ -111,8 +111,8 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   // the end.  This makes it possible to retry when 'fileformat' or
   // 'fileencoding' was guessed wrong.
   line_count = curbuf->b_ml.ml_line_count;
-  retval = readfile(read_stdin ? NULL : curbuf->b_ffname,
-                    read_stdin ? NULL : curbuf->b_fname,
+  retval = readfile(read_stdin ? NULL : (char *)curbuf->b_ffname,
+                    read_stdin ? NULL : (char *)curbuf->b_fname,
                     line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
                     flags | READ_BUFFER, silent);
   if (retval == OK) {
@@ -229,7 +229,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
     }
 #endif
 
-    retval = readfile(curbuf->b_ffname, curbuf->b_fname,
+    retval = readfile((char *)curbuf->b_ffname, (char *)curbuf->b_fname,
                       (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
                       flags | READ_NEW | (read_fifo ? READ_FIFO : 0), silent);
 #ifdef UNIX
@@ -3175,7 +3175,7 @@ void maketitle(void)
                                      SPACE_FOR_FNAME + 1);
         buf_p += MIN(size, SPACE_FOR_FNAME);
       } else {
-        buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
+        buf_p += transstr_buf((const char *)path_tail((char *)curbuf->b_fname),
                               buf_p, SPACE_FOR_FNAME + 1, true);
       }
 
@@ -3285,7 +3285,7 @@ void maketitle(void)
       if (buf_spname(curbuf) != NULL) {
         buf_p = buf_spname(curbuf);
       } else {                        // use file name only in icon
-        buf_p = path_tail(curbuf->b_ffname);
+        buf_p = (char_u *)path_tail((char *)curbuf->b_ffname);
       }
       *icon_str = NUL;
       // Truncate name at 100 bytes.
@@ -3841,7 +3841,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
       if (opt != STL_FILENAME) {
         str = (char *)NameBuff;
       } else {
-        str = (char *)path_tail(NameBuff);
+        str = path_tail((char *)NameBuff);
       }
       break;
     case STL_VIM_EXPR:     // '{'
@@ -3909,7 +3909,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
       // Check if the evaluated result is a number.
       // If so, convert the number to an int and free the string.
       if (str != NULL && *str != 0) {
-        if (*skipdigits((char_u *)str) == NUL) {
+        if (*skipdigits(str) == NUL) {
           num = atoi(str);
           XFREE_CLEAR(str);
           itemisflag = false;
@@ -5201,9 +5201,9 @@ static int chk_modeline(linenr_T lnum, int flags)
   s = linecopy = vim_strsave(s);      // copy the line, it will change
 
   save_sourcing_lnum = sourcing_lnum;
-  save_sourcing_name = sourcing_name;
+  save_sourcing_name = (char_u *)sourcing_name;
   sourcing_lnum = lnum;               // prepare for emsg()
-  sourcing_name = (char_u *)"modelines";
+  sourcing_name = "modelines";
 
   end = false;
   while (end == false) {
@@ -5259,7 +5259,7 @@ static int chk_modeline(linenr_T lnum, int flags)
   }
 
   sourcing_lnum = save_sourcing_lnum;
-  sourcing_name = save_sourcing_name;
+  sourcing_name = (char *)save_sourcing_name;
 
   xfree(linecopy);
 
@@ -5594,7 +5594,7 @@ bool buf_contents_changed(buf_T *buf)
   aucmd_prepbuf(&aco, newbuf);
 
   if (ml_open(curbuf) == OK
-      && readfile(buf->b_ffname, buf->b_fname,
+      && readfile((char *)buf->b_ffname, (char *)buf->b_fname,
                   (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
                   &ea, READ_NEW | READ_DUMMY, false) == OK) {
     // compare the two files line by line

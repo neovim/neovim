@@ -920,7 +920,7 @@ int nlua_call(lua_State *lstate)
 {
   Error err = ERROR_INIT;
   size_t name_len;
-  const char_u *name = (const char_u *)luaL_checklstring(lstate, 1, &name_len);
+  const char *name = luaL_checklstring(lstate, 1, &name_len);
   if (!nlua_is_deferred_safe()) {
     return luaL_error(lstate, e_luv_api_disabled, "vimL function");
   }
@@ -1249,7 +1249,7 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
   char_u *line = NULL;
 
   ga_init(&ga, (int)sizeof(char_u *), 10);
-  while ((line = fgetline(0, cookie, 0, false)) != NULL) {
+  while ((line = (char_u *)fgetline(0, cookie, 0, false)) != NULL) {
     GA_APPEND(char_u *, &ga, line);
   }
   char *code = ga_concat_strings_sep(&ga, "\n");

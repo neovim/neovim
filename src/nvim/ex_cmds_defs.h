@@ -121,7 +121,7 @@ struct aucmd_executable_t {
 
 #define AUCMD_EXECUTABLE_INIT { .type = CALLABLE_NONE }
 
-typedef char_u *(*LineGetter)(int, void *, int, bool);
+typedef char *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
 typedef struct cmdname {

@@ -1341,7 +1341,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
    * Vi also doesn't do this and the messages are not very informative.
    */
   no_wait_return++;             // don't call wait_return() while busy
-  if (itmp != NULL && buf_write(curbuf, (char_u *)itmp, NULL, line1, line2, eap,
+  if (itmp != NULL && buf_write(curbuf, itmp, NULL, line1, line2, eap,
                                 false, false, false, true) == FAIL) {
     msg_putchar('\n');  // Keep message from buf_write().
     no_wait_return--;
@@ -1386,7 +1386,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
 
   if (do_out) {
     if (otmp != NULL) {
-      if (readfile((char_u *)otmp, NULL, line2, (linenr_T)0, (linenr_T)MAXLNUM, eap,
+      if (readfile(otmp, NULL, line2, (linenr_T)0, (linenr_T)MAXLNUM, eap,
                    READ_FILTER, false) != OK) {
         if (!aborting()) {
           msg_putchar('\n');
@@ -1930,7 +1930,7 @@ int do_write(exarg_T *eap)
     }
 
     name_was_missing = curbuf->b_ffname == NULL;
-    retval = buf_write(curbuf, (char_u *)ffname, (char_u *)fname, eap->line1, eap->line2,
+    retval = buf_write(curbuf, ffname, fname, eap->line1, eap->line2,
                        eap, eap->append, eap->forceit, true, false);
 
     // After ":saveas fname" reset 'readonly'.
@@ -5360,7 +5360,7 @@ void fix_help_buffer(void)
    * In the "help.txt" and "help.abx" file, add the locally added help
    * files.  This uses the very first line in the help file.
    */
-  char *const fname = (char *)path_tail(curbuf->b_fname);
+  char *const fname = path_tail((char *)curbuf->b_fname);
   if (FNAMECMP(fname, "help.txt") == 0
       || (FNAMENCMP(fname, "help.", 5) == 0
           && ASCII_ISALPHA(fname[5])
@@ -5413,8 +5413,8 @@ void fix_help_buffer(void)
                 }
                 const char *const f1 = fnames[i1];
                 const char *const f2 = fnames[i2];
-                const char *const t1 = (char *)path_tail((char_u *)f1);
-                const char *const t2 = (char *)path_tail((char_u *)f2);
+                const char *const t1 = path_tail(f1);
+                const char *const t2 = path_tail(f2);
                 const char *const e1 = (char *)STRRCHR(t1, '.');
                 const char *const e2 = (char *)STRRCHR(t2, '.');
                 if (e1 == NULL || e2 == NULL) {

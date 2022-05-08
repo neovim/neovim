@@ -1187,16 +1187,16 @@ intptr_t getwhitecols(const char_u *p)
 /// @param[in]  q  String to skip digits in.
 ///
 /// @return Pointer to the character after the skipped digits.
-char_u *skipdigits(const char_u *q)
+char *skipdigits(const char *q)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
-  const char_u *p = q;
+  const char *p = q;
   while (ascii_isdigit(*p)) {
     // skip to next non-digit
     p++;
   }
-  return (char_u *)p;
+  return (char *)p;
 }
 
 /// skip over binary digits

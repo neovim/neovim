@@ -48,7 +48,7 @@ typedef enum {
 /// Number of history tables
 #define HIST_COUNT      (HIST_DEBUG + 1)
 
-typedef char_u *(*CompleteListItemGetter)(expand_T *, int);
+typedef char *(*CompleteListItemGetter)(expand_T *, int);
 
 /// History entry definition
 typedef struct hist_entry {

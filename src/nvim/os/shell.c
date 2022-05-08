@@ -188,7 +188,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
     }
   }
   if (shell_style == STYLE_ECHO
-      && strstr((char *)path_tail(p_sh), "sh") != NULL) {
+      && strstr(path_tail((char *)p_sh), "sh") != NULL) {
     shell_style = STYLE_VIMGLOB;
   }
 

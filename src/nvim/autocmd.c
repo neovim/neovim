@@ -1521,11 +1521,10 @@ bool apply_autocmds(event_T event, char_u *fname, char_u *fname_io, bool force, 
 /// @param exarg Ex command arguments
 ///
 /// @return true if some commands were executed.
-bool apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io, bool force, buf_T *buf,
+bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
                           exarg_T *eap)
 {
-  return apply_autocmds_group(event, (char *)fname, (char *)fname_io, force, AUGROUP_ALL, buf,
-                              eap);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, eap);
 }
 
 /// Like apply_autocmds(), but handles the caller's retval.  If the script
@@ -1541,14 +1540,14 @@ bool apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io, bool f
 /// @param[in,out] retval caller's retval
 ///
 /// @return true if some autocommands were executed
-bool apply_autocmds_retval(event_T event, char_u *fname, char_u *fname_io, bool force, buf_T *buf,
+bool apply_autocmds_retval(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
                            int *retval)
 {
   if (should_abort(*retval)) {
     return false;
   }
 
-  bool did_cmd = apply_autocmds_group(event, (char *)fname, (char *)fname_io, force,
+  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force,
                                       AUGROUP_ALL, buf, NULL);
   if (did_cmd && aborting()) {
     *retval = FAIL;
@@ -1659,9 +1658,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   }
 
   // Save the autocmd_* variables and info about the current buffer.
-  char *save_autocmd_fname = (char *)autocmd_fname;
+  char *save_autocmd_fname = autocmd_fname;
   int save_autocmd_bufnr = autocmd_bufnr;
-  char *save_autocmd_match = (char *)autocmd_match;
+  char *save_autocmd_match = autocmd_match;
   int save_autocmd_busy = autocmd_busy;
   int save_autocmd_nested = autocmd_nested;
   bool save_changed = curbuf->b_changed;
@@ -1675,18 +1674,18 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         || event == EVENT_OPTIONSET || event == EVENT_MODECHANGED) {
       autocmd_fname = NULL;
     } else if (fname != NULL && !ends_excmd(*fname)) {
-      autocmd_fname = (char_u *)fname;
+      autocmd_fname = fname;
     } else if (buf != NULL) {
-      autocmd_fname = buf->b_ffname;
+      autocmd_fname = (char *)buf->b_ffname;
     } else {
       autocmd_fname = NULL;
     }
   } else {
-    autocmd_fname = (char_u *)fname_io;
+    autocmd_fname = fname_io;
   }
   if (autocmd_fname != NULL) {
     // Allocate MAXPATHL for when eval_vars() resolves the fullpath.
-    autocmd_fname = vim_strnsave(autocmd_fname, MAXPATHL);
+    autocmd_fname = xstrnsave(autocmd_fname, MAXPATHL);
   }
 
   // Set the buffer number to be used for <abuf>.
@@ -1754,11 +1753,11 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 #endif
 
   // Set the name to be used for <amatch>.
-  autocmd_match = (char_u *)fname;
+  autocmd_match = fname;
 
   // Don't redraw while doing autocommands.
   RedrawingDisabled++;
-  char *save_sourcing_name = (char *)sourcing_name;
+  char *save_sourcing_name = sourcing_name;
   sourcing_name = NULL;  // don't free this one
   linenr_T save_sourcing_lnum = sourcing_lnum;
   sourcing_lnum = 0;  // no line number here
@@ -1793,7 +1792,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     did_filetype = true;
   }
 
-  char *tail = (char *)path_tail((char_u *)fname);
+  char *tail = path_tail(fname);
 
   // Find first autocommand that matches
   AutoPatCmd patcmd;
@@ -1860,12 +1859,12 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   filechangeshell_busy = false;
   autocmd_nested = save_autocmd_nested;
   xfree(sourcing_name);
-  sourcing_name = (char_u *)save_sourcing_name;
+  sourcing_name = save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
   xfree(autocmd_fname);
-  autocmd_fname = (char_u *)save_autocmd_fname;
+  autocmd_fname = save_autocmd_fname;
   autocmd_bufnr = save_autocmd_bufnr;
-  autocmd_match = (char_u *)save_autocmd_match;
+  autocmd_match = save_autocmd_match;
   current_sctx = save_current_sctx;
   restore_funccal();
   if (do_profiling == PROF_YES) {
@@ -1933,7 +1932,7 @@ void block_autocmds(void)
 {
   // Remember the value of v:termresponse.
   if (!is_autocmd_blocked()) {
-    old_termresponse = (char *)get_vim_var_str(VV_TERMRESPONSE);
+    old_termresponse = get_vim_var_str(VV_TERMRESPONSE);
   }
   autocmd_blocked++;
 }
@@ -1946,7 +1945,7 @@ void unblock_autocmds(void)
   // the autocommands now.  Esp. useful when executing a shell command
   // during startup (nvim -d).
   if (!is_autocmd_blocked()
-      && get_vim_var_str(VV_TERMRESPONSE) != (char_u *)old_termresponse) {
+      && get_vim_var_str(VV_TERMRESPONSE) != old_termresponse) {
     apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, false, curbuf);
   }
 }
@@ -1979,9 +1978,9 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
       if (ap->buflocal_nr == 0
           ? match_file_pat(NULL,
                            &ap->reg_prog,
-                           (char_u *)apc->fname,
-                           (char_u *)apc->sfname,
-                           (char_u *)apc->tail,
+                           apc->fname,
+                           apc->sfname,
+                           apc->tail,
                            ap->allow_dirs)
           : ap->buflocal_nr == apc->arg_bufnr) {
         const char *const name = event_nr2name(apc->event);
@@ -1991,7 +1990,7 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
           = (STRLEN(s) + strlen(name) + (size_t)ap->patlen + 1);
 
         sourcing_name = xmalloc(sourcing_name_len);
-        snprintf((char *)sourcing_name, sourcing_name_len, s, name, ap->pat);
+        snprintf(sourcing_name, sourcing_name_len, s, name, ap->pat);
         if (p_verbose >= 8) {
           verbose_enter();
           smsg(_("Executing %s"), sourcing_name);
@@ -2064,7 +2063,7 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
 /// Get next autocommand command.
 /// Called by do_cmdline() to get the next line for ":if".
 /// @return allocated string, or NULL for end of autocommands.
-char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
+char *getnextac(int c, void *cookie, int indent, bool do_concat)
 {
   // These arguments are required for do_cmdline.
   (void)c;
@@ -2155,7 +2154,7 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
     acp->nextcmd = ac->next;
   }
 
-  return (char_u *)retval;
+  return retval;
 }
 
 /// Return true if there is a matching autocommand for "fname".
@@ -2165,12 +2164,13 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
 /// @param event event that occurred.
 /// @param sfname filename the event occurred in.
 /// @param buf buffer the file is open in
-bool has_autocmd(event_T event, char_u *sfname, buf_T *buf) FUNC_ATTR_WARN_UNUSED_RESULT
+bool has_autocmd(event_T event, char *sfname, buf_T *buf)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char *tail = (char *)path_tail(sfname);
+  char *tail = path_tail(sfname);
   bool retval = false;
 
-  char *fname = FullName_save((char *)sfname, false);
+  char *fname = FullName_save(sfname, false);
   if (fname == NULL) {
     return false;
   }
@@ -2188,9 +2188,9 @@ bool has_autocmd(event_T event, char_u *sfname, buf_T *buf) FUNC_ATTR_WARN_UNUSE
         && (ap->buflocal_nr == 0
             ? match_file_pat(NULL,
                              &ap->reg_prog,
-                             (char_u *)fname,
+                             fname,
                              sfname,
-                             (char_u *)tail,
+                             tail,
                              ap->allow_dirs)
             : buf != NULL && ap->buflocal_nr == buf->b_fnum)) {
       retval = true;
@@ -2208,12 +2208,12 @@ bool has_autocmd(event_T event, char_u *sfname, buf_T *buf) FUNC_ATTR_WARN_UNUSE
 
 // Function given to ExpandGeneric() to obtain the list of autocommand group
 // names.
-char_u *expand_get_augroup_name(expand_T *xp, int idx)
+char *expand_get_augroup_name(expand_T *xp, int idx)
 {
   // Required for ExpandGeneric
   (void)xp;
 
-  return (char_u *)augroup_name(idx + 1);
+  return augroup_name(idx + 1);
 }
 
 /// @param doautocmd  true for :doauto*, false for :autocmd
@@ -2263,7 +2263,7 @@ char *set_context_in_autocmd(expand_T *xp, char *arg, int doautocmd)
 }
 
 // Function given to ExpandGeneric() to obtain the list of event names.
-char_u *expand_get_event_name(expand_T *xp, int idx)
+char *expand_get_event_name(expand_T *xp, int idx)
 {
   // xp is a required parameter to be used with ExpandGeneric
   (void)xp;
@@ -2273,14 +2273,14 @@ char_u *expand_get_event_name(expand_T *xp, int idx)
   if (name != NULL) {
     // skip when not including groups or skip deleted entries
     if (!autocmd_include_groups || name == get_deleted_augroup()) {
-      return (char_u *)"";
+      return "";
     }
 
-    return (char_u *)name;
+    return name;
   }
 
   // List event names
-  return (char_u *)event_names[idx - next_augroup_id].name;
+  return event_names[idx - next_augroup_id].name;
 }
 
 /// Check whether given autocommand is supported
@@ -2373,7 +2373,7 @@ bool au_exists(const char *const arg) FUNC_ATTR_WARN_UNUSED_RESULT
         && (group == AUGROUP_ALL || ap->group == group)
         && (pattern == NULL
             || (buflocal_buf == NULL
-                ? FNAMECMP(ap->pat, (char_u *)pattern) == 0
+                ? FNAMECMP(ap->pat, pattern) == 0
                 : ap->buflocal_nr == buflocal_buf->b_fnum))) {
       retval = true;
       break;
@@ -2410,7 +2410,7 @@ int aupat_get_buflocal_nr(char *pat, int patlen)
     }
 
     // "<buffer=123>"
-    if (skipdigits((char_u *)pat + 8) == (char_u *)pat + patlen - 1) {
+    if (skipdigits(pat + 8) == pat + patlen - 1) {
       return atoi(pat + 8);
     }
   }
@@ -2434,10 +2434,10 @@ void aupat_normalize_buflocal_pat(char *dest, char *pat, int patlen, int bufloca
            buflocal_nr);
 }
 
-int autocmd_delete_event(int group, event_T event, char_u *pat)
+int autocmd_delete_event(int group, event_T event, char *pat)
   FUNC_ATTR_NONNULL_ALL
 {
-  return do_autocmd_event(event, (char *)pat, false, false, "", true, group);
+  return do_autocmd_event(event, pat, false, false, "", true, group);
 }
 
 /// Deletes an autocmd by ID.
