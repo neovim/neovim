@@ -319,10 +319,14 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     local spawn_params = {
       args = cmd_args;
       stdio = {stdin, stdout, stderr};
+      detached = true;
     }
     if extra_spawn_params then
       spawn_params.cwd = extra_spawn_params.cwd
       spawn_params.env = env_merge(extra_spawn_params.env)
+      if extra_spawn_params.detached ~= nil then
+        spawn_params.detached = extra_spawn_params.detached
+      end
     end
     handle, pid = uv.spawn(cmd, spawn_params, onexit)
     if handle == nil then

@@ -787,6 +787,13 @@ start_client({config})                                *vim.lsp.start_client()*
 
                  { "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }
 <
+                    {detached}           (boolean, default true) Daemonize the
+                                         server process so that it runs in a
+                                         separate process group from Nvim.
+                                         Nvim will shutdown the process on
+                                         exit, but if Nvim fails to exit
+                                         cleanly this could leave behind
+                                         orphaned server processes.
                     {workspace_folders}  (table) List of workspace folders
                                          passed to the language server. For
                                          backwards compatibility rootUri and
