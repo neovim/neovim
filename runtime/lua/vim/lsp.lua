@@ -241,6 +241,7 @@ local function validate_client_config(config)
     capabilities    = { config.capabilities, "t", true };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
     cmd_env         = { config.cmd_env, "t", true };
+    detached        = { config.detached, "b", true };
     name            = { config.name, 's', true };
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
@@ -663,6 +664,10 @@ end
 --- { "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }
 --- </pre>
 ---
+---@param detached: (boolean, default true) Daemonize the server process so that it runs in a
+--- separate process group from Nvim. Nvim will shutdown the process on exit, but if Nvim fails to
+--- exit cleanly this could leave behind orphaned server processes.
+---
 ---@param workspace_folders (table) List of workspace folders passed to the
 --- language server. For backwards compatibility rootUri and rootPath will be
 --- derived from the first workspace folder in this list. See `workspaceFolders` in
@@ -859,6 +864,7 @@ function lsp.start_client(config)
   local rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
     cwd = config.cmd_cwd;
     env = config.cmd_env;
+    detached = config.detached;
   })
 
   -- Return nil if client fails to start
