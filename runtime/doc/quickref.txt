@@ -1269,7 +1269,7 @@ Context-sensitive completion on the command-line:
 |CTRL-W_^|	CTRL-W ^		split window and edit alternate file
 |CTRL-W_n|	CTRL-W n  or  :new	create new empty window
 |CTRL-W_q|	CTRL-W q  or  :q[uit]	quit editing and close window
-|CTRL-W_c|	CTRL-W c  or  :cl[ose]	make buffer hidden and close window
+|CTRL-W_c|	CTRL-W c  or  :clo[se]	make buffer hidden and close window
 |CTRL-W_o|	CTRL-W o  or  :on[ly]	make current window only one on the
 					   screen
 

@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2022 Apr 16
+" Last Change: 2022 May 04
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -924,7 +924,7 @@ func s:DeleteCommands()
     if empty(s:k_map_saved)
       nunmap K
     else
-      " call mapset('n', 0, s:k_map_saved)
+      " call mapset(s:k_map_saved)
       let mode = s:k_map_saved.mode !=# ' ' ? s:k_map_saved.mode : ''
       call nvim_set_keymap(mode, 'K', s:k_map_saved.rhs, {
         \ 'expr': s:k_map_saved.expr ? v:true : v:false,
