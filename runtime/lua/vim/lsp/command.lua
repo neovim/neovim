@@ -391,6 +391,8 @@ M.commands = {
   make_basic_command('incomingcalls', 'incoming_calls', 'callHierarchyProvider'),
   make_basic_command('outgoingcalls', 'outgoing_calls', 'callHierarchyProvider'),
 
+  --- Attach buffer to a client.
+  --- Accepts client as argument in format "1" or "clangd(1)".
   {
     name = 'attach',
     check = make_check_function {
@@ -426,6 +428,10 @@ M.commands = {
     end,
   },
 
+  --- Detach buffer from a client.
+  --- With "1" or "clangd(1)" buffer is detached from a single client.
+  --- With just name eg. "clangd" buffer is detached from all clangd clients.
+  --- Without argument buffer is detached from all clients.
   {
     name = 'detach',
     check = make_check_function {
