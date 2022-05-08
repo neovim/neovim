@@ -1947,6 +1947,8 @@ void ex_lsp(exarg_T *eap)
   lua_setfield(lstate, -2, "buf");
   lua_pushboolean(lstate, eap->forceit);
   lua_setfield(lstate, -2, "bang");
+  lua_pushboolean(lstate, p_verbose != 0);
+  lua_setfield(lstate, -2, "verbose");
   if (eap->addr_count > 0) {
     lua_pushinteger(lstate, eap->line1);
     lua_setfield(lstate, -2, "line1");
@@ -1955,7 +1957,6 @@ void ex_lsp(exarg_T *eap)
     lua_pushinteger(lstate, eap->addr_count);
     lua_setfield(lstate, -2, "range");
   }
-  // TODO: add command modifiers
 
   if (nlua_pcall(lstate, 2, 0) != 0) {
     nlua_error(lstate, _("Error executing vim.lsp.command.run: %.*s"));

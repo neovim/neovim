@@ -49,11 +49,12 @@ end
 ---
 ---@param args (string) Command arguments
 ---@param ctx (table) Command context:
----     buf   (number)      Buffer handle
----     bang  (boolean)     Bang
----     line1 (number|nil)  Range starting line
----     line2 (number|nil)  Range final line
----     range (number|nil)  Number of items in the range
+---     buf     (number)      Buffer handle
+---     bang    (boolean)     Bang
+---     verbose (boolean)     :verbose modifier
+---     line1   (number|nil)  Range starting line
+---     line2   (number|nil)  Range final line
+---     range   (number|nil)  Number of items in the range
 function M.run(args, ctx)
   local cmdname, cmdargs = args:match('(%S+)%s*(.-)%s*$')
   if cmdname then
@@ -196,12 +197,6 @@ local function make_check_function(what)
   return function(ctx)
     return check_err(ctx, what)
   end
-end
-
---- :lsp without any arguments
-function M.default_command(ctx)
-  local _ = ctx -- silence, linter
-  return echoerr('lsp: Argument required')
 end
 
 ---@private
@@ -440,6 +435,7 @@ M.commands = {
     },
     run = function(ctx)
       if not ctx.args then
+        -- No arguments - detach from all clients
         local detached = false
         for id in pairs(vim.lsp.buf_get_clients(ctx.buf)) do
           vim.lsp.buf_detach_client(ctx.buf, id)
@@ -453,6 +449,7 @@ M.commands = {
 
       local id = ctx.args:match('^%d+$') or ctx.args:match('^[%a%d_-]*%((%d+)%)$')
       if id then
+        -- "1" or "clangd(1)" - detach from a single client
         id = assert(tonumber(id))
         local client = vim.lsp.get_client_by_id(id)
         if not client then
@@ -463,6 +460,7 @@ M.commands = {
           vim.lsp.buf_detach_client(ctx.buf, id)
         end
       elseif ctx.args:match('^%S+$') then
+        -- "clangd" - detach from clients with matching name
         local detached = false
         for id2, client in pairs(vim.lsp.buf_get_clients(ctx.buf)) do
           if client.name == ctx.args then
@@ -489,5 +487,77 @@ M.commands = {
   },
 
 }
+
+--- :lsp without any arguments
+--- Print active clients
+function M.default_command(ctx)
+  echo({{'--- Active LSP clients ---', 'Title'}})
+  -- vim.lsp module is not loaded, I have nothing more to say
+  if not rawget(vim, 'lsp') then return end
+
+  -- Get clients attached to the buffer, or with ! all active clients
+  local clients
+  if ctx.bang then
+    clients = vim.lsp.get_active_clients()
+  else
+    clients = vim.lsp.buf_get_clients(ctx.buf)
+  end
+
+  -- Sort clients by id
+  local ids = {}
+  for id in pairs(clients) do
+   table.insert(ids, id)
+  end
+  table.sort(ids)
+
+  for _, id in ipairs(ids) do
+    local client = clients[id]
+    local pid = client.rpc.pid
+    local header = string.format('#%-3d %-24s (%s)', id, client.name, tostring(pid))
+    echo({{header, 'Title'}})
+
+    do
+      local bufs = vim.tbl_filter(function(bufnr)
+        return vim.api.nvim_buf_is_valid(bufnr)
+      end, vim.lsp.get_buffers_by_client_id(id))
+      if #bufs > 0 then
+        table.sort(bufs)
+        for i, bufnr in ipairs(bufs) do
+          -- Mark current buffer with star
+          if bufnr == ctx.buf then
+            bufs[i] = '*'..bufnr
+          end
+        end
+        echo({{'    buffers    ', 'Comment'}, {table.concat(bufs, ', ')}})
+      else
+        echo({{'    buffers    ', 'Comment'}, {'-'}})
+      end
+    end
+
+    echo({{'    command    ', 'Comment'}, {table.concat(client.config.cmd, ' ')}})
+
+    if client.workspaceFolders then
+      echo({{'    directory  ', 'Comment'}, {client.workspaceFolders[1].name}})
+    else
+      echo({{'    directory  ', 'Comment'}, {'<single file mode>', 'SpecialKey'}})
+    end
+
+    do
+      local filetypes = client.config.filetypes or {}
+      if #filetypes > 0 then
+        filetypes = vim.deepcopy(filetypes)
+        table.sort(filetypes)
+        echo({{'    filetypes  ', 'Comment'}, {table.concat(filetypes, ', ')}})
+      else
+        echo({{'    filetypes  ', 'Comment'}, {'-'}})
+      end
+    end
+
+    do
+      local autostart = (client.config.autostart and 'true') or 'false'
+      echo({{'    autostart  ', 'Comment'}, {autostart}})
+    end
+  end
+end
 
 return M
