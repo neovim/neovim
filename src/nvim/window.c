@@ -806,7 +806,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
       col += parent->w_wincol;
       ScreenGrid *grid = &parent->w_grid;
       int row_off = 0, col_off = 0;
-      screen_adjust_grid(&grid, &row_off, &col_off);
+      grid_adjust(&grid, &row_off, &col_off);
       row += row_off;
       col += col_off;
     }
@@ -877,7 +877,7 @@ void ui_ext_win_position(win_T *wp)
       if (win) {
         grid = &win->w_grid;
         int row_off = 0, col_off = 0;
-        screen_adjust_grid(&grid, &row_off, &col_off);
+        grid_adjust(&grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
         if (c.bufpos.lnum >= 0) {

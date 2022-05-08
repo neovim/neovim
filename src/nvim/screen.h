@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/buffer_defs.h"
-#include "nvim/grid_defs.h"
+#include "nvim/grid.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
@@ -26,17 +26,6 @@ typedef enum {
   WC_BOTTOM_LEFT,
   WC_BOTTOM_RIGHT,
 } WindowCorner;
-
-/// By default, all windows are drawn on a single rectangular grid, represented by
-/// this ScreenGrid instance. In multigrid mode each window will have its own
-/// grid, then this is only used for global screen elements that hasn't been
-/// externalized.
-///
-/// Note: before the screen is initialized and when out of memory these can be
-/// NULL.
-EXTERN ScreenGrid default_grid INIT(= SCREEN_GRID_INIT);
-
-#define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 
 // Maximum columns for terminal highlight attributes
 #define TERM_ATTRS_MAX 1024
