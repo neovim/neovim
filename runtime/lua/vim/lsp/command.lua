@@ -513,7 +513,8 @@ function M.default_command(ctx)
   for _, id in ipairs(ids) do
     local client = clients[id]
     local pid = client.rpc.pid
-    local header = string.format('#%-3d %-24s (%s)', id, client.name, tostring(pid))
+    local attached = client.attached_buffers[ctx.buf] and '*' or ' '
+    local header = ('%-3d %s %-32s (%s)'):format(id, attached, client.name, tostring(pid))
     echo({{header, 'Title'}})
 
     do
@@ -534,28 +535,30 @@ function M.default_command(ctx)
       end
     end
 
-    echo({{'    command    ', 'Comment'}, {table.concat(client.config.cmd, ' ')}})
-
     if client.workspaceFolders then
       echo({{'    directory  ', 'Comment'}, {client.workspaceFolders[1].name}})
     else
       echo({{'    directory  ', 'Comment'}, {'<single file mode>', 'SpecialKey'}})
     end
 
-    do
-      local filetypes = client.config.filetypes or {}
-      if #filetypes > 0 then
-        filetypes = vim.deepcopy(filetypes)
-        table.sort(filetypes)
-        echo({{'    filetypes  ', 'Comment'}, {table.concat(filetypes, ', ')}})
-      else
-        echo({{'    filetypes  ', 'Comment'}, {'-'}})
-      end
-    end
+    if ctx.verbose then
+      echo({{'    command    ', 'Comment'}, {table.concat(client.config.cmd, ' ')}})
 
-    do
-      local autostart = (client.config.autostart and 'true') or 'false'
-      echo({{'    autostart  ', 'Comment'}, {autostart}})
+      do
+        local filetypes = client.config.filetypes or {}
+        if #filetypes > 0 then
+          filetypes = vim.deepcopy(filetypes)
+          table.sort(filetypes)
+          echo({{'    filetypes  ', 'Comment'}, {table.concat(filetypes, ', ')}})
+        else
+          echo({{'    filetypes  ', 'Comment'}, {'-'}})
+        end
+      end
+
+      do
+        local autostart = (client.config.autostart and 'true') or 'false'
+        echo({{'    autostart  ', 'Comment'}, {autostart}})
+      end
     end
   end
 end
