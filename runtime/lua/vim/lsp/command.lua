@@ -163,15 +163,15 @@ end
 local function make_basic_command(name, func, capability)
   return {
     name = name,
-    run = function(_)
-      vim.lsp.buf[func]()
-    end,
     check = make_check_function {
       no_args = true,
       attached = true,
       no_range = true,
       capability = capability,
     },
+    run = function(_)
+      vim.lsp.buf[func]()
+    end,
   }
 end
 
@@ -189,18 +189,22 @@ M.commands = {
 
   {
     name = 'rename',
-    run = function(ctx)
-      vim.lsp.buf.rename(ctx.args)
-    end,
     check = make_check_function {
       attached = true,
       no_range = true,
       capability = 'renameProvider',
     },
+    run = function(ctx)
+      vim.lsp.buf.rename(ctx.args)
+    end,
   },
 
   {
     name = 'codeaction',
+    check = make_check_function {
+      attached = true,
+      capability = 'codeActionProvider',
+    },
     run = function(ctx)
       local only
       for _, opt in ipairs(parse_options(ctx)) do
@@ -251,14 +255,18 @@ M.commands = {
         return filter(pat, {'only='})
       end
     end,
-    check = make_check_function {
-      attached = true,
-      capability = 'codeActionProvider',
-    },
   },
 
   {
     name = 'format',
+    check = function(ctx)
+      local err = check_err(ctx, { attached = true })
+      if err then return err end
+      local caps = get_capabilities(ctx.buf)
+      if not caps['documentFormattingProvider'] and not caps['documentRangeFormattingProvider'] then
+        return ERR_NO_CAPABILITY
+      end
+    end,
     run = function(ctx)
       local async, timeout
       for _, opt in ipairs(parse_options(ctx)) do
@@ -310,26 +318,18 @@ M.commands = {
         return filter(pat, {'async', 'timeout='})
       end
     end,
-    check = function(ctx)
-      local err = check_err(ctx, { attached = true })
-      if err then return err end
-      local caps = get_capabilities(ctx.buf)
-      if not caps['documentFormattingProvider'] and not caps['documentRangeFormattingProvider'] then
-        return ERR_NO_CAPABILITY
-      end
-    end,
   },
 
   {
     name = 'find',
-    run = function(ctx)
-      vim.lsp.buf.workspace_symbol(ctx.args or '')
-    end,
     check = make_check_function {
       attached = true,
       no_range = true,
       capability = 'workspaceSymbolProvider',
     },
+    run = function(ctx)
+      vim.lsp.buf.workspace_symbol(ctx.args or '')
+    end,
   },
 
   make_basic_command('incomingcalls', 'incoming_calls', 'callHierarchyProvider'),
@@ -337,20 +337,20 @@ M.commands = {
 
   -- {
   --   name = 'attach',
-  --   -- TODO: run
-  --   -- TODO: expand
   --   check = make_check_function {
   --     no_range = true,
   --   },
+  --   -- TODO: run
+  --   -- TODO: expand
   -- },
 
   -- {
   --   name = 'detach',
-  --   -- TODO: run
-  --   -- TODO: expand
   --   check = make_check_function {
   --     no_range = true,
   --   },
+  --   -- TODO: run
+  --   -- TODO: expand
   -- },
 
 }
