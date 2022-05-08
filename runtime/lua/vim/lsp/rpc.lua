@@ -232,6 +232,72 @@ function default_dispatchers.on_error(code, err)
   local _ = log.error() and log.error('client_error:', client_errors[code], err)
 end
 
+local function spawn_server(cmd, cmd_args, extra_spawn_params)
+  local _ = log.info() and log.info("Starting language server", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
+  validate {
+    cmd = { cmd, 's' };
+    cmd_args = { cmd_args, 't' };
+  }
+  if extra_spawn_params and extra_spawn_params.cwd then
+      assert(is_dir(extra_spawn_params.cwd), "cwd must be a directory")
+  end
+
+  local stdin = uv.new_pipe(false)
+  local stdout = uv.new_pipe(false)
+  local stderr = uv.new_pipe(false)
+
+  local handle, pid
+  do
+    ---@private
+    --- Callback for |vim.loop.spawn()| Closes all streams and runs the `on_exit` dispatcher.
+    ---@param code (number) Exit code
+    ---@param signal (number) Signal that was used to terminate (if any)
+    local function onexit(code, signal)
+      stdin:close()
+      stdout:close()
+      stderr:close()
+      handle:close()
+      -- Make sure that message_callbacks/notify_reply_callbacks can be gc'd.
+      -- TODO(mjlbach): FIXME
+      -- message_callbacks = nil
+      -- notify_reply_callbacks = nil
+      -- dispatchers.on_exit(code, signal)
+    end
+    local spawn_params = {
+      args = cmd_args;
+      stdio = {stdin, stdout, stderr};
+    }
+    if extra_spawn_params then
+      spawn_params.cwd = extra_spawn_params.cwd
+      spawn_params.env = env_merge(extra_spawn_params.env)
+    end
+    handle, pid = uv.spawn(cmd, spawn_params, onexit)
+    if handle == nil then
+      local msg = string.format("Spawning language server with cmd: `%s` failed", cmd)
+      if string.match(pid, "ENOENT") then
+        msg = msg .. ". The language server is either not installed, missing from PATH, or not executable."
+      else
+        msg = msg .. string.format(" with error message: %s", pid)
+      end
+      vim.notify(msg, vim.log.levels.WARN)
+      return
+    end
+  end
+  stderr:read_start(function(_err, chunk)
+    if chunk then
+      local _ = log.error() and log.error("rpc", cmd, "stderr", chunk)
+    end
+  end)
+
+  return {
+    pid = pid;
+    handles = {
+      status = handle;
+      inbound = stdin;
+      outbound = stdout;
+    };
+  }
+end
 --- Starts an LSP server process and create an LSP RPC client object to
 --- interact with it. Communication with the server is currently limited to stdio.
 ---
@@ -257,17 +323,12 @@ end
 --- - {pid} (number) The LSP server's PID.
 --- - {handle} A handle for low-level interaction with the LSP server process
 ---   |vim.loop|.
-local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
-  local _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
+local function start(handles, dispatchers)
+  local _ = log.info() and log.info("Starting RPC client")
   validate {
-    cmd = { cmd, 's' };
-    cmd_args = { cmd_args, 't' };
     dispatchers = { dispatchers, 't', true };
   }
 
-  if extra_spawn_params and extra_spawn_params.cwd then
-      assert(is_dir(extra_spawn_params.cwd), "cwd must be a directory")
-  end
   if dispatchers then
     local user_dispatchers = dispatchers
     dispatchers = {}
@@ -292,50 +353,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     dispatchers = default_dispatchers
   end
 
-  local stdin = uv.new_pipe(false)
-  local stdout = uv.new_pipe(false)
-  local stderr = uv.new_pipe(false)
-
   local message_index = 0
   local message_callbacks = {}
   local notify_reply_callbacks = {}
-
-  local handle, pid
-  do
-    ---@private
-    --- Callback for |vim.loop.spawn()| Closes all streams and runs the `on_exit` dispatcher.
-    ---@param code (number) Exit code
-    ---@param signal (number) Signal that was used to terminate (if any)
-    local function onexit(code, signal)
-      stdin:close()
-      stdout:close()
-      stderr:close()
-      handle:close()
-      -- Make sure that message_callbacks/notify_reply_callbacks can be gc'd.
-      message_callbacks = nil
-      notify_reply_callbacks = nil
-      dispatchers.on_exit(code, signal)
-    end
-    local spawn_params = {
-      args = cmd_args;
-      stdio = {stdin, stdout, stderr};
-    }
-    if extra_spawn_params then
-      spawn_params.cwd = extra_spawn_params.cwd
-      spawn_params.env = env_merge(extra_spawn_params.env)
-    end
-    handle, pid = uv.spawn(cmd, spawn_params, onexit)
-    if handle == nil then
-      local msg = string.format("Spawning language server with cmd: `%s` failed", cmd)
-      if string.match(pid, "ENOENT") then
-        msg = msg .. ". The language server is either not installed, missing from PATH, or not executable."
-      else
-        msg = msg .. string.format(" with error message: %s", pid)
-      end
-      vim.notify(msg, vim.log.levels.WARN)
-      return
-    end
-  end
 
   ---@private
   --- Encodes {payload} into a JSON-RPC message and sends it to the remote
@@ -345,9 +365,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   ---@returns true if the payload could be scheduled, false if the main event-loop is in the process of closing.
   local function encode_and_send(payload)
     local _ = log.debug() and log.debug("rpc.send", payload)
-    if handle == nil or handle:is_closing() then return false end
+    if handles.status == nil or handles.status:is_closing() then return false end
     local encoded = vim.json.encode(payload)
-    stdin:write(format_message_with_content_length(encoded))
+    handles.inbound:write(format_message_with_content_length(encoded))
     return true
   end
 
@@ -414,12 +434,6 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       return false
     end
   end
-
-  stderr:read_start(function(_err, chunk)
-    if chunk then
-      local _ = log.error() and log.error("rpc", cmd, "stderr", chunk)
-    end
-  end)
 
   ---@private
   local function on_error(errkind, ...)
@@ -545,7 +559,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   local request_parser = coroutine.wrap(request_parser_loop)
   request_parser()
-  stdout:read_start(function(err, chunk)
+  handles.outbound:read_start(function(err, chunk)
     if err then
       -- TODO better handling. Can these be intermittent errors?
       on_error(client_errors.READ_ERROR, err)
@@ -570,15 +584,15 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   end)
 
   return {
-    pid = pid;
-    handle = handle;
     request = request;
-    notify = notify
+    notify = notify;
+    handle = handles.status;
   }
 end
 
 return {
   start = start;
+  spawn_server = spawn_server;
   rpc_response_error = rpc_response_error;
   format_rpc_error = format_rpc_error;
   client_errors = client_errors;
