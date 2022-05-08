@@ -185,7 +185,12 @@ end
 function M.on_publish_diagnostics(_, result, ctx, config)
   local client_id = ctx.client_id
   local uri = result.uri
-  local bufnr = vim.uri_to_bufnr(uri)
+  local fname = vim.uri_to_fname(uri)
+  local diagnostics = result.diagnostics
+  if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
+    return
+  end
+  local bufnr = vim.fn.bufadd(fname)
 
   if not bufnr then
     return
@@ -193,7 +198,6 @@ function M.on_publish_diagnostics(_, result, ctx, config)
 
   client_id = get_client_id(client_id)
   local namespace = M.get_namespace(client_id)
-  local diagnostics = result.diagnostics
 
   if config then
     for _, opt in pairs(config) do

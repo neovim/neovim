@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
+local neq = require('test.helpers').neq
 
 describe('vim.lsp.diagnostic', function()
   local fake_uri
@@ -226,6 +227,44 @@ describe('vim.lsp.diagnostic', function()
       eq(1, #result)
       eq(exec_lua([[return vim.str_byteindex(..., 7, true)]], line), result[1].col)
       eq(exec_lua([[return vim.str_byteindex(..., 8, true)]], line), result[1].end_col)
+    end)
+
+    it('does not create buffer on empty diagnostics', function()
+      local bufnr
+
+      -- No buffer is created without diagnostics
+      bufnr = exec_lua [[
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = "file:///fake/uri2",
+          diagnostics = {},
+        }, {client_id=client_id})
+        return vim.fn.bufnr(vim.uri_to_fname("file:///fake/uri2"))
+      ]]
+      eq(bufnr, -1)
+
+      -- Create buffer on diagnostics
+      bufnr = exec_lua [[
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = "file:///fake/uri2",
+          diagnostics = {
+            make_error('Diagnostic', 0, 0, 0, 0),
+          },
+        }, {client_id=client_id})
+        return vim.fn.bufnr(vim.uri_to_fname("file:///fake/uri2"))
+      ]]
+      neq(bufnr, -1)
+      eq(exec_lua([[return #vim.diagnostic.get(...)]], bufnr), 1)
+
+      -- Clear diagnostics after buffer was created
+      bufnr = exec_lua [[
+        vim.lsp.diagnostic.on_publish_diagnostics(nil, {
+          uri = "file:///fake/uri2",
+          diagnostics = {},
+        }, {client_id=client_id})
+        return vim.fn.bufnr(vim.uri_to_fname("file:///fake/uri2"))
+      ]]
+      neq(bufnr, -1)
+      eq(exec_lua([[return #vim.diagnostic.get(...)]], bufnr), 0)
     end)
   end)
 end)
