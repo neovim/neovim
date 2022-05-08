@@ -50,7 +50,7 @@ struct ScreenGrid {
 
   schar_T *chars;
   sattr_T *attrs;
-  unsigned *line_offset;
+  size_t *line_offset;
   char_u *line_wraps;
 
   // last column that was drawn (not cleared with the default background).

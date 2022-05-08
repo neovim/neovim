@@ -37,6 +37,7 @@
 # include <locale.h>
 #endif
 #include "nvim/garray.h"
+#include "nvim/grid.h"
 #include "nvim/log.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"

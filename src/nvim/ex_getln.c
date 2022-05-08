@@ -3664,7 +3664,7 @@ static void cursorcmd(void)
 static void cmd_cursor_goto(int row, int col)
 {
   ScreenGrid *grid = &msg_grid_adj;
-  screen_adjust_grid(&grid, &row, &col);
+  grid_adjust(&grid, &row, &col);
   ui_grid_cursor_goto(grid->handle, row, col);
 }
 

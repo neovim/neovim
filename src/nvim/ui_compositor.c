@@ -635,7 +635,7 @@ static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top, Integer bot, 
       // ideally win_update() should keep track of this itself and not scroll
       // the invalid space.
       if (curgrid->attrs[curgrid->line_offset[r - curgrid->comp_row]
-                         + left - curgrid->comp_col] >= 0) {
+                         + (size_t)left - (size_t)curgrid->comp_col] >= 0) {
         compose_line(r, left, right, 0);
       }
     }
