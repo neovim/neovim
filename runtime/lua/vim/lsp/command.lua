@@ -38,7 +38,15 @@ local function match_command(s)
 end
 
 
---- Run :lsp command
+--- Runs :lsp command.
+---
+---@param args (string) Command arguments
+---@param ctx (table) Command context:
+---     buf   (number)      Buffer handle
+---     bang  (boolean)     Bang
+---     line1 (number|nil)  Range starting line
+---     line2 (number|nil)  Range final line
+---     range (number|nil)  Number of items in the range
 function M.run(args, ctx)
   local cmdname, cmdargs = args:match('(%S+)%s*(.-)%s*$')
   if cmdname then
@@ -59,7 +67,16 @@ function M.run(args, ctx)
   end
 end
 
---- Expand :lsp command
+--- Completion for :lsp command.
+---
+---@param pat (string) Argument to complete
+---@param ctx (table) Command context:
+---     buf   (number)      Buffer handle
+---     args  (string)      Previous arguments
+---     bang  (boolean)     Bang
+---     line1 (true|nil)    Range starting line
+---     line2 (true|nil)    Range final line
+---     range (true|nil)    Number of items in the range
 function M.expand(pat, ctx)
   if not ctx.args then
     local res = {}
@@ -80,11 +97,15 @@ function M.expand(pat, ctx)
 end
 
 
+---@private
+--- Checks if any client is attached to the buffer
 local function is_attached(ctx)
   local lsp = rawget(vim, 'lsp') -- Do not load lsp module if not already loaded
   return lsp and next(lsp.buf_get_clients(ctx.buf)) ~= nil or false
 end
 
+---@private
+--- Returns a lookup table of capabilities of servers attached to the buffer
 local function get_capabilities(bufnr)
   local res = {}
   local lsp = rawget(vim, 'lsp') -- Do not load lsp module if not already loaded
@@ -100,6 +121,8 @@ local function get_capabilities(bufnr)
   return res
 end
 
+---@private
+--- Filters out items not matching the pattern
 local function filter(pat, t)
   local res, n = {}, #pat
   for _, v in ipairs(t) do
@@ -111,6 +134,8 @@ local function filter(pat, t)
   return res
 end
 
+---@private
+--- Parses command options
 local function parse_options(ctx)
   if not ctx.args then return {} end
   local args = vim.split(ctx.args, '%s+', { trimempty = true })
@@ -130,10 +155,21 @@ local function parse_options(ctx)
   return res
 end
 
+---@private
 local function make_range(ctx)
   return { ctx.line1, 1 }, { ctx.line2, #vim.fn.getline(ctx.line2) }
 end
 
+---@private
+--- Checks for errors and returns error message
+---
+---@param ctx   (table) Context
+---@param what  (table) Errors to check:
+---     no_range    (true|nil)    Range not allowed
+---     no_args     (true|nil)    Arguments not allowed
+---     attached    (true|nil)    Requires attached client
+---     capability  (string|nil)  Required server capability
+---@returns Error message or nil on success
 local function check_err(ctx, what)
   if what.no_range and ctx.line1 then
     return ERR_RANGE_NOT_ALLOWED
@@ -148,6 +184,7 @@ local function check_err(ctx, what)
   end
 end
 
+---@private
 local function make_check_function(what)
   return function(ctx)
     return check_err(ctx, what)
