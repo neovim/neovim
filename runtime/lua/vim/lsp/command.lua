@@ -12,6 +12,7 @@ local ERR_OPT_VALUE_INVALID     = 'lsp: Invalid value for option: %s'
 local ERR_OPT_VALUE_NOT_ALLOWED = 'lsp: Value not allowed for option: %s'
 
 
+---@private
 local function echo(msg, history)
   if type(msg) == 'string' then
     msg = {{msg}}
@@ -21,10 +22,12 @@ local function echo(msg, history)
   vim.api.nvim_echo(msg, history and true or false, {})
 end
 
+---@private
 local function echoerr(msg)
   echo({{msg, 'ErrorMsg'}}, true)
 end
 
+---@private
 --- Find a command with name matching "s"
 local function match_command(s)
   s = s:match('%S+')
@@ -72,7 +75,7 @@ end
 ---@param pat (string) Argument to complete
 ---@param ctx (table) Command context:
 ---     buf   (number)      Buffer handle
----     args  (string)      Previous arguments
+---     args  (string|nil)  Previous arguments
 ---     bang  (boolean)     Bang
 ---     line1 (true|nil)    Range starting line
 ---     line2 (true|nil)    Range final line
@@ -197,6 +200,7 @@ function M.default_command(ctx)
   return echoerr('lsp: Argument required')
 end
 
+---@private
 local function make_basic_command(name, func, capability)
   return {
     name = name,
@@ -213,6 +217,17 @@ local function make_basic_command(name, func, capability)
 end
 
 --- List of :lsp subcommands
+---
+--- Parameters:
+---     name    (string)    Command name.
+---     check   (function)  Checks if command is available in current context.
+---                         Receives a context as argument, returns error message
+---                         or nil on success.
+---     run     (function)  Runs the command. Receives context as argument.
+---     expand  (function)  Completion. Receives argument to complete as the first
+---                         argument, and context as the second argument. Returns
+---                         a list of completions and completion offset (to expand
+---                         only a part of completed argument).
 M.commands = {
 
   make_basic_command('definition',     'definition',       'definitionProvider'),
