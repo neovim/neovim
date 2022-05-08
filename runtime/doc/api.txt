@@ -1711,17 +1711,49 @@ nvim_call_function({fn}, {args})                        *nvim_call_function()*
                 Return: ~
                     Result of the function call
 
+nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
+                Executes an Ex command.
+
+                Unlike |nvim_command()| this command takes a structured
+                Dictionary instead of a String. This allows for easier
+                construction and manipulation of an Ex command. This also
+                allows for things such as having spaces inside a command
+                argument, expanding filenames in a command that otherwise
+                doesn't expand filenames, etc.
+
+                Parameters: ~
+                    {cmd}   Command to execute. Must be a Dictionary that can
+                            contain the same values as the return value of
+                            |nvim_parse_cmd()| except "addr", "nargs" and
+                            "nextcmd" which are ignored if provided. All
+                            values except for "cmd" are optional.
+                    {opts}  Optional parameters.
+                            • output: (boolean, default false) Whether to
+                              return command output.
+
+                Return: ~
+                    Command output (non-error, non-shell |:!|) if `output` is
+                    true, else empty string.
+
+                See also: ~
+                    |nvim_exec()|
+                    |nvim_command()|
+
 nvim_command({command})                                       *nvim_command()*
-                Executes an ex-command.
+                Executes an Ex command.
 
                 On execution error: fails with VimL error, does not update
                 v:errmsg.
 
-                Parameters: ~
-                    {command}  Ex-command string
+                Prefer using |nvim_cmd()| or |nvim_exec()| over this. To
+                evaluate multiple lines of Vim script or an Ex command
+                directly, use |nvim_exec()|. To construct an Ex command using
+                a structured format and then execute it, use |nvim_cmd()|. To
+                modify an Ex command before evaluating it, use
+                |nvim_parse_cmd()| in conjunction with |nvim_cmd()|.
 
-                See also: ~
-                    |nvim_exec()|
+                Parameters: ~
+                    {command}  Ex command string
 
 nvim_eval({expr})                                                *nvim_eval()*
                 Evaluates a VimL |expression|. Dictionaries and Lists are
@@ -1737,7 +1769,7 @@ nvim_eval({expr})                                                *nvim_eval()*
                     Evaluation result or expanded object
 
 nvim_exec({src}, {output})                                       *nvim_exec()*
-                Executes Vimscript (multiline block of Ex-commands), like
+                Executes Vimscript (multiline block of Ex commands), like
                 anonymous |:source|.
 
                 Unlike |nvim_command()| this function supports heredocs,
@@ -1758,6 +1790,7 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
                 See also: ~
                     |execute()|
                     |nvim_command()|
+                    |nvim_cmd()|
 
 nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
                 Parse command line.

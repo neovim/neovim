@@ -10,10 +10,14 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ops.h"
+#include "nvim/strings.h"
+#include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/window.h"
@@ -22,7 +26,9 @@
 # include "api/vimscript.c.generated.h"
 #endif
 
-/// Executes Vimscript (multiline block of Ex-commands), like anonymous
+#define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
+
+/// Executes Vimscript (multiline block of Ex commands), like anonymous
 /// |:source|.
 ///
 /// Unlike |nvim_command()| this function supports heredocs, script-scope (s:),
@@ -32,6 +38,7 @@
 ///
 /// @see |execute()|
 /// @see |nvim_command()|
+/// @see |nvim_cmd()|
 ///
 /// @param src      Vimscript code
 /// @param output   Capture and return all (non-error, non-shell |:!|) output
@@ -89,13 +96,16 @@ theend:
   return (String)STRING_INIT;
 }
 
-/// Executes an ex-command.
+/// Executes an Ex command.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
 ///
-/// @see |nvim_exec()|
+/// Prefer using |nvim_cmd()| or |nvim_exec()| over this. To evaluate multiple lines of Vim script
+/// or an Ex command directly, use |nvim_exec()|. To construct an Ex command using a structured
+/// format and then execute it, use |nvim_cmd()|. To modify an Ex command before evaluating it, use
+/// |nvim_parse_cmd()| in conjunction with |nvim_cmd()|.
 ///
-/// @param command  Ex-command string
+/// @param command  Ex command string
 /// @param[out] err Error details (Vim error), if any
 void nvim_command(String command, Error *err)
   FUNC_API_SINCE(1)
@@ -977,4 +987,371 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
 end:
   xfree(cmdline);
   return result;
+}
+
+/// Executes an Ex command.
+///
+/// Unlike |nvim_command()| this command takes a structured Dictionary instead of a String. This
+/// allows for easier construction and manipulation of an Ex command. This also allows for things
+/// such as having spaces inside a command argument, expanding filenames in a command that otherwise
+/// doesn't expand filenames, etc.
+///
+/// @see |nvim_exec()|
+/// @see |nvim_command()|
+///
+/// @param cmd       Command to execute. Must be a Dictionary that can contain the same values as
+///                  the return value of |nvim_parse_cmd()| except "addr", "nargs" and "nextcmd"
+///                  which are ignored if provided. All values except for "cmd" are optional.
+/// @param opts      Optional parameters.
+///                  - output: (boolean, default false) Whether to return command output.
+/// @param[out] err  Error details, if any.
+/// @return Command output (non-error, non-shell |:!|) if `output` is true, else empty string.
+String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error *err)
+  FUNC_API_SINCE(10)
+{
+  exarg_T ea;
+  memset(&ea, 0, sizeof(ea));
+  ea.verbose_save = -1;
+  ea.save_msg_silent = -1;
+
+  CmdParseInfo cmdinfo;
+  memset(&cmdinfo, 0, sizeof(cmdinfo));
+  cmdinfo.verbose = -1;
+
+  char *cmdline = NULL;
+  char *cmdname = NULL;
+  char **args = NULL;
+  size_t argc = 0;
+
+  String retv = (String)STRING_INIT;
+
+#define OBJ_TO_BOOL(var, value, default, varname) \
+  do { \
+    var = api_object_to_bool(value, varname, default, err); \
+    if (ERROR_SET(err)) { \
+      goto end; \
+    } \
+  } while (0)
+
+#define VALIDATION_ERROR(...) \
+  do { \
+    api_set_error(err, kErrorTypeValidation, __VA_ARGS__); \
+    goto end; \
+  } while (0)
+
+  bool output;
+  OBJ_TO_BOOL(output, opts->output, false, "'output'");
+
+  // First, parse the command name and check if it exists and is valid.
+  if (!HAS_KEY(cmd->cmd) || cmd->cmd.type != kObjectTypeString
+      || cmd->cmd.data.string.data[0] == NUL) {
+    VALIDATION_ERROR("'cmd' must be a non-empty String");
+  }
+
+  cmdname = string_to_cstr(cmd->cmd.data.string);
+  ea.cmd = cmdname;
+
+  char *p = find_ex_command(&ea, NULL);
+
+  // If this looks like an undefined user command and there are CmdUndefined
+  // autocommands defined, trigger the matching autocommands.
+  if (p != NULL && ea.cmdidx == CMD_SIZE && ASCII_ISUPPER(*ea.cmd)
+      && has_event(EVENT_CMDUNDEFINED)) {
+    p = xstrdup(cmdname);
+    int ret = apply_autocmds(EVENT_CMDUNDEFINED, (char_u *)p, (char_u *)p, true, NULL);
+    xfree(p);
+    // If the autocommands did something and didn't cause an error, try
+    // finding the command again.
+    p = (ret && !aborting()) ? find_ex_command(&ea, NULL) : ea.cmd;
+  }
+
+  if (p == NULL || ea.cmdidx == CMD_SIZE) {
+    VALIDATION_ERROR("Command not found: %s", cmdname);
+  }
+  if (is_cmd_ni(ea.cmdidx)) {
+    VALIDATION_ERROR("Command not implemented: %s", cmdname);
+  }
+
+  // Get the command flags so that we can know what type of arguments the command uses.
+  // Not required for a user command since `find_ex_command` already deals with it in that case.
+  if (!IS_USER_CMDIDX(ea.cmdidx)) {
+    ea.argt = get_cmd_argt(ea.cmdidx);
+  }
+
+  // Parse command arguments since it's needed to get the command address type.
+  if (HAS_KEY(cmd->args)) {
+    if (cmd->args.type != kObjectTypeArray) {
+      VALIDATION_ERROR("'args' must be an Array");
+    }
+    // Check if every argument is valid
+    for (size_t i = 0; i < cmd->args.data.array.size; i++) {
+      Object elem = cmd->args.data.array.items[i];
+      if (elem.type != kObjectTypeString) {
+        VALIDATION_ERROR("Command argument must be a String");
+      } else if (string_iswhite(elem.data.string)) {
+        VALIDATION_ERROR("Command argument must have non-whitespace characters");
+      }
+    }
+
+    argc = cmd->args.data.array.size;
+    bool argc_valid;
+
+    // Check if correct number of arguments is used.
+    switch (ea.argt & (EX_EXTRA | EX_NOSPC | EX_NEEDARG)) {
+    case EX_EXTRA | EX_NOSPC | EX_NEEDARG:
+      argc_valid = argc == 1;
+      break;
+    case EX_EXTRA | EX_NOSPC:
+      argc_valid = argc <= 1;
+      break;
+    case EX_EXTRA | EX_NEEDARG:
+      argc_valid = argc >= 1;
+      break;
+    case EX_EXTRA:
+      argc_valid = true;
+      break;
+    default:
+      argc_valid = argc == 0;
+      break;
+    }
+
+    if (!argc_valid) {
+      argc = 0;  // Ensure that args array isn't erroneously freed at the end.
+      VALIDATION_ERROR("Incorrect number of arguments supplied");
+    }
+
+    if (argc != 0) {
+      args = xcalloc(argc, sizeof(char *));
+
+      for (size_t i = 0; i < argc; i++) {
+        args[i] = string_to_cstr(cmd->args.data.array.items[i].data.string);
+      }
+    }
+  }
+
+  // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
+  // since it only ever checks the first argument.
+  set_cmd_addr_type(&ea, argc > 0 ? (char_u *)args[0] : NULL);
+
+  if (HAS_KEY(cmd->range)) {
+    if (!(ea.argt & EX_RANGE)) {
+      VALIDATION_ERROR("Command cannot accept a range");
+    } else if (cmd->range.type != kObjectTypeArray) {
+      VALIDATION_ERROR("'range' must be an Array");
+    } else if (cmd->range.data.array.size > 2) {
+      VALIDATION_ERROR("'range' cannot contain more than two elements");
+    }
+
+    Array range = cmd->range.data.array;
+    ea.addr_count = (int)range.size;
+
+    for (size_t i = 0; i < range.size; i++) {
+      Object elem = range.items[i];
+      if (elem.type != kObjectTypeInteger || elem.data.integer < 0) {
+        VALIDATION_ERROR("'range' element must be a non-negative Integer");
+      }
+    }
+
+    if (range.size > 0) {
+      ea.line1 = range.items[0].data.integer;
+      ea.line2 = range.items[range.size - 1].data.integer;
+    }
+
+    if (invalid_range(&ea) != NULL) {
+      VALIDATION_ERROR("Invalid range provided");
+    }
+  }
+  if (ea.addr_count == 0) {
+    if (ea.argt & EX_DFLALL) {
+      set_cmd_dflall_range(&ea);  // Default range for range=%
+    } else {
+      ea.line1 = ea.line2 = get_cmd_default_range(&ea);  // Default range.
+
+      if (ea.addr_type == ADDR_OTHER) {
+        // Default is 1, not cursor.
+        ea.line2 = 1;
+      }
+    }
+  }
+
+  if (HAS_KEY(cmd->count)) {
+    if (!(ea.argt & EX_COUNT)) {
+      VALIDATION_ERROR("Command cannot accept a count");
+    } else if (cmd->count.type != kObjectTypeInteger || cmd->count.data.integer < 0) {
+      VALIDATION_ERROR("'count' must be a non-negative Integer");
+    }
+    set_cmd_count(&ea, cmd->count.data.integer, true);
+  }
+
+  if (HAS_KEY(cmd->reg)) {
+    if (!(ea.argt & EX_REGSTR)) {
+      VALIDATION_ERROR("Command cannot accept a register");
+    } else if (cmd->reg.type != kObjectTypeString || cmd->reg.data.string.size != 1) {
+      VALIDATION_ERROR("'reg' must be a single character");
+    }
+    char regname = cmd->reg.data.string.data[0];
+    if (regname == '=') {
+      VALIDATION_ERROR("Cannot use register \"=");
+    } else if (!valid_yank_reg(regname, ea.cmdidx != CMD_put && !IS_USER_CMDIDX(ea.cmdidx))) {
+      VALIDATION_ERROR("Invalid register: \"%c", regname);
+    }
+    ea.regname = (uint8_t)regname;
+  }
+
+  OBJ_TO_BOOL(ea.forceit, cmd->bang, false, "'bang'");
+  if (ea.forceit && !(ea.argt & EX_BANG)) {
+    VALIDATION_ERROR("Command cannot accept a bang");
+  }
+
+  if (HAS_KEY(cmd->magic)) {
+    if (cmd->magic.type != kObjectTypeDictionary) {
+      VALIDATION_ERROR("'magic' must be a Dictionary");
+    }
+
+    Dict(cmd_magic) magic = { 0 };
+    if (!api_dict_to_keydict(&magic, KeyDict_cmd_magic_get_field,
+                             cmd->magic.data.dictionary, err)) {
+      goto end;
+    }
+
+    OBJ_TO_BOOL(cmdinfo.magic.file, magic.file, ea.argt & EX_XFILE, "'magic.file'");
+    OBJ_TO_BOOL(cmdinfo.magic.bar, magic.bar, ea.argt & EX_TRLBAR, "'magic.bar'");
+  } else {
+    cmdinfo.magic.file = ea.argt & EX_XFILE;
+    cmdinfo.magic.bar = ea.argt & EX_TRLBAR;
+  }
+
+  if (HAS_KEY(cmd->mods)) {
+    if (cmd->mods.type != kObjectTypeDictionary) {
+      VALIDATION_ERROR("'mods' must be a Dictionary");
+    }
+
+    Dict(cmd_mods) mods = { 0 };
+    if (!api_dict_to_keydict(&mods, KeyDict_cmd_mods_get_field, cmd->mods.data.dictionary, err)) {
+      goto end;
+    }
+
+    if (HAS_KEY(mods.tab)) {
+      if (mods.tab.type != kObjectTypeInteger || mods.tab.data.integer < 0) {
+        VALIDATION_ERROR("'mods.tab' must be a non-negative Integer");
+      }
+      cmdinfo.cmdmod.tab = (int)mods.tab.data.integer + 1;
+    }
+
+    if (HAS_KEY(mods.verbose)) {
+      if (mods.verbose.type != kObjectTypeInteger || mods.verbose.data.integer <= 0) {
+        VALIDATION_ERROR("'mods.verbose' must be a non-negative Integer");
+      }
+      cmdinfo.verbose = mods.verbose.data.integer;
+    }
+
+    bool vertical;
+    OBJ_TO_BOOL(vertical, mods.vertical, false, "'mods.vertical'");
+    cmdinfo.cmdmod.split |= (vertical ? WSP_VERT : 0);
+
+    if (HAS_KEY(mods.split)) {
+      if (mods.split.type != kObjectTypeString) {
+        VALIDATION_ERROR("'mods.split' must be a String");
+      }
+
+      if (STRCMP(mods.split.data.string.data, "aboveleft") == 0
+          || STRCMP(mods.split.data.string.data, "leftabove") == 0) {
+        cmdinfo.cmdmod.split |= WSP_ABOVE;
+      } else if (STRCMP(mods.split.data.string.data, "belowright") == 0
+                 || STRCMP(mods.split.data.string.data, "rightbelow") == 0) {
+        cmdinfo.cmdmod.split |= WSP_BELOW;
+      } else if (STRCMP(mods.split.data.string.data, "topleft") == 0) {
+        cmdinfo.cmdmod.split |= WSP_TOP;
+      } else if (STRCMP(mods.split.data.string.data, "botright") == 0) {
+        cmdinfo.cmdmod.split |= WSP_BOT;
+      } else {
+        VALIDATION_ERROR("Invalid value for 'mods.split'");
+      }
+    }
+
+    OBJ_TO_BOOL(cmdinfo.silent, mods.silent, false, "'mods.silent'");
+    OBJ_TO_BOOL(cmdinfo.emsg_silent, mods.emsg_silent, false, "'mods.emsg_silent'");
+    OBJ_TO_BOOL(cmdinfo.sandbox, mods.sandbox, false, "'mods.sandbox'");
+    OBJ_TO_BOOL(cmdinfo.noautocmd, mods.noautocmd, false, "'mods.noautocmd'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.browse, mods.browse, false, "'mods.browse'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.confirm, mods.confirm, false, "'mods.confirm'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.hide, mods.hide, false, "'mods.hide'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.keepalt, mods.keepalt, false, "'mods.keepalt'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.keepjumps, mods.keepjumps, false, "'mods.keepjumps'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.keepmarks, mods.keepmarks, false, "'mods.keepmarks'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.keeppatterns, mods.keeppatterns, false, "'mods.keeppatterns'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.lockmarks, mods.lockmarks, false, "'mods.lockmarks'");
+    OBJ_TO_BOOL(cmdinfo.cmdmod.noswapfile, mods.noswapfile, false, "'mods.noswapfile'");
+
+    if (cmdinfo.sandbox && !(ea.argt & EX_SBOXOK)) {
+      VALIDATION_ERROR("Command cannot be run in sandbox");
+    }
+  }
+
+  // Finally, build the command line string that will be stored inside ea.cmdlinep.
+  // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
+  if (build_cmdline_str(&cmdline, &ea, &cmdinfo, args, argc) == FAIL) {
+    goto end;
+  }
+  ea.cmdlinep = &cmdline;
+
+  garray_T capture_local;
+  const int save_msg_silent = msg_silent;
+  garray_T * const save_capture_ga = capture_ga;
+
+  if (output) {
+    ga_init(&capture_local, 1, 80);
+    capture_ga = &capture_local;
+  }
+
+  try_start();
+  if (output) {
+    msg_silent++;
+  }
+
+  WITH_SCRIPT_CONTEXT(channel_id, {
+    execute_cmd(&ea, &cmdinfo);
+  });
+
+  if (output) {
+    capture_ga = save_capture_ga;
+    msg_silent = save_msg_silent;
+  }
+  try_end(err);
+
+  if (ERROR_SET(err)) {
+    goto clear_ga;
+  }
+
+  if (output && capture_local.ga_len > 1) {
+    retv = (String){
+      .data = capture_local.ga_data,
+      .size = (size_t)capture_local.ga_len,
+    };
+    // redir usually (except :echon) prepends a newline.
+    if (retv.data[0] == '\n') {
+      memmove(retv.data, retv.data + 1, retv.size - 1);
+      retv.data[retv.size - 1] = '\0';
+      retv.size = retv.size - 1;
+    }
+    goto end;
+  }
+clear_ga:
+  if (output) {
+    ga_clear(&capture_local);
+  }
+end:
+  xfree(cmdline);
+  xfree(cmdname);
+  xfree(ea.args);
+  xfree(ea.arglens);
+  for (size_t i = 0; i < argc; i++) {
+    xfree(args[i]);
+  }
+  xfree(args);
+
+  return retv;
+
+#undef OBJ_TO_BOOL
+#undef VALIDATION_ERROR
 }
