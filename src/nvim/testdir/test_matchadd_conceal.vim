@@ -336,8 +336,6 @@ func Test_matchadd_and_syn_conceal()
 endfunc
 
 func Test_interaction_matchadd_syntax()
-  CheckRunVimInTerminal
-
   new
   " Test for issue #7268 fix.
   " When redrawing the second column, win_line() was comparing the sequence
