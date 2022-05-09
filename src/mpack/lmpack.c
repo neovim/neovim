@@ -242,7 +242,9 @@ static mpack_uint32_t lmpack_objlen(lua_State *L, int *is_array)
 
   // when len==0, the caller should guess the type!
   if (len > 0) {
-    *is_array = isarr && max == len;
+    if (is_array != NULL) {
+        *is_array = isarr && max == len;
+    }
   }
 
 end:
