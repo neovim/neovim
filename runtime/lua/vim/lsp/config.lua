@@ -9,6 +9,10 @@ local config = {
   },
 }
 
+-- Map of server name to autocmd id. If a server configuration is redefined, use
+-- this to clear the existing autocmd
+local autocmds = {}
+
 ---@private
 local function validate(opts)
   if not opts.filetypes or #opts.filetypes == 0 then
@@ -52,7 +56,12 @@ return function(opts)
       a.nvim_echo({ { string.format('Configuration for server %s is invalid: %s', k, err), 'WarningMsg' } }, true, {})
     else
       config.servers[k] = v
-      a.nvim_create_autocmd('FileType', {
+
+      if autocmds[k] then
+        a.nvim_del_autocmd(autocmds[k])
+      end
+
+      autocmds[k] = a.nvim_create_autocmd('FileType', {
         group = 'nvim_lsp',
         pattern = v.filetypes,
         callback = function(args)
