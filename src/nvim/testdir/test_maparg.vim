@@ -42,6 +42,20 @@ function Test_maparg()
   map abc y<S-char-114>y
   call assert_equal("yRy", maparg('abc'))
 
+  " character with K_SPECIAL byte
+  nmap abc …
+  call assert_equal('…', maparg('abc'))
+
+  " modified character with K_SPECIAL byte
+  nmap abc <M-…>
+  call assert_equal('<M-…>', maparg('abc'))
+
+  " illegal bytes
+  let str = ":\x7f:\x80:\x90:\xd0:"
+  exe 'nmap abc ' .. str
+  call assert_equal(str, maparg('abc'))
+  unlet str
+
   omap { w
   let d = maparg('{', 'o', 0, 1)
   call assert_equal(['{', 'w', 'o'], [d.lhs, d.rhs, d.mode])

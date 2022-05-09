@@ -4980,7 +4980,11 @@ int get_option_value(const char *name, long *numval, char **stringval, int opt_f
       return -2;
     }
     if (stringval != NULL) {
-      *stringval = xstrdup(*(char **)varp);
+      if ((char_u **)varp == &p_pt) {  // 'pastetoggle'
+        *stringval = str2special_save(*(char **)(varp), false, false);
+      } else {
+        *stringval = xstrdup(*(char **)(varp));
+      }
     }
     return 0;
   }

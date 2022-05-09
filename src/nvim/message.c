@@ -1618,6 +1618,10 @@ int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
     } else {
       text = str2special((const char **)&str, from, false);
     }
+    if (text[0] != NUL && text[1] == NUL) {
+      // single-byte character or illegal byte
+      text = (char *)transchar_byte((uint8_t)text[0]);
+    }
     const int len = vim_strsize((char_u *)text);
     if (maxlen > 0 && retval + len >= maxlen) {
       break;
@@ -1666,6 +1670,7 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
 /// @return Converted key code, in a static buffer. Buffer is always one and the
 ///         same, so save converted string somewhere before running str2special
 ///         for the second time.
+///         On illegal byte return a string with only that byte.
 const char *str2special(const char **const sp, const bool replace_spaces, const bool replace_lt)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
@@ -1699,32 +1704,26 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
     }
   }
 
-  if (!IS_SPECIAL(c)) {
+  if (!IS_SPECIAL(c) && MB_BYTE2LEN(c) > 1) {
     *sp = str;
     // Try to un-escape a multi-byte character after modifiers.
     const char *p = mb_unescape(sp);
-
-    if (p == NULL) {
-      const int len = utf_ptr2len(str);
-      // Check for an illegal byte.
-      if (MB_BYTE2LEN((uint8_t)(*str)) > len) {
-        transchar_nonprint(curbuf, (char_u *)buf, c);
-        *sp = str + 1;
-        return buf;
-      }
-      *sp = str + len;
-      p = str;
+    if (p != NULL) {
+      // Since 'special' is true the multi-byte character 'c' will be
+      // processed by get_special_key_name().
+      c = utf_ptr2char(p);
+    } else {
+      // illegal byte
+      *sp = str + 1;
     }
-    // Since 'special' is true the multi-byte character 'c' will be
-    // processed by get_special_key_name().
-    c = utf_ptr2char(p);
   } else {
+    // single-byte character or illegal byte
     *sp = str + 1;
   }
 
-  // Make unprintable characters in <> form, also <M-Space> and <Tab>.
+  // Make special keys and C0 control characters in <> form, also <M-Space>.
   if (special
-      || char2cells(c) > 1
+      || c < ' '
       || (replace_spaces && c == ' ')
       || (replace_lt && c == '<')) {
     return (const char *)get_special_key_name(c, modifiers);
