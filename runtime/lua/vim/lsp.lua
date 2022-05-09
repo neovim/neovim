@@ -1,5 +1,3 @@
-local if_nil = vim.F.if_nil
-
 local default_handlers = require('vim.lsp.handlers')
 local log = require('vim.lsp.log')
 local lsp_rpc = require('vim.lsp.rpc')
@@ -8,11 +6,16 @@ local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 
 local vim = vim
-local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option =
-  vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
+local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
+  vim.api.nvim_err_writeln,
+  vim.api.nvim_buf_get_lines,
+  vim.api.nvim_command,
+  vim.api.nvim_buf_get_option,
+  vim.api.nvim_exec_autocmds
 local uv = vim.loop
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
+local if_nil = vim.F.if_nil
 
 local lsp = {
   protocol = protocol,
@@ -867,15 +870,27 @@ function lsp.start_client(config)
       pcall(config.on_exit, code, signal, client_id)
     end
 
+    for bufnr, client_ids in pairs(all_buffer_active_clients) do
+      if client_ids[client_id] then
+        vim.schedule(function()
+          nvim_exec_autocmds('LspDetach', {
+            buffer = bufnr,
+            modeline = false,
+            data = { client_id = client_id },
+          })
+
+          local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+          vim.diagnostic.reset(namespace, bufnr)
+        end)
+
+        client_ids[client_id] = nil
+      end
+    end
+
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
 
-    lsp.diagnostic.reset(client_id, all_buffer_active_clients)
     changetracking.reset(client_id)
-    for _, client_ids in pairs(all_buffer_active_clients) do
-      client_ids[client_id] = nil
-    end
-
     if code ~= 0 or (signal ~= 0 and signal ~= 15) then
       local msg = string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
       vim.schedule(function()
@@ -1213,6 +1228,13 @@ function lsp.start_client(config)
   ---@param bufnr (number) Buffer number
   function client._on_attach(bufnr)
     text_document_did_open_handler(bufnr, client)
+
+    nvim_exec_autocmds('LspAttach', {
+      buffer = bufnr,
+      modeline = false,
+      data = { client_id = client.id },
+    })
+
     if config.on_attach then
       -- TODO(ashkan) handle errors.
       pcall(config.on_attach, client, bufnr)
@@ -1358,6 +1380,12 @@ function lsp.buf_detach_client(bufnr, client_id)
     vim.notify(string.format('Buffer (id: %d) is not attached to client (id: %d). Cannot detach.', client_id, bufnr))
     return
   end
+
+  nvim_exec_autocmds('LspDetach', {
+    buffer = bufnr,
+    modeline = false,
+    data = { client_id = client_id },
+  })
 
   changetracking.reset_buf(client, bufnr)
 

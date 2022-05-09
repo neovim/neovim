@@ -18,6 +18,7 @@ local NIL = helpers.NIL
 local read_file = require('test.helpers').read_file
 local write_file = require('test.helpers').write_file
 local isCI = helpers.isCI
+local meths = helpers.meths
 
 -- Use these to get access to a coroutine so that I can run async tests and use
 -- yield.
@@ -335,6 +336,43 @@ describe('LSP', function()
           if ctx.method == 'finish' then
             exec_lua("return lsp.buf_detach_client(BUFFER, TEST_RPC_CLIENT_ID)")
             eq(false, exec_lua("return lsp.buf_is_attached(BUFFER, TEST_RPC_CLIENT_ID)"))
+            client.stop()
+          end
+        end;
+      }
+    end)
+
+    it('should fire autocommands on attach and detach', function()
+      local client
+      test_rpc_server {
+        test_name = "basic_init";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_create_autocmd('LspAttach', {
+              callback = function(args)
+                local client = vim.lsp.get_client_by_id(args.data.client_id)
+                vim.g.lsp_attached = client.name
+              end,
+            })
+            vim.api.nvim_create_autocmd('LspDetach', {
+              callback = function(args)
+                local client = vim.lsp.get_client_by_id(args.data.client_id)
+                vim.g.lsp_detached = client.name
+              end,
+            })
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          eq(true, exec_lua("return lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)"))
+          client.notify('finish')
+        end;
+        on_handler = function(_, _, ctx)
+          if ctx.method == 'finish' then
+            eq('basic_init', meths.get_var('lsp_attached'))
+            exec_lua("return lsp.buf_detach_client(BUFFER, TEST_RPC_CLIENT_ID)")
+            eq('basic_init', meths.get_var('lsp_detached'))
             client.stop()
           end
         end;

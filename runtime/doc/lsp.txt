@@ -461,6 +461,39 @@ LspSignatureActiveParameter
 ==============================================================================
 EVENTS                                                            *lsp-events*
 
+                                                                   *LspAttach*
+After an LSP client attaches to a buffer. The |autocmd-pattern| is the
+name of the buffer. When used from Lua, the client ID is passed to the
+callback in the "data" table. Example: >
+
+    vim.api.nvim_create_autocmd("LspAttach", {
+      callback = function(args)
+        local bufnr = args.buf
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        if client.server_capabilities.completionProvider then
+          vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
+        end
+        if client.server_capabilities.definitionProvider then
+          vim.bo[bufnr].tagfunc = "v:lua.vim.lsp.tagfunc"
+        end
+      end,
+    })
+<
+                                                                   *LspDetach*
+Just before an LSP client detaches from a buffer. The |autocmd-pattern| is the
+name of the buffer. When used from Lua, the client ID is passed to the
+callback in the "data" table. Example: >
+
+    vim.api.nvim_create_autocmd("LspDetach", {
+      callback = function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        -- Do something with the client
+        vim.cmd("setlocal tagfunc< omnifunc<")
+      end,
+    })
+<
+In addition, the following |User| |autocommands| are provided:
+
 LspProgressUpdate                                          *LspProgressUpdate*
    Upon receipt of a progress notification from the server. See
    |vim.lsp.util.get_progress_messages()|.
