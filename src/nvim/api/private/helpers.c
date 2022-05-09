@@ -657,8 +657,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     mode_val = get_map_mode(&p, true);  // mapmode-ic
   } else {
     mode_val = get_map_mode(&p, false);
-    if ((mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING)
-        && mode.size > 0) {
+    if (mode_val == (MODE_VISUAL | MODE_SELECT | MODE_NORMAL | MODE_OP_PENDING) && mode.size > 0) {
       // get_map_mode() treats unrecognized mode shortnames as ":map".
       // This is an error unless the given shortname was empty string "".
       api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", p);

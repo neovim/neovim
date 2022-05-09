@@ -841,7 +841,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   // doing ":@0" when register 0 doesn't contain a CR.
   msg_scroll = false;
 
-  State = CMDLINE;
+  State = MODE_CMDLINE;
 
   if (s->firstc == '/' || s->firstc == '?' || s->firstc == '@') {
     // Use ":lmap" mappings for search pattern and input().
@@ -852,7 +852,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     }
 
     if (*s->b_im_ptr == B_IMODE_LMAP) {
-      State |= LANGMAP;
+      State |= MODE_LANGMAP;
     }
   }
 
@@ -1831,11 +1831,11 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_not_changed(s);
 
   case Ctrl_HAT:
-    if (map_to_exists_mode("", LANGMAP, false)) {
+    if (map_to_exists_mode("", MODE_LANGMAP, false)) {
       // ":lmap" mappings exists, toggle use of mappings.
-      State ^= LANGMAP;
+      State ^= MODE_LANGMAP;
       if (s->b_im_ptr != NULL) {
-        if (State & LANGMAP) {
+        if (State & MODE_LANGMAP) {
           *s->b_im_ptr = B_IMODE_LMAP;
         } else {
           *s->b_im_ptr = B_IMODE_NONE;
@@ -2353,10 +2353,10 @@ static int command_line_changed(CommandLineState *s)
       && !vpeekc_any()) {
     // Show 'inccommand' preview. It works like this:
     //    1. Do the command.
-    //    2. Command implementation detects CMDPREVIEW state, then:
+    //    2. Command implementation detects MODE_CMDPREVIEW state, then:
     //       - Update the screen while the effects are in place.
     //       - Immediately undo the effects.
-    State |= CMDPREVIEW;
+    State |= MODE_CMDPREVIEW;
     emsg_silent++;  // Block error reporting as the command may be incomplete
     msg_silent++;   // Block messages, namely ones that prompt
     do_cmdline((char *)ccline.cmdbuff, NULL, NULL, DOCMD_KEEPLINE|DOCMD_NOWAIT|DOCMD_PREVIEW);
@@ -2369,8 +2369,8 @@ static int command_line_changed(CommandLineState *s)
     update_topline(curwin);
 
     redrawcmdline();
-  } else if (State & CMDPREVIEW) {
-    State = (State & ~CMDPREVIEW);
+  } else if (State & MODE_CMDPREVIEW) {
+    State = (State & ~MODE_CMDPREVIEW);
     close_preview_windows();
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.
   } else {
@@ -5938,7 +5938,7 @@ int get_history_idx(int histype)
 /// ccline and put the previous value in ccline.prev_ccline.
 static struct cmdline_info *get_ccline_ptr(void)
 {
-  if ((State & CMDLINE) == 0) {
+  if ((State & MODE_CMDLINE) == 0) {
     return NULL;
   } else if (ccline.cmdbuff != NULL) {
     return &ccline;
@@ -6438,8 +6438,8 @@ static int open_cmdwin(void)
   const int histtype = hist_char2type(cmdwin_type);
   if (histtype == HIST_CMD || histtype == HIST_DEBUG) {
     if (p_wc == TAB) {
-      add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT, false);
-      add_map((char_u *)"<buffer> <Tab> a<C-X><C-V>", NORMAL, false);
+      add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", MODE_INSERT, false);
+      add_map((char_u *)"<buffer> <Tab> a<C-X><C-V>", MODE_NORMAL, false);
     }
     set_option_value("ft", 0L, "vim", OPT_LOCAL);
   }
@@ -6482,7 +6482,7 @@ static int open_cmdwin(void)
   // No Ex mode here!
   exmode_active = false;
 
-  State = NORMAL;
+  State = MODE_NORMAL;
   setmouse();
 
   // Reset here so it can be set by a CmdWinEnter autocommand.

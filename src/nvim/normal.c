@@ -487,7 +487,7 @@ static void normal_prepare(NormalState *s)
   }
 
   s->mapped_len = typebuf_maplen();
-  State = NORMAL_BUSY;
+  State = MODE_NORMAL_BUSY;
 
   // Set v:count here, when called from main() and not a stuffed command, so
   // that v:count can be used in an expression mapping when there is no count.
@@ -594,7 +594,7 @@ static void normal_redraw_mode_message(NormalState *s)
 
   // Draw the cursor with the right shape here
   if (restart_edit != 0) {
-    State = INSERT;
+    State = MODE_INSERT;
   }
 
   // If need to redraw, and there is a "keep_msg", redraw before the
@@ -671,7 +671,7 @@ static void normal_get_additional_char(NormalState *s)
   // Get a second or third character.
   if (cp != NULL) {
     if (repl) {
-      State = REPLACE;                // pretend Replace mode
+      State = MODE_REPLACE;                // pretend Replace mode
       ui_cursor_shape();              // show different cursor shape
     }
     if (lang && curbuf->b_p_iminsert == B_IMODE_LMAP) {
@@ -679,9 +679,9 @@ static void normal_get_additional_char(NormalState *s)
       no_mapping--;
       allow_keys--;
       if (repl) {
-        State = LREPLACE;
+        State = MODE_LREPLACE;
       } else {
-        State = LANGMAP;
+        State = MODE_LANGMAP;
       }
       langmap_active = true;
     }
@@ -693,7 +693,7 @@ static void normal_get_additional_char(NormalState *s)
       no_mapping++;
       allow_keys++;
     }
-    State = NORMAL_BUSY;
+    State = MODE_NORMAL_BUSY;
     s->need_flushbuf |= add_to_showcmd(*cp);
 
     if (!lit) {
@@ -979,7 +979,7 @@ static int normal_execute(VimState *state, int key)
   s->old_col = curwin->w_curswant;
   s->c = key;
 
-  LANGMAP_ADJUST(s->c, get_real_state() != SELECTMODE);
+  LANGMAP_ADJUST(s->c, get_real_state() != MODE_SELECT);
 
   // If a mapping was started in Visual or Select mode, remember the length
   // of the mapping.  This is used below to not return to Insert mode for as
@@ -1122,7 +1122,7 @@ static int normal_execute(VimState *state, int key)
     did_cursorhold = false;
   }
 
-  State = NORMAL;
+  State = MODE_NORMAL;
 
   if (s->ca.nchar == ESC) {
     clearop(&s->oa);
@@ -1202,7 +1202,7 @@ static void normal_check_interrupt(NormalState *s)
       // Typed two CTRL-C in a row: go back to ex mode as if "Q" was
       // used and keep "got_int" set, so that it aborts ":g".
       exmode_active = true;
-      State = NORMAL;
+      State = MODE_NORMAL;
     } else if (!global_busy || !exmode_active) {
       if (!quit_more) {
         // flush all buffers
@@ -1559,7 +1559,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   // CTRL right mouse button does CTRL-T
   if (is_click && (mod_mask & MOD_MASK_CTRL) && which_button == MOUSE_RIGHT) {
-    if (State & INSERT) {
+    if (State & MODE_INSERT) {
       stuffcharReadbuff(Ctrl_O);
     }
     if (count > 1) {
@@ -1607,7 +1607,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
 
   // Middle mouse button does a 'put' of the selected text
   if (which_button == MOUSE_MIDDLE) {
-    if (State == NORMAL) {
+    if (State == MODE_NORMAL) {
       // If an operator was pending, we don't know what the user wanted to do.
       // Go back to normal mode: Clear the operator and beep().
       if (oap != NULL && oap->op_type != OP_NOP) {
@@ -1629,7 +1629,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         return false;
       }
       // The rest is below jump_to_mouse()
-    } else if ((State & INSERT) == 0) {
+    } else if ((State & MODE_INSERT) == 0) {
       return false;
     }
 
@@ -1638,7 +1638,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     // with do_put().
     // Also paste at the cursor if the current mode isn't in 'mouse' (only
     // happens for the GUI).
-    if ((State & INSERT)) {
+    if ((State & MODE_INSERT)) {
       if (regname == '.') {
         insert_reg(regname, true);
       } else {
@@ -1807,7 +1807,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     }
   }
 
-  if ((State & (NORMAL | INSERT))
+  if ((State & (MODE_NORMAL | MODE_INSERT))
       && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
     if (which_button == MOUSE_LEFT) {
       if (is_click) {
@@ -1958,7 +1958,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         }
       }
     }
-  } else if ((State & INSERT) && VIsual_active) {
+  } else if ((State & MODE_INSERT) && VIsual_active) {
     // If Visual mode started in insert mode, execute "CTRL-O"
     stuffcharReadbuff(Ctrl_O);
   }
@@ -2005,7 +2005,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
              || (curbuf->b_help && (mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK)) {
     // Ctrl-Mouse click (or double click in a help window) jumps to the tag
     // under the mouse pointer.
-    if (State & INSERT) {
+    if (State & MODE_INSERT) {
       stuffcharReadbuff(Ctrl_O);
     }
     stuffcharReadbuff(Ctrl_RSB);
@@ -2013,7 +2013,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   } else if ((mod_mask & MOD_MASK_SHIFT)) {
     // Shift-Mouse click searches for the next occurrence of the word under
     // the mouse pointer
-    if (State & INSERT
+    if (State & MODE_INSERT
         || (VIsual_active && VIsual_select)) {
       stuffcharReadbuff(Ctrl_O);
     }
@@ -2025,7 +2025,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   } else if (in_status_line || in_sep_line) {
     // Do nothing if on status line or vertical separator
     // Handle double clicks otherwise
-  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (NORMAL | INSERT))) {
+  } else if ((mod_mask & MOD_MASK_MULTI_CLICK) && (State & (MODE_NORMAL | MODE_INSERT))) {
     if (is_click || !VIsual_active) {
       if (VIsual_active) {
         orig_cursor = VIsual;
@@ -4268,7 +4268,7 @@ static void nv_ident(cmdarg_T *cap)
       // Start insert mode in terminal buffer
       restart_edit = 'i';
 
-      add_map((char_u *)"<buffer> <esc> <Cmd>bdelete!<CR>", TERM_FOCUS, true);
+      add_map((char_u *)"<buffer> <esc> <Cmd>bdelete!<CR>", MODE_TERMINAL, true);
     }
   }
 
@@ -5269,7 +5269,7 @@ static void nv_replace(cmdarg_T *cap)
     // multi-byte and the other way around.  Also handles adding
     // composing characters for utf-8.
     for (long n = cap->count1; n > 0; n--) {
-      State = REPLACE;
+      State = MODE_REPLACE;
       if (cap->nchar == Ctrl_E || cap->nchar == Ctrl_Y) {
         int c = ins_copychar(curwin->w_cursor.lnum
                              + (cap->nchar == Ctrl_Y ? -1 : 1));
@@ -6807,7 +6807,7 @@ void set_cursor_for_append_to_line(void)
 
     // Pretend Insert mode here to allow the cursor on the
     // character past the end of the line
-    State = INSERT;
+    State = MODE_INSERT;
     coladvance(MAXCOL);
     State = save_State;
   } else {
@@ -6863,7 +6863,7 @@ static void nv_edit(cmdarg_T *cap)
 
       // Pretend Insert mode here to allow the cursor on the
       // character past the end of the line
-      State = INSERT;
+      State = MODE_INSERT;
       coladvance(getviscol());
       State = save_State;
     }

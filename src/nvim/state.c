@@ -56,7 +56,7 @@ getkey:
       key = K_EVENT;
     } else {
       // Duplicate display updating logic in vgetorpeek()
-      if (((State & INSERT) != 0 || p_lz) && (State & CMDLINE) == 0
+      if (((State & MODE_INSERT) != 0 || p_lz) && (State & MODE_CMDLINE) == 0
           && must_redraw != 0 && !need_wait_return) {
         update_screen(0);
         setcursor();  // put cursor back where it belongs
@@ -136,21 +136,22 @@ bool virtual_active(void)
   }
   return cur_ve_flags == VE_ALL
          || ((cur_ve_flags & VE_BLOCK) && VIsual_active && VIsual_mode == Ctrl_V)
-         || ((cur_ve_flags & VE_INSERT) && (State & INSERT));
+         || ((cur_ve_flags & VE_INSERT) && (State & MODE_INSERT));
 }
 
-/// VISUAL, SELECTMODE and OP_PENDING State are never set, they are equal to
-/// NORMAL State with a condition.  This function returns the real State.
+/// MODE_VISUAL, MODE_SELECTMODE and MODE_OP_PENDING State are never set, they are
+/// equal to MODE_NORMAL State with a condition.  This function returns the real
+/// State.
 int get_real_state(void)
 {
-  if (State & NORMAL) {
+  if (State & MODE_NORMAL) {
     if (VIsual_active) {
       if (VIsual_select) {
-        return SELECTMODE;
+        return MODE_SELECT;
       }
-      return VISUAL;
+      return MODE_VISUAL;
     } else if (finish_op) {
-      return OP_PENDING;
+      return MODE_OP_PENDING;
     }
   }
   return State;
@@ -173,17 +174,17 @@ void get_mode(char *buf)
         buf[i++] = 's';
       }
     }
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
-             || State == CONFIRM) {
+  } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE
+             || State == MODE_CONFIRM) {
     buf[i++] = 'r';
-    if (State == ASKMORE) {
+    if (State == MODE_ASKMORE) {
       buf[i++] = 'm';
-    } else if (State == CONFIRM) {
+    } else if (State == MODE_CONFIRM) {
       buf[i++] = '?';
     }
-  } else if (State == EXTERNCMD) {
+  } else if (State == MODE_EXTERNCMD) {
     buf[i++] = '!';
-  } else if (State & INSERT) {
+  } else if (State & MODE_INSERT) {
     if (State & VREPLACE_FLAG) {
       buf[i++] = 'R';
       buf[i++] = 'v';
@@ -199,12 +200,12 @@ void get_mode(char *buf)
     } else if (ctrl_x_mode_not_defined_yet()) {
       buf[i++] = 'x';
     }
-  } else if ((State & CMDLINE) || exmode_active) {
+  } else if ((State & MODE_CMDLINE) || exmode_active) {
     buf[i++] = 'c';
     if (exmode_active) {
       buf[i++] = 'v';
     }
-  } else if (State & TERM_FOCUS) {
+  } else if (State & MODE_TERMINAL) {
     buf[i++] = 't';
   } else {
     buf[i++] = 'n';

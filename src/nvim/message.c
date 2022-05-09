@@ -1125,7 +1125,7 @@ void wait_return(int redraw)
     // just changed.
     screenalloc();
 
-    State = HITRETURN;
+    State = MODE_HITRETURN;
     setmouse();
     cmdline_row = msg_row;
     // Avoid the sequence that the user types ":" at the hit-return prompt
@@ -1250,7 +1250,7 @@ void wait_return(int redraw)
     XFREE_CLEAR(keep_msg);          // don't redisplay message, it's too long
   }
 
-  if (tmpState == SETWSIZE) {       // got resize event while in vgetc()
+  if (tmpState == MODE_SETWSIZE) {       // got resize event while in vgetc()
     ui_refresh();
   } else if (!skip_redraw) {
     if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
@@ -2186,7 +2186,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
       if (lines_left > 0) {
         --lines_left;
       }
-      if (p_more && lines_left == 0 && State != HITRETURN
+      if (p_more && lines_left == 0 && State != MODE_HITRETURN
           && !msg_no_more && !exmode_active) {
         if (do_more_prompt(NUL)) {
           s = confirm_msg_tail;
@@ -2707,7 +2707,7 @@ static int do_more_prompt(int typed_char)
   // We get called recursively when a timer callback outputs a message. In
   // that case don't show another prompt. Also when at the hit-Enter prompt
   // and nothing was typed.
-  if (no_need_more || entered || (State == HITRETURN && typed_char == 0)) {
+  if (no_need_more || entered || (State == MODE_HITRETURN && typed_char == 0)) {
     return false;
   }
   entered = true;
@@ -2721,7 +2721,7 @@ static int do_more_prompt(int typed_char)
     }
   }
 
-  State = ASKMORE;
+  State = MODE_ASKMORE;
   setmouse();
   if (typed_char == NUL) {
     msg_moremsg(FALSE);
@@ -2992,19 +2992,19 @@ void msg_moremsg(int full)
   }
 }
 
-/// Repeat the message for the current mode: ASKMORE, EXTERNCMD, CONFIRM or
-/// exmode_active.
+/// Repeat the message for the current mode: MODE_ASKMORE, MODE_EXTERNCMD,
+/// MODE_CONFIRM or exmode_active.
 void repeat_message(void)
 {
-  if (State == ASKMORE) {
-    msg_moremsg(TRUE);          // display --more-- message again
+  if (State == MODE_ASKMORE) {
+    msg_moremsg(true);          // display --more-- message again
     msg_row = Rows - 1;
-  } else if (State == CONFIRM) {
+  } else if (State == MODE_CONFIRM) {
     display_confirm_msg();      // display ":confirm" message again
     msg_row = Rows - 1;
-  } else if (State == EXTERNCMD) {
+  } else if (State == MODE_EXTERNCMD) {
     ui_cursor_goto(msg_row, msg_col);     // put cursor back
-  } else if (State == HITRETURN || State == SETWSIZE) {
+  } else if (State == MODE_HITRETURN || State == MODE_SETWSIZE) {
     if (msg_row == Rows - 1) {
       // Avoid drawing the "hit-enter" prompt below the previous one,
       // overwrite it.  Esp. useful when regaining focus and a
@@ -3076,9 +3076,9 @@ int msg_end(void)
    * we have to redraw the window.
    * Do not do this if we are abandoning the file or editing the command line.
    */
-  if (!exiting && need_wait_return && !(State & CMDLINE)) {
-    wait_return(FALSE);
-    return FALSE;
+  if (!exiting && need_wait_return && !(State & MODE_CMDLINE)) {
+    wait_return(false);
+    return false;
   }
 
   // NOTE: ui_flush() used to be called here. This had to be removed, as it
@@ -3436,7 +3436,7 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
   int oldState = State;
 
   msg_silent = 0;  // If dialog prompts for input, user needs to see it! #8788
-  State = CONFIRM;
+  State = MODE_CONFIRM;
   setmouse();
 
   /*

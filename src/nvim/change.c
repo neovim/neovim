@@ -543,7 +543,7 @@ void ins_bytes_len(char_u *p, size_t len)
 }
 
 /// Insert or replace a single character at the cursor position.
-/// When in REPLACE or VREPLACE mode, replace any existing character.
+/// When in MODE_REPLACE or MODE_VREPLACE state, replace any existing character.
 /// Caller must have prepared for undo.
 /// For multi-byte characters we get the whole character, the caller must
 /// convert bytes to a character.
@@ -652,7 +652,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
 
   // If we're in Insert or Replace mode and 'showmatch' is set, then briefly
   // show the match for right parens and braces.
-  if (p_sm && (State & INSERT)
+  if (p_sm && (State & MODE_INSERT)
       && msg_silent == 0
       && !ins_compl_active()) {
     showmatch(utf_ptr2char((char *)buf));
@@ -923,10 +923,10 @@ int copy_indent(int size, char_u *src)
 
 /// open_line: Add a new line below or above the current line.
 ///
-/// For VREPLACE mode, we only add a new line when we get to the end of the
-/// file, otherwise we just start replacing the next line.
+/// For MODE_VREPLACE state, we only add a new line when we get to the end of
+/// the file, otherwise we just start replacing the next line.
 ///
-/// Caller must take care of undo.  Since VREPLACE may affect any number of
+/// Caller must take care of undo.  Since MODE_VREPLACE may affect any number of
 /// lines however, it may call u_save_cursor() again when starting to change a
 /// new line.
 /// "flags": OPENLINE_DELSPACES delete spaces after cursor
@@ -979,7 +979,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   char_u *saved_line = vim_strsave(get_cursor_line_ptr());
 
   if (State & VREPLACE_FLAG) {
-    // With VREPLACE we make a copy of the next line, which we will be
+    // With MODE_VREPLACE we make a copy of the next line, which we will be
     // starting to replace.  First make the new line empty and let vim play
     // with the indenting and comment leader to its heart's content.  Then
     // we grab what it ended up putting on the new line, put back the
@@ -992,11 +992,11 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       next_line = vim_strsave((char_u *)"");
     }
 
-    // In VREPLACE mode, a NL replaces the rest of the line, and starts
-    // replacing the next line, so push all of the characters left on the
-    // line onto the replace stack.  We'll push any other characters that
-    // might be replaced at the start of the next line (due to autoindent
-    // etc) a bit later.
+    // In MODE_VREPLACE state, a NL replaces the rest of the line, and
+    // starts replacing the next line, so push all of the characters left
+    // on the line onto the replace stack.  We'll push any other characters
+    // that might be replaced at the start of the next line (due to
+    // autoindent etc) a bit later.
     replace_push(NUL);      // Call twice because BS over NL expects it
     replace_push(NUL);
     p = saved_line + curwin->w_cursor.col;
@@ -1006,8 +1006,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     saved_line[curwin->w_cursor.col] = NUL;
   }
 
-  if ((State & INSERT)
-      && !(State & VREPLACE_FLAG)) {
+  if ((State & MODE_INSERT) && (State & VREPLACE_FLAG) == 0) {
     p_extra = saved_line + curwin->w_cursor.col;
     if (do_si) {  // need first char after new line break
       p = (char_u *)skipwhite((char *)p_extra);
@@ -1552,15 +1551,16 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     }
   }
 
-  // (State == INSERT || State == REPLACE), only when dir == FORWARD
+  // (State == MODE_INSERT || State == MODE_REPLACE), only when dir == FORWARD
   if (p_extra != NULL) {
     *p_extra = saved_char;              // restore char that NUL replaced
 
     // When 'ai' set or "flags" has OPENLINE_DELSPACES, skip to the first
     // non-blank.
     //
-    // When in REPLACE mode, put the deleted blanks on the replace stack,
-    // preceded by a NUL, so they can be put back when a BS is entered.
+    // When in MODE_REPLACE state, put the deleted blanks on the replace
+    // stack, preceded by a NUL, so they can be put back when a BS is
+    // entered.
     if (REPLACE_NORMAL(State)) {
       replace_push(NUL);            // end of extra blanks
     }
@@ -1612,7 +1612,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   if (dir == BACKWARD) {
     curwin->w_cursor.lnum--;
   }
-  if (!(State & VREPLACE_FLAG) || old_cursor.lnum >= orig_line_count) {
+  if ((State & VREPLACE_FLAG) == 0 || old_cursor.lnum >= orig_line_count) {
     if (ml_append(curwin->w_cursor.lnum, (char *)p_extra, (colnr_T)0, false) == FAIL) {
       goto theend;
     }
@@ -1627,7 +1627,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     }
     did_append = true;
   } else {
-    // In VREPLACE mode we are starting to replace the next line.
+    // In MODE_VREPLACE state we are starting to replace the next line.
     curwin->w_cursor.lnum++;
     if (curwin->w_cursor.lnum >= Insstart.lnum + vr_lines_changed) {
       // In case we NL to a new line, BS to the previous one, and NL
@@ -1669,8 +1669,8 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
     ai_col = curwin->w_cursor.col;
 
-    // In REPLACE mode, for each character in the new indent, there must
-    // be a NUL on the replace stack, for when it is deleted with BS
+    // In MODE_REPLACE state, for each character in the new indent, there
+    // must be a NUL on the replace stack, for when it is deleted with BS
     if (REPLACE_NORMAL(State)) {
       for (colnr_T n = 0; n < curwin->w_cursor.col; n++) {
         replace_push(NUL);
@@ -1683,8 +1683,8 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   }
   inhibit_delete_count--;
 
-  // In REPLACE mode, for each character in the extra leader, there must be
-  // a NUL on the replace stack, for when it is deleted with BS.
+  // In MODE_REPLACE state, for each character in the extra leader, there
+  // must be a NUL on the replace stack, for when it is deleted with BS.
   if (REPLACE_NORMAL(State)) {
     while (lead_len-- > 0) {
       replace_push(NUL);
@@ -1694,7 +1694,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   curwin->w_cursor = old_cursor;
 
   if (dir == FORWARD) {
-    if (trunc_line || (State & INSERT)) {
+    if (trunc_line || (State & MODE_INSERT)) {
       // truncate current line at cursor
       saved_line[curwin->w_cursor.col] = NUL;
       // Remove trailing white space, unless OPENLINE_KEEPTRAIL used.
@@ -1752,12 +1752,12 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   curwin->w_cursor.col = newcol;
   curwin->w_cursor.coladd = 0;
 
-  // In VREPLACE mode, we are handling the replace stack ourselves, so stop
-  // fixthisline() from doing it (via change_indent()) by telling it we're in
-  // normal INSERT mode.
+  // In MODE_VREPLACE state, we are handling the replace stack ourselves, so
+  // stop fixthisline() from doing it (via change_indent()) by telling it
+  // we're in normal MODE_INSERT state.
   if (State & VREPLACE_FLAG) {
     vreplace_mode = State;  // So we know to put things right later
-    State = INSERT;
+    State = MODE_INSERT;
   } else {
     vreplace_mode = 0;
   }
@@ -1778,9 +1778,9 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     State = vreplace_mode;
   }
 
-  // Finally, VREPLACE gets the stuff on the new line, then puts back the
-  // original line, and inserts the new stuff char by char, pushing old stuff
-  // onto the replace stack (via ins_char()).
+  // Finally, MODE_VREPLACE gets the stuff on the new line, then puts back
+  // the original line, and inserts the new stuff char by char, pushing old
+  // stuff onto the replace stack (via ins_char()).
   if (State & VREPLACE_FLAG) {
     // Put new line in p_extra
     p_extra = vim_strsave(get_cursor_line_ptr());

@@ -1327,14 +1327,14 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
     draining = true;
     goto theend;
   }
-  if (!(State & (CMDLINE | INSERT)) && (phase == -1 || phase == 1)) {
+  if (!(State & (MODE_CMDLINE | MODE_INSERT)) && (phase == -1 || phase == 1)) {
     ResetRedobuff();
     AppendCharToRedobuff('a');  // Dot-repeat.
   }
   // vim.paste() decides if client should cancel.  Errors do NOT cancel: we
   // want to drain remaining chunks (rather than divert them to main input).
   cancel = (rv.type == kObjectTypeBoolean && !rv.data.boolean);
-  if (!cancel && !(State & CMDLINE)) {  // Dot-repeat.
+  if (!cancel && !(State & MODE_CMDLINE)) {  // Dot-repeat.
     for (size_t i = 0; i < lines.size; i++) {
       String s = lines.items[i].data.string;
       assert(s.size <= INT_MAX);
@@ -1345,7 +1345,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
       }
     }
   }
-  if (!(State & (CMDLINE | INSERT)) && (phase == -1 || phase == 3)) {
+  if (!(State & (MODE_CMDLINE | MODE_INSERT)) && (phase == -1 || phase == 3)) {
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:

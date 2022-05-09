@@ -5078,7 +5078,7 @@ int buf_check_timestamp(buf_T *buf)
         reload = RELOAD_DETECT;
         break;
       }
-    } else if (State > NORMAL_BUSY || (State & CMDLINE) || already_warned) {
+    } else if (State > MODE_NORMAL_BUSY || (State & MODE_CMDLINE) || already_warned) {
       if (*mesg2 != NUL) {
         xstrlcat(tbuf, "; ", tbuf_len - 1);
         xstrlcat(tbuf, mesg2, tbuf_len - 1);

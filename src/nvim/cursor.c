@@ -95,8 +95,8 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
   colnr_T col = 0;
   int head = 0;
 
-  int one_more = (State & INSERT)
-                 || (State & TERM_FOCUS)
+  int one_more = (State & MODE_INSERT)
+                 || (State & MODE_TERMINAL)
                  || restart_edit != NUL
                  || (VIsual_active && *p_sel != 'o')
                  || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
@@ -128,7 +128,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       }
 
       if (wcol / width > (colnr_T)csize / width
-          && ((State & INSERT) == 0 || (int)wcol > csize + 1)) {
+          && ((State & MODE_INSERT) == 0 || (int)wcol > csize + 1)) {
         // In case of line wrapping don't move the cursor beyond the
         // right screen edge.  In Insert mode allow going just beyond
         // the last character (like what happens when typing and
@@ -350,7 +350,7 @@ void check_cursor_col_win(win_T *win)
     // - in Insert mode or restarting Insert mode
     // - in Visual mode and 'selection' isn't "old"
     // - 'virtualedit' is set */
-    if ((State & INSERT) || restart_edit
+    if ((State & MODE_INSERT) || restart_edit
         || (VIsual_active && *p_sel != 'o')
         || (cur_ve_flags & VE_ONEMORE)
         || virtual_active()) {

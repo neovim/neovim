@@ -639,13 +639,13 @@ bool conceal_cursor_line(const win_T *wp)
   if (*wp->w_p_cocu == NUL) {
     return false;
   }
-  if (get_real_state() & VISUAL) {
+  if (get_real_state() & MODE_VISUAL) {
     c = 'v';
-  } else if (State & INSERT) {
+  } else if (State & MODE_INSERT) {
     c = 'i';
-  } else if (State & NORMAL) {
+  } else if (State & MODE_NORMAL) {
     c = 'n';
-  } else if (State & CMDLINE) {
+  } else if (State & MODE_CMDLINE) {
     c = 'c';
   } else {
     return false;
@@ -2384,7 +2384,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
           line_attr_lowprio = cul_attr;
         } else {
-          if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
+          if (!(State & MODE_INSERT) && bt_quickfix(wp->w_buffer)
               && qf_current_entry(wp) == lnum) {
             line_attr = hl_combine_attr(cul_attr, line_attr);
           } else {
@@ -2876,7 +2876,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
         line_attr_lowprio = cul_attr;
       } else {
-        if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
+        if (!(State & MODE_INSERT) && bt_quickfix(wp->w_buffer)
             && qf_current_entry(wp) == lnum) {
           line_attr = hl_combine_attr(cul_attr, line_attr);
         } else {
@@ -3299,7 +3299,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             /* In Insert mode only highlight a word that
              * doesn't touch the cursor. */
             if (spell_hlf != HLF_COUNT
-                && (State & INSERT) != 0
+                && (State & MODE_INSERT)
                 && wp->w_cursor.lnum == lnum
                 && wp->w_cursor.col >=
                 (colnr_T)(prev_ptr - line)
@@ -5943,8 +5943,8 @@ int showmode(void)
   msg_grid_validate();
 
   do_mode = ((p_smd && msg_silent == 0)
-             && ((State & TERM_FOCUS)
-                 || (State & INSERT)
+             && ((State & MODE_TERMINAL)
+                 || (State & MODE_INSERT)
                  || restart_edit != NUL
                  || VIsual_active));
   if (do_mode || reg_recording != 0) {
@@ -6013,13 +6013,13 @@ int showmode(void)
           }
         }
       } else {
-        if (State & TERM_FOCUS) {
+        if (State & MODE_TERMINAL) {
           msg_puts_attr(_(" TERMINAL"), attr);
         } else if (State & VREPLACE_FLAG) {
           msg_puts_attr(_(" VREPLACE"), attr);
         } else if (State & REPLACE_FLAG) {
           msg_puts_attr(_(" REPLACE"), attr);
-        } else if (State & INSERT) {
+        } else if (State & MODE_INSERT) {
           if (p_ri) {
             msg_puts_attr(_(" REVERSE"), attr);
           }
@@ -6035,7 +6035,7 @@ int showmode(void)
         if (p_hkmap) {
           msg_puts_attr(_(" Hebrew"), attr);
         }
-        if (State & LANGMAP) {
+        if (State & MODE_LANGMAP) {
           if (curwin->w_p_arab) {
             msg_puts_attr(_(" Arabic"), attr);
           } else if (get_keymap_str(curwin, (char_u *)" (%s)",
@@ -6043,7 +6043,7 @@ int showmode(void)
             msg_puts_attr((char *)NameBuff, attr);
           }
         }
-        if ((State & INSERT) && p_paste) {
+        if ((State & MODE_INSERT) && p_paste) {
           msg_puts_attr(_(" (paste)"), attr);
         }
 
@@ -6521,13 +6521,10 @@ static void win_redr_ruler(win_T *wp, bool always)
     return;
   }
 
-  /*
-   * Check if not in Insert mode and the line is empty (will show "0-1").
-   */
-  int empty_line = FALSE;
-  if (!(State & INSERT)
-      && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, FALSE) == NUL) {
-    empty_line = TRUE;
+  // Check if not in Insert mode and the line is empty (will show "0-1").
+  int empty_line = false;
+  if ((State & MODE_INSERT) == 0 && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false) == NUL) {
+    empty_line = true;
   }
 
   /*
@@ -6765,9 +6762,9 @@ void screen_resize(int width, int height)
     return;
   }
 
-  if (State == HITRETURN || State == SETWSIZE) {
+  if (State == MODE_HITRETURN || State == MODE_SETWSIZE) {
     // postpone the resizing
-    State = SETWSIZE;
+    State = MODE_SETWSIZE;
     return;
   }
 
@@ -6800,7 +6797,7 @@ void screen_resize(int width, int height)
    * screenalloc() (also invoked from screenclear()).  That is because the
    * "recursive" check above may skip this, but not screenalloc(). */
 
-  if (State != ASKMORE && State != EXTERNCMD && State != CONFIRM) {
+  if (State != MODE_ASKMORE && State != MODE_EXTERNCMD && State != MODE_CONFIRM) {
     screenclear();
   }
 
@@ -6819,7 +6816,7 @@ void screen_resize(int width, int height)
      * Always need to call update_screen() or screenalloc(), to make
      * sure Rows/Columns and the size of the screen is correct!
      */
-    if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
+    if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || State == MODE_CONFIRM
         || exmode_active) {
       screenalloc();
       if (msg_grid.chars) {
@@ -6833,7 +6830,7 @@ void screen_resize(int width, int height)
       if (curwin->w_p_scb) {
         do_check_scrollbind(true);
       }
-      if (State & CMDLINE) {
+      if (State & MODE_CMDLINE) {
         redraw_popupmenu = false;
         update_screen(NOT_VALID);
         redrawcmdline();

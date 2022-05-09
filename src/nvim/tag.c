@@ -2129,7 +2129,7 @@ parse_line:
               STRLCPY(mfp, tagp.tagname, len + 1);
 
               // if wanted, re-read line to get long form too
-              if (State & INSERT) {
+              if (State & MODE_INSERT) {
                 get_it_again = p_sft;
               }
             }

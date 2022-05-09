@@ -2875,7 +2875,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     redraw_curbuf_later(NOT_VALID);     // redraw this buffer later
   }
 
-  if (p_im && (State & INSERT) == 0) {
+  if (p_im && (State & MODE_INSERT) == 0) {
     need_start_insertmode = true;
   }
 
@@ -2939,9 +2939,9 @@ void ex_append(exarg_T *eap)
     lnum = 0;
   }
 
-  State = INSERT;                   // behave like in Insert mode
+  State = MODE_INSERT;                   // behave like in Insert mode
   if (curbuf->b_p_iminsert == B_IMODE_LMAP) {
-    State |= LANGMAP;
+    State |= MODE_LANGMAP;
   }
 
   for (;;) {
@@ -2971,10 +2971,10 @@ void ex_append(exarg_T *eap)
       }
       eap->nextcmd = p;
     } else {
-      // Set State to avoid the cursor shape to be set to INSERT mode
-      // when getline() returns.
       int save_State = State;
-      State = CMDLINE;
+      // Set State to avoid the cursor shape to be set to MODE_INSERT
+      // state when getline() returns.
+      State = MODE_CMDLINE;
       theline = (char *)eap->getline(eap->cstack->cs_looplevel > 0 ? -1 :
                                      NUL, eap->cookie, indent, true);
       State = save_State;
@@ -3024,7 +3024,7 @@ void ex_append(exarg_T *eap)
       empty = 0;
     }
   }
-  State = NORMAL;
+  State = MODE_NORMAL;
 
   if (eap->forceit) {
     curbuf->b_p_ai = !curbuf->b_p_ai;
@@ -3477,7 +3477,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   int start_nsubs;
   int save_ma = 0;
   int save_b_changed = curbuf->b_changed;
-  bool preview = (State & CMDPREVIEW);
+  bool preview = (State & MODE_CMDPREVIEW);
 
   bool did_save = false;
 
@@ -3823,10 +3823,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
         if (subflags.do_ask && !preview) {
           int typed = 0;
 
-          // change State to CONFIRM, so that the mouse works
+          // change State to MODE_CONFIRM, so that the mouse works
           // properly
           int save_State = State;
-          State = CONFIRM;
+          State = MODE_CONFIRM;
           setmouse();                   // disable mouse in xterm
           curwin->w_cursor.col = regmatch.startpos[0].col;
 
@@ -6050,7 +6050,7 @@ void close_preview_windows(void)
 /// from undo history.
 void ex_substitute(exarg_T *eap)
 {
-  bool preview = (State & CMDPREVIEW);
+  bool preview = (State & MODE_CMDPREVIEW);
   if (*p_icm == NUL || !preview) {  // 'inccommand' is disabled
     close_preview_windows();
     (void)do_sub(eap, profile_zero(), true, preview_bufnr);

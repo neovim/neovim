@@ -1382,16 +1382,16 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
   char *mode;
 
   // Use the Insert mode entry when returning to Insert mode.
-  if (((State & INSERT) || restart_edit) && !current_sctx.sc_sid) {
+  if (((State & MODE_INSERT) || restart_edit) && !current_sctx.sc_sid) {
     mode = "Insert";
     idx = MENU_INDEX_INSERT;
-  } else if (State & CMDLINE) {
+  } else if (State & MODE_CMDLINE) {
     mode = "Command";
     idx = MENU_INDEX_CMDLINE;
-  } else if (get_real_state() & VISUAL) {
-    /* Detect real visual mode -- if we are really in visual mode we
-     * don't need to do any guesswork to figure out what the selection
-     * is. Just execute the visual binding for the menu. */
+  } else if (get_real_state() & MODE_VISUAL) {
+    // Detect real visual mode -- if we are really in visual mode we
+    // don't need to do any guesswork to figure out what the selection
+    // is. Just execute the visual binding for the menu.
     mode = "Visual";
     idx = MENU_INDEX_VISUAL;
   } else if (eap != NULL && eap->addr_count) {
