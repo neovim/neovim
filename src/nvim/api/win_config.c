@@ -264,7 +264,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
         String s = cstrn_to_string((const char *)config->border_chars[i], sizeof(schar_T));
 
         int hi_id = config->border_hl_ids[i];
-        char_u *hi_name = syn_id2name(hi_id);
+        char *hi_name = (char *)syn_id2name(hi_id);
         if (hi_name[0]) {
           ADD(tuple, STRING_OBJ(s));
           ADD(tuple, STRING_OBJ(cstr_to_string((const char *)hi_name)));
@@ -387,7 +387,7 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
         return;
       }
       if (string.size
-          && mb_string2cells_len((char_u *)string.data, string.size) > 1) {
+          && mb_string2cells_len(string.data, string.size) > 1) {
         api_set_error(err, kErrorTypeValidation,
                       "border chars must be one cell");
         return;

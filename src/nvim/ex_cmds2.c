@@ -102,7 +102,7 @@ void ex_profile(exarg_T *eap)
 
   e = (char *)skiptowhite((char_u *)eap->arg);
   len = (int)(e - eap->arg);
-  e = (char *)skipwhite((char_u *)e);
+  e = skipwhite(e);
 
   if (len == 5 && STRNCMP(eap->arg, "start", 5) == 0 && *e != NUL) {
     xfree(profile_fname);
@@ -227,7 +227,7 @@ void set_context_in_profile_cmd(expand_T *xp, const char *arg)
 
   if ((const char *)end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
     xp->xp_context = EXPAND_FILES;
-    xp->xp_pattern = (char *)skipwhite((const char_u *)end_subcmd);
+    xp->xp_pattern = skipwhite((char *)end_subcmd);
     return;
   }
 
@@ -835,7 +835,7 @@ static char *do_one_arg(char *str)
       *p++ = *str;
     }
   }
-  str = (char *)skipwhite((char_u *)str);
+  str = skipwhite(str);
   *p = NUL;
 
   return str;
@@ -2345,7 +2345,7 @@ char_u *getsourceline(int c, void *cookie, int indent, bool do_concat)
     // Also check for a comment in between continuation lines: "\ .
     sp->nextline = get_one_sourceline(sp);
     if (sp->nextline != NULL
-        && (*(p = (char *)skipwhite((char_u *)sp->nextline)) == '\\'
+        && (*(p = skipwhite(sp->nextline)) == '\\'
             || (p[0] == '"' && p[1] == '\\' && p[2] == ' '))) {
       garray_T ga;
 
@@ -2794,19 +2794,19 @@ void ex_language(exarg_T *eap)
   if ((*p == NUL || ascii_iswhite(*p)) && p - eap->arg >= 3) {
     if (STRNICMP(eap->arg, "messages", p - eap->arg) == 0) {
       what = VIM_LC_MESSAGES;
-      name = (char *)skipwhite((char_u *)p);
+      name = skipwhite(p);
       whatstr = "messages ";
     } else if (STRNICMP(eap->arg, "ctype", p - eap->arg) == 0) {
       what = LC_CTYPE;
-      name = (char *)skipwhite((char_u *)p);
+      name = skipwhite(p);
       whatstr = "ctype ";
     } else if (STRNICMP(eap->arg, "time", p - eap->arg) == 0) {
       what = LC_TIME;
-      name = (char *)skipwhite((char_u *)p);
+      name = skipwhite(p);
       whatstr = "time ";
     } else if (STRNICMP(eap->arg, "collate", p - eap->arg) == 0) {
       what = LC_COLLATE;
-      name = (char *)skipwhite((char_u *)p);
+      name = skipwhite(p);
       whatstr = "collate ";
     }
   }

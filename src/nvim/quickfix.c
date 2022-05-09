@@ -1610,7 +1610,7 @@ static int qf_parse_file_pfx(int idx, qffields_T *fields, qf_list_T *qfl, char *
     }
     *fields->namebuf = NUL;
     if (tail && *tail) {
-      STRMOVE(IObuff, skipwhite((char_u *)tail));
+      STRMOVE(IObuff, skipwhite(tail));
       qfl->qf_multiscan = true;
       return QF_MULTISCAN;
     }
@@ -2857,7 +2857,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
            qf_types(qf_ptr->qf_type, qf_ptr->qf_nr));
   // Add the message, skipping leading whitespace and newlines.
   int len = (int)STRLEN(IObuff);
-  qf_fmt_text((char *)skipwhite((char_u *)qf_ptr->qf_text), (char *)IObuff + len, IOSIZE - len);
+  qf_fmt_text(skipwhite(qf_ptr->qf_text), (char *)IObuff + len, IOSIZE - len);
 
   // Output the message.  Overwrite to avoid scrolling when the 'O'
   // flag is present in 'shortmess'; But when not jumping, print the
@@ -3159,7 +3159,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   // unrecognized line keep the indent, the compiler may mark a word
   // with ^^^^. */
   qf_fmt_text((fname != NULL || qfp->qf_lnum != 0)
-              ? (char *)skipwhite((char_u *)qfp->qf_text) : qfp->qf_text,
+              ? skipwhite(qfp->qf_text) : qfp->qf_text,
               (char *)IObuff, IOSIZE);
   msg_prt_line(IObuff, false);
   ui_flush();  // show one line at a time
@@ -4079,7 +4079,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
     // Remove newlines and leading whitespace from the text.
     // For an unrecognized line keep the indent, the compiler may
     // mark a word with ^^^^.
-    qf_fmt_text(len > 3 ? (char *)skipwhite((char_u *)qfp->qf_text) : qfp->qf_text,
+    qf_fmt_text(len > 3 ? skipwhite(qfp->qf_text) : qfp->qf_text,
                 (char *)IObuff + len, IOSIZE - len);
   }
 
@@ -5434,7 +5434,7 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
     return FAIL;
   }
 
-  p = (char *)skipwhite((char_u *)p);
+  p = skipwhite(p);
   if (*p == NUL) {
     emsg(_("E683: File name missing or invalid pattern"));
     return FAIL;
@@ -6887,7 +6887,7 @@ static int cbuffer_process_args(exarg_T *eap, buf_T **bufp, linenr_T *line1, lin
 
   if (*eap->arg == NUL) {
     buf = curbuf;
-  } else if (*skipwhite(skipdigits((char_u *)eap->arg)) == NUL) {
+  } else if (*skipwhite((char *)skipdigits((char_u *)eap->arg)) == NUL) {
     buf = buflist_findnr(atoi(eap->arg));
   }
 

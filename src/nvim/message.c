@@ -134,7 +134,7 @@ static int msg_grid_scroll_discount = 0;
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
   char buf[MAX_MCO + 1];
-  size_t size = utf_char2bytes(curwin->w_p_fcs_chars.msgsep, (char_u *)buf);
+  size_t size = utf_char2bytes(curwin->w_p_fcs_chars.msgsep, buf);
   buf[size] = '\0';
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
                       (String){ .data = buf, .size = size });
@@ -1420,7 +1420,7 @@ void msg_putchar_attr(int c, int attr)
     buf[2] = (char)K_THIRD(c);
     buf[3] = NUL;
   } else {
-    buf[utf_char2bytes(c, buf)] = NUL;
+    buf[utf_char2bytes(c, (char *)buf)] = NUL;
   }
   msg_puts_attr((const char *)buf, attr);
 }
@@ -1571,8 +1571,8 @@ void msg_make(char_u *arg)
   int i;
   static char_u *str = (char_u *)"eeffoc", *rs = (char_u *)"Plon#dqg#vxjduB";
 
-  arg = skipwhite(arg);
-  for (i = 5; *arg && i >= 0; --i) {
+  arg = (char_u *)skipwhite((char *)arg);
+  for (i = 5; *arg && i >= 0; i--) {
     if (*arg++ != str[i]) {
       break;
     }
@@ -1821,7 +1821,7 @@ void msg_prt_line(char_u *s, int list)
       } else if (curwin->w_p_lcs_chars.nbsp != NUL && list
                  && (utf_ptr2char((char *)s) == 160
                      || utf_ptr2char((char *)s) == 0x202f)) {
-        utf_char2bytes(curwin->w_p_lcs_chars.nbsp, (char_u *)buf);
+        utf_char2bytes(curwin->w_p_lcs_chars.nbsp, buf);
         buf[utfc_ptr2len(buf)] = NUL;
       } else {
         memmove(buf, s, (size_t)l);
@@ -3509,7 +3509,7 @@ static int copy_char(const char_u *from, char_u *to, bool lowercase)
 {
   if (lowercase) {
     int c = mb_tolower(utf_ptr2char((char *)from));
-    return utf_char2bytes(c, to);
+    return utf_char2bytes(c, (char *)to);
   }
   int len = utfc_ptr2len((char *)from);
   memmove(to, from, (size_t)len);

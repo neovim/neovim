@@ -778,7 +778,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
       return FAIL;
     }
     funcexe.evaluate = true;
-    if (call_func((char_u *)s, -1, rettv, argc, argv, &funcexe) == FAIL) {
+    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
   } else if (expr->v_type == VAR_PARTIAL) {
@@ -789,7 +789,7 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
     }
     funcexe.evaluate = true;
     funcexe.partial = partial;
-    if (call_func((char_u *)s, -1, rettv, argc, argv, &funcexe) == FAIL) {
+    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
   } else {
@@ -798,11 +798,11 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
     if (s == NULL) {
       return FAIL;
     }
-    s = (char *)skipwhite((char_u *)s);
+    s = skipwhite(s);
     if (eval1_emsg(&s, rettv, true) == FAIL) {
       return FAIL;
     }
-    if (*skipwhite((char_u *)s) != NUL) {  // check for trailing chars after expr
+    if (*skipwhite(s) != NUL) {  // check for trailing chars after expr
       tv_clear(rettv);
       semsg(_(e_invexpr2), s);
       return FAIL;
@@ -865,7 +865,7 @@ int skip_expr(char **pp)
 {
   typval_T rettv;
 
-  *pp = (char *)skipwhite((char_u *)(*pp));
+  *pp = skipwhite(*pp);
   return eval1(pp, &rettv, false);
 }
 
@@ -938,7 +938,7 @@ varnumber_T eval_to_number(char *expr)
 {
   typval_T rettv;
   varnumber_T retval;
-  char *p = (char *)skipwhite((char_u *)expr);
+  char *p = skipwhite(expr);
 
   ++emsg_off;
 
@@ -1014,7 +1014,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
   typval_T save_val;
   typval_T rettv;
   list_T *list = NULL;
-  char *p = (char *)skipwhite((char_u *)expr);
+  char *p = skipwhite(expr);
 
   // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
@@ -1096,7 +1096,7 @@ int call_vim_function(const char *func, int argc, typval_T *argv, typval_T *rett
   funcexe.lastline = curwin->w_cursor.lnum;
   funcexe.evaluate = true;
   funcexe.partial = pt;
-  ret = call_func((char_u *)func, len, rettv, argc, argv, &funcexe);
+  ret = call_func(func, len, rettv, argc, argv, &funcexe);
 
 fail:
   if (ret == FAIL) {
@@ -1287,10 +1287,10 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
   }
 
   // Check for the optional 'trim' word before the marker
-  cmd = (char *)skipwhite((char_u *)cmd);
+  cmd = skipwhite(cmd);
   if (STRNCMP(cmd, "trim", 4) == 0
       && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
-    cmd = (char *)skipwhite((char_u *)cmd + 4);
+    cmd = skipwhite(cmd + 4);
 
     // Trim the indentation from all the lines in the here document.
     // The amount of indentation trimmed is the same as the indentation of
@@ -1306,9 +1306,9 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
 
   // The marker is the next word.
   if (*cmd != NUL && *cmd != '"') {
-    marker = (char *)skipwhite((char_u *)cmd);
+    marker = skipwhite(cmd);
     p = (char *)skiptowhite((char_u *)marker);
-    if (*skipwhite((char_u *)p) != NUL && *skipwhite((char_u *)p) != '"') {
+    if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
       emsg(_(e_trailing));
       return NULL;
     }
@@ -1406,7 +1406,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
   if (argend > arg && argend[-1] == '.') {  // For var.='str'.
     argend--;
   }
-  expr = (char *)skipwhite((char_u *)argend);
+  expr = skipwhite(argend);
   if (*expr != '=' && !((vim_strchr((char_u *)"+-*/%.", *expr) != NULL
                          && expr[1] == '=') || STRNCMP(expr, "..=", 3) == 0)) {
     // ":let" without "=": list variables
@@ -1449,9 +1449,9 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
           expr++;
         }
       }
-      expr = (char *)skipwhite((char_u *)expr + 2);
+      expr = skipwhite(expr + 2);
     } else {
-      expr = (char *)skipwhite((char_u *)expr + 1);
+      expr = skipwhite(expr + 1);
     }
 
     if (eap->skip) {
@@ -1522,7 +1522,7 @@ static int ex_let_vars(char *arg_start, typval_T *tv, int copy, int semicolon, i
   listitem_T *item = tv_list_first(l);
   size_t rest_len = tv_list_len(l);
   while (*arg != ']') {
-    arg = (char *)skipwhite((char_u *)arg + 1);
+    arg = skipwhite(arg + 1);
     arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), true, is_const, ",;]", op);
     if (arg == NULL) {
       return FAIL;
@@ -1530,7 +1530,7 @@ static int ex_let_vars(char *arg_start, typval_T *tv, int copy, int semicolon, i
     rest_len--;
 
     item = TV_LIST_ITEM_NEXT(l, item);
-    arg = (char *)skipwhite((char_u *)arg);
+    arg = skipwhite(arg);
     if (*arg == ';') {
       /* Put the rest of the list (may be empty) in the var after ';'.
        * Create a new list for this. */
@@ -1545,7 +1545,7 @@ static int ex_let_vars(char *arg_start, typval_T *tv, int copy, int semicolon, i
       ltv.vval.v_list = rest_list;
       tv_list_ref(rest_list);
 
-      arg = ex_let_one((char *)skipwhite((char_u *)arg + 1), &ltv, false, is_const, "]", op);
+      arg = ex_let_one(skipwhite(arg + 1), &ltv, false, is_const, "]", op);
       tv_clear(&ltv);
       if (arg == NULL) {
         return FAIL;
@@ -1575,7 +1575,7 @@ static const char *skip_var_list(const char *arg, int *var_count, int *semicolon
     // "[var, var]": find the matching ']'.
     p = arg;
     for (;;) {
-      p = (char *)skipwhite((char_u *)p + 1);             // skip whites after '[', ';' or ','
+      p = skipwhite(p + 1);             // skip whites after '[', ';' or ','
       s = skip_var_one((char *)p);
       if (s == p) {
         semsg(_(e_invarg2), p);
@@ -1583,7 +1583,7 @@ static const char *skip_var_list(const char *arg, int *var_count, int *semicolon
       }
       ++*var_count;
 
-      p = (char *)skipwhite((char_u *)s);
+      p = skipwhite(s);
       if (*p == ']') {
         break;
       } else if (*p == ';') {
@@ -1766,7 +1766,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
       xfree(tofree);
     }
 
-    arg = (const char *)skipwhite((const char_u *)arg);
+    arg = (const char *)skipwhite(arg);
   }
 
   return arg;
@@ -1812,7 +1812,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       if (op != NULL && vim_strchr((char_u *)"+-*/%", *op) != NULL) {
         semsg(_(e_letwrong), op);
       } else if (endchars != NULL
-                 && vim_strchr((char_u *)endchars, *skipwhite((char_u *)arg)) == NULL) {
+                 && vim_strchr((char_u *)endchars, *skipwhite(arg)) == NULL) {
         emsg(_(e_letunexp));
       } else if (!check_secure()) {
         const char c1 = name[len];
@@ -1855,7 +1855,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
     char *const p = (char *)find_option_end((const char **)&arg, &opt_flags);
     if (p == NULL
         || (endchars != NULL
-            && vim_strchr((char_u *)endchars, *skipwhite((const char_u *)p)) == NULL)) {
+            && vim_strchr((char_u *)endchars, *skipwhite(p)) == NULL)) {
       emsg(_(e_letunexp));
     } else {
       int opt_type;
@@ -1871,8 +1871,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
         s = tv_get_string_chk(tv);  // != NULL if number or string.
       }
       if (s != NULL && op != NULL && *op != '=') {
-        opt_type = get_option_value(arg, &numval, (char_u **)&stringval,
-                                    opt_flags);
+        opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
         if ((opt_type == 1 && *op == '.')
             || (opt_type == 0 && *op != '.')) {
           semsg(_(e_letwrong), op);
@@ -1918,7 +1917,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
     if (op != NULL && vim_strchr((char_u *)"+-*/%", *op) != NULL) {
       semsg(_(e_letwrong), op);
     } else if (endchars != NULL
-               && vim_strchr((char_u *)endchars, *skipwhite((char_u *)arg + 1)) == NULL) {
+               && vim_strchr((char_u *)endchars, *skipwhite(arg + 1)) == NULL) {
       emsg(_(e_letunexp));
     } else {
       char *s;
@@ -1950,7 +1949,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
     char *const p = get_lval(arg, tv, &lv, false, false, 0, FNE_CHECK_START);
     if (p != NULL && lv.ll_name != NULL) {
-      if (endchars != NULL && vim_strchr((char_u *)endchars, *skipwhite((char_u *)p)) == NULL) {
+      if (endchars != NULL && vim_strchr((char_u *)endchars, *skipwhite(p)) == NULL) {
         emsg(_(e_letunexp));
       } else {
         set_var_lval(&lv, p, tv, copy, is_const, op);
@@ -2098,7 +2097,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       p = key + len;
     } else {
       // Get the index [expr] or the first index [expr: ].
-      p = (char *)skipwhite((char_u *)p + 1);
+      p = skipwhite(p + 1);
       if (*p == ':') {
         empty1 = true;
       } else {
@@ -2111,7 +2110,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
           tv_clear(&var1);
           return NULL;
         }
-        p = (char *)skipwhite((char_u *)p);
+        p = skipwhite(p);
       }
 
       // Optionally get the second index [ :expr].
@@ -2132,7 +2131,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
           tv_clear(&var1);
           return NULL;
         }
-        p = (char *)skipwhite((char_u *)p + 1);
+        p = skipwhite(p + 1);
         if (*p == ']') {
           lp->ll_empty2 = true;
         } else {
@@ -2577,7 +2576,7 @@ void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
     return fi;
   }
 
-  expr = (char *)skipwhite((char_u *)expr);
+  expr = skipwhite(expr);
   if (expr[0] != 'i' || expr[1] != 'n' || !ascii_iswhite(expr[2])) {
     emsg(_("E690: Missing \"in\" after :for"));
     return fi;
@@ -2586,7 +2585,7 @@ void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
   if (skip) {
     ++emsg_skip;
   }
-  if (eval0((char *)skipwhite((char_u *)expr + 2), &tv, nextcmdp, !skip) == OK) {
+  if (eval0(skipwhite(expr + 2), &tv, nextcmdp, !skip) == OK) {
     *errp = false;
     if (!skip) {
       if (tv.v_type == VAR_LIST) {
@@ -2798,10 +2797,10 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
     for (;;) {
       char *const n = (char *)skiptowhite((char_u *)arg);
 
-      if (n == arg || ascii_iswhite_or_nul(*skipwhite((char_u *)n))) {
+      if (n == arg || ascii_iswhite_or_nul(*skipwhite(n))) {
         break;
       }
-      arg = (char *)skipwhite((char_u *)n);
+      arg = skipwhite(n);
     }
   }
 
@@ -2826,7 +2825,7 @@ void ex_lockvar(exarg_T *eap)
     deep = -1;
   } else if (ascii_isdigit(*arg)) {
     deep = getdigits_int((char_u **)&arg, false, -1);
-    arg = (char *)skipwhite((char_u *)arg);
+    arg = skipwhite(arg);
   }
 
   ex_unletlock(eap, arg, deep, do_lock_var);
@@ -2891,7 +2890,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
         clear_lval(&lv);
       }
     }
-    arg = (char *)skipwhite((char_u *)name_end);
+    arg = skipwhite(name_end);
   } while (!ends_excmd(*arg));
 
   eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
@@ -3355,7 +3354,7 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, int evaluate)
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
 
-  p = (char *)skipwhite((char_u *)arg);
+  p = skipwhite(arg);
   ret = eval1(&p, rettv, evaluate);
   if (ret == FAIL || !ends_excmd(*p)) {
     if (ret != FAIL) {
@@ -3418,7 +3417,7 @@ int eval1(char **arg, typval_T *rettv, int evaluate)
     /*
      * Get the second variable.
      */
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
     if (eval1(arg, rettv, evaluate && result) == FAIL) {  // recursive!
       return FAIL;
     }
@@ -3437,7 +3436,7 @@ int eval1(char **arg, typval_T *rettv, int evaluate)
     /*
      * Get the third variable.
      */
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
     if (eval1(arg, &var2, evaluate && !result) == FAIL) {  // Recursive!
       if (evaluate && result) {
         tv_clear(rettv);
@@ -3495,7 +3494,7 @@ static int eval2(char **arg, typval_T *rettv, int evaluate)
     /*
      * Get the second variable.
      */
-    *arg = (char *)skipwhite((char_u *)(*arg) + 2);
+    *arg = skipwhite(*arg + 2);
     if (eval3(arg, &var2, evaluate && !result) == FAIL) {
       return FAIL;
     }
@@ -3564,7 +3563,7 @@ static int eval3(char **arg, typval_T *rettv, int evaluate)
     /*
      * Get the second variable.
      */
-    *arg = (char *)skipwhite((char_u *)(*arg) + 2);
+    *arg = skipwhite(*arg + 2);
     if (eval4(arg, &var2, evaluate && result) == FAIL) {
       return FAIL;
     }
@@ -3683,7 +3682,7 @@ static int eval4(char **arg, typval_T *rettv, int evaluate)
     }
 
     // Get the second variable.
-    *arg = (char *)skipwhite((char_u *)p + len);
+    *arg = skipwhite(p + len);
     if (eval5(arg, &var2, evaluate) == FAIL) {
       tv_clear(rettv);
       return FAIL;
@@ -3757,7 +3756,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
     if (op == '.' && *(*arg + 1) == '.') {  // ..string concatenation
       (*arg)++;
     }
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
     if (eval6(arg, &var2, evaluate, op == '.') == FAIL) {
       tv_clear(rettv);
       return FAIL;
@@ -3930,7 +3929,7 @@ static int eval6(char **arg, typval_T *rettv, int evaluate, int want_string)
     /*
      * Get the second variable.
      */
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
     if (eval7(arg, &var2, evaluate, false) == FAIL) {
       return FAIL;
     }
@@ -4042,7 +4041,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   // Skip '!', '-' and '+' characters.  They are handled later.
   start_leader = *arg;
   while (**arg == '!' || **arg == '-' || **arg == '+') {
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
   }
   end_leader = *arg;
 
@@ -4195,7 +4194,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
 
   // nested expression: (expression).
   case '(':
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
     ret = eval1(arg, rettv, evaluate);                  // recursive!
     if (**arg == ')') {
       ++*arg;
@@ -4235,7 +4234,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
     xfree(alias);
   }
 
-  *arg = (char *)skipwhite((char_u *)(*arg));
+  *arg = skipwhite(*arg);
 
   // Handle following '[', '(' and '.' for expr[expr], expr.name,
   // expr(expr), expr->name(expr)
@@ -4377,7 +4376,7 @@ static int eval_lambda(char **const arg, typval_T *const rettv, const bool evalu
     return FAIL;
   } else if (**arg != '(') {
     if (verbose) {
-      if (*skipwhite((char_u *)(*arg)) == '(') {
+      if (*skipwhite(*arg) == '(') {
         emsg(_(e_nowhitespace));
       } else {
         semsg(_(e_missingparen), "lambda");
@@ -4419,7 +4418,7 @@ static int eval_method(char **const arg, typval_T *const rettv, const bool evalu
   if (STRNCMP(name, "v:lua.", 6) == 0) {
     lua_funcname = name + 6;
     *arg = (char *)skip_luafunc_name((const char *)lua_funcname);
-    *arg = (char *)skipwhite((char_u *)(*arg));  // to detect trailing whitespace later
+    *arg = skipwhite(*arg);  // to detect trailing whitespace later
     len = *arg - lua_funcname;
   } else {
     char *alias;
@@ -4530,14 +4529,14 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
     if (len == 0) {
       return FAIL;
     }
-    *arg = (char *)skipwhite((char_u *)key + len);
+    *arg = skipwhite(key + len);
   } else {
     /*
      * something[idx]
      *
      * Get the (first) variable from inside the [].
      */
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
     if (**arg == ':') {
       empty1 = true;
     } else if (eval1(arg, &var1, evaluate) == FAIL) {  // Recursive!
@@ -4553,7 +4552,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
      */
     if (**arg == ':') {
       range = true;
-      *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+      *arg = skipwhite(*arg + 1);
       if (**arg == ']') {
         empty2 = true;
       } else if (eval1(arg, &var2, evaluate) == FAIL) {  // Recursive!
@@ -4582,7 +4581,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
       }
       return FAIL;
     }
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);         // skip the ']'
+    *arg = skipwhite(*arg + 1);         // skip the ']'
   }
 
   if (evaluate) {
@@ -4815,7 +4814,7 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
   char c = *option_end;
   *option_end = NUL;
   opt_type = get_option_value(*arg, &numval,
-                              rettv == NULL ? NULL : (char_u **)&stringval, opt_flags);
+                              rettv == NULL ? NULL : &stringval, opt_flags);
 
   if (opt_type == -3) {                 // invalid name
     if (rettv != NULL) {
@@ -4929,7 +4928,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
           // For "\u" store the number according to
           // 'encoding'.
           if (c != 'X') {
-            name += utf_char2bytes(nr, (char_u *)name);
+            name += utf_char2bytes(nr, name);
           } else {
             *name++ = nr;
           }
@@ -5095,7 +5094,7 @@ static int get_list_tv(char **arg, typval_T *rettv, int evaluate)
     l = tv_list_alloc(kListLenShouldKnow);
   }
 
-  *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+  *arg = skipwhite(*arg + 1);
   while (**arg != ']' && **arg != NUL) {
     typval_T tv;
     if (eval1(arg, &tv, evaluate) == FAIL) {  // Recursive!
@@ -5113,7 +5112,7 @@ static int get_list_tv(char **arg, typval_T *rettv, int evaluate)
       semsg(_("E696: Missing comma in List: %s"), *arg);
       goto failret;
     }
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != ']') {
@@ -5125,7 +5124,7 @@ failret:
     return FAIL;
   }
 
-  *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+  *arg = skipwhite(*arg + 1);
   if (evaluate) {
     tv_list_set_ret(rettv, l);
   }
@@ -5700,7 +5699,7 @@ static int get_literal_key(char **arg, typval_T *tv)
   tv->v_type = VAR_STRING;
   tv->vval.v_string = xstrnsave(*arg, p - *arg);
 
-  *arg = (char *)skipwhite((char_u *)p);
+  *arg = skipwhite(p);
   return OK;
 }
 
@@ -5715,7 +5714,7 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
   typval_T tv;
   char *key = NULL;
   dictitem_T *item;
-  char *start = (char *)skipwhite((char_u *)(*arg) + 1);
+  char *start = skipwhite(*arg + 1);
   char buf[NUMBUFLEN];
 
   /*
@@ -5729,7 +5728,7 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
     if (eval1(&start, &tv, false) == FAIL) {    // recursive!
       return FAIL;
     }
-    if (*skipwhite((char_u *)start) == '}') {
+    if (*skipwhite(start) == '}') {
       return NOTDONE;
     }
   }
@@ -5740,7 +5739,7 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
   tvkey.v_type = VAR_UNKNOWN;
   tv.v_type = VAR_UNKNOWN;
 
-  *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+  *arg = skipwhite(*arg + 1);
   while (**arg != '}' && **arg != NUL) {
     if ((literal
          ? get_literal_key(arg, &tvkey)
@@ -5761,7 +5760,7 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
       }
     }
 
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
     if (eval1(arg, &tv, evaluate) == FAIL) {  // Recursive!
       if (evaluate) {
         tv_clear(&tvkey);
@@ -5792,7 +5791,7 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
       semsg(_("E722: Missing comma in Dictionary: %s"), *arg);
       goto failret;
     }
-    *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+    *arg = skipwhite(*arg + 1);
   }
 
   if (**arg != '}') {
@@ -5804,7 +5803,7 @@ failret:
     return FAIL;
   }
 
-  *arg = (char *)skipwhite((char_u *)(*arg) + 1);
+  *arg = skipwhite(*arg + 1);
   if (evaluate) {
     tv_dict_set_ret(rettv, d);
   }
@@ -7267,7 +7266,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   funcexe.lastline = curwin->w_cursor.lnum;
   funcexe.evaluate = true;
   funcexe.partial = partial;
-  return call_func((char_u *)name, -1, rettv, argcount_in, argvars_in, &funcexe);
+  return call_func(name, -1, rettv, argcount_in, argvars_in, &funcexe);
 }
 
 static bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
@@ -7969,7 +7968,7 @@ int get_id_len(const char **const arg)
   }
 
   len = (int)(p - *arg);
-  *arg = (const char *)skipwhite((const char_u *)p);
+  *arg = (const char *)skipwhite(p);
 
   return len;
 }
@@ -8009,7 +8008,7 @@ int get_name_len(const char **const arg, char **alias, bool evaluate, bool verbo
   if (expr_start != NULL) {
     if (!evaluate) {
       len += (int)(p - *arg);
-      *arg = (const char *)skipwhite((const char_u *)p);
+      *arg = (const char *)skipwhite(p);
       return len;
     }
 
@@ -8022,7 +8021,7 @@ int get_name_len(const char **const arg, char **alias, bool evaluate, bool verbo
       return -1;
     }
     *alias = temp_string;
-    *arg = (const char *)skipwhite((const char_u *)p);
+    *arg = (const char *)skipwhite(p);
     return (int)STRLEN(temp_string);
   }
 
@@ -8231,7 +8230,7 @@ void set_vim_var_char(int c)
 {
   char buf[MB_MAXBYTES + 1];
 
-  buf[utf_char2bytes(c, (char_u *)buf)] = NUL;
+  buf[utf_char2bytes(c, buf)] = NUL;
   set_vim_var_string(VV_CHAR, buf, -1);
 }
 
@@ -9473,7 +9472,7 @@ void ex_echo(exarg_T *eap)
       xfree(tofree);
     }
     tv_clear(&rettv);
-    arg = (char *)skipwhite((char_u *)arg);
+    arg = skipwhite(arg);
   }
   eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
 
@@ -9539,7 +9538,7 @@ void ex_execute(exarg_T *eap)
     }
 
     tv_clear(&rettv);
-    arg = (char *)skipwhite((char_u *)arg);
+    arg = skipwhite(arg);
   }
 
   if (ret != FAIL && ga.ga_data != NULL) {
@@ -10569,7 +10568,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   funcexe.firstline = curwin->w_cursor.lnum;
   funcexe.lastline = curwin->w_cursor.lnum;
   funcexe.evaluate = true;
-  (void)call_func((const char_u *)func, name_len, &rettv, 2, argvars, &funcexe);
+  (void)call_func(func, name_len, &rettv, 2, argvars, &funcexe);
 
   tv_list_unref(arguments);
   // Restore caller scope information

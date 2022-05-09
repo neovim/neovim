@@ -6560,13 +6560,13 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
     } else if (STRNCMP(p, line_transl, STRLEN(line_transl)) == 0) {
       p += STRLEN(line_transl);
     } else {
-      p = skipwhite(p);
+      p = (char_u *)skipwhite((char *)p);
     }
     if (*p != NUL) {
       if (!isdigit(*p)) {
         p++;                        // skip the separator
       }
-      p = skipwhite(p);
+      p = (char_u *)skipwhite((char *)p);
       if (isdigit(*p)) {
         *file_lnum = getdigits_long(&p, false, 0);
       }

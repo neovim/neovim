@@ -780,7 +780,7 @@ void do_autocmd(char *arg_in, int forceit)
     return;
   }
 
-  pat = (char *)skipwhite((char_u *)pat);
+  pat = skipwhite(pat);
   if (*pat == '|') {
     pat = "";
     cmd = "";
@@ -811,7 +811,7 @@ void do_autocmd(char *arg_in, int forceit)
       }
     }
 
-    cmd = (char *)skipwhite((char_u *)cmd);
+    cmd = skipwhite(cmd);
 
     bool invalid_flags = false;
     for (size_t i = 0; i < 2; i++) {
@@ -1216,7 +1216,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
     return FAIL;
   }
 
-  fname = (char *)skipwhite((char_u *)fname);
+  fname = skipwhite(fname);
 
   // Loop over the events.
   while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
@@ -1298,7 +1298,7 @@ bool check_nomodeline(char **argp)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (STRNCMP(*argp, "<nomodeline>", 12) == 0) {
-    *argp = (char *)skipwhite((char_u *)(*argp) + 12);
+    *argp = skipwhite(*argp + 12);
     return false;
   }
   return true;
@@ -2246,7 +2246,7 @@ char *set_context_in_autocmd(expand_T *xp, char *arg, int doautocmd)
   }
 
   // skip over pattern
-  arg = (char *)skipwhite((char_u *)p);
+  arg = skipwhite(p);
   while (*arg && (!ascii_iswhite(*arg) || arg[-1] == '\\')) {
     arg++;
   }
@@ -2615,7 +2615,7 @@ static int arg_augroup_get(char **argp)
     if (group == AUGROUP_ERROR) {
       group = AUGROUP_ALL;  // no match, use all groups
     } else {
-      *argp = (char *)skipwhite((char_u *)p);  // match, skip over group name
+      *argp = skipwhite(p);  // match, skip over group name
     }
     xfree(group_name);
   }
@@ -2632,7 +2632,7 @@ static bool arg_autocmd_flag_get(bool *flag, char **cmd_ptr, char *pattern, int 
     }
 
     *flag = true;
-    *cmd_ptr = (char *)skipwhite((char_u *)(*cmd_ptr) + len);
+    *cmd_ptr = skipwhite(*cmd_ptr + len);
   }
 
   return false;

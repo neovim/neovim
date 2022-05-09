@@ -796,14 +796,14 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // Isolate the name.
   name_end = (const char *)skiptowhite((const char_u *)line);
-  linep = (const char *)skipwhite((const char_u *)name_end);
+  linep = (const char *)skipwhite(name_end);
 
   // Check for "default" argument.
   if (strncmp(line, "default", (size_t)(name_end - line)) == 0) {
     dodefault = true;
     line = linep;
     name_end = (const char *)skiptowhite((const char_u *)line);
-    linep = (const char *)skipwhite((const char_u *)name_end);
+    linep = (const char *)skipwhite(name_end);
   }
 
   // Check for "clear" or "link" argument.
@@ -835,7 +835,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     HlGroup *hlgroup = NULL;
 
     from_end = (const char *)skiptowhite((const char_u *)from_start);
-    to_start = (const char *)skipwhite((const char_u *)from_end);
+    to_start = (const char *)skipwhite(from_end);
     to_end   = (const char *)skiptowhite((const char_u *)to_start);
 
     if (ends_excmd((uint8_t)(*from_start))
@@ -845,7 +845,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       return;
     }
 
-    if (!ends_excmd(*skipwhite((const char_u *)to_end))) {
+    if (!ends_excmd(*skipwhite(to_end))) {
       semsg(_("E413: Too many arguments: \":highlight link %s\""), from_start);
       return;
     }
@@ -913,7 +913,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       return;
     }
     name_end = (const char *)skiptowhite((const char_u *)line);
-    linep = (const char *)skipwhite((const char_u *)name_end);
+    linep = (const char *)skipwhite(name_end);
   }
 
   // Find the group name in the table.  If it does not exist yet, add it.
@@ -959,7 +959,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       xfree(key);
       key = (char *)vim_strnsave_up((const char_u *)key_start,
                                     (size_t)(linep - key_start));
-      linep = (const char *)skipwhite((const char_u *)linep);
+      linep = (const char *)skipwhite(linep);
 
       if (strcmp(key, "NONE") == 0) {
         if (!init || HL_TABLE()[idx].sg_set == 0) {
@@ -980,7 +980,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       linep++;
 
       // Isolate the argument.
-      linep = (const char *)skipwhite((const char_u *)linep);
+      linep = (const char *)skipwhite(linep);
       if (*linep == '\'') {  // guifg='color name'
         arg_start = ++linep;
         linep = strchr(linep, '\'');
@@ -1238,7 +1238,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
 
       // Continue with next argument.
-      linep = (const char *)skipwhite((const char_u *)linep);
+      linep = (const char *)skipwhite(linep);
     }
   }
 
@@ -1982,7 +1982,7 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
     if (*p != NUL) {  // Past "default" or group name.
       include_default = 0;
       if (strncmp("default", arg, (unsigned)(p - arg)) == 0) {
-        arg = (const char *)skipwhite((const char_u *)p);
+        arg = (const char *)skipwhite(p);
         xp->xp_pattern = (char *)arg;
         p = (const char *)skiptowhite((const char_u *)arg);
       }
@@ -1993,10 +1993,10 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
         }
         if (strncmp("link", arg, (unsigned)(p - arg)) == 0
             || strncmp("clear", arg, (unsigned)(p - arg)) == 0) {
-          xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+          xp->xp_pattern = skipwhite(p);
           p = (const char *)skiptowhite((char_u *)xp->xp_pattern);
           if (*p != NUL) {  // Past first group name.
-            xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+            xp->xp_pattern = skipwhite(p);
             p = (const char *)skiptowhite((char_u *)xp->xp_pattern);
           }
         }

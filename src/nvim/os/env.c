@@ -580,7 +580,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
 
   int prefix_len = (prefix == NULL) ? 0 : (int)STRLEN(prefix);
 
-  char_u *src = skipwhite(srcp);
+  char_u *src = (char_u *)skipwhite((char *)srcp);
   dstlen--;  // leave one char space for "\,"
   while (*src && dstlen > 0) {
     // Skip over `=expr`.
@@ -1087,7 +1087,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
   }
 
   if (!one) {
-    src = skipwhite(src);
+    src = (char_u *)skipwhite((char *)src);
   }
   char *dst_p = (char *)dst;
   while (*src && dstlen > 0) {

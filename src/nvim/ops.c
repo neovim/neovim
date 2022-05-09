@@ -667,7 +667,7 @@ void op_reindent(oparg_T *oap, Indenter how)
       // indented, unless there is only one line.
       if (i != oap->line_count - 1 || oap->line_count == 1
           || how != get_lisp_indent) {
-        l = skipwhite(get_cursor_line_ptr());
+        l = (char_u *)skipwhite((char *)get_cursor_line_ptr());
         if (*l == NUL) {                      // empty or blank line
           amount = 0;
         } else {
@@ -886,7 +886,7 @@ yankreg_T *copy_register(int name)
   } else {
     copy->y_array = xcalloc(copy->y_size, sizeof(char_u *));
     for (size_t i = 0; i < copy->y_size; i++) {
-      copy->y_array[i] = vim_strsave(reg->y_array[i]);
+      copy->y_array[i] = xstrdup(reg->y_array[i]);
     }
   }
   return copy;
@@ -1005,7 +1005,7 @@ static int stuff_yank(int regname, char_u *p)
   }
   yankreg_T *reg = get_yank_register(regname, YREG_YANK);
   if (is_append_register(regname) && reg->y_array != NULL) {
-    char_u **pp = &(reg->y_array[reg->y_size - 1]);
+    char_u **pp = (char_u **)&(reg->y_array[reg->y_size - 1]);
     char_u *lp = xmalloc(STRLEN(*pp) + STRLEN(p) + 1);
     STRCPY(lp, *pp);
     // TODO(philix): use xstpcpy() in stuff_yank()
@@ -1016,8 +1016,8 @@ static int stuff_yank(int regname, char_u *p)
   } else {
     free_register(reg);
     set_yreg_additional_data(reg, NULL);
-    reg->y_array = (char_u **)xmalloc(sizeof(char_u *));
-    reg->y_array[0] = p;
+    reg->y_array = xmalloc(sizeof(char_u *));
+    reg->y_array[0] = (char *)p;
     reg->y_size = 1;
     reg->y_type = kMTCharWise;
   }
@@ -1053,7 +1053,7 @@ static char_u *execreg_line_continuation(char_u **lines, size_t *idx)
   // Any line not starting with \ or "\ is the start of the
   // command.
   while (--i > 0) {
-    p = skipwhite(lines[i]);
+    p = (char_u *)skipwhite((char *)lines[i]);
     if (*p != '\\' && (p[0] != '"' || p[1] != '\\' || p[2] != ' ')) {
       break;
     }
@@ -1063,7 +1063,7 @@ static char_u *execreg_line_continuation(char_u **lines, size_t *idx)
   // join all the lines
   ga_concat(&ga, (char *)lines[cmd_start]);
   for (size_t j = cmd_start + 1; j <= cmd_end; j++) {
-    p = skipwhite(lines[j]);
+    p = (char_u *)skipwhite((char *)lines[j]);
     if (*p == '\\') {
       // Adjust the growsize to the current length to
       // speed up concatenating many lines.
@@ -1165,32 +1165,32 @@ int do_execreg(int regname, int colon, int addcr, int silent)
     for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
       // insert NL between lines and after last line if type is kMTLineWise
       if (reg->y_type == kMTLineWise || i < reg->y_size - 1 || addcr) {
-        if (ins_typebuf((char_u *)"\n", remap, 0, true, silent) == FAIL) {
+        if (ins_typebuf("\n", remap, 0, true, silent) == FAIL) {
           return FAIL;
         }
       }
 
       // Handle line-continuation for :@<register>
-      char_u *str = reg->y_array[i];
+      char_u *str = (char_u *)reg->y_array[i];
       bool free_str = false;
       if (colon && i > 0) {
-        p = skipwhite(str);
+        p = (char_u *)skipwhite((char *)str);
         if (*p == '\\' || (p[0] == '"' && p[1] == '\\' && p[2] == ' ')) {
-          str = execreg_line_continuation(reg->y_array, &i);
+          str = execreg_line_continuation((char_u **)reg->y_array, &i);
           free_str = true;
         }
       }
-      escaped = vim_strsave_escape_ks(str);
+      escaped = (char_u *)vim_strsave_escape_ks((char *)str);
       if (free_str) {
         xfree(str);
       }
-      retval = ins_typebuf(escaped, remap, 0, true, silent);
+      retval = ins_typebuf((char *)escaped, remap, 0, true, silent);
       xfree(escaped);
       if (retval == FAIL) {
         return FAIL;
       }
       if (colon
-          && ins_typebuf((char_u *)":", remap, 0, true, silent) == FAIL) {
+          && ins_typebuf(":", remap, 0, true, silent) == FAIL) {
         return FAIL;
       }
     }
@@ -1216,7 +1216,7 @@ static void put_reedit_in_typebuf(int silent)
       buf[0] = (char_u)(restart_edit == 'I' ? 'i' : restart_edit);
       buf[1] = NUL;
     }
-    if (ins_typebuf(buf, REMAP_NONE, 0, true, silent) == OK) {
+    if (ins_typebuf((char *)buf, REMAP_NONE, 0, true, silent) == OK) {
       restart_edit = NUL;
     }
   }
@@ -1234,27 +1234,27 @@ static int put_in_typebuf(char_u *s, bool esc, bool colon, int silent)
 
   put_reedit_in_typebuf(silent);
   if (colon) {
-    retval = ins_typebuf((char_u *)"\n", REMAP_NONE, 0, true, silent);
+    retval = ins_typebuf("\n", REMAP_NONE, 0, true, silent);
   }
   if (retval == OK) {
     char_u *p;
 
     if (esc) {
-      p = vim_strsave_escape_ks(s);
+      p = (char_u *)vim_strsave_escape_ks((char *)s);
     } else {
       p = s;
     }
     if (p == NULL) {
       retval = FAIL;
     } else {
-      retval = ins_typebuf(p, esc ? REMAP_NONE : REMAP_YES, 0, true, silent);
+      retval = ins_typebuf((char *)p, esc ? REMAP_NONE : REMAP_YES, 0, true, silent);
     }
     if (esc) {
       xfree(p);
     }
   }
   if (colon && retval == OK) {
-    retval = ins_typebuf((char_u *)":", REMAP_NONE, 0, true, silent);
+    retval = ins_typebuf(":", REMAP_NONE, 0, true, silent);
   }
   return retval;
 }
@@ -1461,7 +1461,7 @@ bool cmdline_paste_reg(int regname, bool literally_arg, bool remcr)
   }
 
   for (size_t i = 0; i < reg->y_size; i++) {
-    cmdline_paste_str(reg->y_array[i], literally);
+    cmdline_paste_str((char_u *)reg->y_array[i], literally);
 
     // Insert ^M between lines, unless `remcr` is true.
     if (i < reg->y_size - 1 && !remcr) {
@@ -1540,7 +1540,7 @@ int op_delete(oparg_T *oap)
     if (*ptr != NUL) {
       ptr += oap->inclusive;
     }
-    ptr = skipwhite(ptr);
+    ptr = (char_u *)skipwhite((char *)ptr);
     if (*ptr == NUL && inindent(0)) {
       oap->motion_type = kMTLineWise;
     }
@@ -1983,7 +1983,7 @@ static int op_replace(oparg_T *oap, int c)
         // strlen(newp) at this point
         int newp_len = bd.textcol + bd.startspaces;
         while (--num_chars >= 0) {
-          newp_len += utf_char2bytes(c, newp + newp_len);
+          newp_len += utf_char2bytes(c, (char *)newp + newp_len);
         }
         if (!bd.is_short) {
           // insert post-spaces
@@ -2737,7 +2737,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       break;
 
     case kMTLineWise:
-      reg->y_array[y_idx] = vim_strsave(ml_get(lnum));
+      reg->y_array[y_idx] = (char *)vim_strsave(ml_get(lnum));
       break;
 
     case kMTCharWise: {
@@ -2807,11 +2807,11 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
   if (curr != reg) {      // append the new block to the old block
     new_ptr = xmalloc(sizeof(char_u *) * (curr->y_size + reg->y_size));
-    for (j = 0; j < curr->y_size; ++j) {
-      new_ptr[j] = curr->y_array[j];
+    for (j = 0; j < curr->y_size; j++) {
+      new_ptr[j] = (char_u *)curr->y_array[j];
     }
     xfree(curr->y_array);
-    curr->y_array = new_ptr;
+    curr->y_array = (char **)new_ptr;
 
     if (yank_type == kMTLineWise) {
       // kMTLineWise overrides kMTCharWise and kMTBlockWise
@@ -2828,7 +2828,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       STRCAT(pnew, reg->y_array[0]);
       xfree(curr->y_array[j]);
       xfree(reg->y_array[0]);
-      curr->y_array[j++] = pnew;
+      curr->y_array[j++] = (char *)pnew;
       y_idx = 1;
     } else {
       y_idx = 0;
@@ -2891,7 +2891,7 @@ static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx,
   int size = bd->startspaces + bd->endspaces + bd->textlen;
   assert(size >= 0);
   char_u *pnew = xmallocz((size_t)size);
-  reg->y_array[y_idx] = pnew;
+  reg->y_array[y_idx] = (char *)pnew;
   memset(pnew, ' ', (size_t)bd->startspaces);
   pnew += bd->startspaces;
   memmove(pnew, bd->textstart, (size_t)bd->textlen);
@@ -3165,7 +3165,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     y_type = reg->y_type;
     y_width = reg->y_width;
     y_size = reg->y_size;
-    y_array = reg->y_array;
+    y_array = (char_u **)reg->y_array;
   }
 
   if (curbuf->terminal) {
@@ -3879,7 +3879,7 @@ void ex_display(exarg_T *eap)
       bool do_show = false;
 
       for (size_t j = 0; !do_show && j < yb->y_size; j++) {
-        do_show = !message_filtered(yb->y_array[j]);
+        do_show = !message_filtered((char_u *)yb->y_array[j]);
       }
 
       if (do_show || yb->y_size == 0) {
@@ -3897,7 +3897,8 @@ void ex_display(exarg_T *eap)
             msg_puts_attr("^J", attr);
             n -= 2;
           }
-          for (p = yb->y_array[j]; *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
+          for (p = (char_u *)yb->y_array[j];
+               *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
             clen = utfc_ptr2len((char *)p);
             msg_outtrans_len(p, clen);
             p += clen - 1;
@@ -4114,7 +4115,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     }
 
     if (insert_space && t > 0) {
-      curr = skipwhite(curr);
+      curr = (char_u *)skipwhite((char *)curr);
       if (*curr != NUL
           && *curr != ')'
           && sumsize != 0
@@ -4209,7 +4210,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
       curr += comments[t - 1];
     }
     if (insert_space && t > 1) {
-      curr = skipwhite(curr);
+      curr = (char_u *)skipwhite((char *)curr);
     }
     currsize = (int)STRLEN(curr);
   }
@@ -4725,7 +4726,7 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
     }
   }
 
-  return *skipwhite(ptr + *leader_len) == NUL
+  return *skipwhite((char *)ptr + *leader_len) == NUL
          || (*leader_len > 0 && *flags == COM_END)
          || startPS(lnum, NUL, FALSE);
 }
@@ -5746,7 +5747,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
   // Grow the register array to hold the pointers to the new lines.
   char_u **pp = xrealloc(y_ptr->y_array,
                          (y_ptr->y_size + newlines) * sizeof(char_u *));
-  y_ptr->y_array = pp;
+  y_ptr->y_array = (char **)pp;
 
   size_t lnum = y_ptr->y_size;  // The current line number.
 
@@ -6348,7 +6349,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         // If 'cpoptions' does not contain 'r', insert the search
         // pattern to really repeat the same command.
         if (vim_strchr(p_cpo, CPO_REDO) == NULL) {
-          AppendToRedobuffLit(cap->searchbuf, -1);
+          AppendToRedobuffLit((char *)cap->searchbuf, -1);
         }
         AppendToRedobuff(NL_STR);
       } else if (cap->cmdchar == ':' || cap->cmdchar == K_COMMAND) {
@@ -6358,7 +6359,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         if (repeat_cmdline == NULL) {
           ResetRedobuff();
         } else {
-          AppendToRedobuffLit(repeat_cmdline, -1);
+          AppendToRedobuffLit((char *)repeat_cmdline, -1);
           AppendToRedobuff(NL_STR);
           XFREE_CLEAR(repeat_cmdline);
         }
@@ -7131,7 +7132,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[tv_idx++] = (char_u *)xstrdupnul((const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
+    reg->y_array[tv_idx++] = xstrdupnul((const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 
   if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size - 1]) == 0) {

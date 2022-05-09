@@ -1893,7 +1893,7 @@ static void f_eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *s = tv_get_string_chk(&argvars[0]);
   if (s != NULL) {
-    s = (const char *)skipwhite((const char_u *)s);
+    s = (const char *)skipwhite(s);
   }
 
   const char *const expr_start = s;
@@ -2079,7 +2079,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else if (*p == '&' || *p == '+') {  // Option.
     n = (get_option_tv(&p, NULL, true) == OK);
-    if (*skipwhite((const char_u *)p) != NUL) {
+    if (*skipwhite(p) != NUL) {
       n = false;  // Trailing garbage.
     }
   } else if (*p == '*') {  // Internal or user defined function.
@@ -2572,14 +2572,14 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     // Find interesting text in this line.
-    s = skipwhite(ml_get(lnum));
+    s = (char_u *)skipwhite((char *)ml_get(lnum));
     // skip C comment-start
     if (s[0] == '/' && (s[1] == '*' || s[1] == '/')) {
-      s = skipwhite(s + 2);
-      if (*skipwhite(s) == NUL && lnum + 1 < foldend) {
-        s = skipwhite(ml_get(lnum + 1));
+      s = (char_u *)skipwhite((char *)s + 2);
+      if (*skipwhite((char *)s) == NUL && lnum + 1 < foldend) {
+        s = (char_u *)skipwhite((char *)ml_get(lnum + 1));
         if (*s == '*') {
-          s = skipwhite(s + 1);
+          s = (char_u *)skipwhite((char *)s + 1);
         }
       }
     }
@@ -3035,7 +3035,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
       temp[i++] = K_SECOND(n);
       temp[i++] = K_THIRD(n);
     } else {
-      i += utf_char2bytes(n, temp + i);
+      i += utf_char2bytes(n, (char *)temp + i);
     }
     assert(i < 10);
     temp[i++] = NUL;
@@ -3087,7 +3087,7 @@ static void f_getcharstr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     int i = 0;
 
     if (n != 0) {
-      i += utf_char2bytes(n, temp);
+      i += utf_char2bytes(n, (char *)temp);
     }
     assert(i < 7);
     temp[i++] = NUL;
@@ -5649,7 +5649,7 @@ static void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char_u buf[MB_MAXBYTES + 1];
 
   TV_LIST_ITER_CONST(l, li, {
-    buf[utf_char2bytes(tv_get_number(TV_LIST_ITEM_TV(li)), buf)] = NUL;
+    buf[utf_char2bytes(tv_get_number(TV_LIST_ITEM_TV(li)), (char *)buf)] = NUL;
     ga_concat(&ga, (char *)buf);
   });
   ga_append(&ga, NUL);
@@ -5707,12 +5707,16 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   mode = get_map_mode((char **)&which, 0);
 
   char_u *keys_simplified
-    = replace_termcodes(keys, STRLEN(keys), &keys_buf, flags, &did_simplify, CPO_TO_CPO_FLAGS);
+    = (char_u *)replace_termcodes((char *)keys,
+                                  STRLEN(keys), (char **)&keys_buf, flags, &did_simplify,
+                                  CPO_TO_CPO_FLAGS);
   rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   if (did_simplify) {
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
-    (void)replace_termcodes(keys, STRLEN(keys), &alt_keys_buf, flags | REPTERM_NO_SIMPLIFY, NULL,
+    (void)replace_termcodes((char *)keys,
+                            STRLEN(keys),
+                            (char **)&alt_keys_buf, flags | REPTERM_NO_SIMPLIFY, NULL,
                             CPO_TO_CPO_FLAGS);
     rhs = check_map(alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   }
@@ -6307,7 +6311,7 @@ static void f_nextnonblank(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       lnum = 0;
       break;
     }
-    if (*skipwhite(ml_get(lnum)) != NUL) {
+    if (*skipwhite((char *)ml_get(lnum)) != NUL) {
       break;
     }
   }
@@ -6339,7 +6343,7 @@ static void f_nr2char(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   char buf[MB_MAXBYTES];
-  const int len = utf_char2bytes((int)num, (char_u *)buf);
+  const int len = utf_char2bytes((int)num, buf);
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = xmemdupz(buf, (size_t)len);
@@ -6395,7 +6399,7 @@ static void f_prevnonblank(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
     lnum = 0;
   } else {
-    while (lnum >= 1 && *skipwhite(ml_get(lnum)) == NUL) {
+    while (lnum >= 1 && *skipwhite((char *)ml_get(lnum)) == NUL) {
       lnum--;
     }
   }
@@ -7568,7 +7572,7 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         argv[0] = *rettv;
         argv[1] = *TV_LIST_ITEM_TV(li);
         rettv->v_type = VAR_UNKNOWN;
-        const int r = call_func(func_name, -1, rettv, 2, argv, &funcexe);
+        const int r = call_func((char *)func_name, -1, rettv, 2, argv, &funcexe);
         tv_clear(&argv[0]);
         if (r == FAIL || called_emsg != called_emsg_start) {
           break;
@@ -7601,7 +7605,7 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       argv[0] = *rettv;
       argv[1].v_type = VAR_NUMBER;
       argv[1].vval.v_number = tv_blob_get(b, i);
-      if (call_func(func_name, -1, rettv, 2, argv, &funcexe) == FAIL) {
+      if (call_func((char *)func_name, -1, rettv, 2, argv, &funcexe) == FAIL) {
         return;
       }
     }
@@ -9379,7 +9383,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   funcexe.evaluate = true;
   funcexe.partial = partial;
   funcexe.selfdict = sortinfo->item_compare_selfdict;
-  res = call_func((const char_u *)func_name, -1, &rettv, 2, argv, &funcexe);
+  res = call_func(func_name, -1, &rettv, 2, argv, &funcexe);
   tv_clear(&argv[0]);
   tv_clear(&argv[1]);
 
@@ -9850,11 +9854,11 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "str2float()" function
 static void f_str2float(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u *p = skipwhite((const char_u *)tv_get_string(&argvars[0]));
+  char_u *p = (char_u *)skipwhite(tv_get_string(&argvars[0]));
   bool isneg = (*p == '-');
 
   if (*p == '+' || *p == '-') {
-    p = skipwhite(p + 1);
+    p = (char_u *)skipwhite((char *)p + 1);
   }
   (void)string2float((char *)p, &rettv->vval.v_float);
   if (isneg) {
@@ -9892,10 +9896,10 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  char_u *p = skipwhite((const char_u *)tv_get_string(&argvars[0]));
+  char_u *p = (char_u *)skipwhite(tv_get_string(&argvars[0]));
   bool isneg = (*p == '-');
   if (*p == '+' || *p == '-') {
-    p = skipwhite(p + 1);
+    p = (char_u *)skipwhite((char *)p + 1);
   }
   switch (base) {
   case 2:
@@ -10488,7 +10492,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           : curwin->w_p_lcs_chars.conceal;
       }
       if (cchar != NUL) {
-        utf_char2bytes(cchar, str);
+        utf_char2bytes(cchar, (char *)str);
       }
     }
   }

@@ -1342,7 +1342,7 @@ void ex_catch(exarg_T *eap)
      */
     if (!skip && (cstack->cs_flags[idx] & CSF_THROWN)
         && !(cstack->cs_flags[idx] & CSF_CAUGHT)) {
-      if (end != NULL && *end != NUL && !ends_excmd(*skipwhite((char_u *)end + 1))) {
+      if (end != NULL && *end != NUL && !ends_excmd(*skipwhite(end + 1))) {
         emsg(_(e_trailing));
         return;
       }

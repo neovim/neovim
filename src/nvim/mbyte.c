@@ -579,13 +579,13 @@ size_t mb_string2cells(const char *str)
 ///            string.
 /// @param size maximum length of string. It will terminate on earlier NUL.
 /// @return The number of cells occupied by string `str`
-size_t mb_string2cells_len(const char_u *str, size_t size)
+size_t mb_string2cells_len(const char *str, size_t size)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t clen = 0;
 
-  for (const char_u *p = str; *p != NUL && p < str + size;
-       p += utfc_ptr2len_len(p, size + (p - str))) {
+  for (const char_u *p = (char_u *)str; *p != NUL && p < (char_u *)str + size;
+       p += utfc_ptr2len_len(p, size + (p - (char_u *)str))) {
     clen += utf_ptr2cells((char *)p);
   }
 
@@ -1007,7 +1007,7 @@ int utf_char2len(const int c)
 /// @param c character to convert to \p buf
 /// @param[out] buf UTF-8 string generated from \p c, does not add \0
 /// @return Number of bytes (1-6).
-int utf_char2bytes(const int c, char_u *const buf)
+int utf_char2bytes(const int c, char *const buf)
 {
   if (c < 0x80) {  // 7 bits
     buf[0] = c;
@@ -1370,10 +1370,10 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
   // to fold just one character to determine the result of comparison.
 
   if (c1 != -1 && c2 == -1) {
-    n1 = utf_char2bytes(utf_fold(c1), buffer);
+    n1 = utf_char2bytes(utf_fold(c1), (char *)buffer);
     s1 = buffer;
   } else if (c2 != -1 && c1 == -1) {
-    n2 = utf_char2bytes(utf_fold(c2), buffer);
+    n2 = utf_char2bytes(utf_fold(c2), (char *)buffer);
     s2 = buffer;
   }
 
@@ -2588,7 +2588,7 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
       case 0xbe:
         c = 0x0178; break;                 // Y
       }
-      d += utf_char2bytes(c, d);
+      d += utf_char2bytes(c, (char *)d);
     }
     *d = NUL;
     if (lenp != NULL) {

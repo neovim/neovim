@@ -415,7 +415,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
 #define PUT_FST_IN_PAIR(fst_in_pair, str_end) \
   do { \
     if (fst_in_pair != 0) { \
-      str_end += utf_char2bytes(fst_in_pair, (char_u *)str_end); \
+      str_end += utf_char2bytes(fst_in_pair, str_end); \
       fst_in_pair = 0; \
     } \
   } while (0)
@@ -440,15 +440,14 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
           fst_in_pair = (int)ch;
         } else if (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END
                    && fst_in_pair != 0) {
-          const int full_char = (
-                                 (int)(ch - SURROGATE_LO_START)
+          const int full_char = ((int)(ch - SURROGATE_LO_START)
                                  + ((fst_in_pair - SURROGATE_HI_START) << 10)
                                  + SURROGATE_FIRST_CHAR);
-          str_end += utf_char2bytes(full_char, (char_u *)str_end);
+          str_end += utf_char2bytes(full_char, str_end);
           fst_in_pair = 0;
         } else {
           PUT_FST_IN_PAIR(fst_in_pair, str_end);
-          str_end += utf_char2bytes((int)ch, (char_u *)str_end);
+          str_end += utf_char2bytes((int)ch, str_end);
         }
         break;
       }

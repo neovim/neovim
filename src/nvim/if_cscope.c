@@ -153,7 +153,7 @@ void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
   if (*arg != NUL) {
     const char *p = (const char *)skiptowhite((const char_u *)arg);
     if (*p != NUL) {  // Past first word.
-      xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+      xp->xp_pattern = skipwhite(p);
       if (*skiptowhite((char_u *)xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
       } else if (STRNICMP(arg, "add", p - arg) == 0) {

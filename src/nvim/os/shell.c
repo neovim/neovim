@@ -405,7 +405,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
       while (*p != ' ' && *p != '\n') {
         p++;
       }
-      p = skipwhite(p);                 // skip to next entry
+      p = (char_u *)skipwhite((char *)p);                 // skip to next entry
     }
     // file names are separated with NL
   } else if (shell_style == STYLE_BT || shell_style == STYLE_VIMGLOB) {
@@ -418,7 +418,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
       if (*p != NUL) {
         p++;
       }
-      p = skipwhite(p);                 // skip leading white space
+      p = (char_u *)skipwhite((char *)p);                 // skip leading white space
     }
     // file names are separated with NUL
   } else {
@@ -483,7 +483,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
         *p = NUL;
       } else {
         *p++ = NUL;
-        p = skipwhite(p);                       // skip to next entry
+        p = (char_u *)skipwhite((char *)p);                       // skip to next entry
       }
     } else {          // NUL separates
       while (*p && p < buffer + len) {          // skip entry
@@ -1158,7 +1158,7 @@ static size_t tokenize(const char_u *const str, char **const argv)
     }
 
     argc++;
-    p = (const char *)skipwhite((char_u *)(p + len));
+    p = (const char *)skipwhite((p + len));
   }
 
   return argc;
