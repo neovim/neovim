@@ -81,7 +81,7 @@ void input_stop(void)
 
 static void cursorhold_event(void **argv)
 {
-  event_T event = State & INSERT ? EVENT_CURSORHOLDI : EVENT_CURSORHOLD;
+  event_T event = State & MODE_INSERT ? EVENT_CURSORHOLDI : EVENT_CURSORHOLD;
   apply_autocmds(event, NULL, NULL, false, curbuf);
   did_cursorhold = true;
 }

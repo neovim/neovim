@@ -549,13 +549,13 @@ void ui_check_mouse(void)
   int checkfor = MOUSE_NORMAL;  // assume normal mode
   if (VIsual_active) {
     checkfor = MOUSE_VISUAL;
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE) {
+  } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE) {
     checkfor = MOUSE_RETURN;
-  } else if (State & INSERT) {
+  } else if (State & MODE_INSERT) {
     checkfor = MOUSE_INSERT;
-  } else if (State & CMDLINE) {
+  } else if (State & MODE_CMDLINE) {
     checkfor = MOUSE_COMMAND;
-  } else if (State == CONFIRM || State == EXTERNCMD) {
+  } else if (State == MODE_CONFIRM || State == MODE_EXTERNCMD) {
     checkfor = ' ';  // don't use mouse for ":confirm" or ":!cmd"
   }
 

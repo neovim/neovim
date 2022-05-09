@@ -320,15 +320,15 @@ bool cursor_mode_uses_syn_id(int syn_id)
 int cursor_get_mode_idx(void)
   FUNC_ATTR_PURE
 {
-  if (State == SHOWMATCH) {
+  if (State == MODE_SHOWMATCH) {
     return SHAPE_IDX_SM;
   } else if (State & VREPLACE_FLAG) {
     return SHAPE_IDX_R;
   } else if (State & REPLACE_FLAG) {
     return SHAPE_IDX_R;
-  } else if (State & INSERT) {
+  } else if (State & MODE_INSERT) {
     return SHAPE_IDX_I;
-  } else if (State & CMDLINE) {
+  } else if (State & MODE_CMDLINE) {
     if (cmdline_at_end()) {
       return SHAPE_IDX_C;
     } else if (cmdline_overstrike()) {

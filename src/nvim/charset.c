@@ -1015,7 +1015,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
 
   if (cursor != NULL) {
     if ((*ptr == TAB)
-        && (State & NORMAL)
+        && (State & MODE_NORMAL)
         && !wp->w_p_list
         && !virtual_active()
         && !(VIsual_active && ((*p_sel == 'e') || ltoreq(*pos, VIsual)))) {

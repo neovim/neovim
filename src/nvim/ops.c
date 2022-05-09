@@ -354,7 +354,7 @@ static void shift_block(oparg_T *oap, int amount)
 
   p_ri = 0;                     // don't want revins in indent
 
-  State = INSERT;               // don't want REPLACE for State
+  State = MODE_INSERT;          // don't want MODE_REPLACE for State
   block_prep(oap, &bd, curwin->w_cursor.lnum, true);
   if (bd.is_short) {
     return;
@@ -532,7 +532,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
   char_u *newp, *oldp;     // new, old lines
   linenr_T lnum;                // loop var
   int oldstate = State;
-  State = INSERT;               // don't want REPLACE for State
+  State = MODE_INSERT;          // don't want MODE_REPLACE for State
 
   for (lnum = oap->start.lnum + 1; lnum <= oap->end.lnum; lnum++) {
     block_prep(oap, bdp, lnum, true);
@@ -1865,7 +1865,7 @@ static void replace_character(int c)
 {
   const int n = State;
 
-  State = REPLACE;
+  State = MODE_REPLACE;
   ins_char(c);
   State = n;
   // Backup to the replaced character.
@@ -3774,7 +3774,7 @@ void adjust_cursor_eol(void)
   if (curwin->w_cursor.col > 0
       && gchar_cursor() == NUL
       && (cur_ve_flags & VE_ONEMORE) == 0
-      && !(restart_edit || (State & INSERT))) {
+      && !(restart_edit || (State & MODE_INSERT))) {
     // Put the cursor on the last character in the line.
     dec_cursor();
 
@@ -4608,14 +4608,14 @@ void format_lines(linenr_T line_count, int avoid_fex)
         }
 
         // put cursor on last non-space
-        State = NORMAL;  // don't go past end-of-line
+        State = MODE_NORMAL;  // don't go past end-of-line
         coladvance(MAXCOL);
         while (curwin->w_cursor.col && ascii_isspace(gchar_cursor())) {
           dec_cursor();
         }
 
         // do the formatting, without 'showmode'
-        State = INSERT;         // for open_line()
+        State = MODE_INSERT;         // for open_line()
         smd_save = p_smd;
         p_smd = FALSE;
         insertchar(NUL, INSCHAR_FORMAT

@@ -111,10 +111,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
     pum_external = ui_has(kUIPopupmenu)
-                   || (State == CMDLINE && ui_has(kUIWildmenu));
+                   || (State == MODE_CMDLINE && ui_has(kUIWildmenu));
   }
 
-  pum_rl = (curwin->w_p_rl && State != CMDLINE);
+  pum_rl = (curwin->w_p_rl && State != MODE_CMDLINE);
 
   do {
     // Mark the pum as visible already here,
@@ -126,7 +126,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     below_row = cmdline_row;
 
     // wildoptions=pum
-    if (State == CMDLINE) {
+    if (State == MODE_CMDLINE) {
       pum_win_row = ui_has(kUICmdline) ? 0 : cmdline_row;
       cursor_col = cmd_startcol;
       pum_anchor_grid = ui_has(kUICmdline) ? -1 : DEFAULT_GRID_HANDLE;
@@ -419,7 +419,7 @@ void pum_redraw(void)
 
   grid_assign_handle(&pum_grid);
 
-  pum_grid.zindex = ((State == CMDLINE)
+  pum_grid.zindex = ((State == MODE_CMDLINE)
                      ? kZIndexCmdlinePopupMenu : kZIndexPopupMenu);
 
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col - col_off,

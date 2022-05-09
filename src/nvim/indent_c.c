@@ -1868,10 +1868,11 @@ int get_c_indent(void)
    * For unknown reasons the cursor might be past the end of the line, thus
    * check for that.
    */
-  if ((State & INSERT)
+  if ((State & MODE_INSERT)
       && curwin->w_cursor.col < (colnr_T)STRLEN(linecopy)
-      && linecopy[curwin->w_cursor.col] == ')')
+      && linecopy[curwin->w_cursor.col] == ')') {
     linecopy[curwin->w_cursor.col] = NUL;
+  }
 
   theline = (char_u *)skipwhite((char *)linecopy);
 

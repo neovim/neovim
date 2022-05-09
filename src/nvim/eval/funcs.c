@@ -1064,7 +1064,7 @@ static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "complete()" function
 static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if ((State & INSERT) == 0) {
+  if ((State & MODE_INSERT) == 0) {
     emsg(_("E785: complete() can only be used in Insert mode"));
     return;
   }
@@ -11211,7 +11211,7 @@ static void f_visualmode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "wildmenumode()" function
 static void f_wildmenumode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (wild_menu_showing || ((State & CMDLINE) && pum_visible())) {
+  if (wild_menu_showing || ((State & MODE_CMDLINE) && pum_visible())) {
     rettv->vval.v_number = 1;
   }
 }

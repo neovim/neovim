@@ -644,7 +644,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   if (opts & (kShellOptHideMess | kShellOptExpand)) {
     forward_output = false;
   } else {
-    State = EXTERNCMD;
+    State = MODE_EXTERNCMD;
 
     if (opts & kShellOptWrite) {
       read_input(&input);

@@ -1568,7 +1568,7 @@ bool has_event(event_T event) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// the current mode.
 bool has_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return has_event((get_real_state() == NORMAL_BUSY ? EVENT_CURSORHOLD : EVENT_CURSORHOLDI));
+  return has_event((get_real_state() == MODE_NORMAL_BUSY ? EVENT_CURSORHOLD : EVENT_CURSORHOLDI));
   // return first_autopat[] != NULL;
 }
 
@@ -1578,7 +1578,7 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   if (!did_cursorhold && has_cursorhold() && reg_recording == 0
       && typebuf.tb_len == 0 && !ins_compl_active()) {
     int state = get_real_state();
-    if (state == NORMAL_BUSY || (state & INSERT) != 0) {
+    if (state == MODE_NORMAL_BUSY || (state & MODE_INSERT) != 0) {
       return true;
     }
   }
@@ -2706,9 +2706,9 @@ static void do_autocmd_focusgained(bool gained)
     // belongs.
     need_wait_return = false;
 
-    if (State & CMDLINE) {
+    if (State & MODE_CMDLINE) {
       redrawcmdline();
-    } else if ((State & NORMAL) || (State & INSERT)) {
+    } else if ((State & MODE_NORMAL) || (State & MODE_INSERT)) {
       if (must_redraw != 0) {
         update_screen(0);
       }

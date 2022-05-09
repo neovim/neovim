@@ -187,7 +187,7 @@ void do_exmode(void)
   varnumber_T changedtick;
 
   exmode_active = true;
-  State = NORMAL;
+  State = MODE_NORMAL;
   may_trigger_modechanged();
 
   // When using ":global /pat/ visual" and then "Q" we return to continue
@@ -595,7 +595,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     recursive--;
 
     // Ignore trailing '|'-separated commands in preview-mode ('inccommand').
-    if ((State & CMDPREVIEW) && (flags & DOCMD_PREVIEW)) {
+    if ((State & MODE_CMDPREVIEW) && (flags & DOCMD_PREVIEW)) {
       next_cmdline = NULL;
     }
 
@@ -8584,7 +8584,7 @@ static void ex_redir(exarg_T *eap)
 /// ":redraw": force redraw
 static void ex_redraw(exarg_T *eap)
 {
-  if (State & CMDPREVIEW) {
+  if (State & MODE_CMDPREVIEW) {
     return;  // Ignore :redraw during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;
@@ -8618,7 +8618,7 @@ static void ex_redraw(exarg_T *eap)
 /// ":redrawstatus": force redraw of status line(s)
 static void ex_redrawstatus(exarg_T *eap)
 {
-  if (State & CMDPREVIEW) {
+  if (State & MODE_CMDPREVIEW) {
     return;  // Ignore :redrawstatus during 'inccommand' preview. #9777
   }
   int r = RedrawingDisabled;
@@ -8802,7 +8802,7 @@ void restore_current_state(save_state_T *sst)
 /// ":normal[!] {commands}": Execute normal mode commands.
 static void ex_normal(exarg_T *eap)
 {
-  if (curbuf->terminal && State & TERM_FOCUS) {
+  if (curbuf->terminal && State & MODE_TERMINAL) {
     emsg("Can't re-enter normal mode from terminal mode");
     return;
   }
@@ -8893,7 +8893,7 @@ static void ex_startinsert(exarg_T *eap)
 
   // Ignore the command when already in Insert mode.  Inserting an
   // expression register that invokes a function can do this.
-  if (State & INSERT) {
+  if (State & MODE_INSERT) {
     return;
   }
 

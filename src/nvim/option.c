@@ -4053,7 +4053,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
   } else if ((int *)varp == &p_im) {
     // when 'insertmode' is set from an autocommand need to do work here
     if (p_im) {
-      if ((State & INSERT) == 0) {
+      if ((State & MODE_INSERT) == 0) {
         need_start_insertmode = true;
       }
       stop_insert_mode = false;
@@ -8260,7 +8260,7 @@ dict_T *get_winbuf_options(const int bufopt)
 long get_scrolloff_value(win_T *wp)
 {
   // Disallow scrolloff in terminal-mode. #11915
-  if (State & TERM_FOCUS) {
+  if (State & MODE_TERMINAL) {
     return 0;
   }
   return wp->w_p_so < 0 ? p_so : wp->w_p_so;

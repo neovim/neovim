@@ -83,7 +83,7 @@ void do_debug(char_u *cmd)
   emsg_silent = false;          // display error messages
   redir_off = true;             // don't redirect debug commands
 
-  State = NORMAL;
+  State = MODE_NORMAL;
   debug_mode = true;
 
   if (!debug_did_msg) {

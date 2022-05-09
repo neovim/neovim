@@ -39,7 +39,7 @@ int ask_yesno(const char *const str, const bool direct)
   const int save_State = State;
 
   no_wait_return++;
-  State = CONFIRM;  // Mouse behaves like with :confirm.
+  State = MODE_CONFIRM;  // Mouse behaves like with :confirm.
   setmouse();  // Disable mouse in xterm.
   no_mapping++;
   allow_keys++;  // no mapping here, but recognize keys
@@ -235,7 +235,7 @@ int prompt_for_number(int *mouse_used)
   save_cmdline_row = cmdline_row;
   cmdline_row = 0;
   save_State = State;
-  State = ASKMORE;  // prevents a screen update when using a timer
+  State = MODE_ASKMORE;  // prevents a screen update when using a timer
   // May show different mouse shape.
   setmouse();
 

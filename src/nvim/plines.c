@@ -155,11 +155,11 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   }
 
   // If *s is a TAB, and the TAB is not displayed as ^I, and we're not in
-  // INSERT mode, then col must be adjusted so that it represents the last
-  // screen position of the TAB.  This only fixes an error when the TAB wraps
-  // from one screen line to the next (when 'columns' is not a multiple of
-  // 'ts') -- webb.
-  if (*s == TAB && (State & NORMAL)
+  // MODE_INSERT state, then col must be adjusted so that it represents the
+  // last screen position of the TAB.  This only fixes an error when the TAB
+  // wraps from one screen line to the next (when 'columns' is not a multiple
+  // of 'ts') -- webb.
+  if (*s == TAB && (State & MODE_NORMAL)
       && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
     col += win_lbr_chartabsize(wp, line, s, col, NULL) - 1;
   }
