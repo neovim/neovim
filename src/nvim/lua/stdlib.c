@@ -295,7 +295,7 @@ int nlua_regex(lua_State *lstate)
 
   TRY_WRAP({
     try_start();
-    prog = vim_regcomp((char_u *)text, RE_AUTO | RE_MAGIC | RE_STRICT);
+    prog = vim_regcomp((char *)text, RE_AUTO | RE_MAGIC | RE_STRICT);
     try_end(&err);
   });
 

@@ -2911,7 +2911,7 @@ static void foldlevelIndent(fline_T *flp)
 
   // empty line or lines starting with a character in 'foldignore': level
   // depends on surrounding lines
-  if (*s == NUL || vim_strchr(flp->wp->w_p_fdi, *s) != NULL) {
+  if (*s == NUL || vim_strchr((char *)flp->wp->w_p_fdi, *s) != NULL) {
     // first and last line can't be undefined, use level 0
     if (lnum == 1 || lnum == buf->b_ml.ml_line_count) {
       flp->lvl = 0;
@@ -3042,7 +3042,7 @@ static void foldlevelExpr(fline_T *flp)
 /// Relies on the option value to have been checked for correctness already.
 static void parseMarker(win_T *wp)
 {
-  foldendmarker = vim_strchr(wp->w_p_fmr, ',');
+  foldendmarker = (char_u *)vim_strchr((char *)wp->w_p_fmr, ',');
   foldstartmarkerlen = (size_t)(foldendmarker++ - wp->w_p_fmr);
   foldendmarkerlen = STRLEN(foldendmarker);
 }

@@ -1815,7 +1815,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     p = skiptowhite(p);
   } while (*p != NUL);
 
-  p = vim_strchr(last, '=');
+  p = (char_u *)vim_strchr((char *)last, '=');
 
   // :sign define {name} {args}... {last}=
   //                               |     |

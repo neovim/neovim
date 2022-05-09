@@ -1802,7 +1802,7 @@ static char_u *regatom(int *flagp)
   case Magic('L'):
   case Magic('u'):
   case Magic('U'):
-    p = vim_strchr(classchars, no_Magic(c));
+    p = (char_u *)vim_strchr((char *)classchars, no_Magic(c));
     if (p == NULL) {
       EMSG_RET_NULL(_("E63: invalid use of \\_"));
     }
@@ -5080,7 +5080,7 @@ static long bt_regexec_both(char_u *line, colnr_T col, proftime_T *tm, int *time
     // This is used very often, esp. for ":global".  Use two versions of
     // the loop to avoid overhead of conditions.
     if (!rex.reg_ic) {
-      while ((s = vim_strchr(s, c)) != NULL) {
+      while ((s = (char_u *)vim_strchr((char *)s, c)) != NULL) {
         if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }

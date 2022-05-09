@@ -210,14 +210,12 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
     break;
 #ifdef SIGUSR1
   case SIGUSR1:
-    apply_autocmds(EVENT_SIGNAL, (char_u *)"SIGUSR1", curbuf->b_fname, true,
-                   curbuf);
+    apply_autocmds(EVENT_SIGNAL, "SIGUSR1", curbuf->b_fname, true, curbuf);
     break;
 #endif
 #ifdef SIGWINCH
   case SIGWINCH:
-    apply_autocmds(EVENT_SIGNAL, (char_u *)"SIGWINCH", curbuf->b_fname, true,
-                   curbuf);
+    apply_autocmds(EVENT_SIGNAL, "SIGWINCH", curbuf->b_fname, true, curbuf);
     break;
 #endif
   default:

@@ -800,7 +800,7 @@ char_u *get_expr_line_src(void)
 bool valid_yank_reg(int regname, bool writing)
 {
   if ((regname > 0 && ASCII_ISALNUM(regname))
-      || (!writing && vim_strchr((char_u *)"/.%:=", regname) != NULL)
+      || (!writing && vim_strchr("/.%:=", regname) != NULL)
       || regname == '#'
       || regname == '"'
       || regname == '-'
@@ -1184,7 +1184,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
       if (free_str) {
         xfree(str);
       }
-      retval = ins_typebuf((char *)escaped, remap, 0, true, silent);
+      retval = ins_typebuf(escaped, remap, 0, true, silent);
       xfree(escaped);
       if (retval == FAIL) {
         return FAIL;
@@ -1247,7 +1247,7 @@ static int put_in_typebuf(char_u *s, bool esc, bool colon, int silent)
     if (p == NULL) {
       retval = FAIL;
     } else {
-      retval = ins_typebuf((char *)p, esc ? REMAP_NONE : REMAP_YES, 0, true, silent);
+      retval = ins_typebuf(p, esc ? REMAP_NONE : REMAP_YES, 0, true, silent);
     }
     if (esc) {
       xfree(p);
@@ -1368,7 +1368,7 @@ bool get_spec_reg(int regname, char_u **argp, bool *allocated, bool errmsg)
     if (errmsg) {
       check_fname();            // will give emsg if not set
     }
-    *argp = curbuf->b_fname;
+    *argp = (char_u *)curbuf->b_fname;
     return true;
 
   case '#':                       // alternate file name
@@ -3128,8 +3128,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           if (y_array != NULL) {
             y_array[y_size] = ptr;
           }
-          ++y_size;
-          ptr = vim_strchr(ptr, '\n');
+          y_size++;
+          ptr = (char_u *)vim_strchr((char *)ptr, '\n');
           if (ptr != NULL) {
             if (y_array != NULL) {
               *ptr = NUL;
@@ -3849,7 +3849,7 @@ void ex_display(exarg_T *eap)
       type = 'b'; break;
     }
 
-    if (arg != NULL && vim_strchr(arg, name) == NULL) {
+    if (arg != NULL && vim_strchr((char *)arg, name) == NULL) {
       continue;             // did not ask for this register
     }
 
@@ -3912,14 +3912,14 @@ void ex_display(exarg_T *eap)
 
   // display last inserted text
   if ((p = get_last_insert()) != NULL
-      && (arg == NULL || vim_strchr(arg, '.') != NULL) && !got_int
+      && (arg == NULL || vim_strchr((char *)arg, '.') != NULL) && !got_int
       && !message_filtered(p)) {
     msg_puts("\n  c  \".   ");
     dis_msg(p, true);
   }
 
   // display last command line
-  if (last_cmdline != NULL && (arg == NULL || vim_strchr(arg, ':') != NULL)
+  if (last_cmdline != NULL && (arg == NULL || vim_strchr((char *)arg, ':') != NULL)
       && !got_int && !message_filtered(last_cmdline)) {
     msg_puts("\n  c  \":   ");
     dis_msg(last_cmdline, false);
@@ -3927,14 +3927,14 @@ void ex_display(exarg_T *eap)
 
   // display current file name
   if (curbuf->b_fname != NULL
-      && (arg == NULL || vim_strchr(arg, '%') != NULL) && !got_int
-      && !message_filtered(curbuf->b_fname)) {
+      && (arg == NULL || vim_strchr((char *)arg, '%') != NULL) && !got_int
+      && !message_filtered((char_u *)curbuf->b_fname)) {
     msg_puts("\n  c  \"%   ");
-    dis_msg(curbuf->b_fname, false);
+    dis_msg((char_u *)curbuf->b_fname, false);
   }
 
   // display alternate file name
-  if ((arg == NULL || vim_strchr(arg, '%') != NULL) && !got_int) {
+  if ((arg == NULL || vim_strchr((char *)arg, '%') != NULL) && !got_int) {
     char_u *fname;
     linenr_T dummy;
 
@@ -3946,14 +3946,14 @@ void ex_display(exarg_T *eap)
 
   // display last search pattern
   if (last_search_pat() != NULL
-      && (arg == NULL || vim_strchr(arg, '/') != NULL) && !got_int
+      && (arg == NULL || vim_strchr((char *)arg, '/') != NULL) && !got_int
       && !message_filtered(last_search_pat())) {
     msg_puts("\n  c  \"/   ");
     dis_msg(last_search_pat(), false);
   }
 
   // display last used expression
-  if (expr_line != NULL && (arg == NULL || vim_strchr(arg, '=') != NULL)
+  if (expr_line != NULL && (arg == NULL || vim_strchr((char *)arg, '=') != NULL)
       && !got_int && !message_filtered(expr_line)) {
     msg_puts("\n  c  \"=   ");
     dis_msg(expr_line, false);
@@ -5027,12 +5027,12 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   pos_T endpos;
   colnr_T save_coladd = 0;
 
-  const bool do_hex = vim_strchr(curbuf->b_p_nf, 'x') != NULL;    // "heX"
-  const bool do_oct = vim_strchr(curbuf->b_p_nf, 'o') != NULL;    // "Octal"
-  const bool do_bin = vim_strchr(curbuf->b_p_nf, 'b') != NULL;    // "Bin"
-  const bool do_alpha = vim_strchr(curbuf->b_p_nf, 'p') != NULL;  // "alPha"
+  const bool do_hex = vim_strchr((char *)curbuf->b_p_nf, 'x') != NULL;    // "heX"
+  const bool do_oct = vim_strchr((char *)curbuf->b_p_nf, 'o') != NULL;    // "Octal"
+  const bool do_bin = vim_strchr((char *)curbuf->b_p_nf, 'b') != NULL;    // "Bin"
+  const bool do_alpha = vim_strchr((char *)curbuf->b_p_nf, 'p') != NULL;  // "alPha"
   // "Unsigned"
-  const bool do_unsigned = vim_strchr(curbuf->b_p_nf, 'u') != NULL;
+  const bool do_unsigned = vim_strchr((char *)curbuf->b_p_nf, 'u') != NULL;
 
   if (virtual_active()) {
     save_coladd = pos->coladd;

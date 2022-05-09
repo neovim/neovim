@@ -529,9 +529,9 @@ void free_homedir(void)
 /// again soon.
 /// @param src String containing environment variables to expand
 /// @see {expand_env}
-char_u *expand_env_save(char_u *src)
+char *expand_env_save(char *src)
 {
-  return expand_env_save_opt(src, false);
+  return (char *)expand_env_save_opt((char_u *)src, false);
 }
 
 /// Similar to expand_env_save() but when "one" is `true` handle the string as
@@ -644,7 +644,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
 #endif
       } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
-                 || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
+                 || vim_strchr(" ,\t\n", src[1]) != NULL) {
         var = (char_u *)homedir;
         tail = src + 1;
       } else {  // user directory
@@ -884,8 +884,7 @@ void vim_get_prefix_from_exepath(char *exe_name)
 {
   // TODO(bfredl): param could have been written as "char exe_name[MAXPATHL]"
   // but c_grammar.lua does not recognize it (yet).
-  xstrlcpy(exe_name, (char *)get_vim_var_str(VV_PROGPATH),
-           MAXPATHL * sizeof(*exe_name));
+  xstrlcpy(exe_name, get_vim_var_str(VV_PROGPATH), MAXPATHL * sizeof(*exe_name));
   char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
   *path_end = '\0';  // remove the trailing "nvim.exe"
   path_end = path_tail(exe_name);
@@ -940,7 +939,7 @@ char *vim_getenv(const char *name)
   // - the directory name from 'helpfile' (unless it contains '$')
   // - the executable name from argv[0]
   if (vim_path == NULL) {
-    if (p_hf != NULL && vim_strchr(p_hf, '$') == NULL) {
+    if (p_hf != NULL && vim_strchr((char *)p_hf, '$') == NULL) {
       vim_path = (char *)p_hf;
     }
 

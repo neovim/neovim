@@ -82,7 +82,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   if (env_val != NULL) {
     ret = xstrdup(env_val);
   } else if (fallback) {
-    ret = (char *)expand_env_save((char_u *)fallback);
+    ret = expand_env_save((char *)fallback);
   }
 
   return ret;

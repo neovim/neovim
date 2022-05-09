@@ -1361,18 +1361,18 @@ void ex_catch(exarg_T *eap)
           save_char = *end;
           *end = NUL;
         }
-        save_cpo = (char *)p_cpo;
-        p_cpo = (char_u *)"";
+        save_cpo = p_cpo;
+        p_cpo = "";
         // Disable error messages, it will make current exception
         // invalid
         emsg_off++;
-        regmatch.regprog = vim_regcomp((char_u *)pat, RE_MAGIC + RE_STRING);
+        regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
         emsg_off--;
         regmatch.rm_ic = false;
         if (end != NULL) {
           *end = save_char;
         }
-        p_cpo = (char_u *)save_cpo;
+        p_cpo = save_cpo;
         if (regmatch.regprog == NULL) {
           semsg(_(e_invarg2), pat);
         } else {

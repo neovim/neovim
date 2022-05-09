@@ -2289,7 +2289,7 @@ char_u *enc_locale(void)
   // Make the name lowercase and replace '_' with '-'.
   // Exception: "ja_JP.EUC" == "euc-jp", "zh_CN.EUC" = "euc-cn",
   // "ko_KR.EUC" == "euc-kr"
-  const char *p = (char *)vim_strchr((char_u *)s, '.');
+  const char *p = vim_strchr(s, '.');
   if (p != NULL) {
     if (p > s + 2 && !STRNICMP(p + 1, "EUC", 3)
         && !isalnum((int)p[4]) && p[4] != '-' && p[-3] == '_') {

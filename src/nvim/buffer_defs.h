@@ -537,16 +537,14 @@ struct file_buffer {
   int b_ro_locked;              // Non-zero when the buffer can't be changed.
                                 // Used for FileChangedRO
 
-  //
   // b_ffname   has the full path of the file (NULL for no name).
   // b_sfname   is the name as the user typed it (or NULL).
   // b_fname    is the same as b_sfname, unless ":cd" has been done,
   //            then it is the same as b_ffname (NULL for no name).
-  //
   char_u *b_ffname;        // full path file name, allocated
   char_u *b_sfname;        // short file name, allocated, may be equal to
                            // b_ffname
-  char_u *b_fname;         // current file name, points to b_ffname or
+  char *b_fname;           // current file name, points to b_ffname or
                            // b_sfname
 
   bool file_id_valid;

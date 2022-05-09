@@ -525,7 +525,7 @@ bool path_has_wildcard(const char_u *p)
     // Windows:
     const char *wildcards = "?*$[`";
 #endif
-    if (vim_strchr((char_u *)wildcards, *p) != NULL
+    if (vim_strchr(wildcards, *p) != NULL
         || (p[0] == '~' && p[1] != NUL)) {
       return true;
     }
@@ -559,7 +559,7 @@ bool path_has_exp_wildcard(const char_u *p)
 #else
     const char *wildcards = "*?[";  // Windows.
 #endif
-    if (vim_strchr((char_u *)wildcards, *p) != NULL) {
+    if (vim_strchr(wildcards, *p) != NULL) {
       return true;
     }
   }
@@ -640,7 +640,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
       }
       s = p + 1;
     } else if (path_end >= path + wildoff
-               && (vim_strchr((char_u *)"*?[{~$", *path_end) != NULL
+               && (vim_strchr("*?[{~$", *path_end) != NULL
 #ifndef WIN32
                    || (!p_fic && (flags & EW_ICASE) && mb_isalpha(utf_ptr2char((char *)path_end)))
 #endif
@@ -675,7 +675,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
 
   // convert the file pattern to a regexp pattern
   int starts_with_dot = *s == '.';
-  char_u *pat = file_pat_to_reg_pat(s, e, NULL, false);
+  char *pat = file_pat_to_reg_pat((char *)s, (char *)e, NULL, false);
   if (pat == NULL) {
     xfree(buf);
     return 0;
@@ -949,13 +949,13 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
   STRCAT(file_pattern, pattern);
-  char_u *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, true);
+  char *pat = file_pat_to_reg_pat((char *)file_pattern, NULL, NULL, true);
   xfree(file_pattern);
   if (pat == NULL) {
     return;
   }
 
-  regmatch.rm_ic = TRUE;                // always ignore case
+  regmatch.rm_ic = true;                // always ignore case
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   xfree(pat);
   if (regmatch.regprog == NULL) {
@@ -1153,7 +1153,7 @@ static bool has_env_var(char_u *p)
   for (; *p; MB_PTR_ADV(p)) {
     if (*p == '\\' && p[1] != NUL) {
       p++;
-    } else if (vim_strchr((char_u *)"$", *p) != NULL) {
+    } else if (vim_strchr("$", *p) != NULL) {
       return true;
     }
   }
@@ -1174,13 +1174,13 @@ static bool has_special_wildchar(char_u *p)
     // Allow for escaping.
     if (*p == '\\' && p[1] != NUL && p[1] != '\r' && p[1] != '\n') {
       p++;
-    } else if (vim_strchr((char_u *)SPECIAL_WILDCHAR, *p) != NULL) {
+    } else if (vim_strchr(SPECIAL_WILDCHAR, *p) != NULL) {
       // A { must be followed by a matching }.
-      if (*p == '{' && vim_strchr(p, '}') == NULL) {
+      if (*p == '{' && vim_strchr((char *)p, '}') == NULL) {
         continue;
       }
       // A quote and backtick must be followed by another one.
-      if ((*p == '`' || *p == '\'') && vim_strchr(p, *p) == NULL) {
+      if ((*p == '`' || *p == '\'') && vim_strchr((char *)p, *p) == NULL) {
         continue;
       }
       return true;
@@ -2248,7 +2248,7 @@ int match_suffix(char_u *fname)
       char_u *tail = (char_u *)path_tail((char *)fname);
 
       // empty entry: match name without a '.'
-      if (vim_strchr(tail, '.') == NULL) {
+      if (vim_strchr((char *)tail, '.') == NULL) {
         setsuflen = 1;
         break;
       }

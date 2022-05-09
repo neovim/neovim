@@ -1058,7 +1058,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   if (p != NULL && ea.cmdidx == CMD_SIZE && ASCII_ISUPPER(*ea.cmd)
       && has_event(EVENT_CMDUNDEFINED)) {
     p = xstrdup(cmdname);
-    int ret = apply_autocmds(EVENT_CMDUNDEFINED, (char_u *)p, (char_u *)p, true, NULL);
+    int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
     xfree(p);
     // If the autocommands did something and didn't cause an error, try
     // finding the command again.

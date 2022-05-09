@@ -962,7 +962,7 @@ static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool 
     cmdletter = opt[0];
   }
 
-  qfpos = (char *)vim_strchr(p_csqf, cmdletter);
+  qfpos = vim_strchr((char *)p_csqf, cmdletter);
   if (qfpos != NULL) {
     qfpos++;
     // next symbol must be + or -
@@ -972,8 +972,7 @@ static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool 
     }
 
     if (*qfpos != '0'
-        && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
-                          curbuf->b_fname, true, curbuf)) {
+        && apply_autocmds(EVENT_QUICKFIXCMDPRE, "cscope", curbuf->b_fname, true, curbuf)) {
       if (aborting()) {
         return false;
       }
@@ -1049,8 +1048,7 @@ static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool 
           postponed_split = 0;
         }
 
-        apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)"cscope",
-                       curbuf->b_fname, TRUE, curbuf);
+        apply_autocmds(EVENT_QUICKFIXCMDPOST, "cscope", curbuf->b_fname, true, curbuf);
         if (use_ll) {
           /*
            * In the location list window, use the displayed location

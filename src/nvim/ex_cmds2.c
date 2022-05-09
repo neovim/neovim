@@ -554,7 +554,7 @@ void dialog_changed(buf_T *buf, bool checkall)
     .forceit = false,
   };
 
-  dialog_msg((char *)buff, _("Save changes to \"%s\"?"), (char *)buf->b_fname);
+  dialog_msg((char *)buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, (char_u *)buff, 1);
   } else {
@@ -563,11 +563,7 @@ void dialog_changed(buf_T *buf, bool checkall)
 
   if (ret == VIM_YES) {
     if (buf->b_fname != NULL
-        && check_overwrite(&ea,
-                           buf,
-                           (char *)buf->b_fname,
-                           (char *)buf->b_ffname,
-                           false) == OK) {
+        && check_overwrite(&ea, buf, buf->b_fname, (char *)buf->b_ffname, false) == OK) {
       // didn't hit Cancel
       (void)buf_write_all(buf, false);
     }
@@ -583,7 +579,7 @@ void dialog_changed(buf_T *buf, bool checkall)
         set_bufref(&bufref, buf2);
 
         if (buf2->b_fname != NULL
-            && check_overwrite(&ea, buf2, (char *)buf2->b_fname,
+            && check_overwrite(&ea, buf2, buf2->b_fname,
                                (char *)buf2->b_ffname, false) == OK) {
           // didn't hit Cancel
           (void)buf_write_all(buf2, false);
@@ -611,7 +607,7 @@ bool dialog_close_terminal(buf_T *buf)
   char buff[DIALOG_MSG_SIZE];
 
   dialog_msg(buff, _("Close \"%s\"?"),
-             (buf->b_fname != NULL) ? (char *)buf->b_fname : "?");
+             (buf->b_fname != NULL) ? buf->b_fname : "?");
 
   int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, (char_u *)buff, 1);
 
@@ -738,7 +734,7 @@ bool check_changed_any(bool hidden, bool unload)
     if ((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
         ? semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
         : semsg(_("E162: No write since last change for buffer \"%s\""),
-                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
+                buf_spname(buf) != NULL ? buf_spname(buf) : (char_u *)buf->b_fname)) {
       save = no_wait_return;
       no_wait_return = false;
       wait_return(false);
@@ -792,7 +788,7 @@ int buf_write_all(buf_T *buf, int forceit)
   int retval;
   buf_T *old_curbuf = curbuf;
 
-  retval = (buf_write(buf, (char *)buf->b_ffname, (char *)buf->b_fname,
+  retval = (buf_write(buf, (char *)buf->b_ffname, buf->b_fname,
                       (linenr_T)1, buf->b_ml.ml_line_count, NULL,
                       false, forceit, true, false));
   if (curbuf != old_curbuf) {
@@ -908,7 +904,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
     if (curbuf->b_ffname == NULL) {
       return FAIL;
     }
-    str = (char *)curbuf->b_fname;
+    str = curbuf->b_fname;
     arg_escaped = false;
   }
 
@@ -924,11 +920,11 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
     regmatch.rm_ic = p_fic;     // ignore case when 'fileignorecase' is set
     for (int i = 0; i < new_ga.ga_len && !got_int; i++) {
       p = ((char **)new_ga.ga_data)[i];
-      p = (char *)file_pat_to_reg_pat((char_u *)p, NULL, NULL, false);
+      p = file_pat_to_reg_pat(p, NULL, NULL, false);
       if (p == NULL) {
         break;
       }
-      regmatch.regprog = vim_regcomp((char_u *)p, p_magic ? RE_MAGIC : 0);
+      regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
       if (regmatch.regprog == NULL) {
         xfree(p);
         break;
@@ -1518,12 +1514,11 @@ void ex_listdo(exarg_T *eap)
         // buffer was opened while Syntax autocommands were disabled,
         // need to trigger them now.
         if (buf == curbuf) {
-          apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn,
-                         curbuf->b_fname, true, curbuf);
+          apply_autocmds(EVENT_SYNTAX, (char *)curbuf->b_p_syn, curbuf->b_fname, true,
+                         curbuf);
         } else {
           aucmd_prepbuf(&aco, buf);
-          apply_autocmds(EVENT_SYNTAX, buf->b_p_syn,
-                         buf->b_fname, true, buf);
+          apply_autocmds(EVENT_SYNTAX, (char *)buf->b_p_syn, buf->b_fname, true, buf);
           aucmd_restbuf(&aco);
         }
 
@@ -1920,7 +1915,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   proftime_T wait_start;
   bool trigger_source_post = false;
 
-  p = (char *)expand_env_save((char_u *)fname);
+  p = expand_env_save(fname);
   if (p == NULL) {
     return retval;
   }
@@ -1936,18 +1931,18 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   // Apply SourceCmd autocommands, they should get the file and source it.
   if (has_autocmd(EVENT_SOURCECMD, fname_exp, NULL)
-      && apply_autocmds(EVENT_SOURCECMD, (char_u *)fname_exp, (char_u *)fname_exp,
+      && apply_autocmds(EVENT_SOURCECMD, fname_exp, fname_exp,
                         false, curbuf)) {
     retval = aborting() ? FAIL : OK;
     if (retval == OK) {
       // Apply SourcePost autocommands.
-      apply_autocmds(EVENT_SOURCEPOST, (char_u *)fname_exp, (char_u *)fname_exp, false, curbuf);
+      apply_autocmds(EVENT_SOURCEPOST, fname_exp, fname_exp, false, curbuf);
     }
     goto theend;
   }
 
   // Apply SourcePre autocommands, they may get the file.
-  apply_autocmds(EVENT_SOURCEPRE, (char_u *)fname_exp, (char_u *)fname_exp, false, curbuf);
+  apply_autocmds(EVENT_SOURCEPRE, fname_exp, fname_exp, false, curbuf);
 
   cookie.fp = fopen_noinh_readbin(fname_exp);
   if (cookie.fp == NULL && check_other) {
@@ -2143,7 +2138,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   convert_setup(&cookie.conv, NULL, NULL);
 
   if (trigger_source_post) {
-    apply_autocmds(EVENT_SOURCEPOST, (char_u *)fname_exp, (char_u *)fname_exp, false, curbuf);
+    apply_autocmds(EVENT_SOURCEPOST, fname_exp, fname_exp, false, curbuf);
   }
 
 theend:

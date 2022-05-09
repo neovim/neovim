@@ -233,7 +233,7 @@ void may_trigger_modechanged(void)
   }
 
   char curr_mode[MODE_MAX_LENGTH];
-  char_u pattern_buf[2 * MODE_MAX_LENGTH];
+  char pattern_buf[2 * MODE_MAX_LENGTH];
 
   get_mode(curr_mode);
   if (STRCMP(curr_mode, last_mode) == 0) {
@@ -247,7 +247,7 @@ void may_trigger_modechanged(void)
   tv_dict_set_keys_readonly(v_event);
 
   // concatenate modes in format "old_mode:new_mode"
-  vim_snprintf((char *)pattern_buf, sizeof(pattern_buf), "%s:%s", last_mode, curr_mode);
+  vim_snprintf(pattern_buf, sizeof(pattern_buf), "%s:%s", last_mode, curr_mode);
 
   apply_autocmds(EVENT_MODECHANGED, pattern_buf, NULL, false, curbuf);
   STRCPY(last_mode, curr_mode);

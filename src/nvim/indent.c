@@ -407,7 +407,7 @@ int get_number_indent(linenr_T lnum)
   if ((State & MODE_INSERT) || has_format_option(FO_Q_COMS)) {
     lead_len = get_leader_len(ml_get(lnum), NULL, false, true);
   }
-  regmatch.regprog = vim_regcomp(curbuf->b_p_flp, RE_MAGIC);
+  regmatch.regprog = vim_regcomp((char *)curbuf->b_p_flp, RE_MAGIC);
 
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = false;
@@ -467,7 +467,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
   // add additional indent for numbered lists
   if (wp->w_briopt_list != 0) {
     regmatch_T regmatch = {
-      .regprog = vim_regcomp(curbuf->b_p_flp,
+      .regprog = vim_regcomp((char *)curbuf->b_p_flp,
                              RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
     };
 

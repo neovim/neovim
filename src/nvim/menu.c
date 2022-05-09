@@ -1301,7 +1301,7 @@ static char *menu_text(const char *str, int *mnemonic, char **actext)
   char *text;
 
   // Locate accelerator text, after the first TAB
-  p = (char *)vim_strchr((char_u *)str, TAB);
+  p = vim_strchr(str, TAB);
   if (p != NULL) {
     if (actext != NULL) {
       *actext = xstrdup(p + 1);
@@ -1314,7 +1314,7 @@ static char *menu_text(const char *str, int *mnemonic, char **actext)
 
   // Find mnemonic characters "&a" and reduce "&&" to "&".
   for (p = text; p != NULL;) {
-    p = (char *)vim_strchr((char_u *)p, '&');
+    p = vim_strchr(p, '&');
     if (p != NULL) {
       if (p[1] == NUL) {            // trailing "&"
         break;

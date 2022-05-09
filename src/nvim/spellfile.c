@@ -1100,7 +1100,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
       buf[0] = '^';  // always match at one position only
       SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd,; );
       buf[n + 1] = NUL;
-      lp->sl_prefprog[i] = vim_regcomp((char_u *)buf, RE_MAGIC | RE_STRING);
+      lp->sl_prefprog[i] = vim_regcomp(buf, RE_MAGIC | RE_STRING);
     }
   }
   return 0;
@@ -1202,7 +1202,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     int i = 0;
     for (; i < ccnt; ++i) {
       c = getc(fd);                             // <salfrom>
-      if (vim_strchr((char_u *)"0123456789(-<^$", c) != NULL) {
+      if (vim_strchr("0123456789(-<^$", c) != NULL) {
         break;
       }
       *p++ = c;
@@ -1466,7 +1466,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     }
 
     // Add all flags to "sl_compallflags".
-    if (vim_strchr((char_u *)"?*+[]/", c) == NULL
+    if (vim_strchr("?*+[]/", c) == NULL
         && !byte_in_str(slang->sl_compallflags, c)) {
       *ap++ = c;
       *ap = NUL;
@@ -1521,7 +1521,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     *crp = NUL;
   }
 
-  slang->sl_compprog = vim_regcomp(pat, RE_MAGIC + RE_STRING + RE_STRICT);
+  slang->sl_compprog = vim_regcomp((char *)pat, RE_MAGIC + RE_STRING + RE_STRICT);
   xfree(pat);
   if (slang->sl_compprog == NULL) {
     return SP_FORMERROR;
@@ -2461,7 +2461,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           aff_entry->ae_add = getroom_save(spin, items[3]);
 
           // Recognize flags on the affix: abcd/XYZ
-          aff_entry->ae_flags = vim_strchr(aff_entry->ae_add, '/');
+          aff_entry->ae_flags = (char_u *)vim_strchr((char *)aff_entry->ae_add, '/');
           if (aff_entry->ae_flags != NULL) {
             *aff_entry->ae_flags++ = NUL;
             aff_process_flags(aff, aff_entry);
@@ -2484,8 +2484,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
             } else {
               sprintf((char *)buf, "%s$", items[4]);
             }
-            aff_entry->ae_prog = vim_regcomp(buf,
-                                             RE_MAGIC + RE_STRING + RE_STRICT);
+            aff_entry->ae_prog = vim_regcomp((char *)buf, RE_MAGIC + RE_STRING + RE_STRICT);
             if (aff_entry->ae_prog == NULL) {
               smsg(_("Broken condition in %s line %d: %s"),
                    fname, lnum, items[4]);
@@ -2533,7 +2532,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                       sprintf((char *)buf, "^%s",
                               aff_entry->ae_cond);
                       vim_regfree(aff_entry->ae_prog);
-                      aff_entry->ae_prog = vim_regcomp(buf, RE_MAGIC + RE_STRING);
+                      aff_entry->ae_prog = vim_regcomp((char *)buf, RE_MAGIC + RE_STRING);
                     }
                   }
                 }
@@ -2652,7 +2651,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
             if ((!GA_EMPTY(&spin->si_map)
                  && vim_strchr(spin->si_map.ga_data, c)
                  != NULL)
-                || vim_strchr(p, c) != NULL) {
+                || vim_strchr((char *)p, c) != NULL) {
               smsg(_("Duplicate character in MAP in %s line %d"),
                    fname, lnum);
             }
@@ -2924,7 +2923,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
   tp = p + STRLEN(p);
 
   for (p = compflags; *p != NUL;) {
-    if (vim_strchr((char_u *)"/?*+[]", *p) != NULL) {
+    if (vim_strchr("/?*+[]", *p) != NULL) {
       // Copy non-flag characters directly.
       *tp++ = *p++;
     } else {
@@ -2947,7 +2946,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
           do {
             check_renumber(spin);
             id = spin->si_newcompID--;
-          } while (vim_strchr((char_u *)"/?*+[]\\-^", id) != NULL);
+          } while (vim_strchr("/?*+[]\\-^", id) != NULL);
           ci->ci_newID = id;
           hash_add(&aff->af_comp, ci->ci_key);
         }
@@ -2982,7 +2981,7 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
 
   switch (flagtype) {
   case AFT_CHAR:
-    return vim_strchr(afflist, flag) != NULL;
+    return vim_strchr((char *)afflist, flag) != NULL;
 
   case AFT_CAPLONG:
   case AFT_LONG:
@@ -3783,7 +3782,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     regionmask = spin->si_region;
 
     // Check for flags and region after a slash.
-    p = vim_strchr(line, '/');
+    p = (char_u *)vim_strchr((char *)line, '/');
     if (p != NULL) {
       *p++ = NUL;
       while (*p != NUL) {
@@ -5338,7 +5337,7 @@ static void mkspell(int fcount, char_u **fnames, bool ascii, bool over_write, bo
 
   if (incount <= 0) {
     emsg(_(e_invarg));          // need at least output and input names
-  } else if (vim_strchr((char_u *)path_tail((char *)wfname), '_') != NULL) {
+  } else if (vim_strchr(path_tail((char *)wfname), '_') != NULL) {
     emsg(_("E751: Output file name must not have region name"));
   } else if (incount > MAXREGIONS) {
     semsg(_("E754: Only up to %d regions supported"), MAXREGIONS);
@@ -5693,7 +5692,7 @@ static void init_spellfile(void)
     // Find the end of the language name.  Exclude the region.  If there
     // is a path separator remember the start of the tail.
     for (lend = curwin->w_s->b_p_spl; *lend != NUL
-         && vim_strchr((char_u *)",._", *lend) == NULL; ++lend) {
+         && vim_strchr(",._", *lend) == NULL; lend++) {
       if (vim_ispathsep(*lend)) {
         aspath = true;
         lstart = lend + 1;
@@ -5878,9 +5877,9 @@ static void set_map_str(slang_T *lp, char_u *map)
         hashitem_T *hi;
 
         b = xmalloc(cl + headcl + 2);
-        utf_char2bytes(c, (char *)b);
+        utf_char2bytes(c, b);
         b[cl] = NUL;
-        utf_char2bytes(headc, (char *)b + cl + 1);
+        utf_char2bytes(headc, b + cl + 1);
         b[cl + 1 + headcl] = NUL;
         hash = hash_hash((char_u *)b);
         hi = hash_lookup(&lp->sl_map_hash, (const char *)b, STRLEN(b), hash);

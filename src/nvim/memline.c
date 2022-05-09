@@ -531,8 +531,8 @@ void ml_open_file(buf_T *buf)
     need_wait_return = true;  // call wait_return later
     no_wait_return++;
     (void)semsg(_("E303: Unable to open swap file for \"%s\", recovery impossible"),
-                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname);
-    --no_wait_return;
+                buf_spname(buf) != NULL ? buf_spname(buf) : (char_u *)buf->b_fname);
+    no_wait_return--;
   }
 
   // don't try to open a swap file again
@@ -777,15 +777,14 @@ void ml_recover(bool checkext)
 
   // If the file name ends in ".s[a-w][a-z]" we assume this is the swap file.
   // Otherwise a search is done to find the swap file(s).
-  fname = curbuf->b_fname;
+  fname = (char_u *)curbuf->b_fname;
   if (fname == NULL) {              // When there is no file name
     fname = (char_u *)"";
   }
   len = (int)STRLEN(fname);
   if (checkext && len >= 4
       && STRNICMP(fname + len - 4, ".s", 2) == 0
-      && vim_strchr((char_u *)"abcdefghijklmnopqrstuvw",
-                    TOLOWER_ASC(fname[len - 2])) != NULL
+      && vim_strchr("abcdefghijklmnopqrstuvw", TOLOWER_ASC(fname[len - 2])) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
     directly = true;
     fname_used = vim_strsave(fname);     // make a copy for mf_open()
@@ -1248,8 +1247,8 @@ theend:
   if (serious_error && called_from_main) {
     ml_close(curbuf, TRUE);
   } else {
-    apply_autocmds(EVENT_BUFREADPOST, NULL, curbuf->b_fname, FALSE, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, NULL, curbuf->b_fname, FALSE, curbuf);
+    apply_autocmds(EVENT_BUFREADPOST, NULL, curbuf->b_fname, false, curbuf);
+    apply_autocmds(EVENT_BUFWINENTER, NULL, curbuf->b_fname, false, curbuf);
   }
 }
 
@@ -3321,10 +3320,10 @@ static void attention_message(buf_T *buf, char_u *fname)
   msg_puts("\"\n");
   const time_t swap_mtime = swapfile_info(fname);
   msg_puts(_("While opening file \""));
-  msg_outtrans(buf->b_fname);
+  msg_outtrans((char_u *)buf->b_fname);
   msg_puts("\"\n");
   FileInfo file_info;
-  if (!os_fileinfo((char *)buf->b_fname, &file_info)) {
+  if (!os_fileinfo(buf->b_fname, &file_info)) {
     msg_puts(_("      CANNOT BE FOUND"));
   } else {
     msg_puts(_("             dated: "));
@@ -3343,7 +3342,7 @@ static void attention_message(buf_T *buf, char_u *fname)
              "  Quit, or continue with caution.\n"));
   msg_puts(_("(2) An edit session for this file crashed.\n"));
   msg_puts(_("    If this is the case, use \":recover\" or \"vim -r "));
-  msg_outtrans(buf->b_fname);
+  msg_outtrans((char_u *)buf->b_fname);
   msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
   msg_puts(_("    If you did this already, delete the swap file \""));
   msg_outtrans(fname);
@@ -3423,7 +3422,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   char *fname;
   size_t n;
   char *dir_name;
-  char *buf_fname = (char *)buf->b_fname;
+  char *buf_fname = buf->b_fname;
 
   /*
    * Isolate a directory name from *dirp and put it in dir_name.
@@ -3510,14 +3509,14 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         // give the ATTENTION message when there is an old swap file
         // for the current file, and the buffer was not recovered.
         if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
-            && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
+            && vim_strchr((char *)p_shm, SHM_ATTENTION) == NULL) {
           int choice = 0;
 
           process_still_running = false;
           // It's safe to delete the swap file if all these are true:
           // - the edited file exists
           // - the swap file has no changes and looks OK
-          if (os_path_exists(buf->b_fname) && swapfile_unchanged(fname)) {
+          if (os_path_exists((char_u *)buf->b_fname) && swapfile_unchanged(fname)) {
             choice = 4;
             if (p_verbose > 0) {
               verb_msg(_("Found a swap file that is not useful, deleting it"));

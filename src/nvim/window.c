@@ -2916,8 +2916,8 @@ static void do_autocmd_winclosed(win_T *win)
     return;
   }
   recursive = true;
-  char_u winid[NUMBUFLEN];
-  vim_snprintf((char *)winid, sizeof(winid), "%d", win->handle);
+  char winid[NUMBUFLEN];
+  vim_snprintf(winid, sizeof(winid), "%d", win->handle);
   apply_autocmds(EVENT_WINCLOSED, winid, winid, false, win->w_buffer);
   recursive = false;
 }
@@ -2984,9 +2984,9 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   // When closing the last window in a tab page remove the tab page.
   if (tp->tp_firstwin == tp->tp_lastwin) {
-    char_u prev_idx[NUMBUFLEN];
+    char prev_idx[NUMBUFLEN];
     if (has_event(EVENT_TABCLOSED)) {
-      vim_snprintf((char *)prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
+      vim_snprintf(prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
     }
 
     if (tp == first_tabpage) {
@@ -4098,7 +4098,7 @@ int win_new_tabpage(int after, char_u *filename)
 
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
-    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
+    apply_autocmds(EVENT_TABNEW, (char *)filename, (char *)filename, false, curbuf);
     apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
 
     return OK;
@@ -4890,7 +4890,7 @@ void fix_current_dir(void)
     // (unless that was done already) and change to the local directory.
     if (globaldir == NULL) {
       if (cwd[0] != NUL) {
-        globaldir = (char_u *)xstrdup(cwd);
+        globaldir = xstrdup(cwd);
       }
     }
     bool dir_differs = pathcmp(new_dir, cwd, -1) != 0;
@@ -4909,13 +4909,13 @@ void fix_current_dir(void)
   } else if (globaldir != NULL) {
     // Window doesn't have a local directory and we are not in the global
     // directory: Change to the global directory.
-    bool dir_differs = pathcmp((char *)globaldir, cwd, -1) != 0;
+    bool dir_differs = pathcmp(globaldir, cwd, -1) != 0;
     if (!p_acd && dir_differs) {
-      do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow, true);
+      do_autocmd_dirchanged(globaldir, kCdScopeGlobal, kCdCauseWindow, true);
     }
-    if (os_chdir((char *)globaldir) == 0) {
+    if (os_chdir(globaldir) == 0) {
       if (!p_acd && dir_differs) {
-        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal, kCdCauseWindow, false);
+        do_autocmd_dirchanged(globaldir, kCdScopeGlobal, kCdCauseWindow, false);
       }
     }
     XFREE_CLEAR(globaldir);
@@ -5317,8 +5317,8 @@ void may_trigger_winscrolled(void)
       || wp->w_last_leftcol != wp->w_leftcol
       || wp->w_last_width != wp->w_width
       || wp->w_last_height != wp->w_height) {
-    char_u winid[NUMBUFLEN];
-    vim_snprintf((char *)winid, sizeof(winid), "%d", wp->handle);
+    char winid[NUMBUFLEN];
+    vim_snprintf(winid, sizeof(winid), "%d", wp->handle);
 
     recursive = true;
     apply_autocmds(EVENT_WINSCROLLED, winid, winid, false, wp->w_buffer);
@@ -6517,7 +6517,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
   len = 0;
   while (vim_isfilec(ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
-         || (is_url && vim_strchr((char_u *)":?&=", ptr[len]) != NULL)) {
+         || (is_url && vim_strchr(":?&=", ptr[len]) != NULL)) {
     // After type:// we also include :, ?, & and = as valid characters, so that
     // http://google.com:8080?q=this&that=ok works.
     if ((ptr[len] >= 'A' && ptr[len] <= 'Z')
@@ -6540,7 +6540,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
    * If there is trailing punctuation, remove it.
    * But don't remove "..", could be a directory name.
    */
-  if (len > 2 && vim_strchr((char_u *)".,:;!", ptr[len - 1]) != NULL
+  if (len > 2 && vim_strchr(".,:;!", ptr[len - 1]) != NULL
       && ptr[len - 2] != '.') {
     --len;
   }

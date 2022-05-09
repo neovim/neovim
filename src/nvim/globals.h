@@ -811,7 +811,7 @@ extern char_u *compiled_sys;
 // When a window has a local directory, the absolute path of the global
 // current directory is stored here (in allocated memory).  If the current
 // directory is not a local directory, globaldir is NULL.
-EXTERN char_u *globaldir INIT(= NULL);
+EXTERN char *globaldir INIT(= NULL);
 
 EXTERN char *last_chdir_reason INIT(= NULL);
 
