@@ -2308,9 +2308,9 @@ static garray_T tag_fnames = GA_EMPTY_INIT_VALUE;
  * Callback function for finding all "tags" and "tags-??" files in
  * 'runtimepath' doc directories.
  */
-static void found_tagfile_cb(char_u *fname, void *cookie)
+static void found_tagfile_cb(char *fname, void *cookie)
 {
-  char_u *const tag_fname = vim_strsave(fname);
+  char_u *const tag_fname = vim_strsave((char_u *)fname);
 
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(tag_fname);
@@ -2357,7 +2357,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
     if (first) {
       ga_clear_strings(&tag_fnames);
       ga_init(&tag_fnames, (int)sizeof(char_u *), 10);
-      do_in_runtimepath((char_u *)"doc/tags doc/tags-??", DIP_ALL,
+      do_in_runtimepath("doc/tags doc/tags-??", DIP_ALL,
                         found_tagfile_cb, NULL);
     }
 

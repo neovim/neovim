@@ -319,7 +319,7 @@ static void add_char_buff(buffheader_T *buf, int c)
   if (IS_SPECIAL(c)) {
     len = 1;
   } else {
-    len = utf_char2bytes(c, bytes);
+    len = utf_char2bytes(c, (char *)bytes);
   }
 
   for (int i = 0; i < len; i++) {
@@ -537,18 +537,18 @@ void AppendToRedobuff(const char *s)
 ///
 /// @param str  String to append
 /// @param len  Length of `str` or -1 for up to the NUL.
-void AppendToRedobuffLit(const char_u *str, int len)
+void AppendToRedobuffLit(const char *str, int len)
 {
   if (block_redo) {
     return;
   }
 
-  const char *s = (const char *)str;
-  while (len < 0 ? *s != NUL : s - (const char *)str < len) {
+  const char *s = str;
+  while (len < 0 ? *s != NUL : s - str < len) {
     // Put a string of normal characters in the redo buffer (that's
     // faster).
     const char *start = s;
-    while (*s >= ' ' && *s < DEL && (len < 0 || s - (const char *)str < len)) {
+    while (*s >= ' ' && *s < DEL && (len < 0 || s - str < len)) {
       s++;
     }
 
@@ -561,7 +561,7 @@ void AppendToRedobuffLit(const char_u *str, int len)
       add_buff(&redobuff, start, (long)(s - start));
     }
 
-    if (*s == NUL || (len >= 0 && s - (const char *)str >= len)) {
+    if (*s == NUL || (len >= 0 && s - str >= len)) {
       break;
     }
 
@@ -866,7 +866,7 @@ void init_default_mappings(void)
 // If silent is true, cmd_silent is set when the characters are obtained.
 //
 // return FAIL for failure, OK otherwise
-int ins_typebuf(char_u *str, int noremap, int offset, bool nottyped, bool silent)
+int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 {
   char_u *s1, *s2;
   int addlen;
@@ -1010,7 +1010,7 @@ int ins_char_typebuf(int c, int modifier)
     *end = NUL;
     len = (int)(end - buf);
   }
-  (void)ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
+  (void)ins_typebuf((char *)buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
   return len;
 }
 
@@ -1758,7 +1758,7 @@ static int put_string_in_typebuf(int offset, int slen, char_u *string, int new_s
     del_typebuf(-extra, offset);
   } else if (extra > 0) {
     // insert the extra space we need
-    if (ins_typebuf(string + slen, REMAP_YES, offset, false, false) == FAIL) {
+    if (ins_typebuf((char *)string + slen, REMAP_YES, offset, false, false) == FAIL) {
       return FAIL;
     }
   }
@@ -1816,7 +1816,7 @@ static int check_simplify_modifier(int max_offset)
           new_string[2] = (char_u)K_THIRD(new_c);
           len = 3;
         } else {
-          len = utf_char2bytes(new_c, new_string);
+          len = utf_char2bytes(new_c, (char *)new_string);
         }
         if (modifier == 0) {
           if (put_string_in_typebuf(offset, 4, new_string, len) == FAIL) {
@@ -2116,7 +2116,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     // mode temporarily.  Append K_SELECT to switch back to Select mode.
     if (VIsual_active && VIsual_select && (mp->m_mode & VISUAL)) {
       VIsual_select = false;
-      (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE, 0, true, false);
+      (void)ins_typebuf((char *)K_SELECT_STRING, REMAP_NONE, 0, true, false);
     }
 
     // Copy the values from *mp that are used, because evaluating the
@@ -2202,7 +2202,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       } else {
         noremap = REMAP_SKIP;
       }
-      i = ins_typebuf(map_str, noremap, 0, true, cmd_silent || save_m_silent);
+      i = ins_typebuf((char *)map_str, noremap, 0, true, cmd_silent || save_m_silent);
       if (save_m_expr) {
         xfree(map_str);
       }
@@ -2874,15 +2874,13 @@ void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
   // If something like <C-H> is simplified to 0x08 then mark it as simplified.
   bool did_simplify = false;
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
-  char *replaced = (char *)replace_termcodes((char_u *)orig_lhs, orig_lhs_len, (char_u **)&lhs_buf,
-                                             flags, &did_simplify,
-                                             cpo_flags);
+  char *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &lhs_buf, flags, &did_simplify,
+                                     cpo_flags);
   mapargs->lhs_len = STRLEN(replaced);
   STRLCPY(mapargs->lhs, replaced, sizeof(mapargs->lhs));
   if (did_simplify) {
-    replaced = (char *)replace_termcodes((char_u *)orig_lhs, orig_lhs_len, (char_u **)&alt_lhs_buf,
-                                         flags | REPTERM_NO_SIMPLIFY,
-                                         NULL, cpo_flags);
+    replaced = replace_termcodes(orig_lhs, orig_lhs_len, &alt_lhs_buf, flags | REPTERM_NO_SIMPLIFY,
+                                 NULL, cpo_flags);
     mapargs->alt_lhs_len = STRLEN(replaced);
     STRLCPY(mapargs->alt_lhs, replaced, sizeof(mapargs->alt_lhs));
   } else {
@@ -2901,8 +2899,8 @@ void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
       mapargs->rhs_len = 0;
       mapargs->rhs_is_noop = true;
     } else {
-      replaced = (char *)replace_termcodes((char_u *)orig_rhs, orig_rhs_len, (char_u **)&rhs_buf,
-                                           REPTERM_DO_LT | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
+      replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
+                                   REPTERM_DO_LT | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
       mapargs->rhs_len = STRLEN(replaced);
       // XXX: even when orig_rhs is non-empty, replace_termcodes may produce an empty string.
       mapargs->rhs_is_noop = orig_rhs[0] != NUL && mapargs->rhs_len == 0;
@@ -2947,7 +2945,7 @@ void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
 int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
 {
   const char_u *to_parse = strargs;
-  to_parse = skipwhite(to_parse);
+  to_parse = (char_u *)skipwhite((char *)to_parse);
   MapArguments parsed_args;  // copy these into mapargs "all at once" when done
   memset(&parsed_args, 0, sizeof(parsed_args));
 
@@ -2955,43 +2953,43 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
   // any order.
   while (true) {
     if (STRNCMP(to_parse, "<buffer>", 8) == 0) {
-      to_parse = skipwhite(to_parse + 8);
+      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
       parsed_args.buffer = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<nowait>", 8) == 0) {
-      to_parse = skipwhite(to_parse + 8);
+      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
       parsed_args.nowait = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<silent>", 8) == 0) {
-      to_parse = skipwhite(to_parse + 8);
+      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
       parsed_args.silent = true;
       continue;
     }
 
     // Ignore obsolete "<special>" modifier.
     if (STRNCMP(to_parse, "<special>", 9) == 0) {
-      to_parse = skipwhite(to_parse + 9);
+      to_parse = (char_u *)skipwhite((char *)to_parse + 9);
       continue;
     }
 
     if (STRNCMP(to_parse, "<script>", 8) == 0) {
-      to_parse = skipwhite(to_parse + 8);
+      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
       parsed_args.script = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<expr>", 6) == 0) {
-      to_parse = skipwhite(to_parse + 6);
+      to_parse = (char_u *)skipwhite((char *)to_parse + 6);
       parsed_args.expr = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<unique>", 8) == 0) {
-      to_parse = skipwhite(to_parse + 8);
+      to_parse = (char_u *)skipwhite((char *)to_parse + 8);
       parsed_args.unique = true;
       continue;
     }
@@ -3020,7 +3018,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
 
   // {lhs_end} is a pointer to the "terminating whitespace" after {lhs}.
   // Use that to initialize {rhs_start}.
-  const char_u *rhs_start = skipwhite(lhs_end);
+  const char_u *rhs_start = (char_u *)skipwhite((char *)lhs_end);
 
   // Given {lhs} might be larger than MAXMAPLEN before replace_termcodes
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
@@ -3275,7 +3273,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
                 // the "lhs", since an abbreviation can't have
                 // trailing space.
                 if (n != len && (!is_abbrev || round || n > len
-                                 || *skipwhite(lhs + n) != NUL)) {
+                                 || *skipwhite((char *)lhs + n) != NUL)) {
                   mpp = &(mp->m_next);
                   continue;
                 }
@@ -3799,8 +3797,9 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
   int retval;
 
   char_u *buf;
-  const char_u *const rhs = replace_termcodes((const char_u *)str, strlen(str), &buf, REPTERM_DO_LT,
-                                              NULL, CPO_TO_CPO_FLAGS);
+  const char_u *const rhs = (char_u *)replace_termcodes(str, strlen(str),
+                                                        (char **)&buf, REPTERM_DO_LT,
+                                                        NULL, CPO_TO_CPO_FLAGS);
 
 #define MAPMODE(mode, modechars, chr, modeflags) \
   do { \
@@ -3907,31 +3906,31 @@ char_u *set_context_in_map_cmd(expand_T *xp, char_u *cmd, char_u *arg, bool forc
     for (;;) {
       if (STRNCMP(arg, "<buffer>", 8) == 0) {
         expand_buffer = true;
-        arg = skipwhite(arg + 8);
+        arg = (char_u *)skipwhite((char *)arg + 8);
         continue;
       }
       if (STRNCMP(arg, "<unique>", 8) == 0) {
-        arg = skipwhite(arg + 8);
+        arg = (char_u *)skipwhite((char *)arg + 8);
         continue;
       }
       if (STRNCMP(arg, "<nowait>", 8) == 0) {
-        arg = skipwhite(arg + 8);
+        arg = (char_u *)skipwhite((char *)arg + 8);
         continue;
       }
       if (STRNCMP(arg, "<silent>", 8) == 0) {
-        arg = skipwhite(arg + 8);
+        arg = (char_u *)skipwhite((char *)arg + 8);
         continue;
       }
       if (STRNCMP(arg, "<special>", 9) == 0) {
-        arg = skipwhite(arg + 9);
+        arg = (char_u *)skipwhite((char *)arg + 9);
         continue;
       }
       if (STRNCMP(arg, "<script>", 8) == 0) {
-        arg = skipwhite(arg + 8);
+        arg = (char_u *)skipwhite((char *)arg + 8);
         continue;
       }
       if (STRNCMP(arg, "<expr>", 6) == 0) {
-        arg = skipwhite(arg + 6);
+        arg = (char_u *)skipwhite((char *)arg + 6);
         continue;
       }
       break;
@@ -4190,10 +4189,10 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
           if (c >= ABBR_OFF) {
             c -= ABBR_OFF;
           }
-          int newlen = utf_char2bytes(c, tb + j);
+          int newlen = utf_char2bytes(c, (char *)tb + j);
           tb[j + newlen] = NUL;
           // Need to escape K_SPECIAL.
-          char_u *escaped = vim_strsave_escape_ks(tb + j);
+          char_u *escaped = (char_u *)vim_strsave_escape_ks((char *)tb + j);
           if (escaped != NULL) {
             newlen = (int)STRLEN(escaped);
             memmove(tb + j, escaped, (size_t)newlen);
@@ -4203,7 +4202,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
         }
         tb[j] = NUL;
         // insert the last typed char
-        (void)ins_typebuf(tb, 1, 0, true, mp->m_silent);
+        (void)ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
       }
       if (mp->m_expr) {
         s = eval_map_expr(mp, c);
@@ -4212,7 +4211,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
       }
       if (s != NULL) {
         // insert the to string
-        (void)ins_typebuf(s, mp->m_noremap, 0, true, mp->m_silent);
+        (void)ins_typebuf((char *)s, mp->m_noremap, 0, true, mp->m_silent);
         // no abbrev. for these chars
         typebuf.tb_no_abbr_cnt += (int)STRLEN(s) + j + 1;
         if (mp->m_expr) {
@@ -4224,7 +4223,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
       tb[1] = NUL;
       len = clen;  // Delete characters instead of bytes
       while (len-- > 0) {  // delete the from string
-        (void)ins_typebuf(tb, 1, 0, true, mp->m_silent);
+        (void)ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
       }
       return true;
     }
@@ -4286,7 +4285,7 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
     return NULL;
   }
   // Escape K_SPECIAL in the result to be able to use the string as typeahead.
-  res = vim_strsave_escape_ks(p);
+  res = (char_u *)vim_strsave_escape_ks((char *)p);
   xfree(p);
 
   return res;
@@ -4294,14 +4293,14 @@ static char_u *eval_map_expr(mapblock_T *mp, int c)
 
 /// Copy "p" to allocated memory, escaping K_SPECIAL so that the result
 /// can be put in the typeahead buffer.
-char_u *vim_strsave_escape_ks(char_u *p)
+char *vim_strsave_escape_ks(char *p)
 {
   // Need a buffer to hold up to three times as much.  Four in case of an
   // illegal utf-8 byte:
   // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
   char_u *res = xmalloc(STRLEN(p) * 4 + 1);
   char_u *d = res;
-  for (char_u *s = p; *s != NUL;) {
+  for (char_u *s = (char_u *)p; *s != NUL;) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       // Copy special key unmodified.
       *d++ = *s++;
@@ -4316,7 +4315,7 @@ char_u *vim_strsave_escape_ks(char_u *p)
   }
   *d = NUL;
 
-  return res;
+  return (char *)res;
 }
 
 /// Remove escaping from K_SPECIAL characters.  Reverse of

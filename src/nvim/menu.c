@@ -82,17 +82,17 @@ void ex_menu(exarg_T *eap)
   for (;;) {
     if (STRNCMP(arg, "<script>", 8) == 0) {
       noremap = REMAP_SCRIPT;
-      arg = (char *)skipwhite((char_u *)arg + 8);
+      arg = skipwhite(arg + 8);
       continue;
     }
     if (STRNCMP(arg, "<silent>", 8) == 0) {
       silent = true;
-      arg = (char *)skipwhite((char_u *)arg + 8);
+      arg = skipwhite(arg + 8);
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
       // Ignore obsolete "<special>" modifier.
-      arg = (char *)skipwhite((char_u *)arg + 9);
+      arg = skipwhite(arg + 9);
       continue;
     }
     break;
@@ -111,7 +111,7 @@ void ex_menu(exarg_T *eap)
     }
     if (*arg != NUL) {
       *arg++ = NUL;
-      arg = (char *)skipwhite((char_u *)arg);
+      arg = skipwhite(arg);
     }
   }
 
@@ -131,7 +131,7 @@ void ex_menu(exarg_T *eap)
         arg++;
       }
     }
-    arg = (char *)skipwhite((char_u *)arg);
+    arg = skipwhite(arg);
   } else if (eap->addr_count && eap->line2 != 0) {
     pri_tab[0] = eap->line2;
     i = 1;
@@ -148,10 +148,10 @@ void ex_menu(exarg_T *eap)
    */
   if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
     enable = kTrue;
-    arg = (char *)skipwhite((char_u *)arg + 6);
+    arg = skipwhite(arg + 6);
   } else if (STRNCMP(arg, "disable", 7) == 0 && ascii_iswhite(arg[7])) {
     enable = kFalse;
-    arg = (char *)skipwhite((char_u *)arg + 7);
+    arg = skipwhite(arg + 7);
   }
 
   /*
@@ -236,8 +236,8 @@ void ex_menu(exarg_T *eap)
     } else if (modes & MENU_TIP_MODE) {
       map_buf = NULL;  // Menu tips are plain text.
     } else {
-      map_to = (char *)replace_termcodes((char_u *)map_to, STRLEN(map_to), (char_u **)&map_buf,
-                                         REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+      map_to = replace_termcodes(map_to, STRLEN(map_to), &map_buf,
+                                 REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
     }
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;
@@ -701,7 +701,7 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 
   if (menu->mnemonic) {
     char buf[MB_MAXCHAR + 1] = { 0 };  // > max value of utf8_char2bytes
-    utf_char2bytes(menu->mnemonic, (char_u *)buf);
+    utf_char2bytes(menu->mnemonic, buf);
     tv_dict_add_str(dict, S_LEN("shortcut"), buf);
   }
 
@@ -1458,7 +1458,7 @@ static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
       restore_current_state(&save_state);
       ex_normal_busy--;
     } else {
-      ins_typebuf((char_u *)menu->strings[idx], menu->noremap[idx], 0, true,
+      ins_typebuf(menu->strings[idx], menu->noremap[idx], 0, true,
                   menu->silent[idx]);
     }
   } else if (eap != NULL) {
@@ -1541,7 +1541,7 @@ void ex_menutranslate(exarg_T *eap)
   /*
    * ":menutrans clear": clear all translations.
    */
-  if (STRNCMP(arg, "clear", 5) == 0 && ends_excmd(*skipwhite((char_u *)arg + 5))) {
+  if (STRNCMP(arg, "clear", 5) == 0 && ends_excmd(*skipwhite(arg + 5))) {
     GA_DEEP_CLEAR(&menutrans_ga, menutrans_T, FREE_MENUTRANS);
 
     // Delete all "menutrans_" global variables.
@@ -1550,7 +1550,7 @@ void ex_menutranslate(exarg_T *eap)
     // ":menutrans from to": add translation
     from = arg;
     arg = menu_skip_part(arg);
-    to = (char *)skipwhite((char_u *)arg);
+    to = skipwhite(arg);
     *arg = NUL;
     arg = menu_skip_part(to);
     if (arg == to) {
@@ -1651,7 +1651,7 @@ static char *menu_translate_tab_and_shift(char *arg_start)
   if (*arg != NUL) {
     *arg++ = NUL;
   }
-  arg = (char *)skipwhite((char_u *)arg);
+  arg = skipwhite(arg);
 
   return arg;
 }

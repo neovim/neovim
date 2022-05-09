@@ -1788,7 +1788,7 @@ static void parse_quoted_string(ParserState *const pstate, ExprASTNode *const no
             if (is_hex) {
               *v_p++ = (char)nr;
             } else {
-              v_p += utf_char2bytes(nr, (char_u *)v_p);
+              v_p += utf_char2bytes(nr, v_p);
             }
           } else {
             is_unknown = true;

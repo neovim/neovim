@@ -1714,7 +1714,7 @@ skip:
             arg++;
           }
         }
-        arg = skipwhite(arg);
+        arg = (char_u *)skipwhite((char *)arg);
         if (*arg != '=') {
           break;
         }
@@ -1741,7 +1741,7 @@ skip:
       return FAIL;
     }
 
-    arg = skipwhite(arg);
+    arg = (char_u *)skipwhite((char *)arg);
   }
 
 theend:
@@ -3015,7 +3015,9 @@ ambw_end:
   } else if (varp == &p_pt) {
     // 'pastetoggle': translate key codes like in a mapping
     if (*p_pt) {
-      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
+      (void)replace_termcodes((char *)p_pt,
+                              STRLEN(p_pt),
+                              (char **)&p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
                               CPO_TO_CPO_FLAGS);
       if (p != NULL) {
         if (new_value_alloced) {
@@ -4960,9 +4962,9 @@ static int findoption(const char *const arg)
 /// Hidden Number or Toggle option: -1.
 ///           hidden String option: -2.
 ///                 unknown option: -3.
-int get_option_value(const char *name, long *numval, char_u **stringval, int opt_flags)
+int get_option_value(const char *name, long *numval, char **stringval, int opt_flags)
 {
-  if (get_tty_option(name, (char **)stringval)) {
+  if (get_tty_option(name, stringval)) {
     return 0;
   }
 
@@ -4978,7 +4980,11 @@ int get_option_value(const char *name, long *numval, char_u **stringval, int opt
       return -2;
     }
     if (stringval != NULL) {
-      *stringval = vim_strsave(*(char_u **)(varp));
+      if ((char_u **)varp == &p_pt) {  // 'pastetoggle'
+        *stringval = str2special_save(*(char **)(varp), false, false);
+      } else {
+        *stringval = xstrdup(*(char **)(varp));
+      }
     }
     return 0;
   }
@@ -5193,7 +5199,7 @@ char *set_option_value(const char *const name, const long number, const char *co
           numval = -1;
         } else {
           char *s = NULL;
-          (void)get_option_value(name, &numval, (char_u **)&s, OPT_GLOBAL);
+          (void)get_option_value(name, &numval, &s, OPT_GLOBAL);
         }
       }
       if (flags & P_NUM) {

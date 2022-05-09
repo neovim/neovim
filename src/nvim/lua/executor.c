@@ -956,7 +956,7 @@ int nlua_call(lua_State *lstate)
     funcexe.evaluate = true;
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (TRY_WRAP) to capture abort-causing non-exception errors.
-    (void)call_func(name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
+    (void)call_func((char *)name, (int)name_len, &rettv, nargs, vim_args, &funcexe);
     if (!try_end(&err)) {
       nlua_push_typval(lstate, &rettv, false);
     }
@@ -1873,7 +1873,7 @@ void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
     char *buf = xcalloc(length, sizeof(char));
     bool done = false;
     while (!done) {
-      done = uc_split_args_iter((char_u *)eap->arg, length, &end, buf, &len);
+      done = uc_split_args_iter(eap->arg, length, &end, buf, &len);
       if (len > 0) {
         lua_pushlstring(lstate, buf, len);
         lua_rawseti(lstate, -2, i);

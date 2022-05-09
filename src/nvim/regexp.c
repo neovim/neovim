@@ -1786,13 +1786,13 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         funcexe.evaluate = true;
         if (expr->v_type == VAR_FUNC) {
           s = (char_u *)expr->vval.v_string;
-          call_func(s, -1, &rettv, 1, argv, &funcexe);
+          call_func((char *)s, -1, &rettv, 1, argv, &funcexe);
         } else if (expr->v_type == VAR_PARTIAL) {
           partial_T *partial = expr->vval.v_partial;
 
           s = (char_u *)partial_name(partial);
           funcexe.partial = partial;
-          call_func(s, -1, &rettv, 1, argv, &funcexe);
+          call_func((char *)s, -1, &rettv, 1, argv, &funcexe);
         }
         if (tv_list_len(&matchList.sl_list) > 0) {
           // fill_submatch_list() was called.
@@ -1929,7 +1929,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         int totlen = utfc_ptr2len((char *)src - 1);
 
         if (copy) {
-          utf_char2bytes(cc, dst);
+          utf_char2bytes(cc, (char *)dst);
         }
         dst += utf_char2len(cc) - 1;
         int clen = utf_ptr2len((char *)src - 1);
@@ -2027,7 +2027,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                   s += l;
                   len -= l;
                   if (copy) {
-                    utf_char2bytes(cc, dst);
+                    utf_char2bytes(cc, (char *)dst);
                   }
                   dst += utf_char2len(cc) - 1;
                 }

@@ -141,7 +141,7 @@ void do_debug(char_u *cmd)
       // If this is a debug command, set "last_cmd".
       // If not, reset "last_cmd".
       // For a blank line use previous command.
-      p = skipwhite(cmdline);
+      p = (char_u *)skipwhite((char *)cmdline);
       if (*p != NUL) {
         switch (*p) {
         case 'c':
@@ -242,7 +242,7 @@ void do_debug(char_u *cmd)
           if (*p == NUL) {
             do_showbacktrace(cmd);
           } else {
-            p = skipwhite(p);
+            p = (char_u *)skipwhite((char *)p);
             do_setdebugtracelevel(p);
           }
           continue;
@@ -501,14 +501,14 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
     semsg(_(e_invarg2), p);
     return FAIL;
   }
-  p = skipwhite(p + 4);
+  p = (char_u *)skipwhite((char *)p + 4);
 
   // Find optional line number.
   if (here) {
     bp->dbg_lnum = curwin->w_cursor.lnum;
   } else if (gap != &prof_ga && ascii_isdigit(*p)) {
     bp->dbg_lnum = getdigits_long(&p, true, 0);
-    p = skipwhite(p);
+    p = (char_u *)skipwhite((char *)p);
   } else {
     bp->dbg_lnum = 0;
   }

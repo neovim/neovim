@@ -197,7 +197,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     funcexe.selfdict = self;
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (see above) to capture abort-causing non-exception errors.
-    (void)call_func((char_u *)fn.data, (int)fn.size, &rettv, (int)args.size,
+    (void)call_func(fn.data, (int)fn.size, &rettv, (int)args.size,
                     vim_args, &funcexe);
     if (!try_end(err)) {
       rv = vim_to_object(&rettv);
@@ -290,7 +290,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
       goto end;
     }
     fn = (String) {
-      .data = (char *)di->di_tv.vval.v_string,
+      .data = di->di_tv.vval.v_string,
       .size = STRLEN(di->di_tv.vval.v_string),
     };
   }
@@ -831,7 +831,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     bool done = false;
 
     while (!done) {
-      done = uc_split_args_iter((char_u *)ea.arg, length, &end, buf, &len);
+      done = uc_split_args_iter(ea.arg, length, &end, buf, &len);
       if (len > 0) {
         ADD(args, STRING_OBJ(cstrn_to_string(buf, len)));
       }

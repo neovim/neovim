@@ -4,8 +4,8 @@
 #include <stdbool.h>
 
 #include "nvim/ascii.h"
-#include "nvim/grid_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/grid_defs.h"
 
 /// By default, all windows are drawn on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own
@@ -34,7 +34,7 @@ static inline void schar_from_ascii(char_u *p, const char c)
 /// Put a unicode character in a screen cell.
 static inline int schar_from_char(char_u *p, int c)
 {
-  int len = utf_char2bytes(c, p);
+  int len = utf_char2bytes(c, (char *)p);
   p[len] = NUL;
   return len;
 }

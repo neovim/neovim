@@ -379,7 +379,7 @@ char *strcase_save(const char *const orig, bool upper)
       res = s;
     }
 
-    utf_char2bytes(uc, (char_u *)p);
+    utf_char2bytes(uc, p);
     p += newl;
   }
 
@@ -482,7 +482,7 @@ char_u *vim_strchr(const char_u *const string, const int c)
     return (char_u *)strchr((const char *)string, c);
   } else {
     char u8char[MB_MAXBYTES + 1];
-    const int len = utf_char2bytes(c, (char_u *)u8char);
+    const int len = utf_char2bytes(c, u8char);
     u8char[len] = NUL;
     return (char_u *)strstr((const char *)string, u8char);
   }

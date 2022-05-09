@@ -106,7 +106,7 @@
   (p -= utf_head_off((char_u *)(s), (char_u *)(p) - 1) + 1)
 
 // MB_CHAR2BYTES(): convert character to bytes and advance pointer to bytes
-#define MB_CHAR2BYTES(c, b) ((b) += utf_char2bytes((c), (b)))
+#define MB_CHAR2BYTES(c, b) ((b) += utf_char2bytes((c), ((char *)b)))
 
 #define RESET_BINDING(wp) \
   do { \

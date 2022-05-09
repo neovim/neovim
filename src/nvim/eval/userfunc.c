@@ -125,12 +125,12 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
 
         *p = c;
       }
-      if (*skipwhite(p) == '=' && default_args != NULL) {
+      if (*skipwhite((char *)p) == '=' && default_args != NULL) {
         typval_T rettv;
 
         any_default = true;
-        p = skipwhite(p) + 1;
-        p = skipwhite(p);
+        p = (char_u *)skipwhite((char *)p) + 1;
+        p = (char_u *)skipwhite((char *)p);
         char_u *expr = p;
         if (eval1((char **)&p, &rettv, false) != FAIL) {
           ga_grow(default_args, 1);
@@ -159,7 +159,7 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs, i
         mustend = true;
       }
     }
-    p = skipwhite(p);
+    p = (char_u *)skipwhite((char *)p);
     if (mustend && *p != endchar) {
       if (!skip) {
         semsg(_(e_invarg2), *argp);
@@ -222,7 +222,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   partial_T *pt = NULL;
   int varargs;
   int ret;
-  char_u *start = skipwhite(*arg + 1);
+  char_u *start = (char_u *)skipwhite((char *)(*arg) + 1);
   char_u *s, *e;
   bool *old_eval_lavars = eval_lavars_used;
   bool eval_lavars = false;
@@ -239,7 +239,7 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   } else {
     pnewargs = NULL;
   }
-  *arg = skipwhite(*arg + 1);
+  *arg = (char_u *)skipwhite((char *)(*arg) + 1);
   ret = get_function_args(arg, '-', pnewargs, &varargs, NULL, false);
   if (ret == FAIL || **arg != '>') {
     goto errret;
@@ -251,14 +251,14 @@ int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
   }
 
   // Get the start and the end of the expression.
-  *arg = skipwhite(*arg + 1);
+  *arg = (char_u *)skipwhite((char *)(*arg) + 1);
   s = *arg;
   ret = skip_expr((char **)arg);
   if (ret == FAIL) {
     goto errret;
   }
   e = *arg;
-  *arg = skipwhite(*arg);
+  *arg = (char_u *)skipwhite((char *)(*arg));
   if (**arg != '}') {
     goto errret;
   }
@@ -422,7 +422,7 @@ int get_func_tv(const char_u *name, int len, typval_T *rettv, char_u **arg, func
   argp = *arg;
   while (argcount < MAX_FUNC_ARGS
          - (funcexe->partial == NULL ? 0 : funcexe->partial->pt_argc)) {
-    argp = skipwhite(argp + 1);             // skip the '(' or ','
+    argp = (char_u *)skipwhite((char *)argp + 1);             // skip the '(' or ','
     if (*argp == ')' || *argp == ',' || *argp == NUL) {
       break;
     }
@@ -455,7 +455,7 @@ int get_func_tv(const char_u *name, int len, typval_T *rettv, char_u **arg, func
         ((typval_T **)funcargs.ga_data)[funcargs.ga_len++] = &argvars[i];
       }
     }
-    ret = call_func(name, len, rettv, argcount, argvars, funcexe);
+    ret = call_func((char *)name, len, rettv, argcount, argvars, funcexe);
 
     funcargs.ga_len -= i;
   } else if (!aborting()) {
@@ -470,7 +470,7 @@ int get_func_tv(const char_u *name, int len, typval_T *rettv, char_u **arg, func
     tv_clear(&argvars[argcount]);
   }
 
-  *arg = skipwhite(argp);
+  *arg = (char_u *)skipwhite((char *)argp);
   return ret;
 }
 
@@ -1370,7 +1370,7 @@ int func_call(char_u *name, typval_T *args, partial_T *partial, dict_T *selfdict
   funcexe.evaluate = true;
   funcexe.partial = partial;
   funcexe.selfdict = selfdict;
-  r = call_func(name, -1, rettv, argc, argv, &funcexe);
+  r = call_func((char *)name, -1, rettv, argc, argv, &funcexe);
 
 func_call_skip_call:
   // Free the arguments.
@@ -1442,8 +1442,8 @@ static void argv_add_base(typval_T *const basetv, typval_T **const argvars, int 
 /// @return FAIL if function cannot be called, else OK (even if an error
 ///         occurred while executing the function! Set `msg_list` to capture
 ///         the error, see do_cmdline()).
-int call_func(const char_u *funcname, int len, typval_T *rettv, int argcount_in,
-              typval_T *argvars_in, funcexe_T *funcexe)
+int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, typval_T *argvars_in,
+              funcexe_T *funcexe)
   FUNC_ATTR_NONNULL_ARG(1, 3, 5, 6)
 {
   int ret = FAIL;
@@ -1475,7 +1475,7 @@ int call_func(const char_u *funcname, int len, typval_T *rettv, int argcount_in,
   if (fp == NULL) {
     // Make a copy of the name, if it comes from a funcref variable it could
     // be changed or deleted in the called function.
-    name = vim_strnsave(funcname, (size_t)len);
+    name = vim_strnsave((char_u *)funcname, (size_t)len);
     fname = fname_trans_sid(name, fname_buf, &tofree, &error);
   }
 
@@ -1522,11 +1522,11 @@ int call_func(const char_u *funcname, int len, typval_T *rettv, int argcount_in,
       if (len > 0) {
         error = ERROR_NONE;
         argv_add_base(funcexe->basetv, &argvars, &argcount, argv, &argv_base);
-        nlua_typval_call((const char *)funcname, (size_t)len, argvars, argcount, rettv);
+        nlua_typval_call(funcname, (size_t)len, argvars, argcount, rettv);
       } else {
         // v:lua was called directly; show its name in the emsg
         XFREE_CLEAR(name);
-        funcname = (const char_u *)"v:lua";
+        funcname = "v:lua";
       }
     } else if (fp != NULL || !builtin_function((const char *)rfname, -1)) {
       // User defined function.
@@ -1608,7 +1608,7 @@ theend:
   // Report an error unless the argument evaluation or function call has been
   // cancelled due to an aborting error, an interrupt, or an exception.
   if (!aborting()) {
-    user_func_error(error, (name != NULL) ? name : funcname);
+    user_func_error(error, (name != NULL) ? name : (char_u *)funcname);
   }
 
   // clear the copies made from the partial
@@ -2039,7 +2039,7 @@ void ex_function(exarg_T *eap)
   //  - exclude line numbers from function body
   //
   if (!paren) {
-    if (!ends_excmd(*skipwhite(p))) {
+    if (!ends_excmd(*skipwhite((char *)p))) {
       emsg(_(e_trailing));
       goto ret_free;
     }
@@ -2083,7 +2083,7 @@ void ex_function(exarg_T *eap)
   /*
    * ":function name(arg1, arg2)" Define function.
    */
-  p = skipwhite(p);
+  p = (char_u *)skipwhite((char *)p);
   if (*p != '(') {
     if (!eap->skip) {
       semsg(_("E124: Missing '(': %s"), eap->arg);
@@ -2094,7 +2094,7 @@ void ex_function(exarg_T *eap)
       p = vim_strchr(p, '(');
     }
   }
-  p = skipwhite(p + 1);
+  p = (char_u *)skipwhite((char *)p + 1);
 
   ga_init(&newargs, (int)sizeof(char_u *), 3);
   ga_init(&newlines, (int)sizeof(char_u *), 3);
@@ -2135,7 +2135,7 @@ void ex_function(exarg_T *eap)
 
   // find extra arguments "range", "dict", "abort" and "closure"
   for (;;) {
-    p = skipwhite(p);
+    p = (char_u *)skipwhite((char *)p);
     if (STRNCMP(p, "range", 5) == 0) {
       flags |= FC_RANGE;
       p += 5;
@@ -2249,13 +2249,13 @@ void ex_function(exarg_T *eap)
       // * ":python <<EOF" and "EOF"
       // * ":let {var-name} =<< [trim] {marker}" and "{marker}"
       if (heredoc_trimmed == NULL
-          || (is_heredoc && skipwhite(theline) == theline)
+          || (is_heredoc && (char_u *)skipwhite((char *)theline) == theline)
           || STRNCMP(theline, heredoc_trimmed,
                      STRLEN(heredoc_trimmed)) == 0) {
         if (heredoc_trimmed == NULL) {
           p = theline;
         } else if (is_heredoc) {
-          p = skipwhite(theline) == theline
+          p = (char_u *)skipwhite((char *)theline) == theline
             ? theline : theline + STRLEN(heredoc_trimmed);
         } else {
           p = theline + STRLEN(heredoc_trimmed);
@@ -2279,7 +2279,7 @@ void ex_function(exarg_T *eap)
         char_u *nextcmd = NULL;
         if (*p == '|') {
           nextcmd = p + 1;
-        } else if (line_arg != NULL && *skipwhite(line_arg) != NUL) {
+        } else if (line_arg != NULL && *skipwhite((char *)line_arg) != NUL) {
           nextcmd = line_arg;
         } else if (*p != NUL && *p != '"' && p_verbose > 0) {
           give_warning2((char_u *)_("W22: Text found after :endfunction: %s"),
@@ -2313,11 +2313,11 @@ void ex_function(exarg_T *eap)
       // Check for defining a function inside this function.
       if (checkforcmd((char **)&p, "function", 2)) {
         if (*p == '!') {
-          p = skipwhite(p + 1);
+          p = (char_u *)skipwhite((char *)p + 1);
         }
         p += eval_fname_script((const char *)p);
         xfree(trans_function_name(&p, true, 0, NULL, NULL));
-        if (*skipwhite(p) == '(') {
+        if (*skipwhite((char *)p) == '(') {
           nesting++;
           indent += 2;
         }
@@ -2340,7 +2340,7 @@ void ex_function(exarg_T *eap)
       }
 
       // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
-      arg = skipwhite(skiptowhite(p));
+      arg = (char_u *)skipwhite((char *)skiptowhite(p));
       if (arg[0] == '<' && arg[1] == '<'
           && ((p[0] == 'p' && p[1] == 'y'
                && (!ASCII_ISALNUM(p[2]) || p[2] == 't'
@@ -2357,7 +2357,7 @@ void ex_function(exarg_T *eap)
               || (p[0] == 'm' && p[1] == 'z'
                   && (!ASCII_ISALPHA(p[2]) || p[2] == 's')))) {
         // ":python <<" continues until a dot, like ":append"
-        p = skipwhite(arg + 2);
+        p = (char_u *)skipwhite((char *)arg + 2);
         if (*p == NUL) {
           skip_until = vim_strsave((char_u *)".");
         } else {
@@ -2367,12 +2367,12 @@ void ex_function(exarg_T *eap)
 
       // Check for ":let v =<< [trim] EOF"
       //       and ":let [a, b] =<< [trim] EOF"
-      arg = skipwhite(skiptowhite(p));
+      arg = (char_u *)skipwhite((char *)skiptowhite(p));
       if (*arg == '[') {
         arg = vim_strchr(arg, ']');
       }
       if (arg != NULL) {
-        arg = skipwhite(skiptowhite(arg));
+        arg = (char_u *)skipwhite((char *)skiptowhite(arg));
         if (arg[0] == '='
             && arg[1] == '<'
             && arg[2] == '<'
@@ -2380,12 +2380,12 @@ void ex_function(exarg_T *eap)
                 && p[1] == 'e'
                 && (!ASCII_ISALNUM(p[2])
                     || (p[2] == 't' && !ASCII_ISALNUM(p[3]))))) {
-          p = skipwhite(arg + 3);
+          p = (char_u *)skipwhite((char *)arg + 3);
           if (STRNCMP(p, "trim", 4) == 0) {
             // Ignore leading white space.
-            p = skipwhite(p + 4);
+            p = (char_u *)skipwhite((char *)p + 4);
             heredoc_trimmed =
-              vim_strnsave(theline, (size_t)(skipwhite(theline) - theline));
+              vim_strnsave(theline, (size_t)((char_u *)skipwhite((char *)theline) - theline));
           }
           skip_until = vim_strnsave(p, (size_t)(skiptowhite(p) - p));
           do_concat = false;
@@ -2631,7 +2631,7 @@ bool function_exists(const char *const name, bool no_deref)
   }
   char *const p = (char *)trans_function_name((char_u **)&nm, false, flag, NULL,
                                               NULL);
-  nm = skipwhite(nm);
+  nm = (char_u *)skipwhite((char *)nm);
 
   // Only accept "funcname", "funcname ", "funcname (..." and
   // "funcname(...", not "funcname!...".
@@ -2702,7 +2702,7 @@ void ex_delfunction(exarg_T *eap)
     }
     return;
   }
-  if (!ends_excmd(*skipwhite(p))) {
+  if (!ends_excmd(*skipwhite((char *)p))) {
     xfree(name);
     emsg(_(e_trailing));
     return;
@@ -2958,7 +2958,7 @@ void ex_call(exarg_T *eap)
 
   // Skip white space to allow ":call func ()".  Not good, but required for
   // backward compatibility.
-  startarg = skipwhite(arg);
+  startarg = (char_u *)skipwhite((char *)arg);
   rettv.v_type = VAR_UNKNOWN;  // tv_clear() uses this.
 
   if (*startarg != '(') {

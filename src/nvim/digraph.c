@@ -1646,7 +1646,7 @@ bool check_digraph_chars_valid(int char1, int char2)
 {
   if (char2 == 0) {
     char_u msg[MB_MAXBYTES + 1];
-    msg[utf_char2bytes(char1, msg)] = NUL;
+    msg[utf_char2bytes(char1, (char *)msg)] = NUL;
     semsg(_(e_digraph_must_be_just_two_characters_str), msg);
     return false;
   }
@@ -1664,7 +1664,7 @@ bool check_digraph_chars_valid(int char1, int char2)
 void putdigraph(char_u *str)
 {
   while (*str != NUL) {
-    str = skipwhite(str);
+    str = (char_u *)skipwhite((char *)str);
 
     if (*str == NUL) {
       return;
@@ -1676,7 +1676,7 @@ void putdigraph(char_u *str)
       return;
     }
 
-    str = skipwhite(str);
+    str = (char_u *)skipwhite((char *)str);
 
     if (!ascii_isdigit(*str)) {
       emsg(_(e_number_exp));
@@ -1745,7 +1745,7 @@ static void digraph_getlist_appendpair(const digr_T *dp, list_T *l)
   tv_list_append_string(l2, (char *)buf, -1);
 
   char_u *p = buf;
-  p += utf_char2bytes(dp->result, p);
+  p += utf_char2bytes(dp->result, (char *)p);
   *p = NUL;
   tv_list_append_string(l2, (char *)buf, -1);
 }
@@ -1853,7 +1853,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
     if (utf_iscomposing(dp->result)) {
       *p++ = ' ';
     }
-    p += utf_char2bytes(dp->result, p);
+    p += utf_char2bytes(dp->result, (char *)p);
 
     *p = NUL;
     msg_outtrans_attr(buf, HL_ATTR(HLF_8));
@@ -1933,7 +1933,7 @@ void f_digraph_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int code = digraph_get(digraphs[0], digraphs[1], false);
 
   char_u buf[NUMBUFLEN];
-  buf[utf_char2bytes(code, buf)] = NUL;
+  buf[utf_char2bytes(code, (char *)buf)] = NUL;
   rettv->vval.v_string = (char *)vim_strsave(buf);
 }
 
@@ -2093,13 +2093,13 @@ void ex_loadkeymap(exarg_T *eap)
       break;
     }
 
-    char_u *p = skipwhite(line);
+    char_u *p = (char_u *)skipwhite((char *)line);
 
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
       s = skiptowhite(p);
       kp->from = vim_strnsave(p, (size_t)(s - p));
-      p = skipwhite(s);
+      p = (char_u *)skipwhite((char *)s);
       s = skiptowhite(p);
       kp->to = vim_strnsave(p, (size_t)(s - p));
 

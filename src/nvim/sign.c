@@ -1172,7 +1172,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
 
   // set values for a defined sign.
   for (;;) {
-    arg = skipwhite(p);
+    arg = (char_u *)skipwhite((char *)p);
     if (*arg == NUL) {
       break;
     }
@@ -1343,7 +1343,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
       *signid = -1;
       arg = arg1;
     } else {
-      arg = skipwhite(arg);
+      arg = (char_u *)skipwhite((char *)arg);
     }
   }
 
@@ -1391,7 +1391,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
       arg += 7;
       filename = arg;
       *buf = buflist_findnr(getdigits_int(&arg, true, 0));
-      if (*skipwhite(arg) != NUL) {
+      if (*skipwhite((char *)arg) != NUL) {
         emsg(_(e_trailing));
       }
       break;
@@ -1399,7 +1399,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
       emsg(_(e_invarg));
       return FAIL;
     }
-    arg = skipwhite(arg);
+    arg = (char_u *)skipwhite((char *)arg);
   }
 
   if (filename != NULL && *buf == NULL) {
@@ -1431,7 +1431,7 @@ void ex_sign(exarg_T *eap)
     semsg(_("E160: Unknown sign command: %s"), arg);
     return;
   }
-  arg = skipwhite(p);
+  arg = (char_u *)skipwhite((char *)p);
 
   if (idx <= SIGNCMD_LIST) {
     // Define, undefine or list signs.
@@ -1799,7 +1799,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   // :sign {subcmd} {subcmd_args}
   //                |
   //                begin_subcmd_args
-  begin_subcmd_args = skipwhite(end_subcmd);
+  begin_subcmd_args = (char_u *)skipwhite((char *)end_subcmd);
 
   // Expand last argument of subcmd.
   //
@@ -1810,7 +1810,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   // Loop until reaching last argument.
   char_u *p = begin_subcmd_args;
   do {
-    p = skipwhite(p);
+    p = (char_u *)skipwhite((char *)p);
     last = p;
     p = skiptowhite(p);
   } while (*p != NUL);

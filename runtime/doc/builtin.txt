@@ -179,8 +179,12 @@ getcharmod()			Number	modifiers for the last typed character
 getcharpos({expr})		List	position of cursor, mark, etc.
 getcharsearch()			Dict	last character search
 getcharstr([expr])		String	get one character from the user
+getcmdcompltype()		String	return the type of the current
+					command-line completion
 getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
+getcmdscreenpos()		Number	return cursor screen position in
+					command-line
 getcmdtype()			String	return current command-line type
 getcmdwintype()			String	return current command-line window type
 getcompletion({pat}, {type} [, {filtered}])
@@ -2792,6 +2796,13 @@ getcharstr([expr])					*getcharstr()*
 		Otherwise this works like |getchar()|, except that a number
 		result is converted to a string.
 
+getcmdcompltype()					*getcmdcompltype()*
+		Return the type of the current command-line completion.
+		Only works when the command line is being edited, thus
+		requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
+		See |command-completion| for the return string.
+		Also see |getcmdtype()|, |setcmdpos()| and |getcmdline()|.
+		Returns an empty string when completion is not defined.
 
 getcmdline()						*getcmdline()*
 		Return the current command-line.  Only works when the command
@@ -2810,6 +2821,15 @@ getcmdpos()						*getcmdpos()*
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 		Returns 0 otherwise.
 		Also see |getcmdtype()|, |setcmdpos()| and |getcmdline()|.
+
+getcmdscreenpos()					*getcmdscreenpos()*
+		Return the screen position of the cursor in the command line
+		as a byte count.  The first column is 1.
+		Instead of |getcmdpos()|, it adds the prompt position.
+		Only works when editing the command line, thus requires use of
+		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
+		Returns 0 otherwise.
+		Also see |getcmdpos()|, |setcmdpos()|.
 
 getcmdtype()						*getcmdtype()*
 		Return the current command-line type. Possible return values

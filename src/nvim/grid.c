@@ -2,10 +2,10 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/arabic.h"
-#include "nvim/highlight.h"
-#include "nvim/vim.h"
 #include "nvim/grid.h"
+#include "nvim/highlight.h"
 #include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "grid.c.generated.h"
@@ -39,12 +39,12 @@ void grid_adjust(ScreenGrid **grid, int *row_off, int *col_off)
 /// Put a unicode char, and up to MAX_MCO composing chars, in a screen cell.
 int schar_from_cc(char_u *p, int c, int u8cc[MAX_MCO])
 {
-  int len = utf_char2bytes(c, p);
+  int len = utf_char2bytes(c, (char *)p);
   for (int i = 0; i < MAX_MCO; i++) {
     if (u8cc[i] == 0) {
       break;
     }
-    len += utf_char2bytes(u8cc[i], p + len);
+    len += utf_char2bytes(u8cc[i], (char *)p + len);
   }
   p[len] = 0;
   return len;
@@ -113,10 +113,10 @@ int grid_fix_col(ScreenGrid *grid, int col, int row)
 /// output a single character directly to the grid
 void grid_putchar(ScreenGrid *grid, int c, int row, int col, int attr)
 {
-  char_u buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXBYTES + 1];
 
   buf[utf_char2bytes(c, buf)] = NUL;
-  grid_puts(grid, buf, row, col, attr);
+  grid_puts(grid, (char_u *)buf, row, col, attr);
 }
 
 /// get a single character directly from grid.chars into "bytes[]".
@@ -705,4 +705,3 @@ void grid_free_all_mem(void)
   xfree(linebuf_char);
   xfree(linebuf_attr);
 }
-

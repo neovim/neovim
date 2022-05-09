@@ -1205,11 +1205,11 @@ static void get_wincmd_addr_type(char *arg, exarg_T *eap)
 static char *skip_colon_white(const char *p, bool skipleadingwhite)
 {
   if (skipleadingwhite) {
-    p = (char *)skipwhite((char_u *)p);
+    p = skipwhite(p);
   }
 
   while (*p == ':') {
-    p = (char *)skipwhite((char_u *)p + 1);
+    p = skipwhite(p + 1);
   }
 
   return (char *)p;
@@ -1231,7 +1231,7 @@ static void set_cmd_addr_type(exarg_T *eap, char_u *p)
   }
   // :wincmd range depends on the argument
   if (eap->cmdidx == CMD_wincmd && p != NULL) {
-    get_wincmd_addr_type((char *)skipwhite(p), eap);
+    get_wincmd_addr_type(skipwhite((char *)p), eap);
   }
   // :.cc in quickfix window uses line number
   if ((eap->cmdidx == CMD_cc || eap->cmdidx == CMD_ll) && bt_quickfix(curbuf)) {
@@ -1315,7 +1315,7 @@ static void parse_register(exarg_T *eap)
         }
         eap->arg += STRLEN(eap->arg);
       }
-      eap->arg = (char *)skipwhite((char_u *)eap->arg);
+      eap->arg = skipwhite(eap->arg);
     }
   }
 }
@@ -1331,7 +1331,7 @@ static int parse_count(exarg_T *eap, char **errormsg, bool validate)
       && (!(eap->argt & EX_BUFNAME) || *(p = (char *)skipdigits((char_u *)eap->arg + 1)) == NUL
           || ascii_iswhite(*p))) {
     n = getdigits_long((char_u **)&eap->arg, false, -1);
-    eap->arg = (char *)skipwhite((char_u *)eap->arg);
+    eap->arg = skipwhite(eap->arg);
     if (n <= 0 && (eap->argt & EX_ZEROR) == 0) {
       if (errormsg != NULL) {
         *errormsg = _(e_zerocount);
@@ -1422,7 +1422,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   // Skip ranges to find command name since we need the command to know what kind of range it uses
   eap->cmd = skip_range(eap->cmd, NULL);
   if (*eap->cmd == '*') {
-    eap->cmd = (char *)skipwhite((char_u *)eap->cmd + 1);
+    eap->cmd = skipwhite(eap->cmd + 1);
   }
   p = find_command(eap, NULL);
 
@@ -1467,7 +1467,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   if (eap->cmdidx == CMD_bang) {
     eap->arg = p;
   } else {
-    eap->arg = (char *)skipwhite((char_u *)p);
+    eap->arg = skipwhite(p);
   }
 
   // Don't treat ":r! filter" like a bang
@@ -1604,7 +1604,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   cmd = ea.cmd;
   ea.cmd = skip_range(ea.cmd, NULL);
   if (*ea.cmd == '*') {
-    ea.cmd = (char *)skipwhite((char_u *)ea.cmd + 1);
+    ea.cmd = skipwhite(ea.cmd + 1);
   }
   p = find_command(&ea, NULL);
 
@@ -1882,7 +1882,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   if (ea.cmdidx == CMD_bang) {
     ea.arg = p;
   } else {
-    ea.arg = (char *)skipwhite((char_u *)p);
+    ea.arg = skipwhite(p);
   }
 
   // ":file" cannot be run with an argument when "curbuf->b_ro_locked" is set
@@ -1909,7 +1909,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
         errormsg = _("E494: Use w or w>>");
         goto doend;
       }
-      ea.arg = (char *)skipwhite((char_u *)ea.arg + 1);
+      ea.arg = skipwhite(ea.arg + 1);
       ea.append = true;
     } else if (*ea.arg == '!' && ea.cmdidx == CMD_write) {  // :w !filter
       ++ea.arg;
@@ -1933,7 +1933,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       ea.arg++;
       ea.amount++;
     }
-    ea.arg = (char *)skipwhite((char_u *)ea.arg);
+    ea.arg = skipwhite(ea.arg);
   }
 
   /*
@@ -2133,7 +2133,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       goto doend;
     }
     ea.addr_count = 1;
-    ea.arg = (char *)skipwhite((char_u *)p);
+    ea.arg = skipwhite(p);
   }
 
   // The :try command saves the emsg_silent flag, reset it here when
@@ -2343,7 +2343,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
       }
       if (*p == '!') {
         cmdmod.filter_force = true;
-        p = (char *)skipwhite((char_u *)p + 1);
+        p = skipwhite(p + 1);
         if (*p == NUL || ends_excmd(*p)) {
           break;
         }
@@ -2433,7 +2433,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
       }
       if (*eap->cmd == '!' && !ascii_iswhite(eap->cmd[-1])) {
         // ":silent!", but not "silent !cmd"
-        eap->cmd = (char *)skipwhite((char_u *)eap->cmd + 1);
+        eap->cmd = skipwhite(eap->cmd + 1);
         if (!skip_only) {
           emsg_silent++;
           eap->did_esilent++;
@@ -2598,7 +2598,7 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
       // Will give an error later if a range is found.
       break;
     }
-    eap->cmd = (char *)skipwhite((char_u *)eap->cmd);
+    eap->cmd = skipwhite(eap->cmd);
     lnum = get_address(eap, &eap->cmd, eap->addr_type, eap->skip, silent,
                        eap->addr_count == 0, address_count++);
     if (eap->cmd == NULL) {  // error detected
@@ -2738,7 +2738,7 @@ int checkforcmd(char **pp, char *cmd, int len)
     }
   }
   if (i >= len && !isalpha((*pp)[i])) {
-    *pp = (char *)skipwhite((char_u *)(*pp) + i);
+    *pp = skipwhite(*pp + i);
     return true;
   }
   return FALSE;
@@ -3032,7 +3032,7 @@ int modifier_len(char *cmd)
   char *p = cmd;
 
   if (ascii_isdigit(*cmd)) {
-    p = (char *)skipwhite(skipdigits((char_u *)cmd + 1));
+    p = skipwhite((char *)skipdigits((char_u *)cmd + 1));
   }
   for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
     int j;
@@ -3083,7 +3083,7 @@ int cmd_exists(const char *const name)
   if (ascii_isdigit(*name) && ea.cmdidx != CMD_match) {
     return 0;
   }
-  if (*skipwhite((char_u *)p) != NUL) {
+  if (*skipwhite(p) != NUL) {
     return 0;           // trailing garbage
   }
   return ea.cmdidx == CMD_SIZE ? 0 : (full ? 2 : 1);
@@ -3266,7 +3266,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
   }
 
-  const char *arg = (const char *)skipwhite((const char_u *)p);
+  const char *arg = (const char *)skipwhite(p);
 
   // Skip over ++argopt argument
   if ((ea.argt & EX_ARGOPT) && *arg != NUL && strncmp(arg, "++", 2) == 0) {
@@ -3274,7 +3274,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     while (*p && !ascii_isspace(*p)) {
       MB_PTR_ADV(p);
     }
-    arg = (const char *)skipwhite((const char_u *)p);
+    arg = (const char *)skipwhite(p);
   }
 
   if (ea.cmdidx == CMD_write || ea.cmdidx == CMD_update) {
@@ -3282,7 +3282,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       if (*++arg == '>') {
         arg++;
       }
-      arg = (const char *)skipwhite((const char_u *)arg);
+      arg = (const char *)skipwhite(arg);
     } else if (*arg == '!' && ea.cmdidx == CMD_write) {  // :w !filter
       arg++;
       usefilter = true;
@@ -3301,7 +3301,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     while (*arg == *cmd) {  // allow any number of '>' or '<'
       arg++;
     }
-    arg = (const char *)skipwhite((const char_u *)arg);
+    arg = (const char *)skipwhite(arg);
   }
 
   // Does command allow "+command"?
@@ -3316,7 +3316,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     }
 
     // Skip space(s) after +command to get to the real argument.
-    arg = (const char *)skipwhite((const char_u *)arg);
+    arg = (const char *)skipwhite(arg);
   }
 
   /*
@@ -3378,7 +3378,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
      * Allow spaces within back-quotes to count as part of the argument
      * being expanded.
      */
-    xp->xp_pattern = (char *)skipwhite((const char_u *)arg);
+    xp->xp_pattern = skipwhite(arg);
     p = (const char *)xp->xp_pattern;
     while (*p != NUL) {
       c = utf_ptr2char(p);
@@ -3431,7 +3431,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       xp->xp_shell = TRUE;
 #endif
       // When still after the command name expand executables.
-      if ((char_u *)xp->xp_pattern == skipwhite((const char_u *)arg)) {
+      if ((char_u *)xp->xp_pattern == (char_u *)skipwhite(arg)) {
         xp->xp_context = EXPAND_SHELLCMD;
       }
     }
@@ -3536,13 +3536,13 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
       xp->xp_context = EXPAND_NOTHING;
       return NULL;
     }
-    return (const char *)skipwhite((const char_u *)arg);
+    return (const char *)skipwhite(arg);
 
   case CMD_match:
     if (*arg == NUL || !ends_excmd(*arg)) {
       // also complete "None"
       set_context_in_echohl_cmd(xp, arg);
-      arg = (const char *)skipwhite(skiptowhite((const char_u *)arg));
+      arg = (const char *)skipwhite((char *)skiptowhite((const char_u *)arg));
       if (*arg != NUL) {
         xp->xp_context = EXPAND_NOTHING;
         arg = (const char *)skip_regexp((char_u *)arg + 1, (uint8_t)(*arg),
@@ -3587,7 +3587,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
         }
         return NULL;
       }
-      arg = (const char *)skipwhite((char_u *)p);
+      arg = (const char *)skipwhite(p);
     }
 
     // After the attributes comes the new command name.
@@ -3599,7 +3599,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
     }
 
     // And finally comes a normal command.
-    return (const char *)skipwhite((const char_u *)p);
+    return (const char *)skipwhite(p);
 
   case CMD_delcommand:
     xp->xp_context = EXPAND_USER_COMMANDS;
@@ -3660,7 +3660,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_isplit:
   case CMD_dsplit:
     // Skip count.
-    arg = (const char *)skipwhite(skipdigits((const char_u *)arg));
+    arg = (const char *)skipwhite((char *)skipdigits((const char_u *)arg));
     if (*arg == '/') {  // Match regexp, not just whole words.
       for (++arg; *arg && *arg != '/'; arg++) {
         if (*arg == '\\' && arg[1] != NUL) {
@@ -3668,7 +3668,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
         }
       }
       if (*arg) {
-        arg = (const char *)skipwhite((const char_u *)arg + 1);
+        arg = (const char *)skipwhite(arg + 1);
 
         // Check for trailing illegal characters.
         if (*arg && strchr("|\"\n", *arg) == NULL) {
@@ -3946,7 +3946,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
           || strncmp(arg, "time", (size_t)(p - arg)) == 0
           || strncmp(arg, "collate", (size_t)(p - arg)) == 0) {
         xp->xp_context = EXPAND_LOCALES;
-        xp->xp_pattern = (char *)skipwhite((const char_u *)p);
+        xp->xp_pattern = skipwhite(p);
       } else {
         xp->xp_context = EXPAND_NOTHING;
       }
@@ -4078,7 +4078,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
   linenr_T lnum;
   buf_T *buf;
 
-  cmd = (char *)skipwhite((char_u *)(*ptr));
+  cmd = skipwhite(*ptr);
   lnum = MAXLNUM;
   do {
     switch (*cmd) {
@@ -4291,7 +4291,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
     }
 
     for (;;) {
-      cmd = (char *)skipwhite((char_u *)cmd);
+      cmd = skipwhite(cmd);
       if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd)) {
         break;
       }
@@ -4389,7 +4389,7 @@ static void get_flags(exarg_T *eap)
     } else {
       eap->flags |= EXFLAG_NR;
     }
-    eap->arg = (char *)skipwhite((char_u *)eap->arg + 1);
+    eap->arg = skipwhite(eap->arg + 1);
   }
 }
 
@@ -4567,7 +4567,7 @@ static char *replace_makeprg(exarg_T *eap, char *p, char **cmdlinep)
       }
     }
 
-    p = (char *)skipwhite((char_u *)p);
+    p = skipwhite(p);
 
     if ((pos = strstr(program, "$*")) != NULL) {
       // replace $* by given arguments
@@ -4892,7 +4892,7 @@ static char *getargcmd(char **argp)
       }
     }
 
-    arg = (char *)skipwhite((char_u *)arg);       // skip over spaces
+    arg = skipwhite(arg);       // skip over spaces
     *argp = arg;
   }
   return command;
@@ -4952,14 +4952,14 @@ static int getargopt(exarg_T *eap)
     if (!checkforcmd(&arg, "binary", 3)) {
       return FAIL;
     }
-    eap->arg = (char *)skipwhite((char_u *)arg);
+    eap->arg = skipwhite(arg);
     return OK;
   }
 
   // ":read ++edit file"
   if (STRNCMP(arg, "edit", 4) == 0) {
     eap->read_edit = true;
-    eap->arg = (char *)skipwhite((char_u *)arg + 4);
+    eap->arg = skipwhite(arg + 4);
     return OK;
   }
 
@@ -4988,7 +4988,7 @@ static int getargopt(exarg_T *eap)
   arg++;
   *pp = (int)(arg - eap->cmd);
   arg = skip_cmd_arg(arg, false);
-  eap->arg = (char *)skipwhite((char_u *)arg);
+  eap->arg = skipwhite(arg);
   *arg = NUL;
 
   if (pp == &eap->force_ff) {
@@ -5077,7 +5077,7 @@ static int get_tabpage_arg(exarg_T *eap)
       tab_number = 0;
     } else {
       tab_number = (int)eap->line2;
-      if (!unaccept_arg0 && *skipwhite((char_u *)(*eap->cmdlinep)) == '-') {
+      if (!unaccept_arg0 && *skipwhite(*eap->cmdlinep) == '-') {
         tab_number--;
         if (tab_number < unaccept_arg0) {
           eap->errmsg = e_invarg;
@@ -5280,7 +5280,7 @@ char_u *find_nextcmd(const char_u *p)
 /// @return  NULL if it isn't, the following character if it is.
 char_u *check_nextcmd(char_u *p)
 {
-  char *s = (char *)skipwhite(p);
+  char *s = skipwhite((char *)p);
 
   if (*s == '|' || *s == '\n') {
     return (char_u *)(s + 1);
@@ -5362,7 +5362,7 @@ int uc_add_command(char *name, size_t name_len, char *rep, uint32_t argt, long d
   char *rep_buf = NULL;
   garray_T *gap;
 
-  replace_termcodes((char_u *)rep, STRLEN(rep), (char_u **)&rep_buf, 0, NULL, CPO_TO_CPO_FLAGS);
+  replace_termcodes(rep, STRLEN(rep), &rep_buf, 0, NULL, CPO_TO_CPO_FLAGS);
   if (rep_buf == NULL) {
     // Can't replace termcodes - try using the string as is
     rep_buf = xstrdup(rep);
@@ -5859,7 +5859,7 @@ static void ex_command(exarg_T *eap)
                      &addr_type_arg) == FAIL) {
       return;
     }
-    p = (char *)skipwhite((char_u *)end);
+    p = skipwhite(end);
   }
 
   // Get the name (if any) and skip to the following argument.
@@ -5873,7 +5873,7 @@ static void ex_command(exarg_T *eap)
 
   // If there is nothing after the name, and no attributes were specified,
   // we are listing commands
-  p = (char *)skipwhite((char_u *)end);
+  p = skipwhite(end);
   if (!has_attr && ends_excmd(*p)) {
     uc_list(name, name_len);
   } else if (!ASCII_ISUPPER(*name)) {
@@ -5923,7 +5923,7 @@ static void ex_delcommand(exarg_T *eap)
 
   if (STRNCMP(arg, "-buffer", 7) == 0 && ascii_iswhite(arg[7])) {
     buffer_only = true;
-    arg = (char *)skipwhite((char_u *)arg + 7);
+    arg = skipwhite(arg + 7);
   }
 
   gap = &curbuf->b_ucmds;
@@ -5968,7 +5968,7 @@ static void ex_delcommand(exarg_T *eap)
 /// @param[out] len Length of string in {buf}
 ///
 /// @return true if iteration is complete, else false
-bool uc_split_args_iter(const char_u *arg, size_t arglen, size_t *end, char *buf, size_t *len)
+bool uc_split_args_iter(const char *arg, size_t arglen, size_t *end, char *buf, size_t *len)
 {
   if (!arglen) {
     return true;
@@ -5982,9 +5982,9 @@ bool uc_split_args_iter(const char_u *arg, size_t arglen, size_t *end, char *buf
   size_t l = 0;
   for (; pos < arglen - 1; pos++) {
     if (arg[pos] == '\\' && (arg[pos + 1] == '\\' || ascii_iswhite(arg[pos + 1]))) {
-      buf[l++] = (char)arg[++pos];
+      buf[l++] = arg[++pos];
     } else {
-      buf[l++] = (char)arg[pos];
+      buf[l++] = arg[pos];
       if (ascii_iswhite(arg[pos + 1])) {
         *end = pos + 1;
         *len = l;
@@ -5994,7 +5994,7 @@ bool uc_split_args_iter(const char_u *arg, size_t arglen, size_t *end, char *buf
   }
 
   if (pos < arglen && !ascii_iswhite(arg[pos])) {
-    buf[l++] = (char)arg[pos];
+    buf[l++] = arg[pos];
   }
 
   *len = l;
@@ -6024,7 +6024,7 @@ static char *uc_split_args(char *arg, size_t *lenp)
       len += 2;
       p += 1;
     } else if (ascii_iswhite(*p)) {
-      p = (char *)skipwhite((char_u *)p);
+      p = skipwhite(p);
       if (*p == NUL) {
         break;
       }
@@ -6054,7 +6054,7 @@ static char *uc_split_args(char *arg, size_t *lenp)
       *q++ = '\\';
       *q++ = *p++;
     } else if (ascii_iswhite(*p)) {
-      p = (char *)skipwhite((char_u *)p);
+      p = skipwhite(p);
       if (*p == NUL) {
         break;
       }
@@ -7856,7 +7856,7 @@ static void ex_syncbind(exarg_T *eap)
 
       ctrl_o[0] = Ctrl_O;
       ctrl_o[1] = 0;
-      ins_typebuf((char_u *)ctrl_o, REMAP_NONE, 0, true, false);
+      ins_typebuf(ctrl_o, REMAP_NONE, 0, true, false);
     }
   }
 }
@@ -8190,7 +8190,7 @@ static void ex_winsize(exarg_T *eap)
     return;
   }
   int w = getdigits_int((char_u **)&arg, false, 10);
-  arg = (char *)skipwhite((char_u *)arg);
+  arg = skipwhite(arg);
   char *p = arg;
   int h = getdigits_int((char_u **)&arg, false, 10);
   if (*p != NUL && *arg == NUL) {
@@ -8218,7 +8218,7 @@ static void ex_wincmd(exarg_T *eap)
   }
 
   eap->nextcmd = (char *)check_nextcmd((char_u *)p);
-  p = (char *)skipwhite((char_u *)p);
+  p = skipwhite(p);
   if (*p != NUL && *p != '"' && eap->nextcmd == NULL) {
     emsg(_(e_invarg));
   } else if (!eap->skip) {
@@ -8515,7 +8515,7 @@ static void ex_redir(exarg_T *eap)
       } else {
         mode = "w";
       }
-      arg = (char *)skipwhite((char_u *)arg);
+      arg = skipwhite(arg);
 
       close_redir();
 
@@ -8565,7 +8565,7 @@ static void ex_redir(exarg_T *eap)
         append = FALSE;
       }
 
-      if (var_redir_start((char *)skipwhite((char_u *)arg), append) == OK) {
+      if (var_redir_start(skipwhite(arg), append) == OK) {
         redir_vname = 1;
       }
     } else {  // TODO(vim): redirect to a buffer
@@ -8930,7 +8930,7 @@ static void ex_stopinsert(exarg_T *eap)
 void exec_normal_cmd(char_u *cmd, int remap, bool silent)
 {
   // Stuff the argument into the typeahead buffer.
-  ins_typebuf(cmd, remap, 0, true, silent);
+  ins_typebuf((char *)cmd, remap, 0, true, silent);
   exec_normal(false);
 }
 
@@ -8996,7 +8996,7 @@ static void ex_findpat(exarg_T *eap)
   n = 1;
   if (ascii_isdigit(*eap->arg)) {  // get count
     n = getdigits_long((char_u **)&eap->arg, false, 0);
-    eap->arg = (char *)skipwhite((char_u *)eap->arg);
+    eap->arg = skipwhite(eap->arg);
   }
   if (*eap->arg == '/') {   // Match regexp, not just whole words
     whole = false;
@@ -9004,7 +9004,7 @@ static void ex_findpat(exarg_T *eap)
     p = (char *)skip_regexp((char_u *)eap->arg, '/', p_magic, NULL);
     if (*p) {
       *p++ = NUL;
-      p = (char *)skipwhite((char_u *)p);
+      p = skipwhite(p);
 
       // Check for trailing illegal characters.
       if (!ends_excmd(*p)) {
@@ -9660,12 +9660,12 @@ static void ex_filetype(exarg_T *eap)
   for (;;) {
     if (STRNCMP(arg, "plugin", 6) == 0) {
       plugin = true;
-      arg = (char *)skipwhite((char_u *)arg + 6);
+      arg = skipwhite(arg + 6);
       continue;
     }
     if (STRNCMP(arg, "indent", 6) == 0) {
       indent = true;
-      arg = (char *)skipwhite((char_u *)arg + 6);
+      arg = skipwhite(arg + 6);
       continue;
     }
     break;
@@ -9885,7 +9885,7 @@ bool cmd_can_preview(char *cmd)
   // parse the command line
   ea.cmd = skip_range(cmd, NULL);
   if (*ea.cmd == '*') {
-    ea.cmd = (char *)skipwhite((char_u *)ea.cmd + 1);
+    ea.cmd = skipwhite(ea.cmd + 1);
   }
   char *end = find_command(&ea, NULL);
 
