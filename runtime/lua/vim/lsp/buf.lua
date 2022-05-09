@@ -783,8 +783,8 @@ end
 ---          - diagnostics (table|nil):
 ---                        LSP `Diagnostic[]`. Inferred from the current
 ---                        position if not provided.
----          - only (string|nil):
----                 LSP `CodeActionKind` used to filter the code actions.
+---          - only (table|nil):
+---                 List of LSP `CodeActionKind`s used to filter the code actions.
 ---                 Most language servers support values like `refactor`
 ---                 or `quickfix`.
 ---    - filter (function|nil):
@@ -817,8 +817,8 @@ end
 ---               - diagnostics: (table|nil)
 ---                             LSP `Diagnostic[]`. Inferred from the current
 ---                             position if not provided.
----               - only: (string|nil)
----                      LSP `CodeActionKind` used to filter the code actions.
+---               - only: (table|nil)
+---                      List of LSP `CodeActionKind`s used to filter the code actions.
 ---                      Most language servers support values like `refactor`
 ---                      or `quickfix`.
 ---@param start_pos ({number, number}, optional) mark-indexed position.

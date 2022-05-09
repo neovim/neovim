@@ -985,10 +985,10 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                                • context (table|nil): Corresponds to `CodeActionContext` of the LSP specification:
                                  • diagnostics (table|nil): LSP`Diagnostic[]` . Inferred from the current position if not
                                    provided.
-                                 • only (string|nil): LSP `CodeActionKind`
-                                   used to filter the code actions. Most
-                                   language servers support values like
-                                   `refactor` or `quickfix`.
+                                 • only (table|nil): List of LSP
+                                   `CodeActionKind`s used to filter the code
+                                   actions. Most language servers support
+                                   values like `refactor` or `quickfix`.
 
                                • filter (function|nil): Predicate function
                                  taking an `CodeAction` and returning a
@@ -1183,10 +1183,10 @@ range_code_action({context}, {start_pos}, {end_pos})
                     {context}    table|nil `CodeActionContext` of the LSP specification:
                                  • diagnostics: (table|nil) LSP`Diagnostic[]` . Inferred from the current position if not
                                    provided.
-                                 • only: (string|nil) LSP `CodeActionKind`
-                                   used to filter the code actions. Most
-                                   language servers support values like
-                                   `refactor` or `quickfix`.
+                                 • only: (table|nil) List of LSP
+                                   `CodeActionKind`s used to filter the code
+                                   actions. Most language servers support
+                                   values like `refactor` or `quickfix`.
                     {start_pos}  ({number, number}, optional) mark-indexed
                                  position. Defaults to the start of the last
                                  visual selection.
