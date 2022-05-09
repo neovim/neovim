@@ -1166,11 +1166,13 @@ func Test_edit_MOUSE()
   call getchar() " discard mouse event but keep mouse position
   call feedkeys("A\<LeftMouse>\<esc>", 'tnix')
   call assert_equal([0, 27, 2, 0], getpos('.'))
+  set mousemodel=extend
   " call test_setmouse(5, 3)
   call nvim_input_mouse('right', 'press', '', 0, 4, 2) " set mouse position
   call getchar() " discard mouse event but keep mouse position
   call feedkeys("A\<RightMouse>\<esc>\<esc>", 'tnix')
   call assert_equal([0, 28, 2, 0], getpos('.'))
+  set mousemodel&
   call cursor(1, 100)
   norm! zt
   " this should move by a screen up, but when the test
