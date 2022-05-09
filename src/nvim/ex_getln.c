@@ -4683,7 +4683,7 @@ char_u *addstar(char_u *fname, size_t len, int context)
  *  EXPAND_ENV_VARS         Complete environment variable names
  *  EXPAND_USER             Complete user names
  */
-static void set_expand_context(expand_T *xp)
+void set_expand_context(expand_T *xp)
 {
   // only expansion for ':', '>' and '=' command-lines
   if (ccline.cmdfirstc != ':'
@@ -5949,6 +5949,25 @@ static struct cmdline_info *get_ccline_ptr(void)
   }
 }
 
+/// Get the current command-line completion type.
+char_u *get_cmdline_completion(void)
+{
+  if (cmdline_star > 0) {
+    return NULL;
+  }
+  struct cmdline_info *p = get_ccline_ptr();
+
+  if (p != NULL && p->xpc != NULL) {
+    set_expand_context(p->xpc);
+    char_u *cmd_compl = get_user_cmd_complete(p->xpc, p->xpc->xp_context);
+    if (cmd_compl != NULL) {
+      return vim_strsave(cmd_compl);
+    }
+  }
+
+  return NULL;
+}
+
 /*
  * Get the current command line in allocated memory.
  * Only works when the command line is being edited.
@@ -5981,6 +6000,17 @@ int get_cmdline_pos(void)
     return -1;
   }
   return p->cmdpos;
+}
+
+/// Get the command line cursor screen position.
+int get_cmdline_screen_pos(void)
+{
+  struct cmdline_info *p = get_ccline_ptr();
+
+  if (p == NULL) {
+    return -1;
+  }
+  return p->cmdspos;
 }
 
 /*

@@ -855,8 +855,12 @@ Buffers, windows and the argument list:
 	swapname()		get the swap file path of a buffer
 
 Command line:					*command-line-functions*
+	getcmdcompltype()	get the type of the current command line
+				completion
 	getcmdline()		get the current command line
 	getcmdpos()		get position of the cursor in the command line
+	getcmdscreenpos()	get screen position of the cursor in the
+				command line
 	setcmdpos()		set position of the cursor in the command line
 	getcmdtype()		return the current command-line type
 	getcmdwintype()		return the current command-line window type
