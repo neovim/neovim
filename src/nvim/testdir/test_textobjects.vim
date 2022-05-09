@@ -188,10 +188,18 @@ func Test_string_html_objects()
     call assert_equal("<div><div\nattr=\"attr\"\n></div></div>", @", e)
 
     set quoteescape&
+
+    " this was going beyond the end of the line
+    %del
+    sil! norm i"\
+    sil! norm i"\
+    sil! norm i"\
+    call assert_equal('"\', getline(1))
+
+    bwipe!
   endfor
 
   set enc=utf-8
-  bwipe!
 endfunc
 
 func Test_empty_html_tag()
