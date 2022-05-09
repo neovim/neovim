@@ -23,150 +23,150 @@ end
 local constants = {
   DiagnosticSeverity = {
     -- Reports an error.
-    Error = 1;
+    Error = 1,
     -- Reports a warning.
-    Warning = 2;
+    Warning = 2,
     -- Reports an information.
-    Information = 3;
+    Information = 3,
     -- Reports a hint.
-    Hint = 4;
-  };
+    Hint = 4,
+  },
 
   DiagnosticTag = {
     -- Unused or unnecessary code
-    Unnecessary = 1;
+    Unnecessary = 1,
     -- Deprecated or obsolete code
-    Deprecated = 2;
-  };
+    Deprecated = 2,
+  },
 
   MessageType = {
     -- An error message.
-    Error = 1;
+    Error = 1,
     -- A warning message.
-    Warning = 2;
+    Warning = 2,
     -- An information message.
-    Info = 3;
+    Info = 3,
     -- A log message.
-    Log = 4;
-  };
+    Log = 4,
+  },
 
   -- The file event type.
   FileChangeType = {
     -- The file got created.
-    Created = 1;
+    Created = 1,
     -- The file got changed.
-    Changed = 2;
+    Changed = 2,
     -- The file got deleted.
-    Deleted = 3;
-  };
+    Deleted = 3,
+  },
 
   -- The kind of a completion entry.
   CompletionItemKind = {
-    Text = 1;
-    Method = 2;
-    Function = 3;
-    Constructor = 4;
-    Field = 5;
-    Variable = 6;
-    Class = 7;
-    Interface = 8;
-    Module = 9;
-    Property = 10;
-    Unit = 11;
-    Value = 12;
-    Enum = 13;
-    Keyword = 14;
-    Snippet = 15;
-    Color = 16;
-    File = 17;
-    Reference = 18;
-    Folder = 19;
-    EnumMember = 20;
-    Constant = 21;
-    Struct = 22;
-    Event = 23;
-    Operator = 24;
-    TypeParameter = 25;
-  };
+    Text = 1,
+    Method = 2,
+    Function = 3,
+    Constructor = 4,
+    Field = 5,
+    Variable = 6,
+    Class = 7,
+    Interface = 8,
+    Module = 9,
+    Property = 10,
+    Unit = 11,
+    Value = 12,
+    Enum = 13,
+    Keyword = 14,
+    Snippet = 15,
+    Color = 16,
+    File = 17,
+    Reference = 18,
+    Folder = 19,
+    EnumMember = 20,
+    Constant = 21,
+    Struct = 22,
+    Event = 23,
+    Operator = 24,
+    TypeParameter = 25,
+  },
 
   -- How a completion was triggered
   CompletionTriggerKind = {
     -- Completion was triggered by typing an identifier (24x7 code
     -- complete), manual invocation (e.g Ctrl+Space) or via API.
-    Invoked = 1;
+    Invoked = 1,
     -- Completion was triggered by a trigger character specified by
     -- the `triggerCharacters` properties of the `CompletionRegistrationOptions`.
-    TriggerCharacter = 2;
+    TriggerCharacter = 2,
     -- Completion was re-triggered as the current completion list is incomplete.
-    TriggerForIncompleteCompletions = 3;
-  };
+    TriggerForIncompleteCompletions = 3,
+  },
 
   -- A document highlight kind.
   DocumentHighlightKind = {
     -- A textual occurrence.
-    Text = 1;
+    Text = 1,
     -- Read-access of a symbol, like reading a variable.
-    Read = 2;
+    Read = 2,
     -- Write-access of a symbol, like writing to a variable.
-    Write = 3;
-  };
+    Write = 3,
+  },
 
   -- A symbol kind.
   SymbolKind = {
-    File = 1;
-    Module = 2;
-    Namespace = 3;
-    Package = 4;
-    Class = 5;
-    Method = 6;
-    Property = 7;
-    Field = 8;
-    Constructor = 9;
-    Enum = 10;
-    Interface = 11;
-    Function = 12;
-    Variable = 13;
-    Constant = 14;
-    String = 15;
-    Number = 16;
-    Boolean = 17;
-    Array = 18;
-    Object = 19;
-    Key = 20;
-    Null = 21;
-    EnumMember = 22;
-    Struct = 23;
-    Event = 24;
-    Operator = 25;
-    TypeParameter = 26;
-  };
+    File = 1,
+    Module = 2,
+    Namespace = 3,
+    Package = 4,
+    Class = 5,
+    Method = 6,
+    Property = 7,
+    Field = 8,
+    Constructor = 9,
+    Enum = 10,
+    Interface = 11,
+    Function = 12,
+    Variable = 13,
+    Constant = 14,
+    String = 15,
+    Number = 16,
+    Boolean = 17,
+    Array = 18,
+    Object = 19,
+    Key = 20,
+    Null = 21,
+    EnumMember = 22,
+    Struct = 23,
+    Event = 24,
+    Operator = 25,
+    TypeParameter = 26,
+  },
 
   -- Represents reasons why a text document is saved.
   TextDocumentSaveReason = {
     -- Manually triggered, e.g. by the user pressing save, by starting debugging,
     -- or by an API call.
-    Manual = 1;
+    Manual = 1,
     -- Automatic after a delay.
-    AfterDelay = 2;
+    AfterDelay = 2,
     -- When the editor lost focus.
-    FocusOut = 3;
-  };
+    FocusOut = 3,
+  },
 
   ErrorCodes = {
     -- Defined by JSON RPC
-    ParseError           = -32700;
-    InvalidRequest       = -32600;
-    MethodNotFound       = -32601;
-    InvalidParams        = -32602;
-    InternalError        = -32603;
-    serverErrorStart     = -32099;
-    serverErrorEnd       = -32000;
-    ServerNotInitialized = -32002;
-    UnknownErrorCode     = -32001;
+    ParseError = -32700,
+    InvalidRequest = -32600,
+    MethodNotFound = -32601,
+    InvalidParams = -32602,
+    InternalError = -32603,
+    serverErrorStart = -32099,
+    serverErrorEnd = -32000,
+    ServerNotInitialized = -32002,
+    UnknownErrorCode = -32001,
     -- Defined by the protocol.
-    RequestCancelled     = -32800;
-    ContentModified      = -32801;
-  };
+    RequestCancelled = -32800,
+    ContentModified = -32801,
+  },
 
   -- Describes the content type that a client supports in various
   -- result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
@@ -175,88 +175,88 @@ local constants = {
   -- are reserved for internal usage.
   MarkupKind = {
     -- Plain text is supported as a content format
-    PlainText = 'plaintext';
+    PlainText = 'plaintext',
     -- Markdown is supported as a content format
-    Markdown = 'markdown';
-  };
+    Markdown = 'markdown',
+  },
 
   ResourceOperationKind = {
     -- Supports creating new files and folders.
-    Create = 'create';
+    Create = 'create',
     -- Supports renaming existing files and folders.
-    Rename = 'rename';
+    Rename = 'rename',
     -- Supports deleting existing files and folders.
-    Delete = 'delete';
-  };
+    Delete = 'delete',
+  },
 
   FailureHandlingKind = {
     -- Applying the workspace change is simply aborted if one of the changes provided
     -- fails. All operations executed before the failing operation stay executed.
-    Abort = 'abort';
+    Abort = 'abort',
     -- All operations are executed transactionally. That means they either all
     -- succeed or no changes at all are applied to the workspace.
-    Transactional = 'transactional';
+    Transactional = 'transactional',
     -- If the workspace edit contains only textual file changes they are executed transactionally.
     -- If resource changes (create, rename or delete file) are part of the change the failure
     -- handling strategy is abort.
-    TextOnlyTransactional = 'textOnlyTransactional';
+    TextOnlyTransactional = 'textOnlyTransactional',
     -- The client tries to undo the operations already executed. But there is no
     -- guarantee that this succeeds.
-    Undo = 'undo';
-  };
+    Undo = 'undo',
+  },
 
   -- Known error codes for an `InitializeError`;
   InitializeError = {
     -- If the protocol version provided by the client can't be handled by the server.
     -- @deprecated This initialize error got replaced by client capabilities. There is
     -- no version handshake in version 3.0x
-    unknownProtocolVersion = 1;
-  };
+    unknownProtocolVersion = 1,
+  },
 
   -- Defines how the host (editor) should sync document changes to the language server.
   TextDocumentSyncKind = {
     -- Documents should not be synced at all.
-    None = 0;
+    None = 0,
     -- Documents are synced by always sending the full content
     -- of the document.
-    Full = 1;
+    Full = 1,
     -- Documents are synced by sending the full content on open.
     -- After that only incremental updates to the document are
     -- send.
-    Incremental = 2;
-  };
+    Incremental = 2,
+  },
 
   WatchKind = {
     -- Interested in create events.
-    Create = 1;
+    Create = 1,
     -- Interested in change events
-    Change = 2;
+    Change = 2,
     -- Interested in delete events
-    Delete = 4;
-  };
+    Delete = 4,
+  },
 
   -- Defines whether the insert text in a completion item should be interpreted as
   -- plain text or a snippet.
   InsertTextFormat = {
     -- The primary text to be inserted is treated as a plain string.
-    PlainText = 1;
+    PlainText = 1,
     -- The primary text to be inserted is treated as a snippet.
     --
     -- A snippet can define tab stops and placeholders with `$1`, `$2`
     -- and `${3:foo};`. `$0` defines the final tab stop, it defaults to
     -- the end of the snippet. Placeholders with equal identifiers are linked,
     -- that is typing in one will update others too.
-    Snippet = 2;
-  };
+    Snippet = 2,
+  },
 
   -- A set of predefined code action kinds
   CodeActionKind = {
     -- Empty kind.
-    Empty = '';
+    Empty = '',
     -- Base kind for quickfix actions
-    QuickFix = 'quickfix';
+    QuickFix = 'quickfix',
     -- Base kind for refactoring actions
-    Refactor = 'refactor';
+    Refactor = 'refactor',
     -- Base kind for refactoring extraction actions
     --
     -- Example extract actions:
@@ -266,7 +266,7 @@ local constants = {
     -- - Extract variable
     -- - Extract interface from class
     -- - ...
-    RefactorExtract = 'refactor.extract';
+    RefactorExtract = 'refactor.extract',
     -- Base kind for refactoring inline actions
     --
     -- Example inline actions:
@@ -275,7 +275,7 @@ local constants = {
     -- - Inline variable
     -- - Inline constant
     -- - ...
-    RefactorInline = 'refactor.inline';
+    RefactorInline = 'refactor.inline',
     -- Base kind for refactoring rewrite actions
     --
     -- Example rewrite actions:
@@ -286,14 +286,14 @@ local constants = {
     -- - Make method static
     -- - Move method to base class
     -- - ...
-    RefactorRewrite = 'refactor.rewrite';
+    RefactorRewrite = 'refactor.rewrite',
     -- Base kind for source actions
     --
     -- Source code actions apply to the entire file.
-    Source = 'source';
+    Source = 'source',
     -- Base kind for an organize imports source action
-    SourceOrganizeImports = 'source.organizeImports';
-  };
+    SourceOrganizeImports = 'source.organizeImports',
+  },
 }
 
 for k, v in pairs(constants) do
@@ -620,19 +620,19 @@ function protocol.make_client_capabilities()
   return {
     textDocument = {
       synchronization = {
-        dynamicRegistration = false;
+        dynamicRegistration = false,
 
         -- TODO(ashkan) Send textDocument/willSave before saving (BufWritePre)
-        willSave = false;
+        willSave = false,
 
         -- TODO(ashkan) Implement textDocument/willSaveWaitUntil
-        willSaveWaitUntil = false;
+        willSaveWaitUntil = false,
 
         -- Send textDocument/didSave after saving (BufWritePost)
-        didSave = true;
-      };
+        didSave = true,
+      },
       codeAction = {
-        dynamicRegistration = false;
+        dynamicRegistration = false,
 
         codeActionLiteralSupport = {
           codeActionKind = {
@@ -640,138 +640,146 @@ function protocol.make_client_capabilities()
               local res = vim.tbl_values(protocol.CodeActionKind)
               table.sort(res)
               return res
-            end)();
-          };
-        };
-        isPreferredSupport = true;
-        dataSupport = true;
+            end)(),
+          },
+        },
+        isPreferredSupport = true,
+        dataSupport = true,
         resolveSupport = {
-          properties = { 'edit', }
-        };
-      };
+          properties = { 'edit' },
+        },
+      },
       completion = {
-        dynamicRegistration = false;
+        dynamicRegistration = false,
         completionItem = {
           -- Until we can actually expand snippet, move cursor and allow for true snippet experience,
           -- this should be disabled out of the box.
           -- However, users can turn this back on if they have a snippet plugin.
-          snippetSupport = false;
+          snippetSupport = false,
 
-          commitCharactersSupport = false;
-          preselectSupport = false;
-          deprecatedSupport = false;
-          documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
-        };
+          commitCharactersSupport = false,
+          preselectSupport = false,
+          deprecatedSupport = false,
+          documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
+        },
         completionItemKind = {
           valueSet = (function()
             local res = {}
             for k in ipairs(protocol.CompletionItemKind) do
-              if type(k) == 'number' then table.insert(res, k) end
+              if type(k) == 'number' then
+                table.insert(res, k)
+              end
             end
             return res
-          end)();
-        };
+          end)(),
+        },
 
         -- TODO(tjdevries): Implement this
-        contextSupport = false;
-      };
+        contextSupport = false,
+      },
       declaration = {
-        linkSupport = true;
-      };
+        linkSupport = true,
+      },
       definition = {
-        linkSupport = true;
-      };
+        linkSupport = true,
+      },
       implementation = {
-        linkSupport = true;
-      };
+        linkSupport = true,
+      },
       typeDefinition = {
-        linkSupport = true;
-      };
+        linkSupport = true,
+      },
       hover = {
-        dynamicRegistration = false;
-        contentFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
-      };
+        dynamicRegistration = false,
+        contentFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
+      },
       signatureHelp = {
-        dynamicRegistration = false;
+        dynamicRegistration = false,
         signatureInformation = {
-          activeParameterSupport = true;
-          documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
+          activeParameterSupport = true,
+          documentationFormat = { protocol.MarkupKind.Markdown, protocol.MarkupKind.PlainText },
           parameterInformation = {
-            labelOffsetSupport = true;
-          };
-        };
-      };
+            labelOffsetSupport = true,
+          },
+        },
+      },
       references = {
-        dynamicRegistration = false;
-      };
+        dynamicRegistration = false,
+      },
       documentHighlight = {
-        dynamicRegistration = false
-      };
+        dynamicRegistration = false,
+      },
       documentSymbol = {
-        dynamicRegistration = false;
+        dynamicRegistration = false,
         symbolKind = {
           valueSet = (function()
             local res = {}
             for k in ipairs(protocol.SymbolKind) do
-              if type(k) == 'number' then table.insert(res, k) end
+              if type(k) == 'number' then
+                table.insert(res, k)
+              end
             end
             return res
-          end)();
-        };
-        hierarchicalDocumentSymbolSupport = true;
-      };
+          end)(),
+        },
+        hierarchicalDocumentSymbolSupport = true,
+      },
       rename = {
-        dynamicRegistration = false;
-        prepareSupport = true;
-      };
+        dynamicRegistration = false,
+        prepareSupport = true,
+      },
       publishDiagnostics = {
-        relatedInformation = true;
+        relatedInformation = true,
         tagSupport = {
           valueSet = (function()
             local res = {}
             for k in ipairs(protocol.DiagnosticTag) do
-              if type(k) == 'number' then table.insert(res, k) end
+              if type(k) == 'number' then
+                table.insert(res, k)
+              end
             end
             return res
-          end)();
-        };
-      };
-    };
+          end)(),
+        },
+      },
+    },
     workspace = {
       symbol = {
-        dynamicRegistration = false;
+        dynamicRegistration = false,
         symbolKind = {
           valueSet = (function()
             local res = {}
             for k in ipairs(protocol.SymbolKind) do
-              if type(k) == 'number' then table.insert(res, k) end
+              if type(k) == 'number' then
+                table.insert(res, k)
+              end
             end
             return res
-          end)();
-        };
-        hierarchicalWorkspaceSymbolSupport = true;
-      };
-      workspaceFolders = true;
-      applyEdit = true;
+          end)(),
+        },
+        hierarchicalWorkspaceSymbolSupport = true,
+      },
+      workspaceFolders = true,
+      applyEdit = true,
       workspaceEdit = {
-        resourceOperations = {'rename', 'create', 'delete',},
-      };
-    };
+        resourceOperations = { 'rename', 'create', 'delete' },
+      },
+    },
     callHierarchy = {
-      dynamicRegistration = false;
-    };
-    experimental = nil;
+      dynamicRegistration = false,
+    },
+    experimental = nil,
     window = {
-      workDoneProgress = true;
+      workDoneProgress = true,
       showMessage = {
         messageActionItem = {
-          additionalPropertiesSupport = false;
-        };
-      };
+          additionalPropertiesSupport = false,
+        },
+      },
       showDocument = {
-        support = false;
-      };
-    };
+        support = false,
+      },
+    },
   }
 end
 
@@ -791,12 +799,12 @@ function protocol.resolve_capabilities(server_capabilities)
       willSaveWaitUntil = false,
       save = {
         includeText = false,
-      }
+      },
     }
   elseif type(textDocumentSync) == 'number' then
     -- Backwards compatibility
     if not TextDocumentSyncKind[textDocumentSync] then
-      return nil, "Invalid server TextDocumentSyncKind for textDocumentSync"
+      return nil, 'Invalid server TextDocumentSyncKind for textDocumentSync'
     end
     server_capabilities.textDocumentSync = {
       openClose = true,
@@ -805,10 +813,10 @@ function protocol.resolve_capabilities(server_capabilities)
       willSaveWaitUntil = false,
       save = {
         includeText = false,
-      }
+      },
     }
   elseif type(textDocumentSync) ~= 'table' then
-    return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
+    return nil, string.format('Invalid type for textDocumentSync: %q', type(textDocumentSync))
   end
   return server_capabilities
 end
@@ -827,39 +835,41 @@ function protocol._resolve_capabilities_compat(server_capabilities)
     if textDocumentSync == nil then
       -- Defaults if omitted.
       text_document_sync_properties = {
-        text_document_open_close = false;
-        text_document_did_change = TextDocumentSyncKind.None;
---        text_document_did_change = false;
-        text_document_will_save = false;
-        text_document_will_save_wait_until = false;
-        text_document_save = false;
-        text_document_save_include_text = false;
+        text_document_open_close = false,
+        text_document_did_change = TextDocumentSyncKind.None,
+        --        text_document_did_change = false;
+        text_document_will_save = false,
+        text_document_will_save_wait_until = false,
+        text_document_save = false,
+        text_document_save_include_text = false,
       }
     elseif type(textDocumentSync) == 'number' then
       -- Backwards compatibility
       if not TextDocumentSyncKind[textDocumentSync] then
-        return nil, "Invalid server TextDocumentSyncKind for textDocumentSync"
+        return nil, 'Invalid server TextDocumentSyncKind for textDocumentSync'
       end
       text_document_sync_properties = {
-        text_document_open_close = true;
-        text_document_did_change = textDocumentSync;
-        text_document_will_save = false;
-        text_document_will_save_wait_until = false;
-        text_document_save = true;
-        text_document_save_include_text = false;
+        text_document_open_close = true,
+        text_document_did_change = textDocumentSync,
+        text_document_will_save = false,
+        text_document_will_save_wait_until = false,
+        text_document_save = true,
+        text_document_save_include_text = false,
       }
     elseif type(textDocumentSync) == 'table' then
       text_document_sync_properties = {
-        text_document_open_close = if_nil(textDocumentSync.openClose, false);
-        text_document_did_change = if_nil(textDocumentSync.change, TextDocumentSyncKind.None);
-        text_document_will_save = if_nil(textDocumentSync.willSave, false);
-        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false);
-        text_document_save = if_nil(textDocumentSync.save, false);
-        text_document_save_include_text = if_nil(type(textDocumentSync.save) == 'table'
-                                                and textDocumentSync.save.includeText, false);
+        text_document_open_close = if_nil(textDocumentSync.openClose, false),
+        text_document_did_change = if_nil(textDocumentSync.change, TextDocumentSyncKind.None),
+        text_document_will_save = if_nil(textDocumentSync.willSave, false),
+        text_document_will_save_wait_until = if_nil(textDocumentSync.willSaveWaitUntil, false),
+        text_document_save = if_nil(textDocumentSync.save, false),
+        text_document_save_include_text = if_nil(
+          type(textDocumentSync.save) == 'table' and textDocumentSync.save.includeText,
+          false
+        ),
       }
     else
-      return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
+      return nil, string.format('Invalid type for textDocumentSync: %q', type(textDocumentSync))
     end
   end
   general_properties.completion = server_capabilities.completionProvider ~= nil
@@ -889,16 +899,18 @@ function protocol._resolve_capabilities_compat(server_capabilities)
     general_properties.code_lens = true
     general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
   else
-    error("The server sent invalid codeLensProvider")
+    error('The server sent invalid codeLensProvider')
   end
 
   if server_capabilities.codeActionProvider == nil then
     general_properties.code_action = false
-  elseif type(server_capabilities.codeActionProvider) == 'boolean'
-    or type(server_capabilities.codeActionProvider) == 'table' then
+  elseif
+    type(server_capabilities.codeActionProvider) == 'boolean'
+    or type(server_capabilities.codeActionProvider) == 'table'
+  then
     general_properties.code_action = server_capabilities.codeActionProvider
   else
-    error("The server sent invalid codeActionProvider")
+    error('The server sent invalid codeActionProvider')
   end
 
   if server_capabilities.declarationProvider == nil then
@@ -908,7 +920,7 @@ function protocol._resolve_capabilities_compat(server_capabilities)
   elseif type(server_capabilities.declarationProvider) == 'table' then
     general_properties.declaration = server_capabilities.declarationProvider
   else
-    error("The server sent invalid declarationProvider")
+    error('The server sent invalid declarationProvider')
   end
 
   if server_capabilities.typeDefinitionProvider == nil then
@@ -918,7 +930,7 @@ function protocol._resolve_capabilities_compat(server_capabilities)
   elseif type(server_capabilities.typeDefinitionProvider) == 'table' then
     general_properties.type_definition = server_capabilities.typeDefinitionProvider
   else
-    error("The server sent invalid typeDefinitionProvider")
+    error('The server sent invalid typeDefinitionProvider')
   end
 
   if server_capabilities.implementationProvider == nil then
@@ -928,7 +940,7 @@ function protocol._resolve_capabilities_compat(server_capabilities)
   elseif type(server_capabilities.implementationProvider) == 'table' then
     general_properties.implementation = server_capabilities.implementationProvider
   else
-    error("The server sent invalid implementationProvider")
+    error('The server sent invalid implementationProvider')
   end
 
   local workspace = server_capabilities.workspace
@@ -936,45 +948,45 @@ function protocol._resolve_capabilities_compat(server_capabilities)
   if workspace == nil or workspace.workspaceFolders == nil then
     -- Defaults if omitted.
     workspace_properties = {
-      workspace_folder_properties =  {
-        supported = false;
-        changeNotifications=false;
-      }
+      workspace_folder_properties = {
+        supported = false,
+        changeNotifications = false,
+      },
     }
   elseif type(workspace.workspaceFolders) == 'table' then
     workspace_properties = {
       workspace_folder_properties = {
-        supported = if_nil(workspace.workspaceFolders.supported, false);
-        changeNotifications = if_nil(workspace.workspaceFolders.changeNotifications, false);
-
-      }
+        supported = if_nil(workspace.workspaceFolders.supported, false),
+        changeNotifications = if_nil(workspace.workspaceFolders.changeNotifications, false),
+      },
     }
   else
-    error("The server sent invalid workspace")
+    error('The server sent invalid workspace')
   end
 
   local signature_help_properties
   if server_capabilities.signatureHelpProvider == nil then
     signature_help_properties = {
-      signature_help = false;
-      signature_help_trigger_characters = {};
+      signature_help = false,
+      signature_help_trigger_characters = {},
     }
   elseif type(server_capabilities.signatureHelpProvider) == 'table' then
     signature_help_properties = {
-      signature_help = true;
+      signature_help = true,
       -- The characters that trigger signature help automatically.
-      signature_help_trigger_characters = server_capabilities.signatureHelpProvider.triggerCharacters or {};
+      signature_help_trigger_characters = server_capabilities.signatureHelpProvider.triggerCharacters or {},
     }
   else
-    error("The server sent invalid signatureHelpProvider")
+    error('The server sent invalid signatureHelpProvider')
   end
 
-  local capabilities = vim.tbl_extend("error"
-      , text_document_sync_properties
-      , signature_help_properties
-      , workspace_properties
-      , general_properties
-      )
+  local capabilities = vim.tbl_extend(
+    'error',
+    text_document_sync_properties,
+    signature_help_properties,
+    workspace_properties,
+    general_properties
+  )
 
   return capabilities
 end

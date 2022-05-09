@@ -1,5 +1,5 @@
 local a = vim.api
-local language = require'vim.treesitter.language'
+local language = require('vim.treesitter.language')
 
 -- query: pattern matching on trees
 -- predicate matching is implemented in lua
@@ -43,7 +43,9 @@ function M.get_query_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
   local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
 
-  if #lang_files == 0 then return {} end
+  if #lang_files == 0 then
+    return {}
+  end
 
   local base_langs = {}
 
@@ -52,7 +54,7 @@ function M.get_query_files(lang, query_name, is_included)
   -- ;+ inherits: ({language},)*{language}
   --
   -- {language} ::= {lang} | ({lang})
-  local MODELINE_FORMAT = "^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$"
+  local MODELINE_FORMAT = '^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
 
   for _, file in ipairs(lang_files) do
     local modeline = safe_read(file, '*l')
@@ -62,7 +64,7 @@ function M.get_query_files(lang, query_name, is_included)
 
       if langlist then
         for _, incllang in ipairs(vim.split(langlist, ',', true)) do
-          local is_optional = incllang:match("%(.*%)")
+          local is_optional = incllang:match('%(.*%)')
 
           if is_optional then
             if not is_included then
@@ -90,7 +92,7 @@ end
 local function read_query_files(filenames)
   local contents = {}
 
-  for _,filename in ipairs(filenames) do
+  for _, filename in ipairs(filenames) do
     table.insert(contents, safe_read(filename, '*a'))
   end
 
@@ -142,7 +144,7 @@ local query_cache = setmetatable({}, {
   __index = function(tbl, key)
     rawset(tbl, key, {})
     return rawget(tbl, key)
-  end
+  end,
 })
 
 --- Parse {query} as a string. (If the query is in a file, the caller
@@ -185,7 +187,7 @@ function M.get_node_text(node, source)
   local start_row, start_col, start_byte = node:start()
   local end_row, end_col, end_byte = node:end_()
 
-  if type(source) == "number" then
+  if type(source) == 'number' then
     local lines
     local eof_row = a.nvim_buf_line_count(source)
     if start_row >= eof_row then
@@ -201,56 +203,56 @@ function M.get_node_text(node, source)
 
     if #lines > 0 then
       if #lines == 1 then
-        lines[1]      = string.sub(lines[1], start_col+1, end_col)
+        lines[1] = string.sub(lines[1], start_col + 1, end_col)
       else
-        lines[1]      = string.sub(lines[1], start_col+1)
+        lines[1] = string.sub(lines[1], start_col + 1)
         lines[#lines] = string.sub(lines[#lines], 1, end_col)
       end
     end
 
-    return table.concat(lines, "\n")
-  elseif type(source) == "string" then
-    return source:sub(start_byte+1, end_byte)
+    return table.concat(lines, '\n')
+  elseif type(source) == 'string' then
+    return source:sub(start_byte + 1, end_byte)
   end
 end
 
 -- Predicate handler receive the following arguments
 -- (match, pattern, bufnr, predicate)
 local predicate_handlers = {
-  ["eq?"] = function(match, _, source, predicate)
-      local node = match[predicate[2]]
-      local node_text = M.get_node_text(node, source)
+  ['eq?'] = function(match, _, source, predicate)
+    local node = match[predicate[2]]
+    local node_text = M.get_node_text(node, source)
 
-      local str
-      if type(predicate[3]) == "string" then
-        -- (#eq? @aa "foo")
-        str = predicate[3]
-      else
-        -- (#eq? @aa @bb)
-        str = M.get_node_text(match[predicate[3]], source)
-      end
+    local str
+    if type(predicate[3]) == 'string' then
+      -- (#eq? @aa "foo")
+      str = predicate[3]
+    else
+      -- (#eq? @aa @bb)
+      str = M.get_node_text(match[predicate[3]], source)
+    end
 
-      if node_text ~= str or str == nil then
-        return false
-      end
+    if node_text ~= str or str == nil then
+      return false
+    end
 
-      return true
+    return true
   end,
 
-  ["lua-match?"] = function(match, _, source, predicate)
-      local node = match[predicate[2]]
-      local regex = predicate[3]
-      return string.find(M.get_node_text(node, source), regex)
+  ['lua-match?'] = function(match, _, source, predicate)
+    local node = match[predicate[2]]
+    local regex = predicate[3]
+    return string.find(M.get_node_text(node, source), regex)
   end,
 
-  ["match?"] = (function()
-    local magic_prefixes = {['\\v']=true, ['\\m']=true, ['\\M']=true, ['\\V']=true}
+  ['match?'] = (function()
+    local magic_prefixes = { ['\\v'] = true, ['\\m'] = true, ['\\M'] = true, ['\\V'] = true }
     ---@private
     local function check_magic(str)
-      if string.len(str) < 2 or magic_prefixes[string.sub(str,1,2)] then
+      if string.len(str) < 2 or magic_prefixes[string.sub(str, 1, 2)] then
         return str
       end
-      return '\\v'..str
+      return '\\v' .. str
     end
 
     local compiled_vim_regexes = setmetatable({}, {
@@ -258,7 +260,7 @@ local predicate_handlers = {
         local res = vim.regex(check_magic(pattern))
         rawset(t, pattern, res)
         return res
-      end
+      end,
     })
 
     return function(match, _, source, pred)
@@ -268,11 +270,11 @@ local predicate_handlers = {
     end
   end)(),
 
-  ["contains?"] = function(match, _, source, predicate)
+  ['contains?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
     local node_text = M.get_node_text(node, source)
 
-    for i=3,#predicate do
+    for i = 3, #predicate do
       if string.find(node_text, predicate[i], 1, true) then
         return true
       end
@@ -281,19 +283,19 @@ local predicate_handlers = {
     return false
   end,
 
-  ["any-of?"] = function(match, _, source, predicate)
+  ['any-of?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
     local node_text = M.get_node_text(node, source)
 
     -- Since 'predicate' will not be used by callers of this function, use it
     -- to store a string set built from the list of words to check against.
-    local string_set = predicate["string_set"]
+    local string_set = predicate['string_set']
     if not string_set then
       string_set = {}
-      for i=3,#predicate do
+      for i = 3, #predicate do
         string_set[predicate[i]] = true
       end
-      predicate["string_set"] = string_set
+      predicate['string_set'] = string_set
     end
 
     return string_set[node_text]
@@ -301,15 +303,14 @@ local predicate_handlers = {
 }
 
 -- As we provide lua-match? also expose vim-match?
-predicate_handlers["vim-match?"] = predicate_handlers["match?"]
-
+predicate_handlers['vim-match?'] = predicate_handlers['match?']
 
 -- Directives store metadata or perform side effects against a match.
 -- Directives should always end with a `!`.
 -- Directive handler receive the following arguments
 -- (match, pattern, bufnr, predicate, metadata)
 local directive_handlers = {
-  ["set!"] = function(_, _, _, pred, metadata)
+  ['set!'] = function(_, _, _, pred, metadata)
     if #pred == 4 then
       -- (#set! @capture "key" "value")
       local capture = pred[2]
@@ -324,9 +325,9 @@ local directive_handlers = {
   end,
   -- Shifts the range of a node.
   -- Example: (#offset! @_node 0 1 0 -1)
-  ["offset!"] = function(match, _, _, pred, metadata)
+  ['offset!'] = function(match, _, _, pred, metadata)
     local offset_node = match[pred[2]]
-    local range = {offset_node:range()}
+    local range = { offset_node:range() }
     local start_row_offset = pred[3] or 0
     local start_col_offset = pred[4] or 0
     local end_row_offset = pred[5] or 0
@@ -339,9 +340,9 @@ local directive_handlers = {
 
     -- If this produces an invalid range, we just skip it.
     if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
-      metadata.content = {range}
+      metadata.content = { range }
     end
-  end
+  end,
 }
 
 --- Adds a new predicate to be used in queries
@@ -351,7 +352,7 @@ local directive_handlers = {
 ---      signature will be (match, pattern, bufnr, predicate)
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
-    error(string.format("Overriding %s", name))
+    error(string.format('Overriding %s', name))
   end
 
   predicate_handlers[name] = handler
@@ -364,7 +365,7 @@ end
 ---      signature will be (match, pattern, bufnr, predicate)
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
-    error(string.format("Overriding %s", name))
+    error(string.format('Overriding %s', name))
   end
 
   directive_handlers[name] = handler
@@ -387,7 +388,7 @@ end
 
 ---@private
 local function is_directive(name)
-  return string.sub(name, -1) == "!"
+  return string.sub(name, -1) == '!'
 end
 
 ---@private
@@ -404,7 +405,7 @@ function Query:match_preds(match, pattern, source)
 
     -- Skip over directives... they will get processed after all the predicates.
     if not is_directive(pred[1]) then
-      if string.sub(pred[1], 1, 4) == "not-" then
+      if string.sub(pred[1], 1, 4) == 'not-' then
         pred_name = string.sub(pred[1], 5)
         is_not = true
       else
@@ -415,7 +416,7 @@ function Query:match_preds(match, pattern, source)
       local handler = predicate_handlers[pred_name]
 
       if not handler then
-        error(string.format("No handler for %s", pred[1]))
+        error(string.format('No handler for %s', pred[1]))
         return false
       end
 
@@ -438,7 +439,7 @@ function Query:apply_directives(match, pattern, source, metadata)
       local handler = directive_handlers[pred[1]]
 
       if not handler then
-        error(string.format("No handler for %s", pred[1]))
+        error(string.format('No handler for %s', pred[1]))
         return
       end
 
@@ -446,7 +447,6 @@ function Query:apply_directives(match, pattern, source, metadata)
     end
   end
 end
-
 
 --- Returns the start and stop value if set else the node's range.
 -- When the node's range is used, the stop is incremented by 1
@@ -492,7 +492,7 @@ end
 ---@returns The matching capture id
 ---@returns The captured node
 function Query:iter_captures(node, source, start, stop)
-  if type(source) == "number" and source == 0 then
+  if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
 
@@ -549,7 +549,7 @@ end
 ---@returns The matching pattern id
 ---@returns The matching match
 function Query:iter_matches(node, source, start, stop)
-  if type(source) == "number" and source == 0 then
+  if type(source) == 'number' and source == 0 then
     source = vim.api.nvim_get_current_buf()
   end
 
