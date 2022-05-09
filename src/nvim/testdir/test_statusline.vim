@@ -461,7 +461,6 @@ func Test_statusline_removed_group()
   call writefile(lines, 'XTest_statusline')
 
   let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 10, 'cols': 50})
-  call term_wait(buf, 100)
   call VerifyScreenDump(buf, 'Test_statusline_1', {})
 
   " clean up
@@ -533,6 +532,24 @@ func Test_statusline_verylong_filename()
   set previewwindow
   redraw
   bwipe!
+endfunc
+
+func Test_statusline_highlight_truncate()
+  CheckScreendump
+
+  let lines =<< trim END
+    set laststatus=2
+    hi! link User1 Directory
+    hi! link User2 ErrorMsg
+    set statusline=%.5(%1*ABC%2*DEF%1*GHI%)
+  END
+  call writefile(lines, 'XTest_statusline')
+
+  let buf = RunVimInTerminal('-S XTest_statusline', {'rows': 6})
+  call VerifyScreenDump(buf, 'Test_statusline_hl', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XTest_statusline')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

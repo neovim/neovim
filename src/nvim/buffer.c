@@ -3635,7 +3635,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
         // correct the start of the items for the truncation
         for (int idx = stl_groupitems[groupdepth] + 1; idx < curitem; idx++) {
           // Shift everything back by the number of removed bytes
-          stl_items[idx].start -= n;
+          // Minus one for the leading '<' added above.
+          stl_items[idx].start -= n - 1;
 
           // If the item was partially or completely truncated, set its
           // start to the start of the group
