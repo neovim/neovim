@@ -836,7 +836,7 @@ end
 --- server in the initialize request. Invalid/empty values will default to "off"
 ---@param flags: A table with flags for the client. The current (experimental) flags are:
 --- - allow_incremental_sync (bool, default true): Allow using incremental sync for buffer edits
---- - debounce_text_changes (number, default nil): Debounce didChange
+--- - debounce_text_changes (number, default 150): Debounce didChange
 ---       notifications to the server by the given number in milliseconds. No debounce
 ---       occurs if nil
 --- - exit_timeout (number, default 500): Milliseconds to wait for server to
