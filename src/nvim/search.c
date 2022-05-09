@@ -3969,6 +3969,9 @@ static int find_next_quote(char_u *line, int col, int quotechar, char_u *escape)
       return -1;
     } else if (escape != NULL && vim_strchr(escape, c)) {
       col++;
+      if (line[col] == NUL) {
+        return -1;
+      }
     } else if (c == quotechar) {
       break;
     }
