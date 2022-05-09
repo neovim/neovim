@@ -616,8 +616,6 @@ LanguageTree:children({self})                        *LanguageTree:children()*
 LanguageTree:contains({self}, {range})               *LanguageTree:contains()*
                 Determines whether {range} is contained in this language tree
 
-                This goes down the tree to recursively check children.
-
                 Parameters: ~
                     {range}  A range, that is a `{ start_line, start_col,
                              end_line, end_col }` table.

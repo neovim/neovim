@@ -497,8 +497,6 @@ end
 
 --- Determines whether {range} is contained in this language tree
 ---
---- This goes down the tree to recursively check children.
----
 ---@param range A range, that is a `{ start_line, start_col, end_line, end_col }` table.
 function LanguageTree:contains(range)
   for _, tree in pairs(self._trees) do
