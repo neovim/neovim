@@ -1,4 +1,5 @@
 local a = vim.api
+local config = require'vim.treesitter.config'
 local language = require'vim.treesitter.language'
 
 -- query: pattern matching on trees
@@ -9,14 +10,42 @@ Query.__index = Query
 local M = {}
 
 ---@private
-local function dedupe_files(files)
+---@param lang string
+---@param file string
+---@return boolean
+local function is_file_ignored(lang, file)
+  local ignore_patterns = config.get(lang).query_file_ignore
+
+  if not ignore_patterns then
+    return false
+  end
+
+
+  for _, pattern in ipairs(ignore_patterns) do
+    if string.find(file, pattern) then
+      return true
+    end
+  end
+
+  return false
+end
+
+-- removes ignored files and dedupes list
+--
+---@private
+---@param lang string
+---@param files string[]
+---@return string[]
+local function cleanup_files_list(lang, files)
   local result = {}
   local seen = {}
 
-  for _, path in ipairs(files) do
-    if not seen[path] then
-      table.insert(result, path)
-      seen[path] = true
+  for _, file in ipairs(files) do
+    if not seen[file] then
+      seen[file] = true
+      if not is_file_ignored(lang, file) then
+        table.insert(result, file)
+      end
     end
   end
 
@@ -41,7 +70,7 @@ end
 ---@param is_included Internal parameter, most of the time left as `nil`
 function M.get_query_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
-  local lang_files = dedupe_files(a.nvim_get_runtime_file(query_path, true))
+  local lang_files = cleanup_files_list(lang, a.nvim_get_runtime_file(query_path, true))
 
   if #lang_files == 0 then return {} end
 

@@ -355,6 +355,20 @@ attribute: >
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
+config({opts}, {scope})                                             *config()*
+                Configure treesitter options globally or for a specific lang.
+
+                Parameters: ~
+                    {opts}   table Configuration table with the following
+                             keys:
+                             • query_file_ignore: List of string patterns. If
+                               the path of query file matches any of the
+                               patterns in this list, it will be ignored.
+                    {scope}  number|string|nil Update the opts for the given
+                             scope. The opts will be updated for specific
+                             buffer (number) or specific language (string) or
+                             any language (nil).
+
 get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
                 Gets the parser for this bufnr / ft combination.
 
