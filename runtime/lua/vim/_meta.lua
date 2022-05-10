@@ -593,7 +593,14 @@ local create_option_metatable = function(set_type)
     -- To set a value, instead use:
     --  opt[my_option] = value
     _set = function(self)
-      local value = convert_value_to_vim(self._name, self._info, self._value)
+      local value
+      if self._value ~= nil then
+        value = convert_value_to_vim(self._name, self._info, self._value)
+      elseif set_type == SET_TYPES.SET then
+        -- vim.opt.option = nil sets the option back to its default value
+        value = convert_value_to_vim(self._name, self._info, self._info.default)
+      end
+
       a.nvim_set_option_value(self._name, value, {scope = scope})
 
       return self
@@ -601,6 +608,17 @@ local create_option_metatable = function(set_type)
 
     get = function(self)
       return convert_value_to_lua(self._name, self._info, self._value)
+    end,
+
+    default = function(self)
+      return convert_value_to_lua(self._name, self._info, self._info.default)
+    end,
+
+    reset = function(self)
+      local value = convert_value_to_vim(self._name, self._info, self._info.default)
+      a.nvim_set_option_value(self._name, value, {scope = scope})
+
+      return self
     end,
 
     append = function(self, right)
