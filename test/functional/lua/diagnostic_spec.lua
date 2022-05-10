@@ -993,7 +993,7 @@ describe('vim.diagnostic', function()
 
       -- Virt texts are defined lowest priority to highest, signs from
       -- highest to lowest
-      eq({'Warn', 'Error', 'Info'}, result[1])
+      eq({'Error', 'Info', 'Warn'}, result[1])
       eq({'Info', 'Error', 'Warn'}, result[2])
 
       result = exec_lua [[return get_virt_text_and_signs(true)]]
