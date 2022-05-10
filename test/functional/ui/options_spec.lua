@@ -51,6 +51,7 @@ describe('UI receives option updates', function()
   end)
 
   it('on attach #11372', function()
+    if helpers.pending_freebsd(pending) then return end
     clear()
     local evs = {}
     screen = Screen.new(20,5)

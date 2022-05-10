@@ -40,6 +40,8 @@ describe('search highlighting', function()
   end)
 
   it('is disabled in folded text', function()
+    if helpers.pending_freebsd(pending) then return end
+
     insert("some text\nmore text")
     feed_command('1,2fold')
     feed("gg/text")

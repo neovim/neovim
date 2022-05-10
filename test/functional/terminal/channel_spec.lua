@@ -59,6 +59,8 @@ describe('terminal channel is closed and later released if', function()
   end)
 
   it('opened by termopen(), exited, and deleted by pressing a key', function()
+    if helpers.pending_freebsd(pending) then return end
+
     command([[let id = termopen('echo')]])
     local chans = eval('len(nvim_list_chans())')
     -- wait for process to exit

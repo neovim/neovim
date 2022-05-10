@@ -166,6 +166,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
+    if helpers.pending_freebsd(pending) then return end
     if helpers.pending_win32(pending) then return end
     nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
     terminal_with_fake_shell()

@@ -123,6 +123,7 @@ it('autocmd TermEnter, TermLeave', function()
   command('wincmd w')
   feed('i')
   command('q!')
+  helpers.retry_inf(function()
   eq(
     {
      {'TermOpen',  'n'},
@@ -134,5 +135,5 @@ it('autocmd TermEnter, TermLeave', function()
      {'TermClose', 't'},
      {'TermLeave', 'n'},
     },
-    eval('g:evs'))
+    eval('g:evs')) end)
 end)

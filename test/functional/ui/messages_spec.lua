@@ -1,3 +1,4 @@
+local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
@@ -1117,7 +1118,11 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
   end)
 end)
 
+-- FIXME(dundar): Flaky set of tests. I suspect the before_each is faulty and that it infects all
+-- tests in the describe block.
+if global_helpers.isCI('sourcehut') then
 describe('ui/ext_messages', function()
+  pending("Flaky set of tests. The before_each function may be broken.", function() end)
   local screen
 
   before_each(function()
@@ -1325,6 +1330,7 @@ describe('ui/ext_messages', function()
     }})
   end)
 end)
+end
 
 describe('ui/msg_puts_printf', function()
   it('output multibyte characters correctly', function()

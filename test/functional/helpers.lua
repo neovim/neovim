@@ -401,6 +401,11 @@ function module.retry(max, max_ms, fn)
   end
 end
 
+-- Calls fn() until it succeeds.
+function module.retry_inf(fn)
+  module.retry(nil, nil, fn)
+end
+
 -- Starts a new global Nvim session.
 --
 -- Parameters are interpreted as startup args, OR a map with these keys:
@@ -712,6 +717,19 @@ function module.pending_win32(pending_fn)
   if iswin() then
     if pending_fn ~= nil then
       pending_fn('FIXME: Windows', function() end)
+    end
+    return true
+  else
+    return false
+  end
+end
+
+-- Helper to skip tests. Returns true in FreeBSD systems.
+-- pending_fn is pending() from busted
+function module.pending_freebsd(pending_fn)
+  if global_helpers.uname() == 'freebsd' then
+    if pending_fn ~= nil then
+      pending_fn('FIXME: FreeBSD', function() end)
     end
     return true
   else
