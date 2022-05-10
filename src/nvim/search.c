@@ -5110,7 +5110,7 @@ static void fuzzy_match_in_list(list_T *const l, char_u *const str, const bool m
 
   fuzzyItem_T *const items = xcalloc(len, sizeof(fuzzyItem_T));
   long match_count = 0;
-  uint32_t matches[MAX_FUZZY_MATCHES];
+  uint32_t matches[MAX_FUZZY_MATCHES] = { 0 };
 
   // For all the string items in items, get the fuzzy matching score
   TV_LIST_ITER(l, li, {
