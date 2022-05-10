@@ -1643,14 +1643,21 @@ end
 ---@see |complete-items|
 ---@see |CompleteDone|
 ---
----@param findstart 0 or 1, decides behavior
----@param base If findstart=0, text to match against
----
+---@param findstart number 0 or 1, decides behavior
+---@param base string If findstart=0, text to match against
+-- @param opts table with options controlling returned completion items. To pass options to the omnifunc,
+--        the call to v:lua.vim.lsp.omnifunc can be replaced with a call to a wrapped global function that
+--        passes the user's custom opts.
+--              - remove_unmatched (default true) exclude completion candidates whose prefix does not match
+--              - sort_matches (default true) sort matches by sortText
 ---@returns (number) Decided by {findstart}:
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
-function lsp.omnifunc(findstart, base)
+function lsp.omnifunc(findstart, base, opts)
   local _ = log.debug() and log.debug("omnifunc.findstart", { findstart = findstart, base = base })
+  opts = if_nil(opts, {})
+  opts.remove_unmatched = if_nil(opts.remove_unmatched, true)
+  opts.sort_matches = if_nil(opts.sort_matches, true)
 
   local bufnr = resolve_bufnr()
   local has_buffer_clients = not tbl_isempty(all_buffer_active_clients[bufnr] or {})
@@ -1699,7 +1706,7 @@ function lsp.omnifunc(findstart, base)
     local candidates = util.extract_completion_items(result)
     local startbyte = adjust_start_col(pos[1], line, candidates, encoding) or textMatch
     local prefix = line:sub(startbyte + 1, pos[2])
-    local matches = util.text_document_completion_list_to_complete_items(result, prefix)
+    local matches = util.text_document_completion_list_to_complete_items(result, prefix, opts)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
     vim.fn.complete(startbyte + 1, items)
