@@ -139,7 +139,7 @@ bool virtual_active(void)
          || ((cur_ve_flags & VE_INSERT) && (State & MODE_INSERT));
 }
 
-/// MODE_VISUAL, MODE_SELECTMODE and MODE_OP_PENDING State are never set, they are
+/// MODE_VISUAL, MODE_SELECT and MODE_OP_PENDING State are never set, they are
 /// equal to MODE_NORMAL State with a condition.  This function returns the real
 /// State.
 int get_real_state(void)
