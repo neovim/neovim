@@ -5160,7 +5160,7 @@ static void fuzzy_match_in_list(list_T *const l, char_u *const str, const bool m
         int j = 0;
         const char_u *p = str;
         while (*p != NUL) {
-          if (!ascii_iswhite(utf_ptr2char((char *)p))) {
+          if (!ascii_iswhite(utf_ptr2char((char *)p)) || matchseq) {
             tv_list_append_number(items[match_count].lmatchpos, matches[j]);
             j++;
           }
