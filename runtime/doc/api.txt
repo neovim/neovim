@@ -426,6 +426,14 @@ Two ways to create a floating window:
 
 To close it use |nvim_win_close()| or a command such as |:close|.
 
+To check whether a window is floating, check whether the `relative` option in
+its config is non-empty: >
+
+    if vim.api.nvim_win_get_config(window_id).relative ~= '' then
+      -- window with this window_id is floating
+    end
+>
+
 Buffer text can be highlighted by typical mechanisms (syntax highlighting,
 |api-highlights|). The |hl-NormalFloat| group highlights normal text;
 'winhighlight' can be used as usual to override groups locally. Floats inherit
