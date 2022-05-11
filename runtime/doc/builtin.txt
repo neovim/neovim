@@ -4976,10 +4976,9 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 
 		The optional {dict} argument always supports the following
 		items:
-		    matchseq	When this item is present and {str} contains
-				multiple words separated by white space, then
-				returns only matches that contain the words in
-				the given sequence.
+		    matchseq	When this item is present return only matches
+				that contain the characters in {str} in the
+				given sequence.
 
 		If {list} is a list of dictionaries, then the optional {dict}
 		argument supports the following additional items:
