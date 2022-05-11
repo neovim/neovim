@@ -418,7 +418,9 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
               magic_split[type_index] == 'table' or
               magic_split[type_index] == 'table|nil' or
               magic_split[type_index] == 'boolean' or
-              magic_split[type_index] == 'boolean|nil'
+              magic_split[type_index] == 'boolean|nil' or
+              magic_split[type_index] == 'function' or
+              magic_split[type_index] == 'function|nil'
               then
             magic_split[type_index] = '(' .. magic_split[type_index] .. ')'
           end

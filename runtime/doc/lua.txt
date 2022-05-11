@@ -1509,7 +1509,7 @@ gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
                              to string.find)
 
                 Return: ~
-                    function Iterator over the split components
+                    (function) Iterator over the split components
 
                 See also: ~
                     |vim.split()|
@@ -1921,10 +1921,10 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
                                     |:command-completion|
                                   • highlight (function) Function that will be
                                     used for highlighting user inputs.
-                    {on_confirm}  function ((input|nil) -> ()) Called once the
-                                  user confirms or abort the input. `input` is
-                                  what the user typed. `nil` if the user
-                                  aborted the dialog.
+                    {on_confirm}  (function) ((input|nil) -> ()) Called once
+                                  the user confirms or abort the input.
+                                  `input` is what the user typed. `nil` if the
+                                  user aborted the dialog.
 
 select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                 Prompts the user to pick a single item from a collection of
@@ -1960,7 +1960,7 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
                                    use this to infer the structure or
                                    semantics of `items`, or the context in
                                    which select() was called.
-                    {on_choice}  function ((item|nil, idx|nil) -> ()) Called
+                    {on_choice}  (function) ((item|nil, idx|nil) -> ()) Called
                                  once the user made a choice. `idx` is the
                                  1-based index of `item` within `items`. `nil`
                                  if the user aborted the dialog.

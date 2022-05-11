@@ -669,10 +669,10 @@ for_each_buffer_client({bufnr}, {fn})
 
                 Parameters: ~
                     {bufnr}  (number) Buffer number
-                    {fn}     function Function to run on each client attached
-                             to buffer {bufnr}. The function takes the client,
-                             client ID, and buffer number as arguments.
-                             Example: >
+                    {fn}     (function) Function to run on each client
+                             attached to buffer {bufnr}. The function takes
+                             the client, client ID, and buffer number as
+                             arguments. Example: >
 
                                vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
                                  print(vim.inspect(client))
@@ -1879,8 +1879,9 @@ set_format_func({handle})                      *vim.lsp.log.set_format_func()*
                 Sets formatting function used to format logs
 
                 Parameters: ~
-                    {handle}  function function to apply to logging arguments,
-                              pass vim.inspect for multi-line formatting
+                    {handle}  (function) function to apply to logging
+                              arguments, pass vim.inspect for multi-line
+                              formatting
 
 set_level({level})                                   *vim.lsp.log.set_level()*
                 Sets the current log level.
