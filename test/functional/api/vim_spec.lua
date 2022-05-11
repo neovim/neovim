@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local lfs = require('lfs')
 
 local fmt = string.format
 local assert_alive = helpers.assert_alive
@@ -25,6 +26,7 @@ local tmpname = helpers.tmpname
 local write_file = helpers.write_file
 local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
+local insert = helpers.insert
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -3471,6 +3473,147 @@ describe('API', function()
          pcall_err(meths.parse_cmd, 'Fubar!', {}))
       eq('Error while parsing command line: E481: No range allowed',
          pcall_err(meths.parse_cmd, '4,6Fubar', {}))
+    end)
+  end)
+  describe('nvim_cmd', function()
+    it('works', function ()
+      meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
+      eq(true, meths.get_option_value("cursorline", {}))
+    end)
+    it('captures output', function()
+      eq("foo", meths.cmd({ cmd = "echo", args = { '"foo"' } }, { output = true }))
+    end)
+    it('sets correct script context', function()
+      meths.cmd({ cmd = "set", args = { "cursorline" } }, {})
+      local str = meths.exec([[verbose set cursorline?]], true)
+      neq(nil, str:find("cursorline\n\tLast set from API client %(channel id %d+%)"))
+    end)
+    it('works with range', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        you didn't expect this
+        line5
+        line6
+      ]]
+      meths.cmd({ cmd = "del", range = {2, 4} }, {})
+      expect [[
+        line1
+        you didn't expect this
+        line5
+        line6
+      ]]
+    end)
+    it('works with count', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        you didn't expect this
+        line5
+        line6
+      ]]
+      meths.cmd({ cmd = "del", range = { 2 }, count = 4 }, {})
+      expect [[
+        line1
+        line5
+        line6
+      ]]
+    end)
+    it('works with register', function()
+      insert [[
+        line1
+        line2
+        line3
+        line4
+        you didn't expect this
+        line5
+        line6
+      ]]
+      meths.cmd({ cmd = "del", range = { 2, 4 }, reg = 'a' }, {})
+      meths.exec("1put a", false)
+      expect [[
+        line1
+        line2
+        line3
+        line4
+        you didn't expect this
+        line5
+        line6
+      ]]
+    end)
+    it('works with bang', function ()
+      meths.create_user_command("Foo", 'echo "<bang>"', { bang = true })
+      eq("!", meths.cmd({ cmd = "Foo", bang = true }, { output = true }))
+      eq("", meths.cmd({ cmd = "Foo", bang = false }, { output = true }))
+    end)
+    it('works with modifiers', function()
+      meths.create_user_command("Foo", 'set verbose', {})
+      eq("  verbose=1", meths.cmd({ cmd = "Foo", mods = { verbose = 1 } }, { output = true }))
+      eq(0, meths.get_option_value("verbose", {}))
+    end)
+    it('works with magic.file', function()
+      exec_lua([[
+        vim.api.nvim_create_user_command("Foo", function(opts)
+          vim.api.nvim_echo({{ opts.fargs[1] }}, false, {})
+        end, { nargs = 1 })
+      ]])
+      eq(lfs.currentdir(),
+         meths.cmd({ cmd = "Foo", args = { '%:p:h' }, magic = { file = true } },
+                   { output = true }))
+    end)
+    it('splits arguments correctly', function()
+      meths.exec([[
+        function! FooFunc(...)
+          echo a:000
+        endfunction
+      ]], false)
+      meths.create_user_command("Foo", "call FooFunc(<f-args>)", { nargs = '+' })
+      eq([=[['a quick', 'brown fox', 'jumps over the', 'lazy dog']]=],
+         meths.cmd({ cmd = "Foo", args = { "a quick", "brown fox", "jumps over the", "lazy dog"}},
+                   { output = true }))
+      eq([=[['test \ \\ \"""\', 'more\ tests\"  ']]=],
+         meths.cmd({ cmd = "Foo", args = { [[test \ \\ \"""\]], [[more\ tests\"  ]] } },
+                   { output = true }))
+    end)
+    it('splits arguments correctly for Lua callback', function()
+      meths.exec_lua([[
+        local function FooFunc(opts)
+          vim.pretty_print(opts.fargs)
+        end
+
+        vim.api.nvim_create_user_command("Foo", FooFunc, { nargs = '+' })
+      ]], {})
+      eq([[{ "a quick", "brown fox", "jumps over the", "lazy dog" }]],
+         meths.cmd({ cmd = "Foo", args = { "a quick", "brown fox", "jumps over the", "lazy dog"}},
+                   { output = true }))
+      eq([[{ 'test \\ \\\\ \\"""\\', 'more\\ tests\\"  ' }]],
+         meths.cmd({ cmd = "Foo", args = { [[test \ \\ \"""\]], [[more\ tests\"  ]] } },
+                   { output = true }))
+    end)
+    it('works with buffer names', function()
+      command("edit foo.txt | edit bar.txt")
+      meths.cmd({ cmd = "buffer", args = { "foo.txt" } }, {})
+      eq("foo.txt", funcs.fnamemodify(meths.buf_get_name(0), ":t"))
+      meths.cmd({ cmd = "buffer", args = { "bar.txt" } }, {})
+      eq("bar.txt", funcs.fnamemodify(meths.buf_get_name(0), ":t"))
+    end)
+    it('triggers CmdUndefined event if command is not found', function()
+      meths.exec_lua([[
+        vim.api.nvim_create_autocmd("CmdUndefined",
+                                    { pattern = "Foo",
+                                      callback = function()
+                                        vim.api.nvim_create_user_command("Foo", "echo 'foo'", {})
+                                      end
+                                    })
+      ]], {})
+      eq("foo", meths.cmd({ cmd = "Foo" }, { output = true }))
+    end)
+    it('errors if command is not implemented', function()
+      eq("Command not implemented: popup", pcall_err(meths.cmd, { cmd = "popup" }, {}))
     end)
   end)
 end)

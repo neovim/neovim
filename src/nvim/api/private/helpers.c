@@ -19,6 +19,7 @@
 #include "nvim/decoration.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
@@ -1689,4 +1690,175 @@ int init_sign_text(char **sign_text, char *text)
   }
 
   return OK;
+}
+
+/// Check if a string contains only whitespace characters.
+bool string_iswhite(String str)
+{
+  for (size_t i = 0; i < str.size; i++) {
+    if (!ascii_iswhite(str.data[i])) {
+      // Found a non-whitespace character
+      return false;
+    } else if (str.data[i] == NUL) {
+      // Terminate at first occurence of a NUL character
+      break;
+    }
+  }
+  return true;
+}
+
+// Add modifier string for command into the command line. Includes trailing whitespace if non-empty.
+// @return OK or FAIL.
+static int add_cmd_modifier_str(char *cmdline, size_t *pos, const size_t bufsize,
+                                CmdParseInfo *cmdinfo)
+{
+#define APPEND_MODIFIER(...) \
+  do { \
+    if (*pos < bufsize) { \
+      *pos += (size_t)snprintf(cmdline + *pos, bufsize - *pos, __VA_ARGS__); \
+    } \
+    if (*pos < bufsize) { \
+      cmdline[*pos] = ' '; \
+      *pos += 1; \
+    } else { \
+      goto err; \
+    } \
+  } while (0)
+
+#define APPEND_MODIFIER_IF(cond, mod) \
+  do { \
+    if (cond) { \
+      APPEND_MODIFIER(mod); \
+    } \
+  } while (0)
+
+  if (cmdinfo->cmdmod.tab != 0) {
+    APPEND_MODIFIER("%dtab", cmdinfo->cmdmod.tab - 1);
+  }
+  if (cmdinfo->verbose != -1) {
+    APPEND_MODIFIER("%ldverbose", cmdinfo->verbose);
+  }
+
+  switch (cmdinfo->cmdmod.split & (WSP_ABOVE | WSP_BELOW | WSP_TOP | WSP_BOT)) {
+  case WSP_ABOVE:
+    APPEND_MODIFIER("aboveleft");
+    break;
+  case WSP_BELOW:
+    APPEND_MODIFIER("belowright");
+    break;
+  case WSP_TOP:
+    APPEND_MODIFIER("topleft");
+    break;
+  case WSP_BOT:
+    APPEND_MODIFIER("botright");
+    break;
+  default:
+    break;
+  }
+
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.split & WSP_VERT, "vertical");
+
+  if (cmdinfo->emsg_silent) {
+    APPEND_MODIFIER("silent!");
+  } else if (cmdinfo->silent) {
+    APPEND_MODIFIER("silent");
+  }
+
+  APPEND_MODIFIER_IF(cmdinfo->sandbox, "sandbox");
+  APPEND_MODIFIER_IF(cmdinfo->noautocmd, "noautocmd");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.browse, "browse");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.confirm, "confirm");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.hide, "hide");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.keepalt, "keepalt");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.keepjumps, "keepjumps");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.keepmarks, "keepmarks");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.keeppatterns, "keeppatterns");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.lockmarks, "lockmarks");
+  APPEND_MODIFIER_IF(cmdinfo->cmdmod.noswapfile, "noswapfile");
+
+  return OK;
+err:
+  return FAIL;
+
+#undef APPEND_MODIFIER
+#undef APPEND_MODIFIER_IF
+}
+
+/// Build cmdline string for command, used by `nvim_cmd()`.
+///
+/// @return OK or FAIL.
+int build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdinfo, char **args,
+                      size_t argc)
+{
+  const size_t bufsize = IOSIZE;
+  size_t pos = 0;
+  char *cmdline = xcalloc(bufsize, sizeof(char));
+
+#define CMDLINE_APPEND(...) \
+  do { \
+    if (pos < bufsize) { \
+      pos += (size_t)snprintf(cmdline + pos, bufsize - pos, __VA_ARGS__); \
+    } else { \
+      goto err; \
+    } \
+  } while (0)
+
+  // Command modifiers.
+  if (add_cmd_modifier_str(cmdline, &pos, bufsize, cmdinfo) == FAIL) {
+    goto err;
+  }
+
+  // Command range / count.
+  if (eap->argt & EX_RANGE) {
+    if (eap->addr_count == 1) {
+      CMDLINE_APPEND("%ld", eap->line2);
+    } else if (eap->addr_count > 1) {
+      CMDLINE_APPEND("%ld,%ld", eap->line1, eap->line2);
+      eap->addr_count = 2;  // Make sure address count is not greater than 2
+    }
+  }
+
+  // Keep the index of the position where command name starts, so eap->cmd can point to it.
+  size_t cmdname_idx = pos;
+  CMDLINE_APPEND("%s", eap->cmd);
+  eap->cmd = cmdline + cmdname_idx;
+
+  // Command bang.
+  if (eap->argt & EX_BANG && eap->forceit) {
+    CMDLINE_APPEND("!");
+  }
+
+  // Command register.
+  if (eap->argt & EX_REGSTR && eap->regname) {
+    CMDLINE_APPEND(" %c", eap->regname);
+  }
+
+  // Iterate through each argument and store the starting position and length of each argument in
+  // the cmdline string in `eap->args` and `eap->arglens`, respectively.
+  eap->args = xcalloc(argc, sizeof(char *));
+  eap->arglens = xcalloc(argc, sizeof(size_t));
+  for (size_t i = 0; i < argc; i++) {
+    eap->args[i] = cmdline + pos + 1;  // add 1 to skip the leading space.
+    eap->arglens[i] = STRLEN(args[i]);
+    CMDLINE_APPEND(" %s", args[i]);
+  }
+  eap->argc = argc;
+  eap->arg = argc > 0 ? eap->args[0] : NULL;
+
+  // Replace, :make and :grep with 'makeprg' and 'grepprg'.
+  char *p = replace_makeprg(eap, eap->arg, cmdlinep);
+  if (p != eap->arg) {
+    // If replace_makeprg modified the cmdline string, correct the argument pointers.
+    assert(argc == 1);
+    eap->arg = p;
+    eap->args[0] = p;
+  }
+
+  *cmdlinep = cmdline;
+  return OK;
+err:
+  xfree(cmdline);
+  return FAIL;
+
+#undef CMDLINE_APPEND
 }

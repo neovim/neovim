@@ -33,6 +33,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
@@ -2522,7 +2523,7 @@ char *get_text_locked_msg(void)
 bool curbuf_locked(void)
 {
   if (curbuf->b_ro_locked > 0) {
-    emsg(_("E788: Not allowed to edit another buffer now"));
+    emsg(_(e_cannot_edit_other_buf));
     return true;
   }
   return allbuf_locked();
