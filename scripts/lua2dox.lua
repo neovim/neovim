@@ -403,6 +403,27 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
         if string.sub(line, 3, 3) == '@' or string.sub(line, 1, 4) == '---@' then -- it's a magic comment
           state = 'in_magic_comment'
           local magic = string.sub(line, 4 + offset)
+
+          magic_split = string_split(magic, ' ')
+
+          type_index = 2
+          if magic_split[1] == 'param' then
+            type_index = type_index + 1
+          end
+
+          if magic_split[type_index] == 'number' or
+              magic_split[type_index] == 'number|nil' or
+              magic_split[type_index] == 'string' or
+              magic_split[type_index] == 'string|nil' or
+              magic_split[type_index] == 'table' or
+              magic_split[type_index] == 'table|nil' or
+              magic_split[type_index] == 'boolean' or
+              magic_split[type_index] == 'boolean|nil'
+              then
+            magic_split[type_index] = '(' .. magic_split[type_index] .. ')'
+          end
+          magic = table.concat(magic_split, ' ')
+
           outStream:writeln('/// @' .. magic)
           fn_magic = checkComment4fn(fn_magic,magic)
         elseif string.sub(line,3,3)=='-' then -- it's a nonmagic doc comment

@@ -472,8 +472,8 @@ parse_query({lang}, {query})                                   *parse_query()*
                 • `info.patterns` contains information about predicates.
 
                 Parameters: ~
-                    {lang}   string The language
-                    {query}  string A string containing the query (s-expr
+                    {lang}   (string) The language
+                    {query}  (string) A string containing the query (s-expr
                              syntax)
 
                 Return: ~
@@ -704,7 +704,7 @@ LanguageTree:register_cbs({self}, {cbs})         *LanguageTree:register_cbs()*
                 Registers callbacks for the parser.
 
                 Parameters: ~
-                    {cbs}   table An |nvim_buf_attach()|-like table argument
+                    {cbs}   (table) An |nvim_buf_attach()|-like table argument
                             with the following keys :
                             • `on_bytes` : see |nvim_buf_attach()|, but this will be
                               called after the parsers callback.

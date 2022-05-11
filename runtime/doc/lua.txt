@@ -1319,7 +1319,8 @@ deprecate({name}, {alternative}, {version}, {plugin})        *vim.deprecate()*
 
                 Parameters: ~
                     {name}         string Deprecated function.
-                    {alternative}  string|nil Preferred alternative function.
+                    {alternative}  (string|nil) Preferred alternative
+                                   function.
                     {version}      string Version in which the deprecated
                                    function will be removed.
                     {plugin}       string|nil Plugin name that the function
@@ -1340,11 +1341,12 @@ notify({msg}, {level}, {opts})                                  *vim.notify()*
                 notification provider). By default, writes to |:messages|.
 
                 Parameters: ~
-                    {msg}    string Content of the notification to show to the
-                             user.
-                    {level}  number|nil One of the values from
+                    {msg}    (string) Content of the notification to show to
+                             the user.
+                    {level}  (number|nil) One of the values from
                              |vim.log.levels|.
-                    {opts}   table|nil Optional parameters. Unused by default.
+                    {opts}   (table|nil) Optional parameters. Unused by
+                             default.
 
 notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
                 Display a notification only one time.
@@ -1353,11 +1355,12 @@ notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
                 message will not display a notification.
 
                 Parameters: ~
-                    {msg}    string Content of the notification to show to the
-                             user.
-                    {level}  number|nil One of the values from
+                    {msg}    (string) Content of the notification to show to
+                             the user.
+                    {level}  (number|nil) One of the values from
                              |vim.log.levels|.
-                    {opts}   table|nil Optional parameters. Unused by default.
+                    {opts}   (table|nil) Optional parameters. Unused by
+                             default.
 
 on_key({fn}, {ns_id})                                           *vim.on_key()*
                 Adds Lua function {fn} with namespace id {ns_id} as a listener
@@ -1383,8 +1386,8 @@ on_key({fn}, {ns_id})                                           *vim.on_key()*
                              returns a new |nvim_create_namespace()| id.
 
                 Return: ~
-                    number Namespace id associated with {fn}. Or count of all
-                    callbacks if on_key() is called without arguments.
+                    (number) Namespace id associated with {fn}. Or count of
+                    all callbacks if on_key() is called without arguments.
 
                 Note:
                     {fn} will be removed if an error occurs while calling.
@@ -1438,12 +1441,12 @@ region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})         *vim.region()*
                 marked by two points
 
                 Parameters: ~
-                    {bufnr}      number of buffer
+                    {bufnr}      (number) of buffer
                     {pos1}       (line, column) tuple marking beginning of
                                  region
                     {pos2}       (line, column) tuple marking end of region
                     {regtype}    type of selection (:help setreg)
-                    {inclusive}  boolean indicating whether the selection is
+                    {inclusive}  (boolean) indicating whether the selection is
                                  end-inclusive
 
                 Return: ~
@@ -1470,7 +1473,7 @@ deep_equal({a}, {b})                                        *vim.deep_equal()*
                     {b}  any Second value
 
                 Return: ~
-                    boolean `true` if values are equals, else `false`
+                    (boolean) `true` if values are equals, else `false`
 
 deepcopy({orig})                                              *vim.deepcopy()*
                 Returns a deep copy of the given object. Non-table objects are
@@ -1481,29 +1484,29 @@ deepcopy({orig})                                              *vim.deepcopy()*
                 and will throw an error.
 
                 Parameters: ~
-                    {orig}  table Table to copy
+                    {orig}  (table) Table to copy
 
                 Return: ~
-                    table Table of copied keys and (nested) values.
+                    (table) Table of copied keys and (nested) values.
 
 endswith({s}, {suffix})                                       *vim.endswith()*
                 Tests if `s` ends with `suffix`.
 
                 Parameters: ~
-                    {s}       string String
-                    {suffix}  string Suffix to match
+                    {s}       (string) String
+                    {suffix}  (string) Suffix to match
 
                 Return: ~
-                    boolean `true` if `suffix` is a suffix of `s`
+                    (boolean) `true` if `suffix` is a suffix of `s`
 
 gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
                 Splits a string at each instance of a separator.
 
                 Parameters: ~
-                    {s}      string String to split
-                    {sep}    string Separator or pattern
-                    {plain}  boolean If `true` use `sep` literally (passed to
-                             string.find)
+                    {s}      (string) String to split
+                    {sep}    (string) Separator or pattern
+                    {plain}  (boolean) If `true` use `sep` literally (passed
+                             to string.find)
 
                 Return: ~
                     function Iterator over the split components
@@ -1520,7 +1523,7 @@ is_callable({f})                                           *vim.is_callable()*
                     {f}  any Any object
 
                 Return: ~
-                    boolean `true` if `f` is callable, else `false`
+                    (boolean) `true` if `f` is callable, else `false`
 
 list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 Extends a list-like table with the values of another list-like
@@ -1529,14 +1532,14 @@ list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 NOTE: This mutates dst!
 
                 Parameters: ~
-                    {dst}     table List which will be modified and appended
+                    {dst}     (table) List which will be modified and appended
                               to
-                    {src}     table List from which values will be inserted
-                    {start}   number Start index on src. Defaults to 1
-                    {finish}  number Final index on src. Defaults to `#src`
+                    {src}     (table) List from which values will be inserted
+                    {start}   (number) Start index on src. Defaults to 1
+                    {finish}  (number) Final index on src. Defaults to `#src`
 
                 Return: ~
-                    table dst
+                    (table) dst
 
                 See also: ~
                     |vim.tbl_extend()|
@@ -1546,22 +1549,22 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
                 to end (inclusive)
 
                 Parameters: ~
-                    {list}    table Table
-                    {start}   number Start range of slice
-                    {finish}  number End range of slice
+                    {list}    (table) Table
+                    {start}   (number) Start range of slice
+                    {finish}  (number) End range of slice
 
                 Return: ~
-                    table Copy of table sliced from start to finish
+                    (table) Copy of table sliced from start to finish
                     (inclusive)
 
 pesc({s})                                                         *vim.pesc()*
                 Escapes magic chars in a Lua pattern.
 
                 Parameters: ~
-                    {s}  string String to escape
+                    {s}  (string) String to escape
 
                 Return: ~
-                    string %-escaped pattern string
+                    (string) %-escaped pattern string
 
                 See also: ~
                     https://github.com/rxi/lume
@@ -1578,16 +1581,16 @@ split({s}, {sep}, {kwargs})                                      *vim.split()*
 <
 
                 Parameters: ~
-                    {s}       string String to split
-                    {sep}     string Separator or pattern
-                    {kwargs}  table Keyword arguments:
+                    {s}       (string) String to split
+                    {sep}     (string) Separator or pattern
+                    {kwargs}  (table) Keyword arguments:
                               • plain: (boolean) If `true` use `sep` literally
                                 (passed to string.find)
                               • trimempty: (boolean) If `true` remove empty
                                 items from the front and back of the list
 
                 Return: ~
-                    table List of split components
+                    (table) List of split components
 
                 See also: ~
                     |vim.gsplit()|
@@ -1596,11 +1599,11 @@ startswith({s}, {prefix})                                   *vim.startswith()*
                 Tests if `s` starts with `prefix`.
 
                 Parameters: ~
-                    {s}       string String
-                    {prefix}  string Prefix to match
+                    {s}       (string) String
+                    {prefix}  (string) Prefix to match
 
                 Return: ~
-                    boolean `true` if `prefix` is a prefix of `s`
+                    (boolean) `true` if `prefix` is a prefix of `s`
 
 tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Add the reverse lookup values to an existing table. For
@@ -1610,20 +1613,20 @@ tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Note that this modifies the input.
 
                 Parameters: ~
-                    {o}  table Table to add the reverse to
+                    {o}  (table) Table to add the reverse to
 
                 Return: ~
-                    table o
+                    (table) o
 
 tbl_contains({t}, {value})                                *vim.tbl_contains()*
                 Checks if a list-like (vector) table contains `value`.
 
                 Parameters: ~
-                    {t}      table Table to check
+                    {t}      (table) Table to check
                     {value}  any Value to compare
 
                 Return: ~
-                    boolean `true` if `t` contains `value`
+                    (boolean) `true` if `t` contains `value`
 
 tbl_count({t})                                               *vim.tbl_count()*
                 Counts the number of non-nil values in table `t`.
@@ -1634,10 +1637,10 @@ tbl_count({t})                                               *vim.tbl_count()*
 <
 
                 Parameters: ~
-                    {t}  table Table
+                    {t}  (table) Table
 
                 Return: ~
-                    number Number of non-nil values in table
+                    (number) Number of non-nil values in table
 
                 See also: ~
                     https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
@@ -1646,15 +1649,15 @@ tbl_deep_extend({behavior}, {...})                     *vim.tbl_deep_extend()*
                 Merges recursively two or more map-like tables.
 
                 Parameters: ~
-                    {behavior}  string Decides what to do if a key is found in
-                                more than one map:
+                    {behavior}  (string) Decides what to do if a key is found
+                                in more than one map:
                                 • "error": raise an error
                                 • "keep": use value from the leftmost map
                                 • "force": use value from the rightmost map
-                    {...}       table Two or more map-like tables
+                    {...}       (table) Two or more map-like tables
 
                 Return: ~
-                    table Merged table
+                    (table) Merged table
 
                 See also: ~
                     |tbl_extend()|
@@ -1663,15 +1666,15 @@ tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
                 Merges two or more map-like tables.
 
                 Parameters: ~
-                    {behavior}  string Decides what to do if a key is found in
-                                more than one map:
+                    {behavior}  (string) Decides what to do if a key is found
+                                in more than one map:
                                 • "error": raise an error
                                 • "keep": use value from the leftmost map
                                 • "force": use value from the rightmost map
-                    {...}       table Two or more map-like tables
+                    {...}       (table) Two or more map-like tables
 
                 Return: ~
-                    table Merged table
+                    (table) Merged table
 
                 See also: ~
                     |extend()|
@@ -1681,20 +1684,20 @@ tbl_filter({func}, {t})                                     *vim.tbl_filter()*
 
                 Parameters: ~
                     {func}  function|table Function or callable table
-                    {t}     table Table
+                    {t}     (table) Table
 
                 Return: ~
-                    table Table of filtered values
+                    (table) Table of filtered values
 
 tbl_flatten({t})                                           *vim.tbl_flatten()*
                 Creates a copy of a list-like table such that any nested
                 tables are "unrolled" and appended to the result.
 
                 Parameters: ~
-                    {t}  table List-like table
+                    {t}  (table) List-like table
 
                 Return: ~
-                    table Flattened copy of the given list-like table
+                    (table) Flattened copy of the given list-like table
 
                 See also: ~
                     From https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -1710,8 +1713,8 @@ tbl_get({o}, {...})                                            *vim.tbl_get()*
 <
 
                 Parameters: ~
-                    {o}    table Table to index
-                    {...}  string Optional strings (0 or more, variadic) via
+                    {o}    (table) Table to index
+                    {...}  (string) Optional strings (0 or more, variadic) via
                            which to index the table
 
                 Return: ~
@@ -1721,10 +1724,10 @@ tbl_isempty({t})                                           *vim.tbl_isempty()*
                 Checks if a table is empty.
 
                 Parameters: ~
-                    {t}  table Table to check
+                    {t}  (table) Table to check
 
                 Return: ~
-                    boolean `true` if `t` is empty
+                    (boolean) `true` if `t` is empty
 
                 See also: ~
                     https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -1738,20 +1741,20 @@ tbl_islist({t})                                             *vim.tbl_islist()*
                 |vim.fn|.
 
                 Parameters: ~
-                    {t}  table Table
+                    {t}  (table) Table
 
                 Return: ~
-                    boolean `true` if array-like table, else `false`
+                    (boolean) `true` if array-like table, else `false`
 
 tbl_keys({t})                                                 *vim.tbl_keys()*
                 Return a list of all keys used in a table. However, the order
                 of the return table of keys is not guaranteed.
 
                 Parameters: ~
-                    {t}  table Table
+                    {t}  (table) Table
 
                 Return: ~
-                    table List of keys
+                    (table) List of keys
 
                 See also: ~
                     From https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -1761,30 +1764,30 @@ tbl_map({func}, {t})                                           *vim.tbl_map()*
 
                 Parameters: ~
                     {func}  function|table Function or callable table
-                    {t}     table Table
+                    {t}     (table) Table
 
                 Return: ~
-                    table Table of transformed values
+                    (table) Table of transformed values
 
 tbl_values({t})                                             *vim.tbl_values()*
                 Return a list of all values used in a table. However, the
                 order of the return table of values is not guaranteed.
 
                 Parameters: ~
-                    {t}  table Table
+                    {t}  (table) Table
 
                 Return: ~
-                    table List of values
+                    (table) List of values
 
 trim({s})                                                         *vim.trim()*
                 Trim whitespace (Lua pattern "%s") from both sides of a
                 string.
 
                 Parameters: ~
-                    {s}  string String to trim
+                    {s}  (string) String to trim
 
                 Return: ~
-                    string String with whitespace removed from its beginning
+                    (string) String with whitespace removed from its beginning
                     and end
 
                 See also: ~
@@ -1827,9 +1830,9 @@ validate({opt})                                               *vim.validate()*
 <
 
                 Parameters: ~
-                    {opt}  table Names of parameters to validate. Each key is
-                           a parameter name; each value is a tuple in one of
-                           these forms:
+                    {opt}  (table) Names of parameters to validate. Each key
+                           is a parameter name; each value is a tuple in one
+                           of these forms:
                            1. (arg_value, type_name, optional)
                               • arg_value: argument value
                               • type_name: string|table type name, one of:
@@ -1857,38 +1860,38 @@ uri_from_bufnr({bufnr})                                 *vim.uri_from_bufnr()*
                 Get a URI from a bufnr
 
                 Parameters: ~
-                    {bufnr}  number
+                    {bufnr}  (number)
 
                 Return: ~
-                    string URI
+                    (string) URI
 
 uri_from_fname({path})                                  *vim.uri_from_fname()*
                 Get a URI from a file path.
 
                 Parameters: ~
-                    {path}  string Path to file
+                    {path}  (string) Path to file
 
                 Return: ~
-                    string URI
+                    (string) URI
 
 uri_to_bufnr({uri})                                       *vim.uri_to_bufnr()*
                 Get the buffer for a uri. Creates a new unloaded buffer if no
                 buffer for the uri already exists.
 
                 Parameters: ~
-                    {uri}  string
+                    {uri}  (string)
 
                 Return: ~
-                    number bufnr
+                    (number) bufnr
 
 uri_to_fname({uri})                                       *vim.uri_to_fname()*
                 Get a filename from a URI
 
                 Parameters: ~
-                    {uri}  string
+                    {uri}  (string)
 
                 Return: ~
-                    string filename or unchanged URI for non-file URIs
+                    (string) filename or unchanged URI for non-file URIs
 
 
 ==============================================================================
@@ -1905,7 +1908,7 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
 <
 
                 Parameters: ~
-                    {opts}        table Additional options. See |input()|
+                    {opts}        (table) Additional options. See |input()|
                                   • prompt (string|nil) Text of the prompt.
                                     Defaults to `Input:`.
                                   • default (string|nil) Default reply to the
@@ -1944,8 +1947,8 @@ select({items}, {opts}, {on_choice})                         *vim.ui.select()*
 <
 
                 Parameters: ~
-                    {items}      table Arbitrary items
-                    {opts}       table Additional options
+                    {items}      (table) Arbitrary items
+                    {opts}       (table) Additional options
                                  • prompt (string|nil) Text of the prompt.
                                    Defaults to `Select one of:`
                                  • format_item (function item -> text)
@@ -2026,16 +2029,16 @@ add({filetypes})                                          *vim.filetype.add()*
 <
 
                 Parameters: ~
-                    {filetypes}  table A table containing new filetype maps
+                    {filetypes}  (table) A table containing new filetype maps
                                  (see example).
 
 match({name}, {bufnr})                                  *vim.filetype.match()*
                 Set the filetype for the given buffer from a file name.
 
                 Parameters: ~
-                    {name}   string File name (can be an absolute or relative
-                             path)
-                    {bufnr}  number|nil The buffer to set the filetype for.
+                    {name}   (string) File name (can be an absolute or
+                             relative path)
+                    {bufnr}  (number|nil) The buffer to set the filetype for.
                              Defaults to the current buffer.
 
 
@@ -2051,7 +2054,7 @@ del({modes}, {lhs}, {opts})                                 *vim.keymap.del()*
 <
 
                 Parameters: ~
-                    {opts}  table A table of optional arguments:
+                    {opts}  (table) A table of optional arguments:
                             • buffer: (number or boolean) Remove a mapping
                               from the given buffer. When "true" or 0, use the
                               current buffer.
@@ -2095,12 +2098,12 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                     {mode}  string|table Same mode short names as
                             |nvim_set_keymap()|. Can also be list of modes to
                             create mapping on multiple modes.
-                    {lhs}   string Left-hand side |{lhs}| of the mapping.
+                    {lhs}   (string) Left-hand side |{lhs}| of the mapping.
                     {rhs}   string|function Right-hand side |{rhs}| of the
                             mapping. Can also be a Lua function. If a Lua
                             function and `opts.expr == true`, returning `nil`
                             is equivalent to an empty string.
-                    {opts}  table A table of |:map-arguments| such as
+                    {opts}  (table) A table of |:map-arguments| such as
                             "silent". In addition to the options listed in
                             |nvim_set_keymap()|, this table also accepts the
                             following keys:
