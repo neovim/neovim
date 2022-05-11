@@ -79,7 +79,7 @@ local function compute_line_length(line, offset_encoding)
   local length
   local _
   if offset_encoding == 'utf-16' then
-     _, length = str_utfindex(line)
+    _, length = str_utfindex(line)
   elseif offset_encoding == 'utf-32' then
     length, _ = str_utfindex(line)
   else
@@ -100,7 +100,7 @@ local function align_end_position(line, byte, offset_encoding)
   -- If on the first byte, or an empty string: the trivial case
   if byte == 1 or #line == 0 then
     char = byte
-  -- Called in the case of extending an empty line "" -> "a"
+    -- Called in the case of extending an empty line "" -> "a"
   elseif byte == #line + 1 then
     char = compute_line_length(line, offset_encoding) + 1
   else
@@ -175,12 +175,12 @@ local function compute_start_range(prev_lines, curr_lines, firstline, lastline, 
   end
 
   -- Convert byte to codepoint if applicable
-  if start_byte_idx == 1 or (#prev_line == 0 and start_byte_idx == 1)then
+  if start_byte_idx == 1 or (#prev_line == 0 and start_byte_idx == 1) then
     byte_idx = start_byte_idx
     char_idx = 1
   elseif start_byte_idx == #prev_line + 1 then
     byte_idx = start_byte_idx
-    char_idx = compute_line_length(prev_line, offset_encoding)  + 1
+    char_idx = compute_line_length(prev_line, offset_encoding) + 1
   else
     byte_idx = start_byte_idx + str_utf_start(prev_line, start_byte_idx)
     char_idx = byte_to_utf(prev_line, byte_idx, offset_encoding)
@@ -203,14 +203,30 @@ end
 ---@param new_lastline integer
 ---@param offset_encoding string
 ---@returns (int, int) end_line_idx and end_col_idx of range
-local function compute_end_range(prev_lines, curr_lines, start_range, firstline, lastline, new_lastline, offset_encoding)
+local function compute_end_range(
+  prev_lines,
+  curr_lines,
+  start_range,
+  firstline,
+  lastline,
+  new_lastline,
+  offset_encoding
+)
   -- If firstline == new_lastline, the first change occurred on a line that was deleted.
   -- In this case, the last_byte...
   if firstline == new_lastline then
-      return { line_idx = (lastline - new_lastline + firstline), byte_idx = 1, char_idx = 1 }, { line_idx = firstline, byte_idx = 1, char_idx = 1 }
+    return { line_idx = (lastline - new_lastline + firstline), byte_idx = 1, char_idx = 1 }, {
+      line_idx = firstline,
+      byte_idx = 1,
+      char_idx = 1,
+    }
   end
   if firstline == lastline then
-      return { line_idx = firstline, byte_idx = 1, char_idx = 1 }, { line_idx = new_lastline - lastline + firstline, byte_idx = 1, char_idx = 1 }
+    return { line_idx = firstline, byte_idx = 1, char_idx = 1 }, {
+      line_idx = new_lastline - lastline + firstline,
+      byte_idx = 1,
+      char_idx = 1,
+    }
   end
   -- Compare on last line, at minimum will be the start range
   local start_line_idx = start_range.line_idx
@@ -239,9 +255,7 @@ local function compute_end_range(prev_lines, curr_lines, start_range, firstline,
     end
     for idx = 0, max_length do
       byte_offset = idx
-      if
-        str_byte(prev_line, prev_line_length - byte_offset) ~= str_byte(curr_line, curr_line_length - byte_offset)
-      then
+      if str_byte(prev_line, prev_line_length - byte_offset) ~= str_byte(curr_line, curr_line_length - byte_offset) then
         break
       end
     end
@@ -281,14 +295,13 @@ end
 ---@param end_range table new_end_range returned by last_difference
 ---@returns string text extracted from defined region
 local function extract_text(lines, start_range, end_range, line_ending)
-    if not lines[start_range.line_idx] then
-      return ""
-    end
+  if not lines[start_range.line_idx] then
+    return ''
+  end
   -- Trivial case: start and end range are the same line, directly grab changed text
   if start_range.line_idx == end_range.line_idx then
     -- string.sub is inclusive, end_range is not
     return string.sub(lines[start_range.line_idx], start_range.byte_idx, end_range.byte_idx - 1)
-
   else
     -- Handle deletion case
     -- Collect the changed portion of the first changed line
@@ -303,7 +316,7 @@ local function extract_text(lines, start_range, end_range, line_ending)
       -- Collect the changed portion of the last changed line.
       table.insert(result, string.sub(lines[end_range.line_idx], 1, end_range.byte_idx - 1))
     else
-      table.insert(result, "")
+      table.insert(result, '')
     end
 
     -- Add line ending between all lines

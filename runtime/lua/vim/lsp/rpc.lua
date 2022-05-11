@@ -32,9 +32,9 @@ local function env_merge(env)
   -- Merge.
   env = vim.tbl_extend('force', vim.fn.environ(), env)
   local final_env = {}
-  for k,v in pairs(env) do
+  for k, v in pairs(env) do
     assert(type(k) == 'string', 'env must be a dict')
-    table.insert(final_env, k..'='..tostring(v))
+    table.insert(final_env, k .. '=' .. tostring(v))
   end
   return final_env
 end
@@ -45,10 +45,12 @@ end
 ---@param encoded_message (string)
 ---@returns (table) table containing encoded message and `Content-Length` attribute
 local function format_message_with_content_length(encoded_message)
-  return table.concat {
-    'Content-Length: '; tostring(#encoded_message); '\r\n\r\n';
-    encoded_message;
-  }
+  return table.concat({
+    'Content-Length: ',
+    tostring(#encoded_message),
+    '\r\n\r\n',
+    encoded_message,
+  })
 end
 
 ---@private
@@ -65,23 +67,25 @@ local function parse_headers(header)
     if line == '' then
       break
     end
-    local key, value = line:match("^%s*(%S+)%s*:%s*(.+)%s*$")
+    local key, value = line:match('^%s*(%S+)%s*:%s*(.+)%s*$')
     if key then
       key = key:lower():gsub('%-', '_')
       headers[key] = value
     else
-      local _ = log.error() and log.error("invalid header line %q", line)
-      error(string.format("invalid header line %q", line))
+      local _ = log.error() and log.error('invalid header line %q', line)
+      error(string.format('invalid header line %q', line))
     end
   end
   headers.content_length = tonumber(headers.content_length)
-      or error(string.format("Content-Length not found in headers. %q", header))
+    or error(string.format('Content-Length not found in headers. %q', header))
   return headers
 end
 
 -- This is the start of any possible header patterns. The gsub converts it to a
 -- case insensitive pattern.
-local header_start_pattern = ("content"):gsub("%w", function(c) return "["..c..c:upper().."]" end)
+local header_start_pattern = ('content'):gsub('%w', function(c)
+  return '[' .. c .. c:upper() .. ']'
+end)
 
 ---@private
 --- The actual workhorse.
@@ -100,17 +104,16 @@ local function request_parser_loop()
       -- be searching for.
       -- TODO(ashkan) I'd like to remove this, but it seems permanent :(
       local buffer_start = buffer:find(header_start_pattern)
-      local headers = parse_headers(buffer:sub(buffer_start, start-1))
+      local headers = parse_headers(buffer:sub(buffer_start, start - 1))
       local content_length = headers.content_length
       -- Use table instead of just string to buffer the message. It prevents
       -- a ton of strings allocating.
       -- ref. http://www.lua.org/pil/11.6.html
-      local body_chunks = {buffer:sub(finish+1)}
+      local body_chunks = { buffer:sub(finish + 1) }
       local body_length = #body_chunks[1]
       -- Keep waiting for data until we have enough.
       while body_length < content_length do
-        local chunk = coroutine.yield()
-            or error("Expected more data for the body. The server may have died.") -- TODO hmm.
+        local chunk = coroutine.yield() or error('Expected more data for the body. The server may have died.') -- TODO hmm.
         table.insert(body_chunks, chunk)
         body_length = body_length + #chunk
       end
@@ -123,25 +126,24 @@ local function request_parser_loop()
       end
       local body = table.concat(body_chunks)
       -- Yield our data.
-      buffer = rest..(coroutine.yield(headers, body)
-          or error("Expected more data for the body. The server may have died.")) -- TODO hmm.
+      buffer = rest
+        .. (coroutine.yield(headers, body) or error('Expected more data for the body. The server may have died.')) -- TODO hmm.
     else
       -- Get more data since we don't have enough.
-      buffer = buffer..(coroutine.yield()
-          or error("Expected more data for the header. The server may have died.")) -- TODO hmm.
+      buffer = buffer .. (coroutine.yield() or error('Expected more data for the header. The server may have died.')) -- TODO hmm.
     end
   end
 end
 
 --- Mapping of error codes used by the client
 local client_errors = {
-  INVALID_SERVER_MESSAGE       = 1;
-  INVALID_SERVER_JSON          = 2;
-  NO_RESULT_CALLBACK_FOUND     = 3;
-  READ_ERROR                   = 4;
-  NOTIFICATION_HANDLER_ERROR   = 5;
-  SERVER_REQUEST_HANDLER_ERROR = 6;
-  SERVER_RESULT_CALLBACK_ERROR = 7;
+  INVALID_SERVER_MESSAGE = 1,
+  INVALID_SERVER_JSON = 2,
+  NO_RESULT_CALLBACK_FOUND = 3,
+  READ_ERROR = 4,
+  NOTIFICATION_HANDLER_ERROR = 5,
+  SERVER_REQUEST_HANDLER_ERROR = 6,
+  SERVER_RESULT_CALLBACK_ERROR = 7,
 }
 
 client_errors = vim.tbl_add_reverse_lookup(client_errors)
@@ -151,26 +153,26 @@ client_errors = vim.tbl_add_reverse_lookup(client_errors)
 ---@param err (table) The error object
 ---@returns (string) The formatted error message
 local function format_rpc_error(err)
-  validate {
-    err = { err, 't' };
-  }
+  validate({
+    err = { err, 't' },
+  })
 
   -- There is ErrorCodes in the LSP specification,
   -- but in ResponseError.code it is not used and the actual type is number.
   local code
   if protocol.ErrorCodes[err.code] then
-    code = string.format("code_name = %s,", protocol.ErrorCodes[err.code])
+    code = string.format('code_name = %s,', protocol.ErrorCodes[err.code])
   else
-    code = string.format("code_name = unknown, code = %s,", err.code)
+    code = string.format('code_name = unknown, code = %s,', err.code)
   end
 
-  local message_parts = {"RPC[Error]", code}
+  local message_parts = { 'RPC[Error]', code }
   if err.message then
-    table.insert(message_parts, "message =")
-    table.insert(message_parts, string.format("%q", err.message))
+    table.insert(message_parts, 'message =')
+    table.insert(message_parts, string.format('%q', err.message))
   end
   if err.data then
-    table.insert(message_parts, "data =")
+    table.insert(message_parts, 'data =')
     table.insert(message_parts, vim.inspect(err.data))
   end
   return table.concat(message_parts, ' ')
@@ -185,11 +187,11 @@ local function rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
   local code_name = assert(protocol.ErrorCodes[code], 'Invalid RPC error code')
   return setmetatable({
-    code = code;
-    message = message or code_name;
-    data = data;
+    code = code,
+    message = message or code_name,
+    data = data,
   }, {
-    __tostring = format_rpc_error;
+    __tostring = format_rpc_error,
   })
 end
 
@@ -220,7 +222,7 @@ end
 ---@param signal (number): Number describing the signal used to terminate (if
 ---any)
 function default_dispatchers.on_exit(code, signal)
-  local _ = log.info() and log.info("client_exit", { code = code, signal = signal })
+  local _ = log.info() and log.info('client_exit', { code = code, signal = signal })
 end
 ---@private
 --- Default dispatcher for client errors.
@@ -258,15 +260,15 @@ end
 --- - {handle} A handle for low-level interaction with the LSP server process
 ---   |vim.loop|.
 local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
-  local _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
-  validate {
-    cmd = { cmd, 's' };
-    cmd_args = { cmd_args, 't' };
-    dispatchers = { dispatchers, 't', true };
-  }
+  local _ = log.info() and log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
+  validate({
+    cmd = { cmd, 's' },
+    cmd_args = { cmd_args, 't' },
+    dispatchers = { dispatchers, 't', true },
+  })
 
   if extra_spawn_params and extra_spawn_params.cwd then
-      assert(is_dir(extra_spawn_params.cwd), "cwd must be a directory")
+    assert(is_dir(extra_spawn_params.cwd), 'cwd must be a directory')
   end
   if dispatchers then
     local user_dispatchers = dispatchers
@@ -275,11 +277,11 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       local user_dispatcher = user_dispatchers[dispatch_name]
       if user_dispatcher then
         if type(user_dispatcher) ~= 'function' then
-          error(string.format("dispatcher.%s must be a function", dispatch_name))
+          error(string.format('dispatcher.%s must be a function', dispatch_name))
         end
         -- server_request is wrapped elsewhere.
-        if not (dispatch_name == 'server_request'
-          or dispatch_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
+        if
+          not (dispatch_name == 'server_request' or dispatch_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
         then
           user_dispatcher = schedule_wrap(user_dispatcher)
         end
@@ -317,9 +319,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       dispatchers.on_exit(code, signal)
     end
     local spawn_params = {
-      args = cmd_args;
-      stdio = {stdin, stdout, stderr};
-      detached = true;
+      args = cmd_args,
+      stdio = { stdin, stdout, stderr },
+      detached = true,
     }
     if extra_spawn_params then
       spawn_params.cwd = extra_spawn_params.cwd
@@ -330,11 +332,11 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     end
     handle, pid = uv.spawn(cmd, spawn_params, onexit)
     if handle == nil then
-      local msg = string.format("Spawning language server with cmd: `%s` failed", cmd)
-      if string.match(pid, "ENOENT") then
-        msg = msg .. ". The language server is either not installed, missing from PATH, or not executable."
+      local msg = string.format('Spawning language server with cmd: `%s` failed', cmd)
+      if string.match(pid, 'ENOENT') then
+        msg = msg .. '. The language server is either not installed, missing from PATH, or not executable.'
       else
-        msg = msg .. string.format(" with error message: %s", pid)
+        msg = msg .. string.format(' with error message: %s', pid)
       end
       vim.notify(msg, vim.log.levels.WARN)
       return
@@ -348,8 +350,10 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   ---@param payload table
   ---@returns true if the payload could be scheduled, false if the main event-loop is in the process of closing.
   local function encode_and_send(payload)
-    local _ = log.debug() and log.debug("rpc.send", payload)
-    if handle == nil or handle:is_closing() then return false end
+    local _ = log.debug() and log.debug('rpc.send', payload)
+    if handle == nil or handle:is_closing() then
+      return false
+    end
     local encoded = vim.json.encode(payload)
     stdin:write(format_message_with_content_length(encoded))
     return true
@@ -363,22 +367,22 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   ---@param params (table): Parameters for the invoked LSP method
   ---@returns (bool) `true` if notification could be sent, `false` if not
   local function notify(method, params)
-    return encode_and_send {
-      jsonrpc = "2.0";
-      method = method;
-      params = params;
-    }
+    return encode_and_send({
+      jsonrpc = '2.0',
+      method = method,
+      params = params,
+    })
   end
 
   ---@private
   --- sends an error object to the remote LSP process.
   local function send_response(request_id, err, result)
-    return encode_and_send {
-      id = request_id;
-      jsonrpc = "2.0";
-      error = err;
-      result = result;
-    }
+    return encode_and_send({
+      id = request_id,
+      jsonrpc = '2.0',
+      error = err,
+      result = result,
+    })
   end
 
   -- FIXME: DOC: Should be placed on the RPC client object returned by
@@ -392,18 +396,18 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   ---@param notify_reply_callback (function|nil) Callback to invoke as soon as a request is no longer pending
   ---@returns (bool, number) `(true, message_id)` if request could be sent, `false` if not
   local function request(method, params, callback, notify_reply_callback)
-    validate {
-      callback = { callback, 'f' };
-      notify_reply_callback = { notify_reply_callback, 'f', true };
-    }
+    validate({
+      callback = { callback, 'f' },
+      notify_reply_callback = { notify_reply_callback, 'f', true },
+    })
     message_index = message_index + 1
     local message_id = message_index
-    local result = encode_and_send {
-      id = message_id;
-      jsonrpc = "2.0";
-      method = method;
-      params = params;
-    }
+    local result = encode_and_send({
+      id = message_id,
+      jsonrpc = '2.0',
+      method = method,
+      params = params,
+    })
     if result then
       if message_callbacks then
         message_callbacks[message_id] = schedule_wrap(callback)
@@ -421,7 +425,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   stderr:read_start(function(_err, chunk)
     if chunk then
-      local _ = log.error() and log.error("rpc", cmd, "stderr", chunk)
+      local _ = log.error() and log.error('rpc', cmd, 'stderr', chunk)
     end
   end)
 
@@ -455,7 +459,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       on_error(client_errors.INVALID_SERVER_JSON, decoded)
       return
     end
-    local _ = log.debug() and log.debug("rpc.receive", decoded)
+    local _ = log.debug() and log.debug('rpc.receive', decoded)
 
     if type(decoded.method) == 'string' and decoded.id then
       local err
@@ -463,17 +467,30 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       -- we can still use the result.
       schedule(function()
         local status, result
-        status, result, err = try_call(client_errors.SERVER_REQUEST_HANDLER_ERROR,
-            dispatchers.server_request, decoded.method, decoded.params)
-        local _ = log.debug() and log.debug("server_request: callback result", { status = status, result = result, err = err })
+        status, result, err = try_call(
+          client_errors.SERVER_REQUEST_HANDLER_ERROR,
+          dispatchers.server_request,
+          decoded.method,
+          decoded.params
+        )
+        local _ = log.debug()
+          and log.debug('server_request: callback result', { status = status, result = result, err = err })
         if status then
           if not (result or err) then
             -- TODO this can be a problem if `null` is sent for result. needs vim.NIL
-            error(string.format("method %q: either a result or an error must be sent to the server in response", decoded.method))
+            error(
+              string.format(
+                'method %q: either a result or an error must be sent to the server in response',
+                decoded.method
+              )
+            )
           end
           if err then
-            assert(type(err) == 'table', "err must be a table. Use rpc_response_error to help format errors.")
-            local code_name = assert(protocol.ErrorCodes[err.code], "Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.")
+            assert(type(err) == 'table', 'err must be a table. Use rpc_response_error to help format errors.')
+            local code_name = assert(
+              protocol.ErrorCodes[err.code],
+              'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
+            )
             err.message = err.message or code_name
           end
         else
@@ -483,18 +500,17 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
         end
         send_response(decoded.id, err, result)
       end)
-    -- This works because we are expecting vim.NIL here
+      -- This works because we are expecting vim.NIL here
     elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
-
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
 
       -- Notify the user that a response was received for the request
       local notify_reply_callback = notify_reply_callbacks and notify_reply_callbacks[result_id]
       if notify_reply_callback then
-        validate {
-          notify_reply_callback = { notify_reply_callback, 'f' };
-        }
+        validate({
+          notify_reply_callback = { notify_reply_callback, 'f' },
+        })
         notify_reply_callback(result_id)
         notify_reply_callbacks[result_id] = nil
       end
@@ -503,7 +519,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       if decoded.error then
         local mute_error = false
         if decoded.error.code == protocol.ErrorCodes.RequestCancelled then
-          local _ = log.debug() and log.debug("Received cancellation ack", decoded)
+          local _ = log.debug() and log.debug('Received cancellation ack', decoded)
           mute_error = true
         end
 
@@ -523,24 +539,22 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       local callback = message_callbacks and message_callbacks[result_id]
       if callback then
         message_callbacks[result_id] = nil
-        validate {
-          callback = { callback, 'f' };
-        }
+        validate({
+          callback = { callback, 'f' },
+        })
         if decoded.error then
           decoded.error = setmetatable(decoded.error, {
-            __tostring = format_rpc_error;
+            __tostring = format_rpc_error,
           })
         end
-        try_call(client_errors.SERVER_RESULT_CALLBACK_ERROR,
-            callback, decoded.error, decoded.result)
+        try_call(client_errors.SERVER_RESULT_CALLBACK_ERROR, callback, decoded.error, decoded.result)
       else
         on_error(client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
-        local _ = log.error() and log.error("No callback found for server response id "..result_id)
+        local _ = log.error() and log.error('No callback found for server response id ' .. result_id)
       end
     elseif type(decoded.method) == 'string' then
       -- Notification
-      try_call(client_errors.NOTIFICATION_HANDLER_ERROR,
-          dispatchers.notification, decoded.method, decoded.params)
+      try_call(client_errors.NOTIFICATION_HANDLER_ERROR, dispatchers.notification, decoded.method, decoded.params)
     else
       -- Invalid server message
       on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
@@ -556,7 +570,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       return
     end
     -- This should signal that we are done reading from the client.
-    if not chunk then return end
+    if not chunk then
+      return
+    end
     -- Flush anything in the parser by looping until we don't get a result
     -- anymore.
     while true do
@@ -574,17 +590,17 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   end)
 
   return {
-    pid = pid;
-    handle = handle;
-    request = request;
-    notify = notify
+    pid = pid,
+    handle = handle,
+    request = request,
+    notify = notify,
   }
 end
 
 return {
-  start = start;
-  rpc_response_error = rpc_response_error;
-  format_rpc_error = format_rpc_error;
-  client_errors = client_errors;
+  start = start,
+  rpc_response_error = rpc_response_error,
+  format_rpc_error = format_rpc_error,
+  client_errors = client_errors,
 }
 -- vim:sw=2 ts=2 et

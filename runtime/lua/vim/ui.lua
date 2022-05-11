@@ -37,12 +37,12 @@ local M = {}
 --- </pre>
 
 function M.select(items, opts, on_choice)
-  vim.validate {
+  vim.validate({
     items = { items, 'table', false },
     on_choice = { on_choice, 'function', false },
-  }
+  })
   opts = opts or {}
-  local choices = {opts.prompt or 'Select one of:'}
+  local choices = { opts.prompt or 'Select one of:' }
   local format_item = opts.format_item or tostring
   for i, item in pairs(items) do
     table.insert(choices, string.format('%d: %s', i, format_item(item)))
@@ -83,9 +83,9 @@ end
 --- end)
 --- </pre>
 function M.input(opts, on_confirm)
-  vim.validate {
+  vim.validate({
     on_confirm = { on_confirm, 'function', false },
-  }
+  })
 
   opts = opts or {}
   local input = vim.fn.input(opts)

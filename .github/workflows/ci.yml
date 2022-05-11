@@ -87,6 +87,13 @@ jobs:
         run: ./ci/run_lint.sh clint-full
 
       - if: "!cancelled()"
+        name: stylua
+        uses: JohnnyMorganz/stylua-action@1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --check runtime/
+
+      - if: "!cancelled()"
         name: lualint
         run: ./ci/run_lint.sh lualint
 
