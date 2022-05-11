@@ -764,6 +764,9 @@ function protocol.make_client_capabilities()
       workspaceEdit = {
         resourceOperations = { 'rename', 'create', 'delete' },
       },
+      codeLens = {
+        refreshSupport = true,
+      },
     },
     callHierarchy = {
       dynamicRegistration = false,

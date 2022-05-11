@@ -175,6 +175,11 @@ M['textDocument/codeLens'] = function(...)
   return require('vim.lsp.codelens').on_codelens(...)
 end
 
+M['workspace/codeLens/refresh'] = function(_, _, _, _)
+  require('vim.lsp.codelens').refresh()
+  return {}
+end
+
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 M['textDocument/references'] = function(_, result, ctx, config)
   if not result or vim.tbl_isempty(result) then
