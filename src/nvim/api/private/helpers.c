@@ -1843,7 +1843,8 @@ int build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdinfo, char
     CMDLINE_APPEND(" %s", args[i]);
   }
   eap->argc = argc;
-  eap->arg = argc > 0 ? eap->args[0] : NULL;
+  // If there isn't an argument, make eap->arg point to end of cmd
+  eap->arg = argc > 0 ? eap->args[0] : cmdline + pos;
 
   // Replace, :make and :grep with 'makeprg' and 'grepprg'.
   char *p = replace_makeprg(eap, eap->arg, cmdlinep);
