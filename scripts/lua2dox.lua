@@ -404,9 +404,9 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           state = 'in_magic_comment'
           local magic = string.sub(line, 4 + offset)
 
-          magic_split = string_split(magic, ' ')
+          local magic_split = string_split(magic, ' ')
 
-          type_index = 2
+          local type_index = 2
           if magic_split[1] == 'param' then
             type_index = type_index + 1
           end
