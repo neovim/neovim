@@ -1439,6 +1439,24 @@ describe('API', function()
       nvim('set_option_value', 'autoread', NIL, {scope = 'local'})
       eq(NIL, nvim('get_option_value', 'autoread', {scope = 'local'}))
     end)
+
+    it('set window options', function()
+      -- Same as to nvim_win_set_option
+      nvim('set_option_value', 'colorcolumn', '4,3', {win=0})
+      eq('4,3', nvim('get_option_value', 'colorcolumn', {scope = 'local'}))
+      command("set modified hidden")
+      command("enew") -- edit new buffer, window option is preserved
+      eq('4,3', nvim('get_option_value', 'colorcolumn', {scope = 'local'}))
+    end)
+
+    it('set local window options', function()
+      -- Different to nvim_win_set_option
+      nvim('set_option_value', 'colorcolumn', '4,3', {win=0, scope='local'})
+      eq('4,3', nvim('get_option_value', 'colorcolumn', {scope = 'local'}))
+      command("set modified hidden")
+      command("enew") -- edit new buffer, window option is reset
+      eq('', nvim('get_option_value', 'colorcolumn', {scope = 'local'}))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()

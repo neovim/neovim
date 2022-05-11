@@ -1040,8 +1040,8 @@ Object copy_object(Object obj)
   }
 }
 
-static void set_option_value_for(char *key, int numval, char *stringval, int opt_flags,
-                                 int opt_type, void *from, Error *err)
+void set_option_value_for(char *key, long numval, char *stringval, int opt_flags,
+                          int opt_type, void *from, Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
@@ -1081,7 +1081,7 @@ static void set_option_value_for(char *key, int numval, char *stringval, int opt
 }
 
 
-static void set_option_value_err(char *key, int numval, char *stringval, int opt_flags, Error *err)
+static void set_option_value_err(char *key, long numval, char *stringval, int opt_flags, Error *err)
 {
   char *errmsg;
 

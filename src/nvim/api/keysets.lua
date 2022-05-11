@@ -84,6 +84,8 @@ return {
   };
   option = {
     "scope";
+    "win";
+    "buf";
   };
   highlight = {
     "bold";
