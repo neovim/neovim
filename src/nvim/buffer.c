@@ -2387,7 +2387,7 @@ static char_u *fname_match(regmatch_T *rmp, char_u *name, bool ignore_case)
     rmp->rm_ic = p_fic || ignore_case;
     if (vim_regexec(rmp, name, (colnr_T)0)) {
       match = name;
-    } else {
+    } else if (rmp->regprog != NULL) {
       // Replace $(HOME) with '~' and try matching again.
       p = home_replace_save(NULL, name);
       if (vim_regexec(rmp, p, (colnr_T)0)) {
