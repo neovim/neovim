@@ -66,6 +66,10 @@ func Test_buf_pattern_invalid()
   vsplit 0000000
   silent! buf [0--]\&\zs*\zs*e
   bwipe!
+
+  vsplit 00000000000000000000000000
+  silent! buf [0--]\&\zs*\zs*e
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

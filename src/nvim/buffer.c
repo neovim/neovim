@@ -2366,7 +2366,7 @@ static char_u *buflist_match(regmatch_T *rmp, buf_T *buf, bool ignore_case)
 {
   // First try the short file name, then the long file name.
   char_u *match = fname_match(rmp, buf->b_sfname, ignore_case);
-  if (match == NULL) {
+  if (match == NULL && rmp->regprog != NULL) {
     match = fname_match(rmp, buf->b_ffname, ignore_case);
   }
   return match;
