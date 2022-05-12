@@ -262,7 +262,7 @@ void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last, Error *e
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start            First line index
-/// @param end              Last line index (exclusive)
+/// @param end              Last line index, exclusive
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param[out] err         Error details, if any
 /// @return Array of lines, or empty array for unloaded buffer.
@@ -358,7 +358,7 @@ static bool check_string_array(Array arr, bool disallow_nl, Error *err)
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start            First line index
-/// @param end              Last line index (exclusive)
+/// @param end              Last line index, exclusive
 /// @param strict_indexing  Whether out-of-bounds should be an error.
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
@@ -514,24 +514,25 @@ end:
 
 /// Sets (replaces) a range in the buffer
 ///
-/// This is recommended over nvim_buf_set_lines when only modifying parts of a
-/// line, as extmarks will be preserved on non-modified parts of the touched
+/// This is recommended over |nvim_buf_set_lines()| when only modifying parts of
+/// a line, as extmarks will be preserved on non-modified parts of the touched
 /// lines.
 ///
-/// Indexing is zero-based and end-exclusive.
+/// Indexing is zero-based. Row indices are end-inclusive, and column indices
+/// are end-exclusive.
 ///
-/// To insert text at a given index, set `start` and `end` ranges to the same
-/// index. To delete a range, set `replacement` to an array containing
-/// an empty string, or simply an empty array.
+/// To insert text at a given `(row, column)` location, use `start_row = end_row
+/// = row` and `start_col = end_col = col`. To delete the text in a range, use
+/// `replacement = {}`.
 ///
-/// Prefer nvim_buf_set_lines when adding or deleting entire lines only.
+/// Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire lines.
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start_row        First line index
-/// @param start_col        First column
-/// @param end_row          Last line index
-/// @param end_col          Last column
+/// @param start_col        Starting column (byte offset) on first line
+/// @param end_row          Last line index, inclusive
+/// @param end_col          Ending column (byte offset) on last line, exclusive
 /// @param replacement      Array of lines to use as replacement
 /// @param[out] err         Error details, if any
 void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, Integer start_col,
@@ -760,16 +761,17 @@ end:
 /// This differs from |nvim_buf_get_lines()| in that it allows retrieving only
 /// portions of a line.
 ///
-/// Indexing is zero-based. Column indices are end-exclusive.
+/// Indexing is zero-based. Row indices are end-inclusive, and column indices
+/// are end-exclusive.
 ///
 /// Prefer |nvim_buf_get_lines()| when retrieving entire lines.
 ///
 /// @param channel_id
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param start_row  First line index
-/// @param start_col  Starting byte offset of first line
-/// @param end_row    Last line index
-/// @param end_col    Ending byte offset of last line (exclusive)
+/// @param start_col  Starting column (byte offset) on first line
+/// @param end_row    Last line index, inclusive
+/// @param end_col    Ending column (byte offset) on last line, exclusive
 /// @param opts       Optional parameters. Currently unused.
 /// @param[out] err   Error details, if any
 /// @return Array of lines, or empty array for unloaded buffer.

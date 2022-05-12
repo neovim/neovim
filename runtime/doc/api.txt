@@ -2238,7 +2238,7 @@ nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
                 Parameters: ~
                     {buffer}           Buffer handle, or 0 for current buffer
                     {start}            First line index
-                    {end}              Last line index (exclusive)
+                    {end}              Last line index, exclusive
                     {strict_indexing}  Whether out-of-bounds should be an
                                        error.
 
@@ -2309,16 +2309,18 @@ nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                 This differs from |nvim_buf_get_lines()| in that it allows
                 retrieving only portions of a line.
 
-                Indexing is zero-based. Column indices are end-exclusive.
+                Indexing is zero-based. Row indices are end-inclusive, and
+                column indices are end-exclusive.
 
                 Prefer |nvim_buf_get_lines()| when retrieving entire lines.
 
                 Parameters: ~
                     {buffer}     Buffer handle, or 0 for current buffer
                     {start_row}  First line index
-                    {start_col}  Starting byte offset of first line
-                    {end_row}    Last line index
-                    {end_col}    Ending byte offset of last line (exclusive)
+                    {start_col}  Starting column (byte offset) on first line
+                    {end_row}    Last line index, inclusive
+                    {end_col}    Ending column (byte offset) on last line,
+                                 exclusive
                     {opts}       Optional parameters. Currently unused.
 
                 Return: ~
@@ -2398,7 +2400,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
                 Parameters: ~
                     {buffer}           Buffer handle, or 0 for current buffer
                     {start}            First line index
-                    {end}              Last line index (exclusive)
+                    {end}              Last line index, exclusive
                     {strict_indexing}  Whether out-of-bounds should be an
                                        error.
                     {replacement}      Array of lines to use as replacement
@@ -2448,25 +2450,27 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
                   {replacement})
                 Sets (replaces) a range in the buffer
 
-                This is recommended over nvim_buf_set_lines when only
+                This is recommended over |nvim_buf_set_lines()| when only
                 modifying parts of a line, as extmarks will be preserved on
                 non-modified parts of the touched lines.
 
-                Indexing is zero-based and end-exclusive.
+                Indexing is zero-based. Row indices are end-inclusive, and
+                column indices are end-exclusive.
 
-                To insert text at a given index, set `start` and `end` ranges
-                to the same index. To delete a range, set `replacement` to an
-                array containing an empty string, or simply an empty array.
+                To insert text at a given `(row, column)` location, use
+                `start_row = end_row = row` and `start_col = end_col = col`.
+                To delete the text in a range, use `replacement = {}`.
 
-                Prefer nvim_buf_set_lines when adding or deleting entire lines
-                only.
+                Prefer |nvim_buf_set_lines()| if you are only adding or
+                deleting entire lines.
 
                 Parameters: ~
                     {buffer}       Buffer handle, or 0 for current buffer
                     {start_row}    First line index
-                    {start_col}    First column
-                    {end_row}      Last line index
-                    {end_col}      Last column
+                    {start_col}    Starting column (byte offset) on first line
+                    {end_row}      Last line index, inclusive
+                    {end_col}      Ending column (byte offset) on last line,
+                                   exclusive
                     {replacement}  Array of lines to use as replacement
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
