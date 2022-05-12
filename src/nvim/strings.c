@@ -1480,3 +1480,30 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap, t
   // written to the buffer if it were large enough.
   return (int)str_l;
 }
+
+int kv_do_printf(StringBuilder *str, const char *fmt, ...) {
+  size_t remaining = str->capacity-str->size;
+
+  va_list ap;
+  va_start(ap, fmt);
+  int printed = vsnprintf(str->items+str->size, remaining, fmt, ap);
+  va_end(ap);
+
+  if (printed < 0) {
+    return -1;
+  }
+
+  // printed string didn't fit, resize and try again
+  if ((size_t)printed > remaining) {
+    kv_ensure_space(*str, (size_t)printed);
+    va_start(ap, fmt);
+    printed = vsnprintf(str->items+str->size, str->capacity - str->size, fmt, ap);
+    va_end(ap);
+    if (printed < 0) {
+      return -1;
+    }
+  }
+
+  str->size += (size_t)printed;
+  return printed;
+}

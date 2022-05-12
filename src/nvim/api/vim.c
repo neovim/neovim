@@ -2463,7 +2463,7 @@ void nvim_del_user_command(String name, Error *err)
 
 String nvim__kvec_test(Integer x, Integer y)
 {
-  kvec_t(char) str = KV_INITIAL_VALUE;
+  StringBuilder str = KV_INITIAL_VALUE;
   kv_concat(str, "Hello: ");
   kv_printf(str, "%ld times %ld", x, y);
   kv_concat(str, "\nbabla");
