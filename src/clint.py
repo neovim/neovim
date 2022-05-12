@@ -265,7 +265,7 @@ _valid_extensions = {'c', 'h'}
 _RE_COMMENTLINE = re.compile(r'^\s*//')
 
 
-def ParseNolintSuppressions(filename, raw_line, linenum, error):
+def ParseNolintSuppressions(raw_line, linenum):
     """Updates the global list of error-suppressions.
 
     Parses any NOLINT comments on the current line, updating the global
@@ -273,10 +273,8 @@ def ParseNolintSuppressions(filename, raw_line, linenum, error):
     was malformed.
 
     Args:
-      filename: str, the name of the input file.
       raw_line: str, the line of input text, with comments.
       linenum: int, the number of the current line.
-      error: function, an error handler.
     """
     # FIXME(adonovan): "NOLINT(" is misparsed as NOLINT(*).
     matched = _RE_SUPPRESSION.search(raw_line)
@@ -463,6 +461,7 @@ class _CppLintState:
         self.filters = _DEFAULT_FILTERS[:]
         self.counting = 'total'  # In what way are we counting errors?
         self.errors_by_category = {}  # string to int dict storing error counts
+        self.stdin_filename = ''
 
         # output format:
         # "emacs" - format that emacs can parse (default)
@@ -658,7 +657,8 @@ class FileInfo:
 
     def FullName(self):
         """Make Windows paths like Unix."""
-        return os.path.abspath(self._filename).replace('\\', '/')
+        abspath = str(os.path.abspath(self._filename))
+        return abspath.replace('\\', '/')
 
     def RelativePath(self):
         """FullName with <prefix>/src/nvim/ chopped off."""
@@ -1100,6 +1100,7 @@ def ReverseCloseExpression(clean_lines, linenum, pos):
     """
     line = clean_lines.elided[linenum]
     endchar = line[pos]
+    startchar = None
     if endchar not in ')}]>':
         return (line, 0, -1)
     if endchar == ')':
@@ -1209,8 +1210,7 @@ def CheckForHeaderGuard(filename, lines, error):
         if ifndef != cppvar + '_':
             error_level = 5
 
-        ParseNolintSuppressions(filename, lines[ifndef_linenum], ifndef_linenum,
-                                error)
+        ParseNolintSuppressions(lines[ifndef_linenum], ifndef_linenum)
         error(filename, ifndef_linenum, 'build/header_guard', error_level,
               '#ifndef header guard has wrong style, please use: %s' % cppvar)
 
@@ -1225,8 +1225,7 @@ def CheckForHeaderGuard(filename, lines, error):
         if endif != ('#endif  // %s' % (cppvar + '_')):
             error_level = 5
 
-        ParseNolintSuppressions(filename, lines[endif_linenum], endif_linenum,
-                                error)
+        ParseNolintSuppressions(lines[endif_linenum], endif_linenum)
         error(filename, endif_linenum, 'build/header_guard', error_level,
               '#endif line should be "#endif  // %s"' % cppvar)
 
@@ -1452,12 +1451,6 @@ def CheckOSFunctions(filename, clean_lines, linenum, error):
                   '...) instead of ' + function + '...).')
 
 
-# Matches invalid increment: *count++, which moves pointer instead of
-# incrementing a value.
-_RE_PATTERN_INVALID_INCREMENT = re.compile(
-    r'^\s*\*\w+(\+\+|--);')
-
-
 class _BlockInfo:
 
     """Stores information about a generic block of code."""
@@ -1564,14 +1557,12 @@ class _NestingState:
                 # TODO(unknown): unexpected #endif, issue warning?
                 pass
 
-    def Update(self, filename, clean_lines, linenum, error):
+    def Update(self, clean_lines, linenum):
         """Update nesting state with current line.
 
         Args:
-          filename: The name of the current file.
           clean_lines: A CleansedLines instance containing the file.
           linenum: The number of the line to check.
-          error: The function to call with any errors found.
         """
         line = clean_lines.elided[linenum]
 
@@ -1637,8 +1628,7 @@ class _NestingState:
             line = matched.group(2)
 
 
-def CheckForNonStandardConstructs(filename, clean_lines, linenum,
-                                  nesting_state, error):
+def CheckForNonStandardConstructs(filename, clean_lines, linenum, error):
     r"""Logs an error if we see certain non-ANSI constructs ignored by gcc-2.
 
     Complain about several constructs which gcc-2 accepts, but which are
@@ -1660,8 +1650,6 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum,
       filename: The name of the current file.
       clean_lines: A CleansedLines instance containing the file.
       linenum: The number of the line to check.
-      nesting_state: A _NestingState instance which maintains information about
-                     the current stack of nested blocks being parsed.
       error: A callable to which errors are reported, which takes 4 arguments:
              filename, line number, error level, and message
     """
@@ -2120,7 +2108,7 @@ def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
                 del level_starts[depth]
 
 
-def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
+def CheckSpacing(filename, clean_lines, linenum, error):
     """Checks for the correctness of various spacing issues in the code.
 
     Things we check for: spaces around operators, spaces after
@@ -2134,8 +2122,6 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
       filename: The name of the current file.
       clean_lines: A CleansedLines instance containing the file.
       linenum: The number of the line to check.
-      nesting_state: A _NestingState instance which maintains information about
-                     the current stack of nested blocks being parsed.
       error: The function to call with any errors found.
     """
 
@@ -2830,8 +2816,7 @@ def GetLineWidth(line):
         return len(line)
 
 
-def CheckStyle(filename, clean_lines, linenum, file_extension, nesting_state,
-               error):
+def CheckStyle(filename, clean_lines, linenum, file_extension, error):
     """Checks rules from the 'C++ style rules' section of cppguide.html.
 
     Most of these rules are hard to test (naming, comment style), but we
@@ -2843,8 +2828,6 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, nesting_state,
       clean_lines: A CleansedLines instance containing the file.
       linenum: The number of the line to check.
       file_extension: The extension (without the dot) of the filename.
-      nesting_state: A _NestingState instance which maintains information about
-                     the current stack of nested blocks being parsed.
       error: The function to call with any errors found.
     """
 
@@ -2930,25 +2913,16 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, nesting_state,
     # Some more style checks
     CheckBraces(filename, clean_lines, linenum, error)
     CheckEmptyBlockBody(filename, clean_lines, linenum, error)
-    CheckSpacing(filename, clean_lines, linenum, nesting_state, error)
+    CheckSpacing(filename, clean_lines, linenum, error)
 
 
-_RE_PATTERN_INCLUDE_NEW_STYLE = re.compile(r'#include +"[^/]+\.h"')
 _RE_PATTERN_INCLUDE = re.compile(r'^\s*#\s*include\s*([<"])([^>"]*)[>"].*$')
-# Matches the first component of a filename delimited by -s and _s. That is:
-#  _RE_FIRST_COMPONENT.match('foo').group(0) == 'foo'
-#  _RE_FIRST_COMPONENT.match('foo.cc').group(0) == 'foo'
-#  _RE_FIRST_COMPONENT.match('foo-bar_baz.cc').group(0) == 'foo'
-#  _RE_FIRST_COMPONENT.match('foo_bar-baz.cc').group(0) == 'foo'
-_RE_FIRST_COMPONENT = re.compile(r'^[^-_.]+')
 
 
-def _ClassifyInclude(fileinfo, include, is_system):
+def _ClassifyInclude(is_system):
     """Figures out what kind of header 'include' is.
 
     Args:
-      fileinfo: The current file cpplint is running over. A FileInfo instance.
-      include: The path to a #included file.
       is_system: True if the #include used <> rather than "".
 
     Returns:
@@ -2974,15 +2948,8 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
                       inserted.
       error         : The function to call with any errors found.
     """
-    fileinfo = FileInfo(filename)
 
     line = clean_lines.lines[linenum]
-
-    # "include" should use the new style "foo/bar.h" instead of just "bar.h"
-    # XXX: neovim doesn't currently use this style
-    # if _RE_PATTERN_INCLUDE_NEW_STYLE.search(line):
-    #   error(filename, linenum, 'build/include', 4,
-    #         'Include the directory when naming .h files')
 
     # we shouldn't include a file more than once. actually, there are a
     # handful of instances where doing so is okay, but in general it's
@@ -3011,7 +2978,7 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
             # track of the highest type seen, and complains if we see a
             # lower type after that.
             error_message = include_state.CheckNextIncludeOrder(
-                _ClassifyInclude(fileinfo, include, is_system))
+                _ClassifyInclude(is_system))
             if error_message:
                 error(filename, linenum, 'build/include_order', 4,
                       '%s. Should be: c system, c++ system, other.'
@@ -3078,8 +3045,7 @@ def _GetTextInside(text, start_pattern):
     return text[start_position:position - 1]
 
 
-def CheckLanguage(filename, clean_lines, linenum, file_extension,
-                  include_state, nesting_state, error):
+def CheckLanguage(filename, clean_lines, linenum, include_state, error):
     """Checks rules from the 'C++ language rules' section of cppguide.html.
 
     Some of these rules are hard to test (function overloading, using
@@ -3089,11 +3055,8 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
       filename       : The name of the current file.
       clean_lines    : A CleansedLines instance containing the file.
       linenum        : The number of the line to check.
-      file_extension : The extension (without the dot) of the filename.
       include_state  : An _IncludeState instance in which the headers are
                        inserted.
-      nesting_state  : A _NestingState instance which maintains information
-                       about the current stack of nested blocks being parsed.
       error          : The function to call with any errors found.
     """
     # If the line is empty or consists of entirely a comment, no need to
@@ -3173,8 +3136,9 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     if printf_args:
         match = Match(r'([\w.\->()]+)$', printf_args)
         if match and match.group(1) != '__VA_ARGS__':
-            function_name = re.search(r'\b((?:string)?printf)\s*\(',
-                                      line, re.I).group(1)
+            function_name_groups = re.search(r'\b((?:string)?printf)\s*\(', line, re.I)
+            assert function_name_groups
+            function_name = function_name_groups.group(1)
             error(filename, linenum, 'runtime/printf', 4,
                   'Potential format string bug. Do %s("%%s", %s) instead.'
                   % (function_name, match.group(1)))
@@ -3294,19 +3258,16 @@ def ProcessLine(filename, file_extension, clean_lines, line,
     """
     raw_lines = clean_lines.raw_lines
     init_lines = clean_lines.init_lines
-    ParseNolintSuppressions(filename, raw_lines[line], line, error)
-    nesting_state.Update(filename, clean_lines, line, error)
+    ParseNolintSuppressions(raw_lines[line], line)
+    nesting_state.Update(clean_lines, line)
     if nesting_state.stack and nesting_state.stack[-1].inline_asm != _NO_ASM:
         return
     CheckForFunctionLengths(filename, clean_lines, line, function_state, error)
     CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
     CheckForOldStyleComments(filename, init_lines[line], line, error)
-    CheckStyle(
-        filename, clean_lines, line, file_extension, nesting_state, error)
-    CheckLanguage(filename, clean_lines, line, file_extension, include_state,
-                  nesting_state, error)
-    CheckForNonStandardConstructs(filename, clean_lines, line,
-                                  nesting_state, error)
+    CheckStyle(filename, clean_lines, line, file_extension, error)
+    CheckLanguage(filename, clean_lines, line, include_state, error)
+    CheckForNonStandardConstructs(filename, clean_lines, line, error)
     CheckPosixThreading(filename, clean_lines, line, error)
     CheckMemoryFunctions(filename, clean_lines, line, error)
     CheckOSFunctions(filename, clean_lines, line, error)
@@ -3349,6 +3310,7 @@ def ProcessFileData(filename, file_extension, lines, error,
             if not IsErrorSuppressedByNolint(category, linenum):
                 key = init_lines[linenum - 1 if linenum else 0:linenum + 2]
                 err = [filename, key, category]
+                assert _cpplint_state.record_errors_file
                 json.dump(err, _cpplint_state.record_errors_file)
                 _cpplint_state.record_errors_file.write('\n')
             Error(filename, linenum, category, confidence, message)
@@ -3401,8 +3363,6 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
 
         if filename == '-':
             stdin = sys.stdin.read()
-            if sys.version_info < (3, 0):
-                stdin = stdin.decode('utf8')
             lines = stdin.split('\n')
             if _cpplint_state.stdin_filename is not None:
                 filename = _cpplint_state.stdin_filename
@@ -3498,7 +3458,7 @@ def ParseArguments(args):
     counting_style = ''
     record_errors_file = None
     suppress_errors_file = None
-    stdin_filename = None
+    stdin_filename = ''
 
     for (opt, val) in opts:
         if opt == '--help':
