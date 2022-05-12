@@ -733,4 +733,21 @@ func Test_undofile_cryptmethod_blowfish2()
   set undofile& undolevels& cryptmethod&
 endfunc
 
+func Test_undo_mark()
+  new
+  " The undo is applied to the only line.
+  call setline(1, 'hello')
+  call feedkeys("ggyiw$p", 'xt')
+  undo
+  call assert_equal([0, 1, 1, 0], getpos("'["))
+  call assert_equal([0, 1, 1, 0], getpos("']"))
+  " The undo removes the last line.
+  call feedkeys("Goaaaa\<Esc>", 'xt')
+  call feedkeys("obbbb\<Esc>", 'xt')
+  undo
+  call assert_equal([0, 2, 1, 0], getpos("'["))
+  call assert_equal([0, 2, 1, 0], getpos("']"))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
