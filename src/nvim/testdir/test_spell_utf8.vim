@@ -768,4 +768,10 @@ func Test_spellfile_value()
   set spellfile=Xdir/Xtest.utf-8.add,Xtest_other.add
 endfunc
 
+" Invalid bytes may cause trouble when creating the word list.
+func Test_check_for_valid_word()
+  call assert_fails("spellgood! 0\xac", 'E1280:')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

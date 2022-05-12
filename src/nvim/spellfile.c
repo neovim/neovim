@@ -302,6 +302,7 @@
 #define CF_UPPER        0x02
 
 static char *e_spell_trunc = N_("E758: Truncated spell file");
+static char *e_illegal_character_in_word = N_("E1280: Illegal character in word");
 static char *e_afftrailing = N_("Trailing text in %s line %d: %s");
 static char *e_affname = N_("Affix name too long in %s line %d: %s");
 static char *msg_compressing = N_("Compressing word tree...");
@@ -3927,6 +3928,11 @@ static int store_word(spellinfo_T *spin, char_u *word, int flags, int region, co
   char_u foldword[MAXWLEN];
   int res = OK;
 
+  // Avoid adding illegal bytes to the word tree.
+  if (!utf_valid_string(word, NULL)) {
+    return FAIL;
+  }
+
   (void)spell_casefold(curwin, word, len, foldword, MAXWLEN);
   for (const char_u *p = pfxlist; res == OK; p++) {
     if (!need_affix || (p != NULL && *p != NUL)) {
@@ -5524,6 +5530,11 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   long fpos, fpos_next = 0;
   int i;
   char_u *spf;
+
+  if (!utf_valid_string(word, NULL)) {
+    emsg(_(e_illegal_character_in_word));
+    return;
+  }
 
   if (idx == 0) {           // use internal wordlist
     if (int_wordlist == NULL) {
