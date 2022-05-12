@@ -185,15 +185,8 @@ if(NOT MSVC)
   set_source_files_properties(
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion")
 
-  # gperf generates ANSI-C with incorrect linkage, ignore it.
-  check_c_compiler_flag(-Wstatic-in-inline HAS_WSTATIC_IN_INLINE)
-  if(HAS_WSTATIC_IN_INLINE)
-    set_source_files_properties(
-      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
-  else()
-    set_source_files_properties(
-      eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
-  endif()
+  set_source_files_properties(
+    eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -408,14 +401,9 @@ add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
   DEPENDS ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
 )
 
-if(NOT GPERF_PRG)
-  message(FATAL_ERROR "gperf was not found.")
-endif()
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
   COMMAND ${LUA_PRG} ${FUNCS_GENERATOR}
-      ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
-  COMMAND ${GPERF_PRG}
-      ${GENERATED_DIR}/funcs.generated.h.gperf --output-file=${GENERATED_FUNCS}
+      ${CMAKE_CURRENT_LIST_DIR} ${LUA_SHARED_MODULE_SOURCE} ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
   DEPENDS ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${API_METADATA}
 )
 list(APPEND NVIM_GENERATED_FOR_SOURCES

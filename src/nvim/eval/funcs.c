@@ -80,9 +80,6 @@ typedef enum {
   kSomeMatchStrPos,  ///< Data for matchstrpos().
 } SomeMatchType;
 
-KHASH_MAP_INIT_STR(functions, VimLFuncDef)
-
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/funcs.c.generated.h"
 
@@ -134,14 +131,11 @@ char_u *get_function_name(expand_T *xp, int idx)
       return name;
     }
   }
-  while ((size_t)++intidx < ARRAY_SIZE(functions)
-         && functions[intidx].name[0] == '\0') {}
 
-  if ((size_t)intidx >= ARRAY_SIZE(functions)) {
+  const char *const key = functions[++intidx].name;
+  if (!key) {
     return NULL;
   }
-
-  const char *const key = functions[intidx].name;
   const size_t key_len = strlen(key);
   memcpy(IObuff, key, key_len);
   IObuff[key_len] = '(';
@@ -178,18 +172,19 @@ char_u *get_expr_name(expand_T *xp, int idx)
 /// @param[in]  name  Name of the function.
 ///
 /// @return  pointer to the function definition or NULL if not found.
-const VimLFuncDef *find_internal_func(const char *const name)
+const EvalFuncDef *find_internal_func(const char *const name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   size_t len = strlen(name);
-  return find_internal_func_gperf(name, len);
+  int index = find_internal_func_hash(name, len);
+  return index >= 0 ? &functions[index] : NULL;
 }
 
 int call_internal_func(const char_u *const fname, const int argcount, typval_T *const argvars,
                        typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL
 {
-  const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
+  const EvalFuncDef *const fdef = find_internal_func((const char *)fname);
   if (fdef == NULL) {
     return ERROR_UNKNOWN;
   } else if (argcount < fdef->min_argc) {
@@ -207,7 +202,7 @@ int call_internal_method(const char_u *const fname, const int argcount, typval_T
                          typval_T *const rettv, typval_T *const basetv)
   FUNC_ATTR_NONNULL_ALL
 {
-  const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
+  const EvalFuncDef *const fdef = find_internal_func((const char *)fname);
   if (fdef == NULL) {
     return ERROR_UNKNOWN;
   } else if (fdef->base_arg == BASE_NONE) {
