@@ -832,4 +832,17 @@ func Test_opt_cdhome()
   set cdhome&
 endfunc
 
+func Test_switchbuf_reset()
+  set switchbuf=useopen
+  sblast
+  call assert_equal(1, winnr('$'))
+  set all&
+  " Nvim has a different default for 'switchbuf'
+  " call assert_equal('', &switchbuf)
+  call assert_equal('uselast', &switchbuf)
+  sblast
+  call assert_equal(2, winnr('$'))
+  only!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
