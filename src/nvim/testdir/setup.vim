@@ -26,11 +26,9 @@ set sessionoptions+=options
 set viewoptions+=options
 set switchbuf=
 
-" Unmap Nvim default mappings.
-unmap Y
-unmap <C-L>
-iunmap <C-U>
-iunmap <C-W>
+" Clear Nvim default mappings.
+mapclear
+mapclear!
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'

@@ -87,6 +87,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 	nnoremap <C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>
 	inoremap <C-U> <C-G>u<C-U>
 	inoremap <C-W> <C-G>u<C-W>
+	xnoremap * y/\V<C-R>"<CR>
+	xnoremap # y?\V<C-R>"<CR>
 <
 Default Autocommands ~
 							*default-autocmds*
