@@ -1290,9 +1290,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
   // Finally, build the command line string that will be stored inside ea.cmdlinep.
   // This also sets the values of ea.cmd, ea.arg, ea.args and ea.arglens.
-  if (build_cmdline_str(&cmdline, &ea, &cmdinfo, args, argc) == FAIL) {
-    goto end;
-  }
+  build_cmdline_str(&cmdline, &ea, &cmdinfo, args, argc);
   ea.cmdlinep = &cmdline;
 
   garray_T capture_local;

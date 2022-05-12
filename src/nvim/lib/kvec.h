@@ -94,16 +94,25 @@
     memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
   } while (0)
 
-#define kv_splice(v1, v0) \
+/// fit at least "len" more items
+#define kv_ensure_space(v, len) \
   do { \
-    if ((v1).capacity < (v1).size + (v0).size) { \
-      (v1).capacity = (v1).size + (v0).size; \
-      kv_roundup32((v1).capacity); \
-      kv_resize((v1), (v1).capacity); \
+    if ((v).capacity < (v).size + len) { \
+      (v).capacity = (v).size + len; \
+      kv_roundup32((v).capacity); \
+      kv_resize((v), (v).capacity); \
     } \
-    memcpy((v1).items + (v1).size, (v0).items, sizeof((v1).items[0]) * (v0).size); \
-    (v1).size = (v1).size + (v0).size; \
   } while (0)
+
+#define kv_concat_len(v, data, len) \
+  do { \
+    kv_ensure_space(v, len); \
+    memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
+    (v).size = (v).size + len; \
+  } while (0)
+
+#define kv_concat(v, str) kv_concat_len(v, str, STRLEN(str))
+#define kv_splice(v1, v0) kv_concat_len(v1, (v0).items, (v0).size)
 
 #define kv_pushp(v) \
   ((((v).size == (v).capacity) ? (kv_resize_full(v), 0) : 0), \
@@ -122,6 +131,8 @@
          ? (v).size = (i) + 1 \
          : 0UL)), \
      &(v).items[(i)]))
+
+#define kv_printf(v, ...) kv_do_printf(&(v), __VA_ARGS__)
 
 /// Type of a vector with a few first members allocated on stack
 ///
