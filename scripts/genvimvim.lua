@@ -44,12 +44,13 @@ local function cmd_kw(prev_cmd, cmd)
 end
 
 -- Exclude these from the vimCommand keyword list, they are handled specially
--- in syntax/vim.vim (vimAugroupKey, vimAutoCmd). #9327
-local function is_autocmd_cmd(cmd)
+-- in syntax/vim.vim (vimAugroupKey, vimAutoCmd, vimSubst). #9327
+local function is_special_cased_cmd(cmd)
   return (cmd == 'augroup'
           or cmd == 'autocmd'
           or cmd == 'doautocmd'
-          or cmd == 'doautoall')
+          or cmd == 'doautoall'
+          or cmd == 'substitute')
 end
 
 local vimcmd_start = 'syn keyword vimCommand contained '
@@ -60,7 +61,7 @@ for _, cmd_desc in ipairs(ex_cmds.cmds) do
     w('\n' .. vimcmd_start)
   end
   local cmd = cmd_desc.command
-  if cmd:match('%w') and cmd ~= 'z' and not is_autocmd_cmd(cmd) then
+  if cmd:match('%w') and cmd ~= 'z' and not is_special_cased_cmd(cmd) then
     w(' ' .. cmd_kw(prev_cmd, cmd))
   end
   prev_cmd = cmd
