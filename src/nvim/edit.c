@@ -1325,14 +1325,14 @@ normalchar:
 
     if (!p_paste) {
       // Trigger InsertCharPre.
-      char_u *str = do_insert_char_pre(s->c);
-      char_u *p;
+      char *str = (char *)do_insert_char_pre(s->c);
+      char *p;
 
       if (str != NULL) {
         if (*str != NUL && stop_arrow() != FAIL) {
           // Insert the new value of v:char literally.
           for (p = str; *p != NUL; MB_PTR_ADV(p)) {
-            s->c = utf_ptr2char((char *)p);
+            s->c = utf_ptr2char(p);
             if (s->c == CAR || s->c == K_KENTER || s->c == NL) {
               ins_eol(s->c);
             } else {
@@ -3505,11 +3505,11 @@ static void ins_compl_addleader(int c)
     return;
   }
   if ((cc = utf_char2len(c)) > 1) {
-    char_u buf[MB_MAXBYTES + 1];
+    char buf[MB_MAXBYTES + 1];
 
     utf_char2bytes(c, (char *)buf);
     buf[cc] = NUL;
-    ins_char_bytes(buf, (size_t)cc);
+    ins_char_bytes((char_u *)buf, (size_t)cc);
   } else {
     ins_char(c);
   }
@@ -5939,11 +5939,11 @@ void insertchar(int c, int flags, int second_indent)
     int cc;
 
     if ((cc = utf_char2len(c)) > 1) {
-      char_u buf[MB_MAXBYTES + 1];
+      char buf[MB_MAXBYTES + 1];
 
       utf_char2bytes(c, (char *)buf);
       buf[cc] = NUL;
-      ins_char_bytes(buf, (size_t)cc);
+      ins_char_bytes((char_u *)buf, (size_t)cc);
       AppendCharToRedobuff(c);
     } else {
       ins_char(c);
@@ -6840,7 +6840,7 @@ char_u *add_char2buf(int c, char_u *s)
   char_u temp[MB_MAXBYTES + 1];
   const int len = utf_char2bytes(c, (char *)temp);
   for (int i = 0; i < len; i++) {
-    c = temp[i];
+    c = (uint8_t)temp[i];
     // Need to escape K_SPECIAL like in the typeahead buffer.
     if (c == K_SPECIAL) {
       *s++ = K_SPECIAL;
@@ -9460,7 +9460,7 @@ static char_u *do_insert_char_pre(int c)
     // character.  Only use it when changed, otherwise continue with the
     // original character to avoid breaking autoindent.
     if (STRCMP(buf, get_vim_var_str(VV_CHAR)) != 0) {
-      res = vim_strsave(get_vim_var_str(VV_CHAR));
+      res = vim_strsave((char_u *)get_vim_var_str(VV_CHAR));
     }
   }
 

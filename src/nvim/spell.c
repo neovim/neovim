@@ -385,7 +385,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     } else if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
       mi.mi_end = skiphex(ptr + 2);
     } else {
-      mi.mi_end = skipdigits(ptr);
+      mi.mi_end = (char_u *)skipdigits((char *)ptr);
     }
     nrlen = (size_t)(mi.mi_end - ptr);
   }
@@ -1656,7 +1656,7 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
 // "lang" must be the language without the region: e.g., "en".
 static void spell_load_lang(char_u *lang)
 {
-  char_u fname_enc[85];
+  char fname_enc[85];
   int r;
   spelload_T sl;
   int round;
@@ -2105,7 +2105,7 @@ char *did_set_spelllang(win_T *wp)
       filename = true;
 
       // Locate a region and remove it from the file name.
-      p = vim_strchr(path_tail(lang), '_');
+      p = vim_strchr((char_u *)path_tail((char *)lang), '_');
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
         STRLCPY(region_cp, p + 1, 3);
@@ -2247,7 +2247,7 @@ char *did_set_spelllang(win_T *wp)
       if (round == 0) {
         STRCPY(lang, "internal wordlist");
       } else {
-        STRLCPY(lang, path_tail(spf_name), MAXWLEN + 1);
+        STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
         p = vim_strchr(lang, '.');
         if (p != NULL) {
           *p = NUL;             // truncate at ".encoding.add"
@@ -5652,12 +5652,12 @@ static void make_case_word(char_u *fword, char_u *cword, int flags)
 static bool similar_chars(slang_T *slang, int c1, int c2)
 {
   int m1, m2;
-  char_u buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXBYTES + 1];
   hashitem_T *hi;
 
   if (c1 >= 256) {
     buf[utf_char2bytes(c1, (char *)buf)] = 0;
-    hi = hash_find(&slang->sl_map_hash, buf);
+    hi = hash_find(&slang->sl_map_hash, (char_u *)buf);
     if (HASHITEM_EMPTY(hi)) {
       m1 = 0;
     } else {
@@ -5672,7 +5672,7 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
 
   if (c2 >= 256) {
     buf[utf_char2bytes(c2, (char *)buf)] = 0;
-    hi = hash_find(&slang->sl_map_hash, buf);
+    hi = hash_find(&slang->sl_map_hash, (char_u *)buf);
     if (HASHITEM_EMPTY(hi)) {
       m2 = 0;
     } else {
@@ -6871,20 +6871,20 @@ void ex_spellinfo(exarg_T *eap)
 // ":spelldump"
 void ex_spelldump(exarg_T *eap)
 {
-  char_u *spl;
+  char *spl;
   long dummy;
 
   if (no_spell_checking(curwin)) {
     return;
   }
-  get_option_value("spl", &dummy, (char **)&spl, OPT_LOCAL);
+  get_option_value("spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
   set_option_value("spell", true, "", OPT_LOCAL);
-  set_option_value("spl",  dummy, (char *)spl, OPT_LOCAL);
+  set_option_value("spl",  dummy, spl, OPT_LOCAL);
   xfree(spl);
 
   if (!buf_is_empty(curbuf)) {

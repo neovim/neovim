@@ -3009,7 +3009,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
   //
   // With :unmap, literal white space is included in the {lhs}; there is no
   // separate {rhs}.
-  const char_u *lhs_end = to_parse;
+  const char *lhs_end = (char *)to_parse;
   bool do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
   while (*lhs_end && (is_unmap || !ascii_iswhite(*lhs_end))) {
     if ((lhs_end[0] == Ctrl_V || (do_backslash && lhs_end[0] == '\\'))
@@ -3025,7 +3025,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
 
   // Given {lhs} might be larger than MAXMAPLEN before replace_termcodes
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
-  size_t orig_lhs_len = (size_t)(lhs_end - to_parse);
+  size_t orig_lhs_len = (size_t)((char_u *)lhs_end - to_parse);
   char_u *lhs_to_replace = xcalloc(orig_lhs_len + 1, sizeof(char_u));
   STRLCPY(lhs_to_replace, to_parse, orig_lhs_len + 1);
 
@@ -3820,7 +3820,7 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
   MAPMODE(mode, modechars, 'c', MODE_CMDLINE);
 #undef MAPMODE
 
-  retval = map_to_exists_mode((const char *)rhs, mode, abbr);
+  retval = map_to_exists_mode((char *)rhs, mode, abbr);
   xfree(buf);
 
   return retval;
@@ -4828,7 +4828,7 @@ mapblock_T *get_maphash(int index, buf_T *buf)
 }
 
 /// Get command argument for <Cmd> key
-char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
+char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 {
   garray_T line_ga;
   int c1 = -1, c2;
@@ -4901,7 +4901,7 @@ char_u *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
     ga_clear(&line_ga);
   }
 
-  return (char_u *)line_ga.ga_data;
+  return line_ga.ga_data;
 }
 
 bool map_execute_lua(void)

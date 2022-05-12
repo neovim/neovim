@@ -1327,7 +1327,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
     int mi = 0;
     int ti = 0;
 
-    char *theline = (char *)eap->getline(NUL, eap->cookie, 0, false);
+    char *theline = eap->getline(NUL, eap->cookie, 0, false);
     if (theline == NULL) {
       semsg(_("E990: Missing end marker '%s'"), marker);
       break;
@@ -3170,7 +3170,7 @@ char *cat_prefix_varname(int prefix, const char *name)
 
 /// Function given to ExpandGeneric() to obtain the list of user defined
 /// (global/buffer/window/built-in) variable names.
-char_u *get_user_var_name(expand_T *xp, int idx)
+char *get_user_var_name(expand_T *xp, int idx)
 {
   static size_t gdone;
   static size_t bdone;
@@ -3195,9 +3195,9 @@ char_u *get_user_var_name(expand_T *xp, int idx)
       ++hi;
     }
     if (STRNCMP("g:", xp->xp_pattern, 2) == 0) {
-      return (char_u *)cat_prefix_varname('g', (char *)hi->hi_key);
+      return cat_prefix_varname('g', (char *)hi->hi_key);
     }
-    return hi->hi_key;
+    return (char *)hi->hi_key;
   }
 
   // b: variables
@@ -3211,7 +3211,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi)) {
       ++hi;
     }
-    return (char_u *)cat_prefix_varname('b', (char *)hi->hi_key);
+    return cat_prefix_varname('b', (char *)hi->hi_key);
   }
 
   // w: variables
@@ -3225,7 +3225,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi)) {
       ++hi;
     }
-    return (char_u *)cat_prefix_varname('w', (char *)hi->hi_key);
+    return cat_prefix_varname('w', (char *)hi->hi_key);
   }
 
   // t: variables
@@ -3239,12 +3239,12 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     while (HASHITEM_EMPTY(hi)) {
       ++hi;
     }
-    return (char_u *)cat_prefix_varname('t', (char *)hi->hi_key);
+    return cat_prefix_varname('t', (char *)hi->hi_key);
   }
 
   // v: variables
   if (vidx < ARRAY_SIZE(vimvars)) {
-    return (char_u *)cat_prefix_varname('v', vimvars[vidx++].vv_name);
+    return cat_prefix_varname('v', vimvars[vidx++].vv_name);
   }
 
   XFREE_CLEAR(varnamebuf);
@@ -4057,7 +4057,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
   case '7':
   case '8':
   case '9': {
-    char *p = (char *)skipdigits((char_u *)(*arg) + 1);
+    char *p = skipdigits(*arg + 1);
     int get_float = false;
 
     // We accept a float when the format matches
@@ -4067,7 +4067,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
     // ":let vers = 1.2.3" doesn't fail.
     if (!want_string && p[0] == '.' && ascii_isdigit(p[1])) {
       get_float = true;
-      p = (char *)skipdigits((char_u *)p + 2);
+      p = skipdigits(p + 2);
       if (*p == 'e' || *p == 'E') {
         ++p;
         if (*p == '-' || *p == '+') {
@@ -4076,7 +4076,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
         if (!ascii_isdigit(*p)) {
           get_float = false;
         } else {
-          p = (char *)skipdigits((char_u *)p + 1);
+          p = skipdigits(p + 1);
         }
       }
       if (ASCII_ISALPHA(*p) || *p == '.') {
@@ -8206,9 +8206,10 @@ varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
 /// Get string v: variable value.  Uses a static buffer, can only be used once.
 /// If the String variable has never been set, return an empty string.
 /// Never returns NULL;
-char_u *get_vim_var_str(int idx) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
+char *get_vim_var_str(int idx)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
 {
-  return (char_u *)tv_get_string(&vimvars[idx].vv_tv);
+  return (char *)tv_get_string(&vimvars[idx].vv_tv);
 }
 
 /// Get List v: variable value.  Caller must take care of reference count when
@@ -10217,7 +10218,7 @@ repeat:
     }
   }
 
-  tail = (char *)path_tail((char_u *)(*fnamep));
+  tail = path_tail(*fnamep);
   *fnamelen = STRLEN(*fnamep);
 
   // ":h" - head, remove "/file_name", can be repeated

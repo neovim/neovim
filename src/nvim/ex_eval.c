@@ -479,7 +479,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
   }
 
   excp->type = type;
-  excp->throw_name = (char *)vim_strsave(sourcing_name == NULL ? (char_u *)"" : sourcing_name);
+  excp->throw_name = xstrdup(sourcing_name == NULL ? "" : sourcing_name);
   excp->throw_lnum = sourcing_lnum;
 
   if (p_verbose >= 13 || debug_break_level > 0) {

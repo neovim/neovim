@@ -1332,7 +1332,7 @@ bool mb_isalpha(int a)
 static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2)
 {
   int c1, c2, cdiff;
-  char_u buffer[6];
+  char buffer[6];
 
   for (;;) {
     c1 = utf_safe_read_char_adv(&s1, &n1);
@@ -1371,10 +1371,10 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
 
   if (c1 != -1 && c2 == -1) {
     n1 = utf_char2bytes(utf_fold(c1), (char *)buffer);
-    s1 = buffer;
+    s1 = (char_u *)buffer;
   } else if (c2 != -1 && c1 == -1) {
     n2 = utf_char2bytes(utf_fold(c2), (char *)buffer);
-    s2 = buffer;
+    s2 = (char_u *)buffer;
   }
 
   while (n1 > 0 && n2 > 0 && *s1 != NUL && *s2 != NUL) {

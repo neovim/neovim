@@ -2369,7 +2369,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
       }
       ++tnp->tn_hf_idx;
       STRCPY(buf, p_hf);
-      STRCPY(path_tail(buf), "tags");
+      STRCPY(path_tail((char *)buf), "tags");
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);
 #endif
@@ -2428,7 +2428,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
       r_ptr = vim_findfile_stopdir(buf);
       // move the filename one char forward and truncate the
       // filepath with a NUL
-      filename = path_tail(buf);
+      filename = (char_u *)path_tail((char *)buf);
       STRMOVE(filename + 1, filename);
       *filename++ = NUL;
 
@@ -2715,7 +2715,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
    * autocommand event (e.g., http://sys/file).
    */
   if (!os_path_exists(fname)
-      && !has_autocmd(EVENT_BUFREADCMD, fname,
+      && !has_autocmd(EVENT_BUFREADCMD, (char *)fname,
                       NULL)) {
     retval = NOTAGFILE;
     xfree(nofile_fname);
@@ -2997,7 +2997,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *const tag_fname, const bo
   char_u *retval;
   if ((p_tr || curbuf->b_help)
       && !vim_isAbsName(fname)
-      && (p = path_tail(tag_fname)) != tag_fname) {
+      && (p = (char_u *)path_tail((char *)tag_fname)) != tag_fname) {
     retval = xmalloc(MAXPATHL);
     STRCPY(retval, tag_fname);
     STRLCPY(retval + (p - tag_fname), fname,
@@ -3054,7 +3054,7 @@ static int find_extra(char_u **pp)
   // Repeat for addresses separated with ';'
   for (;;) {
     if (ascii_isdigit(*str)) {
-      str = skipdigits(str + 1);
+      str = (char_u *)skipdigits((char *)str + 1);
     } else if (*str == '/' || *str == '?') {
       str = skip_regexp(str + 1, *str, false, NULL);
       if (*str != first_char) {

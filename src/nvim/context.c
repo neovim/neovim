@@ -129,8 +129,8 @@ bool ctx_restore(Context *ctx, const int flags)
     free_ctx = true;
   }
 
-  char_u *op_shada;
-  get_option_value("shada", NULL, (char **)&op_shada, OPT_GLOBAL);
+  char *op_shada;
+  get_option_value("shada", NULL, &op_shada, OPT_GLOBAL);
   set_option_value("shada", 0L, "!,'100,%", OPT_GLOBAL);
 
   if (flags & kCtxRegs) {
@@ -157,7 +157,7 @@ bool ctx_restore(Context *ctx, const int flags)
     ctx_free(ctx);
   }
 
-  set_option_value("shada", 0L, (char *)op_shada, OPT_GLOBAL);
+  set_option_value("shada", 0L, op_shada, OPT_GLOBAL);
   xfree(op_shada);
 
   return true;

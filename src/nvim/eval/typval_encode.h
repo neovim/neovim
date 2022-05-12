@@ -85,9 +85,7 @@ static inline size_t tv_strlen(const typval_T *const tv)
 static inline size_t tv_strlen(const typval_T *const tv)
 {
   assert(tv->v_type == VAR_STRING);
-  return (tv->vval.v_string == NULL
-          ? 0
-          : strlen((char *)tv->vval.v_string));
+  return (tv->vval.v_string == NULL ? 0 : strlen(tv->vval.v_string));
 }
 
 /// Code for checking whether container references itself

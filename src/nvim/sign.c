@@ -1742,33 +1742,33 @@ static char_u *get_nth_sign_group_name(int idx)
 
 /// Function given to ExpandGeneric() to obtain the sign command
 /// expansion.
-char_u *get_sign_name(expand_T *xp, int idx)
+char *get_sign_name(expand_T *xp, int idx)
 {
   switch (expand_what) {
   case EXP_SUBCMD:
-    return (char_u *)cmds[idx];
+    return cmds[idx];
   case EXP_DEFINE: {
     char *define_arg[] = { "culhl=", "icon=", "linehl=", "numhl=", "text=", "texthl=",
                            NULL };
-    return (char_u *)define_arg[idx];
+    return define_arg[idx];
   }
   case EXP_PLACE: {
     char *place_arg[] = { "line=", "name=", "group=", "priority=", "file=",
                           "buffer=", NULL };
-    return (char_u *)place_arg[idx];
+    return place_arg[idx];
   }
   case EXP_LIST: {
     char *list_arg[] = { "group=", "file=", "buffer=", NULL };
-    return (char_u *)list_arg[idx];
+    return list_arg[idx];
   }
   case EXP_UNPLACE: {
     char *unplace_arg[] = { "group=", "file=", "buffer=", NULL };
-    return (char_u *)unplace_arg[idx];
+    return unplace_arg[idx];
   }
   case EXP_SIGN_NAMES:
-    return get_nth_sign_name(idx);
+    return (char *)get_nth_sign_name(idx);
   case EXP_SIGN_GROUPS:
-    return get_nth_sign_group_name(idx);
+    return (char *)get_nth_sign_group_name(idx);
   default:
     return NULL;
   }

@@ -187,11 +187,11 @@ static void init_users(void)
 }
 
 /// Given to ExpandGeneric() to obtain an user names.
-char_u *get_users(expand_T *xp, int idx)
+char *get_users(expand_T *xp, int idx)
 {
   init_users();
   if (idx < ga_users.ga_len) {
-    return ((char_u **)ga_users.ga_data)[idx];
+    return ((char **)ga_users.ga_data)[idx];
   }
   return NULL;
 }

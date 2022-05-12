@@ -586,7 +586,7 @@ void msg_source(int attr)
     if (sourcing_name == NULL) {
       last_sourcing_name = NULL;
     } else {
-      last_sourcing_name = vim_strsave(sourcing_name);
+      last_sourcing_name = vim_strsave((char_u *)sourcing_name);
     }
   }
   --no_wait_return;
@@ -2418,7 +2418,7 @@ void msg_reset_scroll(void)
 static void inc_msg_scrolled(void)
 {
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
-    char *p = (char *)sourcing_name;
+    char *p = sourcing_name;
     char *tofree = NULL;
 
     // v:scrollstart is empty, set it to the script/function name and line

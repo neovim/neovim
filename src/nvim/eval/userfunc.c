@@ -994,7 +994,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   // Don't redraw while executing the function.
   RedrawingDisabled++;
-  save_sourcing_name = sourcing_name;
+  save_sourcing_name = (char_u *)sourcing_name;
   save_sourcing_lnum = sourcing_lnum;
   sourcing_lnum = 1;
 
@@ -1014,7 +1014,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   {
     if (save_sourcing_name != NULL
         && STRNCMP(save_sourcing_name, "function ", 9) == 0) {
-      vim_snprintf((char *)sourcing_name,
+      vim_snprintf(sourcing_name,
                    len,
                    "%s[%" PRId64 "]..",
                    save_sourcing_name,
@@ -1022,7 +1022,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     } else {
       STRCPY(sourcing_name, "function ");
     }
-    cat_func_name(sourcing_name + STRLEN(sourcing_name), fp);
+    cat_func_name((char_u *)sourcing_name + STRLEN(sourcing_name), fp);
 
     if (p_verbose >= 12) {
       ++no_wait_return;
@@ -1175,7 +1175,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   }
 
   xfree(sourcing_name);
-  sourcing_name = save_sourcing_name;
+  sourcing_name = (char *)save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
   current_sctx = save_current_sctx;
   if (do_profiling_yes) {
@@ -2219,7 +2219,7 @@ void ex_function(exarg_T *eap)
       if (eap->getline == NULL) {
         theline = getcmdline(':', 0L, indent, do_concat);
       } else {
-        theline = eap->getline(':', eap->cookie, indent, do_concat);
+        theline = (char_u *)eap->getline(':', eap->cookie, indent, do_concat);
       }
       line_to_free = theline;
     }
@@ -2644,7 +2644,7 @@ bool function_exists(const char *const name, bool no_deref)
 
 /// Function given to ExpandGeneric() to obtain the list of user defined
 /// function names.
-char_u *get_user_func_name(expand_T *xp, int idx)
+char *get_user_func_name(expand_T *xp, int idx)
 {
   static size_t done;
   static hashitem_T *hi;
@@ -2666,11 +2666,11 @@ char_u *get_user_func_name(expand_T *xp, int idx)
 
     if ((fp->uf_flags & FC_DICT)
         || STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
-      return (char_u *)"";       // don't show dict and lambda functions
+      return "";       // don't show dict and lambda functions
     }
 
     if (STRLEN(fp->uf_name) + 4 >= IOSIZE) {
-      return fp->uf_name;  // Prevent overflow.
+      return (char *)fp->uf_name;  // Prevent overflow.
     }
 
     cat_func_name(IObuff, fp);
@@ -2680,7 +2680,7 @@ char_u *get_user_func_name(expand_T *xp, int idx)
         STRCAT(IObuff, ")");
       }
     }
-    return IObuff;
+    return (char *)IObuff;
   }
   return NULL;
 }
@@ -3137,7 +3137,7 @@ char_u *get_return_cmd(void *rettv)
 /// Called by do_cmdline() to get the next line.
 ///
 /// @return  allocated string, or NULL for end of function.
-char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
+char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 {
   funccall_T *fcp = (funccall_T *)cookie;
   ufunc_T *fp = fcp->func;
@@ -3184,7 +3184,7 @@ char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
     fcp->dbg_tick = debug_tick;
   }
 
-  return retval;
+  return (char *)retval;
 }
 
 /// @return  TRUE if the currently active function should be ended, because a

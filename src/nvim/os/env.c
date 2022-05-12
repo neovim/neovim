@@ -888,7 +888,7 @@ void vim_get_prefix_from_exepath(char *exe_name)
            MAXPATHL * sizeof(*exe_name));
   char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
   *path_end = '\0';  // remove the trailing "nvim.exe"
-  path_end = (char *)path_tail((char_u *)exe_name);
+  path_end = path_tail(exe_name);
   *path_end = '\0';  // remove the trailing "bin/"
 }
 
@@ -957,7 +957,7 @@ char *vim_getenv(const char *name)
 
     if (vim_path != NULL) {
       // remove the file name
-      char *vim_path_end = (char *)path_tail((char_u *)vim_path);
+      char *vim_path_end = path_tail(vim_path);
 
       // remove "doc/" from 'helpfile', if present
       if (vim_path == (char *)p_hf) {
@@ -1048,7 +1048,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
   }
 
   if (buf != NULL && buf->b_help) {
-    const size_t dlen = STRLCPY(dst, path_tail(src), dstlen);
+    const size_t dlen = STRLCPY(dst, path_tail((char *)src), dstlen);
     return MIN(dlen, dstlen - 1);
   }
 
@@ -1158,7 +1158,7 @@ char_u *home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
 
 
 /// Function given to ExpandGeneric() to obtain an environment variable name.
-char_u *get_env_name(expand_T *xp, int idx)
+char *get_env_name(expand_T *xp, int idx)
 {
 #define ENVNAMELEN 100
   // this static buffer is needed to avoid a memory leak in ExpandGeneric
@@ -1168,7 +1168,7 @@ char_u *get_env_name(expand_T *xp, int idx)
   if (envname) {
     STRLCPY(name, envname, ENVNAMELEN);
     xfree(envname);
-    return name;
+    return (char *)name;
   }
   return NULL;
 }
@@ -1226,10 +1226,10 @@ bool os_shell_is_cmdexe(const char *sh)
   }
   if (striequal(sh, "$COMSPEC")) {
     const char *comspec = os_getenv("COMSPEC");
-    return striequal("cmd.exe", (char *)path_tail((char_u *)comspec));
+    return striequal("cmd.exe", path_tail(comspec));
   }
   if (striequal(sh, "cmd.exe") || striequal(sh, "cmd")) {
     return true;
   }
-  return striequal("cmd.exe", (char *)path_tail((char_u *)sh));
+  return striequal("cmd.exe", path_tail(sh));
 }

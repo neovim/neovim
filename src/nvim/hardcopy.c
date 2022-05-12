@@ -1576,7 +1576,7 @@ static void prt_resource_name(char *filename, void *cookie)
 
 static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
 {
-  char_u *buffer;
+  char *buffer;
   int retval;
 
   buffer = xmallocz(MAXPATHL);
@@ -1584,7 +1584,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   STRLCPY(resource->name, name, 64);
   // Look for named resource file in runtimepath
   STRCPY(buffer, "print");
-  add_pathsep((char *)buffer);
+  add_pathsep(buffer);
   STRLCAT(buffer, name, MAXPATHL);
   STRLCAT(buffer, ".ps", MAXPATHL);
   resource->filename[0] = NUL;

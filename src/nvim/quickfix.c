@@ -3104,7 +3104,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
         && (buf = buflist_findnr(qfp->qf_fnum)) != NULL) {
       fname = (char *)buf->b_fname;
       if (qfp->qf_type == 1) {  // :helpgrep
-        fname = (char *)path_tail((char_u *)fname);
+        fname = path_tail(fname);
       }
     }
     if (fname == NULL) {
@@ -4038,7 +4038,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
                && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
                && errbuf->b_fname != NULL) {
       if (qfp->qf_type == 1) {  // :helpgrep
-        STRLCPY(IObuff, path_tail(errbuf->b_fname), IOSIZE);
+        STRLCPY(IObuff, path_tail((char *)errbuf->b_fname), IOSIZE);
       } else {
         // Shorten the file name if not done already.
         // For optimization, do this only for the first entry in a
@@ -5740,7 +5740,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     curbuf->b_flags &= ~BF_DUMMY;
 
     newbuf_to_wipe.br_buf = NULL;
-    readfile_result = readfile((char_u *)fname, NULL, (linenr_T)0, (linenr_T)0,
+    readfile_result = readfile(fname, NULL, (linenr_T)0, (linenr_T)0,
                                (linenr_T)MAXLNUM, NULL,
                                READ_NEW | READ_DUMMY, false);
     newbuf->b_locked--;
@@ -6887,7 +6887,7 @@ static int cbuffer_process_args(exarg_T *eap, buf_T **bufp, linenr_T *line1, lin
 
   if (*eap->arg == NUL) {
     buf = curbuf;
-  } else if (*skipwhite((char *)skipdigits((char_u *)eap->arg)) == NUL) {
+  } else if (*skipwhite(skipdigits(eap->arg)) == NUL) {
     buf = buflist_findnr(atoi(eap->arg));
   }
 

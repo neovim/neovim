@@ -60,7 +60,7 @@ void do_debug(char_u *cmd)
   int save_ignore_script = 0;
   int n;
   char_u *cmdline = NULL;
-  char_u *p;
+  char *p;
   char *tail = NULL;
   static int last_cmd = 0;
 #define CMD_CONT        1
@@ -141,7 +141,7 @@ void do_debug(char_u *cmd)
       // If this is a debug command, set "last_cmd".
       // If not, reset "last_cmd".
       // For a blank line use previous command.
-      p = (char_u *)skipwhite((char *)cmdline);
+      p = skipwhite((char *)cmdline);
       if (*p != NUL) {
         switch (*p) {
         case 'c':
@@ -200,7 +200,7 @@ void do_debug(char_u *cmd)
         if (last_cmd != 0) {
           // Check that the tail matches.
           p++;
-          while (*p != NUL && *p == (char_u)(*tail)) {
+          while (*p != NUL && *p == *tail) {
             p++;
             tail++;
           }
@@ -242,8 +242,8 @@ void do_debug(char_u *cmd)
           if (*p == NUL) {
             do_showbacktrace(cmd);
           } else {
-            p = (char_u *)skipwhite((char *)p);
-            do_setdebugtracelevel(p);
+            p = skipwhite(p);
+            do_setdebugtracelevel((char_u *)p);
           }
           continue;
         case CMD_UP:

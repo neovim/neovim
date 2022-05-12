@@ -5303,8 +5303,8 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 /// @return        FAIL for some error, OK for success.
 static int get_id_list(char_u **const arg, const int keylen, int16_t **const list, const bool skip)
 {
-  char_u *p = NULL;
-  char_u *end;
+  char *p = NULL;
+  char *end;
   int total_count = 0;
   int16_t *retval = NULL;
   regmatch_T regmatch;
@@ -5318,12 +5318,12 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
   // grow when a regexp is used.  In that case round 1 is done once again.
   for (int round = 1; round <= 2; round++) {
     // skip "contains"
-    p = (char_u *)skipwhite((char *)(*arg) + keylen);
+    p = skipwhite((char *)(*arg) + keylen);
     if (*p != '=') {
       semsg(_("E405: Missing equal sign: %s"), *arg);
       break;
     }
-    p = (char_u *)skipwhite((char *)p + 1);
+    p = skipwhite(p + 1);
     if (ends_excmd(*p)) {
       semsg(_("E406: Empty argument: %s"), *arg);
       break;
@@ -5427,11 +5427,11 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
         }
         ++count;
       }
-      p = (char_u *)skipwhite((char *)end);
+      p = skipwhite(end);
       if (*p != ',') {
         break;
       }
-      p = (char_u *)skipwhite((char *)p + 1);             // skip comma in between arguments
+      p = skipwhite(p + 1);             // skip comma in between arguments
     } while (!ends_excmd(*p));
     if (failed) {
       break;
@@ -5443,7 +5443,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
     }
   }
 
-  *arg = p;
+  *arg = (char_u *)p;
   if (failed || retval == NULL) {
     xfree(retval);
     return FAIL;
@@ -5763,26 +5763,26 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
  * Function given to ExpandGeneric() to obtain the list syntax names for
  * expansion.
  */
-char_u *get_syntax_name(expand_T *xp, int idx)
+char *get_syntax_name(expand_T *xp, int idx)
 {
   switch (expand_what) {
   case EXP_SUBCMD:
-    return (char_u *)subcommands[idx].name;
+    return subcommands[idx].name;
   case EXP_CASE: {
     static char *case_args[] = { "match", "ignore", NULL };
-    return (char_u *)case_args[idx];
+    return case_args[idx];
   }
   case EXP_SPELL: {
     static char *spell_args[] =
     { "toplevel", "notoplevel", "default", NULL };
-    return (char_u *)spell_args[idx];
+    return spell_args[idx];
   }
   case EXP_SYNC: {
     static char *sync_args[] =
     { "ccomment", "clear", "fromstart",
       "linebreaks=", "linecont", "lines=", "match",
       "maxlines=", "minlines=", "region", NULL };
-    return (char_u *)sync_args[idx];
+    return sync_args[idx];
   }
   }
   return NULL;
@@ -5965,17 +5965,17 @@ static void syntime_clear(void)
  * Function given to ExpandGeneric() to obtain the possible arguments of the
  * ":syntime {on,off,clear,report}" command.
  */
-char_u *get_syntime_arg(expand_T *xp, int idx)
+char *get_syntime_arg(expand_T *xp, int idx)
 {
   switch (idx) {
   case 0:
-    return (char_u *)"on";
+    return "on";
   case 1:
-    return (char_u *)"off";
+    return "off";
   case 2:
-    return (char_u *)"clear";
+    return "clear";
   case 3:
-    return (char_u *)"report";
+    return "report";
   }
   return NULL;
 }

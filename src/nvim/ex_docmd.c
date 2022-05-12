@@ -111,7 +111,7 @@ struct loop_cookie {
   int current_line;                     // last read line from growarray
   int repeating;                        // TRUE when looping a second time
   // When "repeating" is FALSE use "getline" and "cookie" to get lines
-  char_u *(*getline)(int, void *, int, bool);
+  char *(*getline)(int, void *, int, bool);
   void *cookie;
 };
 
@@ -324,7 +324,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   struct msglist *private_msg_list;
 
   // "fgetline" and "cookie" passed to do_one_cmd()
-  char_u *(*cmd_getline)(int, void *, int, bool);
+  char *(*cmd_getline)(int, void *, int, bool);
   void *cmd_cookie;
   struct loop_cookie cmd_loop_cookie;
   void *real_cookie;
@@ -372,7 +372,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     breakpoint = func_breakpoint(real_cookie);
     dbg_tick = func_dbg_tick(real_cookie);
   } else if (getline_equal(fgetline, cookie, getsourceline)) {
-    fname = (char *)sourcing_name;
+    fname = sourcing_name;
     breakpoint = source_breakpoint(real_cookie);
     dbg_tick = source_dbg_tick(real_cookie);
   }
@@ -518,10 +518,10 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         msg_didout = true;
       }
       if (fgetline == NULL
-          || (next_cmdline = (char *)fgetline(':', cookie,
-                                              cstack.cs_idx <
-                                              0 ? 0 : (cstack.cs_idx + 1) * 2,
-                                              true)) == NULL) {
+          || (next_cmdline = fgetline(':', cookie,
+                                      cstack.cs_idx <
+                                      0 ? 0 : (cstack.cs_idx + 1) * 2,
+                                      true)) == NULL) {
         // Don't call wait_return for aborted command line.  The NULL
         // returned for the end of a sourced file or executed function
         // doesn't do this.
@@ -832,9 +832,9 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         break;
       }
 
-      saved_sourcing_name = (char *)sourcing_name;
+      saved_sourcing_name = sourcing_name;
       saved_sourcing_lnum = sourcing_lnum;
-      sourcing_name = (char_u *)current_exception->throw_name;
+      sourcing_name = current_exception->throw_name;
       sourcing_lnum = current_exception->throw_lnum;
       current_exception->throw_name = NULL;
 
@@ -856,7 +856,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         xfree(p);
       }
       xfree(sourcing_name);
-      sourcing_name = (char_u *)saved_sourcing_name;
+      sourcing_name = saved_sourcing_name;
       sourcing_lnum = saved_sourcing_lnum;
     } else if (got_int || (did_emsg && force_abort)) {
       // On an interrupt or an aborting error not converted to an exception,
@@ -949,7 +949,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 }
 
 /// Obtain a line when inside a ":while" or ":for" loop.
-static char_u *get_loop_line(int c, void *cookie, int indent, bool do_concat)
+static char *get_loop_line(int c, void *cookie, int indent, bool do_concat)
 {
   struct loop_cookie *cp = (struct loop_cookie *)cookie;
   wcmd_T *wp;
@@ -963,21 +963,21 @@ static char_u *get_loop_line(int c, void *cookie, int indent, bool do_concat)
     if (cp->getline == NULL) {
       line = (char *)getcmdline(c, 0L, indent, do_concat);
     } else {
-      line = (char *)cp->getline(c, cp->cookie, indent, do_concat);
+      line = cp->getline(c, cp->cookie, indent, do_concat);
     }
     if (line != NULL) {
       store_loop_line(cp->lines_gap, line);
       ++cp->current_line;
     }
 
-    return (char_u *)line;
+    return line;
   }
 
   KeyTyped = false;
   cp->current_line++;
   wp = (wcmd_T *)(cp->lines_gap->ga_data) + cp->current_line;
   sourcing_lnum = wp->lnum;
-  return vim_strsave((char_u *)wp->line);
+  return xstrdup(wp->line);
 }
 
 /// Store a line in "gap" so that a ":while" loop can execute it again.
@@ -1387,7 +1387,7 @@ static int parse_count(exarg_T *eap, char **errormsg, bool validate)
   long n;
 
   if ((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg)
-      && (!(eap->argt & EX_BUFNAME) || *(p = (char *)skipdigits((char_u *)eap->arg + 1)) == NUL
+      && (!(eap->argt & EX_BUFNAME) || *(p = skipdigits(eap->arg + 1)) == NUL
           || ascii_iswhite(*p))) {
     n = getdigits_long((char_u **)&eap->arg, false, -1);
     eap->arg = skipwhite(eap->arg);
@@ -3189,7 +3189,7 @@ int modifier_len(char *cmd)
   char *p = cmd;
 
   if (ascii_isdigit(*cmd)) {
-    p = skipwhite((char *)skipdigits((char_u *)cmd + 1));
+    p = skipwhite(skipdigits(cmd + 1));
   }
   for (int i = 0; i < (int)ARRAY_SIZE(cmdmods); i++) {
     int j;
@@ -3817,7 +3817,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_isplit:
   case CMD_dsplit:
     // Skip count.
-    arg = (const char *)skipwhite((char *)skipdigits((const char_u *)arg));
+    arg = (const char *)skipwhite(skipdigits(arg));
     if (*arg == '/') {  // Match regexp, not just whole words.
       for (++arg; *arg && *arg != '/'; arg++) {
         if (*arg == '\\' && arg[1] != NUL) {
@@ -5498,12 +5498,12 @@ static int check_more(int message, bool forceit)
 }
 
 /// Function given to ExpandGeneric() to obtain the list of command names.
-char_u *get_command_name(expand_T *xp, int idx)
+char *get_command_name(expand_T *xp, int idx)
 {
   if (idx >= CMD_SIZE) {
-    return (char_u *)expand_user_command_name(idx);
+    return expand_user_command_name(idx);
   }
-  return (char_u *)cmdnames[idx].cmd_name;
+  return cmdnames[idx].cmd_name;
 }
 
 /// Check for a valid user command name
@@ -6729,28 +6729,28 @@ static void do_ucmd(exarg_T *eap)
 
 static char *expand_user_command_name(int idx)
 {
-  return (char *)get_user_commands(NULL, idx - CMD_SIZE);
+  return get_user_commands(NULL, idx - CMD_SIZE);
 }
 
 /// Function given to ExpandGeneric() to obtain the list of user address type names.
-char_u *get_user_cmd_addr_type(expand_T *xp, int idx)
+char *get_user_cmd_addr_type(expand_T *xp, int idx)
 {
-  return (char_u *)addr_type_complete[idx].name;
+  return addr_type_complete[idx].name;
 }
 
 /// Function given to ExpandGeneric() to obtain the list of user command names.
-char_u *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+char *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // In cmdwin, the alternative buffer should be used.
   const buf_T *const buf = prevwin_curwin()->w_buffer;
 
   if (idx < buf->b_ucmds.ga_len) {
-    return USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
+    return (char *)USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
   }
   idx -= buf->b_ucmds.ga_len;
   if (idx < ucmds.ga_len) {
-    return USER_CMD(idx)->uc_name;
+    return (char *)USER_CMD(idx)->uc_name;
   }
   return NULL;
 }
@@ -6777,7 +6777,7 @@ static char *get_user_command_name(int idx, int cmdidx)
 
 /// Function given to ExpandGeneric() to obtain the list of user command
 /// attributes.
-char_u *get_user_cmd_flags(expand_T *xp, int idx)
+char *get_user_cmd_flags(expand_T *xp, int idx)
 {
   static char *user_cmd_flags[] = { "addr",   "bang",     "bar",
                                     "buffer", "complete", "count",
@@ -6786,31 +6786,31 @@ char_u *get_user_cmd_flags(expand_T *xp, int idx)
   if (idx >= (int)ARRAY_SIZE(user_cmd_flags)) {
     return NULL;
   }
-  return (char_u *)user_cmd_flags[idx];
+  return user_cmd_flags[idx];
 }
 
 /// Function given to ExpandGeneric() to obtain the list of values for -nargs.
-char_u *get_user_cmd_nargs(expand_T *xp, int idx)
+char *get_user_cmd_nargs(expand_T *xp, int idx)
 {
   static char *user_cmd_nargs[] = { "0", "1", "*", "?", "+" };
 
   if (idx >= (int)ARRAY_SIZE(user_cmd_nargs)) {
     return NULL;
   }
-  return (char_u *)user_cmd_nargs[idx];
+  return user_cmd_nargs[idx];
 }
 
 /// Function given to ExpandGeneric() to obtain the list of values for -complete.
-char_u *get_user_cmd_complete(expand_T *xp, int idx)
+char *get_user_cmd_complete(expand_T *xp, int idx)
 {
   if (idx >= (int)ARRAY_SIZE(command_complete)) {
     return NULL;
   }
   char *cmd_compl = get_command_complete(idx);
   if (cmd_compl == NULL) {
-    return (char_u *)"";
+    return "";
   } else {
-    return (char_u *)cmd_compl;
+    return cmd_compl;
   }
 }
 
@@ -8098,13 +8098,13 @@ static void ex_read(exarg_T *eap)
       if (check_fname() == FAIL) {       // check for no file name
         return;
       }
-      i = readfile(curbuf->b_ffname, curbuf->b_fname,
+      i = readfile((char *)curbuf->b_ffname, (char *)curbuf->b_fname,
                    eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     } else {
       if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
         (void)setaltfname((char_u *)eap->arg, (char_u *)eap->arg, (linenr_T)1);
       }
-      i = readfile((char_u *)eap->arg, NULL,
+      i = readfile(eap->arg, NULL,
                    eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
     }
     if (i != OK) {
@@ -9551,17 +9551,17 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
 
     case SPEC_AFILE:  // file name for autocommand
       if (autocmd_fname != NULL
-          && !path_is_absolute(autocmd_fname)
+          && !path_is_absolute((char_u *)autocmd_fname)
           // For CmdlineEnter and related events, <afile> is not a path! #9348
-          && !strequal("/", (char *)autocmd_fname)) {
+          && !strequal("/", autocmd_fname)) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
-        result = FullName_save((char *)autocmd_fname, false);
+        result = FullName_save(autocmd_fname, false);
         // Copy into `autocmd_fname`, don't reassign it. #8165
         STRLCPY(autocmd_fname, result, MAXPATHL);
         xfree(result);
       }
-      result = (char *)autocmd_fname;
+      result = autocmd_fname;
       if (result == NULL) {
         *errormsg = _("E495: no autocommand file name to substitute for \"<afile>\"");
         return NULL;
@@ -9579,7 +9579,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_AMATCH:           // match name for autocommand
-      result = (char *)autocmd_match;
+      result = autocmd_match;
       if (result == NULL) {
         *errormsg = _("E497: no autocommand match name to substitute for \"<amatch>\"");
         return NULL;
@@ -9587,7 +9587,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
-      result = (char *)sourcing_name;
+      result = sourcing_name;
       if (result == NULL) {
         *errormsg = _("E498: no :source file name to substitute for \"<sfile>\"");
         return NULL;
@@ -9636,7 +9636,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
     if (src[*usedlen] == '<') {
       (*usedlen)++;
       if ((s = (char *)STRRCHR(result, '.')) != NULL
-          && (char_u *)s >= path_tail((char_u *)result)) {
+          && s >= path_tail(result)) {
         resultlen = (size_t)(s - result);
       }
     } else if (!skip_mod) {
@@ -9820,31 +9820,31 @@ static void ex_behave(exarg_T *eap)
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":behave {mswin,xterm}" command.
-char_u *get_behave_arg(expand_T *xp, int idx)
+char *get_behave_arg(expand_T *xp, int idx)
 {
   if (idx == 0) {
-    return (char_u *)"mswin";
+    return "mswin";
   }
   if (idx == 1) {
-    return (char_u *)"xterm";
+    return "xterm";
   }
   return NULL;
 }
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":messages {clear}" command.
-char_u *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+char *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
   if (idx == 0) {
-    return (char_u *)"clear";
+    return "clear";
   }
   return NULL;
 }
 
-char_u *get_mapclear_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+char *get_mapclear_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 {
   if (idx == 0) {
-    return (char_u *)"<buffer>";
+    return "<buffer>";
   }
   return NULL;
 }

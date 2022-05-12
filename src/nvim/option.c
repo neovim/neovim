@@ -8161,13 +8161,13 @@ size_t copy_option_part(char_u **option, char_u *buf, size_t maxlen, char *sep_c
 /// Return true when 'shell' has "csh" in the tail.
 int csh_like_shell(void)
 {
-  return strstr((char *)path_tail(p_sh), "csh") != NULL;
+  return strstr(path_tail((char *)p_sh), "csh") != NULL;
 }
 
 /// Return true when 'shell' has "fish" in the tail.
 bool fish_like_shell(void)
 {
-  return strstr((char *)path_tail(p_sh), "fish") != NULL;
+  return strstr(path_tail((char *)p_sh), "fish") != NULL;
 }
 
 /// Return the number of requested sign columns, based on current

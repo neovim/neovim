@@ -557,7 +557,7 @@ void ins_char(int c)
   if (buf[0] == 0) {
     buf[0] = '\n';
   }
-  ins_char_bytes(buf, n);
+  ins_char_bytes((char_u *)buf, n);
 }
 
 void ins_char_bytes(char_u *buf, size_t charlen)
