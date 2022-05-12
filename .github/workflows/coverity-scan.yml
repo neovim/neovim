@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential cmake gettext gperf libtool-bin locales ninja-build pkg-config unzip
+          sudo apt-get install -y autoconf automake build-essential cmake gettext libtool-bin locales ninja-build pkg-config unzip
 
       - name: Download Coverity
         run: |

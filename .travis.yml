@@ -37,7 +37,6 @@ env:
                    -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
                    -DMIN_LOG_LEVEL=3"
-    - DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_GPERF=OFF"
     # Environment variables for Clang sanitizers.
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
     - TSAN_OPTIONS="log_path=$LOG_DIR/tsan"
@@ -75,7 +74,6 @@ addons:
       - cscope
       - gcc-multilib
       - gdb
-      - gperf
       - language-pack-tr
       - libtool-bin
       - locales
