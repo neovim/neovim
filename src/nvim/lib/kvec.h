@@ -94,16 +94,32 @@
     memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
   } while (0)
 
-#define kv_splice(v1, v0) \
+#define kv_concat_len(v, data, len) \
   do { \
-    if ((v1).capacity < (v1).size + (v0).size) { \
-      (v1).capacity = (v1).size + (v0).size; \
-      kv_roundup32((v1).capacity); \
-      kv_resize((v1), (v1).capacity); \
+    if ((v).capacity < (v).size + len) { \
+      (v).capacity = (v).size + len; \
+      kv_roundup32((v).capacity); \
+      kv_resize((v), (v).capacity); \
     } \
-    memcpy((v1).items + (v1).size, (v0).items, sizeof((v1).items[0]) * (v0).size); \
-    (v1).size = (v1).size + (v0).size; \
+    memcpy((v).items + (v).size, data, sizeof((v).items[0]) * len); \
+    (v).size = (v).size + len; \
   } while (0)
+
+#define kv_concat(v, str) kv_concat_len(v, str, STRLEN(str))
+#define kv_splice(v1, v0) kv_concat_len(v1, (v0).items, (v0).size)
+
+#define kv_printf(v, fmt, ...) \
+  do { \
+    size_t fmt_size_ = (size_t)snprintf(NULL, 0, fmt, __VA_ARGS__); \
+    if ((v).capacity < (v).size + fmt_size_) { \
+      (v).capacity = (v).size + fmt_size_; \
+      kv_roundup32((v).capacity); \
+      kv_resize((v), (v).capacity); \
+    } \
+    (v).size += (size_t)snprintf((v).items+(v).size, (v).capacity-(v).size, fmt, __VA_ARGS__); \
+  } while (0)
+
+
 
 #define kv_pushp(v) \
   ((((v).size == (v).capacity) ? (kv_resize_full(v), 0) : 0), \
