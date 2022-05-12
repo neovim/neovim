@@ -175,7 +175,6 @@ _ERROR_CATEGORIES = [
     'build/header_guard',
     'build/include',
     'build/include_alpha',
-    'build/include_order',
     'build/printf_format',
     'build/storage_class',
     'build/useless_fattr',
@@ -2919,20 +2918,6 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
 _RE_PATTERN_INCLUDE = re.compile(r'^\s*#\s*include\s*([<"])([^>"]*)[>"].*$')
 
 
-def _ClassifyInclude(is_system):
-    """Figures out what kind of header 'include' is.
-
-    Args:
-      is_system: True if the #include used <> rather than "".
-
-    Returns:
-      One of the _XXX_HEADER constants.
-    """
-    if is_system:
-        return _C_SYS_HEADER
-    return _OTHER_HEADER
-
-
 def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
     """Check rules that are applicable to #include lines.
 
@@ -2963,29 +2948,6 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
                 error(filename, linenum, 'build/include', 4,
                       '"%s" already included at %s:%s' %
                       (include, filename, include_state[include]))
-        else:
-            include_state[include] = linenum
-
-            # We want to ensure that headers appear in the right order:
-            # 1) for foo.cc, foo.h  (preferred location)
-            # 2) c system files
-            # 3) cpp system files
-            # 4) for foo.cc, foo.h  (deprecated location)
-            # 5) other google headers
-            #
-            # We classify each include statement as one of those 5 types
-            # using a number of techniques. The include_state object keeps
-            # track of the highest type seen, and complains if we see a
-            # lower type after that.
-            error_message = include_state.CheckNextIncludeOrder(
-                _ClassifyInclude(is_system))
-            if error_message:
-                error(filename, linenum, 'build/include_order', 4,
-                      '%s. Should be: c system, c++ system, other.'
-                      % error_message)
-            canonical_include = include_state.CanonicalizeAlphabeticalOrder(
-                include)
-            include_state.SetLastHeader(canonical_include)
 
 
 def _GetTextInside(text, start_pattern):
