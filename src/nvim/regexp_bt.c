@@ -1,8 +1,6 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// uncrustify:off
-
 /*
  *
  * Backtracking regular expression implementation.
@@ -19,22 +17,22 @@
  *
  * END NOTICE
  *
- *	Copyright (c) 1986 by University of Toronto.
- *	Written by Henry Spencer.  Not derived from licensed software.
+ *      Copyright (c) 1986 by University of Toronto.
+ *      Written by Henry Spencer.  Not derived from licensed software.
  *
- *	Permission is granted to anyone to use this software for any
- *	purpose on any computer system, and to redistribute it freely,
- *	subject to the following restrictions:
+ *      Permission is granted to anyone to use this software for any
+ *      purpose on any computer system, and to redistribute it freely,
+ *      subject to the following restrictions:
  *
- *	1. The author is not responsible for the consequences of use of
- *		this software, no matter how awful, even if they arise
- *		from defects in it.
+ *      1. The author is not responsible for the consequences of use of
+ *              this software, no matter how awful, even if they arise
+ *              from defects in it.
  *
- *	2. The origin of this software must not be misrepresented, either
- *		by explicit claim or by omission.
+ *      2. The origin of this software must not be misrepresented, either
+ *              by explicit claim or by omission.
  *
- *	3. Altered versions must be plainly marked as such, and must not
- *		be misrepresented as being the original software.
+ *      3. Altered versions must be plainly marked as such, and must not
+ *              be misrepresented as being the original software.
  *
  * Beware that some of this code is subtly aware of the way operator
  * precedence is structured in regular expressions.  Serious changes in
@@ -51,12 +49,12 @@
  * compile to execute that permits the execute phase to run lots faster on
  * simple cases.  They are:
  *
- * regstart	char that must begin a match; NUL if none obvious; Can be a
- *		multi-byte character.
- * reganch	is the match anchored (at beginning-of-line only)?
- * regmust	string (pointer into program) that match must include, or NULL
- * regmlen	length of regmust string
- * regflags	RF_ values or'ed together
+ * regstart     char that must begin a match; NUL if none obvious; Can be a
+ *              multi-byte character.
+ * reganch      is the match anchored (at beginning-of-line only)?
+ * regmust      string (pointer into program) that match must include, or NULL
+ * regmlen      length of regmust string
+ * regflags     RF_ values or'ed together
  *
  * Regstart and reganch permit very fast decisions on suitable starting points
  * for a match, cutting down the work a lot.  Regmust permits fast rejection
@@ -75,7 +73,7 @@
  * plus a "next" pointer, possibly plus an operand.  "Next" pointers of
  * all nodes except BRANCH and BRACES_COMPLEX implement concatenation; a "next"
  * pointer with a BRANCH on both ends of it is connecting two alternatives.
- * (Here we have one of the subtle syntax dependencies:	an individual BRANCH
+ * (Here we have one of the subtle syntax dependencies: an individual BRANCH
  * (as opposed to a collection of them) is never concatenated with anything
  * because of operator precedence).  The "next" pointer of a BRACES_COMPLEX
  * node points to the node after the stuff to be repeated.
@@ -85,52 +83,52 @@
  * (NB this is *not* a tree structure: the tail of the branch connects to the
  * thing following the set of BRANCHes.)
  *
- * pattern	is coded like:
+ * pattern      is coded like:
  *
- *			  +-----------------+
- *			  |		    V
- * <aa>\|<bb>	BRANCH <aa> BRANCH <bb> --> END
- *		     |	    ^	 |	    ^
- *		     +------+	 +----------+
- *
- *
- *		       +------------------+
- *		       V		  |
- * <aa>*	BRANCH BRANCH <aa> --> BACK BRANCH --> NOTHING --> END
- *		     |	    |		    ^			   ^
- *		     |	    +---------------+			   |
- *		     +---------------------------------------------+
+ *                        +-----------------+
+ *                        |                 V
+ * <aa>\|<bb>   BRANCH <aa> BRANCH <bb> --> END
+ *                   |      ^    |          ^
+ *                   +------+    +----------+
  *
  *
- *		       +----------------------+
- *		       V		      |
- * <aa>\+	BRANCH <aa> --> BRANCH --> BACK  BRANCH --> NOTHING --> END
- *		     |		     |		 ^			^
- *		     |		     +-----------+			|
- *		     +--------------------------------------------------+
+ *                     +------------------+
+ *                     V                  |
+ * <aa>*        BRANCH BRANCH <aa> --> BACK BRANCH --> NOTHING --> END
+ *                   |      |               ^                      ^
+ *                   |      +---------------+                      |
+ *                   +---------------------------------------------+
  *
  *
- *					+-------------------------+
- *					V			  |
- * <aa>\{}	BRANCH BRACE_LIMITS --> BRACE_COMPLEX <aa> --> BACK  END
- *		     |				    |		     ^
- *		     |				    +----------------+
- *		     +-----------------------------------------------+
+ *                     +----------------------+
+ *                     V                      |
+ * <aa>\+       BRANCH <aa> --> BRANCH --> BACK  BRANCH --> NOTHING --> END
+ *                   |               |           ^                      ^
+ *                   |               +-----------+                      |
+ *                   +--------------------------------------------------+
  *
  *
- * <aa>\@!<bb>	BRANCH NOMATCH <aa> --> END  <bb> --> END
- *		     |	     |		      ^       ^
- *		     |	     +----------------+       |
- *		     +--------------------------------+
+ *                                      +-------------------------+
+ *                                      V                         |
+ * <aa>\{}      BRANCH BRACE_LIMITS --> BRACE_COMPLEX <aa> --> BACK  END
+ *                   |                              |                ^
+ *                   |                              +----------------+
+ *                   +-----------------------------------------------+
  *
- *						      +---------+
- *						      |		V
- * \z[abc]	BRANCH BRANCH  a  BRANCH  b  BRANCH  c	BRANCH	NOTHING --> END
- *		     |	    |	       |	  |	^		    ^
- *		     |	    |	       |	  +-----+		    |
- *		     |	    |	       +----------------+		    |
- *		     |	    +---------------------------+		    |
- *		     +------------------------------------------------------+
+ *
+ * <aa>\@!<bb>  BRANCH NOMATCH <aa> --> END  <bb> --> END
+ *                   |       |                ^       ^
+ *                   |       +----------------+       |
+ *                   +--------------------------------+
+ *
+ *                                                    +---------+
+ *                                                    |         V
+ * \z[abc]      BRANCH BRANCH  a  BRANCH  b  BRANCH  c  BRANCH  NOTHING --> END
+ *                   |      |          |          |     ^                   ^
+ *                   |      |          |          +-----+                   |
+ *                   |      |          +----------------+                   |
+ *                   |      +---------------------------+                   |
+ *                   +------------------------------------------------------+
  *
  * They all start with a BRANCH for "\|" alternatives, even when there is only
  * one alternative.
@@ -141,8 +139,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nvim/regexp.h"
 #include "nvim/garray.h"
+#include "nvim/regexp.h"
 
 /*
  * The opcodes are:
@@ -220,10 +218,10 @@
                              //     end of match.
 #define BACKREF         100  // -109 node Match same string again \1-\9.
 
-# define ZOPEN          110  // -119 Mark this point in input as start of
-                             //  \z( … \) subexpr.
-# define ZCLOSE         120  // -129 Analogous to ZOPEN.
-# define ZREF           130  // -139 node Match external submatch \z1-\z9
+#define ZOPEN          110  // -119 Mark this point in input as start of
+                            //  \z( … \) subexpr.
+#define ZCLOSE         120  // -129 Analogous to ZOPEN.
+#define ZREF           130  // -139 node Match external submatch \z1-\z9
 
 #define BRACE_COMPLEX   140  // -149 node Match nodes between m & n times
 
@@ -267,8 +265,8 @@ static int brace_count[10];       ///< Current counts for complex brace repeats
 static int one_exactly = false;   ///< only do one char for EXACTLY
 
 // When making changes to classchars also change nfa_classcodes.
-static char_u   *classchars = (char_u *)".iIkKfFpPsSdDxXoOwWhHaAlLuU";
-static int      classcodes[] = {
+static char_u *classchars = (char_u *)".iIkKfFpPsSdDxXoOwWhHaAlLuU";
+static int classcodes[] = {
   ANY, IDENT, SIDENT, KWORD, SKWORD,
   FNAME, SFNAME, PRINT, SPRINT,
   WHITE, NWHITE, DIGIT, NDIGIT,
@@ -282,7 +280,7 @@ static int      classcodes[] = {
  * When regcode is set to this value, code is not emitted and size is computed
  * instead.
  */
-#define JUST_CALC_SIZE  ((char_u *) -1)
+#define JUST_CALC_SIZE  ((char_u *)-1)
 
 // Values for rs_state in regitem_T.
 typedef enum regstate_E {
@@ -299,7 +297,7 @@ typedef enum regstate_E {
   RS_BEHIND1,           // BEHIND / NOBEHIND matching rest
   RS_BEHIND2,           // BEHIND / NOBEHIND matching behind part
   RS_STAR_LONG,         // STAR/PLUS/BRACE_SIMPLE longest match
-  RS_STAR_SHORT         // STAR/PLUS/BRACE_SIMPLE shortest match
+  RS_STAR_SHORT,  // STAR/PLUS/BRACE_SIMPLE shortest match
 } regstate_T;
 
 /*
@@ -307,34 +305,29 @@ typedef enum regstate_E {
  * restored after trying a match.  Used by reg_save() and reg_restore().
  * Also stores the length of "backpos".
  */
-typedef struct
-{
-  union
-  {
-    char_u  *ptr;       // rex.input pointer, for single-line regexp
-    lpos_T  pos;        // rex.input pos, for multi-line regexp
+typedef struct {
+  union {
+    char_u *ptr;       // rex.input pointer, for single-line regexp
+    lpos_T pos;        // rex.input pos, for multi-line regexp
   } rs_u;
-  int         rs_len;
+  int rs_len;
 } regsave_T;
 
 // struct to save start/end pointer/position in for \(\)
-typedef struct
-{
-    union
-    {
-	char_u	*ptr;
-	lpos_T	pos;
-    } se_u;
+typedef struct {
+  union {
+    char_u *ptr;
+    lpos_T pos;
+  } se_u;
 } save_se_T;
 
 // used for BEHIND and NOBEHIND matching
-typedef struct regbehind_S
-{
-    regsave_T	save_after;
-    regsave_T	save_behind;
-    int		save_need_clear_subexpr;
-    save_se_T   save_start[NSUBEXP];
-    save_se_T   save_end[NSUBEXP];
+typedef struct regbehind_S {
+  regsave_T save_after;
+  regsave_T save_behind;
+  int save_need_clear_subexpr;
+  save_se_T save_start[NSUBEXP];
+  save_se_T save_end[NSUBEXP];
 } regbehind_T;
 
 /*
@@ -343,35 +336,31 @@ typedef struct regbehind_S
  * Before it may be another type of item, depending on rs_state, to remember
  * more things.
  */
-typedef struct regitem_S
-{
-  regstate_T  rs_state;         // what we are doing, one of RS_ above
-  short       rs_no;            // submatch nr or BEHIND/NOBEHIND
-  char_u      *rs_scan;         // current node in program
-  union
-  {
-    save_se_T  sesave;
-    regsave_T  regsave;
+typedef struct regitem_S {
+  regstate_T rs_state;         // what we are doing, one of RS_ above
+  int16_t rs_no;            // submatch nr or BEHIND/NOBEHIND
+  char_u *rs_scan;         // current node in program
+  union {
+    save_se_T sesave;
+    regsave_T regsave;
   } rs_un;                      // room for saving rex.input
 } regitem_T;
 
 
 // used for STAR, PLUS and BRACE_SIMPLE matching
-typedef struct regstar_S
-{
-  int         nextb;            // next byte
-  int         nextb_ic;         // next byte reverse case
-  long        count;
-  long        minval;
-  long        maxval;
+typedef struct regstar_S {
+  int nextb;            // next byte
+  int nextb_ic;         // next byte reverse case
+  long count;
+  long minval;
+  long maxval;
 } regstar_T;
 
 // used to store input position when a BACK was encountered, so that we now if
 // we made any progress since the last time.
-typedef struct backpos_S
-{
-  char_u      *bp_scan;         // "scan" where BACK was encountered
-  regsave_T   bp_pos;           // last input position
+typedef struct backpos_S {
+  char_u *bp_scan;         // "scan" where BACK was encountered
+  regsave_T bp_pos;           // last input position
 } backpos_T;
 
 /*
@@ -397,34 +386,34 @@ static regsave_T behind_pos;
  * This makes it fast while not keeping a lot of memory allocated.
  * A three times speed increase was observed when using many simple patterns.
  */
-#define REGSTACK_INITIAL	2048
-#define BACKPOS_INITIAL		64
+#define REGSTACK_INITIAL        2048
+#define BACKPOS_INITIAL         64
 
 /*
  * Opcode notes:
  *
- * BRANCH	The set of branches constituting a single choice are hooked
- *		together with their "next" pointers, since precedence prevents
- *		anything being concatenated to any individual branch.  The
- *		"next" pointer of the last BRANCH in a choice points to the
- *		thing following the whole choice.  This is also where the
- *		final "next" pointer of each individual branch points; each
- *		branch starts with the operand node of a BRANCH node.
+ * BRANCH       The set of branches constituting a single choice are hooked
+ *              together with their "next" pointers, since precedence prevents
+ *              anything being concatenated to any individual branch.  The
+ *              "next" pointer of the last BRANCH in a choice points to the
+ *              thing following the whole choice.  This is also where the
+ *              final "next" pointer of each individual branch points; each
+ *              branch starts with the operand node of a BRANCH node.
  *
- * BACK		Normal "next" pointers all implicitly point forward; BACK
- *		exists to make loop structures possible.
+ * BACK         Normal "next" pointers all implicitly point forward; BACK
+ *              exists to make loop structures possible.
  *
- * STAR,PLUS	'=', and complex '*' and '+', are implemented as circular
- *		BRANCH structures using BACK.  Simple cases (one character
- *		per match) are implemented with STAR and PLUS for speed
- *		and to minimize recursive plunges.
+ * STAR,PLUS    '=', and complex '*' and '+', are implemented as circular
+ *              BRANCH structures using BACK.  Simple cases (one character
+ *              per match) are implemented with STAR and PLUS for speed
+ *              and to minimize recursive plunges.
  *
- * BRACE_LIMITS	This is always followed by a BRACE_SIMPLE or BRACE_COMPLEX
- *		node, and defines the min and max limits to be used for that
- *		node.
+ * BRACE_LIMITS This is always followed by a BRACE_SIMPLE or BRACE_COMPLEX
+ *              node, and defines the min and max limits to be used for that
+ *              node.
  *
- * MOPEN,MCLOSE	...are numbered at compile time.
- * ZOPEN,ZCLOSE	...ditto
+ * MOPEN,MCLOSE ...are numbered at compile time.
+ * ZOPEN,ZCLOSE ...ditto
  */
 
 /*
@@ -442,7 +431,7 @@ static regsave_T behind_pos;
 #define OPERAND(p)      ((p) + 3)
 // Obtain an operand that was stored as four bytes, MSB first.
 #define OPERAND_MIN(p)  (((long)(p)[3] << 24) + ((long)(p)[4] << 16) \
-  + ((long)(p)[5] << 8) + (long)(p)[6])
+                         + ((long)(p)[5] << 8) + (long)(p)[6])
 // Obtain a second operand stored as four bytes.
 #define OPERAND_MAX(p)  OPERAND_MIN((p) + 4)
 // Obtain a second single-byte operand stored after a four bytes operand.
@@ -451,14 +440,14 @@ static regsave_T behind_pos;
 static char_u *reg(int paren, int *flagp);
 
 #ifdef BT_REGEXP_DUMP
-static void	regdump(char_u *, bt_regprog_T *);
+static void     regdump(char_u *, bt_regprog_T *);
 #endif
 
 
 #ifdef REGEXP_DEBUG
-static char_u	*regprop(char_u *);
+static char_u *regprop(char_u *);
 
-static int	regnarrate = 0;
+static int regnarrate = 0;
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -469,15 +458,14 @@ static int	regnarrate = 0;
 /*
  * Setup to parse the regexp.  Used once to get the length and once to do it.
  */
-static void regcomp_start(
-    char_u *expr,
-    int re_flags)                        // see vim_regcomp()
+static void regcomp_start(char_u *expr, int re_flags)                        // see vim_regcomp()
 {
   initchr(expr);
-  if (re_flags & RE_MAGIC)
+  if (re_flags & RE_MAGIC) {
     reg_magic = MAGIC_ON;
-  else
+  } else {
     reg_magic = MAGIC_OFF;
+  }
   reg_string = (re_flags & RE_STRING);
   reg_strict = (re_flags & RE_STRICT);
   get_cpo_flags();
@@ -508,10 +496,11 @@ static bool use_multibytecode(int c)
  */
 static void regc(int b)
 {
-  if (regcode == JUST_CALC_SIZE)
+  if (regcode == JUST_CALC_SIZE) {
     regsize++;
-  else
+  } else {
     *regcode++ = b;
+  }
 }
 
 /*
@@ -537,12 +526,36 @@ static void reg_equi_class(int c)
   {
     switch (c) {
     // Do not use '\300' style, it results in a negative number.
-    case 'A': case 0xc0: case 0xc1: case 0xc2: case 0xc3: case 0xc4:
-    case 0xc5: case 0x100: case 0x102: case 0x104: case 0x1cd:
-    case 0x1de: case 0x1e0: case 0x1fa: case 0x202: case 0x226:
-    case 0x23a: case 0x1e00: case 0x1ea0: case 0x1ea2: case 0x1ea4:
-    case 0x1ea6: case 0x1ea8: case 0x1eaa: case 0x1eac: case 0x1eae:
-    case 0x1eb0: case 0x1eb2: case 0x1eb4: case 0x1eb6:
+    case 'A':
+    case 0xc0:
+    case 0xc1:
+    case 0xc2:
+    case 0xc3:
+    case 0xc4:
+    case 0xc5:
+    case 0x100:
+    case 0x102:
+    case 0x104:
+    case 0x1cd:
+    case 0x1de:
+    case 0x1e0:
+    case 0x1fa:
+    case 0x202:
+    case 0x226:
+    case 0x23a:
+    case 0x1e00:
+    case 0x1ea0:
+    case 0x1ea2:
+    case 0x1ea4:
+    case 0x1ea6:
+    case 0x1ea8:
+    case 0x1eaa:
+    case 0x1eac:
+    case 0x1eae:
+    case 0x1eb0:
+    case 0x1eb2:
+    case 0x1eb4:
+    case 0x1eb6:
       regmbc('A'); regmbc(0xc0); regmbc(0xc1); regmbc(0xc2);
       regmbc(0xc3); regmbc(0xc4); regmbc(0xc5);
       regmbc(0x100); regmbc(0x102); regmbc(0x104);
@@ -554,33 +567,71 @@ static void reg_equi_class(int c)
       regmbc(0x1eae); regmbc(0x1eb0); regmbc(0x1eb2);
       regmbc(0x1eb4); regmbc(0x1eb6);
       return;
-    case 'B': case 0x181: case 0x243: case 0x1e02:
-    case 0x1e04: case 0x1e06:
+    case 'B':
+    case 0x181:
+    case 0x243:
+    case 0x1e02:
+    case 0x1e04:
+    case 0x1e06:
       regmbc('B');
       regmbc(0x181); regmbc(0x243); regmbc(0x1e02);
       regmbc(0x1e04); regmbc(0x1e06);
       return;
-    case 'C': case 0xc7:
-    case 0x106: case 0x108: case 0x10a: case 0x10c: case 0x187:
-    case 0x23b: case 0x1e08: case 0xa792:
+    case 'C':
+    case 0xc7:
+    case 0x106:
+    case 0x108:
+    case 0x10a:
+    case 0x10c:
+    case 0x187:
+    case 0x23b:
+    case 0x1e08:
+    case 0xa792:
       regmbc('C'); regmbc(0xc7);
       regmbc(0x106); regmbc(0x108); regmbc(0x10a);
       regmbc(0x10c); regmbc(0x187); regmbc(0x23b);
       regmbc(0x1e08); regmbc(0xa792);
       return;
-    case 'D': case 0x10e: case 0x110: case 0x18a:
-    case 0x1e0a: case 0x1e0c: case 0x1e0e: case 0x1e10:
+    case 'D':
+    case 0x10e:
+    case 0x110:
+    case 0x18a:
+    case 0x1e0a:
+    case 0x1e0c:
+    case 0x1e0e:
+    case 0x1e10:
     case 0x1e12:
       regmbc('D'); regmbc(0x10e); regmbc(0x110);
       regmbc(0x18a); regmbc(0x1e0a); regmbc(0x1e0c);
       regmbc(0x1e0e); regmbc(0x1e10); regmbc(0x1e12);
       return;
-    case 'E': case 0xc8: case 0xc9: case 0xca: case 0xcb:
-    case 0x112: case 0x114: case 0x116: case 0x118: case 0x11a:
-    case 0x204: case 0x206: case 0x228: case 0x246: case 0x1e14:
-    case 0x1e16: case 0x1e18: case 0x1e1a: case 0x1e1c:
-    case 0x1eb8: case 0x1eba: case 0x1ebc: case 0x1ebe:
-    case 0x1ec0: case 0x1ec2: case 0x1ec4: case 0x1ec6:
+    case 'E':
+    case 0xc8:
+    case 0xc9:
+    case 0xca:
+    case 0xcb:
+    case 0x112:
+    case 0x114:
+    case 0x116:
+    case 0x118:
+    case 0x11a:
+    case 0x204:
+    case 0x206:
+    case 0x228:
+    case 0x246:
+    case 0x1e14:
+    case 0x1e16:
+    case 0x1e18:
+    case 0x1e1a:
+    case 0x1e1c:
+    case 0x1eb8:
+    case 0x1eba:
+    case 0x1ebc:
+    case 0x1ebe:
+    case 0x1ec0:
+    case 0x1ec2:
+    case 0x1ec4:
+    case 0x1ec6:
       regmbc('E'); regmbc(0xc8); regmbc(0xc9);
       regmbc(0xca); regmbc(0xcb); regmbc(0x112);
       regmbc(0x114); regmbc(0x116); regmbc(0x118);
@@ -591,30 +642,61 @@ static void reg_equi_class(int c)
       regmbc(0x1ebc); regmbc(0x1ebe); regmbc(0x1ec0);
       regmbc(0x1ec2); regmbc(0x1ec4); regmbc(0x1ec6);
       return;
-    case 'F': case 0x191: case 0x1e1e: case 0xa798:
+    case 'F':
+    case 0x191:
+    case 0x1e1e:
+    case 0xa798:
       regmbc('F'); regmbc(0x191); regmbc(0x1e1e);
       regmbc(0xa798);
       return;
-    case 'G': case 0x11c: case 0x11e: case 0x120:
-    case 0x122: case 0x193: case 0x1e4: case 0x1e6:
-    case 0x1f4: case 0x1e20: case 0xa7a0:
+    case 'G':
+    case 0x11c:
+    case 0x11e:
+    case 0x120:
+    case 0x122:
+    case 0x193:
+    case 0x1e4:
+    case 0x1e6:
+    case 0x1f4:
+    case 0x1e20:
+    case 0xa7a0:
       regmbc('G'); regmbc(0x11c); regmbc(0x11e);
       regmbc(0x120); regmbc(0x122); regmbc(0x193);
       regmbc(0x1e4); regmbc(0x1e6); regmbc(0x1f4);
       regmbc(0x1e20); regmbc(0xa7a0);
       return;
-    case 'H': case 0x124: case 0x126: case 0x21e:
-    case 0x1e22: case 0x1e24: case 0x1e26:
-    case 0x1e28: case 0x1e2a: case 0x2c67:
+    case 'H':
+    case 0x124:
+    case 0x126:
+    case 0x21e:
+    case 0x1e22:
+    case 0x1e24:
+    case 0x1e26:
+    case 0x1e28:
+    case 0x1e2a:
+    case 0x2c67:
       regmbc('H'); regmbc(0x124); regmbc(0x126);
       regmbc(0x21e); regmbc(0x1e22); regmbc(0x1e24);
       regmbc(0x1e26); regmbc(0x1e28); regmbc(0x1e2a);
       regmbc(0x2c67);
       return;
-    case 'I': case 0xcc: case 0xcd: case 0xce: case 0xcf:
-    case 0x128: case 0x12a: case 0x12c: case 0x12e:
-    case 0x130: case 0x197: case 0x1cf: case 0x208:
-    case 0x20a: case 0x1e2c: case 0x1e2e: case 0x1ec8:
+    case 'I':
+    case 0xcc:
+    case 0xcd:
+    case 0xce:
+    case 0xcf:
+    case 0x128:
+    case 0x12a:
+    case 0x12c:
+    case 0x12e:
+    case 0x130:
+    case 0x197:
+    case 0x1cf:
+    case 0x208:
+    case 0x20a:
+    case 0x1e2c:
+    case 0x1e2e:
+    case 0x1ec8:
     case 0x1eca:
       regmbc('I'); regmbc(0xcc); regmbc(0xcd);
       regmbc(0xce); regmbc(0xcf); regmbc(0x128);
@@ -623,44 +705,102 @@ static void reg_equi_class(int c)
       regmbc(0x208); regmbc(0x20a); regmbc(0x1e2c);
       regmbc(0x1e2e); regmbc(0x1ec8); regmbc(0x1eca);
       return;
-    case 'J': case 0x134: case 0x248:
+    case 'J':
+    case 0x134:
+    case 0x248:
       regmbc('J'); regmbc(0x134); regmbc(0x248);
       return;
-    case 'K': case 0x136: case 0x198: case 0x1e8: case 0x1e30:
-    case 0x1e32: case 0x1e34: case 0x2c69: case 0xa740:
+    case 'K':
+    case 0x136:
+    case 0x198:
+    case 0x1e8:
+    case 0x1e30:
+    case 0x1e32:
+    case 0x1e34:
+    case 0x2c69:
+    case 0xa740:
       regmbc('K'); regmbc(0x136); regmbc(0x198);
       regmbc(0x1e8); regmbc(0x1e30); regmbc(0x1e32);
       regmbc(0x1e34); regmbc(0x2c69); regmbc(0xa740);
       return;
-    case 'L': case 0x139: case 0x13b: case 0x13d: case 0x13f:
-    case 0x141: case 0x23d: case 0x1e36: case 0x1e38:
-    case 0x1e3a: case 0x1e3c: case 0x2c60:
+    case 'L':
+    case 0x139:
+    case 0x13b:
+    case 0x13d:
+    case 0x13f:
+    case 0x141:
+    case 0x23d:
+    case 0x1e36:
+    case 0x1e38:
+    case 0x1e3a:
+    case 0x1e3c:
+    case 0x2c60:
       regmbc('L'); regmbc(0x139); regmbc(0x13b);
       regmbc(0x13d); regmbc(0x13f); regmbc(0x141);
       regmbc(0x23d); regmbc(0x1e36); regmbc(0x1e38);
       regmbc(0x1e3a); regmbc(0x1e3c); regmbc(0x2c60);
       return;
-    case 'M': case 0x1e3e: case 0x1e40: case 0x1e42:
+    case 'M':
+    case 0x1e3e:
+    case 0x1e40:
+    case 0x1e42:
       regmbc('M'); regmbc(0x1e3e); regmbc(0x1e40);
       regmbc(0x1e42);
       return;
-    case 'N': case 0xd1:
-    case 0x143: case 0x145: case 0x147: case 0x1f8:
-    case 0x1e44: case 0x1e46: case 0x1e48: case 0x1e4a:
+    case 'N':
+    case 0xd1:
+    case 0x143:
+    case 0x145:
+    case 0x147:
+    case 0x1f8:
+    case 0x1e44:
+    case 0x1e46:
+    case 0x1e48:
+    case 0x1e4a:
     case 0xa7a4:
       regmbc('N'); regmbc(0xd1);
       regmbc(0x143); regmbc(0x145); regmbc(0x147);
       regmbc(0x1f8); regmbc(0x1e44); regmbc(0x1e46);
       regmbc(0x1e48); regmbc(0x1e4a); regmbc(0xa7a4);
       return;
-    case 'O': case 0xd2: case 0xd3: case 0xd4: case 0xd5: case 0xd6:
-    case 0xd8: case 0x14c: case 0x14e: case 0x150: case 0x19f:
-    case 0x1a0: case 0x1d1: case 0x1ea: case 0x1ec: case 0x1fe:
-    case 0x20c: case 0x20e: case 0x22a: case 0x22c: case 0x22e:
-    case 0x230: case 0x1e4c: case 0x1e4e: case 0x1e50: case 0x1e52:
-    case 0x1ecc: case 0x1ece: case 0x1ed0: case 0x1ed2: case 0x1ed4:
-    case 0x1ed6: case 0x1ed8: case 0x1eda: case 0x1edc: case 0x1ede:
-    case 0x1ee0: case 0x1ee2:
+    case 'O':
+    case 0xd2:
+    case 0xd3:
+    case 0xd4:
+    case 0xd5:
+    case 0xd6:
+    case 0xd8:
+    case 0x14c:
+    case 0x14e:
+    case 0x150:
+    case 0x19f:
+    case 0x1a0:
+    case 0x1d1:
+    case 0x1ea:
+    case 0x1ec:
+    case 0x1fe:
+    case 0x20c:
+    case 0x20e:
+    case 0x22a:
+    case 0x22c:
+    case 0x22e:
+    case 0x230:
+    case 0x1e4c:
+    case 0x1e4e:
+    case 0x1e50:
+    case 0x1e52:
+    case 0x1ecc:
+    case 0x1ece:
+    case 0x1ed0:
+    case 0x1ed2:
+    case 0x1ed4:
+    case 0x1ed6:
+    case 0x1ed8:
+    case 0x1eda:
+    case 0x1edc:
+    case 0x1ede:
+    case 0x1ee0:
+    case 0x1ee2:
       regmbc('O'); regmbc(0xd2); regmbc(0xd3); regmbc(0xd4);
       regmbc(0xd5); regmbc(0xd6); regmbc(0xd8);
       regmbc(0x14c); regmbc(0x14e); regmbc(0x150);
@@ -675,47 +815,105 @@ static void reg_equi_class(int c)
       regmbc(0x1edc); regmbc(0x1ede); regmbc(0x1ee0);
       regmbc(0x1ee2);
       return;
-    case 'P': case 0x1a4: case 0x1e54: case 0x1e56: case 0x2c63:
+    case 'P':
+    case 0x1a4:
+    case 0x1e54:
+    case 0x1e56:
+    case 0x2c63:
       regmbc('P'); regmbc(0x1a4); regmbc(0x1e54);
       regmbc(0x1e56); regmbc(0x2c63);
       return;
-    case 'Q': case 0x24a:
+    case 'Q':
+    case 0x24a:
       regmbc('Q'); regmbc(0x24a);
       return;
-    case 'R': case 0x154: case 0x156: case 0x158: case 0x210:
-    case 0x212: case 0x24c: case 0x1e58: case 0x1e5a:
-    case 0x1e5c: case 0x1e5e: case 0x2c64: case 0xa7a6:
+    case 'R':
+    case 0x154:
+    case 0x156:
+    case 0x158:
+    case 0x210:
+    case 0x212:
+    case 0x24c:
+    case 0x1e58:
+    case 0x1e5a:
+    case 0x1e5c:
+    case 0x1e5e:
+    case 0x2c64:
+    case 0xa7a6:
       regmbc('R'); regmbc(0x154); regmbc(0x156);
       regmbc(0x210); regmbc(0x212); regmbc(0x158);
       regmbc(0x24c); regmbc(0x1e58); regmbc(0x1e5a);
       regmbc(0x1e5c); regmbc(0x1e5e); regmbc(0x2c64);
       regmbc(0xa7a6);
       return;
-    case 'S': case 0x15a: case 0x15c: case 0x15e: case 0x160:
-    case 0x218: case 0x1e60: case 0x1e62: case 0x1e64:
-    case 0x1e66: case 0x1e68: case 0x2c7e: case 0xa7a8:
+    case 'S':
+    case 0x15a:
+    case 0x15c:
+    case 0x15e:
+    case 0x160:
+    case 0x218:
+    case 0x1e60:
+    case 0x1e62:
+    case 0x1e64:
+    case 0x1e66:
+    case 0x1e68:
+    case 0x2c7e:
+    case 0xa7a8:
       regmbc('S'); regmbc(0x15a); regmbc(0x15c);
       regmbc(0x15e); regmbc(0x160); regmbc(0x218);
       regmbc(0x1e60); regmbc(0x1e62); regmbc(0x1e64);
       regmbc(0x1e66); regmbc(0x1e68); regmbc(0x2c7e);
       regmbc(0xa7a8);
       return;
-    case 'T': case 0x162: case 0x164: case 0x166: case 0x1ac:
-    case 0x1ae: case 0x21a: case 0x23e: case 0x1e6a: case 0x1e6c:
-    case 0x1e6e: case 0x1e70:
+    case 'T':
+    case 0x162:
+    case 0x164:
+    case 0x166:
+    case 0x1ac:
+    case 0x1ae:
+    case 0x21a:
+    case 0x23e:
+    case 0x1e6a:
+    case 0x1e6c:
+    case 0x1e6e:
+    case 0x1e70:
       regmbc('T'); regmbc(0x162); regmbc(0x164);
       regmbc(0x166); regmbc(0x1ac); regmbc(0x23e);
       regmbc(0x1ae); regmbc(0x21a); regmbc(0x1e6a);
       regmbc(0x1e6c); regmbc(0x1e6e); regmbc(0x1e70);
       return;
-    case 'U': case 0xd9: case 0xda: case 0xdb: case 0xdc:
-    case 0x168: case 0x16a: case 0x16c: case 0x16e:
-    case 0x170: case 0x172: case 0x1af: case 0x1d3:
-    case 0x1d5: case 0x1d7: case 0x1d9: case 0x1db:
-    case 0x214: case 0x216: case 0x244: case 0x1e72:
-    case 0x1e74: case 0x1e76: case 0x1e78: case 0x1e7a:
-    case 0x1ee4: case 0x1ee6: case 0x1ee8: case 0x1eea:
-    case 0x1eec: case 0x1eee: case 0x1ef0:
+    case 'U':
+    case 0xd9:
+    case 0xda:
+    case 0xdb:
+    case 0xdc:
+    case 0x168:
+    case 0x16a:
+    case 0x16c:
+    case 0x16e:
+    case 0x170:
+    case 0x172:
+    case 0x1af:
+    case 0x1d3:
+    case 0x1d5:
+    case 0x1d7:
+    case 0x1d9:
+    case 0x1db:
+    case 0x214:
+    case 0x216:
+    case 0x244:
+    case 0x1e72:
+    case 0x1e74:
+    case 0x1e76:
+    case 0x1e78:
+    case 0x1e7a:
+    case 0x1ee4:
+    case 0x1ee6:
+    case 0x1ee8:
+    case 0x1eea:
+    case 0x1eec:
+    case 0x1eee:
+    case 0x1ef0:
       regmbc('U'); regmbc(0xd9); regmbc(0xda);
       regmbc(0xdb); regmbc(0xdc); regmbc(0x168);
       regmbc(0x16a); regmbc(0x16c); regmbc(0x16e);
@@ -728,41 +926,92 @@ static void reg_equi_class(int c)
       regmbc(0x1ee8); regmbc(0x1eea); regmbc(0x1eec);
       regmbc(0x1eee); regmbc(0x1ef0);
       return;
-    case 'V': case 0x1b2: case 0x1e7c: case 0x1e7e:
+    case 'V':
+    case 0x1b2:
+    case 0x1e7c:
+    case 0x1e7e:
       regmbc('V'); regmbc(0x1b2); regmbc(0x1e7c);
       regmbc(0x1e7e);
       return;
-    case 'W': case 0x174: case 0x1e80: case 0x1e82:
-    case 0x1e84: case 0x1e86: case 0x1e88:
+    case 'W':
+    case 0x174:
+    case 0x1e80:
+    case 0x1e82:
+    case 0x1e84:
+    case 0x1e86:
+    case 0x1e88:
       regmbc('W'); regmbc(0x174); regmbc(0x1e80);
       regmbc(0x1e82); regmbc(0x1e84); regmbc(0x1e86);
       regmbc(0x1e88);
       return;
-    case 'X': case 0x1e8a: case 0x1e8c:
+    case 'X':
+    case 0x1e8a:
+    case 0x1e8c:
       regmbc('X'); regmbc(0x1e8a); regmbc(0x1e8c);
       return;
-    case 'Y': case 0xdd:
-    case 0x176: case 0x178: case 0x1b3: case 0x232: case 0x24e:
-    case 0x1e8e: case 0x1ef2: case 0x1ef6: case 0x1ef4: case 0x1ef8:
+    case 'Y':
+    case 0xdd:
+    case 0x176:
+    case 0x178:
+    case 0x1b3:
+    case 0x232:
+    case 0x24e:
+    case 0x1e8e:
+    case 0x1ef2:
+    case 0x1ef6:
+    case 0x1ef4:
+    case 0x1ef8:
       regmbc('Y'); regmbc(0xdd); regmbc(0x176);
       regmbc(0x178); regmbc(0x1b3); regmbc(0x232);
       regmbc(0x24e); regmbc(0x1e8e); regmbc(0x1ef2);
       regmbc(0x1ef4); regmbc(0x1ef6); regmbc(0x1ef8);
       return;
-    case 'Z': case 0x179: case 0x17b: case 0x17d: case 0x1b5:
-    case 0x1e90: case 0x1e92: case 0x1e94: case 0x2c6b:
+    case 'Z':
+    case 0x179:
+    case 0x17b:
+    case 0x17d:
+    case 0x1b5:
+    case 0x1e90:
+    case 0x1e92:
+    case 0x1e94:
+    case 0x2c6b:
       regmbc('Z'); regmbc(0x179); regmbc(0x17b);
       regmbc(0x17d); regmbc(0x1b5); regmbc(0x1e90);
       regmbc(0x1e92); regmbc(0x1e94); regmbc(0x2c6b);
       return;
-    case 'a': case 0xe0: case 0xe1: case 0xe2:
-    case 0xe3: case 0xe4: case 0xe5: case 0x101: case 0x103:
-    case 0x105: case 0x1ce: case 0x1df: case 0x1e1: case 0x1fb:
-    case 0x201: case 0x203: case 0x227: case 0x1d8f: case 0x1e01:
-    case 0x1e9a: case 0x1ea1: case 0x1ea3: case 0x1ea5:
-    case 0x1ea7: case 0x1ea9: case 0x1eab: case 0x1ead:
-    case 0x1eaf: case 0x1eb1: case 0x1eb3: case 0x1eb5:
-    case 0x1eb7: case 0x2c65:
+    case 'a':
+    case 0xe0:
+    case 0xe1:
+    case 0xe2:
+    case 0xe3:
+    case 0xe4:
+    case 0xe5:
+    case 0x101:
+    case 0x103:
+    case 0x105:
+    case 0x1ce:
+    case 0x1df:
+    case 0x1e1:
+    case 0x1fb:
+    case 0x201:
+    case 0x203:
+    case 0x227:
+    case 0x1d8f:
+    case 0x1e01:
+    case 0x1e9a:
+    case 0x1ea1:
+    case 0x1ea3:
+    case 0x1ea5:
+    case 0x1ea7:
+    case 0x1ea9:
+    case 0x1eab:
+    case 0x1ead:
+    case 0x1eaf:
+    case 0x1eb1:
+    case 0x1eb3:
+    case 0x1eb5:
+    case 0x1eb7:
+    case 0x2c65:
       regmbc('a'); regmbc(0xe0); regmbc(0xe1);
       regmbc(0xe2); regmbc(0xe3); regmbc(0xe4);
       regmbc(0xe5); regmbc(0x101); regmbc(0x103);
@@ -775,36 +1024,80 @@ static void reg_equi_class(int c)
       regmbc(0x1eaf); regmbc(0x1eb1); regmbc(0x1eb3);
       regmbc(0x1eb5); regmbc(0x1eb7); regmbc(0x2c65);
       return;
-    case 'b': case 0x180: case 0x253: case 0x1d6c: case 0x1d80:
-    case 0x1e03: case 0x1e05: case 0x1e07:
+    case 'b':
+    case 0x180:
+    case 0x253:
+    case 0x1d6c:
+    case 0x1d80:
+    case 0x1e03:
+    case 0x1e05:
+    case 0x1e07:
       regmbc('b');
       regmbc(0x180); regmbc(0x253); regmbc(0x1d6c);
       regmbc(0x1d80); regmbc(0x1e03); regmbc(0x1e05);
       regmbc(0x1e07);
       return;
-    case 'c': case 0xe7:
-    case 0x107: case 0x109: case 0x10b: case 0x10d: case 0x188:
-    case 0x23c: case 0x1e09: case 0xa793: case 0xa794:
+    case 'c':
+    case 0xe7:
+    case 0x107:
+    case 0x109:
+    case 0x10b:
+    case 0x10d:
+    case 0x188:
+    case 0x23c:
+    case 0x1e09:
+    case 0xa793:
+    case 0xa794:
       regmbc('c'); regmbc(0xe7); regmbc(0x107);
       regmbc(0x109); regmbc(0x10b); regmbc(0x10d);
       regmbc(0x188); regmbc(0x23c); regmbc(0x1e09);
       regmbc(0xa793); regmbc(0xa794);
       return;
-    case 'd': case 0x10f: case 0x111: case 0x257: case 0x1d6d:
-    case 0x1d81: case 0x1d91: case 0x1e0b: case 0x1e0d:
-    case 0x1e0f: case 0x1e11: case 0x1e13:
+    case 'd':
+    case 0x10f:
+    case 0x111:
+    case 0x257:
+    case 0x1d6d:
+    case 0x1d81:
+    case 0x1d91:
+    case 0x1e0b:
+    case 0x1e0d:
+    case 0x1e0f:
+    case 0x1e11:
+    case 0x1e13:
       regmbc('d'); regmbc(0x10f); regmbc(0x111);
       regmbc(0x257); regmbc(0x1d6d); regmbc(0x1d81);
       regmbc(0x1d91); regmbc(0x1e0b); regmbc(0x1e0d);
       regmbc(0x1e0f); regmbc(0x1e11); regmbc(0x1e13);
       return;
-    case 'e': case 0xe8: case 0xe9: case 0xea: case 0xeb:
-    case 0x113: case 0x115: case 0x117: case 0x119:
-    case 0x11b: case 0x205: case 0x207: case 0x229:
-    case 0x247: case 0x1d92: case 0x1e15: case 0x1e17:
-    case 0x1e19: case 0x1e1b: case 0x1eb9: case 0x1ebb:
-    case 0x1e1d: case 0x1ebd: case 0x1ebf: case 0x1ec1:
-    case 0x1ec3: case 0x1ec5: case 0x1ec7:
+    case 'e':
+    case 0xe8:
+    case 0xe9:
+    case 0xea:
+    case 0xeb:
+    case 0x113:
+    case 0x115:
+    case 0x117:
+    case 0x119:
+    case 0x11b:
+    case 0x205:
+    case 0x207:
+    case 0x229:
+    case 0x247:
+    case 0x1d92:
+    case 0x1e15:
+    case 0x1e17:
+    case 0x1e19:
+    case 0x1e1b:
+    case 0x1eb9:
+    case 0x1ebb:
+    case 0x1e1d:
+    case 0x1ebd:
+    case 0x1ebf:
+    case 0x1ec1:
+    case 0x1ec3:
+    case 0x1ec5:
+    case 0x1ec7:
       regmbc('e'); regmbc(0xe8); regmbc(0xe9);
       regmbc(0xea); regmbc(0xeb); regmbc(0x113);
       regmbc(0x115); regmbc(0x117); regmbc(0x119);
@@ -816,31 +1109,66 @@ static void reg_equi_class(int c)
       regmbc(0x1ec1); regmbc(0x1ec3); regmbc(0x1ec5);
       regmbc(0x1ec7);
       return;
-    case 'f': case 0x192: case 0x1d6e: case 0x1d82:
-    case 0x1e1f: case 0xa799:
+    case 'f':
+    case 0x192:
+    case 0x1d6e:
+    case 0x1d82:
+    case 0x1e1f:
+    case 0xa799:
       regmbc('f'); regmbc(0x192); regmbc(0x1d6e);
       regmbc(0x1d82); regmbc(0x1e1f); regmbc(0xa799);
       return;
-    case 'g': case 0x11d: case 0x11f: case 0x121: case 0x123:
-    case 0x1e5: case 0x1e7: case 0x260: case 0x1f5: case 0x1d83:
-    case 0x1e21: case 0xa7a1:
+    case 'g':
+    case 0x11d:
+    case 0x11f:
+    case 0x121:
+    case 0x123:
+    case 0x1e5:
+    case 0x1e7:
+    case 0x260:
+    case 0x1f5:
+    case 0x1d83:
+    case 0x1e21:
+    case 0xa7a1:
       regmbc('g'); regmbc(0x11d); regmbc(0x11f);
       regmbc(0x121); regmbc(0x123); regmbc(0x1e5);
       regmbc(0x1e7); regmbc(0x1f5); regmbc(0x260);
       regmbc(0x1d83); regmbc(0x1e21); regmbc(0xa7a1);
       return;
-    case 'h': case 0x125: case 0x127: case 0x21f: case 0x1e23:
-    case 0x1e25: case 0x1e27: case 0x1e29: case 0x1e2b:
-    case 0x1e96: case 0x2c68: case 0xa795:
+    case 'h':
+    case 0x125:
+    case 0x127:
+    case 0x21f:
+    case 0x1e23:
+    case 0x1e25:
+    case 0x1e27:
+    case 0x1e29:
+    case 0x1e2b:
+    case 0x1e96:
+    case 0x2c68:
+    case 0xa795:
       regmbc('h'); regmbc(0x125); regmbc(0x127);
       regmbc(0x21f); regmbc(0x1e23); regmbc(0x1e25);
       regmbc(0x1e27); regmbc(0x1e29); regmbc(0x1e2b);
       regmbc(0x1e96); regmbc(0x2c68); regmbc(0xa795);
       return;
-    case 'i': case 0xec: case 0xed: case 0xee: case 0xef:
-    case 0x129: case 0x12b: case 0x12d: case 0x12f:
-    case 0x1d0: case 0x209: case 0x20b: case 0x268:
-    case 0x1d96: case 0x1e2d: case 0x1e2f: case 0x1ec9:
+    case 'i':
+    case 0xec:
+    case 0xed:
+    case 0xee:
+    case 0xef:
+    case 0x129:
+    case 0x12b:
+    case 0x12d:
+    case 0x12f:
+    case 0x1d0:
+    case 0x209:
+    case 0x20b:
+    case 0x268:
+    case 0x1d96:
+    case 0x1e2d:
+    case 0x1e2f:
+    case 0x1ec9:
     case 0x1ecb:
       regmbc('i'); regmbc(0xec); regmbc(0xed);
       regmbc(0xee); regmbc(0xef); regmbc(0x129);
@@ -849,33 +1177,66 @@ static void reg_equi_class(int c)
       regmbc(0x268); regmbc(0x1d96); regmbc(0x1e2d);
       regmbc(0x1e2f); regmbc(0x1ec9); regmbc(0x1ecb);
       return;
-    case 'j': case 0x135: case 0x1f0: case 0x249:
+    case 'j':
+    case 0x135:
+    case 0x1f0:
+    case 0x249:
       regmbc('j'); regmbc(0x135); regmbc(0x1f0);
       regmbc(0x249);
       return;
-    case 'k': case 0x137: case 0x199: case 0x1e9:
-    case 0x1d84: case 0x1e31: case 0x1e33: case 0x1e35:
-    case 0x2c6a: case 0xa741:
+    case 'k':
+    case 0x137:
+    case 0x199:
+    case 0x1e9:
+    case 0x1d84:
+    case 0x1e31:
+    case 0x1e33:
+    case 0x1e35:
+    case 0x2c6a:
+    case 0xa741:
       regmbc('k'); regmbc(0x137); regmbc(0x199);
       regmbc(0x1e9); regmbc(0x1d84); regmbc(0x1e31);
       regmbc(0x1e33); regmbc(0x1e35); regmbc(0x2c6a);
       regmbc(0xa741);
       return;
-    case 'l': case 0x13a: case 0x13c: case 0x13e:
-    case 0x140: case 0x142: case 0x19a: case 0x1e37:
-    case 0x1e39: case 0x1e3b: case 0x1e3d: case 0x2c61:
+    case 'l':
+    case 0x13a:
+    case 0x13c:
+    case 0x13e:
+    case 0x140:
+    case 0x142:
+    case 0x19a:
+    case 0x1e37:
+    case 0x1e39:
+    case 0x1e3b:
+    case 0x1e3d:
+    case 0x2c61:
       regmbc('l'); regmbc(0x13a); regmbc(0x13c);
       regmbc(0x13e); regmbc(0x140); regmbc(0x142);
       regmbc(0x19a); regmbc(0x1e37); regmbc(0x1e39);
       regmbc(0x1e3b); regmbc(0x1e3d); regmbc(0x2c61);
       return;
-    case 'm': case 0x1d6f: case 0x1e3f: case 0x1e41: case 0x1e43:
+    case 'm':
+    case 0x1d6f:
+    case 0x1e3f:
+    case 0x1e41:
+    case 0x1e43:
       regmbc('m'); regmbc(0x1d6f); regmbc(0x1e3f);
       regmbc(0x1e41); regmbc(0x1e43);
       return;
-    case 'n': case 0xf1: case 0x144: case 0x146: case 0x148:
-    case 0x149: case 0x1f9: case 0x1d70: case 0x1d87:
-    case 0x1e45: case 0x1e47: case 0x1e49: case 0x1e4b:
+    case 'n':
+    case 0xf1:
+    case 0x144:
+    case 0x146:
+    case 0x148:
+    case 0x149:
+    case 0x1f9:
+    case 0x1d70:
+    case 0x1d87:
+    case 0x1e45:
+    case 0x1e47:
+    case 0x1e49:
+    case 0x1e4b:
     case 0xa7a5:
       regmbc('n'); regmbc(0xf1); regmbc(0x144);
       regmbc(0x146); regmbc(0x148); regmbc(0x149);
@@ -883,15 +1244,44 @@ static void reg_equi_class(int c)
       regmbc(0x1e45); regmbc(0x1e47); regmbc(0x1e49);
       regmbc(0x1e4b); regmbc(0xa7a5);
       return;
-    case 'o': case 0xf2: case 0xf3: case 0xf4: case 0xf5:
-    case 0xf6: case 0xf8: case 0x14d: case 0x14f: case 0x151:
-    case 0x1a1: case 0x1d2: case 0x1eb: case 0x1ed: case 0x1ff:
-    case 0x20d: case 0x20f: case 0x22b: case 0x22d: case 0x22f:
-    case 0x231: case 0x275: case 0x1e4d: case 0x1e4f:
-    case 0x1e51: case 0x1e53: case 0x1ecd: case 0x1ecf:
-    case 0x1ed1: case 0x1ed3: case 0x1ed5: case 0x1ed7:
-    case 0x1ed9: case 0x1edb: case 0x1edd: case 0x1edf:
-    case 0x1ee1: case 0x1ee3:
+    case 'o':
+    case 0xf2:
+    case 0xf3:
+    case 0xf4:
+    case 0xf5:
+    case 0xf6:
+    case 0xf8:
+    case 0x14d:
+    case 0x14f:
+    case 0x151:
+    case 0x1a1:
+    case 0x1d2:
+    case 0x1eb:
+    case 0x1ed:
+    case 0x1ff:
+    case 0x20d:
+    case 0x20f:
+    case 0x22b:
+    case 0x22d:
+    case 0x22f:
+    case 0x231:
+    case 0x275:
+    case 0x1e4d:
+    case 0x1e4f:
+    case 0x1e51:
+    case 0x1e53:
+    case 0x1ecd:
+    case 0x1ecf:
+    case 0x1ed1:
+    case 0x1ed3:
+    case 0x1ed5:
+    case 0x1ed7:
+    case 0x1ed9:
+    case 0x1edb:
+    case 0x1edd:
+    case 0x1edf:
+    case 0x1ee1:
+    case 0x1ee3:
       regmbc('o'); regmbc(0xf2); regmbc(0xf3);
       regmbc(0xf4); regmbc(0xf5); regmbc(0xf6);
       regmbc(0xf8); regmbc(0x14d); regmbc(0x14f);
@@ -906,18 +1296,37 @@ static void reg_equi_class(int c)
       regmbc(0x1edb); regmbc(0x1edd); regmbc(0x1edf);
       regmbc(0x1ee1); regmbc(0x1ee3);
       return;
-    case 'p': case 0x1a5: case 0x1d71: case 0x1d88: case 0x1d7d:
-    case 0x1e55: case 0x1e57:
+    case 'p':
+    case 0x1a5:
+    case 0x1d71:
+    case 0x1d88:
+    case 0x1d7d:
+    case 0x1e55:
+    case 0x1e57:
       regmbc('p'); regmbc(0x1a5); regmbc(0x1d71);
       regmbc(0x1d7d); regmbc(0x1d88); regmbc(0x1e55);
       regmbc(0x1e57);
       return;
-    case 'q': case 0x24b: case 0x2a0:
+    case 'q':
+    case 0x24b:
+    case 0x2a0:
       regmbc('q'); regmbc(0x24b); regmbc(0x2a0);
       return;
-    case 'r': case 0x155: case 0x157: case 0x159: case 0x211:
-    case 0x213: case 0x24d: case 0x27d: case 0x1d72: case 0x1d73:
-    case 0x1d89: case 0x1e59: case 0x1e5b: case 0x1e5d: case 0x1e5f:
+    case 'r':
+    case 0x155:
+    case 0x157:
+    case 0x159:
+    case 0x211:
+    case 0x213:
+    case 0x24d:
+    case 0x27d:
+    case 0x1d72:
+    case 0x1d73:
+    case 0x1d89:
+    case 0x1e59:
+    case 0x1e5b:
+    case 0x1e5d:
+    case 0x1e5f:
     case 0xa7a7:
       regmbc('r'); regmbc(0x155); regmbc(0x157);
       regmbc(0x159); regmbc(0x211); regmbc(0x213);
@@ -926,32 +1335,81 @@ static void reg_equi_class(int c)
       regmbc(0x1e5b); regmbc(0x1e5d); regmbc(0x1e5f);
       regmbc(0xa7a7);
       return;
-    case 's': case 0x15b: case 0x15d: case 0x15f: case 0x161:
-    case 0x1e61: case 0x219: case 0x23f: case 0x1d74: case 0x1d8a:
-    case 0x1e63: case 0x1e65: case 0x1e67: case 0x1e69: case 0xa7a9:
+    case 's':
+    case 0x15b:
+    case 0x15d:
+    case 0x15f:
+    case 0x161:
+    case 0x1e61:
+    case 0x219:
+    case 0x23f:
+    case 0x1d74:
+    case 0x1d8a:
+    case 0x1e63:
+    case 0x1e65:
+    case 0x1e67:
+    case 0x1e69:
+    case 0xa7a9:
       regmbc('s'); regmbc(0x15b); regmbc(0x15d);
       regmbc(0x15f); regmbc(0x161); regmbc(0x23f);
       regmbc(0x219); regmbc(0x1d74); regmbc(0x1d8a);
       regmbc(0x1e61); regmbc(0x1e63); regmbc(0x1e65);
       regmbc(0x1e67); regmbc(0x1e69); regmbc(0xa7a9);
       return;
-    case 't': case 0x163: case 0x165: case 0x167: case 0x1ab:
-    case 0x1ad: case 0x21b: case 0x288: case 0x1d75: case 0x1e6b:
-    case 0x1e6d: case 0x1e6f: case 0x1e71: case 0x1e97: case 0x2c66:
+    case 't':
+    case 0x163:
+    case 0x165:
+    case 0x167:
+    case 0x1ab:
+    case 0x1ad:
+    case 0x21b:
+    case 0x288:
+    case 0x1d75:
+    case 0x1e6b:
+    case 0x1e6d:
+    case 0x1e6f:
+    case 0x1e71:
+    case 0x1e97:
+    case 0x2c66:
       regmbc('t'); regmbc(0x163); regmbc(0x165);
       regmbc(0x167); regmbc(0x1ab); regmbc(0x21b);
       regmbc(0x1ad); regmbc(0x288); regmbc(0x1d75);
       regmbc(0x1e6b); regmbc(0x1e6d); regmbc(0x1e6f);
       regmbc(0x1e71); regmbc(0x1e97); regmbc(0x2c66);
       return;
-    case 'u': case 0xf9: case 0xfa: case 0xfb: case 0xfc:
-    case 0x169: case 0x16b: case 0x16d: case 0x16f:
-    case 0x171: case 0x173: case 0x1b0: case 0x1d4:
-    case 0x1d6: case 0x1d8: case 0x1da: case 0x1dc:
-    case 0x215: case 0x217: case 0x289: case 0x1e73:
-    case 0x1d7e: case 0x1d99: case 0x1e75: case 0x1e77:
-    case 0x1e79: case 0x1e7b: case 0x1ee5: case 0x1ee7:
-    case 0x1ee9: case 0x1eeb: case 0x1eed: case 0x1eef:
+    case 'u':
+    case 0xf9:
+    case 0xfa:
+    case 0xfb:
+    case 0xfc:
+    case 0x169:
+    case 0x16b:
+    case 0x16d:
+    case 0x16f:
+    case 0x171:
+    case 0x173:
+    case 0x1b0:
+    case 0x1d4:
+    case 0x1d6:
+    case 0x1d8:
+    case 0x1da:
+    case 0x1dc:
+    case 0x215:
+    case 0x217:
+    case 0x289:
+    case 0x1e73:
+    case 0x1d7e:
+    case 0x1d99:
+    case 0x1e75:
+    case 0x1e77:
+    case 0x1e79:
+    case 0x1e7b:
+    case 0x1ee5:
+    case 0x1ee7:
+    case 0x1ee9:
+    case 0x1eeb:
+    case 0x1eed:
+    case 0x1eef:
     case 0x1ef1:
       regmbc('u'); regmbc(0xf9); regmbc(0xfa);
       regmbc(0xfb); regmbc(0xfc); regmbc(0x169);
@@ -966,31 +1424,61 @@ static void reg_equi_class(int c)
       regmbc(0x1eeb); regmbc(0x1eed); regmbc(0x1eef);
       regmbc(0x1ef1);
       return;
-    case 'v': case 0x28b: case 0x1d8c: case 0x1e7d: case 0x1e7f:
+    case 'v':
+    case 0x28b:
+    case 0x1d8c:
+    case 0x1e7d:
+    case 0x1e7f:
       regmbc('v'); regmbc(0x28b); regmbc(0x1d8c);
       regmbc(0x1e7d); regmbc(0x1e7f);
       return;
-    case 'w': case 0x175: case 0x1e81: case 0x1e83:
-    case 0x1e85: case 0x1e87: case 0x1e89: case 0x1e98:
+    case 'w':
+    case 0x175:
+    case 0x1e81:
+    case 0x1e83:
+    case 0x1e85:
+    case 0x1e87:
+    case 0x1e89:
+    case 0x1e98:
       regmbc('w'); regmbc(0x175); regmbc(0x1e81);
       regmbc(0x1e83); regmbc(0x1e85); regmbc(0x1e87);
       regmbc(0x1e89); regmbc(0x1e98);
       return;
-    case 'x': case 0x1e8b: case 0x1e8d:
+    case 'x':
+    case 0x1e8b:
+    case 0x1e8d:
       regmbc('x'); regmbc(0x1e8b); regmbc(0x1e8d);
       return;
-    case 'y': case 0xfd: case 0xff: case 0x177: case 0x1b4:
-    case 0x233: case 0x24f: case 0x1e8f: case 0x1e99: case 0x1ef3:
-    case 0x1ef5: case 0x1ef7: case 0x1ef9:
+    case 'y':
+    case 0xfd:
+    case 0xff:
+    case 0x177:
+    case 0x1b4:
+    case 0x233:
+    case 0x24f:
+    case 0x1e8f:
+    case 0x1e99:
+    case 0x1ef3:
+    case 0x1ef5:
+    case 0x1ef7:
+    case 0x1ef9:
       regmbc('y'); regmbc(0xfd); regmbc(0xff);
       regmbc(0x177); regmbc(0x1b4); regmbc(0x233);
       regmbc(0x24f); regmbc(0x1e8f); regmbc(0x1e99);
       regmbc(0x1ef3); regmbc(0x1ef5); regmbc(0x1ef7);
       regmbc(0x1ef9);
       return;
-    case 'z': case 0x17a: case 0x17c: case 0x17e: case 0x1b6:
-    case 0x1d76: case 0x1d8e: case 0x1e91: case 0x1e93:
-    case 0x1e95: case 0x2c6c:
+    case 'z':
+    case 0x17a:
+    case 0x17c:
+    case 0x17e:
+    case 0x1b6:
+    case 0x1d76:
+    case 0x1d8e:
+    case 0x1e91:
+    case 0x1e93:
+    case 0x1e95:
+    case 0x2c6c:
       regmbc('z'); regmbc(0x17a); regmbc(0x17c);
       regmbc(0x17e); regmbc(0x1b6); regmbc(0x1d76);
       regmbc(0x1d8e); regmbc(0x1e91); regmbc(0x1e93);
@@ -1002,19 +1490,18 @@ static void reg_equi_class(int c)
 }
 
 
-
 /*
  * Emit a node.
  * Return pointer to generated code.
  */
 static char_u *regnode(int op)
 {
-  char_u  *ret;
+  char_u *ret;
 
   ret = regcode;
-  if (ret == JUST_CALC_SIZE)
+  if (ret == JUST_CALC_SIZE) {
     regsize += 3;
-  else {
+  } else {
     *regcode++ = op;
     *regcode++ = NUL;                   // Null "next" pointer.
     *regcode++ = NUL;
@@ -1044,17 +1531,20 @@ static char_u *regnext(char_u *p)
 {
   int offset;
 
-  if (p == JUST_CALC_SIZE || reg_toolong)
+  if (p == JUST_CALC_SIZE || reg_toolong) {
     return NULL;
+  }
 
   offset = NEXT(p);
-  if (offset == 0)
+  if (offset == 0) {
     return NULL;
+  }
 
-  if (OP(p) == BACK)
+  if (OP(p) == BACK) {
     return p - offset;
-  else
+  } else {
     return p + offset;
+  }
 }
 
 // Set the next-pointer at the end of a node chain.
@@ -1068,7 +1558,7 @@ static void regtail(char_u *p, char_u *val)
 
   // Find last node.
   char_u *scan = p;
-  for (;; ) {
+  for (;;) {
     char_u *temp = regnext(scan);
     if (temp == NULL) {
       break;
@@ -1100,8 +1590,9 @@ static void regoptail(char_u *p, char_u *val)
   // When op is neither BRANCH nor BRACE_COMPLEX0-9, it is "operandless"
   if (p == NULL || p == JUST_CALC_SIZE
       || (OP(p) != BRANCH
-          && (OP(p) < BRACE_COMPLEX || OP(p) > BRACE_COMPLEX + 9)))
+          && (OP(p) < BRACE_COMPLEX || OP(p) > BRACE_COMPLEX + 9))) {
     return;
+  }
   regtail(OPERAND(p), val);
 }
 
@@ -1113,9 +1604,9 @@ static void regoptail(char_u *p, char_u *val)
  */
 static void reginsert(int op, char_u *opnd)
 {
-  char_u      *src;
-  char_u      *dst;
-  char_u      *place;
+  char_u *src;
+  char_u *dst;
+  char_u *place;
 
   if (regcode == JUST_CALC_SIZE) {
     regsize += 3;
@@ -1124,8 +1615,9 @@ static void reginsert(int op, char_u *opnd)
   src = regcode;
   regcode += 3;
   dst = regcode;
-  while (src > opnd)
+  while (src > opnd) {
     *--dst = *--src;
+  }
 
   place = opnd;                 // Op node, where operand used to be.
   *place++ = op;
@@ -1139,9 +1631,9 @@ static void reginsert(int op, char_u *opnd)
  */
 static void reginsert_nr(int op, long val, char_u *opnd)
 {
-  char_u      *src;
-  char_u      *dst;
-  char_u      *place;
+  char_u *src;
+  char_u *dst;
+  char_u *place;
 
   if (regcode == JUST_CALC_SIZE) {
     regsize += 7;
@@ -1150,8 +1642,9 @@ static void reginsert_nr(int op, long val, char_u *opnd)
   src = regcode;
   regcode += 7;
   dst = regcode;
-  while (src > opnd)
+  while (src > opnd) {
     *--dst = *--src;
+  }
 
   place = opnd;                 // Op node, where operand used to be.
   *place++ = op;
@@ -1169,9 +1662,9 @@ static void reginsert_nr(int op, long val, char_u *opnd)
  */
 static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
 {
-  char_u      *src;
-  char_u      *dst;
-  char_u      *place;
+  char_u *src;
+  char_u *dst;
+  char_u *place;
 
   if (regcode == JUST_CALC_SIZE) {
     regsize += 11;
@@ -1180,8 +1673,9 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
   src = regcode;
   regcode += 11;
   dst = regcode;
-  while (src > opnd)
+  while (src > opnd) {
     *--dst = *--src;
+  }
 
   place = opnd;                 // Op node, where operand used to be.
   *place++ = op;
@@ -1201,15 +1695,15 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
 static int seen_endbrace(int refnum)
 {
   if (!had_endbrace[refnum]) {
-      char_u *p;
+    char_u *p;
 
-      // Trick: check if "@<=" or "@<!" follows, in which case
-      // the \1 can appear before the referenced match.
-      for (p = regparse; *p != NUL; p++) {
-        if (p[0] == '@' && p[1] == '<' && (p[2] == '!' || p[2] == '=')) {
-          break;
-        }
+    // Trick: check if "@<=" or "@<!" follows, in which case
+    // the \1 can appear before the referenced match.
+    for (p = regparse; *p != NUL; p++) {
+      if (p[0] == '@' && p[1] == '<' && (p[2] == '!' || p[2] == '=')) {
+        break;
       }
+    }
 
     if (*p == NUL) {
       emsg(_("E65: Illegal back reference"));
@@ -1229,10 +1723,10 @@ static int seen_endbrace(int refnum)
  */
 static char_u *regatom(int *flagp)
 {
-  char_u          *ret;
+  char_u *ret;
   int flags;
   int c;
-  char_u          *p;
+  char_u *p;
   int extra = 0;
   int save_prev_at_start = prev_at_start;
 
@@ -1273,10 +1767,11 @@ static char_u *regatom(int *flagp)
     *flagp |= HASNL;
 
     // "\_[" is character range plus newline
-    if (c == '[')
+    if (c == '[') {
       goto collection;
+    }
 
-  // "\_x" is character class plus newline
+    // "\_x" is character class plus newline
     FALLTHROUGH;
 
   // Character classes.
@@ -1308,8 +1803,9 @@ static char_u *regatom(int *flagp)
   case Magic('u'):
   case Magic('U'):
     p = vim_strchr(classchars, no_Magic(c));
-    if (p == NULL)
+    if (p == NULL) {
       EMSG_RET_NULL(_("E63: invalid use of \\_"));
+    }
     // When '.' is followed by a composing char ignore the dot, so that
     // the composing char is matched here.
     if (c == Magic('.') && utf_iscomposing(peekchr())) {
@@ -1335,11 +1831,13 @@ static char_u *regatom(int *flagp)
     break;
 
   case Magic('('):
-    if (one_exactly)
+    if (one_exactly) {
       EMSG_ONE_RET_NULL;
+    }
     ret = reg(REG_PAREN, &flags);
-    if (ret == NULL)
+    if (ret == NULL) {
       return NULL;
+    }
     *flagp |= flags & (HASWIDTH | SPSTART | HASNL | HASLOOKBH);
     break;
 
@@ -1347,8 +1845,9 @@ static char_u *regatom(int *flagp)
   case Magic('|'):
   case Magic('&'):
   case Magic(')'):
-    if (one_exactly)
+    if (one_exactly) {
       EMSG_ONE_RET_NULL;
+    }
     IEMSG_RET_NULL(_(e_internal));       // Supposed to be caught earlier.
   // NOTREACHED
 
@@ -1365,20 +1864,23 @@ static char_u *regatom(int *flagp)
 
   case Magic('~'):              // previous substitute pattern
     if (reg_prev_sub != NULL) {
-      char_u      *lp;
+      char_u *lp;
 
       ret = regnode(EXACTLY);
       lp = reg_prev_sub;
-      while (*lp != NUL)
+      while (*lp != NUL) {
         regc(*lp++);
+      }
       regc(NUL);
       if (*reg_prev_sub != NUL) {
         *flagp |= HASWIDTH;
-        if ((lp - reg_prev_sub) == 1)
+        if ((lp - reg_prev_sub) == 1) {
           *flagp |= SIMPLE;
+        }
       }
-    } else
+    } else {
       EMSG_RET_NULL(_(e_nopresub));
+    }
     break;
 
   case Magic('1'):
@@ -1389,8 +1891,7 @@ static char_u *regatom(int *flagp)
   case Magic('6'):
   case Magic('7'):
   case Magic('8'):
-  case Magic('9'):
-  {
+  case Magic('9'): {
     int refnum;
 
     refnum = c - Magic('0');
@@ -1402,16 +1903,19 @@ static char_u *regatom(int *flagp)
   break;
 
   case Magic('z'):
-  {
     c = no_Magic(getchr());
     switch (c) {
-    case '(': if ((reg_do_extmatch & REX_SET) == 0)
+    case '(':
+      if ((reg_do_extmatch & REX_SET) == 0) {
         EMSG_RET_NULL(_(e_z_not_allowed));
-      if (one_exactly)
+      }
+      if (one_exactly) {
         EMSG_ONE_RET_NULL;
+      }
       ret = reg(REG_ZPAREN, &flags);
-      if (ret == NULL)
+      if (ret == NULL) {
         return NULL;
+      }
       *flagp |= flags & (HASWIDTH|SPSTART|HASNL|HASLOOKBH);
       re_has_z = REX_SET;
       break;
@@ -1424,40 +1928,45 @@ static char_u *regatom(int *flagp)
     case '6':
     case '7':
     case '8':
-    case '9': if ((reg_do_extmatch & REX_USE) == 0)
+    case '9':
+      if ((reg_do_extmatch & REX_USE) == 0) {
         EMSG_RET_NULL(_(e_z1_not_allowed));
+      }
       ret = regnode(ZREF + c - '0');
       re_has_z = REX_USE;
       break;
 
-    case 's': ret = regnode(MOPEN + 0);
+    case 's':
+      ret = regnode(MOPEN + 0);
       if (!re_mult_next("\\zs")) {
         return NULL;
       }
       break;
 
-    case 'e': ret = regnode(MCLOSE + 0);
+    case 'e':
+      ret = regnode(MCLOSE + 0);
       if (!re_mult_next("\\ze")) {
         return NULL;
       }
       break;
 
-    default:  EMSG_RET_NULL(_("E68: Invalid character after \\z"));
+    default:
+      EMSG_RET_NULL(_("E68: Invalid character after \\z"));
     }
-  }
-  break;
+    break;
 
   case Magic('%'):
-  {
     c = no_Magic(getchr());
     switch (c) {
     // () without a back reference
     case '(':
-      if (one_exactly)
+      if (one_exactly) {
         EMSG_ONE_RET_NULL;
+      }
       ret = reg(REG_NPAREN, &flags);
-      if (ret == NULL)
+      if (ret == NULL) {
         return NULL;
+      }
       *flagp |= flags & (HASWIDTH | SPSTART | HASNL | HASLOOKBH);
       break;
 
@@ -1486,18 +1995,20 @@ static char_u *regatom(int *flagp)
     // \%[abc]: Emit as a list of branches, all ending at the last
     // branch which matches nothing.
     case '[':
-      if (one_exactly)                          // doesn't nest
+      if (one_exactly) {                        // doesn't nest
         EMSG_ONE_RET_NULL;
+      }
       {
-        char_u    *lastbranch;
-        char_u    *lastnode = NULL;
-        char_u    *br;
+        char_u *lastbranch;
+        char_u *lastnode = NULL;
+        char_u *br;
 
         ret = NULL;
         while ((c = getchr()) != ']') {
-          if (c == NUL)
+          if (c == NUL) {
             EMSG2_RET_NULL(_(e_missing_sb),
-                reg_magic == MAGIC_ALL);
+                           reg_magic == MAGIC_ALL);
+          }
           br = regnode(BRANCH);
           if (ret == NULL) {
             ret = br;
@@ -1516,9 +2027,10 @@ static char_u *regatom(int *flagp)
             return NULL;
           }
         }
-        if (ret == NULL)
+        if (ret == NULL) {
           EMSG2_RET_NULL(_(e_empty_sb),
-              reg_magic == MAGIC_ALL);
+                         reg_magic == MAGIC_ALL);
+        }
         lastbranch = regnode(BRANCH);
         br = regnode(NOTHING);
         if (ret != JUST_CALC_SIZE) {
@@ -1526,15 +2038,16 @@ static char_u *regatom(int *flagp)
           regtail(lastbranch, br);
           // connect all branches to the NOTHING
           // branch at the end
-          for (br = ret; br != lastnode; ) {
+          for (br = ret; br != lastnode;) {
             if (OP(br) == BRANCH) {
               regtail(br, lastbranch);
               if (reg_toolong) {
                 return NULL;
               }
               br = OPERAND(br);
-            } else
+            } else {
               br = regnext(br);
+            }
           }
         }
         *flagp &= ~(HASWIDTH | SIMPLE);
@@ -1550,12 +2063,18 @@ static char_u *regatom(int *flagp)
       int64_t i;
 
       switch (c) {
-      case 'd': i = getdecchrs(); break;
-      case 'o': i = getoctchrs(); break;
-      case 'x': i = gethexchrs(2); break;
-      case 'u': i = gethexchrs(4); break;
-      case 'U': i = gethexchrs(8); break;
-      default:  i = -1; break;
+      case 'd':
+        i = getdecchrs(); break;
+      case 'o':
+        i = getoctchrs(); break;
+      case 'x':
+        i = gethexchrs(2); break;
+      case 'u':
+        i = gethexchrs(4); break;
+      case 'U':
+        i = gethexchrs(8); break;
+      default:
+        i = -1; break;
       }
 
       if (i < 0 || i > INT_MAX) {
@@ -1599,9 +2118,9 @@ static char_u *regatom(int *flagp)
           // "\%'m", "\%<'m" and "\%>'m": Mark
           c = getchr();
           ret = regnode(RE_MARK);
-          if (ret == JUST_CALC_SIZE)
+          if (ret == JUST_CALC_SIZE) {
             regsize += 2;
-          else {
+          } else {
             *regcode++ = c;
             *regcode++ = cmp;
           }
@@ -1647,15 +2166,14 @@ static char_u *regatom(int *flagp)
       }
 
       EMSG2_RET_NULL(_("E71: Invalid character after %s%%"),
-          reg_magic == MAGIC_ALL);
+                     reg_magic == MAGIC_ALL);
     }
-  }
-  break;
+    break;
 
   case Magic('['):
 collection:
     {
-      char_u      *lp;
+      char_u *lp;
 
       // If there is no matching ']', we assume the '[' is a normal
       // character.  This makes 'incsearch' and ":help [" work.
@@ -1669,8 +2187,9 @@ collection:
         if (*regparse == '^') {             // Complement of range.
           ret = regnode(ANYBUT + extra);
           regparse++;
-        } else
+        } else {
           ret = regnode(ANYOF + extra);
+        }
 
         // At the start ']' and '-' mean the literal character.
         if (*regparse == ']' || *regparse == '-') {
@@ -1691,15 +2210,17 @@ collection:
             } else {
               // Also accept "a-[.z.]"
               endc = 0;
-              if (*regparse == '[')
+              if (*regparse == '[') {
                 endc = get_coll_element(&regparse);
+              }
               if (endc == 0) {
                 endc = mb_ptr2char_adv((const char_u **)&regparse);
               }
 
               // Handle \o40, \x20 and \u20AC style sequences
-              if (endc == '\\' && !reg_cpo_lit)
+              if (endc == '\\' && !reg_cpo_lit) {
                 endc = coll_get_char();
+              }
 
               if (startc > endc) {
                 EMSG_RET_NULL(_(e_reverse_range));
@@ -1714,8 +2235,9 @@ collection:
                   regmbc(startc);
                 }
               } else {
-                while (++startc <= endc)
+                while (++startc <= endc) {
                   regc(startc);
+                }
               }
               startc = -1;
             }
@@ -1727,7 +2249,7 @@ collection:
                    && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
                        || (!reg_cpo_lit
                            && vim_strchr(REGEXP_ABBR,
-                               regparse[1]) != NULL))) {
+                                         regparse[1]) != NULL))) {
             regparse++;
             if (*regparse == 'n') {
               // '\n' in range: also match NL
@@ -1748,10 +2270,11 @@ collection:
                        || *regparse == 'u'
                        || *regparse == 'U') {
               startc = coll_get_char();
-              if (startc == 0)
+              if (startc == 0) {
                 regc(0x0a);
-              else
+              } else {
                 regmbc(startc);
+              }
             } else {
               startc = backslash_trans(*regparse++);
               regc(startc);
@@ -1840,8 +2363,9 @@ collection:
               }
               break;
             case CLASS_SPACE:
-              for (cu = 9; cu <= 13; cu++)
+              for (cu = 9; cu <= 13; cu++) {
                 regc(cu);
+              }
               regc(' ');
               break;
             case CLASS_UPPER:
@@ -1908,18 +2432,19 @@ collection:
         }
         regc(NUL);
         prevchr_len = 1;                // last char was the ']'
-        if (*regparse != ']')
+        if (*regparse != ']') {
           EMSG_RET_NULL(_(e_toomsbra));                 // Cannot happen?
+        }
         skipchr();                  // let's be friends with the lexer again
         *flagp |= HASWIDTH | SIMPLE;
         break;
-      } else if (reg_strict)
+      } else if (reg_strict) {
         EMSG2_RET_NULL(_(e_missingbracket), reg_magic > MAGIC_OFF);
+      }
     }
     FALLTHROUGH;
 
-  default:
-  {
+  default: {
     int len;
 
     // A multi-byte character is handled as a separate atom if it's
@@ -1952,7 +2477,7 @@ do_multibyte:
           int l;
 
           // Need to get composing character too.
-          for (;; ) {
+          for (;;) {
             l = utf_ptr2len((char *)regparse);
             if (!utf_composinglike(regparse, regparse + l)) {
               break;
@@ -1968,8 +2493,9 @@ do_multibyte:
 
     regc(NUL);
     *flagp |= HASWIDTH;
-    if (len == 1)
+    if (len == 1) {
       *flagp |= SIMPLE;
+    }
   }
   break;
   }
@@ -1996,8 +2522,9 @@ static char_u *regpiece(int *flagp)
   long maxval;
 
   ret = regatom(&flags);
-  if (ret == NULL)
+  if (ret == NULL) {
     return NULL;
+  }
 
   op = peekchr();
   if (re_multi_type(op) == NOT_MULTI) {
@@ -2010,9 +2537,9 @@ static char_u *regpiece(int *flagp)
   skipchr();
   switch (op) {
   case Magic('*'):
-    if (flags & SIMPLE)
+    if (flags & SIMPLE) {
       reginsert(STAR, ret);
-    else {
+    } else {
       // Emit x* as (x&|), where & means "self".
       reginsert(BRANCH, ret);           // Either x
       regoptail(ret, regnode(BACK));            // and loop
@@ -2023,9 +2550,9 @@ static char_u *regpiece(int *flagp)
     break;
 
   case Magic('+'):
-    if (flags & SIMPLE)
+    if (flags & SIMPLE) {
       reginsert(PLUS, ret);
-    else {
+    } else {
       // Emit x+ as x(&|), where & means "self".
       next = regnode(BRANCH);           // Either
       regtail(ret, next);
@@ -2036,23 +2563,29 @@ static char_u *regpiece(int *flagp)
     *flagp = (WORST | HASWIDTH | (flags & (HASNL | HASLOOKBH)));
     break;
 
-  case Magic('@'):
-  {
+  case Magic('@'): {
     int lop = END;
     int64_t nr = getdecchrs();
 
     switch (no_Magic(getchr())) {
-    case '=': lop = MATCH; break;                                 // \@=
-    case '!': lop = NOMATCH; break;                               // \@!
-    case '>': lop = SUBPAT; break;                                // \@>
-    case '<': switch (no_Magic(getchr())) {
-      case '=': lop = BEHIND; break;                               // \@<=
-      case '!': lop = NOBEHIND; break;                             // \@<!
+    case '=':
+      lop = MATCH; break;                                 // \@=
+    case '!':
+      lop = NOMATCH; break;                               // \@!
+    case '>':
+      lop = SUBPAT; break;                                // \@>
+    case '<':
+      switch (no_Magic(getchr())) {
+      case '=':
+        lop = BEHIND; break;                               // \@<=
+      case '!':
+        lop = NOBEHIND; break;                             // \@<!
+      }
     }
-    }
-    if (lop == END)
+    if (lop == END) {
       EMSG2_RET_NULL(_("E59: invalid character after %s@"),
-          reg_magic == MAGIC_ALL);
+                     reg_magic == MAGIC_ALL);
+    }
     // Look behind must match with behind_pos.
     if (lop == BEHIND || lop == NOBEHIND) {
       regtail(ret, regnode(BHPOS));
@@ -2060,11 +2593,13 @@ static char_u *regpiece(int *flagp)
     }
     regtail(ret, regnode(END));             // operand ends
     if (lop == BEHIND || lop == NOBEHIND) {
-      if (nr < 0)
+      if (nr < 0) {
         nr = 0;                 // no limit is same as zero limit
+      }
       reginsert_nr(lop, (uint32_t)nr, ret);
-    } else
+    } else {
       reginsert(lop, ret);
+    }
     break;
   }
 
@@ -2079,23 +2614,26 @@ static char_u *regpiece(int *flagp)
     break;
 
   case Magic('{'):
-    if (!read_limits(&minval, &maxval))
+    if (!read_limits(&minval, &maxval)) {
       return NULL;
+    }
     if (flags & SIMPLE) {
       reginsert(BRACE_SIMPLE, ret);
       reginsert_limits(BRACE_LIMITS, minval, maxval, ret);
     } else {
-      if (num_complex_braces >= 10)
+      if (num_complex_braces >= 10) {
         EMSG2_RET_NULL(_("E60: Too many complex %s{...}s"),
-            reg_magic == MAGIC_ALL);
+                       reg_magic == MAGIC_ALL);
+      }
       reginsert(BRACE_COMPLEX + num_complex_braces, ret);
       regoptail(ret, regnode(BACK));
       regoptail(ret, ret);
       reginsert_limits(BRACE_LIMITS, minval, maxval, ret);
       ++num_complex_braces;
     }
-    if (minval > 0 && maxval > 0)
+    if (minval > 0 && maxval > 0) {
       *flagp = (HASWIDTH | (flags & (HASNL | HASLOOKBH)));
+    }
     break;
   }
   if (re_multi_type(peekchr()) != NOT_MULTI) {
@@ -2115,9 +2653,9 @@ static char_u *regpiece(int *flagp)
  */
 static char_u *regconcat(int *flagp)
 {
-  char_u      *first = NULL;
-  char_u      *chain = NULL;
-  char_u      *latest;
+  char_u *first = NULL;
+  char_u *chain = NULL;
+  char_u *latest;
   int flags;
   int cont = true;
 
@@ -2165,21 +2703,25 @@ static char_u *regconcat(int *flagp)
       break;
     default:
       latest = regpiece(&flags);
-      if (latest == NULL || reg_toolong)
+      if (latest == NULL || reg_toolong) {
         return NULL;
+      }
       *flagp |= flags & (HASWIDTH | HASNL | HASLOOKBH);
-      if (chain == NULL)                        // First piece.
+      if (chain == NULL) {                      // First piece.
         *flagp |= flags & SPSTART;
-      else
+      } else {
         regtail(chain, latest);
+      }
       chain = latest;
-      if (first == NULL)
+      if (first == NULL) {
         first = latest;
+      }
       break;
     }
   }
-  if (first == NULL)            // Loop ran zero times.
+  if (first == NULL) {          // Loop ran zero times.
     first = regnode(NOTHING);
+  }
   return first;
 }
 
@@ -2189,18 +2731,19 @@ static char_u *regconcat(int *flagp)
  */
 static char_u *regbranch(int *flagp)
 {
-  char_u      *ret;
-  char_u      *chain = NULL;
-  char_u      *latest;
+  char_u *ret;
+  char_u *chain = NULL;
+  char_u *latest;
   int flags;
 
   *flagp = WORST | HASNL;               // Tentatively.
 
   ret = regnode(BRANCH);
-  for (;; ) {
+  for (;;) {
     latest = regconcat(&flags);
-    if (latest == NULL)
+    if (latest == NULL) {
       return NULL;
+    }
     // If one of the branches has width, the whole thing has.  If one of
     // the branches anchors at start-of-line, the whole thing does.
     // If one of the branches uses look-behind, the whole thing does.
@@ -2208,14 +2751,17 @@ static char_u *regbranch(int *flagp)
     // If one of the branches doesn't match a line-break, the whole thing
     // doesn't.
     *flagp &= ~HASNL | (flags & HASNL);
-    if (chain != NULL)
+    if (chain != NULL) {
       regtail(chain, latest);
-    if (peekchr() != Magic('&'))
+    }
+    if (peekchr() != Magic('&')) {
       break;
+    }
     skipchr();
     regtail(latest, regnode(END));     // operand ends
-    if (reg_toolong)
+    if (reg_toolong) {
       break;
+    }
     reginsert(MATCH, latest);
     chain = latest;
   }
@@ -2232,13 +2778,12 @@ static char_u *regbranch(int *flagp)
  * is a trifle forced, but the need to tie the tails of the branches to what
  * follows makes it hard to avoid.
  */
-static char_u *reg(
-    int paren,                // REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN
-    int *flagp)
+static char_u *reg(int paren,                // REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN
+                   int *flagp)
 {
-  char_u      *ret;
-  char_u      *br;
-  char_u      *ender;
+  char_u *ret;
+  char_u *br;
+  char_u *ender;
   int parno = 0;
   int flags;
 
@@ -2246,73 +2791,83 @@ static char_u *reg(
 
   if (paren == REG_ZPAREN) {
     // Make a ZOPEN node.
-    if (regnzpar >= NSUBEXP)
+    if (regnzpar >= NSUBEXP) {
       EMSG_RET_NULL(_("E50: Too many \\z("));
+    }
     parno = regnzpar;
     regnzpar++;
     ret = regnode(ZOPEN + parno);
-  } else if (paren == REG_PAREN)    {
+  } else if (paren == REG_PAREN) {
     // Make a MOPEN node.
-    if (regnpar >= NSUBEXP)
+    if (regnpar >= NSUBEXP) {
       EMSG2_RET_NULL(_("E51: Too many %s("), reg_magic == MAGIC_ALL);
+    }
     parno = regnpar;
     ++regnpar;
     ret = regnode(MOPEN + parno);
-  } else if (paren == REG_NPAREN)   {
+  } else if (paren == REG_NPAREN) {
     // Make a NOPEN node.
     ret = regnode(NOPEN);
-  } else
+  } else {
     ret = NULL;
+  }
 
   // Pick up the branches, linking them together.
   br = regbranch(&flags);
-  if (br == NULL)
+  if (br == NULL) {
     return NULL;
-  if (ret != NULL)
+  }
+  if (ret != NULL) {
     regtail(ret, br);           // [MZ]OPEN -> first.
-  else
+  } else {
     ret = br;
+  }
   // If one of the branches can be zero-width, the whole thing can.
   // If one of the branches has * at start or matches a line-break, the
   // whole thing can.
-  if (!(flags & HASWIDTH))
+  if (!(flags & HASWIDTH)) {
     *flagp &= ~HASWIDTH;
+  }
   *flagp |= flags & (SPSTART | HASNL | HASLOOKBH);
   while (peekchr() == Magic('|')) {
     skipchr();
     br = regbranch(&flags);
-    if (br == NULL || reg_toolong)
+    if (br == NULL || reg_toolong) {
       return NULL;
+    }
     regtail(ret, br);           // BRANCH -> BRANCH.
-    if (!(flags & HASWIDTH))
+    if (!(flags & HASWIDTH)) {
       *flagp &= ~HASWIDTH;
+    }
     *flagp |= flags & (SPSTART | HASNL | HASLOOKBH);
   }
 
   // Make a closing node, and hook it on the end.
-  ender = regnode(
-      paren == REG_ZPAREN ? ZCLOSE + parno :
-      paren == REG_PAREN ? MCLOSE + parno :
-      paren == REG_NPAREN ? NCLOSE : END);
+  ender = regnode(paren == REG_ZPAREN ? ZCLOSE + parno :
+                  paren == REG_PAREN ? MCLOSE + parno :
+                  paren == REG_NPAREN ? NCLOSE : END);
   regtail(ret, ender);
 
   // Hook the tails of the branches to the closing node.
-  for (br = ret; br != NULL; br = regnext(br))
+  for (br = ret; br != NULL; br = regnext(br)) {
     regoptail(br, ender);
+  }
 
   // Check for proper termination.
   if (paren != REG_NOPAREN && getchr() != Magic(')')) {
-    if (paren == REG_ZPAREN)
+    if (paren == REG_ZPAREN) {
       EMSG_RET_NULL(_("E52: Unmatched \\z("));
-    else if (paren == REG_NPAREN)
+    } else if (paren == REG_NPAREN) {
       EMSG2_RET_NULL(_(e_unmatchedpp), reg_magic == MAGIC_ALL);
-    else
+    } else {
       EMSG2_RET_NULL(_(e_unmatchedp), reg_magic == MAGIC_ALL);
+    }
   } else if (paren == REG_NOPAREN && peekchr() != NUL) {
-    if (curchr == Magic(')'))
+    if (curchr == Magic(')')) {
       EMSG2_RET_NULL(_(e_unmatchedpar), reg_magic == MAGIC_ALL);
-    else
+    } else {
       EMSG_RET_NULL(_(e_trailing));             // "Can't happen".
+    }
     // NOTREACHED
   }
   // Here we set the flag allowing back references to this set of
@@ -2347,8 +2902,8 @@ static char_u *reg(
  */
 static regprog_T *bt_regcomp(char_u *expr, int re_flags)
 {
-  char_u      *scan;
-  char_u      *longest;
+  char_u *scan;
+  char_u *longest;
   int len;
   int flags;
 
@@ -2362,8 +2917,9 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   regcomp_start(expr, re_flags);
   regcode = JUST_CALC_SIZE;
   regc(REGMAGIC);
-  if (reg(REG_NOPAREN, &flags) == NULL)
+  if (reg(REG_NOPAREN, &flags) == NULL) {
     return NULL;
+  }
 
   // Allocate space.
   bt_regprog_T *r = xmalloc(sizeof(bt_regprog_T) + regsize);
@@ -2375,8 +2931,9 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   regc(REGMAGIC);
   if (reg(REG_NOPAREN, &flags) == NULL || reg_toolong) {
     xfree(r);
-    if (reg_toolong)
+    if (reg_toolong) {
       EMSG_RET_NULL(_("E339: Pattern too long"));
+    }
     return NULL;
   }
 
@@ -2386,10 +2943,12 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   r->regmust = NULL;
   r->regmlen = 0;
   r->regflags = regflags;
-  if (flags & HASNL)
+  if (flags & HASNL) {
     r->regflags |= RF_HASNL;
-  if (flags & HASLOOKBH)
+  }
+  if (flags & HASLOOKBH) {
     r->regflags |= RF_LOOKBH;
+  }
   // Remember whether this pattern has any \z specials in it.
   r->reghasz = re_has_z;
   scan = r->program + 1;        // First BRANCH.
@@ -2407,7 +2966,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
     } else if (OP(scan) == BOW
                || OP(scan) == EOW
                || OP(scan) == NOTHING
-               || OP(scan) == MOPEN  + 0 || OP(scan) == NOPEN
+               || OP(scan) == MOPEN + 0 || OP(scan) == NOPEN
                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
       char_u *regnext_scan = regnext(scan);
       if (OP(regnext_scan) == EXACTLY) {
@@ -2428,11 +2987,12 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
         && !(flags & HASNL)) {
       longest = NULL;
       len = 0;
-      for (; scan != NULL; scan = regnext(scan))
+      for (; scan != NULL; scan = regnext(scan)) {
         if (OP(scan) == EXACTLY && STRLEN(OPERAND(scan)) >= (size_t)len) {
           longest = OPERAND(scan);
           len = (int)STRLEN(OPERAND(scan));
         }
+      }
       r->regmust = longest;
       r->regmlen = len;
     }
@@ -2462,11 +3022,16 @@ static int coll_get_char(void)
   int64_t nr = -1;
 
   switch (*regparse++) {
-  case 'd': nr = getdecchrs(); break;
-  case 'o': nr = getoctchrs(); break;
-  case 'x': nr = gethexchrs(2); break;
-  case 'u': nr = gethexchrs(4); break;
-  case 'U': nr = gethexchrs(8); break;
+  case 'd':
+    nr = getdecchrs(); break;
+  case 'o':
+    nr = getoctchrs(); break;
+  case 'x':
+    nr = gethexchrs(2); break;
+  case 'u':
+    nr = gethexchrs(4); break;
+  case 'U':
+    nr = gethexchrs(8); break;
   }
   if (nr < 0 || nr > INT_MAX) {
     // If getting the number fails be backwards compatible: the character
@@ -2492,8 +3057,8 @@ static void bt_regfree(regprog_T *prog)
  * to regmatch(), but they are here to reduce the amount of stack space used
  * (it can be called recursively many times).
  */
-static long	bl_minval;
-static long	bl_maxval;
+static long bl_minval;
+static long bl_maxval;
 
 // Save the input line and position in a regsave_T.
 static void reg_save(regsave_T *save, garray_T *gap)
@@ -2543,10 +3108,10 @@ static bool reg_save_equal(const regsave_T *save)
 
 // After a failed match restore the sub-expressions.
 #define restore_se(savep, posp, pp) { \
-  if (REG_MULTI) \
-    *(posp) = (savep)->se_u.pos; \
-  else \
-    *(pp) = (savep)->se_u.ptr; }
+  if (REG_MULTI)  /* NOLINT(readability/braces) */ \
+  *(posp) = (savep)->se_u.pos; \
+  else  /* NOLINT */ \
+  *(pp) = (savep)->se_u.ptr; }
 
 /*
  * Tentatively set the sub-expression start to the current position (after
@@ -2572,13 +3137,10 @@ static void save_se_one(save_se_T *savep, char_u **pp)
  * regrepeat - repeatedly match something simple, return how many.
  * Advances rex.input (and rex.lnum) to just after the matched chars.
  */
-    static int
-regrepeat(
-    char_u      *p,
-    long        maxcount)     // maximum number of matches allowed
+static int regrepeat(char_u *p, long maxcount)     // maximum number of matches allowed
 {
   long count = 0;
-  char_u      *opnd;
+  char_u *opnd;
   int mask;
   int testval = 0;
 
@@ -2822,8 +3384,7 @@ do_class:
     mask = RI_UPPER;
     goto do_class;
 
-  case EXACTLY:
-  {
+  case EXACTLY: {
     int cu, cl;
 
     // This doesn't do a multi-byte character, because a MULTIBYTECODE
@@ -2846,8 +3407,7 @@ do_class:
     break;
   }
 
-  case MULTIBYTECODE:
-  {
+  case MULTIBYTECODE: {
     int i, len, cf = 0;
 
     // Safety check (just in case 'encoding' was changed since
@@ -2900,9 +3460,10 @@ do_class:
         }
         scan += len;
       } else {
-        if ((cstrchr(opnd, *scan) == NULL) == testval)
+        if ((cstrchr(opnd, *scan) == NULL) == testval) {
           break;
-        ++scan;
+        }
+        scan++;
       }
       ++count;
     }
@@ -2944,7 +3505,7 @@ do_class:
  */
 static regitem_T *regstack_push(regstate_T state, char_u *scan)
 {
-  regitem_T   *rp;
+  regitem_T *rp;
 
   if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
     emsg(_(e_maxmempat));
@@ -2965,7 +3526,7 @@ static regitem_T *regstack_push(regstate_T state, char_u *scan)
  */
 static void regstack_pop(char_u **scan)
 {
-  regitem_T   *rp;
+  regitem_T *rp;
 
   rp = (regitem_T *)((char *)regstack.ga_data + regstack.ga_len) - 1;
   *scan = rp->rs_scan;
@@ -3025,15 +3586,14 @@ static void restore_subexpr(regbehind_T *bp)
 /// just after the last matched character.
 /// Returns false when there is no match.  Leaves rex.input and rex.lnum in an
 /// undefined state!
-static bool regmatch(
-    char_u *scan,                 // Current node.
-    proftime_T *tm,               // timeout limit or NULL
-    int *timed_out)               // flag set on timeout or NULL
+static bool regmatch(char_u *scan,                 // Current node.
+                     proftime_T *tm,               // timeout limit or NULL
+                     int *timed_out)               // flag set on timeout or NULL
 {
-  char_u        *next;          // Next node.
+  char_u *next;          // Next node.
   int op;
   int c;
-  regitem_T     *rp;
+  regitem_T *rp;
   int no;
   int status;                   // one of the RA_ values:
   int tm_count = 0;
@@ -3044,7 +3604,7 @@ static bool regmatch(
   backpos.ga_len = 0;
 
   // Repeat until "regstack" is empty.
-  for (;; ) {
+  for (;;) {
     // Some patterns may take a long time to match, e.g., "\([a-z]\+\)\+Q".
     // Allow interrupting them with CTRL-C.
     fast_breakcheck();
@@ -3058,7 +3618,7 @@ static bool regmatch(
 
     // Repeat for items that can be matched sequentially, without using the
     // regstack.
-    for (;; ) {
+    for (;;) {
       if (got_int || scan == NULL) {
         status = RA_FAIL;
         break;
@@ -3086,8 +3646,9 @@ static bool regmatch(
           mch_errmsg(_("External submatches:\n"));
           for (i = 0; i < NSUBEXP; i++) {
             mch_errmsg("    \"");
-            if (re_extmatch_in->matches[i] != NULL)
+            if (re_extmatch_in->matches[i] != NULL) {
               mch_errmsg((char *)re_extmatch_in->matches[i]);
+            }
             mch_errmsg("\"\n");
           }
         }
@@ -3168,7 +3729,7 @@ static bool regmatch(
             status = RA_NOMATCH;
           } else {
             const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
-              && pos->col == MAXCOL
+                                    && pos->col == MAXCOL
               ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))
               : pos->col;
 
@@ -3188,8 +3749,9 @@ static bool regmatch(
         break;
 
         case RE_VISUAL:
-          if (!reg_match_visual())
+          if (!reg_match_visual()) {
             status = RA_NOMATCH;
+          }
           break;
 
         case RE_LNUM:
@@ -3260,10 +3822,11 @@ static bool regmatch(
           break;
 
         case IDENT:
-          if (!vim_isIDc(c))
+          if (!vim_isIDc(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case SIDENT:
@@ -3324,135 +3887,152 @@ static bool regmatch(
           break;
 
         case WHITE:
-          if (!ascii_iswhite(c))
+          if (!ascii_iswhite(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NWHITE:
-          if (c == NUL || ascii_iswhite(c))
+          if (c == NUL || ascii_iswhite(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case DIGIT:
-          if (!ri_digit(c))
+          if (!ri_digit(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NDIGIT:
-          if (c == NUL || ri_digit(c))
+          if (c == NUL || ri_digit(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case HEX:
-          if (!ri_hex(c))
+          if (!ri_hex(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NHEX:
-          if (c == NUL || ri_hex(c))
+          if (c == NUL || ri_hex(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case OCTAL:
-          if (!ri_octal(c))
+          if (!ri_octal(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NOCTAL:
-          if (c == NUL || ri_octal(c))
+          if (c == NUL || ri_octal(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case WORD:
-          if (!ri_word(c))
+          if (!ri_word(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NWORD:
-          if (c == NUL || ri_word(c))
+          if (c == NUL || ri_word(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case HEAD:
-          if (!ri_head(c))
+          if (!ri_head(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NHEAD:
-          if (c == NUL || ri_head(c))
+          if (c == NUL || ri_head(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case ALPHA:
-          if (!ri_alpha(c))
+          if (!ri_alpha(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NALPHA:
-          if (c == NUL || ri_alpha(c))
+          if (c == NUL || ri_alpha(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case LOWER:
-          if (!ri_lower(c))
+          if (!ri_lower(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NLOWER:
-          if (c == NUL || ri_lower(c))
+          if (c == NUL || ri_lower(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case UPPER:
-          if (!ri_upper(c))
+          if (!ri_upper(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NUPPER:
-          if (c == NUL || ri_upper(c))
+          if (c == NUL || ri_upper(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
-        case EXACTLY:
-        {
+        case EXACTLY: {
           int len;
-          char_u  *opnd;
+          char_u *opnd;
 
           opnd = OPERAND(scan);
           // Inline the first byte, for speed.
@@ -3492,29 +4072,29 @@ static bool regmatch(
 
         case ANYOF:
         case ANYBUT:
-          if (c == NUL)
+          if (c == NUL) {
             status = RA_NOMATCH;
-          else if ((cstrchr(OPERAND(scan), c) == NULL) == (op == ANYOF))
+          } else if ((cstrchr(OPERAND(scan), c) == NULL) == (op == ANYOF)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
-        case MULTIBYTECODE:
-        {
+        case MULTIBYTECODE: {
           int i, len;
 
           const char_u *opnd = OPERAND(scan);
-            // Safety check (just in case 'encoding' was changed since
-            // compiling the program).
+          // Safety check (just in case 'encoding' was changed since
+          // compiling the program).
           if ((len = utfc_ptr2len((char *)opnd)) < 2) {
             status = RA_NOMATCH;
             break;
           }
           const int opndc = utf_ptr2char((char *)opnd);
           if (utf_iscomposing(opndc)) {
-              // When only a composing char is given match at any
-              // position where that composing char appears.
+            // When only a composing char is given match at any
+            // position where that composing char appears.
             status = RA_NOMATCH;
             for (i = 0; rex.input[i] != NUL;
                  i += utf_ptr2len((char *)rex.input + i)) {
@@ -3524,7 +4104,7 @@ static bool regmatch(
                   break;
                 }
               } else if (opndc == inpc) {
-                  // Include all following composing chars.
+                // Include all following composing chars.
                 len = i + utfc_ptr2len((char *)rex.input + i);
                 status = RA_MATCH;
                 break;
@@ -3543,19 +4123,16 @@ static bool regmatch(
         break;
 
         case RE_COMPOSING:
-        {
-            // Skip composing characters.
+          // Skip composing characters.
           while (utf_iscomposing(utf_ptr2char((char *)rex.input))) {
             MB_CPTR_ADV(rex.input);
           }
-        }
-        break;
+          break;
 
         case NOTHING:
           break;
 
-        case BACK:
-        {
+        case BACK: {
           int i;
 
           // When we run into BACK we need to check if we don't keep
@@ -3565,15 +4142,18 @@ static bool regmatch(
           // The positions are stored in "backpos" and found by the
           // current value of "scan", the position in the RE program.
           backpos_T *bp = (backpos_T *)backpos.ga_data;
-          for (i = 0; i < backpos.ga_len; ++i)
-            if (bp[i].bp_scan == scan)
+          for (i = 0; i < backpos.ga_len; i++) {
+            if (bp[i].bp_scan == scan) {
               break;
+            }
+          }
           if (i == backpos.ga_len) {
             backpos_T *p = GA_APPEND_VIA_PTR(backpos_T, &backpos);
             p->bp_scan = scan;
-          } else if (reg_save_equal(&bp[i].bp_pos))
+          } else if (reg_save_equal(&bp[i].bp_pos)) {
             // Still at same position as last time, fail.
             status = RA_NOMATCH;
+          }
 
           assert(status != RA_FAIL);
           if (status != RA_NOMATCH) {
@@ -3592,25 +4172,24 @@ static bool regmatch(
         case MOPEN + 7:
         case MOPEN + 8:
         case MOPEN + 9:
-        {
           no = op - MOPEN;
           cleanup_subexpr();
           rp = regstack_push(RS_MOPEN, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = no;
             save_se(&rp->rs_un.sesave, &rex.reg_startpos[no],
                     &rex.reg_startp[no]);
             // We simply continue and handle the result when done.
           }
-        }
-        break;
+          break;
 
         case NOPEN:         // \%(
         case NCLOSE:        // \) after \%(
-          if (regstack_push(RS_NOPEN, scan) == NULL)
+          if (regstack_push(RS_NOPEN, scan) == NULL) {
             status = RA_FAIL;
+          }
           // We simply continue and handle the result when done.
           break;
 
@@ -3623,20 +4202,18 @@ static bool regmatch(
         case ZOPEN + 7:
         case ZOPEN + 8:
         case ZOPEN + 9:
-        {
           no = op - ZOPEN;
           cleanup_zsubexpr();
           rp = regstack_push(RS_ZOPEN, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = no;
             save_se(&rp->rs_un.sesave, &reg_startzpos[no],
-                &reg_startzp[no]);
+                    &reg_startzp[no]);
             // We simply continue and handle the result when done.
           }
-        }
-        break;
+          break;
 
         case MCLOSE + 0:    // Match end: \ze
         case MCLOSE + 1:    // \)
@@ -3648,7 +4225,6 @@ static bool regmatch(
         case MCLOSE + 7:
         case MCLOSE + 8:
         case MCLOSE + 9:
-        {
           no = op - MCLOSE;
           cleanup_subexpr();
           rp = regstack_push(RS_MCLOSE, scan);
@@ -3659,8 +4235,7 @@ static bool regmatch(
             save_se(&rp->rs_un.sesave, &rex.reg_endpos[no], &rex.reg_endp[no]);
             // We simply continue and handle the result when done.
           }
-        }
-        break;
+          break;
 
         case ZCLOSE + 1:    // \) after \z(
         case ZCLOSE + 2:
@@ -3671,20 +4246,18 @@ static bool regmatch(
         case ZCLOSE + 7:
         case ZCLOSE + 8:
         case ZCLOSE + 9:
-        {
           no = op - ZCLOSE;
           cleanup_zsubexpr();
           rp = regstack_push(RS_ZCLOSE, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = no;
             save_se(&rp->rs_un.sesave, &reg_endzpos[no],
-                &reg_endzp[no]);
+                    &reg_endzp[no]);
             // We simply continue and handle the result when done.
           }
-        }
-        break;
+          break;
 
         case BACKREF + 1:
         case BACKREF + 2:
@@ -3694,8 +4267,7 @@ static bool regmatch(
         case BACKREF + 6:
         case BACKREF + 7:
         case BACKREF + 8:
-        case BACKREF + 9:
-        {
+        case BACKREF + 9: {
           int len;
 
           no = op - BACKREF;
@@ -3752,7 +4324,6 @@ static bool regmatch(
         case ZREF + 7:
         case ZREF + 8:
         case ZREF + 9:
-        {
           cleanup_zsubexpr();
           no = op - ZREF;
           if (re_extmatch_in != NULL
@@ -3766,25 +4337,22 @@ static bool regmatch(
           } else {
             // Backref was not set: Match an empty string.
           }
-        }
-        break;
+          break;
 
         case BRANCH:
-        {
-          if (OP(next) != BRANCH)       // No choice.
+          if (OP(next) != BRANCH) {     // No choice.
             next = OPERAND(scan);               // Avoid recursion.
-          else {
+          } else {
             rp = regstack_push(RS_BRANCH, scan);
-            if (rp == NULL)
+            if (rp == NULL) {
               status = RA_FAIL;
-            else
+            } else {
               status = RA_BREAK;                // rest is below
+            }
           }
-        }
-        break;
+          break;
 
         case BRACE_LIMITS:
-        {
           if (OP(next) == BRACE_SIMPLE) {
             bl_minval = OPERAND_MIN(scan);
             bl_maxval = OPERAND_MAX(scan);
@@ -3798,8 +4366,7 @@ static bool regmatch(
             internal_error("BRACE_LIMITS");
             status = RA_FAIL;
           }
-        }
-        break;
+          break;
 
         case BRACE_COMPLEX + 0:
         case BRACE_COMPLEX + 1:
@@ -3811,7 +4378,6 @@ static bool regmatch(
         case BRACE_COMPLEX + 7:
         case BRACE_COMPLEX + 8:
         case BRACE_COMPLEX + 9:
-        {
           no = op - BRACE_COMPLEX;
           ++brace_count[no];
 
@@ -3819,9 +4385,9 @@ static bool regmatch(
           if (brace_count[no] <= (brace_min[no] <= brace_max[no]
                                   ? brace_min[no] : brace_max[no])) {
             rp = regstack_push(RS_BRCPLX_MORE, scan);
-            if (rp == NULL)
+            if (rp == NULL) {
               status = RA_FAIL;
-            else {
+            } else {
               rp->rs_no = no;
               reg_save(&rp->rs_un.regsave, &backpos);
               next = OPERAND(scan);
@@ -3835,9 +4401,9 @@ static bool regmatch(
             // Range is the normal way around, use longest match
             if (brace_count[no] <= brace_max[no]) {
               rp = regstack_push(RS_BRCPLX_LONG, scan);
-              if (rp == NULL)
+              if (rp == NULL) {
                 status = RA_FAIL;
-              else {
+              } else {
                 rp->rs_no = no;
                 reg_save(&rp->rs_un.regsave, &backpos);
                 next = OPERAND(scan);
@@ -3848,21 +4414,19 @@ static bool regmatch(
             // Range is backwards, use shortest match first
             if (brace_count[no] <= brace_min[no]) {
               rp = regstack_push(RS_BRCPLX_SHORT, scan);
-              if (rp == NULL)
+              if (rp == NULL) {
                 status = RA_FAIL;
-              else {
+              } else {
                 reg_save(&rp->rs_un.regsave, &backpos);
                 // We continue and handle the result when done.
               }
             }
           }
-        }
-        break;
+          break;
 
         case BRACE_SIMPLE:
         case STAR:
-        case PLUS:
-        {
+        case PLUS: {
           regstar_T rst;
 
           // Lookahead to avoid useless match attempts when we know
@@ -3910,18 +4474,17 @@ static bool regmatch(
             } else {
               ga_grow(&regstack, sizeof(regstar_T));
               regstack.ga_len += sizeof(regstar_T);
-              rp = regstack_push(rst.minval <= rst.maxval
-                  ? RS_STAR_LONG : RS_STAR_SHORT, scan);
-              if (rp == NULL)
+              rp = regstack_push(rst.minval <= rst.maxval ? RS_STAR_LONG : RS_STAR_SHORT, scan);
+              if (rp == NULL) {
                 status = RA_FAIL;
-              else {
+              } else {
                 *(((regstar_T *)rp) - 1) = rst;
                 status = RA_BREAK;                  // skip the restore bits
               }
             }
-          } else
+          } else {
             status = RA_NOMATCH;
-
+          }
         }
         break;
 
@@ -3929,9 +4492,9 @@ static bool regmatch(
         case MATCH:
         case SUBPAT:
           rp = regstack_push(RS_NOMATCH, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = op;
             reg_save(&rp->rs_un.regsave, &backpos);
             next = OPERAND(scan);
@@ -3949,9 +4512,9 @@ static bool regmatch(
             ga_grow(&regstack, sizeof(regbehind_T));
             regstack.ga_len += sizeof(regbehind_T);
             rp = regstack_push(RS_BEHIND1, scan);
-            if (rp == NULL)
+            if (rp == NULL) {
               status = RA_FAIL;
-            else {
+            } else {
               // Need to save the subexpr to be able to restore them
               // when there is a match but we don't use it.
               save_subexpr(((regbehind_T *)rp) - 1);
@@ -4001,13 +4564,13 @@ static bool regmatch(
       }
 
       // If we can't continue sequentially, break the inner loop.
-      if (status != RA_CONT)
+      if (status != RA_CONT) {
         break;
+      }
 
       // Continue in inner loop, advance to next item.
       scan = next;
-
-    } // end of inner loop
+    }  // end of inner loop
 
     // If there is something on the regstack execute the code for the state.
     // If the state is popped then loop and use the older state.
@@ -4030,9 +4593,10 @@ static bool regmatch(
 
       case RS_ZOPEN:
         // Pop the state.  Restore pointers when there is no match.
-        if (status == RA_NOMATCH)
+        if (status == RA_NOMATCH) {
           restore_se(&rp->rs_un.sesave, &reg_startzpos[rp->rs_no],
-              &reg_startzp[rp->rs_no]);
+                     &reg_startzp[rp->rs_no]);
+        }
         regstack_pop(&scan);
         break;
 
@@ -4047,17 +4611,18 @@ static bool regmatch(
 
       case RS_ZCLOSE:
         // Pop the state.  Restore pointers when there is no match.
-        if (status == RA_NOMATCH)
+        if (status == RA_NOMATCH) {
           restore_se(&rp->rs_un.sesave, &reg_endzpos[rp->rs_no],
-              &reg_endzp[rp->rs_no]);
+                     &reg_endzp[rp->rs_no]);
+        }
         regstack_pop(&scan);
         break;
 
       case RS_BRANCH:
-        if (status == RA_MATCH)
+        if (status == RA_MATCH) {
           // this branch matched, use it
           regstack_pop(&scan);
-        else {
+        } else {
           if (status != RA_BREAK) {
             // After a non-matching branch: try next one.
             reg_restore(&rp->rs_un.regsave, &backpos);
@@ -4095,15 +4660,17 @@ static bool regmatch(
           status = RA_CONT;
         }
         regstack_pop(&scan);
-        if (status == RA_CONT)
+        if (status == RA_CONT) {
           scan = regnext(scan);
+        }
         break;
 
       case RS_BRCPLX_SHORT:
         // Pop the state.  Restore pointers when there is no match.
-        if (status == RA_NOMATCH)
+        if (status == RA_NOMATCH) {
           // There was no match, try to match one more item.
           reg_restore(&rp->rs_un.regsave, &backpos);
+        }
         regstack_pop(&scan);
         if (status == RA_NOMATCH) {
           scan = OPERAND(scan);
@@ -4115,16 +4682,18 @@ static bool regmatch(
         // Pop the state.  If the operand matches for NOMATCH or
         // doesn't match for MATCH/SUBPAT, we fail.  Otherwise backup,
         // except for SUBPAT, and continue with the next item.
-        if (status == (rp->rs_no == NOMATCH ? RA_MATCH : RA_NOMATCH))
+        if (status == (rp->rs_no == NOMATCH ? RA_MATCH : RA_NOMATCH)) {
           status = RA_NOMATCH;
-        else {
+        } else {
           status = RA_CONT;
-          if (rp->rs_no != SUBPAT)              // zero-width
+          if (rp->rs_no != SUBPAT) {            // zero-width
             reg_restore(&rp->rs_un.regsave, &backpos);
+          }
         }
         regstack_pop(&scan);
-        if (status == RA_CONT)
+        if (status == RA_CONT) {
           scan = regnext(scan);
+        }
         break;
 
       case RS_BEHIND1:
@@ -4162,10 +4731,10 @@ static bool regmatch(
         if (status == RA_MATCH && reg_save_equal(&behind_pos)) {
           // found a match that ends where "next" started
           behind_pos = (((regbehind_T *)rp) - 1)->save_behind;
-          if (rp->rs_no == BEHIND)
+          if (rp->rs_no == BEHIND) {
             reg_restore(&(((regbehind_T *)rp) - 1)->save_after,
-                &backpos);
-          else {
+                        &backpos);
+          } else {
             // But we didn't want a match.  Need to restore the
             // subexpr, because what follows matched, so they have
             // been set.
@@ -4187,16 +4756,15 @@ static bool regmatch(
                      < behind_pos.rs_u.pos.lnum
                      ? (colnr_T)STRLEN(rex.line)
                      : behind_pos.rs_u.pos.col)
-                    - rp->rs_un.regsave.rs_u.pos.col >= limit))
+                    - rp->rs_un.regsave.rs_u.pos.col >= limit)) {
               no = FAIL;
-            else if (rp->rs_un.regsave.rs_u.pos.col == 0) {
+            } else if (rp->rs_un.regsave.rs_u.pos.col == 0) {
               if (rp->rs_un.regsave.rs_u.pos.lnum
                   < behind_pos.rs_u.pos.lnum
-                  || reg_getline(
-                      --rp->rs_un.regsave.rs_u.pos.lnum)
-                  == NULL)
+                  || reg_getline(--rp->rs_un.regsave.rs_u.pos.lnum)
+                  == NULL) {
                 no = FAIL;
-              else {
+              } else {
                 reg_restore(&rp->rs_un.regsave, &backpos);
                 rp->rs_un.regsave.rs_u.pos.col =
                   (colnr_T)STRLEN(rex.line);
@@ -4207,7 +4775,7 @@ static bool regmatch(
 
               rp->rs_un.regsave.rs_u.pos.col -=
                 utf_head_off(line,
-                               line + rp->rs_un.regsave.rs_u.pos.col - 1)
+                             line + rp->rs_un.regsave.rs_u.pos.col - 1)
                 + 1;
             }
           } else {
@@ -4236,7 +4804,7 @@ static bool regmatch(
             behind_pos = (((regbehind_T *)rp) - 1)->save_behind;
             if (rp->rs_no == NOBEHIND) {
               reg_restore(&(((regbehind_T *)rp) - 1)->save_after,
-                  &backpos);
+                          &backpos);
               status = RA_MATCH;
             } else {
               // We do want a proper match.  Need to restore the
@@ -4254,9 +4822,8 @@ static bool regmatch(
         break;
 
       case RS_STAR_LONG:
-      case RS_STAR_SHORT:
-      {
-        regstar_T           *rst = ((regstar_T *)rp) - 1;
+      case RS_STAR_SHORT: {
+        regstar_T *rst = ((regstar_T *)rp) - 1;
 
         if (status == RA_MATCH) {
           regstack_pop(&scan);
@@ -4265,18 +4832,20 @@ static bool regmatch(
         }
 
         // Tried once already, restore input pointers.
-        if (status != RA_BREAK)
+        if (status != RA_BREAK) {
           reg_restore(&rp->rs_un.regsave, &backpos);
+        }
 
         // Repeat until we found a position where it could match.
-        for (;; ) {
+        for (;;) {
           if (status != RA_BREAK) {
             // Tried first position already, advance.
             if (rp->rs_state == RS_STAR_LONG) {
               // Trying for longest match, but couldn't or
               // didn't match -- back up one char.
-              if (--rst->count < rst->minval)
+              if (--rst->count < rst->minval) {
                 break;
+              }
               if (rex.input == rex.line) {
                 // backup to last char of previous line
                 if (rex.lnum == 0) {
@@ -4300,14 +4869,17 @@ static bool regmatch(
               // Couldn't or didn't match: try advancing one
               // char.
               if (rst->count == rst->minval
-                  || regrepeat(OPERAND(rp->rs_scan), 1L) == 0)
+                  || regrepeat(OPERAND(rp->rs_scan), 1L) == 0) {
                 break;
-              ++rst->count;
+              }
+              rst->count++;
             }
-            if (got_int)
+            if (got_int) {
               break;
-          } else
+            }
+          } else {
             status = RA_NOMATCH;
+          }
 
           // If it could match, try it.
           if (rst->nextb == NUL || *rex.input == rst->nextb
@@ -4331,13 +4903,15 @@ static bool regmatch(
       // If we want to continue the inner loop or didn't pop a state
       // continue matching loop
       if (status == RA_CONT || rp == (regitem_T *)
-          ((char *)regstack.ga_data + regstack.ga_len) - 1)
+          ((char *)regstack.ga_data + regstack.ga_len) - 1) {
         break;
+      }
     }
 
     // May need to continue with the inner loop, starting at "scan".
-    if (status == RA_CONT)
+    if (status == RA_CONT) {
       continue;
+    }
 
     // If the regstack is empty or something failed we are done.
     if (GA_EMPTY(&regstack) || status == RA_FAIL) {
@@ -4351,17 +4925,14 @@ static bool regmatch(
       }
       return status == RA_MATCH;
     }
-
-  } // End of loop until the regstack is empty.
+  }  // End of loop until the regstack is empty.
 
   // NOTREACHED
 }
 
 /// Try match of "prog" with at rex.line["col"].
 /// @returns 0 for failure, or number of lines contained in the match.
-static long regtry(bt_regprog_T *prog,
-                   colnr_T col,
-                   proftime_T *tm,    // timeout limit or NULL
+static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm,    // timeout limit or NULL
                    int *timed_out)    // flag set on timeout or NULL
 {
   rex.input = rex.line + col;
@@ -4416,9 +4987,10 @@ static long regtry(bt_regprog_T *prog,
                          - reg_startzpos[i].col);
         }
       } else {
-        if (reg_startzp[i] != NULL && reg_endzp[i] != NULL)
+        if (reg_startzp[i] != NULL && reg_endzp[i] != NULL) {
           re_extmatch_out->matches[i] =
             vim_strnsave(reg_startzp[i], reg_endzp[i] - reg_startzp[i]);
+        }
       }
     }
   }
@@ -4428,13 +5000,12 @@ static long regtry(bt_regprog_T *prog,
 /// Match a regexp against a string ("line" points to the string) or multiple
 /// lines (if "line" is NULL, use reg_getline()).
 /// @return 0 for failure, or number of lines contained in the match.
-static long bt_regexec_both(char_u *line,
-                            colnr_T col,      // column to start search
+static long bt_regexec_both(char_u *line, colnr_T col,      // column to start search
                             proftime_T *tm,   // timeout limit or NULL
                             int *timed_out)   // flag set on timeout or NULL
 {
-  bt_regprog_T        *prog;
-  char_u      *s;
+  bt_regprog_T *prog;
+  char_u *s;
   long retval = 0L;
 
   // Create "regstack" and "backpos" if they are not allocated yet.
@@ -4473,8 +5044,9 @@ static long bt_regexec_both(char_u *line,
   }
 
   // Check validity of program.
-  if (prog_magic_wrong())
+  if (prog_magic_wrong()) {
     goto theend;
+  }
 
   // If the start column is past the maximum column: no need to try.
   if (rex.reg_maxcol > 0 && col >= rex.reg_maxcol) {
@@ -4590,10 +5162,12 @@ theend:
   if (reg_tofreelen > 400) {
     XFREE_CLEAR(reg_tofree);
   }
-  if (regstack.ga_maxlen > REGSTACK_INITIAL)
+  if (regstack.ga_maxlen > REGSTACK_INITIAL) {
     ga_clear(&regstack);
-  if (backpos.ga_maxlen > BACKPOS_INITIAL)
+  }
+  if (backpos.ga_maxlen > BACKPOS_INITIAL) {
     ga_clear(&backpos);
+  }
 
   if (retval > 0) {
     // Make sure the end is never before the start.  Can happen when \zs
@@ -4624,11 +5198,9 @@ theend:
  *
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static int bt_regexec_nl(
-    regmatch_T *rmp,
-    char_u *line,        // string to match against
-    colnr_T col,         // column to start looking for match
-    bool line_lbr)
+static int bt_regexec_nl(regmatch_T *rmp, char_u *line,        // string to match against
+                         colnr_T col,         // column to start looking for match
+                         bool line_lbr)
 {
   rex.reg_match = rmp;
   rex.reg_mmatch = NULL;
@@ -4658,8 +5230,7 @@ static int bt_regexec_nl(
 ///
 /// @return zero if there is no match and number of lines contained in the match
 ///         otherwise.
-static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
-                             linenr_T lnum, colnr_T col,
+static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
                              proftime_T *tm, int *timed_out)
 {
   rex.reg_match = NULL;
@@ -4683,10 +5254,12 @@ static int re_num_cmp(uint32_t val, char_u *scan)
 {
   uint32_t n = (uint32_t)OPERAND_MIN(scan);
 
-  if (OPERAND_CMP(scan) == '>')
+  if (OPERAND_CMP(scan) == '>') {
     return val > n;
-  if (OPERAND_CMP(scan) == '<')
+  }
+  if (OPERAND_CMP(scan) == '<') {
     return val < n;
+  }
   return val == n;
 }
 
@@ -4697,21 +5270,22 @@ static int re_num_cmp(uint32_t val, char_u *scan)
  */
 static void regdump(char_u *pattern, bt_regprog_T *r)
 {
-  char_u  *s;
+  char_u *s;
   int op = EXACTLY;             // Arbitrary non-END op.
-  char_u  *next;
-  char_u  *end = NULL;
-  FILE    *f;
+  char_u *next;
+  char_u *end = NULL;
+  FILE *f;
 
-#ifdef BT_REGEXP_LOG
+# ifdef BT_REGEXP_LOG
   f = fopen("bt_regexp_log.log", "a");
-#else
+# else
   f = stdout;
-#endif
-  if (f == NULL)
+# endif
+  if (f == NULL) {
     return;
+  }
   fprintf(f, "-------------------------------------\n\r\nregcomp(%s):\r\n",
-      pattern);
+          pattern);
 
   s = r->program + 1;
   // Loop until we find the END that isn't before a referred next (an END
@@ -4720,12 +5294,14 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
     op = OP(s);
     fprintf(f, "%2d%s", (int)(s - r->program), regprop(s));     // Where, what.
     next = regnext(s);
-    if (next == NULL)           // Next ptr.
+    if (next == NULL) {         // Next ptr.
       fprintf(f, "(0)");
-    else
+    } else {
       fprintf(f, "(%d)", (int)((s - r->program) + (next - s)));
-    if (end < next)
+    }
+    if (end < next) {
       end = next;
+    }
     if (op == BRACE_LIMITS) {
       // Two ints
       fprintf(f, " minval %" PRId64 ", maxval %" PRId64,
@@ -4746,8 +5322,9 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
         || op == EXACTLY) {
       // Literal string, where present.
       fprintf(f, "\nxxxxxxxxx\n");
-      while (*s != NUL)
+      while (*s != NUL) {
         fprintf(f, "%c", *s++);
+      }
       fprintf(f, "\nxxxxxxxxx\n");
       s++;
     }
@@ -4755,19 +5332,22 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
   }
 
   // Header fields of interest.
-  if (r->regstart != NUL)
+  if (r->regstart != NUL) {
     fprintf(f, "start `%s' 0x%x; ", r->regstart < 256
-        ? (char *)transchar(r->regstart)
-        : "multibyte", r->regstart);
-  if (r->reganch)
+            ? (char *)transchar(r->regstart)
+            : "multibyte", r->regstart);
+  }
+  if (r->reganch) {
     fprintf(f, "anchored; ");
-  if (r->regmust != NULL)
+  }
+  if (r->regmust != NULL) {
     fprintf(f, "must have \"%s\"", r->regmust);
+  }
   fprintf(f, "\r\n");
 
-#ifdef BT_REGEXP_LOG
+# ifdef BT_REGEXP_LOG
   fclose(f);
-#endif
+# endif
 }
 #endif      // BT_REGEXP_DUMP
 
@@ -4778,7 +5358,7 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
  */
 static char_u *regprop(char_u *op)
 {
-  char            *p;
+  char *p;
   static char buf[50];
 
   STRCPY(buf, ":");
@@ -5144,8 +5724,9 @@ static char_u *regprop(char_u *op)
     p = NULL;
     break;
   }
-  if (p != NULL)
+  if (p != NULL) {
     STRCAT(buf, p);
+  }
   return (char_u *)buf;
 }
 #endif      // REGEXP_DEBUG
