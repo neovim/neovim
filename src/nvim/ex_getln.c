@@ -39,7 +39,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"

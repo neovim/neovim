@@ -18,7 +18,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/memory.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"

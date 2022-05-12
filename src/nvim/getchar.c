@@ -31,7 +31,7 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/input.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"

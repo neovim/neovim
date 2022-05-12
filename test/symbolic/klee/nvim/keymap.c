@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
 #include "nvim/types.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/ascii.h"
 #include "nvim/eval/typval.h"
 

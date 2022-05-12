@@ -24,7 +24,7 @@
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
 #include "nvim/input.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"

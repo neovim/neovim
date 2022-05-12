@@ -1,13 +1,11 @@
-#ifndef NVIM_KEYMAP_H
-#define NVIM_KEYMAP_H
+#ifndef NVIM_KEYCODES_H
+#define NVIM_KEYCODES_H
 
 #include "nvim/strings.h"
 
-/*
- * Keycode definitions for special keys.
- *
- * Any special key code sequences are replaced by these codes.
- */
+// Keycode definitions for special keys.
+//
+// Any special key code sequences are replaced by these codes.
 
 //
 // For MS-DOS some keys produce codes larger than 0xff. They are split into two
@@ -15,66 +13,49 @@
 //
 #define K_NUL                   (0xce)  // for MS-DOS: special key follows
 
-/*
- * K_SPECIAL is the first byte of a special key code and is always followed by
- * two bytes.
- * The second byte can have any value. ASCII is used for normal termcap
- * entries, 0x80 and higher for special keys, see below.
- * The third byte is guaranteed to be between 0x02 and 0x7f.
- */
-
+/// K_SPECIAL is the first byte of a special key code and is always followed by
+/// two bytes.
+/// The second byte can have any value. ASCII is used for normal termcap
+/// entries, 0x80 and higher for special keys, see below.
+/// The third byte is guaranteed to be between 0x02 and 0x7f.
 #define K_SPECIAL               (0x80)
 
-/*
- * Positive characters are "normal" characters.
- * Negative characters are special key codes.  Only characters below -0x200
- * are used to so that the absolute value can't be mistaken for a single-byte
- * character.
- */
+/// Positive characters are "normal" characters.
+/// Negative characters are special key codes.  Only characters below -0x200
+/// are used to so that the absolute value can't be mistaken for a single-byte
+/// character.
 #define IS_SPECIAL(c)           ((c) < 0)
 
-/*
- * Characters 0x0100 - 0x01ff have a special meaning for abbreviations.
- * Multi-byte characters also have ABBR_OFF added, thus are above 0x0200.
- */
+/// Characters 0x0100 - 0x01ff have a special meaning for abbreviations.
+/// Multi-byte characters also have ABBR_OFF added, thus are above 0x0200.
 #define ABBR_OFF                0x100
 
-/*
- * NUL cannot be in the input string, therefore it is replaced by
- *      K_SPECIAL   KS_ZERO     KE_FILLER
- */
+/// NUL cannot be in the input string, therefore it is replaced by
+///      K_SPECIAL   KS_ZERO     KE_FILLER
 #define KS_ZERO                 255
 
-/*
- * K_SPECIAL cannot be in the input string, therefore it is replaced by
- *      K_SPECIAL   KS_SPECIAL  KE_FILLER
- */
+/// K_SPECIAL cannot be in the input string, therefore it is replaced by
+///      K_SPECIAL   KS_SPECIAL  KE_FILLER
 #define KS_SPECIAL              254
 
-/*
- * KS_EXTRA is used for keys that have no termcap name
- *      K_SPECIAL   KS_EXTRA    KE_xxx
- */
+/// KS_EXTRA is used for keys that have no termcap name
+///      K_SPECIAL   KS_EXTRA    KE_xxx
 #define KS_EXTRA                253
 
-/*
- * KS_MODIFIER is used when a modifier is given for a (special) key
- *      K_SPECIAL   KS_MODIFIER bitmask
- */
+/// KS_MODIFIER is used when a modifier is given for a (special) key
+///      K_SPECIAL   KS_MODIFIER bitmask
 #define KS_MODIFIER             252
 
-/*
- * These are used for the GUI
- *      K_SPECIAL   KS_xxx      KE_FILLER
- */
+// These are used for the GUI
+//      K_SPECIAL   KS_xxx      KE_FILLER
+
 #define KS_MOUSE                251
 #define KS_MENU                 250
 #define KS_VER_SCROLLBAR        249
 #define KS_HOR_SCROLLBAR        248
 
-/*
- * Used for switching Select mode back on after a mapping or menu.
- */
+// Used for switching Select mode back on after a mapping or menu.
+
 #define KS_SELECT               245
 #define K_SELECT_STRING         (char_u *)"\200\365X"
 
@@ -87,30 +68,24 @@
 // Used for menu in a tab pages line.
 #define KS_TABMENU              239
 
-/*
- * Filler used after KS_SPECIAL and others
- */
+/// Filler used after KS_SPECIAL and others
 #define KE_FILLER               ('X')
 
-/*
- * translation of three byte code "K_SPECIAL a b" into int "K_xxx" and back
- */
+// translation of three byte code "K_SPECIAL a b" into int "K_xxx" and back
+
 #define TERMCAP2KEY(a, b)       (-((a) + ((int)(b) << 8)))
 #define KEY2TERMCAP0(x)         ((-(x)) & 0xff)
 #define KEY2TERMCAP1(x)         (((unsigned)(-(x)) >> 8) & 0xff)
 
-/*
- * get second or third byte when translating special key code into three bytes
- */
+// get second or third byte when translating special key code into three bytes
+
 #define K_SECOND(c)     ((c) == K_SPECIAL ? KS_SPECIAL : (c) == \
                          NUL ? KS_ZERO : KEY2TERMCAP0(c))
 
 #define K_THIRD(c)      (((c) == K_SPECIAL || (c) == \
                           NUL) ? KE_FILLER : KEY2TERMCAP1(c))
 
-/*
- * get single int code from second byte after K_SPECIAL
- */
+/// get single int code from second byte after K_SPECIAL
 #define TO_SPECIAL(a, b)    ((a) == KS_SPECIAL ? K_SPECIAL : (a) == \
                              KS_ZERO ? K_ZERO : TERMCAP2KEY(a, b))
 
@@ -247,9 +222,8 @@ enum key_extra {
   KE_COMMAND = 104,  // <Cmd> special key
 };
 
-/*
- * the three byte codes are replaced with the following int when using vgetc()
- */
+// the three byte codes are replaced with the following int when using vgetc()
+
 #define K_ZERO          TERMCAP2KEY(KS_ZERO, KE_FILLER)
 
 #define K_UP            TERMCAP2KEY('k', 'u')
@@ -430,10 +404,9 @@ enum key_extra {
 #define K_TABLINE       TERMCAP2KEY(KS_TABLINE, KE_FILLER)
 #define K_TABMENU       TERMCAP2KEY(KS_TABMENU, KE_FILLER)
 
-/*
- * Symbols for pseudo keys which are translated from the real key symbols
- * above.
- */
+// Symbols for pseudo keys which are translated from the real key symbols
+// above.
+
 #define K_LEFTMOUSE     TERMCAP2KEY(KS_EXTRA, KE_LEFTMOUSE)
 #define K_LEFTMOUSE_NM  TERMCAP2KEY(KS_EXTRA, KE_LEFTMOUSE_NM)
 #define K_LEFTDRAG      TERMCAP2KEY(KS_EXTRA, KE_LEFTDRAG)
@@ -486,11 +459,8 @@ enum key_extra {
 #define MOD_MASK_MULTI_CLICK    (MOD_MASK_2CLICK|MOD_MASK_3CLICK| \
                                  MOD_MASK_4CLICK)
 
-/*
- * The length of the longest special key name, including modifiers.
- * Current longest is <M-C-S-T-D-A-4-ScrollWheelRight> (length includes '<' and
- * '>').
- */
+/// The length of the longest special key name, including modifiers.
+/// Current longest is <M-C-S-T-D-A-4-ScrollWheelRight> (length includes '<' and '>').
 #define MAX_KEY_NAME_LEN    32
 
 // Maximum length of a special key event as tokens.  This includes modifiers.
@@ -524,6 +494,6 @@ enum {
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "keymap.h.generated.h"
+# include "keycodes.h.generated.h"
 #endif
-#endif  // NVIM_KEYMAP_H
+#endif  // NVIM_KEYCODES_H

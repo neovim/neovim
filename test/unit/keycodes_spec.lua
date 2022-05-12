@@ -5,10 +5,10 @@ local ffi     = helpers.ffi
 local eq      = helpers.eq
 local neq     = helpers.neq
 
-local keymap = helpers.cimport('./src/nvim/keymap.h')
+local keymap = helpers.cimport('./src/nvim/keycodes.h')
 local NULL = helpers.NULL
 
-describe('keymap.c', function()
+describe('keycodes.c', function()
 
   describe('find_special_key()', function()
     local srcp = ffi.new('const unsigned char *[1]')
