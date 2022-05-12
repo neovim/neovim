@@ -1992,6 +1992,31 @@ theend:
   convert_setup(&vimconv, NULL, NULL);
 }
 
+/// @return  true if string "s" is a valid utf-8 string.
+/// When "end" is NULL stop at the first NUL.
+/// When "end" is positive stop there.
+bool utf_valid_string(const char_u *s, const char_u *end)
+{
+  const char_u *p = s;
+
+  while (end == NULL ? *p != NUL : p < end) {
+    int l = utf8len_tab_zero[*p];
+    if (l == 0) {
+      return false;  // invalid lead byte
+    }
+    if (end != NULL && p + l > end) {
+      return false;  // incomplete byte sequence
+    }
+    p++;
+    while (--l > 0) {
+      if ((*p++ & 0xc0) != 0x80) {
+        return false;  // invalid trail byte
+      }
+    }
+  }
+  return true;
+}
+
 /*
  * If the cursor moves on an trail byte, set the cursor on the lead byte.
  * Thus it moves left if necessary.
