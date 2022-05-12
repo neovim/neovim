@@ -691,10 +691,38 @@ end
 --- `codeAction/resolve`
 local function on_code_action_results(results, ctx, options)
   local action_tuples = {}
-  local filter = options and options.filter
+
+  ---@private
+  local function action_filter(a)
+    -- filter by specified action kind
+    if options and options.context and options.context.only then
+      if not a.kind then
+        return false
+      end
+      local found = false
+      for _, o in ipairs(options.context.only) do
+        -- action kinds are hierachical with . as a separator: when requesting only
+        -- 'quickfix' this filter allows both 'quickfix' and 'quickfix.foo', for example
+        if a.kind:find('^' .. o .. '$') or a.kind:find('^' .. o .. '%.') then
+          found = true
+          break
+        end
+      end
+      if not found then
+        return false
+      end
+    end
+    -- filter by user function
+    if options and options.filter and not options.filter(a) then
+      return false
+    end
+    -- no filter removed this action
+    return true
+  end
+
   for client_id, result in pairs(results) do
     for _, action in pairs(result.result or {}) do
-      if not filter or filter(action) then
+      if action_filter(action) then
         table.insert(action_tuples, { client_id, action })
       end
     end

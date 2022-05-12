@@ -2753,12 +2753,33 @@ describe('LSP', function()
                 vim.lsp.commands['executed_preferred'] = function()
                 end
               end
+              vim.lsp.commands['quickfix_command'] = function(cmd)
+                vim.lsp.commands['executed_quickfix'] = function()
+                end
+              end
               local bufnr = vim.api.nvim_get_current_buf()
               vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
               vim.lsp.buf.code_action({ filter = function(a) return a.isPreferred end, apply = true, })
+              vim.lsp.buf.code_action({
+                  -- expect to be returned actions 'quickfix' and 'quickfix.foo'
+                  context = { only = {'quickfix'}, },
+                  apply = true,
+                  filter = function(a)
+                      if a.kind == 'quickfix.foo' then
+                        vim.lsp.commands['filtered_quickfix_foo'] = function() end
+                        return false
+                      elseif a.kind == 'quickfix' then
+                        return true
+                      else
+                        assert(nil, 'unreachable')
+                      end
+                  end,
+              })
             ]])
           elseif ctx.method == 'shutdown' then
             eq('function', exec_lua[[return type(vim.lsp.commands['executed_preferred'])]])
+            eq('function', exec_lua[[return type(vim.lsp.commands['filtered_quickfix_foo'])]])
+            eq('function', exec_lua[[return type(vim.lsp.commands['executed_quickfix'])]])
             client.stop()
           end
         end
