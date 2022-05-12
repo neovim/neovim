@@ -49,7 +49,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent_c.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"

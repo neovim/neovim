@@ -13,7 +13,7 @@
 #include "nvim/ex_cmds2.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"

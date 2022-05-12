@@ -31,7 +31,7 @@ enum { NUMBUFLEN = 65, };
 #define ROOT_UID 0
 
 #include "nvim/gettext.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/macros.h"
 
 // special attribute addition: Put message in history

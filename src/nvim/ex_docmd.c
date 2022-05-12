@@ -41,7 +41,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/if_cscope.h"
 #include "nvim/input.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"

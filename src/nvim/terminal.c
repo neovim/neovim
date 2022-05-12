@@ -56,7 +56,7 @@
 #include "nvim/getchar.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
-#include "nvim/keymap.h"
+#include "nvim/keycodes.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
