@@ -1250,9 +1250,9 @@ return {
     },
     {
       full_name='insertmode', abbreviation='im',
-      short_desc=N_("start the edit of a file in Insert mode"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
-      varname='p_im',
+      varname='p_force_off',
       defaults={if_true=false}
     },
     {

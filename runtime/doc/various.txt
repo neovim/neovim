@@ -208,8 +208,6 @@ g8			Print the hex values of the bytes used in the
 			{commands} cannot start with a space.  Put a count of
 			1 (one) before it, "1 " is one space.
 
-			The 'insertmode' option is ignored for {commands}.
-
 			This command cannot be followed by another command,
 			since any '|' is considered part of the command.
 

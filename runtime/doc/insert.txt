@@ -32,9 +32,6 @@ If you are working in a special language mode when inserting text, see the
 'langmap' option, |'langmap'|, on how to avoid switching this mode on and off
 all the time.
 
-If you have 'insertmode' set, <Esc> and a few other keys get another meaning.
-See |'insertmode'|.
-
 char		action	~
 -----------------------------------------------------------------------
 						*i_CTRL-[* *i_<Esc>*
@@ -335,9 +332,8 @@ that key is interpreted as in Insert mode.
 The following keys are special.  They stop the current insert, do something,
 and then restart insertion.  This means you can do something without getting
 out of Insert mode.  This is very handy if you prefer to use the Insert mode
-all the time, just like editors that don't have a separate Normal mode.  You
-may also want to set the 'insertmode' option.  You can use CTRL-O if you want
-to map a function key to a command.
+all the time, just like editors that don't have a separate Normal mode. You
+can use CTRL-O if you want to map a function key to a command.
 
 The changes (inserted or deleted characters) before and after these keys can
 be undone separately.  Only the last change can be redone and always behaves
@@ -378,7 +374,6 @@ CTRL-G CTRL-J	cursor one line down, insert start column    *i_CTRL-G_CTRL-J*
 <S-ScrollWheelRight> move window one page right		*i_<S-ScrollWheelRight>*
 CTRL-O		execute one command, return to Insert mode   *i_CTRL-O*
 CTRL-\ CTRL-O	like CTRL-O but don't move the cursor	     *i_CTRL-\_CTRL-O*
-CTRL-L		when 'insertmode' is set: go to Normal mode  *i_CTRL-L*
 CTRL-G u	break undo sequence, start new change	     *i_CTRL-G_u*
 CTRL-G U	don't break undo with next left/right cursor *i_CTRL-G_U*
 		movement, if the cursor stays within the

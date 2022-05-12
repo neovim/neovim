@@ -1366,7 +1366,7 @@ option						*expr-option* *E112* *E113*
 
 Examples: >
 	echo "tabstop is " .. &tabstop
-	if &insertmode
+	if &expandtab
 
 Any option name can be used here.  See |options|.  When using the local value
 and there is no buffer-local or window-local value, the global value is used

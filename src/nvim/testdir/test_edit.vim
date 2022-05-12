@@ -16,8 +16,9 @@ func Test_edit_00b()
   call setline(1, ['abc '])
   inoreabbr <buffer> h here some more
   call cursor(1, 4)
-  " <c-l> expands the abbreviation and ends insertmode
-  call feedkeys(":set im\<cr> h\<c-l>:set noim\<cr>", 'tix')
+  " <esc> expands the abbreviation and ends insert mode
+  " call feedkeys(":set im\<cr> h\<c-l>:set noim\<cr>", 'tix')
+  call feedkeys("i h\<esc>", 'tix')
   call assert_equal(['abc here some more '], getline(1,'$'))
   iunabbr <buffer> h
   bw!
@@ -234,15 +235,18 @@ func Test_edit_09()
   call setline(1, ['abc', 'def', 'ghi'])
   call cursor(1, 1)
   " 1) CTRL-\ CTLR-N
-  call feedkeys(":set im\<cr>\<c-\>\<c-n>ccABC\<c-l>", 'txin')
+  " call feedkeys(":set im\<cr>\<c-\>\<c-n>ccABC\<c-l>", 'txin')
+  call feedkeys("i\<c-\>\<c-n>ccABC\<esc>", 'txin')
   call assert_equal(['ABC', 'def', 'ghi'], getline(1,'$'))
   call setline(1, ['ABC', 'def', 'ghi'])
   " 2) CTRL-\ CTLR-G
-  call feedkeys("j0\<c-\>\<c-g>ZZZ\<cr>\<c-l>", 'txin')
-  call assert_equal(['ABC', 'ZZZ', 'def', 'ghi'], getline(1,'$'))
-  call feedkeys("I\<c-\>\<c-g>YYY\<c-l>", 'txin')
-  call assert_equal(['ABC', 'ZZZ', 'YYYdef', 'ghi'], getline(1,'$'))
-  set noinsertmode
+  " CTRL-\ CTRL-G goes to Insert mode when 'insertmode' is set, but
+  " 'insertmode' is now removed so skip this test
+  " call feedkeys("j0\<c-\>\<c-g>ZZZ\<cr>\<esc>", 'txin')
+  " call assert_equal(['ABC', 'ZZZ', 'def', 'ghi'], getline(1,'$'))
+  " call feedkeys("I\<c-\>\<c-g>YYY\<c-l>", 'txin')
+  " call assert_equal(['ABC', 'ZZZ', 'YYYdef', 'ghi'], getline(1,'$'))
+  " set noinsertmode
   " 3) CTRL-\ CTRL-O
   call setline(1, ['ABC', 'ZZZ', 'def', 'ghi'])
   call cursor(1, 1)
@@ -1043,7 +1047,8 @@ endfunc
 func Test_edit_F1()
   " Pressing <f1>
   new
-  call feedkeys(":set im\<cr>\<f1>\<c-l>", 'tnix')
+  " call feedkeys(":set im\<cr>\<f1>\<c-l>", 'tnix')
+  call feedkeys("i\<f1>\<esc>", 'tnix')
   set noinsertmode
   call assert_equal('help', &buftype)
   bw

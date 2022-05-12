@@ -25,7 +25,6 @@ typedef struct {
   int save_restart_edit;
   bool save_msg_didout;
   int save_State;
-  int save_insertmode;
   bool save_finish_op;
   long save_opcount;
   int save_reg_executing;

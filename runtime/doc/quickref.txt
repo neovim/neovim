@@ -741,7 +741,6 @@ Short explanation of each option:		*option-list*
 'indentexpr'	  'inde'    expression used to obtain the indent of a line
 'indentkeys'	  'indk'    keys that trigger indenting with 'indentexpr'
 'infercase'	  'inf'     adjust case of match for keyword completion
-'insertmode'	  'im'	    start the edit of a file in Insert mode
 'isfname'	  'isf'     characters included in file names and pathnames
 'isident'	  'isi'     characters included in identifiers
 'iskeyword'	  'isk'     characters included in keywords

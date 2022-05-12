@@ -224,9 +224,6 @@ some modes:
 	Cmdline		<C-C>		<C-\><C-G>
 	Op-pending	<C-C>		<C-\><C-G>
 
-Appending CTRL-\ CTRL-G is for going back to insert mode when 'insertmode' is
-set. |CTRL-\_CTRL-G|
-
 Example: >
 
    :amenu File.Next	:next^M

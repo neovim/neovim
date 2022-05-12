@@ -133,7 +133,8 @@ func Test_normal02_selectmode2()
   " some basic select mode tests
   call Setup_NewWindow()
   50
-  call feedkeys(":set im\n\<c-o>gHc\<c-o>:set noim\n", 'tx')
+  " call feedkeys(":set im\n\<c-o>gHc\<c-o>:set noim\n", 'tx')
+  call feedkeys("i\<c-o>gHc\<esc>", 'tx')
   call assert_equal('c51', getline('.'))
   " clean up
   bw!
@@ -2113,11 +2114,11 @@ fun! Test_normal40_ctrl_bsl()
   call assert_equal('n', mode())
   call assert_equal(1, col('.'))
   "imap <buffer> , <c-\><c-n>
-  set im
+  " set im
   exe ":norm! \<c-\>\<c-n>dw"
-  set noim
+  " set noim
   call assert_equal('are   some words', getline(1))
-  call assert_false(&insertmode)
+  " call assert_false(&insertmode)
 
   " clean up
   bw!

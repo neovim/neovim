@@ -1352,14 +1352,12 @@ void openscript(char_u *name, bool directly)
     int oldcurscript;
     int save_State = State;
     int save_restart_edit = restart_edit;
-    int save_insertmode = p_im;
     int save_finish_op = finish_op;
     int save_msg_scroll = msg_scroll;
 
     State = MODE_NORMAL;
     msg_scroll = false;         // no msg scrolling in Normal mode
     restart_edit = 0;           // don't go to Insert mode
-    p_im = false;               // don't use 'insertmode'
     clear_oparg(&oa);
     finish_op = false;
 
@@ -1373,7 +1371,6 @@ void openscript(char_u *name, bool directly)
     State = save_State;
     msg_scroll = save_msg_scroll;
     restart_edit = save_restart_edit;
-    p_im = save_insertmode;
     finish_op = save_finish_op;
   }
 }
@@ -2513,16 +2510,12 @@ static int vgetorpeek(bool advance)
             timedout = true;
             continue;
           }
-          // When 'insertmode' is set, ESC just beeps in Insert
-          // mode.  Use CTRL-L to make edit() return.
           // In Ex-mode \n is compatible with original Vim behaviour.
           // For the command line only CTRL-C always breaks it.
           // For the cmdline window: Alternate between ESC and
           // CTRL-C: ESC for most situations and CTRL-C to close the
           // cmdline window.
-          if (p_im && (State & MODE_INSERT)) {
-            c = Ctrl_L;
-          } else if ((State & MODE_CMDLINE) || (cmdwin_type > 0 && tc == ESC)) {
+          if ((State & MODE_CMDLINE) || (cmdwin_type > 0 && tc == ESC)) {
             c = Ctrl_C;
           } else {
             c = ESC;
