@@ -7,6 +7,7 @@ local neq = helpers.neq
 local feed = helpers.feed
 local eval = helpers.eval
 local exec = helpers.exec
+local funcs = helpers.funcs
 
 describe('tabpage', function()
   before_each(clear)
@@ -51,5 +52,13 @@ describe('tabpage', function()
     ]])
     neq(999, eval('g:win_closed'))
   end)
-end)
 
+  it(":tabmove handles modifiers and addr", function()
+    command('tabnew | tabnew | tabnew')
+    eq(4, funcs.nvim_tabpage_get_number(0))
+    command('     silent      :keepalt   :: :::    silent!    -    tabmove')
+    eq(3, funcs.nvim_tabpage_get_number(0))
+    command('     silent      :keepalt   :: :::    silent!    -2    tabmove')
+    eq(1, funcs.nvim_tabpage_get_number(0))
+  end)
+end)
