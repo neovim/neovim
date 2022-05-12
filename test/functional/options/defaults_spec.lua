@@ -206,7 +206,7 @@ describe('startup defaults', function()
 
   describe('$NVIM_LOG_FILE', function()
     local xdgdir = 'Xtest-startup-xdg-logpath'
-    local xdgstatedir = xdgdir..'/nvim'
+    local xdgstatedir = xdgdir..'/nvim-data'
     after_each(function()
       os.remove('Xtest-logpath')
       rmdir(xdgdir)
