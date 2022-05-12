@@ -495,8 +495,8 @@ buf_detach_client({bufnr}, {client_id})          *vim.lsp.buf_detach_client()*
                 notification.
 
                 Parameters: ~
-                    {bufnr}      number Buffer handle, or 0 for current
-                    {client_id}  number Client id
+                    {bufnr}      (number) Buffer handle, or 0 for current
+                    {client_id}  (number) Client id
 
 buf_get_clients({bufnr})                           *vim.lsp.buf_get_clients()*
                 Gets a map of client_id:client pairs for the given buffer,
@@ -668,11 +668,11 @@ for_each_buffer_client({bufnr}, {fn})
                 Invokes a function for each LSP client attached to a buffer.
 
                 Parameters: ~
-                    {bufnr}  number Buffer number
-                    {fn}     function Function to run on each client attached
-                             to buffer {bufnr}. The function takes the client,
-                             client ID, and buffer number as arguments.
-                             Example: >
+                    {bufnr}  (number) Buffer number
+                    {fn}     (function) Function to run on each client
+                             attached to buffer {bufnr}. The function takes
+                             the client, client ID, and buffer number as
+                             arguments. Example: >
 
                                vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
                                  print(vim.inspect(client))
@@ -690,7 +690,7 @@ formatexpr({opts})                                      *vim.lsp.formatexpr()*
                 'v:lua.vim.lsp.formatexpr(#{timeout_ms:250})')`.
 
                 Parameters: ~
-                    {opts}  table options for customizing the formatting
+                    {opts}  (table) options for customizing the formatting
                             expression which takes the following optional
                             keys:
                             • timeout_ms (default 500ms). The timeout period
@@ -707,7 +707,7 @@ get_buffers_by_client_id({client_id})
                 Returns list of buffers attached to client_id.
 
                 Parameters: ~
-                    {client_id}  number client id
+                    {client_id}  (number) client id
 
                 Return: ~
                     list of buffer ids
@@ -717,7 +717,7 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
                 client may not yet be fully initialized.
 
                 Parameters: ~
-                    {client_id}  number client id
+                    {client_id}  (number) client id
 
                 Return: ~
                     |vim.lsp.client| object, or nil
@@ -820,7 +820,7 @@ start_client({config})                                *vim.lsp.start_client()*
                                          language server if requested via
                                          `workspace/configuration`. Keys are
                                          case-sensitive.
-                    {commands}           table Table that maps string of
+                    {commands}           (table) Table that maps string of
                                          clientside commands to user-defined
                                          functions. Commands passed to
                                          start_client take precedence over the
@@ -908,10 +908,10 @@ start_client({config})                                *vim.lsp.start_client()*
                                            kill -15. If set to false, nvim
                                            exits immediately after sending the
                                            'shutdown' request to the server.
-                    {root_dir}           string Directory where the LSP server
-                                         will base its workspaceFolders,
-                                         rootUri, and rootPath on
-                                         initialization.
+                    {root_dir}           (string) Directory where the LSP
+                                         server will base its
+                                         workspaceFolders, rootUri, and
+                                         rootPath on initialization.
 
                 Return: ~
                     Client id. |vim.lsp.get_client_by_id()| Note: client may
@@ -935,7 +935,7 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
                 Parameters: ~
                     {client_id}  client id or |vim.lsp.client| object, or list
                                  thereof
-                    {force}      boolean (optional) shutdown forcefully
+                    {force}      (boolean) (optional) shutdown forcefully
 
 tagfunc({...})                                             *vim.lsp.tagfunc()*
                 Provides an interface between the built-in client and
@@ -980,7 +980,7 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                 position.
 
                 Parameters: ~
-                    {options}  table|nil Optional table which holds the
+                    {options}  (table|nil) Optional table which holds the
                                following optional fields:
                                • context (table|nil): Corresponds to `CodeActionContext` of the LSP specification:
                                  • diagnostics (table|nil): LSP`Diagnostic[]` . Inferred from the current position if not
@@ -1048,7 +1048,7 @@ execute_command({command_params})              *vim.lsp.buf.execute_command()*
                 Executes an LSP server command.
 
                 Parameters: ~
-                    {command_params}  table A valid `ExecuteCommandParams`
+                    {command_params}  (table) A valid `ExecuteCommandParams`
                                       object
 
                 See also: ~
@@ -1146,7 +1146,7 @@ formatting_sync({options}, {timeout_ms})
 <
 
                 Parameters: ~
-                    {options}     table|nil with valid `FormattingOptions`
+                    {options}     (table|nil) with valid `FormattingOptions`
                                   entries
                     {timeout_ms}  (number) Request timeout
 
@@ -1180,7 +1180,7 @@ range_code_action({context}, {start_pos}, {end_pos})
                 Performs |vim.lsp.buf.code_action()| for a given range.
 
                 Parameters: ~
-                    {context}    table|nil `CodeActionContext` of the LSP specification:
+                    {context}    (table|nil) `CodeActionContext` of the LSP specification:
                                  • diagnostics: (table|nil) LSP`Diagnostic[]` . Inferred from the current position if not
                                    provided.
                                  • only: (table|nil) List of LSP
@@ -1227,10 +1227,10 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                 Renames all references to the symbol under the cursor.
 
                 Parameters: ~
-                    {new_name}  string|nil If not provided, the user will be
+                    {new_name}  (string|nil) If not provided, the user will be
                                 prompted for a new name using
                                 |vim.ui.input()|.
-                    {options}   table|nil additional options
+                    {options}   (table|nil) additional options
                                 • filter (function|nil): Predicate to filter
                                   clients used for rename. Receives the
                                   attached clients as argument and must return
@@ -1275,7 +1275,7 @@ get_namespace({client_id})                *vim.lsp.diagnostic.get_namespace()*
                 |vim.diagnostic|.
 
                 Parameters: ~
-                    {client_id}  number The id of the LSP client
+                    {client_id}  (number) The id of the LSP client
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
 on_publish_diagnostics({_}, {result}, {ctx}, {config})
@@ -1305,7 +1305,7 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 <
 
                 Parameters: ~
-                    {config}  table Configuration table (see
+                    {config}  (table) Configuration table (see
                               |vim.diagnostic.config()|).
 
 
@@ -1316,20 +1316,20 @@ display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
                 Display the lenses using virtual text
 
                 Parameters: ~
-                    {lenses}     table of lenses to display (`CodeLens[] |
+                    {lenses}     (table) of lenses to display (`CodeLens[] |
                                  null`)
-                    {bufnr}      number
-                    {client_id}  number
+                    {bufnr}      (number)
+                    {client_id}  (number)
 
 get({bufnr})                                          *vim.lsp.codelens.get()*
                 Return all lenses for the given buffer
 
                 Parameters: ~
-                    {bufnr}  number Buffer number. 0 can be used for the
+                    {bufnr}  (number) Buffer number. 0 can be used for the
                              current buffer.
 
                 Return: ~
-                    table (`CodeLens[]`)
+                    (table) (`CodeLens[]`)
 
                                               *vim.lsp.codelens.on_codelens()*
 on_codelens({err}, {result}, {ctx}, {_})
@@ -1351,10 +1351,10 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
                 Store lenses for a specific buffer and client
 
                 Parameters: ~
-                    {lenses}     table of lenses to store (`CodeLens[] |
+                    {lenses}     (table) of lenses to store (`CodeLens[] |
                                  null`)
-                    {bufnr}      number
-                    {client_id}  number
+                    {bufnr}      (number)
+                    {client_id}  (number)
 
 
 ==============================================================================
@@ -1372,7 +1372,7 @@ hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
 <
 
                 Parameters: ~
-                    {config}  table Configuration table.
+                    {config}  (table) Configuration table.
                               • border: (default=nil)
                                 • Add borders to the floating window
                                 • See |nvim_open_win()|
@@ -1392,7 +1392,7 @@ signature_help({_}, {result}, {ctx}, {config})
 <
 
                 Parameters: ~
-                    {config}  table Configuration table.
+                    {config}  (table) Configuration table.
                               • border: (default=nil)
                                 • Add borders to the floating window
                                 • See |vim.api.nvim_open_win()|
@@ -1420,9 +1420,9 @@ apply_text_edits({text_edits}, {bufnr}, {offset_encoding})
                 Applies a list of text edits to a buffer.
 
                 Parameters: ~
-                    {text_edits}       table list of `TextEdit` objects
-                    {bufnr}            number Buffer id
-                    {offset_encoding}  string utf-8|utf-16|utf-32
+                    {text_edits}       (table) list of `TextEdit` objects
+                    {bufnr}            (number) Buffer id
+                    {offset_encoding}  (string) utf-8|utf-16|utf-32
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
@@ -1432,24 +1432,24 @@ apply_workspace_edit({workspace_edit}, {offset_encoding})
                 Applies a `WorkspaceEdit`.
 
                 Parameters: ~
-                    {workspace_edit}   table `WorkspaceEdit`
-                    {offset_encoding}  string utf-8|utf-16|utf-32 (required)
+                    {workspace_edit}   (table) `WorkspaceEdit`
+                    {offset_encoding}  (string) utf-8|utf-16|utf-32 (required)
 
 buf_clear_references({bufnr})            *vim.lsp.util.buf_clear_references()*
                 Removes document highlights from a buffer.
 
                 Parameters: ~
-                    {bufnr}  number Buffer id
+                    {bufnr}  (number) Buffer id
 
                                      *vim.lsp.util.buf_highlight_references()*
 buf_highlight_references({bufnr}, {references}, {offset_encoding})
                 Shows a list of document highlights for a certain buffer.
 
                 Parameters: ~
-                    {bufnr}            number Buffer id
-                    {references}       table List of `DocumentHighlight`
+                    {bufnr}            (number) Buffer id
+                    {references}       (table) List of `DocumentHighlight`
                                        objects to highlight
-                    {offset_encoding}  string One of "utf-8", "utf-16",
+                    {offset_encoding}  (string) One of "utf-8", "utf-16",
                                        "utf-32".
 
                 See also: ~
@@ -1464,9 +1464,9 @@ character_offset({buf}, {row}, {col}, {offset_encoding})
                     {buf}              buffer id (0 for current)
                     {row}              0-indexed line
                     {col}              0-indexed byte offset in line
-                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
-                                       to `offset_encoding` of first client of
-                                       `buf`
+                    {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
+                                       defaults to `offset_encoding` of first
+                                       client of `buf`
 
                 Return: ~
                     (number, number) `offset_encoding` index of the character
@@ -1543,8 +1543,8 @@ jump_to_location({location}, {offset_encoding})
                 Jumps to a location.
 
                 Parameters: ~
-                    {location}         table (`Location`|`LocationLink`)
-                    {offset_encoding}  string utf-8|utf-16|utf-32 (required)
+                    {location}         (table) (`Location`|`LocationLink`)
+                    {offset_encoding}  (string) utf-8|utf-16|utf-32 (required)
 
                 Return: ~
                     `true` if the jump succeeded
@@ -1559,9 +1559,9 @@ locations_to_items({locations}, {offset_encoding})
                 |setqflist()| or |setloclist()|.
 
                 Parameters: ~
-                    {locations}        table list of `Location`s or
+                    {locations}        (table) list of `Location`s or
                                        `LocationLink`s
-                    {offset_encoding}  string offset_encoding for locations
+                    {offset_encoding}  (string) offset_encoding for locations
                                        utf-8|utf-16|utf-32
 
                 Return: ~
@@ -1606,7 +1606,7 @@ make_formatting_params({options})
                 buffer and cursor position.
 
                 Parameters: ~
-                    {options}  table|nil with valid `FormattingOptions`
+                    {options}  (table|nil) with valid `FormattingOptions`
                                entries
 
                 Return: ~
@@ -1629,9 +1629,9 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
                                        end of the last visual selection.
                     {bufnr}            (optional, number): buffer handle or 0
                                        for current, defaults to current
-                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
-                                       to `offset_encoding` of first client of
-                                       `bufnr`
+                    {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
+                                       defaults to `offset_encoding` of first
+                                       client of `bufnr`
 
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
@@ -1645,9 +1645,9 @@ make_position_params({window}, {offset_encoding})
                 Parameters: ~
                     {window}           (optional, number): window handle or 0
                                        for current, defaults to current
-                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
-                                       to `offset_encoding` of first client of
-                                       buffer of `window`
+                    {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
+                                       defaults to `offset_encoding` of first
+                                       client of buffer of `window`
 
                 Return: ~
                     `TextDocumentPositionParams` object
@@ -1666,9 +1666,9 @@ make_range_params({window}, {offset_encoding})
                 Parameters: ~
                     {window}           (optional, number): window handle or 0
                                        for current, defaults to current
-                    {offset_encoding}  string utf-8|utf-16|utf-32|nil defaults
-                                       to `offset_encoding` of first client of
-                                       buffer of `window`
+                    {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
+                                       defaults to `offset_encoding` of first
+                                       client of buffer of `window`
 
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
@@ -1702,9 +1702,9 @@ open_floating_preview({contents}, {syntax}, {opts})
                 Shows contents in a floating window.
 
                 Parameters: ~
-                    {contents}  table of lines to show in window
-                    {syntax}    string of syntax to set for opened buffer
-                    {opts}      table with optional fields (additional keys
+                    {contents}  (table) of lines to show in window
+                    {syntax}    (string) of syntax to set for opened buffer
+                    {opts}      (table) with optional fields (additional keys
                                 are passed on to |vim.api.nvim_open_win()|)
                                 • height: (number) height of floating window
                                 • width: (number) width of floating window
@@ -1739,10 +1739,10 @@ parse_snippet({input})                          *vim.lsp.util.parse_snippet()*
                 Parses snippets in a completion entry.
 
                 Parameters: ~
-                    {input}  string unparsed snippet
+                    {input}  (string) unparsed snippet
 
                 Return: ~
-                    string parsed snippet
+                    (string) parsed snippet
 
 preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
                 Previews a location in a floating window
@@ -1795,7 +1795,7 @@ stylize_markdown({bufnr}, {contents}, {opts})
                 `open_floating_preview` instead
 
                 Parameters: ~
-                    {contents}  table of lines to show in window
+                    {contents}  (table) of lines to show in window
                     {opts}      dictionary with optional fields
                                 • height of floating window
                                 • width of floating window
@@ -1873,14 +1873,15 @@ get_level()                                          *vim.lsp.log.get_level()*
                 Gets the current log level.
 
                 Return: ~
-                    string current log level
+                    (string) current log level
 
 set_format_func({handle})                      *vim.lsp.log.set_format_func()*
                 Sets formatting function used to format logs
 
                 Parameters: ~
-                    {handle}  function function to apply to logging arguments,
-                              pass vim.inspect for multi-line formatting
+                    {handle}  (function) function to apply to logging
+                              arguments, pass vim.inspect for multi-line
+                              formatting
 
 set_level({level})                                   *vim.lsp.log.set_level()*
                 Sets the current log level.
@@ -1892,7 +1893,7 @@ should_log({level})                                 *vim.lsp.log.should_log()*
                 Checks whether the level is sufficient for logging.
 
                 Parameters: ~
-                    {level}  number log level
+                    {level}  (number) log level
 
                 Return: ~
                     (bool) true if would log, false if not
@@ -1998,19 +1999,19 @@ compute_diff({prev_lines}, {curr_lines}, {firstline}, {lastline},
                 curr lines
 
                 Parameters: ~
-                    {prev_lines}       table list of lines
-                    {curr_lines}       table list of lines
-                    {firstline}        number line to begin search for first
+                    {prev_lines}       (table) list of lines
+                    {curr_lines}       (table) list of lines
+                    {firstline}        (number) line to begin search for first
                                        difference
-                    {lastline}         number line to begin search in
+                    {lastline}         (number) line to begin search in
                                        old_lines for last difference
-                    {new_lastline}     number line to begin search in
+                    {new_lastline}     (number) line to begin search in
                                        new_lines for last difference
-                    {offset_encoding}  string encoding requested by language
+                    {offset_encoding}  (string) encoding requested by language
                                        server
 
                 Return: ~
-                    table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#textDocumentContentChangeEvent
+                    (table) TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#textDocumentContentChangeEvent
 
 
 ==============================================================================
@@ -2027,10 +2028,10 @@ resolve_capabilities({server_capabilities})
                 capabilities.
 
                 Parameters: ~
-                    {server_capabilities}  table Table of capabilities
+                    {server_capabilities}  (table) Table of capabilities
                                            supported by the server
 
                 Return: ~
-                    table Normalized table of capabilities
+                    (table) Normalized table of capabilities
 
  vim:tw=78:ts=8:ft=help:norl:
