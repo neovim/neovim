@@ -1017,21 +1017,10 @@ vim.call({func}, {...})                                           *vim.call()*
         See also |vim.fn|.
         Equivalent to: >
             vim.fn[func]({...})
-<
-vim.cmd({cmd})                                                     *vim.cmd()*
-        Executes multiple lines of Vimscript at once. It is an alias to
-        |nvim_exec()|, where `output` is set to false. Thus it works identical
-        to |:source|.
-        See also |ex-cmd-index|.
-        Example: >
-            vim.cmd('echo 42')
-            vim.cmd([[
-              augroup My_group
-                autocmd!
-                autocmd FileType c setlocal cindent
-              augroup END
-            ]])
-<
+
+vim.cmd({command})
+        See |vim.cmd()|.
+
 vim.fn.{func}({...})                                                  *vim.fn*
         Invokes |vim-function| or |user-function| {func} with arguments {...}.
         To call autoload functions, use the syntax: >
@@ -1295,6 +1284,34 @@ vim.wo                                                                *vim.wo*
 <
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
+
+cmd({command})                                                     *vim.cmd()*
+                Execute Vim script commands.
+
+                Example: >
+
+                   vim.cmd('echo 42')
+                   vim.cmd([[
+                     augroup My_group
+                       autocmd!
+                       autocmd FileType c setlocal cindent
+                     augroup END
+                   ]])
+                   vim.cmd({ cmd = 'echo', args = { '"foo"' } })
+<
+
+                Parameters: ~
+                    {command}  string|table Command(s) to execute. If a
+                               string, executes multiple lines of Vim script
+                               at once. In this case, it is an alias to
+                               |nvim_exec()|, where `output` is set to false.
+                               Thus it works identical to |:source|. If a
+                               table, executes a single command. In this case,
+                               it is an alias to |nvim_cmd()| where `opts` is
+                               empty.
+
+                See also: ~
+                    |ex-cmd-index|
 
                                              *vim.connection_failure_errmsg()*
 connection_failure_errmsg({consequence})

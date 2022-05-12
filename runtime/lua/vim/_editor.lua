@@ -284,9 +284,33 @@ vim.funcref = function(viml_func_name)
   return vim.fn[viml_func_name]
 end
 
--- An easier alias for commands.
-vim.cmd = function(command)
-  return vim.api.nvim_exec(command, false)
+--- Execute Vim script commands.
+---
+--- Example:
+--- <pre>
+---   vim.cmd('echo 42')
+---   vim.cmd([[
+---     augroup My_group
+---       autocmd!
+---       autocmd FileType c setlocal cindent
+---     augroup END
+---   ]])
+---   vim.cmd({ cmd = 'echo', args = { '"foo"' } })
+--- </pre>
+---
+---@param command string|table Command(s) to execute.
+---                            If a string, executes multiple lines of Vim script at once. In this
+---                            case, it is an alias to |nvim_exec()|, where `output` is set to
+---                            false. Thus it works identical to |:source|.
+---                            If a table, executes a single command. In this case, it is an alias
+---                            to |nvim_cmd()| where `opts` is empty.
+---@see |ex-cmd-index|
+function vim.cmd(command)
+  if type(command) == 'table' then
+    return vim.api.nvim_cmd(command, {})
+  else
+    return vim.api.nvim_exec(command, false)
+  end
 end
 
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
