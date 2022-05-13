@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=Neovim
 GenericName=Text Editor
+GenericName[ckb]=دەستکاریکەری دەق
 GenericName[de]=Texteditor
 GenericName[fr]=Éditeur de texte
 GenericName[ru]=Текстовый редактор
@@ -16,6 +17,7 @@ Comment[bg]=Редактиране на текстови файлове
 Comment[bn]=টেক্স্ট ফাইল এডিট করুন
 Comment[bs]=Izmijeni tekstualne datoteke
 Comment[ca]=Edita fitxers de text
+Comment[ckb]=دەستکاریی فایلی دەق بکە
 Comment[cs]=Úprava textových souborů
 Comment[cy]=Golygu ffeiliau testun
 Comment[da]=Redigér tekstfiler
@@ -79,6 +81,7 @@ Exec=nvim %F
 Terminal=true
 Type=Application
 Keywords=Text;editor;
+Keywords[ckb]=دەق;دەستکاریکەر;
 Keywords[fr]=Texte;éditeur;
 Keywords[ru]=текст;текстовый редактор;
 Keywords[sr]=Текст;едитор;
