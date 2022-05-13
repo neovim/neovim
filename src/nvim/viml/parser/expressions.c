@@ -2646,6 +2646,7 @@ viml_pexpr_parse_figure_brace_closing_error:
           kvi_push(pt_stack, kEPTLambdaArguments);
           lambda_node = cur_node;
         } else {
+          // uncrustify:off
           ADD_IDENT(do {
             NEW_NODE_WITH_CUR_POS(cur_node,
                                   kExprNodeCurlyBracesIdentifier);
@@ -2660,6 +2661,7 @@ viml_pexpr_parse_figure_brace_closing_error:
             want_node = kENodeValue;
           } while (0),
                     Curly);
+          // uncrustify:on
         }
         if (pt_is_assignment(cur_pt)
             && !pt_is_assignment(kv_last(pt_stack))) {
@@ -2737,6 +2739,7 @@ viml_pexpr_parse_figure_brace_closing_error:
                                  : HL(IdentifierName)));
       } else {
         if (scope == kExprVarScopeMissing) {
+          // uncrustify:off
           ADD_IDENT(do {
               NEW_NODE_WITH_CUR_POS(cur_node, kExprNodePlainIdentifier);
               cur_node->data.var.scope = scope;
@@ -2745,6 +2748,7 @@ viml_pexpr_parse_figure_brace_closing_error:
               want_node = kENodeOperator;
             } while (0),
                     IdentifierName);
+          // uncrustify:on
         } else {
           OP_MISSING;
         }
