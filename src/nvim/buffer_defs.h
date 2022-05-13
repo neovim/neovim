@@ -233,6 +233,8 @@ typedef struct {
 #define w_p_sbr w_onebuf_opt.wo_sbr    // 'showbreak'
   char_u *wo_stl;
 #define w_p_stl w_onebuf_opt.wo_stl     // 'statusline'
+  char *wo_wbr;
+#define w_p_wbr w_onebuf_opt.wo_wbr   // 'winbar'
   int wo_scb;
 #define w_p_scb w_onebuf_opt.wo_scb    // 'scrollbind'
   int wo_diff_saved;           // options were saved for starting diff mode
@@ -1235,6 +1237,7 @@ struct window_S {
   struct {
     int stl;
     int stlnc;
+    int wbr;
     int horiz;
     int horizup;
     int horizdown;
@@ -1282,13 +1285,19 @@ struct window_S {
   //
   int w_winrow;                     // first row of window in screen
   int w_height;                     // number of rows in window, excluding
-                                    // status/command/winbar line(s)
+                                    // status/command line(s)
   int w_status_height;              // number of status lines (0 or 1)
+  int w_winbar_height;              // number of window bars (0 or 1)
   int w_wincol;                     // Leftmost column of window in screen.
   int w_width;                      // Width of window, excluding separation.
   int w_hsep_height;                // Number of horizontal separator rows (0 or 1)
   int w_vsep_width;                 // Number of vertical separator columns (0 or 1).
   pos_save_T w_save_cursor;         // backup of cursor pos and topline
+
+  int w_winrow_off;  ///< offset from winrow to the inner window area
+  int w_wincol_off;  ///< offset from wincol to the inner window area
+                     ///< this includes float border but excludes special columns
+                     ///< implemented in win_line() (i.e. signs, folds, numbers)
 
   // inner size of window, which can be overridden by external UI
   int w_height_inner;
@@ -1379,6 +1388,7 @@ struct window_S {
   linenr_T w_redraw_top;            // when != 0: first line needing redraw
   linenr_T w_redraw_bot;            // when != 0: last line needing redraw
   bool w_redr_status;               // if true status line must be redrawn
+  bool w_redr_winbar;               // if true window bar must be redrawn
   bool w_redr_border;               // if true border must be redrawn
 
   // remember what is shown in the ruler for this window (if 'ruler' set)
@@ -1408,6 +1418,7 @@ struct window_S {
 
   // A few options have local flags for P_INSECURE.
   uint32_t w_p_stl_flags;           // flags for 'statusline'
+  uint32_t w_p_wbr_flags;           // flags for 'winbar'
   uint32_t w_p_fde_flags;           // flags for 'foldexpr'
   uint32_t w_p_fdt_flags;           // flags for 'foldtext'
   int *w_p_cc_cols;         // array of columns to highlight or NULL

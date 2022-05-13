@@ -2274,8 +2274,9 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
 ///           - fillchar: (string) Character to fill blank spaces in the statusline (see
 ///                                'fillchars'). Treated as single-width even if it isn't.
 ///           - highlights: (boolean) Return highlight information.
+///           - use_winbar: (boolean) Evaluate winbar instead of statusline.
 ///           - use_tabline: (boolean) Evaluate tabline instead of statusline. When |TRUE|, {winid}
-///                                    is ignored.
+///                                    is ignored. Mutually exclusive with {use_winbar}.
 ///
 /// @param[out] err Error details, if any.
 /// @return Dictionary containing statusline information, with these keys:
@@ -2294,6 +2295,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   int maxwidth;
   int fillchar = 0;
   Window window = 0;
+  bool use_winbar = false;
   bool use_tabline = false;
   bool highlights = false;
 
@@ -2313,7 +2315,6 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     window = (Window)opts->winid.data.integer;
   }
-
   if (HAS_KEY(opts->fillchar)) {
     if (opts->fillchar.type != kObjectTypeString || opts->fillchar.data.string.size == 0
         || ((size_t)utf_ptr2len(opts->fillchar.data.string.data)
@@ -2323,7 +2324,6 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     }
     fillchar = utf_ptr2char(opts->fillchar.data.string.data);
   }
-
   if (HAS_KEY(opts->highlights)) {
     highlights = api_object_to_bool(opts->highlights, "highlights", false, err);
 
@@ -2331,13 +2331,23 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       return result;
     }
   }
+  if (HAS_KEY(opts->use_winbar)) {
+    use_winbar = api_object_to_bool(opts->use_winbar, "use_winbar", false, err);
 
+    if (ERROR_SET(err)) {
+      return result;
+    }
+  }
   if (HAS_KEY(opts->use_tabline)) {
     use_tabline = api_object_to_bool(opts->use_tabline, "use_tabline", false, err);
 
     if (ERROR_SET(err)) {
       return result;
     }
+  }
+  if (use_winbar && use_tabline) {
+    api_set_error(err, kErrorTypeValidation, "use_winbar and use_tabline are mutually exclusive");
+    return result;
   }
 
   win_T *wp, *ewp;
@@ -2348,7 +2358,6 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     fillchar = ' ';
   } else {
     wp = find_window_by_handle(window, err);
-
     if (wp == NULL) {
       api_set_error(err, kErrorTypeException, "unknown winid %d", window);
       return result;
@@ -2356,8 +2365,12 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     ewp = wp;
 
     if (fillchar == 0) {
-      int attr;
-      fillchar = fillchar_status(&attr, wp);
+      if (use_winbar) {
+        fillchar = wp->w_p_fcs_chars.wbr;
+      } else {
+        int attr;
+        fillchar = fillchar_status(&attr, wp);
+      }
     }
   }
 
@@ -2369,7 +2382,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     maxwidth = (int)opts->maxwidth.data.integer;
   } else {
-    maxwidth = (use_tabline || global_stl_height() > 0) ? Columns : wp->w_width;
+    maxwidth = (use_tabline || (!use_winbar && global_stl_height() > 0)) ? Columns : wp->w_width;
   }
 
   char buf[MAXPATHL];
@@ -2404,7 +2417,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
     // add the default highlight at the beginning of the highlight list
     if (hltab->start == NULL || ((char *)hltab->start - buf) != 0) {
       Dictionary hl_info = ARRAY_DICT_INIT;
-      grpname = get_default_stl_hl(wp);
+      grpname = get_default_stl_hl(wp, use_winbar);
 
       PUT(hl_info, "start", INTEGER_OBJ(0));
       PUT(hl_info, "group", CSTR_TO_OBJ(grpname));
@@ -2418,22 +2431,18 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       PUT(hl_info, "start", INTEGER_OBJ((char *)sp->start - buf));
 
       if (sp->userhl == 0) {
-        grpname = get_default_stl_hl(wp);
+        grpname = get_default_stl_hl(wp, use_winbar);
       } else if (sp->userhl < 0) {
         grpname = (char *)syn_id2name(-sp->userhl);
       } else {
         snprintf(user_group, sizeof(user_group), "User%d", sp->userhl);
         grpname = user_group;
       }
-
       PUT(hl_info, "group", CSTR_TO_OBJ(grpname));
-
       ADD(hl_values, DICTIONARY_OBJ(hl_info));
     }
-
     PUT(result, "highlights", ARRAY_OBJ(hl_values));
   }
-
   PUT(result, "str", CSTR_TO_OBJ((char *)buf));
 
   return result;

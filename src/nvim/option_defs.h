@@ -618,6 +618,7 @@ EXTERN int p_stmp;              // 'shelltemp'
 EXTERN int p_ssl;               // 'shellslash'
 #endif
 EXTERN char_u *p_stl;         // 'statusline'
+EXTERN char *p_wbr;         // 'winbar'
 EXTERN int p_sr;                // 'shiftround'
 EXTERN char_u *p_shm;         // 'shortmess'
 EXTERN char_u *p_sbr;         // 'showbreak'
@@ -897,6 +898,7 @@ enum {
   WV_FCS,
   WV_LCS,
   WV_WINBL,
+  WV_WBR,
   WV_COUNT,  // must be the last one
 };
 

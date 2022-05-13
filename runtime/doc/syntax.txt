@@ -5244,6 +5244,10 @@ Whitespace	"nbsp", "space", "tab", "multispace", "lead" and "trail"
 		in 'listchars'.
 							*hl-WildMenu*
 WildMenu	Current match in 'wildmenu' completion.
+							*hl-WinBar*
+WinBar		Window bar of current window.
+							*hl-WinBarNC*
+WinBarNC	Window bar of not-current windows.
 
 					*hl-User1* *hl-User1..9* *hl-User9*
 The 'statusline' syntax allows the use of 9 different highlights in the

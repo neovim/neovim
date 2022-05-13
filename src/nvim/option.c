@@ -2149,6 +2149,8 @@ static uint32_t *insecure_flag(win_T *const wp, int opt_idx, int opt_flags)
     switch ((int)options[opt_idx].indir) {
     case PV_STL:
       return &wp->w_p_stl_flags;
+    case PV_WBR:
+      return &wp->w_p_wbr_flags;
     case PV_FDE:
       return &wp->w_p_fde_flags;
     case PV_FDT:
@@ -2930,8 +2932,8 @@ ambw_end:
       curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
       redraw_titles();
     }
-  } else if (gvarp == &p_stl || varp == &p_tal || varp == &p_ruf) {
-    // 'statusline', 'tabline' or 'rulerformat'
+  } else if (gvarp == &p_stl || gvarp == (char_u **)&p_wbr || varp == &p_tal || varp == &p_ruf) {
+    // 'statusline', 'winbar', 'tabline' or 'rulerformat'
     int wid;
 
     if (varp == &p_ruf) {       // reset ru_wid first
@@ -2950,11 +2952,15 @@ ambw_end:
         errmsg = check_stl_option(p_ruf);
       }
     } else if (varp == &p_ruf || s[0] != '%' || s[1] != '!') {
-      // check 'statusline' or 'tabline' only if it doesn't start with "%!"
+      // check 'statusline', 'winbar' or 'tabline' only if it doesn't start with "%!"
       errmsg = check_stl_option(s);
     }
     if (varp == &p_ruf && errmsg == NULL) {
       comp_col();
+    }
+    // add / remove window bars for 'winbar'
+    if (gvarp == (char_u **)&p_wbr) {
+      set_winbar();
     }
   } else if (gvarp == &p_cpt) {
     // check if it is a valid value for 'complete' -- Acevedo
@@ -3570,6 +3576,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
   struct chars_tab fcs_tab[] = {
     { &wp->w_p_fcs_chars.stl,        "stl",        ' '  },
     { &wp->w_p_fcs_chars.stlnc,      "stlnc",      ' '  },
+    { &wp->w_p_fcs_chars.wbr,        "wbr",        ' '  },
     { &wp->w_p_fcs_chars.horiz,      "horiz",      9472 },  // ─
     { &wp->w_p_fcs_chars.horizup,    "horizup",    9524 },  // ┴
     { &wp->w_p_fcs_chars.horizdown,  "horizdown",  9516 },  // ┬
@@ -3612,15 +3619,15 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
     if (*p_ambw == 'd') {
       // XXX: If ambiwidth=double then some characters take 2 columns,
       // which is forbidden (TUI limitation?). Set old defaults.
-      fcs_tab[2].def  = '-';
       fcs_tab[3].def  = '-';
       fcs_tab[4].def  = '-';
-      fcs_tab[5].def  = '|';
+      fcs_tab[5].def  = '-';
       fcs_tab[6].def  = '|';
       fcs_tab[7].def  = '|';
-      fcs_tab[8].def  = '+';
-      fcs_tab[9].def  = '-';
-      fcs_tab[12].def = '|';
+      fcs_tab[8].def  = '|';
+      fcs_tab[9].def  = '+';
+      fcs_tab[10].def  = '-';
+      fcs_tab[13].def = '|';
     }
   }
 
@@ -4766,7 +4773,7 @@ static void check_redraw(uint32_t flags)
   bool doclear = (flags & P_RCLR) == P_RCLR;
   bool all = ((flags & P_RALL) == P_RALL || doclear);
 
-  if ((flags & P_RSTAT) || all) {  // mark all status lines dirty
+  if ((flags & P_RSTAT) || all) {  // mark all status lines and window bars dirty
     status_redraw_all();
   }
 
@@ -5814,6 +5821,9 @@ void unset_global_local_option(char *name, void *from)
   case PV_STL:
     clear_string_option(&((win_T *)from)->w_p_stl);
     break;
+  case PV_WBR:
+    clear_string_option((char_u **)&((win_T *)from)->w_p_wbr);
+    break;
   case PV_UL:
     buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
     break;
@@ -5891,6 +5901,8 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
       return (char_u *)&(curwin->w_p_sbr);
     case PV_STL:
       return (char_u *)&(curwin->w_p_stl);
+    case PV_WBR:
+      return (char_u *)&(curwin->w_p_wbr);
     case PV_UL:
       return (char_u *)&(curbuf->b_p_ul);
     case PV_LW:
@@ -5984,6 +5996,9 @@ static char_u *get_varp(vimoption_T *p)
   case PV_STL:
     return *curwin->w_p_stl != NUL
            ? (char_u *)&(curwin->w_p_stl) : p->var;
+  case PV_WBR:
+    return *curwin->w_p_wbr != NUL
+           ? (char_u *)&(curwin->w_p_wbr) : p->var;
   case PV_UL:
     return curbuf->b_p_ul != NO_LOCAL_UNDOLEVEL
            ? (char_u *)&(curbuf->b_p_ul) : p->var;
@@ -6252,6 +6267,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_rlc = vim_strsave(from->wo_rlc);
   to->wo_sbr = vim_strsave(from->wo_sbr);
   to->wo_stl = vim_strsave(from->wo_stl);
+  to->wo_wbr = xstrdup(from->wo_wbr);
   to->wo_wrap = from->wo_wrap;
   to->wo_wrap_save = from->wo_wrap_save;
   to->wo_lbr = from->wo_lbr;
@@ -6327,6 +6343,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fcs);
   check_string_option(&wop->wo_lcs);
   check_string_option(&wop->wo_ve);
+  check_string_option((char_u **)&wop->wo_wbr);
 }
 
 /// Free the allocated memory inside a winopt_T.
@@ -6352,6 +6369,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fcs);
   clear_string_option(&wop->wo_lcs);
   clear_string_option(&wop->wo_ve);
+  clear_string_option((char_u **)&wop->wo_wbr);
 }
 
 void didset_window_options(win_T *wp)

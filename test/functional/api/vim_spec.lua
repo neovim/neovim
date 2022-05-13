@@ -3102,6 +3102,19 @@ describe('API', function()
             'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
             { use_tabline = true, highlights = true }))
       end)
+      it('works with winbar', function()
+        eq({
+            str = 'TextWithNoHighlightTextWithWarningHighlight',
+            width = 43,
+            highlights = {
+              { start = 0, group = 'WinBar' },
+              { start = 19, group = 'WarningMsg' }
+            }
+          },
+          meths.eval_statusline(
+            'TextWithNoHighlight%#WarningMsg#TextWithWarningHighlight',
+            { use_winbar = true, highlights = true }))
+      end)
     end)
   end)
   describe('nvim_parse_cmd', function()

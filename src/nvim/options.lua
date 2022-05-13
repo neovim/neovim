@@ -2832,6 +2832,16 @@ return {
       defaults={if_true="menu"}
     },
     {
+      full_name='winbar', abbreviation='wbr',
+      short_desc=N_("custom format for the window bar"),
+      type='string', scope={'global', 'window'},
+      alloced=true,
+      modelineexpr=true,
+      redraw={'statuslines'},
+      varname='p_wbr',
+      defaults={if_true=""}
+    },
+    {
       full_name='winblend', abbreviation='winbl',
       short_desc=N_("Controls transparency level for floating windows"),
       type='number', scope={'window'},

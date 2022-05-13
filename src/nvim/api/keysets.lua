@@ -80,6 +80,7 @@ return {
     "maxwidth";
     "fillchar";
     "highlights";
+    "use_winbar";
     "use_tabline";
   };
   option = {
