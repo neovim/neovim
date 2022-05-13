@@ -1,7 +1,8 @@
 " scdoc compiler for Vim
 " Compiler: scdoc
-" Maintainer: Greg Anders <greg@gpanders.com>
+" Maintainer: Gregory Anders <contact@gpanders.com>
 " Last Updated: 2019-10-24
+" Upstream: https://github.com/gpanders/vim-scdoc
 
 if exists('current_compiler')
     finish
