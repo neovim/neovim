@@ -71,12 +71,18 @@ N			Repeat the latest "/" or "?" [count] times in
 			Only whole keywords are searched for, like with the
 			command "/\<keyword\>".  |exclusive|
 			'ignorecase' is used, 'smartcase' is not.
+							*v_star-default*
+			In Visual mode, search forward for the current selection.
+			|default-mappings|
 
 							*#*
 #			Same as "*", but search backward.  The pound sign
 			(character 163) also works.  If the "#" key works as
 			backspace, try using "stty erase <BS>" before starting
 			Vim (<BS> is CTRL-H or a real backspace).
+							*v_#-default*
+			In Visual mode, search backward for the current selection.
+			|default-mappings|
 
 							*gstar*
 g*			Like "*", but don't put "\<" and "\>" around the word.

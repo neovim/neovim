@@ -848,6 +848,8 @@ void init_default_mappings(void)
           MODE_NORMAL, true);
   add_map((char_u *)"<C-U> <C-G>u<C-U>", MODE_INSERT, true);
   add_map((char_u *)"<C-W> <C-G>u<C-W>", MODE_INSERT, true);
+  add_map((char_u *)"* y/\\\\V<C-R>\"<CR>", MODE_VISUAL, true);
+  add_map((char_u *)"# y?\\\\V<C-R>\"<CR>", MODE_VISUAL, true);
 }
 
 // Insert a string in position 'offset' in the typeahead buffer (for "@r"
