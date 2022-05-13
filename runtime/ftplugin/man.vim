@@ -24,7 +24,11 @@ if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> k             gk
   nnoremap <silent> <buffer> gO            :call man#show_toc()<CR>
   nnoremap <silent> <buffer> <2-LeftMouse> :Man<CR>
-  nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>c
+  if get(b:, 'pager')
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>q
+  else
+    nnoremap <silent> <buffer> <nowait> q :lclose<CR><C-W>c
+  endif
 endif
 
 if get(g:, 'ft_man_folding_enable', 0)
