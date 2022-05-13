@@ -2904,8 +2904,8 @@ void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
       mapargs->rhs_len = 0;
       mapargs->rhs_is_noop = true;
     } else {
-      replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
-                                   REPTERM_DO_LT | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
+      replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, REPTERM_DO_LT, NULL,
+                                   cpo_flags);
       mapargs->rhs_len = STRLEN(replaced);
       // XXX: even when orig_rhs is non-empty, replace_termcodes may produce an empty string.
       mapargs->rhs_is_noop = orig_rhs[0] != NUL && mapargs->rhs_len == 0;

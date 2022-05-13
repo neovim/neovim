@@ -313,11 +313,6 @@ it('unsimplified mapping works when there was a partial match vim-patch:8.2.4504
   expect('xb')
 end)
 
-it('rhs of a mapping is not simplified', function()
-  command('nnoremap <Plug>foo <C-J>')
-  eq('<C-J>', funcs.maparg('<Plug>foo'))
-end)
-
 describe('input non-printable chars', function()
   after_each(function()
     os.remove('Xtest-overwrite')
