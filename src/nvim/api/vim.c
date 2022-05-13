@@ -133,15 +133,33 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 /// @param ns_id Namespace id for this highlight |nvim_create_namespace()|.
 ///              Use 0 to set a highlight group globally |:highlight|.
 /// @param name  Highlight group name, e.g. "ErrorMsg"
-/// @param val   Highlight definition map, like |synIDattr()|. In
-///              addition, the following keys are recognized:
+/// @param val   Highlight definition map, accepts the following keys:
+///                - fg (or foreground): color name or "#RRGGBB", see note.
+///                - bg (or background): color name or "#RRGGBB", see note.
+///                - sp (or special): color name or "#RRGGBB"
+///                - blend: integer between 0 and 100
+///                - bold: boolean
+///                - standout: boolean
+///                - underline: boolean
+///                - underlineline: boolean
+///                - undercurl: boolean
+///                - underdot: boolean
+///                - underdash: boolean
+///                - strikethrough: boolean
+///                - italic: boolean
+///                - reverse: boolean
+///                - nocombine: boolean
+///                - link: name of another highlight group to link to, see |:hi-link|.
+///              Additionally, the following keys are recognized:
 ///                - default: Don't override existing definition |:hi-default|
 ///                - ctermfg: Sets foreground of cterm color |highlight-ctermfg|
 ///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
-///                - cterm: cterm attribute map, like
-///                  |highlight-args|.
-///                  Note: Attributes default to those set for `gui`
-///                        if not set.
+///                - cterm: cterm attribute map, like |highlight-args|.
+///                  Note: Attributes default to those set for `gui` if not set.
+///             Note: The fg and bg keys also accept the string values `"fg"` or `"bg"`
+///                   which act as aliases to the corresponding fg and bg values of the
+///                   Normal group. If the Normal group has not been defined, using these
+///                   values results in an error.
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
