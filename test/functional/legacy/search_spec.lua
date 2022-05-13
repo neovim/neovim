@@ -7,6 +7,7 @@ local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
 local poke_eventloop = helpers.poke_eventloop
+local exec = helpers.exec
 
 describe('search cmdline', function()
   local screen
@@ -638,5 +639,36 @@ describe('search cmdline', function()
       :lvimgrepa "the" **/*.txt^     |
     ]])
     feed('<esc>')
+  end)
+end)
+
+describe('Search highlight', function()
+  before_each(clear)
+  it('Search highlight is combined with Visual highlight vim-patch:8.2.2797', function()
+    local screen = Screen.new(40, 6)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [2] = {bold = true}, -- ModeMsg, Search
+      [3] = {background = Screen.colors.LightGrey},  -- Visual
+      [4] = {background = Screen.colors.Yellow, bold = true},  -- Search
+      [5] = {background = Screen.colors.LightGrey, bold = true},  -- Visual + Search
+    })
+    screen:attach()
+    exec([[
+      set hlsearch noincsearch
+      call setline(1, repeat(["xxx yyy zzz"], 3))
+      hi Search gui=bold
+      /yyy
+      call cursor(1, 6)
+    ]])
+    feed('vjj')
+    screen:expect([[
+      xxx {4:y}{5:yy}{3: zzz}                             |
+      {3:xxx }{5:yyy}{3: zzz}                             |
+      {3:xxx }{5:y}{4:^yy} zzz                             |
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:-- VISUAL --}                            |
+    ]])
   end)
 end)

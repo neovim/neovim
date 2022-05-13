@@ -3006,6 +3006,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
       if (area_attr != 0) {
         char_attr = hl_combine_attr(line_attr, area_attr);
+        if (!highlight_match) {
+          // let search highlight show in Visual area if possible
+          char_attr = hl_combine_attr(search_attr, char_attr);
+        }
       } else if (search_attr != 0) {
         char_attr = hl_combine_attr(line_attr, search_attr);
       }
