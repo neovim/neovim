@@ -3137,10 +3137,13 @@ text...
 :for {var} in {object}					*:for* *E690* *E732*
 :endfo[r]						*:endfo* *:endfor*
 			Repeat the commands between `:for` and `:endfor` for
-			each item in {object}.  {object} can be a |List| or
-			a |Blob|.  Variable {var} is set to the value of each
-			item.  When an error is detected for a command inside
-			the loop, execution continues after the `endfor`.
+			each item in {object}.  {object} can be a |List|,
+			a |Blob| or a |String|.
+
+			Variable {var} is set to the value of each item.
+
+			When an error is detected for a command inside the
+			loop, execution continues after the `endfor`.
 			Changing {object} inside the loop affects what items
 			are used.  Make a copy if this is unwanted: >
 				:for item in copy(mylist)

@@ -983,7 +983,7 @@ modified, but is forced (with '!') to be removed from a window, and
 'autowrite' is off or the buffer can't be written.
 
 You can make a hidden buffer not hidden by starting to edit it with any
-command.  Or by deleting it with the ":bdelete" command.
+command, or by deleting it with the ":bdelete" command.
 
 The 'hidden' is global, it is used for all buffers.  The 'bufhidden' option
 can be used to make an exception for a specific buffer.  It can take these

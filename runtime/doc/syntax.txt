@@ -453,7 +453,7 @@ your own highlight colors for the progress bar. Example: >
 	hi TOhtmlProgress guifg=#c0ffee ctermbg=7
 <
 							 *g:html_number_lines*
-Default: current 'number' setting.
+Default: Current 'number' setting.
 When 0, buffer text is displayed in the generated HTML without line numbering.
 When 1, a column of line numbers is added to the generated HTML with the same
 highlighting as the line number column in Vim (|hl-LineNr|).
@@ -542,7 +542,7 @@ folded text will open the fold as if |g:html_hover_unfold| were set.
    :let g:html_no_foldcolumn = 1
 <
 				*TOhtml-uncopyable-text* *g:html_prevent_copy*
-Default: empty string.
+Default: Empty string.
 This option prevents certain regions of the generated HTML from being copied,
 when you select all text in document rendered in a browser and copy it. Useful
 for allowing users to copy-paste only the source text even if a fold column or
@@ -568,7 +568,7 @@ uncopyable regions. In some browsers, especially older browsers, after
 selecting an entire page and copying the selection, the <input> tags are not
 pasted with the page text. If |g:html_no_invalid| is 0, the <input> tags have
 invalid type; this works in more browsers, but the page will not validate.
-Note: this method does NOT work in recent versions of Chrome and equivalent
+Note: This method does NOT work in recent versions of Chrome and equivalent
 browsers; the <input> tags get pasted with the text.
 
 When "fallback" (default value), the same <input> elements are generated for
@@ -624,12 +624,12 @@ To append a string "_mystring" to the end of each ID: >
 
 	:let g:html_id_expr = '"_mystring"'
 <
-Note, when converting a diff view to HTML, the expression will only be
+Note: When converting a diff view to HTML, the expression will only be
 evaluated for the first window in the diff, and the result used for all the
 windows.
 
 					  *TOhtml-wrap-text* *g:html_pre_wrap*
-Default: current 'wrap' setting.
+Default: Current 'wrap' setting.
 When 0, if |g:html_no_pre| is 0 or unset, the text in the generated HTML does
 not wrap at the edge of the browser window.
 When 1, if |g:html_use_css| is 1, the CSS 2.0 "white-space:pre-wrap" value is
@@ -689,7 +689,7 @@ wide browser support. However, you can override this to support specific
 encodings that may not be automatically detected by default (see options
 below). See http://www.iana.org/assignments/character-sets for the IANA names.
 
-Note, by default all Unicode encodings are converted to UTF-8 with no BOM in
+Note: By default all Unicode encodings are converted to UTF-8 with no BOM in
 the generated HTML, as recommended by W3C:
 
 	http://www.w3.org/International/questions/qa-choosing-encodings
@@ -1293,8 +1293,8 @@ the global or buffer-local variable load_doxygen_syntax.  This is done by
 adding the following to your vimrc. >
 	:let g:load_doxygen_syntax=1
 
-There are a couple of variables that have an effect on syntax highlighting, and
-are to do with non-standard highlighting options.
+There are a couple of variables that have an effect on syntax highlighting,
+and are to do with non-standard highlighting options.
 
 Variable			Default	Effect ~
 g:doxygen_enhanced_color
@@ -1436,8 +1436,8 @@ To enable highlighting some special atoms, put this in your vimrc: >
 
 ELIXIR						*elixir.vim* *ft-elixir-syntax*
 
-Elixir is a dynamic, functional language for building scalable and maintainable
-applications.
+Elixir is a dynamic, functional language for building scalable and
+maintainable applications.
 
 The following file extensions are auto-detected as Elixir file types:
 
@@ -1453,7 +1453,7 @@ Elixir.
 FLEXWIKI				*flexwiki.vim* *ft-flexwiki-syntax*
 
 FlexWiki is an ASP.NET-based wiki package available at http://www.flexwiki.com
-NOTE: this site currently doesn't work, on Wikipedia is mentioned that
+NOTE: This site currently doesn't work, on Wikipedia is mentioned that
 development stopped in 2009.
 
 Syntax highlighting is available for the most common elements of FlexWiki
@@ -1533,8 +1533,8 @@ syntax highlighting will not be correct if the form is incorrectly set.
 When you create a new fortran file, the syntax script assumes fixed source
 form.  If you always use free source form, then >
     :let fortran_free_source=1
-in your vimrc prior to the :syntax on command.  If you always use fixed source
-form, then >
+in your vimrc prior to the :syntax on command.  If you always use fixed
+source form, then >
     :let fortran_fixed_source=1
 in your vimrc prior to the :syntax on command.
 
@@ -1807,8 +1807,8 @@ ends with -->) you can define >
 
 JavaScript and Visual Basic embedded inside HTML documents are highlighted as
 'Special' with statements, comments, strings and so on colored as in standard
-programming languages.  Note that only JavaScript and Visual Basic are currently
-supported, no other scripting language has been added yet.
+programming languages.  Note that only JavaScript and Visual Basic are
+currently supported, no other scripting language has been added yet.
 
 Embedded and inlined cascading style sheets (CSS) are highlighted too.
 
@@ -1912,8 +1912,8 @@ The java.vim syntax highlighting file offers several options:
 
 In Java 1.0.2 it was never possible to have braces inside parens, so this was
 flagged as an error.  Since Java 1.1 this is possible (with anonymous
-classes), and therefore is no longer marked as an error.  If you prefer the old
-way, put the following line into your vim startup file: >
+classes), and therefore is no longer marked as an error.  If you prefer the
+old way, put the following line into your vim startup file: >
 	:let java_mark_braces_in_parens_as_errors=1
 
 All identifiers in java.lang.* are always visible in all classes.  To
@@ -2031,10 +2031,10 @@ LISP						*lisp.vim* *ft-lisp-syntax*
 
 The lisp syntax highlighting provides two options: >
 
-	g:lisp_instring : if it exists, then "(...)" strings are highlighted
+	g:lisp_instring : If it exists, then "(...)" strings are highlighted
 			  as if the contents of the string were lisp.
 			  Useful for AutoLisp.
-	g:lisp_rainbow  : if it exists and is nonzero, then differing levels
+	g:lisp_rainbow  : If it exists and is nonzero, then differing levels
 			  of parenthesization will receive different
 			  highlighting.
 <
@@ -2440,8 +2440,8 @@ If you do not want complex things like '@{${"foo"}}' to be parsed: >
 
 (In Vim 6.x it was the other way around: "perl_extended_vars" enabled it.)
 
-The coloring strings can be changed.  By default strings and qq friends will be
-highlighted like the first line.  If you set the variable
+The coloring strings can be changed.  By default strings and qq friends will
+be highlighted like the first line.  If you set the variable
 perl_string_as_statement, it will be highlighted as in the second line.
 
    "hello world!"; qq|hello world|;
@@ -2453,8 +2453,8 @@ perl_string_as_statement, it will be highlighted as in the second line.
 The syncing has 3 options.  The first two switch off some triggering of
 synchronization and should only be needed in case it fails to work properly.
 If while scrolling all of a sudden the whole screen changes color completely
-then you should try and switch off one of those.  Let me know if you can figure
-out the line that causes the mistake.
+then you should try and switch off one of those.  Let me know if you can
+figure out the line that causes the mistake.
 
 One triggers on "^\s*sub\s*" and the other on "^[$@%]" more or less. >
 
@@ -2491,7 +2491,7 @@ behavior, set 'perl_nofold_packages': >
 
 PHP3 and PHP4		*php.vim* *php3.vim* *ft-php-syntax* *ft-php3-syntax*
 
-[note: previously this was called "php3", but since it now also supports php4
+[Note: Previously this was called "php3", but since it now also supports php4
 it has been renamed to "php"]
 
 There are the following options for the php syntax highlighting.
@@ -2561,15 +2561,15 @@ PPWizard is a preprocessor for HTML and OS/2 INF files
 
 This syntax file has the options:
 
-- ppwiz_highlight_defs : determines highlighting mode for PPWizard's
+- ppwiz_highlight_defs : Determines highlighting mode for PPWizard's
   definitions.  Possible values are
 
   ppwiz_highlight_defs = 1 : PPWizard #define statements retain the
-    colors of their contents (e.g. PPWizard macros and variables)
+    colors of their contents (e.g. PPWizard macros and variables).
 
-  ppwiz_highlight_defs = 2 : preprocessor #define and #evaluate
+  ppwiz_highlight_defs = 2 : Preprocessor #define and #evaluate
     statements are shown in a single color with the exception of line
-    continuation symbols
+    continuation symbols.
 
   The default setting for ppwiz_highlight_defs is 1.
 
@@ -2608,7 +2608,7 @@ highlighted by defining the postscr_level variable as follows: >
 If this variable is not defined it defaults to 2 (level 2) since this is
 the most prevalent version currently.
 
-Note, not all PS interpreters will support all language features for a
+Note: Not all PS interpreters will support all language features for a
 particular language level.  In particular the %!PS-Adobe-3.0 at the start of
 PS files does NOT mean the PostScript present is level 3 PostScript!
 
@@ -2710,7 +2710,7 @@ If you want all possible Python highlighting (the same as setting the
 preceding last option and unsetting all other ones): >
 	:let python_highlight_all = 1
 
-Note: only existence of these options matter, not their value. You can replace
+Note: Only existence of these options matter, not their value. You can replace
       1 above with anything.
 
 QUAKE						*quake.vim* *ft-quake-syntax*
@@ -3150,16 +3150,16 @@ The Speedup syntax file has some options:
   the DECLARE section; if you defined own types, you have to include
   them in the syntax file.
 
-- oneline_comments : this value ranges from 1 to 3 and determines the
+- oneline_comments : This value ranges from 1 to 3 and determines the
   highlighting of # style comments.
 
-  oneline_comments = 1 : allow normal Speedup code after an even
+  oneline_comments = 1 : Allow normal Speedup code after an even
   number of #s.
 
-  oneline_comments = 2 : show code starting with the second # as
+  oneline_comments = 2 : Show code starting with the second # as
   error.  This is the default setting.
 
-  oneline_comments = 3 : show the whole line as error if it contains
+  oneline_comments = 3 : Show the whole line as error if it contains
   more than one #.
 
 Since especially OPERATION sections tend to become very large due to
@@ -3198,8 +3198,8 @@ This covers the shell named "tcsh".  It is a superset of csh.  See |csh.vim|
 for how the filetype is detected.
 
 Tcsh does not allow \" in strings unless the "backslash_quote" shell variable
-is set.  If you want VIM to assume that no backslash quote constructs exist add
-this line to your vimrc: >
+is set.  If you want VIM to assume that no backslash quote constructs exist 
+add this line to your vimrc: >
 
 	:let tcsh_backslash_quote = 0
 
@@ -3552,7 +3552,7 @@ start and end tags.  This can be turned on by >
 	:let g:xml_syntax_folding = 1
 	:set foldmethod=syntax
 
-Note: syntax folding might slow down syntax highlighting significantly,
+Note: Syntax folding might slow down syntax highlighting significantly,
 especially for large files.
 
 
@@ -4982,8 +4982,8 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	a number instead of a color name.
 
 	Note that for 16 color ansi style terminals (including xterms), the
-	numbers in the NR-8 column is used.  Here '*' means 'add 8' so that Blue
-	is 12, DarkGray is 8 etc.
+	numbers in the NR-8 column is used.  Here '*' means 'add 8' so that 
+	Blue is 12, DarkGray is 8 etc.
 
 	Note that for some color terminals these names may result in the wrong
 	colors!
@@ -5096,56 +5096,56 @@ These are the builtin highlighting groups.  Note that the highlighting depends
 on the value of 'background'.  You can see the current settings with the
 ":highlight" command.
 							*hl-ColorColumn*
-ColorColumn	used for the columns set with 'colorcolumn'
+ColorColumn	Used for the columns set with 'colorcolumn'.
 							*hl-Conceal*
-Conceal		placeholder characters substituted for concealed
-		text (see 'conceallevel')
+Conceal		Placeholder characters substituted for concealed
+		text (see 'conceallevel').
 							*hl-CurSearch*
-CurSearch	used for highlighting a search pattern under the cursor
-		(see 'hlsearch')
+CurSearch	Used for highlighting a search pattern under the cursor
+		(see 'hlsearch').
 							*hl-Cursor*
-Cursor		character under the cursor
-lCursor		the character under the cursor when |language-mapping|
-		is used (see 'guicursor')
+Cursor		Character under the cursor.
+lCursor		Character under the cursor when |language-mapping|
+		is used (see 'guicursor').
 							*hl-CursorIM*
-CursorIM	like Cursor, but used when in IME mode |CursorIM|
+CursorIM	Like Cursor, but used when in IME mode. |CursorIM|
 							*hl-CursorColumn*
 CursorColumn	Screen-column at the cursor, when 'cursorcolumn' is set.
 							*hl-CursorLine*
 CursorLine	Screen-line at the cursor, when 'cursorline' is set.
 		Low-priority if foreground (ctermfg OR guifg) is not set.
 							*hl-Directory*
-Directory	directory names (and other special names in listings)
+Directory	Directory names (and other special names in listings).
 							*hl-DiffAdd*
-DiffAdd		diff mode: Added line |diff.txt|
+DiffAdd		Diff mode: Added line. |diff.txt|
 							*hl-DiffChange*
-DiffChange	diff mode: Changed line |diff.txt|
+DiffChange	Diff mode: Changed line. |diff.txt|
 							*hl-DiffDelete*
-DiffDelete	diff mode: Deleted line |diff.txt|
+DiffDelete	Diff mode: Deleted line. |diff.txt|
 							*hl-DiffText*
-DiffText	diff mode: Changed text within a changed line |diff.txt|
+DiffText	Diff mode: Changed text within a changed line. |diff.txt|
 							*hl-EndOfBuffer*
-EndOfBuffer	filler lines (~) after the end of the buffer.
+EndOfBuffer	Filler lines (~) after the end of the buffer.
 		By default, this is highlighted like |hl-NonText|.
 							*hl-TermCursor*
-TermCursor	cursor in a focused terminal
+TermCursor	Cursor in a focused terminal.
 							*hl-TermCursorNC*
-TermCursorNC	cursor in an unfocused terminal
+TermCursorNC	Cursor in an unfocused terminal.
 							*hl-ErrorMsg*
-ErrorMsg	error messages on the command line
+ErrorMsg	Error messages on the command line.
 							*hl-WinSeparator*
-WinSeparator	separators between window splits
+WinSeparator	Separators between window splits.
 							*hl-Folded*
-Folded		line used for closed folds
+Folded		Line used for closed folds.
 							*hl-FoldColumn*
 FoldColumn	'foldcolumn'
 							*hl-SignColumn*
-SignColumn	column where |signs| are displayed
+SignColumn	Column where |signs| are displayed.
 							*hl-IncSearch*
 IncSearch	'incsearch' highlighting; also used for the text replaced with
-		":s///c"
+		":s///c".
 							*hl-Substitute*
-Substitute	|:substitute| replacement text highlighting
+Substitute	|:substitute| replacement text highlighting.
 
 							*hl-LineNr*
 LineNr		Line number for ":number" and ":#" commands, and when 'number'
@@ -5164,15 +5164,15 @@ CursorLineSign	Like SignColumn when 'cursorline' is set for the cursor line.
 							*hl-CursorLineFold*
 CursorLineFold	Like FoldColumn when 'cursorline' is set for the cursor line.
 							*hl-MatchParen*
-MatchParen	The character under the cursor or just before it, if it
+MatchParen	Character under the cursor or just before it, if it
 		is a paired bracket, and its match. |pi_paren.txt|
 
 							*hl-ModeMsg*
-ModeMsg		'showmode' message (e.g., "-- INSERT --")
+ModeMsg		'showmode' message (e.g., "-- INSERT --").
 							*hl-MsgArea*
-MsgArea		Area for messages and cmdline
+MsgArea		Area for messages and cmdline.
 							*hl-MsgSeparator*
-MsgSeparator	Separator for scrolled messages, `msgsep` flag of 'display'
+MsgSeparator	Separator for scrolled messages, `msgsep` flag of 'display'.
 							*hl-MoreMsg*
 MoreMsg		|more-prompt|
 							*hl-NonText*
@@ -5181,21 +5181,21 @@ NonText		'@' at the end of the window, characters from 'showbreak'
 		(e.g., ">" displayed when a double-wide character doesn't
 		fit at the end of the line). See also |hl-EndOfBuffer|.
 							*hl-Normal*
-Normal		normal text
+Normal		Normal text.
 							*hl-NormalFloat*
 NormalFloat	Normal text in floating windows.
 							*hl-NormalNC*
-NormalNC	normal text in non-current windows
+NormalNC	Normal text in non-current windows.
 							*hl-Pmenu*
-Pmenu		Popup menu: normal item.
+Pmenu		Popup menu: Normal item.
 							*hl-PmenuSel*
-PmenuSel	Popup menu: selected item.
+PmenuSel	Popup menu: Selected item.
 							*hl-PmenuSbar*
-PmenuSbar	Popup menu: scrollbar.
+PmenuSbar	Popup menu: Scrollbar.
 							*hl-PmenuThumb*
 PmenuThumb	Popup menu: Thumb of the scrollbar.
 							*hl-Question*
-Question	|hit-enter| prompt and yes/no questions
+Question	|hit-enter| prompt and yes/no questions.
 							*hl-QuickFixLine*
 QuickFixLine	Current |quickfix| item in the quickfix window. Combined with
                 |hl-CursorLine| when the cursor is there.
@@ -5203,7 +5203,7 @@ QuickFixLine	Current |quickfix| item in the quickfix window. Combined with
 Search		Last search pattern highlighting (see 'hlsearch').
 		Also used for similar items that need to stand out.
 							*hl-SpecialKey*
-SpecialKey	Unprintable characters: text displayed differently from what
+SpecialKey	Unprintable characters: Text displayed differently from what
 		it really is. But not 'listchars' whitespace. |hl-Whitespace|
 							*hl-SpellBad*
 SpellBad	Word that is not recognized by the spellchecker. |spell|
@@ -5220,30 +5220,30 @@ SpellRare	Word that is recognized by the spellchecker as one that is
 		hardly ever used. |spell|
 		Combined with the highlighting used otherwise.
 							*hl-StatusLine*
-StatusLine	status line of current window
+StatusLine	Status line of current window.
 							*hl-StatusLineNC*
-StatusLineNC	status lines of not-current windows
-		Note: if this is equal to "StatusLine" Vim will use "^^^" in
+StatusLineNC	Status lines of not-current windows.
+		Note: If this is equal to "StatusLine", Vim will use "^^^" in
 		the status line of the current window.
 							*hl-TabLine*
-TabLine		tab pages line, not active tab page label
+TabLine		Tab pages line, not active tab page label.
 							*hl-TabLineFill*
-TabLineFill	tab pages line, where there are no labels
+TabLineFill	Tab pages line, where there are no labels.
 							*hl-TabLineSel*
-TabLineSel	tab pages line, active tab page label
+TabLineSel	Tab pages line, active tab page label.
 							*hl-Title*
-Title		titles for output from ":set all", ":autocmd" etc.
+Title		Titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*
-Visual		Visual mode selection
+Visual		Visual mode selection.
  							*hl-VisualNOS*
 VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
 							*hl-WarningMsg*
-WarningMsg	warning messages
+WarningMsg	Warning messages.
 							*hl-Whitespace*
 Whitespace	"nbsp", "space", "tab", "multispace", "lead" and "trail"
-		in 'listchars'
+		in 'listchars'.
 							*hl-WildMenu*
-WildMenu	current match in 'wildmenu' completion
+WildMenu	Current match in 'wildmenu' completion.
 
 					*hl-User1* *hl-User1..9* *hl-User9*
 The 'statusline' syntax allows the use of 9 different highlights in the
