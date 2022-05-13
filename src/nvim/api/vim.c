@@ -126,9 +126,15 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 
 /// Sets a highlight group.
 ///
-/// Note: Unlike the `:highlight` command which can update a highlight group,
-/// this function completely replaces the definition. For example:
-/// ``nvim_set_hl(0, 'Visual', {})`` will clear the highlight group 'Visual'.
+/// @note Unlike the `:highlight` command which can update a highlight group,
+///       this function completely replaces the definition. For example:
+///       ``nvim_set_hl(0, 'Visual', {})`` will clear the highlight group
+///       'Visual'.
+///
+/// @note The foreground and background keys also accept the string values
+///       `"fg"` or `"bg"` which act as aliases to the corresponding foreground
+///       and background values of the Normal group. If the Normal group has not
+///       been defined, using these values results in an error.
 ///
 /// @param ns_id Namespace id for this highlight |nvim_create_namespace()|.
 ///              Use 0 to set a highlight group globally |:highlight|.
@@ -156,11 +162,6 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
 ///                - cterm: cterm attribute map, like |highlight-args|.
 ///                  Note: Attributes default to those set for `gui` if not set.
-///             Note: The foreground and background keys also accept the string
-///                   values `"fg"` or `"bg"` which act as aliases to the
-///                   corresponding foreground and background values of the Normal group.
-///                   If the Normal group has not been defined, using these values
-///                   results in an error.
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag

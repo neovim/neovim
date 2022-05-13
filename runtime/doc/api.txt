@@ -1570,10 +1570,18 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
 nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                 Sets a highlight group.
 
-                Note: Unlike the `:highlight` command which can update a
-                highlight group, this function completely replaces the
-                definition. For example: `nvim_set_hl(0, 'Visual', {})` will
-                clear the highlight group 'Visual'.
+                Note:
+                    Unlike the `:highlight` command which can update a
+                    highlight group, this function completely replaces the
+                    definition. For example: `nvim_set_hl(0, 'Visual', {})`
+                    will clear the highlight group 'Visual'.
+
+                Note:
+                    The foreground and background keys also accept the string
+                    values `"fg"` or `"bg"` which act as aliases to the
+                    corresponding foreground and background values of the
+                    Normal group. If the Normal group has not been defined,
+                    using these values results in an error.
 
                 Parameters: ~
                     {ns_id}  Namespace id for this highlight
@@ -1610,13 +1618,7 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                                |highlight-ctermbg|
                              • cterm: cterm attribute map, like
                                |highlight-args|. Note: Attributes default to
-                               those set for `gui` if not set. Note: The
-                               foreground and background keys also accept the
-                               string values `"fg"` or `"bg"` which act as
-                               aliases to the corresponding foreground and
-                               background values of the Normal group. If the
-                               Normal group has not been defined, using these
-                               values results in an error.
+                               those set for `gui` if not set.
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
