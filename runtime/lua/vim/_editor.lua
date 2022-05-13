@@ -406,7 +406,6 @@ function vim.defer_fn(fn, timeout)
     timeout,
     0,
     vim.schedule_wrap(function()
-      timer:stop()
       timer:close()
 
       fn()
