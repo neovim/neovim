@@ -134,9 +134,9 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///              Use 0 to set a highlight group globally |:highlight|.
 /// @param name  Highlight group name, e.g. "ErrorMsg"
 /// @param val   Highlight definition map, accepts the following keys:
-///                - fg (or foreground): color name or "#RRGGBB", see note.
-///                - bg (or background): color name or "#RRGGBB", see note.
-///                - sp (or special): color name or "#RRGGBB"
+///                - foreground (or fg): color name or "#RRGGBB", see note.
+///                - background (or bg): color name or "#RRGGBB", see note.
+///                - special (or sp): color name or "#RRGGBB"
 ///                - blend: integer between 0 and 100
 ///                - bold: boolean
 ///                - standout: boolean
@@ -156,10 +156,11 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
 ///                - cterm: cterm attribute map, like |highlight-args|.
 ///                  Note: Attributes default to those set for `gui` if not set.
-///             Note: The fg and bg keys also accept the string values `"fg"` or `"bg"`
-///                   which act as aliases to the corresponding fg and bg values of the
-///                   Normal group. If the Normal group has not been defined, using these
-///                   values results in an error.
+///             Note: The foreground and background keys also accept the string
+///                   values `"fg"` or `"bg"` which act as aliases to the
+///                   corresponding foreground and background values of the Normal group.
+///                   If the Normal group has not been defined, using these values
+///                   results in an error.
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag

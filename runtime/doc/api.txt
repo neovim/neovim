@@ -1582,11 +1582,11 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                     {name}   Highlight group name, e.g. "ErrorMsg"
                     {val}    Highlight definition map, accepts the following
                              keys:
-                             • fg (or foreground): color name or "#RRGGBB",
+                             • foreground (or fg): color name or "#RRGGBB",
                                see note.
-                             • bg (or background): color name or "#RRGGBB",
+                             • background (or bg): color name or "#RRGGBB",
                                see note.
-                             • sp (or special): color name or "#RRGGBB"
+                             • special (or sp): color name or "#RRGGBB"
                              • blend: integer between 0 and 100
                              • bold: boolean
                              • standout: boolean
@@ -1610,13 +1610,13 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                                |highlight-ctermbg|
                              • cterm: cterm attribute map, like
                                |highlight-args|. Note: Attributes default to
-                               those set for `gui` if not set. Note: The fg
-                               and bg keys also accept the string values
-                               `"fg"` or `"bg"` which act as aliases to the
-                               corresponding fg and bg values of the Normal
-                               group. If the Normal group has not been
-                               defined, using these values results in an
-                               error.
+                               those set for `gui` if not set. Note: The
+                               foreground and background keys also accept the
+                               string values `"fg"` or `"bg"` which act as
+                               aliases to the corresponding foreground and
+                               background values of the Normal group. If the
+                               Normal group has not been defined, using these
+                               values results in an error.
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
