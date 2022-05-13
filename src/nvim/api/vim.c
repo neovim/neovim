@@ -160,8 +160,9 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///                - default: Don't override existing definition |:hi-default|
 ///                - ctermfg: Sets foreground of cterm color |highlight-ctermfg|
 ///                - ctermbg: Sets background of cterm color |highlight-ctermbg|
-///                - cterm: cterm attribute map, like |highlight-args|.
-///                  Note: Attributes default to those set for `gui` if not set.
+///                - cterm: cterm attribute map, like |highlight-args|. If not set,
+///                         cterm attributes will match those from the attribute map
+///                         documented above.
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag

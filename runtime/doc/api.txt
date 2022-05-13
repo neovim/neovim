@@ -1617,8 +1617,9 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                              • ctermbg: Sets background of cterm color
                                |highlight-ctermbg|
                              • cterm: cterm attribute map, like
-                               |highlight-args|. Note: Attributes default to
-                               those set for `gui` if not set.
+                               |highlight-args|. If not set, cterm attributes
+                               will match those from the attribute map
+                               documented above.
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
