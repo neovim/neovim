@@ -9369,10 +9369,8 @@ static void ins_try_si(int c)
   /*
    * do some very smart indenting when entering '{' or '}'
    */
-  if (((did_si || can_si_back) && c == '{') || (can_si && c == '}')) {
-    /*
-     * for '}' set indent equal to indent of line containing matching '{'
-     */
+  if (((did_si || can_si_back) && c == '{') || (can_si && c == '}' && inindent(0))) {
+    // for '}' set indent equal to indent of line containing matching '{'
     if (c == '}' && (pos = findmatch(NULL, '{')) != NULL) {
       old_pos = curwin->w_cursor;
       /*
