@@ -1577,11 +1577,11 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                     will clear the highlight group 'Visual'.
 
                 Note:
-                    The foreground and background keys also accept the string
-                    values `"fg"` or `"bg"` which act as aliases to the
-                    corresponding foreground and background values of the
-                    Normal group. If the Normal group has not been defined,
-                    using these values results in an error.
+                    The fg and bg keys also accept the string values `"fg"` or
+                    `"bg"` which act as aliases to the corresponding
+                    foreground and background values of the Normal group. If
+                    the Normal group has not been defined, using these values
+                    results in an error.
 
                 Parameters: ~
                     {ns_id}  Namespace id for this highlight
@@ -1590,11 +1590,11 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                     {name}   Highlight group name, e.g. "ErrorMsg"
                     {val}    Highlight definition map, accepts the following
                              keys:
-                             • foreground (or fg): color name or "#RRGGBB",
+                             • fg (or foreground): color name or "#RRGGBB",
                                see note.
-                             • background (or bg): color name or "#RRGGBB",
+                             • bg (or background): color name or "#RRGGBB",
                                see note.
-                             • special (or sp): color name or "#RRGGBB"
+                             • sp (or special): color name or "#RRGGBB"
                              • blend: integer between 0 and 100
                              • bold: boolean
                              • standout: boolean
