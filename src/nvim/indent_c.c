@@ -1782,79 +1782,116 @@ void parse_cino(buf_T *buf)
      * doc/indent.txt, and add explanation for it! */
     switch (*l) {
     case '>':
-      buf->b_ind_level = n; break;
+      buf->b_ind_level = n;
+      break;
     case 'e':
-      buf->b_ind_open_imag = n; break;
+      buf->b_ind_open_imag = n;
+      break;
     case 'n':
-      buf->b_ind_no_brace = n; break;
+      buf->b_ind_no_brace = n;
+      break;
     case 'f':
-      buf->b_ind_first_open = n; break;
+      buf->b_ind_first_open = n;
+      break;
     case '{':
-      buf->b_ind_open_extra = n; break;
+      buf->b_ind_open_extra = n;
+      break;
     case '}':
-      buf->b_ind_close_extra = n; break;
+      buf->b_ind_close_extra = n;
+      break;
     case '^':
-      buf->b_ind_open_left_imag = n; break;
+      buf->b_ind_open_left_imag = n;
+      break;
     case 'L':
-      buf->b_ind_jump_label = n; break;
+      buf->b_ind_jump_label = n;
+      break;
     case ':':
-      buf->b_ind_case = n; break;
+      buf->b_ind_case = n;
+      break;
     case '=':
-      buf->b_ind_case_code = n; break;
+      buf->b_ind_case_code = n;
+      break;
     case 'b':
-      buf->b_ind_case_break = n; break;
+      buf->b_ind_case_break = n;
+      break;
     case 'p':
-      buf->b_ind_param = n; break;
+      buf->b_ind_param = n;
+      break;
     case 't':
-      buf->b_ind_func_type = n; break;
+      buf->b_ind_func_type = n;
+      break;
     case '/':
-      buf->b_ind_comment = n; break;
+      buf->b_ind_comment = n;
+      break;
     case 'c':
-      buf->b_ind_in_comment = n; break;
+      buf->b_ind_in_comment = n;
+      break;
     case 'C':
-      buf->b_ind_in_comment2 = n; break;
+      buf->b_ind_in_comment2 = n;
+      break;
     case 'i':
-      buf->b_ind_cpp_baseclass = n; break;
+      buf->b_ind_cpp_baseclass = n;
+      break;
     case '+':
-      buf->b_ind_continuation = n; break;
+      buf->b_ind_continuation = n;
+      break;
     case '(':
-      buf->b_ind_unclosed = n; break;
+      buf->b_ind_unclosed = n;
+      break;
     case 'u':
-      buf->b_ind_unclosed2 = n; break;
+      buf->b_ind_unclosed2 = n;
+      break;
     case 'U':
-      buf->b_ind_unclosed_noignore = n; break;
+      buf->b_ind_unclosed_noignore = n;
+      break;
     case 'W':
-      buf->b_ind_unclosed_wrapped = n; break;
+      buf->b_ind_unclosed_wrapped = n;
+      break;
     case 'w':
-      buf->b_ind_unclosed_whiteok = n; break;
+      buf->b_ind_unclosed_whiteok = n;
+      break;
     case 'm':
-      buf->b_ind_matching_paren = n; break;
+      buf->b_ind_matching_paren = n;
+      break;
     case 'M':
-      buf->b_ind_paren_prev = n; break;
+      buf->b_ind_paren_prev = n;
+      break;
     case ')':
-      buf->b_ind_maxparen = n; break;
+      buf->b_ind_maxparen = n;
+      break;
     case '*':
-      buf->b_ind_maxcomment = n; break;
+      buf->b_ind_maxcomment = n;
+      break;
     case 'g':
-      buf->b_ind_scopedecl = n; break;
+      buf->b_ind_scopedecl = n;
+      break;
     case 'h':
-      buf->b_ind_scopedecl_code = n; break;
+      buf->b_ind_scopedecl_code = n;
+      break;
     case 'j':
-      buf->b_ind_java = n; break;
+      buf->b_ind_java = n;
+      break;
     case 'J':
-      buf->b_ind_js = n; break;
+      buf->b_ind_js = n;
+      break;
     case 'l':
-      buf->b_ind_keep_case_label = n; break;
+      buf->b_ind_keep_case_label = n;
+      break;
     case '#':
-      buf->b_ind_hash_comment = n; break;
+      buf->b_ind_hash_comment = n;
+      break;
     case 'N':
-      buf->b_ind_cpp_namespace = n; break;
+      buf->b_ind_cpp_namespace = n;
+      break;
     case 'k':
-      buf->b_ind_if_for_while = n; break;
+      buf->b_ind_if_for_while = n;
+      break;
     case 'E':
-      buf->b_ind_cpp_extern_c = n; break;
+      buf->b_ind_cpp_extern_c = n;
+      break;
     case 'P':
-      buf->b_ind_pragma = n; break;
+      buf->b_ind_pragma = n;
+      break;
     }
     if (*p == ',') {
       p++;
