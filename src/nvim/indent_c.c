@@ -2151,7 +2151,9 @@ int get_c_indent(void)
      * asterisk in the comment opener; otherwise, line up
      * with the first character of the comment text.
      */
-    if (done) {} else if (theline[0] == '*') {
+    if (done) {
+      // skip
+    } else if (theline[0] == '*') {
       amount += 1;
     } else {
       // If we are more than one line away from the comment opener, take
