@@ -48,22 +48,6 @@ The format of the symbol name should be `NVIM_<DIRECTORY>_<FILE>_H`.
 <
 
 
-Names and Order of Includes ~
-
-Use standard order for readability and to avoid hidden dependencies: C
-library, other libraries' `.h`, your project's `.h`.
-
-    In foo.c order your includes as follows:
-
-        1. C system files.
-        2. Other libraries' `.h` files.
-        3. Your project's `.h` files.
-
-    Exception: sometimes, system-specific code needs conditional includes.
-    Such code can put conditional includes after other includes. Of course,
-    keep your system-specific code small and localized.
-
-
 Constants ~
 
 Do not use macros to define constants in headers.
