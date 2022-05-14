@@ -2507,10 +2507,7 @@ int op_change(oparg_T *oap)
   l = oap->start.col;
   if (oap->motion_type == kMTLineWise) {
     l = 0;
-    if (!p_paste && curbuf->b_p_si
-        && !curbuf->b_p_cin) {
-      can_si = true;            // It's like opening a new line, do si
-    }
+    can_si = may_do_si();  // Like opening a new line, do smart indent
   }
 
   // First delete the text in the region.  In an empty buffer only need to

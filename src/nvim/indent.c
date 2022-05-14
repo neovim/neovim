@@ -522,6 +522,11 @@ int inindent(int extra)
   }
 }
 
+/// @return  true if the conditions are OK for smart indenting.
+bool may_do_si(void)
+{
+  return curbuf->b_p_si && !curbuf->b_p_cin && *curbuf->b_p_inde == NUL && !p_paste;
+}
 
 // Get indent level from 'indentexpr'.
 int get_expr_indent(void)
