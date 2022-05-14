@@ -2015,7 +2015,7 @@ int get_c_indent(void)
     }
   }
 
-  // Is it a non-case label?    Then that goes at the left margin too unless:
+  // Is it a non-case label? Then that goes at the left margin too unless:
   //  - JS flag is set.
   //  - 'L' item has a positive value.
   if (original_line_islabel && !curbuf->b_ind_js
