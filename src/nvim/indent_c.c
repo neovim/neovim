@@ -839,7 +839,7 @@ static int cin_islinecomment(const char_u *p)
 /// @param incl_comma  recognize a trailing comma
 ///
 /// @return  the character terminating the line (ending char's have precedence if
-///           both apply in order to determine initializations).
+///          both apply in order to determine initializations).
 static char_u cin_isterminated(const char_u *s, int incl_open, int incl_comma)
 {
   char_u found_start = 0;
