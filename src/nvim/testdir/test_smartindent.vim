@@ -67,6 +67,11 @@ func Test_si_after_completion()
   call setline(1, 'foo foot')
   call feedkeys("o  f\<C-X>\<C-N>#", 'tx')
   call assert_equal('  foo#', getline(2))
+
+  call setline(2, '')
+  call feedkeys("1Go  f\<C-X>\<C-N>}", 'tx')
+  call assert_equal('  foo}', getline(2))
+
   bwipe!
 endfunc
 
