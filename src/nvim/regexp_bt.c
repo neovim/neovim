@@ -2769,17 +2769,16 @@ static char_u *regbranch(int *flagp)
   return ret;
 }
 
-/*
- * Parse regular expression, i.e. main body or parenthesized thing.
- *
- * Caller must absorb opening parenthesis.
- *
- * Combining parenthesis handling with the base level of regular expression
- * is a trifle forced, but the need to tie the tails of the branches to what
- * follows makes it hard to avoid.
- */
-static char_u *reg(int paren,                // REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN
-                   int *flagp)
+/// Parse regular expression, i.e. main body or parenthesized thing.
+///
+/// Caller must absorb opening parenthesis.
+///
+/// Combining parenthesis handling with the base level of regular expression
+/// is a trifle forced, but the need to tie the tails of the branches to what
+/// follows makes it hard to avoid.
+///
+/// @param paren  REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN
+static char_u *reg(int paren, int *flagp)
 {
   char_u *ret;
   char_u *br;
@@ -3133,11 +3132,11 @@ static void save_se_one(save_se_T *savep, char_u **pp)
   *pp = rex.input;
 }
 
-/*
- * regrepeat - repeatedly match something simple, return how many.
- * Advances rex.input (and rex.lnum) to just after the matched chars.
- */
-static int regrepeat(char_u *p, long maxcount)     // maximum number of matches allowed
+/// regrepeat - repeatedly match something simple, return how many.
+/// Advances rex.input (and rex.lnum) to just after the matched chars.
+///
+/// @param maxcount  maximum number of matches allowed
+static int regrepeat(char_u *p, long maxcount)
 {
   long count = 0;
   char_u *opnd;
@@ -3582,13 +3581,15 @@ static void restore_subexpr(regbehind_T *bp)
 /// (that don't need to know whether the rest of the match failed) by a nested
 /// loop.
 ///
-/// Returns true when there is a match.  Leaves rex.input and rex.lnum
-/// just after the last matched character.
-/// Returns false when there is no match.  Leaves rex.input and rex.lnum in an
-/// undefined state!
-static bool regmatch(char_u *scan,                 // Current node.
-                     proftime_T *tm,               // timeout limit or NULL
-                     int *timed_out)               // flag set on timeout or NULL
+/// @param scan       Current node.
+/// @param tm         timeout limit or NULL
+/// @param timed_out  flag set on timeout or NULL
+///
+/// @return - true when there is a match.  Leaves rex.input and rex.lnum
+///         just after the last matched character.
+///         - false when there is no match.  Leaves rex.input and rex.lnum in an
+///         undefined state!
+static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 {
   char_u *next;          // Next node.
   int op;
@@ -4931,9 +4932,12 @@ static bool regmatch(char_u *scan,                 // Current node.
 }
 
 /// Try match of "prog" with at rex.line["col"].
-/// @returns 0 for failure, or number of lines contained in the match.
-static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm,    // timeout limit or NULL
-                   int *timed_out)    // flag set on timeout or NULL
+///
+/// @param tm         timeout limit or NULL
+/// @param timed_out  flag set on timeout or NULL
+///
+/// @return  0 for failure, or number of lines contained in the match.
+static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_out)
 {
   rex.input = rex.line + col;
   rex.need_clear_subexpr = true;
@@ -4999,10 +5003,13 @@ static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm,    // timeou
 
 /// Match a regexp against a string ("line" points to the string) or multiple
 /// lines (if "line" is NULL, use reg_getline()).
-/// @return 0 for failure, or number of lines contained in the match.
-static long bt_regexec_both(char_u *line, colnr_T col,      // column to start search
-                            proftime_T *tm,   // timeout limit or NULL
-                            int *timed_out)   // flag set on timeout or NULL
+///
+/// @param col        column to start search
+/// @param tm         timeout limit or NULL
+/// @param timed_out  flag set on timeout or NULL
+///
+/// @return  0 for failure, or number of lines contained in the match.
+static long bt_regexec_both(char_u *line, colnr_T col, proftime_T *tm, int *timed_out)
 {
   bt_regprog_T *prog;
   char_u *s;
@@ -5190,17 +5197,16 @@ theend:
   return retval;
 }
 
-/*
- * Match a regexp against a string.
- * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
- * Uses curbuf for line count and 'iskeyword'.
- * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
- *
- * Returns 0 for failure, number of lines contained in the match otherwise.
- */
-static int bt_regexec_nl(regmatch_T *rmp, char_u *line,        // string to match against
-                         colnr_T col,         // column to start looking for match
-                         bool line_lbr)
+/// Match a regexp against a string.
+/// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+/// Uses curbuf for line count and 'iskeyword'.
+/// If "line_lbr" is true, consider a "\n" in "line" to be a line break.
+///
+/// @param line  string to match against
+/// @param col   column to start looking for match
+///
+/// @return  0 for failure, number of lines contained in the match otherwise.
+static int bt_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_lbr)
 {
   rex.reg_match = rmp;
   rex.reg_mmatch = NULL;

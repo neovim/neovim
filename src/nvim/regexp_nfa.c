@@ -352,11 +352,10 @@ static int nfa_ll_index = 0;
     *post_ptr++ = c; \
   } while (0)
 
-/*
- * Initialize internal variables before NFA compilation.
- */
-static void nfa_regcomp_start(char_u *expr, int re_flags                       // see vim_regcomp()
-                              )
+/// Initialize internal variables before NFA compilation.
+///
+/// @param re_flags  @see vim_regcomp()
+static void nfa_regcomp_start(char_u *expr, int re_flags)
 {
   size_t postfix_size;
   size_t nstate_max;
@@ -2885,19 +2884,18 @@ static int nfa_regbranch(void)
   return OK;
 }
 
-/*
- *  Parse a pattern, one or more branches, separated by "\|".  It matches
- *  anything that matches one of the branches.  Example: "foo\|beep" matches
- *  "foo" and matches "beep".  If more than one branch matches, the first one
- *  is used.
- *
- *  pattern ::=     branch
- *      or  branch \| branch
- *      or  branch \| branch \| branch
- *      etc.
- */
-static int nfa_reg(int paren              // REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN
-                   )
+///  Parse a pattern, one or more branches, separated by "\|".  It matches
+///  anything that matches one of the branches.  Example: "foo\|beep" matches
+///  "foo" and matches "beep".  If more than one branch matches, the first one
+///  is used.
+///
+///  pattern ::=     branch
+///      or  branch \| branch
+///      or  branch \| branch \| branch
+///      etc.
+///
+/// @param paren  REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN
+static int nfa_reg(int paren)
 {
   int parno = 0;
 
@@ -4654,13 +4652,14 @@ static void report_state(char *action, regsub_T *sub, nfa_state_T *state, int li
 
 #endif
 
-// Return true if the same state is already in list "l" with the same
-// positions as "subs".
-static bool has_state_with_pos(nfa_list_T *l,        // runtime state list
-                               nfa_state_T *state,   // state to update
-                               regsubs_T *subs,      // pointers to subexpressions
-                               nfa_pim_T *pim        // postponed match or NULL
-                               )
+/// @param l      runtime state list
+/// @param state  state to update
+/// @param subs   pointers to subexpressions
+/// @param pim    postponed match or NULL
+///
+/// @return  true if the same state is already in list "l" with the same
+///          positions as "subs".
+static bool has_state_with_pos(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs, nfa_pim_T *pim)
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
   for (int i = 0; i < l->n; i++) {
@@ -4792,11 +4791,12 @@ static bool match_follows(const nfa_state_T *startstate, int depth)
 }
 
 
-// Return true if "state" is already in list "l".
-static bool state_in_list(nfa_list_T *l,        // runtime state list
-                          nfa_state_T *state,   // state to update
-                          regsubs_T *subs       // pointers to subexpressions
-                          )
+/// @param l      runtime state list
+/// @param state  state to update
+/// @param subs   pointers to subexpressions
+///
+/// @return  true if "state" is already in list "l".
+static bool state_in_list(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs)
   FUNC_ATTR_NONNULL_ALL
 {
   if (state->lastlist[nfa_ll_index] == l->id) {
@@ -4810,14 +4810,18 @@ static bool state_in_list(nfa_list_T *l,        // runtime state list
 // Offset used for "off" by addstate_here().
 #define ADDSTATE_HERE_OFFSET 10
 
-// Add "state" and possibly what follows to state list ".".
-// Returns "subs_arg", possibly copied into temp_subs.
-// Returns NULL when recursiveness is too deep.
-static regsubs_T *addstate(nfa_list_T *l,        // runtime state list
-                           nfa_state_T *state,   // state to update
-                           regsubs_T *subs_arg,  // pointers to subexpressions
-                           nfa_pim_T *pim,       // postponed look-behind match
-                           int off_arg)          // byte offset, when -1 go to next line
+/// Add "state" and possibly what follows to state list ".".
+///
+/// @param l         runtime state list
+/// @param state     state to update
+/// @param subs_arg  pointers to subexpressions
+/// @param pim       postponed look-behind match
+/// @param off_arg   byte offset, when -1 go to next line
+///
+/// @return  "subs_arg", possibly copied into temp_subs.
+///          NULL when recursiveness is too deep.
+static regsubs_T *addstate(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs_arg, nfa_pim_T *pim,
+                           int off_arg)
   FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int subidx;
@@ -5213,16 +5217,16 @@ skip_add:
   return subs;
 }
 
-/*
- * Like addstate(), but the new state(s) are put at position "*ip".
- * Used for zero-width matches, next state to use is the added one.
- * This makes sure the order of states to be tried does not change, which
- * matters for alternatives.
- */
-static regsubs_T *addstate_here(nfa_list_T *l,        // runtime state list
-                                nfa_state_T *state,   // state to update
-                                regsubs_T *subs,      // pointers to subexpressions
-                                nfa_pim_T *pim,       // postponed look-behind match
+/// Like addstate(), but the new state(s) are put at position "*ip".
+/// Used for zero-width matches, next state to use is the added one.
+/// This makes sure the order of states to be tried does not change, which
+/// matters for alternatives.
+///
+/// @param l      runtime state list
+/// @param state  state to update
+/// @param subs   pointers to subexpressions
+/// @param pim    postponed look-behind match
+static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *subs, nfa_pim_T *pim,
                                 int *ip)
   FUNC_ATTR_NONNULL_ARG(1, 2, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -5402,13 +5406,13 @@ static int check_char_class(int class, int c)
   return FAIL;
 }
 
-/*
- * Check for a match with subexpression "subidx".
- * Return true if it matches.
- */
-static int match_backref(regsub_T *sub,           // pointers to subexpressions
-                         int subidx, int *bytelen       // out: length of match in bytes
-                         )
+/// Check for a match with subexpression "subidx".
+///
+/// @param sub      pointers to subexpressions
+/// @param bytelen  out: length of match in bytes
+///
+/// @return  true if it matches.
+static int match_backref(regsub_T *sub, int subidx, int *bytelen)
 {
   int len;
 
@@ -5457,12 +5461,12 @@ retempty:
 }
 
 
-/*
- * Check for a match with \z subexpression "subidx".
- * Return true if it matches.
- */
-static int match_zref(int subidx, int *bytelen       // out: length of match in bytes
-                      )
+/// Check for a match with \z subexpression "subidx".
+///
+/// @param bytelen  out: length of match in bytes
+///
+/// @return  true if it matches.
+static int match_zref(int subidx, int *bytelen)
 {
   int len;
 
@@ -7276,10 +7280,13 @@ theend:
   return nfa_match;
 }
 
-// Try match of "prog" with at rex.line["col"].
-// Returns <= 0 for failure, number of lines contained in the match otherwise.
-static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm,    // timeout limit or NULL
-                       int *timed_out)    // flag set on timeout or NULL
+/// Try match of "prog" with at rex.line["col"].
+///
+/// @param tm         timeout limit or NULL
+/// @param timed_out  flag set on timeout or NULL
+///
+/// @return  <= 0 for failure, number of lines contained in the match otherwise.
+static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_out)
 {
   int i;
   regsubs_T subs, m;
@@ -7639,17 +7646,16 @@ static void nfa_regfree(regprog_T *prog)
   }
 }
 
-/*
- * Match a regexp against a string.
- * "rmp->regprog" is a compiled regexp as returned by nfa_regcomp().
- * Uses curbuf for line count and 'iskeyword'.
- * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
- *
- * Returns <= 0 for failure, number of lines contained in the match otherwise.
- */
-static int nfa_regexec_nl(regmatch_T *rmp, char_u *line,      // string to match against
-                          colnr_T col,       // column to start looking for match
-                          bool line_lbr)
+/// Match a regexp against a string.
+/// "rmp->regprog" is a compiled regexp as returned by nfa_regcomp().
+/// Uses curbuf for line count and 'iskeyword'.
+/// If "line_lbr" is true, consider a "\n" in "line" to be a line break.
+///
+/// @param line  string to match against
+/// @param col   column to start looking for match
+///
+/// @return  <= 0 for failure, number of lines contained in the match otherwise.
+static int nfa_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_lbr)
 {
   rex.reg_match = rmp;
   rex.reg_mmatch = NULL;

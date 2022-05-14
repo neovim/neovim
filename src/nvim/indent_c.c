@@ -460,11 +460,10 @@ static int cin_isinit(void)
   return FALSE;
 }
 
-/*
- * Recognize a switch label: "case .*:" or "default:".
- */
-bool cin_iscase(const char_u *s, bool strict     // Allow relaxed check of case statement for JS
-                )
+/// Recognize a switch label: "case .*:" or "default:".
+///
+/// @param strict  Allow relaxed check of case statement for JS
+bool cin_iscase(const char_u *s, bool strict)
 {
   s = cin_skipcomment(s);
   if (cin_starts_with(s, "case")) {
