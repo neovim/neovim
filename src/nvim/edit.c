@@ -1396,7 +1396,7 @@ static void insert_do_complete(InsertState *s)
     compl_cont_status = 0;
   }
   compl_busy = false;
-  can_si = true;  // allow smartindenting
+  can_si = may_do_si();  // allow smartindenting
 }
 
 static void insert_do_cindent(InsertState *s)
@@ -9403,7 +9403,7 @@ static void ins_try_si(int c)
   /*
    * set indent of '#' always to 0
    */
-  if (curwin->w_cursor.col > 0 && can_si && c == '#') {
+  if (curwin->w_cursor.col > 0 && can_si && c == '#' && inindent(0)) {
     // remember current indent for next line
     old_indent = get_indent();
     (void)set_indent(0, SIN_CHANGED);
