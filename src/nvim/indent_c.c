@@ -3547,8 +3547,7 @@ term_again:
       && vim_strchr(theline, '}') == NULL
       && !cin_ends_in(theline, (char_u *)":", NULL)
       && !cin_ends_in(theline, (char_u *)",", NULL)
-      && cin_isfuncdecl(NULL, cur_curpos.lnum + 1,
-                        cur_curpos.lnum + 1)
+      && cin_isfuncdecl(NULL, cur_curpos.lnum + 1, cur_curpos.lnum + 1)
       && !cin_isterminated(theline, false, true)) {
     amount = curbuf->b_ind_func_type;
     goto theend;
