@@ -2739,8 +2739,6 @@ static void undo_cmdmod(const exarg_T *eap, int save_msg_scroll)
   }
 }
 
-
-
 /// Parse the address range, if any, in "eap".
 /// May set the last search pattern, unless "silent" is true.
 ///
@@ -9870,8 +9868,8 @@ static void ex_filetype(exarg_T *eap)
     // Print current status.
     smsg("filetype detection:%s  plugin:%s  indent:%s",
          filetype_detect == kTrue ? "ON" : "OFF",
-         filetype_plugin == kTrue ? (filetype_detect == kTrue ? "ON" : "(on)") : "OFF",   // NOLINT(whitespace/line_length)
-         filetype_indent == kTrue ? (filetype_detect == kTrue ? "ON" : "(on)") : "OFF");  // NOLINT(whitespace/line_length)
+         filetype_plugin == kTrue ? (filetype_detect == kTrue ? "ON" : "(on)") : "OFF",
+         filetype_indent == kTrue ? (filetype_detect == kTrue ? "ON" : "(on)") : "OFF");
     return;
   }
 
