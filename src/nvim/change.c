@@ -963,8 +963,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   char_u *p;
   char_u saved_char = NUL;        // init for GCC
   pos_T *pos;
-  bool do_si = (!p_paste && curbuf->b_p_si && !curbuf->b_p_cin
-                && *curbuf->b_p_inde == NUL);
+  bool do_si = may_do_si();
   bool do_cindent;
   bool no_si = false;             // reset did_si afterwards
   int first_char = NUL;           // init for GCC
