@@ -2813,8 +2813,7 @@ int get_c_indent(void)
             //  case xx:
             //      c = 99 +        <- this indent plus continuation
             // ->          here;
-            if (lookfor == LOOKFOR_UNTERM
-                || lookfor == LOOKFOR_ENUM_OR_INIT) {
+            if (lookfor == LOOKFOR_UNTERM || lookfor == LOOKFOR_ENUM_OR_INIT) {
               if (cont_amount > 0) {
                 amount = cont_amount;
               } else {
