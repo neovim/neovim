@@ -7,6 +7,7 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/types.h"
+#include "nvim/lib/kvec.h"
 
 /// Append string to string and return pointer to the next byte
 ///
@@ -24,6 +25,8 @@ static inline char *strappend(char *const dst, const char *const src)
   const size_t src_len = strlen(src);
   return (char *)memmove(dst, src, src_len) + src_len;
 }
+
+typedef kvec_t(char) StringBuilder;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "strings.h.generated.h"
