@@ -1518,8 +1518,7 @@ retry:
       trypos = &pos_copy;
       curwin->w_cursor = *trypos;
       if ((trypos_wk = ind_find_start_CORS(NULL)) != NULL) {  // XXX
-        ind_maxp_wk = ind_maxparen - (int)(cursor_save.lnum
-                                           - trypos_wk->lnum);
+        ind_maxp_wk = ind_maxparen - (int)(cursor_save.lnum - trypos_wk->lnum);
         if (ind_maxp_wk > 0) {
           curwin->w_cursor = *trypos_wk;
           goto retry;
