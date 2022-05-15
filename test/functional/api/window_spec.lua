@@ -166,23 +166,23 @@ describe('API/win', function()
       local oldwin = curwin()
       command('vsplit')
       screen:expect([[
-        aaa                           {4:│}aaa                          |
-        bbb                           {4:│}bbb                          |
-        ccc                           {4:│}ccc                          |
-        {2:dd^d                           }{4:│}{2:ddd                          }|
-        {1:~                             }{4:│}{1:~                            }|
-        {1:~                             }{4:│}{1:~                            }|
+        aaa                           │aaa                          |
+        bbb                           │bbb                          |
+        ccc                           │ccc                          |
+        {2:dd^d                           }│{2:ddd                          }|
+        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
                                                                     |
       ]])
       window('set_cursor', oldwin, {1, 0})
       screen:expect([[
-        aaa                           {4:│}{2:aaa                          }|
-        bbb                           {4:│}bbb                          |
-        ccc                           {4:│}ccc                          |
-        {2:dd^d                           }{4:│}ddd                          |
-        {1:~                             }{4:│}{1:~                            }|
-        {1:~                             }{4:│}{1:~                            }|
+        aaa                           │{2:aaa                          }|
+        bbb                           │bbb                          |
+        ccc                           │ccc                          |
+        {2:dd^d                           }│ddd                          |
+        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  1,1        All}|
                                                                     |
       ]])

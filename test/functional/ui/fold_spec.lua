@@ -21,12 +21,14 @@ local content1 = [[
 describe("folded lines", function()
   before_each(function()
     clear()
+    command('hi VertSplit gui=reverse')
   end)
 
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()
       clear()
+      command('hi VertSplit gui=reverse')
       screen = Screen.new(45, 8)
       screen:attach({rgb=true, ext_multigrid=multigrid})
       screen:set_default_attr_ids({

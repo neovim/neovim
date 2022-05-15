@@ -71,14 +71,14 @@ describe('display', function()
       100wincmd <
     ]])
     screen:expect([[
-      ^a{3:│}aaa                                                       |
-      a{3:│}bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
-      a{3:│}bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                |
-      b{3:│}{1:~                                                         }|
-      b{3:│}{1:~                                                         }|
-      b{3:│}{1:~                                                         }|
-      b{3:│}{1:~                                                         }|
-      {1:@}{3:│}{1:~                                                         }|
+      ^a│aaa                                                       |
+      a│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb|
+      a│bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                |
+      b│{1:~                                                         }|
+      b│{1:~                                                         }|
+      b│{1:~                                                         }|
+      b│{1:~                                                         }|
+      {1:@}│{1:~                                                         }|
       {2:< }{3:[No Name] [+]                                             }|
                                                                   |
     ]])
@@ -86,14 +86,14 @@ describe('display', function()
     screen:expect_unchanged()
     command('100wincmd >')
     screen:expect([[
-      ^aaa                                                       {3:│}a|
-      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb{3:│}a|
-      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                {3:│}a|
-      {1:~                                                         }{3:│}b|
-      {1:~                                                         }{3:│}b|
-      {1:~                                                         }{3:│}b|
-      {1:~                                                         }{3:│}b|
-      {1:~                                                         }{3:│}{1:@}|
+      ^aaa                                                       │a|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb│a|
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb                │a|
+      {1:~                                                         }│b|
+      {1:~                                                         }│b|
+      {1:~                                                         }│b|
+      {1:~                                                         }│b|
+      {1:~                                                         }│{1:@}|
       {2:[No Name] [+]                                              }{3:<}|
                                                                   |
     ]])
