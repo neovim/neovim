@@ -236,21 +236,16 @@ jobs:
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
       DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        config: [ MINGW_64-gcov, MSVC_64 ]
-    name: windows (${{ matrix.config }})
+    name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions/cache@v2
         with:
           path: ${{ env.DEPS_BUILD_DIR }}
-          key: ${{ matrix.config }}-${{ hashFiles('third-party\**') }}
+          key: ${{ hashFiles('third-party\**') }}
 
       - name: Run CI
         run: powershell ci\build.ps1
         env:
-          CONFIGURATION: ${{ matrix.config }}
+          CONFIGURATION: MSVC_64

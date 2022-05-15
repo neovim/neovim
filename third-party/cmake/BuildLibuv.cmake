@@ -45,24 +45,11 @@ if(UNIX)
     CONFIGURE_COMMAND ${UNIX_CFGCMD} MAKE=${MAKE_PRG}
     INSTALL_COMMAND ${MAKE_PRG} V=1 install)
 
-elseif(MINGW AND CMAKE_CROSSCOMPILING)
-  # Build libuv for the host
-  BuildLibuv(TARGET libuv_host
-    CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv_host/autogen.sh && ${DEPS_BUILD_DIR}/src/libuv_host/configure --with-pic --disable-shared --prefix=${HOSTDEPS_INSTALL_DIR} CC=${HOST_C_COMPILER}
-    INSTALL_COMMAND ${MAKE_PRG} V=1 install)
-
-  # Build libuv for the target
-  BuildLibuv(
-    CONFIGURE_COMMAND ${UNIX_CFGCMD} --host=${CROSS_TARGET}
-    INSTALL_COMMAND ${MAKE_PRG} V=1 install)
-
 elseif(WIN32)
 
   set(UV_OUTPUT_DIR ${DEPS_BUILD_DIR}/src/libuv/${CMAKE_BUILD_TYPE})
   if(MSVC)
     set(BUILD_SHARED ON)
-  elseif(MINGW)
-    set(BUILD_SHARED OFF)
   else()
     message(FATAL_ERROR "Trying to build libuv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
   endif()

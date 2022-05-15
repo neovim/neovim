@@ -17,8 +17,6 @@ find_path(LUAJIT_INCLUDE_DIR luajit.h
 
 if(MSVC)
   list(APPEND LUAJIT_NAMES lua51)
-elseif(MINGW)
-  list(APPEND LUAJIT_NAMES libluajit libluajit-5.1)
 else()
   list(APPEND LUAJIT_NAMES luajit-5.1)
 endif()
