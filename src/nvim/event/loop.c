@@ -115,14 +115,12 @@ void loop_on_put(MultiQueue *queue, void *data)
   uv_stop(&loop->uv);
 }
 
-#if !defined(EXITFREE)
 static void loop_walk_cb(uv_handle_t *handle, void *arg)
 {
   if (!uv_is_closing(handle)) {
     uv_close(handle, NULL);
   }
 }
-#endif
 
 /// Closes `loop` and its handles, and frees its structures.
 ///
@@ -155,9 +153,7 @@ bool loop_close(Loop *loop, bool wait)
       log_uv_handles(&loop->uv);
       break;
     }
-#if defined(EXITFREE)
-    (void)didstop;
-#else
+
     if (!didstop) {
       // Loop won’t block for I/O after this.
       uv_stop(&loop->uv);
@@ -166,7 +162,6 @@ bool loop_close(Loop *loop, bool wait)
       uv_walk(&loop->uv, loop_walk_cb, NULL);
       didstop = true;
     }
-#endif
   }
   multiqueue_free(loop->fast_events);
   multiqueue_free(loop->thread_events);
