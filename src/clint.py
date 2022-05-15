@@ -199,7 +199,6 @@ _ERROR_CATEGORIES = [
     'whitespace/alignment',
     'whitespace/blank_line',
     'whitespace/braces',
-    'whitespace/comma',
     'whitespace/comments',
     'whitespace/empty_conditional_body',
     'whitespace/empty_loop_body',
@@ -209,7 +208,6 @@ _ERROR_CATEGORIES = [
     'whitespace/newline',
     'whitespace/operators',
     'whitespace/parens',
-    'whitespace/semicolon',
     'whitespace/tab',
     'whitespace/todo',
     'whitespace/line_continuation',
@@ -2362,29 +2360,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
                   'Should have zero or one spaces inside ( and ) in %s' %
                   match.group(1))
 
-    # You should always have a space after a comma (either as fn arg or
-    # operator).
-    #
-    # This does not apply when the non-space character following the
-    # comma is another comma, since the only time when that happens is
-    # for empty macro arguments.
-    #
-    # We run this check in two passes: first pass on elided lines to
-    # verify that lines contain missing whitespaces, second pass on raw
-    # lines to confirm that those missing whitespaces are not due to
-    # elided comments.
-    if Search(r',[^,\s]', line) and Search(r',[^,\s]', raw[linenum]):
-        error(filename, linenum, 'whitespace/comma', 3,
-              'Missing space after ,')
-
-    # You should always have a space after a semicolon
-    # except for few corner cases
-    # TODO(unknown): clarify if 'if (1) { return 1;}' is requires one more
-    # space after ;
-    if Search(r';[^\s};\\)/]', line):
-        error(filename, linenum, 'whitespace/semicolon', 3,
-              'Missing space after ;')
-
     # Next we will look for issues with function calls.
     CheckSpacingForFunctionCall(filename, line, linenum, error)
 
@@ -2446,19 +2421,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     if Search(r'\w\s+\[', line):
         error(filename, linenum, 'whitespace/braces', 5,
               'Extra space before [')
-
-    # You shouldn't have a space before a semicolon at the end of the line.
-    if Search(r':\s*;\s*$', line):
-        error(filename, linenum, 'whitespace/semicolon', 5,
-              'Semicolon defining empty statement. Use {} instead.')
-    elif Search(r'^\s*;\s*$', line):
-        error(filename, linenum, 'whitespace/semicolon', 5,
-              'Line contains only semicolon. If this should be an empty'
-              ' statement, use {} instead.')
-    elif Search(r'\s+;\s*$', line):
-        error(filename, linenum, 'whitespace/semicolon', 5,
-              'Extra space before last semicolon. If this should be an empty '
-              'statement, use {} instead.')
 
     if Search(r'\{(?!\})\S', line):
         error(filename, linenum, 'whitespace/braces', 5,
