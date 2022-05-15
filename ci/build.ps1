@@ -40,18 +40,14 @@ if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
   write-host "cache dir $($env:DEPS_BUILD_DIR) size: $(Get-ChildItem $env:DEPS_BUILD_DIR -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
-if ($compiler -eq 'MSVC') {
-  $cmakeGeneratorArgs = '/verbosity:normal'
-  $cmakeGenerator = 'Visual Studio 16 2019'
-}
+$cmakeGeneratorArgs = '/verbosity:normal'
+$cmakeGenerator = 'Visual Studio 16 2019'
 
-if ($compiler -eq 'MSVC') {
-  $installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-  if ($installationPath -and (test-path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
-    & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x${bits} -no_logo && set" | foreach-object {
-      $name, $value = $_ -split '=', 2
-      set-content env:\"$name" $value
-    }
+$installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+if ($installationPath -and (test-path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
+  & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x${bits} -no_logo && set" | foreach-object {
+    $name, $value = $_ -split '=', 2
+    set-content env:\"$name" $value
   }
 }
 
@@ -74,14 +70,10 @@ function convertToCmakeArgs($vars) {
 }
 
 cd $env:DEPS_BUILD_DIR
-if ($compiler -eq 'MSVC') {
-  if ($bits -eq 32) {
-    cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
-  } else {
-    cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
-  }
+if ($bits -eq 32) {
+  cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 } else {
-  cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+  cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 }
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 cd $buildDir
@@ -89,14 +81,10 @@ cd $buildDir
 # Build Neovim
 mkdir build
 cd build
-if ($compiler -eq 'MSVC') {
-  if ($bits -eq 32) {
-    cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
-  } else {
-    cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
-  }
+if ($bits -eq 32) {
+  cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
 } else {
-  cmake -G $cmakeGenerator $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
+  cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
 }
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 .\bin\nvim --version ; exitIfFailed
