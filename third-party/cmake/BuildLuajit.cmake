@@ -76,57 +76,6 @@ if(UNIX)
     CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR}
     ${DEPLOYMENT_TARGET})
 
-elseif(MINGW AND CMAKE_CROSSCOMPILING)
-
-  # Build luajit for the host
-  BuildLuaJit(TARGET luajit_host
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${INSTALLCMD_UNIX}
-      CC=${HOST_C_COMPILER} PREFIX=${HOSTDEPS_INSTALL_DIR})
-
-  # Build luajit for the target
-  BuildLuaJit(
-    # Similar to Unix + cross - fPIC
-    INSTALL_COMMAND
-      ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR}
-        BUILDMODE=static install
-        TARGET_SYS=${CMAKE_SYSTEM_NAME}
-        CROSS=${CROSS_TARGET}-
-        HOST_CC=${HOST_C_COMPILER} HOST_CFLAGS=${HOST_C_FLAGS}
-        HOST_LDFLAGS=${HOST_EXE_LINKER_FLAGS}
-        FILE_T=luajit.exe
-        Q=
-        INSTALL_TSYMNAME=luajit.exe)
-
-elseif(MINGW)
-
-  if(CMAKE_GENERATOR MATCHES "Ninja")
-    set(LUAJIT_MAKE_PRG ${MAKE_PRG})
-  else()
-    set(LUAJIT_MAKE_PRG ${CMAKE_MAKE_PROGRAM})
-  endif()
-  BuildLuaJit(BUILD_COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER}
-                                PREFIX=${DEPS_INSTALL_DIR}
-                                CFLAGS+=-DLUA_USE_APICHECK
-                                CFLAGS+=-funwind-tables
-                                CCDEBUG+=-g
-                                BUILDMODE=static
-                      # Build a DLL too
-                      COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER} BUILDMODE=dynamic
-
-          INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/bin
-	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/lib
-	    # Luarocks searches for lua51.dll in lib
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/lib
-	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/libluajit.a ${DEPS_INSTALL_DIR}/lib
-	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/include/luajit-2.1
-	    COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/luajit/src/*.h -DTO=${DEPS_INSTALL_DIR}/include/luajit-2.1 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CopyFilesGlob.cmake
-	    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin/lua/jit
-	    COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_BUILD_DIR}/src/luajit/src/jit ${DEPS_INSTALL_DIR}/bin/lua/jit
-	    )
 elseif(MSVC)
 
   BuildLuaJit(

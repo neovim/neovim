@@ -56,7 +56,7 @@ endif()
 # Defaults to 5.1 for bundled LuaJIT/Lua.
 set(LUA_VERSION "5.1")
 
-if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
+if(UNIX)
 
   if(USE_BUNDLED_LUAJIT)
     list(APPEND LUAROCKS_OPTS
@@ -94,13 +94,9 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
     INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
-elseif(MSVC OR MINGW)
+elseif(MSVC)
 
-  if(MINGW)
-    set(COMPILER_FLAG /MW)
-  elseif(MSVC)
-    set(COMPILER_FLAG /MSVC)
-  endif()
+  set(COMPILER_FLAG /MSVC)
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
   BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
@@ -123,9 +119,6 @@ list(APPEND THIRD_PARTY_DEPS luarocks)
 
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luarocks luajit)
-  if(MINGW AND CMAKE_CROSSCOMPILING)
-    add_dependencies(luarocks luajit_host)
-  endif()
 elseif(USE_BUNDLED_LUA)
   add_dependencies(luarocks lua)
 endif()
@@ -196,9 +189,6 @@ if(USE_BUNDLED_BUSTED)
   set(LUV_DEPS luacheck)
   if(USE_BUNDLED_LUV)
     list(APPEND LUV_DEPS luv-static lua-compat-5.3)
-    if(MINGW AND CMAKE_CROSSCOMPILING)
-      list(APPEND LUV_DEPS libuv_host)
-    endif()
     set(LUV_ARGS "CFLAGS=-O0 -g3 -fPIC")
     if(USE_BUNDLED_LIBUV)
       list(APPEND LUV_ARGS LIBUV_DIR=${HOSTDEPS_INSTALL_DIR})

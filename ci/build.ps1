@@ -40,44 +40,7 @@ if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
   write-host "cache dir $($env:DEPS_BUILD_DIR) size: $(Get-ChildItem $env:DEPS_BUILD_DIR -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
-if ($compiler -eq 'MINGW') {
-  if ($bits -eq 32) {
-    $arch = 'i686'
-  }
-  elseif ($bits -eq 64) {
-    $arch = 'x86_64'
-  }
-  if ($compileOption -eq 'gcov') {
-    $nvimCmakeVars['USE_GCOV'] = 'ON'
-    $uploadToCodecov = $true
-    $env:GCOV = "C:\msys64\mingw$bits\bin\gcov"
-
-    # Setup/build Lua coverage.
-    $env:USE_LUACOV = 1
-    $env:BUSTED_ARGS = "--coverage"
-  }
-  # These are native MinGW builds, but they use the toolchain inside
-  # MSYS2, this allows using all the dependencies and tools available
-  # in MSYS2, but we cannot build inside the MSYS2 shell.
-  $cmakeGenerator = 'Ninja'
-  $cmakeGeneratorArgs = '-v'
-  $mingwPackages = @('ninja', 'cmake', 'diffutils').ForEach({
-    "mingw-w64-$arch-$_"
-  })
-
-  # Add MinGW to the PATH
-  $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
-
-  # Avoid pacman "warning" which causes non-zero return code. https://github.com/open62541/open62541/issues/2068
-  & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
-
-  # Build third-party dependencies
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Syu" ; exitIfFailed
-  # Update again in case updating pacman changes pacman.conf
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Syu" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
-}
-elseif ($compiler -eq 'MSVC') {
+if ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
   $cmakeGenerator = 'Visual Studio 16 2019'
 }
