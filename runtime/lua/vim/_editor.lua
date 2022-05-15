@@ -446,17 +446,11 @@ do
   ---@param msg string Content of the notification to show to the user.
   ---@param level number|nil One of the values from |vim.log.levels|.
   ---@param opts table|nil Optional parameters. Unused by default.
-  function vim.notify_once(msg, level, opts, key)
-    -- TODO: `key` is used by vim.deprecated to exclude the traceback and use
-    --       just the actual message for the lookup.
-    --
-    --       It stays undocumented for now, until we can come up with a new
-    --       vim.notify() interface, that would include notify_once behavior
-    --       as an option, and have displaying the message decoupled to let
-    --       the plugins override it without having to reimplement the logic.
-    if not notified[key or msg] then
+  function vim.notify_once(msg, level, opts)
+    if not notified[msg] then
       vim.notify(msg, level, opts)
-      notified[key or msg] = true
+      notified[msg] = true
+      return true
     end
   end
 end
@@ -796,7 +790,9 @@ function vim.deprecate(name, alternative, version, plugin)
   plugin = plugin or 'Nvim'
   message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
   message = message .. ' See :h deprecated\nThis function will be removed in ' .. plugin .. ' version ' .. version
-  vim.notify_once(debug.traceback(message, 2), vim.log.levels.WARN, nil, message)
+  if vim.notify_once(message, vim.log.levels.WARN) then
+    vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
+  end
 end
 
 require('vim._meta')

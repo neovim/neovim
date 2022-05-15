@@ -1365,7 +1365,7 @@ notify({msg}, {level}, {opts})                                  *vim.notify()*
                     {opts}   (table|nil) Optional parameters. Unused by
                              default.
 
-notify_once({msg}, {level}, {opts}, {key})                 *vim.notify_once()*
+notify_once({msg}, {level}, {opts})                        *vim.notify_once()*
                 Display a notification only one time.
 
                 Like |vim.notify()|, but subsequent calls with the same
