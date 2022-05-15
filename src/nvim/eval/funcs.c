@@ -9729,7 +9729,6 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   spell_suggest_list(&ga, (char_u *)str, maxcount, need_capital, false);
 
-
 f_spellsuggest_return:
   tv_list_alloc_ret(rettv, (ptrdiff_t)ga.ga_len);
   for (int i = 0; i < ga.ga_len; i++) {
