@@ -206,7 +206,6 @@ _ERROR_CATEGORIES = [
     'whitespace/end_of_line',
     'whitespace/ending_newline',
     'whitespace/indent',
-    'whitespace/line_length',
     'whitespace/newline',
     'whitespace/operators',
     'whitespace/parens',
@@ -2815,7 +2814,7 @@ def GetLineWidth(line):
         return len(line)
 
 
-def CheckStyle(filename, clean_lines, linenum, file_extension, error):
+def CheckStyle(filename, clean_lines, linenum, error):
     """Checks rules from the 'C++ style rules' section of cppguide.html.
 
     Most of these rules are hard to test (naming, comment style), but we
@@ -2826,7 +2825,6 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
       filename: The name of the current file.
       clean_lines: A CleansedLines instance containing the file.
       linenum: The number of the line to check.
-      file_extension: The extension (without the dot) of the filename.
       error: The function to call with any errors found.
     """
 
@@ -2867,35 +2865,6 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, error):
         error(filename, linenum, 'whitespace/indent', 3,
               'Weird number of spaces at line-start.  '
               'Are you using a 2-space indent?')
-
-    # Check if the line is a header guard.
-    is_header_guard = False
-    if file_extension == 'h':
-        cppvar = GetHeaderGuardCPPVariable(filename)
-        if (line.startswith('#ifndef %s' % cppvar) or
-                line.startswith('#define %s' % cppvar) or
-                line.startswith('#endif  // %s' % cppvar)):
-            is_header_guard = True
-    # #include lines and header guards can be long, since there's no clean way
-    # to split them.
-    #
-    # URLs can be long too.  It's possible to split these, but it makes them
-    # harder to cut&paste.
-    #
-    # The "$Id:...$" comment may also get very long without it being the
-    # developers fault.
-    if (not line.startswith('#include') and not is_header_guard and
-            not Match(r'^\s*//.*http(s?)://\S*$', line) and
-            not Match(r'^// \$Id:.*#[0-9]+ \$$', line)):
-        line_width = GetLineWidth(line)
-        extended_length = int(_line_length * 1.25)
-        if line_width > extended_length:
-            error(filename, linenum, 'whitespace/line_length', 4,
-                  'Lines should very rarely be longer than %i characters' %
-                  extended_length)
-        elif line_width > _line_length:
-            error(filename, linenum, 'whitespace/line_length', 2,
-                  'Lines should be <= %i characters long' % _line_length)
 
     if (cleansed_line.count(';') > 1 and
         # for loops are allowed two ;'s (and may run over two lines).
@@ -3193,14 +3162,13 @@ def CheckLanguage(filename, clean_lines, linenum, include_state, error):
                   'for(;; action)')
 
 
-def ProcessLine(filename, file_extension, clean_lines, line,
+def ProcessLine(filename, clean_lines, line,
                 include_state, function_state, nesting_state, error,
                 extra_check_functions=[]):
     """Processes a single line in the file.
 
     Args:
       filename              : Filename of the file that is being processed.
-      file_extension        : The extension (dot not included) of the file.
       clean_lines           : An array of strings, each representing a line of
                               the file, with comments stripped.
       line                  : Number of line being processed.
@@ -3227,7 +3195,7 @@ def ProcessLine(filename, file_extension, clean_lines, line,
     CheckForFunctionLengths(filename, clean_lines, line, function_state, error)
     CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
     CheckForOldStyleComments(filename, init_lines[line], line, error)
-    CheckStyle(filename, clean_lines, line, file_extension, error)
+    CheckStyle(filename, clean_lines, line, error)
     CheckLanguage(filename, clean_lines, line, include_state, error)
     CheckForNonStandardConstructs(filename, clean_lines, line, error)
     CheckPosixThreading(filename, clean_lines, line, error)
@@ -3285,7 +3253,7 @@ def ProcessFileData(filename, file_extension, lines, error,
     RemoveMultiLineComments(filename, lines, error)
     clean_lines = CleansedLines(lines, init_lines)
     for line in range(clean_lines.NumLines()):
-        ProcessLine(filename, file_extension, clean_lines, line,
+        ProcessLine(filename, clean_lines, line,
                     include_state, function_state, nesting_state, error,
                     extra_check_functions)
 

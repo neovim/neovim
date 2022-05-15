@@ -771,15 +771,6 @@ getting used to, but it is important that all project contributors follow the
 style rules so that they can all read and understand everyone's code easily.
 
 
-Line Length ~
-
-Each line of text in your code should be at most 100 characters long.
-
-Exception: if a comment line contains an example command or a literal URL
-longer than 100 characters, that line may be longer than 100 characters for ease
-of cut and paste.
-
-
 Non-ASCII Characters ~
 
 Non-ASCII characters should be rare, and must use UTF-8 formatting.
