@@ -1153,7 +1153,7 @@ size_t aucmd_pattern_length(char *pat)
 
   char *endpat;
 
-  for (; *pat; pat = (*endpat == ',' ? endpat + 1 : endpat)) {
+  for (; *pat; pat = endpat + 1) {
     // Find end of the pattern.
     // Watch out for a comma in braces, like "*.\{obj,o\}".
     endpat = pat;

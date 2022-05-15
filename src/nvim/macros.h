@@ -56,12 +56,14 @@
 // Returns empty string if it is NULL.
 #define EMPTY_IF_NULL(x) (char *)((x) ? (x) : (char_u *)"")
 
-// Adjust chars in a language according to 'langmap' option.
-// NOTE that there is no noticeable overhead if 'langmap' is not set.
-// When set the overhead for characters < 256 is small.
-// Don't apply 'langmap' if the character comes from the Stuff buffer or from a
-// mapping and the langnoremap option was set.
-// The do-while is just to ignore a ';' after the macro.
+/// Adjust chars in a language according to 'langmap' option.
+/// NOTE that there is no noticeable overhead if 'langmap' is not set.
+/// When set the overhead for characters < 256 is small.
+/// Don't apply 'langmap' if the character comes from the Stuff buffer or from a
+/// mapping and the langnoremap option was set.
+/// The do-while is just to ignore a ';' after the macro.
+///
+/// -V:LANGMAP_ADJUST:560
 #define LANGMAP_ADJUST(c, condition) \
   do { \
     if (*p_langmap \

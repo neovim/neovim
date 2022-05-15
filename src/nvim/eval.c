@@ -10146,9 +10146,6 @@ repeat:
       *fnamep = xstrnsave(*fnamep, STRLEN(*fnamep) + 2);
       xfree(*bufp);          // free any allocated file name
       *bufp = *fnamep;
-      if (*fnamep == NULL) {
-        return -1;
-      }
       add_pathsep(*fnamep);
     }
   }

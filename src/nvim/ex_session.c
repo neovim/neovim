@@ -1012,15 +1012,6 @@ void ex_mkrc(exarg_T *eap)
             emsg(_(e_prev_dir));
           }
           shorten_fnames(true);
-          // restore original dir
-          if (*dirnow != NUL && ((ssop_flags & SSOP_SESDIR)
-                                 || ((ssop_flags & SSOP_CURDIR) && globaldir !=
-                                     NULL))) {
-            if (os_chdir((char *)dirnow) != 0) {
-              emsg(_(e_prev_dir));
-            }
-            shorten_fnames(true);
-          }
         }
         xfree(dirnow);
       } else {

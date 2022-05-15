@@ -1541,6 +1541,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len, cons
 
   // Do the conversion manually to avoid sscanf() quirks.
   abort();  // Should’ve used goto earlier.
+  // -V:PARSE_NUMBER:560
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
     const char *const after_prefix = ptr; \
