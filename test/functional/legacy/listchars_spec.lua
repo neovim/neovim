@@ -105,7 +105,7 @@ describe("'listchars'", function()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
       [2] = {bold = true, reverse = true},  -- StatusLine
-      [3] = {reverse = true},  -- StatusLineNC, VertSplit
+      [3] = {reverse = true},  -- StatusLineNC
       [4] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue},  -- FoldColumn, SignColumn
     })
     screen:attach()
