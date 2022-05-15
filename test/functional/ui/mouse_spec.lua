@@ -595,54 +595,54 @@ describe('ui/mouse/input', function()
     feed('ifoo\nbar<esc>')
 
     screen:expect{grid=[[
-      testing                   {4:│}testing                   |
-      mouse                     {4:│}mouse                     |
-      support and selection     {4:│}support and selection     |
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│[No Name] [+]             }|
-      {0:~                         }{4:│}foo{0:$}                      |
-      {0:~                         }{4:│}ba^r{0:$}                      |
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
+      testing                   │testing                   |
+      mouse                     │mouse                     |
+      support and selection     │support and selection     |
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{4:[No Name] [+]             }|
+      {0:~                         }│foo{0:$}                      |
+      {0:~                         }│ba^r{0:$}                      |
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
       {4:[No Name] [+]              }{5:[No Name] [+]             }|
                                                            |
     ]]}
 
     meths.input_mouse('left', 'press', '', 0, 6, 27)
     screen:expect{grid=[[
-      testing                   {4:│}testing                   |
-      mouse                     {4:│}mouse                     |
-      support and selection     {4:│}support and selection     |
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│[No Name] [+]             }|
-      {0:~                         }{4:│}^foo{0:$}                      |
-      {0:~                         }{4:│}bar{0:$}                      |
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
+      testing                   │testing                   |
+      mouse                     │mouse                     |
+      support and selection     │support and selection     |
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{4:[No Name] [+]             }|
+      {0:~                         }│^foo{0:$}                      |
+      {0:~                         }│bar{0:$}                      |
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
       {4:[No Name] [+]              }{5:[No Name] [+]             }|
                                                            |
     ]]}
     meths.input_mouse('left', 'drag', '', 0, 7, 30)
 
     screen:expect{grid=[[
-      testing                   {4:│}testing                   |
-      mouse                     {4:│}mouse                     |
-      support and selection     {4:│}support and selection     |
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│[No Name] [+]             }|
-      {0:~                         }{4:│}{1:foo}{3:$}                      |
-      {0:~                         }{4:│}{1:bar}{0:^$}                      |
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
-      {0:~                         }{4:│}{0:~                         }|
+      testing                   │testing                   |
+      mouse                     │mouse                     |
+      support and selection     │support and selection     |
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{4:[No Name] [+]             }|
+      {0:~                         }│{1:foo}{3:$}                      |
+      {0:~                         }│{1:bar}{0:^$}                      |
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
+      {0:~                         }│{0:~                         }|
       {4:[No Name] [+]              }{5:[No Name] [+]             }|
       {2:-- VISUAL --}                                         |
     ]]}
@@ -729,12 +729,12 @@ describe('ui/mouse/input', function()
     feed('k')
     feed_command('sp', 'vsp')
     screen:expect([[
-      lines                     {4:│}lines                     |
-      to                        {4:│}to                        |
-      test                      {4:│}test                      |
-      ^mouse scrolling           {4:│}mouse scrolling           |
-                                {4:│}                          |
-      {0:~                         }{4:│}{0:~                         }|
+      lines                     │lines                     |
+      to                        │to                        |
+      test                      │test                      |
+      ^mouse scrolling           │mouse scrolling           |
+                                │                          |
+      {0:~                         }│{0:~                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -750,12 +750,12 @@ describe('ui/mouse/input', function()
       feed('<ScrollWheelDown><0,0>')
     end
     screen:expect([[
-      ^mouse scrolling           {4:│}lines                     |
-                                {4:│}to                        |
-      {0:~                         }{4:│}test                      |
-      {0:~                         }{4:│}mouse scrolling           |
-      {0:~                         }{4:│}                          |
-      {0:~                         }{4:│}{0:~                         }|
+      ^mouse scrolling           │lines                     |
+                                │to                        |
+      {0:~                         }│test                      |
+      {0:~                         }│mouse scrolling           |
+      {0:~                         }│                          |
+      {0:~                         }│{0:~                         }|
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -771,12 +771,12 @@ describe('ui/mouse/input', function()
       feed('<ScrollWheelUp><27,0>')
     end
     screen:expect([[
-      ^mouse scrolling           {4:│}text                      |
-                                {4:│}with                      |
-      {0:~                         }{4:│}many                      |
-      {0:~                         }{4:│}lines                     |
-      {0:~                         }{4:│}to                        |
-      {0:~                         }{4:│}test                      |
+      ^mouse scrolling           │text                      |
+                                │with                      |
+      {0:~                         }│many                      |
+      {0:~                         }│lines                     |
+      {0:~                         }│to                        |
+      {0:~                         }│test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
@@ -793,12 +793,12 @@ describe('ui/mouse/input', function()
       feed('<ScrollWheelUp><27,7><ScrollWheelUp>')
     end
     screen:expect([[
-      ^mouse scrolling           {4:│}text                      |
-                                {4:│}with                      |
-      {0:~                         }{4:│}many                      |
-      {0:~                         }{4:│}lines                     |
-      {0:~                         }{4:│}to                        |
-      {0:~                         }{4:│}test                      |
+      ^mouse scrolling           │text                      |
+                                │with                      |
+      {0:~                         }│many                      |
+      {0:~                         }│lines                     |
+      {0:~                         }│to                        |
+      {0:~                         }│test                      |
       {5:[No Name] [+]              }{4:[No Name] [+]             }|
       Inserting                                            |
       text                                                 |

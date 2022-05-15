@@ -22,6 +22,7 @@ local curbuf, curwin, curtab = helpers.curbuf, helpers.curwin, helpers.curtab
 describe('float window', function()
   before_each(function()
     clear()
+    command('hi VertSplit gui=reverse')
   end)
   local attrs = {
     [0] = {bold=true, foreground=Screen.colors.Blue},
