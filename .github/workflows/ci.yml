@@ -5,7 +5,6 @@ on:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
@@ -24,7 +23,7 @@ jobs:
     # we are able to build neovim without pigeonholing ourselves into specifics
     # of the bundled dependencies.
 
-    if: (github.event_name == 'pull_request' && github.base_ref == 'master' && !github.event.pull_request.draft) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-20.04
     timeout-minutes: 10
     env:
@@ -148,7 +147,6 @@ jobs:
             cmake: minimum_required
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
-    if: github.event.pull_request.draft == false
     env:
       CC: ${{ matrix.cc }}
       CI_OS_NAME: ${{ matrix.os }}
@@ -235,7 +233,6 @@ jobs:
   windows:
     runs-on: windows-2019
     timeout-minutes: 45
-    if: github.event.pull_request.draft == false
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
       DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
