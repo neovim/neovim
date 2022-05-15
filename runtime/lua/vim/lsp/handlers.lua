@@ -327,18 +327,20 @@ M['textDocument/hover'] = M.hover
 ---@param result (table) result of LSP method; a location or a list of locations.
 ---@param ctx (table) table containing the context of the request, including the method
 ---(`textDocument/definition` can return `Location` or `Location[]`
-local function location_handler(_, result, ctx, _)
+local function location_handler(_, result, ctx, config)
   if result == nil or vim.tbl_isempty(result) then
     local _ = log.info() and log.info(ctx.method, 'No location found')
     return nil
   end
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
+  config = config or {}
+
   -- textDocument/definition can return Location or Location[]
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
 
   if vim.tbl_islist(result) then
-    util.jump_to_location(result[1], client.offset_encoding)
+    util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
 
     if #result > 1 then
       vim.fn.setqflist({}, ' ', {
@@ -348,7 +350,7 @@ local function location_handler(_, result, ctx, _)
       api.nvim_command('botright copen')
     end
   else
-    util.jump_to_location(result, client.offset_encoding)
+    util.jump_to_location(result, client.offset_encoding, config.reuse_win)
   end
 end
 

@@ -1015,14 +1015,24 @@ completion({context})                               *vim.lsp.buf.completion()*
                 See also: ~
                     |vim.lsp.protocol.constants.CompletionTriggerKind|
 
-declaration()                                      *vim.lsp.buf.declaration()*
+declaration({options})                             *vim.lsp.buf.declaration()*
                 Jumps to the declaration of the symbol under the cursor.
                 Note:
                     Many servers do not implement this method. Generally, see
                     |vim.lsp.buf.definition()| instead.
 
-definition()                                        *vim.lsp.buf.definition()*
+                Parameters: ~
+                    {options}  (table|nil) additional options
+                               • reuse_win: (boolean) Jump to existing window
+                                 if buffer is already open.
+
+definition({options})                               *vim.lsp.buf.definition()*
                 Jumps to the definition of the symbol under the cursor.
+
+                Parameters: ~
+                    {options}  (table|nil) additional options
+                               • reuse_win: (boolean) Jump to existing window
+                                 if buffer is already open.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
                 Send request to the server to resolve document highlights for
@@ -1250,9 +1260,14 @@ signature_help()                                *vim.lsp.buf.signature_help()*
                 Displays signature information about the symbol under the
                 cursor in a floating window.
 
-type_definition()                              *vim.lsp.buf.type_definition()*
+type_definition({options})                     *vim.lsp.buf.type_definition()*
                 Jumps to the definition of the type of the symbol under the
                 cursor.
+
+                Parameters: ~
+                    {options}  (table|nil) additional options
+                               • reuse_win: (boolean) Jump to existing window
+                                 if buffer is already open.
 
 workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
                 Lists all symbols in the current workspace in the quickfix
@@ -1539,12 +1554,14 @@ get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
                     |shiftwidth|
 
                                              *vim.lsp.util.jump_to_location()*
-jump_to_location({location}, {offset_encoding})
+jump_to_location({location}, {offset_encoding}, {reuse_win})
                 Jumps to a location.
 
                 Parameters: ~
                     {location}         (table) (`Location`|`LocationLink`)
                     {offset_encoding}  (string) utf-8|utf-16|utf-32 (required)
+                    {reuse_win}        (boolean) Jump to existing window if
+                                       buffer is already opened.
 
                 Return: ~
                     `true` if the jump succeeded
