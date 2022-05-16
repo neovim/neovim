@@ -30,4 +30,13 @@ describe('vim.fs', function()
       rmdir(test_dir)
     end)
   end)
+
+  describe('dirname()', function()
+    it('works', function()
+      eq(test_build_dir, exec_lua([[
+        local nvim_dir = ...
+        return vim.fs.dirname(nvim_dir)
+      ]], nvim_dir))
+    end)
+  end)
 end)

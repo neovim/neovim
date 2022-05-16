@@ -21,7 +21,7 @@ local M = {}
 ---@return (function) Iterator
 function M.parents(start)
   return function(_, dir)
-    local parent = vim.fn.fnamemodify(dir, ":h")
+    local parent = M.dirname(dir)
     if parent == dir then
       return nil
     end
@@ -30,6 +30,14 @@ function M.parents(start)
   end,
     nil,
     start
+end
+
+--- Return the parent directory of the given file or directory
+---
+---@param file (string) File or directory
+---@return (string) Parent directory of {file}
+function M.dirname(file)
+  return vim.fn.fnamemodify(file, ':h')
 end
 
 return M
