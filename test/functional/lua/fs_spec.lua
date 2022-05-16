@@ -66,4 +66,17 @@ describe('vim.fs', function()
       ]], nvim_dir, nvim_prog_basename))
     end)
   end)
+
+  describe('find()', function()
+    it('works', function()
+      eq({test_build_dir}, exec_lua([[
+        local dir = ...
+        return vim.fs.find('build', { path = dir, upward = true, type = 'directory' })
+      ]], nvim_dir))
+      eq({nvim_prog}, exec_lua([[
+        local dir, nvim = ...
+        return vim.fs.find(nvim, { path = dir, type = 'file' })
+      ]], test_build_dir, nvim_prog_basename))
+    end)
+  end)
 end)
