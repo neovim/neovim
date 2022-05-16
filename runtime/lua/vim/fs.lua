@@ -48,4 +48,17 @@ function M.basename(file)
   return vim.fn.fnamemodify(file, ':t')
 end
 
+--- Return an iterator over the files and directories located in {path}
+---
+---@param path (string) An absolute or relative path to the directory to iterate
+---            over
+---@return Iterator over files and directories in {path}. Each iteration yields
+---        two values: name and type. Each "name" is the basename of the file or
+---        directory relative to {path}. Type is one of "file" or "directory".
+function M.dir(path)
+  return function(fs)
+    return vim.loop.fs_scandir_next(fs)
+  end, vim.loop.fs_scandir(path)
+end
+
 return M

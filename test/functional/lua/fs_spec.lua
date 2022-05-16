@@ -52,4 +52,18 @@ describe('vim.fs', function()
       ]], nvim_prog))
     end)
   end)
+
+  describe('dir()', function()
+    it('works', function()
+      eq(true, exec_lua([[
+        local dir, nvim = ...
+        for name, type in vim.fs.dir(dir) do
+          if name == nvim and type == 'file' then
+            return true
+          end
+        end
+        return false
+      ]], nvim_dir, nvim_prog_basename))
+    end)
+  end)
 end)

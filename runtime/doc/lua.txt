@@ -2160,6 +2160,20 @@ basename({file})                                           *vim.fs.basename()*
                 Return: ~
                     (string) Basename of {file}
 
+dir({path})                                                     *vim.fs.dir()*
+                Return an iterator over the files and directories located in
+                {path}
+
+                Parameters: ~
+                    {path}  (string) An absolute or relative path to the
+                            directory to iterate over
+
+                Return: ~
+                    Iterator over files and directories in {path}. Each
+                    iteration yields two values: name and type. Each "name" is
+                    the basename of the file or directory relative to {path}.
+                    Type is one of "file" or "directory".
+
 dirname({file})                                             *vim.fs.dirname()*
                 Return the parent directory of the given file or directory
 
