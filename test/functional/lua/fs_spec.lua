@@ -7,6 +7,10 @@ local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local nvim_dir = helpers.nvim_dir
 local test_build_dir = helpers.test_build_dir
+local iswin = helpers.iswin
+local nvim_prog = helpers.nvim_prog
+
+local nvim_prog_basename = iswin() and 'nvim.exe' or 'nvim'
 
 before_each(clear)
 
@@ -37,6 +41,15 @@ describe('vim.fs', function()
         local nvim_dir = ...
         return vim.fs.dirname(nvim_dir)
       ]], nvim_dir))
+    end)
+  end)
+
+  describe('basename()', function()
+    it('works', function()
+      eq(nvim_prog_basename, exec_lua([[
+        local nvim_prog = ...
+        return vim.fs.basename(nvim_prog)
+      ]], nvim_prog))
     end)
   end)
 end)

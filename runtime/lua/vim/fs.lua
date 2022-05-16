@@ -40,4 +40,12 @@ function M.dirname(file)
   return vim.fn.fnamemodify(file, ':h')
 end
 
+--- Return the basename of the given file or directory
+---
+---@param file (string) File or directory
+---@return (string) Basename of {file}
+function M.basename(file)
+  return vim.fn.fnamemodify(file, ':t')
+end
+
 return M

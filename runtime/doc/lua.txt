@@ -2151,6 +2151,15 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
 ==============================================================================
 Lua module: fs                                                        *lua-fs*
 
+basename({file})                                           *vim.fs.basename()*
+                Return the basename of the given file or directory
+
+                Parameters: ~
+                    {file}  (string) File or directory
+
+                Return: ~
+                    (string) Basename of {file}
+
 dirname({file})                                             *vim.fs.dirname()*
                 Return the parent directory of the given file or directory
 
