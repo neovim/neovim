@@ -690,8 +690,9 @@ matching within a single line.
 
 vim.regex({re})                                                  *vim.regex()*
         Parse the Vim regex {re} and return a regex object. Regexes are
-        "magic" and case-insensitive by default, regardless of 'magic' and
-        'ignorecase'. They can be controlled with flags, see |/magic|.
+        "magic" and case-sensitive by default, regardless of 'magic' and
+        'ignorecase'. They can be controlled with flags, see |/magic| and
+        |/ignorecase|.
 
 Methods on the regex object:
 
