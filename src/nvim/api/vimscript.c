@@ -34,7 +34,7 @@
 /// Unlike |nvim_command()| this function supports heredocs, script-scope (s:),
 /// etc.
 ///
-/// On execution error: fails with VimL error, does not update v:errmsg.
+/// On execution error: fails with VimL error, updates v:errmsg.
 ///
 /// @see |execute()|
 /// @see |nvim_command()|
@@ -98,7 +98,7 @@ theend:
 
 /// Executes an Ex command.
 ///
-/// On execution error: fails with VimL error, does not update v:errmsg.
+/// On execution error: fails with VimL error, updates v:errmsg.
 ///
 /// Prefer using |nvim_cmd()| or |nvim_exec()| over this. To evaluate multiple lines of Vim script
 /// or an Ex command directly, use |nvim_exec()|. To construct an Ex command using a structured
@@ -118,7 +118,7 @@ void nvim_command(String command, Error *err)
 /// Evaluates a VimL |expression|.
 /// Dictionaries and Lists are recursively expanded.
 ///
-/// On execution error: fails with VimL error, does not update v:errmsg.
+/// On execution error: fails with VimL error, updates v:errmsg.
 ///
 /// @param expr     VimL expression string
 /// @param[out] err Error details, if any
@@ -226,7 +226,7 @@ free_vim_args:
 
 /// Calls a VimL function with the given arguments.
 ///
-/// On execution error: fails with VimL error, does not update v:errmsg.
+/// On execution error: fails with VimL error, updates v:errmsg.
 ///
 /// @param fn       Function to call
 /// @param args     Function arguments packed in an Array
@@ -240,7 +240,7 @@ Object nvim_call_function(String fn, Array args, Error *err)
 
 /// Calls a VimL |Dictionary-function| with the given arguments.
 ///
-/// On execution error: fails with VimL error, does not update v:errmsg.
+/// On execution error: fails with VimL error, updates v:errmsg.
 ///
 /// @param dict Dictionary, or String evaluating to a VimL |self| dict
 /// @param fn Name of the function defined on the VimL dict
@@ -995,6 +995,8 @@ end:
 /// allows for easier construction and manipulation of an Ex command. This also allows for things
 /// such as having spaces inside a command argument, expanding filenames in a command that otherwise
 /// doesn't expand filenames, etc.
+///
+/// On execution error: fails with VimL error, updates v:errmsg.
 ///
 /// @see |nvim_exec()|
 /// @see |nvim_command()|
