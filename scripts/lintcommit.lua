@@ -190,6 +190,7 @@ function M._test()
     ['fixup'] = true,
     ['fixup: commit message'] = true,
     ['fixup! commit message'] = true,
+    ['chore: normal message'] = false,
     [':no type before colon 1'] = false,
     [' :no type before colon 2'] = false,
     ['  :no type before colon 3'] = false,
