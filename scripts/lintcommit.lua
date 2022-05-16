@@ -78,7 +78,7 @@ local function validate_commit(commit_message)
 
   -- Check if type is correct
   local type = vim.split(before_colon, "%(")[1]
-  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'vim-patch'}
+  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'dist', 'vim-patch'}
   if not vim.tbl_contains(allowed_types, type) then
     return string.format(
       'Invalid commit type "%s". Allowed types are:\n    %s',
@@ -181,6 +181,7 @@ function M._test()
     ['refactor: normal message'] = true,
     ['revert: normal message'] = true,
     ['test: normal message'] = true,
+    ['dist: normal message'] = true,
     ['ci(window): message with scope'] = true,
     ['ci!: message with breaking change'] = true,
     ['ci(tui)!: message with scope and breaking change'] = true,
@@ -190,7 +191,6 @@ function M._test()
     ['fixup'] = true,
     ['fixup: commit message'] = true,
     ['fixup! commit message'] = true,
-    ['chore: normal message'] = false,
     [':no type before colon 1'] = false,
     [' :no type before colon 2'] = false,
     ['  :no type before colon 3'] = false,
