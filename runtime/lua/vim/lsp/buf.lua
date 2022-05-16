@@ -676,7 +676,7 @@ end
 --- Removes document highlights from current buffer.
 ---
 function M.clear_references()
-  util.buf_clear_references()
+  util.buf_clear_references(0)
 end
 
 ---@private
