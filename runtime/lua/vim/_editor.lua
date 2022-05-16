@@ -446,12 +446,14 @@ do
   ---@param msg string Content of the notification to show to the user.
   ---@param level number|nil One of the values from |vim.log.levels|.
   ---@param opts table|nil Optional parameters. Unused by default.
+  ---@return boolean true if message was displayed, else false
   function vim.notify_once(msg, level, opts)
     if not notified[msg] then
       vim.notify(msg, level, opts)
       notified[msg] = true
       return true
     end
+    return false
   end
 end
 
@@ -785,12 +787,13 @@ end
 ---                              be removed.
 ---@param plugin      string|nil Plugin name that the function will be removed
 ---                              from. Defaults to "Nvim".
-function vim.deprecate(name, alternative, version, plugin)
+---@param backtrace   boolean|nil Prints backtrace. Defaults to true.
+function vim.deprecate(name, alternative, version, plugin, backtrace)
   local message = name .. ' is deprecated'
   plugin = plugin or 'Nvim'
   message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
   message = message .. ' See :h deprecated\nThis function will be removed in ' .. plugin .. ' version ' .. version
-  if vim.notify_once(message, vim.log.levels.WARN) then
+  if vim.notify_once(message, vim.log.levels.WARN) and backtrace ~= false then
     vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
   end
 end
