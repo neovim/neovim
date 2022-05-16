@@ -1160,7 +1160,7 @@ void ex_diffpatch(exarg_T *eap)
 {
   char_u *buf = NULL;
   win_T *old_curwin = curwin;
-  char_u *newname = NULL;  // name of patched file buffer
+  char *newname = NULL;  // name of patched file buffer
   char_u *esc_name = NULL;
 
 #ifdef UNIX
@@ -1258,7 +1258,7 @@ void ex_diffpatch(exarg_T *eap)
     emsg(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
-      newname = vim_strnsave(curbuf->b_fname, STRLEN(curbuf->b_fname) + 4);
+      newname = xstrnsave(curbuf->b_fname, STRLEN(curbuf->b_fname) + 4);
       STRCAT(newname, ".new");
     }
 
@@ -1279,7 +1279,7 @@ void ex_diffpatch(exarg_T *eap)
 
         if (newname != NULL) {
           // do a ":file filename.new" on the patched buffer
-          eap->arg = (char *)newname;
+          eap->arg = newname;
           ex_file(eap);
 
           // Do filetype detection with the new name.

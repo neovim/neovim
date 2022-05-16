@@ -571,7 +571,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   if (ssop_flags & SSOP_SESDIR) {
     PUTLINE_FAIL("exe \"cd \" . escape(expand(\"<sfile>:p:h\"), ' ')");
   } else if (ssop_flags & SSOP_CURDIR) {
-    sname = home_replace_save(NULL, globaldir != NULL ? globaldir : dirnow);
+    sname = home_replace_save(NULL, globaldir != NULL ? (char_u *)globaldir : dirnow);
     char *fname_esc = ses_escape_fname((char *)sname, &ssop_flags);
     if (fprintf(fd, "cd %s\n", fname_esc) < 0) {
       xfree(fname_esc);
@@ -997,7 +997,7 @@ void ex_mkrc(exarg_T *eap)
           }
         } else if (*dirnow != NUL
                    && (ssop_flags & SSOP_CURDIR) && globaldir != NULL) {
-          if (os_chdir((char *)globaldir) == 0) {
+          if (os_chdir(globaldir) == 0) {
             shorten_fnames(true);
           }
         }

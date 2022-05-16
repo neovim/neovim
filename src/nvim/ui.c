@@ -344,7 +344,7 @@ void vim_beep(unsigned val)
     // When 'debug' contains "beep" produce a message.  If we are sourcing
     // a script or executing a function give the user a hint where the beep
     // comes from.
-    if (vim_strchr(p_debug, 'e') != NULL) {
+    if (vim_strchr((char *)p_debug, 'e') != NULL) {
       msg_source(HL_ATTR(HLF_W));
       msg_attr(_("Beep!"), HL_ATTR(HLF_W));
     }
@@ -567,7 +567,7 @@ void ui_check_mouse(void)
   for (char_u *p = p_mouse; *p; p++) {
     switch (*p) {
     case 'a':
-      if (vim_strchr((char_u *)MOUSE_A, checkfor) != NULL) {
+      if (vim_strchr(MOUSE_A, checkfor) != NULL) {
         has_mouse = true;
         return;
       }

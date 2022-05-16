@@ -120,8 +120,8 @@ char *parse_shape_opt(int what)
     // Repeat for all comma separated parts.
     char *modep = (char *)p_guicursor;
     while (modep != NULL && *modep != NUL) {
-      colonp = (char *)vim_strchr((char_u *)modep, ':');
-      commap = (char *)vim_strchr((char_u *)modep, ',');
+      colonp = vim_strchr(modep, ':');
+      commap = vim_strchr(modep, ',');
 
       if (colonp == NULL || (commap != NULL && commap < colonp)) {
         return N_("E545: Missing colon");
@@ -215,7 +215,7 @@ char *parse_shape_opt(int what)
               }
               p += 5;
             } else {          // must be a highlight group name then
-              endp = (char *)vim_strchr((char_u *)p, '-');
+              endp = vim_strchr(p, '-');
               if (commap == NULL) {                       // last part
                 if (endp == NULL) {
                   endp = p + STRLEN(p);                  // find end of part
@@ -223,7 +223,7 @@ char *parse_shape_opt(int what)
               } else if (endp > commap || endp == NULL) {
                 endp = commap;
               }
-              slashp = (char *)vim_strchr((char_u *)p, '/');
+              slashp = vim_strchr(p, '/');
               if (slashp != NULL && slashp < endp) {
                 // "group/langmap_group"
                 i = syn_check_group(p, (size_t)(slashp - p));

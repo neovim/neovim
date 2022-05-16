@@ -63,7 +63,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2, const char *cons
       if (tv2->v_type == VAR_LIST) {
         break;
       }
-      if (vim_strchr((char_u *)"+-*/%", *op) != NULL) {
+      if (vim_strchr("+-*/%", *op) != NULL) {
         // nr += nr  or  nr -= nr, nr *= nr, nr /= nr, nr %= nr
         varnumber_T n = tv_get_number(tv1);
         if (tv2->v_type == VAR_FLOAT) {

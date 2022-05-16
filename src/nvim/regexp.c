@@ -154,8 +154,8 @@ static char_u *reg_prev_sub = NULL;
  *  \u  - Multibyte character code, eg \u20ac
  *  \U  - Long multibyte character code, eg \U12345678
  */
-static char_u REGEXP_INRANGE[] = "]^-n\\";
-static char_u REGEXP_ABBR[] = "nrtebdoxuU";
+static char REGEXP_INRANGE[] = "]^-n\\";
+static char REGEXP_ABBR[] = "nrtebdoxuU";
 
 
 /*
@@ -1477,7 +1477,7 @@ static inline char_u *cstrchr(const char_u *const s, const int c)
   FUNC_ATTR_ALWAYS_INLINE
 {
   if (!rex.reg_ic) {
-    return vim_strchr(s, c);
+    return (char_u *)vim_strchr((char *)s, c);
   }
 
   // Use folded case for UTF-8, slow! For ASCII use libc strpbrk which is
@@ -1498,7 +1498,7 @@ static inline char_u *cstrchr(const char_u *const s, const int c)
   } else if (ASCII_ISLOWER(c)) {
     cc = TOUPPER_ASC(c);
   } else {
-    return vim_strchr(s, c);
+    return (char_u *)vim_strchr((char *)s, c);
   }
 
   char tofind[] = { (char)c, (char)cc, NUL };
@@ -1882,7 +1882,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
           no = 0;
         } else if ('0' <= *src && *src <= '9') {
           no = *src++ - '0';
-        } else if (vim_strchr((char_u *)"uUlLeE", *src)) {
+        } else if (vim_strchr("uUlLeE", *src)) {
           switch (*src++) {
           case 'u':
             func_one = (fptr_T)do_upper;
@@ -2285,10 +2285,10 @@ static char_u regname[][30] = {
  * Use vim_regfree() to free the memory.
  * Returns NULL for an error.
  */
-regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
+regprog_T *vim_regcomp(char *expr_arg, int re_flags)
 {
   regprog_T *prog = NULL;
-  char_u *expr = expr_arg;
+  char_u *expr = (char_u *)expr_arg;
   int save_called_emsg;
 
   regexp_engine = p_re;
@@ -2448,7 +2448,7 @@ static bool vim_regexec_string(regmatch_T *rmp, char_u *line, colnr_T col, bool 
     p_re = BACKTRACKING_ENGINE;
     vim_regfree(rmp->regprog);
     report_re_switch(pat);
-    rmp->regprog = vim_regcomp(pat, re_flags);
+    rmp->regprog = vim_regcomp((char *)pat, re_flags);
     if (rmp->regprog != NULL) {
       rmp->regprog->re_in_use = true;
       result = rmp->regprog->engine->regexec_nl(rmp, line, col, nl);
@@ -2544,7 +2544,7 @@ long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, 
     // checking for \z misuse was already done when compiling for NFA,
     // allow all here
     reg_do_extmatch = REX_ALL;
-    rmp->regprog = vim_regcomp(pat, re_flags);
+    rmp->regprog = vim_regcomp((char *)pat, re_flags);
     reg_do_extmatch = 0;
 
     if (rmp->regprog == NULL) {

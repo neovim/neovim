@@ -311,12 +311,12 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
    */
   stringp = option_str;
   while (*stringp) {
-    colonp = vim_strchr(stringp, ':');
+    colonp = (char_u *)vim_strchr((char *)stringp, ':');
     if (colonp == NULL) {
       ret = N_("E550: Missing colon");
       break;
     }
-    commap = vim_strchr(stringp, ',');
+    commap = (char_u *)vim_strchr((char *)stringp, ',');
     if (commap == NULL) {
       commap = option_str + STRLEN(option_str);
     }
@@ -661,7 +661,7 @@ void ex_hardcopy(exarg_T *eap)
    */
   if (mch_print_init(&settings,
                      curbuf->b_fname == NULL ? buf_spname(curbuf) : curbuf->b_sfname ==
-                     NULL ? curbuf->b_fname : curbuf->b_sfname, eap->forceit) == FAIL) {
+                     NULL ? (char_u *)curbuf->b_fname : curbuf->b_sfname, eap->forceit) == FAIL) {
     return;
   }
 
@@ -1588,7 +1588,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   STRLCAT(buffer, name, MAXPATHL);
   STRLCAT(buffer, ".ps", MAXPATHL);
   resource->filename[0] = NUL;
-  retval = (do_in_runtimepath((char *)buffer, 0, prt_resource_name, resource->filename)
+  retval = (do_in_runtimepath(buffer, 0, prt_resource_name, resource->filename)
             && resource->filename[0] != NUL);
   xfree(buffer);
   return retval;
@@ -2344,7 +2344,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
    * Set up the font size.
    */
   fontsize = PRT_PS_DEFAULT_FONTSIZE;
-  for (p = p_pfn; (p = vim_strchr(p, ':')) != NULL; ++p) {
+  for (p = p_pfn; (p = (char_u *)vim_strchr((char *)p, ':')) != NULL; p++) {
     if (p[1] == 'h' && ascii_isdigit(p[2])) {
       fontsize = atoi((char *)p + 2);
     }
@@ -2413,7 +2413,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     }
     prt_ps_fd = os_fopen((char *)prt_ps_file_name, WRITEBIN);
   } else {
-    p = expand_env_save(psettings->outfile);
+    p = (char_u *)expand_env_save((char *)psettings->outfile);
     if (p != NULL) {
       prt_ps_fd = os_fopen((char *)p, WRITEBIN);
       xfree(p);
@@ -2525,7 +2525,7 @@ bool mch_print_begin(prt_settings_T *psettings)
   char ctime_buf[50];
   char *p_time = os_ctime(ctime_buf, sizeof(ctime_buf));
   // Note: os_ctime() adds a \n so we have to remove it :-(
-  p = vim_strchr((char_u *)p_time, '\n');
+  p = (char_u *)vim_strchr(p_time, '\n');
   if (p != NULL) {
     *p = NUL;
   }

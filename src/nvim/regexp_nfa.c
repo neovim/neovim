@@ -1892,7 +1892,7 @@ static int nfa_regatom(void)
   case Magic('L'):
   case Magic('u'):
   case Magic('U'):
-    p = vim_strchr(classchars, no_Magic(c));
+    p = (char_u *)vim_strchr((char *)classchars, no_Magic(c));
     if (p == NULL) {
       if (extra == NFA_ADD_NL) {
         semsg(_(e_ill_char_class), (int64_t)c);

@@ -36,7 +36,7 @@
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
 #define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
 
-#define SHELL_SPECIAL (char_u *)"\t \"&'$;<>()\\|"
+#define SHELL_SPECIAL "\t \"&'$;<>()\\|"
 
 typedef struct {
   char *data;
@@ -73,7 +73,7 @@ static bool have_wildcard(int num, char_u **file)
 static bool have_dollars(int num, char_u **file)
 {
   for (int i = 0; i < num; i++) {
-    if (vim_strchr(file[i], '$') != NULL) {
+    if (vim_strchr((char *)file[i], '$') != NULL) {
       return true;
     }
   }
@@ -151,7 +151,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
   // Don't allow the use of backticks in secure.
   if (secure) {
     for (i = 0; i < num_pat; i++) {
-      if (vim_strchr(pat[i], '`') != NULL
+      if (vim_strchr((char *)pat[i], '`') != NULL
           && (check_secure())) {
         return FAIL;
       }
@@ -1213,7 +1213,7 @@ static void read_input(DynamicBuffer *buf)
       dynamic_buffer_ensure(buf, buf->len + len);
       buf->data[buf->len++] = NUL;
     } else {
-      char_u *s = vim_strchr(lp + written, NL);
+      char_u *s = (char_u *)vim_strchr((char *)lp + written, NL);
       len = s == NULL ? l : (size_t)(s - (lp + written));
       dynamic_buffer_ensure(buf, buf->len + len);
       memcpy(buf->data + buf->len, lp + written, len);

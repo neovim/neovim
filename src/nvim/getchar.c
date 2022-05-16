@@ -802,7 +802,7 @@ int start_redo_ins(void)
 
   // skip the count and the command character
   while ((c = read_redo(false, false)) != NUL) {
-    if (vim_strchr((char_u *)"AaIiRrOo", c) != NULL) {
+    if (vim_strchr("AaIiRrOo", c) != NULL) {
       if (c == 'O' || c == 'o') {
         add_buff(&readbuf2, NL_STR, -1L);
       }
@@ -4736,9 +4736,9 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
 void add_map(char_u *map, int mode, bool nore)
 {
   char_u *s;
-  char_u *cpo_save = p_cpo;
+  char *cpo_save = p_cpo;
 
-  p_cpo = (char_u *)"";         // Allow <> notation
+  p_cpo = "";         // Allow <> notation
   // Need to put string in allocated memory, because do_map() will modify it.
   s = vim_strsave(map);
   (void)do_map(nore ? 2 : 0, s, mode, false);

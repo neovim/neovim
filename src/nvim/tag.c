@@ -1108,10 +1108,8 @@ static void prepare_pats(pat_T *pats, int has_re)
     if (pats->head == pats->pat) {
       pats->headlen = 0;
     } else {
-      for (pats->headlen = 0; pats->head[pats->headlen] != NUL;
-           ++pats->headlen) {
-        if (vim_strchr((char_u *)(p_magic ? ".[~*\\$" : "\\$"),
-                       pats->head[pats->headlen]) != NULL) {
+      for (pats->headlen = 0; pats->head[pats->headlen] != NUL; pats->headlen++) {
+        if (vim_strchr((p_magic ? ".[~*\\$" : "\\$"), pats->head[pats->headlen]) != NULL) {
           break;
         }
       }
@@ -1122,7 +1120,7 @@ static void prepare_pats(pat_T *pats, int has_re)
   }
 
   if (has_re) {
-    pats->regmatch.regprog = vim_regcomp(pats->pat, p_magic ? RE_MAGIC : 0);
+    pats->regmatch.regprog = vim_regcomp((char *)pats->pat, p_magic ? RE_MAGIC : 0);
   } else {
     pats->regmatch.regprog = NULL;
   }
@@ -1604,8 +1602,8 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
               if (STRNICMP(s, help_lang, 2) == 0) {
                 break;
               }
-              ++help_pri;
-              if ((s = vim_strchr(s, ',')) == NULL) {
+              help_pri++;
+              if ((s = (char_u *)vim_strchr((char *)s, ',')) == NULL) {
                 break;
               }
             }
@@ -1864,7 +1862,7 @@ parse_line:
         // This speeds up tag searching a lot!
         if (orgpat.headlen) {
           tagp.tagname = lbuf;
-          tagp.tagname_end = vim_strchr(lbuf, TAB);
+          tagp.tagname_end = (char_u *)vim_strchr((char *)lbuf, TAB);
           if (tagp.tagname_end == NULL) {
             // Corrupted tag line.
             line_error = true;
@@ -1982,7 +1980,7 @@ parse_line:
 
           // Can be a matching tag, isolate the file name and command.
           tagp.fname = tagp.tagname_end + 1;
-          tagp.fname_end = vim_strchr(tagp.fname, TAB);
+          tagp.fname_end = (char_u *)vim_strchr((char *)tagp.fname, TAB);
           tagp.command = tagp.fname_end + 1;
           if (tagp.fname_end == NULL) {
             i = FAIL;
@@ -2473,7 +2471,7 @@ static int parse_tag_line(char_u *lbuf, tagptrs_T *tagp)
 
   // Isolate the tagname, from lbuf up to the first white
   tagp->tagname = lbuf;
-  p = vim_strchr(lbuf, TAB);
+  p = (char_u *)vim_strchr((char *)lbuf, TAB);
   if (p == NULL) {
     return FAIL;
   }
@@ -2484,7 +2482,7 @@ static int parse_tag_line(char_u *lbuf, tagptrs_T *tagp)
     ++p;
   }
   tagp->fname = p;
-  p = vim_strchr(p, TAB);
+  p = (char_u *)vim_strchr((char *)p, TAB);
   if (p == NULL) {
     return FAIL;
   }
@@ -2522,8 +2520,8 @@ static bool test_for_static(tagptrs_T *tagp)
 
   // Check for new style static tag ":...<Tab>file:[<Tab>...]"
   p = tagp->command;
-  while ((p = vim_strchr(p, '\t')) != NULL) {
-    ++p;
+  while ((p = (char_u *)vim_strchr((char *)p, '\t')) != NULL) {
+    p++;
     if (STRNCMP(p, "file:", 5) == 0) {
       return TRUE;
     }
@@ -2595,8 +2593,8 @@ static int parse_match(char_u *lbuf, tagptrs_T *tagp)
             break;
           }
 
-          pc = vim_strchr(p, ':');
-          pt = vim_strchr(p, '\t');
+          pc = (char_u *)vim_strchr((char *)p, ':');
+          pt = (char_u *)vim_strchr((char *)p, '\t');
           if (pc == NULL || (pt != NULL && pc > pt)) {
             tagp->tagkind = p;
           }

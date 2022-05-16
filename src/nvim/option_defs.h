@@ -266,7 +266,7 @@ enum {
   STL_CLICK_FUNC      = '@',  ///< Click region start.
 };
 /// C string containing all 'statusline' option flags
-#define STL_ALL ((char_u[]) { \
+#define STL_ALL ((char[]) { \
     STL_FILEPATH, STL_FULLPATH, STL_FILENAME, STL_COLUMN, STL_VIRTCOL, \
     STL_VIRTCOL_ALT, STL_LINE, STL_NUMLINES, STL_BUFNO, STL_KEYMAP, STL_OFFSET, \
     STL_OFFSET_X, STL_BYTEVAL, STL_BYTEVAL_X, STL_ROFLAG, STL_ROFLAG_ALT, \
@@ -392,7 +392,7 @@ EXTERN char_u *p_csl;         // 'completeslash'
 EXTERN long p_pb;               // 'pumblend'
 EXTERN long p_ph;               // 'pumheight'
 EXTERN long p_pw;               // 'pumwidth'
-EXTERN char_u *p_cpo;         // 'cpoptions'
+EXTERN char *p_cpo;             // 'cpoptions'
 EXTERN char_u *p_csprg;       // 'cscopeprg'
 EXTERN int p_csre;              // 'cscoperelative'
 EXTERN char_u *p_csqf;        // 'cscopequickfix'
@@ -434,7 +434,7 @@ EXTERN char_u *p_gp;          // 'grepprg'
 EXTERN char_u *p_ei;          // 'eventignore'
 EXTERN int p_exrc;              // 'exrc'
 EXTERN char_u *p_fencs;       // 'fileencodings'
-EXTERN char_u *p_ffs;         // 'fileformats'
+EXTERN char *p_ffs;           // 'fileformats'
 EXTERN int p_fic;               // 'fileignorecase'
 EXTERN char_u *p_fcl;         // 'foldclose'
 EXTERN long p_fdls;             // 'foldlevelstart'
@@ -571,7 +571,7 @@ EXTERN char_u *p_rtp;         // 'runtimepath'
 EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
 EXTERN long p_so;               // 'scrolloff'
-EXTERN char_u *p_sbo;         // 'scrollopt'
+EXTERN char *p_sbo;             // 'scrollopt'
 EXTERN char_u *p_sections;    // 'sections'
 EXTERN int p_secure;            // 'secure'
 EXTERN char_u *p_sel;         // 'selection'

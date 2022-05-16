@@ -717,7 +717,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
       }
     }
   } else if (!got_int
-             && (arg == NULL || vim_strchr(arg, c) != NULL)
+             && (arg == NULL || vim_strchr((char *)arg, c) != NULL)
              && p->lnum != 0) {
     // don't output anything if 'q' typed at --more-- prompt
     if (name == NULL && current) {

@@ -1536,7 +1536,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
 
       // Trigger FuncUndefined event, may load the function.
       if (fp == NULL
-          && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, true, NULL)
+          && apply_autocmds(EVENT_FUNCUNDEFINED, (char *)rfname, (char *)rfname, true, NULL)
           && !aborting()) {
         // executed an autocommand, search for the function again
         fp = find_func(rfname);
@@ -1967,7 +1967,7 @@ void ex_function(exarg_T *eap)
 
       c = *p;
       *p = NUL;
-      regmatch.regprog = vim_regcomp((char_u *)eap->arg + 1, RE_MAGIC);
+      regmatch.regprog = vim_regcomp(eap->arg + 1, RE_MAGIC);
       *p = c;
       if (regmatch.regprog != NULL) {
         regmatch.rm_ic = p_ic;
@@ -2009,7 +2009,7 @@ void ex_function(exarg_T *eap)
   // g:func      global function name, same as "func"
   p = (char_u *)eap->arg;
   name = trans_function_name(&p, eap->skip, TFN_NO_AUTOLOAD, &fudi, NULL);
-  paren = (vim_strchr(p, '(') != NULL);
+  paren = (vim_strchr((char *)p, '(') != NULL);
   if (name == NULL && (fudi.fd_dict == NULL || !paren) && !eap->skip) {
     /*
      * Return on an invalid expression in braces, unless the expression
@@ -2090,8 +2090,8 @@ void ex_function(exarg_T *eap)
       goto ret_free;
     }
     // attempt to continue by skipping some text
-    if (vim_strchr(p, '(') != NULL) {
-      p = vim_strchr(p, '(');
+    if (vim_strchr((char *)p, '(') != NULL) {
+      p = (char_u *)vim_strchr((char *)p, '(');
     }
   }
   p = (char_u *)skipwhite((char *)p + 1);
@@ -2207,7 +2207,7 @@ void ex_function(exarg_T *eap)
     if (line_arg != NULL) {
       // Use eap->arg, split up in parts by line breaks.
       theline = line_arg;
-      p = vim_strchr(theline, '\n');
+      p = (char_u *)vim_strchr((char *)theline, '\n');
       if (p == NULL) {
         line_arg += STRLEN(line_arg);
       } else {
@@ -2369,7 +2369,7 @@ void ex_function(exarg_T *eap)
       //       and ":let [a, b] =<< [trim] EOF"
       arg = (char_u *)skipwhite((char *)skiptowhite(p));
       if (*arg == '[') {
-        arg = vim_strchr(arg, ']');
+        arg = (char_u *)vim_strchr((char *)arg, ']');
       }
       if (arg != NULL) {
         arg = (char_u *)skipwhite((char *)skiptowhite(arg));
@@ -2490,7 +2490,7 @@ void ex_function(exarg_T *eap)
   }
 
   if (fp == NULL) {
-    if (fudi.fd_dict == NULL && vim_strchr(name, AUTOLOAD_CHAR) != NULL) {
+    if (fudi.fd_dict == NULL && vim_strchr((char *)name, AUTOLOAD_CHAR) != NULL) {
       int slen, plen;
       char_u *scriptname;
 
@@ -2498,7 +2498,7 @@ void ex_function(exarg_T *eap)
       int j = FAIL;
       if (sourcing_name != NULL) {
         scriptname = (char_u *)autoload_name((const char *)name, STRLEN(name));
-        p = vim_strchr(scriptname, '/');
+        p = (char_u *)vim_strchr((char *)scriptname, '/');
         plen = (int)STRLEN(p);
         slen = (int)STRLEN(sourcing_name);
         if (slen > plen && FNAMECMP(p,

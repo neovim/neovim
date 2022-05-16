@@ -167,8 +167,8 @@ static const char_u *skip_string(const char_u *p)
       }
     } else if (p[0] == 'R' && p[1] == '"') {
       // Raw string: R"[delim](...)[delim]"
-      const char_u *delim = p + 2;
-      const char_u *paren = vim_strchr(delim, '(');
+      const char *delim = (char *)p + 2;
+      const char *paren = vim_strchr((char *)delim, '(');
 
       if (paren != NULL) {
         const ptrdiff_t delim_len = paren - delim;
@@ -737,7 +737,7 @@ static int cin_get_equal_amount(linenr_T lnum)
   }
 
   line = s = ml_get(lnum);
-  while (*s != NUL && vim_strchr((char_u *)"=;{}\"'", *s) == NULL) {
+  while (*s != NUL && vim_strchr("=;{}\"'", *s) == NULL) {
     if (cin_iscomment(s)) {     // ignore comments
       s = cin_skipcomment(s);
     } else {
@@ -3543,8 +3543,8 @@ term_again:
    */
   if (cur_curpos.lnum < curbuf->b_ml.ml_line_count
       && !cin_nocode(theline)
-      && vim_strchr(theline, '{') == NULL
-      && vim_strchr(theline, '}') == NULL
+      && vim_strchr((char *)theline, '{') == NULL
+      && vim_strchr((char *)theline, '}') == NULL
       && !cin_ends_in(theline, (char_u *)":", NULL)
       && !cin_ends_in(theline, (char_u *)",", NULL)
       && cin_isfuncdecl(NULL, cur_curpos.lnum + 1, cur_curpos.lnum + 1)

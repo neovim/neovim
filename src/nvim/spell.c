@@ -1173,7 +1173,7 @@ static bool match_compoundrule(slang_T *slang, char_u *compflags)
     }
 
     // Skip to the next "/", where the next pattern starts.
-    p = vim_strchr(p, '/');
+    p = (char_u *)vim_strchr((char *)p, '/');
     if (p == NULL) {
       break;
     }
@@ -1637,7 +1637,7 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
   int n;
 
   p = (char_u *)skipwhite((char *)line);
-  while (vim_strchr((char_u *)"*#/\"\t", *p) != NULL) {
+  while (vim_strchr("*#/\"\t", *p) != NULL) {
     p = (char_u *)skipwhite((char *)p + 1);
   }
 
@@ -1682,8 +1682,8 @@ static void spell_load_lang(char_u *lang)
       r = do_in_runtimepath((char *)fname_enc, 0, spell_load_cb, &sl);
 
       if (r == FAIL && *sl.sl_lang != NUL && round == 1
-          && apply_autocmds(EVENT_SPELLFILEMISSING, lang,
-                            curbuf->b_fname, FALSE, curbuf)) {
+          && apply_autocmds(EVENT_SPELLFILEMISSING, (char *)lang,
+                            curbuf->b_fname, false, curbuf)) {
         continue;
       }
       break;
@@ -1961,14 +1961,14 @@ int init_syl_tab(slang_T *slang)
   int l;
 
   ga_init(&slang->sl_syl_items, sizeof(syl_item_T), 4);
-  p = vim_strchr(slang->sl_syllable, '/');
+  p = (char_u *)vim_strchr((char *)slang->sl_syllable, '/');
   while (p != NULL) {
     *p++ = NUL;
     if (*p == NUL) {        // trailing slash
       break;
     }
     s = p;
-    p = vim_strchr(p, '/');
+    p = (char_u *)vim_strchr((char *)p, '/');
     if (p == NULL) {
       l = (int)STRLEN(s);
     } else {
@@ -2025,7 +2025,7 @@ static int count_syllables(slang_T *slang, const char_u *word)
       // No recognized syllable item, at least a syllable char then?
       c = utf_ptr2char((char *)p);
       len = utfc_ptr2len((char *)p);
-      if (vim_strchr(slang->sl_syllable, c) == NULL) {
+      if (vim_strchr((char *)slang->sl_syllable, c) == NULL) {
         skip = false;               // No, search for next syllable
       } else if (!skip) {
         ++cnt;                      // Yes, count it
@@ -2105,7 +2105,7 @@ char *did_set_spelllang(win_T *wp)
       filename = true;
 
       // Locate a region and remove it from the file name.
-      p = vim_strchr((char_u *)path_tail((char *)lang), '_');
+      p = (char_u *)vim_strchr(path_tail((char *)lang), '_');
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
         STRLCPY(region_cp, p + 1, 3);
@@ -2248,7 +2248,7 @@ char *did_set_spelllang(win_T *wp)
         STRCPY(lang, "internal wordlist");
       } else {
         STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
-        p = vim_strchr(lang, '.');
+        p = (char_u *)vim_strchr((char *)lang, '.');
         if (p != NULL) {
           *p = NUL;             // truncate at ".encoding.add"
         }
@@ -2686,7 +2686,7 @@ static bool spell_iswordp(const char_u *p, const win_T *wp)
     if (c < 256
         ? wp->w_s->b_spell_ismw[c]
         : (wp->w_s->b_spell_ismw_mb != NULL
-           && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
+           && vim_strchr((char *)wp->w_s->b_spell_ismw_mb, c) != NULL)) {
       s = p + l;
     }
   }
@@ -2730,9 +2730,10 @@ static bool spell_iswordp_w(const int *p, const win_T *wp)
 {
   const int *s;
 
-  if (*p < 256 ? wp->w_s->b_spell_ismw[*p]
-               : (wp->w_s->b_spell_ismw_mb != NULL
-                  && vim_strchr(wp->w_s->b_spell_ismw_mb, *p) != NULL)) {
+  if (*p <
+      256 ? wp->w_s->b_spell_ismw[*p] : (wp->w_s->b_spell_ismw_mb != NULL
+                                         && vim_strchr((char *)wp->w_s->b_spell_ismw_mb,
+                                                       *p) != NULL)) {
     s = p + 1;
   } else {
     s = p;
@@ -3413,7 +3414,7 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
   while (!vim_fgets(line, MAXWLEN * 2, fd) && !got_int) {
     line_breakcheck();
 
-    p = vim_strchr(line, '/');
+    p = (char_u *)vim_strchr((char *)line, '/');
     if (p == NULL) {
       continue;             // No Tab found, just skip the line.
     }
@@ -6260,7 +6261,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
           // replace string
           ws = smp[n].sm_to_w;
           s = smp[n].sm_rules;
-          p0 = (vim_strchr(s, '<') != NULL) ? 1 : 0;
+          p0 = (vim_strchr((char *)s, '<') != NULL) ? 1 : 0;
           if (p0 == 1 && z == 0) {
             // rule with '<' is used
             if (reslen > 0 && ws != NULL && *ws != NUL

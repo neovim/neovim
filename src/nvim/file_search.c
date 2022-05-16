@@ -371,7 +371,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
       ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
                      (dircount + 1) * sizeof(char_u *));
       search_ctx->ffsc_stopdirs_v = ptr;
-      walker = vim_strchr(walker, ';');
+      walker = (char_u *)vim_strchr((char *)walker, ';');
       if (walker) {
         assert(walker - helper >= 0);
         search_ctx->ffsc_stopdirs_v[dircount - 1] =
@@ -396,7 +396,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
    *  -fix path
    *  -wildcard_stuff (might be NULL)
    */
-  wc_part = vim_strchr(path, '*');
+  wc_part = (char_u *)vim_strchr((char *)path, '*');
   if (wc_part != NULL) {
     int64_t llevel;
     int len;
@@ -1643,7 +1643,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
     abort();
   }
 
-  apply_autocmds(event, (char_u *)buf, (char_u *)new_dir, false, curbuf);
+  apply_autocmds(event, buf, new_dir, false, curbuf);
 
   restore_v_event(dict, &save_v_event);
 

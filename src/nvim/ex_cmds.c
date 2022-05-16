@@ -350,7 +350,7 @@ static int linelen(int *has_tab)
   len = linetabsize((char_u *)line);
   // Check for embedded TAB.
   if (has_tab != NULL) {
-    *has_tab = vim_strchr((char_u *)first, TAB) != NULL;
+    *has_tab = vim_strchr(first, TAB) != NULL;
   }
   *last = save;
 
@@ -529,9 +529,9 @@ void ex_sort(exarg_T *eap)
           emsg(_(e_noprevre));
           goto sortend;
         }
-        regmatch.regprog = vim_regcomp(last_search_pat(), RE_MAGIC);
+        regmatch.regprog = vim_regcomp((char *)last_search_pat(), RE_MAGIC);
       } else {
-        regmatch.regprog = vim_regcomp((char_u *)p + 1, RE_MAGIC);
+        regmatch.regprog = vim_regcomp(p + 1, RE_MAGIC);
       }
       if (regmatch.regprog == NULL) {
         goto sortend;
@@ -1718,7 +1718,7 @@ int rename_buffer(char *new_fname)
    */
   fname = (char *)curbuf->b_ffname;
   sfname = (char *)curbuf->b_sfname;
-  xfname = (char *)curbuf->b_fname;
+  xfname = curbuf->b_fname;
   curbuf->b_ffname = NULL;
   curbuf->b_sfname = NULL;
   if (setfname(curbuf, (char_u *)new_fname, NULL, true) == FAIL) {
@@ -1858,7 +1858,7 @@ int do_write(exarg_T *eap)
 
   if (!other) {
     ffname = (char *)curbuf->b_ffname;
-    fname = (char *)curbuf->b_fname;
+    fname = curbuf->b_fname;
     // Not writing the whole file is only allowed with '!'.
     if ((eap->line1 != 1
          || eap->line2 != curbuf->b_ml.ml_line_count)
@@ -1894,9 +1894,9 @@ int do_write(exarg_T *eap)
       // under the new name.  Must be done before buf_write(), because
       // if there is no file name and 'cpo' contains 'F', it will set
       // the file name.
-      fname = (char *)alt_buf->b_fname;
+      fname = alt_buf->b_fname;
       alt_buf->b_fname = curbuf->b_fname;
-      curbuf->b_fname = (char_u *)fname;
+      curbuf->b_fname = fname;
       fname = (char *)alt_buf->b_ffname;
       alt_buf->b_ffname = curbuf->b_ffname;
       curbuf->b_ffname = (char_u *)fname;
@@ -2096,8 +2096,7 @@ void do_wqall(exarg_T *eap)
       semsg(_("E141: No file name for buffer %" PRId64), (int64_t)buf->b_fnum);
       error++;
     } else if (check_readonly(&eap->forceit, buf)
-               || check_overwrite(eap, buf, (char *)buf->b_fname, (char *)buf->b_ffname,
-                                  false) == FAIL) {
+               || check_overwrite(eap, buf, buf->b_fname, (char *)buf->b_ffname, false) == FAIL) {
       error++;
     } else {
       bufref_T bufref;
@@ -2148,12 +2147,12 @@ static int check_readonly(int *forceit, buf_T *buf)
       if (buf->b_p_ro) {
         dialog_msg((char *)buff,
                    _("'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
-                   (char *)buf->b_fname);
+                   buf->b_fname);
       } else {
         dialog_msg((char *)buff,
                    _("File permissions of \"%s\" are read-only.\nIt may still be possible to "
                      "write it.\nDo you wish to try?"),
-                   (char *)buf->b_fname);
+                   buf->b_fname);
       }
 
       if (vim_dialog_yesno(VIM_QUESTION, NULL, (char_u *)buff, 2) == VIM_YES) {
@@ -2340,7 +2339,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     } else {
       if (*ffname == NUL) {                 // re-edit with same file name
         ffname = (char *)curbuf->b_ffname;
-        sfname = (char *)curbuf->b_fname;
+        sfname = curbuf->b_fname;
       }
       free_fname = fix_fname(ffname);       // may expand to full path name
       if (free_fname != NULL) {
@@ -2491,7 +2490,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       // - If we ended up in the new buffer already, need to skip a few
       //         things, set auto_buf.
       if (buf->b_fname != NULL) {
-        new_name = (char *)vim_strsave(buf->b_fname);
+        new_name = xstrdup(buf->b_fname);
       }
       const bufref_T save_au_new_curbuf = au_new_curbuf;
       set_bufref(&au_new_curbuf, buf);
@@ -2641,7 +2640,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     }
     buf = curbuf;
     if (buf->b_fname != NULL) {
-      new_name = (char *)vim_strsave(buf->b_fname);
+      new_name = (char *)vim_strsave((char_u *)buf->b_fname);
     } else {
       new_name = NULL;
     }
@@ -2961,7 +2960,7 @@ void ex_append(exarg_T *eap)
       if (eap->nextcmd == NULL || *eap->nextcmd == NUL) {
         break;
       }
-      p = (char *)vim_strchr((char_u *)eap->nextcmd, NL);
+      p = vim_strchr(eap->nextcmd, NL);
       if (p == NULL) {
         p = eap->nextcmd + STRLEN(eap->nextcmd);
       }
@@ -2975,8 +2974,7 @@ void ex_append(exarg_T *eap)
       // Set State to avoid the cursor shape to be set to MODE_INSERT
       // state when getline() returns.
       State = MODE_CMDLINE;
-      theline = (char *)eap->getline(eap->cstack->cs_looplevel > 0 ? -1 :
-                                     NUL, eap->cookie, indent, true);
+      theline = eap->getline(eap->cstack->cs_looplevel > 0 ? -1 : NUL, eap->cookie, indent, true);
       State = save_State;
     }
     lines_left = Rows - 1;
@@ -3494,7 +3492,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
   }
   // new pattern and substitution
   if (eap->cmd[0] == 's' && *cmd != NUL && !ascii_iswhite(*cmd)
-      && vim_strchr((char_u *)"0123456789cegriIp|\"", *cmd) == NULL) {
+      && vim_strchr("0123456789cegriIp|\"", *cmd) == NULL) {
     // don't accept alphanumeric for separator
     if (check_regexp_delim(*cmd) == FAIL) {
       return NULL;
@@ -3504,8 +3502,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
     //  "\/sub/" and "\?sub?" use last used search pattern (almost like
     //  //sub/r).  "\&sub&" use last substitute pattern (like //sub/).
     if (*cmd == '\\') {
-      ++cmd;
-      if (vim_strchr((char_u *)"/?&", *cmd) == NULL) {
+      cmd++;
+      if (vim_strchr("/?&", *cmd) == NULL) {
         emsg(_(e_backslash));
         return NULL;
       }
@@ -3837,7 +3835,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           // When 'cpoptions' contains "u" don't sync undo when
           // asking for confirmation.
           if (vim_strchr(p_cpo, CPO_UNDO) != NULL) {
-            ++no_u_sync;
+            no_u_sync++;
           }
 
           /*
@@ -3993,7 +3991,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           State = save_State;
           setmouse();
           if (vim_strchr(p_cpo, CPO_UNDO) != NULL) {
-            --no_u_sync;
+            no_u_sync--;
           }
 
           if (typed == 'n') {
@@ -4579,8 +4577,8 @@ void ex_global(exarg_T *eap)
    *             "\&": use previous substitute pattern.
    */
   if (*cmd == '\\') {
-    ++cmd;
-    if (vim_strchr((char_u *)"/?&", *cmd) == NULL) {
+    cmd++;
+    if (vim_strchr("/?&", *cmd) == NULL) {
       emsg(_(e_backslash));
       return;
     }
@@ -5114,7 +5112,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     // And also "\_$" and "\_^".
     if (arg[0] == '\\'
         && ((arg[1] != NUL && arg[2] == NUL)
-            || (vim_strchr((char_u *)"%_z@", arg[1]) != NULL
+            || (vim_strchr("%_z@", arg[1]) != NULL
                 && arg[2] != NUL))) {
       vim_snprintf(d, IOSIZE, "/\\\\%s", arg + 1);
       // Check for "/\\_$", should be "/\\_\$"
@@ -5173,10 +5171,9 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
          * ":help i_^_CTRL-D" work.
          * Insert '-' before and after "CTRL-X" when applicable.
          */
-        if (*s < ' ' || (*s == '^' && s[1] && (ASCII_ISALPHA(s[1])
-                                               || vim_strchr((char_u *)
-                                                             "?@[\\]^",
-                                                             s[1]) != NULL))) {
+        if (*s < ' '
+            || (*s == '^' && s[1]
+                && (ASCII_ISALPHA(s[1]) || vim_strchr("?@[\\]^", s[1]) != NULL))) {
           if ((char_u *)d > IObuff && d[-1] != '_' && d[-1] != '\\') {
             *d++ = '_';                 // prepend a '_' to make x_CTRL-x
           }
@@ -5360,7 +5357,7 @@ void fix_help_buffer(void)
    * In the "help.txt" and "help.abx" file, add the locally added help
    * files.  This uses the very first line in the help file.
    */
-  char *const fname = path_tail((char *)curbuf->b_fname);
+  char *const fname = path_tail(curbuf->b_fname);
   if (FNAMECMP(fname, "help.txt") == 0
       || (FNAMENCMP(fname, "help.", 5) == 0
           && ASCII_ISALPHA(fname[5])
@@ -5448,7 +5445,7 @@ void fix_help_buffer(void)
               }
               vim_fgets(IObuff, IOSIZE, fd);
               if (IObuff[0] == '*'
-                  && (s = (char *)vim_strchr(IObuff + 1, '*'))
+                  && (s = vim_strchr((char *)IObuff + 1, '*'))
                   != NULL) {
                 TriState this_utf = kNone;
                 // Change tag definition to a
@@ -5635,7 +5632,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         }
         firstline = false;
       }
-      p1 = (char *)vim_strchr(IObuff, '*');                        // find first '*'
+      p1 = vim_strchr((char *)IObuff, '*');                        // find first '*'
       while (p1 != NULL) {
         p2 = strchr((const char *)p1 + 1, '*');  // Find second '*'.
         if (p2 != NULL && p2 > p1 + 1) {                   // Skip "*" and "**".
@@ -5650,7 +5647,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
           // followed by a white character or end-of-line.
           if (s == p2
               && ((char_u *)p1 == IObuff || p1[-1] == ' ' || p1[-1] == '\t')
-              && (vim_strchr((char_u *)" \t\n\r", s[1]) != NULL
+              && (vim_strchr(" \t\n\r", s[1]) != NULL
                   || s[1] == '\0')) {
             *p2 = '\0';
             p1++;
@@ -5660,7 +5657,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
             snprintf(s, s_len, "%s\t%s", p1, fname);
 
             // find next '*'
-            p2 = (char *)vim_strchr((char_u *)p2 + 1, '*');
+            p2 = vim_strchr(p2 + 1, '*');
           }
         }
         p1 = p2;
@@ -6203,7 +6200,7 @@ void ex_oldfiles(exarg_T *eap)
         if (p == NULL) {
           return;
         }
-        char *const s = (char *)expand_env_save((char_u *)p);
+        char *const s = expand_env_save((char *)p);
         eap->arg = s;
         eap->cmdidx = CMD_edit;
         cmdmod.browse = false;

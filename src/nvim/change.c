@@ -1498,7 +1498,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         while (off > 0 && lead_len > 0
                && leader[lead_len - 1] == ' ') {
           // Don't do it when there is a tab before the space
-          if (vim_strchr((char_u *)skipwhite((char *)leader), '\t') != NULL) {
+          if (vim_strchr(skipwhite((char *)leader), '\t') != NULL) {
             break;
           }
           lead_len--;
@@ -1878,7 +1878,7 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
 {
   int j;
   int got_com = false;
-  char_u part_buf[COM_MAX_LEN];         // buffer for one option part
+  char part_buf[COM_MAX_LEN];         // buffer for one option part
   char_u *string;                  // pointer to comment string
   char_u *list;
   int middle_match_len = 0;
@@ -1902,8 +1902,8 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
         *flags = list;              // remember where flags started
       }
       prev_list = list;
-      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
-      string = vim_strchr(part_buf, ':');
+      (void)copy_option_part(&list, (char_u *)part_buf, COM_MAX_LEN, ",");
+      string = (char_u *)vim_strchr(part_buf, ':');
       if (string == NULL) {         // missing ':', ignore this part
         continue;
       }
@@ -2025,7 +2025,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   char_u *com_leader;
   char_u *com_flags;
   char_u *list;
-  char_u part_buf[COM_MAX_LEN];         // buffer for one option part
+  char part_buf[COM_MAX_LEN];         // buffer for one option part
 
   // Repeat to match several nested comment strings.
   int i = (int)STRLEN(line);
@@ -2037,8 +2037,8 @@ int get_last_leader_offset(char_u *line, char_u **flags)
 
       // Get one option part into part_buf[].  Advance list to next one.
       // put string at start of string.
-      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
-      string = vim_strchr(part_buf, ':');
+      (void)copy_option_part(&list, (char_u *)part_buf, COM_MAX_LEN, ",");
+      string = (char_u *)vim_strchr(part_buf, ':');
       if (string == NULL) {  // If everything is fine, this cannot actually
                              // happen.
         continue;
@@ -2096,7 +2096,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
     }
 
     if (found_one) {
-      char_u part_buf2[COM_MAX_LEN];            // buffer for one option part
+      char part_buf2[COM_MAX_LEN];            // buffer for one option part
       int len1, len2, off;
 
       result = i;
@@ -2120,11 +2120,11 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       for (list = curbuf->b_p_com; *list;) {
         char_u *flags_save = list;
 
-        (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
+        (void)copy_option_part(&list, (char_u *)part_buf2, COM_MAX_LEN, ",");
         if (flags_save == com_flags) {
           continue;
         }
-        string = vim_strchr(part_buf2, ':');
+        string = (char_u *)vim_strchr(part_buf2, ':');
         string++;
         while (ascii_iswhite(*string)) {
           string++;

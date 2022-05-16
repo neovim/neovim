@@ -65,7 +65,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   if ((hlg_id = syn_check_group(grp, strlen(grp))) == 0) {
     return -1;
   }
-  if (pat != NULL && (regprog = vim_regcomp((char_u *)pat, RE_MAGIC)) == NULL) {
+  if (pat != NULL && (regprog = vim_regcomp((char *)pat, RE_MAGIC)) == NULL) {
     semsg(_(e_invarg2), pat);
     return -1;
   }

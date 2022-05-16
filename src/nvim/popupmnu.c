@@ -694,7 +694,7 @@ static int pum_set_selected(int n, int repeat)
     if ((pum_array[pum_selected].pum_info != NULL)
         && (Rows > 10)
         && (repeat <= 1)
-        && (vim_strchr(p_cot, 'p') != NULL)) {
+        && (vim_strchr((char *)p_cot, 'p') != NULL)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
       int res = OK;
@@ -748,7 +748,7 @@ static int pum_set_selected(int n, int repeat)
           linenr_T lnum = 0;
 
           for (p = pum_array[pum_selected].pum_info; *p != NUL;) {
-            e = vim_strchr(p, '\n');
+            e = (char_u *)vim_strchr((char *)p, '\n');
             if (e == NULL) {
               ml_append(lnum++, (char *)p, 0, false);
               break;

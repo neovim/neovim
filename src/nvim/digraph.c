@@ -2069,7 +2069,7 @@ void ex_loadkeymap(exarg_T *eap)
 
 #define KMAP_LLEN 200  // max length of "to" and "from" together
   char_u buf[KMAP_LLEN + 11];
-  char_u *save_cpo = p_cpo;
+  char *save_cpo = p_cpo;
 
   if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
     emsg(_("E105: Using :loadkeymap not in a sourced file"));
@@ -2083,7 +2083,7 @@ void ex_loadkeymap(exarg_T *eap)
   ga_init(&curbuf->b_kmap_ga, (int)sizeof(kmap_T), 20);
 
   // Set 'cpoptions' to "C" to avoid line continuation.
-  p_cpo = (char_u *)"C";
+  p_cpo = "C";
 
   // Get each line of the sourced file, break at the end.
   for (;;) {
@@ -2093,7 +2093,7 @@ void ex_loadkeymap(exarg_T *eap)
       break;
     }
 
-    char_u *p = (char_u *)skipwhite((char *)line);
+    char_u *p = (char_u *)skipwhite(line);
 
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
@@ -2144,22 +2144,22 @@ void keymap_ga_clear(garray_T *kmap_ga)
 /// Stop using 'keymap'.
 static void keymap_unload(void)
 {
-  char_u buf[KMAP_MAXLEN + 10];
-  char_u *save_cpo = p_cpo;
+  char buf[KMAP_MAXLEN + 10];
+  char *save_cpo = p_cpo;
 
   if (!(curbuf->b_kmap_state & KEYMAP_LOADED)) {
     return;
   }
 
   // Set 'cpoptions' to "C" to avoid line continuation.
-  p_cpo = (char_u *)"C";
+  p_cpo = "C";
 
   // clear the ":lmap"s
   kmap_T *kp = (kmap_T *)curbuf->b_kmap_ga.ga_data;
 
   for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
-    vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s", kp[i].from);
-    (void)do_map(1, buf, MODE_LANGMAP, false);
+    vim_snprintf(buf, sizeof(buf), "<buffer> %s", kp[i].from);
+    (void)do_map(1, (char_u *)buf, MODE_LANGMAP, false);
   }
   keymap_ga_clear(&curbuf->b_kmap_ga);
 

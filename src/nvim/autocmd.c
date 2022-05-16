@@ -796,13 +796,13 @@ void do_autocmd(char *arg_in, int forceit)
 
     // Expand environment variables in the pattern.  Set 'shellslash', we want
     // forward slashes here.
-    if (vim_strchr((char_u *)pat, '$') != NULL || vim_strchr((char_u *)pat, '~') != NULL) {
+    if (vim_strchr(pat, '$') != NULL || vim_strchr(pat, '~') != NULL) {
 #ifdef BACKSLASH_IN_FILENAME
       int p_ssl_save = p_ssl;
 
       p_ssl = true;
 #endif
-      envpat = (char *)expand_env_save((char_u *)pat);
+      envpat = expand_env_save(pat);
 #ifdef BACKSLASH_IN_FILENAME
       p_ssl = p_ssl_save;
 #endif
@@ -1070,10 +1070,9 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
       char *reg_pat;
 
       ap->buflocal_nr = 0;
-      reg_pat = (char *)file_pat_to_reg_pat((char_u *)pat, (char_u *)pat + patlen, &ap->allow_dirs,
-                                            true);
+      reg_pat = file_pat_to_reg_pat(pat, pat + patlen, &ap->allow_dirs, true);
       if (reg_pat != NULL) {
-        ap->reg_prog = vim_regcomp((char_u *)reg_pat, RE_MAGIC);
+        ap->reg_prog = vim_regcomp(reg_pat, RE_MAGIC);
       }
       xfree(reg_pat);
       if (reg_pat == NULL || ap->reg_prog == NULL) {
@@ -1241,8 +1240,8 @@ void ex_doautoall(exarg_T *eap)
 {
   int retval = OK;
   aco_save_T aco;
-  char_u *arg = (char_u *)eap->arg;
-  int call_do_modelines = check_nomodeline((char **)&arg);
+  char *arg = eap->arg;
+  int call_do_modelines = check_nomodeline(&arg);
   bufref_T bufref;
   bool did_aucmd;
 
@@ -1261,7 +1260,7 @@ void ex_doautoall(exarg_T *eap)
     set_bufref(&bufref, buf);
 
     // execute the autocommands for this buffer
-    retval = do_doautocmd((char *)arg, false, &did_aucmd);
+    retval = do_doautocmd(arg, false, &did_aucmd);
 
     if (call_do_modelines && did_aucmd) {
       // Execute the modeline settings, but don't set window-local
@@ -1282,7 +1281,7 @@ void ex_doautoall(exarg_T *eap)
 
   // Execute autocommands for the current buffer last.
   if (retval == OK) {
-    (void)do_doautocmd((char *)arg, false, &did_aucmd);
+    (void)do_doautocmd(arg, false, &did_aucmd);
     if (call_do_modelines && did_aucmd) {
       do_modelines(0);
     }
@@ -1364,7 +1363,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     // Make sure w_localdir and globaldir are NULL to avoid a chdir() in
     // win_enter_ext().
     XFREE_CLEAR(aucmd_win->w_localdir);
-    aco->globaldir = (char *)globaldir;
+    aco->globaldir = globaldir;
     globaldir = NULL;
 
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
@@ -1451,7 +1450,7 @@ win_found:
     hash_init(&aucmd_win->w_vars->dv_hashtab);          // re-use the hashtab
 
     xfree(globaldir);
-    globaldir = (char_u *)aco->globaldir;
+    globaldir = aco->globaldir;
 
     // the buffer contents may have changed
     check_cursor();
@@ -1504,10 +1503,9 @@ win_found:
 /// @param buf Buffer for <abuf>
 ///
 /// @return true if some commands were executed.
-bool apply_autocmds(event_T event, char_u *fname, char_u *fname_io, bool force, buf_T *buf)
+bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf)
 {
-  return apply_autocmds_group(event, (char *)fname, (char *)fname_io, force, AUGROUP_ALL, buf,
-                              NULL);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL);
 }
 
 /// Like apply_autocmds(), but with extra "eap" argument.  This takes care of

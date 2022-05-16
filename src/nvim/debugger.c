@@ -100,7 +100,7 @@ void do_debug(char_u *cmd)
     debug_newval = NULL;
   }
   if (sourcing_name != NULL) {
-    msg((char *)sourcing_name);
+    msg(sourcing_name);
   }
   if (sourcing_lnum != 0) {
     smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
@@ -293,7 +293,7 @@ static int get_maxbacktrace_level(void)
   int maxbacktrace = 0;
 
   if (sourcing_name != NULL) {
-    char *p = (char *)sourcing_name;
+    char *p = sourcing_name;
     char *q;
     while ((q = strstr(p, "..")) != NULL) {
       p = q + 2;
@@ -334,7 +334,7 @@ static void do_showbacktrace(char_u *cmd)
   if (sourcing_name != NULL) {
     int i = 0;
     int max = get_maxbacktrace_level();
-    char *cur = (char *)sourcing_name;
+    char *cur = sourcing_name;
     while (!got_int) {
       char *next = strstr(cur, "..");
       if (next != NULL) {
@@ -475,8 +475,8 @@ static typval_T *eval_expr_no_emsg(struct debuggy *const bp)
 /// @param gap  either &dbg_breakp or &prof_ga
 static int dbg_parsearg(char_u *arg, garray_T *gap)
 {
-  char_u *p = arg;
-  char_u *q;
+  char *p = (char *)arg;
+  char *q;
   bool here = false;
 
   ga_grow(gap, 1);
@@ -501,14 +501,14 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
     semsg(_(e_invarg2), p);
     return FAIL;
   }
-  p = (char_u *)skipwhite((char *)p + 4);
+  p = skipwhite(p + 4);
 
   // Find optional line number.
   if (here) {
     bp->dbg_lnum = curwin->w_cursor.lnum;
   } else if (gap != &prof_ga && ascii_isdigit(*p)) {
-    bp->dbg_lnum = getdigits_long(&p, true, 0);
-    p = (char_u *)skipwhite((char *)p);
+    bp->dbg_lnum = getdigits_long((char_u **)&p, true, 0);
+    p = skipwhite(p);
   } else {
     bp->dbg_lnum = 0;
   }
@@ -516,17 +516,17 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
   // Find the function or file name.  Don't accept a function name with ().
   if ((!here && *p == NUL)
       || (here && *p != NUL)
-      || (bp->dbg_type == DBG_FUNC && strstr((char *)p, "()") != NULL)) {
+      || (bp->dbg_type == DBG_FUNC && strstr(p, "()") != NULL)) {
     semsg(_(e_invarg2), arg);
     return FAIL;
   }
 
   if (bp->dbg_type == DBG_FUNC) {
-    bp->dbg_name = vim_strsave(p);
+    bp->dbg_name = vim_strsave((char_u *)p);
   } else if (here) {
     bp->dbg_name = vim_strsave(curbuf->b_ffname);
   } else if (bp->dbg_type == DBG_EXPR) {
-    bp->dbg_name = vim_strsave(p);
+    bp->dbg_name = vim_strsave((char_u *)p);
     bp->dbg_val = eval_expr_no_emsg(bp);
   } else {
     // Expand the file name in the same way as do_source().  This means
@@ -542,10 +542,10 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
       return FAIL;
     }
     if (*p != '*') {
-      bp->dbg_name = (char_u *)fix_fname((char *)p);
+      bp->dbg_name = (char_u *)fix_fname(p);
       xfree(p);
     } else {
-      bp->dbg_name = p;
+      bp->dbg_name = (char_u *)p;
     }
   }
 
@@ -568,7 +568,7 @@ void ex_breakadd(exarg_T *eap)
     bp->dbg_forceit = eap->forceit;
 
     if (bp->dbg_type != DBG_EXPR) {
-      char_u *pat = file_pat_to_reg_pat(bp->dbg_name, NULL, NULL, false);
+      char *pat = file_pat_to_reg_pat((char *)bp->dbg_name, NULL, NULL, false);
       if (pat != NULL) {
         bp->dbg_prog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
         xfree(pat);

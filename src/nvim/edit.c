@@ -1339,7 +1339,7 @@ normalchar:
               ins_char(s->c);
             }
           }
-          AppendToRedobuffLit((char *)str, -1);
+          AppendToRedobuffLit(str, -1);
         }
         xfree(str);
         s->c = NUL;
@@ -2735,7 +2735,7 @@ static bool pum_wanted(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // "completeopt" must contain "menu" or "menuone"
-  return vim_strchr(p_cot, 'm') != NULL;
+  return vim_strchr((char *)p_cot, 'm') != NULL;
 }
 
 /// Check that there are two or more matches to be shown in the popup menu.
@@ -2983,11 +2983,11 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
     size_t len = STRLEN(pat_esc) + 10;
     ptr = xmalloc(len);
     vim_snprintf((char *)ptr, len, "^\\s*\\zs\\V%s", pat_esc);
-    regmatch.regprog = vim_regcomp(ptr, RE_MAGIC);
+    regmatch.regprog = vim_regcomp((char *)ptr, RE_MAGIC);
     xfree(pat_esc);
     xfree(ptr);
   } else {
-    regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
+    regmatch.regprog = vim_regcomp((char *)pat, p_magic ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL) {
       goto theend;
     }
@@ -3007,7 +3007,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
       copy_option_part(&dict, buf, LSIZE, ",");
       if (!thesaurus && STRCMP(buf, "spell") == 0) {
         count = -1;
-      } else if (vim_strchr(buf, '`') != NULL
+      } else if (vim_strchr((char *)buf, '`') != NULL
                  || expand_wildcards(1, &buf, &count, &files,
                                      EW_FILE|EW_SILENT) != OK) {
         count = 0;
@@ -4252,9 +4252,8 @@ static int ins_compl_get_exp(pos_T *ini)
         // Remember the first match so that the loop stops when we
         // wrap and come back there a second time.
         set_match_pos = true;
-      } else if (vim_strchr((char_u *)"buwU", *e_cpt) != NULL
-                 && (ins_buf =
-                       ins_compl_next_buf(ins_buf, *e_cpt)) != curbuf) {
+      } else if (vim_strchr("buwU", *e_cpt) != NULL
+                 && (ins_buf = ins_compl_next_buf(ins_buf, *e_cpt)) != curbuf) {
         // Scan a buffer, but not the current one.
         if (ins_buf->b_ml.ml_mfp != NULL) {         // loaded buffer
           compl_started = true;
@@ -4268,7 +4267,7 @@ static int ins_compl_get_exp(pos_T *ini)
             continue;
           }
           type = CTRL_X_DICTIONARY;
-          dict = ins_buf->b_fname;
+          dict = (char_u *)ins_buf->b_fname;
           dict_f = DICT_EXACT;
         }
         msg_hist_off = true;  // reset in msg_trunc_attr()
@@ -4276,7 +4275,7 @@ static int ins_compl_get_exp(pos_T *ini)
                      ins_buf->b_fname == NULL
                      ? buf_spname(ins_buf)
                      : ins_buf->b_sfname == NULL
-                     ? ins_buf->b_fname
+                     ? (char_u *)ins_buf->b_fname
                      : ins_buf->b_sfname);
         (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
       } else if (*e_cpt == NUL) {
@@ -5833,7 +5832,7 @@ void insertchar(int c, int flags, int second_indent)
      * comment leader.  First, check what comment leader we can find.
      */
     i = get_leader_len(line = get_cursor_line_ptr(), &p, false, true);
-    if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {  // Just checking
+    if (i > 0 && vim_strchr((char *)p, COM_MIDDLE) != NULL) {  // Just checking
       // Skip middle-comment string
       while (*p && p[-1] != ':') {  // find end of middle flags
         p++;
@@ -7580,7 +7579,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         // make up some named keys <o>, <O>, <e>, <0>, <>>, <<>, <*>,
         // <:> and <!> so that people can re-indent on o, O, e, 0, <,
         // >, *, : and ! keys if they really really want to.
-        if (vim_strchr((char_u *)"<>!*oOe0:", look[1]) != NULL
+        if (vim_strchr("<>!*oOe0:", look[1]) != NULL
             && keytyped == look[1]) {
           return true;
         }
@@ -7607,7 +7606,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       } else {
         icase = false;
       }
-      p = vim_strchr(look, ',');
+      p = (char_u *)vim_strchr((char *)look, ',');
       if (p == NULL) {
         p = look + STRLEN(look);
       }
@@ -8697,7 +8696,7 @@ static void ins_left(void)
       revins_legal++;
     }
     revins_chars++;
-  } else if (vim_strchr(p_ww, '[') != NULL && curwin->w_cursor.lnum > 1) {
+  } else if (vim_strchr((char *)p_ww, '[') != NULL && curwin->w_cursor.lnum > 1) {
     // if 'whichwrap' set for cursor in insert mode may go to previous line.
     // always break undo when moving upwards/downwards, else undo may break
     start_arrow(&tpos);
@@ -8790,7 +8789,7 @@ static void ins_right(void)
     if (revins_chars) {
       revins_chars--;
     }
-  } else if (vim_strchr(p_ww, ']') != NULL
+  } else if (vim_strchr((char *)p_ww, ']') != NULL
              && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
     // if 'whichwrap' set for cursor in insert mode, may move the
     // cursor to the next line

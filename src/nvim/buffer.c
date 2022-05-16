@@ -112,7 +112,7 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   // 'fileencoding' was guessed wrong.
   line_count = curbuf->b_ml.ml_line_count;
   retval = readfile(read_stdin ? NULL : (char *)curbuf->b_ffname,
-                    read_stdin ? NULL : (char *)curbuf->b_fname,
+                    read_stdin ? NULL : curbuf->b_fname,
                     line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
                     flags | READ_BUFFER, silent);
   if (retval == OK) {
@@ -229,7 +229,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
     }
 #endif
 
-    retval = readfile((char *)curbuf->b_ffname, (char *)curbuf->b_fname,
+    retval = readfile((char *)curbuf->b_ffname, curbuf->b_fname,
                       (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
                       flags | READ_NEW | (read_fifo ? READ_FIFO : 0), silent);
 #ifdef UNIX
@@ -1219,8 +1219,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
           return FAIL;
         }
       } else {
-        semsg(_("E89: %s will be killed (add ! to override)"),
-              (char *)buf->b_fname);
+        semsg(_("E89: %s will be killed (add ! to override)"), buf->b_fname);
         return FAIL;
       }
     }
@@ -1803,7 +1802,7 @@ buf_T *buflist_new(char_u *ffname_arg, char_u *sfname_arg, linenr_T lnum, int fl
   hash_init(&buf->b_s.b_keywtab);
   hash_init(&buf->b_s.b_keywtab_ic);
 
-  buf->b_fname = buf->b_sfname;
+  buf->b_fname = (char *)buf->b_sfname;
   if (!file_id_valid) {
     buf->file_id_valid = false;
   } else {
@@ -2113,10 +2112,10 @@ int buflist_findpat(const char_u *pattern, const char_u *pattern_end, bool unlis
 {
   int match = -1;
   int find_listed;
-  char_u *pat;
-  char_u *patend;
+  char *pat;
+  char *patend;
   int attempt;
-  char_u *p;
+  char *p;
   int toggledollar;
 
   if (pattern_end == pattern + 1 && (*pattern == '%' || *pattern == '#')) {
@@ -2138,7 +2137,7 @@ int buflist_findpat(const char_u *pattern, const char_u *pattern_end, bool unlis
     // Repeat this for finding an unlisted buffer if there was no matching
     // listed buffer.
 
-    pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, false);
+    pat = file_pat_to_reg_pat((char *)pattern, (char *)pattern_end, NULL, false);
     if (pat == NULL) {
       return -1;
     }
@@ -2271,7 +2270,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
     }
 
     regmatch_T regmatch;
-    regmatch.regprog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
+    regmatch.regprog = vim_regcomp((char *)patc + attempt * 11, RE_MAGIC);
     if (regmatch.regprog == NULL) {
       if (patc != pat) {
         xfree(patc);
@@ -2426,7 +2425,7 @@ char_u *buflist_nr2name(int n, int fullname, int helptail)
     return NULL;
   }
   return home_replace_save(helptail ? buf : NULL,
-                           fullname ? buf->b_ffname : buf->b_fname);
+                           fullname ? buf->b_ffname : (char_u *)buf->b_fname);
 }
 
 /// Set the line and column numbers for the given buffer and window
@@ -2622,7 +2621,7 @@ void buflist_list(exarg_T *eap)
   garray_T buflist;
   buf_T **buflist_data = NULL;
 
-  if (vim_strchr((char_u *)eap->arg, 't')) {
+  if (vim_strchr(eap->arg, 't')) {
     ga_init(&buflist, sizeof(buf_T *), 50);
     for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
       ga_grow(&buflist, 1);
@@ -2645,28 +2644,28 @@ void buflist_list(exarg_T *eap)
     const bool job_running = buf->terminal && terminal_running(buf->terminal);
 
     // skip unspecified buffers
-    if ((!buf->b_p_bl && !eap->forceit && !vim_strchr((char_u *)eap->arg, 'u'))
-        || (vim_strchr((char_u *)eap->arg, 'u') && buf->b_p_bl)
-        || (vim_strchr((char_u *)eap->arg, '+')
+    if ((!buf->b_p_bl && !eap->forceit && !vim_strchr(eap->arg, 'u'))
+        || (vim_strchr(eap->arg, 'u') && buf->b_p_bl)
+        || (vim_strchr(eap->arg, '+')
             && ((buf->b_flags & BF_READERR) || !bufIsChanged(buf)))
-        || (vim_strchr((char_u *)eap->arg, 'a')
+        || (vim_strchr(eap->arg, 'a')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows == 0))
-        || (vim_strchr((char_u *)eap->arg, 'h')
+        || (vim_strchr(eap->arg, 'h')
             && (buf->b_ml.ml_mfp == NULL || buf->b_nwindows != 0))
-        || (vim_strchr((char_u *)eap->arg, 'R') && (!is_terminal || !job_running))
-        || (vim_strchr((char_u *)eap->arg, 'F') && (!is_terminal || job_running))
-        || (vim_strchr((char_u *)eap->arg, '-') && buf->b_p_ma)
-        || (vim_strchr((char_u *)eap->arg, '=') && !buf->b_p_ro)
-        || (vim_strchr((char_u *)eap->arg, 'x') && !(buf->b_flags & BF_READERR))
-        || (vim_strchr((char_u *)eap->arg, '%') && buf != curbuf)
-        || (vim_strchr((char_u *)eap->arg, '#')
+        || (vim_strchr(eap->arg, 'R') && (!is_terminal || !job_running))
+        || (vim_strchr(eap->arg, 'F') && (!is_terminal || job_running))
+        || (vim_strchr(eap->arg, '-') && buf->b_p_ma)
+        || (vim_strchr(eap->arg, '=') && !buf->b_p_ro)
+        || (vim_strchr(eap->arg, 'x') && !(buf->b_flags & BF_READERR))
+        || (vim_strchr(eap->arg, '%') && buf != curbuf)
+        || (vim_strchr(eap->arg, '#')
             && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
     }
     if (buf_spname(buf) != NULL) {
       STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
     } else {
-      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, true);
+      home_replace(buf, (char_u *)buf->b_fname, NameBuff, MAXPATHL, true);
     }
 
     if (message_filtered(NameBuff)) {
@@ -2700,7 +2699,7 @@ void buflist_list(exarg_T *eap)
     do {
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);
-    if (vim_strchr((char_u *)eap->arg, 't') && buf->b_last_used) {
+    if (vim_strchr(eap->arg, 't') && buf->b_last_used) {
       undo_fmt_time(IObuff + len, (size_t)(IOSIZE - len), buf->b_last_used);
     } else {
       vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len), _("line %" PRId64),
@@ -2730,7 +2729,7 @@ int buflist_name_nr(int fnum, char_u **fname, linenr_T *lnum)
     return FAIL;
   }
 
-  *fname = buf->b_fname;
+  *fname = (char_u *)buf->b_fname;
   *lnum = buflist_findlnum(buf);
 
   return OK;
@@ -2794,7 +2793,7 @@ int setfname(buf_T *buf, char_u *ffname_arg, char_u *sfname_arg, bool message)
     buf->b_ffname = ffname;
     buf->b_sfname = sfname;
   }
-  buf->b_fname = buf->b_sfname;
+  buf->b_fname = (char *)buf->b_sfname;
   if (!file_id_valid) {
     buf->file_id_valid = false;
   } else {
@@ -2823,7 +2822,7 @@ void buf_set_name(int fnum, char_u *name)
     // Allocate ffname and expand into full path.  Also resolves .lnk
     // files on Win32.
     fname_expand(buf, &buf->b_ffname, &buf->b_sfname);
-    buf->b_fname = buf->b_sfname;
+    buf->b_fname = (char *)buf->b_sfname;
   }
 }
 
@@ -2980,7 +2979,7 @@ void buf_set_file_id(buf_T *buf)
 {
   FileID file_id;
   if (buf->b_fname != NULL
-      && os_fileid((char *)buf->b_fname, &file_id)) {
+      && os_fileid(buf->b_fname, &file_id)) {
     buf->file_id_valid = true;
     buf->file_id = file_id;
   } else {
@@ -3023,7 +3022,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
     STRLCPY(p, buf_spname(curbuf), IOSIZE - (p - buffer));
   } else {
     if (!fullname && curbuf->b_fname != NULL) {
-      name = curbuf->b_fname;
+      name = (char_u *)curbuf->b_fname;
     } else {
       name = curbuf->b_ffname;
     }
@@ -3175,7 +3174,7 @@ void maketitle(void)
                                      SPACE_FOR_FNAME + 1);
         buf_p += MIN(size, SPACE_FOR_FNAME);
       } else {
-        buf_p += transstr_buf((const char *)path_tail((char *)curbuf->b_fname),
+        buf_p += transstr_buf((const char *)path_tail(curbuf->b_fname),
                               buf_p, SPACE_FOR_FNAME + 1, true);
       }
 
@@ -3834,7 +3833,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
         STRLCPY(NameBuff, buf_spname(wp->w_buffer), MAXPATHL);
       } else {
         char_u *t = (opt == STL_FULLPATH) ? wp->w_buffer->b_ffname
-                                          : wp->w_buffer->b_fname;
+                                          : (char_u *)wp->w_buffer->b_fname;
         home_replace(wp->w_buffer, t, NameBuff, MAXPATHL, true);
       }
       trans_characters(NameBuff, MAXPATHL);
@@ -4650,7 +4649,7 @@ char_u *alist_name(aentry_T *aep)
   if (bp == NULL || bp->b_fname == NULL) {
     return aep->ae_fname;
   }
-  return bp->b_fname;
+  return (char_u *)bp->b_fname;
 }
 
 /// do_arg_all(): Open up to 'count' windows, one for each argument.
@@ -5234,7 +5233,7 @@ static int chk_modeline(linenr_T lnum, int flags)
         break;
       }
       end = true;
-      s = vim_strchr(s, ' ') + 1;
+      s = (char_u *)vim_strchr((char *)s, ' ') + 1;
     }
     *e = NUL;                         // truncate the set command
 
@@ -5358,7 +5357,7 @@ char_u *buf_spname(buf_T *buf)
   // contains the name as specified by the user.
   if (bt_nofile(buf)) {
     if (buf->b_fname != NULL) {
-      return buf->b_fname;
+      return (char_u *)buf->b_fname;
     }
     if (bt_prompt(buf)) {
       return (char_u *)_("[Prompt]");
@@ -5552,7 +5551,7 @@ char_u *buf_get_fname(const buf_T *buf)
   if (buf->b_fname == NULL) {
     return (char_u *)_("[No Name]");
   }
-  return buf->b_fname;
+  return (char_u *)buf->b_fname;
 }
 
 /// Set 'buflisted' for curbuf to "on" and trigger autocommands if it changed.
@@ -5594,7 +5593,7 @@ bool buf_contents_changed(buf_T *buf)
   aucmd_prepbuf(&aco, newbuf);
 
   if (ml_open(curbuf) == OK
-      && readfile((char *)buf->b_ffname, (char *)buf->b_fname,
+      && readfile((char *)buf->b_ffname, buf->b_fname,
                   (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
                   &ea, READ_NEW | READ_DUMMY, false) == OK) {
     // compare the two files line by line

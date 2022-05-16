@@ -277,10 +277,10 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   // point to one of these values.
   old_curbuf = curbuf;
   old_b_ffname = (char *)curbuf->b_ffname;
-  old_b_fname = (char *)curbuf->b_fname;
+  old_b_fname = curbuf->b_fname;
   using_b_ffname = ((char_u *)fname == curbuf->b_ffname)
                    || ((char_u *)sfname == curbuf->b_ffname);
-  using_b_fname = ((char_u *)fname == curbuf->b_fname) || ((char_u *)sfname == curbuf->b_fname);
+  using_b_fname = (fname == curbuf->b_fname) || (sfname == curbuf->b_fname);
 
   // After reading a file the cursor line changes but we don't want to
   // display the line.
@@ -469,7 +469,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
             || (using_b_ffname
                 && ((char_u *)old_b_ffname != curbuf->b_ffname))
             || (using_b_fname
-                && ((char_u *)old_b_fname != curbuf->b_fname))) {
+                && (old_b_fname != curbuf->b_fname))) {
           emsg(_(e_auchangedbuf));
           return FAIL;
         }
@@ -540,7 +540,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     if (!read_stdin
         && (curbuf != old_curbuf
             || (using_b_ffname && ((char_u *)old_b_ffname != curbuf->b_ffname))
-            || (using_b_fname && ((char_u *)old_b_fname != curbuf->b_fname)))) {
+            || (using_b_fname && (old_b_fname != curbuf->b_fname)))) {
       emsg(_(e_auchangedbuf));
       if (!read_buffer) {
         close(fd);
@@ -646,7 +646,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
      */
     if (!read_stdin && (curbuf != old_curbuf
                         || (using_b_ffname && ((char_u *)old_b_ffname != curbuf->b_ffname))
-                        || (using_b_fname && ((char_u *)old_b_fname != curbuf->b_fname))
+                        || (using_b_fname && (old_b_fname != curbuf->b_fname))
                         || (fd = os_open(fname, O_RDONLY, 0)) < 0)) {
       no_wait_return--;
       msg_scroll = msg_save;
@@ -1957,8 +1957,7 @@ failed:
       if (!au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
-        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname,
-                       true, curbuf);
+        apply_autocmds(EVENT_FILETYPE, (char *)curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
       }
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
@@ -2084,7 +2083,7 @@ static char_u *next_fenc(char_u **pp, bool *alloced)
     *pp = NULL;
     return (char_u *)"";
   }
-  p = vim_strchr(*pp, ',');
+  p = (char_u *)vim_strchr((char *)(*pp), ',');
   if (p == NULL) {
     r = enc_canonize(*pp);
     *pp += STRLEN(*pp);
@@ -2466,8 +2465,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         }
         if (reset_changed && buf->b_changed && !append
             && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
-          /* Buffer still changed, the autocommands didn't work
-           * properly. */
+          // Buffer still changed, the autocommands didn't work properly.
           return FAIL;
         }
         return OK;
@@ -4327,7 +4325,7 @@ void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
 
   if (buf->b_fname != NULL
       && !bt_nofile(buf)
-      && !path_with_url((char *)buf->b_fname)
+      && !path_with_url(buf->b_fname)
       && (force
           || buf->b_sfname == NULL
           || path_is_absolute(buf->b_sfname))) {
@@ -4337,10 +4335,10 @@ void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
     p = path_shorten_fname(buf->b_ffname, dirname);
     if (p != NULL) {
       buf->b_sfname = vim_strsave(p);
-      buf->b_fname = buf->b_sfname;
+      buf->b_fname = (char *)buf->b_sfname;
     }
     if (p == NULL) {
-      buf->b_fname = buf->b_ffname;
+      buf->b_fname = (char *)buf->b_ffname;
     }
   }
 }
@@ -4957,7 +4955,7 @@ int buf_check_timestamp(buf_T *buf)
       buf_store_file_info(buf, &file_info);
     }
 
-    if (os_isdir(buf->b_fname)) {
+    if (os_isdir((char_u *)buf->b_fname)) {
       // Don't do anything for a directory.  Might contain the file explorer.
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
                && !bufIsChanged(buf) && file_info_ok) {
@@ -4985,8 +4983,7 @@ int buf_check_timestamp(buf_T *buf)
       set_vim_var_string(VV_FCS_REASON, reason, -1);
       set_vim_var_string(VV_FCS_CHOICE, "", -1);
       allbuf_lock++;
-      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL,
-                              buf->b_fname, buf->b_fname, false, buf);
+      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL, buf->b_fname, buf->b_fname, false, buf);
       allbuf_lock--;
       busy = false;
       if (n) {
@@ -5046,7 +5043,7 @@ int buf_check_timestamp(buf_T *buf)
   }
 
   if (mesg != NULL) {
-    path = home_replace_save(buf, buf->b_fname);
+    path = home_replace_save(buf, (char_u *)buf->b_fname);
     if (!helpmesg) {
       mesg2 = "";
     }
@@ -5117,8 +5114,7 @@ int buf_check_timestamp(buf_T *buf)
 
   // Trigger FileChangedShell when the file was changed in any way.
   if (bufref_valid(&bufref) && retval != 0) {
-    (void)apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname,
-                         false, buf);
+    (void)apply_autocmds(EVENT_FILECHANGEDSHELLPOST, buf->b_fname, buf->b_fname, false, buf);
   }
   return retval;
 }
@@ -5192,7 +5188,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   if (saved == OK) {
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
-    if (readfile((char *)buf->b_ffname, (char *)buf->b_fname, (linenr_T)0, (linenr_T)0,
+    if (readfile((char *)buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
                  (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
@@ -5523,7 +5519,7 @@ bool match_file_pat(char *pattern, regprog_T **prog, char *fname, char *sfname, 
     if (prog != NULL) {
       regmatch.regprog = *prog;
     } else {
-      regmatch.regprog = vim_regcomp((char_u *)pattern, RE_MAGIC);
+      regmatch.regprog = vim_regcomp(pattern, RE_MAGIC);
     }
   }
 
@@ -5575,7 +5571,7 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   p = list;
   while (*p) {
     copy_option_part(&p, buf, ARRAY_SIZE(buf), ",");
-    regpat = file_pat_to_reg_pat(buf, NULL, &allow_dirs, false);
+    regpat = (char_u *)file_pat_to_reg_pat((char *)buf, NULL, &allow_dirs, false);
     if (regpat == NULL) {
       break;
     }
@@ -5600,13 +5596,12 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
 /// @param no_bslash   Don't use a backward slash as pathsep
 ///
 /// @return            NULL on failure.
-char_u *file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allow_dirs,
-                            int no_bslash)
+char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs, int no_bslash)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char_u *endp;
-  char_u *reg_pat;
-  const char_u *p;
+  const char *endp;
+  char *reg_pat;
+  const char *p;
   int nested = 0;
   bool add_dollar = true;
 
@@ -5618,7 +5613,7 @@ char_u *file_pat_to_reg_pat(const char_u *pat, const char_u *pat_end, char *allo
   }
 
   if (pat_end == pat) {
-    return (char_u *)xstrdup("^$");
+    return xstrdup("^$");
   }
 
   size_t size = 2;  // '^' at start, '$' at end.
