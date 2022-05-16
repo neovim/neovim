@@ -1463,11 +1463,29 @@ function lsp.stop_client(client_id, force)
   end
 end
 
---- Gets all active clients.
+--- Get active clients.
 ---
----@returns Table of |vim.lsp.client| objects
-function lsp.get_active_clients()
-  return vim.tbl_values(active_clients)
+---@param filter (table|nil) A table with key-value pairs used to filter the
+---              returned clients. The available keys are:
+---               - id (number): Only return clients with the given id
+---               - bufnr (number): Only return clients attached to this buffer
+---               - name (string): Only return clients with the given name
+---@returns (table) List of |vim.lsp.client| objects
+function lsp.get_active_clients(filter)
+  validate({ filter = { filter, 't', true } })
+
+  filter = filter or {}
+
+  local clients = {}
+
+  local t = filter.bufnr and (all_buffer_active_clients[resolve_bufnr(filter.bufnr)] or {}) or active_clients
+  for client_id in pairs(t) do
+    local client = active_clients[client_id]
+    if (filter.id == nil or client.id == filter.id) and (filter.name == nil or client.name == filter.name) then
+      clients[#clients + 1] = client
+    end
+  end
+  return clients
 end
 
 function lsp._vim_exit_handler()
@@ -1842,12 +1860,13 @@ end
 --- is a |vim.lsp.client| object.
 ---
 ---@param bufnr (optional, number): Buffer handle, or 0 for current
+---@returns (table) Table of (client_id, client) pairs
+---@deprecated Use |vim.lsp.get_active_clients()| instead.
 function lsp.buf_get_clients(bufnr)
-  bufnr = resolve_bufnr(bufnr)
   local result = {}
-  for_each_buffer_client(bufnr, function(client, client_id)
-    result[client_id] = client
-  end)
+  for _, client in ipairs(lsp.get_active_clients({ bufnr = resolve_bufnr(bufnr) })) do
+    result[client.id] = client
+  end
   return result
 end
 
