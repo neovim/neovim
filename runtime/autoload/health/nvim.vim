@@ -45,7 +45,7 @@ function! s:check_config() abort
   let shadafile = empty(&shada) ? &shada : substitute(matchstr(
         \ split(&shada, ',')[-1], '^n.\+'), '^n', '', '')
   let shadafile = empty(&shadafile) ? empty(shadafile) ?
-        \ stdpath('data').'/shada/main.shada' : expand(shadafile)
+        \ stdpath('state').'/shada/main.shada' : expand(shadafile)
         \ : &shadafile ==# 'NONE' ? '' : &shadafile
   if !empty(shadafile) && empty(glob(shadafile))
     " Since this may be the first time neovim has been run, we will try to
