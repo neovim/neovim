@@ -1725,8 +1725,7 @@ Vimscript Functions                                            *api-vimscript*
 nvim_call_dict_function({dict}, {fn}, {args})
                 Calls a VimL |Dictionary-function| with the given arguments.
 
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
+                On execution error: fails with VimL error, updates v:errmsg.
 
                 Parameters: ~
                     {dict}  Dictionary, or String evaluating to a VimL |self|
@@ -1740,8 +1739,7 @@ nvim_call_dict_function({dict}, {fn}, {args})
 nvim_call_function({fn}, {args})                        *nvim_call_function()*
                 Calls a VimL function with the given arguments.
 
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
+                On execution error: fails with VimL error, updates v:errmsg.
 
                 Parameters: ~
                     {fn}    Function to call
@@ -1759,6 +1757,8 @@ nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
                 allows for things such as having spaces inside a command
                 argument, expanding filenames in a command that otherwise
                 doesn't expand filenames, etc.
+
+                On execution error: fails with VimL error, updates v:errmsg.
 
                 Parameters: ~
                     {cmd}   Command to execute. Must be a Dictionary that can
@@ -1781,8 +1781,7 @@ nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
 nvim_command({command})                                       *nvim_command()*
                 Executes an Ex command.
 
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
+                On execution error: fails with VimL error, updates v:errmsg.
 
                 Prefer using |nvim_cmd()| or |nvim_exec()| over this. To
                 evaluate multiple lines of Vim script or an Ex command
@@ -1798,8 +1797,7 @@ nvim_eval({expr})                                                *nvim_eval()*
                 Evaluates a VimL |expression|. Dictionaries and Lists are
                 recursively expanded.
 
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
+                On execution error: fails with VimL error, updates v:errmsg.
 
                 Parameters: ~
                     {expr}  VimL expression string
@@ -1814,8 +1812,7 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
                 Unlike |nvim_command()| this function supports heredocs,
                 script-scope (s:), etc.
 
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
+                On execution error: fails with VimL error, updates v:errmsg.
 
                 Parameters: ~
                     {src}     Vimscript code
