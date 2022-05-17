@@ -98,13 +98,6 @@ static void set_vservername(garray_T *srvs)
 /// Teardown the server module
 void server_teardown(void)
 {
-  DLOG("v:parent dispose");
-  Error err = ERROR_INIT;
-  nlua_exec(STATIC_CSTR_AS_STRING("return vim._server_teardown()"), (Array)ARRAY_DICT_INIT, &err);
-  if (ERROR_SET(&err)) {
-    ELOG("v:parent dispose failed: %s", err.msg);
-  }
-
   GA_DEEP_CLEAR(&watchers, SocketWatcher *, close_socket_watcher);
 }
 

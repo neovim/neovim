@@ -141,14 +141,6 @@ function vim._server_init()
   vim.api.nvim_exec([[call extend(v:parent, nvim_get_chan_info(]]..parent..[[), 'force')]], false)
 end
 
--- Disposes v:parent (from server.c).
-function vim._server_teardown()
-  local chan = vim.v.parent.id
-  if chan and chan > 0 then
-    vim.fn.chanclose(chan)
-  end
-end
-
 --- Return a human-readable representation of the given object.
 ---
 ---@see https://github.com/kikito/inspect.lua
