@@ -5311,6 +5311,13 @@ func Test_cindent_case()
   bwipe!
 endfunc
 
+" This was reading past the end of the line
+func Test_cindent_check_funcdecl()
+  new
+  sil norm o0('\0=L
+  bwipe!
+endfunc
+
 func Test_cindent_scopedecls()
   new
   setl cindent ts=4 sw=4

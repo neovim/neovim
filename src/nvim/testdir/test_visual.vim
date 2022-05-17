@@ -1249,10 +1249,22 @@ endfunc
 
 func Test_visual_block_append_invalid_char()
   " this was going over the end of the line
+  set isprint=@,161-255
   new
   call setline(1, ['	   let xxx', 'xxxxx', 'xxxxxxxxxxx'])
   exe "normal 0\<C-V>jjA-\<Esc>"
   call assert_equal(['	-   let xxx', 'xxxxx   -', 'xxxxxxxx-xxx'], getline(1, 3))
+  bwipe!
+  set isprint&
+endfunc
+
+func Test_visual_block_with_substitute()
+  " this was reading beyond the end of the line
+  new
+  norm a0)
+  sil! norm  O
+  s/)
+  sil! norm 
   bwipe!
 endfunc
 
