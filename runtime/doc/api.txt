@@ -2656,13 +2656,12 @@ nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
 nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                 Creates or updates an extmark.
 
-                To create a new extmark, pass id=0. The extmark id will be
-                returned. To move an existing mark, pass its id.
-
-                It is also allowed to create a new mark by passing in a
-                previously unused id, but the caller must then keep track of
-                existing and unused ids itself. (Useful over RPC, to avoid
-                waiting for the return value.)
+                By default a new extmark is created when no id is passed in,
+                but it is also possible to create a new mark by passing in a
+                previously unused id or move an existing mark by passing in
+                its id. The caller must then keep track of existing and unused
+                ids itself. (Useful over RPC, to avoid waiting for the return
+                value.)
 
                 Using the optional arguments, it is possible to use this to
                 highlight a range of text, and also to associate virtual text
