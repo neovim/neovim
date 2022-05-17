@@ -1683,14 +1683,13 @@ void execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo)
                                    (eap->argt & EX_BUFUNL) != 0, false, false);
       eap->addr_count = 1;
       // Shift each argument by 1
-      if (eap->args != NULL) {
-        for (size_t i = 0; i < eap->argc - 1; i++) {
-          eap->args[i] = eap->args[i + 1];
-        }
-        // Make the last argument point to the NUL terminator at the end of string
-        eap->args[eap->argc - 1] = eap->args[eap->argc - 1] + eap->arglens[eap->argc - 1];
-        eap->argc -= 1;
+      for (size_t i = 0; i < eap->argc - 1; i++) {
+        eap->args[i] = eap->args[i + 1];
       }
+      // Make the last argument point to the NUL terminator at the end of string
+      eap->args[eap->argc - 1] = eap->args[eap->argc - 1] + eap->arglens[eap->argc - 1];
+      eap->argc -= 1;
+
       eap->arg = eap->args[0];
     }
     if (eap->line2 < 0) {  // failed

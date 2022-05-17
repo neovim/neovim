@@ -143,7 +143,7 @@ bool loop_close(Loop *loop, bool wait)
   while (true) {
     // Run the loop to tickle close-callbacks (which should then free memory).
     // Use UV_RUN_NOWAIT to avoid a hang. #11820
-    uv_run(&loop->uv, didstop ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
+    uv_run(&loop->uv, didstop ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);  // -V547
     if ((uv_loop_close(&loop->uv) != UV_EBUSY) || !wait) {
       break;
     }
