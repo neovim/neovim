@@ -634,12 +634,12 @@ static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #define OFF(attr) offsetof(union typval_vval_union, attr)
-  STATIC_ASSERT(OFF(v_string) == OFF(v_list)
+  STATIC_ASSERT(OFF(v_string) == OFF(v_list)  // -V568
                 && OFF(v_string) == OFF(v_dict)
                 && OFF(v_string) == OFF(v_partial)
-                && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_list)      // -V568
-                && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_dict)      // -V568
-                && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_partial),  // -V568
+                && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_list)
+                && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_dict)
+                && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_partial),
                 "Strings, dictionaries, lists and partials are expected to be pointers, "
                 "so that all three of them can be accessed via v_string");
 #undef OFF
