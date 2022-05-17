@@ -295,6 +295,13 @@ function LanguageTree:included_regions()
   return self._regions
 end
 
+local function process_node(node, id, metadata)
+  if metadata[id] and metadata[id].range then
+    return metadata[id].range
+  end
+  return node
+end
+
 --- Gets language injection points by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -351,7 +358,7 @@ function LanguageTree:_get_injections()
         elseif name == 'combined' then
           combined = true
         elseif name == 'content' and #ranges == 0 then
-          table.insert(ranges, node)
+          table.insert(ranges, process_node(node, id, metadata))
           -- Ignore any tags that start with "_"
           -- Allows for other tags to be used in matches
         elseif string.sub(name, 1, 1) ~= '_' then
@@ -360,12 +367,8 @@ function LanguageTree:_get_injections()
           end
 
           if #ranges == 0 then
-            table.insert(ranges, node)
+            table.insert(ranges, process_node(node, id, metadata))
           end
-        end
-
-        if metadata[id] and metadata[id].range and #ranges == 0 then
-          table.insert(ranges, metadata[id].range)
         end
       end
 
