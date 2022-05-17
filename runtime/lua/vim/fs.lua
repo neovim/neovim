@@ -51,14 +51,14 @@ end
 --- Return an iterator over the files and directories located in {path}
 ---
 ---@param path (string) An absolute or relative path to the directory to iterate
----            over
+---            over. The path is first normalized |vim.fs.normalize()|.
 ---@return Iterator over files and directories in {path}. Each iteration yields
 ---        two values: name and type. Each "name" is the basename of the file or
 ---        directory relative to {path}. Type is one of "file" or "directory".
 function M.dir(path)
   return function(fs)
     return vim.loop.fs_scandir_next(fs)
-  end, vim.loop.fs_scandir(path)
+  end, vim.loop.fs_scandir(M.normalize(path))
 end
 
 --- Find files or directories in the given path.
@@ -176,6 +176,30 @@ function M.find(names, opts)
   end
 
   return matches
+end
+
+--- Normalize a path to a standard format. A tilde (~) character at the
+--- beginning of the path is expanded to the user's home directory and any
+--- backslash (\\) characters are converted to forward slashes (/). Environment
+--- variables are also expanded.
+---
+--- Example:
+--- <pre>
+--- vim.fs.normalize('C:\\Users\\jdoe')
+--- => 'C:/Users/jdoe'
+---
+--- vim.fs.normalize('~/src/neovim')
+--- => '/home/jdoe/src/neovim'
+---
+--- vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
+--- => '/Users/jdoe/.config/nvim/init.vim'
+--- </pre>
+---
+---@param path (string) Path to normalize
+---@return (string) Normalized path
+function M.normalize(path)
+  vim.validate({ path = { path, 's' } })
+  return (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
 end
 
 return M

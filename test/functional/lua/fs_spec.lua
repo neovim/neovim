@@ -79,4 +79,23 @@ describe('vim.fs', function()
       ]], test_build_dir, nvim_prog_basename))
     end)
   end)
+
+  describe('normalize()', function()
+    it('works with backward slashes', function()
+      eq('C:/Users/jdoe', exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
+    end)
+    it('works with ~', function()
+      if iswin() then
+        pending([[$HOME does not exist on Windows ¯\_(ツ)_/¯]])
+      end
+      eq(os.getenv('HOME') .. '/src/foo', exec_lua [[ return vim.fs.normalize('~/src/foo') ]])
+    end)
+    it('works with environment variables', function()
+      local xdg_config_home = test_build_dir .. '/.config'
+      eq(xdg_config_home .. '/nvim', exec_lua([[
+        vim.env.XDG_CONFIG_HOME = ...
+        return vim.fs.normalize('$XDG_CONFIG_HOME/nvim')
+      ]], xdg_config_home))
+    end)
+  end)
 end)
