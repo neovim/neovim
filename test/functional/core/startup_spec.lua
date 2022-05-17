@@ -496,12 +496,13 @@ describe('sysinit', function()
   it('fixed hang issue with -D (#12647)', function()
     if helpers.pending_win32(pending) then return end
     local screen
-    screen = Screen.new(60, 6)
+    screen = Screen.new(60, 7)
     screen:attach()
     command([[let g:id = termopen('"]]..nvim_prog..
     [[" -u NONE -i NONE --cmd "set noruler" -D')]])
     screen:expect([[
       ^                                                            |
+                                                                  |
       Entering Debug mode.  Type "cont" to continue.              |
       cmd: augroup nvim_terminal                                  |
       >                                                           |
@@ -511,6 +512,7 @@ describe('sysinit', function()
     command([[call chansend(g:id, "cont\n")]])
     screen:expect([[
       ^                                                            |
+      ~                                                           |
       ~                                                           |
       [No Name]                                                   |
                                                                   |
