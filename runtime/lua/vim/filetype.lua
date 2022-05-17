@@ -686,6 +686,7 @@ local extension = {
   bbl = 'tex',
   latex = 'tex',
   sty = 'tex',
+  cls = 'tex',
   texi = 'texinfo',
   txi = 'texinfo',
   texinfo = 'texinfo',
