@@ -78,7 +78,7 @@ local function validate_commit(commit_message)
 
   -- Check if type is correct
   local type = vim.split(before_colon, "%(")[1]
-  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'chore', 'vim-patch'}
+  local allowed_types = {'build', 'ci', 'docs', 'feat', 'fix', 'perf', 'refactor', 'revert', 'test', 'dist', 'vim-patch'}
   if not vim.tbl_contains(allowed_types, type) then
     return string.format(
       'Invalid commit type "%s". Allowed types are:\n    %s',
@@ -181,7 +181,7 @@ function M._test()
     ['refactor: normal message'] = true,
     ['revert: normal message'] = true,
     ['test: normal message'] = true,
-    ['chore: normal message'] = true,
+    ['dist: normal message'] = true,
     ['ci(window): message with scope'] = true,
     ['ci!: message with breaking change'] = true,
     ['ci(tui)!: message with scope and breaking change'] = true,
@@ -205,10 +205,10 @@ function M._test()
     ['ci :extra space before colon'] = false,
     ['refactor(): empty scope'] = false,
     ['ci( ): whitespace as scope'] = false,
-    ['chore: period at end of sentence.'] = false,
+    ['ci: period at end of sentence.'] = false,
     ['ci: Starting sentence capitalized'] = false,
     ['unknown: using unknown type'] = false,
-    ['chore: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
+    ['ci: you\'re saying this commit message just goes on and on and on and on and on and on for way too long?'] = false,
   }
 
   local failed = 0
