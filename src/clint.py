@@ -173,12 +173,9 @@ _ERROR_CATEGORIES = [
     'build/deprecated',
     'build/endif_comment',
     'build/header_guard',
-    'build/include',
     'build/include_alpha',
     'build/printf_format',
     'build/storage_class',
-    'build/useless_fattr',
-    'readability/alt_tokens',
     'readability/bool',
     'readability/braces',
     'readability/multiline_comment',
@@ -202,13 +199,10 @@ _ERROR_CATEGORIES = [
     'whitespace/comments',
     'whitespace/empty_conditional_body',
     'whitespace/empty_loop_body',
-    'whitespace/end_of_line',
-    'whitespace/ending_newline',
     'whitespace/indent',
     'whitespace/newline',
     'whitespace/operators',
     'whitespace/parens',
-    'whitespace/tab',
     'whitespace/todo',
     'whitespace/line_continuation',
     'whitespace/cast',
@@ -219,11 +213,6 @@ _ERROR_CATEGORIES = [
 # off by default (i.e., categories that must be enabled by the --filter= flags).
 # All entries here should start with a '-' or '+', as in the --filter= flag.
 _DEFAULT_FILTERS = ['-build/include_alpha']
-
-# These constants define types of headers for use with
-# _IncludeState.CheckNextIncludeOrder().
-_C_SYS_HEADER = 1
-_OTHER_HEADER = 5
 
 # These constants define the current inline assembly state
 _NO_ASM = 0       # Outside of inline assembly block
@@ -354,96 +343,6 @@ def Search(pattern, s):
     if pattern not in _regexp_compile_cache:
         _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
     return _regexp_compile_cache[pattern].search(s)
-
-
-class _IncludeState(dict):  # lgtm [py/missing-equals]
-
-    """Tracks line numbers for includes, and the order in which includes appear.
-
-    As a dict, an _IncludeState object serves as a mapping between include
-    filename and line number on which that file was included.
-
-    Call CheckNextIncludeOrder() once for each header in the file, passing
-    in the type constants defined above.
-
-    """
-    # self._section will move monotonically through this set. If it ever
-    # needs to move backwards, CheckNextIncludeOrder will raise an error.
-    _INITIAL_SECTION = 0
-    _C_SECTION = 2
-    _OTHER_H_SECTION = 4
-
-    _TYPE_NAMES = {
-        _C_SYS_HEADER: 'C system header',
-        _OTHER_HEADER: 'other header',
-    }
-    _SECTION_NAMES = {
-        _INITIAL_SECTION: "... nothing. (This can't be an error.)",
-        _C_SECTION: 'C system header',
-        _OTHER_H_SECTION: 'other header',
-    }
-
-    def __init__(self):
-        dict.__init__(self)
-        self.ResetSection()
-
-    def ResetSection(self):
-        # The name of the current section.
-        self._section = self._INITIAL_SECTION
-        # The path of last found header.
-        self._last_header = ''
-
-    def SetLastHeader(self, header_path):
-        self._last_header = header_path
-
-    def CanonicalizeAlphabeticalOrder(self, header_path):
-        """Returns a path canonicalized for alphabetical comparison.
-
-        - replaces "-" with "_" so they both cmp the same.
-        - lowercase everything, just in case.
-
-        Args:
-          header_path: Path to be canonicalized.
-
-        Returns:
-          Canonicalized path.
-        """
-        return header_path.replace('-', '_').lower()
-
-    def CheckNextIncludeOrder(self, header_type):
-        """Returns a non-empty error message if the next header is out of order.
-
-        This function also updates the internal state to be ready to check
-        the next include.
-
-        Args:
-          header_type: One of the _XXX_HEADER constants defined above.
-
-        Returns:
-          The empty string if the header is in the right order, or an
-          error message describing what's wrong.
-
-        """
-        error_message = ('Found %s after %s' %
-                         (self._TYPE_NAMES[header_type],
-                          self._SECTION_NAMES[self._section]))
-
-        last_section = self._section
-
-        if header_type == _C_SYS_HEADER:
-            if self._section <= self._C_SECTION:
-                self._section = self._C_SECTION
-            else:
-                self._last_header = ''
-                return error_message
-        else:
-            assert header_type == _OTHER_HEADER
-            self._section = self._OTHER_H_SECTION
-
-        if last_section != self._section:
-            self._last_header = ''
-
-        return ''
 
 
 class _CppLintState:
@@ -1251,24 +1150,6 @@ def CheckForBadCharacters(filename, lines, error):
         if '\0' in line:
             error(filename, linenum, 'readability/nul',
                   5, 'Line contains NUL byte.')
-
-
-def CheckForNewlineAtEOF(filename, lines, error):
-    """Logs an error if there is no newline char at the end of the file.
-
-    Args:
-      filename: The name of the current file.
-      lines: An array of strings, each representing a line of the file.
-      error: The function to call with any errors found.
-    """
-
-    # The array lines() was created by adding two newlines to the
-    # original file (go figure), then splitting on \n.
-    # To verify that the file ends in \n, we just have to make sure the
-    # last-but-two element of lines() exists and is empty.
-    if len(lines) < 3 or lines[-2]:
-        error(filename, len(lines) - 2, 'whitespace/ending_newline', 5,
-              'Could not find a newline character at the end of the file.')
 
 
 def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
@@ -2796,10 +2677,6 @@ def CheckStyle(filename, clean_lines, linenum, error):
     raw_lines = clean_lines.lines_without_raw_strings
     line = raw_lines[linenum]
 
-    if line.find('\t') != -1:
-        error(filename, linenum, 'whitespace/tab', 1,
-              'Tab found; better to use spaces')
-
     # One or three blank spaces at the beginning of the line is weird; it's
     # hard to reconcile that with 2-space indents.
     # NOTE: here are the conditions rob pike used for his tests.  Mine aren't
@@ -2815,18 +2692,9 @@ def CheckStyle(filename, clean_lines, linenum, error):
     # if(prevodd && match(prevprev, " +for \\(")) complain = 0;
     initial_spaces = 0
     cleansed_line = clean_lines.elided[linenum]
+
     while initial_spaces < len(line) and line[initial_spaces] == ' ':
         initial_spaces += 1
-    if line and line[-1].isspace():
-        error(filename, linenum, 'whitespace/end_of_line', 4,
-              'Line ends in whitespace.  Consider deleting these extra spaces.')
-    # There are certain situations we allow one space, notably for section
-    # labels
-    elif ((initial_spaces == 1 or initial_spaces == 3) and
-          not Match(r'\s*\w+\s*:\s*$', cleansed_line)):
-        error(filename, linenum, 'whitespace/indent', 3,
-              'Weird number of spaces at line-start.  '
-              'Are you using a 2-space indent?')
 
     if (cleansed_line.count(';') > 1 and
         # for loops are allowed two ;'s (and may run over two lines).
@@ -2847,38 +2715,6 @@ def CheckStyle(filename, clean_lines, linenum, error):
 
 
 _RE_PATTERN_INCLUDE = re.compile(r'^\s*#\s*include\s*([<"])([^>"]*)[>"].*$')
-
-
-def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
-    """Check rules that are applicable to #include lines.
-
-    Strings on #include lines are NOT removed from elided line, to make
-    certain tasks easier. However, to prevent false positives, checks
-    applicable to #include lines in CheckLanguage must be put here.
-
-    Args:
-      filename      : The name of the current file.
-      clean_lines   : A CleansedLines instance containing the file.
-      linenum       : The number of the line to check.
-      include_state : An _IncludeState instance in which the headers are
-                      inserted.
-      error         : The function to call with any errors found.
-    """
-
-    line = clean_lines.lines[linenum]
-
-    # we shouldn't include a file more than once. actually, there are a
-    # handful of instances where doing so is okay, but in general it's
-    # not.
-    match = _RE_PATTERN_INCLUDE.search(line)
-    if match:
-        include = match.group(2)
-        is_system = (match.group(1) == '<')
-        if include in include_state:
-            if is_system or not include.endswith('.c.h'):
-                error(filename, linenum, 'build/include', 4,
-                      '"%s" already included at %s:%s' %
-                      (include, filename, include_state[include]))
 
 
 def _GetTextInside(text, start_pattern):
@@ -2938,7 +2774,7 @@ def _GetTextInside(text, start_pattern):
     return text[start_position:position - 1]
 
 
-def CheckLanguage(filename, clean_lines, linenum, include_state, error):
+def CheckLanguage(filename, clean_lines, linenum, error):
     """Checks rules from the 'C++ language rules' section of cppguide.html.
 
     Some of these rules are hard to test (function overloading, using
@@ -2948,8 +2784,6 @@ def CheckLanguage(filename, clean_lines, linenum, include_state, error):
       filename       : The name of the current file.
       clean_lines    : A CleansedLines instance containing the file.
       linenum        : The number of the line to check.
-      include_state  : An _IncludeState instance in which the headers are
-                       inserted.
       error          : The function to call with any errors found.
     """
     # If the line is empty or consists of entirely a comment, no need to
@@ -2957,16 +2791,6 @@ def CheckLanguage(filename, clean_lines, linenum, include_state, error):
     line = clean_lines.elided[linenum]
     if not line:
         return
-
-    match = _RE_PATTERN_INCLUDE.search(line)
-    if match:
-        CheckIncludeLine(filename, clean_lines, linenum, include_state, error)
-        return
-
-    # Reset include state across preprocessor directives.  This is meant
-    # to silence warnings for conditional includes.
-    if Match(r'^\s*#\s*(?:ifdef|elif|else|endif)\b', line):
-        include_state.ResetSection()
 
     # TODO(unknown): figure out if they're using default arguments in fn proto.
 
@@ -3125,7 +2949,7 @@ def CheckLanguage(filename, clean_lines, linenum, include_state, error):
 
 
 def ProcessLine(filename, clean_lines, line,
-                include_state, function_state, nesting_state, error,
+                function_state, nesting_state, error,
                 extra_check_functions=[]):
     """Processes a single line in the file.
 
@@ -3134,8 +2958,6 @@ def ProcessLine(filename, clean_lines, line,
       clean_lines           : An array of strings, each representing a line of
                               the file, with comments stripped.
       line                  : Number of line being processed.
-      include_state         : An _IncludeState instance in which the headers are
-                              inserted.
       function_state        : A _FunctionState instance which counts function
                               lines, etc.
       nesting_state         : A _NestingState instance which maintains
@@ -3158,7 +2980,7 @@ def ProcessLine(filename, clean_lines, line,
     CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
     CheckForOldStyleComments(filename, init_lines[line], line, error)
     CheckStyle(filename, clean_lines, line, error)
-    CheckLanguage(filename, clean_lines, line, include_state, error)
+    CheckLanguage(filename, clean_lines, line, error)
     CheckForNonStandardConstructs(filename, clean_lines, line, error)
     CheckPosixThreading(filename, clean_lines, line, error)
     CheckMemoryFunctions(filename, clean_lines, line, error)
@@ -3185,7 +3007,6 @@ def ProcessFileData(filename, file_extension, lines, error,
     lines = (['// marker so line numbers and indices both start at 1'] + lines +
              ['// marker so line numbers end in a known way'])
 
-    include_state = _IncludeState()
     function_state = _FunctionState()
     nesting_state = _NestingState()
 
@@ -3216,14 +3037,12 @@ def ProcessFileData(filename, file_extension, lines, error,
     clean_lines = CleansedLines(lines, init_lines)
     for line in range(clean_lines.NumLines()):
         ProcessLine(filename, clean_lines, line,
-                    include_state, function_state, nesting_state, error,
+                    function_state, nesting_state, error,
                     extra_check_functions)
 
     # We check here rather than inside ProcessLine so that we see raw
     # lines rather than "cleaned" lines.
     CheckForBadCharacters(filename, lines, error)
-
-    CheckForNewlineAtEOF(filename, lines, error)
 
 
 def ProcessFile(filename, vlevel, extra_check_functions=[]):
