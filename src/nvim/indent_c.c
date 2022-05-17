@@ -150,7 +150,7 @@ static const char_u *skip_string(const char_u *p)
           i++;
         }
       }
-      if (p[i] == '\'') {                   // check for trailing '
+      if (p[i - 1] != NUL && p[i] == '\'') {  // check for trailing '
         p += i;
         continue;
       }
