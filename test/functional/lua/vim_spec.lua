@@ -794,7 +794,7 @@ describe('lua stdlib', function()
           pcall_err(exec_lua, "vim.fn.nvim_get_current_line()"))
   end)
 
-  it('vim.fn can be called in fast events (if function is allowed)', function()
+  it('vim.fn is allowed in "fast" context by some functions #18306', function()
     exec_lua([[
       local timer = vim.loop.new_timer()
       timer:start(0, 0, function()
