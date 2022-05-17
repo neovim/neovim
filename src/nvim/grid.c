@@ -63,7 +63,7 @@ void grid_clear_line(ScreenGrid *grid, size_t off, int width, bool valid)
 
 void grid_invalidate(ScreenGrid *grid)
 {
-  (void)memset(grid->attrs, -1, sizeof(sattr_T) * (size_t)(grid->Rows * grid->Columns));
+  (void)memset(grid->attrs, -1, sizeof(sattr_T) * (size_t)grid->Rows * (size_t)grid->Columns);
 }
 
 bool grid_invalid_row(ScreenGrid *grid, int row)
