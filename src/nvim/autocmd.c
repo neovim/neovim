@@ -1595,7 +1595,7 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return true if some commands were executed.
 bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force, int group,
-                          buf_T *buf, exarg_T *eap, void *data)
+                          buf_T *buf, exarg_T *eap, Object *data)
 {
   char *sfname = NULL;  // short file name
   bool retval = false;
@@ -2030,7 +2030,7 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
 
     if (apc->data) {
-      PUT(data, "data", copy_object(*(Object *)apc->data));
+      PUT(data, "data", copy_object(*apc->data));
     }
 
     int group = apc->curpat->group;

@@ -760,7 +760,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   bool set_buf = false;
 
   char *pattern = NULL;
-  void *data = NULL;
+  Object *data = NULL;
   bool set_pattern = false;
 
   Array event_array = ARRAY_DICT_INIT;
