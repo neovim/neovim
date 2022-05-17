@@ -1224,4 +1224,16 @@ func Test_screenpos_and_completion()
   call feedkeys(":let a\<C-R>=Check_completion()\<CR>\<Esc>", "xt")
 endfunc
 
+func Test_recursive_register()
+  let @= = ''
+  silent! ?e/
+  let caught = 'no'
+  try
+    normal // 
+  catch /E169:/
+    let caught = 'yes'
+  endtry
+  call assert_equal('yes', caught)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
