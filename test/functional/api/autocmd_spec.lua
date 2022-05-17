@@ -230,6 +230,34 @@ describe('autocmd api', function()
       }, meths.get_var("autocmd_args"))
 
     end)
+
+    it('can receive arbitrary data', function()
+      local function test(data)
+        eq(data, exec_lua([[
+          local input = ...
+          local output
+          vim.api.nvim_create_autocmd("User", {
+            pattern = "Test",
+            callback = function(args)
+              output = args.data
+            end,
+          })
+
+          vim.api.nvim_exec_autocmds("User", {
+            pattern = "Test",
+            data = input,
+          })
+
+          return output
+        ]], data))
+      end
+
+      test("Hello")
+      test(42)
+      test(true)
+      test({ "list" })
+      test({ foo = "bar" })
+    end)
   end)
 
   describe('nvim_get_autocmds', function()

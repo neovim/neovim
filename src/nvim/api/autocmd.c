@@ -760,6 +760,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   bool set_buf = false;
 
   char *pattern = NULL;
+  void *data = NULL;
   bool set_pattern = false;
 
   Array event_array = ARRAY_DICT_INIT;
@@ -818,6 +819,10 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     set_pattern = true;
   }
 
+  if (opts->data.type != kObjectTypeNil) {
+    data = &opts->data;
+  }
+
   modeline = api_object_to_bool(opts->modeline, "modeline", true, err);
 
   if (set_pattern && set_buf) {
@@ -829,7 +834,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   FOREACH_ITEM(event_array, event_str, {
     GET_ONE_EVENT(event_nr, event_str, cleanup)
 
-    did_aucmd |= apply_autocmds_group(event_nr, pattern, NULL, true, au_group, buf, NULL);
+    did_aucmd |= apply_autocmds_group(event_nr, pattern, NULL, true, au_group, buf, NULL, data);
   })
 
   if (did_aucmd && modeline) {

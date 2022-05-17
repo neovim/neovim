@@ -1220,7 +1220,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
   // Loop over the events.
   while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
     if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true, group,
-                             curbuf, NULL)) {
+                             curbuf, NULL, NULL)) {
       nothing_done = false;
     }
   }
@@ -1505,7 +1505,7 @@ win_found:
 /// @return true if some commands were executed.
 bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL);
 }
 
 /// Like apply_autocmds(), but with extra "eap" argument.  This takes care of
@@ -1522,7 +1522,7 @@ bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_
 bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
                           exarg_T *eap)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, eap);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, eap, NULL);
 }
 
 /// Like apply_autocmds(), but handles the caller's retval.  If the script
@@ -1546,7 +1546,7 @@ bool apply_autocmds_retval(event_T event, char *fname, char *fname_io, bool forc
   }
 
   bool did_cmd = apply_autocmds_group(event, fname, fname_io, force,
-                                      AUGROUP_ALL, buf, NULL);
+                                      AUGROUP_ALL, buf, NULL, NULL);
   if (did_cmd && aborting()) {
     *retval = FAIL;
   }
@@ -1595,7 +1595,7 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return true if some commands were executed.
 bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force, int group,
-                          buf_T *buf, exarg_T *eap)
+                          buf_T *buf, exarg_T *eap, void *data)
 {
   char *sfname = NULL;  // short file name
   bool retval = false;
@@ -1811,6 +1811,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     patcmd.next = active_apc_list;
     active_apc_list = &patcmd;
 
+    // Attach data to command
+    patcmd.data = data;
+
     // set v:cmdarg (only when there is a matching pattern)
     save_cmdbang = (long)get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
@@ -2025,6 +2028,10 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     PUT(data, "match", CSTR_TO_OBJ((char *)autocmd_match));
     PUT(data, "file", CSTR_TO_OBJ((char *)autocmd_fname));
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
+
+    if (apc->data) {
+      PUT(data, "data", copy_object(*(Object *)apc->data));
+    }
 
     int group = apc->curpat->group;
     switch (group) {
