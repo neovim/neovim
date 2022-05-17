@@ -1258,6 +1258,16 @@ func Test_visual_block_append_invalid_char()
   set isprint&
 endfunc
 
+func Test_visual_block_with_substitute()
+  " this was reading beyond the end of the line
+  new
+  norm a0)
+  sil! norm  O
+  s/)
+  sil! norm 
+  bwipe!
+endfunc
+
 func Test_visual_reselect_with_count()
   " this was causing an illegal memory access
   let lines =<< trim END
