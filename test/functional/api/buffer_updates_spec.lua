@@ -828,7 +828,6 @@ describe('API: buffer events:', function()
   end
 
   it('when :terminal lines change', function()
-    if helpers.pending_win32(pending) then return end
     local buffer_lines = {}
     local expected_lines = {}
     command('terminal "'..nvim_prog..'" -u NONE -i NONE -n -c "set shortmess+=A"')
