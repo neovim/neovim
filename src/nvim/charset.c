@@ -687,11 +687,12 @@ int char2cells(int c)
 /// @param p
 ///
 /// @return number of display cells.
-int ptr2cells(const char_u *p)
+int ptr2cells(const char *p_in)
 {
+  uint8_t *p = (uint8_t *)p_in;
   // For UTF-8 we need to look at more bytes if the first byte is >= 0x80.
   if (*p >= 0x80) {
-    return utf_ptr2cells((char *)p);
+    return utf_ptr2cells(p_in);
   }
 
   // For DBCS we can tell the cell count from the first byte.
@@ -706,9 +707,9 @@ int ptr2cells(const char_u *p)
 /// @param s
 ///
 /// @return number of character cells.
-int vim_strsize(char_u *s)
+int vim_strsize(char *s)
 {
-  return vim_strnsize(s, MAXCOL);
+  return vim_strnsize((char_u *)s, MAXCOL);
 }
 
 /// Return the number of character cells string "s[len]" will take on the
@@ -726,7 +727,7 @@ int vim_strnsize(char_u *s, int len)
   int size = 0;
   while (*s != NUL && --len >= 0) {
     int l = utfc_ptr2len((char *)s);
-    size += ptr2cells(s);
+    size += ptr2cells((char *)s);
     s += l;
     len -= l - 1;
   }
@@ -1332,10 +1333,10 @@ char_u *skip_to_newline(const char_u *const p)
 /// @param[out]  nr  Number read from the string.
 ///
 /// @return true on success, false on error/overflow
-bool try_getdigits(char_u **pp, intmax_t *nr)
+bool try_getdigits(char **pp, intmax_t *nr)
 {
   errno = 0;
-  *nr = strtoimax((char *)(*pp), (char **)pp, 10);
+  *nr = strtoimax(*pp, pp, 10);
   if (errno == ERANGE && (*nr == INTMAX_MIN || *nr == INTMAX_MAX)) {
     return false;
   }
@@ -1353,7 +1354,7 @@ bool try_getdigits(char_u **pp, intmax_t *nr)
 intmax_t getdigits(char_u **pp, bool strict, intmax_t def)
 {
   intmax_t number;
-  int ok = try_getdigits(pp, &number);
+  int ok = try_getdigits((char **)pp, &number);
   if (strict && !ok) {
     abort();
   }

@@ -2049,9 +2049,9 @@ int get_c_indent(void)
   if (!cin_iscomment(theline) && comment_pos != NULL) {  // XXX
     int lead_start_len = 2;
     int lead_middle_len = 1;
-    char_u lead_start[COM_MAX_LEN];             // start-comment string
-    char_u lead_middle[COM_MAX_LEN];            // middle-comment string
-    char_u lead_end[COM_MAX_LEN];               // end-comment string
+    char lead_start[COM_MAX_LEN];             // start-comment string
+    char lead_middle[COM_MAX_LEN];            // middle-comment string
+    char lead_end[COM_MAX_LEN];               // end-comment string
     char_u *p;
     int start_align = 0;
     int start_off = 0;
@@ -2084,7 +2084,7 @@ int get_c_indent(void)
       if (*p == ':') {
         p++;
       }
-      (void)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
+      (void)copy_option_part(&p, (char_u *)lead_end, COM_MAX_LEN, ",");
       if (what == COM_START) {
         STRCPY(lead_start, lead_end);
         lead_start_len = (int)STRLEN(lead_start);
@@ -2120,8 +2120,7 @@ int get_c_indent(void)
           if (start_off != 0) {
             amount += start_off;
           } else if (start_align == COM_RIGHT) {
-            amount += vim_strsize(lead_start)
-                      - vim_strsize(lead_middle);
+            amount += vim_strsize(lead_start) - vim_strsize(lead_middle);
           }
           break;
         }

@@ -75,7 +75,7 @@ int get_indent_str(const char_u *ptr, int ts, bool list)
       } else {
         // In list mode, when tab is not set, count screen char width
         // for Tab, displays: ^I
-        count += ptr2cells(ptr);
+        count += ptr2cells((char *)ptr);
       }
     } else if (*ptr == ' ') {
       // Count a space for one.
@@ -101,7 +101,7 @@ int get_indent_str_vtab(const char_u *ptr, long ts, long *vts, bool list)
       } else {
         // In list mode, when tab is not set, count screen char width
         // for Tab, displays: ^I
-        count += ptr2cells(ptr);
+        count += ptr2cells((char *)ptr);
       }
     } else if (*ptr == ' ') {
       count++;  // count a space for one
@@ -481,7 +481,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
 
   // indent minus the length of the showbreak string
   if (wp->w_briopt_sbr) {
-    bri -= vim_strsize(get_showbreak_value(wp));
+    bri -= vim_strsize((char *)get_showbreak_value(wp));
   }
 
   // never indent past left window margin

@@ -3847,7 +3847,7 @@ void ex_display(exarg_T *eap)
             n -= 2;
           }
           for (p = (char_u *)yb->y_array[j];
-               *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
+               *p != NUL && (n -= ptr2cells((char *)p)) >= 0; p++) {  // -V1019
             clen = utfc_ptr2len((char *)p);
             msg_outtrans_len(p, clen);
             p += clen - 1;
@@ -3925,7 +3925,7 @@ static void dis_msg(const char_u *p, bool skip_esc)
   n = Columns - 6;
   while (*p != NUL
          && !(*p == ESC && skip_esc && *(p + 1) == NUL)
-         && (n -= ptr2cells(p)) >= 0) {
+         && (n -= ptr2cells((char *)p)) >= 0) {
     if ((l = utfc_ptr2len((char *)p)) > 1) {
       msg_outtrans_len(p, l);
       p += l;

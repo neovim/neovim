@@ -802,7 +802,7 @@ void curs_columns(win_T *wp, int may_scroll)
       // column
       char *const sbr = (char *)get_showbreak_value(wp);
       if (*sbr && *get_cursor_pos_ptr() == NUL
-          && wp->w_wcol == vim_strsize((char_u *)sbr)) {
+          && wp->w_wcol == vim_strsize(sbr)) {
         wp->w_wcol = 0;
       }
     }

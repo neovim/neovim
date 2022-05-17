@@ -658,7 +658,7 @@ void ex_hardcopy(exarg_T *eap)
    * PS.)
    */
   if (mch_print_init(&settings,
-                     curbuf->b_fname == NULL ? buf_spname(curbuf) : curbuf->b_sfname ==
+                     curbuf->b_fname == NULL ? (char_u *)buf_spname(curbuf) : curbuf->b_sfname ==
                      NULL ? (char_u *)curbuf->b_fname : curbuf->b_sfname, eap->forceit) == FAIL) {
     return;
   }

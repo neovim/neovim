@@ -624,7 +624,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
           }
           msg_scroll = true;  // Don't overwrite this message.
         } else {
-          give_warning(IObuff, ic);
+          give_warning((char *)IObuff, ic);
         }
         if (ic && !msg_scrolled && msg_silent == 0) {
           ui_flush();
@@ -784,7 +784,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char_
         // print all other extra fields
         attr = HL_ATTR(HLF_CM);
         while (*p && *p != '\r' && *p != '\n') {
-          if (msg_col + ptr2cells(p) >= Columns) {
+          if (msg_col + ptr2cells((char *)p) >= Columns) {
             msg_putchar('\n');
             if (got_int) {
               break;
@@ -830,7 +830,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char_
     }
 
     while (p != command_end) {
-      if (msg_col + (*p == TAB ? 1 : ptr2cells(p)) > Columns) {
+      if (msg_col + (*p == TAB ? 1 : ptr2cells((char *)p)) > Columns) {
         msg_putchar('\n');
       }
       if (got_int) {
@@ -1050,7 +1050,7 @@ void do_tags(exarg_T *eap)
                    tagstack[i].cur_match + 1,
                    tagstack[i].tagname,
                    tagstack[i].fmark.mark.lnum);
-      msg_outtrans(IObuff);
+      msg_outtrans((char *)IObuff);
       msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
                         ? HL_ATTR(HLF_D) : 0);
       xfree(name);
@@ -3032,8 +3032,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
       *fname_end = NUL;
     }
     fullname = expand_tag_fname(fname, tag_fname, true);
-    retval = (path_full_compare(fullname, buf_ffname, true, true)
-              & kEqualFiles);
+    retval = (path_full_compare((char *)fullname, (char *)buf_ffname, true, true) & kEqualFiles);
     xfree(fullname);
     *fname_end = (char_u)c;
   }

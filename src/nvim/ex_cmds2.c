@@ -732,7 +732,7 @@ bool check_changed_any(bool hidden, bool unload)
     if ((buf->terminal && channel_job_running((uint64_t)buf->b_p_channel))
         ? semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
         : semsg(_("E162: No write since last change for buffer \"%s\""),
-                buf_spname(buf) != NULL ? buf_spname(buf) : (char_u *)buf->b_fname)) {
+                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
       save = no_wait_return;
       no_wait_return = false;
       wait_return(false);
@@ -929,8 +929,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
 
       didone = false;
       for (match = 0; match < ARGCOUNT; match++) {
-        if (vim_regexec(&regmatch, alist_name(&ARGLIST[match]),
-                        (colnr_T)0)) {
+        if (vim_regexec(&regmatch, (char_u *)alist_name(&ARGLIST[match]), (colnr_T)0)) {
           didone = true;
           xfree(ARGLIST[match].ae_fname);
           memmove(ARGLIST + match, ARGLIST + match + 1,
@@ -993,7 +992,8 @@ static bool editing_arg_idx(win_T *win)
                != WARGLIST(win)[win->w_arg_idx].ae_fnum
                && (win->w_buffer->b_ffname == NULL
                    || !(path_full_compare(alist_name(&WARGLIST(win)[win->w_arg_idx]),
-                                          win->w_buffer->b_ffname, true, true) & kEqualFiles))));
+                                          (char *)win->w_buffer->b_ffname, true,
+                                          true) & kEqualFiles))));
 }
 
 /// Check if window "win" is editing the w_arg_idx file in its argument list.
@@ -1011,7 +1011,7 @@ void check_arg_idx(win_T *win)
         && (win->w_buffer->b_fnum == GARGLIST[GARGCOUNT - 1].ae_fnum
             || (win->w_buffer->b_ffname != NULL
                 && (path_full_compare(alist_name(&GARGLIST[GARGCOUNT - 1]),
-                                      win->w_buffer->b_ffname, true, true)
+                                      (char *)win->w_buffer->b_ffname, true, true)
                     & kEqualFiles)))) {
       arg_had_last = true;
     }
@@ -1050,7 +1050,7 @@ void ex_args(exarg_T *eap)
       // required and no wait_return().
       gotocmdline(true);
       for (int i = 0; i < ARGCOUNT; i++) {
-        items[i] = (char *)alist_name(&ARGLIST[i]);
+        items[i] = alist_name(&ARGLIST[i]);
       }
       list_in_columns((char_u **)items, ARGCOUNT, curwin->w_arg_idx);
       xfree(items);
@@ -1137,7 +1137,7 @@ void do_argfile(exarg_T *eap, int argn)
       // the same buffer
       other = true;
       if (buf_hide(curbuf)) {
-        p = fix_fname((char *)alist_name(&ARGLIST[argn]));
+        p = fix_fname(alist_name(&ARGLIST[argn]));
         other = otherfile((char_u *)p);
         xfree(p);
       }
@@ -1159,7 +1159,7 @@ void do_argfile(exarg_T *eap, int argn)
     // Edit the file; always use the last known line number.
     // When it fails (e.g. Abort for already edited file) restore the
     // argument index.
-    if (do_ecmd(0, (char *)alist_name(&ARGLIST[curwin->w_arg_idx]), NULL,
+    if (do_ecmd(0, alist_name(&ARGLIST[curwin->w_arg_idx]), NULL,
                 eap, ECMD_LAST,
                 (buf_hide(curwin->w_buffer) ? ECMD_HIDE : 0)
                 + (eap->forceit ? ECMD_FORCEIT : 0), curwin) == FAIL) {
@@ -1568,7 +1568,7 @@ char *get_arglist_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   if (idx >= ARGCOUNT) {
     return NULL;
   }
-  return (char *)alist_name(&ARGLIST[idx]);
+  return alist_name(&ARGLIST[idx]);
 }
 
 /// ":compiler[!] {name}"
@@ -2206,11 +2206,11 @@ void ex_scriptnames(exarg_T *eap)
 
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i).sn_name != NULL) {
-      home_replace(NULL, SCRIPT_ITEM(i).sn_name, NameBuff, MAXPATHL, true);
+      home_replace(NULL, (char *)SCRIPT_ITEM(i).sn_name, (char *)NameBuff, MAXPATHL, true);
       vim_snprintf((char *)IObuff, IOSIZE, "%3d: %s", i, NameBuff);
       if (!message_filtered(IObuff)) {
         msg_putchar('\n');
-        msg_outtrans(IObuff);
+        msg_outtrans((char *)IObuff);
         line_breakcheck();
       }
     }

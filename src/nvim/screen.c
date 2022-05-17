@@ -4718,7 +4718,7 @@ static int status_match_len(expand_T *xp, char_u *s)
 
   while (*s != NUL) {
     s += skip_status_match_char(xp, s);
-    len += ptr2cells(s);
+    len += ptr2cells((char *)s);
     MB_PTR_ADV(s);
   }
 
@@ -4856,7 +4856,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
     } else {
       for (; *s != NUL; ++s) {
         s += skip_status_match_char(xp, s);
-        clen += ptr2cells(s);
+        clen += ptr2cells((char *)s);
         if ((l = utfc_ptr2len((char *)s)) > 1) {
           STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
           s += l - 1;
@@ -5034,7 +5034,7 @@ static void win_redr_status(win_T *wp)
     grid_fill(&default_grid, row, row + 1, len + col,
               this_ru_col + col, fillchar, fillchar, attr);
 
-    if (get_keymap_str(wp, (char_u *)"<%s>", NameBuff, MAXPATHL)
+    if (get_keymap_str(wp, "<%s>", (char *)NameBuff, MAXPATHL)
         && this_ru_col - len > (int)(STRLEN(NameBuff) + 1)) {
       grid_puts(&default_grid, NameBuff, row,
                 (int)(this_ru_col - STRLEN(NameBuff) - 1), attr);
@@ -5079,7 +5079,7 @@ static void redraw_custom_statusline(win_T *wp)
     // When there is an error disable the statusline, otherwise the
     // display is messed up with errors and a redraw triggers the problem
     // again and again.
-    set_string_option_direct("statusline", -1, (char_u *)"",
+    set_string_option_direct("statusline", -1, "",
                              OPT_FREE | (*wp->w_p_stl != NUL
                                          ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
   }
@@ -5109,7 +5109,7 @@ static void win_redr_winbar(win_T *wp)
       // When there is an error disable the winbar, otherwise the
       // display is messed up with errors and a redraw triggers the problem
       // again and again.
-      set_string_option_direct("winbar", -1, (char_u *)"",
+      set_string_option_direct("winbar", -1, "",
                                OPT_FREE | (*wp->w_p_stl != NUL
                                            ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
     }
@@ -5218,9 +5218,9 @@ static bool vsep_connected(win_T *wp, WindowCorner corner)
 /// @param fmt  format string containing one %s item
 /// @param buf  buffer for the result
 /// @param len  length of buffer
-bool get_keymap_str(win_T *wp, char_u *fmt, char_u *buf, int len)
+bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
 {
-  char_u *p;
+  char *p;
 
   if (wp->w_buffer->b_p_iminsert != B_IMODE_LMAP) {
     return false;
@@ -5229,24 +5229,24 @@ bool get_keymap_str(win_T *wp, char_u *fmt, char_u *buf, int len)
   {
     buf_T *old_curbuf = curbuf;
     win_T *old_curwin = curwin;
-    char_u *s;
+    char *s;
 
     curbuf = wp->w_buffer;
     curwin = wp;
     STRCPY(buf, "b:keymap_name");       // must be writable
     emsg_skip++;
-    s = p = (char_u *)eval_to_string((char *)buf, NULL, false);
+    s = p = eval_to_string(buf, NULL, false);
     emsg_skip--;
     curbuf = old_curbuf;
     curwin = old_curwin;
     if (p == NULL || *p == NUL) {
       if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED) {
-        p = wp->w_buffer->b_p_keymap;
+        p = (char *)wp->w_buffer->b_p_keymap;
       } else {
-        p = (char_u *)"lang";
+        p = "lang";
       }
     }
-    if (vim_snprintf((char *)buf, len, (char *)fmt, p) > len - 1) {
+    if (vim_snprintf(buf, len, fmt, p) > len - 1) {
       buf[0] = NUL;
     }
     xfree(s);
@@ -5268,9 +5268,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   int n;
   int len;
   int fillchar;
-  char_u buf[MAXPATHL];
+  char buf[MAXPATHL];
   char_u *stl;
-  char_u *p;
+  char *p;
   stl_hlrec_t *hltab;
   StlClickRecord *tabtab;
   int use_sandbox = false;
@@ -5389,20 +5389,20 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
    * might change the option value and free the memory. */
   stl = vim_strsave(stl);
   width =
-    build_stl_str_hl(ewp, (char *)buf, sizeof(buf), (char *)stl, use_sandbox,
+    build_stl_str_hl(ewp, buf, sizeof(buf), (char *)stl, use_sandbox,
                      fillchar, maxwidth, &hltab, &tabtab);
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
   // Make all characters printable.
-  p = (char_u *)transstr((const char *)buf, true);
+  p = transstr(buf, true);
   len = STRLCPY(buf, p, sizeof(buf));
   len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   xfree(p);
 
   // fill up with "fillchar"
   while (width < maxwidth && len < (int)sizeof(buf) - 1) {
-    len += utf_char2bytes(fillchar, (char *)buf + len);
+    len += utf_char2bytes(fillchar, buf + len);
     width++;
   }
   buf[len] = NUL;
@@ -5416,8 +5416,8 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(grid, p, textlen, row, col, curattr);
-    col += vim_strnsize(p, textlen);
+    grid_puts_len(grid, (char_u *)p, textlen, row, col, curattr);
+    col += vim_strnsize((char_u *)p, textlen);
     p = hltab[n].start;
 
     if (hltab[n].userhl == 0) {
@@ -5431,7 +5431,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     }
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(grid, p >= buf + len ? (char_u *)"" : p, row, col,
+  grid_puts(grid, p >= buf + len ? (char_u *)"" : (char_u *)p, row, col,
             curattr);
 
   grid_puts_line_flush(false);
@@ -5453,11 +5453,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     .type = kStlClickDisabled,
   };
   for (n = 0; tabtab[n].start != NULL; n++) {
-    len += vim_strnsize(p, (int)(tabtab[n].start - (char *)p));
+    len += vim_strnsize((char_u *)p, (int)(tabtab[n].start - p));
     while (col < len) {
       click_defs[col++] = cur_click_def;
     }
-    p = (char_u *)tabtab[n].start;
+    p = (char *)tabtab[n].start;
     cur_click_def = tabtab[n].def;
     if ((wp != NULL) && !(cur_click_def.type == kStlClickDisabled
                           || cur_click_def.type == kStlClickFuncRun)) {
@@ -5980,13 +5980,13 @@ int showmode(void)
           length = (Rows - msg_row) * Columns - 3;
         }
         if (edit_submode_extra != NULL) {
-          length -= vim_strsize(edit_submode_extra);
+          length -= vim_strsize((char *)edit_submode_extra);
         }
         if (length > 0) {
           if (edit_submode_pre != NULL) {
-            length -= vim_strsize(edit_submode_pre);
+            length -= vim_strsize((char *)edit_submode_pre);
           }
-          if (length - vim_strsize(edit_submode) > 0) {
+          if (length - vim_strsize((char *)edit_submode) > 0) {
             if (edit_submode_pre != NULL) {
               msg_puts_attr((const char *)edit_submode_pre, attr);
             }
@@ -6028,8 +6028,8 @@ int showmode(void)
         if (State & MODE_LANGMAP) {
           if (curwin->w_p_arab) {
             msg_puts_attr(_(" Arabic"), attr);
-          } else if (get_keymap_str(curwin, (char_u *)" (%s)",
-                                    NameBuff, MAXPATHL)) {
+          } else if (get_keymap_str(curwin, " (%s)",
+                                    (char *)NameBuff, MAXPATHL)) {
             msg_puts_attr((char *)NameBuff, attr);
           }
         }
@@ -6211,8 +6211,7 @@ void draw_tabline(void)
     did_emsg = false;
     win_redr_custom(NULL, false, false);
     if (did_emsg) {
-      set_string_option_direct("tabline", -1,
-                               (char_u *)"", OPT_FREE, SID_ERROR);
+      set_string_option_direct("tabline", -1, "", OPT_FREE, SID_ERROR);
     }
     did_emsg |= saved_did_emsg;
   } else {
@@ -6289,10 +6288,10 @@ void draw_tabline(void)
         // Get buffer name in NameBuff[]
         get_trans_bufname(cwp->w_buffer);
         shorten_dir(NameBuff);
-        len = vim_strsize(NameBuff);
+        len = vim_strsize((char *)NameBuff);
         p = NameBuff;
         while (len > room) {
-          len -= ptr2cells(p);
+          len -= ptr2cells((char *)p);
           MB_PTR_ADV(p);
         }
         if (len > Columns - col - 1) {
@@ -6395,7 +6394,7 @@ void get_trans_bufname(buf_T *buf)
   if (buf_spname(buf) != NULL) {
     STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
   } else {
-    home_replace(buf, (char_u *)buf->b_fname, NameBuff, MAXPATHL, true);
+    home_replace(buf, buf->b_fname, (char *)NameBuff, MAXPATHL, true);
   }
   trans_characters(NameBuff, MAXPATHL);
 }
@@ -6521,8 +6520,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     called_emsg = false;
     win_redr_custom(wp, false, true);
     if (called_emsg) {
-      set_string_option_direct("rulerformat", -1, (char_u *)"",
-                               OPT_FREE, SID_ERROR);
+      set_string_option_direct("rulerformat", -1, "", OPT_FREE, SID_ERROR);
     }
     called_emsg |= save_called_emsg;
     return;
@@ -6588,17 +6586,17 @@ static void win_redr_ruler(win_T *wp, bool always)
     }
 
 #define RULER_BUF_LEN 70
-    char_u buffer[RULER_BUF_LEN];
+    char buffer[RULER_BUF_LEN];
 
     /*
      * Some sprintfs return the length, some return a pointer.
      * To avoid portability problems we use strlen() here.
      */
-    vim_snprintf((char *)buffer, RULER_BUF_LEN, "%" PRId64 ",",
+    vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
                  (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? (int64_t)0L
                                                           : (int64_t)wp->w_cursor.lnum);
     size_t len = STRLEN(buffer);
-    col_print(buffer + len, RULER_BUF_LEN - len,
+    col_print((char_u *)buffer + len, RULER_BUF_LEN - len,
               empty_line ? 0 : (int)wp->w_cursor.col + 1,
               (int)virtcol + 1);
 
@@ -6625,7 +6623,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     if (this_ru_col + o < width) {
       // Need at least 3 chars left for get_rel_pos() + NUL.
       while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
-        i += utf_char2bytes(fillchar, (char *)buffer + i);
+        i += utf_char2bytes(fillchar, buffer + i);
         o++;
       }
       get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);
@@ -6646,8 +6644,8 @@ static void win_redr_ruler(win_T *wp, bool always)
       }
       // Truncate at window boundary.
       o = 0;
-      for (i = 0; buffer[i] != NUL; i += utfc_ptr2len((char *)buffer + i)) {
-        o += utf_ptr2cells((char *)buffer + i);
+      for (i = 0; buffer[i] != NUL; i += utfc_ptr2len(buffer + i)) {
+        o += utf_ptr2cells(buffer + i);
         if (this_ru_col + o > width) {
           buffer[i] = NUL;
           break;
@@ -6655,7 +6653,7 @@ static void win_redr_ruler(win_T *wp, bool always)
       }
 
       ScreenGrid *grid = part_of_status ? &default_grid : &msg_grid_adj;
-      grid_puts(grid, buffer, row, this_ru_col + off, attr);
+      grid_puts(grid, (char_u *)buffer, row, this_ru_col + off, attr);
       grid_fill(grid, row, row + 1,
                 this_ru_col + off + (int)STRLEN(buffer), off + width, fillchar,
                 fillchar, attr);

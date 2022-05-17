@@ -373,7 +373,7 @@ struct mapblock {
 /// Used for highlighting in the status line.
 typedef struct stl_hlrec stl_hlrec_t;
 struct stl_hlrec {
-  char_u *start;
+  char *start;
   int userhl;                   // 0: no HL, 1-9: User HL, < 0 for syn ID
 };
 
@@ -381,7 +381,7 @@ struct stl_hlrec {
 typedef struct stl_item stl_item_t;
 struct stl_item {
   // Where the item starts in the status line output buffer
-  char_u *start;
+  char *start;
   // Function to run for ClickFunc items.
   char *cmd;
   // The minimum width of the item

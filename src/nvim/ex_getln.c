@@ -952,8 +952,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     need_wait_return = false;
   }
 
-  set_string_option_direct("icm", -1, s->save_p_icm, OPT_FREE,
-                           SID_NONE);
+  set_string_option_direct("icm", -1, (char *)s->save_p_icm, OPT_FREE, SID_NONE);
   State = s->save_State;
   if (cmdpreview != save_cmdpreview) {
     cmdpreview = save_cmdpreview;  // restore preview state
@@ -2747,7 +2746,7 @@ static int cmdline_charsize(int idx)
   if (cmdline_star > 0) {           // showing '*', always 1 position
     return 1;
   }
-  return ptr2cells(ccline.cmdbuff + idx);
+  return ptr2cells((char *)ccline.cmdbuff + idx);
 }
 
 /// Compute the offset of the cursor on the command line for the prompt and
@@ -3550,7 +3549,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     }
     if (i != 0) {
       // Also backup the cursor position.
-      i = ptr2cells(ccline.cmdbuff + ccline.cmdpos);
+      i = ptr2cells((char *)ccline.cmdbuff + ccline.cmdpos);
       ccline.cmdspos -= i;
       msg_col -= i;
       if (msg_col < 0) {
@@ -4547,10 +4546,10 @@ static int showmatches(expand_T *xp, int wildmenu)
       if (!showtail && (xp->xp_context == EXPAND_FILES
                         || xp->xp_context == EXPAND_SHELLCMD
                         || xp->xp_context == EXPAND_BUFFERS)) {
-        home_replace(NULL, files_found[i], NameBuff, MAXPATHL, TRUE);
-        j = vim_strsize(NameBuff);
+        home_replace(NULL, (char *)files_found[i], (char *)NameBuff, MAXPATHL, true);
+        j = vim_strsize((char *)NameBuff);
       } else {
-        j = vim_strsize(L_SHOWFILE(i));
+        j = vim_strsize((char *)L_SHOWFILE(i));
       }
       if (j > maxlen) {
         maxlen = j;
@@ -4617,8 +4616,7 @@ static int showmatches(expand_T *xp, int wildmenu)
           if (showtail) {
             p = L_SHOWFILE(k);
           } else {
-            home_replace(NULL, files_found[k], NameBuff, MAXPATHL,
-                         TRUE);
+            home_replace(NULL, (char *)files_found[k], (char *)NameBuff, MAXPATHL, true);
             p = NameBuff;
           }
         } else {
@@ -6532,13 +6530,13 @@ void ex_history(exarg_T *eap)
           msg_putchar('\n');
           snprintf((char *)IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
                    hist[i].hisnum);
-          if (vim_strsize(hist[i].hisstr) > Columns - 10) {
+          if (vim_strsize((char *)hist[i].hisstr) > Columns - 10) {
             trunc_string(hist[i].hisstr, IObuff + STRLEN(IObuff),
                          Columns - 10, IOSIZE - (int)STRLEN(IObuff));
           } else {
             STRCAT(IObuff, hist[i].hisstr);
           }
-          msg_outtrans(IObuff);
+          msg_outtrans((char *)IObuff);
           ui_flush();
         }
         if (i == idx) {

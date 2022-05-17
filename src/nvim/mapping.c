@@ -2324,7 +2324,7 @@ void ex_map(exarg_T *eap)
   // print the mappings for security reasons.
   if (secure) {
     secure = 2;
-    msg_outtrans((char_u *)eap->cmd);
+    msg_outtrans(eap->cmd);
     msg_putchar('\n');
   }
   do_exmap(eap, false);

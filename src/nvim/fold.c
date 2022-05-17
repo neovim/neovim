@@ -1813,7 +1813,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldin
           p += len - 1;
         } else if (*p == TAB) {
           *p = ' ';
-        } else if (ptr2cells(p) > 1) {
+        } else if (ptr2cells((char *)p) > 1) {
           break;
         }
       }

@@ -811,7 +811,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // ":highlight {group-name}": list highlighting for one group.
   if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
-    id = syn_name2id_len((const char_u *)line, (size_t)(name_end - line));
+    id = syn_name2id_len(line, (size_t)(name_end - line));
     if (id == 0) {
       semsg(_("E411: highlight group not found: %s"), line);
     } else {
@@ -1389,7 +1389,7 @@ static void highlight_list_one(const int id)
     didh = true;
     msg_puts_attr("links to", HL_ATTR(HLF_D));
     msg_putchar(' ');
-    msg_outtrans(hl_table[hl_table[id - 1].sg_link - 1].sg_name);
+    msg_outtrans((char *)hl_table[hl_table[id - 1].sg_link - 1].sg_name);
   }
 
   if (!didh) {
@@ -1450,14 +1450,14 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
       }
     }
 
-    (void)syn_list_header(didh, vim_strsize((char_u *)ts) + (int)STRLEN(name) + 1, id, false);
+    (void)syn_list_header(didh, vim_strsize((char *)ts) + (int)STRLEN(name) + 1, id, false);
     didh = true;
     if (!got_int) {
       if (*name != NUL) {
         msg_puts_attr(name, HL_ATTR(HLF_D));
         msg_puts_attr("=", HL_ATTR(HLF_D));
       }
-      msg_outtrans((char_u *)ts);
+      msg_outtrans((char *)ts);
     }
   }
   return didh;
@@ -1581,7 +1581,7 @@ bool syn_list_header(const bool did_header, const int outlen, const int id, bool
     if (got_int) {
       return true;
     }
-    msg_outtrans(hl_table[id - 1].sg_name);
+    msg_outtrans((char *)hl_table[id - 1].sg_name);
     name_col = msg_col;
     endcol = 15;
   } else if ((ui_has(kUIMessages) || msg_silent) && !force_newline) {
@@ -1650,14 +1650,14 @@ static void set_hl_attr(int idx)
 int syn_name2id(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return syn_name2id_len((char_u *)name, STRLEN(name));
+  return syn_name2id_len(name, STRLEN(name));
 }
 
 /// Lookup a highlight group name and return its ID.
 ///
 /// @param highlight name e.g. 'Cursor', 'Normal'
 /// @return the highlight id, else 0 if \p name does not exist
-int syn_name2id_len(const char_u *name, size_t len)
+int syn_name2id_len(const char *name, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   char name_u[MAX_SYN_NAME + 1];
@@ -1719,7 +1719,7 @@ int syn_check_group(const char *name, size_t len)
     emsg(_(e_highlight_group_name_too_long));
     return 0;
   }
-  int id = syn_name2id_len((char_u *)name, len);
+  int id = syn_name2id_len(name, len);
   if (id == 0) {  // doesn't exist yet
     return syn_add_group(name, len);
   }
@@ -1735,7 +1735,7 @@ static int syn_add_group(const char *name, size_t len)
 {
   // Check that the name is ASCII letters, digits and underscore.
   for (size_t i = 0; i < len; i++) {
-    int c = (int8_t)name[i];
+    int c = (uint8_t)name[i];
     if (!vim_isprintc(c)) {
       emsg(_("E669: Unprintable character in group name"));
       return 0;

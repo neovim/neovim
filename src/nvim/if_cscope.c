@@ -1078,7 +1078,7 @@ static int cs_help(exarg_T *eap)
   (void)msg_puts(_("cscope commands:\n"));
   while (cmdp->name != NULL) {
     char *help = _(cmdp->help);
-    int space_cnt = 30 - vim_strsize((char_u *)help);
+    int space_cnt = 30 - vim_strsize(help);
 
     // Use %*s rather than %30s to ensure proper alignment in utf-8
     if (space_cnt < 0) {

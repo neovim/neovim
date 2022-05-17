@@ -1207,7 +1207,7 @@ static char *skip_colon_white(const char *p, bool skipleadingwhite)
 /// Set the addr type for command
 ///
 /// @param p pointer to character after command name in cmdline
-void set_cmd_addr_type(exarg_T *eap, char_u *p)
+void set_cmd_addr_type(exarg_T *eap, char *p)
 {
   // ea.addr_type for user commands is set by find_ucmd
   if (IS_USER_CMDIDX(eap->cmdidx)) {
@@ -1220,7 +1220,7 @@ void set_cmd_addr_type(exarg_T *eap, char_u *p)
   }
   // :wincmd range depends on the argument
   if (eap->cmdidx == CMD_wincmd && p != NULL) {
-    get_wincmd_addr_type(skipwhite((char *)p), eap);
+    get_wincmd_addr_type(skipwhite(p), eap);
   }
   // :.cc in quickfix window uses line number
   if ((eap->cmdidx == CMD_cc || eap->cmdidx == CMD_ll) && bt_quickfix(curbuf)) {
@@ -1441,7 +1441,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   p = find_ex_command(eap, NULL);
 
   // Set command address type and parse command range
-  set_cmd_addr_type(eap, (char_u *)p);
+  set_cmd_addr_type(eap, p);
   eap->cmd = cmd;
   if (parse_cmd_address(eap, errormsg, false) == FAIL) {
     return false;
@@ -1812,7 +1812,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // The ea.cmd pointer is updated to point to the first character following the
   // range spec. If an initial address is found, but no second, the upper bound
   // is equal to the lower.
-  set_cmd_addr_type(&ea, (char_u *)p);
+  set_cmd_addr_type(&ea, p);
 
   ea.cmd = cmd;
   if (parse_cmd_address(&ea, &errormsg, false) == FAIL) {
@@ -2655,8 +2655,8 @@ static void apply_cmdmod(cmdmod_T *cmod)
   if ((cmod->cmod_flags & CMOD_NOAUTOCMD) && cmod->cmod_save_ei == NULL) {
     // Set 'eventignore' to "all".
     // First save the existing option value for restoring it later.
-    cmod->cmod_save_ei = vim_strsave(p_ei);
-    set_string_option_direct("ei", -1, (char_u *)"all", OPT_FREE, SID_NONE);
+    cmod->cmod_save_ei = (char *)vim_strsave(p_ei);
+    set_string_option_direct("ei", -1, "all", OPT_FREE, SID_NONE);
   }
 }
 
@@ -2676,7 +2676,7 @@ static void undo_cmdmod(cmdmod_T *cmod)
 
   if (cmod->cmod_save_ei != NULL) {
     // Restore 'eventignore' to the value before ":noautocmd".
-    set_string_option_direct("ei", -1, (char_u *)cmod->cmod_save_ei, OPT_FREE, SID_NONE);
+    set_string_option_direct("ei", -1, cmod->cmod_save_ei, OPT_FREE, SID_NONE);
     free_string_option((char_u *)cmod->cmod_save_ei);
     cmod->cmod_save_ei = NULL;
   }
@@ -5792,7 +5792,7 @@ static void uc_list(char *name, size_t name_len)
       } while (len < 25 - over);
 
       IObuff[len] = '\0';
-      msg_outtrans(IObuff);
+      msg_outtrans((char *)IObuff);
 
       msg_outtrans_special(cmd->uc_rep, false,
                            name_len == 0 ? Columns - 47 : 0);
@@ -7562,7 +7562,7 @@ static void ex_recover(exarg_T *eap)
                      | CCGD_EXCMD)
 
       && (*eap->arg == NUL
-          || setfname(curbuf, (char_u *)eap->arg, NULL, true) == OK)) {
+          || setfname(curbuf, eap->arg, NULL, true) == OK)) {
     ml_recover(true);
   }
   recoverymode = false;
@@ -7750,9 +7750,9 @@ static void ex_tabs(exarg_T *eap)
       if (buf_spname(wp->w_buffer) != NULL) {
         STRLCPY(IObuff, buf_spname(wp->w_buffer), IOSIZE);
       } else {
-        home_replace(wp->w_buffer, (char_u *)wp->w_buffer->b_fname, IObuff, IOSIZE, true);
+        home_replace(wp->w_buffer, wp->w_buffer->b_fname, (char *)IObuff, IOSIZE, true);
       }
-      msg_outtrans(IObuff);
+      msg_outtrans((char *)IObuff);
       ui_flush();                  // output one line at a time
       os_breakcheck();
     }
@@ -9634,7 +9634,7 @@ static char *arg_all(void)
   for (;;) {
     len = 0;
     for (idx = 0; idx < ARGCOUNT; idx++) {
-      p = (char *)alist_name(&ARGLIST[idx]);
+      p = alist_name(&ARGLIST[idx]);
       if (p == NULL) {
         continue;
       }

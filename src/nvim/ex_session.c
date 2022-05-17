@@ -215,7 +215,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigne
   }
   for (int i = 0; i < gap->ga_len; i++) {
     // NULL file names are skipped (only happens when out of memory).
-    s = alist_name(&((aentry_T *)gap->ga_data)[i]);
+    s = (char_u *)alist_name(&((aentry_T *)gap->ga_data)[i]);
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
