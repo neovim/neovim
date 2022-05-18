@@ -3469,6 +3469,8 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
                                • buf: (number) the expanded value of |<abuf>|
                                • file: (string) the expanded value of
                                  |<afile>|
+                               • data: (any) arbitrary data passed to
+                                 |nvim_exec_autocmds()|
 
                              • command (string) optional: Vim command to
                                execute on event. Cannot be used with
@@ -3544,6 +3546,9 @@ nvim_exec_autocmds({event}, {*opts})                    *nvim_exec_autocmds()*
                              • modeline (bool) optional: defaults to true.
                                Process the modeline after the autocommands
                                |<nomodeline>|.
+                             • data (any): arbitrary data to send to the
+                               autocommand callback. See
+                               |nvim_create_autocmd()| for details.
 
                 See also: ~
                     |:doautocmd|

@@ -57,6 +57,7 @@ typedef struct AutoPatCmd {
   char *tail;               // tail of fname
   event_T event;            // current event
   int arg_bufnr;            // initially equal to <abuf>, set to zero when buf is deleted
+  Object *data;             // arbitrary data
   struct AutoPatCmd *next;  // chain of active apc-s for auto-invalidation
 } AutoPatCmd;
 

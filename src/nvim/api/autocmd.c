@@ -405,6 +405,7 @@ cleanup:
 ///                 - match: (string) the expanded value of |<amatch>|
 ///                 - buf: (number) the expanded value of |<abuf>|
 ///                 - file: (string) the expanded value of |<afile>|
+///                 - data: (any) arbitrary data passed to |nvim_exec_autocmds()|
 ///             - command (string) optional: Vim command to execute on event. Cannot be used with
 ///             {callback}
 ///             - once (boolean) optional: defaults to false. Run the autocommand
@@ -749,6 +750,8 @@ void nvim_del_augroup_by_name(String name, Error *err)
 ///             {pattern}.
 ///             - modeline (bool) optional: defaults to true. Process the
 ///             modeline after the autocommands |<nomodeline>|.
+///             - data (any): arbitrary data to send to the autocommand callback. See
+///             |nvim_create_autocmd()| for details.
 /// @see |:doautocmd|
 void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   FUNC_API_SINCE(9)
@@ -760,6 +763,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   bool set_buf = false;
 
   char *pattern = NULL;
+  Object *data = NULL;
   bool set_pattern = false;
 
   Array event_array = ARRAY_DICT_INIT;
@@ -818,6 +822,10 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     set_pattern = true;
   }
 
+  if (opts->data.type != kObjectTypeNil) {
+    data = &opts->data;
+  }
+
   modeline = api_object_to_bool(opts->modeline, "modeline", true, err);
 
   if (set_pattern && set_buf) {
@@ -829,7 +837,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   FOREACH_ITEM(event_array, event_str, {
     GET_ONE_EVENT(event_nr, event_str, cleanup)
 
-    did_aucmd |= apply_autocmds_group(event_nr, pattern, NULL, true, au_group, buf, NULL);
+    did_aucmd |= apply_autocmds_group(event_nr, pattern, NULL, true, au_group, buf, NULL, data);
   })
 
   if (did_aucmd && modeline) {

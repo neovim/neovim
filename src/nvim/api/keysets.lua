@@ -146,6 +146,7 @@ return {
     "group";
     "modeline";
     "pattern";
+    "data";
   };
   get_autocmds = {
     "event";
