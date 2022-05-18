@@ -954,6 +954,20 @@ start_client({config})                                *vim.lsp.start_client()*
                     not be fully initialized. Use `on_init` to do any actions
                     once the client has been initialized.
 
+start_or_attach({config}, {reuse_client})          *vim.lsp.start_or_attach()*
+                Starts a new client or re-uses an existing client and attaches
+                the current buffer to it.
+
+                Parameters: ~
+                    {config}        (table) Same configuration as documented
+                                    in |lsp.start_client()|
+                    {reuse_client}  nil|fun(client: table): boolean Function
+                                    used to decide if a client should be
+                                    re-used. All running clients are tested.
+                                    Starts a new client if nothing matches. If
+                                    `nil` clients that share the same name and
+                                    same `root_dir` are re-used
+
 stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
                 Stops a client(s).
 

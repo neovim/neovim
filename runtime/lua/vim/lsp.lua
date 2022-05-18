@@ -4,6 +4,7 @@ local lsp_rpc = require('vim.lsp.rpc')
 local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
+local api = vim.api
 
 local vim = vim
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
@@ -660,6 +661,30 @@ end
 ---    `initialize` describing the server's capabilities.
 function lsp.client()
   error()
+end
+
+--- Starts a new client or re-uses an existing client and attaches the current
+--- buffer to it.
+---
+---@param config table Same configuration as documented in |lsp.start_client()|
+---@param reuse_client nil|fun(client: table): boolean Function used to decide
+--- if a client should be re-used. All running clients are tested. Starts a new
+--- client if nothing matches. If `nil` clients that share the same name and
+--- same `root_dir` are re-used
+function lsp.start_or_attach(config, reuse_client)
+  reuse_client = reuse_client
+    or function(client)
+      return client.config.root_dir == config.root_dir and client.name == config.name
+    end
+  local bufnr = api.get_current_buf()
+  for _, client in pairs(lsp.get_active_clients()) do
+    if reuse_client(client) then
+      lsp.buf_attach_client(bufnr, client.id)
+      return
+    end
+  end
+  local client_id = lsp.start_client(config)
+  lsp.buf_attach_client(bufnr, client_id)
 end
 
 -- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are
