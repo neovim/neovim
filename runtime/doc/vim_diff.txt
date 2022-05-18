@@ -554,6 +554,7 @@ Options:
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
+  *'terse'* *'noterse'* (Add "s" to 'shortmess' instead)
   'textauto'
   'textmode'
   *'toolbar'* *'tb'*

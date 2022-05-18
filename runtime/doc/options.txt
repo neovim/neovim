@@ -6471,13 +6471,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   C1	    Control characters 0x80...0x9F
 
 
-						*'terse'* *'noterse'*
-'terse'			boolean	(default off)
-			global
-	When set: Add 's' flag to 'shortmess' option (this makes the message
-	for a search that hits the start or end of the file not being
-	displayed).  When reset: Remove 's' flag from 'shortmess' option.
-
 						*'textwidth'* *'tw'*
 'textwidth' 'tw'	number	(default 0)
 			local to buffer

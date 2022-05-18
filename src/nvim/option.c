@@ -4049,18 +4049,6 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
       // buf->b_p_swf
       mf_close_file(curbuf, true);              // remove the swap file
     }
-  } else if ((int *)varp == &p_terse) {
-    // when 'terse' is set change 'shortmess'
-    char *p = vim_strchr((char *)p_shm, SHM_SEARCH);
-
-    // insert 's' in p_shm
-    if (p_terse && p == NULL) {
-      STRCPY(IObuff, p_shm);
-      STRCAT(IObuff, "s");
-      set_string_option_direct("shm", -1, IObuff, OPT_FREE, 0);
-    } else if (!p_terse && p != NULL) {  // remove 's' from p_shm
-      STRMOVE(p, p + 1);
-    }
   } else if ((int *)varp == &p_paste) {
     // when 'paste' is set or reset also change other options
     paste_option_changed();

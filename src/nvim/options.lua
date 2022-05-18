@@ -2529,9 +2529,9 @@ return {
     },
     {
       full_name='terse',
-      short_desc=N_("hides notification of search wrap"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
-      varname='p_terse',
+      varname='p_force_off',
       defaults={if_true=false}
     },
     {
