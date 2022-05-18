@@ -421,10 +421,6 @@ EXTERN vimmenu_T *root_menu INIT(= NULL);
 // overruling of menus that the user already defined.
 EXTERN int sys_menu INIT(= false);
 
-// While redrawing the screen this flag is set.  It means the screen size
-// ('lines' and 'rows') must not be changed.
-EXTERN int updating_screen INIT(= 0);
-
 // All windows are linked in a list. firstwin points to the first entry,
 // lastwin to the last entry (can be the same as firstwin) and curwin to the
 // currently active window.

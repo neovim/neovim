@@ -132,10 +132,6 @@
 
 static match_T search_hl;       // used for 'hlsearch' highlight matching
 
-StlClickDefinition *tab_page_click_defs = NULL;
-
-long tab_page_click_defs_size = 0;
-
 // for line_putchar. Contains the state that needs to be remembered from
 // putting one character to the next.
 typedef struct {
@@ -606,8 +602,6 @@ int update_screen(int type)
   if (pum_drawn() && must_redraw_pum) {
     pum_redraw();
   }
-
-  send_grid_resize = false;
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */
@@ -5571,88 +5565,6 @@ void check_for_delay(bool check_msg_scroll)
   }
 }
 
-/// (Re)allocates a window grid if size changed while in ext_multigrid mode.
-/// Updates size, offsets and handle for the grid regardless.
-///
-/// If "doclear" is true, don't try to copy from the old grid rather clear the
-/// resized grid.
-void win_grid_alloc(win_T *wp)
-{
-  ScreenGrid *grid = &wp->w_grid;
-  ScreenGrid *grid_allocated = &wp->w_grid_alloc;
-
-  int rows = wp->w_height_inner;
-  int cols = wp->w_width_inner;
-  int total_rows = wp->w_height_outer;
-  int total_cols = wp->w_width_outer;
-
-  bool want_allocation = ui_has(kUIMultigrid) || wp->w_floating;
-  bool has_allocation = (grid_allocated->chars != NULL);
-
-  if (grid->rows != rows) {
-    wp->w_lines_valid = 0;
-    xfree(wp->w_lines);
-    wp->w_lines = xcalloc(rows + 1, sizeof(wline_T));
-  }
-
-  int was_resized = false;
-  if (want_allocation && (!has_allocation
-                          || grid_allocated->rows != total_rows
-                          || grid_allocated->cols != total_cols)) {
-    grid_alloc(grid_allocated, total_rows, total_cols,
-               wp->w_grid_alloc.valid, false);
-    grid_allocated->valid = true;
-    if (wp->w_floating && wp->w_float_config.border) {
-      wp->w_redr_border = true;
-    }
-    was_resized = true;
-  } else if (!want_allocation && has_allocation) {
-    // Single grid mode, all rendering will be redirected to default_grid.
-    // Only keep track of the size and offset of the window.
-    grid_free(grid_allocated);
-    grid_allocated->valid = false;
-    was_resized = true;
-  } else if (want_allocation && has_allocation && !wp->w_grid_alloc.valid) {
-    grid_invalidate(grid_allocated);
-    grid_allocated->valid = true;
-  }
-
-  grid->rows = rows;
-  grid->cols = cols;
-
-  wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
-  wp->w_wincol_off = wp->w_border_adj[3];
-
-  if (want_allocation) {
-    grid->target = grid_allocated;
-    grid->row_offset = wp->w_winrow_off;
-    grid->col_offset = wp->w_wincol_off;
-  } else {
-    grid->target = &default_grid;
-    grid->row_offset = wp->w_winrow + wp->w_winrow_off;
-    grid->col_offset = wp->w_wincol + wp->w_wincol_off;
-  }
-
-  // send grid resize event if:
-  // - a grid was just resized
-  // - screen_resize was called and all grid sizes must be sent
-  // - the UI wants multigrid event (necessary)
-  if ((send_grid_resize || was_resized) && want_allocation) {
-    ui_call_grid_resize(grid_allocated->handle,
-                        grid_allocated->cols, grid_allocated->rows);
-  }
-}
-
-/// assign a handle to the grid. The grid need not be allocated.
-void grid_assign_handle(ScreenGrid *grid)
-{
-  static int last_grid_handle = DEFAULT_GRID_HANDLE;
-
-  // only assign a grid handle if not already
-  if (grid->handle == 0) {
-    grid->handle = ++last_grid_handle;
-  }
-}
 
 /// Resize the screen to Rows and Columns.
 ///
@@ -6824,11 +6736,9 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
 /// Set dimensions of the Nvim application "shell".
 void screen_resize(int width, int height)
 {
-  static bool recursive = false;
-
   // Avoid recursiveness, can happen when setting the window size causes
   // another window-changed signal.
-  if (updating_screen || recursive) {
+  if (updating_screen || resizing_screen) {
     return;
   }
 
@@ -6850,7 +6760,7 @@ void screen_resize(int width, int height)
     return;
   }
 
-  recursive = true;
+  resizing_screen = true;
 
   Rows = height;
   Columns = width;
@@ -6867,9 +6777,9 @@ void screen_resize(int width, int height)
 
   send_grid_resize = true;
 
-  /* The window layout used to be adjusted here, but it now happens in
-   * screenalloc() (also invoked from screenclear()).  That is because the
-   * "recursive" check above may skip this, but not screenalloc(). */
+  /// The window layout used to be adjusted here, but it now happens in
+  /// screenalloc() (also invoked from screenclear()).  That is because the
+  /// recursize "resizing_screen" check above may skip this, but not screenalloc().
 
   if (State != MODE_ASKMORE && State != MODE_EXTERNCMD && State != MODE_CONFIRM) {
     screenclear();
@@ -6928,7 +6838,7 @@ void screen_resize(int width, int height)
     }
     ui_flush();
   }
-  recursive = false;
+  resizing_screen = false;
 }
 
 /// Check if the new Nvim application "shell" dimensions are valid.

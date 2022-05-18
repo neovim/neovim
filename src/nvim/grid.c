@@ -6,6 +6,7 @@
 #include "nvim/highlight.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
+#include "nvim/screen.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "grid.c.generated.h"
@@ -704,4 +705,84 @@ void grid_free_all_mem(void)
   grid_free(&default_grid);
   xfree(linebuf_char);
   xfree(linebuf_attr);
+}
+
+/// (Re)allocates a window grid if size changed while in ext_multigrid mode.
+/// Updates size, offsets and handle for the grid regardless.
+///
+/// If "doclear" is true, don't try to copy from the old grid rather clear the
+/// resized grid.
+void win_grid_alloc(win_T *wp)
+{
+  ScreenGrid *grid = &wp->w_grid;
+  ScreenGrid *grid_allocated = &wp->w_grid_alloc;
+
+  int rows = wp->w_height_inner;
+  int cols = wp->w_width_inner;
+  int total_rows = wp->w_height_outer;
+  int total_cols = wp->w_width_outer;
+
+  bool want_allocation = ui_has(kUIMultigrid) || wp->w_floating;
+  bool has_allocation = (grid_allocated->chars != NULL);
+
+  if (grid->rows != rows) {
+    wp->w_lines_valid = 0;
+    xfree(wp->w_lines);
+    wp->w_lines = xcalloc((size_t)rows + 1, sizeof(wline_T));
+  }
+
+  int was_resized = false;
+  if (want_allocation && (!has_allocation
+                          || grid_allocated->rows != total_rows
+                          || grid_allocated->cols != total_cols)) {
+    grid_alloc(grid_allocated, total_rows, total_cols,
+               wp->w_grid_alloc.valid, false);
+    grid_allocated->valid = true;
+    if (wp->w_floating && wp->w_float_config.border) {
+      wp->w_redr_border = true;
+    }
+    was_resized = true;
+  } else if (!want_allocation && has_allocation) {
+    // Single grid mode, all rendering will be redirected to default_grid.
+    // Only keep track of the size and offset of the window.
+    grid_free(grid_allocated);
+    grid_allocated->valid = false;
+    was_resized = true;
+  } else if (want_allocation && has_allocation && !wp->w_grid_alloc.valid) {
+    grid_invalidate(grid_allocated);
+    grid_allocated->valid = true;
+  }
+
+  grid->rows = rows;
+  grid->cols = cols;
+
+  if (want_allocation) {
+    grid->target = grid_allocated;
+    grid->row_offset = wp->w_winrow_off;
+    grid->col_offset = wp->w_wincol_off;
+  } else {
+    grid->target = &default_grid;
+    grid->row_offset = wp->w_winrow + wp->w_winrow_off;
+    grid->col_offset = wp->w_wincol + wp->w_wincol_off;
+  }
+
+  // send grid resize event if:
+  // - a grid was just resized
+  // - screen_resize was called and all grid sizes must be sent
+  // - the UI wants multigrid event (necessary)
+  if ((resizing_screen || was_resized) && want_allocation) {
+    ui_call_grid_resize(grid_allocated->handle,
+                        grid_allocated->cols, grid_allocated->rows);
+  }
+}
+
+/// assign a handle to the grid. The grid need not be allocated.
+void grid_assign_handle(ScreenGrid *grid)
+{
+  static int last_grid_handle = DEFAULT_GRID_HANDLE;
+
+  // only assign a grid handle if not already
+  if (grid->handle == 0) {
+    grid->handle = ++last_grid_handle;
+  }
 }
