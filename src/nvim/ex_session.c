@@ -598,9 +598,14 @@ static int makeopens(FILE *fd, char_u *dirnow)
     PUTLINE_FAIL("let s:shortmess_save = &shortmess");
   }
 
-  // Now save the current files, current buffer first.
-  PUTLINE_FAIL("set shortmess=aoO");
+  // set 'shortmess' for the following.  Add the 'A' flag if it was there
+  PUTLINE_FAIL("if &shortmess =~ 'A'");
+  PUTLINE_FAIL("  set shortmess=aoOA");
+  PUTLINE_FAIL("else");
+  PUTLINE_FAIL("  set shortmess=aoO");
+  PUTLINE_FAIL("endif");
 
+  // Now save the current files, current buffer first.
   // Put all buffers into the buffer list.
   // Do it very early to preserve buffer order after loading session (which
   // can be disrupted by prior `edit` or `tabedit` calls).
