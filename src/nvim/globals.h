@@ -84,7 +84,7 @@ EXTERN struct nvim_stats_s {
 //                      0          not starting anymore
 
 // Number of Rows and Columns in the screen.
-// Note: Use default_grid.Rows and default_grid.Columns to access items in
+// Note: Use default_grid.rows and default_grid.cols to access items in
 // default_grid.chars[]. They may have different values when the screen
 // wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
 // up).
@@ -420,10 +420,6 @@ EXTERN vimmenu_T *root_menu INIT(= NULL);
 // While defining the system menu, sys_menu is true.  This avoids
 // overruling of menus that the user already defined.
 EXTERN int sys_menu INIT(= false);
-
-// While redrawing the screen this flag is set.  It means the screen size
-// ('lines' and 'rows') must not be changed.
-EXTERN int updating_screen INIT(= 0);
 
 // All windows are linked in a list. firstwin points to the first entry,
 // lastwin to the last entry (can be the same as firstwin) and curwin to the

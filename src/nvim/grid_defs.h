@@ -58,8 +58,8 @@ struct ScreenGrid {
   int *dirty_col;
 
   // the size of the allocated grid.
-  int Rows;
-  int Columns;
+  int rows;
+  int cols;
 
   // The state of the grid is valid. Otherwise it needs to be redrawn.
   bool valid;

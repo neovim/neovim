@@ -429,9 +429,9 @@ void pum_redraw(void)
   must_redraw_pum = false;
 
   if (!pum_grid.chars
-      || pum_grid.Rows != pum_height || pum_grid.Columns != grid_width) {
+      || pum_grid.rows != pum_height || pum_grid.cols != grid_width) {
     grid_alloc(&pum_grid, pum_height, grid_width, !invalid_grid, false);
-    ui_call_grid_resize(pum_grid.handle, pum_grid.Columns, pum_grid.Rows);
+    ui_call_grid_resize(pum_grid.handle, pum_grid.cols, pum_grid.rows);
   } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
   }

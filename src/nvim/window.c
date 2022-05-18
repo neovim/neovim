@@ -6263,7 +6263,6 @@ void win_set_inner_size(win_T *wp)
     }
     wp->w_skipcol = 0;
     wp->w_height_inner = height;
-    wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
 
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
@@ -6291,11 +6290,13 @@ void win_set_inner_size(win_T *wp)
 
   wp->w_height_outer = (wp->w_height_inner + win_extra_height(wp));
   wp->w_width_outer = (wp->w_width_inner + win_extra_width(wp));
+  wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
+  wp->w_wincol_off = wp->w_border_adj[3];
 }
 
 static int win_extra_height(win_T *wp)
 {
-  return wp->w_border_adj[0] + wp->w_border_adj[2];
+  return wp->w_border_adj[0] + wp->w_border_adj[2] + wp->w_winbar_height;
 }
 
 static int win_extra_width(win_T *wp)

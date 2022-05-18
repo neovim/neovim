@@ -138,19 +138,19 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
       // use it.
       grid->comp_disabled = true;
       compose_area(grid->comp_row, row,
-                   grid->comp_col, grid->comp_col + grid->Columns);
+                   grid->comp_col, grid->comp_col + grid->cols);
       if (grid->comp_col < col) {
         compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->Rows),
+                     MIN(row + height, grid->comp_row + grid->rows),
                      grid->comp_col, col);
       }
-      if (col + width < grid->comp_col + grid->Columns) {
+      if (col + width < grid->comp_col + grid->cols) {
         compose_area(MAX(row, grid->comp_row),
-                     MIN(row + height, grid->comp_row + grid->Rows),
-                     col + width, grid->comp_col + grid->Columns);
+                     MIN(row + height, grid->comp_row + grid->rows),
+                     col + width, grid->comp_col + grid->cols);
       }
-      compose_area(row + height, grid->comp_row + grid->Rows,
-                   grid->comp_col, grid->comp_col + grid->Columns);
+      compose_area(row + height, grid->comp_row + grid->rows,
+                   grid->comp_col, grid->comp_col + grid->cols);
       grid->comp_disabled = false;
     }
     grid->comp_row = row;
@@ -188,8 +188,8 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     grid->comp_index = insert_at;
   }
   if (moved && valid && ui_comp_should_draw()) {
-    compose_area(grid->comp_row, grid->comp_row + grid->Rows,
-                 grid->comp_col, grid->comp_col + grid->Columns);
+    compose_area(grid->comp_row, grid->comp_row + grid->rows,
+                 grid->comp_col, grid->comp_col + grid->cols);
   }
   return moved;
 }
@@ -249,10 +249,10 @@ static void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
   for (size_t i = old_index; i < new_index; i++) {
     ScreenGrid *grid2 = kv_A(layers, i);
     int startcol = MAX(grid->comp_col, grid2->comp_col);
-    int endcol = MIN(grid->comp_col + grid->Columns,
-                     grid2->comp_col + grid2->Columns);
+    int endcol = MIN(grid->comp_col + grid->cols,
+                     grid2->comp_col + grid2->cols);
     compose_area(MAX(grid->comp_row, grid2->comp_row),
-                 MIN(grid->comp_row + grid->Rows, grid2->comp_row + grid2->Rows),
+                 MIN(grid->comp_row + grid->rows, grid2->comp_row + grid2->rows),
                  startcol, endcol);
   }
 }
@@ -279,7 +279,7 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle, Integer r, Int
     }
   }
 
-  if (cursor_col >= default_grid.Columns || cursor_row >= default_grid.Rows) {
+  if (cursor_col >= default_grid.cols || cursor_row >= default_grid.rows) {
     // TODO(bfredl): this happens with 'writedelay', refactor?
     // abort();
     return;
@@ -292,8 +292,8 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
   for (ssize_t i = (ssize_t)kv_size(layers) - 1; i > 0; i--) {
     ScreenGrid *grid = kv_A(layers, i);
     if (grid->focusable
-        && row >= grid->comp_row && row < grid->comp_row + grid->Rows
-        && col >= grid->comp_col && col < grid->comp_col + grid->Columns) {
+        && row >= grid->comp_row && row < grid->comp_row + grid->rows
+        && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
       return grid;
     }
   }
@@ -315,7 +315,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
     startcol--;
     skipstart = 1;
   }
-  if (endcol < default_grid.Columns && (flags & kLineFlagInvalid)) {
+  if (endcol < default_grid.cols && (flags & kLineFlagInvalid)) {
     endcol++;
     skipend = 1;
   }
@@ -337,8 +337,8 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       // first check to see if any grids have pending updates to width/height,
       // to ensure that we don't accidentally put any characters into `linebuf`
       // that have been invalidated.
-      grid_width = MIN(g->Columns, g->comp_width);
-      grid_height = MIN(g->Rows, g->comp_height);
+      grid_width = MIN(g->cols, g->comp_width);
+      grid_height = MIN(g->rows, g->comp_height);
       if (g->comp_row > row || row >= g->comp_row + grid_height
           || g->comp_disabled) {
         continue;
@@ -354,7 +354,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
 
     assert(grid != NULL);
     assert(until > col);
-    assert(until <= default_grid.Columns);
+    assert(until <= default_grid.cols);
     size_t n = (size_t)(until - col);
 
     if (row == msg_sep_row && grid->comp_index <= msg_grid.comp_index) {
@@ -371,7 +371,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
                    + (size_t)(col - grid->comp_col);
       memcpy(linebuf + (col - startcol), grid->chars + off, n * sizeof(*linebuf));
       memcpy(attrbuf + (col - startcol), grid->attrs + off, n * sizeof(*attrbuf));
-      if (grid->comp_col + grid->Columns > until
+      if (grid->comp_col + grid->cols > until
           && grid->chars[off + n][0] == NUL) {
         linebuf[until - 1 - startcol][0] = ' ';
         linebuf[until - 1 - startcol][1] = '\0';
@@ -452,8 +452,8 @@ static void compose_debug(Integer startrow, Integer endrow, Integer startcol, In
     return;
   }
 
-  endrow = MIN(endrow, default_grid.Rows);
-  endcol = MIN(endcol, default_grid.Columns);
+  endrow = MIN(endrow, default_grid.rows);
+  endcol = MIN(endcol, default_grid.cols);
   int attr = syn_id2attr(syn_id);
 
   for (int row = (int)startrow; row < endrow; row++) {
@@ -480,8 +480,8 @@ static void debug_delay(Integer lines)
 static void compose_area(Integer startrow, Integer endrow, Integer startcol, Integer endcol)
 {
   compose_debug(startrow, endrow, startcol, endcol, dbghl_recompose, true);
-  endrow = MIN(endrow, default_grid.Rows);
-  endcol = MIN(endcol, default_grid.Columns);
+  endrow = MIN(endrow, default_grid.rows);
+  endcol = MIN(endcol, default_grid.cols);
   if (endcol <= startcol) {
     return;
   }
@@ -497,8 +497,8 @@ static void compose_area(Integer startrow, Integer endrow, Integer startcol, Int
 void ui_comp_compose_grid(ScreenGrid *grid)
 {
   if (ui_comp_should_draw()) {
-    compose_area(grid->comp_row, grid->comp_row + grid->Rows,
-                 grid->comp_col, grid->comp_col + grid->Columns);
+    compose_area(grid->comp_row, grid->comp_row + grid->rows,
+                 grid->comp_col, grid->comp_col + grid->cols);
   }
 }
 
@@ -523,17 +523,17 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row, Integer startcol
   // TODO(bfredl): this should not really be necessary. But on some condition
   // when resizing nvim, a window will be attempted to be drawn on the older
   // and possibly larger global screen size.
-  if (row >= default_grid.Rows) {
+  if (row >= default_grid.rows) {
     DLOG("compositor: invalid row %" PRId64 " on grid %" PRId64, row, grid);
     return;
   }
-  if (clearcol > default_grid.Columns) {
+  if (clearcol > default_grid.cols) {
     DLOG("compositor: invalid last column %" PRId64 " on grid %" PRId64,
          clearcol, grid);
-    if (startcol >= default_grid.Columns) {
+    if (startcol >= default_grid.cols) {
       return;
     }
-    clearcol = default_grid.Columns;
+    clearcol = default_grid.cols;
     endcol = MIN(endcol, clearcol);
   }
 
@@ -581,7 +581,7 @@ static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row, Boolean scrol
   }
 
   if (row > msg_current_row && ui_comp_should_draw()) {
-    compose_area(MAX(msg_current_row - 1, 0), row, 0, default_grid.Columns);
+    compose_area(MAX(msg_current_row - 1, 0), row, 0, default_grid.cols);
   } else if (row < msg_current_row && ui_comp_should_draw()
              && msg_current_row < Rows) {
     int delta = msg_current_row - (int)row;

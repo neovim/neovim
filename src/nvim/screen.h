@@ -49,13 +49,21 @@ typedef struct {
 } StlClickRecord;
 
 /// Array defining what should be done when tabline is clicked
-extern StlClickDefinition *tab_page_click_defs;
+EXTERN StlClickDefinition *tab_page_click_defs INIT(= NULL);
 
 /// Size of the tab_page_click_defs array
-extern long tab_page_click_defs_size;
+EXTERN long tab_page_click_defs_size INIT(= 0);
 
 #define W_ENDCOL(wp)   ((wp)->w_wincol + (wp)->w_width)
 #define W_ENDROW(wp)   ((wp)->w_winrow + (wp)->w_height)
+
+// While redrawing the screen this flag is set.  It means the screen size
+// ('lines' and 'rows') must not be changed.
+EXTERN bool updating_screen INIT(= 0);
+
+// While resizing the screen this flag is set.
+EXTERN bool resizing_screen INIT(= 0);
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.h.generated.h"

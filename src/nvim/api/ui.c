@@ -349,7 +349,11 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width, I
     return;
   }
 
-  ui_grid_resize((handle_T)grid, (int)width, (int)height, err);
+  if (grid == DEFAULT_GRID_HANDLE) {
+    nvim_ui_try_resize(channel_id, width, height, err);
+  } else {
+    ui_grid_resize((handle_T)grid, (int)width, (int)height, err);
+  }
 }
 
 /// Tells Nvim the number of elements displaying in the popumenu, to decide
