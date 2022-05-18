@@ -53,7 +53,6 @@ describe('startup', function()
     ]])
   end)
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
-    if helpers.pending_win32(pending) then return end
     local screen = Screen.new(25, 4)
     screen:attach()
     if iswin() then
@@ -105,7 +104,6 @@ describe('startup', function()
     end)
   end)
   it('input from pipe (implicit) #7679', function()
-    if helpers.pending_win32(pending) then return end
     local screen = Screen.new(25, 4)
     screen:attach()
     if iswin() then
@@ -261,7 +259,6 @@ describe('startup', function()
   end)
 
   it('ENTER dismisses early message #7967', function()
-    if helpers.pending_win32(pending) then return end
     local screen
     screen = Screen.new(60, 6)
     screen:attach()
@@ -494,7 +491,6 @@ describe('sysinit', function()
   end)
 
   it('fixed hang issue with -D (#12647)', function()
-    if helpers.pending_win32(pending) then return end
     local screen
     screen = Screen.new(60, 7)
     screen:attach()

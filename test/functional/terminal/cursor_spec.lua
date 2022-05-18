@@ -538,7 +538,7 @@ describe('buffer cursor position is correct in terminal without number column', 
       :aaaaaaaa    {1: }                                                        |
       {3:-- TERMINAL --}                                                        |
     ]])
-    matches('^:aaaaaaaa    ', eval('nvim_get_current_line()'))
+    matches('^:aaaaaaaa    [ ]*$', eval('nvim_get_current_line()'))
     eq({6, 13}, eval('nvim_win_get_cursor(0)'))
     feed([[<C-\><C-N>]])
     screen:expect([[
@@ -918,7 +918,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
       {7:  6 }:aaaaaaaa    {1: }                                                    |
       {3:-- TERMINAL --}                                                        |
     ]])
-    matches('^:aaaaaaaa    ', eval('nvim_get_current_line()'))
+    matches('^:aaaaaaaa    [ ]*$', eval('nvim_get_current_line()'))
     eq({6, 13}, eval('nvim_win_get_cursor(0)'))
     feed([[<C-\><C-N>]])
     screen:expect([[

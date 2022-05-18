@@ -6,6 +6,7 @@ local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.fee
 local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
+local matches = helpers.matches
 local poke_eventloop = helpers.poke_eventloop
 local retry = helpers.retry
 local curbufmeths = helpers.curbufmeths
@@ -460,8 +461,8 @@ describe("'scrollback' option", function()
     expect_lines(58)
 
     -- Verify off-screen state
-    eq((iswin() and '36: line' or '35: line'), eval("getline(line('w0') - 1)"))
-    eq((iswin() and '27: line' or '26: line'), eval("getline(line('w0') - 10)"))
+    matches((iswin() and '^36: line[ ]*$' or '^35: line[ ]*$'), eval("getline(line('w0') - 1)"))
+    matches((iswin() and '^27: line[ ]*$' or '^26: line[ ]*$'), eval("getline(line('w0') - 10)"))
   end)
 
   it('defaults to 10000 in :terminal buffers', function()

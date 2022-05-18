@@ -14,7 +14,6 @@ local has_powershell = helpers.has_powershell
 local set_shell_powershell = helpers.set_shell_powershell
 
 describe("shell command :!", function()
-  if helpers.pending_win32(pending) then return end
   local screen
   before_each(function()
     clear()
