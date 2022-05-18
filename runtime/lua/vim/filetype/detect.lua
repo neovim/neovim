@@ -27,6 +27,9 @@ end
 
 ---@private
 local function findany(s, patterns)
+  if s == nil then
+    return false
+  end
   for _, v in ipairs(patterns) do
     if s:find(v) then
       return true
@@ -82,7 +85,7 @@ function M.asm(bufnr)
       vim.b[bufnr].asmsyntax = 'asm'
     end
   end
-  vim.bo[bufnr].filetype = vim.fn.fnameescape(vim.b[bufnr].asmsyntax)
+  return vim.fn.fnameescape(vim.b[bufnr].asmsyntax)
 end
 
 -- Checks the first 5 lines for a asmsyntax=foo override.
@@ -102,8 +105,7 @@ local visual_basic_content = { 'vb_name', 'begin vb%.form', 'begin vb%.mdiform',
 -- See frm() for Visual Basic form file detection
 function M.bas(bufnr)
   if vim.g.filetype_bas then
-    vim.bo[bufnr].filetype = vim.g.filetype_bas
-    return
+    return vim.g.filetype_bas
   end
 
   -- Most frequent FreeBASIC-specific keywords in distro files
@@ -118,26 +120,30 @@ function M.bas(bufnr)
 
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     if line:find(fb_comment) or matchregex(line, fb_preproc) or matchregex(line, fb_keywords) then
-      vim.bo[bufnr].filetype = 'freebasic'
-      return
+      return 'freebasic'
     elseif matchregex(line, qb64_preproc) then
-      vim.bo[bufnr].filetype = 'qb64'
-      return
+      return 'qb64'
     elseif findany(line:lower(), visual_basic_content) then
-      vim.bo[bufnr].filetype = 'vb'
-      return
+      return 'vb'
     end
   end
-  vim.bo[bufnr].filetype = 'basic'
+  return 'basic'
 end
 
-function M.bindzone(bufnr, default_ft) end
+function M.bindzone(bufnr, default)
+  local lines = table.concat(getlines(bufnr, 1, 4))
+  if findany(lines, { '^; <<>> DiG [0-9%.]+.* <<>>', '%$ORIGIN', '%$TTL', 'IN%s+SOA' }) then
+    return 'bindzone'
+  else
+    return default
+  end
+end
 
 function M.btm(bufnr)
   if vim.g.dosbatch_syntax_for_btm and vim.g.dosbatch_syntax_for_btm ~= 0 then
-    vim.bo[bufnr].filetype = 'dosbatch'
+    return 'dosbatch'
   else
-    vim.bo[bufnr].filetype = 'btm'
+    return 'btm'
   end
 end
 
@@ -157,11 +163,11 @@ end
 
 function M.cfg(bufnr)
   if vim.g.filetype_cfg then
-    vim.bo[bufnr].filetype = vim.g.filetype_cfg
+    return vim.g.filetype_cfg
   elseif is_rapid(bufnr, 'cfg') then
-    vim.bo[bufnr].filetype = 'rapid'
+    return 'rapid'
   else
-    vim.bo[bufnr].filetype = 'cfg'
+    return 'cfg'
   end
 end
 
@@ -173,38 +179,44 @@ end
 function M.change(bufnr)
   local first_line = getlines(bufnr, 1)
   if findany(first_line, { '^#', '^!' }) then
-    vim.bo[bufnr].filetype = 'ch'
-    return
+    return 'ch'
   end
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
     if line:find('^@') then
-      vim.bo[bufnr].filetype = 'change'
-      return
+      return 'change'
     end
     if line:find('MODULE') then
-      vim.bo[bufnr].filetype = 'chill'
-      return
+      return 'chill'
     elseif findany(line:lower(), { 'main%s*%(', '#%s*include', '//' }) then
-      vim.bo[bufnr].filetype = 'ch'
-      return
+      return 'ch'
     end
   end
-  vim.bo[bufnr].filetype = 'chill'
+  return 'chill'
 end
 
-function M.csh(path, bufnr) end
+function M.csh(path, bufnr)
+  if vim.fn.did_filetype() then
+    -- Filetype was already detected
+    return
+  end
+  if vim.g.filetype_csh then
+    return M.shell(path, bufnr, vim.g.filetype_csh)
+  elseif string.find(vim.o.shell, 'tcsh') then
+    return M.shell(path, bufnr, 'tcsh')
+  else
+    return M.shell(path, bufnr, 'csh')
+  end
+end
 
 -- Determine if a *.dat file is Kuka Robot Language
--- TODO: this one fails for some reason, so I omitted it. #18219 should be merged first.
 function M.dat(bufnr)
-  -- if vim.g.filetype_dat then
-  --   vim.bo[bufnr].filetype = vim.g.filetype_dat
-  --   return
-  -- end
-  -- local line = nextnonblank(bufnr, 1):lower()
-  -- if findany(line, { "^%s*&%w+", "^%s*defdat" }) then
-  --   vim.bo[bufnr].filetype = "krl"
-  -- end
+  if vim.g.filetype_dat then
+    return vim.g.filetype_dat
+  end
+  local line = nextnonblank(bufnr, 1)
+  if matchregex(line, [[\c\v^\s*%(\&\w+|defdat>)]]) then
+    return 'krl'
+  end
 end
 
 -- This function is called for all files under */debian/patches/*, make sure not
@@ -231,8 +243,7 @@ function M.dep3patch(path, bufnr)
         '^Applied%-Upstream:',
       })
     then
-      vim.bo[bufnr].filetype = 'dep3patch'
-      return
+      return 'dep3patch'
     elseif line:find('^%-%-%-') then
       -- End of headers found. stop processing
       return
@@ -249,25 +260,24 @@ function M.dtrace(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     if matchregex(line, [[\c^module\>\|^import\>]]) then
       --  D files often start with a module and/or import statement.
-      vim.bo[bufnr].filetype = 'd'
-      return
+      return 'd'
     elseif findany(line, { '^#!%S+dtrace', '#pragma%s+D%s+option', ':%S-:%S-:' }) then
-      vim.bo[bufnr].filetype = 'dtrace'
-      return
+      return 'dtrace'
     end
   end
-  vim.bo[bufnr].filetype = 'd'
+  return 'd'
 end
 
-function M.e(path, bufnr)
+function M.e(bufnr)
   if vim.g.filetype_euphoria then
-    vim.bo[bufnr].filetype = vim.g.filetype_euphoria
-    return
+    return vim.g.filetype_euphoria
   end
-  -- TODO: WIP
-  -- for _, line in ipairs(getlines(bufnr, 1, 100)) do
-  --   if line:find("^$")
-  -- end
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    if findany(line, { "^%s*<'%s*$", "^%s*'>%s*$" }) then
+      return 'specman'
+    end
+  end
+  return 'eiffel'
 end
 
 -- This function checks for valid cl syntax in the first five lines.
@@ -276,36 +286,34 @@ end
 function M.ent(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^%s*[#{]') then
-      vim.bo[bufnr].filetype = 'cl'
-      return
+      return 'cl'
     elseif not line:find('^%s*$') then
       -- Not a blank line, not a comment, and not a block start,
       -- so doesn't look like valid cl code.
       break
     end
   end
-  vim.bo[bufnr].filetype = 'dtd'
+  return 'dtd'
 end
 
 function M.euphoria(bufnr)
   if vim.g.filetype_euphoria then
-    vim.bo[bufnr].filetype = vim.g.filetype_euphoria
+    return vim.g.filetype_euphoria
   else
-    vim.bo[bufnr].filetype = 'euphoria3'
+    return 'euphoria3'
   end
 end
 
 function M.ex(bufnr)
   if vim.g.filetype_euphoria then
-    vim.bo[bufnr].filetype = vim.g.filetype_euphoria
+    return vim.g.filetype_euphoria
   else
     for _, line in ipairs(getlines(bufnr, 1, 100)) do
       if matchregex(line, [[\c^--\|^ifdef\>\|^include\>]]) then
-        vim.bo[bufnr].filetype = 'euphoria3'
-        return
+        return 'euphoria3'
       end
     end
-    vim.bo[bufnr].filetype = 'elixir'
+    return 'elixir'
   end
 end
 
@@ -318,93 +326,110 @@ function M.foam(bufnr)
     if line:find('^FoamFile') then
       foam_file = true
     elseif foam_file and line:find('^%s*object') then
-      vim.bo[bufnr].filetype = 'foam'
-      return
+      return 'foam'
     end
   end
 end
 
 function M.frm(bufnr)
   if vim.g.filetype_frm then
-    vim.bo[bufnr].filetype = vim.g.filetype_frm
-    return
+    return vim.g.filetype_frm
   end
   local lines = table.concat(getlines(bufnr, 1, 5)):lower()
   if findany(lines, visual_basic_content) then
-    vim.bo[bufnr].filetype = 'vb'
+    return 'vb'
   else
-    vim.bo[bufnr].filetype = 'form'
+    return 'form'
   end
 end
 
 -- Distinguish between Forth and F#.
 function M.fs(bufnr)
-  -- TODO: WIP
-  -- if vim.g.filetype_fs then
-  --   vim.bo[bufnr].filetype = vim.g.filetype_fs
-  --   return
-  -- end
-  -- local line = nextnonblank(bufnr, 1)
-  -- if findany(line, { '^%s*.?%( ', '^%s*\\G? ', '^\\$', '^%s*: %S' }) then
-  --   vim.bo[bufnr].filetype = 'forth'
-  -- else
-  --   vim.bo[bufnr].filetype = 'fsharp'
-  -- end
+  if vim.g.filetype_fs then
+    return vim.g.filetype_fs
+  end
+  local line = nextnonblank(bufnr, 1)
+  if findany(line, { '^%s*%.?%( ', '^%s*\\G? ', '^\\$', '^%s*: %S' }) then
+    return 'forth'
+  else
+    return 'fsharp'
+  end
 end
 
 function M.header(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 200)) do
     if findany(line:lower(), { '^@interface', '^@end', '^@class' }) then
       if vim.g.c_syntax_for_h then
-        vim.bo[bufnr].filetype = 'objc'
+        return 'objc'
       else
-        vim.bo[bufnr].filetype = 'objcpp'
+        return 'objcpp'
       end
-      return
     end
   end
   if vim.g.c_syntax_for_h then
-    vim.bo[bufnr].filetype = 'c'
+    return 'c'
   elseif vim.g.ch_syntax_for_h then
-    vim.bo[bufnr].filetype = 'ch'
+    return 'ch'
   else
-    vim.bo[bufnr].filetype = 'cpp'
+    return 'cpp'
   end
 end
 
 function M.html(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
     if matchregex(line, [[\<DTD\s\+XHTML\s]]) then
-      vim.bo[bufnr].filetype = 'xhtml'
-      return
+      return 'xhtml'
     elseif matchregex(line, [[\c{%\s*\(extends\|block\|load\)\>\|{#\s\+]]) then
-      vim.bo[bufnr].filetype = 'htmldjango'
-      return
+      return 'htmldjango'
     end
   end
-  vim.bo[bufnr].filetype = 'html'
+  return 'html'
 end
 
 function M.idl(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 50)) do
     if findany(line:lower(), { '^%s*import%s+"unknwn"%.idl', '^%s*import%s+"objidl"%.idl' }) then
-      vim.bo[bufnr].filetype = 'msidl'
-      return
+      return 'msidl'
     end
   end
-  vim.bo[bufnr].filetype = 'idl'
+  return 'idl'
 end
 
-function M.inc(path, bufnr) end
+local pascal_comments = { '^%s*{', '^%s*%(%*', '^%s*//' }
+local pascal_keywords = [[\c^\s*\%(program\|unit\|library\|uses\|begin\|procedure\|function\|const\|type\|var\)\>]]
+
+function M.inc(bufnr)
+  if vim.g.filetype_inc then
+    return vim.g.filetype_inc
+  end
+  local lines = table.concat(getlines(bufnr, 1, 3))
+  if lines:lower():find('perlscript') then
+    return 'aspperl'
+  elseif lines:find('<%%') then
+    return 'aspvbs'
+  elseif lines:find('<%?') then
+    return 'php'
+    -- Pascal supports // comments but they're vary rarely used for file
+    -- headers so assume POV-Ray
+  elseif findany(lines, { '^%s{', '^%s%(%*' }) or matchregex(lines, pascal_keywords) then
+    return 'pascal'
+  else
+    M.asm_syntax(bufnr)
+    if vim.b[bufnr].asm_syntax then
+      return vim.fn.fnameescape(vim.b[bufnr].asm_syntax)
+    else
+      return 'pov'
+    end
+  end
+end
 
 function M.inp(bufnr)
   if getlines(bufnr, 1):find('^%*') then
-    vim.bo[bufnr].filetype = 'abaqus'
+    return 'abaqus'
   else
     for _, line in ipairs(getlines(bufnr, 1, 500)) do
       if line:lower():find('^header surface data') then
-        vim.bo[bufnr].filetype = 'trasys'
-        return
+        return 'trasys'
       end
     end
   end
@@ -426,18 +451,16 @@ function M.lpc(bufnr)
           '^mixed',
         })
       then
-        vim.bo[bufnr].filetype = 'lpc'
-        return
+        return 'lpc'
       end
     end
   end
-  vim.bo[bufnr].filetype = 'c'
+  return 'c'
 end
 
 function M.m(bufnr)
   if vim.g.filetype_m then
-    vim.bo[bufnr].filetype = vim.g.filetype_m
-    return
+    return vim.g.filetype_m
   end
 
   -- Excluding end(for|function|if|switch|while) common to Murphi
@@ -455,25 +478,20 @@ function M.m(bufnr)
       saw_comment = true
     end
     if line:find('^%s*//') or matchregex(line, [[\c^\s*@import\>]]) or matchregex(line, objc_preprocessor) then
-      vim.bo[bufnr].filetype = 'objc'
-      return
+      return 'objc'
     end
     if
       findany(line, { '^%s*#', '^%s*%%!' })
       or matchregex(line, [[\c^\s*unwind_protect\>]])
       or matchregex(line, [[\c\%(^\|;\)\s*]] .. octave_block_terminators)
     then
-      vim.bo[bufnr].filetype = 'octave'
-      return
+      return 'octave'
     elseif line:find('^%s*%%') then
-      vim.bo[bufnr].filetype = 'matlab'
-      return
+      return 'matlab'
     elseif line:find('^%s*%(%*') then
-      vim.bo[bufnr].filetype = 'mma'
-      return
+      return 'mma'
     elseif matchregex(line, [[\c^\s*\(\(type\|var\)\>\|--\)]]) then
-      vim.bo[bufnr].filetype = 'murphi'
-      return
+      return 'murphi'
     end
   end
 
@@ -481,10 +499,10 @@ function M.m(bufnr)
     -- We didn't see anything definitive, but this looks like either Objective C
     -- or Murphi based on the comment leader. Assume the former as it is more
     -- common.
-    vim.bo[bufnr].filetype = 'objc'
+    return 'objc'
   else
     -- Default is Matlab
-    vim.bo[bufnr].filetype = 'matlab'
+    return 'matlab'
   end
 end
 
@@ -494,38 +512,33 @@ function M.mc(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
     if findany(line:lower(), { '^%s*#', '^%s*dnl' }) then
       -- Sendmail .mc file
-      vim.bo[bufnr].filetype = 'm4'
-      return
+      return 'm4'
     elseif line:find('^%s*;') then
-      vim.bo[bufnr].filetype = 'msmessages'
-      return
+      return 'msmessages'
     end
   end
   -- Default: Sendmail .mc file
-  vim.bo[bufnr].filetype = 'm4'
+  return 'm4'
 end
 
 function M.mm(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
     if matchregex(line, [[\c^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\)]]) then
-      vim.bo[bufnr].filetype = 'objcpp'
-      return
+      return 'objcpp'
     end
   end
-  vim.bo[bufnr].filetype = 'nroff'
+  return 'nroff'
 end
 
 function M.mms(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
     if findany(line, { '^%s*%%', '^%s*//', '^%*' }) then
-      vim.bo[bufnr].filetype = 'mmix'
-      return
+      return 'mmix'
     elseif line:find('^%s*#') then
-      vim.bo[bufnr].filetype = 'make'
-      return
+      return 'make'
     end
   end
-  vim.bo[bufnr].filetype = 'mmix'
+  return 'mmix'
 end
 
 -- Returns true if file content looks like LambdaProlog
@@ -544,18 +557,18 @@ end
 -- Determine if *.mod is ABB RAPID, LambdaProlog, Modula-2, Modsim III or go.mod
 function M.mod(path, bufnr)
   if vim.g.filetype_mod then
-    vim.bo[bufnr].filetype = vim.g.filetype_mod
+    return vim.g.filetype_mod
   elseif is_lprolog(bufnr) then
-    vim.bo[bufnr].filetype = 'lprolog'
+    return 'lprolog'
   elseif matchregex(nextnonblank(bufnr, 1), [[\%(\<MODULE\s\+\w\+\s*;\|^\s*(\*\)]]) then
-    vim.bo[bufnr].filetype = 'modula2'
+    return 'modula2'
   elseif is_rapid(bufnr) then
-    vim.bo[bufnr].filetype = 'rapid'
+    return 'rapid'
   elseif matchregex(path, [[\c\<go\.mod$]]) then
-    vim.bo[bufnr].filetype = 'gomod'
+    return 'gomod'
   else
     -- Nothing recognized, assume modsim3
-    vim.bo[bufnr].filetype = 'modsim3'
+    return 'modsim3'
   end
 end
 
@@ -564,7 +577,6 @@ end
 function M.nroff(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^%.') then
-      vim.bo[bufnr].filetype = 'nroff'
       return true
     end
   end
@@ -578,51 +590,58 @@ end
 function M.perl(path, bufnr)
   local dirname = vim.fn.expand(path, '%:p:h:t')
   if vim.fn.expand(dirname, '%:e') == 't' and (dirname == 't' or dirname == 'xt') then
-    vim.bo[bufnr].filetype = 'perl'
     return true
   end
   local first_line = getlines(bufnr, 1)
   if first_line:find('^#') and first_line:lower():find('perl') then
-    vim.bo[bufnr].filetype = 'perl'
     return true
   end
   for _, line in ipairs(getlines(bufnr, 1, 30)) do
     if matchregex(line, [[\c^use\s\s*\k]]) then
-      vim.bo[bufnr].filetype = 'perl'
       return true
     end
   end
   return false
 end
 
-function M.pl(path, bufnr) end
-
-local pascal_comments = { '^%s*{', '^%s*%(*', '^%s*//' }
-local pascal_keywords = [[\c^\s*\%(program\|unit\|library\|uses\|begin\|procedure\|function\|const\|type\|var\)\>]]
+function M.pl(bufnr)
+  if vim.g.filetype_pl then
+    return vim.g.filetype_pl
+  end
+  -- Recognize Prolog by specific text in the first non-empty line;
+  -- require a blank after the '%' because Perl uses "%list" and "%translate"
+  local line = nextnonblank(bufnr, 1)
+  if
+    line and line:find(':%-')
+    or matchregex(line, [[\c\<prolog\>]])
+    or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
+  then
+    return 'prolog'
+  else
+    return 'perl'
+  end
+end
 
 function M.pp(bufnr)
-  -- TODO: WIP
-
-  -- if vim.g.filetype_pp then
-  --   vim.bo[bufnr].filetype = vim.g.filetype_pp
-  --   return
-  -- end
-  -- local first_line = nextnonblank(bufnr, 1):lower()
-  -- if findany(first_line, { pascal_comments, pascal_keywords }) then
-  --   vim.bo[bufnr].filetype = "pascal"
-  -- else
-  --   vim.bo[bufnr].filetype = "puppet"
-  -- end
+  if vim.g.filetype_pp then
+    return vim.g.filetype_pp
+  end
+  local line = nextnonblank(bufnr, 1)
+  if findany(line, pascal_comments) or matchregex(line, pascal_keywords) then
+    return 'pascal'
+  else
+    return 'puppet'
+  end
 end
 
 function M.prg(bufnr)
   if vim.g.filetype_prg then
-    vim.bo[bufnr].filetype = vim.g.filetype_prg
+    return vim.g.filetype_prg
   elseif is_rapid(bufnr) then
-    vim.bo[bufnr].filetype = 'rapid'
+    return 'rapid'
   else
     -- Nothing recognized, assume Clipper
-    vim.bo[bufnr].filetype = 'clipper'
+    return 'clipper'
   end
 end
 
@@ -630,8 +649,7 @@ end
 -- If not found, assume Progress.
 function M.progress_asm(bufnr)
   if vim.g.filetype_i then
-    vim.bo[bufnr].filetype = vim.g.filetype_i
-    return
+    return vim.g.filetype_i
   end
 
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
@@ -643,17 +661,17 @@ function M.progress_asm(bufnr)
       break
     end
   end
-  vim.bo[bufnr].filetype = 'progress'
+  return 'progress'
 end
 
 function M.progress_cweb(bufnr)
   if vim.g.filetype_w then
-    vim.bo[bufnr].filetype = vim.g.filetype_w
+    return vim.g.filetype_w
   else
     if getlines(bufnr, 1):lower():find('^&analyze') or getlines(bufnr, 3):lower():find('^&global%-define') then
-      vim.bo[bufnr].filetype = 'progress'
+      return 'progress'
     else
-      vim.bo[bufnr].filetype = 'cweb'
+      return 'cweb'
     end
   end
 end
@@ -663,58 +681,65 @@ end
 -- If not found, assume Progress.
 function M.progress_pascal(bufnr)
   if vim.g.filetype_p then
-    vim.bo[bufnr].filetype = vim.g.filetype_p
-    return
+    return vim.g.filetype_p
   end
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
     if findany(line, pascal_comments) or matchregex(line, pascal_keywords) then
-      vim.bo[bufnr].filetype = 'pascal'
-      return
+      return 'pascal'
     elseif not line:find('^%s*$') or line:find('^/%*') then
       -- Not an empty line: Doesn't look like valid Pascal code.
       -- Or it looks like a Progress /* comment
       break
     end
   end
-  vim.bo[bufnr].filetype = 'progress'
+  return 'progress'
 end
 
-function M.proto(path, bufnr) end
+-- Distinguish between "default" and Cproto prototype file.
+function M.proto(bufnr, default)
+  -- Cproto files have a comment in the first line and a function prototype in
+  -- the second line, it always ends in ";".  Indent files may also have
+  -- comments, thus we can't match comments to see the difference.
+  -- IDL files can have a single ';' in the second line, require at least one
+  -- character before the ';'.
+  if getlines(bufnr, 2):find('.;$') then
+    return 'cpp'
+  else
+    return default
+  end
+end
 
 function M.r(bufnr)
   local lines = getlines(bufnr, 1, 50)
   -- Rebol is easy to recognize, check for that first
   if matchregex(table.concat(lines), [[\c\<rebol\>]]) then
-    vim.bo[bufnr].filetype = 'rebol'
-    return
+    return 'rebol'
   end
 
   for _, line in ipairs(lines) do
     -- R has # comments
     if line:find('^%s*#') then
-      vim.bo[bufnr].filetype = 'r'
-      return
+      return 'r'
     end
     -- Rexx has /* comments */
     if line:find('^%s*/%*') then
-      vim.bo[bufnr].filetype = 'rexx'
-      return
+      return 'rexx'
     end
   end
 
   -- Nothing recognized, use user default or assume R
   if vim.g.filetype_r then
-    vim.bo[bufnr].filetype = vim.g.filetype_r
+    return vim.g.filetype_r
   else
     -- Rexx used to be the default, but R appears to be much more popular.
-    vim.bo[bufnr].filetype = 'r'
+    return 'r'
   end
 end
 
 function M.redif(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:lower():find('^template%-type:') then
-      vim.bo[bufnr].filetype = 'redif'
+      return 'redif'
     end
   end
 end
@@ -732,28 +757,26 @@ function M.rules(path, bufnr)
       '/lib/udev/rules%.d/.*%.rules$',
     })
   then
-    vim.bo[bufnr].filetype = 'udevrules'
+    return 'udevrules'
   elseif path:find('^/etc/ufw/') then
     -- Better than hog
-    vim.bo[bufnr].filetype = 'conf'
+    return 'conf'
   elseif findany(path, { '^/etc/polkit%-1/rules%.d', '/usr/share/polkit%-1/rules%.d' }) then
-    vim.bo[bufnr].filetype = 'javascript'
+    return 'javascript'
   else
     local ok, config_lines = pcall(vim.fn.readfile, '/etc/udev/udev.conf')
     if not ok then
-      vim.bo[bufnr].filetype = 'hog'
-      return
+      return 'hog'
     end
     local dir = vim.fn.expand(path, ':h')
     for _, line in ipairs(config_lines) do
       local match = line:match(udev_rules_pattern)
       local udev_rules = line:gsub(udev_rules_pattern, match, 1)
       if dir == udev_rules then
-        vim.bo[bufnr].filetype = 'udevrules'
-        return
+        return 'udevrules'
       end
     end
-    vim.bo[bufnr].filetype = 'hog'
+    return 'hog'
   end
 end
 
@@ -767,11 +790,10 @@ function M.sc(bufnr)
         { '[A-Za-z0-9]*%s:%s[A-Za-z0-9]', 'var%s<', 'classvar%s<', '%^this.*', '|%w*|', '%+%s%w*%s{', '%*ar%s' }
       )
     then
-      vim.bo[bufnr].filetype = 'supercollider'
-      return
+      return 'supercollider'
     end
   end
-  vim.bo[bufnr].filetype = 'scala'
+  return 'scala'
 end
 
 -- This function checks the first line of file extension "scd" to resolve
@@ -781,47 +803,140 @@ function M.scd(bufnr)
   local opt = [[%s+"[^"]*"]]
   local line = getlines(bufnr, 1)
   if findany(line, { first .. '$', first .. opt .. '$', first .. opt .. opt .. '$' }) then
-    vim.bo[bufnr].filetype = 'scdoc'
+    return 'scdoc'
   else
-    vim.bo[bufnr].filetype = 'supercollider'
+    return 'supercollider'
   end
 end
 
-function M.sh(path, bufnr) end
+-- Also called from filetype.lua
+function M.sh(path, bufnr, name)
+  if vim.fn.did_filetype() or path:find(vim.g.ft_ignore_pat) then
+    -- Filetype was already detected or detection should be skipped
+    return
+  end
 
-function M.shell(path, bufnr) end
+  if matchregex(name, [[\<csh\>]]) then
+    -- Some .sh scripts contain #!/bin/csh.
+    return M.shell(path, bufnr, 'csh')
+    -- Some .sh scripts contain #!/bin/tcsh.
+  elseif matchregex(name, [[\<tcsh\>]]) then
+    return M.shell(path, bufnr, 'tcsh')
+    -- Some .sh scripts contain #!/bin/zsh.
+  elseif matchregex(name, [[\<zsh\>]]) then
+    return M.shell(path, bufnr, 'zsh')
+  elseif matchregex(name, [[\<ksh\>]]) then
+    vim.b[bufnr].is_kornshell = 1
+    vim.b[bufnr].is_bash = nil
+    vim.b[bufnr].is_sh = nil
+  elseif vim.g.bash_is_sh or matchregex(name, [[\<bash\>]]) or matchregex(name, [[\<bash2\>]]) then
+    vim.b[bufnr].is_bash = 1
+    vim.b[bufnr].is_kornshell = nil
+    vim.b[bufnr].is_sh = nil
+  elseif matchregex(name, [[\<sh\>]]) then
+    vim.b[bufnr].is_sh = 1
+    vim.b[bufnr].is_kornshell = nil
+    vim.b[bufnr].is_bash = nil
+  end
+  return M.shell(path, bufnr, 'sh')
+end
+
+-- For shell-like file types, check for an "exec" command hidden in a comment, as used for Tcl.
+-- Also called from scripts.vim, thus can't be local to this script. [TODO]
+function M.shell(path, bufnr, name)
+  if vim.fn.did_filetype() or matchregex(path, vim.g.ft_ignore_pat) then
+    -- Filetype was already detected or detection should be skipped
+    return
+  end
+  local prev_line = ''
+  for _, line in ipairs(getlines(bufnr, 2, -1)) do
+    line = line:lower()
+    if line:find('%s*exec%s') and not prev_line:find('^%s*#.*\\$') then
+      -- Found an "exec" line after a comment with continuation
+      local n = line:gsub('%s*exec%s+([^ ]*/)?', '', 1)
+      if matchregex(n, [[\c\<tclsh\|\<wish]]) then
+        return 'tcl'
+      end
+    end
+    prev_line = line
+  end
+  return name
+end
 
 function M.sql(bufnr)
   if vim.g.filetype_sql then
-    vim.bo[bufnr].filetype = vim.g.filetype_sql
+    return vim.g.filetype_sql
   else
-    vim.bo[bufnr].filetype = 'sql'
+    return 'sql'
   end
 end
 
 -- Determine if a *.src file is Kuka Robot Language
 function M.src(bufnr)
   if vim.g.filetype_src then
-    vim.bo[bufnr].filetype = vim.g.filetype_src
-    return
+    return vim.g.filetype_src
   end
   local line = nextnonblank(bufnr, 1)
   if matchregex(line, [[\c\v^\s*%(\&\w+|%(global\s+)?def%(fct)?>)]]) then
-    vim.bo[bufnr].filetype = 'krl'
+    return 'krl'
   end
 end
 
 function M.sys(bufnr)
   if vim.g.filetype_sys then
-    vim.bo[bufnr].filetype = vim.g.filetype_sys
+    return vim.g.filetype_sys
   elseif is_rapid(bufnr) then
-    vim.bo[bufnr].filetype = 'rapid'
+    return 'rapid'
   else
-    vim.bo[bufnr].filetype = 'bat'
+    return 'bat'
   end
 end
 
-function M.tex(path, bufnr) end
+-- Choose context, plaintex, or tex (LaTeX) based on these rules:
+-- 1. Check the first line of the file for "%&<format>".
+-- 2. Check the first 1000 non-comment lines for LaTeX or ConTeXt keywords.
+-- 3. Default to "plain" or to g:tex_flavor, can be set in user's vimrc.
+function M.tex(path, bufnr)
+  local format = getlines(bufnr, 1):find('^%%&%s*(%a+)')
+  if format then
+    format = format:lower():gsub('pdf', '', 1)
+    if format == 'tex' then
+      return 'tex'
+    elseif format == 'plaintex' then
+      return 'plaintex'
+    end
+  elseif path:lower():find('tex/context/.*/.*%.tex') then
+    return 'context'
+  else
+    local lpat = [[documentclass\>\|usepackage\>\|begin{\|newcommand\>\|renewcommand\>]]
+    local cpat =
+      [[start\a\+\|setup\a\+\|usemodule\|enablemode\|enableregime\|setvariables\|useencoding\|usesymbols\|stelle\a\+\|verwende\a\+\|stel\a\+\|gebruik\a\+\|usa\a\+\|imposta\a\+\|regle\a\+\|utilisemodule\>]]
+
+    for i, l in ipairs(getlines(bufnr, 1, 1000)) do
+      -- Find first non-comment line
+      if not l:find('^%s*%%%S') then
+        -- Check the next thousand lines for a LaTeX or ConTeXt keyword.
+        for _, line in ipairs(getlines(bufnr, i + 1, i + 1000)) do
+          local lpat_match, cpat_match = matchregex(line, [[\c^\s*\\\%(]] .. lpat .. [[\)\|^\s*\\\(]] .. cpat .. [[\)]])
+          if lpat_match then
+            return 'tex'
+          elseif cpat_match then
+            return 'context'
+          end
+        end
+      end
+    end
+    -- TODO: add AMSTeX, RevTex, others?
+    if not vim.g.tex_flavor or vim.g.tex_flavor == 'plain' then
+      return 'plaintex'
+    elseif vim.g.tex_flavor == 'context' then
+      return 'context'
+    else
+      -- Probably LaTeX
+      return 'tex'
+    end
+  end
+end
 
 -- Determine if a *.tf file is TF mud client or terraform
 function M.tf(bufnr)
@@ -829,11 +944,10 @@ function M.tf(bufnr)
     -- Assume terraform file on a non-empty line (not whitespace-only)
     -- and when the first non-whitespace character is not a ; or /
     if not line:find('^%s*$') and not line:find('^%s*[;/]') then
-      vim.bo[bufnr].filetype = 'terraform'
-      return
+      return 'terraform'
     end
   end
-  vim.bo[bufnr].filetype = 'tf'
+  return 'tf'
 end
 
 function M.xml(bufnr)
@@ -844,29 +958,25 @@ function M.xml(bufnr)
     if is_docbook4 or is_docbook5 then
       vim.b[bufnr].docbk_type = 'xml'
       vim.b[bufnr].docbk_ver = is_docbook4 and 4 or 5
-      vim.bo[bufnr].filetype = 'docbk'
-      return
+      return 'docbk'
     end
     if line:find([[xmlns:xbl="http://www.mozilla.org/xbl"]]) then
-      vim.bo[bufnr].filetype = 'xbl'
-      return
+      return 'xbl'
     end
   end
-  vim.bo[bufnr].filetype = 'xml'
+  return 'xml'
 end
 
 function M.y(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     if line:find('^%s*%%') then
-      vim.bo[bufnr].filetype = 'yacc'
-      return
+      return 'yacc'
     end
     if matchregex(line, [[\c^\s*\(#\|class\>\)]]) and not line:lower():find('^%s*#%s*include') then
-      vim.bo[bufnr].filetype = 'racc'
-      return
+      return 'racc'
     end
   end
-  vim.bo[bufnr].filetype = 'yacc'
+  return 'yacc'
 end
 
 -- luacheck: pop
