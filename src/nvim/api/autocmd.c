@@ -66,7 +66,9 @@ static int64_t next_autocmd_id = 1;
 ///             - group_name (string): the autocommand group name.
 ///             - desc (string): the autocommand description.
 ///             - event (string): the autocommand event.
-///             - command (string): the autocommand command.
+///             - command (string): the autocommand command. Note: this will be empty if a callback is set.
+///             - callback (function|string|nil): Lua function or name of a Vim script function
+///             which is executed when this autocommand is triggered.
 ///             - once (boolean): whether the autocommand is only run once.
 ///             - pattern (string): the autocommand pattern.
 ///             If the autocommand is buffer local |autocmd-buffer-local|:
@@ -280,9 +282,28 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
           PUT(autocmd_info, "desc", CSTR_TO_OBJ(ac->desc));
         }
 
-        PUT(autocmd_info,
-            "command",
-            STRING_OBJ(cstr_as_string(aucmd_exec_to_string(ac, ac->exec))));
+        if (ac->exec.type == CALLABLE_CB) {
+          PUT(autocmd_info, "command", STRING_OBJ(STRING_INIT));
+
+          Callback *cb = &ac->exec.callable.cb;
+          switch (cb->type) {
+          case kCallbackLua:
+            if (nlua_ref_is_function(cb->data.luaref)) {
+              PUT(autocmd_info, "callback", LUAREF_OBJ(api_new_luaref(cb->data.luaref)));
+            }
+            break;
+          case kCallbackFuncref:
+          case kCallbackPartial:
+            PUT(autocmd_info, "callback", STRING_OBJ(cstr_as_string(callback_to_string(cb))));
+            break;
+          default:
+            abort();
+          }
+        } else {
+          PUT(autocmd_info,
+              "command",
+              STRING_OBJ(cstr_as_string(xstrdup(ac->exec.callable.cmd))));
+        }
 
         PUT(autocmd_info,
             "pattern",
@@ -442,7 +463,8 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
     // not do that.
 
     Object *callback = &opts->callback;
-    if (callback->type == kObjectTypeLuaRef) {
+    switch (callback->type) {
+    case kObjectTypeLuaRef:
       if (callback->data.luaref == LUA_NOREF) {
         api_set_error(err,
                       kErrorTypeValidation,
@@ -459,10 +481,12 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
 
       cb.type = kCallbackLua;
       cb.data.luaref = api_new_luaref(callback->data.luaref);
-    } else if (callback->type == kObjectTypeString) {
+      break;
+    case kObjectTypeString:
       cb.type = kCallbackFuncref;
       cb.data.funcref = string_to_cstr(callback->data.string);
-    } else {
+      break;
+    default:
       api_set_error(err,
                     kErrorTypeException,
                     "'callback' must be a lua function or name of vim function");
