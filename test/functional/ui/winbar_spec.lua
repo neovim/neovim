@@ -194,4 +194,24 @@ describe('winbar', function()
     meths.input_mouse('left', 'press', '', 0, 5, 1)
     eq({5, 1}, meths.win_get_cursor(0))
   end)
+  it('properly equalizes window height for window-local value', function()
+    command('set equalalways | set winbar= | setlocal winbar=a | split')
+    command('setlocal winbar= | split')
+    command('setlocal winbar=b | split')
+    screen:expect([[
+      {1:b                                                           }|
+      ^                                                            |
+      {4:[No Name]                                                   }|
+      {1:b                                                           }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+      {3:~                                                           }|
+      {2:[No Name]                                                   }|
+      {1:a                                                           }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+    ]])
+  end)
 end)
