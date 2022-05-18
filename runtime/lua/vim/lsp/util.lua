@@ -684,6 +684,16 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
   return matches
 end
 
+---@private
+--- Like vim.fn.bufwinid except it works across tabpages.
+local function bufwinid(bufnr)
+  for _, win in ipairs(api.nvim_list_wins()) do
+    if api.nvim_win_get_buf(win) == bufnr then
+      return win
+    end
+  end
+end
+
 --- Rename old_fname to new_fname
 ---
 ---@param opts (table)
@@ -708,10 +718,9 @@ function M.rename(old_fname, new_fname, opts)
   assert(ok, err)
 
   local newbuf = vim.fn.bufadd(new_fname)
-  for _, win in pairs(api.nvim_list_wins()) do
-    if api.nvim_win_get_buf(win) == oldbuf then
-      api.nvim_win_set_buf(win, newbuf)
-    end
+  local win = bufwinid(oldbuf)
+  if win then
+    api.nvim_win_set_buf(win, newbuf)
   end
   api.nvim_buf_delete(oldbuf, { force = true })
 end
@@ -1004,8 +1013,9 @@ end
 ---
 ---@param location table (`Location`|`LocationLink`)
 ---@param offset_encoding string utf-8|utf-16|utf-32 (required)
+---@param reuse_win boolean Jump to existing window if buffer is already opened.
 ---@returns `true` if the jump succeeded
-function M.jump_to_location(location, offset_encoding)
+function M.jump_to_location(location, offset_encoding, reuse_win)
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
   if uri == nil then
@@ -1024,8 +1034,13 @@ function M.jump_to_location(location, offset_encoding)
   vim.fn.settagstack(vim.fn.win_getid(), { items = items }, 't')
 
   --- Jump to new location (adjusting for UTF-16 encoding of characters)
-  api.nvim_set_current_buf(bufnr)
-  api.nvim_buf_set_option(bufnr, 'buflisted', true)
+  local win = reuse_win and bufwinid(bufnr)
+  if win then
+    api.nvim_set_current_win(win)
+  else
+    api.nvim_set_current_buf(bufnr)
+    api.nvim_buf_set_option(bufnr, 'buflisted', true)
+  end
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
   local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
