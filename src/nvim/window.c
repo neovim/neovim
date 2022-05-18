@@ -515,9 +515,14 @@ wingotofile:
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
       break;
     }
+
+    // Make a copy, if the line was changed it will be freed.
+    ptr = vim_strnsave(ptr, len);
+
     find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
                          type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
-    curwin->w_set_curswant = TRUE;
+    xfree(ptr);
+    curwin->w_set_curswant = true;
     break;
 
   // Quickfix window only: view the result under the cursor in a new split.
