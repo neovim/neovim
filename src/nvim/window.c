@@ -6296,7 +6296,7 @@ void win_set_inner_size(win_T *wp)
 
 static int win_extra_height(win_T *wp)
 {
-  return wp->w_border_adj[0] + wp->w_border_adj[2];
+  return wp->w_border_adj[0] + wp->w_border_adj[2] + wp->w_winbar_height;
 }
 
 static int win_extra_width(win_T *wp)

@@ -183,7 +183,7 @@ void os_breakcheck(void)
   // We do not want screen_resize() to redraw here.
   // TODO(bfredl): we are already special casing redraw events, is this
   // hack still needed?
-  updating_screen++;
+  updating_screen = true;
 
   loop_poll_events(&main_loop, 0);
 

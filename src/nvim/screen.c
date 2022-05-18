@@ -5324,8 +5324,10 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     use_sandbox = was_set_insecurely(wp, "tabline", 0);
   } else if (draw_winbar) {
     stl = (char_u *)((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
-    row = wp->w_winrow;
-    col = wp->w_wincol;
+    row = -1;  // row zero is first row of text
+    col = 0;
+    grid = &wp->w_grid;
+    grid_adjust(&grid, &row, &col);
     fillchar = wp->w_p_fcs_chars.wbr;
     attr = (wp == curwin) ? HL_ATTR(HLF_WBR) : HL_ATTR(HLF_WBRNC);
     maxwidth = wp->w_width_inner;
