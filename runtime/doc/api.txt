@@ -844,8 +844,11 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                               Treated as single-width even if it isn't.
                             • highlights: (boolean) Return highlight
                               information.
+                            • use_winbar: (boolean) Evaluate winbar instead of
+                              statusline.
                             • use_tabline: (boolean) Evaluate tabline instead
                               of statusline. When |TRUE|, {winid} is ignored.
+                              Mutually exclusive with {use_winbar}.
 
                 Return: ~
                     Dictionary containing statusline information, with these

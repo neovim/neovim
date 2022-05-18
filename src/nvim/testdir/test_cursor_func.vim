@@ -102,10 +102,11 @@ func Test_screenpos()
   bwipe!
 
   call assert_equal({'col': 1, 'row': 1, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
-  " Needs WinBar
   " nmenu WinBar.TEST :
-  " call assert_equal({'col': 1, 'row': 2, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
+  setlocal winbar=TEST
+  call assert_equal({'col': 1, 'row': 2, 'endcol': 1, 'curscol': 1}, screenpos(win_getid(), 1, 1))
   " nunmenu WinBar.TEST
+  setlocal winbar&
 endfunc
 
 func Test_screenpos_number()

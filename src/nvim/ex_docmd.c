@@ -8830,7 +8830,7 @@ static void ex_redraw(exarg_T *eap)
   ui_flush();
 }
 
-/// ":redrawstatus": force redraw of status line(s)
+/// ":redrawstatus": force redraw of status line(s) and window bar(s)
 static void ex_redrawstatus(exarg_T *eap)
 {
   if (State & MODE_CMDPREVIEW) {
@@ -8846,8 +8846,7 @@ static void ex_redrawstatus(exarg_T *eap)
   } else {
     status_redraw_curbuf();
   }
-  update_screen(VIsual_active ? INVERTED :
-                0);
+  update_screen(VIsual_active ? INVERTED : 0);
   RedrawingDisabled = r;
   p_lz = p;
   ui_flush();

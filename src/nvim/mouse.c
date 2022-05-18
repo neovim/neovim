@@ -68,12 +68,12 @@ bool is_mouse_key(int c)
 /// mouse was previously on a status line, then the status line may be dragged.
 ///
 /// If flags has MOUSE_MAY_VIS, then VIsual mode will be started before the
-/// cursor is moved unless the cursor was on a status line.
+/// cursor is moved unless the cursor was on a status line or window bar.
 /// This function returns one of IN_UNKNOWN, IN_BUFFER, IN_STATUS_LINE or
 /// IN_SEP_LINE depending on where the cursor was clicked.
 ///
 /// If flags has MOUSE_MAY_STOP_VIS, then Visual mode will be stopped, unless
-/// the mouse is on the status line of the same window.
+/// the mouse is on the status line or window bar of the same window.
 ///
 /// If flags has MOUSE_DID_MOVE, nothing is done if the mouse didn't move since
 /// the last call.
@@ -87,6 +87,7 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
 {
   static int on_status_line = 0;        // #lines below bottom of window
   static int on_sep_line = 0;           // on separator right of window
+  static bool on_winbar = false;
   static int prev_row = -1;
   static int prev_col = -1;
   static win_T *dragwin = NULL;         // window being dragged
@@ -126,6 +127,9 @@ retnomove:
     if (on_sep_line) {
       return IN_SEP_LINE;
     }
+    if (on_winbar) {
+      return IN_OTHER_WIN | MOUSE_WINBAR;
+    }
     if (flags & MOUSE_MAY_STOP_VIS) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
@@ -155,9 +159,11 @@ retnomove:
     fdc = win_fdccol_count(wp);
     dragwin = NULL;
 
-    if (row == -1) {
-      return IN_OTHER_WIN;
+    if (row == -1 + wp->w_winbar_height) {
+      on_winbar = !!wp->w_winbar_height;
+      return IN_OTHER_WIN | (on_winbar ? MOUSE_WINBAR : 0);
     }
+    on_winbar = false;
 
     // winpos and height may change in win_enter()!
     if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
@@ -253,6 +259,9 @@ retnomove:
       did_drag |= count;
     }
     return IN_SEP_LINE;                         // Cursor didn't move
+  } else if (on_winbar) {
+    // After a click on the window bar don't start Visual mode.
+    return IN_OTHER_WIN | MOUSE_WINBAR;
   } else {
     // keep_window_focus must be true
     // before moving the cursor for a left click, stop Visual mode
@@ -497,6 +506,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
+      *rowp -= wp->w_winrow_off - wp->w_winbar_height;
       return wp;
     }
   }

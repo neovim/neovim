@@ -276,25 +276,25 @@ void redrawWinline(win_T *wp, linenr_T lnum)
   }
 }
 
-/*
- * update all windows that are editing the current buffer
- */
-void update_curbuf(int type)
-{
-  redraw_curbuf_later(type);
-  update_screen(type);
-}
-
 /// called when the status bars for the buffer 'buf' need to be updated
 void redraw_buf_status_later(buf_T *buf)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf
-        && (wp->w_status_height || (wp == curwin && global_stl_height()))) {
+    if (wp->w_buffer != buf) {
+      continue;
+    }
+    bool redraw = false;
+
+    if (wp->w_status_height || (wp == curwin && global_stl_height())) {
       wp->w_redr_status = true;
-      if (must_redraw < VALID) {
-        must_redraw = VALID;
-      }
+      redraw = true;
+    }
+    if (wp->w_winbar_height) {
+      wp->w_redr_winbar = true;
+      redraw = true;
+    }
+    if (redraw && must_redraw < VALID) {
+      must_redraw = VALID;
     }
   }
 }
@@ -400,6 +400,9 @@ int update_screen(int type)
           if (wp->w_floating) {
             continue;
           }
+          if (wp->w_winrow + wp->w_winbar_height > valid) {
+            wp->w_redr_winbar = true;
+          }
           if (W_ENDROW(wp) > valid) {
             wp->w_redr_type = MAX(wp->w_redr_type, NOT_VALID);
           }
@@ -431,6 +434,9 @@ int update_screen(int type)
             wp->w_redr_type = REDRAW_TOP;
           } else {
             wp->w_redr_type = NOT_VALID;
+            if (wp->w_winrow + wp->w_winbar_height <= msg_scrolled) {
+              wp->w_redr_winbar = true;
+            }
             if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height <= msg_scrolled) {
               wp->w_redr_status = true;
             }
@@ -585,9 +591,12 @@ int update_screen(int type)
       win_update(wp, &providers);
     }
 
-    // redraw status line after the window to minimize cursor movement
+    // redraw status line and window bar after the window to minimize cursor movement
     if (wp->w_redr_status) {
       win_redr_status(wp);
+    }
+    if (wp->w_redr_winbar) {
+      win_redr_winbar(wp);
     }
   }
 
@@ -743,6 +752,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   if (type >= NOT_VALID) {
     wp->w_redr_status = true;
+    wp->w_redr_winbar = true;
     wp->w_lines_valid = 0;
   }
 
@@ -4528,42 +4538,55 @@ void rl_mirror(char_u *str)
   }
 }
 
-/*
- * mark all status lines for redraw; used after first :cd
- */
+/// Mark all status lines and window bars for redraw; used after first :cd
 void status_redraw_all(void)
 {
-  if (global_stl_height()) {
-    curwin->w_redr_status = true;
-    redraw_later(curwin, VALID);
-  } else {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_status_height) {
-        wp->w_redr_status = true;
-        redraw_later(wp, VALID);
-      }
+  bool is_stl_global = global_stl_height() != 0;
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    bool redraw = false;
+
+    if ((!is_stl_global && wp->w_status_height) || (is_stl_global && wp == curwin)) {
+      wp->w_redr_status = true;
+      redraw = true;
+    }
+    if (wp->w_winbar_height) {
+      wp->w_redr_winbar = true;
+      redraw = true;
+    }
+    if (redraw) {
+      redraw_later(wp, VALID);
     }
   }
 }
 
-/// Marks all status lines of the current buffer for redraw.
+/// Marks all status lines and window bars of the current buffer for redraw.
 void status_redraw_curbuf(void)
 {
   status_redraw_buf(curbuf);
 }
 
-/// Marks all status lines of the specified buffer for redraw.
+/// Marks all status lines and window bars of the given buffer for redraw.
 void status_redraw_buf(buf_T *buf)
 {
-  if (global_stl_height() != 0 && curwin->w_buffer == buf) {
-    curwin->w_redr_status = true;
-    redraw_later(curwin, VALID);
-  } else {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_status_height != 0 && wp->w_buffer == buf) {
-        wp->w_redr_status = true;
-        redraw_later(wp, VALID);
-      }
+  bool is_stl_global = global_stl_height() != 0;
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer != buf) {
+      continue;
+    }
+    bool redraw = false;
+
+    if ((!is_stl_global && wp->w_status_height) || (is_stl_global && wp == curwin)) {
+      wp->w_redr_status = true;
+      redraw = true;
+    }
+    if (wp->w_winbar_height) {
+      wp->w_redr_winbar = true;
+      redraw = true;
+    }
+    if (redraw) {
+      redraw_later(wp, VALID);
     }
   }
 }
@@ -4576,6 +4599,9 @@ void redraw_statuslines(void)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_status) {
       win_redr_status(wp);
+    }
+    if (wp->w_redr_winbar) {
+      win_redr_winbar(wp);
     }
   }
   if (redraw_tabline) {
@@ -5075,7 +5101,7 @@ static void redraw_custom_statusline(win_T *wp)
   entered = true;
 
   did_emsg = false;
-  win_redr_custom(wp, false);
+  win_redr_custom(wp, false, false);
   if (did_emsg) {
     // When there is an error disable the statusline, otherwise the
     // display is messed up with errors and a redraw triggers the problem
@@ -5085,6 +5111,41 @@ static void redraw_custom_statusline(win_T *wp)
                                          ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
   }
   did_emsg |= saved_did_emsg;
+  entered = false;
+}
+
+static void win_redr_winbar(win_T *wp)
+{
+  static bool entered = false;
+
+  // Return when called recursively. This can happen when the winbar contains an expression
+  // that triggers a redraw.
+  if (entered) {
+    return;
+  }
+  entered = true;
+
+  wp->w_redr_winbar = false;
+  if (wp->w_winbar_height == 0) {
+    // No window bar, do nothing.
+  } else if (!redrawing()) {
+    // Don't redraw right now, do it later.
+    wp->w_redr_winbar = true;
+  } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
+    int saved_did_emsg = did_emsg;
+
+    did_emsg = false;
+    win_redr_custom(wp, true, false);
+    if (did_emsg) {
+      // When there is an error disable the winbar, otherwise the
+      // display is messed up with errors and a redraw triggers the problem
+      // again and again.
+      set_string_option_direct("winbar", -1, (char_u *)"",
+                               OPT_FREE | (*wp->w_p_stl != NUL
+                                           ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
+    }
+    did_emsg |= saved_did_emsg;
+  }
   entered = false;
 }
 
@@ -5224,11 +5285,9 @@ bool get_keymap_str(win_T *wp, char_u *fmt, char_u *buf, int len)
   return buf[0] != NUL;
 }
 
-/*
- * Redraw the status line or ruler of window "wp".
- * When "wp" is NULL redraw the tab pages line from 'tabline'.
- */
-static void win_redr_custom(win_T *wp, bool draw_ruler)
+/// Redraw the status line, window bar or ruler of window "wp".
+/// When "wp" is NULL redraw the tab pages line from 'tabline'.
+static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 {
   static bool entered = false;
   int attr;
@@ -5269,6 +5328,14 @@ static void win_redr_custom(win_T *wp, bool draw_ruler)
     attr = HL_ATTR(HLF_TPF);
     maxwidth = Columns;
     use_sandbox = was_set_insecurely(wp, "tabline", 0);
+  } else if (draw_winbar) {
+    stl = (char_u *)((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
+    row = wp->w_winrow;
+    col = wp->w_wincol;
+    fillchar = wp->w_p_fcs_chars.wbr;
+    attr = (wp == curwin) ? HL_ATTR(HLF_WBR) : HL_ATTR(HLF_WBRNC);
+    maxwidth = wp->w_width_inner;
+    use_sandbox = was_set_insecurely(wp, "winbar", 0);
   } else {
     row = is_stl_global ? (Rows - p_ch - 1) : W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
@@ -5553,14 +5620,17 @@ void win_grid_alloc(win_T *wp)
   grid->Rows = rows;
   grid->Columns = cols;
 
+  wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
+  wp->w_wincol_off = wp->w_border_adj[3];
+
   if (want_allocation) {
     grid->target = grid_allocated;
-    grid->row_offset = wp->w_border_adj[0];
-    grid->col_offset = wp->w_border_adj[3];
+    grid->row_offset = wp->w_winrow_off;
+    grid->col_offset = wp->w_wincol_off;
   } else {
     grid->target = &default_grid;
-    grid->row_offset = wp->w_winrow;
-    grid->col_offset = wp->w_wincol;
+    grid->row_offset = wp->w_winrow + wp->w_winrow_off;
+    grid->col_offset = wp->w_wincol + wp->w_wincol_off;
   }
 
   // send grid resize event if:
@@ -6220,7 +6290,7 @@ void draw_tabline(void)
     // Check for an error.  If there is one we would loop in redrawing the
     // screen.  Avoid that by making 'tabline' empty.
     did_emsg = false;
-    win_redr_custom(NULL, false);
+    win_redr_custom(NULL, false, false);
     if (did_emsg) {
       set_string_option_direct("tabline", -1,
                                (char_u *)"", OPT_FREE, SID_ERROR);
@@ -6516,7 +6586,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     int save_called_emsg = called_emsg;
 
     called_emsg = false;
-    win_redr_custom(wp, true);
+    win_redr_custom(wp, false, true);
     if (called_emsg) {
       set_string_option_direct("rulerformat", -1, (char_u *)"",
                                OPT_FREE, SID_ERROR);

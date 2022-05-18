@@ -111,7 +111,9 @@ typedef enum {
   HLF_NFLOAT,     // Floating window
   HLF_MSG,        // Message area
   HLF_BORDER,     // Floating window border
-  HLF_COUNT,  // MUST be the last one
+  HLF_WBR,        // Window bars
+  HLF_WBRNC,      // Window bars of not-current windows
+  HLF_COUNT,      // MUST be the last one
 } hlf_T;
 
 EXTERN const char *hlf_names[] INIT(= {
@@ -172,6 +174,8 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_NFLOAT] = "NormalFloat",
   [HLF_MSG] = "MsgArea",
   [HLF_BORDER] = "FloatBorder",
+  [HLF_WBR] = "WinBar",
+  [HLF_WBRNC] = "WinBarNC",
 });
 
 

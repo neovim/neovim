@@ -2452,6 +2452,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
 	  stlnc:c	' ' or '='	statusline of the non-current windows
+	  wbr:c		' '		window bar
 	  horiz:c	'─' or '-'	horizontal separators |:split|
 	  horizup:c	'┴' or '-'	upwards facing horizontal separator
 	  horizdown:c	'┬' or '-'	downwards facing horizontal separator
@@ -2492,6 +2493,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		highlight group ~
 	  stl:c		StatusLine		|hl-StatusLine|
 	  stlnc:c	StatusLineNC		|hl-StatusLineNC|
+	  wbr:c		WinBar			|hl-WinBar| or |hl-WinBarNC|
 	  horiz:c	WinSeparator		|hl-WinSeparator|
 	  horizup:c	WinSeparator		|hl-WinSeparator|
 	  horizdown:c	WinSeparator		|hl-WinSeparator|
@@ -7044,6 +7046,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If the menu is disabled by excluding 'm' from 'guioptions', the ALT
 	key is never used for the menu.
 	This option is not used for <F10>; on Win32.
+
+						*'winbar'* *'wbr'*
+'winbar' 'wbr'		string (default empty)
+			global or local to window |global-local|
+	When non-empty, this option enables the window bar and determines its
+	contents. The window bar is a bar that's shown at the top of every
+	window with it enabled. The value of 'winbar' is evaluated like with
+	'statusline'.
+
+	When changing something that is used in 'winbar' that does not trigger
+	it to be updated, use |:redrawstatus|.
+
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 						*'winblend'* *'winbl'*
 'winblend' 'winbl'		number	(default 0)
