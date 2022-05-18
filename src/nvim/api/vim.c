@@ -2140,8 +2140,8 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     }
   }
 
-  if (row < 0 || row >= g->Rows
-      || col < 0 || col >= g->Columns) {
+  if (row < 0 || row >= g->rows
+      || col < 0 || col >= g->cols) {
     return ret;
   }
   size_t off = g->line_offset[(size_t)row] + (size_t)col;

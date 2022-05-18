@@ -1632,7 +1632,7 @@ void edit_putchar(int c, bool highlight)
     pc_col = 0;
     pc_status = PC_STATUS_UNSET;
     if (curwin->w_p_rl) {
-      pc_col += curwin->w_grid.Columns - 1 - curwin->w_wcol;
+      pc_col += curwin->w_grid.cols - 1 - curwin->w_wcol;
       const int fix_col = grid_fix_col(&curwin->w_grid, pc_col, pc_row);
 
       if (fix_col != pc_col) {
@@ -1759,7 +1759,7 @@ void display_dollar(colnr_T col)
   char_u *p = get_cursor_line_ptr();
   curwin->w_cursor.col -= utf_head_off(p, p + col);
   curs_columns(curwin, false);              // Recompute w_wrow and w_wcol
-  if (curwin->w_wcol < curwin->w_grid.Columns) {
+  if (curwin->w_wcol < curwin->w_grid.cols) {
     edit_putchar('$', false);
     dollar_vcol = curwin->w_virtcol;
   }

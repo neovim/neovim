@@ -8047,8 +8047,8 @@ static void f_screenattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   int row = (int)tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = (int)tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.rows
+      || col < 0 || col >= default_grid.cols) {
     c = -1;
   } else {
     ScreenGrid *grid = &default_grid;
@@ -8065,8 +8065,8 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   int row = tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.rows
+      || col < 0 || col >= default_grid.cols) {
     c = -1;
   } else {
     ScreenGrid *grid = &default_grid;
@@ -8081,8 +8081,8 @@ static void f_screenchars(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int row = tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.rows
+      || col < 0 || col >= default_grid.cols) {
     tv_list_alloc_ret(rettv, 0);
     return;
   }
@@ -8148,8 +8148,8 @@ static void f_screenstring(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   int row = tv_get_number_chk(&argvars[0], NULL) - 1;
   int col = tv_get_number_chk(&argvars[1], NULL) - 1;
-  if (row < 0 || row >= default_grid.Rows
-      || col < 0 || col >= default_grid.Columns) {
+  if (row < 0 || row >= default_grid.rows
+      || col < 0 || col >= default_grid.cols) {
     return;
   }
   ScreenGrid *grid = &default_grid;

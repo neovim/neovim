@@ -162,7 +162,7 @@ void msg_grid_validate(void)
 {
   grid_assign_handle(&msg_grid);
   bool should_alloc = msg_use_grid();
-  if (should_alloc && (msg_grid.Rows != Rows || msg_grid.Columns != Columns
+  if (should_alloc && (msg_grid.rows != Rows || msg_grid.cols != Columns
                        || !msg_grid.chars)) {
     // TODO(bfredl): eventually should be set to "invalid". I e all callers
     // will use the grid including clear to EOS if necessary.
@@ -174,9 +174,9 @@ void msg_grid_validate(void)
 
     // Tricky: allow resize while pager is active
     int pos = msg_scrolled ? msg_grid_pos : Rows - p_ch;
-    ui_comp_put_grid(&msg_grid, pos, 0, msg_grid.Rows, msg_grid.Columns,
+    ui_comp_put_grid(&msg_grid, pos, 0, msg_grid.rows, msg_grid.cols,
                      false, true);
-    ui_call_grid_resize(msg_grid.handle, msg_grid.Columns, msg_grid.Rows);
+    ui_call_grid_resize(msg_grid.handle, msg_grid.cols, msg_grid.rows);
 
     msg_grid.throttled = false;  // don't throttle in 'cmdheight' area
     msg_scrolled_at_flush = msg_scrolled;
@@ -2320,10 +2320,10 @@ void msg_scroll_up(bool may_throttle)
     if (msg_grid_pos > 0) {
       msg_grid_set_pos(msg_grid_pos - 1, true);
     } else {
-      grid_del_lines(&msg_grid, 0, 1, msg_grid.Rows, 0, msg_grid.Columns);
+      grid_del_lines(&msg_grid, 0, 1, msg_grid.rows, 0, msg_grid.cols);
       memmove(msg_grid.dirty_col, msg_grid.dirty_col + 1,
-              (msg_grid.Rows - 1) * sizeof(*msg_grid.dirty_col));
-      msg_grid.dirty_col[msg_grid.Rows - 1] = 0;
+              (msg_grid.rows - 1) * sizeof(*msg_grid.dirty_col));
+      msg_grid.dirty_col[msg_grid.rows - 1] = 0;
     }
   } else {
     grid_del_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
@@ -2356,7 +2356,7 @@ void msg_scroll_flush(void)
     msg_grid.throttled = false;
     int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
     assert(pos_delta >= 0);
-    int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.Rows);
+    int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.rows);
 
     if (pos_delta > 0) {
       ui_ext_msg_set_pos(msg_grid_pos, true);
@@ -2374,7 +2374,7 @@ void msg_scroll_flush(void)
     for (int i = MAX(Rows - MAX(delta, 1), 0); i < Rows; i++) {
       int row = i - msg_grid_pos;
       assert(row >= 0);
-      ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.Columns,
+      ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.cols,
               HL_ATTR(HLF_MSG), false);
       msg_grid.dirty_col[row] = 0;
     }
@@ -2400,9 +2400,9 @@ void msg_reset_scroll(void)
     clear_cmdline = true;
     if (msg_grid.chars) {
       // non-displayed part of msg_grid is considered invalid.
-      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.Rows); i++) {
+      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.rows); i++) {
         grid_clear_line(&msg_grid, msg_grid.line_offset[i],
-                        msg_grid.Columns, false);
+                        msg_grid.cols, false);
       }
     }
   } else {

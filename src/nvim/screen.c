@@ -382,9 +382,9 @@ int update_screen(int type)
     int valid = MAX(Rows - msg_scrollsize(), 0);
     if (msg_grid.chars) {
       // non-displayed part of msg_grid is considered invalid.
-      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.Rows); i++) {
+      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.rows); i++) {
         grid_clear_line(&msg_grid, msg_grid.line_offset[i],
-                        msg_grid.Columns, false);
+                        msg_grid.cols, false);
       }
     }
     if (msg_use_msgsep()) {
@@ -757,7 +757,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   }
 
   // Window is zero-height: Only need to draw the separator
-  if (wp->w_grid.Rows == 0) {
+  if (wp->w_grid.rows == 0) {
     // draw the horizontal separator below this window
     draw_hsep_win(wp);
     draw_sep_connectors_win(wp);
@@ -766,7 +766,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   }
 
   // Window is zero-width: Only need to draw the separator.
-  if (wp->w_grid.Columns == 0) {
+  if (wp->w_grid.cols == 0) {
     // draw the vertical separator right of this window
     draw_vsep_win(wp);
     draw_sep_connectors_win(wp);
@@ -965,7 +965,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         j = 0;
         for (ln = wp->w_topline; ln < wp->w_lines[0].wl_lnum; ln++) {
           j++;
-          if (j >= wp->w_grid.Rows - 2) {
+          if (j >= wp->w_grid.rows - 2) {
             break;
           }
           (void)hasFoldingWin(wp, ln, NULL, &ln, true, NULL);
@@ -973,13 +973,13 @@ static void win_update(win_T *wp, DecorProviders *providers)
       } else {
         j = wp->w_lines[0].wl_lnum - wp->w_topline;
       }
-      if (j < wp->w_grid.Rows - 2) {               // not too far off
+      if (j < wp->w_grid.rows - 2) {               // not too far off
         i = plines_m_win(wp, wp->w_topline, wp->w_lines[0].wl_lnum - 1);
         // insert extra lines for previously invisible filler lines
         if (wp->w_lines[0].wl_lnum != wp->w_topline) {
           i += win_get_fill(wp, wp->w_lines[0].wl_lnum) - wp->w_old_topfill;
         }
-        if (i != 0 && i < wp->w_grid.Rows - 2) {  // less than a screen off
+        if (i != 0 && i < wp->w_grid.rows - 2) {  // less than a screen off
           // Try to insert the correct number of lines.
           // If not the last window, delete the lines at the bottom.
           // win_ins_lines may fail when the terminal can't do it.
@@ -992,8 +992,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
             // Move the entries that were scrolled, disable
             // the entries for the lines to be redrawn.
-            if ((wp->w_lines_valid += j) > wp->w_grid.Rows) {
-              wp->w_lines_valid = wp->w_grid.Rows;
+            if ((wp->w_lines_valid += j) > wp->w_grid.rows) {
+              wp->w_lines_valid = wp->w_grid.rows;
             }
             for (idx = wp->w_lines_valid; idx - j >= 0; idx--) {
               wp->w_lines[idx] = wp->w_lines[idx - j];
@@ -1046,7 +1046,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         row -= wp->w_topfill;
         if (row > 0) {
           win_scroll_lines(wp, 0, -row);
-          bot_start = wp->w_grid.Rows - row;
+          bot_start = wp->w_grid.rows - row;
         }
         if ((row == 0 || bot_start < 999) && wp->w_lines_valid != 0) {
           /*
@@ -1062,7 +1062,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
             /* stop at line that didn't fit, unless it is still
              * valid (no lines deleted) */
             if (row > 0 && bot_start + row
-                + (int)wp->w_lines[j].wl_size > wp->w_grid.Rows) {
+                + (int)wp->w_lines[j].wl_size > wp->w_grid.rows) {
               wp->w_lines_valid = idx + 1;
               break;
             }
@@ -1087,18 +1087,18 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
     // When starting redraw in the first line, redraw all lines.
     if (mid_start == 0) {
-      mid_end = wp->w_grid.Rows;
+      mid_end = wp->w_grid.rows;
     }
   } else {
     // Not VALID or INVERTED: redraw all lines.
     mid_start = 0;
-    mid_end = wp->w_grid.Rows;
+    mid_end = wp->w_grid.rows;
   }
 
   if (type == SOME_VALID) {
     // SOME_VALID: redraw all lines.
     mid_start = 0;
-    mid_end = wp->w_grid.Rows;
+    mid_end = wp->w_grid.rows;
     type = NOT_VALID;
   }
 
@@ -1285,7 +1285,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         }
       }
       srow += mid_start;
-      mid_end = wp->w_grid.Rows;
+      mid_end = wp->w_grid.rows;
       for (; idx < wp->w_lines_valid; idx++) {                  // find end
         if (wp->w_lines[idx].wl_valid
             && wp->w_lines[idx].wl_lnum >= to + 1) {
@@ -1338,7 +1338,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   for (;;) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
-    if (row == wp->w_grid.Rows) {
+    if (row == wp->w_grid.rows) {
       didline = true;
       break;
     }
@@ -1443,7 +1443,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
               new_rows += plines_win(wp, l, true);
             }
             j++;
-            if (new_rows > wp->w_grid.Rows - row - 2) {
+            if (new_rows > wp->w_grid.rows - row - 2) {
               // it's getting too much, must redraw the rest
               new_rows = 9999;
               break;
@@ -1455,17 +1455,17 @@ static void win_update(win_T *wp, DecorProviders *providers)
              * remaining text or scrolling fails, must redraw the
              * rest.  If scrolling works, must redraw the text
              * below the scrolled text. */
-            if (row - xtra_rows >= wp->w_grid.Rows - 2) {
+            if (row - xtra_rows >= wp->w_grid.rows - 2) {
               mod_bot = MAXLNUM;
             } else {
               win_scroll_lines(wp, row, xtra_rows);
-              bot_start = wp->w_grid.Rows + xtra_rows;
+              bot_start = wp->w_grid.rows + xtra_rows;
             }
           } else if (xtra_rows > 0) {
             /* May scroll text down.  If there is not enough
              * remaining text of scrolling fails, must redraw the
              * rest. */
-            if (row + xtra_rows >= wp->w_grid.Rows - 2) {
+            if (row + xtra_rows >= wp->w_grid.rows - 2) {
               mod_bot = MAXLNUM;
             } else {
               win_scroll_lines(wp, row + old_rows, xtra_rows);
@@ -1493,7 +1493,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
                 wp->w_lines[j] = wp->w_lines[i];
                 // stop at a line that won't fit
                 if (x + (int)wp->w_lines[j].wl_size
-                    > wp->w_grid.Rows) {
+                    > wp->w_grid.rows) {
                   wp->w_lines_valid = j + 1;
                   break;
                 }
@@ -1507,8 +1507,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
                            // move entries in w_lines[] downwards
               j -= i;
               wp->w_lines_valid += j;
-              if (wp->w_lines_valid > wp->w_grid.Rows) {
-                wp->w_lines_valid = wp->w_grid.Rows;
+              if (wp->w_lines_valid > wp->w_grid.rows) {
+                wp->w_lines_valid = wp->w_grid.rows;
               }
               for (i = wp->w_lines_valid; i - j >= idx; i--) {
                 wp->w_lines[i] = wp->w_lines[i - j];
@@ -1539,11 +1539,11 @@ static void win_update(win_T *wp, DecorProviders *providers)
           && wp->w_lines[idx].wl_lnum == lnum
           && lnum > wp->w_topline
           && !(dy_flags & (DY_LASTLINE | DY_TRUNCATE))
-          && srow + wp->w_lines[idx].wl_size > wp->w_grid.Rows
+          && srow + wp->w_lines[idx].wl_size > wp->w_grid.rows
           && win_get_fill(wp, lnum) == 0) {
         // This line is not going to fit.  Don't draw anything here,
         // will draw "@  " lines below.
-        row = wp->w_grid.Rows + 1;
+        row = wp->w_grid.rows + 1;
       } else {
         prepare_search_hl(wp, &search_hl, lnum);
         // Let the syntax stuff know we skipped a few lines.
@@ -1554,7 +1554,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
         // Display one line
         row = win_line(wp, lnum, srow,
-                       foldinfo.fi_lines ? srow : wp->w_grid.Rows,
+                       foldinfo.fi_lines ? srow : wp->w_grid.rows,
                        mod_top == 0, false, foldinfo, &line_providers);
 
         if (foldinfo.fi_lines == 0) {
@@ -1573,7 +1573,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       wp->w_lines[idx].wl_lnum = lnum;
       wp->w_lines[idx].wl_valid = true;
 
-      if (row > wp->w_grid.Rows) {         // past end of grid
+      if (row > wp->w_grid.rows) {         // past end of grid
         // we may need the size of that too long line later on
         if (dollar_vcol == -1) {
           wp->w_lines[idx].wl_size = plines_win(wp, lnum, true);
@@ -1591,13 +1591,13 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // 'relativenumber' set and cursor moved vertically: The
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true,
+        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, true,
                        info, &line_providers);
       }
 
       // This line does not need to be drawn, advance to the next one.
       row += wp->w_lines[idx++].wl_size;
-      if (row > wp->w_grid.Rows) {  // past end of screen
+      if (row > wp->w_grid.rows) {  // past end of screen
         break;
       }
       lnum = wp->w_lines[idx - 1].wl_lastlnum + 1;
@@ -1645,41 +1645,41 @@ static void win_update(win_T *wp, DecorProviders *providers)
        * Don't overwrite it, it can be edited.
        */
       wp->w_botline = lnum + 1;
-    } else if (win_get_fill(wp, lnum) >= wp->w_grid.Rows - srow) {
+    } else if (win_get_fill(wp, lnum) >= wp->w_grid.rows - srow) {
       // Window ends in filler lines.
       wp->w_botline = lnum;
-      wp->w_filler_rows = wp->w_grid.Rows - srow;
+      wp->w_filler_rows = wp->w_grid.rows - srow;
     } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
-      int scr_row = wp->w_grid.Rows - 1;
+      int scr_row = wp->w_grid.rows - 1;
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      grid_puts_len(&wp->w_grid, (char_u *)"@@", MIN(wp->w_grid.Columns, 2), scr_row, 0, at_attr);
+      grid_puts_len(&wp->w_grid, (char_u *)"@@", MIN(wp->w_grid.cols, 2), scr_row, 0, at_attr);
 
-      grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.Columns,
+      grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.cols,
                 '@', ' ', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
-      int start_col = wp->w_grid.Columns - 3;
+      int start_col = wp->w_grid.cols - 3;
 
       // Last line isn't finished: Display "@@@" at the end.
-      grid_fill(&wp->w_grid, wp->w_grid.Rows - 1, wp->w_grid.Rows,
-                MAX(start_col, 0), wp->w_grid.Columns, '@', '@', at_attr);
+      grid_fill(&wp->w_grid, wp->w_grid.rows - 1, wp->w_grid.rows,
+                MAX(start_col, 0), wp->w_grid.cols, '@', '@', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.Rows, HLF_AT);
+      win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.rows, HLF_AT);
       wp->w_botline = lnum;
     }
   } else {
     if (eof) {  // we hit the end of the file
       wp->w_botline = buf->b_ml.ml_line_count + 1;
       j = win_get_fill(wp, wp->w_botline);
-      if (j > 0 && !wp->w_botfill && row < wp->w_grid.Rows) {
+      if (j > 0 && !wp->w_botfill && row < wp->w_grid.rows) {
         // Display filler text below last line. win_line() will check
         // for ml_line_count+1 and only draw filler lines
         foldinfo_T info = FOLDINFO_INIT;
-        row = win_line(wp, wp->w_botline, row, wp->w_grid.Rows,
+        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows,
                        false, false, info, &line_providers);
       }
     } else if (dollar_vcol == -1) {
@@ -1688,7 +1688,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
     // make sure the rest of the screen is blank
     // write the 'eob' character to rows that aren't part of the file.
-    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, row, wp->w_grid.Rows,
+    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, row, wp->w_grid.rows,
                  HLF_EOB);
   }
 
@@ -1773,8 +1773,8 @@ static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row, 
 {
   int nn = off + width;
 
-  if (nn > wp->w_grid.Columns) {
-    nn = wp->w_grid.Columns;
+  if (nn > wp->w_grid.cols) {
+    nn = wp->w_grid.cols;
   }
 
   if (wp->w_p_rl) {
@@ -1823,7 +1823,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, i
     grid_fill(&wp->w_grid, row, endrow, W_ENDCOL(wp) - 1 - n, W_ENDCOL(wp) - n,
               c1, c2, attr);
   } else {
-    grid_fill(&wp->w_grid, row, endrow, n, wp->w_grid.Columns, c1, c2, attr);
+    grid_fill(&wp->w_grid, row, endrow, n, wp->w_grid.cols, c1, c2, attr);
   }
 
   set_empty_rows(wp, row);
@@ -1847,7 +1847,7 @@ static int compute_foldcolumn(win_T *wp, int col)
 {
   int fdc = win_fdccol_count(wp);
   int wmw = wp == curwin && p_wmw == 0 ? 1 : p_wmw;
-  int wwidth = wp->w_grid.Columns;
+  int wwidth = wp->w_grid.cols;
 
   if (fdc > wwidth - (col + wmw)) {
     fdc = wwidth - (col + wmw);
@@ -2631,7 +2631,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     // Rightleft window: process the text in the normal direction, but put
     // it in linebuf_char[off] from right to left.  Start at the
     // rightmost column of the window.
-    col = grid->Columns - 1;
+    col = grid->cols - 1;
     off += col;
   }
 
@@ -2813,7 +2813,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           if (wp->w_p_rl) {
             n_extra = col + 1;
           } else {
-            n_extra = grid->Columns - col;
+            n_extra = grid->cols - col;
           }
           char_attr = 0;
         } else if (filler_todo > 0) {
@@ -2828,7 +2828,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           if (wp->w_p_rl) {
             n_extra = col + 1;
           } else {
-            n_extra = grid->Columns - col;
+            n_extra = grid->cols - col;
           }
           char_attr = win_hl_attr(wp, HLF_DED);
         }
@@ -2902,15 +2902,15 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           && vcol >= (long)wp->w_virtcol)
          || (number_only && draw_state > WL_NR))
         && filler_todo <= 0) {
-      draw_virt_text(wp, buf, win_col_offset, &col, grid->Columns, row);
-      grid_put_linebuf(grid, row, 0, col, -grid->Columns, wp->w_p_rl, wp,
+      draw_virt_text(wp, buf, win_col_offset, &col, grid->cols, row);
+      grid_put_linebuf(grid, row, 0, col, -grid->cols, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
         row = wp->w_cline_row + wp->w_cline_height;
       } else {
-        row = grid->Rows;
+        row = grid->rows;
       }
       break;
     }
@@ -2938,19 +2938,19 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
     if (draw_state == WL_LINE
         && has_fold
-        && col < grid->Columns
+        && col < grid->cols
         && n_extra == 0
         && row == startrow) {
       // fill rest of line with 'fold'
       c_extra = wp->w_p_fcs_chars.fold;
       c_final = NUL;
 
-      n_extra = wp->w_p_rl ? (col + 1) : (grid->Columns - col);
+      n_extra = wp->w_p_rl ? (col + 1) : (grid->cols - col);
     }
 
     if (draw_state == WL_LINE
         && has_fold
-        && col >= grid->Columns
+        && col >= grid->cols
         && n_extra != 0
         && row == startrow) {
       // Truncate the folding.
@@ -3079,7 +3079,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
 
         // If a double-width char doesn't fit display a '>' in the last column.
-        if ((wp->w_p_rl ? (col <= 0) : (col >= grid->Columns - 1))
+        if ((wp->w_p_rl ? (col <= 0) : (col >= grid->cols - 1))
             && utf_char2cells(mb_c) == 2) {
           c = '>';
           mb_c = c;
@@ -3193,7 +3193,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // last column; the character is displayed at the start of the
       // next line.
       if ((wp->w_p_rl ? (col <= 0) :
-           (col >= grid->Columns - 1))
+           (col >= grid->cols - 1))
           && utf_char2cells(mb_c) == 2) {
         c = '>';
         mb_c = c;
@@ -3398,7 +3398,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             }
           }
 
-          if (c == TAB && n_extra + col > grid->Columns) {
+          if (c == TAB && n_extra + col > grid->cols) {
             n_extra = tabstop_padding(vcol, wp->w_buffer->b_p_ts,
                                       wp->w_buffer->b_p_vts_array) - 1;
           }
@@ -3601,7 +3601,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                        || ((fromcol >= 0 || fromcol_prev >= 0)
                            && tocol > vcol
                            && VIsual_mode != Ctrl_V
-                           && (wp->w_p_rl ? (col >= 0) : (col < grid->Columns))
+                           && (wp->w_p_rl ? (col >= 0) : (col < grid->cols))
                            && !(noinvcur
                                 && lnum == wp->w_cursor.lnum
                                 && (colnr_T)vcol == wp->w_virtcol)))
@@ -3673,7 +3673,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                    && virtual_active()
                    && tocol != MAXCOL
                    && vcol < tocol
-                   && (wp->w_p_rl ? (col >= 0) : (col < grid->Columns))) {
+                   && (wp->w_p_rl ? (col >= 0) : (col < grid->cols))) {
           c = ' ';
           ptr--;  // put it back at the NUL
         }
@@ -3755,7 +3755,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         && conceal_cursor_line(wp)
         && (int)wp->w_virtcol <= vcol + n_skip) {
       if (wp->w_p_rl) {
-        wp->w_wcol = grid->Columns - col + boguscols - 1;
+        wp->w_wcol = grid->cols - col + boguscols - 1;
       } else {
         wp->w_wcol = col - boguscols;
       }
@@ -3827,7 +3827,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             n = 1;
           }
         } else {
-          if (col >= grid->Columns) {
+          if (col >= grid->cols) {
             n = -1;
           }
         }
@@ -3895,7 +3895,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
-            (long)grid->Columns * (row - startrow + 1) + v
+            (long)grid->cols * (row - startrow + 1) + v
             && lnum != wp->w_cursor.lnum)
            || draw_color_col || line_attr_lowprio || line_attr
            || diff_hlf != (hlf_T)0 || has_virttext)) {
@@ -3933,7 +3933,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
         int col_stride = wp->w_p_rl ? -1 : 1;
 
-        while (wp->w_p_rl ? col >= 0 : col < grid->Columns) {
+        while (wp->w_p_rl ? col >= 0 : col < grid->cols) {
           schar_from_ascii(linebuf_char[off], ' ');
           col += col_stride;
           if (draw_color_col) {
@@ -3966,7 +3966,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         // terminal buffers may need to highlight beyond the end of the
         // logical line
         int n = wp->w_p_rl ? -1 : 1;
-        while (col >= 0 && col < grid->Columns) {
+        while (col >= 0 && col < grid->cols) {
           schar_from_ascii(linebuf_char[off], ' ');
           linebuf_attr[off] = vcol >= TERM_ATTRS_MAX ? 0 : term_attrs[vcol];
           off += n;
@@ -3975,8 +3975,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
       }
 
-      draw_virt_text(wp, buf, win_col_offset, &col, grid->Columns, row);
-      grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,
+      draw_virt_text(wp, buf, win_col_offset, &col, grid->cols, row);
+      grid_put_linebuf(grid, row, 0, col, grid->cols, wp->w_p_rl, wp,
                        wp->w_hl_attr_normal, false);
       row++;
 
@@ -4001,7 +4001,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         && wp->w_p_list
         && !wp->w_p_wrap
         && filler_todo <= 0
-        && (wp->w_p_rl ? col == 0 : col == grid->Columns - 1)
+        && (wp->w_p_rl ? col == 0 : col == grid->cols - 1)
         && !has_fold
         && (*ptr != NUL
             || lcs_eol_one > 0
@@ -4191,7 +4191,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
      * At end of screen line and there is more to come: Display the line
      * so far.  If there is no more to display it is caught above.
      */
-    if ((wp->w_p_rl ? (col < 0) : (col >= grid->Columns))
+    if ((wp->w_p_rl ? (col < 0) : (col >= grid->cols))
         && foldinfo.fi_lines == 0
         && (draw_state != WL_LINE
             || *ptr != NUL
@@ -4204,7 +4204,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                   && filler_todo <= 0          // Not drawing diff filler lines.
                   && lcs_eol_one != -1         // Haven't printed the lcs_eol character.
                   && row != endrow - 1         // Not the last line being displayed.
-                  && (grid->Columns == Columns  // Window spans the width of the screen,
+                  && (grid->cols == Columns  // Window spans the width of the screen,
                       || ui_has(kUIMultigrid))  // or has dedicated grid.
                   && !wp->w_p_rl;              // Not right-to-left.
 
@@ -4216,13 +4216,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           assert(i >= 0);
           int offset = kv_A(virt_lines, i).left_col ? 0 : win_col_offset;
           draw_virt_text_item(buf, offset, kv_A(virt_lines, i).line,
-                              kHlModeReplace, grid->Columns, offset);
+                              kHlModeReplace, grid->cols, offset);
         }
       } else {
-        draw_virt_text(wp, buf, win_col_offset, &draw_col, grid->Columns, row);
+        draw_virt_text(wp, buf, win_col_offset, &draw_col, grid->cols, row);
       }
 
-      grid_put_linebuf(grid, row, 0, draw_col, grid->Columns, wp->w_p_rl,
+      grid_put_linebuf(grid, row, 0, draw_col, grid->cols, wp->w_p_rl,
                        wp, wp->w_hl_attr_normal, wrap);
       if (wrap) {
         ScreenGrid *current_grid = grid;
@@ -4249,7 +4249,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
       // When the window is too narrow draw all "@" lines.
       if (draw_state != WL_LINE && filler_todo <= 0) {
-        win_draw_end(wp, '@', ' ', true, row, wp->w_grid.Rows, HLF_AT);
+        win_draw_end(wp, '@', ' ', true, row, wp->w_grid.rows, HLF_AT);
         row = endrow;
       }
 
@@ -4262,7 +4262,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       col = 0;
       off = 0;
       if (wp->w_p_rl) {
-        col = grid->Columns - 1;  // col is not used if breaking!
+        col = grid->cols - 1;  // col is not used if breaking!
         off += col;
       }
 
@@ -5589,7 +5589,7 @@ void win_grid_alloc(win_T *wp)
   bool want_allocation = ui_has(kUIMultigrid) || wp->w_floating;
   bool has_allocation = (grid_allocated->chars != NULL);
 
-  if (grid->Rows != rows) {
+  if (grid->rows != rows) {
     wp->w_lines_valid = 0;
     xfree(wp->w_lines);
     wp->w_lines = xcalloc(rows + 1, sizeof(wline_T));
@@ -5597,8 +5597,8 @@ void win_grid_alloc(win_T *wp)
 
   int was_resized = false;
   if (want_allocation && (!has_allocation
-                          || grid_allocated->Rows != total_rows
-                          || grid_allocated->Columns != total_cols)) {
+                          || grid_allocated->rows != total_rows
+                          || grid_allocated->cols != total_cols)) {
     grid_alloc(grid_allocated, total_rows, total_cols,
                wp->w_grid_alloc.valid, false);
     grid_allocated->valid = true;
@@ -5617,8 +5617,8 @@ void win_grid_alloc(win_T *wp)
     grid_allocated->valid = true;
   }
 
-  grid->Rows = rows;
-  grid->Columns = cols;
+  grid->rows = rows;
+  grid->cols = cols;
 
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
@@ -5639,7 +5639,7 @@ void win_grid_alloc(win_T *wp)
   // - the UI wants multigrid event (necessary)
   if ((send_grid_resize || was_resized) && want_allocation) {
     ui_call_grid_resize(grid_allocated->handle,
-                        grid_allocated->Columns, grid_allocated->Rows);
+                        grid_allocated->cols, grid_allocated->rows);
   }
 }
 
@@ -5660,7 +5660,7 @@ void grid_assign_handle(ScreenGrid *grid)
 ///
 /// There may be some time between setting Rows and Columns and (re)allocating
 /// default_grid arrays.  This happens when starting up and when
-/// (manually) changing the shell size.  Always use default_grid.Rows and
+/// (manually) changing the shell size.  Always use default_grid.rows and
 /// default_grid.Columns to access items in default_grid.chars[].  Use Rows
 /// and Columns for positioning text etc. where the final size of the shell is
 /// needed.
@@ -5681,8 +5681,8 @@ retry:
   // when Rows and Columns have been set and we have started doing full
   // screen stuff.
   if ((default_grid.chars != NULL
-       && Rows == default_grid.Rows
-       && Columns == default_grid.Columns
+       && Rows == default_grid.rows
+       && Columns == default_grid.cols
        )
       || Rows == 0
       || Columns == 0
@@ -5781,9 +5781,9 @@ void screenclear(void)
   }
 
   // blank out the default grid
-  for (i = 0; i < default_grid.Rows; i++) {
+  for (i = 0; i < default_grid.rows; i++) {
     grid_clear_line(&default_grid, default_grid.line_offset[i],
-                    default_grid.Columns, true);
+                    default_grid.cols, true);
     default_grid.line_wraps[i] = false;
   }
 
@@ -5867,16 +5867,16 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
   }
 
   // No lines are being moved, just draw over the entire area
-  if (row + abs(line_count) >= wp->w_grid.Rows) {
+  if (row + abs(line_count) >= wp->w_grid.rows) {
     return;
   }
 
   if (line_count < 0) {
     grid_del_lines(&wp->w_grid, row, -line_count,
-                   wp->w_grid.Rows, 0, wp->w_grid.Columns);
+                   wp->w_grid.rows, 0, wp->w_grid.cols);
   } else {
     grid_ins_lines(&wp->w_grid, row, line_count,
-                   wp->w_grid.Rows, 0, wp->w_grid.Columns);
+                   wp->w_grid.rows, 0, wp->w_grid.cols);
   }
 }
 
@@ -5915,7 +5915,7 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   // Shift line_offset[] line_count down to reflect the inserted lines.
   // Clear the inserted lines.
   for (i = 0; i < line_count; i++) {
-    if (width != grid->Columns) {
+    if (width != grid->cols) {
       // need to copy part of a line
       j = end - 1 - i;
       while ((j -= line_count) >= row) {
@@ -5933,7 +5933,7 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
       }
       grid->line_offset[j + line_count] = temp;
       grid->line_wraps[j + line_count] = false;
-      grid_clear_line(grid, temp, grid->Columns, false);
+      grid_clear_line(grid, temp, grid->cols, false);
     }
   }
 
@@ -5964,7 +5964,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
   // Now shift line_offset[] line_count up to reflect the deleted lines.
   // Clear the inserted lines.
   for (i = 0; i < line_count; i++) {
-    if (width != grid->Columns) {
+    if (width != grid->cols) {
       // need to copy part of a line
       j = row + i;
       while ((j += line_count) <= end - 1) {
@@ -5983,7 +5983,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
       }
       grid->line_offset[j - line_count] = temp;
       grid->line_wraps[j - line_count] = false;
-      grid_clear_line(grid, temp, grid->Columns, false);
+      grid_clear_line(grid, temp, grid->cols, false);
     }
   }
 

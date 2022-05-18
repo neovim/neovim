@@ -84,7 +84,7 @@ EXTERN struct nvim_stats_s {
 //                      0          not starting anymore
 
 // Number of Rows and Columns in the screen.
-// Note: Use default_grid.Rows and default_grid.Columns to access items in
+// Note: Use default_grid.rows and default_grid.cols to access items in
 // default_grid.chars[]. They may have different values when the screen
 // wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
 // up).
