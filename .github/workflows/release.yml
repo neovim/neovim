@@ -21,7 +21,7 @@ jobs:
       version: ${{ steps.build.outputs.version }}
       release: ${{ steps.build.outputs.release }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Install dependencies
@@ -41,12 +41,12 @@ jobs:
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
           cd "$GITHUB_WORKSPACE/build/"
           cpack -C $NVIM_BUILD_TYPE
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: nvim-linux64
           path: build/nvim-linux64.tar.gz
           retention-days: 1
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: nvim-linux64
           path: build/nvim-linux64.deb
@@ -55,7 +55,7 @@ jobs:
   appimage:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Install dependencies
@@ -66,12 +66,12 @@ jobs:
         run: CC=gcc-11 make appimage-latest
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         run: CC=gcc-11 make appimage-nightly
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: appimage
           path: build/bin/nvim.appimage
           retention-days: 1
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: appimage
           path: build/bin/nvim.appimage.zsync
@@ -80,7 +80,7 @@ jobs:
   macOS:
     runs-on: macos-10.15
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Install brew packages
@@ -112,7 +112,7 @@ jobs:
             fi
           done
           tar cfz nvim-macos.tar.gz nvim-osx64
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: nvim-macos
           path: build/release/nvim-macos.tar.gz
@@ -130,18 +130,18 @@ jobs:
             archive: nvim-win64
     name: windows (${{ matrix.config }})
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - run: powershell ci\build.ps1 -NoTests
         env:
           CONFIGURATION: ${{ matrix.config }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.archive }}
           path: build/${{ matrix.archive }}.zip
           retention-days: 1
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.archive }}
           path: build/${{ matrix.archive }}.msi
@@ -157,9 +157,9 @@ jobs:
     steps:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
 
       - name: Install dependencies
         run: |
