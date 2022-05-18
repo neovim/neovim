@@ -181,6 +181,10 @@ static bool ses_do_frame(const frame_T *fr)
 /// @return  non-zero if window "wp" is to be stored in the Session.
 static int ses_do_win(win_T *wp)
 {
+  // Skip floating windows to avoid issues when restoring the Session. #18432
+  if (wp->w_floating) {
+    return false;
+  }
   if (wp->w_buffer->b_fname == NULL
       // When 'buftype' is "nofile" can't restore the window contents.
       || (!wp->w_buffer->terminal && bt_nofile(wp->w_buffer))) {
