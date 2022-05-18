@@ -2,6 +2,9 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
+local insert = helpers.insert
+local meths = helpers.meths
+local eq = helpers.eq
 
 describe('winbar', function()
   local screen
@@ -176,5 +179,19 @@ describe('winbar', function()
       {4:[No Name]                                                   }|
                                                                   |
     ]])
+  end)
+  it('sets correct position on mouse click', function()
+    insert[[
+      line 1
+      line 2
+      line 3
+      line 4
+      line -42
+      line i
+      line sin(theta)
+      line 8
+    ]]
+    meths.input_mouse('left', 'press', '', 0, 5, 1)
+    eq({5, 1}, meths.win_get_cursor(0))
   end)
 end)
