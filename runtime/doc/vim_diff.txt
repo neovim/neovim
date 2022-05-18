@@ -548,11 +548,13 @@ Options:
   'maxmemtot' Nvim delegates memory-management to the OS.
   'maxcombine' (6 is always used)
   *'prompt'* *'noprompt'*
+  *'remap'* *'noremap'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
+  *'terse'* *'noterse'* (Add "s" to 'shortmess' instead)
   'textauto'
   'textmode'
   *'toolbar'* *'tb'*

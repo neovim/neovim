@@ -824,7 +824,6 @@ Short explanation of each option:		*option-list*
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting
 'regexpengine'	  're'	    default regexp engine to use
 'relativenumber'  'rnu'	    show relative line number in front of each line
-'remap'			    allow mappings to work recursively
 'report'		    threshold for reporting nr. of lines changed
 'revins'	  'ri'	    inserting characters will work backwards
 'rightleft'	  'rl'	    window is right-to-left oriented
@@ -896,7 +895,6 @@ Short explanation of each option:		*option-list*
 'tagstack'	  'tgst'    push tags onto the tag stack
 'term'			    name of the terminal
 'termbidi'	  'tbidi'   terminal takes care of bi-directionality
-'terse'			    shorten some messages
 'textwidth'	  'tw'	    maximum width of text that is being inserted
 'thesaurus'	  'tsr'     list of thesaurus files for keyword completion
 'thesaurusfunc'	  'tsrfu'   function to be used for thesaurus completion

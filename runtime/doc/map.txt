@@ -796,9 +796,8 @@ command.  For example: >
    :noremap j k
 This will exchange the cursor up and down commands.
 
-With the normal :map command, when the 'remap' option is on, mapping takes
-place until the text is found not to be a part of a {lhs}.  For example, if
-you use: >
+With the normal :map command mapping takes place until the text is found not
+to be a part of a {lhs}.  For example, if you use: >
    :map x y
    :map y x
 Vim will replace x with y, and then y with x, etc.  When this has happened

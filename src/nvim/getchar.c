@@ -1881,8 +1881,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   if (no_mapping == 0 && maphash_valid
       && (no_zero_mapping == 0 || tb_c1 != '0')
       && (typebuf.tb_maplen == 0 || is_plug_map
-          || (p_remap
-              && !(typebuf.tb_noremap[typebuf.tb_off] & (RM_NONE|RM_ABBR))))
+          || (!(typebuf.tb_noremap[typebuf.tb_off] & (RM_NONE|RM_ABBR))))
       && !(p_paste && (State & (MODE_INSERT | MODE_CMDLINE)))
       && !(State == MODE_HITRETURN && (tb_c1 == CAR || tb_c1 == ' '))
       && State != MODE_ASKMORE
