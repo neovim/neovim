@@ -638,3 +638,16 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
 
   return true;
 }
+
+void nvim__win_set_bar( Window window, Boolean bar, String thebar, Error *err)
+{
+  win_T *wp = find_window_by_handle(window, err);
+  if (!wp) {
+    return;
+  }
+  wp->w_winbar = bar ? 1 : 0;
+  xfree(wp->w_winbar_line);
+  wp->w_winbar_line = bar ? xstrdup(thebar.size ? thebar.data : "") : NULL;
+  win_set_inner_size(wp);
+  redraw_later(wp, NOT_VALID);
+}

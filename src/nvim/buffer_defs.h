@@ -1290,6 +1290,11 @@ struct window_S {
   int w_vsep_width;                 // Number of vertical separator columns (0 or 1).
   pos_save_T w_save_cursor;         // backup of cursor pos and topline
 
+  int w_winrow_off;  ///< offset from winrow to the inner window area
+  int w_wincol_off;  ///< offset from wincol to the inner window area
+                     ///< this includes float border but excludes special columns
+                     ///< implemented in win_line() (i.e. signs, folds, numbers)
+
   // inner size of window, which can be overridden by external UI
   int w_height_inner;
   int w_width_inner;
@@ -1301,6 +1306,9 @@ struct window_S {
   // outer size of window grid, including border
   int w_height_outer;
   int w_width_outer;
+
+  int w_winbar; // HAIIIII
+  char *w_winbar_line;
 
   /*
    * === start of cached values ====

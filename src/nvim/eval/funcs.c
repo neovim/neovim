@@ -3608,11 +3608,12 @@ static void f_getmousepos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (wp != NULL) {
     int height = wp->w_height + wp->w_hsep_height + wp->w_status_height;
     // The height is adjusted by 1 when there is a bottom border. This is not
-    // necessary for a top border since `row` starts at -1 in that case.
+    // necessary for a top border since `row` already is adjusted for
+    // wp->w_winrow_off
     if (row < height + wp->w_border_adj[2]) {
       winid = wp->handle;
-      winrow = row + 1 + wp->w_border_adj[0];  // Adjust by 1 for top border
-      wincol = col + 1 + wp->w_border_adj[3];  // Adjust by 1 for left border
+      winrow = row + 1 + wp->w_winrow_off;  // Adjust by 1 for top border
+      wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
         (void)mouse_comp_pos(wp, &row, &col, &lnum);
         col = vcol2col(wp, lnum, col);
