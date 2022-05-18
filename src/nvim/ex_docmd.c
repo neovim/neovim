@@ -345,7 +345,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   // here.  The value of 200 allows nested function calls, ":source", etc.
   // Allow 200 or 'maxfuncdepth', whatever is larger.
   if (call_depth >= 200 && call_depth >= p_mfd) {
-    emsg(_("E169: Command too recursive"));
+    emsg(_(e_command_too_recursive));
     // When converting to an exception, we do not include the command name
     // since this is not an error of the specific command.
     do_errthrow((cstack_T *)NULL, NULL);

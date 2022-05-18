@@ -804,6 +804,12 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     ccline.cmdlen = s->indent;
   }
 
+  if (cmdline_level == 50) {
+    // Somehow got into a loop recursively calling getcmdline(), bail out.
+    emsg(_(e_command_too_recursive));
+    goto theend;
+  }
+
   ExpandInit(&s->xpc);
   ccline.xpc = &s->xpc;
 
@@ -995,11 +1001,12 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   State = s->save_State;
   setmouse();
   ui_cursor_shape();            // may show different cursor shape
+  sb_text_end_cmdline();
+
+theend:
   xfree(s->save_p_icm);
   xfree(ccline.last_colors.cmdbuff);
   kv_destroy(ccline.last_colors.colors);
-
-  sb_text_end_cmdline();
 
   char_u *p = ccline.cmdbuff;
 
