@@ -824,7 +824,6 @@ Short explanation of each option:		*option-list*
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting
 'regexpengine'	  're'	    default regexp engine to use
 'relativenumber'  'rnu'	    show relative line number in front of each line
-'remap'			    allow mappings to work recursively
 'report'		    threshold for reporting nr. of lines changed
 'revins'	  'ri'	    inserting characters will work backwards
 'rightleft'	  'rl'	    window is right-to-left oriented

@@ -1911,9 +1911,9 @@ return {
     },
     {
       full_name='remap',
-      short_desc=N_("mappings to work recursively"),
+      short_desc=N_("No description"),
       type='bool', scope={'global'},
-      varname='p_remap',
+      varname='p_force_on',
       defaults={if_true=true}
     },
     {

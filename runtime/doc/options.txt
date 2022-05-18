@@ -4800,15 +4800,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'number', see |number_relativenumber| for all combinations of the two
 	options.
 
-						*'remap'* *'noremap'*
-'remap'			boolean	(default on)
-			global
-	Allows for mappings to work recursively.  If you do not want this for
-	a single entry, use the :noremap[!] command.
-	NOTE: To avoid portability problems with Vim scripts, always keep
-	this option at the default "on".  Only switch it off when working with
-	old Vi scripts.
-
 						*'report'*
 'report'		number	(default 2)
 			global

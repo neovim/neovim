@@ -557,7 +557,6 @@ static char *(p_rdb_values[]) = {
 #define RDB_NODELTA            0x008
 
 EXTERN long p_rdt;              // 'redrawtime'
-EXTERN int p_remap;             // 'remap'
 EXTERN long p_re;               // 'regexpengine'
 EXTERN long p_report;           // 'report'
 EXTERN long p_pvh;              // 'previewheight'

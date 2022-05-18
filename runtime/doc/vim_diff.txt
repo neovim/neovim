@@ -548,6 +548,7 @@ Options:
   'maxmemtot' Nvim delegates memory-management to the OS.
   'maxcombine' (6 is always used)
   *'prompt'* *'noprompt'*
+  *'remap'* *'noremap'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
