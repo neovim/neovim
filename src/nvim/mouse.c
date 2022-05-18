@@ -406,6 +406,9 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   if (win->w_p_rl) {
     col = win->w_width_inner - 1 - col;
   }
+  if (win->w_winbar_height) {
+    row -= win->w_winbar_height;
+  }
 
   lnum = win->w_topline;
 
