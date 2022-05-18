@@ -660,11 +660,17 @@ static const char *const msgpack_error_messages[] = {
   [MSGPACK_UNPACK_NOMEM_ERROR + MUR_OFF] = "not enough memory",
 };
 
-static void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
+static void log_server_msg(uint64_t chan, msgpack_sbuffer *packed)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  DLOGN("RPC ->ch %" PRIu64 ": ", channel_id);
+  if (chan == VIML_INTERNAL_CALL) {
+    DLOGN("RPC ->ch <V>: ");
+  } else if (chan == LUA_INTERNAL_CALL) {
+    DLOGN("RPC ->ch <L>: ");
+  } else {
+    DLOGN("RPC ->ch %" PRIu64 ": ", chan);
+  }
   const msgpack_unpack_return result =
     msgpack_unpack_next(&unpacked, packed->data, packed->size, NULL);
   switch (result) {
@@ -692,9 +698,15 @@ static void log_server_msg(uint64_t channel_id, msgpack_sbuffer *packed)
   }
 }
 
-static void log_client_msg(uint64_t channel_id, bool is_request, const char *name)
+static void log_client_msg(uint64_t chan, bool is_request, const char *name)
 {
-  DLOGN("RPC <-ch %" PRIu64 ": ", channel_id);
+  if (chan == VIML_INTERNAL_CALL) {
+    DLOGN("RPC <-ch <V>: ");
+  } else if (chan == LUA_INTERNAL_CALL) {
+    DLOGN("RPC <-ch <L>: ");
+  } else {
+    DLOGN("RPC <-ch %" PRIu64 ": ", chan);
+  }
   log_lock();
   FILE *f = open_log_file();
   fprintf(f, "%s: %s", is_request ? REQ : RES, name);
