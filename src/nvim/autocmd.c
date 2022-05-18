@@ -190,7 +190,18 @@ static void aupat_show(AutoPat *ap, event_T event, int previous_group)
     if (got_int) {
       return;
     }
-    msg_outtrans((char_u *)aucmd_exec_to_string(ac, ac->exec));
+
+    char *exec_to_string = aucmd_exec_to_string(ac, ac->exec);
+    if (ac->desc != NULL) {
+      size_t msglen = 100;
+      char *msg = (char *)xmallocz(msglen);
+      snprintf(msg, msglen, "%s [%s]", exec_to_string, ac->desc);
+      msg_outtrans((char_u *)msg);
+      XFREE_CLEAR(msg);
+    } else {
+      msg_outtrans((char_u *)exec_to_string);
+    }
+    XFREE_CLEAR(exec_to_string);
     if (p_verbose > 0) {
       last_set_msg(ac->script_ctx);
     }
@@ -1136,8 +1147,6 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
   // perhaps: <lua>DESCRIPTION or similar
   if (desc != NULL) {
     ac->desc = xstrdup(desc);
-  } else {
-    ac->desc = aucmd_exec_default_desc(aucmd);
   }
 
   return OK;
@@ -2118,8 +2127,10 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
 
   if (p_verbose >= 9) {
     verbose_enter_scroll();
-    smsg(_("autocommand %s"), aucmd_exec_to_string(ac, ac->exec));
+    char *exec_to_string = aucmd_exec_to_string(ac, ac->exec);
+    smsg(_("autocommand %s"), exec_to_string);
     msg_puts("\n");  // don't overwrite this either
+    XFREE_CLEAR(exec_to_string);
     verbose_leave_scroll();
   }
 
@@ -2470,45 +2481,42 @@ bool autocmd_delete_id(int64_t id)
 // ===========================================================================
 //  AucmdExecutable Functions
 // ===========================================================================
-char *aucmd_exec_default_desc(AucmdExecutable acc)
-{
-  size_t msglen = 100;
 
-  switch (acc.type) {
-  case CALLABLE_CB:
-    switch (acc.callable.cb.type) {
-    case kCallbackLua: {
-      char *msg = (char *)xmallocz(msglen);
-      snprintf(msg, msglen, "<Lua function %d>", acc.callable.cb.data.luaref);
-      return msg;
-    }
-    case kCallbackFuncref: {
-      // TODO(tjdevries): Is this enough space for this?
-      char *msg = (char *)xmallocz(msglen);
-      snprintf(msg, msglen, "<vim function: %s>", acc.callable.cb.data.funcref);
-      return msg;
-    }
-    case kCallbackPartial: {
-      char *msg = (char *)xmallocz(msglen);
-      snprintf(msg, msglen, "<vim partial: %s>", acc.callable.cb.data.partial->pt_name);
-      return msg;
-    }
-    default:
-      return NULL;
-    }
+/// Generate a string description of a callback
+static char *aucmd_callback_to_string(Callback cb)
+{
+  // NOTE: this function probably belongs in a helper
+
+  size_t msglen = 100;
+  char *msg = (char *)xmallocz(msglen);
+
+  switch (cb.type) {
+  case kCallbackLua:
+    snprintf(msg, msglen, "<lua: %d>", cb.data.luaref);
+    break;
+  case kCallbackFuncref:
+    // TODO(tjdevries): Is this enough space for this?
+    snprintf(msg, msglen, "<vim function: %s>", cb.data.funcref);
+    break;
+  case kCallbackPartial:
+    snprintf(msg, msglen, "<vim partial: %s>", cb.data.partial->pt_name);
+    break;
   default:
-    return NULL;
+    snprintf(msg, msglen, "%s", "");
+    break;
   }
+  return msg;
 }
 
+/// Generate a string description for the command/callback of an autocmd
 char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
   FUNC_ATTR_PURE
 {
   switch (acc.type) {
   case CALLABLE_EX:
-    return acc.callable.cmd;
+    return xstrdup(acc.callable.cmd);
   case CALLABLE_CB:
-    return ac->desc;
+    return aucmd_callback_to_string(acc.callable.cb);
   case CALLABLE_NONE:
     return "This is not possible";
   }

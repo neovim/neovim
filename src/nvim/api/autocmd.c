@@ -283,7 +283,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
 
         PUT(autocmd_info,
             "command",
-            STRING_OBJ(cstr_to_string(aucmd_exec_to_string(ac, ac->exec))));
+            STRING_OBJ(cstr_as_string(aucmd_exec_to_string(ac, ac->exec))));
 
         PUT(autocmd_info,
             "pattern",
