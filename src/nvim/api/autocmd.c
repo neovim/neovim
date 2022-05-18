@@ -405,6 +405,7 @@ cleanup:
 ///                 - match: (string) the expanded value of |<amatch>|
 ///                 - buf: (number) the expanded value of |<abuf>|
 ///                 - file: (string) the expanded value of |<afile>|
+///                 - data: (any) arbitrary data passed to |nvim_exec_autocmds()|
 ///             - command (string) optional: Vim command to execute on event. Cannot be used with
 ///             {callback}
 ///             - once (boolean) optional: defaults to false. Run the autocommand
@@ -749,6 +750,8 @@ void nvim_del_augroup_by_name(String name, Error *err)
 ///             {pattern}.
 ///             - modeline (bool) optional: defaults to true. Process the
 ///             modeline after the autocommands |<nomodeline>|.
+///             - data (any): arbitrary data to send to the autocommand callback. See
+///             |nvim_create_autocmd()| for details.
 /// @see |:doautocmd|
 void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   FUNC_API_SINCE(9)
