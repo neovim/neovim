@@ -1,5 +1,3 @@
-local if_nil = vim.F.if_nil
-
 local default_handlers = require('vim.lsp.handlers')
 local log = require('vim.lsp.log')
 local lsp_rpc = require('vim.lsp.rpc')
@@ -8,11 +6,16 @@ local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 
 local vim = vim
-local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option =
-  vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
+local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
+  vim.api.nvim_err_writeln,
+  vim.api.nvim_buf_get_lines,
+  vim.api.nvim_command,
+  vim.api.nvim_buf_get_option,
+  vim.api.nvim_exec_autocmds
 local uv = vim.loop
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
+local if_nil = vim.F.if_nil
 
 local lsp = {
   protocol = protocol,
@@ -867,15 +870,27 @@ function lsp.start_client(config)
       pcall(config.on_exit, code, signal, client_id)
     end
 
+    for bufnr, client_ids in pairs(all_buffer_active_clients) do
+      if client_ids[client_id] then
+        vim.schedule(function()
+          nvim_exec_autocmds('LspDetach', {
+            buffer = bufnr,
+            modeline = false,
+            data = { client_id = client_id },
+          })
+
+          local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+          vim.diagnostic.reset(namespace, bufnr)
+        end)
+
+        client_ids[client_id] = nil
+      end
+    end
+
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
 
-    lsp.diagnostic.reset(client_id, all_buffer_active_clients)
     changetracking.reset(client_id)
-    for _, client_ids in pairs(all_buffer_active_clients) do
-      client_ids[client_id] = nil
-    end
-
     if code ~= 0 or (signal ~= 0 and signal ~= 15) then
       local msg = string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
       vim.schedule(function()
@@ -1213,6 +1228,13 @@ function lsp.start_client(config)
   ---@param bufnr (number) Buffer number
   function client._on_attach(bufnr)
     text_document_did_open_handler(bufnr, client)
+
+    nvim_exec_autocmds('LspAttach', {
+      buffer = bufnr,
+      modeline = false,
+      data = { client_id = client.id },
+    })
+
     if config.on_attach then
       -- TODO(ashkan) handle errors.
       pcall(config.on_attach, client, bufnr)
@@ -1359,6 +1381,12 @@ function lsp.buf_detach_client(bufnr, client_id)
     return
   end
 
+  nvim_exec_autocmds('LspDetach', {
+    buffer = bufnr,
+    modeline = false,
+    data = { client_id = client_id },
+  })
+
   changetracking.reset_buf(client, bufnr)
 
   if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
@@ -1435,11 +1463,29 @@ function lsp.stop_client(client_id, force)
   end
 end
 
---- Gets all active clients.
+--- Get active clients.
 ---
----@returns Table of |vim.lsp.client| objects
-function lsp.get_active_clients()
-  return vim.tbl_values(active_clients)
+---@param filter (table|nil) A table with key-value pairs used to filter the
+---              returned clients. The available keys are:
+---               - id (number): Only return clients with the given id
+---               - bufnr (number): Only return clients attached to this buffer
+---               - name (string): Only return clients with the given name
+---@returns (table) List of |vim.lsp.client| objects
+function lsp.get_active_clients(filter)
+  validate({ filter = { filter, 't', true } })
+
+  filter = filter or {}
+
+  local clients = {}
+
+  local t = filter.bufnr and (all_buffer_active_clients[resolve_bufnr(filter.bufnr)] or {}) or active_clients
+  for client_id in pairs(t) do
+    local client = active_clients[client_id]
+    if (filter.id == nil or client.id == filter.id) and (filter.name == nil or client.name == filter.name) then
+      clients[#clients + 1] = client
+    end
+  end
+  return clients
 end
 
 function lsp._vim_exit_handler()
@@ -1814,12 +1860,13 @@ end
 --- is a |vim.lsp.client| object.
 ---
 ---@param bufnr (optional, number): Buffer handle, or 0 for current
+---@returns (table) Table of (client_id, client) pairs
+---@deprecated Use |vim.lsp.get_active_clients()| instead.
 function lsp.buf_get_clients(bufnr)
-  bufnr = resolve_bufnr(bufnr)
   local result = {}
-  for_each_buffer_client(bufnr, function(client, client_id)
-    result[client_id] = client
-  end)
+  for _, client in ipairs(lsp.get_active_clients({ bufnr = resolve_bufnr(bufnr) })) do
+    result[client.id] = client
+  end
   return result
 end
 

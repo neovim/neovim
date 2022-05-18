@@ -70,6 +70,8 @@ return {
     'InsertEnter',            -- when entering Insert mode
     'InsertLeave',            -- just after leaving Insert mode
     'InsertLeavePre',         -- just before leaving Insert mode
+    'LspAttach',              -- after an LSP client attaches to a buffer
+    'LspDetach',              -- after an LSP client detaches from a buffer
     'MenuPopup',              -- just before popup menu is displayed
     'ModeChanged',            -- after changing the mode
     'OptionSet',              -- after setting any option
@@ -133,6 +135,8 @@ return {
   nvim_specific = {
     BufModifiedSet=true,
     DiagnosticChanged=true,
+    LspAttach=true,
+    LspDetach=true,
     RecordingEnter=true,
     RecordingLeave=true,
     Signal=true,

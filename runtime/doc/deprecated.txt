@@ -106,11 +106,13 @@ internally and are no longer exposed as part of the API. Instead, use
 *vim.lsp.diagnostic.set_underline()*
 *vim.lsp.diagnostic.set_virtual_text()*
 
-LSP Utility Functions ~
+LSP Functions ~
 
 *vim.lsp.util.diagnostics_to_items()*	Use |vim.diagnostic.toqflist()| instead.
 *vim.lsp.util.set_qflist()*		Use |setqflist()| instead.
 *vim.lsp.util.set_loclist()*		Use |setloclist()| instead.
+*vim.lsp.buf_get_clients()*		Use |vim.lsp.get_active_clients()| with
+                                        {buffer = bufnr} instead.
 
 Lua ~
 *vim.register_keystroke_callback()* Use |vim.on_key()| instead.
