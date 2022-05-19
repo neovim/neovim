@@ -159,16 +159,16 @@ retnomove:
     fdc = win_fdccol_count(wp);
     dragwin = NULL;
 
-    if (row == -1 + wp->w_winbar_height) {
-      on_winbar = !!wp->w_winbar_height;
+    if (row == -1) {
+      on_winbar = wp->w_winbar_height != 0;
       return IN_OTHER_WIN | (on_winbar ? MOUSE_WINBAR : 0);
     }
     on_winbar = false;
 
     // winpos and height may change in win_enter()!
-    if (grid == DEFAULT_GRID_HANDLE && row >= wp->w_height) {
+    if (grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height) {
       // In (or below) status line
-      on_status_line = row - wp->w_height + 1;
+      on_status_line = row + wp->w_winbar_height - wp->w_height + 1;
       dragwin = wp;
     } else {
       on_status_line = 0;
@@ -273,6 +273,9 @@ retnomove:
     if (grid == 0) {
       row -= curwin->w_grid_alloc.comp_row + curwin->w_grid.row_offset;
       col -= curwin->w_grid_alloc.comp_col + curwin->w_grid.col_offset;
+    } else if (grid != DEFAULT_GRID_HANDLE) {
+      row -= curwin->w_grid.row_offset;
+      col -= curwin->w_grid.col_offset;
     }
 
     // When clicking beyond the end of the window, scroll the screen.
@@ -406,9 +409,6 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   if (win->w_p_rl) {
     col = win->w_width_inner - 1 - col;
   }
-  if (win->w_winbar_height) {
-    row -= win->w_winbar_height;
-  }
 
   lnum = win->w_topline;
 
@@ -509,7 +509,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   // exist.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == fp->fr_win) {
-      *rowp -= wp->w_winrow_off - wp->w_winbar_height;
+      *rowp -= wp->w_winbar_height;
       return wp;
     }
   }
