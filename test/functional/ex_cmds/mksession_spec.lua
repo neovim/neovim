@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local get_pathsep = helpers.get_pathsep
+local iswin = helpers.iswin
 local eq = helpers.eq
 local neq = helpers.neq
 local funcs = helpers.funcs
@@ -107,8 +108,10 @@ describe(':mksession', function()
     command('terminal')
     command('cd '..cwd_dir)
     command('mksession '..session_path)
-    command('bd!')
-    sleep(100)  -- Make sure the process exits.
+    command('bdelete!')
+    if iswin() then
+      sleep(100)  -- Make sure all child processes have exited.
+    end
     command('qall!')
 
     -- Create a new test instance of Nvim.
@@ -117,12 +120,14 @@ describe(':mksession', function()
 
     local expected_cwd = cwd_dir..'/'..tab_dir
     matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
-    command('bd!')
-    sleep(100)  -- Make sure the process exits.
+    command('bdelete!')
+    if iswin() then
+      sleep(100)  -- Make sure all child processes have exited.
+    end
   end)
 
   it('restores CWD for :terminal buffer at root directory #16988', function()
-    if helpers.iswin() then
+    if iswin() then
       pending('N/A for Windows')
       return
     end
