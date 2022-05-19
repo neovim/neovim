@@ -1304,20 +1304,23 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     capture_ga = &capture_local;
   }
 
-  try_start();
-  if (output) {
-    msg_silent++;
-  }
+  TRY_WRAP({
+    try_start();
+    if (output) {
+      msg_silent++;
+    }
 
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    execute_cmd(&ea, &cmdinfo);
+    WITH_SCRIPT_CONTEXT(channel_id, {
+      execute_cmd(&ea, &cmdinfo);
+    });
+
+    if (output) {
+      capture_ga = save_capture_ga;
+      msg_silent = save_msg_silent;
+    }
+
+    try_end(err);
   });
-
-  if (output) {
-    capture_ga = save_capture_ga;
-    msg_silent = save_msg_silent;
-  }
-  try_end(err);
 
   if (ERROR_SET(err)) {
     goto clear_ga;
