@@ -273,6 +273,9 @@ retnomove:
     if (grid == 0) {
       row -= curwin->w_grid_alloc.comp_row + curwin->w_grid.row_offset;
       col -= curwin->w_grid_alloc.comp_col + curwin->w_grid.col_offset;
+    } else if (grid != DEFAULT_GRID_HANDLE) {
+      row -= curwin->w_grid.row_offset;
+      col -= curwin->w_grid.col_offset;
     }
 
     // When clicking beyond the end of the window, scroll the screen.

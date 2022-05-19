@@ -6627,7 +6627,7 @@ describe('float window', function()
 
     it("left drag changes visual selection in float window", function()
       local buf = meths.create_buf(false,false)
-      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar'})
+      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
       meths.open_win(buf, false, {relative='editor', width=20, height=3, row=2, col=5})
       if multigrid then
         screen:expect{grid=[[
@@ -6651,12 +6651,12 @@ describe('float window', function()
         ## grid 5
           {1:foo                 }|
           {1:bar                 }|
-          {2:~                   }|
+          {1:baz                 }|
         ]], float_pos={
           [5] = {{id = 1002}, "NW", 1, 2, 5, true, 50};
         }, win_viewport={
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
-          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 2};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
         meths.input_mouse('left', 'press', '', 5, 0, 0)
         screen:expect{grid=[[
@@ -6680,12 +6680,12 @@ describe('float window', function()
         ## grid 5
           {1:^foo                 }|
           {1:bar                 }|
-          {2:~                   }|
+          {1:baz                 }|
         ]], float_pos={
           [5] = {{id = 1002}, "NW", 1, 2, 5, true, 50};
         }, win_viewport={
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
-          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 2};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
         meths.input_mouse('left', 'drag', '', 5, 1, 2)
         screen:expect{grid=[[
@@ -6709,12 +6709,12 @@ describe('float window', function()
         ## grid 5
           {27:foo}{1:                 }|
           {27:ba}{1:^r                 }|
-          {2:~                   }|
+          {1:baz                 }|
         ]], float_pos={
           [5] = {{id = 1002}, "NW", 1, 2, 5, true, 50};
         }, win_viewport={
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
-          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 2};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 3};
         }}
       else
         screen:expect{grid=[[
@@ -6722,7 +6722,7 @@ describe('float window', function()
           {0:~                                       }|
           {0:~    }{1:foo                 }{0:               }|
           {0:~    }{1:bar                 }{0:               }|
-          {0:~    }{2:~                   }{0:               }|
+          {0:~    }{1:baz                 }{0:               }|
           {0:~                                       }|
                                                   |
         ]]}
@@ -6733,7 +6733,7 @@ describe('float window', function()
           {0:~                                       }|
           {0:~    }{1:^foo                 }{0:               }|
           {0:~    }{1:bar                 }{0:               }|
-          {0:~    }{2:~                   }{0:               }|
+          {0:~    }{1:baz                 }{0:               }|
           {0:~                                       }|
                                                   |
         ]]}
@@ -6744,7 +6744,269 @@ describe('float window', function()
           {0:~                                       }|
           {0:~    }{27:foo}{1:                 }{0:               }|
           {0:~    }{27:ba}{1:^r                 }{0:               }|
-          {0:~    }{2:~                   }{0:               }|
+          {0:~    }{1:baz                 }{0:               }|
+          {0:~                                       }|
+          {3:-- VISUAL --}                            |
+        ]]}
+      end
+    end)
+
+    it("left drag changes visual selection in float window with border", function()
+      local buf = meths.create_buf(false,false)
+      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
+      meths.open_win(buf, false, {relative='editor', width=20, height=3, row=0, col=5, border='single'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {5:┌────────────────────┐}|
+          {5:│}{1:foo                 }{5:│}|
+          {5:│}{1:bar                 }{5:│}|
+          {5:│}{1:baz                 }{5:│}|
+          {5:└────────────────────┘}|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 0, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
+        }}
+        meths.input_mouse('left', 'press', '', 5, 1, 1)
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {5:┌────────────────────┐}|
+          {5:│}{1:^foo                 }{5:│}|
+          {5:│}{1:bar                 }{5:│}|
+          {5:│}{1:baz                 }{5:│}|
+          {5:└────────────────────┘}|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 0, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
+        }}
+        meths.input_mouse('left', 'drag', '', 5, 2, 3)
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {3:-- VISUAL --}                            |
+        ## grid 5
+          {5:┌────────────────────┐}|
+          {5:│}{27:foo}{1:                 }{5:│}|
+          {5:│}{27:ba}{1:^r                 }{5:│}|
+          {5:│}{1:baz                 }{5:│}|
+          {5:└────────────────────┘}|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 0, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 3};
+        }}
+      else
+        screen:expect{grid=[[
+          ^     {5:┌────────────────────┐}             |
+          {0:~    }{5:│}{1:foo                 }{5:│}{0:             }|
+          {0:~    }{5:│}{1:bar                 }{5:│}{0:             }|
+          {0:~    }{5:│}{1:baz                 }{5:│}{0:             }|
+          {0:~    }{5:└────────────────────┘}{0:             }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+
+        meths.input_mouse('left', 'press', '', 0, 1, 6)
+        screen:expect{grid=[[
+               {5:┌────────────────────┐}             |
+          {0:~    }{5:│}{1:^foo                 }{5:│}{0:             }|
+          {0:~    }{5:│}{1:bar                 }{5:│}{0:             }|
+          {0:~    }{5:│}{1:baz                 }{5:│}{0:             }|
+          {0:~    }{5:└────────────────────┘}{0:             }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+
+        meths.input_mouse('left', 'drag', '', 0, 2, 8)
+        screen:expect{grid=[[
+               {5:┌────────────────────┐}             |
+          {0:~    }{5:│}{27:foo}{1:                 }{5:│}{0:             }|
+          {0:~    }{5:│}{27:ba}{1:^r                 }{5:│}{0:             }|
+          {0:~    }{5:│}{1:baz                 }{5:│}{0:             }|
+          {0:~    }{5:└────────────────────┘}{0:             }|
+          {0:~                                       }|
+          {3:-- VISUAL --}                            |
+        ]]}
+      end
+    end)
+
+    it("left drag changes visual selection in float window with winbar", function()
+      local buf = meths.create_buf(false,false)
+      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
+      local float_win = meths.open_win(buf, false, {relative='editor', width=20, height=4, row=1, col=5})
+      meths.win_set_option(float_win, 'winbar', 'floaty bar')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {3:floaty bar          }|
+          {1:foo                 }|
+          {1:bar                 }|
+          {1:baz                 }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 1, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
+        }}
+        meths.input_mouse('left', 'press', '', 5, 1, 0)
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {3:floaty bar          }|
+          {1:^foo                 }|
+          {1:bar                 }|
+          {1:baz                 }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 1, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
+        }}
+        meths.input_mouse('left', 'drag', '', 5, 2, 2)
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {3:-- VISUAL --}                            |
+        ## grid 5
+          {3:floaty bar          }|
+          {27:foo}{1:                 }|
+          {27:ba}{1:^r                 }|
+          {1:baz                 }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 1, 5, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 1, curcol = 2, linecount = 3};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~    }{3:floaty bar          }{0:               }|
+          {0:~    }{1:foo                 }{0:               }|
+          {0:~    }{1:bar                 }{0:               }|
+          {0:~    }{1:baz                 }{0:               }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+
+        meths.input_mouse('left', 'press', '', 0, 2, 5)
+        screen:expect{grid=[[
+                                                  |
+          {0:~    }{3:floaty bar          }{0:               }|
+          {0:~    }{1:^foo                 }{0:               }|
+          {0:~    }{1:bar                 }{0:               }|
+          {0:~    }{1:baz                 }{0:               }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+
+        meths.input_mouse('left', 'drag', '', 0, 3, 7)
+        screen:expect{grid=[[
+                                                  |
+          {0:~    }{3:floaty bar          }{0:               }|
+          {0:~    }{27:foo}{1:                 }{0:               }|
+          {0:~    }{27:ba}{1:^r                 }{0:               }|
+          {0:~    }{1:baz                 }{0:               }|
           {0:~                                       }|
           {3:-- VISUAL --}                            |
         ]]}
