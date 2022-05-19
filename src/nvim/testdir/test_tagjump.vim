@@ -1077,6 +1077,15 @@ Type number and <Enter> (q or empty cancels):
   %bwipe
 endfunc
 
+func Test_define_search()
+  " this was accessing freed memory
+  new
+  call setline(1, ['first line', '', '#define something 0'])
+  sil norm o0
+  sil! norm 
+  bwipe!
+endfunc
+
 " Test for the 'taglength' option
 func Test_tag_length()
   set tags=Xtags
