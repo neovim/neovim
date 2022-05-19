@@ -345,4 +345,24 @@ describe('winbar', function()
     ]])
     eq(1, meths.get_option('cmdheight'))
   end)
+  it('properly equalizes window height for window-local value', function()
+    command('set equalalways | set winbar= | setlocal winbar=a | split')
+    command('setlocal winbar= | split')
+    command('setlocal winbar=b | split')
+    screen:expect([[
+      {1:b                                                           }|
+      ^                                                            |
+      {4:[No Name]                                                   }|
+      {1:b                                                           }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+      {3:~                                                           }|
+      {2:[No Name]                                                   }|
+      {1:a                                                           }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+    ]])
+  end)
 end)

@@ -2033,6 +2033,37 @@ void win_move_after(win_T *win1, win_T *win2)
   win2->w_pos_changed = true;
 }
 
+/// Compute maximum number of windows that can fit within "height" in frame "fr".
+static int get_maximum_wincount(frame_T *fr, int height)
+{
+  if (fr->fr_layout != FR_COL) {
+    return (height / (p_wmh + STATUS_HEIGHT + frame2win(fr)->w_winbar_height));
+  } else if (global_winbar_height()) {
+    // If winbar is globally enabled, no need to check each window for it.
+    return (height / (p_wmh + STATUS_HEIGHT + 1));
+  }
+
+  frame_T *frp;
+  int total_wincount = 0;
+
+  // First, try to fit all child frames of "fr" into "height"
+  FOR_ALL_FRAMES(frp, fr->fr_child) {
+    win_T *wp = frame2win(frp);
+
+    if (height < (p_wmh + STATUS_HEIGHT + wp->w_winbar_height)) {
+      break;
+    }
+    height -= p_wmh + STATUS_HEIGHT + wp->w_winbar_height;
+    total_wincount += 1;
+  }
+
+  // If we still have enough room for more windows, just use the default winbar height (which is 0)
+  // in order to get the amount of windows that'd fit in the remaining space
+  total_wincount += height / (p_wmh + STATUS_HEIGHT);
+
+  return total_wincount;
+}
+
 /// Make all windows the same height.
 ///'next_curwin' will soon be the current window, make sure it has enough rows.
 ///
@@ -2232,7 +2263,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       } else {
         extra_sep = 0;
       }
-      totwincount = (n + extra_sep) / (p_wmh + STATUS_HEIGHT + global_winbar_height());
+      totwincount = get_maximum_wincount(topfr, n + extra_sep);
       has_next_curwin = frame_has_win(topfr, next_curwin);
 
       /*
@@ -2266,8 +2297,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
             }
           } else {
             // These windows don't use up room.
-            totwincount -= (n + (fr->fr_next == NULL
-                                 ? extra_sep : 0)) / (p_wmh + STATUS_HEIGHT + global_winbar_height());
+            totwincount -= get_maximum_wincount(fr, (n + (fr->fr_next == NULL ? extra_sep : 0)));
           }
           room -= new_size - n;
           if (room < 0) {
@@ -2312,8 +2342,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       } else {
         // Compute the maximum number of windows vert. in "fr".
         n = frame_minheight(fr, NOWIN);
-        wincount = (n + (fr->fr_next == NULL ? extra_sep : 0))
-                   / (p_wmh + STATUS_HEIGHT + global_winbar_height());
+        wincount = get_maximum_wincount(fr, (n + (fr->fr_next == NULL ? extra_sep : 0)));
         m = frame_minheight(fr, next_curwin);
         if (has_next_curwin) {
           hnc = frame_has_win(fr, next_curwin);
