@@ -519,16 +519,10 @@ local function tree_contains(tree, range)
   local start_fits = start_row < range[1] or (start_row == range[1] and start_col <= range[2])
   local end_fits = end_row > range[3] or (end_row == range[3] and end_col >= range[4])
 
-  if start_fits and end_fits then
-    return true
-  end
-
-  return false
+  return start_fits and end_fits
 end
 
 --- Determines whether {range} is contained in this language tree
----
---- This goes down the tree to recursively check children.
 ---
 ---@param range A range, that is a `{ start_line, start_col, end_line, end_col }` table.
 function LanguageTree:contains(range)
