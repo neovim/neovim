@@ -6,6 +6,7 @@ local insert = helpers.insert
 local meths = helpers.meths
 local eq = helpers.eq
 local poke_eventloop = helpers.poke_eventloop
+local feed = helpers.feed
 
 describe('winbar', function()
   local screen
@@ -147,6 +148,59 @@ describe('winbar', function()
       {2:[No Name]                     [No Name]                     }|
                                                                   |
     ]])
+  end)
+  it('can be ruler', function()
+    insert [[
+      just some
+      random text]]
+    meths.set_option('winbar', 'Hello, I am a ruler: %l,%c')
+    screen:expect{grid=[[
+      {1:Hello, I am a ruler: 2,11                                   }|
+      just some                                                   |
+      random tex^t                                                 |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
+    feed 'b'
+    screen:expect{grid=[[
+      {1:Hello, I am a ruler: 2,8                                    }|
+      just some                                                   |
+      random ^text                                                 |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
+    feed 'k'
+    screen:expect{grid=[[
+      {1:Hello, I am a ruler: 1,8                                    }|
+      just so^me                                                   |
+      random text                                                 |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
   end)
   it('works with laststatus=3', function()
     command('set laststatus=3')
