@@ -863,7 +863,8 @@ function M.code_action(options)
   end
   local context = options.context or {}
   if not context.diagnostics then
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+    local bufnr = vim.api.nvim_get_current_buf()
+    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
   local params = util.make_range_params()
   params.context = context
@@ -889,7 +890,8 @@ function M.range_code_action(context, start_pos, end_pos)
   validate({ context = { context, 't', true } })
   context = context or {}
   if not context.diagnostics then
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+    local bufnr = vim.api.nvim_get_current_buf()
+    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
   local params = util.make_given_range_params(start_pos, end_pos)
   params.context = context
