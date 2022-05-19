@@ -1034,16 +1034,14 @@ VimEnter			After doing all the startup stuff, including
 				   endif
 <							*VimLeave*
 VimLeave			Before exiting Vim, just after writing the
-				.shada file.  Executed only once, like
-				VimLeavePre.
+				|shada| file.  Executed exactly once.
 				Use |v:dying| to detect an abnormal exit.
 				Use |v:exiting| to get the exit code.
 				Not triggered if |v:dying| is 2 or more.
 							*VimLeavePre*
 VimLeavePre			Before exiting Vim, just before writing the
-				.shada file.  This is executed only once,
-				if there is a match with the name of what
-				happens to be the current buffer when exiting.
+				|shada| file.  Executed once, if the pattern
+				matches the current buffer name when exiting.
 				Mostly useful with a "*" pattern. >
 				   :autocmd VimLeavePre * call CleanupStuff()
 <				Use |v:dying| to detect an abnormal exit.

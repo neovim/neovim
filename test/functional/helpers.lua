@@ -366,7 +366,7 @@ local function remove_args(args, args_rm)
   return new_args
 end
 
---- @param io_extra used for stdin_fd, see :help ui-option
+--- @param io_extra number used for stdin_fd, see :help ui-option
 function module.spawn(argv, merge, env, keep, io_extra)
   if session and not keep then
     session:close()

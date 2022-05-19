@@ -1,9 +1,9 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * mark.c: functions for setting marks and jumping to them
- */
+//
+// mark.c: functions for setting marks and jumping to them.
+//
 
 #include <assert.h>
 #include <inttypes.h>
@@ -40,19 +40,14 @@
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
-/*
- * This file contains routines to maintain and manipulate marks.
- */
-
-/*
- * If a named file mark's lnum is non-zero, it is valid.
- * If a named file mark's fnum is non-zero, it is for an existing buffer,
- * otherwise it is from .shada and namedfm[n].fname is the file name.
- * There are marks 'A - 'Z (set by user) and '0 to '9 (set when writing
- * shada).
- */
-
 /// Global marks (marks with file number or name)
+//
+// If a named file mark's lnum is non-zero, it is valid.
+// If a named file mark's fnum is non-zero, it is for an existing buffer,
+// otherwise it is from shada and namedfm[n].fname is the file name.
+// There are marks 'A - 'Z (set by user) and '0 to '9 (set when writing
+// shada).
+//
 static xfmark_T namedfm[NGLOBALMARKS];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -653,11 +648,9 @@ fmark_T *getnextmark(pos_T *startpos, int dir, int begin_line)
   return result;
 }
 
-/*
- * For an xtended filemark: set the fnum from the fname.
- * This is used for marks obtained from the .shada file.  It's postponed
- * until the mark is used to avoid a long startup delay.
- */
+/// For an xtended filemark: set the fnum from the fname.
+/// This is used for marks obtained from the shada file.  It's postponed
+/// until the mark is used to avoid a long startup delay.
 static void fname2fnum(xfmark_T *fm)
 {
   char_u *p;
@@ -690,11 +683,9 @@ static void fname2fnum(xfmark_T *fm)
   }
 }
 
-/*
- * Check all file marks for a name that matches the file name in buf.
- * May replace the name with an fnum.
- * Used for marks that come from the .shada file.
- */
+/// Checks all file marks for a name that matches the file name in buf.
+/// May replace the name with an fnum.
+/// Used for marks that come from the shada file.
 void fmarks_check_names(buf_T *buf)
 {
   char_u *name = buf->b_ffname;
