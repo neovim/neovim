@@ -1,0 +1,45 @@
+.TH VIMDIFF 1 "30 Mart 2001"
+.SH AD
+vimdiff \- bir dosyanýn dört adede kadar sürümlerini Vim ile düzenle
+ve ayrýmlarýný göster
+.SH ÖZET
+.br
+.B vimdiff
+[seçenekler] dosya1 dosya2 [dosya3 [dosya4]]
+.PP
+.B gvimdiff
+.SH TANIM
+.B Vimdiff,
+.B Vim
+içinde iki (üç veya dört) dosyayý açar.
+Her dosya ayrý pencerelerde açýlýr.
+Dosyalar arasýndaki ayrýmlar vurgulanýr.
+Böylece deðiþiklikler kolayca denetlenebilir ve ayný dosyanýn baþka bir
+sürümüne kolaylýkla aktarýlabilir.
+.PP
+Vim hakkýnda ek bilgi için: vim(1)
+.PP
+.B gvimdiff
+olarak baþlatýlýrsa varsa grafik arabirim açýlýr.
+.PP
+Her pencerede 'diff' seçeneði açýlýr, böylece deðiþiklikler vurgulanýr.
+.br
+\'wrap' ve 'scrollbind' seçenekleri metnin düzgün görünmesi için açýlýr.
+.br
+\'foldmethod' seçeneði "diff"e, ayarlanýr, böylece satýr aralýklarý
+kývrýlýr. 'foldcolumn' seçeneði kývýrmalarý kolay ayrýmlama ve açýp kapama
+için iki olarak ayarlanýr.
+.SH SEÇENEKLER
+Satýrlar hizalama için "\-O" seçeneði kullanýlmýþçasýna dikey bölüntüler
+içinde görüntülenir.
+Yatay bölüntüler kullanmak için "\-o" kullanýn.
+Diðer tüm deðiþkenler için: vim(1).
+.SH AYRICA BAKINIZ
+vim(1)
+.SH YAZAR
+.B Vim'in
+büyük çoðunluðu Bram Moolenaar tarafýndan baþkalarýnýn kayda deðer
+yardýmlarýyla yazýlmýþtýr.
+Ek bilgi için
+.B Vim
+içinde ":help credits" yazýn.

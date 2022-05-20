@@ -1,0 +1,544 @@
+.TH VIM 1 "11 Nisan 2006"
+.SH AD
+vim \- Vi IMproved, bir programcýnýn metin düzenleyicisi
+.SH ÖZET
+.br
+.B vim
+[seçenekler] [dosya ..]
+.br
+.B vim
+[seçenekler] \-
+.br
+.B vim
+[seçenekler] \-t etiket
+.br
+.B vim
+[seçenekler] \-q [hatadosyasý]
+.PP
+.br
+.B ex
+.br
+.B view
+.br
+.B gvim
+.B gview
+.B evim
+.B eview
+.br
+.B rvim
+.B rview
+.B rgvim
+.B rgview
+.SH TANIM
+.B Vim,
+Vi ile yukarýya doðru uyumlu olan bir metin düzenleyicisidir.
+Her tür düz metni düzenlemede kullanýlabilir.
+Özellikle programlarý düzenlemede yararlýdýr.
+.PP
+Vi üzerine yapýlmýþ birçok geliþtirme ve iyileþtirmeyi içerir:
+Çok düzeyli geri alma, çoklu pencereler ve arabellekler, sözdizim vurgulama,
+komut satýrý düzenleme, dosya adý tamamlama, çevrimiçi yardým, görsel seçim vb.
+.B Vim
+ve Vi arasýndaki deðiþikliklerin bir özeti için ":help vi_diff.txt"
+dosyasýna bir göz atýn.
+.PP
+.B Vim'i
+çalýþtýrýrken gerekli olan yardýmýn çoðu çevrimiçi yardým sisteminden elde
+edilebilir. Bunun için ":help" komutunu kullanabilirsiniz.
+Aþaðýda ÇEVRÝMÝÇÝ YARDIM bölümüne bakýn.
+.PP
+Genelde
+.B Vim
+tek bir dosyayý düzenlemek için þu komutla çalýþtýrýlýr:
+.PP
+	vim dosya
+.PP
+Biraz daha açacak olursak:
+.PP
+	vim [seçenekler] [dosyalistesi]
+.PP
+Eðer dosya listesi saðlanmamýþsa, düzenleyici boþ bir arabellek açar.
+Bunun dýþýnda aþaðýdaki dört seçenekten bir tanesi de bir veya birden çok
+dosyayý düzenlemek için kullanýlabilir.
+.TP 12
+dosya ..
+Dosya adlarýnýn bir listesi.
+Bunlardan ilki ekrana getirilip arabelleðe yüklenir.
+Ýmleç arabelleðin ilk satýrýnda konumlandýrýlýr.
+Diðer dosyalara ":next" komutu ile geçebilirsiniz.
+Adý tire ile baþlayan bir dosyayý düzenlemek için dosya listesinin baþýna
+"\-\-" koyun.
+.TP
+\-
+Düzenlenecek dosya stdin'den okunur.  Komutlar bir tty olmasý gereken
+stderr'den okunur.
+.TP
+\-t {etiket}
+Düzenlenecek dosya ve bu dosyanýn baþlangýç imleç konumu bir "etiket"e
+dayanýr, bir tür býraktýðýnýz konumu belirten bir ayraç gibi.
+Etiket dosyasýnda {etiket} aranýr, iliþkin dosya þu anki dosya olur ve
+iliþkin komut çalýþtýrýlýr.
+Bu genelde C programlarý için kullanýlýr, {etiket} bu durumda bir iþlev
+olabilir.
+Bunun sonucunda bu iþlevi içeren dosya o anki dosya olur ve imleç bu
+iþlevin baþlangýcýna konumlandýrýlýr.
+Ek bilgi için: ":help tag\-commands".
+.TP
+\-q [hatadosyasý]
+Hýzlý düzelt kipinde baþlat
+[hatadosyasý] okunur ve ilk hata görüntülenir.
+Eðer [hatadosyasý] saðlanmazsa, dosya adý 'errorfile' seçeneðinden alýnýr
+(öntanýmlý olarak Amiga için "AztecC.Err", diðer sistemlerde "errors.err").
+Sonraki hatalara ":cn" komutu ile geçilebilir.
+Ek bilgi için: ":help quickfix".
+.PP
+.B Vim
+girilen komutun adýna göre deðiþik biçimde davranýr (çalýþtýrýlabilir hâlâ
+ayný dosya olarak kalabilir).
+.TP 10
+vim
+"Normal" kip, standart çalýþma biçimi.
+.TP
+ex
+Ex kipinde baþlat.
+"\-e" deðiþkeni ile de baþlatýlabilir.
+Normal kipe ":vi" komutu ile geçilebilir.
+.TP
+view
+Saltokunur kipte baþlat.  Bu kipte dosya yazýmýna izin verilmez.
+"\-R" deðiþkeni ile de baþlatýlabilir.
+.TP
+gvim gview
+Grafik arabirim sürümü.
+Yeni bir pencere açar.
+"\-g" deðiþkeni ile de baþlatýlabilir.
+.TP
+evim eview
+Kolay kipte baþlatýlan grafik arabirim sürümü.
+Yeni bir pencere açar.
+"\-y" deðiþkeni ile de baþlatýlabilir.
+.TP
+rvim rview rgvim rgview
+Yukarýdaki ile ayný, ancak sýnýrlamalar içerir.  Kabuk komutlarý
+çalýþtýrýlamaz veya
+.B Vim
+askýya alýnamaz.
+"\-Z" deðiþkeni ile de baþlatýlabilir.
+.SH SEÇENEKLER
+Seçenekler bir sýra gözetmeksizin dosya adlarýndan önce veya sonra
+kullanýlabilir. 
+Herhangi bir deðiþken içermeyen seçenekler bir tirenin ardýnda sýralanabilir.
+.TP 12
++[num]
+Ýlk dosya için imleç "num" satýrýnda konumlandýrýlacaktýr.
+Eðer "num" eksikse imleç en son satýrda baþlar.
+.TP
++/{dizge}
+Ýlk dosya için imleç {dizgi}'nin ilk eþleþmesinin olduðu satýrda
+konumlandýrýlacaktýr.
+Kullanýlabilir arama dizgileri için ":help search\-pattern" yazýn.
+.TP
++{komut}
+.TP
+\-c {komut}
+Ýlk dosya okunduktan sonra {komut} çalýþtýrýlýr.
+{komut} bir Ex komutu olarak iþletilir.
+Eðer {komut} boþluk içeriyorsa çift týrnak içerisine alýnmalýdýr (bu
+kullanýlan kabuða baðlýdýr).
+Örnek: Vim "+set si" main.c
+.br
+Not: 10 taneye kadar "+" veya "\-c" komutu kullanabilirsiniz.
+.TP
+\-S {dosya}
+Ýlk dosya okunduktan sonra {dosya} kaynak alýnýr.
+\-c "source {dosya}" bu komutun eþdeðeridir.
+{dosya}, '\-' ile baþlayamaz.
+Eðer {dosya} saðlanmazsa "Session.vim" kullanýlýr (yalnýzca \-S son
+deðiþken olarak kullanýldýðýnda iþe yarar).
+.TP
+\-\-cmd {komut}
+"\-c" komutu gibi, ancak komut herhangi bir vimrc dosyasýný iþletmeden
+önce çalýþtýrýlýr.
+"\-c" komutundan baðýmsýz olarak bu komutlardan 10 taneye kadar
+çalýþtýrabilirsiniz.
+.TP
+\-A
+Eðer
+.B Vim
+saðdan sola yazýlan dosyalarý ve Arapça klavye dizilimini kullanabilmesi için
+ARAPÇA desteði ile derlenmiþe bu seçenek
+.B Vim'i
+Arapça kipinde baþlatýr ('arabic' seçeneði açýlýr).  Aksi durumda
+.B Vim
+hata verip çýkar.
+.TP
+\-b
+Ýkili kip.
+Bir çalýþtýrýlabiliri veya ikili dosyayý düzenlemeye olanacak saðlayacak
+birkaç seçenek ayarlanýr.
+.TP
+\-C
+Uyumlu kip. 'compatible' seçeneðini ayarlar.
+Bu kipte
+.B Vim
+bir .vimrc dosyasý var olsa bile genelde Vi gibi davranýr.
+.TP
+\-d
+Karþýlaþtýrma kipinde baþlat.
+Bir, iki, üç veya dört adet dosya adý deðiþkeni olmalýdýr.
+.B Vim
+bütün dosyalarý yan yana açar ve aralarýndaki deðiþiklikleri gösterir.
+vimdiff(1) gibi çalýþýr.
+.TP
+\-d {aygýt}
+{aygýt}'ý bir uçbirim olarak kullanmak için açar.
+Yalnýzca Amiga'da çalýþýr.
+Örnek:
+"\-d con:20/30/600/150".
+.TP
+\-D
+Hata ayýklama kipi.  Bir betiðin ilk komutunu çalýþtýrýrken hata ayýklama
+kipine geçer.
+.TP
+\-e
+.B Vim'i
+Ex kipinde baþlatýr, "ex" çalýþtýrýlabiliri ile ayný iþlevi görür.
+.TP
+\-E
+.B Vim'i
+geliþtirilmiþ Ex kipinde baþlatýr, "exim" çalýþtýrýlabiliri ile ayný
+iþlevi görür.
+.TP
+\-f
+Önplan.  Grafik arabirim sürümü için
+.B Vim
+baþladýðý kabuktan ayrýlmayacak ve kendisini çatallamayacaktýr.
+Amiga'da,
+.B Vim
+yeni bir pencere açmak için yeniden baþlatýlmaz.
+Bu seçenek
+.B Vim
+düzenleme oturumunun bitmesini bekleyecek bir program tarafýndan
+baþlatýldýðýnda kullanýlmalýdýr (örn. mail).
+Amiga'da ":sh" ve ":!" komutlarý çalýþmayacaktýr.
+.TP
+\-\-nofork
+Önplan.  Grafik arabirim sürümü için
+.B Vim
+baþladýðý kabuktan ayrýlmayacak ve kendisini çatallamayacaktýr.
+.TP
+\-F
+Eðer
+.B Vim
+saðdan sola yazýlan dosyalarý ve Farsça klavye dizilimini kullanabilmesi için
+FKMAP desteði ile derlenmiþse, bu seçenek
+.B Vim'i
+Farsça kipinde baþlatýr ('fkmap' ve 'rightleft' seçenekleri açýlýr).
+Aksi durumda
+.B Vim
+hata verip çýkar.
+.TP
+\-g
+Eðer
+.B Vim
+grafik arabirim desteði ile derlenmiþse bu seçenek grafik arabirimi çalýþtýrýr.
+Eðer grafik arabirim desteði eklenmemiþse
+.B Vim
+hata verir ve çýkar.
+.TP
+\-h
+Komut satýrý deðiþkenleri ve seçenekleri üzerine biraz yardým saðlar.
+Bu komuttan sonra
+.B Vim
+çýkar.
+.TP
+\-H
+Eðer
+.B Vim
+saðdan sola yazýlan dosyalarý ve Ýbranca klavye dizilimini kullanabilmesi için
+RIGHTLEFT desteði ile derlenmiþse, bu seçenek 
+.B Vim'i
+Ýbranca kipinde baþlatýr ('hkmap' ve 'rightleft' seçenekleri açýlýr).
+Aksi durumda
+.B Vim
+hata verir ve çýkar.
+.TP
+\-i {viminfo}
+Öntanýmlý "~/.viminfo" dosyasý yerine kullanýlacak olan viminfo dosyasýný
+belirtmek için kullanýlýr.
+Bu komut ayný zamanda viminfo kullanýmýný atlamak için de kullanýlabilir.
+Bunun için dosya adý yerine "NONE" vermeniz yeterlidir.
+.TP
+\-L
+\-r ile ayný.
+.TP
+\-l
+Lisp kipi.
+Bu deðiþken 'lisp' ve 'showmatch' seçeneklerini açar.
+.TP
+\-m
+Dosya yazma seçeneði kapalýdýr.
+\'write' seçeneðini sýfýrlar.
+Arabelleði hâlâ deðiþtirebilirsiniz, ancak dosyayý yazmak olanaklý deðildir.
+.TP
+\-M
+Deðiþikliklere izin verilmez. 'modifiable' ve 'write' seçenekleri kapatýlýr,
+böylece deðiþiklik yapýlamaz ve dosyalar yazýlamaz.
+Bu seçenekleri yeniden açýp deðiþiklik yapmayý etkinleþtirebilirsiniz.
+.TP
+\-N
+Uyumsuz kip. 'no-compatible' seçeneðini sýfýrlar.
+Bu seçenekle birlikte
+.B Vim
+biraz daha düzgünce çalýþýr, ancak bir .vimrc dosyasý olmamasýna raðmen
+Vi ile daha az uyumludur.
+.TP
+\-n
+Bir takas dosyasý kullanýlmaz.
+Çökme sonrasý kurtarma olanaklý olmayacaktýr.
+Eðer çok yavaþ bir ortamda dosya çalýþýyorsanýz (örn. disket) yararlý olabilir.
+":set uc=0" ile de yapýlabilir.
+Geri almak için ":set uc=200" yapýn.
+.TP
+\-nb
+NetBeans için bir düzenleyici sunucusu olur.  Ayrýntýlar için belgelere bakýn.
+.TP
+\-o[N]
+N sayýda pencereyi üst üste açar.
+N verilmezse, her dosya için bir pencere açar.
+.TP
+\-O[N]
+N sayýda pencereyi yan yana açar.
+N verilmezse, her dosya için bir pencere açar.
+.TP
+\-p[N]
+N sayýda sekme açar.
+N verilmezse, her dosya için bir sekme açar.
+.TP
+\-R
+Saltokunur kip.
+\'readonly' seçeneði açýlýr.
+Arabelleði hâlâ deðiþtirebilirsiniz, ancak yanlýþlýkla dosyanýn üzerine
+yazmaktan sizi korur.
+Dosyanýn üzerine yazmak istemiyorsanýz, Ex komutuna bir ünlem imi ekleyin,
+örn. ":w!".
+\-R seçeneði ayný zamanda \-n seçeneðini de uygular (yukarýda bakýn).
+\'readonly' seçeneði ":set noro" ile sýfýrlanabilir.
+Ek bilgi için: ":help 'readonly'".
+.TP
+\-r
+Takas dosyalarýný içerdikleri kurtarma bilgilerini gösterecek biçimde listeler.
+.TP
+\-r {dosya}
+Kurtarma kipi.
+Çökmüþ bir düzenleme oturumunu takas dosyasýný kullanarak kurtarýr.
+Takas dosyasý dosya ile ayný ada iye olup sonuna ".swp" eklenmiþtir.
+Ek bilgi için: ":help recovery".
+.TP
+\-s
+Sessiz kip. Yalnýzca "Ex" olarak baþlatýldýðýnda veya "\-e" seçeneði
+"\-s" seçeneðinden önce verildiðinde çalýþýr.
+.TP
+\-s {betikgir}
+{betikgir} betik dosyasý okunur.
+Dosyadaki karakterler onlarý siz girmiþsiniz gibi kabul edilir.
+Aynýsý ":source! {betikgir}" komutu ile de gerçekleþtirilebilir.
+Eðer dosyanýn sonuna düzenleyici çýkmadan önce gelinirse, sonraki karakterler
+klavyeden okunur.
+.TP
+\-T {uçbirim}
+.B Vim'e
+kullandýðýnýz uçbirimin adýný söyler.
+Yalnýzca kendiliðinden okunamazsa gereklidir.
+.B Vim'in
+tanýdýðý bir uçbirim olmalýdýr veya termcap veya terminfo dosyasýnda
+tanýmlý olmalýdýr.
+.TP
+\-u {vimrc}
+Ýlklendirme için {vimrc} dosyasýndaki komutlarý kullan.
+Diðer tüm ilklendirmeler atlanýr.
+Bunu özel türde dosyalarý düzenlemek için kullanýn.
+Dosya adý olarak "NONE" verilirse tüm özelleþtirmeler atlanýr.
+Ek bilgi için vim içinde ":help initialization" bölümüne bakýn.
+.TP
+\-U {gvimrc}
+Grafik arabirim ilklendirmesi için {gvimrc} dosyasýndaki komutlara bakýn.
+Diðer tüm grafik arabirim ilklendirmeleri atlanýr.
+Dosya adý olarak "NONE" verilirse tüm özelleþtirmeler atlanýr.
+Ek bilgi için vim içinde ":help gui\-init" bölümüne bakýn.
+.TP
+\-V[N]
+Sözlü anlatým.  Hangi dosyalarýn kaynak alýndýðýný ve viminfo dosyasýndan
+nelerin okunduðunu yazdýrýr.  'verbose' için isteðe baðlý N seçeneði 
+kullanýlabilir. Öntanýmlý sayý 10'dur.
+.TP
+\-v
+.B Vim'i
+"vi" yazarak baþlatýrmýþ gibi Vi kipinde baþlatýr.  Bu yalnýzca
+çalýþtýrýlabilir "ex" olduðunda bir iþe yarar.
+.TP
+\-w {betikçýk}
+Girdiðiniz tüm karakterler siz
+.B Vim'den
+çýkana deðin {betikçýk} dosyasýnda saklanýr.
+Bu "vim \-s" veya ":source" komutu ile kullanýlacak bir betik yaratmaya yarar.
+Eðer {betikçýk} dosyasý varsa karakterler dosyaya eklenir.
+.TP
+\-W {betikçýk}
+\-w gibi, ancak var olan bir dosyanýn üzerine yazar.
+.TP
+\-x
+Dosya yazarken þifreleme kullanýr.  Bir þifre girmeniz istenecektir.
+.TP
+\-X
+X sunucusuna baðlanmaz.  Vim'in uçbirimde baþlama süresini azaltýr ancak pencere baþlýðý
+ve pano kullanýlamaz.
+.TP
+\-y
+.B Vim'i
+"evim" veya "eview" yazarak baþlatýrmýþ gibi kolay kipte baþlatýr.
+.B Vim'i
+diðer týkla ve yaz düzenleyicileri gibi çalýþtýrýr.
+.TP
+\-Z
+Kýsýtlý kip.  Program "r" yazarak baþlatýlmýþ gibi davranýr.
+.TP
+\-\-
+Seçeneklerin bittiðini belirtir.
+Bundan sonraki deðiþkenler artýk bir dosya adý olarak iþletilir.
+Ayný zamanda '\-' ile baþlayan bir dosyayý tanýtmak için de kullanýlabilir.
+.TP
+\-\-echo\-wid
+Yalnýzca GTK grafik arabirimi: Pencere numarasýný stdout'a yankýla.
+.TP
+\-\-help
+Yardým iletisini yazdýrýr ve çýkar, "\-h" gibi.
+.TP
+\-\-literal
+Dosya adý deðiþkenlerini gerçek anlamda iþlet, joker karakterlerini
+geniþletme.  Bunun kabuðun karakterleri kendiliðinden geniþlettiði Unix'te
+bir etkisi bulunmamaktadýr.
+.TP
+\-\-noplugin
+Eklentileri yükleme.  "\-u NONE" da ayný iþlevi görür.
+.TP
+\-\-remote
+Bir Vim sunucusuna baðlan ve geri kalan deðiþkenlerde belirtilen dosyalarý
+düzenle. Eðer bir sunucu bulunamazsa bir uyarý verilir ve dosyalar þu anki
+Vim'de düzenlenir.
+.TP
+\-\-remote\-expr {ifade}
+Bir Vim sunucusuna baðlan ve {ifade}'yi deðerlendirip sonucu stdout'a yazdýr.
+.TP
+\-\-remote\-send {anahtarlar}
+Bir Vim sunucusuna baðlan ve ona {anahtarlar} gönder.
+.TP
+\-\-remote\-silent
+\-\-remote gibi, ancak bir sunucu bulunamazsa uyarý vermez.
+.TP
+\-\-remote\-wait
+\-\-remote gibi, ancak Vim dosyalar düzenlenene kadar çýkmaz.
+.TP
+\-\-remote\-wait\-silent
+\-\-remote\-wait gibi, ancak bir sunucu bulunamazsa uyarý vermez.
+.TP
+\-\-serverlist
+Bulunabilecek bütün Vim sunucularýný listeler.
+.TP
+\-\-servername {ad}
+{ad}'ý bir sunucu adý olarak kullanýr.  Bir \-\-remote deðiþkeni ve
+baðlanacaðý sunucunun adý ile kullanýlmadýðý sürece þu anki Vim için
+kullanýlýr.
+.TP
+\-\-socketid {id}
+Yalnýzca GTK grafik arabirimi: GtkPlug mekanizmasýný kullanarak gvim'i baþka
+bir pencerede çalýþtýr.
+.TP
+\-\-version
+Sürüm bilgisini yazdýrýr ve çýkar.
+.SH ÇEVRÝMÝÇÝ YARDIM
+.B Vim
+içinde ":help" yazarak baþlayýn.
+Belirli bir konu üzerine yardým almak için ":help subject" yazýn.
+Örneðin: "ZZ" komutu üzerine bilgi almak için ":help ZZ" yazýn.
+<Tab> ve CTRL-D kullanarak konularý tamamlayýn (":help cmdline\-completion").
+Bir konumdan diðerini atlamak için etiketler mevcuttur (bir tür köprü gibi),
+ek bilgi için ":help").
+Tüm belgelendirmeyi bu biçimde okuyabilirsiniz, örneðin: ":help syntax.txt".
+":help syntax.txt".
+.SH DOSYALAR
+.TP 15
+/usr/local/lib/vim/doc/*.txt
+.B Vim
+belgelendirme dosyalarý.
+Tüm listeyi görmek için ":help doc\-file\-list" yazýn.
+.TP
+/usr/local/lib/vim/doc/tags
+Belgelendirme içinde veri bulmak için kullanýlan etiketler dosyasý.
+.TP
+/usr/local/lib/vim/syntax/syntax.vim
+Sistem geneli sözdizim ilklendirmeleri.
+.TP
+/usr/local/lib/vim/syntax/*.vim
+Programlama dilleri için sözdizim dosyalarý.
+.TP
+/usr/local/lib/vim/vimrc
+Sistem geneli
+.B Vim
+ilklendirmeleri.
+.TP
+~/.vimrc
+Sizin kiþisel
+.B Vim
+ilklendirmeleriniz.
+.TP
+/usr/local/lib/vim/gvimrc
+Sistem geneli gvim ilklendirmeleri.
+.TP
+~/.gvimrc
+Sizin kiþisel gvim ilklendirmeleriniz.
+.TP
+/usr/local/lib/vim/optwin.vim
+":options" komutu için kullanýlan betik, görsel seçenek ayarlarý.
+.TP
+/usr/local/lib/vim/menu.vim
+gvim için sistem geneli menü ilklendirmeleri.
+.TP
+/usr/local/lib/vim/bugreport.vim
+Hata raporu oluþturmak için kullanýlan betik. Ek bilgi için: ":help bugs".
+.TP
+/usr/local/lib/vim/filetype.vim
+Dosya türünü adýndan tanýyan betik. Ek bilgi için: ":help 'filetype'".
+.TP
+/usr/local/lib/vim/scripts.vim
+Dosya türünü içeriðinden tanýyan betik. Ek bilgi için: ":help 'filetype'".
+.TP
+/usr/local/lib/vim/print/*.ps
+PostScript yazdýrmasý için kullanýlan dosyalar.
+.PP
+En güncel bilgiler için VÝM ana sayfasýný ziyaret edin:
+.br
+<URL:http://www.vim.org/>
+.SH AYRICA BAKINIZ
+vimtutor(1)
+.SH YAZAR
+.B Vim'in
+büyük çoðunluðu Bram Moolenaar tarafýndan baþkalarýnýn kayda deðer
+yardýmlarýyla yazýlmýþtýr.
+Ek bilgi için
+.B Vim
+içinde ":help credits" yazýn.
+.br
+.B Vim
+Stevie tabanlýdýr, yazarlarý: Tim Thompson,
+Tony Andrews ve G.R. (Fred) Walter.
+Orijinal koddan geriye pek bir þey kalmadýðýný söylemek yanlýþ olmaz.
+.SH HATALAR
+Bilinen hatalarýn bir listesi için ":help todo" yazýn.
+.PP
+Unutmayýn ki, baþkalarý tarafýndan hata olarak deðerlendirilebilecek konularýn
+bir çoðu Vi'nin davranýþlarýna sadýk kalýnmasý nedeniyle vardýr. Yine de
+bazý þeylerin "Vi bunu deðiþik biçimde yapýyor" diye hata olabileceðini
+düþünüyorsanýz, "vi_diff.txt" dosyasýný dikkatle okuyun (veya Vim içinde
+:help vi_diff.txt yazýn.
+Ek olarak 'compatible' ve 'cpoptions' seçeneklerine de bakabilirsiniz.

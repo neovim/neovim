@@ -1,0 +1,50 @@
+.TH VIMTUTOR 1 "2 Nisan 2001"
+.SH AD
+vimtutor \- Vim eğitmeni
+.SH ÖZET
+.br
+.B vimtutor [\-g] [dil]
+.SH TANIM
+.B Vimtutor,
+.B Vim
+eğitmenini başlatır.
+Önce orijinal eğitmen dosyasının bir kopyasını alır, böylece bir değişikliğe
+uğramadan değiştirilebilir.
+.PP
+.B Vimtutor
+ilk
+.B Vim
+komutlarını öğrenmek isteyen kişiler için yararlıdır.
+.PP
+İsteğe bağlı \-g değişkeni vimtutor'u vim yerine eğer yüklü ise gvim ile
+başlatır. Yüklü değilse açmak için Vim kullanılır.
+.PP
+İsteğe bağlı [dil] değişkeni iki harfli dil kodunu belirtir, örneğin "tr"
+veya "es". Eğer [dil] değişkeni verilmemişse mevcut yerelleştirme
+kullanılır.
+Eğer bu dilde bir eğitmen varsa kullanılır.
+Yoksa İngilizce sürüm kullanılacaktır.
+.PP
+.B Vim
+her zaman Vi uyumlu kipte başlatılır.
+.SH DOSYALAR
+.TP 15
+/usr/local/lib/vim/tutor/tutor[.dil]
+.B Vimtutor
+metin dosyaları.
+.TP 15
+/usr/local/lib/vim/tutor/tutor.vim
+.B Vimtutor
+metin dosyasını kopyalamak için kullanılan betik.
+.SH YAZAR
+.B Vimtutor
+ilk olarak Vi için Michael C. Pierce ve Robert K. Ware, 
+Colorado School of Mines tarafından, Colorado State University'den Charles
+Smith'in verdiği fikirler kullanılarak yazıldı.
+E-posta: bware@mines.colorado.edu.
+.br
+.B Vim
+uyarlaması Bram Moolenaar tarafından yapıldı.
+Çevirmenlerin adları için eğitmen dosyalarına bakın.
+.SH AYRICA BAKINIz
+vim(1)
