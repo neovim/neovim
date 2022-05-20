@@ -204,31 +204,6 @@ char_u *get_search_pat(void)
   return mr_pattern;
 }
 
-/*
- * Reverse text into allocated memory.
- * Returns the allocated string.
- *
- * TODO(philix): move reverse_text() to strings.c
- */
-char_u *reverse_text(char_u *s) FUNC_ATTR_NONNULL_RET
-{
-  /*
-   * Reverse the pattern.
-   */
-  size_t len = STRLEN(s);
-  char_u *rev = xmalloc(len + 1);
-  size_t rev_i = len;
-  for (size_t s_i = 0; s_i < len; s_i++) {
-    const int mb_len = utfc_ptr2len((char *)s + s_i);
-    rev_i -= mb_len;
-    memmove(rev + rev_i, s + s_i, mb_len);
-    s_i += mb_len - 1;
-  }
-  rev[len] = NUL;
-
-  return rev;
-}
-
 void save_re_pat(int idx, char_u *pat, int magic)
 {
   if (spats[idx].pat != pat) {
