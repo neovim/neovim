@@ -443,7 +443,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
                        MAXWLEN + 1);
   mi.mi_fwordlen = (int)STRLEN(mi.mi_fword);
 
-  if (camel_case) {
+  if (camel_case && mi.mi_fwordlen > 0) {
     // introduce a fake word end space into the folded word.
     mi.mi_fword[mi.mi_fwordlen - 1] = ' ';
   }
