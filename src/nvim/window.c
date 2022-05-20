@@ -5119,6 +5119,12 @@ static void win_free(win_T *wp, tabpage_T *tp)
   xfree(wp->w_localdir);
   xfree(wp->w_prevdir);
 
+  stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
+  xfree(wp->w_status_click_defs);
+
+  stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
+  xfree(wp->w_winbar_click_defs);
+
   // Remove the window from the b_wininfo lists, it may happen that the
   // freed memory is re-used for another window.
   FOR_ALL_BUFFERS(buf) {
@@ -6612,6 +6618,23 @@ void last_status(bool morewin)
                   global_stl_height() > 0);
 }
 
+// Remove status line from window, replacing it with a horizontal separator if needed.
+static void win_remove_status_line(win_T *wp, bool add_hsep)
+{
+  wp->w_status_height = 0;
+  if (add_hsep) {
+    wp->w_hsep_height = 1;
+  } else {
+    win_new_height(wp, wp->w_height + STATUS_HEIGHT);
+  }
+  comp_col();
+
+  stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
+  xfree(wp->w_status_click_defs);
+  wp->w_status_click_defs_size = 0;
+  wp->w_status_click_defs = NULL;
+}
+
 // Look for resizable frames and take lines from them to make room for the statusline
 static void resize_frame_for_status(frame_T *fr)
 {
@@ -6652,10 +6675,7 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
 
     if (is_last) {
       if (wp->w_status_height != 0 && (!statusline || is_stl_global)) {
-        // Remove status line
-        wp->w_status_height = 0;
-        win_new_height(wp, wp->w_height + STATUS_HEIGHT);
-        comp_col();
+        win_remove_status_line(wp, false);
       } else if (wp->w_status_height == 0 && !is_stl_global && statusline) {
         // Add statusline to window if needed
         wp->w_status_height = STATUS_HEIGHT;
@@ -6665,9 +6685,7 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
     } else if (wp->w_status_height != 0 && is_stl_global) {
       // If statusline is global and the window has a statusline, replace it with a horizontal
       // separator
-      wp->w_status_height = 0;
-      wp->w_hsep_height = 1;
-      comp_col();
+      win_remove_status_line(wp, true);
     } else if (wp->w_status_height == 0 && !is_stl_global) {
       // If statusline isn't global and the window doesn't have a statusline, re-add it
       wp->w_status_height = STATUS_HEIGHT;
@@ -6675,13 +6693,8 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
       comp_col();
     }
     redraw_all_later(SOME_VALID);
-  } else if (fr->fr_layout == FR_COL) {
-    // For a column frame, recursively call this function for all child frames
-    FOR_ALL_FRAMES(fp, fr->fr_child) {
-      last_status_rec(fp, statusline, is_stl_global);
-    }
   } else {
-    // For a row frame, recursively call this function for all child frames
+    // For a column or row frame, recursively call this function for all child frames
     FOR_ALL_FRAMES(fp, fr->fr_child) {
       last_status_rec(fp, statusline, is_stl_global);
     }
@@ -6697,6 +6710,14 @@ void set_winbar(void)
       wp->w_winbar_height = winbar_height;
       win_set_inner_size(wp);
       wp->w_redr_winbar = winbar_height;
+
+      if (winbar_height == 0) {
+        // When removing winbar, deallocate the w_winbar_click_defs array
+        stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
+        xfree(wp->w_winbar_click_defs);
+        wp->w_winbar_click_defs_size = 0;
+        wp->w_winbar_click_defs = NULL;
+      }
     }
   }
 }

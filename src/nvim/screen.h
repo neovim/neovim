@@ -30,24 +30,6 @@ typedef enum {
 // Maximum columns for terminal highlight attributes
 #define TERM_ATTRS_MAX 1024
 
-/// Status line click definition
-typedef struct {
-  enum {
-    kStlClickDisabled = 0,  ///< Clicks to this area are ignored.
-    kStlClickTabSwitch,     ///< Switch to the given tab.
-    kStlClickTabClose,      ///< Close given tab.
-    kStlClickFuncRun,       ///< Run user function.
-  } type;      ///< Type of the click.
-  int tabnr;   ///< Tab page number.
-  char *func;  ///< Function to run.
-} StlClickDefinition;
-
-/// Used for tabline clicks
-typedef struct {
-  StlClickDefinition def;  ///< Click definition.
-  const char *start;       ///< Location where region starts.
-} StlClickRecord;
-
 /// Array defining what should be done when tabline is clicked
 EXTERN StlClickDefinition *tab_page_click_defs INIT(= NULL);
 
