@@ -3598,5 +3598,6 @@ char_u *register_cfunc(cfunc_T cb, cfunc_free_T cb_free, void *state)
   STRCPY(fp->uf_name, name);
   hash_add(&func_hashtab, UF2HIKEY(fp));
 
+  // coverity[leaked_storage]
   return fp->uf_name;
 }
