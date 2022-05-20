@@ -1583,13 +1583,14 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
 /// @param cmdinfo Command parse information
 void execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo)
 {
+  char *errormsg = NULL;
+
 #define ERROR(msg) \
   do { \
-    emsg(msg); \
+    errormsg = msg; \
     goto end; \
   } while (0)
 
-  char *errormsg = NULL;
   cmdmod_T save_cmdmod = cmdmod;
   cmdmod = cmdinfo->cmdmod;
 
@@ -1648,7 +1649,7 @@ void execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo)
   // If filename expansion is enabled, expand filenames
   if (cmdinfo->magic.file) {
     if (expand_filename(eap, (char_u **)eap->cmdlinep, &errormsg) == FAIL) {
-      ERROR(errormsg);
+      goto end;
     }
   }
 
@@ -1706,14 +1707,20 @@ void execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo)
     eap->errmsg = NULL;
     (cmdnames[eap->cmdidx].cmd_func)(eap);
     if (eap->errmsg != NULL) {
-      ERROR(_(eap->errmsg));
+      errormsg = _(eap->errmsg);
     }
   }
+
 end:
+  if (errormsg != NULL && *errormsg != NUL) {
+    emsg(errormsg);
+  }
   // Undo command modifiers
   undo_cmdmod(eap, msg_scroll);
   cmdmod = save_cmdmod;
-
+  if (eap->did_sandbox) {
+    sandbox--;
+  }
 #undef ERROR
 }
 

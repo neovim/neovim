@@ -3636,5 +3636,13 @@ describe('API', function()
       meths.cmd({ cmd = "update" }, {})
       meths.cmd({ cmd = "buffer", count = 0 }, {})
     end)
+    it('doesn\'t suppress errors when used in keymapping', function()
+      meths.exec_lua([[
+        vim.keymap.set("n", "[l",
+                       function() vim.api.nvim_cmd({ cmd = "echo", args = {"foo"} }, {}) end)
+      ]], {})
+      feed("[l")
+      neq(nil, string.find(eval("v:errmsg"), "E5108:"))
+    end)
   end)
 end)
