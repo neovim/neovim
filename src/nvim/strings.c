@@ -1507,3 +1507,24 @@ int kv_do_printf(StringBuilder *str, const char *fmt, ...)
   str->size += (size_t)printed;
   return printed;
 }
+
+/// Reverse text into allocated memory.
+///
+/// @return  the allocated string.
+char_u *reverse_text(char_u *s)
+  FUNC_ATTR_NONNULL_RET
+{
+  // Reverse the pattern.
+  size_t len = STRLEN(s);
+  char_u *rev = xmalloc(len + 1);
+  size_t rev_i = len;
+  for (size_t s_i = 0; s_i < len; s_i++) {
+    const int mb_len = utfc_ptr2len((char *)s + s_i);
+    rev_i -= (size_t)mb_len;
+    memmove(rev + rev_i, s + s_i, (size_t)mb_len);
+    s_i += (size_t)mb_len - 1;
+  }
+  rev[len] = NUL;
+
+  return rev;
+}
