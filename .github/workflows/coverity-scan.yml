@@ -1,7 +1,7 @@
 name: Coverity
 on:
   schedule:
-    - cron: '10 0 * * 1'  # Run every Monday at 00:10
+    - cron: '10 0 * * *'  # Run every day at 00:10
   workflow_dispatch:
 
 jobs:
