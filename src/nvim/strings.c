@@ -1496,6 +1496,7 @@ int kv_do_printf(StringBuilder *str, const char *fmt, ...)
   // printed string didn't fit, resize and try again
   if ((size_t)printed >= remaining) {
     kv_ensure_space(*str, (size_t)printed + 1);  // include space for NUL terminator at the end
+    assert(str->items != NULL);
     va_start(ap, fmt);
     printed = vsnprintf(str->items + str->size, str->capacity - str->size, fmt, ap);
     va_end(ap);
