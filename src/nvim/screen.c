@@ -5328,6 +5328,11 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     col = 0;
     grid = &wp->w_grid;
     grid_adjust(&grid, &row, &col);
+
+    if (row < 0) {
+      return;
+    }
+
     fillchar = wp->w_p_fcs_chars.wbr;
     attr = (wp == curwin) ? HL_ATTR(HLF_WBR) : HL_ATTR(HLF_WBRNC);
     maxwidth = wp->w_width_inner;
