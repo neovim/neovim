@@ -469,6 +469,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   loop_init(&tui_loop, NULL);
   TUIData *data = xcalloc(1, sizeof(TUIData));
   ui->data = data;
+  bridge->bridge.data = data;
   data->bridge = bridge;
   data->loop = &tui_loop;
   data->is_starting = true;
@@ -2235,4 +2236,27 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value, void *d
 
   return value;
 }
+
+void tui_terminput_start_impl(UI *ui)
+{
+    TUIData *data = (TUIData *)ui->data;
+    if (!data) {
+      return;
+    }
+    if (os_isatty(data->input.in_fd)) {
+      tinput_start(&data->input);
+    }
+}
+
+void tui_terminput_stop_impl(UI *ui)
+{
+    TUIData *data = (TUIData *)ui->data;
+    if (!data) {
+      return;
+    }
+    if (os_isatty(data->input.in_fd)) {
+      tinput_stop(&data->input);
+    }
+}
+
 #endif

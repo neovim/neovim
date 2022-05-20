@@ -658,3 +658,17 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
     win_set_inner_size(wp);
   }
 }
+
+void ui_terminput_start_impl(void)
+{
+  for (size_t i = 0; i < ui_count; i++) {
+    tui_terminput_start_impl(uis[i]);
+  }
+}
+
+void ui_terminput_stop_impl(void)
+{
+  for (size_t i = 0; i < ui_count; i++) {
+    tui_terminput_stop_impl(uis[i]);
+  }
+}

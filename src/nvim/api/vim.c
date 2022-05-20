@@ -2499,3 +2499,17 @@ void nvim_del_user_command(String name, Error *err)
 {
   nvim_buf_del_user_command(-1, name, err);
 }
+
+/// Stop processing of input stream of all attached terminal uis.
+void nvim_ui_terminput_start(void)
+  FUNC_API_SINCE(10)
+{
+  ui_terminput_start_impl();
+}
+
+/// Start processing of input stream of all attached terminal uis.
+void nvim_ui_terminput_stop(void)
+  FUNC_API_SINCE(10)
+{
+  ui_terminput_stop_impl();
+}
