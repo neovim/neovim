@@ -1624,6 +1624,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
 err:
   NLUA_CLEAR_REF(luaref);
   NLUA_CLEAR_REF(compl_luaref);
+  xfree(compl_arg);
 }
 
 int find_sid(uint64_t channel_id)
