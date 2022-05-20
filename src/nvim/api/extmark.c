@@ -95,27 +95,27 @@ static bool ns_initialized(uint32_t ns)
 }
 
 
-static Array extmark_to_array(ExtmarkInfo extmark, bool id, bool add_dict)
+static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict)
 {
   Array rv = ARRAY_DICT_INIT;
   if (id) {
-    ADD(rv, INTEGER_OBJ((Integer)extmark.mark_id));
+    ADD(rv, INTEGER_OBJ((Integer)extmark->mark_id));
   }
-  ADD(rv, INTEGER_OBJ(extmark.row));
-  ADD(rv, INTEGER_OBJ(extmark.col));
+  ADD(rv, INTEGER_OBJ(extmark->row));
+  ADD(rv, INTEGER_OBJ(extmark->col));
 
   if (add_dict) {
     Dictionary dict = ARRAY_DICT_INIT;
 
-    PUT(dict, "right_gravity", BOOLEAN_OBJ(extmark.right_gravity));
+    PUT(dict, "right_gravity", BOOLEAN_OBJ(extmark->right_gravity));
 
-    if (extmark.end_row >= 0) {
-      PUT(dict, "end_row", INTEGER_OBJ(extmark.end_row));
-      PUT(dict, "end_col", INTEGER_OBJ(extmark.end_col));
-      PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
+    if (extmark->end_row >= 0) {
+      PUT(dict, "end_row", INTEGER_OBJ(extmark->end_row));
+      PUT(dict, "end_col", INTEGER_OBJ(extmark->end_col));
+      PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark->end_right_gravity));
     }
 
-    Decoration *decor = &extmark.decor;
+    const Decoration *decor = &extmark->decor;
     if (decor->hl_id) {
       String name = cstr_to_string((const char *)syn_id2name(decor->hl_id));
       PUT(dict, "hl_group", STRING_OBJ(name));
@@ -238,7 +238,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   if (extmark.row < 0) {
     return rv;
   }
-  return extmark_to_array(extmark, false, details);
+  return extmark_to_array(&extmark, false, details);
 }
 
 /// Gets extmarks in "traversal order" from a |charwise| region defined by
@@ -357,7 +357,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
                                        u_row, u_col, (int64_t)limit, reverse);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, (bool)details)));
+    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, (bool)details)));
   }
 
   kv_destroy(marks);
