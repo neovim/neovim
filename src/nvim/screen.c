@@ -335,10 +335,11 @@ int update_screen(int type)
       type = must_redraw;
     }
 
-    /* must_redraw is reset here, so that when we run into some weird
-    * reason to redraw while busy redrawing (e.g., asynchronous
-    * scrolling), or update_topline() in win_update() will cause a
-    * scroll, the screen will be redrawn later or in win_update(). */
+    // must_redraw is reset here, so that when we run into some weird
+    // reason to redraw while busy redrawing (e.g., asynchronous
+    // scrolling), or update_topline() in win_update() will cause a
+    // scroll, or a decoration provider requires a redraw, the screen
+    // will be redrawn later or in win_update().
     must_redraw = 0;
   }
 
@@ -1723,17 +1724,18 @@ static void win_update(win_T *wp, DecorProviders *providers)
     wp->w_valid |= VALID_BOTLINE;
     wp->w_viewport_invalid = true;
     if (wp == curwin && wp->w_botline != old_botline && !recursive) {
-      recursive = true;
       curwin->w_valid &= ~VALID_TOPLINE;
       update_topline(curwin);  // may invalidate w_botline again
-      if (must_redraw != 0) {
-        // Don't update for changes in buffer again.
-        i = curbuf->b_mod_set;
-        curbuf->b_mod_set = false;
-        win_update(curwin, providers);
-        must_redraw = 0;
-        curbuf->b_mod_set = i;
-      }
+    }
+    // must_redraw may be set by a decoration provider or by the update_topline() call above.
+    if (must_redraw != 0 && !recursive) {
+      recursive = true;
+      // Don't update for changes in buffer again.
+      i = wp->w_buffer->b_mod_set;
+      wp->w_buffer->b_mod_set = false;
+      win_update(wp, providers);
+      must_redraw = 0;
+      wp->w_buffer->b_mod_set = i;
       recursive = false;
     }
   }
