@@ -1033,8 +1033,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
   // If 'autoindent' and/or 'smartindent' is set, try to figure out what
   // indent to use for the new line.
-  if (curbuf->b_p_ai
-      || do_si) {
+  if (curbuf->b_p_ai || do_si) {
     // count white space on current line
     newindent = get_indent_str_vtab(saved_line,
                                     curbuf->b_p_ts,
@@ -1482,8 +1481,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         }
 
         // Recompute the indent, it may have changed.
-        if (curbuf->b_p_ai
-            || do_si) {
+        if (curbuf->b_p_ai || do_si) {
           newindent = get_indent_str_vtab(leader,
                                           curbuf->b_p_ts,
                                           curbuf->b_p_vts_array, false);
@@ -1526,15 +1524,13 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
       // if a new indent will be set below, remove the indent that
       // is in the comment leader
-      if (newindent
-          || did_si) {
+      if (newindent || did_si) {
         while (lead_len && ascii_iswhite(*leader)) {
           lead_len--;
           newcol--;
           leader++;
         }
       }
-
       did_si = can_si = false;
     } else if (comment_end != NULL) {
       // We have finished a comment, so we don't use the leader.
@@ -1646,8 +1642,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   }
 
   inhibit_delete_count++;
-  if (newindent
-      || did_si) {
+  if (newindent || did_si) {
     curwin->w_cursor.lnum++;
     if (did_si) {
       int sw = get_sw_value(curbuf);
@@ -1764,6 +1759,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   } else {
     vreplace_mode = 0;
   }
+
   // May do lisp indenting.
   if (!p_paste
       && leader == NULL
@@ -1772,11 +1768,13 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     fixthisline(get_lisp_indent);
     ai_col = (colnr_T)getwhitecols_curline();
   }
+
   // May do indenting after opening a new line.
   if (do_cindent) {
     do_c_expr_indent();
     ai_col = (colnr_T)getwhitecols_curline();
   }
+
   if (vreplace_mode != 0) {
     State = vreplace_mode;
   }

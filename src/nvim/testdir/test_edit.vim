@@ -395,15 +395,13 @@ endfunc
 
 func Test_edit_13()
   " Test smartindenting
-  if exists("+smartindent")
-    new
-    set smartindent autoindent
-    call setline(1, ["\tabc"])
-    call feedkeys("A {\<cr>more\<cr>}\<esc>", 'tnix')
-    call assert_equal(["\tabc {", "\t\tmore", "\t}"], getline(1, '$'))
-    set smartindent& autoindent&
-    bwipe!
-  endif
+  new
+  set smartindent autoindent
+  call setline(1, ["\tabc"])
+  call feedkeys("A {\<cr>more\<cr>}\<esc>", 'tnix')
+  call assert_equal(["\tabc {", "\t\tmore", "\t}"], getline(1, '$'))
+  set smartindent& autoindent&
+  bwipe!
 
   " Test autoindent removing indent of blank line.
   new

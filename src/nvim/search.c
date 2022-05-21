@@ -1965,13 +1965,13 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
   clearpos(&match_pos);
 
   // backward search: Check if this line contains a single-line comment
-  if ((backwards && comment_dir)
-      || lisp) {
+  if ((backwards && comment_dir) || lisp) {
     comment_col = check_linecomment(linep);
   }
   if (lisp && comment_col != MAXCOL && pos.col > (colnr_T)comment_col) {
     lispcomm = true;        // find match inside this comment
   }
+
   while (!got_int) {
     /*
      * Go to the next position, forward or backward. We could use
@@ -1998,8 +1998,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         line_breakcheck();
 
         // Check if this line contains a single-line comment
-        if (comment_dir
-            || lisp) {
+        if (comment_dir || lisp) {
           comment_col = check_linecomment(linep);
         }
         // skip comment
@@ -2013,7 +2012,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
     } else {                          // forward search
       if (linep[pos.col] == NUL
           // at end of line, go to next one
-          // don't search for match in comment
+          // For lisp don't search for match in comment
           || (lisp && comment_col != MAXCOL
               && pos.col == (colnr_T)comment_col)) {
         if (pos.lnum == curbuf->b_ml.ml_line_count          // end of file
@@ -2323,8 +2322,8 @@ int check_linecomment(const char_u *line)
   } else {
     while ((p = (char_u *)vim_strchr((char *)p, '/')) != NULL) {
       // Accept a double /, unless it's preceded with * and followed by *,
-      // because * / / * is an end and start of a C comment.
-      // Only accept the position if it is not inside a string.
+      // because * / / * is an end and start of a C comment.  Only
+      // accept the position if it is not inside a string.
       if (p[1] == '/' && (p == line || p[-1] != '*' || p[2] != '*')
           && !is_pos_in_string(line, (colnr_T)(p - line))) {
         break;

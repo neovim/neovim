@@ -3799,6 +3799,7 @@ static bool ins_compl_prep(int c)
       }
 
       bool want_cindent = (can_cindent && cindent_on());
+
       // When completing whole lines: fix indent for 'cindent'.
       // Otherwise, break line if it's too long.
       if (compl_cont_mode == CTRL_X_WHOLE_LINE) {
@@ -8412,9 +8413,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
     mincol = 0;
     // keep indent
     if (mode == BACKSPACE_LINE
-        && (curbuf->b_p_ai
-            || cindent_on()
-            )
+        && (curbuf->b_p_ai || cindent_on())
         && !revins_on) {
       save_col = curwin->w_cursor.col;
       beginline(BL_WHITE);
