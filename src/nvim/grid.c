@@ -4,9 +4,9 @@
 #include "nvim/arabic.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
-#include "nvim/screen.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "grid.c.generated.h"

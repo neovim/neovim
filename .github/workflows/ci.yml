@@ -66,6 +66,32 @@ jobs:
             ninja-build \
             pkg-config
 
+
+      - name: Cache uncrustify
+        id: cache-uncrustify
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CACHE_UNCRUSTIFY }}
+          key: ${{ env.UNCRUSTIFY_VERSION }}
+
+      - name: Clone uncrustify
+        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: uncrustify/uncrustify
+          ref: ${{ env.UNCRUSTIFY_VERSION }}
+          path: uncrustify
+
+      - name: Install uncrustify
+        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
+        run: |
+          source_dir=uncrustify
+          build_dir=uncrustify/build
+          cmake -S $source_dir -B $build_dir -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build $build_dir
+          mkdir -p $HOME/.cache
+          cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
+
       - name: Cache artifacts
         uses: actions/cache@v2
         with:
@@ -90,6 +116,11 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --check runtime/
+
+      - if: "!cancelled()"
+        name: uncrustify
+        run: |
+          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --check $(find ./src/nvim -name "*.[ch]") >/dev/null
 
       - if: "!cancelled()"
         name: lualint
