@@ -14,11 +14,11 @@ jobs:
       VERSION_BRANCH: marvim/ci-version-update
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: vim/vim
           path: ${{ env.VIM_SOURCE_DIR }}
