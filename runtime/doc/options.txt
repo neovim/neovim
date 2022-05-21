@@ -1291,8 +1291,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'cinscopedecls'* *'cinsd'*
 'cinscopedecls' 'cinsd'	string	(default "public,protected,private")
 			local to buffer
-			{not available when compiled without the |+cindent|
-			feature}
 	Keywords that are interpreted as a C++ scope declaration by |cino-g|.
 	Useful e.g. for working with the Qt framework that defines additional
 	scope declarations "signals", "public slots" and "private slots": >

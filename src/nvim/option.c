@@ -6544,6 +6544,7 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, BV_SI);
       buf->b_p_channel = 0;
       buf->b_p_ci = p_ci;
+
       COPY_OPT_SCTX(buf, BV_CI);
       buf->b_p_cin = p_cin;
       COPY_OPT_SCTX(buf, BV_CIN);
@@ -6553,6 +6554,7 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, BV_CINO);
       buf->b_p_cinsd = vim_strsave(p_cinsd);
       COPY_OPT_SCTX(buf, BV_CINSD);
+
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;
       buf->b_p_pi = p_pi;
