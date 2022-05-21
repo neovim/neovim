@@ -513,9 +513,19 @@ function LanguageTree:register_cbs(cbs)
   end
 end
 
+---Determine whether {range} is completely inside {region} (range(region)==range -> true).
+---@param region node or 6-tuple srow, scol, sbyte, erow, ecol, ebyte.
+---@param inner range, 4-tuple srow, scol, erow, ecol.
+---@return boolean
 ---@private
-local function tree_contains(tree, range)
-  local start_row, start_col, end_row, end_col = tree:root():range()
+local function region_contains(region, range)
+  local start_row, start_col, end_row, end_col
+  if type(region) == 'table' then
+    start_row, start_col, end_row, end_col = region[1], region[2], region[4], region[5]
+  else
+    start_row, start_col, end_row, end_col = region:range()
+  end
+
   local start_fits = start_row < range[1] or (start_row == range[1] and start_col <= range[2])
   local end_fits = end_row > range[3] or (end_row == range[3] and end_col >= range[4])
 
@@ -526,12 +536,13 @@ end
 ---
 ---@param range A range, that is a `{ start_line, start_col, end_line, end_col }` table.
 function LanguageTree:contains(range)
-  for _, tree in pairs(self._trees) do
-    if tree_contains(tree, range) then
-      return true
+  for _, combined_region in ipairs(self._regions) do
+    for _, region in ipairs(combined_region) do
+      if region_contains(region, range) then
+        return true
+      end
     end
   end
-
   return false
 end
 

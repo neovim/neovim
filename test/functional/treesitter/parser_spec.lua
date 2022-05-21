@@ -749,7 +749,10 @@ int x = INT_MAX;
       parser = vim.treesitter.get_parser(0, "c", {
         injections = { c = "(preproc_def (preproc_arg) @c)"}})
 
-      local sub_tree = parser:language_for_range({1, 18, 1, 19})
+      -- check languagetree returned for " 123456789",
+      --                                  ^
+      -- it should be the injected one, since (preproc_arg) includes the space
+      local sub_tree = parser:language_for_range({1, 13, 1, 13})
 
       return sub_tree == parser:children().c
       ]])
