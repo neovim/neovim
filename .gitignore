@@ -75,3 +75,6 @@ tags
 /vim-*.patch
 
 CMakeUserPresets.json
+
+# ctest artifacts
+Testing

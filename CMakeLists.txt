@@ -603,59 +603,7 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "nvim")
 endif()
 
-#
-# Lint
-#
-find_program(LUACHECK_PRG luacheck)
-find_program(STYLUA_PRG stylua)
-find_program(UNCRUSTIFY_PRG uncrustify)
-find_program(SHELLCHECK_PRG shellcheck)
-
-add_glob_target(
-  REQUIRED
-  TARGET lintlua-luacheck
-  COMMAND ${LUACHECK_PRG}
-  FLAGS -q
-  GLOB_DIRS runtime/ scripts/ src/ test/
-  GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE
-  )
-
-add_glob_target(
-  TARGET lintlua-stylua
-  COMMAND ${STYLUA_PRG}
-  FLAGS --color=always --check
-  GLOB_DIRS runtime/
-  GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE
-  )
-
-add_custom_target(lintlua)
-add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
-
 include(InstallHelpers)
-
-add_glob_target(
-  TARGET lintsh
-  COMMAND ${SHELLCHECK_PRG}
-  FLAGS -x -a
-  GLOB_DIRS scripts ci
-  GLOB_PAT *.sh
-  EXCLUDE
-    scripts/pvscheck.sh
-    ci/common
-    ci/snap
-  TOUCH_STRATEGY SINGLE
-  )
-
-add_custom_target(lintcommit
-  COMMAND ${PROJECT_BINARY_DIR}/bin/nvim -u NONE -es -c [[lua require('scripts.lintcommit').main({trace=false})]]
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  VERBATIM)
-add_dependencies(lintcommit nvim)
-
-add_custom_target(lint)
-add_dependencies(lint check-single-includes lintc lintlua lintsh lintcommit lintuncrustify)
 
 #
 # Format
@@ -678,12 +626,13 @@ install_helper(
 # Go down the tree.
 #
 
+enable_testing()
 add_subdirectory(src/nvim)
 get_directory_property(NVIM_VERSION_CFLAGS DIRECTORY src/nvim DEFINITION NVIM_VERSION_CFLAGS)
-add_subdirectory(test/includes)
 add_subdirectory(cmake.config)
-add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)
+# must be set after all the targets have been configured
+add_subdirectory(test)
 get_directory_property(GENERATED_HELP_TAGS DIRECTORY runtime DEFINITION GENERATED_HELP_TAGS)
 if(WIN32)
   install_helper(

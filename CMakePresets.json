@@ -91,5 +91,30 @@
         "rhs": "Windows"
       }
     }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": {
+        "shortProgress": true,
+        "outputOnFailure": true
+      },
+      "execution": {
+        "stopOnFailure": true
+      },
+      "hidden": true
+    },
+    {
+      "name": "lint",
+      "filter": {
+        "include": {
+          "label": "lint-all"
+        }
+      },
+      "inherits": [
+        "default"
+      ]
+    }
   ]
 }
