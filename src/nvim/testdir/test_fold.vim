@@ -901,4 +901,33 @@ func Test_fold_split()
   bw!
 endfunc
 
+" Make sure that when you delete 1 line of a fold whose length is 2 lines, the
+" fold can't be closed since its length (1) is now less than foldminlines.
+func Test_indent_one_line_fold_close()
+  let lines =<< trim END
+    line 1
+      line 2
+      line 3
+  END
+
+  new
+  setlocal sw=2 foldmethod=indent
+  call setline(1, lines)
+  " open all folds, delete line, then close all folds
+  normal zR
+  3delete
+  normal zM
+  call assert_equal(-1, foldclosed(2)) " the fold should not be closed
+
+  " Now do the same, but delete line 2 this time; this covers different code.
+  " (Combining this code with the above code doesn't expose both bugs.)
+  1,$delete
+  call setline(1, lines)
+  normal zR
+  2delete
+  normal zM
+  call assert_equal(-1, foldclosed(2))
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
