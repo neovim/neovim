@@ -3,6 +3,7 @@
 " Maintainer: Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer: Gustavo Niemeyer <niemeyer@conectiva.com> (until March 2014)
 " Last Change: Mon Jun 01 21:15 MSK 2015 Igor Gnatenko
+" Update by Zdenek Dohnal, 2022 May 17
 
 if exists("b:did_ftplugin")
 	finish
@@ -41,8 +42,8 @@ else:
         headers = spec.sourceHeader
         version = headers["Version"]
         release = headers["Release"]
-        vim.command("let ver = " + version)
-        vim.command("let rel = " + release)
+        vim.command("let ver = '" + version + "'")
+        vim.command("let rel = '" + release + "'")
 PYEND
 		endif
 	endfunction

@@ -1,13 +1,13 @@
 " Vim indent file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	(v48) 2020 October 07
-" Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
+" Version:	(v49) 2022 May 14
+" Maintainer:	Ajit J. Thakkar <thakkar.ajit@gmail.com>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-indent from Vim
 " Credits:
 "  Version 0.1 was created in September 2000 by Ajit Thakkar.
 "  Since then, useful suggestions and contributions have been made, in order, by:
 "  Albert Oliver Serra, Takuya Fujiwara, Philipp Edelmann, Eisuke Kawashima,
-"  and Louis Cochen.
+"  Louis Cochen, and Doug Kearns.
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -17,6 +17,7 @@ let b:did_indent = 1
 
 let s:cposet=&cpoptions
 set cpoptions&vim
+let b:undo_indent = "setl inde< indk<"
 
 setlocal indentkeys+==~end,=~case,=~if,=~else,=~do,=~where,=~elsewhere,=~select
 setlocal indentkeys+==~endif,=~enddo,=~endwhere,=~endselect,=~elseif
