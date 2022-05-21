@@ -1209,7 +1209,6 @@ describe('ui/ext_messages', function()
   it('supports global statusline', function()
     feed(":set laststatus=3<cr>")
     feed(":sp<cr>")
-    feed("<c-l>")
     feed(":set cmdheight<cr>")
     screen:expect({grid=[[
       ^                                                                                |
@@ -1241,8 +1240,7 @@ describe('ui/ext_messages', function()
     }})
 
     feed("<c-w>+")
-    feed("<c-l>")
-    feed(":set cmdheight<cr>")
+    feed(":set laststatus<cr>")
     screen:expect({grid=[[
       ^                                                                                |
       {1:~                                                                               }|
@@ -1269,7 +1267,7 @@ describe('ui/ext_messages', function()
       {1:~                                                                               }|
       {7:[No Name]                                                                       }|
     ]], messages={
-      {content = { { "  cmdheight=0" } }, kind = "" }
+      {content = { { "  laststatus=3" } }, kind = "" }
     }})
 
     feed(":set mouse=a<cr>")

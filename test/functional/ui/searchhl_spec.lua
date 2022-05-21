@@ -43,7 +43,7 @@ describe('search highlighting', function()
     insert("some text\nmore text")
     feed_command('1,2fold')
     feed("gg/text")
-    screen:expect([[
+    screen:expect{grid=[[
       {6:+--  2 lines: some text·················}|
       {1:~                                       }|
       {1:~                                       }|
@@ -51,7 +51,9 @@ describe('search highlighting', function()
       {1:~                                       }|
       {1:~                                       }|
       /text^                                   |
-    ]])
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 9, linecount = 2};
+    }}
   end)
 
   it('works', function()
@@ -579,19 +581,20 @@ describe('search highlighting', function()
   end)
 
   it('works with matchadd and syntax', function()
-    screen:set_default_attr_ids( {
-        [1] = {bold=true, foreground=Screen.colors.Blue},
-        [2] = {background = colors.Yellow},
-        [3] = {reverse = true},
-        [4] = {foreground = colors.Red},
-        [5] = {bold = true, background = colors.Green},
-        [6] = {italic = true, background = colors.Magenta},
-        [7] = {bold = true, background = colors.Yellow},
-    } )
+    screen:set_default_attr_ids {
+      [1] = {bold=true, foreground=Screen.colors.Blue};
+      [2] = {background = colors.Yellow};
+      [3] = {reverse = true};
+      [4] = {foreground = colors.Red};
+      [5] = {bold = true, background = colors.Green};
+      [6] = {italic = true, background = colors.Magenta};
+      [7] = {bold = true, background = colors.Yellow};
+      [8] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGray};
+    }
     feed_command('set hlsearch')
-    insert([[
+    insert [[
       very special text
-    ]])
+    ]]
     feed_command("syntax on")
     feed_command("highlight MyGroup guibg=Green gui=bold")
     feed_command("highlight MyGroup2 guibg=Magenta gui=italic")
@@ -601,7 +604,7 @@ describe('search highlighting', function()
     -- searchhl and matchadd matches are exclusive, only the highest priority
     -- is used (and matches with lower priorities are not combined)
     feed_command("/ial te")
-    screen:expect([[
+    screen:expect{grid=[[
         very {5:spec^ial}{2: te}{6:xt}                     |
                                               |
       {1:~                                       }|
@@ -609,10 +612,21 @@ describe('search highlighting', function()
       {1:~                                       }|
       {1:~                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
-    ]])
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 11, linecount = 2};
+    }}
 
     -- check highlights work also in folds
     feed("zf4j")
+    screen:expect{grid=[[
+      {8:^+--  2 lines: very special text·········}|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {4:search hit BOTTOM, continuing at TOP}    |
+    ]]}
     command("%foldopen")
     screen:expect([[
         very {5:spec^ial}{2: te}{6:xt}                     |

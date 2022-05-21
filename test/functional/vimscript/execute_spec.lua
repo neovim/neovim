@@ -153,7 +153,7 @@ describe('execute()', function()
       function! Test3()
         echo 1234
         let x = execute('echoerr "abcdef"', 'silent!')
-        echon 'ABCD'
+        echon 'ABCDXZYZ'
       endfunction
 
       " test 4: silenced echoerr goes as usual
@@ -214,7 +214,7 @@ describe('execute()', function()
       ~                                       |
       ~                                       |
       ~                                       |
-      1234ABCD                                |
+      1234ABCDXZYZ                            |
     ]])
 
     feed([[:call Test4()<cr>]])
