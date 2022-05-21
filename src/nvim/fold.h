@@ -23,6 +23,7 @@ typedef struct foldinfo {
 
 #define FOLDINFO_INIT { 0, 0, 0, 0 }
 
+EXTERN int disable_fold_update INIT(= 0);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fold.h.generated.h"

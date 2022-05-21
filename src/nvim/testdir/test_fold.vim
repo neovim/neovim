@@ -217,6 +217,26 @@ func Test_update_folds_expr_read()
   set foldmethod& foldexpr&
 endfunc
 
+" Test for what patch 8.1.0535 fixes.
+func Test_foldexpr_no_interrupt_addsub()
+  new
+  func! FoldFunc()
+    call setpos('.', getcurpos())
+    return '='
+  endfunc
+
+  set foldmethod=expr
+  set foldexpr=FoldFunc()
+  call setline(1, '1.2')
+
+  exe "norm! $\<C-A>"
+  call assert_equal('1.3', getline(1))
+
+  bwipe!
+  delfunc FoldFunc
+  set foldmethod& foldexpr&
+endfunc
+
 func Check_foldlevels(expected)
   call assert_equal(a:expected, map(range(1, line('$')), 'foldlevel(v:val)'))
 endfunc
