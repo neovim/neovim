@@ -257,6 +257,28 @@ jobs:
         name: Install nvim
         run: ./ci/run_tests.sh install_nvim
 
+      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
+        name: Generate test-runners
+        run: |
+          cmake --build $GITHUB_WORKSPACE/build --target generate-test-runners
+
+
+      # macOS runners have 3 threads
+      - if: matrix.runner == 'macos-11.0' && !cancelled()
+        name: CTest isolated
+        run: |
+          unset CTEST_PROGRESS_OUTPUT
+          export CTEST_PARALLEL_LEVEL=$(node -r os -e 'process.stdout.write(os.cpus().length.toString())' 2>/dev/null || echo "2")
+          ctest --test-dir $GITHUB_WORKSPACE/build --output-on-failure -LE '_serial' -j${CTEST_PARALLEL_LEVEL} --repeat "until-pass:3"
+
+      - if: (matrix.runner == 'macos-11' || matrix.flavor == 'uchar') && !cancelled()
+        name: CTest benchmark
+        timeout-minutes: 10
+        run: |
+          unset CTEST_PROGRESS_OUTPUT
+          unset CTEST_PARALLEL_LEVEL
+          ctest --test-dir $GITHUB_WORKSPACE/build --output-on-failure -L '_serial'
+
       - name: Cache dependencies
         run: ./ci/before_cache.sh
 

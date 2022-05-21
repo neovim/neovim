@@ -23,9 +23,13 @@ endif()
 
 if(DEFINED ENV{TEST_FILE})
   set(TEST_PATH "$ENV{TEST_FILE}")
+elseif(TEST_PATH)
+  set(TEST_PATH "${TEST_PATH}")
 else()
   set(TEST_PATH "${TEST_DIR}/${TEST_TYPE}")
 endif()
+
+message(STATUS "Using TEST_PATH: ${TEST_PATH}")
 
 # Force $TEST_PATH to workdir-relative path ("test/…").
 if(IS_ABSOLUTE ${TEST_PATH})
@@ -34,21 +38,34 @@ endif()
 
 if(BUSTED_OUTPUT_TYPE STREQUAL junit)
   set(EXTRA_ARGS OUTPUT_FILE ${BUILD_DIR}/${TEST_TYPE}test-junit.xml)
+elseif(NOT BUSTED_OUTPUT_TYPE)
+  set(BUSTED_OUTPUT_TYPE nvim)
 endif()
 
-set(BUSTED_ARGS $ENV{BUSTED_ARGS})
+if(DEFINED ENV{BUSTED_ARGS})
+  set(BUSTED_ARGS "$ENV{BUSTED_ARGS}")
+elseif(BUSTED_ARGS)
+  set(BUSTED_ARGS "${BUSTED_ARGS}")
+endif()
+
 separate_arguments(BUSTED_ARGS)
 
 if(DEFINED ENV{TEST_TAG} AND NOT "$ENV{TEST_TAG}" STREQUAL "")
   list(APPEND BUSTED_ARGS --tags $ENV{TEST_TAG})
+elseif(TEST_TAG)
+  list(APPEND BUSTED_ARGS --tags ${TEST_TAG})
 endif()
 
 if(DEFINED ENV{TEST_FILTER} AND NOT "$ENV{TEST_FILTER}" STREQUAL "")
   list(APPEND BUSTED_ARGS --filter $ENV{TEST_FILTER})
+elseif(TEST_FILTER)
+  list(APPEND BUSTED_ARGS --filter ${TEST_FILTER})
 endif()
 
 if(DEFINED ENV{TEST_FILTER_OUT} AND NOT "$ENV{TEST_FILTER_OUT}" STREQUAL "")
   list(APPEND BUSTED_ARGS --filter-out $ENV{TEST_FILTER_OUT})
+elseif(TEST_FILTER_OUT)
+  list(APPEND BUSTED_ARGS --filter-out ${TEST_FILTER_OUT})
 endif()
 
 # TMPDIR: for helpers.tmpname() and Nvim tempname().
@@ -75,7 +92,8 @@ execute_process(
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err
   RESULT_VARIABLE res
-  ${EXTRA_ARGS})
+  ${EXTRA_ARGS}
+  )
 
 file(GLOB RM_FILES ${BUILD_DIR}/Xtest_*)
 file(REMOVE_RECURSE ${RM_FILES})

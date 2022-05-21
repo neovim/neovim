@@ -474,6 +474,10 @@ function module.new_argv(...)
         'NVIM_RPLUGIN_MANIFEST',
         'GCOV_ERROR_FILE',
         'XDG_DATA_DIRS',
+        'XDG_CONFIG_HOME',
+        'XDG_DATA_HOME',
+        'XDG_STATE_HOME',
+        'XDG_CACHE_HOME',
         'TMPDIR',
         'VIMRUNTIME',
       }) do

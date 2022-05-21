@@ -1,0 +1,37 @@
+-- vim: ft=lua tw=80 sw=2 ts=2
+
+return {
+  _all = {
+    helper = 'test/preload.lua',
+    lpath = 'build/?.lua;runtime/lua/?.lua;./?.lua',
+    output = 'test.busted.outputHandlers.nvim',
+    Xhelper = { 'IS_FUNCTIONAL_TEST' },
+  },
+  ---
+  functional = { ROOT = { 'test/functional' } },
+  ----
+  api = { ROOT = { 'test/functional/api' } },
+  autocmd = { ROOT = { 'test/functional/autocmd' } },
+  core = { ROOT = { 'test/functional/core' } },
+  editor = { ROOT = { 'test/functional/editor' } },
+  exCmds = { ROOT = { 'test/functional/ex_cmds' } },
+  lua = { ROOT = { 'test/functional/lua' } },
+  options = { ROOT = { 'test/functional/options' } },
+  plugin = { ROOT = { 'test/functional/plugin' } },
+  provider = { ROOT = { 'test/functional/provider' } },
+  shada = { ROOT = { 'test/functional/shada' } },
+  terminal = { ROOT = { 'test/functional/terminal' } },
+  treesitter = { ROOT = { 'test/functional/treesitter' } },
+  ui = { ROOT = { 'test/functional/ui' } },
+  vimscript = { ROOT = { 'test/functional/vimscript' } },
+  ---
+  unit = {
+    ROOT = { 'test/unit' },
+    Xhelper = { 'IS_UNIT_TEST' },
+  },
+  ---
+  benchmark = {
+    ROOT = { 'test/benchmark' },
+    Xhelper = { 'IS_BENCHMARK_TEST' },
+  },
+}
