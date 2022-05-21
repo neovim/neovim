@@ -473,27 +473,12 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 int utf_char2cells(int c)
 {
   if (c >= 0x100) {
-#ifdef USE_WCHAR_FUNCTIONS
-    //
-    // Assume the library function wcwidth() works better than our own
-    // stuff.  It should return 1 for ambiguous width chars!
-    //
-    int n = wcwidth(c);
-
-    if (n < 0) {
-      return 6;                 // unprintable, displays <xxxx>
-    }
-    if (n > 1) {
-      return n;
-    }
-#else
     if (!utf_printable(c)) {
       return 6;                 // unprintable, displays <xxxx>
     }
     if (intable(doublewidth, ARRAY_SIZE(doublewidth), c)) {
       return 2;
     }
-#endif
     if (p_emoji && intable(emoji_width, ARRAY_SIZE(emoji_width), c)) {
       return 2;
     }
@@ -1061,12 +1046,6 @@ bool utf_iscomposing(int c)
  */
 bool utf_printable(int c)
 {
-#ifdef USE_WCHAR_FUNCTIONS
-  /*
-   * Assume the iswprint() library function works better than our own stuff.
-   */
-  return iswprint(c);
-#else
   // Sorted list of non-overlapping intervals.
   // 0xd800-0xdfff is reserved for UTF-16, actually illegal.
   static struct interval nonprint[] =
@@ -1077,7 +1056,6 @@ bool utf_printable(int c)
   };
 
   return !intable(nonprint, ARRAY_SIZE(nonprint), c);
-#endif
 }
 
 /*
