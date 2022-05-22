@@ -1616,15 +1616,16 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   if (uc_add_command(name.data, name.size, rep, argt, def, flags, compl, compl_arg, compl_luaref,
                      addr_type_arg, luaref, force) != OK) {
     api_set_error(err, kErrorTypeException, "Failed to create user command");
-    goto err;
+    // XXX: uc_add_command() frees compl_arg, luaref, compl_luaref on failure.
+    return;
   }
 
   return;
 
 err:
+  xfree(compl_arg);
   NLUA_CLEAR_REF(luaref);
   NLUA_CLEAR_REF(compl_luaref);
-  xfree(compl_arg);
 }
 
 int find_sid(uint64_t channel_id)
