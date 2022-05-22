@@ -564,6 +564,16 @@ describe('Buffer highlighting', function()
     ]]
 
     clear_namespace(id, 0, -1)
+    screen:expect{grid=[[
+      fooba^r                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
 
     set_extmark(id, 0, 0, {
       end_line = 0,
