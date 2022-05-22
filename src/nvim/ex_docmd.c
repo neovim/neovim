@@ -5528,6 +5528,11 @@ char *uc_validate_name(char *name)
   return name;
 }
 
+/// Create a new user command {name}, if one doesn't already exist.
+///
+/// This function takes ownership of compl_arg, compl_luaref, and luaref.
+///
+/// @return  OK if the command is created, FAIL otherwise.
 int uc_add_command(char *name, size_t name_len, char *rep, uint32_t argt, long def, int flags,
                    int compl, char *compl_arg, LuaRef compl_luaref, cmd_addr_T addr_type,
                    LuaRef luaref, bool force)

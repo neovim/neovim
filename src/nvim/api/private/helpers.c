@@ -1616,7 +1616,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   if (uc_add_command(name.data, name.size, rep, argt, def, flags, compl, compl_arg, compl_luaref,
                      addr_type_arg, luaref, force) != OK) {
     api_set_error(err, kErrorTypeException, "Failed to create user command");
-    goto err;
+    // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
   }
 
   return;
