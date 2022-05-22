@@ -13,6 +13,7 @@ local matches = helpers.matches
 local pesc = helpers.pesc
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
+local meths = helpers.meths
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
@@ -165,5 +166,38 @@ describe(':mksession', function()
 
     -- Verify that the terminal's working directory is "/".
     screen:expect(expected_screen)
+  end)
+
+  it('restores a session when there is a float #18432', function()
+    local tmpfile = file_prefix .. '-tmpfile-float'
+
+    command('edit ' .. tmpfile)
+    local buf = meths.create_buf(false, true)
+    local config = {
+      relative = 'editor',
+      focusable = false,
+      width = 10,
+      height = 3,
+      row = 0,
+      col = 1,
+      style = 'minimal'
+    }
+    meths.open_win(buf, false, config)
+    local cmdheight = meths.get_option('cmdheight')
+    command('mksession ' .. session_file)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    command('source ' .. session_file)
+
+    eq(tmpfile, funcs.expand('%'))
+    -- Check that there is only a single window, which indicates the floating
+    -- window was not restored.
+    eq(1, funcs.winnr('$'))
+    -- The command-line height should remain the same as it was.
+    eq(cmdheight, meths.get_option('cmdheight'))
+
+    os.remove(tmpfile)
   end)
 end)
