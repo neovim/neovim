@@ -6463,6 +6463,9 @@ void showruler(bool always)
   } else {
     win_redr_ruler(curwin, always);
   }
+  if (*p_wbr != NUL || *curwin->w_p_wbr != NUL) {
+    win_redr_winbar(curwin);
+  }
 
   if (need_maketitle
       || (p_icon && (stl_syntax & STL_IN_ICON))
