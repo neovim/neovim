@@ -320,7 +320,7 @@ size_t transstr_len(const char *const s, bool untab)
         len += l;
       } else {
         for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
-          char hexbuf[9];
+          char hexbuf[11];
           len += transchar_hex(hexbuf, pcc[i]);
         }
       }
@@ -367,7 +367,7 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len, bool
         buf_p += l;
       } else {
         for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
-          char hexbuf[9];  // <up to 6 bytes>NUL
+          char hexbuf[11];  // <up to 8 bytes>NUL
           const size_t hexlen = transchar_hex(hexbuf, pcc[i]);
           if (buf_p + hexlen > buf_e) {
             break;
@@ -612,6 +612,10 @@ size_t transchar_hex(char *const buf, const int c)
   buf[i++] = '<';
   if (c > 255) {
     if (c > 255 * 256) {
+      if (c > 255 * 256 * 256) {
+        buf[i++] = (char)nr2hex((unsigned)c >> 28);
+        buf[i++] = (char)nr2hex((unsigned)c >> 24);
+      }
       buf[i++] = (char)nr2hex((unsigned)c >> 20);
       buf[i++] = (char)nr2hex((unsigned)c >> 16);
     }

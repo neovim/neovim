@@ -474,7 +474,13 @@ int utf_char2cells(int c)
 {
   if (c >= 0x100) {
     if (!utf_printable(c)) {
-      return 6;                 // unprintable, displays <xxxx>
+      if (c > 0xffffff) {
+        return 10;
+      } else if (c > 0xffff) {
+        return 8;
+      } else {
+        return 6;   // unprintable, displays <xxxx>
+      }
     }
     if (intable(doublewidth, ARRAY_SIZE(doublewidth), c)) {
       return 2;
@@ -1048,11 +1054,13 @@ bool utf_printable(int c)
 {
   // Sorted list of non-overlapping intervals.
   // 0xd800-0xdfff is reserved for UTF-16, actually illegal.
+  // 0x10FFFF is the last valid codepoints, all values above that
+  // must be escaped.
   static struct interval nonprint[] =
   {
     { 0x070f, 0x070f }, { 0x180b, 0x180e }, { 0x200b, 0x200f }, { 0x202a, 0x202e },
     { 0x2060, 0x206f }, { 0xd800, 0xdfff }, { 0xfeff, 0xfeff }, { 0xfff9, 0xfffb },
-    { 0xfffe, 0xffff }
+    { 0xfffe, 0xffff }, { 0x110000, 0x7fffffff },
   };
 
   return !intable(nonprint, ARRAY_SIZE(nonprint), c);
