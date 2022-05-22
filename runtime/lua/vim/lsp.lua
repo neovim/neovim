@@ -1190,7 +1190,14 @@ function lsp.start_client(config)
   function client.stop(force)
     lsp.diagnostic.reset(client_id, all_buffer_active_clients)
     changetracking.reset(client_id)
-    for _, client_ids in pairs(all_buffer_active_clients) do
+
+    for bufnr, client_ids in pairs(all_buffer_active_clients) do
+      nvim_exec_autocmds('LspDetach', {
+        buffer = bufnr,
+        modeline = false,
+        data = { client_id = client_id },
+      })
+
       client_ids[client_id] = nil
     end
 
