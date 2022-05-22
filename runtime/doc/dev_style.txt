@@ -913,19 +913,9 @@ Don't use spaces inside parentheses. Always use curly braces. >
       ...
     }
 
-You must have a space between the `if` and the open parenthesis. You must also
-have a space between the close parenthesis and the curly brace, if you're
-using one. >
-
-    if(condition) {   // BAD: space missing after IF.
-    if (condition){   // BAD: space missing before {.
-    if (condition) {  // GOOD: proper space after IF and before {.
-
-
 Loops and Switch Statements ~
 
-Annotate non-trivial fall-through between cases. Empty loop bodies should use
-`{}` or `continue`.
+Annotate non-trivial fall-through between cases.
 
 If not conditional on an enumerated value, switch statements should always
 have a `default` case (in the case of an enumerated value, the compiler will
@@ -942,16 +932,6 @@ execute, simply `assert`: >
       default:
         assert(false);
     }
-
-Empty loop bodies should use `{}` or `continue`, but not a single semicolon. >
-
-    while (condition) {
-      // Repeat test until it returns false.
-    }
-    for (int i = 0; i < kSomeNumber; i++) {}  // GOOD: empty body.
-    while (condition) continue;  // GOOD: continue indicates no logic.
-
-    while (condition);  // BAD: looks like part of do/while loop.
 
 Pointer Expressions ~
 
@@ -1009,37 +989,6 @@ expr;`. >
     return(result);  // return is not a function!
 
 
-Preprocessor Directives ~
-
-The hash mark that starts a preprocessor directive should always be at the
-beginning of the line.
-
-Even when preprocessor directives are within the body of indented code, the
-directives should start at the beginning of the line.
-
-Nested directives should add one spaces after the hash mark for each level of
-indentation. 
-
-    // GOOD: directives at beginning of line >
-      if (lopsided_score) {
-    #if DISASTER_PENDING      // Correct -- Starts at beginning of line
-        drop_everything();
-    # if NOTIFY               // One space after #
-        notify_client();
-    # endif
-    #endif
-        BackToNormal();
-      }
-
-<    // BAD: indented directives >
-      if (lopsided_score) {
-        #if DISASTER_PENDING  // Wrong!  The "#if" should be at beginning of line
-        drop_everything();
-        #endif                // Wrong!  Do not indent "#endif"
-        back_to_normal();
-      }
-
-
 Horizontal Whitespace ~
 
 Use of horizontal whitespace depends on location. Never put trailing
@@ -1068,14 +1017,6 @@ whitespace at the end of a line.
           { "Elizabeth", "Aiden",   10 },
           { "Emma",      "Mason",   2  },
         };
-<
-
-    Macros ~
->
-        #define FI(x) \  // Don't align \'s in macro definitions.
-          foo();      \
-          bar();      \
-          ...
 <
 
     Loops and Conditionals ~
@@ -1110,12 +1051,6 @@ whitespace at the end of a line.
 Vertical Whitespace ~
 
 Minimize use of vertical whitespace.
-
-This is more a principle than a rule: don't use blank lines when you don't
-have to. In particular, don't put more than one or two blank lines between
-functions, resist starting functions with a blank line, don't end functions
-with a blank line, and be discriminating with your use of blank lines inside
-functions.
 
 The basic principle is: The more code that fits on one screen, the easier it
 is to follow and understand the control flow of the program. Of course,
