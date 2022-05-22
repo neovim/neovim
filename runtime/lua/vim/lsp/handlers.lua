@@ -321,13 +321,27 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 M['textDocument/hover'] = M.hover
 
----@private
---- Jumps to a location. Used as a handler for multiple LSP methods.
----@param _ (not used)
----@param result (table) result of LSP method; a location or a list of locations.
----@param ctx (table) table containing the context of the request, including the method
 ---(`textDocument/definition` can return `Location` or `Location[]`
-local function location_handler(_, result, ctx, config)
+--- |lsp-handler| for the method "textDocument/definition"
+--- <pre>
+--- -- for one mapping
+--- vim.keymap.set("n", "gv", function()
+---   vim.lsp.buf.definition { jump_type = "vsplit" }
+--- end, { buffer = bufnr })
+---
+--- -- or for all of them
+--- vim.lsp.handlers["textDocument/definition"] = vim.lsp.with(
+---   vim.lsp.handlers.location, {
+---     -- Opens definition in new split
+---     jump_type = "vsplit"
+---   }
+--- )
+--- </pre>
+---@param config table Configuration table.
+---     - jump_type:     (default=nil)
+---         - Opens definition in window opened using this command
+---         - See |opening-window|
+function M.location(_, result, ctx, config)
   if result == nil or vim.tbl_isempty(result) then
     local _ = log.info() and log.info(ctx.method, 'No location found')
     return nil
@@ -335,6 +349,10 @@ local function location_handler(_, result, ctx, config)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
 
   config = config or {}
+
+  if config.jump_type ~= nil then
+    vim.cmd(config.jump_type)
+  end
 
   -- textDocument/definition can return Location or Location[]
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
@@ -355,13 +373,13 @@ local function location_handler(_, result, ctx, config)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration
-M['textDocument/declaration'] = location_handler
+M['textDocument/declaration'] = M.location
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
-M['textDocument/definition'] = location_handler
+M['textDocument/definition'] = M.location
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_typeDefinition
-M['textDocument/typeDefinition'] = location_handler
+M['textDocument/typeDefinition'] = M.location
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_implementation
-M['textDocument/implementation'] = location_handler
+M['textDocument/implementation'] = M.location
 
 --- |lsp-handler| for the method "textDocument/signatureHelp".
 --- The active parameter is highlighted with |hl-LspSignatureActiveParameter|.
