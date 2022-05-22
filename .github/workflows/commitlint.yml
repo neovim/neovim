@@ -4,6 +4,8 @@ on:
   # to merge a PR, it can't be skipped, so use pull_request_target
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - 'master'
 jobs:
   lint-commits:
     runs-on: ubuntu-latest
