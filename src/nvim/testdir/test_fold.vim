@@ -921,6 +921,26 @@ func Test_fold_split()
   bw!
 endfunc
 
+" Make sure that when you append under a blank line that is under a fold with
+" the same indent level as your appended line, the fold expands across the
+" blank line
+func Test_indent_append_under_blank_line()
+  new
+  let lines =<< trim END
+    line 1
+      line 2
+      line 3
+  END
+  call setline(1, lines)
+  setlocal sw=2
+  setlocal foldmethod=indent foldenable
+  call assert_equal([0, 1, 1], range(1, 3)->map('foldlevel(v:val)'))
+  call append(3, '')
+  call append(4, '  line 5')
+  call assert_equal([0, 1, 1, 1, 1], range(1, 5)->map('foldlevel(v:val)'))
+  bw!
+endfunc
+
 " Make sure that when you delete 1 line of a fold whose length is 2 lines, the
 " fold can't be closed since its length (1) is now less than foldminlines.
 func Test_indent_one_line_fold_close()

@@ -2003,7 +2003,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
       // start one line back, because a "<1" may indicate the end of a
       // fold in the topline
       if (top > 1) {
-        --fline.lnum;
+        fline.lnum--;
       }
     } else if (foldmethodIsSyntax(wp)) {
       getlevel = foldlevelSyntax;
@@ -2011,6 +2011,12 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
       getlevel = foldlevelDiff;
     } else {
       getlevel = foldlevelIndent;
+      // Start one line back, because if the line above "top" has an
+      // undefined fold level, folding it relies on the line under it,
+      // which is "top".
+      if (top > 1) {
+        fline.lnum--;
+      }
     }
 
     // Backup to a line for which the fold level is defined.  Since it's
