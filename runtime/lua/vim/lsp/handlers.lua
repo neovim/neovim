@@ -322,7 +322,8 @@ end
 M['textDocument/hover'] = M.hover
 
 ---(`textDocument/definition` can return `Location` or `Location[]`
---- |lsp-handler| for the method "textDocument/definition"
+--- |lsp-handler| for the method "textDocument/declaration", "textDocument/definition", "textDocument/typeDefinition"
+--- and "textDocument/implementation"
 --- <pre>
 --- -- for one mapping
 --- vim.keymap.set("n", "gv", function()
