@@ -119,13 +119,45 @@ describe('autocmd api', function()
 
     describe('desc', function()
       it('can add description to one autocmd', function()
+        local cmd =  "echo 'Should Not Have Errored'"
+        local desc =  "Can show description"
         meths.create_autocmd("BufReadPost", {
           pattern = "*.py",
-          command = "echo 'Should Not Have Errored'",
-          desc = "Can show description",
+          command = cmd,
+          desc = desc,
         })
 
-        eq("Can show description", meths.get_autocmds { event = "BufReadPost" }[1].desc)
+        eq(desc, meths.get_autocmds { event = "BufReadPost" }[1].desc)
+        eq(cmd, meths.get_autocmds { event = "BufReadPost" }[1].command)
+      end)
+
+      it('can add description to one autocmd that uses a callback', function()
+        local desc = 'Can show description'
+        meths.set_var('desc', desc)
+
+        exec_lua([[
+          local callback = function() print 'Should Not Have Errored' end
+          vim.api.nvim_create_autocmd("BufReadPost", {
+            pattern = "*.py",
+            callback = callback,
+            desc = vim.g.desc,
+          })
+        ]])
+
+        eq(desc, meths.get_autocmds({ event = 'BufReadPost' })[1].desc)
+        matches('<lua: %d+>', meths.get_autocmds({ event = 'BufReadPost' })[1].command)
+      end)
+
+      it('will not add a description unless it was provided', function()
+        exec_lua([[
+          local callback = function() print 'Should Not Have Errored' end
+          vim.api.nvim_create_autocmd("BufReadPost", {
+            pattern = "*.py",
+            callback = callback,
+          })
+        ]])
+
+        eq(nil, meths.get_autocmds({ event = 'BufReadPost' })[1].desc)
       end)
 
       it('can add description to multiple autocmd', function()
@@ -169,15 +201,11 @@ describe('autocmd api', function()
       ]]
 
       meths.exec_autocmds("User", {pattern = "Test"})
-      eq({{
-        buflocal = false,
-        command = 'A test autocommand',
-        desc = 'A test autocommand',
-        event = 'User',
-        id = 1,
-        once = false,
-        pattern = 'Test',
-      }}, meths.get_autocmds({event = "User", pattern = "Test"}))
+
+      local aus = meths.get_autocmds({ event = 'User', pattern = 'Test' })
+      local first = aus[1]
+      eq(first.id, 1)
+
       meths.set_var("some_condition", true)
       meths.exec_autocmds("User", {pattern = "Test"})
       eq({}, meths.get_autocmds({event = "User", pattern = "Test"}))
