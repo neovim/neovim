@@ -776,7 +776,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	oldest version of a file.
 
 						*'backupcopy'* *'bkc'*
-'backupcopy' 'bkc'	string	(Vi default for Unix: "yes", otherwise: "auto")
+'backupcopy' 'bkc'	string	(default: "auto")
 			global or local to buffer |global-local|
 	When writing a file and a backup is made, this option tells how it's
 	done.  This is a comma-separated list of words.
@@ -1192,7 +1192,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	(parts of 'cdpath' can be passed to the shell to expand file names).
 
 						*'cedit'*
-'cedit'			string	(Vim default: CTRL-F, Vi default: "")
+'cedit'			string	(default: CTRL-F)
 			global
 	The key used in Command-line Mode to open the command-line window.
 	Only non-printable keys are allowed.
@@ -1543,8 +1543,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See 'preserveindent'.
 
 						*'cpoptions'* *'cpo'* *cpo*
-'cpoptions' 'cpo'	string	(Vim default: "aABceFs_",
-				 Vi default: all flags)
+'cpoptions' 'cpo'	string	(default: "aABceFs_")
 			global
 	A sequence of single character flags.  When a character is present
 	this indicates Vi-compatible behavior.  This is used for things where
@@ -2113,7 +2112,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 					*'display'* *'dy'*
-'display' 'dy'		string	(default "lastline,msgsep", Vi default: "")
+'display' 'dy'		string	(default "lastline,msgsep")
 			global
 	Change the way text is displayed.  This is comma-separated list of
 	flags:
@@ -2359,9 +2358,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'fileformats'* *'ffs'*
 'fileformats' 'ffs'	string (default:
-				Vim+Vi	Win32: "dos,unix",
-				Vim	Unix: "unix,dos",
-				Vi	others: "")
+				Win32: "dos,unix",
+				Unix: "unix,dos")
 			global
 	This gives the end-of-line (<EOL>) formats that will be tried when
 	starting to edit a new buffer and when reading a file into an existing
@@ -2719,7 +2717,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	character and white space.
 
 					*'formatoptions'* *'fo'*
-'formatoptions' 'fo'	string (default: "tcqj", Vi default: "vt")
+'formatoptions' 'fo'	string (default: "tcqj")
 			local to buffer
 	This is a sequence of letters which describes how automatic
 	formatting is to be done.  See |fo-table|.  When the 'paste' option is
@@ -3151,7 +3149,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'hidden' is set for one command with ":hide {command}" |:hide|.
 
 						*'history'* *'hi'*
-'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
+'history' 'hi'		number	(default: 10000)
 			global
 	A history of ":" commands, and a history of previous search patterns
 	is remembered.  This option decides how many entries may be stored in
@@ -3506,8 +3504,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	change 'iskeyword' instead.
 
 						*'iskeyword'* *'isk'*
-'iskeyword' 'isk'	string (default: @,48-57,_,192-255
-				Vi default: @,48-57,_)
+'iskeyword' 'isk'	string (default: @,48-57,_,192-255)
 			local to buffer
 	Keywords are used in searching and recognizing with many commands:
 	"w", "*", "[i", etc.  It is also used for "\k" in a |pattern|.  See
@@ -3777,8 +3774,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	changing the way tabs are displayed.
 
 						*'listchars'* *'lcs'*
-'listchars' 'lcs'	string	(default: "tab:> ,trail:-,nbsp:+"
-				 Vi default: "eol:$")
+'listchars' 'lcs'	string	(default: "tab:> ,trail:-,nbsp:+")
 			global or local to window |global-local|
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma-separated list of string settings.
@@ -4046,8 +4042,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|.
 
 				   *'modeline'* *'ml'* *'nomodeline'* *'noml'*
-'modeline' 'ml'		boolean	(Vim default: on (off for root),
-				 Vi default: off)
+'modeline' 'ml'		boolean	(default: on (off for root))
 			local to buffer
 	If 'modeline' is on 'modelines' gives the number of lines that is
 	checked for set commands.  If 'modeline' is off or 'modelines' is zero
@@ -4102,7 +4097,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when using "rA" on an "A".
 
 						*'more'* *'nomore'*
-'more'			boolean	(Vim default: on, Vi default: off)
+'more'			boolean	(default: on)
 			global
 	When on, listings pause when the whole screen is filled.  You will get
 	the |more-prompt|.  When this option is off there are no pauses, the
@@ -4357,7 +4352,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    |there          |  4 there      |  1 there      |  1 there
 
 						*'numberwidth'* *'nuw'*
-'numberwidth' 'nuw'	number	(Vim default: 4  Vi default: 8)
+'numberwidth' 'nuw'	number	(default: 4)
 			local to window
 	Minimal number of columns to use for the line number.  Only relevant
 	when the 'number' or 'relativenumber' option is set or printing lines
@@ -5113,9 +5108,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'sessionoptions'* *'ssop'*
 'sessionoptions' 'ssop'	string	(default: "blank,buffers,curdir,folds,
-					       help,tabpages,winsize"
-				 Vi default: "blank,buffers,curdir,folds,
-					       help,options,tabpages,winsize")
+					       help,tabpages,winsize")
 			global
 	Changes the effect of the |:mksession| command.  It is a comma-
 	separated list of words.  Each word enables saving and restoring
@@ -5155,10 +5148,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If you leave out "options" many things won't work well after restoring
 	the session.
 				*'shada'* *'sd'* *E526* *E527* *E528*
-'shada' 'sd'		string	(Vim default for
+'shada' 'sd'		string	(default for
 				   Win32:  !,'100,<50,s10,h,rA:,rB:
-				   others: !,'100,<50,s10,h
-				 Vi default: "")
+				   others: !,'100,<50,s10,h)
 			global
 	When non-empty, the shada file is read upon startup and written
 	when exiting Vim (see |shada-file|).  The string should be a comma-
@@ -5436,7 +5428,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Also see 'completeslash'.
 
 			*'shelltemp'* *'stmp'* *'noshelltemp'* *'nostmp'*
-'shelltemp' 'stmp'	boolean	(Vim default on, Vi default off)
+'shelltemp' 'stmp'	boolean	(default on)
 			global
 	When on, use temp files for shell commands.  When off use a pipe.
 	When using a pipe is not possible temp files are used anyway.
@@ -5485,7 +5477,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	function to get the effective shiftwidth value.
 
 						*'shortmess'* *'shm'*
-'shortmess' 'shm'	string	(Vim default "filnxtToOF", Vi default: "S")
+'shortmess' 'shm'	string	(default "filnxtToOF")
 			global
 	This option helps to avoid all the |hit-enter| prompts caused by file
 	messages, for example  with CTRL-G, and to avoid some other messages.
@@ -5559,7 +5551,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:setlocal showbreak=NONE
 <
 				     *'showcmd'* *'sc'* *'noshowcmd'* *'nosc'*
-'showcmd' 'sc'		boolean	(Vim default: on, Vi default: off)
+'showcmd' 'sc'		boolean	(default: on)
 			global
 	Show (partial) command in the last line of the screen.  Set this
 	option off if your terminal is slow.
@@ -5605,7 +5597,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note: Use of the short form is rated PG.
 
 				 *'showmode'* *'smd'* *'noshowmode'* *'nosmd'*
-'showmode' 'smd'	boolean	(Vim default: on, Vi default: off)
+'showmode' 'smd'	boolean	(default: on)
 			global
 	If in Insert, Replace or Visual mode put a message on the last line.
 	The |hl-ModeMsg| highlight group determines the highlighting.
@@ -6389,7 +6381,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If non-zero, tags are significant up to this number of characters.
 
 			*'tagrelative'* *'tr'* *'notagrelative'* *'notr'*
-'tagrelative' 'tr'	boolean	(Vim default: on, Vi default: off)
+'tagrelative' 'tr'	boolean	(default: on)
 			global
 	If on and using a tags file in another directory, file names in that
 	tags file are relative to the directory where the tags file is.
@@ -6837,7 +6829,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	has been changed.
 
 						*'whichwrap'* *'ww'*
-'whichwrap' 'ww'	string	(Vim default: "b,s", Vi default: "")
+'whichwrap' 'ww'	string	(default: "b,s")
 			global
 	Allow specified keys that move the cursor left/right to move to the
 	previous/next line when the cursor is on the first/last character in
@@ -6867,7 +6859,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	makes "dl", "cl", "yl" etc. work normally.
 
 						*'wildchar'* *'wc'*
-'wildchar' 'wc'		number	(Vim default: <Tab>, Vi default: CTRL-E)
+'wildchar' 'wc'		number	(default: <Tab>)
 			global
 	Character you have to type to start wildcard expansion in the
 	command-line, as specified with 'wildmode'.
@@ -7183,7 +7175,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	starts.  When typing text beyond this limit, an <EOL> will be inserted
 	and inserting continues on the next line.
 	Options that add a margin, such as 'number' and 'foldcolumn', cause
-	the text width to be further reduced.  This is Vi compatible.
+	the text width to be further reduced.
 	When 'textwidth' is non-zero, this option is not used.
 	See also 'formatoptions' and |ins-textwidth|.
 
