@@ -49,7 +49,6 @@ import re
 import sre_compile
 import string
 import sys
-import unicodedata
 import json
 import collections  # for defaultdict
 
@@ -186,7 +185,6 @@ _ERROR_CATEGORIES = [
     'readability/increment',
     'runtime/arrays',
     'runtime/int',
-    'runtime/invalid_increment',
     'runtime/memset',
     'runtime/printf',
     'runtime/printf_format',
@@ -194,17 +192,13 @@ _ERROR_CATEGORIES = [
     'runtime/deprecated',
     'syntax/parenthesis',
     'whitespace/alignment',
-    'whitespace/blank_line',
     'whitespace/braces',
     'whitespace/comments',
-    'whitespace/empty_conditional_body',
-    'whitespace/empty_loop_body',
     'whitespace/indent',
     'whitespace/newline',
     'whitespace/operators',
     'whitespace/parens',
     'whitespace/todo',
-    'whitespace/line_continuation',
     'whitespace/cast',
 ]
 
@@ -831,7 +825,6 @@ BRACES = {
     '(': ')',
     '{': '}',
     '[': ']',
-    # '<': '>',  C++-specific pair removed
 }
 
 
@@ -2037,7 +2030,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
             # for the case where the previous line is indented 6 spaces, which
             # may happen when the initializers of a constructor do not fit into
             # a 80 column line.
-            exception = False
             if Match(r' {6}\w', prev_line):  # Initializer list?
                 # We are looking for the opening column of initializer list,
                 # which should be indented 4 spaces to cause 6 space indentation
@@ -2046,39 +2038,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
                 while (search_position >= 0
                        and Match(r' {6}\w', elided[search_position])):
                     search_position -= 1
-                exception = (search_position >= 0
-                             and elided[search_position][:5] == '    :')
-            else:
-                # Search for the function arguments or an initializer list.  We
-                # use a simple heuristic here: If the line is indented 4 spaces;
-                # and we have a closing paren, without the opening paren,
-                # followed by an opening brace or colon (for initializer lists)
-                # we assume that it is the last line of a function header.  If
-                # we have a colon indented 4 spaces, it is an initializer list.
-                exception = (Match(r' {4}\w[^\(]*\)\s*(const\s*)?(\{\s*$|:)',
-                                   prev_line)
-                             or Match(r' {4}:', prev_line))
-
-            if not exception:
-                error(filename, linenum, 'whitespace/blank_line', 2,
-                      'Redundant blank line at the start of a code block '
-                      'should be deleted.')
-        # Ignore blank lines at the end of a block in a long if-else
-        # chain, like this:
-        #   if (condition1) {
-        #     // Something followed by a blank line
-        #
-        #   } else if (condition2) {
-        #     // Something else
-        #   }
-        if linenum + 1 < clean_lines.NumLines():
-            next_line = raw[linenum + 1]
-            if (next_line
-                    and Match(r'\s*}', next_line)
-                    and next_line.find('} else ') == -1):
-                error(filename, linenum, 'whitespace/blank_line', 3,
-                      'Redundant blank line at the end of a code block '
-                      'should be deleted.')
 
     # Next, we complain if there's a comment too near the text
     commentpos = line.find('//')
@@ -2215,12 +2174,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
         error(filename, linenum, 'whitespace/operators', 4,
               'Extra space for operator %s' % match.group(1))
 
-    # A pet peeve of mine: no spaces after an if, while, switch, or for
-    match = Search(r' (if\(|for\(|while\(|switch\()', line)
-    if match:
-        error(filename, linenum, 'whitespace/parens', 5,
-              'Missing space before ( in %s' % match.group(1))
-
     # For if/for/while/switch, the left and right parens should be
     # consistent about how many spaces are inside the parens, and
     # there should either be zero or one spaces inside the parens.
@@ -2288,9 +2241,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
         for offset in range(endlinenum + 1,
                             min(endlinenum + 3, clean_lines.NumLines() - 1)):
             trailing_text += clean_lines.elided[offset]
-        if not Match(r'^[\s}]*[{.;,)<\]]', trailing_text):
-            error(filename, linenum, 'whitespace/braces', 5,
-                  'Missing space before {')
 
     # Make sure '} else {' has spaces.
     if Search(r'}else', line):
@@ -2309,18 +2259,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     if Search(r'\S(?<!\{)\}', line):
         error(filename, linenum, 'whitespace/braces', 5,
               'Missing space before }')
-
-    if Search(r'\S {2,}\\$', line):
-        error(filename, linenum, 'whitespace/line_continuation', 5,
-              'Too many spaces before \\, line continuation character must be '
-              'preceded by exactly one space. For “blank lines” '
-              'it is preferred to use the same amount of spaces as preceding '
-              'indent')
-
-    if Match(r'^ +#', line):
-        error(filename, linenum, 'whitespace/indent', 5,
-              'Must not indent preprocessor directives, use 1-space indent '
-              'after the hash')
 
     cast_line = re.sub(r'^# *define +\w+\([^)]*\)', '', line)
     match = Search(r'(?<!\bkvec_t)'
@@ -2598,65 +2536,6 @@ def CheckBraces(filename, clean_lines, linenum, error):
                   "You don't need a ; after a }")
 
 
-def CheckEmptyBlockBody(filename, clean_lines, linenum, error):
-    """Look for empty loop/conditional body with only a single semicolon.
-
-    Args:
-      filename: The name of the current file.
-      clean_lines: A CleansedLines instance containing the file.
-      linenum: The number of the line to check.
-      error: The function to call with any errors found.
-    """
-
-    # Search for loop keywords at the beginning of the line.  Because only
-    # whitespaces are allowed before the keywords, this will also ignore most
-    # do-while-loops, since those lines should start with closing brace.
-    #
-    # We also check "if" blocks here, since an empty conditional block
-    # is likely an error.
-    line = clean_lines.elided[linenum]
-    matched = Match(r'\s*(for|while|if)\s*\(', line)
-    if matched:
-        # Find the end of the conditional expression
-        (end_line, end_linenum, end_pos) = CloseExpression(
-            clean_lines, linenum, line.find('('))
-
-        # Output warning if what follows the condition expression is a
-        # semicolon.  No warning for all other cases, including whitespace or
-        # newline, since we have a separate check for semicolons preceded by
-        # whitespace.
-        if end_pos >= 0 and Match(r';', end_line[end_pos:]):
-            if matched.group(1) == 'if':
-                error(filename, end_linenum,
-                      'whitespace/empty_conditional_body', 5,
-                      'Empty conditional bodies should use {}')
-            else:
-                error(filename, end_linenum, 'whitespace/empty_loop_body', 5,
-                      'Empty loop bodies should use {} or continue')
-
-
-def GetLineWidth(line):
-    """Determines the width of the line in column positions.
-
-    Args:
-      line: A string, which may be a Unicode string.
-
-    Returns:
-      The width of the line in column positions, accounting for Unicode
-      combining characters and wide characters.
-    """
-    if isinstance(line, str):
-        width = 0
-        for uc in unicodedata.normalize('NFC', line):
-            if unicodedata.east_asian_width(uc) in ('W', 'F'):
-                width += 2
-            elif not unicodedata.combining(uc):
-                width += 1
-        return width
-    else:
-        return len(line)
-
-
 def CheckStyle(filename, clean_lines, linenum, error):
     """Checks rules from the 'C++ style rules' section of cppguide.html.
 
@@ -2710,7 +2589,6 @@ def CheckStyle(filename, clean_lines, linenum, error):
 
     # Some more style checks
     CheckBraces(filename, clean_lines, linenum, error)
-    CheckEmptyBlockBody(filename, clean_lines, linenum, error)
     CheckSpacing(filename, clean_lines, linenum, error)
 
 
