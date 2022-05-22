@@ -123,13 +123,11 @@ describe(":substitute, inccommand=split interactivity", function()
   it("no preview if invoked by feedkeys()", function()
     -- in a script...
     source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
-    poke_eventloop()
     -- or interactively...
-    feed([[:call feedkeys(":%s/tw/MO/g\<CR>")<CR>]])
-    poke_eventloop()
+    feed([[:call feedkeys(":%s/bs/BUU/g\<lt>CR>")<CR>]])
     eq(1, eval("bufnr('$')"))
     -- sanity check: assert the buffer state
-    expect(default_text:gsub("tw", "MO"))
+    expect(default_text:gsub("tw", "MO"):gsub("bs", "BUU"))
   end)
 end)
 
@@ -381,7 +379,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
   }
 
   local function test_sub(substring, split, redoable)
-    clear()
+    command('bwipe!')
     feed_command("set inccommand=" .. split)
 
     insert("1")
@@ -407,7 +405,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
   end
 
   local function test_notsub(substring, split, redoable)
-    clear()
+    command('bwipe!')
     feed_command("set inccommand=" .. split)
 
     insert("1")
@@ -441,7 +439,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
 
   local function test_threetree(substring, split)
-    clear()
+    command('bwipe!')
     feed_command("set inccommand=" .. split)
 
     insert("1")
@@ -492,6 +490,8 @@ describe(":substitute, 'inccommand' preserves undo", function()
       1
       2]])
   end
+
+  before_each(clear)
 
   it("at a non-leaf of the undo tree", function()
    for _, case in pairs(cases) do
@@ -1646,10 +1646,12 @@ end)
 
 describe("'inccommand' and :cnoremap", function()
   local cases = { "",  "split", "nosplit" }
+  local screen
 
-  local function refresh(case)
+  local function refresh(case, visual)
     clear()
-    common_setup(nil, case, default_text)
+    screen = visual and Screen.new(50,10) or nil
+    common_setup(screen, case, default_text)
   end
 
   it('work with remapped characters', function()
@@ -1706,10 +1708,12 @@ describe("'inccommand' and :cnoremap", function()
 
   it('still works with a broken mapping', function()
     for _, case in pairs(cases) do
-      refresh(case)
+      refresh(case, true)
       feed_command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
 
       feed(":%s/tw/tox<enter>")
+      screen:expect{any=[[{14:^E523:]]}
+      feed('<c-c>')
 
       -- error thrown b/c of the mapping
       neq(nil, eval('v:errmsg'):find('^E523:'))
