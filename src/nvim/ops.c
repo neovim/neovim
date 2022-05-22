@@ -453,7 +453,6 @@ static void shift_block(oparg_T *oap, int amount)
       non_white_col += incr;
     }
 
-
     const colnr_T block_space_width = non_white_col - oap->start_vcol;
     // We will shift by "total" or "block_space_width", whichever is less.
     const colnr_T shift_amount = block_space_width < total
@@ -2105,7 +2104,6 @@ static int op_replace(oparg_T *oap, int c)
   return OK;
 }
 
-
 /*
  * Handle the (non-standard vi) tilde operator.  Also for "gu", "gU" and "g?".
  */
@@ -2628,7 +2626,6 @@ void clear_registers(void)
 }
 
 #endif
-
 
 /// Free contents of yankreg `reg`.
 /// Called for normal freeing and in case of error.
@@ -3852,7 +3849,6 @@ void ex_display(exarg_T *eap)
     if (arg != NULL && vim_strchr((char *)arg, name) == NULL) {
       continue;             // did not ask for this register
     }
-
 
     if (i == -1) {
       if (y_previous != NULL) {
@@ -5436,7 +5432,6 @@ void format_reg_type(MotionType reg_type, colnr_T reg_width, char *buf, size_t b
   }
 }
 
-
 /// When `flags` has `kGRegList` return a list with text `s`.
 /// Otherwise just return `s`.
 ///
@@ -5816,7 +5811,6 @@ void clear_oparg(oparg_T *oap)
 {
   memset(oap, 0, sizeof(oparg_T));
 }
-
 
 /*
  *  Count the number of bytes, characters and "words" in a line.
@@ -6285,7 +6279,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   bool empty_region_error;
   int restart_edit_save;
   int lbr_saved = curwin->w_p_lbr;
-
 
   // The visual area is remembered for redo
   static int redo_VIsual_mode = NUL;        // 'v', 'V', or Ctrl-V
@@ -7275,7 +7268,6 @@ void restore_batch_count(int save_count)
     clipboard_delay_update = true;
   }
 }
-
 
 /// Check whether register is empty
 static inline bool reg_empty(const yankreg_T *const reg)

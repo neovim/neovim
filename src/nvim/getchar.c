@@ -54,7 +54,6 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 
-
 /// Index in scriptin
 static int curscript = 0;
 FileDescriptor *scriptin[NSCRIPT] = { NULL };
@@ -3433,7 +3432,6 @@ theend:
   return retval;
 }
 
-
 /// Set or remove a mapping or an abbreviation in the current buffer, OR
 /// display (matching) mappings/abbreviations.
 ///
@@ -4716,7 +4714,6 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
   return NULL;
 }
 
-
 /// Add a mapping. Unlike @ref do_map this copies the {map} argument, so
 /// static or read-only strings can be used.
 ///
@@ -4857,7 +4854,6 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
       }
       c1 = TO_SPECIAL(c1, c2);
     }
-
 
     if (got_int) {
       aborted = true;

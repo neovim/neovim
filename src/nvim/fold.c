@@ -660,7 +660,6 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
   }
 }
 
-
 // deleteFold() {{{2
 /// @param start delete all folds from start to end when not 0
 /// @param end delete all folds from start to end when not 0

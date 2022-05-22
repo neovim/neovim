@@ -638,7 +638,6 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
     goto endFAIL;
   }
 
-
   // <SECTIONS>: <section> ... <sectionend>
   // <section>: <sectionID> <sectionflags> <sectionlen> (section contents)
   for (;;) {
@@ -991,7 +990,6 @@ nextone:
     }
   }
 }
-
 
 // Read a length field from "fd" in "cnt_bytes" bytes.
 // Allocate memory, read the string into it and add a NUL at the end.
@@ -3886,7 +3884,6 @@ static char_u *getroom_save(spellinfo_T *spin, char_u *s)
   return memcpy(getroom(spin, s_size, false), s, s_size);
 }
 
-
 // Free the list of allocated sblock_T.
 static void free_blocks(sblock_T *bl)
 {
@@ -4338,7 +4335,6 @@ static bool node_equal(wordnode_T *n1, wordnode_T *n2)
   return p1 == NULL && p2 == NULL;
 }
 
-
 // Function given to qsort() to sort the REP items on "from" string.
 static int rep_compare(const void *s1, const void *s2)
 {
@@ -4685,7 +4681,6 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
   // end of <SECTIONS>
   putc(SN_END, fd);                                     // <sectionend>
 
-
   // <LWORDTREE>  <KWORDTREE>  <PREFIXTREE>
   spin->si_memtot = 0;
   for (unsigned int round = 1; round <= 3; ++round) {
@@ -4752,7 +4747,6 @@ static void clear_node(wordnode_T *node)
     }
   }
 }
-
 
 /// Dump a word tree at node "node".
 ///
@@ -4871,7 +4865,6 @@ static int put_node(FILE *fd, wordnode_T *node, int idx, int regionmask, bool pr
 
   return newindex;
 }
-
 
 // ":mkspell [-ascii] outfile  infile ..."
 // ":mkspell [-ascii] addfile"
@@ -5259,7 +5252,6 @@ theend:
   // close the file
   fclose(fd);
 }
-
 
 /// Create a Vim spell file from one or more word lists.
 /// "fnames[0]" is the output file name.

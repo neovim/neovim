@@ -216,7 +216,6 @@ void veryfast_breakcheck(void)
   }
 }
 
-
 /// Test whether a file descriptor refers to a terminal.
 ///
 /// @param fd File descriptor.
@@ -329,7 +328,6 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
   }
   return modifiers;
 }
-
 
 // Mouse event handling code(Extract row/col if available and detect multiple
 // clicks)

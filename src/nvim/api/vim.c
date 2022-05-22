@@ -209,7 +209,6 @@ static void on_redraw_event(void **argv)
   redraw_all_later(NOT_VALID);
 }
 
-
 /// Sends input-keys to Nvim, subject to various quirks controlled by `mode`
 /// flags. This is a blocking call, unlike |nvim_input()|.
 ///
@@ -441,7 +440,6 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt, Bool
   return cstr_as_string(ptr);
 }
 
-
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
 ///
@@ -569,7 +567,6 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
   }
   return runtime_get_named(is_lua, pat, all);
 }
-
 
 /// Changes the global working directory.
 ///
@@ -1244,7 +1241,6 @@ static void term_close(void *data)
   chan->stream.internal.cb = LUA_NOREF;
   channel_decref(chan);
 }
-
 
 /// Send data to channel `id`. For a job, it writes it to the
 /// stdin of the process. For the stdio channel |channel-stdio|,
@@ -2191,7 +2187,6 @@ void nvim__screenshot(String path)
 {
   ui_call_screenshot(path);
 }
-
 
 /// Deletes an uppercase/file named mark. See |mark-motions|.
 ///

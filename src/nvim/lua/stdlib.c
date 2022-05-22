@@ -349,7 +349,6 @@ static dict_T *nlua_get_var_scope(lua_State *lstate)
   return dict;
 }
 
-
 int nlua_setvar(lua_State *lstate)
 {
   // non-local return if not found
@@ -469,7 +468,6 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushnumber(lstate, (lua_Number)((ret > 0) - (ret < 0)));
   return 1;
 }
-
 
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {

@@ -22,7 +22,6 @@
 static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
-
 void msgpack_rpc_helpers_init(void)
 {
   msgpack_zone_init(&zone, 0xfff);
@@ -251,7 +250,6 @@ bool msgpack_rpc_to_dictionary(const msgpack_object *const obj, Dictionary *cons
 
   arg->size = obj->via.array.size;
   arg->items = xcalloc(obj->via.map.size, sizeof(KeyValuePair));
-
 
   for (uint32_t i = 0; i < obj->via.map.size; i++) {
     if (!msgpack_rpc_to_string(&obj->via.map.ptr[i].key,

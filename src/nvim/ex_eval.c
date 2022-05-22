@@ -439,7 +439,6 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
   return ret;
 }
 
-
 /// Throw a new exception.  "value" is the exception string for a
 /// user or interrupt exception, or points to a message list in case of an
 /// error exception.
@@ -1139,7 +1138,6 @@ void ex_endwhile(exarg_T *eap)
     cstack->cs_lflags |= CSL_HAD_ENDLOOP;
   }
 }
-
 
 /// Handle ":throw expr"
 void ex_throw(exarg_T *eap)
@@ -1868,7 +1866,6 @@ void leave_cleanup(cleanup_T *csp)
   }
 }
 
-
 /// Make conditionals inactive and discard what's pending in finally clauses
 /// until the conditional type searched for or a try conditional not in its
 /// finally clause is reached.  If this is in an active catch clause, finish
@@ -2008,7 +2005,6 @@ static char *get_end_emsg(cstack_T *cstack)
   }
   return e_endif;
 }
-
 
 /// Rewind conditionals until index "idx" is reached.  "cond_type" and
 /// "cond_level" specify a conditional type and the address of a level variable

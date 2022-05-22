@@ -35,7 +35,6 @@
 # include "api/buffer.c.generated.h"
 #endif
 
-
 /// \defgroup api-buffer
 ///
 /// \brief For more information on buffers, see |buffers|
@@ -50,7 +49,6 @@
 ///
 /// You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()| to check
 /// whether a buffer is loaded.
-
 
 /// Returns the number of lines in the given buffer.
 ///
@@ -737,7 +735,6 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
                  (int)new_len - 1, (colnr_T)last_item.size, new_byte,
                  kExtmarkUndo);
 
-
   changed_lines((linenr_T)start_row, 0, (linenr_T)end_row + 1,
                 (long)extra, true);
 
@@ -1039,7 +1036,6 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
   dict_set_var(buf->b_vars, name, NIL, true, false, err);
 }
 
-
 /// Gets a buffer option value
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
@@ -1335,7 +1331,6 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 
   return rv;
 }
-
 
 /// call a function with buffer as temporary current buffer
 ///

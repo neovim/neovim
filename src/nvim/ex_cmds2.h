@@ -6,7 +6,6 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/runtime.h"
 
-
 //
 // flags for check_changed()
 //

@@ -53,7 +53,6 @@ static uint32_t *buf_ns_ref(buf_T *buf, uint32_t ns_id, bool put)
   return map_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, put);
 }
 
-
 /// Create or update an extmark
 ///
 /// must not be used during iteration!
@@ -361,7 +360,6 @@ ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
   return ret;
 }
 
-
 /// free extmarks from the buffer
 void extmark_free_all(buf_T *buf)
 {
@@ -390,7 +388,6 @@ void extmark_free_all(buf_T *buf)
   map_destroy(uint32_t, uint32_t)(buf->b_extmark_ns);
   map_init(uint32_t, uint32_t, buf->b_extmark_ns);
 }
-
 
 /// Save info for undo/redo of set marks
 static void u_extmark_set(buf_T *buf, uint64_t mark, int row, colnr_T col)
@@ -501,7 +498,6 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
   }
 }
 
-
 /// Adjust extmark row for inserted/deleted rows (columns stay fixed).
 void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, long amount, long amount_after,
                     ExtmarkOp undo)
@@ -593,7 +589,6 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
     u_extmark_copy(buf, start_row, start_col, end_row, end_col);
   }
 
-
   marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,
                   old_row, old_col,
                   new_row, new_col);
@@ -683,7 +678,6 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
   buf_updates_send_splice(buf, new_row, new_col, new_byte,
                           0, 0, 0,
                           extent_row, extent_col, extent_byte);
-
 
   if (undo == kExtmarkUndo) {
     u_header_T *uhp = u_force_get_undo_header(buf);

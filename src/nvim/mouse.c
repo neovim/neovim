@@ -480,7 +480,6 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
     return NULL;
   }
 
-
   frame_T *fp;
 
   fp = topframe;
@@ -572,7 +571,6 @@ void setmouse(void)
   ui_cursor_shape();
   ui_check_mouse();
 }
-
 
 // Set orig_topline.  Used when jumping to another window, so that a double
 // click still works.

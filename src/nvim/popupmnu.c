@@ -443,7 +443,6 @@ void pum_redraw(void)
                           false, pum_grid.zindex);
   }
 
-
   // Never display more than we have
   if (pum_first > pum_size - pum_height) {
     pum_first = pum_size - pum_height;

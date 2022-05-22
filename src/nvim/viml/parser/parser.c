@@ -7,7 +7,6 @@
 # include "viml/parser/parser.c.generated.h"
 #endif
 
-
 void parser_simple_get_line(void *cookie, ParserLine *ret_pline)
 {
   ParserLine **plines_p = (ParserLine **)cookie;

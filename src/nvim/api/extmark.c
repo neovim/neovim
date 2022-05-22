@@ -94,7 +94,6 @@ static bool ns_initialized(uint32_t ns)
   return ns < (uint32_t)next_namespace_id;
 }
 
-
 static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -233,7 +232,6 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
     }
   }
 
-
   ExtmarkInfo extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
   if (extmark.row < 0) {
     return rv;
@@ -333,7 +331,6 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
     limit = INT64_MAX;
   }
 
-
   bool reverse = false;
 
   int l_row;
@@ -351,7 +348,6 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
   if (l_row > u_row || (l_row == u_row && l_col > u_col)) {
     reverse = true;
   }
-
 
   ExtmarkInfoArray marks = extmark_get(buf, (uint32_t)ns_id, l_row, l_col,
                                        u_row, u_col, (int64_t)limit, reverse);
@@ -675,7 +671,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   }
 
-
   OPTION_TO_BOOL(decor.virt_lines_above, virt_lines_above, false);
 
   if (opts->priority.type == kObjectTypeInteger) {
@@ -776,7 +771,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   } else if (line2 >= 0) {
     col2 = 0;
   }
-
 
   // TODO(bfredl): synergize these two branches even more
   if (ephemeral && decor_state.buf == buf) {

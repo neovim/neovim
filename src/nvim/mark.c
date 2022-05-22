@@ -1016,7 +1016,6 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount, lo
       ONE_ADJUST(&(curbuf->b_last_cursor.mark.lnum));
     }
 
-
     // list of change positions
     for (i = 0; i < curbuf->b_changelistlen; i++) {
       ONE_ADJUST_NODEL(&(curbuf->b_changelist[i].mark.lnum));
@@ -1586,7 +1585,6 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
   }
 }
 
-
 // Add information about mark 'mname' to list 'l'
 static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, const char *fname)
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
@@ -1613,7 +1611,6 @@ static int add_mark(list_T *l, const char *mname, const pos_T *pos, int bufnr, c
 
   return OK;
 }
-
 
 /// Get information about marks local to a buffer.
 ///

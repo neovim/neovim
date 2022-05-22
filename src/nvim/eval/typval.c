@@ -1515,7 +1515,6 @@ void tv_dict_free(dict_T *const d)
   }
 }
 
-
 /// Unreference a dictionary
 ///
 /// Decrements the reference count and frees dictionary when it becomes zero.

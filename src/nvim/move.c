@@ -45,7 +45,6 @@ typedef struct {
 # include "move.c.generated.h"
 #endif
 
-
 /*
  * Compute wp->w_botline for the current wp->w_topline.  Can be called after
  * wp->w_topline changed.
@@ -1862,7 +1861,6 @@ void cursor_correct(void)
   curwin->w_valid |= VALID_TOPLINE;
   curwin->w_viewport_invalid = true;
 }
-
 
 /*
  * move screen 'count' pages up or down and update screen

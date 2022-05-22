@@ -15,7 +15,6 @@
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/time.c.generated.h"
 #endif

@@ -26,7 +26,6 @@ typedef kvec_t(ExtmarkInfo) ExtmarkInfoArray;
 // TODO(bfredl): good enough name for now.
 typedef ptrdiff_t bcount_t;
 
-
 // delete the columns between mincol and endcol
 typedef struct {
   int start_row;
@@ -79,7 +78,6 @@ struct undo_object {
     ExtmarkSavePos savepos;
   } data;
 };
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "extmark.h.generated.h"

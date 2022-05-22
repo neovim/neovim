@@ -1,7 +1,6 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
@@ -330,7 +329,6 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
 {
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
-
 
 static void tk_getkeys(TermInput *input, bool force)
 {

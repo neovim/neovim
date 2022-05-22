@@ -178,7 +178,6 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_WBRNC] = "WinBarNC",
 });
 
-
 EXTERN int highlight_attr[HLF_COUNT];       // Highl. attr for each context.
 EXTERN int highlight_attr_last[HLF_COUNT];  // copy for detecting changed groups
 EXTERN int highlight_user[9];                   // User[1-9] attributes
@@ -221,6 +220,5 @@ typedef struct {
 } ColorItem;
 #define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, \
                                  .version = -1, .is_default = false }
-
 
 #endif  // NVIM_HIGHLIGHT_DEFS_H

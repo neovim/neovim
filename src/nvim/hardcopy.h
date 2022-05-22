@@ -80,7 +80,6 @@ typedef struct {
 
 #define PRINT_NUMBER_WIDTH 8
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "hardcopy.h.generated.h"
 #endif

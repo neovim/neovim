@@ -224,7 +224,6 @@
     kb_putp_##name(b, &k); \
   }
 
-
 #define __KB_DEL(name, key_t, kbnode_t, T) \
   static inline key_t __kb_delp_aux_##name(kbtree_##name##_t *b, kbnode_t *x, key_t * __restrict k, \
                                            int s) \

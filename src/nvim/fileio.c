@@ -147,7 +147,6 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   msg_scrolled_ign = false;
 }
 
-
 /// Read lines from file "fname" into the buffer after line "from".
 ///
 /// 1. We allocate blocks with try_malloc, as big as possible.
@@ -839,7 +838,6 @@ retry:
       fio_flags = get_fio_flags((char_u *)fenc);
     }
 
-
 #ifdef HAVE_ICONV
     // Try using iconv() if we can't convert internally.
     if (fio_flags == 0
@@ -1292,7 +1290,6 @@ retry:
           memmove(conv_rest, tail, conv_restlen);
           size -= conv_restlen;
         }
-
 
         while (p > (uint8_t *)ptr) {
           if (fio_flags & FIO_LATIN1) {
@@ -1995,7 +1992,6 @@ bool is_dev_fd_file(char_u *fname)
 }
 #endif
 
-
 /// From the current line count and characters read after that, estimate the
 /// line number where we are now.
 /// Used for error messages that include a line number.
@@ -2145,7 +2141,6 @@ static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
 
   return tmpname;
 }
-
 
 /// Read marks for the current buffer from the ShaDa file, when we support
 /// buffer marks and the buffer has a name.
@@ -3053,7 +3048,6 @@ nobackup:
     }
   }
 
-
   // Default: write the file directly.  May write to a temp file for
   // multi-byte conversion.
   wfname = fname;
@@ -3088,7 +3082,6 @@ nobackup:
       }
     }
   }
-
 
   if (converted && wb_flags == 0) {
 #ifdef HAVE_ICONV
@@ -4109,7 +4102,6 @@ static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
   bool error = false;
   int cc;
 
-
   if (flags & FIO_UCS4) {
     if (flags & FIO_ENDIAN_L) {
       *p++ = c;
@@ -4237,7 +4229,6 @@ static int get_fio_flags(const char_u *name)
   // must be ENC_DBCS, requires iconv()
   return 0;
 }
-
 
 /// Check for a Unicode BOM (Byte Order Mark) at the start of p[size].
 /// "size" must be at least 2.
@@ -5492,7 +5483,6 @@ char_u *vim_tempname(void)
            "%s%" PRIu64, tempdir, temp_count++);
   return vim_strsave(template);
 }
-
 
 /// Tries matching a filename with a "pattern" ("prog" is NULL), or use the
 /// precompiled regprog "prog" ("pattern" is NULL).  That avoids calling

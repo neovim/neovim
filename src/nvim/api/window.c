@@ -373,7 +373,6 @@ Boolean nvim_win_is_valid(Window window)
   return ret;
 }
 
-
 /// Closes the window and hide the buffer it contains (like |:hide| with a
 /// |window-ID|).
 ///

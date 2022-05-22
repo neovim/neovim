@@ -48,7 +48,6 @@
 #  include <sys/access.h>
 # endif
 
-
 // Return a pointer to the ACL of file "fname" in allocated memory.
 // Return NULL if the ACL is not available for whatever reason.
 vim_acl_T mch_get_acl(const char_u *fname)

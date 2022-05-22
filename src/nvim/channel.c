@@ -279,12 +279,10 @@ static void channel_destroy_early(Channel *chan)
   multiqueue_put(main_loop.events, free_channel_event, 1, chan);
 }
 
-
 static void close_cb(Stream *stream, void *data)
 {
   channel_decref(data);
 }
-
 
 /// Starts a job and returns the associated channel
 ///
@@ -415,7 +413,6 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
   *status_out = (varnumber_T)chan->id;
   return chan;
 }
-
 
 uint64_t channel_connect(bool tcp, const char *address, bool rpc, CallbackReader on_output,
                          int timeout, const char **error)
@@ -554,7 +551,6 @@ size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const 
     written = len;
     goto retfree;
   }
-
 
   Stream *in = channel_instream(chan);
   if (in->closed) {
@@ -755,7 +751,6 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
   callback_call(cb, 3, argv, &rettv);
   tv_clear(&rettv);
 }
-
 
 /// Open terminal for channel
 ///

@@ -160,7 +160,6 @@ char *os_get_user_directory(const char *name)
   return NULL;
 }
 
-
 #if defined(EXITFREE)
 
 void free_users(void)

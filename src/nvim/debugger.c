@@ -74,7 +74,6 @@ void do_debug(char_u *cmd)
 #define CMD_UP          9
 #define CMD_DOWN        10
 
-
   RedrawingDisabled++;          // don't redisplay the window
   no_wait_return++;             // don't wait for return
   did_emsg = false;             // don't use error from debugged stuff

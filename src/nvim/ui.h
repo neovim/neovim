@@ -74,6 +74,5 @@ struct ui_t {
 # include "ui_events_call.h.generated.h"
 #endif
 
-
 EXTERN MultiQueue *resize_events;
 #endif  // NVIM_UI_H

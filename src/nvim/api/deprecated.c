@@ -78,7 +78,6 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
   nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end, err);
 }
 
-
 /// Set the virtual text (annotation) for a buffer line.
 ///
 /// @deprecated use nvim_buf_set_extmark to use full virtual text
@@ -136,7 +135,6 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
   if (ERROR_SET(err)) {
     return 0;
   }
-
 
   Decoration *existing = decor_find_virttext(buf, (int)line, ns_id);
 
@@ -291,7 +289,6 @@ void buffer_set_line_slice(Buffer buffer, Integer start, Integer end, Boolean in
   end = convert_index(end) + include_end;
   nvim_buf_set_lines(0, buffer, start, end, false, replacement, err);
 }
-
 
 /// Sets a buffer-scoped (b:) variable
 ///

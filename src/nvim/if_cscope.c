@@ -68,7 +68,6 @@ static void cs_usage_msg(csid_e x)
   (void)semsg(_("E560: Usage: cs[cope] %s"), cs_cmds[(int)x].usage);
 }
 
-
 static enum {
   EXP_CSCOPE_SUBCMD,    // expand ":cscope" sub-commands
   EXP_SCSCOPE_SUBCMD,   // expand ":scscope" sub-commands
@@ -168,7 +167,6 @@ void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
     }
   }
 }
-
 
 /// Find the command, print help if invalid, and then call the corresponding
 /// command function.
@@ -274,7 +272,6 @@ void ex_cstag(exarg_T *eap)
   }
 }
 
-
 /// This simulates a vim_fgets(), but for cscope, returns the next line
 /// from the cscope output.  should only be called from find_tags()
 ///
@@ -291,7 +288,6 @@ bool cs_fgets(char_u *buf, int size)
 
   return false;
 }
-
 
 /// Called only from do_tag(), when popping the tag stack.
 void cs_free_tags(void)
@@ -380,7 +376,6 @@ bool cs_connection(int num, char_u *dbpath, char_u *ppath)
   return false;
 }  // cs_connection
 
-
 /*
  * PRIVATE functions
  ****************************************************************************/
@@ -407,7 +402,6 @@ static void cs_stat_emsg(char *fname)
   int err = errno;
   (void)semsg(_("E563: stat(%s) error: %d"), fname, err);
 }
-
 
 /// The common routine to add a new cscope connection.  Called by
 /// cs_add() and cs_reset().  I really don't like to do this, but this
@@ -520,7 +514,6 @@ add_err:
   return CSCOPE_FAILURE;
 }
 
-
 static bool cs_check_for_connections(void)
 {
   return cs_cnt_connections() > 0;
@@ -613,7 +606,6 @@ static int cs_cnt_matches(size_t idx)
   return nlines;
 }
 
-
 /// Creates the actual cscope command query from what the user entered.
 static char *cs_create_cmd(char *csoption, char *pattern)
 {
@@ -679,7 +671,6 @@ static char *cs_create_cmd(char *csoption, char *pattern)
 
   return cmd;
 }
-
 
 /// This piece of code was taken/adapted from nvi.  do we need to add
 /// the BSD license notice?
@@ -879,7 +870,6 @@ err_closing:
   return CSCOPE_SUCCESS;
 }
 
-
 /// Query cscope using command line interface.  Parse the output and use tselect
 /// to allow choices.  Like Nvi, creates a pipe to send to/from query/cscope.
 ///
@@ -917,7 +907,6 @@ static int cs_find(exarg_T *eap)
   return cs_find_common(opt, pat, eap->forceit, true,
                         eap->cmdidx == CMD_lcscope, (char_u *)(*eap->cmdlinep));
 }
-
 
 /// Common code for cscope find, shared by cs_find() and ex_cstag().
 static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool use_ll,
@@ -1119,7 +1108,6 @@ static int cs_help(exarg_T *eap)
   return CSCOPE_SUCCESS;
 }
 
-
 static void clear_csinfo(size_t i)
 {
   csinfo[i].fname  = NULL;
@@ -1193,7 +1181,6 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags, FileInfo *f
   return (int)i;
 }
 
-
 /// Find cscope command in command table.
 static cscmd_T *cs_lookup_cmd(exarg_T *eap)
 {
@@ -1220,7 +1207,6 @@ static cscmd_T *cs_lookup_cmd(exarg_T *eap)
   }
   return NULL;
 }
-
 
 /// Nuke em.
 static int cs_kill(exarg_T *eap)
@@ -1281,7 +1267,6 @@ static int cs_kill(exarg_T *eap)
   return CSCOPE_SUCCESS;
 }
 
-
 /// Actually kills a specific cscope connection.
 ///
 /// @param i  cscope table index
@@ -1295,7 +1280,6 @@ static void cs_kill_execute(size_t i, char *cname)
   }
   cs_release_csp(i, TRUE);
 }
-
 
 /// Convert the cscope output into a ctags style entry (as might be found
 /// in a ctags tags file).  there's one catch though: cscope doesn't tell you
@@ -1342,7 +1326,6 @@ static char *cs_make_vim_style_matches(char *fname, char *slno, char *search, ch
 
   return buf;
 }
-
 
 /// This is kind of hokey, but i don't see an easy way round this.
 ///
@@ -1414,7 +1397,6 @@ static char *cs_manage_matches(char **matches, char **contexts, size_t totmatche
 
   return p;
 }
-
 
 /// Parse cscope output.
 static char *cs_parse_results(size_t cnumber, char *buf, int bufsize, char **context,
@@ -1580,7 +1562,6 @@ static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a, 
 
   xfree(buf);
 }
-
 
 // get the requested path components
 static char *cs_pathcomponents(char *path)
@@ -1929,7 +1910,6 @@ static void cs_release_csp(size_t i, bool freefnpp)
   clear_csinfo(i);
 }
 
-
 /// Calls cs_kill on all cscope connections then reinits.
 static int cs_reset(exarg_T *eap)
 {
@@ -1979,7 +1959,6 @@ static int cs_reset(exarg_T *eap)
   }
   return CSCOPE_SUCCESS;
 }
-
 
 /// Construct the full pathname to a file found in the cscope database.
 /// (Prepends ppath, if there is one and if it's not already prepended,
@@ -2031,7 +2010,6 @@ static char *cs_resolve_file(size_t i, char *name)
   return fullname;
 }
 
-
 /// Show all cscope connections.
 static int cs_show(exarg_T *eap)
 {
@@ -2058,7 +2036,6 @@ static int cs_show(exarg_T *eap)
   wait_return(TRUE);
   return CSCOPE_SUCCESS;
 }
-
 
 /// Only called when VIM exits to quit any cscope sessions.
 void cs_end(void)

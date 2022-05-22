@@ -537,7 +537,6 @@ bool check_changed(buf_T *buf, int flags)
   return false;
 }
 
-
 /// Ask the user what to do when abandoning a changed buffer.
 /// Must check 'write' option first!
 ///
@@ -624,7 +623,6 @@ bool can_abandon(buf_T *buf, int forceit)
          || autowrite(buf, forceit) == OK
          || forceit;
 }
-
 
 /// Add a buffer number to "bufnrs", unless it's already there.
 static void add_bufnum(int *bufnrs, int *bufnump, int nr)
@@ -877,7 +875,6 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
   ga_clear(&ga);
   return i;
 }
-
 
 /// @param str
 /// @param what
@@ -1637,7 +1634,6 @@ void ex_compiler(exarg_T *eap)
   }
 }
 
-
 /// ":options"
 void ex_options(exarg_T *eap)
 {
@@ -2146,7 +2142,6 @@ theend:
   return retval;
 }
 
-
 /// Check if fname was sourced before to finds its SID.
 /// If it's new, generate a new SID.
 ///
@@ -2191,7 +2186,6 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
 
   return si;
 }
-
 
 /// ":scriptnames"
 void ex_scriptnames(exarg_T *eap)
@@ -2290,7 +2284,6 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
         ? ((struct source_cookie *)cookie)->sourcing_lnum
         : sourcing_lnum;
 }
-
 
 /// Get one full line from a sourced file.
 /// Called by do_cmdline() when it's called from do_source().
@@ -2619,7 +2612,6 @@ void do_finish(exarg_T *eap, int reanimate)
   }
 }
 
-
 /// @return  true when a sourced file had the ":finish" command: Don't give error
 ///          message for missing ":endif".
 ///          false when not sourcing a file.
@@ -2720,7 +2712,6 @@ static char *get_mess_env(void)
 }
 
 #endif
-
 
 /// Set the "v:lang" variable according to the current locale setting.
 /// Also do "v:lc_time"and "v:ctype".
@@ -2869,7 +2860,6 @@ void ex_language(exarg_T *eap)
   }
 }
 
-
 static char **locales = NULL;       // Array of all available locales
 
 # ifndef WIN32
@@ -2970,7 +2960,6 @@ char *get_locales(expand_T *xp, int idx)
 }
 
 #endif
-
 
 static void script_host_execute(char *name, exarg_T *eap)
 {

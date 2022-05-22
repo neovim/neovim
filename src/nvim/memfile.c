@@ -60,7 +60,6 @@
 
 #define MEMFILE_PAGE_SIZE 4096       /// default page size
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memfile.c.generated.h"
 #endif

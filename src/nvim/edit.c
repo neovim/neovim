@@ -245,7 +245,6 @@ typedef struct insert_state {
   char_u *ptr;
 } InsertState;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.c.generated.h"
 #endif
@@ -575,7 +574,6 @@ static int insert_check(VimState *state)
   // When emsg() was called msg_scroll will have been set.
   msg_scroll = false;
 
-
   // Open fold at the cursor line, according to 'foldopen'.
   if (fdo_flags & FDO_INSERT) {
     foldOpenCursor();
@@ -838,7 +836,6 @@ static int insert_execute(VimState *state, int key)
   return insert_handle_key(s);
 }
 
-
 static int insert_handle_key(InsertState *s)
 {
   // The big switch to handle a character in insert mode.
@@ -904,13 +901,11 @@ static int insert_handle_key(InsertState *s)
   case K_SELECT:      // end of Select mode mapping - ignore
     break;
 
-
   case K_HELP:        // Help key works like <ESC> <Help>
   case K_F1:
   case K_XF1:
     stuffcharReadbuff(K_HELP);
     return 0;  // exit insert mode
-
 
   case ' ':
     if (mod_mask != MOD_MASK_CTRL) {
@@ -1156,7 +1151,6 @@ check_pum:
       ins_pagedown();
     }
     break;
-
 
   case K_S_TAB:       // When not mapped, use like a normal TAB
     s->c = TAB;
@@ -2071,7 +2065,6 @@ bool ctrl_x_mode_not_defined_yet(void)
   return ctrl_x_mode == CTRL_X_NOT_DEFINED_YET;
 }
 
-
 /// Check that the "dict" or "tsr" option can be used.
 ///
 /// @param  dict_opt  check "dict" when true, "tsr" when false.
@@ -2608,7 +2601,6 @@ void completeopt_was_set(void)
   }
 }
 
-
 /*
  * Start completion for the complete() function.
  * "startcol" is where the matched text starts (1 is first column).
@@ -2672,12 +2664,10 @@ void set_completion(colnr_T startcol, list_T *list)
   ui_flush();
 }
 
-
 /* "compl_match_array" points the currently displayed list of entries in the
  * popup menu.  It is NULL when there is no popup menu. */
 static pumitem_T *compl_match_array = NULL;
 static int compl_match_arraysize;
-
 
 /*
  * Remove any popup menu.
@@ -3343,7 +3333,6 @@ static char_u *ins_compl_mode(void)
   return (char_u *)"";
 }
 
-
 /*
  * Delete one character before the cursor and show the subset of the matches
  * that match the word that is now before the cursor.
@@ -3928,7 +3917,6 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
   }
   return buf;
 }
-
 
 /// Get the user-defined completion function name for completion 'type'
 static char_u *get_complete_funcname(int type)
@@ -5392,7 +5380,6 @@ static int ins_complete(int c, bool enable_pum)
   save_w_wrow = curwin->w_wrow;
   save_w_leftcol = curwin->w_leftcol;
   n = ins_compl_next(true, ins_compl_key2count(c), insert_match, false);
-
 
   if (n > 1) {          // all matches have been found
     compl_matches = n;
@@ -7754,7 +7741,6 @@ static void ins_reg(void)
     add_to_showcmd_c(Ctrl_R);
   }
 
-
   // Don't map the register name. This also prevents the mode message to be
   // deleted when ESC is hit.
   no_mapping++;
@@ -7999,7 +7985,6 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
     }
   }
 
-
   State = MODE_NORMAL;
   may_trigger_modechanged();
   // need to position cursor again when on a TAB
@@ -8201,7 +8186,6 @@ static void ins_del(void)
   can_si_back = false;
   AppendCharToRedobuff(K_DEL);
 }
-
 
 /*
  * Delete one character for ins_bs().
@@ -8627,7 +8611,6 @@ static void ins_mousescroll(int dir)
     can_cindent = true;
   }
 }
-
 
 static void ins_left(void)
 {
@@ -9153,7 +9136,6 @@ static int ins_digraph(void)
     did_putchar = true;
     add_to_showcmd_c(Ctrl_K);
   }
-
 
   // don't map the digraph chars. This also prevents the
   // mode message to be deleted when ESC is hit

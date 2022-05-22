@@ -145,7 +145,6 @@ static bool cursor_style_enabled = false;
 # include "tui/tui.c.generated.h"
 #endif
 
-
 UI *tui_start(void)
 {
   UI *ui = xcalloc(1, sizeof(UI));  // Freed by ui_bridge_stop().
@@ -712,7 +711,6 @@ static void update_attrs(UI *ui, int attr_id)
       unibi_out(ui, unibi_set_a_background);
     }
   }
-
 
   data->default_attr = fg == -1 && bg == -1
                        && !bold && !italic && !has_any_underline && !reverse && !standout

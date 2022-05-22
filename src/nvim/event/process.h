@@ -33,7 +33,6 @@ struct process {
   MultiQueue *events;
 };
 
-
 static inline Process process_init(Loop *loop, ProcessType type, void *data)
 {
   return (Process) {

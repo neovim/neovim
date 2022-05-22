@@ -75,7 +75,6 @@
 #define Ctrl_HAT        30  // ^
 #define Ctrl__          31
 
-
 // Character that separates dir names in a path.
 #ifdef BACKSLASH_IN_FILENAME
 # define PATHSEP        psepc

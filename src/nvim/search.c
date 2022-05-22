@@ -3507,7 +3507,6 @@ int current_block(oparg_T *oap, long count, int include, int what, int other)
   return OK;
 }
 
-
 /// @param end_tag  when true, return true if the cursor is on "</aaa>".
 ///
 /// @return         true if the cursor is on a "<aaa>" tag.  Ignore "<aaa/>".
@@ -3925,7 +3924,6 @@ extend:
   return OK;
 }
 
-
 /// Search quote char from string line[col].
 /// Quote character escaped by one of the characters in "escape" is not counted
 /// as a quote.
@@ -4243,7 +4241,6 @@ abort_search:
   }
   return false;
 }
-
 
 /// Find next search match under cursor, cursor at end.
 /// Used while an operator is pending, and in Visual mode.

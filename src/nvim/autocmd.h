@@ -61,7 +61,6 @@ typedef struct AutoPatCmd {
   struct AutoPatCmd *next;  // chain of active apc-s for auto-invalidation
 } AutoPatCmd;
 
-
 // Set by the apply_autocmds_group function if the given event is equal to
 // EVENT_FILETYPE. Used by the readfile function in order to determine if
 // EVENT_BUFREADPOST triggered the EVENT_FILETYPE.
@@ -69,7 +68,6 @@ typedef struct AutoPatCmd {
 // Relying on this value requires one to reset it prior calling
 // apply_autocmds_group.
 EXTERN bool au_did_filetype INIT(= false);
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "autocmd.h.generated.h"

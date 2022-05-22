@@ -113,7 +113,6 @@
  * Added destructor
  */
 
-
 #ifndef NVIM_LIB_KHASH_H
 #define NVIM_LIB_KHASH_H
 

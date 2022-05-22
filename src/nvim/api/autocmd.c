@@ -31,7 +31,6 @@
     goto goto_name; \
   }
 
-
 // ID for associating autocmds created via nvim_create_autocmd
 // Used to delete autocmds from nvim_del_autocmd
 static int64_t next_autocmd_id = 1;
@@ -429,7 +428,6 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
   AucmdExecutable aucmd = AUCMD_EXECUTABLE_INIT;
   Callback cb = CALLBACK_NONE;
 
-
   if (!unpack_string_or_array(&event_array, &event, "event", true, err)) {
     goto cleanup;
   }
@@ -549,7 +547,6 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
       }
     }
   });
-
 
 cleanup:
   aucmd_exec_free(&aucmd);

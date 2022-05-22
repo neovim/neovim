@@ -199,7 +199,6 @@ typedef struct {
   hashtab_T sve_hashtab;
 } save_v_event_T;
 
-
 /// trans_function_name() flags
 typedef enum {
   TFN_INT = 1,  ///< May use internal function name

@@ -44,7 +44,6 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-
 struct dir_stack_T {
   struct dir_stack_T *next;
   char *dirname;
@@ -250,7 +249,6 @@ static char *e_no_more_items = N_("E553: No more items");
   for ((i) = 1, (qfp) = (qfl)->qf_start;  /* NOLINT(readability/braces) */ \
        !got_int && (i) <= (qfl)->qf_count && (qfp) != NULL; \
        (i)++, (qfp) = (qfp)->qf_next)
-
 
 // Looking up a buffer can be slow if there are many.  Remember the last one
 // to make this a lot faster if there are multiple matches in the same file.
@@ -465,7 +463,6 @@ static const char *efm_analyze_prefix(const char *efmp, efm_T *efminfo)
 
   return efmp;
 }
-
 
 // Converts a 'errorformat' string to regular expression pattern
 static int efm_to_regpat(const char *efm, int len, efm_T *fmt_ptr, char *regpat)
@@ -1106,7 +1103,6 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
       old_last = qfl->qf_last;
     }
   }
-
 
   // Use the local value of 'errorformat' if it's set.
   if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
@@ -2213,7 +2209,6 @@ static char *qf_push_dir(char *dirbuf, struct dir_stack_T **stackptr, bool is_fi
   }
 }
 
-
 // pop dirbuf from the directory stack and return previous directory or NULL if
 // stack is empty
 static char *qf_pop_dir(struct dir_stack_T **stackptr)
@@ -3079,7 +3074,6 @@ theend:
   decr_quickfix_busy();
 }
 
-
 // Highlight attributes used for displaying entries from the quickfix list.
 static int qfFileAttr;
 static int qfSepAttr;
@@ -3283,7 +3277,6 @@ static void qf_range_text(const qfline_T *qfp, char *buf, int bufsize)
   }
   buf[len] = NUL;
 }
-
 
 /// Display information (list number, list size and the title) about a
 /// quickfix/location list.
@@ -5069,7 +5062,6 @@ void ex_cbelow(exarg_T *eap)
   }
 }
 
-
 /// Return the autocmd name for the :cfile Ex commands
 static char *cfile_get_auname(cmdidx_T cmdidx)
 {
@@ -5090,7 +5082,6 @@ static char *cfile_get_auname(cmdidx_T cmdidx)
     return NULL;
   }
 }
-
 
 // ":cfile"/":cgetfile"/":caddfile" commands.
 // ":lfile"/":lgetfile"/":laddfile" commands.
@@ -5201,7 +5192,6 @@ static void vgr_init_regmatch(regmmatch_T *regmatch, char *s)
   regmatch->rmm_maxcol = 0;
 }
 
-
 /// Display a file name when vimgrep is running.
 static void vgr_display_fname(char *fname)
 {
@@ -5263,7 +5253,6 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid, char *titl
 
   return true;
 }
-
 
 /// Search for a pattern in all the lines in a buffer and add the matching lines
 /// to a quickfix list.

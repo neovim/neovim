@@ -82,7 +82,6 @@ typedef struct {
   int refcount;
 } MulticastEvent;  ///< Event present on multiple queues.
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/multiqueue.c.generated.h"
 #endif

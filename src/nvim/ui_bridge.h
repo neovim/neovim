@@ -38,7 +38,6 @@ struct ui_bridge_data {
     uv_mutex_unlock(&d->mutex); \
   } while (0)
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.h.generated.h"
 #endif

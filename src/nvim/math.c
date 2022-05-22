@@ -31,10 +31,12 @@ int xfpclassify(double d)
     return m ? FP_NAN : FP_INFINITE;
   }
 }
+
 int xisinf(double d)
 {
   return FP_INFINITE == xfpclassify(d);
 }
+
 int xisnan(double d)
 {
   return FP_NAN == xfpclassify(d);

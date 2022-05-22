@@ -34,7 +34,6 @@
 # include "charset.c.generated.h"
 #endif
 
-
 static bool chartab_initialized = false;
 
 // b_chartab[] is an array with 256 bits, each bit representing one of the
@@ -494,7 +493,6 @@ char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
     // skip to next multi-byte char
     i += utfc_ptr2len((char *)STR_PTR(i));
   }
-
 
   if (buf == NULL) {
     return (char_u *)ga.ga_data;

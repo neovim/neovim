@@ -160,7 +160,6 @@ typedef struct {
 } WinExtmark;
 static kvec_t(WinExtmark) win_extmark_arr INIT(= KV_INITIAL_VALUE);
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
@@ -551,7 +550,6 @@ int update_screen(int type)
   bool did_one = false;
   search_hl.rm.regprog = NULL;
 
-
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid_alloc.chars) {
       grid_invalidate(&wp->w_grid_alloc);
@@ -609,7 +607,6 @@ int update_screen(int type)
 
   decor_providers_invoke_end(&providers, &provider_err);
   kvi_destroy(providers);
-
 
   // either cmdline is cleared, not drawn or mode is last drawn
   cmdline_was_last_drawn = false;
@@ -1721,7 +1718,6 @@ static void win_update(win_T *wp, DecorProviders *providers)
     }
   }
 
-
   // restore got_int, unless CTRL-C was hit while redrawing
   if (!got_int) {
     got_int = save_got_int;
@@ -1806,7 +1802,6 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, i
   set_empty_rows(wp, row);
 }
 
-
 /// Advance **color_cols
 ///
 /// @return  true when there are columns to draw.
@@ -1888,7 +1883,6 @@ done:
   s->p += c_len;
   return cells;
 }
-
 
 /// Fills the foldcolumn at "p" for window "wp".
 /// Only to be called when 'foldcolumn' > 0.
@@ -4113,7 +4107,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           n_attr = 0;
         }
 
-
         if (utf_char2cells(mb_c) > 1) {
           // Need to fill two screen columns.
           if (wp->w_p_rl) {
@@ -4497,7 +4490,6 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
     }
   }
 }
-
 
 /*
  * Mirror text "str" for right-left displaying.
@@ -5468,7 +5460,6 @@ static void win_redr_border(win_T *wp)
   schar_T *chars = wp->w_float_config.border_chars;
   int *attrs = wp->w_float_config.border_attr;
 
-
   int *adj = wp->w_border_adj;
   int irow = wp->w_height_inner, icol = wp->w_width_inner;
 
@@ -5516,7 +5507,6 @@ static void win_redr_border(win_T *wp)
   }
 }
 
-
 /*
  * Prepare for 'hlsearch' highlighting.
  */
@@ -5540,7 +5530,6 @@ static void end_search_hl(void)
     search_hl.rm.regprog = NULL;
   }
 }
-
 
 /// Check if there should be a delay.  Used before clearing or redrawing the
 /// screen or the command line.
@@ -5794,7 +5783,6 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
  * screen changes, and in the meantime, everything still works.
  */
 
-
 /// insert lines on the screen and move the existing lines down
 /// 'line_count' is the number of lines to be inserted.
 /// 'end' is the line after the scrolled part. Normally it is Rows.
@@ -5895,7 +5883,6 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
     ui_call_grid_scroll(grid->handle, row, end, col, col + width, line_count, 0);
   }
 }
-
 
 // Show the current mode and ruler.
 //
@@ -6182,7 +6169,6 @@ void draw_tabline(void)
     return;
   }
 
-
   // Init TabPageIdxs[] to zero: Clicking outside of tabs has no effect.
   assert(Columns == tab_page_click_defs_size);
   stl_clear_click_defs(tab_page_click_defs, tab_page_click_defs_size);
@@ -6231,7 +6217,6 @@ void draw_tabline(void)
         wp = tp->tp_firstwin;
       }
 
-
       if (tp->tp_topframe == topframe) {
         attr = win_hl_attr(cwp, HLF_TPS);
       }
@@ -6252,7 +6237,6 @@ void draw_tabline(void)
           modified = true;
         }
       }
-
 
       if (modified || wincount > 1) {
         if (wincount > 1) {

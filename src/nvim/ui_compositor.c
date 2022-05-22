@@ -462,7 +462,6 @@ static void compose_debug(Integer startrow, Integer endrow, Integer startcol, In
                               (const sattr_T *)attrbuf);
   }
 
-
   if (delay) {
     debug_delay(endrow - startrow);
   }
@@ -475,7 +474,6 @@ static void debug_delay(Integer lines)
   uint64_t factor = (uint64_t)MAX(MIN(lines, 5), 1);
   os_microdelay(factor * wd * 1000u, true);
 }
-
 
 static void compose_area(Integer startrow, Integer endrow, Integer startcol, Integer endcol)
 {

@@ -180,7 +180,6 @@ static bool decor_virt_pos(Decoration decor)
   return kv_size(decor.virt_text) || decor.ui_watched;
 }
 
-
 bool decor_redraw_start(buf_T *buf, int top_row, DecorState *state)
 {
   state->top_row = top_row;
@@ -529,7 +528,6 @@ void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col,
   }
   decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true, ns_id, mark_id);
 }
-
 
 int decor_virt_lines(win_T *wp, linenr_T lnum, VirtLines *lines)
 {

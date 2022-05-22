@@ -157,7 +157,6 @@ static char_u *reg_prev_sub = NULL;
 static char REGEXP_INRANGE[] = "]^-n\\";
 static char REGEXP_ABBR[] = "nrtebdoxuU";
 
-
 /*
  * Translate '\x' to its control character, except "\n", which is Magic.
  */
@@ -376,14 +375,12 @@ typedef struct {
   int regnpar;
 } parse_state_T;
 
-
 static regengine_T bt_regengine;
 static regengine_T nfa_regengine;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "regexp.c.generated.h"
 #endif
-
 
 // Return true if compiled regular expression "prog" can match a line break.
 int re_multiline(const regprog_T *prog)
@@ -413,7 +410,6 @@ static int get_equi_class(char_u **pp)
   }
   return 0;
 }
-
 
 /*
  * Check for a collating element "[.a.]".  "pp" points to the '['.
@@ -540,7 +536,6 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
   return p;
 }
 
-
 // variables used for parsing
 static int prevchr_len;    // byte length of previous char
 static int at_start;       // True when on the first character
@@ -590,7 +585,6 @@ static void restore_parse_state(parse_state_T *ps)
   prev_at_start = ps->prev_at_start;
   regnpar = ps->regnpar;
 }
-
 
 /*
  * Get the next character without advancing.
@@ -898,7 +892,6 @@ static int64_t getoctchrs(void)
   return nr;
 }
 
-
 /*
  * read_limits - Read two integers to be taken as a minimum and maximum.
  * If the first character is '-', then the range is reversed.
@@ -999,7 +992,6 @@ typedef struct {
   int need_clear_subexpr;   ///< subexpressions still need to be cleared
   int need_clear_zsubexpr;  ///< extmatch subexpressions still need to be
                             ///< cleared
-
 
   // Internal copy of 'ignorecase'.  It is set at each call to vim_regexec().
   // Normally it gets the value of "rm_ic" or "rmm_ic", but when the pattern
@@ -1111,7 +1103,6 @@ static int reg_prev_class(void)
   }
   return -1;
 }
-
 
 // Return true if the current rex.input position matches the Visual area.
 static bool reg_match_visual(void)
@@ -1245,7 +1236,6 @@ static void cleanup_zsubexpr(void)
   }
 }
 
-
 // Advance rex.lnum, rex.line and rex.input to the next line.
 static void reg_nextline(void)
 {
@@ -1253,7 +1243,6 @@ static void reg_nextline(void)
   rex.input = rex.line;
   fast_breakcheck();
 }
-
 
 /*
  * Check whether a backreference matches.
@@ -1510,7 +1499,6 @@ static inline char_u *cstrchr(const char_u *const s, const int c)
 ////////////////////////////////////////////////////////////////
 
 // This stuff below really confuses cc on an SGI -- webb
-
 
 static fptr_T do_upper(int *d, int c)
 {
@@ -2081,7 +2069,6 @@ exit:
   return (int)((dst - dest) + 1 - num_escaped);
 }
 
-
 /*
  * Call reg_getline() with the line numbers from the submatch.  If a
  * substitute() was used the reg_maxline and other values have been
@@ -2377,7 +2364,6 @@ void vim_regfree(regprog_T *prog)
     prog->engine->regfree(prog);
   }
 }
-
 
 #if defined(EXITFREE)
 void free_regexp_stuff(void)

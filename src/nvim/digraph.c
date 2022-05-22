@@ -1832,7 +1832,6 @@ static void printdigraph(const digr_T *dp, result_T *previous)
       msg_putchar('\n');
     }
 
-
     // Make msg_col a multiple of list_width by using spaces.
     if (msg_col % list_width != 0) {
       int spaces = (msg_col / list_width + 1) * list_width - msg_col;
@@ -2015,7 +2014,6 @@ typedef struct {
 } kmap_T;
 
 #define KMAP_MAXLEN 20  // maximum length of "from" or "to"
-
 
 /// Set up key mapping tables for the 'keymap' option.
 ///

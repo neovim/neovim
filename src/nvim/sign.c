@@ -59,7 +59,6 @@ static char *cmds[] = {
 #define SIGNCMD_LAST    6
 };
 
-
 static hashtab_T sg_table;  // sign group (signgroup_T) hashtable
 static int next_sign_id = 1;  // next sign id in the global group
 
@@ -361,7 +360,6 @@ static void sign_sort_by_prio_on_line(buf_T *buf, sign_entry_T *sign)
   }
 }
 
-
 /// Add the sign into the signlist. Find the right spot to do it though.
 ///
 /// @param buf  buffer to store sign in
@@ -585,7 +583,6 @@ static linenr_T buf_delsign(buf_T *buf, linenr_T atlnum, int id, char_u *group)
 
   return lnum;
 }
-
 
 /// Find the line number of the sign with the requested id in group 'group'. If
 /// the sign does not exist, return 0 as the line number. This will still let

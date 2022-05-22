@@ -13,7 +13,6 @@
 # include "event/loop.c.generated.h"
 #endif
 
-
 void loop_init(Loop *loop, void *data)
 {
   uv_loop_init(&loop->uv);

@@ -126,7 +126,6 @@ static void augroup_map_del(int id, char *name)
   }
 }
 
-
 static inline const char *get_deleted_augroup(void) FUNC_ATTR_ALWAYS_INLINE
 {
   if (deleted_augroup == NULL) {
@@ -387,7 +386,6 @@ static void au_cleanup(void)
 
   au_need_clean = false;
 }
-
 
 // Get the first AutoPat for a particular event.
 AutoPat *au_get_autopat_for_event(event_T event)
@@ -667,7 +665,6 @@ const char *event_nr2name(event_T event)
   }
   return "Unknown";
 }
-
 
 /// Return true if "event" is included in 'eventignore'.
 ///
@@ -1016,7 +1013,6 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
   } else {
     findgroup = group;
   }
-
 
   // detect special <buffer[=X]> buffer-local patterns
   int is_buflocal = aupat_is_buflocal(pat, patlen);
@@ -1853,7 +1849,6 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
       reset_lnums();
     }
 
-
     if (eap != NULL) {
       (void)set_cmdarg(NULL, save_cmdarg);
       set_vim_var_nr(VV_CMDBANG, save_cmdbang);
@@ -2650,7 +2645,6 @@ static bool arg_autocmd_flag_get(bool *flag, char **cmd_ptr, char *pattern, int 
 
   return false;
 }
-
 
 // UI Enter
 void do_autocmd_uienter(uint64_t chanid, bool attached)

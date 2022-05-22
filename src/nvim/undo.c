@@ -611,7 +611,6 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
   return OK;
 }
 
-
 // magic at start of undofile
 #define UF_START_MAGIC     "Vim\237UnDo\345"
 #define UF_START_MAGIC_LEN     9
@@ -2471,7 +2470,6 @@ static void u_undoredo(int undo, bool do_buf_event)
     buf_updates_unload(curbuf, true);
   }
   // finish Adjusting extmarks
-
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;

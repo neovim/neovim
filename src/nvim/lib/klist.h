@@ -32,7 +32,6 @@
 #include "nvim/func_attr.h"
 #include "nvim/memory.h"
 
-
 #define KMEMPOOL_INIT(name, kmptype_t, kmpfree_f) \
   typedef struct { \
     size_t cnt, n, max; \

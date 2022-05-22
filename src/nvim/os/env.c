@@ -878,7 +878,6 @@ const void *vim_env_iter_rev(const char delim, const char *const val, const void
   }
 }
 
-
 /// @param[out] exe_name should be at least MAXPATHL in size
 void vim_get_prefix_from_exepath(char *exe_name)
 {
@@ -1154,7 +1153,6 @@ char_u *home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
   home_replace(buf, src, dst, len, true);
   return dst;
 }
-
 
 /// Function given to ExpandGeneric() to obtain an environment variable name.
 char *get_env_name(expand_T *xp, int idx)

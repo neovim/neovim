@@ -146,7 +146,6 @@ typedef struct ff_visited_list_hdr {
   ff_visited_T *ffvl_visited_list;
 } ff_visited_list_hdr_T;
 
-
 /*
  * '**' can be expanded to several directory levels.
  * Set the default maximum depth.

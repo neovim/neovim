@@ -41,7 +41,6 @@
 #define MSCR_LEFT       (-1)
 #define MSCR_RIGHT      (-2)
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mouse.h.generated.h"
 #endif

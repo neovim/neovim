@@ -2747,7 +2747,6 @@ static int nfa_regpiece(void)
 
     break;
 
-
   default:
     break;
   }     // end switch
@@ -3485,7 +3484,6 @@ static nfa_state_T *alloc_state(int c, nfa_state_T *out, nfa_state_T *out1)
  * next state for this fragment.
  */
 
-
 /*
  * Initialize a Frag_T struct and return it.
  */
@@ -3522,7 +3520,6 @@ static void patch(Ptrlist *l, nfa_state_T *s)
     l->s = s;
   }
 }
-
 
 /*
  * Join the two lists l1 and l2, returning the combination.
@@ -4403,7 +4400,6 @@ static void nfa_postprocess(nfa_regprog_T *prog)
 #define NFA_PIM_MATCH    2      // pim executed, matches
 #define NFA_PIM_NOMATCH  3      // pim executed, no match
 
-
 #ifdef REGEXP_DEBUG
 static void log_subsexpr(regsubs_T *subs)
 {
@@ -4789,7 +4785,6 @@ static bool match_follows(const nfa_state_T *startstate, int depth)
   }
   return false;
 }
-
 
 /// @param l      runtime state list
 /// @param state  state to update
@@ -5460,7 +5455,6 @@ retempty:
   return false;
 }
 
-
 /// Check for a match with \z subexpression "subidx".
 ///
 /// @param bytelen  out: length of match in bytes
@@ -5529,7 +5523,6 @@ static bool nfa_re_num_cmp(uintmax_t val, int op, uintmax_t pos)
   }
   return val == pos;
 }
-
 
 /*
  * Recursively call nfa_regmatch()
@@ -5683,7 +5676,6 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
 
   return result;
 }
-
 
 /*
  * Estimate the chance of a match with "state" failing.

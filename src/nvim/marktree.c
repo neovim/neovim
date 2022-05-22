@@ -575,7 +575,6 @@ void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
   marktree_del_itr(b, itr, false);
   key.pos = (mtpos_t){ row, col };
 
-
   marktree_put_key(b, key);
   itr->node = NULL;  // itr might become invalid by put
 }
@@ -799,7 +798,6 @@ bool marktree_itr_node_done(MarkTreeIter *itr)
   return !itr->node || itr->i == itr->node->n - 1;
 }
 
-
 mtpos_t marktree_itr_pos(MarkTreeIter *itr)
 {
   mtpos_t pos = rawkey(itr).pos;
@@ -960,7 +958,6 @@ past_continue_same_node:
       }
     }
   }
-
 
   while (itr->node) {
     unrelative(oldbase[itr->lvl], &rawkey(itr).pos);

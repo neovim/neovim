@@ -57,7 +57,6 @@ void ex_runtime(exarg_T *eap)
   source_runtime(arg, flags);
 }
 
-
 static void source_callback(char *fname, void *cookie)
 {
   (void)do_source(fname, false, DOSO_NONE);
@@ -160,7 +159,6 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
     }
   }
 
-
   return did_one ? OK : FAIL;
 }
 
@@ -201,7 +199,6 @@ void runtime_search_path_unref(RuntimeSearchPath path, int *ref)
     }
   }
 }
-
 
 /// Find the file "name" in all directories in "path" and invoke
 /// "callback(fname, cookie)".
@@ -524,7 +521,6 @@ RuntimeSearchPath runtime_search_path_build(void)
     map_put(String, handle_T)(&pack_used, the_entry, 0);
   }
 
-
   char *rtp_entry;
   for (rtp_entry = (char *)p_rtp; *rtp_entry != NUL;) {
     char *cur_entry = rtp_entry;
@@ -611,7 +607,6 @@ void runtime_search_path_validate(void)
     uv_mutex_unlock(&runtime_search_path_mutex);
   }
 }
-
 
 /// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
 int do_in_runtimepath(char *name, int flags, DoInRuntimepathCB callback, void *cookie)
@@ -884,7 +879,6 @@ static void add_opt_pack_plugin(char *fname, void *cookie)
   add_pack_plugin(true, (char_u *)fname, cookie);
 }
 
-
 /// Add all packages in the "start" directory to 'runtimepath'.
 void add_pack_start_dirs(void)
 {
@@ -917,7 +911,6 @@ static void add_pack_start_dir(char *fname, void *cookie)
     }
   }
 }
-
 
 /// Load plugins from all packages in the "start" directory.
 void load_start_packages(void)
@@ -1048,7 +1041,6 @@ static inline size_t compute_double_env_sep_len(const char *const val, const siz
   } while (iter != NULL);
   return ret;
 }
-
 
 #define NVIM_SIZE (sizeof("nvim") - 1)
 /// Add directories to a ENV_SEPCHAR-separated array from a colon-separated one

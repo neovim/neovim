@@ -244,7 +244,6 @@
 
 #define a_BYTE_ORDER_MARK               0xfeff
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "arabic.c.generated.h"
 #endif
