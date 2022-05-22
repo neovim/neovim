@@ -222,10 +222,32 @@ describe('LSP', function()
     end)
   end)
 
+  describe('lsp._cmd_parts test', function()
+    local function _cmd_parts(input)
+      return exec_lua([[
+        lsp = require('vim.lsp')
+        return lsp._cmd_parts(...)
+      ]], input)
+    end
+    it('should valid cmd argument', function()
+      eq(true, pcall(_cmd_parts, {"nvim"}))
+      eq(true, pcall(_cmd_parts, {"nvim", "--head"}))
+    end)
+
+    it('should invalid cmd argument', function()
+      eq('Error executing lua: .../lsp.lua:0: cmd: expected list, got nvim',
+        pcall_err(_cmd_parts, 'nvim'))
+      eq('Error executing lua: .../lsp.lua:0: cmd argument: expected string, got number',
+        pcall_err(_cmd_parts, {'nvim', 1}))
+    end)
+  end)
+end)
+
+describe('LSP', function()
   describe('basic_init test', function()
     after_each(function()
       stop()
-      exec_lua("lsp.stop_client(lsp.get_active_clients())")
+      exec_lua("lsp.stop_client(lsp.get_active_clients(), true)")
       exec_lua("lsp._vim_exit_handler()")
     end)
 
@@ -424,16 +446,23 @@ describe('LSP', function()
       }
     end)
     it('workspace/configuration returns NIL per section if client was started without config.settings', function()
-      fake_lsp_server_setup('workspace/configuration no settings')
-      eq({ NIL, NIL, }, exec_lua [[
-        local result = {
-          items = {
-            {section = 'foo'},
-            {section = 'bar'},
-          }
-        }
-        return vim.lsp.handlers['workspace/configuration'](nil, result, {client_id=TEST_RPC_CLIENT_ID})
-      ]])
+      local result = nil
+      test_rpc_server {
+        test_name = 'basic_init';
+        on_init = function(c) c.stop() end,
+        on_setup = function()
+          result = exec_lua [[
+            local result = {
+              items = {
+                {section = 'foo'},
+                {section = 'bar'},
+              }
+            }
+            return vim.lsp.handlers['workspace/configuration'](nil, result, {client_id=TEST_RPC_CLIENT_ID})
+          ]]
+        end
+      }
+      eq({ NIL, NIL }, result)
     end)
 
     it('should verify capabilities sent', function()
@@ -1343,25 +1372,6 @@ describe('LSP', function()
           end
         end;
       }
-    end)
-  end)
-  describe('lsp._cmd_parts test', function()
-    local function _cmd_parts(input)
-      return exec_lua([[
-        lsp = require('vim.lsp')
-        return lsp._cmd_parts(...)
-      ]], input)
-    end
-    it('should valid cmd argument', function()
-      eq(true, pcall(_cmd_parts, {"nvim"}))
-      eq(true, pcall(_cmd_parts, {"nvim", "--head"}))
-    end)
-
-    it('should invalid cmd argument', function()
-      eq('Error executing lua: .../lsp.lua:0: cmd: expected list, got nvim',
-        pcall_err(_cmd_parts, 'nvim'))
-      eq('Error executing lua: .../lsp.lua:0: cmd argument: expected string, got number',
-        pcall_err(_cmd_parts, {'nvim', 1}))
     end)
   end)
 end)
