@@ -41,7 +41,7 @@ set nowrapscan
 " Start at the first "msgid" line.
 let wsv = winsaveview()
 1
-/^msgid\>
+keeppatterns /^msgid\>
 
 " When an error is detected this is set to the line number.
 " Note: this is used in the Makefile.
@@ -104,7 +104,7 @@ while 1
 
   " Find next msgid.  Quit when there is no more.
   let lnum = line('.')
-  silent! /^msgid\>
+  silent! keeppatterns /^msgid\>
   if line('.') == lnum
     break
   endif
@@ -137,7 +137,7 @@ endfunc
 " Check that the \n at the end of the msgid line is also present in the msgstr
 " line.  Skip over the header.
 1
-/^"MIME-Version:
+keeppatterns /^"MIME-Version:
 while 1
   let lnum = search('^msgid\>')
   if lnum <= 0
