@@ -1432,6 +1432,32 @@ static void move_tab_to_mouse(void)
   }
 }
 
+/// Check that mouse support is enabled for visual mode
+static bool mouse_supports_visual(void)
+{
+  if (!*p_mouse) {
+    return true;
+  }
+  for (char_u *p = p_mouse; *p; p++) {
+    switch (*p) {
+    case 'a':
+      return true;
+      break;
+    case MOUSE_HELP:
+      if (curbuf->b_help) {
+        return true;
+      }
+      break;
+    default:
+      if (MOUSE_VISUAL == *p) {
+        return true;
+      }
+      break;
+    }
+  }
+  return false;
+}
+
 /// Do the appropriate action for the current mouse click in the current mode.
 /// Not used for Command-line mode.
 ///
@@ -1805,7 +1831,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         if (VIsual_active) {
           jump_flags |= MOUSE_MAY_STOP_VIS;
         }
-      } else {
+      } else if (mouse_supports_visual()) {
         jump_flags |= MOUSE_MAY_VIS;
       }
     } else if (which_button == MOUSE_RIGHT) {
@@ -1820,7 +1846,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         }
       }
       jump_flags |= MOUSE_FOCUS;
-      jump_flags |= MOUSE_MAY_VIS;
+      if (mouse_supports_visual()) {
+        jump_flags |= MOUSE_MAY_VIS;
+      }
     }
   }
 
