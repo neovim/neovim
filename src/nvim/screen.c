@@ -88,6 +88,7 @@
 #include "nvim/fold.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
@@ -5337,10 +5338,26 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     attr = (wp == curwin) ? HL_ATTR(HLF_WBR) : HL_ATTR(HLF_WBRNC);
     maxwidth = wp->w_width_inner;
     use_sandbox = was_set_insecurely(wp, "winbar", 0);
+
+    stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
+    // Allocate / resize the click definitions array for winbar if needed.
+    if (wp->w_winbar_height && wp->w_winbar_click_defs_size < (size_t)maxwidth) {
+      xfree(wp->w_winbar_click_defs);
+      wp->w_winbar_click_defs_size = (size_t)maxwidth;
+      wp->w_winbar_click_defs = xcalloc(wp->w_winbar_click_defs_size, sizeof(StlClickRecord));
+    }
   } else {
     row = is_stl_global ? (Rows - p_ch - 1) : W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
     maxwidth = is_stl_global ? Columns : wp->w_width;
+
+    stl_clear_click_defs(wp->w_status_click_defs, wp->w_status_click_defs_size);
+    // Allocate / resize the click definitions array for statusline if needed.
+    if (wp->w_status_click_defs_size < (size_t)maxwidth) {
+      xfree(wp->w_status_click_defs);
+      wp->w_status_click_defs_size = maxwidth;
+      wp->w_status_click_defs = xcalloc(wp->w_status_click_defs_size, sizeof(StlClickRecord));
+    }
 
     if (draw_ruler) {
       stl = p_ruf;
@@ -5445,25 +5462,37 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
   grid_puts_line_flush(false);
 
-  if (wp == NULL) {
-    // Fill the tab_page_click_defs array for clicking in the tab pages line.
-    col = 0;
-    len = 0;
-    p = buf;
-    StlClickDefinition cur_click_def = {
-      .type = kStlClickDisabled,
-    };
-    for (n = 0; tabtab[n].start != NULL; n++) {
-      len += vim_strnsize(p, (int)(tabtab[n].start - (char *)p));
-      while (col < len) {
-        tab_page_click_defs[col++] = cur_click_def;
-      }
-      p = (char_u *)tabtab[n].start;
-      cur_click_def = tabtab[n].def;
+  // Fill the tab_page_click_defs, w_status_click_defs or w_winbar_click_defs array for clicking
+  // in the tab page line, status line or window bar
+  StlClickDefinition *click_defs = (wp == NULL) ? tab_page_click_defs
+                                                : draw_winbar ? wp->w_winbar_click_defs
+                                                              : wp->w_status_click_defs;
+
+  if (click_defs == NULL) {
+    goto theend;
+  }
+
+  col = 0;
+  len = 0;
+  p = buf;
+  StlClickDefinition cur_click_def = {
+    .type = kStlClickDisabled,
+  };
+  for (n = 0; tabtab[n].start != NULL; n++) {
+    len += vim_strnsize(p, (int)(tabtab[n].start - (char *)p));
+    while (col < len) {
+      click_defs[col++] = cur_click_def;
     }
-    while (col < Columns) {
-      tab_page_click_defs[col++] = cur_click_def;
+    p = (char_u *)tabtab[n].start;
+    cur_click_def = tabtab[n].def;
+    if ((wp != NULL) && !(cur_click_def.type == kStlClickDisabled
+                          || cur_click_def.type == kStlClickFuncRun)) {
+      // window bar and status line only support click functions
+      cur_click_def.type = kStlClickDisabled;
     }
+  }
+  while (col < maxwidth) {
+    click_defs[col++] = cur_click_def;
   }
 
 theend:
@@ -5572,7 +5601,6 @@ void check_for_delay(bool check_msg_scroll)
   }
 }
 
-
 /// Resize the screen to Rows and Columns.
 ///
 /// Allocate default_grid.chars[] and other grid arrays.
@@ -5641,7 +5669,7 @@ retry:
   StlClickDefinition *new_tab_page_click_defs =
     xcalloc((size_t)Columns, sizeof(*new_tab_page_click_defs));
 
-  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
+  stl_clear_click_defs(tab_page_click_defs, tab_page_click_defs_size);
   xfree(tab_page_click_defs);
 
   tab_page_click_defs = new_tab_page_click_defs;
@@ -5672,19 +5700,19 @@ retry:
   resizing = false;
 }
 
-/// Clear tab_page_click_defs table
+/// Clear status line, window bar or tab page line click definition table
 ///
 /// @param[out]  tpcd  Table to clear.
 /// @param[in]  tpcd_size  Size of the table.
-void clear_tab_page_click_defs(StlClickDefinition *const tpcd, const long tpcd_size)
+void stl_clear_click_defs(StlClickDefinition *const click_defs, const long click_defs_size)
 {
-  if (tpcd != NULL) {
-    for (long i = 0; i < tpcd_size; i++) {
-      if (i == 0 || tpcd[i].func != tpcd[i - 1].func) {
-        xfree(tpcd[i].func);
+  if (click_defs != NULL) {
+    for (long i = 0; i < click_defs_size; i++) {
+      if (i == 0 || click_defs[i].func != click_defs[i - 1].func) {
+        xfree(click_defs[i].func);
       }
     }
-    memset(tpcd, 0, (size_t)tpcd_size * sizeof(tpcd[0]));
+    memset(click_defs, 0, (size_t)click_defs_size * sizeof(click_defs[0]));
   }
 }
 
@@ -6200,7 +6228,7 @@ void draw_tabline(void)
 
   // Init TabPageIdxs[] to zero: Clicking outside of tabs has no effect.
   assert(Columns == tab_page_click_defs_size);
-  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
+  stl_clear_click_defs(tab_page_click_defs, tab_page_click_defs_size);
 
   // Use the 'tabline' option if it's set.
   if (*p_tal != NUL) {

@@ -6009,7 +6009,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	      the label, e.g.: %3Xclose%X.  Use %999X for a "close current 
 	      tab" label.    Clicking this label with left mouse button closes 
 	      specified tab page.
-	@ N   For 'tabline': start of execute function label. Use %X or %T to 
+	@ N   Start of execute function label. Use %X or %T to 
 	      end the label, e.g.: %10@SwitchBuffer@foo.c%X.  Clicking this 
 	      label runs specified function: in the example when clicking once 
 	      using left mouse button on "foo.c" "SwitchBuffer(10, 1, 'l', 
@@ -6033,8 +6033,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	         is a bug that denotes that new mouse button recognition was 
 	         added without modifying code that reacts on mouse clicks on 
 	         this label.
-	      Note: to test whether your version of Neovim contains this 
-	            feature use `has('tablineat')`.
 	< -   Where to truncate line if too long.  Default is at the start.
 	      No width fields allowed.
 	= -   Separation point between alignment sections. Each section will

@@ -6,6 +6,8 @@
 // for FILE
 #include <stdio.h>
 
+#include "grid_defs.h"
+
 typedef struct file_buffer buf_T;  // Forward declaration
 
 // Reference to a buffer that stores the value of buf_free_count.
@@ -1492,6 +1494,16 @@ struct window_S {
   // Location list reference used in the location list window.
   // In a non-location list window, w_llist_ref is NULL.
   qf_info_T *w_llist_ref;
+
+  // Status line click definitions
+  StlClickDefinition *w_status_click_defs;
+  // Size of the w_status_click_defs array
+  size_t w_status_click_defs_size;
+
+  // Window bar click definitions
+  StlClickDefinition *w_winbar_click_defs;
+  // Size of the w_winbar_click_defs array
+  size_t w_winbar_click_defs_size;
 };
 
 static inline int win_hl_attr(win_T *wp, int hlf)

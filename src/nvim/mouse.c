@@ -241,8 +241,8 @@ retnomove:
     }
 
     curwin->w_cursor.lnum = curwin->w_topline;
-  } else if (on_status_line && which_button == MOUSE_LEFT) {
-    if (dragwin != NULL) {
+  } else if (on_status_line) {
+    if (which_button == MOUSE_LEFT && dragwin != NULL) {
       // Drag the status line
       count = row - dragwin->w_winrow - dragwin->w_height + 1
               - on_status_line;
