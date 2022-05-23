@@ -4381,7 +4381,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 #endif
           ++depth;
           sp = &stack[depth];
-          ++sp->ts_fidx;
+          if (fword[sp->ts_fidx] != NUL) {
+            sp->ts_fidx++;
+          }
           tword[sp->ts_twordlen++] = c;
           sp->ts_arridx = idxs[arridx];
           if (newscore == SCORE_SUBST) {

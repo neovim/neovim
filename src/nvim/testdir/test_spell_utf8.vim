@@ -631,7 +631,7 @@ func Test_spell_affix()
         \ ["bar", "barbork", "end", "fooa1", "fooa\u00E9", "nouend", "prebar", "prebarbork", "start"],
         \ [
         \   ["bad", ["bar", "end", "fooa1"]],
-        \   ["foo", ["fooa1", "fooa\u00E9", "bar"]],
+        \   ["foo", ["fooa1", "bar", "end"]],
         \   ["fooa2", ["fooa1", "fooa\u00E9", "bar"]],
         \   ["prabar", ["prebar", "bar", "bar bar"]],
         \   ["probarbirk", ["prebarbork"]],
@@ -649,7 +649,7 @@ func Test_spell_affix()
         \ ["bar", "barbork", "end", "lead", "meea1", "meea\u00E9", "prebar", "prebarbork"],
         \ [
         \   ["bad", ["bar", "end", "lead"]],
-        \   ["mee", ["meea1", "meea\u00E9", "bar"]],
+        \   ["mee", ["meea1", "bar", "end"]],
         \   ["meea2", ["meea1", "meea\u00E9", "lead"]],
         \   ["prabar", ["prebar", "bar", "leadbar"]],
         \   ["probarbirk", ["prebarbork"]],
@@ -666,7 +666,7 @@ func Test_spell_affix()
         \ ["bar", "barmeat", "lead", "meea1", "meea\u00E9", "meezero", "prebar", "prebarmeat", "tail"],
         \ [
         \   ["bad", ["bar", "lead", "tail"]],
-        \   ["mee", ["meea1", "meea\u00E9", "bar"]],
+        \   ["mee", ["meea1", "bar", "lead"]],
         \   ["meea2", ["meea1", "meea\u00E9", "lead"]],
         \   ["prabar", ["prebar", "bar", "leadbar"]],
         \   ["probarmaat", ["prebarmeat"]],
@@ -761,11 +761,15 @@ func Test_spell_sal_and_addition()
   set spl=Xtest_ca.utf-8.spl
   call assert_equal("elequint", FirstSpellWord())
   call assert_equal("elekwint", SecondSpellWord())
+
+  set spellfile=
+  set spl&
 endfunc
 
 func Test_spellfile_value()
   set spellfile=Xdir/Xtest.utf-8.add
   set spellfile=Xdir/Xtest.utf-8.add,Xtest_other.add
+  set spellfile=
 endfunc
 
 func Test_no_crash_with_weird_text()
@@ -786,6 +790,19 @@ endfunc
 " Invalid bytes may cause trouble when creating the word list.
 func Test_check_for_valid_word()
   call assert_fails("spellgood! 0\xac", 'E1280:')
+endfunc
+
+" This was going over the end of the word
+func Test_word_index()
+  new
+  norm R0
+  spellgood! ﬂ0
+  sil norm z=
+
+  bwipe!
+  " clear the word list
+  set enc=utf-8
+  call delete('Xtmpfile')
 endfunc
 
 
