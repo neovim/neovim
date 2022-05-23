@@ -638,6 +638,12 @@ nvim__stats()                                                  *nvim__stats()*
                 Return: ~
                     Map of various internal stats.
 
+nvim__unpack({str})                                           *nvim__unpack()*
+                TODO: Documentation
+
+                Attributes: ~
+                    |api-fast|
+
 nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Calls many API methods atomically.
 

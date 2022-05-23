@@ -9,6 +9,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
+#include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/vim.h"
 
 typedef struct Channel Channel;
@@ -30,7 +31,7 @@ typedef struct {
 typedef struct {
   PMap(cstr_t) subscribed_events[1];
   bool closed;
-  msgpack_unpacker *unpacker;
+  Unpacker *unpacker;
   uint32_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
   Dictionary info;
