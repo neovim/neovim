@@ -2323,6 +2323,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
               }
               fp->fd_len += fp->fd_top - firstlnum;
               fp->fd_top = firstlnum;
+              fp->fd_small = kNone;
               fold_changed = true;
             } else if ((flp->start != 0 && lvl == level)
                        || (firstlnum != startlnum)) {

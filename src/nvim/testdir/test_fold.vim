@@ -970,4 +970,23 @@ func Test_indent_one_line_fold_close()
   bw!
 endfunc
 
+" Make sure that when appending [an indented line then a blank line] right
+" before a single indented line, the resulting extended fold can be closed
+func Test_indent_append_blank_small_fold_close()
+  new
+  setlocal sw=2 foldmethod=indent
+  " at first, the fold at the second line can't be closed since it's smaller
+  " than foldminlines
+  let lines =<< trim END
+    line 1
+      line 4
+  END
+  call setline(1, lines)
+  call append(1, ['  line 2', ''])
+  " close all folds
+  normal zM
+  call assert_notequal(-1, foldclosed(2)) " the fold should be closed now
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
