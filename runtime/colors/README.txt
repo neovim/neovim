@@ -71,7 +71,7 @@ and use ":runtime" to load the original colorscheme: >
 	hi Statement ctermfg=Blue guifg=Blue
 
 To see which highlight group is used where, see `:help highlight-groups` and
-`:help group-name`.
+`:help group-name` .
 
 You can use ":highlight" to find out the current colors.  Exception: the
 ctermfg and ctermbg values are numbers, which are only valid for the current
