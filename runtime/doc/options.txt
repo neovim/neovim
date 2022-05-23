@@ -959,7 +959,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		    (mostly used in |Normal-mode| or |Cmdline-mode|).
 	esc	    hitting <Esc> in |Normal-mode|.
 	hangul	    Ignored.
-	insertmode  Pressing <Esc> in 'insertmode'.
 	lang	    Calling the beep module for Lua/Mzscheme/TCL.
 	mess	    No output available for |g<|.
 	showmatch   Error occurred for 'showmatch' function.
@@ -3411,31 +3410,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	has a lowercase letter where the typed text has an uppercase letter,
 	and there is a letter before it, the completed part is made uppercase.
 	With 'noinfercase' the match is used as-is.
-
-			*'insertmode'* *'im'* *'noinsertmode'* *'noim'*
-'insertmode' 'im'	boolean	(default off)
-			global
-	Makes Vim work in a way that Insert mode is the default mode.  Useful
-	if you want to use Vim as a modeless editor.
-	These Insert mode commands will be useful:
-	- Use the cursor keys to move around.
-	- Use CTRL-O to execute one Normal mode command |i_CTRL-O|.  When
-	  this is a mapping, it is executed as if 'insertmode' was off.
-	  Normal mode remains active until the mapping is finished.
-	- Use CTRL-L to execute a number of Normal mode commands, then use
-	  <Esc> to get back to Insert mode.  Note that CTRL-L moves the cursor
-	  left, like <Esc> does when 'insertmode' isn't set.  |i_CTRL-L|
-
-	These items change when 'insertmode' is set:
-	- when starting to edit of a file, Vim goes to Insert mode.
-	- <Esc> in Insert mode is a no-op and beeps.
-	- <Esc> in Normal mode makes Vim go to Insert mode.
-	- CTRL-L in Insert mode is a command, it is not inserted.
-	- CTRL-Z in Insert mode suspends Vim, see |CTRL-Z|.	*i_CTRL-Z*
-	However, when <Esc> is used inside a mapping, it behaves like
-	'insertmode' was not set.  This was done to be able to use the same
-	mappings with 'insertmode' set or not set.
-	When executing commands with |:normal| 'insertmode' is not used.
 
 						*'isfname'* *'isf'*
 'isfname' 'isf'		string	(default for Windows:

@@ -543,6 +543,13 @@ Options:
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*
+  *'insertmode'* *'im'* Use the following script to emulate 'insertmode':
+>
+      autocmd VimEnter,CmdlineLeave,WinEnter,WinScrolled,BufEnter * silent! if &modifiable | startinsert | endif
+      inoremap <Esc> <Nop>
+      inoremap <C-L> <Esc>
+      nnoremap <Esc> i
+<
   *'macatsui'*
   'maxmem' Nvim delegates memory-management to the OS.
   'maxmemtot' Nvim delegates memory-management to the OS.

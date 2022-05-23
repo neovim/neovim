@@ -424,8 +424,7 @@ Vim has seven BASIC modes:
 					*Normal* *Normal-mode* *command-mode*
 Normal mode		In Normal mode you can enter all the normal editor
 			commands.  If you start the editor you are in this
-			mode (unless you have set the 'insertmode' option,
-			see below).  This is also known as command mode.
+			mode.  This is also known as command mode.
 
 Visual mode		This is like Normal mode, but the movement commands
 			extend a highlighted area.  When a non-movement
@@ -551,8 +550,6 @@ Ex		 :vi	  --	  --	 --	    --	      --
 *6 Go from Select mode to Insert mode by typing a printable character.  The
    selection is deleted and the character is inserted.
 
-If the 'insertmode' option is on, editing a file will start in Insert mode.
-
 	*CTRL-\_CTRL-N* *i_CTRL-\_CTRL-N* *c_CTRL-\_CTRL-N* *v_CTRL-\_CTRL-N*
 Additionally the command CTRL-\ CTRL-N or <C-\><C-N> can be used to go to
 Normal mode from any other mode.  This can be used to make sure Vim is in
@@ -561,10 +558,7 @@ work in Ex mode.  When used after a command that takes an argument, such as
 |f| or |m|, the timeout set with 'ttimeoutlen' applies.
 
 	*CTRL-\_CTRL-G* *i_CTRL-\_CTRL-G* *c_CTRL-\_CTRL-G* *v_CTRL-\_CTRL-G*
-The command CTRL-\ CTRL-G or <C-\><C-G> can be used to go to Insert mode when
-'insertmode' is set.  Otherwise it goes to Normal mode.  This can be used to
-make sure Vim is in the mode indicated by 'insertmode', without knowing in
-what mode Vim currently is.
+CTRL-\ CTRL-G works the same as |CTRL-\_CTRL-N| for backward compatibility.
 
 				*gQ* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
 gQ			Switch to Ex mode.  This is like typing ":" commands

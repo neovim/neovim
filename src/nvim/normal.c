@@ -1126,9 +1126,6 @@ static int normal_execute(VimState *state, int key)
 
   if (s->ca.nchar == ESC) {
     clearop(&s->oa);
-    if (restart_edit == 0 && goto_im()) {
-      restart_edit = 'a';
-    }
     s->command_finished = true;
     goto finish;
   }
@@ -1177,14 +1174,6 @@ static void normal_check_stuff_buffer(NormalState *s)
     if (need_wait_return) {
       // if wait_return still needed call it now
       wait_return(false);
-    }
-
-    if (need_start_insertmode && goto_im() && !VIsual_active) {
-      need_start_insertmode = false;
-      stuffReadbuff("i");  // start insert mode next
-      // skip the fileinfo message now, because it would be shown
-      // after insert mode finishes!
-      need_fileinfo = false;
     }
   }
 }
@@ -3904,7 +3893,6 @@ static void nv_regreplay(cmdarg_T *cap)
 /// Handle a ":" command and <Cmd> or Lua keymaps.
 static void nv_colon(cmdarg_T *cap)
 {
-  int old_p_im;
   bool cmd_result;
   bool is_cmdkey = cap->cmdchar == K_COMMAND;
   bool is_lua = cap->cmdchar == K_LUA;
@@ -3930,23 +3918,12 @@ static void nv_colon(cmdarg_T *cap)
       compute_cmdrow();
     }
 
-    old_p_im = p_im;
-
     if (is_lua) {
       cmd_result = map_execute_lua();
     } else {
       // get a command line and execute it
       cmd_result = do_cmdline(NULL, is_cmdkey ? getcmdkeycmd : getexline, NULL,
                               cap->oap->op_type != OP_NOP ? DOCMD_KEEPLINE : 0);
-    }
-
-    // If 'insertmode' changed, enter or exit Insert mode
-    if (p_im != old_p_im) {
-      if (p_im) {
-        restart_edit = 'i';
-      } else {
-        restart_edit = 0;
-      }
     }
 
     if (cmd_result == false) {
@@ -6735,10 +6712,6 @@ static void nv_normal(cmdarg_T *cap)
       end_visual_mode();                // stop Visual
       redraw_curbuf_later(INVERTED);
     }
-    // CTRL-\ CTRL-G restarts Insert mode when 'insertmode' is set.
-    if (cap->nchar == Ctrl_G && p_im) {
-      restart_edit = 'a';
-    }
   } else {
     clearopbeep(cap->oap);
   }
@@ -6753,8 +6726,7 @@ static void nv_esc(cmdarg_T *cap)
   no_reason = (cap->oap->op_type == OP_NOP
                && cap->opcount == 0
                && cap->count0 == 0
-               && cap->oap->regname == 0
-               && !p_im);
+               && cap->oap->regname == 0);
 
   if (cap->arg) {               // true for CTRL-C
     if (restart_edit == 0
@@ -6771,9 +6743,8 @@ static void nv_esc(cmdarg_T *cap)
 
     // Don't reset "restart_edit" when 'insertmode' is set, it won't be
     // set again below when halfway through a mapping.
-    if (!p_im) {
-      restart_edit = 0;
-    }
+    restart_edit = 0;
+
     if (cmdwin_type != 0) {
       cmdwin_result = K_IGNORE;
       got_int = false;          // don't stop executing autocommands et al.
@@ -6796,13 +6767,6 @@ static void nv_esc(cmdarg_T *cap)
     vim_beep(BO_ESC);
   }
   clearop(cap->oap);
-
-  // A CTRL-C is often used at the start of a menu.  When 'insertmode' is
-  // set return to Insert mode afterwards.
-  if (restart_edit == 0 && goto_im()
-      && ex_normal_busy == 0) {
-    restart_edit = 'a';
-  }
 }
 
 // Move the cursor for the "A" command.
@@ -6837,8 +6801,7 @@ static void nv_edit(cmdarg_T *cap)
   } else if ((cap->cmdchar == 'a' || cap->cmdchar == 'i')
              && (cap->oap->op_type != OP_NOP || VIsual_active)) {
     nv_object(cap);
-  } else if (!curbuf->b_p_ma && !p_im && !curbuf->terminal) {
-    // Only give this error when 'insertmode' is off.
+  } else if (!curbuf->b_p_ma && !curbuf->terminal) {
     emsg(_(e_modifiable));
     clearop(cap->oap);
   } else if (!checkclearopq(cap->oap)) {

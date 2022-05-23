@@ -6719,7 +6719,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         // remember it to make 'insertmode' work with mappings for
         // Visual mode.  But do this only once and not when typed and
         // 'insertmode' isn't set.
-        if (p_im || !KeyTyped) {
+        if (!KeyTyped) {
           restart_edit_save = restart_edit;
         } else {
           restart_edit_save = 0;

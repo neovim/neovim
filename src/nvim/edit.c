@@ -459,9 +459,8 @@ static void insert_enter(InsertState *s)
 
   where_paste_started.lnum = 0;
   can_cindent = true;
-  // The cursor line is not in a closed fold, unless 'insertmode' is set or
-  // restarting.
-  if (!p_im && did_restart_edit == 0) {
+  // The cursor line is not in a closed fold, unless restarting.
+  if (did_restart_edit == 0) {
     foldOpenCursor();
   }
 
@@ -473,7 +472,7 @@ static void insert_enter(InsertState *s)
     s->i = showmode();
   }
 
-  if (!p_im && did_restart_edit == 0) {
+  if (did_restart_edit == 0) {
     change_warning(curbuf, s->i == 0 ? 0 : s->i + 1);
   }
 
@@ -554,7 +553,7 @@ static int insert_check(VimState *state)
   }
 
   if (stop_insert_mode && !compl_started) {
-    // ":stopinsert" used or 'insertmode' reset
+    // ":stopinsert" used
     s->count = 0;
     return 0;  // exit insert mode
   }
@@ -756,7 +755,6 @@ static int insert_execute(VimState *state, int key)
   }
 
   // CTRL-\ CTRL-N goes to Normal mode,
-  // CTRL-\ CTRL-G goes to mode selected with 'insertmode',
   // CTRL-\ CTRL-O is like CTRL-O but without moving the cursor
   if (s->c == Ctrl_BSL) {
     // may need to redraw when no more chars available now
@@ -770,8 +768,6 @@ static int insert_execute(VimState *state, int key)
       // it's something else
       vungetc(s->c);
       s->c = Ctrl_BSL;
-    } else if (s->c == Ctrl_G && p_im) {
-      return 1;  // continue
     } else {
       if (s->c == Ctrl_O) {
         ins_ctrl_o();
@@ -843,16 +839,6 @@ static int insert_execute(VimState *state, int key)
 }
 
 
-/// Return true when need to go to Insert mode because of 'insertmode'.
-///
-/// Don't do this when still processing a command or a mapping.
-/// Don't do this when inside a ":normal" command.
-bool goto_im(void)
-  FUNC_ATTR_PURE
-{
-  return p_im && stuff_empty() && typebuf_typed();
-}
-
 static int insert_handle_key(InsertState *s)
 {
   // The big switch to handle a character in insert mode.
@@ -884,26 +870,10 @@ static int insert_handle_key(InsertState *s)
       }
     }
 
-    // when 'insertmode' set, and not halfway through a mapping, don't leave
-    // Insert mode
-    if (goto_im()) {
-      if (got_int) {
-        (void)vgetc();                        // flush all buffers
-        got_int = false;
-      } else {
-        vim_beep(BO_IM);
-      }
-      break;
-    }
     return 0;  // exit insert mode
 
-  case Ctrl_Z:        // suspend when 'insertmode' set
-    if (!p_im) {
-      goto normalchar;                // insert CTRL-Z as normal char
-    }
-    do_cmdline_cmd("stop");
-    ui_cursor_shape();  // may need to update cursor shape
-    break;
+  case Ctrl_Z:
+    goto normalchar;                // insert CTRL-Z as normal char
 
   case Ctrl_O:        // execute one command
     if (ctrl_x_mode == CTRL_X_OMNI) {
@@ -939,9 +909,6 @@ static int insert_handle_key(InsertState *s)
   case K_F1:
   case K_XF1:
     stuffcharReadbuff(K_HELP);
-    if (p_im) {
-      need_start_insertmode = true;
-    }
     return 0;  // exit insert mode
 
 
@@ -956,7 +923,7 @@ static int insert_handle_key(InsertState *s)
     // For ^@ the trailing ESC will end the insert, unless there is an
     // error.
     if (stuff_inserted(NUL, 1L, (s->c == Ctrl_A)) == FAIL
-        && s->c != Ctrl_A && !p_im) {
+        && s->c != Ctrl_A) {
       return 0;  // exit insert mode
     }
     s->inserted_space = false;
@@ -1236,7 +1203,7 @@ check_pum:
       }
       break;
     }
-    if (!ins_eol(s->c) && !p_im) {
+    if (!ins_eol(s->c)) {
       return 0;  // out of memory
     }
     auto_format(false, false);
@@ -1288,13 +1255,6 @@ check_pum:
 
   case Ctrl_L:        // Whole line completion after ^X
     if (ctrl_x_mode != CTRL_X_WHOLE_LINE) {
-      // CTRL-L with 'insertmode' set: Leave Insert mode
-      if (p_im) {
-        if (echeck_abbr(Ctrl_L + ABBR_OFF)) {
-          break;
-        }
-        return 0;  // exit insert mode
-      }
       goto normalchar;
     }
     FALLTHROUGH;
@@ -7964,10 +7924,8 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   }
   if (!arrow_used) {
     // Don't append the ESC for "r<CR>" and "grx".
-    // When 'insertmode' is set only CTRL-L stops Insert mode.  Needed for
-    // when "count" is non-zero.
     if (cmdchar != 'r' && cmdchar != 'v') {
-      AppendToRedobuff(p_im ? "\014" : ESC_STR);
+      AppendToRedobuff(ESC_STR);
     }
 
     /*

@@ -8979,7 +8979,6 @@ bool save_current_state(save_state_T *sst)
   sst->save_restart_edit = restart_edit;
   sst->save_msg_didout = msg_didout;
   sst->save_State = State;
-  sst->save_insertmode = p_im;
   sst->save_finish_op = finish_op;
   sst->save_opcount = opcount;
   sst->save_reg_executing = reg_executing;
@@ -8987,7 +8986,6 @@ bool save_current_state(save_state_T *sst)
 
   msg_scroll = false;   // no msg scrolling in Normal mode
   restart_edit = 0;     // don't go to Insert mode
-  p_im = false;         // don't use 'insertmode
 
   // Save the current typeahead.  This is required to allow using ":normal"
   // from an event handler and makes sure we don't hang when the argument
@@ -9010,7 +9008,6 @@ void restore_current_state(save_state_T *sst)
     // override the value of restart_edit anyway.
     restart_edit = sst->save_restart_edit;
   }
-  p_im = sst->save_insertmode;
   finish_op = sst->save_finish_op;
   opcount = sst->save_opcount;
   reg_executing = sst->save_reg_executing;

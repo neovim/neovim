@@ -527,7 +527,6 @@ accordingly, proceeding as follows:
 16. Execute startup commands
 	If a |-t| flag was given, the tag is jumped to.
 	Commands given with |-c| and |+cmd| are executed.
-	If the 'insertmode' option is set, Insert mode is entered.
 	The starting flag is reset, has("vim_starting") will now return zero.
 	The |v:vim_did_enter| variable is set to 1.
 	The |VimEnter| autocommands are executed.

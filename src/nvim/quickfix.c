@@ -2540,9 +2540,7 @@ static int jump_to_help_window(qf_info_T *qi, bool newwin, int *opened_window)
     }
   }
 
-  if (!p_im) {
-    restart_edit = 0;  // don't want insert mode in help file
-  }
+  restart_edit = 0;  // don't want insert mode in help file
 
   return OK;
 }

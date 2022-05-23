@@ -1336,8 +1336,7 @@ static int command_line_execute(VimState *state, int key)
     }
   }
 
-  // CTRL-\ CTRL-N goes to Normal mode, CTRL-\ CTRL-G goes to Insert
-  // mode when 'insertmode' is set, CTRL-\ e prompts for an expression.
+  // CTRL-\ CTRL-N goes to Normal mode, CTRL-\ e prompts for an expression.
   if (s->c == Ctrl_BSL) {
     no_mapping++;
     allow_keys++;
@@ -1399,9 +1398,6 @@ static int command_line_execute(VimState *state, int key)
       redrawcmd();
       return command_line_not_changed(s);
     } else {
-      if (s->c == Ctrl_G && p_im && restart_edit == 0) {
-        restart_edit = 'a';
-      }
       s->gotesc = true;        // will free ccline.cmdbuff after putting it
                                // in history
       return 0;                // back to Normal mode

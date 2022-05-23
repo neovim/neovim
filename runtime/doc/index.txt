@@ -26,7 +26,7 @@ tag		char		action in Insert mode	~
 				insert
 |i_CTRL-A|	CTRL-A		insert previously inserted text
 |i_CTRL-C|	CTRL-C		quit insert mode, without checking for
-				abbreviation, unless 'insertmode' set.
+				abbreviation
 |i_CTRL-D|	CTRL-D		delete one shiftwidth of indent in the current
 				line
 |i_CTRL-E|	CTRL-E		insert the character which is below the cursor
@@ -50,7 +50,6 @@ tag		char		action in Insert mode	~
 |i_CTRL-J|	CTRL-J		same as <CR>
 |i_CTRL-K|	CTRL-K {char1} {char2}
 				enter digraph
-|i_CTRL-L|	CTRL-L		when 'insertmode' set: Leave Insert mode
 |i_<CR>|	<CR>		begin new line
 |i_CTRL-M|	CTRL-M		same as <CR>
 |i_CTRL-N|	CTRL-N		find next match for keyword in front of the
@@ -86,11 +85,10 @@ tag		char		action in Insert mode	~
 |i_CTRL-W|	CTRL-W		delete word before the cursor
 |i_CTRL-X|	CTRL-X {mode}	enter CTRL-X sub mode, see |i_CTRL-X_index|
 |i_CTRL-Y|	CTRL-Y		insert the character which is above the cursor
-|i_CTRL-Z|	CTRL-Z		when 'insertmode' set: suspend Vim
-|i_<Esc>|	<Esc>		end insert mode (unless 'insertmode' set)
+|i_<Esc>|	<Esc>		end insert mode
 |i_CTRL-[|	CTRL-[		same as <Esc>
 |i_CTRL-\_CTRL-N| CTRL-\ CTRL-N	go to Normal mode
-|i_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to mode specified with 'insertmode'
+|i_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to Normal mode
 		CTRL-\ a - z	reserved for extensions
 		CTRL-\ others	not used
 |i_CTRL-]|	CTRL-]		trigger abbreviation
@@ -221,7 +219,7 @@ tag		char	      note action in Normal mode	~
 |CTRL-Z|	CTRL-Z		   suspend program (or start new shell)
 		CTRL-[ <Esc>	   not used
 |CTRL-\_CTRL-N|	CTRL-\ CTRL-N	   go to Normal mode (no-op)
-|CTRL-\_CTRL-G|	CTRL-\ CTRL-G	   go to mode specified with 'insertmode'
+|CTRL-\_CTRL-G|	CTRL-\ CTRL-G	   go to Normal mode (no-op)
 		CTRL-\ a - z	   reserved for extensions
 		CTRL-\ others      not used
 |CTRL-]|	CTRL-]		   :ta to ident under cursor
@@ -892,7 +890,7 @@ here are those that are different.
 tag		command	      note action in Visual mode	~
 ------------------------------------------------------------------------------
 |v_CTRL-\_CTRL-N| CTRL-\ CTRL-N	   stop Visual mode
-|v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   go to mode specified with 'insertmode'
+|v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   go to Normal mode
 |v_CTRL-A|	CTRL-A		2  add N to number in highlighted text
 |v_CTRL-C|	CTRL-C		   stop Visual mode
 |v_CTRL-G|	CTRL-G		   toggle between Visual mode and Select mode
@@ -1068,8 +1066,7 @@ tag		command		action in Command-line editing mode	~
 |c_<Esc>|	<Esc>		abandon command-line without executing it
 |c_CTRL-[|	CTRL-[		same as <Esc>
 |c_CTRL-\_CTRL-N| CTRL-\ CTRL-N	go to Normal mode, abandon command-line
-|c_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to mode specified with 'insertmode',
-				abandon command-line
+|c_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to Normal mode, abandon command-line
 		CTRL-\ a - d	reserved for extensions
 |c_CTRL-\_e|	CTRL-\ e {expr} replace the command line with the result of
 				{expr}

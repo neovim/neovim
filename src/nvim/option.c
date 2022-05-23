@@ -4052,21 +4052,6 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
   } else if ((int *)varp == &p_paste) {
     // when 'paste' is set or reset also change other options
     paste_option_changed();
-  } else if ((int *)varp == &p_im) {
-    // when 'insertmode' is set from an autocommand need to do work here
-    if (p_im) {
-      if ((State & MODE_INSERT) == 0) {
-        need_start_insertmode = true;
-      }
-      stop_insert_mode = false;
-    } else if (old_value) {  // only reset if it was set previously
-      need_start_insertmode = false;
-      stop_insert_mode = true;
-      if (restart_edit != 0 && mode_displayed) {
-        clear_cmdline = true;  // remove "(insert)"
-      }
-      restart_edit = 0;
-    }
   } else if ((int *)varp == &p_ic && p_hls) {
     // when 'ignorecase' is set or reset and 'hlsearch' is set, redraw
     redraw_all_later(SOME_VALID);
