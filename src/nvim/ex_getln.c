@@ -230,23 +230,6 @@ static int compl_match_arraysize;
 static int compl_startcol;
 static int compl_selected;
 
-/// |:checkhealth| completion items
-///
-/// Regenerates on every new command line prompt, to accommodate changes on the
-/// runtime files.
-typedef struct {
-  garray_T names;  // healthcheck names
-  unsigned last_gen;  // last_prompt_id where names were generated
-} CheckhealthComp;
-
-/// Cookie used when converting filepath to name
-struct healthchecks_cookie {
-  garray_T *names;  // global healthchecks
-  bool is_lua;  // true if the current entry is a Lua healthcheck
-};
-
-static CheckhealthComp healthchecks = { GA_INIT(sizeof(char_u *), 10), 0 };
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
 #endif
@@ -295,59 +278,23 @@ static void init_incsearch_state(incsearch_state_T *s)
 /// @param[in] xp  Not used.
 static char *get_healthcheck_names(expand_T *xp, int idx)
 {
-  // Generate the first time or on new prompt.
-  if (healthchecks.last_gen == 0 || healthchecks.last_gen != last_prompt_id) {
-    ga_clear_strings(&healthchecks.names);
-    char *patterns[3] = { "autoload/health/**.vim", "lua/**/**/health/init.lua",  // NOLINT
-                          "lua/**/**/health.lua" };  // NOLINT
-    for (int i = 0; i < 3; i++) {
-      struct healthchecks_cookie hcookie = { .names = &healthchecks.names, .is_lua = i != 0 };
-      do_in_runtimepath(patterns[i], DIP_ALL, get_healthcheck_cb, &hcookie);
+  static Object names = OBJECT_INIT;
+  static unsigned last_gen = 0;
 
-      if (healthchecks.names.ga_len > 0) {
-        ga_remove_duplicate_strings(&healthchecks.names);
-      }
-    }
-    // Tracked to regenerate items on next prompt.
-    healthchecks.last_gen = last_prompt_id;
+  if (last_gen != last_prompt_id || last_gen == 0) {
+    Array a = ARRAY_DICT_INIT;
+    Error err = ERROR_INIT;
+    Object res = nlua_exec(STATIC_CSTR_AS_STRING("return vim.health._complete()"), a, &err);
+    api_clear_error(&err);
+    api_free_object(names);
+    names = res;
+    last_gen = last_prompt_id;
   }
-  return idx < healthchecks.names.ga_len
-    ? ((char **)(healthchecks.names.ga_data))[idx] : NULL;
-}
 
-/// Transform healthcheck file path into it's name.
-///
-/// Used as a callback for do_in_runtimepath
-/// @param[in] path  Expanded path to a possible healthcheck.
-/// @param[out] cookie  Array where names will be inserted.
-static void get_healthcheck_cb(char *path, void *cookie)
-{
-  if (path != NULL) {
-    struct healthchecks_cookie *hcookie = (struct healthchecks_cookie *)cookie;
-    char *pattern;
-    char *sub = "\\1";
-    char *res;
-
-    if (hcookie->is_lua) {
-      // Lua: transform "../lua/vim/lsp/health.lua" into "vim.lsp"
-      pattern = ".*lua[\\/]\\(.\\{-}\\)[\\/]health\\([\\/]init\\)\\?\\.lua$";
-    } else {
-      // Vim: transform "../autoload/health/provider.vim" into "provider"
-      pattern = ".*[\\/]\\([^\\/]*\\)\\.vim$";
-    }
-
-    res = do_string_sub(path, pattern, sub, NULL, "g");
-    if (hcookie->is_lua && res != NULL) {
-      // Replace slashes with dots as represented by the healthcheck plugin.
-      char *ares = do_string_sub(res, "[\\/]", ".", NULL, "g");
-      xfree(res);
-      res = ares;
-    }
-
-    if (res != NULL) {
-      GA_APPEND(char *, hcookie->names, res);
-    }
+  if (names.type == kObjectTypeArray && idx < (int)names.data.array.size) {
+    return names.data.array.items[idx].data.string.data;
   }
+  return NULL;
 }
 
 // Return true when 'incsearch' highlighting is to be done.

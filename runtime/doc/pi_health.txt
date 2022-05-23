@@ -48,27 +48,26 @@ Commands                                *health-commands*
                         :checkhealth vim*
 <
 ==============================================================================
-Lua Functions                           *health-functions-lua* *health-lua*
+Lua Functions                       *health-functions-lua* *health-lua* *vim.health*
 
 The Lua "health" module can be used to create new healthchecks (see also
-|health-functions-vim|). To get started, simply use:  >
-        local health = require('health')
-<
-health.report_start({name})                             *health.report_start()*
+|health-functions-vim|). To get started, simply use:
+
+vim.health.report_start({name})                         *vim.health.report_start()*
         Starts a new report. Most plugins should call this only once, but if
         you want different sections to appear in your report, call this once
         per section.
 
-health.report_info({msg})                               *health.report_info()*
+vim.health.report_info({msg})                           *vim.health.report_info()*
         Reports an informational message.
 
-health.report_ok({msg})                                 *health.report_ok()*
+vim.health.report_ok({msg})                             *vim.health.report_ok()*
         Reports a "success" message.
 
-health.report_warn({msg} [, {advice}])                  *health.report_warn()*
+vim.health.report_warn({msg} [, {advice}])              *vim.health.report_warn()*
         Reports a warning. {advice} is an optional List of suggestions.
 
-health.report_error({msg} [, {advice}])                 *health.report_error()*
+vim.health.report_error({msg} [, {advice}])             *vim.health.report_error()*
         Reports an error. {advice} is an optional List of suggestions.
 
 ==============================================================================
@@ -98,15 +97,14 @@ Copy this sample code into `lua/foo/health/init.lua` or `lua/foo/health.lua`,
 replacing "foo" in the path with your plugin name: >
 
         local M = {}
-        local health = require("health")
 
         M.check = function()
-          health.report_start("my_plugin report")
+          vim.health.report_start("my_plugin report")
           -- make sure setup function parameters are ok
           if check_setup() then
-            health.report_ok("Setup function is correct")
+            vim.health.report_ok("Setup function is correct")
           else
-            health.report_error("Setup function is incorrect")
+            vim.health.report_error("Setup function is incorrect")
           end
           -- do some more checking
           -- ...
