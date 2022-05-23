@@ -62,6 +62,11 @@ local matchregex = (function()
   end
 end)()
 
+---@private
+local did_filetype = function()
+  return vim.fn.did_filetype() ~= 0
+end
+
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
 
@@ -195,7 +200,7 @@ function M.change(bufnr)
 end
 
 function M.csh(path, bufnr)
-  if vim.fn.did_filetype() then
+  if did_filetype() then
     -- Filetype was already detected
     return
   end
@@ -252,8 +257,7 @@ function M.dep3patch(path, bufnr)
 end
 
 function M.dtrace(bufnr)
-  local did_filetype = vim.fn.did_filetype()
-  if did_filetype and did_filetype ~= 0 then
+  if did_filetype() then
     -- Filetype was already detected
     return
   end
@@ -811,7 +815,7 @@ end
 
 -- Also called from filetype.lua
 function M.sh(path, bufnr, name)
-  if vim.fn.did_filetype() or path:find(vim.g.ft_ignore_pat) then
+  if did_filetype() or path:find(vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
     return
   end
@@ -844,7 +848,7 @@ end
 -- For shell-like file types, check for an "exec" command hidden in a comment, as used for Tcl.
 -- Also called from scripts.vim, thus can't be local to this script. [TODO]
 function M.shell(path, bufnr, name)
-  if vim.fn.did_filetype() or matchregex(path, vim.g.ft_ignore_pat) then
+  if did_filetype() or matchregex(path, vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
     return
   end
