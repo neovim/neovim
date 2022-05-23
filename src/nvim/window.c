@@ -6709,7 +6709,7 @@ void set_winbar(void)
     if (wp->w_winbar_height != winbar_height) {
       wp->w_winbar_height = winbar_height;
       win_set_inner_size(wp);
-      wp->w_redr_winbar = winbar_height;
+      wp->w_redr_status = wp->w_redr_status || winbar_height;
 
       if (winbar_height == 0) {
         // When removing winbar, deallocate the w_winbar_click_defs array

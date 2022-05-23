@@ -277,21 +277,12 @@ void redrawWinline(win_T *wp, linenr_T lnum)
 void redraw_buf_status_later(buf_T *buf)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer != buf) {
-      continue;
-    }
-    bool redraw = false;
-
-    if (wp->w_status_height || (wp == curwin && global_stl_height())) {
+    if (wp->w_buffer == buf && (wp->w_status_height || (wp == curwin && global_stl_height())
+                                || wp->w_winbar_height)) {
       wp->w_redr_status = true;
-      redraw = true;
-    }
-    if (wp->w_winbar_height) {
-      wp->w_redr_winbar = true;
-      redraw = true;
-    }
-    if (redraw && must_redraw < VALID) {
-      must_redraw = VALID;
+      if (must_redraw < VALID) {
+        must_redraw = VALID;
+      }
     }
   }
 }
@@ -397,9 +388,6 @@ int update_screen(int type)
           if (wp->w_floating) {
             continue;
           }
-          if (wp->w_winrow + wp->w_winbar_height > valid) {
-            wp->w_redr_winbar = true;
-          }
           if (W_ENDROW(wp) > valid) {
             wp->w_redr_type = MAX(wp->w_redr_type, NOT_VALID);
           }
@@ -432,9 +420,6 @@ int update_screen(int type)
           } else {
             wp->w_redr_type = NOT_VALID;
             if (wp->w_winrow + wp->w_winbar_height <= msg_scrolled) {
-              wp->w_redr_winbar = true;
-            }
-            if (!is_stl_global && W_ENDROW(wp) + wp->w_status_height <= msg_scrolled) {
               wp->w_redr_status = true;
             }
           }
@@ -590,10 +575,8 @@ int update_screen(int type)
 
     // redraw status line and window bar after the window to minimize cursor movement
     if (wp->w_redr_status) {
-      win_redr_status(wp);
-    }
-    if (wp->w_redr_winbar) {
       win_redr_winbar(wp);
+      win_redr_status(wp);
     }
   }
 
@@ -747,7 +730,6 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   if (type >= NOT_VALID) {
     wp->w_redr_status = true;
-    wp->w_redr_winbar = true;
     wp->w_lines_valid = 0;
   }
 
@@ -4539,17 +4521,9 @@ void status_redraw_all(void)
   bool is_stl_global = global_stl_height() != 0;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    bool redraw = false;
-
-    if ((!is_stl_global && wp->w_status_height) || (is_stl_global && wp == curwin)) {
+    if ((!is_stl_global && wp->w_status_height) || (is_stl_global && wp == curwin)
+        || wp->w_winbar_height) {
       wp->w_redr_status = true;
-      redraw = true;
-    }
-    if (wp->w_winbar_height) {
-      wp->w_redr_winbar = true;
-      redraw = true;
-    }
-    if (redraw) {
       redraw_later(wp, VALID);
     }
   }
@@ -4567,20 +4541,9 @@ void status_redraw_buf(buf_T *buf)
   bool is_stl_global = global_stl_height() != 0;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer != buf) {
-      continue;
-    }
-    bool redraw = false;
-
-    if ((!is_stl_global && wp->w_status_height) || (is_stl_global && wp == curwin)) {
+    if (wp->w_buffer == buf && ((!is_stl_global && wp->w_status_height)
+                                || (is_stl_global && wp == curwin) || wp->w_winbar_height)) {
       wp->w_redr_status = true;
-      redraw = true;
-    }
-    if (wp->w_winbar_height) {
-      wp->w_redr_winbar = true;
-      redraw = true;
-    }
-    if (redraw) {
       redraw_later(wp, VALID);
     }
   }
@@ -4593,10 +4556,8 @@ void redraw_statuslines(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_status) {
-      win_redr_status(wp);
-    }
-    if (wp->w_redr_winbar) {
       win_redr_winbar(wp);
+      win_redr_status(wp);
     }
   }
   if (redraw_tabline) {
@@ -5120,12 +5081,8 @@ static void win_redr_winbar(win_T *wp)
   }
   entered = true;
 
-  wp->w_redr_winbar = false;
-  if (wp->w_winbar_height == 0) {
-    // No window bar, do nothing.
-  } else if (!redrawing()) {
-    // Don't redraw right now, do it later.
-    wp->w_redr_winbar = true;
+  if (wp->w_winbar_height == 0 || !redrawing()) {
+    // Do nothing.
   } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
     int saved_did_emsg = did_emsg;
 
