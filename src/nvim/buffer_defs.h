@@ -1389,8 +1389,7 @@ struct window_S {
                                     // w_redr_type is REDRAW_TOP
   linenr_T w_redraw_top;            // when != 0: first line needing redraw
   linenr_T w_redraw_bot;            // when != 0: last line needing redraw
-  bool w_redr_status;               // if true status line must be redrawn
-  bool w_redr_winbar;               // if true window bar must be redrawn
+  bool w_redr_status;               // if true statusline/winbar must be redrawn
   bool w_redr_border;               // if true border must be redrawn
 
   // remember what is shown in the ruler for this window (if 'ruler' set)
