@@ -1476,7 +1476,7 @@ modes Conditional, Number, Statement, Comment, PreProc, Type, and String,
 following the language specifications in 'Symbolic Manipulation with FORM' by
 J.A.M. Vermaseren, CAN, Netherlands, 1991.
 
-If you want include your own changes to the default colors, you have to
+If you want to include your own changes to the default colors, you have to
 redefine the following syntax groups:
 
     - formConditional

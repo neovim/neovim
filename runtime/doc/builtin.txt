@@ -1026,7 +1026,7 @@ chansend({id}, {data})					*chansend()*
 
 
 char2nr({string} [, {utf8}])					*char2nr()*
-		Return number value of the first char in {string}.
+		Return Number value of the first char in {string}.
 		Examples: >
 			char2nr(" ")		returns 32
 			char2nr("ABC")		returns 65
@@ -1313,13 +1313,13 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 
 		An example: >
 		   let choice = confirm("What do you want?",
-		   			\ "&Apples\n&Oranges\n&Bananas", 2)
+					\ "&Apples\n&Oranges\n&Bananas", 2)
 		   if choice == 0
-		   	echo "make up your mind!"
+			echo "make up your mind!"
 		   elseif choice == 3
-		   	echo "tasteful"
+			echo "tasteful"
 		   else
-		   	echo "I prefer bananas myself."
+			echo "I prefer bananas myself."
 		   endif
 <		In a GUI dialog, buttons are used.  The layout of the buttons
 		depends on the 'v' flag in 'guioptions'.  If it is included,
@@ -1894,8 +1894,8 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 <		There must be no space between the symbol (&/$/*/#) and the
 		name.
 		There must be no extra characters after the name, although in
-		a few cases this is ignored.  That may become more strict in
-		the future, thus don't count on it!
+		a few cases this is ignored.  That may become stricter in the
+		future, thus don't count on it!
 		Working example: >
 			exists(":make")
 <		NOT working example: >
@@ -2680,7 +2680,7 @@ getchar([expr])						*getchar()*
 
 		Without [expr] and when [expr] is 0 a whole character or
 		special key is returned.  If it is a single character, the
-		result is a number.  Use nr2char() to convert it to a String.
+		result is a Number.  Use |nr2char()| to convert it to a String.
 		Otherwise a String is returned with the encoded character.
 		For a special key it's a String with a sequence of bytes
 		starting with 0x80 (decimal: 128).  This is the same value as
@@ -7612,9 +7612,11 @@ strftime({format} [, {time}])				*strftime()*
 			GetFormat()->strftime()
 
 strgetchar({str}, {index})				*strgetchar()*
-		Get character {index} from {str}.  This uses a character
-		index, not a byte index.  Composing characters are considered
-		separate characters here.
+		Get a Number corresponding to the character at {index} in
+		{str}.  This uses a zero-based character index, not a byte
+		index.  Composing characters are considered separate
+		characters here.  Use |nr2char()| to convert the Number to a
+		String.
 		Also see |strcharpart()| and |strchars()|.
 
 		Can also be used as a |method|: >

@@ -1,9 +1,7 @@
 " PostScript indent file
 " Language:	PostScript
-" Maintainer:	Mike Williams <mrw@netcomuk.co.uk> (Invalid email address)
-" 		Doug Kearns <dougkearns@gmail.com>
+" Maintainer:	Mike Williams <mrw@eandem.co.uk>
 " Last Change:	2022 Apr 06
-
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
