@@ -76,7 +76,7 @@ To see which highlight group is used where, see `:help highlight-groups` and
 You can use ":highlight" to find out the current colors.  Exception: the
 ctermfg and ctermbg values are numbers, which are only valid for the current
 terminal.  Use the color names instead for better portability.  See
-`:help cterm-colors`.
+`:help cterm-colors` .
 
 The default color settings can be found in the source file
 "src/nvim/highlight_group.c".  Search for "highlight_init".
