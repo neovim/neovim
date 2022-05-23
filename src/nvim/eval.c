@@ -6886,6 +6886,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
   buf_T *curbuf_save = NULL;
   win_T *curwin_save = NULL;
   const bool is_curbuf = buf == curbuf;
+  const bool save_VIsual_active = VIsual_active;
 
   // When using the current buffer ml_mfp will be set if needed.  Useful when
   // setline() is used on startup.  For other buffers the buffer must be
@@ -6896,6 +6897,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
   }
 
   if (!is_curbuf) {
+    VIsual_active = false;
     curbuf_save = curbuf;
     curwin_save = curwin;
     curbuf = buf;
@@ -6986,6 +6988,7 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
   if (!is_curbuf) {
     curbuf = curbuf_save;
     curwin = curwin_save;
+    VIsual_active = save_VIsual_active;
   }
 }
 

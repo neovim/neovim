@@ -1636,6 +1636,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   const bool is_curbuf = buf == curbuf;
+  const bool save_VIsual_active = VIsual_active;
 
   const linenr_T first = tv_get_lnum_buf(&argvars[1], buf);
   if (argvars[2].v_type != VAR_UNKNOWN) {
@@ -1651,6 +1652,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (!is_curbuf) {
+    VIsual_active = false;
     curbuf_save = curbuf;
     curwin_save = curwin;
     curbuf = buf;
@@ -1694,6 +1696,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!is_curbuf) {
     curbuf = curbuf_save;
     curwin = curwin_save;
+    VIsual_active = save_VIsual_active;
   }
 }
 

@@ -153,3 +153,38 @@ func Test_appendbufline_redraw()
   call StopVimInTerminal(buf)
   call delete('XscriptMatchCommon')
 endfunc
+
+func Test_setbufline_select_mode()
+  new
+  call setline(1, ['foo', 'bar'])
+  call feedkeys("j^v2l\<C-G>", 'nx')
+
+  let bufnr = bufadd('Xdummy')
+  call bufload(bufnr)
+  call setbufline(bufnr, 1, ['abc'])
+
+  call feedkeys("x", 'nx')
+  call assert_equal(['foo', 'x'], getline(1, 2))
+
+  exe "bwipe! " .. bufnr
+  bwipe!
+endfunc
+
+func Test_deletebufline_select_mode()
+  new
+  call setline(1, ['foo', 'bar'])
+  call feedkeys("j^v2l\<C-G>", 'nx')
+
+  let bufnr = bufadd('Xdummy')
+  call bufload(bufnr)
+  call setbufline(bufnr, 1, ['abc', 'def'])
+  call deletebufline(bufnr, 1)
+
+  call feedkeys("x", 'nx')
+  call assert_equal(['foo', 'x'], getline(1, 2))
+
+  exe "bwipe! " .. bufnr
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
