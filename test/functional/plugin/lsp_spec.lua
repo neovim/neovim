@@ -371,6 +371,7 @@ describe('LSP', function()
         on_setup = function()
           exec_lua [[
             BUFFER = vim.api.nvim_create_buf(false, true)
+            BUFFER2 = vim.api.nvim_create_buf(false, true)
             vim.api.nvim_create_autocmd('LspAttach', {
               callback = function(args)
                 local client = vim.lsp.get_client_by_id(args.data.client_id)
@@ -380,7 +381,7 @@ describe('LSP', function()
             vim.api.nvim_create_autocmd('LspDetach', {
               callback = function(args)
                 local client = vim.lsp.get_client_by_id(args.data.client_id)
-                vim.g.lsp_detached = client.name
+                vim.g.lsp_detached = client.name .. args.buf
               end,
             })
           ]]
@@ -394,8 +395,9 @@ describe('LSP', function()
           if ctx.method == 'finish' then
             eq('basic_init', meths.get_var('lsp_attached'))
             exec_lua("return lsp.buf_detach_client(BUFFER, TEST_RPC_CLIENT_ID)")
-            eq('basic_init', meths.get_var('lsp_detached'))
+            eq('basic_init' .. BUFFER, meths.get_var('lsp_detached'))
             client.stop()
+            eq('basic_init' .. BUFFER2, meths.get_var('lsp_detached'))
           end
         end;
       }
