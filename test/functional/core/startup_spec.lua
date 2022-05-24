@@ -580,7 +580,7 @@ describe('user config init', function()
 
     it('loads default lua config, but shows an error', function()
       clear{ args_rm={'-u'}, env=xenv }
-      feed('<cr>') -- confirm "Conflicting config ..." message
+      feed('<cr><c-c>')  -- Dismiss "Conflicting config …" message.
       eq(1, eval('g:lua_rc'))
       matches('^E5422: Conflicting configs', meths.exec('messages', true))
     end)
@@ -632,13 +632,13 @@ describe('runtime:', function()
     eq(2, eval('g:lua_plugin'))
     -- Check if plugin_file_path is listed in :scriptname
     local scripts = meths.exec(':scriptnames', true)
-    assert.Truthy(scripts:find(plugin_file_path))
+    assert(scripts:find(plugin_file_path))
 
     -- Check if plugin_file_path is listed in startup profile
     local profile_reader = io.open(profiler_file, 'r')
     local profile_log = profile_reader:read('*a')
     profile_reader:close()
-    assert.Truthy(profile_log :find(plugin_file_path))
+    assert(profile_log:find(plugin_file_path))
 
     os.remove(profiler_file)
     rmdir(plugin_path)

@@ -23,7 +23,6 @@
 
 #define MAX_CONNECTIONS 32
 #define ENV_LISTEN "NVIM_LISTEN_ADDRESS"  // deprecated
-#define ENV_NVIM "NVIM"
 
 static garray_T watchers = GA_EMPTY_INIT_VALUE;
 
@@ -54,6 +53,11 @@ bool server_init(const char *listen_addr)
   if (os_env_exists(ENV_LISTEN)) {
     // Unset $NVIM_LISTEN_ADDRESS, it's a liability hereafter.
     os_unsetenv(ENV_LISTEN);
+  }
+
+  // TODO: this is for logging_spec. Can remove this after nvim_log #7062 is merged.
+  if (os_env_exists("__NVIM_TEST_LOG")) {
+    ELOG("test log message");
   }
 
   return rv == 0;

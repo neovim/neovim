@@ -23,8 +23,6 @@
 #include "nvim/os/time.h"
 #include "nvim/types.h"
 
-#define LOG_FILE_ENV "NVIM_LOG_FILE"
-
 /// Cached location of the expanded log file path decided by log_path_init().
 static char log_file_path[MAXPATHL + 1] = { 0 };
 
@@ -52,7 +50,7 @@ static bool log_try_create(char *fname)
   return true;
 }
 
-/// Initializes path to log file. Sets $NVIM_LOG_FILE if empty.
+/// Initializes the log file path and sets $NVIM_LOG_FILE if empty.
 ///
 /// Tries $NVIM_LOG_FILE, or falls back to $XDG_STATE_HOME/nvim/log. Failed
 /// initialization indicates either a bug in expand_env() or both $NVIM_LOG_FILE
@@ -60,9 +58,8 @@ static bool log_try_create(char *fname)
 static void log_path_init(void)
 {
   size_t size = sizeof(log_file_path);
-  expand_env((char_u *)"$" LOG_FILE_ENV, (char_u *)log_file_path,
-             (int)size - 1);
-  if (strequal("$" LOG_FILE_ENV, log_file_path)
+  expand_env((char_u *)"$" ENV_LOGFILE, (char_u *)log_file_path, (int)size - 1);
+  if (strequal("$" ENV_LOGFILE, log_file_path)
       || log_file_path[0] == '\0'
       || os_isdir((char_u *)log_file_path)
       || !log_try_create(log_file_path)) {
@@ -87,7 +84,7 @@ static void log_path_init(void)
       log_file_path[0] = '\0';
       return;
     }
-    os_setenv(LOG_FILE_ENV, log_file_path, true);
+    os_setenv(ENV_LOGFILE, log_file_path, true);
     if (log_dir_failure) {
       WLOG("Failed to create directory %s for writing logs: %s",
            failed_dir, os_strerror(log_dir_failure));
@@ -209,7 +206,7 @@ FILE *open_log_file(void)
   //  - Directory does not exist
   //  - File is not writable
   do_log_to_file(stderr, LOGLVL_ERR, NULL, __func__, __LINE__, true,
-                 "failed to open $" LOG_FILE_ENV " (%s): %s",
+                 "failed to open $" ENV_LOGFILE " (%s): %s",
                  strerror(errno), log_file_path);
   return stderr;
 }
@@ -277,6 +274,9 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
                              va_list args)
   FUNC_ATTR_PRINTF(7, 0)
 {
+  // Name of the Nvim instance that produced the log.
+  static char name[16] = { 0 };
+
   static const char *log_levels[] = {
     [LOGLVL_DBG] = "DBG",
     [LOGLVL_INF] = "INF",
@@ -302,14 +302,25 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
     millis = (int)curtime.tv_usec / 1000;
   }
 
+  // Get a name for this Nvim instance.
+  if (name[0] == '\0') {
+    const char *testid = os_getenv("NVIM_TEST");
+    const char *parent = os_getenv(ENV_NVIM);
+    if (testid) {
+      snprintf(name, sizeof(name), "%s%s", testid ? testid : "", parent ? "/child" : "");
+    } else {
+      int64_t pid = os_get_pid();
+      snprintf(name, sizeof(name), "%-5" PRId64 "%s", pid, parent ? "/child" : "");
+    }
+  }
+
   // Print the log message.
-  int64_t pid = os_get_pid();
   int rv = (line_num == -1 || func_name == NULL)
-    ? fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s",
-              log_levels[log_level], date_time, millis, pid,
+    ? fprintf(log_file, "%s %s.%03d %-10s %s",
+              log_levels[log_level], date_time, millis, name,
               (context == NULL ? "?:" : context))
-                               : fprintf(log_file, "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
-                                         log_levels[log_level], date_time, millis, pid,
+                               : fprintf(log_file, "%s %s.%03d %-10s %s%s:%d: ",
+                                         log_levels[log_level], date_time, millis, name,
                                          (context == NULL ? "" : context),
                                          func_name, line_num);
   if (rv < 0) {

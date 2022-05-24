@@ -163,9 +163,14 @@ static struct termios termios_default;
 /// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
 void pty_process_save_termios(int tty_fd)
 {
-  DLOG("tty_fd=%d", tty_fd);
-  if (tty_fd == -1 || tcgetattr(tty_fd, &termios_default) != 0) {
+  if (tty_fd == -1) {
     return;
+  }
+  int rv = tcgetattr(tty_fd, &termios_default);
+  if (rv != 0) {
+    ELOG("tcgetattr failed (tty_fd=%d): %s", tty_fd, strerror(errno));
+  } else {
+    DLOG("tty_fd=%d", tty_fd);
   }
 }
 

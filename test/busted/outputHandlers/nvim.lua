@@ -215,7 +215,9 @@ return function(options)
   end
 
   handler.testStart = function(element, _parent)
-    io.write(runString:format(handler.getFullName(element)))
+    local testid = _G._nvim_test_id or ''
+    local desc = ('%s %s'):format(testid, handler.getFullName(element))
+    io.write(runString:format(desc))
     io.flush()
 
     return nil, true

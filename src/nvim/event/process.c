@@ -120,7 +120,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   proc->internal_close_cb = decref;
   proc->refcount++;
   kl_push(WatcherPtr, proc->loop->children, proc);
-  DLOG("new: pid=%d argv=[%s]", proc->pid, *proc->argv);
+  DLOG("new: pid=%d argv=[%s]", proc->pid, proc->argv[0]);
   return 0;
 }
 

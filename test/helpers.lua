@@ -40,10 +40,6 @@ function module.popen_r(...)
   return io.popen(module.argss_to_cmd(...), 'r')
 end
 
-function module.popen_w(...)
-  return io.popen(module.argss_to_cmd(...), 'w')
-end
-
 -- sleeps the test runner (_not_ the nvim instance)
 function module.sleep(ms)
   luv.sleep(ms)
@@ -104,16 +100,16 @@ end
 ---
 ---@param pat string      Lua pattern to search for in the log file
 ---@param logfile string  Full path to log file (default=$NVIM_LOG_FILE)
-function module.assert_log(pat, logfile)
+---@param nrlines number  Search up to this many log lines
+function module.assert_log(pat, logfile, nrlines)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local nrlines = 10
+  nrlines = nrlines or 10
   local lines = module.read_file_list(logfile, -nrlines) or {}
   for _,line in ipairs(lines) do
     if line:match(pat) then return end
   end
-  local logtail = module.read_nvim_log(logfile)
   error(string.format('Pattern %q not found in log (last %d lines): %s:\n%s',
-    pat, nrlines, logfile, logtail))
+    pat, nrlines, logfile, '    '..table.concat(lines, '\n    ')))
 end
 
 -- Invokes `fn` and returns the error string (with truncated paths), or raises
@@ -271,7 +267,7 @@ module.uname = (function()
       return platform
     end
 
-    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_SYSTEM_NAME.
+    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_HOST_SYSTEM_NAME.
       platform = string.lower(os.getenv("SYSTEM_NAME"))
       return platform
     end
@@ -406,17 +402,6 @@ function module.check_cores(app, force)
   tests_skipped = 0
   if found_cores > 0 then
     error("crash detected (see above)")
-  end
-end
-
-function module.which(exe)
-  local pipe = module.popen_r('which', exe)
-  local ret = pipe:read('*a')
-  pipe:close()
-  if ret == '' then
-    return nil
-  else
-    return ret:sub(1, -2)
   end
 end
 

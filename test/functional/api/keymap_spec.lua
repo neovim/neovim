@@ -336,7 +336,7 @@ describe('nvim_get_keymap', function()
       return GlobalCount
     ]])
     local mapargs = meths.get_keymap('n')
-    assert.Truthy(type(mapargs[1].callback) == 'number', 'callback is not luaref number')
+    assert(type(mapargs[1].callback) == 'number', 'callback is not luaref number')
     mapargs[1].callback = nil
     eq({
       lhs='asdf',
@@ -815,7 +815,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     assert.truthy(string.match(funcs.maparg('asdf', 'n'),
                   "^<Lua function %d+>"))
     local mapargs = funcs.maparg('asdf', 'n', false, true)
-    assert.Truthy(type(mapargs.callback) == 'number', 'callback is not luaref number')
+    assert(type(mapargs.callback) == 'number', 'callback is not luaref number')
     mapargs.callback = nil
     eq(generate_mapargs('n', 'asdf', nil, {sid=sid_lua}), mapargs)
   end)

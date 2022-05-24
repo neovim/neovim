@@ -16,4 +16,7 @@
 # include "os/users.h.generated.h"
 #endif
 
+#define ENV_LOGFILE "NVIM_LOG_FILE"
+#define ENV_NVIM "NVIM"
+
 #endif  // NVIM_OS_OS_H
