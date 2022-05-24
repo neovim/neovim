@@ -1854,6 +1854,9 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     int click_row = mouse_row;
     int click_col = mouse_col;
     win_T *wp = mouse_find_win(&click_grid, &click_row, &click_col);
+    if (wp == NULL) {
+      return false;
+    }
 
     StlClickDefinition *click_defs = in_status_line ? wp->w_status_click_defs
                                                     : wp->w_winbar_click_defs;
