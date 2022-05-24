@@ -442,6 +442,9 @@ to disable various visual features such as the 'number' column.
 
 Currently, floating windows don't support some widgets like scrollbar.
 
+The output of |:mksession| does not include commands for restoring floating
+windows.
+
 Example: create a float with scratch buffer: >
 
     let buf = nvim_create_buf(v:false, v:true)
