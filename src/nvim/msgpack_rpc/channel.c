@@ -31,7 +31,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
-#if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
+#if MIN_LOG_LEVEL > LOGLVL_DBG
 # define log_client_msg(...)
 # define log_server_msg(...)
 #endif
@@ -62,7 +62,7 @@ void rpc_start(Channel *channel)
 
   if (channel->streamtype != kChannelStreamInternal) {
     Stream *out = channel_outstream(channel);
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+#if MIN_LOG_LEVEL <= LOGLVL_DBG
     Stream *in = channel_instream(channel);
     DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id,
          (void *)in, (void *)out);
@@ -209,7 +209,7 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
     char buf[256];
     snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
              channel->id);
-    call_set_error(channel, buf, INFO_LOG_LEVEL);
+    call_set_error(channel, buf, LOGLVL_INF);
     goto end;
   }
 
@@ -249,7 +249,7 @@ static void parse_msgpack(Channel *channel)
                  "ch %" PRIu64 " returned a response with an unknown request "
                  "id. Ensure the client is properly synchronized",
                  channel->id);
-        call_set_error(channel, buf, ERROR_LOG_LEVEL);
+        call_set_error(channel, buf, LOGLVL_ERR);
       }
       msgpack_unpacked_destroy(&unpacked);
     } else {
@@ -299,7 +299,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
       snprintf(buf, sizeof(buf),
                "ch %" PRIu64 " sent an invalid message, closed.",
                channel->id);
-      call_set_error(channel, buf, ERROR_LOG_LEVEL);
+      call_set_error(channel, buf, LOGLVL_ERR);
     }
     api_clear_error(&error);
     return;
@@ -418,7 +418,7 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
              "ch %" PRIu64 ": stream write failed. "
              "RPC canceled; closing channel",
              channel->id);
-    call_set_error(channel, buf, ERROR_LOG_LEVEL);
+    call_set_error(channel, buf, LOGLVL_ERR);
   }
 
   return success;
@@ -693,7 +693,7 @@ const char *rpc_client_name(Channel *chan)
   return NULL;
 }
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+#if MIN_LOG_LEVEL <= LOGLVL_DBG
 # define REQ "[request]  "
 # define RES "[response] "
 # define NOT "[notify]   "

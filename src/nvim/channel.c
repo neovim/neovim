@@ -188,7 +188,7 @@ Channel *channel_alloc(ChannelStreamType type)
 
 void channel_create_event(Channel *chan, const char *ext_source)
 {
-#if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
+#if MIN_LOG_LEVEL <= LOGLVL_INF
   const char *source;
 
   if (ext_source) {

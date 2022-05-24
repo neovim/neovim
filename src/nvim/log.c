@@ -17,6 +17,8 @@
 
 #include "auto/config.h"
 #include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/message.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/types.h"
@@ -26,6 +28,7 @@
 /// Cached location of the expanded log file path decided by log_path_init().
 static char log_file_path[MAXPATHL + 1] = { 0 };
 
+static bool did_log_init = false;
 static uv_mutex_t mutex;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -103,7 +106,9 @@ static bool log_path_init(void)
 void log_init(void)
 {
   uv_mutex_init(&mutex);
+  // AFTER init_homedir ("~", XDG) and set_init_1 (env vars). 22b52dd462e5 #11501
   log_path_init();
+  did_log_init = true;
 }
 
 void log_lock(void)
@@ -116,6 +121,14 @@ void log_unlock(void)
   uv_mutex_unlock(&mutex);
 }
 
+static void on_log_recursive_event(void **argv)
+{
+  char *fn_name = argv[0];
+  ptrdiff_t linenr = (ptrdiff_t)argv[1];
+  siemsg("E5430: %s:%d: recursive log!", fn_name, linenr);
+  xfree(fn_name);
+}
+
 /// Logs a message to $NVIM_LOG_FILE.
 ///
 /// @param log_level  Log level (see log.h)
@@ -124,10 +137,29 @@ void log_unlock(void)
 /// @param line_num   Source line number, or -1
 /// @param eol        Append linefeed "\n"
 /// @param fmt        printf-style format string
+///
+/// @return true if log was emitted normally, false if failed or recursive
 bool logmsg(int log_level, const char *context, const char *func_name, int line_num, bool eol,
             const char *fmt, ...)
   FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
 {
+  static bool recursive = false;
+  static bool did_msg = false;  // Showed recursion message?
+  if (!did_log_init) {
+    g_stats.log_skip++;
+    // set_init_1 may try logging before we are ready. 6f27f5ef91b3 #10183
+    return false;
+  }
+  if (recursive) {
+    if (!did_msg) {
+      did_msg = true;
+      char *arg1 = func_name ? xstrdup(func_name) : (context ? xstrdup(context) : NULL);
+      multiqueue_put(main_loop.events, on_log_recursive_event, 2, arg1, line_num);
+    }
+    g_stats.log_skip++;
+    return false;
+  }
+
   if (log_level < MIN_LOG_LEVEL) {
     return false;
   }
@@ -139,6 +171,7 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
 #endif
 
   log_lock();
+  recursive = true;
   bool ret = false;
   FILE *log_file = open_log_file();
 
@@ -156,6 +189,7 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
     fclose(log_file);
   }
 end:
+  recursive = false;
   log_unlock();
   return ret;
 }
@@ -184,21 +218,17 @@ end:
 /// @return FILE* decided by log_path_init() or stderr in case of error
 FILE *open_log_file(void)
 {
-  static bool opening_log_file = false;
-  // Disallow recursion. (This only matters for log_path_init; for logmsg and
-  // friends we use a mutex: log_lock).
-  if (opening_log_file) {
-    do_log_to_file(stderr, ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true,
-                   "Cannot LOG() recursively.");
-    return stderr;
+  static bool recursive = false;
+  if (recursive) {
+    abort();
   }
 
   FILE *log_file = NULL;
-  opening_log_file = true;
+  recursive = true;
   if (log_path_init()) {
     log_file = fopen(log_file_path, "a");
   }
-  opening_log_file = false;
+  recursive = false;
 
   if (log_file != NULL) {
     return log_file;
@@ -208,9 +238,8 @@ FILE *open_log_file(void)
   //  - LOG() is called before early_init()
   //  - Directory does not exist
   //  - File is not writable
-  do_log_to_file(stderr, ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true,
-                 "Logging to stderr, failed to open $" LOG_FILE_ENV ": %s",
-                 log_file_path);
+  do_log_to_file(stderr, LOGLVL_ERR, NULL, __func__, __LINE__, true,
+                 "failed to open $" LOG_FILE_ENV ": %s", log_file_path);
   return stderr;
 }
 
@@ -237,8 +266,7 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name, const in
   // Now we have a command string like:
   //    addr2line -e /path/to/exe -f -p 0x123 0x456 ...
 
-  do_log_to_file(log_file, DEBUG_LOG_LEVEL, NULL, func_name, line_num, true,
-                 "trace:");
+  do_log_to_file(log_file, LOGLVL_DBG, NULL, func_name, line_num, true, "trace:");
   FILE *fp = popen(cmdbuf, "r");
   char linebuf[IOSIZE];
   while (fgets(linebuf, sizeof(linebuf) - 1, fp) != NULL) {
@@ -285,12 +313,12 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   FUNC_ATTR_PRINTF(7, 0)
 {
   static const char *log_levels[] = {
-    [DEBUG_LOG_LEVEL]   = "DEBUG",
-    [INFO_LOG_LEVEL]    = "INFO ",
-    [WARN_LOG_LEVEL]    = "WARN ",
-    [ERROR_LOG_LEVEL]   = "ERROR",
+    [LOGLVL_DBG] = "DBG",
+    [LOGLVL_INF] = "INF",
+    [LOGLVL_WRN] = "WRN",
+    [LOGLVL_ERR] = "ERR",
   };
-  assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
+  assert(log_level >= LOGLVL_DBG && log_level <= LOGLVL_ERR);
 
   // Format the timestamp.
   struct tm local_time;

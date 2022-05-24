@@ -81,8 +81,8 @@ getkey:
       may_sync_undo();
     }
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-    log_key(DEBUG_LOG_LEVEL, key);
+#if MIN_LOG_LEVEL <= LOGLVL_DBG
+    log_key(LOGLVL_DBG, key);
 #endif
 
     int execute_result = s->execute(s, key);
