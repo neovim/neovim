@@ -21,7 +21,7 @@ on:
 
 jobs:
   regen-api-docs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
       pull-requests: write
@@ -35,9 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y python3 luajit
-          conda install -c conda-forge doxygen=1.9.2 msgpack-python
-          echo "$CONDA/bin" >> $GITHUB_PATH
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack luajit
 
       - name: Setup git config
         run: |
