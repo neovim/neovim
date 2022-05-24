@@ -140,50 +140,18 @@ build/runtime/doc/tags helptags: | nvim
 helphtml: | nvim build/runtime/doc/tags
 	+$(BUILD_TOOL) -C build doc_html
 
-functionaltest: | nvim
-	+$(BUILD_TOOL) -C build functionaltest
+functionaltest functionaltest-lua unittest benchmark: | nvim
+	$(BUILD_TOOL) -C build $@
 
-functionaltest-lua: | nvim
-	+$(BUILD_TOOL) -C build functionaltest-lua
+stylua lualint shlint pylint uncrustify clint clint-full check-single-includes generated-sources: | build/.ran-cmake
+	$(BUILD_TOOL) -C build $@
 
-stylua:
-	stylua --check runtime/
-
-lualint: | build/.ran-cmake deps
-	$(BUILD_TOOL) -C build lualint
-
-_opt_stylua:
-	@command -v stylua && { $(MAKE) stylua; exit $$?; } \
-		|| echo "SKIP: stylua (stylua not found)"
-
-shlint:
-	@shellcheck --version | head -n 2
-	shellcheck scripts/vim-patch.sh
-
-_opt_shlint:
-	@command -v shellcheck && { $(MAKE) shlint; exit $$?; } \
-		|| echo "SKIP: shlint (shellcheck not found)"
-
-pylint:
-	flake8 contrib/ scripts/ src/ test/
-
-# Run pylint only if flake8 is installed.
-_opt_pylint:
-	@command -v flake8 && { $(MAKE) pylint; exit $$?; } \
-		|| echo "SKIP: pylint (flake8 not found)"
-
-commitlint:
+commitlint: | nvim
 	$(NVIM_PRG) -u NONE -es +"lua require('scripts.lintcommit').main({trace=false})"
 
 _opt_commitlint:
 	@test -x build/bin/nvim && { $(MAKE) commitlint; exit $$?; } \
 		|| echo "SKIP: commitlint (build/bin/nvim not found)"
-
-unittest: | nvim
-	+$(BUILD_TOOL) -C build unittest
-
-benchmark: | nvim
-	+$(BUILD_TOOL) -C build benchmark
 
 test: functionaltest unittest
 
@@ -200,18 +168,6 @@ distclean:
 install: checkprefix nvim
 	+$(BUILD_TOOL) -C build install
 
-clint: build/.ran-cmake
-	+$(BUILD_TOOL) -C build clint
-
-clint-full: build/.ran-cmake
-	+$(BUILD_TOOL) -C build clint-full
-
-check-single-includes: build/.ran-cmake
-	+$(BUILD_TOOL) -C build check-single-includes
-
-generated-sources: build/.ran-cmake
-	+$(BUILD_TOOL) -C build generated-sources
-
 appimage:
 	bash scripts/genappimage.sh
 
@@ -221,7 +177,7 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-lint: check-single-includes clint _opt_stylua lualint _opt_pylint _opt_shlint _opt_commitlint
+lint: check-single-includes clint stylua lualint pylint shlint _opt_commitlint
 
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
 # Does not work with "Unix Makefiles".

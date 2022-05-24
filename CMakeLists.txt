@@ -612,9 +612,6 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "nvim")
 endif()
 
-find_program(LUACHECK_PRG luacheck)
-find_program(FLAKE8_PRG flake8)
-
 include(InstallHelpers)
 
 file(GLOB MANPAGES
@@ -748,15 +745,51 @@ if(BUSTED_LUA_PRG)
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
-if(LUACHECK_PRG)
-  add_custom_target(lualint
-    COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-else()
-  add_custom_target(lualint false
-    COMMENT "lualint: LUACHECK_PRG not defined")
-endif()
+find_program(LUACHECK luacheck)
+find_program(STYLUA stylua)
+find_program(SHELLCHECK shellcheck)
+find_program(FLAKE8 flake8)
+find_program(UNCRUSTIFY uncrustify)
 
+set(TARGET "lualint")
+add_custom_target(${TARGET}
+  COMMAND ${CMAKE_COMMAND}
+  -DPROGRAM=${LUACHECK}
+  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
+  -DTARGET=${TARGET}
+  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
+
+set(TARGET "stylua")
+add_custom_target(${TARGET}
+  COMMAND ${CMAKE_COMMAND}
+  -DPROGRAM=${STYLUA}
+  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
+  -DTARGET=${TARGET}
+  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
+
+set(TARGET "shlint")
+add_custom_target(${TARGET}
+  COMMAND ${CMAKE_COMMAND}
+  -DPROGRAM=${SHELLCHECK}
+  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
+  -DTARGET=${TARGET}
+  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
+
+set(TARGET "pylint")
+add_custom_target(${TARGET}
+  COMMAND ${CMAKE_COMMAND}
+  -DPROGRAM=${FLAKE8}
+  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
+  -DTARGET=${TARGET}
+  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
+
+set(TARGET "uncrustify")
+add_custom_target(${TARGET}
+  COMMAND ${CMAKE_COMMAND}
+  -DPROGRAM=${UNCRUSTIFY}
+  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
+  -DTARGET=${TARGET}
+  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
 
 #add uninstall target
 if(NOT TARGET uninstall)
