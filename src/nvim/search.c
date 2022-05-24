@@ -3453,11 +3453,11 @@ int current_block(oparg_T *oap, long count, int include, int what, int other)
       }
     }
 
-    /*
-     * In Visual mode, when the resulting area is not bigger than what we
-     * started with, extend it to the next block, and then exclude again.
-     */
+    // In Visual mode, when the resulting area is not bigger than what we
+    // started with, extend it to the next block, and then exclude again.
+    // Don't try to expand the area if the area is empty.
     if (!lt(start_pos, old_start) && !lt(old_end, curwin->w_cursor)
+        && !equalpos(start_pos, curwin->w_cursor)
         && VIsual_active) {
       curwin->w_cursor = old_start;
       decl(&curwin->w_cursor);
