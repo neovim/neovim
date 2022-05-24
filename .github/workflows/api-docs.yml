@@ -30,6 +30,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          # Fetch depth 0 is required if called through workflow_call. In order
+          # to create a PR we need to access other branches, which requires a
+          # full clone.
           fetch-depth: 0
 
       - name: Install dependencies
