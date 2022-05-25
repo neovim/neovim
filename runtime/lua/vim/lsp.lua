@@ -1188,12 +1188,6 @@ function lsp.start_client(config)
   ---
   ---@param force (bool, optional)
   function client.stop(force)
-    lsp.diagnostic.reset(client_id, all_buffer_active_clients)
-    changetracking.reset(client_id)
-    for _, client_ids in pairs(all_buffer_active_clients) do
-      client_ids[client_id] = nil
-    end
-
     local handle = rpc.handle
     if handle:is_closing() then
       return
