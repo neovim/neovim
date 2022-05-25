@@ -1271,10 +1271,10 @@ rename({new_name}, {options})                           *vim.lsp.buf.rename()*
                                 prompted for a new name using
                                 |vim.ui.input()|.
                     {options}   (table|nil) additional options
-                                • filter (function|nil): Predicate to filter
-                                  clients used for rename. Receives the
-                                  attached clients as argument and must return
-                                  a list of clients.
+                                • filter (function|nil): Predicate used to
+                                  filter clients. Receives a client as
+                                  argument and must return a boolean. Clients
+                                  matching the predicate are included.
                                 • name (string|nil): Restrict clients used for
                                   rename to ones where client.name matches
                                   this field.
