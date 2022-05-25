@@ -53,9 +53,37 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 
-/// Growarray to store info about already sourced scripts.
-static garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
-#define SCRIPT_ITEM(id) (((scriptitem_T *)script_items.ga_data)[(id) - 1])
+/// Hash map to store info about already sourced scripts.
+/// Also store the dev/ino, so that we don't have to stat() each
+/// script when going through the list.
+typedef struct scriptitem_S {
+  char_u *sn_name;
+  bool file_id_valid;
+  FileID file_id;
+  bool sn_prof_on;              ///< true when script is/was profiled
+  bool sn_pr_force;             ///< forceit: profile functions in this script
+  proftime_T sn_pr_child;       ///< time set when going into first child
+  int sn_pr_nest;               ///< nesting for sn_pr_child
+  // profiling the script as a whole
+  int sn_pr_count;              ///< nr of times sourced
+  proftime_T sn_pr_total;       ///< time spent in script + children
+  proftime_T sn_pr_self;        ///< time spent in script itself
+  proftime_T sn_pr_start;       ///< time at script start
+  proftime_T sn_pr_children;    ///< time in children after script start
+  // profiling the script per line
+  garray_T sn_prl_ga;           ///< things stored for every line
+  proftime_T sn_prl_start;      ///< start time for current line
+  proftime_T sn_prl_children;   ///< time spent in children for this line
+  proftime_T sn_prl_wait;       ///< wait start time for current line
+  linenr_T sn_prl_idx;          ///< index of line being timed; -1 if none
+  int sn_prl_execed;            ///< line being timed was executed
+} scriptitem_T;
+
+static int last_current_SID_seq = 0;
+static PMap(scid_T) script_items = MAP_INIT;
+
+/// Sorted growarray of SIDs associated with a :sourced script file.
+static garray_T file_sids = GA_INIT(sizeof(scid_T), 4);
 
 // Struct used in sn_prl_ga for every line of a script.
 typedef struct sn_prl_S {
@@ -256,25 +284,27 @@ void profile_dump(void)
 static void profile_reset(void)
 {
   // Reset sourced files.
-  for (int id = 1; id <= script_items.ga_len; id++) {
-    scriptitem_T *si = &SCRIPT_ITEM(id);
-    if (si->sn_prof_on) {
-      si->sn_prof_on      = false;
-      si->sn_pr_force     = false;
-      si->sn_pr_child     = profile_zero();
-      si->sn_pr_nest      = 0;
-      si->sn_pr_count     = 0;
-      si->sn_pr_total     = profile_zero();
-      si->sn_pr_self      = profile_zero();
-      si->sn_pr_start     = profile_zero();
-      si->sn_pr_children  = profile_zero();
-      ga_clear(&si->sn_prl_ga);
-      si->sn_prl_start    = profile_zero();
-      si->sn_prl_children = profile_zero();
-      si->sn_prl_wait     = profile_zero();
-      si->sn_prl_idx      = -1;
-      si->sn_prl_execed   = 0;
-    }
+  {
+    scriptitem_T *si;
+    map_foreach_value(&script_items, si, {
+      if (si->sn_prof_on) {
+        si->sn_prof_on      = false;
+        si->sn_pr_force     = false;
+        si->sn_pr_child     = profile_zero();
+        si->sn_pr_nest      = 0;
+        si->sn_pr_count     = 0;
+        si->sn_pr_total     = profile_zero();
+        si->sn_pr_self      = profile_zero();
+        si->sn_pr_start     = profile_zero();
+        si->sn_pr_children  = profile_zero();
+        ga_clear(&si->sn_prl_ga);
+        si->sn_prl_start    = profile_zero();
+        si->sn_prl_children = profile_zero();
+        si->sn_prl_wait     = profile_zero();
+        si->sn_prl_idx      = -1;
+        si->sn_prl_execed   = 0;
+      }
+    })
   }
 
   // Reset functions.
@@ -325,33 +355,25 @@ static void profile_init(scriptitem_T *si)
 /// Save time when starting to invoke another script or function.
 ///
 /// @param tm  place to store wait time
-void script_prof_save(proftime_T *tm)
+void script_prof_save(proftime_T *const tm)
 {
-  scriptitem_T *si;
-
-  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
-    if (si->sn_prof_on && si->sn_pr_nest++ == 0) {
-      si->sn_pr_child = profile_start();
-    }
+  scriptitem_T *const si = script_item(current_sctx.sc_sid);
+  if (si != NULL && si->sn_prof_on && si->sn_pr_nest++ == 0) {
+    si->sn_pr_child = profile_start();
   }
   *tm = profile_get_wait();
 }
 
 /// Count time spent in children after invoking another script or function.
-void script_prof_restore(proftime_T *tm)
+void script_prof_restore(proftime_T *const tm)
 {
-  scriptitem_T *si;
-
-  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
-    if (si->sn_prof_on && --si->sn_pr_nest == 0) {
-      si->sn_pr_child = profile_end(si->sn_pr_child);
-      // don't count wait time
-      si->sn_pr_child = profile_sub_wait(*tm, si->sn_pr_child);
-      si->sn_pr_children = profile_add(si->sn_pr_children, si->sn_pr_child);
-      si->sn_prl_children = profile_add(si->sn_prl_children, si->sn_pr_child);
-    }
+  scriptitem_T *const si = script_item(current_sctx.sc_sid);
+  if (si != NULL && si->sn_prof_on && --si->sn_pr_nest == 0) {
+    si->sn_pr_child = profile_end(si->sn_pr_child);
+    // don't count wait time
+    si->sn_pr_child = profile_sub_wait(*tm, si->sn_pr_child);
+    si->sn_pr_children = profile_add(si->sn_pr_children, si->sn_pr_child);
+    si->sn_prl_children = profile_add(si->sn_prl_children, si->sn_pr_child);
   }
 }
 
@@ -370,15 +392,29 @@ void prof_inchar_exit(void)
   profile_set_wait(profile_add(profile_get_wait(), inchar_time));
 }
 
+/// Get pointer to script item.
+/// @param id  script ID.
+/// @return pointer to script item, or NULL if invalid ID or unallocated.
+static inline scriptitem_T *script_item(const scid_T id)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  return id > 0 ? pmap_get(scid_T)(&script_items, id) : NULL;
+}
+
+/// Get ID of script in `file_sids`.
+/// @param i  index in `file_sids`.
+/// @return script ID.
+static inline scid_T file_sid(const int i)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  return ((scid_T *)file_sids.ga_data)[i];
+}
+
 /// Dump the profiling results for all scripts in file "fd".
 static void script_dump_profile(FILE *fd)
 {
-  scriptitem_T *si;
-  FILE *sfd;
-  sn_prl_T *pp;
-
-  for (int id = 1; id <= script_items.ga_len; id++) {
-    si = &SCRIPT_ITEM(id);
+  for (int fi = 0; fi < file_sids.ga_len; fi++) {
+    const scriptitem_T *const si = script_item(file_sid(fi));
     if (si->sn_prof_on) {
       fprintf(fd, "SCRIPT  %s\n", si->sn_name);
       if (si->sn_pr_count == 1) {
@@ -391,7 +427,7 @@ static void script_dump_profile(FILE *fd)
       fprintf(fd, "\n");
       fprintf(fd, "count  total (s)   self (s)\n");
 
-      sfd = os_fopen((char *)si->sn_name, "r");
+      FILE *const sfd = os_fopen((char *)si->sn_name, "r");
       if (sfd == NULL) {
         fprintf(fd, "Cannot open file!\n");
       } else {
@@ -416,8 +452,8 @@ static void script_dump_profile(FILE *fd)
             IObuff[n] = NL;
             IObuff[n + 1] = NUL;
           }
-          if (i < si->sn_prl_ga.ga_len
-              && (pp = &PRL_ITEM(si, i))->snp_count > 0) {
+          const sn_prl_T *pp;
+          if (i < si->sn_prl_ga.ga_len && (pp = &PRL_ITEM(si, i))->snp_count > 0) {
             fprintf(fd, "%5d ", pp->snp_count);
             if (profile_equal(pp->sn_prl_total, pp->sn_prl_self)) {
               fprintf(fd, "           ");
@@ -437,15 +473,12 @@ static void script_dump_profile(FILE *fd)
   }
 }
 
-/// @return  true when a function defined in the current script should be
-///          profiled.
+/// @return  true when a function defined in the current script should be profiled.
 bool prof_def_func(void)
-  FUNC_ATTR_PURE
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (current_sctx.sc_sid > 0) {
-    return SCRIPT_ITEM(current_sctx.sc_sid).sn_pr_force;
-  }
-  return false;
+  const scriptitem_T *const si = script_item(current_sctx.sc_sid);
+  return si != NULL && si->sn_prof_on && si->sn_pr_force;
 }
 
 /// If 'autowrite' option set, try to write the file.
@@ -1754,6 +1787,7 @@ static FILE *fopen_noinh_readbin(char *filename)
 typedef struct {
   char *buf;
   size_t offset;
+  linenr_T sourcing_lnum;
 } GetStrLineCookie;
 
 /// Get one full line from a sourced string (in-memory, no file).
@@ -1763,7 +1797,7 @@ typedef struct {
 ///         some error.
 static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
 {
-  GetStrLineCookie *p = cookie;
+  GetStrLineCookie *const p = cookie;
   if (STRLEN(p->buf) <= p->offset) {
     return NULL;
   }
@@ -1772,14 +1806,16 @@ static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
   garray_T ga;
   ga_init(&ga, sizeof(char_u), 400);
   ga_concat_len(&ga, line, (size_t)(eol - line));
+  sourcing_lnum = ++p->sourcing_lnum;
   if (do_concat && vim_strchr(p_cpo, CPO_CONCAT) == NULL) {
     while (eol[0] != NUL) {
       line = eol + 1;
-      const char_u *const next_eol = skip_to_newline((char_u *)line);
-      if (!concat_continued_line(&ga, 400, (char_u *)line, (size_t)(next_eol - (char_u *)line))) {
+      const char *const next_eol = (char *)skip_to_newline((char_u *)line);
+      if (!concat_continued_line(&ga, 400, (char_u *)line, (size_t)(next_eol - line))) {
         break;
       }
-      eol = (char *)next_eol;
+      p->sourcing_lnum++;
+      eol = next_eol;
     }
   }
   ga_append(&ga, NUL);
@@ -1787,31 +1823,51 @@ static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
   return ga.ga_data;
 }
 
-/// Create a new script item and allocate script-local vars. @see new_script_vars
+/// Create a new script item.
 ///
+/// @note `sn_name` is set to `name` while `sn_prof_on` and `file_id_valid` are set to false.
+///       Other fields are left uninitialized!
+///
+/// @param  id  ID of the new item.
 /// @param  name  File name of the script. NULL for anonymous :source.
-/// @param[out]  sid_out  SID of the new item.
-///
-/// @return  pointer to the created script item.
-scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
+/// @return pointer to the created script item.
+static scriptitem_T *new_script_item(const scid_T id, char *const name)
 {
-  static scid_T last_current_SID = 0;
-  const scid_T sid = ++last_current_SID;
-  if (sid_out != NULL) {
-    *sid_out = sid;
-  }
-  ga_grow(&script_items, sid - script_items.ga_len);
-  while (script_items.ga_len < sid) {
-    script_items.ga_len++;
-    SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
-    SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
-  }
-  SCRIPT_ITEM(sid).sn_name = (char_u *)name;
-  new_script_vars(sid);  // Allocate the local script variables to use for this script.
-  return &SCRIPT_ITEM(sid);
+  assert(id > 0 && !pmap_has(scid_T)(&script_items, id));
+  scriptitem_T *const si = xmalloc(sizeof(scriptitem_T));
+  si->sn_name = (char_u *)name;
+  si->sn_prof_on = false;
+  si->file_id_valid = false;
+  pmap_put(scid_T)(&script_items, id, si);
+  return si;
 }
 
-static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
+/// @param  trace_type  When `nlua_is_verbose` is true, encodes tracing info in the
+///                     returned SID. Used by `nlua_set_sctx` for :verbose logging.
+/// @return  a new script ID.
+scid_T script_new_sid(const SidTraceType trace_type)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static scid_T last_current_SID = 0;
+
+  scid_T sid = ++last_current_SID;
+  if (trace_type != kSidTraceNone && nlua_is_verbose()) {
+    switch (trace_type) {
+    case kSidTraceLua:
+      sid += SID_TRACE_LUA;
+      break;
+    case kSidTraceFromLua:
+      sid += SID_TRACE_FROM_LUA;
+      break;
+    default:
+      abort();
+    }
+  }
+  return sid;
+}
+
+static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name,
+                                   const scid_T sid)
 {
   char *save_sourcing_name = sourcing_name;
   linenr_T save_sourcing_lnum = sourcing_lnum;
@@ -1827,15 +1883,13 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   sourcing_lnum = 0;
 
   const sctx_T save_current_sctx = current_sctx;
-  if (current_sctx.sc_sid != SID_LUA) {
-    current_sctx.sc_sid = SID_STR;
-  }
-  current_sctx.sc_seq = 0;
-  current_sctx.sc_lnum = save_sourcing_lnum;
+  current_sctx.sc_sid = sid;
+  current_sctx.sc_seq = sid > 0 ? ++last_current_SID_seq : 0;
+  current_sctx.sc_lnum = 0;
   funccal_entry_T entry;
   save_funccal(&entry);
-  int retval = do_cmdline(NULL, fgetline, cookie,
-                          DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
+  const int retval = do_cmdline(NULL, fgetline, cookie,
+                                DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
   sourcing_lnum = save_sourcing_lnum;
   sourcing_name = save_sourcing_name;
   current_sctx = save_current_sctx;
@@ -1846,6 +1900,8 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
 static void cmd_source_buffer(const exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
+  static Map(handle_T, scid_T) buf_sids = MAP_INIT;
+
   if (curbuf == NULL) {
     return;
   }
@@ -1862,17 +1918,23 @@ static void cmd_source_buffer(const exarg_T *const eap)
     ga_append(&ga, NL);
   }
   ((char_u *)ga.ga_data)[ga.ga_len - 1] = NUL;
-  const GetStrLineCookie cookie = {
+  GetStrLineCookie cookie = {
     .buf = ga.ga_data,
     .offset = 0,
+    .sourcing_lnum = 0,
   };
-  if (curbuf->b_fname
-      && path_with_extension((const char *)curbuf->b_fname, "lua")) {
-    nlua_source_using_linegetter(get_str_line, (void *)&cookie,
-                                 ":source (no file)");
+
+  if (curbuf->b_fname && path_with_extension((const char *)curbuf->b_fname, "lua")) {
+    nlua_source_using_linegetter(get_str_line, &cookie, ":source (no file)");
   } else {
-    source_using_linegetter((void *)&cookie, get_str_line,
-                            ":source (no file)");
+    scid_T sid = map_get(handle_T, scid_T)(&buf_sids, curbuf->handle);
+    if (sid == 0) {
+      // First time sourcing this buffer, use a new SID for it.
+      sid = script_new_sid(kSidTraceNone);
+      map_put(handle_T, scid_T)(&buf_sids, curbuf->handle, sid);
+    }
+    cookie.sourcing_lnum = eap->line1 - 1;
+    source_using_linegetter(&cookie, get_str_line, ":source (no file)", sid);
   }
   ga_clear(&ga);
 }
@@ -1885,8 +1947,12 @@ int do_source_str(const char *cmd, const char *traceback_name)
   GetStrLineCookie cookie = {
     .buf = (char *)cmd,
     .offset = 0,
+    .sourcing_lnum = 0,
   };
-  return source_using_linegetter((void *)&cookie, get_str_line, traceback_name);
+  const scid_T sid = script_new_sid(
+      current_sctx.sc_sid == SID_LUA || current_sctx.sc_sid >= SID_TRACE_LUA
+      ? kSidTraceFromLua : kSidTraceNone);
+  return source_using_linegetter(&cookie, get_str_line, traceback_name, sid);
 }
 
 /// When fname is a 'lua' file nlua_exec_file() is invoked to source it.
@@ -2034,7 +2100,8 @@ int do_source(char *fname, int check_other, int is_vimrc)
   save_funccal(&funccalp_entry);
 
   const sctx_T save_current_sctx = current_sctx;
-  si = get_current_script_id((char_u *)fname_exp, &current_sctx);
+  const bool is_lua = path_with_extension(fname, "lua");
+  si = new_file_sctx((char_u *)fname_exp, &current_sctx, is_lua);
 
   if (l_do_profiling == PROF_YES) {
     bool forceit = false;
@@ -2067,10 +2134,9 @@ int do_source(char *fname, int check_other, int is_vimrc)
     firstline = (uint8_t *)p;
   }
 
-  if (path_with_extension((const char *)fname_exp, "lua")) {
+  if (is_lua) {
     const sctx_T current_sctx_backup = current_sctx;
     const linenr_T sourcing_lnum_backup = sourcing_lnum;
-    current_sctx.sc_sid = SID_LUA;
     current_sctx.sc_lnum = 0;
     sourcing_lnum = 0;
     // Source the file as lua
@@ -2085,8 +2151,6 @@ int do_source(char *fname, int check_other, int is_vimrc)
   retval = OK;
 
   if (l_do_profiling == PROF_YES) {
-    // Get "si" again, "script_items" may have been reallocated.
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on) {
       si->sn_pr_start = profile_end(si->sn_pr_start);
       si->sn_pr_start = profile_sub_wait(wait_start, si->sn_pr_start);
@@ -2146,43 +2210,42 @@ theend:
   return retval;
 }
 
-
-/// Check if fname was sourced before to finds its SID.
-/// If it's new, generate a new SID.
+/// Sets script context to refer to a file in preparation for sourcing and returns its item.
+/// If the file is new, a script item is created and its SID added to `file_sids`.
 ///
-/// @param[in] fname file path of script
-/// @param[out] ret_sctx sctx of this script
-scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
+/// @param[in]  fname  file path of script.
+/// @param[out]  ret_sctx  sctx of this script.
+/// @param  is_lua  true if a Lua script.
+/// @return  pointer to the script item.
+static scriptitem_T *new_file_sctx(char_u *const fname, sctx_T *const ret_sctx, const bool is_lua)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  static int last_current_SID_seq = 0;
-
   sctx_T script_sctx = { .sc_seq = ++last_current_SID_seq,
                          .sc_lnum = 0,
                          .sc_sid = 0 };
   FileID file_id;
   scriptitem_T *si = NULL;
 
-  bool file_id_ok = os_fileid((char *)fname, &file_id);
-  assert(script_items.ga_len >= 0);
-  for (script_sctx.sc_sid = script_items.ga_len; script_sctx.sc_sid > 0;
-       script_sctx.sc_sid--) {
-    si = &SCRIPT_ITEM(script_sctx.sc_sid);
+  const bool file_id_ok = os_fileid((char *)fname, &file_id);
+  int fi = file_sids.ga_len - 1;
+  for (; fi >= 0; fi--) {
+    script_sctx.sc_sid = file_sid(fi);
+    si = script_item(script_sctx.sc_sid);
     // Compare dev/ino when possible, it catches symbolic links.
     // Also compare file names, the inode may change when the file was edited.
-    bool file_id_equal = file_id_ok && si->file_id_valid
-                         && os_fileid_equal(&(si->file_id), &file_id);
-    if (si->sn_name != NULL
-        && (file_id_equal || FNAMECMP(si->sn_name, fname) == 0)) {
+    const bool file_id_equal = file_id_ok && si->file_id_valid
+                               && os_fileid_equal(&(si->file_id), &file_id);
+    if (file_id_equal || FNAMECMP(si->sn_name, fname) == 0) {
       break;
     }
   }
-  if (script_sctx.sc_sid == 0) {
-    si = new_script_item((char *)vim_strsave(fname), &script_sctx.sc_sid);
+  if (fi < 0) {
+    script_sctx.sc_sid = script_new_sid(is_lua ? kSidTraceLua : kSidTraceNone);
+    si = new_script_item(script_sctx.sc_sid, (char *)vim_strsave(fname));
+    GA_APPEND(scid_T, &file_sids, script_sctx.sc_sid);
     if (file_id_ok) {
       si->file_id_valid = true;
       si->file_id = file_id;
-    } else {
-      si->file_id_valid = false;
     }
   }
   if (ret_sctx != NULL) {
@@ -2192,30 +2255,52 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
   return si;
 }
 
+/// @param  sid  ID of the script.
+/// @return  Name of the script. NULL for anonymous scripts and special SIDs.
+char_u *script_name(const scid_T sid)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const scriptitem_T *const si = script_item(sid);
+  return si != NULL ? si->sn_name : NULL;
+}
+
+/// Set the name of a script.
+/// @note  Allocates a script item for scripts without one.
+/// @param  sid  ID of the script.
+/// @param  name  Allocated new name of the script, or NULL to make it anonymous.
+void script_set_name(const scid_T sid, char *const name)
+{
+  scriptitem_T *const si = script_item(sid);
+  if (si != NULL) {
+    xfree(si->sn_name);
+    si->sn_name = (char_u *)name;
+  } else {
+    new_script_item(sid, name);
+  }
+}
 
 /// ":scriptnames"
 void ex_scriptnames(exarg_T *eap)
 {
   if (eap->addr_count > 0) {
     // :script {scriptId}: edit the script
-    if (eap->line2 < 1 || eap->line2 > script_items.ga_len) {
+    const scriptitem_T *const si = script_item((scid_T)eap->line2);
+    if (si == NULL || si->sn_name == NULL) {
       emsg(_(e_invarg));
     } else {
-      eap->arg = (char *)SCRIPT_ITEM(eap->line2).sn_name;
+      eap->arg = (char *)si->sn_name;
       do_exedit(eap, NULL);
     }
     return;
   }
 
-  for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
-    if (SCRIPT_ITEM(i).sn_name != NULL) {
-      home_replace(NULL, SCRIPT_ITEM(i).sn_name, NameBuff, MAXPATHL, true);
-      vim_snprintf((char *)IObuff, IOSIZE, "%3d: %s", i, NameBuff);
-      if (!message_filtered(IObuff)) {
-        msg_putchar('\n');
-        msg_outtrans(IObuff);
-        line_breakcheck();
-      }
+  for (int fi = 0; fi < file_sids.ga_len && !got_int; fi++) {
+    home_replace(NULL, script_item(file_sid(fi))->sn_name, NameBuff, MAXPATHL, true);
+    vim_snprintf((char *)IObuff, IOSIZE, "%3" PRIdSCID ": %s", file_sid(fi), NameBuff);
+    if (!message_filtered(IObuff)) {
+      msg_putchar('\n');
+      msg_outtrans(IObuff);
+      line_breakcheck();
     }
   }
 }
@@ -2224,10 +2309,8 @@ void ex_scriptnames(exarg_T *eap)
 /// Fix slashes in the list of script names for 'shellslash'.
 void scriptnames_slash_adjust(void)
 {
-  for (int i = 1; i <= script_items.ga_len; i++) {
-    if (SCRIPT_ITEM(i).sn_name != NULL) {
-      slash_adjust(SCRIPT_ITEM(i).sn_name);
-    }
+  for (int fi = 0; fi < file_sids.ga_len; fi++) {
+    slash_adjust(script_item(file_sid(fi))->sn_name);
   }
 }
 
@@ -2260,15 +2343,16 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
   case SID_STR:
     return (char_u *)_("anonymous :source");
   default: {
-    char *const sname = (char *)SCRIPT_ITEM(last_set.script_ctx.sc_sid).sn_name;
-    if (sname == NULL) {
-      snprintf((char *)IObuff, IOSIZE, _("anonymous :source (script id %d)"),
+    assert(last_set.script_ctx.sc_sid > 0);
+    const scriptitem_T *const si = script_item(last_set.script_ctx.sc_sid);
+    if (si == NULL || si->sn_name == NULL) {
+      snprintf((char *)IObuff, IOSIZE, _("anonymous :source (script id %" PRIdSCID ")"),
                last_set.script_ctx.sc_sid);
       return IObuff;
     }
 
     *should_free = true;
-    return home_replace_save(NULL, (char_u *)sname);
+    return home_replace_save(NULL, si->sn_name);
   }
   }
 }
@@ -2277,18 +2361,27 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
 void free_scriptnames(void)
 {
   profile_reset();
-
-# define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
-  GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
+  {
+    scriptitem_T *si;
+    map_foreach_value(&script_items, si, {
+      xfree(si->sn_name);
+      xfree(si);
+    })
+  }
+  pmap_destroy(scid_T)(&script_items);
+  ga_clear(&file_sids);
 }
 #endif
 
 linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
   FUNC_ATTR_PURE
 {
-  return fgetline == getsourceline
-        ? ((struct source_cookie *)cookie)->sourcing_lnum
-        : sourcing_lnum;
+  if (fgetline == getsourceline) {
+    return ((struct source_cookie *)cookie)->sourcing_lnum;
+  } else if (fgetline == get_str_line) {
+    return ((GetStrLineCookie *)cookie)->sourcing_lnum;
+  }
+  return sourcing_lnum;
 }
 
 
@@ -2488,13 +2581,10 @@ retry:
 /// until later and we need to store the time now.
 void script_line_start(void)
 {
-  scriptitem_T *si;
-  sn_prl_T *pp;
-
-  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
+  scriptitem_T *const si = script_item(current_sctx.sc_sid);
+  if (si == NULL) {
     return;
   }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && sourcing_lnum >= 1) {
     // Grow the array before starting the timer, so that the time spent
     // here isn't counted.
@@ -2504,7 +2594,7 @@ void script_line_start(void)
     while (si->sn_prl_ga.ga_len <= si->sn_prl_idx
            && si->sn_prl_ga.ga_len < si->sn_prl_ga.ga_maxlen) {
       // Zero counters for a line that was not used before.
-      pp = &PRL_ITEM(si, si->sn_prl_ga.ga_len);
+      sn_prl_T *const pp = &PRL_ITEM(si, si->sn_prl_ga.ga_len);
       pp->snp_count = 0;
       pp->sn_prl_total = profile_zero();
       pp->sn_prl_self = profile_zero();
@@ -2520,13 +2610,8 @@ void script_line_start(void)
 /// Called when actually executing a function line.
 void script_line_exec(void)
 {
-  scriptitem_T *si;
-
-  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
-    return;
-  }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
-  if (si->sn_prof_on && si->sn_prl_idx >= 0) {
+  scriptitem_T *const si = script_item(current_sctx.sc_sid);
+  if (si != NULL && si->sn_prof_on && si->sn_prl_idx >= 0) {
     si->sn_prl_execed = true;
   }
 }
@@ -2534,17 +2619,14 @@ void script_line_exec(void)
 /// Called when done with a function line.
 void script_line_end(void)
 {
-  scriptitem_T *si;
-  sn_prl_T *pp;
-
-  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
+  scriptitem_T *const si = script_item(current_sctx.sc_sid);
+  if (si == NULL) {
     return;
   }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && si->sn_prl_idx >= 0
       && si->sn_prl_idx < si->sn_prl_ga.ga_len) {
     if (si->sn_prl_execed) {
-      pp = &PRL_ITEM(si, si->sn_prl_idx);
+      sn_prl_T *const pp = &PRL_ITEM(si, si->sn_prl_idx);
       pp->snp_count++;
       si->sn_prl_start = profile_end(si->sn_prl_start);
       si->sn_prl_start = profile_sub_wait(si->sn_prl_wait, si->sn_prl_start);

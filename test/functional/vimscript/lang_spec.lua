@@ -11,7 +11,6 @@ describe('vimscript', function()
       return
     end
     source([[
-      let s:foo = 1
       func! <sid>_dummy_function()
         echo 1
       endfunc

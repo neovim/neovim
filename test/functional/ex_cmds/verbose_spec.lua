@@ -2,18 +2,20 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
+local neq = helpers.neq
+local eval = helpers.eval
 local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local write_file = helpers.write_file
 local call_viml_function = helpers.meths.call_function
 
 describe('lua :verbose', function()
-  local script_location, script_file
+  local script_location, script_file, current_dir
   -- All test cases below use the same nvim instance.
   setup(function()
     clear{args={'-V1'}}
     script_file = 'test_verbose.lua'
-    local current_dir = call_viml_function('getcwd', {})
+    current_dir = call_viml_function('getcwd', {})
     current_dir = call_viml_function('fnamemodify', {current_dir, ':~'})
     script_location = table.concat{current_dir, helpers.get_pathsep(), script_file}
 
@@ -27,7 +29,9 @@ vim.keymap.set('n', '<leader>key2', ':echo "test"<cr>')
 vim.api.nvim_exec("augroup test_group\
                      autocmd!\
                      autocmd FileType c setl cindent\
+                     autocmd User Foo let s:test += 1 | echom s:test\
                      augroup END\
+                     let s:test = 1336\
                   ", false)
 
 vim.api.nvim_command("command Bdelete :bd")
@@ -37,6 +41,7 @@ vim.api.nvim_exec ("\
 function Close_Window() abort\
   wincmd -\
 endfunction\
+let g:sid1 = expand('<SID>')\
 ", false)
 
 local ret = vim.api.nvim_exec ("\
@@ -44,7 +49,14 @@ function! s:return80()\
   return 80\
 endfunction\
 let &tw = s:return80()\
+let g:sid2 = expand('<SID>')\
 ", true)
+
+vim.api.nvim_exec([=[
+  function SetOption()
+    set cuc
+  endfunc
+]=], false)
 ]])
     exec(':source '..script_file)
   end)
@@ -101,8 +113,10 @@ n  \key2       * :echo "test"<CR>
 --- Autocommands ---
 test_group  FileType
     c         setl cindent
-	Last set from %s line 7]],
+	Last set from anonymous :source (script id 2305843009213693959) (sourced from %s:7) line 3]],
        script_location), result)
+
+    eq("1337", exec_capture(":doautocmd User Foo"))
   end)
 
   it('"Last set" for command defined by nvim_command', function()
@@ -110,7 +124,7 @@ test_group  FileType
     eq(string.format([[
     Name              Args Address Complete    Definition
     Bdelete           0                        :bd
-	Last set from %s line 13]],
+	Last set from %s line 15]],
        script_location), result)
   end)
 
@@ -119,15 +133,15 @@ test_group  FileType
     eq(string.format([[
     Name              Args Address Complete    Definition
     TestCommand       0                        :echo 'Hello'
-	Last set from %s line 14]],
+	Last set from %s line 16]],
        script_location), result)
   end)
 
-  it('"Last set for function', function()
+  it('"Last set" for function', function()
     local result = exec_capture(':verbose function Close_Window')
     eq(string.format([[
    function Close_Window() abort
-	Last set from %s line 16
+	Last set from anonymous :source (script id 2305843009213693960) (sourced from %s:18) line 2
 1    wincmd -
    endfunction]],
        script_location), result)
@@ -137,8 +151,49 @@ test_group  FileType
     local result = exec_capture(':verbose set tw?')
     eq(string.format([[
   textwidth=80
-	Last set from %s line 22]],
+	Last set from anonymous :source (script id 2305843009213693961) (sourced from %s:25) line 5]],
        script_location), result)
+
+    -- Different anon execs in the same file should have unique SIDs as usual.
+    neq(eval('g:sid1'), eval('g:sid2'))
+
+    -- Also shouldn't add duplicate names to :scriptnames output.
+    eq(string.format("4611686018427387906: %s", script_location), exec_capture(':scriptnames'))
+
+    -- Setting an option in a nested context (function, in this case).
+    call_viml_function('SetOption', {})
+    eq(string.format([[
+  cursorcolumn
+	Last set from anonymous :source (script id 2305843009213693962) (sourced from %s:33) line 2]],
+       script_location), exec_capture('verbose set cuc?'))
+  end)
+
+  describe(':scriptnames', function()
+    local script2_file = "test.lua"
+    local script2_location = current_dir .. helpers.get_pathsep() .. script2_file
+
+    setup(function()
+      write_file(script2_file, [[
+        vim.api.nvim_exec("set cursorline", false)]])
+    end)
+    teardown(function() os.remove(script2_file) end)
+
+    it('does not show script sourced without :source', function()
+      exec('luafile ' .. script2_location)
+      eq(string.format("4611686018427387906: %s", script_location), exec_capture(':scriptnames'))
+
+      -- Still check that :verbose output is correct.
+      eq(string.format([[
+  cursorline
+	Last set from anonymous :source (script id 2305843009213693977) (sourced from %s:1) line 1]],
+        script2_location), exec_capture('set cursorline?'))
+
+      exec('source ' .. script2_location)
+      eq(string.format([[
+4611686018427387906: %s
+4611686018427387933: %s]],
+        script_location, script2_location), exec_capture(':scriptnames'))
+    end)
   end)
 end)
 

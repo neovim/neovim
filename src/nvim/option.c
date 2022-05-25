@@ -3912,8 +3912,7 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
 {
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int indir = (int)options[opt_idx].indir;
-  nlua_set_sctx(&script_ctx);
-  const LastSet last_set = {
+  LastSet last_set = {
     .script_ctx = {
       script_ctx.sc_sid,
       script_ctx.sc_seq,
@@ -3921,6 +3920,7 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
     },
     current_channel_id
   };
+  nlua_set_sctx(&last_set.script_ctx);
 
   // Remember where the option was set.  For local options need to do that
   // in the buffer or window structure.

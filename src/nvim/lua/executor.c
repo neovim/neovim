@@ -1240,7 +1240,7 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
 {
   const linenr_T save_sourcing_lnum = sourcing_lnum;
   const sctx_T save_current_sctx = current_sctx;
-  current_sctx.sc_sid = SID_STR;
+  current_sctx.sc_sid = SID_LUA;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = 0;
   sourcing_lnum = 0;
@@ -1786,23 +1786,33 @@ void nlua_execute_on_key(int c)
 #endif
 }
 
-// Sets the editor "script context" during Lua execution. Used by :verbose.
-// @param[out] current
-void nlua_set_sctx(sctx_T *current)
+/// @return  true if :verbose tracing is enabled for Lua scripts. ('verbose' >= 1)
+bool nlua_is_verbose(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (p_verbose <= 0 || current->sc_sid != SID_LUA) {
+  return p_verbose >= 1;
+}
+
+/// Sets script context to show the running Lua script & line no when `nlua_is_verbose` is true.
+/// @note  If the context refers to an anonymous script, it may have its name set,
+///        which allocates a script item.
+/// @param[in,out]  sctx  Script context.
+void nlua_set_sctx(sctx_T *const sctx)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!nlua_is_verbose() || (sctx->sc_sid != SID_LUA && sctx->sc_sid < SID_TRACE_FROM_LUA)) {
     return;
   }
   lua_State *const lstate = global_lstate;
-  lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
+  lua_Debug *const info = xmalloc(sizeof(lua_Debug));
 
   // Files where internal wrappers are defined so we can ignore them
   // like vim.o/opt etc are defined in _meta.lua
-  char *ignorelist[] = {
+  const char *const ignorelist[] = {
     "vim/_meta.lua",
     "vim/keymap.lua",
   };
-  int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
+  const int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
 
   for (int level = 1; true; level++) {
     if (lua_getstack(lstate, level, info) != 1) {
@@ -1828,11 +1838,45 @@ void nlua_set_sctx(sctx_T *current)
     }
     break;
   }
-  char *source_path = fix_fname(info->source + 1);
-  get_current_script_id((char_u *)source_path, current);
-  xfree(source_path);
-  current->sc_lnum = info->currentline;
-  current->sc_seq = -1;
+
+  // If anonymous, set the name to the fname of the running Lua script.
+  if (script_name(sctx->sc_sid) == NULL) {
+    if (sctx->sc_sid <= 0) {
+      assert(sctx->sc_sid == SID_LUA);
+      sctx->sc_sid = script_new_sid(kSidTraceLua);  // need a SID to set a script name
+    }
+
+    char *const lua_fname = fix_fname(info->source + 1);
+    if (sctx->sc_sid >= SID_TRACE_LUA) {
+      script_set_name(sctx->sc_sid, lua_fname);
+    } else {
+      assert(sctx->sc_sid >= SID_TRACE_FROM_LUA);
+
+      const LastSet last_set = {
+        .script_ctx = *sctx,
+        .channel_id = current_channel_id,
+      };
+      bool free_verb_name;
+      char *const verb_name = (char *)get_scriptname(last_set, &free_verb_name);
+
+      // Shorten Lua fname relative to home dir, like :verbose.
+      home_replace(NULL, (char_u *)lua_fname, NameBuff, MAXPATHL, true);
+
+      char buf[IOSIZE];
+      snprintf(buf, IOSIZE, _("%s (sourced from %s:%d)"), verb_name, NameBuff, info->currentline);
+      if (free_verb_name) {
+        xfree(verb_name);
+      }
+      xfree(lua_fname);
+
+      script_set_name(sctx->sc_sid, xstrdup(buf));
+    }
+  }
+  // Only set this context's line number if it refers to a Lua script.
+  // Don't do this for Vim scripts, they count line numbers differently!
+  if (sctx->sc_sid >= SID_TRACE_LUA) {
+    sctx->sc_lnum = info->currentline;
+  }
 
 cleanup:
   xfree(info);

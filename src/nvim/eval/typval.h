@@ -267,9 +267,11 @@ struct blobvar_S {
 };
 
 /// Type used for script ID
-typedef int scid_T;
+typedef int64_t scid_T;
 /// Format argument for scid_T
-#define PRIdSCID "d"
+#define PRIdSCID PRId64
+/// Buffer size required to hold "<SNR>", a (not special) script ID, underscore and NUL.
+#define SIDBUFLEN (26)
 
 // SCript ConteXt (SCTX): identifies a script line.
 // When sourcing a script "sc_lnum" is zero, "sourcing_lnum" is the current

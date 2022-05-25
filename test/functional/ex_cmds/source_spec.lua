@@ -13,6 +13,7 @@ local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local exec_capture = helpers.exec_capture
 local neq = helpers.neq
+local matches = helpers.matches
 
 describe(':source', function()
   before_each(function()
@@ -26,17 +27,16 @@ describe(':source', function()
         \ k: "v"
        "\ (o_o)
         \ }
-      let c = expand("<SID>")->empty()
+      let c = expand("<SID>") | set cursorline
       let s:s = 0zbeef.cafe
       let d = s:s]])
 
     command('source')
     eq('2', meths.exec('echo a', true))
     eq("{'k': 'v'}", meths.exec('echo b', true))
-
-    -- Script items are created only on script var access
-    eq("1", meths.exec('echo c', true))
+    eq("<SNR>1_", meths.exec('echo c', true))
     eq("0zBEEFCAFE", meths.exec('echo d', true))
+    matches('line 6$', exec_capture('verbose set cursorline?'))
 
     exec('set cpoptions+=C')
     eq('Vim(let):E15: Invalid expression: #{', exc_exec('source'))
@@ -45,7 +45,7 @@ describe(':source', function()
   it('selection in current buffer', function()
     insert([[
       let a = 2
-      let a = 3
+      let a = 3 | set cursorline
       let a = 4
       let b = #{
        "\ (>_<)
@@ -60,6 +60,11 @@ describe(':source', function()
     feed('ggjV')
     feed_command(':source')
     eq('3', meths.exec('echo a', true))
+    matches('line 2$', exec_capture('verbose set cursorline?'))
+
+    -- Disable 'cursorline' to make sure the LastSet line nr is changed.
+    feed_command('set nocursorline')
+    eq('nocursorline', exec_capture('verbose set cursorline?'))
 
     -- Source from 2nd line to end of file
     feed('ggjVG')
@@ -67,13 +72,45 @@ describe(':source', function()
     eq('4', meths.exec('echo a', true))
     eq("{'K': 'V'}", meths.exec('echo b', true))
     eq("<SNR>1_C()", meths.exec('echo D()', true))
+    matches('line 2$', exec_capture('verbose set cursorline?'))
 
     -- Source last line only
     feed_command(':$source')
-    eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
+    eq("<SNR>1_C()", meths.exec('echo D()', true))
 
     exec('set cpoptions+=C')
     eq('Vim(let):E15: Invalid expression: #{', exc_exec("'<,'>source"))
+  end)
+
+  it('current buffer reuses SID', function()
+    insert [[
+      " also shouldn't cause a redefinition error when `:source`ing the
+      " same buffer twice (script context uses a new sequence number)
+      func s:Foo()
+      endfunc
+      let id = expand("<SID>")
+    ]]
+    command('source')
+    eq("<SNR>1_", eval('g:id'))
+    command('source')
+    eq("<SNR>1_", eval('g:id'))
+
+    -- Ensure a new buffer has a different SID
+    command('new')
+    insert [[
+      let id = expand("<SID>")
+    ]]
+    command('source')
+    eq("<SNR>2_", eval('g:id'))
+    command('source')
+    eq("<SNR>2_", eval('g:id'))
+
+    command('wincmd p')
+    command('source')
+    eq("<SNR>1_", eval('g:id'))
+
+    -- Scripts should be anonymous
+    eq("", exec_capture(':scriptnames'))
   end)
 
   it('does not break if current buffer is modified while sourced', function()
@@ -140,6 +177,10 @@ describe(':source', function()
       a = [=[
         \ 1
        "\ 2]=]
+      vim.cmd [=[
+        let s:a = 3
+        let g:a = expand('<SID>')
+      ]=]
     ]])
 
     command('edit '..test_file)
@@ -147,6 +188,7 @@ describe(':source', function()
 
     eq(12, eval('g:c'))
     eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
+    eq('<SNR>1_', eval('g:a'))
     os.remove(test_file)
   end)
 
