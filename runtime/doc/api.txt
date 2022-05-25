@@ -1674,12 +1674,18 @@ nvim_set_option_value({name}, {value}, {*opts})
                 global and local value are set unless otherwise specified with
                 {scope}.
 
+                Note the options {win} and {buf} cannot be used together.
+
                 Parameters: ~
                     {name}   Option name
                     {value}  New option value
                     {opts}   Optional parameters
                              • scope: One of 'global' or 'local'. Analogous to
                                |:setglobal| and |:setlocal|, respectively.
+                             • win: |window-ID|. Used for setting window local
+                               option.
+                             • buf: Buffer number. Used for setting buffer
+                               local option.
 
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
                 Sets a global (g:) variable.
