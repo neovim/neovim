@@ -91,11 +91,11 @@ do -- buffer option accessor
         return new_buf_opt_accessor(k)
       end
 
-      return a.nvim_buf_get_option(bufnr or 0, k)
+      return a.nvim_get_option_value(k, { buf = bufnr or 0 })
     end
 
     local function set(k, v)
-      return a.nvim_buf_set_option(bufnr or 0, k, v)
+      return a.nvim_set_option_value(k, v, { buf = bufnr or 0 })
     end
 
     return make_meta_accessor(get, set, nil, function(k)
@@ -121,11 +121,11 @@ do -- window option accessor
       if winnr == nil and type(k) == 'number' then
         return new_win_opt_accessor(k)
       end
-      return a.nvim_win_get_option(winnr or 0, k)
+      return a.nvim_get_option_value(k, { win = winnr or 0 })
     end
 
     local function set(k, v)
-      return a.nvim_win_set_option(winnr or 0, k, v)
+      return a.nvim_set_option_value(k, v, { win = winnr or 0 })
     end
 
     return make_meta_accessor(get, set, nil, function(k)
