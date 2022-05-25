@@ -10,7 +10,6 @@
 #define SYS_OPTWIN_FILE "$VIMRUNTIME/optwin.vim"
 #define RUNTIME_DIRNAME "runtime"
 
-
 #include "auto/config.h"
 #define HAVE_PATHDEF
 
@@ -36,7 +35,6 @@ enum { NUMBUFLEN = 65, };
 
 // special attribute addition: Put message in history
 #define MSG_HIST                0x1000
-
 
 // Values for State
 //
@@ -74,7 +72,6 @@ enum { NUMBUFLEN = 65, };
 #define MODE_CONFIRM         0x7000  // ":confirm" prompt
 #define MODE_CMDPREVIEW      0x8000  // Showing 'inccommand' command "live" preview.
 
-
 /// Directions.
 typedef enum {
   kDirectionNotSet = 0,
@@ -102,7 +99,6 @@ typedef enum {
 #define VAR_TYPE_BOOL       6
 #define VAR_TYPE_SPECIAL    7
 #define VAR_TYPE_BLOB      10
-
 
 // values for xp_context when doing command line completion
 
@@ -164,7 +160,6 @@ enum {
   EXPAND_LUA,
 };
 
-
 // Minimal size for block 0 of a swap file.
 // NOTE: This depends on size of struct block0! It's not done with a sizeof(),
 // because struct block0 is defined in memline.c (Sorry).
@@ -172,7 +167,6 @@ enum {
 
 #define MIN_SWAP_PAGE_SIZE 1048
 #define MAX_SWAP_PAGE_SIZE 50000
-
 
 // Boolean constants
 
@@ -186,7 +180,6 @@ enum {
 #define STATUS_HEIGHT   1       // height of a status line under a window
 #define QF_WINHEIGHT    10      // default height for quickfix window
 
-
 // Buffer sizes
 
 #ifndef CMDBUFFSIZE
@@ -198,7 +191,6 @@ enum {
 #define DIALOG_MSG_SIZE 1000    // buffer size for dialog_msg()
 
 enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
-
 
 // Maximum length of key sequence to be mapped.
 // Must be able to hold an Amiga resize report.
@@ -282,7 +274,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #define FNAMENCMP(x, y, n) path_fnamencmp((const char *)(x), \
                                           (const char *)(y), \
                                           (size_t)(n))
-
 
 // Enums need a typecast to be used as array index (for Ultrix).
 #define HL_ATTR(n)      highlight_attr[(int)(n)]

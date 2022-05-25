@@ -140,7 +140,6 @@ void providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *
   }
 }
 
-
 /// For each provider invoke the 'buf' callback for a given buffer.
 ///
 /// @param      buf       Buffer
@@ -157,7 +156,6 @@ void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers, char **er
     }
   }
 }
-
 
 /// For each provider invoke the 'end' callback
 ///

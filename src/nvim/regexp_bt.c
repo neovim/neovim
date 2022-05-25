@@ -43,7 +43,6 @@
  * Named character class support added by Walter Briscoe (1998 Jul 01)
  */
 
-
 /*
  * The "internal use only" fields in regexp_defs.h are present to pass info from
  * compile to execute that permits the execute phase to run lots faster on
@@ -173,7 +172,6 @@
 #define NEWL            18      //      Match line-break
 #define BHPOS           19      //      End position for BEHIND or NOBEHIND
 
-
 // character classes: 20-48 normal, 50-78 include a line-break
 #define ADD_NL          30
 #define FIRST_NL        ANY + ADD_NL
@@ -251,7 +249,6 @@
 #define HASNL           0x8     // Contains some \n.
 #define HASLOOKBH       0x10    // Contains "\@<=" or "\@<!".
 #define WORST           0       // Worst case.
-
 
 static int prevchr_len;         ///< byte length of previous char
 static int num_complex_braces;  ///< Complex \{...} count
@@ -345,7 +342,6 @@ typedef struct regitem_S {
     regsave_T regsave;
   } rs_un;                      // room for saving rex.input
 } regitem_T;
-
 
 // used for STAR, PLUS and BRACE_SIMPLE matching
 typedef struct regstar_S {
@@ -443,7 +439,6 @@ static char_u *reg(int paren, int *flagp);
 static void     regdump(char_u *, bt_regprog_T *);
 #endif
 
-
 #ifdef REGEXP_DEBUG
 static char_u *regprop(char_u *);
 
@@ -453,7 +448,6 @@ static int regnarrate = 0;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "regexp_bt.c.generated.h"
 #endif
-
 
 /*
  * Setup to parse the regexp.  Used once to get the length and once to do it.
@@ -490,7 +484,6 @@ static bool use_multibytecode(int c)
              || utf_iscomposing(c));
 }
 
-
 /*
  * Emit (if appropriate) a byte of code
  */
@@ -514,7 +507,6 @@ static void regmbc(int c)
     regcode += utf_char2bytes(c, (char *)regcode);
   }
 }
-
 
 /*
  * Produce the bytes for equivalence class "c".
@@ -1489,7 +1481,6 @@ static void reg_equi_class(int c)
   regmbc(c);
 }
 
-
 /*
  * Emit a node.
  * Return pointer to generated code.
@@ -1595,7 +1586,6 @@ static void regoptail(char_u *p, char_u *val)
   }
   regtail(OPERAND(p), val);
 }
-
 
 /*
  * Insert an operator in front of already-emitted operand
@@ -2876,7 +2866,6 @@ static char_u *reg(int paren, int *flagp)
   }
   return ret;
 }
-
 
 /*
  * bt_regcomp() - compile a regular expression into internal code for the
@@ -5222,7 +5211,6 @@ static int bt_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_l
   assert(r <= INT_MAX);
   return (int)r;
 }
-
 
 /// Matches a regexp against multiple lines.
 /// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().

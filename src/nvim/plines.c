@@ -45,7 +45,6 @@ int plines_win(win_T *wp, linenr_T lnum, bool winheight)
   return plines_win_nofill(wp, lnum, winheight) + win_get_fill(wp, lnum);
 }
 
-
 /// Return the number of filler lines above "lnum".
 ///
 /// @param wp

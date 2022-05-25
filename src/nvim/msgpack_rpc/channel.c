@@ -49,7 +49,6 @@ void rpc_init(void)
   msgpack_sbuffer_init(&out_buffer);
 }
 
-
 void rpc_start(Channel *channel)
 {
   channel_incref(channel);
@@ -72,7 +71,6 @@ void rpc_start(Channel *channel)
     rstream_start(out, receive_msgpack, channel);
   }
 }
-
 
 static Channel *find_rpc_channel(uint64_t id)
 {
@@ -359,7 +357,6 @@ static void handle_request(Channel *channel, msgpack_object *request)
   }
 }
 
-
 /// Handles a message, depending on the type:
 ///   - Request: invokes method and writes the response (or error).
 ///   - Notification: invokes method (emits `nvim_error_event` on error).
@@ -412,7 +409,6 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
     Stream *in = channel_instream(channel);
     success = wstream_write(in, buffer);
   }
-
 
   if (!success) {
     // If the write failed for any reason, close the channel
@@ -534,7 +530,6 @@ static void unsubscribe(Channel *channel, char *event)
   pmap_del(cstr_t)(&event_strings, event_string);
   xfree(event_string);
 }
-
 
 /// Mark rpc state as closed, and release its reference to the channel.
 /// Don't call this directly, call channel_close(id, kChannelPartRpc, &error)

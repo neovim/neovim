@@ -1835,7 +1835,6 @@ int syn_get_final_id(int hl_id)
       continue;
     }
 
-
     if (sgp->sg_link == 0 || sgp->sg_link > highlight_ga.ga_len) {
       break;
     }

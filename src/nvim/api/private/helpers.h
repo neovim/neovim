@@ -146,7 +146,6 @@ typedef struct {
     code; \
   }
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
 # include "keysets.h.generated.h"
@@ -162,6 +161,5 @@ typedef struct {
     code; \
     current_sctx = save_current_sctx; \
   } while (0);
-
 
 #endif  // NVIM_API_PRIVATE_HELPERS_H

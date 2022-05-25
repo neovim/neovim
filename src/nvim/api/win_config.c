@@ -22,7 +22,6 @@
 # include "api/win_config.c.generated.h"
 #endif
 
-
 /// Open a new window.
 ///
 /// Currently this is used to open floating and external windows.
@@ -589,7 +588,6 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
                   "One of 'relative' and 'external' must be used");
     return false;
   }
-
 
   if (HAS_KEY(config->focusable)) {
     fconfig->focusable = api_object_to_bool(config->focusable, "'focusable' key", false, err);

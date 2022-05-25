@@ -229,7 +229,6 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
   }
 }
 
-
 bool win_check_ns_hl(win_T *wp)
 {
   if (ns_hl_changed) {
@@ -759,7 +758,6 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   if (mask & HL_UNDERDASH) {
     PUT(hl, "underdash", BOOLEAN_OBJ(true));
   }
-
 
   if (mask & HL_ITALIC) {
     PUT(hl, "italic", BOOLEAN_OBJ(true));

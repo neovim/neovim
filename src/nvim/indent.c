@@ -26,7 +26,6 @@
 #include "nvim/strings.h"
 #include "nvim/undo.h"
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "indent.c.generated.h"
 #endif
@@ -40,7 +39,6 @@ int get_indent(void)
                              false);
 }
 
-
 // Count the size (in window cells) of the indent in line "lnum".
 int get_indent_lnum(linenr_T lnum)
 {
@@ -49,7 +47,6 @@ int get_indent_lnum(linenr_T lnum)
                              curbuf->b_p_vts_array,
                              false);
 }
-
 
 // Count the size (in window cells) of the indent in line "lnum" of buffer
 // "buf".
@@ -60,7 +57,6 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
                              buf->b_p_vts_array,
                              false);
 }
-
 
 /// Count the size (in window cells) of the indent in line "ptr", with
 /// 'tabstop' at "ts".
@@ -387,7 +383,6 @@ int set_indent(int size, int flags)
   return retval;
 }
 
-
 // Return the indent of the current line after a number.  Return -1 if no
 // number was found.  Used for 'n' in 'formatoptions': numbered list.
 // Since a pattern is used it can actually handle more than numbers.
@@ -580,7 +575,6 @@ int get_expr_indent(void)
   return indent;
 }
 
-
 // When 'p' is present in 'cpoptions, a Vi compatible method is used.
 // The incompatible newer method is quite a bit better at indenting
 // code in lisp-like languages than the traditional one; it's still
@@ -765,7 +759,6 @@ int get_lisp_indent(void)
 
   return amount;
 }
-
 
 static int lisp_match(char_u *p)
 {

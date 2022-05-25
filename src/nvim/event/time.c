@@ -11,7 +11,6 @@
 # include "event/time.c.generated.h"
 #endif
 
-
 void time_watcher_init(Loop *loop, TimeWatcher *watcher, void *data)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {

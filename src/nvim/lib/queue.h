@@ -44,7 +44,6 @@ typedef struct _queue {
       (q) = next; \
   }
 
-
 // ffi.cdef is unable to swallow `bool` in place of `int` here.
 static inline int QUEUE_EMPTY(const QUEUE *const q)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT

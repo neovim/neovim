@@ -186,7 +186,6 @@ void buf_updates_unload(buf_T *buf, bool can_reload)
   }
 }
 
-
 void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
                               int64_t num_removed, bool send_tick)
 {

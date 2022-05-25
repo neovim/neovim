@@ -288,7 +288,6 @@ int ml_open(buf_T *buf)
   buf->b_ml.ml_line_count = 1;
   curwin->w_nrwidth_line_count = 0;
 
-
   /*
    * fill block0 struct and write page 0
    */
@@ -731,7 +730,6 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
     b0p->b0_flags |= B0_HAS_FENC;
   }
 }
-
 
 /// Try to recover curbuf from the .swp file.
 ///
@@ -2445,7 +2443,6 @@ void ml_add_deleted_len_buf(buf_T *buf, char_u *ptr, ssize_t len)
   }
 }
 
-
 int ml_replace(linenr_T lnum, char *line, bool copy)
 {
   return ml_replace_buf(curbuf, lnum, (char_u *)line, copy);
@@ -3304,7 +3301,6 @@ char_u *get_file_in_dir(char_u *fname, char_u *dname)
   return retval;
 }
 
-
 /// Print the ATTENTION message: info about an existing swap file.
 ///
 /// @param buf  buffer being edited
@@ -3350,7 +3346,6 @@ static void attention_message(buf_T *buf, char_u *fname)
   cmdline_row = msg_row;
   --no_wait_return;
 }
-
 
 /// Trigger the SwapExists autocommands.
 ///

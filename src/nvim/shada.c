@@ -550,7 +550,6 @@ static inline void hmll_remove(HMLList *const hmll, HMLListEntry *const hmll_ent
   }
 }
 
-
 /// Insert entry to the linked list
 ///
 /// @param[out]  hmll            List to insert to.

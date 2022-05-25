@@ -529,7 +529,6 @@ static int parser_set_ranges(lua_State *L)
   size_t tbl_len = lua_objlen(L, 2);
   TSRange *ranges = xmalloc(sizeof(TSRange) * tbl_len);
 
-
   // [ parser, ranges ]
   for (size_t index = 0; index < tbl_len; index++) {
     lua_rawgeti(L, 2, index + 1);  // [ parser, ranges, range ]
@@ -557,7 +556,6 @@ static int parser_get_ranges(lua_State *L)
   push_ranges(L, ranges, len);
   return 1;
 }
-
 
 // Tree methods
 
@@ -655,7 +653,6 @@ static bool node_check(lua_State *L, int index, TSNode *res)
   }
   return false;
 }
-
 
 static int node_tostring(lua_State *L)
 {
@@ -1059,7 +1056,6 @@ static int query_next_match(lua_State *L)
   return 0;
 }
 
-
 static int query_next_capture(lua_State *L)
 {
   // Upvalues are:
@@ -1204,7 +1200,6 @@ int tslua_parse_query(lua_State *L)
   lua_setmetatable(L, -2);  // [udata]
   return 1;
 }
-
 
 static const char *query_err_string(TSQueryError err)
 {

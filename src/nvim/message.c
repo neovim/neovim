@@ -114,7 +114,6 @@ bool keep_msg_more = false;    // keep_msg was set by msgmore()
  *                  This is an allocated string or NULL when not used.
  */
 
-
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
 static Array msg_ext_chunks = ARRAY_DICT_INIT;
@@ -264,7 +263,6 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
     msg_outtrans_attr((char_u *)s, attr);
   }
 }
-
 
 /// @param keep set keep_msg if it doesn't scroll
 bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
@@ -760,7 +758,6 @@ bool semsg_multiline(const char *const fmt, ...)
   bool ret;
   va_list ap;
 
-
   static char errbuf[MULTILINE_BUFSIZE];
   if (emsg_not_now()) {
     return true;
@@ -1010,7 +1007,6 @@ void ex_messages(void *const eap_p)
     return;
   }
 
-
   p = first_msg_hist;
 
   if (eap->addr_count != 0) {
@@ -1167,7 +1163,6 @@ void wait_return(int redraw)
       allow_keys--;
       reg_recording = save_reg_recording;
       scriptout = save_scriptout;
-
 
       /*
        * Allow scrolling back in the messages.
@@ -1342,7 +1337,6 @@ void msgmore(long n)
     }
   }
 }
-
 
 void msg_ext_set_kind(const char *msg_kind)
 {
@@ -2742,7 +2736,6 @@ static int do_more_prompt(int typed_char)
       c = get_keystroke(resize_events);
     }
 
-
     toscroll = 0;
     switch (c) {
     case BS:                    // scroll one line back
@@ -3440,7 +3433,6 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
     return dfltbutton;  // return default option
   }
 
-
   int save_msg_silent = msg_silent;
   int oldState = State;
 
@@ -3506,7 +3498,6 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
 
   return retval;
 }
-
 
 /// Copy one character from "*from" to "*to", taking care of multi-byte
 /// characters.  Return the length of the character in bytes.
@@ -3577,7 +3568,6 @@ static char_u *console_dialog_alloc(const char_u *message, char_u *buttons, bool
   if (!has_hotkey[0]) {
     len += 2;                                // "x" -> "[x]"
   }
-
 
   // Now allocate space for the strings
   xfree(confirm_msg);

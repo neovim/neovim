@@ -42,7 +42,6 @@ void rstream_init(Stream *stream, size_t bufsize)
   stream->buffer->nonfull_cb = on_rbuffer_nonfull;
 }
 
-
 /// Starts watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance

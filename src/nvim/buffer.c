@@ -1025,10 +1025,8 @@ char *do_bufdel(int command, char_u *arg, int addr_count, int start_bnr, int end
     }
   }
 
-
   return errormsg;
 }
-
 
 /// Make the current buffer empty.
 /// Used when it is wiped out and it's the last buffer.
@@ -1179,7 +1177,6 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
     return FAIL;
   }
-
 
   // delete buffer "buf" from memory and/or the list
   if (unload) {
@@ -1425,7 +1422,6 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   return OK;
 }
 
-
 /// Set current buffer to "buf".  Executes autocommands and closes current
 /// buffer.
 ///
@@ -1584,7 +1580,6 @@ void enter_buffer(buf_T *buf)
   if (curwin->w_topline == 1 && !curwin->w_topline_was_set) {
     scroll_cursor_halfway(false);       // redisplay at correct position
   }
-
 
   // Change directories when the 'acd' option is set.
   do_autochdir();
@@ -1931,7 +1926,6 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_bkc);
   clear_string_option(&buf->b_p_menc);
 }
-
 
 /// Get alternate file "n".
 /// Set linenr to "lnum" or altfpos.lnum if "lnum" == 0.
@@ -2357,7 +2351,6 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   return count == 0 ? FAIL : OK;
 }
 
-
 /// Check for a match on the file name for buffer "buf" with regprog "prog".
 ///
 /// @param ignore_case  When true, ignore case. Use 'fic' otherwise.
@@ -2490,7 +2483,6 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
     wip->wi_next->wi_prev = wip;
   }
 }
-
 
 /// Check that "wip" has 'diff' set and the diff is only for another tab page.
 /// That's because a diff is local to a tab page.
@@ -3113,7 +3105,6 @@ void col_print(char_u *buf, size_t buflen, int col, int vcol)
 static char_u *lasttitle = NULL;
 static char_u *lasticon = NULL;
 
-
 /// Put the title name in the title bar and icon of the window.
 void maketitle(void)
 {
@@ -3331,7 +3322,6 @@ static bool value_change(char_u *str, char_u **last)
   return false;
 }
 
-
 /// Set current window title
 void resettitle(void)
 {
@@ -3355,7 +3345,6 @@ typedef enum {
   kNumBaseDecimal = 10,
   kNumBaseHexadecimal = 16,
 } NumberBase;
-
 
 /// Build a string from the status line items in "fmt".
 /// Return length of string in screen cells.
@@ -3472,7 +3461,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
   // Note: The null termination character must occur here or earlier,
   //       so any user-visible characters must occur before here.
   char *out_end_p = (out + outlen) - 1;
-
 
   // Proceed character by character through the statusline format string
   // fmt_p is the current position in the input buffer
@@ -3914,7 +3902,6 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
           itemisflag = false;
         }
       }
-
 
       // If the output of the expression needs to be evaluated
       // replace the %{} block with the result of evaluation
@@ -4698,7 +4685,6 @@ void do_arg_all(int count, int forceit, int keep_tabs)
   old_curwin = curwin;
   old_curtab = curtab;
 
-
   // Try closing all windows that are not in the argument list.
   // Also close windows that are not full width;
   // When 'hidden' or "forceit" set the buffer becomes hidden.
@@ -4947,7 +4933,6 @@ void ex_buffer_all(exarg_T *eap)
 
   setpcmark();
 
-
   // Close superfluous windows (two windows for the same buffer).
   // Also close windows that are not full-width.
   if (had_tab > 0) {
@@ -5097,7 +5082,6 @@ void ex_buffer_all(exarg_T *eap)
     }
   }
 }
-
 
 /// do_modelines() - process mode lines for the current file
 ///

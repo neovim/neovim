@@ -16,7 +16,6 @@
 # define NVIM_PROBE(name, n, ...)
 #endif
 
-
 #define TRACE_LOG_LEVEL 0
 #define DEBUG_LOG_LEVEL 1
 #define INFO_LOG_LEVEL 2

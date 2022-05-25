@@ -60,7 +60,6 @@ typedef int idx_T;
 #define WF_PFX_COMPFORBID (WFP_COMPFORBID << 24)  // postponed prefix with
                                                   // COMPOUNDFORBIDFLAG
 
-
 // flags for <compoptions>
 #define COMP_CHECKDUP           1       // CHECKCOMPOUNDDUP
 #define COMP_CHECKREP           2       // CHECKCOMPOUNDREP

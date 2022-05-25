@@ -99,7 +99,6 @@ static char *mt_names[MT_COUNT/2] =
 #define NOTAGFILE       99              // return value for jumpto_tag
 static char_u *nofile_fname = NULL;   // fname for NOTAGFILE error
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tag.c.generated.h"
 #endif
@@ -603,7 +602,6 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         smsg(_("File \"%s\" does not exist"), nofile_fname);
       }
 
-
       ic = (matches[cur_match][0] & MT_IC_OFF);
       if (type != DT_TAG && type != DT_SELECT && type != DT_JUMP
           && type != DT_CSCOPE
@@ -1064,7 +1062,6 @@ void do_tags(exarg_T *eap)
   }
 }
 
-
 /*
  * Compare two strings, for length "len", ignoring case the ASCII way.
  * return 0 for match, < 0 for smaller, > 0 for bigger
@@ -1088,7 +1085,6 @@ static int tag_strnicmp(char_u *s1, char_u *s2, size_t len)
   }
   return 0;                             // strings match
 }
-
 
 /*
  * Extract info from the tag search pattern "pats->pat".
@@ -1409,7 +1405,6 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
   int match_re;                 // match with regexp
   int matchoff = 0;
   int save_emsg_off;
-
 
   char_u *mfp;
   garray_T ga_match[MT_COUNT];   // stores matches in sequence
@@ -1751,7 +1746,6 @@ line_read_in:
             }
           }
         }
-
 
         /*
          * When still at the start of the file, check for Emacs tags file
@@ -2723,7 +2717,6 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
 
   ++RedrawingDisabled;
 
-
   if (l_g_do_tagpreview != 0) {
     postponed_split = 0;        // don't split again below
     curwin_save = curwin;       // Save current window
@@ -3147,7 +3140,6 @@ int expand_tags(int tagnames, char_u *pat, int *num_file, char_u ***file)
   xfree(name_buf);
   return ret;
 }
-
 
 /// Add a tag field to the dictionary "dict".
 /// Return OK or FAIL.

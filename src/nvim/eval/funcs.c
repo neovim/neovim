@@ -99,7 +99,6 @@ PRAGMA_DIAG_POP
 // uncrustify:on
 #endif
 
-
 static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
@@ -111,7 +110,6 @@ static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial val
 /// - locally in the function results in a "used before set" warning
 /// - using va_start() to initialize it gives "function with fixed args" error
 static va_list dummy_ap;
-
 
 /// Function given to ExpandGeneric() to obtain the list of internal
 /// or user defined function names.
@@ -345,7 +343,6 @@ static void f_and(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                          & tv_get_number_chk(&argvars[1], NULL);
 }
 
-
 /// "api_info()" function
 static void f_api_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -471,7 +468,6 @@ static void f_browsedir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   f_browse(argvars, rettv, NULL);
 }
-
 
 /// Find a buffer by number or exact name.
 static buf_T *find_buffer(typval_T *avar)
@@ -2169,7 +2165,6 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #endif
 }
 
-
 /// "menu_get(path [, modes])" function
 static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -2206,7 +2201,6 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   rettv->vval.v_string = (char *)cmdstr;
 }
-
 
 /// "flatten(list[, {maxdepth}])" function
 static void f_flatten(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -2359,7 +2353,6 @@ static void f_filewritable(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = os_file_is_writable(filename);
 }
 
-
 static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 {
   char_u *fresult = NULL;
@@ -2417,7 +2410,6 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
     rettv->vval.v_string = (char *)fresult;
   }
 }
-
 
 /// "filter()" function
 static void f_filter(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -2501,7 +2493,6 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   xfree(fbuf);
 }
-
 
 /// "foldclosed()" function
 static void foldclosed_both(typval_T *argvars, typval_T *rettv, int end)
@@ -3569,7 +3560,6 @@ static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   win_T *wp = find_win_by_nr_or_id(&argvars[0]);
   get_qf_loc_list(false, wp, &argvars[1], rettv);
 }
-
 
 /// "getmarklist()" function
 static void f_getmarklist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -4763,7 +4753,6 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = selected;
 }
 
-
 static garray_T ga_userinput = { 0, 0, sizeof(tasave_T), 4, NULL };
 
 /// "inputrestore()" function
@@ -5005,7 +4994,6 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-
   Channel *data = find_job(argvars[0].vval.v_number, true);
   if (!data) {
     return;
@@ -5169,7 +5157,6 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     shell_free_argv(argv);
     return;
   }
-
 
   dict_T *job_opts = NULL;
   bool detach = false;
@@ -5660,7 +5647,6 @@ static void f_localtime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = (varnumber_T)time(NULL);
 }
 
-
 static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 {
   char *keys_buf = NULL;
@@ -5773,7 +5759,6 @@ static void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   get_maparg(argvars, rettv, FALSE);
 }
-
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,
                             const SomeMatchType type)
@@ -7903,7 +7888,6 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     set_current_funccal((funccall_T *)(provider_caller_scope.funccalp));
   }
 
-
   Error err = ERROR_INIT;
 
   uint64_t chan_id = (uint64_t)argvars[0].vval.v_number;
@@ -9578,7 +9562,6 @@ static void f_stdioopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-
   bool rpc = false;
   CallbackReader on_stdin = CALLBACK_READER_INIT;
   dict_T *opts = argvars[0].vval.v_dict;
@@ -9601,7 +9584,6 @@ static void f_stdioopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!id) {
     semsg(e_stdiochan2, error);
   }
-
 
   rettv->vval.v_number = (varnumber_T)id;
   rettv->v_type = VAR_NUMBER;
@@ -10390,7 +10372,6 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     modec = 'c';
   }
 
-
   const char *p = NULL;
   switch (TOLOWER_ASC(what[0])) {
   case 'b':
@@ -10538,7 +10519,6 @@ static void f_systemlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_system_output_as_rettv(argvars, rettv, true);
 }
 
-
 /// "tabpagebuflist()" function
 static void f_tabpagebuflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -10583,7 +10563,6 @@ static void f_tabpagenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   rettv->vval.v_number = nr;
 }
-
 
 /// Common code for tabpagewinnr() and winnr().
 static int get_winnr(tabpage_T *tp, typval_T *argvar)
@@ -10897,7 +10876,6 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number =
     timer_start(tv_get_number(&argvars[0]), repeat, &callback);
 }
-
 
 /// "timer_stop(timerid)" function
 static void f_timer_stop(typval_T *argvars, typval_T *rettv, FunPtr fptr)

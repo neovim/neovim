@@ -35,7 +35,6 @@
 #endif
 #define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM
 
-
 char *Version = VIM_VERSION_SHORT;
 char *longVersion = NVIM_VERSION_LONG;
 char *version_buildtype = "Build type: " NVIM_VERSION_BUILD_TYPE;
@@ -2193,7 +2192,6 @@ void list_version(void)
 
   version_msg("\nRun :checkhealth for more info");
 }
-
 
 /// Show the intro message when not editing a file.
 void maybe_intro_message(void)

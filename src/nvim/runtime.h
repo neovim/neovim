@@ -32,7 +32,6 @@ typedef kvec_t(char *) CharVec;
 #define DIP_LUA  0x100    // also use ".lua" files
 #define DIP_DIRFILE 0x200  // find both files and directories
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "runtime.h.generated.h"
 #endif

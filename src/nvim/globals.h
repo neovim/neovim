@@ -96,7 +96,6 @@ EXTERN int Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 EXTERN NS ns_hl_active INIT(= 0);         // current ns that defines highlights
 EXTERN bool ns_hl_changed INIT(= false);  // highlight need update
 
-
 // We use 64-bit file functions here, if available.  E.g. ftello() returns
 // off_t instead of long, which helps if long is 32 bit and off_t is 64 bit.
 // We assume that when fseeko() is available then ftello() is too.
@@ -201,7 +200,6 @@ EXTERN bool msg_scrolled_ign INIT(= false);
 // Whether the screen is damaged due to scrolling. Sometimes msg_scrolled
 // is reset before the screen is redrawn, so we need to keep track of this.
 EXTERN bool msg_did_scroll INIT(= false);
-
 
 EXTERN char_u *keep_msg INIT(= NULL);       // msg to be shown after redraw
 EXTERN int keep_msg_attr INIT(= 0);         // highlight attr for keep_msg
@@ -315,7 +313,6 @@ EXTERN bool suppress_errthrow INIT(= false);
 /// cstacks; the pending exceptions, however, are not on the caught stack.
 EXTERN except_T *caught_stack INIT(= NULL);
 
-
 ///
 /// Garbage collection can only take place when we are sure there are no Lists
 /// or Dictionaries being used internally.  This is flagged with
@@ -360,7 +357,6 @@ EXTERN struct caller_scope {
   void *funccalp;
 } provider_caller_scope;
 EXTERN int provider_call_nesting INIT(= 0);
-
 
 EXTERN int t_colors INIT(= 256);                // int value of T_CCO
 
@@ -477,7 +473,6 @@ EXTERN buf_T *curbuf INIT(= NULL);    // currently active buffer
 // Iterate through all the signs placed in a buffer
 #define FOR_ALL_SIGNS_IN_BUF(buf, sign) \
   for ((sign) = (buf)->b_signlist; (sign) != NULL; (sign) = (sign)->se_next)   // NOLINT
-
 
 // List of files being edited (global argument list).  curwin->w_alist points
 // to this when the window is using the global argument list.
@@ -793,7 +788,6 @@ enum {
   WM_LIST = 3,      ///< cmdline CTRL-D
 };
 
-
 // Some file names are stored in pathdef.c, which is generated from the
 // Makefile to make their value depend on the Makefile.
 #ifdef HAVE_PATHDEF
@@ -841,7 +835,6 @@ EXTERN bool no_hlsearch INIT(= false);
 
 // Page number used for %N in 'pageheader' and 'guitablabel'.
 EXTERN linenr_T printer_page_num;
-
 
 EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
                                                   // or from feedkeys()

@@ -49,7 +49,6 @@ typedef struct {
 #define LUA_PUSH_STATIC_STRING(lstate, s) \
   lua_pushlstring(lstate, s, sizeof(s) - 1)
 
-
 static LuaTableProps nlua_traverse_table(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -674,7 +673,6 @@ static inline void nlua_create_typed_table(lua_State *lstate, const size_t narr,
   lua_rawset(lstate, -3);
 }
 
-
 /// Convert given String to lua string
 ///
 /// Leaves converted string on top of the stack.
@@ -807,7 +805,6 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
 #undef ADD_REMOTE_TYPE
   }
 }
-
 
 /// Convert lua value to string
 ///
@@ -1296,7 +1293,6 @@ void nlua_init_types(lua_State *const lstate)
 
   lua_rawset(lstate, -3);
 }
-
 
 void nlua_pop_keydict(lua_State *L, void *retval, field_hash hashy, Error *err)
 {

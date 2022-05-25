@@ -149,5 +149,4 @@ static inline Stream *channel_outstream(Channel *chan)
   abort();
 }
 
-
 #endif  // NVIM_CHANNEL_H

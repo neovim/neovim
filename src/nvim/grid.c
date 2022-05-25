@@ -17,7 +17,6 @@
 // Per-cell attributes
 static size_t linebuf_size = 0;
 
-
 /// Determine if dedicated window grid should be used or the default_grid
 ///
 /// If UI did not request multigrid support, draw all windows on the
@@ -135,7 +134,6 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes, int *attrp
     schar_copy(bytes, grid->chars[off]);
   }
 }
-
 
 /// put string '*text' on the window grid at position 'row' and 'col', with
 /// attributes 'attr', and update chars[] and attrs[].
@@ -271,7 +269,6 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
 
     schar_T buf;
     schar_from_cc(buf, u8c, u8cc);
-
 
     need_redraw = schar_cmp(grid->chars[off], buf)
                   || (mbyte_cells == 2 && grid->chars[off + 1][0] != 0)

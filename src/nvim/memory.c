@@ -661,7 +661,6 @@ void free_all_mem(void)
   ResetRedobuff();
   ResetRedobuff();
 
-
   // highlight info
   free_highlight();
 

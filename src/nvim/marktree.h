@@ -32,7 +32,6 @@ typedef struct {
   iterstate_t s[MT_MAX_DEPTH];
 } MarkTreeIter;
 
-
 // Internal storage
 //
 // NB: actual marks have flags > 0, so we can use (row,col,0) pseudo-key for
@@ -109,7 +108,6 @@ static inline uint16_t mt_flags(bool right_gravity, uint8_t decor_level)
                     | (decor_level << MT_FLAG_DECOR_OFFSET));
 }
 
-
 struct mtnode_s {
   int32_t n;
   int32_t level;
@@ -129,7 +127,6 @@ typedef struct {
   // Map(uint64_t, ExtmarkItem) essentially;
   PMap(uint64_t) id2node[1];
 } MarkTree;
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "marktree.h.generated.h"

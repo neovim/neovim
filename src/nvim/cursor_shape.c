@@ -315,7 +315,6 @@ bool cursor_mode_uses_syn_id(int syn_id)
   return false;
 }
 
-
 /// Return the index into shape_table[] for the current mode.
 int cursor_get_mode_idx(void)
   FUNC_ATTR_PURE

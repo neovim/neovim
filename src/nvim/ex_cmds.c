@@ -73,7 +73,6 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-
 /// Case matching style to use for :substitute
 typedef enum {
   kSubHonorOptions = 0,  ///< Honor the user's 'ignorecase'/'smartcase' options
@@ -1507,7 +1506,6 @@ void do_shell(char *cmd, int flags)
     return;
   }
 
-
   /*
    * For autocommands we want to get the output on the current screen, to
    * avoid having to type return below.
@@ -2883,7 +2881,6 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   // Change directories when the 'acd' option is set.
   do_autochdir();
 
-
 theend:
   if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->terminal != NULL) {
     terminal_check_size(old_curbuf.br_buf->terminal);
@@ -4065,7 +4062,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           goto skip;
         }
 
-
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
         if (!preview || has_second_delim) {
@@ -4143,7 +4139,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           }
           replaced_bytes += end.col - start.col;
 
-
           // Now the trick is to replace CTRL-M chars with a real line
           // break.  This would make it impossible to insert a CTRL-M in
           // the text.  The line break can be avoided by preceding the
@@ -4198,7 +4193,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
                          end.lnum - start.lnum, matchcols, replaced_bytes,
                          lnum - lnum_start, subcols, sublen - 1, kExtmarkUndo);
         }
-
 
         // 4. If subflags.do_all is set, find next match.
         // Prevent endless loop with patterns that match empty
@@ -4751,7 +4745,6 @@ bool prepare_tagpreview(bool undo_sync)
   return false;
 }
 
-
 /// ":help": open a read-only window on a help file
 void ex_help(exarg_T *eap)
 {
@@ -4931,7 +4924,6 @@ void ex_help(exarg_T *eap)
 erret:
   xfree(tag);
 }
-
 
 /// In an argument search for a language specifiers in the form "@xx".
 /// Changes the "@" to NUL if found, and returns a pointer to "xx".
@@ -5519,7 +5511,6 @@ void ex_viusage(exarg_T *eap)
 {
   do_cmdline_cmd("help normal-index");
 }
-
 
 /// Generate tags in one help directory
 ///

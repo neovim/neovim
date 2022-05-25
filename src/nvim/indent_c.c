@@ -212,7 +212,6 @@ int is_pos_in_string(const char_u *line, colnr_T col)
  * Below "XXX" means that this function may unlock the current line.
  */
 
-
 /*
  * Return true if the string "line" starts with a word from 'cinwords'.
  */
@@ -237,7 +236,6 @@ bool cin_is_cinword(const char_u *line)
 
   return retval;
 }
-
 
 /*
  * Skip over white space and C comments within the line.
@@ -1422,7 +1420,6 @@ static int cin_is_cpp_extern_c(const char_u *s)
   return false;
 }
 
-
 /*
  * Skip strings, chars and comments until at or past "trypos".
  * Return the column found.
@@ -1552,7 +1549,6 @@ static pos_T *find_match_paren_after_brace(int ind_maxparen)
   }
   return trypos;
 }
-
 
 /*
  * Return ind_maxparen corrected for the difference in line number between the
@@ -3745,7 +3741,6 @@ term_again:
   if (cin_iscomment(theline)) {
     amount += curbuf->b_ind_comment;
   }
-
 
   // add extra indent if the previous line ended in a backslash:
   //          "asdfasdf{backslash}

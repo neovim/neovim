@@ -82,7 +82,6 @@ typedef struct loop {
     } \
   } while (0)
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.h.generated.h"
 #endif

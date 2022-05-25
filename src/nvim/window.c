@@ -53,11 +53,9 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "window.c.generated.h"
 #endif
-
 
 #define NOWIN           ((win_T *)-1)   // non-existing window
 
@@ -533,7 +531,6 @@ wingotofile:
     }
     break;
 
-
   // CTRL-W g  extended commands
   case 'g':
   case Ctrl_G:
@@ -772,7 +769,6 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
                         || memcmp(fconfig.border_hl_ids,
                                   wp->w_float_config.border_hl_ids,
                                   sizeof fconfig.border_hl_ids));
-
 
   wp->w_float_config = fconfig;
 
@@ -1054,7 +1050,6 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     }
     need_status = STATUS_HEIGHT;
   }
-
 
   if (flags & WSP_VERT) {
     int wmw1;
@@ -1520,7 +1515,6 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   return OK;
 }
 
-
 /*
  * Initialize window "newp" from window "oldp".
  * Used when splitting a window and when creating a new tab page.
@@ -1755,7 +1749,6 @@ static void win_exchange(long Prenum)
     beep_flush();
     return;
   }
-
 
   /*
    * find window to exchange with
@@ -3843,7 +3836,6 @@ static int frame_minwidth(frame_T *topfrp, win_T *next_curwin)
   return m;
 }
 
-
 /// Try to close all windows except current one.
 /// Buffers in the other windows become hidden if 'hidden' is set, or '!' is
 /// used and the buffer was modified.
@@ -4560,7 +4552,6 @@ void tabpage_move(int nr)
   redraw_tabline = true;
 }
 
-
 /*
  * Go to another window.
  * When jumping to another buffer, stop Visual mode.  Do this before
@@ -4597,7 +4588,6 @@ void win_goto(win_T *wp)
     redrawWinline(curwin, curwin->w_cursor.lnum);
   }
 }
-
 
 /*
  * Find the tabpage for window "win".
@@ -5061,7 +5051,6 @@ static win_T *win_alloc(win_T *after, bool hidden)
   return new_wp;
 }
 
-
 // Free one wininfo_T.
 void free_wininfo(wininfo_T *wip, buf_T *bp)
 {
@@ -5071,7 +5060,6 @@ void free_wininfo(wininfo_T *wip, buf_T *bp)
   }
   xfree(wip);
 }
-
 
 /// Remove window 'wp' from the window list and free the structure.
 ///
@@ -5283,7 +5271,6 @@ static void frame_remove(frame_T *frp)
   }
 }
 
-
 /*
  * Called from win_new_shellsize() after Rows changed.
  * This only does the current tab page, others must be done when made active.
@@ -5473,7 +5460,6 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
   }
 }
 
-
 /*
  * Set current window height and take care of repositioning other windows to
  * fit around it.
@@ -5520,7 +5506,6 @@ void win_setheight_win(int height, win_T *win)
     showmode();
   }
 }
-
 
 /*
  * Set the height of a frame to "height" and take care that all frames and
@@ -6131,7 +6116,6 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
   (void)win_comp_pos();
   redraw_all_later(NOT_VALID);
 }
-
 
 #define FRACTION_MULT   16384L
 

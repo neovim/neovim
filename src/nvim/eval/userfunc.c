@@ -200,7 +200,6 @@ static void register_closure(ufunc_T *fp)
   [current_funccal->fc_funcs.ga_len++] = fp;
 }
 
-
 /// @return  a name for a lambda.  Returned in static memory.
 char_u *get_lambda_name(void)
 {

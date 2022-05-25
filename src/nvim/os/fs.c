@@ -56,7 +56,6 @@ static const int kLibuvSuccess = 0;
 static uv_loop_t fs_loop;
 static uv_mutex_t fs_loop_mutex;
 
-
 // Initialize the fs module
 void fs_init(void)
 {
@@ -76,7 +75,6 @@ void fs_loop_unlock(void)
 {
   uv_mutex_unlock(&fs_loop_mutex);
 }
-
 
 /// Changes the current directory to `path`.
 ///

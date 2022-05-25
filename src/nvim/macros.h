@@ -94,7 +94,6 @@
 
 #define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
 
-
 // MB_PTR_ADV(): advance a pointer to the next character, taking care of
 // multi-byte characters if needed. Skip over composing chars.
 #define MB_PTR_ADV(p)      (p += utfc_ptr2len((char *)p))

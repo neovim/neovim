@@ -359,7 +359,6 @@ void terminal_check_size(Terminal *term)
   vterm_get_size(term->vt, &curheight, &curwidth);
   uint16_t width = 0, height = 0;
 
-
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
       const uint16_t win_width =
@@ -721,7 +720,6 @@ static int get_rgb(VTermState *state, VTermColor color)
   vterm_state_convert_color_to_rgb(state, &color);
   return RGB_(color.rgb.red, color.rgb.green, color.rgb.blue);
 }
-
 
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr, int *term_attrs)
 {
@@ -1363,7 +1361,6 @@ end:
 
 // }}}
 // terminal buffer refresh & misc {{{
-
 
 static void fetch_row(Terminal *term, int row, int end_col)
 {

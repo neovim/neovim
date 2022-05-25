@@ -553,7 +553,6 @@ char_u *concat_str(const char_u *restrict str1, const char_u *restrict str2)
   return dest;
 }
 
-
 static const char *const e_printf =
   N_("E766: Insufficient arguments for printf()");
 

@@ -46,7 +46,6 @@ EXTERN bool updating_screen INIT(= 0);
 // While resizing the screen this flag is set.
 EXTERN bool resizing_screen INIT(= 0);
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.h.generated.h"
 #endif

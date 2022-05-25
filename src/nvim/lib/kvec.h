@@ -121,7 +121,6 @@
 #define kv_push(v, x) \
   (*kv_pushp(v) = (x))
 
-
 #define kv_a(v, i) \
   (*(((v).capacity <= (size_t)(i) \
       ? ((v).capacity = (v).size = (i) + 1, \

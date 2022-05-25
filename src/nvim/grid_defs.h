@@ -21,7 +21,6 @@ enum {
   kZIndexCmdlinePopupMenu = 250,
 };
 
-
 /// ScreenGrid represents a resizable rectuangular grid displayed by UI clients.
 ///
 /// chars[] contains the UTF-8 text that is currently displayed on the grid.

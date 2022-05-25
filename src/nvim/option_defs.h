@@ -49,7 +49,6 @@
 # define DFLT_FFS_VI  ""
 #endif
 
-
 // Possible values for 'encoding'
 #define ENC_UCSBOM     "ucs-bom"       // check for BOM at start of file
 

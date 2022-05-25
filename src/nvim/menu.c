@@ -31,11 +31,9 @@
 
 #define MENUDEPTH   10          // maximum depth of menus
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "menu.c.generated.h"
 #endif
-
 
 /// The character for each menu mode
 static char menu_mode_chars[] = { 'n', 'v', 's', 'o', 'i', 'c', 't' };
@@ -97,7 +95,6 @@ void ex_menu(exarg_T *eap)
     }
     break;
   }
-
 
   // Locate an optional "icon=filename" argument
   // TODO(nvim): Currently this is only parsed. Should expose it to UIs.
@@ -161,7 +158,6 @@ void ex_menu(exarg_T *eap)
     show_menus(arg, modes);
     return;
   }
-
 
   menu_path = arg;
   if (*menu_path == '.') {
@@ -267,7 +263,6 @@ void ex_menu(exarg_T *eap)
 theend:
   ;
 }
-
 
 /// Add the menu with the given name to the menu hierarchy
 ///
@@ -397,7 +392,6 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
         menu->enabled |= modes;
       }
     }
-
 
     menup = &menu->children;
     parent = menu;
@@ -543,7 +537,6 @@ static int menu_enable_recurse(vimmenu_T *menu, char *name, int modes, int enabl
     return FAIL;
   }
 
-
   return OK;
 }
 
@@ -615,7 +608,6 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
       return FAIL;
     }
 
-
     // Recalculate modes for menu based on the new updated children
     menu->modes &= ~modes;
     child = menu->children;
@@ -644,7 +636,6 @@ static void free_menu(vimmenu_T **menup)
   vimmenu_T *menu;
 
   menu = *menup;
-
 
   // Don't change *menup until after calling gui_mch_destroy_menu(). The
   // MacOS code needs the original structure to properly delete the menu.
@@ -749,7 +740,6 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
   return dict;
 }
 
-
 /// Export menus matching path \p path_name
 ///
 /// @param path_name
@@ -775,7 +765,6 @@ bool menu_get(char *const path_name, int modes, list_T *list)
   }
   return true;
 }
-
 
 /// Find menu matching `name` and `modes`.
 ///
@@ -913,7 +902,6 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
   }
 }
 
-
 /*
  * Used when expanding menu names.
  */
@@ -936,7 +924,6 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   int expand_menus;
 
   xp->xp_context = EXPAND_UNSUCCESSFUL;
-
 
   // Check for priority numbers, enable and disable
   for (p = arg; *p; ++p) {
@@ -1146,7 +1133,6 @@ char *get_menu_names(expand_T *xp, int idx)
   return str;
 }
 
-
 /// Skip over this element of the menu path and return the start of the next
 /// element.  Any \ and ^Vs are removed from the current element.
 ///
@@ -1196,7 +1182,6 @@ static bool menu_namecmp(const char *const name, const char *const mname)
   return (name[i] == NUL || name[i] == TAB)
          && (mname[i] == NUL || mname[i] == TAB);
 }
-
 
 /// Returns the \ref MENU_MODES specified by menu command `cmd`.
 ///  (eg :menu! returns MENU_CMDLINE_MODE | MENU_INSERT_MODE)
@@ -1281,7 +1266,6 @@ static char *popup_mode_name(char *name, int idx)
   return p;
 }
 
-
 /// Duplicate the menu item text and then process to see if a mnemonic key
 /// and/or accelerator text has been identified.
 ///
@@ -1346,7 +1330,6 @@ bool menu_is_popup(const char *const name)
   return STRNCMP(name, "PopUp", 5) == 0;
 }
 
-
 // Return true if "name" is a toolbar menu name.
 bool menu_is_toolbar(const char *const name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
@@ -1362,7 +1345,6 @@ int menu_is_separator(char *name)
 {
   return name[0] == '-' && name[STRLEN(name) - 1] == '-';
 }
-
 
 /// True if a popup menu or starts with \ref MNU_HIDDEN_CHAR
 ///

@@ -407,7 +407,6 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
   });
 }
 
-
 buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
 {
   if (buffer == 0) {
@@ -1040,8 +1039,8 @@ Object copy_object(Object obj)
   }
 }
 
-void set_option_value_for(char *key, long numval, char *stringval, int opt_flags,
-                          int opt_type, void *from, Error *err)
+void set_option_value_for(char *key, long numval, char *stringval, int opt_flags, int opt_type,
+                          void *from, Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
@@ -1079,7 +1078,6 @@ void set_option_value_for(char *key, long numval, char *stringval, int opt_flags
 
   try_end(err);
 }
-
 
 static void set_option_value_err(char *key, long numval, char *stringval, int opt_flags, Error *err)
 {
@@ -1561,7 +1559,6 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   } else if (ERROR_SET(err)) {
     goto err;
   }
-
 
   if (api_object_to_bool(opts->register_, "register", false, err)) {
     argt |= EX_REGSTR;

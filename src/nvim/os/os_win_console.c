@@ -9,7 +9,6 @@
 # include "os/os_win_console.c.generated.h"
 #endif
 
-
 int os_get_conin_fd(void)
 {
   const HANDLE conin_handle = CreateFile("CONIN$",

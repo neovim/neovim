@@ -344,7 +344,6 @@ static int enc_canon_search(const char_u *name)
   return -1;
 }
 
-
 /*
  * Find canonical encoding "name" in the list and return its properties.
  * Returns 0 if not found.
@@ -1525,7 +1524,6 @@ ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool us
   return -1;
 }
 
-
 /*
  * Version of strnicmp() that handles multi-byte characters.
  * Needed for Big5, Shift-JIS and UTF-8 encoding.  Other DBCS encodings can
@@ -1867,7 +1865,6 @@ int mb_tail_off(const char_u *base, const char_u *p)
   return i;
 }
 
-
 /// Return the offset from "p" to the first byte of the character it points
 /// into. Can start anywhere in a stream of bytes.
 /// Unlike utf_head_off() this doesn't include composing characters and returns a negative value.
@@ -2129,7 +2126,6 @@ const char *mb_unescape(const char **const pp)
   return NULL;
 }
 
-
 /*
  * Skip the Vim specific head of a 'encoding' name.
  */
@@ -2225,7 +2221,6 @@ static int enc_alias_search(const char_u *name)
   return -1;
 }
 
-
 #ifdef HAVE_LANGINFO_H
 # include <langinfo.h>
 #endif
@@ -2298,7 +2293,6 @@ enc_locale_copy_enc:
 }
 
 #if defined(HAVE_ICONV)
-
 
 /*
  * Call iconv_open() with a check if iconv() works properly (there are broken
@@ -2428,7 +2422,6 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
 }
 
 #endif  // HAVE_ICONV
-
 
 /*
  * Setup "vcp" for conversion from "from" to "to".

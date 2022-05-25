@@ -1107,7 +1107,6 @@ const char *gettail_dir(const char *const fname)
   return dir_end;
 }
 
-
 /// Calls globpath() with 'path' values for the given pattern and stores the
 /// result in "gap".
 /// Returns the total number of matches.
@@ -1142,7 +1141,6 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
 
   return gap->ga_len;
 }
-
 
 /*
  * Return TRUE if "p" contains what looks like an environment variable.

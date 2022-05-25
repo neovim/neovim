@@ -116,7 +116,6 @@ static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
   }
 ;
 
-
 static const uint32_t cterm_color_8[8] = {
   0x000000, 0xff0000, 0x00ff00, 0xffff00,
   0x0000ff, 0xff00ff, 0x00ffff, 0xffffff
@@ -365,7 +364,6 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
   xfree(old_opts);
   return ret;
 }
-
 
 /*
  * If using a dark background, the colors will probably be too bright to show
@@ -970,7 +968,6 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   return col;
 }
 
-
 /*
  * PS printer stuff.
  *
@@ -1242,7 +1239,6 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
 #define PRT_RESOURCE_ENCODING       "Encoding"
 #define PRT_RESOURCE_CMAP           "CMap"
 
-
 /* Data for table based DSC comment recognition, easy to extend if VIM needs to
  * read more comments. */
 #define PRT_DSC_MISC_TYPE           (-1)
@@ -1254,7 +1250,6 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
 #define PRT_DSC_VERSION             "%%Version:"
 #define PRT_DSC_ENDCOMMENTS         "%%EndComments:"
 
-
 #define SIZEOF_CSTR(s)      (sizeof(s) - 1)
 static struct prt_dsc_comment_S prt_dsc_table[] =
 {
@@ -1264,7 +1259,6 @@ static struct prt_dsc_comment_S prt_dsc_table[] =
   { PRT_DSC_ENDCOMMENTS, SIZEOF_CSTR(PRT_DSC_ENDCOMMENTS),
     PRT_DSC_ENDCOMMENTS_TYPE }
 };
-
 
 /*
  * Variables for the output PostScript file.
@@ -2053,7 +2047,6 @@ static void prt_font_metrics(int font_scale)
   prt_char_width = PRT_PS_FONT_TO_USER(font_scale, prt_ps_font->wx);
 }
 
-
 static int prt_get_cpl(void)
 {
   if (prt_use_number()) {
@@ -2167,7 +2160,6 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   struct prt_ps_encoding_S *p_mbenc;
   struct prt_ps_encoding_S *p_mbenc_first;
   struct prt_ps_charset_S *p_mbchar = NULL;
-
 
   /*
    * Set up font and encoding.

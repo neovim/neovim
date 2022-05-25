@@ -1371,7 +1371,6 @@ static void set_diff_option(win_T *wp, int value)
   curbuf = curwin->w_buffer;
 }
 
-
 /// Set options in window "wp" for diff mode.
 ///
 /// @param addbuf Add buffer to diff.
@@ -2035,7 +2034,6 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     ex_diffupdate(NULL);
   }
   towin->w_topfill = 0;
-
 
   // search for a change that includes "lnum" in the list of diffblocks.
   for (dp = curtab->tp_first_diff; dp != NULL; dp = dp->df_next) {

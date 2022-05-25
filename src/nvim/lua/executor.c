@@ -135,7 +135,6 @@ static int nlua_pcall(lua_State *lstate, int nargs, int nresults)
   return status;
 }
 
-
 /// Gets the version of the current Nvim build.
 ///
 /// @param  lstate  Lua interpreter state.
@@ -146,7 +145,6 @@ static int nlua_nvim_version(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   api_free_dictionary(version);
   return 1;
 }
-
 
 static void nlua_luv_error_event(void **argv)
 {
@@ -1041,7 +1039,6 @@ static int nlua_empty_dict_tostring(lua_State *lstate)
   return 1;
 }
 
-
 #ifdef WIN32
 /// os.getenv: override os.getenv to maintain coherency. #9681
 ///
@@ -1054,7 +1051,6 @@ static int nlua_getenv(lua_State *lstate)
   return 1;
 }
 #endif
-
 
 /// add the value to the registry
 /// The current implementation does not support calls from threads.
@@ -1073,7 +1069,6 @@ LuaRef nlua_ref(lua_State *lstate, nlua_ref_state_t *ref_state, int index)
   }
   return ref;
 }
-
 
 LuaRef nlua_ref_global(lua_State *lstate, int index)
 {
@@ -1100,7 +1095,6 @@ void nlua_unref_global(lua_State *lstate, LuaRef ref)
   nlua_unref(lstate, nlua_global_refs, ref);
 }
 
-
 void api_free_luaref(LuaRef ref)
 {
   nlua_unref_global(global_lstate, ref);
@@ -1111,7 +1105,6 @@ void nlua_pushref(lua_State *lstate, LuaRef ref)
 {
   lua_rawgeti(lstate, LUA_REGISTRYINDEX, ref);
 }
-
 
 /// Gets a new reference to an object stored at original_ref
 ///
@@ -1129,7 +1122,6 @@ LuaRef api_new_luaref(LuaRef original_ref)
   lua_pop(lstate, 1);
   return new_ref;
 }
-
 
 /// Evaluate lua string
 ///
@@ -1743,7 +1735,6 @@ char_u *nlua_register_table_as_callable(typval_T *const arg)
 
   char_u *name = register_cfunc(&nlua_CFunction_func_call,
                                 &nlua_CFunction_func_free, state);
-
 
   lua_pop(lstate, 1);  // []
   assert(top == lua_gettop(lstate));

@@ -615,7 +615,6 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       oldlen = (size_t)utfc_ptr2len((char *)oldp + col);
     }
 
-
     // Push the replaced bytes onto the replace stack, so that they can be
     // put back when BS is used.  The bytes of a multi-byte character are
     // done the other way around, so that the first byte is popped off

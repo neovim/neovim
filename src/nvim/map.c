@@ -32,7 +32,6 @@
 #define handle_T_hash kh_int_hash_func
 #define handle_T_eq kh_int_hash_equal
 
-
 #if defined(ARCH_64)
 # define ptr_t_hash(key) uint64_t_hash((uint64_t)key)
 # define ptr_t_eq(a, b) uint64_t_eq((uint64_t)a, (uint64_t)b)
@@ -162,7 +161,6 @@ static inline bool ColorKey_eq(ColorKey ae1, ColorKey ae2)
 {
   return memcmp(&ae1, &ae2, sizeof(ae1)) == 0;
 }
-
 
 MAP_IMPL(int, int, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)

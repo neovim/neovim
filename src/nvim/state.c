@@ -24,7 +24,6 @@
 # include "state.c.generated.h"
 #endif
 
-
 void state_enter(VimState *s)
 {
   for (;;) {
@@ -121,7 +120,6 @@ void state_handle_k_event(void)
     }
   }
 }
-
 
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)

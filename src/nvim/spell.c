@@ -301,7 +301,6 @@ typedef struct {
   int score;
 } limitscore_T;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "spell.c.generated.h"
 #endif
@@ -1302,7 +1301,6 @@ static void find_prefix(matchinf_T *mip, int mode)
       mip->mi_cprefixlen = nofold_len(mip->mi_fword, mip->mi_prefixlen,
                                       mip->mi_word);
       find_word(mip, FIND_PREFIX);
-
 
       if (len == 0) {
         break;              // no children, word must end here
@@ -2550,7 +2548,6 @@ void spell_reload(void)
   }
 }
 
-
 // Opposite of offset2bytes().
 // "pp" points to the bytes and is advanced over it.
 // Returns the offset.
@@ -3137,7 +3134,6 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
 
   return need_cap;
 }
-
 
 // ":spellrepall"
 void ex_spellrepall(exarg_T *eap)
@@ -4937,7 +4933,6 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   }
 }
 
-
 // Go one level deeper in the tree.
 static void go_deeper(trystate_T *stack, int depth, int score_add)
 {
@@ -5834,7 +5829,6 @@ static void check_suggestions(suginfo_T *su, garray_T *gap)
   }
 }
 
-
 // Add a word to be banned.
 static void add_banned(suginfo_T *su, char_u *word)
 {
@@ -5887,7 +5881,6 @@ static void rescore_one(suginfo_T *su, suggest_T *stp)
     stp->st_had_bonus = true;
   }
 }
-
 
 // Function given to qsort() to sort the suggestions on st_score.
 // First on "st_score", then "st_altscore" then alphabetically.
@@ -6068,7 +6061,6 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   int c0;
   bool did_white = false;
   int wordlen;
-
 
   // Convert the multi-byte string to a wide-character string.
   // Remove accents, if wanted.  We actually remove all non-word characters.

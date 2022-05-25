@@ -53,11 +53,9 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 
-
 // TODO(ZyX-I): Remove DICT_MAXNEST, make users be non-recursive instead
 
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
-
 
 static char *e_letunexp = N_("E18: Unexpected characters in :let");
 static char *e_missbrac = N_("E111: Missing ']'");
@@ -1067,7 +1065,6 @@ int get_spellword(list_T *const list, const char **ret_word)
   return tv_list_find_nr(list, -1, NULL);
 }
 
-
 // Call some vim script function and return the result in "*rettv".
 // Uses argv[0] to argv[argc-1] for the function arguments. argv[argc]
 // should have type VAR_UNKNOWN.
@@ -1208,7 +1205,6 @@ void prof_child_exit(proftime_T *tm)
   }
   script_prof_restore(tm);
 }
-
 
 /// Evaluate 'foldexpr'.  Returns the foldlevel, and any character preceding
 /// it in "*cp".  Doesn't give error messages.
@@ -2701,7 +2697,6 @@ void free_for_info(void *fi_void)
   xfree(fi);
 }
 
-
 void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -3145,7 +3140,6 @@ void del_menutrans_vars(void)
  * with its prefix. Allocated in cat_prefix_varname(), freed later in
  * get_user_var_name().
  */
-
 
 static char *varnamebuf = NULL;
 static size_t varnamebuflen = 0;
@@ -5636,7 +5630,6 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
   return abort;
 }
 
-
 /// Mark all lists and dicts referenced in given mark
 ///
 /// @return  true if setting references failed somehow.
@@ -5682,7 +5675,6 @@ static inline bool set_ref_dict(dict_T *dict, int copyID)
   }
   return false;
 }
-
 
 /// Get the key for *{key: val} into "tv" and advance "arg".
 ///
@@ -7286,7 +7278,6 @@ static bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_
     tv.vval.v_partial = callback->data.partial;
     return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
     break;
-
 
   default:
     abort();
@@ -10248,7 +10239,6 @@ repeat:
     *usedlen += 2;
   }
 
-
   // ":t" - tail, just the basename
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 't') {
     *usedlen += 2;
@@ -10489,7 +10479,6 @@ bool common_job_callbacks(dict_T *vopts, CallbackReader *on_stdout, CallbackRead
   return false;
 }
 
-
 Channel *find_job(uint64_t id, bool show_error)
 {
   Channel *data = find_channel(id);
@@ -10506,7 +10495,6 @@ Channel *find_job(uint64_t id, bool show_error)
   }
   return data;
 }
-
 
 void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 {

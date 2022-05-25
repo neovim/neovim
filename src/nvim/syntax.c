@@ -95,7 +95,6 @@ typedef struct syn_pattern {
   syn_time_T sp_time;
 } synpat_T;
 
-
 typedef struct syn_cluster_S {
   char_u *scl_name;         // syntax cluster name
   char_u *scl_name_u;       // uppercase of scl_name
@@ -177,7 +176,6 @@ static char *(spo_name_tab[SPO_COUNT]) =
 #define SPTYPE_START    2       // match a regexp, start of item
 #define SPTYPE_END      3       // match a regexp, end of item
 #define SPTYPE_SKIP     4       // match a regexp, skip within item
-
 
 #define SYN_ITEMS(buf)  ((synpat_T *)((buf)->b_syn_patterns.ga_data))
 
@@ -2094,7 +2092,6 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
       }
     }
 
-
     /*
      * Check for end of current state (and the states before it) at the
      * next column.  Don't do this for syncing, because we would miss a
@@ -2139,7 +2136,6 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
 
   return current_attr;
 }
-
 
 /// @return  true if we already matched pattern "idx" at the current column.
 static bool did_match_already(int idx, garray_T *gap)
@@ -3606,7 +3602,6 @@ static void syn_match_msg(void)
 }
 
 static int last_matchgroup;
-
 
 /// List one syntax item, for ":syntax" or "syntax list syntax_name".
 ///
@@ -5694,7 +5689,6 @@ bool syntax_present(win_T *win)
          || win->w_s->b_keywtab_ic.ht_used > 0;
 }
 
-
 static enum {
   EXP_SUBCMD,       // expand ":syn" sub-commands
   EXP_CASE,         // expand ":syn case" arguments
@@ -5788,7 +5782,6 @@ char *get_syntax_name(expand_T *xp, int idx)
   return NULL;
 }
 
-
 /// Function called for expression evaluation: get syntax ID at file position.
 ///
 /// @param trans       remove transparency
@@ -5822,7 +5815,6 @@ int get_syntax_info(int *seqnrp)
   *seqnrp = current_seqnr;
   return current_flags;
 }
-
 
 /// Get the sequence number of the concealed file position.
 ///

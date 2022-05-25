@@ -50,7 +50,6 @@
        rbuffer_space(buf); \
        wptr = rbuffer_write_ptr(buf, &wcnt))
 
-
 // Iteration
 #define RBUFFER_EACH(buf, c, i) \
   for (size_t i = 0;  /* NOLINT(readability/braces) */ \
