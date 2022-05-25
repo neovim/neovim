@@ -3696,8 +3696,11 @@ error:
       len = STRLEN(y_array[y_size - 1]);
       col = (colnr_T)len - lendiff;
       if (col > 1) {
-        curbuf->b_op_end.col = col - 1 - utf_head_off(y_array[y_size - 1],
-                                                      y_array[y_size - 1] + len - 1);
+        curbuf->b_op_end.col = col - 1;
+        if (len > 0) {
+          curbuf->b_op_end.col -= utf_head_off(y_array[y_size - 1],
+                                               y_array[y_size - 1] + len - 1);
+        }
       } else {
         curbuf->b_op_end.col = 0;
       }
