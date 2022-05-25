@@ -89,6 +89,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 	inoremap <C-W> <C-G>u<C-W>
 	xnoremap * y/\V<C-R>"<CR>
 	xnoremap # y?\V<C-R>"<CR>
+	nnoremap <C-_> u
+	inoremap <C-_> <C-O>u
 <
 Default Autocommands ~
 							*default-autocmds*
