@@ -333,7 +333,7 @@ Four autocommands can be used: >
 						*TermdebugStartPre*
 TermdebugStartPre		Before starting debugging.
 				Not triggered if the debugger is already
-				running or |g:termdebugger| cannot be
+				running or the debugger command cannot be
 				executed.
 						*TermdebugStartPost*
 TermdebugStartPost		After debugging has initialized.
@@ -362,18 +362,24 @@ This works slightly differently:
 
 						*termdebug_use_prompt*
 Prompt mode can be used with: >
+	let g:termdebug_config['use_prompt'] = 1
+Or if there is no g:termdebug_config: >
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
 The K key is normally mapped to :Evaluate. If you do not want this use: >
+	let g:termdebug_config['map_K'] = 0
+Or if there is no g:termdebug_config: >
 	let g:termdebug_map_K = 0
-
 <
 						*termdebug_disasm_window*
-If you want the Asm window shown by default, set this to 1. Setting to
-any value greater than 1 will set the Asm window height to that value: >
+If you want the Asm window shown by default, set the flag to 1.
+the "disasm_window_height" entry can be used to set the window height: >
+	let g:termdebug_config['disasm_window'] = 1
+	let g:termdebug_config['disasm_window_height'] = 15
+or, if there is no g:termdebug_config: >
 	let g:termdebug_disasm_window = 15
-<
+Any value greater than 1 will set the Asm window height to that value: >
 
 Communication ~
 						*termdebug-communication*
@@ -390,13 +396,24 @@ communication channel.
 
 
 Customizing ~
+				*termdebug-customizing* *g:termdebug_config*
+In the past several global variables were used for configuration.  These are
+deprecated, using the g:termdebug_config dictionary is preferred.  When
+g:termdebug_config exists the other global variables will not be used.
 
-GDB command						*termdebug-customizing*
+
+GDB command ~
 							*g:termdebugger*
-To change the name of the gdb command, set the "g:termdebugger" variable before
-invoking `:Termdebug`: >
+To change the name of the gdb command, set "debugger" entry in
+g:termdebug_config or the "g:termdebugger" variable before invoking
+`:Termdebug`: >
+	let g:termdebug_config['command'] = "mygdb"
+Or if there is no g:termdebug_config: >
 	let g:termdebugger = "mygdb"
+
 If the command needs an argument use a List: >
+	let g:termdebug_config['command'] = ['rr', 'replay', '--']
+Or if there is no g:termdebug_config: >
 	let g:termdebugger = ['rr', 'replay', '--']
 
 To not use neovim floating windows for previewing variable evaluation, set the
@@ -410,7 +427,17 @@ cursor: >
 or set/unset a breakpoint: >
 	nnoremap <RightMouse> :Break<CR>
 
-<							*gdb-version*
+
+Several arguments will be added to make gdb work well for the debugger.
+If you want to modify them, add a function to filter the argument list: >
+	let g:termdebug_config['command_filter'] = MyDebugFilter
+
+If you do not want the arguments to be added, but you do need to set the
+"pty", use a function to add the necessary arguments: >
+	let g:termdebug_config['command_add_args'] = MyAddArguments
+The function will be called with the list of arguments so far, and a second
+argument that is the name of the pty.
+							*gdb-version*
 Only debuggers fully compatible with gdb will work.  Vim uses the GDB/MI
 interface.  The "new-ui" command  requires gdb version 7.12 or later.  if you
 get this error:
@@ -418,8 +445,8 @@ get this error:
 Then your gdb is too old.
 
 
-Colors						*hl-debugPC* *hl-debugBreakpoint*
-
+Colors~
+						*hl-debugPC* *hl-debugBreakpoint*
 The color of the signs can be adjusted with these highlight groups:
 - debugPC		the current position
 - debugBreakpoint	a breakpoint
@@ -445,15 +472,17 @@ Vim window width						*termdebug_wide*
 
 To change the width of the Vim window when debugging starts and use a vertical
 split: >
+	let g:termdebug_config['wide'] = 163
+Or if there is no g:termdebug_config: >
 	let g:termdebug_wide = 163
 
 This will set 'columns' to 163 when `:Termdebug` is used.  The value is
 restored when quitting the debugger.
 
-If g:termdebug_wide is set and 'columns' is already a greater value, then a
+If the wide value is set and 'columns' is already a greater value, then a
 vertical split will be used without modifying 'columns'.
 
-Set g:termdebug_wide to 1 to use a vertical split without ever changing
+Set the wide value to 1 to use a vertical split without ever changing
 'columns'.  This is useful when the terminal can't be resized by Vim.
 
 
