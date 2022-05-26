@@ -377,23 +377,20 @@ end
 ---                name using |vim.ui.input()|.
 ---@param options table|nil additional options
 ---     - filter (function|nil):
----         Predicate to filter clients used for rename.
----         Receives the attached clients as argument and must return a list of
----         clients.
+---         Predicate used to filter clients. Receives a client as argument and
+---         must return a boolean. Clients matching the predicate are included.
 ---     - name (string|nil):
 ---         Restrict clients used for rename to ones where client.name matches
 ---         this field.
 function M.rename(new_name, options)
   options = options or {}
   local bufnr = options.bufnr or vim.api.nvim_get_current_buf()
-  local clients = vim.lsp.buf_get_clients(bufnr)
-
+  local clients = vim.lsp.get_active_clients({
+    bufnr = bufnr,
+    name = options.name,
+  })
   if options.filter then
-    clients = options.filter(clients)
-  elseif options.name then
-    clients = vim.tbl_filter(function(client)
-      return client.name == options.name
-    end, clients)
+    clients = vim.tbl_filter(options.filter, clients)
   end
 
   -- Clients must at least support rename, prepareRename is optional
