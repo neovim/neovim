@@ -10,6 +10,7 @@
 --       Defaults to BASE_NONE (function cannot be used as a method).
 -- func  Name of the C function which implements the VimL function. Defaults to
 --       `f_{funcname}`.
+-- fast  Function can run in |api-fast| events. Defaults to false.
 
 local varargs = function(nr)
   return {nr}
@@ -205,7 +206,7 @@ return {
     hlID={args=1, base=1},
     hlexists={args=1, base=1},
     hostname={},
-    iconv={args=3, base=1},
+    iconv={args=3, base=1, fast=true},
     indent={args=1, base=1},
     index={args={2, 4}, base=1},
     input={args={1, 3}, base=1},

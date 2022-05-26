@@ -794,6 +794,20 @@ describe('lua stdlib', function()
           pcall_err(exec_lua, "vim.fn.nvim_get_current_line()"))
   end)
 
+  it('vim.fn is allowed in "fast" context by some functions #18306', function()
+    exec_lua([[
+      local timer = vim.loop.new_timer()
+      timer:start(0, 0, function()
+        timer:close()
+        assert(vim.in_fast_event())
+        vim.g.fnres = vim.fn.iconv('hello', 'utf-8', 'utf-8')
+      end)
+    ]])
+
+    helpers.poke_eventloop()
+    eq('hello', exec_lua[[return vim.g.fnres]])
+  end)
+
   it('vim.rpcrequest and vim.rpcnotify', function()
     exec_lua([[
       chan = vim.fn.jobstart({'cat'}, {rpc=true})

@@ -1038,6 +1038,8 @@ vim.fn.{func}({...})                                                  *vim.fn*
         Note: vim.fn keys are generated lazily, thus `pairs(vim.fn)` only
         enumerates functions that were called at least once.
 
+        Note: The majority of functions cannot run in |api-fast| callbacks with some
+        undocumented exceptions which are allowed.
 
                                                            *lua-vim-variables*
 The Vim editor global dictionaries |g:| |w:| |b:| |t:| |v:| can be accessed

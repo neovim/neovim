@@ -61,10 +61,11 @@ for _, name in ipairs(neworder) do
   local base = def.base or "BASE_NONE"
   local func = def.func or ('f_' .. name)
   local data = def.data or "NULL"
-  hashpipe:write(('  { "%s", %s, %s, %s, &%s, (FunPtr)%s },\n')
-                  :format(name, args[1], args[2], base, func, data))
+  local fast = def.fast and 'true' or 'false'
+  hashpipe:write(('  { "%s", %s, %s, %s, %s, &%s, (FunPtr)%s },\n')
+                  :format(name, args[1], args[2], base, fast, func, data))
 end
-hashpipe:write('  { NULL, 0, 0, BASE_NONE, NULL, NULL },\n')
+hashpipe:write('  { NULL, 0, 0, BASE_NONE, false, NULL, NULL },\n')
 hashpipe:write("};\n\n")
 hashpipe:write(hashfun)
 hashpipe:close()

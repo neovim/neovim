@@ -914,12 +914,22 @@ int nlua_in_fast_event(lua_State *lstate)
   return 1;
 }
 
+static bool viml_func_is_fast(const char *name)
+{
+  const EvalFuncDef *const fdef = find_internal_func((const char *)name);
+  if (fdef) {
+    return fdef->fast;
+  }
+  // Not a vimL function
+  return false;
+}
+
 int nlua_call(lua_State *lstate)
 {
   Error err = ERROR_INIT;
   size_t name_len;
   const char *name = luaL_checklstring(lstate, 1, &name_len);
-  if (!nlua_is_deferred_safe()) {
+  if (!nlua_is_deferred_safe() && !viml_func_is_fast(name)) {
     return luaL_error(lstate, e_luv_api_disabled, "vimL function");
   }
 
