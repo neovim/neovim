@@ -30,6 +30,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
+#include "nvim/fileio.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"
@@ -1425,6 +1426,45 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
   }
 
   api_set_error(err, kErrorTypeException, "No such user-defined command: %s", name.data);
+}
+
+/// Save the buffer
+///
+/// @param buffer Buffer handle, or 0 for current buffer
+/// @param opts Optional parameters. Keys:
+///          - ignore_ro: Ignores the buffer's option 'readonly' and save. Default: false
+void nvim_buf_save(Buffer buffer, Dictionary opts, Error *err)
+  FUNC_API_SINCE(10)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return;
+  }
+
+  bool ignore_ro = false;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object v = opts.items[i].value;
+
+    if (strequal("ignore_ro", k.data)) {
+      ignore_ro = api_object_to_bool(v, "ignore_ro", false, err);
+    } else {
+      api_set_error(err, kErrorTypeException, "unexpected key: %s", k.data);
+      return;
+    }
+  }
+
+  if (buf->b_p_ro && !ignore_ro) {
+    api_set_error(err, kErrorTypeException, "Buffer \"%d\" is readonly.", buffer);
+    return;
+  }
+
+  int result = buf_write(buf, (char *)buf->b_ffname, buf->b_fname, (linenr_T)1, buf->b_ml.ml_line_count,
+                         NULL, false, false, true, false);
+  if (result == FAIL) {
+    api_set_error(err, kErrorTypeException, "Failed to save buffer.");
+    return;
+  }
 }
 
 Dictionary nvim__buf_stats(Buffer buffer, Error *err)
