@@ -789,11 +789,6 @@ example, `"\uFEFF"`, is the Unicode zero-width no-break space character, which
 would be invisible if included in the source as straight UTF-8.
 
 
-Spaces vs. Tabs ~
-
-Use only spaces, and indent 2 spaces at a time. Do not use tabs in your code.
-
-
 Function Declarations and Definitions ~
 
 Return type on the same line as function name, parameters on the same line if
@@ -903,7 +898,7 @@ no name, assume a zero-length name. >
 
 Conditionals ~
 
-Don't use spaces inside parentheses. Always use curly braces. >
+Don't use spaces inside parentheses. >
 
     if (condition) {  // no spaces inside parentheses
       ...  // 2 space indent.
@@ -923,8 +918,8 @@ warn you if any values are not handled). If the default case should never
 execute, simply `assert`: >
 
     switch (var) {
-      case 0:    // 2 space indent
-        ...      // 4 space indent
+      case 0:
+        ...
         break;
       case 1:
         ...
@@ -950,15 +945,6 @@ Note that:
 
     - There are no spaces around the period or arrow when accessing a member.
     - Pointer operators have no space after the * or &.
-
-When declaring a pointer variable or argument, place the asterisk adjacent to
-the variable name: >
-
-    char *c;
-
-    char * c;  // BAD: spaces on both sides of *
-    char* c;   // BAD
-
 
 Boolean Expressions ~
 
@@ -991,15 +977,10 @@ expr;`. >
 
 Horizontal Whitespace ~
 
-Use of horizontal whitespace depends on location. Never put trailing
-whitespace at the end of a line.
+Use of horizontal whitespace depends on location.
 
     General ~
 >
-        if (x) {          // Open braces should always have a space before them.
-          ...
-        }
-        int i = 0;        // Semicolons usually have no space before them.
         int x[] = { 0 };  // Spaces inside braces for braced-init-list.
 <
 
@@ -1019,21 +1000,6 @@ whitespace at the end of a line.
         };
 <
 
-    Loops and Conditionals ~
->
-        if (b) {              // Space after the keyword in condition.
-        } else {              // Spaces around else.
-        }
-        while (test) {}       // There is usually no space inside parentheses.
-        for (; i < 5; i++) {  // For loops always have a space after the
-          ...                 // semicolon and no a space before the
-          ...                 // semicolon.
-        }
-        switch (i) {
-          case 1:             // No space before colon in a switch case.
-            ...
-          case 2: break;      // Space after a colon if there's code after it.
-<
 
     Operators ~
 >
@@ -1043,8 +1009,6 @@ whitespace at the end of a line.
         x++;              // arguments.
         if (x && !y)
           ...
-        v = w*x + y/z;    // Use spaces to indicate operator precedence.
-        v = w * (x + z);  // Parentheses should have no spaces inside them.
         i = (int)d;       // No spaces after a cast operator.
 <
 
