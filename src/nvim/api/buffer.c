@@ -1137,12 +1137,16 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
   return buf && buf->b_ml.ml_mfp != NULL;
 }
 
-/// Deletes the buffer. See |:bwipeout|
+/// Deletes the buffer.
 ///
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param opts  Optional parameters. Keys:
 ///          - force:  Force deletion and ignore unsaved changes.
-///          - unload: Unloaded only, do not delete. See |:bunload|
+///          - action: (default: "wipeout")
+///             - "wipeout": Equivalent to |:bwipeout|.
+///             - "unload":  Equivalent to |:bunload|.
+///             - "delete":  Equivalent to |:bdelete|.
+///          - unload: [deprecated] please use `action="unload"` instead.
 void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_CHECK_TEXTLOCK
@@ -1154,14 +1158,30 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
   }
 
   bool force = false;
-  bool unload = false;
+  int action = DOBUF_WIPE;
+
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object v = opts.items[i].value;
     if (strequal("force", k.data)) {
       force = api_object_to_bool(v, "force", false, err);
+    } else if (strequal("action", k.data)) {
+      if (v.type == kObjectTypeString) {
+        char* choice = v.data.string.data;
+        if (strequal(choice, "unload")) {
+          action = DOBUF_UNLOAD;
+        } else if (strequal(choice, "wipeout")) {
+          action = DOBUF_WIPE;
+        } else if (strequal(choice, "delete")) {
+          action = DOBUF_DEL;
+        } else {
+          api_set_error(err, kErrorTypeValidation, "Invalid action: %s", choice);
+        }
+        return;
+      }
     } else if (strequal("unload", k.data)) {
-      unload = api_object_to_bool(v, "unload", false, err);
+      // For backward compatibility we support "unload=true" as an alias for "action='unload"
+      action = DOBUF_UNLOAD;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return;
@@ -1172,14 +1192,10 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
     return;
   }
 
-  int result = do_buffer(unload ? DOBUF_UNLOAD : DOBUF_WIPE,
-                         DOBUF_FIRST,
-                         FORWARD,
-                         buf->handle,
-                         force);
+  int result = do_buffer(action, DOBUF_FIRST, FORWARD, buf->handle, force);
 
   if (result == FAIL) {
-    api_set_error(err, kErrorTypeException, "Failed to unload buffer.");
+    api_set_error(err, kErrorTypeException, "Failed to delete buffer.");
     return;
   }
 }
