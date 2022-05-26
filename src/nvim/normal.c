@@ -432,6 +432,18 @@ static int find_command(int cmdchar)
   return idx;
 }
 
+/// If currently editing a cmdline or text is locked: beep and give an error
+/// message, return true.
+static bool check_text_locked(oparg_T *oap)
+{
+  if (text_locked()) {
+    clearopbeep(oap);
+    text_locked_msg();
+    return true;
+  }
+  return false;
+}
+
 /// Normal state entry point. This is called on:
 ///
 /// - Startup, In this case the function never returns.
@@ -1079,15 +1091,9 @@ static int normal_execute(VimState *state, int key)
     goto finish;
   }
 
-  if (text_locked() && (nv_cmds[s->idx].cmd_flags & NV_NCW)) {
-    // This command is not allowed while editing a cmdline: beep.
-    clearopbeep(&s->oa);
-    text_locked_msg();
-    s->command_finished = true;
-    goto finish;
-  }
-
-  if ((nv_cmds[s->idx].cmd_flags & NV_NCW) && curbuf_locked()) {
+  if ((nv_cmds[s->idx].cmd_flags & NV_NCW)
+      && (check_text_locked(&s->oa) || curbuf_locked())) {
+    // this command is not allowed now
     s->command_finished = true;
     goto finish;
   }
@@ -4704,9 +4710,7 @@ static void nv_gotofile(cmdarg_T *cap)
   char_u *ptr;
   linenr_T lnum = -1;
 
-  if (text_locked()) {
-    clearopbeep(cap->oap);
-    text_locked_msg();
+  if (check_text_locked(cap->oap)) {
     return;
   }
   if (curbuf_locked()) {
@@ -6433,13 +6437,7 @@ static void nv_g_cmd(cmdarg_T *cap)
 
   // "gQ": improved Ex mode
   case 'Q':
-    if (text_locked()) {
-      clearopbeep(cap->oap);
-      text_locked_msg();
-      break;
-    }
-
-    if (!checkclearopq(oap)) {
+    if (!check_text_locked(cap->oap) && !checkclearopq(oap)) {
       do_exmode();
     }
     break;

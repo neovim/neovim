@@ -89,6 +89,7 @@
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
@@ -1953,6 +1954,11 @@ void undo_time(long step, bool sec, bool file, bool absolute)
   bool dofile = file;
   bool above = false;
   bool did_undo = true;
+
+  if (text_locked()) {
+    text_locked_msg();
+    return;
+  }
 
   // First make sure the current undoable change is synced.
   if (curbuf->b_u_synced == false) {
