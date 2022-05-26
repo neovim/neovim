@@ -4826,6 +4826,8 @@ static void nv_brackets(cmdarg_T *cap)
     if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
       clearop(cap->oap);
     } else {
+      // Make a copy, if the line was changed it will be freed.
+      ptr = vim_strnsave(ptr, len);
       find_pattern_in_path(ptr, 0, len, true,
                            cap->count0 == 0 ? !isupper(cap->nchar) : false,
                            (((cap->nchar & 0xf) == ('d' & 0xf))
@@ -4839,6 +4841,7 @@ static void nv_brackets(cmdarg_T *cap)
                             ? curwin->w_cursor.lnum + 1
                             : (linenr_T)1),
                            MAXLNUM);
+      xfree(ptr);
       curwin->w_set_curswant = true;
     }
   } else if ((cap->cmdchar == '[' && vim_strchr("{(*/#mM", cap->nchar) != NULL)

@@ -1084,6 +1084,12 @@ func Test_define_search()
   sil norm o0
   sil! norm 
   bwipe!
+
+  new somefile
+  call setline(1, ['first line', '', '#define something 0'])
+  sil norm 0o0
+  sil! norm ]d
+  bwipe!
 endfunc
 
 " Test for the 'taglength' option
