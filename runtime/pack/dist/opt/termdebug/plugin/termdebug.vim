@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2022 May 09
+" Last Change: 2022 May 23
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -71,11 +71,6 @@ set cpo&vim
 command -nargs=* -complete=file -bang Termdebug call s:StartDebug(<bang>0, <f-args>)
 command -nargs=+ -complete=file -bang TermdebugCommand call s:StartDebugCommand(<bang>0, <f-args>)
 
-" Name of the gdb command, defaults to "gdb".
-if !exists('g:termdebugger')
-  let g:termdebugger = 'gdb'
-endif
-
 let s:pc_id = 12
 let s:asm_id = 13
 let s:break_id = 14  " breakpoint number is added to this
@@ -105,8 +100,17 @@ call s:Highlight(1, '', &background)
 hi default debugBreakpoint term=reverse ctermbg=red guibg=red
 hi default debugBreakpointDisabled term=reverse ctermbg=gray guibg=gray
 
+" Get the command to execute the debugger as a list, defaults to ["gdb"].
 func s:GetCommand()
-  return type(g:termdebugger) == v:t_list ? copy(g:termdebugger) : [g:termdebugger]
+  if exists('g:termdebug_config')
+    let cmd = get(g:termdebug_config, 'command', 'gdb')
+  elseif exists('g:termdebugger')
+    let cmd = g:termdebugger
+  else
+    let cmd = 'gdb'
+  endif
+
+  return type(cmd) == v:t_list ? copy(cmd) : [cmd]
 endfunc
 
 func s:StartDebug(bang, ...)
@@ -177,12 +181,10 @@ func s:StartDebug_internal(dict)
     call s:StartDebug_term(a:dict)
   endif
 
-  if exists('g:termdebug_disasm_window')
-    if g:termdebug_disasm_window
-      let curwinid = win_getid(winnr())
-      call s:GotoAsmwinOrCreateIt()
-      call win_gotoid(curwinid)
-    endif
+  if s:GetDisasmWindow()
+    let curwinid = win_getid(winnr())
+    call s:GotoAsmwinOrCreateIt()
+    call win_gotoid(curwinid)
   endif
 
   if exists('#User#TermdebugStartPost')
@@ -252,18 +254,28 @@ func s:StartDebug_term(dict)
   let proc_args = get(a:dict, 'proc_args', [])
 
   let gdb_cmd = s:GetCommand()
-  " Add -quiet to avoid the intro message causing a hit-enter prompt.
-  let gdb_cmd += ['-quiet']
-  " Disable pagination, it causes everything to stop at the gdb
-  let gdb_cmd += ['-iex', 'set pagination off']
-  " Interpret commands while the target is running.  This should usually only
-  " be exec-interrupt, since many commands don't work properly while the
-  " target is running (so execute during startup).
-  let gdb_cmd += ['-iex', 'set mi-async on']
-  " Open a terminal window to run the debugger.
-  let gdb_cmd += ['-tty', pty]
-  " Command executed _after_ startup is done, provides us with the necessary feedback
-  let gdb_cmd += ['-ex', 'echo startupdone\n']
+
+  if exists('g:termdebug_config') && has_key(g:termdebug_config, 'command_add_args')
+    let gdb_cmd = g:termdebug_config.command_add_args(gdb_cmd, pty)
+  else
+    " Add -quiet to avoid the intro message causing a hit-enter prompt.
+    let gdb_cmd += ['-quiet']
+    " Disable pagination, it causes everything to stop at the gdb
+    let gdb_cmd += ['-iex', 'set pagination off']
+    " Interpret commands while the target is running.  This should usually only
+    " be exec-interrupt, since many commands don't work properly while the
+    " target is running (so execute during startup).
+    let gdb_cmd += ['-iex', 'set mi-async on']
+    " Open a terminal window to run the debugger.
+    let gdb_cmd += ['-tty', pty]
+    " Command executed _after_ startup is done, provides us with the necessary
+    " feedback
+    let gdb_cmd += ['-ex', 'echo startupdone\n']
+  endif
+
+  if exists('g:termdebug_config') && has_key(g:termdebug_config, 'command_filter')
+    let gdb_cmd = g:termdebug_config.command_filter(gdb_cmd)
+  endif
 
   " Adding arguments requested by the user
   let gdb_cmd += gdb_args
@@ -871,7 +883,13 @@ func s:InstallCommands()
   command Asm call s:GotoAsmwinOrCreateIt()
   command Winbar call s:InstallWinbar()
 
-  if !exists('g:termdebug_map_K') || g:termdebug_map_K
+  let map = 1
+  if exists('g:termdebug_config')
+    let map = get(g:termdebug_config, 'map_K', 1)
+  elseif exists('g:termdebug_map_K')
+    let map = g:termdebug_map_K
+  endif
+  if map
     " let s:k_map_saved = maparg('K', 'n', 0, 1)
     let s:k_map_saved = {}
     for map in nvim_get_keymap('n')
@@ -1280,6 +1298,26 @@ func s:GotoSourcewinOrCreateIt()
   endif
 endfunc
 
+func s:GetDisasmWindow()
+  if exists('g:termdebug_config')
+    return get(g:termdebug_config, 'disasm_window', 0)
+  endif
+  if exists('g:termdebug_disasm_window')
+    return g:termdebug_disasm_window
+  endif
+  return 0
+endfunc
+
+func s:GetDisasmWindowHeight()
+  if exists('g:termdebug_config')
+    return get(g:termdebug_config, 'disasm_window_height', 0)
+  endif
+  if exists('g:termdebug_disasm_window') && g:termdebug_disasm_window > 1
+    return g:termdebug_disasm_window
+  endif
+  return 0
+endfunc
+
 func s:GotoAsmwinOrCreateIt()
   if !win_gotoid(s:asmwin)
     if win_gotoid(s:sourcewin)
@@ -1303,10 +1341,8 @@ func s:GotoAsmwinOrCreateIt()
       exe 'file Termdebug-asm-listing'
     endif
 
-    if exists('g:termdebug_disasm_window')
-      if g:termdebug_disasm_window > 1
-        exe 'resize ' . g:termdebug_disasm_window
-      endif
+    if s:GetDisasmWindowHeight() > 0
+      exe 'resize ' .. s:GetDisasmWindowHeight()
     endif
   endif
 

@@ -243,6 +243,10 @@ preprocess_patch() {
   LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/keymap\.h/\1\/keycodes.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename terminal.txt to nvim_terminal_emulator.txt
+  LC_ALL=C sed -e 's/\( [ab]\/runtime\/doc\)\/terminal\.txt/\1\/nvim_terminal_emulator.txt/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename test_urls.vim to check_urls.vim
   LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls\.vim\)@\1/scripts/check\2@g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
