@@ -405,7 +405,7 @@ au BufNewFile,BufRead *.cu,*.cuh		setf cuda
 
 " Dockerfile; Podman uses the same syntax with name Containerfile
 " Also see Dockerfile.* below.
-au BufNewFile,BufRead Containerfile,Dockerfile,*.Dockerfile	setf dockerfile
+au BufNewFile,BufRead Containerfile,Dockerfile,dockerfile,*.[dD]ockerfile	setf dockerfile
 
 " WildPackets EtherPeek Decoder
 au BufNewFile,BufRead *.dcd			setf dcd
@@ -815,6 +815,9 @@ au BufNewFile,BufRead *.hjson			setf hjson
 " Hollywood
 au BufRead,BufNewFile *.hws			setf hollywood
 
+" Hoon
+au BufRead,BufNewFile *.hoon			setf hoon
+
 " Tilde (must be before HTML)
 au BufNewFile,BufRead *.t.html			setf tilde
 
@@ -1167,6 +1170,9 @@ au BufNewFile,BufRead *.isc,*.monk,*.ssc,*.tsc	setf monk
 
 " MOO
 au BufNewFile,BufRead *.moo			setf moo
+
+" Moonscript
+au BufNewFile,BufRead *.moon			setf moonscript
 
 " Modconf
 au BufNewFile,BufRead */etc/modules.conf,*/etc/modules,*/etc/conf.modules setf modconf
