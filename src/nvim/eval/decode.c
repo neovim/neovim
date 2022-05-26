@@ -414,9 +414,9 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
   bool hasnul = false;
 #define PUT_FST_IN_PAIR(fst_in_pair, str_end) \
   do { \
-    if (fst_in_pair != 0) { \
-      str_end += utf_char2bytes(fst_in_pair, str_end); \
-      fst_in_pair = 0; \
+    if ((fst_in_pair) != 0) { \
+      (str_end) += utf_char2bytes(fst_in_pair, (str_end)); \
+      (fst_in_pair) = 0; \
     } \
   } while (0)
   for (const char *t = s; t < p; t++) {

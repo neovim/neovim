@@ -6027,7 +6027,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
 #define ADD_STATE_IF_MATCH(state) \
   if (result) { \
-    add_state = state->out; \
+    add_state = (state)->out; \
     add_off = clen; \
   }
 

@@ -879,9 +879,9 @@ void tv_list_reverse(list_T *const l)
   list_log(l, NULL, NULL, "reverse");
 #define SWAP(a, b) \
   do { \
-    tmp = a; \
-    a = b; \
-    b = tmp; \
+    tmp = (a); \
+    (a) = (b); \
+    (b) = tmp; \
   } while (0)
   listitem_T *tmp;
 
@@ -2262,36 +2262,36 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
   do { \
-    tv->vval.v_special = kSpecialVarNull; \
-    tv->v_lock = VAR_UNLOCKED; \
+    (tv)->vval.v_special = kSpecialVarNull; \
+    (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
   do { \
-    tv->vval.v_bool = kBoolVarFalse; \
-    tv->v_lock = VAR_UNLOCKED; \
+    (tv)->vval.v_bool = kBoolVarFalse; \
+    (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
   do { \
-    (void)num; \
-    tv->vval.v_number = 0; \
-    tv->v_lock = VAR_UNLOCKED; \
+    (void)(num); \
+    (tv)->vval.v_number = 0; \
+    (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER(tv, num)
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
   do { \
-    tv->vval.v_float = 0; \
-    tv->v_lock = VAR_UNLOCKED; \
+    (tv)->vval.v_float = 0; \
+    (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, buf, len) \
   do { \
     xfree(buf); \
-    tv->vval.v_string = NULL; \
-    tv->v_lock = VAR_UNLOCKED; \
+    (tv)->vval.v_string = NULL; \
+    (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
 #define TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len)
@@ -2300,9 +2300,9 @@ void tv_blob_copy(typval_T *const from, typval_T *const to)
 
 #define TYPVAL_ENCODE_CONV_BLOB(tv, blob, len) \
   do { \
-    tv_blob_unref(tv->vval.v_blob); \
-    tv->vval.v_blob = NULL; \
-    tv->v_lock = VAR_UNLOCKED; \
+    tv_blob_unref((tv)->vval.v_blob); \
+    (tv)->vval.v_blob = NULL; \
+    (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
 static inline int _nothing_conv_func_start(typval_T *const tv, char_u *const fun)
@@ -2359,9 +2359,9 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
   do { \
-    tv_list_unref(tv->vval.v_list); \
-    tv->vval.v_list = NULL; \
-    tv->v_lock = VAR_UNLOCKED; \
+    tv_list_unref((tv)->vval.v_list); \
+    (tv)->vval.v_list = NULL; \
+    (tv)->v_lock = VAR_UNLOCKED; \
   } while (0)
 
 static inline void _nothing_conv_empty_dict(typval_T *const tv, dict_T **const dictp)
@@ -2375,8 +2375,8 @@ static inline void _nothing_conv_empty_dict(typval_T *const tv, dict_T **const d
 }
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
   do { \
-    assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
-    _nothing_conv_empty_dict(tv, ((dict_T **)&dict)); \
+    assert((void *)&(dict) != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
+    _nothing_conv_empty_dict(tv, ((dict_T **)&(dict))); \
   } while (0)
 
 static inline int _nothing_conv_real_list_after_start(typval_T *const tv,
@@ -2397,7 +2397,7 @@ static inline int _nothing_conv_real_list_after_start(typval_T *const tv,
 
 #define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv) \
   do { \
-    if (_nothing_conv_real_list_after_start(tv, &mpsv) != NOTDONE) { \
+    if (_nothing_conv_real_list_after_start(tv, &(mpsv)) != NOTDONE) { \
       goto typval_encode_stop_converting_one_item; \
     } \
   } while (0)
@@ -2437,8 +2437,9 @@ static inline int _nothing_conv_real_dict_after_start(typval_T *const tv, dict_T
 
 #define TYPVAL_ENCODE_CONV_REAL_DICT_AFTER_START(tv, dict, mpsv) \
   do { \
-    if (_nothing_conv_real_dict_after_start(tv, (dict_T **)&dict, (void *)&TYPVAL_ENCODE_NODICT_VAR, \
-                                            &mpsv) != NOTDONE) { \
+    if (_nothing_conv_real_dict_after_start(tv, (dict_T **)&(dict), \
+                                            (void *)&TYPVAL_ENCODE_NODICT_VAR, &(mpsv)) \
+        != NOTDONE) { \
       goto typval_encode_stop_converting_one_item; \
     } \
   } while (0)
@@ -2457,7 +2458,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv, dict_T **const dic
   }
 }
 #define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
-  _nothing_conv_dict_end(tv, (dict_T **)&dict, \
+  _nothing_conv_dict_end(tv, (dict_T **)&(dict), \
                          (void *)&TYPVAL_ENCODE_NODICT_VAR)
 
 #define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type)
@@ -2639,9 +2640,9 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock, const boo
   // lock/unlock the item itself
 #define CHANGE_LOCK(lock, var) \
   do { \
-    var = ((VarLockStatus[]) { \
-      [VAR_UNLOCKED] = (lock ? VAR_LOCKED : VAR_UNLOCKED), \
-      [VAR_LOCKED] = (lock ? VAR_LOCKED : VAR_UNLOCKED), \
+    (var) = ((VarLockStatus[]) { \
+      [VAR_UNLOCKED] = ((lock) ? VAR_LOCKED : VAR_UNLOCKED), \
+      [VAR_LOCKED] = ((lock) ? VAR_LOCKED : VAR_UNLOCKED), \
       [VAR_FIXED] = VAR_FIXED, \
     })[var]; \
   } while (0)

@@ -2351,9 +2351,9 @@ static int ins_compl_add(char_u *const str, int len, char_u *const fname,
   }
 #define FREE_CPTEXT(cptext, cptext_allocated) \
   do { \
-    if (cptext != NULL && cptext_allocated) { \
+    if ((cptext) != NULL && (cptext_allocated)) { \
       for (size_t i = 0; i < CPT_COUNT; i++) { \
-        xfree(cptext[i]); \
+        xfree((cptext)[i]); \
       } \
     } \
   } while (0)

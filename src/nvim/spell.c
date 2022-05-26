@@ -3519,7 +3519,7 @@ static void spell_suggest_intern(suginfo_T *su, bool interactive)
 // Free the info put in "*su" by spell_find_suggest().
 static void spell_find_cleanup(suginfo_T *su)
 {
-#define FREE_SUG_WORD(sug) xfree(sug->st_word)
+#define FREE_SUG_WORD(sug) xfree((sug)->st_word)
   // Free the suggestions.
   GA_DEEP_CLEAR(&su->su_ga, suggest_T, FREE_SUG_WORD);
   GA_DEEP_CLEAR(&su->su_sga, suggest_T, FREE_SUG_WORD);

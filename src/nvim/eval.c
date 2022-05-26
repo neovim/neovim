@@ -124,13 +124,13 @@ typedef struct {
 
 #define VV(idx, name, type, flags) \
   [idx] = { \
-    .vv_name = name, \
+    .vv_name = (name), \
     .vv_di = { \
-      .di_tv = { .v_type = type }, \
+      .di_tv = { .v_type = (type) }, \
       .di_flags = 0, \
       .di_key = { 0 }, \
     }, \
-    .vv_flags = flags, \
+    .vv_flags = (flags), \
   }
 
 #define VIMVAR_KEY_LEN 16  // Maximum length of the key of v:variables
