@@ -7900,6 +7900,55 @@ describe('float window', function()
         ]]}
       end
     end)
+
+    it('can use both border and winbar', function()
+      local buf = meths.create_buf(false,false)
+      local win1 = meths.open_win(buf, false, {relative='editor', width=15, height=3, row=0, col=4, border = 'single'})
+      meths.win_set_option(win1, 'winbar', 'floaty bar')
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:┌───────────────┐}|
+          {5:│}{3:floaty bar     }{5:│}|
+          {5:│}{1:               }{5:│}|
+          {5:│}{2:~              }{5:│}|
+          {5:└───────────────┘}|
+        ]], float_pos={
+          [4] = {{id = 1001}, "NW", 1, 0, 4, true, 50};
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+        }}
+      else
+        screen:expect{grid=[[
+          ^    {5:┌───────────────┐}                   |
+          {0:~   }{5:│}{3:floaty bar     }{5:│}{0:                   }|
+          {0:~   }{5:│}{1:               }{5:│}{0:                   }|
+          {0:~   }{5:│}{2:~              }{5:│}{0:                   }|
+          {0:~   }{5:└───────────────┘}{0:                   }|
+          {0:~                                       }|
+                                                  |
+        ]]}
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()

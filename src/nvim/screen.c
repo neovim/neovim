@@ -5461,7 +5461,7 @@ static void win_redr_border(win_T *wp)
   int *attrs = wp->w_float_config.border_attr;
 
   int *adj = wp->w_border_adj;
-  int irow = wp->w_height_inner, icol = wp->w_width_inner;
+  int irow = wp->w_height, icol = wp->w_width;
 
   if (adj[0]) {
     grid_puts_line_start(grid, 0);
