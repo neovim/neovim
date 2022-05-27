@@ -23,6 +23,8 @@ describe('winbar', function()
       [5] = {bold = true, foreground = Screen.colors.Red},
       [6] = {foreground = Screen.colors.Blue},
       [7] = {background = Screen.colors.LightGrey},
+      [8] = {background = Screen.colors.LightMagenta},
+      [9] = {bold = true, foreground = Screen.colors.Blue, background = Screen.colors.LightMagenta},
     })
     meths.set_option('winbar', 'Set Up The Bars')
   end)
@@ -399,6 +401,7 @@ describe('winbar', function()
     ]])
     eq(1, meths.get_option('cmdheight'))
   end)
+
   it('properly equalizes window height for window-local value', function()
     command('set equalalways | set winbar= | setlocal winbar=a | split')
     command('setlocal winbar= | split')
@@ -418,5 +421,42 @@ describe('winbar', function()
       {2:[No Name]                                                   }|
                                                                   |
     ]])
+  end)
+
+  it('requires window-local value for floating windows', function()
+    local win = meths.open_win(0, false, { relative = 'editor', row = 2, col = 10, height = 7,
+                                           width = 30 })
+    meths.set_option_value('winbar', 'bar', {})
+    screen:expect{grid=[[
+      {1:bar                                                         }|
+      ^                                                            |
+      {3:~         }{8:                              }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
+    meths.set_option_value('winbar', 'floaty bar', { scope = 'local', win = win.id })
+    screen:expect{grid=[[
+      {1:bar                                                         }|
+      ^                                                            |
+      {3:~         }{1:floaty bar                    }{3:                    }|
+      {3:~         }{8:                              }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~         }{9:~                             }{3:                    }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
   end)
 end)

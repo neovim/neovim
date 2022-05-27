@@ -7004,6 +7004,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When changing something that is used in 'winbar' that does not trigger
 	it to be updated, use |:redrawstatus|.
 
+	Floating windows do not use the global value of 'winbar'. The
+	window-local value of 'winbar' must be set for a floating window to
+	have a window bar.
+
 	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 						*'winblend'* *'winbl'*
