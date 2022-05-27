@@ -927,14 +927,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	backup would be made by renaming the original file crontab won't see
 	the newly created file).  Also see 'backupcopy' and |crontab|.
 
-						*'balloondelay'* *'bdlay'*
-'balloondelay' 'bdlay'	Removed.
-
-			*'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
-'ballooneval' 'beval'	Removed.
-
-						*'balloonexpr'* *'bexpr'*
-'balloonexpr' 'bexpr'	Removed.
 
 						*'belloff'* *'bo'*
 'belloff' 'bo'		string	(default "all")
@@ -3928,12 +3920,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set.  Note that this is not in milliseconds, like other options that
 	set a time.  This is to be compatible with Nvi.
 
-						*'maxcombine'* *'mco'*
-'maxcombine' 'mco'	Removed. |vim-differences|
-	Nvim always displays up to 6 combining characters.  You can still edit
-    text with more than 6 combining characters, you just can't see them.
-    Use |g8| or |ga|.  See |mbyte-combining|.
-
 						*'maxfuncdepth'* *'mfd'*
 'maxfuncdepth' 'mfd'	number	(default 100)
 			global
@@ -6569,9 +6555,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	separating space only when needed.
 	NOTE: Use of special characters in 'titlestring' may cause the display
 	to be garbled (e.g., when it contains a CR or NL character).
-
-				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
-'ttyfast' 'tf'		Removed. |vim-differences|
 
 						*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")

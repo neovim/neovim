@@ -528,6 +528,9 @@ Highlight groups:
 
 Options:
   'antialias'
+  *'balloondelay'* *'bdlay'*
+  *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
+  *'balloonexpr'* *'bexpr'*
   'bioskey' (MS-DOS)
   'conskey' (MS-DOS)
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)
@@ -551,9 +554,12 @@ Options:
       nnoremap <Esc> i
 <
   *'macatsui'*
+  *'maxcombine'* *'mco'*
+    Nvim always displays up to 6 combining characters.  You can still edit
+    text with more than 6 combining characters, you just can't see them.
+    Use |g8| or |ga|.  See |mbyte-combining|.
   'maxmem' Nvim delegates memory-management to the OS.
   'maxmemtot' Nvim delegates memory-management to the OS.
-  'maxcombine' (6 is always used)
   *'prompt'* *'noprompt'*
   *'remap'* *'noremap'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
@@ -567,10 +573,10 @@ Options:
   *'toolbar'* *'tb'*
   *'toolbariconsize'* *'tbis'*
   *'ttybuiltin'* *'tbi'* *'nottybuiltin'* *'notbi'*
+  *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
   *'ttymouse'* *'ttym'*
   *'ttyscroll'* *'tsl'*
   *'ttytype'* *'tty'*
-  'ttyfast'
   'weirdinvert'
 
 Startup:
