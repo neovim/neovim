@@ -6689,7 +6689,10 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
 void set_winbar(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    int winbar_height = (*p_wbr != NUL || *wp->w_p_wbr != NUL) ? 1 : 0;
+    // Require the local value to be set in order to show winbar on a floating window.
+    int winbar_height = wp->w_floating ? ((*wp->w_p_wbr != NUL) ? 1 : 0)
+                                       : ((*p_wbr != NUL || *wp->w_p_wbr != NUL) ? 1 : 0);
+
     if (wp->w_winbar_height != winbar_height) {
       wp->w_winbar_height = winbar_height;
       win_set_inner_size(wp);
