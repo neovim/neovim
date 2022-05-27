@@ -102,13 +102,23 @@ static bool log_path_init(void)
 
 void log_init(void)
 {
-  uv_mutex_init(&mutex);
-  log_path_init();
+  if (uv_mutex_init(&mutex)) {
+    WLOG("Failed to create mutex for writing logs: %s", os_strerror(errno));
+  }
+  if(!log_path_init()){
+    WLOG("Failed to create logfile");
+  }
 }
 
-void log_lock(void)
+int log_lock(void)
 {
-  uv_mutex_lock(&mutex);
+  int ret = uv_mutex_trylock(&mutex);
+
+  if(ret){
+    WLOG("Failed to lock mutex for writing logs: %s", os_strerror(errno));
+  }
+
+  return ret;
 }
 
 void log_unlock(void)
@@ -138,7 +148,9 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
   assert(!entered_free_all_mem);
 #endif
 
-  log_lock();
+  if (log_lock()) {
+    return false;
+  }
   bool ret = false;
   FILE *log_file = open_log_file();
 
@@ -162,8 +174,10 @@ end:
 
 void log_uv_handles(void *loop)
 {
+  if(log_lock()) {
+    return;
+  }
   uv_loop_t *l = loop;
-  log_lock();
   FILE *log_file = open_log_file();
 
   if (log_file == NULL) {
@@ -253,7 +267,9 @@ void log_callstack_to_file(FILE *log_file, const char *const func_name, const in
 
 void log_callstack(const char *const func_name, const int line_num)
 {
-  log_lock();
+  if(log_lock()){
+    return;
+  }
   FILE *log_file = open_log_file();
   if (log_file == NULL) {
     goto end;
