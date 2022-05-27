@@ -3613,8 +3613,10 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         status = RA_FAIL;
         break;
       }
-      // Check for timeout once in a 100 times to avoid overhead.
-      if (tm != NULL && ++tm_count == 100) {
+      // Check for timeout once in 250 times to avoid excessive overhead from
+      // reading the clock.  The value has been picked to check about once
+      // per msec on a modern CPU.
+      if (tm != NULL && ++tm_count == 250) {
         tm_count = 0;
         if (profile_passed_limit(*tm)) {
           if (timed_out != NULL) {
@@ -5139,8 +5141,10 @@ static long bt_regexec_both(char_u *line, colnr_T col, proftime_T *tm, int *time
         break;
       }
       col += utfc_ptr2len((char *)rex.line + col);
-      // Check for timeout once in a twenty times to avoid overhead.
-      if (tm != NULL && ++tm_count == 20) {
+      // Check for timeout once in 500 times to avoid excessive overhead
+      // from reading the clock.  The value has been picked to check
+      // about once per msec on a modern CPU.
+      if (tm != NULL && ++tm_count == 500) {
         tm_count = 0;
         if (profile_passed_limit(*tm)) {
           if (timed_out != NULL) {
