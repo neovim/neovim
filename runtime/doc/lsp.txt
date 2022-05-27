@@ -500,6 +500,128 @@ Example: >
    autocmd User LspProgressUpdate redrawstatus
    autocmd User LspRequest redrawstatus
 <
+==============================================================================
+LSP SNIPPET PARSER                                        *lsp-snippet-parser*
+
+|vim.lsp.parser.parse| generates the AST for a snippet-string. This section
+describes the structure of the returned AST.
+For a general overview of lsp-snippets and their capabilities, refer to
+https://github.com/microsoft/language-server-protocol/blob/main/snippetSyntax.md.
+
+In the following, `node` refers to any of |lsp-parser-text|, |lsp-parser-choice|,
+|lsp-parser-tabstop|, |lsp-parser-variable| or |lsp-parser-placeholder|.
+Each node can be identified by comparing its {type} against `NodeType`s in
+`vim.lsp.parser.ast.node_types` (just `node_type` from now on).
+{*fieldname} denotes an optional field.
+
+Snippet                                                  *lsp-parser-snippet*
+                Fields:~
+                    {type}       (NodeType)  `node_type.SNIPPET`
+                    {children}   (node[])    Content of the snippet.
+                                             `${1|foo,bar|} or: $FOOBAR???` 
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^~
+                                             [     1     ][ 2 ][  3  ][4]~
+
+Text                                                        *lsp-parser-text*
+                Fields:~
+                    {type}       (NodeType)  `node_type.TEXT`
+                    {esc}        (string)    Escaped text.
+                    {raw}        (string)    Unescaped text.
+
+Tabstop                                                  *lsp-parser-tabstop*
+                Fields:~
+                    {type}       (NodeType)  `node_type.TABSTOP`
+                    {tabstop}    (number)    Position of this tabstop or
+                                             position of the tabstop that
+                                             should be mirrored (and
+                                             potentially transformed).
+                                             `${1}`
+                                               ^~
+                    {*transform} (transform) Optional transform that should
+                                             be applied to the mirrored text.
+                                             `${1/./${1:/upcase}/g}`
+                                                 ^^^^^^^^^^^^^^^^~
+
+Placeholder                                          *lsp-parser-placeholder*
+                Fields:~
+                    {type}       (NodeType)  `node_type.PLACEHOLDER`
+                    {tabstop}    (number)    Position of the placeholder.
+                                             `${1: abc$2}`
+                                               ^~
+                    {children}   (node[])    Default-content of the
+                                             placeholder.
+                                             `${1: default ${2:content}}`
+                                                 ^^^^^^^^^^^^^^^^^^^^^~
+
+Variable                                                *lsp-parser-variable*
+                A variable can be either transformed, or have a `default`, not
+                both.
+                Fields:~
+                    {type}       (NodeType)  `node_type.VARIABLE`
+                    {name}       (string)    Variable's name.
+                                             `$TM_FILENAME`
+                                              ^^^^^^^^^^^~
+                    {*transform} (transform) Optional transform applied to
+                                             the variable's value.
+                                             `${TM_FILENAME/(.*)/${1:/upcase}/}`
+                                                           ^^^^^^^^^^^^^^^^^^~
+                    {*children}  (node[])    Nodes that are inserted if the
+                                             variable is empty, also called
+                                             `default`.
+                                             `${EMPTY:${1:a placeholder}}`
+                                                     ^^^^^^^^^^^^^^^^^^~
+
+Choice                                                    *lsp-parser-choice*
+                Fields:~
+                    {type}       (NodeType)  `node_type.CHOICE`
+                    {tabstop}    (number)    Position.
+                                             `${1|a,b,c,d|}`
+                                               ^~
+                    {items}      (string[])  Different choices.
+                                             `${1|one,two,three}`
+                                                 ^^^ ^^^ ^^^^^~
+                                                 [1] [2] [ 3 ]~
+
+Transform                                              *lsp-parser-transform*
+                Fields:~
+                    {type}       (NodeType)  `node_type.TRANSFORM`
+                    {pattern}    (string)    Regex applied by this transform.
+                                             `([12])+/${1:?small:big} numbers/`
+                                             ^^^^^^^~
+                    {format}     (table)     List of `text` and `format` that make
+                                             up the resulting string.
+                                             `(.*)/${1:+yup}     ${1:-nope}/gi`
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^~
+                                                  [   1   ][ 2 ][   3   ]~
+                    {option}     (string)    Regex-options.
+                                             `A/a/gi`
+                                                 ^^~
+Format                                                    *lsp-parser-format*
+		A format either
+		- inserts the capture unchanged,
+		- modifies the capture via {modifier} or
+		- inserts {if_text} if the capture is nonempty, and
+		  {else_text} otherwise.
+
+                Fields:~
+                    {type}          (NodeType) `node_type.FORMAT`
+                    {capture_index} (number)   The capture-group this format is
+                                               applied to.
+                                               `${1:?exists:doesn't}`
+                                                 ^~
+                    {*modifier}     (string)   Modifier applied to the capture-
+                                               group.
+                                               `${1/capitalize}`
+                                                   ^^^^^^^^^^~
+                    {*if_text}      (string)   Inserted if the capture group is
+                                               nonempty.
+                                               `${1:+ first capture group is OK}`
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^~
+                    {*else_text}    (string)   Inserted if the capture group is
+                                               empty or does not exist
+                                               (no match).
+                                               `${1:-not OK :( }`
+                                                    ^^^^^^^^^^~
 
 ==============================================================================
 Lua module: vim.lsp                                                 *lsp-core*
@@ -2134,5 +2256,131 @@ resolve_capabilities({server_capabilities})
 
                 Return: ~
                     (table) Normalized table of capabilities
+
+
+==============================================================================
+Lua module: vim.lsp.parser                                        *lsp-parser*
+
+parse({input})                                        *vim.lsp.parser.parse()*
+                Build the AST for {input}.
+
+                Parameters: ~
+                    {input}  (string) A snippet as defined in https://code.visualstudio.com/docs/editor/userdefinedsnippets#_grammar
+
+                Return: ~
+                    (Snippet)
+
+
+==============================================================================
+Lua module: vim.lsp.ast                                              *lsp-ast*
+
+choice({tabstop}, {items})                              *vim.lsp.ast.choice()*
+                Create a new choice.
+
+                Parameters: ~
+                    {tabstop}  (number) Position of the choice.
+                    {items}    (string[]) Choices.
+
+                Return: ~
+                    (table) |lsp-parser-choice|
+
+format({capture_index}, {capture_transform})            *vim.lsp.ast.format()*
+                Create a new format which either inserts the capture at
+                {capture_index}, applies a modifier to the capture or inserts
+                {if_text} if the capture is nonempty, and {else_text}
+                otherwise.
+
+                Parameters: ~
+                    {capture_index}      (number) Capture this format is
+                                         applied to.
+                    {capture_transform}  (string | table | nil)
+                                         • (string): {capture_transform} is a
+                                           modifier.
+                                         • (table): {capture_transform} can
+                                           contain either of
+                                           • {if_text} (string, default "")
+                                             Inserted for nonempty capture.
+                                           • {else_text} (string, default "")
+                                             Inserted for empty or undefined
+                                             capture.
+
+                Return: ~
+                    (table) |lsp-parser-format|
+
+is_node({t})                                           *vim.lsp.ast.is_node()*
+                Determine whether {t} is an AST-node.
+
+                Parameters: ~
+                    {t}  (table)
+
+                Return: ~
+                    (boolean)
+
+placeholder({tabstop}, {children})                 *vim.lsp.ast.placeholder()*
+                Create a new placeholder.
+
+                Parameters: ~
+                    {tabstop}   (number) Position of the placeholder.
+                    {children}  (ast-node[]) Content of the placeholder.
+
+                Return: ~
+                    (table) |lsp-parser-placeholder|
+
+snippet({children})                                    *vim.lsp.ast.snippet()*
+                Create a new snippet.
+
+                Parameters: ~
+                    {children}  (ast-node[]) Contents of the snippet.
+
+                Return: ~
+                    (table) |lsp-parser-snippet|
+
+tabstop({tabstop}, {transform})                        *vim.lsp.ast.tabstop()*
+                Create a new tabstop.
+
+                Parameters: ~
+                    {tabstop}    (number) Position of this tabstop.
+                    {transform}  (table|nil) optional transform applied to the
+                                 tabstop.
+
+                Return: ~
+                    (table) |lsp-parser-tabstop|
+
+text({esc}, {raw})                                        *vim.lsp.ast.text()*
+                Create new text.
+
+                Parameters: ~
+                    {esc}  (string) Escaped text.
+                    {raw}  (string|nil, default {esc}) Unescaped text.
+
+                Return: ~
+                    (table) |lsp-parser-text|
+
+transform({pattern}, {format}, {option})             *vim.lsp.ast.transform()*
+                Create a new transform.
+
+                Parameters: ~
+                    {pattern}  (string) Regex applied to the variable/tabstop
+                               this transform is supplied to.
+                    {format}   (table of Format|Text) Replacement for the
+                               regex.
+                    {option}   (string|nil) Regex-options, default "".
+
+                Return: ~
+                    (table) |lsp-parser-transform|
+
+variable({name}, {replacement})                       *vim.lsp.ast.variable()*
+                Create a new variable.
+
+                Parameters: ~
+                    {name}         (string) Name.
+                    {replacement}  (node[] | transform | nil)
+                                   • (node[]) Inserted when the variable is
+                                     empty.
+                                   • (transform) Applied to the variable's
+                                     value.
+
+                Return: ~
+                    (table) |lsp-parser-variable|
 
  vim:tw=78:ts=8:ft=help:norl:

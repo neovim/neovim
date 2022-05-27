@@ -1,9 +1,12 @@
 local P = {}
 
+local ast = require('vim.lsp.snippet.ast')
+
 ---Take characters until the target characters (The escape sequence is '\' + char)
 ---@param targets string[] The character list for stop consuming text.
 ---@param specials string[] If the character isn't contained in targets/specials, '\' will be left.
-P.take_until = function(targets, specials)
+---@private
+function P.take_until(targets, specials)
   targets = targets or {}
   specials = specials or {}
 
@@ -48,7 +51,8 @@ P.take_until = function(targets, specials)
   end
 end
 
-P.unmatch = function(pos)
+---@private
+function P.unmatch(pos)
   return {
     parsed = false,
     value = nil,
@@ -56,7 +60,8 @@ P.unmatch = function(pos)
   }
 end
 
-P.map = function(parser, map)
+---@private
+function P.map(parser, map)
   return function(input, pos)
     local result = parser(input, pos)
     if result.parsed then
@@ -70,13 +75,15 @@ P.map = function(parser, map)
   end
 end
 
-P.lazy = function(factory)
+---@private
+function P.lazy(factory)
   return function(input, pos)
     return factory()(input, pos)
   end
 end
 
-P.token = function(token)
+---@private
+function P.token(token)
   return function(input, pos)
     local maybe_token = string.sub(input, pos, pos + #token - 1)
     if token == maybe_token then
@@ -90,7 +97,8 @@ P.token = function(token)
   end
 end
 
-P.pattern = function(p)
+---@private
+function P.pattern(p)
   return function(input, pos)
     local maybe_match = string.match(string.sub(input, pos), '^' .. p)
     if maybe_match then
@@ -104,7 +112,8 @@ P.pattern = function(p)
   end
 end
 
-P.many = function(parser)
+---@private
+function P.many(parser)
   return function(input, pos)
     local values = {}
     local new_pos = pos
@@ -127,7 +136,8 @@ P.many = function(parser)
   end
 end
 
-P.any = function(...)
+---@private
+function P.any(...)
   local parsers = { ... }
   return function(input, pos)
     for _, parser in ipairs(parsers) do
@@ -140,7 +150,8 @@ P.any = function(...)
   end
 end
 
-P.opt = function(parser)
+---@private
+function P.opt(parser)
   return function(input, pos)
     local result = parser(input, pos)
     return {
@@ -151,7 +162,8 @@ P.opt = function(parser)
   end
 end
 
-P.seq = function(...)
+---@private
+function P.seq(...)
   local parsers = { ... }
   return function(input, pos)
     local values = {}
@@ -173,38 +185,7 @@ P.seq = function(...)
   end
 end
 
-local Node = {}
-
-Node.Type = {
-  SNIPPET = 0,
-  TABSTOP = 1,
-  PLACEHOLDER = 2,
-  VARIABLE = 3,
-  CHOICE = 4,
-  TRANSFORM = 5,
-  FORMAT = 6,
-  TEXT = 7,
-}
-
-function Node:__tostring()
-  local insert_text = {}
-  if self.type == Node.Type.SNIPPET then
-    for _, c in ipairs(self.children) do
-      table.insert(insert_text, tostring(c))
-    end
-  elseif self.type == Node.Type.CHOICE then
-    table.insert(insert_text, self.items[1])
-  elseif self.type == Node.Type.PLACEHOLDER then
-    for _, c in ipairs(self.children or {}) do
-      table.insert(insert_text, tostring(c))
-    end
-  elseif self.type == Node.Type.TEXT then
-    table.insert(insert_text, self.esc)
-  end
-  return table.concat(insert_text, '')
-end
-
---@see https://code.visualstudio.com/docs/editor/userdefinedsnippets#_grammar
+---see https://code.visualstudio.com/docs/editor/userdefinedsnippets#_grammar
 
 local S = {}
 S.dollar = P.token('$')
@@ -223,11 +204,7 @@ end)
 S.var = P.pattern('[%a_][%w_]+')
 S.text = function(targets, specials)
   return P.map(P.take_until(targets, specials), function(value)
-    return setmetatable({
-      type = Node.Type.TEXT,
-      raw = value.raw,
-      esc = value.esc,
-    }, Node)
+    return ast.text(value.esc, value.raw)
   end)
 end
 
@@ -237,16 +214,10 @@ end)
 
 S.format = P.any(
   P.map(P.seq(S.dollar, S.int), function(values)
-    return setmetatable({
-      type = Node.Type.FORMAT,
-      capture_index = values[2],
-    }, Node)
+    return ast.format(values[2])
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.close), function(values)
-    return setmetatable({
-      type = Node.Type.FORMAT,
-      capture_index = values[3],
-    }, Node)
+    return ast.format(values[3])
   end),
   P.map(
     P.seq(
@@ -259,11 +230,7 @@ S.format = P.any(
       S.close
     ),
     function(values)
-      return setmetatable({
-        type = Node.Type.FORMAT,
-        capture_index = values[3],
-        modifier = values[6],
-      }, Node)
+      return ast.format(values[3], values[6])
     end
   ),
   P.map(
@@ -276,43 +243,32 @@ S.format = P.any(
       S.close
     ),
     function(values)
-      return setmetatable({
-        type = Node.Type.FORMAT,
-        capture_index = values[3],
-        if_text = values[5][2] and values[5][2].esc or '',
-        else_text = values[5][4] and values[5][4].esc or '',
-      }, Node)
+      return ast.format(values[3], {
+        if_text = values[5][2] and values[5][2].esc,
+        else_text = values[5][4] and values[5][4].esc,
+      })
     end
   ),
   P.map(
     P.seq(S.dollar, S.open, S.int, S.colon, P.seq(S.plus, P.opt(P.take_until({ '}' }, { '\\' }))), S.close),
     function(values)
-      return setmetatable({
-        type = Node.Type.FORMAT,
-        capture_index = values[3],
-        if_text = values[5][2] and values[5][2].esc or '',
-        else_text = '',
-      }, Node)
+      return ast.format(values[3], {
+        if_text = values[5][2] and values[5][2].esc,
+      })
     end
   ),
   P.map(
     P.seq(S.dollar, S.open, S.int, S.colon, S.minus, P.opt(P.take_until({ '}' }, { '\\' })), S.close),
     function(values)
-      return setmetatable({
-        type = Node.Type.FORMAT,
-        capture_index = values[3],
-        if_text = '',
-        else_text = values[6] and values[6].esc or '',
-      }, Node)
+      return ast.format(values[3], {
+        else_text = values[6] and values[6].esc,
+      })
     end
   ),
   P.map(P.seq(S.dollar, S.open, S.int, S.colon, P.opt(P.take_until({ '}' }, { '\\' })), S.close), function(values)
-    return setmetatable({
-      type = Node.Type.FORMAT,
-      capture_index = values[3],
-      if_text = '',
-      else_text = values[5] and values[5].esc or '',
-    }, Node)
+    return ast.format(values[3], {
+      else_text = values[5] and values[5].esc,
+    })
   end)
 )
 
@@ -326,34 +282,19 @@ S.transform = P.map(
     P.opt(P.pattern('[ig]+'))
   ),
   function(values)
-    return setmetatable({
-      type = Node.Type.TRANSFORM,
-      pattern = values[2].raw,
-      format = values[4],
-      option = values[6],
-    }, Node)
+    return ast.transform(values[2].raw, values[4], values[6])
   end
 )
 
 S.tabstop = P.any(
   P.map(P.seq(S.dollar, S.int), function(values)
-    return setmetatable({
-      type = Node.Type.TABSTOP,
-      tabstop = values[2],
-    }, Node)
+    return ast.tabstop(values[2])
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.close), function(values)
-    return setmetatable({
-      type = Node.Type.TABSTOP,
-      tabstop = values[3],
-    }, Node)
+    return ast.tabstop(values[3])
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.transform, S.close), function(values)
-    return setmetatable({
-      type = Node.Type.TABSTOP,
-      tabstop = values[3],
-      transform = values[4],
-    }, Node)
+    return ast.tabstop(values[3], values[4])
   end)
 )
 
@@ -361,18 +302,8 @@ S.placeholder = P.any(
   P.map(
     P.seq(S.dollar, S.open, S.int, S.colon, P.opt(P.many(P.any(S.toplevel, S.text({ '$', '}' }, { '\\' })))), S.close),
     function(values)
-      return setmetatable({
-        type = Node.Type.PLACEHOLDER,
-        tabstop = values[3],
-        -- insert empty text if opt did not match.
-        children = values[5] or {
-          setmetatable({
-            type = Node.Type.TEXT,
-            raw = '',
-            esc = '',
-          }, Node),
-        },
-      }, Node)
+      -- no children -> manually create empty text.
+      return ast.placeholder(values[3], values[5] or { ast.text('') })
     end
   )
 )
@@ -390,62 +321,38 @@ S.choice = P.map(
     S.close
   ),
   function(values)
-    return setmetatable({
-      type = Node.Type.CHOICE,
-      tabstop = values[3],
-      items = values[5],
-    }, Node)
+    return ast.choice(values[3], values[5])
   end
 )
 
 S.variable = P.any(
   P.map(P.seq(S.dollar, S.var), function(values)
-    return setmetatable({
-      type = Node.Type.VARIABLE,
-      name = values[2],
-    }, Node)
+    return ast.variable(values[2])
   end),
   P.map(P.seq(S.dollar, S.open, S.var, S.close), function(values)
-    return setmetatable({
-      type = Node.Type.VARIABLE,
-      name = values[3],
-    }, Node)
+    return ast.variable(values[3])
   end),
   P.map(P.seq(S.dollar, S.open, S.var, S.transform, S.close), function(values)
-    return setmetatable({
-      type = Node.Type.VARIABLE,
-      name = values[3],
-      transform = values[4],
-    }, Node)
+    return ast.variable(values[3], values[4])
   end),
   P.map(
     P.seq(S.dollar, S.open, S.var, S.colon, P.many(P.any(S.toplevel, S.text({ '$', '}' }, { '\\' }))), S.close),
     function(values)
-      return setmetatable({
-        type = Node.Type.VARIABLE,
-        name = values[3],
-        children = values[5],
-      }, Node)
+      return ast.variable(values[3], values[5])
     end
   )
 )
 
 S.snippet = P.map(P.many(P.any(S.toplevel, S.text({ '$' }, { '}', '\\' }))), function(values)
-  return setmetatable({
-    type = Node.Type.SNIPPET,
-    children = values,
-  }, Node)
+  return ast.snippet(values)
 end)
 
 local M = {}
 
----The snippet node type enum
----@types table<string, number>
-M.NodeType = Node.Type
-
----Parse snippet string and returns the AST
----@param input string
----@return table
+---Build the AST for {input}.
+---@param input string A snippet as defined in
+---                    https://code.visualstudio.com/docs/editor/userdefinedsnippets#_grammar
+---@return (Snippet)
 function M.parse(input)
   local result = S.snippet(input, 1)
   if not result.parsed then
@@ -453,5 +360,7 @@ function M.parse(input)
   end
   return result.value
 end
+
+M.ast = ast
 
 return M

@@ -192,10 +192,13 @@ CONFIG = {
             'rpc.lua',
             'sync.lua',
             'protocol.lua',
+            'parser.lua',
+            'ast.lua'
         ],
         'files': [
             'runtime/lua/vim/lsp',
             'runtime/lua/vim/lsp.lua',
+            'runtime/lua/vim/lsp/parser',
         ],
         'file_patterns': '*.lua',
         'fn_name_prefix': '',

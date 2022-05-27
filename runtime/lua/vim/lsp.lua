@@ -33,6 +33,8 @@ local lsp = {
 
   -- Export these directly from rpc.
   rpc_response_error = lsp_rpc.rpc_response_error,
+
+  snippet = require('vim.lsp.snippet'),
 }
 
 -- maps request name to the required server_capability in the client.

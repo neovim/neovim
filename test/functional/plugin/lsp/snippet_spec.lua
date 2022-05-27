@@ -1,23 +1,24 @@
 local helpers = require('test.functional.helpers')(after_each)
-local snippet = require('vim.lsp._snippet')
+local snippet = require('vim.lsp.snippet')
+local type = snippet.ast.node_type
 
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 
-describe('vim.lsp._snippet', function()
+describe('vim.lsp.snippet.parser', function()
   before_each(helpers.clear)
   after_each(helpers.clear)
 
   local parse = function(...)
-    return exec_lua('return require("vim.lsp._snippet").parse(...)', ...)
+    return exec_lua('return vim.lsp.snippet.parse(...)', ...)
   end
 
   it('should parse only text', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = type.SNIPPET,
       children = {
         {
-          type = snippet.NodeType.TEXT,
+          type = type.TEXT,
           raw = 'TE\\$\\}XT',
           esc = 'TE$}XT',
         },
@@ -27,14 +28,14 @@ describe('vim.lsp._snippet', function()
 
   it('should parse tabstop', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = type.SNIPPET,
       children = {
         {
-          type = snippet.NodeType.TABSTOP,
+          type = type.TABSTOP,
           tabstop = 1,
         },
         {
-          type = snippet.NodeType.TABSTOP,
+          type = type.TABSTOP,
           tabstop = 2,
         },
       },
@@ -43,35 +44,35 @@ describe('vim.lsp._snippet', function()
 
   it('should parse placeholders', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = type.SNIPPET,
       children = {
         {
-          type = snippet.NodeType.PLACEHOLDER,
+          type = type.PLACEHOLDER,
           tabstop = 1,
           children = {
             {
-              type = snippet.NodeType.PLACEHOLDER,
+              type = type.PLACEHOLDER,
               tabstop = 2,
               children = {
                 {
-                  type = snippet.NodeType.TEXT,
+                  type = type.TEXT,
                   raw = 'TE\\$\\}XT',
                   esc = 'TE$}XT',
                 },
                 {
-                  type = snippet.NodeType.TABSTOP,
+                  type = type.TABSTOP,
                   tabstop = 3,
                 },
                 {
-                  type = snippet.NodeType.TABSTOP,
+                  type = type.TABSTOP,
                   tabstop = 1,
                   transform = {
-                    type = snippet.NodeType.TRANSFORM,
+                    type = type.TRANSFORM,
                     pattern = 'regex',
                     option = 'i',
                     format = {
                       {
-                        type = snippet.NodeType.FORMAT,
+                        type = type.FORMAT,
                         capture_index = 1,
                         modifier = 'upcase',
                       },
@@ -79,7 +80,7 @@ describe('vim.lsp._snippet', function()
                   },
                 },
                 {
-                  type = snippet.NodeType.TEXT,
+                  type = type.TEXT,
                   raw = 'TE\\$\\}XT',
                   esc = 'TE$}XT',
                 },
@@ -93,35 +94,36 @@ describe('vim.lsp._snippet', function()
 
   it('should parse variables', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = type.SNIPPET,
       children = {
         {
-          type = snippet.NodeType.VARIABLE,
+          type = type.VARIABLE,
           name = 'VAR',
         },
         {
-          type = snippet.NodeType.VARIABLE,
+          type = type.VARIABLE,
           name = 'VAR',
         },
         {
-          type = snippet.NodeType.VARIABLE,
+          type = type.VARIABLE,
           name = 'VAR',
           children = {
             {
-              type = snippet.NodeType.TABSTOP,
+              type = type.TABSTOP,
               tabstop = 1,
             },
           },
         },
         {
-          type = snippet.NodeType.VARIABLE,
+          type = type.VARIABLE,
           name = 'VAR',
           transform = {
-            type = snippet.NodeType.TRANSFORM,
+            type = type.TRANSFORM,
             pattern = 'regex',
+            option = '',
             format = {
               {
-                type = snippet.NodeType.FORMAT,
+                type = type.FORMAT,
                 capture_index = 1,
                 modifier = 'upcase',
               },
@@ -134,10 +136,10 @@ describe('vim.lsp._snippet', function()
 
   it('should parse choice', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = type.SNIPPET,
       children = {
         {
-          type = snippet.NodeType.CHOICE,
+          type = type.CHOICE,
           tabstop = 1,
           items = {
             ',',
@@ -150,40 +152,41 @@ describe('vim.lsp._snippet', function()
 
   it('should parse format', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
+      type = type.SNIPPET,
       children = {
         {
-          type = snippet.NodeType.VARIABLE,
+          type = type.VARIABLE,
           name = 'VAR',
           transform = {
-            type = snippet.NodeType.TRANSFORM,
+            type = type.TRANSFORM,
             pattern = 'regex',
+            option = '',
             format = {
               {
-                type = snippet.NodeType.FORMAT,
+                type = type.FORMAT,
                 capture_index = 1,
                 modifier = 'upcase',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = type.FORMAT,
                 capture_index = 1,
                 if_text = 'if_text',
                 else_text = '',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = type.FORMAT,
                 capture_index = 1,
                 if_text = '',
                 else_text = 'else_text',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = type.FORMAT,
                 capture_index = 1,
                 else_text = 'else_text',
                 if_text = 'if_text',
               },
               {
-                type = snippet.NodeType.FORMAT,
+                type = type.FORMAT,
                 capture_index = 1,
                 if_text = '',
                 else_text = 'else_text',
