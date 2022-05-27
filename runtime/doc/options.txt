@@ -3697,7 +3697,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Vim limits the number of lines to what fits on the screen.  You can
 	use this command to get the tallest window possible: >
 		:set lines=999
-<	Minimum value is 2, maximum value is 1000.
+<	Minimum value is 3, maximum value is 1000.
 
 						*'linespace'* *'lsp'*
 'linespace' 'lsp'	number	(default 0)
