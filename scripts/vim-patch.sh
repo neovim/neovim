@@ -4,6 +4,8 @@ set -e
 set -u
 # Use privileged mode, which e.g. skips using CDPATH.
 set -p
+# https://www.shellcheck.net/wiki/SC2031
+shopt -s lastpipe
 
 # Ensure that the user has a bash that supports -A
 if [[ "${BASH_VERSINFO[0]}" -lt 4  ]]; then
@@ -345,7 +347,7 @@ stage_patch() {
 
   See the wiki for more information:
     * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim
-' "${vim_version}" "${BASENAME}" "${BASENAME}"
+' "${vim_version}" "${BASENAME}" "${BASENAME}" "${BASENAME}"
   return $ret
 }
 
