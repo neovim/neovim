@@ -529,12 +529,12 @@ it is for and how it should be used. >
     };
 
 If the field comments are short, you can also put them next to the field. But
-be consistent within one struct. >
+be consistent within one struct, and follow the necessary doxygen style. >
 
     struct wininfo_S {
-      WinInfo *wi_next;  /// Next entry or NULL for last entry.
-      WinInfo *wi_prev;  /// Previous entry or NULL for first entry.
-      Win *wi_win;       /// Pointer to window that did the wi_fpos.
+      WinInfo *wi_next;  ///< Next entry or NULL for last entry.
+      WinInfo *wi_prev;  ///< Previous entry or NULL for first entry.
+      Win *wi_win;       ///< Pointer to window that did the wi_fpos.
       ...
     };
 
