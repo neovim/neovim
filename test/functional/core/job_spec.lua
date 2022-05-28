@@ -26,7 +26,7 @@ local Screen = require('test.functional.ui.screen')
 
 -- FIXME(dundar): Flaky set of tests. I suspect the before_each is faulty and that it infects all
 -- tests in the describe block.
-if global_helpers.isCI('sourcehut') then
+if not global_helpers.isCI('sourcehut') then
 describe('jobs', function()
   local channel
 
