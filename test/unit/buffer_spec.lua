@@ -25,14 +25,14 @@ describe('buffer functions', function()
   local path2 = 'file_path_test'
   local path3 = 'path_test_file'
 
-  before_each(function()
+  setup(function()
     -- create the files
     io.open(path1, 'w').close()
     io.open(path2, 'w').close()
     io.open(path3, 'w').close()
   end)
 
-  after_each(function()
+  teardown(function()
     os.remove(path1)
     os.remove(path2)
     os.remove(path3)
