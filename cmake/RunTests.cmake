@@ -12,6 +12,12 @@ set(ENV{XDG_CONFIG_HOME} ${BUILD_DIR}/Xtest_xdg/config)
 set(ENV{XDG_DATA_HOME} ${BUILD_DIR}/Xtest_xdg/share)
 unset(ENV{XDG_DATA_DIRS})
 
+# Test being run inside neovim :terminal unset inherited environment variables.
+if(DEFINED ENV{NVIM})
+  unset(ENV{NVIM_LOG_FILE})
+  unset(ENV{NVIM})
+endif()
+
 if(NOT DEFINED ENV{NVIM_LOG_FILE})
   set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/.nvimlog)
 endif()
