@@ -849,9 +849,9 @@ describe('lua stdlib', function()
       vim.rpcnotify(chan, 'nvim_set_current_line', 'foo')
       return vim.api.nvim_get_current_line()
     ]]))
-    retry(10, nil, function()
+    retry(function()
       eq('foo', meths.get_current_line())
-    end)
+    end, 10)
 
     local screen = Screen.new(50,7)
     screen:set_default_attr_ids({

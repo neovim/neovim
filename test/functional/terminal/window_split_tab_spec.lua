@@ -75,12 +75,12 @@ describe(':terminal', function()
 
     if iswin() then
       -- win: SIGWINCH is unreliable, use a weaker test. #7506
-      retry(3, 30000, function()
+      retry(function()
         screen:try_resize(w1, h1)
         screen:expect{any='rows: 7, cols: 47'}
         screen:try_resize(w2, h2)
         screen:expect{any='rows: 4, cols: 41'}
-      end)
+      end, 3, 30000)
       return
     end
 

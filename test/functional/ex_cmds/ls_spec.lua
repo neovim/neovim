@@ -22,7 +22,7 @@ describe(':ls', function()
     command('vsplit')
     command('terminal')
     feed('iexit<cr>')
-    retry(nil, 5000, function()
+    retry(function()
       local ls_output = eval('execute("ls")')
       -- Normal buffer.
       eq('\n  1  h ', string.match(ls_output, '\n *1....'))
@@ -30,19 +30,19 @@ describe(':ls', function()
       eq('\n  2 #aR', string.match(ls_output, '\n *2....'))
       -- Terminal buffer [F]inished.
       eq('\n  3 %aF', string.match(ls_output, '\n *3....'))
-    end)
+    end, nil, 5000)
 
-    retry(nil, 5000, function()
+    retry(function()
       local ls_output = eval('execute("ls R")')
       -- Just the [R]unning terminal buffer.
       eq('\n  2 #aR ', string.match(ls_output, '^\n *2 ... '))
-    end)
+    end, nil, 5000)
 
-    retry(nil, 5000, function()
+    retry(function()
       local ls_output = eval('execute("ls F")')
       -- Just the [F]inished terminal buffer.
       eq('\n  3 %aF ', string.match(ls_output, '^\n *3 ... '))
-    end)
+    end, nil, 5000)
   end)
 
 end)

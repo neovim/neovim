@@ -405,7 +405,7 @@ describe("'scrollback' option", function()
     curbufmeths.set_option('scrollback', 0)
     feed_data(nvim_dir..'/shell-test REP 31 line'..(iswin() and '\r' or '\n'))
     screen:expect{any='30: line                      '}
-    retry(nil, nil, function() expect_lines(7) end)
+    retry(function() expect_lines(7) end)
   end)
 
   it('deletes lines (only) if necessary', function()
@@ -426,12 +426,12 @@ describe("'scrollback' option", function()
     feed_data(nvim_dir.."/shell-test REP 31 line"..(iswin() and '\r' or '\n'))
     screen:expect{any='30: line                      '}
 
-    retry(nil, nil, function() expect_lines(33, 2) end)
+    retry(function() expect_lines(33, 2) end)
     curbufmeths.set_option('scrollback', 10)
     poke_eventloop()
-    retry(nil, nil, function() expect_lines(16) end)
+    retry(function() expect_lines(16) end)
     curbufmeths.set_option('scrollback', 10000)
-    retry(nil, nil, function() expect_lines(16) end)
+    retry(function() expect_lines(16) end)
     -- Terminal job data is received asynchronously, may happen before the
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
@@ -493,7 +493,7 @@ describe("'scrollback' option", function()
 
     -- _Local_ scrollback=-1 in :terminal forces the _maximum_.
     command('setlocal scrollback=-1')
-    retry(nil, nil, function()  -- Fixup happens on refresh, not immediately.
+    retry(function()  -- Fixup happens on refresh, not immediately.
       eq(100000, curbufmeths.get_option('scrollback'))
     end)
 

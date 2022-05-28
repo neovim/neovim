@@ -64,7 +64,7 @@ describe('ui mode_change event', function()
 
     local matchtime = 0
     command("set showmatch")
-    retry(nil, nil, function()
+    retry(function()
       matchtime = matchtime + 1
       local screen_timeout = 1000 * matchtime  -- fail faster for retry.
 

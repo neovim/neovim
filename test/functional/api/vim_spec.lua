@@ -2097,7 +2097,7 @@ describe('API', function()
       eq(1, eval('jobstop(&channel)'))
       eval('jobwait([&channel], 1000)')  -- Wait.
       expected2.pty = (iswin() and '?' or '')  -- pty stream was closed.
-      retry(function () eq(expected2, eval('nvim_get_chan_info(&channel)')) end)
+      helpers.retry(function() eq(expected2, eval('nvim_get_chan_info(&channel)')) end)
     end)
   end)
 

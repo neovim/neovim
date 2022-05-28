@@ -89,7 +89,7 @@ describe('perl provider', function()
       1;
     ]])
     command('let g:job_id = jobstart(["perl", "'..fname..'"])')
-    retry(nil, 3000, function() eq('hello', eval('g:job_out')) end)
+    retry(function() eq('hello', eval('g:job_out')) end, nil, 3000)
   end)
 
   it('plugin works', function()
@@ -123,6 +123,6 @@ describe('perl provider', function()
       1;
     ]])
     command('let g:job_id = jobstart(["perl", "'..fname..'"])')
-    retry(nil, 3000, function() eq('hello-plugin', eval('g:job_out')) end)
+    retry(function() eq('hello-plugin', eval('g:job_out')) end, nil, 3000)
   end)
 end)

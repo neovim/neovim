@@ -168,7 +168,7 @@ describe("'wildmenu'", function()
     command('term')
 
     -- Check for a shell prompt to verify that the terminal loaded.
-    retry(nil, nil, function()
+    retry(function()
       if iswin() then
         eq('Microsoft', eval("matchstr(join(getline(1, '$')), 'Microsoft')"))
       else

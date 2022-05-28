@@ -95,6 +95,6 @@ describe('notify', function()
     assert_alive()
     eq({false, 'Invalid channel: '..catchan},
       exec_lua ([[ return {pcall(vim.rpcrequest, ..., 'nvim_eval', '1+1')}]], catchan))
-    retry(nil, 3000, function() eq({}, meths.get_chan_info(catchan)) end) -- cat be dead :(
+    retry(function() eq({}, meths.get_chan_info(catchan)) end, nil, 3000) -- cat be dead :(
   end)
 end)

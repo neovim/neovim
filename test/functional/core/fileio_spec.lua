@@ -47,9 +47,9 @@ describe('fileio', function()
     command('set updatetime=1')
     feed('izub<esc>h')                    -- File is 'modified'.
     sleep(3)                              -- Allow 'updatetime' to expire.
-    retry(3, nil, function()
+    retry(function()
       eq(1, request('nvim__stats').fsync)
-    end)
+    end, 3)
     command('set updatetime=9999')
 
     -- 2. Exit caused by deadly signal (+ 'swapfile').

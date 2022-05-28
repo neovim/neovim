@@ -973,7 +973,7 @@ describe('jobs', function()
     local ppid = funcs.jobpid(j)
     local children
     if iswin() then
-      local status, result = pcall(retry, nil, nil, function()
+      local status, result = pcall(retry, function()
         children = meths.get_proc_children(ppid)
         -- On Windows conhost.exe may exist, and
         -- e.g. vctip.exe might appear.  #10783
@@ -985,7 +985,7 @@ describe('jobs', function()
         error(result)
       end
     else
-      retry(nil, nil,  function()
+      retry(function()
         children = meths.get_proc_children(ppid)
         eq(3, #children)
       end)
@@ -999,7 +999,7 @@ describe('jobs', function()
     -- Kill the root of the tree.
     eq(1, funcs.jobstop(j))
     -- Assert that the children were killed.
-    retry(nil, nil, function()
+    retry(function()
       for _, child_pid in ipairs(children) do
         eq(NIL, meths.get_proc(child_pid))
       end

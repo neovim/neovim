@@ -27,7 +27,7 @@ describe(':terminal window', function()
     eq('terminal', eval('&buftype'))
     feed([[i<cr>]])
     -- Check topline _while_ in terminal-mode.
-    retry(nil, nil, function() eq(6, eval('winsaveview()["topline"]')) end)
+    retry(function() eq(6, eval('winsaveview()["topline"]')) end)
   end)
 
   describe("with 'number'", function()

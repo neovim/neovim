@@ -45,9 +45,9 @@ describe('channels', function()
 
     command("call chansend(g:id, msgpackdump([[2,'nvim_set_var',['code',23]]]))")
     set_session(server)
-    retry(nil, 1000, function()
+    retry(function()
       eq(23, meths.get_var('code'))
-    end)
+    end, nil, 1000)
     set_session(client)
 
     command("call chansend(g:id, msgpackdump([[0,0,'nvim_eval',['2+3']]]))")

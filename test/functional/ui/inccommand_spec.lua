@@ -107,9 +107,9 @@ describe(":substitute, inccommand=split interactivity", function()
   -- in the "no preview" tests (below) actually means something.
   it("previews interactive cmdline", function()
     feed(':%s/tw/MO/g')
-    retry(nil, 1000, function()
+    retry(function()
       eq(2, eval("bufnr('$')"))
-    end)
+    end, nil, 1000)
   end)
 
   it("no preview if invoked by a script", function()
@@ -1285,13 +1285,13 @@ describe(":substitute, inccommand=split", function()
     feed(':%s/a/bcdef')
 
     -- Assert that 'inccommand' is DISABLED in cmdline mode.
-    retry(nil, nil, function()
+    retry(function()
       eq('', eval('&inccommand'))
     end)
 
     -- Assert that 'inccommand' is again ENABLED after leaving cmdline mode.
     feed([[<C-\><C-N>]])
-    retry(nil, nil, function()
+    retry(function()
       eq('split', eval('&inccommand'))
     end)
   end)
@@ -2794,7 +2794,7 @@ it(':substitute with inccommand during :terminal activity', function()
   if helpers.skip_fragile(pending) then
     return
   end
-  retry(2, 40000, function()
+  retry(function()
     local screen = Screen.new(30,15)
     clear()
 
@@ -2811,7 +2811,7 @@ it(':substitute with inccommand during :terminal activity', function()
     sleep(20)  -- Allow some terminal activity.
     helpers.poke_eventloop()
     screen:expect_unchanged()
-  end)
+  end, 2, 40000)
 end)
 
 it(':substitute with inccommand, timer-induced :redraw #9777', function()

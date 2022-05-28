@@ -47,7 +47,7 @@ describe('TUI', function()
 
   -- Wait for mode in the child Nvim (avoid "typeahead race" #10826).
   local function wait_for_mode(mode)
-    retry(nil, nil, function()
+    retry(function()
       local _, m = child_session:request('nvim_get_mode')
       eq(mode, m.mode)
     end)
@@ -56,7 +56,7 @@ describe('TUI', function()
   -- Assert buffer contents in the child Nvim.
   local function expect_child_buf_lines(expected)
     assert(type({}) == type(expected))
-    retry(nil, nil, function()
+    retry(function()
       local _, buflines = child_session:request(
         'nvim_buf_get_lines', 0, 0, -1, false)
       eq(expected, buflines)
@@ -501,7 +501,7 @@ describe('TUI', function()
 
   it('paste: cmdline-mode collects chunks of unfinished line', function()
     local function expect_cmdline(expected)
-      retry(nil, nil, function()
+      retry(function()
         local _, cmdline = child_session:request(
           'nvim_call_function', 'getcmdline', {})
         eq(expected, cmdline)
@@ -1029,7 +1029,7 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 
   it('in normal-mode', function()
-    retry(2, 3 * screen.timeout, function()
+    retry(function()
     feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
@@ -1051,13 +1051,13 @@ describe('TUI FocusGained/FocusLost', function()
       lost                                              |
       {3:-- TERMINAL --}                                    |
     ]])
-    end)
+    end, 2, 3 * screen.timeout)
   end)
 
   it('in insert-mode', function()
     feed_command('set noshowmode')
     feed_data('i')
-    retry(2, 3 * screen.timeout, function()
+    retry(function()
     feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
@@ -1078,7 +1078,7 @@ describe('TUI FocusGained/FocusLost', function()
       lost                                              |
       {3:-- TERMINAL --}                                    |
     ]])
-    end)
+    end, 2, 3 * screen.timeout)
   end)
 
   -- During cmdline-mode we ignore :echo invoked by timers/events.
@@ -1114,7 +1114,7 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(":autocmd!\n")
     feed_data(":autocmd FocusLost * call append(line('$'), 'lost')\n")
     feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
-    retry(2, 3 * screen.timeout, function()
+    retry(function()
       -- Enter cmdline-mode.
       feed_data(':')
       screen:sleep(1)
@@ -1126,7 +1126,7 @@ describe('TUI FocusGained/FocusLost', function()
       -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
       feed_data('\n')
       screen:expect{any='lost'..(' '):rep(46)..'|\ngained'}
-    end)
+    end, 2, 3 * screen.timeout)
   end)
 
   it('in terminal-mode', function()
@@ -1480,10 +1480,10 @@ describe("TUI 'term' option", function()
 
     local full_timeout = screen.timeout
     screen.timeout = 250  -- We want screen:expect() to fail quickly.
-    retry(nil, 2 * full_timeout, function()  -- Wait for TUI thread to set 'term'.
+    retry(function()  -- Wait for TUI thread to set 'term'.
       feed_data(":echo 'term='.(&term)\n")
       screen:expect{any='term='..term_expected}
-    end)
+    end, nil, 2 * full_timeout)
   end
 
   it('gets builtin term if $TERM is invalid', function()
@@ -1551,11 +1551,11 @@ describe("TUI", function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    retry(nil, 3000, function()  -- Wait for log file to be flushed.
+    retry(function()  -- Wait for log file to be flushed.
       local log = read_file('Xtest_tui_verbose_log') or ''
       eq('--- Terminal info --- {{{\n', string.match(log, '%-%-%- Terminal.-\n'))
       ok(#log > 50)
-    end)
+    end, nil, 3000)
   end)
 
 end)

@@ -32,9 +32,9 @@ describe(':terminal', function()
     feed([[<C-\><C-N>]])
     poke_eventloop()
     -- Wait for some terminal activity.
-    retry(nil, 4000, function()
+    retry(function()
       ok(funcs.line('$') > 6)
-    end)
+    end, nil, 4000)
     feed_command("messages")
     screen:expect([[
       msg1                                              |
@@ -83,9 +83,9 @@ describe(':terminal', function()
       feed([[<C-\><C-N>]])
       poke_eventloop()
       -- Wait for >=1 lines to be created.
-      retry(nil, 4000, function()
+      retry(function()
         ok(funcs.line('$') > lines_before)
-      end)
+      end, nil, 4000)
     end
     enter_and_leave()
     enter_and_leave()
@@ -144,14 +144,14 @@ describe(':terminal (with fake shell)', function()
   it('with no argument, acts like termopen()', function()
     if helpers.skip_win32(pending) then return end
     terminal_with_fake_shell()
-    retry(nil, 4 * screen.timeout, function()
+    retry(function()
     screen:expect([[
       ^ready $                                           |
       [Process exited 0]                                |
                                                         |
       :terminal                                         |
     ]])
-    end)
+    end, nil, 4 * screen.timeout)
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
@@ -263,14 +263,14 @@ describe(':terminal (with fake shell)', function()
     if helpers.skip_win32(pending) then return end
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
-    retry(nil, 4 * screen.timeout, function()
+    retry(function()
     screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |
       [Process exited 0]                                |
       :terminal echo "scripts/shadacat.py"              |
     ]])
-    end)
+    end, nil, 4 * screen.timeout)
     feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     feed([[ggf"lgf]])

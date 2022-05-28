@@ -98,7 +98,7 @@ describe('undo tree:', function()
         expect_line('123456abc')
       end
 
-      helpers.retry(2, nil, test_earlier_later)
+      helpers.retry(test_earlier_later, 2, nil)
     end)
 
     it('file-write specifications', function()

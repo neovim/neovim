@@ -31,7 +31,7 @@ describe('K', function()
 
     -- K on the text "K_spec_out" resolves to `!echo fnord >> K_spec_out`.
     feed('i'..test_file..'<ESC>K')
-    retry(nil, nil, function() eq(1, eval('filereadable("'..test_file..'")')) end)
+    retry(function() eq(1, eval('filereadable("'..test_file..'")')) end)
     eq({'fnord'}, eval("readfile('"..test_file.."')"))
     -- Confirm that Neovim is still in terminal mode after K is pressed (#16692).
     helpers.sleep(500)

@@ -80,11 +80,11 @@ describe('startup', function()
             ..[[ -c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
             ..[[ -c q | cat -v"]]  -- Output to a pipe.
             ..[[, shellescape(v:progpath))]])
-    retry(nil, 3000, function()
+    retry(function()
       sleep(1)
       eq('1\n0\n',  -- stdin is a TTY, stdout is a pipe
          read_file('Xtest_startup_ttyout'))
-    end)
+    end, nil, 3000)
   end)
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
     if iswin() then
@@ -97,11 +97,11 @@ describe('startup', function()
             ..[[ -c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
             ..[[ -c q -- -"]]
             ..[[, shellescape(v:progpath))]])
-    retry(nil, 3000, function()
+    retry(function()
       sleep(1)
       eq('0\n1\n',  -- stdin is a pipe, stdout is a TTY
          read_file('Xtest_startup_ttyout'))
-    end)
+    end, nil, 3000)
   end)
   it('input from pipe (implicit) #7679', function()
     local screen = Screen.new(25, 4)

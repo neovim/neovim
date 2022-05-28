@@ -381,7 +381,7 @@ end
 
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
-function module.retry(max, max_ms, fn)
+function module.retry(fn, max, max_ms)
   assert(max == nil or max > 0)
   assert(max_ms == nil or max_ms > 0)
   local tries = 1

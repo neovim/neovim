@@ -46,7 +46,7 @@ local monitor_memory_usage = {
     return tonumber(handle:read('*a'):match('%d+'))
   end,
   op = function(self)
-    retry(nil, 10000, function()
+    retry(function()
       local val = self.memory_usage(self)
       if self.max < val then
         self.max = val
@@ -62,7 +62,7 @@ local monitor_memory_usage = {
       table.remove(self.hist, 1)
       self.last = self.hist[#self.hist]
       eq(#result, 1)
-    end)
+    end, nil, 10000)
   end,
   dump = function(self)
     return 'max: '..self.max ..', last: '..self.last
