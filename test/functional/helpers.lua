@@ -724,19 +724,6 @@ function module.pending_win32(pending_fn)
   end
 end
 
--- Helper to skip tests. Returns true in FreeBSD systems.
--- pending_fn is pending() from busted
-function module.pending_freebsd(pending_fn)
-  if global_helpers.uname() == 'freebsd' then
-    if pending_fn ~= nil then
-      pending_fn('FIXME: FreeBSD', function() end)
-    end
-    return true
-  else
-    return false
-  end
-end
-
 function module.pending_c_parser(pending_fn)
   local status, msg = unpack(module.exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
   if not status then

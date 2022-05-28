@@ -55,7 +55,7 @@ describe('Remote', function()
     end
 
     it('edit a single file', function()
-      if helpers.pending_freebsd(pending) then return end
+      if helpers.skip_fragile(pending) then return end
 
       run_remote('--remote', fname)
       expect(contents)
