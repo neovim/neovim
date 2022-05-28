@@ -1420,7 +1420,6 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   char *cmd;
   char *p;
   char *after_modifier = NULL;
-  cmdmod_T save_cmdmod = cmdmod;
 
   // Initialize cmdinfo
   memset(cmdinfo, 0, sizeof(*cmdinfo));
@@ -1434,42 +1433,11 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   eap->getline = NULL;
   eap->cookie = NULL;
 
-  // Parse command modifiers
-  if (parse_command_modifiers(eap, errormsg, false) == FAIL) {
+  if (!get_command_modifiers(eap, cmdinfo, errormsg)) {
     return false;
   }
-  after_modifier = eap->cmd;
 
-  // Revert the side-effects of `parse_command_modifiers`
-  if (eap->save_msg_silent != -1) {
-    cmdinfo->silent = !!msg_silent;
-    msg_silent = eap->save_msg_silent;
-    eap->save_msg_silent = -1;
-  }
-  if (eap->did_esilent) {
-    cmdinfo->emsg_silent = true;
-    emsg_silent--;
-    eap->did_esilent = false;
-  }
-  if (eap->did_sandbox) {
-    cmdinfo->sandbox = true;
-    sandbox--;
-    eap->did_sandbox = false;
-  }
-  if (cmdmod.save_ei != NULL) {
-    cmdinfo->noautocmd = true;
-    set_string_option_direct("ei", -1, (char_u *)cmdmod.save_ei, OPT_FREE, SID_NONE);
-    free_string_option((char_u *)cmdmod.save_ei);
-  }
-  if (eap->verbose_save != -1) {
-    cmdinfo->verbose = p_verbose;
-    p_verbose = eap->verbose_save;
-    eap->verbose_save = -1;
-  } else {
-    cmdinfo->verbose = -1;
-  }
-  cmdinfo->cmdmod = cmdmod;
-  cmdmod = save_cmdmod;
+  after_modifier = eap->cmd;
 
   // Save location after command modifiers
   cmd = eap->cmd;
@@ -1576,8 +1544,8 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
 /// Execute an Ex command using parsed command line information.
 /// Does not do any validation of the Ex command arguments.
 ///
-/// @param eap Ex-command arguments
-/// @param cmdinfo Command parse information
+/// @param eap Ex-command arguments.
+/// @param cmdinfo Command parse information.
 void execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo)
 {
   char *errormsg = NULL;
@@ -2702,6 +2670,55 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
   }
 
   return OK;
+}
+
+// Parse command modifiers and store information about them in "eap" amd "cmdinfo".
+//
+// @param[out] eap Ex-command arguments.
+// @param[out] cmdinfo Command parse information.
+// @param[out] errormsg Error message, if any.
+// @return Success or fail.
+bool get_command_modifiers(exarg_T *eap, CmdParseInfo *cmdinfo, char **errormsg)
+{
+  cmdmod_T save_cmdmod = cmdmod;
+
+  // Parse command modifiers
+  if (parse_command_modifiers(eap, errormsg, false) == FAIL) {
+    return false;
+  }
+
+  // Revert the side-effects of `parse_command_modifiers` and store command information
+  if (eap->save_msg_silent != -1) {
+    cmdinfo->silent = !!msg_silent;
+    msg_silent = eap->save_msg_silent;
+    eap->save_msg_silent = -1;
+  }
+  if (eap->did_esilent) {
+    cmdinfo->emsg_silent = true;
+    emsg_silent--;
+    eap->did_esilent = false;
+  }
+  if (eap->did_sandbox) {
+    cmdinfo->sandbox = true;
+    sandbox--;
+    eap->did_sandbox = false;
+  }
+  if (cmdmod.save_ei != NULL) {
+    cmdinfo->noautocmd = true;
+    set_string_option_direct("ei", -1, (char_u *)cmdmod.save_ei, OPT_FREE, SID_NONE);
+    free_string_option((char_u *)cmdmod.save_ei);
+  }
+  if (eap->verbose_save != -1) {
+    cmdinfo->verbose = p_verbose;
+    p_verbose = eap->verbose_save;
+    eap->verbose_save = -1;
+  } else {
+    cmdinfo->verbose = -1;
+  }
+  cmdinfo->cmdmod = cmdmod;
+  cmdmod = save_cmdmod;
+
+  return true;
 }
 
 /// Undo and free contents of "cmdmod".

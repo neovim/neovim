@@ -1003,7 +1003,9 @@ end:
 ///
 /// @param cmd       Command to execute. Must be a Dictionary that can contain the same values as
 ///                  the return value of |nvim_parse_cmd()| except "addr", "nargs" and "nextcmd"
-///                  which are ignored if provided. All values except for "cmd" are optional.
+///                  which are ignored if provided. All values except for "cmd" are optional. "mods"
+///                  can also be a string containing a whitespace-separated list of modifiers
+///                  instead of a table.
 /// @param opts      Optional parameters.
 ///                  - output: (boolean, default false) Whether to return command output.
 /// @param[out] err  Error details, if any.
@@ -1224,66 +1226,85 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   }
 
   if (HAS_KEY(cmd->mods)) {
-    if (cmd->mods.type != kObjectTypeDictionary) {
-      VALIDATION_ERROR("'mods' must be a Dictionary");
+    if (cmd->mods.type != kObjectTypeDictionary && cmd->mods.type != kObjectTypeString) {
+      VALIDATION_ERROR("'mods' must be a Dictionary or String");
     }
 
-    Dict(cmd_mods) mods = { 0 };
-    if (!api_dict_to_keydict(&mods, KeyDict_cmd_mods_get_field, cmd->mods.data.dictionary, err)) {
-      goto end;
-    }
-
-    if (HAS_KEY(mods.tab)) {
-      if (mods.tab.type != kObjectTypeInteger || mods.tab.data.integer < 0) {
-        VALIDATION_ERROR("'mods.tab' must be a non-negative Integer");
-      }
-      cmdinfo.cmdmod.tab = (int)mods.tab.data.integer + 1;
-    }
-
-    if (HAS_KEY(mods.verbose)) {
-      if (mods.verbose.type != kObjectTypeInteger || mods.verbose.data.integer <= 0) {
-        VALIDATION_ERROR("'mods.verbose' must be a non-negative Integer");
-      }
-      cmdinfo.verbose = mods.verbose.data.integer;
-    }
-
-    bool vertical;
-    OBJ_TO_BOOL(vertical, mods.vertical, false, "'mods.vertical'");
-    cmdinfo.cmdmod.split |= (vertical ? WSP_VERT : 0);
-
-    if (HAS_KEY(mods.split)) {
-      if (mods.split.type != kObjectTypeString) {
-        VALIDATION_ERROR("'mods.split' must be a String");
+    if (cmd->mods.type == kObjectTypeDictionary) {
+      Dict(cmd_mods) mods = { 0 };
+      if (!api_dict_to_keydict(&mods, KeyDict_cmd_mods_get_field, cmd->mods.data.dictionary, err)) {
+        goto end;
       }
 
-      if (STRCMP(mods.split.data.string.data, "aboveleft") == 0
-          || STRCMP(mods.split.data.string.data, "leftabove") == 0) {
-        cmdinfo.cmdmod.split |= WSP_ABOVE;
-      } else if (STRCMP(mods.split.data.string.data, "belowright") == 0
-                 || STRCMP(mods.split.data.string.data, "rightbelow") == 0) {
-        cmdinfo.cmdmod.split |= WSP_BELOW;
-      } else if (STRCMP(mods.split.data.string.data, "topleft") == 0) {
-        cmdinfo.cmdmod.split |= WSP_TOP;
-      } else if (STRCMP(mods.split.data.string.data, "botright") == 0) {
-        cmdinfo.cmdmod.split |= WSP_BOT;
-      } else {
-        VALIDATION_ERROR("Invalid value for 'mods.split'");
+      if (HAS_KEY(mods.tab)) {
+        if (mods.tab.type != kObjectTypeInteger || mods.tab.data.integer < 0) {
+          VALIDATION_ERROR("'mods.tab' must be a non-negative Integer");
+        }
+        cmdinfo.cmdmod.tab = (int)mods.tab.data.integer + 1;
       }
-    }
 
-    OBJ_TO_BOOL(cmdinfo.silent, mods.silent, false, "'mods.silent'");
-    OBJ_TO_BOOL(cmdinfo.emsg_silent, mods.emsg_silent, false, "'mods.emsg_silent'");
-    OBJ_TO_BOOL(cmdinfo.sandbox, mods.sandbox, false, "'mods.sandbox'");
-    OBJ_TO_BOOL(cmdinfo.noautocmd, mods.noautocmd, false, "'mods.noautocmd'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.browse, mods.browse, false, "'mods.browse'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.confirm, mods.confirm, false, "'mods.confirm'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.hide, mods.hide, false, "'mods.hide'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.keepalt, mods.keepalt, false, "'mods.keepalt'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.keepjumps, mods.keepjumps, false, "'mods.keepjumps'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.keepmarks, mods.keepmarks, false, "'mods.keepmarks'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.keeppatterns, mods.keeppatterns, false, "'mods.keeppatterns'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.lockmarks, mods.lockmarks, false, "'mods.lockmarks'");
-    OBJ_TO_BOOL(cmdinfo.cmdmod.noswapfile, mods.noswapfile, false, "'mods.noswapfile'");
+      if (HAS_KEY(mods.verbose)) {
+        if (mods.verbose.type != kObjectTypeInteger || mods.verbose.data.integer <= 0) {
+          VALIDATION_ERROR("'mods.verbose' must be a non-negative Integer");
+        }
+        cmdinfo.verbose = mods.verbose.data.integer;
+      }
+
+      bool vertical;
+      OBJ_TO_BOOL(vertical, mods.vertical, false, "'mods.vertical'");
+      cmdinfo.cmdmod.split |= (vertical ? WSP_VERT : 0);
+
+      if (HAS_KEY(mods.split)) {
+        if (mods.split.type != kObjectTypeString) {
+          VALIDATION_ERROR("'mods.split' must be a String");
+        }
+
+        if (STRCMP(mods.split.data.string.data, "aboveleft") == 0
+            || STRCMP(mods.split.data.string.data, "leftabove") == 0) {
+          cmdinfo.cmdmod.split |= WSP_ABOVE;
+        } else if (STRCMP(mods.split.data.string.data, "belowright") == 0
+                   || STRCMP(mods.split.data.string.data, "rightbelow") == 0) {
+          cmdinfo.cmdmod.split |= WSP_BELOW;
+        } else if (STRCMP(mods.split.data.string.data, "topleft") == 0) {
+          cmdinfo.cmdmod.split |= WSP_TOP;
+        } else if (STRCMP(mods.split.data.string.data, "botright") == 0) {
+          cmdinfo.cmdmod.split |= WSP_BOT;
+        } else {
+          VALIDATION_ERROR("Invalid value for 'mods.split'");
+        }
+      }
+
+      OBJ_TO_BOOL(cmdinfo.silent, mods.silent, false, "'mods.silent'");
+      OBJ_TO_BOOL(cmdinfo.emsg_silent, mods.emsg_silent, false, "'mods.emsg_silent'");
+      OBJ_TO_BOOL(cmdinfo.sandbox, mods.sandbox, false, "'mods.sandbox'");
+      OBJ_TO_BOOL(cmdinfo.noautocmd, mods.noautocmd, false, "'mods.noautocmd'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.browse, mods.browse, false, "'mods.browse'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.confirm, mods.confirm, false, "'mods.confirm'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.hide, mods.hide, false, "'mods.hide'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.keepalt, mods.keepalt, false, "'mods.keepalt'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.keepjumps, mods.keepjumps, false, "'mods.keepjumps'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.keepmarks, mods.keepmarks, false, "'mods.keepmarks'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.keeppatterns, mods.keeppatterns, false, "'mods.keeppatterns'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.lockmarks, mods.lockmarks, false, "'mods.lockmarks'");
+      OBJ_TO_BOOL(cmdinfo.cmdmod.noswapfile, mods.noswapfile, false, "'mods.noswapfile'");
+    } else {
+      char *errormsg = NULL;
+      // Temporarily prepend modifier string to ea.cmd in order to parse it.
+      size_t buflen = cmd->cmd.data.string.size + cmd->mods.data.string.size + 1;
+      char *buf = xcalloc(buflen, sizeof(char));
+      snprintf(buf, buflen, "%s %s", cmd->mods.data.string.data, ea.cmd);
+      ea.cmd = buf;
+
+      bool success = get_command_modifiers(&ea, &cmdinfo, &errormsg);
+      xfree(buf);
+
+      if (!success) {
+        VALIDATION_ERROR("Error while parsing command modifier string: %s", errormsg);
+      }
+
+      // Set ea.cmd back to the command name.
+      ea.cmd = cmdname;
+    }
 
     if (cmdinfo.sandbox && !(ea.argt & EX_SBOXOK)) {
       VALIDATION_ERROR("Command cannot be run in sandbox");

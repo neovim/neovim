@@ -1777,7 +1777,9 @@ nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
                             contain the same values as the return value of
                             |nvim_parse_cmd()| except "addr", "nargs" and
                             "nextcmd" which are ignored if provided. All
-                            values except for "cmd" are optional.
+                            values except for "cmd" are optional. "mods" can
+                            also be a string containing a whitespace-separated
+                            list of modifiers instead of a table.
                     {opts}  Optional parameters.
                             • output: (boolean, default false) Whether to
                               return command output.
