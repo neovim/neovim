@@ -120,7 +120,8 @@ jobs:
       - if: "!cancelled()"
         name: uncrustify
         run: |
-          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --check $(find ./src/nvim -name "*.[ch]") >/dev/null
+          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
+          git diff --color --exit-code
 
       - if: "!cancelled()"
         name: lualint
