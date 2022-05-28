@@ -295,6 +295,14 @@ function LanguageTree:included_regions()
   return self._regions
 end
 
+---@private
+local function get_node_range(node, id, metadata)
+  if metadata[id] and metadata[id].range then
+    return metadata[id].range
+  end
+  return { node:range() }
+end
+
 --- Gets language injection points by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -327,10 +335,10 @@ function LanguageTree:_get_injections()
 
         -- Allow for captured nodes to be used
         if type(content) == 'number' then
-          content = { match[content] }
+          content = { match[content]:range() }
         end
 
-        if content then
+        if type(content) == 'table' and #content >= 4 then
           vim.list_extend(ranges, content)
         end
       end
@@ -351,7 +359,7 @@ function LanguageTree:_get_injections()
         elseif name == 'combined' then
           combined = true
         elseif name == 'content' and #ranges == 0 then
-          table.insert(ranges, node)
+          table.insert(ranges, get_node_range(node, id, metadata))
           -- Ignore any tags that start with "_"
           -- Allows for other tags to be used in matches
         elseif string.sub(name, 1, 1) ~= '_' then
@@ -360,7 +368,7 @@ function LanguageTree:_get_injections()
           end
 
           if #ranges == 0 then
-            table.insert(ranges, node)
+            table.insert(ranges, get_node_range(node, id, metadata))
           end
         end
       end
@@ -397,7 +405,10 @@ function LanguageTree:_get_injections()
 
       for _, entry in pairs(patterns) do
         if entry.combined then
-          table.insert(result[lang], vim.tbl_flatten(entry.regions))
+          local regions = vim.tbl_map(function(e)
+            return vim.tbl_flatten(e)
+          end, entry.regions)
+          table.insert(result[lang], regions)
         else
           for _, ranges in ipairs(entry.regions) do
             table.insert(result[lang], ranges)

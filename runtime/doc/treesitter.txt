@@ -261,36 +261,37 @@ for a node or match and perform side effects. For example, the |set!|
 predicate sets metadata on the match or node : >
 	((identifier) @foo (#set! "type" "parameter"))
 
-Here is a list of built-in directives:
+Built-in directives:
 
-	`set!`						*ts-directive-set!*
-		Sets key/value metadata for a specific node or match : >
-			((identifier) @foo (#set! @foo "kind" "parameter"))
-			((node1) @left (node2) @right (#set! "type" "pair"))
+        `set!`                                              *ts-directive-set!*
+                Sets key/value metadata for a specific match or capture.
+                Value is accessible as either `metadata[key]` (match
+                specific) or `metadata[capture_id][key]` (capture specific).
+
+                Parameters: ~
+                    {capture_id} (optional)
+                    {key}
+                    {value}
+
+                Examples: >
+                        ((identifier) @foo (#set! @foo "kind" "parameter"))
+                        ((node1) @left (node2) @right (#set! "type" "pair"))
 <
-	`offset!`					*ts-directive-offset!*
-		Takes the range of the captured node and applies the offsets
-		to it's range : >
-			((identifier) @constant (#offset! @constant 0 1 0 -1))
-<		This will generate a range object for the captured node with
-		the offsets applied. The arguments are
-		`({capture_id}, {start_row}, {start_col}, {end_row}, {end_col}, {key?})`
-		The default key is "offset".
+        `offset!`                                        *ts-directive-offset!*
+                Takes the range of the captured node and applies an offset.
+                This will generate a new range object for the captured node
+                as `metadata[capture_id].range`.
 
-					*vim.treesitter.query.add_directive()*
-vim.treesitter.query.add_directive({name}, {handler})
+                Parameters: ~
+                    {capture_id}
+                    {start_row}
+                    {start_col}
+                    {end_row}
+                    {end_col}
 
-This adds a directive with the name {name} to be used in queries.
-{handler} should be a function whose signature will be : >
-	handler(match, pattern, bufnr, predicate, metadata)
-Handlers can set match level data by setting directly on the metadata object
-`metadata.key = value` Handlers can set node level data by using the capture
-id on the metadata table `metadata[capture_id].key = value`
-
-					*vim.treesitter.query.list_directives()*
-vim.treesitter.query.list_directives()
-
-This lists the currently available directives to use in queries.
+                Example: >
+                        ((identifier) @constant (#offset! @constant 0 1 0 -1))
+<
 
 Treesitter syntax highlighting (WIP)		     *lua-treesitter-highlight*
 
@@ -409,10 +410,15 @@ Lua module: vim.treesitter.query                            *treesitter-query*
 add_directive({name}, {handler}, {force})                    *add_directive()*
                 Adds a new directive to be used in queries
 
+                Handlers can set match level data by setting directly on the
+                metadata object `metadata.key = value`, additionally, handlers
+                can set node level data by using the capture id on the
+                metadata table `metadata[capture_id].key = value`
+
                 Parameters: ~
                     {name}     the name of the directive, without leading #
                     {handler}  the handler function to be used signature will
-                               be (match, pattern, bufnr, predicate)
+                               be (match, pattern, bufnr, predicate, metadata)
 
 add_predicate({name}, {handler}, {force})                    *add_predicate()*
                 Adds a new predicate to be used in queries
@@ -451,6 +457,8 @@ get_query_files({lang}, {query_name}, {is_included})
                                    as `nil`
 
 list_directives()                                          *list_directives()*
+                Lists the currently available directives to use in queries.
+
                 Return: ~
                     The list of supported directives.
 

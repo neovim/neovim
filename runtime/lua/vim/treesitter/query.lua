@@ -313,20 +313,22 @@ local directive_handlers = {
   ['set!'] = function(_, _, _, pred, metadata)
     if #pred == 4 then
       -- (#set! @capture "key" "value")
-      local capture = pred[2]
-      if not metadata[capture] then
-        metadata[capture] = {}
+      local _, capture_id, key, value = unpack(pred)
+      if not metadata[capture_id] then
+        metadata[capture_id] = {}
       end
-      metadata[capture][pred[3]] = pred[4]
+      metadata[capture_id][key] = value
     else
+      local _, key, value = unpack(pred)
       -- (#set! "key" "value")
-      metadata[pred[2]] = pred[3]
+      metadata[key] = value
     end
   end,
   -- Shifts the range of a node.
   -- Example: (#offset! @_node 0 1 0 -1)
   ['offset!'] = function(match, _, _, pred, metadata)
-    local offset_node = match[pred[2]]
+    local capture_id = pred[2]
+    local offset_node = match[capture_id]
     local range = { offset_node:range() }
     local start_row_offset = pred[3] or 0
     local start_col_offset = pred[4] or 0
@@ -340,7 +342,10 @@ local directive_handlers = {
 
     -- If this produces an invalid range, we just skip it.
     if range[1] < range[3] or (range[1] == range[3] and range[2] <= range[4]) then
-      metadata.content = { range }
+      if not metadata[capture_id] then
+        metadata[capture_id] = {}
+      end
+      metadata[capture_id].range = range
     end
   end,
 }
@@ -360,9 +365,14 @@ end
 
 --- Adds a new directive to be used in queries
 ---
+--- Handlers can set match level data by setting directly on the
+--- metadata object `metadata.key = value`, additionally, handlers
+--- can set node level data by using the capture id on the
+--- metadata table `metadata[capture_id].key = value`
+---
 ---@param name the name of the directive, without leading #
 ---@param handler the handler function to be used
----      signature will be (match, pattern, bufnr, predicate)
+---      signature will be (match, pattern, bufnr, predicate, metadata)
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -371,6 +381,7 @@ function M.add_directive(name, handler, force)
   directive_handlers[name] = handler
 end
 
+--- Lists the currently available directives to use in queries.
 ---@return The list of supported directives.
 function M.list_directives()
   return vim.tbl_keys(directive_handlers)
