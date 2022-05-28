@@ -6726,6 +6726,7 @@ describe('float window', function()
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
           [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
+
         meths.input_mouse('left', 'press', '', 5, 0, 0)
         screen:expect{grid=[[
         ## grid 1
@@ -6755,6 +6756,7 @@ describe('float window', function()
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
           [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
+
         meths.input_mouse('left', 'drag', '', 5, 1, 2)
         screen:expect{grid=[[
         ## grid 1
@@ -6854,6 +6856,7 @@ describe('float window', function()
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
           [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
+
         meths.input_mouse('left', 'press', '', 5, 1, 1)
         screen:expect{grid=[[
         ## grid 1
@@ -6885,6 +6888,7 @@ describe('float window', function()
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
           [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
+
         meths.input_mouse('left', 'drag', '', 5, 2, 3)
         screen:expect{grid=[[
         ## grid 1
@@ -6986,6 +6990,7 @@ describe('float window', function()
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
           [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
+
         meths.input_mouse('left', 'press', '', 5, 1, 0)
         screen:expect{grid=[[
         ## grid 1
@@ -7016,6 +7021,7 @@ describe('float window', function()
           [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
           [5] = {win = {id = 1002}, topline = 0, botline = 3, curline = 0, curcol = 0, linecount = 3};
         }}
+
         meths.input_mouse('left', 'drag', '', 5, 2, 2)
         screen:expect{grid=[[
         ## grid 1
@@ -7078,6 +7084,123 @@ describe('float window', function()
           {0:~                                       }|
           {3:-- VISUAL --}                            |
         ]]}
+      end
+    end)
+
+    it('left drag changes visual selection if float window is turned into a split', function()
+      local buf = meths.create_buf(false,false)
+      meths.buf_set_lines(buf, 0, -1, true, {'foo', 'bar', 'baz'})
+      meths.open_win(buf, true, {relative='editor', width=20, height=3, row=2, col=5})
+      command('wincmd L')
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          {5:[No Name]           }{4:[No Name] [+]       }|
+          [3:----------------------------------------]|
+        ## grid 2
+                             |
+          {0:~                  }|
+          {0:~                  }|
+          {0:~                  }|
+          {0:~                  }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          ^foo                 |
+          bar                 |
+          baz                 |
+          {0:~                   }|
+          {0:~                   }|
+        ]])
+
+        meths.input_mouse('left', 'press', '', 5, 2, 2)
+        screen:expect([[
+        ## grid 1
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          {5:[No Name]           }{4:[No Name] [+]       }|
+          [3:----------------------------------------]|
+        ## grid 2
+                             |
+          {0:~                  }|
+          {0:~                  }|
+          {0:~                  }|
+          {0:~                  }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          foo                 |
+          bar                 |
+          ba^z                 |
+          {0:~                   }|
+          {0:~                   }|
+        ]])
+
+        meths.input_mouse('left', 'drag', '', 5, 1, 1)
+        screen:expect([[
+        ## grid 1
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          [2:-------------------]{5:│}[5:--------------------]|
+          {5:[No Name]           }{4:[No Name] [+]       }|
+          [3:----------------------------------------]|
+        ## grid 2
+                             |
+          {0:~                  }|
+          {0:~                  }|
+          {0:~                  }|
+          {0:~                  }|
+        ## grid 3
+          {3:-- VISUAL --}                            |
+        ## grid 5
+          foo                 |
+          b^a{27:r}                 |
+          {27:baz}                 |
+          {0:~                   }|
+          {0:~                   }|
+        ]])
+      else
+        screen:expect([[
+                             {5:│}^foo                 |
+          {0:~                  }{5:│}bar                 |
+          {0:~                  }{5:│}baz                 |
+          {0:~                  }{5:│}{0:~                   }|
+          {0:~                  }{5:│}{0:~                   }|
+          {5:[No Name]           }{4:[No Name] [+]       }|
+                                                  |
+        ]])
+
+        meths.input_mouse('left', 'press', '', 0, 2, 22)
+        screen:expect([[
+                             {5:│}foo                 |
+          {0:~                  }{5:│}bar                 |
+          {0:~                  }{5:│}ba^z                 |
+          {0:~                  }{5:│}{0:~                   }|
+          {0:~                  }{5:│}{0:~                   }|
+          {5:[No Name]           }{4:[No Name] [+]       }|
+                                                  |
+        ]])
+
+        meths.input_mouse('left', 'drag', '', 0, 1, 21)
+        screen:expect([[
+                             {5:│}foo                 |
+          {0:~                  }{5:│}b^a{27:r}                 |
+          {0:~                  }{5:│}{27:baz}                 |
+          {0:~                  }{5:│}{0:~                   }|
+          {0:~                  }{5:│}{0:~                   }|
+          {5:[No Name]           }{4:[No Name] [+]       }|
+          {3:-- VISUAL --}                            |
+        ]])
       end
     end)
 

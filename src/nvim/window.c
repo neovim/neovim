@@ -1941,7 +1941,7 @@ static void win_totop(int size, int flags)
     } else {
       // No longer a float, a non-multigrid UI shouldn't draw it as such
       ui_call_win_hide(curwin->w_grid_alloc.handle);
-      win_free_grid(curwin, false);
+      win_free_grid(curwin, true);
     }
   } else {
     // Remove the window and frame from the tree of frames.
@@ -5179,8 +5179,7 @@ void win_free_grid(win_T *wp, bool reinit)
   }
   grid_free(&wp->w_grid_alloc);
   if (reinit) {
-    // if a float is turned into a split and back into a float, the grid
-    // data structure will be reused
+    // if a float is turned into a split, the grid data structure will be reused
     memset(&wp->w_grid_alloc, 0, sizeof(wp->w_grid_alloc));
   }
 }
