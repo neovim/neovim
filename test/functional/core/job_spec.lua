@@ -83,7 +83,7 @@ describe('jobs', function()
   end)
 
   it('append environment with pty #env', function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip_win32(pending) then return end
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.pty = v:true")
@@ -793,7 +793,7 @@ describe('jobs', function()
     end)
 
     it('can be called recursively', function()
-      if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+      if helpers.skip_win32(pending) then return end  -- TODO: Need `cat`.
       source([[
       let g:opts = {}
       let g:counter = 0
@@ -1015,7 +1015,7 @@ describe('jobs', function()
   end)
 
   describe('running tty-test program', function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip_win32(pending) then return end
     local function next_chunk()
       local rv
       while true do
@@ -1114,7 +1114,7 @@ describe("pty process teardown", function()
   end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip_win32(pending) then return end
     -- Use a nested nvim (in :term) to test without --headless.
     feed_command(":terminal '"..helpers.nvim_prog
       .."' -u NONE -i NONE --cmd '"..nvim_set.."' "

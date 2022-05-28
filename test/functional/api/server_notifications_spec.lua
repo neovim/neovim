@@ -84,7 +84,7 @@ describe('notify', function()
     elseif helpers.skip_fragile(pending) then
       return
     end
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip_win32(pending) then return end
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = eval('exepath("cat")')
     eq({id=catchan, argv={catpath}, stream='job', mode='rpc', client = {}}, exec_lua ([[

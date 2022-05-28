@@ -2663,7 +2663,7 @@ describe('API', function()
       eq({}, meths.get_runtime_file("foobarlang/", true))
     end)
     it('can handle bad patterns', function()
-      if helpers.pending_win32(pending) then return end
+      if helpers.skip_win32(pending) then return end
 
       eq("Vim:E220: Missing }.", pcall_err(meths.get_runtime_file, "{", false))
 

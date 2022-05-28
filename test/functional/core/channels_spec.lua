@@ -145,7 +145,7 @@ describe('channels', function()
   end
 
   it('can use stdio channel with pty', function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip_win32(pending) then return end
     source([[
       let g:job_opts = {
       \ 'on_stdout': function('OnEvent'),
@@ -199,7 +199,7 @@ describe('channels', function()
 
 
   it('stdio channel can use rpc and stderr simultaneously', function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip_win32(pending) then return end
     source([[
       let g:job_opts = {
       \ 'on_stderr': function('OnEvent'),

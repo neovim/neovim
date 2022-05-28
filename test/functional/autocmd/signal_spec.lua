@@ -6,7 +6,7 @@ local eq = helpers.eq
 local funcs = helpers.funcs
 local next_msg = helpers.next_msg
 
-if helpers.pending_win32(pending) then
+if helpers.skip_win32(pending) then
   -- Only applies to POSIX systems.
   return
 end

@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
 local ok = helpers.ok
 
-if helpers.pending_win32(pending) then return end
+if helpers.skip_win32(pending) then return end
 
 describe('api', function()
   local screen

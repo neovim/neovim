@@ -25,7 +25,7 @@ local meths = helpers.meths
 local run, stop = helpers.run, helpers.stop
 
 -- TODO(justinmk): hangs on Windows https://github.com/neovim/neovim/pull/11837
-if helpers.pending_win32(pending) then return end
+if helpers.skip_win32(pending) then return end
 
 -- Fake LSP server.
 local fake_lsp_code = 'test/functional/fixtures/fake-lsp-server.lua'

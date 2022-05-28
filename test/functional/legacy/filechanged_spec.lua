@@ -15,7 +15,7 @@ describe('file changed dialog', function()
   end)
 
   it('works', function()
-    if helpers.pending_win32(pending) then return end
+    if helpers.skip_win32(pending) then return end
     source([[
       func Test_file_changed_dialog()
         au! FileChangedShell
