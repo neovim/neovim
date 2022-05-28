@@ -1266,8 +1266,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   } else if (wp->w_floating) {
     new_frame(wp);
     wp->w_floating = false;
-    // non-floating window doesn't store float config.
+    // non-floating window doesn't store float config or have a border.
     wp->w_float_config = FLOAT_CONFIG_INIT;
+    memset(wp->w_border_adj, 0, sizeof(wp->w_border_adj));
   }
 
   /*
