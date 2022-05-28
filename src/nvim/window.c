@@ -1334,7 +1334,6 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     set_fraction(oldwin);
   }
   wp->w_fraction = oldwin->w_fraction;
-  wp->w_winbar_height = oldwin->w_winbar_height;
 
   if (flags & WSP_VERT) {
     wp->w_p_scr = curwin->w_p_scr;
@@ -1571,6 +1570,8 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
   copyFoldingState(oldp, newp);
 
   win_init_some(newp, oldp);
+
+  newp->w_winbar_height = oldp->w_winbar_height;
 }
 
 /*

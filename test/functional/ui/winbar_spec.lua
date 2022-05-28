@@ -459,4 +459,40 @@ describe('winbar', function()
                                                                   |
     ]]}
   end)
+
+  it('works correctly when moving a split', function()
+    screen:try_resize(45, 6)
+    command('set winbar=')
+    command('vsplit')
+    command('setlocal winbar=foo')
+    screen:expect([[
+      {1:foo                   }│                      |
+      ^                      │{3:~                     }|
+      {3:~                     }│{3:~                     }|
+      {3:~                     }│{3:~                     }|
+      {4:[No Name]              }{2:[No Name]             }|
+                                                   |
+    ]])
+
+    command('wincmd L')
+    screen:expect([[
+                            │{1:foo                   }|
+      {3:~                     }│^                      |
+      {3:~                     }│{3:~                     }|
+      {3:~                     }│{3:~                     }|
+      {2:[No Name]              }{4:[No Name]             }|
+                                                   |
+    ]])
+
+    command('wincmd w')
+    command('wincmd L')
+    screen:expect([[
+      {1:foo                   }│^                      |
+                            │{3:~                     }|
+      {3:~                     }│{3:~                     }|
+      {3:~                     }│{3:~                     }|
+      {2:[No Name]              }{4:[No Name]             }|
+                                                   |
+    ]])
+  end)
 end)
