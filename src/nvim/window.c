@@ -783,8 +783,8 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 
   if (!ui_has(kUIMultigrid)) {
-    wp->w_height = MIN(wp->w_height, Rows - 1 - win_extra_height(wp));
-    wp->w_width = MIN(wp->w_width, Columns - win_extra_width(wp));
+    wp->w_height = MIN(wp->w_height, Rows - 1 - win_border_height(wp));
+    wp->w_width = MIN(wp->w_width, Columns - win_border_width(wp));
   }
 
   win_set_inner_size(wp);
@@ -6330,18 +6330,18 @@ void win_set_inner_size(win_T *wp)
     terminal_check_size(wp->w_buffer->terminal);
   }
 
-  wp->w_height_outer = (wp->w_height_inner + win_extra_height(wp));
-  wp->w_width_outer = (wp->w_width_inner + win_extra_width(wp));
+  wp->w_height_outer = (wp->w_height_inner + win_border_height(wp) + wp->w_winbar_height);
+  wp->w_width_outer = (wp->w_width_inner + win_border_width(wp));
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
 }
 
-static int win_extra_height(win_T *wp)
+static int win_border_height(win_T *wp)
 {
-  return wp->w_border_adj[0] + wp->w_border_adj[2] + wp->w_winbar_height;
+  return wp->w_border_adj[0] + wp->w_border_adj[2];
 }
 
-static int win_extra_width(win_T *wp)
+static int win_border_width(win_T *wp)
 {
   return wp->w_border_adj[1] + wp->w_border_adj[3];
 }

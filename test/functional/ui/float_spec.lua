@@ -7896,8 +7896,8 @@ describe('float window', function()
         ]]}
       end
 
-      -- add a border
-      meths.win_set_config(win1, {relative='editor', width=15, height=3, row=0, col=4, border = 'single'})
+      -- resize and add a border
+      meths.win_set_config(win1, {relative='editor', width=15, height=4, row=0, col=4, border = 'single'})
 
       if multigrid then
         screen:expect{grid=[[
@@ -7923,6 +7923,7 @@ describe('float window', function()
           {5:│}{3:floaty bar     }{5:│}|
           {5:│}{1:               }{5:│}|
           {5:│}{2:~              }{5:│}|
+          {5:│}{2:~              }{5:│}|
           {5:└───────────────┘}|
         ]], float_pos={
           [4] = {{id = 1001}, "NW", 1, 0, 4, true, 50};
@@ -7936,8 +7937,8 @@ describe('float window', function()
           {0:~   }{5:│}{3:floaty bar     }{5:│}{0:                   }|
           {0:~   }{5:│}{1:               }{5:│}{0:                   }|
           {0:~   }{5:│}{2:~              }{5:│}{0:                   }|
+          {0:~   }{5:│}{2:~              }{5:│}{0:                   }|
           {0:~   }{5:└───────────────┘}{0:                   }|
-          {0:~                                       }|
                                                   |
         ]]}
       end
