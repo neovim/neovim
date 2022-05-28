@@ -5948,6 +5948,16 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   int add_off = 0;
   int toplevel = start->c == NFA_MOPEN;
   regsubs_T *r;
+  // Some patterns may take a long time to match, especially when using
+  // recursive_regmatch(). Allow interrupting them with CTRL-C.
+  fast_breakcheck();
+  if (got_int) {
+    return false;
+  }
+  if (nfa_did_time_out()) {
+    return false;
+  }
+
 #ifdef NFA_REGEXP_DEBUG_LOG
   FILE *debug = fopen(NFA_REGEXP_DEBUG_LOG, "a");
 
@@ -5956,22 +5966,6 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
     return false;
   }
 #endif
-  // Some patterns may take a long time to match, especially when using
-  // recursive_regmatch(). Allow interrupting them with CTRL-C.
-  fast_breakcheck();
-  if (got_int) {
-#ifdef NFA_REGEXP_DEBUG_LOG
-    fclose(debug);
-#endif
-    return false;
-  }
-  if (nfa_did_time_out()) {
-#ifdef NFA_REGEXP_DEBUG_LOG
-    fclose(debug);
-#endif
-    return false;
-  }
-
   nfa_match = false;
 
   // Allocate memory for the lists of nodes.
