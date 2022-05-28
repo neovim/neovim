@@ -6620,17 +6620,15 @@ static void win_remove_status_line(win_T *wp, bool add_hsep)
   wp->w_status_click_defs = NULL;
 }
 
-// Look for resizable frames and take lines from them to make room for the statusline
-static void resize_frame_for_status(frame_T *fr)
+// Look for a horizontally resizable frame, starting with frame "fr".
+// Returns NULL if there are no resizable frames.
+static frame_T *find_horizontally_resizable_frame(frame_T *fr)
 {
-  // Find a frame to take a line from.
   frame_T *fp = fr;
-  win_T *wp = fr->fr_win;
 
   while (fp->fr_height <= frame_minheight(fp, NULL)) {
     if (fp == topframe) {
-      emsg(_(e_noroom));
-      return;
+      return NULL;
     }
     // In a column of frames: go to frame above.  If already at
     // the top or in a row of frames: go to parent.
@@ -6640,13 +6638,49 @@ static void resize_frame_for_status(frame_T *fr)
       fp = fp->fr_parent;
     }
   }
-  if (fp != fr) {
+
+  return fp;
+}
+
+// Look for resizable frames and take lines from them to make room for the statusline.
+// @return Success or failure.
+static bool resize_frame_for_status(frame_T *fr)
+{
+  win_T *wp = fr->fr_win;
+  frame_T *fp = find_horizontally_resizable_frame(fr);
+
+  if (fp == NULL) {
+    emsg(_(e_noroom));
+    return false;
+  } else if (fp != fr) {
     frame_new_height(fp, fp->fr_height - 1, false, false);
     frame_fix_height(wp);
     (void)win_comp_pos();
   } else {
     win_new_height(wp, wp->w_height - 1);
   }
+
+  return true;
+}
+
+// Look for resizable frames and take lines from them to make room for the winbar.
+// @return Success or failure.
+static bool resize_frame_for_winbar(frame_T *fr)
+{
+  win_T *wp = fr->fr_win;
+  frame_T *fp = find_horizontally_resizable_frame(fr);
+
+  if (fp == NULL || fp == fr) {
+    emsg(_(e_noroom));
+    return false;
+  } else {
+    frame_new_height(fp, fp->fr_height - 1, false, false);
+    win_new_height(wp, wp->w_height + 1);
+    frame_fix_height(wp);
+    win_comp_pos();
+  }
+
+  return true;
 }
 
 static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
@@ -6664,7 +6698,9 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
       } else if (wp->w_status_height == 0 && !is_stl_global && statusline) {
         // Add statusline to window if needed
         wp->w_status_height = STATUS_HEIGHT;
-        resize_frame_for_status(fr);
+        if (!resize_frame_for_status(fr)) {
+          return;
+        }
         comp_col();
       }
     } else if (wp->w_status_height != 0 && is_stl_global) {
@@ -6695,6 +6731,14 @@ void set_winbar(void)
                                        : ((*p_wbr != NUL || *wp->w_p_wbr != NUL) ? 1 : 0);
 
     if (wp->w_winbar_height != winbar_height) {
+      if (winbar_height == 1 && wp->w_height_inner <= 1) {
+        if (wp->w_floating) {
+          emsg(_(e_noroom));
+          continue;
+        } else if (!resize_frame_for_winbar(wp->w_frame)) {
+          return;
+        }
+      }
       wp->w_winbar_height = winbar_height;
       win_set_inner_size(wp);
       wp->w_redr_status = wp->w_redr_status || winbar_height;
