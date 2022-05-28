@@ -7,6 +7,7 @@ local meths = helpers.meths
 local eq = helpers.eq
 local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
+local pcall_err = helpers.pcall_err
 
 describe('winbar', function()
   local screen
@@ -28,6 +29,7 @@ describe('winbar', function()
     })
     meths.set_option('winbar', 'Set Up The Bars')
   end)
+
   it('works', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
@@ -45,6 +47,7 @@ describe('winbar', function()
                                                                   |
     ]])
   end)
+
   it('works with custom \'fillchars\' value', function()
     command('set fillchars=wbr:+')
     screen:expect([[
@@ -63,6 +66,7 @@ describe('winbar', function()
                                                                   |
     ]])
   end)
+
   it('works with custom highlight', function()
     command('hi WinBar guifg=red')
     screen:expect([[
@@ -81,6 +85,7 @@ describe('winbar', function()
                                                                   |
     ]])
   end)
+
   it('works with splits', function()
     command('hi WinBar guifg=red')
     command('hi WinBarNC guifg=blue')
@@ -101,6 +106,7 @@ describe('winbar', function()
                                                                   |
     ]])
   end)
+
   it('works when switching value of \'winbar\'', function()
     command('belowright vsplit | split | split | set winbar=')
     screen:expect([[
@@ -151,6 +157,7 @@ describe('winbar', function()
                                                                   |
     ]])
   end)
+
   it('can be ruler', function()
     insert [[
       just some
@@ -204,6 +211,7 @@ describe('winbar', function()
                                                                   |
     ]]}
   end)
+
   it('works with laststatus=3', function()
     command('set laststatus=3')
     screen:expect([[
@@ -494,5 +502,60 @@ describe('winbar', function()
       {2:[No Name]              }{4:[No Name]             }|
                                                    |
     ]])
+  end)
+
+  it('properly resizes window when there is no space in it', function()
+    command('set winbar= | 1split')
+    screen:expect([[
+      ^                                                            |
+      {4:[No Name]                                                   }|
+                                                                  |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {2:[No Name]                                                   }|
+                                                                  |
+    ]])
+    command('set winbar=a')
+    screen:expect([[
+      {1:a                                                           }|
+      ^                                                            |
+      {4:[No Name]                                                   }|
+      {1:a                                                           }|
+                                                                  |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {2:[No Name]                                                   }|
+                                                                  |
+    ]])
+  end)
+
+  it('cannot be added unless there is room', function()
+    command('set winbar= | split | split | split | split | split')
+    screen:expect([[
+      ^                                                            |
+      {4:[No Name]                                                   }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+      {2:[No Name]                                                   }|
+                                                                  |
+    ]])
+    eq('Vim(set):E36: Not enough room', pcall_err(command, 'set winbar=test'))
   end)
 end)
