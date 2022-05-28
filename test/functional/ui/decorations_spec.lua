@@ -866,6 +866,34 @@ end]]
   end)
 end)
 
+describe('extmark conceal', function()
+  local screen, ns
+  before_each( function()
+    clear()
+    screen = Screen.new(50, 5)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [0] = {bold=true, foreground=Screen.colors.Blue};
+      [1] = {background=Screen.colors.DarkGrey, foreground=Screen.colors.LightGrey};
+    }
+
+    ns = meths.create_namespace 'test'
+  end)
+
+  it('conceals', function()
+    insert('foo\n')
+    command('let &conceallevel=2')
+    meths.buf_set_extmark(0, ns, 0, 0, {end_col=0, end_row=2, conceal='X'})
+    screen:expect([[
+        {1:X}                                                 |
+        ^                                                  |
+        {0:~                                                 }|
+        {0:~                                                 }|
+                                                          |
+      ]])
+  end)
+end)
+
 describe('decorations: virtual lines', function()
   local screen, ns
   before_each(function()
