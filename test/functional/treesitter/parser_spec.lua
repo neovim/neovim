@@ -5,13 +5,13 @@ local eq = helpers.eq
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local pending_c_parser = helpers.pending_c_parser
+local skip_c_parser = helpers.skip_c_parser
 
 before_each(clear)
 
 describe('treesitter parser API', function()
   clear()
-  if pending_c_parser(pending) then return end
+  if skip_c_parser(pending) then return end
 
   it('parses buffer', function()
     if helpers.skip_win32(pending) then return end
@@ -249,7 +249,7 @@ void ui_refresh(void)
   end)
 
   it('supports getting text of multiline node', function()
-    if pending_c_parser(pending) then return end
+    if skip_c_parser(pending) then return end
     insert(test_text)
     local res = exec_lua([[
       local parser = vim.treesitter.get_parser(0, "c")

@@ -4,7 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
-local pending_c_parser = helpers.pending_c_parser
+local skip_c_parser = helpers.skip_c_parser
 
 before_each(clear)
 
@@ -15,7 +15,7 @@ end
 describe('treesitter node API', function()
   clear()
 
-  if pending_c_parser(pending) then
+  if skip_c_parser(pending) then
     return
   end
 

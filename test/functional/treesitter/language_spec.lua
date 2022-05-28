@@ -6,7 +6,7 @@ local command = helpers.command
 local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 local matches = helpers.matches
-local pending_c_parser = helpers.pending_c_parser
+local skip_c_parser = helpers.skip_c_parser
 
 before_each(clear)
 
@@ -29,7 +29,7 @@ describe('treesitter API', function()
   end)
 
   it('inspects language', function()
-    if pending_c_parser(pending) then return end
+    if skip_c_parser(pending) then return end
 
     local keys, fields, symbols = unpack(exec_lua([[
       local lang = vim.treesitter.inspect_language('c')

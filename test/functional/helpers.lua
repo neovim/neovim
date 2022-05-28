@@ -724,7 +724,7 @@ function module.skip_win32(pending_fn)
   end
 end
 
-function module.pending_c_parser(pending_fn)
+function module.skip_c_parser(pending_fn)
   local status, msg = unpack(module.exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
   if not status then
     if module.isCI() then
