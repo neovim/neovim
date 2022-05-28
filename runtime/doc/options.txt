@@ -927,7 +927,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	backup would be made by renaming the original file crontab won't see
 	the newly created file).  Also see 'backupcopy' and |crontab|.
 
-
 						*'belloff'* *'bo'*
 'belloff' 'bo'		string	(default "all")
 			global
