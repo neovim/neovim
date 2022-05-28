@@ -123,7 +123,7 @@ it('autocmd TermEnter, TermLeave', function()
   command('wincmd w')
   feed('i')
   command('q!')
-  helpers.retry_inf(function()
+  retry(function()
   eq(
     {
      {'TermOpen',  'n'},

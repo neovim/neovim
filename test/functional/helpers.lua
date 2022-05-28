@@ -401,11 +401,6 @@ function module.retry(max, max_ms, fn)
   end
 end
 
--- Calls fn() until it succeeds.
-function module.retry_inf(fn)
-  module.retry(nil, nil, fn)
-end
-
 -- Starts a new global Nvim session.
 --
 -- Parameters are interpreted as startup args, OR a map with these keys:
