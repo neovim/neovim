@@ -1343,6 +1343,108 @@ describe(":substitute, inccommand=split", function()
     ]])
   end)
 
+  it([[preview changes correctly with c_CTRL-R_= and c_CTRL-\_e]], function()
+    feed('gg')
+    feed(":1,2s/t/X")
+    screen:expect([[
+      Inc subs{12:X}itution on           |
+      {12:X}wo lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |1| Inc subs{12:X}itution on       |
+      |2| {12:X}wo lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :1,2s/t/X^                     |
+    ]])
+
+    feed([[<C-R>='Y']])
+    -- preview should be unchanged during c_CTRL-R_= editing
+    screen:expect([[
+      Inc subs{12:X}itution on           |
+      {12:X}wo lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |1| Inc subs{12:X}itution on       |
+      |2| {12:X}wo lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      ={1:'Y'}^                          |
+    ]])
+
+    feed('<CR>')
+    -- preview should be changed by the result of the expression
+    screen:expect([[
+      Inc subs{12:XY}itution on          |
+      {12:XY}wo lines                    |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |1| Inc subs{12:XY}itution on      |
+      |2| {12:XY}wo lines                |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :1,2s/t/XY^                    |
+    ]])
+
+    feed([[<C-\>e'echo']])
+    -- preview should be unchanged during c_CTRL-\_e editing
+    screen:expect([[
+      Inc subs{12:XY}itution on          |
+      {12:XY}wo lines                    |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |1| Inc subs{12:XY}itution on      |
+      |2| {12:XY}wo lines                |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      ={1:'echo'}^                       |
+    ]])
+
+    feed('<CR>')
+    -- preview should be cleared if command is changed to a non-previewable one
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :echo^                         |
+    ]])
+  end)
+
 end)
 
 describe("inccommand=nosplit", function()
