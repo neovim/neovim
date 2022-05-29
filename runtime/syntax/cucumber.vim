@@ -14,7 +14,7 @@ syn case match
 syn sync minlines=20
 
 let g:cucumber_languages = {
-      \"en": {"and": "And\\>", "background": "Background\\>", "but": "But\\>", "examples": "Scenarios\\>\\|Examples\\>", "feature": "Business Need\\>\\|Feature\\>\\|Ability\\>", "given": "Given\\>", "scenario": "Scenario\\>", "scenario_outline": "Scenario Template\\>\\|Scenario Outline\\>", "then": "Then\\>", "when": "When\\>"},
+      \"en": {"and": "And\\>", "background": "Background\\>", "but": "But\\>", "examples": "Scenarios\\>\\|Examples\\>", "feature": "Business Need\\>\\|Feature\\>\\|Ability\\>", "rule": "Rule\\>", "given": "Given\\>", "scenario": "Scenario\\>", "scenario_outline": "Scenario Template\\>\\|Scenario Outline\\>", "then": "Then\\>", "when": "When\\>"},
       \"ar": {"and": "\\%u0648\\>", "background": "\\%u0627\\%u0644\\%u062e\\%u0644\\%u0641\\%u064a\\%u0629\\>", "but": "\\%u0644\\%u0643\\%u0646\\>", "examples": "\\%u0627\\%u0645\\%u062b\\%u0644\\%u0629\\>", "feature": "\\%u062e\\%u0627\\%u0635\\%u064a\\%u0629\\>", "given": "\\%u0628\\%u0641\\%u0631\\%u0636\\>", "scenario": "\\%u0633\\%u064a\\%u0646\\%u0627\\%u0631\\%u064a\\%u0648\\>", "scenario_outline": "\\%u0633\\%u064a\\%u0646\\%u0627\\%u0631\\%u064a\\%u0648 \\%u0645\\%u062e\\%u0637\\%u0637\\>", "then": "\\%u0627\\%u0630\\%u0627\\%u064b\\>\\|\\%u062b\\%u0645\\>", "when": "\\%u0639\\%u0646\\%u062f\\%u0645\\%u0627\\>\\|\\%u0645\\%u062a\\%u0649\\>"},
       \"bg": {"and": "\\%u0418\\>", "background": "\\%u041f\\%u0440\\%u0435\\%u0434\\%u0438\\%u0441\\%u0442\\%u043e\\%u0440\\%u0438\\%u044f\\>", "but": "\\%u041d\\%u043e\\>", "examples": "\\%u041f\\%u0440\\%u0438\\%u043c\\%u0435\\%u0440\\%u0438\\>", "feature": "\\%u0424\\%u0443\\%u043d\\%u043a\\%u0446\\%u0438\\%u043e\\%u043d\\%u0430\\%u043b\\%u043d\\%u043e\\%u0441\\%u0442\\>", "given": "\\%u0414\\%u0430\\%u0434\\%u0435\\%u043d\\%u043e\\>", "scenario": "\\%u0421\\%u0446\\%u0435\\%u043d\\%u0430\\%u0440\\%u0438\\%u0439\\>", "scenario_outline": "\\%u0420\\%u0430\\%u043c\\%u043a\\%u0430 \\%u043d\\%u0430 \\%u0441\\%u0446\\%u0435\\%u043d\\%u0430\\%u0440\\%u0438\\%u0439\\>", "then": "\\%u0422\\%u043e\\>", "when": "\\%u041a\\%u043e\\%u0433\\%u0430\\%u0442\\%u043e\\>"},
       \"bm": {"and": "Dan\\>", "background": "Latar Belakang\\>", "but": "Tetapi\\>", "examples": "Contoh \\>", "feature": "Fungsi\\>", "given": "Bagi\\>", "scenario": "Senario\\>", "scenario_outline": "Menggariskan Senario \\>", "then": "Kemudian\\>", "when": "Apabila\\>"},
@@ -100,11 +100,12 @@ endfunction
 syn match   cucumberComment  "\%(^\s*\)\@<=#.*"
 syn match   cucumberComment  "\%(\%^\s*\)\@<=#.*" contains=cucumberLanguage
 syn match   cucumberLanguage "\%(#\s*\)\@<=language:" contained
-syn match   cucumberUnparsed "\S.*" nextgroup=cucumberUnparsedComment,cucumberUnparsed,cucumberTags,cucumberBackground,cucumberScenario,cucumberScenarioOutline,cucumberExamples skipwhite skipempty contained
-syn match   cucumberUnparsedComment "#.*" nextgroup=cucumberUnparsedComment,cucumberUnparsed,cucumberTags,cucumberBackground,cucumberScenario,cucumberScenarioOutline,cucumberExamples skipwhite skipempty contained
+syn match   cucumberUnparsed "\S.*" nextgroup=cucumberUnparsedComment,cucumberUnparsed,cucumberTags,cucumberBackground,cucumberRule,cucumberScenario,cucumberScenarioOutline,cucumberExamples skipwhite skipempty contained
+syn match   cucumberUnparsedComment "#.*" nextgroup=cucumberUnparsedComment,cucumberUnparsed,cucumberTags,cucumberBackground,cucumberRule,cucumberScenario,cucumberScenarioOutline,cucumberExamples skipwhite skipempty contained
 
-exe 'syn match cucumberFeature "\%(^\s*\)\@<='.s:pattern('feature').':" nextgroup=cucumberUnparsedComment,cucumberUnparsed,cucumberBackground,cucumberScenario,cucumberScenarioOutline,cucumberExamples skipwhite skipempty'
+exe 'syn match cucumberFeature "\%(^\s*\)\@<='.s:pattern('feature').':" nextgroup=cucumberUnparsedComment,cucumberUnparsed,cucumberBackground,cucumberScenario,cucumberRule,cucumberScenarioOutline,cucumberExamples skipwhite skipempty'
 exe 'syn match cucumberBackground "\%(^\s*\)\@<='.s:pattern('background').':"'
+exe 'syn match cucumberRule "\%(^\s*\)\@<='.s:pattern('rule').':"'
 exe 'syn match cucumberScenario "\%(^\s*\)\@<='.s:pattern('scenario').':"'
 exe 'syn match cucumberScenarioOutline "\%(^\s*\)\@<='.s:pattern('scenario_outline').':"'
 exe 'syn match cucumberExamples "\%(^\s*\)\@<='.s:pattern('examples').':" nextgroup=cucumberExampleTable skipempty skipwhite'
@@ -126,6 +127,7 @@ hi def link cucumberBackground        Define
 hi def link cucumberScenario          Define
 hi def link cucumberScenarioOutline   Define
 hi def link cucumberExamples          Define
+hi def link cucumberRule              Define
 hi def link cucumberPlaceholder       Constant
 hi def link cucumberDelimiter         Delimiter
 hi def link cucumberTags              Tag
