@@ -40,6 +40,7 @@
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
+#include "nvim/window.h"
 
 static int in_fast_callback = 0;
 
@@ -1912,6 +1913,61 @@ void nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap)
   (void)uc_mods(buf);
   lua_pushstring(lstate, buf);
   lua_setfield(lstate, -2, "mods");
+
+  lua_newtable(lstate);  // smods table
+
+  lua_pushinteger(lstate, cmdmod.tab);
+  lua_setfield(lstate, -2, "tab");
+  lua_pushinteger(lstate, p_verbose);
+  lua_setfield(lstate, -2, "verbose");
+
+  if (cmdmod.split & WSP_ABOVE) {
+    lua_pushstring(lstate, "aboveleft");
+  } else if (cmdmod.split & WSP_BELOW) {
+    lua_pushstring(lstate, "belowright");
+  } else if (cmdmod.split & WSP_TOP) {
+    lua_pushstring(lstate, "topleft");
+  } else if (cmdmod.split & WSP_BOT) {
+    lua_pushstring(lstate, "botright");
+  } else {
+    lua_pushstring(lstate, "");
+  }
+  lua_setfield(lstate, -2, "split");
+
+  lua_pushboolean(lstate, cmdmod.split & WSP_VERT);
+  lua_setfield(lstate, -2, "vertical");
+  lua_pushboolean(lstate, msg_silent != 0);
+  lua_setfield(lstate, -2, "silent");
+  lua_pushboolean(lstate, emsg_silent != 0);
+  lua_setfield(lstate, -2, "emsg_silent");
+  lua_pushboolean(lstate, eap->did_sandbox);
+  lua_setfield(lstate, -2, "sandbox");
+  lua_pushboolean(lstate, cmdmod.save_ei != NULL);
+  lua_setfield(lstate, -2, "noautocmd");
+
+  typedef struct {
+    bool *set;
+    char *name;
+  } mod_entry_T;
+  static mod_entry_T mod_entries[] = {
+    { &cmdmod.browse, "browse" },
+    { &cmdmod.confirm, "confirm" },
+    { &cmdmod.hide, "hide" },
+    { &cmdmod.keepalt, "keepalt" },
+    { &cmdmod.keepjumps, "keepjumps" },
+    { &cmdmod.keepmarks, "keepmarks" },
+    { &cmdmod.keeppatterns, "keeppatterns" },
+    { &cmdmod.lockmarks, "lockmarks" },
+    { &cmdmod.noswapfile, "noswapfile" }
+  };
+
+  // The modifiers that are simple flags
+  for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
+    lua_pushboolean(lstate, *mod_entries[i].set);
+    lua_setfield(lstate, -2, mod_entries[i].name);
+  }
+
+  lua_setfield(lstate, -2, "smods");
 
   if (nlua_pcall(lstate, 1, 0)) {
     nlua_error(lstate, _("Error executing Lua callback: %.*s"));
