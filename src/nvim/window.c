@@ -3993,6 +3993,7 @@ void win_init_size(void)
   firstwin->w_height = ROWS_AVAIL;
   firstwin->w_height_inner = firstwin->w_height - firstwin->w_winbar_height;
   firstwin->w_height_outer = firstwin->w_height;
+  firstwin->w_winrow_off = firstwin->w_winbar_height;
   topframe->fr_height = ROWS_AVAIL;
   firstwin->w_width = Columns;
   firstwin->w_width_inner = firstwin->w_width;
