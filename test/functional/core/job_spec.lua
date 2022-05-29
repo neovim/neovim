@@ -682,6 +682,7 @@ describe('jobs', function()
     -- User can explicitly set $NVIM_LOG_FILE, $VIM, $VIMRUNTIME.
     eq('NVIM_LOG_FILE=Xtest_jobstart_env',
       get_env_in_child_job('NVIM_LOG_FILE', { NVIM_LOG_FILE='Xtest_jobstart_env' }))
+    os.remove('Xtest_jobstart_env')
   end)
 
   describe('jobwait', function()
