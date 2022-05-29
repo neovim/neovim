@@ -26,6 +26,8 @@ describe('winbar', function()
       [7] = {background = Screen.colors.LightGrey},
       [8] = {background = Screen.colors.LightMagenta},
       [9] = {bold = true, foreground = Screen.colors.Blue, background = Screen.colors.LightMagenta},
+      [10] = {background = Screen.colors.LightGrey, underline = true},
+      [11] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
     })
     meths.set_option('winbar', 'Set Up The Bars')
   end)
@@ -242,6 +244,23 @@ describe('winbar', function()
       {3:~                            }│{1:Set Up The Bars               }|
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
+      {4:[No Name]                                                   }|
+                                                                  |
+    ]])
+    -- Test for issue #18791
+    command('tabnew')
+    screen:expect([[
+      {10: }{11:4}{10: [No Name] }{1: [No Name] }{2:                                   }{10:X}|
+      {1:Set Up The Bars                                             }|
+      ^                                                            |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
       {4:[No Name]                                                   }|
                                                                   |
     ]])
