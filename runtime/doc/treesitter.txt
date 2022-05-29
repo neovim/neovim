@@ -754,8 +754,8 @@ LanguageTree:set_included_regions({self}, {regions})
                 parsed again.
 
                 Parameters: ~
-                    {regions}  A list of regions this tree should manage and
-                               parse.
+                    {regions}  (table) list of regions this tree should manage
+                               and parse.
                     {self}
 
 LanguageTree:source({self})                            *LanguageTree:source()*
