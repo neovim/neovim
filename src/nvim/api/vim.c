@@ -2501,6 +2501,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 ///                 - count: (number) Any count supplied |<count>|
 ///                 - reg: (string) The optional register, if specified |<reg>|
 ///                 - mods: (string) Command modifiers, if any |<mods>|
+///                 - smods: (table) Command modifiers in a structured format. Has the same
+///                 structure as the "mods" key of |nvim_parse_cmd()|.
 /// @param  opts    Optional command attributes. See |command-attributes| for more details. To use
 ///                 boolean attributes (such as |:command-bang| or |:command-bar|) set the value to
 ///                 "true". In addition to the string options listed in |:command-complete|, the

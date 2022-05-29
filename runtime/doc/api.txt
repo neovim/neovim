@@ -743,6 +743,9 @@ nvim_create_user_command({name}, {command}, {*opts})
                                  specified |<reg>|
                                • mods: (string) Command modifiers, if any
                                  |<mods>|
+                               • smods: (table) Command modifiers in a
+                                 structured format. Has the same structure as
+                                 the "mods" key of |nvim_parse_cmd()|.
                     {opts}     Optional command attributes. See
                                |command-attributes| for more details. To use
                                boolean attributes (such as |:command-bang| or
