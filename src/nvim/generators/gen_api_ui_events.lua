@@ -15,6 +15,9 @@ local client_output = io.open(arg[8], 'wb')
 local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
+_G.vim = loadfile(nvimdir..'/../../runtime/lua/vim/shared.lua')()
+local hashy = require'generators.hashy'
+
 local function write_signature(output, ev, prefix, notype)
   output:write('('..prefix)
   if prefix == "" and #ev.parameters == 0 then
@@ -213,24 +216,25 @@ for i = 1, #events do
   end
 end
 
--- Generate the map_init method for client handlers
-client_output:write([[
-void ui_client_methods_table_init(void)
-{
-
-]])
-
-for i = 1, #events do
-  local fn = events[i]
-  if (not fn.noexport) and ((not fn.remote_only) or fn.client_impl) then
-    client_output:write('  add_ui_client_event_handler('..
-                '(String) {.data = "'..fn.name..'", '..
-                '.size = sizeof("'..fn.name..'") - 1}, '..
-                '(UIClientHandler) ui_client_event_'..fn.name..');\n')
+local client_events = {}
+for _,ev in ipairs(events) do
+  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) then
+    client_events[ev.name] = ev
   end
 end
 
-client_output:write('\n}\n\n')
+local hashorder, hashfun = hashy.hashy_hash("ui_client_handler", vim.tbl_keys(client_events), function (idx)
+  return "event_handlers["..idx.."].name"
+end)
+
+client_output:write("static const UIClientHandler event_handlers[] = {\n")
+
+for _, name in ipairs(hashorder) do
+  client_output:write('  { .name = "'..name..'", .fn = ui_client_event_'..name..'},\n')
+end
+
+client_output:write('\n};\n\n')
+client_output:write(hashfun)
 
 proto_output:close()
 call_output:close()

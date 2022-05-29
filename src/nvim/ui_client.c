@@ -16,17 +16,16 @@
 #include "nvim/ui_client.h"
 #include "nvim/vim.h"
 
-static Map(String, UIClientHandler) ui_client_handlers = MAP_INIT;
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ui_client.c.generated.h"
+
+# include "ui_events_client.generated.h"
+#endif
 
 // Temporary buffer for converting a single grid_line event
 static size_t buf_size = 0;
 static schar_T *buf_char = NULL;
 static sattr_T *buf_attr = NULL;
-
-static void add_ui_client_event_handler(String method, UIClientHandler handler)
-{
-  map_put(String, UIClientHandler)(&ui_client_handlers, method, handler);
-}
 
 void ui_client_init(uint64_t chan)
 {
@@ -44,9 +43,6 @@ void ui_client_init(uint64_t chan)
   ADD(args, DICTIONARY_OBJ(opts));
 
   rpc_send_event(chan, "nvim_ui_attach", args);
-  msgpack_rpc_add_redraw();  // GAME!
-  // TODO(bfredl): use a keyset instead
-  ui_client_methods_table_init();
   ui_client_channel_id = chan;
 }
 
@@ -61,22 +57,23 @@ void ui_client_init(uint64_t chan)
 /// @param channel_id: The id of the rpc channel
 /// @param uidata: The dense array containing the ui_events sent by the server
 /// @param[out] err Error details, if any
-Object ui_client_handle_redraw(uint64_t channel_id, Array args, Error *error)
+Object handle_ui_client_redraw(uint64_t channel_id, Array args, Error *error)
 {
   for (size_t i = 0; i < args.size; i++) {
     Array call = args.items[i].data.array;
     String name = call.items[0].data.string;
 
-    UIClientHandler handler = map_get(String, UIClientHandler)(&ui_client_handlers, name);
-    if (!handler) {
+    int hash = ui_client_handler_hash(name.data, name.size);
+    if (hash < 0) {
       ELOG("No ui client handler for %s", name.size ? name.data : "<empty>");
       continue;
     }
+    UIClientHandler handler = event_handlers[hash];
 
     // fprintf(stderr, "%s: %zu\n", name.data, call.size-1);
     DLOG("Invoke ui client handler for %s", name.data);
     for (size_t j = 1; j < call.size; j++) {
-      handler(call.items[j].data.array);
+      handler.fn(call.items[j].data.array);
     }
   }
 
@@ -107,10 +104,6 @@ static HlAttrs ui_client_dict2hlattrs(Dictionary d, bool rgb)
   }
   return dict2hlattrs(&dict, true, NULL, &err);
 }
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_events_client.generated.h"
-#endif
 
 void ui_client_event_grid_resize(Array args)
 {

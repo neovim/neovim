@@ -3,7 +3,10 @@
 
 #include "nvim/api/private/defs.h"
 
-typedef void (*UIClientHandler)(Array args);
+typedef struct {
+  const char *name;
+  void (*fn)(Array args);
+} UIClientHandler;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_client.h.generated.h"
