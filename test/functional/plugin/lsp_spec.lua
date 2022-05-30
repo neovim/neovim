@@ -266,8 +266,8 @@ describe('LSP', function()
         end;
         -- If the program timed out, then code will be nil.
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         -- Note that NIL must be used here.
         -- on_handler(err, method, result, client_id)
@@ -288,8 +288,8 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq(101, code, "exit code", fake_lsp_logfile)  -- See fake-lsp-server.lua
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(101, code, "exit code")  -- See fake-lsp-server.lua
+          eq(0, signal, "exit signal")
           assert_log(pesc([[assert_eq failed: left == "\"shutdown\"", right == "\"test\""]]),
             fake_lsp_logfile)
         end;
@@ -335,8 +335,8 @@ describe('LSP', function()
           client.stop()
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(...)
           eq(table.remove(expected_handlers), {...}, "expected handler")
@@ -367,8 +367,8 @@ describe('LSP', function()
           client.notify('finish')
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
@@ -436,8 +436,8 @@ describe('LSP', function()
           client = _client
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
@@ -496,8 +496,8 @@ describe('LSP', function()
           eq(false, client.server_capabilities().codeLensProvider)
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(...)
           eq(table.remove(expected_handlers), {...}, "expected handler")
@@ -517,8 +517,8 @@ describe('LSP', function()
           client = c
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
@@ -547,8 +547,8 @@ describe('LSP', function()
           client = c
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
@@ -596,8 +596,8 @@ describe('LSP', function()
           eq(true, client.supports_method("unknown-method"))
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(...)
           eq(table.remove(expected_handlers), {...}, "expected handler")
@@ -626,8 +626,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(...)
           eq(table.remove(expected_handlers), {...}, "expected handler")
@@ -651,8 +651,8 @@ describe('LSP', function()
           exec_lua("vim.lsp.buf.type_definition()")
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(...)
           eq(table.remove(expected_handlers), {...}, "expected handler")
@@ -672,8 +672,8 @@ describe('LSP', function()
           client = _client
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
           eq(0, #expected_handlers, "did not call expected handler")
         end;
         on_handler = function(err, _, ctx)
@@ -696,8 +696,8 @@ describe('LSP', function()
           client = _client
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
           eq(0, #expected_handlers, "did not call expected handler")
         end;
         on_handler = function(err, _, ctx)
@@ -726,8 +726,8 @@ describe('LSP', function()
           client.notify("release")
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
           eq(0, #expected_handlers, "did not call expected handler")
         end;
         on_handler = function(err, _, ctx)
@@ -759,8 +759,8 @@ describe('LSP', function()
           client.notify("release")
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
           eq(0, #expected_handlers, "did not call expected handler")
         end;
         on_handler = function(err, _, ctx)
@@ -793,8 +793,8 @@ describe('LSP', function()
           client.notify("release")
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
           eq(0, #expected_handlers, "did not call expected handler")
         end;
         on_handler = function(err, _, ctx)
@@ -828,8 +828,8 @@ describe('LSP', function()
           client.notify("release")
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
           eq(0, #expected_handlers, "did not call expected handler")
           eq(3, eval('g:requests'))
         end;
@@ -874,8 +874,8 @@ describe('LSP', function()
           client.notify('finish')
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
@@ -917,8 +917,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -960,8 +960,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -1003,8 +1003,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -1052,8 +1052,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -1103,8 +1103,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -1154,8 +1154,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -1203,8 +1203,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -1247,8 +1247,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           if ctx.method == 'start' then
@@ -1298,8 +1298,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result,ctx)
           if ctx.method == 'start' then
@@ -1340,8 +1340,8 @@ describe('LSP', function()
           client.stop(true)
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
@@ -1379,8 +1379,8 @@ describe('LSP', function()
           ]]
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
@@ -1725,8 +1725,8 @@ describe('LSP', function()
         end;
         -- If the program timed out, then code will be nil.
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         -- Note that NIL must be used here.
         -- on_handler(err, method, result, client_id)
@@ -2728,8 +2728,8 @@ describe('LSP', function()
           ]=])
         end;
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end;
         on_handler = function(err, result, ctx)
           -- Don't compare & assert params, they're not relevant for the testcase
@@ -2768,8 +2768,8 @@ describe('LSP', function()
         on_setup = function()
         end,
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end,
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx})
@@ -2846,8 +2846,8 @@ describe('LSP', function()
         on_setup = function()
         end,
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end,
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx})
@@ -2919,8 +2919,8 @@ describe('LSP', function()
         on_setup = function()
         end,
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end,
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx})
@@ -2985,8 +2985,8 @@ describe('LSP', function()
             ]=])
         end,
         on_exit = function(code, signal)
-          eq(0, code, "exit code", fake_lsp_logfile)
-          eq(0, signal, "exit signal", fake_lsp_logfile)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
         end,
         on_handler = function(err, result, ctx)
           eq(table.remove(expected_handlers), {err, result, ctx})

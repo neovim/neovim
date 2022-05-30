@@ -51,42 +51,23 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
---- Invokes `fn` and includes the tail of `logfile` in the error message if it
---- fails.
----
----@param logfile string  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
----@param fn string       Function to invoke
----@param ... string      Function arguments
-local function dumplog(logfile, fn, ...)
-  -- module.validate({
-  --   logfile={logfile,'s',true},
-  --   fn={fn,'f',false},
-  -- })
-  local status, rv = pcall(fn, ...)
-  if status == false then
-    logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-    local logtail = module.read_nvim_log(logfile)
-    error(string.format('%s\n%s', tostring(rv), logtail))
-  end
+function module.eq(expected, actual, context)
+  return assert.are.same(expected, actual, context)
 end
-function module.eq(expected, actual, context, logfile)
-  return dumplog(logfile, assert.are.same, expected, actual, context)
+function module.neq(expected, actual, context)
+  return assert.are_not.same(expected, actual, context)
 end
-function module.neq(expected, actual, context, logfile)
-  return dumplog(logfile, assert.are_not.same, expected, actual, context)
-end
-function module.ok(res, msg, logfile)
-  return dumplog(logfile, assert.is_true, res, msg)
+function module.ok(res, msg)
+  return assert.is_true(res, msg)
 end
 
--- TODO(bfredl): this should "failure" not "error" (issue with dumplog() )
 local function epicfail(state, arguments, _)
   state.failure_message = arguments[1]
   return false
 end
 assert:register("assertion", "epicfail", epicfail)
-function module.fail(msg, logfile)
-  return dumplog(logfile, assert.epicfail, msg)
+function module.fail(msg)
+  return assert.epicfail(msg)
 end
 
 function module.matches(pat, actual)
