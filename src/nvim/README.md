@@ -23,7 +23,7 @@ Logs
 
 Low-level log messages sink to `$NVIM_LOG_FILE`.
 
-UI events are logged at DEBUG level (`DEBUG_LOG_LEVEL`).
+UI events are logged at DEBUG level (`LOGLVL_DBG`).
 
     rm -rf build/
     make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"

@@ -255,6 +255,7 @@ describe('startup', function()
 
   it('does not crash when expanding cdpath during early_init', function()
     clear{env={CDPATH='~doesnotexist'}}
+    assert_alive()
     eq(',~doesnotexist', eval('&cdpath'))
   end)
 

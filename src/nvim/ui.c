@@ -64,7 +64,7 @@ static handle_T cursor_grid_handle = DEFAULT_GRID_HANDLE;
 static bool has_mouse = false;
 static int pending_has_mouse = -1;
 
-#if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
+#if MIN_LOG_LEVEL > LOGLVL_DBG
 # define UI_LOG(funname)
 #else
 static size_t uilog_seen = 0;
@@ -82,10 +82,10 @@ static char uilog_last_event[1024] = { 0 };
       uilog_seen++; \
     } else { \
       if (uilog_seen > 0) { \
-        logmsg(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, \
+        logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, \
                "%s (+%zu times...)", uilog_last_event, uilog_seen); \
       } \
-      logmsg(DEBUG_LOG_LEVEL, "UI: ", NULL, -1, true, STR(funname)); \
+      logmsg(LOGLVL_DBG, "UI: ", NULL, -1, true, STR(funname)); \
       uilog_seen = 0; \
       xstrlcpy(uilog_last_event, STR(funname), sizeof(uilog_last_event)); \
     } \

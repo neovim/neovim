@@ -76,7 +76,8 @@
 EXTERN struct nvim_stats_s {
   int64_t fsync;
   int64_t redraw;
-} g_stats INIT(= { 0, 0 });
+  int16_t log_skip;  // How many logs were tried and skipped before log_init.
+} g_stats INIT(= { 0, 0, 0 });
 
 // Values for "starting".
 #define NO_SCREEN       2       // no screen updating yet
@@ -1029,7 +1030,7 @@ EXTERN FILE *time_fd INIT(= NULL);  // where to write startup timing
 // the warning.
 EXTERN int vim_ignored;
 
-// Start a msgpack-rpc channel over stdin/stdout.
+// stdio is an RPC channel (--embed).
 EXTERN bool embedded_mode INIT(= false);
 // Do not start a UI nor read/write to stdio (unless embedding).
 EXTERN bool headless_mode INIT(= false);

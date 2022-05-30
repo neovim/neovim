@@ -1349,7 +1349,7 @@ STATE DIRECTORY (DEFAULT) ~
 Note: Throughout the user manual these defaults are used as placeholders, e.g.
 "~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
 
-LOG FILE					*$NVIM_LOG_FILE*
+LOG FILE					*$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
 debugging, plugins and RPC clients. >
 	:echo $NVIM_LOG_FILE
