@@ -480,7 +480,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
 }
 
 /// Calculates the number of display cells occupied by `text`.
-/// <Tab> counts as one cell.
+/// Control characters including <Tab> count as one cell.
 ///
 /// @param text       Some text
 /// @param[out] err   Error details, if any
