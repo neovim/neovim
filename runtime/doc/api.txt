@@ -1706,7 +1706,7 @@ nvim_set_vvar({name}, {value})                               *nvim_set_vvar()*
 
 nvim_strwidth({text})                                        *nvim_strwidth()*
                 Calculates the number of display cells occupied by `text`.
-                <Tab> counts as one cell.
+                Control characters including <Tab> count as one cell.
 
                 Parameters: ~
                     {text}  Some text
