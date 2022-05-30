@@ -6,6 +6,7 @@
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
 #include "nvim/vim.h"

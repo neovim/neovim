@@ -32,37 +32,22 @@
 #include "nvim/api/window.h"
 #include "nvim/ui_client.h"
 
-static Map(String, MsgpackRpcRequestHandler) methods = MAP_INIT;
-
-static void msgpack_rpc_add_method_handler(String method, MsgpackRpcRequestHandler handler)
-{
-  map_put(String, MsgpackRpcRequestHandler)(&methods, method, handler);
-}
-
-void msgpack_rpc_add_redraw(void)
-{
-  msgpack_rpc_add_method_handler(STATIC_CSTR_AS_STRING("redraw"),
-                                 (MsgpackRpcRequestHandler) { .fn = ui_client_handle_redraw,
-                                                              .fast = true });
-}
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "api/private/dispatch_wrappers.generated.h"
+#endif
 
 /// @param name API method name
 /// @param name_len name size (includes terminating NUL)
 MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name, size_t name_len,
                                                      Error *error)
 {
-  String m = { .data = (char *)name, .size = name_len };
-  MsgpackRpcRequestHandler rv =
-    map_get(String, MsgpackRpcRequestHandler)(&methods, m);
+  int hash = msgpack_rpc_get_handler_for_hash(name, name_len);
 
-  if (!rv.fn) {
+  if (hash < 0) {
     api_set_error(error, kErrorTypeException, "Invalid method: %.*s",
-                  m.size > 0 ? (int)m.size : (int)sizeof("<empty>"),
-                  m.size > 0 ? m.data : "<empty>");
+                  name_len > 0 ? (int)name_len : (int)sizeof("<empty>"),
+                  name_len > 0 ? name : "<empty>");
+    return (MsgpackRpcRequestHandler){ 0 };
   }
-  return rv;
+  return method_handlers[hash];
 }
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/dispatch_wrappers.generated.h"
-#endif

@@ -16,6 +16,10 @@ local functions = {}
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
+_G.vim = loadfile(nvimdir..'/../../runtime/lua/vim/shared.lua')()
+
+local hashy = require'generators.hashy'
+
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 local headers = {}
@@ -339,24 +343,27 @@ for i = 1, #functions do
   end
 end
 
--- Generate a function that initializes method names with handler functions
-output:write([[
-void msgpack_rpc_init_method_table(void)
-{
-]])
-
-for i = 1, #functions do
-  local fn = functions[i]
+local remote_fns = {}
+for _,fn in ipairs(functions) do
   if fn.remote then
-      output:write('  msgpack_rpc_add_method_handler('..
-                   '(String) {.data = "'..fn.name..'", '..
-                   '.size = sizeof("'..fn.name..'") - 1}, '..
-                   '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-                   ', .fast = '..tostring(fn.fast)..'});\n')
+    remote_fns[fn.name] = fn
   end
 end
+remote_fns.redraw = {impl_name="ui_client_redraw", fast=true}
 
-output:write('\n}\n\n')
+local hashorder, hashfun = hashy.hashy_hash("msgpack_rpc_get_handler_for", vim.tbl_keys(remote_fns), function (idx)
+  return "method_handlers["..idx.."].name"
+end)
+
+output:write("static const MsgpackRpcRequestHandler method_handlers[] = {\n")
+for _, name in ipairs(hashorder) do
+  local fn = remote_fns[name]
+  output:write('  { .name = "'..name..'", .fn = handle_'..  (fn.impl_name or fn.name)..
+               ', .fast = '..tostring(fn.fast)..'},\n')
+end
+output:write("};\n\n")
+output:write(hashfun)
+
 output:close()
 
 local mpack_output = io.open(mpack_outputf, 'wb')
