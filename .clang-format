@@ -48,6 +48,7 @@ IncludeCategories:
 AlignConsecutiveMacros: AcrossEmptyLines
 IndentPPDirectives: AfterHash
 SpaceBeforeParens: ControlStatementsExceptControlMacros
+PPIndentWidth: 1
 ForEachMacros:
   - FOR_ALL_AUEVENTS
   - FOR_ALL_AUPATS_IN_EVENT
