@@ -204,9 +204,14 @@ Then you can compare `bar` with another session, to debug TUI behavior.
 
 ### TUI redraw
 
-Set the 'writedelay' option to see where and when the UI is painted.
+Set the 'writedelay' and 'redrawdebug' options to see where and when the UI is painted.
 
-    :set writedelay=1
+    :set writedelay=50 rdb=compositor
+
+Note: neovim uses an internal screenbuffer to only send minimal updates even if a large
+region is repainted internally. To also highlight excess internal redraws, use
+
+    :set writedelay=50 rdb=compositor,nodelta
 
 ### Terminal reference
 
