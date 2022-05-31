@@ -10413,7 +10413,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
       // - The text up to where the match is.
       // - The substituted text.
       // - The text after the match.
-      sublen = vim_regsub(&regmatch, (char_u *)sub, expr, (char_u *)tail, false, true, false);
+      sublen = vim_regsub(&regmatch, (char_u *)sub, expr, (char_u *)tail, 0, REGSUB_MAGIC);
       ga_grow(&ga, (int)((end - tail) + sublen -
                          (regmatch.endp[0] - regmatch.startp[0])));
 
@@ -10421,8 +10421,9 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
       int i = (int)(regmatch.startp[0] - (char_u *)tail);
       memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       // add the substituted text
-      (void)vim_regsub(&regmatch, (char_u *)sub, expr, (char_u *)ga.ga_data
-                       + ga.ga_len + i, true, true, false);
+      (void)vim_regsub(&regmatch, (char_u *)sub, expr,
+                       (char_u *)ga.ga_data + ga.ga_len + i, sublen,
+                       REGSUB_COPY | REGSUB_MAGIC);
       ga.ga_len += i + sublen - 1;
       tail = (char *)regmatch.endp[0];
       if (*tail == NUL) {
