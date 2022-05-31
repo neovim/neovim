@@ -314,6 +314,14 @@ function M.highlight_node(bufnr, node, ns, hlgroup)
   M.highlight_range(bufnr, { node:range() }, ns, hlgroup)
 end
 
+local function get_node_range(node_or_range)
+  if type(node_or_range) == 'table' then
+    return unpack(node_or_range)
+  else
+    return node_or_range:range()
+  end
+end
+
 ---Sets visual selection for node
 ---@param bufnr number The buffer number
 ---@param node table The node to visually select select
@@ -323,8 +331,10 @@ end
 ---       - 'linewise'(or 'V')
 ---       - 'blockwise'(or '<C-v>')
 function M.update_selection(bufnr, node, opts)
+  opts = opts or {}
+
   local selection_mode = opts.selection_mode or 'charwise'
-  local start_row, start_col, end_row, end_col = M.get_vim_range({ M.get_node_range(node) }, bufnr)
+  local start_row, start_col, end_row, end_col = M.get_vim_range(bufnr, { get_node_range(node) })
 
   vim.fn.setpos('.', { bufnr, start_row, start_col, 0 })
 
@@ -332,8 +342,11 @@ function M.update_selection(bufnr, node, opts)
   local v_table = { charwise = 'v', linewise = 'V', blockwise = '<C-v>' }
   ---- Call to `nvim_replace_termcodes()` is needed for sending appropriate
   ---- command to enter blockwise mode
-  local mode_string = vim.api.nvim_replace_termcodes(v_table[selection_mode] or selection_mode, true, true, true)
+  local mode_string =
+    vim.api.nvim_replace_termcodes(v_table[selection_mode] or selection_mode, true, true, true)
   vim.cmd('normal! ' .. mode_string)
+  vim.fn.setpos('.', { bufnr, start_row, start_col, 0 })
+  vim.cmd('normal! o')
   vim.fn.setpos('.', { bufnr, end_row, end_col, 0 })
 end
 
