@@ -40,10 +40,12 @@ local function progress_handler(_, result, ctx, _)
     if val.kind == 'begin' then
       client.messages.progress[token] = {
         title = val.title,
+        cancellable = val.cancellable,
         message = val.message,
         percentage = val.percentage,
       }
     elseif val.kind == 'report' then
+      client.messages.progress[token].cancellable = val.cancellable
       client.messages.progress[token].message = val.message
       client.messages.progress[token].percentage = val.percentage
     elseif val.kind == 'end' then
