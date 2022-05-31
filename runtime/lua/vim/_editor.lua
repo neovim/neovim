@@ -49,6 +49,7 @@ for k, v in pairs({
   diagnostic = true,
   keymap = true,
   ui = true,
+  health = true,
 }) do
   vim._submodules[k] = v
 end
