@@ -7112,6 +7112,12 @@ void restore_win_noblock(switchwin_T *switchwin, bool no_display)
 void switch_buffer(bufref_T *save_curbuf, buf_T *buf)
 {
   block_autocmds();
+  switch_buffer_noblock(save_curbuf, buf);
+}
+
+// As switch_buffer() but without unblocking autocommands.
+void switch_buffer_noblock(bufref_T *save_curbuf, buf_T *buf)
+{
   set_bufref(save_curbuf, curbuf);
   curbuf->b_nwindows--;
   curbuf = buf;
@@ -7123,6 +7129,11 @@ void switch_buffer(bufref_T *save_curbuf, buf_T *buf)
 void restore_buffer(bufref_T *save_curbuf)
 {
   unblock_autocmds();
+  restore_buffer_noblock(save_curbuf);
+}
+
+// As restore_buffer() but without unblocking autocommands.
+void restore_buffer_noblock(bufref_T *save_curbuf) {
   // Check for valid buffer, just in case.
   if (bufref_valid(save_curbuf)) {
     curbuf->b_nwindows--;

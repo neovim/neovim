@@ -11564,3 +11564,21 @@ static void f_xor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = tv_get_number_chk(&argvars[0], NULL)
                          ^ tv_get_number_chk(&argvars[1], NULL);
 }
+
+/// "buf_execute(win_id, command)" function
+static void f_buf_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  // Return an empty string if something fails.
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  buf_T *buf = tv_get_buf_from_arg(&argvars[0]);
+  if (buf != NULL) {
+    // rettv->vval.v_number = -1;
+    // return;
+    bufref_T save_buf;
+    switch_buffer_noblock(&save_buf, buf);
+    execute_common(argvars, rettv, fptr, 1);
+    restore_buffer(&save_buf);
+  }
+}
