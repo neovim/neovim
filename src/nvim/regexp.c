@@ -1653,21 +1653,22 @@ static void clear_submatch_list(staticList10_T *sl)
 /// vim_regsub() - perform substitutions after a vim_regexec() or
 /// vim_regexec_multi() match.
 ///
-/// If "copy" is true really copy into "dest".
-/// If "copy" is false nothing is copied, this is just to find out the length
-/// of the result.
+/// If "flags" has REGSUB_COPY really copy into "dest[destlen]".
+/// Oterwise nothing is copied, only compue the length of the result.
 ///
-/// If "backslash" is true, a backslash will be removed later, need to double
-/// them to keep them, and insert a backslash before a CR to avoid it being
-/// replaced with a line break later.
+/// If "flags" has REGSUB_MAGIC then behave like 'magic' is set.
+///
+/// If "flags" has REGSUB_BACKSLASH a backslash will be removed later, need to
+/// double them to keep them, and insert a backslash before a CR to avoid it
+/// being replaced with a line break later.
 ///
 /// Note: The matched text must not change between the call of
 /// vim_regexec()/vim_regexec_multi() and vim_regsub()!  It would make the back
 /// references invalid!
 ///
 /// Returns the size of the replacement, including terminating NUL.
-int vim_regsub(regmatch_T *rmp, char_u *source, typval_T *expr, char_u *dest, int copy, int magic,
-               int backslash)
+int vim_regsub(regmatch_T *rmp, char_u *source, typval_T *expr, char_u *dest, int destlen,
+               int flags)
 {
   regexec_T rex_save;
   bool rex_in_use_save = rex_in_use;
@@ -1683,7 +1684,7 @@ int vim_regsub(regmatch_T *rmp, char_u *source, typval_T *expr, char_u *dest, in
   rex.reg_maxline = 0;
   rex.reg_buf = curbuf;
   rex.reg_line_lbr = true;
-  int result = vim_regsub_both(source, expr, dest, copy, magic, backslash);
+  int result = vim_regsub_both(source, expr, dest, destlen, flags);
 
   rex_in_use = rex_in_use_save;
   if (rex_in_use) {
@@ -1693,8 +1694,8 @@ int vim_regsub(regmatch_T *rmp, char_u *source, typval_T *expr, char_u *dest, in
   return result;
 }
 
-int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *dest, int copy,
-                     int magic, int backslash)
+int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *dest, int destlen,
+                     int flags)
 {
   regexec_T rex_save;
   bool rex_in_use_save = rex_in_use;
@@ -1711,7 +1712,7 @@ int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *de
   rex.reg_firstlnum = lnum;
   rex.reg_maxline = curbuf->b_ml.ml_line_count - lnum;
   rex.reg_line_lbr = false;
-  int result = vim_regsub_both(source, NULL, dest, copy, magic, backslash);
+  int result = vim_regsub_both(source, NULL, dest, destlen, flags);
 
   rex_in_use = rex_in_use_save;
   if (rex_in_use) {
@@ -1721,8 +1722,7 @@ int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *de
   return result;
 }
 
-static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int copy, int magic,
-                           int backslash)
+static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int destlen, int flags)
 {
   char_u *src;
   char_u *dst;
@@ -1735,6 +1735,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
   linenr_T clnum = 0;           // init for GCC
   int len = 0;                  // init for GCC
   static char_u *eval_result = NULL;
+  bool copy = flags & REGSUB_COPY;
 
   // We need to keep track of how many backslashes we escape, so that the byte
   // counts for `extmark_splice` are correct.
@@ -1755,8 +1756,8 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
   if (expr != NULL || (source[0] == '\\' && source[1] == '=')) {
     // To make sure that the length doesn't change between checking the
     // length and copying the string, and to speed up things, the
-    // resulting string is saved from the call with "copy" == false to the
-    // call with "copy" == true.
+    // resulting string is saved from the call with "flags & REGSUB_COPY"
+    // == 0 to the call with "flags & REGSUB_COPY" != 0.
     if (copy) {
       if (eval_result != NULL) {
         STRCPY(dest, eval_result);
@@ -1845,7 +1846,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
             had_backslash = true;
           }
         }
-        if (had_backslash && backslash) {
+        if (had_backslash && (flags & REGSUB_BACKSLASH)) {
           // Backslashes will be consumed, need to double them.
           s = vim_strsave_escaped(eval_result, (char_u *)"\\");
           xfree(eval_result);
@@ -1862,11 +1863,11 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
     }
   } else {
     while ((c = *src++) != NUL) {
-      if (c == '&' && magic) {
+      if (c == '&' && (flags & REGSUB_MAGIC)) {
         no = 0;
       } else if (c == '\\' && *src != NUL) {
-        if (*src == '&' && !magic) {
-          ++src;
+        if (*src == '&' && !(flags & REGSUB_MAGIC)) {
+          src++;
           no = 0;
         } else if ('0' <= *src && *src <= '9') {
           no = *src++ - '0';
@@ -1895,6 +1896,10 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
         if (c == K_SPECIAL && src[0] != NUL && src[1] != NUL) {
           // Copy a special key as-is.
           if (copy) {
+            if (dst + 3 > dest + destlen) {
+              iemsg("vim_regsub_both(): not enough space");
+              return 0;
+            }
             *dst++ = c;
             *dst++ = *src++;
             *dst++ = *src++;
@@ -1922,9 +1927,13 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
           // If "backslash" is true the backslash will be removed
           // later.  Used to insert a literal CR.
           default:
-            if (backslash) {
+            if (flags & REGSUB_BACKSLASH) {
               num_escaped += 1;
               if (copy) {
+                if (dst + 1 > dest + destlen) {
+                  iemsg("vim_regsub_both(): not enough space");
+                  return 0;
+                }
                 *dst = '\\';
               }
               dst++;
@@ -1945,17 +1954,26 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
         }
 
         int totlen = utfc_ptr2len((char *)src - 1);
+        int charlen = utf_char2len(cc);
 
         if (copy) {
+          if (dst + charlen > dest + destlen) {
+            iemsg("vim_regsub_both(): not enough space");
+            return 0;
+          }
           utf_char2bytes(cc, (char *)dst);
         }
-        dst += utf_char2len(cc) - 1;
+        dst += charlen - 1;
         int clen = utf_ptr2len((char *)src - 1);
 
         // If the character length is shorter than "totlen", there
         // are composing characters; copy them as-is.
         if (clen < totlen) {
           if (copy) {
+            if (dst + totlen - clen > dest + destlen) {
+              iemsg("vim_regsub_both(): not enough space");
+              return 0;
+            }
             memmove(dst + 1, src - 1 + clen, (size_t)(totlen - clen));
           }
           dst += totlen - clen;
@@ -1992,6 +2010,10 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
                   break;
                 }
                 if (copy) {
+                  if (dst + 1 > dest + destlen) {
+                    iemsg("vim_regsub_both(): not enough space");
+                    return 0;
+                  }
                   *dst = CAR;
                 }
                 dst++;
@@ -2010,14 +2032,16 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
               }
               goto exit;
             } else {
-              if (backslash && (*s == CAR || *s == '\\')) {
-                /*
-                 * Insert a backslash in front of a CR, otherwise
-                 * it will be replaced by a line break.
-                 * Number of backslashes will be halved later,
-                 * double them here.
-                 */
+              if ((flags & REGSUB_BACKSLASH) && (*s == CAR || *s == '\\')) {
+                // Insert a backslash in front of a CR, otherwise
+                // it will be replaced by a line break.
+                // Number of backslashes will be halved later,
+                // double them here.
                 if (copy) {
+                  if (dst + 2 > dest + destlen) {
+                    iemsg("vim_regsub_both(): not enough space");
+                    return 0;
+                  }
                   dst[0] = '\\';
                   dst[1] = *s;
                 }
@@ -2037,6 +2061,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
 
                 {
                   int l;
+                  int charlen;
 
                   // Copy composing characters separately, one
                   // at a time.
@@ -2044,10 +2069,15 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int cop
 
                   s += l;
                   len -= l;
+                  charlen = utf_char2len(cc);
                   if (copy) {
+                    if (dst + charlen > dest + destlen) {
+                      iemsg("vim_regsub_both(): not enough space");
+                      return 0;
+                    }
                     utf_char2bytes(cc, (char *)dst);
                   }
-                  dst += utf_char2len(cc) - 1;
+                  dst += charlen - 1;
                 }
                 dst++;
               }
@@ -2386,8 +2416,8 @@ static void report_re_switch(char_u *pat)
   }
 }
 
-/// Matches a regexp against a string.
-/// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+/// Match a regexp against a string.
+/// "rmp->regprog" must be a compiled regexp as returned by vim_regcomp().
 /// Note: "rmp->regprog" may be freed and changed.
 /// Uses curbuf for line count and 'iskeyword'.
 /// When "nl" is true consider a "\n" in "line" to be a line break.

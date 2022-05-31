@@ -4078,7 +4078,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
           // get length of substitution part
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
-                                    (char_u *)sub, (char_u *)sub_firstline, false, p_magic, true);
+                                    (char_u *)sub, (char_u *)sub_firstline, 0,
+                                    REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
           // If getting the substitute string caused an error, don't do
           // the replacement.
           // Don't keep flags set by a recursive call
@@ -4118,7 +4119,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout, bool do_buf_event, handle
 
           (void)vim_regsub_multi(&regmatch,
                                  sub_firstlnum - regmatch.startpos[0].lnum,
-                                 (char_u *)sub, (char_u *)new_end, true, p_magic, true);
+                                 (char_u *)sub, (char_u *)new_end, sublen,
+                                 REGSUB_COPY | REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
           sub_nsubs++;
           did_sub = true;
 

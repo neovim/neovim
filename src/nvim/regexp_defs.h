@@ -168,4 +168,9 @@ struct regengine {
   // char_u *expr;
 };
 
+// Flags used by vim_regsub() and vim_regsub_both()
+#define REGSUB_COPY      1
+#define REGSUB_MAGIC     2
+#define REGSUB_BACKSLASH 4
+
 #endif  // NVIM_REGEXP_DEFS_H
