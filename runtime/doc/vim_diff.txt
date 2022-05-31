@@ -235,8 +235,8 @@ Options:
   'fillchars'   flags: "msgsep" (see 'display'), "horiz", "horizup",
                 "horizdown", "vertleft", "vertright", "verthoriz"
   'foldcolumn'  supports up to 9 dynamic/fixed columns
-  'inccommand'  shows interactive results for |:substitute|-like commands
-                and |:command-preview| commands
+  'inccommand'  shows interactive results for |:substitute|-like commands,
+                |:normal| and |:command-preview| commands
   'laststatus'  global statusline support
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'

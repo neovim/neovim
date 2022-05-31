@@ -94,6 +94,7 @@ static const char *highlight_init_both[] = {
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
   "ErrorMsg     ctermbg=DarkRed ctermfg=White guibg=Red guifg=White",
   "IncSearch    cterm=reverse gui=reverse",
+  "IncCursor    cterm=reverse gui=reverse",
   "ModeMsg      cterm=bold gui=bold",
   "NonText      ctermfg=Blue gui=bold guifg=Blue",
   "Normal       cterm=NONE gui=NONE",

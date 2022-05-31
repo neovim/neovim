@@ -62,6 +62,7 @@ typedef enum {
   HLF_D,          // directories in CTRL-D listing
   HLF_E,          // error messages
   HLF_I,          // incremental search
+  HLF_IC,         // incremental cursor
   HLF_L,          // last search string
   HLF_LC,         // current search match
   HLF_M,          // "--More--" message
@@ -125,6 +126,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_D] = "Directory",
   [HLF_E] = "ErrorMsg",
   [HLF_I] = "IncSearch",
+  [HLF_IC] = "IncCursor",
   [HLF_L] = "Search",
   [HLF_LC] = "CurSearch",
   [HLF_M] = "MoreMsg",

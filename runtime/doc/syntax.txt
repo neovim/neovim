@@ -5144,6 +5144,8 @@ SignColumn	Column where |signs| are displayed.
 							*hl-IncSearch*
 IncSearch	'incsearch' highlighting; also used for the text replaced with
 		":s///c".
+							*hl-IncCursor*
+IncCursor	Cursor used by |:normal| 'inccommand' preview.
 							*hl-Substitute*
 Substitute	|:substitute| replacement text highlighting.
 

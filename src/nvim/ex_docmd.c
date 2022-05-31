@@ -9046,12 +9046,11 @@ void restore_current_state(save_state_T *sst)
   ui_cursor_shape();  // may show different cursor shape
 }
 
-/// ":normal[!] {commands}": Execute normal mode commands.
-static void ex_normal(exarg_T *eap)
+static int do_normal(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr)
 {
   if (curbuf->terminal && State & MODE_TERMINAL) {
     emsg("Can't re-enter normal mode from terminal mode");
-    return;
+    return 0;
   }
   save_state_T save_state;
   char *arg = NULL;
@@ -9060,12 +9059,14 @@ static void ex_normal(exarg_T *eap)
 
   if (ex_normal_lock > 0) {
     emsg(_(e_secure));
-    return;
+    return 0;
   }
   if (ex_normal_busy >= p_mmd) {
     emsg(_("E192: Recursive use of :normal too deep"));
-    return;
+    return 0;
   }
+
+  static int cmdpreview_hl_id = 0;
 
   // vgetc() expects K_SPECIAL to have been escaped.  Don't do
   // this for the K_SPECIAL leading byte, otherwise special keys will not
@@ -9100,6 +9101,9 @@ static void ex_normal(exarg_T *eap)
 
   ex_normal_busy++;
   if (save_current_state(&save_state)) {
+    if (cmdpreview && cmdpreview_hl_id == 0) {
+      cmdpreview_hl_id = syn_check_group(S_LEN("IncCursor"));
+    }
     // Repeat the :normal command for each line in the range.  When no
     // range given, execute it just once, without positioning the cursor
     // first.
@@ -9112,6 +9116,12 @@ static void ex_normal(exarg_T *eap)
 
       exec_normal_cmd((char_u *)(arg != NULL ? arg : eap->arg),
                       eap->forceit ? REMAP_NONE : REMAP_YES, false);
+      
+      if (cmdpreview) {
+        bufhl_add_hl_pos_offset(curbuf, (int)cmdpreview_ns, cmdpreview_hl_id,
+                                (lpos_T){ curwin->w_cursor.lnum, curwin->w_cursor.col },
+                                (lpos_T){ curwin->w_cursor.lnum, curwin->w_cursor.col + 1 }, 0);
+      }
     } while (eap->addr_count > 0 && eap->line1 <= eap->line2 && !got_int);
   }
 
@@ -9125,6 +9135,19 @@ static void ex_normal(exarg_T *eap)
   setmouse();
   ui_cursor_shape();  // may show different cursor shape
   xfree(arg);
+
+  return 1;
+}
+
+/// ":normal[!] {commands}": Execute normal mode commands.
+static void ex_normal(exarg_T *eap)
+{
+  do_normal(eap, 0, 0);
+}
+
+static int ex_normal_preview(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr)
+{
+  return do_normal(eap, cmdpreview_ns, cmdpreview_bufnr);
 }
 
 /// ":startinsert", ":startreplace" and ":startgreplace"

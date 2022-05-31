@@ -38,6 +38,7 @@ local predefined_hl_defs = {
   DiffText=true,
   ErrorMsg=true,
   IncSearch=true,
+  IncCursor=true,
   ModeMsg=true,
   NonText=true,
   PmenuSbar=true,

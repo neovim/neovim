@@ -1845,9 +1845,10 @@ module.cmds = {
   },
   {
     command='normal',
-    flags=bit.bor(RANGE, BANG, EXTRA, NEEDARG, NOTRLCOM, CTRLV, SBOXOK, CMDWIN),
+    flags=bit.bor(RANGE, BANG, EXTRA, NEEDARG, NOTRLCOM, CTRLV, SBOXOK, CMDWIN, PREVIEW),
     addr_type='ADDR_LINES',
     func='ex_normal',
+    preview_func='ex_normal_preview',
   },
   {
     command='number',
