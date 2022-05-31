@@ -3647,7 +3647,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
           group_len = (min_group_width - group_len) * utf_char2len(fillchar);
           memmove(t + group_len, t, (size_t)((char_u *)out_p - t));
           if (out_p + group_len >= (out_end_p + 1)) {
-            group_len = (long)(out_end_p - out_p);
+            group_len = (long)(out_end_p - out_p);  // NOLINT(google-readability-casting)
           }
           out_p += group_len;
           // }

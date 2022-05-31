@@ -557,7 +557,7 @@ void AppendToRedobuffLit(const char *str, int len)
       s--;
     }
     if (s > start) {
-      add_buff(&redobuff, start, (long)(s - start));
+      add_buff(&redobuff, start, (long)(s - start));  // NOLINT(google-readability-casting)
     }
 
     if (*s == NUL || (len >= 0 && s - str >= len)) {

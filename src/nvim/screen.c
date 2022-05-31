@@ -3778,7 +3778,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // flag to indicate whether prevcol equals startcol of search_hl or
       // one of the matches
       bool prevcol_hl_flag = get_prevcol_hl_flag(wp, &search_hl,
-                                                 (long)(ptr - line) - 1);
+                                                 (long)(ptr - line) - 1);  // NOLINT(google-readability-casting)
 
       // Invert at least one char, used for Visual and empty line or
       // highlight match at end of line. If it's beyond the last
@@ -3814,7 +3814,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         if (area_attr == 0 && !has_fold) {
           // Use attributes from match with highest priority among
           // 'search_hl' and the match list.
-          get_search_match_hl(wp, &search_hl, (long)(ptr - line), &char_attr);
+          get_search_match_hl(wp, &search_hl, (long)(ptr - line), &char_attr);  // NOLINT(google-readability-casting)
         }
 
         int eol_attr = char_attr;

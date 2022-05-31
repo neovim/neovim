@@ -6945,17 +6945,17 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
          * small, to avoid repeatedly 'allocing' large and
          * 'reallocing' small. */
         if (prevsize == 0) {
-          prevsize = (long)(p - start);
+          prevsize = (long)(p - start);  // NOLINT(google-readability-casting)
         } else {
           long grow50pc = (prevsize * 3) / 2;
-          long growmin  = (long)((p - start) * 2 + prevlen);
+          long growmin  = (long)((p - start) * 2 + prevlen);  // NOLINT(google-readability-casting)
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
         prev = xrealloc(prev, prevsize);
       }
       // Add the line part to end of "prev".
       memmove(prev + prevlen, start, p - start);
-      prevlen += (long)(p - start);
+      prevlen += (long)(p - start);  // NOLINT(google-readability-casting)
     }
   }   // while
 
