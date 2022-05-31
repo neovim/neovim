@@ -5,7 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local curbuf_contents = helpers.curbuf_contents
 local command = helpers.command
-local eq = helpers.eq
+local eq, neq = helpers.eq, helpers.neq
 local getcompletion = helpers.funcs.getcompletion
 
 describe(':checkhealth', function()
@@ -37,6 +37,7 @@ describe(':checkhealth', function()
     eq('nvim', getcompletion('nvim', 'checkhealth')[1])
     eq('provider', getcompletion('prov', 'checkhealth')[1])
     eq('vim.lsp', getcompletion('vim.ls', 'checkhealth')[1])
+    neq('vim', getcompletion('^vim', 'checkhealth')[1])  -- should not complete vim.health
   end)
 end)
 
@@ -241,6 +242,13 @@ describe('health.vim', function()
         ========================================================================
           - ERROR: No healthcheck found for "non_existent_healthcheck" plugin.
         ]])
+    end)
+
+    it("does not use vim.health as a healtcheck", function()
+      -- vim.health is not a healthcheck
+      command("checkhealth vim")
+      helpers.expect([[
+      ERROR: No healthchecks found.]])
     end)
   end)
 end)

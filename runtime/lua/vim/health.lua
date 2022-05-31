@@ -41,6 +41,8 @@ M._complete = function()
   vim.tbl_map(function(f)
     unique[f] = true
   end, names)
+  -- vim.health is this file, which is not a healthcheck
+  unique['vim'] = nil
   return vim.tbl_keys(unique)
 end
 
