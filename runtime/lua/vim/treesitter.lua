@@ -337,4 +337,35 @@ function M.update_selection(bufnr, node, opts)
   vim.fn.setpos('.', { bufnr, end_row, end_col, 0 })
 end
 
+---Goes to the given node
+---
+---@param node table The node to go to
+---@param opts table Options table
+---@param opts.goto_end boolean (default false) set cursor at the end of the node
+---@param opts.set_jump boolean (default false) mark current position before moving the cursor
+function M.goto_node(node, opts)
+  opts = opts or {}
+  local goto_end = vim.F.if_nil(opts.goto_end, false)
+  local set_jump = vim.F.if_nil(opts.goto_end, false)
+
+  if not node then
+    return
+  end
+
+  if set_jump then
+    vim.cmd("normal! m'")
+  end
+
+  local range = { M.get_vim_range(nil, { node:range() }) }
+  local position
+  if goto_end then
+    position = { range[3], range[4] }
+  else
+    position = { range[1], range[2] }
+  end
+
+  -- Position is 1, 0 indexed.
+  a.nvim_win_set_cursor(0, { position[1], position[2] - 1 })
+end
+
 return M
