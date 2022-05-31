@@ -113,7 +113,7 @@
 // void myfunc(void) REAL_FATTR_ALWAYS_INLINE;
 #  define REAL_FATTR_MALLOC __attribute__((malloc))
 #  define REAL_FATTR_ALLOC_ALIGN(x) __attribute__((alloc_align(x)))
-#  define REAL_FATTR_PURE __attribute__ ((pure))
+#  define REAL_FATTR_PURE __attribute__((pure))
 #  define REAL_FATTR_CONST __attribute__((const))
 #  define REAL_FATTR_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
 #  define REAL_FATTR_ALWAYS_INLINE __attribute__((always_inline))

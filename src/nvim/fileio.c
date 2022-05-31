@@ -4893,13 +4893,11 @@ int buf_check_timestamp(buf_T *buf)
   char *mesg2 = "";
   bool helpmesg = false;
 
-  // uncrustify:off
   enum {
     RELOAD_NONE,
     RELOAD_NORMAL,
-    RELOAD_DETECT
+    RELOAD_DETECT,
   } reload = RELOAD_NONE;
-  // uncrustify:on
 
   bool can_reload = false;
   uint64_t orig_size = buf->b_orig_size;
