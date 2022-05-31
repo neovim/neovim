@@ -301,4 +301,17 @@ function M.highlight_range(bufnr, range, ns, hlgroup)
   vim.highlight.range(bufnr, ns, hlgroup, { start_row, start_col }, { end_row, end_col })
 end
 
+---Highlights the given node
+---
+---@param bufnr number The buffer number
+---@param node table The node to highlight
+---@param ns number The namespace id
+---@param hlgroup string The highlight group name
+function M.highlight_node(bufnr, node, ns, hlgroup)
+  if not node then
+    return
+  end
+  M.highlight_range(bufnr, { node:range() }, ns, hlgroup)
+end
+
 return M
