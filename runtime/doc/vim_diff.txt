@@ -183,6 +183,7 @@ Commands:
   |:sign-define| accepts a `numhl` argument, to highlight the line number
   |:match| can be invoked before highlight group is defined
   |:source| works with Lua and anonymous (no file) scripts
+  User commands can support |:command-preview| to show results as you type
 
 Events:
   |RecordingEnter|
@@ -235,6 +236,7 @@ Options:
                 "horizdown", "vertleft", "vertright", "verthoriz"
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'inccommand'  shows interactive results for |:substitute|-like commands
+                and |:command-preview| commands
   'laststatus'  global statusline support
   'pumblend'    pseudo-transparent popupmenu
   'scrollback'

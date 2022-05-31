@@ -3266,8 +3266,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'inccommand' 'icm'	string	(default "nosplit")
 			global
 
-	When nonempty, shows the effects of |:substitute|, |:smagic|, and
-	|:snomagic| as you type.
+	When nonempty, shows the effects of |:substitute|, |:smagic|,
+	|:snomagic| and user commands with the |:command-preview| flag as you
+	type.
 
 	Possible values:
 		nosplit	Shows the effects of a command incrementally in the
@@ -3275,8 +3276,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		split	Like "nosplit", but also shows partial off-screen
 			results in a preview window.
 
-	If the preview is too slow (exceeds 'redrawtime') then 'inccommand' is
-	automatically disabled until |Command-line-mode| is done.
+	If the preview for built-in commands is too slow (exceeds
+	'redrawtime') then 'inccommand' is automatically disabled until
+	|Command-line-mode| is done.
 
 						*'include'* *'inc'*
 'include' 'inc'		string	(default "^\s*#\s*include")

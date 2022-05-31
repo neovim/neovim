@@ -70,7 +70,6 @@ enum { NUMBUFLEN = 65, };
 #define MODE_EXTERNCMD       0x5000  // executing an external command
 #define MODE_SHOWMATCH       (0x6000 | MODE_INSERT)  // show matching paren
 #define MODE_CONFIRM         0x7000  // ":confirm" prompt
-#define MODE_CMDPREVIEW      0x8000  // Showing 'inccommand' command "live" preview.
 
 /// Directions.
 typedef enum {

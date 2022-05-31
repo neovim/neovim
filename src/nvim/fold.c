@@ -754,8 +754,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
     // the modification of the *first* line of the fold, but we send through a
     // notification that includes every line that was part of the fold
     int64_t num_changed = last_lnum - first_lnum;
-    buf_updates_send_changes(wp->w_buffer, first_lnum, num_changed,
-                             num_changed, true);
+    buf_updates_send_changes(wp->w_buffer, first_lnum, num_changed, num_changed);
   }
 }
 
@@ -1614,7 +1613,7 @@ static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
   // u_save() is unable to save the buffer line, but we send the
   // nvim_buf_lines_event anyway since it won't do any harm.
   int64_t num_changed = 1 + end.lnum - start.lnum;
-  buf_updates_send_changes(buf, start.lnum, num_changed, num_changed, true);
+  buf_updates_send_changes(buf, start.lnum, num_changed, num_changed);
 }
 
 // foldAddMarker() {{{2
