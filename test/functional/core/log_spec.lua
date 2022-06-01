@@ -1,18 +1,19 @@
 local helpers = require('test.functional.helpers')(after_each)
 local assert_log = helpers.assert_log
 local clear = helpers.clear
+local command = helpers.command
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
+local expect_exit = helpers.expect_exit
 local request = helpers.request
 local retry = helpers.retry
-local expect_exit = helpers.expect_exit
 
 describe('log', function()
-  local test_log_file = 'Xtest_logging'
+  local testlog = 'Xtest_logging'
 
   after_each(function()
-    expect_exit('qa!')
-    os.remove(test_log_file)
+    expect_exit(command, 'qa!')
+    os.remove(testlog)
   end)
 
   it('skipped before log_init', function()
@@ -33,13 +34,14 @@ describe('log', function()
     --    ERR 2022-05-29T12:30:03.814 T2/child   log_init:110: test log message
 
     clear({env={
-      NVIM_LOG_FILE=test_log_file,
-      -- TODO: Can remove this after nvim_log #7062 is merged.
+      NVIM_LOG_FILE=testlog,
+      -- TODO: remove this after nvim_log #7062 is merged.
       __NVIM_TEST_LOG='1'
       }})
 
-    retry(nil, nil, function()
-      assert_log('T%d+\\.%d+\\.\\d +log_init:%d+: test log message', test_log_file, 100)
+    local tid = _G._nvim_test_id
+    retry(nil, 1000, function()
+      assert_log(tid..'%.%d+%.%d +server_init:%d+: test log message', testlog, 100)
     end)
 
     exec_lua([[
@@ -47,9 +49,9 @@ describe('log', function()
       vim.fn.jobwait({ j1 }, 10000)
     ]])
 
-    -- Child Nvim spawned by jobstart() appends "/child" to parent name.
-    retry(nil, nil, function()
-      assert_log('T%d+/child +log_init:%d+: test log message', test_log_file, 100)
+    -- Child Nvim spawned by jobstart() appends "/c" to parent name.
+    retry(nil, 1000, function()
+      assert_log('%.%d+%.%d/c +server_init:%d+: test log message', testlog, 100)
     end)
   end)
 end)

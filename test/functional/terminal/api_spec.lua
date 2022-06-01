@@ -6,7 +6,7 @@ if helpers.pending_win32(pending) then return end
 
 describe('api', function()
   local screen
-  local socket_name = "Xtest_functional_api.sock"
+  local socket_name = "./Xtest_functional_api.sock"
 
   before_each(function()
     helpers.clear()
@@ -29,7 +29,7 @@ describe('api', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
-      ]]..socket_name..[[                         |
+      ]]..socket_name..[[                       |
       {3:-- TERMINAL --}                                    |
     ]])
 

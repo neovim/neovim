@@ -431,16 +431,20 @@ end
 function module.new_argv(...)
   local args = {unpack(module.nvim_argv)}
   table.insert(args, '--headless')
+  if _G._nvim_test_id then
+    -- Set the server name to the test-id for logging. #8519
+    table.insert(args, '--listen')
+    table.insert(args, _G._nvim_test_id)
+  end
   local new_args
   local io_extra
-  local env = {}
+  local env = nil
   local opts = select(1, ...)
   if type(opts) ~= 'table' then
     new_args = {...}
   else
     args = remove_args(args, opts.args_rm)
     if opts.env then
-      opts.env['NVIM_TEST'] = nil
       local env_opt = {}
       for k, v in pairs(opts.env) do
         assert(type(k) == 'string')
@@ -461,11 +465,12 @@ function module.new_argv(...)
         'TMPDIR',
         'VIMRUNTIME',
       }) do
-        -- Set these from the environment only if not in opts.env.
+        -- Set these from the environment unless the caller defined them.
         if not env_opt[k] then
           env_opt[k] = os.getenv(k)
         end
       end
+      env = {}
       for k, v in pairs(env_opt) do
         env[#env + 1] = k .. '=' .. v
       end
@@ -476,10 +481,6 @@ function module.new_argv(...)
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)
   end
-
-  -- TODO(justinmk): introduce v:name and use that instead.
-  table.insert(env, ('NVIM_TEST=%s'):format(_G._nvim_test_id or '?'))
-
   return args, env, io_extra
 end
 

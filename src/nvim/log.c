@@ -16,11 +16,13 @@
 #include <uv.h>
 
 #include "auto/config.h"
+#include "nvim/eval.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/message.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/path.h"
 #include "nvim/types.h"
 
 /// Cached location of the expanded log file path decided by log_path_init().
@@ -291,8 +293,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
     return false;
   }
   char date_time[20];
-  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S",
-               &local_time) == 0) {
+  if (strftime(date_time, sizeof(date_time), "%Y-%m-%dT%H:%M:%S", &local_time) == 0) {
     return false;
   }
 
@@ -303,14 +304,19 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   }
 
   // Get a name for this Nvim instance.
-  if (name[0] == '\0') {
-    const char *testid = os_getenv("NVIM_TEST");
-    const char *parent = os_getenv(ENV_NVIM);
-    if (testid) {
-      snprintf(name, sizeof(name), "%s%s", testid ? testid : "", parent ? "/child" : "");
+  // TODO(justinmk): expose this as v:name ?
+  if (starting || name[0] == '\0') {
+    // Parent servername.
+    const char *parent = path_tail(os_getenv(ENV_NVIM));
+    // Servername. Empty until starting=false.
+    const char *serv = path_tail(get_vim_var_str(VV_SEND_SERVER));
+    if (parent && parent[0] != NUL) {
+      snprintf(name, sizeof(name), "%s/c", parent);  // "/c" indicates child.
+    } else if (serv && serv[0] != NUL) {
+      snprintf(name, sizeof(name), "%s", serv ? serv : "");
     } else {
       int64_t pid = os_get_pid();
-      snprintf(name, sizeof(name), "%-5" PRId64 "%s", pid, parent ? "/child" : "");
+      snprintf(name, sizeof(name), "?.%-5" PRId64, pid);
     }
   }
 

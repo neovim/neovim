@@ -30,7 +30,7 @@ describe('server', function()
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
     local servers = funcs.serverlist()
     eq(1, #servers)
-    ok(string.len(servers[1]) > 4)  -- Like /tmp/nvim…/… or \\.\pipe\…
+    ok(string.len(servers[1]) > 4)  -- "~/.local/state/nvim…/…" or "\\.\pipe\…"
   end)
 
   it('sets v:servername at startup or if all servers were stopped', function()
@@ -54,7 +54,7 @@ describe('server', function()
 
     -- v:servername and $NVIM take the next available server.
     local servername = (iswin() and [[\\.\pipe\Xtest-functional-server-pipe]]
-                                or 'Xtest-functional-server-socket')
+                                or './Xtest-functional-server-socket')
     funcs.serverstart(servername)
     eq(servername, meths.get_vvar('servername'))
     -- Not set in the current process, only in children.
@@ -66,7 +66,7 @@ describe('server', function()
     eq(0, eval("serverstop('bogus-socket-name')"))
   end)
 
-  it('parses endpoints correctly', function()
+  it('parses endpoints', function()
     clear_serverlist()
     eq({}, funcs.serverlist())
 
@@ -101,6 +101,10 @@ describe('server', function()
     eq(expected, funcs.serverlist())
     clear_serverlist()
 
+    -- Address without slashes is a "name" which is appended to a generated path. #8519
+    matches([[.*[/\\]xtest1%.2%.3%.4[^/\\]*]], funcs.serverstart('xtest1.2.3.4'))
+    clear_serverlist()
+
     eq('Vim:Failed to start server: invalid argument',
       pcall_err(funcs.serverstart, '127.0.0.1:65536'))  -- invalid port
     eq({}, funcs.serverlist())
@@ -113,7 +117,7 @@ describe('server', function()
     -- Add some servers.
     local servs = (iswin()
       and { [[\\.\pipe\Xtest-pipe0934]], [[\\.\pipe\Xtest-pipe4324]] }
-      or  { [[Xtest-pipe0934]], [[Xtest-pipe4324]] })
+      or  { [[./Xtest-pipe0934]], [[./Xtest-pipe4324]] })
     for _, s in ipairs(servs) do
       eq(s, eval("serverstart('"..s.."')"))
     end
@@ -146,9 +150,13 @@ describe('startup --listen', function()
 
   it('sets v:servername, overrides $NVIM_LISTEN_ADDRESS', function()
     local addr = (iswin() and [[\\.\pipe\Xtest-listen-pipe]]
-                          or 'Xtest-listen-pipe')
-    clear({ env={ NVIM_LISTEN_ADDRESS='Xtest-env-pipe' },
+                          or './Xtest-listen-pipe')
+    clear({ env={ NVIM_LISTEN_ADDRESS='./Xtest-env-pipe' },
             args={ '--listen', addr } })
     eq(addr, meths.get_vvar('servername'))
+
+    -- Address without slashes is a "name" which is appended to a generated path. #8519
+    clear({ args={ '--listen', 'test-name' } })
+    matches([[.*[/\\]test%-name[^/\\]*]], meths.get_vvar('servername'))
   end)
 end)
