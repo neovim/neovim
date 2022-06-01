@@ -2798,15 +2798,11 @@ void ex_language(exarg_T *eap)
   }
 
   if (*name == NUL) {
-# ifdef HAVE_WORKING_LIBINTL
     if (what == VIM_LC_MESSAGES) {
       p = get_mess_env();
     } else {
-# endif
-    p = setlocale(what, NULL);
-# ifdef HAVE_WORKING_LIBINTL
-  }
-# endif
+      p = setlocale(what, NULL);
+    }
     if (p == NULL || *p == NUL) {
       p = "Unknown";
     }
