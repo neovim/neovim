@@ -6678,7 +6678,7 @@ static bool resize_frame_for_winbar(frame_T *fr)
     frame_new_height(fp, fp->fr_height - 1, false, false);
     win_new_height(wp, wp->w_height + 1);
     frame_fix_height(wp);
-    win_comp_pos();
+    (void)win_comp_pos();
   }
 
   return true;

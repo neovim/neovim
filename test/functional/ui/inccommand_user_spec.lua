@@ -336,4 +336,21 @@ describe("'inccommand' for user commands", function()
     feed('e')
     assert_alive()
   end)
+
+  it('no crash if preview callback changes inccommand option', function()
+    command('set inccommand=nosplit')
+    exec_lua([[
+      vim.api.nvim_create_user_command('Replace', function() end, {
+        nargs = '*',
+        preview = function()
+          vim.api.nvim_set_option('inccommand', 'split')
+          return 2
+        end,
+      })
+    ]])
+    feed(':R')
+    assert_alive()
+    feed('e')
+    assert_alive()
+  end)
 end)
