@@ -14,5 +14,7 @@ echo "Install neovim npm package"
 npm install -g neovim
 npm link neovim
 
-sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
-perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
+if [[ $CI_OS_NAME != osx ]]; then
+  sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
+  perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
+fi
