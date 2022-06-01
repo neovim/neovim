@@ -30,6 +30,7 @@ describe('decorations providers', function()
       [11] = {foreground = Screen.colors.Red, background = tonumber('0x005028')};
       [12] = {foreground = tonumber('0x990000')};
       [13] = {background = Screen.colors.LightBlue};
+      [14] = {background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue};
     }
   end)
 
@@ -403,6 +404,50 @@ describe('decorations providers', function()
       {13:restore_buffer(&save_buf);^              }|
                                               |
     ]]}
+  end)
+
+  it('can create and remove signs when CursorMoved autocommand validates botline #18661', function()
+    exec_lua([[
+      local lines = {}
+      for i = 1, 200 do
+        lines[i] = 'hello' .. tostring(i)
+      end
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+    ]])
+    setup_provider([[
+      local function on_do(kind, winid, bufnr, topline, botline_guess)
+        if kind == 'win' then
+          if topline < 100 and botline_guess > 100 then
+            vim.api.nvim_buf_set_extmark(bufnr, ns1, 99, -1, { sign_text = 'X' })
+          else
+            vim.api.nvim_buf_clear_namespace(bufnr, ns1, 0, -1)
+          end
+        end
+      end
+    ]])
+    command([[autocmd CursorMoved * call line('w$')]])
+    meths.win_set_cursor(0, {100, 0})
+    screen:expect([[
+      {14:  }hello97                               |
+      {14:  }hello98                               |
+      {14:  }hello99                               |
+      X ^hello100                              |
+      {14:  }hello101                              |
+      {14:  }hello102                              |
+      {14:  }hello103                              |
+                                              |
+    ]])
+    meths.win_set_cursor(0, {1, 0})
+    screen:expect([[
+      ^hello1                                  |
+      hello2                                  |
+      hello3                                  |
+      hello4                                  |
+      hello5                                  |
+      hello6                                  |
+      hello7                                  |
+                                              |
+    ]])
   end)
 end)
 

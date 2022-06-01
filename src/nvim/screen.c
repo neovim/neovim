@@ -326,10 +326,11 @@ int update_screen(int type)
       type = must_redraw;
     }
 
-    /* must_redraw is reset here, so that when we run into some weird
-    * reason to redraw while busy redrawing (e.g., asynchronous
-    * scrolling), or update_topline() in win_update() will cause a
-    * scroll, the screen will be redrawn later or in win_update(). */
+    // must_redraw is reset here, so that when we run into some weird
+    // reason to redraw while busy redrawing (e.g., asynchronous
+    // scrolling), or update_topline() in win_update() will cause a
+    // scroll, or a decoration provider requires a redraw, the screen
+    // will be redrawn later or in win_update().
     must_redraw = 0;
   }
 
@@ -689,6 +690,9 @@ bool win_cursorline_standout(const win_T *wp)
  */
 static void win_update(win_T *wp, DecorProviders *providers)
 {
+  bool called_decor_providers = false;
+win_update_start:
+  ;
   buf_T *buf = wp->w_buffer;
   int type;
   int top_end = 0;              /* Below last row of the top area that needs
@@ -1306,6 +1310,14 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   DecorProviders line_providers;
   decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
+  (void)win_signcol_count(wp);  // check if provider changed signcol width
+  if (must_redraw != 0) {
+    must_redraw = 0;
+    if (!called_decor_providers) {
+      called_decor_providers = true;
+      goto win_update_start;
+    }
+  }
 
   bool cursorline_standout = win_cursorline_standout(wp);
 
