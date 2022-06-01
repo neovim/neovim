@@ -24,88 +24,84 @@ QUICKSTART                                              *lsp-quickstart*
 Nvim provides an LSP client, but the servers are provided by third parties.
 Follow these steps to get LSP features:
 
-  1. Install the nvim-lspconfig plugin.  It provides common configuration for
-     various servers so you can get started quickly.
-     https://github.com/neovim/nvim-lspconfig
-  2. Install a language server. A list of language servers can be found here:
-     https://microsoft.github.io/language-server-protocol/implementors/servers/
-     See individual server documentation for installation instructions.
-  3. Add `lua require('lspconfig').xx.setup{…}` to your init.vim, where "xx" is
-     the name of the relevant config. See the nvim-lspconfig README for details.
-     NOTE: Make sure to restart nvim after installing and configuring.
-  4. Check that an LSP client has attached to the current buffer:  >
+  1. Install language servers using your package manager or by
+     following the upstream installation instruction.
 
-      :lua print(vim.inspect(vim.lsp.buf_get_clients()))
+     A list of language servers is available at:
+
+     https://microsoft.github.io/language-server-protocol/implementors/servers/
+
+  2. Configure the LSP client per language server.
+     A minimal example:
+>
+     vim.lsp.start({
+        name = 'my-server-name',
+        cmd = {'name-of-language-server-executable'},
+        root_dir = vim.fs.dirname(vim.fs.find('.git')[1]),
+     })
+<
+     See |vim.lsp.start| for details.
+
+  3. Configure keymaps and autocmds to utilize LSP features.
+     See |lsp-config|.
 <
                                                         *lsp-config*
-Inline diagnostics are enabled automatically, e.g. syntax errors will be
-annotated in the buffer.  But you probably also want to use other features
-like go-to-definition, hover, etc.
 
-While Nvim does not provide an "auto-completion" framework by default, it is
-still possible to get completions from the LSP server. To incorporate these
-completions, it is recommended to use |vim.lsp.omnifunc|, which is an 'omnifunc'
-handler. When 'omnifunc' is set to `v:lua.vim.lsp.omnifunc`, |i_CTRL-X_CTRL-O|
-will provide completions from the language server.
+Starting a LSP client will automatically report diagnostics via
+|vim.diagnostic|. Read |vim.diagnostic.config| to learn how to customize the
+display.
 
-Example config (in init.vim): >
+To get completion from the LSP server you can enable the |vim.lsp.omnifunc|:
+>
+    vim.bo.omnifunc = 'v:lua.vim.lsp.omnifunc'
+<
+To trigger completion, use |i_CTRL-X_CTRL-O|
 
-  lua << EOF
-    local custom_lsp_attach = function(client)
-      -- See `:help nvim_buf_set_keymap()` for more information
-      vim.api.nvim_buf_set_keymap(0, 'n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', {noremap = true})
-      vim.api.nvim_buf_set_keymap(0, 'n', '<c-]>', '<cmd>lua vim.lsp.buf.definition()<CR>', {noremap = true})
-      -- ... and other keymappings for LSP
+To get features like go-to-definition you can enable the |vim.lsp.tagfunc|
+which changes commands like |:tjump| to utilize the language server and also
+enables keymaps like |CTLR-]|, |CTRL-W_]|, |CTRL-W_}| and many more.
 
-      -- Use LSP as the handler for omnifunc.
-      --    See `:help omnifunc` and `:help ins-completion` for more information.
-      vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-
-      -- Use LSP as the handler for formatexpr.
-      --    See `:help formatexpr` for more information.
-      vim.api.nvim_buf_set_option(0, 'formatexpr', 'v:lua.vim.lsp.formatexpr()')
-
-      -- For plugins with an `on_attach` callback, call them here. For example:
-      -- require('completion').on_attach()
-    end
-
-    -- An example of configuring for `sumneko_lua`,
-    --  a language server for Lua.
-
-    -- set the path to the sumneko installation
-    local system_name = "Linux" -- (Linux, macOS, or Windows)
-    local sumneko_root_path = '/path/to/lua-language-server'
-    local sumneko_binary = sumneko_root_path.."/bin/"..system_name.."/lua-language-server"
-
-    require('lspconfig').sumneko_lua.setup({
-      cmd = {sumneko_binary, "-E", sumneko_root_path .. "/main.lua"};
-      -- An example of settings for an LSP server.
-      --    For more options, see nvim-lspconfig
-      settings = {
-        Lua = {
-          runtime = {
-            -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
-            version = 'LuaJIT',
-            -- Setup your lua path
-            path = vim.split(package.path, ';'),
-          },
-          diagnostics = {
-            -- Get the language server to recognize the `vim` global
-            globals = {'vim'},
-          },
-          workspace = {
-            -- Make the server aware of Neovim runtime files
-            library = {
-              [vim.fn.expand('$VIMRUNTIME/lua')] = true,
-              [vim.fn.expand('$VIMRUNTIME/lua/vim/lsp')] = true,
-            },
-          },
-        }
-      },
-
-      on_attach = custom_lsp_attach
+To use other LSP features like hover, rename, etc. you can setup some
+additional keymaps. It's recommended to setup them in a |LspAttach| autocmd to
+ensure they're only active if the there is a LSP client running. An example:
+>
+    vim.api.nvim_create_autocmd('LspAttach', {
+      group = lsp_group,
+      callback = function(args)
+        vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf })
+      end,
     })
-  EOF
+
+<
+The most used functions are:
+
+- |vim.lsp.buf.hover()|
+- |vim.lsp.buf.format()|
+- |vim.lsp.buf.references()|
+- |vim.lsp.buf.implementation()|
+- |vim.lsp.buf.code_action()|
+
+
+Not all language servers provide the same capabilities. To ensure you only set
+keymaps if the language server supports a feature, you can guard the keymap
+calls behind capability checks:
+>
+    vim.api.nvim_create_autocmd('LspAttach', {
+      group = lsp_group,
+      callback = function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        if client.server_capabilities.hoverProvider then
+          vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf })
+        end
+      end,
+    })
+<
+
+To learn what capabilities are available you can run the following command in
+a buffer with a started LSP client:
+
+>
+  :lua =vim.lsp.get_active_clients()[1].server_capabilties
 <
 
 Full list of features provided by default can be found in |lsp-buf|.
@@ -800,6 +796,55 @@ set_log_level({level})                               *vim.lsp.set_log_level()*
                 See also: ~
                     |vim.lsp.log_levels|
 
+start({config}, {opts})                                      *vim.lsp.start()*
+                Create a new LSP client and start a language server or reuses
+                an already running client if one is found matching `name` and
+                `root_dir`. Attaches the current buffer to the client.
+
+                Example:
+>
+
+    vim.lsp.start({
+       name = 'my-server-name',
+       cmd = {'name-of-language-server-executable'},
+       root_dir = vim.fs.dirname(vim.fs.find('.git')[1]),
+    })
+<
+
+                See |lsp.start_client| for all available options. The most
+                important are:
+
+                `name` is an arbitrary name for the LSP client. It should be
+                unique per language server.
+
+                `cmd` the command as list - used to start the language server. The
+                command must be present in the `$PATH` environment variable or an absolute path to the executable.
+                Shell constructs like `~` are NOT expanded.
+
+                `root_dir` path to the project root. Language servers use this
+                information to discover metadata like the dependencies of your
+                project and they tend to index the contents within the project
+                folder. The example above uses |vim.fs.find| and
+                |vim.fs.dirname| to detect the project root by traversing the
+                file system upwards starting from the current directory until
+                a `.git` file or folder is found.
+
+                To ensure a language server is only started for languages it
+                can handle, make sure to call |vim.lsp.start| within a
+                |FileType| autocmd. Either use |:au|, |nvim_create_autocmd()|
+                or put the call in a `ftplugin/<filetype_name>.lua` (See
+                |ftplugin-name|)
+
+                Parameters: ~
+                    {config}  (table) Same configuration as documented in
+                              |lsp.start_client()|
+                    {opts}    nil|table Optional keyword arguments:
+                              • reuse_client (fun(client: client, config:
+                                table): boolean) Predicate used to decide if a
+                                client should be re-used. Used on all running
+                                clients. The default implementation re-uses a
+                                client if name and root_dir matches.
+
 start_client({config})                                *vim.lsp.start_client()*
                 Starts and initializes a client with the given configuration.
 
@@ -953,20 +998,6 @@ start_client({config})                                *vim.lsp.start_client()*
                     Client id. |vim.lsp.get_client_by_id()| Note: client may
                     not be fully initialized. Use `on_init` to do any actions
                     once the client has been initialized.
-
-start_or_attach({config}, {reuse_client})          *vim.lsp.start_or_attach()*
-                Starts a new client or re-uses an existing client and attaches
-                the current buffer to it.
-
-                Parameters: ~
-                    {config}        (table) Same configuration as documented
-                                    in |lsp.start_client()|
-                    {reuse_client}  nil|fun(client: table): boolean Function
-                                    used to decide if a client should be
-                                    re-used. All running clients are tested.
-                                    Starts a new client if nothing matches. If
-                                    `nil` clients that share the same name and
-                                    same `root_dir` are re-used
 
 stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
                 Stops a client(s).

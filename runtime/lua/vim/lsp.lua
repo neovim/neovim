@@ -663,22 +663,58 @@ function lsp.client()
   error()
 end
 
---- Starts a new client or re-uses an existing client and attaches the current
---- buffer to it.
+--- Create a new LSP client and start a language server or reuses an already
+--- running client if one is found matching `name` and `root_dir`.
+--- Attaches the current buffer to the client.
+---
+--- Example:
+---
+--- <pre>
+--- vim.lsp.start({
+---    name = 'my-server-name',
+---    cmd = {'name-of-language-server-executable'},
+---    root_dir = vim.fs.dirname(vim.fs.find('.git')[1]),
+--- })
+--- </pre>
+---
+--- See |lsp.start_client| for all available options. The most important are:
+---
+--- `name` is an arbitrary name for the LSP client. It should be unique per
+--- language server.
+---
+--- `cmd` the command as list - used to start the language server.
+--- The command must be present in the `$PATH` environment variable or an
+--- absolute path to the executable. Shell constructs like `~` are *NOT* expanded.
+---
+--- `root_dir` path to the project root.
+--- Language servers use this information to discover metadata like the
+--- dependencies of your project and they tend to index the contents within the
+--- project folder. The example above uses |vim.fs.find| and |vim.fs.dirname|
+--- to detect the project root by traversing the file system upwards starting
+--- from the current directory until a `.git` file or folder is found.
+---
+--- To ensure a language server is only started for languages it can handle,
+--- make sure to call |vim.lsp.start| within a |FileType| autocmd.
+--- Either use |:au|, |nvim_create_autocmd()| or put the call in a
+--- `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
 ---
 ---@param config table Same configuration as documented in |lsp.start_client()|
----@param reuse_client nil|fun(client: table): boolean Function used to decide
---- if a client should be re-used. All running clients are tested. Starts a new
---- client if nothing matches. If `nil` clients that share the same name and
---- same `root_dir` are re-used
-function lsp.start_or_attach(config, reuse_client)
-  reuse_client = reuse_client
-    or function(client)
-      return client.config.root_dir == config.root_dir and client.name == config.name
+---@param opts nil|table Optional keyword arguments:
+---             - reuse_client (fun(client: client, config: table): boolean)
+---                            Predicate used to decide if a client should be re-used.
+---                            Used on all running clients.
+---                            The default implementation re-uses a client if name
+---                            and root_dir matches.
+function lsp.start(config, opts)
+  opts = opts or {}
+  local reuse_client = opts.reuse_client
+    or function(client, conf)
+      return client.config.root_dir == conf.root_dir and client.name == conf.name
     end
-  local bufnr = api.get_current_buf()
+  config.name = config.name or (config.cmd[1] and vim.fs.basename(config.cmd[1])) or nil
+  local bufnr = api.nvim_get_current_buf()
   for _, client in pairs(lsp.get_active_clients()) do
-    if reuse_client(client) then
+    if reuse_client(client, config) then
       lsp.buf_attach_client(bufnr, client.id)
       return
     end
