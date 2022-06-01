@@ -746,6 +746,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     normal_bg = g->sg_rgb_bg;
     normal_sp = g->sg_rgb_sp;
     ui_default_colors_set();
+    g->sg_attr = hl_get_syn_attr(0, id, attrs);
   } else {
     g->sg_attr = hl_get_syn_attr(0, id, attrs);
 
