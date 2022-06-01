@@ -465,6 +465,34 @@ describe("'scrollback' option", function()
     matches((iswin() and '^27: line[ ]*$' or '^26: line[ ]*$'), eval("getline(line('w0') - 10)"))
   end)
 
+  it('deletes extra lines immediately', function()
+    -- Scrollback is 10 on screen_setup
+    local screen = thelpers.screen_setup(nil, nil, 30)
+    local lines = {}
+    for i = 1, 30 do
+      table.insert(lines, 'line'..tostring(i))
+    end
+    table.insert(lines, '')
+    feed_data(lines)
+      screen:expect([[
+        line26                        |
+        line27                        |
+        line28                        |
+        line29                        |
+        line30                        |
+        {1: }                             |
+        {3:-- TERMINAL --}                |
+      ]])
+    local term_height = 6  -- Actual terminal screen height, not the scrollback
+    -- Initial
+    local scrollback = curbufmeths.get_option('scrollback')
+    eq(scrollback + term_height, eval('line("$")'))
+    -- Reduction
+    scrollback = scrollback - 2
+    curbufmeths.set_option('scrollback', scrollback)
+    eq(scrollback + term_height, eval('line("$")'))
+  end)
+
   it('defaults to 10000 in :terminal buffers', function()
     set_fake_shell()
     command('terminal')
