@@ -368,4 +368,16 @@ function M.goto_node(node, opts)
   a.nvim_win_set_cursor(0, { position[1], position[2] - 1 })
 end
 
+---Gets the node range in the lsp range format
+---@param node table The node to convert
+---
+---@returns { start =`start_position`, end = `end_position` }
+function M.node_to_lsp_range(node)
+  local start_line, start_col, end_line, end_col = get_node_range(node)
+  local rtn = {}
+  rtn.start = { line = start_line, character = start_col }
+  rtn['end'] = { line = end_line, character = end_col }
+  return rtn
+end
+
 return M
