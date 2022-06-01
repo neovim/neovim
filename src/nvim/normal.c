@@ -3917,7 +3917,7 @@ static void nv_regreplay(cmdarg_T *cap)
   }
 }
 
-/// Handle a ":" command and <Cmd> or Lua keymaps.
+/// Handle a ":" command and <Cmd> or Lua mappings.
 static void nv_colon(cmdarg_T *cap)
 {
   bool cmd_result;
