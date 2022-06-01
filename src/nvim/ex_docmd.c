@@ -10133,9 +10133,8 @@ bool cmd_can_preview(char *cmd)
   if (*ea.cmd == '*') {
     ea.cmd = skipwhite(ea.cmd + 1);
   }
-  find_ex_command(&ea, NULL);
 
-  if (ea.cmdidx == CMD_SIZE) {
+  if (find_ex_command(&ea, NULL) == NULL || ea.cmdidx == CMD_SIZE) {
     return false;
   } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
     // find_ex_command sets the flags for user commands automatically
