@@ -171,6 +171,11 @@ function! s:get_healthcheck(plugin_names) abort
   for v in values(healthchecks)
     let output[v[0]] = v[1:]
   endfor
+  try
+    " vim.health is not a healthcheck, skip it
+    call remove(output, 'vim')
+  catch
+  endtry
   return output
 endfunction
 
