@@ -2413,6 +2413,7 @@ static void cmdpreview_show(CommandLineState *s)
   int save_w_p_cuc = curwin->w_p_cuc;
   bool save_hls = p_hls;
   varnumber_T save_changedtick = buf_get_changedtick(curbuf);
+  bool icm_split = *p_icm == 's';  // inccommand=split
   buf_T *cmdpreview_buf;
   win_T *cmdpreview_win;
   cmdmod_T save_cmdmod = cmdmod;
@@ -2433,7 +2434,7 @@ static void cmdpreview_show(CommandLineState *s)
   cmdmod.noswapfile = true;      // Disable swap for preview buffer
 
   // Open preview buffer if inccommand=split.
-  if (*p_icm == 'n') {
+  if (!icm_split) {
     cmdpreview_bufnr = 0;
   } else if ((cmdpreview_buf = cmdpreview_open_buf()) == NULL) {
     abort();
@@ -2456,7 +2457,7 @@ static void cmdpreview_show(CommandLineState *s)
   }
 
   // If inccommand=split and preview callback returns 2, open preview window.
-  if (*p_icm != 'n' && cmdpreview_type == 2
+  if (icm_split && cmdpreview_type == 2
       && (cmdpreview_win = cmdpreview_open_win(cmdpreview_buf)) == NULL) {
     abort();
   }
@@ -2470,7 +2471,7 @@ static void cmdpreview_show(CommandLineState *s)
   }
 
   // Close preview window if it's open.
-  if (*p_icm != 'n' && cmdpreview_type == 2 && cmdpreview_win != NULL) {
+  if (icm_split && cmdpreview_type == 2 && cmdpreview_win != NULL) {
     cmdpreview_close_win();
   }
   // Clear preview highlights.

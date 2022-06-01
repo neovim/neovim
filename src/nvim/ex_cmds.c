@@ -5872,7 +5872,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   linenr_T highest_num_line = 0;
   int col_width = 0;
   // Use preview window only when inccommand=split and range is not just the current line
-  bool preview = (*p_icm != 'n') && (eap->line1 != old_cusr.lnum || eap->line2 != old_cusr.lnum);
+  bool preview = (*p_icm == 's') && (eap->line1 != old_cusr.lnum || eap->line2 != old_cusr.lnum);
 
   if (preview) {
     cmdpreview_buf = buflist_findnr(cmdpreview_bufnr);
