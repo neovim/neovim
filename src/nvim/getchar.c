@@ -2839,8 +2839,8 @@ int fix_input_buffer(char_u *buf, int len)
 /// the final `lhs` exceeds `MAXMAPLEN`, `lhs_len` will be set equal to the
 /// original larger length and `lhs` will be truncated.
 ///
-/// If RHS is equal to "<Nop>", `rhs` will be the empty string, `rhs_len`
-/// will be zero, and `rhs_is_noop` will be set to true.
+/// If RHS should be <Nop>, `rhs` will be an empty string, `rhs_len` will be
+/// zero, and `rhs_is_noop` will be set to true.
 ///
 /// Any memory allocated by @ref replace_termcodes is freed before this function
 /// returns.
@@ -2898,8 +2898,9 @@ void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
       replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, REPTERM_DO_LT, NULL,
                                    cpo_flags);
       mapargs->rhs_len = STRLEN(replaced);
-      // XXX: even when orig_rhs is non-empty, replace_termcodes may produce an empty string.
-      mapargs->rhs_is_noop = orig_rhs[0] != NUL && mapargs->rhs_len == 0;
+      // XXX: replace_termcodes may produce an empty string even if orig_rhs is non-empty
+      // (e.g. a single ^V, see :h map-empty-rhs)
+      mapargs->rhs_is_noop = orig_rhs_len != 0 && mapargs->rhs_len == 0;
       mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
       STRLCPY(mapargs->rhs, replaced, mapargs->rhs_len + 1);
     }

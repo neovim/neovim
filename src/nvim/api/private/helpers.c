@@ -678,11 +678,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
       parsed_args.rhs_is_noop = true;
     } else {
-      // the given RHS was nonempty and not a <Nop>, but was parsed as if it
-      // were empty?
-      assert(false && "Failed to parse nonempty RHS!");
-      api_set_error(err, kErrorTypeValidation, "Parsing of nonempty RHS failed: %s", rhs.data);
-      goto fail_and_free;
+      abort();  // should never happen
     }
   } else if (is_unmap && (parsed_args.rhs_len || parsed_args.rhs_lua != LUA_NOREF)) {
     if (parsed_args.rhs_len) {

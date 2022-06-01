@@ -54,8 +54,8 @@ struct map_arguments {
 
   char_u *rhs;  /// The {rhs} of the mapping.
   size_t rhs_len;
-  LuaRef rhs_lua;  /// lua function as rhs
-  bool rhs_is_noop;  /// True when the {orig_rhs} is <nop>.
+  LuaRef rhs_lua;  /// lua function as {rhs}
+  bool rhs_is_noop;  /// True when the {rhs} should be <Nop>.
 
   char_u *orig_rhs;  /// The original text of the {rhs}.
   size_t orig_rhs_len;
