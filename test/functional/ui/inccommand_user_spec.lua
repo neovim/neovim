@@ -5,6 +5,7 @@ local exec_lua = helpers.exec_lua
 local insert = helpers.insert
 local feed = helpers.feed
 local command = helpers.command
+local assert_alive = helpers.assert_alive
 
 -- Implements a :Replace command that works like :substitute.
 local setup_replace_cmd = [[
@@ -325,5 +326,14 @@ describe("'inccommand' for user commands", function()
       {2:~                                       }|
       :.Replace text cats^                     |
     ]])
+  end)
+
+  it('does not crash on ambiguous command #18825', function()
+    command('set inccommand=split')
+    command('command Reply echo 1')
+    feed(':R')
+    assert_alive()
+    feed('e')
+    assert_alive()
   end)
 end)
