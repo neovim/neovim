@@ -673,7 +673,7 @@ end
 --- vim.lsp.start({
 ---    name = 'my-server-name',
 ---    cmd = {'name-of-language-server-executable'},
----    root_dir = vim.fs.dirname(vim.fs.find('.git')[1]),
+---    root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'})[1]),
 --- })
 --- </pre>
 ---
@@ -691,7 +691,8 @@ end
 --- dependencies of your project and they tend to index the contents within the
 --- project folder. The example above uses |vim.fs.find| and |vim.fs.dirname|
 --- to detect the project root by traversing the file system upwards starting
---- from the current directory until a `.git` file or folder is found.
+--- from the current directory until either a `pyproject.toml` or `setup.py`
+--- file is found.
 ---
 --- To ensure a language server is only started for languages it can handle,
 --- make sure to call |vim.lsp.start| within a |FileType| autocmd.
@@ -705,6 +706,7 @@ end
 ---                            Used on all running clients.
 ---                            The default implementation re-uses a client if name
 ---                            and root_dir matches.
+---@return number client_id
 function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client
@@ -716,11 +718,12 @@ function lsp.start(config, opts)
   for _, client in pairs(lsp.get_active_clients()) do
     if reuse_client(client, config) then
       lsp.buf_attach_client(bufnr, client.id)
-      return
+      return client.id
     end
   end
   local client_id = lsp.start_client(config)
   lsp.buf_attach_client(bufnr, client_id)
+  return client_id
 end
 
 -- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are

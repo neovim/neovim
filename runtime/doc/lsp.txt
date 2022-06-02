@@ -37,7 +37,7 @@ Follow these steps to get LSP features:
      vim.lsp.start({
         name = 'my-server-name',
         cmd = {'name-of-language-server-executable'},
-        root_dir = vim.fs.dirname(vim.fs.find('.git')[1]),
+        root_dir = vim.fs.dirname(vim.fs.find({'setup.py', 'pyproject.toml'})[1]),
      })
 <
      See |vim.lsp.start| for details.
@@ -63,10 +63,9 @@ enables keymaps like |CTLR-]|, |CTRL-W_]|, |CTRL-W_}| and many more.
 
 To use other LSP features like hover, rename, etc. you can setup some
 additional keymaps. It's recommended to setup them in a |LspAttach| autocmd to
-ensure they're only active if the there is a LSP client running. An example:
+ensure they're only active if there is a LSP client running. An example:
 >
     vim.api.nvim_create_autocmd('LspAttach', {
-      group = lsp_group,
       callback = function(args)
         vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf })
       end,
@@ -87,7 +86,6 @@ keymaps if the language server supports a feature, you can guard the keymap
 calls behind capability checks:
 >
     vim.api.nvim_create_autocmd('LspAttach', {
-      group = lsp_group,
       callback = function(args)
         local client = vim.lsp.get_client_by_id(args.data.client_id)
         if client.server_capabilities.hoverProvider then
@@ -807,7 +805,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
     vim.lsp.start({
        name = 'my-server-name',
        cmd = {'name-of-language-server-executable'},
-       root_dir = vim.fs.dirname(vim.fs.find('.git')[1]),
+       root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'})[1]),
     })
 <
 
@@ -827,7 +825,7 @@ start({config}, {opts})                                      *vim.lsp.start()*
                 folder. The example above uses |vim.fs.find| and
                 |vim.fs.dirname| to detect the project root by traversing the
                 file system upwards starting from the current directory until
-                a `.git` file or folder is found.
+                either a `pyproject.toml` or `setup.py` file is found.
 
                 To ensure a language server is only started for languages it
                 can handle, make sure to call |vim.lsp.start| within a
@@ -844,6 +842,9 @@ start({config}, {opts})                                      *vim.lsp.start()*
                                 client should be re-used. Used on all running
                                 clients. The default implementation re-uses a
                                 client if name and root_dir matches.
+
+                Return: ~
+                    (number) client_id
 
 start_client({config})                                *vim.lsp.start_client()*
                 Starts and initializes a client with the given configuration.
