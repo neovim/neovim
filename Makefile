@@ -47,13 +47,7 @@ endif
 
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(CMAKE_GENERATOR))
-    ifneq ($(shell $(CMAKE_PRG) --help 2>/dev/null | grep Ninja),)
-      BUILD_TOOL = ninja
-    else
-      # User's version of CMake doesn't support Ninja
-      BUILD_TOOL = $(MAKE)
-      CMAKE_GENERATOR := Unix Makefiles
-    endif
+    BUILD_TOOL = ninja
   else
     BUILD_TOOL = $(MAKE)
   endif
