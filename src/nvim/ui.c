@@ -229,15 +229,9 @@ void ui_refresh(void)
     p_lz = save_p_lz;
   } else {
     Array args = ARRAY_DICT_INIT;
-    Error err = ERROR_INIT;
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
-    rpc_send_call(ui_client_channel_id, "nvim_ui_try_resize", args, &err);
-
-    if (ERROR_SET(&err)) {
-      ELOG("ui_client resize: %s", err.msg);
-    }
-    api_clear_error(&err);
+    rpc_send_event(ui_client_channel_id, "nvim_ui_try_resize", args);
   }
 
   if (ext_widgets[kUIMessages]) {

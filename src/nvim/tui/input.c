@@ -144,8 +144,10 @@ static void tinput_wait_enqueue(void **argv)
         Error err = ERROR_INIT;
         ADD(args, STRING_OBJ(copy_string(keys)));
         // TODO(bfredl): could be non-blocking now with paste?
-        Object result = rpc_send_call(ui_client_channel_id, "nvim_input", args, &err);
+        ArenaMem res_mem = NULL;
+        Object result = rpc_send_call(ui_client_channel_id, "nvim_input", args, &res_mem, &err);
         consumed = result.type == kObjectTypeInteger ? (size_t)result.data.integer : 0;
+        arena_mem_free(res_mem, NULL);
       } else {
         consumed = input_enqueue(keys);
       }

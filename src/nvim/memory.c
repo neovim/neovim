@@ -524,6 +524,87 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
   }
 }
 
+#define ARENA_BLOCK_SIZE 4096
+
+void arena_start(Arena *arena, ArenaMem *reuse_blk)
+{
+  if (reuse_blk && *reuse_blk) {
+    arena->cur_blk = (char *)*reuse_blk;
+    *reuse_blk = NULL;
+  } else {
+    arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+  }
+  arena->pos = 0;
+  arena->size = ARENA_BLOCK_SIZE;
+  // address is the same as as (struct consumed_blk *)arena->cur_blk
+  struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
+  assert((char *)blk == (char *)arena->cur_blk);
+  blk->prev = NULL;
+}
+
+/// Finnish the allocations in an arena.
+///
+/// This does not immedately free the memory, but leaves existing allocated
+/// objects valid, and returns an opaque ArenaMem handle, which can be used to
+/// free the allocations using `arena_mem_free`, when the objects allocated
+/// from the arena are not needed anymore.
+ArenaMem arena_finish(Arena *arena)
+{
+  struct consumed_blk *res = (struct consumed_blk *)arena->cur_blk;
+  *arena = (Arena)ARENA_EMPTY;
+  return res;
+}
+
+void *arena_alloc(Arena *arena, size_t size, bool align)
+{
+  if (align) {
+    arena->pos = (arena->pos + (ARENA_ALIGN - 1)) & ~(ARENA_ALIGN - 1);
+  }
+  if (arena->pos + size > arena->size) {
+    if (size > (arena->size - sizeof(struct consumed_blk)) >> 1) {
+      // if allocation is too big, allocate a large block with the requested
+      // size, but still with block pointer head. We do this even for
+      // arena->size / 2, as there likely is space left for the next
+      // small allocation in the current block.
+      char *alloc = xmalloc(size + sizeof(struct consumed_blk));
+      struct consumed_blk *cur_blk = (struct consumed_blk *)arena->cur_blk;
+      struct consumed_blk *fix_blk = (struct consumed_blk *)alloc;
+      fix_blk->prev = cur_blk->prev;
+      cur_blk->prev = fix_blk;
+      return (alloc + sizeof(struct consumed_blk));
+    } else {
+      struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
+      arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+      arena->pos = 0;
+      arena->size = ARENA_BLOCK_SIZE;
+      struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
+      blk->prev = prev_blk;
+    }
+  }
+
+  char *mem = arena->cur_blk + arena->pos;
+  arena->pos += size;
+  return mem;
+}
+
+void arena_mem_free(ArenaMem mem, ArenaMem *reuse_blk)
+{
+  struct consumed_blk *b = mem;
+  // peel of the first block, as it is guaranteed to be ARENA_BLOCK_SIZE,
+  // not a custom fix_blk
+  if (reuse_blk && *reuse_blk == NULL && b != NULL) {
+    *reuse_blk = b;
+    b = b->prev;
+    (*reuse_blk)->prev = NULL;
+  }
+
+  while (b) {
+    struct consumed_blk *prev = b->prev;
+    xfree(b);
+    b = prev;
+  }
+}
+
 #if defined(EXITFREE)
 
 # include "nvim/buffer.h"

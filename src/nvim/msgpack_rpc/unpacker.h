@@ -9,8 +9,10 @@
 #include "mpack/object.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/memory.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 
-typedef struct {
+struct Unpacker {
   mpack_parser_t parser;
   mpack_tokbuf_t reader;
 
@@ -28,7 +30,11 @@ typedef struct {
   Object error;  // error return
   Object result;  // arg list or result
   Error unpack_error;
-} Unpacker;
+
+  Arena arena;
+  // one lenght free-list of reusable blocks
+  ArenaMem reuse_blk;
+};
 
 // unrecovareble error. unpack_error should be set!
 #define unpacker_closed(p) ((p)->state < 0)

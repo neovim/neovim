@@ -1016,10 +1016,11 @@ static int nlua_rpc(lua_State *lstate, bool request)
   }
 
   if (request) {
-    Object result = rpc_send_call(chan_id, name, args, &err);
+    ArenaMem res_mem = NULL;
+    Object result = rpc_send_call(chan_id, name, args, &res_mem, &err);
     if (!ERROR_SET(&err)) {
       nlua_push_Object(lstate, result, false);
-      api_free_object(result);
+      arena_mem_free(res_mem, NULL);
     }
   } else {
     if (!rpc_send_event(chan_id, name, args)) {
