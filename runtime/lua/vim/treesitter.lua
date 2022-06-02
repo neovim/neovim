@@ -2,6 +2,7 @@ local a = vim.api
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local LanguageTree = require('vim.treesitter.languagetree')
+local highlighter = require('vim.treesitter.highlighter')
 
 -- TODO(bfredl): currently we retain parsers for the lifetime of the buffer.
 -- Consider use weak references to release parser if all plugins are done with
@@ -165,6 +166,62 @@ function M.node_contains(node, range)
   local end_fits = end_row > range[3] or (end_row == range[3] and end_col >= range[4])
 
   return start_fits and end_fits
+end
+
+---Gets a list of highlight group for a given cursor position
+---@param bufnr number The buffer number
+---@param row number The position row
+---@param col number The position column
+---
+---@returns (table) A table of highlight groups
+function M.get_hl_groups_at_position(bufnr, row, col)
+  local buf_highlighter = highlighter.active[bufnr]
+
+  if not buf_highlighter then
+    return {}
+  end
+
+  local matches = {}
+
+  buf_highlighter.tree:for_each_tree(function(tstree, tree)
+    if not tstree then
+      return
+    end
+
+    local root = tstree:root()
+    local root_start_row, _, root_end_row, _ = root:range()
+
+    -- Only worry about trees within the line range
+    if root_start_row > row or root_end_row < row then
+      return
+    end
+
+    local q = buf_highlighter:get_query(tree:lang())
+
+    -- Some injected languages may not have highlight queries.
+    if not q:query() then
+      return
+    end
+
+    local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
+
+    for capture, node, metadata in iter do
+      local hl = q.hl_cache[capture]
+
+      if hl and M.is_in_node_range(node, row, col) then
+        local c = q._query.captures[capture] -- name of the capture in the query
+        if c ~= nil then
+          local general_hl, is_vim_hl = q:_get_hl_from_capture(capture)
+          local local_hl = not is_vim_hl and (tree:lang() .. general_hl)
+          table.insert(
+            matches,
+            { capture = c, specific = local_hl, general = general_hl, priority = metadata.priority }
+          )
+        end
+      end
+    end
+  end, true)
+  return matches
 end
 
 return M
