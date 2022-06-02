@@ -223,7 +223,6 @@ jobs:
       - name: Install brew packages
         if: matrix.os == 'osx'
         run: |
-          brew update --quiet
           brew install automake ccache cpanminus ninja
 
       - name: Setup interpreter packages
