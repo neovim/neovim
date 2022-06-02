@@ -64,6 +64,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
 end
 
 local yank_ns = api.nvim_create_namespace('hlyank')
+local yank_timer
 --- Highlight the yanked region
 ---
 --- use from init.vim via
@@ -113,6 +114,9 @@ function M.on_yank(opts)
 
   local bufnr = api.nvim_get_current_buf()
   api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
+  if yank_timer then
+    yank_timer:close()
+  end
 
   local pos1 = vim.fn.getpos("'[")
   local pos2 = vim.fn.getpos("']")
@@ -129,7 +133,8 @@ function M.on_yank(opts)
     { regtype = event.regtype, inclusive = event.inclusive, priority = M.priorities.user }
   )
 
-  vim.defer_fn(function()
+  yank_timer = vim.defer_fn(function()
+    yank_timer = nil
     if api.nvim_buf_is_valid(bufnr) then
       api.nvim_buf_clear_namespace(bufnr, yank_ns, 0, -1)
     end
