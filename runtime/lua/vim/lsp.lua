@@ -673,7 +673,7 @@ end
 --- vim.lsp.start({
 ---    name = 'my-server-name',
 ---    cmd = {'name-of-language-server-executable'},
----    root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'})[1]),
+---    root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'}, { upward = true })[1]),
 --- })
 --- </pre>
 ---
@@ -687,12 +687,20 @@ end
 --- absolute path to the executable. Shell constructs like `~` are *NOT* expanded.
 ---
 --- `root_dir` path to the project root.
---- Language servers use this information to discover metadata like the
---- dependencies of your project and they tend to index the contents within the
---- project folder. The example above uses |vim.fs.find| and |vim.fs.dirname|
---- to detect the project root by traversing the file system upwards starting
+--- By default this is used to decide if an existing client should be re-used.
+--- The example above uses |vim.fs.find| and |vim.fs.dirname| to detect the
+--- root by traversing the file system upwards starting
 --- from the current directory until either a `pyproject.toml` or `setup.py`
 --- file is found.
+---
+--- `workspace_folders` a list of { uri:string, name: string } tables.
+--- The project root folders used by the language server.
+--- If `nil` the property is derived from the `root_dir` for convenience.
+---
+--- Language servers use this information to discover metadata like the
+--- dependencies of your project and they tend to index the contents within the
+--- project folder.
+---
 ---
 --- To ensure a language server is only started for languages it can handle,
 --- make sure to call |vim.lsp.start| within a |FileType| autocmd.
