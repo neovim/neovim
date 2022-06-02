@@ -480,11 +480,13 @@ function M.add_workspace_folder(workspace_folder)
     print(workspace_folder, ' is not a valid directory')
     return
   end
-  local params = util.make_workspace_params(
-    { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } },
-    {}
-  )
-  for _, client in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
+  local new_workspace = {
+    uri = vim.uri_from_fname(workspace_folder),
+    name = workspace_folder,
+  }
+  local params = { event = { added = { new_workspace }, removed = {} } }
+  local bufnr = vim.api.nvim_get_current_buf()
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
     local found = false
     for _, folder in pairs(client.workspace_folders or {}) do
       if folder.name == workspace_folder then
@@ -494,11 +496,11 @@ function M.add_workspace_folder(workspace_folder)
       end
     end
     if not found then
-      vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+      client.notify('workspace/didChangeWorkspaceFolders', params)
       if not client.workspace_folders then
         client.workspace_folders = {}
       end
-      table.insert(client.workspace_folders, params.event.added[1])
+      table.insert(client.workspace_folders, new_workspace)
     end
   end
 end
@@ -513,14 +515,16 @@ function M.remove_workspace_folder(workspace_folder)
   if not (workspace_folder and #workspace_folder > 0) then
     return
   end
-  local params = util.make_workspace_params(
-    {},
-    { { uri = vim.uri_from_fname(workspace_folder), name = workspace_folder } }
-  )
-  for _, client in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
-    for idx, folder in pairs(client.workspace_folders or {}) do
+  local workspace = {
+    uri = vim.uri_from_fname(workspace_folder),
+    name = workspace_folder,
+  }
+  local params = { event = { added = {}, removed = { workspace } } }
+  local bufnr = vim.api.nvim_get_current_buf()
+  for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+    for idx, folder in pairs(client.workspace_folders) do
       if folder.name == workspace_folder then
-        vim.lsp.buf_notify(0, 'workspace/didChangeWorkspaceFolders', params)
+        client.notify('workspace/didChangeWorkspaceFolders', params)
         client.workspace_folders[idx] = nil
         return
       end
