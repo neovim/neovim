@@ -261,22 +261,27 @@ end
 ---
 --- Note, this call invalidates the tree and requires it to be parsed again.
 ---
----@param regions A list of regions this tree should manage and parse.
+---@param regions (table) list of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(regions)
-  -- TODO(vigoux): I don't think string parsers are useful for now
-  if type(self._source) == 'number' then
-    -- Transform the tables from 4 element long to 6 element long (with byte offset)
-    for _, region in ipairs(regions) do
-      for i, range in ipairs(region) do
-        if type(range) == 'table' and #range == 4 then
-          local start_row, start_col, end_row, end_col = unpack(range)
+  -- Transform the tables from 4 element long to 6 element long (with byte offset)
+  for _, region in ipairs(regions) do
+    for i, range in ipairs(region) do
+      if type(range) == 'table' and #range == 4 then
+        local start_row, start_col, end_row, end_col = unpack(range)
+        local start_byte = 0
+        local end_byte = 0
+        -- TODO(vigoux): proper byte computation here, and account for EOL ?
+        if type(self._source) == 'number' then
           -- Easy case, this is a buffer parser
-          -- TODO(vigoux): proper byte computation here, and account for EOL ?
-          local start_byte = a.nvim_buf_get_offset(self._source, start_row) + start_col
-          local end_byte = a.nvim_buf_get_offset(self._source, end_row) + end_col
-
-          region[i] = { start_row, start_col, start_byte, end_row, end_col, end_byte }
+          start_byte = a.nvim_buf_get_offset(self._source, start_row) + start_col
+          end_byte = a.nvim_buf_get_offset(self._source, end_row) + end_col
+        elseif type(self._source) == 'string' then
+          -- string parser, single `\n` delimited string
+          start_byte = vim.fn.byteidx(self._source, start_col)
+          end_byte = vim.fn.byteidx(self._source, end_col)
         end
+
+        region[i] = { start_row, start_col, start_byte, end_row, end_col, end_byte }
       end
     end
   end
