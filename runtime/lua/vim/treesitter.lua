@@ -141,4 +141,17 @@ function M.is_ancestor(dest, source)
   return false
 end
 
+---Determines if a node contains a range
+---@param node table The node
+---@param range table The range
+---
+---@returns (boolean) True if the node contains the range
+function M.node_contains(node, range)
+  local start_row, start_col, end_row, end_col = node:range()
+  local start_fits = start_row < range[1] or (start_row == range[1] and start_col <= range[2])
+  local end_fits = end_row > range[3] or (end_row == range[3] and end_col >= range[4])
+
+  return start_fits and end_fits
+end
+
 return M
