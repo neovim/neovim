@@ -45,6 +45,7 @@
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
@@ -2186,6 +2187,12 @@ void nvim__screenshot(String path)
   FUNC_API_FAST
 {
   ui_call_screenshot(path);
+}
+
+Object nvim__unpack(String str, Error *err)
+  FUNC_API_FAST
+{
+  return unpack(str.data, str.size, err);
 }
 
 /// Deletes an uppercase/file named mark. See |mark-motions|.

@@ -12,8 +12,6 @@
 # define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 #endif
 
-static int mpack_rtoken(const char **buf, size_t *buflen,
-    mpack_token_t *tok);
 static int mpack_rpending(const char **b, size_t *nl, mpack_tokbuf_t *tb);
 static int mpack_rvalue(mpack_token_type_t t, mpack_uint32_t l,
     const char **b, size_t *bl, mpack_token_t *tok);
@@ -52,7 +50,10 @@ MPACK_API int mpack_read(mpack_tokbuf_t *tokbuf, const char **buf,
   int status;
   size_t initial_ppos, ptrlen, advanced;
   const char *ptr, *ptr_save;
-  assert(*buf && *buflen);
+  assert(*buf);
+  if (*buflen == 0) {
+    return MPACK_EOF;
+  }
 
   if (tokbuf->passthrough) {
     /* pass data from str/bin/ext directly as a MPACK_TOKEN_CHUNK, adjusting
@@ -170,8 +171,7 @@ MPACK_API int mpack_write(mpack_tokbuf_t *tokbuf, char **buf, size_t *buflen,
   return MPACK_OK;
 }
 
-static int mpack_rtoken(const char **buf, size_t *buflen,
-    mpack_token_t *tok)
+int mpack_rtoken(const char **buf, size_t *buflen, mpack_token_t *tok)
 {
   unsigned char t = ADVANCE(buf, buflen);
   if (t < 0x80) {
