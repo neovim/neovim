@@ -337,4 +337,10 @@ describe("API: set highlight", function()
       exec_capture('highlight Test_hl3'))
 
   end)
+
+  it ("correctly sets 'Normal' internal properties", function()
+    -- Normal has some special handling internally. #18024
+    meths.set_hl(0, 'Normal', {fg='#000083', bg='#0000F3'})
+    eq({foreground = 131, background = 243}, nvim("get_hl_by_name", 'Normal', true))
+  end)
 end)
