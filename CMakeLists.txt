@@ -745,16 +745,16 @@ if(BUSTED_LUA_PRG)
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
-find_program(LUACHECK luacheck)
-find_program(STYLUA stylua)
-find_program(SHELLCHECK shellcheck)
-find_program(FLAKE8 flake8)
-find_program(UNCRUSTIFY uncrustify)
+find_program(LUACHECK_PRG luacheck)
+find_program(STYLUA_PRG stylua)
+find_program(SHELLCHECK_PRG shellcheck)
+find_program(FLAKE8_PRG flake8)
+find_program(UNCRUSTIFY_PRG uncrustify)
 
 set(TARGET "lualint")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${LUACHECK}
+  -DPROGRAM=${LUACHECK_PRG}
   -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
@@ -762,7 +762,7 @@ add_custom_target(${TARGET}
 set(TARGET "stylua")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${STYLUA}
+  -DPROGRAM=${STYLUA_PRG}
   -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
@@ -770,7 +770,7 @@ add_custom_target(${TARGET}
 set(TARGET "shlint")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${SHELLCHECK}
+  -DPROGRAM=${SHELLCHECK_PRG}
   -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
@@ -778,7 +778,7 @@ add_custom_target(${TARGET}
 set(TARGET "pylint")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${FLAKE8}
+  -DPROGRAM=${FLAKE8_PRG}
   -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
@@ -786,7 +786,7 @@ add_custom_target(${TARGET}
 set(TARGET "uncrustify")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${UNCRUSTIFY}
+  -DPROGRAM=${UNCRUSTIFY_PRG}
   -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
