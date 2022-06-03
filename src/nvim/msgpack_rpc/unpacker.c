@@ -50,15 +50,23 @@ static void api_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
       Object *obj = parent->data[0].p;
       KeyValuePair *kv = &kv_A(obj->data.dictionary, parent->pos);
       if (!parent->key_visited) {
+        // TODO(bfredl): when implementing interrupt parse on error,
+        // stop parsing here when node is not a STR/BIN
+        kv->key = (String)STRING_INIT;
         key_location = &kv->key;
-      } else {
-        result = &kv->value;
       }
+      result = &kv->value;
       break;
     }
 
-    default:
+    case MPACK_TOKEN_STR:
+    case MPACK_TOKEN_BIN:
+    case MPACK_TOKEN_EXT:
+      assert(node->tok.type == MPACK_TOKEN_CHUNK);
       break;
+
+    default:
+      abort();
     }
   } else {
     result = &unpacker->result;
@@ -99,6 +107,7 @@ static void api_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
     break;
 
   case MPACK_TOKEN_CHUNK:
+    assert(parent);
     if (parent->tok.type == MPACK_TOKEN_STR || parent->tok.type == MPACK_TOKEN_BIN) {
       char *data = parent->data[0].p;
       memcpy(data + parent->pos,
