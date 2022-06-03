@@ -16,56 +16,10 @@
 
 local M = {}
 
----@private
-local function getlines(bufnr, start_lnum, end_lnum)
-  if not end_lnum then
-    -- Return a single line as a string
-    return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1]
-  end
-  return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
-end
-
----@private
-local function findany(s, patterns)
-  if s == nil then
-    return false
-  end
-  for _, v in ipairs(patterns) do
-    if s:find(v) then
-      return true
-    end
-  end
-  return false
-end
-
----@private
-local function nextnonblank(bufnr, start_lnum)
-  for _, line in ipairs(getlines(bufnr, start_lnum, -1)) do
-    if not line:find('^%s*$') then
-      return line
-    end
-  end
-  return nil
-end
-
----@private
-local matchregex = (function()
-  local cache = {}
-  return function(line, pattern)
-    if line == nil then
-      return nil
-    end
-    if not cache[pattern] then
-      cache[pattern] = vim.regex(pattern)
-    end
-    return cache[pattern]:match_str(line)
-  end
-end)()
-
----@private
-local did_filetype = function()
-  return vim.fn.did_filetype() ~= 0
-end
+local getlines = vim.filetype.getlines
+local findany = vim.filetype.findany
+local nextnonblank = vim.filetype.nextnonblank
+local matchregex = vim.filetype.matchregex
 
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
@@ -200,7 +154,7 @@ function M.change(bufnr)
 end
 
 function M.csh(path, bufnr)
-  if did_filetype() then
+  if vim.fn.did_filetype() ~= 0 then
     -- Filetype was already detected
     return
   end
@@ -213,11 +167,15 @@ function M.csh(path, bufnr)
   end
 end
 
--- Determine if a *.dat file is Kuka Robot Language
-function M.dat(bufnr)
+function M.dat(path, bufnr)
+  -- Innovation data processing
+  if findany(path:lower(), { '^upstream%.dat$', '^upstream%..*%.dat$', '^.*%.upstream%.dat$' }) then
+    return 'upstreamdat'
+  end
   if vim.g.filetype_dat then
     return vim.g.filetype_dat
   end
+  -- Determine if a *.dat file is Kuka Robot Language
   local line = nextnonblank(bufnr, 1)
   if matchregex(line, [[\c\v^\s*%(\&\w+|defdat>)]]) then
     return 'krl'
@@ -257,7 +215,7 @@ function M.dep3patch(path, bufnr)
 end
 
 function M.dtrace(bufnr)
-  if did_filetype() then
+  if vim.fn.did_filetype() ~= 0 then
     -- Filetype was already detected
     return
   end
@@ -815,7 +773,7 @@ end
 
 -- Also called from filetype.lua
 function M.sh(path, bufnr, name)
-  if did_filetype() or path:find(vim.g.ft_ignore_pat) then
+  if vim.fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
     return
   end
@@ -848,7 +806,7 @@ end
 -- For shell-like file types, check for an "exec" command hidden in a comment, as used for Tcl.
 -- Also called from scripts.vim, thus can't be local to this script. [TODO]
 function M.shell(path, bufnr, name)
-  if did_filetype() or matchregex(path, vim.g.ft_ignore_pat) then
+  if vim.fn.did_filetype() ~= 0 or matchregex(path, vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
     return
   end
@@ -1054,6 +1012,49 @@ function M.hw(bufnr)
   end
   return 'virata'
 end
+
+function M.news(bufnr)
+  if getlines(bufnr, 1):lower():find('; urgency=') then
+    return 'debchangelog'
+  end
+end
+
+-- Debian Control
+function M.control(bufnr)
+  if getlines(bufnr, 1):lower():find('^Source:') then
+    return 'debcontrol'
+  end
+end
+
+-- Debian Copyright
+function M.copyright(bufnr)
+  if getlines(bufnr, 1):lower():find('^Format:') then
+    return 'debcopyright'
+  end
+end
+
+-- Software Distributor Product Specification File (POSIX 1387.2-1995)
+function M.psf(bufnr)
+  local line = getlines(bufnr, 1):lower()
+  if
+    findany(
+      line,
+      { '^%s*distribution%s*$', '^%s*installed_software%s*$', '^%s*root%s*$', '^%s*bundle%s*$', '^%s*product%s*$' }
+    )
+  then
+    return 'psf'
+  end
+end
+
+-- XFree86 config
+function M.xfree86(bufnr)
+  local line = getlines(bufnr, 1)
+  if matchregex(line, [[\<XConfigurator\>]]) then
+    vim.b[bufnr].xf86conf_xfree86_version = 3
+    return 'xf86conf'
+  end
+end
+
 -- luacheck: pop
 -- luacheck: pop
 
