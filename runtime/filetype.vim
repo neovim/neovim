@@ -1286,25 +1286,25 @@ au BufNewFile,BufRead opam,*.opam,*.opam.template setf opam
 au BufNewFile,BufRead [a-zA-Z0-9]*Dict\(.*\)\=,[a-zA-Z]*Properties\(.*\)\=,*Transport\(.*\),fvSchemes,fvSolution,fvConstrains,fvModels,*/constant/g,*/0\(\.orig\)\=/* call dist#ft#FTfoam()
 
 " OpenROAD
-au BufNewFile,BufRead *.or			setf openroad
+au BufNewFile,BufRead *.or				setf openroad
 
 " OPL
-au BufNewFile,BufRead *.[Oo][Pp][Ll]		setf opl
+au BufNewFile,BufRead *.[Oo][Pp][Ll]			setf opl
 
 " OpenSCAD
-au BufNewFile,BufRead *.scad		setf openscad		
+au BufNewFile,BufRead *.scad				setf openscad		
 
 " Oracle config file
-au BufNewFile,BufRead *.ora			setf ora
+au BufNewFile,BufRead *.ora				setf ora
 
 " Org
-au BufNewFile,BufRead *.org,*.org_archive	setf org
+au BufNewFile,BufRead *.org,*.org_archive		setf org
 
 " Packet filter conf
-au BufNewFile,BufRead pf.conf			setf pf
+au BufNewFile,BufRead pf.conf				setf pf
 
-" Pacman config
-au BufNewFile,BufRead */etc/pacman.conf		setf conf
+" ini style config files, using # comments
+au BufNewFile,BufRead */etc/pacman.conf,mpv.conf	setf confini
 
 " Pacman hooks
 au BufNewFile,BufRead *.hook
@@ -1319,36 +1319,36 @@ au BufNewFile,BufRead */etc/pam.conf			setf pamconf
 au BufNewFile,BufRead pam_env.conf,.pam_environment	setf pamenv
 
 " PApp
-au BufNewFile,BufRead *.papp,*.pxml,*.pxsl	setf papp
+au BufNewFile,BufRead *.papp,*.pxml,*.pxsl		setf papp
 
 " Password file
 au BufNewFile,BufRead */etc/passwd,*/etc/passwd-,*/etc/passwd.edit,*/etc/shadow,*/etc/shadow-,*/etc/shadow.edit,*/var/backups/passwd.bak,*/var/backups/shadow.bak setf passwd
 
 " Pascal (also *.p, *.pp, *.inc)
-au BufNewFile,BufRead *.pas			setf pascal
+au BufNewFile,BufRead *.pas				setf pascal
 
 " Pascal or Puppet manifest
-au BufNewFile,BufRead *.pp			call dist#ft#FTpp()
+au BufNewFile,BufRead *.pp				call dist#ft#FTpp()
 
 " Delphi or Lazarus program file
-au BufNewFile,BufRead *.dpr,*.lpr		setf pascal
+au BufNewFile,BufRead *.dpr,*.lpr			setf pascal
 
 " Free Pascal makefile definition file
-au BufNewFile,BufRead *.fpc			setf fpcmake
+au BufNewFile,BufRead *.fpc				setf fpcmake
 
 " PDF
-au BufNewFile,BufRead *.pdf			setf pdf
+au BufNewFile,BufRead *.pdf				setf pdf
 
 " PCMK - HAE - crm configure edit
-au BufNewFile,BufRead *.pcmk			setf pcmk
+au BufNewFile,BufRead *.pcmk				setf pcmk
 
 " Perl
 if has("fname_case")
-  au BufNewFile,BufRead *.pl,*.PL		call dist#ft#FTpl()
+  au BufNewFile,BufRead *.pl,*.PL			call dist#ft#FTpl()
 else
-  au BufNewFile,BufRead *.pl			call dist#ft#FTpl()
+  au BufNewFile,BufRead *.pl				call dist#ft#FTpl()
 endif
-au BufNewFile,BufRead *.plx,*.al,*.psgi		setf perl
+au BufNewFile,BufRead *.plx,*.al,*.psgi			setf perl
 
 " Perl, XPM or XPM2
 au BufNewFile,BufRead *.pm
