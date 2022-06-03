@@ -37,6 +37,9 @@ end
 ---@param file (string) File or directory
 ---@return (string) Parent directory of {file}
 function M.dirname(file)
+  if file == nil then
+    return nil
+  end
   return vim.fn.fnamemodify(file, ':h')
 end
 

@@ -4,6 +4,7 @@ local lsp_rpc = require('vim.lsp.rpc')
 local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
+local api = vim.api
 
 local vim = vim
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
@@ -660,6 +661,77 @@ end
 ---    `initialize` describing the server's capabilities.
 function lsp.client()
   error()
+end
+
+--- Create a new LSP client and start a language server or reuses an already
+--- running client if one is found matching `name` and `root_dir`.
+--- Attaches the current buffer to the client.
+---
+--- Example:
+---
+--- <pre>
+--- vim.lsp.start({
+---    name = 'my-server-name',
+---    cmd = {'name-of-language-server-executable'},
+---    root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'}, { upward = true })[1]),
+--- })
+--- </pre>
+---
+--- See |lsp.start_client| for all available options. The most important are:
+---
+--- `name` is an arbitrary name for the LSP client. It should be unique per
+--- language server.
+---
+--- `cmd` the command as list - used to start the language server.
+--- The command must be present in the `$PATH` environment variable or an
+--- absolute path to the executable. Shell constructs like `~` are *NOT* expanded.
+---
+--- `root_dir` path to the project root.
+--- By default this is used to decide if an existing client should be re-used.
+--- The example above uses |vim.fs.find| and |vim.fs.dirname| to detect the
+--- root by traversing the file system upwards starting
+--- from the current directory until either a `pyproject.toml` or `setup.py`
+--- file is found.
+---
+--- `workspace_folders` a list of { uri:string, name: string } tables.
+--- The project root folders used by the language server.
+--- If `nil` the property is derived from the `root_dir` for convenience.
+---
+--- Language servers use this information to discover metadata like the
+--- dependencies of your project and they tend to index the contents within the
+--- project folder.
+---
+---
+--- To ensure a language server is only started for languages it can handle,
+--- make sure to call |vim.lsp.start| within a |FileType| autocmd.
+--- Either use |:au|, |nvim_create_autocmd()| or put the call in a
+--- `ftplugin/<filetype_name>.lua` (See |ftplugin-name|)
+---
+---@param config table Same configuration as documented in |lsp.start_client()|
+---@param opts nil|table Optional keyword arguments:
+---             - reuse_client (fun(client: client, config: table): boolean)
+---                            Predicate used to decide if a client should be re-used.
+---                            Used on all running clients.
+---                            The default implementation re-uses a client if name
+---                            and root_dir matches.
+---@return number client_id
+function lsp.start(config, opts)
+  opts = opts or {}
+  local reuse_client = opts.reuse_client
+    or function(client, conf)
+      return client.config.root_dir == conf.root_dir and client.name == conf.name
+    end
+  config.name = config.name or (config.cmd[1] and vim.fs.basename(config.cmd[1])) or nil
+  local bufnr = api.nvim_get_current_buf()
+  for _, client in pairs(lsp.get_active_clients()) do
+    if reuse_client(client, config) then
+      lsp.buf_attach_client(bufnr, client.id)
+      return client.id
+    end
+  end
+  local client_id = lsp.start_client(config)
+  lsp.buf_attach_client(bufnr, client_id)
+  return client_id
 end
 
 -- FIXME: DOC: Currently all methods on the `vim.lsp.client` object are
