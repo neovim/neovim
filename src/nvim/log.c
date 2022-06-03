@@ -105,7 +105,7 @@ static bool log_path_init(void)
 
 void log_init(void)
 {
-  uv_mutex_init(&mutex);
+  uv_mutex_init_recursive(&mutex);
   // AFTER init_homedir ("~", XDG) and set_init_1 (env vars). 22b52dd462e5 #11501
   log_path_init();
   did_log_init = true;
@@ -150,15 +150,6 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
     // set_init_1 may try logging before we are ready. 6f27f5ef91b3 #10183
     return false;
   }
-  if (recursive) {
-    if (!did_msg) {
-      did_msg = true;
-      char *arg1 = func_name ? xstrdup(func_name) : (context ? xstrdup(context) : NULL);
-      multiqueue_put(main_loop.events, on_log_recursive_event, 2, arg1, line_num);
-    }
-    g_stats.log_skip++;
-    return false;
-  }
 
   if (log_level < MIN_LOG_LEVEL) {
     return false;
@@ -171,6 +162,16 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
 #endif
 
   log_lock();
+  if (recursive) {
+    if (!did_msg) {
+      did_msg = true;
+      char *arg1 = func_name ? xstrdup(func_name) : (context ? xstrdup(context) : NULL);
+      loop_schedule_deferred(&main_loop, event_create(on_log_recursive_event, 2, arg1, line_num));
+    }
+    g_stats.log_skip++;
+    return false;
+  }
+
   recursive = true;
   bool ret = false;
   FILE *log_file = open_log_file();
