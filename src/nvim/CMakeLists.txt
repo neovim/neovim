@@ -800,10 +800,10 @@ foreach(sfile ${LINT_NVIM_SOURCES})
   list(APPEND LINT_TARGETS ${touch_file})
   list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})
 endforeach()
-add_custom_target(clint DEPENDS ${LINT_TARGETS})
+add_custom_target(lint_c DEPENDS ${LINT_TARGETS})
 
 add_custom_target(
-  clint-full
+  lint_c_full
   COMMAND
     ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} ${LINT_NVIM_REL_SOURCES}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

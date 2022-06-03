@@ -107,11 +107,11 @@ jobs:
         run: ./ci/run_tests.sh build_nvim
 
       - if: "!cancelled()"
-        name: clint-full
-        run: ./ci/run_lint.sh clint-full
+        name: lint_c_full
+        run: ./ci/run_lint.sh lint_c_full
 
       - if: "!cancelled()"
-        name: stylua
+        name: lint_stylua
         uses: JohnnyMorganz/stylua-action@1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -124,16 +124,16 @@ jobs:
           git diff --color --exit-code
 
       - if: "!cancelled()"
-        name: lualint
-        run: ./ci/run_lint.sh lualint
+        name: lint_lua
+        run: ./ci/run_lint.sh lint_lua
 
       - if: "!cancelled()"
-        name: pylint
-        run: ./ci/run_lint.sh pylint
+        name: lint_py
+        run: ./ci/run_lint.sh lint_py
 
       - if: "!cancelled()"
-        name: shlint
-        run: ./ci/run_lint.sh shlint
+        name: lint_sh
+        run: ./ci/run_lint.sh lint_sh
 
       - if: "!cancelled()"
         name: check-single-includes
