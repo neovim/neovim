@@ -169,6 +169,7 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
       loop_schedule_deferred(&main_loop, event_create(on_log_recursive_event, 2, arg1, line_num));
     }
     g_stats.log_skip++;
+    log_unlock();
     return false;
   }
 
