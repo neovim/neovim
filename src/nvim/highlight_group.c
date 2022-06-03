@@ -738,6 +738,8 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   g->sg_script_ctx = current_sctx;
   g->sg_script_ctx.sc_lnum += sourcing_lnum;
 
+  g->sg_attr = hl_get_syn_attr(0, id, attrs);
+
   // 'Normal' is special
   if (STRCMP(g->sg_name_u, "NORMAL") == 0) {
     cterm_normal_fg_color = g->sg_cterm_fg;
@@ -747,8 +749,6 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     normal_sp = g->sg_rgb_sp;
     ui_default_colors_set();
   } else {
-    g->sg_attr = hl_get_syn_attr(0, id, attrs);
-
     // a cursor style uses this syn_id, make sure its attribute is updated.
     if (cursor_mode_uses_syn_id(id)) {
       ui_mode_info_set();
