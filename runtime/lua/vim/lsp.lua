@@ -1117,6 +1117,10 @@ function lsp.start_client(config)
         end
       end
 
+      if next(config.settings) then
+        client.notify('workspace/didChangeConfiguration', { settings = config.settings })
+      end
+
       if config.on_init then
         local status, err = pcall(config.on_init, client, result)
         if not status then

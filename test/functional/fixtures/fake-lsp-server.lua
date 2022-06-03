@@ -116,6 +116,19 @@ function tests.basic_init()
   }
 end
 
+function tests.basic_init_did_change_configuration()
+  skeleton({
+    on_init = function(_)
+      return {
+        capabilities = {},
+      }
+    end,
+    body = function()
+      expect_notification('workspace/didChangeConfiguration', { settings = { dummy = 1 } })
+    end,
+  })
+end
+
 function tests.check_workspace_configuration()
   skeleton {
     on_init = function(_params)

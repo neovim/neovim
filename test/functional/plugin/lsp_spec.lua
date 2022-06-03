@@ -45,10 +45,10 @@ local function clear_notrace()
 end
 
 
-local function fake_lsp_server_setup(test_name, timeout_ms, options)
+local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
   exec_lua([=[
     lsp = require('vim.lsp')
-    local test_name, fixture_filename, logfile, timeout, options = ...
+    local test_name, fixture_filename, logfile, timeout, options, settings = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
       cmd_env = {
         NVIM_LOG_FILE = logfile;
@@ -79,17 +79,18 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options)
         allow_incremental_sync = options.allow_incremental_sync or false;
         debounce_text_changes = options.debounce_text_changes or 0;
       };
+      settings = settings;
       on_exit = function(...)
         vim.rpcnotify(1, "exit", ...)
       end;
     }
-  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3, options or {})
+  ]=], test_name, fake_lsp_code, fake_lsp_logfile, timeout_ms or 1e3, options or {}, settings or {})
 end
 
 local function test_rpc_server(config)
   if config.test_name then
     clear_notrace()
-    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options)
+    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options, config.settings)
   end
   local client = setmetatable({}, {
     __index = function(_, name)
@@ -296,6 +297,22 @@ describe('LSP', function()
           eq(table.remove(expected_handlers), {...}, "expected handler")
         end;
       }
+    end)
+
+    it('should send didChangeConfiguration after initialize if there are settings', function()
+      test_rpc_server({
+        test_name = 'basic_init_did_change_configuration',
+        on_init = function(client, _)
+          client.stop()
+        end,
+        on_exit = function(code, signal)
+          eq(0, code, 'exit code', fake_lsp_logfile)
+          eq(0, signal, 'exit signal', fake_lsp_logfile)
+        end,
+        settings = {
+          dummy = 1,
+        },
+      })
     end)
 
     it('should succeed with manual shutdown', function()
