@@ -108,14 +108,14 @@ void redraw_for_cursorline(win_T *wp)
 }
 
 /// Redraw when w_virtcol changes and 'cursorcolumn' is set or 'cursorlineopt'
-/// contains "screenline" or when the 'CurSearch' highlight is in use.
+/// contains "screenline" or when the "CurSearch" highlight is in use.
 /// Also when concealing is on and 'concealcursor' is active.
 static void redraw_for_cursorcolumn(win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
   if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
     if (wp->w_p_cuc || ((HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC]) && using_hlsearch())) {
-      // When 'cursorcolumn' is set or 'CurSearch' is in use
+      // When 'cursorcolumn' is set or "CurSearch" is in use
       // need to redraw with SOME_VALID.
       redraw_later(wp, SOME_VALID);
     } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {

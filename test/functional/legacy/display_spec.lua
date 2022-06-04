@@ -61,7 +61,7 @@ describe('display', function()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
       [2] = {bold = true, reverse = true},  -- StatusLine
-      [3] = {reverse = true},  -- VertSplit, StatusLineNC
+      [3] = {reverse = true},  -- StatusLineNC
     })
     screen:attach()
     exec([[

@@ -1092,7 +1092,7 @@ vim.env                                                              *vim.env*
                                                             *lua-vim-optlocal*
                                                             *lua-vim-setlocal*
 
-In Vimscript, there is an way to set options |set-option|. In Lua, the
+In Vimscript, there is a way to set options |set-option|. In Lua, the
 corresponding method is `vim.opt`.
 
 `vim.opt` provides several conveniences for setting and controlling options

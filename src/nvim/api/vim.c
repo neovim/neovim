@@ -157,7 +157,6 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///                - reverse: boolean
 ///                - nocombine: boolean
 ///                - link: name of another highlight group to link to, see |:hi-link|.
-///              Additionally, the following keys are recognized:
 ///                - default: Don't override existing definition |:hi-default|
 ///                - ctermfg: Sets foreground of cterm color |highlight-ctermfg|
 ///                - ctermbg: Sets background of cterm color |highlight-ctermbg|

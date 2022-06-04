@@ -1625,8 +1625,7 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                              • reverse: boolean
                              • nocombine: boolean
                              • link: name of another highlight group to link
-                               to, see |:hi-link|. Additionally, the following
-                               keys are recognized:
+                               to, see |:hi-link|.
                              • default: Don't override existing definition
                                |:hi-default|
                              • ctermfg: Sets foreground of cterm color

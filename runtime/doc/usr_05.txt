@@ -45,7 +45,7 @@ This file is always used and is recommended:
 
 The vimrc file can contain all the commands that you type after a colon.  The
 simplest ones are for setting options.  For example, if you want Vim to always
-start with the 'incsearch' option on, add this line your vimrc file: >
+start with the 'ignorecase' option on, add this line your vimrc file: >
 
 	set ignorecase
 

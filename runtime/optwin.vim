@@ -469,7 +469,7 @@ endif
 
 
 call <SID>Header("multiple windows")
-call append("$", "laststatus\t0, 1 or 2; when to use a status line for the last window")
+call append("$", "laststatus\t0, 1, 2 or 3; when to use a status line for the last window")
 call append("$", " \tset ls=" . &ls)
 if has("statusline")
   call append("$", "statusline\talternate format to be used for a status line")

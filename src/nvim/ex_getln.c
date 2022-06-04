@@ -2553,7 +2553,6 @@ static int command_line_changed(CommandLineState *s)
     }
   }
 
-  // 'incsearch' highlighting.
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
       && *p_icm != NUL       // 'inccommand' is set
