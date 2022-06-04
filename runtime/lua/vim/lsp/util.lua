@@ -1038,8 +1038,8 @@ function M.jump_to_location(location, offset_encoding, reuse_win)
   if win then
     api.nvim_set_current_win(win)
   else
-    api.nvim_set_current_buf(bufnr)
     api.nvim_buf_set_option(bufnr, 'buflisted', true)
+    api.nvim_set_current_buf(bufnr)
   end
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
