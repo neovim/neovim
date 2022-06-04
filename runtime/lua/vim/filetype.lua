@@ -6,11 +6,11 @@ local M = {}
 local function starsetf(ft)
   return {
     function(path)
-      if not vim.g.fg_ignore_pat then
+      if not vim.g.ft_ignore_pat then
         return ft
       end
 
-      local re = vim.regex(vim.g.fg_ignore_pat)
+      local re = vim.regex(vim.g.ft_ignore_pat)
       if re:match_str(path) then
         return ft
       end
