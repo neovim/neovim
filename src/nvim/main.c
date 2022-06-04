@@ -263,6 +263,8 @@ int main(int argc, char **argv)
 
   nlua_init();
 
+  TIME_MSG("init lua interpreter");
+
   if (embedded_mode) {
     const char *err;
     if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
