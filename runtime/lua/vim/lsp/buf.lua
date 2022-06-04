@@ -708,7 +708,7 @@ local function on_code_action_results(results, ctx, options)
       end
       local found = false
       for _, o in ipairs(options.context.only) do
-        -- action kinds are hierachical with . as a separator: when requesting only
+        -- action kinds are hierarchical with . as a separator: when requesting only
         -- 'quickfix' this filter allows both 'quickfix' and 'quickfix.foo', for example
         if a.kind:find('^' .. o .. '$') or a.kind:find('^' .. o .. '%.') then
           found = true

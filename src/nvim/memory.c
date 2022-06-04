@@ -529,7 +529,7 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
 void arena_start(Arena *arena, ArenaMem *reuse_blk)
 {
   if (reuse_blk && *reuse_blk) {
-    arena->cur_blk = (char *)*reuse_blk;
+    arena->cur_blk = (char *)(*reuse_blk);
     *reuse_blk = NULL;
   } else {
     arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
