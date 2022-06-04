@@ -62,4 +62,6 @@ endfunction
 
 command! -bar UpdateRemotePlugins call remote#host#UpdateRemotePlugins()
 
-call s:LoadRemotePlugins()
+if index(v:argv, "--clean") < 0
+  call s:LoadRemotePlugins()
+endif
