@@ -6063,10 +6063,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	If the statusline is not updated when you want it (e.g., after setting
 	a variable that's used in an expression), you can force an update by
-	setting an option without changing its value.  Example: >
-		:let &ro = &ro
+	using `:redrawstatus`.
 
-<	A result of all digits is regarded a number for display purposes.
+	A result of all digits is regarded a number for display purposes.
 	Otherwise the result is taken as flag text and applied to the rules
 	described above.
 
