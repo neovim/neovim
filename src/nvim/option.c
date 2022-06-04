@@ -4551,7 +4551,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
   } else if (pp == &curwin->w_p_nuw) {
     curwin->w_nrwidth_line_count = 0;
   } else if (pp == &curwin->w_p_winbl && value != old_value) {
-    // 'floatblend'
+    // 'winblend'
     curwin->w_p_winbl = MAX(MIN(curwin->w_p_winbl, 100), 0);
     curwin->w_hl_needs_update = true;
     check_blending(curwin);
