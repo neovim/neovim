@@ -48,6 +48,7 @@ modes.
 			allows for nested and recursive use of mappings.
 			Note: Trailing spaces are included in the {rhs},
 			because space is a valid Normal mode command.
+			See |map-trailing-white|.
 
 						*:nore* *:norem*
 :no[remap]  {lhs} {rhs}		|mapmode-nvo|	*:no*  *:noremap* *:nor*
@@ -85,10 +86,8 @@ modes.
 			for other modes where it applies.
 			It also works when {lhs} matches the {rhs} of a
 			mapping. This is for when an abbreviation applied.
-			Note: Trailing spaces are included in the {lhs}.  This
-			unmap does NOT work: >
-				:map @@ foo
-				:unmap @@ | print
+			Note: Trailing spaces are included in the {lhs}.
+			See |map-trailing-white|.
 
 :mapc[lear]			|mapmode-nvo|		*:mapc*   *:mapclear*
 :nmapc[lear]			|mapmode-n|		*:nmapc*  *:nmapclear*
@@ -151,6 +150,24 @@ decide if "aa" or "aaa" should be mapped.  This means that after typing "aa"
 that mapping won't get expanded yet, Vim is waiting for another character.
 If you type a space, then "foo" will get inserted, plus the space.  If you
 type "a", then "bar" will get inserted.
+
+Trailing white space ~
+							*map-trailing-white*
+This unmap command does NOT work: >
+	:map @@ foo
+	:unmap @@ | print
+
+Because it tries to unmap "@@ ", including the white space before the command
+separator "|".  Other examples with trailing white space: >
+	unmap @@ 
+	unmap @@     " comment
+
+An error will be issued, which is very hard to identify, because the ending
+whitespace character in `unmap @@ ` is not visible.
+
+A generic solution is to put the command separator "|" right after the mapped
+keys.  After that white space and a comment may follow: >
+	unmap @@|    " comment
 
 
 1.2 SPECIAL ARGUMENTS					*:map-arguments*

@@ -1207,7 +1207,7 @@ to their previous contents.  When the '>' flag is present in 'cpoptions' then
 a line break is inserted before the appended text.
 
 5. Read-only registers ":, ". and "%
-These are '%', '#', ':' and '.'.  You can use them only with the "p", "P",
+These are '%', ':' and '.'.  You can use them only with the "p", "P",
 and ":put" commands and with CTRL-R.
 						*quote_.* *quote.* *E29*
 	".	Contains the last inserted text (the same as what is inserted
