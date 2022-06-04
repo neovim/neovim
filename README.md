@@ -63,7 +63,7 @@ After installing the dependencies, run the following command.
 
 To install to a non-default location:
 
-    make CMAKE_INSTALL_PREFIX=/full/path/
+    make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=/full/path/
     make install
 
 CMake hints for inspecting the build:
