@@ -631,7 +631,7 @@ void stuffReadbuffSpec(const char *s)
       stuffReadbuffLen(s, 3);
       s += 3;
     } else {
-      int c = mb_ptr2char_adv((const char_u **)&s);
+      int c = mb_cptr2char_adv((const char_u **)&s);
       if (c == CAR || c == NL || c == ESC) {
         c = ' ';
       }
