@@ -1021,14 +1021,14 @@ end
 
 -- Debian Control
 function M.control(bufnr)
-  if getlines(bufnr, 1):lower():find('^Source:') then
+  if getlines(bufnr, 1):find('^Source:') then
     return 'debcontrol'
   end
 end
 
 -- Debian Copyright
 function M.copyright(bufnr)
-  if getlines(bufnr, 1):lower():find('^Format:') then
+  if getlines(bufnr, 1):find('^Format:') then
     return 'debcopyright'
   end
 end

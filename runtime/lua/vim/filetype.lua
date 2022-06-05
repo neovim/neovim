@@ -3,17 +3,21 @@ local api = vim.api
 local M = {}
 
 ---@private
+local function starsetf_match(ft, path)
+  if not vim.g.ft_ignore_pat then
+    return ft
+  end
+  local re = vim.regex(vim.g.ft_ignore_pat)
+  if re:match_str(path) then
+    return ft
+  end
+end
+
+---@private
 local function starsetf(ft)
   return {
     function(path)
-      if not vim.g.ft_ignore_pat then
-        return ft
-      end
-
-      local re = vim.regex(vim.g.ft_ignore_pat)
-      if re:match_str(path) then
-        return ft
-      end
+      return starsetf_match(ft, path)
     end,
     {
       -- Starset matches should always have lowest priority
@@ -1297,7 +1301,7 @@ local extension = {
     return M.match(root, bufnr)
   end,
   ['in'] = function(path, bufnr)
-    if vim.fn.expand(path, ':t') ~= 'configure.in' then
+    if vim.fs.basename(path) ~= 'configure.in' then
       local root = vim.fn.fnameescape(vim.fn.fnamemodify(path, ':r'))
       return M.match(root, bufnr)
     end
@@ -1324,7 +1328,7 @@ local filename = {
   WORKSPACE = 'bzl',
   BUILD = 'bzl',
   ['cabal.project'] = 'cabalproject',
-  [vim.env.HOME .. '/cabal.config'] = 'cabalproject',
+  [vim.env.HOME .. '/cabal.config'] = 'cabalconfig',
   ['cabal.config'] = 'cabalconfig',
   calendar = 'calendar',
   catalog = 'catalog',
@@ -1699,7 +1703,7 @@ local pattern = {
   ['.*bsd'] = 'bsdl',
   ['bzr_log%..*'] = 'bzr',
   ['.*enlightenment/.*%.cfg'] = 'c',
-  ['.*/%.calendar/.*'] = 'calendar',
+  ['.*/%.calendar/.*'] = starsetf('calendar'),
   ['.*/share/calendar/.*/calendar%..*'] = starsetf('calendar'),
   ['.*/share/calendar/calendar%..*'] = starsetf('calendar'),
   ['.*/etc/defaults/cdrdao'] = 'cdrdaoconf',
@@ -1737,7 +1741,7 @@ local pattern = {
   ['.*/%.config/git/config'] = 'gitconfig',
   ['.*%.git/config%.worktree'] = 'gitconfig',
   ['.*%.git/worktrees/.*/config%.worktree'] = 'gitconfig',
-  ['/git/config'] = function(path, bufnr)
+  ['.*/git/config'] = function(path, bufnr)
     if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/config') then
       return 'gitconfig'
     end
@@ -1747,12 +1751,12 @@ local pattern = {
   ['.*/usr/.*/gnupg/options%.skel'] = 'gpg',
   ['.*/%.gnupg/options'] = 'gpg',
   ['.*/%.gnupg/gpg%.conf'] = 'gpg',
-  ['/options'] = function(path, bufnr)
+  ['.*/options'] = function(path, bufnr)
     if vim.env.GNUPGHOME and path:find(vim.env.GNUPGHOME .. '/options') then
       return 'gpg'
     end
   end,
-  ['/gpg%.conf'] = function(path, bufnr)
+  ['.*/gpg%.conf'] = function(path, bufnr)
     if vim.env.GNUPGHOME and path:find(vim.env.GNUPGHOME .. '/gpg%.conf') then
       return 'gpg'
     end
@@ -1964,14 +1968,26 @@ local pattern = {
   ['.*%.properties_.._.._.*'] = starsetf('jproperties'),
   ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
   ['.*/%.fvwm/.*'] = starsetf('fvwm'),
-  ['.*fvwmrc.*'] = function(path, bufnr)
-    vim.b[bufnr].fvwm_version = 1
-    starsetf('fvwm')
-  end,
-  ['.*fvwm95.*%.hook'] = function(path, bufnr)
-    vim.b[bufnr].fvwm_version = 1
-    starsetf('fvwm')
-  end,
+  ['.*fvwmrc.*'] = {
+    function(path, bufnr)
+      vim.b[bufnr].fvwm_version = 1
+      return starsetf_match('fvwm')
+    end,
+    {
+      -- Starset matches should always have lowest priority
+      priority = -math.huge,
+    },
+  },
+  ['.*fvwm95.*%.hook'] = {
+    function(path, bufnr)
+      vim.b[bufnr].fvwm_version = 1
+      return starsetf_match('fvwm')
+    end,
+    {
+      -- Starset matches should always have lowest priority
+      priority = -math.huge,
+    },
+  },
   ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
   ['.*/Xresources/.*'] = starsetf('xdefaults'),
   ['.*/app%-defaults/.*'] = starsetf('xdefaults'),
@@ -1992,11 +2008,17 @@ local pattern = {
   ['.*/etc/httpd/sites%-.*/.*'] = starsetf('apache'),
   ['.*/etc/logcheck/.*%.d.*/.*'] = starsetf('logcheck'),
   ['.*/etc/modprobe%..*'] = starsetf('modconf'),
-  ['.*/etc/modutils/.*'] = function(path, bufnr)
-    if vim.fn.executable(vim.fn.expand(path)) ~= 1 then
-      return starsetf('modconf')
-    end
-  end,
+  ['.*/etc/modutils/.*'] = {
+    function(path, bufnr)
+      if vim.fn.executable(vim.fn.expand(path)) ~= 1 then
+        return starsetf_match('modconf')
+      end
+    end,
+    {
+      -- Starset matches should always have lowest priority
+      priority = -math.huge,
+    },
+  },
   ['.*/etc/pam%.d/.*'] = starsetf('pamconf'),
   ['.*/etc/profile'] = function(path, bufnr)
     return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
@@ -2119,10 +2141,16 @@ local pattern = {
     vim.b[bufnr].xf86conf_xfree86_version = 4
     return 'xf86config'
   end,
-  ['XF86Config%-4'] = function(path, bufnr)
-    vim.b[bufnr].xf86conf_xfree86_version = 4
-    return starsetf('xf86config')
-  end,
+  ['XF86Config%-4'] = {
+    function(path, bufnr)
+      vim.b[bufnr].xf86conf_xfree86_version = 4
+      return starsetf_match('xf86config')
+    end,
+    {
+      -- Starset matches should always have lowest priority
+      priority = -math.huge,
+    },
+  },
   -- Decrease priority to run after the pattern above
   ['XF86Config.*'] = {
     function(path, bufnr)
@@ -2138,14 +2166,20 @@ local pattern = {
       starsetf('changelog')
     end
   end,
-  ['.*fvwm2rc.*'] = function(path, bufnr)
-    if vim.fn.fnamemodify(path, ':e') == 'm4' then
-      starsetf('fvwm2m4')
-    else
-      vim.b[bufnr].fvwm_version = 2
-      starsetf('fvwm')
-    end
-  end,
+  ['.*fvwm2rc.*'] = {
+    function(path, bufnr)
+      if vim.fn.fnamemodify(path, ':e') == 'm4' then
+        return starsetf_match('fvwm2m4')
+      else
+        vim.b[bufnr].fvwm_version = 2
+        return starsetf_match('fvwm')
+      end
+    end,
+    {
+      -- Starset matches should always have lowest priority
+      priority = -math.huge,
+    },
+  },
   ['.*%.[Ll][Oo][Gg]'] = function(path, bufnr)
     -- Innovation Data Processing
     -- (refactor of filetype.vim since the patterns are case-insensitive)
