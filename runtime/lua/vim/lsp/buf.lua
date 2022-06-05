@@ -516,7 +516,14 @@ local function on_code_action_results(results, ctx)
         enriched_ctx.client_id = client.id
         fn(command, enriched_ctx)
       else
-        M.execute_command(command)
+        -- Not using command directly to exclude extra properties,
+        -- see https://github.com/python-lsp/python-lsp-server/issues/146
+        local params = {
+          command = command.command,
+          arguments = command.arguments,
+          workDoneToken = command.workDoneToken,
+        }
+        client.request('workspace/executeCommand', params, nil, ctx.bufnr)
       end
     end
   end
