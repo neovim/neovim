@@ -357,7 +357,7 @@ static int nlua_wait(lua_State *lstate)
 {
   intptr_t timeout = luaL_checkinteger(lstate, 1);
   if (timeout < 0) {
-    return luaL_error(lstate, "timeout must be > 0");
+    return luaL_error(lstate, "timeout must be >= 0");
   }
 
   int lua_top = lua_gettop(lstate);
@@ -384,7 +384,7 @@ static int nlua_wait(lua_State *lstate)
   if (lua_top >= 3 && !lua_isnil(lstate, 3)) {
     interval = luaL_checkinteger(lstate, 3);
     if (interval < 0) {
-      return luaL_error(lstate, "interval must be > 0");
+      return luaL_error(lstate, "interval must be >= 0");
     }
   }
 
