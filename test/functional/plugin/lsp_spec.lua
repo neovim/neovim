@@ -2793,6 +2793,45 @@ describe('LSP', function()
         end
       }
     end)
+    it('Calls workspace/executeCommand if no client side command', function()
+      local client
+      local expected_handlers = {
+        { NIL, {}, { method = 'shutdown', client_id = 1 } },
+        {
+          NIL,
+          { command = 'dummy1', title = 'Command 1' },
+          { bufnr = 1, method = 'workspace/executeCommand', client_id = 1 },
+        },
+        { NIL, {}, { method = 'start', client_id = 1 } },
+      }
+      test_rpc_server({
+        test_name = 'code_action_server_side_command',
+        on_init = function(client_)
+          client = client_
+        end,
+        on_setup = function() end,
+        on_exit = function(code, signal)
+          eq(0, code, 'exit code', fake_lsp_logfile)
+          eq(0, signal, 'exit signal', fake_lsp_logfile)
+        end,
+        on_handler = function(err, result, ctx)
+          ctx.params = nil -- don't compare in assert
+          eq(table.remove(expected_handlers), { err, result, ctx })
+          if ctx.method == 'start' then
+            exec_lua([[
+              local bufnr = vim.api.nvim_get_current_buf()
+              vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+              vim.fn.inputlist = function()
+                return 1
+              end
+              vim.lsp.buf.code_action()
+            ]])
+          elseif ctx.method == 'shutdown' then
+            client.stop()
+          end
+        end,
+      })
+    end)
     it('Filters and automatically applies action if requested', function()
       local client
       local expected_handlers = {
