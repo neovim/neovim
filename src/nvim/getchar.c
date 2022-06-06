@@ -2585,8 +2585,8 @@ static int vgetorpeek(bool advance)
 
         // get a character: 3. from the user - get it
         if (typebuf.tb_len == 0) {
-          // timedout may have been set while waiting for a mapping
-          // that has a <Nop> RHS.
+          // timedout may have been set if a mapping with empty RHS
+          // fully matched while longer mappings timed out.
           timedout = false;
         }
 
