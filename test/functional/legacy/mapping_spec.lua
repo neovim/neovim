@@ -162,4 +162,21 @@ describe('mapping', function()
     sleep(10)
     eq('n', eval('mode()'))
   end)
+
+  it('timeout works after an <Nop> mapping is triggered on timeout vim-patch:8.1.0052', function()
+    command('set timeout timeoutlen=400')
+    command('inoremap ab TEST')
+    command('inoremap a <Nop>')
+    -- Enter Insert mode
+    feed('i')
+    -- Wait for the "a" mapping to time out
+    feed('a')
+    sleep(500)
+    -- Send "a" and wait for a period shorter than 'timeoutlen'
+    feed('a')
+    sleep(100)
+    -- Send "b", should trigger the "ab" mapping
+    feed('b')
+    expect('TEST')
+  end)
 end)
