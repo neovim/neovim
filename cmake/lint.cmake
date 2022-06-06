@@ -1,24 +1,24 @@
 if(PROGRAM)
 
-  if(${TARGET} STREQUAL "lint_uncrustify")
+  if(${TARGET} STREQUAL "lintuncrustify")
     file(GLOB_RECURSE FILES ${PROJECT_ROOT}/src/nvim/*.[c,h])
     execute_process(COMMAND ${PROGRAM} -c src/uncrustify.cfg -q --check ${FILES}
       WORKING_DIRECTORY ${PROJECT_ROOT}
       RESULT_VARIABLE ret
       OUTPUT_QUIET)
-  elseif(${TARGET} STREQUAL "lint_py")
+  elseif(${TARGET} STREQUAL "lintpy")
     execute_process(COMMAND ${PROGRAM} contrib/ scripts/ src/ test/
       WORKING_DIRECTORY ${PROJECT_ROOT}
       RESULT_VARIABLE ret)
-  elseif(${TARGET} STREQUAL "lint_sh")
+  elseif(${TARGET} STREQUAL "lintsh")
     execute_process(COMMAND ${PROGRAM} scripts/vim-patch.sh
       WORKING_DIRECTORY ${PROJECT_ROOT}
       RESULT_VARIABLE ret)
-  elseif(${TARGET} STREQUAL "lint_stylua")
+  elseif(${TARGET} STREQUAL "lintstylua")
     execute_process(COMMAND ${PROGRAM} --color=always --check runtime/
       WORKING_DIRECTORY ${PROJECT_ROOT}
       RESULT_VARIABLE ret)
-  elseif(${TARGET} STREQUAL "lint_lua")
+  elseif(${TARGET} STREQUAL "lintlua")
     execute_process(COMMAND ${PROGRAM} -q runtime/ scripts/ src/ test/
       WORKING_DIRECTORY ${PROJECT_ROOT}
       RESULT_VARIABLE ret)

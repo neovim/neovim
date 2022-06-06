@@ -751,7 +751,7 @@ find_program(SHELLCHECK_PRG shellcheck)
 find_program(FLAKE8_PRG flake8)
 find_program(UNCRUSTIFY_PRG uncrustify)
 
-set(TARGET "lint_lua")
+set(TARGET "lintlua")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
   -DPROGRAM=${LUACHECK_PRG}
@@ -759,7 +759,7 @@ add_custom_target(${TARGET}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
 
-set(TARGET "lint_stylua")
+set(TARGET "lintstylua")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
   -DPROGRAM=${STYLUA_PRG}
@@ -767,7 +767,7 @@ add_custom_target(${TARGET}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
 
-set(TARGET "lint_sh")
+set(TARGET "lintsh")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
   -DPROGRAM=${SHELLCHECK_PRG}
@@ -775,7 +775,7 @@ add_custom_target(${TARGET}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
 
-set(TARGET "lint_py")
+set(TARGET "lintpy")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
   -DPROGRAM=${FLAKE8_PRG}
@@ -783,7 +783,7 @@ add_custom_target(${TARGET}
   -DTARGET=${TARGET}
   -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
 
-set(TARGET "lint_uncrustify")
+set(TARGET "lintuncrustify")
 add_custom_target(${TARGET}
   COMMAND ${CMAKE_COMMAND}
   -DPROGRAM=${UNCRUSTIFY_PRG}

@@ -12,7 +12,7 @@ rm -f "$END_MARKER"
 
 # Run all tests if no input argument is given
 if (($# == 0)); then
-  tests=('lint_c_full' 'lint_lua' 'lint_py' 'lint_sh' 'check-single-includes')
+  tests=('lintcfull' 'lintlua' 'lintpy' 'lintsh' 'check-single-includes')
 else
   tests=("$@")
 fi

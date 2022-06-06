@@ -137,7 +137,7 @@ helphtml: | nvim build/runtime/doc/tags
 functionaltest functionaltest-lua unittest benchmark: | nvim
 	$(BUILD_TOOL) -C build $@
 
-lint_stylua lint_lua lint_sh lint_py lint_uncrustify lint_c lint_c_full check-single-includes generated-sources: | build/.ran-cmake
+lintstylua lintlua lintsh lintpy lintuncrustify lintc lintcfull check-single-includes generated-sources: | build/.ran-cmake
 	$(BUILD_TOOL) -C build $@
 
 commitlint: | nvim
@@ -171,7 +171,7 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-lint: check-single-includes lint_c lint_stylua lint_lua lint_py lint_sh _opt_commitlint
+lint: check-single-includes lintc lintstylua lintlua lintpy lintsh _opt_commitlint
 
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
 # Does not work with "Unix Makefiles".
@@ -183,4 +183,4 @@ $(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lint_stylua lint_lua lint_py lint_sh functionaltest unittest lint lint_c clean distclean nvim libnvim cmake deps install appimage checkprefix commitlint
+.PHONY: test lintstylua lintlua lintpy lintsh functionaltest unittest lint lintc clean distclean nvim libnvim cmake deps install appimage checkprefix commitlint
