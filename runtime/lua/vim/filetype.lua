@@ -3,25 +3,22 @@ local api = vim.api
 local M = {}
 
 ---@private
-local function starsetf_match(ft, path)
-  if not vim.g.ft_ignore_pat then
-    return ft
-  end
-  local re = vim.regex(vim.g.ft_ignore_pat)
-  if re:match_str(path) then
-    return ft
-  end
-end
-
----@private
-local function starsetf(ft)
+local function starsetf(ft, opts)
   return {
-    function(path)
-      return starsetf_match(ft, path)
+    function(path, bufnr)
+      local f = type(ft) == 'function' and ft(path, bufnr) or ft
+      if not vim.g.ft_ignore_pat then
+        return f
+      end
+
+      local re = vim.regex(vim.g.ft_ignore_pat)
+      if not re:match_str(path) then
+        return f
+      end
     end,
     {
       -- Starset matches should always have lowest priority
-      priority = -math.huge,
+      priority = (opts and opts.priority) or -math.huge,
     },
   }
 end
@@ -1302,7 +1299,7 @@ local extension = {
   end,
   ['in'] = function(path, bufnr)
     if vim.fs.basename(path) ~= 'configure.in' then
-      local root = vim.fn.fnameescape(vim.fn.fnamemodify(path, ':r'))
+      local root = vim.fn.fnamemodify(path, ':r')
       return M.match(root, bufnr)
     end
   end,
@@ -1831,12 +1828,12 @@ local pattern = {
   ['.*/%.pinforc'] = 'pinfo',
   ['.*/etc/pinforc'] = 'pinfo',
   ['.*/etc/protocols'] = 'protocols',
-  ['.*printcap.*'] = function(path, bufnr)
+  ['.*printcap.*'] = starsetf(function(path, bufnr)
     if vim.fn.did_filetype() == 0 then
       vim.b[bufnr].ptcap_type = 'print'
-      return starsetf('ptcap')
+      return 'ptcap'
     end
-  end,
+  end),
   ['.*baseq[2-3]/.*%.cfg'] = 'quake',
   ['.*quake[1-3]/.*%.cfg'] = 'quake',
   ['.*id1/.*%.cfg'] = 'quake',
@@ -1882,12 +1879,12 @@ local pattern = {
   ['.*/etc/systemd/system/%.#.*'] = 'systemd',
   ['.*/%.config/systemd/user/.*%.d/%.#.*'] = 'systemd',
   ['.*/%.config/systemd/user/%.#.*'] = 'systemd',
-  ['.*termcap.*'] = function(path, bufnr)
+  ['.*termcap.*'] = starsetf(function(path, bufnr)
     if vim.fn.did_filetype() == 0 then
       vim.b[bufnr].ptcap_type = 'term'
-      return starsetf('ptcap')
+      return 'ptcap'
     end
-  end,
+  end),
   ['.*%.t%.html'] = 'tilde',
   ['%.?tmux.*%.conf'] = 'tmux',
   ['%.?tmux.*%.conf.*'] = { 'tmux', { priority = -1 } },
@@ -1968,26 +1965,14 @@ local pattern = {
   ['.*%.properties_.._.._.*'] = starsetf('jproperties'),
   ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
   ['.*/%.fvwm/.*'] = starsetf('fvwm'),
-  ['.*fvwmrc.*'] = {
-    function(path, bufnr)
-      vim.b[bufnr].fvwm_version = 1
-      return starsetf_match('fvwm')
-    end,
-    {
-      -- Starset matches should always have lowest priority
-      priority = -math.huge,
-    },
-  },
-  ['.*fvwm95.*%.hook'] = {
-    function(path, bufnr)
-      vim.b[bufnr].fvwm_version = 1
-      return starsetf_match('fvwm')
-    end,
-    {
-      -- Starset matches should always have lowest priority
-      priority = -math.huge,
-    },
-  },
+  ['.*fvwmrc.*'] = starsetf(function(path, bufnr)
+    vim.b[bufnr].fvwm_version = 1
+    return 'fvwm'
+  end),
+  ['.*fvwm95.*%.hook'] = starsetf(function(path, bufnr)
+    vim.b[bufnr].fvwm_version = 1
+    return 'fvwm'
+  end),
   ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
   ['.*/Xresources/.*'] = starsetf('xdefaults'),
   ['.*/app%-defaults/.*'] = starsetf('xdefaults'),
@@ -2008,17 +1993,11 @@ local pattern = {
   ['.*/etc/httpd/sites%-.*/.*'] = starsetf('apache'),
   ['.*/etc/logcheck/.*%.d.*/.*'] = starsetf('logcheck'),
   ['.*/etc/modprobe%..*'] = starsetf('modconf'),
-  ['.*/etc/modutils/.*'] = {
-    function(path, bufnr)
-      if vim.fn.executable(vim.fn.expand(path)) ~= 1 then
-        return starsetf_match('modconf')
-      end
-    end,
-    {
-      -- Starset matches should always have lowest priority
-      priority = -math.huge,
-    },
-  },
+  ['.*/etc/modutils/.*'] = starsetf(function(path, bufnr)
+    if vim.fn.executable(vim.fn.expand(path)) ~= 1 then
+      return 'modconf'
+    end
+  end),
   ['.*/etc/pam%.d/.*'] = starsetf('pamconf'),
   ['.*/etc/profile'] = function(path, bufnr)
     return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
@@ -2141,45 +2120,31 @@ local pattern = {
     vim.b[bufnr].xf86conf_xfree86_version = 4
     return 'xf86config'
   end,
-  ['XF86Config%-4'] = {
-    function(path, bufnr)
-      vim.b[bufnr].xf86conf_xfree86_version = 4
-      return starsetf_match('xf86config')
-    end,
-    {
-      -- Starset matches should always have lowest priority
-      priority = -math.huge,
-    },
-  },
-  -- Decrease priority to run after the pattern above
-  ['XF86Config.*'] = {
-    function(path, bufnr)
-      return starsetf(require('vim.filetype.detect').xf86conf(bufnr))
-    end,
-    { priority = -1 },
-  },
-  ['[cC]hange[lL]og.*'] = function(path, bufnr)
+  -- Increase priority to run before the pattern below
+  ['XF86Config%-4'] = starsetf(function(path, bufnr)
+    vim.b[bufnr].xf86conf_xfree86_version = 4
+    return 'xf86config'
+  end, { priority = -math.huge + 1 }),
+  ['XF86Config.*'] = starsetf(function(path, bufnr)
+    vim.b[bufnr].xf86conf_xfree86_version = 4
+    return require('vim.filetype.detect').xf86conf(bufnr)
+  end),
+  ['[cC]hange[lL]og.*'] = starsetf(function(path, bufnr)
     local line = getline(bufnr, 1):lower()
     if line:find('; urgency=') then
-      starsetf('debchangelog')
+      return 'debchangelog'
     else
-      starsetf('changelog')
+      return 'changelog'
     end
-  end,
-  ['.*fvwm2rc.*'] = {
-    function(path, bufnr)
-      if vim.fn.fnamemodify(path, ':e') == 'm4' then
-        return starsetf_match('fvwm2m4')
-      else
-        vim.b[bufnr].fvwm_version = 2
-        return starsetf_match('fvwm')
-      end
-    end,
-    {
-      -- Starset matches should always have lowest priority
-      priority = -math.huge,
-    },
-  },
+  end),
+  ['.*fvwm2rc.*'] = starsetf(function(path, bufnr)
+    if vim.fn.fnamemodify(path, ':e') == 'm4' then
+      return 'fvwm2m4'
+    else
+      vim.b[bufnr].fvwm_version = 2
+      return 'fvwm'
+    end
+  end),
   ['.*%.[Ll][Oo][Gg]'] = function(path, bufnr)
     -- Innovation Data Processing
     -- (refactor of filetype.vim since the patterns are case-insensitive)
