@@ -26,7 +26,7 @@ end
 ---@private
 local function getline(bufnr, start_lnum, end_lnum)
   end_lnum = end_lnum or start_lnum
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
+  local lines = api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
   return table.concat(lines) or ''
 end
 
@@ -40,9 +40,9 @@ end
 function M.getlines(bufnr, start_lnum, end_lnum)
   if not end_lnum then
     -- Return a single line as a string
-    return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1]
+    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1]
   end
-  return vim.api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
+  return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
 end
 
 ---@private
@@ -1513,12 +1513,14 @@ local filename = {
   ['/.pinforc'] = 'pinfo',
   ['.povrayrc'] = 'povini',
   ['printcap'] = function(path, bufnr)
-    vim.b[bufnr].ptcap_type = 'print'
-    return 'ptcap'
+    return 'ptcap', function(bufnr)
+      vim.b[bufnr].ptcap_type = 'print'
+    end
   end,
   ['termcap'] = function(path, bufnr)
-    vim.b[bufnr].ptcap_type = 'term'
-    return 'ptcap'
+    return 'ptcap', function(bufnr)
+      vim.b[bufnr].ptcap_type = 'term'
+    end
   end,
   ['.procmailrc'] = 'procmail',
   ['.procmail'] = 'procmail',
@@ -1604,12 +1606,14 @@ local filename = {
   ['xdm-config'] = 'xdefaults',
   ['.Xdefaults'] = 'xdefaults',
   ['xorg.conf'] = function(path, bufnr)
-    vim.b[bufnr].xf86conf_xfree86_version = 4
-    return 'xf86conf'
+    return 'xf86conf', function(bufnr)
+      vim.b[bufnr].xf86conf_xfree86_version = 4
+    end
   end,
   ['xorg.conf-4'] = function(path, bufnr)
-    vim.b[bufnr].xf86conf_xfree86_version = 4
-    return 'xf86conf'
+    return 'xf86conf', function(bufnr)
+      vim.b[bufnr].xf86conf_xfree86_version = 4
+    end
   end,
   ['/etc/xinetd.conf'] = 'xinetd',
   fglrxrc = 'xml',
@@ -1662,7 +1666,7 @@ local filename = {
   bashrc = function(path, bufnr)
     return require('vim.filetype.detect').sh(path, bufnr, 'bash')
   end,
-  crontab = starsetf('crontab'),
+  crontab = 'crontab',
   ['csh.cshrc'] = function(path, bufnr)
     return require('vim.filetype.detect').csh(path, bufnr)
   end,
@@ -1682,7 +1686,7 @@ local filename = {
     return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
   end,
   ['XF86Config'] = function(path, bufnr)
-    return require('vim.filetype.detect').xf86conf(bufnr)
+    return require('vim.filetype.detect').xfree86(bufnr)
   end,
   -- END FILENAME
 }
@@ -1830,8 +1834,9 @@ local pattern = {
   ['.*/etc/protocols'] = 'protocols',
   ['.*printcap.*'] = starsetf(function(path, bufnr)
     if vim.fn.did_filetype() == 0 then
-      vim.b[bufnr].ptcap_type = 'print'
-      return 'ptcap'
+      return 'ptcap', function(bufnr)
+        vim.b[bufnr].ptcap_type = 'print'
+      end
     end
   end),
   ['.*baseq[2-3]/.*%.cfg'] = 'quake',
@@ -1881,8 +1886,9 @@ local pattern = {
   ['.*/%.config/systemd/user/%.#.*'] = 'systemd',
   ['.*termcap.*'] = starsetf(function(path, bufnr)
     if vim.fn.did_filetype() == 0 then
-      vim.b[bufnr].ptcap_type = 'term'
-      return 'ptcap'
+      return 'ptcap', function(bufnr)
+        vim.b[bufnr].ptcap_type = 'term'
+      end
     end
   end),
   ['.*%.t%.html'] = 'tilde',
@@ -1966,12 +1972,14 @@ local pattern = {
   ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
   ['.*/%.fvwm/.*'] = starsetf('fvwm'),
   ['.*fvwmrc.*'] = starsetf(function(path, bufnr)
-    vim.b[bufnr].fvwm_version = 1
-    return 'fvwm'
+    return 'fvwm', function(bufnr)
+      vim.b[bufnr].fvwm_version = 1
+    end
   end),
   ['.*fvwm95.*%.hook'] = starsetf(function(path, bufnr)
-    vim.b[bufnr].fvwm_version = 1
-    return 'fvwm'
+    return 'fvwm', function(bufnr)
+      vim.b[bufnr].fvwm_version = 1
+    end
   end),
   ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
   ['.*/Xresources/.*'] = starsetf('xdefaults'),
@@ -2117,17 +2125,18 @@ local pattern = {
   ['.*/queries/.*%.scm'] = 'query', -- tree-sitter queries
   ['.*,v'] = 'rcs',
   ['.*/xorg%.conf%.d/.*%.conf'] = function(path, bufnr)
-    vim.b[bufnr].xf86conf_xfree86_version = 4
-    return 'xf86config'
+    return 'xf86config', function(bufnr)
+      vim.b[bufnr].xf86conf_xfree86_version = 4
+    end
   end,
   -- Increase priority to run before the pattern below
-  ['XF86Config%-4'] = starsetf(function(path, bufnr)
-    vim.b[bufnr].xf86conf_xfree86_version = 4
-    return 'xf86config'
+  ['XF86Config%-4.*'] = starsetf(function(path, bufnr)
+    return 'xf86conf', function(bufnr)
+      vim.b[bufnr].xf86conf_xfree86_version = 4
+    end
   end, { priority = -math.huge + 1 }),
   ['XF86Config.*'] = starsetf(function(path, bufnr)
-    vim.b[bufnr].xf86conf_xfree86_version = 4
-    return require('vim.filetype.detect').xf86conf(bufnr)
+    return require('vim.filetype.detect').xfree86(bufnr)
   end),
   ['[cC]hange[lL]og.*'] = starsetf(function(path, bufnr)
     local line = getline(bufnr, 1):lower()
@@ -2141,8 +2150,9 @@ local pattern = {
     if vim.fn.fnamemodify(path, ':e') == 'm4' then
       return 'fvwm2m4'
     else
-      vim.b[bufnr].fvwm_version = 2
-      return 'fvwm'
+      return 'fvwm', function(bufnr)
+        vim.b[bufnr].fvwm_version = 2
+      end
     end
   end),
   ['.*%.[Ll][Oo][Gg]'] = function(path, bufnr)
@@ -2220,7 +2230,9 @@ end
 --- filetype directly) or a function. If a function, it takes the full path and
 --- buffer number of the file as arguments (along with captures from the matched
 --- pattern, if any) and should return a string that will be used as the
---- buffer's filetype.
+--- buffer's filetype. Optionally, the function can return a second function
+--- value which, when called, modifies the state of the buffer. This can be used
+--- to, for example, set filetype-specific buffer variables.
 ---
 --- Filename patterns can specify an optional priority to resolve cases when a
 --- file path matches multiple patterns. Higher priorities are matched first.
@@ -2238,7 +2250,10 @@ end
 ---      foo = "fooscript",
 ---      bar = function(path, bufnr)
 ---        if some_condition() then
----          return "barscript"
+---          return "barscript", function(bufnr)
+---            -- Set a buffer variable
+---            vim.b[bufnr].barscript_version = 2
+---          end
 ---        end
 ---        return "bar"
 ---      end,
@@ -2283,13 +2298,13 @@ end
 
 ---@private
 local function dispatch(ft, path, bufnr, ...)
+  local extra
   if type(ft) == 'function' then
-    ft = ft(path, bufnr, ...)
+    ft, extra = ft(path, bufnr, ...)
   end
 
   if type(ft) == 'string' then
-    api.nvim_buf_set_option(bufnr, 'filetype', ft)
-    return true
+    return ft, extra
   end
 
   -- Any non-falsey value (that is, anything other than 'nil' or 'false') will
@@ -2314,11 +2329,19 @@ local function match_pattern(name, path, tail, pat)
   return matches
 end
 
---- Set the filetype for the given buffer from a file name.
+--- Find the filetype for the given filename and buffer.
 ---
 ---@param name string File name (can be an absolute or relative path)
 ---@param bufnr number|nil The buffer to set the filetype for. Defaults to the current buffer.
+---@return string|nil If a match was found, the matched filetype.
+---@return function|nil A function that modifies buffer state when called (for example, to set some
+---                     filetype specific buffer variables).
 function M.match(name, bufnr)
+  vim.validate({
+    name = { name, 's' },
+    bufnr = { bufnr, 'n', true },
+  })
+
   -- When fired from the main filetypedetect autocommand the {bufnr} argument is omitted, so we use
   -- the current buffer. The {bufnr} argument is provided to allow extensibility in case callers
   -- wish to perform filetype detection on buffers other than the current one.
@@ -2326,16 +2349,20 @@ function M.match(name, bufnr)
 
   name = normalize_path(name)
 
+  local ft, extra
+
   -- First check for the simple case where the full path exists as a key
   local path = vim.fn.resolve(vim.fn.fnamemodify(name, ':p'))
-  if dispatch(filename[path], path, bufnr) then
-    return
+  ft, extra = dispatch(filename[path], path, bufnr)
+  if ft then
+    return ft, extra
   end
 
   -- Next check against just the file name
   local tail = vim.fn.fnamemodify(name, ':t')
-  if dispatch(filename[tail], path, bufnr) then
-    return
+  ft, extra = dispatch(filename[tail], path, bufnr)
+  if ft then
+    return ft, extra
   end
 
   -- Next, check the file path against available patterns with non-negative priority
@@ -2348,19 +2375,21 @@ function M.match(name, bufnr)
       break
     end
 
-    local ft = v[k][1]
+    local filetype = v[k][1]
     local matches = match_pattern(name, path, tail, k)
     if matches then
-      if dispatch(ft, path, bufnr, matches) then
-        return
+      ft, extra = dispatch(filetype, path, bufnr, matches)
+      if ft then
+        return ft, extra
       end
     end
   end
 
   -- Next, check file extension
   local ext = vim.fn.fnamemodify(name, ':e')
-  if dispatch(extension[ext], path, bufnr) then
-    return
+  ft, extra = dispatch(extension[ext], path, bufnr)
+  if ft then
+    return ft, extra
   end
 
   -- Finally, check patterns with negative priority
@@ -2368,11 +2397,12 @@ function M.match(name, bufnr)
     local v = pattern_sorted[i]
     local k = next(v)
 
-    local ft = v[k][1]
+    local filetype = v[k][1]
     local matches = match_pattern(name, path, tail, k)
     if matches then
-      if dispatch(ft, path, bufnr, matches) then
-        return
+      ft, extra = dispatch(filetype, path, bufnr, matches)
+      if ft then
+        return ft, extra
       end
     end
   end
