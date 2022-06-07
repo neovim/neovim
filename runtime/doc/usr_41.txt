@@ -1596,7 +1596,7 @@ the same (the text may change, e.g., it may be translated).
 
 When the ":read" command causes another error, the pattern "E484:" will not
 match in it.  Thus this exception will not be caught and result in the usual
-error message.
+error message and execution is aborted.
 
 You might be tempted to do this: >
 
