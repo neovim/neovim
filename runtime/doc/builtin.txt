@@ -582,7 +582,7 @@ acos({expr})							*acos()*
 		|Float| in the range of [0, pi].
 		{expr} must evaluate to a |Float| or a |Number| in the range
 		[-1, 1].
-		Returns "nan" if {expr} is outside the range [-1, 1].  Returns
+		Returns NaN if {expr} is outside the range [-1, 1].  Returns
  		0.0 if {expr} is not a |Float| or a |Number|.
 		Examples: >
 			:echo acos(0)
@@ -709,7 +709,7 @@ asin({expr})						*asin()*
 		in the range of [-pi/2, pi/2].
 		{expr} must evaluate to a |Float| or a |Number| in the range
 		[-1, 1].
-		Returns "nan" if {expr} is outside the range [-1, 1].  Returns
+		Returns NaN if {expr} is outside the range [-1, 1].  Returns
 		0.0 if {expr} is not a |Float| or a |Number|.
 		Examples: >
 			:echo asin(0.8)
@@ -7460,8 +7460,8 @@ sqrt({expr})						*sqrt()*
 			:echo sqrt(100)
 <			10.0 >
 			:echo sqrt(-4.01)
-<			nan
-		"nan" may be different, it depends on system libraries.
+<			str2float('nan')
+		NaN may be different, it depends on system libraries.
 
 		Can also be used as a |method|: >
 			Compute()->sqrt()
