@@ -72,4 +72,23 @@ describe("CTRL-C (mapped)", function()
       -- INSERT --                                        |
     ]])
   end)
+
+  it('interrupts recursive mapping', function()
+    command('nnoremap <C-C> <Nop>')
+    command('nmap <F2> <Ignore><F2>')
+    feed('<F2>')
+    sleep(10)
+    feed('foo<C-C>')
+    -- wait for input buffer to be flushed
+    sleep(10)
+    feed('i')
+    screen:expect([[
+      ^                                                    |
+      ~                                                   |
+      ~                                                   |
+      ~                                                   |
+      ~                                                   |
+      -- INSERT --                                        |
+    ]])
+  end)
 end)
