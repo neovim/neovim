@@ -212,7 +212,11 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
 
   while (*ptr) {
     if (*ptr == '<') {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
+      int n = (size_t)snprintf(buf + len, sizeof(buf) - len, "<lt>");
+      if (n < 0 || n >= sizeof(buf) - len) {
+        break;
+      }
+      len += n;
     } else {
       buf[len++] = *ptr;
     }
