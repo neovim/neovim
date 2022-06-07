@@ -1054,6 +1054,8 @@ char2nr({string} [, {utf8}])					*char2nr()*
 		A combining character is a separate character.
 		|nr2char()| does the opposite.
 
+		Returns 0 if {string} is not a |String|.
+
 		Can also be used as a |method|: >
 			GetChar()->char2nr()
 <
@@ -3210,7 +3212,7 @@ getmatches([{win}])					*getmatches()*
 		|getmatches()|.
 		If {win} is specified, use the window with this number or
 		window ID instead of the current window.  If {win} is invalid,
-		an empty list is returned.
+		`0` is returned.
 		Example: >
 			:echo getmatches()
 <			[{'group': 'MyGroup1', 'pattern': 'TODO',
