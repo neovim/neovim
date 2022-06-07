@@ -873,11 +873,11 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int i;
   win_T *win = get_optional_window(argvars, 0);
 
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
   if (win == NULL) {
     return;
   }
 
-  tv_list_alloc_ret(rettv, kListLenMayKnow);
   cur = win->w_match_head;
   while (cur != NULL) {
     dict_T *dict = tv_dict_alloc();
