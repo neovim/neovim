@@ -3214,7 +3214,7 @@ getmatches([{win}])					*getmatches()*
 		|getmatches()|.
 		If {win} is specified, use the window with this number or
 		window ID instead of the current window.  If {win} is invalid,
-		`0` is returned.
+		an empty list is returned.
 		Example: >
 			:echo getmatches()
 <			[{'group': 'MyGroup1', 'pattern': 'TODO',
