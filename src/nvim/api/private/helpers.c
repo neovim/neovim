@@ -1703,7 +1703,7 @@ bool string_iswhite(String str)
       // Found a non-whitespace character
       return false;
     } else if (str.data[i] == NUL) {
-      // Terminate at first occurence of a NUL character
+      // Terminate at first occurrence of a NUL character
       break;
     }
   }
