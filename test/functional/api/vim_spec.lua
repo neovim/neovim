@@ -27,6 +27,7 @@ local write_file = helpers.write_file
 local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
+local expect_exit = helpers.expect_exit
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -2617,7 +2618,7 @@ describe('API', function()
 
     it('does not cause heap-use-after-free on exit while setting options', function()
       command('au OptionSet * q')
-      command('silent! call nvim_create_buf(0, 1)')
+      expect_exit(command, 'silent! call nvim_create_buf(0, 1)')
     end)
   end)
 

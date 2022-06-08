@@ -2,6 +2,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local meths, funcs, nvim_command, eq, eval =
   helpers.meths, helpers.funcs, helpers.command, helpers.eq, helpers.eval
+local expect_exit = helpers.expect_exit
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
@@ -33,7 +34,7 @@ describe('ShaDa support code', function()
       local vartype = eval('type(g:' .. varname .. ')')
       -- Exit during `reset` is not a regular exit: it does not write shada
       -- automatically
-      nvim_command('qall')
+      expect_exit(nvim_command, 'qall')
       reset('set shada+=!')
       eq(vartype, eval('type(g:' .. varname .. ')'))
       eq(varval, meths.get_var(varname))
@@ -98,7 +99,7 @@ describe('ShaDa support code', function()
     meths.set_var('LSTVAR', {'«'})
     meths.set_var('DCTVAR', {['«']='«'})
     meths.set_var('NESTEDVAR', {['«']={{'«'}, {['«']='«'}, {a='Test'}}})
-    nvim_command('qall')
+    expect_exit(nvim_command, 'qall')
     reset()
     eq('«', meths.get_var('STRVAR'))
     eq({'«'}, meths.get_var('LSTVAR'))
@@ -116,7 +117,7 @@ describe('ShaDa support code', function()
     meths.set_var('DCTVAR', {['«\171']='«\171'})
     meths.set_var('NESTEDVAR', {['\171']={{'\171«'}, {['\171']='\171'},
                                 {a='Test'}}})
-    nvim_command('qall')
+    expect_exit(nvim_command, 'qall')
     reset()
     eq('\171', meths.get_var('STRVAR'))
     eq({'\171'}, meths.get_var('LSTVAR'))

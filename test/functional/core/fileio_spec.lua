@@ -16,12 +16,13 @@ local trim = helpers.trim
 local currentdir = helpers.funcs.getcwd
 local iswin = helpers.iswin
 local assert_alive = helpers.assert_alive
+local expect_exit = helpers.expect_exit
 
 describe('fileio', function()
   before_each(function()
   end)
   after_each(function()
-    command(':qall!')
+    expect_exit(command, ':qall!')
     os.remove('Xtest_startup_shada')
     os.remove('Xtest_startup_file1')
     os.remove('Xtest_startup_file1~')

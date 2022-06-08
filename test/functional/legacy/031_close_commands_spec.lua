@@ -17,6 +17,7 @@ local source = helpers.source
 local insert = helpers.insert
 local expect = helpers.expect
 local feed_command = helpers.feed_command
+local expect_exit = helpers.expect_exit
 
 describe('Commands that close windows and/or buffers', function()
   local function cleanup()
@@ -118,7 +119,7 @@ describe('Commands that close windows and/or buffers', function()
     feed_command('q!')
     feed('<CR>')
     expect('testtext 1')
-    source([[
+    expect_exit(source, [[
       q!
       " Now nvim should have exited
       throw "Oh, Not finished yet."]])

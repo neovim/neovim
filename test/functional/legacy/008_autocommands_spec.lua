@@ -6,6 +6,7 @@ local source = helpers.source
 local clear, command, expect, eq, eval = helpers.clear, helpers.command, helpers.expect, helpers.eq, helpers.eval
 local write_file, dedent = helpers.write_file, helpers.dedent
 local read_file = helpers.read_file
+local expect_exit = helpers.expect_exit
 
 describe('autocommands that delete and unload buffers:', function()
   local test_file = 'Xtest-008_autocommands.out'
@@ -78,7 +79,7 @@ describe('autocommands that delete and unload buffers:', function()
     command('silent! edit Xxx1')
     command('silent! edit Makefile') -- an existing file
     command('silent! split new2')
-    command('silent! quit')
+    expect_exit(command, 'silent! quit')
     eq('VimLeave done',
        string.match(read_file(test_file), "^%s*(.-)%s*$"))
   end)
