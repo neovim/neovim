@@ -1,4 +1,4 @@
-function(LINT)
+function(lint)
   cmake_parse_arguments(LINT "QUIET" "PROGRAM" "FLAGS;FILES" ${ARGN})
 
   if(LINT_QUIET)
