@@ -233,7 +233,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   RESET_BINDING(curwin);
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
-  // Intitialzie to check if the scrollback buffer has been allocated inside a TermOpen autocmd
+  // Initialize to check if the scrollback buffer has been allocated inside a TermOpen autocmd
   rv->sb_buffer = NULL;
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
@@ -1485,8 +1485,7 @@ static void refresh_size(Terminal *term, buf_T *buf)
 
 void on_scrollback_option_changed(Terminal *term)
 {
-  // Guard against adjusting a scrollback buffer that doesn't exist yet. Which happens when the user
-  // sets the scrollback option in a TermOpen autocmd.
+  // Scrollback buffer may not exist yet, e.g. if 'scrollback' is set in a TermOpen autocmd.
   if (term->sb_buffer != NULL) {
     refresh_terminal(term);
   }
