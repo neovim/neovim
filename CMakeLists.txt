@@ -745,51 +745,13 @@ if(BUSTED_LUA_PRG)
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
-find_program(LUACHECK_PRG luacheck)
-find_program(STYLUA_PRG stylua)
-find_program(SHELLCHECK_PRG shellcheck)
-find_program(FLAKE8_PRG flake8)
-find_program(UNCRUSTIFY_PRG uncrustify)
-
-set(TARGET "lintlua")
-add_custom_target(${TARGET}
-  COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${LUACHECK_PRG}
-  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
-  -DTARGET=${TARGET}
-  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-
-set(TARGET "lintstylua")
-add_custom_target(${TARGET}
-  COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${STYLUA_PRG}
-  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
-  -DTARGET=${TARGET}
-  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-
-set(TARGET "lintsh")
-add_custom_target(${TARGET}
-  COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${SHELLCHECK_PRG}
-  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
-  -DTARGET=${TARGET}
-  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-
-set(TARGET "lintpy")
-add_custom_target(${TARGET}
-  COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${FLAKE8_PRG}
-  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
-  -DTARGET=${TARGET}
-  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-
-set(TARGET "lintuncrustify")
-add_custom_target(${TARGET}
-  COMMAND ${CMAKE_COMMAND}
-  -DPROGRAM=${UNCRUSTIFY_PRG}
-  -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
-  -DTARGET=${TARGET}
-  -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
+foreach(TARGET IN ITEMS lintlua lintsh lintpy lintuncrustify)
+  add_custom_target(${TARGET}
+    COMMAND ${CMAKE_COMMAND}
+    -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
+    -DTARGET=${TARGET}
+    -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
+endforeach()
 
 #add uninstall target
 if(NOT TARGET uninstall)
