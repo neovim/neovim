@@ -85,6 +85,7 @@ static void log_path_init(void)
     // Fall back to stderr
     if (len >= size || !log_try_create(log_file_path)) {
       log_file_path[0] = '\0';
+      return;
     }
     os_setenv(LOG_FILE_ENV, log_file_path, true);
     if (log_dir_failure) {
