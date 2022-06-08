@@ -1241,10 +1241,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     if (HAS_KEY(mods.verbose)) {
-      if (mods.verbose.type != kObjectTypeInteger || mods.verbose.data.integer <= 0) {
-        VALIDATION_ERROR("'mods.verbose' must be a non-negative Integer");
+      if (mods.verbose.type != kObjectTypeInteger) {
+        VALIDATION_ERROR("'mods.verbose' must be a Integer");
+      } else if (mods.verbose.data.integer >= 0) {
+        // Silently ignore negative integers to allow mods.verbose to be set to -1.
+        cmdinfo.verbose = mods.verbose.data.integer;
       }
-      cmdinfo.verbose = mods.verbose.data.integer;
     }
 
     bool vertical;
@@ -1256,8 +1258,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
         VALIDATION_ERROR("'mods.split' must be a String");
       }
 
-      if (STRCMP(mods.split.data.string.data, "aboveleft") == 0
-          || STRCMP(mods.split.data.string.data, "leftabove") == 0) {
+      if (*mods.split.data.string.data == NUL) {
+        // Empty string, do nothing.
+      } else if (STRCMP(mods.split.data.string.data, "aboveleft") == 0
+                 || STRCMP(mods.split.data.string.data, "leftabove") == 0) {
         cmdinfo.cmdmod.split |= WSP_ABOVE;
       } else if (STRCMP(mods.split.data.string.data, "belowright") == 0
                  || STRCMP(mods.split.data.string.data, "rightbelow") == 0) {
