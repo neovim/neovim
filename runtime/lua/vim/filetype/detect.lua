@@ -777,7 +777,7 @@ function M.sh(path, bufnr, name)
     return
   end
 
-  local extra
+  local on_detect
 
   if matchregex(name, [[\<csh\>]]) then
     -- Some .sh scripts contain #!/bin/csh.
@@ -789,25 +789,25 @@ function M.sh(path, bufnr, name)
   elseif matchregex(name, [[\<zsh\>]]) then
     return M.shell(path, bufnr, 'zsh')
   elseif matchregex(name, [[\<ksh\>]]) then
-    extra = function(bufnr)
+    on_detect = function(bufnr)
       vim.b[bufnr].is_kornshell = 1
       vim.b[bufnr].is_bash = nil
       vim.b[bufnr].is_sh = nil
     end
   elseif vim.g.bash_is_sh or matchregex(name, [[\<bash\>]]) or matchregex(name, [[\<bash2\>]]) then
-    extra = function(bufnr)
+    on_detect = function(bufnr)
       vim.b[bufnr].is_bash = 1
       vim.b[bufnr].is_kornshell = nil
       vim.b[bufnr].is_sh = nil
     end
   elseif matchregex(name, [[\<sh\>]]) then
-    extra = function(bufnr)
+    on_detect = function(bufnr)
       vim.b[bufnr].is_sh = 1
       vim.b[bufnr].is_kornshell = nil
       vim.b[bufnr].is_bash = nil
     end
   end
-  return M.shell(path, bufnr, 'sh'), extra
+  return M.shell(path, bufnr, 'sh'), on_detect
 end
 
 -- For shell-like file types, check for an "exec" command hidden in a comment, as used for Tcl.
@@ -926,7 +926,7 @@ function M.xml(bufnr)
     local is_docbook5 = line:find([[ xmlns="http://docbook.org/ns/docbook"]])
     if is_docbook4 or is_docbook5 then
       return 'docbk',
-        function(path, bufnr)
+        function(bufnr)
           vim.b[bufnr].docbk_type = 'xml'
           vim.b[bufnr].docbk_ver = is_docbook4 and 4 or 5
         end
@@ -964,7 +964,7 @@ function M.sgml(bufnr)
     return 'smgllnx'
   elseif lines:find('<!DOCTYPE.*DocBook') then
     return 'docbk',
-      function(path, bufnr)
+      function(bufnr)
         vim.b[bufnr].docbk_type = 'sgml'
         vim.b[bufnr].docbk_ver = 4
       end
@@ -1060,13 +1060,13 @@ end
 -- XFree86 config
 function M.xfree86(bufnr)
   local line = getlines(bufnr, 1)
-  local extra
+  local on_detect
   if matchregex(line, [[\<XConfigurator\>]]) then
-    extra = function(bufnr)
+    on_detect = function(bufnr)
       vim.b[bufnr].xf86conf_xfree86_version = 3
     end
   end
-  return 'xf86conf', extra
+  return 'xf86conf', on_detect
 end
 
 -- luacheck: pop

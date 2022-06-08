@@ -23,8 +23,7 @@ describe('vim.filetype', function()
           rs = 'radicalscript',
         },
       })
-      vim.filetype.match('main.rs')
-      return vim.bo.filetype
+      return vim.filetype.match('main.rs')
     ]])
   end)
 
@@ -38,8 +37,7 @@ describe('vim.filetype', function()
           ['main.rs'] = 'somethingelse',
         },
       })
-      vim.filetype.match('main.rs')
-      return vim.bo.filetype
+      return vim.filetype.match('main.rs')
     ]])
   end)
 
@@ -50,8 +48,7 @@ describe('vim.filetype', function()
           ['s_O_m_e_F_i_l_e'] = 'nim',
         },
       })
-      vim.filetype.match('s_O_m_e_F_i_l_e')
-      return vim.bo.filetype
+      return vim.filetype.match('s_O_m_e_F_i_l_e')
     ]])
 
     eq('dosini', exec_lua([[
@@ -62,8 +59,7 @@ describe('vim.filetype', function()
           [root .. '/.config/fun/config'] = 'dosini',
         },
       })
-      vim.filetype.match(root .. '/.config/fun/config')
-      return vim.bo.filetype
+      return vim.filetype.match(root .. '/.config/fun/config')
     ]], root))
   end)
 
@@ -76,8 +72,7 @@ describe('vim.filetype', function()
           ['~/blog/.*%.txt'] = 'markdown',
         }
       })
-      vim.filetype.match('~/blog/why_neovim_is_awesome.txt')
-      return vim.bo.filetype
+      return vim.filetype.match('~/blog/why_neovim_is_awesome.txt')
     ]], root))
   end)
 
@@ -92,8 +87,7 @@ describe('vim.filetype', function()
           end,
         }
       })
-      vim.filetype.match('relevant_to_me')
-      return vim.bo.filetype
+      return vim.filetype.match('relevant_to_me')
     ]])
   end)
 end)

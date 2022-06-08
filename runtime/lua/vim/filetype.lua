@@ -2298,13 +2298,13 @@ end
 
 ---@private
 local function dispatch(ft, path, bufnr, ...)
-  local extra
+  local on_detect
   if type(ft) == 'function' then
-    ft, extra = ft(path, bufnr, ...)
+    ft, on_detect = ft(path, bufnr, ...)
   end
 
   if type(ft) == 'string' then
-    return ft, extra
+    return ft, on_detect
   end
 
   -- Any non-falsey value (that is, anything other than 'nil' or 'false') will
@@ -2349,20 +2349,20 @@ function M.match(name, bufnr)
 
   name = normalize_path(name)
 
-  local ft, extra
+  local ft, on_detect
 
   -- First check for the simple case where the full path exists as a key
   local path = vim.fn.resolve(vim.fn.fnamemodify(name, ':p'))
-  ft, extra = dispatch(filename[path], path, bufnr)
+  ft, on_detect = dispatch(filename[path], path, bufnr)
   if ft then
-    return ft, extra
+    return ft, on_detect
   end
 
   -- Next check against just the file name
   local tail = vim.fn.fnamemodify(name, ':t')
-  ft, extra = dispatch(filename[tail], path, bufnr)
+  ft, on_detect = dispatch(filename[tail], path, bufnr)
   if ft then
-    return ft, extra
+    return ft, on_detect
   end
 
   -- Next, check the file path against available patterns with non-negative priority
@@ -2378,18 +2378,18 @@ function M.match(name, bufnr)
     local filetype = v[k][1]
     local matches = match_pattern(name, path, tail, k)
     if matches then
-      ft, extra = dispatch(filetype, path, bufnr, matches)
+      ft, on_detect = dispatch(filetype, path, bufnr, matches)
       if ft then
-        return ft, extra
+        return ft, on_detect
       end
     end
   end
 
   -- Next, check file extension
   local ext = vim.fn.fnamemodify(name, ':e')
-  ft, extra = dispatch(extension[ext], path, bufnr)
+  ft, on_detect = dispatch(extension[ext], path, bufnr)
   if ft then
-    return ft, extra
+    return ft, on_detect
   end
 
   -- Finally, check patterns with negative priority
@@ -2400,9 +2400,9 @@ function M.match(name, bufnr)
     local filetype = v[k][1]
     local matches = match_pattern(name, path, tail, k)
     if matches then
-      ft, extra = dispatch(filetype, path, bufnr, matches)
+      ft, on_detect = dispatch(filetype, path, bufnr, matches)
       if ft then
-        return ft, extra
+        return ft, on_detect
       end
     end
   end
