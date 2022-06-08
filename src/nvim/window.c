@@ -893,7 +893,7 @@ void ui_ext_win_position(win_T *wp)
 
     wp->w_grid_alloc.zindex = wp->w_float_config.zindex;
     if (ui_has(kUIMultigrid)) {
-      String anchor = cstr_to_string(float_anchor_str[c.anchor]);
+      String anchor = cstr_as_string((char *)float_anchor_str[c.anchor]);
       ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
                             grid->handle, row, col, c.focusable,
                             wp->w_grid_alloc.zindex);
@@ -967,8 +967,8 @@ static int check_split_disallowed(void)
  * "flags":
  * WSP_ROOM: require enough room for new window
  * WSP_VERT: vertical split.
- * WSP_TOP:  open window at the top-left of the shell (help window).
- * WSP_BOT:  open window at the bottom-right of the shell (quickfix window).
+ * WSP_TOP:  open window at the top-left of the screen (help window).
+ * WSP_BOT:  open window at the bottom-right of the screen (quickfix window).
  * WSP_HELP: creating the help window, keep layout snapshot
  *
  * return FAIL for failure, OK otherwise
@@ -2499,7 +2499,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
 
   redraw_tabline = true;
   if (h != tabline_height()) {
-    shell_new_rows();
+    win_new_screen_rows();
   }
 }
 
@@ -2606,7 +2606,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
 
     win_close_othertab(win, free_buf, prev_curtab);
     if (h != tabline_height()) {
-      shell_new_rows();
+      win_new_screen_rows();
     }
   }
   entering_window(curwin);
@@ -4350,10 +4350,10 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   }
 
   if (curtab->tp_old_Rows != Rows || (old_off != firstwin->w_winrow)) {
-    shell_new_rows();
+    win_new_screen_rows();
   }
   if (curtab->tp_old_Columns != Columns && starting == 0) {
-    shell_new_columns();  // update window widths
+    win_new_screen_cols();  // update window widths
   }
 
   lastused_tabpage = old_curtab;
@@ -5277,11 +5277,29 @@ static void frame_remove(frame_T *frp)
   }
 }
 
-/*
- * Called from win_new_shellsize() after Rows changed.
- * This only does the current tab page, others must be done when made active.
- */
-void shell_new_rows(void)
+void win_new_screensize(void)
+{
+  static long old_Rows = 0;
+  static long old_Columns = 0;
+
+  if (old_Rows != Rows) {
+    // If 'window' uses the whole screen, keep it using that.
+    // Don't change it when set with "-w size" on the command line.
+    if (p_window == old_Rows - 1 || (old_Rows == 0 && p_window == 0)) {
+      p_window = Rows - 1;
+    }
+    old_Rows = Rows;
+    win_new_screen_rows();  // update window sizes
+  }
+  if (old_Columns != Columns) {
+    old_Columns = Columns;
+    win_new_screen_cols();  // update window sizes
+  }
+}
+/// Called from win_new_screensize() after Rows changed.
+///
+/// This only does the current tab page, others must be done when made active.
+void win_new_screen_rows(void)
 {
   int h = (int)ROWS_AVAIL;
 
@@ -5305,10 +5323,8 @@ void shell_new_rows(void)
   curtab->tp_ch_used = p_ch;
 }
 
-/*
- * Called from win_new_shellsize() after Columns changed.
- */
-void shell_new_columns(void)
+/// Called from win_new_screensize() after Columns changed.
+void win_new_screen_cols(void)
 {
   if (firstwin == NULL) {       // not initialized yet
     return;

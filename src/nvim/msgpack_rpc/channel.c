@@ -360,6 +360,17 @@ free_ret:
   api_clear_error(&error);
 }
 
+bool rpc_write_raw(uint64_t id, WBuffer *buffer)
+{
+  Channel *channel = find_rpc_channel(id);
+  if (!channel) {
+    wstream_release_wbuffer(buffer);
+    return false;
+  }
+
+  return channel_write(channel, buffer);
+}
+
 static bool channel_write(Channel *channel, WBuffer *buffer)
 {
   bool success;

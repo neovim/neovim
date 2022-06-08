@@ -151,17 +151,20 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
 
     if (pum_external) {
       if (array_changed) {
-        Array arr = ARRAY_DICT_INIT;
+        Arena arena = ARENA_EMPTY;
+        arena_start(&arena, &ui_ext_fixblk);
+        Array arr = arena_array(&arena, (size_t)size);
         for (int i = 0; i < size; i++) {
-          Array item = ARRAY_DICT_INIT;
-          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_text)));
-          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_kind)));
-          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_extra)));
-          ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_info)));
-          ADD(arr, ARRAY_OBJ(item));
+          Array item = arena_array(&arena, 4);
+          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_text)));
+          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_kind)));
+          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_extra)));
+          ADD_C(item, STRING_OBJ(cstr_as_string((char *)array[i].pum_info)));
+          ADD_C(arr, ARRAY_OBJ(item));
         }
         ui_call_popupmenu_show(arr, selected, pum_win_row, cursor_col,
                                pum_anchor_grid);
+        arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
       } else {
         ui_call_popupmenu_select(selected);
         return;
@@ -438,7 +441,7 @@ void pum_redraw(void)
   if (ui_has(kUIMultigrid)) {
     const char *anchor = pum_above ? "SW" : "NW";
     int row_off = pum_above ? -pum_height : 0;
-    ui_call_win_float_pos(pum_grid.handle, -1, cstr_to_string(anchor),
+    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string((char *)anchor),
                           pum_anchor_grid, pum_row - row_off, pum_col - col_off,
                           false, pum_grid.zindex);
   }

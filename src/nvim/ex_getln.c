@@ -3309,45 +3309,53 @@ draw_cmdline_no_arabicshape:
 
 static void ui_ext_cmdline_show(CmdlineInfo *line)
 {
+  Arena arena = ARENA_EMPTY;
+  arena_start(&arena, &ui_ext_fixblk);
   Array content = ARRAY_DICT_INIT;
   if (cmdline_star) {
+    content = arena_array(&arena, 1);
     size_t len = 0;
     for (char_u *p = ccline.cmdbuff; *p; MB_PTR_ADV(p)) {
       len++;
     }
-    char *buf = xmallocz(len);
+    char *buf = arena_alloc(&arena, len, false);
     memset(buf, '*', len);
-    Array item = ARRAY_DICT_INIT;
-    ADD(item, INTEGER_OBJ(0));
-    ADD(item, STRING_OBJ(((String) { .data = buf, .size = len })));
-    ADD(content, ARRAY_OBJ(item));
+    Array item = arena_array(&arena, 2);
+    ADD_C(item, INTEGER_OBJ(0));
+    ADD_C(item, STRING_OBJ(cbuf_as_string(buf, len)));
+    ADD_C(content, ARRAY_OBJ(item));
   } else if (kv_size(line->last_colors.colors)) {
+    content = arena_array(&arena, kv_size(line->last_colors.colors));
     for (size_t i = 0; i < kv_size(line->last_colors.colors); i++) {
       CmdlineColorChunk chunk = kv_A(line->last_colors.colors, i);
-      Array item = ARRAY_DICT_INIT;
-      ADD(item, INTEGER_OBJ(chunk.attr));
+      Array item = arena_array(&arena, 2);
+      ADD_C(item, INTEGER_OBJ(chunk.attr));
 
       assert(chunk.end >= chunk.start);
-      ADD(item, STRING_OBJ(cbuf_to_string((char *)line->cmdbuff + chunk.start,
-                                          (size_t)(chunk.end - chunk.start))));
-      ADD(content, ARRAY_OBJ(item));
+      ADD_C(item, STRING_OBJ(cbuf_as_string((char *)line->cmdbuff + chunk.start,
+                                            (size_t)(chunk.end - chunk.start))));
+      ADD_C(content, ARRAY_OBJ(item));
     }
   } else {
-    Array item = ARRAY_DICT_INIT;
-    ADD(item, INTEGER_OBJ(0));
-    ADD(item, STRING_OBJ(cstr_to_string((char *)(line->cmdbuff))));
-    ADD(content, ARRAY_OBJ(item));
+    Array item = arena_array(&arena, 2);
+    ADD_C(item, INTEGER_OBJ(0));
+    ADD_C(item, STRING_OBJ(cstr_as_string((char *)(line->cmdbuff))));
+    content = arena_array(&arena, 1);
+    ADD_C(content, ARRAY_OBJ(item));
   }
+  char charbuf[2] = { (char)line->cmdfirstc, 0 };
   ui_call_cmdline_show(content, line->cmdpos,
-                       cchar_to_string((char)line->cmdfirstc),
-                       cstr_to_string((char *)(line->cmdprompt)),
+                       cstr_as_string(charbuf),
+                       cstr_as_string((char *)(line->cmdprompt)),
                        line->cmdindent,
                        line->level);
   if (line->special_char) {
-    ui_call_cmdline_special_char(cchar_to_string(line->special_char),
+    charbuf[0] = line->special_char;
+    ui_call_cmdline_special_char(cstr_as_string(charbuf),
                                  line->special_shift,
                                  line->level);
   }
+  arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
 }
 
 void ui_ext_cmdline_block_append(size_t indent, const char *line)
@@ -3363,9 +3371,9 @@ void ui_ext_cmdline_block_append(size_t indent, const char *line)
   ADD(content, ARRAY_OBJ(item));
   ADD(cmdline_block, ARRAY_OBJ(content));
   if (cmdline_block.size > 1) {
-    ui_call_cmdline_block_append(copy_array(content));
+    ui_call_cmdline_block_append(content);
   } else {
-    ui_call_cmdline_block_show(copy_array(cmdline_block));
+    ui_call_cmdline_block_show(cmdline_block);
   }
 }
 
@@ -3385,7 +3393,7 @@ void cmdline_screen_cleared(void)
   }
 
   if (cmdline_block.size) {
-    ui_call_cmdline_block_show(copy_array(cmdline_block));
+    ui_call_cmdline_block_show(cmdline_block);
   }
 
   int prev_level = ccline.level - 1;
@@ -3442,7 +3450,8 @@ void putcmdline(char c, int shift)
     }
     msg_no_more = false;
   } else if (ccline.redraw_state != kCmdRedrawAll) {
-    ui_call_cmdline_special_char(cchar_to_string(c), shift,
+    char charbuf[2] = { c, 0 };
+    ui_call_cmdline_special_char(cstr_as_string(charbuf), shift,
                                  ccline.level);
   }
   cursorcmd();

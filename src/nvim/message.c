@@ -1068,6 +1068,7 @@ void ex_messages(void *const eap_p)
       }
     }
     ui_call_msg_history_show(entries);
+    api_free_array(entries);
     msg_ext_history_visible = true;
     wait_return(false);
   } else {
@@ -1262,11 +1263,11 @@ void wait_return(int redraw)
     msg_ext_keep_after_cmdline = true;
   }
 
-  // If the window size changed set_shellsize() will redraw the screen.
+  // If the screen size changed screen_resize() will redraw the screen.
   // Otherwise the screen is only redrawn if 'redraw' is set and no ':'
   // typed.
   tmpState = State;
-  State = oldState;                 // restore State before set_shellsize
+  State = oldState;  // restore State before screen_resize()
   setmouse();
   msg_check();
   need_wait_return = false;
@@ -3136,12 +3137,13 @@ void msg_ext_ui_flush(void)
 
   msg_ext_emit_chunk();
   if (msg_ext_chunks.size > 0) {
-    ui_call_msg_show(cstr_to_string(msg_ext_kind),
+    ui_call_msg_show(cstr_as_string((char *)msg_ext_kind),
                      msg_ext_chunks, msg_ext_overwrite);
     if (!msg_ext_overwrite) {
       msg_ext_visible++;
     }
     msg_ext_kind = NULL;
+    api_free_array(msg_ext_chunks);
     msg_ext_chunks = (Array)ARRAY_DICT_INIT;
     msg_ext_cur_len = 0;
     msg_ext_overwrite = false;
@@ -3155,6 +3157,7 @@ void msg_ext_flush_showmode(void)
   if (ui_has(kUIMessages)) {
     msg_ext_emit_chunk();
     ui_call_msg_showmode(msg_ext_chunks);
+    api_free_array(msg_ext_chunks);
     msg_ext_chunks = (Array)ARRAY_DICT_INIT;
     msg_ext_cur_len = 0;
   }
