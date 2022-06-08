@@ -720,14 +720,10 @@ function module.pending_win32(pending_fn)
 end
 
 function module.pending_c_parser(pending_fn)
-  local status, msg = unpack(module.exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
+  local status, _ = unpack(module.exec_lua([[ return {pcall(vim.treesitter.require_language, 'c')} ]]))
   if not status then
-    if module.isCI() then
-      error("treesitter C parser not found, required on CI: " .. msg)
-    else
-      pending_fn 'no C parser, skipping'
-      return true
-    end
+    pending_fn 'no C parser, skipping'
+    return true
   end
   return false
 end
