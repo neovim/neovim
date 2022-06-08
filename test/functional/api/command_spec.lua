@@ -136,7 +136,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
-        verbose = 0,
+        verbose = -1,
         vertical = false,
       },
       range = 0,
@@ -170,7 +170,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
-        verbose = 0,
+        verbose = -1,
         vertical = false,
       },
       range = 0,
@@ -204,7 +204,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
-        verbose = 0,
+        verbose = -1,
         vertical = false,
       },
       range = 0,
@@ -238,7 +238,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "botright",
         tab = 0,
-        verbose = 0,
+        verbose = -1,
         vertical = false,
       },
       range = 1,
@@ -272,7 +272,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
-        verbose = 0,
+        verbose = -1,
         vertical = false,
       },
       range = 1,
@@ -306,7 +306,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
-        verbose = 0,
+        verbose = -1,
         vertical = false,
       },
       range = 0,
@@ -352,7 +352,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
-        verbose = 0,
+        verbose = -1,
         vertical = false,
       },
       range = 0,
@@ -417,6 +417,16 @@ describe('nvim_create_user_command', function()
     matches('Invalid command name', pcall_err(exec_lua, [[
       vim.api.nvim_create_user_command('💩', 'echo "hi"', {})
     ]]))
+  end)
+
+  it('smods can be used with nvim_cmd', function()
+    exec_lua[[
+      vim.api.nvim_create_user_command('MyEcho', function(opts)
+        vim.api.nvim_cmd({ cmd = 'echo', args = { '&verbose' }, mods = opts.smods }, {})
+      end, {})
+    ]]
+
+    eq("3", meths.cmd({ cmd = 'MyEcho', mods = { verbose = 3 } }, { output = true }))
   end)
 end)
 
