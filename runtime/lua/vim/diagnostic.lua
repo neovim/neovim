@@ -398,10 +398,19 @@ local function get_diagnostics(bufnr, opts, clamp)
     if not opts.lnum or d.lnum == opts.lnum then
       if clamp and vim.api.nvim_buf_is_loaded(b) then
         local line_count = buf_line_count[b] - 1
-        if d.lnum > line_count or d.end_lnum > line_count or d.lnum < 0 or d.end_lnum < 0 then
+        if
+          d.lnum > line_count
+          or d.end_lnum > line_count
+          or d.lnum < 0
+          or d.end_lnum < 0
+          or d.col < 0
+          or d.end_col < 0
+        then
           d = vim.deepcopy(d)
           d.lnum = math.max(math.min(d.lnum, line_count), 0)
           d.end_lnum = math.max(math.min(d.end_lnum, line_count), 0)
+          d.col = math.max(d.col, 0)
+          d.end_col = math.max(d.end_col, 0)
         end
       end
       table.insert(diagnostics, d)

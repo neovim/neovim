@@ -729,6 +729,19 @@ describe('vim.diagnostic', function()
         return vim.diagnostic.get_next_pos { namespace = diagnostic_ns }
       ]])
     end)
+
+    it('works with diagnostics before the start of the line', function()
+    eq({4, 0}, exec_lua [[
+    vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Diagnostic #1', 3, 9001, 3, 9001),
+        make_error('Diagnostic #2', 4, -1, 4, -1),
+    })
+    vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+    vim.api.nvim_win_set_cursor(0, {1, 1})
+    vim.diagnostic.goto_next { float = false }
+    return vim.diagnostic.get_next_pos { namespace = diagnostic_ns }
+    ]])
+end)
   end)
 
   describe('get_prev_pos()', function()
