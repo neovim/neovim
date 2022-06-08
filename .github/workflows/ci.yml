@@ -167,11 +167,12 @@ jobs:
             runner: macos-11.0
             os: osx
 
-            # The functionaltest-lua test two things simultaneously:
+            # functionaltest-lua is our dumping ground for non-mainline configurations.
             # 1. Check that the tests pass with PUC Lua instead of LuaJIT.
             # 2. Use as oldest/minimum versions of dependencies/build tools we
             #    still explicitly support so we don't accidentally rely on
             #    features that is only available on later versions.
+            # 3. No treesitter parsers installed.
           - flavor: functionaltest-lua
             cc: gcc
             runner: ubuntu-20.04
