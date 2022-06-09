@@ -169,23 +169,23 @@ void ui_refresh(void)
 
   it("supports caching queries", function()
     local long_query = query:rep(100)
-    local first_run = exec_lua ([[
-      local before = vim.loop.hrtime()
-      cquery = vim.treesitter.parse_query("c", ...)
-      local after = vim.loop.hrtime()
-      return after - before
-    ]], long_query)
+    local function q(n)
+      return exec_lua ([[
+        local query, n = ...
+        local before = vim.loop.hrtime()
+        for i=1,n,1 do
+          cquery = vim.treesitter.parse_query("c", ...)
+        end
+        local after = vim.loop.hrtime()
+        return after - before
+      ]], long_query, n)
+    end
 
-    local subsequent_runs = exec_lua ([[
-      local before = vim.loop.hrtime()
-      for i=1,100,1 do
-        cquery = vim.treesitter.parse_query("c", ...)
-      end
-      local after = vim.loop.hrtime()
-      return after - before
-    ]], long_query)
+    local firstrun = q(1)
+    local manyruns = q(100)
 
-    assert.True(1000 * subsequent_runs < first_run)
+    -- First run should be at least 5x slower.
+    assert(500 * manyruns < firstrun, ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
   end)
 
   it('support query and iter by capture', function()
