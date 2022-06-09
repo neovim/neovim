@@ -3610,7 +3610,11 @@ nvim_get_autocmds({*opts})                               *nvim_get_autocmds()*
                     • group_name (string): the autocommand group name.
                     • desc (string): the autocommand description.
                     • event (string): the autocommand event.
-                    • command (string): the autocommand command.
+                    • command (string): the autocommand command. Note: this
+                      will be empty if a callback is set.
+                    • callback (function|string|nil): Lua function or name of
+                      a Vim script function which is executed when this
+                      autocommand is triggered.
                     • once (boolean): whether the autocommand is only run
                       once.
                     • pattern (string): the autocommand pattern. If the

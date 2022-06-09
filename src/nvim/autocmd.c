@@ -2477,32 +2477,6 @@ bool autocmd_delete_id(int64_t id)
 //  AucmdExecutable Functions
 // ===========================================================================
 
-/// Generate a string description of a callback
-static char *aucmd_callback_to_string(Callback cb)
-{
-  // NOTE: this function probably belongs in a helper
-
-  size_t msglen = 100;
-  char *msg = (char *)xmallocz(msglen);
-
-  switch (cb.type) {
-  case kCallbackLua:
-    snprintf(msg, msglen, "<lua: %d>", cb.data.luaref);
-    break;
-  case kCallbackFuncref:
-    // TODO(tjdevries): Is this enough space for this?
-    snprintf(msg, msglen, "<vim function: %s>", cb.data.funcref);
-    break;
-  case kCallbackPartial:
-    snprintf(msg, msglen, "<vim partial: %s>", cb.data.partial->pt_name);
-    break;
-  default:
-    snprintf(msg, msglen, "%s", "");
-    break;
-  }
-  return msg;
-}
-
 /// Generate a string description for the command/callback of an autocmd
 char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
   FUNC_ATTR_PURE
@@ -2511,7 +2485,7 @@ char *aucmd_exec_to_string(AutoCmd *ac, AucmdExecutable acc)
   case CALLABLE_EX:
     return xstrdup(acc.callable.cmd);
   case CALLABLE_CB:
-    return aucmd_callback_to_string(acc.callable.cb);
+    return callback_to_string(&acc.callable.cb);
   case CALLABLE_NONE:
     return "This is not possible";
   }
