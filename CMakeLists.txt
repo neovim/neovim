@@ -750,6 +750,7 @@ foreach(TARGET IN ITEMS lintlua lintsh lintpy lintuncrustify)
     COMMAND ${CMAKE_COMMAND}
     -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
     -DTARGET=${TARGET}
+    -DDEPS_PREFIX=${DEPS_PREFIX}
     -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
 endforeach()
 

@@ -7,9 +7,10 @@ function(lint)
     set(OUTPUT_QUIET "")
   endif()
 
-  find_program(PROGRAM_EXISTS ${LINT_PROGRAM})
-  if(PROGRAM_EXISTS)
-    execute_process(COMMAND ${LINT_PROGRAM} ${LINT_FLAGS} ${LINT_FILES}
+  find_program(${LINT_PROGRAM}_PRG ${LINT_PROGRAM})
+  set(LINT_PRG ${${LINT_PROGRAM}_PRG})
+  if(LINT_PRG)
+    execute_process(COMMAND ${LINT_PRG} ${LINT_FLAGS} ${LINT_FILES}
       WORKING_DIRECTORY ${PROJECT_ROOT}
       RESULT_VARIABLE ret
       ${OUTPUT_QUIET})
@@ -20,6 +21,9 @@ function(lint)
     message(STATUS "${TARGET}: ${LINT_PROGRAM} not found. SKIP.")
   endif()
 endfunction()
+
+# Find bundled programs
+list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
 
 if(${TARGET} STREQUAL "lintuncrustify")
   file(GLOB_RECURSE FILES ${PROJECT_ROOT}/src/nvim/*.[c,h])
