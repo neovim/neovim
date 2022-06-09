@@ -3639,9 +3639,8 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
       if (varp == &p_lcs || varp == &wp->w_p_lcs) {
         wp->w_p_lcs_chars.tab1 = NUL;
         wp->w_p_lcs_chars.tab3 = NUL;
-        if (wp->w_p_lcs_chars.multispace != NULL) {
-          xfree(wp->w_p_lcs_chars.multispace);
-        }
+
+        xfree(wp->w_p_lcs_chars.multispace);
         if (multispace_len > 0) {
           wp->w_p_lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(int));
           wp->w_p_lcs_chars.multispace[multispace_len] = NUL;
@@ -3649,9 +3648,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
           wp->w_p_lcs_chars.multispace = NULL;
         }
 
-        if (wp->w_p_lcs_chars.leadmultispace != NULL) {
-          xfree(wp->w_p_lcs_chars.leadmultispace);
-        }
+        xfree(wp->w_p_lcs_chars.leadmultispace);
         if (lead_multispace_len > 0) {
           wp->w_p_lcs_chars.leadmultispace
             = xmalloc(((size_t)lead_multispace_len + 1) * sizeof(int));
@@ -3745,7 +3742,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
                    && p[len2 + 1] != NUL) {
           s = p + len2 + 1;
           if (round == 0) {
-            // Get length of lcsmultispace string in first round
+            // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
             lead_multispace_len = 0;
             while (*s != NUL && *s != ',') {
@@ -3756,7 +3753,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
               lead_multispace_len++;
             }
             if (lead_multispace_len == 0) {
-              // lcsmultispace cannot be an empty string
+              // lcs-leadmultispace cannot be an empty string
               return e_invarg;
             }
             p = s;
