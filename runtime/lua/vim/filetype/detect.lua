@@ -40,8 +40,8 @@ function M.asm(bufnr)
       syntax = 'asm'
     end
   end
-  return syntax, function(bufnr)
-    vim.b[bufnr].asmsyntax = syntax
+  return syntax, function(b)
+    vim.b[b].asmsyntax = syntax
   end
 end
 
@@ -378,8 +378,8 @@ function M.inc(bufnr)
     if not syntax or syntax == '' then
       return 'pov'
     end
-    return syntax, function(bufnr)
-      vim.b[bufnr].asmsyntax = syntax
+    return syntax, function(b)
+      vim.b[b].asmsyntax = syntax
     end
   end
 end
@@ -789,22 +789,22 @@ function M.sh(path, bufnr, name)
   elseif matchregex(name, [[\<zsh\>]]) then
     return M.shell(path, bufnr, 'zsh')
   elseif matchregex(name, [[\<ksh\>]]) then
-    on_detect = function(bufnr)
-      vim.b[bufnr].is_kornshell = 1
-      vim.b[bufnr].is_bash = nil
-      vim.b[bufnr].is_sh = nil
+    on_detect = function(b)
+      vim.b[b].is_kornshell = 1
+      vim.b[b].is_bash = nil
+      vim.b[b].is_sh = nil
     end
   elseif vim.g.bash_is_sh or matchregex(name, [[\<bash\>]]) or matchregex(name, [[\<bash2\>]]) then
-    on_detect = function(bufnr)
-      vim.b[bufnr].is_bash = 1
-      vim.b[bufnr].is_kornshell = nil
-      vim.b[bufnr].is_sh = nil
+    on_detect = function(b)
+      vim.b[b].is_bash = 1
+      vim.b[b].is_kornshell = nil
+      vim.b[b].is_sh = nil
     end
   elseif matchregex(name, [[\<sh\>]]) then
-    on_detect = function(bufnr)
-      vim.b[bufnr].is_sh = 1
-      vim.b[bufnr].is_kornshell = nil
-      vim.b[bufnr].is_bash = nil
+    on_detect = function(b)
+      vim.b[b].is_sh = 1
+      vim.b[b].is_kornshell = nil
+      vim.b[b].is_bash = nil
     end
   end
   return M.shell(path, bufnr, 'sh'), on_detect
@@ -926,9 +926,9 @@ function M.xml(bufnr)
     local is_docbook5 = line:find([[ xmlns="http://docbook.org/ns/docbook"]])
     if is_docbook4 or is_docbook5 then
       return 'docbk',
-        function(bufnr)
-          vim.b[bufnr].docbk_type = 'xml'
-          vim.b[bufnr].docbk_ver = is_docbook4 and 4 or 5
+        function(b)
+          vim.b[b].docbk_type = 'xml'
+          vim.b[b].docbk_ver = is_docbook4 and 4 or 5
         end
     end
     if line:find([[xmlns:xbl="http://www.mozilla.org/xbl"]]) then
@@ -963,11 +963,10 @@ function M.sgml(bufnr)
   if lines:find('linuxdoc') then
     return 'smgllnx'
   elseif lines:find('<!DOCTYPE.*DocBook') then
-    return 'docbk',
-      function(bufnr)
-        vim.b[bufnr].docbk_type = 'sgml'
-        vim.b[bufnr].docbk_ver = 4
-      end
+    return 'docbk', function(b)
+      vim.b[b].docbk_type = 'sgml'
+      vim.b[b].docbk_ver = 4
+    end
   else
     return 'sgml'
   end
@@ -1062,8 +1061,8 @@ function M.xfree86(bufnr)
   local line = getlines(bufnr, 1)
   local on_detect
   if matchregex(line, [[\<XConfigurator\>]]) then
-    on_detect = function(bufnr)
-      vim.b[bufnr].xf86conf_xfree86_version = 3
+    on_detect = function(b)
+      vim.b[b].xf86conf_xfree86_version = 3
     end
   end
   return 'xf86conf', on_detect

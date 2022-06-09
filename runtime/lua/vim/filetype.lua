@@ -1513,13 +1513,13 @@ local filename = {
   ['/.pinforc'] = 'pinfo',
   ['.povrayrc'] = 'povini',
   ['printcap'] = function(path, bufnr)
-    return 'ptcap', function(bufnr)
-      vim.b[bufnr].ptcap_type = 'print'
+    return 'ptcap', function(b)
+      vim.b[b].ptcap_type = 'print'
     end
   end,
   ['termcap'] = function(path, bufnr)
-    return 'ptcap', function(bufnr)
-      vim.b[bufnr].ptcap_type = 'term'
+    return 'ptcap', function(b)
+      vim.b[b].ptcap_type = 'term'
     end
   end,
   ['.procmailrc'] = 'procmail',
@@ -1606,13 +1606,13 @@ local filename = {
   ['xdm-config'] = 'xdefaults',
   ['.Xdefaults'] = 'xdefaults',
   ['xorg.conf'] = function(path, bufnr)
-    return 'xf86conf', function(bufnr)
-      vim.b[bufnr].xf86conf_xfree86_version = 4
+    return 'xf86conf', function(b)
+      vim.b[b].xf86conf_xfree86_version = 4
     end
   end,
   ['xorg.conf-4'] = function(path, bufnr)
-    return 'xf86conf', function(bufnr)
-      vim.b[bufnr].xf86conf_xfree86_version = 4
+    return 'xf86conf', function(b)
+      vim.b[b].xf86conf_xfree86_version = 4
     end
   end,
   ['/etc/xinetd.conf'] = 'xinetd',
@@ -1834,8 +1834,8 @@ local pattern = {
   ['.*/etc/protocols'] = 'protocols',
   ['.*printcap.*'] = starsetf(function(path, bufnr)
     if vim.fn.did_filetype() == 0 then
-      return 'ptcap', function(bufnr)
-        vim.b[bufnr].ptcap_type = 'print'
+      return 'ptcap', function(b)
+        vim.b[b].ptcap_type = 'print'
       end
     end
   end),
@@ -1886,8 +1886,8 @@ local pattern = {
   ['.*/%.config/systemd/user/%.#.*'] = 'systemd',
   ['.*termcap.*'] = starsetf(function(path, bufnr)
     if vim.fn.did_filetype() == 0 then
-      return 'ptcap', function(bufnr)
-        vim.b[bufnr].ptcap_type = 'term'
+      return 'ptcap', function(b)
+        vim.b[b].ptcap_type = 'term'
       end
     end
   end),
@@ -1972,13 +1972,13 @@ local pattern = {
   ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
   ['.*/%.fvwm/.*'] = starsetf('fvwm'),
   ['.*fvwmrc.*'] = starsetf(function(path, bufnr)
-    return 'fvwm', function(bufnr)
-      vim.b[bufnr].fvwm_version = 1
+    return 'fvwm', function(b)
+      vim.b[b].fvwm_version = 1
     end
   end),
   ['.*fvwm95.*%.hook'] = starsetf(function(path, bufnr)
-    return 'fvwm', function(bufnr)
-      vim.b[bufnr].fvwm_version = 1
+    return 'fvwm', function(b)
+      vim.b[b].fvwm_version = 1
     end
   end),
   ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
@@ -2125,14 +2125,14 @@ local pattern = {
   ['.*/queries/.*%.scm'] = 'query', -- tree-sitter queries
   ['.*,v'] = 'rcs',
   ['.*/xorg%.conf%.d/.*%.conf'] = function(path, bufnr)
-    return 'xf86config', function(bufnr)
-      vim.b[bufnr].xf86conf_xfree86_version = 4
+    return 'xf86config', function(b)
+      vim.b[b].xf86conf_xfree86_version = 4
     end
   end,
   -- Increase priority to run before the pattern below
   ['XF86Config%-4.*'] = starsetf(function(path, bufnr)
-    return 'xf86conf', function(bufnr)
-      vim.b[bufnr].xf86conf_xfree86_version = 4
+    return 'xf86conf', function(b)
+      vim.b[b].xf86conf_xfree86_version = 4
     end
   end, { priority = -math.huge + 1 }),
   ['XF86Config.*'] = starsetf(function(path, bufnr)
@@ -2150,8 +2150,8 @@ local pattern = {
     if vim.fn.fnamemodify(path, ':e') == 'm4' then
       return 'fvwm2m4'
     else
-      return 'fvwm', function(bufnr)
-        vim.b[bufnr].fvwm_version = 2
+      return 'fvwm', function(b)
+        vim.b[b].fvwm_version = 2
       end
     end
   end),
