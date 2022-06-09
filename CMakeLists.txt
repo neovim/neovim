@@ -71,13 +71,8 @@ else()
   endif()
 endif()
 
-if(CMAKE_CROSSCOMPILING AND NOT UNIX)
-  list(INSERT CMAKE_FIND_ROOT_PATH 0 ${DEPS_PREFIX})
-  list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX}/../host/bin)
-else()
-  list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
-  set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
-endif()
+list(INSERT CMAKE_PREFIX_PATH 0 ${DEPS_PREFIX})
+set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${DEPS_PREFIX}/lib/pkgconfig")
 
 # used for check_c_compiler_flag
 include(CheckCCompilerFlag)

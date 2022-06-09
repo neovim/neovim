@@ -119,23 +119,11 @@ if(CMAKE_OSX_SYSROOT)
   endif()
 endif()
 
-# Cross compiling: use these for dependencies built for the
-# HOST system, when not crosscompiling these should be the
-# same as DEPS_*. Except when targeting Unix in which case
-# want all the dependencies to use the same compiler.
-if(CMAKE_CROSSCOMPILING AND NOT UNIX)
-  set(HOSTDEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/host")
-  set(HOSTDEPS_BIN_DIR "${HOSTDEPS_INSTALL_DIR}/bin")
-  set(HOSTDEPS_LIB_DIR "${HOSTDEPS_INSTALL_DIR}/lib")
-  set(HOSTDEPS_C_COMPILER "${HOST_C_COMPILER}")
-  set(HOSTDEPS_CXX_COMPILER "${HOST_CXX_COMPILER}")
-else()
-  set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
-  set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
-  set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
-  set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
-  set(HOSTDEPS_CXX_COMPILER "${DEPS_CXX_COMPILER}")
-endif()
+set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
+set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
+set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
+set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
+set(HOSTDEPS_CXX_COMPILER "${DEPS_CXX_COMPILER}")
 
 include(ExternalProject)
 
@@ -222,7 +210,7 @@ if(USE_BUNDLED_LUAJIT)
   include(BuildLuajit)
 endif()
 
-if(USE_BUNDLED_LUA AND NOT CMAKE_CROSSCOMPILING)
+if(USE_BUNDLED_LUA)
   include(BuildLua)
 endif()
 
