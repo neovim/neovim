@@ -157,7 +157,7 @@ cannot start with a digit.  Valid variable names are:
 	FuncLength
 	LENGTH
 
-Invalid names are "foo+bar" and "6var".
+Invalid names are "foo.bar" and "6var".
    These variables are global.  To see a list of currently defined variables
 use this command: >
 
@@ -581,7 +581,7 @@ statements is equal to: >
 
 	:substitute/\a/*/g
 
-Using the functions becomes more interesting when you do more work before and
+Using the functions becomes interesting when you do more work before and
 after the substitute() call.
 
 

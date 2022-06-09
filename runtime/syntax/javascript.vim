@@ -7,7 +7,7 @@
 "		(ss) repaired several quoting and grouping glitches
 "		(ss) fixed regex parsing issue with multiple qualifiers [gi]
 "		(ss) additional factoring of keywords, globals, and members
-" Last Change:	2021 Mar 30
+" Last Change:	2022 Jun 09
 " 		2013 Jun 12: adjusted javaScriptRegexpString (Kevin Locke)
 " 		2018 Apr 14: adjusted javaScriptRegexpString (LongJohnCoder)
 
@@ -39,9 +39,16 @@ syn region  javaScriptStringT	       start=+`+  skip=+\\\\\|\\`+  end=+`+	contai
 
 syn region  javaScriptEmbed	       start=+${+  end=+}+	contains=@javaScriptEmbededExpr
 
+" number handling by Christopher Leonard chris.j.leonard@gmx.com
 syn match   javaScriptSpecialCharacter "'\\.'"
-syn match   javaScriptNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
-syn match   javaScriptNumber	       "-\=\<\d\+\%(_\d\+\)*\>"
+syn match   javaScriptNumber           "\<0[bB][0-1]\+\(_[0-1]\+\)*\>"
+syn match   javaScriptNumber           "\<0[oO][0-7]\+\(_[0-7]\+\)*\>"
+syn match   javaScriptNumber           "\<0\([0-7]\+\(_[0-7]\+\)*\)\?\>"
+syn match   javaScriptNumber           "\<0[xX][0-9a-fA-F]\+\(_[0-9a-fA-F]\+\)*\>"
+syn match   javaScriptNumber           "\<\d\+\(_\d\+\)*[eE][+-]\?\d\+\>"
+syn match   javaScriptNumber           "\<[1-9]\d*\(_\d\+\)*\(\.\(\d\+\(_\d\+\)*\([eE][+-]\?\d\+\)\?\)\?\)\?\>"
+syn match   javaScriptNumber           "\<\(\d\+\(_\d\+\)*\)\?\.\d\+\(_\d\+\)*\([eE][+-]\?\d\+\)\?\>"
+syn match   javaScriptNumber           "\<\d\+\(_\d\+\)*\.\(\d\+\(_\d\+\)*\([eE][+-]\?\d\+\)\?\)\?\>"
 syn region  javaScriptRegexpString     start=+[,(=+]\s*/[^/*]+ms=e-1,me=e-1 skip=+\\\\\|\\/+ end=+/[gimuys]\{0,2\}\s*$+ end=+/[gimuys]\{0,2\}\s*[+;.,)\]}]+me=e-1 end=+/[gimuys]\{0,2\}\s\+\/+me=e-1 contains=@htmlPreproc,javaScriptComment oneline
 
 syn keyword javaScriptConditional	if else switch
