@@ -2077,7 +2077,8 @@ match({name}, {bufnr})                                  *vim.filetype.match()*
                     (string|nil) If a match was found, the matched filetype.
                     (function|nil) A function that modifies buffer state when
                     called (for example, to set some filetype specific buffer
-                    variables).
+                    variables). The function accepts a buffer number as its
+                    only argument.
 
 
 ==============================================================================

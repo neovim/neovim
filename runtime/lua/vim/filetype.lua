@@ -2335,7 +2335,8 @@ end
 ---@param bufnr number|nil The buffer to set the filetype for. Defaults to the current buffer.
 ---@return string|nil If a match was found, the matched filetype.
 ---@return function|nil A function that modifies buffer state when called (for example, to set some
----                     filetype specific buffer variables).
+---                     filetype specific buffer variables). The function accepts a buffer number as
+---                     its only argument.
 function M.match(name, bufnr)
   vim.validate({
     name = { name, 's' },
