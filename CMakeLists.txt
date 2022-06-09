@@ -612,6 +612,33 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "nvim")
 endif()
 
+#
+# Lint
+#
+find_program(LUACHECK_PRG luacheck)
+find_program(STYLUA_PRG stylua)
+find_program(FLAKE8_PRG flake8)
+find_program(UNCRUSTIFY_PRG uncrustify)
+find_program(SHELLCHECK_PRG shellcheck)
+include(DefCmdTarget)
+def_cmd_target(lintlua ${LUACHECK_PRG} LUACHECK_PRG true)
+if(LUACHECK_PRG)
+  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/)
+endif()
+if(STYLUA_PRG)
+  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${STYLUA_PRG} --color=always --check runtime/)
+else()
+  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${CMAKE_COMMAND} -E echo "STYLUA_PRG not found")
+endif()
+def_cmd_target(lintpy ${FLAKE8_PRG} FLAKE8_PRG true)
+if(FLAKE8_PRG)
+  add_custom_command(OUTPUT lintpy-cmd APPEND COMMAND ${FLAKE8_PRG} contrib/ scripts/ src/ test/)
+endif()
+def_cmd_target(lintsh ${SHELLCHECK_PRG} SHELLCHECK_PRG true)
+if(SHELLCHECK_PRG)
+  add_custom_command(OUTPUT lintsh-cmd APPEND COMMAND ${SHELLCHECK_PRG} scripts/vim-patch.sh)
+endif()
+
 include(InstallHelpers)
 
 file(GLOB MANPAGES
@@ -744,14 +771,6 @@ if(BUSTED_LUA_PRG)
     ${TEST_TARGET_ARGS})
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
-
-foreach(TARGET IN ITEMS lintlua lintsh lintpy lintuncrustify)
-  add_custom_target(${TARGET}
-    COMMAND ${CMAKE_COMMAND}
-    -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
-    -DTARGET=${TARGET}
-    -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-endforeach()
 
 #add uninstall target
 if(NOT TARGET uninstall)
