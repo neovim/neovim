@@ -4544,9 +4544,9 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
       check_colorcolumn(wp);
     }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    if (curbuf->terminal) {
-      // Force the scrollback to take effect.
-      terminal_check_size(curbuf->terminal);
+    if (curbuf->terminal && value < old_value) {
+      // Force the scrollback to take immediate effect only when decreasing it.
+      on_scrollback_option_changed(curbuf->terminal);
     }
   } else if (pp == &curwin->w_p_nuw) {
     curwin->w_nrwidth_line_count = 0;
