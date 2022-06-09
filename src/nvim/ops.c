@@ -182,40 +182,33 @@ int get_op_type(int char1, int char2)
   return i;
 }
 
-/*
- * Return TRUE if operator "op" always works on whole lines.
- */
+/// @return  TRUE if operator "op" always works on whole lines.
 int op_on_lines(int op)
 {
   return opchars[op][2] & OPF_LINES;
 }
 
-// Return TRUE if operator "op" changes text.
+/// @return  TRUE if operator "op" changes text.
 int op_is_change(int op)
 {
   return opchars[op][2] & OPF_CHANGE;
 }
 
-/*
- * Get first operator command character.
- * Returns 'g' or 'z' if there is another command character.
- */
+/// Get first operator command character.
+///
+/// @return  'g' or 'z' if there is another command character.
 int get_op_char(int optype)
 {
   return opchars[optype][0];
 }
 
-/*
- * Get second operator command character.
- */
+/// Get second operator command character.
 int get_extra_op_char(int optype)
 {
   return opchars[optype][1];
 }
 
-/*
- * op_shift - handle a shift operation
- */
+/// handle a shift operation
 void op_shift(oparg_T *oap, int curs_top, int amount)
 {
   long i;
@@ -334,10 +327,8 @@ void shift_line(int left, int round, int amount, int call_changed_bytes)
   }
 }
 
-/*
- * Shift one line of the current block one shiftwidth right or left.
- * Leaves cursor on first character in block.
- */
+/// Shift one line of the current block one shiftwidth right or left.
+/// Leaves cursor on first character in block.
 static void shift_block(oparg_T *oap, int amount)
 {
   const bool left = (oap->op_type == OP_LSHIFT);
@@ -517,10 +508,8 @@ static void shift_block(oparg_T *oap, int amount)
   p_ri = old_p_ri;
 }
 
-/*
- * Insert string "s" (b_insert ? before : after) block :AKelly
- * Caller must prepare for undo.
- */
+/// Insert string "s" (b_insert ? before : after) block :AKelly
+/// Caller must prepare for undo.
 static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def *bdp)
 {
   int p_ts;
@@ -630,9 +619,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
   State = oldstate;
 }
 
-/*
- * op_reindent - handle reindenting a block of lines.
- */
+/// Handle reindenting a block of lines.
 void op_reindent(oparg_T *oap, Indenter how)
 {
   long i = 0;
@@ -718,10 +705,9 @@ void op_reindent(oparg_T *oap, Indenter how)
  */
 static char_u *expr_line = NULL;
 
-/*
- * Get an expression for the "\"=expr1" or "CTRL-R =expr1"
- * Returns '=' when OK, NUL otherwise.
- */
+/// Get an expression for the "\"=expr1" or "CTRL-R =expr1"
+///
+/// @return  '=' when OK, NUL otherwise.
 int get_expr_register(void)
 {
   char_u *new_line;
@@ -738,20 +724,17 @@ int get_expr_register(void)
   return '=';
 }
 
-/*
- * Set the expression for the '=' register.
- * Argument must be an allocated string.
- */
+/// Set the expression for the '=' register.
+/// Argument must be an allocated string.
 void set_expr_line(char_u *new_line)
 {
   xfree(expr_line);
   expr_line = new_line;
 }
 
-/*
- * Get the result of the '=' register expression.
- * Returns a pointer to allocated memory, or NULL for failure.
- */
+/// Get the result of the '=' register expression.
+///
+/// @return  a pointer to allocated memory, or NULL for failure.
 char_u *get_expr_line(void)
 {
   char_u *expr_copy;
@@ -779,9 +762,7 @@ char_u *get_expr_line(void)
   return rv;
 }
 
-/*
- * Get the '=' register expression itself, without evaluating it.
- */
+/// Get the '=' register expression itself, without evaluating it.
 char_u *get_expr_line_src(void)
 {
   if (expr_line == NULL) {
@@ -790,8 +771,9 @@ char_u *get_expr_line_src(void)
   return vim_strsave(expr_line);
 }
 
-/// Returns whether `regname` is a valid name of a yank register.
-/// Note: There is no check for 0 (default register), caller should do this.
+/// @return  whether `regname` is a valid name of a yank register.
+///
+/// @note: There is no check for 0 (default register), caller should do this.
 /// The black hole register '_' is regarded as valid.
 ///
 /// @param regname name of register
@@ -811,7 +793,7 @@ bool valid_yank_reg(int regname, bool writing)
   return false;
 }
 
-/// Return yankreg_T to use, according to the value of `regname`.
+/// @return yankreg_T to use, according to the value of `regname`.
 /// Cannot handle the '_' (black hole) register.
 /// Must only be called with a valid register name!
 ///
@@ -871,8 +853,8 @@ static inline bool is_literal_register(int regname)
   return regname == '*' || regname == '+';
 }
 
-/// Returns a copy of contents in register `name`
-/// for use in do_put. Should be freed by caller.
+/// @return  a copy of contents in register `name` for use in do_put. Should be
+///          freed by caller.
 yankreg_T *copy_register(int name)
   FUNC_ATTR_NONNULL_RET
 {
@@ -891,7 +873,7 @@ yankreg_T *copy_register(int name)
   return copy;
 }
 
-/// check if the current yank register has kMTLineWise register type
+/// Check if the current yank register has kMTLineWise register type
 bool yank_register_mline(int regname)
 {
   if (regname != 0 && !valid_yank_reg(regname, false)) {
@@ -904,11 +886,9 @@ bool yank_register_mline(int regname)
   return reg->y_type == kMTLineWise;
 }
 
-/*
- * Start or stop recording into a yank register.
- *
- * Return FAIL for failure, OK otherwise.
- */
+/// Start or stop recording into a yank register.
+///
+/// @return  FAIL for failure, OK otherwise.
 int do_record(int c)
 {
   char_u *p;
@@ -985,12 +965,10 @@ static void set_yreg_additional_data(yankreg_T *reg, dict_T *additional_data)
   reg->additional_data = additional_data;
 }
 
-/*
- * Stuff string "p" into yank register "regname" as a single line (append if
- * uppercase). "p" must have been allocated.
- *
- * return FAIL for failure, OK otherwise
- */
+/// Stuff string "p" into yank register "regname" as a single line (append if
+/// uppercase). "p" must have been allocated.
+///
+/// @return  FAIL for failure, OK otherwise
 static int stuff_yank(int regname, char_u *p)
 {
   // check for read-only register
@@ -1198,10 +1176,8 @@ int do_execreg(int regname, int colon, int addcr, int silent)
   return retval;
 }
 
-/*
- * If "restart_edit" is not zero, put it in the typeahead buffer, so that it's
- * used only after other typeahead has been processed.
- */
+/// If "restart_edit" is not zero, put it in the typeahead buffer, so that it's
+/// used only after other typeahead has been processed.
 static void put_reedit_in_typebuf(int silent)
 {
   char_u buf[3];
@@ -1477,7 +1453,7 @@ bool cmdline_paste_reg(int regname, bool literally_arg, bool remcr)
   return OK;
 }
 
-// Shift the delete registers: "9 is cleared, "8 becomes "9, etc.
+/// Shift the delete registers: "9 is cleared, "8 becomes "9, etc.
 static void shift_delete_registers(bool y_append)
 {
   free_register(&y_regs[9]);  // free register "9
@@ -1490,11 +1466,9 @@ static void shift_delete_registers(bool y_append)
   y_regs[1].y_array = NULL;  // set register "1 to empty
 }
 
-/*
- * Handle a delete operation.
- *
- * Return FAIL if undo failed, OK otherwise.
- */
+/// Handle a delete operation.
+///
+/// @return  FAIL if undo failed, OK otherwise.
 int op_delete(oparg_T *oap)
 {
   int n;
@@ -1832,10 +1806,8 @@ setmarks:
   return OK;
 }
 
-/*
- * Adjust end of operating area for ending on a multi-byte character.
- * Used for deletion.
- */
+/// Adjust end of operating area for ending on a multi-byte character.
+/// Used for deletion.
 static void mb_adjust_opend(oparg_T *oap)
 {
   char_u *p;
@@ -1846,9 +1818,7 @@ static void mb_adjust_opend(oparg_T *oap)
   }
 }
 
-/*
- * Put character 'c' at position 'lp'
- */
+/// Put character 'c' at position 'lp'
 static inline void pbyte(pos_T lp, int c)
 {
   assert(c <= UCHAR_MAX);
@@ -1858,8 +1828,8 @@ static inline void pbyte(pos_T lp, int c)
   }
 }
 
-// Replace the character under the cursor with "c".
-// This takes care of multi-byte characters.
+/// Replace the character under the cursor with "c".
+/// This takes care of multi-byte characters.
 static void replace_character(int c)
 {
   const int n = State;
@@ -1871,9 +1841,7 @@ static void replace_character(int c)
   dec_cursor();
 }
 
-/*
- * Replace a whole area with one character.
- */
+/// Replace a whole area with one character.
 static int op_replace(oparg_T *oap, int c)
 {
   int n, numc;
@@ -2104,9 +2072,7 @@ static int op_replace(oparg_T *oap, int c)
   return OK;
 }
 
-/*
- * Handle the (non-standard vi) tilde operator.  Also for "gu", "gU" and "g?".
- */
+/// Handle the (non-standard vi) tilde operator.  Also for "gu", "gU" and "g?".
 void op_tilde(oparg_T *oap)
 {
   pos_T pos;
@@ -2180,13 +2146,13 @@ void op_tilde(oparg_T *oap)
   }
 }
 
-/*
- * Invoke swapchar() on "length" bytes at position "pos".
- * "pos" is advanced to just after the changed characters.
- * "length" is rounded up to include the whole last multi-byte character.
- * Also works correctly when the number of bytes changes.
- * Returns TRUE if some character was changed.
- */
+/// Invoke swapchar() on "length" bytes at position "pos".
+///
+/// @param pos     is advanced to just after the changed characters.
+/// @param length  is rounded up to include the whole last multi-byte character.
+/// Also works correctly when the number of bytes changes.
+///
+/// @return  TRUE if some character was changed.
 static int swapchars(int op_type, pos_T *pos, int length)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2207,11 +2173,13 @@ static int swapchars(int op_type, pos_T *pos, int length)
   return did_change;
 }
 
-// If op_type == OP_UPPER: make uppercase,
-// if op_type == OP_LOWER: make lowercase,
-// if op_type == OP_ROT13: do rot13 encoding,
-// else swap case of character at 'pos'
-// returns true when something actually changed.
+/// @param op_type
+///                 == OP_UPPER: make uppercase,
+///                 == OP_LOWER: make lowercase,
+///                 == OP_ROT13: do rot13 encoding,
+///                 else swap case of character at 'pos'
+///
+/// @return  true when something actually changed.
 bool swapchar(int op_type, pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(2)
 {
@@ -2265,9 +2233,7 @@ bool swapchar(int op_type, pos_T *pos)
   return false;
 }
 
-/*
- * op_insert - Insert and append operators for Visual mode.
- */
+/// Insert and append operators for Visual mode.
 void op_insert(oparg_T *oap, long count1)
 {
   long ins_len, pre_textlen = 0;
@@ -2482,11 +2448,9 @@ void op_insert(oparg_T *oap, long count1)
   }
 }
 
-/*
- * op_change - handle a change operation
- *
- * return TRUE if edit() returns because of a CTRL-O command
- */
+/// handle a change operation
+///
+/// @return  TRUE if edit() returns because of a CTRL-O command
 int op_change(oparg_T *oap)
 {
   colnr_T l;
@@ -2607,9 +2571,7 @@ int op_change(oparg_T *oap)
   return retval;
 }
 
-/*
- * set all the yank registers to empty (called from main())
- */
+/// set all the yank registers to empty (called from main())
 void init_yank(void)
 {
   memset(&(y_regs[0]), 0, sizeof(y_regs));
@@ -2629,7 +2591,8 @@ void clear_registers(void)
 
 /// Free contents of yankreg `reg`.
 /// Called for normal freeing and in case of error.
-/// `reg` must not be NULL (but `reg->y_array` might be)
+///
+/// @param reg  must not be NULL (but `reg->y_array` might be)
 void free_register(yankreg_T *reg)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2873,8 +2836,9 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
   }
 }
 
-// Copy a block range into a register.
-// If "exclude_trailing_space" is set, do not copy trailing whitespaces.
+/// Copy a block range into a register.
+///
+/// @param exclude_trailing_space  if true, do not copy trailing whitespaces.
 static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx,
                            bool exclude_trailing_space)
   FUNC_ATTR_NONNULL_ALL
@@ -2963,13 +2927,14 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   recursive = false;
 }
 
-// Put contents of register "regname" into the text.
-// Caller must check "regname" to be valid!
-// "flags": PUT_FIXINDENT     make indent look nice
-//          PUT_CURSEND       leave cursor after end of new text
-//          PUT_LINE          force linewise put (":put")
-//          PUT_BLOCK_INNER   in block mode, do not add trailing spaces
-// dir: BACKWARD for 'P', FORWARD for 'p'
+/// Put contents of register "regname" into the text.
+/// Caller must check "regname" to be valid!
+///
+/// @param flags  PUT_FIXINDENT     make indent look nice
+///               PUT_CURSEND       leave cursor after end of new text
+///               PUT_LINE          force linewise put (":put")
+///               PUT_BLOCK_INNER   in block mode, do not add trailing spaces
+/// @param dir    BACKWARD for 'P', FORWARD for 'p'
 void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 {
   char_u *ptr;
@@ -3760,10 +3725,8 @@ end:
   adjust_cursor_eol();
 }
 
-/*
- * When the cursor is on the NUL past the end of the line and it should not be
- * there move it left.
- */
+/// When the cursor is on the NUL past the end of the line and it should not be
+/// there move it left.
 void adjust_cursor_eol(void)
 {
   unsigned int cur_ve_flags = get_ve_flags();
@@ -3785,9 +3748,7 @@ void adjust_cursor_eol(void)
   }
 }
 
-/*
- * Return TRUE if lines starting with '#' should be left aligned.
- */
+/// @return  TRUE if lines starting with '#' should be left aligned.
 int preprocs_left(void)
 {
   return ((curbuf->b_p_si && !curbuf->b_p_cin)
@@ -3795,7 +3756,7 @@ int preprocs_left(void)
               && curbuf->b_ind_hash_comment == 0));
 }
 
-// Return the character name of the register with the given number
+/// @return  the character name of the register with the given number
 int get_register_name(int num)
 {
   if (num == -1) {
@@ -3819,9 +3780,7 @@ int get_unname_register(void)
   return y_previous == NULL ? -1 : (int)(y_previous - &y_regs[0]);
 }
 
-/*
- * ":dis" and ":registers": Display the contents of the yank registers.
- */
+/// ":dis" and ":registers": Display the contents of the yank registers.
 void ex_display(exarg_T *eap)
 {
   char_u *p;
@@ -4048,14 +4007,14 @@ char_u *skip_comment(char_u *line, bool process, bool include_space, bool *is_co
   return line;
 }
 
-// Join 'count' lines (minimal 2) at cursor position.
-// When "save_undo" is TRUE save lines for undo first.
-// Set "use_formatoptions" to FALSE when e.g. processing backspace and comment
-// leaders should not be removed.
-// When setmark is true, sets the '[ and '] mark, else, the caller is expected
-// to set those marks.
-//
-// return FAIL for failure, OK otherwise
+/// @param count              number of lines (minimal 2) to join at cursor position.
+/// @param save_undo          when TRUE, save lines for undo first.
+/// @param use_formatoptions  set to FALSE when e.g. processing backspace and comment
+///                           leaders should not be removed.
+/// @param setmark            when true, sets the '[ and '] mark, else, the caller is expected
+///                           to set those marks.
+///
+/// @return  FAIL for failure, OK otherwise
 int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions, bool setmark)
 {
   char_u *curr = NULL;
@@ -4256,11 +4215,11 @@ theend:
   return ret;
 }
 
-/*
- * Return TRUE if the two comment leaders given are the same.  "lnum" is
- * the first line.  White-space is ignored.  Note that the whole of
- * 'leader1' must match 'leader2_len' characters from 'leader2' -- webb
- */
+/// @return  TRUE if the two comment leaders given are the same.
+///
+/// @param lnum  The first line.  White-space is ignored.
+///
+/// @note the whole of 'leader1' must match 'leader2_len' characters from 'leader2'.
 static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, int leader2_len,
                        char_u *leader2_flags)
 {
@@ -4400,9 +4359,7 @@ static void op_format(oparg_T *oap, int keep_cursor)
   }
 }
 
-/*
- * Implementation of the format operator 'gq' for when using 'formatexpr'.
- */
+/// Implementation of the format operator 'gq' for when using 'formatexpr'.
 static void op_formatexpr(oparg_T *oap)
 {
   if (oap->is_VIsual) {
@@ -4449,8 +4406,9 @@ int fex_format(linenr_T lnum, long count, int c)
   return r;
 }
 
-/// Format "line_count" lines, starting at the cursor position.
-/// When "line_count" is negative, format until the end of the paragraph.
+/// @param line_count  number of lines to format, starting at the cursor position.
+///                    when negative, format until the end of the paragraph.
+///
 /// Lines after the cursor line are saved for undo, caller must have saved the
 /// first line.
 ///
@@ -4677,9 +4635,7 @@ void format_lines(linenr_T line_count, int avoid_fex)
   }
 }
 
-/*
- * Return TRUE if line "lnum" ends in a white character.
- */
+/// @return  TRUE if line "lnum" ends in a white character.
 static int ends_in_white(linenr_T lnum)
 {
   char_u *s = ml_get(lnum);
@@ -4692,14 +4648,12 @@ static int ends_in_white(linenr_T lnum)
   return ascii_iswhite(s[l]);
 }
 
-/*
- * Blank lines, and lines containing only the comment leader, are left
- * untouched by the formatting.  The function returns TRUE in this
- * case.  It also returns TRUE when a line starts with the end of a comment
- * ('e' in comment flags), so that this line is skipped, and not joined to the
- * previous line.  A new paragraph starts after a blank line, or when the
- * comment leader changes -- webb.
- */
+/// Blank lines, and lines containing only the comment leader, are left
+/// untouched by the formatting.  The function returns TRUE in this
+/// case.  It also returns TRUE when a line starts with the end of a comment
+/// ('e' in comment flags), so that this line is skipped, and not joined to the
+/// previous line.  A new paragraph starts after a blank line, or when the
+/// comment leader changes.
 static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, int do_comments)
 {
   char_u *flags = NULL;        // init for GCC
@@ -4727,10 +4681,10 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
          || startPS(lnum, NUL, FALSE);
 }
 
-/*
- * Return TRUE when a paragraph starts in line "lnum".  Return FALSE when the
- * previous line is in the same paragraph.  Used for auto-formatting.
- */
+/// Used for auto-formatting.
+///
+/// @return  TRUE when a paragraph starts in line "lnum".
+///          FALSE when the previous line is in the same paragraph.
 int paragraph_start(linenr_T lnum)
 {
   char_u *p;
@@ -4768,19 +4722,17 @@ int paragraph_start(linenr_T lnum)
   return FALSE;
 }
 
-/*
- * prepare a few things for block mode yank/delete/tilde
- *
- * for delete:
- * - textlen includes the first/last char to be (partly) deleted
- * - start/endspaces is the number of columns that are taken by the
- *   first/last deleted char minus the number of columns that have to be
- *   deleted.
- * for yank and tilde:
- * - textlen includes the first/last char to be wholly yanked
- * - start/endspaces is the number of columns of the first/last yanked char
- *   that are to be yanked.
- */
+/// prepare a few things for block mode yank/delete/tilde
+///
+/// for delete:
+/// - textlen includes the first/last char to be (partly) deleted
+/// - start/endspaces is the number of columns that are taken by the
+///   first/last deleted char minus the number of columns that have to be
+///   deleted.
+/// for yank and tilde:
+/// - textlen includes the first/last char to be wholly yanked
+/// - start/endspaces is the number of columns of the first/last yanked char
+///   that are to be yanked.
 static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, bool is_del)
 {
   int incr = 0;
@@ -5369,11 +5321,10 @@ theend:
   return did_change;
 }
 
-/*
- * Return the type of a register.
- * Used for getregtype()
- * Returns kMTUnknown for error.
- */
+/// Used for getregtype()
+///
+/// @return  the type of a register or
+///          kMTUnknown for error.
 MotionType get_reg_type(int regname, colnr_T *reg_width)
 {
   switch (regname) {
@@ -5438,7 +5389,7 @@ void format_reg_type(MotionType reg_type, colnr_T reg_width, char *buf, size_t b
 /// When `flags` has `kGRegList` return a list with text `s`.
 /// Otherwise just return `s`.
 ///
-/// Returns a void * for use in get_reg_contents().
+/// @return  a void * for use in get_reg_contents().
 static void *get_reg_wrap_one_line(char_u *s, int flags)
 {
   if (!(flags & kGRegList)) {
@@ -5572,7 +5523,7 @@ static void finish_write_reg(int name, yankreg_T *reg, yankreg_T *old_y_previous
   }
 }
 
-/// write_reg_contents - store `str` in register `name`
+/// store `str` in register `name`
 ///
 /// @see write_reg_contents_ex
 void write_reg_contents(int name, const char_u *str, ssize_t len, int must_append)
@@ -5815,20 +5766,18 @@ void clear_oparg(oparg_T *oap)
   memset(oap, 0, sizeof(oparg_T));
 }
 
-/*
- *  Count the number of bytes, characters and "words" in a line.
- *
- *  "Words" are counted by looking for boundaries between non-space and
- *  space characters.  (it seems to produce results that match 'wc'.)
- *
- *  Return value is byte count; word count for the line is added to "*wc".
- *  Char count is added to "*cc".
- *
- *  The function will only examine the first "limit" characters in the
- *  line, stopping if it encounters an end-of-line (NUL byte).  In that
- *  case, eol_size will be added to the character count to account for
- *  the size of the EOL character.
- */
+///  Count the number of bytes, characters and "words" in a line.
+///
+///  "Words" are counted by looking for boundaries between non-space and
+///  space characters.  (it seems to produce results that match 'wc'.)
+///
+///  Return value is byte count; word count for the line is added to "*wc".
+///  Char count is added to "*cc".
+///
+///  The function will only examine the first "limit" characters in the
+///  line, stopping if it encounters an end-of-line (NUL byte).  In that
+///  case, eol_size will be added to the character count to account for
+///  the size of the EOL character.
 static varnumber_T line_count_info(char_u *line, varnumber_T *wc, varnumber_T *cc,
                                    varnumber_T limit, int eol_size)
 {
@@ -5867,7 +5816,8 @@ static varnumber_T line_count_info(char_u *line, varnumber_T *wc, varnumber_T *c
 /// Give some info about the position of the cursor (for "g CTRL-G").
 /// In Visual mode, give some info about the selected region.  (In this case,
 /// the *_count_cursor variables store running totals for the selection.)
-/// When "dict" is not NULL store the info there instead of showing it.
+///
+/// @param dict  when not NULL, store the info there instead of showing it.
 void cursor_pos_info(dict_T *dict)
 {
   char_u *p;
@@ -6113,7 +6063,7 @@ void cursor_pos_info(dict_T *dict)
   }
 }
 
-// Handle indent and format operators and visual mode ":".
+/// Handle indent and format operators and visual mode ":".
 static void op_colon(oparg_T *oap)
 {
   stuffcharReadbuff(':');
@@ -6160,7 +6110,7 @@ static void op_colon(oparg_T *oap)
   // do_cmdline() does the rest
 }
 
-// Handle the "g@" operator: call 'operatorfunc'.
+/// Handle the "g@" operator: call 'operatorfunc'.
 static void op_function(const oparg_T *oap)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -6273,8 +6223,8 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
   oap->start = curwin->w_cursor;
 }
 
-// Handle an operator after Visual mode or when the movement is finished.
-// "gui_yank" is true when yanking text for the clipboard.
+/// Handle an operator after Visual mode or when the movement is finished.
+/// "gui_yank" is true when yanking text for the clipboard.
 void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 {
   oparg_T *oap = cap->oap;
