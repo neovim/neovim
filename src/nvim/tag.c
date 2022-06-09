@@ -1143,7 +1143,15 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
   typval_T args[4];
   typval_T rettv;
   char_u flagString[4];
-  taggy_T *tag = &curwin->w_tagstack[curwin->w_tagstackidx];
+  taggy_T *tag = NULL;
+
+  if (curwin->w_tagstacklen > 0) {
+    if (curwin->w_tagstackidx == curwin->w_tagstacklen) {
+      tag = &curwin->w_tagstack[curwin->w_tagstackidx - 1];
+    } else {
+      tag = &curwin->w_tagstack[curwin->w_tagstackidx];
+    }
+  }
 
   if (*curbuf->b_p_tfu == NUL) {
     return FAIL;
@@ -1156,7 +1164,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
 
   // create 'info' dict argument
   dict_T *const d = tv_dict_alloc_lock(VAR_FIXED);
-  if (tag->user_data != NULL) {
+  if (tag != NULL && tag->user_data != NULL) {
     tv_dict_add_str(d, S_LEN("user_data"), (const char *)tag->user_data);
   }
   if (buf_ffname != NULL) {
