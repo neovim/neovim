@@ -2453,6 +2453,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   if (wp->w_p_list && !has_fold && !end_fill) {
     if (wp->w_p_lcs_chars.space
         || wp->w_p_lcs_chars.multispace != NULL
+        || wp->w_p_lcs_chars.leadmultispace != NULL
         || wp->w_p_lcs_chars.trail
         || wp->w_p_lcs_chars.lead
         || wp->w_p_lcs_chars.nbsp) {
@@ -2467,7 +2468,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       trailcol += (colnr_T)(ptr - line);
     }
     // find end of leading whitespace
-    if (wp->w_p_lcs_chars.lead) {
+    if (wp->w_p_lcs_chars.lead || wp->w_p_lcs_chars.leadmultispace != NULL) {
       leadcol = 0;
       while (ascii_iswhite(ptr[leadcol])) {
         leadcol++;
@@ -3441,8 +3442,20 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
         if ((trailcol != MAXCOL && ptr > line + trailcol && c == ' ')
             || (leadcol != 0 && ptr < line + leadcol && c == ' ')) {
-          c = (ptr > line + trailcol) ? wp->w_p_lcs_chars.trail
-                                      : wp->w_p_lcs_chars.lead;
+          if (leadcol != 0 && in_multispace && ptr < line + leadcol
+              && wp->w_p_lcs_chars.leadmultispace != NULL) {
+            c = wp->w_p_lcs_chars.leadmultispace[multispace_pos++];
+            if (wp->w_p_lcs_chars.leadmultispace[multispace_pos] == NUL) {
+              multispace_pos = 0;
+            }
+          } else if (ptr > line + trailcol && wp->w_p_lcs_chars.trail) {
+            c = wp->w_p_lcs_chars.trail;
+          } else if (ptr < line + leadcol && wp->w_p_lcs_chars.lead) {
+            c = wp->w_p_lcs_chars.lead;
+          } else if (leadcol != 0 && c == ' ' && wp->w_p_lcs_chars.space) {
+            c = wp->w_p_lcs_chars.space;
+          }
+
           n_attr = 1;
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr

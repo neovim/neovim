@@ -3782,14 +3782,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 			"space" setting is used.  For example,
 			`:set listchars=multispace:---+` shows ten consecutive
 			spaces as:
-				---+---+--
+				---+---+-- ~
 							*lcs-lead*
 	  lead:c	Character to show for leading spaces.  When omitted,
 			leading spaces are blank.  Overrides the "space" and
 			"multispace" settings for leading spaces.  You can
 			combine it with "tab:", for example: >
 				:set listchars+=tab:>-,lead:.
-<							*lcs-trail*
+<							*lcs-leadmultispace*
+	  leadmultispace:c...
+			Like multispace value, but only for leading whitespace
+			Overrides |lcs-lead| for leading multiple spaces.
+			`:set listchars=leadmultispace:---+` shows ten consecutive
+			leading spaces as:
+				---+---+--XXX ~
+			Where "XXX" denotes the first non-blank characters in
+			the line.
+							*lcs-trail*
 	  trail:c	Character to show for trailing spaces.  When omitted,
 			trailing spaces are blank.  Overrides the "space" and
 			"multispace" settings for trailing spaces.

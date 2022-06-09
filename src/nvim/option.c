@@ -3552,13 +3552,15 @@ static int get_encoded_char_adv(char_u **p)
 /// @return error message, NULL if it's OK.
 static char *set_chars_option(win_T *wp, char_u **varp, bool set)
 {
-  int round, i, len, entries;
+  int round, i, len, len2, entries;
   char_u *p, *s;
   int c1;
   int c2 = 0;
   int c3 = 0;
-  char_u *last_multispace = NULL;  // Last occurrence of "multispace:"
-  int multispace_len = 0;          // Length of lcs-multispace string
+  char_u *last_multispace = NULL;   // Last occurrence of "multispace:"
+  char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
+  int multispace_len = 0;           // Length of lcs-multispace string
+  int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
 
   struct chars_tab {
     int *cp;    ///< char value
@@ -3637,14 +3639,22 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
       if (varp == &p_lcs || varp == &wp->w_p_lcs) {
         wp->w_p_lcs_chars.tab1 = NUL;
         wp->w_p_lcs_chars.tab3 = NUL;
-        if (wp->w_p_lcs_chars.multispace != NULL) {
-          xfree(wp->w_p_lcs_chars.multispace);
-        }
+
+        xfree(wp->w_p_lcs_chars.multispace);
         if (multispace_len > 0) {
           wp->w_p_lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(int));
           wp->w_p_lcs_chars.multispace[multispace_len] = NUL;
         } else {
           wp->w_p_lcs_chars.multispace = NULL;
+        }
+
+        xfree(wp->w_p_lcs_chars.leadmultispace);
+        if (lead_multispace_len > 0) {
+          wp->w_p_lcs_chars.leadmultispace
+            = xmalloc(((size_t)lead_multispace_len + 1) * sizeof(int));
+          wp->w_p_lcs_chars.leadmultispace[lead_multispace_len] = NUL;
+        } else {
+          wp->w_p_lcs_chars.leadmultispace = NULL;
         }
       }
     }
@@ -3694,6 +3704,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
 
       if (i == entries) {
         len = (int)STRLEN("multispace");
+        len2 = (int)STRLEN("leadmultispace");
         if ((varp == &p_lcs || varp == &wp->w_p_lcs)
             && STRNCMP(p, "multispace", len) == 0
             && p[len] == ':'
@@ -3721,6 +3732,37 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
               c1 = get_encoded_char_adv(&s);
               if (p == last_multispace) {
                 wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
+              }
+            }
+            p = s;
+          }
+        } else if ((varp == &p_lcs || varp == &wp->w_p_lcs)
+                   && STRNCMP(p, "leadmultispace", len2) == 0
+                   && p[len2] == ':'
+                   && p[len2 + 1] != NUL) {
+          s = p + len2 + 1;
+          if (round == 0) {
+            // get length of lcs-leadmultispace string in first round
+            last_lmultispace = p;
+            lead_multispace_len = 0;
+            while (*s != NUL && *s != ',') {
+              c1 = get_encoded_char_adv(&s);
+              if (c1 == 0 || char2cells(c1) > 1) {
+                return e_invarg;
+              }
+              lead_multispace_len++;
+            }
+            if (lead_multispace_len == 0) {
+              // lcs-leadmultispace cannot be an empty string
+              return e_invarg;
+            }
+            p = s;
+          } else {
+            int multispace_pos = 0;
+            while (*s != NUL && *s != ',') {
+              c1 = get_encoded_char_adv(&s);
+              if (p == last_lmultispace) {
+                wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
             }
             p = s;

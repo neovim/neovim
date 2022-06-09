@@ -1232,6 +1232,7 @@ struct window_S {
     int lead;
     int trail;
     int *multispace;
+    int *leadmultispace;
     int conceal;
   } w_p_lcs_chars;
 
