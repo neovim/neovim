@@ -106,6 +106,7 @@ describe('meta-keys #8226 #13042', function()
   end)
 
   it('ALT/META when recording a macro #13235', function()
+    command('inoremap <M-Esc> <lt>M-ESC>')
     feed('ifoo<CR>bar<CR>baz<Esc>gg0')
     -- <M-"> is reinterpreted as <Esc>"
     feed('qrviw"ayC// This is some text: <M-">apq')
@@ -113,7 +114,27 @@ describe('meta-keys #8226 #13042', function()
       // This is some text: foo
       bar
       baz]])
-    -- Should not insert an extra double quote when replaying
+    -- Should not insert an extra double quote or trigger <M-Esc> when replaying
+    feed('j0@rj0@@')
+    expect([[
+      // This is some text: foo
+      // This is some text: bar
+      // This is some text: baz]])
+    command('%delete')
+  end)
+
+  it('ALT/META with special key when recording a macro', function()
+    command('inoremap <M-Esc> <lt>M-ESC>')
+    command('noremap <S-Tab> "')
+    command('noremap! <S-Tab> "')
+    feed('ifoo<CR>bar<CR>baz<Esc>gg0')
+    -- <M-S-Tab> is reinterpreted as <Esc><S-Tab>
+    feed('qrviw<S-Tab>ayC// This is some text: <M-S-Tab>apq')
+    expect([[
+      // This is some text: foo
+      bar
+      baz]])
+    -- Should not insert an extra double quote or trigger <M-Esc> when replaying
     feed('j0@rj0@@')
     expect([[
       // This is some text: foo
