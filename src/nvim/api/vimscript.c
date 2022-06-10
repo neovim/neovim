@@ -1155,8 +1155,8 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     if (range.size > 0) {
-      ea.line1 = range.items[0].data.integer;
-      ea.line2 = range.items[range.size - 1].data.integer;
+      ea.line1 = (linenr_T)range.items[0].data.integer;
+      ea.line2 = (linenr_T)range.items[range.size - 1].data.integer;
     }
 
     if (invalid_range(&ea) != NULL) {

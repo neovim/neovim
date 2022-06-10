@@ -116,7 +116,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
                 (int)tv_list_idx_of_item(pos_list, li));
           goto fail;
         }
-        lnum = tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
+        lnum = (linenr_T)tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
         if (error) {
           goto fail;
         }
@@ -150,7 +150,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
         if (TV_LIST_ITEM_TV(li)->vval.v_number <= 0) {
           continue;
         }
-        m->pos.pos[i].lnum = TV_LIST_ITEM_TV(li)->vval.v_number;
+        m->pos.pos[i].lnum = (linenr_T)TV_LIST_ITEM_TV(li)->vval.v_number;
         m->pos.pos[i].col = 0;
         m->pos.pos[i].len = 0;
       } else {

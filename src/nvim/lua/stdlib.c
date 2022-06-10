@@ -89,7 +89,7 @@ static int regex_match_line(lua_State *lstate)
   }
 
   long bufnr = luaL_checkinteger(lstate, 2);
-  long rownr = luaL_checkinteger(lstate, 3);
+  linenr_T rownr = (linenr_T)luaL_checkinteger(lstate, 3);
   long start = 0, end = -1;
   if (narg >= 4) {
     start = luaL_checkinteger(lstate, 4);

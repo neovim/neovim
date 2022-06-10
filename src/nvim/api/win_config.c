@@ -325,7 +325,7 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
       || bufpos.items[1].type != kObjectTypeInteger) {
     return false;
   }
-  out->lnum = bufpos.items[0].data.integer;
+  out->lnum = (linenr_T)bufpos.items[0].data.integer;
   out->col = (colnr_T)bufpos.items[1].data.integer;
   return true;
 }

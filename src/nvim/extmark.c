@@ -499,8 +499,8 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
 }
 
 /// Adjust extmark row for inserted/deleted rows (columns stay fixed).
-void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, long amount, long amount_after,
-                    ExtmarkOp undo)
+void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
+                    linenr_T amount_after, ExtmarkOp undo)
 {
   if (curbuf_splice_pending) {
     return;

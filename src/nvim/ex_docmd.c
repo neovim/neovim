@@ -1355,13 +1355,13 @@ static void parse_register(exarg_T *eap)
 void set_cmd_count(exarg_T *eap, long count, bool validate)
 {
   if (eap->addr_type != ADDR_LINES) {  // e.g. :buffer 2, :sleep 3
-    eap->line2 = count;
+    eap->line2 = (linenr_T)count;
     if (eap->addr_count == 0) {
       eap->addr_count = 1;
     }
   } else {
     eap->line1 = eap->line2;
-    eap->line2 += count - 1;
+    eap->line2 += (linenr_T)count - 1;
     eap->addr_count++;
     // Be vi compatible: no error message for out of range.
     if (validate && eap->line2 > curbuf->b_ml.ml_line_count) {
@@ -4243,7 +4243,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
 {
   int c;
   int i;
-  long n;
+  linenr_T n;
   char *cmd;
   pos_T pos;
   pos_T *fp;
@@ -4458,7 +4458,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
 
     default:
       if (ascii_isdigit(*cmd)) {                // absolute line number
-        lnum = getdigits_long((char_u **)&cmd, false, 0);
+        lnum = (linenr_T)getdigits((char_u **)&cmd, false, 0);
       }
     }
 
@@ -4512,7 +4512,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
       if (!ascii_isdigit(*cmd)) {       // '+' is '+1', but '+0' is not '+1'
         n = 1;
       } else {
-        n = getdigits((char_u **)&cmd, false, MAXLNUM);
+        n = getdigits_int32(&cmd, false, MAXLNUM);
         if (n == MAXLNUM) {
           emsg(_(e_line_number_out_of_range));
           goto error;
@@ -4535,7 +4535,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         if (i == '-') {
           lnum -= n;
         } else {
-          if (n >= LONG_MAX - lnum) {
+          if (n >= INT32_MAX - lnum) {
             emsg(_(e_line_number_out_of_range));
             goto error;
           }
@@ -8551,11 +8551,11 @@ static void ex_copymove(exarg_T *eap)
   }
 
   if (eap->cmdidx == CMD_move) {
-    if (do_move(eap->line1, eap->line2, n) == FAIL) {
+    if (do_move(eap->line1, eap->line2, (linenr_T)n) == FAIL) {
       return;
     }
   } else {
-    ex_copy(eap->line1, eap->line2, n);
+    ex_copy(eap->line1, eap->line2, (linenr_T)n);
   }
   u_clearline();
   beginline(BL_SOL | BL_FIX);

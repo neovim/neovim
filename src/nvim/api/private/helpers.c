@@ -1397,7 +1397,8 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
       return res;
     }
   }
-  pos_T pos = { line, (int)col, (int)col };
+  assert(INT32_MIN <= line && line <= INT32_MAX);
+  pos_T pos = { (linenr_T)line, (int)col, (int)col };
   res = setmark_pos(*name.data, &pos, buf->handle);
   if (!res) {
     if (deleting) {
@@ -1773,9 +1774,9 @@ void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdinfo, cha
   // Command range / count.
   if (eap->argt & EX_RANGE) {
     if (eap->addr_count == 1) {
-      kv_printf(cmdline, "%ld", eap->line2);
+      kv_printf(cmdline, "%" PRIdLINENR, eap->line2);
     } else if (eap->addr_count > 1) {
-      kv_printf(cmdline, "%ld,%ld", eap->line1, eap->line2);
+      kv_printf(cmdline, "%" PRIdLINENR ",%" PRIdLINENR, eap->line1, eap->line2);
       eap->addr_count = 2;  // Make sure address count is not greater than 2
     }
   }

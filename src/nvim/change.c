@@ -138,7 +138,7 @@ void changed_internal(void)
 /// Common code for when a change was made.
 /// See changed_lines() for the arguments.
 /// Careful: may trigger autocommands that reload the buffer.
-static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra)
+static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T xtra)
 {
   // mark the buffer as modified
   changed();
@@ -349,7 +349,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
 void changed_bytes(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
-  changed_common(lnum, col, lnum + 1, 0L);
+  changed_common(lnum, col, lnum + 1, 0);
   // notify any channels that are watching
   buf_updates_send_changes(curbuf, lnum, 1, 1);
 
@@ -382,7 +382,7 @@ void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 /// Appended "count" lines below line "lnum" in the current buffer.
 /// Must be called AFTER the change and after mark_adjust().
 /// Takes care of marking the buffer to be redrawn and sets the changed flag.
-void appended_lines(linenr_T lnum, long count)
+void appended_lines(linenr_T lnum, linenr_T count)
 {
   changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
@@ -393,18 +393,18 @@ void appended_lines_mark(linenr_T lnum, long count)
   // Skip mark_adjust when adding a line after the last one, there can't
   // be marks there. But it's still needed in diff mode.
   if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
-    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, kExtmarkUndo);
+    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, (linenr_T)count, 0L, kExtmarkUndo);
   } else {
-    extmark_adjust(curbuf, lnum + 1, (linenr_T)MAXLNUM, count, 0L,
+    extmark_adjust(curbuf, lnum + 1, (linenr_T)MAXLNUM, (linenr_T)count, 0L,
                    kExtmarkUndo);
   }
-  changed_lines(lnum + 1, 0, lnum + 1, count, true);
+  changed_lines(lnum + 1, 0, lnum + 1, (linenr_T)count, true);
 }
 
 /// Deleted "count" lines at line "lnum" in the current buffer.
 /// Must be called AFTER the change and after mark_adjust().
 /// Takes care of marking the buffer to be redrawn and sets the changed flag.
-void deleted_lines(linenr_T lnum, long count)
+void deleted_lines(linenr_T lnum, linenr_T count)
 {
   changed_lines(lnum, 0, lnum + count, -count, true);
 }
@@ -418,9 +418,9 @@ void deleted_lines_mark(linenr_T lnum, long count)
   bool made_empty = (count > 0) && curbuf->b_ml.ml_flags & ML_EMPTY;
 
   mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM,
-              -count + (made_empty?1:0),
+              -(linenr_T)count + (made_empty?1:0),
               kExtmarkUndo);
-  changed_lines(lnum, 0, lnum + count, -count, true);
+  changed_lines(lnum, 0, lnum + (linenr_T)count, (linenr_T)(-count), true);
 }
 
 /// Marks the area to be redrawn after a change.
@@ -429,7 +429,7 @@ void deleted_lines_mark(linenr_T lnum, long count)
 /// @param lnum first line with change
 /// @param lnume line below last changed line
 /// @param xtra number of extra lines (negative when deleting)
-void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
+void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, linenr_T xtra)
 {
   if (buf->b_mod_set) {
     // find the maximum area that must be redisplayed
@@ -474,7 +474,7 @@ void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
 /// @param do_buf_event  some callers like undo/redo call changed_lines() and
 /// then increment changedtick *again*. This flag allows these callers to send
 /// the nvim_buf_lines_event events after they're done modifying changedtick.
-void changed_lines(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra, bool do_buf_event)
+void changed_lines(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T xtra, bool do_buf_event)
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
 

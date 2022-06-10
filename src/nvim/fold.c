@@ -1370,7 +1370,8 @@ void deleteFoldRecurse(buf_T *bp, garray_T *gap)
 
 // foldMarkAdjust() {{{2
 /// Update line numbers of folds for inserted/deleted lines.
-void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long amount_after)
+void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
+                    linenr_T amount_after)
 {
   // If deleting marks from line1 to line2, but not deleting all those
   // lines, set line2 so that only deleted lines have their folds removed.
@@ -1387,7 +1388,7 @@ void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long
 
 // foldMarkAdjustRecurse() {{{2
 static void foldMarkAdjustRecurse(win_T *wp, garray_T *gap, linenr_T line1, linenr_T line2,
-                                  long amount, long amount_after)
+                                  linenr_T amount, linenr_T amount_after)
 {
   fold_T *fp;
   linenr_T last;
@@ -2886,7 +2887,7 @@ static void foldMerge(win_T *const wp, fold_T *fp1, garray_T *gap, fold_T *fp2)
 
   // If the last nested fold in fp1 touches the first nested fold in fp2,
   // merge them recursively.
-  if (foldFind(gap1, fp1->fd_len - 1L, &fp3) && foldFind(gap2, 0L, &fp4)) {
+  if (foldFind(gap1, fp1->fd_len - 1, &fp3) && foldFind(gap2, 0L, &fp4)) {
     foldMerge(wp, fp3, gap2, fp4);
   }
 
@@ -3256,7 +3257,7 @@ static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap, linenr_T off
 /// @return  FAIL when writing failed.
 static int put_fold_open_close(FILE *fd, fold_T *fp, linenr_T off)
 {
-  if (fprintf(fd, "%" PRId64, (int64_t)(fp->fd_top + off)) < 0
+  if (fprintf(fd, "%" PRIdLINENR, fp->fd_top + off) < 0
       || put_eol(fd) == FAIL
       || fprintf(fd, "normal! z%c",
                  fp->fd_flags == FD_CLOSED ? 'c' : 'o') < 0

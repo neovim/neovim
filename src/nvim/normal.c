@@ -2818,7 +2818,7 @@ void do_check_scrollbind(bool check)
       // resync is performed, some of the other 'scrollbind' windows may
       // need to jump so that the current window's relative position is
       // visible on-screen.
-      check_scrollbind(curwin->w_topline - curwin->w_scbind_pos, 0L);
+      check_scrollbind(curwin->w_topline - (linenr_T)curwin->w_scbind_pos, 0L);
     }
     curwin->w_scbind_pos = curwin->w_topline;
   }
@@ -2935,7 +2935,7 @@ static void nv_addsub(cmdarg_T *cap)
   } else if (!VIsual_active && cap->oap->op_type == OP_NOP) {
     prep_redo_cmd(cap);
     cap->oap->op_type = cap->cmdchar == Ctrl_A ? OP_NR_ADD : OP_NR_SUB;
-    op_addsub(cap->oap, cap->count1, cap->arg);
+    op_addsub(cap->oap, (linenr_T)cap->count1, cap->arg);
     cap->oap->op_type = OP_NOP;
   } else if (VIsual_active) {
     nv_operator(cap);
@@ -3486,7 +3486,7 @@ dozet:
     if (cap->count0 > curbuf->b_ml.ml_line_count) {
       curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     } else {
-      curwin->w_cursor.lnum = cap->count0;
+      curwin->w_cursor.lnum = (linenr_T)cap->count0;
     }
     check_cursor_col();
   }
@@ -4359,7 +4359,7 @@ static void nv_scroll(cmdarg_T *cap)
           curwin->w_cursor.lnum--;
         }
       } else {
-        curwin->w_cursor.lnum -= cap->count1 - 1;
+        curwin->w_cursor.lnum -= (linenr_T)cap->count1 - 1;
       }
     }
   } else {
@@ -4372,15 +4372,15 @@ static void nv_scroll(cmdarg_T *cap)
       for (n = 0; curwin->w_topline + n < curbuf->b_ml.ml_line_count; n++) {
         // Count half the number of filler lines to be "below this
         // line" and half to be "above the next line".
-        if (n > 0 && used + win_get_fill(curwin, curwin->w_topline + n) / 2 >= half) {
+        if (n > 0 && used + win_get_fill(curwin, curwin->w_topline + (linenr_T)n) / 2 >= half) {
           n--;
           break;
         }
-        used += plines_win(curwin, curwin->w_topline + n, true);
+        used += plines_win(curwin, curwin->w_topline + (linenr_T)n, true);
         if (used >= half) {
           break;
         }
-        if (hasFolding(curwin->w_topline + n, NULL, &lnum)) {
+        if (hasFolding(curwin->w_topline + (linenr_T)n, NULL, &lnum)) {
           n = lnum - curwin->w_topline;
         }
       }
@@ -4399,7 +4399,7 @@ static void nv_scroll(cmdarg_T *cap)
         n = lnum - curwin->w_topline;
       }
     }
-    curwin->w_cursor.lnum = curwin->w_topline + n;
+    curwin->w_cursor.lnum = curwin->w_topline + (linenr_T)n;
     if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
       curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     }
@@ -5049,11 +5049,11 @@ static void nv_percent(cmdarg_T *cap)
       // overflow on 32-bits, so use a formula with less accuracy
       // to avoid overflows.
       if (curbuf->b_ml.ml_line_count >= 21474836) {
-        curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count + 99L)
-                                / 100L * cap->count0;
+        curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count + 99)
+                                / 100 * (linenr_T)cap->count0;
       } else {
         curwin->w_cursor.lnum = (curbuf->b_ml.ml_line_count *
-                                 cap->count0 + 99L) / 100L;
+                                 (linenr_T)cap->count0 + 99) / 100;
       }
       if (curwin->w_cursor.lnum < 1) {
         curwin->w_cursor.lnum = 1;
@@ -5705,7 +5705,7 @@ static void nv_visual(cmdarg_T *cap)
       // For V and ^V, we multiply the number of lines even if there
       // was only one -- webb
       if (resel_VIsual_mode != 'v' || resel_VIsual_line_count > 1) {
-        curwin->w_cursor.lnum += resel_VIsual_line_count * cap->count0 - 1;
+        curwin->w_cursor.lnum += resel_VIsual_line_count * (linenr_T)cap->count0 - 1;
         check_cursor();
       }
       VIsual_mode = resel_VIsual_mode;
@@ -6709,7 +6709,7 @@ static void nv_goto(cmdarg_T *cap)
 
   // When a count is given, use it instead of the default lnum
   if (cap->count0 != 0) {
-    lnum = cap->count0;
+    lnum = (linenr_T)cap->count0;
   }
   if (lnum < 1L) {
     lnum = 1L;
@@ -7024,7 +7024,7 @@ static void nv_halfpage(cmdarg_T *cap)
           && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count)) {
     clearopbeep(cap->oap);
   } else if (!checkclearop(cap->oap)) {
-    halfpage(cap->cmdchar == Ctrl_D, cap->count0);
+    halfpage(cap->cmdchar == Ctrl_D, (linenr_T)cap->count0);
   }
 }
 

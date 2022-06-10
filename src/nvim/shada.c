@@ -3376,8 +3376,6 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
               i64, proc)
 #define INTEGER_KEY(un, entry_name, name, tgt) \
   INT_KEY(un, entry_name, name, tgt, TOINT)
-#define LONG_KEY(un, entry_name, name, tgt) \
-  INT_KEY(un, entry_name, name, tgt, TOLONG)
 #define ADDITIONAL_KEY(un) \
   else {  /* NOLINT(readability/braces) */ \
     ga_grow(&ad_ga, 1); \
@@ -3641,7 +3639,7 @@ shada_read_next_item_start:
                       "mark", unpacked.data.via.map.ptr[i].val,
                       entry->data.filemark.name, u64, TOCHAR);
       }
-      LONG_KEY(unpacked, "mark", KEY_LNUM, entry->data.filemark.mark.lnum)
+      INTEGER_KEY(unpacked, "mark", KEY_LNUM, entry->data.filemark.mark.lnum)
       INTEGER_KEY(unpacked, "mark", KEY_COL, entry->data.filemark.mark.col)
       STRING_KEY(unpacked, "mark", KEY_FILE, entry->data.filemark.fname)
       ADDITIONAL_KEY(unpacked)
@@ -3888,8 +3886,8 @@ shada_read_next_item_start:
           {
             for (i = 0; i < unpacked_2.data.via.map.size; i++) {  // -V535
               CHECK_KEY_IS_STR(unpacked_2, "buffer list entry")
-              LONG_KEY(unpacked_2, "buffer list entry", KEY_LNUM,
-                       entry->data.buffer_list.buffers[j].pos.lnum)
+              INTEGER_KEY(unpacked_2, "buffer list entry", KEY_LNUM,
+                          entry->data.buffer_list.buffers[j].pos.lnum)
               INTEGER_KEY(unpacked_2, "buffer list entry", KEY_COL,
                           entry->data.buffer_list.buffers[j].pos.col)
               STRING_KEY(unpacked_2, "buffer list entry", KEY_FILE,
@@ -3957,7 +3955,6 @@ shada_read_next_item_error:
 #undef TYPED_KEY
 #undef INT_KEY
 #undef INTEGER_KEY
-#undef LONG_KEY
 #undef TOU8
 #undef TOSIZE
 #undef SET_ADDITIONAL_DATA

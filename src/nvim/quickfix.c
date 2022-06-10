@@ -198,8 +198,8 @@ typedef struct {
   char *module;
   char *errmsg;
   size_t errmsglen;
-  long lnum;
-  long end_lnum;
+  linenr_T lnum;
+  linenr_T end_lnum;
   int col;
   int end_col;
   bool use_viscol;
@@ -1295,7 +1295,7 @@ static int qf_parse_fmt_l(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->lnum = atol((char *)rmp->startp[midx]);
+  fields->lnum = (linenr_T)atol((char *)rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1306,7 +1306,7 @@ static int qf_parse_fmt_e(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->end_lnum = atol((char *)rmp->startp[midx]);
+  fields->end_lnum = (linenr_T)atol((char *)rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1833,8 +1833,8 @@ void check_quickfix_busy(void)
 ///
 /// @returns QF_OK or QF_FAIL.
 static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, int bufnum,
-                        char *mesg, long lnum, long end_lnum, int col, int end_col, char vis_col,
-                        char *pattern, int nr, char type, char valid)
+                        char *mesg, linenr_T lnum, linenr_T end_lnum, int col, int end_col,
+                        char vis_col, char *pattern, int nr, char type, char valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
   qfline_T **lastp;  // pointer to qf_last or NULL
@@ -3357,7 +3357,7 @@ void qf_history(exarg_T *eap)
 
     // Jump to the specified quickfix list
     if (eap->line2 > 0 && eap->line2 <= qi->qf_listcount) {
-      qi->qf_curlist = (int)(eap->line2 - 1);
+      qi->qf_curlist = eap->line2 - 1;
       qf_msg(qi, qi->qf_curlist, "");
       qf_update_buffer(qi, NULL);
     } else {
@@ -3436,7 +3436,8 @@ static void qf_free(qf_list_T *qfl)
 }
 
 // qf_mark_adjust: adjust marks
-bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long amount_after)
+bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
+                    linenr_T amount_after)
 {
   int i;
   qfline_T *qfp;
@@ -5262,7 +5263,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
 {
   bool found_match = false;
 
-  for (long lnum = 1; lnum <= buf->b_ml.ml_line_count && *tomatch > 0; lnum++) {
+  for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count && *tomatch > 0; lnum++) {
     colnr_T col = 0;
     if (!(flags & VGR_FUZZY)) {
       // Regular expression match
@@ -6361,8 +6362,8 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, const dict_T *d, bool first_en
   char *const filename = tv_dict_get_string(d, "filename", true);
   char *const module = tv_dict_get_string(d, "module", true);
   int bufnum = (int)tv_dict_get_number(d, "bufnr");
-  const long lnum = (long)tv_dict_get_number(d, "lnum");
-  const long end_lnum = (long)tv_dict_get_number(d, "end_lnum");
+  const linenr_T lnum = (linenr_T)tv_dict_get_number(d, "lnum");
+  const linenr_T end_lnum = (linenr_T)tv_dict_get_number(d, "end_lnum");
   const int col = (int)tv_dict_get_number(d, "col");
   const int end_col = (int)tv_dict_get_number(d, "end_col");
   const char vcol = (char)tv_dict_get_number(d, "vcol");
@@ -7096,7 +7097,7 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
     return;
   }
 
-  long lnum = 1;
+  linenr_T lnum = 1;
   while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
     char *line = (char *)IObuff;
 
