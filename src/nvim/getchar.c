@@ -1007,6 +1007,7 @@ int ins_char_typebuf(int c, int modifier)
     buf[len + 1] = (char_u)K_SECOND(c);
     buf[len + 2] = (char_u)K_THIRD(c);
     buf[len + 3] = NUL;
+    len += 3;
   } else {
     char_u *end = add_char2buf(c, buf + len);
     *end = NUL;
