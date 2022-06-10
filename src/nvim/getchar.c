@@ -1636,8 +1636,7 @@ int vgetc(void)
       // something with a meta- or alt- modifier that was not mapped, interpret
       // <M-x> as <Esc>x rather than as an unbound meta keypress. #8213
       // In Terminal mode, however, this is not desirable. #16220
-      if (!no_mapping && KeyTyped && !(State & MODE_TERMINAL)
-          && (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META)) {
+      if (!no_mapping && KeyTyped && !(State & MODE_TERMINAL) && mod_mask == MOD_MASK_ALT) {
         mod_mask = 0;
         int len = ins_char_typebuf(c, 0);
         (void)ins_char_typebuf(ESC, 0);
