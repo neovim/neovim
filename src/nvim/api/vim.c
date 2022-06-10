@@ -942,26 +942,15 @@ void nvim_echo(Array chunks, Boolean history, Dictionary opts, Error *err)
     goto error;
   }
 
-  no_wait_return++;
-  msg_start();
-  msg_clr_eos();
-  bool need_clear = false;
-  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
-    HlMessageChunk chunk = kv_A(hl_msg, i);
-    msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
-                       true, &need_clear);
-  }
+  msg_multiattr(hl_msg, history ? "echomsg" : "echo", history);
+
   if (history) {
-    msg_ext_set_kind("echomsg");
-    add_hl_msg_hist(hl_msg);
-  } else {
-    msg_ext_set_kind("echo");
+    // history takes ownership
+    return;
   }
-  no_wait_return--;
-  msg_end();
 
 error:
-  clear_hl_msg(&hl_msg);
+  hl_msg_free(hl_msg);
 }
 
 /// Writes a message to the Vim output buffer. Does not append "\n", the

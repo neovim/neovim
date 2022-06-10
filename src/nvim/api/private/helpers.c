@@ -1344,8 +1344,8 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
   return hl_msg;
 
 free_exit:
-  clear_hl_msg(&hl_msg);
-  return hl_msg;
+  hl_msg_free(hl_msg);
+  return (HlMessage)KV_INITIAL_VALUE;
 }
 
 bool api_dict_to_keydict(void *rv, field_hash hashy, Dictionary dict, Error *err)

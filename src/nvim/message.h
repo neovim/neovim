@@ -44,6 +44,7 @@ typedef struct msg_hist {
   const char *kind;     ///< Message kind (for msg_ext)
   int attr;               ///< Message highlighting.
   bool multiline;         ///< Multiline message.
+  HlMessage multiattr;    ///< multiattr message.
 } MessageHistoryEntry;
 
 /// First message

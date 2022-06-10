@@ -264,6 +264,25 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
   }
 }
 
+void msg_multiattr(HlMessage hl_msg, const char *kind, bool history)
+{
+  no_wait_return++;
+  msg_start();
+  msg_clr_eos();
+  bool need_clear = false;
+  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
+    HlMessageChunk chunk = kv_A(hl_msg, i);
+    msg_multiline_attr((const char *)chunk.text.data, chunk.attr,
+                       true, &need_clear);
+  }
+  msg_ext_set_kind(kind);
+  if (history && kv_size(hl_msg)) {
+    add_msg_hist_multiattr(NULL, 0, 0, true, hl_msg);
+  }
+  no_wait_return--;
+  msg_end();
+}
+
 /// @param keep set keep_msg if it doesn't scroll
 bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   FUNC_ATTR_NONNULL_ALL
@@ -889,44 +908,34 @@ char_u *msg_may_trunc(bool force, char_u *s)
   return s;
 }
 
-void clear_hl_msg(HlMessage *hl_msg)
+void hl_msg_free(HlMessage hl_msg)
 {
-  for (size_t i = 0; i < kv_size(*hl_msg); i++) {
-    xfree(kv_A(*hl_msg, i).text.data);
+  for (size_t i = 0; i < kv_size(hl_msg); i++) {
+    xfree(kv_A(hl_msg, i).text.data);
   }
-  kv_destroy(*hl_msg);
-  *hl_msg = (HlMessage)KV_INITIAL_VALUE;
+  kv_destroy(hl_msg);
 }
 
 #define LINE_BUFFER_SIZE 4096
 
 void add_hl_msg_hist(HlMessage hl_msg)
 {
-  // TODO(notomo): support multi highlighted message history
-  size_t pos = 0;
-  char buf[LINE_BUFFER_SIZE];
-  for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
-    HlMessageChunk chunk = kv_A(hl_msg, i);
-    for (uint32_t j = 0; j < chunk.text.size; j++) {
-      if (pos == LINE_BUFFER_SIZE - 1) {
-        buf[pos] = NUL;
-        add_msg_hist((const char *)buf, -1, MSG_HIST, true);
-        pos = 0;
-        continue;
-      }
-      buf[pos++] = chunk.text.data[j];
-    }
-  }
-  if (pos != 0) {
-    buf[pos] = NUL;
-    add_msg_hist((const char *)buf, -1, MSG_HIST, true);
+  if (kv_size(hl_msg)) {
+    add_msg_hist_multiattr(NULL, 0, 0, true, hl_msg);
   }
 }
 
 /// @param[in]  len  Length of s or -1.
 static void add_msg_hist(const char *s, int len, int attr, bool multiline)
 {
+  add_msg_hist_multiattr(s, len, attr, multiline, (HlMessage)KV_INITIAL_VALUE);
+}
+
+static void add_msg_hist_multiattr(const char *s, int len, int attr, bool multiline,
+                                   HlMessage multiattr)
+{
   if (msg_hist_off || msg_silent != 0) {
+    hl_msg_free(multiattr);
     return;
   }
 
@@ -937,21 +946,26 @@ static void add_msg_hist(const char *s, int len, int attr, bool multiline)
 
   // allocate an entry and add the message at the end of the history
   struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
-  if (len < 0) {
-    len = (int)STRLEN(s);
+  if (s) {
+    if (len < 0) {
+      len = (int)STRLEN(s);
+    }
+    // remove leading and trailing newlines
+    while (len > 0 && *s == '\n') {
+      s++;
+      len--;
+    }
+    while (len > 0 && s[len - 1] == '\n') {
+      len--;
+    }
+    p->msg = (char_u *)xmemdupz(s, (size_t)len);
+  } else {
+    p->msg = NULL;
   }
-  // remove leading and trailing newlines
-  while (len > 0 && *s == '\n') {
-    ++s;
-    --len;
-  }
-  while (len > 0 && s[len - 1] == '\n') {
-    len--;
-  }
-  p->msg = (char_u *)xmemdupz(s, (size_t)len);
   p->next = NULL;
   p->attr = attr;
   p->multiline = multiline;
+  p->multiattr = multiattr;
   p->kind = msg_ext_kind;
   if (last_msg_hist != NULL) {
     last_msg_hist->next = p;
@@ -980,6 +994,7 @@ int delete_first_msg(void)
     last_msg_hist = NULL;
   }
   xfree(p->msg);
+  hl_msg_free(p->multiattr);
   xfree(p);
   --msg_hist_len;
   return OK;
@@ -1028,14 +1043,24 @@ void ex_messages(void *const eap_p)
     }
     Array entries = ARRAY_DICT_INIT;
     for (; p != NULL; p = p->next) {
-      if (p->msg != NULL && p->msg[0] != NUL) {
+      if (kv_size(p->multiattr) || (p->msg && p->msg[0])) {
         Array entry = ARRAY_DICT_INIT;
         ADD(entry, STRING_OBJ(cstr_to_string(p->kind)));
-        Array content_entry = ARRAY_DICT_INIT;
-        ADD(content_entry, INTEGER_OBJ(p->attr));
-        ADD(content_entry, STRING_OBJ(cstr_to_string((char *)(p->msg))));
         Array content = ARRAY_DICT_INIT;
-        ADD(content, ARRAY_OBJ(content_entry));
+        if (kv_size(p->multiattr)) {
+          for (uint32_t i = 0; i < kv_size(p->multiattr); i++) {
+            HlMessageChunk chunk = kv_A(p->multiattr, i);
+            Array content_entry = ARRAY_DICT_INIT;
+            ADD(content_entry, INTEGER_OBJ(chunk.attr));
+            ADD(content_entry, STRING_OBJ(copy_string(chunk.text)));
+            ADD(content, ARRAY_OBJ(content_entry));
+          }
+        } else if (p->msg && p->msg[0]) {
+          Array content_entry = ARRAY_DICT_INIT;
+          ADD(content_entry, INTEGER_OBJ(p->attr));
+          ADD(content_entry, STRING_OBJ(cstr_to_string((char *)(p->msg))));
+          ADD(content, ARRAY_OBJ(content_entry));
+        }
         ADD(entry, ARRAY_OBJ(content));
         ADD(entries, ARRAY_OBJ(entry));
       }
@@ -1046,7 +1071,9 @@ void ex_messages(void *const eap_p)
   } else {
     msg_hist_off = true;
     for (; p != NULL && !got_int; p = p->next) {
-      if (p->msg != NULL) {
+      if (kv_size(p->multiattr)) {
+        msg_multiattr(p->multiattr, p->kind, false);
+      } else if (p->msg != NULL) {
         msg_attr_keep((char *)p->msg, p->attr, false, p->multiline);
       }
     }
