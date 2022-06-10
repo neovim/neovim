@@ -2907,6 +2907,36 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
   ]])
 end)
 
+it(':substitute with inccommand, allows :redraw before first separator is typed #18857', function()
+  local screen = Screen.new(30,6)
+  clear()
+  common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
+  command('hi! link NormalFloat CursorLine')
+  local float_buf = meths.create_buf(false, true)
+  meths.open_win(float_buf, false, {
+    relative = 'editor', height = 1, width = 5, row = 3, col = 0, focusable = false,
+  })
+  feed(':%s')
+  screen:expect([[
+    foo bar baz                   |
+    bar baz fox                   |
+    bar foo baz                   |
+    {16:     }{15:                         }|
+    {15:~                             }|
+    :%s^                           |
+  ]])
+  meths.buf_set_lines(float_buf, 0, -1, true, {'foo'})
+  command('redraw')
+  screen:expect([[
+    foo bar baz                   |
+    bar baz fox                   |
+    bar foo baz                   |
+    {16:foo  }{15:                         }|
+    {15:~                             }|
+    :%s^                           |
+  ]])
+end)
+
 it(":substitute doesn't crash with inccommand, if undo is empty #12932", function()
   local screen = Screen.new(10,5)
   clear()

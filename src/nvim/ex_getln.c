@@ -2516,6 +2516,7 @@ static void cmdpreview_show(CommandLineState *s)
 
   // If preview callback returned 0, update screen to clear remnants of an earlier preview.
   if (cmdpreview_type == 0) {
+    cmdpreview = false;
     update_screen(SOME_VALID);
   }
 end:
