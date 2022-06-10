@@ -3440,8 +3440,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           }
         }
 
-        if ((trailcol != MAXCOL && ptr > line + trailcol && c == ' ')
-            || (leadcol != 0 && ptr < line + leadcol && c == ' ')) {
+        if (c == ' ' && ((trailcol != MAXCOL && ptr > line + trailcol)
+                         || (leadcol != 0 && ptr < line + leadcol))) {
           if (leadcol != 0 && in_multispace && ptr < line + leadcol
               && wp->w_p_lcs_chars.leadmultispace != NULL) {
             c = wp->w_p_lcs_chars.leadmultispace[multispace_pos++];
@@ -3452,7 +3452,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             c = wp->w_p_lcs_chars.trail;
           } else if (ptr < line + leadcol && wp->w_p_lcs_chars.lead) {
             c = wp->w_p_lcs_chars.lead;
-          } else if (leadcol != 0 && c == ' ' && wp->w_p_lcs_chars.space) {
+          } else if (leadcol != 0 && wp->w_p_lcs_chars.space) {
             c = wp->w_p_lcs_chars.space;
           }
 
