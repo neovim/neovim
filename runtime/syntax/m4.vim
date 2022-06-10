@@ -21,6 +21,7 @@ endif
 syn match  m4Variable contained "\$\d\+"
 syn match  m4Special  contained "$[@*#]"
 syn match  m4Comment  "\<\(m4_\)\=dnl\>.*" contains=SpellErrors
+syn match  m4Comment  "#.*" contains=SpellErrors
 syn match  m4Constants "\<\(m4_\)\=__file__"
 syn match  m4Constants "\<\(m4_\)\=__line__"
 syn keyword m4Constants divnum sysval m4_divnum m4_sysval
@@ -32,7 +33,7 @@ syn region m4Command  matchgroup=m4builtin start="\<\(m4_\)\=\(len\|index\|regex
 syn keyword m4Statement divert undivert
 syn region m4Command  matchgroup=m4Type      start="\<\(m4_\)\=\(undefine\|popdef\)("he=e-1 end=")" contains=@m4Top
 syn region m4Function matchgroup=m4Type      start="\<[_A-Z][_A-Z0-9]*("he=e-1 end=")" contains=@m4Top
-syn region m4String   start="`" end="'" contained contains=@m4Top,@m4StringContents,SpellErrors
+syn region m4String   start="`" end="'" contains=SpellErrors
 syn cluster m4Top     contains=m4Comment,m4Constants,m4Special,m4Variable,m4String,m4Paren,m4Command,m4Statement,m4Function
 
 " Define the default highlighting.
