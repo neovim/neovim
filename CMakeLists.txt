@@ -612,6 +612,9 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "nvim")
 endif()
 
+find_program(LUACHECK_PRG luacheck)
+find_program(FLAKE8_PRG flake8)
+
 include(InstallHelpers)
 
 file(GLOB MANPAGES
@@ -745,13 +748,15 @@ if(BUSTED_LUA_PRG)
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
-foreach(TARGET IN ITEMS lintlua lintsh lintpy lintuncrustify)
-  add_custom_target(${TARGET}
-    COMMAND ${CMAKE_COMMAND}
-    -DPROJECT_ROOT=${PROJECT_SOURCE_DIR}
-    -DTARGET=${TARGET}
-    -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-endforeach()
+if(LUACHECK_PRG)
+  add_custom_target(lualint
+    COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+else()
+  add_custom_target(lualint false
+    COMMENT "lualint: LUACHECK_PRG not defined")
+endif()
+
 
 #add uninstall target
 if(NOT TARGET uninstall)
