@@ -48,12 +48,12 @@ fun! s:SynSet()
     " load each in sequence.  Skip empty entries.
     for name in split(s, '\.')
       if !empty(name)
-          call nvim__get_runtime([
-                \ 'syntax/' . name . '.vim',
-                \ 'syntax/' . name . '.lua',
-                \ ], v:true, {'do_source': v:true})
-          " TODO(clason): nvim__get_runtime doesn't support globs
-          exe printf('runtime! syntax/%s/*.vim syntax/%s/*.lua', name, name)
+        call nvim__get_runtime([
+              \ 'syntax/' . name . '.vim',
+              \ 'syntax/' . name . '.lua',
+              \ ], v:true, {'do_source': v:true})
+        " TODO(clason): nvim__get_runtime doesn't support globs
+        exe printf('runtime! syntax/%s/*.vim syntax/%s/*.lua', name, name)
       endif
     endfor
   endif

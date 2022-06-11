@@ -24,8 +24,12 @@ augroup filetypeindent
       " When there is a dot it is used to separate filetype names.  Thus for
       " "aaa.bbb" load "indent/aaa.vim" and then "indent/bbb.vim".
       for name in split(s, '\.')
-        exe 'runtime! indent/' . name . '.vim'
-        exe 'runtime! indent/' . name . '.lua'
+        if !empty(name)
+          call nvim__get_runtime([
+                \ 'indent/' . name . '.vim',
+                \ 'indent/' . name . '.lua',
+                \ ], v:true, {'do_source': v:true})
+        endif
       endfor
     endif
   endfunc
