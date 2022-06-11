@@ -1035,44 +1035,6 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
   dict_set_var(buf->b_vars, name, NIL, true, false, err);
 }
 
-/// Gets a buffer option value
-///
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param name       Option name
-/// @param[out] err   Error details, if any
-/// @return Option value
-Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
-  FUNC_API_SINCE(1)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return (Object)OBJECT_INIT;
-  }
-
-  return get_option_from(buf, SREQ_BUF, name, err);
-}
-
-/// Sets a buffer option value. Passing 'nil' as value deletes the option (only
-/// works if there's a global fallback)
-///
-/// @param channel_id
-/// @param buffer     Buffer handle, or 0 for current buffer
-/// @param name       Option name
-/// @param value      Option value
-/// @param[out] err   Error details, if any
-void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
-{
-  buf_T *buf = find_buffer_by_handle(buffer, err);
-
-  if (!buf) {
-    return;
-  }
-
-  set_option_to(channel_id, buf, SREQ_BUF, name, value, err);
-}
-
 /// Gets the full file name for the buffer
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer

@@ -264,44 +264,6 @@ void nvim_win_del_var(Window window, String name, Error *err)
   dict_set_var(win->w_vars, name, NIL, true, false, err);
 }
 
-/// Gets a window option value
-///
-/// @param window   Window handle, or 0 for current window
-/// @param name     Option name
-/// @param[out] err Error details, if any
-/// @return Option value
-Object nvim_win_get_option(Window window, String name, Error *err)
-  FUNC_API_SINCE(1)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return (Object)OBJECT_INIT;
-  }
-
-  return get_option_from(win, SREQ_WIN, name, err);
-}
-
-/// Sets a window option value. Passing 'nil' as value deletes the option(only
-/// works if there's a global fallback)
-///
-/// @param channel_id
-/// @param window   Window handle, or 0 for current window
-/// @param name     Option name
-/// @param value    Option value
-/// @param[out] err Error details, if any
-void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
-{
-  win_T *win = find_window_by_handle(window, err);
-
-  if (!win) {
-    return;
-  }
-
-  set_option_to(channel_id, win, SREQ_WIN, name, value, err);
-}
-
 /// Gets the window position in display cells. First position is zero.
 ///
 /// @param window   Window handle, or 0 for current window
