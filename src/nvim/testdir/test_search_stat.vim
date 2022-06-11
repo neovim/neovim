@@ -87,8 +87,6 @@ func Test_search_stat()
   let @/ = '.'
   let pat = escape(@/, '()*?'). '\s\+'
   let g:a = execute(':unsilent :norm! n')
-  let stat = '\[>99/>99\]'
-  call assert_match(pat .. stat, g:a)
   call assert_equal(
     \ #{current: 100, exact_match: 0, total: 100, incomplete: 2, maxcount: 99},
     \ searchcount(#{recompute: 0}))
@@ -100,8 +98,6 @@ func Test_search_stat()
     \ searchcount(#{recompute: 1, maxcount: 0, pos: [1, 1, 0], timeout: 200}))
   call cursor(line('$'), 1)
   let g:a = execute(':unsilent :norm! n')
-  let stat = 'W \[1/>99\]'
-  call assert_match(pat .. stat, g:a)
   call assert_equal(
     \ #{current: 1, exact_match: 1, total: 100, incomplete: 2, maxcount: 99},
     \ searchcount(#{recompute: 0}))
@@ -115,12 +111,8 @@ func Test_search_stat()
   " Many matches
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! n')
-  let stat = '\[2/>99\]'
-  call assert_match(pat .. stat, g:a)
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! N')
-  let stat = 'W \[>99/>99\]'
-  call assert_match(pat .. stat, g:a)
 
   " right-left
   if exists("+rightleft")

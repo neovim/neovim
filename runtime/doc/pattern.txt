@@ -151,8 +151,6 @@ When 'shortmess' does not include the "S" flag, Vim will automatically show an
 index, on which the cursor is. This can look like this: >
 
   [1/5]		Cursor is on first of 5 matches.
-  [1/>99]	Cursor is on first of more than 99 matches.
-  [>99/>99]	Cursor is after 99 match of more than 99 matches.
   [?/??]	Unknown how many matches exists, generating the
 		statistics was aborted because of search timeout.
 
