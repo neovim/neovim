@@ -612,7 +612,15 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
 
       feed("<esc>")
-      -- replacing with escaped characters
+      -- replacing with expression register
+      feed([[:%s/b/\=5+5]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with backslash
       feed([[:%s/b/\\]])
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
@@ -620,8 +628,24 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
 
       feed("<esc>")
-      -- replacing with expression register
-      feed([[:%s/b/\=5+5]])
+      -- replacing with backslash from expression register
+      feed([[:%s/b/\='\']])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with backslash followed by another character
+      feed([[:%s/b/\\!]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with backslash followed by another character from expression register
+      feed([[:%s/b/\='\!']])
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 };
         { "test1", "bytes", 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 };

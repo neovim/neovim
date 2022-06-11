@@ -1737,10 +1737,6 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
   static char_u *eval_result = NULL;
   bool copy = flags & REGSUB_COPY;
 
-  // We need to keep track of how many backslashes we escape, so that the byte
-  // counts for `extmark_splice` are correct.
-  int num_escaped = 0;
-
   // Be paranoid...
   if ((source == NULL && expr == NULL) || dest == NULL) {
     emsg(_(e_null));
@@ -1928,7 +1924,6 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
           // later.  Used to insert a literal CR.
           default:
             if (flags & REGSUB_BACKSLASH) {
-              num_escaped += 1;
               if (copy) {
                 if (dst + 1 > dest + destlen) {
                   iemsg("vim_regsub_both(): not enough space");
@@ -2096,7 +2091,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
   }
 
 exit:
-  return (int)((dst - dest) + 1 - num_escaped);
+  return (int)((dst - dest) + 1);
 }
 
 /*
