@@ -75,6 +75,7 @@ return {
   };
   runtime = {
     "is_lua";
+    "do_source";
   };
   eval_statusline = {
     "winid";
