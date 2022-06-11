@@ -8,6 +8,23 @@ local M = {}
 
 -- FIXME: DOC: Expose in vimdocs
 
+--@private
+--- Translates LSP MessageType to log.levels
+--@param message_type integer LSP MessageType
+--@return integer One of log.levels
+--see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#messageType
+local function to_lsp_log(message_type)
+  if message_type == protocol.MessageType.Error then
+    return log.levels.ERROR
+  elseif message_type == protocol.MessageType.Warning then
+    return log.levels.WARN
+  elseif message_type == protocol.MessageType.Info or message_type == protocol.MessageType.Log then
+    return log.levels.INFO
+  else
+    return log.levels.DEBUG
+  end
+end
+
 ---@private
 --- Writes to error buffer.
 ---@param ... (table of strings) Will be concatenated before being written
@@ -468,15 +485,8 @@ M['window/logMessage'] = function(_, result, ctx, _)
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
     err_message('LSP[', client_name, '] client has shut down after sending ', message)
-  end
-  if message_type == protocol.MessageType.Error then
-    log.error(message)
-  elseif message_type == protocol.MessageType.Warning then
-    log.warn(message)
-  elseif message_type == protocol.MessageType.Info or message_type == protocol.MessageType.Log then
-    log.info(message)
   else
-    log.debug(message)
+    vim.notify(string.format('LSP[%s] %s\n', client_name, message), to_lsp_log(message_type))
   end
   return result
 end
@@ -490,12 +500,8 @@ M['window/showMessage'] = function(_, result, ctx, _)
   local client_name = client and client.name or string.format('id=%d', client_id)
   if not client then
     err_message('LSP[', client_name, '] client has shut down after sending ', message)
-  end
-  if message_type == protocol.MessageType.Error then
-    err_message('LSP[', client_name, '] ', message)
   else
-    local message_type_name = protocol.MessageType[message_type]
-    api.nvim_out_write(string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message))
+    vim.notify(string.format('LSP[%s] %s\n', client_name, message), to_lsp_log(message_type))
   end
   return result
 end
