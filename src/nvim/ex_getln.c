@@ -2325,19 +2325,9 @@ static buf_T *cmdpreview_open_buf(void)
 static win_T *cmdpreview_open_win(buf_T *cmdpreview_buf)
 {
   win_T *save_curwin = curwin;
-  bool win_found = false;
 
-  // Try to find an existing preview window.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == cmdpreview_buf) {
-      win_enter(wp, false);
-      win_found = true;
-      break;
-    }
-  }
-
-  // If an existing window is not found, create one.
-  if (!win_found && win_split((int)p_cwh, WSP_BOT) == FAIL) {
+  // Open preview window.
+  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     return NULL;
   }
 
@@ -2459,7 +2449,8 @@ static void cmdpreview_show(CommandLineState *s)
   // If inccommand=split and preview callback returns 2, open preview window.
   if (icm_split && cmdpreview_type == 2
       && (cmdpreview_win = cmdpreview_open_win(cmdpreview_buf)) == NULL) {
-    abort();
+    // If there's not enough room to open the preview window, just preview without the window.
+    cmdpreview_type = 1;
   }
 
   // If preview callback is nonzero, update screen now.

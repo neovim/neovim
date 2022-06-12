@@ -2051,6 +2051,16 @@ describe("'inccommand' split windows", function()
     end
   end)
 
+  it("don't open if there's not enough room", function()
+    refresh()
+    screen:try_resize(40, 3)
+    feed("gg:%s/tw")
+    screen:expect([[
+      Inc substitution on                     |
+      {12:tw}o lines                               |
+      :%s/tw^                                  |
+    ]])
+  end)
 end)
 
 describe("'inccommand' with 'gdefault'", function()
