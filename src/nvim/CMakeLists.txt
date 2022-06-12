@@ -804,9 +804,9 @@ foreach(sfile ${LINT_NVIM_SOURCES})
 endforeach()
 add_custom_target(lintc DEPENDS ${LINT_TARGETS})
 
-def_cmd_target(lintcun ${UNCRUSTIFY_PRG} UNCRUSTIFY_PRG false)  # Non-fatal so that "lintc" target can depend on it.
+def_cmd_target(lintuncrustify ${UNCRUSTIFY_PRG} UNCRUSTIFY_PRG false)  # Non-fatal so that "lintc" target can depend on it.
 if(UNCRUSTIFY_PRG)
-  add_custom_command(OUTPUT lintcun-cmd APPEND
+  add_custom_command(OUTPUT lintuncrustify-cmd APPEND
     COMMAND ${CMAKE_COMMAND}
       -DUNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
       -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
@@ -819,7 +819,7 @@ add_custom_target(
   COMMAND
     ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} ${LINT_NVIM_REL_SOURCES}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE} lintcun
+  DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE} lintuncrustify
 )
 
 add_custom_target(generated-sources DEPENDS
