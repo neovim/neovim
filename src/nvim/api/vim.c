@@ -1465,21 +1465,6 @@ void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
   nvim_buf_del_keymap(channel_id, -1, mode, lhs, err);
 }
 
-/// Gets a map of global (non-buffer-local) Ex commands.
-///
-/// Currently only |user-commands| are supported, not builtin Ex commands.
-///
-/// @param  opts  Optional parameters. Currently only supports
-///               {"builtin":false}
-/// @param[out]  err   Error details, if any.
-///
-/// @returns Map of maps describing commands.
-Dictionary nvim_get_commands(Dict(get_commands) *opts, Error *err)
-  FUNC_API_SINCE(4)
-{
-  return nvim_buf_get_commands(-1, opts, err);
-}
-
 /// Returns a 2-tuple (Array), where item 0 is the current channel id and item
 /// 1 is the |api-metadata| map (Dictionary).
 ///
@@ -2268,59 +2253,4 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   PUT(result, "str", CSTR_TO_OBJ((char *)buf));
 
   return result;
-}
-
-/// Create a new user command |user-commands|
-///
-/// {name} is the name of the new command. The name must begin with an uppercase letter.
-///
-/// {command} is the replacement text or Lua function to execute.
-///
-/// Example:
-/// <pre>
-///    :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
-///    :SayHello
-///    Hello world!
-/// </pre>
-///
-/// @param  name    Name of the new user command. Must begin with an uppercase letter.
-/// @param  command Replacement command to execute when this user command is executed. When called
-///                 from Lua, the command can also be a Lua function. The function is called with a
-///                 single table argument that contains the following keys:
-///                 - args: (string) The args passed to the command, if any |<args>|
-///                 - fargs: (table) The args split by unescaped whitespace (when more than one
-///                 argument is allowed), if any |<f-args>|
-///                 - bang: (boolean) "true" if the command was executed with a ! modifier |<bang>|
-///                 - line1: (number) The starting line of the command range |<line1>|
-///                 - line2: (number) The final line of the command range |<line2>|
-///                 - range: (number) The number of items in the command range: 0, 1, or 2 |<range>|
-///                 - count: (number) Any count supplied |<count>|
-///                 - reg: (string) The optional register, if specified |<reg>|
-///                 - mods: (string) Command modifiers, if any |<mods>|
-///                 - smods: (table) Command modifiers in a structured format. Has the same
-///                 structure as the "mods" key of |nvim_parse_cmd()|.
-/// @param  opts    Optional command attributes. See |command-attributes| for more details. To use
-///                 boolean attributes (such as |:command-bang| or |:command-bar|) set the value to
-///                 "true". In addition to the string options listed in |:command-complete|, the
-///                 "complete" key also accepts a Lua function which works like the "customlist"
-///                 completion mode |:command-completion-customlist|. Additional parameters:
-///                 - desc: (string) Used for listing the command when a Lua function is used for
-///                                  {command}.
-///                 - force: (boolean, default true) Override any previous definition.
-///                 - preview: (function) Preview callback for 'inccommand' |:command-preview|
-/// @param[out] err Error details, if any.
-void nvim_create_user_command(String name, Object command, Dict(user_command) *opts, Error *err)
-  FUNC_API_SINCE(9)
-{
-  create_user_command(name, command, opts, 0, err);
-}
-
-/// Delete a user-defined command.
-///
-/// @param  name    Name of the command to delete.
-/// @param[out] err Error details, if any.
-void nvim_del_user_command(String name, Error *err)
-  FUNC_API_SINCE(9)
-{
-  nvim_buf_del_user_command(-1, name, err);
 }

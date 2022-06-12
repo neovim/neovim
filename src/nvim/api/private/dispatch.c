@@ -23,6 +23,7 @@
 // ===========================================================================
 #include "nvim/api/autocmd.h"
 #include "nvim/api/buffer.h"
+#include "nvim/api/command.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/options.h"
 #include "nvim/api/tabpage.h"

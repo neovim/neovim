@@ -90,9 +90,6 @@ static bool ex_pressedreturn = false;
 
 garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 
-// Whether a command index indicates a user command.
-#define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
-
 // Struct for storing a line inside a while/for loop
 typedef struct {
   char *line;            // command line

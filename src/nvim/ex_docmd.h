@@ -17,6 +17,9 @@
 #define VALID_PATH              1
 #define VALID_HEAD              2
 
+// Whether a command index indicates a user command.
+#define IS_USER_CMDIDX(idx) ((int)(idx) < 0)
+
 // Structure used to save the current state.  Used when executing Normal mode
 // commands while in any other mode.
 typedef struct {
