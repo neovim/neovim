@@ -4142,6 +4142,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           // That is Vi compatible.
           for (p1 = new_end; *p1; p1++) {
             if (p1[0] == '\\' && p1[1] != NUL) {            // remove backslash
+              sublen--;  // correct the byte counts for extmark_splice()
               STRMOVE(p1, p1 + 1);
             } else if (*p1 == CAR) {
               if (u_inssub(lnum) == OK) {             // prepare for undo

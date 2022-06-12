@@ -152,7 +152,6 @@ func Run_SubCmd_Tests(tests)
   for t in a:tests
     let start = line('.') + 1
     let end = start + len(t[2]) - 1
-    " TODO: why is there a one second delay the first time we get here?
     exe "normal o" . t[0]
     call cursor(start, 1)
     exe t[1]
@@ -187,7 +186,8 @@ func Test_sub_cmd_1()
 	      \ ['sSs', 's/S/\c/', ['scs']],
 	      \ ['tTt', "s/T/\<C-V>\<C-J>/", ["t\<C-V>\<C-J>t"]],
 	      \ ['U', 's/U/\L\uuUu\l\EU/', ['UuuU']],
-	      \ ['V', 's/V/\U\lVvV\u\Ev/', ['vVVv']]
+	      \ ['V', 's/V/\U\lVvV\u\Ev/', ['vVVv']],
+	      \ ['\', 's/\\/\\\\/', ['\\']]
 	      \ ]
   call Run_SubCmd_Tests(tests)
 endfunc
@@ -218,7 +218,8 @@ func Test_sub_cmd_2()
 	      \ ['sSs', 's/S/\c/', ['scs']],
 	      \ ['tTt', "s/T/\<C-V>\<C-J>/", ["t\<C-V>\<C-J>t"]],
 	      \ ['U', 's/U/\L\uuUu\l\EU/', ['UuuU']],
-	      \ ['V', 's/V/\U\lVvV\u\Ev/', ['vVVv']]
+	      \ ['V', 's/V/\U\lVvV\u\Ev/', ['vVVv']],
+	      \ ['\', 's/\\/\\\\/', ['\\']]
 	      \ ]
   call Run_SubCmd_Tests(tests)
 endfunc
@@ -672,10 +673,11 @@ func Test_nocatch_sub_failure_handling()
   endfunc
   new
   call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
-  %s/aaa/\=Foo()/g
+  " need silent! to avoid a delay when entering Insert mode
+  silent! %s/aaa/\=Foo()/g
   call assert_equal(['1 0', '2 0', '3 0'], getline(1, 3))
 
-  " Trow without try-catch causes abort after the first line.
+  " Throw without try-catch causes abort after the first line.
   " We cannot test this, since it would stop executing the test script.
 
   " try/catch does not result in any changes
