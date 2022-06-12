@@ -521,7 +521,7 @@ void ui_flush(void)
     api_free_array(style);
     pending_mode_info_update = false;
   }
-  if (pending_mode_update) {
+  if (pending_mode_update && !starting) {
     char *full_name = shape_table[ui_mode_idx].full_name;
     ui_call_mode_change(cstr_as_string(full_name), ui_mode_idx);
     pending_mode_update = false;
