@@ -340,6 +340,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       else
         msg = msg .. string.format(' with error message: %s', pid)
       end
+      log.warn(msg)
       vim.notify(msg, vim.log.levels.WARN)
       return
     end
