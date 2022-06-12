@@ -252,9 +252,8 @@ describe('lua buffer event callbacks: on_lines', function()
     eq(2, meths.win_get_cursor(0)[1])
   end)
 
-  it('does not SEGFAULT when calling win_findbuf in on_detach', function()
-
-    exec_lua[[
+  it('does not SEGFAULT when accessing window buffer info in on_detach #14998', function()
+    local code = [[
       local buf = vim.api.nvim_create_buf(false, false)
 
       vim.cmd"split"
@@ -262,12 +261,18 @@ describe('lua buffer event callbacks: on_lines', function()
 
       vim.api.nvim_buf_attach(buf, false, {
         on_detach = function(_, buf)
+          vim.fn.tabpagebuflist()
           vim.fn.win_findbuf(buf)
         end
       })
     ]]
 
+    exec_lua(code)
     command("q!")
+    helpers.assert_alive()
+
+    exec_lua(code)
+    command("bd!")
     helpers.assert_alive()
   end)
 
