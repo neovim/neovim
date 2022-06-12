@@ -76,29 +76,6 @@ if(UNIX)
     CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR}
     ${DEPLOYMENT_TARGET})
 
-elseif(MINGW AND CMAKE_CROSSCOMPILING)
-
-  # Build luajit for the host
-  BuildLuaJit(TARGET luajit_host
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${INSTALLCMD_UNIX}
-      CC=${HOST_C_COMPILER} PREFIX=${HOSTDEPS_INSTALL_DIR})
-
-  # Build luajit for the target
-  BuildLuaJit(
-    # Similar to Unix + cross - fPIC
-    INSTALL_COMMAND
-      ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR}
-        BUILDMODE=static install
-        TARGET_SYS=${CMAKE_SYSTEM_NAME}
-        CROSS=${CROSS_TARGET}-
-        HOST_CC=${HOST_C_COMPILER} HOST_CFLAGS=${HOST_C_FLAGS}
-        HOST_LDFLAGS=${HOST_EXE_LINKER_FLAGS}
-        FILE_T=luajit.exe
-        Q=
-        INSTALL_TSYMNAME=luajit.exe)
-
 elseif(MINGW)
 
   if(CMAKE_GENERATOR MATCHES "Ninja")
