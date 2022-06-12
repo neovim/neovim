@@ -95,6 +95,8 @@ CONFIG = {
         'section_order': [
             'vim.c',
             'vimscript.c',
+            'command.c',
+            'options.c',
             'buffer.c',
             'extmark.c',
             'window.c',

@@ -8,6 +8,7 @@
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/charset.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/extmark.h"
 #include "nvim/highlight_group.h"
@@ -1032,4 +1033,155 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Erro
   return;
 error:
   decor_provider_clear(p);
+}
+
+/// Gets the line and column of an extmark.
+///
+/// Extmarks may be queried by position, name or even special names
+/// in the future such as "cursor".
+///
+/// @param[out] lnum extmark line
+/// @param[out] colnr extmark column
+///
+/// @return true if the extmark was found, else false
+static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, int *row,
+                                       colnr_T *col, Error *err)
+{
+  // Check if it is mark id
+  if (obj.type == kObjectTypeInteger) {
+    Integer id = obj.data.integer;
+    if (id == 0) {
+      *row = 0;
+      *col = 0;
+      return true;
+    } else if (id == -1) {
+      *row = MAXLNUM;
+      *col = MAXCOL;
+      return true;
+    } else if (id < 0) {
+      api_set_error(err, kErrorTypeValidation, "Mark id must be positive");
+      return false;
+    }
+
+    ExtmarkInfo extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
+    if (extmark.row >= 0) {
+      *row = extmark.row;
+      *col = extmark.col;
+      return true;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "No mark with requested id");
+      return false;
+    }
+
+    // Check if it is a position
+  } else if (obj.type == kObjectTypeArray) {
+    Array pos = obj.data.array;
+    if (pos.size != 2
+        || pos.items[0].type != kObjectTypeInteger
+        || pos.items[1].type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Position must have 2 integer elements");
+      return false;
+    }
+    Integer pos_row = pos.items[0].data.integer;
+    Integer pos_col = pos.items[1].data.integer;
+    *row = (int)(pos_row >= 0 ? pos_row  : MAXLNUM);
+    *col = (colnr_T)(pos_col >= 0 ? pos_col : MAXCOL);
+    return true;
+  } else {
+    api_set_error(err, kErrorTypeValidation,
+                  "Position must be a mark id Integer or position Array");
+    return false;
+  }
+}
+// adapted from sign.c:sign_define_init_text.
+// TODO(lewis6991): Consider merging
+static int init_sign_text(char **sign_text, char *text)
+{
+  char *s;
+
+  char *endp = text + (int)STRLEN(text);
+
+  // Count cells and check for non-printable chars
+  int cells = 0;
+  for (s = text; s < endp; s += utfc_ptr2len(s)) {
+    if (!vim_isprintc(utf_ptr2char(s))) {
+      break;
+    }
+    cells += utf_ptr2cells(s);
+  }
+  // Currently must be empty, one or two display cells
+  if (s != endp || cells > 2) {
+    return FAIL;
+  }
+  if (cells < 1) {
+    return OK;
+  }
+
+  // Allocate one byte more if we need to pad up
+  // with a space.
+  size_t len = (size_t)(endp - text + ((cells == 1) ? 1 : 0));
+  *sign_text = xstrnsave(text, len);
+
+  if (cells == 1) {
+    STRCPY(*sign_text + len - 1, " ");
+  }
+
+  return OK;
+}
+
+VirtText parse_virt_text(Array chunks, Error *err, int *width)
+{
+  VirtText virt_text = KV_INITIAL_VALUE;
+  int w = 0;
+  for (size_t i = 0; i < chunks.size; i++) {
+    if (chunks.items[i].type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Chunk is not an array");
+      goto free_exit;
+    }
+    Array chunk = chunks.items[i].data.array;
+    if (chunk.size == 0 || chunk.size > 2
+        || chunk.items[0].type != kObjectTypeString) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Chunk is not an array with one or two strings");
+      goto free_exit;
+    }
+
+    String str = chunk.items[0].data.string;
+
+    int hl_id = 0;
+    if (chunk.size == 2) {
+      Object hl = chunk.items[1];
+      if (hl.type == kObjectTypeArray) {
+        Array arr = hl.data.array;
+        for (size_t j = 0; j < arr.size; j++) {
+          hl_id = object_to_hl_id(arr.items[j], "virt_text highlight", err);
+          if (ERROR_SET(err)) {
+            goto free_exit;
+          }
+          if (j < arr.size - 1) {
+            kv_push(virt_text, ((VirtTextChunk){ .text = NULL,
+                                                 .hl_id = hl_id }));
+          }
+        }
+      } else {
+        hl_id = object_to_hl_id(hl, "virt_text highlight", err);
+        if (ERROR_SET(err)) {
+          goto free_exit;
+        }
+      }
+    }
+
+    char *text = transstr(str.size > 0 ? str.data : "", false);  // allocates
+    w += (int)mb_string2cells(text);
+
+    kv_push(virt_text, ((VirtTextChunk){ .text = text, .hl_id = hl_id }));
+  }
+
+  *width = w;
+  return virt_text;
+
+free_exit:
+  clear_virttext(&virt_text);
+  return virt_text;
 }

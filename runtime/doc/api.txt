@@ -708,67 +708,6 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
                 See also: ~
                     buf_open_scratch
 
-                                                  *nvim_create_user_command()*
-nvim_create_user_command({name}, {command}, {*opts})
-                Create a new user command |user-commands|
-
-                {name} is the name of the new command. The name must begin
-                with an uppercase letter.
-
-                {command} is the replacement text or Lua function to execute.
-
-                Example: >
-                   :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
-                   :SayHello
-                   Hello world!
-<
-
-                Parameters: ~
-                    {name}     Name of the new user command. Must begin with
-                               an uppercase letter.
-                    {command}  Replacement command to execute when this user
-                               command is executed. When called from Lua, the
-                               command can also be a Lua function. The
-                               function is called with a single table argument
-                               that contains the following keys:
-                               • args: (string) The args passed to the
-                                 command, if any |<args>|
-                               • fargs: (table) The args split by unescaped
-                                 whitespace (when more than one argument is
-                                 allowed), if any |<f-args>|
-                               • bang: (boolean) "true" if the command was
-                                 executed with a ! modifier |<bang>|
-                               • line1: (number) The starting line of the
-                                 command range |<line1>|
-                               • line2: (number) The final line of the command
-                                 range |<line2>|
-                               • range: (number) The number of items in the
-                                 command range: 0, 1, or 2 |<range>|
-                               • count: (number) Any count supplied |<count>|
-                               • reg: (string) The optional register, if
-                                 specified |<reg>|
-                               • mods: (string) Command modifiers, if any
-                                 |<mods>|
-                               • smods: (table) Command modifiers in a
-                                 structured format. Has the same structure as
-                                 the "mods" key of |nvim_parse_cmd()|.
-                    {opts}     Optional command attributes. See
-                               |command-attributes| for more details. To use
-                               boolean attributes (such as |:command-bang| or
-                               |:command-bar|) set the value to "true". In
-                               addition to the string options listed in
-                               |:command-complete|, the "complete" key also
-                               accepts a Lua function which works like the
-                               "customlist" completion mode
-                               |:command-completion-customlist|. Additional
-                               parameters:
-                               • desc: (string) Used for listing the command
-                                 when a Lua function is used for {command}.
-                               • force: (boolean, default true) Override any
-                                 previous definition.
-                               • preview: (function) Preview callback for
-                                 'inccommand' |:command-preview|
-
 nvim_del_current_line()                              *nvim_del_current_line()*
                 Deletes the current line.
 
@@ -799,12 +738,6 @@ nvim_del_mark({name})                                        *nvim_del_mark()*
                 See also: ~
                     |nvim_buf_del_mark()|
                     |nvim_get_mark()|
-
-nvim_del_user_command({name})                        *nvim_del_user_command()*
-                Delete a user-defined command.
-
-                Parameters: ~
-                    {name}  Name of the command to delete.
 
 nvim_del_var({name})                                          *nvim_del_var()*
                 Removes a global (g:) variable.
@@ -923,15 +856,6 @@ nvim_feedkeys({keys}, {mode}, {escape_ks})                   *nvim_feedkeys()*
                     feedkeys()
                     vim_strsave_escape_ks
 
-nvim_get_all_options_info()                      *nvim_get_all_options_info()*
-                Gets the option information for all options.
-
-                The dictionary has the full option names as keys and option
-                metadata dictionaries as detailed at |nvim_get_option_info|.
-
-                Return: ~
-                    dictionary of all options
-
 nvim_get_api_info()                                      *nvim_get_api_info()*
                 Returns a 2-tuple (Array), where item 0 is the current channel
                 id and item 1 is the |api-metadata| map (Dictionary).
@@ -995,19 +919,6 @@ nvim_get_color_map()                                    *nvim_get_color_map()*
 
                 Return: ~
                     Map of color names and RGB values.
-
-nvim_get_commands({*opts})                               *nvim_get_commands()*
-                Gets a map of global (non-buffer-local) Ex commands.
-
-                Currently only |user-commands| are supported, not builtin Ex
-                commands.
-
-                Parameters: ~
-                    {opts}  Optional parameters. Currently only supports
-                            {"builtin":false}
-
-                Return: ~
-                    Map of maps describing commands.
 
 nvim_get_context({*opts})                                 *nvim_get_context()*
                 Gets a map of the current editor state.
@@ -1118,56 +1029,6 @@ nvim_get_mode()                                              *nvim_get_mode()*
 
                 Attributes: ~
                     |api-fast|
-
-nvim_get_option({name})                                    *nvim_get_option()*
-                Gets the global value of an option.
-
-                Parameters: ~
-                    {name}  Option name
-
-                Return: ~
-                    Option value (global)
-
-nvim_get_option_info({name})                          *nvim_get_option_info()*
-                Gets the option information for one option
-
-                Resulting dictionary has keys:
-                • name: Name of the option (like 'filetype')
-                • shortname: Shortened name of the option (like 'ft')
-                • type: type of option ("string", "number" or "boolean")
-                • default: The default value for the option
-                • was_set: Whether the option was set.
-                • last_set_sid: Last set script id (if any)
-                • last_set_linenr: line number where option was set
-                • last_set_chan: Channel where option was set (0 for local)
-                • scope: one of "global", "win", or "buf"
-                • global_local: whether win or buf option has a global value
-                • commalist: List of comma separated values
-                • flaglist: List of single char flags
-
-                Parameters: ~
-                    {name}  Option name
-
-                Return: ~
-                    Option Information
-
-nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
-                Gets the value of an option. The behavior of this function
-                matches that of |:set|: the local value of an option is
-                returned if it exists; otherwise, the global value is
-                returned. Local values always correspond to the current buffer
-                or window. To get a buffer-local or window-local option for a
-                specific buffer or window, use |nvim_buf_get_option()| or
-                |nvim_win_get_option()|.
-
-                Parameters: ~
-                    {name}  Option name
-                    {opts}  Optional parameters
-                            • scope: One of 'global' or 'local'. Analogous to
-                              |:setglobal| and |:setlocal|, respectively.
-
-                Return: ~
-                    Option value
 
 nvim_get_proc({pid})                                         *nvim_get_proc()*
                 Gets info describing process `pid`.
@@ -1670,33 +1531,6 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                             that takes a Lua function to call when the mapping
                             is executed.
 
-nvim_set_option({name}, {value})                           *nvim_set_option()*
-                Sets the global value of an option.
-
-                Parameters: ~
-                    {name}   Option name
-                    {value}  New option value
-
-                                                     *nvim_set_option_value()*
-nvim_set_option_value({name}, {value}, {*opts})
-                Sets the value of an option. The behavior of this function
-                matches that of |:set|: for global-local options, both the
-                global and local value are set unless otherwise specified with
-                {scope}.
-
-                Note the options {win} and {buf} cannot be used together.
-
-                Parameters: ~
-                    {name}   Option name
-                    {value}  New option value
-                    {opts}   Optional parameters
-                             • scope: One of 'global' or 'local'. Analogous to
-                               |:setglobal| and |:setlocal|, respectively.
-                             • win: |window-ID|. Used for setting window local
-                               option.
-                             • buf: Buffer number. Used for setting buffer
-                               local option.
-
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
                 Sets a global (g:) variable.
 
@@ -1770,36 +1604,6 @@ nvim_call_function({fn}, {args})                        *nvim_call_function()*
                 Return: ~
                     Result of the function call
 
-nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
-                Executes an Ex command.
-
-                Unlike |nvim_command()| this command takes a structured
-                Dictionary instead of a String. This allows for easier
-                construction and manipulation of an Ex command. This also
-                allows for things such as having spaces inside a command
-                argument, expanding filenames in a command that otherwise
-                doesn't expand filenames, etc.
-
-                On execution error: fails with VimL error, updates v:errmsg.
-
-                Parameters: ~
-                    {cmd}   Command to execute. Must be a Dictionary that can
-                            contain the same values as the return value of
-                            |nvim_parse_cmd()| except "addr", "nargs" and
-                            "nextcmd" which are ignored if provided. All
-                            values except for "cmd" are optional.
-                    {opts}  Optional parameters.
-                            • output: (boolean, default false) Whether to
-                              return command output.
-
-                Return: ~
-                    Command output (non-error, non-shell |:!|) if `output` is
-                    true, else empty string.
-
-                See also: ~
-                    |nvim_exec()|
-                    |nvim_command()|
-
 nvim_command({command})                                       *nvim_command()*
                 Executes an Ex command.
 
@@ -1849,76 +1653,6 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
                     |execute()|
                     |nvim_command()|
                     |nvim_cmd()|
-
-nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
-                Parse command line.
-
-                Doesn't check the validity of command arguments.
-
-                Attributes: ~
-                    |api-fast|
-
-                Parameters: ~
-                    {str}   Command line string to parse. Cannot contain "\n".
-                    {opts}  Optional parameters. Reserved for future use.
-
-                Return: ~
-                    Dictionary containing command information, with these
-                    keys:
-                    • cmd: (string) Command name.
-                    • range: (array) Command <range>. Can have 0-2 elements
-                      depending on how many items the range contains. Has no
-                      elements if command doesn't accept a range or if no
-                      range was specified, one element if only a single range
-                      item was specified and two elements if both range items
-                      were specified.
-                    • count: (number) Any |<count>| that was supplied to the
-                      command. -1 if command cannot take a count.
-                    • reg: (number) The optional command |<register>|, if
-                      specified. Empty string if not specified or if command
-                      cannot take a register.
-                    • bang: (boolean) Whether command contains a |<bang>| (!)
-                      modifier.
-                    • args: (array) Command arguments.
-                    • addr: (string) Value of |:command-addr|. Uses short
-                      name.
-                    • nargs: (string) Value of |:command-nargs|.
-                    • nextcmd: (string) Next command if there are multiple
-                      commands separated by a |:bar|. Empty if there isn't a
-                      next command.
-                    • magic: (dictionary) Which characters have special
-                      meaning in the command arguments.
-                      • file: (boolean) The command expands filenames. Which
-                        means characters such as "%", "#" and wildcards are
-                        expanded.
-                      • bar: (boolean) The "|" character is treated as a
-                        command separator and the double quote character (")
-                        is treated as the start of a comment.
-
-                    • mods: (dictionary) |:command-modifiers|.
-                      • silent: (boolean) |:silent|.
-                      • emsg_silent: (boolean) |:silent!|.
-                      • sandbox: (boolean) |:sandbox|.
-                      • noautocmd: (boolean) |:noautocmd|.
-                      • browse: (boolean) |:browse|.
-                      • confirm: (boolean) |:confirm|.
-                      • hide: (boolean) |:hide|.
-                      • keepalt: (boolean) |:keepalt|.
-                      • keepjumps: (boolean) |:keepjumps|.
-                      • keepmarks: (boolean) |:keepmarks|.
-                      • keeppatterns: (boolean) |:keeppatterns|.
-                      • lockmarks: (boolean) |:lockmarks|.
-                      • noswapfile: (boolean) |:noswapfile|.
-                      • tab: (integer) |:tab|.
-                      • verbose: (integer) |:verbose|. -1 when omitted.
-                      • vertical: (boolean) |:vertical|.
-                      • split: (string) Split modifier string, is an empty
-                        string when there's no split modifier. If there is a
-                        split modifier it can be one of:
-                        • "aboveleft": |:aboveleft|.
-                        • "belowright": |:belowright|.
-                        • "topleft": |:topleft|.
-                        • "botright": |:botright|.
 
                                                      *nvim_parse_expression()*
 nvim_parse_expression({expr}, {flags}, {highlight})
@@ -2017,6 +1751,350 @@ nvim_parse_expression({expr}, {flags}, {highlight})
                         nodes.
                       • "svalue": String, value for "SingleQuotedString" and
                         "DoubleQuotedString" nodes.
+
+
+==============================================================================
+Command Functions                                                *api-command*
+
+                                              *nvim_buf_create_user_command()*
+nvim_buf_create_user_command({buffer}, {name}, {command}, {*opts})
+                Create a new user command |user-commands| in the given buffer.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer.
+
+                See also: ~
+                    nvim_create_user_command
+
+                                                 *nvim_buf_del_user_command()*
+nvim_buf_del_user_command({buffer}, {name})
+                Delete a buffer-local user-defined command.
+
+                Only commands created with |:command-buffer| or
+                |nvim_buf_create_user_command()| can be deleted with this
+                function.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer.
+                    {name}    Name of the command to delete.
+
+nvim_buf_get_commands({buffer}, {*opts})             *nvim_buf_get_commands()*
+                Gets a map of buffer-local |user-commands|.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {opts}    Optional parameters. Currently not used.
+
+                Return: ~
+                    Map of maps describing commands.
+
+nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
+                Executes an Ex command.
+
+                Unlike |nvim_command()| this command takes a structured
+                Dictionary instead of a String. This allows for easier
+                construction and manipulation of an Ex command. This also
+                allows for things such as having spaces inside a command
+                argument, expanding filenames in a command that otherwise
+                doesn't expand filenames, etc.
+
+                On execution error: fails with VimL error, updates v:errmsg.
+
+                Parameters: ~
+                    {cmd}   Command to execute. Must be a Dictionary that can
+                            contain the same values as the return value of
+                            |nvim_parse_cmd()| except "addr", "nargs" and
+                            "nextcmd" which are ignored if provided. All
+                            values except for "cmd" are optional.
+                    {opts}  Optional parameters.
+                            • output: (boolean, default false) Whether to
+                              return command output.
+
+                Return: ~
+                    Command output (non-error, non-shell |:!|) if `output` is
+                    true, else empty string.
+
+                See also: ~
+                    |nvim_exec()|
+                    |nvim_command()|
+
+                                                  *nvim_create_user_command()*
+nvim_create_user_command({name}, {command}, {*opts})
+                Create a new user command |user-commands|
+
+                {name} is the name of the new command. The name must begin
+                with an uppercase letter.
+
+                {command} is the replacement text or Lua function to execute.
+
+                Example: >
+                   :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {})
+                   :SayHello
+                   Hello world!
+<
+
+                Parameters: ~
+                    {name}     Name of the new user command. Must begin with
+                               an uppercase letter.
+                    {command}  Replacement command to execute when this user
+                               command is executed. When called from Lua, the
+                               command can also be a Lua function. The
+                               function is called with a single table argument
+                               that contains the following keys:
+                               • args: (string) The args passed to the
+                                 command, if any |<args>|
+                               • fargs: (table) The args split by unescaped
+                                 whitespace (when more than one argument is
+                                 allowed), if any |<f-args>|
+                               • bang: (boolean) "true" if the command was
+                                 executed with a ! modifier |<bang>|
+                               • line1: (number) The starting line of the
+                                 command range |<line1>|
+                               • line2: (number) The final line of the command
+                                 range |<line2>|
+                               • range: (number) The number of items in the
+                                 command range: 0, 1, or 2 |<range>|
+                               • count: (number) Any count supplied |<count>|
+                               • reg: (string) The optional register, if
+                                 specified |<reg>|
+                               • mods: (string) Command modifiers, if any
+                                 |<mods>|
+                               • smods: (table) Command modifiers in a
+                                 structured format. Has the same structure as
+                                 the "mods" key of |nvim_parse_cmd()|.
+                    {opts}     Optional command attributes. See
+                               |command-attributes| for more details. To use
+                               boolean attributes (such as |:command-bang| or
+                               |:command-bar|) set the value to "true". In
+                               addition to the string options listed in
+                               |:command-complete|, the "complete" key also
+                               accepts a Lua function which works like the
+                               "customlist" completion mode
+                               |:command-completion-customlist|. Additional
+                               parameters:
+                               • desc: (string) Used for listing the command
+                                 when a Lua function is used for {command}.
+                               • force: (boolean, default true) Override any
+                                 previous definition.
+                               • preview: (function) Preview callback for
+                                 'inccommand' |:command-preview|
+
+nvim_del_user_command({name})                        *nvim_del_user_command()*
+                Delete a user-defined command.
+
+                Parameters: ~
+                    {name}  Name of the command to delete.
+
+nvim_get_commands({*opts})                               *nvim_get_commands()*
+                Gets a map of global (non-buffer-local) Ex commands.
+
+                Currently only |user-commands| are supported, not builtin Ex
+                commands.
+
+                Parameters: ~
+                    {opts}  Optional parameters. Currently only supports
+                            {"builtin":false}
+
+                Return: ~
+                    Map of maps describing commands.
+
+nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
+                Parse command line.
+
+                Doesn't check the validity of command arguments.
+
+                Attributes: ~
+                    |api-fast|
+
+                Parameters: ~
+                    {str}   Command line string to parse. Cannot contain "\n".
+                    {opts}  Optional parameters. Reserved for future use.
+
+                Return: ~
+                    Dictionary containing command information, with these
+                    keys:
+                    • cmd: (string) Command name.
+                    • range: (array) Command <range>. Can have 0-2 elements
+                      depending on how many items the range contains. Has no
+                      elements if command doesn't accept a range or if no
+                      range was specified, one element if only a single range
+                      item was specified and two elements if both range items
+                      were specified.
+                    • count: (number) Any |<count>| that was supplied to the
+                      command. -1 if command cannot take a count.
+                    • reg: (number) The optional command |<register>|, if
+                      specified. Empty string if not specified or if command
+                      cannot take a register.
+                    • bang: (boolean) Whether command contains a |<bang>| (!)
+                      modifier.
+                    • args: (array) Command arguments.
+                    • addr: (string) Value of |:command-addr|. Uses short
+                      name.
+                    • nargs: (string) Value of |:command-nargs|.
+                    • nextcmd: (string) Next command if there are multiple
+                      commands separated by a |:bar|. Empty if there isn't a
+                      next command.
+                    • magic: (dictionary) Which characters have special
+                      meaning in the command arguments.
+                      • file: (boolean) The command expands filenames. Which
+                        means characters such as "%", "#" and wildcards are
+                        expanded.
+                      • bar: (boolean) The "|" character is treated as a
+                        command separator and the double quote character (")
+                        is treated as the start of a comment.
+
+                    • mods: (dictionary) |:command-modifiers|.
+                      • silent: (boolean) |:silent|.
+                      • emsg_silent: (boolean) |:silent!|.
+                      • sandbox: (boolean) |:sandbox|.
+                      • noautocmd: (boolean) |:noautocmd|.
+                      • browse: (boolean) |:browse|.
+                      • confirm: (boolean) |:confirm|.
+                      • hide: (boolean) |:hide|.
+                      • keepalt: (boolean) |:keepalt|.
+                      • keepjumps: (boolean) |:keepjumps|.
+                      • keepmarks: (boolean) |:keepmarks|.
+                      • keeppatterns: (boolean) |:keeppatterns|.
+                      • lockmarks: (boolean) |:lockmarks|.
+                      • noswapfile: (boolean) |:noswapfile|.
+                      • tab: (integer) |:tab|.
+                      • verbose: (integer) |:verbose|. -1 when omitted.
+                      • vertical: (boolean) |:vertical|.
+                      • split: (string) Split modifier string, is an empty
+                        string when there's no split modifier. If there is a
+                        split modifier it can be one of:
+                        • "aboveleft": |:aboveleft|.
+                        • "belowright": |:belowright|.
+                        • "topleft": |:topleft|.
+                        • "botright": |:botright|.
+
+
+==============================================================================
+Options Functions                                                *api-options*
+
+nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
+                Gets a buffer option value
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {name}    Option name
+
+                Return: ~
+                    Option value
+
+nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
+                Sets a buffer option value. Passing 'nil' as value deletes the
+                option (only works if there's a global fallback)
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {name}    Option name
+                    {value}   Option value
+
+nvim_get_all_options_info()                      *nvim_get_all_options_info()*
+                Gets the option information for all options.
+
+                The dictionary has the full option names as keys and option
+                metadata dictionaries as detailed at |nvim_get_option_info|.
+
+                Return: ~
+                    dictionary of all options
+
+nvim_get_option({name})                                    *nvim_get_option()*
+                Gets the global value of an option.
+
+                Parameters: ~
+                    {name}  Option name
+
+                Return: ~
+                    Option value (global)
+
+nvim_get_option_info({name})                          *nvim_get_option_info()*
+                Gets the option information for one option
+
+                Resulting dictionary has keys:
+                • name: Name of the option (like 'filetype')
+                • shortname: Shortened name of the option (like 'ft')
+                • type: type of option ("string", "number" or "boolean")
+                • default: The default value for the option
+                • was_set: Whether the option was set.
+                • last_set_sid: Last set script id (if any)
+                • last_set_linenr: line number where option was set
+                • last_set_chan: Channel where option was set (0 for local)
+                • scope: one of "global", "win", or "buf"
+                • global_local: whether win or buf option has a global value
+                • commalist: List of comma separated values
+                • flaglist: List of single char flags
+
+                Parameters: ~
+                    {name}  Option name
+
+                Return: ~
+                    Option Information
+
+nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
+                Gets the value of an option. The behavior of this function
+                matches that of |:set|: the local value of an option is
+                returned if it exists; otherwise, the global value is
+                returned. Local values always correspond to the current buffer
+                or window. To get a buffer-local or window-local option for a
+                specific buffer or window, use |nvim_buf_get_option()| or
+                |nvim_win_get_option()|.
+
+                Parameters: ~
+                    {name}  Option name
+                    {opts}  Optional parameters
+                            • scope: One of 'global' or 'local'. Analogous to
+                              |:setglobal| and |:setlocal|, respectively.
+
+                Return: ~
+                    Option value
+
+nvim_set_option({name}, {value})                           *nvim_set_option()*
+                Sets the global value of an option.
+
+                Parameters: ~
+                    {name}   Option name
+                    {value}  New option value
+
+                                                     *nvim_set_option_value()*
+nvim_set_option_value({name}, {value}, {*opts})
+                Sets the value of an option. The behavior of this function
+                matches that of |:set|: for global-local options, both the
+                global and local value are set unless otherwise specified with
+                {scope}.
+
+                Note the options {win} and {buf} cannot be used together.
+
+                Parameters: ~
+                    {name}   Option name
+                    {value}  New option value
+                    {opts}   Optional parameters
+                             • scope: One of 'global' or 'local'. Analogous to
+                               |:setglobal| and |:setlocal|, respectively.
+                             • win: |window-ID|. Used for setting window local
+                               option.
+                             • buf: Buffer number. Used for setting buffer
+                               local option.
+
+nvim_win_get_option({window}, {name})                  *nvim_win_get_option()*
+                Gets a window option value
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
+                    {name}    Option name
+
+                Return: ~
+                    Option value
+
+nvim_win_set_option({window}, {name}, {value})         *nvim_win_set_option()*
+                Sets a window option value. Passing 'nil' as value deletes the
+                option(only works if there's a global fallback)
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
+                    {name}    Option name
+                    {value}   Option value
 
 
 ==============================================================================
@@ -2157,16 +2235,6 @@ nvim_buf_call({buffer}, {fun})                               *nvim_buf_call()*
                     Return value of function. NB: will deepcopy lua values
                     currently, use upvalues to send lua references in and out.
 
-                                              *nvim_buf_create_user_command()*
-nvim_buf_create_user_command({buffer}, {name}, {command}, {*opts})
-                Create a new user command |user-commands| in the given buffer.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer.
-
-                See also: ~
-                    nvim_create_user_command
-
 nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
                 Unmaps a buffer-local |mapping| for the given mode.
 
@@ -2193,18 +2261,6 @@ nvim_buf_del_mark({buffer}, {name})                      *nvim_buf_del_mark()*
                 See also: ~
                     |nvim_buf_set_mark()|
                     |nvim_del_mark()|
-
-                                                 *nvim_buf_del_user_command()*
-nvim_buf_del_user_command({buffer}, {name})
-                Delete a buffer-local user-defined command.
-
-                Only commands created with |:command-buffer| or
-                |nvim_buf_create_user_command()| can be deleted with this
-                function.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer.
-                    {name}    Name of the command to delete.
 
 nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
                 Removes a buffer-scoped (b:) variable
@@ -2252,16 +2308,6 @@ nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
 
                 Return: ~
                     `b:changedtick` value.
-
-nvim_buf_get_commands({buffer}, {*opts})             *nvim_buf_get_commands()*
-                Gets a map of buffer-local |user-commands|.
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {opts}    Optional parameters. Currently not used.
-
-                Return: ~
-                    Map of maps describing commands.
 
 nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
                 Gets a list of buffer-local |mapping| definitions.
@@ -2340,16 +2386,6 @@ nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
 
                 Return: ~
                     Integer byte offset, or -1 for unloaded buffer.
-
-nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
-                Gets a buffer option value
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {name}    Option name
-
-                Return: ~
-                    Option value
 
                                                          *nvim_buf_get_text()*
 nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
@@ -2485,15 +2521,6 @@ nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Buffer name
-
-nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
-                Sets a buffer option value. Passing 'nil' as value deletes the
-                option (only works if there's a global fallback)
-
-                Parameters: ~
-                    {buffer}  Buffer handle, or 0 for current buffer
-                    {name}    Option name
-                    {value}   Option value
 
                                                          *nvim_buf_set_text()*
 nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
@@ -2968,16 +2995,6 @@ nvim_win_get_number({window})                          *nvim_win_get_number()*
                 Return: ~
                     Window number
 
-nvim_win_get_option({window}, {name})                  *nvim_win_get_option()*
-                Gets a window option value
-
-                Parameters: ~
-                    {window}  Window handle, or 0 for current window
-                    {name}    Option name
-
-                Return: ~
-                    Option value
-
 nvim_win_get_position({window})                      *nvim_win_get_position()*
                 Gets the window position in display cells. First position is
                 zero.
@@ -3065,15 +3082,6 @@ nvim_win_set_height({window}, {height})                *nvim_win_set_height()*
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
                     {height}  Height as a count of rows
-
-nvim_win_set_option({window}, {name}, {value})         *nvim_win_set_option()*
-                Sets a window option value. Passing 'nil' as value deletes the
-                option(only works if there's a global fallback)
-
-                Parameters: ~
-                    {window}  Window handle, or 0 for current window
-                    {name}    Option name
-                    {value}   Option value
 
 nvim_win_set_var({window}, {name}, {value})               *nvim_win_set_var()*
                 Sets a window-scoped (w:) variable
