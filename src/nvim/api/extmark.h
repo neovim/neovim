@@ -2,6 +2,7 @@
 #define NVIM_API_EXTMARK_H
 
 #include "nvim/api/private/defs.h"
+#include "nvim/decoration.h"
 #include "nvim/map.h"
 
 EXTERN Map(String, handle_T) namespace_ids INIT(= MAP_INIT);
