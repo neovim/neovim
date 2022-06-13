@@ -98,6 +98,19 @@ func Test_options_command()
   " close option-window
   close
 
+  " Open the option-window at the top.
+  set splitbelow
+  topleft options
+  call assert_equal(1, winnr())
+  close
+
+  " Open the option-window at the bottom.
+  set nosplitbelow
+  botright options
+  call assert_equal(winnr('$'), winnr())
+  close
+  set splitbelow&
+
   " Open the option-window in a new tab.
   tab options
   " Check if the option-window is opened in a tab.
@@ -105,9 +118,15 @@ func Test_options_command()
   call assert_notequal('option-window', bufname(''))
   normal gt
   call assert_equal('option-window', bufname(''))
-
   " close option-window
   close
+
+  " Open the options window browse
+  if has('browse')
+    browse set
+    call assert_equal('option-window', bufname(''))
+    close
+  endif
 endfunc
 
 func Test_path_keep_commas()

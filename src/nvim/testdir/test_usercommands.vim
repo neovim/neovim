@@ -4,63 +4,95 @@
 function Test_cmdmods()
   let g:mods = ''
 
-  command! -nargs=* MyCmd let g:mods .= '<mods> '
+  command! -nargs=* MyCmd let g:mods = '<mods>'
 
   MyCmd
+  call assert_equal('', g:mods)
   aboveleft MyCmd
+  call assert_equal('aboveleft', g:mods)
   abo MyCmd
+  call assert_equal('aboveleft', g:mods)
   belowright MyCmd
+  call assert_equal('belowright', g:mods)
   bel MyCmd
+  call assert_equal('belowright', g:mods)
   botright MyCmd
+  call assert_equal('botright', g:mods)
   bo MyCmd
+  call assert_equal('botright', g:mods)
   browse MyCmd
+  call assert_equal('browse', g:mods)
   bro MyCmd
+  call assert_equal('browse', g:mods)
   confirm MyCmd
+  call assert_equal('confirm', g:mods)
   conf MyCmd
+  call assert_equal('confirm', g:mods)
   hide MyCmd
+  call assert_equal('hide', g:mods)
   hid MyCmd
+  call assert_equal('hide', g:mods)
   keepalt MyCmd
+  call assert_equal('keepalt', g:mods)
   keepa MyCmd
+  call assert_equal('keepalt', g:mods)
   keepjumps MyCmd
+  call assert_equal('keepjumps', g:mods)
   keepj MyCmd
+  call assert_equal('keepjumps', g:mods)
   keepmarks MyCmd
+  call assert_equal('keepmarks', g:mods)
   kee MyCmd
+  call assert_equal('keepmarks', g:mods)
   keeppatterns MyCmd
+  call assert_equal('keeppatterns', g:mods)
   keepp MyCmd
+  call assert_equal('keeppatterns', g:mods)
   leftabove MyCmd  " results in :aboveleft
+  call assert_equal('aboveleft', g:mods)
   lefta MyCmd
+  call assert_equal('aboveleft', g:mods)
   lockmarks MyCmd
+  call assert_equal('lockmarks', g:mods)
   loc MyCmd
+  call assert_equal('lockmarks', g:mods)
   " noautocmd MyCmd
   noswapfile MyCmd
+  call assert_equal('noswapfile', g:mods)
   nos MyCmd
+  call assert_equal('noswapfile', g:mods)
   rightbelow MyCmd " results in :belowright
+  call assert_equal('belowright', g:mods)
   rightb MyCmd
+  call assert_equal('belowright', g:mods)
   " sandbox MyCmd
   silent MyCmd
+  call assert_equal('silent', g:mods)
   sil MyCmd
+  call assert_equal('silent', g:mods)
   tab MyCmd
+  call assert_equal('tab', g:mods)
   topleft MyCmd
+  call assert_equal('topleft', g:mods)
   to MyCmd
+  call assert_equal('topleft', g:mods)
   " unsilent MyCmd
   verbose MyCmd
+  call assert_equal('verbose', g:mods)
   verb MyCmd
+  call assert_equal('verbose', g:mods)
   vertical MyCmd
+  call assert_equal('vertical', g:mods)
   vert MyCmd
+  call assert_equal('vertical', g:mods)
 
   aboveleft belowright botright browse confirm hide keepalt keepjumps
-        \ keepmarks keeppatterns lockmarks noswapfile silent tab
-        \ topleft verbose vertical MyCmd
+	      \ keepmarks keeppatterns lockmarks noswapfile silent tab
+	      \ topleft verbose vertical MyCmd
 
-  call assert_equal(' aboveleft aboveleft belowright belowright botright ' .
-        \ 'botright browse browse confirm confirm hide hide ' .
-        \ 'keepalt keepalt keepjumps keepjumps keepmarks keepmarks ' .
-        \ 'keeppatterns keeppatterns aboveleft aboveleft lockmarks lockmarks noswapfile ' .
-        \ 'noswapfile belowright belowright silent silent tab topleft topleft verbose verbose ' .
-        \ 'vertical vertical ' .
-        \ 'aboveleft belowright botright browse confirm hide keepalt keepjumps ' .
-        \ 'keepmarks keeppatterns lockmarks noswapfile silent tab topleft ' .
-        \ 'verbose vertical ', g:mods)
+  call assert_equal('browse confirm hide keepalt keepjumps ' .
+      \ 'keepmarks keeppatterns lockmarks noswapfile silent ' .
+      \ 'verbose aboveleft belowright botright tab topleft vertical', g:mods)
 
   let g:mods = ''
   command! -nargs=* MyQCmd let g:mods .= '<q-mods> '
