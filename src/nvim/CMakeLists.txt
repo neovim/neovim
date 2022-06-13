@@ -808,9 +808,10 @@ def_cmd_target(lintuncrustify ${UNCRUSTIFY_PRG} UNCRUSTIFY_PRG false)  # Non-fat
 if(UNCRUSTIFY_PRG)
   add_custom_command(OUTPUT lintuncrustify-cmd APPEND
     COMMAND ${CMAKE_COMMAND}
-      -DUNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
-      -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
-      -DLINT_NVIM_SOURCES=${LINT_NVIM_SOURCES}
+      -D UNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
+      -D PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
+      -D NVIM_SOURCES="${NVIM_SOURCES}"
+      -D NVIM_HEADERS="${NVIM_HEADERS}"
       -P ${PROJECT_SOURCE_DIR}/cmake/RunUncrustify.cmake)
 endif()
 
