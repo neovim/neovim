@@ -133,6 +133,9 @@ function M.display(lenses, bufnr, client_id)
     api.nvim_buf_clear_namespace(bufnr, ns, i, i + 1)
     local chunks = {}
     local num_line_lenses = #line_lenses
+    table.sort(line_lenses, function(a, b)
+      return a.range.start.character < b.range.start.character
+    end)
     for j, lens in ipairs(line_lenses) do
       local text = lens.command and lens.command.title or 'Unresolved lens ...'
       table.insert(chunks, { text, 'LspCodeLens' })
