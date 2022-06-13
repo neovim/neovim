@@ -4962,6 +4962,8 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 
 		The maximum number of positions in {pos} is 8.
 
+		Returns -1 on error.
+
 		Example: >
 			:highlight MyGroup ctermbg=green guibg=green
 			:let m = matchaddpos("MyGroup", [[23, 24], 34])
@@ -5990,7 +5992,7 @@ reltime([{start} [, {end}]])				*reltime()*
 		and {end}.
 
 		The {start} and {end} arguments must be values returned by
-		reltime().
+		reltime().  Returns zero on error.
 
 		Can also be used as a |method|: >
 			GetStart()->reltime()
