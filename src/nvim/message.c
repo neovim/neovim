@@ -2324,12 +2324,12 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
 ///          "pattern".
 bool message_filtered(char_u *msg)
 {
-  if (cmdmod.filter_regmatch.regprog == NULL) {
+  if (cmdmod.cmod_filter_regmatch.regprog == NULL) {
     return false;
   }
 
-  bool match = vim_regexec(&cmdmod.filter_regmatch, msg, (colnr_T)0);
-  return cmdmod.filter_force ? match : !match;
+  bool match = vim_regexec(&cmdmod.cmod_filter_regmatch, msg, (colnr_T)0);
+  return cmdmod.cmod_filter_force ? match : !match;
 }
 
 /// including horizontal separator

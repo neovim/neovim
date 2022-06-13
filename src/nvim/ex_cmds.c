@@ -981,7 +981,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
         foldMoveRange(win, &win->w_folds, line1, line2, dest);
       }
     }
-    if (!cmdmod.lockmarks) {
+    if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       curbuf->b_op_start.lnum = dest - num_lines + 1;
       curbuf->b_op_end.lnum = dest;
     }
@@ -994,12 +994,12 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
         foldMoveRange(win, &win->w_folds, dest + 1, line1 - 1, line2);
       }
     }
-    if (!cmdmod.lockmarks) {
+    if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       curbuf->b_op_start.lnum = dest + 1;
       curbuf->b_op_end.lnum = dest + num_lines;
     }
   }
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   }
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
@@ -1064,7 +1064,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
   char *p;
 
   count = line2 - line1 + 1;
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     curbuf->b_op_start.lnum = n + 1;
     curbuf->b_op_end.lnum = n + count;
     curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
@@ -1287,10 +1287,10 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     return;
   }
 
-  const bool save_lockmarks = cmdmod.lockmarks;
+  const int save_cmod_flags = cmdmod.cmod_flags;
   // Temporarily disable lockmarks since that's needed to propagate changed
   // regions of the buffer for foldUpdate(), linecount, etc.
-  cmdmod.lockmarks = false;
+  cmdmod.cmod_flags &= ~CMOD_LOCKMARKS;
 
   cursor_save = curwin->w_cursor;
   linecount = line2 - line1 + 1;
@@ -1410,7 +1410,8 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     }
 
     if (do_in) {
-      if (cmdmod.keepmarks || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
+      if ((cmdmod.cmod_flags & CMOD_KEEPMARKS)
+          || vim_strchr(p_cpo, CPO_REMMARK) == NULL) {
         // TODO(bfredl): Currently not active for extmarks. What would we
         // do if columns don't match, assume added/deleted bytes at the
         // end of each line?
@@ -1471,11 +1472,11 @@ error:
 
 filterend:
 
-  cmdmod.lockmarks = save_lockmarks;
+  cmdmod.cmod_flags = save_cmod_flags;
   if (curbuf != old_curbuf) {
     no_wait_return--;
     emsg(_("E135: *Filter* Autocommands must not change current buffer"));
-  } else if (cmdmod.lockmarks) {
+  } else if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
     curbuf->b_op_start = orig_start;
     curbuf->b_op_end = orig_end;
   }
@@ -1730,7 +1731,7 @@ int rename_buffer(char *new_fname)
   curbuf->b_flags |= BF_NOTEDITED;
   if (xfname != NULL && *xfname != NUL) {
     buf = buflist_new((char_u *)fname, (char_u *)xfname, curwin->w_cursor.lnum, 0);
-    if (buf != NULL && !cmdmod.keepalt) {
+    if (buf != NULL && (cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
       curwin->w_alt_fnum = buf->b_fnum;
     }
   }
@@ -1866,7 +1867,7 @@ int do_write(exarg_T *eap)
         && !eap->forceit
         && !eap->append
         && !p_wa) {
-      if (p_confirm || cmdmod.confirm) {
+      if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         if (vim_dialog_yesno(VIM_QUESTION, NULL,
                              (char_u *)_("Write partial file?"), 2) != VIM_YES) {
           goto theend;
@@ -1985,7 +1986,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
         return FAIL;
       }
 #endif
-      if (p_confirm || cmdmod.confirm) {
+      if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         char buff[DIALOG_MSG_SIZE];
 
         dialog_msg((char *)buff, _("Overwrite existing file \"%s\"?"), fname);
@@ -2021,7 +2022,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
       swapname = (char *)makeswapname((char_u *)fname, (char_u *)ffname, curbuf, (char_u *)dir);
       xfree(dir);
       if (os_path_exists((char_u *)swapname)) {
-        if (p_confirm || cmdmod.confirm) {
+        if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
           char buff[DIALOG_MSG_SIZE];
 
           dialog_msg((char *)buff,
@@ -2142,7 +2143,7 @@ static int check_readonly(int *forceit, buf_T *buf)
   if (!*forceit && (buf->b_p_ro
                     || (os_path_exists(buf->b_ffname)
                         && !os_file_is_writable((char *)buf->b_ffname)))) {
-    if ((p_confirm || cmdmod.confirm) && buf->b_fname != NULL) {
+    if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && buf->b_fname != NULL) {
       char buff[DIALOG_MSG_SIZE];
 
       if (buf->b_p_ro) {
@@ -2401,7 +2402,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
    */
   if (other_file) {
     if (!(flags & (ECMD_ADDBUF | ECMD_ALTBUF))) {
-      if (!cmdmod.keepalt) {
+      if ((cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
         curwin->w_alt_fnum = curbuf->b_fnum;
       }
       if (oldwin != NULL) {
@@ -3028,7 +3029,7 @@ void ex_append(exarg_T *eap)
   // eap->line2 pointed to the end of the buffer and nothing was appended)
   // "end" is set to lnum when something has been appended, otherwise
   // it is the same as "start"  -- Acevedo
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     curbuf->b_op_start.lnum
       = (eap->line2 < curbuf->b_ml.ml_line_count) ? eap->line2 + 1 : curbuf->b_ml.ml_line_count;
     if (eap->cmdidx != CMD_append) {
@@ -3307,7 +3308,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, char *sub, char *cmd, boo
     }
 
     if (save) {
-      if (!cmdmod.keeppatterns) {
+      if ((cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
         save_re_pat(RE_SUBST, (char_u *)pat, p_magic);
       }
       add_to_history(HIST_SEARCH, (char_u *)pat, true, NUL);
@@ -4373,7 +4374,7 @@ skip:
   }
 
   if (sub_nsubs > start_nsubs) {
-    if (!cmdmod.lockmarks) {
+    if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       // Set the '[ and '] marks.
       curbuf->b_op_start.lnum = eap->line1;
       curbuf->b_op_end.lnum = line2;
@@ -4826,8 +4827,8 @@ void ex_help(exarg_T *eap)
    * Always open a new one for ":tab help".
    */
   if (!bt_help(curwin->w_buffer)
-      || cmdmod.tab != 0) {
-    if (cmdmod.tab != 0) {
+      || cmdmod.cmod_tab != 0) {
+    if (cmdmod.cmod_tab != 0) {
       wp = NULL;
     } else {
       wp = NULL;
@@ -4853,7 +4854,7 @@ void ex_help(exarg_T *eap)
       // specified, the current window is vertically split and
       // narrow.
       n = WSP_HELP;
-      if (cmdmod.split == 0 && curwin->w_width != Columns
+      if (cmdmod.cmod_split == 0 && curwin->w_width != Columns
           && curwin->w_width < 80) {
         n |= WSP_TOP;
       }
@@ -4873,9 +4874,9 @@ void ex_help(exarg_T *eap)
       alt_fnum = curbuf->b_fnum;
       (void)do_ecmd(0, NULL, NULL, NULL, ECMD_LASTL,
                     ECMD_HIDE + ECMD_SET_HELP,
-                    NULL                  // buffer is still open, don't store info
-                    );
-      if (!cmdmod.keepalt) {
+                    NULL);  // buffer is still open, don't store info
+
+      if ((cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
         curwin->w_alt_fnum = alt_fnum;
       }
       empty_fnum = curbuf->b_fnum;
@@ -4901,7 +4902,8 @@ void ex_help(exarg_T *eap)
   }
 
   // keep the previous alternate file
-  if (alt_fnum != 0 && curwin->w_alt_fnum == empty_fnum && !cmdmod.keepalt) {
+  if (alt_fnum != 0 && curwin->w_alt_fnum == empty_fnum
+      && (cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
     curwin->w_alt_fnum = alt_fnum;
   }
 
@@ -6069,7 +6071,7 @@ void ex_oldfiles(exarg_T *eap)
     got_int = false;
 
     // File selection prompt on ":browse oldfiles"
-    if (cmdmod.browse) {
+    if (cmdmod.cmod_flags & CMOD_BROWSE) {
       quit_more = false;
       nr = prompt_for_number(false);
       msg_starthere();
@@ -6081,7 +6083,7 @@ void ex_oldfiles(exarg_T *eap)
         char *const s = expand_env_save((char *)p);
         eap->arg = s;
         eap->cmdidx = CMD_edit;
-        cmdmod.browse = false;
+        cmdmod.cmod_flags &= ~CMOD_BROWSE;
         do_exedit(eap, NULL);
         xfree(s);
       }

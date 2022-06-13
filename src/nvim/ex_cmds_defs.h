@@ -243,40 +243,44 @@ struct expand {
 #define XP_BS_ONE       1       // uses one backslash before a space
 #define XP_BS_THREE     2       // uses three backslashes before a space
 
+enum {
+  CMOD_SANDBOX      = 0x0001,  ///< ":sandbox"
+  CMOD_SILENT       = 0x0002,  ///< ":silent"
+  CMOD_ERRSILENT    = 0x0004,  ///< ":silent!"
+  CMOD_UNSILENT     = 0x0008,  ///< ":unsilent"
+  CMOD_NOAUTOCMD    = 0x0010,  ///< ":noautocmd"
+  CMOD_HIDE         = 0x0020,  ///< ":hide"
+  CMOD_BROWSE       = 0x0040,  ///< ":browse" - invoke file dialog
+  CMOD_CONFIRM      = 0x0080,  ///< ":confirm" - invoke yes/no dialog
+  CMOD_KEEPALT      = 0x0100,  ///< ":keepalt"
+  CMOD_KEEPMARKS    = 0x0200,  ///< ":keepmarks"
+  CMOD_KEEPJUMPS    = 0x0400,  ///< ":keepjumps"
+  CMOD_LOCKMARKS    = 0x0800,  ///< ":lockmarks"
+  CMOD_KEEPPATTERNS = 0x1000,  ///< ":keeppatterns"
+  CMOD_NOSWAPFILE   = 0x2000,  ///< ":noswapfile"
+};
+
 /// Command modifiers ":vertical", ":browse", ":confirm", ":hide", etc. set a
 /// flag.  This needs to be saved for recursive commands, put them in a
 /// structure for easy manipulation.
 typedef struct {
-  int cmod_flags;              ///< CMOD_ flags, see below
-  int split;                   ///< flags for win_split()
-  int tab;                     ///< > 0 when ":tab" was used
-  bool browse;                 ///< true to invoke file dialog
-  bool confirm;                ///< true to invoke yes/no dialog
-  bool hide;                   ///< true when ":hide" was used
-  bool keepalt;                ///< true when ":keepalt" was used
-  bool keepjumps;              ///< true when ":keepjumps" was used
-  bool keepmarks;              ///< true when ":keepmarks" was used
-  bool keeppatterns;           ///< true when ":keeppatterns" was used
-  bool lockmarks;              ///< true when ":lockmarks" was used
-  bool noswapfile;             ///< true when ":noswapfile" was used
-  regmatch_T filter_regmatch;  ///< set by :filter /pat/
-  bool filter_force;           ///< set for :filter!
+  int cmod_flags;                   ///< CMOD_ flags
 
-  int cmod_verbose;            ///< non-zero to set 'verbose', -1 is used for zero override
+  int cmod_split;                   ///< flags for win_split()
+  int cmod_tab;                     ///< > 0 when ":tab" was used
+  regmatch_T cmod_filter_regmatch;  ///< set by :filter /pat/
+  bool cmod_filter_force;           ///< set for :filter!
+
+  int cmod_verbose;                 ///< non-zero to set 'verbose', -1 is used for zero override
 
   // values for undo_cmdmod()
-  char_u *cmod_save_ei;        ///< saved value of 'eventignore'
-  int cmod_did_sandbox;        ///< set when "sandbox" was incremented
-  long cmod_verbose_save;      ///< if 'verbose' was set: value of p_verbose plus one
-  int cmod_save_msg_silent;    ///< if non-zero: saved value of msg_silent + 1
-  int cmod_did_esilent;        ///< incremented when emsg_silent is
+  char_u *cmod_save_ei;             ///< saved value of 'eventignore'
+  int cmod_did_sandbox;             ///< set when "sandbox" was incremented
+  long cmod_verbose_save;           ///< if 'verbose' was set: value of p_verbose plus one
+  int cmod_save_msg_silent;         ///< if non-zero: saved value of msg_silent + 1
+  int cmod_save_msg_scroll;         ///< for restoring msg_scroll
+  int cmod_did_esilent;             ///< incremented when emsg_silent is
 } cmdmod_T;
-
-#define CMOD_SANDBOX    0x01
-#define CMOD_SILENT     0x02
-#define CMOD_ERRSILENT  0x04
-#define CMOD_UNSILENT   0x08
-#define CMOD_NOAUTOCMD  0x10
 
 /// Stores command modifier info used by `nvim_parse_cmd`
 typedef struct {

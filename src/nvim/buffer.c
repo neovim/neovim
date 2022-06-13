@@ -1191,7 +1191,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
 
     if (!forceit && bufIsChanged(buf)) {
-      if ((p_confirm || cmdmod.confirm) && p_write) {
+      if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && p_write) {
         dialog_changed(buf, false);
         if (!bufref_valid(&bufref)) {
           // Autocommand deleted buffer, oops! It's not changed now.
@@ -1211,7 +1211,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
 
     if (!forceit && buf->terminal && terminal_running(buf->terminal)) {
-      if (p_confirm || cmdmod.confirm) {
+      if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         if (!dialog_close_terminal(buf)) {
           return FAIL;
         }
@@ -1393,7 +1393,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
 
   // Check if the current buffer may be abandoned.
   if (action == DOBUF_GOTO && !can_abandon(curbuf, forceit)) {
-    if ((p_confirm || cmdmod.confirm) && p_write) {
+    if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && p_write) {
       bufref_T bufref;
       set_bufref(&bufref, buf);
       dialog_changed(curbuf, false);
@@ -1439,7 +1439,7 @@ void set_curbuf(buf_T *buf, int action)
   long old_tw = curbuf->b_p_tw;
 
   setpcmark();
-  if (!cmdmod.keepalt) {
+  if ((cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
     curwin->w_alt_fnum = curbuf->b_fnum;     // remember alternate file
   }
   buflist_altfpos(curwin);                       // remember curpos
@@ -2846,7 +2846,7 @@ buf_T *setaltfname(char_u *ffname, char_u *sfname, linenr_T lnum)
 
   // Create a buffer.  'buflisted' is not set if it's a new buffer
   buf = buflist_new(ffname, sfname, lnum, 0);
-  if (buf != NULL && !cmdmod.keepalt) {
+  if (buf != NULL && (cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
     curwin->w_alt_fnum = buf->b_fnum;
   }
   return buf;
@@ -4659,7 +4659,7 @@ void do_arg_all(int count, int forceit, int keep_tabs)
   alist_T *alist;           // argument list to be used
   buf_T *buf;
   tabpage_T *tpnext;
-  int had_tab = cmdmod.tab;
+  int had_tab = cmdmod.cmod_tab;
   win_T *old_curwin, *last_curwin;
   tabpage_T *old_curtab, *last_curtab;
   win_T *new_curwin = NULL;
@@ -4870,7 +4870,7 @@ void do_arg_all(int count, int forceit, int keep_tabs)
 
     // When ":tab" was used open a new tab for a new window repeatedly.
     if (had_tab > 0 && tabpage_index(NULL) <= p_tpm) {
-      cmdmod.tab = 9999;
+      cmdmod.cmod_tab = 9999;
     }
   }
 
@@ -4917,7 +4917,7 @@ void ex_buffer_all(exarg_T *eap)
   int r;
   long count;                   // Maximum number of windows to open.
   int all;                      // When true also load inactive buffers.
-  int had_tab = cmdmod.tab;
+  int had_tab = cmdmod.cmod_tab;
   tabpage_T *tpnext;
 
   if (eap->addr_count == 0) {   // make as many windows as possible
@@ -4943,7 +4943,7 @@ void ex_buffer_all(exarg_T *eap)
     for (wp = firstwin; wp != NULL; wp = wpnext) {
       wpnext = wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
-           || ((cmdmod.split & WSP_VERT)
+           || ((cmdmod.cmod_split & WSP_VERT)
                ? wp->w_height + wp->w_hsep_height + wp->w_status_height < Rows - p_ch
                - tabline_height() - global_stl_height()
                : wp->w_width != Columns)
@@ -5056,7 +5056,7 @@ void ex_buffer_all(exarg_T *eap)
     }
     // When ":tab" was used open a new tab for a new window repeatedly.
     if (had_tab > 0 && tabpage_index(NULL) <= p_tpm) {
-      cmdmod.tab = 9999;
+      cmdmod.cmod_tab = 9999;
     }
   }
   autocmd_no_enter--;
@@ -5322,7 +5322,7 @@ bool buf_hide(const buf_T *const buf)
   case 'h':
     return true;            // "hide"
   }
-  return p_hid || cmdmod.hide;
+  return p_hid || (cmdmod.cmod_flags & CMOD_HIDE);
 }
 
 /// @return  special buffer name or
