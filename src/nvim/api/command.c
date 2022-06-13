@@ -218,10 +218,10 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(result, "nextcmd", CSTR_TO_OBJ((char *)ea.nextcmd));
 
   Dictionary mods = ARRAY_DICT_INIT;
-  PUT(mods, "silent", BOOLEAN_OBJ(cmdinfo.silent));
-  PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.emsg_silent));
-  PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.sandbox));
-  PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.noautocmd));
+  PUT(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
+  PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
+  PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
+  PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
   PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.tab));
   PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.verbose));
   PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.browse));
@@ -298,7 +298,17 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
 #define OBJ_TO_BOOL(var, value, default, varname) \
   do { \
-    var = api_object_to_bool(value, varname, default, err); \
+    (var) = api_object_to_bool(value, varname, default, err); \
+    if (ERROR_SET(err)) { \
+      goto end; \
+    } \
+  } while (0)
+
+#define OBJ_TO_CMOD_FLAG(flag, value, default, varname) \
+  do { \
+    if (api_object_to_bool(value, varname, default, err)) { \
+      cmdinfo.cmdmod.cmod_flags |= (flag); \
+    } \
     if (ERROR_SET(err)) { \
       goto end; \
     } \
@@ -544,10 +554,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       }
     }
 
-    OBJ_TO_BOOL(cmdinfo.silent, mods.silent, false, "'mods.silent'");
-    OBJ_TO_BOOL(cmdinfo.emsg_silent, mods.emsg_silent, false, "'mods.emsg_silent'");
-    OBJ_TO_BOOL(cmdinfo.sandbox, mods.sandbox, false, "'mods.sandbox'");
-    OBJ_TO_BOOL(cmdinfo.noautocmd, mods.noautocmd, false, "'mods.noautocmd'");
+    OBJ_TO_CMOD_FLAG(CMOD_SILENT, mods.silent, false, "'mods.silent'");
+    OBJ_TO_CMOD_FLAG(CMOD_ERRSILENT, mods.emsg_silent, false, "'mods.emsg_silent'");
+    OBJ_TO_CMOD_FLAG(CMOD_SANDBOX, mods.sandbox, false, "'mods.sandbox'");
+    OBJ_TO_CMOD_FLAG(CMOD_NOAUTOCMD, mods.noautocmd, false, "'mods.noautocmd'");
     OBJ_TO_BOOL(cmdinfo.cmdmod.browse, mods.browse, false, "'mods.browse'");
     OBJ_TO_BOOL(cmdinfo.cmdmod.confirm, mods.confirm, false, "'mods.confirm'");
     OBJ_TO_BOOL(cmdinfo.cmdmod.hide, mods.hide, false, "'mods.hide'");
@@ -558,7 +568,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     OBJ_TO_BOOL(cmdinfo.cmdmod.lockmarks, mods.lockmarks, false, "'mods.lockmarks'");
     OBJ_TO_BOOL(cmdinfo.cmdmod.noswapfile, mods.noswapfile, false, "'mods.noswapfile'");
 
-    if (cmdinfo.sandbox && !(ea.argt & EX_SBOXOK)) {
+    if ((cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX) && !(ea.argt & EX_SBOXOK)) {
       VALIDATION_ERROR("Command cannot be run in sandbox");
     }
   }
@@ -629,6 +639,7 @@ end:
   return retv;
 
 #undef OBJ_TO_BOOL
+#undef OBJ_TO_CMOD_FLAG
 #undef VALIDATION_ERROR
 }
 
@@ -663,9 +674,9 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
     kv_printf(cmdline, "%dverbose ", cmdinfo->verbose);
   }
 
-  if (cmdinfo->emsg_silent) {
+  if (cmdinfo->cmdmod.cmod_flags & CMOD_ERRSILENT) {
     kv_concat(cmdline, "silent! ");
-  } else if (cmdinfo->silent) {
+  } else if (cmdinfo->cmdmod.cmod_flags & CMOD_SILENT) {
     kv_concat(cmdline, "silent ");
   }
 
@@ -694,8 +705,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   } while (0)
 
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.split & WSP_VERT, "vertical ");
-  CMDLINE_APPEND_IF(cmdinfo->sandbox, "sandbox ");
-  CMDLINE_APPEND_IF(cmdinfo->noautocmd, "noautocmd ");
+  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_SANDBOX, "sandbox ");
+  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_NOAUTOCMD, "noautocmd ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.browse, "browse ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.confirm, "confirm ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.hide, "hide ");

@@ -1431,10 +1431,6 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   after_modifier = eap->cmd;
 
-  cmdinfo->silent = cmdmod.cmod_flags & CMOD_SILENT;
-  cmdinfo->emsg_silent = cmdmod.cmod_flags & CMOD_ERRSILENT;
-  cmdinfo->sandbox = cmdmod.cmod_flags & CMOD_SANDBOX;
-  cmdinfo->noautocmd = cmdmod.cmod_flags & CMOD_NOAUTOCMD;
   if (cmdmod.cmod_verbose != 0) {
     cmdinfo->verbose = cmdmod.cmod_verbose < 0 ? 0 : cmdmod.cmod_verbose;
   } else {
@@ -1566,18 +1562,6 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   cmdmod = cmdinfo->cmdmod;
 
   // Apply command modifiers
-  if (cmdinfo->silent) {
-    cmdmod.cmod_flags |= CMOD_SILENT;
-  }
-  if (cmdinfo->emsg_silent) {
-    cmdmod.cmod_flags |= CMOD_ERRSILENT;
-  }
-  if (cmdinfo->sandbox) {
-    cmdmod.cmod_flags |= CMOD_SANDBOX;
-  }
-  if (cmdinfo->noautocmd) {
-    cmdmod.cmod_flags |= CMOD_NOAUTOCMD;
-  }
   if (cmdinfo->verbose >= 0) {
     cmdmod.cmod_verbose = cmdinfo->verbose == 0 ? -1 : cmdinfo->verbose;
   }

@@ -280,12 +280,8 @@ typedef struct {
 
 /// Stores command modifier info used by `nvim_parse_cmd`
 typedef struct {
-  bool silent;
-  bool emsg_silent;
-  bool sandbox;
-  bool noautocmd;
-  int verbose;  ///< unlike cmod_verbose, -1 is used when unspecified and 0 for zero override
   cmdmod_T cmdmod;
+  int verbose;  ///< unlike cmod_verbose, -1 is used when unspecified and 0 for zero override
   struct {
     bool file;
     bool bar;
