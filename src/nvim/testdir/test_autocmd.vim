@@ -1981,6 +1981,13 @@ function Test_dirchanged_global()
   call assert_equal(expected, s:li)
   exe 'lcd ' .. fnameescape(s:dir_bar)
   call assert_equal(expected, s:li)
+
+  exe 'cd ' .. s:dir_foo
+  exe 'cd ' .. s:dir_bar
+  autocmd! test_dirchanged DirChanged global let g:result = expand("<afile>")
+  cd -
+  call assert_equal(s:dir_foo, substitute(g:result, '\\', '/', 'g'))
+
   call s:After_test_dirchanged()
 endfunc
 
