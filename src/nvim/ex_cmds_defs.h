@@ -209,10 +209,6 @@ struct exarg {
   LineGetter getline;           ///< Function used to get the next line
   void *cookie;                 ///< argument for getline()
   cstack_T *cstack;             ///< condition stack for ":if" etc.
-  long verbose_save;            ///< saved value of p_verbose
-  int save_msg_silent;          ///< saved value of msg_silent
-  int did_esilent;              ///< how many times emsg_silent was incremented
-  bool did_sandbox;             ///< when true did sandbox++
 };
 
 #define FORCE_BIN 1             // ":edit ++bin file"
@@ -251,6 +247,7 @@ struct expand {
 /// flag.  This needs to be saved for recursive commands, put them in a
 /// structure for easy manipulation.
 typedef struct {
+  int cmod_flags;              ///< CMOD_ flags, see below
   int split;                   ///< flags for win_split()
   int tab;                     ///< > 0 when ":tab" was used
   bool browse;                 ///< true to invoke file dialog
@@ -262,10 +259,24 @@ typedef struct {
   bool keeppatterns;           ///< true when ":keeppatterns" was used
   bool lockmarks;              ///< true when ":lockmarks" was used
   bool noswapfile;             ///< true when ":noswapfile" was used
-  char *save_ei;               ///< saved value of 'eventignore'
   regmatch_T filter_regmatch;  ///< set by :filter /pat/
   bool filter_force;           ///< set for :filter!
+
+  int cmod_verbose;            ///< non-zero to set 'verbose', -1 is used for zero override
+
+  // values for undo_cmdmod()
+  char_u *cmod_save_ei;        ///< saved value of 'eventignore'
+  int cmod_did_sandbox;        ///< set when "sandbox" was incremented
+  long cmod_verbose_save;      ///< if 'verbose' was set: value of p_verbose plus one
+  int cmod_save_msg_silent;    ///< if non-zero: saved value of msg_silent + 1
+  int cmod_did_esilent;        ///< incremented when emsg_silent is
 } cmdmod_T;
+
+#define CMOD_SANDBOX    0x01
+#define CMOD_SILENT     0x02
+#define CMOD_ERRSILENT  0x04
+#define CMOD_UNSILENT   0x08
+#define CMOD_NOAUTOCMD  0x10
 
 /// Stores command modifier info used by `nvim_parse_cmd`
 typedef struct {
@@ -273,7 +284,7 @@ typedef struct {
   bool emsg_silent;
   bool sandbox;
   bool noautocmd;
-  long verbose;
+  int verbose;  ///< unlike cmod_verbose, -1 is used when unspecified and 0 for zero override
   cmdmod_T cmdmod;
   struct {
     bool file;

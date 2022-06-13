@@ -284,8 +284,6 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 {
   exarg_T ea;
   memset(&ea, 0, sizeof(ea));
-  ea.verbose_save = -1;
-  ea.save_msg_silent = -1;
 
   CmdParseInfo cmdinfo;
   memset(&cmdinfo, 0, sizeof(cmdinfo));
@@ -514,9 +512,9 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     if (HAS_KEY(mods.verbose)) {
       if (mods.verbose.type != kObjectTypeInteger) {
         VALIDATION_ERROR("'mods.verbose' must be a Integer");
-      } else if (mods.verbose.data.integer >= 0) {
+      } else if ((int)mods.verbose.data.integer >= 0) {
         // Silently ignore negative integers to allow mods.verbose to be set to -1.
-        cmdinfo.verbose = mods.verbose.data.integer;
+        cmdinfo.verbose = (int)mods.verbose.data.integer;
       }
     }
 
@@ -662,7 +660,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
     kv_printf(cmdline, "%dtab ", cmdinfo->cmdmod.tab - 1);
   }
   if (cmdinfo->verbose != -1) {
-    kv_printf(cmdline, "%ldverbose ", cmdinfo->verbose);
+    kv_printf(cmdline, "%dverbose ", cmdinfo->verbose);
   }
 
   if (cmdinfo->emsg_silent) {

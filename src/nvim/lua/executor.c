@@ -1920,7 +1920,9 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   lua_pushinteger(lstate, cmdmod.tab);
   lua_setfield(lstate, -2, "tab");
 
-  lua_pushinteger(lstate, eap->verbose_save != -1 ? p_verbose : -1);
+  lua_pushinteger(lstate, (cmdmod.cmod_verbose != 0
+                           ? cmdmod.cmod_verbose < 0 ? 0 : cmdmod.cmod_verbose
+                           : -1));
   lua_setfield(lstate, -2, "verbose");
 
   if (cmdmod.split & WSP_ABOVE) {
@@ -1938,13 +1940,13 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 
   lua_pushboolean(lstate, cmdmod.split & WSP_VERT);
   lua_setfield(lstate, -2, "vertical");
-  lua_pushboolean(lstate, eap->save_msg_silent != -1 ? (msg_silent != 0) : 0);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SILENT);
   lua_setfield(lstate, -2, "silent");
-  lua_pushboolean(lstate, eap->did_esilent);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_ERRSILENT);
   lua_setfield(lstate, -2, "emsg_silent");
-  lua_pushboolean(lstate, eap->did_sandbox);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SANDBOX);
   lua_setfield(lstate, -2, "sandbox");
-  lua_pushboolean(lstate, cmdmod.save_ei != NULL);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_NOAUTOCMD);
   lua_setfield(lstate, -2, "noautocmd");
 
   typedef struct {
