@@ -2381,11 +2381,12 @@ static void cmdpreview_show(CommandLineState *s)
   // Copy the command line so we can modify it.
   char *cmdline = xstrdup((char *)ccline.cmdbuff);
   char *errormsg = NULL;
-
-  parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg);
-  if (errormsg != NULL) {
+  emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
+  if (!parse_cmdline(cmdline, &ea, &cmdinfo, &errormsg)) {
+    emsg_off--;
     goto end;
   }
+  emsg_off--;
 
   // Swap invalid command range if needed
   if ((ea.argt & EX_RANGE) && ea.line1 > ea.line2) {
@@ -2409,7 +2410,8 @@ static void cmdpreview_show(CommandLineState *s)
   cmdmod_T save_cmdmod = cmdmod;
 
   cmdpreview = true;
-  emsg_silent++;                 // Block error reporting as the command may be incomplete
+  emsg_silent++;                 // Block error reporting as the command may be incomplete,
+                                 // but still update v:errmsg
   msg_silent++;                  // Block messages, namely ones that prompt
   block_autocmds();              // Block events
   garray_T save_view;
