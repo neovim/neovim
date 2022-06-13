@@ -853,7 +853,7 @@ void msg_schedule_semsg(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup((char *)IObuff);
-  multiqueue_put(main_loop.events, msg_semsg_event, 1, s);
+  loop_schedule_deferred(&main_loop, event_create(msg_semsg_event, 1, s));
 }
 
 /// Like msg(), but truncate to a single line if p_shm contains 't', or when
