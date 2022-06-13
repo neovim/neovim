@@ -270,6 +270,13 @@ function module.command(cmd)
   module.request('nvim_command', cmd)
 end
 
+
+-- use for commands which expect nvim to quit
+function module.expect_exit(...)
+  eq("EOF was received from Nvim. Likely the Nvim process crashed.",
+     module.pcall_err(...))
+end
+
 -- Evaluates a VimL expression.
 -- Fails on VimL error, but does not update v:errmsg.
 function module.eval(expr)

@@ -17,6 +17,7 @@ local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
 local tbl_contains = helpers.tbl_contains
+local expect_exit = helpers.expect_exit
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -174,7 +175,7 @@ describe('startup defaults', function()
     command('write')
     local f = eval('fnamemodify(@%,":p")')
     assert(string.len(f) > 3)
-    command('qall')
+    expect_exit(command, 'qall')
     clear{args={}, args_rm={'-i'}, env=env}
     eq({ f }, eval('v:oldfiles'))
     os.remove('Xtest-foo')

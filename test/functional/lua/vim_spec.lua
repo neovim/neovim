@@ -22,7 +22,7 @@ local remove_trace = helpers.remove_trace
 local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
-
+local expect_exit = helpers.expect_exit
 
 describe('lua stdlib', function()
   before_each(clear)
@@ -2677,9 +2677,7 @@ describe('lua: builtin modules', function()
 
   it('does not work when disabled without runtime', function()
     clear{args={'--luamod-dev'}, env={VIMRUNTIME='fixtures/a'}}
-    -- error checking could be better here. just check that --luamod-dev
-    -- does anything at all by breaking with missing runtime..
-    eq(nil, exec_lua[[return vim.tbl_count {x=1,y=2}]])
+    expect_exit(exec_lua, [[return vim.tbl_count {x=1,y=2}]])
   end)
 end)
 

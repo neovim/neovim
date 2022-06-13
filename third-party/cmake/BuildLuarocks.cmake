@@ -219,7 +219,7 @@ if(USE_BUNDLED_BUSTED)
   # nvim-client: https://github.com/neovim/lua-client
   add_custom_command(OUTPUT ${ROCKS_DIR}/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build nvim-client 0.2.3-1 ${LUAROCKS_BUILDARGS}
+    ARGS build nvim-client 0.2.4-1 ${LUAROCKS_BUILDARGS}
     DEPENDS luv)
   add_custom_target(nvim-client DEPENDS ${ROCKS_DIR}/nvim-client)
 

@@ -4,6 +4,7 @@ local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local eq = helpers.eq
 local insert = helpers.insert
 local poke_eventloop = helpers.poke_eventloop
+local expect_exit = helpers.expect_exit
 
 describe('Screen', function()
   local screen
@@ -1003,7 +1004,7 @@ describe('Screen', function()
   -- test/functional/ui/syntax_conceal_spec.lua.
   describe('concealed line after window scroll', function()
     after_each(function()
-      command(':qall!')
+      expect_exit(command, ':qall!')
       os.remove('Xcolesearch')
     end)
 
