@@ -6555,23 +6555,46 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
   return result;
 }
 
+/// Add modifiers from "cmdmod.split" to "buf".  Set "multi_mods" when one was
+/// added.
+///
+/// @return the number of bytes added
+size_t add_win_cmd_modifers(char *buf, bool *multi_mods)
+{
+  size_t result = 0;
+
+  // :aboveleft and :leftabove
+  if (cmdmod.split & WSP_ABOVE) {
+    result += add_cmd_modifier(buf, "aboveleft", multi_mods);
+  }
+  // :belowright and :rightbelow
+  if (cmdmod.split & WSP_BELOW) {
+    result += add_cmd_modifier(buf, "belowright", multi_mods);
+  }
+  // :botright
+  if (cmdmod.split & WSP_BOT) {
+    result += add_cmd_modifier(buf, "botright", multi_mods);
+  }
+
+  // :tab
+  if (cmdmod.tab > 0) {
+    result += add_cmd_modifier(buf, "tab", multi_mods);
+  }
+  // :topleft
+  if (cmdmod.split & WSP_TOP) {
+    result += add_cmd_modifier(buf, "topleft", multi_mods);
+  }
+  // :vertical
+  if (cmdmod.split & WSP_VERT) {
+    result += add_cmd_modifier(buf, "vertical", multi_mods);
+  }
+  return result;
+}
+
 size_t uc_mods(char *buf)
 {
   size_t result = 0;
   bool multi_mods = false;
-
-  // :aboveleft and :leftabove
-  if (cmdmod.split & WSP_ABOVE) {
-    result += add_cmd_modifier(buf, "aboveleft", &multi_mods);
-  }
-  // :belowright and :rightbelow
-  if (cmdmod.split & WSP_BELOW) {
-    result += add_cmd_modifier(buf, "belowright", &multi_mods);
-  }
-  // :botright
-  if (cmdmod.split & WSP_BOT) {
-    result += add_cmd_modifier(buf, "botright", &multi_mods);
-  }
 
   typedef struct {
     bool *set;
@@ -6602,14 +6625,6 @@ size_t uc_mods(char *buf)
   if (msg_silent > 0) {
     result += add_cmd_modifier(buf, emsg_silent > 0 ? "silent!" : "silent", &multi_mods);
   }
-  // :tab
-  if (cmdmod.tab > 0) {
-    result += add_cmd_modifier(buf, "tab", &multi_mods);
-  }
-  // :topleft
-  if (cmdmod.split & WSP_TOP) {
-    result += add_cmd_modifier(buf, "topleft", &multi_mods);
-  }
 
   // TODO(vim): How to support :unsilent?
 
@@ -6617,10 +6632,8 @@ size_t uc_mods(char *buf)
   if (p_verbose > 0) {
     result += add_cmd_modifier(buf, "verbose", &multi_mods);
   }
-  // :vertical
-  if (cmdmod.split & WSP_VERT) {
-    result += add_cmd_modifier(buf, "vertical", &multi_mods);
-  }
+  // flags from cmdmod.split
+  result += add_win_cmd_modifers(buf, &multi_mods);
 
   return result;
 }
