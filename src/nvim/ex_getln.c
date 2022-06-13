@@ -688,9 +688,9 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
 /// @param init_ccline  clear ccline first
 static uint8_t *command_line_enter(int firstc, long count, int indent, bool init_ccline)
 {
-  bool check_cmdheight = p_ch < 1 && !ui_has(kUIMessages) && vpeekc() == NUL;
+  bool cmdheight0 = p_ch < 1 && !ui_has(kUIMessages) && vpeekc() == NUL;
 
-  if (check_cmdheight) {
+  if (cmdheight0) {
     // If cmdheight is 0, cmdheight must be set to 1 when we enter command line.
     set_option_value("ch", 1L, NULL, 0);
     redraw_statuslines();
@@ -983,7 +983,7 @@ theend:
     ccline.cmdbuff = NULL;
   }
 
-  if (check_cmdheight) {
+  if (cmdheight0) {
     // Restore cmdheight
     set_option_value("ch", 0L, NULL, 0);
   }

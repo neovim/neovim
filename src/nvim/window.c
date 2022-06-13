@@ -1145,8 +1145,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       needed += p_wh - wmh1 + oldwin->w_winbar_height;
     }
     if (p_ch < 1) {
-      // add the command line height
-      needed += 1;
+      needed += 1;  // Adjust for cmdheight=0.
     }
     if (flags & (WSP_BOT | WSP_TOP)) {
       minheight = frame_minheight(topframe, NOWIN) + need_status;

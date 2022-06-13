@@ -869,7 +869,7 @@ describe('cmdheight=0', function()
     screen:attach()
   end)
 
-  it("works with cmdheight=1 noruler laststatus=2", function()
+  it("with cmdheight=1 noruler laststatus=2", function()
     command("set cmdheight=1 noruler laststatus=2")
     screen:expect{grid=[[
       ^                         |
@@ -880,7 +880,7 @@ describe('cmdheight=0', function()
     ]]}
   end)
 
-  it("works with cmdheight=0 noruler laststatus=2", function()
+  it("with cmdheight=0 noruler laststatus=2", function()
     command("set cmdheight=0 noruler laststatus=2")
     screen:expect{grid=[[
       ^                         |
@@ -891,7 +891,7 @@ describe('cmdheight=0', function()
     ]]}
   end)
 
-  it("works with cmdheight=0 ruler laststatus=0", function()
+  it("with cmdheight=0 ruler laststatus=0", function()
     command("set cmdheight=0 ruler laststatus=0")
     screen:expect{grid=[[
       ^                         |
@@ -902,7 +902,7 @@ describe('cmdheight=0', function()
     ]]}
   end)
 
-  it("works with cmdheight=0 ruler laststatus=0", function()
+  it("with cmdheight=0 ruler laststatus=0", function()
     command("set cmdheight=0 noruler laststatus=0 showmode")
     feed('i')
     screen:expect{grid=[[
@@ -916,7 +916,7 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
   end)
 
-  it("works with showmode", function()
+  it("with showmode", function()
     command("set cmdheight=1 noruler laststatus=0 showmode")
     feed('i')
     screen:expect{grid=[[
@@ -930,7 +930,7 @@ describe('cmdheight=0', function()
     eq(1, eval('&cmdheight'))
   end)
 
-  it("works when using command line", function()
+  it("when using command line", function()
     command("set cmdheight=0 noruler laststatus=0")
     feed(':')
     screen:expect{grid=[[
@@ -952,7 +952,7 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
   end)
 
-  it("works when using input()", function()
+  it("when using input()", function()
     command("set cmdheight=0 noruler laststatus=0")
     feed(':call input("foo >")<cr>')
     screen:expect{grid=[[
@@ -974,7 +974,7 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
   end)
 
-  it("works with winbar and splits", function()
+  it("with winbar and splits", function()
     command("set cmdheight=0 noruler laststatus=3 winbar=foo")
     feed(':split<CR>')
     screen:expect{grid=[[

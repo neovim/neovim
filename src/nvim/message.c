@@ -1388,9 +1388,9 @@ void msg_start(void)
     need_fileinfo = false;
   }
 
-  bool none_msg_area = !ui_has(kUIMessages) && p_ch < 1;
+  bool no_msg_area = !ui_has(kUIMessages) && p_ch < 1;
 
-  if (need_clr_eos || (none_msg_area && redrawing_cmdline)) {
+  if (need_clr_eos || (no_msg_area && redrawing_cmdline)) {
     // Halfway an ":echo" command and getting an (error) message: clear
     // any text from the command.
     need_clr_eos = false;
@@ -1399,13 +1399,11 @@ void msg_start(void)
 
   if (!msg_scroll && full_screen) {     // overwrite last message
     msg_row = cmdline_row;
-    msg_col =
-      cmdmsg_rl ? Columns - 1 :
-      0;
-    if (none_msg_area && get_cmdprompt() == NULL) {
+    msg_col = cmdmsg_rl ? Columns - 1 : 0;
+    if (no_msg_area && get_cmdprompt() == NULL) {
       msg_row -= 1;
     }
-  } else if (msg_didout || none_msg_area) {  // start message on next line
+  } else if (msg_didout || no_msg_area) {  // start message on next line
     msg_putchar('\n');
     did_return = true;
     cmdline_row = msg_row;
