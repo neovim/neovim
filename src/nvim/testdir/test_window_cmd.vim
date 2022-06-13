@@ -887,6 +887,7 @@ func Test_floatwin_splitmove()
 endfunc
 
 func Test_window_resize()
+  throw 'Skipped: Nvim supports cmdheight=0'
   " Vertical :resize (absolute, relative, min and max size).
   vsplit
   vert resize 8
@@ -1028,9 +1029,14 @@ func Test_win_move_statusline()
     call assert_equal(h0, winheight(0))
     call assert_equal(1, &cmdheight)
   endfor
+  " Nvim supports cmdheight=0
+  set cmdheight=0
   call assert_true(win_move_statusline(0, 1))
-  call assert_equal(h0, winheight(0))
-  call assert_equal(1, &cmdheight)
+  "call assert_equal(h0, winheight(0))
+  "call assert_equal(1, &cmdheight)
+  call assert_equal(h0 + 1, winheight(0))
+  call assert_equal(0, &cmdheight)
+  set cmdheight&
   " check win_move_statusline from bottom window on top window ID
   let id = win_getid(1)
   for offset in range(5)
