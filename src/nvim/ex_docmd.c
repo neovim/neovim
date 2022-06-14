@@ -1430,12 +1430,6 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   after_modifier = eap->cmd;
 
-  if (cmdinfo->cmdmod.cmod_verbose != 0) {
-    cmdinfo->verbose = cmdinfo->cmdmod.cmod_verbose < 0 ? 0 : cmdinfo->cmdmod.cmod_verbose;
-  } else {
-    cmdinfo->verbose = -1;
-  }
-
   // Save location after command modifiers
   cmd = eap->cmd;
   // Skip ranges to find command name since we need the command to know what kind of range it uses
@@ -1559,9 +1553,6 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   cmdmod = cmdinfo->cmdmod;
 
   // Apply command modifiers
-  if (cmdinfo->verbose >= 0) {
-    cmdmod.cmod_verbose = cmdinfo->verbose == 0 ? -1 : cmdinfo->verbose;
-  }
   apply_cmdmod(&cmdmod);
 
   if (!MODIFIABLE(curbuf) && (eap->argt & EX_MODIFY)
@@ -2614,12 +2605,10 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool 
         break;
       }
       if (ascii_isdigit(*eap->cmd)) {
-        cmod->cmod_verbose = atoi((char *)eap->cmd);
-        if (cmod->cmod_verbose == 0) {
-          cmod->cmod_verbose = -1;
-        }
+        // zero means not set, one is verbose == 0, etc.
+        cmod->cmod_verbose = atoi((char *)eap->cmd) + 1;
       } else {
-        cmod->cmod_verbose = 1;
+        cmod->cmod_verbose = 2;  // default: verbose == 1
       }
       eap->cmd = p;
       continue;
@@ -2638,11 +2627,11 @@ static void apply_cmdmod(cmdmod_T *cmod)
     sandbox++;
     cmod->cmod_did_sandbox = true;
   }
-  if (cmod->cmod_verbose != 0) {
+  if (cmod->cmod_verbose > 0) {
     if (cmod->cmod_verbose_save == 0) {
       cmod->cmod_verbose_save = p_verbose + 1;
     }
-    p_verbose = cmod->cmod_verbose < 0 ? 0 : cmod->cmod_verbose;
+    p_verbose = cmod->cmod_verbose - 1;
   }
 
   if ((cmod->cmod_flags & (CMOD_SILENT | CMOD_UNSILENT))

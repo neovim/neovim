@@ -1920,9 +1920,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   lua_pushinteger(lstate, cmdmod.cmod_tab);
   lua_setfield(lstate, -2, "tab");
 
-  lua_pushinteger(lstate, (cmdmod.cmod_verbose != 0
-                           ? cmdmod.cmod_verbose < 0 ? 0 : cmdmod.cmod_verbose
-                           : -1));
+  lua_pushinteger(lstate, cmdmod.cmod_verbose - 1);
   lua_setfield(lstate, -2, "verbose");
 
   if (cmdmod.cmod_split & WSP_ABOVE) {

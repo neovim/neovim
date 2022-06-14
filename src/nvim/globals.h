@@ -757,7 +757,7 @@ EXTERN bool did_cursorhold INIT(= false);      // set when CursorHold t'gerd
 
 EXTERN int postponed_split INIT(= 0);        // for CTRL-W CTRL-] command
 EXTERN int postponed_split_flags INIT(= 0);  // args for win_split()
-EXTERN int postponed_split_tab INIT(= 0);    // cmdmod.tab
+EXTERN int postponed_split_tab INIT(= 0);    // cmdmod.cmod_tab
 EXTERN int g_do_tagpreview INIT(= 0);  // for tag preview commands:
                                        // height of preview window
 EXTERN bool g_tag_at_cursor INIT(= false);  // whether the tag command comes

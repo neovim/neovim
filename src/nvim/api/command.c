@@ -223,7 +223,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
   PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
   PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab));
-  PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.verbose));
+  PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
   PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
   PUT(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
   PUT(mods, "hide", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_HIDE));
@@ -287,7 +287,6 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
   CmdParseInfo cmdinfo;
   memset(&cmdinfo, 0, sizeof(cmdinfo));
-  cmdinfo.verbose = -1;
 
   char *cmdline = NULL;
   char *cmdname = NULL;
@@ -524,7 +523,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
         VALIDATION_ERROR("'mods.verbose' must be a Integer");
       } else if ((int)mods.verbose.data.integer >= 0) {
         // Silently ignore negative integers to allow mods.verbose to be set to -1.
-        cmdinfo.verbose = (int)mods.verbose.data.integer;
+        cmdinfo.cmdmod.cmod_verbose = (int)mods.verbose.data.integer + 1;
       }
     }
 
@@ -670,8 +669,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   if (cmdinfo->cmdmod.cmod_tab != 0) {
     kv_printf(cmdline, "%dtab ", cmdinfo->cmdmod.cmod_tab - 1);
   }
-  if (cmdinfo->verbose != -1) {
-    kv_printf(cmdline, "%dverbose ", cmdinfo->verbose);
+  if (cmdinfo->cmdmod.cmod_verbose > 0) {
+    kv_printf(cmdline, "%dverbose ", cmdinfo->cmdmod.cmod_verbose - 1);
   }
 
   if (cmdinfo->cmdmod.cmod_flags & CMOD_ERRSILENT) {
