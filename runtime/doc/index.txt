@@ -282,7 +282,7 @@ tag		char	      note action in Normal mode	~
 |/|		/{pattern}<CR>	1  search forward for the Nth occurrence of
 				   {pattern}
 |/<CR>|		/<CR>		1  search forward for {pattern} of last search
-|count|		0		1  cursor to the first char of the line
+|0|		0		1  cursor to the first char of the line
 |count|		1		   prepend to command to give a count
 |count|		2			"
 |count|		3			"

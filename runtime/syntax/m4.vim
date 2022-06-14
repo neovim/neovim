@@ -2,7 +2,8 @@
 " Language:		M4
 " Maintainer:	Claudio Fleiner (claudio@fleiner.com)
 " URL:			http://www.fleiner.com/vim/syntax/m4.vim
-" Last Change:	2005 Jan 15
+" 				(outdated)
+" Last Change:	2022 Jun 12
 
 " This file will highlight user function calls if they use only
 " capital letters and have at least one argument (i.e. the '('
