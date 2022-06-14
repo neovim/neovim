@@ -9,15 +9,16 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
-#include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/vim.h"
 
 typedef struct Channel Channel;
+typedef struct Unpacker Unpacker;
 
 typedef struct {
   uint32_t request_id;
   bool returned, errored;
   Object result;
+  ArenaMem result_mem;
 } ChannelCallFrame;
 
 typedef struct {
@@ -26,6 +27,7 @@ typedef struct {
   MsgpackRpcRequestHandler handler;
   Array args;
   uint32_t request_id;
+  ArenaMem used_mem;
 } RequestEvent;
 
 typedef struct {

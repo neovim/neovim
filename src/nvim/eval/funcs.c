@@ -7893,7 +7893,8 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   uint64_t chan_id = (uint64_t)argvars[0].vval.v_number;
   const char *method = tv_get_string(&argvars[1]);
 
-  Object result = rpc_send_call(chan_id, method, args, &err);
+  ArenaMem res_mem = NULL;
+  Object result = rpc_send_call(chan_id, method, args, &res_mem, &err);
 
   if (l_provider_call_nesting) {
     current_sctx = save_current_sctx;
@@ -7928,7 +7929,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
 end:
-  api_free_object(result);
+  arena_mem_free(res_mem, NULL);
   api_clear_error(&err);
 }
 

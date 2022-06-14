@@ -26,6 +26,7 @@
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/os/input.h"
 #include "nvim/os_unix.h"
 #include "nvim/ui.h"
@@ -113,7 +114,8 @@ bool rpc_send_event(uint64_t id, const char *name, Array args)
 /// @param args Array with method arguments
 /// @param[out] error True if the return value is an error
 /// @return Whatever the remote method returned
-Object rpc_send_call(uint64_t id, const char *method_name, Array args, Error *err)
+Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem *result_mem,
+                     Error *err)
 {
   Channel *channel = NULL;
 
@@ -130,7 +132,7 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, Error *er
   send_request(channel, request_id, method_name, args);
 
   // Push the frame
-  ChannelCallFrame frame = { request_id, false, false, NIL };
+  ChannelCallFrame frame = { request_id, false, false, NIL, NULL };
   kv_push(rpc->call_stack, &frame);
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, frame.returned);
   (void)kv_pop(rpc->call_stack);
@@ -155,10 +157,14 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, Error *er
       api_set_error(err, kErrorTypeException, "%s", "unknown error");
     }
 
-    api_free_object(frame.result);
+    // frame.result was allocated in an arena
+    arena_mem_free(frame.result_mem, &rpc->unpacker->reuse_blk);
+    frame.result_mem = NULL;
   }
 
   channel_decref(channel);
+
+  *result_mem = frame.result_mem;
 
   return frame.errored ? NIL : frame.result;
 }
@@ -249,17 +255,17 @@ static void parse_msgpack(Channel *channel)
       if (frame->errored) {
         frame->result = p->error;
         // TODO(bfredl): p->result should not even be decoded
-        api_free_object(p->result);
+        // api_free_object(p->result);
       } else {
         frame->result = p->result;
       }
+      frame->result_mem = arena_finish(&p->arena);
     } else {
       log_client_msg(channel->id, p->type == kMessageTypeRequest, p->handler.name);
 
       Object res = p->result;
       if (p->result.type != kObjectTypeArray) {
         chan_close_with_error(channel, "msgpack-rpc request args has to be an array", LOGLVL_ERR);
-        api_free_object(p->result);
         return;
       }
       Array arg = res.data.array;
@@ -282,7 +288,7 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
   if (!p->handler.fn) {
     send_error(channel, p->type, p->request_id, p->unpack_error.msg);
     api_clear_error(&p->unpack_error);
-    api_free_array(args);
+    arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
     return;
   }
 
@@ -291,6 +297,7 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
   evdata->channel = channel;
   evdata->handler = p->handler;
   evdata->args = args;
+  evdata->used_mem = arena_finish(&p->arena);
   evdata->request_id = p->request_id;
   channel_incref(channel);
   if (p->handler.fast) {
@@ -346,7 +353,8 @@ static void request_event(void **argv)
   }
 
 free_ret:
-  api_free_array(e->args);
+  // e->args is allocated in an arena
+  arena_mem_free(e->used_mem, &channel->rpc.unpacker->reuse_blk);
   channel_decref(channel);
   xfree(e);
   api_clear_error(&error);
@@ -523,6 +531,7 @@ static void exit_event(void **argv)
 void rpc_free(Channel *channel)
 {
   remote_ui_disconnect(channel->id);
+  unpacker_teardown(channel->rpc.unpacker);
   xfree(channel->rpc.unpacker);
 
   // Unsubscribe from all events
@@ -543,7 +552,6 @@ static void chan_close_with_error(Channel *channel, char *msg, int loglevel)
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     frame->returned = true;
     frame->errored = true;
-    api_free_object(frame->result);
     frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 
