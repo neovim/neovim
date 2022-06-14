@@ -1,180 +1,109 @@
 " Vim indent file
-" Language:      Perl 5
+" Language:      Perl
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
-" Last Change:   2020 Apr 15
+" License:       Vim License (see :help license)
+" Last Change:   2021 Sep 24
 
-" Suggestions and improvements by :
-"   Aaron J. Sherman (use syntax for hints)
-"   Artem Chuprina (play nice with folding)
+if exists("b:did_ftplugin") | finish | endif
+let b:did_ftplugin = 1
 
-" TODO things that are not or not properly indented (yet) :
-" - Continued statements
-"     print "foo",
-"       "bar";
-"     print "foo"
-"       if bar();
-" - Multiline regular expressions (m//x)
-" (The following probably needs modifying the perl syntax file)
-" - qw() lists
-" - Heredocs with terminators that don't match \I\i*
-
-" Only load this indent file when no other was loaded.
-if exists("b:did_indent")
-    finish
-endif
-let b:did_indent = 1
-
-" Is syntax highlighting active ?
-let b:indent_use_syntax = has("syntax")
-
-setlocal indentexpr=GetPerlIndent()
-setlocal indentkeys+=0=,0),0],0=or,0=and
-if !b:indent_use_syntax
-    setlocal indentkeys+=0=EO
-endif
-
-let s:cpo_save = &cpo
+" Make sure the continuation lines below do not cause problems in
+" compatibility mode.
+let s:save_cpo = &cpo
 set cpo-=C
 
-function! GetPerlIndent()
+setlocal formatoptions-=t
+setlocal formatoptions+=crqol
+setlocal keywordprg=perldoc\ -f
 
-    " Get the line to be indented
-    let cline = getline(v:lnum)
+setlocal comments=:#
+setlocal commentstring=#%s
 
-    " Indent POD markers to column 0
-    if cline =~ '^\s*=\L\@!'
-        return 0
-    endif
+" Provided by Ned Konz <ned at bike-nomad dot com>
+"---------------------------------------------
+setlocal include=\\<\\(use\\\|require\\)\\>
+" '+' is removed to support plugins in Catalyst or DBIx::Class
+" where the leading plus indicates a fully-qualified module name.
+setlocal includeexpr=substitute(substitute(substitute(substitute(v:fname,'+','',''),'::','/','g'),'->\*','',''),'$','.pm','')
+setlocal define=[^A-Za-z_]
+setlocal iskeyword+=:
 
-    " Get current syntax item at the line's first char
-    let csynid = ''
-    if b:indent_use_syntax
-        let csynid = synIDattr(synID(v:lnum,1,0),"name")
-    endif
+" The following line changes a global variable but is necessary to make
+" gf and similar commands work. Thanks to Andrew Pimlott for pointing
+" out the problem.
+let s:old_isfname = &isfname
+set isfname+=:
+let s:new_isfname = &isfname
 
-    " Don't reindent POD and heredocs
-    if csynid == "perlPOD" || csynid == "perlHereDoc" || csynid =~ "^pod"
-        return indent(v:lnum)
-    endif
+augroup perl_global_options
+  au!
+  exe "au BufEnter * if &filetype == 'perl' | let &isfname = '" . s:new_isfname . "' | endif"
+  exe "au BufLeave * if &filetype == 'perl' | let &isfname = '" . s:old_isfname . "' | endif"
+augroup END
 
-    " Indent end-of-heredocs markers to column 0
-    if b:indent_use_syntax
-        " Assumes that an end-of-heredoc marker matches \I\i* to avoid
-        " confusion with other types of strings
-        if csynid == "perlStringStartEnd" && cline =~ '^\I\i*$'
-            return 0
-        endif
+" Undo the stuff we changed.
+let b:undo_ftplugin = "setlocal fo< kp< com< cms< inc< inex< def< isk<" .
+      \               " | let &isfname = '" .  s:old_isfname . "'"
+
+if get(g:, 'perl_fold', 0)
+  setlocal foldmethod=syntax
+  let b:undo_ftplugin .= " | setlocal fdm<"
+endif
+
+" Set this once, globally.
+if !exists("perlpath")
+    if executable("perl")
+      try
+	if &shellxquote != '"'
+	    let perlpath = system('perl -e "print join(q/,/,@INC)"')
+	else
+	    let perlpath = system("perl -e 'print join(q/,/,@INC)'")
+	endif
+	let perlpath = substitute(perlpath,',.$',',,','')
+      catch /E145:/
+	let perlpath = ".,,"
+      endtry
     else
-        " Without syntax hints, assume that end-of-heredocs markers begin with EO
-        if cline =~ '^\s*EO'
-            return 0
-        endif
+	" If we can't call perl to get its path, just default to using the
+	" current directory and the directory of the current file.
+	let perlpath = ".,,"
     endif
+endif
 
-    " Now get the indent of the previous perl line.
-
-    " Find a non-blank line above the current line.
-    let lnum = prevnonblank(v:lnum - 1)
-    " Hit the start of the file, use zero indent.
-    if lnum == 0
-        return 0
-    endif
-    let line = getline(lnum)
-    let ind = indent(lnum)
-    " Skip heredocs, POD, and comments on 1st column
-    if b:indent_use_syntax
-        let skippin = 2
-        while skippin
-            let synid = synIDattr(synID(lnum,1,0),"name")
-            if (synid == "perlStringStartEnd" && line =~ '^\I\i*$')
-                        \ || (skippin != 2 && synid == "perlPOD")
-                        \ || (skippin != 2 && synid == "perlHereDoc")
-                        \ || synid == "perlComment"
-                        \ || synid =~ "^pod"
-                let lnum = prevnonblank(lnum - 1)
-                if lnum == 0
-                    return 0
-                endif
-                let line = getline(lnum)
-                let ind = indent(lnum)
-                let skippin = 1
-            else
-                let skippin = 0
-            endif
-        endwhile
+" Append perlpath to the existing path value, if it is set.  Since we don't
+" use += to do it because of the commas in perlpath, we have to handle the
+" global / local settings, too.
+if &l:path == ""
+    if &g:path == ""
+        let &l:path=perlpath
     else
-        if line =~ "^EO"
-            let lnum = search("<<[\"']\\=EO", "bW")
-            let line = getline(lnum)
-            let ind = indent(lnum)
-        endif
+        let &l:path=&g:path.",".perlpath
     endif
+else
+    let &l:path=&l:path.",".perlpath
+endif
 
-    " Indent blocks enclosed by {}, (), or []
-    if b:indent_use_syntax
-        " Find a real opening brace
-        " NOTE: Unlike Perl character classes, we do NOT need to escape the
-        " closing brackets with a backslash.  Doing so just puts a backslash
-        " in the character class and causes sorrow.  Instead, put the closing
-        " bracket as the first character in the class.
-        let braceclass = '[][(){}]'
-        let bracepos = match(line, braceclass, matchend(line, '^\s*[])}]'))
-        while bracepos != -1
-            let synid = synIDattr(synID(lnum, bracepos + 1, 0), "name")
-            " If the brace is highlighted in one of those groups, indent it.
-            " 'perlHereDoc' is here only to handle the case '&foo(<<EOF)'.
-            if synid == ""
-                        \ || synid == "perlMatchStartEnd"
-                        \ || synid == "perlHereDoc"
-                        \ || synid == "perlBraces"
-                        \ || synid == "perlStatementIndirObj"
-                        \ || synid =~ "^perlFiledescStatement"
-                        \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
-                let brace = strpart(line, bracepos, 1)
-                if brace == '(' || brace == '{' || brace == '['
-                    let ind = ind + shiftwidth()
-                else
-                    let ind = ind - shiftwidth()
-                endif
-            endif
-            let bracepos = match(line, braceclass, bracepos + 1)
-        endwhile
-        let bracepos = matchend(cline, '^\s*[])}]')
-        if bracepos != -1
-            let synid = synIDattr(synID(v:lnum, bracepos, 0), "name")
-            if synid == ""
-                        \ || synid == "perlMatchStartEnd"
-                        \ || synid == "perlBraces"
-                        \ || synid == "perlStatementIndirObj"
-                        \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
-                let ind = ind - shiftwidth()
-            endif
-        endif
-    else
-        if line =~ '[{[(]\s*\(#[^])}]*\)\=$'
-            let ind = ind + shiftwidth()
-        endif
-        if cline =~ '^\s*[])}]'
-            let ind = ind - shiftwidth()
-        endif
-    endif
+let b:undo_ftplugin .= " | setlocal pa<"
+"---------------------------------------------
 
-    " Indent lines that begin with 'or' or 'and'
-    if cline =~ '^\s*\(or\|and\)\>'
-        if line !~ '^\s*\(or\|and\)\>'
-            let ind = ind + shiftwidth()
-        endif
-    elseif line =~ '^\s*\(or\|and\)\>'
-        let ind = ind - shiftwidth()
-    endif
+" Change the browse dialog to show mainly Perl-related files
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+    let b:browsefilter = "Perl Source Files (*.pl)\t*.pl\n" .
+		       \ "Perl Modules (*.pm)\t*.pm\n" .
+		       \ "Perl Documentation Files (*.pod)\t*.pod\n" .
+		       \ "All Files (*.*)\t*.*\n"
+    let b:undo_ftplugin .= " | unlet! b:browsefilter"
+endif
 
-    return ind
+" Proper matching for matchit plugin
+if exists("loaded_matchit") && !exists("b:match_words")
+    let b:match_skip = 's:comment\|string\|perlQQ\|perlShellCommand\|perlHereDoc\|perlSubstitution\|perlTranslation\|perlMatch\|perlFormatField'
+    let b:match_words = '\<if\>:\<elsif\>:\<else\>'
+    let b:undo_ftplugin .= " | unlet! b:match_words b:match_skip"
+endif
 
-endfunction
-
-let &cpo = s:cpo_save
-unlet s:cpo_save
-
-" vim:ts=8:sts=4:sw=4:expandtab:ft=vim
+" Restore the saved compatibility options.
+let &cpo = s:save_cpo
+unlet s:save_cpo s:old_isfname s:new_isfname

@@ -2,9 +2,9 @@
 " Language:    Verbose TAP Output
 " Maintainer:  Rufus Cable <rufus@threebytesfull.com>
 " Remark:      Simple syntax highlighting for TAP output
-" License:
+" License:     Vim License (see :help license)
 " Copyright:   (c) 2008-2013 Rufus Cable
-" Last Change: 2014-12-13
+" Last Change: 2020 Mar 15
 
 if exists("b:current_syntax")
   finish
@@ -29,12 +29,12 @@ syn match tapTestStatusOK /ok/ contained
 syn match tapTestStatusNotOK /not ok/ contained
 
 " highlight todo tests
-syn match tapTestTodo /\(# TODO\|Failed (TODO)\) .*$/ contained contains=tapTestTodoRev
-syn match tapTestTodoRev /\<TODO\>/ contained
+syn match tapTestTodo /\c\(# TODO\|Failed (TODO)\) .*$/ contained contains=tapTestTodoRev
+syn match tapTestTodoRev /\c\<TODO\>/ contained
 
 " highlight skipped tests
-syn match tapTestSkip /# skip .*$/ contained contains=tapTestSkipTag
-syn match tapTestSkipTag /\(# \)\@<=skip\>/ contained
+syn match tapTestSkip /\c# skip .*$/ contained contains=tapTestSkipTag
+syn match tapTestSkipTag /\c\(# \)\@<=skip\>/ contained
 
 " look behind so "ok 123" and "not ok 124" match test number
 syn match tapTestNumber /\(ok \)\@<=\d\d*/ contained
@@ -51,17 +51,6 @@ syn region tapTestResultsSummaryNotOK start=/TODO passed:/ end=/$/ contained
 
 syn region tapTestInstructionsRegion start=/\%1l/ end=/^$/
 
-set foldtext=TAPTestLine_foldtext()
-function! TAPTestLine_foldtext()
-    let line = getline(v:foldstart)
-    let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
-    return sub
-endfunction
-
-set foldminlines=5
-set foldcolumn=2
-set foldenable
-set foldmethod=syntax
 syn sync fromstart
 
 if !exists("did_tapverboseoutput_syntax_inits")
