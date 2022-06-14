@@ -1045,4 +1045,36 @@ describe('cmdheight=0', function()
 
     assert_alive()
   end)
+
+  it("when substitute text", function()
+    command("set cmdheight=0 noruler laststatus=3")
+    feed('ifoo<ESC>')
+    screen:expect{grid=[[
+      fo^o                      |
+      ~                        |
+      ~                        |
+      ~                        |
+      [No Name] [+]            |
+    ]]}
+
+    feed(':%s/foo/bar/gc<CR>')
+    screen:expect{grid=[[
+      foo                      |
+      ~                        |
+      ~                        |
+      [No Name] [+]            |
+      replace wi...q/l/^E/^Y)?^ |
+    ]]}
+
+    feed('y')
+    screen:expect{grid=[[
+      ^bar                      |
+      ~                        |
+      ~                        |
+      ~                        |
+      [No Name] [+]            |
+    ]]}
+
+    assert_alive()
+  end)
 end)
