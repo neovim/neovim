@@ -1890,7 +1890,7 @@ failed:
     check_cursor_lnum();
     beginline(BL_WHITE | BL_FIX);           // on first non-blank
 
-    if (!cmdmod.lockmarks) {
+    if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       // Set '[ and '] marks to the newly read lines.
       curbuf->b_op_start.lnum = from + 1;
       curbuf->b_op_start.col = 0;
@@ -2425,7 +2425,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     if (buf == NULL || (buf->b_ml.ml_mfp == NULL && !empty_memline)
         || did_cmd || nofile_err
         || aborting()) {
-      if (buf != NULL && cmdmod.lockmarks) {
+      if (buf != NULL && (cmdmod.cmod_flags & CMOD_LOCKMARKS)) {
         // restore the original '[ and '] positions
         buf->b_op_start = orig_start;
         buf->b_op_end = orig_end;
@@ -2511,7 +2511,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     }
   }
 
-  if (cmdmod.lockmarks) {
+  if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
     // restore the original '[ and '] positions
     buf->b_op_start = orig_start;
     buf->b_op_end = orig_end;

@@ -187,8 +187,8 @@ static void do_cscope_general(exarg_T *eap, int make_split)
       return;
     }
     postponed_split = -1;
-    postponed_split_flags = cmdmod.split;
-    postponed_split_tab = cmdmod.tab;
+    postponed_split_flags = cmdmod.cmod_split;
+    postponed_split_tab = cmdmod.cmod_tab;
   }
 
   cmdp->func(eap);

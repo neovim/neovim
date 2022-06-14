@@ -148,7 +148,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
   }
 
   // set the '. mark
-  if (!cmdmod.keepjumps) {
+  if ((cmdmod.cmod_flags & CMOD_KEEPJUMPS) == 0) {
     RESET_FMARK(&curbuf->b_last_change, ((pos_T) { lnum, col, 0 }), 0);
 
     // Create a new entry if a new undo-able change was started or we

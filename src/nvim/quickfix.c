@@ -2493,7 +2493,7 @@ static int jump_to_help_window(qf_info_T *qi, bool newwin, int *opened_window)
 {
   win_T *wp = NULL;
 
-  if (cmdmod.tab != 0 || newwin) {
+  if (cmdmod.cmod_tab != 0 || newwin) {
     wp = NULL;
   } else {
     wp = qf_find_help_win();
@@ -2505,7 +2505,7 @@ static int jump_to_help_window(qf_info_T *qi, bool newwin, int *opened_window)
     // Split off help window; put it at far top if no position
     // specified, the current window is vertically split and narrow.
     int flags = WSP_HELP;
-    if (cmdmod.split == 0
+    if (cmdmod.cmod_split == 0
         && curwin->w_width != Columns
         && curwin->w_width < 80) {
       flags |= WSP_TOP;
@@ -2880,7 +2880,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
   qfltype_T qfl_type = qfl->qfl_type;
 
   // For ":helpgrep" find a help window or open one.
-  if (qf_ptr->qf_type == 1 && (!bt_help(curwin->w_buffer) || cmdmod.tab != 0)) {
+  if (qf_ptr->qf_type == 1 && (!bt_help(curwin->w_buffer) || cmdmod.cmod_tab != 0)) {
     if (jump_to_help_window(qi, newwin, opened_window) == FAIL) {
       return FAIL;
     }
@@ -3655,13 +3655,13 @@ static int qf_open_new_cwindow(qf_info_T *qi, int height)
   // The current window becomes the previous window afterwards.
   win_T *const win = curwin;
 
-  if (IS_QF_STACK(qi) && cmdmod.split == 0) {
+  if (IS_QF_STACK(qi) && cmdmod.cmod_split == 0) {
     // Create the new quickfix window at the very bottom, except when
     // :belowright or :aboveleft is used.
     win_goto(lastwin);
   }
   // Default is to open the window below the current window
-  if (cmdmod.split == 0) {
+  if (cmdmod.cmod_split == 0) {
     flags = WSP_BELOW;
   }
   flags |= WSP_NEWLOC;
@@ -3747,9 +3747,9 @@ void ex_copen(exarg_T *eap)
   reset_VIsual_and_resel();  // stop Visual mode
 
   // Find an existing quickfix window, or open a new one.
-  if (cmdmod.tab == 0) {
+  if (cmdmod.cmod_tab == 0) {
     status = qf_goto_cwindow(qi, eap->addr_count != 0, height,
-                             cmdmod.split & WSP_VERT);
+                             cmdmod.cmod_split & WSP_VERT);
   }
   if (status == FAIL) {
     if (qf_open_new_cwindow(qi, height) == FAIL) {
@@ -5510,7 +5510,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
           // with the same name.
           wipe_dummy_buffer(buf, dirname_start);
           buf = NULL;
-        } else if (!cmdmod.hide
+        } else if ((cmdmod.cmod_flags & CMOD_HIDE) == 0
                    || buf->b_p_bh[0] == 'u'             // "unload"
                    || buf->b_p_bh[0] == 'w'             // "wipe"
                    || buf->b_p_bh[0] == 'd') {          // "delete"

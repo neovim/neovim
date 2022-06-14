@@ -268,7 +268,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     msg_attr_keep((char *)IObuff, 0, true, false);
   }
 
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set "'[" and "']" marks.
     curbuf->b_op_start = oap->start;
     curbuf->b_op_end.lnum = oap->end.lnum;
@@ -693,7 +693,7 @@ void op_reindent(oparg_T *oap, Indenter how)
                   "%" PRId64 " lines indented ", i),
          (int64_t)i);
   }
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // set '[ and '] marks
     curbuf->b_op_start = oap->start;
     curbuf->b_op_end = oap->end;
@@ -1793,7 +1793,7 @@ int op_delete(oparg_T *oap)
   msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 
 setmarks:
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     if (oap->motion_type == kMTBlockWise) {
       curbuf->b_op_end.lnum = oap->end.lnum;
       curbuf->b_op_end.col = oap->start.col;
@@ -2063,7 +2063,7 @@ static int op_replace(oparg_T *oap, int c)
   check_cursor();
   changed_lines(oap->start.lnum, oap->start.col, oap->end.lnum + 1, 0L, true);
 
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set "'[" and "']" marks.
     curbuf->b_op_start = oap->start;
     curbuf->b_op_end = oap->end;
@@ -2133,7 +2133,7 @@ void op_tilde(oparg_T *oap)
     redraw_curbuf_later(INVERTED);
   }
 
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set '[ and '] marks.
     curbuf->b_op_start = oap->start;
     curbuf->b_op_end = oap->end;
@@ -2825,7 +2825,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     }
   }
 
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set "'[" and "']" marks.
     curbuf->b_op_start = oap->start;
     curbuf->b_op_end = oap->end;
@@ -3708,7 +3708,7 @@ error:
   curwin->w_set_curswant = TRUE;
 
 end:
-  if (cmdmod.lockmarks) {
+  if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
     curbuf->b_op_start = orig_start;
     curbuf->b_op_end = orig_end;
   }
@@ -4051,7 +4051,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   // and setup the array of space strings lengths
   for (t = 0; t < (linenr_T)count; t++) {
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t));
-    if (t == 0 && setmark && !cmdmod.lockmarks) {
+    if (t == 0 && setmark && (cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       // Set the '[ mark.
       curwin->w_buffer->b_op_start.lnum = curwin->w_cursor.lnum;
       curwin->w_buffer->b_op_start.col = (colnr_T)STRLEN(curr);
@@ -4172,7 +4172,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
 
   ml_replace(curwin->w_cursor.lnum, (char *)newp, false);
 
-  if (setmark && !cmdmod.lockmarks) {
+  if (setmark && (cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set the '] mark.
     curwin->w_buffer->b_op_end.lnum = curwin->w_cursor.lnum;
     curwin->w_buffer->b_op_end.col = sumsize;
@@ -4309,7 +4309,7 @@ static void op_format(oparg_T *oap, int keep_cursor)
     redraw_curbuf_later(INVERTED);
   }
 
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set '[ mark at the start of the formatted area
     curbuf->b_op_start = oap->start;
   }
@@ -4334,7 +4334,7 @@ static void op_format(oparg_T *oap, int keep_cursor)
   old_line_count = curbuf->b_ml.ml_line_count - old_line_count;
   msgmore(old_line_count);
 
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // put '] mark on the end of the formatted area
     curbuf->b_op_end = curwin->w_cursor;
   }
@@ -4945,7 +4945,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
 
     // Set '[ mark if something changed. Keep the last end
     // position from do_addsub().
-    if (change_cnt > 0 && !cmdmod.lockmarks) {
+    if (change_cnt > 0 && (cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       curbuf->b_op_start = startpos;
     }
 
@@ -5299,7 +5299,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
   }
 
-  if (!cmdmod.lockmarks) {
+  if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // set the '[ and '] marks
     curbuf->b_op_start = startpos;
     curbuf->b_op_end = endpos;
@@ -6155,7 +6155,7 @@ static void op_function(const oparg_T *oap)
 
     virtual_op = save_virtual_op;
     finish_op = save_finish_op;
-    if (cmdmod.lockmarks) {
+    if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
       curbuf->b_op_start = orig_start;
       curbuf->b_op_end = orig_end;
     }

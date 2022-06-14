@@ -309,7 +309,6 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   FUNC_ATTR_NONNULL_ALL
 {
   char *cmd;
-  cmdmod_T save_cmdmod = cmdmod;
   char *p;
   bool delim_optional = false;
   int delim;
@@ -346,8 +345,8 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   ea.cmd = (char *)ccline.cmdbuff;
   ea.addr_type = ADDR_LINES;
 
-  parse_command_modifiers(&ea, &dummy, true);
-  cmdmod = save_cmdmod;
+  cmdmod_T dummy_cmdmod;
+  parse_command_modifiers(&ea, &dummy, &dummy_cmdmod, true);
 
   cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr("sgvl", *cmd) == NULL) {
@@ -2433,9 +2432,9 @@ static void cmdpreview_show(CommandLineState *s)
   curwin->w_p_cul = false;       // Disable 'cursorline' so it doesn't mess up the highlights
   curwin->w_p_cuc = false;       // Disable 'cursorcolumn' so it doesn't mess up the highlights
   p_hls = false;                 // Don't show search highlighting during live substitution
-  cmdmod.split = 0;              // Disable :leftabove/botright modifiers
-  cmdmod.tab = 0;                // Disable :tab modifier
-  cmdmod.noswapfile = true;      // Disable swap for preview buffer
+  cmdmod.cmod_split = 0;         // Disable :leftabove/botright modifiers
+  cmdmod.cmod_tab = 0;           // Disable :tab modifier
+  cmdmod.cmod_flags |= CMOD_NOSWAPFILE;  // Disable swap for preview buffer
 
   // Open preview buffer if inccommand=split.
   if (!icm_split) {
@@ -6074,7 +6073,7 @@ void add_to_history(int histype, char_u *new_entry, int in_map, int sep)
   }
   assert(histype != HIST_DEFAULT);
 
-  if (cmdmod.keeppatterns && histype == HIST_SEARCH) {
+  if ((cmdmod.cmod_flags & CMOD_KEEPPATTERNS) && histype == HIST_SEARCH) {
     return;
   }
 
@@ -6604,8 +6603,8 @@ static int open_cmdwin(void)
   pum_undisplay(true);
 
   // don't use a new tab page
-  cmdmod.tab = 0;
-  cmdmod.noswapfile = 1;
+  cmdmod.cmod_tab = 0;
+  cmdmod.cmod_flags |= CMOD_NOSWAPFILE;
 
   // Create a window for the command-line buffer.
   if (win_split((int)p_cwh, WSP_BOT) == FAIL) {

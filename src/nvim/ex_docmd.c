@@ -1411,7 +1411,6 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   char *cmd;
   char *p;
   char *after_modifier = NULL;
-  cmdmod_T save_cmdmod = cmdmod;
 
   // Initialize cmdinfo
   memset(cmdinfo, 0, sizeof(*cmdinfo));
@@ -1426,41 +1425,10 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   eap->cookie = NULL;
 
   // Parse command modifiers
-  if (parse_command_modifiers(eap, errormsg, false) == FAIL) {
+  if (parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false) == FAIL) {
     return false;
   }
   after_modifier = eap->cmd;
-
-  // Revert the side-effects of `parse_command_modifiers`
-  if (eap->save_msg_silent != -1) {
-    cmdinfo->silent = !!msg_silent;
-    msg_silent = eap->save_msg_silent;
-    eap->save_msg_silent = -1;
-  }
-  if (eap->did_esilent) {
-    cmdinfo->emsg_silent = true;
-    emsg_silent--;
-    eap->did_esilent = false;
-  }
-  if (eap->did_sandbox) {
-    cmdinfo->sandbox = true;
-    sandbox--;
-    eap->did_sandbox = false;
-  }
-  if (cmdmod.save_ei != NULL) {
-    cmdinfo->noautocmd = true;
-    set_string_option_direct("ei", -1, (char_u *)cmdmod.save_ei, OPT_FREE, SID_NONE);
-    free_string_option((char_u *)cmdmod.save_ei);
-  }
-  if (eap->verbose_save != -1) {
-    cmdinfo->verbose = p_verbose;
-    p_verbose = eap->verbose_save;
-    eap->verbose_save = -1;
-  } else {
-    cmdinfo->verbose = -1;
-  }
-  cmdinfo->cmdmod = cmdmod;
-  cmdmod = save_cmdmod;
 
   // Save location after command modifiers
   cmd = eap->cmd;
@@ -1585,26 +1553,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   cmdmod = cmdinfo->cmdmod;
 
   // Apply command modifiers
-  if (cmdinfo->silent) {
-    eap->save_msg_silent = msg_silent;
-    msg_silent++;
-  }
-  if (cmdinfo->emsg_silent) {
-    eap->did_esilent = true;
-    emsg_silent++;
-  }
-  if (cmdinfo->sandbox) {
-    eap->did_sandbox = true;
-    sandbox++;
-  }
-  if (cmdinfo->noautocmd) {
-    cmdmod.save_ei = (char *)vim_strsave(p_ei);
-    set_string_option_direct("ei", -1, (char_u *)"all", OPT_FREE, SID_NONE);
-  }
-  if (cmdinfo->verbose != -1) {
-    eap->verbose_save = p_verbose;
-    p_verbose = cmdinfo->verbose;
-  }
+  apply_cmdmod(&cmdmod);
 
   if (!MODIFIABLE(curbuf) && (eap->argt & EX_MODIFY)
       // allow :put in terminals
@@ -1712,11 +1661,8 @@ end:
     emsg(errormsg);
   }
   // Undo command modifiers
-  undo_cmdmod(eap, msg_scroll);
+  undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;
-  if (eap->did_sandbox) {
-    sandbox--;
-  }
   return retv;
 #undef ERROR
 }
@@ -1746,7 +1692,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   char *errormsg = NULL;  // error message
   char *after_modifier = NULL;
   exarg_T ea;
-  const int save_msg_scroll = msg_scroll;
   cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
   const bool save_pending_end_reg_executing = pending_end_reg_executing;
@@ -1788,9 +1733,10 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   ea.cookie = cookie;
   ea.cstack = cstack;
 
-  if (parse_command_modifiers(&ea, &errormsg, false) == FAIL) {
+  if (parse_command_modifiers(&ea, &errormsg, &cmdmod, false) == FAIL) {
     goto doend;
   }
+  apply_cmdmod(&cmdmod);
 
   after_modifier = ea.cmd;
 
@@ -2337,12 +2283,12 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   // The :try command saves the emsg_silent flag, reset it here when
   // ":silent! try" was used, it should only apply to :try itself.
-  if (ea.cmdidx == CMD_try && ea.did_esilent > 0) {
-    emsg_silent -= ea.did_esilent;
+  if (ea.cmdidx == CMD_try && cmdmod.cmod_did_esilent > 0) {
+    emsg_silent -= cmdmod.cmod_did_esilent;
     if (emsg_silent < 0) {
       emsg_silent = 0;
     }
-    ea.did_esilent = 0;
+    cmdmod.cmod_did_esilent = 0;
   }
 
   // 7. Execute the command.
@@ -2402,14 +2348,10 @@ doend:
               (ea.cmdidx != CMD_SIZE
                && !IS_USER_CMDIDX(ea.cmdidx)) ? cmdnames[(int)ea.cmdidx].cmd_name : NULL);
 
-  undo_cmdmod(&ea, save_msg_scroll);
+  undo_cmdmod(&cmdmod);
   cmdmod = save_cmdmod;
   reg_executing = save_reg_executing;
   pending_end_reg_executing = save_pending_end_reg_executing;
-
-  if (ea.did_sandbox) {
-    sandbox--;
-  }
 
   if (ea.nextcmd && *ea.nextcmd == NUL) {       // not really a next command
     ea.nextcmd = NULL;
@@ -2434,25 +2376,25 @@ char *ex_errmsg(const char *const msg, const char *const arg)
 
 /// Parse and skip over command modifiers:
 /// - update eap->cmd
-/// - store flags in "cmdmod".
+/// - store flags in "cmod".
 /// - Set ex_pressedreturn for an empty command line.
-/// - set msg_silent for ":silent"
-/// - set 'eventignore' to "all" for ":noautocmd"
-/// - set p_verbose for ":verbose"
-/// - Increment "sandbox" for ":sandbox"
 ///
-/// @param skip_only      if true, the global variables are not changed, except for
-///                       "cmdmod".
+/// @param skip_only      if false, undo_cmdmod() must be called later to free
+///                       any cmod_filter_regmatch.regprog.
 /// @param[out] errormsg  potential error message.
 ///
+/// Call apply_cmdmod() to get the side effects of the modifiers:
+/// - Increment "sandbox" for ":sandbox"
+/// - set p_verbose for ":verbose"
+/// - set msg_silent for ":silent"
+/// - set 'eventignore' to "all" for ":noautocmd"
+///
 /// @return  FAIL when the command is not to be executed.
-int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
+int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool skip_only)
 {
   char *p;
 
-  memset(&cmdmod, 0, sizeof(cmdmod));
-  eap->verbose_save = -1;
-  eap->save_msg_silent = -1;
+  memset(cmod, 0, sizeof(*cmod));
 
   // Repeat until no more command modifiers are found.
   for (;;) {
@@ -2490,48 +2432,48 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
       if (!checkforcmd(&eap->cmd, "aboveleft", 3)) {
         break;
       }
-      cmdmod.split |= WSP_ABOVE;
+      cmod->cmod_split |= WSP_ABOVE;
       continue;
 
     case 'b':
       if (checkforcmd(&eap->cmd, "belowright", 3)) {
-        cmdmod.split |= WSP_BELOW;
+        cmod->cmod_split |= WSP_BELOW;
         continue;
       }
       if (checkforcmd(&eap->cmd, "browse", 3)) {
-        cmdmod.browse = true;
+        cmod->cmod_flags |= CMOD_BROWSE;
         continue;
       }
       if (!checkforcmd(&eap->cmd, "botright", 2)) {
         break;
       }
-      cmdmod.split |= WSP_BOT;
+      cmod->cmod_split |= WSP_BOT;
       continue;
 
     case 'c':
       if (!checkforcmd(&eap->cmd, "confirm", 4)) {
         break;
       }
-      cmdmod.confirm = true;
+      cmod->cmod_flags |= CMOD_CONFIRM;
       continue;
 
     case 'k':
       if (checkforcmd(&eap->cmd, "keepmarks", 3)) {
-        cmdmod.keepmarks = true;
+        cmod->cmod_flags |= CMOD_KEEPMARKS;
         continue;
       }
       if (checkforcmd(&eap->cmd, "keepalt", 5)) {
-        cmdmod.keepalt = true;
+        cmod->cmod_flags |= CMOD_KEEPALT;
         continue;
       }
       if (checkforcmd(&eap->cmd, "keeppatterns", 5)) {
-        cmdmod.keeppatterns = true;
+        cmod->cmod_flags |= CMOD_KEEPPATTERNS;
         continue;
       }
       if (!checkforcmd(&eap->cmd, "keepjumps", 5)) {
         break;
       }
-      cmdmod.keepjumps = true;
+      cmod->cmod_flags |= CMOD_KEEPJUMPS;
       continue;
 
     case 'f': {  // only accept ":filter {pat} cmd"
@@ -2541,7 +2483,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
         break;
       }
       if (*p == '!') {
-        cmdmod.filter_force = true;
+        cmod->cmod_filter_force = true;
         p = skipwhite(p + 1);
         if (*p == NUL || ends_excmd(*p)) {
           break;
@@ -2557,8 +2499,8 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
         break;
       }
       if (!skip_only) {
-        cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
-        if (cmdmod.filter_regmatch.regprog == NULL) {
+        cmod->cmod_filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
+        if (cmod->cmod_filter_regmatch.regprog == NULL) {
           break;
         }
       }
@@ -2573,70 +2515,52 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
         break;
       }
       eap->cmd = p;
-      cmdmod.hide = true;
+      cmod->cmod_flags |= CMOD_HIDE;
       continue;
 
     case 'l':
       if (checkforcmd(&eap->cmd, "lockmarks", 3)) {
-        cmdmod.lockmarks = true;
+        cmod->cmod_flags |= CMOD_LOCKMARKS;
         continue;
       }
 
       if (!checkforcmd(&eap->cmd, "leftabove", 5)) {
         break;
       }
-      cmdmod.split |= WSP_ABOVE;
+      cmod->cmod_split |= WSP_ABOVE;
       continue;
 
     case 'n':
       if (checkforcmd(&eap->cmd, "noautocmd", 3)) {
-        if (cmdmod.save_ei == NULL && !skip_only) {
-          // Set 'eventignore' to "all". Restore the
-          // existing option value later.
-          cmdmod.save_ei = (char *)vim_strsave(p_ei);
-          set_string_option_direct("ei", -1, (char_u *)"all", OPT_FREE, SID_NONE);
-        }
+        cmod->cmod_flags |= CMOD_NOAUTOCMD;
         continue;
       }
       if (!checkforcmd(&eap->cmd, "noswapfile", 3)) {
         break;
       }
-      cmdmod.noswapfile = true;
+      cmod->cmod_flags |= CMOD_NOSWAPFILE;
       continue;
 
     case 'r':
       if (!checkforcmd(&eap->cmd, "rightbelow", 6)) {
         break;
       }
-      cmdmod.split |= WSP_BELOW;
+      cmod->cmod_split |= WSP_BELOW;
       continue;
 
     case 's':
       if (checkforcmd(&eap->cmd, "sandbox", 3)) {
-        if (!skip_only) {
-          if (!eap->did_sandbox) {
-            sandbox++;
-          }
-          eap->did_sandbox = true;
-        }
+        cmod->cmod_flags |= CMOD_SANDBOX;
         continue;
       }
       if (!checkforcmd(&eap->cmd, "silent", 3)) {
         break;
       }
-      if (!skip_only) {
-        if (eap->save_msg_silent == -1) {
-          eap->save_msg_silent = msg_silent;
-        }
-        msg_silent++;
-      }
+      cmod->cmod_flags |= CMOD_SILENT;
       if (*eap->cmd == '!' && !ascii_iswhite(eap->cmd[-1])) {
         // ":silent!", but not "silent !cmd"
         eap->cmd = skipwhite(eap->cmd + 1);
-        if (!skip_only) {
-          emsg_silent++;
-          eap->did_esilent++;
-        }
+        cmod->cmod_flags |= CMOD_ERRSILENT;
       }
       continue;
 
@@ -2647,13 +2571,13 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
                                        false, 1);
 
           if (tabnr == MAXLNUM) {
-            cmdmod.tab = tabpage_index(curtab) + 1;
+            cmod->cmod_tab = tabpage_index(curtab) + 1;
           } else {
             if (tabnr < 0 || tabnr > LAST_TAB_NR) {
               *errormsg = _(e_invrange);
               return false;
             }
-            cmdmod.tab = tabnr + 1;
+            cmod->cmod_tab = tabnr + 1;
           }
         }
         eap->cmd = p;
@@ -2662,38 +2586,29 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
       if (!checkforcmd(&eap->cmd, "topleft", 2)) {
         break;
       }
-      cmdmod.split |= WSP_TOP;
+      cmod->cmod_split |= WSP_TOP;
       continue;
 
     case 'u':
       if (!checkforcmd(&eap->cmd, "unsilent", 3)) {
         break;
       }
-      if (!skip_only) {
-        if (eap->save_msg_silent == -1) {
-          eap->save_msg_silent = msg_silent;
-        }
-        msg_silent = 0;
-      }
+      cmod->cmod_flags |= CMOD_UNSILENT;
       continue;
 
     case 'v':
       if (checkforcmd(&eap->cmd, "vertical", 4)) {
-        cmdmod.split |= WSP_VERT;
+        cmod->cmod_split |= WSP_VERT;
         continue;
       }
       if (!checkforcmd(&p, "verbose", 4)) {
         break;
       }
-      if (!skip_only) {
-        if (eap->verbose_save < 0) {
-          eap->verbose_save = p_verbose;
-        }
-        if (ascii_isdigit(*eap->cmd)) {
-          p_verbose = atoi(eap->cmd);
-        } else {
-          p_verbose = 1;
-        }
+      if (ascii_isdigit(*eap->cmd)) {
+        // zero means not set, one is verbose == 0, etc.
+        cmod->cmod_verbose = atoi((char *)eap->cmd) + 1;
+      } else {
+        cmod->cmod_verbose = 2;  // default: verbose == 1
       }
       eap->cmd = p;
       continue;
@@ -2704,41 +2619,91 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, bool skip_only)
   return OK;
 }
 
-/// Undo and free contents of "cmdmod".
-static void undo_cmdmod(const exarg_T *eap, int save_msg_scroll)
+/// Apply the command modifiers.  Saves current state in "cmdmod", call
+/// undo_cmdmod() later.
+static void apply_cmdmod(cmdmod_T *cmod)
+{
+  if ((cmod->cmod_flags & CMOD_SANDBOX) && !cmod->cmod_did_sandbox) {
+    sandbox++;
+    cmod->cmod_did_sandbox = true;
+  }
+  if (cmod->cmod_verbose > 0) {
+    if (cmod->cmod_verbose_save == 0) {
+      cmod->cmod_verbose_save = p_verbose + 1;
+    }
+    p_verbose = cmod->cmod_verbose - 1;
+  }
+
+  if ((cmod->cmod_flags & (CMOD_SILENT | CMOD_UNSILENT))
+      && cmod->cmod_save_msg_silent == 0) {
+    cmod->cmod_save_msg_silent = msg_silent + 1;
+    cmod->cmod_save_msg_scroll = msg_scroll;
+  }
+  if (cmod->cmod_flags & CMOD_SILENT) {
+    msg_silent++;
+  }
+  if (cmod->cmod_flags & CMOD_UNSILENT) {
+    msg_silent = 0;
+  }
+
+  if (cmod->cmod_flags & CMOD_ERRSILENT) {
+    emsg_silent++;
+    cmod->cmod_did_esilent++;
+  }
+
+  if ((cmod->cmod_flags & CMOD_NOAUTOCMD) && cmod->cmod_save_ei == NULL) {
+    // Set 'eventignore' to "all".
+    // First save the existing option value for restoring it later.
+    cmod->cmod_save_ei = vim_strsave(p_ei);
+    set_string_option_direct("ei", -1, (char_u *)"all", OPT_FREE, SID_NONE);
+  }
+}
+
+/// Undo and free contents of "cmod".
+static void undo_cmdmod(cmdmod_T *cmod)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (eap->verbose_save >= 0) {
-    p_verbose = eap->verbose_save;
+  if (cmod->cmod_verbose_save > 0) {
+    p_verbose = cmod->cmod_verbose_save - 1;
+    cmod->cmod_verbose_save = 0;
   }
 
-  if (cmdmod.save_ei != NULL) {
+  if (cmod->cmod_did_sandbox) {
+    sandbox--;
+    cmod->cmod_did_sandbox = false;
+  }
+
+  if (cmod->cmod_save_ei != NULL) {
     // Restore 'eventignore' to the value before ":noautocmd".
-    set_string_option_direct("ei", -1, (char_u *)cmdmod.save_ei, OPT_FREE, SID_NONE);
-    free_string_option((char_u *)cmdmod.save_ei);
+    set_string_option_direct("ei", -1, (char_u *)cmod->cmod_save_ei, OPT_FREE, SID_NONE);
+    free_string_option((char_u *)cmod->cmod_save_ei);
+    cmod->cmod_save_ei = NULL;
   }
 
-  vim_regfree(cmdmod.filter_regmatch.regprog);
+  vim_regfree(cmod->cmod_filter_regmatch.regprog);
 
-  if (eap->save_msg_silent != -1) {
+  if (cmod->cmod_save_msg_silent > 0) {
     // messages could be enabled for a serious error, need to check if the
     // counters don't become negative
-    if (!did_emsg || msg_silent > eap->save_msg_silent) {
-      msg_silent = eap->save_msg_silent;
+    if (!did_emsg || msg_silent > cmod->cmod_save_msg_silent - 1) {
+      msg_silent = cmod->cmod_save_msg_silent - 1;
     }
-    emsg_silent -= eap->did_esilent;
+    emsg_silent -= cmod->cmod_did_esilent;
     if (emsg_silent < 0) {
       emsg_silent = 0;
     }
     // Restore msg_scroll, it's set by file I/O commands, even when no
     // message is actually displayed.
-    msg_scroll = save_msg_scroll;
+    msg_scroll = cmod->cmod_save_msg_scroll;
 
     // "silent reg" or "silent echo x" inside "redir" leaves msg_col
     // somewhere in the line.  Put it back in the first column.
     if (redirecting()) {
       msg_col = 0;
     }
+
+    cmod->cmod_save_msg_silent = 0;
+    cmod->cmod_did_esilent = 0;
   }
 }
 
@@ -5488,7 +5453,7 @@ static int check_more(int message, bool forceit)
   if (!forceit && only_one_window()
       && ARGCOUNT > 1 && !arg_had_last && n > 0 && quitmore == 0) {
     if (message) {
-      if ((p_confirm || cmdmod.confirm) && curbuf->b_fname != NULL) {
+      if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && curbuf->b_fname != NULL) {
         char buff[DIALOG_MSG_SIZE];
 
         vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
@@ -6555,8 +6520,8 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
   return result;
 }
 
-/// Add modifiers from "cmdmod.split" to "buf".  Set "multi_mods" when one was
-/// added.
+/// Add modifiers from "cmdmod.cmod_split" to "buf".  Set "multi_mods" when one
+/// was added.
 ///
 /// @return the number of bytes added
 size_t add_win_cmd_modifers(char *buf, bool *multi_mods)
@@ -6564,28 +6529,28 @@ size_t add_win_cmd_modifers(char *buf, bool *multi_mods)
   size_t result = 0;
 
   // :aboveleft and :leftabove
-  if (cmdmod.split & WSP_ABOVE) {
+  if (cmdmod.cmod_split & WSP_ABOVE) {
     result += add_cmd_modifier(buf, "aboveleft", multi_mods);
   }
   // :belowright and :rightbelow
-  if (cmdmod.split & WSP_BELOW) {
+  if (cmdmod.cmod_split & WSP_BELOW) {
     result += add_cmd_modifier(buf, "belowright", multi_mods);
   }
   // :botright
-  if (cmdmod.split & WSP_BOT) {
+  if (cmdmod.cmod_split & WSP_BOT) {
     result += add_cmd_modifier(buf, "botright", multi_mods);
   }
 
   // :tab
-  if (cmdmod.tab > 0) {
+  if (cmdmod.cmod_tab > 0) {
     result += add_cmd_modifier(buf, "tab", multi_mods);
   }
   // :topleft
-  if (cmdmod.split & WSP_TOP) {
+  if (cmdmod.cmod_split & WSP_TOP) {
     result += add_cmd_modifier(buf, "topleft", multi_mods);
   }
   // :vertical
-  if (cmdmod.split & WSP_VERT) {
+  if (cmdmod.cmod_split & WSP_VERT) {
     result += add_cmd_modifier(buf, "vertical", multi_mods);
   }
   return result;
@@ -6597,23 +6562,23 @@ size_t uc_mods(char *buf)
   bool multi_mods = false;
 
   typedef struct {
-    bool *set;
+    int flag;
     char *name;
   } mod_entry_T;
   static mod_entry_T mod_entries[] = {
-    { &cmdmod.browse, "browse" },
-    { &cmdmod.confirm, "confirm" },
-    { &cmdmod.hide, "hide" },
-    { &cmdmod.keepalt, "keepalt" },
-    { &cmdmod.keepjumps, "keepjumps" },
-    { &cmdmod.keepmarks, "keepmarks" },
-    { &cmdmod.keeppatterns, "keeppatterns" },
-    { &cmdmod.lockmarks, "lockmarks" },
-    { &cmdmod.noswapfile, "noswapfile" }
+    { CMOD_BROWSE, "browse" },
+    { CMOD_CONFIRM, "confirm" },
+    { CMOD_HIDE, "hide" },
+    { CMOD_KEEPALT, "keepalt" },
+    { CMOD_KEEPJUMPS, "keepjumps" },
+    { CMOD_KEEPMARKS, "keepmarks" },
+    { CMOD_KEEPPATTERNS, "keeppatterns" },
+    { CMOD_LOCKMARKS, "lockmarks" },
+    { CMOD_NOSWAPFILE, "noswapfile" }
   };
   // the modifiers that are simple flags
   for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
-    if (*mod_entries[i].set) {
+    if (cmdmod.cmod_flags & mod_entries[i].flag) {
       result += add_cmd_modifier(buf, mod_entries[i].name, &multi_mods);
     }
   }
@@ -6632,7 +6597,7 @@ size_t uc_mods(char *buf)
   if (p_verbose > 0) {
     result += add_cmd_modifier(buf, "verbose", &multi_mods);
   }
-  // flags from cmdmod.split
+  // flags from cmdmod.cmod_split
   result += add_win_cmd_modifers(buf, &multi_mods);
 
   return result;
@@ -7180,7 +7145,7 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 
   need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
   if (need_hide && !buf_hide(buf) && !forceit) {
-    if ((p_confirm || cmdmod.confirm) && p_write) {
+    if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && p_write) {
       bufref_T bufref;
       set_bufref(&bufref, buf);
       dialog_changed(buf, false);
@@ -7663,7 +7628,7 @@ void ex_splitview(exarg_T *eap)
 
   // A ":split" in the quickfix window works like ":new".  Don't want two
   // quickfix windows.  But it's OK when doing ":tab split".
-  if (bt_quickfix(curbuf) && cmdmod.tab == 0) {
+  if (bt_quickfix(curbuf) && cmdmod.cmod_tab == 0) {
     if (eap->cmdidx == CMD_split) {
       eap->cmdidx = CMD_new;
     }
@@ -7685,7 +7650,7 @@ void ex_splitview(exarg_T *eap)
    * Either open new tab page or split the window.
    */
   if (use_tab) {
-    if (win_new_tabpage(cmdmod.tab != 0 ? cmdmod.tab : eap->addr_count == 0
+    if (win_new_tabpage(cmdmod.cmod_tab != 0 ? cmdmod.cmod_tab : eap->addr_count == 0
                         ? 0 : (int)eap->line2 + 1, (char_u *)eap->arg) != FAIL) {
       do_exedit(eap, old_curwin);
       apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
@@ -7694,7 +7659,7 @@ void ex_splitview(exarg_T *eap)
       if (curwin != old_curwin
           && win_valid(old_curwin)
           && old_curwin->w_buffer != curbuf
-          && !cmdmod.keepalt) {
+          && (cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
         old_curwin->w_alt_fnum = curbuf->b_fnum;
       }
     }
@@ -7852,7 +7817,7 @@ static void ex_resize(exarg_T *eap)
   }
 
   n = (int)atol(eap->arg);
-  if (cmdmod.split & WSP_VERT) {
+  if (cmdmod.cmod_split & WSP_VERT) {
     if (*eap->arg == '-' || *eap->arg == '+') {
       n += wp->w_width;
     } else if (n == 0 && eap->arg[0] == NUL) {  // default is very wide
@@ -8023,7 +7988,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
       && curwin != old_curwin
       && win_valid(old_curwin)
       && old_curwin->w_buffer != curbuf
-      && !cmdmod.keepalt) {
+      && (cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
     old_curwin->w_alt_fnum = curbuf->b_fnum;
   }
 
@@ -8473,8 +8438,8 @@ static void ex_wincmd(exarg_T *eap)
     emsg(_(e_invarg));
   } else if (!eap->skip) {
     // Pass flags on for ":vertical wincmd ]".
-    postponed_split_flags = cmdmod.split;
-    postponed_split_tab = cmdmod.tab;
+    postponed_split_flags = cmdmod.cmod_split;
+    postponed_split_tab = cmdmod.cmod_tab;
     do_window(*eap->arg, eap->addr_count > 0 ? eap->line2 : 0L, xchar);
     postponed_split_flags = 0;
     postponed_split_tab = 0;
@@ -9310,8 +9275,8 @@ static void ex_pedit(exarg_T *eap)
 static void ex_stag(exarg_T *eap)
 {
   postponed_split = -1;
-  postponed_split_flags = cmdmod.split;
-  postponed_split_tab = cmdmod.tab;
+  postponed_split_flags = cmdmod.cmod_split;
+  postponed_split_tab = cmdmod.cmod_tab;
   ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name + 1);
   postponed_split_flags = 0;
   postponed_split_tab = 0;

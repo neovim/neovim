@@ -790,14 +790,14 @@ static int diff_write(buf_T *buf, diffin_T *din)
   // Always use 'fileformat' set to "unix".
   char_u *save_ff = buf->b_p_ff;
   buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
-  const bool save_lockmarks = cmdmod.lockmarks;
+  const bool save_cmod_flags = cmdmod.cmod_flags;
   // Writing the buffer is an implementation detail of performing the diff,
   // so it shouldn't update the '[ and '] marks.
-  cmdmod.lockmarks = true;
+  cmdmod.cmod_flags |= CMOD_LOCKMARKS;
   int r = buf_write(buf, (char *)din->din_fname, NULL,
                     (linenr_T)1, buf->b_ml.ml_line_count,
                     NULL, false, false, false, true);
-  cmdmod.lockmarks = save_lockmarks;
+  cmdmod.cmod_flags = save_cmod_flags;
   free_string_option(buf->b_p_ff);
   buf->b_p_ff = save_ff;
   return r;
@@ -1263,7 +1263,7 @@ void ex_diffpatch(exarg_T *eap)
     }
 
     // don't use a new tab page, each tab page has its own diffs
-    cmdmod.tab = 0;
+    cmdmod.cmod_tab = 0;
 
     if (win_split(0, (diff_flags & DIFF_VERTICAL) ? WSP_VERT : 0) != FAIL) {
       // Pretend it was a ":split fname" command
@@ -1323,7 +1323,7 @@ void ex_diffsplit(exarg_T *eap)
   set_fraction(curwin);
 
   // don't use a new tab page, each tab page has its own diffs
-  cmdmod.tab = 0;
+  cmdmod.cmod_tab = 0;
 
   if (win_split(0, (diff_flags & DIFF_VERTICAL) ? WSP_VERT : 0) != FAIL) {
     // Pretend it was a ":split fname" command

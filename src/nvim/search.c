@@ -176,7 +176,7 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
    * Save the currently used pattern in the appropriate place,
    * unless the pattern should not be remembered.
    */
-  if (!(options & SEARCH_KEEP) && !cmdmod.keeppatterns) {
+  if (!(options & SEARCH_KEEP) && (cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
     // search or global command
     if (pat_save == RE_SEARCH || pat_save == RE_BOTH) {
       save_re_pat(RE_SEARCH, pat, magic);
@@ -1420,7 +1420,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
   curwin->w_set_curswant = TRUE;
 
 end_do_search:
-  if ((options & SEARCH_KEEP) || cmdmod.keeppatterns) {
+  if ((options & SEARCH_KEEP) || (cmdmod.cmod_flags & CMOD_KEEPPATTERNS)) {
     spats[0].off = old_off;
   }
   xfree(msgbuf);

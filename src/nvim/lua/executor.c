@@ -1918,55 +1918,55 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 
   lua_newtable(lstate);  // smods table
 
-  lua_pushinteger(lstate, cmdmod.tab);
+  lua_pushinteger(lstate, cmdmod.cmod_tab);
   lua_setfield(lstate, -2, "tab");
 
-  lua_pushinteger(lstate, eap->verbose_save != -1 ? p_verbose : -1);
+  lua_pushinteger(lstate, cmdmod.cmod_verbose - 1);
   lua_setfield(lstate, -2, "verbose");
 
-  if (cmdmod.split & WSP_ABOVE) {
+  if (cmdmod.cmod_split & WSP_ABOVE) {
     lua_pushstring(lstate, "aboveleft");
-  } else if (cmdmod.split & WSP_BELOW) {
+  } else if (cmdmod.cmod_split & WSP_BELOW) {
     lua_pushstring(lstate, "belowright");
-  } else if (cmdmod.split & WSP_TOP) {
+  } else if (cmdmod.cmod_split & WSP_TOP) {
     lua_pushstring(lstate, "topleft");
-  } else if (cmdmod.split & WSP_BOT) {
+  } else if (cmdmod.cmod_split & WSP_BOT) {
     lua_pushstring(lstate, "botright");
   } else {
     lua_pushstring(lstate, "");
   }
   lua_setfield(lstate, -2, "split");
 
-  lua_pushboolean(lstate, cmdmod.split & WSP_VERT);
+  lua_pushboolean(lstate, cmdmod.cmod_split & WSP_VERT);
   lua_setfield(lstate, -2, "vertical");
-  lua_pushboolean(lstate, eap->save_msg_silent != -1 ? (msg_silent != 0) : 0);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SILENT);
   lua_setfield(lstate, -2, "silent");
-  lua_pushboolean(lstate, eap->did_esilent);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_ERRSILENT);
   lua_setfield(lstate, -2, "emsg_silent");
-  lua_pushboolean(lstate, eap->did_sandbox);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SANDBOX);
   lua_setfield(lstate, -2, "sandbox");
-  lua_pushboolean(lstate, cmdmod.save_ei != NULL);
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_NOAUTOCMD);
   lua_setfield(lstate, -2, "noautocmd");
 
   typedef struct {
-    bool *set;
+    int flag;
     char *name;
   } mod_entry_T;
   static mod_entry_T mod_entries[] = {
-    { &cmdmod.browse, "browse" },
-    { &cmdmod.confirm, "confirm" },
-    { &cmdmod.hide, "hide" },
-    { &cmdmod.keepalt, "keepalt" },
-    { &cmdmod.keepjumps, "keepjumps" },
-    { &cmdmod.keepmarks, "keepmarks" },
-    { &cmdmod.keeppatterns, "keeppatterns" },
-    { &cmdmod.lockmarks, "lockmarks" },
-    { &cmdmod.noswapfile, "noswapfile" }
+    { CMOD_BROWSE, "browse" },
+    { CMOD_CONFIRM, "confirm" },
+    { CMOD_HIDE, "hide" },
+    { CMOD_KEEPALT, "keepalt" },
+    { CMOD_KEEPJUMPS, "keepjumps" },
+    { CMOD_KEEPMARKS, "keepmarks" },
+    { CMOD_KEEPPATTERNS, "keeppatterns" },
+    { CMOD_LOCKMARKS, "lockmarks" },
+    { CMOD_NOSWAPFILE, "noswapfile" }
   };
 
   // The modifiers that are simple flags
   for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
-    lua_pushboolean(lstate, *mod_entries[i].set);
+    lua_pushboolean(lstate, cmdmod.cmod_flags & mod_entries[i].flag);
     lua_setfield(lstate, -2, mod_entries[i].name);
   }
 
