@@ -85,7 +85,7 @@ fi
 #   - Expects: $ARCH, $APP, $VERSION env vars
 #   - Expects: ./$APP.AppDir/ directory
 #   - Produces: ./nvim.appimage
-./linuxdeploy-x86_64.AppImage --appdir $APP.AppDir -d $ROOT_DIR/runtime/nvim.desktop -i \
+./linuxdeploy-x86_64.AppImage --appdir $APP.AppDir -d $ROOT_DIR/runtime/org.neovim.nvim.desktop -i \
 "$ROOT_DIR/runtime/nvim.png" --output appimage
 
 # Moving the final executable to a different folder so it isn't in the
