@@ -891,7 +891,7 @@ char_u *msg_may_trunc(bool force, char_u *s)
 
   room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (int)STRLEN(s) - room > 0) {
+      && (int)STRLEN(s) - room > 0 && p_ch > 0) {
     int size = vim_strsize((char *)s);
 
     // There may be room anyway when there are multibyte chars.
