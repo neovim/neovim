@@ -2947,10 +2947,9 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
   ]])
 end)
 
-it(':substitute with inccommand, does nothing if range contains invalid marks', function()
+it(':substitute with inccommand, does not crash if range contains invalid marks', function()
   local screen = Screen.new(30, 6)
   clear()
-  command('set undolevels=-1')
   common_setup(screen, 'split', 'test')
   feed([[:'a,'bs]])
   screen:expect([[
@@ -2961,6 +2960,8 @@ it(':substitute with inccommand, does nothing if range contains invalid marks', 
     {15:~                             }|
     :'a,'bs^                       |
   ]])
+  -- v:errmsg shouldn't be set either before the first separator is typed
+  eq('', eval('v:errmsg'))
   feed('/')
   screen:expect([[
     test                          |
@@ -2970,7 +2971,6 @@ it(':substitute with inccommand, does nothing if range contains invalid marks', 
     {15:~                             }|
     :'a,'bs/^                      |
   ]])
-  eq('', eval('v:errmsg'))
 end)
 
 it(":substitute doesn't crash with inccommand, if undo is empty #12932", function()
