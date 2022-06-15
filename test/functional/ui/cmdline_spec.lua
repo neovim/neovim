@@ -949,6 +949,20 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
   end)
 
+  it("with cmdheight=0 ruler rulerformat laststatus=0", function()
+    command("set cmdheight=0 noruler laststatus=0 rulerformat=%l,%c%= showmode")
+    feed('i')
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+    ]], showmode={}}
+    feed('<Esc>')
+    eq(0, eval('&cmdheight'))
+  end)
+
   it("with showmode", function()
     command("set cmdheight=1 noruler laststatus=0 showmode")
     feed('i')
