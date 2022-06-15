@@ -19,6 +19,8 @@ local function new_screen(opt)
     [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
     [6] = {foreground = Screen.colors.Magenta},
     [7] = {bold = true, foreground = Screen.colors.Brown},
+    [8] = {background = Screen.colors.LightGrey},
+    [9] = {bold = true},
   })
   return screen
 end
@@ -847,6 +849,37 @@ describe('cmdline redraw', function()
     :012345678901234567890123|
     456789^                   |
     ]], unchanged=true}
+  end)
+
+  it('after pressing Ctrl-C in cmdwin in Visual mode #18967', function()
+    screen:try_resize(40, 10)
+    command('set cmdwinheight=3')
+    feed('q:iabc<Esc>vhh')
+    screen:expect([[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:[No Name]                               }|
+      {1::}^a{8:bc}                                    |
+      {1:~                                       }|
+      {1:~                                       }|
+      {3:[Command Line]                          }|
+      {9:-- VISUAL --}                            |
+    ]])
+    feed('<C-C>')
+    screen:expect([[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:[No Name]                               }|
+      {1::}a{8:bc}                                    |
+      {1:~                                       }|
+      {1:~                                       }|
+      {3:[Command Line]                          }|
+      :^abc                                    |
+    ]])
   end)
 end)
 
