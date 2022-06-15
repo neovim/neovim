@@ -21,7 +21,7 @@ describe('vim.highlight.on_yank', function()
     eq('', eval('v:errmsg'))
   end)
 
-  it('does not show errors even if it is executed between timeout and clearing highlight', function()
+  it('does not close timer twice', function()
     exec_lua([[
       vim.highlight.on_yank({timeout = 10, on_macro = true, event = {operator = "y"}})
       vim.loop.sleep(10)
