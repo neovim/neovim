@@ -1851,8 +1851,8 @@ void msg_prt_line(char_u *s, int list)
       } else if (curwin->w_p_lcs_chars.nbsp != NUL && list
                  && (utf_ptr2char((char *)s) == 160
                      || utf_ptr2char((char *)s) == 0x202f)) {
-        utf_char2bytes(curwin->w_p_lcs_chars.nbsp, buf);
-        buf[utfc_ptr2len(buf)] = NUL;
+        int len = utf_char2bytes(curwin->w_p_lcs_chars.nbsp, buf);
+        buf[len] = NUL;
       } else {
         memmove(buf, s, (size_t)l);
         buf[l] = NUL;
