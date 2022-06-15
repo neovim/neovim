@@ -6153,6 +6153,10 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
+  if (p_ch <= 0) {
+    return;
+  }
+
   msg_puts_attr(_("recording"), attr);
   if (!shortmess(SHM_RECORDING)) {
     char s[4];

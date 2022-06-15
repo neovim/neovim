@@ -1060,6 +1060,26 @@ describe('cmdheight=0', function()
     assert_alive()
   end)
 
+  it("when macro with lastline", function()
+    command("set cmdheight=0 display=lastline")
+    feed('qq')
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+    ]], showmode={}}
+    feed('q')
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+    ]], showmode={}}
+  end)
+
   it("when substitute text", function()
     command("set cmdheight=0 noruler laststatus=3")
     feed('ifoo<ESC>')
