@@ -1,11 +1,12 @@
 " Vim syntax file
-" Language:     Mason (Perl embedded in HTML)
-" Maintainer:   vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl/tree/master
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:  2017-09-12
-" Contributors: Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
-"               Andrew Smith <andrewdsmith@yahoo.com>
+" Language:      Mason (Perl embedded in HTML)
+" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
+" Last Change:   2021 Oct 10
+" Contributors:  Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+"                Andrew Smith <andrewdsmith@yahoo.com>
 "
 " TODO:
 "  - Fix <%text> blocks to show HTML tags but ignore Mason tags.
@@ -74,6 +75,7 @@ syn cluster masonTop contains=masonLine,masonExpr,masonPerl,masonComp,masonArgs,
 " syntax files.
 hi def link masonDoc Comment
 hi def link masonPod Comment
+hi def link podOrdinary masonPod
 hi def link masonPerlComment perlComment
 
 let b:current_syntax = "mason"

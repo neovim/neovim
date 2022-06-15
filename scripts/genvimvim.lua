@@ -44,12 +44,13 @@ local function cmd_kw(prev_cmd, cmd)
 end
 
 -- Exclude these from the vimCommand keyword list, they are handled specially
--- in syntax/vim.vim (vimAugroupKey, vimAutoCmd, vimSubst). #9327
+-- in syntax/vim.vim (vimAugroupKey, vimAutoCmd, vimGlobal, vimSubst). #9327
 local function is_special_cased_cmd(cmd)
   return (cmd == 'augroup'
           or cmd == 'autocmd'
           or cmd == 'doautocmd'
           or cmd == 'doautoall'
+          or cmd == 'global'
           or cmd == 'substitute')
 end
 
