@@ -5281,7 +5281,6 @@ void forward_slash(char_u *fname)
     return;
   }
   for (p = fname; *p != NUL; p++) {
-    // The Big5 encoding can have '\' in the trail byte.
     if (*p == '\\') {
       *p = '/';
     }
