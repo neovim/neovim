@@ -453,7 +453,6 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
           if (c == Ctrl_C) {
             int len = (int)STRLEN(menu->strings[i]);
 
-            // Append CTRL-\ CTRL-G to obey 'insertmode'.
             menu->strings[i][len] = Ctrl_BSL;
             menu->strings[i][len + 1] = Ctrl_G;
             menu->strings[i][len + 2] = NUL;

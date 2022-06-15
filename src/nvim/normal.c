@@ -998,9 +998,8 @@ static int normal_execute(VimState *state, int key)
   // In Select mode, typed text replaces the selection.
   if (VIsual_active && VIsual_select && (vim_isprintc(s->c)
                                          || s->c == NL || s->c == CAR || s->c == K_KENTER)) {
-    // Fake a "c"hange command.  When "restart_edit" is set (e.g., because
-    // 'insertmode' is set) fake a "d"elete command, Insert mode will
-    // restart automatically.
+    // Fake a "c"hange command.
+    // When "restart_edit" is set fake a "d"elete command, Insert mode will restart automatically.
     // Insert the typed character in the typeahead buffer, so that it can
     // be mapped in Insert mode.  Required for ":lmap" to work.
     int len = ins_char_typebuf(vgetc_char, vgetc_mod_mask);
@@ -6772,8 +6771,6 @@ static void nv_esc(cmdarg_T *cap)
       }
     }
 
-    // Don't reset "restart_edit" when 'insertmode' is set, it won't be
-    // set again below when halfway through a mapping.
     restart_edit = 0;
 
     if (cmdwin_type != 0) {

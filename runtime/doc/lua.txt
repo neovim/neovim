@@ -291,7 +291,7 @@ The Lua print() function redirects its output to the Nvim message area, with
 arguments separated by " " (space) instead of "\t" (tab).
 
                                                                         *:lua*
-:[range]lua {chunk}
+:lua {chunk}
                         Executes Lua chunk {chunk}.
                         If {chunk} starts with "=" the rest of the chunk is
                         evaluated as an expression and printed. `:lua =expr`
@@ -304,7 +304,7 @@ arguments separated by " " (space) instead of "\t" (tab).
                             :lua =jit.version
 <
                                                                 *:lua-heredoc*
-:[range]lua << [endmarker]
+:lua << [endmarker]
 {script}
 {endmarker}
                         Executes Lua script {script} from within Vimscript.
@@ -345,7 +345,7 @@ arguments separated by " " (space) instead of "\t" (tab).
                             :luado if bp:match(line) then return "-->\t" .. line end
 <
                                                                     *:luafile*
-:[range]luafile {file}
+:luafile {file}
                         Execute Lua script in {file}.
                         The whole argument is used as the filename (like
                         |:edit|), spaces do not need to be escaped.

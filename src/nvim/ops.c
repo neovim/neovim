@@ -6666,9 +6666,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         CancelRedo();
       } else {
         // This is a new edit command, not a restart.  Need to
-        // remember it to make 'insertmode' work with mappings for
-        // Visual mode.  But do this only once and not when typed and
-        // 'insertmode' isn't set.
+        // remember it to make i_CTRL-O work with mappings for
+        // Visual mode.  But do this only once and not when typed.
         if (!KeyTyped) {
           restart_edit_save = restart_edit;
         } else {
@@ -6760,7 +6759,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         CancelRedo();
       } else {
         // This is a new edit command, not a restart.  Need to
-        // remember it to make 'insertmode' work with mappings for
+        // remember it to make i_CTRL-O work with mappings for
         // Visual mode.  But do this only once.
         restart_edit_save = restart_edit;
         restart_edit = 0;
