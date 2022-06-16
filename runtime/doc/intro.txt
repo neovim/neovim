@@ -383,8 +383,8 @@ Note:
   <k1>, ..., <k9> and <kPoint> will not work.
 - Nvim supports mapping multibyte chars with modifiers such as `<M-ä>`. Which
   combinations actually work depends on the the UI or host terminal.
-- When a key is pressed using a meta or alt modifier and no mapping exists
-  for that keypress, Nvim behaves as though <Esc> was pressed before the key.
+- When a key is pressed using a meta or alt modifier and no mapping exists for
+  that keypress, Nvim may behave as though <Esc> was pressed before the key.
 - It is possible to notate combined modifiers (e.g. <C-A-T> for CTRL-ALT-T),
   but your terminal must encode the input for that to work. |tui-input|
 

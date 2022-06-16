@@ -30,6 +30,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
@@ -1584,16 +1585,18 @@ int vgetc(void)
         vgetc_char = c;
       }
 
-      // If mappings are enabled (i.e., not Ctrl-v) and the user directly typed
-      // something with a meta- or alt- modifier that was not mapped, interpret
-      // <M-x> as <Esc>x rather than as an unbound meta keypress. #8213
-      // In Terminal mode, however, this is not desirable. #16220
-      if (!no_mapping && KeyTyped && !(State & MODE_TERMINAL)
-          && (mod_mask == MOD_MASK_ALT || mod_mask == MOD_MASK_META)) {
+      // If mappings are enabled (i.e., not i_CTRL-V) and the user directly typed something with
+      // MOD_MASK_ALT (<M-/<A- modifier) that was not mapped, interpret <M-x> as <Esc>x rather
+      // than as an unbound <M-x> keypress. #8213
+      // In Terminal mode, however, this is not desirable. #16202 #16220
+      // Also do not do this for mouse keys, as terminals encode mouse events as CSI sequences, and
+      // MOD_MASK_ALT has a meaning even for unmapped mouse keys.
+      if (!no_mapping && KeyTyped && mod_mask == MOD_MASK_ALT && !(State & MODE_TERMINAL)
+          && !is_mouse_key(c)) {
         mod_mask = 0;
         int len = ins_char_typebuf(c, 0);
         (void)ins_char_typebuf(ESC, 0);
-        ungetchars(len + 3);  // The ALT/META modifier takes three more bytes
+        ungetchars(len + 3);  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
         continue;
       }
 

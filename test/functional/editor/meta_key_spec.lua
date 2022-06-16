@@ -91,7 +91,7 @@ describe('meta-keys #8226 #13042', function()
     command('tnoremap <A-j> alt-j')
     feed('i<M-l> xxx <A-j>')
     eq('meta-l xxx alt-j', exec_lua([[return _G.input_data]]))
-    -- Unmapped ALT-chord is sent to terminal as-is. #16220
+    -- Unmapped ALT-chord is sent to terminal as-is. #16202 #16220
     exec_lua([[_G.input_data = '']])
     command('tunmap <M-l>')
     feed('<M-l>')
