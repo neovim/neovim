@@ -202,6 +202,10 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'gforth\>'
     set ft=forth
 
+    " Icon
+  elseif s:name =~# 'icon\>'
+    set ft=icon
+
   endif
   unlet s:name
 
