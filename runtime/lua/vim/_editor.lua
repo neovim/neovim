@@ -408,7 +408,9 @@ function vim.defer_fn(fn, timeout)
     timeout,
     0,
     vim.schedule_wrap(function()
-      timer:close()
+      if not timer:is_closing() then
+        timer:close()
+      end
 
       fn()
     end)
