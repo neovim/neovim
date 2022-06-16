@@ -275,8 +275,9 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   return rv;
 }
 
-void terminal_close(Terminal *term, int status)
+void terminal_close(Terminal **termpp, int status)
 {
+  Terminal *term = *termpp;
   if (term->destroy) {
     return;
   }
@@ -286,6 +287,7 @@ void terminal_close(Terminal *term, int status)
     // If called from close_buffer() inside free_all_mem(), the main loop has
     // already been freed, so it is not safe to call the close callback here.
     terminal_destroy(term);
+    *termpp = NULL;
     return;
   }
 #endif

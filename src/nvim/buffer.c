@@ -527,7 +527,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   }
 
   if (buf->terminal) {
-    terminal_close(buf->terminal, -1);
+    terminal_close(&buf->terminal, -1);
   }
 
   // Always remove the buffer when there is no file name.
