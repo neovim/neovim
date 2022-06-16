@@ -985,6 +985,9 @@ theend:
   if (cmdheight0) {
     // Restore cmdheight
     set_option_value("ch", 0L, NULL, 0);
+
+    // Redraw is needed for command line completion
+    redraw_all_later(CLEAR);
   }
 
   return p;
