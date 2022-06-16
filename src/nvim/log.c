@@ -114,14 +114,6 @@ void log_unlock(void)
   uv_mutex_unlock(&mutex);
 }
 
-static void on_log_recursive_event(void **argv)
-{
-  char *fn_name = argv[0];
-  ptrdiff_t linenr = (ptrdiff_t)argv[1];
-  siemsg("E5430: %s:%d: recursive log!", fn_name, linenr);
-  xfree(fn_name);
-}
-
 /// Logs a message to $NVIM_LOG_FILE.
 ///
 /// @param log_level  Log level (see log.h)
@@ -158,9 +150,7 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
   if (recursive) {
     if (!did_msg) {
       did_msg = true;
-      char *arg1 = func_name ? xstrdup(func_name) : (context ? xstrdup(context) : NULL);
-      // coverity[leaked_storage]
-      loop_schedule_deferred(&main_loop, event_create(on_log_recursive_event, 2, arg1, line_num));
+      msg_schedule_semsg("E5430: %s:%d: recursive log!", func_name ? func_name : context, line_num);
     }
     g_stats.log_skip++;
     log_unlock();
