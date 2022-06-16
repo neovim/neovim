@@ -944,9 +944,9 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : ctermfg + 1;
     hlattrs.cterm_ae_attr = cterm_mask;
   } else {
+    hlattrs.cterm_bg_color = ctermbg == -1 ? 0 : ctermbg + 1;
+    hlattrs.cterm_fg_color = ctermfg == -1 ? 0 : ctermfg + 1;
     hlattrs.cterm_ae_attr = cterm_mask;
-    hlattrs.cterm_bg_color = bg == -1 ? 0 : bg + 1;
-    hlattrs.cterm_fg_color = fg == -1 ? 0 : fg + 1;
   }
 
   return hlattrs;
