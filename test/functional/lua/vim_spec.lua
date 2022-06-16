@@ -23,6 +23,7 @@ local mkdir_p = helpers.mkdir_p
 local rmdir = helpers.rmdir
 local write_file = helpers.write_file
 local expect_exit = helpers.expect_exit
+local poke_eventloop = helpers.poke_eventloop
 
 describe('lua stdlib', function()
   before_each(clear)
@@ -2267,6 +2268,22 @@ describe('lua stdlib', function()
       insert("hello")
 
       eq('iworld<ESC>', exec_lua[[return table.concat(keys, '')]])
+    end)
+
+    it('can call vim.fn functions on Ctrl-C #17273', function()
+      exec_lua([[
+        _G.ctrl_c_cmdtype = ''
+
+        vim.on_key(function(c)
+          if c == '\3' then
+            _G.ctrl_c_cmdtype = vim.fn.getcmdtype()
+          end
+        end)
+      ]])
+      feed('/')
+      poke_eventloop()  -- This is needed because Ctrl-C flushes input
+      feed('<C-C>')
+      eq('/', exec_lua([[return _G.ctrl_c_cmdtype]]))
     end)
   end)
 
