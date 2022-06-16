@@ -32,8 +32,13 @@ struct Unpacker {
   Error unpack_error;
 
   Arena arena;
-  // one lenght free-list of reusable blocks
+  // one length free-list of reusable blocks
   ArenaMem reuse_blk;
+
+  bool is_ui;
+  int nevents;
+  int ncalls;
+  UIClientHandler ui_handler;
 };
 
 // unrecovareble error. unpack_error should be set!

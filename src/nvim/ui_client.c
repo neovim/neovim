@@ -46,37 +46,23 @@ void ui_client_init(uint64_t chan)
   ui_client_channel_id = chan;
 }
 
-/// Handler for "redraw" events sent by the NVIM server
+UIClientHandler ui_client_get_redraw_handler(const char *name, size_t name_len, Error *error)
+{
+  int hash = ui_client_handler_hash(name, name_len);
+  if (hash < 0) {
+    return (UIClientHandler){ NULL, NULL };
+  }
+  return event_handlers[hash];
+}
+
+/// Placeholder for _sync_ requests with 'redraw' method name
 ///
-/// This function will be called by handle_request (in msgpack_rpc/channel.c)
-/// The individual ui_events sent by the server are individually handled
-/// by their respective handlers defined in ui_events_client.generated.h
-///
-/// @note The "flush" event is called only once and only after handling all
-///       the other events
-/// @param channel_id: The id of the rpc channel
-/// @param uidata: The dense array containing the ui_events sent by the server
-/// @param[out] err Error details, if any
+/// async 'redraw' events, which are expected when nvim acts as an ui client.
+/// get handled in msgpack_rpc/unpacker.c and directy dispatched to handlers
+/// of specific ui events, like ui_client_event_grid_resize and so on.
 Object handle_ui_client_redraw(uint64_t channel_id, Array args, Error *error)
 {
-  for (size_t i = 0; i < args.size; i++) {
-    Array call = args.items[i].data.array;
-    String name = call.items[0].data.string;
-
-    int hash = ui_client_handler_hash(name.data, name.size);
-    if (hash < 0) {
-      ELOG("No ui client handler for %s", name.size ? name.data : "<empty>");
-      continue;
-    }
-    UIClientHandler handler = event_handlers[hash];
-
-    // fprintf(stderr, "%s: %zu\n", name.data, call.size-1);
-    DLOG("Invoke ui client handler for %s", name.data);
-    for (size_t j = 1; j < call.size; j++) {
-      handler.fn(call.items[j].data.array);
-    }
-  }
-
+  api_set_error(error, kErrorTypeValidation, "'redraw' cannot be sent as a request");
   return NIL;
 }
 

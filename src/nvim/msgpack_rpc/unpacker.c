@@ -292,7 +292,18 @@ bool unpacker_advance(Unpacker *p)
     if (!unpacker_parse_header(p)) {
       return false;
     }
-    p->state = p->type == kMessageTypeResponse ? 1 : 2;
+    if (p->type == kMessageTypeNotification && p->handler.fn == handle_ui_client_redraw) {
+      p->state = 10;
+    } else {
+      p->state = p->type == kMessageTypeResponse ? 1 : 2;
+      arena_start(&p->arena, &p->reuse_blk);
+    }
+  }
+
+  if (p->state == 10 || p->state == 11) {
+    if (!unpacker_parse_redraw(p)) {
+      return false;
+    }
     arena_start(&p->arena, &p->reuse_blk);
   }
 
@@ -310,13 +321,91 @@ rerun:
     return false;
   }
 
-  if (p->state == 1) {
+  switch (p->state) {
+  case 1:
     p->error = p->result;
     p->state = 2;
     goto rerun;
-  } else {
-    assert(p->state == 2);
+  case 2:
     p->state = 0;
+    p->is_ui = false;
+    return true;
+  case 12:
+    p->ncalls--;
+    if (p->ncalls > 0) {
+      p->state = 12;
+    } else if (p->nevents > 0) {
+      p->state = 11;
+    } else {
+      p->state = 0;
+    }
+    // TODO: fold into p->type
+    p->is_ui = true;
+    return true;
+  default:
+    abort();
   }
-  return true;
+}
+
+// note: first {11} is not saved as a state
+// <0>[2, "redraw", <10>[{11}["method", <12>[args], <12>[args], ...], <11>[...], ...]]
+//
+bool unpacker_parse_redraw(Unpacker *p)
+{
+  mpack_token_t tok;
+  int result;
+
+  const char *data = p->read_ptr;
+  size_t size = p->read_size;
+  switch (p->state) {
+  case 10:
+    result = mpack_rtoken(&data, &size, &tok);
+    if (result == MPACK_EOF) {
+      return false;
+    } else if (result || tok.type != MPACK_TOKEN_ARRAY) {
+      p->state = -1;
+      return false;
+    }
+
+    p->nevents = (int)tok.length;
+    FALLTHROUGH;
+
+  case 11:
+    result = mpack_rtoken(&data, &size, &tok);
+    if (result == MPACK_EOF) {
+      return false;
+    } else if (result || tok.type != MPACK_TOKEN_ARRAY) {
+      abort();
+    }
+
+    p->ncalls = (int)tok.length;
+    if (p->ncalls-- == 0) {
+      p->state = -1;
+      return false;
+    }
+
+    result = mpack_rtoken(&data, &size, &tok);
+    if (result == MPACK_EOF) {
+      return false;
+    } else if (result || (tok.type != MPACK_TOKEN_STR && tok.type != MPACK_TOKEN_BIN)) {
+      abort();
+    }
+
+    if (tok.length > size) {
+      return false;
+    }
+
+    p->ui_handler = ui_client_get_redraw_handler(data, tok.length, NULL);
+    data += tok.length;
+    size -= tok.length;
+
+    p->nevents--;
+    p->read_ptr = data;
+    p->read_size = size;
+    p->state = 12;
+    return true;
+
+  default:
+    abort();
+  }
 }
