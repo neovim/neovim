@@ -373,9 +373,13 @@ end
 function vim.defer_fn(fn, timeout)
   vim.validate { fn = { fn, 'c', true}; }
   local timer = vim.loop.new_timer()
-  timer:start(timeout, 0, vim.schedule_wrap(function()
-    timer:stop()
-    timer:close()
+  timer:start(
+    timeout,
+    0,
+    vim.schedule_wrap(function()
+      if not timer:is_closing() then
+        timer:close()
+      end
 
     fn()
   end))
