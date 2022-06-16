@@ -47,33 +47,33 @@ describe(':let', function()
   end)
 
   it("multibyte env var #8398 #9267", function()
-    command("let $NVIM_TEST = 'AìaB'")
-    eq('AìaB', eval('$NVIM_TEST'))
-    command("let $NVIM_TEST = 'AaあB'")
-    eq('AaあB', eval('$NVIM_TEST'))
+    command("let $NVIM_TEST_LET = 'AìaB'")
+    eq('AìaB', eval('$NVIM_TEST_LET'))
+    command("let $NVIM_TEST_LET = 'AaあB'")
+    eq('AaあB', eval('$NVIM_TEST_LET'))
     local mbyte = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
-    command("let $NVIM_TEST = '"..mbyte.."'")
-    eq(mbyte, eval('$NVIM_TEST'))
+    command("let $NVIM_TEST_LET = '"..mbyte.."'")
+    eq(mbyte, eval('$NVIM_TEST_LET'))
   end)
 
   it("multibyte env var to child process #8398 #9267",  function()
-    local cmd_get_child_env = "let g:env_from_child = system(['"..nvim_dir.."/printenv-test', 'NVIM_TEST'])"
-    command("let $NVIM_TEST = 'AìaB'")
+    local cmd_get_child_env = "let g:env_from_child = system(['"..nvim_dir.."/printenv-test', 'NVIM_TEST_LET'])"
+    command("let $NVIM_TEST_LET = 'AìaB'")
     command(cmd_get_child_env)
-    eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
+    eq(eval('$NVIM_TEST_LET'), eval('g:env_from_child'))
 
-    command("let $NVIM_TEST = 'AaあB'")
+    command("let $NVIM_TEST_LET = 'AaあB'")
     command(cmd_get_child_env)
-    eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
+    eq(eval('$NVIM_TEST_LET'), eval('g:env_from_child'))
 
     local mbyte = [[\p* .ม .ม .ม .ม่ .ม่ .ม่ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ ֹֻ ֹֻ ֹֻ .ֹֻ .ֹֻ .ֹֻ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹ ֹ ֹ .ֹ .ֹ .ֹ ֹֻ ֹֻ
                     .ֹֻ .ֹֻ .ֹֻ a a a ca ca ca à à à]]
-    command("let $NVIM_TEST = '"..mbyte.."'")
+    command("let $NVIM_TEST_LET = '"..mbyte.."'")
     command(cmd_get_child_env)
-    eq(eval('$NVIM_TEST'), eval('g:env_from_child'))
+    eq(eval('$NVIM_TEST_LET'), eval('g:env_from_child'))
   end)
 
   it("release of list assigned to l: variable does not trigger assertion #12387, #12430", function()

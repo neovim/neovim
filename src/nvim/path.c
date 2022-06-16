@@ -88,7 +88,12 @@ FileComparison path_full_compare(char_u *const s1, char_u *const s2, const bool 
   return kDifferentFiles;
 }
 
-/// Gets the tail (i.e., the filename segment) of a path `fname`.
+/// Gets the tail (filename segment) of path `fname`.
+///
+/// Examples:
+/// - "dir/file.txt" => "file.txt"
+/// - "file.txt" => "file.txt"
+/// - "dir/" => ""
 ///
 /// @return pointer just past the last path separator (empty string, if fname
 ///         ends in a slash), or empty string if fname is NULL.

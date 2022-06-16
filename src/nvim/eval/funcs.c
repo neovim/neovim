@@ -8497,7 +8497,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       address = xstrdup(tv_get_string(argvars));
     }
   } else {
-    address = server_address_new();
+    address = server_address_new(NULL);
   }
 
   int result = server_start(address);

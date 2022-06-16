@@ -40,10 +40,6 @@ function module.popen_r(...)
   return io.popen(module.argss_to_cmd(...), 'r')
 end
 
-function module.popen_w(...)
-  return io.popen(module.argss_to_cmd(...), 'w')
-end
-
 -- sleeps the test runner (_not_ the nvim instance)
 function module.sleep(ms)
   luv.sleep(ms)
@@ -55,42 +51,23 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
---- Invokes `fn` and includes the tail of `logfile` in the error message if it
---- fails.
----
----@param logfile string  Log file, defaults to $NVIM_LOG_FILE or '.nvimlog'
----@param fn string       Function to invoke
----@param ... string      Function arguments
-local function dumplog(logfile, fn, ...)
-  -- module.validate({
-  --   logfile={logfile,'s',true},
-  --   fn={fn,'f',false},
-  -- })
-  local status, rv = pcall(fn, ...)
-  if status == false then
-    logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-    local logtail = module.read_nvim_log(logfile)
-    error(string.format('%s\n%s', tostring(rv), logtail))
-  end
+function module.eq(expected, actual, context)
+  return assert.are.same(expected, actual, context)
 end
-function module.eq(expected, actual, context, logfile)
-  return dumplog(logfile, assert.are.same, expected, actual, context)
+function module.neq(expected, actual, context)
+  return assert.are_not.same(expected, actual, context)
 end
-function module.neq(expected, actual, context, logfile)
-  return dumplog(logfile, assert.are_not.same, expected, actual, context)
-end
-function module.ok(res, msg, logfile)
-  return dumplog(logfile, assert.is_true, res, msg)
+function module.ok(res, msg)
+  return assert.is_true(res, msg)
 end
 
--- TODO(bfredl): this should "failure" not "error" (issue with dumplog() )
 local function epicfail(state, arguments, _)
   state.failure_message = arguments[1]
   return false
 end
 assert:register("assertion", "epicfail", epicfail)
-function module.fail(msg, logfile)
-  return dumplog(logfile, assert.epicfail, msg)
+function module.fail(msg)
+  return assert.epicfail(msg)
 end
 
 function module.matches(pat, actual)
@@ -104,16 +81,16 @@ end
 ---
 ---@param pat string      Lua pattern to search for in the log file
 ---@param logfile string  Full path to log file (default=$NVIM_LOG_FILE)
-function module.assert_log(pat, logfile)
+---@param nrlines number  Search up to this many log lines
+function module.assert_log(pat, logfile, nrlines)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local nrlines = 10
+  nrlines = nrlines or 10
   local lines = module.read_file_list(logfile, -nrlines) or {}
   for _,line in ipairs(lines) do
     if line:match(pat) then return end
   end
-  local logtail = module.read_nvim_log(logfile)
   error(string.format('Pattern %q not found in log (last %d lines): %s:\n%s',
-    pat, nrlines, logfile, logtail))
+    pat, nrlines, logfile, '    '..table.concat(lines, '\n    ')))
 end
 
 -- Invokes `fn` and returns the error string (with truncated paths), or raises
@@ -271,7 +248,7 @@ module.uname = (function()
       return platform
     end
 
-    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_SYSTEM_NAME.
+    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_HOST_SYSTEM_NAME.
       platform = string.lower(os.getenv("SYSTEM_NAME"))
       return platform
     end
@@ -406,17 +383,6 @@ function module.check_cores(app, force)
   tests_skipped = 0
   if found_cores > 0 then
     error("crash detected (see above)")
-  end
-end
-
-function module.which(exe)
-  local pipe = module.popen_r('which', exe)
-  local ret = pipe:read('*a')
-  pipe:close()
-  if ret == '' then
-    return nil
-  else
-    return ret:sub(1, -2)
   end
 end
 

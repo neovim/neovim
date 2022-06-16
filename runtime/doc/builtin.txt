@@ -6628,30 +6628,29 @@ serverlist()						*serverlist()*
 
 serverstart([{address}])				*serverstart()*
 		Opens a socket or named pipe at {address} and listens for
-		|RPC| messages. Clients can send |API| commands to the address
-		to control Nvim.
+		|RPC| messages. Clients can send |API| commands to the
+		returned address to control Nvim.
 
-		Returns the address string.
+		Returns the address string (may differ from the requested
+		{address}).
+		 
+		- If {address} contains a colon ":" it is interpreted as
+		  a TCP/IPv4/IPv6 address where the last ":" separates host
+		  and port (empty or zero assigns a random port).
+		- Else it is interpreted as a named pipe or Unix domain socket
+		  path. If there are no slashes it is treated as a name and
+		  appended to a generated path.
+		- If {address} is empty it generates a path.
 
-		If {address} does not contain a colon ":" it is interpreted as
-		a named pipe or Unix domain socket path.
-
-		Example: >
+		Example named pipe: >
 			if has('win32')
-			  call serverstart('\\.\pipe\nvim-pipe-1234')
+			  echo serverstart('\\.\pipe\nvim-pipe-1234')
 			else
-			  call serverstart('nvim.sock')
+			  echo serverstart('nvim.sock')
 			endif
 <
-		If {address} contains a colon ":" it is interpreted as a TCP
-		address where the last ":" separates the host and port.
-		Assigns a random port if it is empty or 0. Supports IPv4/IPv6.
-
-		Example: >
-			:call serverstart('::1:12345')
-<
-		If no address is given, it is equivalent to: >
-			:call serverstart(tempname())
+		Example TCP/IP address: >
+			echo serverstart('::1:12345')
 
 serverstop({address})					*serverstop()*
 		Closes the pipe or socket at {address}.
@@ -7545,7 +7544,7 @@ stdpath({what})					*stdpath()* *E6100*
 		data_dirs    List    Other data directories.
 		log          String  Logs directory (for use by plugins too).
 		state        String  Session state directory: storage for file
-				     drafts, undo history, shada, etc.
+				     drafts, undo, shada, named pipes, ...
 
 		Example: >
 			:echo stdpath("config")
