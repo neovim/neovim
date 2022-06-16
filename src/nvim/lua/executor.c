@@ -1775,10 +1775,13 @@ void nlua_execute_on_key(int c)
   // [ vim, vim._on_key, buf ]
   lua_pushlstring(lstate, (const char *)buf, buf_len);
 
+  int save_got_int = got_int;
+  got_int = false;  // avoid interrupts when the key typed is Ctrl-C
   if (nlua_pcall(lstate, 1, 0)) {
     nlua_error(lstate,
                _("Error executing  vim.on_key Lua callback: %.*s"));
   }
+  got_int |= save_got_int;
 
   // [ vim ]
   lua_pop(lstate, 1);
