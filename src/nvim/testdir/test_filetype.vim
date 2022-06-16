@@ -717,6 +717,7 @@ let s:script_checks = {
       \ 'routeros': [['#!/path/rsc']],
       \ 'fish': [['#!/path/fish']],
       \ 'forth': [['#!/path/gforth']],
+      \ 'icon': [['#!/path/icon']],
       \ }
 
 " Various forms of "env" optional arguments.
