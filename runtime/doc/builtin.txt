@@ -8036,6 +8036,8 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		cursor): >
 	:echo synIDattr(synIDtrans(synID(line("."), col("."), 1)), "fg")
 <
+		Returns an empty string on error.
+
 		Can also be used as a |method|: >
 	:echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
 
@@ -8091,7 +8093,7 @@ synstack({lnum}, {col})					*synstack()*
 			   echo synIDattr(id, "name")
 			endfor
 <		When the position specified with {lnum} and {col} is invalid
-		nothing is returned.  The position just after the last
+		an empty list is returned.  The position just after the last
 		character in a line and the first column in an empty line are
 		valid positions.
 
@@ -8714,7 +8716,7 @@ win_gettype([{nr}])					*win_gettype()*
 		popup window then 'buftype' is "terminal" and win_gettype()
 		returns "popup".
 
-		Return an empty string if the window cannot be found.
+		Returns "unknown" if the window cannot be found.
 
 		Can also be used as a |method|: >
 			GetWinid()->win_gettype()
