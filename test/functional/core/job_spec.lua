@@ -16,6 +16,7 @@ local poke_eventloop = helpers.poke_eventloop
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
+local exec_lua = helpers.exec_lua
 local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
@@ -208,7 +209,7 @@ describe('jobs', function()
     ok(string.find(err, "E475: Invalid argument: expected valid directory$") ~= nil)
   end)
 
-  it('produces error when using non-executable `cwd`', function()
+  it('error on non-executable `cwd`', function()
     if iswin() then return end  -- N/A for Windows
 
     local dir = 'Xtest_not_executable_dir'
@@ -249,7 +250,7 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
-  it('allows interactive commands', function()
+  it('interactive commands', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     nvim('command', 'call jobsend(j, "abc\\n")')
@@ -295,7 +296,7 @@ describe('jobs', function()
     nvim('command', "call jobstop(j)")
   end)
 
-  it("will not buffer data if it doesn't end in newlines", function()
+  it("emits partial lines (does NOT buffer data lacking newlines)", function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
     eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
@@ -378,7 +379,7 @@ describe('jobs', function()
     eq(NIL, meths.get_proc(pid))
   end)
 
-  it("do not survive the exit of nvim", function()
+  it("disposed on Nvim exit", function()
     -- use sleep, which doesn't die on stdin close
     nvim('command', "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)")
     local pid = eval('jobpid(g:j)')
@@ -644,6 +645,43 @@ describe('jobs', function()
         {'notification', '1', {'foo', 'bar', {'', ''}, 'stdout'}},
       }
     )
+  end)
+
+  it('jobstart() environment: $NVIM, $NVIM_LISTEN_ADDRESS #11009', function()
+    local function get_env_in_child_job(envname, env)
+      return exec_lua([[
+        local envname, env = ...
+        local join = function(s) return vim.fn.join(s, '') end
+        local stdout = {}
+        local stderr = {}
+        local opt = {
+          env = env,
+          stdout_buffered = true,
+          stderr_buffered = true,
+          on_stderr = function(chan, data, name) stderr = data end,
+          on_stdout = function(chan, data, name) stdout = data end,
+        }
+        local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1',( '+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' }, opt)
+        vim.fn.jobwait({ j1 }, 10000)
+        return join({ join(stdout), join(stderr) })
+      ]],
+      envname,
+      env)
+    end
+
+    local addr = eval('v:servername')
+    ok((addr):len() > 0)
+    -- $NVIM is _not_ defined in the top-level Nvim process.
+    eq('', eval('$NVIM'))
+    -- jobstart() shares its v:servername with the child via $NVIM.
+    eq('NVIM='..addr, get_env_in_child_job('NVIM'))
+    -- $NVIM_LISTEN_ADDRESS is unset by server_init in the child.
+    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS'))
+    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS',
+      { NVIM_LISTEN_ADDRESS='Xtest_jobstart_env' }))
+    -- User can explicitly set $NVIM_LOG_FILE, $VIM, $VIMRUNTIME.
+    eq('NVIM_LOG_FILE=Xtest_jobstart_env',
+      get_env_in_child_job('NVIM_LOG_FILE', { NVIM_LOG_FILE='Xtest_jobstart_env' }))
   end)
 
   describe('jobwait', function()

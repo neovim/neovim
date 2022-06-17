@@ -5090,6 +5090,16 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
     tv_dict_add_str(env, S_LEN("TERM"), pty_term_name);
   }
 
+  // Set $NVIM (in the child process) to v:servername. #3118
+  char *nvim_addr = (char *)get_vim_var_str(VV_SEND_SERVER);
+  if (nvim_addr[0] != '\0') {
+    dictitem_T *dv = tv_dict_find(env, S_LEN("NVIM"));
+    if (dv) {
+      tv_dict_item_remove(env, dv);
+    }
+    tv_dict_add_str(env, S_LEN("NVIM"), nvim_addr);
+  }
+
   if (job_env) {
 #ifdef WIN32
     TV_DICT_ITER(job_env->di_tv.vval.v_dict, var, {

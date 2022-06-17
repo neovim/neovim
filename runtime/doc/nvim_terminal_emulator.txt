@@ -25,22 +25,22 @@ Start						*terminal-start*
 
 There are several ways to create a terminal buffer:
 
-- Invoke the |:terminal| command.
-- Call the |termopen()| function.
-- Edit a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
-  For example:
->
+- Run the |:terminal| command.
+- Call the |nvim_open_term()| or |termopen()| function.
+- Edit a "term://" buffer. Examples: >
     :edit term://bash
     :vsplit term://top
-<
-    Note: The "term://" pattern is handled by a BufReadCmd handler, so the
-    |autocmd-nested| modifier is required to use it in an autocmd. >
+
+<    Note: To open a "term://" buffer from an autocmd, the |autocmd-nested|
+    modifier is required. >
         autocmd VimEnter * ++nested split term://sh
-<    This is only mentioned for reference; use |:terminal| instead.
+<    (This is only mentioned for reference; use |:terminal| instead.)
 
 When the terminal starts, the buffer contents are updated and the buffer is
 named in the form of `term://{cwd}//{pid}:{cmd}`. This naming scheme is used
 by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
+
+The terminal environment is initialized as in |jobstart-env|.
 
 ==============================================================================
 Input						*terminal-input*
