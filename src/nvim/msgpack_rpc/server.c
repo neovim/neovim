@@ -89,7 +89,7 @@ void server_teardown(void)
 ///
 /// Named pipe format:
 /// - Windows: "\\.\pipe\<name>.<pid>.<counter>"
-/// - Other: "~/.local/state/nvim/<name>.<pid>.<counter>"
+/// - Other: "/tmp/nvim.user/xxx/<name>.<pid>.<counter>"
 char *server_address_new(const char *name)
 {
   static uint32_t count = 0;
@@ -98,7 +98,7 @@ char *server_address_new(const char *name)
   int r = snprintf(fmt, sizeof(fmt), "\\\\.\\pipe\\%s.%" PRIu64 ".%" PRIu32,
                    name ? name : "nvim", os_get_pid(), count++);
 #else
-  char *dir = get_xdg_home(kXDGStateHome);
+  char *dir = stdpaths_get_xdg_var(kXDGRuntimeDir);
   int r = snprintf(fmt, sizeof(fmt), "%s/%s.%" PRIu64 ".%" PRIu32,
                    dir, name ? name : "nvim", os_get_pid(), count++);
   xfree(dir);

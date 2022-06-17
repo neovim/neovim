@@ -126,7 +126,7 @@ bool os_isrealdir(const char *name)
   }
 }
 
-/// Check if the given path is a directory or not.
+/// Check if the given path exists and is a directory.
 ///
 /// @return `true` if `name` is a directory.
 bool os_isdir(const char_u *name)
@@ -790,6 +790,27 @@ int os_setperm(const char *const name, int perm)
   RUN_UV_FS_FUNC(r, uv_fs_chmod, name, perm, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
+
+#ifdef UNIX
+/// Checks if the current user owns a file.
+///
+/// Uses both uv_fs_stat() and uv_fs_lstat() via os_fileinfo() and
+/// os_fileinfo_link() respectively for extra security.
+bool os_file_owned(const char *fname)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uid_t uid = getuid();
+  FileInfo finfo;
+  bool file_owned = os_fileinfo(fname, &finfo) && finfo.stat.st_uid == uid;
+  bool link_owned = os_fileinfo_link(fname, &finfo) && finfo.stat.st_uid == uid;
+  return file_owned && link_owned;
+}
+#else
+bool os_file_owned(const char *fname)
+{
+  return true;  // TODO(justinmk): Windows. #8244
+}
+#endif
 
 /// Changes the owner and group of a file, like chown(2).
 ///

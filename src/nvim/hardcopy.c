@@ -2508,7 +2508,7 @@ bool mch_print_begin(prt_settings_T *psettings)
    */
   prt_dsc_start();
   prt_dsc_textline("Title", (char *)psettings->jobname);
-  if (os_get_user_name(buffer, 256) == FAIL) {
+  if (os_get_username(buffer, 256) == FAIL) {
     STRCPY(buffer, "Unknown");
   }
   prt_dsc_textline("For", buffer);

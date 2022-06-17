@@ -1328,8 +1328,9 @@ paths.
 						*base-directories* *xdg*
 The "base" (root) directories conform to the XDG Base Directory Specification.
 https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-The $XDG_CONFIG_HOME, $XDG_DATA_HOME and $XDG_STATE_HOME environment variables
-are used if they exist, otherwise default values (listed below) are used.
+The $XDG_CONFIG_HOME, $XDG_DATA_HOME, $XDG_RUNTIME_DIR, and $XDG_STATE_HOME
+environment variables are used if defined, else default values (listed below)
+are used.
 
 CONFIG DIRECTORY (DEFAULT) ~
                   *$XDG_CONFIG_HOME*            Nvim: stdpath("config")
@@ -1340,6 +1341,11 @@ DATA DIRECTORY (DEFAULT) ~
                   *$XDG_DATA_HOME*              Nvim: stdpath("data")
     Unix:         ~/.local/share              ~/.local/share/nvim
     Windows:      ~/AppData/Local             ~/AppData/Local/nvim-data
+
+RUN DIRECTORY (DEFAULT) ~
+                  *$XDG_RUNTIME_DIR*            Nvim: stdpath("run")
+    Unix:         /tmp/nvim.user/xxx          /tmp/nvim.user/xxx
+    Windows:      $TMP/nvim.user/xxx          $TMP/nvim.user/xxx
 
 STATE DIRECTORY (DEFAULT) ~
                   *$XDG_STATE_HOME*             Nvim: stdpath("state")

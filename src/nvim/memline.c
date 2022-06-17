@@ -311,7 +311,7 @@ int ml_open(buf_T *buf)
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
     b0p->b0_flags = get_fileformat(buf) + 1;
     set_b0_fname(b0p, buf);
-    (void)os_get_user_name((char *)b0p->b0_uname, B0_UNAME_SIZE);
+    (void)os_get_username((char *)b0p->b0_uname, B0_UNAME_SIZE);
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
     os_get_hostname((char *)b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
@@ -669,7 +669,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
                  B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
-      int retval = os_get_user_name(uname, B0_UNAME_SIZE);
+      int retval = os_get_username(uname, B0_UNAME_SIZE);
       size_t ulen = STRLEN(uname);
       size_t flen = STRLEN(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {

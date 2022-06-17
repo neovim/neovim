@@ -5281,45 +5281,80 @@ void forward_slash(char_u *fname)
 }
 #endif
 
-/// Name of Vim's own temp dir. Ends in a slash.
-static char_u *vim_tempdir = NULL;
+/// Path to Nvim's own temp dir. Ends in a slash.
+static char *vim_tempdir = NULL;
 
-/// Create a directory for private use by this instance of Neovim.
-/// This is done once, and the same directory is used for all temp files.
+/// Creates a directory for private use by this instance of Nvim, trying each of
+/// `TEMP_DIR_NAMES` until one succeeds.
+///
+/// Only done once, the same directory is used for all temp files.
 /// This method avoids security problems because of symlink attacks et al.
 /// It's also a bit faster, because we only need to check for an existing
 /// file when creating the directory and not for each temp file.
-static void vim_maketempdir(void)
+static void vim_mktempdir(void)
 {
-  static const char *temp_dirs[] = TEMP_DIR_NAMES;
-  // Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
-  char_u template[TEMP_FILE_PATH_MAXLEN];
-  char_u path[TEMP_FILE_PATH_MAXLEN];
+  static const char *temp_dirs[] = TEMP_DIR_NAMES;  // Try each of these until one succeeds.
+  char tmp[TEMP_FILE_PATH_MAXLEN];
+  char path[TEMP_FILE_PATH_MAXLEN];
+  char user[40] = { 0 };
+
+  (void)os_get_username(user, sizeof(user));
 
   // Make sure the umask doesn't remove the executable bit.
   // "repl" has been reported to use "0177".
   mode_t umask_save = umask(0077);
   for (size_t i = 0; i < ARRAY_SIZE(temp_dirs); i++) {
-    // Expand environment variables, leave room for "/nvimXXXXXX/999999999"
-    expand_env((char_u *)temp_dirs[i], template, TEMP_FILE_PATH_MAXLEN - 22);
-    if (!os_isdir(template)) {  // directory doesn't exist
+    // Expand environment variables, leave room for "/tmp/nvim.<user>/XXXXXX/999999999".
+    expand_env((char_u *)temp_dirs[i], (char_u *)tmp, TEMP_FILE_PATH_MAXLEN - 64);
+    if (!os_isdir((char_u *)tmp)) {
       continue;
     }
 
-    add_pathsep((char *)template);
-    // Concatenate with temporary directory name pattern
-    STRCAT(template, "nvimXXXXXX");
+    // "/tmp/" exists, now try to create "/tmp/nvim.<user>/".
+    add_pathsep(tmp);
+    xstrlcat(tmp, "nvim.", sizeof(tmp));
+    xstrlcat(tmp, user, sizeof(tmp));
+    (void)os_mkdir(tmp, 0700);  // Always create, to avoid a race.
+    bool owned = os_file_owned(tmp);
+    bool isdir = os_isdir((char_u *)tmp);
+#ifdef UNIX
+    int perm = os_getperm(tmp);  // XDG_RUNTIME_DIR must be owned by the user, mode 0700.
+    bool valid = isdir && owned && 0700 == (perm & 0777);
+#else
+    bool valid = isdir && owned;  // TODO(justinmk): Windows ACL?
+#endif
+    if (valid) {
+      add_pathsep(tmp);
+    } else {
+      if (!owned) {
+        ELOG("tempdir root not owned by current user (%s): %s", user, tmp);
+      } else if (!isdir) {
+        ELOG("tempdir root not a directory: %s", tmp);
+      }
+#ifdef UNIX
+      if (0700 != (perm & 0777)) {
+        ELOG("tempdir root has invalid permissions (%o): %s", perm, tmp);
+      }
+#endif
+      // If our "root" tempdir is invalid or fails, proceed without "<user>/".
+      // Else user1 could break user2 by creating "/tmp/nvim.user2/".
+      tmp[strlen(tmp) - strlen(user)] = '\0';
+    }
 
-    if (os_mkdtemp((const char *)template, (char *)path) != 0) {
+    // Now try to create "/tmp/nvim.<user>/XXXXXX".
+    xstrlcat(tmp, "XXXXXX", sizeof(tmp));  // mkdtemp "template", will be replaced with random alphanumeric chars.
+    int r = os_mkdtemp(tmp, path);
+    if (r != 0) {
+      WLOG("tempdir create failed: %s: %s", os_strerror(r), tmp);
       continue;
     }
 
-    if (vim_settempdir((char *)path)) {
+    if (vim_settempdir(path)) {
       // Successfully created and set temporary directory so stop trying.
       break;
     } else {
       // Couldn't set `vim_tempdir` to `path` so remove created directory.
-      os_rmdir((char *)path);
+      os_rmdir(path);
     }
   }
   (void)umask(umask_save);
@@ -5415,26 +5450,27 @@ void vim_deltempdir(void)
 {
   if (vim_tempdir != NULL) {
     // remove the trailing path separator
-    path_tail((char *)vim_tempdir)[-1] = NUL;
-    delete_recursive((const char *)vim_tempdir);
+    path_tail(vim_tempdir)[-1] = NUL;
+    delete_recursive(vim_tempdir);
     XFREE_CLEAR(vim_tempdir);
   }
 }
 
-/// @return  the name of temp directory. This directory would be created on the first
-///          call to this function.
-char_u *vim_gettempdir(void)
+/// Gets path to Nvim's own temp dir (ending with slash).
+///
+/// Creates the directory on the first call.
+char *vim_gettempdir(void)
 {
   if (vim_tempdir == NULL) {
-    vim_maketempdir();
+    vim_mktempdir();
   }
 
   return vim_tempdir;
 }
 
-/// Set Neovim own temporary directory name to `tempdir`. This directory should
-/// be already created. Expand this name to a full path and put it in
-/// `vim_tempdir`. This avoids that using `:cd` would confuse us.
+/// Sets Nvim's own temporary directory name to `tempdir`. This directory must
+/// already exist. Expands the name to a full path and put it in `vim_tempdir`.
+/// This avoids that using `:cd` would confuse us.
 ///
 /// @param tempdir must be no longer than MAXPATHL.
 ///
@@ -5447,7 +5483,7 @@ static bool vim_settempdir(char *tempdir)
   }
   vim_FullName(tempdir, buf, MAXPATHL, false);
   add_pathsep(buf);
-  vim_tempdir = (char_u *)xstrdup(buf);
+  vim_tempdir = xstrdup(buf);
   xfree(buf);
   return true;
 }
@@ -5456,14 +5492,14 @@ static bool vim_settempdir(char *tempdir)
 ///
 /// @note The temp file is NOT created.
 ///
-/// @return  pointer to the temp file name or NULL if Neovim can't create
+/// @return  pointer to the temp file name or NULL if Nvim can't create
 ///          temporary directory for its own temporary files.
 char_u *vim_tempname(void)
 {
   // Temp filename counter.
   static uint64_t temp_count;
 
-  char_u *tempdir = vim_gettempdir();
+  char *tempdir = vim_gettempdir();
   if (!tempdir) {
     return NULL;
   }

@@ -112,9 +112,13 @@ int os_get_usernames(garray_T *users)
   return OK;
 }
 
-// Insert user name in s[len].
-// Return OK if a name found.
-int os_get_user_name(char *s, size_t len)
+/// Gets the username that owns the current Nvim process.
+///
+/// @param s[out] Username.
+/// @param len Length of `s`.
+///
+/// @return OK if a name found.
+int os_get_username(char *s, size_t len)
 {
 #ifdef UNIX
   return os_get_uname((uv_uid_t)getuid(), s, len);
@@ -124,9 +128,13 @@ int os_get_user_name(char *s, size_t len)
 #endif
 }
 
-// Insert user name for "uid" in s[len].
-// Return OK if a name found.
-// If the name is not found, write the uid into s[len] and return FAIL.
+/// Gets the username associated with `uid`.
+///
+/// @param uid User id.
+/// @param s[out] Username, or `uid` on failure.
+/// @param len Length of `s`.
+///
+/// @return OK if a username was found, else FAIL.
 int os_get_uname(uv_uid_t uid, char *s, size_t len)
 {
 #if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
@@ -142,10 +150,10 @@ int os_get_uname(uv_uid_t uid, char *s, size_t len)
   return FAIL;  // a number is not a name
 }
 
-// Returns the user directory for the given username.
-// The caller has to free() the returned string.
-// If the username is not found, NULL is returned.
-char *os_get_user_directory(const char *name)
+/// Gets the user directory for the given username, or NULL on failure.
+///
+/// Caller must free() the returned string.
+char *os_get_userdir(const char *name)
 {
 #if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)
   if (name == NULL || *name == NUL) {

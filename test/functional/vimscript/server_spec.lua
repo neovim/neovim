@@ -5,6 +5,7 @@ local iswin = helpers.iswin
 local ok = helpers.ok
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
+local mkdir = helpers.mkdir
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
@@ -13,9 +14,19 @@ local function clear_serverlist()
 end
 
 describe('server', function()
-  before_each(clear)
+  it('serverstart() stores sockets in $XDG_RUNTIME_DIR', function()
+    local dir = 'Xtest_xdg_run'
+    mkdir(dir)
+    clear({ env={ XDG_RUNTIME_DIR=dir } })
+    matches(dir, funcs.stdpath('run'))
+    if not iswin() then
+      matches(dir, funcs.serverstart())
+    end
+  end)
+
 
   it('serverstart(), serverstop() does not set $NVIM', function()
+    clear()
     local s = eval('serverstart()')
     assert(s ~= nil and s:len() > 0, "serverstart() returned empty")
     eq('', eval('$NVIM'))
@@ -34,6 +45,7 @@ describe('server', function()
   end)
 
   it('sets v:servername at startup or if all servers were stopped', function()
+    clear()
     local initial_server = meths.get_vvar('servername')
     assert(initial_server ~= nil and initial_server:len() > 0,
            'v:servername was not initialized')
@@ -62,11 +74,13 @@ describe('server', function()
   end)
 
   it('serverstop() returns false for invalid input', function()
+    clear()
     eq(0, eval("serverstop('')"))
     eq(0, eval("serverstop('bogus-socket-name')"))
   end)
 
   it('parses endpoints', function()
+    clear()
     clear_serverlist()
     eq({}, funcs.serverlist())
 
@@ -111,6 +125,7 @@ describe('server', function()
   end)
 
   it('serverlist() returns the list of servers', function()
+    clear()
     -- There should already be at least one server.
     local n = eval('len(serverlist())')
 

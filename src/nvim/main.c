@@ -2016,14 +2016,14 @@ static void source_startup_scripts(const mparm_T *const parmp)
       // do_user_initialization.
 #if defined(UNIX)
       // If vimrc file is not owned by user, set 'secure' mode.
-      if (!file_owned(VIMRC_FILE))
+      if (!os_file_owned(VIMRC_FILE))  // NOLINT(readability/braces)
 #endif
       secure = p_secure;
 
       if (do_source(VIMRC_FILE, true, DOSO_VIMRC) == FAIL) {
 #if defined(UNIX)
         // if ".exrc" is not owned by user set 'secure' mode
-        if (!file_owned(EXRC_FILE)) {
+        if (!os_file_owned(EXRC_FILE)) {
           secure = p_secure;
         } else {
           secure = 0;
@@ -2067,23 +2067,6 @@ static int execute_env(char *env)
   }
   return FAIL;
 }
-
-#ifdef UNIX
-/// Checks if user owns file.
-/// Use both uv_fs_stat() and uv_fs_lstat() through os_fileinfo() and
-/// os_fileinfo_link() respectively for extra security.
-static bool file_owned(const char *fname)
-{
-  assert(fname != NULL);
-  uid_t uid = getuid();
-  FileInfo file_info;
-  bool file_owned = os_fileinfo(fname, &file_info)
-                    && file_info.stat.st_uid == uid;
-  bool link_owned = os_fileinfo_link(fname, &file_info)
-                    && file_info.stat.st_uid == uid;
-  return file_owned && link_owned;
-}
-#endif
 
 /// Prints the following then exits:
 /// - An error message `errstr`

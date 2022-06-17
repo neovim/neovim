@@ -7543,8 +7543,10 @@ stdpath({what})					*stdpath()* *E6100*
 		                     is stored here.
 		data_dirs    List    Other data directories.
 		log          String  Logs directory (for use by plugins too).
+		run          String  Run directory: temporary, local storage
+				     for sockets, named pipes, etc.
 		state        String  Session state directory: storage for file
-				     drafts, undo, shada, named pipes, ...
+				     drafts, undo, shada, etc.
 
 		Example: >
 			:echo stdpath("config")

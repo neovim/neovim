@@ -266,7 +266,7 @@ describe('env.c', function()
 
     itp('does not crash #3725', function()
       local name_out = ffi.new('char[100]')
-      cimp.os_get_user_name(name_out, 100)
+      cimp.os_get_username(name_out, 100)
       local curuser = ffi.string(name_out)
 
       local src = to_cstr("~"..curuser.."/Vcs/django-rest-framework/rest_framework/renderers.py")
