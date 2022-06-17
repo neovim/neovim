@@ -676,17 +676,6 @@ if(BUSTED_PRG)
   set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test streams-test tty-test ${GENERATED_HELP_TAGS})
   set(BENCHMARK_PREREQS nvim tty-test)
 
-  # Useful for automated build systems, if they want to manually run the tests.
-  add_custom_target(unittest-prereqs
-    DEPENDS ${UNITTEST_PREREQS})
-  set_target_properties(unittest-prereqs PROPERTIES FOLDER test)
-
-  add_custom_target(functionaltest-prereqs
-    DEPENDS ${FUNCTIONALTEST_PREREQS})
-
-  add_custom_target(benchmark-prereqs
-    DEPENDS ${BENCHMARK_PREREQS})
-
   check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
   if(LUA_HAS_FFI)
     add_custom_target(unittest
@@ -731,8 +720,7 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
-  set_target_properties(functionaltest functionaltest-prereqs
-    PROPERTIES FOLDER test)
+  set_target_properties(functionaltest PROPERTIES FOLDER test)
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
@@ -747,7 +735,7 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
-  set_target_properties(benchmark benchmark-prereqs PROPERTIES FOLDER test)
+  set_target_properties(benchmark PROPERTIES FOLDER test)
 endif()
 
 if(BUSTED_LUA_PRG)
