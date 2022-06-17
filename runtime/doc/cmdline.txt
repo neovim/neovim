@@ -1136,8 +1136,8 @@ save the command-line history and read it back later.
 If the 'wildchar' option is set to <Tab>, and the command-line window is used
 for an Ex command, then two mappings will be added to use <Tab> for completion
 in the command-line window, like this: >
-	:imap <buffer> <Tab> <C-X><C-V>
-	:nmap <buffer> <Tab> a<C-X><C-V>
+	:inoremap <buffer> <Tab> <C-X><C-V>
+	:nnoremap <buffer> <Tab> a<C-X><C-V>
 Note that hitting <Tab> in Normal mode will do completion on the next
 character.  That way it works at the end of the line.
 If you don't want these mappings, disable them with: >

@@ -4,7 +4,7 @@
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " License:       Vim License (see :help license)
-" Last Change:   2021 Oct 7
+" Last Change:   2022 Jun 13
 " Contributors:  Andy Lester <andy@petdance.com>
 "                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "                Lukas Mai <l.mai.web.de>
@@ -442,11 +442,18 @@ syn match  perlFormatField	"@$" contained
 " This problem also exists with empty string delimited heredocs but there's no
 " known workaround for that case.
 if get(g:, 'perl_fold', 0)
-  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="VIM_PERL_EOF\%$" contains=perlPOD,@perlDATA fold
-  syntax region perlEND  matchgroup=perlENDStart  start="^__END__$"  end="VIM_PERL_EOF\%$" contains=perlPOD,@perlDATA fold
+  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="VIM_PERL_EOF\%$" contains=@perlDATA fold
+  syntax region perlEND  matchgroup=perlENDStart  start="^__END__$"  end="VIM_PERL_EOF\%$" contains=@perlDATA fold
 else
-  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=perlPOD,@perlDATA
-  syntax region perlEND  matchgroup=perlENDStart  start="^__END__$"  end="\%$" contains=perlPOD,@perlDATA
+  syntax region perlDATA matchgroup=perlDATAStart start="^__DATA__$" end="\%$" contains=@perlDATA
+  syntax region perlEND  matchgroup=perlENDStart  start="^__END__$"  end="\%$" contains=@perlDATA
+endif
+
+" TODO: generalise this to allow other filetypes
+if get(g:, 'perl_highlight_data', 0)
+  syn cluster perlDATA add=perlPOD
+else
+  syn cluster perlDATA remove=perlPOD
 endif
 
 "

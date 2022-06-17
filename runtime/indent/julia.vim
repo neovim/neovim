@@ -2,8 +2,14 @@
 " Language:	Julia
 " Maintainer:	Carlo Baldassi <carlobaldassi@gmail.com>
 " Homepage:	https://github.com/JuliaEditorSupport/julia-vim
-" Last Change:	2016 jun 16
+" Last Change:	2022 Jun 14
 " Notes:        originally based on Bram Molenaar's indent file for vim
+
+" Only load this indent file when no other was loaded.
+if exists("b:did_indent")
+  finish
+endif
+let b:did_indent = 1
 
 setlocal autoindent
 

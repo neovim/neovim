@@ -1,11 +1,12 @@
 " Vim syntax file
 " Language:	dts/dtsi (device tree files)
 " Maintainer:	Daniel Mack <vim@zonque.org>
-" Last Change:	2021 May 15
+" Last Change:	2022 Jun 14
 
 if exists("b:current_syntax")
   finish
 endif
+let b:current_syntax = 'dts'
 
 syntax region dtsComment        start="/\*"  end="\*/"
 syntax match  dtsReference      "&[[:alpha:][:digit:]_]\+"
