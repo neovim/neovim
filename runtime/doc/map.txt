@@ -345,9 +345,15 @@ Note:
   mapping is recursive.
 - In Visual mode  you can use `line('v')` and `col('v')` to get one end of the
   Visual area, the cursor is at the other end.
-- In select-mode, |:map| and |:vmap| command mappings are executed in
-  visual-mode.  Use |:smap| to handle select-mode.
-
+- In Select mode, |:map| and |:vmap| command mappings are executed in
+  Visual mode.  Use |:smap| to handle Select mode differently.  One particular
+  edge case: >
+  	:vnoremap <C-K> <Esc>
+<  This ends Visual mode when in Visual mode, but in Select mode it does not
+  work, because Select mode is restored after executing the mapped keys.  You
+  need to use: >
+  	:snoremap <C-K> <Esc>
+<
 							*E5520*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the
 {rhs} of the mapping definition.  |Command-line| mode is never entered.

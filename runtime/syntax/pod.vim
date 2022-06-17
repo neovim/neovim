@@ -5,7 +5,7 @@
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " License:       Vim License (see :help license)
-" Last Change:   2021 Oct 8
+" Last Change:   2022 Jun 13
 
 " To add embedded POD documentation highlighting to your syntax file, add
 " the commands:

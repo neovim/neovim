@@ -20,7 +20,6 @@ endif
 syn case match
 
 let is_bash = 1
-unlet! b:current_syntax
 syn include @shTop syntax/sh.vim
 
 syn region	initngService			matchgroup=initngServiceHeader start="^\s*\(service\|virtual\|daemon\|class\|cron\)\s\+\(\(\w\|[-/*]\)\+\(\s\+:\s\+\(\w\|[-/*]\)\+\)\?\)\s\+{" end="}" contains=@initngServiceCluster
