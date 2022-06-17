@@ -1325,6 +1325,13 @@ function lsp.start_client(config)
   function client._on_attach(bufnr)
     text_document_did_open_handler(bufnr, client)
 
+    if client.server_capabilities.definitionProvider and vim.bo[bufnr].tagfunc == '' then
+      vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
+    end
+    if client.server_capabilities.completionProvider and vim.bo[bufnr].omnifunc == '' then
+      vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
+    end
+
     nvim_exec_autocmds('LspAttach', {
       buffer = bufnr,
       modeline = false,
