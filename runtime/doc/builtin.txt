@@ -8703,7 +8703,7 @@ win_gettype([{nr}])					*win_gettype()*
 			"command"	command-line window |cmdwin|
 			(empty)		normal window
 			"loclist"	|location-list-window|
-			"popup"		popup window |popup|
+			"popup"		floating window |api-floatwin|
 			"preview"	preview window |preview-window|
 			"quickfix"	|quickfix-window|
 			"unknown"	window {nr} not found
@@ -8712,11 +8712,7 @@ win_gettype([{nr}])					*win_gettype()*
 		When {nr} is given return the type of this window by number or
 		|window-ID|.
 
-		Also see the 'buftype' option.  When running a terminal in a
-		popup window then 'buftype' is "terminal" and win_gettype()
-		returns "popup".
-
-		Returns "unknown" if the window cannot be found.
+		Also see the 'buftype' option.
 
 		Can also be used as a |method|: >
 			GetWinid()->win_gettype()
