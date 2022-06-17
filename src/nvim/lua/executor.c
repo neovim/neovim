@@ -1615,7 +1615,7 @@ int nlua_expand_pat(expand_T *xp, char_u *pat, int *num_results, char_u ***resul
   lua_getfield(lstate, -1, "_expand_pat");
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
-  // [ vim, vim._on_key, buf ]
+  // [ vim, vim._expand_pat, buf ]
   lua_pushlstring(lstate, (const char *)pat, STRLEN(pat));
 
   if (nlua_pcall(lstate, 1, 2) != 0) {
@@ -1768,7 +1768,7 @@ void nlua_execute_on_key(int c)
   // [ vim ]
   lua_getglobal(lstate, "vim");
 
-  // [ vim, vim._on_key]
+  // [ vim, vim._on_key ]
   lua_getfield(lstate, -1, "_on_key");
   luaL_checktype(lstate, -1, LUA_TFUNCTION);
 
