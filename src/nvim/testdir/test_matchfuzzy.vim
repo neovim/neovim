@@ -258,6 +258,14 @@ func Test_matchfuzzy_limit()
   call assert_equal(['2', '2'], x->matchfuzzy('2', #{limit: 2}))
   call assert_equal(['2', '2'], x->matchfuzzy('2', #{limit: 3}))
   call assert_fails("call matchfuzzy(x, '2', #{limit: '2'})", 'E475:')
+
+  let l = [{'id': 5, 'val': 'crayon'}, {'id': 6, 'val': 'camera'}]
+  call assert_equal([{'id': 5, 'val': 'crayon'}, {'id': 6, 'val': 'camera'}], l->matchfuzzy('c', #{text_cb: {v -> v.val}}))
+  call assert_equal([{'id': 5, 'val': 'crayon'}, {'id': 6, 'val': 'camera'}], l->matchfuzzy('c', #{key: 'val'}))
+  call assert_equal([{'id': 5, 'val': 'crayon'}, {'id': 6, 'val': 'camera'}], l->matchfuzzy('c', #{text_cb: {v -> v.val}, limit: 0}))
+  call assert_equal([{'id': 5, 'val': 'crayon'}, {'id': 6, 'val': 'camera'}], l->matchfuzzy('c', #{key: 'val', limit: 0}))
+  call assert_equal([{'id': 5, 'val': 'crayon'}], l->matchfuzzy('c', #{text_cb: {v -> v.val}, limit: 1}))
+  call assert_equal([{'id': 5, 'val': 'crayon'}], l->matchfuzzy('c', #{key: 'val', limit: 1}))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

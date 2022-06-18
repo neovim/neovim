@@ -5034,6 +5034,8 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 		    matchseq	When this item is present return only matches
 				that contain the characters in {str} in the
 				given sequence.
+		    limit	Maximum number of matches in {list} to be
+				returned.  Zero means no limit.
 
 		If {list} is a list of dictionaries, then the optional {dict}
 		argument supports the following additional items:
@@ -5045,8 +5047,6 @@ matchfuzzy({list}, {str} [, {dict}])			*matchfuzzy()*
 				This should accept a dictionary item as the
 				argument and return the text for that item to
 				use for fuzzy matching.
-		    limit	Maximum number of matches in {list} to be
-				returned.  Zero means no limit.
 
 		{str} is treated as a literal string and regular expression
 		matching is NOT supported.  The maximum supported {str} length
