@@ -590,7 +590,8 @@ static int terminal_execute(VimState *state, int key)
   return 1;
 }
 
-/// Frees the given Terminal structure and sets the caller storage to NULL.
+/// Frees the given Terminal structure and sets the caller storage to NULL (in the spirit of
+/// XFREE_CLEAR).
 void terminal_destroy(Terminal **termpp)
 {
   Terminal *term = *termpp;
@@ -614,7 +615,7 @@ void terminal_destroy(Terminal **termpp)
     xfree(term->sb_buffer);
     vterm_free(term->vt);
     xfree(term);
-    *termpp = NULL;
+    *termpp = NULL;  // coverity[dead-store]
   }
 }
 
