@@ -2791,7 +2791,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     xfree(reg->y_array);
   }
 
-  if (message) {  // Display message about yank?
+  if (message && p_ch > 0) {  // Display message about yank?
     if (yank_type == kMTCharWise && yanklines == 1) {
       yanklines = 0;
     }
