@@ -799,8 +799,7 @@ static inline void term_delayed_free(void **argv)
   }
 
   if (chan->term) {
-    terminal_destroy(chan->term);
-    chan->term = NULL;
+    terminal_destroy(&chan->term);
   }
   channel_decref(chan);
 }

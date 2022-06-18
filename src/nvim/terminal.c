@@ -286,8 +286,7 @@ void terminal_close(Terminal **termpp, int status)
   if (entered_free_all_mem) {
     // If called from close_buffer() inside free_all_mem(), the main loop has
     // already been freed, so it is not safe to call the close callback here.
-    terminal_destroy(term);
-    *termpp = NULL;
+    terminal_destroy(termpp);
     return;
   }
 #endif
@@ -588,8 +587,8 @@ static int terminal_execute(VimState *state, int key)
   return 1;
 }
 
-void terminal_destroy(Terminal *term)
-{
+void terminal_destroy(Terminal **termpp) {
+  Terminal *term = *termpp;
   buf_T *buf = handle_get_buffer(term->buf_handle);
   if (buf) {
     term->buf_handle = 0;
@@ -610,6 +609,7 @@ void terminal_destroy(Terminal *term)
     xfree(term->sb_buffer);
     vterm_free(term->vt);
     xfree(term);
+    *termpp = NULL;
   }
 }
 
