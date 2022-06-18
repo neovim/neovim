@@ -618,20 +618,28 @@ find_program(SHELLCHECK_PRG shellcheck)
 include(DefCmdTarget)
 def_cmd_target(lintlua ${LUACHECK_PRG} LUACHECK_PRG true)
 if(LUACHECK_PRG)
-  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/)
+  add_custom_command(TARGET lintlua
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/)
 endif()
 if(STYLUA_PRG)
-  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${STYLUA_PRG} --color=always --check runtime/)
+  add_custom_command(TARGET lintlua
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${STYLUA_PRG} --color=always --check runtime/)
 else()
-  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${CMAKE_COMMAND} -E echo "STYLUA_PRG not found")
+  add_custom_command(TARGET lintlua COMMAND ${CMAKE_COMMAND} -E echo "STYLUA_PRG not found")
 endif()
 def_cmd_target(lintpy ${FLAKE8_PRG} FLAKE8_PRG false)
 if(FLAKE8_PRG)
-  add_custom_command(OUTPUT lintpy-cmd APPEND COMMAND ${FLAKE8_PRG} contrib/ scripts/ src/ test/)
+  add_custom_command(TARGET lintpy
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${FLAKE8_PRG} contrib/ scripts/ src/ test/)
 endif()
 def_cmd_target(lintsh ${SHELLCHECK_PRG} SHELLCHECK_PRG false)
 if(SHELLCHECK_PRG)
-  add_custom_command(OUTPUT lintsh-cmd APPEND COMMAND ${SHELLCHECK_PRG} scripts/vim-patch.sh)
+  add_custom_command(TARGET lintsh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${SHELLCHECK_PRG} scripts/vim-patch.sh)
 endif()
 
 include(InstallHelpers)
