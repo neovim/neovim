@@ -142,7 +142,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       api_free_luaref(chan->stream.internal.cb);
       chan->stream.internal.cb = LUA_NOREF;
       chan->stream.internal.closed = true;
-      terminal_close(chan->term, 0);
+      terminal_close(&chan->term, 0);
     } else {
       channel_decref(chan);
     }
@@ -705,7 +705,7 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
 {
   Channel *chan = data;
   if (chan->term) {
-    terminal_close(chan->term, status);
+    terminal_close(&chan->term, status);
   }
 
   // If process did not exit, we only closed the handle of a detached process.
@@ -798,8 +798,9 @@ static inline void term_delayed_free(void **argv)
     return;
   }
 
-  terminal_destroy(chan->term);
-  chan->term = NULL;
+  if (chan->term) {
+    terminal_destroy(&chan->term);
+  }
   channel_decref(chan);
 }
 

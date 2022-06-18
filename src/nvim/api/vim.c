@@ -1025,8 +1025,7 @@ static void term_resize(uint16_t width, uint16_t height, void *data)
 static void term_close(void *data)
 {
   Channel *chan = data;
-  terminal_destroy(chan->term);
-  chan->term = NULL;
+  terminal_destroy(&chan->term);
   api_free_luaref(chan->stream.internal.cb);
   chan->stream.internal.cb = LUA_NOREF;
   channel_decref(chan);
