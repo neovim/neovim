@@ -212,7 +212,7 @@ describe('ui/cursor', function()
         if m.blinkwait then m.blinkwait = 700 end
       end
       if m.hl_id then
-          m.hl_id = 61
+          m.hl_id = 57
           m.attr = {background = Screen.colors.DarkGray}
       end
       if m.id_lm then m.id_lm = 62 end

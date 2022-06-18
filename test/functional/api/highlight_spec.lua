@@ -133,6 +133,13 @@ describe('API: highlight',function()
     eq({ underline = true, standout = true, },
        meths.get_hl_by_name('cursorline', 0));
 
+    -- Test cterm & Normal values. #18024 (tail) & #18980
+    -- Ensure Normal, and groups that match Normal return their fg & bg cterm values
+    meths.set_hl(0, 'Normal', {ctermfg = 17, ctermbg = 213})
+    meths.set_hl(0, 'NotNormal', {ctermfg = 17, ctermbg = 213})
+    -- Note colors are "cterm" values, not rgb-as-ints
+    eq({foreground = 17, background = 213}, nvim("get_hl_by_name", 'Normal', false))
+    eq({foreground = 17, background = 213}, nvim("get_hl_by_name", 'NotNormal', false))
   end)
 
   it('nvim_get_hl_id_by_name', function()
@@ -336,5 +343,11 @@ describe("API: set highlight", function()
     eq('Test_hl3       xxx guifg=#FF00FF blend=50',
       exec_capture('highlight Test_hl3'))
 
+  end)
+
+  it ("correctly sets 'Normal' internal properties", function()
+    -- Normal has some special handling internally. #18024
+    meths.set_hl(0, 'Normal', {fg='#000083', bg='#0000F3'})
+    eq({foreground = 131, background = 243}, nvim("get_hl_by_name", 'Normal', true))
   end)
 end)
