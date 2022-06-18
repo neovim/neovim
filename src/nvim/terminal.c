@@ -275,6 +275,9 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   return rv;
 }
 
+/// Closes the Terminal buffer.
+///
+/// May call terminal_destroy, which sets caller storage to NULL.
 void terminal_close(Terminal **termpp, int status)
 {
   Terminal *term = *termpp;
@@ -587,7 +590,9 @@ static int terminal_execute(VimState *state, int key)
   return 1;
 }
 
-void terminal_destroy(Terminal **termpp) {
+/// Frees the given Terminal structure and sets the caller storage to NULL.
+void terminal_destroy(Terminal **termpp)
+{
   Terminal *term = *termpp;
   buf_T *buf = handle_get_buffer(term->buf_handle);
   if (buf) {
