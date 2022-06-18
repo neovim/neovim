@@ -1111,4 +1111,10 @@ describe('cmdheight=0', function()
 
     assert_alive()
   end)
+
+  it("when window resize", function()
+    command("set cmdheight=0")
+    feed('<C-w>+')
+    eq(0, eval('&cmdheight'))
+  end)
 end)
