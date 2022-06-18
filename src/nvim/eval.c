@@ -8199,7 +8199,7 @@ varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
 
 /// Get string v: variable value.  Uses a static buffer, can only be used once.
 /// If the String variable has never been set, return an empty string.
-/// Never returns NULL;
+/// Never returns NULL.
 char *get_vim_var_str(int idx)
   FUNC_ATTR_PURE FUNC_ATTR_NONNULL_RET
 {
