@@ -438,6 +438,7 @@ describe('extmark decorations', function()
       [23] = {foreground = Screen.colors.Magenta1, background = Screen.colors.LightGrey};
       [24] = {bold = true};
       [25] = {background = Screen.colors.LightRed};
+      [26] = {background=Screen.colors.DarkGrey, foreground=Screen.colors.LightGrey};
     }
 
     ns = meths.create_namespace 'test'
@@ -818,6 +819,20 @@ end]]
                                                         |
     ]]}
     helpers.assert_alive()
+  end)
+
+  it('conceal #19007', function()
+    screen:try_resize(50, 5)
+    insert('foo\n')
+    command('let &conceallevel=2')
+    meths.buf_set_extmark(0, ns, 0, 0, {end_col=0, end_row=2, conceal='X'})
+    screen:expect([[
+        {26:X}                                                 |
+        ^                                                  |
+        {1:~                                                 }|
+        {1:~                                                 }|
+                                                          |
+      ]])
   end)
 end)
 
