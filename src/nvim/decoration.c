@@ -69,7 +69,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
 {
   if (row2 >= row1) {
-    if (!decor || decor->hl_id || decor_has_sign(decor)) {
+    if (!decor || decor->hl_id || decor_has_sign(decor) || decor->conceal) {
       redraw_buf_range_later(buf, row1 + 1, row2 + 1);
     }
   }
