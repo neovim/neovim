@@ -184,8 +184,8 @@ void ui_refresh(void)
     local firstrun = q(1)
     local manyruns = q(100)
 
-    -- First run should be at least 5x slower.
-    assert(500 * manyruns < firstrun, ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
+    -- First run should be at least 4x slower.
+    assert(400 * manyruns < firstrun, ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
   end)
 
   it('support query and iter by capture', function()
