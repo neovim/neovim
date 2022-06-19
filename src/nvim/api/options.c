@@ -280,7 +280,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
   return get_option_from(buf, SREQ_BUF, name, err);
 }
 
-/// Sets a buffer option value. Passing 'nil' as value deletes the option (only
+/// Sets a buffer option value. Passing `nil` as value deletes the option (only
 /// works if there's a global fallback)
 ///
 /// @param channel_id
@@ -318,7 +318,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
   return get_option_from(win, SREQ_WIN, name, err);
 }
 
-/// Sets a window option value. Passing 'nil' as value deletes the option(only
+/// Sets a window option value. Passing `nil` as value deletes the option (only
 /// works if there's a global fallback)
 ///
 /// @param channel_id
@@ -338,7 +338,7 @@ void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object
   set_option_to(channel_id, win, SREQ_WIN, name, value, err);
 }
 
-/// Gets the value of a global or local(buffer, window) option.
+/// Gets the value of a global or local (buffer, window) option.
 ///
 /// @param from If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
 ///        to the window or buffer.
@@ -393,7 +393,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
   return rv;
 }
 
-/// Sets the value of a global or local(buffer, window) option.
+/// Sets the value of a global or local (buffer, window) option.
 ///
 /// @param to If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
 ///        to the window or buffer.

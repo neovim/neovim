@@ -3571,7 +3571,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	help.  (Note that previously setting the global option to the empty
 	value did this, which is now deprecated.)
 	When the first character is ":", the command is invoked as a Vim
-	Ex command with [count] added as an argument if it is not zero.
+	Ex command prefixed with [count].
 	When "man" or "man -s" is used, Vim will automatically translate
 	a [count] for the "K" command to a section number.
 	See |option-backslash| about including spaces and backslashes.
@@ -4210,14 +4210,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The 'mousemodel' option is set by the |:behave| command.
 
-					*mousescroll*
+					*'mousescroll'*
 'mousescroll'		string	(default "ver:3,hor:6")
 			global
 	This option controls the number of lines / columns to scroll by when
 	scrolling with a mouse. The option is a comma separated list of parts.
 	Each part consists of a direction and a count as follows:
 		direction:count,direction:count
-	Direction is one of either "hor" or "ver", "hor" controls horizontal
+	Direction is one of either "hor" or "ver". "hor" controls horizontal
 	scrolling and "ver" controls vertical scrolling. Count sets the amount
 	to scroll by for the given direction, it should be a non negative
 	integer. Each direction should be set at most once. If a direction
