@@ -174,7 +174,7 @@ static void deadly_signal(int signum)
   set_vim_var_nr(VV_DYING, 1);
   v_dying = 1;
 
-  WLOG("got signal %d (%s)", signum, signal_name(signum));
+  ILOG("got signal %d (%s)", signum, signal_name(signum));
 
   snprintf((char *)IObuff, sizeof(IObuff), "Vim: Caught deadly signal '%s'\r\n",
            signal_name(signum));
