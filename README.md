@@ -130,3 +130,6 @@ Plugin represents an individual plugin.
 
 ### Plugin:load\_script(path) -> specs, handlers
 
+# Credits
+
+Originally written by @garyburd (Gary Burd).
