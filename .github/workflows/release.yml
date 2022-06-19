@@ -102,7 +102,7 @@ jobs:
           libs=($(otool -L nvim-osx64/bin/nvim | sed 1d | sed -E -e 's|^[[:space:]]*||' -e 's| .*||'))
           echo "libs:"
           for lib in "${libs[@]}"; do
-            if echo "$lib" | grep -q -E 'libSystem|CoreFoundation' 2>/dev/null; then
+            if echo "$lib" | grep -q -E 'libSystem|CoreServices' 2>/dev/null; then
               echo "  [skipped] $lib"
             else
               echo "  $lib"
