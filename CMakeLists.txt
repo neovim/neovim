@@ -618,29 +618,34 @@ find_program(SHELLCHECK_PRG shellcheck)
 include(DefCmdTarget)
 def_cmd_target(lintlua ${LUACHECK_PRG} LUACHECK_PRG true)
 if(LUACHECK_PRG)
-  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/)
+  add_custom_command(TARGET lintlua
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${LUACHECK_PRG} -q runtime/ scripts/ src/ test/)
 endif()
 if(STYLUA_PRG)
-  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${STYLUA_PRG} --color=always --check runtime/)
+  add_custom_command(TARGET lintlua
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${STYLUA_PRG} --color=always --check runtime/)
 else()
-  add_custom_command(OUTPUT lintlua-cmd APPEND COMMAND ${CMAKE_COMMAND} -E echo "STYLUA_PRG not found")
+  add_custom_command(TARGET lintlua COMMAND ${CMAKE_COMMAND} -E echo "STYLUA_PRG not found")
 endif()
 def_cmd_target(lintpy ${FLAKE8_PRG} FLAKE8_PRG false)
 if(FLAKE8_PRG)
-  add_custom_command(OUTPUT lintpy-cmd APPEND COMMAND ${FLAKE8_PRG} contrib/ scripts/ src/ test/)
+  add_custom_command(TARGET lintpy
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${FLAKE8_PRG} contrib/ scripts/ src/ test/)
 endif()
 def_cmd_target(lintsh ${SHELLCHECK_PRG} SHELLCHECK_PRG false)
 if(SHELLCHECK_PRG)
-  add_custom_command(OUTPUT lintsh-cmd APPEND COMMAND ${SHELLCHECK_PRG} scripts/vim-patch.sh)
+  add_custom_command(TARGET lintsh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMAND ${SHELLCHECK_PRG} scripts/vim-patch.sh)
 endif()
 
 include(InstallHelpers)
 
-file(GLOB MANPAGES
-  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  man/nvim.1)
 install_helper(
-  FILES ${MANPAGES}
+  FILES ${CMAKE_SOURCE_DIR}/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 #
@@ -675,17 +680,6 @@ if(BUSTED_PRG)
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test streams-test tty-test ${GENERATED_HELP_TAGS})
   set(BENCHMARK_PREREQS nvim tty-test)
-
-  # Useful for automated build systems, if they want to manually run the tests.
-  add_custom_target(unittest-prereqs
-    DEPENDS ${UNITTEST_PREREQS})
-  set_target_properties(unittest-prereqs PROPERTIES FOLDER test)
-
-  add_custom_target(functionaltest-prereqs
-    DEPENDS ${FUNCTIONALTEST_PREREQS})
-
-  add_custom_target(benchmark-prereqs
-    DEPENDS ${BENCHMARK_PREREQS})
 
   check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
   if(LUA_HAS_FFI)
@@ -731,8 +725,7 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${FUNCTIONALTEST_PREREQS}
     ${TEST_TARGET_ARGS})
-  set_target_properties(functionaltest functionaltest-prereqs
-    PROPERTIES FOLDER test)
+  set_target_properties(functionaltest PROPERTIES FOLDER test)
 
   add_custom_target(benchmark
     COMMAND ${CMAKE_COMMAND}
@@ -747,7 +740,7 @@ if(BUSTED_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${BENCHMARK_PREREQS}
     ${TEST_TARGET_ARGS})
-  set_target_properties(benchmark benchmark-prereqs PROPERTIES FOLDER test)
+  set_target_properties(benchmark PROPERTIES FOLDER test)
 endif()
 
 if(BUSTED_LUA_PRG)
@@ -767,17 +760,8 @@ if(BUSTED_LUA_PRG)
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
-#add uninstall target
-if(NOT TARGET uninstall)
-    configure_file(
-        "cmake/UninstallHelper.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/UninstallHelper.cmake"
-        IMMEDIATE @ONLY)
-
-    add_custom_target(uninstall
-        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/UninstallHelper.cmake)
-endif()
-
+add_custom_target(uninstall
+  COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/UninstallHelper.cmake)
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   add_subdirectory(packaging)

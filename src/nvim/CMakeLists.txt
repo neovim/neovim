@@ -805,7 +805,7 @@ add_custom_target(lintc DEPENDS ${LINT_TARGETS})
 
 def_cmd_target(lintuncrustify ${UNCRUSTIFY_PRG} UNCRUSTIFY_PRG false)
 if(UNCRUSTIFY_PRG)
-  add_custom_command(OUTPUT lintuncrustify-cmd APPEND
+  add_custom_command(TARGET lintuncrustify
     COMMAND ${CMAKE_COMMAND}
       -D UNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
       -D PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
