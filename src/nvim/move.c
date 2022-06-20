@@ -1518,12 +1518,10 @@ void set_empty_rows(win_T *wp, int used)
   }
 }
 
-/*
- * Recompute topline to put the cursor at the bottom of the window.
- * Scroll at least "min_scroll" lines.
- * If "set_topbot" is true, set topline and botline first (for "zb").
- * This is messy stuff!!!
- */
+/// Recompute topline to put the cursor at the bottom of the window.
+/// When scrolling scroll at least "min_scroll" lines.
+/// If "set_topbot" is true, set topline and botline first (for "zb").
+/// This is messy stuff!!!
 void scroll_cursor_bot(int min_scroll, int set_topbot)
 {
   int used;
