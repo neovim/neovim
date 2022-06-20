@@ -24,14 +24,15 @@
 /// Gets the value of an option. The behavior of this function matches that of
 /// |:set|: the local value of an option is returned if it exists; otherwise,
 /// the global value is returned. Local values always correspond to the current
-/// buffer or window. To get a buffer-local or window-local option for a
-/// specific buffer or window, use |nvim_buf_get_option()| or
-/// |nvim_win_get_option()|.
+/// buffer or window, unless "buf" or "win" is set in {opts}.
 ///
 /// @param name      Option name
 /// @param opts      Optional parameters
-///                  - scope: One of 'global' or 'local'. Analogous to
+///                  - scope: One of "global" or "local". Analogous to
 ///                  |:setglobal| and |:setlocal|, respectively.
+///                  - win: |window-ID|. Used for getting window local options.
+///                  - buf: Buffer number. Used for getting buffer local options.
+///                         Implies {scope} is "local".
 /// @param[out] err  Error details, if any
 /// @return          Option value
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
@@ -54,9 +55,44 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     goto end;
   }
 
+  int opt_type = SREQ_GLOBAL;
+  void *from = NULL;
+
+  if (opts->win.type == kObjectTypeInteger) {
+    opt_type = SREQ_WIN;
+    from = find_window_by_handle((int)opts->win.data.integer, err);
+  } else if (HAS_KEY(opts->win)) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: win");
+    goto end;
+  }
+
+  if (opts->buf.type == kObjectTypeInteger) {
+    scope = OPT_LOCAL;
+    opt_type = SREQ_BUF;
+    from = find_buffer_by_handle((int)opts->buf.data.integer, err);
+  } else if (HAS_KEY(opts->buf)) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: buf");
+    goto end;
+  }
+
+  if (HAS_KEY(opts->scope) && HAS_KEY(opts->buf)) {
+    api_set_error(err, kErrorTypeValidation, "scope and buf cannot be used together");
+    goto end;
+  }
+
+  if (HAS_KEY(opts->win) && HAS_KEY(opts->buf)) {
+    api_set_error(err, kErrorTypeValidation, "buf and win cannot be used together");
+    goto end;
+  }
+
   long numval = 0;
   char *stringval = NULL;
-  switch (get_option_value(name.data, &numval, &stringval, scope)) {
+  int result = get_option_value_for(name.data, &numval, &stringval, scope, opt_type, from, err);
+  if (ERROR_SET(err)) {
+    goto end;
+  }
+
+  switch (result) {
   case 0:
     rv = STRING_OBJ(cstr_as_string(stringval));
     break;
@@ -506,4 +542,43 @@ static void set_option_value_err(char *key, long numval, char *stringval, int op
 
     api_set_error(err, kErrorTypeException, "%s", errmsg);
   }
+}
+
+int get_option_value_for(char *key, long *numval, char **stringval, int opt_flags, int opt_type,
+                         void *from, Error *err)
+{
+  switchwin_T switchwin;
+  aco_save_T aco;
+  int result = 0;
+
+  try_start();
+  switch (opt_type) {
+  case SREQ_WIN:
+    if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
+        == FAIL) {
+      restore_win_noblock(&switchwin, true);
+      if (try_end(err)) {
+        return result;
+      }
+      api_set_error(err,
+                    kErrorTypeException,
+                    "Problem while switching windows");
+      return result;
+    }
+    result = get_option_value(key, numval, stringval, opt_flags);
+    restore_win_noblock(&switchwin, true);
+    break;
+  case SREQ_BUF:
+    aucmd_prepbuf(&aco, (buf_T *)from);
+    result = get_option_value(key, numval, stringval, opt_flags);
+    aucmd_restbuf(&aco);
+    break;
+  case SREQ_GLOBAL:
+    result = get_option_value(key, numval, stringval, opt_flags);
+    break;
+  }
+
+  try_end(err);
+
+  return result;
 }

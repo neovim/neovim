@@ -2037,15 +2037,17 @@ nvim_get_option_value({name}, {*opts})               *nvim_get_option_value()*
                 matches that of |:set|: the local value of an option is
                 returned if it exists; otherwise, the global value is
                 returned. Local values always correspond to the current buffer
-                or window. To get a buffer-local or window-local option for a
-                specific buffer or window, use |nvim_buf_get_option()| or
-                |nvim_win_get_option()|.
+                or window, unless "buf" or "win" is set in {opts}.
 
                 Parameters: ~
                     {name}  Option name
                     {opts}  Optional parameters
-                            • scope: One of 'global' or 'local'. Analogous to
+                            • scope: One of "global" or "local". Analogous to
                               |:setglobal| and |:setlocal|, respectively.
+                            • win: |window-ID|. Used for getting window local
+                              options.
+                            • buf: Buffer number. Used for getting buffer
+                              local options. Implies {scope} is "local".
 
                 Return: ~
                     Option value
