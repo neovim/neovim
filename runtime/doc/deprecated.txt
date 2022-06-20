@@ -24,12 +24,12 @@ Commands ~
 *:wviminfo*		Deprecated alias to |:wshada| command.
 
 Environment Variables ~
-*$NVIM_LISTEN_ADDRESS*	$NVIM_LISTEN_ADDRESS is a deprecated way to set the
-			|--listen| address of Nvim, and also had a conflicting
-			purpose as a way to detect a parent Nvim (use |$NVIM|
-			for that). It is unset by |terminal| and |jobstart()|
-			(unless explicitly given by the "env" option).
-			Ignored if --listen is given.
+*$NVIM_LISTEN_ADDRESS*	Deprecated way to
+			* set the server name (use |--listen| instead)
+			* get the server name (use |v:servername| instead)
+			* detect a parent Nvim (use |$NVIM| instead)
+			Unset by |terminal| and |jobstart()| (unless explicitly
+			given by the "env" option). Ignored if --listen is given.
 
 Events ~
 *BufCreate*		Use |BufAdd| instead.
