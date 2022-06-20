@@ -2364,7 +2364,7 @@ fnamemodify({fname}, {mods})				*fnamemodify()*
 		Example: >
 			:echo fnamemodify("main.c", ":p:h")
 <		results in: >
-			/home/mool/vim/vim/src
+			/home/user/vim/vim/src
 <		If {mods} is empty or an unsupported modifier is used then
 		{fname} is returned.
 		Note: Environment variables don't work in {fname}, use
