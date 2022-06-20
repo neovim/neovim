@@ -2717,6 +2717,8 @@ getchar([expr])						*getchar()*
 			Return zero otherwise.
 		If [expr] is 1, only check if a character is available, it is
 			not consumed.  Return zero if no character available.
+		If [expr] is 2, wait until a character is available without
+			moving the cursor.
 		If you prefer always getting a string use |getcharstr()|.
 
 		Without [expr] and when [expr] is 0 a whole character or
@@ -2834,6 +2836,8 @@ getcharstr([expr])					*getcharstr()*
 		If [expr] is 1 or true, only check if a character is
 			available, it is not consumed.  Return an empty string
 			if no character is available.
+		If [expr] is 2, wait until a character is available without
+			moving the cursor.
 		Otherwise this works like |getchar()|, except that a number
 		result is converted to a string.
 

@@ -2960,17 +2960,28 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
   FUNC_ATTR_NONNULL_ALL
 {
   varnumber_T n;
-  bool error = false;
+  varnumber_T arg = -1;
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    bool error = false;
+    arg = tv_get_number_chk(&argvars[0], &error);
+    if (error || arg < 0) {
+      arg = 0;
+    }
+  }
 
   no_mapping++;
   allow_keys++;
   for (;;) {
-    // Position the cursor.  Needed after a message that ends in a space,
-    // or if event processing caused a redraw.
-    ui_cursor_goto(msg_row, msg_col);
+    // getchar(2): blocking wait without moving the cursor
+    if (arg != 2) {
+      // Position the cursor.  Needed after a message that ends in a space,
+      // or if event processing caused a redraw.
+      ui_cursor_goto(msg_row, msg_col);
+    }
 
-    if (argvars[0].v_type == VAR_UNKNOWN) {
-      // getchar(): blocking wait.
+    if (arg == -1 || arg == 2) {
+      // getchar() or getchar(2): blocking wait.
       // TODO(bfredl): deduplicate shared logic with state_enter ?
       if (!char_avail()) {
         (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
@@ -2980,10 +2991,10 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
         }
       }
       n = safe_vgetc();
-    } else if (tv_get_number_chk(&argvars[0], &error) == 1) {
+    } else if (arg == 1) {
       // getchar(1): only check if char avail
       n = vpeekc_any();
-    } else if (error || vpeekc_any() == NUL) {
+    } else if (vpeekc_any() == NUL) {
       // illegal argument or getchar(0) and no char avail: return zero
       n = 0;
     } else {
