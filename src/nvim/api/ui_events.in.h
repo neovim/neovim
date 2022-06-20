@@ -99,7 +99,7 @@ void raw_line(Integer grid, Integer row, Integer startcol,
               LineFlags flags, const schar_T *chunk, const sattr_T *attrs)
   FUNC_API_NOEXPORT FUNC_API_COMPOSITOR_IMPL;
 
-void event(char *name, Array args, bool *args_consumed)
+void event(char *name, Array args)
   FUNC_API_NOEXPORT;
 
 void win_pos(Integer grid, Window win, Integer startrow,

@@ -7272,7 +7272,7 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
 
   redraw_tabline = true;
   if (h != tabline_height()) {
-    shell_new_rows();
+    win_new_screen_rows();
   }
 }
 

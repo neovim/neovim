@@ -4528,7 +4528,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     last_status(false);  // (re)set last window status line.
   } else if (pp == &p_stal) {
     // (re)set tab page line
-    shell_new_rows();   // recompute window positions and heights
+    win_new_screen_rows();   // recompute window positions and heights
   } else if (pp == &curwin->w_p_fdl) {
     newFoldLevel();
   } else if (pp == &curwin->w_p_fml) {
@@ -4617,7 +4617,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     p_columns = MIN_COLUMNS;
   }
 
-  // True max size is defined by check_shellsize()
+  // True max size is defined by check_screensize()
   p_lines = MIN(p_lines, INT_MAX);
   p_columns = MIN(p_columns, INT_MAX);
 
@@ -4635,7 +4635,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
       // messages.
       Rows = (int)p_lines;
       Columns = (int)p_columns;
-      check_shellsize();
+      check_screensize();
       if (cmdline_row > Rows - p_ch && Rows > p_ch) {
         assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
         cmdline_row = (int)(Rows - p_ch);

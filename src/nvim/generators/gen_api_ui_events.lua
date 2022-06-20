@@ -36,20 +36,12 @@ local function write_signature(output, ev, prefix, notype)
   output:write(')')
 end
 
-local function write_arglist(output, ev, need_copy)
-  output:write('  Array args = ARRAY_DICT_INIT;\n')
+local function write_arglist(output, ev)
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
     local kind = string.upper(param[1])
-    local do_copy = need_copy and (kind == "ARRAY" or kind == "DICTIONARY" or kind == "STRING" or kind == "OBJECT")
-    output:write('  ADD(args, ')
-    if do_copy then
-      output:write('copy_object(')
-    end
+    output:write('  ADD_C(args, ')
     output:write(kind..'_OBJ('..param[2]..')')
-    if do_copy then
-      output:write(')')
-    end
     output:write(');\n')
   end
 end
@@ -119,7 +111,9 @@ for i = 1, #events do
       remote_output:write('static void remote_ui_'..ev.name)
       write_signature(remote_output, ev, 'UI *ui')
       remote_output:write('\n{\n')
-      write_arglist(remote_output, ev, true)
+      remote_output:write('  UIData *data = ui->data;\n')
+      remote_output:write('  Array args = data->call_buf;\n')
+      write_arglist(remote_output, ev)
       remote_output:write('  push_call(ui, "'..ev.name..'", args);\n')
       remote_output:write('}\n\n')
     end
@@ -186,9 +180,10 @@ for i = 1, #events do
     write_signature(call_output, ev, '')
     call_output:write('\n{\n')
     if ev.remote_only then
-      write_arglist(call_output, ev, false)
+      call_output:write('  Array args = call_buf;\n')
+      write_arglist(call_output, ev)
       call_output:write('  UI_LOG('..ev.name..');\n')
-      call_output:write('  ui_event("'..ev.name..'", args);\n')
+      call_output:write('  ui_call_event("'..ev.name..'", args);\n')
     elseif ev.compositor_impl then
       call_output:write('  UI_CALL')
       write_signature(call_output, ev, '!ui->composed, '..ev.name..', ui', true)

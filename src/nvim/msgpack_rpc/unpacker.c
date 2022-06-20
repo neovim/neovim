@@ -11,10 +11,6 @@
 # include "msgpack_rpc/unpacker.c.generated.h"
 #endif
 
-#define kv_fixsize_arena(a, v, s) \
-  ((v).capacity = (s), \
-   (v).items = (void *)arena_alloc(a, sizeof((v).items[0]) * (v).capacity, true))
-
 Object unpack(const char *data, size_t size, Error *err)
 {
   Unpacker unpacker;

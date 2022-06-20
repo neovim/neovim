@@ -786,6 +786,7 @@ void free_all_mem(void)
   decor_free_all_mem();
 
   nlua_free_all_mem();
+  ui_free_all_mem();
 }
 
 #endif

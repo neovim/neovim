@@ -8,6 +8,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/memory.h"
 
 typedef enum {
   kUICmdline = 0,
@@ -45,6 +46,8 @@ enum {
 };
 
 typedef int LineFlags;
+
+EXTERN ArenaMem ui_ext_fixblk INIT(= NULL);
 
 struct ui_t {
   bool rgb;

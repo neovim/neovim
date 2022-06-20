@@ -669,6 +669,32 @@ void api_free_string(String value)
   xfree(value.data);
 }
 
+Array arena_array(Arena *arena, size_t max_size)
+{
+  Array arr = ARRAY_DICT_INIT;
+  kv_fixsize_arena(arena, arr, max_size);
+  return arr;
+}
+
+Dictionary arena_dict(Arena *arena, size_t max_size)
+{
+  Dictionary dict = ARRAY_DICT_INIT;
+  kv_fixsize_arena(arena, dict, max_size);
+  return dict;
+}
+
+String arena_string(Arena *arena, String str)
+{
+  if (str.size) {
+    char *mem = arena_alloc(arena, str.size + 1, false);
+    memcpy(mem, str.data, str.size);
+    mem[str.size] = NUL;
+    return cbuf_as_string(mem, str.size);
+  } else {
+    return (String)STRING_INIT;
+  }
+}
+
 void api_free_object(Object value)
 {
   switch (value.type) {

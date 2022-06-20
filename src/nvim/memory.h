@@ -51,6 +51,10 @@ typedef struct {
 // inits an empty arena. use arena_start() to actually allocate space!
 #define ARENA_EMPTY { .cur_blk = NULL, .pos = 0, .size = 0 }
 
+#define kv_fixsize_arena(a, v, s) \
+  ((v).capacity = (s), \
+   (v).items = (void *)arena_alloc(a, sizeof((v).items[0]) * (v).capacity, true))
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memory.h.generated.h"
 #endif
