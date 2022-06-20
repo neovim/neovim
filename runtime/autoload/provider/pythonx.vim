@@ -8,7 +8,7 @@ let s:loaded_pythonx_provider = 1
 function! provider#pythonx#Require(host) abort
   " Python host arguments
   let prog = provider#python3#Prog()
-  let args = [prog, '-c', 'import sys; sys.path = list(filter(lambda x: x != "", sys.path)); import neovim; neovim.start_host()']
+  let args = [prog, '-c', 'import sys; sys.path = [p for p in sys.path if p != ""]; import neovim; neovim.start_host()']
 
 
   " Collect registered Python plugins into args
@@ -63,7 +63,7 @@ endfunction
 function! s:import_module(prog, module) abort
   let prog_version = system([a:prog, '-c' , printf(
         \ 'import sys; ' .
-        \ 'sys.path = list(filter(lambda x: x != "", sys.path)); ' .
+        \ 'sys.path = [p for p in sys.path if p != ""]; ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
         \ 'import pkgutil; ' .
         \ 'exit(2*int(pkgutil.get_loader("%s") is None))',
