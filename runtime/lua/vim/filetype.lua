@@ -24,13 +24,6 @@ local function starsetf(ft, opts)
 end
 
 ---@private
-local function getline(bufnr, start_lnum, end_lnum)
-  end_lnum = end_lnum or start_lnum
-  local lines = api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
-  return table.concat(lines) or ''
-end
-
----@private
 --- Get a single line or line-range from the buffer.
 ---
 ---@param bufnr number|nil The buffer to get the lines from
@@ -127,6 +120,15 @@ local extension = {
     end
     return 'aspvbs'
   end,
+  asm = function(path, bufnr)
+    return require('vim.filetype.detect').asm(bufnr)
+  end,
+  lst = function(path, bufnr)
+    return require('vim.filetype.detect').asm(bufnr)
+  end,
+  mac = function(path, bufnr)
+    return require('vim.filetype.detect').asm(bufnr)
+  end,
   ['asn1'] = 'asn',
   asn = 'asn',
   asp = function(path, bufnr)
@@ -142,14 +144,32 @@ local extension = {
   ref = 'b',
   imp = 'b',
   mch = 'b',
+  bas = function(path, bufnr)
+    return require('vim.filetype.detect').bas(bufnr)
+  end,
+  bi = function(path, bufnr)
+    return require('vim.filetype.detect').bas(bufnr)
+  end,
+  bm = function(path, bufnr)
+    return require('vim.filetype.detect').bas(bufnr)
+  end,
   bc = 'bc',
   bdf = 'bdf',
   beancount = 'beancount',
   bib = 'bib',
+  com = function(path, bufnr)
+    return require('vim.filetype.detect').bindzone(bufnr, 'dcl')
+  end,
+  db = function(path, bufnr)
+    return require('vim.filetype.detect').bindzone(bufnr, '')
+  end,
   bicep = 'bicep',
   bl = 'blank',
   bsdl = 'bsdl',
   bst = 'bst',
+  btm = function(path, bufnr)
+    return (vim.g.dosbatch_syntax_for_btm and vim.g.dosbatch_syntax_for_btm ~= 0) and 'dosbatch' or 'btm'
+  end,
   bzl = 'bzl',
   bazel = 'bzl',
   BUILD = 'bzl',
@@ -163,6 +183,9 @@ local extension = {
   hgrc = 'cfg',
   chf = 'ch',
   chai = 'chaiscript',
+  ch = function(path, bufnr)
+    return require('vim.filetype.detect').change(bufnr)
+  end,
   chs = 'chaskell',
   chopro = 'chordpro',
   crd = 'chordpro',
@@ -184,15 +207,22 @@ local extension = {
   atg = 'coco',
   recipe = 'conaryrecipe',
   hook = function(path, bufnr)
-    if getline(bufnr, 1) == '[Trigger]' then
-      return 'conf'
-    end
+    return M.getlines(bufnr, 1) == '[Trigger]' and 'conf'
   end,
   mklx = 'context',
   mkiv = 'context',
   mkii = 'context',
   mkxl = 'context',
   mkvi = 'context',
+  control = function(path, bufnr)
+    return require('vim.filetype.detect').control(bufnr)
+  end,
+  copyright = function(path, bufnr)
+    return require('vim.filetype.detect').copyright(bufnr)
+  end,
+  csh = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
   moc = 'cpp',
   hh = 'cpp',
   tlh = 'cpp',
@@ -206,16 +236,10 @@ local extension = {
   hxx = 'cpp',
   hpp = 'cpp',
   cpp = function(path, bufnr)
-    if vim.g.cynlib_syntax_for_cpp then
-      return 'cynlib'
-    end
-    return 'cpp'
+    return vim.g.cynlib_syntax_for_cpp and 'cynlib' or 'cpp'
   end,
   cc = function(path, bufnr)
-    if vim.g.cynlib_syntax_for_cc then
-      return 'cynlib'
-    end
-    return 'cpp'
+    return vim.g.cynlib_syntax_for_cc and 'cynlib' or 'cpp'
   end,
   crm = 'crm',
   csx = 'cs',
@@ -237,6 +261,15 @@ local extension = {
   drt = 'dart',
   ds = 'datascript',
   dcd = 'dcd',
+  decl = function(path, bufnr)
+    return require('vim.filetype.detect').decl(bufnr)
+  end,
+  dec = function(path, bufnr)
+    return require('vim.filetype.detect').decl(bufnr)
+  end,
+  dcl = function(path, bufnr)
+    return require('vim.filetype.detect').decl(bufnr) or 'clean'
+  end,
   def = 'def',
   desc = 'desc',
   directory = 'desktop',
@@ -253,17 +286,40 @@ local extension = {
   drac = 'dracula',
   drc = 'dracula',
   dtd = 'dtd',
+  d = function(path, bufnr)
+    return require('vim.filetype.detect').dtrace(bufnr)
+  end,
   dts = 'dts',
   dtsi = 'dts',
   dylan = 'dylan',
   intr = 'dylanintr',
   lid = 'dylanlid',
+  e = function(path, bufnr)
+    return require('vim.filetype.detect').e(bufnr)
+  end,
+  E = function(path, bufnr)
+    return require('vim.filetype.detect').e(bufnr)
+  end,
   ecd = 'ecd',
+  edf = 'edif',
+  edfi = 'edif',
+  edo = 'edif',
+  edn = function(path, bufnr)
+    return require('vim.filetype.detect').edn(bufnr)
+  end,
   eex = 'eelixir',
   leex = 'eelixir',
+  am = function(path, bufnr)
+    if not path:lower():find('makefile%.am$') then
+      return 'elf'
+    end
+  end,
   exs = 'elixir',
   elm = 'elm',
   elv = 'elvish',
+  ent = function(path, bufnr)
+    return require('vim.filetype.detect').ent(bufnr)
+  end,
   epp = 'epuppet',
   erl = 'erlang',
   hrl = 'erlang',
@@ -273,6 +329,36 @@ local extension = {
   ec = 'esqlc',
   EC = 'esqlc',
   strl = 'esterel',
+  eu = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  EU = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  ew = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  EW = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  EX = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  exu = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  EXU = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  exw = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  EXW = function(path, bufnr)
+    return vim.g.filetype_euphoria or 'euphoria3'
+  end,
+  ex = function(path, bufnr)
+    return require('vim.filetype.detect').ex(bufnr)
+  end,
   exp = 'expect',
   factor = 'factor',
   fal = 'falcon',
@@ -308,7 +394,13 @@ local extension = {
   ['f08'] = 'fortran',
   fpc = 'fpcmake',
   fsl = 'framescript',
+  frm = function(path, bufnr)
+    return require('vim.filetype.detect').frm(bufnr)
+  end,
   fb = 'freebasic',
+  fs = function(path, bufnr)
+    return require('vim.filetype.detect').fs(bufnr)
+  end,
   fsi = 'fsharp',
   fsx = 'fsharp',
   fusion = 'fusion',
@@ -350,6 +442,9 @@ local extension = {
   ht = 'haste',
   htpp = 'hastepreproc',
   hb = 'hb',
+  h = function(path, bufnr)
+    return require('vim.filetype.detect').header(bufnr)
+  end,
   sum = 'hercules',
   errsum = 'hercules',
   ev = 'hercules',
@@ -362,14 +457,56 @@ local extension = {
   hog = 'hog',
   hws = 'hollywood',
   hoon = 'hoon',
+  cpt = function(path, bufnr)
+    return require('vim.filetype.detect').html(bufnr)
+  end,
+  dtml = function(path, bufnr)
+    return require('vim.filetype.detect').html(bufnr)
+  end,
+  htm = function(path, bufnr)
+    return require('vim.filetype.detect').html(bufnr)
+  end,
+  html = function(path, bufnr)
+    return require('vim.filetype.detect').html(bufnr)
+  end,
+  pt = function(path, bufnr)
+    return require('vim.filetype.detect').html(bufnr)
+  end,
+  shtml = function(path, bufnr)
+    return require('vim.filetype.detect').html(bufnr)
+  end,
+  stm = function(path, bufnr)
+    return require('vim.filetype.detect').html(bufnr)
+  end,
   htt = 'httest',
   htb = 'httest',
+  hw = function(path, bufnr)
+    return require('vim.filetype.detect').hw(bufnr)
+  end,
+  module = function(path, bufnr)
+    return require('vim.filetype.detect').hw(bufnr)
+  end,
+  pkg = function(path, bufnr)
+    return require('vim.filetype.detect').hw(bufnr)
+  end,
   iba = 'ibasic',
   ibi = 'ibasic',
   icn = 'icon',
+  idl = function(path, bufnr)
+    return require('vim.filetype.detect').idl(bufnr)
+  end,
+  inc = function(path, bufnr)
+    return require('vim.filetype.detect').inc(bufnr)
+  end,
   inf = 'inform',
   INF = 'inform',
   ii = 'initng',
+  inp = function(path, bufnr)
+    return require('vim.filetype.detect').inp(bufnr)
+  end,
+  ms = function(path, bufnr)
+    return require('vim.filetype.detect').nroff(bufnr) or 'xmath'
+  end,
   iss = 'iss',
   mst = 'ist',
   ist = 'ist',
@@ -445,14 +582,26 @@ local extension = {
   lou = 'lout',
   ulpc = 'lpc',
   lpc = 'lpc',
+  c = function(path, bufnr)
+    return require('vim.filetype.detect').lpc(bufnr)
+  end,
   sig = 'lprolog',
   lsl = 'lsl',
   lss = 'lss',
   nse = 'lua',
   rockspec = 'lua',
   lua = 'lua',
-  quake = 'm3quake',
+  m = function(path, bufnr)
+    return require('vim.filetype.detect').m(bufnr)
+  end,
   at = 'm4',
+  mc = function(path, bufnr)
+    return require('vim.filetype.detect').mc(bufnr)
+  end,
+  quake = 'm3quake',
+  ['m4'] = function(path, bufnr)
+    return require('vim.filetype.detect').m4(path)
+  end,
   eml = 'mail',
   mk = 'make',
   mak = 'make',
@@ -487,8 +636,14 @@ local extension = {
   mib = 'mib',
   mix = 'mix',
   mixal = 'mix',
+  mm = function(path, bufnr)
+    return require('vim.filetype.detect').mm(bufnr)
+  end,
   nb = 'mma',
   mmp = 'mmp',
+  mms = function(path, bufnr)
+    return require('vim.filetype.detect').mms(bufnr)
+  end,
   DEF = 'modula2',
   ['m2'] = 'modula2',
   mi = 'modula2',
@@ -559,6 +714,9 @@ local extension = {
   pike = 'pike',
   pmod = 'pike',
   rcp = 'pilrc',
+  PL = function(path, bufnr)
+    return require('vim.filetype.detect').pl(bufnr)
+  end,
   pli = 'pli',
   ['pl1'] = 'pli',
   ['p36'] = 'plm',
@@ -604,6 +762,9 @@ local extension = {
   ptl = 'python',
   ql = 'ql',
   qll = 'ql',
+  R = function(path, bufnr)
+    return require('vim.filetype.detect').r(bufnr)
+  end,
   rad = 'radiance',
   mat = 'radiance',
   ['pod6'] = 'raku',
@@ -685,6 +846,24 @@ local extension = {
   sdl = 'sdl',
   sed = 'sed',
   sexp = 'sexplib',
+  bash = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ebuild = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  eclass = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  env = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr)
+  end,
+  ksh = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
+  end,
+  sh = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr)
+  end,
   sieve = 'sieve',
   siv = 'sieve',
   sil = 'sil',
@@ -767,14 +946,7 @@ local extension = {
   latex = 'tex',
   sty = 'tex',
   cls = function(path, bufnr)
-    local line = getline(bufnr, 1)
-    if line:find('^%%') then
-      return 'tex'
-    elseif line:find('^#') and line:lower():find('rexx') then
-      return 'rexx'
-    else
-      return 'st'
-    end
+    return require('vim.filetype.detect').cls(bufnr)
   end,
   texi = 'texinfo',
   txi = 'texinfo',
@@ -793,11 +965,7 @@ local extension = {
   tutor = 'tutor',
   twig = 'twig',
   ts = function(path, bufnr)
-    if getline(bufnr, 1):find('<%?xml') then
-      return 'xml'
-    else
-      return 'typescript'
-    end
+    return M.getlines(bufnr, 1):find('<%?xml') and 'xml' or 'typescript'
   end,
   tsx = 'typescriptreact',
   uc = 'uc',
@@ -855,10 +1023,7 @@ local extension = {
   wpl = 'xml',
   xmi = 'xml',
   xpm = function(path, bufnr)
-    if getline(bufnr, 1):find('XPM2') then
-      return 'xpm2'
-    end
-    return 'xpm'
+    return M.getlines(bufnr, 1):find('XPM2') and 'xpm2' or 'xpm'
   end,
   ['xpm2'] = 'xpm2',
   xqy = 'xquery',
@@ -882,160 +1047,8 @@ local extension = {
   zut = 'zimbutempl',
   zsh = 'zsh',
   vala = 'vala',
-  E = function(path, bufnr)
-    return require('vim.filetype.detect').e(bufnr)
-  end,
-  EU = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  EW = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  EX = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  EXU = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  EXW = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  PL = function(path, bufnr)
-    return require('vim.filetype.detect').pl(bufnr)
-  end,
-  R = function(path, bufnr)
-    return require('vim.filetype.detect').r(bufnr)
-  end,
-  asm = function(path, bufnr)
-    return require('vim.filetype.detect').asm(bufnr)
-  end,
-  bas = function(path, bufnr)
-    return require('vim.filetype.detect').bas(bufnr)
-  end,
-  bi = function(path, bufnr)
-    return require('vim.filetype.detect').bas(bufnr)
-  end,
-  bm = function(path, bufnr)
-    return require('vim.filetype.detect').bas(bufnr)
-  end,
-  bash = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  btm = function(path, bufnr)
-    return require('vim.filetype.detect').btm(bufnr)
-  end,
-  c = function(path, bufnr)
-    return require('vim.filetype.detect').lpc(bufnr)
-  end,
-  ch = function(path, bufnr)
-    return require('vim.filetype.detect').change(bufnr)
-  end,
-  com = function(path, bufnr)
-    return require('vim.filetype.detect').bindzone(bufnr, 'dcl')
-  end,
-  cpt = function(path, bufnr)
-    return require('vim.filetype.detect').html(bufnr)
-  end,
-  csh = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  d = function(path, bufnr)
-    return require('vim.filetype.detect').dtrace(bufnr)
-  end,
-  db = function(path, bufnr)
-    return require('vim.filetype.detect').bindzone(bufnr, '')
-  end,
-  dtml = function(path, bufnr)
-    return require('vim.filetype.detect').html(bufnr)
-  end,
-  e = function(path, bufnr)
-    return require('vim.filetype.detect').e(bufnr)
-  end,
-  ebuild = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  eclass = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  ent = function(path, bufnr)
-    return require('vim.filetype.detect').ent(bufnr)
-  end,
-  env = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
-  end,
-  eu = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  ew = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  ex = function(path, bufnr)
-    return require('vim.filetype.detect').ex(bufnr)
-  end,
-  exu = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  exw = function(path, bufnr)
-    return require('vim.filetype.detect').euphoria(bufnr)
-  end,
-  frm = function(path, bufnr)
-    return require('vim.filetype.detect').frm(bufnr)
-  end,
-  fs = function(path, bufnr)
-    return require('vim.filetype.detect').fs(bufnr)
-  end,
-  h = function(path, bufnr)
-    return require('vim.filetype.detect').header(bufnr)
-  end,
-  htm = function(path, bufnr)
-    return require('vim.filetype.detect').html(bufnr)
-  end,
-  html = function(path, bufnr)
-    return require('vim.filetype.detect').html(bufnr)
-  end,
-  i = function(path, bufnr)
-    return require('vim.filetype.detect').progress_asm(bufnr)
-  end,
-  idl = function(path, bufnr)
-    return require('vim.filetype.detect').idl(bufnr)
-  end,
-  inc = function(path, bufnr)
-    return require('vim.filetype.detect').inc(bufnr)
-  end,
-  inp = function(path, bufnr)
-    return require('vim.filetype.detect').inp(bufnr)
-  end,
-  ksh = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
-  end,
-  lst = function(path, bufnr)
-    return require('vim.filetype.detect').asm(bufnr)
-  end,
-  m = function(path, bufnr)
-    return require('vim.filetype.detect').m(bufnr)
-  end,
-  mac = function(path, bufnr)
-    return require('vim.filetype.detect').asm(bufnr)
-  end,
-  mc = function(path, bufnr)
-    return require('vim.filetype.detect').mc(bufnr)
-  end,
-  mm = function(path, bufnr)
-    return require('vim.filetype.detect').mm(bufnr)
-  end,
-  mms = function(path, bufnr)
-    return require('vim.filetype.detect').mms(bufnr)
-  end,
-  p = function(path, bufnr)
-    return require('vim.filetype.detect').progress_pascal(bufnr)
-  end,
-  patch = function(path, bufnr)
-    local firstline = getline(bufnr, 1)
-    if string.find(firstline, '^From ' .. string.rep('%x', 40) .. '+ Mon Sep 17 00:00:00 2001$') then
-      return 'gitsendemail'
-    else
-      return 'diff'
-    end
+  web = function(path, bufnr)
+    return require('vim.filetype.detect').web(bufnr)
   end,
   pl = function(path, bufnr)
     return require('vim.filetype.detect').pl(bufnr)
@@ -1043,11 +1056,20 @@ local extension = {
   pp = function(path, bufnr)
     return require('vim.filetype.detect').pp(bufnr)
   end,
+  i = function(path, bufnr)
+    return require('vim.filetype.detect').progress_asm(bufnr)
+  end,
+  w = function(path, bufnr)
+    return require('vim.filetype.detect').progress_cweb(bufnr)
+  end,
+  p = function(path, bufnr)
+    return require('vim.filetype.detect').progress_pascal(bufnr)
+  end,
   pro = function(path, bufnr)
     return require('vim.filetype.detect').proto(bufnr, 'idlang')
   end,
-  pt = function(path, bufnr)
-    return require('vim.filetype.detect').html('idlang')
+  patch = function(path, bufnr)
+    return require('vim.filetype.detect').patch(bufnr)
   end,
   r = function(path, bufnr)
     return require('vim.filetype.detect').r(bufnr)
@@ -1056,7 +1078,7 @@ local extension = {
     return require('vim.filetype.detect').redif(bufnr)
   end,
   rules = function(path, bufnr)
-    return require('vim.filetype.detect').rules(path, bufnr)
+    return require('vim.filetype.detect').rules(path)
   end,
   sc = function(path, bufnr)
     return require('vim.filetype.detect').sc(bufnr)
@@ -1064,20 +1086,14 @@ local extension = {
   scd = function(path, bufnr)
     return require('vim.filetype.detect').scd(bufnr)
   end,
-  sh = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
-  end,
-  shtml = function(path, bufnr)
-    return require('vim.filetype.detect').html(bufnr)
-  end,
-  sql = function(path, bufnr)
-    return require('vim.filetype.detect').sql(bufnr)
-  end,
-  stm = function(path, bufnr)
-    return require('vim.filetype.detect').html(bufnr)
-  end,
   tcsh = function(path, bufnr)
     return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+  end,
+  sql = function(path, bufnr)
+    return vim.g.filetype_sql and vim.g.filetype_sql or 'sql'
+  end,
+  zsql = function(path, bufnr)
+    return vim.g.filetype_sql and vim.g.filetype_sql or 'sql'
   end,
   tex = function(path, bufnr)
     return require('vim.filetype.detect').tex(path, bufnr)
@@ -1085,8 +1101,8 @@ local extension = {
   tf = function(path, bufnr)
     return require('vim.filetype.detect').tf(bufnr)
   end,
-  w = function(path, bufnr)
-    return require('vim.filetype.detect').progress_cweb(bufnr)
+  txt = function(path, bufnr)
+    return require('vim.filetype.detect').txt(bufnr)
   end,
   xml = function(path, bufnr)
     return require('vim.filetype.detect').xml(bufnr)
@@ -1094,143 +1110,38 @@ local extension = {
   y = function(path, bufnr)
     return require('vim.filetype.detect').y(bufnr)
   end,
-  zsql = function(path, bufnr)
-    return require('vim.filetype.detect').sql(bufnr)
-  end,
-  txt = function(path, bufnr)
-    --helpfiles match *.txt, but should have a modeline as last line
-    if not getline(bufnr, -1):find('vim:.*ft=help') then
-      return 'text'
-    end
-  end,
   cmd = function(path, bufnr)
-    if getline(bufnr, 1):find('^/%*') then
-      return 'rexx'
-    end
-    return 'dosbatch'
+    return M.getlines(bufnr, 1):find('^/%*') and 'rexx' or 'dosbatch'
   end,
   rul = function(path, bufnr)
     return require('vim.filetype.detect').rul(bufnr)
   end,
   cpy = function(path, bufnr)
-    if getline(bufnr, 1):find('^##') then
-      return 'python'
-    end
-    return 'cobol'
+    return M.getlines(bufnr, 1):find('^##') and 'python' or 'cobol'
   end,
   dsl = function(path, bufnr)
-    if getline(bufnr, 1):find('^%s*<!') then
-      return 'dsl'
-    end
-    return 'structurizr'
-  end,
-  edf = 'edif',
-  edfi = 'edif',
-  edo = 'edif',
-  edn = function(path, bufnr)
-    return require('vim.filetype.detect').edn(bufnr)
+    return M.getlines(bufnr, 1):find('^%s*<!') and 'dsl' or 'structurizr'
   end,
   smil = function(path, bufnr)
-    if getline(bufnr, 1):find('<%?%s*xml.*%?>') then
-      return 'xml'
-    end
-    return 'smil'
+    return M.getlines(bufnr, 1):find('<%?%s*xml.*%?>') and 'xml' or 'smil'
   end,
   smi = function(path, bufnr)
     return require('vim.filetype.detect').smi(bufnr)
   end,
   install = function(path, bufnr)
-    if getline(bufnr, 1):lower():find('<%?php') then
-      return 'php'
-    end
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').install(path, bufnr)
   end,
   pm = function(path, bufnr)
-    local line = getline(bufnr, 1)
-    if line:find('XPM2') then
-      return 'xpm2'
-    elseif line:find('XPM') then
-      return 'xpm'
-    else
-      return 'perl'
-    end
+    return require('vim.filetype.detect').pm(bufnr)
   end,
   me = function(path, bufnr)
-    local filename = vim.fn.fnamemodify(path, ':t'):lower()
-    if filename ~= 'read.me' and filename ~= 'click.me' then
-      return 'nroff'
-    end
+    return require('vim.filetype.detect').me(path)
   end,
   reg = function(path, bufnr)
-    local line = getline(bufnr, 1):lower()
-    if line:find('^regedit[0-9]*%s*$') or line:find('^windows registry editor version %d*%.%d*%s*$') then
-      return 'registry'
-    end
-  end,
-  decl = function(path, bufnr)
-    return require('vim.filetype.detect').decl(bufnr)
-  end,
-  dec = function(path, bufnr)
-    return require('vim.filetype.detect').decl(bufnr)
-  end,
-  dcl = function(path, bufnr)
-    local decl = require('vim.filetype.detect').decl(bufnr)
-    if decl then
-      return decl
-    end
-    return 'clean'
-  end,
-  web = function(path, bufnr)
-    return require('vim.filetype.detect').web(bufnr)
+    return require('vim.filetype.detect').reg(bufnr)
   end,
   ttl = function(path, bufnr)
-    local line = getline(bufnr, 1):lower()
-    if line:find('^@?prefix') or line:find('^@?base') then
-      return 'turtle'
-    end
-    return 'teraterm'
-  end,
-  am = function(path, bufnr)
-    if not path:lower():find('makefile%.am$') then
-      return 'elf'
-    end
-  end,
-  ['m4'] = function(path, bufnr)
-    local path_lower = path:lower()
-    if not path_lower:find('html%.m4$') and not path_lower:find('fvwm2rc') then
-      return 'm4'
-    end
-  end,
-  hw = function(path, bufnr)
-    return require('vim.filetype.detect').hw(bufnr)
-  end,
-  module = function(path, bufnr)
-    return require('vim.filetype.detect').hw(bufnr)
-  end,
-  pkg = function(path, bufnr)
-    return require('vim.filetype.detect').hw(bufnr)
-  end,
-  ms = function(path, bufnr)
-    if not require('vim.filetype.detect').nroff(bufnr) then
-      return 'xmath'
-    end
-  end,
-  t = function(path, bufnr)
-    if not require('vim.filetype.detect').nroff(bufnr) and not require('vim.filetype.detect').perl(path, bufnr) then
-      return 'tads'
-    end
-  end,
-  class = function(path, bufnr)
-    -- Check if not a Java class (starts with '\xca\xfe\xba\xbe')
-    if not getline(bufnr, 1):find('^\202\254\186\190') then
-      return 'stata'
-    end
-  end,
-  sgml = function(path, bufnr)
-    return require('vim.filetype.detect').sgml(bufnr)
-  end,
-  sgm = function(path, bufnr)
-    return require('vim.filetype.detect').sgml(bufnr)
+    return require('vim.filetype.detect').ttl(bufnr)
   end,
   rc = function(path, bufnr)
     if not path:find('/etc/Muttrc%.d/') then
@@ -1242,14 +1153,26 @@ local extension = {
       return 'rc'
     end
   end,
-  control = function(path, bufnr)
-    return require('vim.filetype.detect').control(bufnr)
+  class = function(path, bufnr)
+    require('vim.filetype.detect').class(bufnr)
   end,
-  copyright = function(path, bufnr)
-    return require('vim.filetype.detect').copyright(bufnr)
+  sgml = function(path, bufnr)
+    return require('vim.filetype.detect').sgml(bufnr)
+  end,
+  sgm = function(path, bufnr)
+    return require('vim.filetype.detect').sgml(bufnr)
+  end,
+  t = function(path, bufnr)
+    if not require('vim.filetype.detect').nroff(bufnr) and not require('vim.filetype.detect').perl(path, bufnr) then
+      return 'tads'
+    end
   end,
   -- Ignored extensions
   bak = function(path, bufnr)
+    local root = vim.fn.fnamemodify(path, ':r')
+    return M.match(root, bufnr)
+  end,
+  ['dpkg-bak'] = function(path, bufnr)
     local root = vim.fn.fnamemodify(path, ':r')
     return M.match(root, bufnr)
   end,
@@ -1265,9 +1188,11 @@ local extension = {
     local root = vim.fn.fnamemodify(path, ':r')
     return M.match(root, bufnr)
   end,
-  ['dpkg-bak'] = function(path, bufnr)
-    local root = vim.fn.fnamemodify(path, ':r')
-    return M.match(root, bufnr)
+  ['in'] = function(path, bufnr)
+    if vim.fs.basename(path) ~= 'configure.in' then
+      local root = vim.fn.fnamemodify(path, ':r')
+      return M.match(root, bufnr)
+    end
   end,
   new = function(path, bufnr)
     local root = vim.fn.fnamemodify(path, ':r')
@@ -1297,12 +1222,6 @@ local extension = {
     local root = vim.fn.fnamemodify(path, ':r')
     return M.match(root, bufnr)
   end,
-  ['in'] = function(path, bufnr)
-    if vim.fs.basename(path) ~= 'configure.in' then
-      local root = vim.fn.fnamemodify(path, ':r')
-      return M.match(root, bufnr)
-    end
-  end,
   -- END EXTENSION
 }
 
@@ -1322,6 +1241,13 @@ local filename = {
   ['.arch-inventory'] = 'arch',
   ['GNUmakefile.am'] = 'automake',
   ['named.root'] = 'bindzone',
+  ['.*/bind/db%..*'] = starsetf('bindzone'),
+  ['.*/named/db%..*'] = starsetf('bindzone'),
+  ['cabal%.project%..*'] = starsetf('cabalproject'),
+  ['sgml%.catalog.*'] = starsetf('catalog'),
+  ['/etc/hostname%..*'] = starsetf('config'),
+  ['.*/etc/cron%.d/.*'] = starsetf('crontab'),
+  ['crontab%..*'] = starsetf('crontab'),
   WORKSPACE = 'bzl',
   BUILD = 'bzl',
   ['cabal.project'] = 'cabalproject',
@@ -1335,9 +1261,28 @@ local filename = {
   ['/etc/defaults/cdrdao'] = 'cdrdaoconf',
   ['cfengine.conf'] = 'cfengine',
   ['CMakeLists.txt'] = 'cmake',
+  ['.alias'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
+  ['.cshrc'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
+  ['.login'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
+  ['csh.cshrc'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
+  ['csh.login'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
+  ['csh.logout'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
   ['auto.master'] = 'conf',
   ['configure.in'] = 'config',
   ['configure.ac'] = 'config',
+  crontab = 'crontab',
   ['.cvsrc'] = 'cvsrc',
   ['/debian/changelog'] = 'debchangelog',
   ['changelog.dch'] = 'debchangelog',
@@ -1348,6 +1293,9 @@ local filename = {
   ['/debian/copyright'] = 'debcopyright',
   ['/etc/apt/sources.list'] = 'debsources',
   ['denyhosts.conf'] = 'denyhosts',
+  ['.*/debian/patches/.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').dep3patch(path, bufnr)
+  end,
   ['dict.conf'] = 'dictconf',
   ['.dictrc'] = 'dictconf',
   ['/etc/DIR_COLORS'] = 'dircolors',
@@ -1524,6 +1472,9 @@ local filename = {
   end,
   ['.procmailrc'] = 'procmail',
   ['.procmail'] = 'procmail',
+  ['indent.pro'] = function(path, bufnr)
+    return require('vim.filetype.detect').proto(bufnr, 'indent')
+  end,
   ['/etc/protocols'] = 'protocols',
   ['INDEX'] = function(path, bufnr)
     return require('vim.filetype.detect').psf(bufnr)
@@ -1551,9 +1502,46 @@ local filename = {
   ['.screenrc'] = 'screen',
   ['/etc/sensors3.conf'] = 'sensors',
   ['/etc/sensors.conf'] = 'sensors',
+  ['.*/etc/sensors%.d/[^.].*'] = starsetf('sensors'),
   ['/etc/services'] = 'services',
   ['/etc/serial.conf'] = 'setserial',
   ['/etc/udev/cdsymlinks.conf'] = 'sh',
+  ['bash.bashrc'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  bashrc = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ['.bashrc'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ['.env'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr)
+  end,
+  ['.kshrc'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
+  end,
+  ['.profile'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr)
+  end,
+  ['/etc/profile'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr)
+  end,
+  APKBUILD = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  PKGBUILD = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ['.tcshrc'] = function(path, bufnr)
+    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+  end,
+  ['tcsh.login'] = function(path, bufnr)
+    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+  end,
+  ['tcsh.tcshrc'] = function(path, bufnr)
+    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+  end,
   ['/etc/slp.conf'] = 'slpconf',
   ['/etc/slp.reg'] = 'slpreg',
   ['/etc/slp.spi'] = 'slpspi',
@@ -1615,6 +1603,9 @@ local filename = {
       vim.b[b].xf86conf_xfree86_version = 4
     end
   end,
+  ['XF86Config'] = function(path, bufnr)
+    return require('vim.filetype.detect').xfree86()
+  end,
   ['/etc/xinetd.conf'] = 'xinetd',
   fglrxrc = 'xml',
   ['/etc/blkid.tab'] = 'xml',
@@ -1627,67 +1618,6 @@ local filename = {
   ['.zcompdump'] = 'zsh',
   ['.zshenv'] = 'zsh',
   ['.zfbfmarks'] = 'zsh',
-  ['.alias'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['.bashrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  ['.cshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['.env'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
-  end,
-  ['.kshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
-  end,
-  ['.login'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['.profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
-  end,
-  ['.tcshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
-  end,
-  ['/etc/profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
-  end,
-  APKBUILD = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  PKGBUILD = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  ['bash.bashrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  bashrc = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  crontab = 'crontab',
-  ['csh.cshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['csh.login'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['csh.logout'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['indent.pro'] = function(path, bufnr)
-    return require('vim.filetype.detect').proto(bufnr, 'indent')
-  end,
-  ['tcsh.login'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
-  end,
-  ['tcsh.tcshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
-  end,
-  ['XF86Config'] = function(path, bufnr)
-    return require('vim.filetype.detect').xfree86(bufnr)
-  end,
   -- END FILENAME
 }
 
@@ -1699,7 +1629,31 @@ local pattern = {
   ['.*/etc/asound%.conf'] = 'alsaconf',
   ['.*/etc/apache2/sites%-.*/.*%.com'] = 'apache',
   ['.*/etc/httpd/.*%.conf'] = 'apache',
+  ['.*/etc/apache2/.*%.conf.*'] = starsetf('apache'),
+  ['.*/etc/apache2/conf%..*/.*'] = starsetf('apache'),
+  ['.*/etc/apache2/mods%-.*/.*'] = starsetf('apache'),
+  ['.*/etc/apache2/sites%-.*/.*'] = starsetf('apache'),
+  ['access%.conf.*'] = starsetf('apache'),
+  ['apache%.conf.*'] = starsetf('apache'),
+  ['apache2%.conf.*'] = starsetf('apache'),
+  ['httpd%.conf.*'] = starsetf('apache'),
+  ['srm%.conf.*'] = starsetf('apache'),
+  ['.*/etc/httpd/conf%..*/.*'] = starsetf('apache'),
+  ['.*/etc/httpd/conf%.d/.*%.conf.*'] = starsetf('apache'),
+  ['.*/etc/httpd/mods%-.*/.*'] = starsetf('apache'),
+  ['.*/etc/httpd/sites%-.*/.*'] = starsetf('apache'),
+  ['.*/etc/proftpd/.*%.conf.*'] = starsetf('apachestyle'),
+  ['.*/etc/proftpd/conf%..*/.*'] = starsetf('apachestyle'),
+  ['proftpd%.conf.*'] = starsetf('apachestyle'),
+  ['.*asterisk/.*%.conf.*'] = starsetf('asterisk'),
+  ['.*asterisk.*/.*voicemail%.conf.*'] = starsetf('asteriskvm'),
   ['.*/%.aptitude/config'] = 'aptconf',
+  ['.*%.[aA]'] = function(path, bufnr)
+    return require('vim.filetype.detect').asm(bufnr)
+  end,
+  ['.*%.[sS]'] = function(path, bufnr)
+    return require('vim.filetype.detect').asm(bufnr)
+  end,
   ['[mM]akefile%.am'] = 'automake',
   ['.*bsd'] = 'bsdl',
   ['bzr_log%..*'] = 'bzr',
@@ -1711,6 +1665,14 @@ local pattern = {
   ['.*/etc/cdrdao%.conf'] = 'cdrdaoconf',
   ['.*/etc/default/cdrdao'] = 'cdrdaoconf',
   ['.*hgrc'] = 'cfg',
+  ['.*%.[Cc][Ff][Gg]'] = {
+    function(path, bufnr)
+      return require('vim.filetype.detect').cfg(bufnr)
+    end,
+    -- Decrease the priority to avoid conflicts with more specific patterns
+    -- such as '.*/etc/a2ps/.*%.cfg', '.*enlightenment/.*%.cfg', etc.
+    { priority = -1 },
+  },
   ['.*%.%.ch'] = 'chill',
   ['.*%.cmake%.in'] = 'cmake',
   -- */cmus/rc and */.cmus/rc
@@ -1719,7 +1681,24 @@ local pattern = {
   ['.*/%.?cmus/.*%.theme'] = 'cmusrc',
   ['.*/%.cmus/autosave'] = 'cmusrc',
   ['.*/%.cmus/command%-history'] = 'cmusrc',
+  ['%.cshrc.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
+  ['%.login.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').csh(path, bufnr)
+  end,
   ['cvs%d+'] = 'cvs',
+  ['.*%.[Dd][Aa][Tt]'] = function(path, bufnr)
+    return require('vim.filetype.detect').dat(path, bufnr)
+  end,
+  ['[cC]hange[lL]og.*'] = starsetf(function(path, bufnr)
+    require('vim.filetype.detect').changelog(bufnr)
+  end),
+  ['.*/etc/dnsmasq%.d/.*'] = starsetf('dnsmasq'),
+  ['Containerfile%..*'] = starsetf('dockerfile'),
+  ['Dockerfile%..*'] = starsetf('dockerfile'),
+  ['.*/etc/yum%.repos%.d/.*'] = starsetf('dosini'),
+  ['drac%..*'] = starsetf('dracula'),
   ['.*/debian/changelog'] = 'debchangelog',
   ['.*/debian/control'] = 'debcontrol',
   ['.*/debian/copyright'] = 'debcopyright',
@@ -1736,6 +1715,52 @@ local pattern = {
   ['.*/dtrace/.*%.d'] = 'dtrace',
   ['.*esmtprc'] = 'esmtprc',
   ['.*Eterm/.*%.cfg'] = 'eterm',
+  ['[a-zA-Z0-9].*Dict'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['[a-zA-Z0-9].*Dict%..*'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['[a-zA-Z].*Properties'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['[a-zA-Z].*Properties%..*'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['.*Transport%..*'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['.*/constant/g'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['.*/0/.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['.*/0%.orig/.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').foam(bufnr)
+  end,
+  ['.*/%.fvwm/.*'] = starsetf('fvwm'),
+  ['.*fvwmrc.*'] = starsetf(function(path, bufnr)
+    return 'fvwm', function(b)
+      vim.b[b].fvwm_version = 1
+    end
+  end),
+  ['.*fvwm95.*%.hook'] = starsetf(function(path, bufnr)
+    return 'fvwm', function(b)
+      vim.b[b].fvwm_version = 1
+    end
+  end),
+  ['.*fvwm2rc.*'] = starsetf(function(path, bufnr)
+    return require('vim.filetype.detect').fvwm(path)
+  end),
+  ['.*/tmp/lltmp.*'] = starsetf('gedcom'),
+  ['/etc/gitconfig%.d/.*'] = starsetf('gitconfig'),
+  ['.*/gitolite%-admin/conf/.*'] = starsetf('gitolite'),
+  ['tmac%..*'] = starsetf('nroff'),
+  ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
+  ['.*%.git/.*'] = function(path, bufnr)
+    require('vim.filetype.detect').git(bufnr)
+  end,
   ['.*%.git/modules/.*/config'] = 'gitconfig',
   ['.*%.git/config'] = 'gitconfig',
   ['.*/etc/gitconfig'] = 'gitconfig',
@@ -1766,13 +1791,15 @@ local pattern = {
   ['.*/etc/gshadow'] = 'group',
   ['.*/etc/group%.edit'] = 'group',
   ['.*/var/backups/gshadow%.bak'] = 'group',
-  ['.*/etc/group-'] = 'group',
-  ['.*/etc/gshadow-'] = 'group',
+  ['.*/etc/group%-'] = 'group',
+  ['.*/etc/gshadow%-'] = 'group',
   ['.*/var/backups/group%.bak'] = 'group',
   ['.*/etc/gshadow%.edit'] = 'group',
   ['.*/boot/grub/grub%.conf'] = 'grub',
   ['.*/boot/grub/menu%.lst'] = 'grub',
   ['.*/etc/grub%.conf'] = 'grub',
+  -- gtkrc* and .gtkrc*
+  ['%.?gtkrc.*'] = starsetf('gtkrc'),
   [vim.env.VIMRUNTIME .. '/doc/.*%.txt'] = 'help',
   ['hg%-editor%-.*%.txt'] = 'hgcommit',
   ['.*/etc/host%.conf'] = 'hostconf',
@@ -1785,8 +1812,15 @@ local pattern = {
   ['.*/%.sway/config'] = 'i3config',
   ['.*/%.icewm/menu'] = 'icemenu',
   ['.*/etc/initng/.*/.*%.i'] = 'initng',
+  ['JAM.*%..*'] = starsetf('jam'),
+  ['Prl.*%..*'] = starsetf('jam'),
   ['.*%.properties_..'] = 'jproperties',
   ['.*%.properties_.._..'] = 'jproperties',
+  ['.*%.properties_.._.._.*'] = starsetf('jproperties'),
+  ['Kconfig%..*'] = starsetf('kconfig'),
+  ['.*%.[Ss][Uu][Bb]'] = 'krl',
+  ['lilo%.conf.*'] = starsetf('lilo'),
+  ['.*/etc/logcheck/.*%.d.*/.*'] = starsetf('logcheck'),
   ['.*lftp/rc'] = 'lftp',
   ['.*/%.libao'] = 'libao',
   ['.*/etc/libao%.conf'] = 'libao',
@@ -1796,52 +1830,99 @@ local pattern = {
   ['.*/LiteStep/.*/.*%.rc'] = 'litestep',
   ['.*/etc/login%.access'] = 'loginaccess',
   ['.*/etc/login%.defs'] = 'logindefs',
+  ['%.letter%.%d+'] = 'mail',
+  ['%.article%.%d+'] = 'mail',
+  ['/tmp/SLRN[0-9A-Z.]+'] = 'mail',
+  ['ae%d+%.txt'] = 'mail',
+  ['pico%.%d+'] = 'mail',
+  ['mutt%-.*%-%w+'] = 'mail',
+  ['muttng%-.*%-%w+'] = 'mail',
+  ['neomutt%-.*%-%w+'] = 'mail',
+  ['mutt' .. string.rep('[%w_-]', 6)] = 'mail',
+  ['neomutt' .. string.rep('[%w_-]', 6)] = 'mail',
+  ['snd%.%d+'] = 'mail',
+  ['reportbug%-.*'] = starsetf('mail'),
   ['.*/etc/mail/aliases'] = 'mailaliases',
   ['.*/etc/aliases'] = 'mailaliases',
   ['.*[mM]akefile'] = 'make',
+  ['[mM]akefile.*'] = starsetf('make'),
   ['.*/etc/man%.conf'] = 'manconf',
+  ['.*%.[Mm][Oo][Dd]'] = function(path, bufnr)
+    return require('vim.filetype.detect').mod(path, bufnr)
+  end,
   ['.*/etc/modules%.conf'] = 'modconf',
   ['.*/etc/conf%.modules'] = 'modconf',
   ['.*/etc/modules'] = 'modconf',
+  ['.*/etc/modprobe%..*'] = starsetf('modconf'),
+  ['.*/etc/modutils/.*'] = starsetf(function(path, bufnr)
+    if vim.fn.executable(vim.fn.expand(path)) ~= 1 then
+      return 'modconf'
+    end
+  end),
   ['.*%.[mi][3g]'] = 'modula3',
+  ['Muttrc'] = 'muttrc',
+  ['Muttngrc'] = 'muttrc',
+  ['.*/etc/Muttrc%.d/.*'] = starsetf('muttrc'),
   ['.*/%.mplayer/config'] = 'mplayerconf',
+  ['Muttrc.*'] = starsetf('muttrc'),
+  ['Muttngrc.*'] = starsetf('muttrc'),
+  -- muttrc* and .muttrc*
+  ['%.?muttrc.*'] = starsetf('muttrc'),
+  -- muttngrc* and .muttngrc*
+  ['%.?muttngrc.*'] = starsetf('muttrc'),
+  ['.*/%.mutt/muttrc.*'] = starsetf('muttrc'),
+  ['.*/%.muttng/muttrc.*'] = starsetf('muttrc'),
+  ['.*/%.muttng/muttngrc.*'] = starsetf('muttrc'),
   ['rndc.*%.conf'] = 'named',
   ['rndc.*%.key'] = 'named',
   ['named.*%.conf'] = 'named',
   ['.*/etc/nanorc'] = 'nanorc',
   ['.*%.NS[ACGLMNPS]'] = 'natural',
+  ['Neomuttrc.*'] = starsetf('neomuttrc'),
+  -- neomuttrc* and .neomuttrc*
+  ['%.?neomuttrc.*'] = starsetf('neomuttrc'),
+  ['.*/%.neomutt/neomuttrc.*'] = starsetf('neomuttrc'),
   ['nginx.*%.conf'] = 'nginx',
   ['.*/etc/nginx/.*'] = 'nginx',
   ['.*nginx%.conf'] = 'nginx',
   ['.*/nginx/.*%.conf'] = 'nginx',
   ['.*/usr/local/nginx/conf/.*'] = 'nginx',
+  ['.*%.[1-9]'] = function(path, bufnr)
+    return require('vim.filetype.detect').nroff(bufnr)
+  end,
   ['.*%.ml%.cppo'] = 'ocaml',
   ['.*%.mli%.cppo'] = 'ocaml',
   ['.*%.opam%.template'] = 'opam',
   ['.*%.[Oo][Pp][Ll]'] = 'opl',
   ['.*/etc/pam%.conf'] = 'pamconf',
-  ['.*/etc/passwd-'] = 'passwd',
+  ['.*/etc/pam%.d/.*'] = starsetf('pamconf'),
+  ['.*/etc/passwd%-'] = 'passwd',
   ['.*/etc/shadow'] = 'passwd',
   ['.*/etc/shadow%.edit'] = 'passwd',
   ['.*/var/backups/shadow%.bak'] = 'passwd',
   ['.*/var/backups/passwd%.bak'] = 'passwd',
   ['.*/etc/passwd'] = 'passwd',
   ['.*/etc/passwd%.edit'] = 'passwd',
-  ['.*/etc/shadow-'] = 'passwd',
+  ['.*/etc/shadow%-'] = 'passwd',
+  ['%.?gitolite%.rc'] = 'perl',
+  ['example%.gitolite%.rc'] = 'perl',
   ['.*%.php%d'] = 'php',
   ['.*/%.pinforc'] = 'pinfo',
   ['.*/etc/pinforc'] = 'pinfo',
+  ['.*%.[Pp][Rr][Gg]'] = function(path, bufnr)
+    return require('vim.filetype.detect').prg(bufnr)
+  end,
   ['.*/etc/protocols'] = 'protocols',
   ['.*printcap.*'] = starsetf(function(path, bufnr)
-    if vim.fn.did_filetype() == 0 then
-      return 'ptcap', function(b)
-        vim.b[b].ptcap_type = 'print'
-      end
-    end
+    return require('vim.filetype.detect').printcap('print')
   end),
   ['.*baseq[2-3]/.*%.cfg'] = 'quake',
   ['.*quake[1-3]/.*%.cfg'] = 'quake',
   ['.*id1/.*%.cfg'] = 'quake',
+  ['.*/queries/.*%.scm'] = 'query', -- tree-sitter queries (Neovim only)
+  ['.*,v'] = 'rcs',
+  ['%.reminders.*'] = starsetf('remind'),
+  ['[rR]akefile.*'] = starsetf('ruby'),
   ['[rR]antfile'] = 'ruby',
   ['[rR]akefile'] = 'ruby',
   ['.*/etc/sensors%.conf'] = 'sensors',
@@ -1849,6 +1930,31 @@ local pattern = {
   ['.*/etc/services'] = 'services',
   ['.*/etc/serial%.conf'] = 'setserial',
   ['.*/etc/udev/cdsymlinks%.conf'] = 'sh',
+  ['%.bash[_%-]aliases'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ['%.bash[_%-]logout'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ['%.bash[_%-]profile'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ['%.kshrc.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
+  end,
+  ['%.profile.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr)
+  end,
+  ['.*/etc/profile'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr)
+  end,
+  ['bash%-fc[%-%.]'] = function(path, bufnr)
+    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+  end,
+  ['%.tcshrc.*'] = function(path, bufnr)
+    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+  end,
+  ['.*/etc/sudoers%.d/.*'] = starsetf('sudoers'),
   ['.*%._sst%.meta'] = 'sisu',
   ['.*%.%-sst%.meta'] = 'sisu',
   ['.*%.sst%.meta'] = 'sisu',
@@ -1858,9 +1964,15 @@ local pattern = {
   ['.*/etc/ssh/ssh_config%.d/.*%.conf'] = 'sshconfig',
   ['.*/%.ssh/config'] = 'sshconfig',
   ['.*/etc/ssh/sshd_config%.d/.*%.conf'] = 'sshdconfig',
+  ['.*%.[Ss][Rr][Cc]'] = function(path, bufnr)
+    return require('vim.filetype.detect').src(bufnr)
+  end,
   ['.*/etc/sudoers'] = 'sudoers',
   ['svn%-commit.*%.tmp'] = 'svn',
   ['.*%.swift%.gyb'] = 'swiftgyb',
+  ['.*%.[Ss][Yy][Ss]'] = function(path, bufnr)
+    return require('vim.filetype.detect').sys(bufnr)
+  end,
   ['.*/etc/sysctl%.conf'] = 'sysctl',
   ['.*/etc/sysctl%.d/.*%.conf'] = 'sysctl',
   ['.*/systemd/.*%.automount'] = 'systemd',
@@ -1885,11 +1997,7 @@ local pattern = {
   ['.*/%.config/systemd/user/.*%.d/%.#.*'] = 'systemd',
   ['.*/%.config/systemd/user/%.#.*'] = 'systemd',
   ['.*termcap.*'] = starsetf(function(path, bufnr)
-    if vim.fn.did_filetype() == 0 then
-      return 'ptcap', function(b)
-        vim.b[b].ptcap_type = 'term'
-      end
-    end
+    return require('vim.filetype.detect').printcap('term')
   end),
   ['.*%.t%.html'] = 'tilde',
   ['%.?tmux.*%.conf'] = 'tmux',
@@ -1907,7 +2015,13 @@ local pattern = {
   ['.*/%.config/upstart/.*%.conf'] = 'upstart',
   ['.*/%.init/.*%.conf'] = 'upstart',
   ['.*/usr/share/upstart/.*%.override'] = 'upstart',
+  ['.*%.[Ll][Oo][Gg]'] = function(path, bufnr)
+    return require('vim.filetype.detect').log(path)
+  end,
+  ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
   ['.*%.ws[fc]'] = 'wsh',
+  ['.*/Xresources/.*'] = starsetf('xdefaults'),
+  ['.*/app%-defaults/.*'] = starsetf('xdefaults'),
   ['.*/etc/xinetd%.conf'] = 'xinetd',
   ['.*/etc/blkid%.tab'] = 'xml',
   ['.*/etc/blkid%.tab%.old'] = 'xml',
@@ -1917,213 +2031,10 @@ local pattern = {
   ['.*/etc/xdg/menus/.*%.menu'] = 'xml',
   ['.*Xmodmap'] = 'xmodmap',
   ['.*/etc/zprofile'] = 'zsh',
-  ['%.bash[_-]aliases'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  ['%.bash[_-]logout'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  ['%.bash[_-]profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  ['%.cshrc.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['%.gtkrc.*'] = starsetf('gtkrc'),
-  ['%.kshrc.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
-  end,
-  ['%.login.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').csh(path, bufnr)
-  end,
-  ['Muttrc.*'] = starsetf('muttrc'),
-  ['Muttngrc.*'] = starsetf('muttrc'),
-  -- muttrc* and .muttrc*
-  ['%.?muttrc.*'] = starsetf('muttrc'),
-  -- muttngrc* and .muttngrc*
-  ['%.?muttngrc.*'] = starsetf('muttrc'),
-  ['.*/%.mutt/muttrc.*'] = starsetf('muttrc'),
-  ['.*/%.muttng/muttrc.*'] = starsetf('muttrc'),
-  ['.*/%.muttng/muttngrc.*'] = starsetf('muttrc'),
-  ['Neomuttrc.*'] = starsetf('neomuttrc'),
-  -- neomuttrc* and .neomuttrc*
-  ['%.?neomuttrc.*'] = starsetf('neomuttrc'),
-  ['.*/%.neomutt/neomuttrc.*'] = starsetf('neomuttrc'),
-  ['%.profile.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
-  end,
-  ['%.reminders.*'] = starsetf('remind'),
-  ['%.tcshrc.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
-  end,
-  ['%.zcompdump.*'] = starsetf('zsh'),
-  ['%.zlog.*'] = starsetf('zsh'),
-  ['%.zsh.*'] = starsetf('zsh'),
-  ['.*%.[1-9]'] = function(path, bufnr)
-    return require('vim.filetype.detect').nroff(bufnr)
-  end,
-  ['.*%.[aA]'] = function(path, bufnr)
-    return require('vim.filetype.detect').asm(bufnr)
-  end,
-  ['.*%.[sS]'] = function(path, bufnr)
-    return require('vim.filetype.detect').asm(bufnr)
-  end,
-  ['.*%.properties_.._.._.*'] = starsetf('jproperties'),
-  ['.*%.vhdl_[0-9].*'] = starsetf('vhdl'),
-  ['.*/%.fvwm/.*'] = starsetf('fvwm'),
-  ['.*fvwmrc.*'] = starsetf(function(path, bufnr)
-    return 'fvwm', function(b)
-      vim.b[b].fvwm_version = 1
-    end
-  end),
-  ['.*fvwm95.*%.hook'] = starsetf(function(path, bufnr)
-    return 'fvwm', function(b)
-      vim.b[b].fvwm_version = 1
-    end
-  end),
-  ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
-  ['.*/Xresources/.*'] = starsetf('xdefaults'),
-  ['.*/app%-defaults/.*'] = starsetf('xdefaults'),
-  ['.*/bind/db%..*'] = starsetf('bindzone'),
-  ['.*/debian/patches/.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').dep3patch(path, bufnr)
-  end,
-  ['.*/etc/Muttrc%.d/.*'] = starsetf('muttrc'),
-  ['.*/etc/apache2/.*%.conf.*'] = starsetf('apache'),
-  ['.*/etc/apache2/conf%..*/.*'] = starsetf('apache'),
-  ['.*/etc/apache2/mods%-.*/.*'] = starsetf('apache'),
-  ['.*/etc/apache2/sites%-.*/.*'] = starsetf('apache'),
-  ['.*/etc/cron%.d/.*'] = starsetf('crontab'),
-  ['.*/etc/dnsmasq%.d/.*'] = starsetf('dnsmasq'),
-  ['.*/etc/httpd/conf%..*/.*'] = starsetf('apache'),
-  ['.*/etc/httpd/conf%.d/.*%.conf.*'] = starsetf('apache'),
-  ['.*/etc/httpd/mods%-.*/.*'] = starsetf('apache'),
-  ['.*/etc/httpd/sites%-.*/.*'] = starsetf('apache'),
-  ['.*/etc/logcheck/.*%.d.*/.*'] = starsetf('logcheck'),
-  ['.*/etc/modprobe%..*'] = starsetf('modconf'),
-  ['.*/etc/modutils/.*'] = starsetf(function(path, bufnr)
-    if vim.fn.executable(vim.fn.expand(path)) ~= 1 then
-      return 'modconf'
-    end
-  end),
-  ['.*/etc/pam%.d/.*'] = starsetf('pamconf'),
-  ['.*/etc/profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, getline(bufnr, 1))
-  end,
-  ['.*/etc/proftpd/.*%.conf.*'] = starsetf('apachestyle'),
-  ['.*/etc/proftpd/conf%..*/.*'] = starsetf('apachestyle'),
-  ['.*/etc/sudoers%.d/.*'] = starsetf('sudoers'),
-  ['.*/etc/xinetd%.d/.*'] = starsetf('xinetd'),
-  ['.*/etc/yum%.repos%.d/.*'] = starsetf('dosini'),
-  ['.*/gitolite%-admin/conf/.*'] = starsetf('gitolite'),
-  ['.*/named/db%..*'] = starsetf('bindzone'),
-  ['.*/tmp/lltmp.*'] = starsetf('gedcom'),
-  ['.*asterisk.*/.*voicemail%.conf.*'] = starsetf('asteriskvm'),
-  ['.*asterisk/.*%.conf.*'] = starsetf('asterisk'),
   ['.*vimrc.*'] = starsetf('vim'),
-  ['.*xmodmap.*'] = starsetf('xmodmap'),
-  ['/etc/gitconfig%.d/.*'] = starsetf('gitconfig'),
-  ['/etc/hostname%..*'] = starsetf('config'),
-  ['Containerfile%..*'] = starsetf('dockerfile'),
-  ['Dockerfile%..*'] = starsetf('dockerfile'),
-  ['JAM.*%..*'] = starsetf('jam'),
-  ['Kconfig%..*'] = starsetf('kconfig'),
-  ['Prl.*%..*'] = starsetf('jam'),
   ['Xresources.*'] = starsetf('xdefaults'),
-  ['[mM]akefile.*'] = starsetf('make'),
-  ['[rR]akefile.*'] = starsetf('ruby'),
-  ['access%.conf.*'] = starsetf('apache'),
-  ['apache%.conf.*'] = starsetf('apache'),
-  ['apache2%.conf.*'] = starsetf('apache'),
-  ['bash%-fc[-%.]'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
-  end,
-  ['cabal%.project%..*'] = starsetf('cabalproject'),
-  ['crontab%..*'] = starsetf('crontab'),
-  ['drac%..*'] = starsetf('dracula'),
-  ['gtkrc.*'] = starsetf('gtkrc'),
-  ['httpd%.conf.*'] = starsetf('apache'),
-  ['lilo%.conf.*'] = starsetf('lilo'),
-  ['Muttrc'] = 'muttrc',
-  ['Muttngrc'] = 'muttrc',
-  ['proftpd%.conf.*'] = starsetf('apachestyle'),
-  ['reportbug%-.*'] = starsetf('mail'),
-  ['sgml%.catalog.*'] = starsetf('catalog'),
-  ['srm%.conf.*'] = starsetf('apache'),
-  ['tmac%..*'] = starsetf('nroff'),
-  ['zlog.*'] = starsetf('zsh'),
-  ['zsh.*'] = starsetf('zsh'),
-  ['ae%d+%.txt'] = 'mail',
-  ['snd%.%d+'] = 'mail',
-  ['%.letter%.%d+'] = 'mail',
-  ['%.article%.%d+'] = 'mail',
-  ['pico%.%d+'] = 'mail',
-  ['mutt%-.*%-%w+'] = 'mail',
-  ['muttng%-.*%-%w+'] = 'mail',
-  ['neomutt%-.*%-%w+'] = 'mail',
-  ['mutt' .. string.rep('[%w_-]', 6)] = 'mail',
-  ['neomutt' .. string.rep('[%w_-]', 6)] = 'mail',
-  ['/tmp/SLRN[0-9A-Z.]+'] = 'mail',
-  ['[a-zA-Z0-9].*Dict'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['[a-zA-Z0-9].*Dict%..*'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['[a-zA-Z].*Properties'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['[a-zA-Z].*Properties%..*'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['.*Transport%..*'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['.*/constant/g'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['.*/0/.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['.*/0%.orig/.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').foam(bufnr)
-  end,
-  ['.*/etc/sensors%.d/[^.].*'] = starsetf('sensors'),
-  ['.*%.git/.*'] = function(path, bufnr)
-    local firstline = getline(bufnr, 1)
-    if firstline:find('^' .. string.rep('%x', 40) .. '+ ') or firstline:sub(1, 5) == 'ref: ' then
-      return 'git'
-    end
-  end,
-  ['.*%.[Cc][Ff][Gg]'] = {
-    function(path, bufnr)
-      return require('vim.filetype.detect').cfg(bufnr)
-    end,
-    -- Decrease the priority to avoid conflicts with more specific patterns
-    -- such as '.*/etc/a2ps/.*%.cfg', '.*enlightenment/.*%.cfg', etc.
-    { priority = -1 },
-  },
-  ['.*%.[Dd][Aa][Tt]'] = function(path, bufnr)
-    return require('vim.filetype.detect').dat(path, bufnr)
-  end,
-  ['.*%.[Mm][Oo][Dd]'] = function(path, bufnr)
-    return require('vim.filetype.detect').mod(path, bufnr)
-  end,
-  ['.*%.[Ss][Rr][Cc]'] = function(path, bufnr)
-    return require('vim.filetype.detect').src(bufnr)
-  end,
-  ['.*%.[Ss][Uu][Bb]'] = 'krl',
-  ['.*%.[Pp][Rr][Gg]'] = function(path, bufnr)
-    return require('vim.filetype.detect').prg(bufnr)
-  end,
-  ['.*%.[Ss][Yy][Ss]'] = function(path, bufnr)
-    return require('vim.filetype.detect').sys(bufnr)
-  end,
-  ['%.?gitolite%.rc'] = 'perl',
-  ['example%.gitolite%.rc'] = 'perl',
-  -- Neovim only
-  ['.*/queries/.*%.scm'] = 'query', -- tree-sitter queries
-  ['.*,v'] = 'rcs',
+  ['.*/etc/xinetd%.d/.*'] = starsetf('xinetd'),
+  ['.*xmodmap.*'] = starsetf('xmodmap'),
   ['.*/xorg%.conf%.d/.*%.conf'] = function(path, bufnr)
     return 'xf86config', function(b)
       vim.b[b].xf86conf_xfree86_version = 4
@@ -2138,37 +2049,11 @@ local pattern = {
   ['XF86Config.*'] = starsetf(function(path, bufnr)
     return require('vim.filetype.detect').xfree86(bufnr)
   end),
-  ['[cC]hange[lL]og.*'] = starsetf(function(path, bufnr)
-    local line = getline(bufnr, 1):lower()
-    if line:find('; urgency=') then
-      return 'debchangelog'
-    else
-      return 'changelog'
-    end
-  end),
-  ['.*fvwm2rc.*'] = starsetf(function(path, bufnr)
-    if vim.fn.fnamemodify(path, ':e') == 'm4' then
-      return 'fvwm2m4'
-    else
-      return 'fvwm', function(b)
-        vim.b[b].fvwm_version = 2
-      end
-    end
-  end),
-  ['.*%.[Ll][Oo][Gg]'] = function(path, bufnr)
-    -- Innovation Data Processing
-    -- (refactor of filetype.vim since the patterns are case-insensitive)
-    path = path:lower()
-    if M.findany(path, { 'upstream%.log', 'upstream%..*%.log', '.*%.upstream%.log', 'upstream%-.*%.log' }) then
-      return 'upstreamlog'
-    elseif M.findany(path, { 'upstreaminstall%.log', 'upstreaminstall%..*%.log', '.*%.upstreaminstall%.log' }) then
-      return 'upstreaminstalllog'
-    elseif M.findany(path, { 'usserver%.log', 'usserver%..*%.log', '.*%.usserver%.log' }) then
-      return 'usserverlog'
-    elseif M.findany(path, { 'usw2kagt%.log', 'usws2kagt%..*%.log', '.*%.usws2kagt%.log' }) then
-      return 'usw2kagtlog'
-    end
-  end,
+  ['%.zcompdump.*'] = starsetf('zsh'),
+  -- .zlog* and zlog*
+  ['%.?zlog.*'] = starsetf('zsh'),
+  -- .zsh* and zsh*
+  ['%.?zsh.*'] = starsetf('zsh'),
   -- Ignored extension
   ['.*~'] = function(path, bufnr)
     local short = path:gsub('~$', '', 1)

@@ -1,6 +1,9 @@
--- Contains filetype detection functions converted to Lua from Vim's autoload/runtime/dist/ft.vim file.
+-- Contains filetype detection functions for use in filetype.lua that are either:
+--  * used more than once or
+--  * complex (e.g. check more than one line or use conditionals).
+-- Simple one-line checks, such as a check for a string in the first line are better inlined in filetype.lua.
 
--- Here are a few guidelines to follow when porting a new function:
+-- A few guidelines to follow when porting a new function:
 --  * Sort the function alphabetically and omit 'ft' or 'check' from the new function name.
 --  * Use ':find' instead of ':match' / ':sub' if possible.
 --  * When '=~' is used to match a pattern, there are two possibilities:
@@ -42,6 +45,17 @@ function M.asm(bufnr)
   end
   return syntax, function(b)
     vim.b[b].asmsyntax = syntax
+  end
+end
+
+-- Active Server Pages (with Perl or Visual Basic Script)
+function M.asp(bufnr)
+  if vim.g.filetype_asp then
+    return vim.g.filetype_asp
+  elseif table.concat(getlines(bufnr, 1, 3)):lower():find('perlscript') then
+    return 'aspperl'
+  else
+    return 'aspvbs'
   end
 end
 
@@ -91,17 +105,8 @@ function M.bindzone(bufnr, default)
   local lines = table.concat(getlines(bufnr, 1, 4))
   if findany(lines, { '^; <<>> DiG [0-9%.]+.* <<>>', '%$ORIGIN', '%$TTL', 'IN%s+SOA' }) then
     return 'bindzone'
-  else
-    return default
   end
-end
-
-function M.btm(bufnr)
-  if vim.g.dosbatch_syntax_for_btm and vim.g.dosbatch_syntax_for_btm ~= 0 then
-    return 'dosbatch'
-  else
-    return 'btm'
-  end
+  return default
 end
 
 -- Returns true if file content looks like RAPID
@@ -151,6 +156,46 @@ function M.change(bufnr)
   return 'chill'
 end
 
+function M.changelog(bufnr)
+  local line = getlines(bufnr, 1):lower()
+  if line:find('; urgency=') then
+    return 'debchangelog'
+  end
+  return 'changelog'
+end
+
+function M.class(bufnr)
+  -- Check if not a Java class (starts with '\xca\xfe\xba\xbe')
+  if not getlines(bufnr, 1):find('^\202\254\186\190') then
+    return 'stata'
+  end
+end
+
+function M.cls(bufnr)
+  local line = getlines(bufnr, 1)
+  if line:find('^%%') then
+    return 'tex'
+  elseif line:find('^#') and line:lower():find('rexx') then
+    return 'rexx'
+  else
+    return 'st'
+  end
+end
+
+-- Debian Control
+function M.control(bufnr)
+  if getlines(bufnr, 1):find('^Source:') then
+    return 'debcontrol'
+  end
+end
+
+-- Debian Copyright
+function M.copyright(bufnr)
+  if getlines(bufnr, 1):find('^Format:') then
+    return 'debcopyright'
+  end
+end
+
 function M.csh(path, bufnr)
   if vim.fn.did_filetype() ~= 0 then
     -- Filetype was already detected
@@ -177,6 +222,14 @@ function M.dat(path, bufnr)
   local line = nextnonblank(bufnr, 1)
   if matchregex(line, [[\c\v^\s*%(\&\w+|defdat>)]]) then
     return 'krl'
+  end
+end
+
+function M.decl(bufnr)
+  for _, line in ipairs(getlines(bufnr, 1, 3)) do
+    if line:lower():find('^<!sgml') then
+      return 'sgmldecl'
+    end
   end
 end
 
@@ -240,6 +293,15 @@ function M.e(bufnr)
   return 'eiffel'
 end
 
+function M.edn(bufnr)
+  local line = getlines(bufnr, 1)
+  if matchregex(line, [[\c^\s*(\s*edif\>]]) then
+    return 'edif'
+  else
+    return 'clojure'
+  end
+end
+
 -- This function checks for valid cl syntax in the first five lines.
 -- Look for either an opening comment, '#', or a block start, '{'.
 -- If not found, assume SGML.
@@ -254,14 +316,6 @@ function M.ent(bufnr)
     end
   end
   return 'dtd'
-end
-
-function M.euphoria(bufnr)
-  if vim.g.filetype_euphoria then
-    return vim.g.filetype_euphoria
-  else
-    return 'euphoria3'
-  end
 end
 
 function M.ex(bufnr)
@@ -303,6 +357,15 @@ function M.frm(bufnr)
   end
 end
 
+function M.fvwm(path)
+  if vim.fn.fnamemodify(path, ':e') == 'm4' then
+    return 'fvwm2m4'
+  end
+  return 'fvwm', function(bufnr)
+    vim.b[bufnr].fvwm_version = 2
+  end
+end
+
 -- Distinguish between Forth and F#.
 function M.fs(bufnr)
   if vim.g.filetype_fs then
@@ -313,6 +376,13 @@ function M.fs(bufnr)
     return 'forth'
   else
     return 'fsharp'
+  end
+end
+
+function M.git(bufnr)
+  local line = getlines(bufnr, 1)
+  if line:find('^' .. string.rep('%x', 40) .. '+ ') or line:sub(1, 5) == 'ref: ' then
+    return 'git'
   end
 end
 
@@ -344,6 +414,14 @@ function M.html(bufnr)
     end
   end
   return 'html'
+end
+
+-- Virata Config Script File or Drupal module
+function M.hw(bufnr)
+  if getlines(bufnr, 1):lower():find('<%?php') then
+    return 'php'
+  end
+  return 'virata'
 end
 
 function M.idl(bufnr)
@@ -393,6 +471,28 @@ function M.inp(bufnr)
         return 'trasys'
       end
     end
+  end
+end
+
+function M.install(path, bufnr)
+  if getlines(bufnr, 1):lower():find('<%?php') then
+    return 'php'
+  end
+  return M.sh(path, bufnr, 'bash')
+end
+
+-- Innovation Data Processing
+-- (refactor of filetype.vim since the patterns are case-insensitive)
+function M.log(path)
+  path = path:lower()
+  if findany(path, { 'upstream%.log', 'upstream%..*%.log', '.*%.upstream%.log', 'upstream%-.*%.log' }) then
+    return 'upstreamlog'
+  elseif findany(path, { 'upstreaminstall%.log', 'upstreaminstall%..*%.log', '.*%.upstreaminstall%.log' }) then
+    return 'upstreaminstalllog'
+  elseif findany(path, { 'usserver%.log', 'usserver%..*%.log', '.*%.usserver%.log' }) then
+    return 'usserverlog'
+  elseif findany(path, { 'usw2kagt%.log', 'usws2kagt%..*%.log', '.*%.usws2kagt%.log' }) then
+    return 'usw2kagtlog'
   end
 end
 
@@ -467,6 +567,13 @@ function M.m(bufnr)
   end
 end
 
+function M.m4(path)
+  path = path:lower()
+  if not path:find('html%.m4$') and not path:find('fvwm2rc') then
+    return 'm4'
+  end
+end
+
 -- Rely on the file to start with a comment.
 -- MS message text files use ';', Sendmail files use '#' or 'dnl'
 function M.mc(bufnr)
@@ -480,6 +587,13 @@ function M.mc(bufnr)
   end
   -- Default: Sendmail .mc file
   return 'm4'
+end
+
+function M.me(path)
+  local filename = vim.fn.fnamemodify(path, ':t'):lower()
+  if filename ~= 'read.me' and filename ~= 'click.me' then
+    return 'nroff'
+  end
 end
 
 function M.mm(bufnr)
@@ -533,15 +647,29 @@ function M.mod(path, bufnr)
   end
 end
 
+function M.news(bufnr)
+  if getlines(bufnr, 1):lower():find('; urgency=') then
+    return 'debchangelog'
+  end
+end
+
 -- This function checks if one of the first five lines start with a dot. In
--- that case it is probably an nroff file: 'filetype' is set and true is returned.
+-- that case it is probably an nroff file.
 function M.nroff(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^%.') then
-      return true
+      return 'nroff'
     end
   end
-  return false
+end
+
+function M.patch(bufnr)
+  local firstline = getlines(bufnr, 1)
+  if string.find(firstline, '^From ' .. string.rep('%x', 40) .. '+ Mon Sep 17 00:00:00 2001$') then
+    return 'gitsendemail'
+  else
+    return 'diff'
+  end
 end
 
 -- If the file has an extension of 't' and is in a directory 't' or 'xt' then
@@ -551,18 +679,17 @@ end
 function M.perl(path, bufnr)
   local dirname = vim.fn.expand(path, '%:p:h:t')
   if vim.fn.expand(dirname, '%:e') == 't' and (dirname == 't' or dirname == 'xt') then
-    return true
+    return 'perl'
   end
   local first_line = getlines(bufnr, 1)
   if first_line:find('^#') and first_line:lower():find('perl') then
-    return true
+    return 'perl'
   end
   for _, line in ipairs(getlines(bufnr, 1, 30)) do
     if matchregex(line, [[\c^use\s\s*\k]]) then
-      return true
+      return 'perl'
     end
   end
-  return false
 end
 
 function M.pl(bufnr)
@@ -578,6 +705,17 @@ function M.pl(bufnr)
     or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
   then
     return 'prolog'
+  else
+    return 'perl'
+  end
+end
+
+function M.pm(bufnr)
+  local line = getlines(bufnr, 1)
+  if line:find('XPM2') then
+    return 'xpm2'
+  elseif line:find('XPM') then
+    return 'xpm'
   else
     return 'perl'
   end
@@ -603,6 +741,14 @@ function M.prg(bufnr)
   else
     -- Nothing recognized, assume Clipper
     return 'clipper'
+  end
+end
+
+function M.printcap(ptcap_type)
+  if vim.fn.did_filetype() == 0 then
+    return 'ptcap', function(bufnr)
+      vim.b[bufnr].ptcap_type = ptcap_type
+    end
   end
 end
 
@@ -670,6 +816,19 @@ function M.proto(bufnr, default)
   end
 end
 
+-- Software Distributor Product Specification File (POSIX 1387.2-1995)
+function M.psf(bufnr)
+  local line = getlines(bufnr, 1):lower()
+  if
+    findany(
+      line,
+      { '^%s*distribution%s*$', '^%s*installed_software%s*$', '^%s*root%s*$', '^%s*bundle%s*$', '^%s*product%s*$' }
+    )
+  then
+    return 'psf'
+  end
+end
+
 function M.r(bufnr)
   local lines = getlines(bufnr, 1, 50)
   -- Rebol is easy to recognize, check for that first
@@ -705,8 +864,23 @@ function M.redif(bufnr)
   end
 end
 
+function M.reg(bufnr)
+  local line = getlines(bufnr, 1):lower()
+  if line:find('^regedit[0-9]*%s*$') or line:find('^windows registry editor version %d*%.%d*%s*$') then
+    return 'registry'
+  end
+end
+
+-- Diva (with Skill) or InstallShield
+function M.rul(bufnr)
+  if table.concat(getlines(bufnr, 1, 6)):lower():find('installshield') then
+    return 'ishd'
+  end
+  return 'diva'
+end
+
 local udev_rules_pattern = '^%s*udev_rules%s*=%s*"([%^"]+)/*".*'
-function M.rules(path, bufnr)
+function M.rules(path)
   path = path:lower()
   if
     findany(path, {
@@ -770,7 +944,20 @@ function M.scd(bufnr)
   end
 end
 
--- Also called from filetype.lua
+function M.sgml(bufnr)
+  local lines = table.concat(getlines(bufnr, 1, 5))
+  if lines:find('linuxdoc') then
+    return 'smgllnx'
+  elseif lines:find('<!DOCTYPE.*DocBook') then
+    return 'docbk', function(b)
+      vim.b[b].docbk_type = 'sgml'
+      vim.b[b].docbk_ver = 4
+    end
+  else
+    return 'sgml'
+  end
+end
+
 function M.sh(path, bufnr, name)
   if vim.fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
@@ -779,6 +966,7 @@ function M.sh(path, bufnr, name)
 
   local on_detect
 
+  name = name or getlines(bufnr, 1)
   if matchregex(name, [[\<csh\>]]) then
     -- Some .sh scripts contain #!/bin/csh.
     return M.shell(path, bufnr, 'csh')
@@ -832,11 +1020,13 @@ function M.shell(path, bufnr, name)
   return name
 end
 
-function M.sql(bufnr)
-  if vim.g.filetype_sql then
-    return vim.g.filetype_sql
+-- SMIL or SNMP MIB file
+function M.smi(bufnr)
+  local line = getlines(bufnr, 1)
+  if matchregex(line, [[\c\<smil\>]]) then
+    return 'smil'
   else
-    return 'sql'
+    return 'mib'
   end
 end
 
@@ -919,6 +1109,43 @@ function M.tf(bufnr)
   return 'tf'
 end
 
+function M.ttl(bufnr)
+  local line = getlines(bufnr, 1):lower()
+  if line:find('^@?prefix') or line:find('^@?base') then
+    return 'turtle'
+  end
+  return 'teraterm'
+end
+
+function M.txt(bufnr)
+  -- helpfiles match *.txt, but should have a modeline as last line
+  if not getlines(bufnr, -1):find('vim:.*ft=help') then
+    return 'text'
+  end
+end
+
+-- WEB (*.web is also used for Winbatch: Guess, based on expecting "%" comment
+-- lines in a WEB file).
+function M.web(bufnr)
+  for _, line in ipairs(getlines(bufnr, 1, 5)) do
+    if line:find('^%%') then
+      return 'web'
+    end
+  end
+  return 'winbatch'
+end
+
+-- XFree86 config
+function M.xfree86()
+  return 'xf86conf',
+    function(bufnr)
+      local line = getlines(bufnr, 1)
+      if matchregex(line, [[\<XConfigurator\>]]) then
+        vim.b[bufnr].xf86conf_xfree86_version = 3
+      end
+    end
+end
+
 function M.xml(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     local is_docbook4 = line:find('<!DOCTYPE.*DocBook')
@@ -948,124 +1175,6 @@ function M.y(bufnr)
     end
   end
   return 'yacc'
-end
-
-function M.decl(bufnr)
-  for _, line in ipairs(getlines(bufnr, 1, 3)) do
-    if line:lower():find('^<!sgml') then
-      return 'sgmldecl'
-    end
-  end
-end
-
-function M.sgml(bufnr)
-  local lines = table.concat(getlines(bufnr, 1, 5))
-  if lines:find('linuxdoc') then
-    return 'smgllnx'
-  elseif lines:find('<!DOCTYPE.*DocBook') then
-    return 'docbk', function(b)
-      vim.b[b].docbk_type = 'sgml'
-      vim.b[b].docbk_ver = 4
-    end
-  else
-    return 'sgml'
-  end
-end
-
-function M.web(bufnr)
-  for _, line in ipairs(getlines(bufnr, 1, 5)) do
-    if line:find('^%%') then
-      return 'web'
-    end
-  end
-  return 'winbatch'
-end
-
-function M.rul(bufnr)
-  if table.concat(getlines(bufnr, 1, 6)):lower():find('installshield') then
-    return 'ishd'
-  end
-  return 'diva'
-end
-
-function M.asp(bufnr)
-  if vim.g.filetype_asp then
-    return vim.g.filetype_asp
-  elseif table.concat(getlines(bufnr, 1, 3)):lower():find('perlscript') then
-    return 'aspperl'
-  else
-    return 'aspvbs'
-  end
-end
-
-function M.edn(bufnr)
-  local line = getlines(bufnr, 1)
-  if matchregex(line, [[\c^\s*(\s*edif\>]]) then
-    return 'edif'
-  else
-    return 'clojure'
-  end
-end
-
-function M.smi(bufnr)
-  local line = getlines(bufnr, 1)
-  if matchregex(line, [[\c\<smil\>]]) then
-    return 'smil'
-  else
-    return 'mib'
-  end
-end
-
-function M.hw(bufnr)
-  if getlines(bufnr, 1):lower():find('<%?php') then
-    return 'php'
-  end
-  return 'virata'
-end
-
-function M.news(bufnr)
-  if getlines(bufnr, 1):lower():find('; urgency=') then
-    return 'debchangelog'
-  end
-end
-
--- Debian Control
-function M.control(bufnr)
-  if getlines(bufnr, 1):find('^Source:') then
-    return 'debcontrol'
-  end
-end
-
--- Debian Copyright
-function M.copyright(bufnr)
-  if getlines(bufnr, 1):find('^Format:') then
-    return 'debcopyright'
-  end
-end
-
--- Software Distributor Product Specification File (POSIX 1387.2-1995)
-function M.psf(bufnr)
-  local line = getlines(bufnr, 1):lower()
-  if
-    findany(
-      line,
-      { '^%s*distribution%s*$', '^%s*installed_software%s*$', '^%s*root%s*$', '^%s*bundle%s*$', '^%s*product%s*$' }
-    )
-  then
-    return 'psf'
-  end
-end
-
--- XFree86 config
-function M.xfree86(bufnr)
-  local line = getlines(bufnr, 1)
-  local on_detect
-  if matchregex(line, [[\<XConfigurator\>]]) then
-    on_detect = function(b)
-      vim.b[b].xf86conf_xfree86_version = 3
-    end
-  end
-  return 'xf86conf', on_detect
 end
 
 -- luacheck: pop
