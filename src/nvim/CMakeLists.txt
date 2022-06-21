@@ -82,10 +82,10 @@ set(LINT_SUPPRESSES_ARCHIVE ${LINT_SUPPRESSES_ROOT}/errors.tar.gz)
 set(LINT_SUPPRESSES_TOUCH_FILE "${TOUCHES_DIR}/unpacked-clint-errors-archive")
 set(LINT_SUPPRESSES_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/InstallClintErrors.cmake")
 
-file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
-file(GLOB API_HEADERS api/*.h)
+glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
+glob_wrapper(API_HEADERS api/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
-file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
+glob_wrapper(MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
@@ -97,10 +97,10 @@ file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT})
 file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
-file(GLOB NVIM_SOURCES *.c)
-file(GLOB NVIM_HEADERS *.h)
-file(GLOB EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c)
-file(GLOB EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h)
+glob_wrapper(NVIM_SOURCES *.c)
+glob_wrapper(NVIM_HEADERS *.h)
+glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c)
+glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h)
 
 foreach(subdir
         os
@@ -120,13 +120,13 @@ foreach(subdir
 
   file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
   file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
-  file(GLOB sources ${subdir}/*.c)
-  file(GLOB headers ${subdir}/*.h)
+  glob_wrapper(sources ${subdir}/*.c)
+  glob_wrapper(headers ${subdir}/*.h)
   list(APPEND NVIM_SOURCES ${sources})
   list(APPEND NVIM_HEADERS ${headers})
 endforeach()
 
-file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
+glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 
 # Sort file lists to ensure generated files are created in the same order from
 # build to build.
