@@ -942,8 +942,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     }
   }
 
-  char *key = NULL;
-  char *arg = NULL;
+  char key[64];
+  char arg[512];
   if (!doclear) {
     while (!ends_excmd((uint8_t)(*linep))) {
       key_start = linep;
@@ -958,9 +958,15 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       while (*linep && !ascii_iswhite(*linep) && *linep != '=') {
         linep++;
       }
-      xfree(key);
-      key = (char *)vim_strnsave_up((const char_u *)key_start,
-                                    (size_t)(linep - key_start));
+      size_t key_len = (size_t)(linep - key_start);
+      if (key_len > sizeof key - 1) {
+        semsg(_("E423: Illegal argument"));
+        error = true;
+        break;
+      }
+      memcpy(key, key_start, key_len);
+      key[key_len] = NUL;
+      vim_strup((char_u *)key);
       linep = (const char *)skipwhite(linep);
 
       if (strcmp(key, "NONE") == 0) {
@@ -1000,8 +1006,14 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         error = true;
         break;
       }
-      xfree(arg);
-      arg = xstrndup(arg_start, (size_t)(linep - arg_start));
+      size_t arg_len = (size_t)(linep - arg_start);
+      if (arg_len > sizeof arg - 1) {
+        semsg(_("E423: Illegal argument"));
+        error = true;
+        break;
+      }
+      memcpy(arg, arg_start, arg_len);
+      arg[arg_len] = NUL;
 
       if (*linep == '\'') {
         linep++;
@@ -1271,8 +1283,6 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     HL_TABLE()[idx].sg_script_ctx.sc_lnum += sourcing_lnum;
     nlua_set_sctx(&HL_TABLE()[idx].sg_script_ctx);
   }
-  xfree(key);
-  xfree(arg);
 
   // Only call highlight_changed() once, after a sequence of highlight
   // commands, and only if an attribute actually changed
