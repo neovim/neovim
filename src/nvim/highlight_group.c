@@ -1249,33 +1249,28 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     }
   }
 
-  // If there is an error, and it's a new entry, remove it from the table.
-  if (error && idx == highlight_ga.ga_len) {
-    syn_unadd_group();
-  } else {
-    if (!error && is_normal_group) {
-      // Need to update all groups, because they might be using "bg" and/or
-      // "fg", which have been changed now.
-      highlight_attr_set_all();
+  if (!error && is_normal_group) {
+    // Need to update all groups, because they might be using "bg" and/or
+    // "fg", which have been changed now.
+    highlight_attr_set_all();
 
-      if (!ui_has(kUILinegrid) && starting == 0) {
-        // Older UIs assume that we clear the screen after normal group is
-        // changed
-        ui_refresh();
-      } else {
-        // TUI and newer UIs will repaint the screen themselves. NOT_VALID
-        // redraw below will still handle usages of guibg=fg etc.
-        ui_default_colors_set();
-      }
-      did_highlight_changed = true;
-      redraw_all_later(NOT_VALID);
+    if (!ui_has(kUILinegrid) && starting == 0) {
+      // Older UIs assume that we clear the screen after normal group is
+      // changed
+      ui_refresh();
     } else {
-      set_hl_attr(idx);
+      // TUI and newer UIs will repaint the screen themselves. NOT_VALID
+      // redraw below will still handle usages of guibg=fg etc.
+      ui_default_colors_set();
     }
-    HL_TABLE()[idx].sg_script_ctx = current_sctx;
-    HL_TABLE()[idx].sg_script_ctx.sc_lnum += sourcing_lnum;
-    nlua_set_sctx(&HL_TABLE()[idx].sg_script_ctx);
+    did_highlight_changed = true;
+    redraw_all_later(NOT_VALID);
+  } else {
+    set_hl_attr(idx);
   }
+  HL_TABLE()[idx].sg_script_ctx = current_sctx;
+  HL_TABLE()[idx].sg_script_ctx.sc_lnum += sourcing_lnum;
+  nlua_set_sctx(&HL_TABLE()[idx].sg_script_ctx);
 
   // Only call highlight_changed() once, after a sequence of highlight
   // commands, and only if an attribute actually changed
@@ -1739,7 +1734,7 @@ int syn_check_group(const char *name, size_t len)
 ///
 /// @param name must be an allocated string, it will be consumed.
 /// @return 0 for failure, else the allocated group id
-/// @see syn_check_group syn_unadd_group
+/// @see syn_check_group
 static int syn_add_group(char_u *name)
 {
   char_u *p;
@@ -1790,17 +1785,6 @@ static int syn_add_group(char_u *name)
   map_put(cstr_t, int)(&highlight_unames, name_up, id);
 
   return id;
-}
-
-/// When, just after calling syn_add_group(), an error is discovered, this
-/// function deletes the new name.
-static void syn_unadd_group(void)
-{
-  highlight_ga.ga_len--;
-  HlGroup *item = &HL_TABLE()[highlight_ga.ga_len];
-  map_del(cstr_t, int)(&highlight_unames, item->sg_name_u);
-  xfree(item->sg_name);
-  xfree(item->sg_name_u);
 }
 
 /// Translate a group ID to highlight attributes.
