@@ -1293,7 +1293,8 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 Integer nvim_get_color_by_name(String name)
   FUNC_API_SINCE(1)
 {
-  return name_to_color(name.data);
+  int dummy;
+  return name_to_color(name.data, &dummy);
 }
 
 /// Returns a map of color names and RGB values.

@@ -392,7 +392,7 @@ static uint32_t prt_get_color(int hl_id, int modec)
 
   const char *color = highlight_color(hl_id, "fg#", 'g');
   if (color != NULL) {
-    RgbValue rgb = name_to_color(color);
+    RgbValue rgb = name_to_color(color, &colorindex);
     if (rgb != -1) {
       return (uint32_t)rgb;
     }

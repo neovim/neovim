@@ -962,7 +962,8 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
     }
     int color;
     if (rgb) {
-      color = name_to_color(str.data);
+      int dummy;
+      color = name_to_color(str.data, &dummy);
     } else {
       color = name_to_ctermcolor(str.data);
     }
