@@ -30,6 +30,9 @@
 // builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
+// arena for object with same lifetime as highlight_ga (aka hl_table)
+Arena highlight_arena = ARENA_EMPTY;
+
 Map(cstr_t, int) highlight_unames = MAP_INIT;
 
 /// The "term", "cterm" and "gui" arguments can be any combination of the
@@ -1287,13 +1290,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 #if defined(EXITFREE)
 void free_highlight(void)
 {
-  for (int i = 0; i < highlight_ga.ga_len; i++) {
-    highlight_clear(i);
-    xfree(hl_table[i].sg_name);
-    xfree(hl_table[i].sg_name_u);
-  }
   ga_clear(&highlight_ga);
   map_destroy(cstr_t, int)(&highlight_unames);
+  arena_mem_free(arena_finish(&highlight_arena), NULL);
 }
 
 #endif
@@ -1722,7 +1721,7 @@ int syn_check_group(const char *name, size_t len)
   }
   int id = syn_name2id_len((char_u *)name, len);
   if (id == 0) {  // doesn't exist yet
-    return syn_add_group(vim_strnsave((char_u *)name, len));
+    return syn_add_group(name, len);
   }
   return id;
 }
@@ -1732,17 +1731,15 @@ int syn_check_group(const char *name, size_t len)
 /// @param name must be an allocated string, it will be consumed.
 /// @return 0 for failure, else the allocated group id
 /// @see syn_check_group
-static int syn_add_group(char_u *name)
+static int syn_add_group(const char *name, size_t len)
 {
-  char_u *p;
-
   // Check that the name is ASCII letters, digits and underscore.
-  for (p = name; *p != NUL; p++) {
-    if (!vim_isprintc(*p)) {
+  for (size_t i = 0; i < len; i++) {
+    int c = (int8_t)name[i];
+    if (!vim_isprintc(c)) {
       emsg(_("E669: Unprintable character in group name"));
-      xfree(name);
       return 0;
-    } else if (!ASCII_ISALNUM(*p) && *p != '_') {
+    } else if (!ASCII_ISALNUM(c) && c != '_') {
       // This is an error, but since there previously was no check only give a warning.
       msg_source(HL_ATTR(HLF_W));
       msg(_("W18: Invalid character in group name"));
@@ -1758,16 +1755,13 @@ static int syn_add_group(char_u *name)
 
   if (highlight_ga.ga_len >= MAX_HL_ID) {
     emsg(_("E849: Too many highlight and syntax groups"));
-    xfree(name);
     return 0;
   }
-
-  char *const name_up = (char *)vim_strsave_up(name);
 
   // Append another syntax_highlight entry.
   HlGroup *hlgp = GA_APPEND_VIA_PTR(HlGroup, &highlight_ga);
   memset(hlgp, 0, sizeof(*hlgp));
-  hlgp->sg_name = name;
+  hlgp->sg_name = (char_u *)arena_memdupz(&highlight_arena, name, len);
   hlgp->sg_rgb_bg = -1;
   hlgp->sg_rgb_fg = -1;
   hlgp->sg_rgb_sp = -1;
@@ -1775,11 +1769,12 @@ static int syn_add_group(char_u *name)
   hlgp->sg_rgb_fg_idx = kColorIdxNone;
   hlgp->sg_rgb_sp_idx = kColorIdxNone;
   hlgp->sg_blend = -1;
-  hlgp->sg_name_u = name_up;
+  hlgp->sg_name_u = arena_memdupz(&highlight_arena, name, len);
+  vim_strup((char_u *)hlgp->sg_name_u);
 
   int id = highlight_ga.ga_len;  // ID is index plus one
 
-  map_put(cstr_t, int)(&highlight_unames, name_up, id);
+  map_put(cstr_t, int)(&highlight_unames, hlgp->sg_name_u, id);
 
   return id;
 }

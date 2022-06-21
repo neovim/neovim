@@ -686,10 +686,7 @@ Dictionary arena_dict(Arena *arena, size_t max_size)
 String arena_string(Arena *arena, String str)
 {
   if (str.size) {
-    char *mem = arena_alloc(arena, str.size + 1, false);
-    memcpy(mem, str.data, str.size);
-    mem[str.size] = NUL;
-    return cbuf_as_string(mem, str.size);
+    return cbuf_as_string(arena_memdupz(arena, str.data, str.size), str.size);
   } else {
     return (String)STRING_INIT;
   }

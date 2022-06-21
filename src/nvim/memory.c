@@ -605,6 +605,14 @@ void arena_mem_free(ArenaMem mem, ArenaMem *reuse_blk)
   }
 }
 
+char *arena_memdupz(Arena *arena, const char *buf, size_t size)
+{
+  char *mem = arena_alloc(arena, size + 1, false);
+  memcpy(mem, buf, size);
+  mem[size] = NUL;
+  return mem;
+}
+
 #if defined(EXITFREE)
 
 # include "nvim/buffer.h"
