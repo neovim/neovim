@@ -5,7 +5,7 @@ local clear, insert = helpers.clear, helpers.insert
 local command = helpers.command
 local meths = helpers.meths
 local iswin = helpers.iswin
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 local thelpers = require('test.functional.terminal.helpers')
 
 describe('ext_hlstate detailed highlights', function()
@@ -191,7 +191,7 @@ describe('ext_hlstate detailed highlights', function()
       [6] = {{foreground = tonumber('0x40ffff'), fg_indexed=true}, {5, 1}},
       [7] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
     })
-    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     screen:expect([[
       ^tty ready                               |
       {1: }                                       |
