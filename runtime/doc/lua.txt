@@ -2090,7 +2090,7 @@ match({arg})                                            *vim.filetype.match()*
     vim.filetype.match({ filename = "main.lua" })
 
     -- Using file contents
-    vim.filetype.match({ contents = "#!/usr/bin/env bash" })
+    vim.filetype.match({ contents = {"#!/usr/bin/env bash"} })
 <
 
                 Parameters: ~
