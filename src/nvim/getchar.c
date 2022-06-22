@@ -2122,6 +2122,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       const bool save_may_garbage_collect = may_garbage_collect;
       const int save_cursor_row = ui_current_row();
       const int save_cursor_col = ui_current_col();
+      const handle_T save_cursor_grid = ui_cursor_grid();
       const int prev_did_emsg = did_emsg;
 
       vgetc_busy = 0;
@@ -2135,7 +2136,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
 
       // The mapping may do anything, but we expect it to take care of
       // redrawing.  Do put the cursor back where it was.
-      ui_cursor_goto(save_cursor_row, save_cursor_col);
+      ui_grid_cursor_goto(save_cursor_grid, save_cursor_row, save_cursor_col);
       ui_flush();
 
       // If an error was displayed and the expression returns an empty
