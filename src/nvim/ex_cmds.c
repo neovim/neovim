@@ -1577,11 +1577,11 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
   size_t len = STRLEN(cmd) + 1;  // At least enough space for cmd + NULL.
 
   len += is_fish_shell ?  sizeof("begin; " "; end") - 1
-                       :  is_pwsh ? STRLEN("Start-Process ")
+                       :  is_pwsh ? sizeof("Start-Process ")
                                   : sizeof("(" ")") - 1;
 
   if (itmp != NULL) {
-    len += is_pwsh  ? STRLEN(itmp) + STRLEN(" -RedirectStandardInput ")
+    len += is_pwsh  ? STRLEN(itmp) + sizeof(" -RedirectStandardInput ")
                     : STRLEN(itmp) + sizeof(" { " " < " " } ") - 1;
   }
   if (otmp != NULL) {
@@ -1609,16 +1609,16 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     } else {
       xstrlcat(buf, " < ", len - 1);
     }
-    xstrlcat(buf, (const char *)itmp, len - 1);
+    xstrlcat(buf, (char *)itmp, len - 1);
   }
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
   if (is_pwsh) {
     xstrlcpy(buf, "Start-Process ", len);
-    xstrlcat(buf, (char *)cmd, len);
+    xstrlcat(buf, cmd, len);
   } else {
-    xstrlcpy(buf, (char *)cmd, len);
+    xstrlcpy(buf, cmd, len);
   }
   if (itmp != NULL) {
     // If there is a pipe, we have to put the '<' in front of it.
@@ -1635,9 +1635,9 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     } else {
       xstrlcat(buf, " < ", len);
     }
-    xstrlcat(buf, (const char *)itmp, len);
+    xstrlcat(buf, itmp, len);
     if (*p_shq == NUL) {
-      const char *const p = find_pipe((const char *)cmd);
+      const char *const p = find_pipe(cmd);
       if (p != NULL) {
         xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
         xstrlcat(buf, p, len - 1);
