@@ -1400,6 +1400,8 @@ describe('lua stdlib', function()
        pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
     matches("Expected lua string$",
        pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
+    matches("Invalid buffer id: %-1$",
+       pcall_err(exec_lua, 'return vim.bo[-1].filetype'))
   end)
 
   it('vim.wo', function()
@@ -1419,6 +1421,8 @@ describe('lua stdlib', function()
        pcall_err(exec_lua, 'return vim.wo.notanopt'))
     matches("Expected lua string$",
        pcall_err(exec_lua, 'return vim.wo[0][0].list'))
+    matches("Invalid window id: %-1$",
+       pcall_err(exec_lua, 'return vim.wo[-1].list'))
     eq(2, funcs.luaeval "vim.wo[1000].cole")
     exec_lua [[
     vim.wo[1000].cole = 0

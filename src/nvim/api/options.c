@@ -43,6 +43,9 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
   if (opts->win.type == kObjectTypeInteger) {
     *opt_type = SREQ_WIN;
     *from = find_window_by_handle((int)opts->win.data.integer, err);
+    if (ERROR_SET(err)) {
+      return FAIL;
+    }
   } else if (HAS_KEY(opts->win)) {
     api_set_error(err, kErrorTypeValidation, "invalid value for key: win");
     return FAIL;
@@ -52,6 +55,9 @@ static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_t
     *scope = OPT_LOCAL;
     *opt_type = SREQ_BUF;
     *from = find_buffer_by_handle((int)opts->buf.data.integer, err);
+    if (ERROR_SET(err)) {
+      return FAIL;
+    }
   } else if (HAS_KEY(opts->buf)) {
     api_set_error(err, kErrorTypeValidation, "invalid value for key: buf");
     return FAIL;
