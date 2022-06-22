@@ -2047,7 +2047,7 @@ local pattern = {
     end
   end, { priority = -math.huge + 1 }),
   ['XF86Config.*'] = starsetf(function(path, bufnr)
-    return require('vim.filetype.detect').xfree86(bufnr)
+    return require('vim.filetype.detect').xfree86()
   end),
   ['%.zcompdump.*'] = starsetf('zsh'),
   -- .zlog* and zlog*
@@ -2185,17 +2185,24 @@ end
 local function dispatch(ft, path, bufnr, ...)
   local on_detect
   if type(ft) == 'function' then
-    ft, on_detect = ft(path, bufnr, ...)
+    if bufnr then
+      ft, on_detect = ft(path, bufnr, ...)
+    else
+      -- If bufnr is nil (meaning we are matching only against the filename), set it to an invalid
+      -- value (-1) and catch any errors from the filetype detection function. If the function tries
+      -- to use the buffer then it will fail, but this enables functions which do not need a buffer
+      -- to still work.
+      local ok
+      ok, ft, on_detect = pcall(ft, path, -1, ...)
+      if not ok then
+        return
+      end
+    end
   end
 
   if type(ft) == 'string' then
     return ft, on_detect
   end
-
-  -- Any non-falsey value (that is, anything other than 'nil' or 'false') will
-  -- end filetype matching. This is useful for e.g. the dist#ft functions that
-  -- return 0, but set the buffer's filetype themselves
-  return ft
 end
 
 ---@private
@@ -2214,28 +2221,73 @@ local function match_pattern(name, path, tail, pat)
   return matches
 end
 
---- Find the filetype for the given filename and buffer.
+--- Perform filetype detection.
 ---
----@param name string File name (can be an absolute or relative path)
----@param bufnr number|nil The buffer to set the filetype for. Defaults to the current buffer.
+--- The filetype can be detected using one of three methods:
+---  1. Using an existing buffer
+---  2. Using only a file name
+---  3. Using only file contents
+---
+--- Of these, option 1 provides the most accurate result as it uses both the buffer's filename and
+--- (optionally) the buffer contents. Options 2 and 3 can be used without an existing buffer, but
+--- may not always provide a match in cases where the filename (or contents) cannot unambiguously
+--- determine the filetype.
+---
+--- Each of the three options is specified using a key to the single argument of this function.
+--- Example:
+---
+--- <pre>
+---   -- Using a buffer number
+---   vim.filetype.match({ buf = 42 })
+---
+---   -- Using a filename
+---   vim.filetype.match({ filename = "main.lua" })
+---
+---   -- Using file contents
+---   vim.filetype.match({ contents = "#!/usr/bin/env bash" })
+--- </pre>
+---
+---@param arg table Table specifying which matching strategy to use. It is an error to provide more
+---                 than one strategy. Accepted keys are:
+---                   * buf (number): Buffer number to use for matching
+---                   * filename (string): Filename to use for matching. Note that the file need not
+---                                        actually exist in the filesystem, only the name itself is
+---                                        used.
+---                   * contents (table): An array of lines representing file contents to use for
+---                                       matching.
 ---@return string|nil If a match was found, the matched filetype.
 ---@return function|nil A function that modifies buffer state when called (for example, to set some
 ---                     filetype specific buffer variables). The function accepts a buffer number as
 ---                     its only argument.
-function M.match(name, bufnr)
+function M.match(arg)
   vim.validate({
-    name = { name, 's' },
-    bufnr = { bufnr, 'n', true },
+    arg = { arg, 't' },
   })
 
-  -- When fired from the main filetypedetect autocommand the {bufnr} argument is omitted, so we use
-  -- the current buffer. The {bufnr} argument is provided to allow extensibility in case callers
-  -- wish to perform filetype detection on buffers other than the current one.
-  bufnr = bufnr or api.nvim_get_current_buf()
+  if not (arg.buf or arg.filename or arg.contents) then
+    error('One of "buf", "filename", or "contents" must be given')
+  end
 
-  name = normalize_path(name)
+  if (arg.buf and arg.filename) or (arg.buf and arg.contents) or (arg.filename and arg.contents) then
+    error('Only one of "buf", "filename", or "contents" must be given')
+  end
+
+  local bufnr = arg.buf
+  local name = bufnr and api.nvim_buf_get_name(bufnr) or arg.filename
+  local contents = arg.contents
+
+  if name then
+    name = normalize_path(name)
+  end
 
   local ft, on_detect
+
+  if not (bufnr or name) then
+    -- Sanity check: this should not happen
+    assert(contents, 'contents should be non-nil when bufnr and filename are nil')
+    -- TODO: "scripts.lua" content matching
+    return ft, on_detect
+  end
 
   -- First check for the simple case where the full path exists as a key
   local path = vim.fn.resolve(vim.fn.fnamemodify(name, ':p'))
