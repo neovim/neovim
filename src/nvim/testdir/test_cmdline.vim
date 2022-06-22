@@ -636,6 +636,14 @@ func Test_illegal_address2()
   call delete('Xtest.vim')
 endfunc
 
+func Test_mark_from_line_zero()
+  " this was reading past the end of the first (empty) line
+  new
+  norm oxxxx
+  call assert_fails("0;'(", 'E20:')
+  bwipe!
+endfunc
+
 func Test_cmdline_complete_wildoptions()
   help
   call feedkeys(":tag /\<c-a>\<c-b>\"\<cr>", 'tx')
