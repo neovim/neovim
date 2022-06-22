@@ -697,8 +697,10 @@ int get_lisp_indent(void)
             && lisp_match(that + 1)) {
           amount += 2;
         } else {
-          that++;
-          amount++;
+          if (*that != NUL) {
+            that++;
+            amount++;
+          }
           firsttry = amount;
 
           while (ascii_iswhite(*that)) {

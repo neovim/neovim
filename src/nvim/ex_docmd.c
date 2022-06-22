@@ -2826,10 +2826,13 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
         curwin->w_cursor.lnum = eap->line2;
 
         // Don't leave the cursor on an illegal line or column, but do
-        // accept zero as address, so 0;/PATTERN/ works correctly.
+        // accept zero as address, so 0;/PATTERN/ works correctly
+        // (where zero usually means to use the first line).
         // Check the cursor position before returning.
         if (eap->line2 > 0) {
           check_cursor();
+        } else {
+          check_cursor_col();
         }
         need_check_cursor = true;
       }
