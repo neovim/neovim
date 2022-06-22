@@ -363,21 +363,29 @@ func Test_mkview_open_folds()
 
   call append(0, ['a', 'b', 'c'])
   1,3fold
-  " zR affects 'foldlevel', make sure the option is applied after the folds
-  " have been recreated.
-  normal zR
   write! Xtestfile
 
+  call assert_notequal(-1, foldclosed(1))
+  call assert_notequal(-1, foldclosed(2))
+  call assert_notequal(-1, foldclosed(3))
+
+  " Save the view with folds closed
+  mkview! Xtestview
+
+  " zR affects 'foldlevel', make sure the option is applied after the folds
+  " have been recreated.
+  " Open folds to ensure they get closed when restoring the view
+  normal zR
+
   call assert_equal(-1, foldclosed(1))
   call assert_equal(-1, foldclosed(2))
   call assert_equal(-1, foldclosed(3))
 
-  mkview! Xtestview
   source Xtestview
 
-  call assert_equal(-1, foldclosed(1))
-  call assert_equal(-1, foldclosed(2))
-  call assert_equal(-1, foldclosed(3))
+  call assert_notequal(-1, foldclosed(1))
+  call assert_notequal(-1, foldclosed(2))
+  call assert_notequal(-1, foldclosed(3))
 
   call delete('Xtestview')
   call delete('Xtestfile')
