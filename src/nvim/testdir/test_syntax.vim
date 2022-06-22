@@ -778,6 +778,82 @@ func Test_search_syntax_skip()
   bwipe!
 endfunc
 
+func Test_syn_contained_transparent()
+  " Comments starting with "Regression:" show the result when the highlighting
+  " span of the containing item is assigned to the contained region.
+  syntax on
+
+  let l:case = "Transparent region contained in region"
+  new
+  syntax region X start=/\[/ end=/\]/ contained transparent
+  syntax region Y start=/(/ end=/)/ contains=X
+
+  call setline(1,  "==(--[~~]--)==")
+  let l:expected = "  YYYYYYYYYY  "
+  eval AssertHighlightGroups(1, 1, l:expected, 1, l:case)
+  syntax clear Y X
+  bw!
+
+  let l:case = "Transparent region extends region"
+  new
+  syntax region X start=/\[/ end=/\]/ contained transparent
+  syntax region Y start=/(/ end=/)/ end=/e/ contains=X
+
+  call setline(1,  "==(--[~~e~~]--)==")
+  let l:expected = "  YYYYYYYYYYYYY  "
+  " Regression:    "  YYYYYYY   YYY  "
+  eval AssertHighlightGroups(1, 1, l:expected, 1, l:case)
+  syntax clear Y X
+  bw!
+
+  let l:case = "Nested transparent regions extend region"
+  new
+  syntax region X start=/\[/ end=/\]/ contained transparent
+  syntax region Y start=/(/ end=/)/ end=/e/ contains=X
+
+  call setline(1,  "==(--[~~e~~[~~e~~]~~e~~]--)==")
+  let l:expected = "  YYYYYYYYYYYYYYYYYYYYYYYYY  "
+  " Regression:    "  YYYYYYY         YYYYYYYYY  "
+  eval AssertHighlightGroups(1, 1, l:expected, 1, l:case)
+  syntax clear Y X
+  bw!
+
+  let l:case = "Transparent region contained in match"
+  new
+  syntax region X start=/\[/ end=/\]/ contained transparent
+  syntax match Y /(.\{-})/ contains=X
+
+  call setline(1,  "==(--[~~]--)==")
+  let l:expected = "  YYYYYYYYYY  "
+  eval AssertHighlightGroups(1, 1, l:expected, 1, l:case)
+  syntax clear Y X
+  bw!
+
+  let l:case = "Transparent region extends match"
+  new
+  syntax region X start=/\[/ end=/\]/ contained transparent
+  syntax match Y /(.\{-}[e)]/ contains=X
+
+  call setline(1,  "==(--[~~e~~]--)==")
+  let l:expected = "  YYYYYYYYYY     "
+  " Regression:    "  YYYYYYY        "
+  eval AssertHighlightGroups(1, 1, l:expected, 1, l:case)
+  syntax clear Y X
+  bw!
+
+  let l:case = "Nested transparent regions extend match"
+  new
+  syntax region X start=/\[/ end=/\]/ contained transparent
+  syntax match Y /(.\{-}[e)]/ contains=X
+
+  call setline(1,  "==(--[~~e~~[~~e~~]~~e~~]--)==")
+  let l:expected = "  YYYYYYYYYYYYYYYYYYYYYY     "
+  " Regression:    "  YYYYYYY         YYYYYY     "
+  eval AssertHighlightGroups(1, 1, l:expected, 1, l:case)
+  syntax clear Y X
+  bw!
+endfunc
+
 func Test_syn_include_contains_TOP()
   let l:case = "TOP in included syntax means its group list name"
   new
