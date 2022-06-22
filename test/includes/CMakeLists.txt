@@ -16,7 +16,7 @@ endforeach()
 
 foreach(hfile ${PRE_HEADERS})
   string(REGEX REPLACE ^pre/ post/ post_hfile ${hfile})
-  get_filename_component(hdir ${CMAKE_CURRENT_BINARY_DIR}/${post_hfile} PATH)
+  get_filename_component(hdir ${CMAKE_CURRENT_BINARY_DIR}/${post_hfile} DIRECTORY)
   file(MAKE_DIRECTORY ${hdir})
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${post_hfile}

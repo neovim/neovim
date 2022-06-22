@@ -225,7 +225,7 @@ foreach(sfile ${NVIM_SOURCES}
               "${GENERATED_KEYSETS}"
               "${GENERATED_UI_EVENTS_CLIENT}"
               )
-  get_filename_component(full_d ${sfile} PATH)
+  get_filename_component(full_d ${sfile} DIRECTORY)
   file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
   if(${d} MATCHES "^[.][.]|auto/")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
@@ -597,10 +597,7 @@ set_target_properties(
     POSITION_INDEPENDENT_CODE ON
     OUTPUT_NAME ${LIBNVIM_NAME}
 )
-set_property(
-  TARGET libnvim
-  APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
-)
+target_compile_options(libnvim PRIVATE -DMAKE_LIB)
 
 if(NOT LUAJIT_FOUND)
   message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
@@ -626,10 +623,7 @@ else()
     PROPERTIES
       POSITION_INDEPENDENT_CODE ON
   )
-  set_property(
-    TARGET nvim-test
-    APPEND_STRING PROPERTY COMPILE_FLAGS " -DUNIT_TESTING "
-  )
+  target_compile_options(nvim-test PRIVATE -DUNIT_TESTING)
 endif()
 
 if(CLANG_ASAN_UBSAN)
@@ -664,7 +658,7 @@ elseif(CLANG_TSAN)
 endif()
 
 function(get_test_target prefix sfile relative_path_var target_var)
-  get_filename_component(full_d "${sfile}" PATH)
+  get_filename_component(full_d "${sfile}" DIRECTORY)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
   if(d MATCHES "^[.][.]")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
