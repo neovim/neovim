@@ -4282,7 +4282,7 @@ static void nv_ident(cmdarg_T *cap)
       // Start insert mode in terminal buffer
       restart_edit = 'i';
 
-      add_map((char_u *)"<buffer> <esc> <Cmd>bdelete!<CR>", MODE_TERMINAL, true);
+      add_map("<esc>", "<Cmd>bdelete!<CR>", MODE_TERMINAL, true);
     }
   }
 

@@ -2092,37 +2092,35 @@ void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 void init_default_mappings(void)
 {
-  add_map((char_u *)"Y y$", MODE_NORMAL, true);
+  add_map("Y", "y$", MODE_NORMAL, false);
 
   // Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>
   // See https://github.com/neovim/neovim/issues/17473
-  add_map((char_u *)"<C-L> <Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
-          MODE_NORMAL, true);
-  add_map((char_u *)"<C-U> <C-G>u<C-U>", MODE_INSERT, true);
-  add_map((char_u *)"<C-W> <C-G>u<C-W>", MODE_INSERT, true);
-  add_map((char_u *)"* y/\\\\V<C-R>\"<CR>", MODE_VISUAL, true);
-  add_map((char_u *)"# y?\\\\V<C-R>\"<CR>", MODE_VISUAL, true);
+  add_map("<C-L>", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
+          MODE_NORMAL, false);
+  add_map("<C-U>", "<C-G>u<C-U>", MODE_INSERT, false);
+  add_map("<C-W>", "<C-G>u<C-W>", MODE_INSERT, false);
+  add_map("*", "y/\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
+  add_map("#", "y?\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
 }
 
-/// Add a mapping. Unlike @ref do_map this copies the {map} argument, so
+/// Add a mapping. Unlike @ref do_map this copies the string arguments, so
 /// static or read-only strings can be used.
 ///
-/// @param map  C-string containing the arguments of the map/abbrev command,
-///             i.e. everything except the initial `:[X][nore]map`.
+/// @param lhs  C-string containing the lhs of the mapping
+/// @param rhs  C-string containing the rhs of the mapping
 /// @param mode  Bitflags representing the mode in which to set the mapping.
 ///              See @ref get_map_mode.
-/// @param nore  If true, make a non-recursive mapping.
-void add_map(char_u *map, int mode, bool nore)
+/// @param buffer  If true, make a buffer-local mapping for curbuf
+void add_map(char *lhs, char *rhs, int mode, bool buffer)
 {
-  char_u *s;
-  char *cpo_save = p_cpo;
+  MapArguments args = { 0 };
+  set_maparg_lhs_rhs(lhs, strlen(lhs), rhs, strlen(rhs), LUA_NOREF, 0, &args);
+  args.buffer = buffer;
 
-  p_cpo = "";         // Allow <> notation
-  // Need to put string in allocated memory, because do_map() will modify it.
-  s = vim_strsave(map);
-  (void)do_map(nore ? 2 : 0, s, mode, false);
-  xfree(s);
-  p_cpo = cpo_save;
+  buf_do_map(2, &args, mode, false, curbuf);
+  xfree(args.rhs);
+  xfree(args.orig_rhs);
 }
 
 /// Any character has an equivalent 'langmap' character.  This is used for
