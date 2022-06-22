@@ -21,6 +21,55 @@
 # include "api/options.c.generated.h"
 #endif
 
+static int validate_option_value_args(Dict(option) *opts, int *scope, int *opt_type, void **from,
+                                      Error *err)
+{
+  if (opts->scope.type == kObjectTypeString) {
+    if (!strcmp(opts->scope.data.string.data, "local")) {
+      *scope = OPT_LOCAL;
+    } else if (!strcmp(opts->scope.data.string.data, "global")) {
+      *scope = OPT_GLOBAL;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "invalid scope: must be 'local' or 'global'");
+      return FAIL;
+    }
+  } else if (HAS_KEY(opts->scope)) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: scope");
+    return FAIL;
+  }
+
+  *opt_type = SREQ_GLOBAL;
+
+  if (opts->win.type == kObjectTypeInteger) {
+    *opt_type = SREQ_WIN;
+    *from = find_window_by_handle((int)opts->win.data.integer, err);
+  } else if (HAS_KEY(opts->win)) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: win");
+    return FAIL;
+  }
+
+  if (opts->buf.type == kObjectTypeInteger) {
+    *scope = OPT_LOCAL;
+    *opt_type = SREQ_BUF;
+    *from = find_buffer_by_handle((int)opts->buf.data.integer, err);
+  } else if (HAS_KEY(opts->buf)) {
+    api_set_error(err, kErrorTypeValidation, "invalid value for key: buf");
+    return FAIL;
+  }
+
+  if (HAS_KEY(opts->scope) && HAS_KEY(opts->buf)) {
+    api_set_error(err, kErrorTypeValidation, "scope and buf cannot be used together");
+    return FAIL;
+  }
+
+  if (HAS_KEY(opts->win) && HAS_KEY(opts->buf)) {
+    api_set_error(err, kErrorTypeValidation, "buf and win cannot be used together");
+    return FAIL;
+  }
+
+  return OK;
+}
+
 /// Gets the value of an option. The behavior of this function matches that of
 /// |:set|: the local value of an option is returned if it exists; otherwise,
 /// the global value is returned. Local values always correspond to the current
@@ -41,55 +90,18 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   Object rv = OBJECT_INIT;
 
   int scope = 0;
-  if (opts->scope.type == kObjectTypeString) {
-    if (!strcmp(opts->scope.data.string.data, "local")) {
-      scope = OPT_LOCAL;
-    } else if (!strcmp(opts->scope.data.string.data, "global")) {
-      scope = OPT_GLOBAL;
-    } else {
-      api_set_error(err, kErrorTypeValidation, "invalid scope: must be 'local' or 'global'");
-      goto end;
-    }
-  } else if (HAS_KEY(opts->scope)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: scope");
-    goto end;
-  }
-
   int opt_type = SREQ_GLOBAL;
   void *from = NULL;
-
-  if (opts->win.type == kObjectTypeInteger) {
-    opt_type = SREQ_WIN;
-    from = find_window_by_handle((int)opts->win.data.integer, err);
-  } else if (HAS_KEY(opts->win)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: win");
-    goto end;
-  }
-
-  if (opts->buf.type == kObjectTypeInteger) {
-    scope = OPT_LOCAL;
-    opt_type = SREQ_BUF;
-    from = find_buffer_by_handle((int)opts->buf.data.integer, err);
-  } else if (HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: buf");
-    goto end;
-  }
-
-  if (HAS_KEY(opts->scope) && HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "scope and buf cannot be used together");
-    goto end;
-  }
-
-  if (HAS_KEY(opts->win) && HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "buf and win cannot be used together");
-    goto end;
+  if (!validate_option_value_args(opts, &scope, &opt_type, &from, err)) {
+    return rv;
   }
 
   long numval = 0;
   char *stringval = NULL;
-  int result = get_option_value_for(name.data, &numval, &stringval, scope, opt_type, from, err);
+  int result = access_option_value_for(name.data, &numval, &stringval, scope, opt_type, from,
+                                       true, err);
   if (ERROR_SET(err)) {
-    goto end;
+    return rv;
   }
 
   switch (result) {
@@ -114,10 +126,9 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     break;
   default:
     api_set_error(err, kErrorTypeValidation, "unknown option '%s'", name.data);
-    goto end;
+    return rv;
   }
 
-end:
   return rv;
 }
 
@@ -139,47 +150,9 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
   FUNC_API_SINCE(9)
 {
   int scope = 0;
-  if (opts->scope.type == kObjectTypeString) {
-    if (!strcmp(opts->scope.data.string.data, "local")) {
-      scope = OPT_LOCAL;
-    } else if (!strcmp(opts->scope.data.string.data, "global")) {
-      scope = OPT_GLOBAL;
-    } else {
-      api_set_error(err, kErrorTypeValidation, "invalid scope: must be 'local' or 'global'");
-      return;
-    }
-  } else if (HAS_KEY(opts->scope)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: scope");
-    return;
-  }
-
   int opt_type = SREQ_GLOBAL;
   void *to = NULL;
-
-  if (opts->win.type == kObjectTypeInteger) {
-    opt_type = SREQ_WIN;
-    to = find_window_by_handle((int)opts->win.data.integer, err);
-  } else if (HAS_KEY(opts->win)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: win");
-    return;
-  }
-
-  if (opts->buf.type == kObjectTypeInteger) {
-    scope = OPT_LOCAL;
-    opt_type = SREQ_BUF;
-    to = find_buffer_by_handle((int)opts->buf.data.integer, err);
-  } else if (HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "invalid value for key: buf");
-    return;
-  }
-
-  if (HAS_KEY(opts->scope) && HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "scope and buf cannot be used together");
-    return;
-  }
-
-  if (HAS_KEY(opts->win) && HAS_KEY(opts->buf)) {
-    api_set_error(err, kErrorTypeValidation, "buf and win cannot be used together");
+  if (!validate_option_value_args(opts, &scope, &opt_type, &to, err)) {
     return;
   }
 
@@ -204,7 +177,7 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     return;
   }
 
-  set_option_value_for(name.data, numval, stringval, scope, opt_type, to, err);
+  access_option_value_for(name.data, &numval, &stringval, scope, opt_type, to, false, err);
 }
 
 /// Gets the option information for all options.
@@ -441,7 +414,7 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
     }
   }
 
-  int numval = 0;
+  long numval = 0;
   char *stringval = NULL;
 
   if (flags & SOPT_BOOL) {
@@ -486,66 +459,30 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
                           ? 0 : (type == SREQ_GLOBAL)
                                 ? OPT_GLOBAL : OPT_LOCAL;
 
-    set_option_value_for(name.data, numval, stringval,
-                         opt_flags, type, to, err);
+    access_option_value_for(name.data, &numval, &stringval, opt_flags, type, to, false, err);
   });
 }
 
-void set_option_value_for(char *key, long numval, char *stringval, int opt_flags, int opt_type,
-                          void *from, Error *err)
+static int access_option_value(char *key, long *numval, char **stringval, int opt_flags, bool get,
+                               Error *err)
 {
-  switchwin_T switchwin;
-  aco_save_T aco;
-
-  try_start();
-  switch (opt_type) {
-  case SREQ_WIN:
-    if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
-        == FAIL) {
-      restore_win_noblock(&switchwin, true);
+  if (get) {
+    return get_option_value(key, numval, stringval, opt_flags);
+  } else {
+    char *errmsg;
+    if ((errmsg = set_option_value(key, *numval, *stringval, opt_flags))) {
       if (try_end(err)) {
-        return;
+        return 0;
       }
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Problem while switching windows");
-      return;
+
+      api_set_error(err, kErrorTypeException, "%s", errmsg);
     }
-    set_option_value_err(key, numval, stringval, opt_flags, err);
-    restore_win_noblock(&switchwin, true);
-    break;
-  case SREQ_BUF:
-    aucmd_prepbuf(&aco, (buf_T *)from);
-    set_option_value_err(key, numval, stringval, opt_flags, err);
-    aucmd_restbuf(&aco);
-    break;
-  case SREQ_GLOBAL:
-    set_option_value_err(key, numval, stringval, opt_flags, err);
-    break;
-  }
-
-  if (ERROR_SET(err)) {
-    return;
-  }
-
-  try_end(err);
-}
-
-static void set_option_value_err(char *key, long numval, char *stringval, int opt_flags, Error *err)
-{
-  char *errmsg;
-
-  if ((errmsg = set_option_value(key, numval, stringval, opt_flags))) {
-    if (try_end(err)) {
-      return;
-    }
-
-    api_set_error(err, kErrorTypeException, "%s", errmsg);
+    return 0;
   }
 }
 
-int get_option_value_for(char *key, long *numval, char **stringval, int opt_flags, int opt_type,
-                         void *from, Error *err)
+static int access_option_value_for(char *key, long *numval, char **stringval, int opt_flags,
+                                   int opt_type, void *from, bool get, Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
@@ -565,17 +502,21 @@ int get_option_value_for(char *key, long *numval, char **stringval, int opt_flag
                     "Problem while switching windows");
       return result;
     }
-    result = get_option_value(key, numval, stringval, opt_flags);
+    result = access_option_value(key, numval, stringval, opt_flags, get, err);
     restore_win_noblock(&switchwin, true);
     break;
   case SREQ_BUF:
     aucmd_prepbuf(&aco, (buf_T *)from);
-    result = get_option_value(key, numval, stringval, opt_flags);
+    result = access_option_value(key, numval, stringval, opt_flags, get, err);
     aucmd_restbuf(&aco);
     break;
   case SREQ_GLOBAL:
-    result = get_option_value(key, numval, stringval, opt_flags);
+    result = access_option_value(key, numval, stringval, opt_flags, get, err);
     break;
+  }
+
+  if (ERROR_SET(err)) {
+    return result;
   }
 
   try_end(err);
