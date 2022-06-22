@@ -2286,7 +2286,7 @@ function M.match(arg)
     -- Sanity check: this should not happen
     assert(contents, 'contents should be non-nil when bufnr and filename are nil')
     -- TODO: "scripts.lua" content matching
-    return ft, on_detect
+    return
   end
 
   -- First check for the simple case where the full path exists as a key
