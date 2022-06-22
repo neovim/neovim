@@ -51,8 +51,8 @@ if(DEFINED ENV{TEST_FILTER_OUT} AND NOT "$ENV{TEST_FILTER_OUT}" STREQUAL "")
   list(APPEND BUSTED_ARGS --filter-out $ENV{TEST_FILTER_OUT})
 endif()
 
-# TMPDIR: use relative test path (for parallel test runs / isolation).
-set(ENV{TMPDIR} "${BUILD_DIR}/Xtest_tmpdir/${TEST_PATH}")
+# TMPDIR: for helpers.tmpname() and Nvim tempname().
+set(ENV{TMPDIR} "${BUILD_DIR}/Xtest_tmpdir")
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 
 # HISTFILE: do not write into user's ~/.bash_history
