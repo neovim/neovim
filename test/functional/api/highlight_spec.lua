@@ -293,19 +293,20 @@ describe("API: set highlight", function()
     eq('Test_hl2       xxx cterm=undercurl,italic,reverse,strikethrough ctermfg=8 ctermbg=15 gui=bold,underline,underlineline,undercurl,underdot,underdash,italic,reverse,strikethrough guifg=#ff0000 guibg=#0032aa',
       exec_capture('highlight Test_hl2'))
 
-    -- Colors are stored exactly as they are defined.
+    -- Colors are stored with the name they are defined, but
+    -- with canonical casing
     meths.set_hl(0, 'Test_hl3', { bg = 'reD', fg = 'bLue'})
-    eq('Test_hl3       xxx guifg=bLue guibg=reD',
+    eq('Test_hl3       xxx guifg=Blue guibg=Red',
       exec_capture('highlight Test_hl3'))
   end)
 
   it ("can modify a highlight in the global namespace", function()
     meths.set_hl(0, 'Test_hl3', { bg = 'red', fg = 'blue'})
-    eq('Test_hl3       xxx guifg=blue guibg=red',
+    eq('Test_hl3       xxx guifg=Blue guibg=Red',
       exec_capture('highlight Test_hl3'))
 
     meths.set_hl(0, 'Test_hl3', { bg = 'red' })
-    eq('Test_hl3       xxx guibg=red',
+    eq('Test_hl3       xxx guibg=Red',
       exec_capture('highlight Test_hl3'))
 
     meths.set_hl(0, 'Test_hl3', { ctermbg = 9, ctermfg = 12})
@@ -327,7 +328,7 @@ describe("API: set highlight", function()
       pcall_err(meths.set_hl, 0, 'Test_hl3', {ctermfg='bleu'}))
 
     meths.set_hl(0, 'Test_hl3', {fg='#FF00FF'})
-    eq('Test_hl3       xxx guifg=#FF00FF',
+    eq('Test_hl3       xxx guifg=#ff00ff',
       exec_capture('highlight Test_hl3'))
 
     eq("'#FF00FF' is not a valid color",
@@ -340,7 +341,7 @@ describe("API: set highlight", function()
     end
 
     meths.set_hl(0, 'Test_hl3', {fg='#FF00FF', blend=50})
-    eq('Test_hl3       xxx guifg=#FF00FF blend=50',
+    eq('Test_hl3       xxx guifg=#ff00ff blend=50',
       exec_capture('highlight Test_hl3'))
 
   end)

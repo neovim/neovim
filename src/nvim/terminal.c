@@ -257,7 +257,8 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
     snprintf(var, sizeof(var), "terminal_color_%d", i);
     char *name = get_config_string(var);
     if (name) {
-      color_val = name_to_color(name);
+      int dummy;
+      color_val = name_to_color(name, &dummy);
       xfree(name);
 
       if (color_val != -1) {

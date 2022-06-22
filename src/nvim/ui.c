@@ -507,10 +507,12 @@ void ui_flush(void)
     pending_cursor_update = false;
   }
   if (pending_mode_info_update) {
-    Array style = mode_style_array();
+    Arena arena = ARENA_EMPTY;
+    arena_start(&arena, &ui_ext_fixblk);
+    Array style = mode_style_array(&arena);
     bool enabled = (*p_guicursor != NUL);
     ui_call_mode_info_set(enabled, style);
-    api_free_array(style);
+    arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
     pending_mode_info_update = false;
   }
   if (pending_mode_update && !starting) {
