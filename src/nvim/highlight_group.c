@@ -1751,6 +1751,8 @@ static int syn_add_group(const char *name, size_t len)
   if (highlight_ga.ga_data == NULL) {
     highlight_ga.ga_itemsize = sizeof(HlGroup);
     ga_set_growsize(&highlight_ga, 10);
+    // 265 builtin groups, will always be used, plus some space
+    ga_grow(&highlight_ga, 300);
   }
 
   if (highlight_ga.ga_len >= MAX_HL_ID) {
@@ -2765,10 +2767,19 @@ RgbValue name_to_color(const char *name, int *idx)
     return normal_fg;
   }
 
-  for (int i = 0; color_name_table[i].name != NULL; i++) {
-    if (!STRICMP(name, color_name_table[i].name)) {
-      *idx = i;
-      return color_name_table[i].color;
+  int lo = 0;
+  int hi = ARRAY_SIZE(color_name_table) - 1;  // don't count NULL element
+  while (lo < hi) {
+    int m = (lo + hi) / 2;
+    int cmp = STRICMP(name, color_name_table[m].name);
+    if (cmp < 0) {
+      hi = m;
+    } else if (cmp > 0) {
+      lo = m + 1;
+    } else {  // found match
+      *idx = m;
+      return color_name_table[m].color;
+      break;
     }
   }
 

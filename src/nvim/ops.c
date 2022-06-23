@@ -57,7 +57,7 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-static yankreg_T y_regs[NUM_REGISTERS];
+static yankreg_T y_regs[NUM_REGISTERS] = { 0 };
 
 static yankreg_T *y_previous = NULL;  // ptr to last written yankreg
 
@@ -2569,12 +2569,6 @@ int op_change(oparg_T *oap)
   auto_format(false, true);
 
   return retval;
-}
-
-/// set all the yank registers to empty (called from main())
-void init_yank(void)
-{
-  memset(&(y_regs[0]), 0, sizeof(y_regs));
 }
 
 #if defined(EXITFREE)

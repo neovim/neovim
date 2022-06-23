@@ -128,6 +128,7 @@ void event_init(void)
   channel_init();
   terminal_init();
   ui_init();
+  TIME_MSG("event init");
 }
 
 /// @returns false if main_loop could not be closed gracefully
@@ -172,6 +173,8 @@ void early_init(mparm_T *paramp)
            (int)ovi.dwMajorVersion, (int)ovi.dwMinorVersion);
 #endif
 
+  TIME_MSG("early init");
+
 #if defined(HAVE_LOCALE_H)
   // Setup to use the current locale (for ctype() and many other things).
   // NOTE: Translated messages with encodings other than latin1 will not
@@ -184,8 +187,7 @@ void early_init(mparm_T *paramp)
   if (!win_alloc_first()) {
     os_exit(0);
   }
-
-  init_yank();                  // init yank buffers
+  TIME_MSG("init first window");
 
   alist_init(&global_alist);    // Init the argument list to empty.
   global_alist.id = 0;
