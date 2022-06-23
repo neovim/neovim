@@ -3025,6 +3025,7 @@ ambw_end:
   } else if (varp == &p_pt) {
     // 'pastetoggle': translate key codes like in a mapping
     if (*p_pt) {
+      p = NULL;
       (void)replace_termcodes((char *)p_pt,
                               STRLEN(p_pt),
                               (char **)&p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,

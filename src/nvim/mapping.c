@@ -104,10 +104,10 @@ static void mapblock_free(mapblock_T **mpp)
   xfree(mp->m_keys);
   if (!mp->m_simplified) {
     NLUA_CLEAR_REF(mp->m_luaref);
+    xfree(mp->m_str);
+    xfree(mp->m_orig_str);
   }
-  XFREE_CLEAR(mp->m_str);
-  XFREE_CLEAR(mp->m_orig_str);
-  XFREE_CLEAR(mp->m_desc);
+  xfree(mp->m_desc);
   *mpp = mp->m_next;
   xfree(mp);
 }
@@ -254,14 +254,12 @@ static void showmap(mapblock_T *mp, bool local)
 /// @param[in] orig_rhs_len   `strlen` of orig_rhs.
 /// @param[in] cpo_flags  See param docs for @ref replace_termcodes.
 /// @param[out] mapargs   MapArguments struct holding the replaced strings.
-static void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
+static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
                                const char *const orig_rhs, const size_t orig_rhs_len,
                                const LuaRef rhs_lua, const int cpo_flags,
                                MapArguments *const mapargs)
 {
-  char *lhs_buf = NULL;
-  char *alt_lhs_buf = NULL;
-  char *rhs_buf = NULL;
+  char lhs_buf[128];
 
   // If mapping has been given as ^V<C_UP> say, then replace the term codes
   // with the appropriate two bytes. If it is a shifted special key, unshift
@@ -273,13 +271,20 @@ static void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
   // If something like <C-H> is simplified to 0x08 then mark it as simplified.
   bool did_simplify = false;
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
-  char *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &lhs_buf, flags, &did_simplify,
+  char *bufarg = lhs_buf;
+  char *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, flags, &did_simplify,
                                      cpo_flags);
+  if (replaced == NULL) {
+    return false;
+  }
   mapargs->lhs_len = STRLEN(replaced);
   STRLCPY(mapargs->lhs, replaced, sizeof(mapargs->lhs));
   if (did_simplify) {
-    replaced = replace_termcodes(orig_lhs, orig_lhs_len, &alt_lhs_buf, flags | REPTERM_NO_SIMPLIFY,
+    replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, flags | REPTERM_NO_SIMPLIFY,
                                  NULL, cpo_flags);
+    if (replaced == NULL) {
+      return false;
+    }
     mapargs->alt_lhs_len = STRLEN(replaced);
     STRLCPY(mapargs->alt_lhs, replaced, sizeof(mapargs->alt_lhs));
   } else {
@@ -298,14 +303,14 @@ static void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
       mapargs->rhs_len = 0;
       mapargs->rhs_is_noop = true;
     } else {
+      char *rhs_buf = NULL;
       replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, REPTERM_DO_LT, NULL,
                                    cpo_flags);
       mapargs->rhs_len = STRLEN(replaced);
       // XXX: replace_termcodes may produce an empty string even if orig_rhs is non-empty
       // (e.g. a single ^V, see :h map-empty-rhs)
       mapargs->rhs_is_noop = orig_rhs_len != 0 && mapargs->rhs_len == 0;
-      mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
-      STRLCPY(mapargs->rhs, replaced, mapargs->rhs_len + 1);
+      mapargs->rhs = (char_u *)replaced;
     }
   } else {
     char tmp_buf[64];
@@ -317,10 +322,7 @@ static void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
                                             (char_u)KS_EXTRA, KE_LUA, rhs_lua);
     mapargs->rhs = vim_strsave((char_u *)tmp_buf);
   }
-
-  xfree(lhs_buf);
-  xfree(alt_lhs_buf);
-  xfree(rhs_buf);
+  return true;
 }
 
 /// Parse a string of |:map-arguments| into a @ref MapArguments struct.
@@ -346,27 +348,26 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
 {
   const char_u *to_parse = strargs;
   to_parse = (char_u *)skipwhite((char *)to_parse);
-  MapArguments parsed_args;  // copy these into mapargs "all at once" when done
-  memset(&parsed_args, 0, sizeof(parsed_args));
+  memset(mapargs, 0, sizeof(*mapargs));
 
   // Accept <buffer>, <nowait>, <silent>, <expr>, <script>, and <unique> in
   // any order.
   while (true) {
     if (STRNCMP(to_parse, "<buffer>", 8) == 0) {
       to_parse = (char_u *)skipwhite((char *)to_parse + 8);
-      parsed_args.buffer = true;
+      mapargs->buffer = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<nowait>", 8) == 0) {
       to_parse = (char_u *)skipwhite((char *)to_parse + 8);
-      parsed_args.nowait = true;
+      mapargs->nowait = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<silent>", 8) == 0) {
       to_parse = (char_u *)skipwhite((char *)to_parse + 8);
-      parsed_args.silent = true;
+      mapargs->silent = true;
       continue;
     }
 
@@ -378,19 +379,19 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
 
     if (STRNCMP(to_parse, "<script>", 8) == 0) {
       to_parse = (char_u *)skipwhite((char *)to_parse + 8);
-      parsed_args.script = true;
+      mapargs->script = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<expr>", 6) == 0) {
       to_parse = (char_u *)skipwhite((char *)to_parse + 6);
-      parsed_args.expr = true;
+      mapargs->expr = true;
       continue;
     }
 
     if (STRNCMP(to_parse, "<unique>", 8) == 0) {
       to_parse = (char_u *)skipwhite((char *)to_parse + 8);
-      parsed_args.unique = true;
+      mapargs->unique = true;
       continue;
     }
     break;
@@ -423,19 +424,21 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
   // Given {lhs} might be larger than MAXMAPLEN before replace_termcodes
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
   size_t orig_lhs_len = (size_t)((char_u *)lhs_end - to_parse);
-  char_u *lhs_to_replace = xcalloc(orig_lhs_len + 1, sizeof(char_u));
+  if (orig_lhs_len >= 256) {
+    return 1;
+  }
+  char_u lhs_to_replace[256];
   STRLCPY(lhs_to_replace, to_parse, orig_lhs_len + 1);
 
   size_t orig_rhs_len = STRLEN(rhs_start);
-  set_maparg_lhs_rhs((char *)lhs_to_replace, orig_lhs_len,
-                     (char *)rhs_start, orig_rhs_len, LUA_NOREF,
-                     CPO_TO_CPO_FLAGS, &parsed_args);
+  if (!set_maparg_lhs_rhs((char *)lhs_to_replace, orig_lhs_len,
+                          (char *)rhs_start, orig_rhs_len, LUA_NOREF,
+                          CPO_TO_CPO_FLAGS, mapargs)) {
+    return 1;
+  }
 
-  xfree(lhs_to_replace);
 
-  *mapargs = parsed_args;
-
-  if (parsed_args.lhs_len > MAXMAPLEN) {
+  if (mapargs->lhs_len > MAXMAPLEN) {
     return 1;
   }
   return 0;
@@ -494,8 +497,6 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   }
 
   const char_u *lhs = (char_u *)&args->lhs;
-  const char_u *const rhs = args->rhs;
-  const char_u *const orig_rhs = args->orig_rhs;
   const bool did_simplify = args->alt_lhs_len != 0;
 
   // The following is done twice if we have two versions of keys
@@ -712,16 +713,20 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 // new rhs for existing entry
                 mp->m_mode &= ~mode;  // remove mode bits
                 if (mp->m_mode == 0 && !did_it) {  // reuse entry
-                  XFREE_CLEAR(mp->m_str);
-                  XFREE_CLEAR(mp->m_orig_str);
                   XFREE_CLEAR(mp->m_desc);
                   if (!mp->m_simplified) {
                     NLUA_CLEAR_REF(mp->m_luaref);
+                    XFREE_CLEAR(mp->m_str);
+                    XFREE_CLEAR(mp->m_orig_str);
                   }
-
-                  mp->m_str = vim_strsave(rhs);
-                  mp->m_orig_str = vim_strsave(orig_rhs);
+                  mp->m_str = args->rhs;
+                  mp->m_orig_str = args->orig_rhs;
                   mp->m_luaref = args->rhs_lua;
+                  if (!keyround1_simplified) {
+                    args->rhs = NULL;
+                    args->orig_rhs = NULL;
+                    args->rhs_lua = LUA_NOREF;
+                  }
                   mp->m_noremap = noremap;
                   mp->m_nowait = args->nowait;
                   mp->m_silent = args->silent;
@@ -804,9 +809,14 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     mp->m_keys = vim_strsave(lhs);
-    mp->m_str = vim_strsave(rhs);
-    mp->m_orig_str = vim_strsave(orig_rhs);
+    mp->m_str = args->rhs;
+    mp->m_orig_str = args->orig_rhs;
     mp->m_luaref = args->rhs_lua;
+    if (!keyround1_simplified) {
+      args->rhs = NULL;
+      args->orig_rhs = NULL;
+      args->rhs_lua = LUA_NOREF;
+    }
     mp->m_keylen = (int)STRLEN(mp->m_keys);
     mp->m_noremap = noremap;
     mp->m_nowait = args->nowait;
@@ -1039,7 +1049,7 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
   int mode = 0;
   int retval;
 
-  char_u *buf;
+  char_u *buf = NULL;
   const char_u *const rhs = (char_u *)replace_termcodes(str, strlen(str),
                                                         (char **)&buf, REPTERM_DO_LT,
                                                         NULL, CPO_TO_CPO_FLAGS);
@@ -2411,9 +2421,13 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
   parsed_args.buffer = !global;
 
-  set_maparg_lhs_rhs(lhs.data, lhs.size,
-                     rhs.data, rhs.size, lua_funcref,
-                     CPO_TO_CPO_FLAGS, &parsed_args);
+  if (!set_maparg_lhs_rhs(lhs.data, lhs.size,
+                          rhs.data, rhs.size, lua_funcref,
+                          CPO_TO_CPO_FLAGS, &parsed_args)) {
+    api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
+    goto fail_and_free;
+  }
+
   if (opts != NULL && opts->desc.type == kObjectTypeString) {
     parsed_args.desc = string_to_cstr(opts->desc.data.string);
   } else {
@@ -2493,13 +2507,12 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }  // switch
 
-  parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
 fail_and_free:
   current_sctx = save_current_sctx;
   NLUA_CLEAR_REF(parsed_args.rhs_lua);
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
-  XFREE_CLEAR(parsed_args.desc);
+  xfree(parsed_args.desc);
 }
 
 /// Get an array containing dictionaries describing mappings
