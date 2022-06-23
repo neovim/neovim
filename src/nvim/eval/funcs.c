@@ -7766,6 +7766,9 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
         break;
       }
     }
+
+    // clear the start flag to avoid getting stuck here
+    options &= ~SEARCH_START;
   }
 
   if (subpatnum != FAIL) {
