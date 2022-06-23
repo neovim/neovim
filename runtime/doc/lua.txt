@@ -11,30 +11,126 @@ Lua engine                                                           *lua* *Lua*
 ==============================================================================
 INTRODUCTION                                                       *lua-intro*
 
-The Lua 5.1 language is builtin and always available. Try this command to get
-an idea of what lurks beneath: >
+The Lua 5.1 script engine is builtin and always available. Try this command to
+get an idea of what lurks beneath: >
 
     :lua print(vim.inspect(package.loaded))
+
+Nvim includes a "standard library" |lua-stdlib| for Lua.  It complements the
+"editor stdlib" (|builtin-functions| and |Ex-commands|) and the |API|, all of
+which can be used from Lua code (|lua-vimscript| |vim.api|). Together these
+"namespaces" form the Nvim programming interface.
+
+The |:source| and |:runtime| commands can run Lua scripts. Lua modules can be
+loaded with `require('name')`, which by convention usually returns a table.
+See |lua-require| for how Nvim finds and loads Lua modules.
+
+See this page for more insight into Nvim Lua:
+    https://github.com/nanotee/nvim-lua-guide
+
+                                                                  *lua-compat*
+Lua 5.1 is the permanent interface for Nvim Lua.  Plugins need only consider
+Lua 5.1, not worry about forward-compatibility with future Lua versions.  If
+Nvim ever ships with Lua 5.4+, a Lua 5.1 compatibility shim will be provided
+so that old plugins continue to work transparently.
+
+------------------------------------------------------------------------------
+LUA CONCEPTS AND IDIOMS                                         *lua-concepts*
+
+Lua is very simple: this means that, while there are some quirks, once you
+internalize those quirks, everything works the same everywhere. Scopes
+(closures) in particular are very consistent, unlike JavaScript or most other
+languages.
+
+Lua has three fundamental mechanisms—one for "each major aspect of
+programming": tables, closures, and coroutines.
+https://www.lua.org/doc/cacm2018.pdf
+- Tables are the "object" or container datastructure: they represent both
+  lists and maps, you can extend them to represent your own datatypes and
+  change their behavior using |luaref-metatable| (like Python's "datamodel").
+- EVERY scope in Lua is a closure: a function is a closure, a module is
+  a closure, a `do` block (|luaref-do|) is a closure--and they all work the
+  same. A Lua module is literally just a big closure discovered on the "path"
+  (where your modules are found: |package.cpath|).
+- Stackful coroutines enable cooperative multithreading, generators, and
+  versatile control for both Lua and its host (Nvim).
+
+                                                           *lua-call-function*
+Lua functions can be called in multiple ways. Consider the function: >
+    local foo = function(a, b)
+        print("A: ", a)
+        print("B: ", b)
+    end
+
+The first way to call this function is: >
+    foo(1, 2)
+    -- ==== Result ====
+    -- A: 1
+    -- B: 2
+
+This way of calling a function is familiar from most scripting languages.
+In Lua, any missing arguments are passed as `nil`. Example: >
+    foo(1)
+    -- ==== Result ====
+    -- A: 1
+    -- B: nil
+
+Furthermore it is not an error if extra parameters are passed, they are just
+discarded.
+
+It is also allowed to omit the parentheses (only) if the function takes
+exactly one string (`"foo"`) or table literal (`{1,2,3}`). The latter is often
+used to approximate the "named parameters" feature of languages like Python
+("kwargs" or "keyword args"). Example: >
+    local func_with_opts = function(opts)
+        local will_do_foo = opts.foo
+        local filename = opts.filename
+
+        ...
+    end
+
+    func_with_opts { foo = true, filename = "hello.world" }
 <
-Nvim includes a "standard library" |lua-stdlib| for Lua. It complements the
-"editor stdlib" (|builtin-functions| and Ex commands) and the |API|, all of
-which can be used from Lua code. A good overview of using Lua in neovim is
-given by https://github.com/nanotee/nvim-lua-guide.
+There is nothing special going on here except that parentheses are treated as
+whitespace. But visually, this small bit of sugar gets reasonably close to
+a "keyword args" interface.
 
-The |:source| and |:runtime| commands can run Lua scripts as well as Vim
-scripts. Lua modules can be loaded with `require('name')`, which
-conventionally returns a table but can return any value.
+It is of course also valid to call the function with parentheses: >
 
-See |lua-require| for details on how Nvim finds and loads Lua modules.
-See |lua-require-example| for an example of how to write and use a module.
+    func_with_opts({ foo = true, filename = "hello.world" })
+<
+Nvim tends to prefer the keyword args style.
+
+------------------------------------------------------------------------------
+LUA PATTERNS                                                    *lua-patterns*
+
+Lua intentionally does not support regular expressions, instead it has limited
+"patterns" which avoid the performance pitfalls of extended regex.
+|luaref-patterns|
+
+Examples using |string.match()|: >
+
+    print(string.match("foo123bar123", "%d+"))
+    -- 123
+
+    print(string.match("foo123bar123", "[^%d]+"))
+    -- foo
+
+    print(string.match("foo123bar123", "[abc]+"))
+    -- ba
+
+    print(string.match("foo.bar", "%.bar"))
+    -- .bar
+
+For more complex matching you can use Vim regex from Lua via |vim.regex()|.
 
 ==============================================================================
 IMPORTING LUA MODULES                                            *lua-require*
 
 Modules are searched for under the directories specified in 'runtimepath', in
-the order they appear. Any `.` in the module name is treated as a directory
-separator when searching. For a module `foo.bar`, each directory is searched
-for `lua/foo/bar.lua`, then `lua/foo/bar/init.lua`. If no files are found,
+the order they appear.  Any "." in the module name is treated as a directory
+separator when searching.  For a module `foo.bar`, each directory is searched
+for `lua/foo/bar.lua`, then `lua/foo/bar/init.lua`.  If no files are found,
 the directories are searched again for a shared library with a name matching
 `lua/foo/bar.?`, where `?` is a list of suffixes (such as `so` or `dll`) derived from
 the initial value of |package.cpath|. If still no files are found, Nvim falls
@@ -48,8 +144,7 @@ documentation at https://www.lua.org/manual/5.1/manual.html#pdf-require.
 
 For example, if 'runtimepath' is `foo,bar` and |package.cpath| was
 `./?.so;./?.dll` at startup, `require('mod')` searches these paths in order
-and loads the first module found:
-
+and loads the first module found ("first wins"):
     foo/lua/mod.lua
     foo/lua/mod/init.lua
     bar/lua/mod.lua
@@ -59,9 +154,10 @@ and loads the first module found:
     bar/lua/mod.so
     bar/lua/mod.dll
 
+                                                        *lua-package-path*
 Nvim automatically adjusts |package.path| and |package.cpath| according to the
 effective 'runtimepath' value. Adjustment happens whenever 'runtimepath' is
-changed. |package.path| is adjusted by simply appending `/lua/?.lua` and
+changed. `package.path` is adjusted by simply appending `/lua/?.lua` and
 `/lua/?/init.lua` to each directory from 'runtimepath' (`/` is actually the
 first character of `package.config`).
 
@@ -121,163 +217,6 @@ Note:
   plugins using shell, which will not work with paths containing semicolons,
   it is better to not have them in 'runtimepath' at all.
 
-==============================================================================
-Lua Syntax Information                                       *lua-syntax-help*
-
-While Lua has a simple syntax, there are a few things to understand,
-particularly when looking at the documentation above.
-
-                                                    *lua-syntax-call-function*
-
-Lua functions can be called in multiple ways. Consider the function: >
-
-    local example_func = function(a, b)
-        print("A is: ", a)
-        print("B is: ", b)
-    end
-<
-The first way to call this function is: >
-
-    example_func(1, 2)
-    -- ==== Result ====
-    -- A is: 1
-    -- B is: 2
-<
-This way of calling a function is familiar from most scripting languages.
-In Lua, it's important to understand that any function arguments that are
-not supplied are automatically set to `nil`. For example: >
-
-    example_func(1)
-    -- ==== Result ====
-    -- A is: 1
-    -- B is: nil
-<
-Additionally, if any extra parameters are passed, they are discarded
-completely.
-
-In Lua, it is also possible to omit the parentheses (only) if the function
-takes a single string or table literal (`"foo"` or "`{1,2,3}`", respectively).
-The latter is most often used to approximate "keyword-style" arguments with a
-single dictionary, for example: >
-
-    local func_with_opts = function(opts)
-        local will_do_foo = opts.foo
-        local filename = opts.filename
-
-        ...
-    end
-
-    func_with_opts { foo = true, filename = "hello.world" }
-<
-In this style, each "parameter" is passed via keyword. It is still valid
-to call the function in the standard style: >
-
-    func_with_opts({ foo = true, filename = "hello.world" })
-<
-But often in the documentation, you will see the former rather than the
-latter style due to its brevity.
-
-==============================================================================
-Lua Patterns                                                    *lua-patterns*
-
-For performance reasons, Lua does not support regular expressions natively.
-Instead, the Lua `string` standard library allows manipulations using a
-restricted set of "patterns", see |luaref-patterns|.
-
-Examples (`string.match` extracts the first match): >
-
-    print(string.match("foo123bar123", "%d+"))
-    -- -> 123
-
-    print(string.match("foo123bar123", "[^%d]+"))
-    -- -> foo
-
-    print(string.match("foo123bar123", "[abc]+"))
-    -- -> ba
-
-    print(string.match("foo.bar", "%.bar"))
-    -- -> .bar
-
-For more complex matching, Vim regular expressions can be used from Lua
-through |vim.regex()|.
-
-------------------------------------------------------------------------------
-LUA PLUGIN EXAMPLE                                       *lua-require-example*
-
-The following example plugin adds a command `:MakeCharBlob` which transforms
-current buffer into a long `unsigned char` array. Lua contains transformation
-function in a module `lua/charblob.lua` which is imported in
-`autoload/charblob.vim` (`require("charblob")`). Example plugin is supposed
-to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in
-this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
-
-autoload/charblob.vim: >
-
-    function charblob#encode_buffer()
-      call setline(1, luaeval(
-      \    'require("charblob").encode(unpack(_A))',
-      \    [getline(1, '$'), &textwidth, '  ']))
-    endfunction
-<
-plugin/charblob.vim: >
-
-    if exists('g:charblob_loaded')
-      finish
-    endif
-    let g:charblob_loaded = 1
-
-    command MakeCharBlob :call charblob#encode_buffer()
-<
-lua/charblob.lua: >
-
-    local function charblob_bytes_iter(lines)
-      local init_s = {
-        next_line_idx = 1,
-        next_byte_idx = 1,
-        lines = lines,
-      }
-      local function next(s, _)
-        if lines[s.next_line_idx] == nil then
-          return nil
-        end
-        if s.next_byte_idx > #(lines[s.next_line_idx]) then
-          s.next_line_idx = s.next_line_idx + 1
-          s.next_byte_idx = 1
-          return ('\n'):byte()
-        end
-        local ret = lines[s.next_line_idx]:byte(s.next_byte_idx)
-        if ret == ('\n'):byte() then
-          ret = 0  -- See :h NL-used-for-NUL.
-        end
-        s.next_byte_idx = s.next_byte_idx + 1
-        return ret
-      end
-      return next, init_s, nil
-    end
-
-    local function charblob_encode(lines, textwidth, indent)
-      local ret = {
-        'const unsigned char blob[] = {',
-        indent,
-      }
-      for byte in charblob_bytes_iter(lines) do
-        --                .- space + number (width 3) + comma
-        if #(ret[#ret]) + 5 > textwidth then
-          ret[#ret + 1] = indent
-        else
-          ret[#ret] = ret[#ret] .. ' '
-        end
-        ret[#ret] = ret[#ret] .. (('%3u,'):format(byte))
-      end
-      ret[#ret + 1] = '};'
-      return ret
-    end
-
-    return {
-      bytes_iter = charblob_bytes_iter,
-      encode = charblob_encode,
-    }
-<
 ==============================================================================
 COMMANDS                                                        *lua-commands*
 
@@ -1053,6 +992,7 @@ LUA-VIMSCRIPT BRIDGE                                           *lua-vimscript*
 
 Nvim Lua provides an interface to Vimscript variables and functions, and
 editor commands and options.
+
 See also https://github.com/nanotee/nvim-lua-guide.
 
 vim.call({func}, {...})                                           *vim.call()*
@@ -1436,7 +1376,7 @@ deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
 
 inspect({object}, {options})                                   *vim.inspect()*
-    Return a human-readable representation of the given object.
+    Gets a human-readable representation of the given object.
 
     See also: ~
         https://github.com/kikito/inspect.lua
