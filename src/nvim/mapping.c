@@ -635,16 +635,18 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     // "bar" because of the abbreviation.
     for (int round = 0; (round == 0 || maptype == 1) && round <= 1
          && !did_it && !got_int; round++) {
-      // need to loop over all hash lists
-      for (int hash = 0; hash < 256 && !got_int; hash++) {
-        if (is_abbrev) {
-          if (hash > 0) {  // there is only one abbreviation list
-            break;
-          }
-          mpp = abbr_table;
-        } else {
-          mpp = &(map_table[hash]);
-        }
+      int hash_start, hash_end;
+      if (has_lhs || is_abbrev) {
+        // just use one hash
+        hash_start = is_abbrev ? 0 : MAP_HASH(mode, lhs[0]);
+        hash_end = hash_start + 1;
+      } else {
+        // need to loop over all hash lists
+        hash_start = 0;
+        hash_end = 256;
+      }
+      for (int hash = hash_start; hash < hash_end && !got_int; hash++) {
+        mpp = is_abbrev ?  abbr_table :  &(map_table[hash]);
         for (mp = *mpp; mp != NULL && !got_int; mp = *mpp) {
           if ((mp->m_mode & mode) == 0) {
             // skip entries with wrong mode
