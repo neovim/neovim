@@ -463,6 +463,17 @@ separated) that trigger the command.
 The optional [++nested] flag allows for nesting of autocommands (see below),
 and finally, {command} is the command to be executed.
 
+When adding an autocommand the already existing ones remain.  To avoid adding
+the autocommand several times you should use this form: >
+
+	:augroup updateDate
+	:  autocmd!
+	:  autocmd BufWritePre *  call DateInsert()
+	:augroup END
+
+This will delete any previously defined autocommand with `:autocmd!` before
+defining the new one.  Groups are explained later.
+
 
 EVENTS
 

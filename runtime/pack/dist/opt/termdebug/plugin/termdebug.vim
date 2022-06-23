@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2022 May 23
+" Last Change: 2022 Jun 22
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -1406,7 +1406,7 @@ func s:HandleCursor(msg)
         echomsg 'different fname: "' .. expand('%:p') .. '" vs "' .. fnamemodify(fname, ':p') .. '"'
         augroup Termdebug
           " Always open a file read-only instead of showing the ATTENTION
-          " prompt, since we are unlikely to want to edit the file.
+          " prompt, since it is unlikely we want to edit the file.
           " The file may be changed but not saved, warn for that.
           au SwapExists * echohl WarningMsg
                 \ | echo 'Warning: file is being edited elsewhere'
