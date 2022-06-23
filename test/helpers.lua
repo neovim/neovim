@@ -291,7 +291,8 @@ module.tmpname = (function()
     if tmpdir_is_local(tmpdir) then
       -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
       seq = seq + 1
-      local fname = tmpdir..'/nvim-test-lua-'..seq
+      -- "…/Xtest_tmpdir/T42.7"
+      local fname = ('%s/%s.%d'):format(tmpdir, (_G._nvim_test_id or 'nvim-test'), seq)
       io.open(fname, 'w'):close()
       return fname
     else
