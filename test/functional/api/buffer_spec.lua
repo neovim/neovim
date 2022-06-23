@@ -227,8 +227,8 @@ describe('api/buf', function()
     it('can get a single line with strict indexing', function()
       set_lines(0, 1, true, {'line1.a'})
       eq(1, line_count()) -- sanity
-      eq(false, pcall(get_lines, 1, 2, true))
-      eq(false, pcall(get_lines, -3, -2, true))
+      eq('Index out of bounds', pcall_err(get_lines, 1, 2, true))
+      eq('Index out of bounds', pcall_err(get_lines, -3, -2, true))
     end)
 
     it('can get a single line with non-strict indexing', function()
@@ -240,11 +240,11 @@ describe('api/buf', function()
 
     it('can set and delete a single line with strict indexing', function()
       set_lines(0, 1, true, {'line1.a'})
-      eq(false, pcall(set_lines, 1, 2, true, {'line1.b'}))
-      eq(false, pcall(set_lines, -3, -2, true, {'line1.c'}))
+      eq('Index out of bounds', pcall_err(set_lines, 1, 2, true, {'line1.b'}))
+      eq('Index out of bounds', pcall_err(set_lines, -3, -2, true, {'line1.c'}))
       eq({'line1.a'}, get_lines(0, -1, true))
-      eq(false, pcall(set_lines, 1, 2, true, {}))
-      eq(false, pcall(set_lines, -3, -2, true, {}))
+      eq('Index out of bounds', pcall_err(set_lines, 1, 2, true, {}))
+      eq('Index out of bounds', pcall_err(set_lines, -3, -2, true, {}))
       eq({'line1.a'}, get_lines(0, -1, true))
     end)
 
@@ -302,9 +302,9 @@ describe('api/buf', function()
       set_lines(0, -1, true, {'a', 'b', 'c'})
       eq({'a', 'b', 'c'}, get_lines(0, -1, true)) --sanity
 
-      eq(false, pcall(get_lines, 3, 4, true))
-      eq(false, pcall(get_lines, 3, 10, true))
-      eq(false, pcall(get_lines, -5, -5, true))
+      eq('Index out of bounds', pcall_err(get_lines, 3, 4, true))
+      eq('Index out of bounds', pcall_err(get_lines, 3, 10, true))
+      eq('Index out of bounds', pcall_err(get_lines, -5, -5, true))
       -- empty or inverted ranges are not errors
       eq({}, get_lines(3, -1, true))
       eq({}, get_lines(-3, -4, true))
@@ -316,10 +316,10 @@ describe('api/buf', function()
 
       eq({'c'}, get_lines(-2, 5, false))
       eq({'a', 'b', 'c'}, get_lines(0, 6, false))
-      eq(false, pcall(set_lines, 4, 6, true, {'d'}))
+      eq('Index out of bounds', pcall_err(set_lines, 4, 6, true, {'d'}))
       set_lines(4, 6, false, {'d'})
       eq({'a', 'b', 'c', 'd'}, get_lines(0, -1, true))
-      eq(false, pcall(set_lines, -6, -6, true, {'e'}))
+      eq('Index out of bounds', pcall_err(set_lines, -6, -6, true, {'e'}))
       set_lines(-6, -6, false, {'e'})
       eq({'e', 'a', 'b', 'c', 'd'}, get_lines(0, -1, true))
     end)
@@ -392,7 +392,7 @@ describe('api/buf', function()
     end)
   end)
 
-  describe('nvim_buf_get_lines, nvim_buf_set_text', function()
+  describe('nvim_buf_set_text', function()
     local get_lines, set_text = curbufmeths.get_lines, curbufmeths.set_text
 
     it('works', function()
@@ -430,6 +430,10 @@ describe('api/buf', function()
 
       set_text(-1, 0, -1, 0, {'text'})
       eq({'goodbye bar', 'text'}, get_lines(0, 2, true))
+
+      -- can append to a line
+      set_text(1, 4, -1, 4, {' and', 'more'})
+      eq({'goodbye bar', 'text and', 'more'}, get_lines(0, 3, true))
     end)
 
     it('works with undo', function()
@@ -513,12 +517,12 @@ describe('api/buf', function()
       eq({0, 6}, curbufmeths.get_extmark_by_id(ns, id2, {}))
       eq({0, 6}, curbufmeths.get_extmark_by_id(ns, id3, {}))
 
-	  -- marks should be shifted over by the correct number of bytes for multibyte
-	  -- chars
-	  set_text(0, 0, 0, 0, {'Ø'})
-	  eq({0, 3}, curbufmeths.get_extmark_by_id(ns, id1, {}))
-	  eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id2, {}))
-	  eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      -- marks should be shifted over by the correct number of bytes for multibyte
+      -- chars
+      set_text(0, 0, 0, 0, {'Ø'})
+      eq({0, 3}, curbufmeths.get_extmark_by_id(ns, id1, {}))
+      eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id2, {}))
+      eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id3, {}))
     end)
 
     it("correctly marks changed region for redraw #13890", function()
@@ -540,18 +544,39 @@ describe('api/buf', function()
                       |
 
       ]])
+    end)
 
+    it('errors on out-of-range', function()
+      insert([[
+      hello foo!
+      text]])
+      eq('start_row out of bounds', pcall_err(set_text, 2, 0, 3, 0, {}))
+      eq('start_row out of bounds', pcall_err(set_text, -3, 0, 0, 0, {}))
+      eq('end_row out of bounds', pcall_err(set_text, 0, 0, 2, 0, {}))
+      eq('end_row out of bounds', pcall_err(set_text, 0, 0, -3, 0, {}))
+      eq('start_col out of bounds', pcall_err(set_text, 1, 5, 1, 5, {}))
+      eq('end_col out of bounds', pcall_err(set_text, 1, 0, 1, 5, {}))
+    end)
+
+    it('errors when start is greater than end', function()
+      insert([[
+      hello foo!
+      text]])
+      eq('start is higher than end', pcall_err(set_text, 1, 0, 0, 0, {}))
+      eq('start is higher than end', pcall_err(set_text, 0, 1, 0, 0, {}))
     end)
   end)
 
   describe('nvim_buf_get_text', function()
     local get_text = curbufmeths.get_text
 
-    it('works', function()
+    before_each(function()
       insert([[
       hello foo!
       text]])
+    end)
 
+    it('works', function()
       eq({'hello'}, get_text(0, 0, 0, 5, {}))
       eq({'hello foo!'}, get_text(0, 0, 0, 42, {}))
       eq({'foo!'}, get_text(0, 6, 0, 10, {}))
@@ -562,13 +587,17 @@ describe('api/buf', function()
     end)
 
     it('errors on out-of-range', function()
-      eq(false, pcall(get_text, 2, 0, 3, 0, {}))
-      eq(false, pcall(get_text, 0, 0, 4, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 2, 0, 3, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, -3, 0, 0, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, 2, 0, {}))
+      eq('Index out of bounds', pcall_err(get_text, 0, 0, -3, 0, {}))
+      -- no ml_get errors should happen #19017
+      eq('', meths.get_vvar('errmsg'))
     end)
 
     it('errors when start is greater than end', function()
-      eq(false, pcall(get_text, 1, 0, 0, 0, {}))
-      eq(false, pcall(get_text, 0, 1, 0, 0, {}))
+      eq('start is higher than end', pcall_err(get_text, 1, 0, 0, 0, {}))
+      eq('start_col must be less than end_col', pcall_err(get_text, 0, 1, 0, 0, {}))
     end)
   end)
 
