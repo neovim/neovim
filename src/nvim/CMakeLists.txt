@@ -1,7 +1,5 @@
 option(USE_GCOV "Enable gcov support" OFF)
 
-include(DefCmdTarget)
-
 if(USE_GCOV)
   if(CLANG_TSAN)
     # GCOV and TSAN results in false data race reports
@@ -24,7 +22,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -framework CoreServices")
 endif()
 
-set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
@@ -801,16 +798,12 @@ foreach(sfile ${LINT_NVIM_SOURCES})
 endforeach()
 add_custom_target(lintc DEPENDS ${LINT_TARGETS})
 
-def_cmd_target(lintuncrustify ${UNCRUSTIFY_PRG} UNCRUSTIFY_PRG false)
-if(UNCRUSTIFY_PRG)
-  add_custom_command(TARGET lintuncrustify
-    COMMAND ${CMAKE_COMMAND}
-      -D UNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
-      -D PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
-      -D NVIM_SOURCES="${NVIM_SOURCES}"
-      -D NVIM_HEADERS="${NVIM_HEADERS}"
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunUncrustify.cmake)
-endif()
+add_glob_targets(
+  TARGET lintuncrustify
+  COMMAND ${UNCRUSTIFY_PRG}
+  FLAGS -c "${PROJECT_SOURCE_DIR}/src/uncrustify.cfg" -q --check
+  FILES ${LINT_NVIM_SOURCES}
+  )
 
 add_custom_target(
   lintcfull
