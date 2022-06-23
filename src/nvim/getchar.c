@@ -2861,6 +2861,7 @@ void set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
                                      cpo_flags);
   mapargs->lhs_len = STRLEN(replaced);
   STRLCPY(mapargs->lhs, replaced, sizeof(mapargs->lhs));
+  did_simplify = false;
   if (did_simplify) {
     replaced = replace_termcodes(orig_lhs, orig_lhs_len, &alt_lhs_buf, flags | REPTERM_NO_SIMPLIFY,
                                  NULL, cpo_flags);
@@ -3152,7 +3153,7 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev, buf_T 
     }
 
     // Check if a new local mapping wasn't already defined globally.
-    if (map_table == buf->b_maphash && has_lhs && has_rhs && maptype != 1) {
+    if (map_table == buf->b_maphash && has_lhs && has_rhs && maptype != 1 && args->unique) {
       // need to loop over all global hash lists
       for (int hash = 0; hash < 256 && !got_int; hash++) {
         if (is_abbrev) {

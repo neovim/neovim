@@ -773,14 +773,17 @@ static int extract_modifiers(int key, int *modp, const bool simplify, bool *cons
     key = TOUPPER_ASC(key);
   }
   if (simplify && (modifiers & MOD_MASK_CTRL)
-      && ((key >= '?' && key <= '_') || ASCII_ISALPHA(key))) {
-    key = CTRL_CHR(key);
-    modifiers &= ~MOD_MASK_CTRL;
-    if (key == NUL) {  // <C-@> is <Nul>
-      key = K_ZERO;
-    }
-    if (did_simplify != NULL) {
-      *did_simplify = true;
+      && ((key >= '?' && key <= '_') || (ASCII_ISALPHA(key)))) {
+    int new_key = CTRL_CHR(key);
+    if (new_key != TAB && new_key != CAR && new_key != ESC && new_key != NL) {
+      key = new_key;
+      modifiers &= ~MOD_MASK_CTRL;
+      if (key == NUL) {  // <C-@> is <Nul>
+        key = K_ZERO;
+      }
+      if (did_simplify != NULL) {
+        *did_simplify = true;
+      }
     }
   }
 
