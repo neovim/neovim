@@ -831,7 +831,7 @@ func Test_using_old_sub()
     ~
     s/
   endfunc
-  silent!  s/\%')/\=Repl()
+  silent! s/\%')/\=Repl()
 
   delfunc Repl
   bwipe!
@@ -1132,6 +1132,16 @@ func Test_substitute_short_cmd()
   sIe
 
   bw!
+endfunc
+
+" This should be done last to reveal a memory leak when vim_regsub_both() is
+" called to evaluate an expression but it is not used in a second call.
+func Test_z_substitute_expr_leak()
+  func SubExpr()
+    ~n
+  endfunc
+  silent! s/\%')/\=SubExpr()
+  delfunc SubExpr
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
