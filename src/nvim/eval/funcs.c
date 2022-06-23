@@ -38,6 +38,7 @@
 #include "nvim/input.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
+#include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/match.h"
 #include "nvim/math.h"
@@ -5647,89 +5648,6 @@ static void f_localtime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = (varnumber_T)time(NULL);
 }
 
-static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
-{
-  char *keys_buf = NULL;
-  char_u *alt_keys_buf = NULL;
-  bool did_simplify = false;
-  char_u *rhs;
-  LuaRef rhs_lua;
-  int mode;
-  int abbr = FALSE;
-  int get_dict = FALSE;
-  mapblock_T *mp;
-  int buffer_local;
-  int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
-
-  // Return empty string for failure.
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  char *keys = (char *)tv_get_string(&argvars[0]);
-  if (*keys == NUL) {
-    return;
-  }
-
-  char buf[NUMBUFLEN];
-  const char *which;
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    which = tv_get_string_buf_chk(&argvars[1], buf);
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      abbr = tv_get_number(&argvars[2]);
-      if (argvars[3].v_type != VAR_UNKNOWN) {
-        get_dict = tv_get_number(&argvars[3]);
-      }
-    }
-  } else {
-    which = "";
-  }
-  if (which == NULL) {
-    return;
-  }
-
-  mode = get_map_mode((char **)&which, 0);
-
-  char_u *keys_simplified
-    = (char_u *)replace_termcodes(keys,
-                                  STRLEN(keys), &keys_buf, flags, &did_simplify,
-                                  CPO_TO_CPO_FLAGS);
-  rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
-  if (did_simplify) {
-    // When the lhs is being simplified the not-simplified keys are
-    // preferred for printing, like in do_map().
-    (void)replace_termcodes(keys,
-                            STRLEN(keys),
-                            (char **)&alt_keys_buf, flags | REPTERM_NO_SIMPLIFY, NULL,
-                            CPO_TO_CPO_FLAGS);
-    rhs = check_map(alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
-  }
-
-  if (!get_dict) {
-    // Return a string.
-    if (rhs != NULL) {
-      if (*rhs == NUL) {
-        rettv->vval.v_string = xstrdup("<Nop>");
-      } else {
-        rettv->vval.v_string = str2special_save((char *)rhs, false, false);
-      }
-    } else if (rhs_lua != LUA_NOREF) {
-      size_t msglen = 100;
-      char *msg = (char *)xmalloc(msglen);
-      snprintf(msg, msglen, "<Lua function %d>", mp->m_luaref);
-      rettv->vval.v_string = msg;
-    }
-  } else {
-    tv_dict_alloc_ret(rettv);
-    if (mp != NULL && (rhs != NULL || rhs_lua != LUA_NOREF)) {
-      // Return a dictionary.
-      mapblock_fill_dict(rettv->vval.v_dict, mp, buffer_local, true);
-    }
-  }
-
-  xfree(keys_buf);
-  xfree(alt_keys_buf);
-}
-
 /// luaeval() function implementation
 static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
@@ -5746,18 +5664,6 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_map(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   filter_map(argvars, rettv, TRUE);
-}
-
-/// "maparg()" function
-static void f_maparg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  get_maparg(argvars, rettv, TRUE);
-}
-
-/// "mapcheck()" function
-static void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  get_maparg(argvars, rettv, FALSE);
 }
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,

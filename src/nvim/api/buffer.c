@@ -22,6 +22,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
 #include "nvim/lua/executor.h"
+#include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

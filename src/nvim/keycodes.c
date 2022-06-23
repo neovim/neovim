@@ -1005,6 +1005,78 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   return *bufp;
 }
 
+/// Add character "c" to buffer "s"
+///
+/// Escapes the special meaning of K_SPECIAL, handles multi-byte
+/// characters.
+///
+/// @param[in]  c  Character to add.
+/// @param[out]  s  Buffer to add to. Must have at least MB_MAXBYTES + 1 bytes.
+///
+/// @return Pointer to after the added bytes.
+char_u *add_char2buf(int c, char_u *s)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  char_u temp[MB_MAXBYTES + 1];
+  const int len = utf_char2bytes(c, (char *)temp);
+  for (int i = 0; i < len; i++) {
+    c = (uint8_t)temp[i];
+    // Need to escape K_SPECIAL like in the typeahead buffer.
+    if (c == K_SPECIAL) {
+      *s++ = K_SPECIAL;
+      *s++ = KS_SPECIAL;
+      *s++ = KE_FILLER;
+    } else {
+      *s++ = (char_u)c;
+    }
+  }
+  return s;
+}
+
+/// Copy "p" to allocated memory, escaping K_SPECIAL so that the result
+/// can be put in the typeahead buffer.
+char *vim_strsave_escape_ks(char *p)
+{
+  // Need a buffer to hold up to three times as much.  Four in case of an
+  // illegal utf-8 byte:
+  // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
+  char_u *res = xmalloc(STRLEN(p) * 4 + 1);
+  char_u *d = res;
+  for (char_u *s = (char_u *)p; *s != NUL;) {
+    if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+      // Copy special key unmodified.
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+    } else {
+      // Add character, possibly multi-byte to destination, escaping
+      // K_SPECIAL. Be careful, it can be an illegal byte!
+      d = add_char2buf(utf_ptr2char((char *)s), d);
+      s += utf_ptr2len((char *)s);
+    }
+  }
+  *d = NUL;
+
+  return (char *)res;
+}
+
+/// Remove escaping from K_SPECIAL characters.  Reverse of
+/// vim_strsave_escape_ks().  Works in-place.
+void vim_unescape_ks(char_u *p)
+{
+  char_u *s = p, *d = p;
+
+  while (*s != NUL) {
+    if (s[0] == K_SPECIAL && s[1] == KS_SPECIAL && s[2] == KE_FILLER) {
+      *d++ = K_SPECIAL;
+      s += 3;
+    } else {
+      *d++ = *s++;
+    }
+  }
+  *d = NUL;
+}
+
 /// Logs a single key as a human-readable keycode.
 void log_key(int log_level, int key)
 {
