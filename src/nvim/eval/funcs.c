@@ -5694,6 +5694,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
                                   STRLEN(keys), &keys_buf, flags, &did_simplify,
                                   CPO_TO_CPO_FLAGS);
   rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
+  did_simplify = false;
   if (did_simplify) {
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
