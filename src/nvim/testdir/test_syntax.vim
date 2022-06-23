@@ -745,8 +745,9 @@ func Test_search_syntax_skip()
   1
   call search('VIM', 'w', '', 0, 'synIDattr(synID(line("."), col("."), 1), "name") =~? "comment"')
   call assert_equal('Another Text for VIM', getline('.'))
+
   1
-  call search('VIM', 'w', '', 0, 'synIDattr(synID(line("."), col("."), 1), "name") !~? "string"')
+  call search('VIM', 'cw', '', 0, 'synIDattr(synID(line("."), col("."), 1), "name") !~? "string"')
   call assert_equal(' let a = "VIM"', getline('.'))
 
   " Skip argument using Lambda.
@@ -755,26 +756,27 @@ func Test_search_syntax_skip()
   call assert_equal('Another Text for VIM', getline('.'))
 
   1
-  call search('VIM', 'w', '', 0, { -> synIDattr(synID(line("."), col("."), 1), "name") !~? "string"})
+  call search('VIM', 'cw', '', 0, { -> synIDattr(synID(line("."), col("."), 1), "name") !~? "string"})
   call assert_equal(' let a = "VIM"', getline('.'))
 
   " Skip argument using funcref.
   func InComment()
     return synIDattr(synID(line("."), col("."), 1), "name") =~? "comment"
   endfunc
-  func InString()
+  func NotInString()
     return synIDattr(synID(line("."), col("."), 1), "name") !~? "string"
   endfunc
+
   1
   call search('VIM', 'w', '', 0, function('InComment'))
   call assert_equal('Another Text for VIM', getline('.'))
 
   1
-  call search('VIM', 'w', '', 0, function('InString'))
+  call search('VIM', 'cw', '', 0, function('NotInString'))
   call assert_equal(' let a = "VIM"', getline('.'))
 
   delfunc InComment
-  delfunc InString
+  delfunc NotInString
   bwipe!
 endfunc
 
