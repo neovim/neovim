@@ -1220,6 +1220,17 @@ func Test_recalling_cmdline()
   cunmap <Plug>(save-cmdline)
 endfunc
 
+" this was going over the end of IObuff
+func Test_report_error_with_composing()
+  let caught = 'no'
+  try
+    exe repeat('0', 987) .. "0\xdd\x80\xdd\x80\xdd\x80\xdd\x80"
+  catch /E492:/
+    let caught = 'yes'
+  endtry
+  call assert_equal('yes', caught)
+endfunc
+
 " Test for expanding 2-letter and 3-letter :substitute command arguments.
 " These commands don't accept an argument.
 func Test_cmdline_complete_substitute_short()

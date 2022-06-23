@@ -2892,11 +2892,13 @@ static void append_command(char *cmd)
 
   STRCAT(IObuff, ": ");
   d = (char *)IObuff + STRLEN(IObuff);
-  while (*s != NUL && (char_u *)d - IObuff < IOSIZE - 7) {
+  while (*s != NUL && (char_u *)d - IObuff + 5 < IOSIZE) {
     if ((char_u)s[0] == 0xc2 && (char_u)s[1] == 0xa0) {
       s += 2;
       STRCPY(d, "<a0>");
       d += 4;
+    } else if ((char_u *)d - IObuff + utfc_ptr2len(s) + 1 >= IOSIZE) {
+      break;
     } else {
       mb_copy_char((const char_u **)&s, (char_u **)&d);
     }
