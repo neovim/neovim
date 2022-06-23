@@ -780,6 +780,9 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (argvars[2].v_type != VAR_DICT) {
       emsg(_(e_dictreq));
+      if (owned) {
+        func_unref(func);
+      }
       return;
     }
     selfdict = argvars[2].vval.v_dict;
