@@ -553,13 +553,13 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // check range is ordered and everything!
   // start_row, end_row within buffer len (except add text past the end?)
   start_row = normalize_index(buf, start_row, false, &oob);
-  if (oob || start_row == buf->b_ml.ml_line_count + 1) {
+  if (oob) {
     api_set_error(err, kErrorTypeValidation, "start_row out of bounds");
     return;
   }
 
   end_row = normalize_index(buf, end_row, false, &oob);
-  if (oob || end_row == buf->b_ml.ml_line_count + 1) {
+  if (oob) {
     api_set_error(err, kErrorTypeValidation, "end_row out of bounds");
     return;
   }
@@ -1358,14 +1358,15 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 // Normalizes 0-based indexes to buffer line numbers
 static int64_t normalize_index(buf_T *buf, int64_t index, bool end_exclusive, bool *oob)
 {
-  int64_t line_count = buf->b_ml.ml_line_count;
+  assert(buf->b_ml.ml_line_count > 0);
+  int64_t max_index = buf->b_ml.ml_line_count + (int)end_exclusive - 1;
   // Fix if < 0
-  index = index < 0 ? line_count + index + (int)end_exclusive : index;
+  index = index < 0 ? max_index + index + 1 : index;
 
   // Check for oob
-  if (index > line_count) {
+  if (index > max_index) {
     *oob = true;
-    index = line_count;
+    index = max_index;
   } else if (index < 0) {
     *oob = true;
     index = 0;
