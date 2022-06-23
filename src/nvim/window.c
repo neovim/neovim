@@ -26,6 +26,7 @@
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/main.h"
+#include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/match.h"
 #include "nvim/memline.h"

@@ -233,6 +233,10 @@ preprocess_patch() {
   LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/userfunc\.c/\1\/eval\/userfunc\.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename map.c to mapping.c
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/map\(\.[ch]\)/\1\/mapping\2/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename session.c to ex_session.c
   LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/session\(\.[ch]\)/\1\/ex_session\2/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"

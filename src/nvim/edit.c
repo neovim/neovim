@@ -31,6 +31,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/keycodes.h"
 #include "nvim/main.h"
+#include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -6767,34 +6768,6 @@ void free_last_insert(void)
 }
 
 #endif
-
-/// Add character "c" to buffer "s"
-///
-/// Escapes the special meaning of K_SPECIAL, handles multi-byte
-/// characters.
-///
-/// @param[in]  c  Character to add.
-/// @param[out]  s  Buffer to add to. Must have at least MB_MAXBYTES + 1 bytes.
-///
-/// @return Pointer to after the added bytes.
-char_u *add_char2buf(int c, char_u *s)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  char_u temp[MB_MAXBYTES + 1];
-  const int len = utf_char2bytes(c, (char *)temp);
-  for (int i = 0; i < len; i++) {
-    c = (uint8_t)temp[i];
-    // Need to escape K_SPECIAL like in the typeahead buffer.
-    if (c == K_SPECIAL) {
-      *s++ = K_SPECIAL;
-      *s++ = KS_SPECIAL;
-      *s++ = KE_FILLER;
-    } else {
-      *s++ = (char_u)c;
-    }
-  }
-  return s;
-}
 
 /*
  * move cursor to start of line

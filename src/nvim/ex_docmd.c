@@ -44,6 +44,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
+#include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/match.h"
 #include "nvim/mbyte.h"
@@ -5256,45 +5257,6 @@ theend:
   return tab_number;
 }
 
-/// ":abbreviate" and friends.
-static void ex_abbreviate(exarg_T *eap)
-{
-  do_exmap(eap, TRUE);          // almost the same as mapping
-}
-
-/// ":map" and friends.
-static void ex_map(exarg_T *eap)
-{
-  /*
-   * If we are sourcing .exrc or .vimrc in current directory we
-   * print the mappings for security reasons.
-   */
-  if (secure) {
-    secure = 2;
-    msg_outtrans((char_u *)eap->cmd);
-    msg_putchar('\n');
-  }
-  do_exmap(eap, FALSE);
-}
-
-/// ":unmap" and friends.
-static void ex_unmap(exarg_T *eap)
-{
-  do_exmap(eap, FALSE);
-}
-
-/// ":mapclear" and friends.
-static void ex_mapclear(exarg_T *eap)
-{
-  map_clear_mode((char_u *)eap->cmd, (char_u *)eap->arg, eap->forceit, false);
-}
-
-/// ":abclear" and friends.
-static void ex_abclear(exarg_T *eap)
-{
-  map_clear_mode((char_u *)eap->cmd, (char_u *)eap->arg, true, true);
-}
-
 static void ex_autocmd(exarg_T *eap)
 {
   // Disallow autocommands from .exrc and .vimrc in current
@@ -8378,23 +8340,6 @@ void do_sleep(long msec)
   // input buffer, otherwise a following call to input() fails.
   if (got_int) {
     (void)vpeekc();
-  }
-}
-
-static void do_exmap(exarg_T *eap, int isabbrev)
-{
-  int mode;
-  char *cmdp = eap->cmd;
-  mode = get_map_mode(&cmdp, eap->forceit || isabbrev);
-
-  switch (do_map((*cmdp == 'n') ? 2 : (*cmdp == 'u'),
-                 (char_u *)eap->arg, mode, isabbrev)) {
-  case 1:
-    emsg(_(e_invarg));
-    break;
-  case 2:
-    emsg(isabbrev ? _(e_noabbr) : _(e_nomap));
-    break;
   }
 }
 

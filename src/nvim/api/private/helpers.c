@@ -21,7 +21,6 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/fileio.h"
-#include "nvim/getchar.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/lua/executor.h"
@@ -441,142 +440,6 @@ Array string_to_array(const String input, bool crlf)
   return ret;
 }
 
-/// Set, tweak, or remove a mapping in a mode. Acts as the implementation for
-/// functions like @ref nvim_buf_set_keymap.
-///
-/// Arguments are handled like @ref nvim_set_keymap unless noted.
-/// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
-///                   buffer, or -1 to signify global behavior ("all buffers")
-/// @param  is_unmap  When true, removes the mapping that matches {lhs}.
-void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mode, String lhs,
-                   String rhs, Dict(keymap) *opts, Error *err)
-{
-  LuaRef lua_funcref = LUA_NOREF;
-  bool global = (buffer == -1);
-  if (global) {
-    buffer = 0;
-  }
-  buf_T *target_buf = find_buffer_by_handle(buffer, err);
-
-  if (!target_buf) {
-    return;
-  }
-
-  const sctx_T save_current_sctx = api_set_sctx(channel_id);
-
-  if (opts != NULL && opts->callback.type == kObjectTypeLuaRef) {
-    lua_funcref = opts->callback.data.luaref;
-    opts->callback.data.luaref = LUA_NOREF;
-  }
-  MapArguments parsed_args = MAP_ARGUMENTS_INIT;
-  if (opts) {
-#define KEY_TO_BOOL(name) \
-  parsed_args.name = api_object_to_bool(opts->name, #name, false, err); \
-  if (ERROR_SET(err)) { \
-    goto fail_and_free; \
-  }
-
-    KEY_TO_BOOL(nowait);
-    KEY_TO_BOOL(noremap);
-    KEY_TO_BOOL(silent);
-    KEY_TO_BOOL(script);
-    KEY_TO_BOOL(expr);
-    KEY_TO_BOOL(unique);
-#undef KEY_TO_BOOL
-  }
-  parsed_args.buffer = !global;
-
-  set_maparg_lhs_rhs(lhs.data, lhs.size,
-                     rhs.data, rhs.size, lua_funcref,
-                     CPO_TO_CPO_FLAGS, &parsed_args);
-  if (opts != NULL && opts->desc.type == kObjectTypeString) {
-    parsed_args.desc = string_to_cstr(opts->desc.data.string);
-  } else {
-    parsed_args.desc = NULL;
-  }
-  if (parsed_args.lhs_len > MAXMAPLEN || parsed_args.alt_lhs_len > MAXMAPLEN) {
-    api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
-    goto fail_and_free;
-  }
-
-  if (mode.size > 1) {
-    api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
-    goto fail_and_free;
-  }
-  int mode_val;  // integer value of the mapping mode, to be passed to do_map()
-  char *p = (mode.size) ? mode.data : "m";
-  if (STRNCMP(p, "!", 2) == 0) {
-    mode_val = get_map_mode(&p, true);  // mapmode-ic
-  } else {
-    mode_val = get_map_mode(&p, false);
-    if (mode_val == (MODE_VISUAL | MODE_SELECT | MODE_NORMAL | MODE_OP_PENDING) && mode.size > 0) {
-      // get_map_mode() treats unrecognized mode shortnames as ":map".
-      // This is an error unless the given shortname was empty string "".
-      api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", p);
-      goto fail_and_free;
-    }
-  }
-
-  if (parsed_args.lhs_len == 0) {
-    api_set_error(err, kErrorTypeValidation, "Invalid (empty) LHS");
-    goto fail_and_free;
-  }
-
-  bool is_noremap = parsed_args.noremap;
-  assert(!(is_unmap && is_noremap));
-
-  if (!is_unmap && lua_funcref == LUA_NOREF
-      && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
-    if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
-      parsed_args.rhs_is_noop = true;
-    } else {
-      abort();  // should never happen
-    }
-  } else if (is_unmap && (parsed_args.rhs_len || parsed_args.rhs_lua != LUA_NOREF)) {
-    if (parsed_args.rhs_len) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Gave nonempty RHS in unmap command: %s", parsed_args.rhs);
-    } else {
-      api_set_error(err, kErrorTypeValidation, "Gave nonempty RHS for unmap");
-    }
-    goto fail_and_free;
-  }
-
-  // buf_do_map() reads noremap/unmap as its own argument.
-  int maptype_val = 0;
-  if (is_unmap) {
-    maptype_val = 1;
-  } else if (is_noremap) {
-    maptype_val = 2;
-  }
-
-  switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {
-  case 0:
-    break;
-  case 1:
-    api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
-    goto fail_and_free;
-  case 2:
-    api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
-    goto fail_and_free;
-  case 5:
-    api_set_error(err, kErrorTypeException,
-                  "E227: mapping already exists for %s", parsed_args.lhs);
-    goto fail_and_free;
-  default:
-    assert(false && "Unrecognized return code!");
-    goto fail_and_free;
-  }  // switch
-
-  parsed_args.rhs_lua = LUA_NOREF;  // don't clear ref on success
-fail_and_free:
-  current_sctx = save_current_sctx;
-  NLUA_CLEAR_REF(parsed_args.rhs_lua);
-  xfree(parsed_args.rhs);
-  xfree(parsed_args.orig_rhs);
-  XFREE_CLEAR(parsed_args.desc);
-}
-
 /// Collects `n` buffer lines into array `l`, optionally replacing newlines
 /// with NUL.
 ///
@@ -928,58 +791,6 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
   va_end(args2);
 
   err->type = errType;
-}
-
-/// Get an array containing dictionaries describing mappings
-/// based on mode and buffer id
-///
-/// @param  mode  The abbreviation for the mode
-/// @param  buf  The buffer to get the mapping array. NULL for global
-/// @param  from_lua  Whether it is called from internal lua api.
-/// @returns Array of maparg()-like dictionaries describing mappings
-ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
-{
-  Array mappings = ARRAY_DICT_INIT;
-  dict_T *const dict = tv_dict_alloc();
-
-  // Convert the string mode to the integer mode
-  // that is stored within each mapblock
-  char *p = mode.data;
-  int int_mode = get_map_mode(&p, 0);
-
-  // Determine the desired buffer value
-  long buffer_value = (buf == NULL) ? 0 : buf->handle;
-
-  for (int i = 0; i < MAX_MAPHASH; i++) {
-    for (const mapblock_T *current_maphash = get_maphash(i, buf);
-         current_maphash;
-         current_maphash = current_maphash->m_next) {
-      if (current_maphash->m_simplified) {
-        continue;
-      }
-      // Check for correct mode
-      if (int_mode & current_maphash->m_mode) {
-        mapblock_fill_dict(dict, current_maphash, buffer_value, false);
-        Object api_dict = vim_to_object((typval_T[]) { { .v_type = VAR_DICT,
-                                                         .vval.v_dict = dict } });
-        if (from_lua) {
-          Dictionary d = api_dict.data.dictionary;
-          for (size_t j = 0; j < d.size; j++) {
-            if (strequal("callback", d.items[j].key.data)) {
-              d.items[j].value.type = kObjectTypeLuaRef;
-              d.items[j].value.data.luaref = api_new_luaref((LuaRef)d.items[j].value.data.integer);
-              break;
-            }
-          }
-        }
-        ADD(mappings, api_dict);
-        tv_dict_clear(dict);
-      }
-    }
-  }
-  tv_dict_free(dict);
-
-  return mappings;
 }
 
 /// Force obj to bool.
