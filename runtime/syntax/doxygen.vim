@@ -498,12 +498,16 @@ endif
 
     syn match doxygenLeadingWhite +\(^\s*\*\)\@<=\s*+ contained
 
-    " This is still a proposal, but won't do any harm.
-    aug doxygengroup
-    au!
-    au Syntax UserColor_reset nested call s:Doxygen_Hilights_Base()
-    au Syntax UserColor_{on,reset,enable} nested call s:Doxygen_Hilights()
-    aug END
+    " This is still a proposal, but it is probably fine.  However, it doesn't
+    " work when 'syntax' is set in a modeline, catch the security error.
+    try
+      aug doxygengroup
+        au!
+        au Syntax UserColor_reset nested call s:Doxygen_Hilights_Base()
+        au Syntax UserColor_{on,reset,enable} nested call s:Doxygen_Hilights()
+      aug END
+    catch /E12:/
+    endtry
 
 
     SynLink doxygenBody                   Comment

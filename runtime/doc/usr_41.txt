@@ -1636,27 +1636,29 @@ manual: |exception-handling|.
 Here is a summary of items that apply to Vim scripts.  They are also mentioned
 elsewhere, but form a nice checklist.
 
-The end-of-line character depends on the system.  For Unix a single <NL>
-character is used.  For Windows <CR><NL> is used.  This is important when
-using mappings that end in a <CR>.  See |:source_crnl|.
+The end-of-line character depends on the system.  For Vim scripts it is
+recommended to always use the Unix fileformat.  Lines are then separated with
+the Newline character.  This also works on any other system.  That way you can
+copy your Vim scripts from MS-Windows to Unix and they still work.  See
+|:source_crnl|.  To be sure it is set right, do this before writing the file:
+ >
+	:setlocal fileformat=unix
+
+When using "dos" fileformat, lines are separated with CR-NL, two characters.
+The CR character causes various problems, better avoid this.
 
 
 WHITE SPACE
 
-Blank lines are allowed and ignored.
+Blank lines are allowed in a script and ignored.
 
-Leading whitespace characters (blanks and TABs) are always ignored.  The
-whitespaces between parameters (e.g. between the "set" and the "cpoptions" in
-the example below) are reduced to one blank character and plays the role of a
-separator, the whitespaces after the last (visible) character may or may not
-be ignored depending on the situation, see below.
+Leading whitespace characters (blanks and TABs) are ignored, except when using
+|:let-heredoc| without "trim".
 
-For a ":set" command involving the "=" (equal) sign, such as in: >
-
-	:set cpoptions    =aABceFst
-
-the whitespace immediately before the "=" sign is ignored.  But there can be
-no whitespace after the "=" sign!
+Trailing whitespace is often ignored, but not always.  One command that
+includes it is `map`.  You have to watch out for that, it can cause hard to
+understand mistakes.  A generic solution is to never use trailing white space,
+unless you really need it.
 
 To include a whitespace character in the value of an option, it must be
 escaped by a "\" (backslash)  as in the following example: >
