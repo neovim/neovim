@@ -838,6 +838,19 @@ func Test_using_old_sub()
   set nocompatible
 endfunc
 
+" This was switching windows in between computing the length and using it.
+func Test_sub_change_window()
+  silent! lfile
+  sil! norm o0000000000000000000000000000000000000000000000000000
+  func Repl()
+    lopen
+  endfunc
+  silent!  s/\%')/\=Repl()
+  bwipe!
+  bwipe!
+  delfunc Repl
+endfunc
+
 " Test for the 2-letter and 3-letter :substitute commands
 func Test_substitute_short_cmd()
   new

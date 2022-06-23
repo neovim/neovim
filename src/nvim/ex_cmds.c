@@ -4069,11 +4069,16 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           // Save flags for recursion.  They can change for e.g.
           // :s/^/\=execute("s#^##gn")
           subflags_T subflags_save = subflags;
+
+          // Disallow changing text or switching window in an expression.
+          textlock++;
           // get length of substitution part
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
                                     (char_u *)sub, (char_u *)sub_firstline, 0,
                                     REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
+          textlock--;
+
           // If getting the substitute string caused an error, don't do
           // the replacement.
           // Don't keep flags set by a recursive call
@@ -4111,10 +4116,12 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           int start_col = new_end - new_start;
           current_match.start.col = start_col;
 
+          textlock++;
           (void)vim_regsub_multi(&regmatch,
                                  sub_firstlnum - regmatch.startpos[0].lnum,
                                  (char_u *)sub, (char_u *)new_end, sublen,
                                  REGSUB_COPY | REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
+          textlock--;
           sub_nsubs++;
           did_sub = true;
 
