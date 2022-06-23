@@ -300,6 +300,19 @@ ScreenGrid *ui_comp_mouse_focus(int row, int col)
   return NULL;
 }
 
+/// Compute which grid is on top at supplied screen coordinates
+ScreenGrid *ui_comp_get_grid_at_coord(int row, int col)
+{
+  for (ssize_t i = (ssize_t)kv_size(layers) - 1; i > 0; i--) {
+    ScreenGrid *grid = kv_A(layers, i);
+    if (row >= grid->comp_row && row < grid->comp_row + grid->rows
+        && col >= grid->comp_col && col < grid->comp_col + grid->cols) {
+      return grid;
+    }
+  }
+  return &default_grid;
+}
+
 /// Baseline implementation. This is always correct, but we can sometimes
 /// do something more efficient (where efficiency means smaller deltas to
 /// the downstream UI.)
