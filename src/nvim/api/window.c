@@ -51,7 +51,9 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   win_set_buf(window, buffer, false, err);
 }
 
-/// Gets the (1,0)-indexed cursor position in the window. |api-indexing|
+/// Gets the (1,0)-indexed, buffer-relative cursor position for a given window
+/// (different windows showing the same buffer have independent cursor
+/// positions). |api-indexing|
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
