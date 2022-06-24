@@ -1243,10 +1243,11 @@ char *runtimepath_default(bool clean_arg)
                                          AFTER_SIZE + 1);
   rtp_size += compute_double_env_sep_len(config_dirs, NVIM_SIZE + 1,
                                          AFTER_SIZE + 1);
+  char *rtp = NULL;
   if (rtp_size == 0) {
-    return NULL;
+    goto freeall;
   }
-  char *const rtp = xmalloc(rtp_size);
+  rtp = xmalloc(rtp_size);
   char *rtp_cur = rtp;
   rtp_cur = add_dir(rtp_cur, config_home, config_len, kXDGConfigHome,
                     NULL, 0, NULL, 0);
@@ -1271,6 +1272,7 @@ char *runtimepath_default(bool clean_arg)
   assert((size_t)(rtp_cur - rtp) == rtp_size);
 #undef SITE_SIZE
 #undef AFTER_SIZE
+freeall:
   xfree(data_dirs);
   xfree(config_dirs);
   xfree(data_home);
