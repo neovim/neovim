@@ -5,7 +5,7 @@ function(BuildLuajit)
   cmake_parse_arguments(_luajit
     ""
     "TARGET"
-    "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
+    "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND;DEPENDS"
     ${ARGN})
   if(NOT _luajit_CONFIGURE_COMMAND AND NOT _luajit_BUILD_COMMAND
         AND NOT _luajit_INSTALL_COMMAND)
@@ -30,13 +30,14 @@ function(BuildLuajit)
     CONFIGURE_COMMAND "${_luajit_CONFIGURE_COMMAND}"
     BUILD_IN_SOURCE 1
     BUILD_COMMAND "${_luajit_BUILD_COMMAND}"
-    INSTALL_COMMAND "${_luajit_INSTALL_COMMAND}")
+    INSTALL_COMMAND "${_luajit_INSTALL_COMMAND}"
+    DEPENDS "${_luajit_DEPENDS}")
 
   # Create symlink for development version manually.
   if(UNIX)
     add_custom_command(
       TARGET ${_luajit_TARGET}
-      COMMAND ${CMAKE_COMMAND} -E create_symlink luajit-2.1.0-beta3 ${DEPS_BIN_DIR}/luajit)
+      COMMAND ${CMAKE_COMMAND} -E create_symlink luajit-2.1.0-beta3 ${DEPS_BIN_DIR}/${_luajit_TARGET})
   endif()
 endfunction()
 
@@ -51,30 +52,62 @@ if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
 else()
   set(AMD64_ABI "")
 endif()
-set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
-                                CFLAGS+=-DLUA_USE_APICHECK
-                                CFLAGS+=-funwind-tables
-                                ${NO_STACK_CHECK}
-                                ${AMD64_ABI}
-                                CCDEBUG+=-g
-                                Q=
-                                install)
+set(BUILDCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
+                              CFLAGS+=-DLUA_USE_APICHECK
+                              CFLAGS+=-funwind-tables
+                              ${NO_STACK_CHECK}
+                              ${AMD64_ABI}
+                              CCDEBUG+=-g
+                              Q=)
 
-if(UNIX)
-  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    if(CMAKE_OSX_DEPLOYMENT_TARGET)
-      set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
-    else()
-      # Use the same target as our nightly builds
-      set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=10.11")
-    endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  if(CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
   else()
-    set(DEPLOYMENT_TARGET "")
+    execute_process(COMMAND sw_vers -productVersion OUTPUT_VARIABLE MACOS_VERSION)
+    set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${MACOS_VERSION}")
   endif()
+else()
+  set(DEPLOYMENT_TARGET "")
+endif()
 
-  BuildLuaJit(INSTALL_COMMAND ${INSTALLCMD_UNIX}
+if((UNIX AND NOT APPLE) OR (APPLE AND NOT CMAKE_OSX_ARCHITECTURES))
+  BuildLuaJit(INSTALL_COMMAND ${BUILDCMD_UNIX}
     CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR}
-    ${DEPLOYMENT_TARGET})
+    ${DEPLOYMENT_TARGET} install)
+
+elseif(CMAKE_OSX_ARCHITECTURES AND APPLE)
+
+  # Passing multiple `-arch` flags to the LuaJIT build will cause it to fail.
+  # To get a working universal build, we build each requested architecture slice
+  # individually then `lipo` them all up.
+  set(LUAJIT_SRC_DIR "${DEPS_BUILD_DIR}/src/luajit")
+  foreach(ARCH IN LISTS CMAKE_OSX_ARCHITECTURES)
+    set(STATIC_CC "${LUAJIT_C_COMPILER} -arch ${ARCH}")
+    set(DYNAMIC_CC "${LUAJIT_C_COMPILER} -arch ${ARCH} -fPIC")
+    set(TARGET_LD "${LUAJIT_C_COMPILER} -arch ${ARCH}")
+    list(APPEND LUAJIT_THIN_EXECUTABLES "${LUAJIT_SRC_DIR}-${ARCH}/src/luajit")
+    list(APPEND LUAJIT_THIN_STATIC_LIBS "${LUAJIT_SRC_DIR}-${ARCH}/src/libluajit.a")
+    list(APPEND LUAJIT_THIN_DYLIBS "${LUAJIT_SRC_DIR}-${ARCH}/src/libluajit.so")
+    list(APPEND LUAJIT_THIN_TARGETS "luajit-${ARCH}")
+
+    # See https://luajit.org/install.html#cross.
+    BuildLuaJit(TARGET "luajit-${ARCH}"
+        BUILD_COMMAND ${BUILDCMD_UNIX}
+        CC=${LUAJIT_C_COMPILER} STATIC_CC=${STATIC_CC}
+        DYNAMIC_CC=${DYNAMIC_CC} TARGET_LD=${TARGET_LD}
+        PREFIX=${DEPS_INSTALL_DIR}
+        ${DEPLOYMENT_TARGET})
+  endforeach()
+  BuildLuaJit(
+    CONFIGURE_COMMAND ${BUILDCMD_UNIX} CC=${LUAJIT_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR} ${DEPLOYMENT_TARGET}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${LUAJIT_SRC_DIR}/src/luajit ${LUAJIT_SRC_DIR}/src/libluajit.so ${LUAJIT_SRC_DIR}/src/libluajit.a
+    BUILD_COMMAND lipo ${LUAJIT_THIN_EXECUTABLES} -create -output ${LUAJIT_SRC_DIR}/src/luajit
+    COMMAND lipo ${LUAJIT_THIN_STATIC_LIBS} -create -output ${LUAJIT_SRC_DIR}/src/libluajit.a
+    COMMAND lipo ${LUAJIT_THIN_DYLIBS} -create -output ${LUAJIT_SRC_DIR}/src/libluajit.so
+    INSTALL_COMMAND ${BUILDCMD_UNIX} CC=${LUAJIT_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR} ${DEPLOYMENT_TARGET} install
+    DEPENDS ${LUAJIT_THIN_TARGETS}
+    )
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
 
