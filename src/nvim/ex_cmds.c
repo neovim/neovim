@@ -3468,7 +3468,6 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
   static int pre_hl_id = 0;
   pos_T old_cursor = curwin->w_cursor;
   int start_nsubs;
-  int save_ma = 0;
 
   bool did_save = false;
 
@@ -4060,7 +4059,8 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
         //    there is a replace pattern.
         if (!cmdpreview || has_second_delim) {
           long lnum_start = lnum;  // save the start lnum
-          save_ma = curbuf->b_p_ma;
+          int save_ma = curbuf->b_p_ma;
+          int save_sandbox = sandbox;
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
             curbuf->b_p_ma = false;
@@ -4069,20 +4069,24 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           // Save flags for recursion.  They can change for e.g.
           // :s/^/\=execute("s#^##gn")
           subflags_T subflags_save = subflags;
-          // get length of substitution part
+
+          // Disallow changing text or switching window in an expression.
+          textlock++;
+          // Get length of substitution part, including the NUL.
+          // When it fails sublen is zero.
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
                                     (char_u *)sub, (char_u *)sub_firstline, 0,
                                     REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
+          textlock--;
+
           // If getting the substitute string caused an error, don't do
           // the replacement.
           // Don't keep flags set by a recursive call
           subflags = subflags_save;
-          if (aborting() || subflags.do_count) {
+          if (sublen == 0 || aborting() || subflags.do_count) {
             curbuf->b_p_ma = save_ma;
-            if (sandbox > 0) {
-              sandbox--;
-            }
+            sandbox = save_sandbox;
             goto skip;
           }
 
@@ -4111,10 +4115,12 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           int start_col = new_end - new_start;
           current_match.start.col = start_col;
 
+          textlock++;
           (void)vim_regsub_multi(&regmatch,
                                  sub_firstlnum - regmatch.startpos[0].lnum,
                                  (char_u *)sub, (char_u *)new_end, sublen,
                                  REGSUB_COPY | REGSUB_BACKSLASH | (p_magic ? REGSUB_MAGIC : 0));
+          textlock--;
           sub_nsubs++;
           did_sub = true;
 
