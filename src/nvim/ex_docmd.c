@@ -6016,7 +6016,9 @@ static void ex_command(exarg_T *eap)
 void ex_comclear(exarg_T *eap)
 {
   uc_clear(&ucmds);
-  uc_clear(&curbuf->b_ucmds);
+  if (curbuf != NULL) {
+    uc_clear(&curbuf->b_ucmds);
+  }
 }
 
 void free_ucmd(ucmd_T *cmd)
