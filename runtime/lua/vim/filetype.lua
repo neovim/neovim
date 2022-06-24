@@ -33,7 +33,7 @@ end
 function M.getlines(bufnr, start_lnum, end_lnum)
   if not end_lnum then
     -- Return a single line as a string
-    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1]
+    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
   end
   return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
 end
