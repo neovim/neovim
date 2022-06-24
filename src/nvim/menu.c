@@ -232,6 +232,7 @@ void ex_menu(exarg_T *eap)
     } else if (modes & MENU_TIP_MODE) {
       map_buf = NULL;  // Menu tips are plain text.
     } else {
+      map_buf = NULL;
       map_to = replace_termcodes(map_to, STRLEN(map_to), &map_buf,
                                  REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
     }

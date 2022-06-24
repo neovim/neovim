@@ -861,6 +861,9 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// @param[in]  from  What characters to replace.
 /// @param[in]  from_len  Length of the "from" argument.
 /// @param[out]  bufp  Location where results were saved in case of success (allocated).
+///                    if *bufp is non-NULL, it will be used directly. it is
+///                    assumed to be 128 bytes long (enough for transcoding LHS
+///                    of mapping)
 ///                    Will be set to NULL in case of failure.
 /// @param[in]  flags  REPTERM_FROM_PART    see above
 ///                    REPTERM_DO_LT        also translate <lt>
@@ -885,10 +888,12 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   const bool do_backslash = !(cpo_flags & FLAG_CPO_BSLASH);  // backslash is a special character
   const bool do_special = !(flags & REPTERM_NO_SPECIAL);
 
+  bool allocated = (*bufp == NULL);
+
   // Allocate space for the translation.  Worst case a single character is
   // replaced by 6 bytes (shifted special key), plus a NUL at the end.
-  const size_t buf_len = from_len * 6 + 1;
-  result = xmalloc(buf_len);
+  const size_t buf_len = allocated ? from_len * 6 + 1 : 128;
+  result = allocated ? xmalloc(buf_len) : *bufp;
 
   src = (char_u *)from;
 
@@ -907,6 +912,9 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
 
   // Copy each byte from *from to result[dlen]
   while (src <= end) {
+    if (!allocated && dlen + 64 > buf_len) {
+      return NULL;
+    }
     // Check for special <> keycodes, like "<C-S-LeftMouse>"
     if (do_special && ((flags & REPTERM_DO_LT) || ((end - src) >= 3
                                                    && STRNCMP(src, "<lt>", 4) != 0))) {
@@ -1000,7 +1008,9 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   }
   result[dlen] = NUL;
 
-  *bufp = xrealloc(result, dlen + 1);
+  if (allocated) {
+    *bufp = xrealloc(result, dlen + 1);
+  }
 
   return *bufp;
 }
