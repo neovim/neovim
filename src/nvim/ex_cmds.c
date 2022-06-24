@@ -144,17 +144,15 @@ void do_ascii(const exarg_T *const eap)
 
     dig = (char *)get_digraph_for_char(cval);
     if (dig != NULL) {
-      iobuff_len += (
-                     vim_snprintf((char *)IObuff + iobuff_len,
-                                  sizeof(IObuff) - iobuff_len,
-                                  _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
-                                  transchar(c), buf1, buf2, cval, cval, cval, dig));
+      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+                                         sizeof(IObuff) - iobuff_len,
+                                         _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
+                                         transchar(c), buf1, buf2, cval, cval, cval, dig);
     } else {
-      iobuff_len += (
-                     vim_snprintf((char *)IObuff + iobuff_len,
-                                  sizeof(IObuff) - iobuff_len,
-                                  _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
-                                  transchar(c), buf1, buf2, cval, cval, cval));
+      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+                                         sizeof(IObuff) - iobuff_len,
+                                         _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+                                         transchar(c), buf1, buf2, cval, cval, cval);
     }
 
     c = cc[ci++];
@@ -190,25 +188,23 @@ void do_ascii(const exarg_T *const eap)
     if (utf_iscomposing(c)) {
       IObuff[iobuff_len++] = ' ';  // Draw composing char on top of a space.
     }
-    iobuff_len += utf_char2bytes(c, (char *)IObuff + iobuff_len);
+    iobuff_len += (size_t)utf_char2bytes(c, (char *)IObuff + iobuff_len);
 
     dig = (char *)get_digraph_for_char(c);
     if (dig != NULL) {
-      iobuff_len += (
-                     vim_snprintf((char *)IObuff + iobuff_len,
-                                  sizeof(IObuff) - iobuff_len,
-                                  (c < 0x10000
-                          ? _("> %d, Hex %04x, Oct %o, Digr %s")
-                          : _("> %d, Hex %08x, Oct %o, Digr %s")),
-                                  c, c, c, dig));
+      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+                                         sizeof(IObuff) - iobuff_len,
+                                         (c < 0x10000
+                                          ? _("> %d, Hex %04x, Oct %o, Digr %s")
+                                          : _("> %d, Hex %08x, Oct %o, Digr %s")),
+                                         c, c, c, dig);
     } else {
-      iobuff_len += (
-                     vim_snprintf((char *)IObuff + iobuff_len,
-                                  sizeof(IObuff) - iobuff_len,
-                                  (c < 0x10000
-                          ? _("> %d, Hex %04x, Octal %o")
-                          : _("> %d, Hex %08x, Octal %o")),
-                                  c, c, c));
+      iobuff_len += (size_t)vim_snprintf((char *)IObuff + iobuff_len,
+                                         sizeof(IObuff) - iobuff_len,
+                                         (c < 0x10000
+                                          ? _("> %d, Hex %04x, Octal %o")
+                                          : _("> %d, Hex %08x, Octal %o")),
+                                         c, c, c);
     }
     if (ci == MAX_MCO) {
       break;
@@ -254,10 +250,10 @@ void ex_align(exarg_T *eap)
      * if invalid value, use 80
      */
     if (width <= 0) {
-      width = curbuf->b_p_tw;
+      width = (int)curbuf->b_p_tw;
     }
     if (width == 0 && curbuf->b_p_wm > 0) {
-      width = curwin->w_width_inner - curbuf->b_p_wm;
+      width = curwin->w_width_inner - (int)curbuf->b_p_wm;
     }
     if (width <= 0) {
       width = 80;
@@ -325,7 +321,6 @@ static int linelen(int *has_tab)
   char *line;
   char *first;
   char *last;
-  int save;
   int len;
 
   // Get the line.  If it's empty bail out early (could be the empty string
@@ -340,7 +335,7 @@ static int linelen(int *has_tab)
   // find the character after the last non-blank character
   for (last = first + STRLEN(first);
        last > first && ascii_iswhite(last[-1]); last--) {}
-  save = (char_u)(*last);
+  char save = *last;
   *last = NUL;
   // Get line length.
   len = linetabsize((char_u *)line);
@@ -428,10 +423,10 @@ static int sort_compare(const void *s1, const void *s2)
     // guarantee that the first pointer becomes invalid when obtaining the
     // second one.
     memcpy(sortbuf1, ml_get(l1.lnum) + l1.st_u.line.start_col_nr,
-           l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr + 1);
+           (size_t)(l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr + 1));
     sortbuf1[l1.st_u.line.end_col_nr - l1.st_u.line.start_col_nr] = NUL;
     memcpy(sortbuf2, ml_get(l2.lnum) + l2.st_u.line.start_col_nr,
-           l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1);
+           (size_t)(l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr + 1));
     sortbuf2[l2.st_u.line.end_col_nr - l2.st_u.line.start_col_nr] = NUL;
 
     result = string_compare(sortbuf1, sortbuf2);
@@ -451,7 +446,7 @@ void ex_sort(exarg_T *eap)
   int len;
   linenr_T lnum;
   long maxlen = 0;
-  size_t count = eap->line2 - eap->line1 + 1;
+  size_t count = (size_t)(eap->line2 - eap->line1) + 1;
   size_t i;
   char *p;
   char *s;
@@ -635,8 +630,8 @@ void ex_sort(exarg_T *eap)
   }
 
   // Allocate a buffer that can hold the longest line.
-  sortbuf1 = xmalloc(maxlen + 1);
-  sortbuf2 = xmalloc(maxlen + 1);
+  sortbuf1 = xmalloc((size_t)maxlen + 1);
+  sortbuf2 = xmalloc((size_t)maxlen + 1);
 
   // Sort the array of line numbers.  Note: can't be interrupted!
   qsort((void *)nrs, count, sizeof(sorti_T), sort_compare);
@@ -660,7 +655,7 @@ void ex_sort(exarg_T *eap)
 
     s = (char *)ml_get(get_lnum);
     size_t bytelen = STRLEN(s) + 1;  // include EOL in bytelen
-    old_count += bytelen;
+    old_count += (bcount_t)bytelen;
     if (!unique || i == 0 || string_compare(s, sortbuf1) != 0) {
       // Copy the line into a buffer, it may become invalid in
       // ml_append(). And it's needed for "unique".
@@ -668,7 +663,7 @@ void ex_sort(exarg_T *eap)
       if (ml_append(lnum++, sortbuf1, (colnr_T)0, false) == FAIL) {
         break;
       }
-      new_count += bytelen;
+      new_count += (bcount_t)bytelen;
     }
     fast_breakcheck();
     if (got_int) {
@@ -686,21 +681,21 @@ void ex_sort(exarg_T *eap)
   }
 
   // Adjust marks for deleted (or added) lines and prepare for displaying.
-  deleted = (long)(count - (lnum - eap->line2));
+  deleted = (long)count - (lnum - eap->line2);
   if (deleted > 0) {
-    mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
+    mark_adjust(eap->line2 - (linenr_T)deleted, eap->line2, (long)MAXLNUM, (linenr_T)(-deleted),
                 kExtmarkNOOP);
     msgmore(-deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkNOOP);
+    mark_adjust(eap->line2, MAXLNUM, (linenr_T)(-deleted), 0L, kExtmarkNOOP);
   }
 
   if (change_occurred || deleted != 0) {
     extmark_splice(curbuf, eap->line1 - 1, 0,
-                   count, 0, old_count,
+                   (int)count, 0, old_count,
                    lnum - eap->line2, 0, new_count, kExtmarkUndo);
 
-    changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
+    changed_lines(eap->line1, 0, eap->line2 + 1, (linenr_T)(-deleted), true);
   }
 
   curwin->w_cursor.lnum = eap->line1;
@@ -757,7 +752,7 @@ void ex_retab(exarg_T *eap)
     new_vts_array = curbuf->b_p_vts_array;
     new_ts_str = NULL;
   } else {
-    new_ts_str = xstrnsave(new_ts_str, eap->arg - new_ts_str);
+    new_ts_str = xstrnsave(new_ts_str, (size_t)(eap->arg - new_ts_str));
   }
   for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     ptr = (char *)ml_get(lnum);
@@ -786,7 +781,7 @@ void ex_retab(exarg_T *eap)
           if (!curbuf->b_p_et) {
             int t, s;
 
-            tabstop_fromto(start_vcol, vcol,
+            tabstop_fromto((colnr_T)start_vcol, (colnr_T)vcol,
                            curbuf->b_p_ts, new_vts_array, &t, &s);
             num_tabs = t;
             num_spaces = s;
@@ -810,7 +805,7 @@ void ex_retab(exarg_T *eap)
               emsg(_(e_resulting_text_too_long));
               break;
             }
-            new_line = xmalloc(new_len);
+            new_line = xmalloc((size_t)new_len);
 
             if (start_col > 0) {
               memmove(new_line, ptr, (size_t)start_col);
@@ -1139,7 +1134,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   char *t;
   char *p;
   char *trailarg;
-  int len;
+  size_t len;
   int scroll_save = msg_scroll;
 
   //
@@ -1163,9 +1158,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   bool ins_prevcmd = forceit;
   trailarg = arg;
   do {
-    len = (int)STRLEN(trailarg) + 1;
+    len = STRLEN(trailarg) + 1;
     if (newcmd != NULL) {
-      len += (int)STRLEN(newcmd);
+      len += STRLEN(newcmd);
     }
     if (ins_prevcmd) {
       if (prevcmd == NULL) {
@@ -1173,7 +1168,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
         xfree(newcmd);
         return;
       }
-      len += (int)STRLEN(prevcmd);
+      len += STRLEN(prevcmd);
     }
     t = xmalloc(len);
     *t = NUL;
@@ -1374,7 +1369,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   read_linecount = curbuf->b_ml.ml_line_count;
 
   // Pass on the kShellOptDoOut flag when the output is being redirected.
-  call_shell((char_u *)cmd_buf, kShellOptFilter | shell_flags, NULL);
+  call_shell((char_u *)cmd_buf, (ShellOpts)(kShellOptFilter | shell_flags), NULL);
   xfree(cmd_buf);
 
   did_check_timestamps = FALSE;
@@ -1526,7 +1521,7 @@ void do_shell(char *cmd, int flags)
   // This ui_cursor_goto is required for when the '\n' resulted in a "delete line
   // 1" command to the terminal.
   ui_cursor_goto(msg_row, msg_col);
-  (void)call_shell((char_u *)cmd, flags, NULL);
+  (void)call_shell((char_u *)cmd, (ShellOpts)flags, NULL);
   msg_didout = true;
   did_check_timestamps = false;
   need_check_timestamps = true;
@@ -1657,9 +1652,9 @@ void append_redir(char *const buf, const size_t buflen, const char *const opt,
   }
   if (p != NULL) {
     *end = ' ';  // not really needed? Not with sh, ksh or bash
-    vim_snprintf(end + 1, (size_t)(buflen - (end + 1 - buf)), opt, fname);
+    vim_snprintf(end + 1, (size_t)((ptrdiff_t)buflen - (end + 1 - buf)), opt, fname);
   } else {
-    vim_snprintf(end, (size_t)(buflen - (end - buf)), " %s %s", opt, fname);
+    vim_snprintf(end, (size_t)((ptrdiff_t)buflen - (end - buf)), " %s %s", opt, fname);
   }
 }
 
@@ -2419,7 +2414,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         linenr_T tlnum = 0;
 
         if (command != NULL) {
-          tlnum = atol(command);
+          tlnum = (linenr_T)atol(command);
           if (tlnum <= 0) {
             tlnum = 1L;
           }
@@ -2961,7 +2956,7 @@ void ex_append(exarg_T *eap)
       if (p == NULL) {
         p = eap->nextcmd + STRLEN(eap->nextcmd);
       }
-      theline = xstrnsave(eap->nextcmd, p - eap->nextcmd);
+      theline = xstrnsave(eap->nextcmd, (size_t)(p - eap->nextcmd));
       if (*p != NUL) {
         p++;
       }
@@ -3135,38 +3130,38 @@ void ex_z(exarg_T *eap)
 
   switch (*kind) {
   case '-':
-    start = lnum - bigness * (linenr_T)(x - kind) + 1;
-    end = start + bigness - 1;
+    start = lnum - (linenr_T)bigness * (linenr_T)(x - kind) + 1;
+    end = start + (linenr_T)bigness - 1;
     curs = end;
     break;
 
   case '=':
-    start = lnum - (bigness + 1) / 2 + 1;
-    end = lnum + (bigness + 1) / 2 - 1;
+    start = lnum - ((linenr_T)bigness + 1) / 2 + 1;
+    end = lnum + ((linenr_T)bigness + 1) / 2 - 1;
     curs = lnum;
     minus = 1;
     break;
 
   case '^':
-    start = lnum - bigness * 2;
-    end = lnum - bigness;
-    curs = lnum - bigness;
+    start = lnum - (linenr_T)bigness * 2;
+    end = lnum - (linenr_T)bigness;
+    curs = lnum - (linenr_T)bigness;
     break;
 
   case '.':
-    start = lnum - (bigness + 1) / 2 + 1;
-    end = lnum + (bigness + 1) / 2 - 1;
+    start = lnum - ((linenr_T)bigness + 1) / 2 + 1;
+    end = lnum + ((linenr_T)bigness + 1) / 2 - 1;
     curs = end;
     break;
 
   default:        // '+'
     start = lnum;
     if (*kind == '+') {
-      start += bigness * (linenr_T)(x - kind - 1) + 1;
+      start += (linenr_T)bigness * (linenr_T)(x - kind - 1) + 1;
     } else if (eap->addr_count == 0) {
       ++start;
     }
-    end = start + bigness - 1;
+    end = start + (linenr_T)bigness - 1;
     curs = end;
     break;
   }
@@ -3300,7 +3295,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, char *sub, char *cmd, boo
                                   // plus one extra line if not at the end of file.
                                   + (eap->line2 < curbuf->b_ml.ml_line_count ? 1 : 0);
     if (joined_lines_count > 1) {
-      do_join(joined_lines_count, FALSE, TRUE, FALSE, true);
+      do_join((size_t)joined_lines_count, false, true, false, true);
       sub_nsubs = joined_lines_count - 1;
       sub_nlines = 1;
       do_sub_msg(false);
@@ -3339,7 +3334,7 @@ static char *sub_grow_buf(char **new_start, int needed_len)
     // substitution into (and some extra space to avoid
     // too many calls to xmalloc()/free()).
     new_start_len = needed_len + 50;
-    *new_start = xmalloc(new_start_len);
+    *new_start = xmalloc((size_t)new_start_len);
     **new_start = NUL;
     new_end = *new_start;
   } else {
@@ -3347,10 +3342,10 @@ static char *sub_grow_buf(char **new_start, int needed_len)
     // substitution into.  If not, make it larger (with a bit
     // extra to avoid too many calls to xmalloc()/free()).
     size_t len = STRLEN(*new_start);
-    needed_len += len;
+    needed_len += (int)len;
     if (needed_len > new_start_len) {
       new_start_len = needed_len + 50;
-      *new_start = xrealloc(*new_start, new_start_len);
+      *new_start = xrealloc(*new_start, (size_t)new_start_len);
     }
     new_end = *new_start + len;
   }
@@ -3467,7 +3462,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
   PreviewLines preview_lines = { KV_INITIAL_VALUE, 0 };
   static int pre_hl_id = 0;
   pos_T old_cursor = curwin->w_cursor;
-  int start_nsubs;
+  long start_nsubs;
 
   bool did_save = false;
 
@@ -3571,7 +3566,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       return 0;
     }
     eap->line1 = eap->line2;
-    eap->line2 += i - 1;
+    eap->line2 += (linenr_T)i - 1;
     if (eap->line2 > curbuf->b_ml.ml_line_count) {
       eap->line2 = curbuf->b_ml.ml_line_count;
     }
@@ -3853,10 +3848,10 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
                 ec += numw;
               }
 
-              prompt = xmallocz(ec + 1);
-              memset(prompt, ' ', sc);
-              memset(prompt + sc, '^', ec - sc + 1);
-              resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE);
+              prompt = xmallocz((size_t)ec + 1);
+              memset(prompt, ' ', (size_t)sc);
+              memset(prompt + sc, '^', (size_t)(ec - sc) + 1);
+              resp = getcmdline_prompt((char)(-1), prompt, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE);
               msg_putchar('\n');
               xfree(prompt);
               if (resp != NULL) {
@@ -3929,8 +3924,8 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
               msg_ext_set_kind("confirm_sub");
               smsg_attr(HL_ATTR(HLF_R),  // Same highlight as wait_return().
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
-              msg_no_more = FALSE;
-              msg_scroll = i;
+              msg_no_more = false;
+              msg_scroll = (int)i;
               showruler(true);
               ui_cursor_goto(msg_row, msg_col);
               RedrawingDisabled = temp;
@@ -4011,7 +4006,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
         // go beyond the last line of the buffer.
         if (nmatch > curbuf->b_ml.ml_line_count - sub_firstlnum + 1) {
           nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
-          current_match.end.lnum = sub_firstlnum + nmatch;
+          current_match.end.lnum = sub_firstlnum + (linenr_T)nmatch;
           skip_match = true;
         }
 
@@ -4020,7 +4015,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     /* For a multi-line match, make a copy of the last matched */ \
     /* line and continue in that one. */ \
     if (nmatch > 1) { \
-      sub_firstlnum += nmatch - 1; \
+      sub_firstlnum += (linenr_T)nmatch - 1; \
       xfree(sub_firstline); \
       sub_firstline = (char *)vim_strsave(ml_get(sub_firstlnum)); \
       /* When going beyond the last line, stop substituting. */ \
@@ -4045,12 +4040,12 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
         if (cmdpreview && !has_second_delim) {
           current_match.start.col = regmatch.startpos[0].col;
           if (current_match.end.lnum == 0) {
-            current_match.end.lnum = sub_firstlnum + nmatch - 1;
+            current_match.end.lnum = sub_firstlnum + (linenr_T)nmatch - 1;
           }
           current_match.end.col  = regmatch.endpos[0].col;
 
           ADJUST_SUB_FIRSTLNUM();
-          lnum += nmatch - 1;
+          lnum += (linenr_T)nmatch - 1;
 
           goto skip;
         }
@@ -4098,13 +4093,13 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           if (nmatch == 1) {
             p1 = sub_firstline;
           } else {
-            p1 = (char *)ml_get(sub_firstlnum + nmatch - 1);
+            p1 = (char *)ml_get(sub_firstlnum + (linenr_T)nmatch - 1);
             nmatch_tl += nmatch - 1;
           }
-          size_t copy_len = regmatch.startpos[0].col - copycol;
+          size_t copy_len = (size_t)(regmatch.startpos[0].col - copycol);
           new_end = sub_grow_buf(&new_start,
-                                 (STRLEN(p1) - regmatch.endpos[0].col)
-                                 + copy_len + sublen + 1);
+                                 (colnr_T)STRLEN(p1) - regmatch.endpos[0].col
+                                 + (colnr_T)copy_len + sublen + 1);
 
           // copy the text up to the part that matched
           memmove(new_end, sub_firstline + copycol, copy_len);
@@ -4112,7 +4107,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
           // Finally, at this point we can know where the match actually will
           // start in the new text
-          int start_col = new_end - new_start;
+          int start_col = (int)(new_end - new_start);
           current_match.start.col = start_col;
 
           textlock++;
@@ -4137,7 +4132,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           bcount_t replaced_bytes = 0;
           lpos_T start = regmatch.startpos[0], end = regmatch.endpos[0];
           for (i = 0; i < nmatch - 1; i++) {
-            replaced_bytes += STRLEN(ml_get(lnum_start + i)) + 1;
+            replaced_bytes += (bcount_t)STRLEN(ml_get((linenr_T)(lnum_start + i))) + 1;
           }
           replaced_bytes += end.col - start.col;
 
@@ -4180,7 +4175,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
               p1 += utfc_ptr2len(p1) - 1;
             }
           }
-          size_t new_endcol = STRLEN(new_start);
+          colnr_T new_endcol = (colnr_T)STRLEN(new_start);
           current_match.end.col = new_endcol;
           current_match.end.lnum = lnum;
 
@@ -4192,9 +4187,9 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
             u_save_cursor();
             did_save = true;
           }
-          extmark_splice(curbuf, lnum_start - 1, start_col,
+          extmark_splice(curbuf, (int)lnum_start - 1, start_col,
                          end.lnum - start.lnum, matchcols, replaced_bytes,
-                         lnum - lnum_start, subcols, sublen - 1, kExtmarkUndo);
+                         lnum - (linenr_T)lnum_start, subcols, sublen - 1, kExtmarkUndo);
         }
 
         // 4. If subflags.do_all is set, find next match.
@@ -4263,13 +4258,13 @@ skip:
               for (i = 0; i < nmatch_tl; i++) {
                 ml_delete(lnum, false);
               }
-              mark_adjust(lnum, lnum + nmatch_tl - 1,
-                          (long)MAXLNUM, -nmatch_tl, kExtmarkNOOP);
+              mark_adjust(lnum, lnum + (linenr_T)nmatch_tl - 1,
+                          (long)MAXLNUM, (linenr_T)(-nmatch_tl), kExtmarkNOOP);
               if (subflags.do_ask) {
-                deleted_lines(lnum, nmatch_tl);
+                deleted_lines(lnum, (linenr_T)nmatch_tl);
               }
               lnum--;
-              line2 -= nmatch_tl;  // nr of lines decreases
+              line2 -= (linenr_T)nmatch_tl;  // nr of lines decreases
               nmatch_tl = 0;
             }
 
@@ -4365,7 +4360,7 @@ skip:
     // the line number before the change (same as adding the number of
     // deleted lines).
     i = curbuf->b_ml.ml_line_count - old_line_count;
-    changed_lines(first_line, 0, last_line - i, i, false);
+    changed_lines(first_line, 0, last_line - (linenr_T)i, (linenr_T)i, false);
 
     int64_t num_added = last_line - first_line;
     int64_t num_removed = num_added - i;
@@ -4598,8 +4593,7 @@ void ex_global(exarg_T *eap)
 
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
-    match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                              (colnr_T)0, NULL, NULL);
+    match = (int)vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
       global_exe_one(cmd, lnum);
     }
@@ -4607,8 +4601,7 @@ void ex_global(exarg_T *eap)
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
-      match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                (colnr_T)0, NULL, NULL);
+      match = (int)vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
       if (regmatch.regprog == NULL) {
         break;  // re-compiling regprog failed
       }
@@ -4984,7 +4977,7 @@ int help_heuristic(char *matched_string, int offset, int wrong_case)
   if (matched_string[0] == '+' && matched_string[1] != NUL) {
     offset += 100;
   }
-  return (int)(100 * num_letters + STRLEN(matched_string) + offset);
+  return 100 * num_letters + (int)STRLEN(matched_string) + offset;
 }
 
 /// Compare functions for qsort() below, that checks the help heuristics number
@@ -5165,7 +5158,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
           STRCPY(d, "CTRL-");
           d += 5;
           if (*s < ' ') {
-            *d++ = *s + '@';
+            *d++ = (char)(*s + '@');
             if (d[-1] == '\\') {
               *d++ = '\\';              // double a backslash
             }
@@ -5635,7 +5628,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
                   || s[1] == '\0')) {
             *p2 = '\0';
             p1++;
-            size_t s_len= (p2 - p1) + STRLEN(fname) + 2;
+            size_t s_len= (size_t)(p2 - p1) + STRLEN(fname) + 2;
             s = xmalloc(s_len);
             GA_APPEND(char *, &ga, s);
             snprintf(s, s_len, "%s\t%s", p1, fname);
@@ -5756,8 +5749,8 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
                && ASCII_ISALPHA(files[i][len - 2])
                && TOLOWER_ASC(files[i][len - 1]) == 'x') {
       // ".abx" -> language "ab"
-      lang[0] = TOLOWER_ASC(files[i][len - 3]);
-      lang[1] = TOLOWER_ASC(files[i][len - 2]);
+      lang[0] = (char)TOLOWER_ASC(files[i][len - 3]);
+      lang[1] = (char)TOLOWER_ASC(files[i][len - 2]);
     } else {
       continue;
     }
@@ -5771,8 +5764,8 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
     if (j == ga.ga_len) {
       // New language, add it.
       ga_grow(&ga, 2);
-      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[0];
-      ((char_u *)ga.ga_data)[ga.ga_len++] = lang[1];
+      ((char *)ga.ga_data)[ga.ga_len++] = lang[0];
+      ((char *)ga.ga_data)[ga.ga_len++] = lang[1];
     }
   }
 
@@ -5781,8 +5774,8 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
    */
   for (j = 0; j < ga.ga_len; j += 2) {
     STRCPY(fname, "tags-xx");
-    fname[5] = ((char_u *)ga.ga_data)[j];
-    fname[6] = ((char_u *)ga.ga_data)[j + 1];
+    fname[5] = ((char *)ga.ga_data)[j];
+    fname[6] = ((char *)ga.ga_data)[j + 1];
     if (fname[5] == 'e' && fname[6] == 'n') {
       // English is an exception: use ".txt" and "tags".
       fname[4] = NUL;
@@ -5889,7 +5882,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
 
     if (lines.subresults.size > 0) {
       highest_num_line = kv_last(lines.subresults).end.lnum;
-      col_width = log10(highest_num_line) + 1 + 3;
+      col_width = (int)log10(highest_num_line) + 1 + 3;
     }
   }
 
@@ -5934,7 +5927,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
           line = "";
         } else {
           line = (char *)ml_get_buf(orig_buf, next_linenr, false);
-          line_size = strlen(line) + col_width + 1;
+          line_size = strlen(line) + (size_t)col_width + 1;
 
           // Reallocate if line not long enough
           if (line_size > old_line_size) {
@@ -5957,9 +5950,9 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
       }
       linenr_origbuf = match.end.lnum;
 
-      bufhl_add_hl_pos_offset(cmdpreview_buf, cmdpreview_ns, hl_id, p_start, p_end, col_width);
+      bufhl_add_hl_pos_offset(cmdpreview_buf, (int)cmdpreview_ns, hl_id, p_start, p_end, col_width);
     }
-    bufhl_add_hl_pos_offset(orig_buf, cmdpreview_ns, hl_id, match.start, match.end, 0);
+    bufhl_add_hl_pos_offset(orig_buf, (int)cmdpreview_ns, hl_id, match.start, match.end, 0);
   }
 
   xfree(str);
@@ -5974,7 +5967,6 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
 void ex_substitute(exarg_T *eap)
 {
   (void)do_sub(eap, profile_zero(), 0, 0);
-  return;
 }
 
 /// :substitute command preview callback.
@@ -6082,7 +6074,7 @@ void ex_oldfiles(exarg_T *eap)
       nr = prompt_for_number(false);
       msg_starthere();
       if (nr > 0 && nr <= tv_list_len(l)) {
-        const char *const p = tv_list_find_str(l, nr - 1);
+        const char *const p = tv_list_find_str(l, (int)nr - 1);
         if (p == NULL) {
           return;
         }
