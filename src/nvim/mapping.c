@@ -37,8 +37,7 @@ static mapblock_T *first_abbr = NULL;  // first entry in abbrlist
 
 // Each mapping is put in one of the MAX_MAPHASH hash lists,
 // to speed up finding it.
-static mapblock_T *(maphash[MAX_MAPHASH]);
-static bool maphash_valid = false;
+static mapblock_T *(maphash[MAX_MAPHASH]) = { 0 };
 
 // Make a hash value for a mapping.
 // "mode" is the lower 4 bits of the State for the mapping.
@@ -78,20 +77,6 @@ mapblock_T *get_maphash(int index, buf_T *buf)
   }
 
   return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
-}
-
-bool is_maphash_valid(void)
-{
-  return maphash_valid;
-}
-
-/// Initialize maphash[] for first use.
-static void validate_maphash(void)
-{
-  if (!maphash_valid) {
-    memset(maphash, 0, sizeof(maphash));
-    maphash_valid = true;
-  }
 }
 
 /// Delete one entry from the abbrlist or maphash[].
@@ -437,7 +422,6 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
     return 1;
   }
 
-
   if (mapargs->lhs_len > MAXMAPLEN) {
     return 1;
   }
@@ -483,8 +467,6 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   if (args->script) {
     noremap = REMAP_SCRIPT;
   }
-
-  validate_maphash();
 
   const bool has_lhs = (args->lhs[0] != NUL);
   const bool has_rhs = args->rhs_lua != LUA_NOREF || (args->rhs[0] != NUL) || args->rhs_is_noop;
@@ -987,8 +969,6 @@ void map_clear_int(buf_T *buf, int mode, bool local, bool abbr)
   int hash;
   int new_hash;
 
-  validate_maphash();
-
   for (hash = 0; hash < 256; hash++) {
     if (abbr) {
       if (hash > 0) {           // there is only one abbrlist
@@ -1091,8 +1071,6 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
   mapblock_T *mp;
   int hash;
   bool exp_buffer = false;
-
-  validate_maphash();
 
   // Do it twice: once for global maps and once for local maps.
   for (;;) {
@@ -1260,8 +1238,6 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
   int round;
   char_u *p;
   int i;
-
-  validate_maphash();
 
   *num_file = 0;                    // return values in case of FAIL
   *file = NULL;
@@ -1609,8 +1585,6 @@ int makemap(FILE *fd, buf_T *buf)
   int hash;
   bool did_cpo = false;
 
-  validate_maphash();
-
   // Do the loop twice: Once for mappings, once for abbreviations.
   // Then loop over all map hash lists.
   for (abbr = 0; abbr < 2; abbr++) {
@@ -1922,8 +1896,6 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
   int len, minlen;
   mapblock_T *mp;
   *rhs_lua = LUA_NOREF;
-
-  validate_maphash();
 
   len = (int)STRLEN(keys);
   for (int local = 1; local >= 0; local--) {

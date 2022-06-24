@@ -1822,7 +1822,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
   // - waiting for a char with --more--
   // - in Ctrl-X mode, and we get a valid char for that mode
   tb_c1 = typebuf.tb_buf[typebuf.tb_off];
-  if (no_mapping == 0 && is_maphash_valid()
+  if (no_mapping == 0
       && (no_zero_mapping == 0 || tb_c1 != '0')
       && (typebuf.tb_maplen == 0 || is_plug_map
           || (!(typebuf.tb_noremap[typebuf.tb_off] & (RM_NONE|RM_ABBR))))
