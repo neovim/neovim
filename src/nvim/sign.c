@@ -1176,21 +1176,27 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
     p = skiptowhite_esc(arg);
     if (STRNCMP(arg, "icon=", 5) == 0) {
       arg += 5;
+      XFREE_CLEAR(icon);
       icon = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "text=", 5) == 0) {
       arg += 5;
+      XFREE_CLEAR(text);
       text = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "linehl=", 7) == 0) {
       arg += 7;
+      XFREE_CLEAR(linehl);
       linehl = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "texthl=", 7) == 0) {
       arg += 7;
+      XFREE_CLEAR(texthl);
       texthl = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "culhl=", 6) == 0) {
       arg += 6;
+      XFREE_CLEAR(culhl);
       culhl = vim_strnsave(arg, (size_t)(p - arg));
     } else if (STRNCMP(arg, "numhl=", 6) == 0) {
       arg += 6;
+      XFREE_CLEAR(numhl);
       numhl = vim_strnsave(arg, (size_t)(p - arg));
     } else {
       semsg(_(e_invarg2), arg);
