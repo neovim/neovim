@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Vim script
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Mar 01
+" Last Change:	2022 Jun 24
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -36,6 +36,14 @@ endfunc
 let s:lineContPat = '^\s*\(\\\|"\\ \)'
 
 function GetVimIndentIntern()
+  " If the current line has line continuation and the previous one too, use
+  " the same indent.  This does not skip empty lines.
+  let cur_text = getline(v:lnum)
+  let cur_has_linecont = cur_text =~ s:lineContPat
+  if cur_has_linecont && v:lnum > 1 && getline(v:lnum - 1) =~ s:lineContPat
+    return indent(v:lnum - 1)
+  endif
+
   " Find a non-blank line above the current line.
   let lnum = prevnonblank(v:lnum - 1)
 
@@ -44,8 +52,7 @@ function GetVimIndentIntern()
 
   " If the current line doesn't start with '\' or '"\ ' and below a line that
   " starts with '\' or '"\ ', use the indent of the line above it.
-  let cur_text = getline(v:lnum)
-  if cur_text !~ s:lineContPat
+  if !cur_has_linecont
     while lnum > 0 && getline(lnum) =~ s:lineContPat
       let lnum = lnum - 1
     endwhile
