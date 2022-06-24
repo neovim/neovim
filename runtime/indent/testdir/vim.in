@@ -30,6 +30,12 @@ for x in [
 eval 0
 endfor
 
+let t = [
+\ {
+\ 'k': 'val',
+\ },
+\  ]
+
 " END_INDENT
 
 " START_INDENT
