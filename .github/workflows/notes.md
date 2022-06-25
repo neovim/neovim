@@ -22,7 +22,7 @@ ${NVIM_VERSION}
 
 1. Download **nvim-macos.tar.gz**
 2. Extract: `tar xzvf nvim-macos.tar.gz`
-3. Run `./nvim-osx64/bin/nvim`
+3. Run `./nvim-macos/bin/nvim`
 
 ### Linux (x64)
 

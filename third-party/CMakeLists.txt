@@ -119,6 +119,19 @@ if(CMAKE_OSX_SYSROOT)
   endif()
 endif()
 
+if(CMAKE_OSX_ARCHITECTURES)
+  string(REPLACE ";" "|" CMAKE_OSX_ARCHITECTURES_ALT_SEP "${CMAKE_OSX_ARCHITECTURES}")
+  # The LuaJIT build does not like being passed multiple `-arch` flags
+  # so we handle a universal build the old-fashioned way.
+  set(LUAJIT_C_COMPILER "${DEPS_C_COMPILER}")
+  foreach(ARCH IN LISTS CMAKE_OSX_ARCHITECTURES)
+    set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -arch ${ARCH}")
+    if(DEPS_CXX_COMPILER)
+      set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -arch ${ARCH}")
+    endif()
+  endforeach()
+endif()
+
 set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
 set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
 set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
