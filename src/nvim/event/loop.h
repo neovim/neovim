@@ -36,6 +36,8 @@ typedef struct loop {
   // generic timer, used by loop_poll_events()
   uv_timer_t poll_timer;
 
+  uv_timer_t exit_delay_timer;
+
   uv_async_t async;
   uv_mutex_t mutex;
   int recursive;

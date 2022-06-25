@@ -1075,4 +1075,6 @@ typedef enum {
 // Only filled for Win32.
 EXTERN char windowsVersion[20] INIT(= { 0 });
 
+EXTERN int exit_need_delay INIT(= 0);
+
 #endif  // NVIM_GLOBALS_H
