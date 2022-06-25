@@ -686,6 +686,26 @@ describe('autocmd api', function()
       eq(true, meths.get_var("autocmd_executed"))
     end)
 
+    it("can trigger multiple patterns", function()
+      meths.set_var("autocmd_executed", 0)
+
+      meths.create_autocmd("BufReadPost", {
+        pattern = "*",
+        command = "let g:autocmd_executed += 1",
+      })
+
+      meths.exec_autocmds("BufReadPost", { pattern = { "*.lua", "*.vim" } })
+      eq(2, meths.get_var("autocmd_executed"))
+
+      meths.create_autocmd("BufReadPre", {
+        pattern = { "bar", "foo" },
+        command = "let g:autocmd_executed += 10",
+      })
+
+      meths.exec_autocmds("BufReadPre", { pattern = { "foo", "bar", "baz", "frederick" }})
+      eq(22, meths.get_var("autocmd_executed"))
+    end)
+
     it("can pass the buffer", function()
       meths.set_var("buffer_executed", -1)
       eq(-1, meths.get_var("buffer_executed"))
@@ -742,7 +762,7 @@ describe('autocmd api', function()
       meths.exec_autocmds("CursorHoldI", { buffer = 1 })
       eq('none', meths.get_var("filename_executed"))
 
-      meths.exec_autocmds("CursorHoldI", { buffer = tonumber(meths.get_current_buf()) })
+      meths.exec_autocmds("CursorHoldI", { buffer = meths.get_current_buf() })
       eq('__init__.py', meths.get_var("filename_executed"))
 
       -- Reset filename

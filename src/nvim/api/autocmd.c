@@ -781,13 +781,11 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   bool modeline = true;
 
   buf_T *buf = curbuf;
-  bool set_buf = false;
 
-  char *pattern = NULL;
-  Object *data = NULL;
-  bool set_pattern = false;
-
+  Array patterns = ARRAY_DICT_INIT;
   Array event_array = ARRAY_DICT_INIT;
+
+  Object *data = NULL;
 
   if (!unpack_string_or_array(&event_array, &event, "event", true, err)) {
     goto cleanup;
@@ -826,21 +824,18 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
     }
 
     buf = find_buffer_by_handle((Buffer)buf_obj.data.integer, err);
-    set_buf = true;
 
     if (ERROR_SET(err)) {
       goto cleanup;
     }
   }
 
-  if (opts->pattern.type != kObjectTypeNil) {
-    if (opts->pattern.type != kObjectTypeString) {
-      api_set_error(err, kErrorTypeValidation, "'pattern' must be a string");
-      goto cleanup;
-    }
+  if (!get_patterns_from_pattern_or_buf(&patterns, opts->pattern, opts->buffer, err)) {
+    goto cleanup;
+  }
 
-    pattern = string_to_cstr(opts->pattern.data.string);
-    set_pattern = true;
+  if (patterns.size == 0) {
+    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("*")));
   }
 
   if (opts->data.type != kObjectTypeNil) {
@@ -849,16 +844,16 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
 
   modeline = api_object_to_bool(opts->modeline, "modeline", true, err);
 
-  if (set_pattern && set_buf) {
-    api_set_error(err, kErrorTypeValidation, "must not set 'buffer' and 'pattern'");
-    goto cleanup;
-  }
-
   bool did_aucmd = false;
   FOREACH_ITEM(event_array, event_str, {
     GET_ONE_EVENT(event_nr, event_str, cleanup)
 
-    did_aucmd |= apply_autocmds_group(event_nr, pattern, NULL, true, au_group, buf, NULL, data);
+    for (size_t i = 0; i < patterns.size; i++) {
+      Object pat = patterns.items[i];
+      char *fname = opts->buffer.type == kObjectTypeNil ? pat.data.string.data : NULL;
+      did_aucmd |=
+        apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL, data);
+    }
   })
 
   if (did_aucmd && modeline) {
@@ -867,7 +862,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
 
 cleanup:
   api_free_array(event_array);
-  XFREE_CLEAR(pattern);
+  api_free_array(patterns);
 }
 
 static bool check_autocmd_string_array(Array arr, char *k, Error *err)
@@ -988,11 +983,11 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
     } else {
       api_set_error(err,
                     kErrorTypeValidation,
-                    "'pattern' must be a string");
+                    "'pattern' must be a string or table");
       return false;
     }
   } else if (buffer.type != kObjectTypeNil) {
-    if (buffer.type != kObjectTypeInteger) {
+    if (buffer.type != kObjectTypeInteger && buffer.type != kObjectTypeBuffer) {
       api_set_error(err,
                     kErrorTypeValidation,
                     "'buffer' must be an integer");
