@@ -7,7 +7,7 @@ local eval = helpers.eval
 local meths = helpers.meths
 local exec_capture = helpers.exec_capture
 local source = helpers.source
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 
 before_each(clear)
 
@@ -59,7 +59,7 @@ describe(':let', function()
   end)
 
   it("multibyte env var to child process #8398 #9267",  function()
-    local cmd_get_child_env = "let g:env_from_child = system(['"..nvim_dir.."/printenv-test', 'NVIM_TEST'])"
+    local cmd_get_child_env = ("let g:env_from_child = system(['%s', 'NVIM_TEST'])"):format(testprg('printenv-test'))
     command("let $NVIM_TEST = 'AìaB'")
     command(cmd_get_child_env)
     eq(eval('$NVIM_TEST'), eval('g:env_from_child'))

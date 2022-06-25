@@ -7,7 +7,7 @@ local meths = helpers.meths
 local eq = helpers.eq
 local eval = helpers.eval
 local retry = helpers.retry
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 
 describe("'wildmenu'", function()
   local screen
@@ -114,7 +114,7 @@ describe("'wildmenu'", function()
   it('is preserved during :terminal activity', function()
     command('set wildmenu wildmode=full')
     command('set scrollback=4')
-    feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 5000 !terminal_output!<cr>]])
+    feed((':terminal "%s" REP 5000 !terminal_output!<cr>'):format(testprg('shell-test')))
     feed('G')  -- Follow :terminal output.
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
     -- NB: in earlier versions terminal output was redrawn during cmdline mode.

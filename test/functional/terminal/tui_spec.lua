@@ -14,7 +14,7 @@ local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
 local clear = helpers.clear
 local command = helpers.command
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
@@ -385,7 +385,7 @@ describe('TUI', function()
         return
     end
     feed_data(':set statusline=^^^^^^^\n')
-    feed_data(':terminal '..nvim_dir..'/tty-test\n')
+    feed_data(':terminal '..testprg('tty-test')..'\n')
     feed_data('i')
     screen:expect{grid=[[
       tty ready                                         |
@@ -903,7 +903,7 @@ describe('TUI', function()
 
     feed_data(':set statusline=^^^^^^^\n')
     feed_data(':set termguicolors\n')
-    feed_data(':terminal '..nvim_dir..'/tty-test\n')
+    feed_data(':terminal '..testprg('tty-test')..'\n')
     -- Depending on platform the above might or might not fit in the cmdline
     -- so clear it for consistent behavior.
     feed_data(':\027')
@@ -1130,7 +1130,7 @@ describe('TUI FocusGained/FocusLost', function()
   end)
 
   it('in terminal-mode', function()
-    feed_data(':set shell='..nvim_dir..'/shell-test\n')
+    feed_data(':set shell='..testprg('shell-test')..'\n')
     feed_data(':set noshowmode laststatus=0\n')
 
     feed_data(':terminal\n')
