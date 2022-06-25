@@ -305,7 +305,7 @@ func Test_getcompletion()
   call assert_equal([], l)
 
   let l = getcompletion('', 'dir')
-  call assert_true(index(l, expand('sautest/')) >= 0)
+  call assert_true(index(l, 'sautest/') >= 0)
   let l = getcompletion('NoMatch', 'dir')
   call assert_equal([], l)
 
@@ -415,7 +415,7 @@ func Test_getcompletion()
 
   " Command line completion tests
   let l = getcompletion('cd ', 'cmdline')
-  call assert_true(index(l, expand('sautest/')) >= 0)
+  call assert_true(index(l, 'sautest/') >= 0)
   let l = getcompletion('cd NoMatch', 'cmdline')
   call assert_equal([], l)
   let l = getcompletion('let v:n', 'cmdline')
@@ -539,7 +539,7 @@ func Test_expand_star_star()
   call mkdir('a/b', 'p')
   call writefile(['asdfasdf'], 'a/b/fileXname')
   call feedkeys(":find **/fileXname\<Tab>\<CR>", 'xt')
-  call assert_equal('find '.expand('a/b/fileXname'), getreg(':'))
+  call assert_equal('find a/b/fileXname', getreg(':'))
   bwipe!
   call delete('a', 'rf')
 endfunc
