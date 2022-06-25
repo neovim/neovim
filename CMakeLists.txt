@@ -573,11 +573,7 @@ endif()
 
 message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
-if(DEBUG)
-  option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" OFF)
-else()
-  option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
-endif()
+option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
 
 if(COMPILE_LUA AND NOT WIN32)
   if(PREFER_LUA)
