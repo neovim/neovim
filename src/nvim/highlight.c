@@ -719,93 +719,107 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
     return dic;
   }
 
-  return hlattrs2dict(syn_attr2entry((int)attr_id), rgb);
+  return hlattrs2dict(NULL, syn_attr2entry((int)attr_id), rgb);
 }
 
 /// Converts an HlAttrs into Dictionary
 ///
+/// @param[out] hl optional pre-allocated dictionary for return value
+///                if present, must be allocated with at least 16 elements!
 /// @param[in] aep data to convert
 /// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
-Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
+Dictionary hlattrs2dict(Dictionary *hl_alloc, HlAttrs ae, bool use_rgb)
 {
-  Dictionary hl = ARRAY_DICT_INIT;
   int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
+  Dictionary hl = ARRAY_DICT_INIT;
+  if (hl_alloc) {
+    hl = *hl_alloc;
+  } else {
+    kv_ensure_space(hl, 16);
+  }
 
   if (mask & HL_BOLD) {
-    PUT(hl, "bold", BOOLEAN_OBJ(true));
+    PUT_C(hl, "bold", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_STANDOUT) {
-    PUT(hl, "standout", BOOLEAN_OBJ(true));
+    PUT_C(hl, "standout", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_UNDERLINE) {
-    PUT(hl, "underline", BOOLEAN_OBJ(true));
+    PUT_C(hl, "underline", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_UNDERCURL) {
-    PUT(hl, "undercurl", BOOLEAN_OBJ(true));
+    PUT_C(hl, "undercurl", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_UNDERDOUBLE) {
-    PUT(hl, "underdouble", BOOLEAN_OBJ(true));
+    PUT_C(hl, "underdouble", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_UNDERDOTTED) {
-    PUT(hl, "underdotted", BOOLEAN_OBJ(true));
+    PUT_C(hl, "underdotted", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_UNDERDASHED) {
-    PUT(hl, "underdashed", BOOLEAN_OBJ(true));
+    PUT_C(hl, "underdashed", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_ITALIC) {
-    PUT(hl, "italic", BOOLEAN_OBJ(true));
+    PUT_C(hl, "italic", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_INVERSE) {
-    PUT(hl, "reverse", BOOLEAN_OBJ(true));
+    PUT_C(hl, "reverse", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_STRIKETHROUGH) {
-    PUT(hl, "strikethrough", BOOLEAN_OBJ(true));
+    PUT_C(hl, "strikethrough", BOOLEAN_OBJ(true));
   }
 
   if (use_rgb) {
     if (mask & HL_FG_INDEXED) {
-      PUT(hl, "fg_indexed", BOOLEAN_OBJ(true));
+      PUT_C(hl, "fg_indexed", BOOLEAN_OBJ(true));
     }
 
     if (mask & HL_BG_INDEXED) {
-      PUT(hl, "bg_indexed", BOOLEAN_OBJ(true));
+      PUT_C(hl, "bg_indexed", BOOLEAN_OBJ(true));
     }
 
     if (ae.rgb_fg_color != -1) {
-      PUT(hl, "foreground", INTEGER_OBJ(ae.rgb_fg_color));
+      PUT_C(hl, "foreground", INTEGER_OBJ(ae.rgb_fg_color));
     }
 
     if (ae.rgb_bg_color != -1) {
-      PUT(hl, "background", INTEGER_OBJ(ae.rgb_bg_color));
+      PUT_C(hl, "background", INTEGER_OBJ(ae.rgb_bg_color));
     }
 
     if (ae.rgb_sp_color != -1) {
-      PUT(hl, "special", INTEGER_OBJ(ae.rgb_sp_color));
+      PUT_C(hl, "special", INTEGER_OBJ(ae.rgb_sp_color));
     }
   } else {
     if (ae.cterm_fg_color != 0) {
-      PUT(hl, "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
+      PUT_C(hl, "foreground", INTEGER_OBJ(ae.cterm_fg_color - 1));
     }
 
     if (ae.cterm_bg_color != 0) {
-      PUT(hl, "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
+      PUT_C(hl, "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
     }
   }
 
   if (ae.hl_blend > -1) {
-    PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
+    PUT_C(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
-  return hl;
+  if (hl_alloc) {
+    *hl_alloc = hl;
+    return hl;
+  } else {
+    Dictionary allocated = copy_dictionary(hl);
+    kv_destroy(hl);
+    return allocated;
+  }
 }
 
 HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)

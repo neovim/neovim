@@ -202,7 +202,6 @@ void early_init(mparm_T *paramp)
   set_lang_var();               // set v:lang and v:ctype
 
   init_signs();
-  ui_comp_syn_init();
 }
 
 #ifdef MAKE_LIB
@@ -320,6 +319,7 @@ int main(int argc, char **argv)
   no_wait_return = true;
 
   init_highlight(true, false);  // Default highlight groups.
+  ui_comp_syn_init();
   TIME_MSG("init highlight");
 
   // Set the break level after the terminal is initialized.
