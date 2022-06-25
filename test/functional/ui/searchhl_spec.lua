@@ -5,7 +5,7 @@ local command = helpers.command
 local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 
 describe('search highlighting', function()
   local screen
@@ -305,7 +305,7 @@ describe('search highlighting', function()
   end)
 
   it('is preserved during :terminal activity', function()
-    feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 5000 foo<cr>]])
+    feed((':terminal "%s" REP 5000 foo<cr>'):format(testprg('shell-test')))
 
     feed(':file term<CR>')
     feed('G')  -- Follow :terminal output.

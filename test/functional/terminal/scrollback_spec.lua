@@ -2,7 +2,7 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
-local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.feed_command
+local feed, testprg, feed_command = helpers.feed, helpers.testprg, helpers.feed_command
 local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
@@ -350,7 +350,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
-    feed_command('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
+    feed_command(("call termopen(['%s', '10']) | startinsert"):format(testprg('tty-test')))
     poke_eventloop()
     screen:expect([[
       line6                         |
@@ -382,7 +382,7 @@ describe("'scrollback' option", function()
 
   local function set_fake_shell()
     -- shell-test.c is a fake shell that prints its arguments and exits.
-    nvim('set_option', 'shell', nvim_dir..'/shell-test')
+    nvim('set_option', 'shell', testprg('shell-test'))
     nvim('set_option', 'shellcmdflag', 'EXE')
   end
 
@@ -403,7 +403,7 @@ describe("'scrollback' option", function()
     end
 
     curbufmeths.set_option('scrollback', 0)
-    feed_data(nvim_dir..'/shell-test REP 31 line'..(iswin() and '\r' or '\n'))
+    feed_data(('%s REP 31 line%s'):format(testprg('shell-test'), iswin() and '\r' or '\n'))
     screen:expect{any='30: line                      '}
     retry(nil, nil, function() expect_lines(7) end)
   end)
@@ -423,7 +423,7 @@ describe("'scrollback' option", function()
     -- Wait for prompt.
     screen:expect{any='%$'}
 
-    feed_data(nvim_dir.."/shell-test REP 31 line"..(iswin() and '\r' or '\n'))
+    feed_data(('%s REP 31 line%s'):format(testprg('shell-test'), iswin() and '\r' or '\n'))
     screen:expect{any='30: line                      '}
 
     retry(nil, nil, function() expect_lines(33, 2) end)
@@ -436,7 +436,7 @@ describe("'scrollback' option", function()
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
 
-    feed_data(nvim_dir.."/shell-test REP 41 line"..(iswin() and '\r' or '\n'))
+    feed_data(('%s REP 41 line%s'):format(testprg('shell-test'), iswin() and '\r' or '\n'))
     if iswin() then
       screen:expect{grid=[[
         37: line                      |

@@ -1,8 +1,8 @@
 local luv = require('luv')
 local helpers = require('test.functional.helpers')(after_each)
 
-local clear, command, nvim, nvim_dir =
-  helpers.clear, helpers.command, helpers.nvim, helpers.nvim_dir
+local clear, command, nvim, testprg =
+  helpers.clear, helpers.command, helpers.nvim, helpers.testprg
 local eval, eq, neq, retry =
   helpers.eval, helpers.eq, helpers.neq, helpers.retry
 local ok = helpers.ok
@@ -12,7 +12,7 @@ local iswin = helpers.iswin
 describe('autocmd TermClose', function()
   before_each(function()
     clear()
-    nvim('set_option', 'shell', nvim_dir .. '/shell-test')
+    nvim('set_option', 'shell', testprg('shell-test'))
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
   end)
 

@@ -17,7 +17,7 @@ local source = helpers.source
 local poke_eventloop = helpers.poke_eventloop
 local nvim = helpers.nvim
 local sleep = helpers.sleep
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 local assert_alive = helpers.assert_alive
 
 local default_text = [[
@@ -2875,7 +2875,7 @@ it(':substitute with inccommand during :terminal activity', function()
     clear()
 
     command("set cmdwinheight=3")
-    feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 5000 xxx<cr>]])
+    feed(([[:terminal "%s" REP 5000 xxx<cr>]]):format(testprg('shell-test')))
     command('file term')
     feed('G')  -- Follow :terminal output.
     command('new')

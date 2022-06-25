@@ -1573,14 +1573,18 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 #else
     false;
 #endif
+  bool is_pwsh = STRNCMP(invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
+                 || STRNCMP(invocation_path_tail(p_sh, NULL), "powershell", 10) == 0;
 
   size_t len = STRLEN(cmd) + 1;  // At least enough space for cmd + NULL.
 
   len += is_fish_shell ?  sizeof("begin; " "; end") - 1
-                       :  sizeof("(" ")") - 1;
+                       :  is_pwsh ? sizeof("Start-Process ")
+                                  : sizeof("(" ")") - 1;
 
   if (itmp != NULL) {
-    len += STRLEN(itmp) + sizeof(" { " " < " " } ") - 1;
+    len += is_pwsh  ? STRLEN(itmp) + sizeof(" -RedirectStandardInput ")
+                    : STRLEN(itmp) + sizeof(" { " " < " " } ") - 1;
   }
   if (otmp != NULL) {
     len += STRLEN(otmp) + STRLEN(p_srr) + 2;  // two extra spaces ("  "),
@@ -1590,7 +1594,10 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 #if defined(UNIX)
   // Put delimiters around the command (for concatenated commands) when
   // redirecting input and/or output.
-  if (itmp != NULL || otmp != NULL) {
+  if (is_pwsh) {
+    xstrlcpy(buf, "Start-Process ", len);
+    xstrlcat(buf, cmd, len);
+  } else if (itmp != NULL || otmp != NULL) {
     char *fmt = is_fish_shell ? "begin; %s; end"
                               :       "(%s)";
     vim_snprintf(buf, len, fmt, cmd);
@@ -1599,13 +1606,22 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
   }
 
   if (itmp != NULL) {
-    xstrlcat(buf, " < ", len - 1);
-    xstrlcat(buf, (const char *)itmp, len - 1);
+    if (is_pwsh) {
+      xstrlcat(buf, " -RedirectStandardInput ", len - 1);
+    } else {
+      xstrlcat(buf, " < ", len - 1);
+    }
+    xstrlcat(buf, itmp, len - 1);
   }
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
-  xstrlcpy(buf, (char *)cmd, len);
+  if (is_pwsh) {
+    xstrlcpy(buf, "Start-Process ", len);
+    xstrlcat(buf, cmd, len);
+  } else {
+    xstrlcpy(buf, cmd, len);
+  }
   if (itmp != NULL) {
     // If there is a pipe, we have to put the '<' in front of it.
     // Don't do this when 'shellquote' is not empty, otherwise the
@@ -1616,10 +1632,14 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
         *p = NUL;
       }
     }
-    xstrlcat(buf, " < ", len);
-    xstrlcat(buf, (const char *)itmp, len);
+    if (is_pwsh) {
+      xstrlcat(buf, " -RedirectStandardInput ", len);
+    } else {
+      xstrlcat(buf, " < ", len);
+    }
+    xstrlcat(buf, itmp, len);
     if (*p_shq == NUL) {
-      const char *const p = find_pipe((const char *)cmd);
+      const char *const p = find_pipe(cmd);
       if (p != NULL) {
         xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
         xstrlcat(buf, p, len - 1);

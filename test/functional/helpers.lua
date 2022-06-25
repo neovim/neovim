@@ -515,9 +515,17 @@ function module.has_powershell()
   return module.eval('executable("'..(iswin() and 'powershell' or 'pwsh')..'")') == 1
 end
 
-function module.set_shell_powershell()
-  local shell = iswin() and 'powershell' or 'pwsh'
-  assert(module.has_powershell())
+--- Sets Nvim shell to powershell.
+---
+--- @param fake (boolean) If true, a fake will be used if powershell is not
+---             found on the system.
+--- @returns true if powershell was found on the system, else false.
+function module.set_shell_powershell(fake)
+  local found = module.has_powershell()
+  if not fake then
+    assert(found)
+  end
+  local shell = found and (iswin() and 'powershell' or 'pwsh') or module.testprg('pwsh-test')
   local set_encoding = '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
   local cmd = set_encoding..'Remove-Item -Force '..table.concat(iswin()
     and {'alias:cat', 'alias:echo', 'alias:sleep'}
@@ -525,10 +533,11 @@ function module.set_shell_powershell()
   module.exec([[
     let &shell = ']]..shell..[['
     set shellquote= shellxquote=
-    let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
-    let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
     let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command ]]..cmd..[['
+    let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+    let &shellredir = '-RedirectStandardOutput %s -NoNewWindow -Wait'
   ]])
+  return found
 end
 
 function module.nvim(method, ...)
@@ -784,9 +793,19 @@ function module.get_pathsep()
   return iswin() and '\\' or '/'
 end
 
+--- Gets the filesystem root dir, namely "/" or "C:/".
 function module.pathroot()
   local pathsep = package.config:sub(1,1)
   return iswin() and (module.nvim_dir:sub(1,2)..pathsep) or '/'
+end
+
+--- Gets the full `…/build/bin/{name}` path of a test program produced by
+--- `test/functional/fixtures/CMakeLists.txt`.
+---
+--- @param name (string) Name of the test program.
+function module.testprg(name)
+  local ext = module.iswin() and '.exe' or ''
+  return ('%s/%s%s'):format(module.nvim_dir, name, ext)
 end
 
 -- Returns a valid, platform-independent Nvim listen address.

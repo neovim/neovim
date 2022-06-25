@@ -9,6 +9,7 @@ local feed_command = helpers.feed_command
 local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
+local testprg = helpers.testprg
 local nvim_dir = helpers.nvim_dir
 local has_powershell = helpers.has_powershell
 local set_shell_powershell = helpers.set_shell_powershell
@@ -54,7 +55,7 @@ describe("shell command :!", function()
     if 'openbsd' == helpers.uname() then
       pending('FIXME #10804')
     end
-    child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
+    child_session.feed_data((":!%s REP 30001 foo\n"):format(testprg('shell-test')))
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
@@ -207,12 +208,7 @@ describe("shell command :!", function()
 
     it('handles multibyte sequences split over buffer boundaries', function()
       command('cd '..nvim_dir)
-      local cmd
-      if iswin() then
-        cmd = '!shell-test UTF-8  '
-      else
-        cmd = '!./shell-test UTF-8'
-      end
+      local cmd = iswin() and '!shell-test UTF-8  ' or '!./shell-test UTF-8'
       feed_command(cmd)
       -- Note: only the first example of split composed char works
       screen:expect([[

@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local nvim_dir, command = helpers.nvim_dir, helpers.command
+local testprg, command = helpers.testprg, helpers.command
 local nvim_prog = helpers.nvim_prog
 local eq, eval = helpers.eq, helpers.eval
 local matches = helpers.matches
@@ -150,7 +150,7 @@ describe('cursor with customized highlighting', function()
       [3] = {bold = true},
     })
     screen:attach({rgb=false})
-    command('call termopen(["'..nvim_dir..'/tty-test"])')
+    command('call termopen(["'..testprg('tty-test')..'"])')
     feed_command('startinsert')
   end)
 

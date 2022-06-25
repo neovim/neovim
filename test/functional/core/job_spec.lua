@@ -1,9 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
-  nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
+  testprg, ok, source, write_file, mkdir, rmdir = helpers.clear,
   helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_msg, helpers.nvim,
-  helpers.nvim_dir, helpers.ok, helpers.source,
+  helpers.testprg, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local assert_alive = helpers.assert_alive
 local command = helpers.command
@@ -1043,8 +1043,7 @@ describe('jobs', function()
         return a:data
       endfunction
       ]])
-      local ext = iswin() and '.exe' or ''
-      insert(nvim_dir..'/tty-test'..ext)  -- Full path to tty-test.
+      insert(testprg('tty-test'))
       nvim('command', 'let g:job_opts.pty = 1')
       nvim('command', 'let exec = [expand("<cfile>:p")]')
       nvim('command', "let j = jobstart(exec, g:job_opts)")
