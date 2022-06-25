@@ -51,7 +51,7 @@ describe('UI receives option updates', function()
   end)
 
   it('on attach #11372', function()
-    clear()
+    clear{args_rm={'--headless'}}
     local evs = {}
     screen = Screen.new(20,5)
     -- Override mouse_on/mouse_off handlers.
@@ -88,6 +88,13 @@ describe('UI receives option updates', function()
       eq(expected, screen.options)
     end)
 
+    command("set pumblend=50")
+    expected.pumblend = 50
+    screen:expect(function()
+        eq(expected, screen.options)
+    end)
+
+    -- check handling of out-of-bounds value
     command("set pumblend=-1")
     expected.pumblend = 0
     screen:expect(function()

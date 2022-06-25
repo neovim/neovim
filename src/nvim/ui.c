@@ -503,6 +503,9 @@ handle_T ui_cursor_grid(void)
 
 void ui_flush(void)
 {
+  if (!ui_active()) {
+    return;
+  }
   cmdline_ui_flush();
   win_ui_flush();
   msg_ext_ui_flush();
