@@ -5263,12 +5263,13 @@ static int ins_complete(int c, bool enable_pum)
         return FAIL;
       }
 
-      /* Return value -2 means the user complete function wants to
-       * cancel the complete without an error.
-       * Return value -3 does the same as -2 and leaves CTRL-X mode.*/
-      if (col == -2) {
+      // Return value -2 means the user complete function wants to cancel the
+      // complete without an error, do the same if the function did not execute
+      // successfully.
+      if (col == -2 || aborting()) {
         return FAIL;
       }
+      // Return value -3 does the same as -2 and leaves CTRL-X mode.
       if (col == -3) {
         ctrl_x_mode = CTRL_X_NORMAL;
         edit_submode = NULL;
