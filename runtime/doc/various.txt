@@ -346,7 +346,11 @@ g8			Print the hex values of the bytes used in the
 			Only string variables can be used.  After the
 			redirection starts, if the variable is removed or
 			locked or the variable type is changed, then further
-			command output messages will cause errors.
+			command output messages will cause errors.  When using
+			a local variable (l:var in a function or s:var in a
+			script) and another `:redir` causes the current one to
+			end, the scope might be different and the assignment
+			fails.
 			To get the output of one command the |execute()|
 			function can be used instead of redirection.
 
