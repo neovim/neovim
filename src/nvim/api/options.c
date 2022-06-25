@@ -162,6 +162,19 @@ void nvim_set_option_value(String name, Object value, Dict(option) *opts, Error 
     return;
   }
 
+  // If:
+  // - window id is provided
+  // - scope is not provided
+  // - option is global or local to window (global-local)
+  //
+  // Then force scope to local since we don't want to change the global option
+  if (opt_type == SREQ_WIN && scope == 0) {
+    int flags = get_option_value_strict(name.data, NULL, NULL, opt_type, to);
+    if (flags & SOPT_GLOBAL) {
+      scope = OPT_LOCAL;
+    }
+  }
+
   long numval = 0;
   char *stringval = NULL;
 
@@ -460,11 +473,12 @@ void set_option_to(uint64_t channel_id, void *to, int type, String name, Object 
     stringval = value.data.string.data;
   }
 
-  WITH_SCRIPT_CONTEXT(channel_id, {
-    const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
-                          ? 0 : (type == SREQ_GLOBAL)
-                                ? OPT_GLOBAL : OPT_LOCAL;
+  // For global-win-local options -> setlocal
+  // For        win-local options -> setglobal and setlocal (opt_flags == 0)
+  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL)) ? 0 :
+                        (type == SREQ_GLOBAL)                        ? OPT_GLOBAL : OPT_LOCAL;
 
+  WITH_SCRIPT_CONTEXT(channel_id, {
     access_option_value_for(name.data, &numval, &stringval, opt_flags, type, to, false, err);
   });
 }

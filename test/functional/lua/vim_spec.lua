@@ -1428,6 +1428,13 @@ describe('lua stdlib', function()
     vim.wo[1000].cole = 0
     ]]
     eq(0, funcs.luaeval "vim.wo[1000].cole")
+
+    -- Can handle global-local values
+    exec_lua [[vim.o.scrolloff = 100]]
+    exec_lua [[vim.wo.scrolloff = 200]]
+    eq(200, funcs.luaeval "vim.wo.scrolloff")
+    exec_lua [[vim.wo.scrolloff = -1]]
+    eq(100, funcs.luaeval "vim.wo.scrolloff")
   end)
 
   describe('vim.opt', function()
