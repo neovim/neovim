@@ -59,8 +59,8 @@ if sys.version_info < MIN_PYTHON_VERSION:
     print("requires Python {}.{}+".format(*MIN_PYTHON_VERSION))
     sys.exit(1)
 
-doxygen_version = tuple([int(i) for i in subprocess.check_output(["doxygen", "-v"],
-                        universal_newlines=True).split()[0].split('.')])
+doxygen_version = tuple((int(i) for i in subprocess.check_output(["doxygen", "-v"],
+                        universal_newlines=True).split()[0].split('.')))
 
 if doxygen_version < MIN_DOXYGEN_VERSION:
     print("\nRequires doxygen {}.{}.{}+".format(*MIN_DOXYGEN_VERSION))
@@ -1096,7 +1096,6 @@ def main(config, args):
 
         docs = ''
 
-        i = 0
         for filename in CONFIG[target]['section_order']:
             try:
                 title, helptag, section_doc = sections.pop(filename)
@@ -1104,7 +1103,6 @@ def main(config, args):
                 msg(f'warning: empty docs, skipping (target={target}): {filename}')
                 msg(f'    existing docs: {sections.keys()}')
                 continue
-            i += 1
             if filename not in CONFIG[target]['append_only']:
                 docs += sep
                 docs += '\n%s%s' % (title,
