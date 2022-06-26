@@ -2064,14 +2064,45 @@ add({filetypes})                                          *vim.filetype.add()*
                     {filetypes}  (table) A table containing new filetype maps
                                  (see example).
 
-match({name}, {bufnr})                                  *vim.filetype.match()*
-                Find the filetype for the given filename and buffer.
+match({arg})                                            *vim.filetype.match()*
+                Perform filetype detection.
+
+                The filetype can be detected using one of three methods:
+                1. Using an existing buffer
+                2. Using only a file name
+                3. Using only file contents
+
+                Of these, option 1 provides the most accurate result as it
+                uses both the buffer's filename and (optionally) the buffer
+                contents. Options 2 and 3 can be used without an existing
+                buffer, but may not always provide a match in cases where the
+                filename (or contents) cannot unambiguously determine the
+                filetype.
+
+                Each of the three options is specified using a key to the
+                single argument of this function. Example:
+>
+
+    -- Using a buffer number
+    vim.filetype.match({ buf = 42 })
+
+    -- Using a filename
+    vim.filetype.match({ filename = "main.lua" })
+
+    -- Using file contents
+    vim.filetype.match({ contents = {"#!/usr/bin/env bash"} })
+<
 
                 Parameters: ~
-                    {name}   (string) File name (can be an absolute or
-                             relative path)
-                    {bufnr}  (number|nil) The buffer to set the filetype for.
-                             Defaults to the current buffer.
+                    {arg}  (table) Table specifying which matching strategy to
+                           use. It is an error to provide more than one
+                           strategy. Accepted keys are:
+                           • buf (number): Buffer number to use for matching
+                           • filename (string): Filename to use for matching.
+                             Note that the file need not actually exist in the
+                             filesystem, only the name itself is used.
+                           • contents (table): An array of lines representing
+                             file contents to use for matching.
 
                 Return: ~
                     (string|nil) If a match was found, the matched filetype.

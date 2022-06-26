@@ -12,7 +12,7 @@ vim.api.nvim_create_augroup('filetypedetect', { clear = false })
 vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
   group = 'filetypedetect',
   callback = function(args)
-    local ft, on_detect = vim.filetype.match(args.file, args.buf)
+    local ft, on_detect = vim.filetype.match({ buf = args.buf })
     if ft then
       vim.api.nvim_buf_set_option(args.buf, 'filetype', ft)
       if on_detect then
