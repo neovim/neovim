@@ -3008,3 +3008,10 @@ it('long :%s/ with inccommand does not collapse cmdline', function()
     AAAAAAA^     |
   ]])
 end)
+
+it("with 'inccommand' typing :filter doesn't segfault #19057", function()
+  clear()
+  common_setup(nil, 'nosplit')
+  feed(':filter s')
+  assert_alive()
+end)

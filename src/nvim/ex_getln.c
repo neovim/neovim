@@ -2372,7 +2372,7 @@ static void cmdpreview_close_win(void)
   }
 }
 
-/// Show 'inccommand' preview. It works like this:
+/// Show 'inccommand' preview if command is previewable. It works like this:
 ///    1. Store current undo information so we can revert to current state later.
 ///    2. Execute the preview callback with the parsed command, preview buffer number and preview
 ///       namespace number as arguments. The preview callback sets the highlight and does the
@@ -2385,12 +2385,15 @@ static void cmdpreview_close_win(void)
 ///    5. If the return value of the preview callback is not 0, update the screen while the effects
 ///       of the preview are still in place.
 ///    6. Revert all changes made by the preview callback.
-static void cmdpreview_show(CommandLineState *s)
+///
+/// @return whether preview is shown or not.
+static bool cmdpreview_may_show(CommandLineState *s)
 {
   // Parse the command line and return if it fails.
   exarg_T ea;
   CmdParseInfo cmdinfo;
   // Copy the command line so we can modify it.
+  int cmdpreview_type = 0;
   char *cmdline = xstrdup((char *)ccline.cmdbuff);
   char *errormsg = NULL;
   emsg_off++;  // Block errors when parsing the command line, and don't update v:errmsg
@@ -2399,6 +2402,11 @@ static void cmdpreview_show(CommandLineState *s)
     goto end;
   }
   emsg_off--;
+
+  // Check if command is previewable, if not, don't attempt to show preview
+  if (!(ea.argt & EX_PREVIEW)) {
+    goto end;
+  }
 
   // Swap invalid command range if needed
   if ((ea.argt & EX_RANGE) && ea.line1 > ea.line2) {
@@ -2454,7 +2462,7 @@ static void cmdpreview_show(CommandLineState *s)
   // the preview.
   Error err = ERROR_INIT;
   try_start();
-  int cmdpreview_type = execute_cmd(&ea, &cmdinfo, true);
+  cmdpreview_type = execute_cmd(&ea, &cmdinfo, true);
   if (try_end(&err)) {
     api_clear_error(&err);
     cmdpreview_type = 0;
@@ -2518,14 +2526,9 @@ static void cmdpreview_show(CommandLineState *s)
   update_topline(curwin);
 
   redrawcmdline();
-
-  // If preview callback returned 0, update screen to clear remnants of an earlier preview.
-  if (cmdpreview_type == 0) {
-    cmdpreview = false;
-    update_screen(SOME_VALID);
-  }
 end:
   xfree(cmdline);
+  return cmdpreview_type != 0;
 }
 
 static int command_line_changed(CommandLineState *s)
@@ -2564,9 +2567,9 @@ static int command_line_changed(CommandLineState *s)
       && *p_icm != NUL       // 'inccommand' is set
       && curbuf->b_p_ma      // buffer is modifiable
       && cmdline_star == 0   // not typing a password
-      && cmd_can_preview((char *)ccline.cmdbuff)
-      && !vpeekc_any()) {
-    cmdpreview_show(s);
+      && !vpeekc_any()
+      && cmdpreview_may_show(s)) {
+    // 'inccommand' preview has been shown.
   } else if (cmdpreview) {
     cmdpreview = false;
     update_screen(SOME_VALID);  // Clear 'inccommand' preview.

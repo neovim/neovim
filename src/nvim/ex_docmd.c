@@ -1405,6 +1405,8 @@ bool is_cmd_ni(cmdidx_T cmdidx)
 }
 
 /// Parse command line and return information about the first command.
+/// If parsing is done successfully, need to free cmod_filter_regmatch.regprog after calling,
+/// usually done using undo_cmdmod() or execute_cmd().
 ///
 /// @param cmdline Command line string
 /// @param[out] eap Ex command arguments
@@ -1432,6 +1434,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
 
   // Parse command modifiers
   if (parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false) == FAIL) {
+    vim_regfree(cmdinfo->cmdmod.cmod_filter_regmatch.regprog);
     return false;
   }
   after_modifier = eap->cmd;
@@ -10038,44 +10041,6 @@ static void ex_terminal(exarg_T *eap)
   }
 
   do_cmdline_cmd(ex_cmd);
-}
-
-/// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
-///
-/// @param[in] cmd Commandline to check. May start with a range or modifier.
-///
-/// @return true if `cmd` is previewable
-bool cmd_can_preview(char *cmd)
-{
-  if (cmd == NULL) {
-    return false;
-  }
-
-  // Ignore additional colons at the start...
-  cmd = skip_colon_white(cmd, true);
-
-  // Ignore any leading modifiers (:keeppatterns, :verbose, etc.)
-  for (int len = modifier_len(cmd); len != 0; len = modifier_len(cmd)) {
-    cmd += len;
-    cmd = skip_colon_white(cmd, true);
-  }
-
-  exarg_T ea;
-  memset(&ea, 0, sizeof(ea));
-  // parse the command line
-  ea.cmd = skip_range(cmd, NULL);
-  if (*ea.cmd == '*') {
-    ea.cmd = skipwhite(ea.cmd + 1);
-  }
-
-  if (find_ex_command(&ea, NULL) == NULL || ea.cmdidx == CMD_SIZE) {
-    return false;
-  } else if (!IS_USER_CMDIDX(ea.cmdidx)) {
-    // find_ex_command sets the flags for user commands automatically
-    ea.argt = cmdnames[(int)ea.cmdidx].cmd_argt;
-  }
-
-  return (ea.argt & EX_PREVIEW);
 }
 
 /// Gets a map of maps describing user-commands defined for buffer `buf` or
