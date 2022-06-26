@@ -2,6 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local clear = helpers.clear
+local feed = helpers.feed
+local eval = helpers.eval
 
 describe('vim.ui', function()
   before_each(function()
@@ -66,6 +68,20 @@ describe('vim.ui', function()
       ]]
       eq('Inputted text', result[1])
       eq('Input: ', result[2])
+    end)
+
+    it('can input text on nil opt', function()
+      feed(':lua vim.ui.input(nil, function(input) result = input end)<cr>')
+      eq('', eval('v:errmsg'))
+      feed('Inputted text<cr>')
+      eq('Inputted text', exec_lua('return result'))
+    end)
+
+    it('can input text on {} opt', function()
+      feed(':lua vim.ui.input({}, function(input) result = input end)<cr>')
+      eq('', eval('v:errmsg'))
+      feed('abcdefg<cr>')
+      eq('abcdefg', exec_lua('return result'))
     end)
   end)
 end)

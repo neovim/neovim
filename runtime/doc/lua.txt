@@ -1935,8 +1935,7 @@ input({opts}, {on_confirm})                                   *vim.ui.input()*
 
                 Parameters: ~
                     {opts}        (table) Additional options. See |input()|
-                                  • prompt (string|nil) Text of the prompt.
-                                    Defaults to `Input:`.
+                                  • prompt (string|nil) Text of the prompt
                                   • default (string|nil) Default reply to the
                                     input
                                   • completion (string|nil) Specifies type of
