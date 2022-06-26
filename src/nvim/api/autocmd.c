@@ -510,9 +510,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
 
     int retval;
 
-    for (size_t i = 0; i < patterns.size; i++) {
-      Object pat = patterns.items[i];
-
+    FOREACH_ITEM(patterns, pat, {
       // See: TODO(sctx)
       WITH_SCRIPT_CONTEXT(channel_id, {
         retval = autocmd_register(autocmd_id,
@@ -530,7 +528,7 @@ Integer nvim_create_autocmd(uint64_t channel_id, Object event, Dict(create_autoc
         api_set_error(err, kErrorTypeException, "Failed to set autocmd");
         goto cleanup;
       }
-    }
+    })
   });
 
 
@@ -804,13 +802,12 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   FOREACH_ITEM(event_array, event_str, {
     GET_ONE_EVENT(event_nr, event_str, cleanup)
 
-    for (size_t i = 0; i < patterns.size; i++) {
-      Object pat = patterns.items[i];
-      char_u *fname = opts->buffer.type == kObjectTypeNil ? (char_u *)pat.data.string.data : NULL;
-      did_aucmd |=
+    FOREACH_ITEM(patterns, pat, {
+        char_u *fname = opts->buffer.type == kObjectTypeNil ? (char_u *)pat.data.string.data : NULL;
+        did_aucmd |=
         apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL);
-    }
-  })
+        })
+    })
 
   if (did_aucmd && modeline) {
     do_modelines(0);
@@ -823,8 +820,8 @@ cleanup:
 
 static bool check_autocmd_string_array(Array arr, char *k, Error *err)
 {
-  for (size_t i = 0; i < arr.size; i++) {
-    if (arr.items[i].type != kObjectTypeString) {
+  FOREACH_ITEM(arr, entry, {
+    if (entry.type != kObjectTypeString) {
       api_set_error(err,
                     kErrorTypeValidation,
                     "All entries in '%s' must be strings",
@@ -833,13 +830,13 @@ static bool check_autocmd_string_array(Array arr, char *k, Error *err)
     }
 
     // Disallow newlines in the middle of the line.
-    const String l = arr.items[i].data.string;
+    const String l = entry.data.string;
     if (memchr(l.data, NL, l.size)) {
       api_set_error(err, kErrorTypeValidation,
                     "String cannot contain newlines");
       return false;
     }
-  }
+  })
   return true;
 }
 
@@ -926,8 +923,8 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
       }
 
       Array array = v->data.array;
-      for (size_t i = 0; i < array.size; i++) {
-        char_u *pat = (char_u *)array.items[i].data.string.data;
+      FOREACH_ITEM(array, entry, {
+        char_u *pat = (char_u *)entry.data.string.data;
         size_t patlen = aucmd_pattern_length(pat);
         while (patlen) {
           ADD(*patterns, STRING_OBJ(cbuf_to_string((char *)pat, patlen)));
@@ -935,7 +932,7 @@ static bool get_patterns_from_pattern_or_buf(Array *patterns, Object pattern, Ob
           pat = aucmd_next_pattern(pat, patlen);
           patlen = aucmd_pattern_length(pat);
         }
-      }
+      })
     } else {
       api_set_error(err,
                     kErrorTypeValidation,
