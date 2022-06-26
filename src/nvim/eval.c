@@ -469,7 +469,9 @@ void eval_clear(void)
   hash_clear(&compat_hashtab);
 
   free_scriptnames();
+# ifdef HAVE_WORKING_LIBINTL
   free_locales();
+# endif
 
   // global variables
   vars_clear(&globvarht);
