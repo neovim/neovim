@@ -153,9 +153,9 @@ class Script:
             unpacker = msgpack.Unpacker(file_like=fp, read_size=1)
             max_type = max(typ.value for typ in EntryTypes)
 
-        return unpacker, max_type
+        return fp, unpacker, max_type
 
-    def _loop(self, unpacker, fp, max_type) -> None:
+    def _loop(self, fp, unpacker, max_type) -> None:
         """
         Every iteration of the script.
         """
@@ -200,10 +200,10 @@ class Script:
         """
         Runs the script.
         """
-        unpacker, max_type = self._unpack()
+        fp, unpacker, max_type = self._unpack()
             
         while True:
-            self._loop()
+            self._loop(fp, unpacker, max_type)
 
 
 def main():
