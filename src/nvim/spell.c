@@ -3663,6 +3663,12 @@ static void suggest_try_change(suginfo_T *su)
   p = su->su_badptr + su->su_badlen;
   (void)spell_casefold(curwin, p, (int)STRLEN(p), fword + n, MAXWLEN - n);
 
+  // Make sure the resulting text is not longer than the original text.
+  n = (int)STRLEN(su->su_badptr);
+  if (n < MAXWLEN) {
+    fword[n] = NUL;
+  }
+
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
 
@@ -4375,7 +4381,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 #endif
           ++depth;
           sp = &stack[depth];
-          ++sp->ts_fidx;
+          if (fword[sp->ts_fidx] != NUL) {
+            sp->ts_fidx++;
+          }
           tword[sp->ts_twordlen++] = c;
           sp->ts_arridx = idxs[arridx];
           if (newscore == SCORE_SUBST) {
@@ -4391,7 +4399,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
             sp->ts_fcharstart = sp->ts_fidx - 1;
             sp->ts_isdiff = (newscore != 0)
                             ? DIFF_YES : DIFF_NONE;
-          } else if (sp->ts_isdiff == DIFF_INSERT) {
+          } else if (sp->ts_isdiff == DIFF_INSERT && sp->ts_fidx > 0) {
             // When inserting trail bytes don't advance in the
             // bad word.
             sp->ts_fidx--;

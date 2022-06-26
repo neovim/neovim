@@ -72,6 +72,16 @@ func Test_z_equal_on_invalid_utf8_word()
   bwipe!
 endfunc
 
+func Test_z_equal_on_single_character()
+  " this was decrementing the index below zero
+  new
+  norm a0\Ê
+  norm zW
+  norm z=
+
+  bwipe!
+endfunc
+
 " Test spellbadword() with argument
 func Test_spellbadword()
   set spell

@@ -576,7 +576,6 @@ endfunc
 
 "Compound words
 func Test_spell_compound()
-  throw 'skipped: TODO: '
   call LoadAffAndDic(g:test_data_aff3, g:test_data_dic3)
   call RunGoodBad("foo m\u00EF foobar foofoobar barfoo barbarfoo",
         \ "bad: bar la foom\u00EF barm\u00EF m\u00EFfoo m\u00EFbar m\u00EFm\u00EF lala m\u00EFla lam\u00EF foola labar",
@@ -624,14 +623,14 @@ endfunc
 
 " Test affix flags with two characters
 func Test_spell_affix()
-  throw 'skipped: TODO: '
+  CheckNotMSWindows  " FIXME: Why does this fail with MSVC?
   call LoadAffAndDic(g:test_data_aff5, g:test_data_dic5)
   call RunGoodBad("fooa1 fooa\u00E9 bar prebar barbork prebarbork  startprebar start end startend  startmiddleend nouend",
         \ "bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart startprobar startnouend",
         \ ["bar", "barbork", "end", "fooa1", "fooa\u00E9", "nouend", "prebar", "prebarbork", "start"],
         \ [
         \   ["bad", ["bar", "end", "fooa1"]],
-        \   ["foo", ["fooa1", "fooa\u00E9", "bar"]],
+        \   ["foo", ["fooa1", "bar", "end"]],
         \   ["fooa2", ["fooa1", "fooa\u00E9", "bar"]],
         \   ["prabar", ["prebar", "bar", "bar bar"]],
         \   ["probarbirk", ["prebarbork"]],
@@ -649,7 +648,7 @@ func Test_spell_affix()
         \ ["bar", "barbork", "end", "lead", "meea1", "meea\u00E9", "prebar", "prebarbork"],
         \ [
         \   ["bad", ["bar", "end", "lead"]],
-        \   ["mee", ["meea1", "meea\u00E9", "bar"]],
+        \   ["mee", ["meea1", "bar", "end"]],
         \   ["meea2", ["meea1", "meea\u00E9", "lead"]],
         \   ["prabar", ["prebar", "bar", "leadbar"]],
         \   ["probarbirk", ["prebarbork"]],
@@ -666,7 +665,7 @@ func Test_spell_affix()
         \ ["bar", "barmeat", "lead", "meea1", "meea\u00E9", "meezero", "prebar", "prebarmeat", "tail"],
         \ [
         \   ["bad", ["bar", "lead", "tail"]],
-        \   ["mee", ["meea1", "meea\u00E9", "bar"]],
+        \   ["mee", ["meea1", "bar", "lead"]],
         \   ["meea2", ["meea1", "meea\u00E9", "lead"]],
         \   ["prabar", ["prebar", "bar", "leadbar"]],
         \   ["probarmaat", ["prebarmeat"]],
@@ -700,7 +699,6 @@ endfunc
 
 " Affix flags
 func Test_spell_affix_flags()
-  throw 'skipped: TODO: '
   call LoadAffAndDic(g:test_data_aff10, g:test_data_dic10)
   call RunGoodBad("drink drinkable drinkables drinktable drinkabletable",
 	\ "bad: drinks drinkstable drinkablestable",
@@ -761,16 +759,48 @@ func Test_spell_sal_and_addition()
   set spl=Xtest_ca.utf-8.spl
   call assert_equal("elequint", FirstSpellWord())
   call assert_equal("elekwint", SecondSpellWord())
+
+  set spellfile=
+  set spl&
 endfunc
 
 func Test_spellfile_value()
   set spellfile=Xdir/Xtest.utf-8.add
   set spellfile=Xdir/Xtest.utf-8.add,Xtest_other.add
+  set spellfile=
+endfunc
+
+func Test_no_crash_with_weird_text()
+  new
+  let lines =<< trim END
+      r<sfile>
+      
+
+
+      
+  END
+  call setline(1, lines)
+  exe "%norm \<C-v>ez=>\<C-v>wzG"
+
+  bwipe!
 endfunc
 
 " Invalid bytes may cause trouble when creating the word list.
 func Test_check_for_valid_word()
   call assert_fails("spellgood! 0\xac", 'E1280:')
+endfunc
+
+" This was going over the end of the word
+func Test_word_index()
+  new
+  norm R0
+  spellgood! ﬂ0
+  sil norm z=
+
+  bwipe!
+  " clear the word list
+  set enc=utf-8
+  call delete('Xtmpfile')
 endfunc
 
 
