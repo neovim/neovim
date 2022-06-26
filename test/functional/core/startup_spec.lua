@@ -24,6 +24,7 @@ local iswin = helpers.iswin
 local startswith = helpers.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
+local alter_slashes = helpers.alter_slashes
 
 local testfile = 'Xtest_startuptime'
 after_each(function()
@@ -33,9 +34,9 @@ end)
 describe('startup', function()
   it('--clean', function()
     clear()
-    ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) ~= nil)
+    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) ~= nil)
     clear('--clean')
-    ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) == nil)
+    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) == nil)
   end)
 
   it('--startuptime', function()
