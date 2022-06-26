@@ -136,7 +136,7 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 7)
 set(NVIM_VERSION_PATCH 2)
-set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
+set(NVIM_VERSION_PRERELEASE "") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 9)         # Bump this after any API change.
