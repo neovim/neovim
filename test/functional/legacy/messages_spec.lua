@@ -402,6 +402,28 @@ describe('messages', function()
                                                 |
       ]])
     end)
+
+    -- oldtest: Test_mode_updated_after_ctrl_c()
+    it('pressing Ctrl-C in i_CTRL-O', function()
+      feed('i<C-O>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {2:-- (insert) --}                          |
+      ]])
+      feed('<C-C>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+    end)
   end)
 
   -- oldtest: Test_ask_yesno()
