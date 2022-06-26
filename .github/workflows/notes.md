@@ -21,8 +21,9 @@ ${NVIM_VERSION}
 ### macOS
 
 1. Download **nvim-macos.tar.gz**
-2. Extract: `tar xzvf nvim-macos.tar.gz`
-3. Run `./nvim-macos/bin/nvim`
+2. Run `xattr -c ./nvim-macos.tar.gz` (to avoid "unknown developer" warning)
+3. Extract: `tar xzvf nvim-macos.tar.gz`
+4. Run `./nvim-macos/bin/nvim`
 
 ### Linux (x64)
 
