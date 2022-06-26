@@ -376,6 +376,32 @@ describe('messages', function()
                                                 |
       ]])
     end)
+
+    -- oldtest: Test_mode_message_at_leaving_insert_with_esc_mapped()
+    it('leaving Insert mode with ESC in the middle of a mapping vim-patch:8.1.1192', function()
+      exec([[
+        set laststatus=2
+        inoremap <Esc> <Esc>00
+      ]])
+      feed('i')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {3:[No Name]                               }|
+        {2:-- INSERT --}                            |
+      ]])
+      feed('<Esc>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {3:[No Name]                               }|
+                                                |
+      ]])
+    end)
   end)
 
   -- oldtest: Test_ask_yesno()

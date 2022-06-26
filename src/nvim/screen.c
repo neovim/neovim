@@ -591,7 +591,7 @@ int update_screen(int type)
 
   // Clear or redraw the command line.  Done last, because scrolling may
   // mess up the command line.
-  if (clear_cmdline || redraw_cmdline) {
+  if (clear_cmdline || redraw_cmdline || redraw_mode) {
     showmode();
   }
 
@@ -5828,18 +5828,19 @@ bool skip_showmode(void)
   // Call char_avail() only when we are going to show something, because it
   // takes a bit of time.  redrawing() may also call char_avail().
   if (global_busy || msg_silent != 0 || !redrawing() || (char_avail() && !KeyTyped)) {
-    redraw_cmdline = true;  // show mode later
+    redraw_mode = true;  // show mode later
     return true;
   }
   return false;
 }
 
-// Show the current mode and ruler.
-//
-// If clear_cmdline is true, clear the rest of the cmdline.
-// If clear_cmdline is false there may be a message there that needs to be
-// cleared only if a mode is shown.
-// Return the length of the message (0 if no message).
+/// Show the current mode and ruler.
+///
+/// If clear_cmdline is true, clear the rest of the cmdline.
+/// If clear_cmdline is false there may be a message there that needs to be
+/// cleared only if a mode is shown.
+/// If redraw_mode is true show or clear the mode.
+/// @return the length of the message (0 if no message).
 int showmode(void)
 {
   bool need_clear;
@@ -5998,7 +5999,7 @@ int showmode(void)
     }
 
     mode_displayed = true;
-    if (need_clear || clear_cmdline) {
+    if (need_clear || clear_cmdline || redraw_mode) {
       msg_clr_eos();
     }
     msg_didout = false;                 // overwrite this message
@@ -6010,6 +6011,9 @@ int showmode(void)
   } else if (clear_cmdline && msg_silent == 0) {
     // Clear the whole command line.  Will reset "clear_cmdline".
     msg_clr_cmdline();
+  } else if (redraw_mode) {
+    msg_pos_mode();
+    msg_clr_eos();
   }
 
   // NB: also handles clearing the showmode if it was empty or disabled
@@ -6027,6 +6031,7 @@ int showmode(void)
     win_redr_ruler(last, true);
   }
   redraw_cmdline = false;
+  redraw_mode = false;
   clear_cmdline = false;
 
   return length;
