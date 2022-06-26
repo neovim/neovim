@@ -14,6 +14,7 @@
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/keycodes.h"
+#include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -494,6 +495,7 @@ static void process_ctrl_c(void)
       *rbuffer_get(input_buffer, i) = Ctrl_C;
       got_int = true;
       consume_count = i;
+      nlua_interrupt();
       break;
     }
   }

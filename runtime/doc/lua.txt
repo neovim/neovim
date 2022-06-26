@@ -896,6 +896,11 @@ vim.schedule({callback})                                      *vim.schedule()*
         to avoid |textlock| or other temporary restrictions.
 
 
+vim.breakcheck()                                            *vim.breakcheck()*
+    This function is intended to be used in custom hooks set via 
+    `debug.sethook`.  Function checks whether user issued `<C-c>` and if yes,
+    throws `"interrupted!"` error, otherwise it just returns.
+
 vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
     Defers calling {fn} until {timeout} ms passes. Use to do a one-shot timer
     that calls {fn}.

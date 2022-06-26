@@ -4549,6 +4549,14 @@ static char *set_num_option(int opt_idx, char_u *varp, long value, char *errbuf,
     if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
     }
+  } else if (pp == &p_licf) {
+    // 'luaintchkfreq'
+    if (p_licf < 0) {
+      p_licf = 0;
+    } else if (p_licf > INT_MAX) {
+      p_licf = INT_MAX;
+    }
+    nlua_set_interrupt_hook(NULL);
   } else if (pp == &curbuf->b_p_iminsert) {
     showmode();
     // Show/unshow value of 'keymap' in status lines.
