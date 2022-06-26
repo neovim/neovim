@@ -576,7 +576,6 @@ endfunc
 
 "Compound words
 func Test_spell_compound()
-  throw 'skipped: TODO: '
   call LoadAffAndDic(g:test_data_aff3, g:test_data_dic3)
   call RunGoodBad("foo m\u00EF foobar foofoobar barfoo barbarfoo",
         \ "bad: bar la foom\u00EF barm\u00EF m\u00EFfoo m\u00EFbar m\u00EFm\u00EF lala m\u00EFla lam\u00EF foola labar",
@@ -624,7 +623,7 @@ endfunc
 
 " Test affix flags with two characters
 func Test_spell_affix()
-  throw 'skipped: TODO: '
+  CheckNotMSWindows  " FIXME: Why does this fail with MSVC?
   call LoadAffAndDic(g:test_data_aff5, g:test_data_dic5)
   call RunGoodBad("fooa1 fooa\u00E9 bar prebar barbork prebarbork  startprebar start end startend  startmiddleend nouend",
         \ "bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart startprobar startnouend",
@@ -700,7 +699,6 @@ endfunc
 
 " Affix flags
 func Test_spell_affix_flags()
-  throw 'skipped: TODO: '
   call LoadAffAndDic(g:test_data_aff10, g:test_data_dic10)
   call RunGoodBad("drink drinkable drinkables drinktable drinkabletable",
 	\ "bad: drinks drinkstable drinkablestable",

@@ -2596,6 +2596,8 @@ ambw_end:
         // only encoding=utf-8 allowed
         if (STRCMP(p_enc, "utf-8") != 0) {
           errmsg = e_unsupportedoption;
+        } else {
+          spell_reload();
         }
       }
     }
