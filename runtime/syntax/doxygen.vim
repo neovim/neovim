@@ -120,7 +120,7 @@ try
 
 " end=+\(\n\s*\*\=\s*\([@\\]\([npcbea]\>\|em\>\|ref\>\|link\>\|f\$\|[$\\&<>#]\)\@!\)\|\s*$\)\@=+
 "syn region doxygenBriefLine contained start=+\<\k+ skip=+^\s*\(\*/\@!\s*\)\=\(\<\|[@\\]\<\([npcbea]\>\|em\>\|ref\|link\>\>\|f\$\|[$\\&<>#]\)\|[^ \t\\@*]\)+ end=+^+ contains=doxygenContinueCommentWhite,doxygenSmallSpecial,@doxygenHtmlGroup,doxygenTODO,doxygenHyperLink,doxygenHashLink,@Spell  skipwhite keepend matchgroup=xxx
-syn region doxygenBriefLine contained start=+\<\k+ skip=+^\s*\(\*/\@!\s*\)\=\(\<\|[@\\]\<\([npcbea]\>\|em\>\|ref\|link\>\>\|f\$\|[$\\&<>#]\)\|[^ \t\\@*]\)+ end=+^+  skipwhite keepend matchgroup=xxx
+syn region doxygenBriefLine contained start=+\<\k+ skip=+^\s*\(\*/\@!\s*\)\=\(\<\|[@\\]\<\([npcbea]\>\|em\>\|ref\|link\>\>\|f\$\|[$\\&<>#]\)\|[^ \t\\@*]\)+ end=+^+  skipwhite keepend matchgroup=xxx contains=@Spell
 " syn region doxygenBriefLine matchgroup=xxxy contained start=+\<\k.\++ skip=+^\s*\k+ end=+end+  skipwhite keepend
 "doxygenFindBriefSpecial,
   "" syn region doxygenSpecialMultilineDesc  start=+.\++ contained contains=doxygenSpecialContinueCommentWhite,doxygenSmallSpecial,doxygenHyperLink,doxygenHashLink,@doxygenHtmlGroup,@Spell  skipwhite keepend
