@@ -4251,7 +4251,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   // Otherwise remove the mode message.
   if (reg_recording != 0 || restart_edit != NUL) {
     showmode();
-  } else if (p_smd) {
+  } else if (p_smd && !skip_showmode()) {
     msg("");
   }
   // Exit Insert mode
