@@ -3663,6 +3663,12 @@ static void suggest_try_change(suginfo_T *su)
   p = su->su_badptr + su->su_badlen;
   (void)spell_casefold(curwin, p, (int)STRLEN(p), fword + n, MAXWLEN - n);
 
+  // Make sure the resulting text is not longer than the original text.
+  n = (int)STRLEN(su->su_badptr);
+  if (n < MAXWLEN) {
+    fword[n] = NUL;
+  }
+
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
 

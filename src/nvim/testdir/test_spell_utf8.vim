@@ -768,6 +768,21 @@ func Test_spellfile_value()
   set spellfile=Xdir/Xtest.utf-8.add,Xtest_other.add
 endfunc
 
+func Test_no_crash_with_weird_text()
+  new
+  let lines =<< trim END
+      r<sfile>
+      
+
+
+      
+  END
+  call setline(1, lines)
+  exe "%norm \<C-v>ez=>\<C-v>wzG"
+
+  bwipe!
+endfunc
+
 " Invalid bytes may cause trouble when creating the word list.
 func Test_check_for_valid_word()
   call assert_fails("spellgood! 0\xac", 'E1280:')
