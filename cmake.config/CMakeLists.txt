@@ -128,14 +128,14 @@ endif()
 
 # generate configuration header and update include directories
 configure_file (
-  "${PROJECT_SOURCE_DIR}/config/config.h.in"
-  "${PROJECT_BINARY_DIR}/config/auto/config.h"
+  "${PROJECT_SOURCE_DIR}/cmake.config/config.h.in"
+  "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
 # generate version definitions
 configure_file (
-  "${PROJECT_SOURCE_DIR}/config/versiondef.h.in"
-  "${PROJECT_BINARY_DIR}/config/auto/versiondef.h"
+  "${PROJECT_SOURCE_DIR}/cmake.config/versiondef.h.in"
+  "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef.h"
   )
 
 # generate pathdef.c
@@ -158,6 +158,6 @@ elseif (EXISTS ${HOSTNAME_PROG})
 endif()
 
 configure_file (
-  "${PROJECT_SOURCE_DIR}/config/pathdef.c.in"
-  "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
+  "${PROJECT_SOURCE_DIR}/cmake.config/pathdef.c.in"
+  "${PROJECT_BINARY_DIR}/cmake.config/auto/pathdef.c"
   ESCAPE_QUOTES)

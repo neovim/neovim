@@ -35,7 +35,7 @@ build_deps() {
   # update CMake configuration and update to newer deps versions.
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
-  CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/third-party/"
+  CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
 
   if ! top_make; then
     exit 1

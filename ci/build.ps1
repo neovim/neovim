@@ -71,9 +71,9 @@ function convertToCmakeArgs($vars) {
 
 cd $env:DEPS_BUILD_DIR
 if ($bits -eq 32) {
-  cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+  cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/cmake.deps/" ; exitIfFailed
 } else {
-  cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+  cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/cmake.deps/" ; exitIfFailed
 }
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 cd $buildDir

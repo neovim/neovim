@@ -244,12 +244,12 @@ if(use_git_version)
   file(RELATIVE_PATH relbuild "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
   add_custom_target(update_version_stamp ALL
     COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
-      ${relbuild}/config/auto/versiondef_git.h
+      ${relbuild}/cmake.config/auto/versiondef_git.h
       "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}"
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/cmake.config/auto/versiondef_git.h)
 else()
-  file(WRITE ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h "")
+  file(WRITE ${CMAKE_BINARY_DIR}/cmake.config/auto/versiondef_git.h "")
 endif()
 
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
@@ -394,7 +394,7 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
-  "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
+  "${PROJECT_BINARY_DIR}/cmake.config/auto/pathdef.c"
 )
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}

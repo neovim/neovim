@@ -286,6 +286,7 @@ else()
   set(ALL_DEPS clean-shared-libraries)
 endif()
 
+# TODO(justinmk): does anyone use this target?
 add_custom_target(third-party ALL
   COMMAND ${CMAKE_COMMAND} -E touch .third-party
   DEPENDS ${ALL_DEPS}

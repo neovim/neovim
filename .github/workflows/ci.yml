@@ -98,9 +98,9 @@ jobs:
           path: |
             ${{ env.CACHE_NVIM_DEPS_DIR }}
             ~/.ccache
-          key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!third-party/**CMakeLists.txt') }}-${{ github.base_ref }}
+          key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
 
-      - name: Build third-party
+      - name: Build third-party deps
         run: ./ci/before_script.sh
 
       - name: Build nvim
@@ -236,9 +236,9 @@ jobs:
           path: |
             ${{ env.CACHE_NVIM_DEPS_DIR }}
             ~/.ccache
-          key: ${{ matrix.runner }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'third-party/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
+          key: ${{ matrix.runner }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'cmake.deps/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
 
-      - name: Build third-party
+      - name: Build third-party deps
         run: ./ci/before_script.sh
 
       - name: Build
@@ -276,7 +276,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{ env.DEPS_BUILD_DIR }}
-          key: ${{ hashFiles('third-party\**') }}
+          key: ${{ hashFiles('cmake.deps\**') }}
 
       - name: Run CI
         run: powershell ci\build.ps1

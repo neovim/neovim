@@ -96,7 +96,7 @@ build/.ran-cmake: | deps
 	cd build && $(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
 	touch $@
 
-deps: | build/.ran-third-party-cmake
+deps: | build/.ran-deps-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	+$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
 endif
@@ -104,12 +104,12 @@ endif
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
 	mkdir -p "$@"
-build/.ran-third-party-cmake:: $(DEPS_BUILD_DIR)
+build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
 	cd $(DEPS_BUILD_DIR) && \
 		$(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
-		$(DEPS_CMAKE_FLAGS) $(MAKEFILE_DIR)/third-party
+		$(DEPS_CMAKE_FLAGS) $(MAKEFILE_DIR)/cmake.deps
 endif
-build/.ran-third-party-cmake::
+build/.ran-deps-cmake::
 	mkdir -p build
 	touch $@
 

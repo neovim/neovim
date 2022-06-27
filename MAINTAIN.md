@@ -63,7 +63,7 @@ or the backport will fail.
 Third-party dependencies
 --------------
 
-These "bundled" dependencies can be updated by bumping their versions in `third-party/CMakeLists.txt`:
+These "bundled" dependencies can be updated by bumping their versions in `cmake.deps/CMakeLists.txt`:
   - [Lua](https://www.lua.org/download.html)
   - [LuaJIT](https://github.com/LuaJIT/LuaJIT)
   - [Luv](https://github.com/luvit/luv)

@@ -7,7 +7,7 @@ local write_file, spawn, set_session, nvim_prog, exc_exec =
   helpers.exc_exec
 
 local lfs = require('lfs')
-local paths = require('test.config.paths')
+local paths = require('test.cmakeconfig.paths')
 
 local mpack = require('mpack')
 
