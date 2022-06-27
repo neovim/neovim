@@ -82,8 +82,13 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-static char *e_no_such_user_defined_command_str = N_("E184: No such user-defined command: %s");
-static char *e_no_such_user_defined_command_in_current_buffer_str
+static char e_no_such_user_defined_command_str[]
+  = N_("E184: No such user-defined command: %s");
+static char e_ambiguous_use_of_user_defined_command[]
+  = N_("E464: Ambiguous use of user-defined command");
+static char e_not_an_editor_command[]
+  = N_("E492: Not an editor command");
+static char e_no_such_user_defined_command_in_current_buffer_str[]
   = N_("E1237: No such user-defined command in current buffer: %s");
 
 static int quitmore = 0;
@@ -1439,6 +1444,10 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
     eap->cmd = skipwhite(eap->cmd + 1);
   }
   p = find_ex_command(eap, NULL);
+  if (p == NULL) {
+    *errormsg = _(e_ambiguous_use_of_user_defined_command);
+    return false;
+  }
 
   // Set command address type and parse command range
   set_cmd_addr_type(eap, (char_u *)p);
@@ -1455,7 +1464,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
-    STRCPY(IObuff, _("E492: Not an editor command"));
+    STRCPY(IObuff, _(e_not_an_editor_command));
     // If the modifier was parsed OK the error must be in the following command
     char *cmdname = after_modifier ? after_modifier : cmdline;
     append_command(cmdname);
@@ -1886,14 +1895,14 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   if (p == NULL) {
     if (!ea.skip) {
-      errormsg = _("E464: Ambiguous use of user-defined command");
+      errormsg = _(e_ambiguous_use_of_user_defined_command);
     }
     goto doend;
   }
   // Check for wrong commands.
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
-      STRCPY(IObuff, _("E492: Not an editor command"));
+      STRCPY(IObuff, _(e_not_an_editor_command));
       // If the modifier was parsed OK the error must be in the following
       // command
       char *cmdname = after_modifier ? after_modifier : *cmdlinep;
