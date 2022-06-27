@@ -3520,6 +3520,9 @@ describe('API', function()
          pcall_err(meths.parse_cmd, 'Fubar!', {}))
       eq('Error while parsing command line: E481: No range allowed',
          pcall_err(meths.parse_cmd, '4,6Fubar', {}))
+      command('command! Foobar echo foo')
+      eq('Error while parsing command line: E464: Ambiguous use of user-defined command',
+         pcall_err(meths.parse_cmd, 'F', {}))
     end)
   end)
   describe('nvim_cmd', function()
