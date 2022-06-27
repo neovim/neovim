@@ -44,12 +44,9 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: nvim-linux64
-          path: build/nvim-linux64.tar.gz
-          retention-days: 1
-      - uses: actions/upload-artifact@v3
-        with:
-          name: nvim-linux64
-          path: build/nvim-linux64.deb
+          path: |
+            build/nvim-linux64.tar.gz
+            build/nvim-linux64.deb
           retention-days: 1
 
   appimage:
@@ -69,12 +66,9 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: appimage
-          path: build/bin/nvim.appimage
-          retention-days: 1
-      - uses: actions/upload-artifact@v3
-        with:
-          name: appimage
-          path: build/bin/nvim.appimage.zsync
+          path: |
+            build/bin/nvim.appimage
+            build/bin/nvim.appimage.zsync
           retention-days: 1
 
   macOS:
@@ -132,6 +126,7 @@ jobs:
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
       DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
+      CONFIGURATION: ${{ matrix.config }}
     strategy:
       matrix:
         include:
@@ -143,17 +138,12 @@ jobs:
         with:
           fetch-depth: 0
       - run: powershell ci\build.ps1 -NoTests
-        env:
-          CONFIGURATION: ${{ matrix.config }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.archive }}
-          path: build/${{ matrix.archive }}.zip
-          retention-days: 1
-      - uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.archive }}
-          path: build/${{ matrix.archive }}.msi
+          path: |
+            build/${{ matrix.archive }}.msi
+            build/${{ matrix.archive }}.zip
           retention-days: 1
 
   publish:
@@ -161,6 +151,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
@@ -171,9 +162,7 @@ jobs:
       - uses: actions/download-artifact@v3
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gettext-base
+        run: sudo apt-get update && sudo apt-get install -y gettext-base
 
       - if: github.event_name == 'workflow_dispatch'
         run: echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
@@ -184,16 +173,12 @@ jobs:
           TAG_NAME=${{ github.ref }}
           echo "TAG_NAME=${TAG_NAME#refs/tags/}" >> $GITHUB_ENV
       - if: env.TAG_NAME == 'nightly'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           (echo 'SUBJECT=Nvim development (prerelease) build';
            echo 'PRERELEASE=--prerelease') >> $GITHUB_ENV
           gh release delete nightly --yes || true
           git push origin :nightly || true
       - if: env.TAG_NAME != 'nightly'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           (echo 'SUBJECT=Nvim release build';
            echo 'PRERELEASE=') >> $GITHUB_ENV
@@ -232,7 +217,6 @@ jobs:
           echo "SHA_WIN_64_MSI=$(cat nvim-win64.msi.sha256sum)" >> $GITHUB_ENV
       - name: Publish release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NVIM_VERSION: ${{ needs.linux.outputs.version }}
           DEBUG: api
         run: |
