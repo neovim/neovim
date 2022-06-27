@@ -693,7 +693,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   if (cmdheight0) {
     // If cmdheight is 0, cmdheight must be set to 1 when we enter command line.
     set_option_value("ch", 1L, NULL, 0);
-    redraw_statuslines();
+    update_screen(VALID);                 // redraw the screen NOW
   }
 
   // can be invoked recursively, identify each level
