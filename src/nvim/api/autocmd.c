@@ -833,7 +833,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   }
 
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("*")));
+    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
   }
 
   if (opts->data.type != kObjectTypeNil) {
