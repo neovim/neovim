@@ -2240,21 +2240,29 @@ end
 ---   -- Using a buffer number
 ---   vim.filetype.match({ buf = 42 })
 ---
----   -- Using a filename
----   vim.filetype.match({ filename = "main.lua" })
+---   -- Override the filename of the given buffer
+---   vim.filetype.match({ buf = 42, filename = 'foo.c' })
+---
+---   -- Using a filename without a buffer
+---   vim.filetype.match({ filename = 'main.lua' })
 ---
 ---   -- Using file contents
----   vim.filetype.match({ contents = {"#!/usr/bin/env bash"} })
+---   vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
 --- </pre>
 ---
----@param arg table Table specifying which matching strategy to use. It is an error to provide more
----                 than one strategy. Accepted keys are:
----                   * buf (number): Buffer number to use for matching
----                   * filename (string): Filename to use for matching. Note that the file need not
----                                        actually exist in the filesystem, only the name itself is
----                                        used.
+---@param arg table Table specifying which matching strategy to use. Accepted keys are:
+---                   * buf (number): Buffer number to use for matching. Mutually exclusive with
+---                                   {contents}
+---                   * filename (string): Filename to use for matching. When {buf} is given,
+---                                        defaults to the filename of the given buffer number. The
+---                                        file need not actually exist in the filesystem. When used
+---                                        without {buf} only the name of the file is used for
+---                                        filetype matching. This may result in failure to detect
+---                                        the filetype in cases where the filename alone is not
+---                                        enough to disambiguate the filetype.
 ---                   * contents (table): An array of lines representing file contents to use for
----                                       matching.
+---                                       matching. Can be used with {filename}. Mutually exclusive
+---                                       with {buf}.
 ---@return string|nil If a match was found, the matched filetype.
 ---@return function|nil A function that modifies buffer state when called (for example, to set some
 ---                     filetype specific buffer variables). The function accepts a buffer number as
@@ -2265,16 +2273,20 @@ function M.match(arg)
   })
 
   if not (arg.buf or arg.filename or arg.contents) then
-    error('One of "buf", "filename", or "contents" must be given')
+    error('At least one of "buf", "filename", or "contents" must be given')
   end
 
-  if (arg.buf and arg.filename) or (arg.buf and arg.contents) or (arg.filename and arg.contents) then
-    error('Only one of "buf", "filename", or "contents" must be given')
+  if arg.buf and arg.contents then
+    error('Only one of "buf" or "contents" must be given')
   end
 
   local bufnr = arg.buf
-  local name = bufnr and api.nvim_buf_get_name(bufnr) or arg.filename
+  local name = arg.filename
   local contents = arg.contents
+
+  if bufnr and not name then
+    name = api.nvim_buf_get_name(bufnr)
+  end
 
   if name then
     name = normalize_path(name)
@@ -2282,9 +2294,9 @@ function M.match(arg)
 
   local ft, on_detect
 
-  if not (bufnr or name) then
+  if contents then
     -- Sanity check: this should not happen
-    assert(contents, 'contents should be non-nil when bufnr and filename are nil')
+    assert(not bufnr, '"buf" and "contents" are mutually exclusive')
     -- TODO: "scripts.lua" content matching
     return
   end
