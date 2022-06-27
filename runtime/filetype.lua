@@ -35,16 +35,16 @@ end
 -- Set a marker so that the ftdetect scripts are not sourced a second time by filetype.vim
 vim.g.did_load_ftdetect = 1
 
--- If filetype.vim is disabled, set up the autocmd to use scripts.vim
+-- If filetype.vim is disabled, set up the autocmd to use scripts.lua
 if vim.g.did_load_filetypes then
   vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
     group = 'filetypedetect',
-    command = "if !did_filetype() && expand('<amatch>') !~ g:ft_ignore_pat | runtime! scripts.vim | endif",
+    command = "if !did_filetype() && expand('<amatch>') !~ g:ft_ignore_pat | runtime! scripts.lua | endif",
   })
 
   vim.api.nvim_create_autocmd('StdinReadPost', {
     group = 'filetypedetect',
-    command = 'if !did_filetype() | runtime! scripts.vim | endif',
+    command = 'if !did_filetype() | runtime! scripts.lua | endif',
   })
 end
 
