@@ -444,7 +444,7 @@ if(TS_HAS_SET_ALLOCATOR)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_TS_HAS_SET_ALLOCATOR")
 endif()
 
-# Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
+# The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 
 if(PREFER_LUA)
@@ -641,7 +641,7 @@ endif()
 include(InstallHelpers)
 
 install_helper(
-  FILES ${CMAKE_SOURCE_DIR}/man/nvim.1
+  FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 #
