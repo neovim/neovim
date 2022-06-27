@@ -877,7 +877,7 @@ Note: these are typed literally, they are not special keys!
 		   When the match is with a file name, it is expanded to the
  		   full path.
 							*:<sfile>* *<sfile>*
-	<sfile>    When executing a ":source" command, is replaced with the
+	<sfile>    When executing a `:source` command, is replaced with the
 		   file name of the sourced file.  *E498*
 		   When executing a function, is replaced with:
 		   "function {function-name}[{lnum}]"
@@ -886,7 +886,7 @@ Note: these are typed literally, they are not special keys!
 		   Note that filename-modifiers are useless when <sfile> is
 		   used inside a function.
 							*:<slnum>* *<slnum>*
-	<slnum>	   When executing a ":source" command, is replaced with the
+	<slnum>	   When executing a `:source` command, is replaced with the
 		   line number.  *E842*
 		   When executing a function it's the line number relative to
 		   the start of the function.

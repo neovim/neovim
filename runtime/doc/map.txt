@@ -176,7 +176,8 @@ keys.  After that white space and a comment may follow: >
 "<unique>" can be used in any order.  They must appear right after the
 command, before any other arguments.
 
-			*:map-local* *:map-<buffer>* *:map-buffer* *E224* *E225*
+					*:map-local* *:map-<buffer>* *:map-buffer*
+					*E224* *E225*
 If the first argument to one of these commands is "<buffer>" the mapping will
 be effective in the current buffer only.  Example: >
 	:map <buffer>  ,w  /[.,;]<CR>

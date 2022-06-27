@@ -119,7 +119,7 @@ You will not get an error if you try to change the type of a variable.
 
 
 1.2 Function references ~
-						*Funcref* *E695* *E718*
+							*Funcref* *E695* *E718*
 A Funcref variable is obtained with the |function()| function, the |funcref()|
 function or created with the lambda expression |expr-lambda|.  It can be used
 in an expression in the place of a function name, before the parenthesis
@@ -1123,7 +1123,7 @@ Generally, if a |List| index is equal to or higher than the length of the
 error.
 
 
-expr8[expr1a : expr1b]	substring or sublist		*expr-[:]*
+expr8[expr1a : expr1b]	substring or |sublist|		*expr-[:]* *substring*
 
 If expr8 is a String this results in the substring with the bytes or
 characters from expr1a to and including expr1b.  expr8 is used as a String,

@@ -290,7 +290,7 @@ The examples below assume a 'shiftwidth' of 4.
 <
 							*cino-g*
 	gN    Place C++ scope declarations N characters from the indent of the
-	      block they are in.  (default 'shiftwidth'). By default, a scope 
+	      block they are in.  (default 'shiftwidth'). By default, a scope
 	      declaration is "public:", "protected:" or "private:". This can
 	      be adjusted with the 'cinscopedecls' option.
 
