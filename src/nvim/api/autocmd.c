@@ -793,7 +793,7 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
   }
 
   if (patterns.size == 0) {
-    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("*")));
+    ADD(patterns, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
   }
 
   modeline = api_object_to_bool(opts->modeline, "modeline", true, err);
