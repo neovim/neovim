@@ -6153,7 +6153,7 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
-  if (p_ch <= 0) {
+  if (p_ch <= 0 && !ui_has(kUIMessages)) {
     return;
   }
 
@@ -6461,7 +6461,8 @@ int redrawing(void)
  */
 int messaging(void)
 {
-  return !(p_lz && char_avail() && !KeyTyped) && p_ch > 0;
+  return !(p_lz && char_avail() && !KeyTyped)
+    && (p_ch > 0 || ui_has(kUIMessages));
 }
 
 /// Show current status info in ruler and various other places
@@ -6519,7 +6520,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     }
   }
 
-  if (*p_ruf && p_ch > 0) {
+  if (*p_ruf && p_ch > 0 && !ui_has(kUIMessages)) {
     int save_called_emsg = called_emsg;
     called_emsg = false;
     win_redr_custom(wp, false, true);
