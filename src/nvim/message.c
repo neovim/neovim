@@ -3085,9 +3085,9 @@ void msg_clr_eos_force(void)
 
   if (p_ch > 0) {
     grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol,
-        ' ', ' ', HL_ATTR(HLF_MSG));
+              ' ', ' ', HL_ATTR(HLF_MSG));
     grid_fill(&msg_grid_adj, msg_row + 1, Rows, 0, Columns,
-        ' ', ' ', HL_ATTR(HLF_MSG));
+              ' ', ' ', HL_ATTR(HLF_MSG));
   }
 
   redraw_cmdline = true;  // overwritten the command line
