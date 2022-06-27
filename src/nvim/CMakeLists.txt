@@ -165,7 +165,6 @@ set(CONV_SOURCES
   lua/treesitter.c
   mbyte.c
   memline.c
-  message.c
   regexp.c
   screen.c
   search.c
