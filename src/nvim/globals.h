@@ -1018,6 +1018,8 @@ EXTERN char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group 
 EXTERN char e_undobang_cannot_redo_or_move_branch[]
 INIT(= N_("E5767: Cannot use :undo! to redo or move to a different undo branch"));
 
+EXTERN char e_ambiguous_cmd[] INIT(= N_("E464: Ambiguous use of user-defined command"));
+
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 

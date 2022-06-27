@@ -1438,7 +1438,10 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   if (*eap->cmd == '*') {
     eap->cmd = skipwhite(eap->cmd + 1);
   }
-  p = find_ex_command(eap, NULL);
+  if((p = find_ex_command(eap, NULL)) == NULL) {
+    *errormsg = _(e_ambiguous_cmd);
+    return false;
+  }
 
   // Set command address type and parse command range
   set_cmd_addr_type(eap, (char_u *)p);
@@ -1886,7 +1889,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   if (p == NULL) {
     if (!ea.skip) {
-      errormsg = _("E464: Ambiguous use of user-defined command");
+      errormsg = _(e_ambiguous_cmd);
     }
     goto doend;
   }
