@@ -3798,9 +3798,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 				:set listchars+=tab:>-,lead:.
 <							*lcs-leadmultispace*
 	  leadmultispace:c...
-			Like multispace value, but only for leading
-			whitespace.  Overrides |lcs-lead| for leading multiple
-			spaces.  `:set listchars=leadmultispace:---+` shows ten
+			Like the |lcs-multispace| value, but for leading
+			spaces only.  Also overrides |lcs-lead| for leading
+			multiple spaces.
+			`:set listchars=leadmultispace:---+` shows ten
 			consecutive leading spaces as:
 				---+---+--XXX ~
 			Where "XXX" denotes the first non-blank characters in
