@@ -1,0 +1,143 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "displayName": "base preset",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+      },
+      "environment": {
+        "LOG_DIR": "${sourceDir}/build/logs"
+      },
+      "hidden": true
+    },
+    {
+      "name": "clang",
+      "environment": {
+        "CC": "clang"
+      },
+      "inherits": [
+        "base"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "description": "Same as RelWithDebInfo, but disables debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "inherits": [
+        "base"
+      ]
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "RelWithDebInfo",
+      "description": "Enables optimizations (-Og or -O2) with debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "inherits": [
+        "base"
+      ]
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "description": "Disables optimizations (-O0), enables debug information",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "inherits": [
+        "base"
+      ]
+    },
+    {
+      "name": "asan",
+      "displayName": "Debug (with AddressSanitizer and UndefinedBehaviorSanitizer)",
+      "cacheVariables": {
+        "CLANG_ASAN_UBSAN": "ON"
+      },
+      "inherits": [
+        "clang",
+        "debug"
+      ]
+    },
+    {
+      "name": "tsan",
+      "displayName": "Debug (with ThreadSanitizer)",
+      "cacheVariables": {
+        "CLANG_TSAN": "ON"
+      },
+      "inherits": [
+        "clang",
+        "debug"
+      ]
+    },
+    {
+      "name": "msan",
+      "displayName": "Debug (with MemorySanitizer)",
+      "cacheVariables": {
+        "CLANG_MSAN": "ON"
+      },
+      "inherits": [
+        "clang",
+        "debug"
+      ]
+    },
+    {
+      "name": "msvc-vs2022",
+      "displayName": "Windows MSVC x64 (with VS2022)",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      },
+      "inherits": "base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan"
+    },
+    {
+      "name": "msan",
+      "configurePreset": "msan"
+    },
+    {
+      "name": "msvc-vs2022",
+      "configurePreset": "msvc-vs2022",
+      "nativeToolOptions": [
+        "/verbosity:normal",
+        "/m"
+      ],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+}
