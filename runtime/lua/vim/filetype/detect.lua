@@ -906,9 +906,11 @@ function M.rules(path)
     local dir = vim.fn.expand(path, ':h')
     for _, line in ipairs(config_lines) do
       local match = line:match(udev_rules_pattern)
-      local udev_rules = line:gsub(udev_rules_pattern, match, 1)
-      if dir == udev_rules then
-        return 'udevrules'
+      if match then
+        local udev_rules = line:gsub(udev_rules_pattern, match, 1)
+        if dir == udev_rules then
+          return 'udevrules'
+        end
       end
     end
     return 'hog'
