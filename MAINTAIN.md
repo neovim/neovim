@@ -52,7 +52,7 @@ has a major bug:
 3. Cut a release from `release-x.y`.
     - Run `./scripts/release.sh`
     - Update (force-push) the remote `stable` tag.
-    - The [nightly job](https://github.com/neovim/neovim/blob/master/.github/workflows/release.yml#L4)
+    - The [CI job](https://github.com/neovim/neovim/blob/3d45706478cd030c3ee05b4f336164bb96138095/.github/workflows/release.yml#L11-L13)
       will update the release assets based on the `stable` tag.
 
 The neovim repository includes a backport [github action](https://github.com/zeebe-io/backport-action).

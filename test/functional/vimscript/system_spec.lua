@@ -79,8 +79,8 @@ describe('system()', function()
     end)
 
     it('calls executable in $PATH', function()
-      if 0 == eval("executable('python')") then pending("missing `python`") end
-      eq("foo\n", eval([[system(['python', '-c', 'print("foo")'])]]))
+      if 0 == eval("executable('python3')") then pending("missing `python3`") end
+      eq("foo\n", eval([[system(['python3', '-c', 'print("foo")'])]]))
       eq(0, eval('v:shell_error'))
     end)
 
@@ -175,7 +175,7 @@ describe('system()', function()
 
     it('powershell w/ UTF-8 text #13713', function()
       if not helpers.has_powershell() then
-        pending("not tested; powershell was not found", function() end)
+        pending("powershell not found", function() end)
         return
       end
       helpers.set_shell_powershell()
@@ -613,7 +613,7 @@ describe('systemlist()', function()
 
   it('powershell w/ UTF-8 text #13713', function()
     if not helpers.has_powershell() then
-      pending("not tested; powershell was not found", function() end)
+      pending("powershell not found", function() end)
       return
     end
     helpers.set_shell_powershell()
