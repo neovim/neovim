@@ -4,7 +4,7 @@ set -e
 data_files="UnicodeData.txt CaseFolding.txt EastAsianWidth.txt"
 emoji_files="emoji-data.txt"
 
-UNIDIR_DEFAULT=unicode
+UNIDIR_DEFAULT=src/unicode
 DOWNLOAD_URL_BASE_DEFAULT='http://unicode.org/Public'
 
 if test x$1 = 'x--help' ; then
@@ -39,5 +39,5 @@ done
 
 (
   cd "$UNIDIR"
-  git commit -m "Update unicode files" -- $files
+  git commit -m "feat: update unicode tables" -- $files
 )

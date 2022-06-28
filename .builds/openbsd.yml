@@ -33,7 +33,7 @@ tasks:
     export AUTOMAKE_VERSION=1.16
     mkdir neovim/.deps
     cd neovim/.deps
-    cmake -G Ninja ../third-party/
+    cmake -G Ninja ../cmake.deps/
     cmake --build . --config RelWithDebInfo
 - build: |
     mkdir neovim/build

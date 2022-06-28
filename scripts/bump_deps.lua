@@ -132,7 +132,7 @@ end
 local function write_cmakelists_line(symbol, kind, value)
 	require_executable("sed")
 
-	local cmakelists_path = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
+	local cmakelists_path = nvim_src_dir .. "/" .. "cmake.deps/CMakeLists.txt"
 	run_die({
 		"sed",
 		"-i",
@@ -169,7 +169,7 @@ local function update_cmakelists(dependency, archive, comment)
 
 	verify_branch(dependency.name)
 
-	local changed_file = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
+	local changed_file = nvim_src_dir .. "/" .. "cmake.deps/CMakeLists.txt"
 
 	p("Updating " .. dependency.name .. " to " .. archive.url .. "\n")
 	write_cmakelists_line(dependency.symbol, "URL", archive.url:gsub("/", "\\/"))
@@ -183,7 +183,7 @@ end
 local function verify_cmakelists_committed()
 	require_executable("git")
 
-	local cmakelists_path = nvim_src_dir .. "/" .. "third-party/CMakeLists.txt"
+	local cmakelists_path = nvim_src_dir .. "/" .. "cmake.deps/CMakeLists.txt"
 	run_die({ "git", "diff", "--quiet", "HEAD", "--", cmakelists_path }, cmakelists_path .. " has uncommitted changes")
 end
 

@@ -18,7 +18,7 @@
   - runtime/lua/vim/diagnostic.lua
 
 "dependencies":
-  - third-party/**/*
+  - cmake.deps/**/*
 
 "spell":
   - src/nvim/spell*

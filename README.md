@@ -81,8 +81,10 @@ Project layout
 --------------
 
     ├─ ci/              build automation
-    ├─ cmake/           build scripts
-    ├─ runtime/         user plugins/docs
+    ├─ cmake/           CMake utils
+    ├─ cmake.config/    CMake defines
+    ├─ cmake.deps/      subproject to fetch and build dependencies (optional)
+    ├─ runtime/         plugins and docs
     ├─ src/nvim/        application source code (see src/nvim/README.md)
     │  ├─ api/          API subsystem
     │  ├─ eval/         VimL subsystem
@@ -93,7 +95,6 @@ Project layout
     │  ├─ msgpack_rpc/  RPC subsystem
     │  ├─ os/           low-level platform code
     │  └─ tui/          built-in UI
-    ├─ third-party/     CMake subproject to build dependencies
     └─ test/            tests (see test/README.md)
 
 License
