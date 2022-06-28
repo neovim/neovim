@@ -268,6 +268,7 @@ typedef struct {
 
   int cmod_split;  ///< flags for win_split()
   int cmod_tab;  ///< > 0 when ":tab" was used
+  char *cmod_filter_pat;
   regmatch_T cmod_filter_regmatch;  ///< set by :filter /pat/
   bool cmod_filter_force;  ///< set for :filter!
 

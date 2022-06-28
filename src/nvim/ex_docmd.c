@@ -1405,8 +1405,8 @@ bool is_cmd_ni(cmdidx_T cmdidx)
 }
 
 /// Parse command line and return information about the first command.
-/// If parsing is done successfully, need to free cmod_filter_regmatch.regprog after calling,
-/// usually done using undo_cmdmod() or execute_cmd().
+/// If parsing is done successfully, need to free cmod_filter_pat and cmod_filter_regmatch.regprog
+/// after calling, usually done using undo_cmdmod() or execute_cmd().
 ///
 /// @param cmdline Command line string
 /// @param[out] eap Ex command arguments
@@ -1434,8 +1434,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
 
   // Parse command modifiers
   if (parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false) == FAIL) {
-    vim_regfree(cmdinfo->cmdmod.cmod_filter_regmatch.regprog);
-    return false;
+    goto err;
   }
   after_modifier = eap->cmd;
 
@@ -1449,21 +1448,21 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   p = find_ex_command(eap, NULL);
   if (p == NULL) {
     *errormsg = _(e_ambiguous_use_of_user_defined_command);
-    return false;
+    goto err;
   }
 
   // Set command address type and parse command range
   set_cmd_addr_type(eap, p);
   eap->cmd = cmd;
   if (parse_cmd_address(eap, errormsg, false) == FAIL) {
-    return false;
+    goto err;
   }
 
   // Skip colon and whitespace
   eap->cmd = skip_colon_white(eap->cmd, true);
   // Fail if command is a comment or if command doesn't exist
   if (*eap->cmd == NUL || *eap->cmd == '"') {
-    return false;
+    goto err;
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
@@ -1472,7 +1471,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
     char *cmdname = after_modifier ? after_modifier : cmdline;
     append_command(cmdname);
     *errormsg = (char *)IObuff;
-    return false;
+    goto err;
   }
 
   // Correctly set 'forceit' for commands
@@ -1511,12 +1510,12 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   // Fail if command doesn't support bang but is used with a bang
   if (!(eap->argt & EX_BANG) && eap->forceit) {
     *errormsg = _(e_nobang);
-    return false;
+    goto err;
   }
   // Fail if command doesn't support a range but it is given a range
   if (!(eap->argt & EX_RANGE) && eap->addr_count > 0) {
     *errormsg = _(e_norange);
-    return false;
+    goto err;
   }
   // Set default range for command if required
   if ((eap->argt & EX_DFLALL) && eap->addr_count == 0) {
@@ -1526,7 +1525,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   // Parse register and count
   parse_register(eap);
   if (parse_count(eap, errormsg, false) == FAIL) {
-    return false;
+    goto err;
   }
 
   // Remove leading whitespace and colon from next command
@@ -1543,6 +1542,9 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   }
 
   return true;
+err:
+  undo_cmdmod(&cmdinfo->cmdmod);
+  return false;
 }
 
 /// Execute an Ex command using parsed command line information.
@@ -2393,7 +2395,7 @@ char *ex_errmsg(const char *const msg, const char *const arg)
 /// - Set ex_pressedreturn for an empty command line.
 ///
 /// @param skip_only      if false, undo_cmdmod() must be called later to free
-///                       any cmod_filter_regmatch.regprog.
+///                       any cmod_filter_pat and cmod_filter_regmatch.regprog.
 /// @param[out] errormsg  potential error message.
 ///
 /// Call apply_cmdmod() to get the side effects of the modifiers:
@@ -2512,6 +2514,7 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool 
         break;
       }
       if (!skip_only) {
+        cmod->cmod_filter_pat = xstrdup(reg_pat);
         cmod->cmod_filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
         if (cmod->cmod_filter_regmatch.regprog == NULL) {
           break;
@@ -2673,7 +2676,7 @@ static void apply_cmdmod(cmdmod_T *cmod)
 }
 
 /// Undo and free contents of "cmod".
-static void undo_cmdmod(cmdmod_T *cmod)
+void undo_cmdmod(cmdmod_T *cmod)
   FUNC_ATTR_NONNULL_ALL
 {
   if (cmod->cmod_verbose_save > 0) {
@@ -2693,6 +2696,7 @@ static void undo_cmdmod(cmdmod_T *cmod)
     cmod->cmod_save_ei = NULL;
   }
 
+  xfree(cmod->cmod_filter_pat);
   vim_regfree(cmod->cmod_filter_regmatch.regprog);
 
   if (cmod->cmod_save_msg_silent > 0) {
