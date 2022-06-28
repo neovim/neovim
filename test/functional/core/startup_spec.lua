@@ -499,11 +499,11 @@ describe('sysinit', function()
     [[" -u NONE -i NONE --cmd "set noruler" -D')]])
     screen:expect([[
       ^                                                            |
-                                                                  |
       Entering Debug mode.  Type "cont" to continue.              |
-      cmd: augroup nvim_terminal                                  |
+      pre-vimrc command line                                      |
+      cmd: set noruler                                            |
       >                                                           |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,1            All|
                                                                   |
     ]])
     command([[call chansend(g:id, "cont\n")]])
