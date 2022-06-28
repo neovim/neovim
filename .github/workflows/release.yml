@@ -107,8 +107,9 @@ jobs:
         run: |
           export MACOSX_DEPLOYMENT_TARGET="$(sw_vers -productVersion | cut -f1 -d.)"
           OSX_FLAGS="-DCMAKE_OSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET} -DCMAKE_OSX_ARCHITECTURES=arm64\;x86_64"
+          # TODO(carlocab): fix `FindLibIntl` so that the test for `libintl` works when linking statically.
           make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} \
-               CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= $OSX_FLAGS" \
+               CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= -DHAVE_WORKING_LIBINTL:BOOLEAN=TRUE $OSX_FLAGS" \
                DEPS_CMAKE_FLAGS="$OSX_FLAGS"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-macos" install
       - name: Create package
