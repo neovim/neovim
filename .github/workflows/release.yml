@@ -102,6 +102,7 @@ jobs:
           brew uninstall $(brew uses --installed --recursive gettext)
           brew unlink gettext
           ln -sf "$(brew --prefix)/opt/$(readlink "${GETTEXT_PREFIX}")/bin"/* /usr/local/bin/
+          ln -sf "$(brew --prefix)/opt/$(readlink "${GETTEXT_PREFIX}")/include"/* /usr/local/include/
           rm -f "$GETTEXT_PREFIX"
       - name: Build release
         run: |
