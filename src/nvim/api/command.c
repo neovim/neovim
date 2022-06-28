@@ -13,6 +13,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/lua/executor.h"
 #include "nvim/ops.h"
+#include "nvim/regexp.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -94,6 +95,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     }
     goto end;
   }
+  vim_regfree(cmdinfo.cmdmod.cmod_filter_regmatch.regprog);
 
   // Parse arguments
   Array args = ARRAY_DICT_INIT;
