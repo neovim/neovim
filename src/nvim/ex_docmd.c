@@ -6001,6 +6001,7 @@ static void ex_command(exarg_T *eap)
   name = p;
   end = uc_validate_name(name);
   if (!end) {
+    XFREE_CLEAR(compl_arg);
     emsg(_("E182: Invalid command name"));
     return;
   }
