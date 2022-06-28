@@ -3319,7 +3319,6 @@ void qf_age(exarg_T *eap)
   }
 
   if (eap->addr_count != 0) {
-    assert(eap->line2 <= INT_MAX);
     count = (int)eap->line2;
   } else {
     count = 1;
@@ -3739,7 +3738,6 @@ void ex_copen(exarg_T *eap)
   incr_quickfix_busy();
 
   if (eap->addr_count != 0) {
-    assert(eap->line2 <= INT_MAX);
     height = (int)eap->line2;
   } else {
     height = QF_WINHEIGHT;
