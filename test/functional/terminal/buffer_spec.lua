@@ -235,6 +235,13 @@ describe(':terminal buffer', function()
     feed_command('bdelete!')
   end)
 
+  it("does not free curbuf of exit ##10386", function()
+    feed_command "autocmd TermClose * bd!"
+    feed_command "terminal"
+    feed_command "bd!"
+    assert_alive()
+  end)
+
   describe('handles confirmations', function()
     it('with :confirm', function()
       feed_command('terminal')
