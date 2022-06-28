@@ -3005,7 +3005,7 @@ static int check_keyword_id(char_u *const line, const int startcol, int *const e
 ///  Accept a keyword at other levels only if it is in the contains list.
 static keyentry_T *match_keyword(char_u *keyword, hashtab_T *ht, stateitem_T *cur_si)
 {
-  hashitem_T *hi = hash_find(ht, keyword);
+  hashitem_T *hi = hash_find(ht, (char *)keyword);
   if (!HASHITEM_EMPTY(hi)) {
     for (keyentry_T *kp = HI2KE(hi); kp != NULL; kp = kp->ke_next) {
       if (current_next_list != 0
@@ -5123,7 +5123,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
         ci->sp_off_flags |= (1 << idx);
         if (idx == SPO_LC_OFF) {            // lc=99
           end += 3;
-          *p = getdigits_int(&end, true, 0);
+          *p = getdigits_int((char **)&end, true, 0);
 
           // "lc=" offset automatically sets "ms=" offset
           if (!(ci->sp_off_flags & (1 << SPO_MS_OFF))) {
@@ -5134,10 +5134,10 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
           end += 4;
           if (*end == '+') {
             end++;
-            *p = getdigits_int(&end, true, 0);    // positive offset
+            *p = getdigits_int((char **)&end, true, 0);    // positive offset
           } else if (*end == '-') {
             end++;
-            *p = -getdigits_int(&end, true, 0);   // negative offset
+            *p = -getdigits_int((char **)&end, true, 0);   // negative offset
           }
         }
         if (*end != ',') {
@@ -5382,7 +5382,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
           regmatch.rm_ic = TRUE;
           id = 0;
           for (int i = highlight_num_groups(); --i >= 0;) {
-            if (vim_regexec(&regmatch, highlight_group_name(i), (colnr_T)0)) {
+            if (vim_regexec(&regmatch, (char *)highlight_group_name(i), (colnr_T)0)) {
               if (round == 2) {
                 // Got more items than expected; can happen
                 // when adding items that match:

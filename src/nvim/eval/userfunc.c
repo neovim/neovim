@@ -547,9 +547,7 @@ static char_u *fname_trans_sid(const char_u *const name, char_u *const fname_buf
 /// @return  NULL for unknown function.
 ufunc_T *find_func(const char_u *name)
 {
-  hashitem_T *hi;
-
-  hi = hash_find(&func_hashtab, name);
+  hashitem_T *hi = hash_find(&func_hashtab, (char *)name);
   if (!HASHITEM_EMPTY(hi)) {
     return HI2UF(hi);
   }
@@ -724,7 +722,7 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
 /// @return true if the entry was deleted, false if it wasn't found.
 static bool func_remove(ufunc_T *fp)
 {
-  hashitem_T *hi = hash_find(&func_hashtab, UF2HIKEY(fp));
+  hashitem_T *hi = hash_find(&func_hashtab, (char *)UF2HIKEY(fp));
 
   if (!HASHITEM_EMPTY(hi)) {
     hash_remove(&func_hashtab, hi);
@@ -1045,7 +1043,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
               char *s = tofree;
               char buf[MSG_BUF_LEN];
               if (vim_strsize(s) > MSG_BUF_CLEN) {
-                trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN, sizeof(buf));
+                trunc_string(s, buf, MSG_BUF_CLEN, sizeof(buf));
                 s = buf;
               }
               msg_puts(s);
@@ -1159,7 +1157,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       emsg_off--;
       if (s != NULL) {
         if (vim_strsize(s) > MSG_BUF_CLEN) {
-          trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN, MSG_BUF_LEN);
+          trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
           s = buf;
         }
         smsg(_("%s returning %s"), sourcing_name, s);
@@ -1976,7 +1974,7 @@ void ex_function(exarg_T *eap)
             --todo;
             fp = HI2UF(hi);
             if (!isdigit(*fp->uf_name)
-                && vim_regexec(&regmatch, fp->uf_name, 0)) {
+                && vim_regexec(&regmatch, (char *)fp->uf_name, 0)) {
               list_func_head(fp, false, false);
             }
           }
@@ -2537,7 +2535,7 @@ void ex_function(exarg_T *eap)
     // insert the new function in the function list
     STRCPY(fp->uf_name, name);
     if (overwrite) {
-      hi = hash_find(&func_hashtab, name);
+      hi = hash_find(&func_hashtab, (char *)name);
       hi->hi_key = UF2HIKEY(fp);
     } else if (hash_add(&func_hashtab, UF2HIKEY(fp)) == FAIL) {
       xfree(fp);

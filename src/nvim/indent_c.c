@@ -224,7 +224,7 @@ bool cin_is_cinword(const char_u *line)
   line = (char_u *)skipwhite((char *)line);
 
   for (char_u *cinw = curbuf->b_p_cinw; *cinw;) {
-    size_t len = copy_option_part(&cinw, cinw_buf, cinw_len, ",");
+    size_t len = copy_option_part((char **)&cinw, (char *)cinw_buf, cinw_len, ",");
     if (STRNCMP(line, cinw_buf, len) == 0
         && (!vim_iswordc(line[len]) || !vim_iswordc(line[len - 1]))) {
       retval = true;
@@ -520,7 +520,7 @@ bool cin_isscopedecl(const char_u *p)
   bool found = false;
 
   for (char_u *cinsd = curbuf->b_p_cinsd; *cinsd;) {
-    const size_t len = copy_option_part(&cinsd, cinsd_buf, cinsd_len, ",");
+    const size_t len = copy_option_part((char **)&cinsd, (char *)cinsd_buf, cinsd_len, ",");
     if (STRNCMP(s, cinsd_buf, len) == 0) {
       const char_u *skip = cin_skipcomment(s + len);
       if (*skip == ':' && skip[1] != ':') {
@@ -1501,7 +1501,7 @@ retry:
   if ((trypos = findmatchlimit(NULL, c, 0, ind_maxp_wk)) != NULL) {
     // check if the ( is in a // comment
     if ((colnr_T)cin_skip2pos(trypos) > trypos->col) {
-      ind_maxp_wk = ind_maxparen - (int)(cursor_save.lnum - trypos->lnum);
+      ind_maxp_wk = ind_maxparen - (cursor_save.lnum - trypos->lnum);
       if (ind_maxp_wk > 0) {
         curwin->w_cursor = *trypos;
         curwin->w_cursor.col = 0;  // XXX
@@ -1515,7 +1515,7 @@ retry:
       trypos = &pos_copy;
       curwin->w_cursor = *trypos;
       if ((trypos_wk = ind_find_start_CORS(NULL)) != NULL) {  // XXX
-        ind_maxp_wk = ind_maxparen - (int)(cursor_save.lnum - trypos_wk->lnum);
+        ind_maxp_wk = ind_maxparen - (cursor_save.lnum - trypos_wk->lnum);
         if (ind_maxp_wk > 0) {
           curwin->w_cursor = *trypos_wk;
           goto retry;
@@ -1746,7 +1746,7 @@ void parse_cino(buf_T *buf)
       p++;
     }
     char_u *digits_start = p;   // remember where the digits start
-    int n = getdigits_int(&p, true, 0);
+    int n = getdigits_int((char **)&p, true, 0);
     divider = 0;
     if (*p == '.') {        // ".5s" means a fraction.
       fraction = atoi((char *)++p);
@@ -2075,7 +2075,7 @@ int get_c_indent(void)
         } else if (*p == COM_LEFT || *p == COM_RIGHT) {
           align = *p++;
         } else if (ascii_isdigit(*p) || *p == '-') {
-          off = getdigits_int(&p, true, 0);
+          off = getdigits_int((char **)&p, true, 0);
         } else {
           p++;
         }
@@ -2084,7 +2084,7 @@ int get_c_indent(void)
       if (*p == ':') {
         p++;
       }
-      (void)copy_option_part(&p, (char_u *)lead_end, COM_MAX_LEN, ",");
+      (void)copy_option_part((char **)&p, lead_end, COM_MAX_LEN, ",");
       if (what == COM_START) {
         STRCPY(lead_start, lead_end);
         lead_start_len = (int)STRLEN(lead_start);

@@ -275,10 +275,9 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   // executing nasty autocommands.  Also check if "fname" and "sfname"
   // point to one of these values.
   old_curbuf = curbuf;
-  old_b_ffname = (char *)curbuf->b_ffname;
+  old_b_ffname = curbuf->b_ffname;
   old_b_fname = curbuf->b_fname;
-  using_b_ffname = ((char_u *)fname == curbuf->b_ffname)
-                   || ((char_u *)sfname == curbuf->b_ffname);
+  using_b_ffname = (fname == curbuf->b_ffname) || (sfname == curbuf->b_ffname);
   using_b_fname = (fname == curbuf->b_fname) || (sfname == curbuf->b_fname);
 
   // After reading a file the cursor line changes but we don't want to
@@ -373,7 +372,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         && !S_ISFIFO(perm)                          // ... or fifo
         && !S_ISSOCK(perm)                          // ... or socket
 #ifdef OPEN_CHR_FILES
-        && !(S_ISCHR(perm) && is_dev_fd_file((char_u *)fname))
+        && !(S_ISCHR(perm) && is_dev_fd_file(fname))
         // ... or a character special file named /dev/fd/<n>
 #endif
         ) {
@@ -466,7 +465,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         // SwapExists autocommand may mess things up
         if (curbuf != old_curbuf
             || (using_b_ffname
-                && ((char_u *)old_b_ffname != curbuf->b_ffname))
+                && (old_b_ffname != curbuf->b_ffname))
             || (using_b_fname
                 && (old_b_fname != curbuf->b_fname))) {
           emsg(_(e_auchangedbuf));
@@ -538,7 +537,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     check_need_swap(newfile);
     if (!read_stdin
         && (curbuf != old_curbuf
-            || (using_b_ffname && ((char_u *)old_b_ffname != curbuf->b_ffname))
+            || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
             || (using_b_fname && (old_b_fname != curbuf->b_fname)))) {
       emsg(_(e_auchangedbuf));
       if (!read_buffer) {
@@ -645,7 +644,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
      * (cd for example) if it invalidates fname or sfname.
      */
     if (!read_stdin && (curbuf != old_curbuf
-                        || (using_b_ffname && ((char_u *)old_b_ffname != curbuf->b_ffname))
+                        || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
                         || (using_b_fname && (old_b_fname != curbuf->b_fname))
                         || (fd = os_open(fname, O_RDONLY, 0)) < 0)) {
       no_wait_return--;
@@ -1974,12 +1973,12 @@ failed:
 /// Do not accept "/dev/fd/[012]", opening these may hang Vim.
 ///
 /// @param fname file name to check
-bool is_dev_fd_file(char_u *fname)
+bool is_dev_fd_file(char *fname)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return STRNCMP(fname, "/dev/fd/", 8) == 0
-         && ascii_isdigit(fname[8])
-         && *skipdigits((char *)fname + 9) == NUL
+         && ascii_isdigit((uint8_t)fname[8])
+         && *skipdigits(fname + 9) == NUL
          && (fname[9] != NUL
              || (fname[8] != '0' && fname[8] != '1' && fname[8] != '2'));
 }
@@ -2342,16 +2341,16 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
      * Set curbuf to the buffer to be written.
      * Careful: The autocommands may call buf_write() recursively!
      */
-    if ((char_u *)ffname == buf->b_ffname) {
+    if (ffname == buf->b_ffname) {
       buf_ffname = true;
     }
-    if ((char_u *)sfname == buf->b_sfname) {
+    if (sfname == buf->b_sfname) {
       buf_sfname = true;
     }
-    if ((char_u *)fname == buf->b_ffname) {
+    if (fname == buf->b_ffname) {
       buf_fname_f = true;
     }
-    if ((char_u *)fname == buf->b_sfname) {
+    if (fname == buf->b_sfname) {
       buf_fname_s = true;
     }
 
@@ -2491,16 +2490,16 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
      * be kept in fname, ffname and sfname.
      */
     if (buf_ffname) {
-      ffname = (char *)buf->b_ffname;
+      ffname = buf->b_ffname;
     }
     if (buf_sfname) {
-      sfname = (char *)buf->b_sfname;
+      sfname = buf->b_sfname;
     }
     if (buf_fname_f) {
-      fname = (char *)buf->b_ffname;
+      fname = buf->b_ffname;
     }
     if (buf_fname_s) {
-      fname = (char *)buf->b_sfname;
+      fname = buf->b_sfname;
     }
   }
 
@@ -2762,7 +2761,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         /*
          * Isolate one directory name, using an entry in 'bdir'.
          */
-        size_t dir_len = copy_option_part((char_u **)&dirp, IObuff, IOSIZE, ",");
+        size_t dir_len = copy_option_part(&dirp, (char *)IObuff, IOSIZE, ",");
         p = (char *)IObuff + dir_len;
         bool trailing_pathseps = after_pathsep((char *)IObuff, p) && p[-1] == p[-2];
         if (trailing_pathseps) {
@@ -2923,7 +2922,7 @@ nobackup:
         /*
          * Isolate one directory name and make the backup file name.
          */
-        size_t dir_len = copy_option_part((char_u **)&dirp, IObuff, IOSIZE, ",");
+        size_t dir_len = copy_option_part(&dirp, (char *)IObuff, IOSIZE, ",");
         p = (char *)IObuff + dir_len;
         bool trailing_pathseps = after_pathsep((char *)IObuff, p) && p[-1] == p[-2];
         if (trailing_pathseps) {
@@ -4304,24 +4303,24 @@ static int make_bom(char_u *buf, char_u *name)
 /// name.
 void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
 {
-  char_u *p;
+  char *p;
 
   if (buf->b_fname != NULL
       && !bt_nofile(buf)
       && !path_with_url(buf->b_fname)
       && (force
           || buf->b_sfname == NULL
-          || path_is_absolute(buf->b_sfname))) {
+          || path_is_absolute((char_u *)buf->b_sfname))) {
     if (buf->b_sfname != buf->b_ffname) {
       XFREE_CLEAR(buf->b_sfname);
     }
-    p = path_shorten_fname(buf->b_ffname, dirname);
+    p = (char *)path_shorten_fname((char_u *)buf->b_ffname, dirname);
     if (p != NULL) {
-      buf->b_sfname = vim_strsave(p);
-      buf->b_fname = (char *)buf->b_sfname;
+      buf->b_sfname = xstrdup(p);
+      buf->b_fname = buf->b_sfname;
     }
     if (p == NULL) {
-      buf->b_fname = (char *)buf->b_ffname;
+      buf->b_fname = buf->b_ffname;
     }
   }
 }
@@ -4918,7 +4917,7 @@ int buf_check_timestamp(buf_T *buf)
   bool file_info_ok;
   if (!(buf->b_flags & BF_NOTEDITED)
       && buf->b_mtime != 0
-      && (!(file_info_ok = os_fileinfo((char *)buf->b_ffname, &file_info))
+      && (!(file_info_ok = os_fileinfo(buf->b_ffname, &file_info))
           || time_differs(&file_info, buf->b_mtime, buf->b_mtime_ns)
           || (int)file_info.stat.st_mode != buf->b_orig_mode)) {
     const long prev_b_mtime = buf->b_mtime;
@@ -5016,7 +5015,7 @@ int buf_check_timestamp(buf_T *buf)
       }
     }
   } else if ((buf->b_flags & BF_NEW) && !(buf->b_flags & BF_NEW_W)
-             && os_path_exists(buf->b_ffname)) {
+             && os_path_exists((char_u *)buf->b_ffname)) {
     retval = 1;
     mesg = _("W13: Warning: File \"%s\" has been created after editing started");
     buf->b_flags |= BF_NEW_W;
@@ -5024,7 +5023,7 @@ int buf_check_timestamp(buf_T *buf)
   }
 
   if (mesg != NULL) {
-    path = home_replace_save(buf, (char_u *)buf->b_fname);
+    path = (char_u *)home_replace_save(buf, buf->b_fname);
     if (!helpmesg) {
       mesg2 = "";
     }
@@ -5169,7 +5168,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   if (saved == OK) {
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
-    if (readfile((char *)buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
+    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
                  (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
@@ -5547,10 +5546,10 @@ bool match_file_pat(char *pattern, regprog_T **prog, char *fname, char *sfname, 
    */
   if (regmatch.regprog != NULL
       && ((allow_dirs
-           && (vim_regexec(&regmatch, (char_u *)fname, (colnr_T)0)
+           && (vim_regexec(&regmatch, fname, (colnr_T)0)
                || (sfname != NULL
-                   && vim_regexec(&regmatch, (char_u *)sfname, (colnr_T)0))))
-          || (!allow_dirs && vim_regexec(&regmatch, (char_u *)tail, (colnr_T)0)))) {
+                   && vim_regexec(&regmatch, sfname, (colnr_T)0))))
+          || (!allow_dirs && vim_regexec(&regmatch, tail, (colnr_T)0)))) {
     result = true;
   }
 
@@ -5586,7 +5585,7 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   // try all patterns in 'wildignore'
   p = list;
   while (*p) {
-    copy_option_part(&p, buf, ARRAY_SIZE(buf), ",");
+    copy_option_part((char **)&p, (char *)buf, ARRAY_SIZE(buf), ",");
     regpat = (char_u *)file_pat_to_reg_pat((char *)buf, NULL, &allow_dirs, false);
     if (regpat == NULL) {
       break;

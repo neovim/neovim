@@ -1266,7 +1266,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
         continue;
       }
 
-      if (vim_regexec(regmatch, p, (colnr_T)0)) {
+      if (vim_regexec(regmatch, (char *)p, (colnr_T)0)) {
         if (round == 1) {
           count++;
         } else {
@@ -1289,7 +1289,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
       for (; mp; mp = mp->m_next) {
         if (mp->m_mode & expand_mapmodes) {
           p = translate_mapping(mp->m_keys, CPO_TO_CPO_FLAGS);
-          if (p != NULL && vim_regexec(regmatch, p, (colnr_T)0)) {
+          if (p != NULL && vim_regexec(regmatch, (char *)p, (colnr_T)0)) {
             if (round == 1) {
               count++;
             } else {

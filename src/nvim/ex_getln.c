@@ -4455,14 +4455,13 @@ static void escape_fname(char_u **pp)
  */
 void tilde_replace(char_u *orig_pat, int num_files, char_u **files)
 {
-  int i;
-  char_u *p;
+  char *p;
 
   if (orig_pat[0] == '~' && vim_ispathsep(orig_pat[1])) {
-    for (i = 0; i < num_files; ++i) {
-      p = home_replace_save(NULL, files[i]);
+    for (int i = 0; i < num_files; i++) {
+      p = home_replace_save(NULL, (char *)files[i]);
       xfree(files[i]);
-      files[i] = p;
+      files[i] = (char_u *)p;
     }
   }
 }
@@ -5164,10 +5163,10 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char_u **
     return OK;
   }
   if (xp->xp_context == EXPAND_BUFFERS) {
-    return ExpandBufnames(pat, num_file, file, options);
+    return ExpandBufnames((char *)pat, num_file, (char ***)file, options);
   }
   if (xp->xp_context == EXPAND_DIFF_BUFFERS) {
-    return ExpandBufnames(pat, num_file, file, options | BUF_DIFF_FILTER);
+    return ExpandBufnames((char *)pat, num_file, (char ***)file, options | BUF_DIFF_FILTER);
   }
   if (xp->xp_context == EXPAND_TAGS
       || xp->xp_context == EXPAND_TAGS_LISTFILES) {
@@ -5320,8 +5319,8 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
     if (*str == NUL) {  // skip empty strings
       continue;
     }
-    if (vim_regexec(regmatch, str, (colnr_T)0)) {
-      ++count;
+    if (vim_regexec(regmatch, (char *)str, (colnr_T)0)) {
+      count++;
     }
   }
   if (count == 0) {
@@ -5341,7 +5340,7 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
     if (*str == NUL) {  // Skip empty strings.
       continue;
     }
-    if (vim_regexec(regmatch, str, (colnr_T)0)) {
+    if (vim_regexec(regmatch, (char *)str, (colnr_T)0)) {
       if (escaped) {
         str = vim_strsave_escaped(str, (char_u *)" \t\\.");
       } else {
@@ -5573,7 +5572,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
     *e = NUL;
 
     const bool skip = xp->xp_pattern[0]
-                      && vim_regexec(regmatch, s, (colnr_T)0) == 0;
+                      && vim_regexec(regmatch, (char *)s, (colnr_T)0) == 0;
     *e = keep;
     if (!skip) {
       GA_APPEND(char_u *, &ga, vim_strnsave(s, (size_t)(e - s)));
@@ -5814,7 +5813,7 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
   // Loop over all entries in {path}.
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
-    copy_option_part(&path, buf, MAXPATHL, ",");
+    copy_option_part((char **)&path, (char *)buf, MAXPATHL, ",");
     if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
       add_pathsep((char *)buf);
       STRCAT(buf, file);  // NOLINT
@@ -6370,7 +6369,7 @@ int del_history_entry(int histype, char_u *str)
       if (hisptr->hisstr == NULL) {
         break;
       }
-      if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
+      if (vim_regexec(&regmatch, (char *)hisptr->hisstr, (colnr_T)0)) {
         found = true;
         hist_free_entry(hisptr);
       } else {
@@ -6538,7 +6537,7 @@ void ex_history(exarg_T *eap)
           snprintf((char *)IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
                    hist[i].hisnum);
           if (vim_strsize((char *)hist[i].hisstr) > Columns - 10) {
-            trunc_string(hist[i].hisstr, IObuff + STRLEN(IObuff),
+            trunc_string((char *)hist[i].hisstr, (char *)IObuff + STRLEN(IObuff),
                          Columns - 10, IOSIZE - (int)STRLEN(IObuff));
           } else {
             STRCAT(IObuff, hist[i].hisstr);

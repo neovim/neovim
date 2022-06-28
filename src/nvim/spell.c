@@ -504,7 +504,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
         // Check for end of sentence.
         regmatch.regprog = wp->w_s->b_cap_prog;
         regmatch.rm_ic = false;
-        int r = vim_regexec(&regmatch, ptr, 0);
+        int r = vim_regexec(&regmatch, (char *)ptr, 0);
         wp->w_s->b_cap_prog = regmatch.regprog;
         if (r) {
           *capcol = (int)(regmatch.endp[0] - ptr);
@@ -1908,12 +1908,11 @@ void count_common_word(slang_T *lp, char_u *word, int len, int count)
 /// @param split  word was split, less bonus
 static int score_wordcount_adj(slang_T *slang, int score, char_u *word, bool split)
 {
-  hashitem_T *hi;
   wordcount_T *wc;
   int bonus;
   int newscore;
 
-  hi = hash_find(&slang->sl_wordcount, word);
+  hashitem_T *hi = hash_find(&slang->sl_wordcount, (char *)word);
   if (!HASHITEM_EMPTY(hi)) {
     wc = HI2WC(hi);
     if (wc->wc_count < SCORE_THRES2) {
@@ -2083,7 +2082,7 @@ char *did_set_spelllang(win_T *wp)
   // Loop over comma separated language names.
   for (splp = spl_copy; *splp != NUL;) {
     // Get one language name.
-    copy_option_part(&splp, lang, MAXWLEN, ",");
+    copy_option_part((char **)&splp, (char *)lang, MAXWLEN, ",");
     region = NULL;
     len = (int)STRLEN(lang);
 
@@ -2215,7 +2214,7 @@ char *did_set_spelllang(win_T *wp)
       int_wordlist_spl(spf_name);
     } else {
       // One entry in 'spellfile'.
-      copy_option_part(&spf, spf_name, MAXPATHL - 5, ",");
+      copy_option_part((char **)&spf, (char *)spf_name, MAXPATHL - 5, ",");
       STRCAT(spf_name, ".spl");
 
       // If it was already found above then skip it.
@@ -2805,12 +2804,12 @@ int spell_check_sps(void)
   sps_limit = 9999;
 
   for (p = p_sps; *p != NUL;) {
-    copy_option_part(&p, buf, MAXPATHL, ",");
+    copy_option_part((char **)&p, (char *)buf, MAXPATHL, ",");
 
     f = 0;
     if (ascii_isdigit(*buf)) {
       s = buf;
-      sps_limit = getdigits_int(&s, true, 0);
+      sps_limit = getdigits_int((char **)&s, true, 0);
       if (*s != NUL && !ascii_isdigit(*s)) {
         f = -1;
       }
@@ -3121,7 +3120,7 @@ static bool check_need_cap(linenr_T lnum, colnr_T col)
       if (p == line || spell_iswordp_nmw(p, curwin)) {
         break;
       }
-      if (vim_regexec(&regmatch, p, 0)
+      if (vim_regexec(&regmatch, (char *)p, 0)
           && regmatch.endp[0] == line + endcol) {
         need_cap = true;
         break;
@@ -3328,7 +3327,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
 
   // Loop over the items in 'spellsuggest'.
   for (p = sps_copy; *p != NUL;) {
-    copy_option_part(&p, buf, MAXPATHL, ",");
+    copy_option_part((char **)&p, (char *)buf, MAXPATHL, ",");
 
     if (STRNCMP(buf, "expr:", 5) == 0) {
       // Evaluate an expression.  Skip this when called recursively,
@@ -4034,8 +4033,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
           break;
         }
         if ((sp->ts_complen == sp->ts_compsplit
-             && WAS_BANNED(su, preword + sp->ts_prewordlen))
-            || WAS_BANNED(su, preword)) {
+             && WAS_BANNED(su, (char *)preword + sp->ts_prewordlen))
+            || WAS_BANNED(su, (char *)preword)) {
           if (slang->sl_compprog == NULL) {
             break;
           }
@@ -5661,7 +5660,7 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
 
   if (c1 >= 256) {
     buf[utf_char2bytes(c1, (char *)buf)] = 0;
-    hi = hash_find(&slang->sl_map_hash, (char_u *)buf);
+    hi = hash_find(&slang->sl_map_hash, buf);
     if (HASHITEM_EMPTY(hi)) {
       m1 = 0;
     } else {
@@ -5676,7 +5675,7 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
 
   if (c2 >= 256) {
     buf[utf_char2bytes(c2, (char *)buf)] = 0;
-    hi = hash_find(&slang->sl_map_hash, (char_u *)buf);
+    hi = hash_find(&slang->sl_map_hash, buf);
     if (HASHITEM_EMPTY(hi)) {
       m2 = 0;
     } else {
@@ -7144,7 +7143,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
       hashitem_T *hi;
 
       // Include the word count for ":spelldump!".
-      hi = hash_find(&slang->sl_wordcount, tw);
+      hi = hash_find(&slang->sl_wordcount, (char *)tw);
       if (!HASHITEM_EMPTY(hi)) {
         vim_snprintf((char *)IObuff, IOSIZE, "%s\t%d",
                      tw, HI2WC(hi)->wc_count);

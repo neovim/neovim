@@ -665,7 +665,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
      * First replace home dir path with "~/" with home_replace().
      * Then insert the user name to get "~user/".
      */
-    home_replace(NULL, (char *)buf->b_ffname, (char *)b0p->b0_fname,
+    home_replace(NULL, buf->b_ffname, (char *)b0p->b0_fname,
                  B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
@@ -680,7 +680,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
       }
     }
     FileInfo file_info;
-    if (os_fileinfo((char *)buf->b_ffname, &file_info)) {
+    if (os_fileinfo(buf->b_ffname, &file_info)) {
       long_to_char(file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
       long_to_char((long)os_fileinfo_inode(&file_info), b0p->b0_ino);
       buf_store_file_info(buf, &file_info);
@@ -708,7 +708,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
 /// not set.
 static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
 {
-  if (same_directory(buf->b_ml.ml_mfp->mf_fname, buf->b_ffname)) {
+  if (same_directory(buf->b_ml.ml_mfp->mf_fname, (char_u *)buf->b_ffname)) {
     b0p->b0_flags |= B0_SAME_DIR;
   } else {
     b0p->b0_flags &= ~B0_SAME_DIR;
@@ -944,7 +944,7 @@ void ml_recover(bool checkext)
   if (buf_spname(curbuf) != NULL) {
     STRLCPY(NameBuff, buf_spname(curbuf), MAXPATHL);
   } else {
-    home_replace(NULL, (char *)curbuf->b_ffname, (char *)NameBuff, MAXPATHL, true);
+    home_replace(NULL, curbuf->b_ffname, (char *)NameBuff, MAXPATHL, true);
   }
   smsg(_("Original file \"%s\""), NameBuff);
   msg_putchar('\n');
@@ -956,7 +956,7 @@ void ml_recover(bool checkext)
   FileInfo swp_file_info;
   mtime = char_to_long(b0p->b0_mtime);
   if (curbuf->b_ffname != NULL
-      && os_fileinfo((char *)curbuf->b_ffname, &org_file_info)
+      && os_fileinfo(curbuf->b_ffname, &org_file_info)
       && ((os_fileinfo((char *)mfp->mf_fname, &swp_file_info)
            && org_file_info.stat.st_mtim.tv_sec
            > swp_file_info.stat.st_mtim.tv_sec)
@@ -990,7 +990,7 @@ void ml_recover(bool checkext)
    * 'fileencoding', etc.  Ignore errors.  The text itself is not used.
    */
   if (curbuf->b_ffname != NULL) {
-    orig_file_status = readfile((char *)curbuf->b_ffname, NULL, (linenr_T)0,
+    orig_file_status = readfile(curbuf->b_ffname, NULL, (linenr_T)0,
                                 (linenr_T)0, (linenr_T)MAXLNUM, NULL, READ_NEW, false);
   }
 
@@ -1064,7 +1064,7 @@ void ml_recover(bool checkext)
              */
             if (!cannot_open) {
               line_count = pp->pb_pointer[idx].pe_line_count;
-              if (readfile((char *)curbuf->b_ffname, NULL, lnum,
+              if (readfile(curbuf->b_ffname, NULL, lnum,
                            pp->pb_pointer[idx].pe_old_lnum - 1, line_count,
                            NULL, 0, false) != OK) {
                 cannot_open = true;
@@ -1305,7 +1305,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
     // Isolate a directory name from *dirp and put it in dir_name (we know
     // it is large enough, so use 31000 for length).
     // Advance dirp to next directory name.
-    (void)copy_option_part(&dirp, dir_name, 31000, ",");
+    (void)copy_option_part((char **)&dirp, (char *)dir_name, 31000, ",");
 
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     // check current dir
       if (fname == NULL) {
@@ -1694,7 +1694,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
        * call ml_preserve() to get rid of all negative numbered blocks.
        */
       FileInfo file_info;
-      if (!os_fileinfo((char *)buf->b_ffname, &file_info)
+      if (!os_fileinfo(buf->b_ffname, &file_info)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
           || file_info.stat.st_mtim.tv_nsec != buf->b_mtime_read_ns
           || os_fileinfo_size(&file_info) != buf->b_orig_size) {
@@ -3426,12 +3426,12 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
    */
   const size_t dir_len = strlen(*dirp) + 1;
   dir_name = xmalloc(dir_len);
-  (void)copy_option_part((char_u **)dirp, (char_u *)dir_name, dir_len, ",");
+  (void)copy_option_part(dirp, dir_name, dir_len, ",");
 
   /*
    * we try different names until we find one that does not exist yet
    */
-  fname = (char *)makeswapname((char_u *)buf_fname, buf->b_ffname, buf,
+  fname = (char *)makeswapname((char_u *)buf_fname, (char_u *)buf->b_ffname, buf,
                                (char_u *)dir_name);
 
   for (;;) {
@@ -3479,12 +3479,12 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             if (b0.b0_flags & B0_SAME_DIR) {
               if (FNAMECMP(path_tail((char *)buf->b_ffname),
                            path_tail((char *)b0.b0_fname)) != 0
-                  || !same_directory((char_u *)fname, buf->b_ffname)) {
+                  || !same_directory((char_u *)fname, (char_u *)buf->b_ffname)) {
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the
                 // inode too.
                 expand_env(b0.b0_fname, NameBuff, MAXPATHL);
-                if (fnamecmp_ino(buf->b_ffname, NameBuff,
+                if (fnamecmp_ino((char_u *)buf->b_ffname, NameBuff,
                                  char_to_long(b0.b0_ino))) {
                   differ = TRUE;
                 }
@@ -3493,7 +3493,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
               // The name in the swap file may be
               // "~user/path/file".  Expand it first.
               expand_env(b0.b0_fname, NameBuff, MAXPATHL);
-              if (fnamecmp_ino(buf->b_ffname, NameBuff,
+              if (fnamecmp_ino((char_u *)buf->b_ffname, NameBuff,
                                char_to_long(b0.b0_ino))) {
                 differ = TRUE;
               }

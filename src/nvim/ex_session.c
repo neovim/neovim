@@ -248,9 +248,9 @@ static char *ses_get_fname(buf_T *buf, unsigned *flagp)
       && (ssop_flags & (SSOP_CURDIR | SSOP_SESDIR))
       && !p_acd
       && !did_lcd) {
-    return (char *)buf->b_sfname;
+    return buf->b_sfname;
   }
-  return (char *)buf->b_ffname;
+  return buf->b_ffname;
 }
 
 /// Write a buffer name to the session file.
@@ -275,7 +275,7 @@ static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp, bool add_eol)
 static char *ses_escape_fname(char *name, unsigned *flagp)
 {
   char *p;
-  char *sname = (char *)home_replace_save(NULL, (char_u *)name);
+  char *sname = home_replace_save(NULL, name);
 
   // Always SSOP_SLASH: change all backslashes to forward slashes.
   for (p = sname; *p != NUL; MB_PTR_ADV(p)) {
@@ -517,7 +517,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   if (wp->w_localdir != NULL
       && (flagp != &vop_flags || (*flagp & SSOP_CURDIR))) {
     if (fputs("lcd ", fd) < 0
-        || ses_put_fname(fd, wp->w_localdir, flagp) == FAIL
+        || ses_put_fname(fd, (char_u *)wp->w_localdir, flagp) == FAIL
         || fprintf(fd, "\n") < 0) {
       return FAIL;
     }
@@ -542,7 +542,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   int nr;
   int restore_size = true;
   win_T *wp;
-  char_u *sname;
+  char *sname;
   win_T *edited_win = NULL;
   int tabnr;
   win_T *tab_firstwin;
@@ -575,8 +575,8 @@ static int makeopens(FILE *fd, char_u *dirnow)
   if (ssop_flags & SSOP_SESDIR) {
     PUTLINE_FAIL("exe \"cd \" . escape(expand(\"<sfile>:p:h\"), ' ')");
   } else if (ssop_flags & SSOP_CURDIR) {
-    sname = home_replace_save(NULL, globaldir != NULL ? (char_u *)globaldir : dirnow);
-    char *fname_esc = ses_escape_fname((char *)sname, &ssop_flags);
+    sname = home_replace_save(NULL, globaldir != NULL ? globaldir : (char *)dirnow);
+    char *fname_esc = ses_escape_fname(sname, &ssop_flags);
     if (fprintf(fd, "cd %s\n", fname_esc) < 0) {
       xfree(fname_esc);
       xfree(sname);
@@ -821,7 +821,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
     // Take care of tab-local working directories if applicable
     if (tp->tp_localdir) {
       if (fputs("if exists(':tcd') == 2 | tcd ", fd) < 0
-          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
+          || ses_put_fname(fd, (char_u *)tp->tp_localdir, &ssop_flags) == FAIL
           || fputs(" | endif\n", fd) < 0) {
         return FAIL;
       }
@@ -1001,7 +1001,7 @@ void ex_mkrc(exarg_T *eap)
           *dirnow = NUL;
         }
         if (*dirnow != NUL && (ssop_flags & SSOP_SESDIR)) {
-          if (vim_chdirfile((char_u *)fname, kCdCauseOther) == OK) {
+          if (vim_chdirfile(fname, kCdCauseOther) == OK) {
             shorten_fnames(true);
           }
         } else if (*dirnow != NUL
@@ -1075,7 +1075,7 @@ static char *get_view_file(int c)
     emsg(_(e_noname));
     return NULL;
   }
-  char *sname = (char *)home_replace_save(NULL, curbuf->b_ffname);
+  char *sname = home_replace_save(NULL, curbuf->b_ffname);
 
   // We want a file name without separators, because we're not going to make
   // a directory.

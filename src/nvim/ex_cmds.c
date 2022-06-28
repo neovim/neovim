@@ -560,7 +560,7 @@ void ex_sort(exarg_T *eap)
 
     start_col = 0;
     end_col = len;
-    if (regmatch.regprog != NULL && vim_regexec(&regmatch, (char_u *)s, 0)) {
+    if (regmatch.regprog != NULL && vim_regexec(&regmatch, s, 0)) {
       if (sort_rx) {
         start_col = (colnr_T)(regmatch.startp[0] - (char_u *)s);
         end_col = (colnr_T)(regmatch.endp[0] - (char_u *)s);
@@ -1732,19 +1732,19 @@ int rename_buffer(char *new_fname)
    * But don't set the alternate file name if the buffer didn't have a
    * name.
    */
-  fname = (char *)curbuf->b_ffname;
-  sfname = (char *)curbuf->b_sfname;
+  fname = curbuf->b_ffname;
+  sfname = curbuf->b_sfname;
   xfname = curbuf->b_fname;
   curbuf->b_ffname = NULL;
   curbuf->b_sfname = NULL;
   if (setfname(curbuf, new_fname, NULL, true) == FAIL) {
-    curbuf->b_ffname = (char_u *)fname;
-    curbuf->b_sfname = (char_u *)sfname;
+    curbuf->b_ffname = fname;
+    curbuf->b_sfname = sfname;
     return FAIL;
   }
   curbuf->b_flags |= BF_NOTEDITED;
   if (xfname != NULL && *xfname != NUL) {
-    buf = buflist_new((char_u *)fname, (char_u *)xfname, curwin->w_cursor.lnum, 0);
+    buf = buflist_new(fname, xfname, curwin->w_cursor.lnum, 0);
     if (buf != NULL && (cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
       curwin->w_alt_fnum = buf->b_fnum;
     }
@@ -1842,7 +1842,7 @@ int do_write(exarg_T *eap)
     if (free_fname != NULL) {
       ffname = free_fname;
     }
-    other = otherfile((char_u *)ffname);
+    other = otherfile(ffname);
   }
 
   /*
@@ -1851,9 +1851,9 @@ int do_write(exarg_T *eap)
   if (other) {
     if (vim_strchr(p_cpo, CPO_ALTWRITE) != NULL
         || eap->cmdidx == CMD_saveas) {
-      alt_buf = setaltfname((char_u *)ffname, (char_u *)fname, (linenr_T)1);
+      alt_buf = setaltfname(ffname, fname, (linenr_T)1);
     } else {
-      alt_buf = buflist_findname((char_u *)ffname);
+      alt_buf = buflist_findname(ffname);
     }
     if (alt_buf != NULL && alt_buf->b_ml.ml_mfp != NULL) {
       // Overwriting a file that is loaded in another buffer is not a
@@ -1873,7 +1873,7 @@ int do_write(exarg_T *eap)
   }
 
   if (!other) {
-    ffname = (char *)curbuf->b_ffname;
+    ffname = curbuf->b_ffname;
     fname = curbuf->b_fname;
     // Not writing the whole file is only allowed with '!'.
     if ((eap->line1 != 1
@@ -1913,12 +1913,12 @@ int do_write(exarg_T *eap)
       fname = alt_buf->b_fname;
       alt_buf->b_fname = curbuf->b_fname;
       curbuf->b_fname = fname;
-      fname = (char *)alt_buf->b_ffname;
+      fname = alt_buf->b_ffname;
       alt_buf->b_ffname = curbuf->b_ffname;
-      curbuf->b_ffname = (char_u *)fname;
-      fname = (char *)alt_buf->b_sfname;
+      curbuf->b_ffname = fname;
+      fname = alt_buf->b_sfname;
       alt_buf->b_sfname = curbuf->b_sfname;
-      curbuf->b_sfname = (char_u *)fname;
+      curbuf->b_sfname = fname;
       buf_name_changed(curbuf);
       apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
       apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, alt_buf);
@@ -1942,7 +1942,7 @@ int do_write(exarg_T *eap)
 
       // Autocommands may have changed buffer names, esp. when
       // 'autochdir' is set.
-      fname = (char *)curbuf->b_sfname;
+      fname = curbuf->b_sfname;
     }
 
     name_was_missing = curbuf->b_ffname == NULL;
@@ -2031,7 +2031,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
       } else {
         dir = xmalloc(MAXPATHL);
         p = (char *)p_dir;
-        copy_option_part((char_u **)&p, (char_u *)dir, MAXPATHL, ",");
+        copy_option_part(&p, dir, MAXPATHL, ",");
       }
       swapname = (char *)makeswapname((char_u *)fname, (char_u *)ffname, curbuf, (char_u *)dir);
       xfree(dir);
@@ -2112,7 +2112,7 @@ void do_wqall(exarg_T *eap)
       semsg(_("E141: No file name for buffer %" PRId64), (int64_t)buf->b_fnum);
       error++;
     } else if (check_readonly(&eap->forceit, buf)
-               || check_overwrite(eap, buf, buf->b_fname, (char *)buf->b_ffname, false) == FAIL) {
+               || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname, false) == FAIL) {
       error++;
     } else {
       bufref_T bufref;
@@ -2155,8 +2155,8 @@ static int check_readonly(int *forceit, buf_T *buf)
   // Handle a file being readonly when the 'readonly' option is set or when
   // the file exists and permissions are read-only.
   if (!*forceit && (buf->b_p_ro
-                    || (os_path_exists(buf->b_ffname)
-                        && !os_file_is_writable((char *)buf->b_ffname)))) {
+                    || (os_path_exists((char_u *)buf->b_ffname)
+                        && !os_file_is_writable(buf->b_ffname)))) {
     if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && buf->b_fname != NULL) {
       char buff[DIALOG_MSG_SIZE];
 
@@ -2218,7 +2218,7 @@ int getfile(int fnum, char *ffname_arg, char *sfname_arg, int setpm, linenr_T ln
   if (fnum == 0) {
     // make ffname full path, set sfname
     fname_expand(curbuf, &ffname, &sfname);
-    other = otherfile((char_u *)ffname);
+    other = otherfile(ffname);
     free_me = ffname;                   // has been allocated, free() later
   } else {
     other = (fnum != curbuf->b_fnum);
@@ -2339,7 +2339,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     }
 #ifdef USE_FNAME_CASE
     if (sfname != NULL) {
-      path_fix_case((char_u *)sfname);             // set correct case for sfname
+      path_fix_case(sfname);             // set correct case for sfname
     }
 #endif
 
@@ -2354,14 +2354,14 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       other_file = false;
     } else {
       if (*ffname == NUL) {                 // re-edit with same file name
-        ffname = (char *)curbuf->b_ffname;
+        ffname = curbuf->b_ffname;
         sfname = curbuf->b_fname;
       }
       free_fname = fix_fname(ffname);       // may expand to full path name
       if (free_fname != NULL) {
         ffname = free_fname;
       }
-      other_file = otherfile((char_u *)ffname);
+      other_file = otherfile(ffname);
     }
   }
 
@@ -2384,7 +2384,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
                        | ((flags & ECMD_FORCEIT) ? CCGD_FORCEIT : 0)
                        | (eap == NULL ? 0 : CCGD_EXCMD))) {
     if (fnum == 0 && other_file && ffname != NULL) {
-      (void)setaltfname((char_u *)ffname, (char_u *)sfname, newlnum < 0 ? 0 : newlnum);
+      (void)setaltfname(ffname, sfname, newlnum < 0 ? 0 : newlnum);
     }
     goto theend;
   }
@@ -2441,13 +2441,13 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         // Add BLN_NOCURWIN to avoid a new wininfo items are associated
         // with the current window.
         const buf_T *const newbuf
-          = buflist_new((char_u *)ffname, (char_u *)sfname, tlnum, BLN_LISTED | BLN_NOCURWIN);
+          = buflist_new(ffname, sfname, tlnum, BLN_LISTED | BLN_NOCURWIN);
         if (newbuf != NULL && (flags & ECMD_ALTBUF)) {
           curwin->w_alt_fnum = newbuf->b_fnum;
         }
         goto theend;
       }
-      buf = buflist_new((char_u *)ffname, (char_u *)sfname, 0L,
+      buf = buflist_new(ffname, sfname, 0L,
                         BLN_CURBUF | (flags & ECMD_SET_HELP ? 0 : BLN_LISTED));
       // Autocmds may change curwin and curbuf.
       if (oldwin != NULL) {
@@ -5388,7 +5388,7 @@ void fix_help_buffer(void)
       // $VIMRUNTIME.
       char *p = (char *)p_rtp;
       while (*p != NUL) {
-        copy_option_part((char_u **)&p, NameBuff, MAXPATHL, ",");
+        copy_option_part(&p, (char *)NameBuff, MAXPATHL, ",");
         char *const rt = vim_getenv("VIMRUNTIME");
         if (rt != NULL
             && path_full_compare(rt, (char *)NameBuff, false, true) != kEqualFiles) {

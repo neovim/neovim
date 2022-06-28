@@ -85,9 +85,9 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
 ///         used for that key.
 ///         WARNING: Returned pointer becomes invalid as soon as the hash table
 ///                  is changed in any way.
-hashitem_T *hash_find(const hashtab_T *const ht, const char_u *const key)
+hashitem_T *hash_find(const hashtab_T *const ht, const char *const key)
 {
-  return hash_lookup(ht, (const char *)key, STRLEN(key), hash_hash(key));
+  return hash_lookup(ht, key, STRLEN(key), hash_hash((char_u *)key));
 }
 
 /// Like hash_find, but key is not NUL-terminated

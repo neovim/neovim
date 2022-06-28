@@ -893,8 +893,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                 break;
               }
               assert(MAXPATHL >= len);
-              copy_option_part(&suf, file_path + len,
-                               MAXPATHL - len, ",");
+              copy_option_part((char **)&suf, (char *)file_path + len, MAXPATHL - len, ",");
             }
           }
         } else {
@@ -1503,7 +1502,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
             break;
           }
           assert(MAXPATHL >= l);
-          copy_option_part(&buf, NameBuff + l, MAXPATHL - l, ",");
+          copy_option_part((char **)&buf, (char *)NameBuff + l, MAXPATHL - l, ",");
         }
       }
     }
@@ -1543,7 +1542,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
 
         // copy next path
         buf[0] = 0;
-        copy_option_part(&dir, buf, MAXPATHL, " ,");
+        copy_option_part((char **)&dir, (char *)buf, MAXPATHL, " ,");
 
         // get the stopdir string
         r_ptr = vim_findfile_stopdir(buf);
@@ -1653,12 +1652,12 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
 /// Caller must call shorten_fnames()!
 ///
 /// @return  OK or FAIL
-int vim_chdirfile(char_u *fname, CdCause cause)
+int vim_chdirfile(char *fname, CdCause cause)
 {
   char dir[MAXPATHL];
 
   STRLCPY(dir, fname, MAXPATHL);
-  *path_tail_with_sep((char_u *)dir) = NUL;
+  *path_tail_with_sep(dir) = NUL;
 
   if (os_dirname(NameBuff, sizeof(NameBuff)) != OK) {
     NameBuff[0] = NUL;
@@ -1688,7 +1687,7 @@ int vim_chdirfile(char_u *fname, CdCause cause)
 int vim_chdir(char_u *new_dir)
 {
   char *dir_name = (char *)find_directory_in_path(new_dir, STRLEN(new_dir),
-                                                  FNAME_MESS, curbuf->b_ffname);
+                                                  FNAME_MESS, (char_u *)curbuf->b_ffname);
   if (dir_name == NULL) {
     return -1;
   }

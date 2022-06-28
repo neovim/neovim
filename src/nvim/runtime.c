@@ -93,7 +93,7 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
     char_u *rtp = rtp_copy;
     while (*rtp != NUL && ((flags & DIP_ALL) || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
-      copy_option_part(&rtp, buf, MAXPATHL, ",");
+      copy_option_part((char **)&rtp, (char *)buf, MAXPATHL, ",");
       size_t buflen = STRLEN(buf);
 
       // Skip after or non-after directories.
@@ -118,8 +118,7 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
         while (*np != NUL && ((flags & DIP_ALL) || !did_one)) {
           // Append the pattern from "name" to buf[].
           assert(MAXPATHL >= (tail - buf));
-          copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)),
-                           "\t ");
+          copy_option_part((char **)&np, (char *)tail, (size_t)(MAXPATHL - (tail - buf)), "\t ");
 
           if (p_verbose > 10) {
             verbose_enter();
@@ -252,8 +251,7 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
       while (*np != NUL && ((flags & DIP_ALL) || !did_one)) {
         // Append the pattern from "name" to buf[].
         assert(MAXPATHL >= (tail - buf));
-        copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)),
-                         "\t ");
+        copy_option_part((char **)&np, (char *)tail, (size_t)(MAXPATHL - (tail - buf)), "\t ");
 
         if (p_verbose > 10) {
           verbose_enter();
@@ -513,7 +511,7 @@ RuntimeSearchPath runtime_search_path_build(void)
   static char_u buf[MAXPATHL];
   for (char *entry = (char *)p_pp; *entry != NUL;) {
     char *cur_entry = entry;
-    copy_option_part((char_u **)&entry, buf, MAXPATHL, ",");
+    copy_option_part(&entry, (char *)buf, MAXPATHL, ",");
 
     String the_entry = { .data = cur_entry, .size = STRLEN(buf) };
 
@@ -524,7 +522,7 @@ RuntimeSearchPath runtime_search_path_build(void)
   char *rtp_entry;
   for (rtp_entry = (char *)p_rtp; *rtp_entry != NUL;) {
     char *cur_entry = rtp_entry;
-    copy_option_part((char_u **)&rtp_entry, buf, MAXPATHL, ",");
+    copy_option_part(&rtp_entry, (char *)buf, MAXPATHL, ",");
     size_t buflen = STRLEN(buf);
 
     if (path_is_after(buf, buflen)) {
@@ -558,7 +556,7 @@ RuntimeSearchPath runtime_search_path_build(void)
 
   // "after" dirs in rtp
   for (; *rtp_entry != NUL;) {
-    copy_option_part((char_u **)&rtp_entry, buf, MAXPATHL, ",");
+    copy_option_part(&rtp_entry, (char *)buf, MAXPATHL, ",");
     expand_rtp_entry(&search_path, &rtp_used, (char *)buf, path_is_after(buf, STRLEN(buf)));
   }
 
@@ -700,7 +698,7 @@ static int add_pack_dir_to_rtp(char_u *fname, bool is_pack)
   for (const char *entry = (const char *)p_rtp; *entry != NUL;) {
     const char *cur_entry = entry;
 
-    copy_option_part((char_u **)&entry, buf, MAXPATHL, ",");
+    copy_option_part((char **)&entry, (char *)buf, MAXPATHL, ",");
     if (insp == NULL) {
       add_pathsep((char *)buf);
       char *const rtp_ffname = fix_fname((char *)buf);
@@ -849,7 +847,7 @@ static void add_pack_plugin(bool opt, char_u *fname, void *cookie)
 
     const char *p = (const char *)p_rtp;
     while (*p != NUL) {
-      copy_option_part((char_u **)&p, (char_u *)buf, MAXPATHL, ",");
+      copy_option_part((char **)&p, buf, MAXPATHL, ",");
       if (path_fnamecmp(buf, (char *)fname) == 0) {
         found = true;
         break;

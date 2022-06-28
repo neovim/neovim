@@ -690,7 +690,7 @@ static void fname2fnum(xfmark_T *fm)
     p = path_shorten_fname(NameBuff, IObuff);
 
     // buflist_new() will call fmarks_check_names()
-    (void)buflist_new(NameBuff, p, (linenr_T)1, 0);
+    (void)buflist_new((char *)NameBuff, (char *)p, (linenr_T)1, 0);
   }
 }
 
@@ -701,7 +701,7 @@ static void fname2fnum(xfmark_T *fm)
  */
 void fmarks_check_names(buf_T *buf)
 {
-  char_u *name = buf->b_ffname;
+  char_u *name = (char_u *)buf->b_ffname;
   int i;
 
   if (buf->b_ffname == NULL) {
@@ -806,7 +806,7 @@ char_u *fm_getname(fmark_T *fmark, int lead_len)
   if (fmark->fnum == curbuf->b_fnum) {              // current buffer
     return mark_line(&(fmark->mark), lead_len);
   }
-  return buflist_nr2name(fmark->fnum, FALSE, TRUE);
+  return (char_u *)buflist_nr2name(fmark->fnum, false, true);
 }
 
 /*
@@ -1851,7 +1851,7 @@ void get_global_marks(list_T *l)
   // Marks 'A' to 'Z' and '0' to '9'
   for (int i = 0; i < NMARKS + EXTRA_MARKS; i++) {
     if (namedfm[i].fmark.fnum != 0) {
-      name = (char *)buflist_nr2name(namedfm[i].fmark.fnum, true, true);
+      name = buflist_nr2name(namedfm[i].fmark.fnum, true, true);
     } else {
       name = namedfm[i].fname;
     }

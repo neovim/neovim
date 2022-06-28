@@ -523,7 +523,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
   if (bp->dbg_type == DBG_FUNC) {
     bp->dbg_name = vim_strsave((char_u *)p);
   } else if (here) {
-    bp->dbg_name = vim_strsave(curbuf->b_ffname);
+    bp->dbg_name = vim_strsave((char_u *)curbuf->b_ffname);
   } else if (bp->dbg_type == DBG_EXPR) {
     bp->dbg_name = vim_strsave((char_u *)p);
     bp->dbg_val = eval_expr_no_emsg(bp);

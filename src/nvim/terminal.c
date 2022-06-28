@@ -228,7 +228,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
   if (buf->b_ffname != NULL) {
-    buf_set_term_title(buf, (char *)buf->b_ffname);
+    buf_set_term_title(buf, buf->b_ffname);
   }
   RESET_BINDING(curwin);
   // Reset cursor in current window.

@@ -1563,7 +1563,7 @@ static int qf_parse_get_fields(char *linebuf, size_t linelen, efm_T *fmt_ptr, qf
   // Always ignore case when looking for a matching error.
   regmatch.rm_ic = true;
   regmatch.regprog = fmt_ptr->prog;
-  r = vim_regexec(&regmatch, (char_u *)linebuf, (colnr_T)0);
+  r = vim_regexec(&regmatch, linebuf, (colnr_T)0);
   fmt_ptr->prog = regmatch.regprog;
   if (r) {
     status = qf_parse_match(linebuf, linelen, fmt_ptr, &regmatch, fields,
@@ -2139,7 +2139,7 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
     xfree(ptr);
   } else {
     xfree(qf_last_bufname);
-    buf = buflist_new((char_u *)bufname, NULL, (linenr_T)0, BLN_NOOPT);
+    buf = buflist_new(bufname, NULL, (linenr_T)0, BLN_NOOPT);
     qf_last_bufname = (bufname == ptr) ? bufname : xstrdup(bufname);
     set_bufref(&qf_last_bufref, buf);
   }
@@ -3301,7 +3301,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     }
     STRLCAT(buf, title, IOSIZE);
   }
-  trunc_string((char_u *)buf, (char_u *)buf, Columns - 1, IOSIZE);
+  trunc_string(buf, buf, Columns - 1, IOSIZE);
   msg(buf);
 }
 
@@ -4035,7 +4035,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
         // buffer.
         if (first_bufline
             && (errbuf->b_sfname == NULL
-                || path_is_absolute(errbuf->b_sfname))) {
+                || path_is_absolute((char_u *)errbuf->b_sfname))) {
           if (*dirname == NUL) {
             os_dirname((char_u *)dirname, MAXPATHL);
           }
@@ -5462,7 +5462,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
       vgr_display_fname(fname);
     }
 
-    buf_T *buf = buflist_findname_exp((char_u *)cmd_args->fnames[fi]);
+    buf_T *buf = buflist_findname_exp(cmd_args->fnames[fi]);
     bool using_dummy;
     if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
       // Remember that a buffer with this name already exists.
@@ -6936,8 +6936,7 @@ void ex_cbuffer(exarg_T *eap)
   qf_title = qf_cmdtitle(*eap->cmdlinep);
 
   if (buf->b_sfname) {
-    vim_snprintf((char *)IObuff, IOSIZE, "%s (%s)",
-                 qf_title, (char *)buf->b_sfname);
+    vim_snprintf((char *)IObuff, IOSIZE, "%s (%s)", qf_title, buf->b_sfname);
     qf_title = (char *)IObuff;
   }
 
@@ -7099,7 +7098,7 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
   while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
     char *line = (char *)IObuff;
 
-    if (vim_regexec(p_regmatch, (char_u *)line, (colnr_T)0)) {
+    if (vim_regexec(p_regmatch, line, (colnr_T)0)) {
       int l = (int)STRLEN(line);
 
       // remove trailing CR, LF, spaces, etc.
@@ -7181,7 +7180,7 @@ static void hgr_search_in_rtp(qf_list_T *qfl, regmatch_T *p_regmatch, const char
   // Go through all directories in 'runtimepath'
   char *p = (char *)p_rtp;
   while (*p != NUL && !got_int) {
-    copy_option_part((char_u **)&p, NameBuff, MAXPATHL, ",");
+    copy_option_part(&p, (char *)NameBuff, MAXPATHL, ",");
 
     hgr_search_files_in_dir(qfl, (char *)NameBuff, p_regmatch, (char *)lang);
   }

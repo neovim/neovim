@@ -162,7 +162,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (ascii_isdigit(*p)) {
-        c = getdigits_int((char_u **)&p, true, 0);
+        c = getdigits_int((char **)&p, true, 0);
       } else {
         c = mb_ptr2char_adv(&p);
       }
@@ -172,7 +172,7 @@ int buf_init_chartab(buf_T *buf, int global)
         p++;
 
         if (ascii_isdigit(*p)) {
-          c2 = getdigits_int((char_u **)&p, true, 0);
+          c2 = getdigits_int((char **)&p, true, 0);
         } else {
           c2 = mb_ptr2char_adv(&p);
         }
@@ -265,7 +265,7 @@ int buf_init_chartab(buf_T *buf, int global)
 ///
 /// @param buf
 /// @param bufsize
-void trans_characters(char_u *buf, int bufsize)
+void trans_characters(char *buf, int bufsize)
 {
   char_u *trs;                 // translated character
   int len = (int)STRLEN(buf);  // length of string needing translation
@@ -274,10 +274,10 @@ void trans_characters(char_u *buf, int bufsize)
   while (*buf != 0) {
     int trs_len;      // length of trs[]
     // Assume a multi-byte character doesn't need translation.
-    if ((trs_len = utfc_ptr2len((char *)buf)) > 1) {
+    if ((trs_len = utfc_ptr2len(buf)) > 1) {
       len -= trs_len;
     } else {
-      trs = transchar_byte(*buf);
+      trs = transchar_byte((uint8_t)(*buf));
       trs_len = (int)STRLEN(trs);
 
       if (trs_len > 1) {
@@ -1302,7 +1302,7 @@ char_u *skiptowhite(const char_u *p)
 /// @param p
 ///
 /// @return Pointer to the next whitespace character.
-char_u *skiptowhite_esc(char_u *p)
+char *skiptowhite_esc(char *p)
   FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
@@ -1364,9 +1364,9 @@ intmax_t getdigits(char_u **pp, bool strict, intmax_t def)
 /// Gets an int number from a string.
 ///
 /// @see getdigits
-int getdigits_int(char_u **pp, bool strict, int def)
+int getdigits_int(char **pp, bool strict, int def)
 {
-  intmax_t number = getdigits(pp, strict, def);
+  intmax_t number = getdigits((char_u **)pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_INT
   if (strict) {
     assert(number >= INT_MIN && number <= INT_MAX);

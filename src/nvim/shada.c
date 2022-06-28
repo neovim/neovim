@@ -1328,8 +1328,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         char *const sfname =
           (char *)path_try_shorten_fname((char_u *)cur_entry.data.buffer_list.buffers[i].fname);
         buf_T *const buf =
-          buflist_new((char_u *)cur_entry.data.buffer_list.buffers[i].fname, (char_u *)sfname, 0,
-                      BLN_LISTED);
+          buflist_new(cur_entry.data.buffer_list.buffers[i].fname, sfname, 0, BLN_LISTED);
         if (buf != NULL) {
           fmarkv_T view = INIT_FMARKV;
           RESET_FMARK(&buf->b_last_cursor,
@@ -2307,7 +2306,7 @@ static inline ShadaEntry shada_get_buflist(khash_t(bufset) *const removable_bufs
     }
     buflist_entry.data.buffer_list.buffers[i] = (struct buffer_list_buffer) {
       .pos = buf->b_last_cursor.mark,
-      .fname = (char *)buf->b_ffname,
+      .fname = buf->b_ffname,
       .additional_data = buf->additional_data,
     };
     i++;
@@ -2445,7 +2444,7 @@ static inline void replace_numbered_mark(WriteMergerState *const wms, const size
 static inline void find_removable_bufs(khash_t(bufset) *removable_bufs)
 {
   FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ffname != NULL && shada_removable((char *)buf->b_ffname)) {
+    if (buf->b_ffname != NULL && shada_removable(buf->b_ffname)) {
       int kh_ret;
       (void)kh_put(bufset, removable_bufs, (uintptr_t)buf, &kh_ret);
     }
@@ -2804,7 +2803,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
             .mark = curwin->w_cursor,
             .name = '0',
             .additional_data = NULL,
-            .fname = (char *)curbuf->b_ffname,
+            .fname = curbuf->b_ffname,
           }
         }
       },
@@ -2998,7 +2997,7 @@ shada_write_file_open: {}
   }
   if (nomerge) {
 shada_write_file_nomerge: {}
-    char *const tail = (char *)path_tail_with_sep((char_u *)fname);
+    char *const tail = path_tail_with_sep(fname);
     if (tail != fname) {
       const char tail_save = *tail;
       *tail = NUL;
@@ -3974,9 +3973,9 @@ static bool shada_removable(const char *name)
   char part[MAXPATHL + 1];
   bool retval = false;
 
-  char *new_name = (char *)home_replace_save(NULL, (char_u *)name);
+  char *new_name = home_replace_save(NULL, (char *)name);
   for (p = (char *)p_shada; *p;) {
-    (void)copy_option_part((char_u **)&p, (char_u *)part, ARRAY_SIZE(part), ", ");
+    (void)copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
       home_replace(NULL, part + 1, (char *)NameBuff, MAXPATHL, true);
       size_t n = STRLEN(NameBuff);
@@ -4026,8 +4025,7 @@ static inline size_t shada_init_jumps(PossiblyFreedShadaEntry *jumps,
       continue;
     }
     const char *const fname =
-      (char *)(fm.fmark.fnum ==
-               0 ? (fm.fname == NULL ? NULL : (char_u *)fm.fname) : buf ? buf->b_ffname : NULL);
+      (fm.fmark.fnum == 0 ? (fm.fname == NULL ? NULL : fm.fname) : buf ? buf->b_ffname : NULL);
     if (fname == NULL) {
       continue;
     }

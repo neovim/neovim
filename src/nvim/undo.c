@@ -693,8 +693,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
   // When not reading use the first directory that exists or ".".
   dirp = (char *)p_udir;
   while (*dirp != NUL) {
-    size_t dir_len = copy_option_part((char_u **)&dirp, (char_u *)dir_name,
-                                      MAXPATHL, ",");
+    size_t dir_len = copy_option_part(&dirp, dir_name, MAXPATHL, ",");
     if (dir_len == 1 && dir_name[0] == '.') {
       // Use same directory as the ffname,
       // "dir/name" -> "dir/.name.un~"
@@ -1186,7 +1185,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   bufinfo_T bi;
 
   if (name == NULL) {
-    file_name = u_get_undo_file_name((char *)buf->b_ffname, false);
+    file_name = u_get_undo_file_name(buf->b_ffname, false);
     if (file_name == NULL) {
       if (p_verbose > 0) {
         verbose_enter();
@@ -1291,7 +1290,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   FileInfo file_info_old;
   FileInfo file_info_new;
   if (buf->b_ffname != NULL
-      && os_fileinfo((char *)buf->b_ffname, &file_info_old)
+      && os_fileinfo(buf->b_ffname, &file_info_old)
       && os_fileinfo(file_name, &file_info_new)
       && file_info_old.stat.st_gid != file_info_new.stat.st_gid
       && os_fchown(fd, (uv_uid_t)-1, (uv_gid_t)file_info_old.stat.st_gid)) {
@@ -1370,10 +1369,8 @@ write_error:
 
 #ifdef HAVE_ACL
   if (buf->b_ffname != NULL) {
-    vim_acl_T acl;
-
     // For systems that support ACL: get the ACL from the original file.
-    acl = mch_get_acl(buf->b_ffname);
+    vim_acl_T acl = mch_get_acl((char_u *)buf->b_ffname);
     mch_set_acl((char_u *)file_name, acl);
     mch_free_acl(acl);
   }
@@ -1398,7 +1395,7 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
 
   char *file_name;
   if (name == NULL) {
-    file_name = u_get_undo_file_name((char *)curbuf->b_ffname, true);
+    file_name = u_get_undo_file_name(curbuf->b_ffname, true);
     if (file_name == NULL) {
       return;
     }

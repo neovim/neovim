@@ -1059,7 +1059,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       old_cursor = curwin->w_cursor;
       ptr = saved_line;
       if (flags & OPENLINE_DO_COM) {
-        lead_len = get_leader_len(ptr, NULL, false, true);
+        lead_len = get_leader_len((char *)ptr, NULL, false, true);
       } else {
         lead_len = 0;
       }
@@ -1072,7 +1072,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           newindent = get_indent();
         }
         if (flags & OPENLINE_DO_COM) {
-          lead_len = get_leader_len(ptr, NULL, false, true);
+          lead_len = get_leader_len((char *)ptr, NULL, false, true);
         } else {
           lead_len = 0;
         }
@@ -1191,14 +1191,14 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // This may then be inserted in front of the new line.
   end_comment_pending = NUL;
   if (flags & OPENLINE_DO_COM) {
-    lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, true);
+    lead_len = get_leader_len((char *)saved_line, (char **)&lead_flags, dir == BACKWARD, true);
     if (lead_len == 0 && curbuf->b_p_cin && do_cindent && dir == FORWARD
         && (!has_format_option(FO_NO_OPEN_COMS) || (flags & OPENLINE_FORMAT))) {
       // Check for a line comment after code.
       comment_start = check_linecomment(saved_line);
       if (comment_start != MAXCOL) {
-        lead_len = get_leader_len(saved_line + comment_start,
-                                  &lead_flags, false, true);
+        lead_len = get_leader_len((char *)saved_line + comment_start,
+                                  (char **)&lead_flags, false, true);
         if (lead_len != 0) {
           lead_len += comment_start;
           if (did_do_comment != NULL) {
@@ -1238,7 +1238,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
 
           // find start of middle part
-          (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
+          (void)copy_option_part((char **)&p, (char *)lead_middle, COM_MAX_LEN, ",");
           require_blank = false;
         }
 
@@ -1249,7 +1249,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
+        (void)copy_option_part((char **)&p, (char *)lead_middle, COM_MAX_LEN, ",");
 
         while (*p && p[-1] != ':') {  // find end of end flags
           // Check whether we allow automatic ending of comments
@@ -1258,7 +1258,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        size_t n = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
+        size_t n = copy_option_part((char **)&p, (char *)lead_end, COM_MAX_LEN, ",");
 
         if (end_comment_pending == -1) {  // we can set it now
           end_comment_pending = lead_end[n - 1];
@@ -1377,7 +1377,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           if (*p == COM_RIGHT || *p == COM_LEFT) {
             c = *p++;
           } else if (ascii_isdigit(*p) || *p == '-') {
-            off = getdigits_int(&p, true, 0);
+            off = getdigits_int((char **)&p, true, 0);
           } else {
             p++;
           }
@@ -1881,16 +1881,16 @@ void del_lines(long nlines, bool undo)
 /// When "flags" is not NULL, it is set to point to the flags of the recognized comment leader.
 /// "backward" must be true for the "O" command.
 /// If "include_space" is set, include trailing whitespace while calculating the length.
-int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_space)
+int get_leader_len(char *line, char **flags, bool backward, bool include_space)
 {
   int j;
   int got_com = false;
   char part_buf[COM_MAX_LEN];         // buffer for one option part
-  char_u *string;                  // pointer to comment string
-  char_u *list;
+  char *string;                  // pointer to comment string
+  char *list;
   int middle_match_len = 0;
-  char_u *prev_list;
-  char_u *saved_flags = NULL;
+  char *prev_list;
+  char *saved_flags = NULL;
 
   int result = 0;
   int i = 0;
@@ -1902,15 +1902,15 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
   while (line[i] != NUL) {
     // scan through the 'comments' option for a match
     int found_one = false;
-    for (list = curbuf->b_p_com; *list;) {
+    for (list = (char *)curbuf->b_p_com; *list;) {
       // Get one option part into part_buf[].  Advance "list" to next
       // one.  Put "string" at start of string.
       if (!got_com && flags != NULL) {
         *flags = list;              // remember where flags started
       }
       prev_list = list;
-      (void)copy_option_part(&list, (char_u *)part_buf, COM_MAX_LEN, ",");
-      string = (char_u *)vim_strchr(part_buf, ':');
+      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+      string = vim_strchr(part_buf, ':');
       if (string == NULL) {         // missing ':', ignore this part
         continue;
       }
@@ -2023,15 +2023,15 @@ int get_leader_len(char_u *line, char_u **flags, bool backward, bool include_spa
 ///
 /// When "flags" is not null, it is set to point to the flags describing the
 /// recognized comment leader.
-int get_last_leader_offset(char_u *line, char_u **flags)
+int get_last_leader_offset(char *line, char **flags)
 {
   int result = -1;
   int j;
   int lower_check_bound = 0;
-  char_u *string;
-  char_u *com_leader;
-  char_u *com_flags;
-  char_u *list;
+  char *string;
+  char *com_leader;
+  char *com_flags;
+  char *list;
   char part_buf[COM_MAX_LEN];         // buffer for one option part
 
   // Repeat to match several nested comment strings.
@@ -2039,13 +2039,13 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   while (--i >= lower_check_bound) {
     // scan through the 'comments' option for a match
     int found_one = false;
-    for (list = curbuf->b_p_com; *list;) {
-      char_u *flags_save = list;
+    for (list = (char *)curbuf->b_p_com; *list;) {
+      char *flags_save = list;
 
       // Get one option part into part_buf[].  Advance list to next one.
       // put string at start of string.
-      (void)copy_option_part(&list, (char_u *)part_buf, COM_MAX_LEN, ",");
-      string = (char_u *)vim_strchr(part_buf, ':');
+      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+      string = vim_strchr(part_buf, ':');
       if (string == NULL) {  // If everything is fine, this cannot actually
                              // happen.
         continue;
@@ -2124,14 +2124,14 @@ int get_last_leader_offset(char_u *line, char_u **flags)
       }
       len1 = (int)STRLEN(com_leader);
 
-      for (list = curbuf->b_p_com; *list;) {
-        char_u *flags_save = list;
+      for (list = (char *)curbuf->b_p_com; *list;) {
+        char *flags_save = list;
 
-        (void)copy_option_part(&list, (char_u *)part_buf2, COM_MAX_LEN, ",");
+        (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
         if (flags_save == com_flags) {
           continue;
         }
-        string = (char_u *)vim_strchr(part_buf2, ':');
+        string = vim_strchr(part_buf2, ':');
         string++;
         while (ascii_iswhite(*string)) {
           string++;

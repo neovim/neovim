@@ -125,14 +125,14 @@ char *path_tail(const char *fname)
 ///   - Pointer to the last path separator of `fname`, if there is any.
 ///   - `fname` if it contains no path separator.
 ///   - Never NULL.
-char_u *path_tail_with_sep(char_u *fname)
+char *path_tail_with_sep(char *fname)
 {
   assert(fname != NULL);
 
   // Don't remove the '/' from "c:/file".
-  char_u *past_head = get_past_head(fname);
-  char_u *tail = (char_u *)path_tail((char *)fname);
-  while (tail > past_head && after_pathsep((char *)fname, (char *)tail)) {
+  char *past_head = (char *)get_past_head((char_u *)fname);
+  char *tail = path_tail(fname);
+  while (tail > past_head && after_pathsep(fname, tail)) {
     tail--;
   }
   return tail;
@@ -326,11 +326,11 @@ void shorten_dir(char_u *str)
  */
 bool dir_of_file_exists(char_u *fname)
 {
-  char_u *p = path_tail_with_sep(fname);
-  if (p == fname) {
+  char *p = path_tail_with_sep((char *)fname);
+  if ((char_u *)p == fname) {
     return true;
   }
-  char_u c = *p;
+  char c = *p;
   *p = NUL;
   bool retval = os_isdir(fname);
   *p = c;
@@ -731,7 +731,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
            || ((flags & EW_DODOT)
                && name[1] != NUL
                && (name[1] != '.' || name[2] != NUL)))  // -V557
-          && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
+          && ((regmatch.regprog != NULL && vim_regexec(&regmatch, (char *)name, 0))
               || ((flags & EW_NOTWILD)
                   && FNAMENCMP(path + (s - buf), name, e - s) == 0))) {
         STRCPY(s, name);
@@ -845,7 +845,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
   char_u *buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
-    copy_option_part(&path_option, buf, MAXPATHL, " ,");
+    copy_option_part((char **)&path_option, (char *)buf, MAXPATHL, " ,");
 
     if (buf[0] == '.' && (buf[1] == NUL || vim_ispathsep(buf[1]))) {
       /* Relative to current buffer:
@@ -854,8 +854,8 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       if (curbuf->b_ffname == NULL) {
         continue;
       }
-      char_u *p = (char_u *)path_tail((char *)curbuf->b_ffname);
-      size_t len = (size_t)(p - curbuf->b_ffname);
+      char_u *p = (char_u *)path_tail(curbuf->b_ffname);
+      size_t len = (size_t)(p - (char_u *)curbuf->b_ffname);
       if (len + STRLEN(buf) >= MAXPATHL) {
         continue;
       }
@@ -996,7 +996,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     if (pattern[0] == '*' && pattern[1] == '*'
         && vim_ispathsep_nocolon(pattern[2])
         && path_cutoff != NULL
-        && vim_regexec(&regmatch, path_cutoff, (colnr_T)0)
+        && vim_regexec(&regmatch, (char *)path_cutoff, (colnr_T)0)
         && is_unique(path_cutoff, gap, i)) {
       sort_again = true;
       memmove(path, path_cutoff, STRLEN(path_cutoff) + 1);
@@ -1005,7 +1005,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       // unique path.  We start at the end of the path. */
       pathsep_p = path + len - 1;
       while (find_previous_pathsep(path, &pathsep_p)) {
-        if (vim_regexec(&regmatch, pathsep_p + 1, (colnr_T)0)
+        if (vim_regexec(&regmatch, (char *)pathsep_p + 1, (colnr_T)0)
             && is_unique(pathsep_p + 1, gap, i)
             && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
           sort_again = true;
@@ -1877,7 +1877,7 @@ char *fix_fname(const char *fname)
   fname = xstrdup(fname);
 
 # ifdef USE_FNAME_CASE
-  path_fix_case((char_u *)fname);  // set correct case for file name
+  path_fix_case(fname);  // set correct case for file name
 # endif
 
   return (char *)fname;
@@ -1889,17 +1889,17 @@ char *fix_fname(const char *fname)
 /// Only required for file systems where case is ignored and preserved.
 // TODO(SplinterOfChaos): Could also be used when mounting case-insensitive
 // file systems.
-void path_fix_case(char_u *name)
+void path_fix_case(char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   FileInfo file_info;
-  if (!os_fileinfo_link((char *)name, &file_info)) {
+  if (!os_fileinfo_link(name, &file_info)) {
     return;
   }
 
   // Open the directory where the file is located.
-  char_u *slash = STRRCHR(name, '/');
-  char_u *tail;
+  char *slash = (char *)STRRCHR(name, '/');
+  char *tail;
   Directory dir;
   bool ok;
   if (slash == NULL) {
@@ -1907,7 +1907,7 @@ void path_fix_case(char_u *name)
     tail = name;
   } else {
     *slash = NUL;
-    ok = os_scandir(&dir, (char *)name);
+    ok = os_scandir(&dir, name);
     *slash = '/';
     tail = slash + 1;
   }
@@ -1916,8 +1916,8 @@ void path_fix_case(char_u *name)
     return;
   }
 
-  char_u *entry;
-  while ((entry = (char_u *)os_scandir_next(&dir))) {
+  char *entry;
+  while ((entry = (char *)os_scandir_next(&dir))) {
     // Only accept names that differ in case and are the same byte
     // length. TODO: accept different length name.
     if (STRICMP(tail, entry) == 0 && STRLEN(tail) == STRLEN(entry)) {
@@ -1956,9 +1956,9 @@ int after_pathsep(const char *b, const char *p)
  */
 bool same_directory(char_u *f1, char_u *f2)
 {
-  char_u ffname[MAXPATHL];
-  char_u *t1;
-  char_u *t2;
+  char ffname[MAXPATHL];
+  char *t1;
+  char *t2;
 
   // safety check
   if (f1 == NULL || f2 == NULL) {
@@ -1967,8 +1967,8 @@ bool same_directory(char_u *f1, char_u *f2)
 
   (void)vim_FullName((char *)f1, (char *)ffname, MAXPATHL, FALSE);
   t1 = path_tail_with_sep(ffname);
-  t2 = path_tail_with_sep(f2);
-  return t1 - ffname == t2 - f2
+  t2 = path_tail_with_sep((char *)f2);
+  return t1 - ffname == (char_u *)t2 - f2
          && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
 }
 
@@ -2246,7 +2246,7 @@ int match_suffix(char_u *fname)
   size_t fnamelen = STRLEN(fname);
   size_t setsuflen = 0;
   for (char_u *setsuf = p_su; *setsuf;) {
-    setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
+    setsuflen = copy_option_part((char **)&setsuf, (char *)suf_buf, MAXSUFLEN, ".,");
     if (setsuflen == 0) {
       char_u *tail = (char_u *)path_tail((char *)fname);
 
