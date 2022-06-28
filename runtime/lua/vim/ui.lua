@@ -59,7 +59,7 @@ end
 ---
 ---@param opts table Additional options. See |input()|
 ---     - prompt (string|nil)
----               Text of the prompt. Defaults to `Input: `.
+---               Text of the prompt
 ---     - default (string|nil)
 ---               Default reply to the input
 ---     - completion (string|nil)
@@ -87,7 +87,7 @@ function M.input(opts, on_confirm)
     on_confirm = { on_confirm, 'function', false },
   })
 
-  opts = opts or {}
+  opts = (opts and not vim.tbl_isempty(opts)) and opts or vim.empty_dict()
   local input = vim.fn.input(opts)
   if #input > 0 then
     on_confirm(input)
