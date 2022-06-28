@@ -4223,7 +4223,7 @@ static int ins_compl_get_exp(pos_T *ini)
         msg_hist_off = true;  // reset in msg_trunc_attr()
         vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
                      ins_buf->b_fname == NULL
-                     ? buf_spname(ins_buf)
+                     ? (char_u *)buf_spname(ins_buf)
                      : ins_buf->b_sfname == NULL
                      ? (char_u *)ins_buf->b_fname
                      : ins_buf->b_sfname);
@@ -4831,15 +4831,15 @@ static int ins_compl_next(int allow_get_expansion, int count, int insert_match, 
    */
   if (compl_shown_match->cp_fname != NULL) {
     char *lead = _("match in file");
-    int space = sc_col - vim_strsize((char_u *)lead) - 2;
-    char_u *s;
-    char_u *e;
+    int space = sc_col - vim_strsize(lead) - 2;
+    char *s;
+    char *e;
 
     if (space > 0) {
       // We need the tail that fits.  With double-byte encoding going
       // back from the end is very slow, thus go from the start and keep
       // the text that fits in "space" between "s" and "e".
-      for (s = e = compl_shown_match->cp_fname; *e != NUL; MB_PTR_ADV(e)) {
+      for (s = e = (char *)compl_shown_match->cp_fname; *e != NUL; MB_PTR_ADV(e)) {
         space -= ptr2cells(e);
         while (space < 0) {
           space += ptr2cells(s);
@@ -4848,7 +4848,7 @@ static int ins_compl_next(int allow_get_expansion, int count, int insert_match, 
       }
       msg_hist_off = true;
       vim_snprintf((char *)IObuff, IOSIZE, "%s %s%s", lead,
-                   s > compl_shown_match->cp_fname ? "<" : "", s);
+                   (char_u *)s > compl_shown_match->cp_fname ? "<" : "", s);
       msg((char *)IObuff);
       msg_hist_off = false;
       redraw_cmdline = false;     // don't overwrite!
@@ -6807,15 +6807,15 @@ void beginline(int flags)
 
 int oneright(void)
 {
-  char_u *ptr;
+  char *ptr;
   int l;
 
   if (virtual_active()) {
     pos_T prevpos = curwin->w_cursor;
 
     // Adjust for multi-wide char (excluding TAB)
-    ptr = get_cursor_pos_ptr();
-    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char((char *)ptr))) ?
+    ptr = (char *)get_cursor_pos_ptr();
+    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))) ?
                               ptr2cells(ptr) : 1));
     curwin->w_set_curswant = true;
     // Return OK if the cursor moved, FAIL otherwise (at window edge).
@@ -6823,12 +6823,12 @@ int oneright(void)
             || prevpos.coladd != curwin->w_cursor.coladd) ? OK : FAIL;
   }
 
-  ptr = get_cursor_pos_ptr();
+  ptr = (char *)get_cursor_pos_ptr();
   if (*ptr == NUL) {
     return FAIL;            // already at the very end
   }
 
-  l = utfc_ptr2len((char *)ptr);
+  l = utfc_ptr2len(ptr);
 
   // move "l" bytes right, but don't end up on the NUL, unless 'virtualedit'
   // contains "onemore".
@@ -6865,12 +6865,9 @@ int oneleft(void)
     }
 
     if (curwin->w_cursor.coladd == 1) {
-      char_u *ptr;
-
       // Adjust for multi-wide char (not a TAB)
-      ptr = get_cursor_pos_ptr();
-      if (*ptr != TAB && vim_isprintc(utf_ptr2char((char *)ptr))
-          && ptr2cells(ptr) > 1) {
+      char *ptr = (char *)get_cursor_pos_ptr();
+      if (*ptr != TAB && vim_isprintc(utf_ptr2char(ptr)) && ptr2cells(ptr) > 1) {
         curwin->w_cursor.coladd = 0;
       }
     }

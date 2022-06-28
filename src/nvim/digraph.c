@@ -1846,7 +1846,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
     *p++ = dp->char2;
     *p++ = ' ';
     *p = NUL;
-    msg_outtrans(buf);
+    msg_outtrans((char *)buf);
     p = buf;
 
     // add a space to draw a composing char on
@@ -1863,7 +1863,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
     }
     assert(p >= buf);
     vim_snprintf((char *)p, sizeof(buf) - (size_t)(p - buf), " %3d", dp->result);
-    msg_outtrans(buf);
+    msg_outtrans((char *)buf);
   }
 }
 

@@ -621,7 +621,7 @@ static void set_option_default(int opt_idx, int opt_flags)
       // freeing and allocating the value.
       if (options[opt_idx].indir != PV_NONE) {
         set_string_option_direct(NULL, opt_idx,
-                                 options[opt_idx].def_val, opt_flags, 0);
+                                 (char *)options[opt_idx].def_val, opt_flags, 0);
       } else {
         if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED)) {
           free_string_option(*(char_u **)(varp));
@@ -944,7 +944,7 @@ void ex_set(exarg_T *eap)
   if (eap->forceit) {
     flags |= OPT_ONECOLUMN;
   }
-  (void)do_set((char_u *)eap->arg, flags);
+  (void)do_set(eap->arg, flags);
 }
 
 /// Parse 'arg' for option settings.
@@ -962,7 +962,7 @@ void ex_set(exarg_T *eap)
 /// @param arg  option string (may be written to!)
 ///
 /// @return  FAIL if an error is detected, OK otherwise
-int do_set(char_u *arg, int opt_flags)
+int do_set(char *arg, int opt_flags)
 {
   int opt_idx;
   char *errmsg;
@@ -990,7 +990,7 @@ int do_set(char_u *arg, int opt_flags)
 
   while (*arg != NUL) {         // loop to process all options
     errmsg = NULL;
-    startarg = arg;             // remember for error message
+    startarg = (char_u *)arg;             // remember for error message
 
     if (STRNCMP(arg, "all", 3) == 0 && !isalpha(arg[3])
         && !(opt_flags & OPT_MODELINE)) {
@@ -1043,7 +1043,7 @@ int do_set(char_u *arg, int opt_flags)
         }
         len++;
         if (opt_idx == -1) {
-          key = find_key_option(arg + 1, true);
+          key = find_key_option((char_u *)arg + 1, true);
         }
       } else {
         len = 0;
@@ -1057,12 +1057,12 @@ int do_set(char_u *arg, int opt_flags)
         }
         opt_idx = findoption_len((const char *)arg, (size_t)len);
         if (opt_idx == -1) {
-          key = find_key_option(arg, false);
+          key = find_key_option((char_u *)arg, false);
         }
       }
 
       // remember character after option name
-      afterchar = arg[len];
+      afterchar = (uint8_t)arg[len];
 
       // skip white space, allow ":set ai  ?"
       while (ascii_iswhite(arg[len])) {
@@ -1084,7 +1084,7 @@ int do_set(char_u *arg, int opt_flags)
           len++;
         }
       }
-      nextchar = arg[len];
+      nextchar = (uint8_t)arg[len];
 
       if (opt_idx == -1 && key == 0) {          // found a mismatch: skip
         errmsg = N_("E518: Unknown option");
@@ -1282,14 +1282,14 @@ int do_set(char_u *arg, int opt_flags)
                            || *arg == '^'
                            || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
                                && !ascii_isdigit(*arg)))) {
-              value = string_to_key(arg);
+              value = string_to_key((char_u *)arg);
               if (value == 0 && (long *)varp != &p_wcm) {
                 errmsg = e_invarg;
                 goto skip;
               }
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
               // Allow negative, octal and hex numbers.
-              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
+              vim_str2nr((char_u *)arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
               if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
                 errmsg = N_("E521: Number required after =");
                 goto skip;
@@ -1391,8 +1391,8 @@ int do_set(char_u *arg, int opt_flags)
               if (varp == (char_u *)&p_kp
                   && (*arg == NUL || *arg == ' ')) {
                 STRCPY(errbuf, ":help");
-                save_arg = arg;
-                arg = (char_u *)errbuf;
+                save_arg = (char_u *)arg;
+                arg = errbuf;
               }
               /*
                * Convert 'backspace' number to string, for
@@ -1435,7 +1435,7 @@ int do_set(char_u *arg, int opt_flags)
               else if (varp == (char_u *)&p_ww
                        && ascii_isdigit(*arg)) {
                 *errbuf = NUL;
-                i = getdigits_int(&arg, true, 0);
+                i = getdigits_int((char_u **)&arg, true, 0);
                 if (i & 1) {
                   STRLCAT(errbuf, "b,", sizeof(errbuf));
                 }
@@ -1451,8 +1451,8 @@ int do_set(char_u *arg, int opt_flags)
                 if (i & 16) {
                   STRLCAT(errbuf, "[,],", sizeof(errbuf));
                 }
-                save_arg = arg;
-                arg = (char_u *)errbuf;
+                save_arg = (char_u *)arg;
+                arg = errbuf;
               }
               /*
                * Remove '>' before 'dir' and 'bdir', for
@@ -1498,14 +1498,14 @@ int do_set(char_u *arg, int opt_flags)
                     ) {
                   arg++;                        // remove backslash
                 }
-                i = utfc_ptr2len((char *)arg);
+                i = utfc_ptr2len(arg);
                 if (i > 1) {
                   // copy multibyte char
                   memmove(s, arg, (size_t)i);
                   arg += i;
                   s += i;
                 } else {
-                  *s++ = *arg++;
+                  *s++ = (uint8_t)(*arg++);
                 }
               }
               *s = NUL;
@@ -1622,7 +1622,7 @@ int do_set(char_u *arg, int opt_flags)
               }
 
               if (save_arg != NULL) {               // number for 'whichwrap'
-                arg = save_arg;
+                arg = (char *)save_arg;
               }
               new_value_alloced = true;
             }
@@ -1710,7 +1710,7 @@ skip:
             arg++;
           }
         }
-        arg = (char_u *)skipwhite((char *)arg);
+        arg = skipwhite(arg);
         if (*arg != '=') {
           break;
         }
@@ -1720,12 +1720,12 @@ skip:
     if (errmsg != NULL) {
       STRLCPY(IObuff, _(errmsg), IOSIZE);
       i = (int)STRLEN(IObuff) + 2;
-      if (i + (arg - startarg) < IOSIZE) {
+      if (i + ((char_u *)arg - startarg) < IOSIZE) {
         // append the argument with the error
         STRCAT(IObuff, ": ");
-        assert(arg >= startarg);
-        memmove(IObuff + i, startarg, (size_t)(arg - startarg));
-        IObuff[i + (arg - startarg)] = NUL;
+        assert((char_u *)arg >= startarg);
+        memmove(IObuff + i, startarg, (size_t)((char_u *)arg - startarg));
+        IObuff[i + ((char_u *)arg - startarg)] = NUL;
       }
       // make sure all characters are printable
       trans_characters(IObuff, IOSIZE);
@@ -1737,7 +1737,7 @@ skip:
       return FAIL;
     }
 
-    arg = (char_u *)skipwhite((char *)arg);
+    arg = skipwhite(arg);
   }
 
 theend:
@@ -2181,11 +2181,11 @@ static int shada_idx = -1;
 /// "set_sid".
 ///
 /// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
-void set_string_option_direct(const char *name, int opt_idx, const char_u *val, int opt_flags,
+void set_string_option_direct(const char *name, int opt_idx, const char *val, int opt_flags,
                               int set_sid)
 {
-  char_u *s;
-  char_u **varp;
+  char *s;
+  char **varp;
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int idx = opt_idx;
 
@@ -2204,18 +2204,17 @@ void set_string_option_direct(const char *name, int opt_idx, const char_u *val, 
 
   assert((void *)options[idx].var != (void *)&p_shada);
 
-  s = vim_strsave(val);
+  s = xstrdup(val);
   {
-    varp = (char_u **)get_varp_scope(&(options[idx]),
-                                     both ? OPT_LOCAL : opt_flags);
+    varp = (char **)get_varp_scope(&(options[idx]), both ? OPT_LOCAL : opt_flags);
     if ((opt_flags & OPT_FREE) && (options[idx].flags & P_ALLOCED)) {
-      free_string_option(*varp);
+      free_string_option((char_u *)(*varp));
     }
     *varp = s;
 
     // For buffer/window local option may also set the global value.
     if (both) {
-      set_string_option_global(idx, varp);
+      set_string_option_global(idx, (char_u **)varp);
     }
 
     options[idx].flags |= P_ALLOCED;
@@ -2223,8 +2222,8 @@ void set_string_option_direct(const char *name, int opt_idx, const char_u *val, 
     /* When setting both values of a global option with a local value,
     * make the local value empty, so that the global value is used. */
     if (((int)options[idx].indir & PV_BOTH) && both) {
-      free_string_option(*varp);
-      *varp = empty_option;
+      free_string_option((char_u *)(*varp));
+      *varp = (char *)empty_option;
     }
     if (set_sid != SID_NONE) {
       sctx_T script_ctx;
@@ -2814,7 +2813,7 @@ ambw_end:
     }
   } else if (gvarp == &p_sbr) {  // 'showbreak'
     for (s = *varp; *s;) {
-      if (ptr2cells(s) != 1) {
+      if (ptr2cells((char *)s) != 1) {
         errmsg = N_("E595: 'showbreak' contains unprintable or wide character");
       }
       MB_PTR_ADV(s);
@@ -2834,7 +2833,7 @@ ambw_end:
     int flagval = (varp == &p_titlestring) ? STL_IN_TITLE : STL_IN_ICON;
 
     // NULL => statusline syntax
-    if (vim_strchr((char *)(*varp), '%') && check_stl_option(*varp) == NULL) {
+    if (vim_strchr((char *)(*varp), '%') && check_stl_option((char *)(*varp)) == NULL) {
       stl_syntax |= flagval;
     } else {
       stl_syntax &= ~flagval;
@@ -2943,14 +2942,14 @@ ambw_end:
         s++;
       }
       wid = getdigits_int(&s, true, 0);
-      if (wid && *s == '(' && (errmsg = check_stl_option(p_ruf)) == NULL) {
+      if (wid && *s == '(' && (errmsg = check_stl_option((char *)p_ruf)) == NULL) {
         ru_wid = wid;
       } else {
-        errmsg = check_stl_option(p_ruf);
+        errmsg = check_stl_option((char *)p_ruf);
       }
     } else if (varp == &p_ruf || s[0] != '%' || s[1] != '!') {
       // check 'statusline', 'winbar' or 'tabline' only if it doesn't start with "%!"
-      errmsg = check_stl_option(s);
+      errmsg = check_stl_option((char *)s);
     }
     if (varp == &p_ruf && errmsg == NULL) {
       comp_col();
@@ -3786,7 +3785,7 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
 
 /// Check validity of options with the 'statusline' format.
 /// Return an untranslated error message or NULL.
-char *check_stl_option(char_u *s)
+char *check_stl_option(char *s)
 {
   int groupdepth = 0;
   static char errbuf[80];
@@ -5325,7 +5324,7 @@ static void showoptions(int all, int opt_flags)
           len = 1;                      // a toggle option fits always
         } else {
           option_value2string(p, opt_flags);
-          len = (int)STRLEN(p->fullname) + vim_strsize(NameBuff) + 1;
+          len = (int)STRLEN(p->fullname) + vim_strsize((char *)NameBuff) + 1;
         }
         if ((len <= INC - GAP && run == 1)
             || (len > INC - GAP && run == 2)) {
@@ -5438,7 +5437,7 @@ static void showoneopt(vimoption_T *p, int opt_flags)
     msg_putchar('=');
     // put value string in NameBuff
     option_value2string(p, opt_flags);
-    msg_outtrans(NameBuff);
+    msg_outtrans((char *)NameBuff);
   }
 
   silent_mode = save_silent;
@@ -5631,7 +5630,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, uint6
 
       // replace home directory in the whole option value into "buf"
       buf = xmalloc(size);
-      home_replace(NULL, *valuep, buf, size, false);
+      home_replace(NULL, (char *)(*valuep), (char *)buf, size, false);
 
       // If the option value is longer than MAXPATHL, we need to append
       // each comma separated part of the option separately, so that it
@@ -7042,7 +7041,7 @@ static void option_value2string(vimoption_T *opp, int opt_flags)
     if (varp == NULL) {  // Just in case.
       NameBuff[0] = NUL;
     } else if (opp->flags & P_EXPAND) {
-      home_replace(NULL, varp, NameBuff, MAXPATHL, false);
+      home_replace(NULL, (char *)varp, (char *)NameBuff, MAXPATHL, false);
       // Translate 'pastetoggle' into special key names.
     } else if ((char_u **)opp->var == &p_pt) {
       str2specialbuf((const char *)p_pt, (char *)NameBuff, MAXPATHL);
@@ -7963,11 +7962,7 @@ void set_fileformat(int eol_style, int opt_flags)
 
   // p is NULL if "eol_style" is EOL_UNKNOWN.
   if (p != NULL) {
-    set_string_option_direct("ff",
-                             -1,
-                             (char_u *)p,
-                             OPT_FREE | opt_flags,
-                             0);
+    set_string_option_direct("ff", -1, p, OPT_FREE | opt_flags, 0);
   }
 
   // This may cause the buffer to become (un)modified.

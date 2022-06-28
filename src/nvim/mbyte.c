@@ -2012,7 +2012,7 @@ void mb_check_adjust_col(void *win_)
 
   // Column 0 is always valid.
   if (oldcol != 0) {
-    char_u *p = ml_get_buf(win->w_buffer, win->w_cursor.lnum, false);
+    char *p = (char *)ml_get_buf(win->w_buffer, win->w_cursor.lnum, false);
     colnr_T len = (colnr_T)STRLEN(p);
 
     // Empty line or invalid column?
@@ -2024,13 +2024,13 @@ void mb_check_adjust_col(void *win_)
         win->w_cursor.col = len - 1;
       }
       // Move the cursor to the head byte.
-      win->w_cursor.col -= utf_head_off(p, p + win->w_cursor.col);
+      win->w_cursor.col -= utf_head_off((char_u *)p, (char_u *)p + win->w_cursor.col);
     }
 
     // Reset `coladd` when the cursor would be on the right half of a
     // double-wide character.
     if (win->w_cursor.coladd == 1 && p[win->w_cursor.col] != TAB
-        && vim_isprintc(utf_ptr2char((char *)p + win->w_cursor.col))
+        && vim_isprintc(utf_ptr2char(p + win->w_cursor.col))
         && ptr2cells(p + win->w_cursor.col) > 1) {
       win->w_cursor.coladd = 0;
     }

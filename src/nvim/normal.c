@@ -3287,7 +3287,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
     validate_virtcol();
     colnr_T virtcol = curwin->w_virtcol;
     if (virtcol > (colnr_T)width1 && *get_showbreak_value(curwin) != NUL) {
-      virtcol -= vim_strsize(get_showbreak_value(curwin));
+      virtcol -= vim_strsize((char *)get_showbreak_value(curwin));
     }
 
     int c = utf_ptr2char((char *)get_cursor_pos_ptr());

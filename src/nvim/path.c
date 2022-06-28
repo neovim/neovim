@@ -52,27 +52,27 @@
 /// @param checkname When both files don't exist, only compare their names.
 /// @param expandenv Whether to expand environment variables in file names.
 /// @return Enum of type FileComparison. @see FileComparison.
-FileComparison path_full_compare(char_u *const s1, char_u *const s2, const bool checkname,
+FileComparison path_full_compare(char *const s1, char *const s2, const bool checkname,
                                  const bool expandenv)
 {
   assert(s1 && s2);
-  char_u exp1[MAXPATHL];
-  char_u full1[MAXPATHL];
-  char_u full2[MAXPATHL];
+  char exp1[MAXPATHL];
+  char full1[MAXPATHL];
+  char full2[MAXPATHL];
   FileID file_id_1, file_id_2;
 
   if (expandenv) {
-    expand_env(s1, exp1, MAXPATHL);
+    expand_env((char_u *)s1, (char_u *)exp1, MAXPATHL);
   } else {
     STRLCPY(exp1, s1, MAXPATHL);
   }
-  bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
-  bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
+  bool id_ok_1 = os_fileid(exp1, &file_id_1);
+  bool id_ok_2 = os_fileid(s2, &file_id_2);
   if (!id_ok_1 && !id_ok_2) {
     // If os_fileid() doesn't work, may compare the names.
     if (checkname) {
-      vim_FullName((char *)exp1, (char *)full1, MAXPATHL, false);
-      vim_FullName((char *)s2, (char *)full2, MAXPATHL, false);
+      vim_FullName(exp1, full1, MAXPATHL, false);
+      vim_FullName(s2, full2, MAXPATHL, false);
       if (FNAMECMP(full1, full2) == 0) {
         return kEqualFileNames;
       }

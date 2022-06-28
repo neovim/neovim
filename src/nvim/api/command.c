@@ -413,7 +413,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
   // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
   // since it only ever checks the first argument.
-  set_cmd_addr_type(&ea, argc > 0 ? (char_u *)args[0] : NULL);
+  set_cmd_addr_type(&ea, argc > 0 ? args[0] : NULL);
 
   if (HAS_KEY(cmd->range)) {
     if (!(ea.argt & EX_RANGE)) {

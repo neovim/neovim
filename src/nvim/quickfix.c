@@ -4343,7 +4343,7 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
   }
   msg_start();
   msg_puts(":!");
-  msg_outtrans((char_u *)cmd);  // show what we are doing
+  msg_outtrans(cmd);  // show what we are doing
 
   return cmd;
 }
@@ -5100,7 +5100,7 @@ void ex_cfile(exarg_T *eap)
     }
   }
   if (*eap->arg != NUL) {
-    set_string_option_direct("ef", -1, (char_u *)eap->arg, OPT_FREE, 0);
+    set_string_option_direct("ef", -1, eap->arg, OPT_FREE, 0);
   }
 
   char *enc = (*curbuf->b_p_menc != NUL) ? (char *)curbuf->b_p_menc : (char *)p_menc;
@@ -5199,9 +5199,9 @@ static void vgr_display_fname(char *fname)
   msg_start();
   char *p = (char *)msg_strtrunc((char_u *)fname, true);
   if (p == NULL) {
-    msg_outtrans((char_u *)fname);
+    msg_outtrans(fname);
   } else {
-    msg_outtrans((char_u *)p);
+    msg_outtrans(p);
     xfree(p);
   }
   msg_clr_eos();
@@ -5716,7 +5716,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     aucmd_prepbuf(&aco, newbuf);
 
     // Need to set the filename for autocommands.
-    (void)setfname(curbuf, (char_u *)fname, NULL, false);
+    (void)setfname(curbuf, fname, NULL, false);
 
     // Create swap file now to avoid the ATTENTION message.
     check_need_swap(true);

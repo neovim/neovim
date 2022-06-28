@@ -1033,7 +1033,7 @@ char *vim_getenv(const char *name)
 ///                  a list of them.
 ///
 /// @return length of the string put into dst, does not include NUL byte.
-size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst, size_t dstlen,
+size_t home_replace(const buf_T *const buf, const char *src, char *const dst, size_t dstlen,
                     const bool one)
   FUNC_ATTR_NONNULL_ARG(3)
 {
@@ -1085,9 +1085,9 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
   }
 
   if (!one) {
-    src = (char_u *)skipwhite((char *)src);
+    src = skipwhite((char *)src);
   }
-  char *dst_p = (char *)dst;
+  char *dst_p = dst;
   while (*src && dstlen > 0) {
     // Here we are at the beginning of a file name.
     // First, check to see if the beginning of the file name matches
@@ -1123,11 +1123,11 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
 
     // if (!one) skip to separator: space or comma.
     while (*src && (one || (*src != ',' && *src != ' ')) && --dstlen > 0) {
-      *dst_p++ = (char)(*src++);
+      *dst_p++ = *src++;
     }
     // Skip separator.
     while ((*src == ' ' || *src == ',') && --dstlen > 0) {
-      *dst_p++ = (char)(*src++);
+      *dst_p++ = *src++;
     }
   }
   // If (dstlen == 0) out of space, what to do???
@@ -1137,7 +1137,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src, char_u *const dst
   if (must_free) {
     xfree(homedir_env_mod);
   }
-  return (size_t)(dst_p - (char *)dst);
+  return (size_t)(dst_p - dst);
 }
 
 /// Like home_replace, store the replaced string in allocated memory.
@@ -1149,9 +1149,9 @@ char_u *home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
   if (src != NULL) {          // just in case
     len += STRLEN(src);
   }
-  char_u *dst = xmalloc(len);
-  home_replace(buf, src, dst, len, true);
-  return dst;
+  char *dst = xmalloc(len);
+  home_replace(buf, (char *)src, dst, len, true);
+  return (char_u *)dst;
 }
 
 /// Function given to ExpandGeneric() to obtain an environment variable name.

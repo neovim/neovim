@@ -10688,7 +10688,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // "./…" => "/home/foo/…"
   vim_FullName(cwd, (char *)NameBuff, sizeof(NameBuff), false);
   // "/home/foo/…" => "~/…"
-  size_t len = home_replace(NULL, NameBuff, IObuff, sizeof(IObuff), true);
+  size_t len = home_replace(NULL, (char *)NameBuff, (char *)IObuff, sizeof(IObuff), true);
   // Trim slash.
   if (len != 1 && (IObuff[len - 1] == '\\' || IObuff[len - 1] == '/')) {
     IObuff[len - 1] = '\0';
@@ -10706,7 +10706,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // at this point the buffer has no terminal instance associated yet, so unset
   // the 'swapfile' option to ensure no swap file will be created
   curbuf->b_p_swf = false;
-  (void)setfname(curbuf, NameBuff, NULL, true);
+  (void)setfname(curbuf, (char *)NameBuff, NULL, true);
   // Save the job id and pid in b:terminal_job_{id,pid}
   Error err = ERROR_INIT;
   // deprecated: use 'channel' buffer option

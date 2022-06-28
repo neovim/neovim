@@ -174,7 +174,7 @@ static void aupat_show(AutoPat *ap, event_T event, int previous_group)
   }
 
   msg_col = 4;
-  msg_outtrans((char_u *)ap->pat);
+  msg_outtrans(ap->pat);
 
   for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
     // skip removed commands
@@ -195,10 +195,10 @@ static void aupat_show(AutoPat *ap, event_T event, int previous_group)
       size_t msglen = 100;
       char *msg = (char *)xmallocz(msglen);
       snprintf(msg, msglen, "%s [%s]", exec_to_string, ac->desc);
-      msg_outtrans((char_u *)msg);
+      msg_outtrans(msg);
       XFREE_CLEAR(msg);
     } else {
-      msg_outtrans((char_u *)exec_to_string);
+      msg_outtrans(exec_to_string);
     }
     XFREE_CLEAR(exec_to_string);
     if (p_verbose > 0) {
@@ -471,7 +471,7 @@ void augroup_del(char *name, bool stupid_legacy_mode)
       FOR_ALL_AUEVENTS(event) {
         FOR_ALL_AUPATS_IN_EVENT(event, ap) {
           if (ap->group == i && ap->pat != NULL) {
-            give_warning((char_u *)_("W19: Deleting augroup that is still in use"), true);
+            give_warning(_("W19: Deleting augroup that is still in use"), true);
             map_put(String, int)(&map_augroup_name_to_id, cstr_as_string(name), AUGROUP_DELETED);
             augroup_map_del(ap->group, NULL);
             return;
@@ -717,7 +717,7 @@ char *au_event_disable(char *what)
   } else {
     STRCAT(new_ei, what);
   }
-  set_string_option_direct("ei", -1, (char_u *)new_ei, OPT_FREE, SID_NONE);
+  set_string_option_direct("ei", -1, new_ei, OPT_FREE, SID_NONE);
   xfree(new_ei);
 
   return save_ei;
@@ -726,7 +726,7 @@ char *au_event_disable(char *what)
 void au_event_restore(char *old_ei)
 {
   if (old_ei != NULL) {
-    set_string_option_direct("ei", -1, (char_u *)old_ei, OPT_FREE, SID_NONE);
+    set_string_option_direct("ei", -1, old_ei, OPT_FREE, SID_NONE);
     xfree(old_ei);
   }
 }

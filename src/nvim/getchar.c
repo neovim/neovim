@@ -2501,7 +2501,7 @@ static int vgetorpeek(bool advance)
               && State != MODE_HITRETURN) {
             // this looks nice when typing a dead character map
             if (State & MODE_INSERT
-                && ptr2cells(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len - 1) == 1) {
+                && ptr2cells((char *)typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len - 1) == 1) {
               edit_putchar(typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len - 1], false);
               setcursor();  // put cursor back where it belongs
               c1 = 1;
@@ -2524,9 +2524,9 @@ static int vgetorpeek(bool advance)
 
           // this looks nice when typing a dead character map
           if ((State & MODE_CMDLINE) && cmdline_star == 0) {
-            char_u *p = typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len - 1;
-            if (ptr2cells(p) == 1 && *p < 128) {
-              putcmdline((char)(*p), false);
+            char *p = (char *)typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len - 1;
+            if (ptr2cells(p) == 1 && (uint8_t)(*p) < 128) {
+              putcmdline(*p, false);
               c1 = 1;
             }
           }

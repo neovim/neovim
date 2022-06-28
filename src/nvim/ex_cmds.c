@@ -876,8 +876,7 @@ void ex_retab(exarg_T *eap)
     long *old_vts_ary = curbuf->b_p_vts_array;
 
     if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
-      set_string_option_direct("vts", -1, (char_u *)new_ts_str,
-                               OPT_FREE | OPT_LOCAL, 0);
+      set_string_option_direct("vts", -1, new_ts_str, OPT_FREE | OPT_LOCAL, 0);
       curbuf->b_p_vts_array = new_vts_array;
       xfree(old_vts_ary);
     } else {
@@ -1232,7 +1231,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     msg_start();
     msg_putchar(':');
     msg_putchar('!');
-    msg_outtrans((char_u *)newcmd);
+    msg_outtrans(newcmd);
     msg_clr_eos();
     ui_cursor_goto(msg_row, msg_col);
 
@@ -1738,7 +1737,7 @@ int rename_buffer(char *new_fname)
   xfname = curbuf->b_fname;
   curbuf->b_ffname = NULL;
   curbuf->b_sfname = NULL;
-  if (setfname(curbuf, (char_u *)new_fname, NULL, true) == FAIL) {
+  if (setfname(curbuf, new_fname, NULL, true) == FAIL) {
     curbuf->b_ffname = (char_u *)fname;
     curbuf->b_sfname = (char_u *)sfname;
     return FAIL;
@@ -2218,7 +2217,7 @@ int getfile(int fnum, char *ffname_arg, char *sfname_arg, int setpm, linenr_T ln
 
   if (fnum == 0) {
     // make ffname full path, set sfname
-    fname_expand(curbuf, (char_u **)&ffname, (char_u **)&sfname);
+    fname_expand(curbuf, &ffname, &sfname);
     other = otherfile((char_u *)ffname);
     free_me = ffname;                   // has been allocated, free() later
   } else {
@@ -4453,8 +4452,7 @@ skip:
   // Show 'inccommand' preview if there are matched lines.
   if (cmdpreview && !aborting()) {
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
-      set_string_option_direct("icm", -1, (char_u *)"", OPT_FREE,
-                               SID_NONE);
+      set_string_option_direct("icm", -1, "", OPT_FREE, SID_NONE);
     } else if (*p_icm != NUL && pat != NULL) {
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group(S_LEN("Substitute"));
@@ -4742,7 +4740,7 @@ bool prepare_tagpreview(bool undo_sync)
                                                and 'cursorbind' */
       curwin->w_p_diff = false;             // no 'diff'
       set_string_option_direct("fdc", -1,     // no 'foldcolumn'
-                               (char_u *)"0", OPT_FREE, SID_NONE);
+                               "0", OPT_FREE, SID_NONE);
       return true;
     }
   }
@@ -5272,8 +5270,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
 static void prepare_help_buffer(void)
 {
   curbuf->b_help = true;
-  set_string_option_direct("buftype", -1, (char_u *)"help",
-                           OPT_FREE|OPT_LOCAL, 0);
+  set_string_option_direct("buftype", -1, "help", OPT_FREE|OPT_LOCAL, 0);
 
   // Always set these options after jumping to a help tag, because the
   // user may have an autocommand that gets in the way.
@@ -5282,14 +5279,13 @@ static void prepare_help_buffer(void)
   // Only set it when needed, buf_init_chartab() is some work.
   char *p = "!-~,^*,^|,^\",192-255";
   if (STRCMP(curbuf->b_p_isk, p) != 0) {
-    set_string_option_direct("isk", -1, (char_u *)p, OPT_FREE|OPT_LOCAL, 0);
+    set_string_option_direct("isk", -1, p, OPT_FREE|OPT_LOCAL, 0);
     check_buf_options(curbuf);
     (void)buf_init_chartab(curbuf, FALSE);
   }
 
   // Don't use the global foldmethod.
-  set_string_option_direct("fdm", -1, (char_u *)"manual",
-                           OPT_FREE|OPT_LOCAL, 0);
+  set_string_option_direct("fdm", -1, "manual", OPT_FREE|OPT_LOCAL, 0);
 
   curbuf->b_p_ts = 8;         // 'tabstop' is 8.
   curwin->w_p_list = FALSE;   // No list mode.
@@ -5375,7 +5371,7 @@ void fix_help_buffer(void)
         copy_option_part((char_u **)&p, NameBuff, MAXPATHL, ",");
         char *const rt = vim_getenv("VIMRUNTIME");
         if (rt != NULL
-            && path_full_compare((char_u *)rt, NameBuff, false, true) != kEqualFiles) {
+            && path_full_compare(rt, (char *)NameBuff, false, true) != kEqualFiles) {
           int fcount;
           char **fnames;
           char *s;
@@ -5582,8 +5578,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   // add the "help-tags" tag.
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags
-      || path_full_compare((char_u *)"$VIMRUNTIME/doc",
-                           (char_u *)dir, false, true) == kEqualFiles) {
+      || path_full_compare("$VIMRUNTIME/doc", dir, false, true) == kEqualFiles) {
     size_t s_len = 18 + STRLEN(tagfname);
     s = xmalloc(s_len);
     snprintf(s, s_len, "help-tags\t%s\t1\n", tagfname);
@@ -5874,8 +5869,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   buf_T *cmdpreview_buf = NULL;
 
   // disable file info message
-  set_string_option_direct("shm", -1, (char_u *)"F", OPT_FREE,
-                           SID_NONE);
+  set_string_option_direct("shm", -1, "F", OPT_FREE, SID_NONE);
 
   // Update the topline to ensure that main window is on the correct line
   update_topline(curwin);
@@ -5977,7 +5971,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
 
   xfree(str);
 
-  set_string_option_direct("shm", -1, (char_u *)save_shm_p, OPT_FREE, SID_NONE);
+  set_string_option_direct("shm", -1, save_shm_p, OPT_FREE, SID_NONE);
   xfree(save_shm_p);
 
   return preview ? 2 : 1;
@@ -6077,7 +6071,7 @@ void ex_oldfiles(exarg_T *eap)
       if (!message_filtered((char_u *)fname)) {
         msg_outnum(nr);
         msg_puts(": ");
-        msg_outtrans((char_u *)tv_get_string(TV_LIST_ITEM_TV(li)));
+        msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));
         msg_clr_eos();
         msg_putchar('\n');
         ui_flush();                  // output one line at a time

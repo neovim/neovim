@@ -531,7 +531,7 @@ void ml_open_file(buf_T *buf)
     need_wait_return = true;  // call wait_return later
     no_wait_return++;
     (void)semsg(_("E303: Unable to open swap file for \"%s\", recovery impossible"),
-                buf_spname(buf) != NULL ? buf_spname(buf) : (char_u *)buf->b_fname);
+                buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname);
     no_wait_return--;
   }
 
@@ -665,8 +665,8 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
      * First replace home dir path with "~/" with home_replace().
      * Then insert the user name to get "~user/".
      */
-    home_replace(NULL, buf->b_ffname, b0p->b0_fname,
-                 B0_FNAME_SIZE_CRYPT, TRUE);
+    home_replace(NULL, (char *)buf->b_ffname, (char *)b0p->b0_fname,
+                 B0_FNAME_SIZE_CRYPT, true);
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
       int retval = os_get_user_name(uname, B0_UNAME_SIZE);
@@ -933,18 +933,18 @@ void ml_recover(bool checkext)
    */
   if (directly) {
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
-    if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
+    if (setfname(curbuf, (char *)NameBuff, NULL, true) == FAIL) {
       goto theend;
     }
   }
 
-  home_replace(NULL, mfp->mf_fname, NameBuff, MAXPATHL, TRUE);
+  home_replace(NULL, (char *)mfp->mf_fname, (char *)NameBuff, MAXPATHL, true);
   smsg(_("Using swap file \"%s\""), NameBuff);
 
   if (buf_spname(curbuf) != NULL) {
     STRLCPY(NameBuff, buf_spname(curbuf), MAXPATHL);
   } else {
-    home_replace(NULL, curbuf->b_ffname, NameBuff, MAXPATHL, TRUE);
+    home_replace(NULL, (char *)curbuf->b_ffname, (char *)NameBuff, MAXPATHL, true);
   }
   smsg(_("Original file \"%s\""), NameBuff);
   msg_putchar('\n');
@@ -1377,7 +1377,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
       for (int i = 0; i < num_files; i++) {
         // Do not expand wildcards, on Windows would try to expand
         // "%tmp%" in "%tmp%file"
-        if (path_full_compare(p, files[i], true, false) & kEqualFiles) {
+        if (path_full_compare((char *)p, (char *)files[i], true, false) & kEqualFiles) {
           // Remove the name from files[i].  Move further entries
           // down.  When the array becomes empty free it here, since
           // FreeWild() won't be called below.
@@ -1520,7 +1520,7 @@ static time_t swapfile_info(char_u *fname)
     // print name of owner of the file
     if (os_get_uname(file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
       msg_puts(_("          owned by: "));
-      msg_outtrans((char_u *)uname);
+      msg_outtrans(uname);
       msg_puts(_("   dated: "));
     } else
 #endif
@@ -1547,7 +1547,7 @@ static time_t swapfile_info(char_u *fname)
         if (b0.b0_fname[0] == NUL) {
           msg_puts(_("[No Name]"));
         } else {
-          msg_outtrans(b0.b0_fname);
+          msg_outtrans((char *)b0.b0_fname);
         }
 
         msg_puts(_("\n          modified: "));
@@ -1555,7 +1555,7 @@ static time_t swapfile_info(char_u *fname)
 
         if (*(b0.b0_uname) != NUL) {
           msg_puts(_("\n         user name: "));
-          msg_outtrans(b0.b0_uname);
+          msg_outtrans((char *)b0.b0_uname);
         }
 
         if (*(b0.b0_hname) != NUL) {
@@ -1564,7 +1564,7 @@ static time_t swapfile_info(char_u *fname)
           } else {
             msg_puts(_("\n         host name: "));
           }
-          msg_outtrans(b0.b0_hname);
+          msg_outtrans((char *)b0.b0_hname);
         }
 
         if (char_to_long(b0.b0_pid) != 0L) {
@@ -3317,7 +3317,7 @@ static void attention_message(buf_T *buf, char_u *fname)
   msg_puts("\"\n");
   const time_t swap_mtime = swapfile_info(fname);
   msg_puts(_("While opening file \""));
-  msg_outtrans((char_u *)buf->b_fname);
+  msg_outtrans(buf->b_fname);
   msg_puts("\"\n");
   FileInfo file_info;
   if (!os_fileinfo(buf->b_fname, &file_info)) {
@@ -3339,10 +3339,10 @@ static void attention_message(buf_T *buf, char_u *fname)
              "  Quit, or continue with caution.\n"));
   msg_puts(_("(2) An edit session for this file crashed.\n"));
   msg_puts(_("    If this is the case, use \":recover\" or \"vim -r "));
-  msg_outtrans((char_u *)buf->b_fname);
+  msg_outtrans(buf->b_fname);
   msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
   msg_puts(_("    If you did this already, delete the swap file \""));
-  msg_outtrans(fname);
+  msg_outtrans((char *)fname);
   msg_puts(_("\"\n    to avoid this message.\n"));
   cmdline_row = msg_row;
   --no_wait_return;
@@ -3552,8 +3552,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
             char *const name = xmalloc(name_len);
             memcpy(name, sw_msg_1, sw_msg_1_len + 1);
-            home_replace(NULL, (char_u *)fname, (char_u *)&name[sw_msg_1_len],
-                         fname_len, true);
+            home_replace(NULL, fname, &name[sw_msg_1_len], fname_len, true);
             xstrlcat(name, sw_msg_2, name_len);
             choice = do_dialog(VIM_WARNING, (char_u *)_("VIM - ATTENTION"),
                                (char_u *)name,

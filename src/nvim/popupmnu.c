@@ -66,19 +66,19 @@ static void pum_compute_size(void)
   for (int i = 0; i < pum_size; i++) {
     int w;
     if (pum_array[i].pum_text != NULL) {
-      w = vim_strsize(pum_array[i].pum_text);
+      w = vim_strsize((char *)pum_array[i].pum_text);
       if (pum_base_width < w) {
         pum_base_width = w;
       }
     }
     if (pum_array[i].pum_kind != NULL) {
-      w = vim_strsize(pum_array[i].pum_kind) + 1;
+      w = vim_strsize((char *)pum_array[i].pum_kind) + 1;
       if (pum_kind_width < w) {
         pum_kind_width = w;
       }
     }
     if (pum_array[i].pum_extra != NULL) {
-      w = vim_strsize(pum_array[i].pum_extra) + 1;
+      w = vim_strsize((char *)pum_array[i].pum_extra) + 1;
       if (pum_extra_width < w) {
         pum_extra_width = w;
       }
@@ -504,7 +504,7 @@ void pum_redraw(void)
           if (s == NULL) {
             s = p;
           }
-          w = ptr2cells(p);
+          w = ptr2cells((char *)p);
 
           if ((*p == NUL) || (*p == TAB) || (totwidth + w > pum_width)) {
             // Display the text that fits or comes before a Tab.
@@ -517,13 +517,13 @@ void pum_redraw(void)
             *p = saved;
 
             if (pum_rl) {
-              char_u *rt = reverse_text(st);
-              char_u *rt_start = rt;
+              char *rt = (char *)reverse_text(st);
+              char *rt_start = rt;
               int size = vim_strsize(rt);
 
               if (size > pum_width) {
                 do {
-                  size -= utf_ptr2cells((char *)rt);
+                  size -= utf_ptr2cells(rt);
                   MB_PTR_ADV(rt);
                 } while (size > pum_width);
 
@@ -535,7 +535,7 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_puts_len(&pum_grid, rt, (int)STRLEN(rt), row,
+              grid_puts_len(&pum_grid, (char_u *)rt, (int)STRLEN(rt), row,
                             grid_col - size + 1, attr);
               xfree(rt_start);
               xfree(st);

@@ -1393,7 +1393,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
             while (old_size < repl_size && p > leader) {
               MB_PTR_BACK(leader, p);
-              old_size += ptr2cells(p);
+              old_size += ptr2cells((char *)p);
             }
             l = lead_repl_len - (int)(endp - p);
             if (l != 0) {
@@ -1413,7 +1413,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
             if (l > 1) {
               p -= l;
-              if (ptr2cells(p) > 1) {
+              if (ptr2cells((char *)p) > 1) {
                 p[1] = ' ';
                 l--;
               }
@@ -1463,7 +1463,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
                 int l = utfc_ptr2len((char *)p);
 
                 if (l > 1) {
-                  if (ptr2cells(p) > 1) {
+                  if (ptr2cells((char *)p) > 1) {
                     // Replace a double-wide char with
                     // two spaces
                     l--;

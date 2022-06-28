@@ -637,7 +637,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   // Truncate the line to fit it in the window
   len = 0;
   for (p = s; *p != NUL; MB_PTR_ADV(p)) {
-    len += ptr2cells(p);
+    len += ptr2cells((char *)p);
     if (len >= Columns - lead_len) {
       break;
     }
@@ -733,7 +733,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
       msg_putchar('\n');
       if (!got_int) {
         snprintf((char *)IObuff, IOSIZE, " %c %6" PRIdLINENR " %4d ", c, p->lnum, p->col);
-        msg_outtrans(IObuff);
+        msg_outtrans((char *)IObuff);
         if (name != NULL) {
           msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
         }
@@ -864,7 +864,7 @@ void ex_jumps(exarg_T *eap)
                i == curwin->w_jumplistidx ? '>' : ' ',
                i > curwin->w_jumplistidx ? i - curwin->w_jumplistidx : curwin->w_jumplistidx - i,
                curwin->w_jumplist[i].fmark.mark.lnum, curwin->w_jumplist[i].fmark.mark.col);
-      msg_outtrans(IObuff);
+      msg_outtrans((char *)IObuff);
       msg_outtrans_attr(name,
                         curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
                         ? HL_ATTR(HLF_D) : 0);
@@ -908,7 +908,7 @@ void ex_changes(exarg_T *eap)
                                           : curwin->w_changelistidx - i,
               (long)curbuf->b_changelist[i].mark.lnum,
               curbuf->b_changelist[i].mark.col);
-      msg_outtrans(IObuff);
+      msg_outtrans((char *)IObuff);
       name = mark_line(&curbuf->b_changelist[i].mark, 17);
       msg_outtrans_attr(name, HL_ATTR(HLF_D));
       xfree(name);
@@ -1578,7 +1578,7 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
     if (lp->coladd == 1
         && p[lp->col] != TAB
         && vim_isprintc(utf_ptr2char((char *)p + lp->col))
-        && ptr2cells(p + lp->col) > 1) {
+        && ptr2cells((char *)p + lp->col) > 1) {
       lp->coladd = 0;
     }
   }

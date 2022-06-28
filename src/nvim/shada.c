@@ -3977,7 +3977,7 @@ static bool shada_removable(const char *name)
   for (p = (char *)p_shada; *p;) {
     (void)copy_option_part((char_u **)&p, (char_u *)part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
-      home_replace(NULL, (char_u *)(part + 1), (char_u *)NameBuff, MAXPATHL, true);
+      home_replace(NULL, part + 1, (char *)NameBuff, MAXPATHL, true);
       size_t n = STRLEN(NameBuff);
       if (mb_strnicmp((char_u *)NameBuff, (char_u *)new_name, n) == 0) {
         retval = true;

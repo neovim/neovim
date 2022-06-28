@@ -3171,9 +3171,9 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
     msg_puts("\n");
     if (curwin->w_s->b_syn_isk != empty_option) {
       msg_puts("syntax iskeyword ");
-      msg_outtrans(curwin->w_s->b_syn_isk);
+      msg_outtrans((char *)curwin->w_s->b_syn_isk);
     } else {
-      msg_outtrans((char_u *)_("syntax iskeyword not set"));
+      msg_outtrans(_("syntax iskeyword not set"));
     }
   } else {
     if (STRNICMP(arg, "clear", 5) == 0) {
@@ -3382,7 +3382,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
           XFREE_CLEAR(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
         }
       } else {
-        id = syn_name2id_len(arg, (int)(arg_end - arg));
+        id = syn_name2id_len((char *)arg, (int)(arg_end - arg));
         if (id == 0) {
           semsg(_(e_nogroup), arg);
           break;
@@ -3553,7 +3553,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
           syn_list_cluster(id - SYNID_CLUSTER);
         }
       } else {
-        int id = syn_name2id_len(arg, (int)(arg_end - arg));
+        int id = syn_name2id_len((char *)arg, (int)(arg_end - arg));
         if (id == 0) {
           semsg(_(e_nogroup), arg);
         } else {
@@ -3690,8 +3690,8 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
       }
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0) {
-        msg_outtrans(highlight_group_name(SYN_ITEMS(curwin->w_s)
-                                          [spp->sp_sync_idx].sp_syn.id - 1));
+        msg_outtrans((char *)highlight_group_name(SYN_ITEMS(curwin->w_s)
+                                                  [spp->sp_sync_idx].sp_syn.id - 1));
       } else {
         msg_puts("NONE");
       }
@@ -3704,7 +3704,7 @@ static void syn_list_one(const int id, const bool syncing, const bool link_only)
     (void)syn_list_header(did_header, 0, id, true);
     msg_puts_attr("links to", attr);
     msg_putchar(' ');
-    msg_outtrans(highlight_group_name(highlight_link_id(id - 1) - 1));
+    msg_outtrans((char *)highlight_group_name(highlight_link_id(id - 1) - 1));
   }
 }
 
@@ -3729,7 +3729,7 @@ static void syn_list_cluster(int id)
 
   // slight hack:  roughly duplicate the guts of syn_list_header()
   msg_putchar('\n');
-  msg_outtrans(SYN_CLSTR(curwin->w_s)[id].scl_name);
+  msg_outtrans((char *)SYN_CLSTR(curwin->w_s)[id].scl_name);
 
   if (msg_col >= endcol) {      // output at least one space
     endcol = msg_col + 1;
@@ -3766,9 +3766,9 @@ static void put_id_list(const char *const name, const int16_t *const list, const
       int scl_id = *p - SYNID_CLUSTER;
 
       msg_putchar('@');
-      msg_outtrans(SYN_CLSTR(curwin->w_s)[scl_id].scl_name);
+      msg_outtrans((char *)SYN_CLSTR(curwin->w_s)[scl_id].scl_name);
     } else {
-      msg_outtrans(highlight_group_name(*p - 1));
+      msg_outtrans((char *)highlight_group_name(*p - 1));
     }
     if (p[1]) {
       msg_putchar(',');
@@ -3788,9 +3788,9 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
     msg_puts_attr("matchgroup", attr);
     msg_putchar('=');
     if (last_matchgroup == 0) {
-      msg_outtrans((char_u *)"NONE");
+      msg_outtrans("NONE");
     } else {
-      msg_outtrans(highlight_group_name(last_matchgroup - 1));
+      msg_outtrans((char *)highlight_group_name(last_matchgroup - 1));
     }
     msg_putchar(' ');
   }
@@ -3807,7 +3807,7 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
     }
   }
   msg_putchar(sepchars[i]);
-  msg_outtrans(spp->sp_pattern);
+  msg_outtrans((char *)spp->sp_pattern);
   msg_putchar(sepchars[i]);
 
   // output any pattern options
@@ -3917,7 +3917,7 @@ static bool syn_list_keywords(const int id, const hashtab_T *const ht, bool did_
             prev_skipempty = (kp->flags & HL_SKIPEMPTY);
           }
         }
-        msg_outtrans(kp->keyword);
+        msg_outtrans((char *)kp->keyword);
       }
     }
   }
@@ -6038,7 +6038,7 @@ static void syntime_report(void)
     msg_puts(profile_msg(p->average));
     msg_puts(" ");
     msg_advance(50);
-    msg_outtrans(highlight_group_name(p->id - 1));
+    msg_outtrans((char *)highlight_group_name(p->id - 1));
     msg_puts(" ");
 
     msg_advance(69);

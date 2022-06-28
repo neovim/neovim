@@ -348,7 +348,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   }
   retval = msg_end();
 
-  if (keep && retval && vim_strsize((char_u *)s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
+  if (keep && retval && vim_strsize((char *)s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
     set_keep_msg((char *)s, 0);
   }
 
@@ -374,7 +374,7 @@ char_u *msg_strtrunc(char_u *s, int force)
   if ((!msg_scroll && !need_wait_return && shortmess(SHM_TRUNCALL)
        && !exmode_active && msg_silent == 0 && !ui_has(kUIMessages))
       || force) {
-    len = vim_strsize(s);
+    len = vim_strsize((char *)s);
     if (msg_scrolled != 0) {
       // Use all the columns.
       room = (Rows - msg_row) * Columns - 1;
@@ -423,7 +423,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
       buf[e] = NUL;
       return;
     }
-    n = ptr2cells(s + e);
+    n = ptr2cells((char *)s + e);
     if (len + n > half) {
       break;
     }
@@ -443,7 +443,7 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
     do {
       half = half - utf_head_off(s, s + half - 1) - 1;
     } while (half > 0 && utf_iscomposing(utf_ptr2char((char *)s + half)));
-    n = ptr2cells(s + half);
+    n = ptr2cells((char *)s + half);
     if (len + n > room || half == 0) {
       break;
     }
@@ -892,7 +892,7 @@ char_u *msg_may_trunc(bool force, char_u *s)
   room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
       && (int)STRLEN(s) - room > 0) {
-    int size = vim_strsize(s);
+    int size = vim_strsize((char *)s);
 
     // There may be room anyway when there are multibyte chars.
     if (size <= room) {
@@ -1275,7 +1275,7 @@ void wait_return(int redraw)
   emsg_on_display = false;      // can delete error message now
   lines_left = -1;              // reset lines_left at next msg_start()
   reset_last_sourcing();
-  if (keep_msg != NULL && vim_strsize(keep_msg) >=
+  if (keep_msg != NULL && vim_strsize((char *)keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
     XFREE_CLEAR(keep_msg);          // don't redisplay message, it's too long
   }
@@ -1489,9 +1489,9 @@ static void msg_home_replace_attr(char_u *fname, int attr)
 /// Use attributes 'attr'.
 ///
 /// @return  the number of characters it takes on the screen.
-int msg_outtrans(char_u *str)
+int msg_outtrans(char *str)
 {
-  return msg_outtrans_attr(str, 0);
+  return msg_outtrans_attr((char_u *)str, 0);
 }
 
 int msg_outtrans_attr(const char_u *str, int attr)
@@ -1654,7 +1654,7 @@ int msg_outtrans_special(const char_u *strstart, bool from, int maxlen)
       // single-byte character or illegal byte
       text = (char *)transchar_byte((uint8_t)text[0]);
     }
-    const int len = vim_strsize((char_u *)text);
+    const int len = vim_strsize((char *)text);
     if (maxlen > 0 && retval + len >= maxlen) {
       break;
     }
@@ -3027,7 +3027,7 @@ void msg_moremsg(int full)
   if (full) {
     grid_puts(&msg_grid_adj, (char_u *)
               _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
-              Rows - 1, vim_strsize(s), attr);
+              Rows - 1, vim_strsize((char *)s), attr);
   }
 }
 
@@ -3376,7 +3376,8 @@ int verbose_open(void)
 
 /// Give a warning message (for searching).
 /// Use 'w' highlighting and may repeat the message after redrawing
-void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
+void give_warning(char *message, bool hl)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // Don't do this for ":silent".
   if (msg_silent != 0) {
@@ -3386,7 +3387,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   // Don't want a hit-enter prompt here.
   no_wait_return++;
 
-  set_vim_var_string(VV_WARNINGMSG, (char *)message, -1);
+  set_vim_var_string(VV_WARNINGMSG, message, -1);
   XFREE_CLEAR(keep_msg);
   if (hl) {
     keep_msg_attr = HL_ATTR(HLF_W);
@@ -3399,7 +3400,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   }
 
   if (msg_attr((const char *)message, keep_msg_attr) && msg_scrolled == 0) {
-    set_keep_msg((char *)message, keep_msg_attr);
+    set_keep_msg(message, keep_msg_attr);
   }
   msg_didout = false;  // Overwrite this message.
   msg_nowait = true;   // Don't wait for this message.
@@ -3411,7 +3412,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
 void give_warning2(char_u *const message, char_u *const a1, bool hl)
 {
   vim_snprintf((char *)IObuff, IOSIZE, (char *)message, a1);
-  give_warning(IObuff, hl);
+  give_warning((char *)IObuff, hl);
 }
 
 /// Advance msg cursor to column "col".

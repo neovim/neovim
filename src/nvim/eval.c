@@ -8968,7 +8968,7 @@ static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t
     msg_putchar(' ');
   }
 
-  msg_outtrans((char_u *)string);
+  msg_outtrans((char *)string);
 
   if (type == VAR_FUNC || type == VAR_PARTIAL) {
     msg_puts("()");
@@ -10124,7 +10124,7 @@ repeat:
         os_dirname((char_u *)dirname, MAXPATHL);
         if (has_homerelative) {
           s = xstrdup(dirname);
-          home_replace(NULL, (char_u *)s, (char_u *)dirname, MAXPATHL, true);
+          home_replace(NULL, s, dirname, MAXPATHL, true);
           xfree(s);
         }
         size_t namelen = STRLEN(dirname);
@@ -10147,7 +10147,7 @@ repeat:
           }
         }
       } else {
-        home_replace(NULL, (char_u *)p, (char_u *)dirname, MAXPATHL, true);
+        home_replace(NULL, p, dirname, MAXPATHL, true);
         // Only replace it when it starts with '~'
         if (*dirname == '~') {
           s = xstrdup(dirname);

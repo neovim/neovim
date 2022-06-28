@@ -1826,7 +1826,7 @@ static void spell_reload_one(char_u *fname, bool added_word)
   bool didit = false;
 
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare(fname, slang->sl_fname, false, true) == kEqualFiles) {
+    if (path_full_compare((char *)fname, (char *)slang->sl_fname, false, true) == kEqualFiles) {
       slang_clear(slang);
       if (spell_load_file(fname, NULL, slang, false) == NULL) {
         // reloading failed, clear the language
@@ -4903,7 +4903,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
   // of the code for the soundfolding stuff.
   // It might have been done already by spell_reload_one().
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare(wfname, slang->sl_fname, false, true)
+    if (path_full_compare((char *)wfname, (char *)slang->sl_fname, false, true)
         == kEqualFiles) {
       break;
     }
@@ -5598,9 +5598,8 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
           if (fseek(fd, fpos, SEEK_SET) == 0) {
             fputc('#', fd);
             if (undo) {
-              home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);
-              smsg(_("Word '%.*s' removed from %s"),
-                   len, word, NameBuff);
+              home_replace(NULL, (char *)fname, (char *)NameBuff, MAXPATHL, true);
+              smsg(_("Word '%.*s' removed from %s"), len, word, NameBuff);
             }
           }
           if (fseek(fd, fpos_next, SEEK_SET) != 0) {
@@ -5648,7 +5647,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       }
       fclose(fd);
 
-      home_replace(NULL, fname, NameBuff, MAXPATHL, TRUE);
+      home_replace(NULL, (char *)fname, (char *)NameBuff, MAXPATHL, true);
       smsg(_("Word '%.*s' added to %s"), len, word, NameBuff);
     }
   }

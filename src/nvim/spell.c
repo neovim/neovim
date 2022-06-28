@@ -1576,7 +1576,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
         lnum = wp->w_buffer->b_ml.ml_line_count;
         wrapped = true;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning((char_u *)_(top_bot_msg), true);
+          give_warning(_(top_bot_msg), true);
         }
       }
       capcol = -1;
@@ -1591,7 +1591,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
         lnum = 1;
         wrapped = true;
         if (!shortmess(SHM_SEARCH)) {
-          give_warning((char_u *)_(bot_top_msg), true);
+          give_warning(_(bot_top_msg), true);
         }
       }
 
@@ -2115,7 +2115,7 @@ char *did_set_spelllang(win_T *wp)
 
       // Check if we loaded this language before.
       for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-        if (path_full_compare(lang, slang->sl_fname, false, true)
+        if (path_full_compare((char *)lang, (char *)slang->sl_fname, false, true)
             == kEqualFiles) {
           break;
         }
@@ -2164,7 +2164,7 @@ char *did_set_spelllang(win_T *wp)
     // Loop over the languages, there can be several files for "lang".
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
       if (filename
-          ? path_full_compare(lang, slang->sl_fname, false, true) == kEqualFiles
+          ? path_full_compare((char *)lang, (char *)slang->sl_fname, false, true) == kEqualFiles
           : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -2222,7 +2222,7 @@ char *did_set_spelllang(win_T *wp)
       for (c = 0; c < ga.ga_len; ++c) {
         p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
         if (p != NULL
-            && path_full_compare(spf_name, p, false, true) == kEqualFiles) {
+            && path_full_compare((char *)spf_name, (char *)p, false, true) == kEqualFiles) {
           break;
         }
       }
@@ -2233,7 +2233,7 @@ char *did_set_spelllang(win_T *wp)
 
     // Check if it was loaded already.
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-      if (path_full_compare(spf_name, slang->sl_fname, false, true)
+      if (path_full_compare((char *)spf_name, (char *)slang->sl_fname, false, true)
           == kEqualFiles) {
         break;
       }

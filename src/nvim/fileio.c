@@ -1697,7 +1697,7 @@ failed:
     save_file_ff(curbuf);
     // If editing a new file: set 'fenc' for the current buffer.
     // Also for ":read ++edit file".
-    set_string_option_direct("fenc", -1, (char_u *)fenc, OPT_FREE | OPT_LOCAL, 0);
+    set_string_option_direct("fenc", -1, fenc, OPT_FREE | OPT_LOCAL, 0);
   }
   if (fenc_alloced) {
     xfree(fenc);
@@ -2057,7 +2057,7 @@ void set_forced_fenc(exarg_T *eap)
 {
   if (eap->force_enc != 0) {
     char_u *fenc = enc_canonize((char_u *)eap->cmd + eap->force_enc);
-    set_string_option_direct("fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
+    set_string_option_direct("fenc", -1, (char *)fenc, OPT_FREE|OPT_LOCAL, 0);
     xfree(fenc);
   }
 }
@@ -3765,7 +3765,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
     return FAIL;
   }
 
-  if (setfname(curbuf, fname, sfname, false) == OK) {
+  if (setfname(curbuf, (char *)fname, (char *)sfname, false) == OK) {
     curbuf->b_flags |= BF_NOTEDITED;
   }
 
@@ -3805,8 +3805,7 @@ static void add_quoted_fname(char *const ret_buf, const size_t buf_len, const bu
     fname = "-stdin-";
   }
   ret_buf[0] = '"';
-  home_replace(buf, (const char_u *)fname, (char_u *)ret_buf + 1,
-               (int)buf_len - 4, true);
+  home_replace(buf, fname, ret_buf + 1, (int)buf_len - 4, true);
   xstrlcat(ret_buf, "\" ", buf_len);
 }
 

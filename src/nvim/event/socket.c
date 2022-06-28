@@ -38,7 +38,7 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
     char *port = host_end + 1;
     intmax_t iport;
 
-    int ok = try_getdigits(&(char_u *){ (char_u *)port }, &iport);
+    int ok = try_getdigits(&(char *){ port }, &iport);
     if (!ok || iport < 0 || iport > UINT16_MAX) {
       ELOG("Invalid port: %s", port);
       return UV_EINVAL;

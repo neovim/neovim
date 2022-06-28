@@ -1044,9 +1044,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
             if (tofree != NULL) {
               char *s = tofree;
               char buf[MSG_BUF_LEN];
-              if (vim_strsize((char_u *)s) > MSG_BUF_CLEN) {
-                trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN,
-                             sizeof(buf));
+              if (vim_strsize(s) > MSG_BUF_CLEN) {
+                trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN, sizeof(buf));
                 s = buf;
               }
               msg_puts(s);
@@ -1159,7 +1158,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
       char *tofree = s;
       emsg_off--;
       if (s != NULL) {
-        if (vim_strsize((char_u *)s) > MSG_BUF_CLEN) {
+        if (vim_strsize(s) > MSG_BUF_CLEN) {
           trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN, MSG_BUF_LEN);
           s = buf;
         }
