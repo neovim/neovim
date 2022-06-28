@@ -1,11 +1,11 @@
-# emoji-data.txt
-# Date: 2020-01-28, 20:52:38 GMT
-# © 2020 Unicode®, Inc.
+# emoji-data-14.0.0.txt
+# Date: 2021-08-26, 17:22:22 GMT
+# © 2021 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Emoji Data for UTS #51
-# Version: 13.0
+# Used with Emoji Version 14.0 and subsequent minor revisions (if any)
 #
 # For documentation and usage, see http://www.unicode.org/reports/tr51
 #
@@ -22,7 +22,7 @@
 # All omitted code points have Emoji=No 
 # @missing: 0000..10FFFF  ; Emoji ; No
 
-0023          ; Emoji                # E0.0   [1] (#️)       number sign
+0023          ; Emoji                # E0.0   [1] (#️)       hash sign
 002A          ; Emoji                # E0.0   [1] (*️)       asterisk
 0030..0039    ; Emoji                # E0.0  [10] (0️..9️)    digit zero..digit nine
 00A9          ; Emoji                # E0.6   [1] (©️)       copyright
@@ -119,8 +119,8 @@
 2747          ; Emoji                # E0.6   [1] (❇️)       sparkle
 274C          ; Emoji                # E0.6   [1] (❌)       cross mark
 274E          ; Emoji                # E0.6   [1] (❎)       cross mark button
-2753..2755    ; Emoji                # E0.6   [3] (❓..❕)    question mark..white exclamation mark
-2757          ; Emoji                # E0.6   [1] (❗)       exclamation mark
+2753..2755    ; Emoji                # E0.6   [3] (❓..❕)    red question mark..white exclamation mark
+2757          ; Emoji                # E0.6   [1] (❗)       red exclamation mark
 2763          ; Emoji                # E1.0   [1] (❣️)       heart exclamation
 2764          ; Emoji                # E0.6   [1] (❤️)       red heart
 2795..2797    ; Emoji                # E0.6   [3] (➕..➗)    plus..divide
@@ -239,7 +239,7 @@
 1F509         ; Emoji                # E1.0   [1] (🔉)       speaker medium volume
 1F50A..1F514  ; Emoji                # E0.6  [11] (🔊..🔔)    speaker high volume..bell
 1F515         ; Emoji                # E1.0   [1] (🔕)       bell with slash
-1F516..1F52B  ; Emoji                # E0.6  [22] (🔖..🔫)    bookmark..pistol
+1F516..1F52B  ; Emoji                # E0.6  [22] (🔖..🔫)    bookmark..water pistol
 1F52C..1F52D  ; Emoji                # E1.0   [2] (🔬..🔭)    microscope..telescope
 1F52E..1F53D  ; Emoji                # E0.6  [16] (🔮..🔽)    crystal ball..downwards button
 1F549..1F54A  ; Emoji                # E0.7   [2] (🕉️..🕊️)    om..dove
@@ -294,7 +294,7 @@
 1F62E..1F62F  ; Emoji                # E1.0   [2] (😮..😯)    face with open mouth..hushed face
 1F630..1F633  ; Emoji                # E0.6   [4] (😰..😳)    anxious face with sweat..flushed face
 1F634         ; Emoji                # E1.0   [1] (😴)       sleeping face
-1F635         ; Emoji                # E0.6   [1] (😵)       dizzy face
+1F635         ; Emoji                # E0.6   [1] (😵)       face with crossed-out eyes
 1F636         ; Emoji                # E1.0   [1] (😶)       face without mouth
 1F637..1F640  ; Emoji                # E0.6  [10] (😷..🙀)    face with medical mask..weary cat
 1F641..1F644  ; Emoji                # E1.0   [4] (🙁..🙄)    slightly frowning face..face with rolling eyes
@@ -341,6 +341,7 @@
 1F6D1..1F6D2  ; Emoji                # E3.0   [2] (🛑..🛒)    stop sign..shopping cart
 1F6D5         ; Emoji                # E12.0  [1] (🛕)       hindu temple
 1F6D6..1F6D7  ; Emoji                # E13.0  [2] (🛖..🛗)    hut..elevator
+1F6DD..1F6DF  ; Emoji                # E14.0  [3] (🛝..🛟)    playground slide..ring buoy
 1F6E0..1F6E5  ; Emoji                # E0.7   [6] (🛠️..🛥️)    hammer and wrench..motor boat
 1F6E9         ; Emoji                # E0.7   [1] (🛩️)       small airplane
 1F6EB..1F6EC  ; Emoji                # E1.0   [2] (🛫..🛬)    airplane departure..airplane arrival
@@ -352,6 +353,7 @@
 1F6FA         ; Emoji                # E12.0  [1] (🛺)       auto rickshaw
 1F6FB..1F6FC  ; Emoji                # E13.0  [2] (🛻..🛼)    pickup truck..roller skate
 1F7E0..1F7EB  ; Emoji                # E12.0 [12] (🟠..🟫)    orange circle..brown square
+1F7F0         ; Emoji                # E14.0  [1] (🟰)       heavy equals sign
 1F90C         ; Emoji                # E13.0  [1] (🤌)       pinched fingers
 1F90D..1F90F  ; Emoji                # E12.0  [3] (🤍..🤏)    white heart..pinching hand
 1F910..1F918  ; Emoji                # E1.0   [9] (🤐..🤘)    zipper-mouth face..sign of the horns
@@ -375,6 +377,7 @@
 1F972         ; Emoji                # E13.0  [1] (🥲)       smiling face with tear
 1F973..1F976  ; Emoji                # E11.0  [4] (🥳..🥶)    partying face..cold face
 1F977..1F978  ; Emoji                # E13.0  [2] (🥷..🥸)    ninja..disguised face
+1F979         ; Emoji                # E14.0  [1] (🥹)       face holding back tears
 1F97A         ; Emoji                # E11.0  [1] (🥺)       pleading face
 1F97B         ; Emoji                # E12.0  [1] (🥻)       sari
 1F97C..1F97F  ; Emoji                # E11.0  [4] (🥼..🥿)    lab coat..flat shoe
@@ -392,21 +395,29 @@
 1F9C1..1F9C2  ; Emoji                # E11.0  [2] (🧁..🧂)    cupcake..salt
 1F9C3..1F9CA  ; Emoji                # E12.0  [8] (🧃..🧊)    beverage box..ice
 1F9CB         ; Emoji                # E13.0  [1] (🧋)       bubble tea
+1F9CC         ; Emoji                # E14.0  [1] (🧌)       troll
 1F9CD..1F9CF  ; Emoji                # E12.0  [3] (🧍..🧏)    person standing..deaf person
 1F9D0..1F9E6  ; Emoji                # E5.0  [23] (🧐..🧦)    face with monocle..socks
 1F9E7..1F9FF  ; Emoji                # E11.0 [25] (🧧..🧿)    red envelope..nazar amulet
 1FA70..1FA73  ; Emoji                # E12.0  [4] (🩰..🩳)    ballet shoes..shorts
 1FA74         ; Emoji                # E13.0  [1] (🩴)       thong sandal
 1FA78..1FA7A  ; Emoji                # E12.0  [3] (🩸..🩺)    drop of blood..stethoscope
+1FA7B..1FA7C  ; Emoji                # E14.0  [2] (🩻..🩼)    x-ray..crutch
 1FA80..1FA82  ; Emoji                # E12.0  [3] (🪀..🪂)    yo-yo..parachute
 1FA83..1FA86  ; Emoji                # E13.0  [4] (🪃..🪆)    boomerang..nesting dolls
 1FA90..1FA95  ; Emoji                # E12.0  [6] (🪐..🪕)    ringed planet..banjo
 1FA96..1FAA8  ; Emoji                # E13.0 [19] (🪖..🪨)    military helmet..rock
+1FAA9..1FAAC  ; Emoji                # E14.0  [4] (🪩..🪬)    mirror ball..hamsa
 1FAB0..1FAB6  ; Emoji                # E13.0  [7] (🪰..🪶)    fly..feather
+1FAB7..1FABA  ; Emoji                # E14.0  [4] (🪷..🪺)    lotus..nest with eggs
 1FAC0..1FAC2  ; Emoji                # E13.0  [3] (🫀..🫂)    anatomical heart..people hugging
+1FAC3..1FAC5  ; Emoji                # E14.0  [3] (🫃..🫅)    pregnant man..person with crown
 1FAD0..1FAD6  ; Emoji                # E13.0  [7] (🫐..🫖)    blueberries..teapot
+1FAD7..1FAD9  ; Emoji                # E14.0  [3] (🫗..🫙)    pouring liquid..jar
+1FAE0..1FAE7  ; Emoji                # E14.0  [8] (🫠..🫧)    melting face..bubbles
+1FAF0..1FAF6  ; Emoji                # E14.0  [7] (🫰..🫶)    hand with index finger and thumb crossed..heart hands
 
-# Total elements: 1367
+# Total elements: 1404
 
 # ================================================
 
@@ -438,8 +449,8 @@
 2728          ; Emoji_Presentation   # E0.6   [1] (✨)       sparkles
 274C          ; Emoji_Presentation   # E0.6   [1] (❌)       cross mark
 274E          ; Emoji_Presentation   # E0.6   [1] (❎)       cross mark button
-2753..2755    ; Emoji_Presentation   # E0.6   [3] (❓..❕)    question mark..white exclamation mark
-2757          ; Emoji_Presentation   # E0.6   [1] (❗)       exclamation mark
+2753..2755    ; Emoji_Presentation   # E0.6   [3] (❓..❕)    red question mark..white exclamation mark
+2757          ; Emoji_Presentation   # E0.6   [1] (❗)       red exclamation mark
 2795..2797    ; Emoji_Presentation   # E0.6   [3] (➕..➗)    plus..divide
 27B0          ; Emoji_Presentation   # E0.6   [1] (➰)       curly loop
 27BF          ; Emoji_Presentation   # E1.0   [1] (➿)       double curly loop
@@ -533,7 +544,7 @@
 1F509         ; Emoji_Presentation   # E1.0   [1] (🔉)       speaker medium volume
 1F50A..1F514  ; Emoji_Presentation   # E0.6  [11] (🔊..🔔)    speaker high volume..bell
 1F515         ; Emoji_Presentation   # E1.0   [1] (🔕)       bell with slash
-1F516..1F52B  ; Emoji_Presentation   # E0.6  [22] (🔖..🔫)    bookmark..pistol
+1F516..1F52B  ; Emoji_Presentation   # E0.6  [22] (🔖..🔫)    bookmark..water pistol
 1F52C..1F52D  ; Emoji_Presentation   # E1.0   [2] (🔬..🔭)    microscope..telescope
 1F52E..1F53D  ; Emoji_Presentation   # E0.6  [16] (🔮..🔽)    crystal ball..downwards button
 1F54B..1F54E  ; Emoji_Presentation   # E1.0   [4] (🕋..🕎)    kaaba..menorah
@@ -569,7 +580,7 @@
 1F62E..1F62F  ; Emoji_Presentation   # E1.0   [2] (😮..😯)    face with open mouth..hushed face
 1F630..1F633  ; Emoji_Presentation   # E0.6   [4] (😰..😳)    anxious face with sweat..flushed face
 1F634         ; Emoji_Presentation   # E1.0   [1] (😴)       sleeping face
-1F635         ; Emoji_Presentation   # E0.6   [1] (😵)       dizzy face
+1F635         ; Emoji_Presentation   # E0.6   [1] (😵)       face with crossed-out eyes
 1F636         ; Emoji_Presentation   # E1.0   [1] (😶)       face without mouth
 1F637..1F640  ; Emoji_Presentation   # E0.6  [10] (😷..🙀)    face with medical mask..weary cat
 1F641..1F644  ; Emoji_Presentation   # E1.0   [4] (🙁..🙄)    slightly frowning face..face with rolling eyes
@@ -614,6 +625,7 @@
 1F6D1..1F6D2  ; Emoji_Presentation   # E3.0   [2] (🛑..🛒)    stop sign..shopping cart
 1F6D5         ; Emoji_Presentation   # E12.0  [1] (🛕)       hindu temple
 1F6D6..1F6D7  ; Emoji_Presentation   # E13.0  [2] (🛖..🛗)    hut..elevator
+1F6DD..1F6DF  ; Emoji_Presentation   # E14.0  [3] (🛝..🛟)    playground slide..ring buoy
 1F6EB..1F6EC  ; Emoji_Presentation   # E1.0   [2] (🛫..🛬)    airplane departure..airplane arrival
 1F6F4..1F6F6  ; Emoji_Presentation   # E3.0   [3] (🛴..🛶)    kick scooter..canoe
 1F6F7..1F6F8  ; Emoji_Presentation   # E5.0   [2] (🛷..🛸)    sled..flying saucer
@@ -621,6 +633,7 @@
 1F6FA         ; Emoji_Presentation   # E12.0  [1] (🛺)       auto rickshaw
 1F6FB..1F6FC  ; Emoji_Presentation   # E13.0  [2] (🛻..🛼)    pickup truck..roller skate
 1F7E0..1F7EB  ; Emoji_Presentation   # E12.0 [12] (🟠..🟫)    orange circle..brown square
+1F7F0         ; Emoji_Presentation   # E14.0  [1] (🟰)       heavy equals sign
 1F90C         ; Emoji_Presentation   # E13.0  [1] (🤌)       pinched fingers
 1F90D..1F90F  ; Emoji_Presentation   # E12.0  [3] (🤍..🤏)    white heart..pinching hand
 1F910..1F918  ; Emoji_Presentation   # E1.0   [9] (🤐..🤘)    zipper-mouth face..sign of the horns
@@ -644,6 +657,7 @@
 1F972         ; Emoji_Presentation   # E13.0  [1] (🥲)       smiling face with tear
 1F973..1F976  ; Emoji_Presentation   # E11.0  [4] (🥳..🥶)    partying face..cold face
 1F977..1F978  ; Emoji_Presentation   # E13.0  [2] (🥷..🥸)    ninja..disguised face
+1F979         ; Emoji_Presentation   # E14.0  [1] (🥹)       face holding back tears
 1F97A         ; Emoji_Presentation   # E11.0  [1] (🥺)       pleading face
 1F97B         ; Emoji_Presentation   # E12.0  [1] (🥻)       sari
 1F97C..1F97F  ; Emoji_Presentation   # E11.0  [4] (🥼..🥿)    lab coat..flat shoe
@@ -661,21 +675,29 @@
 1F9C1..1F9C2  ; Emoji_Presentation   # E11.0  [2] (🧁..🧂)    cupcake..salt
 1F9C3..1F9CA  ; Emoji_Presentation   # E12.0  [8] (🧃..🧊)    beverage box..ice
 1F9CB         ; Emoji_Presentation   # E13.0  [1] (🧋)       bubble tea
+1F9CC         ; Emoji_Presentation   # E14.0  [1] (🧌)       troll
 1F9CD..1F9CF  ; Emoji_Presentation   # E12.0  [3] (🧍..🧏)    person standing..deaf person
 1F9D0..1F9E6  ; Emoji_Presentation   # E5.0  [23] (🧐..🧦)    face with monocle..socks
 1F9E7..1F9FF  ; Emoji_Presentation   # E11.0 [25] (🧧..🧿)    red envelope..nazar amulet
 1FA70..1FA73  ; Emoji_Presentation   # E12.0  [4] (🩰..🩳)    ballet shoes..shorts
 1FA74         ; Emoji_Presentation   # E13.0  [1] (🩴)       thong sandal
 1FA78..1FA7A  ; Emoji_Presentation   # E12.0  [3] (🩸..🩺)    drop of blood..stethoscope
+1FA7B..1FA7C  ; Emoji_Presentation   # E14.0  [2] (🩻..🩼)    x-ray..crutch
 1FA80..1FA82  ; Emoji_Presentation   # E12.0  [3] (🪀..🪂)    yo-yo..parachute
 1FA83..1FA86  ; Emoji_Presentation   # E13.0  [4] (🪃..🪆)    boomerang..nesting dolls
 1FA90..1FA95  ; Emoji_Presentation   # E12.0  [6] (🪐..🪕)    ringed planet..banjo
 1FA96..1FAA8  ; Emoji_Presentation   # E13.0 [19] (🪖..🪨)    military helmet..rock
+1FAA9..1FAAC  ; Emoji_Presentation   # E14.0  [4] (🪩..🪬)    mirror ball..hamsa
 1FAB0..1FAB6  ; Emoji_Presentation   # E13.0  [7] (🪰..🪶)    fly..feather
+1FAB7..1FABA  ; Emoji_Presentation   # E14.0  [4] (🪷..🪺)    lotus..nest with eggs
 1FAC0..1FAC2  ; Emoji_Presentation   # E13.0  [3] (🫀..🫂)    anatomical heart..people hugging
+1FAC3..1FAC5  ; Emoji_Presentation   # E14.0  [3] (🫃..🫅)    pregnant man..person with crown
 1FAD0..1FAD6  ; Emoji_Presentation   # E13.0  [7] (🫐..🫖)    blueberries..teapot
+1FAD7..1FAD9  ; Emoji_Presentation   # E14.0  [3] (🫗..🫙)    pouring liquid..jar
+1FAE0..1FAE7  ; Emoji_Presentation   # E14.0  [8] (🫠..🫧)    melting face..bubbles
+1FAF0..1FAF6  ; Emoji_Presentation   # E14.0  [7] (🫰..🫶)    hand with index finger and thumb crossed..heart hands
 
-# Total elements: 1148
+# Total elements: 1185
 
 # ================================================
 
@@ -738,15 +760,17 @@
 1F9BB         ; Emoji_Modifier_Base  # E12.0  [1] (🦻)       ear with hearing aid
 1F9CD..1F9CF  ; Emoji_Modifier_Base  # E12.0  [3] (🧍..🧏)    person standing..deaf person
 1F9D1..1F9DD  ; Emoji_Modifier_Base  # E5.0  [13] (🧑..🧝)    person..elf
+1FAC3..1FAC5  ; Emoji_Modifier_Base  # E14.0  [3] (🫃..🫅)    pregnant man..person with crown
+1FAF0..1FAF6  ; Emoji_Modifier_Base  # E14.0  [7] (🫰..🫶)    hand with index finger and thumb crossed..heart hands
 
-# Total elements: 122
+# Total elements: 132
 
 # ================================================
 
 # All omitted code points have Emoji_Component=No 
 # @missing: 0000..10FFFF  ; Emoji_Component ; No
 
-0023          ; Emoji_Component      # E0.0   [1] (#️)       number sign
+0023          ; Emoji_Component      # E0.0   [1] (#️)       hash sign
 002A          ; Emoji_Component      # E0.0   [1] (*️)       asterisk
 0030..0039    ; Emoji_Component      # E0.0  [10] (0️..9️)    digit zero..digit nine
 200D          ; Emoji_Component      # E0.0   [1] (‍)        zero width joiner
@@ -902,8 +926,8 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 2747          ; Extended_Pictographic# E0.6   [1] (❇️)       sparkle
 274C          ; Extended_Pictographic# E0.6   [1] (❌)       cross mark
 274E          ; Extended_Pictographic# E0.6   [1] (❎)       cross mark button
-2753..2755    ; Extended_Pictographic# E0.6   [3] (❓..❕)    question mark..white exclamation mark
-2757          ; Extended_Pictographic# E0.6   [1] (❗)       exclamation mark
+2753..2755    ; Extended_Pictographic# E0.6   [3] (❓..❕)    red question mark..white exclamation mark
+2757          ; Extended_Pictographic# E0.6   [1] (❗)       red exclamation mark
 2763          ; Extended_Pictographic# E1.0   [1] (❣️)       heart exclamation
 2764          ; Extended_Pictographic# E0.6   [1] (❤️)       red heart
 2765..2767    ; Extended_Pictographic# E0.0   [3] (❥..❧)    ROTATED HEAVY BLACK HEART BULLET..ROTATED FLORAL HEART BULLET
@@ -1041,7 +1065,7 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 1F509         ; Extended_Pictographic# E1.0   [1] (🔉)       speaker medium volume
 1F50A..1F514  ; Extended_Pictographic# E0.6  [11] (🔊..🔔)    speaker high volume..bell
 1F515         ; Extended_Pictographic# E1.0   [1] (🔕)       bell with slash
-1F516..1F52B  ; Extended_Pictographic# E0.6  [22] (🔖..🔫)    bookmark..pistol
+1F516..1F52B  ; Extended_Pictographic# E0.6  [22] (🔖..🔫)    bookmark..water pistol
 1F52C..1F52D  ; Extended_Pictographic# E1.0   [2] (🔬..🔭)    microscope..telescope
 1F52E..1F53D  ; Extended_Pictographic# E0.6  [16] (🔮..🔽)    crystal ball..downwards button
 1F546..1F548  ; Extended_Pictographic# E0.0   [3] (🕆..🕈)    WHITE LATIN CROSS..CELTIC CROSS
@@ -1117,7 +1141,7 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 1F62E..1F62F  ; Extended_Pictographic# E1.0   [2] (😮..😯)    face with open mouth..hushed face
 1F630..1F633  ; Extended_Pictographic# E0.6   [4] (😰..😳)    anxious face with sweat..flushed face
 1F634         ; Extended_Pictographic# E1.0   [1] (😴)       sleeping face
-1F635         ; Extended_Pictographic# E0.6   [1] (😵)       dizzy face
+1F635         ; Extended_Pictographic# E0.6   [1] (😵)       face with crossed-out eyes
 1F636         ; Extended_Pictographic# E1.0   [1] (😶)       face without mouth
 1F637..1F640  ; Extended_Pictographic# E0.6  [10] (😷..🙀)    face with medical mask..weary cat
 1F641..1F644  ; Extended_Pictographic# E1.0   [4] (🙁..🙄)    slightly frowning face..face with rolling eyes
@@ -1166,7 +1190,8 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 1F6D3..1F6D4  ; Extended_Pictographic# E0.0   [2] (🛓..🛔)    STUPA..PAGODA
 1F6D5         ; Extended_Pictographic# E12.0  [1] (🛕)       hindu temple
 1F6D6..1F6D7  ; Extended_Pictographic# E13.0  [2] (🛖..🛗)    hut..elevator
-1F6D8..1F6DF  ; Extended_Pictographic# E0.0   [8] (🛘..🛟)    <reserved-1F6D8>..<reserved-1F6DF>
+1F6D8..1F6DC  ; Extended_Pictographic# E0.0   [5] (🛘..🛜)    <reserved-1F6D8>..<reserved-1F6DC>
+1F6DD..1F6DF  ; Extended_Pictographic# E14.0  [3] (🛝..🛟)    playground slide..ring buoy
 1F6E0..1F6E5  ; Extended_Pictographic# E0.7   [6] (🛠️..🛥️)    hammer and wrench..motor boat
 1F6E6..1F6E8  ; Extended_Pictographic# E0.0   [3] (🛦..🛨)    UP-POINTING MILITARY AIRPLANE..UP-POINTING SMALL AIRPLANE
 1F6E9         ; Extended_Pictographic# E0.7   [1] (🛩️)       small airplane
@@ -1185,7 +1210,9 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 1F774..1F77F  ; Extended_Pictographic# E0.0  [12] (🝴..🝿)    <reserved-1F774>..<reserved-1F77F>
 1F7D5..1F7DF  ; Extended_Pictographic# E0.0  [11] (🟕..🟟)    CIRCLED TRIANGLE..<reserved-1F7DF>
 1F7E0..1F7EB  ; Extended_Pictographic# E12.0 [12] (🟠..🟫)    orange circle..brown square
-1F7EC..1F7FF  ; Extended_Pictographic# E0.0  [20] (🟬..🟿)    <reserved-1F7EC>..<reserved-1F7FF>
+1F7EC..1F7EF  ; Extended_Pictographic# E0.0   [4] (🟬..🟯)    <reserved-1F7EC>..<reserved-1F7EF>
+1F7F0         ; Extended_Pictographic# E14.0  [1] (🟰)       heavy equals sign
+1F7F1..1F7FF  ; Extended_Pictographic# E0.0  [15] (🟱..🟿)    <reserved-1F7F1>..<reserved-1F7FF>
 1F80C..1F80F  ; Extended_Pictographic# E0.0   [4] (🠌..🠏)    <reserved-1F80C>..<reserved-1F80F>
 1F848..1F84F  ; Extended_Pictographic# E0.0   [8] (🡈..🡏)    <reserved-1F848>..<reserved-1F84F>
 1F85A..1F85F  ; Extended_Pictographic# E0.0   [6] (🡚..🡟)    <reserved-1F85A>..<reserved-1F85F>
@@ -1214,7 +1241,7 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 1F972         ; Extended_Pictographic# E13.0  [1] (🥲)       smiling face with tear
 1F973..1F976  ; Extended_Pictographic# E11.0  [4] (🥳..🥶)    partying face..cold face
 1F977..1F978  ; Extended_Pictographic# E13.0  [2] (🥷..🥸)    ninja..disguised face
-1F979         ; Extended_Pictographic# E0.0   [1] (🥹)       <reserved-1F979>
+1F979         ; Extended_Pictographic# E14.0  [1] (🥹)       face holding back tears
 1F97A         ; Extended_Pictographic# E11.0  [1] (🥺)       pleading face
 1F97B         ; Extended_Pictographic# E12.0  [1] (🥻)       sari
 1F97C..1F97F  ; Extended_Pictographic# E11.0  [4] (🥼..🥿)    lab coat..flat shoe
@@ -1232,7 +1259,7 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 1F9C1..1F9C2  ; Extended_Pictographic# E11.0  [2] (🧁..🧂)    cupcake..salt
 1F9C3..1F9CA  ; Extended_Pictographic# E12.0  [8] (🧃..🧊)    beverage box..ice
 1F9CB         ; Extended_Pictographic# E13.0  [1] (🧋)       bubble tea
-1F9CC         ; Extended_Pictographic# E0.0   [1] (🧌)       <reserved-1F9CC>
+1F9CC         ; Extended_Pictographic# E14.0  [1] (🧌)       troll
 1F9CD..1F9CF  ; Extended_Pictographic# E12.0  [3] (🧍..🧏)    person standing..deaf person
 1F9D0..1F9E6  ; Extended_Pictographic# E5.0  [23] (🧐..🧦)    face with monocle..socks
 1F9E7..1F9FF  ; Extended_Pictographic# E11.0 [25] (🧧..🧿)    red envelope..nazar amulet
@@ -1241,19 +1268,28 @@ E0020..E007F  ; Emoji_Component      # E0.0  [96] (󠀠..󠁿)      tag space..c
 1FA74         ; Extended_Pictographic# E13.0  [1] (🩴)       thong sandal
 1FA75..1FA77  ; Extended_Pictographic# E0.0   [3] (🩵..🩷)    <reserved-1FA75>..<reserved-1FA77>
 1FA78..1FA7A  ; Extended_Pictographic# E12.0  [3] (🩸..🩺)    drop of blood..stethoscope
-1FA7B..1FA7F  ; Extended_Pictographic# E0.0   [5] (🩻..🩿)    <reserved-1FA7B>..<reserved-1FA7F>
+1FA7B..1FA7C  ; Extended_Pictographic# E14.0  [2] (🩻..🩼)    x-ray..crutch
+1FA7D..1FA7F  ; Extended_Pictographic# E0.0   [3] (🩽..🩿)    <reserved-1FA7D>..<reserved-1FA7F>
 1FA80..1FA82  ; Extended_Pictographic# E12.0  [3] (🪀..🪂)    yo-yo..parachute
 1FA83..1FA86  ; Extended_Pictographic# E13.0  [4] (🪃..🪆)    boomerang..nesting dolls
 1FA87..1FA8F  ; Extended_Pictographic# E0.0   [9] (🪇..🪏)    <reserved-1FA87>..<reserved-1FA8F>
 1FA90..1FA95  ; Extended_Pictographic# E12.0  [6] (🪐..🪕)    ringed planet..banjo
 1FA96..1FAA8  ; Extended_Pictographic# E13.0 [19] (🪖..🪨)    military helmet..rock
-1FAA9..1FAAF  ; Extended_Pictographic# E0.0   [7] (🪩..🪯)    <reserved-1FAA9>..<reserved-1FAAF>
+1FAA9..1FAAC  ; Extended_Pictographic# E14.0  [4] (🪩..🪬)    mirror ball..hamsa
+1FAAD..1FAAF  ; Extended_Pictographic# E0.0   [3] (🪭..🪯)    <reserved-1FAAD>..<reserved-1FAAF>
 1FAB0..1FAB6  ; Extended_Pictographic# E13.0  [7] (🪰..🪶)    fly..feather
-1FAB7..1FABF  ; Extended_Pictographic# E0.0   [9] (🪷..🪿)    <reserved-1FAB7>..<reserved-1FABF>
+1FAB7..1FABA  ; Extended_Pictographic# E14.0  [4] (🪷..🪺)    lotus..nest with eggs
+1FABB..1FABF  ; Extended_Pictographic# E0.0   [5] (🪻..🪿)    <reserved-1FABB>..<reserved-1FABF>
 1FAC0..1FAC2  ; Extended_Pictographic# E13.0  [3] (🫀..🫂)    anatomical heart..people hugging
-1FAC3..1FACF  ; Extended_Pictographic# E0.0  [13] (🫃..🫏)    <reserved-1FAC3>..<reserved-1FACF>
+1FAC3..1FAC5  ; Extended_Pictographic# E14.0  [3] (🫃..🫅)    pregnant man..person with crown
+1FAC6..1FACF  ; Extended_Pictographic# E0.0  [10] (🫆..🫏)    <reserved-1FAC6>..<reserved-1FACF>
 1FAD0..1FAD6  ; Extended_Pictographic# E13.0  [7] (🫐..🫖)    blueberries..teapot
-1FAD7..1FAFF  ; Extended_Pictographic# E0.0  [41] (🫗..🫿)    <reserved-1FAD7>..<reserved-1FAFF>
+1FAD7..1FAD9  ; Extended_Pictographic# E14.0  [3] (🫗..🫙)    pouring liquid..jar
+1FADA..1FADF  ; Extended_Pictographic# E0.0   [6] (🫚..🫟)    <reserved-1FADA>..<reserved-1FADF>
+1FAE0..1FAE7  ; Extended_Pictographic# E14.0  [8] (🫠..🫧)    melting face..bubbles
+1FAE8..1FAEF  ; Extended_Pictographic# E0.0   [8] (🫨..🫯)    <reserved-1FAE8>..<reserved-1FAEF>
+1FAF0..1FAF6  ; Extended_Pictographic# E14.0  [7] (🫰..🫶)    hand with index finger and thumb crossed..heart hands
+1FAF7..1FAFF  ; Extended_Pictographic# E0.0   [9] (🫷..🫿)    <reserved-1FAF7>..<reserved-1FAFF>
 1FC00..1FFFD  ; Extended_Pictographic# E0.0[1022] (🰀..🿽)    <reserved-1FC00>..<reserved-1FFFD>
 
 # Total elements: 3537
