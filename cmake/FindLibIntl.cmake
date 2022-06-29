@@ -41,6 +41,16 @@ endif()
 if (MSVC)
   list(APPEND CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARY})
 endif()
+
+# On macOS, if libintl is a static library then we also need
+# to link libiconv and CoreFoundation.
+get_filename_component(LibIntl_EXT "${LibIntl_LIBRARY}" EXT)
+if (APPLE AND (LibIntl_EXT STREQUAL ".a"))
+  set(LibIntl_STATIC TRUE)
+  find_library(CoreFoundation_FRAMEWORK CoreFoundation)
+  list(APPEND CMAKE_REQUIRED_LIBRARIES "${ICONV_LIBRARY}" "${CoreFoundation_FRAMEWORK}")
+endif()
+
 check_c_source_compiles("
 #include <libintl.h>
 
@@ -53,6 +63,9 @@ int main(int argc, char** argv) {
 }" HAVE_WORKING_LIBINTL)
 if (MSVC)
   list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${ICONV_LIBRARY})
+endif()
+if (LibIntl_STATIC)
+  list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES  "${ICONV_LIBRARY}" "${CoreFoundation_FRAMEWORK}")
 endif()
 if (LibIntl_INCLUDE_DIR)
   list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${LibIntl_INCLUDE_DIR}")
