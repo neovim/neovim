@@ -4474,29 +4474,6 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/// "hasmapto()" function
-static void f_hasmapto(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  const char *mode;
-  const char *const name = tv_get_string(&argvars[0]);
-  bool abbr = false;
-  char buf[NUMBUFLEN];
-  if (argvars[1].v_type == VAR_UNKNOWN) {
-    mode = "nvo";
-  } else {
-    mode = tv_get_string_buf(&argvars[1], buf);
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      abbr = tv_get_number(&argvars[2]);
-    }
-  }
-
-  if (map_to_exists(name, mode, abbr)) {
-    rettv->vval.v_number = true;
-  } else {
-    rettv->vval.v_number = false;
-  }
-}
-
 /// "histadd()" function
 static void f_histadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
