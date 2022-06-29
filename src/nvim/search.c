@@ -286,6 +286,8 @@ static struct spat saved_last_search_spat;
 static int did_save_last_search_spat = 0;
 static int saved_last_idx = 0;
 static bool saved_no_hlsearch = false;
+static colnr_T saved_search_match_endcol;
+static linenr_T saved_search_match_lines;
 
 /// Save and restore the search pattern for incremental highlight search
 /// feature.
@@ -326,6 +328,21 @@ void restore_last_search_pattern(void)
   set_vv_searchforward();
   last_idx = saved_last_idx;
   set_no_hlsearch(saved_no_hlsearch);
+}
+
+/// Save and restore the incsearch highlighting variables.
+/// This is required so that calling searchcount() at does not invalidate the
+/// incsearch highlighting.
+static void save_incsearch_state(void)
+{
+  saved_search_match_endcol = search_match_endcol;
+  saved_search_match_lines  = search_match_lines;
+}
+
+static void restore_incsearch_state(void)
+{
+  search_match_endcol = saved_search_match_endcol;
+  search_match_lines  = saved_search_match_lines;
 }
 
 char_u *last_search_pattern(void)
@@ -4717,6 +4734,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   save_last_search_pattern();
+  save_incsearch_state();
   if (pattern != NULL) {
     if (*pattern == NUL) {
       goto the_end;
@@ -4738,6 +4756,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 the_end:
   restore_last_search_pattern();
+  restore_incsearch_state();
 }
 
 /// Fuzzy string matching
