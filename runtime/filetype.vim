@@ -1794,16 +1794,11 @@ au BufNewFile,BufRead *.il,*.ils,*.cdf		setf skill
 au BufNewFile,BufRead .slrnrc			setf slrnrc
 au BufNewFile,BufRead *.score			setf slrnsc
 
-" Smalltalk (and TeX)
+" Smalltalk
 au BufNewFile,BufRead *.st			setf st
-au BufNewFile,BufRead *.cls
-	\ if getline(1) =~ '^%' |
-	\  setf tex |
-	\ elseif getline(1)[0] == '#' && getline(1) =~ 'rexx' |
-	\  setf rexx |
-	\ else |
-	\  setf st |
-	\ endif
+
+" Smalltalk (and Rexx, TeX, and Visual Basic)
+au BufNewFile,BufRead *.cls                     call dist#ft#FTcls()
 
 " Smarty templates
 au BufNewFile,BufRead *.tpl			setf smarty

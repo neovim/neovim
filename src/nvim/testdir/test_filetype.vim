@@ -812,7 +812,7 @@ func Test_bas_file()
 
   " Visual Basic
 
-  call writefile(['Attribute VB_NAME = "Testing"'], 'Xfile.bas')
+  call writefile(['Attribute VB_NAME = "Testing"', 'Enum Foo', 'End Enum'], 'Xfile.bas')
   split Xfile.bas
   call assert_equal('vb', &filetype)
   bwipe!
@@ -1692,5 +1692,45 @@ func Test_xpm_file()
   filetype off
 endfunc
 
+func Test_cls_file()
+  filetype on
+
+  call writefile(['looks like Smalltalk'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('st', &filetype)
+  bwipe!
+
+  " Test dist#ft#FTcls()
+
+  let g:filetype_cls = 'vb'
+  split Xfile.cls
+  call assert_equal('vb', &filetype)
+  bwipe!
+  unlet g:filetype_cls
+
+  " TeX
+
+  call writefile(['%'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('tex', &filetype)
+  bwipe!
+
+  " Rexx
+
+  call writefile(['# rexx'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('rexx', &filetype)
+  bwipe!
+
+  " Visual Basic
+
+  call writefile(['VERSION 1.0 CLASS'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('vb', &filetype)
+  bwipe!
+
+  call delete('Xfile.cls')
+  filetype off
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
