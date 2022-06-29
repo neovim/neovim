@@ -234,6 +234,7 @@ let s:filename_checks = {
     \ 'haml': ['file.haml'],
     \ 'hamster': ['file.hsm'],
     \ 'handlebars': ['file.hbs'],
+    \ 'hare': ['file.ha'],
     \ 'haskell': ['file.hs', 'file.hsc', 'file.hs-boot', 'file.hsig'],
     \ 'haste': ['file.ht'],
     \ 'hastepreproc': ['file.htpp'],

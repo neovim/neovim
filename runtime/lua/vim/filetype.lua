@@ -435,6 +435,7 @@ local extension = {
   haml = 'haml',
   hsm = 'hamster',
   hbs = 'handlebars',
+  ha = 'hare',
   ['hs-boot'] = 'haskell',
   hsig = 'haskell',
   hsc = 'haskell',
