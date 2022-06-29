@@ -141,6 +141,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	*.asp		g:filetype_asp	|ft-aspvbs-syntax| |ft-aspperl-syntax|
 	*.bas		g:filetype_bas	|ft-basic-syntax|
 	*.cfg		g:filetype_cfg
+	*.cls		g:filetype_cls
 	*.csh		g:filetype_csh	|ft-csh-syntax|
 	*.dat		g:filetype_dat
 	*.frm		g:filetype_frm	|ft-form-syntax|

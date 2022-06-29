@@ -83,19 +83,19 @@ function M.bas(bufnr)
   local fb_keywords =
     [[\c^\s*\%(extern\|var\|enum\|private\|scope\|union\|byref\|operator\|constructor\|delete\|namespace\|public\|property\|with\|destructor\|using\)\>\%(\s*[:=(]\)\@!]]
   local fb_preproc =
-    [[\c^\s*\%(#\a\+\|option\s\+\%(byval\|dynamic\|escape\|\%(no\)\=gosub\|nokeyword\|private\|static\)\>\)]]
+    [[\c^\s*\%(#\s*\a\+\|option\s\+\%(byval\|dynamic\|escape\|\%(no\)\=gosub\|nokeyword\|private\|static\)\>\|\%(''\|rem\)\s*\$lang\>\|def\%(byte\|longint\|short\|ubyte\|uint\|ulongint\|ushort\)\>\)]]
 
   local fb_comment = "^%s*/'"
   -- OPTION EXPLICIT, without the leading underscore, is common to many dialects
   local qb64_preproc = [[\c^\s*\%($\a\+\|option\s\+\%(_explicit\|_\=explicitarray\)\>\)]]
 
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
-    if line:find(fb_comment) or matchregex(line, fb_preproc) or matchregex(line, fb_keywords) then
+    if findany(line:lower(), visual_basic_content) then
+      return 'vb'
+    elseif line:find(fb_comment) or matchregex(line, fb_preproc) or matchregex(line, fb_keywords) then
       return 'freebasic'
     elseif matchregex(line, qb64_preproc) then
       return 'qb64'
-    elseif findany(line:lower(), visual_basic_content) then
-      return 'vb'
     end
   end
   return 'basic'
@@ -172,11 +172,16 @@ function M.class(bufnr)
 end
 
 function M.cls(bufnr)
+  if vim.g.filetype_cls then
+    return vim.g.filetype_cls
+  end
   local line = getlines(bufnr, 1)
   if line:find('^%%') then
     return 'tex'
   elseif line:find('^#') and line:lower():find('rexx') then
     return 'rexx'
+  elseif line == 'VERSION 1.0 CLASS' then
+    return 'vb'
   else
     return 'st'
   end

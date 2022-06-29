@@ -78,22 +78,30 @@ func dist#ft#FTbas()
 
   " most frequent FreeBASIC-specific keywords in distro files
   let fb_keywords = '\c^\s*\%(extern\|var\|enum\|private\|scope\|union\|byref\|operator\|constructor\|delete\|namespace\|public\|property\|with\|destructor\|using\)\>\%(\s*[:=(]\)\@!'
-  let fb_preproc  = '\c^\s*\%(#\a\+\|option\s\+\%(byval\|dynamic\|escape\|\%(no\)\=gosub\|nokeyword\|private\|static\)\>\)'
+  let fb_preproc  = '\c^\s*\%(' ..
+        \ '#\s*\a\+\|' ..
+        \ 'option\s\+\%(byval\|dynamic\|escape\|\%(no\)\=gosub\|nokeyword\|private\|static\)\>\|' ..
+        \ '\%(''\|rem\)\s*\$lang\>\|' ..
+        \ 'def\%(byte\|longint\|short\|ubyte\|uint\|ulongint\|ushort\)\>' ..
+        \ '\)'
   let fb_comment  = "^\\s*/'"
   " OPTION EXPLICIT, without the leading underscore, is common to many dialects
   let qb64_preproc = '\c^\s*\%($\a\+\|option\s\+\%(_explicit\|_\=explicitarray\)\>\)'
 
-  let lines = getline(1, min([line("$"), 100]))
-
-  if match(lines, fb_preproc) > -1 || match(lines, fb_comment) > -1 || match(lines, fb_keywords) > -1
-    setf freebasic
-  elseif match(lines, qb64_preproc) > -1
-    setf qb64
-  elseif match(lines, s:ft_visual_basic_content) > -1
-    setf vb
-  else
-    setf basic
-  endif
+  for lnum in range(1, min([line("$"), 100]))
+    let line = getline(lnum)
+    if line =~ s:ft_visual_basic_content
+      setf vb
+      return
+    elseif line =~ fb_preproc || line =~ fb_comment || line =~ fb_keywords
+      setf freebasic
+      return
+    elseif line =~ qb64_preproc
+      setf qb64
+      return
+    endif
+  endfor
+  setf basic
 endfunc
 
 func dist#ft#FTbtm()
@@ -128,6 +136,23 @@ func dist#ft#FTcfg()
     setf rapid
   else
     setf cfg
+  endif
+endfunc
+
+func dist#ft#FTcls()
+  if exists("g:filetype_cls")
+    exe "setf " .. g:filetype_cls
+    return
+  endif
+
+  if getline(1) =~ '^%'
+    setf tex
+  elseif getline(1)[0] == '#' && getline(1) =~ 'rexx'
+    setf rexx
+  elseif getline(1) == 'VERSION 1.0 CLASS'
+    setf vb
+  else
+    setf st
   endif
 endfunc
 
