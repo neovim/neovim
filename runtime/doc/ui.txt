@@ -314,11 +314,10 @@ numerical highlight ids to the actual attributes.
 	`bold`:			bold text.
 	`strikethrough`:	struckthrough text.
 	`underline`:		underlined text. The line has `special` color.
-	`underlineline`:	double underlined text. The lines have `special`
-				color.
 	`undercurl`:		undercurled text. The curl has `special` color.
-	`underdot`:		underdotted text. The dots have `special` color.
-	`underdash`:		underdashed text. The dashes have `special` color.
+	`underdouble`:		double underlined text. The lines have `special` color.
+	`underdotted`:		underdotted text. The dots have `special` color.
+	`underdashed`:		underdashed text. The dashes have `special` color.
 	`blend`:		Blend level (0-100). Could be used by UIs to
 				support blending floating windows to the
 				background or to signal a transparent cursor.
@@ -477,10 +476,10 @@ is not active. New UIs should implement |ui-linegrid| instead.
 	`bold`:		bold text.
 	`strikethrough`:  struckthrough text.
 	`underline`:	underlined text. The line has `special` color.
-	`underlineline`:  double underlined text. The lines have `special` color.
 	`undercurl`:	undercurled text. The curl has `special` color.
-	`underdot`:	underdotted text. The dots have `special` color.
-	`underdash`:	underdashed text. The dashes have `special` color.
+	`underdouble`:	double underlined text. The lines have `special` color.
+	`underdotted`:	underdotted text. The dots have `special` color.
+	`underdashed`:	underdashed text. The dashes have `special` color.
 
 ["put", text]
 	The (utf-8 encoded) string `text` is put at the cursor position

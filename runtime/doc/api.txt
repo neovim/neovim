@@ -1477,10 +1477,10 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                              • bold: boolean
                              • standout: boolean
                              • underline: boolean
-                             • underlineline: boolean
                              • undercurl: boolean
-                             • underdot: boolean
-                             • underdash: boolean
+                             • underdouble: boolean
+                             • underdotted: boolean
+                             • underdashed: boolean
                              • strikethrough: boolean
                              • italic: boolean
                              • reverse: boolean

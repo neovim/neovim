@@ -743,20 +743,20 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
     PUT(hl, "underline", BOOLEAN_OBJ(true));
   }
 
-  if (mask & HL_UNDERLINELINE) {
-    PUT(hl, "underlineline", BOOLEAN_OBJ(true));
-  }
-
   if (mask & HL_UNDERCURL) {
     PUT(hl, "undercurl", BOOLEAN_OBJ(true));
   }
 
-  if (mask & HL_UNDERDOT) {
-    PUT(hl, "underdot", BOOLEAN_OBJ(true));
+  if (mask & HL_UNDERDOUBLE) {
+    PUT(hl, "underdouble", BOOLEAN_OBJ(true));
   }
 
-  if (mask & HL_UNDERDASH) {
-    PUT(hl, "underdash", BOOLEAN_OBJ(true));
+  if (mask & HL_UNDERDOTTED) {
+    PUT(hl, "underdotted", BOOLEAN_OBJ(true));
+  }
+
+  if (mask & HL_UNDERDASHED) {
+    PUT(hl, "underdashed", BOOLEAN_OBJ(true));
   }
 
   if (mask & HL_ITALIC) {
@@ -825,10 +825,10 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, bold, , HL_BOLD);
   CHECK_FLAG(dict, mask, standout, , HL_STANDOUT);
   CHECK_FLAG(dict, mask, underline, , HL_UNDERLINE);
-  CHECK_FLAG(dict, mask, underlineline, , HL_UNDERLINELINE);
   CHECK_FLAG(dict, mask, undercurl, , HL_UNDERCURL);
-  CHECK_FLAG(dict, mask, underdot, , HL_UNDERDOT);
-  CHECK_FLAG(dict, mask, underdash, , HL_UNDERDASH);
+  CHECK_FLAG(dict, mask, underdouble, , HL_UNDERDOUBLE);
+  CHECK_FLAG(dict, mask, underdotted, , HL_UNDERDOTTED);
+  CHECK_FLAG(dict, mask, underdashed, , HL_UNDERDASHED);
   CHECK_FLAG(dict, mask, italic, , HL_ITALIC);
   CHECK_FLAG(dict, mask, reverse, , HL_INVERSE);
   CHECK_FLAG(dict, mask, strikethrough, , HL_STRIKETHROUGH);

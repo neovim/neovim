@@ -95,10 +95,10 @@ return {
     "standout";
     "strikethrough";
     "underline";
-    "underlineline";
     "undercurl";
-    "underdot";
-    "underdash";
+    "underdouble";
+    "underdotted";
+    "underdashed";
     "italic";
     "reverse";
     "nocombine";
@@ -120,10 +120,10 @@ return {
     "standout";
     "strikethrough";
     "underline";
-    "underlineline";
     "undercurl";
-    "underdot";
-    "underdash";
+    "underdouble";
+    "underdotted";
+    "underdashed";
     "italic";
     "reverse";
     "nocombine";

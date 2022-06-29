@@ -4895,19 +4895,19 @@ the same syntax file on all UIs.
 
 1. TUI highlight arguments
 
-					*bold* *underline* *underlineline*
-					*undercurl* *underdot* *underdash*
-					*inverse* *italic* *standout*
-					*nocombine* *strikethrough*
+					*bold* *underline* *undercurl*
+					*underdouble* *underdotted*
+					*underdashed* *inverse* *italic*
+					*standout* *nocombine* *strikethrough*
 cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 	attr-list is a comma-separated list (without spaces) of the
 	following items (in any order):
 		bold
 		underline
-		underlineline	double underline
 		undercurl	curly underline
-		underdot	dotted underline
-		underdash	dashed underline
+		underdouble	double underline
+		underdotted	dotted underline
+		underdashed	dashed underline
 		strikethrough
 		reverse
 		inverse		same as reverse
@@ -4918,7 +4918,7 @@ cterm={attr-list}			*attr-list* *highlight-cterm* *E418*
 
 	Note that "bold" can be used here and by using a bold font.  They
 	have the same effect.
-	"underlineline", "undercurl", "underdot", and "underdash" fall back
+	"undercurl", "underdouble", "underdotted", and "underdashed" fall back
 	to "underline" in a terminal that does not support them. The color is
 	set using |highlight-guisp|.
 

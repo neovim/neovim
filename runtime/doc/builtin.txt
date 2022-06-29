@@ -8026,10 +8026,10 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"inverse"	"1" if inverse (= reverse)
 		"standout"	"1" if standout
 		"underline"	"1" if underlined
-		"underlineline"	"1" if double underlined
 		"undercurl"	"1" if undercurled
-		"underdot"	"1" if dotted underlined
-		"underdash"	"1" if dashed underlined
+		"underdouble"	"1" if double underlined
+		"underdotted"	"1" if dotted underlined
+		"underdashed"	"1" if dashed underlined
 		"strikethrough" "1" if struckthrough
 
 		Example (echoes the color of the syntax item under the

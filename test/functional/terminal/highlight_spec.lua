@@ -306,7 +306,7 @@ describe('synIDattr()', function()
 
   it('returns "1" if group has given highlight attribute', function()
     local hl_attrs = {
-      'underline', 'underlineline', 'undercurl', 'underdot', 'underdash', 'strikethrough'
+      'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed', 'strikethrough'
     }
     for _,hl_attr in ipairs(hl_attrs) do
       local context = 'using ' .. hl_attr .. ' attr'
