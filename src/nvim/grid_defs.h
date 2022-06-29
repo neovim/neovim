@@ -128,4 +128,13 @@ typedef struct {
   const char *start;       ///< Location where region starts.
 } StlClickRecord;
 
+typedef struct {
+  int args[3];
+  int icell;
+  int ncells;
+  int coloff;
+  int cur_attr;
+  int clear_width;
+} GridLineEvent;
+
 #endif  // NVIM_GRID_DEFS_H

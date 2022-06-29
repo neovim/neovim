@@ -35,10 +35,10 @@ struct Unpacker {
   // one length free-list of reusable blocks
   ArenaMem reuse_blk;
 
-  bool is_ui;
   int nevents;
   int ncalls;
   UIClientHandler ui_handler;
+  GridLineEvent *grid_line_event;
 };
 
 // unrecovareble error. unpack_error should be set!

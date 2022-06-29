@@ -22,11 +22,6 @@
 # include "ui_events_client.generated.h"
 #endif
 
-// Temporary buffer for converting a single grid_line event
-static size_t buf_size = 0;
-static schar_T *buf_char = NULL;
-static sattr_T *buf_attr = NULL;
-
 void ui_client_init(uint64_t chan)
 {
   Array args = ARRAY_DICT_INIT;
@@ -106,88 +101,30 @@ void ui_client_event_grid_resize(Array args)
   Integer height = args.items[2].data.integer;
   ui_call_grid_resize(grid, width, height);
 
-  if (buf_size < (size_t)width) {
-    xfree(buf_char);
-    xfree(buf_attr);
-    buf_size = (size_t)width;
-    buf_char = xmalloc(buf_size * sizeof(schar_T));
-    buf_attr = xmalloc(buf_size * sizeof(sattr_T));
+  if (grid_line_buf_size < (size_t)width) {
+    xfree(grid_line_buf_char);
+    xfree(grid_line_buf_attr);
+    grid_line_buf_size = (size_t)width;
+    grid_line_buf_char = xmalloc(grid_line_buf_size * sizeof(schar_T));
+    grid_line_buf_attr = xmalloc(grid_line_buf_size * sizeof(sattr_T));
   }
 }
 
 void ui_client_event_grid_line(Array args)
+  FUNC_ATTR_NORETURN
 {
-  if (args.size < 4
-      || args.items[0].type != kObjectTypeInteger
-      || args.items[1].type != kObjectTypeInteger
-      || args.items[2].type != kObjectTypeInteger
-      || args.items[3].type != kObjectTypeArray) {
-    goto error;
-  }
+  abort();  // unreachable
+}
 
-  Integer grid = args.items[0].data.integer;
-  Integer row = args.items[1].data.integer;
-  Integer startcol = args.items[2].data.integer;
-  Array cells = args.items[3].data.array;
+void ui_client_event_raw_line(GridLineEvent *g)
+{
+  int grid = g->args[0], row = g->args[1], startcol = g->args[2];
+  Integer endcol = startcol + g->coloff;
+  Integer clearcol = endcol + g->clear_width;
 
   // TODO(hlpr98): Accommodate other LineFlags when included in grid_line
   LineFlags lineflags = 0;
 
-  size_t j = 0;
-  int cur_attr = 0;
-  int clear_attr = 0;
-  int clear_width = 0;
-  for (size_t i = 0; i < cells.size; i++) {
-    if (cells.items[i].type != kObjectTypeArray) {
-      goto error;
-    }
-    Array cell = cells.items[i].data.array;
-
-    if (cell.size < 1 || cell.items[0].type != kObjectTypeString) {
-      goto error;
-    }
-    String sstring = cell.items[0].data.string;
-
-    char *schar = sstring.data;
-    int repeat = 1;
-    if (cell.size >= 2) {
-      if (cell.items[1].type != kObjectTypeInteger
-          || cell.items[1].data.integer < 0) {
-        goto error;
-      }
-      cur_attr = (int)cell.items[1].data.integer;
-    }
-
-    if (cell.size >= 3) {
-      if (cell.items[2].type != kObjectTypeInteger
-          || cell.items[2].data.integer < 0) {
-        goto error;
-      }
-      repeat = (int)cell.items[2].data.integer;
-    }
-
-    if (i == cells.size - 1 && sstring.size == 1 && sstring.data[0] == ' ' && repeat > 1) {
-      clear_width = repeat;
-      break;
-    }
-
-    for (int r = 0; r < repeat; r++) {
-      if (j >= buf_size) {
-        goto error;  // _YIKES_
-      }
-      STRLCPY(buf_char[j], schar, sizeof(schar_T));
-      buf_attr[j++] = cur_attr;
-    }
-  }
-
-  Integer endcol = startcol + (int)j;
-  Integer clearcol = endcol + clear_width;
-  clear_attr = cur_attr;
-
-  ui_call_raw_line(grid, row, startcol, endcol, clearcol, clear_attr, lineflags,
-                   (const schar_T *)buf_char, (const sattr_T *)buf_attr);
-  return;
-
-error:
-  ELOG("Error handling ui event 'grid_line'");
+  ui_call_raw_line(grid, row, startcol, endcol, clearcol, g->cur_attr, lineflags,
+                   (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }
