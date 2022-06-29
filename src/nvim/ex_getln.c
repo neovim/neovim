@@ -2404,7 +2404,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
 
   // Check if command is previewable, if not, don't attempt to show preview
   if (!(ea.argt & EX_PREVIEW)) {
-    vim_regfree(cmdinfo.cmdmod.cmod_filter_regmatch.regprog);
+    undo_cmdmod(&cmdinfo.cmdmod);
     goto end;
   }
 

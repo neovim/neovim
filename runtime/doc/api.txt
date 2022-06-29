@@ -1944,6 +1944,11 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
                         is treated as the start of a comment.
 
                     • mods: (dictionary) |:command-modifiers|.
+                      • filter: (dictionary) |:filter|.
+                        • pattern: (string) Filter pattern. Empty string if
+                          there is no filter.
+                        • force: (boolean) Whether filter is inverted or not.
+
                       • silent: (boolean) |:silent|.
                       • emsg_silent: (boolean) |:silent!|.
                       • sandbox: (boolean) |:sandbox|.

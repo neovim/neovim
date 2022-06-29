@@ -49,6 +49,9 @@
 ///             - bar: (boolean) The "|" character is treated as a command separator and the double
 ///                              quote character (\") is treated as the start of a comment.
 ///         - mods: (dictionary) |:command-modifiers|.
+///             - filter: (dictionary) |:filter|.
+///                 - pattern: (string) Filter pattern. Empty string if there is no filter.
+///                 - force: (boolean) Whether filter is inverted or not.
 ///             - silent: (boolean) |:silent|.
 ///             - emsg_silent: (boolean) |:silent!|.
 ///             - sandbox: (boolean) |:sandbox|.
@@ -95,7 +98,6 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
     }
     goto end;
   }
-  vim_regfree(cmdinfo.cmdmod.cmod_filter_regmatch.regprog);
 
   // Parse arguments
   Array args = ARRAY_DICT_INIT;
@@ -220,6 +222,14 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(result, "nextcmd", CSTR_TO_OBJ((char *)ea.nextcmd));
 
   Dictionary mods = ARRAY_DICT_INIT;
+
+  Dictionary filter = ARRAY_DICT_INIT;
+  PUT(filter, "pattern", cmdinfo.cmdmod.cmod_filter_pat
+      ? CSTR_TO_OBJ(cmdinfo.cmdmod.cmod_filter_pat)
+      : STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+  PUT(filter, "force", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_filter_force));
+  PUT(mods, "filter", DICTIONARY_OBJ(filter));
+
   PUT(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
   PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
   PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
@@ -257,6 +267,8 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(magic, "file", BOOLEAN_OBJ(cmdinfo.magic.file));
   PUT(magic, "bar", BOOLEAN_OBJ(cmdinfo.magic.bar));
   PUT(result, "magic", DICTIONARY_OBJ(magic));
+
+  undo_cmdmod(&cmdinfo.cmdmod);
 end:
   xfree(cmdline);
   return result;
@@ -511,6 +523,35 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     Dict(cmd_mods) mods = { 0 };
     if (!api_dict_to_keydict(&mods, KeyDict_cmd_mods_get_field, cmd->mods.data.dictionary, err)) {
       goto end;
+    }
+
+    if (HAS_KEY(mods.filter)) {
+      if (mods.filter.type != kObjectTypeDictionary) {
+        VALIDATION_ERROR("'mods.filter' must be a Dictionary");
+      }
+
+      Dict(cmd_mods_filter) filter = { 0 };
+
+      if (!api_dict_to_keydict(&filter, KeyDict_cmd_mods_filter_get_field,
+                               mods.filter.data.dictionary, err)) {
+        goto end;
+      }
+
+      if (HAS_KEY(filter.pattern)) {
+        if (filter.pattern.type != kObjectTypeString) {
+          VALIDATION_ERROR("'mods.filter.pattern' must be a String");
+        }
+
+        OBJ_TO_BOOL(cmdinfo.cmdmod.cmod_filter_force, filter.force, false, "'mods.filter.force'");
+
+        // "filter! // is not no-op, so add a filter if either the pattern is non-empty or if filter
+        // is inverted.
+        if (*filter.pattern.data.string.data != NUL || cmdinfo.cmdmod.cmod_filter_force) {
+          cmdinfo.cmdmod.cmod_filter_pat = string_to_cstr(filter.pattern.data.string);
+          cmdinfo.cmdmod.cmod_filter_regmatch.regprog = vim_regcomp(cmdinfo.cmdmod.cmod_filter_pat,
+                                                                    RE_MAGIC);
+        }
+      }
     }
 
     if (HAS_KEY(mods.tab)) {

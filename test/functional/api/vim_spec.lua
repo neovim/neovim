@@ -3167,6 +3167,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3203,6 +3207,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3239,6 +3247,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3275,6 +3287,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3311,6 +3327,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3347,6 +3367,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3383,6 +3407,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = true,
+          filter = {
+              pattern = "foo",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3398,7 +3426,45 @@ describe('API', function()
           tab = 2,
           verbose = 15
         },
-      }, meths.parse_cmd('15verbose silent! aboveleft topleft tab split foo.txt', {}))
+      }, meths.parse_cmd('15verbose silent! aboveleft topleft tab filter /foo/ split foo.txt', {}))
+      eq({
+        cmd = 'split',
+        args = { 'foo.txt' },
+        bang = false,
+        range = {},
+        count = -1,
+        reg = '',
+        addr = '?',
+        magic = {
+            file = true,
+            bar = true
+        },
+        nargs = '?',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+              pattern = "foo",
+              force = true
+          },
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          vertical = false,
+          split = "",
+          tab = 0,
+          verbose = -1
+        },
+      }, meths.parse_cmd('filter! /foo/ split foo.txt', {}))
     end)
     it('works with user commands', function()
       command('command -bang -nargs=+ -range -addr=lines MyCommand echo foo')
@@ -3420,6 +3486,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3456,6 +3526,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3493,6 +3567,10 @@ describe('API', function()
           browse = false,
           confirm = false,
           emsg_silent = false,
+          filter = {
+              pattern = "",
+              force = false
+          },
           hide = false,
           keepalt = false,
           keepjumps = false,
@@ -3604,6 +3682,13 @@ describe('API', function()
       meths.create_user_command("Foo", 'set verbose', {})
       eq("  verbose=1", meths.cmd({ cmd = "Foo", mods = { verbose = 1 } }, { output = true }))
       eq(0, meths.get_option_value("verbose", {}))
+      command('edit foo.txt | edit bar.txt')
+      eq('  1 #h   "foo.txt"                      line 1',
+         meths.cmd({ cmd = "buffers", mods = { filter = { pattern = "foo", force = false } } },
+                   { output = true }))
+      eq('  2 %a   "bar.txt"                      line 1',
+         meths.cmd({ cmd = "buffers", mods = { filter = { pattern = "foo", force = true } } },
+                   { output = true }))
     end)
     it('works with magic.file', function()
       exec_lua([[

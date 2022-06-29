@@ -181,6 +181,7 @@ return {
   cmd_mods = {
     "silent";
     "emsg_silent";
+    "filter";
     "sandbox";
     "noautocmd";
     "browse";
@@ -196,6 +197,10 @@ return {
     "verbose";
     "vertical";
     "split";
+  };
+  cmd_mods_filter = {
+    "pattern";
+    "force";
   };
   cmd_opts = {
     "output";
