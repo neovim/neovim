@@ -19,9 +19,9 @@ describe('vim.lsp._snippet', function()
         {
           type = snippet.NodeType.TEXT,
           raw = 'TE\\$\\}XT',
-          esc = 'TE$}XT'
-        }
-      }
+          esc = 'TE$}XT',
+        },
+      },
     }, parse('TE\\$\\}XT'))
   end)
 
@@ -36,8 +36,8 @@ describe('vim.lsp._snippet', function()
         {
           type = snippet.NodeType.TABSTOP,
           tabstop = 2,
-        }
-      }
+        },
+      },
     }, parse('$1${2}'))
   end)
 
@@ -56,7 +56,7 @@ describe('vim.lsp._snippet', function()
                 {
                   type = snippet.NodeType.TEXT,
                   raw = 'TE\\$\\}XT',
-                  esc = 'TE$}XT'
+                  esc = 'TE$}XT',
                 },
                 {
                   type = snippet.NodeType.TABSTOP,
@@ -73,21 +73,21 @@ describe('vim.lsp._snippet', function()
                       {
                         type = snippet.NodeType.FORMAT,
                         capture_index = 1,
-                        modifier = 'upcase'
-                      }
-                    }
+                        modifier = 'upcase',
+                      },
+                    },
                   },
                 },
                 {
                   type = snippet.NodeType.TEXT,
                   raw = 'TE\\$\\}XT',
-                  esc = 'TE$}XT'
+                  esc = 'TE$}XT',
                 },
-              }
-            }
-          }
+              },
+            },
+          },
         },
-      }
+      },
     }, parse('${1:${2:TE\\$\\}XT$3${1/regex/${1:/upcase}/i}TE\\$\\}XT}}'))
   end)
 
@@ -110,8 +110,8 @@ describe('vim.lsp._snippet', function()
             {
               type = snippet.NodeType.TABSTOP,
               tabstop = 1,
-            }
-          }
+            },
+          },
         },
         {
           type = snippet.NodeType.VARIABLE,
@@ -124,11 +124,11 @@ describe('vim.lsp._snippet', function()
                 type = snippet.NodeType.FORMAT,
                 capture_index = 1,
                 modifier = 'upcase',
-              }
-            }
-          }
+              },
+            },
+          },
         },
-      }
+      },
     }, parse('$VAR${VAR}${VAR:$1}${VAR/regex/${1:/upcase}/}'))
   end)
 
@@ -141,12 +141,96 @@ describe('vim.lsp._snippet', function()
           tabstop = 1,
           items = {
             ',',
-            '|'
-          }
-        }
-      }
+            '|',
+          },
+        },
+      },
     }, parse('${1|\\,,\\||}'))
   end)
 
-end)
+  it('should parse format', function()
+    eq({
+      type = snippet.NodeType.SNIPPET,
+      children = {
+        {
+          type = snippet.NodeType.VARIABLE,
+          name = 'VAR',
+          transform = {
+            type = snippet.NodeType.TRANSFORM,
+            pattern = 'regex',
+            format = {
+              {
+                type = snippet.NodeType.FORMAT,
+                capture_index = 1,
+                modifier = 'upcase',
+              },
+              {
+                type = snippet.NodeType.FORMAT,
+                capture_index = 1,
+                if_text = 'if_text',
+                else_text = '',
+              },
+              {
+                type = snippet.NodeType.FORMAT,
+                capture_index = 1,
+                if_text = '',
+                else_text = 'else_text',
+              },
+              {
+                type = snippet.NodeType.FORMAT,
+                capture_index = 1,
+                else_text = 'else_text',
+                if_text = 'if_text',
+              },
+              {
+                type = snippet.NodeType.FORMAT,
+                capture_index = 1,
+                if_text = '',
+                else_text = 'else_text',
+              },
+            },
+          },
+        },
+      },
+    }, parse('${VAR/regex/${1:/upcase}${1:+if_text}${1:-else_text}${1:?if_text:else_text}${1:else_text}/}'))
+  end)
 
+  it('should parse empty strings', function()
+    eq({
+      children = {
+        {
+          children = { {
+            esc = '',
+            raw = '',
+            type = 7,
+          } },
+          tabstop = 1,
+          type = 2,
+        },
+        {
+          esc = ' ',
+          raw = ' ',
+          type = 7,
+        },
+        {
+          name = 'VAR',
+          transform = {
+            format = {
+              {
+                capture_index = 1,
+                else_text = '',
+                if_text = '',
+                type = 6,
+              },
+            },
+            option = 'g',
+            pattern = 'erg',
+            type = 5,
+          },
+          type = 3,
+        },
+      },
+      type = 0,
+    }, parse('${1:} ${VAR/erg/${1:?:}/g}'))
+  end)
+end)
