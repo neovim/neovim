@@ -691,8 +691,8 @@ void free_all_mem(void)
 
   // Clear mappings, abbreviations, breakpoints.
   // NB: curbuf not used with local=false arg
-  map_clear_int(curbuf, MAP_ALL_MODES, false, false);
-  map_clear_int(curbuf, MAP_ALL_MODES, false, true);
+  map_clear_mode(curbuf, MAP_ALL_MODES, false, false);
+  map_clear_mode(curbuf, MAP_ALL_MODES, false, true);
   do_cmdline_cmd("breakdel *");
   do_cmdline_cmd("profdel *");
   do_cmdline_cmd("set keymap=");

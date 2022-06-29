@@ -939,8 +939,8 @@ static int get_map_mode(char **cmdp, bool forceit)
   return mode;
 }
 
-/// Clear all mappings or abbreviations.
-/// 'abbr' should be false for mappings, true for abbreviations.
+/// Clear all mappings (":mapclear") or abbreviations (":abclear").
+/// "abbr" should be false for mappings, true for abbreviations.
 /// This function used to be called map_clear().
 static void do_mapclear(char_u *cmdp, char_u *arg, int forceit, int abbr)
 {
@@ -954,7 +954,7 @@ static void do_mapclear(char_u *cmdp, char_u *arg, int forceit, int abbr)
   }
 
   mode = get_map_mode((char **)&cmdp, forceit);
-  map_clear_int(curbuf, mode, local, abbr);
+  map_clear_mode(curbuf, mode, local, abbr);
 }
 
 /// Clear all mappings in "mode".
@@ -963,7 +963,7 @@ static void do_mapclear(char_u *cmdp, char_u *arg, int forceit, int abbr)
 /// @param mode  mode in which to delete
 /// @param local  true for buffer-local mappings
 /// @param abbr  true for abbreviations
-void map_clear_int(buf_T *buf, int mode, bool local, bool abbr)
+void map_clear_mode(buf_T *buf, int mode, bool local, bool abbr)
 {
   mapblock_T *mp, **mpp;
   int hash;
@@ -1942,6 +1942,29 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
   }
 
   return NULL;
+}
+
+/// "hasmapto()" function
+void f_hasmapto(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  const char *mode;
+  const char *const name = tv_get_string(&argvars[0]);
+  bool abbr = false;
+  char buf[NUMBUFLEN];
+  if (argvars[1].v_type == VAR_UNKNOWN) {
+    mode = "nvo";
+  } else {
+    mode = tv_get_string_buf(&argvars[1], buf);
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      abbr = tv_get_number(&argvars[2]);
+    }
+  }
+
+  if (map_to_exists(name, mode, abbr)) {
+    rettv->vval.v_number = true;
+  } else {
+    rettv->vval.v_number = false;
+  }
 }
 
 /// Fill a dictionary with all applicable maparg() like dictionaries
