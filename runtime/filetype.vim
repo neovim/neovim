@@ -785,6 +785,9 @@ au BufNewFile,BufRead *.hsm			setf hamster
 " Handlebars
 au BufNewFile,BufRead *.hbs			setf handlebars
 
+" Hare
+au BufNewFile,BufRead *.ha			setf hare
+
 " Haskell
 au BufNewFile,BufRead *.hs,*.hsc,*.hs-boot,*.hsig setf haskell
 au BufNewFile,BufRead *.lhs			setf lhaskell
