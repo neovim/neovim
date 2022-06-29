@@ -41,26 +41,7 @@
 
 // local declarations. {{{1
 // typedef fold_T {{{2
-/*
- * The toplevel folds for each window are stored in the w_folds growarray.
- * Each toplevel fold can contain an array of second level folds in the
- * fd_nested growarray.
- * The info stored in both growarrays is the same: An array of fold_T.
- */
-typedef struct {
-  linenr_T fd_top;              // first line of fold; for nested fold
-                                // relative to parent
-  linenr_T fd_len;              // number of lines in the fold
-  garray_T fd_nested;           // array of nested folds
-  char fd_flags;                // see below
-  TriState fd_small;            // kTrue, kFalse, or kNone: fold smaller than
-                                // 'foldminlines'; kNone applies to nested
-                                // folds too
-} fold_T;
 
-#define FD_OPEN         0       // fold is open (nested ones can be closed)
-#define FD_CLOSED       1       // fold is closed
-#define FD_LEVEL        2       // depends on 'foldlevel' (nested folds too)
 
 #define MAX_LEVEL       20      // maximum fold depth
 
@@ -1522,7 +1503,7 @@ static int getDeepestNestingRecurse(garray_T *gap)
 /// @param[out] maybe_smallp true: outer this had fd_small == kNone
 /// @param lnum_off line number offset for fp->fd_top
 /// @return true if fold is closed
-static bool check_closed(win_T *const wp, fold_T *const fp, bool *const use_levelp, const int level,
+bool check_closed(win_T *const wp, fold_T *const fp, bool *const use_levelp, const int level,
                          bool *const maybe_smallp, const linenr_T lnum_off)
 {
   bool closed = false;
