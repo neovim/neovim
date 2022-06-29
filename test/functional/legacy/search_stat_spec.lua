@@ -12,6 +12,7 @@ describe('search stat', function()
       [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
       [2] = {background = Screen.colors.Yellow},  -- Search
       [3] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey},  -- Folded
+      [4] = {reverse = true},  -- IncSearch, TabLineFill
     })
     screen:attach()
   end)
@@ -116,6 +117,68 @@ describe('search stat', function()
       {1:~                             }|
       {1:~                             }|
                                     |
+    ]])
+  end)
+
+  it('is not broken by calling searchcount() in tabline vim-patch:8.2.4378', function()
+    exec([[
+      call setline(1, ['abc--c', '--------abc', '--abc'])
+      set hlsearch
+      set incsearch
+      set showtabline=2
+
+      function MyTabLine()
+      try
+        let a=searchcount(#{recompute: 1, maxcount: -1})
+        return a.current .. '/' .. a.total
+      catch
+        return ''
+      endtry
+      endfunction
+
+      set tabline=%!MyTabLine()
+    ]])
+
+    feed('/abc')
+    screen:expect([[
+      {4:                              }|
+      {2:abc}--c                        |
+      --------{4:abc}                   |
+      --{2:abc}                         |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      /abc^                          |
+    ]])
+
+    feed('<C-G>')
+    screen:expect([[
+      {4:3/3                           }|
+      {2:abc}--c                        |
+      --------{2:abc}                   |
+      --{4:abc}                         |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      /abc^                          |
+    ]])
+
+    feed('<C-G>')
+    screen:expect([[
+      {4:1/3                           }|
+      {4:abc}--c                        |
+      --------{2:abc}                   |
+      --{2:abc}                         |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      /abc^                          |
     ]])
   end)
 end)
