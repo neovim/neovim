@@ -653,6 +653,15 @@ add_glob_targets(
   TOUCH_STRATEGY SINGLE
   )
 
+add_custom_target(lintcommit
+  COMMAND ${PROJECT_BINARY_DIR}/bin/nvim -u NONE -es -c [[lua require('scripts.lintcommit').main({trace=false})]]
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  VERBATIM)
+add_dependencies(lintcommit nvim)
+
+add_custom_target(lint)
+add_dependencies(lint check-single-includes lintc lintlua lintpy lintsh lintcommit lintuncrustify)
+
 install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
@@ -775,3 +784,4 @@ add_custom_target(uninstall
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   add_subdirectory(cmake.packaging)
 endif()
+
