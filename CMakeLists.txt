@@ -274,6 +274,7 @@ int main(void)
 }
 " HAVE_BUILTIN_ADD_OVERFLOW)
 
+option(ENABLE_COMPILER_SUGGESTIONS "Enable -Wsuggest compiler warnings" OFF)
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_compile_options(/W3)
@@ -292,25 +293,27 @@ else()
     add_compile_options(-Wimplicit-fallthrough)
   endif()
 
-  # Clang doesn't have -Wsuggest-attribute so check for each one.
-  check_c_compiler_flag(-Wsuggest-attribute=pure HAVE_WSUGGEST_ATTRIBUTE_PURE)
-  if(HAVE_WSUGGEST_ATTRIBUTE_PURE)
-    add_compile_options(-Wsuggest-attribute=pure)
-  endif()
+  if(ENABLE_COMPILER_SUGGESTIONS)
+    # Clang doesn't have -Wsuggest-attribute so check for each one.
+    check_c_compiler_flag(-Wsuggest-attribute=pure HAVE_WSUGGEST_ATTRIBUTE_PURE)
+    if(HAVE_WSUGGEST_ATTRIBUTE_PURE)
+      add_compile_options(-Wsuggest-attribute=pure)
+    endif()
 
-  check_c_compiler_flag(-Wsuggest-attribute=const HAVE_WSUGGEST_ATTRIBUTE_CONST)
-  if(HAVE_WSUGGEST_ATTRIBUTE_CONST)
-    add_compile_options(-Wsuggest-attribute=const)
-  endif()
+    check_c_compiler_flag(-Wsuggest-attribute=const HAVE_WSUGGEST_ATTRIBUTE_CONST)
+    if(HAVE_WSUGGEST_ATTRIBUTE_CONST)
+      add_compile_options(-Wsuggest-attribute=const)
+    endif()
 
-  check_c_compiler_flag(-Wsuggest-attribute=malloc HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
-  if(HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
-    add_compile_options(-Wsuggest-attribute=malloc)
-  endif()
+    check_c_compiler_flag(-Wsuggest-attribute=malloc HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
+    if(HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
+      add_compile_options(-Wsuggest-attribute=malloc)
+    endif()
 
-  check_c_compiler_flag(-Wsuggest-attribute=cold HAVE_WSUGGEST_ATTRIBUTE_COLD)
-  if(HAVE_WSUGGEST_ATTRIBUTE_COLD)
-    add_compile_options(-Wsuggest-attribute=cold)
+    check_c_compiler_flag(-Wsuggest-attribute=cold HAVE_WSUGGEST_ATTRIBUTE_COLD)
+    if(HAVE_WSUGGEST_ATTRIBUTE_COLD)
+      add_compile_options(-Wsuggest-attribute=cold)
+    endif()
   endif()
 
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
