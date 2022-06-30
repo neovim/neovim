@@ -2699,6 +2699,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         } else {
 #ifdef UNIX
           os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
+          os_fsetperm(fd, perm);
           if (!os_fileinfo((char *)IObuff, &file_info)
               || file_info.stat.st_uid != file_info_old.stat.st_uid
               || file_info.stat.st_gid != file_info_old.stat.st_gid
