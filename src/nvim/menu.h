@@ -18,6 +18,7 @@
 #define MENU_OP_PENDING_MODE    (1 << MENU_INDEX_OP_PENDING)
 #define MENU_INSERT_MODE        (1 << MENU_INDEX_INSERT)
 #define MENU_CMDLINE_MODE       (1 << MENU_INDEX_CMDLINE)
+#define MENU_TERMINAL_MODE      (1 << MENU_INDEX_TERMINAL)
 #define MENU_TIP_MODE           (1 << MENU_INDEX_TIP)
 #define MENU_ALL_MODES          ((1 << MENU_INDEX_TIP) - 1)
 /// @}

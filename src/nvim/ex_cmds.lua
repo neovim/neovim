@@ -191,7 +191,7 @@ module.cmds = {
   },
   {
     command='behave',
-    flags=bit.bor(NEEDARG, WORD1, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, NEEDARG, WORD1, TRLBAR, CMDWIN),
     addr_type='ADDR_NONE',
     func='ex_behave',
   },
@@ -2877,6 +2877,24 @@ module.cmds = {
     flags=bit.bor(BANG, TRLBAR),
     addr_type='ADDR_NONE',
     func='ex_tag',
+  },
+  {
+    command='tlmenu',
+    flags=bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN),
+    addr_type='ADDR_OTHER',
+    func='ex_menu',
+  },
+  {
+    command='tlnoremenu',
+    flags=bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN),
+    addr_type='ADDR_OTHER',
+    func='ex_menu',
+  },
+  {
+    command='tlunmenu',
+    flags=bit.bor(RANGE, ZEROR, EXTRA, TRLBAR, NOTRLCOM, CTRLV, CMDWIN),
+    addr_type='ADDR_OTHER',
+    func='ex_menu',
   },
   {
     command='tmenu',

@@ -1144,8 +1144,9 @@ enum {
   MENU_INDEX_OP_PENDING   = 3,
   MENU_INDEX_INSERT       = 4,
   MENU_INDEX_CMDLINE      = 5,
-  MENU_INDEX_TIP          = 6,
-  MENU_MODES              = 7,
+  MENU_INDEX_TERMINAL     = 6,
+  MENU_INDEX_TIP          = 7,
+  MENU_MODES              = 8,
 };
 
 typedef struct VimMenu vimmenu_T;

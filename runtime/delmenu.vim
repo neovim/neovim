@@ -5,6 +5,7 @@
 " Last Change:	2019 Dec 10
 
 aunmenu *
+tlunmenu *
 
 unlet! g:did_install_default_menus
 unlet! g:did_install_syntax_menu

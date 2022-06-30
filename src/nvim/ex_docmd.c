@@ -4060,6 +4060,9 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_cmenu:
   case CMD_cnoremenu:
   case CMD_cunmenu:
+  case CMD_tlmenu:
+  case CMD_tlnoremenu:
+  case CMD_tlunmenu:
   case CMD_tmenu:
   case CMD_tunmenu:
   case CMD_popup:
