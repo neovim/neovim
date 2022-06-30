@@ -940,14 +940,17 @@ void pum_set_event_info(dict_T *dict)
 
 static void pum_position_at_mouse(int min_width)
 {
+  pum_anchor_grid = mouse_grid;
   if (Rows - mouse_row > pum_size) {
     // Enough space below the mouse row.
+    pum_above = false;
     pum_row = mouse_row + 1;
     if (pum_height > Rows - pum_row) {
       pum_height = Rows - pum_row;
     }
   } else {
     // Show above the mouse row, reduce height if it does not fit.
+    pum_above = true;
     pum_row = mouse_row - pum_size;
     if (pum_row < 0) {
       pum_height += pum_row;
@@ -971,6 +974,14 @@ static void pum_position_at_mouse(int min_width)
 /// Select the pum entry at the mouse position.
 static void pum_select_mouse_pos(void)
 {
+  if (mouse_grid == pum_grid.handle) {
+    pum_selected = mouse_row;
+    return;
+  } else if (mouse_grid > 1) {
+    pum_selected = -1;
+    return;
+  }
+
   int idx = mouse_row - pum_row;
 
   if (idx < 0 || idx >= pum_size) {
