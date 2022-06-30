@@ -1501,7 +1501,7 @@ void execute_menu(const exarg_T *eap, vimmenu_T *menu, int mode_idx)
   }
 
   assert(idx != MENU_INDEX_INVALID);
-  if (menu->strings[idx] != NULL) {
+  if (menu->strings[idx] != NULL && (menu->modes & (1 << idx))) {
     // When executing a script or function execute the commands right now.
     // Also for the window toolbar
     // Otherwise put them in the typeahead buffer.

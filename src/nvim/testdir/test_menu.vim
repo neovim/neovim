@@ -60,8 +60,23 @@ func Test_menu_commands()
   emenu c Test.FooBar
   call assert_equal('cmdline', g:did_menu)
 
-  aunmenu Test.FooBar
+  nunmenu Test.FooBar
+  call assert_fails('emenu n Test.FooBar', 'E335: Menu not defined for Normal mode')
+  vunmenu Test.FooBar
+  call assert_fails('emenu v Test.FooBar', 'E335: Menu not defined for Visual mode')
+  vmenu 2 Test.FooBar :let g:did_menu = 'visual'<CR>
+  sunmenu Test.FooBar
+  call assert_fails('emenu s Test.FooBar', 'E335: Menu not defined for Select mode')
+  ounmenu Test.FooBar
+  call assert_fails('emenu o Test.FooBar', 'E335: Menu not defined for Op-pending mode')
+  iunmenu Test.FooBar
+  call assert_fails('emenu i Test.FooBar', 'E335: Menu not defined for Insert mode')
+  cunmenu Test.FooBar
+  call assert_fails('emenu c Test.FooBar', 'E335: Menu not defined for Cmdline mode')
   tlunmenu Test.FooBar
+  call assert_fails('emenu t Test.FooBar', 'E335: Menu not defined for Terminal mode')
+
+  aunmenu Test.FooBar
   call assert_fails('emenu n Test.FooBar', 'E334:')
 
   nmenu 2 Test.FooBar.Child :let g:did_menu = 'foobar'<CR>
