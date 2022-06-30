@@ -3344,7 +3344,6 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
       totlen = (size_t)(count * (yanklen + spaces)
                         + bd.startspaces + bd.endspaces);
-      int addcount = (int)totlen + lines_appended;
       newp = (char_u *)xmalloc(totlen + oldlen + 1);
 
       // copy part up to cursor to new line
@@ -3366,7 +3365,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           memset(ptr, ' ', (size_t)spaces);
           ptr += spaces;
         } else {
-          addcount -= spaces;
+          totlen -= (size_t)spaces;  // didn't use these spaces
         }
       }
 
@@ -3380,7 +3379,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
       ml_replace(curwin->w_cursor.lnum, (char *)newp, false);
       extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, bd.textcol,
-                          delcount, addcount, kExtmarkUndo);
+                          delcount, (int)totlen + lines_appended, kExtmarkUndo);
 
       ++curwin->w_cursor.lnum;
       if (i == 0) {
