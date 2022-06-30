@@ -459,7 +459,7 @@ func dist#ft#FTmm()
   setf nroff
 endfunc
 
-" Returns true if file content looks like LambdaProlog
+" Returns true if file content looks like LambdaProlog module
 func IsLProlog()
   " skip apparent comments and blank lines, what looks like 
   " LambdaProlog comment may be RAPID header
@@ -845,6 +845,27 @@ func dist#ft#FTperl()
     return 1
   endif
   return 0
+endfunc
+
+" LambdaProlog and Standard ML signature files
+func dist#ft#FTsig()
+  if exists("g:filetype_sig")
+    exe "setf " .. g:filetype_sig
+    return
+  endif
+
+  let lprolog_comment = '^\s*\%(/\*\|%\)'
+  let lprolog_keyword = '^\s*sig\s\+\a'
+  let sml_comment = '^\s*(\*'
+  let sml_keyword = '^\s*\%(signature\|structure\)\s\+\a'
+
+  let line = getline(nextnonblank(1))
+
+  if line =~ lprolog_comment || line =~# lprolog_keyword
+    setf lprolog
+  elseif line =~ sml_comment || line =~# sml_keyword
+    setf sml
+  endif
 endfunc
 
 func dist#ft#FTsys()

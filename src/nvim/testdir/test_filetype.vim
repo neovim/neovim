@@ -313,7 +313,6 @@ let s:filename_checks = {
     \ 'lotos': ['file.lot', 'file.lotos'],
     \ 'lout': ['file.lou', 'file.lout'],
     \ 'lpc': ['file.lpc', 'file.ulpc'],
-    \ 'lprolog': ['file.sig'],
     \ 'lsl': ['file.lsl'],
     \ 'lss': ['file.lss'],
     \ 'lua': ['file.lua', 'file.rockspec', 'file.nse'],
@@ -1732,5 +1731,60 @@ func Test_cls_file()
   call delete('Xfile.cls')
   filetype off
 endfunc
+
+func Test_sig_file()
+  filetype on
+
+  call writefile(['this is neither Lambda Prolog nor SML'], 'Xfile.sig')
+  split Xfile.sig
+  call assert_equal('', &filetype)
+  bwipe!
+
+  " Test dist#ft#FTsig()
+
+  let g:filetype_sig = 'sml'
+  split Xfile.sig
+  call assert_equal('sml', &filetype)
+  bwipe!
+  unlet g:filetype_sig
+
+  " Lambda Prolog
+
+  call writefile(['sig foo.'], 'Xfile.sig')
+  split Xfile.sig
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+
+  call writefile(['/* ... */'], 'Xfile.sig')
+  split Xfile.sig
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+
+  call writefile(['% ...'], 'Xfile.sig')
+  split Xfile.sig
+  call assert_equal('lprolog', &filetype)
+  bwipe!
+
+  " SML signature file
+
+  call writefile(['signature FOO ='], 'Xfile.sig')
+  split Xfile.sig
+  call assert_equal('sml', &filetype)
+  bwipe!
+
+  call writefile(['structure FOO ='], 'Xfile.sig')
+  split Xfile.sig
+  call assert_equal('sml', &filetype)
+  bwipe!
+
+  call writefile(['(* ... *)'], 'Xfile.sig')
+  split Xfile.sig
+  call assert_equal('sml', &filetype)
+  bwipe!
+
+  call delete('Xfile.sig')
+  filetype off
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

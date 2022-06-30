@@ -586,7 +586,6 @@ local extension = {
   c = function(path, bufnr)
     return require('vim.filetype.detect').lpc(bufnr)
   end,
-  sig = 'lprolog',
   lsl = 'lsl',
   lss = 'lss',
   nse = 'lua',
@@ -867,6 +866,9 @@ local extension = {
   end,
   sieve = 'sieve',
   siv = 'sieve',
+  sig = function(path, bufnr)
+    return require('vim.filetype.detect').sig(bufnr)
+  end,
   sil = 'sil',
   sim = 'simula',
   ['s85'] = 'sinda',
