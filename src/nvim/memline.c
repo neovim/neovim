@@ -3,7 +3,7 @@
 
 // for debugging
 // #define CHECK(c, s) do { if (c) emsg(s); } while (0)
-#define CHECK(c, s) do { } while (0)
+#define CHECK(c, s) do {} while (0)
 
 /*
  * memline.c: Contains the functions for appending, deleting and changing the

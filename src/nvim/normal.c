@@ -1022,7 +1022,7 @@ static int normal_execute(VimState *state, int key)
 
   s->need_flushbuf = add_to_showcmd(s->c);
 
-  while (normal_get_command_count(s)) { }
+  while (normal_get_command_count(s)) {}
 
   if (s->c == K_EVENT) {
     // Save the count values so that ca.opcount and ca.count0 are exactly

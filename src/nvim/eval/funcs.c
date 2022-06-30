@@ -91,13 +91,11 @@ typedef enum {
 #  pragma function(floor)
 # endif
 
-// uncrustify:off
 PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
 PRAGMA_DIAG_PUSH_IGNORE_IMPLICIT_FALLTHROUGH
 # include "funcs.generated.h"
 PRAGMA_DIAG_POP
 PRAGMA_DIAG_POP
-// uncrustify:on
 #endif
 
 static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
