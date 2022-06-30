@@ -1000,9 +1000,12 @@ void pum_show_popupmenu(vimmenu_T *menu)
 {
   pum_undisplay(true);
   pum_size = 0;
+  int mode = get_menu_mode_flag();
 
   for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
-    pum_size++;
+    if (menu_is_separator(mp->dname) || (mp->modes & mp->enabled & mode)) {
+      pum_size++;
+    }
   }
 
   int idx = 0;
@@ -1011,7 +1014,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
   for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
     if (menu_is_separator(mp->dname)) {
       array[idx++].pum_text = (char_u *)"";
-    } else {
+    } else if (mp->modes & mp->enabled & mode) {
       array[idx++].pum_text = (char_u *)mp->dname;
     }
   }
@@ -1078,4 +1081,19 @@ void pum_show_popupmenu(vimmenu_T *menu)
 
   xfree(array);
   pum_undisplay(true);
+}
+
+void pum_make_popup(const char *path_name, int use_mouse_pos)
+{
+  if (!use_mouse_pos) {
+    // Hack: set mouse position at the cursor so that the menu pops up
+    // around there.
+    mouse_row = curwin->w_winrow + curwin->w_wrow;
+    mouse_col = curwin->w_wincol + curwin->w_wcol;
+  }
+
+  vimmenu_T *menu = menu_find(path_name);
+  if (menu != NULL) {
+    pum_show_popupmenu(menu);
+  }
 }

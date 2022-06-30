@@ -62,6 +62,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -7983,6 +7984,11 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
 static void ex_nogui(exarg_T *eap)
 {
   eap->errmsg = N_("E25: Nvim does not have a built-in GUI");
+}
+
+static void ex_popup(exarg_T *eap)
+{
+  pum_make_popup(eap->arg, eap->forceit);
 }
 
 static void ex_swapname(exarg_T *eap)

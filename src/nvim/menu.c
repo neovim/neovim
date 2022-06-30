@@ -1382,6 +1382,16 @@ static int get_menu_mode(void)
   return MENU_INDEX_INVALID;
 }
 
+int get_menu_mode_flag(void)
+{
+  int mode = get_menu_mode();
+
+  if (mode == MENU_INDEX_INVALID) {
+    return 0;
+  }
+  return 1 << mode;
+}
+
 /// Display the Special "PopUp" menu as a pop-up at the current mouse
 /// position.  The "PopUpn" menu is for Normal mode, "PopUpi" for Insert mode,
 /// etc.
@@ -1543,6 +1553,52 @@ void ex_emenu(exarg_T *eap)
 
   // Found the menu, so execute.
   execute_menu(eap, menu);
+}
+
+/// Given a menu descriptor, e.g. "File.New", find it in the menu hierarchy.
+vimmenu_T *menu_find(const char *path_name)
+{
+  vimmenu_T *menu = *get_root_menu(path_name);
+  char *saved_name = xstrdup(path_name);
+  char *name = saved_name;
+  while (*name) {
+    // find the end of one dot-separated name and put a NUL at the dot
+    char *p = menu_name_skip(name);
+
+    while (menu != NULL) {
+      if (menu_name_equal(name, menu)) {
+        if (menu->children == NULL) {
+          // found a menu item instead of a sub-menu
+          if (*p == NUL) {
+            emsg(_("E336: Menu path must lead to a sub-menu"));
+          } else {
+            emsg(_(e_notsubmenu));
+          }
+          menu = NULL;
+          goto theend;
+        }
+        if (*p == NUL) {  // found a full match
+          goto theend;
+        }
+        break;
+      }
+      menu = menu->next;
+    }
+    if (menu == NULL) {  // didn't find it
+      break;
+    }
+
+    // Found a match, search the sub-menu.
+    menu = menu->children;
+    name = p;
+  }
+
+  if (menu == NULL) {
+    emsg(_("E337: Menu not found - check menu names"));
+  }
+theend:
+  xfree(saved_name);
+  return menu;
 }
 
 /*

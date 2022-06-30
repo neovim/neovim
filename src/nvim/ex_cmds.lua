@@ -1991,7 +1991,7 @@ module.cmds = {
     command='popup',
     flags=bit.bor(NEEDARG, EXTRA, BANG, TRLBAR, NOTRLCOM, CMDWIN),
     addr_type='ADDR_NONE',
-    func='ex_ni',
+    func='ex_popup',
   },
   {
     command='ppop',
