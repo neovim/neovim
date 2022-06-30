@@ -75,6 +75,8 @@ local function call_ui_event_method(output, ev)
       hlattrs_args_count = hlattrs_args_count + 1
     elseif kind == 'Object' then
       output:write('args.items['..(j-1)..'];\n')
+    elseif kind == 'Window' then
+      output:write('(Window)args.items['..(j-1)..'].data.integer;\n')
     else
       output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
     end

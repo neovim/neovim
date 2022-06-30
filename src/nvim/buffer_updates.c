@@ -285,14 +285,13 @@ void buf_updates_send_changes(buf_T *buf, linenr_T firstline, int64_t num_added,
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
       textlock++;
-      Object res = nlua_call_ref(cb.on_lines, "lines", args, true, NULL);
+      Object res = nlua_call_ref(cb.on_lines, "lines", args, false, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
         buffer_update_callbacks_free(cb);
         keep = false;
       }
-      api_free_object(res);
     }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
@@ -335,7 +334,7 @@ void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcoun
       ADD_C(args, INTEGER_OBJ(new_byte));
 
       textlock++;
-      Object res = nlua_call_ref(cb.on_bytes, "bytes", args, true, NULL);
+      Object res = nlua_call_ref(cb.on_bytes, "bytes", args, false, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -371,14 +370,13 @@ void buf_updates_changedtick(buf_T *buf)
 
       textlock++;
       Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
-                                 args, true, NULL);
+                                 args, false, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
         buffer_update_callbacks_free(cb);
         keep = false;
       }
-      api_free_object(res);
     }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);

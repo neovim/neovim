@@ -198,13 +198,16 @@ void ui_refresh(void)
     ext_widgets[i] = true;
   }
 
+  UI *compositor = uis[0];
+
   bool inclusive = ui_override();
-  for (size_t i = 0; i < ui_count; i++) {
+  for (size_t i = 1; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
-      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
+      bool in_compositor = ui->composed && compositor->ui_ext[j];
+      ext_widgets[j] &= (ui->ui_ext[j] || in_compositor || inclusive);
     }
   }
 

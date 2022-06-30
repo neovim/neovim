@@ -223,6 +223,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
   ui->msg_set_pos = remote_ui_msg_set_pos;
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
+  ui->win_viewport = remote_ui_win_viewport;
 
   CLEAR_FIELD(ui->ui_ext);
 

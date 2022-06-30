@@ -69,6 +69,11 @@ struct ui_t {
   void (*inspect)(UI *ui, Dictionary *info);
 };
 
+typedef struct ui_event_callback {
+  LuaRef cb;
+  bool ext_widgets[kUIGlobalCount];
+} UIEventCallback;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
 
