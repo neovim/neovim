@@ -2341,7 +2341,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       do_return(&ea, TRUE, FALSE, NULL);
     }
   }
-  need_rethrow = check_cstack = FALSE;
+  need_rethrow = check_cstack = false;
 
 doend:
   // can happen with zero line number
