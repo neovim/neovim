@@ -213,5 +213,17 @@ func Test_put_empty_register()
   bwipe!
 endfunc
 
+" this was putting the end mark after the end of the line
+func Test_put_visual_mode()
+  edit! SomeNewBuffer
+  set selection=exclusive
+  exe "norm o\t"
+  m0
+  sil! norm pp
+
+  bwipe!
+  set selection&
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
