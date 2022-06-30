@@ -29,10 +29,10 @@ describe('API: highlight',function()
     italic = true,
     reverse = true,
     underline = true,
-    underlineline = true,
     undercurl = true,
-    underdot = true,
-    underdash = true,
+    underdouble = true,
+    underdotted = true,
+    underdashed = true,
     strikethrough = true,
   }
 
@@ -55,7 +55,7 @@ describe('API: highlight',function()
     eq('Invalid highlight id: 30000', string.match(emsg, 'Invalid.*'))
 
     -- Test all highlight properties.
-    command('hi NewHighlight gui=underline,bold,underlineline,undercurl,underdot,underdash,italic,reverse,strikethrough')
+    command('hi NewHighlight gui=underline,bold,undercurl,underdouble,underdotted,underdashed,italic,reverse,strikethrough')
     eq(expected_rgb2, nvim("get_hl_by_id", hl_id, true))
 
     -- Test nil argument.
@@ -205,9 +205,9 @@ describe("API: set highlight", function()
     reverse = true,
     undercurl = true,
     underline = true,
-    underdash = true,
-    underdot = true,
-    underlineline = true,
+    underdashed = true,
+    underdotted = true,
+    underdouble = true,
     strikethrough = true,
     cterm = {
       italic = true,
@@ -224,9 +224,9 @@ describe("API: set highlight", function()
     reverse = true,
     undercurl = true,
     underline = true,
-    underdash = true,
-    underdot = true,
-    underlineline = true,
+    underdashed = true,
+    underdotted = true,
+    underdouble = true,
     strikethrough = true,
   }
   local highlight3_result_cterm = {
@@ -290,7 +290,7 @@ describe("API: set highlight", function()
       exec_capture('highlight Test_hl'))
 
     meths.set_hl(0, 'Test_hl2', highlight3_config)
-    eq('Test_hl2       xxx cterm=undercurl,italic,reverse,strikethrough ctermfg=8 ctermbg=15 gui=bold,underline,underlineline,undercurl,underdot,underdash,italic,reverse,strikethrough guifg=#ff0000 guibg=#0032aa',
+    eq('Test_hl2       xxx cterm=undercurl,italic,reverse,strikethrough ctermfg=8 ctermbg=15 gui=bold,underline,undercurl,underdouble,underdotted,underdashed,italic,reverse,strikethrough guifg=#ff0000 guibg=#0032aa',
       exec_capture('highlight Test_hl2'))
 
     -- Colors are stored with the name they are defined, but

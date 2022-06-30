@@ -149,10 +149,10 @@ Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
 ///                - bold: boolean
 ///                - standout: boolean
 ///                - underline: boolean
-///                - underlineline: boolean
 ///                - undercurl: boolean
-///                - underdot: boolean
-///                - underdash: boolean
+///                - underdouble: boolean
+///                - underdotted: boolean
+///                - underdashed: boolean
 ///                - strikethrough: boolean
 ///                - italic: boolean
 ///                - reverse: boolean

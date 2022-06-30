@@ -572,7 +572,7 @@ syn match	vimHiBang	contained	"!"	skipwhite nextgroup=@vimHighlightCluster
 
 syn match	vimHiGroup	contained	"\i\+"
 syn case ignore
-syn keyword	vimHiAttrib	contained	none bold inverse italic nocombine reverse standout strikethrough underline underlineline undercurl underdot underdash
+syn keyword	vimHiAttrib	contained	none bold inverse italic nocombine reverse standout strikethrough underline undercurl underdouble underdotted underdashed
 syn keyword	vimFgBgAttrib	contained	none bg background fg foreground
 syn case match
 syn match	vimHiAttribList	contained	"\i\+"	contains=vimHiAttrib

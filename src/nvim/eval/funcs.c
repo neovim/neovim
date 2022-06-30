@@ -10303,21 +10303,29 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       p = highlight_has_attr(id, HL_STANDOUT, modec);
     }
     break;
-  case 'u': {
-    const size_t len = STRLEN(what);
-    if (len <= 5 || (TOLOWER_ASC(what[5]) == 'l' && len <= 9)) {  // underline
-      p = highlight_has_attr(id, HL_UNDERLINE, modec);
-    } else if (TOLOWER_ASC(what[5]) == 'c') {  // undercurl
-      p = highlight_has_attr(id, HL_UNDERCURL, modec);
-    } else if (len > 9 && TOLOWER_ASC(what[9]) == 'l') {  // underlineline
-      p = highlight_has_attr(id, HL_UNDERLINELINE, modec);
-    } else if (len > 6 && TOLOWER_ASC(what[6]) == 'o') {  // underdot
-      p = highlight_has_attr(id, HL_UNDERDOT, modec);
-    } else {  // underdash
-      p = highlight_has_attr(id, HL_UNDERDASH, modec);
+  case 'u':
+    if (STRLEN(what) >= 9) {
+      if (TOLOWER_ASC(what[5]) == 'l') {
+        // underline
+        p = highlight_has_attr(id, HL_UNDERLINE, modec);
+      } else if (TOLOWER_ASC(what[5]) != 'd') {
+        // undercurl
+        p = highlight_has_attr(id, HL_UNDERCURL, modec);
+      } else if (TOLOWER_ASC(what[6]) != 'o') {
+        // underdashed
+        p = highlight_has_attr(id, HL_UNDERDASHED, modec);
+      } else if (TOLOWER_ASC(what[7]) == 'u') {
+        // underdouble
+        p = highlight_has_attr(id, HL_UNDERDOUBLE, modec);
+      } else {
+        // underdotted
+        p = highlight_has_attr(id, HL_UNDERDOTTED, modec);
+      }
+    } else {
+      // ul
+      p = highlight_color(id, what, modec);
     }
     break;
-  }
   }
 
   rettv->v_type = VAR_STRING;

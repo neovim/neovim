@@ -38,10 +38,12 @@ Map(cstr_t, int) highlight_unames = MAP_INIT;
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
-{ "bold", "standout", "underline", "underlineline", "undercurl", "underdot",
-  "underdash", "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
+{ "bold", "standout", "underline",
+  "undercurl", "underdouble", "underdotted", "underdashed",
+  "italic", "reverse", "inverse", "strikethrough", "nocombine", "NONE" };
 static int hl_attr_table[] =
-{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERLINELINE, HL_UNDERCURL, HL_UNDERDOT, HL_UNDERDASH,
+{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE,
+  HL_UNDERCURL, HL_UNDERDOUBLE, HL_UNDERDOTTED, HL_UNDERDASHED,
   HL_ITALIC, HL_INVERSE, HL_INVERSE, HL_STRIKETHROUGH, HL_NOCOMBINE, 0 };
 
 /// Structure that stores information about a highlight group.

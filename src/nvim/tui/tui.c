@@ -589,26 +589,26 @@ static void update_attrs(UI *ui, int attr_id)
   bool strikethrough = attr & HL_STRIKETHROUGH;
 
   bool underline;
-  bool underlineline;
   bool undercurl;
-  bool underdot;
-  bool underdash;
+  bool underdouble;
+  bool underdotted;
+  bool underdashed;
   if (data->unibi_ext.set_underline_style != -1) {
     underline = attr & HL_UNDERLINE;
-    underlineline = attr & HL_UNDERLINELINE;
     undercurl = attr & HL_UNDERCURL;
-    underdash = attr & HL_UNDERDASH;
-    underdot = attr & HL_UNDERDOT;
+    underdouble = attr & HL_UNDERDOUBLE;
+    underdashed = attr & HL_UNDERDASHED;
+    underdotted = attr & HL_UNDERDOTTED;
   } else {
     underline = attr & HL_ANY_UNDERLINE;
-    underlineline = false;
     undercurl = false;
-    underdot = false;
-    underdash = false;
+    underdouble = false;
+    underdotted = false;
+    underdashed = false;
   }
 
   bool has_any_underline = undercurl || underline
-                           || underdot || underdash || underlineline;
+                           || underdouble || underdotted || underdashed;
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
     if (bold || reverse || underline || standout) {
@@ -648,19 +648,19 @@ static void update_attrs(UI *ui, int attr_id)
   if (strikethrough && data->unibi_ext.enter_strikethrough_mode != -1) {
     unibi_out_ext(ui, data->unibi_ext.enter_strikethrough_mode);
   }
-  if (underlineline && data->unibi_ext.set_underline_style != -1) {
-    UNIBI_SET_NUM_VAR(data->params[0], 2);
-    unibi_out_ext(ui, data->unibi_ext.set_underline_style);
-  }
   if (undercurl && data->unibi_ext.set_underline_style != -1) {
     UNIBI_SET_NUM_VAR(data->params[0], 3);
     unibi_out_ext(ui, data->unibi_ext.set_underline_style);
   }
-  if (underdot && data->unibi_ext.set_underline_style != -1) {
+  if (underdouble && data->unibi_ext.set_underline_style != -1) {
+    UNIBI_SET_NUM_VAR(data->params[0], 2);
+    unibi_out_ext(ui, data->unibi_ext.set_underline_style);
+  }
+  if (underdotted && data->unibi_ext.set_underline_style != -1) {
     UNIBI_SET_NUM_VAR(data->params[0], 4);
     unibi_out_ext(ui, data->unibi_ext.set_underline_style);
   }
-  if (underdash && data->unibi_ext.set_underline_style != -1) {
+  if (underdashed && data->unibi_ext.set_underline_style != -1) {
     UNIBI_SET_NUM_VAR(data->params[0], 5);
     unibi_out_ext(ui, data->unibi_ext.set_underline_style);
   }

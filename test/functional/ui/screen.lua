@@ -1579,9 +1579,9 @@ end
 
 function Screen:_equal_attrs(a, b)
     return a.bold == b.bold and a.standout == b.standout and
-       a.underline == b.underline and a.underlineline == b.underlineline and
-       a.undercurl == b.undercurl and a.underdot == b.underdot and
-       a.underdash == b.underdash and a.italic == b.italic and
+       a.underline == b.underline and a.undercurl == b.undercurl and
+       a.underdouble == b.underdouble and a.underdotted == b.underdotted and
+       a.underdashed == b.underdashed and a.italic == b.italic and
        a.reverse == b.reverse and a.foreground == b.foreground and
        a.background == b.background and a.special == b.special and a.blend == b.blend and
        a.strikethrough == b.strikethrough and

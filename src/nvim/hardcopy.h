@@ -18,9 +18,9 @@ typedef struct {
   TriState italic;
   TriState underline;
   int undercurl;
-  int underlineline;
-  int underdot;
-  int underdash;
+  int underdouble;
+  int underdotted;
+  int underdashed;
 } prt_text_attr_T;
 
 /*
