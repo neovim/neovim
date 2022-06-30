@@ -1036,7 +1036,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
     ui_flush();
 
     int c = vgetc();
-    if (c == ESC) {
+    if (c == ESC || c == Ctrl_C) {
       break;
     } else if (c == CAR || c == NL) {
       // enter: select current item, if any, and close
