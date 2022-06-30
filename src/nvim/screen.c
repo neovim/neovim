@@ -5757,12 +5757,17 @@ static void linecopy(ScreenGrid *grid, int to, int from, int col, int width)
           width * sizeof(sattr_T));
 }
 
-/*
- * Set cursor to its position in the current window.
- */
+/// Set cursor to its position in the current window.
 void setcursor(void)
 {
-  if (redrawing()) {
+  setcursor_mayforce(false);
+}
+
+/// Set cursor to its position in the current window.
+/// @param force  when true, also when not redrawing.
+void setcursor_mayforce(bool force)
+{
+  if (force || redrawing()) {
     validate_cursor();
 
     ScreenGrid *grid = &curwin->w_grid;
