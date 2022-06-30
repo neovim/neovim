@@ -399,7 +399,8 @@ describe('startup', function()
     eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
 
     local rtp = meths.get_option'rtp'
-    ok(startswith(rtp, 'test/functional/fixtures/nvim,test/functional/fixtures/pack/*/start/*,test/functional/fixtures/start/*,test/functional/fixtures,test/functional/fixtures/middle,'), 'rtp='..rtp)
+    ok(startswith(rtp, 'test/functional/fixtures/nvim,test/functional/fixtures/pack/*/start/*,test/functional/fixtures/start/*,test/functional/fixtures,test/functional/fixtures/middle,'),
+      'startswith(…)', 'rtp='..rtp)
   end)
 
   it("handles the correct order with opt packages and after/", function()

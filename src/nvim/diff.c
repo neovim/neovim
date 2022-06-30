@@ -1206,7 +1206,7 @@ void ex_diffpatch(exarg_T *eap)
       || (os_chdir((char *)dirbuf) != 0)) {
     dirbuf[0] = NUL;
   } else {
-    char *tempdir = (char *)vim_gettempdir();
+    char *tempdir = vim_gettempdir();
     if (tempdir == NULL) {
       tempdir = "/tmp";
     }

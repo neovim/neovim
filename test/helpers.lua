@@ -57,8 +57,16 @@ end
 function module.neq(expected, actual, context)
   return assert.are_not.same(expected, actual, context)
 end
-function module.ok(res, msg)
-  return assert.is_true(res, msg)
+
+--- Asserts that `cond` is true, or prints a message.
+---
+--- @param cond (boolean) expression to assert
+--- @param expected (any) description of expected result
+--- @param actual (any) description of actual result
+function module.ok(cond, expected, actual)
+  assert((not expected and not actual) or (expected and actual), 'if "expected" is given, "actual" is also required')
+  local msg = expected and ('expected %s, got: %s'):format(expected, tostring(actual)) or nil
+  return assert(cond, msg)
 end
 
 local function epicfail(state, arguments, _)
@@ -77,20 +85,33 @@ function module.matches(pat, actual)
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
---- Asserts that `pat` matches one or more lines in the tail of $NVIM_LOG_FILE.
+--- Asserts that `pat` matches (or *not* if inverse=true) any line in the tail of `logfile`.
 ---
----@param pat string      Lua pattern to search for in the log file
----@param logfile string  Full path to log file (default=$NVIM_LOG_FILE)
----@param nrlines number  Search up to this many log lines
-function module.assert_log(pat, logfile, nrlines)
+---@param pat (string) Lua pattern to match lines in the log file
+---@param logfile (string) Full path to log file (default=$NVIM_LOG_FILE)
+---@param nrlines (number) Search up to this many log lines
+---@param inverse (boolean) Assert that the pattern does NOT match.
+function module.assert_log(pat, logfile, nrlines, inverse)
   logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
+  assert(logfile ~= nil, 'no logfile')
   nrlines = nrlines or 10
+  inverse = inverse or false
   local lines = module.read_file_list(logfile, -nrlines) or {}
+  local msg = string.format('Pattern %q %sfound in log (last %d lines): %s:\n%s',
+    pat, (inverse and '' or 'not '), nrlines, logfile, '    '..table.concat(lines, '\n    '))
   for _,line in ipairs(lines) do
-    if line:match(pat) then return end
+    if line:match(pat) then
+      if inverse then error(msg) else return end
+    end
   end
-  error(string.format('Pattern %q not found in log (last %d lines): %s:\n%s',
-    pat, nrlines, logfile, '    '..table.concat(lines, '\n    ')))
+  if not inverse then error(msg) end
+end
+
+--- Asserts that `pat` does NOT matche any line in the tail of `logfile`.
+---
+--- @see assert_log
+function module.assert_nolog(pat, logfile, nrlines)
+  return module.assert_log(pat, logfile, nrlines, true)
 end
 
 -- Invokes `fn` and returns the error string (with truncated paths), or raises
@@ -284,6 +305,7 @@ local function tmpdir_is_local(dir)
   return not not (dir and string.find(dir, 'Xtest'))
 end
 
+--- Creates a new temporary file for use by tests.
 module.tmpname = (function()
   local seq = 0
   local tmpdir = tmpdir_get()

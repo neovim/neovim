@@ -9719,6 +9719,8 @@ static void f_stdpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_string = get_xdg_home(kXDGStateHome);
   } else if (strequal(p, "log")) {
     rettv->vval.v_string = get_xdg_home(kXDGStateHome);
+  } else if (strequal(p, "run")) {
+    rettv->vval.v_string = stdpaths_get_xdg_var(kXDGRuntimeDir);
   } else if (strequal(p, "config_dirs")) {
     get_xdg_var_list(kXDGConfigDirs, rettv);
   } else if (strequal(p, "data_dirs")) {
