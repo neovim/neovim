@@ -214,7 +214,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
       // relative to containing fold.
       gap = &fp->fd_nested;
       lnum_rel -= fp->fd_top;
-      ++level;
+      level++;
     }
   }
 
@@ -457,7 +457,7 @@ static void newFoldLevelWin(win_T *wp)
     // manual open/close will then change the flags to FD_OPEN or
     // FD_CLOSED for those folds that don't use 'foldlevel'.
     fp = (fold_T *)wp->w_folds.ga_data;
-    for (int i = 0; i < wp->w_folds.ga_len; ++i) {
+    for (int i = 0; i < wp->w_folds.ga_len; i++) {
       fp[i].fd_flags = FD_LEVEL;
     }
     wp->w_fold_manual = false;
@@ -485,7 +485,7 @@ static int checkCloseRec(garray_T *gap, linenr_T lnum, int level)
   int retval = FALSE;
 
   fp = (fold_T *)gap->ga_data;
-  for (int i = 0; i < gap->ga_len; ++i) {
+  for (int i = 0; i < gap->ga_len; i++) {
     // Only manually opened folds may need to be closed.
     if (fp[i].fd_flags == FD_OPEN) {
       if (level <= 0 && (lnum < fp[i].fd_top
@@ -692,10 +692,10 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
       // check nested folds
       gap = &fp->fd_nested;
       lnum_off += fp->fd_top;
-      ++level;
+      level++;
     }
     if (found_ga == NULL) {
-      ++lnum;
+      lnum++;
     } else {
       lnum = found_fp->fd_top + found_fp->fd_len + found_off;
 
@@ -932,7 +932,7 @@ int foldMoveTo(const bool updown, const int dir, const long count)
       // Check nested folds (if any).
       gap = &fp->fd_nested;
       lnum_off += fp->fd_top;
-      ++level;
+      level++;
     }
     if (lnum_found != curwin->w_cursor.lnum) {
       if (retval == FAIL) {
@@ -966,7 +966,7 @@ int find_wl_entry(win_T *win, linenr_T lnum)
 {
   int i;
 
-  for (i = 0; i < win->w_lines_valid; ++i) {
+  for (i = 0; i < win->w_lines_valid; i++) {
     if (win->w_lines[i].wl_valid) {
       if (lnum < win->w_lines[i].wl_lnum) {
         return -1;
@@ -1043,9 +1043,9 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
     to_p->fd_flags = from_p->fd_flags;
     to_p->fd_small = from_p->fd_small;
     cloneFoldGrowArray(&from_p->fd_nested, &to_p->fd_nested);
-    ++to->ga_len;
-    ++from_p;
-    ++to_p;
+    to->ga_len++;
+    from_p++;
+    to_p++;
   }
 }
 
@@ -1107,7 +1107,7 @@ static int foldLevelWin(win_T *wp, linenr_T lnum)
     // Check nested folds.  Line number is relative to containing fold.
     gap = &fp->fd_nested;
     lnum_rel -= fp->fd_top;
-    ++level;
+    level++;
   }
 
   return level;
@@ -1131,7 +1131,7 @@ static void setFoldRepeat(pos_T pos, long count, int do_open)
   int done;
   long n;
 
-  for (n = 0; n < count; ++n) {
+  for (n = 0; n < count; n++) {
     done = DONE_NOTHING;
     (void)setManualFold(pos, do_open, false, &done);
     if (!(done & DONE_ACTION)) {
@@ -1227,7 +1227,7 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, int opening, int recu
         fp->fd_flags = FD_OPEN;
       }
       fp2 = (fold_T *)fp->fd_nested.ga_data;
-      for (j = 0; j < fp->fd_nested.ga_len; ++j) {
+      for (j = 0; j < fp->fd_nested.ga_len; j++) {
         fp2[j].fd_flags = FD_LEVEL;
       }
     }
@@ -1255,7 +1255,7 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, int opening, int recu
     gap = &fp->fd_nested;
     lnum -= fp->fd_top;
     off += fp->fd_top;
-    ++level;
+    level++;
   }
   if (found_fold) {
     // When closing and not recurse, close deepest open fold.
@@ -1286,7 +1286,7 @@ static void foldOpenNested(fold_T *fpr)
   fold_T *fp;
 
   fp = (fold_T *)fpr->fd_nested.ga_data;
-  for (int i = 0; i < fpr->fd_nested.ga_len; ++i) {
+  for (int i = 0; i < fpr->fd_nested.ga_len; i++) {
     foldOpenNested(&fp[i]);
     fp[i].fd_flags = FD_OPEN;
   }
@@ -1392,7 +1392,7 @@ static void foldMarkAdjustRecurse(win_T *wp, garray_T *gap, linenr_T line1, line
   (void)foldFind(gap, line1, &fp);
 
   // Adjust all folds below "line1" that are affected.
-  for (int i = (int)(fp - (fold_T *)gap->ga_data); i < gap->ga_len; ++i, ++fp) {
+  for (int i = (int)(fp - (fold_T *)gap->ga_data); i < gap->ga_len; i++, fp++) {
     // Check for these situations:
     //    1  2  3
     //    1  2  3
@@ -1481,7 +1481,7 @@ static int getDeepestNestingRecurse(garray_T *gap)
   fold_T *fp;
 
   fp = (fold_T *)gap->ga_data;
-  for (int i = 0; i < gap->ga_len; ++i) {
+  for (int i = 0; i < gap->ga_len; i++) {
     level = getDeepestNestingRecurse(&fp[i].fd_nested) + 1;
     if (level > maxlevel) {
       maxlevel = level;
@@ -1675,7 +1675,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char_u *marker, size_t mark
     // Found the marker, include a digit if it's there.
     size_t len = markerlen;
     if (ascii_isdigit(p[len])) {
-      ++len;
+      len++;
     }
     if (*cms != NUL) {
       // Also delete 'commentstring' if it matches.
@@ -1858,7 +1858,7 @@ void foldtext_cleanup(char_u *str)
     }
     if (len > 0) {
       if (ascii_isdigit(s[len])) {
-        ++len;
+        len++;
       }
 
       // May remove 'commentstring' start.  Useful when it's a double
@@ -1881,7 +1881,7 @@ void foldtext_cleanup(char_u *str)
     }
     if (len != 0) {
       while (ascii_iswhite(s[len])) {
-        ++len;
+        len++;
       }
       STRMOVE(s, s + len);
     } else {
@@ -2026,7 +2026,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
       if (!foldFind(gap, lnum_rel, &fpn)) {
         break;
       }
-      ++current_fdl;
+      current_fdl++;
 
       fold_start_lnum += fpn->fd_top;
       gap = &fpn->fd_nested;
@@ -2091,7 +2091,7 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
       if (fline.lnum == wp->w_buffer->b_ml.ml_line_count) {
         break;
       }
-      ++fline.lnum;
+      fline.lnum++;
       fline.lvl = fline.lvl_next;
       getlevel(&fline);
     }
@@ -2220,7 +2220,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
         // at least one nested fold.
         ll = flp->lnum - fp->fd_top;
         while (foldFind(&fp2->fd_nested, ll, &fp2)) {
-          ++i;
+          i++;
           ll -= fp2->fd_top;
         }
       }
@@ -2856,11 +2856,11 @@ static void foldMerge(win_T *const wp, fold_T *fp1, garray_T *gap, fold_T *fp2)
   // Move nested folds in fp2 to the end of fp1.
   if (!GA_EMPTY(gap2)) {
     ga_grow(gap1, gap2->ga_len);
-    for (idx = 0; idx < gap2->ga_len; ++idx) {
+    for (idx = 0; idx < gap2->ga_len; idx++) {
       ((fold_T *)gap1->ga_data)[gap1->ga_len]
         = ((fold_T *)gap2->ga_data)[idx];
       ((fold_T *)gap1->ga_data)[gap1->ga_len].fd_top += fp1->fd_len;
-      ++gap1->ga_len;
+      gap1->ga_len++;
     }
     gap2->ga_len = 0;
   }
@@ -3042,7 +3042,7 @@ static void foldlevelMarker(fline_T *flp)
   // cache a few values for speed
   startmarker = flp->wp->w_p_fmr;
   cstart = *startmarker;
-  ++startmarker;
+  startmarker++;
   cend = *foldendmarker;
 
   // Default: no start found, next level is same as current level
@@ -3067,9 +3067,9 @@ static void foldlevelMarker(fline_T *flp)
           }
         }
       } else {
-        ++flp->lvl;
-        ++flp->lvl_next;
-        ++flp->start;
+        flp->lvl++;
+        flp->lvl_next++;
+        flp->start++;
       }
     } else if (*s == cend && STRNCMP(s + 1, foldendmarker + 1,
                                      foldendmarkerlen - 1) == 0) {
@@ -3160,7 +3160,7 @@ static int put_folds_recurse(FILE *fd, garray_T *gap, linenr_T off)
         || put_eol(fd) == FAIL) {
       return FAIL;
     }
-    ++fp;
+    fp++;
   }
   return OK;
 }
@@ -3207,7 +3207,7 @@ static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap, linenr_T off
         }
       }
     }
-    ++fp;
+    fp++;
   }
 
   return OK;
