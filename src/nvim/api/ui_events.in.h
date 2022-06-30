@@ -121,7 +121,7 @@ void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
 void win_viewport(Integer grid, Window win, Integer topline,
                   Integer botline, Integer curline, Integer curcol,
                   Integer line_count)
-  FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(7) FUNC_API_BRIDGE_IMPL;
 
 void win_extmark(Integer grid, Window win, Integer ns_id, Integer mark_id,
                  Integer row, Integer col)

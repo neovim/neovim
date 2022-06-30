@@ -7,6 +7,7 @@
 #include <tree_sitter/api.h>
 
 #include "luv/luv.h"
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -39,6 +40,8 @@
 #include "nvim/os/os.h"
 #include "nvim/profile.h"
 #include "nvim/screen.h"
+#include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
@@ -587,6 +590,82 @@ static bool nlua_init_packages(lua_State *lstate)
   return true;
 }
 
+/// "vim.ui_attach(ns_id, {ext_foo=true}, cb)" function
+static int nlua_ui_attach(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int nargs = lua_gettop(lstate);
+
+  if (nargs != 3) {
+    return luaL_error(lstate, "Expected 3 arguments");
+  }
+  if (!lua_isnumber(lstate, 1)) {
+    return luaL_error(lstate, "ns_id must be an integer");
+  }
+
+  uint32_t ns_id = (uint32_t)lua_tointeger(lstate, 1);
+
+  if (!ns_initialized(ns_id)) {
+    return luaL_error(lstate, "invalid ns_id");
+  }
+  if (!lua_istable(lstate, 2)) {
+    return luaL_error(lstate, "ext_widgets must be a table");
+  }
+  if (!lua_isfunction(lstate, 3)) {
+    return luaL_error(lstate, "callback must be a Lua function");
+  }
+
+  LuaRef ui_event_cb = nlua_ref_global(lstate, 3);
+  bool ext_widgets[kUIGlobalCount] = { false };
+
+  lua_pushvalue(lstate, 2);
+  lua_pushnil(lstate);
+  while (lua_next(lstate, -2)) {
+    // [dict, key, val]
+    size_t len;
+    const char *s = lua_tolstring(lstate, -2, &len);
+    bool val = lua_toboolean(lstate, -1);
+
+    int i;
+    for (i = 0; i < kUIGlobalCount; i++) {
+      if (strequal(s, ui_ext_names[i])) {
+        ext_widgets[i] = val;
+        goto ok;
+      }
+    }
+
+    return luaL_error(lstate, "Unexpected key: %s", s);
+ok:
+    lua_pop(lstate, 1);
+  }
+
+  ui_comp_add_cb(ns_id, ui_event_cb, ext_widgets);
+  return 0;
+}
+
+/// "vim.ui_detach(ns_id)" function
+static int nlua_ui_detach(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int nargs = lua_gettop(lstate);
+
+  if (nargs != 1) {
+    return luaL_error(lstate, "Expected 1 argument");
+  }
+  if (!lua_isnumber(lstate, 1)) {
+    return luaL_error(lstate, "ns_id must be an integer");
+  }
+
+  uint32_t ns_id = (uint32_t)lua_tointeger(lstate, 1);
+
+  if (!ns_initialized(ns_id)) {
+    return luaL_error(lstate, "invalid ns_id");
+  }
+
+  ui_comp_remove_cb(ns_id);
+  return 0;
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -646,6 +725,14 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // wait
   lua_pushcfunction(lstate, &nlua_wait);
   lua_setfield(lstate, -2, "wait");
+
+  // ui_attach
+  lua_pushcfunction(lstate, &nlua_ui_attach);
+  lua_setfield(lstate, -2, "ui_attach");
+
+  // ui_detach
+  lua_pushcfunction(lstate, &nlua_ui_detach);
+  lua_setfield(lstate, -2, "ui_detach");
 
   nlua_common_vim_init(lstate, false);
 

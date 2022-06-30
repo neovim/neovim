@@ -19,6 +19,7 @@
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/os.h"
@@ -54,6 +55,8 @@ static bool msg_was_scrolled = false;
 static int msg_sep_row = -1;
 static schar_T msg_sep_char = { ' ', NUL };
 
+static PMap(uint32_t) ui_event_cbs = MAP_INIT;
+
 static int dbghl_normal, dbghl_clear, dbghl_composed, dbghl_recompose;
 
 void ui_comp_init(void)
@@ -69,13 +72,17 @@ void ui_comp_init(void)
   compositor->grid_cursor_goto = ui_comp_grid_cursor_goto;
   compositor->raw_line = ui_comp_raw_line;
   compositor->msg_set_pos = ui_comp_msg_set_pos;
+  compositor->event = ui_comp_event;
 
   // Be unopinionated: will be attached together with a "real" ui anyway
   compositor->width = INT_MAX;
   compositor->height = INT_MAX;
-  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+  for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
     compositor->ui_ext[i] = true;
   }
+
+  // TODO(bfredl): one day. in the future.
+  compositor->ui_ext[kUIMultigrid] = false;
 
   // TODO(bfredl): this will be more complicated if we implement
   // hlstate per UI (i e reduce hl ids for non-hlstate UIs)
@@ -85,6 +92,15 @@ void ui_comp_init(void)
   curgrid = &default_grid;
 
   ui_attach_impl(compositor, 0);
+}
+
+void ui_comp_free_all_mem(void)
+{
+  UIEventCallback *event_cb;
+  map_foreach_value(&ui_event_cbs, event_cb, {
+    xfree(event_cb);
+  })
+  pmap_destroy(uint32_t)(&ui_event_cbs);
 }
 
 void ui_comp_syn_init(void)
@@ -675,4 +691,52 @@ static void ui_comp_grid_resize(UI *ui, Integer grid, Integer width, Integer hei
       bufsize = new_bufsize;
     }
   }
+}
+
+static void ui_comp_event(UI *ui, char *name, Array args)
+{
+  Error err = ERROR_INIT;
+  UIEventCallback *event_cb;
+
+  map_foreach_value(&ui_event_cbs, event_cb, {
+    nlua_call_ref(event_cb->cb, name, args, false, &err);
+  })
+}
+
+static void ui_comp_update_ext(void)
+{
+  for (int i = 0; i < kUIGlobalCount; i++) {
+    UIEventCallback *event_cb;
+
+    map_foreach_value(&ui_event_cbs, event_cb, {
+      if (event_cb->ext_widgets[i]) {
+        compositor->ui_ext[i] = true;
+        break;
+      }
+    })
+  }
+}
+
+void ui_comp_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
+{
+  UIEventCallback *event_cb = xcalloc(1, sizeof(UIEventCallback));
+  event_cb->cb = cb;
+  memcpy(event_cb->ext_widgets, ext_widgets, ARRAY_SIZE(event_cb->ext_widgets));
+
+  if (pmap_has(uint32_t)(&ui_event_cbs, ns_id)) {
+    xfree(pmap_get(uint32_t)(&ui_event_cbs, ns_id));
+  }
+  pmap_put(uint32_t)(&ui_event_cbs, ns_id, event_cb);
+  ui_comp_update_ext();
+  ui_schedule_refresh();
+}
+
+void ui_comp_remove_cb(uint32_t ns_id)
+{
+  if (pmap_has(uint32_t)(&ui_event_cbs, ns_id)) {
+    xfree(pmap_get(uint32_t)(&ui_event_cbs, ns_id));
+    pmap_del(uint32_t)(&ui_event_cbs, ns_id);
+  }
+  ui_comp_update_ext();
+  ui_schedule_refresh();
 }

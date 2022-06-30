@@ -87,7 +87,7 @@ const char *describe_ns(NS ns_id)
 }
 
 // Is the Namespace in use?
-static bool ns_initialized(uint32_t ns)
+bool ns_initialized(uint32_t ns)
 {
   if (ns < 1) {
     return false;
