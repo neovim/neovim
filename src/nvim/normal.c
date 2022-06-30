@@ -1493,12 +1493,12 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
 /// Do the appropriate action for the current mouse click in the current mode.
 /// Not used for Command-line mode.
 ///
-/// Normal Mode:
+/// Normal and Visual Mode:
 /// event         modi-  position      visual       change   action
 ///               fier   cursor                     window
 /// left press     -     yes         end             yes
 /// left press     C     yes         end             yes     "^]" (2)
-/// left press     S     yes         end             yes     "*" (2)
+/// left press     S     yes     end (popup: extend) yes     "*" (2)
 /// left drag      -     yes     start if moved      no
 /// left relse     -     yes     start if moved      no
 /// middle press   -     yes      if not active      no      put register
@@ -1787,9 +1787,52 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   if (mouse_model_popup()) {
     if (which_button == MOUSE_RIGHT
         && !(mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))) {
-      // NOTE: Ignore right button down and drag mouse events. Windows only
-      // shows the popup menu on the button up event.
-      return false;
+      if (!is_click) {
+        // Ignore right button release events, only shows the popup
+        // menu on the button down event.
+        return false;
+      }
+      jump_flags = 0;
+      if (STRCMP(p_mousem, "popup_setpos") == 0) {
+        // First set the cursor position before showing the popup
+        // menu.
+        if (VIsual_active) {
+          pos_T m_pos;
+          // set MOUSE_MAY_STOP_VIS if we are outside the
+          // selection or the current window (might have false
+          // negative here)
+          if (mouse_row < curwin->w_winrow
+              || mouse_row > (curwin->w_winrow + curwin->w_height)) {
+            jump_flags = MOUSE_MAY_STOP_VIS;
+          } else if (get_fpos_of_mouse(&m_pos) != IN_BUFFER) {
+            jump_flags = MOUSE_MAY_STOP_VIS;
+          } else {
+            if ((lt(curwin->w_cursor, VIsual)
+                 && (lt(m_pos, curwin->w_cursor) || lt(VIsual, m_pos)))
+                || (lt(VIsual, curwin->w_cursor)
+                    && (lt(m_pos, VIsual) || lt(curwin->w_cursor, m_pos)))) {
+              jump_flags = MOUSE_MAY_STOP_VIS;
+            } else if (VIsual_mode == Ctrl_V) {
+              getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
+              getvcol(curwin, &m_pos, NULL, &m_pos.col, NULL);
+              if (m_pos.col < leftcol || m_pos.col > rightcol) {
+                jump_flags = MOUSE_MAY_STOP_VIS;
+              }
+            }
+          }
+        } else {
+          jump_flags = MOUSE_MAY_STOP_VIS;
+        }
+      }
+      if (jump_flags) {
+        jump_flags = jump_to_mouse(jump_flags, NULL, which_button);
+        update_curbuf(VIsual_active ? INVERTED : VALID);
+        setcursor();
+        ui_flush();  // Update before showing popup menu
+      }
+      show_popupmenu();
+      got_click = false;  // ignore release events
+      return (jump_flags & CURSOR_MOVED) != 0;
     }
     if (which_button == MOUSE_LEFT
         && (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_ALT))) {

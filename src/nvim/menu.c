@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/eval.h"
@@ -22,6 +23,7 @@
 #include "nvim/memory.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
+#include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
@@ -1355,9 +1357,64 @@ static int menu_is_hidden(char *name)
          || (menu_is_popup(name) && name[5] != NUL);
 }
 
+static int get_menu_mode(void)
+{
+  if (VIsual_active) {
+    if (VIsual_select)
+      return MENU_INDEX_SELECT;
+    return MENU_INDEX_VISUAL;
+  }
+  if (State & MODE_INSERT) {
+    return MENU_INDEX_INSERT;
+  }
+  if ((State & MODE_CMDLINE) || State == MODE_ASKMORE || State == MODE_HITRETURN) {
+    return MENU_INDEX_CMDLINE;
+  }
+  if (finish_op) {
+    return MENU_INDEX_OP_PENDING;
+  }
+  if (State & MODE_NORMAL) {
+    return MENU_INDEX_NORMAL;
+  }
+  if (State & MODE_LANGMAP) {  // must be a "r" command, like Insert mode
+    return MENU_INDEX_INSERT;
+  }
+  return MENU_INDEX_INVALID;
+}
+
+/// Display the Special "PopUp" menu as a pop-up at the current mouse
+/// position.  The "PopUpn" menu is for Normal mode, "PopUpi" for Insert mode,
+/// etc.
+void show_popupmenu(void)
+{
+  int mode = get_menu_mode();
+  if (mode == MENU_INDEX_INVALID) {
+    return;
+  }
+  mode = menu_mode_chars[mode];
+
+  char ename[2];
+  ename[0] = (char)mode;
+  ename[1] = NUL;
+  apply_autocmds(EVENT_MENUPOPUP, ename, NULL, false, curbuf);
+
+  vimmenu_T *menu;
+
+  for (menu = root_menu; menu != NULL; menu = menu->next) {
+    if (STRNCMP("PopUp", menu->name, 5) == 0 && menu->name[5] == mode) {
+      break;
+    }
+  }
+
+  // Only show a popup when it is defined and has entries
+  if (menu != NULL && menu->children != NULL) {
+    pum_show_popupmenu(menu);
+  }
+}
+
 // Execute "menu".  Use by ":emenu" and the window toolbar.
 // "eap" is NULL for the window toolbar.
-static void execute_menu(const exarg_T *eap, vimmenu_T *menu)
+void execute_menu(const exarg_T *eap, vimmenu_T *menu)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   int idx = -1;

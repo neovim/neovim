@@ -30,6 +30,49 @@
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
 
+/// Translate window coordinates to buffer position without any side effects
+int get_fpos_of_mouse(pos_T *mpos)
+{
+  int grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+
+  if (row < 0 || col < 0) {  // check if it makes sense
+    return IN_UNKNOWN;
+  }
+
+  // find the window where the row is in
+  win_T *wp = mouse_find_win(&grid, &row, &col);
+  if (wp == NULL) {
+    return IN_UNKNOWN;
+  }
+
+  // winpos and height may change in win_enter()!
+  if (row + wp->w_winbar_height >= wp->w_height) {  // In (or below) status line
+    return IN_STATUS_LINE;
+  }
+  if (col >= wp->w_width) {  // In vertical separator line
+    return IN_SEP_LINE;
+  }
+
+  if (wp != curwin) {
+    return IN_UNKNOWN;
+  }
+
+  // compute the position in the buffer line from the posn on the screen
+  if (mouse_comp_pos(curwin, &row, &col, &mpos->lnum)) {
+    return IN_STATUS_LINE;  // past bottom
+  }
+
+  mpos->col = vcol2col(wp, mpos->lnum, col);
+
+  if (mpos->col > 0) {
+    mpos->col--;
+  }
+  mpos->coladd = 0;
+  return IN_BUFFER;
+}
+
 /// Return true if "c" is a mouse key.
 bool is_mouse_key(int c)
 {

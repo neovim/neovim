@@ -298,6 +298,13 @@ void redraw_win_signcol(win_T *wp)
   }
 }
 
+/// Update all windows that are editing the current buffer.
+void update_curbuf(int type)
+{
+  redraw_curbuf_later(type);
+  update_screen(type);
+}
+
 /// Redraw the parts of the screen that is marked for redraw.
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and
