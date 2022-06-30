@@ -204,7 +204,7 @@ end)
 S.var = P.pattern('[%a_][%w_]+')
 S.text = function(targets, specials)
   return P.map(P.take_until(targets, specials), function(value)
-    return ast.text(value.esc, value.raw)
+    return ast.Text.new(value.esc, value.raw)
   end)
 end
 
@@ -214,10 +214,10 @@ end)
 
 S.format = P.any(
   P.map(P.seq(S.dollar, S.int), function(values)
-    return ast.format(values[2])
+    return ast.Format.new(values[2])
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.close), function(values)
-    return ast.format(values[3])
+    return ast.Format.new(values[3])
   end),
   P.map(
     P.seq(
@@ -230,7 +230,7 @@ S.format = P.any(
       S.close
     ),
     function(values)
-      return ast.format(values[3], values[6])
+      return ast.Format.new(values[3], values[6])
     end
   ),
   P.map(
@@ -243,7 +243,7 @@ S.format = P.any(
       S.close
     ),
     function(values)
-      return ast.format(values[3], {
+      return ast.Format.new(values[3], {
         if_text = values[5][2] and values[5][2].esc,
         else_text = values[5][4] and values[5][4].esc,
       })
@@ -252,7 +252,7 @@ S.format = P.any(
   P.map(
     P.seq(S.dollar, S.open, S.int, S.colon, P.seq(S.plus, P.opt(P.take_until({ '}' }, { '\\' }))), S.close),
     function(values)
-      return ast.format(values[3], {
+      return ast.Format.new(values[3], {
         if_text = values[5][2] and values[5][2].esc,
       })
     end
@@ -260,13 +260,13 @@ S.format = P.any(
   P.map(
     P.seq(S.dollar, S.open, S.int, S.colon, S.minus, P.opt(P.take_until({ '}' }, { '\\' })), S.close),
     function(values)
-      return ast.format(values[3], {
+      return ast.Format.new(values[3], {
         else_text = values[6] and values[6].esc,
       })
     end
   ),
   P.map(P.seq(S.dollar, S.open, S.int, S.colon, P.opt(P.take_until({ '}' }, { '\\' })), S.close), function(values)
-    return ast.format(values[3], {
+    return ast.Format.new(values[3], {
       else_text = values[5] and values[5].esc,
     })
   end)
@@ -282,19 +282,19 @@ S.transform = P.map(
     P.opt(P.pattern('[ig]+'))
   ),
   function(values)
-    return ast.transform(values[2].raw, values[4], values[6])
+    return ast.Transform.new(values[2].raw, values[4], values[6])
   end
 )
 
 S.tabstop = P.any(
   P.map(P.seq(S.dollar, S.int), function(values)
-    return ast.tabstop(values[2])
+    return ast.Tabstop.new(values[2])
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.close), function(values)
-    return ast.tabstop(values[3])
+    return ast.Tabstop.new(values[3])
   end),
   P.map(P.seq(S.dollar, S.open, S.int, S.transform, S.close), function(values)
-    return ast.tabstop(values[3], values[4])
+    return ast.Tabstop.new(values[3], values[4])
   end)
 )
 
@@ -303,7 +303,7 @@ S.placeholder = P.any(
     P.seq(S.dollar, S.open, S.int, S.colon, P.opt(P.many(P.any(S.toplevel, S.text({ '$', '}' }, { '\\' })))), S.close),
     function(values)
       -- no children -> manually create empty text.
-      return ast.placeholder(values[3], values[5] or { ast.text('') })
+      return ast.Placeholder.new(values[3], values[5] or { ast.Text.new('') })
     end
   )
 )
@@ -321,30 +321,30 @@ S.choice = P.map(
     S.close
   ),
   function(values)
-    return ast.choice(values[3], values[5])
+    return ast.Choice.new(values[3], values[5])
   end
 )
 
 S.variable = P.any(
   P.map(P.seq(S.dollar, S.var), function(values)
-    return ast.variable(values[2])
+    return ast.Variable.new(values[2])
   end),
   P.map(P.seq(S.dollar, S.open, S.var, S.close), function(values)
-    return ast.variable(values[3])
+    return ast.Variable.new(values[3])
   end),
   P.map(P.seq(S.dollar, S.open, S.var, S.transform, S.close), function(values)
-    return ast.variable(values[3], values[4])
+    return ast.Variable.new(values[3], values[4])
   end),
   P.map(
     P.seq(S.dollar, S.open, S.var, S.colon, P.many(P.any(S.toplevel, S.text({ '$', '}' }, { '\\' }))), S.close),
     function(values)
-      return ast.variable(values[3], values[5])
+      return ast.Variable.new(values[3], values[5])
     end
   )
 )
 
 S.snippet = P.map(P.many(P.any(S.toplevel, S.text({ '$' }, { '}', '\\' }))), function(values)
-  return ast.snippet(values)
+  return ast.Snippet.new(values)
 end)
 
 local M = {}
