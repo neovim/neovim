@@ -3,9 +3,7 @@
 
 // vim: set fdm=marker fdl=1 fdc=3
 
-/*
- * fold.c: code for folding
- */
+// fold.c: code for folding
 
 #include <inttypes.h>
 #include <string.h>
@@ -41,12 +39,12 @@
 
 // local declarations. {{{1
 // typedef fold_T {{{2
-/*
- * The toplevel folds for each window are stored in the w_folds growarray.
- * Each toplevel fold can contain an array of second level folds in the
- * fd_nested growarray.
- * The info stored in both growarrays is the same: An array of fold_T.
- */
+
+// The toplevel folds for each window are stored in the w_folds growarray.
+// Each toplevel fold can contain an array of second level folds in the
+// fd_nested growarray.
+// The info stored in both growarrays is the same: An array of fold_T.
+
 typedef struct {
   linenr_T fd_top;              // first line of fold; for nested fold
                                 // relative to parent
@@ -93,20 +91,16 @@ typedef void (*LevelGetter)(fline_T *);
 #endif
 static char *e_nofold = N_("E490: No fold found");
 
-/*
- * While updating the folds lines between invalid_top and invalid_bot have an
- * undefined fold level.  Only used for the window currently being updated.
- */
+// While updating the folds lines between invalid_top and invalid_bot have an
+// undefined fold level.  Only used for the window currently being updated.
 static linenr_T invalid_top = (linenr_T)0;
 static linenr_T invalid_bot = (linenr_T)0;
 
-/*
- * When using 'foldexpr' we sometimes get the level of the next line, which
- * calls foldlevel() to get the level of the current line, which hasn't been
- * stored yet.  To get around this chicken-egg problem the level of the
- * previous line is stored here when available.  prev_lnum is zero when the
- * level is not available.
- */
+// When using 'foldexpr' we sometimes get the level of the next line, which
+// calls foldlevel() to get the level of the current line, which hasn't been
+// stored yet.  To get around this chicken-egg problem the level of the
+// previous line is stored here when available.  prev_lnum is zero when the
+// level is not available.
 static linenr_T prev_lnum = 0;
 static int prev_lnum_lvl = -1;
 
@@ -181,10 +175,8 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
   }
 
   if (cache) {
-    /*
-     * First look in cached info for displayed lines.  This is probably
-     * the fastest, but it can only be used if the entry is still valid.
-     */
+    // First look in cached info for displayed lines.  This is probably
+    // the fastest, but it can only be used if the entry is still valid.
     const int x = find_wl_entry(win, lnum);
     if (x >= 0) {
       first = win->w_lines[x].wl_lnum;
@@ -194,9 +186,7 @@ bool hasFoldingWin(win_T *const win, const linenr_T lnum, linenr_T *const firstp
   }
 
   if (first == 0) {
-    /*
-     * Recursively search for a fold that contains "lnum".
-     */
+    // Recursively search for a fold that contains "lnum".
     garray_T *gap = &win->w_folds;
     for (;;) {
       if (!foldFind(gap, lnum_rel, &fp)) {
@@ -447,9 +437,7 @@ void newFoldLevel(void)
   newFoldLevelWin(curwin);
 
   if (foldmethodIsDiff(curwin) && curwin->w_p_scb) {
-    /*
-     * Set the same foldlevel in other windows in diff mode.
-     */
+    // Set the same foldlevel in other windows in diff mode.
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
         wp->w_p_fdl = curwin->w_p_fdl;
@@ -1077,11 +1065,9 @@ static bool foldFind(const garray_T *gap, linenr_T lnum, fold_T **fpp)
     return false;
   }
 
-  /*
-   * Perform a binary search.
-   * "low" is lowest index of possible match.
-   * "high" is highest index of possible match.
-   */
+  // Perform a binary search.
+  // "low" is lowest index of possible match.
+  // "high" is highest index of possible match.
   fp = (fold_T *)gap->ga_data;
   low = 0;
   high = gap->ga_len - 1;
@@ -1170,10 +1156,8 @@ static linenr_T setManualFold(pos_T pos, int opening, int recurse, int *donep)
   if (foldmethodIsDiff(curwin) && curwin->w_p_scb) {
     linenr_T dlnum;
 
-    /*
-     * Do the same operation in other windows in diff mode.  Calculate the
-     * line number from the diffs.
-     */
+    // Do the same operation in other windows in diff mode.  Calculate the
+    // line number from the diffs.
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
         dlnum = diff_lnum_win(curwin->w_cursor.lnum, wp);
@@ -1215,9 +1199,7 @@ static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, int opening, int recu
 
   checkupdate(wp);
 
-  /*
-   * Find the fold, open or close it.
-   */
+  // Find the fold, open or close it.
   gap = &wp->w_folds;
   for (;;) {
     if (!foldFind(gap, lnum, &fp)) {
@@ -1409,21 +1391,17 @@ static void foldMarkAdjustRecurse(win_T *wp, garray_T *gap, linenr_T line1, line
   // Find the fold containing or just below "line1".
   (void)foldFind(gap, line1, &fp);
 
-  /*
-   * Adjust all folds below "line1" that are affected.
-   */
+  // Adjust all folds below "line1" that are affected.
   for (int i = (int)(fp - (fold_T *)gap->ga_data); i < gap->ga_len; ++i, ++fp) {
-    /*
-     * Check for these situations:
-     *    1  2  3
-     *    1  2  3
-     * line1     2      3  4  5
-     *       2  3  4  5
-     *       2  3  4  5
-     * line2     2      3  4  5
-     *          3     5  6
-     *          3     5  6
-     */
+    // Check for these situations:
+    //    1  2  3
+    //    1  2  3
+    // line1     2      3  4  5
+    //       2  3  4  5
+    //       2  3  4  5
+    // line2     2      3  4  5
+    //          3     5  6
+    //          3     5  6
 
     last = fp->fd_top + fp->fd_len - 1;     // last line of fold
 
@@ -2032,13 +2010,11 @@ static void foldUpdateIEMS(win_T *const wp, linenr_T top, linenr_T bot)
     }
   }
 
-  /*
-   * If folding is defined by the syntax, it is possible that a change in
-   * one line will cause all sub-folds of the current fold to change (e.g.,
-   * closing a C-style comment can cause folds in the subsequent lines to
-   * appear). To take that into account we should adjust the value of "bot"
-   * to point to the end of the current fold:
-   */
+  // If folding is defined by the syntax, it is possible that a change in
+  // one line will cause all sub-folds of the current fold to change (e.g.,
+  // closing a C-style comment can cause folds in the subsequent lines to
+  // appear). To take that into account we should adjust the value of "bot"
+  // to point to the end of the current fold:
   if (foldlevelSyntax == getlevel) {
     garray_T *gap = &wp->w_folds;
     fold_T *fpn = NULL;
@@ -2184,12 +2160,10 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
   const linenr_T linecount = flp->wp->w_buffer->b_ml.ml_line_count - flp->off;
   int concat;
 
-  /*
-   * If using the marker method, the start line is not the start of a fold
-   * at the level we're dealing with and the level is non-zero, we must use
-   * the previous fold.  But ignore a fold that starts at or below
-   * startlnum, it must be deleted.
-   */
+  // If using the marker method, the start line is not the start of a fold
+  // at the level we're dealing with and the level is non-zero, we must use
+  // the previous fold.  But ignore a fold that starts at or below
+  // startlnum, it must be deleted.
   if (getlevel == foldlevelMarker && flp->start <= flp->lvl - level
       && flp->lvl > 0) {
     (void)foldFind(gap, startlnum - 1, &fp);
@@ -2200,17 +2174,15 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
     }
   }
 
-  /*
-   * Loop over all lines in this fold, or until "bot" is hit.
-   * Handle nested folds inside of this fold.
-   * "flp->lnum" is the current line.  When finding the end of the fold, it
-   * is just below the end of the fold.
-   * "*flp" contains the level of the line "flp->lnum" or a following one if
-   * there are lines with an invalid fold level.  "flp->lnum_save" is the
-   * line number that was used to get the fold level (below "flp->lnum" when
-   * it has an invalid fold level).  When called the fold level is always
-   * valid, thus "flp->lnum_save" is equal to "flp->lnum".
-   */
+  // Loop over all lines in this fold, or until "bot" is hit.
+  // Handle nested folds inside of this fold.
+  // "flp->lnum" is the current line.  When finding the end of the fold, it
+  // is just below the end of the fold.
+  // "*flp" contains the level of the line "flp->lnum" or a following one if
+  // there are lines with an invalid fold level.  "flp->lnum_save" is the
+  // line number that was used to get the fold level (below "flp->lnum" when
+  // it has an invalid fold level).  When called the fold level is always
+  // valid, thus "flp->lnum_save" is equal to "flp->lnum".
   flp->lnum_save = flp->lnum;
   while (!got_int) {
     // Updating folds can be slow, check for CTRL-C.
@@ -2273,10 +2245,8 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
             || flp->start != 0
             || flp->had_end <= MAX_LEVEL
             || flp->lnum == linecount)) {
-      /*
-       * Remove or update folds that have lines between startlnum and
-       * firstlnum.
-       */
+      // Remove or update folds that have lines between startlnum and
+      // firstlnum.
       while (!got_int) {
         // set concat to 1 if it's allowed to concatenate this fold
         // with a previous one that touches it.
@@ -2429,17 +2399,13 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
     }
 
     if (lvl < level || flp->lnum > linecount) {
-      /*
-       * Found a line with a lower foldlevel, this fold ends just above
-       * "flp->lnum".
-       */
+      // Found a line with a lower foldlevel, this fold ends just above
+      // "flp->lnum".
       break;
     }
 
-    /*
-     * The fold includes the line "flp->lnum" and "flp->lnum_save".
-     * Check "fp" for safety.
-     */
+    // The fold includes the line "flp->lnum" and "flp->lnum_save".
+    // Check "fp" for safety.
     if (lvl > level && fp != NULL) {
       // There is a nested fold, handle it recursively.
       // At least do one line (can happen when finish is true).
@@ -2464,12 +2430,10 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
 
       // This fold may end at the same line, don't incr. flp->lnum.
     } else {
-      /*
-       * Get the level of the next line, then continue the loop to check
-       * if it ends there.
-       * Skip over undefined lines, to find the foldlevel after it.
-       * For the last line in the file the foldlevel is always valid.
-       */
+      // Get the level of the next line, then continue the loop to check
+      // if it ends there.
+      // Skip over undefined lines, to find the foldlevel after it.
+      // For the last line in the file the foldlevel is always valid.
       flp->lnum = flp->lnum_save;
       ll = flp->lnum + 1;
       while (!got_int) {
@@ -2502,11 +2466,9 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
     return bot;
   }
 
-  /*
-   * Get here when:
-   * lvl < level: the folds ends just above "flp->lnum"
-   * lvl >= level: fold continues below "bot"
-   */
+  // Get here when:
+  // lvl < level: the folds ends just above "flp->lnum"
+  // lvl >= level: fold continues below "bot"
 
   // Current fold at least extends until lnum.
   if (fp->fd_len < flp->lnum - fp->fd_top) {
