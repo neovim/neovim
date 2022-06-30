@@ -116,7 +116,7 @@ static char_u *tagmatchname = NULL;   // name of last used tag
  * Tag for preview window is remembered separately, to avoid messing up the
  * normal tagstack.
  */
-static taggy_T ptag_entry = { NULL, { { 0, 0, 0 }, 0, 0, NULL }, 0, 0, NULL };
+static taggy_T ptag_entry = { NULL, INIT_FMARK, 0, 0, NULL };
 
 static int tfu_in_use = false;  // disallow recursive call of tagfunc
 

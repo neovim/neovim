@@ -3706,7 +3706,8 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
           pos_T *pos;
           size_t col = REG_MULTI ? rex.input - rex.line : 0;
 
-          pos = getmark_buf(rex.reg_buf, mark, false);
+          // fm will be NULL if the mark is not set in reg_buf
+          fmark_T *fm = mark_get(rex.reg_buf, curwin, NULL, kMarkBufLocal, mark);
 
           // Line may have been freed, get it again.
           if (REG_MULTI) {
@@ -3714,10 +3715,11 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
             rex.input = rex.line + col;
           }
 
-          if (pos == NULL                    // mark doesn't exist
-              || pos->lnum <= 0) {           // mark isn't set in reg_buf
+          if (fm == NULL                    // mark doesn't exist
+              || fm->mark.lnum <= 0) {           // mark isn't set in reg_buf
             status = RA_NOMATCH;
           } else {
+            pos = &fm->mark;
             const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
                                     && pos->col == MAXCOL
               ? (colnr_T)STRLEN(reg_getline(pos->lnum - rex.reg_firstlnum))

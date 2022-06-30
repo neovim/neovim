@@ -2027,20 +2027,20 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
     return rv;
   }
 
-  xfmark_T mark = get_global_mark(*name.data);
-  pos_T pos = mark.fmark.mark;
+  xfmark_T *mark = mark_get_global(false, *name.data);  // false avoids loading the mark buffer
+  pos_T pos = mark->fmark.mark;
   bool allocated = false;
   int bufnr;
   char *filename;
 
   // Marks are from an open buffer it fnum is non zero
-  if (mark.fmark.fnum != 0) {
-    bufnr = mark.fmark.fnum;
+  if (mark->fmark.fnum != 0) {
+    bufnr = mark->fmark.fnum;
     filename = (char *)buflist_nr2name(bufnr, true, true);
     allocated = true;
     // Marks comes from shada
   } else {
-    filename = mark.fname;
+    filename = mark->fname;
     bufnr = 0;
   }
 

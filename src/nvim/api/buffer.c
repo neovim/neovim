@@ -1156,17 +1156,17 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
     return res;
   }
 
-  pos_T *pos = getmark_buf(buf, *name.data, false);
+  fmark_T *fm = mark_get(buf, curwin, NULL, kMarkAllNoResolve, *name.data);
 
-  // pos point to NULL when there's no mark with name
-  if (pos == NULL) {
+  // fm is NULL when there's no mark with the given name
+  if (fm == NULL) {
     api_set_error(err, kErrorTypeValidation, "Invalid mark name: '%c'",
                   *name.data);
     return res;
   }
 
-  // pos->lnum is 0 when the mark is not valid in the buffer, or is not set.
-  if (pos->lnum != 0) {
+  // mark.lnum is 0 when the mark is not valid in the buffer, or is not set.
+  if (fm->mark.lnum != 0 && fm->fnum == buf->handle) {
     // since the mark belongs to the buffer delete it.
     res = set_mark(buf, name, 0, 0, err);
   }
@@ -1239,26 +1239,25 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
     return rv;
   }
 
-  pos_T *posp;
+  fmark_T *fm;
+  pos_T pos;
   char mark = *name.data;
 
-  try_start();
-  bufref_T save_buf;
-  switch_buffer(&save_buf, buf);
-  posp = getmark(mark, false);
-  restore_buffer(&save_buf);
-
-  if (try_end(err)) {
-    return rv;
-  }
-
-  if (posp == NULL) {
+  fm = mark_get(buf, curwin, NULL, kMarkAllNoResolve, mark);
+  if (fm == NULL) {
     api_set_error(err, kErrorTypeValidation, "Invalid mark name");
     return rv;
   }
+  // (0, 0) uppercase/file mark set in another buffer.
+  if (fm->fnum != buf->handle) {
+    pos.lnum = 0;
+    pos.col = 0;
+  } else {
+    pos = fm->mark;
+  }
 
-  ADD(rv, INTEGER_OBJ(posp->lnum));
-  ADD(rv, INTEGER_OBJ(posp->col));
+  ADD(rv, INTEGER_OBJ(pos.lnum));
+  ADD(rv, INTEGER_OBJ(pos.col));
 
   return rv;
 }
