@@ -1008,6 +1008,13 @@ void pum_show_popupmenu(vimmenu_T *menu)
     }
   }
 
+  // When there are only Terminal mode menus, using "popup Edit" results in
+  // pum_size being zero.
+  if (pum_size <= 0) {
+    emsg(e_menuothermode);
+    return;
+  }
+
   int idx = 0;
   pumitem_T *array = (pumitem_T *)xcalloc((size_t)pum_size, sizeof(pumitem_T));
 

@@ -913,7 +913,7 @@ func Test_popup_complete_backwards_ctrl_p()
   bwipe!
 endfunc
 
-fun! Test_complete_o_tab()
+func Test_complete_o_tab()
   CheckFunction test_override
   let s:o_char_pressed = 0
 
@@ -922,7 +922,7 @@ fun! Test_complete_o_tab()
       let s:o_char_pressed = 0
       call feedkeys("\<c-x>\<c-n>", 'i')
     endif
-  endf
+  endfunc
 
   set completeopt=menu,noselect
   new
@@ -941,7 +941,21 @@ fun! Test_complete_o_tab()
   bwipe!
   set completeopt&
   delfunc s:act_on_text_changed
-endf
+endfunc
+
+func Test_menu_only_exists_in_terminal()
+  if !exists(':tlmenu') || has('gui_running')
+    return
+  endif
+  tlnoremenu  &Edit.&Paste<Tab>"+gP  <C-W>"+
+  aunmenu *
+  try
+    popup Edit
+    call assert_false(1, 'command should have failed')
+  catch
+    call assert_exception('E328:')
+  endtry
+endfunc
 
 func Test_popup_complete_info_01()
   new

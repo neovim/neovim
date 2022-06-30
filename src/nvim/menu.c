@@ -41,7 +41,6 @@
 static char *menu_mode_chars[] = { "n", "v", "s", "o", "i", "c", "tl", "t" };
 
 static char e_notsubmenu[] = N_("E327: Part of menu-item path is not sub-menu");
-static char e_othermode[] = N_("E328: Menu only exists in another mode");
 static char e_nomenu[] = N_("E329: No menu \"%s\"");
 
 // Return true if "name" is a window toolbar menu name.
@@ -573,7 +572,7 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
         }
       } else if (*name != NUL) {
         if (!silent) {
-          emsg(_(e_othermode));
+          emsg(_(e_menuothermode));
         }
         return FAIL;
       }
@@ -787,7 +786,7 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
           emsg(_(e_notsubmenu));
           return NULL;
         } else if ((menu->modes & modes) == 0x0) {
-          emsg(_(e_othermode));
+          emsg(_(e_menuothermode));
           return NULL;
         } else if (*p == NUL) {  // found a full match
           return menu;

@@ -986,6 +986,7 @@ EXTERN char e_notset[] INIT(= N_("E764: Option '%s' is not set"));
 EXTERN char e_invalidreg[] INIT(= N_("E850: Invalid register name"));
 EXTERN char e_dirnotf[] INIT(= N_("E919: Directory not found in '%s': \"%s\""));
 EXTERN char e_au_recursive[] INIT(= N_("E952: Autocommand caused recursive behavior"));
+EXTERN char e_menuothermode[] INIT(= N_("E328: Menu only exists in another mode"));
 EXTERN char e_autocmd_close[] INIT(= N_("E813: Cannot close autocmd window"));
 EXTERN char e_listarg[] INIT(= N_("E686: Argument of %s must be a List"));
 EXTERN char e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
