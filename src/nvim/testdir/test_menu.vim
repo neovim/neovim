@@ -46,6 +46,10 @@ func Test_menu_commands()
   imenu 2 Test.FooBar :let g:did_menu = 'insert'<CR>
   cmenu 2 Test.FooBar :let g:did_menu = 'cmdline'<CR>
   emenu n Test.FooBar
+
+  call feedkeys(":menu Test.FooB\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"menu Test.FooBar', @:)
+
   call assert_equal('normal', g:did_menu)
   emenu v Test.FooBar
   call assert_equal('visual', g:did_menu)

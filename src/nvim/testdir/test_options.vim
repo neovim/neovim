@@ -238,6 +238,12 @@ func Test_set_completion()
   call feedkeys(":set di\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set dictionary diff diffexpr diffopt digraph directory display', @:)
 
+  call feedkeys(":setlocal di\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"setlocal dictionary diff diffexpr diffopt digraph directory display', @:)
+
+  call feedkeys(":setglobal di\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"setglobal dictionary diff diffexpr diffopt digraph directory display', @:)
+
   " Expand boolan options. When doing :set no<Tab>
   " vim displays the options names without "no" but completion uses "no...".
   call feedkeys(":set nodi\<C-A>\<C-B>\"\<CR>", 'tx')
@@ -268,6 +274,7 @@ func Test_set_completion()
 
   call feedkeys(":set tags=./\\\\ dif\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set tags=./\\ diff diffexpr diffopt', @:)
+
   set tags&
 
   " Expand values for 'filetype'
