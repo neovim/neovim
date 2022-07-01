@@ -430,6 +430,10 @@ fmark_T *mark_get_local(buf_T *buf, win_T *win, int name)
     mark = mark_get_motion(buf, win, name);
   }
 
+  if (mark) {
+    mark->fnum = buf->b_fnum;
+  }
+
   return mark;
 }
 
