@@ -612,7 +612,6 @@ bool ui_has(UIExtension ext)
   return ui_ext[ext];
 }
 
-
 /// Returns true if the UI has messages area.
 bool ui_has_messages(void)
 {
