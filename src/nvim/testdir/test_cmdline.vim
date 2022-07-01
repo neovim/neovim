@@ -757,6 +757,15 @@ funct Test_cmdline_complete_languages()
   endif
 endfunc
 
+func Test_cmdline_complete_env_variable()
+  let $X_VIM_TEST_COMPLETE_ENV = 'foo'
+
+  call feedkeys(":edit $X_VIM_TEST_COMPLETE_E\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('"edit $X_VIM_TEST_COMPLETE_ENV', @:)
+
+  unlet $X_VIM_TEST_COMPLETE_ENV
+endfunc
+
 func Test_cmdline_complete_expression()
   let g:SomeVar = 'blah'
   for cmd in ['exe', 'echo', 'echon', 'echomsg']
@@ -893,22 +902,6 @@ func Test_getcmdwin_autocmd()
   augroup END
 endfunc
 
-" Test error: "E135: *Filter* Autocommands must not change current buffer"
-func Test_cmd_bang_E135()
-  new
-  call setline(1, ['a', 'b', 'c', 'd'])
-  augroup test_cmd_filter_E135
-    au!
-    autocmd FilterReadPost * help
-  augroup END
-  call assert_fails('2,3!echo "x"', 'E135:')
-
-  augroup test_cmd_filter_E135
-    au!
-  augroup END
-  %bwipe!
-endfunc
-
 func Test_verbosefile()
   set verbosefile=Xlog
   echomsg 'foo'
@@ -989,34 +982,6 @@ func Test_cmdline_overstrike()
   let &encoding = encoding_save
 endfunc
 
-func Test_cmdwin_feedkeys()
-  " This should not generate E488
-  call feedkeys("q:\<CR>", 'x')
-endfunc
-
-" Tests for the issues fixed in 7.4.441.
-" When 'cedit' is set to Ctrl-C, opening the command window hangs Vim
-func Test_cmdwin_cedit()
-  exe "set cedit=\<C-c>"
-  normal! :
-  call assert_equal(1, winnr('$'))
-
-  let g:cmd_wintype = ''
-  func CmdWinType()
-      let g:cmd_wintype = getcmdwintype()
-      let g:wintype = win_gettype()
-      return ''
-  endfunc
-
-  call feedkeys("\<C-c>a\<C-R>=CmdWinType()\<CR>\<CR>")
-  echo input('')
-  call assert_equal('@', g:cmd_wintype)
-  call assert_equal('command', g:wintype)
-
-  set cedit&vim
-  delfunc CmdWinType
-endfunc
-
 func Test_cmdwin_restore()
   CheckScreendump
 
@@ -1093,6 +1058,34 @@ func Test_buffers_lastused()
   bwipeout bufc
 endfunc
 
+func Test_cmdwin_feedkeys()
+  " This should not generate E488
+  call feedkeys("q:\<CR>", 'x')
+endfunc
+
+" Tests for the issues fixed in 7.4.441.
+" When 'cedit' is set to Ctrl-C, opening the command window hangs Vim
+func Test_cmdwin_cedit()
+  exe "set cedit=\<C-c>"
+  normal! :
+  call assert_equal(1, winnr('$'))
+
+  let g:cmd_wintype = ''
+  func CmdWinType()
+      let g:cmd_wintype = getcmdwintype()
+      let g:wintype = win_gettype()
+      return ''
+  endfunc
+
+  call feedkeys("\<C-c>a\<C-R>=CmdWinType()\<CR>\<CR>")
+  echo input('')
+  call assert_equal('@', g:cmd_wintype)
+  call assert_equal('command', g:wintype)
+
+  set cedit&vim
+  delfunc CmdWinType
+endfunc
+
 " Test for CmdwinEnter autocmd
 func Test_cmdwin_autocmd()
   CheckFeature cmdwin
@@ -1141,6 +1134,22 @@ func Test_cmdwin_tabpage()
   call assert_fails("silent norm q/g	", 'E11:')
   call assert_fails("silent norm q/g	:I\<Esc>", 'E492:')
   tabclose!
+endfunc
+
+" Test error: "E135: *Filter* Autocommands must not change current buffer"
+func Test_cmd_bang_E135()
+  new
+  call setline(1, ['a', 'b', 'c', 'd'])
+  augroup test_cmd_filter_E135
+    au!
+    autocmd FilterReadPost * help
+  augroup END
+  call assert_fails('2,3!echo "x"', 'E135:')
+
+  augroup test_cmd_filter_E135
+    au!
+  augroup END
+  %bwipe!
 endfunc
 
 " test that ";" works to find a match at the start of the first line

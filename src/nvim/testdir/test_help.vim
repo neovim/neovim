@@ -92,6 +92,11 @@ func Test_help_local_additions()
   let &rtp = rtp_save
 endfunc
 
+func Test_help_completion()
+  call feedkeys(":help :undo\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"help :undo :undoj :undol :undojoin :undolist', @:)
+endfunc
+
 " Test for the :helptags command
 func Test_helptag_cmd()
   call mkdir('Xdir/a/doc', 'p')

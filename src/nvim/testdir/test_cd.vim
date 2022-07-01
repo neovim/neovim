@@ -225,6 +225,21 @@ func Test_cd_from_non_existing_dir()
   call assert_equal(saveddir, getcwd())
 endfunc
 
+func Test_cd_completion()
+  call mkdir('XComplDir1', 'p')
+  call mkdir('XComplDir2', 'p')
+  call writefile([], 'XComplFile')
+
+  for cmd in ['cd', 'chdir', 'lcd', 'lchdir', 'tcd', 'tchdir']
+    call feedkeys(':' .. cmd .. " XCompl\<C-A>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"' .. cmd .. ' XComplDir1/ XComplDir2/', @:)
+  endfor
+
+  call delete('XComplDir1', 'd')
+  call delete('XComplDir2', 'd')
+  call delete('XComplFile')
+endfunc
+
 func Test_cd_unknown_dir()
   call mkdir('Xa')
   cd Xa

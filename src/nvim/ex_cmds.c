@@ -5019,7 +5019,15 @@ static int help_compare(const void *s1, const void *s2)
 
   p1 = *(char **)s1 + strlen(*(char **)s1) + 1;
   p2 = *(char **)s2 + strlen(*(char **)s2) + 1;
-  return strcmp(p1, p2);
+
+  // Compare by help heuristic number first.
+  int cmp = strcmp(p1, p2);
+  if (cmp != 0) {
+    return cmp;
+  }
+
+  // Compare by strings as tie-breaker when same heuristic number.
+  return strcmp(*(char **)s1, *(char **)s2);
 }
 
 /// Find all help tags matching "arg", sort them and return in matches[], with
