@@ -3651,6 +3651,13 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     sub_needs_free = cmdpreview && sub != source;
   }
 
+  bool cmdheight0 = p_ch < 1 && !ui_has(kUIMessages);
+  if (cmdheight0) {
+    // If cmdheight is 0, cmdheight must be set to 1 when we enter command line.
+    set_option_value("ch", 1L, NULL, 0);
+    redraw_statuslines();
+  }
+
   // Check for a match on each line.
   // If preview: limit to max('cmdwinheight', viewport).
   linenr_T line2 = eap->line2;
@@ -4459,6 +4466,11 @@ skip:
       }
       retv = show_sub(eap, old_cursor, &preview_lines, pre_hl_id, cmdpreview_ns, cmdpreview_bufnr);
     }
+  }
+
+  if (cmdheight0) {
+    // Restore cmdheight
+    set_option_value("ch", 0L, NULL, 0);
   }
 
   kv_destroy(preview_lines.subresults);

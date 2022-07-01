@@ -891,7 +891,7 @@ char_u *msg_may_trunc(bool force, char_u *s)
 
   room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (int)STRLEN(s) - room > 0) {
+      && (int)STRLEN(s) - room > 0 && p_ch > 0) {
     int size = vim_strsize((char *)s);
 
     // There may be room anyway when there are multibyte chars.
@@ -3083,10 +3083,11 @@ void msg_clr_eos_force(void)
     msg_row = msg_grid_pos;
   }
 
-  grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol,
-            ' ', ' ', HL_ATTR(HLF_MSG));
   if (p_ch > 0) {
-    grid_fill(&msg_grid_adj, msg_row + 1, Rows, 0, Columns, ' ', ' ', HL_ATTR(HLF_MSG));
+    grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol,
+              ' ', ' ', HL_ATTR(HLF_MSG));
+    grid_fill(&msg_grid_adj, msg_row + 1, Rows, 0, Columns,
+              ' ', ' ', HL_ATTR(HLF_MSG));
   }
 
   redraw_cmdline = true;  // overwritten the command line

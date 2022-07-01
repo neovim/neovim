@@ -949,6 +949,20 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
   end)
 
+  it("with cmdheight=0 ruler rulerformat laststatus=0", function()
+    command("set cmdheight=0 noruler laststatus=0 rulerformat=%l,%c%= showmode")
+    feed('i')
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+    ]], showmode={}}
+    feed('<Esc>')
+    eq(0, eval('&cmdheight'))
+  end)
+
   it("with showmode", function()
     command("set cmdheight=1 noruler laststatus=0 showmode")
     feed('i')
@@ -1044,5 +1058,63 @@ describe('cmdheight=0', function()
     eq(0, eval('&cmdheight'))
 
     assert_alive()
+  end)
+
+  it("when macro with lastline", function()
+    command("set cmdheight=0 display=lastline")
+    feed('qq')
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+    ]], showmode={}}
+    feed('q')
+    screen:expect{grid=[[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+    ]], showmode={}}
+  end)
+
+  it("when substitute text", function()
+    command("set cmdheight=0 noruler laststatus=3")
+    feed('ifoo<ESC>')
+    screen:expect{grid=[[
+      fo^o                      |
+      ~                        |
+      ~                        |
+      ~                        |
+      [No Name] [+]            |
+    ]]}
+
+    feed(':%s/foo/bar/gc<CR>')
+    screen:expect{grid=[[
+      foo                      |
+      ~                        |
+      ~                        |
+      [No Name] [+]            |
+      replace wi...q/l/^E/^Y)?^ |
+    ]]}
+
+    feed('y')
+    screen:expect{grid=[[
+      ^bar                      |
+      ~                        |
+      ~                        |
+      ~                        |
+      [No Name] [+]            |
+    ]]}
+
+    assert_alive()
+  end)
+
+  it("when window resize", function()
+    command("set cmdheight=0")
+    feed('<C-w>+')
+    eq(0, eval('&cmdheight'))
   end)
 end)
