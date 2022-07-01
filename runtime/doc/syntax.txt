@@ -1659,6 +1659,21 @@ because Fortran90 has no reserved words.
 For further information related to fortran, see |ft-fortran-indent| and
 |ft-fortran-plugin|.
 
+FREEBASIC				*freebasic.vim* *ft-freebasic-syntax*
+
+FreeBASIC files will be highlighted differently for each of the four available
+dialects, "fb", "qb", "fblite" and "deprecated".  See |ft-freebasic-plugin|
+for how to select the correct dialect.
+
+Highlighting is further configurable via the following variables.
+
+Variable			Highlight ~
+*freebasic_no_comment_fold*	disable multiline comment folding
+*freebasic_operators*		non-alpha operators
+*freebasic_space_errors*	trailing white space and spaces before a <Tab>
+*freebasic_type_suffixes*	QuickBASIC style type suffixes
+
+
 
 FVWM CONFIGURATION FILES			*fvwm.vim* *ft-fvwm-syntax*
 

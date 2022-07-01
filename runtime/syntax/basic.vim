@@ -3,7 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Allan Kelly <allan@fruitloaf.co.uk>
 " Contributors:		Thilo Six
-" Last Change:		2021 Aug 08
+" Last Change:		2022 Jun 22
 
 " First version based on Micro$soft QBASIC circa 1989, as documented in
 " 'Learn BASIC Now' by Halvorson&Rygmyr. Microsoft Press 1989.
@@ -344,7 +344,7 @@ hi def link basicCommentError	    Error
 hi def link basicDataString	    basicString
 hi def link basicFilenumber	    basicTypeSuffix " TODO: better group
 hi def link basicFloat		    Float
-hi def link basicFunction	    Identifier
+hi def link basicFunction	    Function
 hi def link basicKeyword	    Keyword
 hi def link basicLineIdentifier	    LineNr
 hi def link basicLineContinuation   Special

@@ -553,11 +553,30 @@ Options:
 For further discussion of fortran_have_tabs and the method used for the
 detection of source format see |ft-fortran-syntax|.
 
+
+FREEBASIC						*ft-freebasic-plugin*
+
+This plugin aims to treat the four FreeBASIC dialects, "fb", "qb", "fblite"
+and "deprecated", as distinct languages.
+
+The dialect will be set to the first name found in g:freebasic_forcelang, any
+#lang directive or $lang metacommand in the file being edited, or finally
+g:freebasic_lang.  These global variables conceptually map to the fbc options
+-forcelang and -lang.  If no dialect is explicitly specified "fb" will be
+used.
+
+For example, to set the dialect to a default of "fblite" but still allow for
+any #lang directive overrides, use the following command: >
+
+     let g:freebasic_lang = "fblite"
+
+
 GIT COMMIT                                              *ft-gitcommit-plugin*
 
 One command, :DiffGitCached, is provided to show a diff of the current commit
 in the preview window.  It is equivalent to calling "git diff --cached" plus
 any arguments given to the command.
+
 
 GPROF							*ft-gprof-plugin*
 
@@ -567,6 +586,7 @@ to the details of that function in the call graph.
 
 The mapping can be disabled with: >
 	let g:no_gprof_maps = 1
+
 
 MAIL							*ft-mail-plugin*
 
