@@ -300,7 +300,9 @@ int nlua_regex(lua_State *lstate)
   });
 
   if (ERROR_SET(&err)) {
-    return luaL_error(lstate, "couldn't parse regex: %s", err.msg);
+    nlua_push_errstr(lstate, "couldn't parse regex: %s", err.msg);
+    api_clear_error(&err);
+    return lua_error(lstate);
   }
   assert(prog);
 
@@ -338,12 +340,14 @@ static dict_T *nlua_get_var_scope(lua_State *lstate)
       dict = tabpage->tp_vars;
     }
   } else {
-    luaL_error(lstate, "invalid scope", err.msg);
+    luaL_error(lstate, "invalid scope");
     return NULL;
   }
 
   if (ERROR_SET(&err)) {
-    luaL_error(lstate, "FAIL: %s", err.msg);
+    nlua_push_errstr(lstate, "scoped variable: %s", err.msg);
+    api_clear_error(&err);
+    lua_error(lstate);
     return NULL;
   }
   return dict;
@@ -536,4 +540,15 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
   // vim.json
   lua_cjson_new(lstate);
   lua_setfield(lstate, -2, "json");
+}
+
+/// like luaL_error, but allow cleanup
+void nlua_push_errstr(lua_State *L, const char *fmt, ...)
+{
+  va_list argp;
+  va_start(argp, fmt);
+  luaL_where(L, 1);
+  lua_pushvfstring(L, fmt, argp);
+  va_end(argp);
+  lua_concat(L, 2);
 }
