@@ -80,6 +80,9 @@ To use `ALT+{h,j,k,l}` to navigate windows from any mode: >
     :nnoremap <A-k> <C-w>k
     :nnoremap <A-l> <C-w>l
 
+You can also create menus similar to terminal mode mappings, but you have to
+use |:tlmenu| instead of |:tmenu|.
+
 Mouse input has the following behavior:
 
 - If the program has enabled mouse events, the corresponding events will be

@@ -11,6 +11,7 @@ local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
+local exec = helpers.exec
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -2359,6 +2360,74 @@ describe('builtin popupmenu', function()
       {2:-- INSERT --}                    |
     ]])
   end)
+
+  it('supports mousemodel=popup', function()
+    screen:try_resize(32, 6)
+    exec([[
+      call setline(1, 'popup menu test')
+      set mouse=a mousemodel=popup
+
+      menu PopUp.foo :let g:menustr = 'foo'<CR>
+      menu PopUp.bar :let g:menustr = 'bar'<CR>
+      menu PopUp.baz :let g:menustr = 'baz'<CR>
+    ]])
+    meths.input_mouse('right', 'press', '', 0, 0, 4)
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~  }{n: foo }{1:                        }|
+      {1:~  }{n: bar }{1:                        }|
+      {1:~  }{n: baz }{1:                        }|
+      {1:~                               }|
+                                      |
+    ]])
+    feed('<Down>')
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~  }{s: foo }{1:                        }|
+      {1:~  }{n: bar }{1:                        }|
+      {1:~  }{n: baz }{1:                        }|
+      {1:~                               }|
+                                      |
+    ]])
+    feed('<Down>')
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~  }{n: foo }{1:                        }|
+      {1:~  }{s: bar }{1:                        }|
+      {1:~  }{n: baz }{1:                        }|
+      {1:~                               }|
+                                      |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :let g:menustr = 'bar'          |
+    ]])
+    eq('bar', meths.get_var('menustr'))
+    meths.input_mouse('right', 'press', '', 0, 1, 20)
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                  }{n: foo }{1:        }|
+      {1:~                  }{n: bar }{1:        }|
+      {1:~                  }{n: baz }{1:        }|
+      :let g:menustr = 'bar'          |
+    ]])
+    meths.input_mouse('left', 'press', '', 0, 4, 22)
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :let g:menustr = 'baz'          |
+    ]])
+    eq('baz', meths.get_var('menustr'))
+  end)
 end)
 
 describe('builtin popupmenu with ui/ext_multigrid', function()
@@ -2449,5 +2518,58 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
         {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
         {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
     ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 11, false, 100}}})
+  end)
+
+  it('supports mousemodel=popup', function()
+    screen:try_resize(32, 6)
+    exec([[
+      call setline(1, 'popup menu test')
+      set mouse=a mousemodel=popup
+
+      menu PopUp.foo :let g:menustr = 'foo'<CR>
+      menu PopUp.bar :let g:menustr = 'bar'<CR>
+      menu PopUp.baz :let g:menustr = 'baz'<CR>
+    ]])
+    meths.input_mouse('right', 'press', '', 2, 1, 20)
+    screen:expect({grid=[[
+    ## grid 1
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [3:--------------------------------]|
+    ## grid 2
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+    ## grid 3
+                                      |
+    ## grid 4
+      {n: foo }|
+      {n: bar }|
+      {n: baz }|
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 2, 19, false, 100}}})
+    meths.input_mouse('left', 'press', '', 4, 2, 2)
+    screen:expect({grid=[[
+    ## grid 1
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [3:--------------------------------]|
+    ## grid 2
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+    ## grid 3
+      :let g:menustr = 'baz'          |
+    ]]})
+    eq('baz', meths.get_var('menustr'))
   end)
 end)

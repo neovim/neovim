@@ -18,6 +18,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/menu.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/popupmnu.h"
@@ -512,9 +513,13 @@ void pum_redraw(void)
             char_u *st;
             char_u saved = *p;
 
-            *p = NUL;
+            if (saved != NUL) {
+              *p = NUL;
+            }
             st = (char_u *)transstr((const char *)s, true);
-            *p = saved;
+            if (saved != NUL) {
+              *p = saved;
+            }
 
             if (pum_rl) {
               char *rt = (char *)reverse_text(st);
@@ -931,4 +936,182 @@ void pum_set_event_info(dict_T *dict)
   (void)tv_dict_add_nr(dict, S_LEN("size"), pum_size);
   (void)tv_dict_add_bool(dict, S_LEN("scrollbar"),
                          pum_scrollbar ? kBoolVarTrue : kBoolVarFalse);
+}
+
+static void pum_position_at_mouse(int min_width)
+{
+  pum_anchor_grid = mouse_grid;
+  if (Rows - mouse_row > pum_size) {
+    // Enough space below the mouse row.
+    pum_above = false;
+    pum_row = mouse_row + 1;
+    if (pum_height > Rows - pum_row) {
+      pum_height = Rows - pum_row;
+    }
+  } else {
+    // Show above the mouse row, reduce height if it does not fit.
+    pum_above = true;
+    pum_row = mouse_row - pum_size;
+    if (pum_row < 0) {
+      pum_height += pum_row;
+      pum_row = 0;
+    }
+  }
+  if (Columns - mouse_col >= pum_base_width || Columns - mouse_col > min_width) {
+    // Enough space to show at mouse column.
+    pum_col = mouse_col;
+  } else {
+    // Not enough space, right align with window.
+    pum_col = Columns - (pum_base_width > min_width ? min_width : pum_base_width);
+  }
+
+  pum_width = Columns - pum_col;
+  if (pum_width > pum_base_width + 1) {
+    pum_width = pum_base_width + 1;
+  }
+}
+
+/// Select the pum entry at the mouse position.
+static void pum_select_mouse_pos(void)
+{
+  if (mouse_grid == pum_grid.handle) {
+    pum_selected = mouse_row;
+    return;
+  } else if (mouse_grid > 1) {
+    pum_selected = -1;
+    return;
+  }
+
+  int idx = mouse_row - pum_row;
+
+  if (idx < 0 || idx >= pum_size) {
+    pum_selected = -1;
+  } else if (*pum_array[idx].pum_text != NUL) {
+    pum_selected = idx;
+  }
+}
+
+/// Execute the currently selected popup menu item.
+static void pum_execute_menu(vimmenu_T *menu, int mode)
+{
+  int idx = 0;
+  exarg_T ea;
+
+  for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
+    if ((mp->modes & mp->enabled & mode) && idx++ == pum_selected) {
+      memset(&ea, 0, sizeof(ea));
+      execute_menu(&ea, mp, -1);
+      break;
+    }
+  }
+}
+
+/// Open the terminal version of the popup menu and don't return until it is closed.
+void pum_show_popupmenu(vimmenu_T *menu)
+{
+  pum_undisplay(true);
+  pum_size = 0;
+  int mode = get_menu_mode_flag();
+
+  for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
+    if (menu_is_separator(mp->dname) || (mp->modes & mp->enabled & mode)) {
+      pum_size++;
+    }
+  }
+
+  // When there are only Terminal mode menus, using "popup Edit" results in
+  // pum_size being zero.
+  if (pum_size <= 0) {
+    emsg(e_menuothermode);
+    return;
+  }
+
+  int idx = 0;
+  pumitem_T *array = (pumitem_T *)xcalloc((size_t)pum_size, sizeof(pumitem_T));
+
+  for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
+    if (menu_is_separator(mp->dname)) {
+      array[idx++].pum_text = (char_u *)"";
+    } else if (mp->modes & mp->enabled & mode) {
+      array[idx++].pum_text = (char_u *)mp->dname;
+    }
+  }
+
+  pum_array = array;
+  pum_compute_size();
+  pum_scrollbar = 0;
+  pum_height = pum_size;
+  pum_position_at_mouse(20);
+
+  pum_selected = -1;
+  pum_first = 0;
+
+  for (;;) {
+    pum_is_visible = true;
+    pum_is_drawn = true;
+    pum_redraw();
+    setcursor_mayforce(true);
+    ui_flush();
+
+    int c = vgetc();
+    if (c == ESC || c == Ctrl_C) {
+      break;
+    } else if (c == CAR || c == NL) {
+      // enter: select current item, if any, and close
+      pum_execute_menu(menu, mode);
+      break;
+    } else if (c == 'k' || c == K_UP || c == K_MOUSEUP) {
+      // cursor up: select previous item
+      while (pum_selected > 0) {
+        pum_selected--;
+        if (*array[pum_selected].pum_text != NUL) {
+          break;
+        }
+      }
+    } else if (c == 'j' || c == K_DOWN || c == K_MOUSEDOWN) {
+      // cursor down: select next item
+      while (pum_selected < pum_size - 1) {
+        pum_selected++;
+        if (*array[pum_selected].pum_text != NUL) {
+          break;
+        }
+      }
+    } else if (c == K_RIGHTMOUSE) {
+      // Right mouse down: reposition the menu.
+      vungetc(c);
+      break;
+    } else if (c == K_LEFTDRAG || c == K_RIGHTDRAG || c == K_MOUSEMOVE) {
+      // mouse moved: select item in the mouse row
+      pum_select_mouse_pos();
+    } else if (c == K_LEFTMOUSE || c == K_LEFTMOUSE_NM || c == K_RIGHTRELEASE) {
+      // left mouse click: select clicked item, if any, and close;
+      // right mouse release: select clicked item, close if any
+      pum_select_mouse_pos();
+      if (pum_selected >= 0) {
+        pum_execute_menu(menu, mode);
+        break;
+      }
+      if (c == K_LEFTMOUSE || c == K_LEFTMOUSE_NM) {
+        break;
+      }
+    }
+  }
+
+  xfree(array);
+  pum_undisplay(true);
+}
+
+void pum_make_popup(const char *path_name, int use_mouse_pos)
+{
+  if (!use_mouse_pos) {
+    // Hack: set mouse position at the cursor so that the menu pops up
+    // around there.
+    mouse_row = curwin->w_winrow + curwin->w_wrow;
+    mouse_col = curwin->w_wincol + curwin->w_wcol;
+  }
+
+  vimmenu_T *menu = menu_find(path_name);
+  if (menu != NULL) {
+    pum_show_popupmenu(menu);
+  }
 }

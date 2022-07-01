@@ -195,6 +195,10 @@ the mouse button down on this will pop up a menu containing the item
 "Big Changes", which is a sub-menu containing the item "Delete All Spaces",
 which when selected, performs the operation.
 
+To create a menu for terminal mode, use |:tlmenu| instead of |:tmenu| unlike
+key mapping (|:tmap|). This is because |:tmenu| is already used for defining
+tooltips for menus. See |terminal-input|.
+
 Special characters in a menu name:
 
 	&	The next character is the shortcut key.  Make sure each
@@ -214,9 +218,9 @@ this menu can be used.  The second part is shown as "Open     :e".  The ":e"
 is right aligned, and the "O" is underlined, to indicate it is the shortcut.
 
 					*:am*  *:amenu*  *:an*      *:anoremenu*
-The ":amenu" command can be used to define menu entries for all modes at once.
-To make the command work correctly, a character is automatically inserted for
-some modes:
+The ":amenu" command can be used to define menu entries for all modes at once,
+expect for Terminal mode.  To make the command work correctly, a character is
+automatically inserted for some modes:
 	mode		inserted	appended	~
 	Normal		nothing		nothing
 	Visual		<C-C>		<C-\><C-G>
@@ -469,6 +473,16 @@ Executing Menus						*execute-menus*
 				insert-mode menu Eg: >
 	:emenu File.Exit
 
+:[range]em[enu] {mode} {menu}	Like above, but execute the menu for {mode}:
+				    'n': |:nmenu|  Normal mode
+				    'v': |:vmenu|  Visual mode
+				    's': |:smenu|  Select mode
+				    'o': |:omenu|  Operator-pending mode
+				    't': |:tlmenu| Terminal mode
+				    'i': |:imenu|  Insert mode
+				    'c': |:cmenu|  Cmdline mode
+
+
 You can use :emenu to access useful menu items you may have got used to from
 GUI mode.  See 'wildmenu' for an option that works well with this.  See
 |console-menus| for an example.
@@ -494,7 +508,9 @@ may be used to complete the name of the menu item for the appropriate mode.
 To remove all menus use:			*:unmenu-all*  >
 	:unmenu *	" remove all menus in Normal and visual mode
 	:unmenu! *	" remove all menus in Insert and Command-line mode
-	:aunmenu *	" remove all menus in all modes
+	:aunmenu *	" remove all menus in all modes, except for Terminal
+			" mode
+	:tlunmenu *	" remove all menus in Terminal mode
 
 If you want to get rid of the menu bar: >
 	:set guioptions-=m
@@ -547,6 +563,8 @@ See section |42.4| in the user manual.
 :tu[nmenu] {menupath}		Remove a tip for a menu or tool.
 				{only in X11 and Win32 GUI}
 
+Note: To create menus for terminal mode, use |:tlmenu| instead.
+
 When a tip is defined for a menu item, it appears in the command-line area
 when the mouse is over that item, much like a standard Windows menu hint in
 the status bar.  (Except when Vim is in Command-line mode, when of course
@@ -577,8 +595,8 @@ a menu item - you don't need to do a :tunmenu as well.
 
 5.9 Popup Menus
 
-In the Win32 GUI, you can cause a menu to popup at the cursor.  This behaves
-similarly to the PopUp menus except that any menu tree can be popped up.
+You can cause a menu to popup at the cursor.  This behaves similarly to the
+PopUp menus except that any menu tree can be popped up.
 
 This command is for backwards compatibility, using it is discouraged, because
 it behaves in a strange way.
@@ -587,7 +605,6 @@ it behaves in a strange way.
 :popu[p] {name}			Popup the menu {name}.  The menu named must
 				have at least one subentry, but need not
 				appear on the menu-bar (see |hidden-menus|).
-				{only available for Win32 GUI}
 
 :popu[p]! {name}		Like above, but use the position of the mouse
 				pointer instead of the cursor.

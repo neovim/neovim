@@ -727,13 +727,14 @@ MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
 				menu for what is under the cursor or mouse
 				pointer.
-				The pattern is matched against a single
-				character representing the mode:
+				The pattern is matched against one or two
+				characters representing the mode:
 					n	Normal
 					v	Visual
 					o	Operator-pending
 					i	Insert
 					c	Command line
+					tl	Terminal
 							*ModeChanged*
 ModeChanged			After changing the mode. The pattern is
 				matched against `'old_mode:new_mode'`, for
