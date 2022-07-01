@@ -6143,7 +6143,7 @@ void unshowmode(bool force)
 // Clear the mode message.
 void clearmode(void)
 {
-  // TODO: Use ext_messages instead
+  // TODO(Shougo): Use ext_messages instead
   if (!ui_has_messages()) {
     return;
   }
@@ -6165,7 +6165,7 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
-  // TODO: Use ext_messages instead
+  // TODO(Shougo): Use ext_messages instead
   if (!ui_has_messages()) {
     return;
   }

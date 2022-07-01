@@ -687,7 +687,7 @@ void op_reindent(oparg_T *oap, Indenter how)
     redraw_curbuf_later(INVERTED);
   }
 
-  // TODO: Use ext_messages instead
+  // TODO(Shougo): Use ext_messages instead
   if (oap->line_count > p_report && ui_has_messages()) {
     i = oap->line_count - (i + 1);
     smsg(NGETTEXT("%" PRId64 " line indented ",
@@ -2790,7 +2790,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     xfree(reg->y_array);
   }
 
-  // TODO: Use ext_messages instead
+  // TODO(Shougo): Use ext_messages instead
   if (message && ui_has_messages()) {  // Display message about yank?
     if (yank_type == kMTCharWise && yanklines == 1) {
       yanklines = 0;
