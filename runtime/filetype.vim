@@ -993,8 +993,8 @@ au BufNewFile,BufRead *.latte,*.lte		setf latte
 " Limits
 au BufNewFile,BufRead */etc/limits,*/etc/*limits.conf,*/etc/*limits.d/*.conf	setf limits
 
-" LambdaProlog (see dist#ft#FTmod for *.mod)
-au BufNewFile,BufRead *.sig			setf lprolog
+" LambdaProlog or SML (see dist#ft#FTmod for *.mod)
+au BufNewFile,BufRead *.sig			call dist#ft#FTsig()
 
 " LDAP LDIF
 au BufNewFile,BufRead *.ldif			setf ldif

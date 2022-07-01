@@ -155,6 +155,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	*.pp		g:filetype_pp	|ft-pascal-syntax|
 	*.prg		g:filetype_prg
 	*.r		g:filetype_r
+	*.sig		g:filetype_sig
 	*.sql		g:filetype_sql	|ft-sql-syntax|
 	*.src		g:filetype_src
 	*.sys		g:filetype_sys

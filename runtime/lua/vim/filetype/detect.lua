@@ -922,6 +922,23 @@ function M.rules(path)
   end
 end
 
+-- LambdaProlog and Standard ML signature files
+function M.sig(bufnr)
+  if vim.g.filetype_sig then
+    return vim.g.filetype_sig
+  end
+
+  local line = nextnonblank(bufnr, 1)
+
+  -- LambdaProlog comment or keyword
+  if findany(line, { '^%s*/%*', '^%s*%%', '^%s*sig%s+%a' }) then
+    return 'lprolog'
+    -- SML comment or keyword
+  elseif findany(line, { '^%s*%(%*', '^%s*signature%s+%a', '^%s*structure%s+%a' }) then
+    return 'sml'
+  end
+end
+
 -- This function checks the first 25 lines of file extension "sc" to resolve
 -- detection between scala and SuperCollider
 function M.sc(bufnr)
