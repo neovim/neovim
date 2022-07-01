@@ -699,6 +699,21 @@ func Test_spellsuggest_too_deep()
   bwipe!
 endfunc
 
+func Test_spell_good_word_invalid()
+  " This was adding a word with a 0x02 byte, which causes havoc.
+  enew
+  norm o0
+  sil! norm rzzWs00/
+  2
+  sil! norm VzGprzzW
+  sil! norm z=
+
+  bwipe!
+  " clear the internal word list
+  " set enc=latin1
+  set enc=utf-8
+endfunc
+
 func LoadAffAndDic(aff_contents, dic_contents)
   throw 'skipped: Nvim does not support enc=latin1'
   set enc=latin1

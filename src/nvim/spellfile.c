@@ -3904,6 +3904,21 @@ static wordnode_T *wordtree_alloc(spellinfo_T *spin)
   return (wordnode_T *)getroom(spin, sizeof(wordnode_T), true);
 }
 
+/// Return true if "word" contains valid word characters.
+/// Control characters and trailing '/' are invalid.  Space is OK.
+static bool valid_spell_word(const char_u *word)
+{
+  if (!utf_valid_string(word, NULL)) {
+    return false;
+  }
+  for (const char_u *p = word; *p != NUL; p += utfc_ptr2len((const char *)p)) {
+    if (*p < ' ' || (p[0] == '/' && p[1] == NUL)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /// Store a word in the tree(s).
 /// Always store it in the case-folded tree.  For a keep-case word this is
 /// useful when the word can also be used with all caps (no WF_FIXCAP flag) and
@@ -3925,7 +3940,7 @@ static int store_word(spellinfo_T *spin, char_u *word, int flags, int region, co
   int res = OK;
 
   // Avoid adding illegal bytes to the word tree.
-  if (!utf_valid_string(word, NULL)) {
+  if (!valid_spell_word(word)) {
     return FAIL;
   }
 
@@ -5522,7 +5537,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   int i;
   char_u *spf;
 
-  if (!utf_valid_string(word, NULL)) {
+  if (!valid_spell_word(word)) {
     emsg(_(e_illegal_character_in_word));
     return;
   }
