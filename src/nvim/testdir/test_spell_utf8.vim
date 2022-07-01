@@ -780,7 +780,12 @@ func Test_no_crash_with_weird_text()
       
   END
   call setline(1, lines)
-  exe "%norm \<C-v>ez=>\<C-v>wzG"
+  try
+    exe "%norm \<C-v>ez=>\<C-v>wzG"
+  catch /E1280:/
+    let caught = 'yes'
+  endtry
+  call assert_equal('yes', caught)
 
   bwipe!
 endfunc
