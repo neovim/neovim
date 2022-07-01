@@ -687,6 +687,7 @@ void free_all_mem(void)
 
   // Clear menus.
   do_cmdline_cmd("aunmenu *");
+  do_cmdline_cmd("tlunmenu *");
   do_cmdline_cmd("menutranslate clear");
 
   // Clear mappings, abbreviations, breakpoints.
