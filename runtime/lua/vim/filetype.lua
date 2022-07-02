@@ -2174,6 +2174,25 @@ end
 ---  })
 --- </pre>
 ---
+--- To add a fallback match on contents (see |new-filetype-scripts|), use
+--- <pre>
+--- vim.filetype.add {
+---   pattern = {
+---     ['.*'] = {
+---       priority = -math.huge,
+---       function(path, bufnr)
+---         local content = vim.filetype.getlines(bufnr, 1)
+---         if vim.filetype.matchregex(content, { [[^#!.*\<mine\>]] }) then
+---           return 'mine'
+---         elseif vim.filetype.matchregex(content, { [[\<drawing\>]] }) then
+---           return 'drawing'
+---         end
+---       end,
+---     },
+---   },
+--- }
+--- </pre>
+---
 ---@param filetypes table A table containing new filetype maps (see example).
 function M.add(filetypes)
   for k, v in pairs(filetypes.extension or {}) do
@@ -2364,8 +2383,9 @@ function M.match(args)
     -- If name is nil, catch any errors from the contents filetype detection function.
     -- If the function tries to use the filename that is nil then it will fail,
     -- but this enables checks which do not need a filename to still work.
-    ft = pcall(require('vim.filetype.detect').match_contents, contents, name)
-    if ft then
+    local ok
+    ok, ft = pcall(require('vim.filetype.detect').match_contents, contents, name)
+    if ok and ft then
       return ft
     end
   end

@@ -2059,6 +2059,26 @@ add({filetypes})                                          *vim.filetype.add()*
                   })
 <
 
+                To add a fallback match on contents (see
+                |new-filetype-scripts|), use >
+
+                 vim.filetype.add {
+                   pattern = {
+                     ['.*'] = {
+                       priority = -math.huge,
+                       function(path, bufnr)
+                         local content = vim.filetype.getlines(bufnr, 1)
+                         if vim.filetype.matchregex(content, { [[^#!.*<mine>]] }) then
+                           return 'mine'
+                         elseif vim.filetype.matchregex(content, { [[<drawing>]] }) then
+                           return 'drawing'
+                         end
+                       end,
+                     },
+                   },
+                 }
+<
+
                 Parameters: ~
                     {filetypes}  (table) A table containing new filetype maps
                                  (see example).

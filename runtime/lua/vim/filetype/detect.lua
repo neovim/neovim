@@ -310,7 +310,7 @@ function M.dep3patch(path, bufnr)
   end
 end
 
-function M.diff(contents)
+local function diff(contents)
   if
     contents[1]:find('^%-%-%- ') and contents[2]:find('^%+%+%+ ')
     or contents[1]:find('^%* looking for ') and contents[2]:find('^%* comparing to ')
@@ -1360,7 +1360,7 @@ local function match_from_hashbang(contents, path)
 
   -- tcl scripts may have #!/bin/sh in the first line and "exec wish" in the
   -- third line. Suggested by Steven Atkinson.
-  if contents[3]:find('^exec wish') then
+  if contents[3] and contents[3]:find('^exec wish') then
     name = 'wish'
   end
 
@@ -1417,7 +1417,7 @@ local patterns_text = {
     { vim_regex = true },
   },
   function(contents)
-    return require('vim.filetype.detect').diff(contents)
+    return diff(contents)
   end,
   -- PostScript Files (must have %!PS as the first line, like a2ps output)
   ['^%%![ \t]*PS'] = 'postscr',
@@ -1514,8 +1514,9 @@ local function match_from_text(contents, path)
         return v
       end
     elseif type(v) == 'function' then
-      local ft = v(contents)
-      if ft then
+      -- If filetype detection fails, continue with the next pattern
+      local ok, ft = pcall(v, contents)
+      if ok and ft then
         return ft
       end
     else
@@ -1523,7 +1524,9 @@ local function match_from_text(contents, path)
       if opts.start_lnum then
         assert(not opts.ignore_case, 'ignore_case=true is ignored when start_lnum is also present, needs refactor')
         for i = opts.start_lnum, opts.end_lnum do
-          if contents[i]:find(k) then
+          if not contents[i] then
+            break
+          elseif contents[i]:find(k) then
             return v[1]
           end
         end
