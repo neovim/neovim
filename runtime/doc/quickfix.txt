@@ -556,6 +556,9 @@ pattern is used.
 The |:Lfilter| command does the same as |:Cfilter| but operates on the current
 location list.
 
+The current quickfix/location list is not modified by these commands, so you
+can go back to the unfiltered list using the |:colder|/|:lolder| command.
+
 =============================================================================
 2. The error window					*quickfix-window*
 

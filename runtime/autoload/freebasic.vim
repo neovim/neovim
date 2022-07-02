@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	FreeBASIC
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2021 Mar 16
+" Last Change:	2022 June 24
 
 " Dialects can be one of fb, qb, fblite, or deprecated
 " Precedence is forcelang > #lang > lang
@@ -18,17 +18,16 @@ function! freebasic#GetDialect() abort
 
   " override with #lang directive or metacommand
 
-  let skip = "has('syntax_items') && synIDattr(synID(line('.'), col('.'), 1), 'name') =~ 'Comment$'"
   let pat = '\c^\s*\%(#\s*lang\s\+\|''\s*$lang\s*:\s*\)"\([^"]*\)"'
 
   let save_cursor = getcurpos()
   call cursor(1, 1)
-  let lnum = search(pat, 'n', '', '', skip)
+  let lnum = search(pat, 'cn')
   call setpos('.', save_cursor)
 
   if lnum
     let word = matchlist(getline(lnum), pat)[1]
-    if word =~? '\%(fb\|deprecated\|fblite\|qb\)'
+    if word =~? '\<\%(fb\|deprecated\|fblite\|qb\)\>'
       let dialect = word
     else
       echomsg "freebasic#GetDialect: Invalid lang, found '" .. word .. "' at line " .. lnum .. " " .. getline(lnum)
