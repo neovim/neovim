@@ -553,6 +553,15 @@ func Xtest_browse(cchar)
   10Xcc
   call assert_equal(11, line('.'))
   call assert_equal('Xqftestfile2', bufname('%'))
+  Xopen
+  call cursor(2, 1)
+  if a:cchar == 'c'
+    .cc
+  else
+    .ll
+  endif
+  call assert_equal(6, line('.'))
+  call assert_equal('Xqftestfile1', bufname('%'))
 
   " Jumping to an error from the error window (when only the error window is
   " present)

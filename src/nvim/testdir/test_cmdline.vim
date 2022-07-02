@@ -818,7 +818,30 @@ func Test_cmdline_search_range()
   1,\&s/b/B/
   call assert_equal('B', getline(2))
 
+  let @/ = 'apple'
+  call assert_fails('\/print', 'E486:')
+
   bwipe!
+endfunc
+
+" Test for the tick mark (') in an excmd range
+func Test_tick_mark_in_range()
+  " If only the tick is passed as a range and no command is specified, there
+  " should not be an error
+  call feedkeys(":'\<CR>", 'xt')
+  call assert_equal("'", getreg(':'))
+  call assert_fails("',print", 'E78:')
+endfunc
+
+" Test for using a line number followed by a search pattern as range
+func Test_lnum_and_pattern_as_range()
+  new
+  call setline(1, ['foo 1', 'foo 2', 'foo 3'])
+  let @" = ''
+  2/foo/yank
+  call assert_equal("foo 3\n", @")
+  call assert_equal(1, line('.'))
+  close!
 endfunc
 
 " Tests for getcmdline(), getcmdpos() and getcmdtype()
@@ -1103,6 +1126,26 @@ func Test_cmdwin_autocmd()
     au!
   augroup END
   augroup! CmdWin
+endfunc
+
+func Test_cmdwin_jump_to_win()
+  call assert_fails('call feedkeys("q:\<C-W>\<C-W>\<CR>", "xt")', 'E11:')
+  new
+  set modified
+  call assert_fails('call feedkeys("q/:qall\<CR>", "xt")', 'E162:')
+  close!
+  call feedkeys("q/:close\<CR>", "xt")
+  call assert_equal(1, winnr('$'))
+  call feedkeys("q/:exit\<CR>", "xt")
+  call assert_equal(1, winnr('$'))
+endfunc
+
+" Test for backtick expression in the command line
+func Test_cmd_backtick()
+  %argd
+  argadd `=['a', 'b', 'c']`
+  call assert_equal(['a', 'b', 'c'], argv())
+  %argd
 endfunc
 
 func Test_cmdlineclear_tabenter()
