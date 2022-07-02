@@ -503,8 +503,7 @@ EXTERN int stdout_isatty INIT(= true);
 EXTERN int stdin_fd INIT(= -1);
 
 // true when doing full-screen output, otherwise only writing some messages.
-// volatile because it is used in a signal handler.
-EXTERN volatile int full_screen INIT(= false);
+EXTERN int full_screen INIT(= false);
 
 /// Non-zero when only "safe" commands are allowed, e.g. when sourcing .exrc or
 /// .vimrc in current directory.
@@ -724,7 +723,8 @@ EXTERN bool need_highlight_changed INIT(= true);
 
 EXTERN FILE *scriptout INIT(= NULL);  ///< Stream to write script to.
 
-// volatile because it is used in a signal handler.
+// Note that even when handling SIGINT, volatile is not necessary because the
+// callback is not called directly from the signal handlers.
 EXTERN bool got_int INIT(= false);          // set to true when interrupt signal occurred
 EXTERN bool bangredo INIT(= false);         // set to true with ! command
 EXTERN int searchcmdlen;                    // length of previous search cmd

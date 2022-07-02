@@ -165,8 +165,7 @@ static char *signal_name(int signum)
 // This function handles deadly signals.
 // It tries to preserve any swap files and exit properly.
 // (partly from Elvis).
-// NOTE: Avoid unsafe functions, such as allocating memory, they can result in
-// a deadlock.
+// NOTE: this is scheduled on the event loop, not called directly from a signal handler.
 static void deadly_signal(int signum)
   FUNC_ATTR_NORETURN
 {
