@@ -280,7 +280,7 @@ fmark_T *get_jumplist(win_T *win, int count)
     }
     break;
   }
-  return jmp != NULL ? &jmp->fmark : NULL;
+  return &jmp->fmark;
 }
 
 /// Get mark in "count" position in the |changelist| relative to the current index.
