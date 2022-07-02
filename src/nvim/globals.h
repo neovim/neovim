@@ -224,7 +224,7 @@ EXTERN dict_T vimvardict;                   // Dictionary with v: variables
 EXTERN dict_T globvardict;                  // Dictionary with g: variables
 /// g: value
 #define globvarht globvardict.dv_hashtab
-EXTERN int did_emsg;                        // set by emsg() when the message
+EXTERN bool did_emsg;                       // set by emsg() when the message
                                             // is displayed or thrown
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
 EXTERN bool did_emsg_syntax;                // did_emsg set because of a
@@ -274,11 +274,11 @@ EXTERN except_T *current_exception;
 
 /// Set when a throw that cannot be handled in do_cmdline() must be propagated
 /// to the cstack of the previously called do_cmdline().
-EXTERN int need_rethrow INIT(= false);
+EXTERN bool need_rethrow INIT(= false);
 
 /// Set when a ":finish" or ":return" that cannot be handled in do_cmdline()
 /// must be propagated to the cstack of the previously called do_cmdline().
-EXTERN int check_cstack INIT(= false);
+EXTERN bool check_cstack INIT(= false);
 
 /// Number of nested try conditionals (across function calls and ":source"
 /// commands).
@@ -725,8 +725,7 @@ EXTERN bool need_highlight_changed INIT(= true);
 EXTERN FILE *scriptout INIT(= NULL);  ///< Stream to write script to.
 
 // volatile because it is used in a signal handler.
-EXTERN volatile int got_int INIT(= false);  // set to true when interrupt
-                                            // signal occurred
+EXTERN bool got_int INIT(= false);          // set to true when interrupt signal occurred
 EXTERN bool bangredo INIT(= false);         // set to true with ! command
 EXTERN int searchcmdlen;                    // length of previous search cmd
 EXTERN int reg_do_extmatch INIT(= 0);       // Used when compiling regexp:
