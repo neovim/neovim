@@ -644,7 +644,7 @@ end
 
 local function m4(contents)
   for _, line in ipairs(contents) do
-    if matchregex(line, '^\\%s*dnl\\>') then
+    if matchregex(line, [[^\s*dnl\>]]) then
       return 'm4'
     end
   end
