@@ -13,6 +13,7 @@
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/move.h"
@@ -66,6 +67,50 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
     ADD(rv, INTEGER_OBJ(win->w_cursor.lnum));
     ADD(rv, INTEGER_OBJ(win->w_cursor.col));
   }
+
+  return rv;
+}
+
+static void get_folds(win_T *win, int level, bool use_level, bool maybe_small,
+                      int lnum_off, garray_T fold_ga, Array *ret)
+{
+  for (int i = 0; i < fold_ga.ga_len; i++) {
+    fold_T *f = (fold_T *)fold_ga.ga_data+i;
+    bool had_folded = check_closed(win, f, &use_level, level, &maybe_small, lnum_off);
+    int lnum = lnum_off + f->fd_top;
+
+    if (had_folded) {
+      // Only collect closed folds
+      // TODO(lewis6991): Add option to return open folds too
+      Array elem = ARRAY_DICT_INIT;
+      int row = lnum - 1;
+      ADD(elem, INTEGER_OBJ(row));
+      ADD(elem, INTEGER_OBJ(row + f->fd_len - 1));
+      ADD(*ret, ARRAY_OBJ(elem));
+    } else {
+      // look at nested folds
+      get_folds(win, level + 1, use_level, maybe_small, lnum, f->fd_nested, ret);
+    }
+  }
+}
+
+/// Get fold for the current window
+///
+/// @param window   Window handle, or 0 for current window
+/// @param opts     Optional parameters. Reserved for future use.
+/// @return Array of 2-integer tuples representing start and end of the fold
+/// (0-indexed, inclusive).
+Array nvim_win_get_folds(Window window, Dictionary opts, Error *err)
+  FUNC_API_SINCE(8)
+{
+  Array rv = ARRAY_DICT_INIT;
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return rv;
+  }
+
+  get_folds(win, 0, false, false, 0, win->w_folds, &rv);
 
   return rv;
 }

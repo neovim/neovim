@@ -2984,6 +2984,17 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
                 Return: ~
                     (row, col) tuple
 
+nvim_win_get_folds({window}, {opts})                    *nvim_win_get_folds()*
+                Get fold for the current window
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
+                    {opts}    Optional parameters. Reserved for future use.
+
+                Return: ~
+                    Array of 2-integer tuples representing start and end of
+                    the fold (0-indexed, inclusive).
+
 nvim_win_get_height({window})                          *nvim_win_get_height()*
                 Gets the window height
 
