@@ -6455,20 +6455,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
   }
 
   case ct_MODS:
-    result = quote ? 2 : 0;
-    if (buf != NULL) {
-      if (quote) {
-        *buf++ = '"';
-      }
-      *buf = '\0';
-    }
-
-    result += uc_mods(buf);
-
-    if (quote && buf != NULL) {
-      buf += result - 2;
-      *buf = '"';
-    }
+    result = uc_mods(buf, &cmdmod, quote);
     break;
 
   case ct_REGISTER:
@@ -6508,43 +6495,45 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
   return result;
 }
 
-/// Add modifiers from "cmdmod.cmod_split" to "buf".  Set "multi_mods" when one
+/// Add modifiers from "cmod->cmod_split" to "buf".  Set "multi_mods" when one
 /// was added.
 ///
 /// @return the number of bytes added
-size_t add_win_cmd_modifers(char *buf, bool *multi_mods)
+size_t add_win_cmd_modifers(char *buf, const cmdmod_T *cmod, bool *multi_mods)
 {
   size_t result = 0;
 
   // :aboveleft and :leftabove
-  if (cmdmod.cmod_split & WSP_ABOVE) {
+  if (cmod->cmod_split & WSP_ABOVE) {
     result += add_cmd_modifier(buf, "aboveleft", multi_mods);
   }
   // :belowright and :rightbelow
-  if (cmdmod.cmod_split & WSP_BELOW) {
+  if (cmod->cmod_split & WSP_BELOW) {
     result += add_cmd_modifier(buf, "belowright", multi_mods);
   }
   // :botright
-  if (cmdmod.cmod_split & WSP_BOT) {
+  if (cmod->cmod_split & WSP_BOT) {
     result += add_cmd_modifier(buf, "botright", multi_mods);
   }
 
   // :tab
-  if (cmdmod.cmod_tab > 0) {
+  if (cmod->cmod_tab > 0) {
     result += add_cmd_modifier(buf, "tab", multi_mods);
   }
   // :topleft
-  if (cmdmod.cmod_split & WSP_TOP) {
+  if (cmod->cmod_split & WSP_TOP) {
     result += add_cmd_modifier(buf, "topleft", multi_mods);
   }
   // :vertical
-  if (cmdmod.cmod_split & WSP_VERT) {
+  if (cmod->cmod_split & WSP_VERT) {
     result += add_cmd_modifier(buf, "vertical", multi_mods);
   }
   return result;
 }
 
-size_t uc_mods(char *buf)
+/// Generate text for the "cmod" command modifiers.
+/// If "buf" is NULL just return the length.
+size_t uc_mods(char *buf, const cmdmod_T *cmod, bool quote)
 {
   size_t result = 0;
   bool multi_mods = false;
@@ -6562,8 +6551,20 @@ size_t uc_mods(char *buf)
     { CMOD_KEEPMARKS, "keepmarks" },
     { CMOD_KEEPPATTERNS, "keeppatterns" },
     { CMOD_LOCKMARKS, "lockmarks" },
-    { CMOD_NOSWAPFILE, "noswapfile" }
+    { CMOD_NOSWAPFILE, "noswapfile" },
+    { CMOD_UNSILENT, "unsilent" },
+    { CMOD_NOAUTOCMD, "noautocmd" },
+    { CMOD_SANDBOX, "sandbox" },
   };
+
+  result = quote ? 2 : 0;
+  if (buf != NULL) {
+    if (quote) {
+      *buf++ = '"';
+    }
+    *buf = '\0';
+  }
+
   // the modifiers that are simple flags
   for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
     if (cmdmod.cmod_flags & mod_entries[i].flag) {
@@ -6571,23 +6572,23 @@ size_t uc_mods(char *buf)
     }
   }
 
-  // TODO(vim): How to support :noautocmd?
-  // TODO(vim): How to support :sandbox?
-
   // :silent
   if (msg_silent > 0) {
-    result += add_cmd_modifier(buf, emsg_silent > 0 ? "silent!" : "silent", &multi_mods);
+    result += add_cmd_modifier(buf,
+                               (cmod->cmod_flags & CMOD_ERRSILENT) ? "silent!" : "silent",
+                               &multi_mods);
   }
-
-  // TODO(vim): How to support :unsilent?
-
   // :verbose
   if (p_verbose > 0) {
     result += add_cmd_modifier(buf, "verbose", &multi_mods);
   }
-  // flags from cmdmod.cmod_split
-  result += add_win_cmd_modifers(buf, &multi_mods);
+  // flags from cmod->cmod_split
+  result += add_win_cmd_modifers(buf, cmod, &multi_mods);
 
+  if (quote && buf != NULL) {
+    buf += result - 2;
+    *buf = '"';
+  }
   return result;
 }
 

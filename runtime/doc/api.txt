@@ -1951,6 +1951,7 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
 
                       • silent: (boolean) |:silent|.
                       • emsg_silent: (boolean) |:silent!|.
+                      • unsilent: (boolean) |:unsilent|.
                       • sandbox: (boolean) |:sandbox|.
                       • noautocmd: (boolean) |:noautocmd|.
                       • browse: (boolean) |:browse|.
