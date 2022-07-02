@@ -1294,7 +1294,7 @@ local patterns_hashbang = {
   ['make\\>'] = { 'make', { vim_regex = true } },
   ['^pike\\%(\\>\\|[0-9]\\)'] = { 'pike', { vim_regex = true } },
   lua = 'lua',
-  perl = 'lua',
+  perl = 'perl',
   php = 'php',
   python = 'python',
   ['^groovy\\>'] = { 'groovy', { vim_regex = true } },
@@ -1332,7 +1332,7 @@ local function match_from_hashbang(contents, path)
   -- Check for a line like "#!/usr/bin/env {options} bash".  Turn it into
   -- "#!/usr/bin/bash" to make matching easier.
   -- Recognize only a few {options} that are commonly used.
-  if M.matchregex(first_line, [[^#!\s*\S*\<env\s]]) then
+  if matchregex(first_line, [[^#!\s*\S*\<env\s]]) then
     first_line = first_line:gsub('%S+=%S+', '')
     first_line = first_line
       :gsub('%-[iS]', '', 1)
@@ -1451,7 +1451,7 @@ local patterns_text = {
   ['^SNNS network definition file'] = 'snnsnet',
   ['^SNNS pattern definition file'] = 'snnspat',
   ['^SNNS result file'] = 'snnsres',
-  ['&%%.-[Vv]irata'] = { 'virata', { start_lnum = 1, end_lnum = 5 } },
+  ['^%%.-[Vv]irata'] = { 'virata', { start_lnum = 1, end_lnum = 5 } },
   ['[0-9:.]* *execve%('] = 'strace',
   ['^__libc_start_main'] = 'strace',
   -- VSE JCL
@@ -1487,7 +1487,7 @@ local patterns_text = {
   -- (See also: http://www.gnu.org/software/emacs/manual/html_node/emacs/Choosing-Modes.html#Choosing-Modes)
   ['%-%*%-.*erlang.*%-%*%-'] = { 'erlang', { ignore_case = true } },
   -- YAML
-  ['^&YAML'] = 'yaml',
+  ['^%%YAML'] = 'yaml',
   -- MikroTik RouterOS script
   ['^#.*by RouterOS'] = 'routeros',
   -- Sed scripts
@@ -1521,7 +1521,7 @@ local function match_from_text(contents, path)
       end
     else
       local opts = type(v) == 'table' and v[2] or {}
-      if opts.start_lnum then
+      if opts.start_lnum and opts.end_lnum then
         assert(not opts.ignore_case, 'ignore_case=true is ignored when start_lnum is also present, needs refactor')
         for i = opts.start_lnum, opts.end_lnum do
           if not contents[i] then
@@ -1531,10 +1531,10 @@ local function match_from_text(contents, path)
           end
         end
       else
-        -- Check the first line only
-        local line = opts.ignore_case and contents[1]:lower() or contents[1]
+        local line_nr = opts.start_lnum or 1
+        local line = opts.ignore_case and contents[line_nr]:lower() or contents[line_nr]
         if opts.vim_regex and matchregex(line, k) or line:find(k) then
-          return v[1]
+          return v[line_nr]
         end
       end
     end

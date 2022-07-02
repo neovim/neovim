@@ -13,7 +13,7 @@
 
 " Only do the rest when not using Lua filetype detection
 " and the FileType autocommand has not been triggered yet.
-if g:do_filetype_lua || did_filetype()
+if exists(g:do_filetype_lua) && g:do_filetype_lua || did_filetype()
   finish
 endif
 
