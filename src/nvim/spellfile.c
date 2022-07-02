@@ -2351,7 +2351,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         // "S" flag on all but the last block, thus we check for that
         // and store it in ah_follows.
         STRLCPY(key, items[1], AH_KEY_LEN);
-        hi = hash_find(tp, key);
+        hi = hash_find(tp, (char *)key);
         if (!HASHITEM_EMPTY(hi)) {
           cur_aff = HI2AH(hi);
           if (cur_aff->ah_combine != (*items[2] == 'Y')) {
@@ -2688,9 +2688,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       } else if (STRCMP(items[0], "COMMON") == 0) {
         int i;
 
-        for (i = 1; i < itemcnt; ++i) {
-          if (HASHITEM_EMPTY(hash_find(&spin->si_commonwords,
-                                       items[i]))) {
+        for (i = 1; i < itemcnt; i++) {
+          if (HASHITEM_EMPTY(hash_find(&spin->si_commonwords, (char *)items[i]))) {
             p = vim_strsave(items[i]);
             hash_add(&spin->si_commonwords, p);
           }
@@ -2872,7 +2871,7 @@ static unsigned get_affitem(int flagtype, char_u **pp)
       ++*pp;            // always advance, avoid getting stuck
       return 0;
     }
-    res = getdigits_int(pp, true, 0);
+    res = getdigits_int((char **)pp, true, 0);
     if (res == 0) {
       res = ZERO_FLAG;
     }
@@ -2932,7 +2931,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
         // Find the flag in the hashtable.  If it was used before, use
         // the existing ID.  Otherwise add a new entry.
         STRLCPY(key, prevp, p - prevp + 1);
-        hi = hash_find(&aff->af_comp, key);
+        hi = hash_find(&aff->af_comp, (char *)key);
         if (!HASHITEM_EMPTY(hi)) {
           id = HI2CI(hi)->ci_newID;
         } else {
@@ -2997,7 +2996,7 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
 
   case AFT_NUM:
     for (p = afflist; *p != NUL;) {
-      int digits = getdigits_int(&p, true, 0);
+      int digits = getdigits_int((char **)&p, true, 0);
       assert(digits >= 0);
       n = (unsigned int)digits;
       if (n == 0) {
@@ -3359,7 +3358,7 @@ static int get_pfxlist(afffile_T *affile, char_u *afflist, char_u *store_afflist
       // A flag is a postponed prefix flag if it appears in "af_pref"
       // and its ID is not zero.
       STRLCPY(key, prevp, p - prevp + 1);
-      hi = hash_find(&affile->af_pref, key);
+      hi = hash_find(&affile->af_pref, (char *)key);
       if (!HASHITEM_EMPTY(hi)) {
         id = HI2AH(hi)->ah_newID;
         if (id != 0) {
@@ -3392,7 +3391,7 @@ static void get_compflags(afffile_T *affile, char_u *afflist, char_u *store_affl
     if (get_affitem(affile->af_flagtype, &p) != 0) {
       // A flag is a compound flag if it appears in "af_comp".
       STRLCPY(key, prevp, p - prevp + 1);
-      hi = hash_find(&affile->af_comp, key);
+      hi = hash_find(&affile->af_comp, (char *)key);
       if (!HASHITEM_EMPTY(hi)) {
         store_afflist[cnt++] = HI2CI(hi)->ci_newID;
       }
@@ -5563,8 +5562,8 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
     }
     fnamebuf = xmalloc(MAXPATHL);
 
-    for (spf = curwin->w_s->b_p_spf, i = 1; *spf != NUL; ++i) {
-      copy_option_part(&spf, fnamebuf, MAXPATHL, ",");
+    for (spf = curwin->w_s->b_p_spf, i = 1; *spf != NUL; i++) {
+      copy_option_part((char **)&spf, (char *)fnamebuf, MAXPATHL, ",");
       if (i == idx) {
         break;
       }
@@ -5576,7 +5575,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
     }
 
     // Check that the user isn't editing the .add file somewhere.
-    buf = buflist_findname_exp(fnamebuf);
+    buf = buflist_findname_exp((char *)fnamebuf);
     if (buf != NULL && buf->b_ml.ml_mfp == NULL) {
       buf = NULL;
     }
@@ -5638,7 +5637,8 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       // file.  We may need to create the "spell" directory first.  We
       // already checked the runtime directory is writable in
       // init_spellfile().
-      if (!dir_of_file_exists(fname) && (p = path_tail_with_sep(fname)) != fname) {
+      if (!dir_of_file_exists(fname)
+          && (p = (char_u *)path_tail_with_sep((char *)fname)) != fname) {
         int c = *p;
 
         // The directory doesn't exist.  Try creating it and opening
@@ -5716,7 +5716,7 @@ static void init_spellfile(void)
                 lstart - curbuf->b_s.b_p_spl);
       } else {
         // Copy the path from 'runtimepath' to buf[].
-        copy_option_part(&rtp, buf, MAXPATHL, ",");
+        copy_option_part((char **)&rtp, (char *)buf, MAXPATHL, ",");
       }
       if (os_file_is_writable((char *)buf) == 2) {
         // Use the first language name from 'spelllang' and the

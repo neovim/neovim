@@ -400,7 +400,7 @@ int get_number_indent(linenr_T lnum)
 
   // In format_lines() (i.e. not insert mode), fo+=q is needed too...
   if ((State & MODE_INSERT) || has_format_option(FO_Q_COMS)) {
-    lead_len = get_leader_len(ml_get(lnum), NULL, false, true);
+    lead_len = get_leader_len((char *)ml_get(lnum), NULL, false, true);
   }
   regmatch.regprog = vim_regcomp((char *)curbuf->b_p_flp, RE_MAGIC);
 
@@ -409,7 +409,7 @@ int get_number_indent(linenr_T lnum)
 
     // vim_regexec() expects a pointer to a line.  This lets us
     // start matching for the flp beyond any comment leader...
-    if (vim_regexec(&regmatch, ml_get(lnum) + lead_len, (colnr_T)0)) {
+    if (vim_regexec(&regmatch, (char *)ml_get(lnum) + lead_len, (colnr_T)0)) {
       pos.lnum = lnum;
       pos.col = (colnr_T)(*regmatch.endp - ml_get(lnum));
       pos.coladd = 0;
@@ -468,7 +468,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
 
     if (regmatch.regprog != NULL) {
       regmatch.rm_ic = false;
-      if (vim_regexec(&regmatch, line, 0)) {
+      if (vim_regexec(&regmatch, (char *)line, 0)) {
         if (wp->w_briopt_list > 0) {
           bri += wp->w_briopt_list;
         } else {
@@ -769,7 +769,7 @@ static int lisp_match(char_u *p)
   char_u *word = *curbuf->b_p_lw != NUL ? curbuf->b_p_lw : p_lispwords;
 
   while (*word != NUL) {
-    (void)copy_option_part(&word, buf, LSIZE, ",");
+    (void)copy_option_part((char **)&word, (char *)buf, LSIZE, ",");
     len = (int)STRLEN(buf);
 
     if ((STRNCMP(buf, p, len) == 0) && (p[len] == ' ')) {

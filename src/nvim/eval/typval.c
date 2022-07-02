@@ -1434,7 +1434,7 @@ dictitem_T *tv_dict_item_copy(dictitem_T *const di)
 void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
-  hashitem_T *const hi = hash_find(&dict->dv_hashtab, item->di_key);
+  hashitem_T *const hi = hash_find(&dict->dv_hashtab, (char *)item->di_key);
   if (HASHITEM_EMPTY(hi)) {
     semsg(_(e_intern2), "tv_dict_item_remove()");
   } else {
@@ -1567,7 +1567,7 @@ dictitem_T *tv_dict_find(const dict_T *const d, const char *const key, const ptr
     return NULL;
   }
   hashitem_T *const hi = (len < 0
-                          ? hash_find(&d->dv_hashtab, (const char_u *)key)
+                          ? hash_find(&d->dv_hashtab, key)
                           : hash_find_len(&d->dv_hashtab, key, (size_t)len));
   if (HASHITEM_EMPTY(hi)) {
     return NULL;

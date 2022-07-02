@@ -562,7 +562,7 @@ void dialog_changed(buf_T *buf, bool checkall)
 
   if (ret == VIM_YES) {
     if (buf->b_fname != NULL
-        && check_overwrite(&ea, buf, buf->b_fname, (char *)buf->b_ffname, false) == OK) {
+        && check_overwrite(&ea, buf, buf->b_fname, buf->b_ffname, false) == OK) {
       // didn't hit Cancel
       (void)buf_write_all(buf, false);
     }
@@ -578,8 +578,7 @@ void dialog_changed(buf_T *buf, bool checkall)
         set_bufref(&bufref, buf2);
 
         if (buf2->b_fname != NULL
-            && check_overwrite(&ea, buf2, buf2->b_fname,
-                               (char *)buf2->b_ffname, false) == OK) {
+            && check_overwrite(&ea, buf2, buf2->b_fname, buf2->b_ffname, false) == OK) {
           // didn't hit Cancel
           (void)buf_write_all(buf2, false);
         }
@@ -786,7 +785,7 @@ int buf_write_all(buf_T *buf, int forceit)
   int retval;
   buf_T *old_curbuf = curbuf;
 
-  retval = (buf_write(buf, (char *)buf->b_ffname, buf->b_fname,
+  retval = (buf_write(buf, buf->b_ffname, buf->b_fname,
                       (linenr_T)1, buf->b_ml.ml_line_count, NULL,
                       false, forceit, true, false));
   if (curbuf != old_curbuf) {
@@ -929,7 +928,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
 
       didone = false;
       for (match = 0; match < ARGCOUNT; match++) {
-        if (vim_regexec(&regmatch, (char_u *)alist_name(&ARGLIST[match]), (colnr_T)0)) {
+        if (vim_regexec(&regmatch, alist_name(&ARGLIST[match]), (colnr_T)0)) {
           didone = true;
           xfree(ARGLIST[match].ae_fname);
           memmove(ARGLIST + match, ARGLIST + match + 1,
@@ -992,7 +991,7 @@ static bool editing_arg_idx(win_T *win)
                != WARGLIST(win)[win->w_arg_idx].ae_fnum
                && (win->w_buffer->b_ffname == NULL
                    || !(path_full_compare(alist_name(&WARGLIST(win)[win->w_arg_idx]),
-                                          (char *)win->w_buffer->b_ffname, true,
+                                          win->w_buffer->b_ffname, true,
                                           true) & kEqualFiles))));
 }
 
@@ -1011,7 +1010,7 @@ void check_arg_idx(win_T *win)
         && (win->w_buffer->b_fnum == GARGLIST[GARGCOUNT - 1].ae_fnum
             || (win->w_buffer->b_ffname != NULL
                 && (path_full_compare(alist_name(&GARGLIST[GARGCOUNT - 1]),
-                                      (char *)win->w_buffer->b_ffname, true, true)
+                                      win->w_buffer->b_ffname, true, true)
                     & kEqualFiles)))) {
       arg_had_last = true;
     }
@@ -1138,7 +1137,7 @@ void do_argfile(exarg_T *eap, int argn)
       other = true;
       if (buf_hide(curbuf)) {
         p = fix_fname(alist_name(&ARGLIST[argn]));
-        other = otherfile((char_u *)p);
+        other = otherfile(p);
         xfree(p);
       }
       if ((!buf_hide(curbuf) || !other)
@@ -1551,7 +1550,7 @@ static void alist_add_list(int count, char **files, int after, bool will_edit)
     for (int i = 0; i < count; i++) {
       const int flags = BLN_LISTED | (will_edit ? BLN_CURBUF : 0);
       ARGLIST[after + i].ae_fname = (char_u *)files[i];
-      ARGLIST[after + i].ae_fnum = buflist_add((char_u *)files[i], flags);
+      ARGLIST[after + i].ae_fnum = buflist_add(files[i], flags);
     }
     ALIST(curwin)->al_ga.ga_len += count;
     if (old_argcount > 0 && curwin->w_arg_idx >= after) {
@@ -2265,7 +2264,7 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
     }
 
     *should_free = true;
-    return home_replace_save(NULL, (char_u *)sname);
+    return (char_u *)home_replace_save(NULL, sname);
   }
   }
 }
@@ -2494,8 +2493,7 @@ void script_line_start(void)
   if (si->sn_prof_on && sourcing_lnum >= 1) {
     // Grow the array before starting the timer, so that the time spent
     // here isn't counted.
-    (void)ga_grow(&si->sn_prl_ga,
-                  (int)(sourcing_lnum - si->sn_prl_ga.ga_len));
+    (void)ga_grow(&si->sn_prl_ga, sourcing_lnum - si->sn_prl_ga.ga_len);
     si->sn_prl_idx = sourcing_lnum - 1;
     while (si->sn_prl_ga.ga_len <= si->sn_prl_idx
            && si->sn_prl_ga.ga_len < si->sn_prl_ga.ga_maxlen) {

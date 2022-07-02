@@ -545,8 +545,8 @@ struct file_buffer {
   // b_sfname   is the name as the user typed it (or NULL).
   // b_fname    is the same as b_sfname, unless ":cd" has been done,
   //            then it is the same as b_ffname (NULL for no name).
-  char_u *b_ffname;        // full path file name, allocated
-  char_u *b_sfname;        // short file name, allocated, may be equal to
+  char *b_ffname;          // full path file name, allocated
+  char *b_sfname;          // short file name, allocated, may be equal to
                            // b_ffname
   char *b_fname;           // current file name, points to b_ffname or
                            // b_sfname
@@ -829,7 +829,7 @@ struct file_buffer {
 
   int b_start_eol;              // last line had eol when it was read
   int b_start_ffc;              // first char of 'ff' when edit started
-  char_u *b_start_fenc;    // 'fileencoding' when edit started or NULL
+  char *b_start_fenc;           // 'fileencoding' when edit started or NULL
   int b_bad_char;               // "++bad=" argument when edit started or 0
   int b_start_bomb;             // 'bomb' when it was read
 
@@ -855,7 +855,7 @@ struct file_buffer {
                                 // are not used!  Use the B_SPELL macro to
                                 // access b_spell without #ifdef.
 
-  char_u *b_prompt_text;        // set by prompt_setprompt()
+  char *b_prompt_text;          // set by prompt_setprompt()
   Callback b_prompt_callback;   // set by prompt_setcallback()
   Callback b_prompt_interrupt;  // set by prompt_setinterrupt()
   int b_prompt_insert;          // value for restart_edit when entering
@@ -963,8 +963,8 @@ struct tabpage_S {
   frame_T *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
   ScopeDictDictItem tp_winvar;      ///< Variable for "t:" Dictionary.
   dict_T *tp_vars;         ///< Internal variables, local to tab page.
-  char_u *tp_localdir;     ///< Absolute path of local cwd or NULL.
-  char_u *tp_prevdir;      ///< Previous directory.
+  char *tp_localdir;       ///< Absolute path of local cwd or NULL.
+  char *tp_prevdir;        ///< Previous directory.
 };
 
 /*
@@ -1061,7 +1061,7 @@ struct matchitem {
   matchitem_T *next;
   int id;                   ///< match ID
   int priority;             ///< match priority
-  char_u *pattern;          ///< pattern to highlight
+  char *pattern;            ///< pattern to highlight
   regmmatch_T match;        ///< regexp program for pattern
   posmatch_T pos;           ///< position matches
   match_T hl;               ///< struct for doing the actual highlighting
@@ -1409,8 +1409,8 @@ struct window_S {
                                     // out of range!)
   int w_arg_idx_invalid;            // editing another file than w_arg_idx
 
-  char_u *w_localdir;          // absolute path of local directory or NULL
-  char_u *w_prevdir;           // previous directory
+  char *w_localdir;            // absolute path of local directory or NULL
+  char *w_prevdir;             // previous directory
   // Options local to a window.
   // They are local because they influence the layout of the window or
   // depend on the window layout.
@@ -1424,10 +1424,10 @@ struct window_S {
   uint32_t w_p_wbr_flags;           // flags for 'winbar'
   uint32_t w_p_fde_flags;           // flags for 'foldexpr'
   uint32_t w_p_fdt_flags;           // flags for 'foldtext'
-  int *w_p_cc_cols;         // array of columns to highlight or NULL
-  char_u w_p_culopt_flags;     // flags for cursorline highlighting
-  long w_p_siso;             // 'sidescrolloff' local value
-  long w_p_so;               // 'scrolloff' local value
+  int *w_p_cc_cols;                 // array of columns to highlight or NULL
+  uint8_t w_p_culopt_flags;         // flags for cursorline highlighting
+  long w_p_siso;                    // 'sidescrolloff' local value
+  long w_p_so;                      // 'scrolloff' local value
 
   int w_briopt_min;                 // minimum width for breakindent
   int w_briopt_shift;               // additional shift for breakindent

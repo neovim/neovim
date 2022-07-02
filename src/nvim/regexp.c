@@ -2516,9 +2516,9 @@ bool vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line, colnr_T 
 
 // Note: "rmp->regprog" may be freed and changed.
 // Return true if there is a match, false if not.
-bool vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
+bool vim_regexec(regmatch_T *rmp, char *line, colnr_T col)
 {
-  return vim_regexec_string(rmp, line, col, false);
+  return vim_regexec_string(rmp, (char_u *)line, col, false);
 }
 
 // Like vim_regexec(), but consider a "\n" in "line" to be a line break.

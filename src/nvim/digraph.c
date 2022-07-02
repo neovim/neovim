@@ -1683,7 +1683,7 @@ void putdigraph(char_u *str)
       emsg(_(e_number_exp));
       return;
     }
-    int n = getdigits_int(&str, true, 0);
+    int n = getdigits_int((char **)&str, true, 0);
 
     registerdigraph(char1, char2, n);
   }

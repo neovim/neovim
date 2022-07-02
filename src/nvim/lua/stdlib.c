@@ -55,7 +55,7 @@ static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
   regmatch_T rm;
   rm.regprog = *prog;
   rm.rm_ic = false;
-  bool match = vim_regexec(&rm, str, 0);
+  bool match = vim_regexec(&rm, (char *)str, 0);
   *prog = rm.regprog;
 
   if (match) {
@@ -252,7 +252,7 @@ static int nlua_str_utf_end(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   if (offset < 0 || offset > (intptr_t)s1_len) {
     return luaL_error(lstate, "index out of range");
   }
-  int tail_offset = mb_tail_off((char_u *)s1, (char_u *)s1 + offset - 1);
+  int tail_offset = mb_tail_off(s1, s1 + offset - 1);
   lua_pushinteger(lstate, tail_offset);
   return 1;
 }

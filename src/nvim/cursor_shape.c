@@ -189,7 +189,7 @@ char *parse_shape_opt(int what)
               if (!ascii_isdigit(*p)) {
                 return N_("E548: digit expected");
               }
-              int n = getdigits_int((char_u **)&p, false, 0);
+              int n = getdigits_int(&p, false, 0);
               if (len == 3) {               // "ver" or "hor"
                 if (n == 0) {
                   return N_("E549: Illegal percentage");

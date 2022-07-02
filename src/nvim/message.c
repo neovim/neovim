@@ -387,7 +387,7 @@ char_u *msg_strtrunc(char_u *s, int force)
       // composing chars)
       len = (room + 2) * 18;
       buf = xmalloc((size_t)len);
-      trunc_string(s, buf, room, len);
+      trunc_string((char *)s, (char *)buf, room, len);
     }
   }
   return buf;
@@ -395,7 +395,7 @@ char_u *msg_strtrunc(char_u *s, int force)
 
 /// Truncate a string "s" to "buf" with cell width "room".
 /// "s" and "buf" may be equal.
-void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
+void trunc_string(char *s, char *buf, int room_in, int buflen)
 {
   int room = room_in - 3;  // "..." takes 3 chars
   int half;
@@ -423,13 +423,13 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
       buf[e] = NUL;
       return;
     }
-    n = ptr2cells((char *)s + e);
+    n = ptr2cells(s + e);
     if (len + n > half) {
       break;
     }
     len += n;
     buf[e] = s[e];
-    for (n = utfc_ptr2len((char *)s + e); --n > 0;) {
+    for (n = utfc_ptr2len(s + e); --n > 0;) {
       if (++e == buflen) {
         break;
       }
@@ -441,9 +441,9 @@ void trunc_string(char_u *s, char_u *buf, int room_in, int buflen)
   half = i = (int)STRLEN(s);
   for (;;) {
     do {
-      half = half - utf_head_off(s, s + half - 1) - 1;
-    } while (half > 0 && utf_iscomposing(utf_ptr2char((char *)s + half)));
-    n = ptr2cells((char *)s + half);
+      half = half - utf_head_off((char_u *)s, (char_u *)s + half - 1) - 1;
+    } while (half > 0 && utf_iscomposing(utf_ptr2char(s + half)));
+    n = ptr2cells(s + half);
     if (len + n > room || half == 0) {
       break;
     }
@@ -1477,10 +1477,8 @@ void msg_home_replace_hl(char_u *fname)
 
 static void msg_home_replace_attr(char_u *fname, int attr)
 {
-  char_u *name;
-
-  name = home_replace_save(NULL, fname);
-  msg_outtrans_attr(name, attr);
+  char *name = home_replace_save(NULL, (char *)fname);
+  msg_outtrans_attr((char_u *)name, attr);
   xfree(name);
 }
 
@@ -2329,7 +2327,7 @@ bool message_filtered(char_u *msg)
     return false;
   }
 
-  bool match = vim_regexec(&cmdmod.cmod_filter_regmatch, msg, (colnr_T)0);
+  bool match = vim_regexec(&cmdmod.cmod_filter_regmatch, (char *)msg, (colnr_T)0);
   return cmdmod.cmod_filter_force ? match : !match;
 }
 

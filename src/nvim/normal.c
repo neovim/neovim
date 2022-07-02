@@ -3143,7 +3143,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
       }
       break;
     }
-    if (get_leader_len(get_cursor_line_ptr(), NULL, false, true) > 0) {
+    if (get_leader_len((char *)get_cursor_line_ptr(), NULL, false, true) > 0) {
       // Ignore this line, continue at start of next line.
       curwin->w_cursor.lnum++;
       curwin->w_cursor.col = 0;

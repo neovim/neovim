@@ -1618,7 +1618,7 @@ char_u *buf_prompt_text(const buf_T *const buf)
   if (buf->b_prompt_text == NULL) {
     return (char_u *)"% ";
   }
-  return buf->b_prompt_text;
+  return (char_u *)buf->b_prompt_text;
 }
 
 // Return the effective prompt for the current buffer.
@@ -2955,7 +2955,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
       /* Expand wildcards in the dictionary name, but do not allow
        * backticks (for security, the 'dict' option may have been set in
        * a modeline). */
-      copy_option_part(&dict, buf, LSIZE, ",");
+      copy_option_part((char **)&dict, (char *)buf, LSIZE, ",");
       if (!thesaurus && STRCMP(buf, "spell") == 0) {
         count = -1;
       } else if (vim_strchr((char *)buf, '`') != NULL
@@ -3020,7 +3020,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
     while (!got_int && !compl_interrupted
            && !vim_fgets(buf, LSIZE, fp)) {
       ptr = buf;
-      while (vim_regexec(regmatch, buf, (colnr_T)(ptr - buf))) {
+      while (vim_regexec(regmatch, (char *)buf, (colnr_T)(ptr - buf))) {
         ptr = regmatch->startp[0];
         if (CTRL_X_MODE_LINE_OR_EVAL(ctrl_x_mode)) {
           ptr = find_line_end(ptr);
@@ -4223,9 +4223,9 @@ static int ins_compl_get_exp(pos_T *ini)
         msg_hist_off = true;  // reset in msg_trunc_attr()
         vim_snprintf((char *)IObuff, IOSIZE, _("Scanning: %s"),
                      ins_buf->b_fname == NULL
-                     ? (char_u *)buf_spname(ins_buf)
+                     ? buf_spname(ins_buf)
                      : ins_buf->b_sfname == NULL
-                     ? (char_u *)ins_buf->b_fname
+                     ? ins_buf->b_fname
                      : ins_buf->b_sfname);
         (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
       } else if (*e_cpt == NUL) {
@@ -4257,7 +4257,7 @@ static int ins_compl_get_exp(pos_T *ini)
         }
 
         // in any case e_cpt is advanced to the next entry
-        (void)copy_option_part(&e_cpt, IObuff, IOSIZE, ",");
+        (void)copy_option_part((char **)&e_cpt, (char *)IObuff, IOSIZE, ",");
 
         found_all = true;
         if (type == -1) {
@@ -4313,7 +4313,7 @@ static int ins_compl_get_exp(pos_T *ini)
       if (find_tags(compl_pattern, &num_matches, &matches,
                     TAG_REGEXP | TAG_NAMES | TAG_NOIC | TAG_INS_COMP
                     | (l_ctrl_x_mode != CTRL_X_NORMAL ? TAG_VERBOSE : 0),
-                    TAG_MANY, curbuf->b_ffname) == OK && num_matches > 0) {
+                    TAG_MANY, (char_u *)curbuf->b_ffname) == OK && num_matches > 0) {
         ins_compl_add_matches(num_matches, matches, p_ic);
       }
       g_tag_at_cursor = false;
@@ -4516,7 +4516,8 @@ static int ins_compl_get_exp(pos_T *ini)
             }
           }
         }
-        if (ins_compl_add_infercase(ptr, len, p_ic, ins_buf == curbuf ? NULL : ins_buf->b_sfname,
+        if (ins_compl_add_infercase(ptr, len, p_ic,
+                                    ins_buf == curbuf ? NULL : (char_u *)ins_buf->b_sfname,
                                     0, cont_s_ipos) != NOTDONE) {
           found_new_match = OK;
           break;
@@ -5773,21 +5774,18 @@ void insertchar(int c, int flags, int second_indent)
 
   // Check whether this character should end a comment.
   if (did_ai && c == end_comment_pending) {
-    char_u *line;
     char_u lead_end[COM_MAX_LEN];  // end-comment string
-    int i;
 
-    /*
-     * Need to remove existing (middle) comment leader and insert end
-     * comment leader.  First, check what comment leader we can find.
-     */
-    i = get_leader_len(line = get_cursor_line_ptr(), &p, false, true);
+    // Need to remove existing (middle) comment leader and insert end
+    // comment leader.  First, check what comment leader we can find.
+    char_u *line = get_cursor_line_ptr();
+    int i = get_leader_len((char *)line, (char **)&p, false, true);
     if (i > 0 && vim_strchr((char *)p, COM_MIDDLE) != NULL) {  // Just checking
       // Skip middle-comment string
       while (*p && p[-1] != ':') {  // find end of middle flags
         p++;
       }
-      int middle_len = (int)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
+      int middle_len = (int)copy_option_part((char **)&p, (char *)lead_end, COM_MAX_LEN, ",");
       // Don't count trailing white space for middle_len
       while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1])) {
         middle_len--;
@@ -5797,7 +5795,7 @@ void insertchar(int c, int flags, int second_indent)
       while (*p && p[-1] != ':') {  // find end of end flags
         p++;
       }
-      int end_len = (int)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
+      int end_len = (int)copy_option_part((char **)&p, (char *)lead_end, COM_MAX_LEN, ",");
 
       // Skip white space before the cursor
       i = curwin->w_cursor.col;
@@ -5974,12 +5972,12 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
     // Don't break until after the comment leader
     if (do_comments) {
       char_u *line = get_cursor_line_ptr();
-      leader_len = get_leader_len(line, NULL, false, true);
+      leader_len = get_leader_len((char *)line, NULL, false, true);
       if (leader_len == 0 && curbuf->b_p_cin) {
         // Check for a line comment after code.
         int comment_start = check_linecomment(line);
         if (comment_start != MAXCOL) {
-          leader_len = get_leader_len(line + comment_start, NULL, false, true);
+          leader_len = get_leader_len((char *)line + comment_start, NULL, false, true);
           if (leader_len != 0) {
             leader_len += comment_start;
           }
@@ -6374,7 +6372,7 @@ void auto_format(bool trailblank, bool prev_line)
   // With the 'c' flag in 'formatoptions' and 't' missing: only format
   // comments.
   if (has_format_option(FO_WRAP_COMS) && !has_format_option(FO_WRAP)
-      && get_leader_len(old, NULL, false, true) == 0) {
+      && get_leader_len((char *)old, NULL, false, true) == 0) {
     return;
   }
 

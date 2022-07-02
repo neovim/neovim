@@ -5406,9 +5406,9 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
 
   for (;;) {
     if (incl_regmatch.regprog != NULL
-        && vim_regexec(&incl_regmatch, line, (colnr_T)0)) {
+        && vim_regexec(&incl_regmatch, (char *)line, (colnr_T)0)) {
       char_u *p_fname = (curr_fname == (char_u *)curbuf->b_fname)
-                        ? curbuf->b_ffname : curr_fname;
+                        ? (char_u *)curbuf->b_ffname : curr_fname;
 
       if (inc_opt != NULL && strstr((char *)inc_opt, "\\zs") != NULL) {
         // Use text from '\zs' to '\ze' (or end) of 'include'.
@@ -5586,12 +5586,10 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
 search_line:
       define_matched = false;
       if (def_regmatch.regprog != NULL
-          && vim_regexec(&def_regmatch, line, (colnr_T)0)) {
-        /*
-         * Pattern must be first identifier after 'define', so skip
-         * to that position before checking for match of pattern.  Also
-         * don't let it match beyond the end of this identifier.
-         */
+          && vim_regexec(&def_regmatch, (char *)line, (colnr_T)0)) {
+        // Pattern must be first identifier after 'define', so skip
+        // to that position before checking for match of pattern.  Also
+        // don't let it match beyond the end of this identifier.
         p = def_regmatch.endp[0];
         while (*p && !vim_iswordc(*p)) {
           p++;
@@ -5618,7 +5616,7 @@ search_line:
             matched = false;
           }
         } else if (regmatch.regprog != NULL
-                   && vim_regexec(&regmatch, line, (colnr_T)(p - line))) {
+                   && vim_regexec(&regmatch, (char *)line, (colnr_T)(p - line))) {
           matched = true;
           startp = regmatch.startp[0];
           // Check if the line is not a comment line (unless we are
@@ -5627,7 +5625,7 @@ search_line:
           if (skip_comments) {
             if ((*line != '#'
                  || STRNCMP(skipwhite((char *)line + 1), "define", 6) != 0)
-                && get_leader_len(line, NULL, false, true)) {
+                && get_leader_len((char *)line, NULL, false, true)) {
               matched = false;
             }
 

@@ -1840,8 +1840,9 @@ int mb_off_next(const char_u *base, const char_u *p)
 /// Return the offset from "p" to the last byte of the character it points
 /// into.  Can start anywhere in a stream of bytes.
 /// Composing characters are not included.
-int mb_tail_off(const char_u *base, const char_u *p)
+int mb_tail_off(const char *base, const char *p_in)
 {
+  const uint8_t *p = (uint8_t *)p_in;
   int i;
   int j;
 
@@ -1853,7 +1854,7 @@ int mb_tail_off(const char_u *base, const char_u *p)
   for (i = 0; (p[i + 1] & 0xc0) == 0x80; i++) {}
 
   // Check for illegal sequence.
-  for (j = 0; p - j > base; j++) {
+  for (j = 0; p_in - j > base; j++) {
     if ((p[-j] & 0xc0) != 0x80) {
       break;
     }

@@ -1679,7 +1679,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     } else if (fname != NULL && !ends_excmd(*fname)) {
       autocmd_fname = fname;
     } else if (buf != NULL) {
-      autocmd_fname = (char *)buf->b_ffname;
+      autocmd_fname = buf->b_ffname;
     } else {
       autocmd_fname = NULL;
     }
@@ -1711,9 +1711,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
         fname = (char *)buf->b_p_ft;
       } else {
         if (buf->b_sfname != NULL) {
-          sfname = (char *)vim_strsave(buf->b_sfname);
+          sfname = xstrdup(buf->b_sfname);
         }
-        fname = (char *)buf->b_ffname;
+        fname = buf->b_ffname;
       }
     }
     if (fname == NULL) {

@@ -86,7 +86,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   m = xcalloc(1, sizeof(matchitem_T));
   m->id = id;
   m->priority = prio;
-  m->pattern = pat == NULL ? NULL: (char_u *)xstrdup(pat);
+  m->pattern = pat == NULL ? NULL: xstrdup(pat);
   m->hlg_id = hlg_id;
   m->match.regprog = regprog;
   m->match.rmm_ic = false;

@@ -100,10 +100,9 @@ static signgroup_T *sign_group_ref(const char_u *groupname)
 /// removed, then remove the group.
 static void sign_group_unref(char_u *groupname)
 {
-  hashitem_T *hi;
   signgroup_T *group;
 
-  hi = hash_find(&sg_table, groupname);
+  hashitem_T *hi = hash_find(&sg_table, (char *)groupname);
   if (!HASHITEM_EMPTY(hi)) {
     group = HI2SG(hi);
     group->sg_refcount--;
@@ -136,7 +135,7 @@ static int sign_group_get_next_signid(buf_T *buf, const char_u *groupname)
   int found = false;
 
   if (groupname != NULL) {
-    hi = hash_find(&sg_table, groupname);
+    hi = hash_find(&sg_table, (char *)groupname);
     if (HASHITEM_EMPTY(hi)) {
       return id;
     }
@@ -647,7 +646,7 @@ static int buf_findsign_id(buf_T *buf, linenr_T lnum, char_u *groupname)
 }
 
 /// Delete signs in buffer "buf".
-void buf_delete_signs(buf_T *buf, char_u *group)
+void buf_delete_signs(buf_T *buf, char *group)
 {
   sign_entry_T *sign;
   sign_entry_T **lastp;  // pointer to pointer to current sign
@@ -662,7 +661,7 @@ void buf_delete_signs(buf_T *buf, char_u *group)
   lastp = &buf->b_signlist;
   for (sign = buf->b_signlist; sign != NULL; sign = next) {
     next = sign->se_next;
-    if (sign_in_group(sign, group)) {
+    if (sign_in_group(sign, (char_u *)group)) {
       *lastp = next;
       if (next != NULL) {
         next->se_prev = sign->se_prev;
@@ -1086,7 +1085,7 @@ static int sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T at
   if (sign_id == 0) {
     // Delete all the signs in the specified buffer
     redraw_buf_later(buf, NOT_VALID);
-    buf_delete_signs(buf, sign_group);
+    buf_delete_signs(buf, (char *)sign_group);
   } else {
     linenr_T lnum;
 
@@ -1173,7 +1172,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
     if (*arg == NUL) {
       break;
     }
-    p = skiptowhite_esc(arg);
+    p = (char_u *)skiptowhite_esc((char *)arg);
     if (STRNCMP(arg, "icon=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(icon);
@@ -1273,7 +1272,7 @@ static void sign_unplace_cmd(buf_T *buf, linenr_T lnum, char_u *sign_name, int i
       // :sign unplace * group=*
       FOR_ALL_BUFFERS(cbuf) {
         if (cbuf->b_signlist != NULL) {
-          buf_delete_signs(cbuf, group);
+          buf_delete_signs(cbuf, (char *)group);
         }
       }
     }
@@ -1341,7 +1340,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
   // first arg could be placed sign id
   arg1 = arg;
   if (ascii_isdigit(*arg)) {
-    *signid = getdigits_int(&arg, true, 0);
+    *signid = getdigits_int((char **)&arg, true, 0);
     if (!ascii_iswhite(*arg) && *arg != NUL) {
       *signid = -1;
       arg = arg1;
@@ -1388,12 +1387,12 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
     } else if (STRNCMP(arg, "file=", 5) == 0) {
       arg += 5;
       filename = arg;
-      *buf = buflist_findname_exp(arg);
+      *buf = buflist_findname_exp((char *)arg);
       break;
     } else if (STRNCMP(arg, "buffer=", 7) == 0) {
       arg += 7;
       filename = arg;
-      *buf = buflist_findnr(getdigits_int(&arg, true, 0));
+      *buf = buflist_findnr(getdigits_int((char **)&arg, true, 0));
       if (*skipwhite((char *)arg) != NUL) {
         emsg(_(e_trailing));
       }

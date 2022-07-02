@@ -802,7 +802,7 @@ static void init_locale(void)
 
   char localepath[MAXPATHL] = { 0 };
   snprintf(localepath, sizeof(localepath), "%s", get_vim_var_str(VV_PROGPATH));
-  char *tail = (char *)path_tail_with_sep((char_u *)localepath);
+  char *tail = path_tail_with_sep(localepath);
   *tail = NUL;
   tail = path_tail(localepath);
   xstrlcpy(tail, "share/locale",
@@ -1354,11 +1354,11 @@ scripterror:
 
       // Add the file to the global argument list.
       ga_grow(&global_alist.al_ga, 1);
-      char_u *p = vim_strsave((char_u *)argv[0]);
+      char *p = xstrdup(argv[0]);
 
-      if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
+      if (parmp->diff_mode && os_isdir((char_u *)p) && GARGCOUNT > 0
           && !os_isdir((char_u *)alist_name(&GARGLIST[0]))) {
-        char_u *r = (char_u *)concat_fnames((char *)p, path_tail(alist_name(&GARGLIST[0])), true);
+        char *r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), true);
         xfree(p);
         p = r;
       }
@@ -1371,7 +1371,7 @@ scripterror:
       int alist_fnum_flag = edit_stdin(had_stdin_file, parmp)
                             ? 1   // add buffer nr after exp.
                             : 2;  // add buffer number now and use curbuf
-      alist_add(&global_alist, (char *)p, alist_fnum_flag);
+      alist_add(&global_alist, p, alist_fnum_flag);
     }
 
     // If there are no more letters after the current "-", go to next argument.

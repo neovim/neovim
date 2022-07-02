@@ -4845,7 +4845,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
   clen = len;
 
   i = first_match;
-  while ((long)(clen + status_match_len(xp, L_MATCH(i)) + 2) < Columns) {
+  while (clen + status_match_len(xp, L_MATCH(i)) + 2 < Columns) {
     if (i == match) {
       selstart = buf + len;
       selstart_col = clen;
@@ -6412,7 +6412,7 @@ void get_trans_bufname(buf_T *buf)
   } else {
     home_replace(buf, buf->b_fname, (char *)NameBuff, MAXPATHL, true);
   }
-  trans_characters(NameBuff, MAXPATHL);
+  trans_characters((char *)NameBuff, MAXPATHL);
 }
 
 /*
@@ -6613,7 +6613,7 @@ static void win_redr_ruler(win_T *wp, bool always)
                  (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? (int64_t)0L
                                                           : (int64_t)wp->w_cursor.lnum);
     size_t len = STRLEN(buffer);
-    col_print((char_u *)buffer + len, RULER_BUF_LEN - len,
+    col_print(buffer + len, RULER_BUF_LEN - len,
               empty_line ? 0 : (int)wp->w_cursor.col + 1,
               (int)virtcol + 1);
 

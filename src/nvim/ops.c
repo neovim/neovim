@@ -1347,7 +1347,7 @@ bool get_spec_reg(int regname, char_u **argp, bool *allocated, bool errmsg)
     return true;
 
   case '#':                       // alternate file name
-    *argp = getaltfname(errmsg);  // may give emsg if not set
+    *argp = (char_u *)getaltfname(errmsg);  // may give emsg if not set
     return true;
 
   case '=':                     // result of expression
@@ -1810,10 +1810,8 @@ setmarks:
 /// Used for deletion.
 static void mb_adjust_opend(oparg_T *oap)
 {
-  char_u *p;
-
   if (oap->inclusive) {
-    p = ml_get(oap->end.lnum);
+    char *p = (char *)ml_get(oap->end.lnum);
     oap->end.col += mb_tail_off(p, p + oap->end.col);
   }
 }
@@ -3886,12 +3884,12 @@ void ex_display(exarg_T *eap)
 
   // display alternate file name
   if ((arg == NULL || vim_strchr((char *)arg, '%') != NULL) && !got_int) {
-    char_u *fname;
+    char *fname;
     linenr_T dummy;
 
-    if (buflist_name_nr(0, &fname, &dummy) != FAIL && !message_filtered(fname)) {
+    if (buflist_name_nr(0, &fname, &dummy) != FAIL && !message_filtered((char_u *)fname)) {
       msg_puts("\n  c  \"#   ");
-      dis_msg(fname, false);
+      dis_msg((char_u *)fname, false);
     }
   }
 
@@ -3950,7 +3948,7 @@ char_u *skip_comment(char_u *line, bool process, bool include_space, bool *is_co
 {
   char_u *comment_flags = NULL;
   int lead_len;
-  int leader_offset = get_last_leader_offset(line, &comment_flags);
+  int leader_offset = get_last_leader_offset((char *)line, (char **)&comment_flags);
 
   *is_comment = false;
   if (leader_offset != -1) {
@@ -3972,7 +3970,7 @@ char_u *skip_comment(char_u *line, bool process, bool include_space, bool *is_co
     return line;
   }
 
-  lead_len = get_leader_len(line, &comment_flags, false, include_space);
+  lead_len = get_leader_len((char *)line, (char **)&comment_flags, false, include_space);
 
   if (lead_len == 0) {
     return line;
@@ -4654,7 +4652,7 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
 
   ptr = ml_get(lnum);
   if (do_comments) {
-    *leader_len = get_leader_len(ptr, leader_flags, false, true);
+    *leader_len = get_leader_len((char *)ptr, (char **)leader_flags, false, true);
   } else {
     *leader_len = 0;
   }
@@ -5597,7 +5595,7 @@ void write_reg_contents_ex(int name, const char_u *str, ssize_t len, bool must_a
         semsg(_(e_nobufnr), (int64_t)num);
       }
     } else {
-      buf = buflist_findnr(buflist_findpat(str, str + STRLEN(str),
+      buf = buflist_findnr(buflist_findpat((char *)str, (char *)str + STRLEN(str),
                                            true, false, false));
     }
     if (buf == NULL) {
@@ -5993,9 +5991,9 @@ void cursor_pos_info(dict_T *dict)
       } else {
         p = get_cursor_line_ptr();
         validate_virtcol();
-        col_print(buf1, sizeof(buf1), (int)curwin->w_cursor.col + 1,
+        col_print((char *)buf1, sizeof(buf1), (int)curwin->w_cursor.col + 1,
                   (int)curwin->w_virtcol + 1);
-        col_print(buf2, sizeof(buf2), (int)STRLEN(p), linetabsize(p));
+        col_print((char *)buf2, sizeof(buf2), (int)STRLEN(p), linetabsize(p));
 
         if (char_count_cursor == byte_count_cursor
             && char_count == byte_count) {
@@ -6961,7 +6959,7 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
       return false;
     }
     const char *p = regtype.data + 1;
-    reg->y_width = getdigits_int((char_u **)&p, false, 1) - 1;
+    reg->y_width = getdigits_int((char **)&p, false, 1) - 1;
     if (regtype.size > (size_t)(p - regtype.data)) {
       return false;
     }

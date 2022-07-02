@@ -167,7 +167,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
   char_u **new_matches;
   int use_tagstack;
   int skip_msg = false;
-  char_u *buf_ffname = curbuf->b_ffname;  // name for priority computation
+  char_u *buf_ffname = (char_u *)curbuf->b_ffname;  // name for priority computation
   int use_tfu = 1;
 
   // remember the matches for the last used tag
@@ -423,7 +423,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
     buf_T *buf = buflist_findnr(cur_fnum);
 
     if (buf != NULL) {
-      buf_ffname = buf->b_ffname;
+      buf_ffname = (char_u *)buf->b_ffname;
     }
   }
 
@@ -2031,14 +2031,13 @@ parse_line:
 
           cc = *tagp.tagname_end;
           *tagp.tagname_end = NUL;
-          match = vim_regexec(&orgpat.regmatch, tagp.tagname, (colnr_T)0);
+          match = vim_regexec(&orgpat.regmatch, (char *)tagp.tagname, (colnr_T)0);
           if (match) {
             matchoff = (int)(orgpat.regmatch.startp[0] - tagp.tagname);
             if (orgpat.regmatch.rm_ic) {
-              orgpat.regmatch.rm_ic = FALSE;
-              match_no_ic = vim_regexec(&orgpat.regmatch, tagp.tagname,
-                                        (colnr_T)0);
-              orgpat.regmatch.rm_ic = TRUE;
+              orgpat.regmatch.rm_ic = false;
+              match_no_ic = vim_regexec(&orgpat.regmatch, (char *)tagp.tagname, (colnr_T)0);
+              orgpat.regmatch.rm_ic = true;
             }
           }
           *tagp.tagname_end = (char_u)cc;
@@ -2423,7 +2422,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
        * Copy next file name into buf.
        */
       buf[0] = NUL;
-      (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
+      (void)copy_option_part((char **)&tnp->tn_np, (char *)buf, MAXPATHL - 1, " ,");
 
       r_ptr = vim_findfile_stopdir(buf);
       // move the filename one char forward and truncate the
@@ -2436,7 +2435,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
                                              r_ptr, 100,
                                              FALSE,                   // don't free visited list
                                              FINDFILE_FILE,           // we search for a file
-                                             tnp->tn_search_ctx, TRUE, curbuf->b_ffname);
+                                             tnp->tn_search_ctx, true, (char_u *)curbuf->b_ffname);
       if (tnp->tn_search_ctx != NULL) {
         tnp->tn_did_filefind_init = TRUE;
       }
@@ -2749,7 +2748,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
   // If it was a CTRL-W CTRL-] command split window now.  For ":tab tag"
   // open a new tab page.
   if (postponed_split && (swb_flags & (SWB_USEOPEN | SWB_USETAB))) {
-    buf_T *const existing_buf = buflist_findname_exp(fname);
+    buf_T *const existing_buf = buflist_findname_exp((char *)fname);
 
     if (existing_buf != NULL) {
       const win_T *wp = NULL;
@@ -3112,11 +3111,11 @@ int expand_tags(int tagnames, char_u *pat, int *num_file, char_u ***file)
   if (pat[0] == '/') {
     ret = find_tags(pat + 1, num_file, file,
                     TAG_REGEXP | extra_flag | TAG_VERBOSE | TAG_NO_TAGFUNC,
-                    TAG_MANY, curbuf->b_ffname);
+                    TAG_MANY, (char_u *)curbuf->b_ffname);
   } else {
     ret = find_tags(pat, num_file, file,
                     TAG_REGEXP | extra_flag | TAG_VERBOSE | TAG_NO_TAGFUNC | TAG_NOIC,
-                    TAG_MANY, curbuf->b_ffname);
+                    TAG_MANY, (char_u *)curbuf->b_ffname);
   }
   if (ret == OK && !tagnames) {
     // Reorganize the tags for display and matching as strings of:

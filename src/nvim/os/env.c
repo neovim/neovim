@@ -884,7 +884,7 @@ void vim_get_prefix_from_exepath(char *exe_name)
   // TODO(bfredl): param could have been written as "char exe_name[MAXPATHL]"
   // but c_grammar.lua does not recognize it (yet).
   xstrlcpy(exe_name, get_vim_var_str(VV_PROGPATH), MAXPATHL * sizeof(*exe_name));
-  char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
+  char *path_end = path_tail_with_sep(exe_name);
   *path_end = '\0';  // remove the trailing "nvim.exe"
   path_end = path_tail(exe_name);
   *path_end = '\0';  // remove the trailing "bin/"
@@ -1143,15 +1143,16 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
 /// Like home_replace, store the replaced string in allocated memory.
 /// @param buf When not NULL, check for help files
 /// @param src Input file name
-char_u *home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
+char *home_replace_save(buf_T *buf, char *src)
+  FUNC_ATTR_NONNULL_RET
 {
   size_t len = 3;             // space for "~/" and trailing NUL
   if (src != NULL) {          // just in case
     len += STRLEN(src);
   }
   char *dst = xmalloc(len);
-  home_replace(buf, (char *)src, dst, len, true);
-  return (char_u *)dst;
+  home_replace(buf, src, dst, len, true);
+  return dst;
 }
 
 /// Function given to ExpandGeneric() to obtain an environment variable name.
@@ -1189,7 +1190,7 @@ bool os_setenv_append_path(const char *fname)
     internal_error("os_setenv_append_path()");
     return false;
   }
-  const char *tail = (char *)path_tail_with_sep((char_u *)fname);
+  const char *tail = path_tail_with_sep((char *)fname);
   size_t dirlen = (size_t)(tail - fname);
   assert(tail >= fname && dirlen + 1 < sizeof(os_buf));
   xstrlcpy(os_buf, fname, dirlen + 1);

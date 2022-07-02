@@ -1554,9 +1554,9 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
     copy_loclist_stack(oldp, newp);
   }
   newp->w_localdir = (oldp->w_localdir == NULL)
-                     ? NULL : vim_strsave(oldp->w_localdir);
+                     ? NULL : xstrdup(oldp->w_localdir);
   newp->w_prevdir = (oldp->w_prevdir == NULL)
-                    ? NULL : vim_strsave(oldp->w_prevdir);
+                    ? NULL : xstrdup(oldp->w_prevdir);
 
   // copy tagstack and folds
   for (i = 0; i < oldp->w_tagstacklen; i++) {
@@ -4076,7 +4076,7 @@ int win_new_tabpage(int after, char_u *filename)
   }
 
   newtp->tp_localdir = old_curtab->tp_localdir
-    ? vim_strsave(old_curtab->tp_localdir) : NULL;
+    ? xstrdup(old_curtab->tp_localdir) : NULL;
 
   curtab = newtp;
 
@@ -4899,8 +4899,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
 void fix_current_dir(void)
 {
   // New directory is either the local directory of the window, tab or NULL.
-  char *new_dir = (char *)(curwin->w_localdir
-                           ? curwin->w_localdir : curtab->tp_localdir);
+  char *new_dir = curwin->w_localdir ? curwin->w_localdir : curtab->tp_localdir;
   char cwd[MAXPATHL];
   if (os_dirname((char_u *)cwd, MAXPATHL) != OK) {
     cwd[0] = NUL;
@@ -6484,7 +6483,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
 
       *file_lnum = getdigits_long(&p, false, 0);
     }
-    return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
+    return find_file_name_in_path(ptr, len, options, count, (char_u *)curbuf->b_ffname);
   }
   return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
 }
@@ -6505,7 +6504,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
 char_u *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 {
   return file_name_in_line(get_cursor_line_ptr(),
-                           curwin->w_cursor.col, options, count, curbuf->b_ffname,
+                           curwin->w_cursor.col, options, count, (char_u *)curbuf->b_ffname,
                            file_lnum);
 }
 

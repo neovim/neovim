@@ -935,7 +935,7 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
   const char *const real_end = e;
   const char past_head_save = *past_head;
   while (!os_isdir((char_u *)curdir)) {
-    e = (char *)path_tail_with_sep((char_u *)curdir);
+    e = path_tail_with_sep(curdir);
     if (e <= past_head) {
       *past_head = NUL;
       break;

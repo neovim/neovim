@@ -342,7 +342,7 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
         break;
       }
 
-      table[idx].number = getdigits_int(&p, false, 0);
+      table[idx].number = getdigits_int((char **)&p, false, 0);
     }
 
     table[idx].string = p;
@@ -659,7 +659,8 @@ void ex_hardcopy(exarg_T *eap)
    */
   if (mch_print_init(&settings,
                      curbuf->b_fname == NULL ? (char_u *)buf_spname(curbuf) : curbuf->b_sfname ==
-                     NULL ? (char_u *)curbuf->b_fname : curbuf->b_sfname, eap->forceit) == FAIL) {
+                     NULL ? (char_u *)curbuf->b_fname : (char_u *)curbuf->b_sfname,
+                     eap->forceit) == FAIL) {
     return;
   }
 
