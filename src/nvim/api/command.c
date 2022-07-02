@@ -54,6 +54,7 @@
 ///                 - force: (boolean) Whether filter is inverted or not.
 ///             - silent: (boolean) |:silent|.
 ///             - emsg_silent: (boolean) |:silent!|.
+///             - unsilent: (boolean) |:unsilent|.
 ///             - sandbox: (boolean) |:sandbox|.
 ///             - noautocmd: (boolean) |:noautocmd|.
 ///             - browse: (boolean) |:browse|.
@@ -232,6 +233,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
 
   PUT(mods, "silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SILENT));
   PUT(mods, "emsg_silent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_ERRSILENT));
+  PUT(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
   PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
   PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
   PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab));
@@ -598,6 +600,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
     OBJ_TO_CMOD_FLAG(CMOD_SILENT, mods.silent, false, "'mods.silent'");
     OBJ_TO_CMOD_FLAG(CMOD_ERRSILENT, mods.emsg_silent, false, "'mods.emsg_silent'");
+    OBJ_TO_CMOD_FLAG(CMOD_UNSILENT, mods.silent, false, "'mods.unsilent'");
     OBJ_TO_CMOD_FLAG(CMOD_SANDBOX, mods.sandbox, false, "'mods.sandbox'");
     OBJ_TO_CMOD_FLAG(CMOD_NOAUTOCMD, mods.noautocmd, false, "'mods.noautocmd'");
     OBJ_TO_CMOD_FLAG(CMOD_BROWSE, mods.browse, false, "'mods.browse'");
@@ -720,6 +723,10 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
     kv_concat(cmdline, "silent! ");
   } else if (cmdinfo->cmdmod.cmod_flags & CMOD_SILENT) {
     kv_concat(cmdline, "silent ");
+  }
+
+  if (cmdinfo->cmdmod.cmod_flags & CMOD_UNSILENT) {
+    kv_concat(cmdline, "unsilent ");
   }
 
   switch (cmdinfo->cmdmod.cmod_split & (WSP_ABOVE | WSP_BELOW | WSP_TOP | WSP_BOT)) {

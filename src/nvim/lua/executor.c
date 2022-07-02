@@ -1946,6 +1946,8 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   lua_setfield(lstate, -2, "silent");
   lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_ERRSILENT);
   lua_setfield(lstate, -2, "emsg_silent");
+  lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_UNSILENT);
+  lua_setfield(lstate, -2, "unsilent");
   lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SANDBOX);
   lua_setfield(lstate, -2, "sandbox");
   lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_NOAUTOCMD);

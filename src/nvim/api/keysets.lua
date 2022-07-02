@@ -181,6 +181,7 @@ return {
   cmd_mods = {
     "silent";
     "emsg_silent";
+    "unsilent";
     "filter";
     "sandbox";
     "noautocmd";

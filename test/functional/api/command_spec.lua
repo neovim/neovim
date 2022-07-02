@@ -136,6 +136,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
+        unsilent = false,
         verbose = -1,
         vertical = false,
       },
@@ -170,6 +171,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
+        unsilent = false,
         verbose = -1,
         vertical = false,
       },
@@ -204,6 +206,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
+        unsilent = false,
         verbose = -1,
         vertical = false,
       },
@@ -221,10 +224,10 @@ describe('nvim_create_user_command', function()
       bang = true,
       line1 = 10,
       line2 = 10,
-      mods = "botright",
+      mods = "confirm unsilent botright",
       smods = {
         browse = false,
-        confirm = false,
+        confirm = true,
         emsg_silent = false,
         hide = false,
         keepalt = false,
@@ -238,6 +241,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "botright",
         tab = 0,
+        unsilent = true,
         verbose = -1,
         vertical = false,
       },
@@ -245,7 +249,7 @@ describe('nvim_create_user_command', function()
       count = 10,
       reg = "",
     }, exec_lua [=[
-      vim.api.nvim_command('botright 10CommandWithLuaCallback! h\tey ')
+      vim.api.nvim_command('unsilent botright confirm 10CommandWithLuaCallback! h\tey ')
       return result
     ]=])
 
@@ -272,6 +276,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
+        unsilent = false,
         verbose = -1,
         vertical = false,
       },
@@ -306,6 +311,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
+        unsilent = false,
         verbose = -1,
         vertical = false,
       },
@@ -352,6 +358,7 @@ describe('nvim_create_user_command', function()
         silent = false,
         split = "",
         tab = 0,
+        unsilent = false,
         verbose = -1,
         vertical = false,
       },
