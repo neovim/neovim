@@ -6293,7 +6293,7 @@ static int calc_hist_idx(int histype, int num)
         wrapped = TRUE;
       }
     }
-    if (hist[i].hisnum == num && hist[i].hisstr != NULL) {
+    if (i >= 0 && hist[i].hisnum == num && hist[i].hisstr != NULL) {
       return i;
     }
   } else if (-num <= hislen) {

@@ -71,6 +71,12 @@ func Test_complete_wildmenu()
     cunmap <C-K>
   endif
 
+  " Completion using a relative path
+  cd Xdir1/Xdir2
+  call feedkeys(":e ../\<Tab>\<Right>\<Down>\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"e Xtestfile3 Xtestfile4', @:)
+  cd -
+
   " cleanup
   %bwipe
   call delete('Xdir1/Xdir2/Xtestfile4')
@@ -581,6 +587,10 @@ func Test_cmdline_paste()
     " ignore error E32
   endtry
   call assert_equal("Xtestfile", bufname("%"))
+
+  " Use an invalid expression for <C-\>e
+  call assert_beeps('call feedkeys(":\<C-\>einvalid\<CR>", "tx")')
+
   bwipe!
 endfunc
 
@@ -818,7 +828,30 @@ func Test_cmdline_search_range()
   1,\&s/b/B/
   call assert_equal('B', getline(2))
 
+  let @/ = 'apple'
+  call assert_fails('\/print', 'E486:')
+
   bwipe!
+endfunc
+
+" Test for the tick mark (') in an excmd range
+func Test_tick_mark_in_range()
+  " If only the tick is passed as a range and no command is specified, there
+  " should not be an error
+  call feedkeys(":'\<CR>", 'xt')
+  call assert_equal("'", getreg(':'))
+  call assert_fails("',print", 'E78:')
+endfunc
+
+" Test for using a line number followed by a search pattern as range
+func Test_lnum_and_pattern_as_range()
+  new
+  call setline(1, ['foo 1', 'foo 2', 'foo 3'])
+  let @" = ''
+  2/foo/yank
+  call assert_equal("foo 3\n", @")
+  call assert_equal(1, line('.'))
+  close!
 endfunc
 
 " Tests for getcmdline(), getcmdpos() and getcmdtype()
@@ -853,6 +886,8 @@ func Test_getcmdtype()
   cnoremap <expr> <F6> Check_cmdline('=')
   call feedkeys("a\<C-R>=MyCmd a\<F6>\<Esc>\<Esc>", "xt")
   cunmap <F6>
+
+  call assert_equal('', getcmdline())
 endfunc
 
 func Test_getcmdwintype()
@@ -1105,6 +1140,30 @@ func Test_cmdwin_autocmd()
   augroup! CmdWin
 endfunc
 
+func Test_cmdwin_jump_to_win()
+  call assert_fails('call feedkeys("q:\<C-W>\<C-W>\<CR>", "xt")', 'E11:')
+  new
+  set modified
+  call assert_fails('call feedkeys("q/:qall\<CR>", "xt")', 'E162:')
+  close!
+  call feedkeys("q/:close\<CR>", "xt")
+  call assert_equal(1, winnr('$'))
+  call feedkeys("q/:exit\<CR>", "xt")
+  call assert_equal(1, winnr('$'))
+
+  " opening command window twice should fail
+  call assert_beeps('call feedkeys("q:q:\<CR>\<CR>", "xt")')
+  call assert_equal(1, winnr('$'))
+endfunc
+
+" Test for backtick expression in the command line
+func Test_cmd_backtick()
+  %argd
+  argadd `=['a', 'b', 'c']`
+  call assert_equal(['a', 'b', 'c'], argv())
+  %argd
+endfunc
+
 func Test_cmdlineclear_tabenter()
   " See test/functional/legacy/cmdline_spec.lua
   CheckScreendump
@@ -1150,6 +1209,21 @@ func Test_cmd_bang_E135()
     au!
   augroup END
   %bwipe!
+endfunc
+
+" Test for using ~ for home directory in cmdline completion matches
+func Test_cmdline_expand_home()
+  call mkdir('Xdir')
+  call writefile([], 'Xdir/Xfile1')
+  call writefile([], 'Xdir/Xfile2')
+  cd Xdir
+  let save_HOME = $HOME
+  let $HOME = getcwd()
+  call feedkeys(":e ~/\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e ~/Xfile1 ~/Xfile2', @:)
+  let $HOME = save_HOME
+  cd ..
+  call delete('Xdir', 'rf')
 endfunc
 
 " test that ";" works to find a match at the start of the first line
