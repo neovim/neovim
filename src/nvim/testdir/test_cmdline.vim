@@ -71,6 +71,12 @@ func Test_complete_wildmenu()
     cunmap <C-K>
   endif
 
+  " Completion using a relative path
+  cd Xdir1/Xdir2
+  call feedkeys(":e ../\<Tab>\<Right>\<Down>\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"e Xtestfile3 Xtestfile4', @:)
+  cd -
+
   " cleanup
   %bwipe
   call delete('Xdir1/Xdir2/Xtestfile4')
@@ -581,6 +587,10 @@ func Test_cmdline_paste()
     " ignore error E32
   endtry
   call assert_equal("Xtestfile", bufname("%"))
+
+  " Use an invalid expression for <C-\>e
+  call assert_beeps('call feedkeys(":\<C-\>einvalid\<CR>", "tx")')
+
   bwipe!
 endfunc
 
@@ -876,6 +886,8 @@ func Test_getcmdtype()
   cnoremap <expr> <F6> Check_cmdline('=')
   call feedkeys("a\<C-R>=MyCmd a\<F6>\<Esc>\<Esc>", "xt")
   cunmap <F6>
+
+  call assert_equal('', getcmdline())
 endfunc
 
 func Test_getcmdwintype()
@@ -1138,6 +1150,10 @@ func Test_cmdwin_jump_to_win()
   call assert_equal(1, winnr('$'))
   call feedkeys("q/:exit\<CR>", "xt")
   call assert_equal(1, winnr('$'))
+
+  " opening command window twice should fail
+  call assert_beeps('call feedkeys("q:q:\<CR>\<CR>", "xt")')
+  call assert_equal(1, winnr('$'))
 endfunc
 
 " Test for backtick expression in the command line
@@ -1193,6 +1209,21 @@ func Test_cmd_bang_E135()
     au!
   augroup END
   %bwipe!
+endfunc
+
+" Test for using ~ for home directory in cmdline completion matches
+func Test_cmdline_expand_home()
+  call mkdir('Xdir')
+  call writefile([], 'Xdir/Xfile1')
+  call writefile([], 'Xdir/Xfile2')
+  cd Xdir
+  let save_HOME = $HOME
+  let $HOME = getcwd()
+  call feedkeys(":e ~/\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e ~/Xfile1 ~/Xfile2', @:)
+  let $HOME = save_HOME
+  cd ..
+  call delete('Xdir', 'rf')
 endfunc
 
 " test that ";" works to find a match at the start of the first line

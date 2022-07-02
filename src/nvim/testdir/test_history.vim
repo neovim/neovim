@@ -86,6 +86,8 @@ function Test_History()
   call assert_fails('call histget([])', 'E730:')
   call assert_equal(-1, histnr('abc'))
   call assert_fails('call histnr([])', 'E730:')
+  call assert_fails('history xyz', 'E488:')
+  call assert_fails('history ,abc', 'E488:')
 endfunction
 
 function Test_Search_history_window()
@@ -109,3 +111,52 @@ function Test_history_completion()
   call feedkeys(":history \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"history / : = > ? @ all cmd debug expr input search', @:)
 endfunc
+
+" Test for increasing the 'history' option value
+func Test_history_size()
+  let save_histsz = &history
+  call histdel(':')
+  set history=5
+  for i in range(1, 5)
+    call histadd(':', 'cmd' .. i)
+  endfor
+  call assert_equal(5, histnr(':'))
+  call assert_equal('cmd5', histget(':', -1))
+
+  set history=10
+  for i in range(6, 10)
+    call histadd(':', 'cmd' .. i)
+  endfor
+  call assert_equal(10, histnr(':'))
+  call assert_equal('cmd1', histget(':', 1))
+  call assert_equal('cmd10', histget(':', -1))
+
+  set history=5
+  call histadd(':', 'abc')
+  call assert_equal('', histget(':', 6))
+  call assert_equal('', histget(':', 12))
+  call assert_equal('cmd7', histget(':', 7))
+  call assert_equal('abc', histget(':', -1))
+
+  let &history=save_histsz
+endfunc
+
+" Test for recalling old search patterns in /
+func Test_history_search()
+  call histdel('/')
+  let g:pat = []
+  func SavePat()
+    call add(g:pat, getcmdline())
+    return ''
+  endfunc
+  cnoremap <F2> <C-\>eSavePat()<CR>
+  call histadd('/', 'pat1')
+  call histadd('/', 'pat2')
+  let @/ = ''
+  call feedkeys("/\<Up>\<F2>\<Up>\<F2>\<Down>\<Down>\<F2>\<Esc>", 'xt')
+  call assert_equal(['pat2', 'pat1', ''], g:pat)
+  cunmap <F2>
+  delfunc SavePat
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

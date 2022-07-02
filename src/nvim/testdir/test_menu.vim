@@ -89,3 +89,39 @@ func Test_menu_commands()
 
   unlet g:did_menu
 endfun
+
+" Test for menu item completion in command line
+func Test_menu_expand()
+  " Create the menu itmes for test
+  for i in range(1, 4)
+    let m = 'menu Xmenu.A' .. i .. '.A' .. i
+    for j in range(1, 4)
+      exe m .. 'B' .. j .. ' :echo "A' .. i .. 'B' .. j .. '"' .. "<CR>"
+    endfor
+  endfor
+  set wildmenu
+
+  " Test for <CR> selecting a submenu
+  call feedkeys(":emenu Xmenu.A\<Tab>\<CR>\<Right>x\<BS>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"emenu Xmenu.A1.A1B2', @:)
+
+  " Test for <Down> selecting a submenu
+  call feedkeys(":emenu Xmenu.A\<Tab>\<Right>\<Right>\<Down>" ..
+        \ "\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"emenu Xmenu.A3.A3B1 A3B2 A3B3 A3B4', @:)
+
+  " Test for <Up> to go up a submenu
+  call feedkeys(":emenu Xmenu.A\<Tab>\<Down>\<Up>\<Right>\<Right>" ..
+        \ "\<Left>\<Down>\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"emenu Xmenu.A2.A2B1 A2B2 A2B3 A2B4', @:)
+
+  " Test for <Up> to go up a menu
+  call feedkeys(":emenu Xmenu.A\<Tab>\<Down>\<Up>\<Up>\<Up>" ..
+        \ "\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"emenu Buffers. Xmenu.', @:)
+
+  set wildmenu&
+  unmenu Xmenu
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
