@@ -229,7 +229,9 @@ local function cvs_diff(path, contents)
       then
         -- Only look at the first 100 lines
         for line_nr = 1, 100 do
-          if
+          if not contents[line_nr] then
+            break
+          elseif
             findany(contents[line_nr], {
               '^LC_IDENTIFICATION$',
               '^LC_CTYPE$',
