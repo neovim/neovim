@@ -2741,6 +2741,8 @@ int win_close(win_T *win, bool free_buf, bool force)
      * to be the last one left, return now.
      */
     if (wp->w_buffer != curbuf) {
+      reset_VIsual_and_resel();  // stop Visual mode
+
       other_buffer = true;
       win->w_closing = true;
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
