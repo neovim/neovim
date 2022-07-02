@@ -59,7 +59,7 @@ func Test_matchfuzzy()
 
   %bw!
   eval ['somebuf', 'anotherone', 'needle', 'yetanotherone']->map({_, v -> bufadd(v) + bufload(v)})
-  let l = getbufinfo()->map({_, v -> v.name})->matchfuzzy('ndl')
+  let l = getbufinfo()->map({_, v -> fnamemodify(v.name, ':t')})->matchfuzzy('ndl')
   call assert_equal(1, len(l))
   call assert_match('needle', l[0])
 
