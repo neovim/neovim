@@ -27,6 +27,7 @@ void loop_init(Loop *loop, void *data)
   uv_signal_init(&loop->uv, &loop->children_watcher);
   uv_timer_init(&loop->uv, &loop->children_kill_timer);
   uv_timer_init(&loop->uv, &loop->poll_timer);
+  uv_timer_init(&loop->uv, &loop->exit_delay_timer);
   loop->poll_timer.data = xmalloc(sizeof(bool));  // "timeout expired" flag
 }
 
@@ -136,6 +137,7 @@ bool loop_close(Loop *loop, bool wait)
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
   uv_close((uv_handle_t *)&loop->poll_timer, timer_close_cb);
+  uv_close((uv_handle_t *)&loop->exit_delay_timer, NULL);
   uv_close((uv_handle_t *)&loop->async, NULL);
   uint64_t start = wait ? os_hrtime() : 0;
   bool didstop = false;

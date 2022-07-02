@@ -532,8 +532,19 @@ void rpc_close(Channel *channel)
   }
 }
 
+static void exit_delay_cb(uv_timer_t *handle)
+{
+  uv_timer_stop(&main_loop.exit_delay_timer);
+  multiqueue_put(main_loop.fast_events, exit_event, 0);
+}
+
 static void exit_event(void **argv)
 {
+  if (exit_need_delay) {
+    uv_timer_start(&main_loop.exit_delay_timer, exit_delay_cb, 0, 0);
+    return;
+  }
+
   if (!exiting) {
     os_exit(0);
   }

@@ -386,11 +386,13 @@ static void process_close_handles(void **argv)
 {
   Process *proc = argv[0];
 
+  exit_need_delay++;
   flush_stream(proc, &proc->out);
   flush_stream(proc, &proc->err);
 
   process_close_streams(proc);
   process_close(proc);
+  exit_need_delay--;
 }
 
 static void on_process_exit(Process *proc)
