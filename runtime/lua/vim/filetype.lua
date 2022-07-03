@@ -2223,8 +2223,7 @@ end
 ---
 --- See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
 ---
---- Note that Lua filetype detection is only enabled when |g:do_filetype_lua| is
---- set to 1.
+--- Note that Lua filetype detection is disabled when |g:do_legacy_filetype| is set.
 ---
 --- Example:
 --- <pre>

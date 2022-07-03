@@ -1,11 +1,8 @@
-if vim.g.did_load_filetypes and vim.g.did_load_filetypes ~= 0 then
+-- Skip if legacy filetype is enabled or filetype detection is disabled
+if vim.g.do_legacy_filetype or vim.g.did_load_filetypes then
   return
 end
-
--- For now, make this opt-in with a global variable
-if vim.g.do_filetype_lua ~= 1 then
-  return
-end
+vim.g.did_load_filetypes = 1
 
 vim.api.nvim_create_augroup('filetypedetect', { clear = false })
 
@@ -38,21 +35,16 @@ if not vim.g.did_load_ftdetect then
   ]])
 end
 
--- Set a marker so that the ftdetect scripts are not sourced a second time by filetype.vim
-vim.g.did_load_ftdetect = 1
+-- Set up the autocmd for user scripts.vim
+vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+  group = 'filetypedetect',
+  command = "if !did_filetype() && expand('<amatch>') !~ g:ft_ignore_pat | runtime! scripts.vim | endif",
+})
 
--- If filetype.vim is disabled, set up the autocmd to use scripts.vim
-if vim.g.did_load_filetypes then
-  vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
-    group = 'filetypedetect',
-    command = "if !did_filetype() && expand('<amatch>') !~ g:ft_ignore_pat | runtime! scripts.vim | endif",
-  })
-
-  vim.api.nvim_create_autocmd('StdinReadPost', {
-    group = 'filetypedetect',
-    command = 'if !did_filetype() | runtime! scripts.vim | endif',
-  })
-end
+vim.api.nvim_create_autocmd('StdinReadPost', {
+  group = 'filetypedetect',
+  command = 'if !did_filetype() | runtime! scripts.vim | endif',
+})
 
 if not vim.g.ft_ignore_pat then
   vim.g.ft_ignore_pat = '\\.\\(Z\\|gz\\|bz2\\|zip\\|tgz\\)$'

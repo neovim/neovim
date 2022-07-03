@@ -177,7 +177,9 @@ This means that the contents of compressed files are not inspected.
 If a file type that you want to use is not detected yet, there are a few ways
 to add it.  In any way, it's better not to modify the $VIMRUNTIME/filetype.lua
 or $VIMRUNTIME/filetype.vim files.  They will be overwritten when installing a
-new version of Nvim.
+new version of Nvim. The following explains the legacy Vim mechanism (enabled
+if |do_legacy_filetype| is set). For Nvim's default mechanism, see
+|vim.filetype.add()|.
 
 A. If you want to overrule all default file type checks.
    This works by writing one file for each filetype.  The disadvantage is that
@@ -236,39 +238,8 @@ C. If your file type can be detected by the file name or extension.
       Write this file as "filetype.vim" in your user runtime directory.  For
       example, for Unix: >
 	:w ~/.config/nvim/filetype.vim
-<
-      Alternatively, create a file called "filetype.lua" that adds new
-      filetypes.
-      Example: >
-	vim.filetype.add({
-	  extension = {
-	    foo = "fooscript",
-	  },
-	  filename = {
-	    [".foorc"] = "foorc",
-	  },
-	  pattern = {
-	    [".*/etc/foo/.*%.conf"] = "foorc",
-	  },
-	})
-<
-      See |vim.filetype.add()|.
-						     *g:do_filetype_lua*
-      For now, Lua filetype detection is opt-in. You can enable it by adding
-      the following to your |init.vim|: >
-        let g:do_filetype_lua = 1
-<						     *g:did_load_filetypes*
-      In either case, the builtin filetype detection provided by Nvim can be
-      disabled by setting the did_load_filetypes global variable. If this
-      variable exists, $VIMRUNTIME/filetype.vim will not run.
-      Example: >
-	" Disable filetype.vim (but still load filetype.lua if enabled)
-	let g:did_load_filetypes = 0
 
-	" Disable filetype.vim and filetype.lua
-	let g:did_load_filetypes = 1
-
-<  3. To use the new filetype detection you must restart Vim.
+<   3. To use the new filetype detection you must restart Vim.
 
    Your filetype.vim will be sourced before the default FileType autocommands
    have been installed.  Your autocommands will match first, and the
@@ -314,6 +285,16 @@ scripts.vim files in a runtime directory that is used for everybody.  Check
 the 'runtimepath' for a directory to use.  If there isn't one, set
 'runtimepath' in the |system-vimrc|.  Be careful to keep the default
 directories!
+
+						     *g:do_legacy_filetype*
+To disable Nvim's default filetype detection and revert to Vim's legacy
+filetype detection, add the following to your |init.vim|: >
+  let g:do_legacy_filetype = 1
+<						     *g:did_load_filetypes*
+The builtin filetype detection provided by Nvim can be disabled by setting
+the `did_load_filetypes` global variable. If this variable exists, neither
+the default `$VIMRUNTIME/filetype.lua` nor the legacy `$VIMRUNTIME/filetype.vim`
+will run.
 
 							*plugin-details*
 The "plugin" directory can be in any of the directories in the 'runtimepath'
