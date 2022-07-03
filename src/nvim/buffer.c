@@ -89,6 +89,7 @@
 static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
+static char *e_buflocked = N_("E937: Attempt to delete a buffer that is in use");
 
 // Number of times free_buffer() was called.
 static int buf_free_count = 0;
@@ -438,7 +439,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   // Disallow deleting the buffer when it is locked (already being closed or
   // halfway a command that relies on it). Unloading is allowed.
   if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
-    emsg(_("E937: Attempt to delete a buffer that is in use"));
+    emsg(_(e_buflocked));
     return false;
   }
 
@@ -529,7 +530,9 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
   }
 
   if (buf->terminal) {
+    buf->b_locked++;
     terminal_close(&buf->terminal, -1);
+    buf->b_locked--;
   }
 
   // Always remove the buffer when there is no file name.
@@ -1182,6 +1185,10 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   if (unload) {
     int forward;
     bufref_T bufref;
+    if (buf->b_locked) {
+      emsg(_(e_buflocked));
+      return FAIL;
+    }
     set_bufref(&bufref, buf);
 
     // When unloading or deleting a buffer that's already unloaded and
