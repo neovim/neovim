@@ -2059,11 +2059,31 @@ add({filetypes})                                          *vim.filetype.add()*
                   })
 <
 
+                To add a fallback match on contents (see
+                |new-filetype-scripts|), use >
+
+                 vim.filetype.add {
+                   pattern = {
+                     ['.*'] = {
+                       priority = -math.huge,
+                       function(path, bufnr)
+                         local content = vim.filetype.getlines(bufnr, 1)
+                         if vim.filetype.matchregex(content, { [[^#!.*\<mine\>]] }) then
+                           return 'mine'
+                         elseif vim.filetype.matchregex(content, { [[\<drawing\>]] }) then
+                           return 'drawing'
+                         end
+                       end,
+                     },
+                   },
+                 }
+<
+
                 Parameters: ~
                     {filetypes}  (table) A table containing new filetype maps
                                  (see example).
 
-match({arg})                                            *vim.filetype.match()*
+match({args})                                           *vim.filetype.match()*
                 Perform filetype detection.
 
                 The filetype can be detected using one of three methods:
@@ -2096,22 +2116,22 @@ match({arg})                                            *vim.filetype.match()*
 <
 
                 Parameters: ~
-                    {arg}  (table) Table specifying which matching strategy to
-                           use. Accepted keys are:
-                           • buf (number): Buffer number to use for matching.
-                             Mutually exclusive with {contents}
-                           • filename (string): Filename to use for matching.
-                             When {buf} is given, defaults to the filename of
-                             the given buffer number. The file need not
-                             actually exist in the filesystem. When used
-                             without {buf} only the name of the file is used
-                             for filetype matching. This may result in failure
-                             to detect the filetype in cases where the
-                             filename alone is not enough to disambiguate the
-                             filetype.
-                           • contents (table): An array of lines representing
-                             file contents to use for matching. Can be used
-                             with {filename}. Mutually exclusive with {buf}.
+                    {args}  (table) Table specifying which matching strategy
+                            to use. Accepted keys are:
+                            • buf (number): Buffer number to use for matching.
+                              Mutually exclusive with {contents}
+                            • filename (string): Filename to use for matching.
+                              When {buf} is given, defaults to the filename of
+                              the given buffer number. The file need not
+                              actually exist in the filesystem. When used
+                              without {buf} only the name of the file is used
+                              for filetype matching. This may result in
+                              failure to detect the filetype in cases where
+                              the filename alone is not enough to disambiguate
+                              the filetype.
+                            • contents (table): An array of lines representing
+                              file contents to use for matching. Can be used
+                              with {filename}. Mutually exclusive with {buf}.
 
                 Return: ~
                     (string|nil) If a match was found, the matched filetype.

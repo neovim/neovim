@@ -11,9 +11,9 @@
 " 'ignorecase' option making a difference.  Where case is to be ignored use
 " =~? instead.  Do not use =~ anywhere.
 
-
-" Only do the rest when the FileType autocommand has not been triggered yet.
-if did_filetype()
+" Only do the rest when not using Lua filetype detection
+" and the FileType autocommand has not been triggered yet.
+if exists("g:do_filetype_lua") && g:do_filetype_lua || did_filetype()
   finish
 endif
 

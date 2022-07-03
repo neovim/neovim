@@ -24,18 +24,26 @@ local function starsetf(ft, opts)
 end
 
 ---@private
---- Get a single line or line-range from the buffer.
+--- Get a single line or line range from the buffer.
+--- If only start_lnum is specified, return a single line as a string.
+--- If both start_lnum and end_lnum are omitted, return all lines from the buffer.
 ---
 ---@param bufnr number|nil The buffer to get the lines from
----@param start_lnum number The line number of the first line (inclusive, 1-based)
+---@param start_lnum number|nil The line number of the first line (inclusive, 1-based)
 ---@param end_lnum number|nil The line number of the last line (inclusive, 1-based)
 ---@return table<string>|string Array of lines, or string when end_lnum is omitted
 function M.getlines(bufnr, start_lnum, end_lnum)
-  if not end_lnum then
-    -- Return a single line as a string
-    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
+  if end_lnum then
+    -- Return a line range
+    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
   end
-  return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
+  if start_lnum then
+    -- Return a single line
+    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
+  else
+    -- Return all lines
+    return api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  end
 end
 
 ---@private
@@ -600,7 +608,8 @@ local extension = {
   end,
   quake = 'm3quake',
   ['m4'] = function(path, bufnr)
-    return require('vim.filetype.detect').m4(path)
+    path = path:lower()
+    return not (path:find('html%.m4$') or path:find('fvwm2rc')) and 'm4'
   end,
   eml = 'mail',
   mk = 'make',
@@ -847,22 +856,22 @@ local extension = {
   sed = 'sed',
   sexp = 'sexplib',
   bash = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ebuild = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   eclass = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   env = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr)
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
   ksh = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'ksh')
   end,
   sh = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr)
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
   sieve = 'sieve',
   siv = 'sieve',
@@ -1090,7 +1099,7 @@ local extension = {
     return require('vim.filetype.detect').scd(bufnr)
   end,
   tcsh = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+    return require('vim.filetype.detect').shell(path, M.getlines(bufnr), 'tcsh')
   end,
   sql = function(path, bufnr)
     return vim.g.filetype_sql and vim.g.filetype_sql or 'sql'
@@ -1510,40 +1519,40 @@ local filename = {
   ['/etc/serial.conf'] = 'setserial',
   ['/etc/udev/cdsymlinks.conf'] = 'sh',
   ['bash.bashrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   bashrc = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['.bashrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['.env'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr)
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
   ['.kshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'ksh')
   end,
   ['.profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr)
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
   ['/etc/profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr)
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
   APKBUILD = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   PKGBUILD = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['.tcshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+    return require('vim.filetype.detect').shell(path, M.getlines(bufnr), 'tcsh')
   end,
   ['tcsh.login'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+    return require('vim.filetype.detect').shell(path, M.getlines(bufnr), 'tcsh')
   end,
   ['tcsh.tcshrc'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+    return require('vim.filetype.detect').shell(path, M.getlines(bufnr), 'tcsh')
   end,
   ['/etc/slp.conf'] = 'slpconf',
   ['/etc/slp.reg'] = 'slpreg',
@@ -1934,28 +1943,28 @@ local pattern = {
   ['.*/etc/serial%.conf'] = 'setserial',
   ['.*/etc/udev/cdsymlinks%.conf'] = 'sh',
   ['%.bash[_%-]aliases'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['%.bash[_%-]logout'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['%.bash[_%-]profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['%.kshrc.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'ksh')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'ksh')
   end,
   ['%.profile.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr)
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
   ['.*/etc/profile'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr)
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr))
   end,
   ['bash%-fc[%-%.]'] = function(path, bufnr)
-    return require('vim.filetype.detect').sh(path, bufnr, 'bash')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'bash')
   end,
   ['%.tcshrc.*'] = function(path, bufnr)
-    return require('vim.filetype.detect').shell(path, bufnr, 'tcsh')
+    return require('vim.filetype.detect').sh(path, M.getlines(bufnr), 'tcsh')
   end,
   ['.*/etc/sudoers%.d/.*'] = starsetf('sudoers'),
   ['.*%._sst%.meta'] = 'sisu',
@@ -2165,6 +2174,25 @@ end
 ---  })
 --- </pre>
 ---
+--- To add a fallback match on contents (see |new-filetype-scripts|), use
+--- <pre>
+--- vim.filetype.add {
+---   pattern = {
+---     ['.*'] = {
+---       priority = -math.huge,
+---       function(path, bufnr)
+---         local content = vim.filetype.getlines(bufnr, 1)
+---         if vim.filetype.matchregex(content, { [[^#!.*\\<mine\\>]] }) then
+---           return 'mine'
+---         elseif vim.filetype.matchregex(content, { [[\\<drawing\\>]] }) then
+---           return 'drawing'
+---         end
+---       end,
+---     },
+---   },
+--- }
+--- </pre>
+---
 ---@param filetypes table A table containing new filetype maps (see example).
 function M.add(filetypes)
   for k, v in pairs(filetypes.extension or {}) do
@@ -2253,7 +2281,7 @@ end
 ---   vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
 --- </pre>
 ---
----@param arg table Table specifying which matching strategy to use. Accepted keys are:
+---@param args table Table specifying which matching strategy to use. Accepted keys are:
 ---                   * buf (number): Buffer number to use for matching. Mutually exclusive with
 ---                                   {contents}
 ---                   * filename (string): Filename to use for matching. When {buf} is given,
@@ -2270,22 +2298,18 @@ end
 ---@return function|nil A function that modifies buffer state when called (for example, to set some
 ---                     filetype specific buffer variables). The function accepts a buffer number as
 ---                     its only argument.
-function M.match(arg)
+function M.match(args)
   vim.validate({
-    arg = { arg, 't' },
+    arg = { args, 't' },
   })
 
-  if not (arg.buf or arg.filename or arg.contents) then
+  if not (args.buf or args.filename or args.contents) then
     error('At least one of "buf", "filename", or "contents" must be given')
   end
 
-  if arg.buf and arg.contents then
-    error('Only one of "buf" or "contents" must be given')
-  end
-
-  local bufnr = arg.buf
-  local name = arg.filename
-  local contents = arg.contents
+  local bufnr = args.buf
+  local name = args.filename
+  local contents = args.contents
 
   if bufnr and not name then
     name = api.nvim_buf_get_name(bufnr)
@@ -2296,13 +2320,6 @@ function M.match(arg)
   end
 
   local ft, on_detect
-
-  if contents then
-    -- Sanity check: this should not happen
-    assert(not bufnr, '"buf" and "contents" are mutually exclusive')
-    -- TODO: "scripts.lua" content matching
-    return
-  end
 
   -- First check for the simple case where the full path exists as a key
   local path = vim.fn.resolve(vim.fn.fnamemodify(name, ':p'))
@@ -2345,7 +2362,7 @@ function M.match(arg)
     return ft, on_detect
   end
 
-  -- Finally, check patterns with negative priority
+  -- Next, check patterns with negative priority
   for i = j, #pattern_sorted do
     local v = pattern_sorted[i]
     local k = next(v)
@@ -2357,6 +2374,19 @@ function M.match(arg)
       if ft then
         return ft, on_detect
       end
+    end
+  end
+
+  -- Finally, check file contents
+  if contents or bufnr then
+    contents = contents or M.getlines(bufnr)
+    -- If name is nil, catch any errors from the contents filetype detection function.
+    -- If the function tries to use the filename that is nil then it will fail,
+    -- but this enables checks which do not need a filename to still work.
+    local ok
+    ok, ft = pcall(require('vim.filetype.detect').match_contents, contents, name)
+    if ok and ft then
+      return ft
     end
   end
 end
