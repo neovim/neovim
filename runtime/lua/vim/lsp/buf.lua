@@ -61,6 +61,7 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
+---     - on_list: (function) handler for list results
 function M.declaration(options)
   local params = util.make_position_params()
   request_with_options('textDocument/declaration', params, options)
@@ -70,6 +71,7 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
+---     - on_list: (function) handler for list results
 function M.definition(options)
   local params = util.make_position_params()
   request_with_options('textDocument/definition', params, options)
@@ -79,6 +81,7 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
+---     - on_list: (function) handler for list results
 function M.type_definition(options)
   local params = util.make_position_params()
   request_with_options('textDocument/typeDefinition', params, options)
@@ -86,9 +89,12 @@ end
 
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
-function M.implementation()
+---
+---@param options table|nil additional options
+---     - on_list: (function) handler for list results
+function M.implementation(options)
   local params = util.make_position_params()
-  request('textDocument/implementation', params)
+  request_with_options('textDocument/implementation', params, options)
 end
 
 --- Displays signature information about the symbol under the cursor in a
@@ -496,20 +502,24 @@ end
 ---
 ---@param context (table) Context for the request
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
-function M.references(context)
+---@param options table|nil additional options
+---     - on_list: (function) handler for list results
+function M.references(context, options)
   validate({ context = { context, 't', true } })
   local params = util.make_position_params()
   params.context = context or {
     includeDeclaration = true,
   }
-  request('textDocument/references', params)
+  request_with_options('textDocument/references', params, options)
 end
 
 --- Lists all symbols in the current buffer in the quickfix window.
 ---
-function M.document_symbol()
+---@param options table|nil additional options
+---     - on_list: (function) handler for list results
+function M.document_symbol(options)
   local params = { textDocument = util.make_text_document_params() }
-  request('textDocument/documentSymbol', params)
+  request_with_options('textDocument/documentSymbol', params, options)
 end
 
 ---@private
@@ -648,13 +658,15 @@ end
 --- string means no filtering is done.
 ---
 ---@param query (string, optional)
-function M.workspace_symbol(query)
+---@param options table|nil additional options
+---     - on_list: (function) handler for list results
+function M.workspace_symbol(query, options)
   query = query or npcall(vim.fn.input, 'Query: ')
   if query == nil then
     return
   end
   local params = { query = query }
-  request('workspace/symbol', params)
+  request_with_options('workspace/symbol', params, options)
 end
 
 --- Send request to the server to resolve document highlights for the current
