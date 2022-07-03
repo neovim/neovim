@@ -1335,9 +1335,9 @@ local function match_from_hashbang(contents, path)
   if matchregex(first_line, [[^#!\s*\S*\<env\s]]) then
     first_line = first_line:gsub('%S+=%S+', '')
     first_line = first_line
-      :gsub('%-[iS]', '', 1)
       :gsub('%-%-ignore%-environment', '', 1)
       :gsub('%-%-split%-string', '', 1)
+      :gsub('%-[iS]', '', 1)
     first_line = vim.fn.substitute(first_line, [[\<env\s\+]], '', '')
   end
 
@@ -1452,7 +1452,7 @@ local patterns_text = {
   ['^SNNS pattern definition file'] = 'snnspat',
   ['^SNNS result file'] = 'snnsres',
   ['^%%.-[Vv]irata'] = { 'virata', { start_lnum = 1, end_lnum = 5 } },
-  ['[0-9:.]* *execve%('] = 'strace',
+  ['[0-9:%.]* *execve%('] = 'strace',
   ['^__libc_start_main'] = 'strace',
   -- VSE JCL
   ['^\\* $$ JOB\\>'] = { 'vsejcl', { vim_regex = true } },
@@ -1531,10 +1531,12 @@ local function match_from_text(contents, path)
           end
         end
       else
-        local line_nr = opts.start_lnum or 1
-        local line = opts.ignore_case and contents[line_nr]:lower() or contents[line_nr]
-        if opts.vim_regex and matchregex(line, k) or line:find(k) then
-          return v[line_nr]
+        local line_nr = opts.start_lnum == -1 and #contents or opts.start_lnum or 1
+        if contents[line_nr] then
+          local line = opts.ignore_case and contents[line_nr]:lower() or contents[line_nr]
+          if opts.vim_regex and matchregex(line, k) or line:find(k) then
+            return v[1]
+          end
         end
       end
     end
