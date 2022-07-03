@@ -2493,6 +2493,41 @@ describe('lua stdlib', function()
 
       eq(false, pcall_result)
     end)
+
+    describe('returns -2 when interrupted', function()
+      before_each(function()
+        local channel = meths.get_api_info()[1]
+        meths.set_var('channel', channel)
+      end)
+
+      it('without callback', function()
+        exec_lua([[
+          function _G.Wait()
+            vim.rpcnotify(vim.g.channel, 'ready')
+            local _, interrupted = vim.wait(4000)
+            vim.rpcnotify(vim.g.channel, 'wait', interrupted)
+          end
+        ]])
+        feed(':lua _G.Wait()<CR>')
+        eq({'notification', 'ready', {}}, next_msg(500))
+        feed('<C-C>')
+        eq({'notification', 'wait', {-2}}, next_msg(500))
+      end)
+
+      it('with callback', function()
+        exec_lua([[
+          function _G.Wait()
+            vim.rpcnotify(vim.g.channel, 'ready')
+            local _, interrupted = vim.wait(4000, function() end)
+            vim.rpcnotify(vim.g.channel, 'wait', interrupted)
+          end
+        ]])
+        feed(':lua _G.Wait()<CR>')
+        eq({'notification', 'ready', {}}, next_msg(500))
+        feed('<C-C>')
+        eq({'notification', 'wait', {-2}}, next_msg(500))
+      end)
+    end)
   end)
 
   it('vim.notify_once', function()
