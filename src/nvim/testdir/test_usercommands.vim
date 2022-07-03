@@ -56,7 +56,10 @@ function Test_cmdmods()
   call assert_equal('lockmarks', g:mods)
   loc MyCmd
   call assert_equal('lockmarks', g:mods)
-  " noautocmd MyCmd
+  noautocmd MyCmd
+  call assert_equal('noautocmd', g:mods)
+  noa MyCmd
+  call assert_equal('noautocmd', g:mods)
   noswapfile MyCmd
   call assert_equal('noswapfile', g:mods)
   nos MyCmd
@@ -70,29 +73,43 @@ function Test_cmdmods()
   call assert_equal('silent', g:mods)
   sil MyCmd
   call assert_equal('silent', g:mods)
+  silent! MyCmd
+  call assert_equal('silent!', g:mods)
+  sil! MyCmd
+  call assert_equal('silent!', g:mods)
   tab MyCmd
   call assert_equal('tab', g:mods)
   topleft MyCmd
   call assert_equal('topleft', g:mods)
   to MyCmd
   call assert_equal('topleft', g:mods)
-  " unsilent MyCmd
+  unsilent MyCmd
+  call assert_equal('unsilent', g:mods)
+  uns MyCmd
+  call assert_equal('unsilent', g:mods)
   verbose MyCmd
   call assert_equal('verbose', g:mods)
   verb MyCmd
   call assert_equal('verbose', g:mods)
+  0verbose MyCmd
+  call assert_equal('0verbose', g:mods)
+  3verbose MyCmd
+  call assert_equal('3verbose', g:mods)
+  999verbose MyCmd
+  call assert_equal('999verbose', g:mods)
   vertical MyCmd
   call assert_equal('vertical', g:mods)
   vert MyCmd
   call assert_equal('vertical', g:mods)
 
   aboveleft belowright botright browse confirm hide keepalt keepjumps
-	      \ keepmarks keeppatterns lockmarks noswapfile silent tab
-	      \ topleft verbose vertical MyCmd
+	      \ keepmarks keeppatterns lockmarks noautocmd noswapfile silent
+	      \ tab topleft unsilent verbose vertical MyCmd
 
   call assert_equal('browse confirm hide keepalt keepjumps ' .
-      \ 'keepmarks keeppatterns lockmarks noswapfile silent ' .
-      \ 'verbose aboveleft belowright botright tab topleft vertical', g:mods)
+      \ 'keepmarks keeppatterns lockmarks noswapfile unsilent noautocmd ' .
+      \ 'silent verbose aboveleft belowright botright tab topleft vertical',
+      \ g:mods)
 
   let g:mods = ''
   command! -nargs=* MyQCmd let g:mods .= '<q-mods> '

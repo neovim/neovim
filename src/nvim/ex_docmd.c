@@ -6567,20 +6567,27 @@ size_t uc_mods(char *buf, const cmdmod_T *cmod, bool quote)
 
   // the modifiers that are simple flags
   for (size_t i = 0; i < ARRAY_SIZE(mod_entries); i++) {
-    if (cmdmod.cmod_flags & mod_entries[i].flag) {
+    if (cmod->cmod_flags & mod_entries[i].flag) {
       result += add_cmd_modifier(buf, mod_entries[i].name, &multi_mods);
     }
   }
 
   // :silent
-  if (msg_silent > 0) {
+  if (cmod->cmod_flags & CMOD_SILENT) {
     result += add_cmd_modifier(buf,
                                (cmod->cmod_flags & CMOD_ERRSILENT) ? "silent!" : "silent",
                                &multi_mods);
   }
   // :verbose
-  if (p_verbose > 0) {
-    result += add_cmd_modifier(buf, "verbose", &multi_mods);
+  if (cmod->cmod_verbose > 0) {
+    int verbose_value = cmod->cmod_verbose - 1;
+    if (verbose_value == 1) {
+      result += add_cmd_modifier(buf, "verbose", &multi_mods);
+    } else {
+      char verbose_buf[NUMBUFLEN];
+      snprintf(verbose_buf, NUMBUFLEN, "%dverbose", verbose_value);
+      result += add_cmd_modifier(buf, verbose_buf, &multi_mods);
+    }
   }
   // flags from cmod->cmod_split
   result += add_win_cmd_modifers(buf, cmod, &multi_mods);
