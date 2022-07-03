@@ -2156,7 +2156,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                    -- Expr mappings
                    vim.keymap.set('i', '<Tab>', function()
                      return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
-                   end, { expr = true })
+                   end, { expr = true, remap = true })
                    -- <Plug> mappings
                    vim.keymap.set('n', '[%', '<Plug>(MatchitNormalMultiBackward)')
 <
