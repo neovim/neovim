@@ -1103,7 +1103,7 @@ describe('cmdheight=0', function()
       ~                        |
       ~                        |
       ~                        |
-      ~                        |
+      recording @q             |
     ]], showmode={}}
     feed('q')
     screen:expect{grid=[[

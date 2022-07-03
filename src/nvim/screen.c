@@ -6143,11 +6143,6 @@ void unshowmode(bool force)
 // Clear the mode message.
 void clearmode(void)
 {
-  // TODO(Shougo): Use ext_messages instead
-  if (!ui_has_messages()) {
-    return;
-  }
-
   const int save_msg_row = msg_row;
   const int save_msg_col = msg_col;
 
@@ -6165,11 +6160,6 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
-  // TODO(Shougo): Use ext_messages instead
-  if (!ui_has_messages()) {
-    return;
-  }
-
   msg_puts_attr(_("recording"), attr);
   if (!shortmess(SHM_RECORDING)) {
     char s[4];

@@ -894,6 +894,7 @@ int do_record(int c)
 {
   char_u *p;
   static int regname;
+  static bool change_cmdheight = false;
   yankreg_T *old_y_previous;
   int retval;
 
@@ -907,6 +908,13 @@ int do_record(int c)
       showmode();
       regname = c;
       retval = OK;
+      if (!ui_has_messages()) {
+        // Enable macro indicator temporary
+        set_option_value("ch", 1L, NULL, 0);
+        update_screen(VALID);
+
+        change_cmdheight = true;
+      }
       apply_autocmds(EVENT_RECORDINGENTER, NULL, NULL, false, curbuf);
     }
   } else {  // stop recording
@@ -928,6 +936,15 @@ int do_record(int c)
     buf[1] = NUL;
     (void)tv_dict_add_str(dict, S_LEN("regname"), buf);
     tv_dict_set_keys_readonly(dict);
+
+    if (change_cmdheight) {
+      // Restore cmdheight
+      set_option_value("ch", 0L, NULL, 0);
+
+      redraw_all_later(CLEAR);
+
+      change_cmdheight = false;
+    }
 
     // Get the recorded key hits.  K_SPECIAL will be escaped, this
     // needs to be removed again to put it in a register.  exec_reg then
