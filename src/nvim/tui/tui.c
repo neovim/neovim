@@ -137,8 +137,7 @@ struct TUIData {
   char *space_buf;
 };
 
-static bool got_winch = false;
-static bool did_user_set_dimensions = false;
+static int got_winch = 0;
 static bool cursor_style_enabled = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -535,7 +534,7 @@ static void sigcont_cb(SignalWatcher *watcher, int signum, void *data)
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
-  got_winch = true;
+  got_winch++;
   UI *ui = data;
   if (tui_is_stopped(ui)) {
     return;
@@ -987,7 +986,7 @@ static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
     r->right = MIN(r->right, grid->width);
   }
 
-  if (!got_winch && (!data->is_starting || did_user_set_dimensions)) {
+  if (!got_winch && !data->is_starting) {
     // Resize the _host_ terminal.
     UNIBI_SET_NUM_VAR(data->params[0], (int)height);
     UNIBI_SET_NUM_VAR(data->params[1], (int)width);
@@ -997,7 +996,7 @@ static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
       reset_scroll_region(ui, ui->width == grid->width);
     }
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
-    got_winch = false;
+    got_winch = got_winch > 0 ? got_winch - 1 : 0;
     grid->row = -1;
   }
 }
@@ -1504,23 +1503,13 @@ static void tui_guess_size(UI *ui)
   TUIData *data = ui->data;
   int width = 0, height = 0;
 
-  // 1 - look for non-default 'columns' and 'lines' options during startup
-  if (data->is_starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
-    did_user_set_dimensions = true;
-    assert(Columns >= 0);
-    assert(Rows >= 0);
-    width = Columns;
-    height = Rows;
-    goto end;
-  }
-
-  // 2 - try from a system call(ioctl/TIOCGWINSZ on unix)
+  // 1 - try from a system call(ioctl/TIOCGWINSZ on unix)
   if (data->out_isatty
       && !uv_tty_get_winsize(&data->output_handle.tty, &width, &height)) {
     goto end;
   }
 
-  // 3 - use $LINES/$COLUMNS if available
+  // 2 - use $LINES/$COLUMNS if available
   const char *val;
   int advance;
   if ((val = os_getenv("LINES"))
@@ -1530,7 +1519,7 @@ static void tui_guess_size(UI *ui)
     goto end;
   }
 
-  // 4 - read from terminfo if available
+  // 3 - read from terminfo if available
   height = unibi_get_num(data->ut, unibi_lines);
   width = unibi_get_num(data->ut, unibi_columns);
 
