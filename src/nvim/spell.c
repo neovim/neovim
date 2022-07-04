@@ -2327,11 +2327,11 @@ char *did_set_spelllang(win_T *wp)
       }
     }
   }
+  redraw_later(wp, NOT_VALID);
 
 theend:
   xfree(spl_copy);
   recursive = false;
-  redraw_later(wp, NOT_VALID);
   return ret_msg;
 }
 

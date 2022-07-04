@@ -131,6 +131,30 @@ foobar/?
   set spell&
 endfunc
 
+func Test_spell_file_missing()
+  let s:spell_file_missing = 0
+  augroup TestSpellFileMissing
+    autocmd! SpellFileMissing * let s:spell_file_missing += 1
+  augroup END
+
+  set spell spelllang=ab_cd
+  let messages = GetMessages()
+  " This message is not shown in Nvim because of #3027
+  " call assert_equal('Warning: Cannot find word list "ab.utf-8.spl" or "ab.ascii.spl"', messages[-1])
+  call assert_equal(1, s:spell_file_missing)
+
+  new XTestSpellFileMissing
+  augroup TestSpellFileMissing
+    autocmd! SpellFileMissing * bwipe
+  augroup END
+  call assert_fails('set spell spelllang=ab_cd', 'E797:')
+
+  augroup! TestSpellFileMissing
+  unlet s:spell_file_missing
+  set spell& spelllang&
+  %bwipe!
+endfunc
+
 func Test_spelllang_inv_region()
   set spell spelllang=en_xx
   let messages = GetMessages()
