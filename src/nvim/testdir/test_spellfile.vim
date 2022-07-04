@@ -410,6 +410,24 @@ func Test_sugfile_format_error()
   call assert_fails("let s = spellsuggest('abc')", 'E782:')
   set nospell spelllang&
 
+  " invalid suggest word count in SUGTABLE
+  set encoding=utf-8
+  call writefile(0z56494D7375670100000000000000440000000022, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E782:')
+  set nospell spelllang&
+
+  " missing sugline in SUGTABLE
+  set encoding=utf-8
+  call writefile(0z56494D7375670100000000000000440000000000000005, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E782:')
+  set nospell spelllang&
+
   let &rtp = save_rtp
   call delete('Xtest', 'rf')
 endfunc
@@ -512,25 +530,29 @@ endfunc
 
 " Tests for :mkspell with a .dic and .aff file
 func Test_aff_file_format_error()
+  " FIXME: For some reason, the :mkspell command below doesn't fail on the
+  " MS-Windows CI build. Disable this test on MS-Windows for now.
+  CheckNotMSWindows
+
   " No word count in .dic file
   call writefile([], 'Xtest.dic')
   call writefile([], 'Xtest.aff')
   call assert_fails('mkspell! Xtest.spl Xtest', 'E760:')
 
-  " Invalid encoding in .aff file
+  " create a .dic file for the tests below
   call writefile(['1', 'work'], 'Xtest.dic')
+
+  " Invalid encoding in .aff file
   call writefile(['# comment', 'SET Xinvalidencoding'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Conversion in Xtest.aff not supported: from xinvalidencoding', output)
 
   " Invalid flag in .aff file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['FLAG xxx'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Invalid value for FLAG in Xtest.aff line 1: xxx', output)
 
   " set FLAGS after using flag for an affix
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['SFX L Y 1', 'SFX L 0 re [^x]', 'FLAG long'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('FLAG after using flags in Xtest.aff line 3: long', output)
@@ -558,152 +580,138 @@ func Test_aff_file_format_error()
   let &encoding = save_encoding
 
   " COMPOUNDFORBIDFLAG flag after PFX in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L Y 1', 'PFX L 0 re x', 'COMPOUNDFLAG c', 'COMPOUNDFORBIDFLAG x'],
         \ 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in Xtest.aff line 4', output)
 
   " COMPOUNDPERMITFLAG flag after PFX in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L Y 1', 'PFX L 0 re x', 'COMPOUNDPERMITFLAG c'],
         \ 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in Xtest.aff line 3', output)
 
   " Wrong COMPOUNDRULES flag value in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['COMPOUNDRULES a'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Wrong COMPOUNDRULES value in Xtest.aff line 1: a', output)
 
   " Wrong COMPOUNDWORDMAX flag value in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['COMPOUNDWORDMAX 0'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Wrong COMPOUNDWORDMAX value in Xtest.aff line 1: 0', output)
 
   " Wrong COMPOUNDMIN flag value in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['COMPOUNDMIN 0'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Wrong COMPOUNDMIN value in Xtest.aff line 1: 0', output)
 
   " Wrong COMPOUNDSYLMAX flag value in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['COMPOUNDSYLMAX 0'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Wrong COMPOUNDSYLMAX value in Xtest.aff line 1: 0', output)
 
   " Wrong CHECKCOMPOUNDPATTERN flag value in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['CHECKCOMPOUNDPATTERN 0'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Wrong CHECKCOMPOUNDPATTERN value in Xtest.aff line 1: 0', output)
 
   " Duplicate affix entry in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L Y 1', 'PFX L 0 re x', 'PFX L Y 1', 'PFX L 0 re x'],
         \ 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Duplicate affix in Xtest.aff line 3: L', output)
 
   " Duplicate affix entry in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L Y 1', 'PFX L Y 1'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Unrecognized or duplicate item in Xtest.aff line 2: PFX', output)
 
   " Different combining flags in an affix file
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L Y 1', 'PFX L 0 re x', 'PFX L N 1'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Different combining flag in continued affix block in Xtest.aff line 3', output)
 
   " Try to reuse a affix used for BAD flag
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['BAD x', 'PFX x Y 1', 'PFX x 0 re x'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in Xtest.aff line 2: x', output)
 
   " Trailing characters in an affix entry
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L Y 1 Test', 'PFX L 0 re x'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Trailing text in Xtest.aff line 1: Test', output)
 
   " Trailing characters in an affix entry
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L Y 1', 'PFX L 0 re x Test'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Trailing text in Xtest.aff line 2: Test', output)
 
   " Incorrect combine flag in an affix entry
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['PFX L X 1', 'PFX L 0 re x'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Expected Y or N in Xtest.aff line 1: X', output)
 
   " Invalid count for REP item
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['REP a'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Expected REP(SAL) count in Xtest.aff line 1', output)
 
   " Trailing characters in REP item
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['REP 1', 'REP f ph test'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Trailing text in Xtest.aff line 2: test', output)
 
   " Invalid count for MAP item
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['MAP a'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Expected MAP count in Xtest.aff line 1', output)
 
   " Duplicate character in a MAP item
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['MAP 2', 'MAP xx', 'MAP yy'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Duplicate character in MAP in Xtest.aff line 2', output)
 
   " Use COMPOUNDSYLMAX without SYLLABLE
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['COMPOUNDSYLMAX 2'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('COMPOUNDSYLMAX used without SYLLABLE', output)
 
   " Missing SOFOTO
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['SOFOFROM abcdef'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Missing SOFOTO line in Xtest.aff', output)
 
-  " FIXME: The following test causes a heap overflow with the ASAN build
-  " " Both SAL and SOFOFROM/SOFOTO items
-  " call writefile(['1', 'work'], 'Xtest.dic')
-  " call writefile(['SOFOFROM abcd', 'SOFOTO ABCD', 'SAL CIA X'], 'Xtest.aff')
-  " let output = execute('mkspell! Xtest.spl Xtest')
-  " call assert_match('Both SAL and SOFO lines in Xtest.aff', output)
+  " Length of SOFOFROM and SOFOTO differ
+  call writefile(['SOFOFROM abcde', 'SOFOTO ABCD'], 'Xtest.aff')
+  call assert_fails('mkspell! Xtest.spl Xtest', 'E759:')
+
+  " Both SAL and SOFOFROM/SOFOTO items
+  call writefile(['SOFOFROM abcd', 'SOFOTO ABCD', 'SAL CIA X'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Both SAL and SOFO lines in Xtest.aff', output)
 
   " use an alphabet flag when FLAG is num
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['FLAG num', 'SFX L Y 1', 'SFX L 0 re [^x]'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Flag is not a number in Xtest.aff line 2: L', output)
 
   " use number and alphabet flag when FLAG is num
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['FLAG num', 'SFX 4f Y 1', 'SFX 4f 0 re [^x]'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Affix name too long in Xtest.aff line 2: 4f', output)
 
   " use a single character flag when FLAG is long
-  call writefile(['1', 'work'], 'Xtest.dic')
   call writefile(['FLAG long', 'SFX L Y 1', 'SFX L 0 re [^x]'], 'Xtest.aff')
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Illegal flag in Xtest.aff line 2: L', output)
+
+  " duplicate word in the .dic file
+  call writefile(['2', 'good', 'good', 'good'], 'Xtest.dic')
+  call writefile(['NAME vim'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('First duplicate word in Xtest.dic line 3: good', output)
+  call assert_match('2 duplicate word(s) in Xtest.dic', output)
 
   call delete('Xtest.dic')
   call delete('Xtest.aff')
@@ -745,6 +753,16 @@ func Test_init_spellfile()
   let &encoding = save_encoding
   let &rtp = save_rtp
   %bw!
+endfunc
+
+" Test for the 'mkspellmem' option
+func Test_mkspellmem_opt()
+  call assert_fails('set mkspellmem=1000', 'E474:')
+  call assert_fails('set mkspellmem=1000,', 'E474:')
+  call assert_fails('set mkspellmem=1000,50', 'E474:')
+  call assert_fails('set mkspellmem=1000,50,', 'E474:')
+  call assert_fails('set mkspellmem=1000,50,10,', 'E474:')
+  call assert_fails('set mkspellmem=1000,50,0', 'E474:')
 endfunc
 
 " Test CHECKCOMPOUNDPATTERN (see :help spell-CHECKCOMPOUNDPATTERN)
