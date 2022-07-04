@@ -167,8 +167,173 @@ func Test_spell_normal()
   call assert_equal([], glob('Xspellfile.add',0,1))
   call assert_equal([], glob('Xspellfile2.add',0,1))
 
-  set spellfile=
+  set spellfile= spell& spelllang&
   bw!
+endfunc
+
+" Test for spell file format errors
+func Test_spellfile_format_error()
+  let save_rtp = &rtp
+  call mkdir('Xtest/spell', 'p')
+
+  " empty spell file
+  call writefile([], './Xtest/spell/Xtest.utf-8.spl')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E757:')
+  set nospell spelllang&
+
+  " invalid file ID
+  call writefile(['vim'], './Xtest/spell/Xtest.utf-8.spl')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E757:')
+  set nospell spelllang&
+
+  " missing version number
+  call writefile(['VIMspell'], './Xtest/spell/Xtest.utf-8.spl')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E771:')
+  set nospell spelllang&
+
+  " invalid version number
+  call writefile(['VIMspellz'], './Xtest/spell/Xtest.utf-8.spl')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E772:')
+  set nospell spelllang&
+
+  " no sections
+  call writefile(0z56494D7370656C6C32, './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E758:')
+  set nospell spelllang&
+
+  " missing section length
+  call writefile(['VIMspell200'], './Xtest/spell/Xtest.utf-8.spl')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E758:')
+  set nospell spelllang&
+
+  " unsupported required section
+  call writefile(['VIMspell2z' .. nr2char(1) .. '   ' .. nr2char(4)],
+        \ './Xtest/spell/Xtest.utf-8.spl')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E770:')
+  set nospell spelllang&
+
+  " unsupported not-required section
+  call writefile(['VIMspell2z' .. nr2char(0) .. '   ' .. nr2char(4)],
+        \ './Xtest/spell/Xtest.utf-8.spl')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E758:')
+  set nospell spelllang&
+
+  " SN_REGION: invalid number of region names
+  call writefile(0z56494D7370656C6C320000000000FF,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E759:')
+  set nospell spelllang&
+
+  " SN_CHARFLAGS: missing <charflagslen> length
+  call writefile(0z56494D7370656C6C32010000000004,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E758:')
+  set nospell spelllang&
+
+  " SN_CHARFLAGS: invalid <charflagslen> length
+  call writefile(0z56494D7370656C6C320100000000010201,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  " FIXME: There are no error messages. How to check for the test result?
+  set nospell spelllang&
+
+  " SN_CHARFLAGS: charflagslen == 0 and folcharslen != 0
+  call writefile(0z56494D7370656C6C3201000000000400000101,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E759:')
+  set nospell spelllang&
+
+  " SN_CHARFLAGS: missing <folcharslen> length
+  call writefile(0z56494D7370656C6C3201000000000100,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E758:')
+  set nospell spelllang&
+
+  " SN_PREFCOND: invalid prefcondcnt
+  call writefile(0z56494D7370656C6C3203000000000100,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E759:')
+  set nospell spelllang&
+
+  " SN_PREFCOND: invalid condlen
+  call writefile(0z56494D7370656C6C320300000000020001,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E759:')
+  set nospell spelllang&
+
+  " SN_REP: invalid repcount
+  call writefile(0z56494D7370656C6C3204000000000100,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E758:')
+  set nospell spelllang&
+
+  " SN_REP: missing rep
+  call writefile(0z56494D7370656C6C320400000000020004,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E758:')
+  set nospell spelllang&
+
+  " SN_REP: zero repfromlen
+  call writefile(0z56494D7370656C6C32040000000003000100,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E759:')
+  set nospell spelllang&
+
+  " SN_REP: invalid reptolen
+  call writefile(0z56494D7370656C6C320400000000050001014101,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  " FIXME: There are no error messages. How to check for the test result?
+  set spell
+  set nospell spelllang&
+
+  " SN_REP: zero reptolen
+  call writefile(0z56494D7370656C6C320400000000050001014100,
+        \ './Xtest/spell/Xtest.utf-8.spl', 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E759:')
+  set nospell spelllang&
+
+  let &rtp = save_rtp
+  call delete('Xtest', 'rf')
 endfunc
 
 " Test CHECKCOMPOUNDPATTERN (see :help spell-CHECKCOMPOUNDPATTERN)
