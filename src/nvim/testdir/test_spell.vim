@@ -155,6 +155,44 @@ func Test_spell_file_missing()
   %bwipe!
 endfunc
 
+func Test_spelldump()
+  set spell spelllang=en
+  spellrare! emacs
+
+  spelldump
+
+  " Check assumption about region: 1: us, 2: au, 3: ca, 4: gb, 5: nz.
+  call assert_equal('/regions=usaucagbnz', getline(1))
+  call assert_notequal(0, search('^theater/1$'))    " US English only.
+  call assert_notequal(0, search('^theatre/2345$')) " AU, CA, GB or NZ English.
+
+  call assert_notequal(0, search('^emacs/?$'))      " ? for a rare word.
+  call assert_notequal(0, search('^the the/!$'))    " ! for a wrong word.
+
+  bwipe
+  set spell&
+endfunc
+
+func Test_spelldump_bang()
+  new
+  call setline(1, 'This is a sample sentence.')
+  redraw
+  set spell
+  redraw
+  spelldump!
+
+  " :spelldump! includes the number of times a word was found while updating
+  " the screen.
+  " Common word count starts at 10, regular word count starts at 0.
+  call assert_notequal(0, search("^is\t11$"))    " common word found once.
+  call assert_notequal(0, search("^the\t10$"))   " common word never found.
+  call assert_notequal(0, search("^sample\t1$")) " regular word found once.
+  call assert_equal(0, search("^screen\t"))      " regular word never found.
+
+  %bwipe!
+  set spell&
+endfunc
+
 func Test_spelllang_inv_region()
   set spell spelllang=en_xx
   let messages = GetMessages()
