@@ -733,7 +733,7 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
       if (lp->sl_syllable == NULL) {
         goto endFAIL;
       }
-      if (init_syl_tab(lp) == FAIL) {
+      if (init_syl_tab(lp) != OK) {
         goto endFAIL;
       }
       break;
