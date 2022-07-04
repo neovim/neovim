@@ -383,7 +383,7 @@ function Screen:expect(expected, attr_ids, ...)
       for i, row in ipairs(expected_rows) do
         msg_expected_rows[i] = row
         local m = (row ~= actual_rows[i] and row:match('{MATCH:(.*)}') or nil)
-        if row ~= actual_rows[i] and (not m or not actual_rows[i]:match(m)) then
+        if row ~= actual_rows[i] and (not m or not (actual_rows[i] and actual_rows[i]:match(m))) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
             actual_rows[i] = '*' .. actual_rows[i]
