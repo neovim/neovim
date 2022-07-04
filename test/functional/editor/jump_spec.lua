@@ -251,4 +251,32 @@ describe("jumpoptions=view", function()
                 |
     ]])
   end)
+
+  it('falls back to standard behavior for a mark without a view', function()
+    local screen = Screen.new(5, 8)
+    screen:attach()
+    command('edit ' .. file1)
+    feed('10ggzzvwy')
+    screen:expect([[
+      7 line      |
+      8 line      |
+      9 line      |
+      ^10 line     |
+      11 line     |
+      12 line     |
+      13 line     |
+                  |
+    ]])
+    feed('`]')
+    screen:expect([[
+      7 line      |
+      8 line      |
+      9 line      |
+      10 ^line     |
+      11 line     |
+      12 line     |
+      13 line     |
+                  |
+    ]])
+  end)
 end)
