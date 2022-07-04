@@ -705,7 +705,9 @@ static void ui_comp_event(UI *ui, char *name, Array args)
 
 static void ui_comp_update_ext(void)
 {
-  for (int i = 0; i < kUIGlobalCount; i++) {
+  memset(compositor->ui_ext, 0, ARRAY_SIZE(compositor->ui_ext));
+
+  for (size_t i = 0; i < kUIGlobalCount; i++) {
     UIEventCallback *event_cb;
 
     map_foreach_value(&ui_event_cbs, event_cb, {
