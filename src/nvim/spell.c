@@ -7023,8 +7023,9 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
           n = arridx[depth] + curi[depth];
           ++curi[depth];
           c = byts[n];
-          if (c == 0) {
-            // End of word, deal with the word.
+          if (c == 0 || depth >= MAXWLEN - 1) {
+            // End of word or reached maximum length, deal with the
+            // word.
             // Don't use keep-case words in the fold-case tree,
             // they will appear in the keep-case tree.
             // Only use the word when the region matches.

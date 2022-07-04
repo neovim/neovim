@@ -287,6 +287,18 @@ func Test_spellreall()
   bwipe!
 endfunc
 
+func Test_spell_dump_word_length()
+  " this was running over MAXWLEN
+  new
+  noremap 0 0a0zW0000000
+  sil! norm 0z=0
+  sil norm 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  sil! norm 0z=0
+
+  bwipe!
+  nunmap 0
+endfunc
+
 " Test spellsuggest({word} [, {max} [, {capital}]])
 func Test_spellsuggest()
   " Verify suggestions are given even when spell checking is not enabled.
