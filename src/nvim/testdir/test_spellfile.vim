@@ -167,8 +167,602 @@ func Test_spell_normal()
   call assert_equal([], glob('Xspellfile.add',0,1))
   call assert_equal([], glob('Xspellfile2.add',0,1))
 
-  set spellfile=
+  set spellfile= spell& spelllang&
   bw!
+endfunc
+
+" Spell file content test. Write 'content' to the spell file prefixed by the
+" spell file header and then enable spell checking. If 'emsg' is not empty,
+" then check for error.
+func Spellfile_Test(content, emsg)
+  let splfile = './Xtest/spell/Xtest.utf-8.spl'
+  " Add the spell file header and version (VIMspell2)
+  let v = 0z56494D7370656C6C32 + a:content
+  call writefile(v, splfile, 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  if a:emsg != ''
+    call assert_fails('set spell', a:emsg)
+  else
+    " FIXME: With some invalid spellfile contents, there are no error
+    " messages. So don't know how to check for the test result.
+    set spell
+  endif
+  set nospell spelllang& rtp&
+endfunc
+
+" Test for spell file format errors.
+" The spell file format is described in spellfile.c
+func Test_spellfile_format_error()
+  let save_rtp = &rtp
+  call mkdir('Xtest/spell', 'p')
+  let splfile = './Xtest/spell/Xtest.utf-8.spl'
+
+  " empty spell file
+  call writefile([], splfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E757:')
+  set nospell spelllang&
+
+  " invalid file ID
+  call writefile(0z56494D, splfile, 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E757:')
+  set nospell spelllang&
+
+  " missing version number
+  call writefile(0z56494D7370656C6C, splfile, 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E771:')
+  set nospell spelllang&
+
+  " invalid version number
+  call writefile(0z56494D7370656C6C7A, splfile, 'b')
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  call assert_fails('set spell', 'E772:')
+  set nospell spelllang&
+
+  " no sections
+  call Spellfile_Test(0z, 'E758:')
+
+  " missing section length
+  call Spellfile_Test(0z00, 'E758:')
+
+  " unsupported required section
+  call Spellfile_Test(0z7A0100000004, 'E770:')
+
+  " unsupported not-required section
+  call Spellfile_Test(0z7A0000000004, 'E758:')
+
+  " SN_REGION: invalid number of region names
+  call Spellfile_Test(0z0000000000FF, 'E759:')
+
+  " SN_CHARFLAGS: missing <charflagslen> length
+  call Spellfile_Test(0z010000000004, 'E758:')
+
+  " SN_CHARFLAGS: invalid <charflagslen> length
+  call Spellfile_Test(0z0100000000010201, '')
+
+  " SN_CHARFLAGS: charflagslen == 0 and folcharslen != 0
+  call Spellfile_Test(0z01000000000400000101, 'E759:')
+
+  " SN_CHARFLAGS: missing <folcharslen> length
+  call Spellfile_Test(0z01000000000100, 'E758:')
+
+  " SN_PREFCOND: invalid prefcondcnt
+  call Spellfile_Test(0z03000000000100, 'E759:')
+
+  " SN_PREFCOND: invalid condlen
+  call Spellfile_Test(0z0300000000020001, 'E759:')
+
+  " SN_REP: invalid repcount
+  call Spellfile_Test(0z04000000000100, 'E758:')
+
+  " SN_REP: missing rep
+  call Spellfile_Test(0z0400000000020004, 'E758:')
+
+  " SN_REP: zero repfromlen
+  call Spellfile_Test(0z040000000003000100, 'E759:')
+
+  " SN_REP: invalid reptolen
+  call Spellfile_Test(0z0400000000050001014101, '')
+
+  " SN_REP: zero reptolen
+  call Spellfile_Test(0z0400000000050001014100, 'E759:')
+
+  " SN_SAL: missing salcount
+  call Spellfile_Test(0z05000000000102, 'E758:')
+
+  " SN_SAL: missing salfromlen
+  call Spellfile_Test(0z050000000003080001, 'E758:')
+
+  " SN_SAL: missing saltolen
+  call Spellfile_Test(0z0500000000050400010161, 'E758:')
+
+  " SN_WORDS: non-NUL terminated word
+  call Spellfile_Test(0z0D000000000376696D, 'E758:')
+
+  " SN_WORDS: very long word
+  let v = eval('0z0D000000012C' .. repeat('41', 300))
+  call Spellfile_Test(v, 'E759:')
+
+  " SN_SOFO: missing sofofromlen
+  call Spellfile_Test(0z06000000000100, 'E758:')
+
+  " SN_SOFO: missing sofotolen
+  call Spellfile_Test(0z06000000000400016100, 'E758:')
+
+  " SN_SOFO: missing sofoto
+  call Spellfile_Test(0z0600000000050001610000, 'E759:')
+
+  " SN_COMPOUND: compmax is less than 2
+  call Spellfile_Test(0z08000000000101, 'E759:')
+
+  " SN_COMPOUND: missing compsylmax and other options
+  call Spellfile_Test(0z0800000000020401, 'E759:')
+
+  " SN_COMPOUND: missing compoptions
+  call Spellfile_Test(0z080000000005040101, 'E758:')
+
+  " SN_INFO: missing info
+  call Spellfile_Test(0z0F0000000005040101, '')
+
+  " SN_MIDWORD: missing midword
+  call Spellfile_Test(0z0200000000040102, '')
+
+  " SN_MAP: missing midword
+  call Spellfile_Test(0z0700000000040102, '')
+
+  " SN_SYLLABLE: missing SYLLABLE item
+  call Spellfile_Test(0z0900000000040102, '')
+
+  " SN_SYLLABLE: More than SY_MAXLEN size
+  let v = eval('0z090000000022612F' .. repeat('62', 32))
+  call Spellfile_Test(v, '')
+
+  " LWORDTREE: missing
+  call Spellfile_Test(0zFF, 'E758:')
+
+  " LWORDTREE: missing tree node
+  call Spellfile_Test(0zFF00000004, 'E758:')
+
+  " LWORDTREE: missing tree node value
+  call Spellfile_Test(0zFF0000000402, 'E758:')
+
+  " KWORDTREE: missing tree node
+  call Spellfile_Test(0zFF0000000000000004, 'E758:')
+
+  " PREFIXTREE: missing tree node
+  call Spellfile_Test(0zFF000000000000000000000004, 'E758:')
+
+  let &rtp = save_rtp
+  call delete('Xtest', 'rf')
+endfunc
+
+" Test for format errors in suggest file
+func Test_sugfile_format_error()
+  let save_rtp = &rtp
+  call mkdir('Xtest/spell', 'p')
+  let splfile = './Xtest/spell/Xtest.utf-8.spl'
+  let sugfile = './Xtest/spell/Xtest.utf-8.sug'
+
+  " create an empty spell file with a suggest timestamp
+  call writefile(0z56494D7370656C6C320B00000000080000000000000044FF000000000000000000000000, splfile, 'b')
+
+  " 'encoding' is set before each test to clear the previously loaded suggest
+  " file from memory.
+
+  " empty suggest file
+  set encoding=utf-8
+  call writefile([], sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E778:')
+  set nospell spelllang&
+
+  " zero suggest version
+  set encoding=utf-8
+  call writefile(0z56494D73756700, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E779:')
+  set nospell spelllang&
+
+  " unsupported suggest version
+  set encoding=utf-8
+  call writefile(0z56494D7375671F, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E780:')
+  set nospell spelllang&
+
+  " missing suggest timestamp
+  set encoding=utf-8
+  call writefile(0z56494D73756701, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E781:')
+  set nospell spelllang&
+
+  " incorrect suggest timestamp
+  set encoding=utf-8
+  call writefile(0z56494D7375670100000000000000FF, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E781:')
+  set nospell spelllang&
+
+  " missing suggest wordtree
+  set encoding=utf-8
+  call writefile(0z56494D737567010000000000000044, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E782:')
+  set nospell spelllang&
+
+  " invalid suggest word count in SUGTABLE
+  set encoding=utf-8
+  call writefile(0z56494D7375670100000000000000440000000022, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E782:')
+  set nospell spelllang&
+
+  " missing sugline in SUGTABLE
+  set encoding=utf-8
+  call writefile(0z56494D7375670100000000000000440000000000000005, sugfile)
+  set runtimepath=./Xtest
+  set spelllang=Xtest
+  set spell
+  call assert_fails("let s = spellsuggest('abc')", 'E782:')
+  set nospell spelllang&
+
+  let &rtp = save_rtp
+  call delete('Xtest', 'rf')
+endfunc
+
+" Test for using :mkspell to create a spell file from a list of words
+func Test_wordlist_dic()
+  " duplicate encoding
+  let lines =<< trim [END]
+    # This is an example word list
+
+    /encoding=latin1
+    /encoding=latin1
+    example
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell Xwordlist.spl Xwordlist.dic')
+  call assert_match('Duplicate /encoding= line ignored in Xwordlist.dic line 4: /encoding=latin1', output)
+
+  " multiple encoding for a word
+  let lines =<< trim [END]
+    example
+    /encoding=latin1
+    example
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('/encoding= line after word ignored in Xwordlist.dic line 2: /encoding=latin1', output)
+
+  " unsupported encoding for a word
+  let lines =<< trim [END]
+    /encoding=Xtest
+    example
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('Conversion in Xwordlist.dic not supported: from Xtest to utf-8', output)
+
+  " duplicate region
+  let lines =<< trim [END]
+    /regions=usca
+    /regions=usca
+    example
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('Duplicate /regions= line ignored in Xwordlist.dic line 2: regions=usca', output)
+
+  " maximum regions
+  let lines =<< trim [END]
+    /regions=uscauscauscauscausca
+    example
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('Too many regions in Xwordlist.dic line 1: uscauscauscauscausca', output)
+
+  " unsupported '/' value
+  let lines =<< trim [END]
+    /test=abc
+    example
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('/ line ignored in Xwordlist.dic line 1: /test=abc', output)
+
+  " unsupported flag
+  let lines =<< trim [END]
+    example/+
+  [END]
+  call writefile(lines, 'Xwordlist.dic')
+  let output = execute('mkspell! Xwordlist.spl Xwordlist.dic')
+  call assert_match('Unrecognized flags in Xwordlist.dic line 1: +', output)
+
+  " non-ascii word
+  call writefile(["ʀʀ"], 'Xwordlist.dic')
+  let output = execute('mkspell! -ascii Xwordlist.spl Xwordlist.dic')
+  call assert_match('Ignored 1 words with non-ASCII characters', output)
+
+  call delete('Xwordlist.spl')
+  call delete('Xwordlist.dic')
+endfunc
+
+" Test for the :mkspell command
+func Test_mkspell()
+  call assert_fails('mkspell Xtest_us.spl', 'E751:')
+  call assert_fails('mkspell a b c d e f g h i j k', 'E754:')
+
+  call writefile([], 'Xtest.spl')
+  call writefile([], 'Xtest.dic')
+  call assert_fails('mkspell Xtest.spl Xtest.dic', 'E13:')
+  call delete('Xtest.spl')
+  call delete('Xtest.dic')
+
+  call mkdir('Xtest.spl')
+  call assert_fails('mkspell! Xtest.spl Xtest.dic', 'E17:')
+  call delete('Xtest.spl', 'rf')
+
+  call assert_fails('mkspell en en_US abc_xyz', 'E755:')
+endfunc
+
+" Tests for :mkspell with a .dic and .aff file
+func Test_aff_file_format_error()
+  " FIXME: For some reason, the :mkspell command below doesn't fail on the
+  " MS-Windows CI build. Disable this test on MS-Windows for now.
+  CheckNotMSWindows
+
+  " No word count in .dic file
+  call writefile([], 'Xtest.dic')
+  call writefile([], 'Xtest.aff')
+  call assert_fails('mkspell! Xtest.spl Xtest', 'E760:')
+
+  " create a .dic file for the tests below
+  call writefile(['1', 'work'], 'Xtest.dic')
+
+  " Invalid encoding in .aff file
+  call writefile(['# comment', 'SET Xinvalidencoding'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Conversion in Xtest.aff not supported: from xinvalidencoding', output)
+
+  " Invalid flag in .aff file
+  call writefile(['FLAG xxx'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Invalid value for FLAG in Xtest.aff line 1: xxx', output)
+
+  " set FLAGS after using flag for an affix
+  call writefile(['SFX L Y 1', 'SFX L 0 re [^x]', 'FLAG long'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('FLAG after using flags in Xtest.aff line 3: long', output)
+
+  " INFO in affix file
+  let save_encoding = &encoding
+  call mkdir('Xrtp/spell', 'p')
+  call writefile(['1', 'work'], 'Xrtp/spell/Xtest.dic')
+  call writefile(['NAME klingon', 'VERSION 1.4', 'AUTHOR Spock'],
+        \ 'Xrtp/spell/Xtest.aff')
+  silent mkspell! Xrtp/spell/Xtest.utf-8.spl Xrtp/spell/Xtest
+  let save_rtp = &rtp
+  set runtimepath=./Xrtp
+  set spelllang=Xtest
+  set spell
+  let output = split(execute('spellinfo'), "\n")
+  call assert_equal("NAME klingon", output[1])
+  call assert_equal("VERSION 1.4", output[2])
+  call assert_equal("AUTHOR Spock", output[3])
+  let &rtp = save_rtp
+  call delete('Xrtp', 'rf')
+  set spell& spelllang& spellfile&
+  %bw!
+  " 'encoding' must be set again to clear the spell file in memory
+  let &encoding = save_encoding
+
+  " COMPOUNDFORBIDFLAG flag after PFX in an affix file
+  call writefile(['PFX L Y 1', 'PFX L 0 re x', 'COMPOUNDFLAG c', 'COMPOUNDFORBIDFLAG x'],
+        \ 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in Xtest.aff line 4', output)
+
+  " COMPOUNDPERMITFLAG flag after PFX in an affix file
+  call writefile(['PFX L Y 1', 'PFX L 0 re x', 'COMPOUNDPERMITFLAG c'],
+        \ 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in Xtest.aff line 3', output)
+
+  " Wrong COMPOUNDRULES flag value in an affix file
+  call writefile(['COMPOUNDRULES a'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Wrong COMPOUNDRULES value in Xtest.aff line 1: a', output)
+
+  " Wrong COMPOUNDWORDMAX flag value in an affix file
+  call writefile(['COMPOUNDWORDMAX 0'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Wrong COMPOUNDWORDMAX value in Xtest.aff line 1: 0', output)
+
+  " Wrong COMPOUNDMIN flag value in an affix file
+  call writefile(['COMPOUNDMIN 0'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Wrong COMPOUNDMIN value in Xtest.aff line 1: 0', output)
+
+  " Wrong COMPOUNDSYLMAX flag value in an affix file
+  call writefile(['COMPOUNDSYLMAX 0'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Wrong COMPOUNDSYLMAX value in Xtest.aff line 1: 0', output)
+
+  " Wrong CHECKCOMPOUNDPATTERN flag value in an affix file
+  call writefile(['CHECKCOMPOUNDPATTERN 0'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Wrong CHECKCOMPOUNDPATTERN value in Xtest.aff line 1: 0', output)
+
+  " Duplicate affix entry in an affix file
+  call writefile(['PFX L Y 1', 'PFX L 0 re x', 'PFX L Y 1', 'PFX L 0 re x'],
+        \ 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Duplicate affix in Xtest.aff line 3: L', output)
+
+  " Duplicate affix entry in an affix file
+  call writefile(['PFX L Y 1', 'PFX L Y 1'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Unrecognized or duplicate item in Xtest.aff line 2: PFX', output)
+
+  " Different combining flags in an affix file
+  call writefile(['PFX L Y 1', 'PFX L 0 re x', 'PFX L N 1'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Different combining flag in continued affix block in Xtest.aff line 3', output)
+
+  " Try to reuse a affix used for BAD flag
+  call writefile(['BAD x', 'PFX x Y 1', 'PFX x 0 re x'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in Xtest.aff line 2: x', output)
+
+  " Trailing characters in an affix entry
+  call writefile(['PFX L Y 1 Test', 'PFX L 0 re x'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Trailing text in Xtest.aff line 1: Test', output)
+
+  " Trailing characters in an affix entry
+  call writefile(['PFX L Y 1', 'PFX L 0 re x Test'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Trailing text in Xtest.aff line 2: Test', output)
+
+  " Incorrect combine flag in an affix entry
+  call writefile(['PFX L X 1', 'PFX L 0 re x'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Expected Y or N in Xtest.aff line 1: X', output)
+
+  " Invalid count for REP item
+  call writefile(['REP a'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Expected REP(SAL) count in Xtest.aff line 1', output)
+
+  " Trailing characters in REP item
+  call writefile(['REP 1', 'REP f ph test'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Trailing text in Xtest.aff line 2: test', output)
+
+  " Invalid count for MAP item
+  call writefile(['MAP a'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Expected MAP count in Xtest.aff line 1', output)
+
+  " Duplicate character in a MAP item
+  call writefile(['MAP 2', 'MAP xx', 'MAP yy'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Duplicate character in MAP in Xtest.aff line 2', output)
+
+  " Use COMPOUNDSYLMAX without SYLLABLE
+  call writefile(['COMPOUNDSYLMAX 2'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('COMPOUNDSYLMAX used without SYLLABLE', output)
+
+  " Missing SOFOTO
+  call writefile(['SOFOFROM abcdef'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Missing SOFOTO line in Xtest.aff', output)
+
+  " Length of SOFOFROM and SOFOTO differ
+  call writefile(['SOFOFROM abcde', 'SOFOTO ABCD'], 'Xtest.aff')
+  call assert_fails('mkspell! Xtest.spl Xtest', 'E759:')
+
+  " Both SAL and SOFOFROM/SOFOTO items
+  call writefile(['SOFOFROM abcd', 'SOFOTO ABCD', 'SAL CIA X'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Both SAL and SOFO lines in Xtest.aff', output)
+
+  " use an alphabet flag when FLAG is num
+  call writefile(['FLAG num', 'SFX L Y 1', 'SFX L 0 re [^x]'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Flag is not a number in Xtest.aff line 2: L', output)
+
+  " use number and alphabet flag when FLAG is num
+  call writefile(['FLAG num', 'SFX 4f Y 1', 'SFX 4f 0 re [^x]'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Affix name too long in Xtest.aff line 2: 4f', output)
+
+  " use a single character flag when FLAG is long
+  call writefile(['FLAG long', 'SFX L Y 1', 'SFX L 0 re [^x]'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Illegal flag in Xtest.aff line 2: L', output)
+
+  " duplicate word in the .dic file
+  call writefile(['2', 'good', 'good', 'good'], 'Xtest.dic')
+  call writefile(['NAME vim'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('First duplicate word in Xtest.dic line 3: good', output)
+  call assert_match('2 duplicate word(s) in Xtest.dic', output)
+
+  call delete('Xtest.dic')
+  call delete('Xtest.aff')
+  call delete('Xtest.spl')
+  call delete('Xtest.sug')
+endfunc
+
+func Test_spell_add_word()
+  set spellfile=
+  call assert_fails('spellgood abc', 'E764:')
+
+  set spellfile=Xtest.utf-8.add
+  call assert_fails('2spellgood abc', 'E765:')
+
+  edit Xtest.utf-8.add
+  call setline(1, 'sample')
+  call assert_fails('spellgood abc', 'E139:')
+  set spellfile&
+  %bw!
+endfunc
+
+" When 'spellfile' is not set, adding a new good word will automatically set
+" the 'spellfile'
+func Test_init_spellfile()
+  let save_rtp = &rtp
+  let save_encoding = &encoding
+  call mkdir('Xrtp/spell', 'p')
+  call writefile(['vim'], 'Xrtp/spell/Xtest.dic')
+  silent mkspell Xrtp/spell/Xtest.utf-8.spl Xrtp/spell/Xtest.dic
+  set runtimepath=./Xrtp
+  set spelllang=Xtest
+  set spell
+  silent spellgood abc
+  call assert_equal('./Xrtp/spell/Xtest.utf-8.add', &spellfile)
+  call assert_equal(['abc'], readfile('Xrtp/spell/Xtest.utf-8.add'))
+  call assert_true(filereadable('Xrtp/spell/Xtest.utf-8.spl'))
+  set spell& spelllang& spellfile&
+  call delete('Xrtp', 'rf')
+  let &encoding = save_encoding
+  let &rtp = save_rtp
+  %bw!
+endfunc
+
+" Test for the 'mkspellmem' option
+func Test_mkspellmem_opt()
+  call assert_fails('set mkspellmem=1000', 'E474:')
+  call assert_fails('set mkspellmem=1000,', 'E474:')
+  call assert_fails('set mkspellmem=1000,50', 'E474:')
+  call assert_fails('set mkspellmem=1000,50,', 'E474:')
+  call assert_fails('set mkspellmem=1000,50,10,', 'E474:')
+  call assert_fails('set mkspellmem=1000,50,0', 'E474:')
 endfunc
 
 " Test CHECKCOMPOUNDPATTERN (see :help spell-CHECKCOMPOUNDPATTERN)

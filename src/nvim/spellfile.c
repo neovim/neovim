@@ -733,7 +733,7 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
       if (lp->sl_syllable == NULL) {
         goto endFAIL;
       }
-      if (init_syl_tab(lp) == FAIL) {
+      if (init_syl_tab(lp) != OK) {
         goto endFAIL;
       }
       break;
@@ -2379,7 +2379,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
               || cur_aff->ah_flag == aff->af_needcomp
               || cur_aff->ah_flag == aff->af_comproot) {
             smsg(_("Affix also used for "
-                   "BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST"
+                   "BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST "
                    "in %s line %d: %s"),
                  fname, lnum, items[1]);
           }

@@ -808,5 +808,18 @@ func Test_word_index()
   call delete('Xtmpfile')
 endfunc
 
+func Test_check_empty_line()
+  " This was using freed memory
+  enew
+  spellgood! ﬂ
+  norm z=
+  norm yy
+  sil! norm P]svc
+  norm P]s
+
+  " TODO: should we clear the word list?
+  bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
