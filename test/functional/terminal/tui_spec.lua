@@ -85,6 +85,24 @@ describe('TUI', function()
     assert_alive()
   end)
 
+  it('resize at startup', function()
+    -- Issues: #17285 #15044 #11330
+    screen:try_resize(50, 10)
+    feed_command([[call termopen([v:progpath, '--clean', '--cmd', 'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile']) | sleep 500m | vs new]])
+    screen:expect([[
+      {1: }                        │                        |
+      {4:~                        }│{4:~                       }|
+      {4:~                        }│{4:~                       }|
+      {4:~                        }│{4:~                       }|
+      {4:~                        }│{4:~                       }|
+      {4:~                        }│{5:[No Name]   0,0-1    All}|
+      {4:~                        }│                        |
+      {5:new                       }{MATCH:<.*[/\]nvim }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('accepts resize while pager is active', function()
     child_session:request("nvim_command", [[
     set more
