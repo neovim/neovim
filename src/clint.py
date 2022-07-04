@@ -651,6 +651,9 @@ def Error(filename, linenum, category, confidence, message):
         elif _cpplint_state.output_format == 'eclipse':
             sys.stdout.write('%s:%s: warning: %s  [%s] [%d]\n' % (
                 filename, linenum, message, category, confidence))
+        elif _cpplint_state.output_format == 'gh_action':
+            sys.stdout.write('::error file=%s,line=%s::%s  [%s] [%d]\n' % (
+                filename, linenum, message, category, confidence))
         else:
             sys.stdout.write('%s:%s:  %s  [%s] [%d]\n' % (
                 filename, linenum, message, category, confidence))
@@ -3053,7 +3056,7 @@ def ParseArguments(args):
         if opt == '--help':
             PrintUsage(None)
         elif opt == '--output':
-            if val not in ('emacs', 'vs7', 'eclipse'):
+            if val not in ('emacs', 'vs7', 'eclipse', 'gh_action'):
                 PrintUsage('The only allowed output formats are emacs,'
                            ' vs7 and eclipse.')
             output_format = val

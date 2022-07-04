@@ -778,6 +778,12 @@ add_custom_command(
 
 add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
 
+if(CI_BUILD)
+  set(LINT_OUTPUT_FORMAT gh_action)
+else()
+  set(LINT_OUTPUT_FORMAT vs7)
+endif()
+
 set(LINT_NVIM_REL_SOURCES)
 foreach(sfile ${LINT_NVIM_SOURCES})
   get_test_target("" "${sfile}" r suffix)
@@ -787,7 +793,7 @@ foreach(sfile ${LINT_NVIM_SOURCES})
   set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
   add_custom_command(
     OUTPUT ${touch_file}
-    COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} ${rsfile}
+    COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} --output=${LINT_OUTPUT_FORMAT} ${rsfile}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
     DEPENDS ${LINT_PRG} ${sfile} ${LINT_SUPPRESSES_TOUCH_FILE}
@@ -807,7 +813,7 @@ add_glob_targets(
 add_custom_target(
   lintcfull
   COMMAND
-    ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} ${LINT_NVIM_REL_SOURCES}
+    ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} --output=${LINT_OUTPUT_FORMAT} ${LINT_NVIM_REL_SOURCES}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE} lintuncrustify
 )
