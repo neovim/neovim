@@ -607,6 +607,8 @@ void mark_view_restore(fmark_T *fm)
 {
   if (fm != NULL && fm->view.topline_offset >= 0) {
     linenr_T topline = fm->mark.lnum - fm->view.topline_offset;
+    // If the mark does not have a view, topline_offset is MAXLNUM,
+    // and this check can prevent restoring mark view in that case.
     if (topline >= 1) {
       set_topline(curwin, topline);
     }

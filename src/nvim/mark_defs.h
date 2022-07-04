@@ -64,9 +64,10 @@ typedef enum {
 /// Represents view in which the mark was created
 typedef struct fmarkv {
   linenr_T topline_offset;  ///< Amount of lines from the mark lnum to the top of the window.
+                            ///< Use MAXLNUM to indicate that the mark does not have a view.
 } fmarkv_T;
 
-#define INIT_FMARKV { 0 }
+#define INIT_FMARKV { MAXLNUM }
 
 /// Structure defining single local mark
 typedef struct filemark {
