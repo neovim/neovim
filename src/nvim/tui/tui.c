@@ -137,7 +137,7 @@ struct TUIData {
   char *space_buf;
 };
 
-static bool volatile got_winch = false;
+static bool got_winch = false;
 static bool did_user_set_dimensions = false;
 static bool cursor_style_enabled = false;
 
