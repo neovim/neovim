@@ -817,9 +817,7 @@ func Test_check_empty_line()
   sil! norm P]svc
   norm P]s
 
-  " set 'encoding' to clear the wordt list
-  set enc=latin1
-  set enc=utf-8
+  " TODO: should we clear the word list?
   bwipe!
 endfunc
 
