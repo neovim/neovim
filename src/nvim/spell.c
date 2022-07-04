@@ -1469,7 +1469,9 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     }
 
     // Copy the line into "buf" and append the start of the next line if
-    // possible.
+    // possible.  Note: this ml_get_buf() may make "line" invalid, check
+    // for empty line first.
+    bool empty_line = *skipwhite((const char *)line) == NUL;
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
       spell_cat_line(buf + STRLEN(buf),
@@ -1613,7 +1615,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
       --capcol;
 
       // But after empty line check first word in next line
-      if (*skipwhite((char *)line) == NUL) {
+      if (empty_line) {
         capcol = 0;
       }
     }
