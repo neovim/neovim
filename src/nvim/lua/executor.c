@@ -617,6 +617,7 @@ static int nlua_ui_attach(lua_State *lstate)
 
   LuaRef ui_event_cb = nlua_ref_global(lstate, 3);
   bool ext_widgets[kUIGlobalCount] = { false };
+  bool tbl_has_true_val = false;
 
   lua_pushvalue(lstate, 2);
   lua_pushnil(lstate);
@@ -626,9 +627,11 @@ static int nlua_ui_attach(lua_State *lstate)
     const char *s = lua_tolstring(lstate, -2, &len);
     bool val = lua_toboolean(lstate, -1);
 
-    int i;
-    for (i = 0; i < kUIGlobalCount; i++) {
+    for (size_t i = 0; i < kUIGlobalCount; i++) {
       if (strequal(s, ui_ext_names[i])) {
+        if (val) {
+          tbl_has_true_val = true;
+        }
         ext_widgets[i] = val;
         goto ok;
       }
@@ -637,6 +640,10 @@ static int nlua_ui_attach(lua_State *lstate)
     return luaL_error(lstate, "Unexpected key: %s", s);
 ok:
     lua_pop(lstate, 1);
+  }
+
+  if (!tbl_has_true_val) {
+    return luaL_error(lstate, "ext_widgets table must contain at least one 'true' value");
   }
 
   ui_comp_add_cb(ns_id, ui_event_cb, ext_widgets);
