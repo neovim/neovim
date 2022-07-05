@@ -7,6 +7,8 @@ local eval, eq, neq, retry =
   helpers.eval, helpers.eq, helpers.neq, helpers.retry
 local ok = helpers.ok
 local feed = helpers.feed
+local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 local iswin = helpers.iswin
 
 describe('autocmd TermClose', function()
@@ -14,6 +16,24 @@ describe('autocmd TermClose', function()
     clear()
     nvim('set_option', 'shell', testprg('shell-test'))
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
+  end)
+
+
+  local function test_termclose_delete_own_buf()
+    command('autocmd TermClose * bdelete!')
+    command('terminal')
+    eq('Vim(bdelete):E937: Attempt to delete a buffer that is in use', pcall_err(command, 'bdelete!'))
+    assert_alive()
+  end
+
+  -- TODO: fixed after merging patches for `can_unload_buffer`?
+  pending('TermClose deleting its own buffer, altbuf = buffer 1 #10386', function()
+    test_termclose_delete_own_buf()
+  end)
+
+  it('TermClose deleting its own buffer, altbuf NOT buffer 1 #10386', function()
+    command('edit foo1')
+    test_termclose_delete_own_buf()
   end)
 
   it('triggers when fast-exiting terminal job stops', function()
