@@ -26,12 +26,14 @@ set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
+set(STDLIB_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_lua_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
 set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
 set(GENERATOR_HASHY ${GENERATOR_DIR}/hashy.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(LUA_API_C_BINDINGS ${GENERATED_DIR}/lua_api_c_bindings.generated.c)
+set(LUA_STDLIB_C_BINDINGS ${GENERATED_DIR}/lua_stdlib_c_bindings.generated.c)
 set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
@@ -81,6 +83,7 @@ set(LINT_SUPPRESSES_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/InstallClintErro
 
 glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
 glob_wrapper(API_HEADERS api/*.h)
+glob_wrapper(STDLIB_HEADERS lua/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
 glob_wrapper(MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 
@@ -294,6 +297,9 @@ foreach(sfile ${NVIM_SOURCES}
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")
     list(APPEND API_HEADERS ${gf_h_h})
   endif()
+  if(${d} MATCHES "^lua$")
+    list(APPEND STDLIB_HEADERS ${gf_h_h})
+  endif()
 endforeach()
 
 add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
@@ -319,6 +325,17 @@ add_custom_command(
     ${API_DISPATCH_GENERATOR}
     ${GENERATOR_C_GRAMMAR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+)
+
+add_custom_command(
+  OUTPUT ${LUA_STDLIB_C_BINDINGS}
+  COMMAND ${LUA_PRG} ${STDLIB_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                     ${LUA_STDLIB_C_BINDINGS}
+                     ${STDLIB_HEADERS}
+  DEPENDS
+    ${STDLIB_HEADERS}
+    ${STDLIB_DISPATCH_GENERATOR}
+    ${GENERATOR_C_GRAMMAR}
 )
 
 add_custom_command(
@@ -350,6 +367,10 @@ add_custom_command(
 
 list(APPEND NVIM_GENERATED_SOURCES
   "${LUA_API_C_BINDINGS}"
+)
+
+list(APPEND NVIM_GENERATED_SOURCES
+  "${LUA_STDLIB_C_BINDINGS}"
 )
 
 add_custom_command(

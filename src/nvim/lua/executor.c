@@ -650,6 +650,8 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   nlua_state_add_stdlib(lstate, false);
 
+  nlua_state_add_stdlib_gen(lstate);
+
   lua_setglobal(lstate, "vim");
 
   if (!nlua_init_packages(lstate)) {
