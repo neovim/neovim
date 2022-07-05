@@ -195,7 +195,8 @@ func Test_indent_func_with_gq()
         \ 'metus lectus ultrices odio, sed elementum mi ante at arcu.', '', '\begin{center}', '',
         \ 'Proin nec risus consequat nunc dapibus consectetur. Mauris lacinia est a augue',
         \ 'tristique accumsan. Morbi pretium, felis molestie eleifend condimentum, arcu',
-        \ 'ipsum congue nisl, quis euismod purus libero in ante. Donec id semper purus.',
+        \ 'ipsum congue nisl, quis euismod purus libero in ante.', '',
+        \ 'Donec id semper purus.',
         \ 'Suspendisse eget aliquam nunc. Maecenas fringilla mauris vitae maximus',
         \ 'condimentum. Cras a quam in mi dictum eleifend at a lorem. Sed convallis',
         \ 'ante a commodo facilisis. Nam suscipit vulputate odio, vel dapibus nisl',
@@ -204,10 +205,10 @@ func Test_indent_func_with_gq()
   1d_
   call cursor(5, 1)
   ka
-  call cursor(15, 1)
+  call cursor(14, 1)
   kb
   norm! 'agqap
-  norm! 'bgqap
+  norm! 'bgqG
   let expected = [ '\documentclass{article}', '', '\begin{document}', '',
         \ 'Lorem ipsum dolor sit amet, consectetur adipiscing',
         \ 'elit. Fusce ut enim non libero efficitur aliquet.',
@@ -224,9 +225,10 @@ func Test_indent_func_with_gq()
         \ '  consectetur. Mauris lacinia est a augue',
         \ '  tristique accumsan. Morbi pretium, felis',
         \ '  molestie eleifend condimentum, arcu ipsum congue',
-        \ '  nisl, quis euismod purus libero in ante. Donec',
-        \ '  id semper purus.  Suspendisse eget aliquam nunc.',
-        \ '  Maecenas fringilla mauris vitae maximus',
+        \ '  nisl, quis euismod purus libero in ante.',
+        \ '',
+        \ '  Donec id semper purus.  Suspendisse eget aliquam',
+        \ '  nunc. Maecenas fringilla mauris vitae maximus',
         \ '  condimentum. Cras a quam in mi dictum eleifend',
         \ '  at a lorem. Sed convallis ante a commodo',
         \ '  facilisis. Nam suscipit vulputate odio, vel',
@@ -239,5 +241,29 @@ func Test_indent_func_with_gq()
   delmark ab
   delfunction GetTeXIndent 
 endfu
+
+func Test_formatting_keeps_first_line_indent()
+  let lines =<< trim END
+      foo()
+      {
+          int x;         // manually positioned
+                         // more text that will be formatted
+                         // but not reindented
+  END
+  new
+  call setline(1, lines)
+  setlocal sw=4 cindent tw=45 et
+  normal! 4Ggqj
+  let expected =<< trim END
+      foo()
+      {
+          int x;         // manually positioned
+                         // more text that will be
+                         // formatted but not
+                         // reindented
+  END
+  call assert_equal(expected, getline(1, '$'))
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
