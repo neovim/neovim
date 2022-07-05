@@ -1291,6 +1291,9 @@ Lua module: vim                                                      *lua-vim*
 cmd({command})                                                     *vim.cmd()*
                 Execute Vim script commands.
 
+                Note that `vim.cmd` can be indexed with a command name to
+                return a callable function to the command.
+
                 Example: >
 
                    vim.cmd('echo 42')
@@ -1300,7 +1303,23 @@ cmd({command})                                                     *vim.cmd()*
                        autocmd FileType c setlocal cindent
                      augroup END
                    ]])
-                   vim.cmd({ cmd = 'echo', args = { '"foo"' } })
+
+                   -- Ex command :echo "foo"
+                   -- Note string literals need to be double quoted.
+                   vim.cmd('echo "foo"')
+                   vim.cmd { cmd = 'echo', args = { '"foo"' } }
+                   vim.cmd.echo({ args = { '"foo"' } })
+                   vim.cmd.echo('"foo"')
+
+                   -- Ex command :write! myfile.txt
+                   vim.cmd('write! myfile.txt')
+                   vim.cmd { cmd = 'write', args = { "myfile.txt" }, bang = true }
+                   vim.cmd.write { args = { "myfile.txt" }, bang = true }
+                   vim.cmd.write {"myfile.txt", bang = true })
+
+                   -- Ex command :colorscheme blue
+                   vim.cmd('colorscheme blue')
+                   vim.cmd.colorscheme('blue')
 <
 
                 Parameters: ~

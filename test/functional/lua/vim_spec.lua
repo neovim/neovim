@@ -2148,6 +2148,13 @@ describe('lua stdlib', function()
     ]]
     eq('2', funcs.luaeval "BUF")
     eq(2, funcs.luaeval "#vim.api.nvim_list_bufs()")
+
+    -- vim.cmd can be indexed with a command name
+    exec_lua [[
+      vim.cmd.let 'g:var = 2'
+    ]]
+
+    eq(2, funcs.luaeval "vim.g.var")
   end)
 
   it('vim.regex', function()
