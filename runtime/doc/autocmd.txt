@@ -419,6 +419,85 @@ ChanOpen			Just after a channel was opened.
 				Sets these |v:event| keys:
 				    info	as from |nvim_get_chan_info()|
 
+							*CmdAtom*
+CmdAtom				After a user action (an input "atom"): any
+				motion, operator, insert session, Visual-mode
+				keysequence, Ex cmdline (":cnext<CR>"),
+				mapping (and its sub-atoms), or scroll/mouse.
+
+				Only for user input, not programmatic input:
+					INPUT			ATOM ~
+					typed keys		yes
+					|nvim_input()|		yes
+					|nvim_feedkeys()|	with "t" (see note)
+					dot-repeat |.|		yes
+					mapping, typed "@q"	yes
+					|:normal|		no
+					API requests		no, lol
+					"@q" fed by a script	no
+					"multicursor" replays	no
+					aborted operation	no
+					terminal-mode keys	no
+					mouse drag/release	no
+					Hydrogen		yes
+
+				Note: keys fed from a typed mapping's own
+				execution (e.g. its Lua callback) count as
+				the mapping's expansion and fold into its
+				atom, "t" or not.
+				Fired at the next event-loop tick, not
+				synchronously.
+				<amatch> (the pattern) is the atom type.
+
+				The |event-data| has these fields; a field
+				that does not apply is omitted (type, keys,
+				changed, and cascade are always present):
+				- arg: Typed operand of `cmd`: the "x" of "fx",
+				  the replacement char of |r|.
+				  |key-notation|, like `cmd`.
+				- atoms: The constituent atoms of a composite
+				  (multi-command mapping, Visual sequence),
+				  in-order.  A consumer of e.g. "motion" atoms
+				  may want to inspect these "children".
+				- cascade: Queued for "multicursor" replay.
+				- changed: Buffer was changed.
+				- cmd: Command/motion/object name: "w", "fx" is
+				  "f", "iw", "gJ", "<Home>", …. |key-notation|
+				  (not raw bytes).
+				- count: Effective |count|; omitted if none.
+				- keys:	Resolved (post-mapping) keysequence,
+				  raw internal bytes (not |key-notation|):
+				  feed directly to |feedkeys()| or
+				  |nvim_feedkeys()| (mode "n") to replay. Use
+				  |keytrans()| to key-notation. Empty for
+				  a mapping whose commands have no replayable
+				  keys (|<Cmd>|/Lua commands).
+				- lhs: LHS (user input). Raw bytes, like `keys`.
+				- motionforce |forced-motion|: "v", "V", or
+				  "<C-V>" (|key-notation|).
+				- operator: Operator: "d", "g@", "zf", ….
+				  |key-notation|, like `cmd`.
+				- pending: What is awaiting input after
+				  a mapping: "operator", "visual".
+				- reg: Register name.
+				- text: Payload text: inserted text of an
+				  insert session (after its last cursor-move,
+				  like |quote.|), Ex cmdline, or search.
+				  Literal text, not key encoding.  Examples:
+				    - typed "iab<Esc>" → text="ab"
+				    - typed ":cnext<CR>" → text="cnext"
+				    - typed "iab<Left>c<Esc>" → text="c"
+				- type: "command", "ex", "insert", "jump",
+				  "mapping", "motion", "mouse", "operator",
+				  "scroll", "visual".
+				    - "command": neither edits nor moves the
+				      cursor (undo, folds, CTRL-W commands, …).
+				    - "jump": moves the cursor via
+				      absolute/shared navigation state
+				      (|jumplist|, marks, |star|).
+				    - "mouse"/"scroll" atoms are emit-only:
+				      never cascaded, not replayable.
+
 							*CmdlineChanged*
 CmdlineChanged			After EVERY change inside command line. Also
 				triggered during mappings! Use |<Cmd>| instead

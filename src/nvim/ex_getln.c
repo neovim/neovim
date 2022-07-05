@@ -48,6 +48,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/input.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insert.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
@@ -950,6 +951,11 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
         xfree(new_last_cmdline);
         new_last_cmdline = xstrnsave(ccline.cmdbuff, (size_t)ccline.cmdlen);
       }
+    }
+
+    if (!s->gotesc && ccline.level == 1) {
+      // An accepted toplevel cmdline is the executing command's payload (":cnext<CR>", "/pat<CR>").
+      atom_cmdline_set(s->firstc, ccline.cmdbuff, (size_t)ccline.cmdlen);
     }
 
     if (s->gotesc) {

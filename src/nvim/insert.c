@@ -218,16 +218,17 @@ static void insert_enter(InsertState *s)
   }
 
   if (s->cmdchar != NUL && restart_edit == 0) {
-    ResetRedobuff();
-    AppendNumberToRedobuff(s->count);
     if (s->cmdchar == 'V' || s->cmdchar == 'v') {
       // "gR" or "gr" command
-      AppendCharToRedobuff('g');
-      AppendCharToRedobuff((s->cmdchar == 'v') ? 'r' : 'R');
+      redo_new((CmdSpec){ .count = s->count, .cmd = 'g', .cmd2 = (s->cmdchar == 'v') ? 'r' : 'R' });
+      redo_append_char('g');
+      redo_append_char((s->cmdchar == 'v') ? 'r' : 'R');
     } else {
-      AppendCharToRedobuff(s->cmdchar);
+      redo_new((CmdSpec){ .count = s->count, .cmd = s->cmdchar,
+                          .cmd2 = (s->cmdchar == 'g') ? 'I' : NUL });
+      redo_append_char(s->cmdchar);
       if (s->cmdchar == 'g') {          // "gI" command
-        AppendCharToRedobuff('I');
+        redo_append_char('I');
       } else if (s->cmdchar == 'r') {  // "r<CR>" command
         s->count = 1;                  // insert only one <CR>
       }
@@ -279,7 +280,7 @@ static void insert_enter(InsertState *s)
   if (restart_edit != 0 && stuff_empty()) {
     // After a paste we consider text typed to be part of the insert for
     // the pasted text. You can backspace over the pasted text too.
-    Ins.arrow_used = where_paste_started.lnum == 0;
+    Ins.moved = where_paste_started.lnum == 0 ? kInsJump : kInsNone;
     restart_edit = 0;
 
     // If the cursor was after the end-of-line before the CTRL-O and it is
@@ -304,7 +305,7 @@ static void insert_enter(InsertState *s)
     }
     ins_at_eol = false;
   } else {
-    Ins.arrow_used = false;
+    Ins.moved = kInsNone;
   }
 
   // we are in insert mode now, don't need to start it anymore
@@ -337,10 +338,10 @@ static void insert_enter(InsertState *s)
 
   // Get the current length of the redo buffer, those characters have to be
   // skipped if we want to get to the inserted characters.
-  String inserted = get_inserted();
-  Ins.new_insert_skip = (int)inserted.size;
-  if (inserted.data != NULL) {
-    xfree(inserted.data);
+  String redo = redo_keys();
+  Ins.new_insert_skip = (int)redo.size;
+  if (redo.data != NULL) {
+    xfree(redo.data);
   }
 
   old_indent = 0;
@@ -389,7 +390,7 @@ static int insert_check(VimState *state)
     Ins.revins_legal = 0;
   }
 
-  if (Ins.arrow_used) {       // don't repeat insert when arrow key used
+  if (Ins.moved != kInsNone) {  // don't repeat insert when arrow key used
     s->count = 0;
   }
 
@@ -411,7 +412,7 @@ static int insert_check(VimState *state)
   }
 
   // set curwin->w_curswant for next K_DOWN or K_UP
-  if (!Ins.arrow_used) {
+  if (Ins.moved == kInsNone) {
     curwin->w_set_curswant = true;
   }
 
@@ -726,8 +727,6 @@ static int insert_execute(VimState *state, int key)
 static int insert_handle_key(InsertState *s)
 {
   // The big switch to handle a character in insert mode.
-  // TODO(tarruda): This could look better if a lookup table is used.
-  // (similar to normal mode `nv_cmds[]`)
   switch (s->c) {
   case ESC:           // End input mode
     if (echeck_abbr(ESC + ABBR_OFF)) {
@@ -1227,7 +1226,7 @@ normalchar:
               ins_char(s->c);
             }
           }
-          AppendToRedobuffLit(str, -1);
+          redo_append_lit(str, -1);
         }
         xfree(str);
         s->c = NUL;
@@ -1324,7 +1323,7 @@ static void insert_handle_key_post(InsertState *s)
   }
 
   // If the cursor was moved we didn't just insert a space
-  if (Ins.arrow_used) {
+  if (Ins.moved != kInsNone) {
     s->inserted_space = false;
   }
 
@@ -1393,11 +1392,6 @@ bool edit(int cmdchar, bool startln, int count)
   s->count = count;
   insert_enter(s);
   return s->c == Ctrl_O;
-}
-
-bool ins_need_undo_get(void)
-{
-  return Ins.need_undo;
 }
 
 /// Redraw for Insert mode.
@@ -1505,7 +1499,7 @@ static void ins_ctrl_v(void)
     edit_putchar('^', true);
     did_putchar = true;
   }
-  AppendToRedobuff(CTRL_V_STR);
+  redo_append_str(S_LEN(CTRL_V_STR));
 
   add_to_showcmd_c(Ctrl_V);
 
@@ -1596,7 +1590,7 @@ char *prompt_text(void)
   return buf_prompt_text(curbuf);
 }
 
-// Prepare for prompt mode: Make sure the last line has the prompt text.
+// Prepare for prompt mode (buftype=prompt): Make sure the last line has the prompt text.
 // Move the cursor to this line.
 static void init_prompt(int cmdchar_todo)
 {
@@ -1674,7 +1668,7 @@ static void set_insstart(linenr_T lnum, colnr_T col)
   Ins.start_orig = Ins.start;
   Ins.start_textlen = Ins.start.col;
   Ins.start_blank_vcol = MAXCOL;
-  Ins.arrow_used = false;
+  Ins.moved = kInsNone;
 }
 
 // Undo the previous edit_putchar().
@@ -1922,7 +1916,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
       }
       p[len - 1] = NUL;
       ins_str(p, (size_t)(len - 1));
-      AppendToRedobuffLit(p, -1);
+      redo_append_lit(p, -1);
       ctrlv = false;
     }
   }
@@ -2112,7 +2106,7 @@ void insertchar(int c, int flags, int second_indent)
       i = 0;
     }
     if (buf[i] != NUL) {
-      AppendToRedobuffLit(buf + i, -1);
+      redo_append_lit(buf + i, -1);
     }
   } else {
     int cc;
@@ -2123,13 +2117,13 @@ void insertchar(int c, int flags, int second_indent)
       utf_char2bytes(c, buf);
       buf[cc] = NUL;
       ins_char_bytes(buf, (size_t)cc);
-      AppendCharToRedobuff(c);
+      redo_append_char(c);
     } else {
       ins_char(c);
       if (flags & INSCHAR_CTRLV) {
         redo_literal(c);
       } else {
-        AppendCharToRedobuff(c);
+        redo_append_char(c);
       }
     }
   }
@@ -2144,45 +2138,60 @@ static void redo_literal(int c)
   // three digits.
   if (ascii_isdigit(c)) {
     vim_snprintf(buf, sizeof(buf), "%03d", c);
-    AppendToRedobuff(buf);
+    redo_append_str(buf, -1);
   } else {
-    AppendCharToRedobuff(c);
+    redo_append_char(c);
   }
 }
 
-/// start_arrow() is called when an arrow key is used in insert mode.
+/// Called when the cursor moves in insert-mode without editing text (arrow keys, <Home>, mouse).
 /// For undo/redo it resembles hitting the <ESC> key.
 ///
-/// @param end_insert_pos  can be NULL
-void start_arrow(pos_T *end_insert_pos)
+/// @param end_insert_pos  Can be NULL
+/// @param end_change      End undoable change
+/// @param move_key        Cursor-move key, captured in the CmdAtom (replayed at mc-cascade).
+///                        NUL for non-captured jumps (mouse, <PageUp>, <C-Home>); then the next
+///                        edit restarts a new insert-session (stop_arrow()).
+void start_arrow(pos_T *end_insert_pos, bool end_change, int move_key)
 {
-  start_arrow_common(end_insert_pos, true);
-}
-
-/// Like start_arrow() but with end_change argument.
-/// Will prepare for redo of CTRL-G U if "end_change" is false.
-///
-/// @param end_insert_pos  can be NULL
-/// @param end_change      end undoable change
-static void start_arrow_with_change(pos_T *end_insert_pos, bool end_change)
-{
-  start_arrow_common(end_insert_pos, end_change);
-  if (!end_change) {
-    AppendCharToRedobuff(Ctrl_G);
-    AppendCharToRedobuff('U');
+  if (Ins.moved == kInsNone && end_change) {  // something has been inserted
+    stop_insert(end_insert_pos, false, false);  // this stops the current insert
   }
-}
-
-/// @param end_insert_pos  can be NULL
-/// @param end_change      end undoable change
-static void start_arrow_common(pos_T *end_insert_pos, bool end_change)
-{
-  if (!Ins.arrow_used && end_change) {  // something has been inserted
-    AppendToRedobuff(ESC_STR);
-    stop_insert(end_insert_pos, false, false);
-    Ins.arrow_used = true;  // This means we stopped the current insert.
+  if (Ins.moved != kInsJump) {
+    if (move_key == NUL) {
+      redo_append_str(S_LEN(ESC_STR));
+      Ins.moved = kInsJump;
+    } else {
+      if (!IS_SPECIAL(move_key)) {
+        // CTRL-G j/k: the only captured cursor-moves typed as plain chars.
+        redo_append_char(Ctrl_G);
+      }
+      redo_append_char(move_key);
+      if (end_change) {
+        Ins.moved = kInsArrow;
+      }
+    }
   }
   check_spell_redraw();
+}
+
+/// Like start_arrow(); if `end_change` is false (CTRL-G U pending), also captures the CTRL-G U
+/// keys in the atom, ahead of "move_key": replay re-executes the whole "<C-g>U<Left>".
+///
+/// (Capturing them here, before start_arrow(), cannot corrupt stop_insert()'s last_insert
+/// harvest: they append only when "end_change" is false, and stop_insert() runs only when it
+/// is true.)
+///
+/// @param end_insert_pos  Can be NULL
+/// @param end_change      End undoable change
+/// @param move_key        @see start_arrow()
+static void start_arrow_with_change(pos_T *end_insert_pos, bool end_change, int move_key)
+{
+  if (!end_change && Ins.moved != kInsJump) {
+    redo_append_char(Ctrl_G);
+    redo_append_char('U');
+  }
+  start_arrow(end_insert_pos, end_change, move_key);
 }
 
 // If we skipped highlighting word at cursor, do it now.
@@ -2198,11 +2207,12 @@ static void check_spell_redraw(void)
 }
 
 // stop_arrow() is called before a change is made in insert mode.
-// If an arrow key has been used, start a new insertion.
+//
+// After a cursor-move (`Ins.moved`), the change starts a new INSERTION (see `Ins.start`).
 // Returns FAIL if undo is impossible, shouldn't insert then.
 int stop_arrow(void)
 {
-  if (Ins.arrow_used) {
+  if (Ins.moved != kInsNone) {
     Ins.start = curwin->w_cursor;  // new insertion starts here
     if (Ins.start.col > Ins.start_orig.col && !Ins.need_undo) {
       // Don't update the original insert position when moved to the
@@ -2211,8 +2221,9 @@ int stop_arrow(void)
     }
     Ins.start_textlen = linetabsize_str(get_cursor_line_ptr());
 
+    const bool jumped = Ins.moved == kInsJump;
     if (u_save_cursor() == OK) {
-      Ins.arrow_used = false;
+      Ins.moved = kInsNone;
       Ins.need_undo = false;
     }
     Ins.ai_col = 0;
@@ -2220,9 +2231,19 @@ int stop_arrow(void)
       orig_line_count = curbuf->b_ml.ml_line_count;
       vr_lines_changed = 1;
     }
-    ResetRedobuff();
-    AppendToRedobuff("1i");  // Pretend we start an insertion.
-    Ins.new_insert_skip = 2;
+    if (jumped) {
+      // Non-captured cursor-move (mouse, <PageUp>, …): restart the capture as a "1i" insertion.
+      // The count is a spec field (not body bytes), so "[count]." replaces it ("3i…").
+      redo_new((CmdSpec){ .count = 1, .cmd = 'i' });
+      redo_append_char('i');
+      Ins.new_insert_skip = 2;
+    } else {
+      // Cursor-move was captured (start_arrow()): the atom mc-cascade will replay it.
+      // Only `last_insert` (the ". register, i_CTRL-A) restarts here, like Vim.
+      String redo = redo_keys();
+      Ins.new_insert_skip = (int)redo.size;
+      xfree(redo.data);
+    }
   } else if (Ins.need_undo) {
     if (u_save_cursor() == OK) {
       // A command or event may have moved the cursor before the next
@@ -2241,7 +2262,7 @@ int stop_arrow(void)
   // Always open fold at the cursor line when inserting something.
   foldOpenCursor();
 
-  return Ins.arrow_used || Ins.need_undo ? FAIL : OK;
+  return Ins.moved != kInsNone || Ins.need_undo ? FAIL : OK;
 }
 
 /// Do a few things to stop inserting.
@@ -2258,17 +2279,17 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   // Save the inserted text for later redo with ^@ and CTRL-A.
   // Don't do it when "restart_edit" was set and nothing was inserted,
   // otherwise CTRL-O w and then <Left> will clear "last_insert".
-  String inserted = get_inserted();
-  int added = inserted.data == NULL ? 0 : (int)inserted.size - Ins.new_insert_skip;
+  String redo = redo_keys();
+  int added = redo.data == NULL ? 0 : (int)redo.size - Ins.new_insert_skip;
   if (Ins.did_restart_edit == 0 || added > 0) {
     xfree(last_insert.data);
-    last_insert = inserted;  // structure copy
+    last_insert = redo;  // structure copy
     last_insert_skip = added < 0 ? 0 : Ins.new_insert_skip;
   } else {
-    xfree(inserted.data);
+    xfree(redo.data);
   }
 
-  if (!Ins.arrow_used && end_insert_pos != NULL) {
+  if (Ins.moved == kInsNone && end_insert_pos != NULL) {
     int cc;
     // Auto-format now.  It may seem strange to do this when stopping an
     // insertion (or moving the cursor), but it's required when appending
@@ -2313,9 +2334,9 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
     // Do this when ESC was used or moving the cursor up/down.
     // Check for the old position still being valid, just in case the text
     // got changed unexpectedly.
-    if (!nomove && Ins.did_ai && (esc || (vim_strchr(p_cpo, kCpoIndent) == NULL
-                                          && curwin->w_cursor.lnum !=
-                                          end_insert_pos->lnum))
+    if (!nomove && Ins.did_ai
+        && (esc || (vim_strchr(p_cpo, kCpoIndent) == NULL
+                    && curwin->w_cursor.lnum != end_insert_pos->lnum))
         && end_insert_pos->lnum <= curbuf->b_ml.ml_line_count) {
       pos_T tpos = curwin->w_cursor;
       colnr_T prev_col = end_insert_pos->col;
@@ -2735,7 +2756,7 @@ static bool echeck_abbr(int c)
 {
   // Don't check for abbreviation in paste mode, when disabled and just
   // after moving around with cursor keys.
-  if (p_paste || no_abbr || Ins.arrow_used) {
+  if (p_paste || no_abbr || Ins.moved != kInsNone) {
     return false;
   }
 
@@ -2956,15 +2977,15 @@ static void ins_reg(void)
 
     if (literally == Ctrl_O || literally == Ctrl_P) {
       // Append the command to the redo buffer.
-      AppendCharToRedobuff(Ctrl_R);
-      AppendCharToRedobuff(literally);
-      AppendCharToRedobuff(regname);
+      redo_append_char(Ctrl_R);
+      redo_append_char(literally);
+      redo_append_char(regname);
 
       do_put(regname, NULL, BACKWARD, 1,
              (literally == Ctrl_P ? PUT_FIXINDENT : 0) | PUT_CURSEND);
     } else if (reg->y_size > 1 && is_literal_register(regname)) {
-      AppendCharToRedobuff(Ctrl_R);
-      AppendCharToRedobuff(regname);
+      redo_append_char(Ctrl_R);
+      redo_append_char(regname);
       do_put(regname, NULL, BACKWARD, 1, PUT_CURSEND);
     } else if (insert_reg(regname, NULL, !!literally) == FAIL) {
       vim_beep(kOptBoFlagRegister);
@@ -3089,10 +3110,10 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
     RedrawingDisabled--;
     disabled_redraw = false;
   }
-  if (!Ins.arrow_used) {
+  if (Ins.moved == kInsNone) {
     // Don't append the ESC for "r<CR>" and "grx".
     if (cmdchar != 'r' && cmdchar != 'v') {
-      AppendToRedobuff(ESC_STR);
+      redo_append_str(S_LEN(ESC_STR));
     }
 
     // Repeating insert may take a long time.  Check for
@@ -3121,6 +3142,10 @@ static bool ins_esc(int *count, int cmdchar, bool nomove)
     }
     stop_insert(&curwin->w_cursor, true, nomove);
     undisplay_dollar();
+  } else if (Ins.moved == kInsArrow && cmdchar != 'r' && cmdchar != 'v') {
+    // The session ended just after a cursor-move: close the atom, so the whole session (including
+    // cursor-move) replays.
+    redo_append_str(S_LEN(ESC_STR));
   }
 
   if (cmdchar != 'r' && cmdchar != 'v') {
@@ -3261,7 +3286,7 @@ static void ins_insert(int replaceState)
     State = replaceState | (State & MODE_LANGMAP);
   }
   may_trigger_modechanged();
-  AppendCharToRedobuff(K_INS);
+  redo_append_char(K_INS);
   showmode();
   ui_cursor_shape();            // may show different cursor shape
 }
@@ -3294,7 +3319,7 @@ static void ins_shift(int c, int lastc)
   if (stop_arrow() == FAIL) {
     return;
   }
-  AppendCharToRedobuff(c);
+  redo_append_char(c);
 
   // 0^D and ^^D: remove all indent.
   if (c == Ctrl_D && (lastc == '0' || lastc == '^')
@@ -3349,7 +3374,7 @@ static void ins_del(void)
   Ins.did_si = false;
   Ins.can_si = false;
   Ins.can_si_back = false;
-  AppendCharToRedobuff(K_DEL);
+  redo_append_char(K_DEL);
 }
 
 /// Handle Backspace, delete-word and delete-line in Insert mode.
@@ -3376,10 +3401,10 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       || (!Ins.revins_on
           && ((curwin->w_cursor.lnum == 1 && curwin->w_cursor.col == 0)
               || (!can_bs(BS_START)
-                  && ((Ins.arrow_used && !bt_prompt(curbuf))
+                  && ((Ins.moved != kInsNone && !bt_prompt(curbuf))
                       || (curwin->w_cursor.lnum == Ins.start_orig.lnum
                           && curwin->w_cursor.col <= Ins.start_orig.col)))
-              || (!can_bs(BS_INDENT) && !Ins.arrow_used && Ins.ai_col > 0
+              || (!can_bs(BS_INDENT) && Ins.moved == kInsNone && Ins.ai_col > 0
                   && curwin->w_cursor.col <= Ins.ai_col)
               || (!can_bs(BS_EOL) && curwin->w_cursor.col == 0)))) {
     vim_beep(kOptBoFlagBackspace);
@@ -3518,7 +3543,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
                 && curwin->w_cursor.col > 0
                 && (*(get_cursor_pos_ptr() - 1) == TAB
                     || (*(get_cursor_pos_ptr() - 1) == ' '
-                        && (!*inserted_space_p || Ins.arrow_used)))))) {
+                        && (!*inserted_space_p || Ins.moved != kInsNone)))))) {
       *inserted_space_p = false;
 
       bool const use_ts = !curwin->w_p_list || curwin->w_p_lcs_chars.tab1;
@@ -3669,7 +3694,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   // It's a little strange to put backspaces into the redo
   // buffer, but it makes auto-indent a lot easier to deal
   // with.
-  AppendCharToRedobuff(c);
+  redo_append_char(c);
 
   // If deleted before the insertion point, adjust it
   if (curwin->w_cursor.lnum == Ins.start_orig.lnum
@@ -3707,10 +3732,7 @@ static void ins_left(void)
   undisplay_dollar();
   pos_T tpos = curwin->w_cursor;
   if (oneleft() == OK) {
-    start_arrow_with_change(&tpos, end_change);
-    if (!end_change) {
-      AppendCharToRedobuff(K_LEFT);
-    }
+    start_arrow_with_change(&tpos, end_change, K_LEFT);
     // If exit reversed string, position is fixed
     if (Ins.revins_scol != -1 && (int)curwin->w_cursor.col >= Ins.revins_scol) {
       Ins.revins_legal++;
@@ -3719,7 +3741,7 @@ static void ins_left(void)
   } else if (vim_strchr(p_ww, '[') != NULL && curwin->w_cursor.lnum > 1) {
     // if 'whichwrap' set for cursor in insert mode may go to previous line.
     // always break undo when moving upwards/downwards, else undo may break
-    start_arrow(&tpos);
+    start_arrow(&tpos, true, K_LEFT);
     curwin->w_cursor.lnum--;
     coladvance(curwin, MAXCOL);
     curwin->w_set_curswant = true;  // so we stay at the end
@@ -3742,7 +3764,7 @@ static void ins_home(int c)
   curwin->w_cursor.col = 0;
   curwin->w_cursor.coladd = 0;
   curwin->w_curswant = 0;
-  start_arrow(&tpos);
+  start_arrow(&tpos, true, c == K_C_HOME ? NUL : K_HOME);
 }
 
 static void ins_end(int c)
@@ -3758,7 +3780,7 @@ static void ins_end(int c)
   coladvance(curwin, MAXCOL);
   curwin->w_curswant = MAXCOL;
 
-  start_arrow(&tpos);
+  start_arrow(&tpos, true, c == K_C_END ? NUL : K_END);
 }
 
 static void ins_s_left(void)
@@ -3769,10 +3791,7 @@ static void ins_s_left(void)
   }
   undisplay_dollar();
   if (curwin->w_cursor.lnum > 1 || curwin->w_cursor.col > 0) {
-    start_arrow_with_change(&curwin->w_cursor, end_change);
-    if (!end_change) {
-      AppendCharToRedobuff(K_S_LEFT);
-    }
+    start_arrow_with_change(&curwin->w_cursor, end_change, K_S_LEFT);
     bck_word(1, false, false);
     curwin->w_set_curswant = true;
   } else {
@@ -3790,10 +3809,7 @@ static void ins_right(void)
   }
   undisplay_dollar();
   if (gchar_cursor() != NUL || virtual_active(curwin)) {
-    start_arrow_with_change(&curwin->w_cursor, end_change);
-    if (!end_change) {
-      AppendCharToRedobuff(K_RIGHT);
-    }
+    start_arrow_with_change(&curwin->w_cursor, end_change, K_RIGHT);
     curwin->w_set_curswant = true;
     if (virtual_active(curwin)) {
       oneright();
@@ -3809,7 +3825,7 @@ static void ins_right(void)
              && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
     // if 'whichwrap' set for cursor in insert mode, may move the
     // cursor to the next line
-    start_arrow(&curwin->w_cursor);
+    start_arrow(&curwin->w_cursor, true, K_RIGHT);
     curwin->w_set_curswant = true;
     curwin->w_cursor.lnum++;
     curwin->w_cursor.col = 0;
@@ -3828,10 +3844,7 @@ static void ins_s_right(void)
   undisplay_dollar();
   if (curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count
       || gchar_cursor() != NUL) {
-    start_arrow_with_change(&curwin->w_cursor, end_change);
-    if (!end_change) {
-      AppendCharToRedobuff(K_S_RIGHT);
-    }
+    start_arrow_with_change(&curwin->w_cursor, end_change, K_S_RIGHT);
     fwd_word(1, false, 0);
     curwin->w_set_curswant = true;
   } else {
@@ -3856,7 +3869,7 @@ static void ins_up(bool startcol)
         || old_topfill != curwin->w_topfill) {
       redraw_later(curwin, UPD_VALID);
     }
-    start_arrow(&tpos);
+    start_arrow(&tpos, true, startcol ? 'k' : K_UP);
     Ins.can_cindent = true;
   } else {
     vim_beep(kOptBoFlagCursor);
@@ -3870,7 +3883,7 @@ static void ins_pageup(void)
   if (mod_mask & MOD_MASK_CTRL) {
     // <C-PageUp>: tab page back
     if (first_tabpage->tp_next != NULL) {
-      start_arrow(&curwin->w_cursor);
+      start_arrow(&curwin->w_cursor, true, NUL);
       goto_tabpage(-1);
     }
     return;
@@ -3878,7 +3891,7 @@ static void ins_pageup(void)
 
   pos_T tpos = curwin->w_cursor;
   if (pagescroll(BACKWARD, 1, false) == OK) {
-    start_arrow(&tpos);
+    start_arrow(&tpos, true, NUL);
     Ins.can_cindent = true;
   } else {
     vim_beep(kOptBoFlagCursor);
@@ -3901,7 +3914,7 @@ static void ins_down(bool startcol)
         || old_topfill != curwin->w_topfill) {
       redraw_later(curwin, UPD_VALID);
     }
-    start_arrow(&tpos);
+    start_arrow(&tpos, true, startcol ? 'j' : K_DOWN);
     Ins.can_cindent = true;
   } else {
     vim_beep(kOptBoFlagCursor);
@@ -3915,7 +3928,7 @@ static void ins_pagedown(void)
   if (mod_mask & MOD_MASK_CTRL) {
     // <C-PageDown>: tab page forward
     if (first_tabpage->tp_next != NULL) {
-      start_arrow(&curwin->w_cursor);
+      start_arrow(&curwin->w_cursor, true, NUL);
       goto_tabpage(0);
     }
     return;
@@ -3923,7 +3936,7 @@ static void ins_pagedown(void)
 
   pos_T tpos = curwin->w_cursor;
   if (pagescroll(FORWARD, 1, false) == OK) {
-    start_arrow(&tpos);
+    start_arrow(&tpos, true, NUL);
     Ins.can_cindent = true;
   } else {
     vim_beep(kOptBoFlagCursor);
@@ -3974,7 +3987,7 @@ static bool ins_tab(void)
   Ins.did_si = false;
   Ins.can_si = false;
   Ins.can_si_back = false;
-  AppendToRedobuff("\t");
+  redo_append_str(S_LEN("\t"));
 
   if (p_sta && ind) {  // insert tab in indent, use 'shiftwidth'
     temp = get_sw_value(curbuf);
@@ -4189,7 +4202,7 @@ bool ins_eol(int c)
     curwin->w_cursor.col += get_cursor_pos_len();
   }
 
-  AppendToRedobuff(NL_STR);
+  redo_append_str(S_LEN(NL_STR));
   bool i = open_line(FORWARD,
                      has_format_option(kFoRetComs) ? OPENLINE_DO_COM : 0,
                      old_indent, NULL);
@@ -4260,7 +4273,7 @@ static int ins_digraph(void)
       edit_unputchar();
     }
     if (cc != ESC) {
-      AppendToRedobuff(CTRL_V_STR);
+      redo_append_str(S_LEN(CTRL_V_STR));
       c = digraph_get(c, cc, true);
       clear_showcmd();
       return c;
@@ -4323,7 +4336,7 @@ static int ins_ctrl_ey(int tc)
       // wasn't set.  Digits, 'o' and 'x' are special after a
       // CTRL-V, don't use it for these.
       if (c < 256 && !isalnum(c)) {
-        AppendToRedobuff(CTRL_V_STR);
+        redo_append_str(S_LEN(CTRL_V_STR));
       }
       OptInt tw_save = curbuf->b_p_tw;
       curbuf->b_p_tw = -1;

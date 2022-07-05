@@ -43,14 +43,14 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/register.h"
 #include "nvim/shada.h"
+#include "nvim/state_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
 #include "context.c.generated.h"
-
-int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs | kCtxFuncs);
 
 /// Nesting depth of ctx_switch() calls that changed curwin.
 static int _ctx_switch_depth = 0;
@@ -74,17 +74,22 @@ void ctx_free(Context *ctx)
   api_free_array(ctx->funcs);
 }
 
-/// Saves the editor state to a context.
-///
-/// Use "flags" to select particular types of context.
+/// Saves the editor state (ALL THE THINGS!!!1) to a context.
 ///
 /// @param  ctx    Save to this context.
-/// @param  flags  Flags, see ContextTypeFlags enum.
-void ctx_save(Context *ctx, const int flags)
+/// @param  flags  State types to save.
+void ctx_save(Context *ctx, const CtxStateFlags flags)
   FUNC_ATTR_NONNULL_ALL
 {
+  ctx->buf = curbuf->handle;
+  ctx->pos = (pos_T) {
+    .lnum = curwin->w_cursor.lnum,
+    .col = curwin->w_cursor.col,
+    .coladd = curwin->w_cursor.coladd,
+  };
+
   if (flags & kCtxRegs) {
-    ctx->regs = shada_encode_regs();
+    ctx->regs = shada_encode_regs(false, 0);
   }
 
   if (flags & kCtxJumps) {
@@ -125,32 +130,37 @@ void ctx_save(Context *ctx, const int flags)
   }
 }
 
-/// Loads (restores) the editor state from a Context snapshot.
-///
-/// Use "flags" to select particular types of context.
+/// Loads (restores) the editor state from a Context snapshot. Restores registers EXACTLY, unless
+/// kCtxMergeReg is specified.
 ///
 /// @param  ctx    Load from this context.
-/// @param  flags  Flags, see ContextTypeFlags enum.
-void ctx_load(Context *ctx, const int flags)
+/// @param  flags  State types to load.
+/// @param  loadflags  Controls load behavior.
+void ctx_load(Context *ctx, const CtxStateFlags flags, const CtxLoadFlags loadflags)
   FUNC_ATTR_NONNULL_ALL
 {
-  Object op_shada = get_option_value(kOptShada, OPT_GLOBAL);
-  set_option_value(kOptShada, STATIC_CSTR_AS_OBJ("!,'100,%"), OPT_GLOBAL);
+  // TODO(jkeyes): restore window, mode, pos?
 
   if (flags & kCtxRegs) {
-    shada_read_string(ctx->regs, kShaDaWantInfo | kShaDaForceit);
+    if (!(loadflags & kCtxMergeReg)) {
+      // Avoid shada "merge" behavior for registers; restore "exact", don't merge.
+      for (int i = 0; i < NUM_SAVED_REGISTERS; i++) {
+        free_register(get_y_register(i));
+      }
+    }
+    shada_read_string(ctx->regs, kShaDaWantInfo | kShaDaForceit | kShaDaNanos | kShaDaNoHistory);
   }
 
   if (flags & kCtxJumps) {
-    shada_read_string(ctx->jumps, kShaDaWantInfo | kShaDaForceit);
+    shada_read_string(ctx->jumps, kShaDaWantInfo | kShaDaForceit | kShaDaNoHistory);
   }
 
   if (flags & kCtxBufs) {
-    shada_read_string(ctx->bufs, kShaDaWantInfo | kShaDaForceit);
+    shada_read_string(ctx->bufs, kShaDaWantInfo | kShaDaForceit | kShaDaNoHistory | kShaDaNoOpt);
   }
 
   if (flags & kCtxGVars) {
-    shada_read_string(ctx->gvars, kShaDaWantInfo | kShaDaForceit);
+    shada_read_string(ctx->gvars, kShaDaWantInfo | kShaDaForceit | kShaDaNoHistory | kShaDaNoOpt);
   }
 
   if (flags & kCtxFuncs) {
@@ -158,9 +168,6 @@ void ctx_load(Context *ctx, const int flags)
       do_cmdline_cmd(ctx->funcs.items[i].data.string.data);
     }
   }
-
-  set_option_value(kOptShada, op_shada, OPT_GLOBAL);
-  optval_free(op_shada);
 }
 
 /// Convert readfile()-style array to String
@@ -215,12 +222,12 @@ Dict ctx_to_dict(Context *ctx, Arena *arena)
 /// @param[out]  err   Error object.
 ///
 /// @return types of included context items.
-int ctx_from_dict(Dict dict, Context *ctx, Error *err)
+CtxStateFlags ctx_from_dict(Dict dict, Context *ctx, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
 
-  int types = 0;
+  CtxStateFlags types = 0;
   for (size_t i = 0; i < dict.size && !ERROR_SET(err); i++) {
     KeyValuePair item = dict.items[i];
     if (item.value.type != kObjectTypeArray) {

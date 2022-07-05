@@ -66,15 +66,12 @@ enum {
   CA_NO_ADJ_OP_END = 2,  ///< don't adjust operator end
 };
 
-/// A Visual selection's mode and extent (line/column span, not absolute positions), so it can be
-/// re-applied starting at the cursor: for "gv" reselect (`Visual.resel`) and Visual-operator redo
-/// (`redo_VIsual`).
+/// A Visual selection's mode and extent (line/column span, not absolute positions), so an
+/// equal-sized region can be re-applied starting at the cursor: {count}v reselect.
 typedef struct {
   int mode;             ///< 'v', 'V', or Ctrl-V
   linenr_T line_count;  ///< number of lines
   colnr_T vcol;         ///< number of cols or end column (MAXCOL: to end of line)
-  int count;            ///< count for the Visual operator
-  int arg;              ///< extra argument
 } VisualExtent;
 
 /// Visual/Select mode state, as one global "group" (Visual). Previously these were bare EXTERN
@@ -88,8 +85,7 @@ typedef struct {
   int restart_select;     ///< Restart Select mode when next cmd finished.
   int reselect;           ///< Restart the selection after a Select-mode mapping or menu.
   int mode;               ///< Type of Visual mode: 'v', 'V', Ctrl-V.
-  bool redo_busy;         ///< True when redoing Visual.
-  VisualExtent resel;     ///< Previous Visual area, for reselection ("gv"); seeds operator-redo.
+  VisualExtent resel;     ///< Previous Visual area's extent, for {count}v reselect.
 } VisualState;
 
 /// Replacement for nchar used by nv_replace().

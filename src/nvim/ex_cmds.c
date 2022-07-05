@@ -1201,9 +1201,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     // buffername.
     char *cmd = vim_strsave_escaped(prevcmd, "%#");
 
-    AppendToRedobuffLit(cmd, -1);
+    redo_append_lit(cmd, -1);
     xfree(cmd);
-    AppendToRedobuff("\n");
+    redo_append_str(S_LEN("\n"));
     bangredo = false;
   }
   // Add quotes around the command, for shells that need them.

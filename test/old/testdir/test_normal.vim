@@ -535,9 +535,13 @@ func Test_normal09c_operatorfunc()
   new
   call setline(1, ['first', 'first', 'third', 'third', 'second'])
   normal! 1GVjg@
-  normal! 5G.
   normal! 3G.
-  call assert_equal(['_____', '_____', '_____', '_____', '______'], getline(1, '$'))
+  " Nvim: "." re-executes the captured keysequence ("Vjg@"), not an equal-size
+  " reselect. At the last line the replayed "j" fails, aborting the replay:
+  " nothing is applied (and the pending Visual mode is left active).
+  normal! 5G.
+  exe "normal! \<Esc>"
+  call assert_equal(['_____', '_____', '_____', '_____', 'second'], getline(1, '$'))
   bwipe!
   set operatorfunc=
 endfunc

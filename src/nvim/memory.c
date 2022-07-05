@@ -25,6 +25,7 @@
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
+#include "nvim/input_cmdatom.h"
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
@@ -33,6 +34,7 @@
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/normal.h"
 #include "nvim/option_vars.h"
 #include "nvim/sign.h"
 #include "nvim/state_defs.h"
@@ -964,8 +966,7 @@ void free_all_mem(void)
 
   // Clear registers.
   clear_registers();
-  ResetRedobuff();
-  ResetRedobuff();
+  redo_free_all();
 
   // highlight info
   free_highlight();
@@ -983,6 +984,7 @@ void free_all_mem(void)
   channel_free_all_mem();
   eval_clear();
   api_extmark_free_all_mem();
+  atom_free_all();
 
   map_destroy(int, &buffer_handles);
   map_destroy(int, &window_handles);

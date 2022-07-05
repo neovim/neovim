@@ -343,9 +343,13 @@ out of Insert mode.  This is very handy if you prefer to use the Insert mode
 all the time, just like editors that don't have a separate Normal mode. You
 can use CTRL-O if you want to map a function key to a command.
 
+							*ins-repeat*
 The changes (inserted or deleted characters) before and after these keys can
-be undone separately.  Only the last change can be redone and always behaves
-like an "i" command.
+be undone separately.  Relative cursor-moves (the cursor keys, <S-Left>,
+<Home>, CTRL-G j, …) are part of the insert: |.| repeats the whole insert,
+including cursor-moves.  After a jump (mouse, scroll, <PageUp>, …) only the
+last change can be redone, and it behaves like an "i" command.  The |quote.|
+register always holds just the text typed after the last cursor-move.
 
 char		action	~
 -----------------------------------------------------------------------
@@ -445,6 +449,8 @@ will be repeatable by using |.| to the expected
 
    Lorem ipsum (dolor)
 
+Cursor keys are captured by |.| (|ins-repeat|), so these mappings are only
+needed to keep the cursor-move from starting a new undo block.
 
 Using CTRL-O splits undo: the text typed before and after it is undone
 separately.  If you want to avoid this (e.g., in a mapping) you might be able

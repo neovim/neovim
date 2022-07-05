@@ -119,6 +119,8 @@ describe('mapping', function()
     command('imapclear')
     command('set whichwrap=<,>,[,]')
     feed('G3o<esc>2k')
+    -- Nvim: "." re-executes the whole insert session, including the (wrapping)
+    -- CTRL-G U <Right>, instead of only the text typed after it.
     command(
       [[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]]
     )
@@ -131,8 +133,8 @@ describe('mapping', function()
 
 
       Test2: text wit a (here some more text [und undo])
-      new line here
       Test3: text with a (parenthesis here
+      new line hereTest3: text with a (parenthesis here
       new line here
       ]])
   end)

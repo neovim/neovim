@@ -10,15 +10,23 @@
 #include "nvim/types_defs.h"
 
 typedef struct {
-  String regs;     ///< Registers.
-  String jumps;    ///< Jumplist.
-  String bufs;     ///< Buffer list.
-  String gvars;    ///< Global variables.
-  Array funcs;              ///< Functions.
+  pos_T pos;         ///< Current cursor position (cache, see `mark`).
+  uint32_t mark;     ///< Extmark id tracking `pos` across buffer edits.
+  colnr_T curswant;  ///< Preferred column ("curswant"); -1 if unset.
+  handle_T buf;      ///< Current buffer handle.
+  String regs;       ///< Registers (shada msgpack string).
+  String jumps;      ///< Jumplist (shada msgpack string).
+  String bufs;       ///< Buffer list (shada msgpack string).
+  String gvars;      ///< Global variables (shada msgpack string).
+  Array funcs;       ///< Functions.
 } Context;
 typedef kvec_t(Context) ContextVec;
 
 #define CONTEXT_INIT (Context) { \
+  .pos = { 0 }, \
+  .mark = 0, \
+  .curswant = -1, \
+  .buf = 0, \
   .regs = STRING_INIT, \
   .jumps = STRING_INIT, \
   .bufs = STRING_INIT, \
@@ -33,7 +41,13 @@ typedef enum {
   kCtxGVars = 8,      ///< Global variables
   kCtxSFuncs = 16,    ///< Script functions
   kCtxFuncs = 32,     ///< Functions
+  kCtxAll = kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs | kCtxFuncs,
 } CtxStateFlags;
+
+/// "How" to load, orthogonal to "what" (CtxStateFlags).
+typedef enum {
+  kCtxMergeReg = 1,  ///< Merge incoming registers with existing.
+} CtxLoadFlags;
 
 /// Temporary, hidden window (fka "autocmd window"): a pooled window created to temporarily show
 /// a buffer that has no window (ctx_switch() on a buffer target), to handle the side effects.  When

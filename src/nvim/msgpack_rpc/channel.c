@@ -548,6 +548,7 @@ void rpc_free(Channel *channel)
 /// Closes a channel after receiving fatal error, and logs a message.
 static void chan_close_on_err(Channel *channel, char *msg, int loglevel)
 {
+  logmsg(loglevel, "RPC: ", NULL, -1, true, "%s", msg);
   for (size_t i = 0; i < kv_size(channel->rpc.call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->rpc.call_stack, i);
     if (frame->returned) {

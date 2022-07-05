@@ -25,6 +25,7 @@ return {
     ChanClose = false,
     ChanInfo = false, -- info was received about channel
     ChanOpen = false, -- channel was opened
+    CmdAtom = false, -- after an atomic user operation (motion, operator, insert, mapping, …)
     CmdUndefined = false, -- command undefined
     CmdlineChanged = false, -- command line was modified
     CmdlineEnter = false, -- after entering cmdline mode

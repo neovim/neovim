@@ -73,7 +73,7 @@ const char *profile_msg(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char buf[50];
   snprintf(buf, sizeof(buf), "%10.6lf",
-           (double)profile_signed(tm) / 1000000000.0);
+           (double)profile_signed(tm) / NS_PER_SEC);
   return buf;
 }
 

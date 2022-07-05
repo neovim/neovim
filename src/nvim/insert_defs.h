@@ -5,23 +5,28 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
+/// Change-delimiting cursor-move in insert-mode (start_arrow()): undo, Ins.start and last_insert
+/// (the ". register) restart at next edit (stop_arrow()); typed keys sync undo (may_sync_undo()).
+typedef enum {
+  kInsNone = 0,  ///< No cursor-move since last edit: contiguous insert-session.
+  kInsArrow,     ///< Cursor-move captured in the atom.
+  kInsJump,      ///< Non-replayable jump (mouse, <PageUp>, …): atom terminated (<Esc>).
+} InsArrow;
+
 /// Insert-mode session state: the in-progress insert session, as one global "group" (Ins), so the
-/// insert session can be saved/restored as a whole around nested edit() mini-sessions (e.g.
-/// a future multicursor live-mirror).
+/// insert session can be saved/restored as a whole around nested edit() sessions.
 typedef struct {
-  pos_T start;               ///< Where the latest insert/append mode started
-  pos_T start_orig;          ///< Where the latest insert/append mode started. In contrast to
-                             ///< "start", this won't be reset by certain keys and is needed for
-                             ///< op_insert(), to detect correctly where inserting by the user
-                             ///< started.
+  pos_T start;               ///< Start of current INSERTION: from here to cursor is the unit that
+                             ///< undo, '[ and ". treat as one. Reanchored after cursor-move, C-G u.
+  pos_T start_orig;          ///< Where insert by the user started (for op_insert): follows `start`
+                             ///< until insertion starts right of it; <bs> before it pulls back.
   colnr_T start_textlen;     ///< length of line when insert started
   colnr_T start_blank_vcol;  ///< vcol for first inserted blank
-  bool arrow_used;           ///< Normally false, set to true after hitting a cursor key in insert
-                             ///< mode. Used by vgetorpeek() to decide when to call u_sync().
+  InsArrow moved;            ///< Cursor moved since the last edit; see InsArrow.
   bool stop_insert_mode;     ///< for ":stopinsert"
   bool can_cindent;          ///< may do cindenting on this line
   bool need_undo;            ///< call u_save() before inserting a char. Set when edit() is
-                             ///< called; after that arrow_used is used.
+                             ///< called; after that `moved` is used.
   bool did_ai;               ///< Makes auto-indent work right on lines where only a <CR> or
                              ///< <Esc> is typed: set when an auto-indent is done, reset when any
                              ///< other editing is done on the line. If an <Esc> or <CR> is

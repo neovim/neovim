@@ -2193,6 +2193,7 @@ vim.go.ei = vim.go.eventignore
 --- 	`ChanClose`,
 --- 	`ChanInfo`,
 --- 	`ChanOpen`,
+--- 	`CmdAtom`,
 --- 	`CmdUndefined`,
 --- 	`CmdlineChanged`,
 --- 	`CmdlineEnter`,

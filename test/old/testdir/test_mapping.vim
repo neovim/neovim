@@ -279,9 +279,11 @@ endfunc
 func Test_break_undo()
   set whichwrap=<,>,[,]
   call feedkeys("G4o2k", "xt")
+  " Nvim: "." re-executes the whole insert session, including the (wrapping)
+  " CTRL-G U <Right>, instead of only the text typed after it.
   exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."
-  call assert_equal('new line here', getline(line('$') - 3))
-  call assert_equal('Test3: text with a (parenthesis here', getline(line('$') - 2))
+  call assert_equal('Test3: text with a (parenthesis here', getline(line('$') - 3))
+  call assert_equal('new line hereTest3: text with a (parenthesis here', getline(line('$') - 2))
   call assert_equal('new line here', getline(line('$') - 1))
   set nomodified
 endfunc

@@ -260,9 +260,7 @@ int inc_cursor(void)
   return inc(&curwin->w_cursor);
 }
 
-/// Decrement the line pointer 'p' crossing line boundaries as necessary.
-///
-/// @return  1 when crossing a line, -1 when at start of file, 0 otherwise.
+/// Decrement the cursor position.  See dec() for return values.
 int dec_cursor(void)
 {
   return dec(&curwin->w_cursor);

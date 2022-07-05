@@ -359,17 +359,39 @@ See |v_b_r_example|.
 ==============================================================================
 6. Repeating						*visual-repeat*
 
-When repeating a Visual mode operator, the operator will be applied to the
-same amount of text as the last time:
-- Linewise Visual mode: The same number of lines.
-- Blockwise Visual mode: The same number of lines and columns.
-- Normal Visual mode within one line: The same number of characters.
-- Normal Visual mode with several lines: The same number of lines, in the
-  last line the same number of characters as in the last line the last time.
-The start of the text is the Cursor position.  If the "$" command was used as
-one of the last commands to extend the highlighted text, the repeating will
-be applied up to the rightmost column of the longest line.  Any count passed
-to the `.` command is not used.
+Repeating a Visual operation works "semantically": |.| replays the captured
+keysequence (Visual selection plus operator) at the cursor: "viwd" then "."
+deletes the word at the cursor, whatever its size. (Note: this is unlike Vim,
+where Visual-repeat works on the same fixed-size region. If you prefer that
+behavior, see |visual-fixed-size|.)
+
+A [count] given to "." is prepended to the replayed keys. If the selection was
+extended by a command that cannot be replayed (mouse, search, Ex command,
+scroll), "." instead applies the operator to a same-size area, as if "1v"
+(|v|) preceded it.
+
+							*visual-fixed-size*
+Example: To mimic Vim's fixed-size Visual dot-repeat: after a Visual
+operation, reselect the fixed-size region ("1v", |v|) and applies the
+operator: >lua
+
+    local vop ---@type string?
+    vim.api.nvim_create_autocmd('CmdAtom', {
+      ---@param ev {data: vim.event.cmdatom.data}
+      callback = function(ev)
+        if ev.data.type == 'visual' then
+          vop = ev.data.atoms and ev.data.atoms[#ev.data.atoms].keys or nil
+        elseif ev.data.changed then
+          vop = nil  -- the last change is no longer the Visual one
+        end
+      end,
+    })
+    vim.keymap.set('n', '.', function()
+      vim.schedule(function()
+        vim.api.nvim_feedkeys(vop and ('1v' .. vop) or '.', 'n', false)
+      end)
+    end)
+<
 
 Visual mode |default-mappings| "@" and "Q" repeat a register for all selected
 lines if the selection is linewise.  See |v_@-default| and |v_Q-default| for

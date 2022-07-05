@@ -185,8 +185,8 @@ describe('listlbr', function()
       1111-2222-1111-11-1111-2222-1111
       Test 9: using redo after block visual mode
 
-      AaA
-      AaA
+      AAA
+      AAA
       A
       Test 10: using normal commands after block-visual
 

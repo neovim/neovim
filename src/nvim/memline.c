@@ -4225,6 +4225,12 @@ int incl(pos_T *lp)
   return r;
 }
 
+/// Decrements position `lp` by one character (multibyte-aware), crossing line boundaries as
+/// necessary. Resets `lp.coladd`. Uses curbuf.
+///
+/// @return   1 when crossing to the previous line.
+///          -1 when at the start of the file.
+///           0 otherwise.
 int dec(pos_T *lp)
 {
   lp->coladd = 0;

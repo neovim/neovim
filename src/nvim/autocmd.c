@@ -1449,7 +1449,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   static bool filechangeshell_busy = false;
   proftime_T wait_time;
   bool did_save_redobuff = false;
-  save_redo_T save_redo;
+  RedoState save_redo;
   const bool save_KeyTyped = KeyTyped;
   ESTACK_CHECK_DECLARATION;
   CtxSwitch aco = { 0 };
@@ -1578,7 +1578,8 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   } else {
     sfname = TO_SLASH_SAVE(fname);
     // Don't try expanding the following events.
-    if (event == EVENT_CMDLINECHANGED
+    if (event == EVENT_CMDATOM
+        || event == EVENT_CMDLINECHANGED
         || event == EVENT_CMDLINEENTER
         || event == EVENT_CMDLINELEAVEPRE
         || event == EVENT_CMDLINELEAVE
@@ -1652,7 +1653,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   if (!autocmd_busy) {
     save_search_patterns();
     if (!ins_compl_active()) {
-      saveRedobuff(&save_redo);
+      save_redobuff(&save_redo);
       did_save_redobuff = true;
     }
     curbuf->b_did_filetype = curbuf->b_keep_filetype;
@@ -1768,7 +1769,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   if (!autocmd_busy) {
     restore_search_patterns();
     if (did_save_redobuff) {
-      restoreRedobuff(&save_redo);
+      restore_redobuff(&save_redo);
     }
     curbuf->b_did_filetype = false;
     while (au_pending_free_buf != NULL) {
