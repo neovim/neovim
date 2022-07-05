@@ -6234,6 +6234,15 @@ static void get_op_vcol(oparg_T *oap, colnr_T redo_VIsual_vcol, bool initial)
   oap->start = curwin->w_cursor;
 }
 
+/// Information for redoing the previous Visual selection.
+typedef struct {
+  int rv_mode;             ///< 'v', 'V', or Ctrl-V
+  linenr_T rv_line_count;  ///< number of lines
+  colnr_T rv_vcol;         ///< number of cols or end column
+  long rv_count;           ///< count for Visual operator
+  int rv_arg;              ///< extra argument
+} redo_VIsual_T;
+
 /// Handle an operator after Visual mode or when the movement is finished.
 /// "gui_yank" is true when yanking text for the clipboard.
 void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
@@ -6245,11 +6254,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
   int lbr_saved = curwin->w_p_lbr;
 
   // The visual area is remembered for redo
-  static int redo_VIsual_mode = NUL;        // 'v', 'V', or Ctrl-V
-  static linenr_T redo_VIsual_line_count;   // number of lines
-  static colnr_T redo_VIsual_vcol;          // number of cols or end column
-  static long redo_VIsual_count;            // count for Visual operator
-  static int redo_VIsual_arg;               // extra argument
+  static redo_VIsual_T redo_VIsual = { NUL, 0, 0, 0, 0 };
+
   bool include_line_break = false;
 
   old_cursor = curwin->w_cursor;
@@ -6332,28 +6338,27 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
     if (redo_VIsual_busy) {
       // Redo of an operation on a Visual area. Use the same size from
-      // redo_VIsual_line_count and redo_VIsual_vcol.
+      // redo_VIsual.rv_line_count and redo_VIsual.rv_vcol.
       oap->start = curwin->w_cursor;
-      curwin->w_cursor.lnum += redo_VIsual_line_count - 1;
+      curwin->w_cursor.lnum += redo_VIsual.rv_line_count - 1;
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
         curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
       }
-      VIsual_mode = redo_VIsual_mode;
-      if (redo_VIsual_vcol == MAXCOL || VIsual_mode == 'v') {
+      VIsual_mode = redo_VIsual.rv_mode;
+      if (redo_VIsual.rv_vcol == MAXCOL || VIsual_mode == 'v') {
         if (VIsual_mode == 'v') {
-          if (redo_VIsual_line_count <= 1) {
+          if (redo_VIsual.rv_line_count <= 1) {
             validate_virtcol();
-            curwin->w_curswant =
-              curwin->w_virtcol + redo_VIsual_vcol - 1;
+            curwin->w_curswant = curwin->w_virtcol + redo_VIsual.rv_vcol - 1;
           } else {
-            curwin->w_curswant = redo_VIsual_vcol;
+            curwin->w_curswant = redo_VIsual.rv_vcol;
           }
         } else {
           curwin->w_curswant = MAXCOL;
         }
         coladvance(curwin->w_curswant);
       }
-      cap->count0 = redo_VIsual_count;
+      cap->count0 = redo_VIsual.rv_count;
       cap->count1 = (cap->count0 == 0 ? 1 : cap->count0);
     } else if (VIsual_active) {
       if (!gui_yank) {
@@ -6440,7 +6445,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     virtual_op = virtual_active();
 
     if (VIsual_active || redo_VIsual_busy) {
-      get_op_vcol(oap, redo_VIsual_vcol, true);
+      get_op_vcol(oap, redo_VIsual.rv_vcol, true);
 
       if (!redo_VIsual_busy && !gui_yank) {
         // Prepare to reselect and redo Visual: this is based on the
@@ -6504,11 +6509,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           }
         }
         if (!redo_VIsual_busy) {
-          redo_VIsual_mode = resel_VIsual_mode;
-          redo_VIsual_vcol = resel_VIsual_vcol;
-          redo_VIsual_line_count = resel_VIsual_line_count;
-          redo_VIsual_count = cap->count0;
-          redo_VIsual_arg = cap->arg;
+          redo_VIsual.rv_mode = resel_VIsual_mode;
+          redo_VIsual.rv_vcol = resel_VIsual_vcol;
+          redo_VIsual.rv_line_count = resel_VIsual_line_count;
+          redo_VIsual.rv_count = cap->count0;
+          redo_VIsual.rv_arg = cap->arg;
         }
       }
 
@@ -6758,12 +6763,20 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       op_format(oap, true);             // use internal function
       break;
 
-    case OP_FUNCTION:
+    case OP_FUNCTION: {
+      redo_VIsual_T save_redo_VIsual = redo_VIsual;
+
       // Restore linebreak, so that when the user edits it looks as
       // before.
       curwin->w_p_lbr = lbr_saved;
-      op_function(oap);                 // call 'operatorfunc'
+      // call 'operatorfunc'
+      op_function(oap);
+
+      // Restore the info for redoing Visual mode, the function may
+      // invoke another operator and unintentionally change it.
+      redo_VIsual = save_redo_VIsual;
       break;
+    }
 
     case OP_INSERT:
     case OP_APPEND:
@@ -6844,7 +6857,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         VIsual_active = true;
         curwin->w_p_lbr = lbr_saved;
-        op_addsub(oap, (linenr_T)cap->count1, redo_VIsual_arg);
+        op_addsub(oap, (linenr_T)cap->count1, redo_VIsual.rv_arg);
         VIsual_active = false;
       }
       check_cursor_col();

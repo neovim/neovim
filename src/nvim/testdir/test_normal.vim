@@ -406,6 +406,10 @@ func OperatorfuncRedo(_)
   let g:opfunc_count = v:count
 endfunc
 
+func Underscorize(_)
+  normal! '[V']r_
+endfunc
+
 func Test_normal09c_operatorfunc()
   " Test redoing operatorfunc
   new
@@ -419,6 +423,16 @@ func Test_normal09c_operatorfunc()
 
   bw!
   unlet g:opfunc_count
+
+  " Test redoing Visual mode
+  set operatorfunc=Underscorize
+  new
+  call setline(1, ['first', 'first', 'third', 'third', 'second'])
+  normal! 1GVjr_
+  normal! 5G.
+  normal! 3G.
+  call assert_equal(['_____', '_____', '_____', '_____', '______'], getline(1, '$'))
+  bwipe!
   set operatorfunc=
 endfunc
 
