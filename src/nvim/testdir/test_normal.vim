@@ -345,7 +345,7 @@ func Test_normal08_fold()
   bw!
 endfunc
 
-func Test_normal09_operatorfunc()
+func Test_normal09a_operatorfunc()
   " Test operatorfunc
   call Setup_NewWindow()
   " Add some spaces for counting
@@ -375,7 +375,7 @@ func Test_normal09_operatorfunc()
   bw!
 endfunc
 
-func Test_normal09a_operatorfunc()
+func Test_normal09b_operatorfunc()
   " Test operatorfunc
   call Setup_NewWindow()
   " Add some spaces for counting
@@ -397,8 +397,43 @@ func Test_normal09a_operatorfunc()
   " clean up
   unmap <buffer> ,,
   set opfunc=
+  call assert_fails('normal Vg@', 'E774:')
   bw!
   unlet! g:opt
+endfunc
+
+func OperatorfuncRedo(_)
+  let g:opfunc_count = v:count
+endfunc
+
+func Underscorize(_)
+  normal! '[V']r_
+endfunc
+
+func Test_normal09c_operatorfunc()
+  " Test redoing operatorfunc
+  new
+  call setline(1, 'some text')
+  set operatorfunc=OperatorfuncRedo
+  normal v3g@
+  call assert_equal(3, g:opfunc_count)
+  let g:opfunc_count = 0
+  normal .
+  call assert_equal(3, g:opfunc_count)
+
+  bw!
+  unlet g:opfunc_count
+
+  " Test redoing Visual mode
+  set operatorfunc=Underscorize
+  new
+  call setline(1, ['first', 'first', 'third', 'third', 'second'])
+  normal! 1GVjg@
+  normal! 5G.
+  normal! 3G.
+  call assert_equal(['_____', '_____', '_____', '_____', '______'], getline(1, '$'))
+  bwipe!
+  set operatorfunc=
 endfunc
 
 func Test_normal10_expand()
@@ -1784,9 +1819,9 @@ fun! Test_normal33_g_cmd2()
   %d
   15vsp
   set wrap listchars= sbr=
-  let lineA='abcdefghijklmnopqrstuvwxyz'
-  let lineB='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  let lineC='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let lineA = 'abcdefghijklmnopqrstuvwxyz'
+  let lineB = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let lineC = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   $put =lineA
   $put =lineB
 
@@ -1820,6 +1855,28 @@ fun! Test_normal33_g_cmd2()
   call assert_equal(15, col('.'))
   call assert_equal('l', getreg(0))
   call assert_beeps('normal 5g$')
+
+  " Test for g$ with double-width character half displayed
+  vsplit
+  9wincmd |
+  setlocal nowrap nonumber
+  call setline(2, 'asdfasdfヨ')
+  2
+  normal 0g$
+  call assert_equal(8, col('.'))
+  10wincmd |
+  normal 0g$
+  call assert_equal(9, col('.'))
+
+  setlocal signcolumn=yes
+  11wincmd |
+  normal 0g$
+  call assert_equal(8, col('.'))
+  12wincmd |
+  normal 0g$
+  call assert_equal(9, col('.'))
+
+  close
 
   " Test for g_
   call assert_beeps('normal! 100g_')

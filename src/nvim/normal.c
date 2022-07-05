@@ -2494,20 +2494,29 @@ static void prep_redo_cmd(cmdarg_T *cap)
 /// Note that only the last argument can be a multi-byte char.
 void prep_redo(int regname, long num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
 {
+  prep_redo_num2(regname, num, cmd1, cmd2, 0L, cmd3, cmd4, cmd5);
+}
+
+/// Prepare for redo of any command with extra count after "cmd2".
+void prep_redo_num2(int regname, long num1, int cmd1, int cmd2, long num2, int cmd3, int cmd4,
+                    int cmd5)
+{
   ResetRedobuff();
   if (regname != 0) {   // yank from specified buffer
     AppendCharToRedobuff('"');
     AppendCharToRedobuff(regname);
   }
-  if (num) {
-    AppendNumberToRedobuff(num);
+  if (num1 != 0) {
+    AppendNumberToRedobuff(num1);
   }
-
   if (cmd1 != NUL) {
     AppendCharToRedobuff(cmd1);
   }
   if (cmd2 != NUL) {
     AppendCharToRedobuff(cmd2);
+  }
+  if (num2 != 0) {
+    AppendNumberToRedobuff(num2);
   }
   if (cmd3 != NUL) {
     AppendCharToRedobuff(cmd3);
@@ -6156,6 +6165,16 @@ static void nv_g_cmd(cmdarg_T *cap)
       }
       i = curwin->w_leftcol + curwin->w_width_inner - col_off - 1;
       coladvance((colnr_T)i);
+
+      // if the character doesn't fit move one back
+      if (curwin->w_cursor.col > 0 && utf_ptr2cells((const char *)get_cursor_pos_ptr()) > 1) {
+        colnr_T vcol;
+
+        getvvcol(curwin, &curwin->w_cursor, NULL, NULL, &vcol);
+        if (vcol >= curwin->w_leftcol + curwin->w_width - col_off) {
+          curwin->w_cursor.col--;
+        }
+      }
 
       // Make sure we stick in this column.
       validate_virtcol();
