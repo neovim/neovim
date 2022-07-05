@@ -493,7 +493,13 @@ int smsg(const char *s, ...)
   va_start(arglist, s);
   vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
   va_end(arglist);
-  return msg((char *)IObuff);
+
+  if (!ui_has_messages()) {
+    // Use emsg() instead.  Because msg() does not work if no command line area
+    return semsg((char *)IObuff);
+  } else {
+    return msg((char *)IObuff);
+  }
 }
 
 int smsg_attr(int attr, const char *s, ...)
