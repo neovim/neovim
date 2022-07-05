@@ -490,7 +490,14 @@ int smsg(const char *s, ...)
 {
   if (!ui_has_messages()) {
     // Use emsg() instead.  Because msg() does not work if no command line area
-    return semsg(s);
+    bool ret;
+    va_list arglist;
+
+    va_start(arglist, s);
+    ret = semsgv(s, arglist);
+    va_end(arglist);
+
+    return ret;
   } else {
     va_list arglist;
 
