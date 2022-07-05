@@ -144,6 +144,16 @@ func Test_lisp_indent()
   close!
 endfunc
 
+func Test_lisp_indent_quoted()
+  " This was going past the end of the line
+  new
+  setlocal lisp autoindent
+  call setline(1, ['"[', '='])
+  normal Gvk=
+
+  bwipe!
+endfunc
+
 " Test for setting the 'indentexpr' from a modeline
 func Test_modeline_indent_expr()
   let modeline = &modeline
