@@ -428,7 +428,7 @@ func Test_normal09c_operatorfunc()
   set operatorfunc=Underscorize
   new
   call setline(1, ['first', 'first', 'third', 'third', 'second'])
-  normal! 1GVjr_
+  normal! 1GVjg@
   normal! 5G.
   normal! 3G.
   call assert_equal(['_____', '_____', '_____', '_____', '______'], getline(1, '$'))
