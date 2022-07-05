@@ -2494,20 +2494,29 @@ static void prep_redo_cmd(cmdarg_T *cap)
 /// Note that only the last argument can be a multi-byte char.
 void prep_redo(int regname, long num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
 {
+  prep_redo_num2(regname, num, cmd1, cmd2, 0L, cmd3, cmd4, cmd5);
+}
+
+/// Prepare for redo of any command with extra count after "cmd2".
+void prep_redo_num2(int regname, long num1, int cmd1, int cmd2, long num2, int cmd3, int cmd4,
+                    int cmd5)
+{
   ResetRedobuff();
   if (regname != 0) {   // yank from specified buffer
     AppendCharToRedobuff('"');
     AppendCharToRedobuff(regname);
   }
-  if (num) {
-    AppendNumberToRedobuff(num);
+  if (num1 != 0) {
+    AppendNumberToRedobuff(num1);
   }
-
   if (cmd1 != NUL) {
     AppendCharToRedobuff(cmd1);
   }
   if (cmd2 != NUL) {
     AppendCharToRedobuff(cmd2);
+  }
+  if (num2 != 0) {
+    AppendNumberToRedobuff(num2);
   }
   if (cmd3 != NUL) {
     AppendCharToRedobuff(cmd3);
