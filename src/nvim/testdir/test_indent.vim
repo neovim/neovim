@@ -157,10 +157,12 @@ func Test_modeline_indent_expr()
   call assert_equal('GetIndent()', &indentexpr)
   exe "normal Oa\nb\n"
   call assert_equal(['  a', '    b'], getline(1, 2))
+
   set modelineexpr&
   delfunc GetIndent
   let &modeline = modeline
   close!
+  call delete('Xfile.txt')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
