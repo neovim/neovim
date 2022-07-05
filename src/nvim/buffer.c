@@ -89,7 +89,6 @@
 static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
-static char *e_buflocked = N_("E937: Attempt to delete a buffer that is in use");
 
 // Number of times free_buffer() was called.
 static int buf_free_count = 0;
@@ -381,6 +380,26 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
+/// Return true when buffer "buf" can be unloaded.
+/// Give an error message and return false when the buffer is locked or the
+/// screen is being redrawn and the buffer is in a window.
+static bool can_unload_buffer(buf_T *buf)
+{
+  bool can_unload = !buf->b_locked;
+
+  if (can_unload && updating_screen) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == buf) {
+        can_unload = false;
+      }
+    }
+  }
+  if (!can_unload) {
+    emsg(_("E937: Attempt to delete a buffer that is in use"));
+  }
+  return can_unload;
+}
+
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -438,8 +457,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
 
   // Disallow deleting the buffer when it is locked (already being closed or
   // halfway a command that relies on it). Unloading is allowed.
-  if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
-    emsg(_(e_buflocked));
+  if ((del_buf || wipe_buf) && !can_unload_buffer(buf)) {
     return false;
   }
 
@@ -1185,8 +1203,7 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
   if (unload) {
     int forward;
     bufref_T bufref;
-    if (buf->b_locked) {
-      emsg(_(e_buflocked));
+    if (!can_unload_buffer(buf)) {
       return FAIL;
     }
     set_bufref(&bufref, buf);
