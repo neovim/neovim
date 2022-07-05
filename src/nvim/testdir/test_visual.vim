@@ -700,7 +700,6 @@ func Test_linewise_select_mode()
   exe "normal GkkgH\<Del>"
   call assert_equal(['', 'b', 'c'], getline(1, '$'))
 
-
   " linewise select mode: delete middle two lines
   call deletebufline('', 1, '$')
   call append('$', ['a', 'b', 'c'])
@@ -720,6 +719,15 @@ func Test_linewise_select_mode()
   call assert_equal(['', 'a'], getline(1, '$'))
 
   bwipe!
+endfunc
+
+" Test for blockwise select mode (g CTRL-H)
+func Test_blockwise_select_mode()
+  new
+  call setline(1, ['foo', 'bar'])
+  call feedkeys("g\<BS>\<Right>\<Down>mm", 'xt')
+  call assert_equal(['mmo', 'mmr'], getline(1, '$'))
+  close!
 endfunc
 
 func Test_visual_mode_put()
@@ -1103,6 +1111,73 @@ func Test_block_insert_replace_tabs()
         \ "#define BO_CRSR\t    \t0x0004", ''], getline(1, '$'))
   set ts& sts& sw&
   bwipe!
+endfunc
+
+" Test for * register in :
+func Test_star_register()
+  call assert_fails('*bfirst', 'E16:')
+  new
+  call setline(1, ['foo', 'bar', 'baz', 'qux'])
+  exe "normal jVj\<ESC>"
+  *yank r
+  call assert_equal("bar\nbaz\n", @r)
+
+  delmarks < >
+  call assert_fails('*yank', 'E20:')
+  close!
+endfunc
+
+" Test for using visual mode maps in select mode
+func Test_select_mode_map()
+  new
+  vmap <buffer> <F2> 3l
+  call setline(1, 'Test line')
+  call feedkeys("gh\<F2>map", 'xt')
+  call assert_equal('map line', getline(1))
+
+  vmap <buffer> <F2> ygV
+  call feedkeys("0gh\<Right>\<Right>\<F2>cwabc", 'xt')
+  call assert_equal('abc line', getline(1))
+
+  vmap <buffer> <F2> :<C-U>let v=100<CR>
+  call feedkeys("gggh\<Right>\<Right>\<F2>foo", 'xt')
+  call assert_equal('foo line', getline(1))
+
+  " reselect the select mode using gv from a visual mode map
+  vmap <buffer> <F2> gv
+  set selectmode=cmd
+  call feedkeys("0gh\<F2>map", 'xt')
+  call assert_equal('map line', getline(1))
+  set selectmode&
+
+  close!
+endfunc
+
+" Test for changing text in visual mode with 'exclusive' selection
+func Test_exclusive_selection()
+  new
+  call setline(1, ['one', 'two'])
+  set selection=exclusive
+  call feedkeys("vwcabc", 'xt')
+  call assert_equal('abctwo', getline(1))
+  call setline(1, ["\tone"])
+  set virtualedit=all
+  call feedkeys('0v2lcl', 'xt')
+  call assert_equal('l      one', getline(1))
+  set virtualedit&
+  set selection&
+  close!
+endfunc
+
+" Test for starting visual mode with a count
+" This test should be run withou any previous visual modes. So this should be
+" run as a first test.
+func Test_AAA_start_visual_mode_with_count()
+  new
+  call setline(1, ['aaaaaaa', 'aaaaaaa', 'aaaaaaa', 'aaaaaaa'])
+  normal! gg2Vy
+  call assert_equal("aaaaaaa\naaaaaaa\n", @")
+  close!
 endfunc
 
 func Test_visual_put_in_block()

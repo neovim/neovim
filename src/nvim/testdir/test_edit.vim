@@ -270,6 +270,10 @@ func Test_edit_10()
   call cursor(1, 4)
   call feedkeys("A\<s-home>start\<esc>", 'txin')
   call assert_equal(['startdef', 'ghi'], getline(1, '$'))
+  " start select mode again with gv
+  set selectmode=cmd
+  call feedkeys('gvabc', 'xt')
+  call assert_equal('abctdef', getline(1))
   set selectmode= keymodel=
   bw!
 endfunc

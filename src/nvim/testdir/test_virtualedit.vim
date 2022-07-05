@@ -301,6 +301,9 @@ func Test_replace_on_tab()
   call append(0, "'r'\t")
   normal gg^5lrxAy
   call assert_equal("'r'  x  y", getline(1))
+  call setline(1, 'aaaaaaaaaaaa')
+  exe "normal! gg2lgR\<Tab>"
+  call assert_equal("aa\taaaa", getline(1))
   bwipe!
   set virtualedit=
 endfunc
