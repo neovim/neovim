@@ -8373,7 +8373,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
       }
 
       // delete characters until we are at or before want_vcol
-      while (vcol > want_vcol
+      while (vcol > want_vcol && curwin->w_cursor.col > 0
              && (cc = *(get_cursor_pos_ptr() - 1), ascii_iswhite(cc))) {
         ins_bs_one(&vcol);
       }
