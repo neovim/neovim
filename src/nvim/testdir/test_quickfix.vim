@@ -5558,6 +5558,7 @@ func Test_locationlist_open_in_newtab()
   call delete('Xqftestfile3')
   set switchbuf&vim
 
+  set cmdheight=1
   %bwipe!
 endfunc
 
