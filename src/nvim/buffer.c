@@ -391,6 +391,7 @@ static bool can_unload_buffer(buf_T *buf)
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer == buf) {
         can_unload = false;
+        break;
       }
     }
   }
@@ -1568,6 +1569,9 @@ void enter_buffer(buf_T *buf)
 
   // mark cursor position as being invalid
   curwin->w_valid = 0;
+
+  buflist_setfpos(curbuf, curwin, curbuf->b_last_cursor.mark.lnum, curbuf->b_last_cursor.mark.col,
+                  true);
 
   // Make sure the buffer is loaded.
   if (curbuf->b_ml.ml_mfp == NULL) {    // need to load the file
