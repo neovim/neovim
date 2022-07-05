@@ -2529,6 +2529,43 @@ describe('lua stdlib', function()
     screen:expect_unchanged()
   end)
 
+  it('vim.colorscheme', function()
+    eq("Expected at least 1 argument", exec_lua [[
+      local _, err = pcall(vim.colorscheme)
+      return err
+    ]])
+
+    eq("bad argument #1 to '?' (expected string)", exec_lua [[
+      local _, err = pcall(vim.colorscheme, 1)
+      return err
+    ]])
+
+    local screen = Screen.new(60,4)
+    screen:attach()
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]], attr_ids = {
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {foreground=Screen.colors.Red},
+      }
+    }
+
+    exec_lua [[ vim.colorscheme('blue') ]]
+
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]], attr_ids={
+      [0] = {background = tonumber('0x000087'), foreground = tonumber('0xffdf00')};
+    }}
+
+  end)
+
   describe('vim.schedule_wrap', function()
     it('preserves argument lists', function()
       exec_lua [[

@@ -910,6 +910,14 @@ vim.defer_fn({fn}, {timeout})                                   *vim.defer_fn*
     Returns: ~
         |vim.loop|.new_timer() object
 
+vim.colorscheme({name})                                    *vim.colorscheme()*
+    Load color scheme {name}.
+
+    See |:colorscheme| for more details.
+
+    Parameters: ~
+        {name}  Color scheme to load
+
 vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
         Wait for {time} in milliseconds until {callback} returns `true`.
 

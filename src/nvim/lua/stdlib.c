@@ -26,6 +26,7 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
+#include "nvim/highlight_group.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/spell.h"
@@ -164,6 +165,25 @@ static struct luaL_Reg regex_meta[] = {
   { "match_line", regex_match_line },
   { NULL, NULL }
 };
+
+/// set the current color scheme
+static int nlua_colorscheme(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  if (lua_gettop(lstate) < 1) {
+    return luaL_error(lstate, "Expected at least 1 argument");
+  }
+
+  if (lua_type(lstate, 1) != LUA_TSTRING) {
+    return luaL_argerror(lstate, 1, "expected string");
+  }
+
+  const char *name = luaL_checkstring(lstate, 1);
+
+  if (load_colors((char_u *)name) == FAIL) {
+    return luaL_error(lstate, "Cannot find color scheme %s", name);
+  }
+  return 0;
+}
 
 /// convert byte index to UTF-32 and UTF-16 indices
 ///
@@ -519,6 +539,10 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     luaopen_spell(lstate);
     lua_setfield(lstate, -2, "spell");
   }
+
+  // vim.colorscheme
+  lua_pushcfunction(lstate, &nlua_colorscheme);
+  lua_setfield(lstate, -2, "colorscheme");
 
   // vim.mpack
   luaopen_mpack(lstate);
