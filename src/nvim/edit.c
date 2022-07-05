@@ -7330,7 +7330,7 @@ static void replace_do_bs(int limit_col)
 }
 
 /// Check that C-indenting is on.
-static bool cindent_on(void)
+bool cindent_on(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL);
