@@ -472,6 +472,20 @@ any window, using the TermDebugSendCommand() function.  Example: >
 The argument is the gdb command.
 
 
+Popup menu ~
+							*termdebug_popup*
+
+By default the Termdebug plugin sets 'mousemodel' to "popup_setpos" and adds
+these entries to the popup menu:
+	Set breakpoint		`:Break`
+	Clear breakpoint	`:Clear`
+	Evaluate		`:Evaluate`
+If you don't want this then disable it with: >
+	let g:termdebug_config['popup'] = 0
+or if there is no g:termdebug_config: >
+	let g:termdebug_popup = 0
+
+
 Vim window width ~
 							*termdebug_wide*
 
