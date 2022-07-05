@@ -1784,9 +1784,9 @@ fun! Test_normal33_g_cmd2()
   %d
   15vsp
   set wrap listchars= sbr=
-  let lineA='abcdefghijklmnopqrstuvwxyz'
-  let lineB='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  let lineC='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let lineA = 'abcdefghijklmnopqrstuvwxyz'
+  let lineB = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let lineC = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   $put =lineA
   $put =lineB
 
@@ -1820,6 +1820,28 @@ fun! Test_normal33_g_cmd2()
   call assert_equal(15, col('.'))
   call assert_equal('l', getreg(0))
   call assert_beeps('normal 5g$')
+
+  " Test for g$ with double-width character half displayed
+  vsplit
+  9wincmd |
+  setlocal nowrap nonumber
+  call setline(2, 'asdfasdfヨ')
+  2
+  normal 0g$
+  call assert_equal(8, col('.'))
+  10wincmd |
+  normal 0g$
+  call assert_equal(9, col('.'))
+
+  setlocal signcolumn=yes
+  11wincmd |
+  normal 0g$
+  call assert_equal(8, col('.'))
+  12wincmd |
+  normal 0g$
+  call assert_equal(9, col('.'))
+
+  close
 
   " Test for g_
   call assert_beeps('normal! 100g_')
