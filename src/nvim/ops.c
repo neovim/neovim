@@ -4421,6 +4421,7 @@ void format_lines(linenr_T line_count, int avoid_fex)
   int smd_save;
   long count;
   bool need_set_indent = true;      // set indent of next paragraph
+  linenr_T first_line = curwin->w_cursor.lnum;
   bool force_format = false;
   const int old_State = State;
 
@@ -4547,9 +4548,24 @@ void format_lines(linenr_T line_count, int avoid_fex)
        */
       if (is_end_par || force_format) {
         if (need_set_indent) {
-          // replace indent in first line with minimal number of
-          // tabs and spaces, according to current options
-          (void)set_indent(get_indent(), SIN_CHANGED);
+          int indent = 0;  // amount of indent needed
+
+          // Replace indent in first line of a paragraph with minimal
+          // number of tabs and spaces, according to current options.
+          // For the very first formatted line keep the current
+          // indent.
+          if (curwin->w_cursor.lnum == first_line) {
+            indent = get_indent();
+          } else if (curbuf->b_p_lisp) {
+            indent = get_lisp_indent();
+          } else {
+            if (cindent_on()) {
+              indent = *curbuf->b_p_inde != NUL ? get_expr_indent() : get_c_indent();
+            } else {
+              indent = get_indent();
+            }
+          }
+          (void)set_indent(indent, SIN_CHANGED);
         }
 
         // put cursor on last non-space
