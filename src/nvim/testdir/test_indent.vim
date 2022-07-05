@@ -121,4 +121,46 @@ func Test_copyindent()
   close!
 endfunc
 
+" Test for changing multiple lines with lisp indent
+func Test_lisp_indent_change_multiline()
+  new
+  setlocal lisp autoindent
+  call setline(1, ['(if a', '  (if b', '    (return 5)))'])
+  normal! jc2j(return 4))
+  call assert_equal('  (return 4))', getline(2))
+  close!
+endfunc
+
+func Test_lisp_indent()
+  new
+  setlocal lisp autoindent
+  call setline(1, ['(if a', '  ;; comment', '  \ abc', '', '  " str1\', '  " st\b', '  (return 5)'])
+  normal! jo;; comment
+  normal! jo\ abc
+  normal! jo;; ret
+  normal! jostr1"
+  normal! jostr2"
+  call assert_equal(['  ;; comment', '  ;; comment', '  \ abc', '  \ abc', '', '  ;; ret', '  " str1\', '  str1"', '  " st\b', '  str2"'], getline(2, 11))
+  close!
+endfunc
+
+" Test for setting the 'indentexpr' from a modeline
+func Test_modeline_indent_expr()
+  let modeline = &modeline
+  set modeline
+  func GetIndent()
+    return line('.') * 2
+  endfunc
+  call writefile(['# vim: indentexpr=GetIndent()'], 'Xfile.txt')
+  set modelineexpr
+  new Xfile.txt
+  call assert_equal('GetIndent()', &indentexpr)
+  exe "normal Oa\nb\n"
+  call assert_equal(['  a', '    b'], getline(1, 2))
+  set modelineexpr&
+  delfunc GetIndent
+  let &modeline = modeline
+  close!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
