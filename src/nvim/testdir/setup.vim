@@ -30,6 +30,10 @@ set switchbuf=
 mapclear
 mapclear!
 
+" Make "Q" switch to Ex mode.
+" This does not work for all tests.
+nnoremap Q gQ
+
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 
