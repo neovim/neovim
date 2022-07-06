@@ -1963,11 +1963,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     return OK;
   }
 
-  if (text_locked()) {
-    text_locked_msg();
-    return FAIL;
-  }
-  if (curbuf_locked()) {
+  if (text_or_buf_locked()) {
     return FAIL;
   }
 

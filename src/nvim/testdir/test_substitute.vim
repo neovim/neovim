@@ -1,5 +1,7 @@
 " Tests for the substitute (:s) command
 
+source shared.vim
+
 func Test_multiline_subst()
   enew!
   call append(0, ["1 aa",
@@ -871,6 +873,31 @@ func Test_sub_undo_change()
   call Do_Test_sub_undo_change()
 
   delfunc Repl
+endfunc
+
+" This was opening a command line window from the expression
+func Test_sub_open_cmdline_win()
+  " the error only happens in a very specific setup, run a new Vim instance to
+  " get a clean starting point.
+  let lines =<< trim [SCRIPT]
+    norm o0000000000000000000000000000000000000000000000000000
+    func Replace()
+      norm q/
+    endfunc
+    s/\%')/\=Replace()
+    redir >Xresult
+    messages
+    redir END
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '-u NONE -S Xscript')
+    let messages = readfile('Xresult')
+    call assert_match('E565: Not allowed to change text or change window', messages[3])
+  endif
+
+  call delete('Xscript')
+  call delete('Xresult')
 endfunc
 
 " Test for the 2-letter and 3-letter :substitute commands

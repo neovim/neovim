@@ -2726,6 +2726,17 @@ char *get_text_locked_msg(void)
   }
 }
 
+/// Check for text, window or buffer locked.
+/// Give an error message and return true if something is locked.
+bool text_or_buf_locked(void)
+{
+  if (text_locked()) {
+    text_locked_msg();
+    return true;
+  }
+  return curbuf_locked();
+}
+
 /// Check if "curbuf->b_ro_locked" or "allbuf_lock" is set and
 /// return true when it is and give an error message.
 bool curbuf_locked(void)
@@ -6599,6 +6610,11 @@ static int open_cmdwin(void)
   int save_State = State;
   bool save_exmode = exmode_active;
   int save_cmdmsg_rl = cmdmsg_rl;
+
+  // Can't do this when text or buffer is locked.
+  if (text_or_buf_locked()) {
+    return K_IGNORE;
+  }
 
   // Can't do this recursively.  Can't do it when typing a password.
   if (cmdwin_type != 0
