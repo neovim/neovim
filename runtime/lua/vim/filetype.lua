@@ -2408,7 +2408,7 @@ function M.match(args)
   local ft, on_detect
 
   -- First check for the simple case where the full path exists as a key
-  local path = vim.fn.resolve(vim.fn.fnamemodify(name, ':p'))
+  local path = vim.fn.fnamemodify(name, ':p')
   ft, on_detect = dispatch(filename[path], path, bufnr)
   if ft then
     return ft, on_detect
