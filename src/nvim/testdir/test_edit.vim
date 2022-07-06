@@ -985,6 +985,22 @@ func Test_edit_CTRL_U()
   bw!
 endfunc
 
+func Test_edit_completefunc_delete()
+  func CompleteFunc(findstart, base)
+    if a:findstart == 1
+      return col('.') - 1
+    endif
+    normal dd
+    return ['a', 'b']
+  endfunc
+  new
+  set completefunc=CompleteFunc
+  call setline(1, ['', 'abcd', ''])
+  2d
+  call assert_fails("normal 2G$a\<C-X>\<C-U>", 'E565:')
+  bwipe!
+endfunc
+
 func Test_edit_CTRL_Z()
   " Ctrl-Z when insertmode is not set inserts it literally
   new
@@ -1331,7 +1347,7 @@ func Test_edit_forbidden()
   try
     call feedkeys("ix\<esc>", 'tnix')
     call assert_fails(1, 'textlock')
-  catch /^Vim\%((\a\+)\)\=:E523/ " catch E523: not allowed here
+  catch /^Vim\%((\a\+)\)\=:E565/ " catch E565: not allowed here
   endtry
   " TODO: Might be a bug: should x really be inserted here
   call assert_equal(['xa'], getline(1, '$'))
@@ -1356,7 +1372,7 @@ func Test_edit_forbidden()
   try
     call feedkeys("i\<c-x>\<c-u>\<esc>", 'tnix')
     call assert_fails(1, 'change in complete function')
-  catch /^Vim\%((\a\+)\)\=:E523/ " catch E523
+  catch /^Vim\%((\a\+)\)\=:E565/ " catch E565
   endtry
   delfu Complete
   set completefunc=

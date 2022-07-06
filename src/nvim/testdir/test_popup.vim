@@ -349,19 +349,17 @@ func DummyCompleteOne(findstart, base)
   endif
 endfunc
 
-" Test that nothing happens if the 'completefunc' opens
-" a new window (no completion, no crash)
+" Test that nothing happens if the 'completefunc' tries to open
+" a new window (fails to open window, continues)
 func Test_completefunc_opens_new_window_one()
   new
   let winid = win_getid()
   setlocal completefunc=DummyCompleteOne
   call setline(1, 'one')
   /^one
-  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E839:')
-  call assert_notequal(winid, win_getid())
-  q!
+  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E565:')
   call assert_equal(winid, win_getid())
-  call assert_equal('', getline(1))
+  call assert_equal('oneDEF', getline(1))
   q!
 endfunc
 

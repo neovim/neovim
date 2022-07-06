@@ -292,7 +292,7 @@ for i = 1, #functions do
 
     if fn.check_textlock then
       output:write('\n  if (textlock != 0) {')
-      output:write('\n    api_set_error(error, kErrorTypeException, "%s", e_secure);')
+      output:write('\n    api_set_error(error, kErrorTypeException, "%s", e_textlock);')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
     end
@@ -435,7 +435,7 @@ local function process_function(fn)
   if fn.check_textlock then
     write_shifted_output(output, [[
     if (textlock != 0) {
-      api_set_error(&err, kErrorTypeException, "%s", e_secure);
+      api_set_error(&err, kErrorTypeException, "%s", e_textlock);
       goto exit_0;
     }
     ]])
