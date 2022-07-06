@@ -1323,6 +1323,7 @@ local patterns_hashbang = {
   ['fish\\>'] = { 'fish', { vim_regex = true } },
   ['gforth\\>'] = { 'forth', { vim_regex = true } },
   ['icon\\>'] = { 'icon', { vim_regex = true } },
+  guile = 'scheme',
 }
 
 ---@private

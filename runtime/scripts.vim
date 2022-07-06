@@ -206,6 +206,10 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'icon\>'
     set ft=icon
 
+    " Guile
+  elseif s:name =~# 'guile'
+    set ft=scheme
+
   endif
   unlet s:name
 

@@ -1257,7 +1257,7 @@ local filename = {
   ['.*/named/db%..*'] = starsetf('bindzone'),
   ['cabal%.project%..*'] = starsetf('cabalproject'),
   ['sgml%.catalog.*'] = starsetf('catalog'),
-  ['/etc/hostname%..*'] = starsetf('config'),
+  ['.*/etc/hostname%..*'] = starsetf('config'),
   ['.*/etc/cron%.d/.*'] = starsetf('crontab'),
   ['crontab%..*'] = starsetf('crontab'),
   WORKSPACE = 'bzl',
@@ -1766,7 +1766,7 @@ local pattern = {
     return require('vim.filetype.detect').fvwm(path)
   end),
   ['.*/tmp/lltmp.*'] = starsetf('gedcom'),
-  ['/etc/gitconfig%.d/.*'] = starsetf('gitconfig'),
+  ['.*/etc/gitconfig%.d/.*'] = starsetf('gitconfig'),
   ['.*/gitolite%-admin/conf/.*'] = starsetf('gitolite'),
   ['tmac%..*'] = starsetf('nroff'),
   ['.*/%.gitconfig%.d/.*'] = starsetf('gitconfig'),
