@@ -514,7 +514,7 @@ void last_pat_prog(regmmatch_T *regmatch)
   --emsg_off;
 }
 
-/// lowest level search function.
+/// Lowest level search function.
 /// Search for 'count'th occurrence of pattern "pat" in direction "dir".
 /// Start at position "pos" and return the found position in "pos".
 ///
@@ -3991,8 +3991,7 @@ static int find_prev_quote(char_u *line, int col_start, int quotechar, char_u *e
     }
     if (n & 1) {
       col_start -= n;           // uneven number of escape chars, skip it
-    } else if (line[col_start] ==
-               quotechar) {
+    } else if (line[col_start] == quotechar) {
       break;
     }
   }
@@ -4115,8 +4114,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
         col_end = curwin->w_cursor.col;
       }
     }
-  } else if (line[col_start] == quotechar
-             || !vis_empty) {
+  } else if (line[col_start] == quotechar || !vis_empty) {
     int first_col = col_start;
 
     if (!vis_empty) {
@@ -4185,9 +4183,8 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
 
   // Set start position.  After vi" another i" must include the ".
   // For v2i" include the quotes.
-  if (!include && count < 2
-      && (vis_empty || !inside_quotes)) {
-    ++col_start;
+  if (!include && count < 2 && (vis_empty || !inside_quotes)) {
+    col_start++;
   }
   curwin->w_cursor.col = col_start;
   if (VIsual_active) {

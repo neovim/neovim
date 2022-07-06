@@ -2078,8 +2078,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
   } else if ((mod_mask & MOD_MASK_SHIFT)) {
     // Shift-Mouse click searches for the next occurrence of the word under
     // the mouse pointer
-    if (State & MODE_INSERT
-        || (VIsual_active && VIsual_select)) {
+    if (State & MODE_INSERT || (VIsual_active && VIsual_select)) {
       stuffcharReadbuff(Ctrl_O);
     }
     if (which_button == MOUSE_LEFT) {
@@ -2546,8 +2545,7 @@ static bool checkclearop(oparg_T *oap)
 /// @return  true if operator or Visual was active.
 static bool checkclearopq(oparg_T *oap)
 {
-  if (oap->op_type == OP_NOP
-      && !VIsual_active) {
+  if (oap->op_type == OP_NOP && !VIsual_active) {
     return false;
   }
   clearopbeep(oap);
@@ -4472,7 +4470,6 @@ static void nv_scroll(cmdarg_T *cap)
 static void nv_right(cmdarg_T *cap)
 {
   long n;
-  int PAST_LINE;
 
   if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
     // <C-Right> and <S-Right> move a word or WORD right
@@ -4485,18 +4482,17 @@ static void nv_right(cmdarg_T *cap)
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  PAST_LINE = (VIsual_active && *p_sel != 'o');
+  bool past_line = (VIsual_active && *p_sel != 'o');
 
-  // In virtual mode, there's no such thing as "PAST_LINE", as lines are
-  // (theoretically) infinitely long.
+  // In virtual edit mode, there's no such thing as "past_line", as lines
+  // are (theoretically) infinitely long.
   if (virtual_active()) {
-    PAST_LINE = 0;
+    past_line = false;
   }
 
   for (n = cap->count1; n > 0; n--) {
-    if ((!PAST_LINE && oneright() == false)
-        || (PAST_LINE
-            && *get_cursor_pos_ptr() == NUL)) {
+    if ((!past_line && oneright() == false)
+        || (past_line && *get_cursor_pos_ptr() == NUL)) {
       //          <Space> wraps to next line if 'whichwrap' has 's'.
       //              'l' wraps to next line if 'whichwrap' has 'l'.
       // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
@@ -4531,7 +4527,7 @@ static void nv_right(cmdarg_T *cap)
         }
       }
       break;
-    } else if (PAST_LINE) {
+    } else if (past_line) {
       curwin->w_set_curswant = true;
       if (virtual_active()) {
         oneright();
@@ -6472,8 +6468,7 @@ static void nv_redo_or_register(cmdarg_T *cap)
 static void nv_Undo(cmdarg_T *cap)
 {
   // In Visual mode and typing "gUU" triggers an operator
-  if (cap->oap->op_type == OP_UPPER
-      || VIsual_active) {
+  if (cap->oap->op_type == OP_UPPER || VIsual_active) {
     // translate "gUU" to "gUgU"
     cap->cmdchar = 'g';
     cap->nchar = 'U';
@@ -6488,9 +6483,7 @@ static void nv_Undo(cmdarg_T *cap)
 /// single character.
 static void nv_tilde(cmdarg_T *cap)
 {
-  if (!p_to
-      && !VIsual_active
-      && cap->oap->op_type != OP_TILDE) {
+  if (!p_to && !VIsual_active && cap->oap->op_type != OP_TILDE) {
     if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
       clearopbeep(cap->oap);
       return;

@@ -7935,13 +7935,8 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
    * Don't do it for CTRL-O, unless past the end of the line.
    */
   if (!nomove
-      && (curwin->w_cursor.col != 0
-          || curwin->w_cursor.coladd > 0
-          )
-      && (restart_edit == NUL
-          || (gchar_cursor() == NUL
-              && !VIsual_active
-              ))
+      && (curwin->w_cursor.col != 0 || curwin->w_cursor.coladd > 0)
+      && (restart_edit == NUL || (gchar_cursor() == NUL && !VIsual_active))
       && !revins_on) {
     if (curwin->w_cursor.coladd > 0 || get_ve_flags() == VE_ALL) {
       oneleft();

@@ -6627,9 +6627,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     switch (oap->op_type) {
     case OP_LSHIFT:
     case OP_RSHIFT:
-      op_shift(oap, true,
-               oap->is_VIsual ? (int)cap->count1 :
-               1);
+      op_shift(oap, true, oap->is_VIsual ? (int)cap->count1 : 1);
       auto_format(false, true);
       break;
 
