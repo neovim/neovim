@@ -4571,12 +4571,8 @@ void win_goto(win_T *wp)
 {
   win_T *owp = curwin;
 
-  if (text_locked()) {
+  if (text_or_buf_locked()) {
     beep_flush();
-    text_locked_msg();
-    return;
-  }
-  if (curbuf_locked()) {
     return;
   }
 
