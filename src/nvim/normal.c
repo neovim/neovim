@@ -559,6 +559,14 @@ static bool normal_need_additional_char(NormalState *s)
 
 static bool normal_need_redraw_mode_message(NormalState *s)
 {
+  // In Visual mode and with "^O" in Insert mode, a short message will be
+  // overwritten by the mode message.  Wait a bit, until a key is hit.
+  // In Visual mode, it's more important to keep the Visual area updated
+  // than keeping a message (e.g. from a /pat search).
+  // Only do this if the command was typed, not from a mapping.
+  // Don't wait when emsg_silent is non-zero.
+  // Also wait a bit after an error message, e.g. for "^O:".
+  // Don't redraw the screen, it would remove the message.
   return (
           // 'showmode' is set and messages can be printed
           ((p_smd && msg_silent == 0
@@ -892,14 +900,6 @@ static void normal_finish_command(NormalState *s)
 
   // Wait for a moment when a message is displayed that will be overwritten
   // by the mode message.
-  // In Visual mode and with "^O" in Insert mode, a short message will be
-  // overwritten by the mode message.  Wait a bit, until a key is hit.
-  // In Visual mode, it's more important to keep the Visual area updated
-  // than keeping a message (e.g. from a /pat search).
-  // Only do this if the command was typed, not from a mapping.
-  // Don't wait when emsg_silent is non-zero.
-  // Also wait a bit after an error message, e.g. for "^O:".
-  // Don't redraw the screen, it would remove the message.
   if (normal_need_redraw_mode_message(s)) {
     normal_redraw_mode_message(s);
   }
@@ -3472,6 +3472,108 @@ void scroll_redraw(int up, long count)
   redraw_later(curwin, VALID);
 }
 
+/// Get the count specified after a 'z' command.
+/// @return  true to process the 'z' command and false to skip it.
+static bool nv_z_get_count(cmdarg_T *cap, int *nchar_arg)
+{
+  int nchar = *nchar_arg;
+
+  // "z123{nchar}": edit the count before obtaining {nchar}
+  if (checkclearop(cap->oap)) {
+    return false;
+  }
+  long n = nchar - '0';
+
+  for (;;) {
+    no_mapping++;
+    allow_keys++;         // no mapping for nchar, but allow key codes
+    nchar = plain_vgetc();
+    LANGMAP_ADJUST(nchar, true);
+    no_mapping--;
+    allow_keys--;
+    (void)add_to_showcmd(nchar);
+    if (nchar == K_DEL || nchar == K_KDEL) {
+      n /= 10;
+    } else if (ascii_isdigit(nchar)) {
+      n = n * 10 + (nchar - '0');
+    } else if (nchar == CAR) {
+      win_setheight((int)n);
+      break;
+    } else if (nchar == 'l'
+               || nchar == 'h'
+               || nchar == K_LEFT
+               || nchar == K_RIGHT) {
+      cap->count1 = n ? n * cap->count1 : cap->count1;
+      *nchar_arg = nchar;
+      return true;
+    } else {
+      clearopbeep(cap->oap);
+      break;
+    }
+  }
+  cap->oap->op_type = OP_NOP;
+  return false;
+}
+
+/// "zug" and "zuw": undo "zg" and "zw"
+/// "zg": add good word to word list
+/// "zw": add wrong word to word list
+/// "zG": add good word to temp word list
+/// "zW": add wrong word to temp word list
+static int nv_zg_zw(cmdarg_T *cap, int nchar)
+{
+  bool undo = false;
+
+  if (nchar == 'u') {
+    no_mapping++;
+    allow_keys++;               // no mapping for nchar, but allow key codes
+    nchar = plain_vgetc();
+    LANGMAP_ADJUST(nchar, true);
+    no_mapping--;
+    allow_keys--;
+    (void)add_to_showcmd(nchar);
+    if (vim_strchr("gGwW", nchar) == NULL) {
+      clearopbeep(cap->oap);
+      return OK;
+    }
+    undo = true;
+  }
+
+  if (checkclearop(cap->oap)) {
+    return OK;
+  }
+  char_u *ptr = NULL;
+  size_t len;
+  if (VIsual_active && !get_visual_text(cap, &ptr, &len)) {
+    return FAIL;
+  }
+  if (ptr == NULL) {
+    pos_T pos = curwin->w_cursor;
+
+    // Find bad word under the cursor.  When 'spell' is
+    // off this fails and find_ident_under_cursor() is
+    // used below.
+    emsg_off++;
+    len = spell_move_to(curwin, FORWARD, true, true, NULL);
+    emsg_off--;
+    if (len != 0 && curwin->w_cursor.col <= pos.col) {
+      ptr = ml_get_pos(&curwin->w_cursor);
+    }
+    curwin->w_cursor = pos;
+  }
+
+  if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
+    return FAIL;
+  }
+  assert(len <= INT_MAX);
+  spell_add_word(ptr, (int)len,
+                 nchar == 'w' || nchar == 'W' ? SPELL_ADD_BAD : SPELL_ADD_GOOD,
+                 (nchar == 'G' || nchar == 'W') ? 0 : (int)cap->count1,
+                 undo);
+
+  return OK;
+}
+
 /// Commands that start with "z".
 static void nv_zet(cmdarg_T *cap)
 {
@@ -3480,47 +3582,13 @@ static void nv_zet(cmdarg_T *cap)
   int nchar = cap->nchar;
   long old_fdl = curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
-  bool undo = false;
 
   int l_p_siso = (int)get_sidescrolloff_value(curwin);
 
-  if (ascii_isdigit(nchar)) {
-    // "z123{nchar}": edit the count before obtaining {nchar}
-    if (checkclearop(cap->oap)) {
-      return;
-    }
-    n = nchar - '0';
-    for (;;) {
-      no_mapping++;
-      allow_keys++;         // no mapping for nchar, but allow key codes
-      nchar = plain_vgetc();
-      LANGMAP_ADJUST(nchar, true);
-      no_mapping--;
-      allow_keys--;
-      (void)add_to_showcmd(nchar);
-      if (nchar == K_DEL || nchar == K_KDEL) {
-        n /= 10;
-      } else if (ascii_isdigit(nchar)) {
-        n = n * 10 + (nchar - '0');
-      } else if (nchar == CAR) {
-        win_setheight(n);
-        break;
-      } else if (nchar == 'l'
-                 || nchar == 'h'
-                 || nchar == K_LEFT
-                 || nchar == K_RIGHT) {
-        cap->count1 = n ? n * cap->count1 : cap->count1;
-        goto dozet;
-      } else {
-        clearopbeep(cap->oap);
-        break;
-      }
-    }
-    cap->oap->op_type = OP_NOP;
+  if (ascii_isdigit(nchar) && !nv_z_get_count(cap, &nchar)) {
     return;
   }
 
-dozet:
   // "zf" and "zF" are always an operator, "zd", "zo", "zO", "zc"
   // and "zC" only in Visual mode.  "zj" and "zk" are motion
   // commands.
@@ -3870,60 +3938,14 @@ dozet:
     break;
 
   case 'u':     // "zug" and "zuw": undo "zg" and "zw"
-    no_mapping++;
-    allow_keys++;               // no mapping for nchar, but allow key codes
-    nchar = plain_vgetc();
-    LANGMAP_ADJUST(nchar, true);
-    no_mapping--;
-    allow_keys--;
-    (void)add_to_showcmd(nchar);
-    if (vim_strchr("gGwW", nchar) == NULL) {
-      clearopbeep(cap->oap);
-      break;
-    }
-    undo = true;
-    FALLTHROUGH;
-
   case 'g':     // "zg": add good word to word list
   case 'w':     // "zw": add wrong word to word list
   case 'G':     // "zG": add good word to temp word list
   case 'W':     // "zW": add wrong word to temp word list
-  {
-    char_u *ptr = NULL;
-    size_t len;
-
-    if (checkclearop(cap->oap)) {
-      break;
-    }
-    if (VIsual_active && !get_visual_text(cap, &ptr, &len)) {
+    if (nv_zg_zw(cap, nchar) == FAIL) {
       return;
     }
-    if (ptr == NULL) {
-      pos_T pos = curwin->w_cursor;
-
-      // Find bad word under the cursor.  When 'spell' is
-      // off this fails and find_ident_under_cursor() is
-      // used below.
-      emsg_off++;
-      len = spell_move_to(curwin, FORWARD, true, true, NULL);
-      emsg_off--;
-      if (len != 0 && curwin->w_cursor.col <= pos.col) {
-        ptr = ml_get_pos(&curwin->w_cursor);
-      }
-      curwin->w_cursor = pos;
-    }
-
-    if (ptr == NULL && (len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
-      return;
-    }
-    assert(len <= INT_MAX);
-    spell_add_word(ptr, (int)len,
-                   nchar == 'w' || nchar == 'W'
-                   ? SPELL_ADD_BAD : SPELL_ADD_GOOD,
-                   (nchar == 'G' || nchar == 'W') ? 0 : (int)cap->count1,
-                   undo);
-  }
-  break;
+    break;
 
   case '=':     // "z=": suggestions for a badly spelled word
     if (!checkclearop(cap->oap)) {
@@ -4118,6 +4140,69 @@ void do_nv_ident(int c1, int c2)
   nv_ident(&ca);
 }
 
+/// 'K' normal-mode command. Get the command to lookup the keyword under the
+/// cursor.
+static size_t nv_K_getcmd(cmdarg_T *cap, char_u *kp, bool kp_help, bool kp_ex, char_u **ptr_arg,
+                          size_t n, char *buf, size_t buf_size)
+{
+  if (kp_help) {
+    // in the help buffer
+    STRCPY(buf, "he! ");
+    return n;
+  }
+
+  if (kp_ex) {
+    // 'keywordprg' is an ex command
+    if (cap->count0 != 0) {  // Send the count to the ex command.
+      snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
+    }
+    STRCAT(buf, kp);
+    STRCAT(buf, " ");
+    return n;
+  }
+
+  char_u *ptr = *ptr_arg;
+
+  // An external command will probably use an argument starting
+  // with "-" as an option.  To avoid trouble we skip the "-".
+  while (*ptr == '-' && n > 0) {
+    ptr++;
+    n--;
+  }
+  if (n == 0) {
+    // found dashes only
+    emsg(_(e_noident));
+    xfree(buf);
+    *ptr_arg = ptr;
+    return 0;
+  }
+
+  // When a count is given, turn it into a range.  Is this
+  // really what we want?
+  bool isman = (STRCMP(kp, "man") == 0);
+  bool isman_s = (STRCMP(kp, "man -s") == 0);
+  if (cap->count0 != 0 && !(isman || isman_s)) {
+    snprintf(buf, buf_size, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
+  }
+
+  do_cmdline_cmd("tabnew");
+  STRCAT(buf, "terminal ");
+  if (cap->count0 == 0 && isman_s) {
+    STRCAT(buf, "man");
+  } else {
+    STRCAT(buf, kp);
+  }
+  STRCAT(buf, " ");
+  if (cap->count0 != 0 && (isman || isman_s)) {
+    snprintf(buf + STRLEN(buf), buf_size - STRLEN(buf), "%" PRId64,
+             (int64_t)cap->count0);
+    STRCAT(buf, " ");
+  }
+
+  *ptr_arg = ptr;
+  return n;
+}
+
 /// Handle the commands that use the word under the cursor.
 /// [g] CTRL-]   :ta to current identifier
 /// [g] 'K'      run program for current identifier
@@ -4197,48 +4282,9 @@ static void nv_ident(cmdarg_T *cap)
     break;
 
   case 'K':
-    if (kp_help) {
-      STRCPY(buf, "he! ");
-    } else if (kp_ex) {
-      if (cap->count0 != 0) {  // Send the count to the ex command.
-        snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
-      }
-      STRCAT(buf, kp);
-      STRCAT(buf, " ");
-    } else {
-      // An external command will probably use an argument starting
-      // with "-" as an option.  To avoid trouble we skip the "-".
-      while (*ptr == '-' && n > 0) {
-        ptr++;
-        n--;
-      }
-      if (n == 0) {
-        emsg(_(e_noident));              // found dashes only
-        xfree(buf);
-        return;
-      }
-
-      // When a count is given, turn it into a range.  Is this
-      // really what we want?
-      bool isman = (STRCMP(kp, "man") == 0);
-      bool isman_s = (STRCMP(kp, "man -s") == 0);
-      if (cap->count0 != 0 && !(isman || isman_s)) {
-        snprintf(buf, buf_size, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
-      }
-
-      do_cmdline_cmd("tabnew");
-      STRCAT(buf, "terminal ");
-      if (cap->count0 == 0 && isman_s) {
-        STRCAT(buf, "man");
-      } else {
-        STRCAT(buf, kp);
-      }
-      STRCAT(buf, " ");
-      if (cap->count0 != 0 && (isman || isman_s)) {
-        snprintf(buf + STRLEN(buf), buf_size - STRLEN(buf), "%" PRId64,
-                 (int64_t)cap->count0);
-        STRCAT(buf, " ");
-      }
+    n = nv_K_getcmd(cap, kp, kp_help, kp_ex, &ptr, n, buf, buf_size);
+    if (n == 0) {
+      return;
     }
     break;
 
@@ -4493,8 +4539,8 @@ static void nv_right(cmdarg_T *cap)
   for (n = cap->count1; n > 0; n--) {
     if ((!past_line && oneright() == false)
         || (past_line && *get_cursor_pos_ptr() == NUL)) {
-      //          <Space> wraps to next line if 'whichwrap' has 's'.
-      //              'l' wraps to next line if 'whichwrap' has 'l'.
+      //    <Space> wraps to next line if 'whichwrap' has 's'.
+      //        'l' wraps to next line if 'whichwrap' has 'l'.
       // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
       if (((cap->cmdchar == ' ' && vim_strchr((char *)p_ww, 's') != NULL)
            || (cap->cmdchar == 'l' && vim_strchr((char *)p_ww, 'l') != NULL)
@@ -4843,18 +4889,133 @@ static void nv_csearch(cmdarg_T *cap)
   }
 }
 
+/// "[{", "[(", "]}" or "])": go to Nth unclosed '{', '(', '}' or ')'
+/// "[#", "]#": go to start/end of Nth innermost #if..#endif construct.
+/// "[/", "[*", "]/", "]*": go to Nth comment start/end.
+/// "[m" or "]m" search for prev/next start of (Java) method.
+/// "[M" or "]M" search for prev/next end of (Java) method.
+static void nv_bracket_block(cmdarg_T *cap, const pos_T *old_pos)
+{
+  pos_T new_pos = { 0, 0, 0 };
+  pos_T *pos = NULL;  // init for GCC
+  pos_T prev_pos;
+  long n;
+  int findc;
+  int c;
+
+  if (cap->nchar == '*') {
+    cap->nchar = '/';
+  }
+  prev_pos.lnum = 0;
+  if (cap->nchar == 'm' || cap->nchar == 'M') {
+    if (cap->cmdchar == '[') {
+      findc = '{';
+    } else {
+      findc = '}';
+    }
+    n = 9999;
+  } else {
+    findc = cap->nchar;
+    n = cap->count1;
+  }
+  for (; n > 0; n--) {
+    if ((pos = findmatchlimit(cap->oap, findc,
+                              (cap->cmdchar == '[') ? FM_BACKWARD : FM_FORWARD, 0)) == NULL) {
+      if (new_pos.lnum == 0) {        // nothing found
+        if (cap->nchar != 'm' && cap->nchar != 'M') {
+          clearopbeep(cap->oap);
+        }
+      } else {
+        pos = &new_pos;               // use last one found
+      }
+      break;
+    }
+    prev_pos = new_pos;
+    curwin->w_cursor = *pos;
+    new_pos = *pos;
+  }
+  curwin->w_cursor = *old_pos;
+
+  // Handle "[m", "]m", "[M" and "[M".  The findmatchlimit() only
+  // brought us to the match for "[m" and "]M" when inside a method.
+  // Try finding the '{' or '}' we want to be at.
+  // Also repeat for the given count.
+  if (cap->nchar == 'm' || cap->nchar == 'M') {
+    // norm is true for "]M" and "[m"
+    int norm = ((findc == '{') == (cap->nchar == 'm'));
+
+    n = cap->count1;
+    // found a match: we were inside a method
+    if (prev_pos.lnum != 0) {
+      pos = &prev_pos;
+      curwin->w_cursor = prev_pos;
+      if (norm) {
+        n--;
+      }
+    } else {
+      pos = NULL;
+    }
+    while (n > 0) {
+      for (;;) {
+        if ((findc == '{' ? dec_cursor() : inc_cursor()) < 0) {
+          // if not found anything, that's an error
+          if (pos == NULL) {
+            clearopbeep(cap->oap);
+          }
+          n = 0;
+          break;
+        }
+        c = gchar_cursor();
+        if (c == '{' || c == '}') {
+          // Must have found end/start of class: use it.
+          // Or found the place to be at.
+          if ((c == findc && norm) || (n == 1 && !norm)) {
+            new_pos = curwin->w_cursor;
+            pos = &new_pos;
+            n = 0;
+          } else if (new_pos.lnum == 0) {
+            // if no match found at all, we started outside of the
+            // class and we're inside now.  Just go on.
+            new_pos = curwin->w_cursor;
+            pos = &new_pos;
+          } else if ((pos = findmatchlimit(cap->oap, findc,
+                                           (cap->cmdchar == '[') ? FM_BACKWARD : FM_FORWARD,
+                                           0)) == NULL) {
+            // found start/end of other method: go to match
+            n = 0;
+          } else {
+            curwin->w_cursor = *pos;
+          }
+          break;
+        }
+      }
+      n--;
+    }
+    curwin->w_cursor = *old_pos;
+    if (pos == NULL && new_pos.lnum != 0) {
+      clearopbeep(cap->oap);
+    }
+  }
+  if (pos != NULL) {
+    setpcmark();
+    curwin->w_cursor = *pos;
+    curwin->w_set_curswant = true;
+    if ((fdo_flags & FDO_BLOCK) && KeyTyped
+        && cap->oap->op_type == OP_NOP) {
+      foldOpenCursor();
+    }
+  }
+}
+
 /// "[" and "]" commands.
 /// cap->arg is BACKWARD for "[" and FORWARD for "]".
 static void nv_brackets(cmdarg_T *cap)
 {
-  pos_T new_pos = { 0, 0, 0 };
   pos_T prev_pos;
   pos_T *pos = NULL;          // init for GCC
   pos_T old_pos;                    // cursor position before command
   int flag;
   long n;
-  int findc;
-  int c;
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
@@ -4870,7 +5031,7 @@ static void nv_brackets(cmdarg_T *cap)
     //
     //                    search       list           jump
     //                  fwd   bwd    fwd   bwd     fwd    bwd
-    // identifier     "]i"  "[i"   "]I"  "[I"     "]^I"  "[^I"
+    // identifier       "]i"  "[i"   "]I"  "[I"   "]^I"  "[^I"
     // define           "]d"  "[d"   "]D"  "[D"   "]^D"  "[^D"
     char_u *ptr;
     size_t len;
@@ -4903,108 +5064,7 @@ static void nv_brackets(cmdarg_T *cap)
     // "[/", "[*", "]/", "]*": go to Nth comment start/end.
     // "[m" or "]m" search for prev/next start of (Java) method.
     // "[M" or "]M" search for prev/next end of (Java) method.
-    if (cap->nchar == '*') {
-      cap->nchar = '/';
-    }
-    prev_pos.lnum = 0;
-    if (cap->nchar == 'm' || cap->nchar == 'M') {
-      if (cap->cmdchar == '[') {
-        findc = '{';
-      } else {
-        findc = '}';
-      }
-      n = 9999;
-    } else {
-      findc = cap->nchar;
-      n = cap->count1;
-    }
-    for (; n > 0; n--) {
-      if ((pos = findmatchlimit(cap->oap, findc,
-                                (cap->cmdchar == '[') ? FM_BACKWARD : FM_FORWARD, 0)) == NULL) {
-        if (new_pos.lnum == 0) {        // nothing found
-          if (cap->nchar != 'm' && cap->nchar != 'M') {
-            clearopbeep(cap->oap);
-          }
-        } else {
-          pos = &new_pos;               // use last one found
-        }
-        break;
-      }
-      prev_pos = new_pos;
-      curwin->w_cursor = *pos;
-      new_pos = *pos;
-    }
-    curwin->w_cursor = old_pos;
-
-    // Handle "[m", "]m", "[M" and "[M".  The findmatchlimit() only
-    // brought us to the match for "[m" and "]M" when inside a method.
-    // Try finding the '{' or '}' we want to be at.
-    // Also repeat for the given count.
-    if (cap->nchar == 'm' || cap->nchar == 'M') {
-      // norm is true for "]M" and "[m"
-      int norm = ((findc == '{') == (cap->nchar == 'm'));
-
-      n = cap->count1;
-      // found a match: we were inside a method
-      if (prev_pos.lnum != 0) {
-        pos = &prev_pos;
-        curwin->w_cursor = prev_pos;
-        if (norm) {
-          n--;
-        }
-      } else {
-        pos = NULL;
-      }
-      while (n > 0) {
-        for (;;) {
-          if ((findc == '{' ? dec_cursor() : inc_cursor()) < 0) {
-            // if not found anything, that's an error
-            if (pos == NULL) {
-              clearopbeep(cap->oap);
-            }
-            n = 0;
-            break;
-          }
-          c = gchar_cursor();
-          if (c == '{' || c == '}') {
-            // Must have found end/start of class: use it.
-            // Or found the place to be at.
-            if ((c == findc && norm) || (n == 1 && !norm)) {
-              new_pos = curwin->w_cursor;
-              pos = &new_pos;
-              n = 0;
-            } else if (new_pos.lnum == 0) {
-              // if no match found at all, we started outside of the
-              // class and we're inside now.  Just go on.
-              new_pos = curwin->w_cursor;
-              pos = &new_pos;
-            } else if ((pos = findmatchlimit(cap->oap, findc,
-                                             (cap->cmdchar == '[') ? FM_BACKWARD : FM_FORWARD,
-                                             0)) == NULL) {
-              // found start/end of other method: go to match
-              n = 0;
-            } else {
-              curwin->w_cursor = *pos;
-            }
-            break;
-          }
-        }
-        n--;
-      }
-      curwin->w_cursor = old_pos;
-      if (pos == NULL && new_pos.lnum != 0) {
-        clearopbeep(cap->oap);
-      }
-    }
-    if (pos != NULL) {
-      setpcmark();
-      curwin->w_cursor = *pos;
-      curwin->w_set_curswant = true;
-      if ((fdo_flags & FDO_BLOCK) && KeyTyped
-          && cap->oap->op_type == OP_NOP) {
-        foldOpenCursor();
-      }
-    }
+    nv_bracket_block(cap, &old_pos);
   } else if (cap->nchar == '[' || cap->nchar == ']') {
     // "[[", "[]", "]]" and "][": move to start or end of function
     if (cap->nchar == cap->cmdchar) {               // "]]" or "[["
