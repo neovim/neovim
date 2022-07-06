@@ -250,9 +250,12 @@ local build_emoji_table = function(ut_fp, emojiprops, doublewidth, ambiwidth)
         table.insert(emoji, { n, n_last })
       end
 
-      -- Characters below 1F000 may be considered single width traditionally,
-      -- making them double width causes problems.
-      if n >= 0x1f000 then
+      -- Special cases:
+      --   * Below 1F000 is considered single-width traditionally.
+      --   * Regional Indicator Symbols 0x1F1E6-0X1F1FF are almost always used
+      --     in pairs to represent a country flag, so special-case as
+      --     single-width to avoid 4 virtual columns. #16447
+      if (n >= 0x1f000 and n < 0x1f1e6) or n > 0x1f1ff then
         -- exclude characters that are in the ambiguous/doublewidth table
         for _, ambi in ipairs(ambiwidth) do
           if n >= ambi[1] and n <= ambi[2] then
