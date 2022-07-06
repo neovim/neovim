@@ -8557,14 +8557,12 @@ static void ins_mousescroll(int dir)
   }
 
   // Don't scroll the window in which completion is being done.
-  if (!pum_visible()
-      || curwin != old_curwin) {
+  if (!pum_visible() || curwin != old_curwin) {
     if (dir == MSCR_DOWN || dir == MSCR_UP) {
       if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-        scroll_redraw(dir,
-                      (curwin->w_botline - curwin->w_topline));
+        scroll_redraw(dir, (long)(curwin->w_botline - curwin->w_topline));
       } else {
-        scroll_redraw(dir, 3L);
+        scroll_redraw(dir, p_mousescroll_vert);
       }
     } else {
       mouse_scroll_horiz(dir);

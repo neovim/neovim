@@ -688,7 +688,7 @@ bool mouse_scroll_horiz(int dir)
     return false;
   }
 
-  int step = 6;
+  int step = (int)p_mousescroll_hor;
   if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
     step = curwin->w_width_inner;
   }
