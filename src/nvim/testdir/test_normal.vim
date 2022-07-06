@@ -1422,9 +1422,16 @@ func Test_normal27_bracket()
   call assert_equal(5, line('.'))
   call assert_equal(3, col('.'))
 
-  " No mark after line 21, cursor moves to first non blank on current line
+  " No mark before line 1, cursor moves to first non-blank on current line
+  1
+  norm! 5|['
+  call assert_equal('  1   b', getline('.'))
+  call assert_equal(1, line('.'))
+  call assert_equal(3, col('.'))
+
+  " No mark after line 21, cursor moves to first non-blank on current line
   21
-  norm! $]'
+  norm! 5|]'
   call assert_equal('  21   b', getline('.'))
   call assert_equal(21, line('.'))
   call assert_equal(3, col('.'))
@@ -1441,12 +1448,40 @@ func Test_normal27_bracket()
   call assert_equal(20, line('.'))
   call assert_equal(8, col('.'))
 
+  " No mark before line 1, cursor does not move
+  1
+  norm! 5|[`
+  call assert_equal('  1   b', getline('.'))
+  call assert_equal(1, line('.'))
+  call assert_equal(5, col('.'))
+
+  " No mark after line 21, cursor does not move
+  21
+  norm! 5|]`
+  call assert_equal('  21   b', getline('.'))
+  call assert_equal(21, line('.'))
+  call assert_equal(5, col('.'))
+
+  " Count too large for [`
+  " cursor moves to first lowercase mark
+  norm! 99[`
+  call assert_equal('  1   b', getline('.'))
+  call assert_equal(1, line('.'))
+  call assert_equal(7, col('.'))
+
+  " Count too large for ]`
+  " cursor moves to last lowercase mark
+  norm! 99]`
+  call assert_equal('  20   b', getline('.'))
+  call assert_equal(20, line('.'))
+  call assert_equal(8, col('.'))
+
   " clean up
   bw!
 endfunc
 
+" Test for ( and ) sentence movements
 func Test_normal28_parenthesis()
-  " basic testing for ( and )
   new
   call append(0, ['This is a test. With some sentences!', '', 'Even with a question? And one more. And no sentence here'])
 

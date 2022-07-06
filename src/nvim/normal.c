@@ -5011,8 +5011,6 @@ static void nv_bracket_block(cmdarg_T *cap, const pos_T *old_pos)
 /// cap->arg is BACKWARD for "[" and FORWARD for "]".
 static void nv_brackets(cmdarg_T *cap)
 {
-  pos_T prev_pos;
-  pos_T *pos = NULL;          // init for GCC
   pos_T old_pos;                    // cursor position before command
   int flag;
   long n;
@@ -5091,19 +5089,19 @@ static void nv_brackets(cmdarg_T *cap)
     nv_put_opt(cap, true);
   } else if (cap->nchar == '\'' || cap->nchar == '`') {
     // "['", "[`", "]'" and "]`": jump to next mark
-    fmark_T *fm = NULL;
-    pos = &curwin->w_cursor;
+    fmark_T *fm = pos_to_mark(curbuf, NULL, curwin->w_cursor);
+    fmark_T *prev_fm;
     for (n = cap->count1; n > 0; n--) {
-      prev_pos = *pos;
-      fm = getnextmark(pos, cap->cmdchar == '[' ? BACKWARD : FORWARD,
+      prev_fm = fm;
+      fm = getnextmark(&fm->mark, cap->cmdchar == '[' ? BACKWARD : FORWARD,
                        cap->nchar == '\'');
-      if (pos == NULL) {
+      if (fm == NULL) {
         break;
-      } else {
-        pos = fm != NULL ? &fm->mark : NULL;  // Adjust for the next iteration.
       }
     }
-    fm = fm == NULL ? pos_to_mark(curbuf, NULL, curwin->w_cursor) : fm;
+    if (fm == NULL) {
+      fm = prev_fm;
+    }
     MarkMove flags = kMarkContext;
     flags |= cap->nchar == '\'' ? kMarkBeginLine: 0;
     nv_mark_move_to(cap, flags, fm);
