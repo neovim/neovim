@@ -448,27 +448,21 @@ fmark_T *mark_get_local(buf_T *buf, win_T *win, int name)
 fmark_T *mark_get_motion(buf_T *buf, win_T *win, int name)
 {
   fmark_T *mark = NULL;
-  if (name == '{' || name == '}') {
-    // to previous/next paragraph
+  const pos_T pos = curwin->w_cursor;
+  const bool slcb = listcmd_busy;
+  listcmd_busy = true;  // avoid that '' is changed
+  if (name == '{' || name == '}') {  // to previous/next paragraph
     oparg_T oa;
-    bool slcb = listcmd_busy;
-    listcmd_busy = true;  // avoid that '' is changed
-
-    if (findpar(&oa.inclusive,
-                name == '}' ? FORWARD : BACKWARD, 1L, NUL, false)) {
+    if (findpar(&oa.inclusive, name == '}' ? FORWARD : BACKWARD, 1L, NUL, false)) {
       mark = pos_to_mark(buf, NULL, win->w_cursor);
     }
-    listcmd_busy = slcb;
-    // to previous/next sentence
-  } else if (name == '(' || name == ')') {
-    bool slcb = listcmd_busy;
-    listcmd_busy = true;  // avoid that '' is changed
-
+  } else if (name == '(' || name == ')') {  // to previous/next sentence
     if (findsent(name == ')' ? FORWARD : BACKWARD, 1L)) {
       mark = pos_to_mark(buf, NULL, win->w_cursor);
     }
-    listcmd_busy = slcb;
   }
+  curwin->w_cursor = pos;
+  listcmd_busy = slcb;
   return mark;
 }
 
