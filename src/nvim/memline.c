@@ -1834,6 +1834,7 @@ char_u *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
   DATA_BL *dp;
   char_u *ptr;
   static int recursive = 0;
+  static char_u questions[4];
 
   if (lnum > buf->b_ml.ml_line_count) {  // invalid line number
     if (recursive == 0) {
@@ -1844,8 +1845,8 @@ char_u *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
       recursive--;
     }
 errorret:
-    STRCPY(IObuff, "???");
-    return IObuff;
+    STRCPY(questions, "???");
+    return questions;
   }
   if (lnum <= 0) {                      // pretend line 0 is line 1
     lnum = 1;
