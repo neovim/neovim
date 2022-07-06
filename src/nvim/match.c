@@ -494,10 +494,10 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
       shl->lnum += shl->rm.startpos[0].lnum;
       break;                            // useful match found
     }
-
-    // Restore called_emsg for assert_fails().
-    called_emsg = save_called_emsg;
   }
+
+  // Restore called_emsg for assert_fails().
+  called_emsg = save_called_emsg;
 }
 
 /// Advance to the match in window "wp" line "lnum" or past it.

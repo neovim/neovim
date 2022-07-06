@@ -509,7 +509,7 @@ EXTERN int full_screen INIT(= false);
 /// .vimrc in current directory.
 EXTERN int secure INIT(= 0);
 
-/// Non-zero when changing text and jumping to another window/buffer is not
+/// Non-zero when changing text and jumping to another window or editing another buffer is not
 /// allowed.
 EXTERN int textlock INIT(= 0);
 
@@ -955,6 +955,7 @@ EXTERN char e_listdictblobarg[] INIT(= N_("E896: Argument of %s must be a List, 
 EXTERN char e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char e_secure[] INIT(= N_("E523: Not allowed here"));
+EXTERN char e_textlock[] INIT(= N_("E565: Not allowed to change text or change window"));
 EXTERN char e_screenmode[] INIT(= N_("E359: Screen mode setting not supported"));
 EXTERN char e_scroll[] INIT(= N_("E49: Invalid scroll size"));
 EXTERN char e_shellempty[] INIT(= N_("E91: 'shell' option is empty"));

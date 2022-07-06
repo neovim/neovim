@@ -401,6 +401,30 @@ func Test_winsize_cmd()
   " Actually changing the window size would be flaky.
 endfunc
 
+" Test for running Ex commands when text is locked.
+" <C-\>e in the command line is used to lock the text
+func Test_run_excmd_with_text_locked()
+  " :quit
+  let cmd = ":\<C-\>eexecute('quit')\<CR>\<C-C>"
+  call assert_fails("call feedkeys(cmd, 'xt')", 'E565:')
+
+  " :qall
+  let cmd = ":\<C-\>eexecute('qall')\<CR>\<C-C>"
+  call assert_fails("call feedkeys(cmd, 'xt')", 'E565:')
+
+  " :exit
+  let cmd = ":\<C-\>eexecute('exit')\<CR>\<C-C>"
+  call assert_fails("call feedkeys(cmd, 'xt')", 'E565:')
+
+  " :close - should be ignored
+  new
+  let cmd = ":\<C-\>eexecute('close')\<CR>\<C-C>"
+  call assert_equal(2, winnr('$'))
+  close
+
+  call assert_fails("call feedkeys(\":\<C-R>=execute('bnext')\<CR>\", 'xt')", 'E565:')
+endfunc
+
 func Test_not_break_expression_register()
   call setreg('=', '1+1')
   if 0

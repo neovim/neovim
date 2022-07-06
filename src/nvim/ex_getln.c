@@ -2722,7 +2722,7 @@ char *get_text_locked_msg(void)
   if (cmdwin_type != 0) {
     return e_cmdwin;
   } else {
-    return e_secure;
+    return e_textlock;
   }
 }
 

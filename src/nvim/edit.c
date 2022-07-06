@@ -1409,14 +1409,9 @@ bool edit(int cmdchar, bool startln, long count)
 
   // Don't allow changes in the buffer while editing the cmdline.  The
   // caller of getcmdline() may get confused.
-  if (textlock != 0) {
-    emsg(_(e_secure));
-    return false;
-  }
-
   // Don't allow recursive insert mode when busy with completion.
-  if (compl_started || compl_busy || pum_visible()) {
-    emsg(_(e_secure));
+  if (textlock != 0 || compl_started || compl_busy || pum_visible()) {
+    emsg(_(e_textlock));
     return false;
   }
 
@@ -3966,6 +3961,8 @@ static void expand_by_function(int type, char_u *base)
   pos = curwin->w_cursor;
   curwin_save = curwin;
   curbuf_save = curbuf;
+  // Lock the text to avoid weird things from happening.
+  textlock++;
 
   // Call a function, which returns a list or dict.
   if (call_vim_function((char *)funcname, 2, args, &rettv) == OK) {
@@ -3984,6 +3981,7 @@ static void expand_by_function(int type, char_u *base)
       break;
     }
   }
+  textlock--;
 
   if (curwin_save != curwin || curbuf_save != curbuf) {
     emsg(_(e_complwin));

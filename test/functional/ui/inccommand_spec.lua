@@ -1778,11 +1778,11 @@ describe("'inccommand' and :cnoremap", function()
       feed_command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
 
       feed(":%s/tw/tox<enter>")
-      screen:expect{any=[[{14:^E523:]]}
+      screen:expect{any=[[{14:^E565:]]}
       feed('<c-c>')
 
       -- error thrown b/c of the mapping
-      neq(nil, eval('v:errmsg'):find('^E523:'))
+      neq(nil, eval('v:errmsg'):find('^E565:'))
       expect([[
       Inc substitution on
       toxo lines
