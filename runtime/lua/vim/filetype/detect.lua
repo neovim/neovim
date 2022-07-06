@@ -187,6 +187,17 @@ function M.cls(bufnr)
   end
 end
 
+function M.conf(path, bufnr)
+  if vim.fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
+    return
+  end
+  for _, line in ipairs(getlines(bufnr, 1, 5)) do
+    if line:find('^#') then
+      return 'conf'
+    end
+  end
+end
+
 -- Debian Control
 function M.control(bufnr)
   if getlines(bufnr, 1):find('^Source:') then
@@ -256,8 +267,9 @@ local function cvs_diff(path, contents)
 end
 
 function M.dat(path, bufnr)
+  local file_name = vim.fn.fnamemodify(path, ':t'):lower()
   -- Innovation data processing
-  if findany(path:lower(), { '^upstream%.dat$', '^upstream%..*%.dat$', '^.*%.upstream%.dat$' }) then
+  if findany(file_name, { '^upstream%.dat$', '^upstream%..*%.dat$', '^.*%.upstream%.dat$' }) then
     return 'upstreamdat'
   end
   if vim.g.filetype_dat then
@@ -458,7 +470,7 @@ end
 
 function M.git(bufnr)
   local line = getlines(bufnr, 1)
-  if line:find('^' .. string.rep('%x', 40) .. '+ ') or line:sub(1, 5) == 'ref: ' then
+  if matchregex(line, [[^\x\{40,\}\>\|^ref: ]]) then
     return 'git'
   end
 end
@@ -568,7 +580,7 @@ function M.log(path)
     return 'upstreaminstalllog'
   elseif findany(path, { 'usserver%.log', 'usserver%..*%.log', '.*%.usserver%.log' }) then
     return 'usserverlog'
-  elseif findany(path, { 'usw2kagt%.log', 'usws2kagt%..*%.log', '.*%.usws2kagt%.log' }) then
+  elseif findany(path, { 'usw2kagt%.log', 'usw2kagt%..*%.log', '.*%.usw2kagt%.log' }) then
     return 'usw2kagtlog'
   end
 end
@@ -759,8 +771,8 @@ end
 -- If the first line starts with '#' and contains 'perl' it's probably a Perl file.
 -- (Slow test) If a file contains a 'use' statement then it is almost certainly a Perl file.
 function M.perl(path, bufnr)
-  local dirname = vim.fn.expand(path, '%:p:h:t')
-  if vim.fn.expand(dirname, '%:e') == 't' and (dirname == 't' or dirname == 'xt') then
+  local dir_name = vim.fs.dirname(path)
+  if vim.fn.expand(path, '%:e') == 't' and (dir_name == 't' or dir_name == 'xt') then
     return 'perl'
   end
   local first_line = getlines(bufnr, 1)
