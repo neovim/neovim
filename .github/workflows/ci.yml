@@ -100,8 +100,12 @@ jobs:
             ~/.ccache
           key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
 
-      - name: Build third-party deps
-        run: ./ci/before_script.sh
+      - name: prepare-ccache
+        run: |
+          echo "ccache stats will be cleared"
+          ccache -s
+          # Reset ccache stats for real results in before_cache.
+          ccache --zero-stats
 
       - name: Build nvim
         run: ./ci/run_tests.sh build_nvim
