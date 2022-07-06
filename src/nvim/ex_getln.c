@@ -6612,13 +6612,8 @@ static int open_cmdwin(void)
   int save_cmdmsg_rl = cmdmsg_rl;
 
   // Can't do this when text or buffer is locked.
-  if (text_or_buf_locked()) {
-    return K_IGNORE;
-  }
-
   // Can't do this recursively.  Can't do it when typing a password.
-  if (cmdwin_type != 0
-      || cmdline_star > 0) {
+  if (text_or_buf_locked() || cmdwin_type != 0 || cmdline_star > 0) {
     beep_flush();
     return K_IGNORE;
   }

@@ -880,6 +880,7 @@ func Test_sub_open_cmdline_win()
   " the error only happens in a very specific setup, run a new Vim instance to
   " get a clean starting point.
   let lines =<< trim [SCRIPT]
+    set vb t_vb=
     norm o0000000000000000000000000000000000000000000000000000
     func Replace()
       norm q/
@@ -892,8 +893,8 @@ func Test_sub_open_cmdline_win()
   [SCRIPT]
   call writefile(lines, 'Xscript')
   if RunVim([], [], '-u NONE -S Xscript')
-    let messages = readfile('Xresult')
-    call assert_match('E565: Not allowed to change text or change window', messages[3])
+    call assert_match('E565: Not allowed to change text or change window',
+          \ readfile('Xresult')->join('XX'))
   endif
 
   call delete('Xscript')
