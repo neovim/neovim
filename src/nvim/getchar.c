@@ -1545,12 +1545,16 @@ int vgetc(void)
         }
         break;
 
+      case K_KUP:
       case K_XUP:
         c = K_UP; break;
+      case K_KDOWN:
       case K_XDOWN:
         c = K_DOWN; break;
+      case K_KLEFT:
       case K_XLEFT:
         c = K_LEFT; break;
+      case K_KRIGHT:
       case K_XRIGHT:
         c = K_RIGHT; break;
       }

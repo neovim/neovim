@@ -111,11 +111,17 @@ width of the terminal.
 							*tui-input*
 Nvim uses libtermkey to convert terminal escape sequences to key codes.
 |terminfo| is used first, and CSI sequences not in |terminfo| (including
-extended keys a.k.a. modifyOtherKeys or `CSI u`) can also be parsed.
+extended keys a.k.a. modifyOtherKeys or "CSI u") can also be parsed.
 For example, when running Nvim in tmux, this makes Nvim leave Insert mode and
 go to the window below: >
-  tmux send-keys 'Escape' [ 2 7 u 'C-W' j
-Where `'Escape' [ 2 7 u` is an unambiguous `CSI u` sequence for the <Esc> key.
+	tmux send-keys 'Escape' [ 2 7 u 'C-W' j
+Where `'Escape' [ 2 7 u` is an unambiguous "CSI u" sequence for the <Esc> key.
+
+The kitty keyboard protocol https://sw.kovidgoyal.net/kitty/keyboard-protocol/
+is partially supported, including keypad keys in Unicode Private Use Area.
+For example, this sequence is recognized by Nvim as <C-kEnter>: >
+	CSI 57414 ; 5 u
+and can be used differently from <C-CR> in mappings.
 
 						*tui-modifyOtherKeys* *tui-csiu*
 Historically, terminal emulators could not distinguish between certain control

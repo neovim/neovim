@@ -20,6 +20,7 @@ local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
+local funcs = helpers.funcs
 
 if helpers.pending_win32(pending) then return end
 
@@ -294,6 +295,179 @@ describe('TUI', function()
     {5:[No Name] [+]                                     }|
     {3:-- INSERT --}                                      |
     {3:-- TERMINAL --}                                    |
+    ]], attrs)
+  end)
+
+  it('accepts keypad keys from kitty keyboard protocol #19180', function()
+    feed_data('i')
+    feed_data(funcs.nr2char(57399)) -- KP_0
+    feed_data(funcs.nr2char(57400)) -- KP_1
+    feed_data(funcs.nr2char(57401)) -- KP_2
+    feed_data(funcs.nr2char(57402)) -- KP_3
+    feed_data(funcs.nr2char(57403)) -- KP_4
+    feed_data(funcs.nr2char(57404)) -- KP_5
+    feed_data(funcs.nr2char(57405)) -- KP_6
+    feed_data(funcs.nr2char(57406)) -- KP_7
+    feed_data(funcs.nr2char(57407)) -- KP_8
+    feed_data(funcs.nr2char(57408)) -- KP_9
+    feed_data(funcs.nr2char(57409)) -- KP_DECIMAL
+    feed_data(funcs.nr2char(57410)) -- KP_DIVIDE
+    feed_data(funcs.nr2char(57411)) -- KP_MULTIPLY
+    feed_data(funcs.nr2char(57412)) -- KP_SUBTRACT
+    feed_data(funcs.nr2char(57413)) -- KP_ADD
+    feed_data(funcs.nr2char(57414)) -- KP_ENTER
+    feed_data(funcs.nr2char(57415)) -- KP_EQUAL
+    screen:expect([[
+      0123456789./*-+                                   |
+      ={1: }                                                |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57417)) -- KP_LEFT
+    screen:expect([[
+      0123456789./*-+                                   |
+      {1:=}                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57418)) -- KP_RIGHT
+    screen:expect([[
+      0123456789./*-+                                   |
+      ={1: }                                                |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57419)) -- KP_UP
+    screen:expect([[
+      0{1:1}23456789./*-+                                   |
+      =                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57420)) -- KP_DOWN
+    screen:expect([[
+      0123456789./*-+                                   |
+      ={1: }                                                |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57425)) -- KP_INSERT
+    screen:expect([[
+      0123456789./*-+                                   |
+      ={1: }                                                |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- REPLACE --}                                     |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027[27u') -- ESC
+    screen:expect([[
+      0123456789./*-+                                   |
+      {1:=}                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027[57417;5u') -- CTRL + KP_LEFT
+    screen:expect([[
+      {1:0}123456789./*-+                                   |
+      =                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027[57418;2u') -- SHIFT + KP_RIGHT
+    screen:expect([[
+      0123456789{1:.}/*-+                                   |
+      =                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57426)) -- KP_DELETE
+    screen:expect([[
+      0123456789{1:/}*-+                                    |
+      =                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57423)) -- KP_HOME
+    screen:expect([[
+      {1:0}123456789/*-+                                    |
+      =                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(funcs.nr2char(57424)) -- KP_END
+    screen:expect([[
+      0123456789/*-{1:+}                                    |
+      =                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data(':tab split\r:tabnew\r')
+    feed_data(':highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline\r')
+    local attrs = screen:get_default_attr_ids()
+    attrs[11] = {underline = true}
+    screen:expect([[
+      {11: + [No Name]  + [No Name] }{3: [No Name] }{1:            }{11:X}|
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    feed_data('\027[57421;5u') -- CTRL + KP_PAGE_UP
+    screen:expect([[
+      {11: + [No Name] }{3: + [No Name] }{11: [No Name] }{1:            }{11:X}|
+      0123456789/*-{1:+}                                    |
+      =                                                 |
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    feed_data('\027[57422;5u') -- CTRL + KP_PAGE_DOWN
+    screen:expect([[
+      {11: + [No Name]  + [No Name] }{3: [No Name] }{1:            }{11:X}|
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]], attrs)
   end)
 
