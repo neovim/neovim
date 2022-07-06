@@ -1361,4 +1361,9 @@ func Test_recursive_register()
   call assert_equal('yes', caught)
 endfunc
 
+func Test_long_error_message()
+  " the error should be truncated, not overrun IObuff
+  silent! norm Q00000000000000     000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000                                                                                                                                                                                                                        
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

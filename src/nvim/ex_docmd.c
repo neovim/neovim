@@ -2904,9 +2904,16 @@ int checkforcmd(char **pp, char *cmd, int len)
 /// invisible otherwise.
 static void append_command(char *cmd)
 {
+  size_t len = STRLEN(IObuff);
   char *s = cmd;
   char *d;
 
+  if (len > IOSIZE - 100) {
+    // Not enough space, truncate and put in "...".
+    d = (char *)IObuff + IOSIZE - 100;
+    d -= utf_head_off(IObuff, (const char_u *)d);
+    STRCPY(d, "...");
+  }
   STRCAT(IObuff, ": ");
   d = (char *)IObuff + STRLEN(IObuff);
   while (*s != NUL && (char_u *)d - IObuff + 5 < IOSIZE) {
