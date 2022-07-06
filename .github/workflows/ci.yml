@@ -60,12 +60,20 @@ jobs:
             lua-filesystem \
             lua-inspect \
             lua-lpeg \
-            lua-luv-dev \
             lua-nvim \
             luajit \
             ninja-build \
             pkg-config
 
+      # LIBLUV 1.43.0+ is required, which isn't available on apt
+      - name: Install luv
+        run: |
+          git clone https://github.com/luvit/luv.git
+          sudo make -C luv \
+            WITH_SHARED_LIBUV=ON \
+            LUA_BUILD_TYPE=System \
+            BUILD_DIR=build-luv \
+            install
 
       - name: Cache uncrustify
         id: cache-uncrustify
