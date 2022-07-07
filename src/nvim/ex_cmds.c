@@ -1585,20 +1585,24 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
   }
   char *const buf = xmalloc(len);
 
-#if defined(UNIX)
-  // Put delimiters around the command (for concatenated commands) when
-  // redirecting input and/or output.
   if (is_pwsh) {
     xstrlcpy(buf, "Start-Process ", len);
     xstrlcat(buf, cmd, len);
+#if defined(UNIX)
+    // Put delimiters around the command (for concatenated commands) when
+    // redirecting input and/or output.
   } else if (itmp != NULL || otmp != NULL) {
     char *fmt = is_fish_shell ? "begin; %s; end"
                               :       "(%s)";
     vim_snprintf(buf, len, fmt, cmd);
+#endif
+    // For shells that don't understand braces around commands, at least allow
+    // the use of commands in a pipe.
   } else {
     xstrlcpy(buf, cmd, len);
   }
 
+#if defined(UNIX)
   if (itmp != NULL) {
     if (is_pwsh) {
       xstrlcat(buf, " -RedirectStandardInput ", len - 1);
@@ -1608,14 +1612,6 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
     xstrlcat(buf, itmp, len - 1);
   }
 #else
-  // For shells that don't understand braces around commands, at least allow
-  // the use of commands in a pipe.
-  if (is_pwsh) {
-    xstrlcpy(buf, "Start-Process ", len);
-    xstrlcat(buf, cmd, len);
-  } else {
-    xstrlcpy(buf, cmd, len);
-  }
   if (itmp != NULL) {
     // If there is a pipe, we have to put the '<' in front of it.
     // Don't do this when 'shellquote' is not empty, otherwise the
