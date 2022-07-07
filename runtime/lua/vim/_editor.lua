@@ -739,7 +739,12 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     f_tab = true
   elseif subcmd == 'silent' then
     f_silent = true
-  elseif subcmd == 'wait' or subcmd == 'wait-silent' or subcmd == 'tab-wait' or subcmd == 'tab-wait-silent' then
+  elseif
+    subcmd == 'wait'
+    or subcmd == 'wait-silent'
+    or subcmd == 'tab-wait'
+    or subcmd == 'tab-wait-silent'
+  then
     return { errmsg = 'E5600: Wait commands not yet implemented in nvim' }
   elseif subcmd == 'tab-silent' then
     f_tab = true
@@ -795,7 +800,11 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   local message = name .. ' is deprecated'
   plugin = plugin or 'Nvim'
   message = alternative and (message .. ', use ' .. alternative .. ' instead.') or message
-  message = message .. ' See :h deprecated\nThis function will be removed in ' .. plugin .. ' version ' .. version
+  message = message
+    .. ' See :h deprecated\nThis function will be removed in '
+    .. plugin
+    .. ' version '
+    .. version
   if vim.notify_once(message, vim.log.levels.WARN) and backtrace ~= false then
     vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
   end

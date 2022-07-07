@@ -102,9 +102,13 @@ do -- buffer option accessor
       if type(k) == 'string' then
         _setup()
         if win_options[k] then
-          error(string.format([['%s' is a window option, not a buffer option. See ":help %s"]], k, k))
+          error(
+            string.format([['%s' is a window option, not a buffer option. See ":help %s"]], k, k)
+          )
         elseif glb_options[k] then
-          error(string.format([['%s' is a global option, not a buffer option. See ":help %s"]], k, k))
+          error(
+            string.format([['%s' is a global option, not a buffer option. See ":help %s"]], k, k)
+          )
         end
       end
 
@@ -132,9 +136,13 @@ do -- window option accessor
       if type(k) == 'string' then
         _setup()
         if buf_options[k] then
-          error(string.format([['%s' is a buffer option, not a window option. See ":help %s"]], k, k))
+          error(
+            string.format([['%s' is a buffer option, not a window option. See ":help %s"]], k, k)
+          )
         elseif glb_options[k] then
-          error(string.format([['%s' is a global option, not a window option. See ":help %s"]], k, k))
+          error(
+            string.format([['%s' is a global option, not a window option. See ":help %s"]], k, k)
+          )
         end
       end
 
@@ -252,7 +260,12 @@ local function assert_valid_value(name, value, types)
   end
 
   error(
-    string.format("Invalid option type '%s' for '%s', should be %s", type_of_value, name, table.concat(types, ' or '))
+    string.format(
+      "Invalid option type '%s' for '%s', should be %s",
+      type_of_value,
+      name,
+      table.concat(types, ' or ')
+    )
   )
 end
 

@@ -880,7 +880,8 @@ function protocol._resolve_capabilities_compat(server_capabilities)
   general_properties.document_symbol = server_capabilities.documentSymbolProvider or false
   general_properties.workspace_symbol = server_capabilities.workspaceSymbolProvider or false
   general_properties.document_formatting = server_capabilities.documentFormattingProvider or false
-  general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider or false
+  general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider
+    or false
   general_properties.call_hierarchy = server_capabilities.callHierarchyProvider or false
   general_properties.execute_command = server_capabilities.executeCommandProvider ~= nil
 
@@ -897,7 +898,8 @@ function protocol._resolve_capabilities_compat(server_capabilities)
     general_properties.code_lens_resolve = false
   elseif type(server_capabilities.codeLensProvider) == 'table' then
     general_properties.code_lens = true
-    general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider or false
+    general_properties.code_lens_resolve = server_capabilities.codeLensProvider.resolveProvider
+      or false
   else
     error('The server sent invalid codeLensProvider')
   end
@@ -974,7 +976,8 @@ function protocol._resolve_capabilities_compat(server_capabilities)
     signature_help_properties = {
       signature_help = true,
       -- The characters that trigger signature help automatically.
-      signature_help_trigger_characters = server_capabilities.signatureHelpProvider.triggerCharacters or {},
+      signature_help_trigger_characters = server_capabilities.signatureHelpProvider.triggerCharacters
+        or {},
     }
   else
     error('The server sent invalid signatureHelpProvider')

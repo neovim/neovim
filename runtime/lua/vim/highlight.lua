@@ -16,7 +16,14 @@ function M.create(higroup, hi_info, default)
   for k, v in pairs(hi_info) do
     table.insert(options, string.format('%s=%s', k, v))
   end
-  vim.cmd(string.format([[highlight %s %s %s]], default and 'default' or '', higroup, table.concat(options, ' ')))
+  vim.cmd(
+    string.format(
+      [[highlight %s %s %s]],
+      default and 'default' or '',
+      higroup,
+      table.concat(options, ' ')
+    )
+  )
 end
 
 ---@private

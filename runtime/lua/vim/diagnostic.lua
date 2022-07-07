@@ -68,7 +68,10 @@ local all_namespaces = {}
 ---@private
 local function to_severity(severity)
   if type(severity) == 'string' then
-    return assert(M.severity[string.upper(severity)], string.format('Invalid severity: %s', severity))
+    return assert(
+      M.severity[string.upper(severity)],
+      string.format('Invalid severity: %s', severity)
+    )
   end
   return severity
 end
@@ -277,7 +280,8 @@ local function set_diagnostic_cache(namespace, bufnr, diagnostics)
   for _, diagnostic in ipairs(diagnostics) do
     assert(diagnostic.lnum, 'Diagnostic line number is required')
     assert(diagnostic.col, 'Diagnostic column is required')
-    diagnostic.severity = diagnostic.severity and to_severity(diagnostic.severity) or M.severity.ERROR
+    diagnostic.severity = diagnostic.severity and to_severity(diagnostic.severity)
+      or M.severity.ERROR
     diagnostic.end_lnum = diagnostic.end_lnum or diagnostic.lnum
     diagnostic.end_col = diagnostic.end_col or diagnostic.col
     diagnostic.namespace = namespace
@@ -322,13 +326,8 @@ local function save_extmarks(namespace, bufnr)
     })
     diagnostic_attached_buffers[bufnr] = true
   end
-  diagnostic_cache_extmarks[bufnr][namespace] = vim.api.nvim_buf_get_extmarks(
-    bufnr,
-    namespace,
-    0,
-    -1,
-    { details = true }
-  )
+  diagnostic_cache_extmarks[bufnr][namespace] =
+    vim.api.nvim_buf_get_extmarks(bufnr, namespace, 0, -1, { details = true })
 end
 
 local registered_autocmds = {}
@@ -482,7 +481,8 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   bufnr = get_bufnr(bufnr)
   local wrap = vim.F.if_nil(opts.wrap, true)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local diagnostics = get_diagnostics(bufnr, vim.tbl_extend('keep', opts, { namespace = namespace }), true)
+  local diagnostics =
+    get_diagnostics(bufnr, vim.tbl_extend('keep', opts, { namespace = namespace }), true)
   local line_diagnostics = diagnostic_lines(diagnostics)
   for i = 0, line_count do
     local offset = i * (search_forward and 1 or -1)
@@ -971,7 +971,10 @@ M.handlers.virtual_text = {
       if opts.virtual_text.format then
         diagnostics = reformat_diagnostics(opts.virtual_text.format, diagnostics)
       end
-      if opts.virtual_text.source and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1) then
+      if
+        opts.virtual_text.source
+        and (opts.virtual_text.source ~= 'if_many' or count_sources(bufnr) > 1)
+      then
         diagnostics = prefix_source(diagnostics)
       end
       if opts.virtual_text.severity then
@@ -1279,7 +1282,9 @@ function M.open_float(opts, ...)
     -- LSP servers can send diagnostics with `end_col` past the length of the line
     local line_length = #vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, true)[1]
     diagnostics = vim.tbl_filter(function(d)
-      return d.lnum == lnum and math.min(d.col, line_length - 1) <= col and (d.end_col >= col or d.end_lnum > lnum)
+      return d.lnum == lnum
+        and math.min(d.col, line_length - 1) <= col
+        and (d.end_col >= col or d.end_lnum > lnum)
     end, diagnostics)
   end
 
@@ -1333,9 +1338,10 @@ function M.open_float(opts, ...)
     diagnostics = prefix_source(diagnostics)
   end
 
-  local prefix_opt = if_nil(opts.prefix, (scope == 'cursor' and #diagnostics <= 1) and '' or function(_, i)
-    return string.format('%d. ', i)
-  end)
+  local prefix_opt =
+    if_nil(opts.prefix, (scope == 'cursor' and #diagnostics <= 1) and '' or function(_, i)
+      return string.format('%d. ', i)
+    end)
 
   local prefix, prefix_hl_group
   if prefix_opt then

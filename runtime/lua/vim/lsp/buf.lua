@@ -228,7 +228,8 @@ function M.format(options)
       end
       local params = util.make_formatting_params(options.formatting_options)
       client.request('textDocument/formatting', params, function(...)
-        local handler = client.handlers['textDocument/formatting'] or vim.lsp.handlers['textDocument/formatting']
+        local handler = client.handlers['textDocument/formatting']
+          or vim.lsp.handlers['textDocument/formatting']
         handler(...)
         do_format(next(clients, idx))
       end, bufnr)
@@ -284,7 +285,10 @@ end
 ---@param timeout_ms (number) Request timeout
 ---@see |vim.lsp.buf.formatting_seq_sync|
 function M.formatting_sync(options, timeout_ms)
-  vim.notify_once('vim.lsp.buf.formatting_sync is deprecated. Use vim.lsp.buf.format instead', vim.log.levels.WARN)
+  vim.notify_once(
+    'vim.lsp.buf.formatting_sync is deprecated. Use vim.lsp.buf.format instead',
+    vim.log.levels.WARN
+  )
   local params = util.make_formatting_params(options)
   local bufnr = vim.api.nvim_get_current_buf()
   select_client('textDocument/formatting', function(client)
@@ -318,7 +322,10 @@ end
 ---in the following order: first all clients that are not in the `order` list, then
 ---the remaining clients in the order as they occur in the `order` list.
 function M.formatting_seq_sync(options, timeout_ms, order)
-  vim.notify_once('vim.lsp.buf.formatting_seq_sync is deprecated. Use vim.lsp.buf.format instead', vim.log.levels.WARN)
+  vim.notify_once(
+    'vim.lsp.buf.formatting_seq_sync is deprecated. Use vim.lsp.buf.format instead',
+    vim.log.levels.WARN
+  )
   local clients = vim.tbl_values(vim.lsp.buf_get_clients())
   local bufnr = vim.api.nvim_get_current_buf()
 
@@ -346,7 +353,10 @@ function M.formatting_seq_sync(options, timeout_ms, order)
       if result and result.result then
         util.apply_text_edits(result.result, bufnr, client.offset_encoding)
       elseif err then
-        vim.notify(string.format('vim.lsp.buf.formatting_seq_sync: (%s) %s', client.name, err), vim.log.levels.WARN)
+        vim.notify(
+          string.format('vim.lsp.buf.formatting_seq_sync: (%s) %s', client.name, err),
+          vim.log.levels.WARN
+        )
       end
     end
   end
@@ -429,7 +439,8 @@ function M.rename(new_name, options)
     local function rename(name)
       local params = util.make_position_params(win, client.offset_encoding)
       params.newName = name
-      local handler = client.handlers['textDocument/rename'] or vim.lsp.handlers['textDocument/rename']
+      local handler = client.handlers['textDocument/rename']
+        or vim.lsp.handlers['textDocument/rename']
       client.request('textDocument/rename', params, function(...)
         handler(...)
         try_use_client(next(clients, idx))
@@ -443,7 +454,8 @@ function M.rename(new_name, options)
           if next(clients, idx) then
             try_use_client(next(clients, idx))
           else
-            local msg = err and ('Error on prepareRename: ' .. (err.message or '')) or 'Nothing to rename'
+            local msg = err and ('Error on prepareRename: ' .. (err.message or ''))
+              or 'Nothing to rename'
             vim.notify(msg, vim.log.levels.INFO)
           end
           return
@@ -475,7 +487,10 @@ function M.rename(new_name, options)
         end)
       end, bufnr)
     else
-      assert(client.supports_method('textDocument/rename'), 'Client must support textDocument/rename')
+      assert(
+        client.supports_method('textDocument/rename'),
+        'Client must support textDocument/rename'
+      )
       if new_name then
         rename(new_name)
         return
@@ -587,7 +602,8 @@ end
 --- Add the folder at path to the workspace folders. If {path} is
 --- not provided, the user will be prompted for a path using |input()|.
 function M.add_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, 'Workspace Folder: ', vfn.expand('%:p:h'), 'dir')
+  workspace_folder = workspace_folder
+    or npcall(vfn.input, 'Workspace Folder: ', vfn.expand('%:p:h'), 'dir')
   vim.api.nvim_command('redraw')
   if not (workspace_folder and #workspace_folder > 0) then
     return
@@ -623,7 +639,8 @@ end
 --- {path} is not provided, the user will be prompted for
 --- a path using |input()|.
 function M.remove_workspace_folder(workspace_folder)
-  workspace_folder = workspace_folder or npcall(vfn.input, 'Workspace Folder: ', vfn.expand('%:p:h'))
+  workspace_folder = workspace_folder
+    or npcall(vfn.input, 'Workspace Folder: ', vfn.expand('%:p:h'))
   vim.api.nvim_command('redraw')
   if not (workspace_folder and #workspace_folder > 0) then
     return

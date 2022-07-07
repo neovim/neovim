@@ -2094,8 +2094,7 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
 Lua module: vim.lsp.sync                                            *lsp-sync*
 
                                                  *vim.lsp.sync.compute_diff()*
-compute_diff({prev_lines}, {curr_lines}, {firstline}, {lastline},
-             {new_lastline}, {offset_encoding}, {line_ending})
+compute_diff({___MissingCloseParenHere___})
                 Returns the range table for the difference between prev and
                 curr lines
 

@@ -59,7 +59,11 @@ do
 
     local log_info = vim.loop.fs_stat(logfilename)
     if log_info and log_info.size > 1e9 then
-      local warn_msg = string.format('LSP client log is large (%d MB): %s', log_info.size / (1000 * 1000), logfilename)
+      local warn_msg = string.format(
+        'LSP client log is large (%d MB): %s',
+        log_info.size / (1000 * 1000),
+        logfilename
+      )
       vim.notify(warn_msg)
     end
 
@@ -129,7 +133,8 @@ vim.tbl_add_reverse_lookup(log.levels)
 ---@param level (string or number) One of `vim.lsp.log.levels`
 function log.set_level(level)
   if type(level) == 'string' then
-    current_log_level = assert(log.levels[level:upper()], string.format('Invalid log level: %q', level))
+    current_log_level =
+      assert(log.levels[level:upper()], string.format('Invalid log level: %q', level))
   else
     assert(type(level) == 'number', 'level must be a number or string')
     assert(log.levels[level], string.format('Invalid log level: %d', level))

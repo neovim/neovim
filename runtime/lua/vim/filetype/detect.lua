@@ -71,7 +71,8 @@ function M.asm_syntax(bufnr)
   end
 end
 
-local visual_basic_content = { 'vb_name', 'begin vb%.form', 'begin vb%.mdiform', 'begin vb%.usercontrol' }
+local visual_basic_content =
+  { 'vb_name', 'begin vb%.form', 'begin vb%.mdiform', 'begin vb%.usercontrol' }
 
 -- See frm() for Visual Basic form file detection
 function M.bas(bufnr)
@@ -92,7 +93,11 @@ function M.bas(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     if findany(line:lower(), visual_basic_content) then
       return 'vb'
-    elseif line:find(fb_comment) or matchregex(line, fb_preproc) or matchregex(line, fb_keywords) then
+    elseif
+      line:find(fb_comment)
+      or matchregex(line, fb_preproc)
+      or matchregex(line, fb_keywords)
+    then
       return 'freebasic'
     elseif matchregex(line, qb64_preproc) then
       return 'qb64'
@@ -236,7 +241,13 @@ local function cvs_diff(path, contents)
       elseif
         -- Locale input files: Formal Definitions of Cultural Conventions
         -- Filename must be like en_US, fr_FR@euro or en_US.UTF-8
-        findany(path, { '%a%a_%a%a$', '%a%a_%a%a[%.@]', '%a%a_%a%ai18n$', '%a%a_%a%aPOSIX$', '%a%a_%a%atranslit_' })
+        findany(path, {
+          '%a%a_%a%a$',
+          '%a%a_%a%a[%.@]',
+          '%a%a_%a%ai18n$',
+          '%a%a_%a%aPOSIX$',
+          '%a%a_%a%atranslit_',
+        })
       then
         -- Only look at the first 100 lines
         for line_nr = 1, 100 do
@@ -327,9 +338,11 @@ local function diff(contents)
     contents[1]:find('^%-%-%- ') and contents[2]:find('^%+%+%+ ')
     or contents[1]:find('^%* looking for ') and contents[2]:find('^%* comparing to ')
     or contents[1]:find('^%*%*%* ') and contents[2]:find('^%-%-%- ')
-    or contents[1]:find('^=== ') and ((contents[2]:find('^' .. string.rep('=', 66)) and contents[3]:find('^%-%-% ') and contents[4]:find(
-      '^%+%+%+'
-    )) or (contents[2]:find('^%-%-%- ') and contents[3]:find('^%+%+%+ ')))
+    or contents[1]:find('^=== ') and ((contents[2]:find('^' .. string.rep('=', 66)) and contents[3]:find(
+      '^%-%-% '
+    ) and contents[4]:find('^%+%+%+')) or (contents[2]:find('^%-%-%- ') and contents[3]:find(
+      '^%+%+%+ '
+    )))
     or findany(contents[1], { '^=== removed', '^=== added', '^=== renamed', '^=== modified' })
   then
     return 'diff'
@@ -523,7 +536,8 @@ function M.idl(bufnr)
 end
 
 local pascal_comments = { '^%s*{', '^%s*%(%*', '^%s*//' }
-local pascal_keywords = [[\c^\s*\%(program\|unit\|library\|uses\|begin\|procedure\|function\|const\|type\|var\)\>]]
+local pascal_keywords =
+  [[\c^\s*\%(program\|unit\|library\|uses\|begin\|procedure\|function\|const\|type\|var\)\>]]
 
 function M.inc(bufnr)
   if vim.g.filetype_inc then
@@ -574,9 +588,19 @@ end
 -- (refactor of filetype.vim since the patterns are case-insensitive)
 function M.log(path)
   path = path:lower()
-  if findany(path, { 'upstream%.log', 'upstream%..*%.log', '.*%.upstream%.log', 'upstream%-.*%.log' }) then
+  if
+    findany(
+      path,
+      { 'upstream%.log', 'upstream%..*%.log', '.*%.upstream%.log', 'upstream%-.*%.log' }
+    )
+  then
     return 'upstreamlog'
-  elseif findany(path, { 'upstreaminstall%.log', 'upstreaminstall%..*%.log', '.*%.upstreaminstall%.log' }) then
+  elseif
+    findany(
+      path,
+      { 'upstreaminstall%.log', 'upstreaminstall%..*%.log', '.*%.upstreaminstall%.log' }
+    )
+  then
     return 'upstreaminstalllog'
   elseif findany(path, { 'usserver%.log', 'usserver%..*%.log', '.*%.usserver%.log' }) then
     return 'usserverlog'
@@ -616,7 +640,8 @@ function M.m(bufnr)
   -- Excluding end(for|function|if|switch|while) common to Murphi
   local octave_block_terminators =
     [[\<end\%(_try_catch\|classdef\|enumeration\|events\|methods\|parfor\|properties\)\>]]
-  local objc_preprocessor = [[\c^\s*#\s*\%(import\|include\|define\|if\|ifn\=def\|undef\|line\|error\|pragma\)\>]]
+  local objc_preprocessor =
+    [[\c^\s*#\s*\%(import\|include\|define\|if\|ifn\=def\|undef\|line\|error\|pragma\)\>]]
 
   -- Whether we've seen a multiline comment leader
   local saw_comment = false
@@ -627,7 +652,11 @@ function M.m(bufnr)
       -- anything more definitive.
       saw_comment = true
     end
-    if line:find('^%s*//') or matchregex(line, [[\c^\s*@import\>]]) or matchregex(line, objc_preprocessor) then
+    if
+      line:find('^%s*//')
+      or matchregex(line, [[\c^\s*@import\>]])
+      or matchregex(line, objc_preprocessor)
+    then
       return 'objc'
     end
     if
@@ -869,7 +898,10 @@ function M.progress_cweb(bufnr)
   if vim.g.filetype_w then
     return vim.g.filetype_w
   else
-    if getlines(bufnr, 1):lower():find('^&analyze') or getlines(bufnr, 3):lower():find('^&global%-define') then
+    if
+      getlines(bufnr, 1):lower():find('^&analyze')
+      or getlines(bufnr, 3):lower():find('^&global%-define')
+    then
       return 'progress'
     else
       return 'cweb'
@@ -914,10 +946,13 @@ end
 function M.psf(bufnr)
   local line = getlines(bufnr, 1):lower()
   if
-    findany(
-      line,
-      { '^%s*distribution%s*$', '^%s*installed_software%s*$', '^%s*root%s*$', '^%s*bundle%s*$', '^%s*product%s*$' }
-    )
+    findany(line, {
+      '^%s*distribution%s*$',
+      '^%s*installed_software%s*$',
+      '^%s*root%s*$',
+      '^%s*bundle%s*$',
+      '^%s*product%s*$',
+    })
   then
     return 'psf'
   end
@@ -960,7 +995,9 @@ end
 
 function M.reg(bufnr)
   local line = getlines(bufnr, 1):lower()
-  if line:find('^regedit[0-9]*%s*$') or line:find('^windows registry editor version %d*%.%d*%s*$') then
+  if
+    line:find('^regedit[0-9]*%s*$') or line:find('^windows registry editor version %d*%.%d*%s*$')
+  then
     return 'registry'
   end
 end
@@ -1033,10 +1070,15 @@ end
 function M.sc(bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 25)) do
     if
-      findany(
-        line,
-        { '[A-Za-z0-9]*%s:%s[A-Za-z0-9]', 'var%s<', 'classvar%s<', '%^this.*', '|%w*|', '%+%s%w*%s{', '%*ar%s' }
-      )
+      findany(line, {
+        '[A-Za-z0-9]*%s:%s[A-Za-z0-9]',
+        'var%s<',
+        'classvar%s<',
+        '%^this.*',
+        '|%w*|',
+        '%+%s%w*%s{',
+        '%*ar%s',
+      })
     then
       return 'supercollider'
     end
@@ -1062,10 +1104,11 @@ function M.sgml(bufnr)
   if lines:find('linuxdoc') then
     return 'smgllnx'
   elseif lines:find('<!DOCTYPE.*DocBook') then
-    return 'docbk', function(b)
-      vim.b[b].docbk_type = 'sgml'
-      vim.b[b].docbk_ver = 4
-    end
+    return 'docbk',
+      function(b)
+        vim.b[b].docbk_type = 'sgml'
+        vim.b[b].docbk_ver = 4
+      end
   else
     return 'sgml'
   end
@@ -1194,7 +1237,8 @@ function M.tex(path, bufnr)
       if not l:find('^%s*%%%S') then
         -- Check the next thousand lines for a LaTeX or ConTeXt keyword.
         for _, line in ipairs(getlines(bufnr, i + 1, i + 1000)) do
-          local lpat_match, cpat_match = matchregex(line, [[\c^\s*\\\%(]] .. lpat .. [[\)\|^\s*\\\(]] .. cpat .. [[\)]])
+          local lpat_match, cpat_match =
+            matchregex(line, [[\c^\s*\\\%(]] .. lpat .. [[\)\|^\s*\\\(]] .. cpat .. [[\)]])
           if lpat_match then
             return 'tex'
           elseif cpat_match then
@@ -1489,10 +1533,17 @@ local patterns_text = {
   -- Scheme scripts
   ['exec%s%+%S*scheme'] = { 'scheme', { start_lnum = 1, end_lnum = 2 } },
   -- Git output
-  ['^\\(commit\\|tree\\|object\\) \\x\\{40,\\}\\>\\|^tag \\S\\+$'] = { 'git', { vim_regex = true } },
+  ['^\\(commit\\|tree\\|object\\) \\x\\{40,\\}\\>\\|^tag \\S\\+$'] = {
+    'git',
+    { vim_regex = true },
+  },
   function(lines)
     -- Gprof (gnu profiler)
-    if lines[1] == 'Flat profile:' and lines[2] == '' and lines[3]:find('^Each sample counts as .* seconds%.$') then
+    if
+      lines[1] == 'Flat profile:'
+      and lines[2] == ''
+      and lines[3]:find('^Each sample counts as .* seconds%.$')
+    then
       return 'gprof'
     end
   end,
@@ -1515,7 +1566,12 @@ local function match_from_text(contents, path)
   if contents[1]:find('^:$') then
     -- Bourne-like shell scripts: sh ksh bash bash2
     return M.sh(path, contents)
-  elseif matchregex('\n' .. table.concat(contents, '\n'), [[\n\s*emulate\s\+\%(-[LR]\s\+\)\=[ckz]\=sh\>]]) then
+  elseif
+    matchregex(
+      '\n' .. table.concat(contents, '\n'),
+      [[\n\s*emulate\s\+\%(-[LR]\s\+\)\=[ckz]\=sh\>]]
+    )
+  then
     -- Z shell scripts
     return 'zsh'
   end
@@ -1535,7 +1591,10 @@ local function match_from_text(contents, path)
     else
       local opts = type(v) == 'table' and v[2] or {}
       if opts.start_lnum and opts.end_lnum then
-        assert(not opts.ignore_case, 'ignore_case=true is ignored when start_lnum is also present, needs refactor')
+        assert(
+          not opts.ignore_case,
+          'ignore_case=true is ignored when start_lnum is also present, needs refactor'
+        )
         for i = opts.start_lnum, opts.end_lnum do
           if not contents[i] then
             break
