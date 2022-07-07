@@ -115,7 +115,8 @@ local function request_parser_loop()
       local body_length = #body_chunks[1]
       -- Keep waiting for data until we have enough.
       while body_length < content_length do
-        local chunk = coroutine.yield() or error('Expected more data for the body. The server may have died.') -- TODO hmm.
+        local chunk = coroutine.yield()
+          or error('Expected more data for the body. The server may have died.') -- TODO hmm.
         table.insert(body_chunks, chunk)
         body_length = body_length + #chunk
       end
@@ -129,10 +130,16 @@ local function request_parser_loop()
       local body = table.concat(body_chunks)
       -- Yield our data.
       buffer = rest
-        .. (coroutine.yield(headers, body) or error('Expected more data for the body. The server may have died.')) -- TODO hmm.
+        .. (
+          coroutine.yield(headers, body)
+          or error('Expected more data for the body. The server may have died.')
+        ) -- TODO hmm.
     else
       -- Get more data since we don't have enough.
-      buffer = buffer .. (coroutine.yield() or error('Expected more data for the header. The server may have died.')) -- TODO hmm.
+      buffer = buffer
+        .. (
+          coroutine.yield() or error('Expected more data for the header. The server may have died.')
+        ) -- TODO hmm.
     end
   end
 end
@@ -262,7 +269,8 @@ end
 --- - {handle} A handle for low-level interaction with the LSP server process
 ---   |vim.loop|.
 local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
-  local _ = log.info() and log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
+  local _ = log.info()
+    and log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
   validate({
     cmd = { cmd, 's' },
     cmd_args = { cmd_args, 't' },
@@ -336,7 +344,8 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     if handle == nil then
       local msg = string.format('Spawning language server with cmd: `%s` failed', cmd)
       if string.match(pid, 'ENOENT') then
-        msg = msg .. '. The language server is either not installed, missing from PATH, or not executable.'
+        msg = msg
+          .. '. The language server is either not installed, missing from PATH, or not executable.'
       else
         msg = msg .. string.format(' with error message: %s', pid)
       end
@@ -476,7 +485,10 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
           decoded.params
         )
         local _ = log.debug()
-          and log.debug('server_request: callback result', { status = status, result = result, err = err })
+          and log.debug(
+            'server_request: callback result',
+            { status = status, result = result, err = err }
+          )
         if status then
           if not (result or err) then
             -- TODO this can be a problem if `null` is sent for result. needs vim.NIL
@@ -488,7 +500,10 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
             )
           end
           if err then
-            assert(type(err) == 'table', 'err must be a table. Use rpc_response_error to help format errors.')
+            assert(
+              type(err) == 'table',
+              'err must be a table. Use rpc_response_error to help format errors.'
+            )
             local code_name = assert(
               protocol.ErrorCodes[err.code],
               'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
@@ -549,14 +564,25 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
             __tostring = format_rpc_error,
           })
         end
-        try_call(client_errors.SERVER_RESULT_CALLBACK_ERROR, callback, decoded.error, decoded.result)
+        try_call(
+          client_errors.SERVER_RESULT_CALLBACK_ERROR,
+          callback,
+          decoded.error,
+          decoded.result
+        )
       else
         on_error(client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
-        local _ = log.error() and log.error('No callback found for server response id ' .. result_id)
+        local _ = log.error()
+          and log.error('No callback found for server response id ' .. result_id)
       end
     elseif type(decoded.method) == 'string' then
       -- Notification
-      try_call(client_errors.NOTIFICATION_HANDLER_ERROR, dispatchers.notification, decoded.method, decoded.params)
+      try_call(
+        client_errors.NOTIFICATION_HANDLER_ERROR,
+        dispatchers.notification,
+        decoded.method,
+        decoded.params
+      )
     else
       -- Invalid server message
       on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)

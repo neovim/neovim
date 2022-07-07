@@ -80,7 +80,13 @@ for i = 0, 31 do
 end
 
 local function escape(str)
-  return (gsub(gsub(gsub(str, '\\', '\\\\'), '(%c)%f[0-9]', longControlCharEscapes), '%c', shortControlCharEscapes))
+  return (
+    gsub(
+      gsub(gsub(str, '\\', '\\\\'), '(%c)%f[0-9]', longControlCharEscapes),
+      '%c',
+      shortControlCharEscapes
+    )
+  )
 end
 
 local function isIdentifier(str)
@@ -181,11 +187,13 @@ local function processRecursive(process, item, path, visited)
     for k, v in rawpairs(processed) do
       processedKey = processRecursive(process, k, makePath(path, k, inspect.KEY), visited)
       if processedKey ~= nil then
-        processedCopy[processedKey] = processRecursive(process, v, makePath(path, processedKey), visited)
+        processedCopy[processedKey] =
+          processRecursive(process, v, makePath(path, processedKey), visited)
       end
     end
 
-    local mt = processRecursive(process, getmetatable(processed), makePath(path, inspect.METATABLE), visited)
+    local mt =
+      processRecursive(process, getmetatable(processed), makePath(path, inspect.METATABLE), visited)
     if type(mt) ~= 'table' then
       mt = nil
     end

@@ -44,7 +44,8 @@ end
 
 ---@private
 local function query_workspace_symbols(pattern)
-  local results_by_client, err = lsp.buf_request_sync(0, 'workspace/symbol', { query = pattern }, 1000)
+  local results_by_client, err =
+    lsp.buf_request_sync(0, 'workspace/symbol', { query = pattern }, 1000)
   if err then
     return {}
   end

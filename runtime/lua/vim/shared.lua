@@ -254,7 +254,11 @@ local function tbl_extend(behavior, deep_extend, ...)
   end
 
   if select('#', ...) < 2 then
-    error('wrong number of arguments (given ' .. tostring(1 + select('#', ...)) .. ', expected at least 3)')
+    error(
+      'wrong number of arguments (given '
+        .. tostring(1 + select('#', ...))
+        .. ', expected at least 3)'
+    )
   end
 
   local ret = {}
@@ -650,7 +654,8 @@ do
         -- Check user-provided validation function
         local valid, optional_message = types(val)
         if not valid then
-          local error_message = string.format('%s: expected %s, got %s', param_name, (spec[3] or '?'), tostring(val))
+          local error_message =
+            string.format('%s: expected %s, got %s', param_name, (spec[3] or '?'), tostring(val))
           if optional_message ~= nil then
             error_message = error_message .. string.format('. Info: %s', optional_message)
           end
@@ -672,7 +677,13 @@ do
           end
         end
         if not success then
-          return false, string.format('%s: expected %s, got %s', param_name, table.concat(types, '|'), type(val))
+          return false,
+            string.format(
+              '%s: expected %s, got %s',
+              param_name,
+              table.concat(types, '|'),
+              type(val)
+            )
         end
       else
         return false, string.format('invalid type name: %s', tostring(types))

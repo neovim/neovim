@@ -44,12 +44,22 @@ local function get_border_size(opts)
       shadow = { 1, 1 },
     }
     if border_size[border] == nil then
-      error(string.format('invalid floating preview border: %s. :help vim.api.nvim_open_win()', vim.inspect(border)))
+      error(
+        string.format(
+          'invalid floating preview border: %s. :help vim.api.nvim_open_win()',
+          vim.inspect(border)
+        )
+      )
     end
     height, width = unpack(border_size[border])
   else
     if 8 % #border ~= 0 then
-      error(string.format('invalid floating preview border: %s. :help vim.api.nvim_open_win()', vim.inspect(border)))
+      error(
+        string.format(
+          'invalid floating preview border: %s. :help vim.api.nvim_open_win()',
+          vim.inspect(border)
+        )
+      )
     end
     ---@private
     local function border_width(id)
@@ -61,7 +71,12 @@ local function get_border_size(opts)
         -- border specified as a list of border characters
         return vim.fn.strdisplaywidth(border[id])
       end
-      error(string.format('invalid floating preview border: %s. :help vim.api.nvim_open_win()', vim.inspect(border)))
+      error(
+        string.format(
+          'invalid floating preview border: %s. :help vim.api.nvim_open_win()',
+          vim.inspect(border)
+        )
+      )
     end
     ---@private
     local function border_height(id)
@@ -73,7 +88,12 @@ local function get_border_size(opts)
         -- border specified as a list of border characters
         return #border[id] > 0 and 1 or 0
       end
-      error(string.format('invalid floating preview border: %s. :help vim.api.nvim_open_win()', vim.inspect(border)))
+      error(
+        string.format(
+          'invalid floating preview border: %s. :help vim.api.nvim_open_win()',
+          vim.inspect(border)
+        )
+      )
     end
     height = height + border_height(2) -- top
     height = height + border_height(6) -- bottom
@@ -531,7 +551,10 @@ function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
   if offset_encoding == nil then
-    vim.notify_once('apply_text_document_edit must be called with valid offset encoding', vim.log.levels.WARN)
+    vim.notify_once(
+      'apply_text_document_edit must be called with valid offset encoding',
+      vim.log.levels.WARN
+    )
   end
 
   -- For lists of text document edits,
@@ -765,7 +788,10 @@ end
 --see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit, offset_encoding)
   if offset_encoding == nil then
-    vim.notify_once('apply_workspace_edit must be called with valid offset encoding', vim.log.levels.WARN)
+    vim.notify_once(
+      'apply_workspace_edit must be called with valid offset encoding',
+      vim.log.levels.WARN
+    )
   end
   if workspace_edit.documentChanges then
     for idx, change in ipairs(workspace_edit.documentChanges) do
@@ -1022,7 +1048,10 @@ function M.jump_to_location(location, offset_encoding, reuse_win)
     return
   end
   if offset_encoding == nil then
-    vim.notify_once('jump_to_location must be called with valid offset encoding', vim.log.levels.WARN)
+    vim.notify_once(
+      'jump_to_location must be called with valid offset encoding',
+      vim.log.levels.WARN
+    )
   end
   local bufnr = vim.uri_to_bufnr(uri)
   -- Save position in jumplist
@@ -1226,14 +1255,21 @@ function M.stylize_markdown(bufnr, contents, opts)
         -- strip any empty lines or separators prior to this separator in actual markdown
         if line:match('^---+$') then
           while
-            markdown_lines[#stripped] and (stripped[#stripped]:match('^%s*$') or stripped[#stripped]:match('^---+$'))
+            markdown_lines[#stripped]
+            and (stripped[#stripped]:match('^%s*$') or stripped[#stripped]:match('^---+$'))
           do
             markdown_lines[#stripped] = false
             table.remove(stripped, #stripped)
           end
         end
         -- add the line if its not an empty line following a separator
-        if not (line:match('^%s*$') and markdown_lines[#stripped] and stripped[#stripped]:match('^---+$')) then
+        if
+          not (
+            line:match('^%s*$')
+            and markdown_lines[#stripped]
+            and stripped[#stripped]:match('^---+$')
+          )
+        then
           table.insert(stripped, line)
           markdown_lines[#stripped] = true
         end
@@ -1265,7 +1301,11 @@ function M.stylize_markdown(bufnr, contents, opts)
   local function apply_syntax_to_region(ft, start, finish)
     if ft == '' then
       vim.cmd(
-        string.format('syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend', start, finish + 1)
+        string.format(
+          'syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend',
+          start,
+          finish + 1
+        )
       )
       return
     end
@@ -1283,7 +1323,13 @@ function M.stylize_markdown(bufnr, contents, opts)
       langs[lang] = true
     end
     vim.cmd(
-      string.format('syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s keepend', name, start, finish + 1, lang)
+      string.format(
+        'syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s keepend',
+        name,
+        start,
+        finish + 1,
+        lang
+      )
     )
   end
 
@@ -1587,15 +1633,21 @@ do --[[ References ]]
       offset_encoding = { offset_encoding, 'string', false },
     })
     for _, reference in ipairs(references) do
-      local start_line, start_char = reference['range']['start']['line'], reference['range']['start']['character']
-      local end_line, end_char = reference['range']['end']['line'], reference['range']['end']['character']
+      local start_line, start_char =
+        reference['range']['start']['line'], reference['range']['start']['character']
+      local end_line, end_char =
+        reference['range']['end']['line'], reference['range']['end']['character']
 
       local start_idx = get_line_byte_from_position(
         bufnr,
         { line = start_line, character = start_char },
         offset_encoding
       )
-      local end_idx = get_line_byte_from_position(bufnr, { line = start_line, character = end_char }, offset_encoding)
+      local end_idx = get_line_byte_from_position(
+        bufnr,
+        { line = start_line, character = end_char },
+        offset_encoding
+      )
 
       local document_highlight_kind = {
         [protocol.DocumentHighlightKind.Text] = 'LspReferenceText',
@@ -1630,7 +1682,10 @@ end)
 ---@returns (table) list of items
 function M.locations_to_items(locations, offset_encoding)
   if offset_encoding == nil then
-    vim.notify_once('locations_to_items must be called with valid offset encoding', vim.log.levels.WARN)
+    vim.notify_once(
+      'locations_to_items must be called with valid offset encoding',
+      vim.log.levels.WARN
+    )
   end
 
   local items = {}
@@ -1857,7 +1912,10 @@ function M._get_offset_encoding(bufnr)
   for _, client in pairs(vim.lsp.buf_get_clients(bufnr)) do
     if client.offset_encoding == nil then
       vim.notify_once(
-        string.format('Client (id: %s) offset_encoding is nil. Do not unset offset_encoding.', client.id),
+        string.format(
+          'Client (id: %s) offset_encoding is nil. Do not unset offset_encoding.',
+          client.id
+        ),
         vim.log.levels.ERROR
       )
     end
@@ -1994,7 +2052,10 @@ end
 function M.character_offset(buf, row, col, offset_encoding)
   local line = get_line(buf, row)
   if offset_encoding == nil then
-    vim.notify_once('character_offset must be called with valid offset encoding', vim.log.levels.WARN)
+    vim.notify_once(
+      'character_offset must be called with valid offset encoding',
+      vim.log.levels.WARN
+    )
   end
   -- If the col is past the EOL, use the line length.
   if col > #line then

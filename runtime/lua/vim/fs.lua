@@ -61,7 +61,8 @@ end
 function M.dir(path)
   return function(fs)
     return vim.loop.fs_scandir_next(fs)
-  end, vim.loop.fs_scandir(M.normalize(path))
+  end,
+    vim.loop.fs_scandir(M.normalize(path))
 end
 
 --- Find files or directories in the given path.

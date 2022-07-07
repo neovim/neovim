@@ -125,7 +125,8 @@ M['workspace/applyEdit'] = function(_, workspace_edit, ctx)
   if workspace_edit.label then
     print('Workspace edit', workspace_edit.label)
   end
-  local status, result = pcall(util.apply_workspace_edit, workspace_edit.edit, client.offset_encoding)
+  local status, result =
+    pcall(util.apply_workspace_edit, workspace_edit.edit, client.offset_encoding)
   return {
     applied = status,
     failureReason = result,
@@ -137,7 +138,11 @@ M['workspace/configuration'] = function(_, result, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
   if not client then
-    err_message('LSP[', client_id, '] client has shut down after sending a workspace/configuration request')
+    err_message(
+      'LSP[',
+      client_id,
+      '] client has shut down after sending a workspace/configuration request'
+    )
     return
   end
   if not result.items then
@@ -239,10 +244,14 @@ local function response_to_list(map_result, entity, title_fn)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
-M['textDocument/documentSymbol'] = response_to_list(util.symbols_to_items, 'document symbols', function(ctx)
-  local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ':.')
-  return string.format('Symbols in %s', fname)
-end)
+M['textDocument/documentSymbol'] = response_to_list(
+  util.symbols_to_items,
+  'document symbols',
+  function(ctx)
+    local fname = vim.fn.fnamemodify(vim.uri_to_fname(ctx.params.textDocument.uri), ':.')
+    return string.format('Symbols in %s', fname)
+  end
+)
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_symbol
 M['workspace/symbol'] = response_to_list(util.symbols_to_items, 'symbols', function(ctx)
@@ -391,7 +400,8 @@ function M.signature_help(_, result, ctx, config)
     return
   end
   local client = vim.lsp.get_client_by_id(ctx.client_id)
-  local triggers = vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
+  local triggers =
+    vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
   local ft = api.nvim_buf_get_option(ctx.bufnr, 'filetype')
   local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
   lines = util.trim_empty_lines(lines)

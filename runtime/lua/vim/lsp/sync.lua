@@ -130,7 +130,14 @@ end
 ---@param new_lastline integer new_lastline from on_lines, adjusted to 1-index
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
 ---@returns table<int, int> line_idx, byte_idx, and char_idx of first change position
-local function compute_start_range(prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding)
+local function compute_start_range(
+  prev_lines,
+  curr_lines,
+  firstline,
+  lastline,
+  new_lastline,
+  offset_encoding
+)
   local char_idx
   local byte_idx
   -- If firstline == lastline, no existing text is changed. All edit operations
@@ -249,13 +256,19 @@ local function compute_end_range(
     local max_length
     if start_line_idx == prev_line_idx then
       -- Search until beginning of difference
-      max_length = min(prev_line_length - start_range.byte_idx, curr_line_length - start_range.byte_idx) + 1
+      max_length = min(
+        prev_line_length - start_range.byte_idx,
+        curr_line_length - start_range.byte_idx
+      ) + 1
     else
       max_length = min(prev_line_length, curr_line_length) + 1
     end
     for idx = 0, max_length do
       byte_offset = idx
-      if str_byte(prev_line, prev_line_length - byte_offset) ~= str_byte(curr_line, curr_line_length - byte_offset) then
+      if
+        str_byte(prev_line, prev_line_length - byte_offset)
+        ~= str_byte(curr_line, curr_line_length - byte_offset)
+      then
         break
       end
     end
@@ -268,8 +281,10 @@ local function compute_end_range(
   if prev_end_byte_idx == 0 then
     prev_end_byte_idx = 1
   end
-  local prev_byte_idx, prev_char_idx = align_end_position(prev_line, prev_end_byte_idx, offset_encoding)
-  local prev_end_range = { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
+  local prev_byte_idx, prev_char_idx =
+    align_end_position(prev_line, prev_end_byte_idx, offset_encoding)
+  local prev_end_range =
+    { line_idx = prev_line_idx, byte_idx = prev_byte_idx, char_idx = prev_char_idx }
 
   local curr_end_range
   -- Deletion event, new_range cannot be before start
@@ -281,8 +296,10 @@ local function compute_end_range(
     if curr_end_byte_idx == 0 then
       curr_end_byte_idx = 1
     end
-    local curr_byte_idx, curr_char_idx = align_end_position(curr_line, curr_end_byte_idx, offset_encoding)
-    curr_end_range = { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
+    local curr_byte_idx, curr_char_idx =
+      align_end_position(curr_line, curr_end_byte_idx, offset_encoding)
+    curr_end_range =
+      { line_idx = curr_line_idx, byte_idx = curr_byte_idx, char_idx = curr_char_idx }
   end
 
   return prev_end_range, curr_end_range
@@ -341,7 +358,10 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
   local start_line = lines[start_range.line_idx]
   local range_length
   if start_line and #start_line > 0 then
-    range_length = compute_line_length(start_line, offset_encoding) - start_range.char_idx + 1 + line_ending_length
+    range_length = compute_line_length(start_line, offset_encoding)
+      - start_range.char_idx
+      + 1
+      + line_ending_length
   else
     -- Length of newline character
     range_length = line_ending_length
@@ -373,7 +393,15 @@ end
 ---@param new_lastline number line to begin search in new_lines for last difference
 ---@param offset_encoding string encoding requested by language server
 ---@returns table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#textDocumentContentChangeEvent
-function M.compute_diff(prev_lines, curr_lines, firstline, lastline, new_lastline, offset_encoding, line_ending)
+function M.compute_diff(
+  prev_lines,
+  curr_lines,
+  firstline,
+  lastline,
+  new_lastline,
+  offset_encoding,
+  line_ending
+)
   -- Find the start of changes between the previous and current buffer. Common between both.
   -- Sent to the server as the start of the changed range.
   -- Used to grab the changed text from the latest buffer.
@@ -403,7 +431,8 @@ function M.compute_diff(prev_lines, curr_lines, firstline, lastline, new_lastlin
   local text = extract_text(curr_lines, start_range, curr_end_range, line_ending)
 
   -- Compute the range of the replaced text. Deprecated but still required for certain language servers
-  local range_length = compute_range_length(prev_lines, start_range, prev_end_range, offset_encoding, line_ending)
+  local range_length =
+    compute_range_length(prev_lines, start_range, prev_end_range, offset_encoding, line_ending)
 
   -- convert to 0 based indexing
   local result = {

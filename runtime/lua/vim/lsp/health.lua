@@ -11,7 +11,12 @@ function M.check()
   report_info(string.format('LSP log level : %s', log_level_string))
 
   if current_log_level < log.levels.WARN then
-    report_warn(string.format('Log level %s will cause degraded performance and high disk usage', log_level_string))
+    report_warn(
+      string.format(
+        'Log level %s will cause degraded performance and high disk usage',
+        log_level_string
+      )
+    )
   end
 
   local log_path = vim.lsp.get_log_path()

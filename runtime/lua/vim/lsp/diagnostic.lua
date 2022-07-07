@@ -302,7 +302,9 @@ function M.get(bufnr, client_id, predicate)
   end
 
   local namespace = M.get_namespace(client_id)
-  return diagnostic_vim_to_lsp(vim.tbl_filter(predicate, vim.diagnostic.get(bufnr, { namespace = namespace })))
+  return diagnostic_vim_to_lsp(
+    vim.tbl_filter(predicate, vim.diagnostic.get(bufnr, { namespace = namespace }))
+  )
 end
 
 --- Get the diagnostics by line
@@ -483,7 +485,12 @@ function M.set_signs(diagnostics, bufnr, client_id, _, opts)
     opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
 
-  vim.diagnostic._set_signs(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
+  vim.diagnostic._set_signs(
+    namespace,
+    bufnr,
+    diagnostic_lsp_to_vim(diagnostics, bufnr, client_id),
+    opts
+  )
 end
 
 --- Set underline for given diagnostics
@@ -503,7 +510,12 @@ function M.set_underline(diagnostics, bufnr, client_id, _, opts)
   if opts and not opts.severity and opts.severity_limit then
     opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
-  return vim.diagnostic._set_underline(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
+  return vim.diagnostic._set_underline(
+    namespace,
+    bufnr,
+    diagnostic_lsp_to_vim(diagnostics, bufnr, client_id),
+    opts
+  )
 end
 
 --- Set virtual text given diagnostics
@@ -525,7 +537,12 @@ function M.set_virtual_text(diagnostics, bufnr, client_id, _, opts)
   if opts and not opts.severity and opts.severity_limit then
     opts.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
   end
-  return vim.diagnostic._set_virtual_text(namespace, bufnr, diagnostic_lsp_to_vim(diagnostics, bufnr, client_id), opts)
+  return vim.diagnostic._set_virtual_text(
+    namespace,
+    bufnr,
+    diagnostic_lsp_to_vim(diagnostics, bufnr, client_id),
+    opts
+  )
 end
 
 --- Default function to get text chunks to display using |nvim_buf_set_extmark()|.

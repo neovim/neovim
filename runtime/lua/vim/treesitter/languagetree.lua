@@ -32,10 +32,8 @@ function LanguageTree.new(source, lang, opts)
     _regions = {},
     _trees = {},
     _opts = opts,
-    _injection_query = injections[lang] and query.parse_query(lang, injections[lang]) or query.get_query(
-      lang,
-      'injections'
-    ),
+    _injection_query = injections[lang] and query.parse_query(lang, injections[lang])
+      or query.get_query(lang, 'injections'),
     _valid = false,
     _parser = vim._create_ts_parser(lang),
     _callbacks = {
