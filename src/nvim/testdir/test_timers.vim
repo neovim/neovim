@@ -1,8 +1,7 @@
 " Test for timers
 
-if !has('timers')
-  finish
-endif
+source check.vim
+CheckFeature timers
 
 source shared.vim
 source term_util.vim
@@ -317,8 +316,8 @@ endfunc
 " Test that the garbage collector isn't triggered if a timer callback invokes
 " vgetc().
 func Test_nocatch_garbage_collect()
-  CheckFunction test_garbagecollect_soon
-  CheckFunction test_override
+  " skipped: Nvim does not support test_garbagecollect_soon(), test_override()
+  return
   " 'uptimetime. must be bigger than the timer timeout
   set ut=200
   call test_garbagecollect_soon()

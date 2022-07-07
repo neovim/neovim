@@ -1,8 +1,7 @@
 " Tests for the history functions
 
-if !has('cmdline_hist')
-  finish
-endif
+source check.vim
+CheckFeature cmdline_hist
 
 set history=7
 

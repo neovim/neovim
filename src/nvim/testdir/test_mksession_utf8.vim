@@ -3,9 +3,8 @@
 set encoding=utf-8
 scriptencoding utf-8
 
-if !has('mksession')
-  finish
-endif
+source check.vim
+CheckFeature mksession
 
 func Test_mksession_utf8()
   tabnew

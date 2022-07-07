@@ -3,9 +3,10 @@
 set encoding=utf-8
 scriptencoding utf-8
 
-if !exists("+linebreak") || !has("conceal") || !has("signs")
-  finish
-endif
+source check.vim
+CheckOption linebreak
+CheckFeature conceal
+CheckFeature signs
 
 source view_util.vim
 

@@ -1,7 +1,7 @@
 " Test for matchadd() and conceal feature using utf-8.
-if !has('conceal')
-  finish
-endif
+
+source check.vim
+CheckFeature conceal
 
 func s:screenline(lnum) abort
   let line = []

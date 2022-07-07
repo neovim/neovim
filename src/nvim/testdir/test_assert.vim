@@ -257,6 +257,26 @@ func Test_assert_with_msg()
   call remove(v:errors, 0)
 endfunc
 
+func Test_mouse_position()
+  throw 'Skipped: Nvim does not have test_setmouse()'
+  let save_mouse = &mouse
+  set mouse=a
+  new
+  call setline(1, ['line one', 'line two'])
+  call assert_equal([0, 1, 1, 0], getpos('.'))
+  call test_setmouse(1, 5)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 5, 0], getpos('.'))
+  call test_setmouse(2, 20)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 2, 8, 0], getpos('.'))
+  call test_setmouse(5, 1)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 2, 1, 0], getpos('.'))
+  bwipe!
+  let &mouse = save_mouse
+endfunc
+
 " Must be last.
 func Test_zz_quit_detected()
   " Verify that if a test function ends Vim the test script detects this.

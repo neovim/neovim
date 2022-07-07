@@ -1,10 +1,9 @@
 " *-register (quotestar) tests
 
-if !has('clipboard')
-  finish
-endif
-
 source shared.vim
+source check.vim
+
+CheckFeature clipboard_working
 
 func Do_test_quotestar_for_macunix()
   if empty(exepath('pbcopy')) || empty(exepath('pbpaste'))
