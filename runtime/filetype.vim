@@ -3,6 +3,11 @@
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
 " Last Change:	2022 Jul 5
 
+" Only run this if enabled
+if !exists("do_legacy_filetype")
+  finish
+endif
+
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
   finish
