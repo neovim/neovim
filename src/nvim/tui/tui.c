@@ -2037,22 +2037,27 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
     }
   }
 
-  if (iterm || iterm_pretending_xterm) {
-    // FIXME: Bypassing tmux like this affects the cursor colour globally, in
-    // all panes, which is not particularly desirable.  A better approach
-    // would use a tmux control sequence and an extra if(screen) test.
-    data->unibi_ext.set_cursor_color =
-      (int)unibi_add_ext_str(ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
-  } else if ((xterm || rxvt || tmux || alacritty)
-             && (vte_version == 0 || vte_version >= 3900)) {
-    // Supported in urxvt, newer VTE.
-    data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(ut, "ext.set_cursor_color",
-                                                              "\033]12;#%p1%06x\007");
+  data->unibi_ext.set_cursor_color = unibi_find_ext_str(ut, "Cs");
+  if (-1 == data->unibi_ext.set_cursor_color) {
+    if (iterm || iterm_pretending_xterm) {
+      // FIXME: Bypassing tmux like this affects the cursor colour globally, in
+      // all panes, which is not particularly desirable.  A better approach
+      // would use a tmux control sequence and an extra if(screen) test.
+      data->unibi_ext.set_cursor_color =
+        (int)unibi_add_ext_str(ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
+    } else if ((xterm || rxvt || tmux || alacritty)
+               && (vte_version == 0 || vte_version >= 3900)) {
+      // Supported in urxvt, newer VTE.
+      data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(ut, "ext.set_cursor_color",
+                                                                "\033]12;#%p1%06x\007");
+    }
   }
-
   if (-1 != data->unibi_ext.set_cursor_color) {
-    data->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(ut, "ext.reset_cursor_color",
-                                                                "\x1b]112\x07");
+    data->unibi_ext.reset_cursor_color = unibi_find_ext_str(ut, "Cr");
+    if (-1 == data->unibi_ext.reset_cursor_color) {
+      data->unibi_ext.reset_cursor_color = (int)unibi_add_ext_str(ut, "ext.reset_cursor_color",
+                                                                  "\x1b]112\x07");
+    }
   }
 
   data->unibi_ext.save_title = (int)unibi_add_ext_str(ut, "ext.save_title", "\x1b[22;0t");
