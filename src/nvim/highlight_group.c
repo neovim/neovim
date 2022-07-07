@@ -9,6 +9,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/eval/vars.h"
 #include "nvim/fold.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"

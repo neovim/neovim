@@ -37,6 +37,7 @@
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"

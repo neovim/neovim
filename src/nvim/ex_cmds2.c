@@ -24,6 +24,7 @@
 #include "nvim/charset.h"
 #include "nvim/debugger.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/ex_eval.h"

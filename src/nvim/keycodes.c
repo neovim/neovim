@@ -8,7 +8,7 @@
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/edit.h"
-#include "nvim/eval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/keycodes.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
