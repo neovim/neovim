@@ -630,7 +630,7 @@ end)
 describe('shell :!', function()
   before_each(clear)
 
-  it(':{range}! with powershell filter/redirect #16271', function()
+  it(':{range}! with powershell filter/redirect #16271 #19250', function()
     local screen = Screen.new(500, 8)
     screen:attach()
     local found = helpers.set_shell_powershell(true)
@@ -639,18 +639,25 @@ describe('shell :!', function()
       1
       4
       2]])
-    feed(':4verbose %!sort<cr>')
-    screen:expect{
-      any=[[Executing command: .?Start%-Process sort %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
-    }
+    if iswin() then
+      feed(':4verbose %!sort /R<cr>')
+      screen:expect{
+        any=[[Executing command: .?Start%-Process sort %-ArgumentList "/R" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
+      }
+    else
+      feed(':4verbose %!sort -r<cr>')
+      screen:expect{
+        any=[[Executing command: .?Start%-Process sort %-ArgumentList "%-r" %-RedirectStandardInput .* %-RedirectStandardOutput .* %-NoNewWindow %-Wait]]
+      }
+    end
     feed('<CR>')
     if found then
       -- Not using fake powershell, so we can test the result.
       expect([[
-        1
-        2
+        4
         3
-        4]])
+        2
+        1]])
     end
   end)
 end)
