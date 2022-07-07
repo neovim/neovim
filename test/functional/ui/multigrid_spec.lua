@@ -2127,7 +2127,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1}
+      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
     }}
     insert([[
       Lorem ipsum dolor sit amet, consectetur
@@ -2162,7 +2162,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
     }}
 
 
@@ -2187,7 +2187,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 2, botline = 9, curline = 7, curcol = 0, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 2, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 2},
     }}
 
     command("split")
@@ -2211,8 +2211,8 @@ describe('ext_multigrid', function()
       reprehenderit in voluptate velit esse cillum    |
       ^dolore eu fugiat nulla pariatur. Excepteur sint |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11},
-      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 7, curcol = 0, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
+      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 5},
     }}
 
     feed("b")
@@ -2236,8 +2236,8 @@ describe('ext_multigrid', function()
       reprehenderit in voluptate velit esse ^cillum    |
       dolore eu fugiat nulla pariatur. Excepteur sint |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11},
-      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 6, curcol = 38, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
+      [4] = {win = {id = 1001}, topline = 5, botline = 9, curline = 6, curcol = 38, linecount = 11, sum_scroll_delta = 5},
     }}
 
     feed("2k")
@@ -2261,8 +2261,8 @@ describe('ext_multigrid', function()
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse cillum    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11},
-      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 6, botline = 9, curline = 7, curcol = 0, linecount = 11, sum_scroll_delta = 6},
+      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
     }}
 
     -- handles non-current window
@@ -2287,8 +2287,59 @@ describe('ext_multigrid', function()
       ea commodo consequat. Duis aute irure dolor in  |
       reprehenderit in voluptate velit esse cillum    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11},
-      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
+      [4] = {win = {id = 1001}, topline = 4, botline = 8, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
+    }}
+
+    -- sum_scroll_delta works with folds
+    feed('zfj')
+    screen:expect{grid=[[
+    ## grid 1
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {12:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      Lorem ipsum dolor sit amet, consectetur         |
+      adipisicing elit, sed do eiusmod tempor         |
+    ## grid 3
+                                                      |
+    ## grid 4
+      {13:^+--  2 lines: exercitation ullamco laboris nisi }|
+      reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
+      [4] = {win = {id = 1001}, topline = 4, botline = 9, curline = 4, curcol = 38, linecount = 11, sum_scroll_delta = 4},
+    }}
+
+    feed('<c-e>')
+    screen:expect{grid=[[
+    ## grid 1
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      [4:------------------------------------------------]|
+      {11:[No Name] [+]                                   }|
+      [2:------------------------------------------------]|
+      [2:------------------------------------------------]|
+      {12:[No Name] [+]                                   }|
+      [3:------------------------------------------------]|
+    ## grid 2
+      Lorem ipsum dolor sit amet, consectetur         |
+      adipisicing elit, sed do eiusmod tempor         |
+    ## grid 3
+                                                      |
+    ## grid 4
+      ^reprehenderit in voluptate velit esse cillum    |
+      dolore eu fugiat nulla pariatur. Excepteur sint |
+      occaecat cupidatat non proident, sunt in culpa  |
+    ]], win_viewport={
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 10, linecount = 11, sum_scroll_delta = 0},
+      [4] = {win = {id = 1001}, topline = 6, botline = 10, curline = 6, curcol = 0, linecount = 11, sum_scroll_delta = 5},
     }}
   end)
 
@@ -2314,7 +2365,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1}
+      [2] = {win = { id = 1000 }, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0}
     }}
     insert([[
       Lorem ipsum dolor sit amet, consectetur
@@ -2349,7 +2400,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                       |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 5, botline = 11, curline = 10, curcol = 7, linecount = 11, sum_scroll_delta = 5},
     }}
 
     meths.input_mouse('left', 'press', '', 1,5, 1)
@@ -2376,7 +2427,7 @@ describe('ext_multigrid', function()
     ## grid 3
       {7:-- VISUAL --}                                    |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 6, botline = 12, curline = 10, curcol = 1, linecount = 11},
+      [2] = {win = {id = 1000}, topline = 6, botline = 12, curline = 10, curcol = 1, linecount = 11, sum_scroll_delta = 6},
     }}
   end)
 
@@ -2414,8 +2465,8 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
 
     -- XXX: hack to get notifications. Could use next_msg() also.
@@ -2459,8 +2510,8 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
     eq({}, win_pos)
 
@@ -2497,8 +2548,8 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
-      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1};
+      [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+      [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
     }}
     eq({}, win_pos)
   end)
