@@ -2367,6 +2367,10 @@ fnamemodify({fname}, {mods})				*fnamemodify()*
 			/home/user/vim/vim/src
 <		If {mods} is empty or an unsupported modifier is used then
 		{fname} is returned.
+		When {fname} is empty then with {mods} ":h" returns ".", so
+		that `:cd` can be used with it.  This is different from
+		expand('%:h') without a buffer name, which returns an empty
+		string.
 		Note: Environment variables don't work in {fname}, use
 		|expand()| first then.
 

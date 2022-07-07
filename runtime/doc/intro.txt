@@ -565,7 +565,7 @@ gQ			Switch to Ex mode.  This is like typing ":" commands
 			one after another, except:
 			- You don't have to keep pressing ":".
 			- The screen doesn't get updated after each command.
-			Use the ":vi" command |:visual| to exit this mode.
+			Use the `:vi` command (|:visual|) to exit this mode.
 
 ==============================================================================
 Window contents						*window-contents*

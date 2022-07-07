@@ -2,7 +2,7 @@
 " Language:		fetchmail(1) RC File
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
-" Latest Revision:	2022 Jun 30
+" Latest Revision:	2022 Jul 02
 
 " Version 6.4.3
 
@@ -62,7 +62,7 @@ syn match   fetchmailNoise	display '[:;,]'
 syn keyword fetchmailSet	nextgroup=fetchmailOptions skipwhite skipnl set
 
 syn keyword fetchmailOptions	daemon postmaster bouncemail spambounce
-				\ softbounce logfile idfile syslog properties
+				\ softbounce logfile pidfile idfile syslog properties
 syn match   fetchmailOptions	'\<no\_s\+\(bouncemail\|spambounce\|softbounce\|syslog\)'
 
 hi def link fetchmailComment	Comment
