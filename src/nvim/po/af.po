@@ -34,6 +34,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO_8859-1\n"
 "Content-Transfer-Encoding: 8-bit\n"
+"Plural-Forms: nplurals=2; plural=n!=1;\n"
 
 #~ msgid "[Location List]"
 #~ msgstr ""
@@ -645,11 +646,11 @@ msgstr "&Ok"
 #~ msgid "filter() argument"
 #~ msgstr ""
 
-#, fuzzy, c-format
-#~ msgid "+-%s%3ld line: "
-#~ msgid_plural "+-%s%3ld lines: "
-#~ msgstr[0] "+-%s%3ld reëls: "
-#~ msgstr[1] "+-%s%3ld reëls: "
+#, c-format
+msgid "+-%s%3ld line: "
+msgid_plural "+-%s%3ld lines: "
+msgstr[0] "+-%s%3ld reëls: "
+msgstr[1] "+-%s%3ld reëls: "
 
 #, fuzzy, c-format
 #~ msgid "E700: Unknown function: %s"

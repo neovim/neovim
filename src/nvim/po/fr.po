@@ -1574,6 +1574,12 @@ msgid_plural "+--%3ld lines folded "
 msgstr[0] "+--%3ld ligne déplacée "
 msgstr[1] "+--%3ld lignes déplacées "
 
+#, c-format
+msgid "+-%s%3ld line: "
+msgid_plural "+-%s%3ld lines: "
+msgstr[0] "+-%s%3ld ligne : "
+msgstr[1] "+-%s%3ld lignes : "
+
 msgid "E222: Add to read buffer"
 msgstr "E222: Ajout au tampon de lecture"
 
