@@ -46,3 +46,15 @@ func Test_source_sandbox()
   bwipe!
   call delete('Xsourcehello')
 endfunc
+
+" When deleting a file and immediately creating a new one the inode may be
+" recycled.  Vim should not recognize it as the same script.
+func Test_different_script()
+  call ch_logfile('logfile', 'w')
+  call writefile(['let s:var = "asdf"'], 'XoneScript')
+  source XoneScript
+  call delete('XoneScript')
+  call writefile(['let g:var = s:var'], 'XtwoScript')
+  call assert_fails('source XtwoScript', 'E121:')
+  call delete('XtwoScript')
+endfunc

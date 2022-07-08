@@ -2161,16 +2161,19 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
 
   bool file_id_ok = os_fileid((char *)fname, &file_id);
   assert(script_items.ga_len >= 0);
-  for (script_sctx.sc_sid = script_items.ga_len; script_sctx.sc_sid > 0;
-       script_sctx.sc_sid--) {
+  for (script_sctx.sc_sid = script_items.ga_len; script_sctx.sc_sid > 0; script_sctx.sc_sid--) {
     si = &SCRIPT_ITEM(script_sctx.sc_sid);
-    // Compare dev/ino when possible, it catches symbolic links.
-    // Also compare file names, the inode may change when the file was edited.
-    bool file_id_equal = file_id_ok && si->file_id_valid
-                         && os_fileid_equal(&(si->file_id), &file_id);
-    if (si->sn_name != NULL
-        && (file_id_equal || FNAMECMP(si->sn_name, fname) == 0)) {
-      break;
+    if (si->sn_name != NULL) {
+      // Compare dev/ino when possible, it catches symbolic links.
+      // Also compare file names, the inode may change when the file was
+      // edited or it may be re-used for another script (esp. in tests).
+      if (file_id_ok && si->file_id_valid && !os_fileid_equal(&(si->file_id), &file_id)) {
+        continue;
+      }
+      if (FNAMECMP(si->sn_name, fname) == 0) {
+        // Found it!
+        break;
+      }
     }
   }
   if (script_sctx.sc_sid == 0) {
