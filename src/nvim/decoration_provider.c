@@ -91,7 +91,7 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 
   linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
                        ? wp->w_botline
-                       : (wp->w_topline + wp->w_height_inner));
+                       : MIN(wp->w_topline + wp->w_height_inner, wp->w_buffer->b_ml.ml_line_count));
 
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
