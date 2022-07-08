@@ -1837,6 +1837,11 @@ msgid "+--%3ld line folded "
 msgid_plural "+--%3ld lines folded "
 msgstr[0] "+--%3ld 行が折畳まれました"
 
+#, c-format
+msgid "+-%s%3ld line: "
+msgid_plural "+-%s%3ld lines: "
+msgstr[0] "+-%s%3ld 行: "
+
 msgid "E222: Add to read buffer"
 msgstr "E222: 読込バッファへ追加"
 
