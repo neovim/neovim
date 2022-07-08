@@ -347,17 +347,13 @@ local function schedule_display(namespace, bufnr, args)
 
   local key = make_augroup_key(namespace, bufnr)
   if not registered_autocmds[key] then
-    vim.cmd(string.format(
-      [[augroup %s
-      au!
-      autocmd %s <buffer=%s> lua vim.diagnostic._execute_scheduled_display(%s, %s)
-    augroup END]],
-      key,
-      table.concat(insert_leave_auto_cmds, ','),
-      bufnr,
-      namespace,
-      bufnr
-    ))
+    vim.api.nvim_create_autocmd(insert_leave_auto_cmds, {
+      group = key,
+      buffer = bufnr,
+      callback = function()
+        vim.diagnostic._execute_scheduled_display(namespace, bufnr)
+      end,
+    })
     registered_autocmds[key] = true
   end
 end
