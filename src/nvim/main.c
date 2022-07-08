@@ -362,6 +362,9 @@ int main(int argc, char **argv)
   init_default_autocmds();
   TIME_MSG("init default autocommands");
 
+  init_default_menus();
+  TIME_MSG("init default menus");
+
   bool vimrc_none = params.use_vimrc != NULL && strequal(params.use_vimrc, "NONE");
 
   // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.

@@ -26,6 +26,13 @@
 /// Start a menu name with this to not include it on the main menu bar
 #define MNU_HIDDEN_CHAR         ']'
 
+// 2nd argument for menu_build()
+typedef struct {
+  char *mode;
+  char *text;
+  char *command;
+} menuitem_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "menu.h.generated.h"
 #endif

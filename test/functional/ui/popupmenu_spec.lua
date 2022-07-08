@@ -2367,6 +2367,7 @@ describe('builtin popupmenu', function()
       call setline(1, 'popup menu test')
       set mouse=a mousemodel=popup
 
+      aunmenu PopUp
       menu PopUp.foo :let g:menustr = 'foo'<CR>
       menu PopUp.bar :let g:menustr = 'bar'<CR>
       menu PopUp.baz :let g:menustr = 'baz'<CR>
@@ -2526,6 +2527,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       call setline(1, 'popup menu test')
       set mouse=a mousemodel=popup
 
+      aunmenu PopUp
       menu PopUp.foo :let g:menustr = 'foo'<CR>
       menu PopUp.bar :let g:menustr = 'bar'<CR>
       menu PopUp.baz :let g:menustr = 'baz'<CR>

@@ -1819,3 +1819,57 @@ static char *menu_translate_tab_and_shift(char *arg_start)
 
   return arg;
 }
+
+// build new menu from list of items
+void menu_build(char *name, menuitem_T **items, size_t nitems)
+{
+  unsigned sep = 0;
+
+  // clear menu just in case
+  vim_snprintf((char *)IObuff, IOSIZE, "silent! aunmenu %s", name);
+  do_cmdline_cmd((char *)IObuff);
+
+  for (size_t i = 0; i < nitems; i++) {
+    if (items[i] == NULL) {
+      // separator
+      vim_snprintf((char *)IObuff, IOSIZE, "anoremenu %s.-%u-<Tab> <Nop>",
+                   name, ++sep);
+    } else {
+      // normal item
+      char *text = (char *)vim_strsave_escaped((char_u *)_(items[i]->text),
+                                               escape_chars);
+      vim_snprintf((char *)IObuff, IOSIZE, "%snoremenu %s.%s<Tab> %s",
+                   items[i]->mode, name, text, items[i]->command);
+      XFREE_CLEAR(text);
+    }
+
+    // add to menu
+    do_cmdline_cmd((char *)IObuff);
+  }
+}
+
+// initialization of default menus
+void init_default_menus(void)
+{
+#define ITEM(m, t, c) &(menuitem_T) { (m), (t), (c) },
+
+  // for right mouse button
+  menuitem_T *popup[] = {
+    //   Mode Text                Command
+    ITEM("a", N_("Undo"),         "u")
+    ITEM("v", N_("Cut"),          "\"+x")
+    ITEM("v", N_("Copy"),         "\"+y")
+    ITEM("a", N_("Paste"),        "\"+gP")
+    ITEM("v", N_("Paste"),        "\"+p")
+    ITEM("v", N_("Delete"),       "\"_x")
+    ITEM("n", N_("Select All"),   "ggVG")
+    ITEM("v", N_("Select All"),   "gg0oG$")
+    ITEM("i", N_("Select All"),   "<C-Home><C-O>VG")
+    NULL,
+    ITEM("a", N_("How-to disable mouse"), "<Cmd>help disable-mouse<CR>")
+  };
+
+#undef ITEM
+
+  menu_build("PopUp", popup, ARRAY_SIZE(popup));
+}

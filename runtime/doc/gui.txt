@@ -441,6 +441,21 @@ You can define the special menu "PopUp".  This is the menu that is displayed
 when the right mouse button is pressed, if 'mousemodel' is set to popup or
 popup_setpos.
 
+The predefined menu looks like this: >
+    " The default popup menu
+    silent! aunmenu PopUp
+    anoremenu PopUp.Undo<Tab>			u
+    vnoremenu PopUp.Cut<Tab>			"+x
+    vnoremenu PopUp.Copy<Tab>			"+y
+    anoremenu PopUp.Paste<Tab>			"+gP
+    vnoremenu PopUp.Paste<Tab>			"+p
+    vnoremenu PopUp.Delete<Tab>			"_x
+    nnoremenu PopUp.Select\ All<Tab>		ggVG
+    vnoremenu PopUp.Select\ All<Tab>		gg0oG$
+    inoremenu PopUp.Select\ All<Tab>		<C-Home><C-O>VG
+    anoremenu PopUp.-1-<Tab>			<Nop>
+    anoremenu PopUp.How-to\ disable\ mouse<Tab>	<Cmd>help disable-mouse<CR>
+<
 
 Showing What Menus Are Mapped To			*showing-menus*
 
