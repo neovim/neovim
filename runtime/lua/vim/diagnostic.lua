@@ -346,9 +346,10 @@ local function schedule_display(namespace, bufnr, args)
   bufs_waiting_to_update[bufnr][namespace] = args
 
   local key = make_augroup_key(namespace, bufnr)
+  local group = vim.api.nvim_create_augroup(key)
   if not registered_autocmds[key] then
     vim.api.nvim_create_autocmd(insert_leave_auto_cmds, {
-      group = key,
+      group = group,
       buffer = bufnr,
       callback = function()
         vim.diagnostic._execute_scheduled_display(namespace, bufnr)
