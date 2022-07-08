@@ -427,9 +427,8 @@ This table can be used with vim.fn.setqflist or vim.fn.setloclist. E.g.:
     vim.api.nvim_command('cfirst')
   end
 
-  local bufopts = { noremap=true, silent=true, buffer=bufnr }
-  vim.keymap.set('n', '<leader>d', function() vim.lsp.buf.definition{on_list=on_list} end, bufopts)
-  vim.keymap.set('n', '<leader>af', function() vim.lsp.buf.references(nil, {on_list=on_list}) end, bufopts)
+  vim.lsp.buf.definition{on_list=on_list}
+  vim.lsp.buf.references(nil, {on_list=on_list})
 
 If you prefer loclist do something like this:
 
