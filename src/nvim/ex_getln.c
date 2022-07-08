@@ -3224,7 +3224,7 @@ static void draw_cmdline(int start, int len)
       int u8cc[MAX_MCO];
       int u8c = utfc_ptr2char_len(p, u8cc, start + len - i);
       mb_l = utfc_ptr2len_len(p, start + len - i);
-      if (arabic_char(u8c)) {
+      if (ARABIC_CHAR(u8c)) {
         do_arabicshape = true;
         break;
       }
@@ -3260,7 +3260,7 @@ static void draw_cmdline(int start, int len)
       int u8cc[MAX_MCO];
       int u8c = utfc_ptr2char_len(p, u8cc, start + len - i);
       mb_l = utfc_ptr2len_len(p, start + len - i);
-      if (arabic_char(u8c)) {
+      if (ARABIC_CHAR(u8c)) {
         int pc;
         int pc1 = 0;
         int nc = 0;
