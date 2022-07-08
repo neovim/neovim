@@ -636,6 +636,10 @@ EXTERN int motion_force INIT(=0);       // motion force for pending operator
 
 // Ex Mode (Q) state
 EXTERN bool exmode_active INIT(= false);  // true if Ex mode is active
+
+/// Flag set when normal_check() should return 0 when entering Ex mode.
+EXTERN bool pending_exmode_active INIT(= false);
+
 EXTERN bool ex_no_reprint INIT(=false);   // No need to print after z or p.
 
 // 'inccommand' command preview state

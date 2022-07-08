@@ -64,6 +64,14 @@ func Test_ex_mode()
   let &encoding = encoding_save
 endfunc
 
+func Test_Ex_feedkeys()
+  " this doesn't do anything useful, just check it doesn't hang
+  new
+  call setline(1, ["foo"])
+  call feedkeys("Qg/foo/visual\<CR>", "xt")
+  bwipe!
+endfunc
+
 func Test_ex_mode_errors()
   " Not allowed to enter ex mode when text is locked
   au InsertCharPre <buffer> normal! gQ<CR>
