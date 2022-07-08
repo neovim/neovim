@@ -15,12 +15,8 @@
 #define CCGD_ALLBUF     8       // may write all buffers
 #define CCGD_EXCMD      16      // may suggest using !
 
-/// Also store the dev/ino, so that we don't have to stat() each
-/// script when going through the list.
 typedef struct scriptitem_S {
   char_u *sn_name;
-  bool file_id_valid;
-  FileID file_id;
   bool sn_prof_on;              ///< true when script is/was profiled
   bool sn_pr_force;             ///< forceit: profile functions in this script
   proftime_T sn_pr_child;       ///< time set when going into first child
