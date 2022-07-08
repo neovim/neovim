@@ -438,8 +438,6 @@ If you prefer loclist do something like this:
     vim.api.nvim_command('lopen')
   end
 
-options parameter is table that has title, list and optionally context.
-
 ================================================================================
 LSP HIGHLIGHT                                                    *lsp-highlight*
 
