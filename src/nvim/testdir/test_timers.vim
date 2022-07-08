@@ -15,7 +15,7 @@ func MyHandlerWithLists(lists, timer)
   let x = string(a:lists)
 endfunc
 
-func Test_oneshot()
+func Test_timer_oneshot()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler')
   let slept = WaitFor('g:val == 1')
@@ -27,7 +27,7 @@ func Test_oneshot()
   endif
 endfunc
 
-func Test_repeat_three()
+func Test_timer_repeat_three()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': 3})
   let slept = WaitFor('g:val == 3')
@@ -39,7 +39,7 @@ func Test_repeat_three()
   endif
 endfunc
 
-func Test_repeat_many()
+func Test_timer_repeat_many()
   call timer_stopall()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
@@ -51,7 +51,7 @@ func Test_repeat_many()
   call assert_inrange((has('mac') ? 1 : 2), LoadAdjust(5), g:val)
 endfunc
 
-func Test_with_partial_callback()
+func Test_timer_with_partial_callback()
   let g:val = 0
   let meow = {'one': 1}
   function meow.bite(...)
@@ -68,13 +68,13 @@ func Test_with_partial_callback()
   endif
 endfunc
 
-func Test_retain_partial()
+func Test_timer_retain_partial()
   call timer_start(50, function('MyHandlerWithLists', [['a']]))
-  call garbagecollect()
+  call test_garbagecollect_now()
   sleep 100m
 endfunc
 
-func Test_info()
+func Test_timer_info()
   let id = timer_start(1000, 'MyHandler')
   let info = id->timer_info()
   call assert_equal(id, info[0]['id'])
@@ -93,7 +93,7 @@ func Test_info()
   call assert_equal([], timer_info(id))
 endfunc
 
-func Test_stopall()
+func Test_timer_stopall()
   call timer_stopall()
   let id1 = timer_start(1000, 'MyHandler')
   let id2 = timer_start(2000, 'MyHandler')
@@ -105,7 +105,7 @@ func Test_stopall()
   call assert_equal(0, len(info))
 endfunc
 
-func Test_paused()
+func Test_timer_paused()
   let g:val = 0
 
   let id = timer_start(50, 'MyHandler')
@@ -138,7 +138,7 @@ func StopMyself(timer)
   endif
 endfunc
 
-func Test_delete_myself()
+func Test_timer_delete_myself()
   let g:called = 0
   let t = timer_start(10, 'StopMyself', {'repeat': -1})
   call WaitForAssert({-> assert_equal(2, g:called)})
@@ -157,16 +157,17 @@ func StopTimer2(timer)
   call timer_stop(g:timer1)
 endfunc
 
-func Test_stop_in_callback()
+func Test_timer_stop_in_callback()
   let g:timer1 = timer_start(10, 'StopTimer1')
   sleep 40m
+  call assert_equal(0, len(timer_info()))
 endfunc
 
 func StopTimerAll(timer)
   call timer_stopall()
 endfunc
 
-func Test_stop_all_in_callback()
+func Test_timer_stop_all_in_callback()
   call timer_stopall()
   let g:timer1 = timer_start(10, 'StopTimerAll')
   let info = timer_info()
@@ -189,7 +190,7 @@ func InputCb(timer)
   call Resume()
 endfunc
 
-func Test_input_in_timer()
+func Test_timer_input_in_timer()
   let g:val = ''
   call timer_start(10, 'InputCb')
   call Standby(1000)
@@ -242,7 +243,7 @@ func Interrupt(timer)
   call nvim_input("\<C-C>")
 endfunc
 
-func Test_peek_and_get_char()
+func Test_timer_peek_and_get_char()
   if !has('unix') && !has('gui_running')
     return
   endif
@@ -253,7 +254,7 @@ func Test_peek_and_get_char()
   eval intr->timer_stop()
 endfunc
 
-func Test_getchar_zero()
+func Test_timer_getchar_zero()
   if has('win32') && !has('gui_running')
     " Console: no low-level input
     return
@@ -271,7 +272,7 @@ func Test_getchar_zero()
   call timer_stop(id)
 endfunc
 
-func Test_ex_mode()
+func Test_timer_ex_mode()
   " Function with an empty line.
   func Foo(...)
 
@@ -282,9 +283,9 @@ func Test_ex_mode()
   call timer_stop(timer)
 endfunc
 
-func Test_restore_count()
+func Test_timer_restore_count()
   if !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot run Vim in a terminal window'
   endif
   " Check that v:count is saved and restored, not changed by a timer.
   call writefile([
@@ -315,7 +316,7 @@ endfunc
 
 " Test that the garbage collector isn't triggered if a timer callback invokes
 " vgetc().
-func Test_nocatch_garbage_collect()
+func Test_timer_nocatch_garbage_collect()
   " skipped: Nvim does not support test_garbagecollect_soon(), test_override()
   return
   " 'uptimetime. must be bigger than the timer timeout
@@ -339,7 +340,7 @@ func Test_nocatch_garbage_collect()
   delfunc FeedChar
 endfunc
 
-func Test_error_in_timer_callback()
+func Test_timer_error_in_timer_callback()
   if !has('terminal') || (has('win32') && has('gui_running'))
     throw 'Skipped: cannot run Vim in a terminal window'
   endif
