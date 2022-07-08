@@ -171,12 +171,10 @@ describe('vim.lsp.snippet.parser', function()
                 type = type.FORMAT,
                 capture_index = 1,
                 if_text = 'if_text',
-                else_text = '',
               },
               {
                 type = type.FORMAT,
                 capture_index = 1,
-                if_text = '',
                 else_text = 'else_text',
               },
               {
@@ -188,7 +186,6 @@ describe('vim.lsp.snippet.parser', function()
               {
                 type = type.FORMAT,
                 capture_index = 1,
-                if_text = '',
                 else_text = 'else_text',
               },
             },

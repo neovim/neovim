@@ -244,8 +244,8 @@ S.format = P.any(
     ),
     function(values)
       return ast.Format.new(values[3], {
-        if_text = values[5][2] and values[5][2].esc,
-        else_text = values[5][4] and values[5][4].esc,
+        if_text = values[5][2] and values[5][2].esc or "",
+        else_text = values[5][4] and values[5][4].esc or "",
       })
     end
   ),
@@ -253,7 +253,7 @@ S.format = P.any(
     P.seq(S.dollar, S.open, S.int, S.colon, P.seq(S.plus, P.opt(P.take_until({ '}' }, { '\\' }))), S.close),
     function(values)
       return ast.Format.new(values[3], {
-        if_text = values[5][2] and values[5][2].esc,
+        if_text = values[5][2] and values[5][2].esc or "",
       })
     end
   ),
@@ -261,13 +261,13 @@ S.format = P.any(
     P.seq(S.dollar, S.open, S.int, S.colon, S.minus, P.opt(P.take_until({ '}' }, { '\\' })), S.close),
     function(values)
       return ast.Format.new(values[3], {
-        else_text = values[6] and values[6].esc,
+        else_text = values[6] and values[6].esc or "",
       })
     end
   ),
   P.map(P.seq(S.dollar, S.open, S.int, S.colon, P.opt(P.take_until({ '}' }, { '\\' })), S.close), function(values)
     return ast.Format.new(values[3], {
-      else_text = values[5] and values[5].esc,
+      else_text = values[5] and values[5].esc or "",
     })
   end)
 )
