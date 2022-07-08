@@ -19,6 +19,26 @@ describe(':source', function()
     clear()
   end)
 
+  it('sourcing a file that is deleted and recreated is consistent vim-patch:8.1.0151', function()
+    local test_file = 'Xfile.vim'
+    local other_file = 'Xfoobar'
+    local script = [[
+      func Func()
+      endfunc
+    ]]
+    write_file(test_file, script)
+    command('source ' .. test_file)
+    os.remove(test_file)
+    write_file(test_file, script)
+    command('source ' .. test_file)
+    os.remove(test_file)
+    write_file(other_file, '')
+    write_file(test_file, script)
+    command('source ' .. test_file)
+    os.remove(other_file)
+    os.remove(test_file)
+  end)
+
   it('current buffer', function()
     insert([[
       let a = 2
