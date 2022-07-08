@@ -160,8 +160,16 @@ endfunc
 func Test_timer_stop_in_callback()
   call assert_equal(0, len(timer_info()))
   let g:timer1 = timer_start(10, 'StopTimer1')
-  sleep 50m
-  call assert_equal(0, len(timer_info()))
+  let slept = 0
+  for i in range(10)
+    if len(timer_info()) == 0
+      break
+    endif
+    sleep 10m
+    let slept += 10
+  endfor
+  " This should take only 30 msec, but on Mac it's often longer
+  call assert_inrange(0, 50, slept)
 endfunc
 
 func StopTimerAll(timer)
