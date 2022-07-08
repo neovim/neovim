@@ -414,8 +414,13 @@ For the format of the notification message, see:
 
                                                                 *on-list-handler*
 
-on_list handler accepts single parameter options which can be passed directly
-to vim.fn.setqflist or vim.fn.setloclist. E.g.:
+`on_list` receives a table with:
+
+ - `items` table[], structured like |setqflist-what|
+ - `title` string, title for the list.
+ - `context` table|nil. `ctx` from |lsp-handler|
+
+This table can be used with vim.fn.setqflist or vim.fn.setloclist. E.g.:
 
   local function on_list(options)
     vim.fn.setqflist({}, ' ', options)
