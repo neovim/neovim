@@ -1486,6 +1486,8 @@ func Test_sort_last_search_pat()
   call setline(1, ['3b', '1c', '2a'])
   sort //
   call assert_equal(['2a', '3b', '1c'], getline(1, '$'))
+  call test_clear_search_pat()
+  call assert_fails('sort //', 'E35:')
   close!
 endfunc
 

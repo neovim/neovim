@@ -808,6 +808,21 @@ func Test_sub_expand_text()
   close!
 endfunc
 
+" Test for command failures when the last substitute pattern is not set.
+func Test_sub_with_no_last_pat()
+  call test_clear_search_pat()
+  call assert_fails('~', 'E33:')
+  call assert_fails('s//abc/g', 'E476:')
+  call assert_fails('s\/bar', 'E476:')
+  call assert_fails('s\&bar&', 'E476:')
+
+  call test_clear_search_pat()
+  let save_cpo = &cpo
+  set cpo+=/
+  call assert_fails('s/abc/%/', 'E33:')
+  let &cpo = save_cpo
+endfunc
+
 func Test_submatch_list_concatenate()
   let pat = 'A\(.\)'
   let Rep = {-> string([submatch(0, 1)] + [[submatch(1)]])}

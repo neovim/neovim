@@ -2858,6 +2858,10 @@ func XvimgrepTests(cchar)
   call assert_equal(0, getbufinfo('Xtestfile1')[0].loaded)
   call assert_equal([], getbufinfo('Xtestfile2'))
 
+  " Test with the last search pattern not set
+  call test_clear_search_pat()
+  call assert_fails('Xvimgrep // *', 'E35:')
+
   call delete('Xtestfile1')
   call delete('Xtestfile2')
 endfunc
