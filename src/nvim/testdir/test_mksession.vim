@@ -2,9 +2,8 @@
 
 scriptencoding latin1
 
-if !has('mksession')
-  finish
-endif
+source check.vim
+CheckFeature mksession
 
 source shared.vim
 source term_util.vim
@@ -43,9 +42,9 @@ func Test_mksession()
     \   '    four leadinG spaces',
     \   'two		consecutive tabs',
     \   'two	tabs	in one line',
-    \   'one Ã¤ multibyteCharacter',
-    \   'aÃ¤ Ã„  two multiByte characters',
-    \   'AÃ¤Ã¶Ã¼  three mulTibyte characters',
+    \   'one ä multibyteCharacter',
+    \   'aä Ä  two multiByte characters',
+    \   'Aäöü  three mulTibyte characters',
     \   'short line',
     \ ])
   let tmpfile = 'Xtemp'

@@ -1,8 +1,8 @@
 " Tests for Perl interface
 
-if !has('perl') || has('win32')
-  finish
-endif
+source check.vim
+CheckFeature perl
+CheckNotMSWindows
 
 " FIXME: RunTest don't see any error when Perl abort...
 perl $SIG{__WARN__} = sub { die "Unexpected warnings from perl: @_" };

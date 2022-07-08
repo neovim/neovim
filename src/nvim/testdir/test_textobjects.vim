@@ -1,8 +1,7 @@
 " Test for textobjects
 
-if !has('textobjects')
-  finish
-endif
+source check.vim
+CheckFeature textobjects
 
 func CpoM(line, useM, expected)
   new

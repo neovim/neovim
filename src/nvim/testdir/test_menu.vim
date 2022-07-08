@@ -1,8 +1,7 @@
 " Test that the system menu can be loaded.
 
-if !has('menu')
-  finish
-endif
+source check.vim
+CheckFeature menu
 
 func Test_load_menu()
   try

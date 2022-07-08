@@ -1,7 +1,11 @@
 " Test for cscope commands.
 
-if !has('cscope') || !executable('cscope') || !has('quickfix')
-  finish
+source check.vim
+CheckFeature cscope
+CheckFeature quickfix
+
+if !executable('cscope')
+  throw 'Skipped: cscope program missing'
 endif
 
 func CscopeSetupOrClean(setup)

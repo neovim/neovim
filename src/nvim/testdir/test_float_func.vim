@@ -1,8 +1,7 @@
 " test float functions
 
-if !has('float')
-  finish
-end
+source check.vim
+CheckFeature float
 
 func Test_abs()
   call assert_equal('1.23', string(abs(1.23)))

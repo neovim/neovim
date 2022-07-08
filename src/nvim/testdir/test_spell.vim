@@ -2,9 +2,7 @@
 " Note: this file uses latin1 encoding, but is used with utf-8 encoding.
 
 source check.vim
-if !has('spell')
-  finish
-endif
+CheckFeature spell
 
 source screendump.vim
 
