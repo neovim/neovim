@@ -908,6 +908,15 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
   msg_list = saved_msg_list;
 
+  // Cleanup if "cs_emsg_silent_list" remains.
+  if (cstack.cs_emsg_silent_list != NULL) {
+    eslist_T *elem, *temp;
+    for (elem = cstack.cs_emsg_silent_list; elem != NULL; elem = temp) {
+      temp = elem->next;
+      xfree(elem);
+    }
+  }
+
   /*
    * If there was too much output to fit on the command line, ask the user to
    * hit return before redrawing the screen. With the ":global" command we do

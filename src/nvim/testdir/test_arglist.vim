@@ -1,5 +1,8 @@
 " Test argument list commands
 
+source shared.vim
+source term_util.vim
+
 func Reset_arglist()
   args a | %argd
 endfunc
@@ -510,3 +513,17 @@ func Test_argdo()
   call assert_equal(['Xa.c', 'Xb.c', 'Xc.c'], l)
   bwipe Xa.c Xb.c Xc.c
 endfunc
+
+" Test for quiting Vim with unedited files in the argument list
+func Test_quit_with_arglist()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot run vim in terminal'
+  endif
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, ":args a b c\n")
+  call term_sendkeys(buf, ":quit\n")
+  call WaitForAssert({-> assert_match('^E173:', term_getline(buf, 6))})
+  call StopVimInTerminal(buf)
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

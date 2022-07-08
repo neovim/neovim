@@ -2858,10 +2858,6 @@ func XvimgrepTests(cchar)
   call assert_equal(0, getbufinfo('Xtestfile1')[0].loaded)
   call assert_equal([], getbufinfo('Xtestfile2'))
 
-  " Test with the last search pattern not set
-  call test_clear_search_pat()
-  call assert_fails('Xvimgrep // *', 'E35:')
-
   call delete('Xtestfile1')
   call delete('Xtestfile2')
 endfunc
@@ -2893,6 +2889,21 @@ func Test_vimgrep_incsearch()
 
   call test_override("ALL", 0)
   set noincsearch
+endfunc
+
+" Test vimgrep with the last search pattern not set
+func Test_vimgrep_with_no_last_search_pat()
+  let lines =<< trim [SCRIPT]
+    call assert_fails('vimgrep // *', 'E35:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
 endfunc
 
 " Test vimgrep without swap file

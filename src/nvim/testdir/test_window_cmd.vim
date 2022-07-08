@@ -886,6 +886,30 @@ func Test_floatwin_splitmove()
   bwipe
 endfunc
 
+" Test for the :only command
+func Test_window_only()
+  new
+  set modified
+  new
+  call assert_fails('only', 'E445:')
+  only!
+endfunc
+
+" Test for errors with :wincmd
+func Test_wincmd_errors()
+  call assert_fails('wincmd g', 'E474:')
+  call assert_fails('wincmd ab', 'E474:')
+endfunc
+
+" Test for errors with :winpos
+func Test_winpos_errors()
+  throw 'Skipped: Nvim does not have :winpos'
+  if !has("gui_running") && !has('win32')
+    call assert_fails('winpos', 'E188:')
+  endif
+  call assert_fails('winpos 10', 'E466:')
+endfunc
+
 func Test_window_resize()
   throw 'Skipped: Nvim supports cmdheight=0'
   " Vertical :resize (absolute, relative, min and max size).

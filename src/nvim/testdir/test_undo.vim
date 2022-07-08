@@ -299,6 +299,8 @@ func Test_undo_write()
   close!
   call delete('Xtest')
   bwipe! Xtest
+
+  call assert_fails('earlier xyz', 'E475:')
 endfunc
 
 func Test_insert_expr()

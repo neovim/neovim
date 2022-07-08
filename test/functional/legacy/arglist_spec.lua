@@ -3,6 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, command, eq = helpers.clear, helpers.command, helpers.eq
 local eval, exc_exec, neq = helpers.eval, helpers.exc_exec, helpers.neq
+local pcall_err = helpers.pcall_err
 
 describe('argument list commands', function()
   before_each(clear)
@@ -206,7 +207,6 @@ describe('argument list commands', function()
     command('%argd')
   end)
 
-
   it('test for autocommand that redefines the argument list, when doing ":all"', function()
     command('autocmd BufReadPost Xxx2 next Xxx2 Xxx1')
     command("call writefile(['test file Xxx1'], 'Xxx1')")
@@ -233,5 +233,10 @@ describe('argument list commands', function()
     command("call delete('Xxx3')")
     command('argdelete Xxx*')
     command('bwipe! Xxx1 Xxx2 Xxx3')
+  end)
+
+  it('quitting Vim with unedited files in the argument list throws E173', function()
+    command('args a b c')
+    eq('Vim(quit):E173: 2 more files to edit', pcall_err(command, 'quit'))
   end)
 end)

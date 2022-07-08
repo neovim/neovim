@@ -1486,9 +1486,23 @@ func Test_sort_last_search_pat()
   call setline(1, ['3b', '1c', '2a'])
   sort //
   call assert_equal(['2a', '3b', '1c'], getline(1, '$'))
-  call test_clear_search_pat()
-  call assert_fails('sort //', 'E35:')
   close!
+endfunc
+
+" Test for :sort with no last search pattern
+func Test_sort_with_no_last_search_pat()
+  let lines =<< trim [SCRIPT]
+    call setline(1, ['3b', '1c', '2a'])
+    call assert_fails('sort //', 'E35:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
 endfunc
 
 " Test for retaining marks across a :sort

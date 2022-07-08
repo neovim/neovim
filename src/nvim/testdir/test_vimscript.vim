@@ -1771,6 +1771,92 @@ func Test_function_defined_line()
     call delete('Xtest.vim')
 endfunc
 
+" Test for missing :endif, :endfor, :endwhile and :endtry           {{{1
+func Test_missing_end()
+  call writefile(['if 2 > 1', 'echo ">"'], 'Xscript')
+  call assert_fails('source Xscript', 'E171:')
+  call writefile(['for i in range(5)', 'echo i'], 'Xscript')
+  call assert_fails('source Xscript', 'E170:')
+  call writefile(['while v:true', 'echo "."'], 'Xscript')
+  call assert_fails('source Xscript', 'E170:')
+  call writefile(['try', 'echo "."'], 'Xscript')
+  call assert_fails('source Xscript', 'E600:')
+  call delete('Xscript')
+endfunc
+
+" Test for deep nesting of if/for/while/try statements              {{{1
+func Test_deep_nest()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot run vim in terminal'
+  endif
+
+  let lines =<< trim [SCRIPT]
+    " Deep nesting of if ... endif
+    func Test1()
+      let @a = join(repeat(['if v:true'], 51), "\n")
+      let @a ..= "\n"
+      let @a ..= join(repeat(['endif'], 51), "\n")
+      @a
+      let @a = ''
+    endfunc
+
+    " Deep nesting of for ... endfor
+    func Test2()
+      let @a = join(repeat(['for i in [1]'], 51), "\n")
+      let @a ..= "\n"
+      let @a ..= join(repeat(['endfor'], 51), "\n")
+      @a
+      let @a = ''
+    endfunc
+
+    " Deep nesting of while ... endwhile
+    func Test3()
+      let @a = join(repeat(['while v:true'], 51), "\n")
+      let @a ..= "\n"
+      let @a ..= join(repeat(['endwhile'], 51), "\n")
+      @a
+      let @a = ''
+    endfunc
+
+    " Deep nesting of try ... endtry
+    func Test4()
+      let @a = join(repeat(['try'], 51), "\n")
+      let @a ..= "\necho v:true\n"
+      let @a ..= join(repeat(['endtry'], 51), "\n")
+      @a
+      let @a = ''
+    endfunc
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+
+  let buf = RunVimInTerminal('-S Xscript', {'rows': 6})
+
+  " Deep nesting of if ... endif
+  call term_sendkeys(buf, ":call Test1()\n")
+  call WaitForAssert({-> assert_match('^E579:', term_getline(buf, 5))})
+
+  " Deep nesting of for ... endfor
+  call term_sendkeys(buf, ":call Test2()\n")
+  call WaitForAssert({-> assert_match('^E585:', term_getline(buf, 5))})
+
+  " Deep nesting of while ... endwhile
+  call term_sendkeys(buf, ":call Test3()\n")
+  call WaitForAssert({-> assert_match('^E585:', term_getline(buf, 5))})
+
+  " Deep nesting of try ... endtry
+  call term_sendkeys(buf, ":call Test4()\n")
+  call WaitForAssert({-> assert_match('^E601:', term_getline(buf, 5))})
+
+  "let l = ''
+  "for i in range(1, 6)
+  "  let l ..= term_getline(buf, i) . "\n"
+  "endfor
+  "call assert_report(l)
+
+  call StopVimInTerminal(buf)
+  call delete('Xscript')
+endfunc
+
 func Test_for_over_string()
   let res = ''
   for c in 'aéc̀d'
