@@ -1366,29 +1366,21 @@ local function close_preview_autocmd(events, winnr, bufnrs)
 
   -- close the preview window when entered a buffer that is not
   -- the floating window buffer or the buffer that spawned it
-  vim.cmd(string.format(
-    [[
-    augroup %s
-      autocmd!
-      autocmd BufEnter * lua vim.lsp.util._close_preview_window(%d, {%s})
-    augroup end
-  ]],
-    augroup,
-    winnr,
-    table.concat(bufnrs, ',')
-  ))
+  api.nvim_create_autocmds('BufEnter', {
+    group = augroup,
+    pattern = '*',
+    callback = function()
+      vim.lsp.util._close_preview_window(winnr, table.concat(bufnrs, ','))
+    end,
+  })
 
   if #events > 0 then
-    vim.cmd(string.format(
-      [[
-      augroup %s
-        autocmd %s <buffer> lua vim.lsp.util._close_preview_window(%d)
-      augroup end
-    ]],
-      augroup,
-      table.concat(events, ','),
-      winnr
-    ))
+    api.nvim_create_autocmds(events, {
+      buffer = bufnrs[2],
+      callback = function()
+        vim.lsp.util._close_preview_window(winnr)
+      end,
+    })
   end
 end
 
