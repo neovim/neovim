@@ -349,7 +349,11 @@ local function schedule_display(namespace, bufnr, args)
   local group = vim.api.nvim_create_augroup(key)
   if not registered_autocmds[key] then
     vim.api.nvim_create_autocmd(insert_leave_auto_cmds, {
+<<<<<<< HEAD
       group = group,
+=======
+      group = key,
+>>>>>>> c87d8f6a4 (refactor :use nvim_create_autocmd api replace vim.cmd)
       buffer = bufnr,
       callback = function()
         vim.diagnostic._execute_scheduled_display(namespace, bufnr)

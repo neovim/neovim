@@ -1368,6 +1368,10 @@ local function close_preview_autocmd(events, winnr, bufnrs)
   -- the floating window buffer or the buffer that spawned it
   api.nvim_create_autocmds('BufEnter', {
     group = augroup,
+<<<<<<< HEAD
+=======
+    pattern = '*',
+>>>>>>> c87d8f6a4 (refactor :use nvim_create_autocmd api replace vim.cmd)
     callback = function()
       vim.lsp.util._close_preview_window(winnr, table.concat(bufnrs, ','))
     end,
