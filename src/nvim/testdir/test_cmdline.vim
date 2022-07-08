@@ -18,6 +18,11 @@ func Test_complete_list()
   " We can't see the output, but at least we check the code runs properly.
   call feedkeys(":e test\<C-D>\r", "tx")
   call assert_equal('test', expand('%:t'))
+
+  " If a command doesn't support completion, then CTRL-D should be literally
+  " used.
+  call feedkeys(":chistory \<C-D>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"chistory \<C-D>", @:)
 endfunc
 
 func Test_complete_wildmenu()
@@ -70,6 +75,11 @@ func Test_complete_wildmenu()
     cunmap <C-J>
     cunmap <C-K>
   endif
+
+  " Test for canceling the wild menu by adding a character
+  redrawstatus
+  call feedkeys(":e Xdir1/\<Tab>x\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xdir1/Xdir2/x', @:)
 
   " Completion using a relative path
   cd Xdir1/Xdir2
@@ -590,6 +600,18 @@ func Test_cmdline_paste()
 
   " Use an invalid expression for <C-\>e
   call assert_beeps('call feedkeys(":\<C-\>einvalid\<CR>", "tx")')
+
+  " Try to paste an invalid register using <C-R>
+  call feedkeys(":\"one\<C-R>\<C-X>two\<CR>", 'xt')
+  call assert_equal('"onetwo', @:)
+
+  let @a = "xy\<C-H>z"
+  call feedkeys(":\"\<C-R>a\<CR>", 'xt')
+  call assert_equal('"xz', @:)
+  call feedkeys(":\"\<C-R>\<C-O>a\<CR>", 'xt')
+  call assert_equal("\"xy\<C-H>z", @:)
+
+  call assert_beeps('call feedkeys(":\<C-R>=\<C-R>=\<Esc>", "xt")')
 
   bwipe!
 endfunc
@@ -1224,6 +1246,112 @@ func Test_cmdline_expand_home()
   let $HOME = save_HOME
   cd ..
   call delete('Xdir', 'rf')
+endfunc
+
+" Test for using CTRL-\ CTRL-G in the command line to go back to normal mode
+" or insert mode (when 'insertmode' is set)
+func Test_cmdline_ctrl_g()
+  new
+  call setline(1, 'abc')
+  call cursor(1, 3)
+  " If command line is entered from insert mode, using C-\ C-G should back to
+  " insert mode
+  call feedkeys("i\<C-O>:\<C-\>\<C-G>xy", 'xt')
+  call assert_equal('abxyc', getline(1))
+  call assert_equal(4, col('.'))
+
+  " If command line is entered in 'insertmode', using C-\ C-G should back to
+  " 'insertmode'
+  " call feedkeys(":set im\<cr>\<C-L>:\<C-\>\<C-G>12\<C-L>:set noim\<cr>", 'xt')
+  " call assert_equal('ab12xyc', getline(1))
+  close!
+endfunc
+
+" Return the 'len' characters in screen starting from (row,col)
+func s:ScreenLine(row, col, len)
+  let s = ''
+  for i in range(a:len)
+    let s .= nr2char(screenchar(a:row, a:col + i))
+  endfor
+  return s
+endfunc
+
+" Test for 'wildmode'
+func Test_wildmode()
+  func T(a, c, p)
+    return "oneA\noneB\noneC"
+  endfunc
+  command -nargs=1 -complete=custom,T MyCmd
+
+  func SaveScreenLine()
+    let g:Sline = s:ScreenLine(&lines - 1, 1, 20)
+    return ''
+  endfunc
+  cnoremap <expr> <F2> SaveScreenLine()
+
+  set nowildmenu
+  set wildmode=full,list
+  let g:Sline = ''
+  call feedkeys(":MyCmd \t\t\<F2>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('oneA  oneB  oneC    ', g:Sline)
+  call assert_equal('"MyCmd oneA', @:)
+
+  set wildmode=longest,full
+  call feedkeys(":MyCmd o\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one', @:)
+  call feedkeys(":MyCmd o\t\t\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneC', @:)
+
+  set wildmode=longest
+  call feedkeys(":MyCmd one\t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd one', @:)
+
+  set wildmode=list:longest
+  let g:Sline = ''
+  call feedkeys(":MyCmd \t\<F2>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('oneA  oneB  oneC    ', g:Sline)
+  call assert_equal('"MyCmd one', @:)
+
+  set wildmode=""
+  call feedkeys(":MyCmd \t\t\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"MyCmd oneA', @:)
+
+  delcommand MyCmd
+  delfunc T
+  delfunc SaveScreenLine
+  cunmap <F2>
+  set wildmode&
+endfunc
+
+" Test for interrupting the command-line completion
+func Test_interrupt_compl()
+  func F(lead, cmdl, p)
+    if a:lead =~ 'tw'
+      call interrupt()
+      return
+    endif
+    return "one\ntwo\nthree"
+  endfunc
+  command -nargs=1 -complete=custom,F Tcmd
+
+  set nowildmenu
+  set wildmode=full
+  let interrupted = 0
+  try
+    call feedkeys(":Tcmd tw\<Tab>\<C-B>\"\<CR>", 'xt')
+  catch /^Vim:Interrupt$/
+    let interrupted = 1
+  endtry
+  call assert_equal(1, interrupted)
+
+  delcommand Tcmd
+  delfunc F
+  set wildmode&
+endfunc
+
+func Test_cmdline_edit()
+  call feedkeys(":\"buffer\<Right>\<Home>\<Left>\<CR>", 'xt')
+  call assert_equal("\"buffer", @:)
 endfunc
 
 " Test for normal mode commands not supported in the cmd window
