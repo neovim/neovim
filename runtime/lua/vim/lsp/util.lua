@@ -1367,7 +1367,7 @@ local function close_preview_window(winnr, bufnrs)
     end
 
     local augroup = 'preview_window_' .. winnr
-    api.nvim_clear_automcd({ group = augroup })
+    api.nvim_del_augroup_by_name(augroup)
     pcall(vim.api.nvim_win_close, winnr, true)
   end)
 end
@@ -1381,7 +1381,7 @@ end
 ---@see |autocmd-events|
 local function close_preview_autocmd(events, winnr, bufnrs)
   local augroup = api.nvim_create_augroup('preview_window_' .. winnr, {
-    clear = true
+    clear = true,
   })
 
   -- close the preview window when entered a buffer that is not

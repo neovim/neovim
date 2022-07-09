@@ -384,7 +384,7 @@ local function clear_scheduled_display(namespace, bufnr)
   local key = make_augroup_key(namespace, bufnr)
 
   if registered_autocmds[key] then
-    vim.api.nvim_clear_autocmd({ group = key })
+    vim.api.nvim_del_augroup_by_name(key)
     registered_autocmds[key] = nil
   end
 end

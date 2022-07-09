@@ -16,7 +16,7 @@ local _default_highlights = {}
 local _link_default_highlight_once = function(from, to)
   if not _default_highlights[from] then
     _default_highlights[from] = true
-    a.nvim_set_hl(0,from, { link = to,default = true })
+    a.nvim_set_hl(0, from, { link = to, default = true })
   end
 
   return from
