@@ -338,6 +338,32 @@ local function make_augroup_key(namespace, bufnr)
   return string.format('DiagnosticInsertLeave:%s:%s', bufnr, ns.name)
 end
 
+---@private
+local function execute_scheduled_display(namespace, bufnr)
+  local args = bufs_waiting_to_update[bufnr][namespace]
+  if not args then
+    return
+  end
+
+  -- Clear the args so we don't display unnecessarily.
+  bufs_waiting_to_update[bufnr][namespace] = nil
+
+  M.show(namespace, bufnr, nil, args)
+end
+
+--- @deprecated
+--- Callback scheduled when leaving Insert mode.
+---
+--- called from the Vimscript autocommand.
+---
+--- See @ref schedule_display()
+---
+---@private
+function M._execute_scheduled_display(namespace, bufnr)
+  vim.deprecate('vim.diagnostic._execute_scheduled_display', nil, '0.9')
+  execute_scheduled_display(namespace, bufnr)
+end
+
 --- Table of autocmd events to fire the update for displaying new diagnostic information
 local insert_leave_auto_cmds = { 'InsertLeave', 'CursorHoldI' }
 
@@ -346,18 +372,15 @@ local function schedule_display(namespace, bufnr, args)
   bufs_waiting_to_update[bufnr][namespace] = args
 
   local key = make_augroup_key(namespace, bufnr)
+  local group = vim.api.nvim_create_augroup(key, { clear = true })
   if not registered_autocmds[key] then
-    vim.cmd(string.format(
-      [[augroup %s
-      au!
-      autocmd %s <buffer=%s> lua vim.diagnostic._execute_scheduled_display(%s, %s)
-    augroup END]],
-      key,
-      table.concat(insert_leave_auto_cmds, ','),
-      bufnr,
-      namespace,
-      bufnr
-    ))
+    vim.api.nvim_create_autocmd(insert_leave_auto_cmds, {
+      group = group,
+      buffer = bufnr,
+      callback = function()
+        execute_scheduled_display(namespace, bufnr)
+      end,
+    })
     registered_autocmds[key] = true
   end
 end
@@ -367,12 +390,7 @@ local function clear_scheduled_display(namespace, bufnr)
   local key = make_augroup_key(namespace, bufnr)
 
   if registered_autocmds[key] then
-    vim.cmd(string.format(
-      [[augroup %s
-      au!
-    augroup END]],
-      key
-    ))
+    vim.api.nvim_del_augroup_by_name(key)
     registered_autocmds[key] = nil
   end
 end
@@ -1046,26 +1064,6 @@ function M._get_virt_text_chunks(line_diags, opts)
 
     return virt_texts
   end
-end
-
---- Callback scheduled when leaving Insert mode.
----
---- This function must be exported publicly so that it is available to be
---- called from the Vimscript autocommand.
----
---- See @ref schedule_display()
----
----@private
-function M._execute_scheduled_display(namespace, bufnr)
-  local args = bufs_waiting_to_update[bufnr][namespace]
-  if not args then
-    return
-  end
-
-  -- Clear the args so we don't display unnecessarily.
-  bufs_waiting_to_update[bufnr][namespace] = nil
-
-  M.show(namespace, bufnr, nil, args)
 end
 
 --- Hide currently displayed diagnostics.

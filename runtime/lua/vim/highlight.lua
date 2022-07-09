@@ -11,6 +11,7 @@ M.priorities = {
 
 ---@private
 function M.create(higroup, hi_info, default)
+  vim.deprecate('vim.highlight.create', 'vim.api.nvim_set_hl', '0.9')
   local options = {}
   -- TODO: Add validation
   for k, v in pairs(hi_info) do
@@ -28,6 +29,7 @@ end
 
 ---@private
 function M.link(higroup, link_to, force)
+  vim.deprecate('vim.highlight.link', 'vim.api.nvim_set_hl', '0.9')
   vim.cmd(string.format([[highlight%s link %s %s]], force and '!' or ' default', higroup, link_to))
 end
 
