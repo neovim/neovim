@@ -1,5 +1,7 @@
 " test taglist(), tagfiles() functions and :tags command
 
+source view_util.vim
+
 func Test_taglist()
   call writefile([
 	\ "FFoo\tXfoo\t1",
@@ -222,3 +224,21 @@ func Test_format_error()
   set tags&
   call delete('Xtags')
 endfunc
+
+" Test for :tag command completion with 'wildoptions' set to 'tagfile'
+func Test_tag_complete_wildoptions()
+  call writefile(["foo\ta.c\t10;\"\tf", "bar\tb.c\t20;\"\td"], 'Xtags')
+  set tags=Xtags
+  set wildoptions=tagfile
+
+  call feedkeys(":tag \<C-D>\<C-R>=Screenline(&lines - 1)\<CR> : "
+        \ .. "\<C-R>=Screenline(&lines - 2)\<CR>\<C-B>\"\<CR>", 'xt')
+
+  call assert_equal('"tag bar d b.c : foo f a.c', @:)
+
+  call delete('Xtags')
+  set wildoptions&
+  set tags&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
