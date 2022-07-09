@@ -1722,35 +1722,6 @@ function M.locations_to_items(locations, offset_encoding)
   return items
 end
 
---- Fills target window's location list with given list of items.
---- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
---- Defaults to current window.
----
----@deprecated Use |setloclist()|
----
----@param items (table) list of items
-function M.set_loclist(items, win_id)
-  vim.deprecate('vim.lsp.util.set_loclist', 'setloclist', '0.8')
-  vim.fn.setloclist(win_id or 0, {}, ' ', {
-    title = 'Language Server',
-    items = items,
-  })
-end
-
---- Fills quickfix list with given list of items.
---- Can be obtained with e.g. |vim.lsp.util.locations_to_items()|.
----
----@deprecated Use |setqflist()|
----
----@param items (table) list of items
-function M.set_qflist(items)
-  vim.deprecate('vim.lsp.util.set_qflist', 'setqflist', '0.8')
-  vim.fn.setqflist({}, ' ', {
-    title = 'Language Server',
-    items = items,
-  })
-end
-
 -- According to LSP spec, if the client set "symbolKind.valueSet",
 -- the client must handle it properly even if it receives a value outside the specification.
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_documentSymbol
