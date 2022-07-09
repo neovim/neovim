@@ -623,6 +623,11 @@ func Test_aff_file_format_error()
   let output = execute('mkspell! Xtest.spl Xtest')
   call assert_match('Wrong CHECKCOMPOUNDPATTERN value in Xtest.aff line 1: 0', output)
 
+  " Both compounding and NOBREAK specified
+  call writefile(['COMPOUNDFLAG c', 'NOBREAK'], 'Xtest.aff')
+  let output = execute('mkspell! Xtest.spl Xtest')
+  call assert_match('Warning: both compounding and NOBREAK specified', output)
+
   " Duplicate affix entry in an affix file
   call writefile(['PFX L Y 1', 'PFX L 0 re x', 'PFX L Y 1', 'PFX L 0 re x'],
         \ 'Xtest.aff')
@@ -775,6 +780,15 @@ func Test_NOBREAK()
   call assert_equal(['z', 'bad'], spellbadword('onez'))
   call assert_equal(['zero', 'bad'], spellbadword('Onetwozerothree'))
 
+  new
+  call setline(1, 'Onetwwothree')
+  norm! fw1z=
+  call assert_equal('Onetwothree', getline(1))
+  call setline(1, 'Onetwothre')
+  norm! fh1z=
+  call assert_equal('Onetwothree', getline(1))
+
+  bw!
   set spell& spelllang&
   call delete('XtestNOBREAK.dic')
   call delete('XtestNOBREAK.aff')
@@ -934,6 +948,48 @@ func Test_spellfile_CIRCUMFIX()
   call delete('XtestCIRCUMFIX.dic')
   call delete('XtestCIRCUMFIX.aff')
   call delete('XtestCIRCUMFIX-utf8.spl')
+endfunc
+
+" Test SFX that strips/chops characters
+func Test_spellfile_SFX_strip()
+  " Simplified conjugation of Italian verbs ending in -are (first conjugation).
+  call writefile(['SFX A Y 4',
+        \         'SFX A are iamo [^icg]are',
+        \         'SFX A are hiamo [cg]are',
+        \         'SFX A re mo iare',
+        \         'SFX A re vamo are'],
+        \         'XtestSFX.aff')
+  " Examples of Italian verbs:
+  " - cantare = to sing
+  " - cercare = to search
+  " - odiare = to hate
+  call writefile(['3', 'cantare/A', 'cercare/A', 'odiare/A'], 'XtestSFX.dic')
+
+  mkspell! XtestSFX-utf8.spl XtestSFX
+  set spell spelllang=XtestSFX-utf8.spl
+
+  " To sing, we're singing, we were singing.
+  call assert_equal(['', ''], spellbadword('cantare cantiamo cantavamo'))
+
+  " To search, we're searching, we were searching.
+  call assert_equal(['', ''], spellbadword('cercare cerchiamo cercavamo'))
+
+  " To hate, we hate, we were hating.
+  call assert_equal(['', ''], spellbadword('odiare odiamo odiavamo'))
+
+  for badword in ['canthiamo', 'cerciamo', 'cantarevamo', 'odiiamo']
+    call assert_equal([badword, 'bad'], spellbadword(badword))
+  endfor
+
+  call assert_equal(['cantiamo'],  spellsuggest('canthiamo', 1))
+  call assert_equal(['cerchiamo'], spellsuggest('cerciamo', 1))
+  call assert_equal(['cantavamo'], spellsuggest('cantarevamo', 1))
+  call assert_equal(['odiamo'],    spellsuggest('odiiamo', 1))
+
+  set spell& spelllang&
+  call delete('XtestSFX.dic')
+  call delete('XtestSFX.aff')
+  call delete('XtestSFX-utf8.spl')
 endfunc
 
 " When 'spellfile' is not set, adding a new good word will automatically set
