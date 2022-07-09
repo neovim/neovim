@@ -598,9 +598,6 @@ func Test_cmdline_paste()
   endtry
   call assert_equal("Xtestfile", bufname("%"))
 
-  " Use an invalid expression for <C-\>e
-  call assert_beeps('call feedkeys(":\<C-\>einvalid\<CR>", "tx")')
-
   " Try to paste an invalid register using <C-R>
   call feedkeys(":\"one\<C-R>\<C-X>two\<CR>", 'xt')
   call assert_equal('"onetwo', @:)
@@ -1349,9 +1346,53 @@ func Test_interrupt_compl()
   set wildmode&
 endfunc
 
+" Test for moving the cursor on the : command line
 func Test_cmdline_edit()
-  call feedkeys(":\"buffer\<Right>\<Home>\<Left>\<CR>", 'xt')
-  call assert_equal("\"buffer", @:)
+  let str = ":one two\<C-U>"
+  let str ..= "one two\<C-W>\<C-W>"
+  let str ..= "\<Left>five\<Right>"
+  let str ..= "\<Home>two "
+  let str ..= "\<C-Left>one "
+  let str ..= "\<C-Right> three"
+  let str ..= "\<End>\<S-Left>four "
+  let str ..= "\<S-Right> six"
+  let str ..= "\<C-B>\"\<C-E> seven\<CR>"
+  call feedkeys(str, 'xt')
+  call assert_equal("\"one two three four five six seven", @:)
+endfunc
+
+" Test for moving the cursor on the / command line in 'rightleft' mode
+func Test_cmdline_edit_rightleft()
+  CheckFeature rightleft
+  set rightleft
+  set rightleftcmd=search
+  let str = "/one two\<C-U>"
+  let str ..= "one two\<C-W>\<C-W>"
+  let str ..= "\<Right>five\<Left>"
+  let str ..= "\<Home>two "
+  let str ..= "\<C-Right>one "
+  let str ..= "\<C-Left> three"
+  let str ..= "\<End>\<S-Right>four "
+  let str ..= "\<S-Left> six"
+  let str ..= "\<C-B>\"\<C-E> seven\<CR>"
+  call assert_fails("call feedkeys(str, 'xt')", 'E486:')
+  call assert_equal("\"one two three four five six seven", @/)
+  set rightleftcmd&
+  set rightleft&
+endfunc
+
+" Test for using <C-\>e in the command line to evaluate an expression
+func Test_cmdline_expr()
+  " Evaluate an expression from the beginning of a command line
+  call feedkeys(":abc\<C-B>\<C-\>e\"\\\"hello\"\<CR>\<CR>", 'xt')
+  call assert_equal('"hello', @:)
+
+  " Use an invalid expression for <C-\>e
+  call assert_beeps('call feedkeys(":\<C-\>einvalid\<CR>", "tx")')
+
+  " Insert literal <CTRL-\> in the command line
+  call feedkeys(":\"e \<C-\>\<C-Y>\<CR>", 'xt')
+  call assert_equal("\"e \<C-\>\<C-Y>", @:)
 endfunc
 
 " Test for normal mode commands not supported in the cmd window
