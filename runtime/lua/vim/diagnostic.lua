@@ -360,7 +360,7 @@ end
 ---
 ---@private
 function M._execute_scheduled_display(namespace, bufnr)
-  vim.deprecate('vim.diagnostic._execute_scheduled_display', 'execute_scheduled_display', '0.9')
+  vim.deprecate('vim.diagnostic._execute_scheduled_display', nil, '0.9')
   execute_scheduled_display(namespace, bufnr)
 end
 

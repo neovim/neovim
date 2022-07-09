@@ -9,6 +9,30 @@ M.priorities = {
   user = 200,
 }
 
+---@private
+function M.create(higroup, hi_info, default)
+  vim.deprecate('vim.highlight.create', 'vim.api.nvim_set_hl', '0.9')
+  local options = {}
+  -- TODO: Add validation
+  for k, v in pairs(hi_info) do
+    table.insert(options, string.format('%s=%s', k, v))
+  end
+  vim.cmd(
+    string.format(
+      [[highlight %s %s %s]],
+      default and 'default' or '',
+      higroup,
+      table.concat(options, ' ')
+    )
+  )
+end
+
+---@private
+function M.link(higroup, link_to, force)
+  vim.deprecate('vim.highlight.create', 'vim.api.nvim_set_hl', '0.9')
+  vim.cmd(string.format([[highlight%s link %s %s]], force and '!' or ' default', higroup, link_to))
+end
+
 --- Highlight range between two positions
 ---
 ---@param bufnr number of buffer to apply highlighting to
