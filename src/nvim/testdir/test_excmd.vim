@@ -147,7 +147,6 @@ endfunc
 
 " Test for the :insert command
 func Test_insert_cmd()
-  set noautoindent " test assumes noautoindent, but it's on by default in Nvim
   new
   call setline(1, ['  L1'])
   call feedkeys(":insert\<CR>  L2\<CR>  L3\<CR>.\<CR>", 'xt')
@@ -197,7 +196,6 @@ endfunc
 
 " Test for the :change command
 func Test_change_cmd()
-  set noautoindent " test assumes noautoindent, but it's on by default in Nvim
   new
   call setline(1, ['  L1', 'L2', 'L3'])
   call feedkeys(":change\<CR>  L4\<CR>  L5\<CR>.\<CR>", 'xt')

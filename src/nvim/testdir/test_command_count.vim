@@ -33,7 +33,7 @@ func Test_command_count_0()
   delcommand RangeBuffers
   delcommand RangeBuffersAll
 
-  set nohidden
+  set hidden&
   set swapfile&
 endfunc
 

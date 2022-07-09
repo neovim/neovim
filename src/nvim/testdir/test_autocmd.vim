@@ -1720,7 +1720,7 @@ func Test_Cmd_Autocmds()
   au BufWriteCmd XtestE call extend(g:lines, getline(0, '$'))
   wall				" will write other window to 'lines'
   call assert_equal(4, len(g:lines), g:lines)
-  call assert_equal("\tasdf", g:lines[2])
+  call assert_equal("asdf", g:lines[2])
 
   au! BufReadCmd
   au! BufWriteCmd

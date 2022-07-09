@@ -137,7 +137,7 @@ func Test_gf_visual()
 
   bwipe!
   call delete('Xtest_gf_visual')
-  set nohidden
+  set hidden&
 endfunc
 
 func Test_gf_error()
