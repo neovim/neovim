@@ -22,17 +22,6 @@ local function get_client_id(client_id)
 end
 
 ---@private
-local function get_bufnr(bufnr)
-  if not bufnr then
-    return vim.api.nvim_get_current_buf()
-  elseif bufnr == 0 then
-    return vim.api.nvim_get_current_buf()
-  end
-
-  return bufnr
-end
-
----@private
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
     severity = vim.lsp.protocol.DiagnosticSeverity[severity]
