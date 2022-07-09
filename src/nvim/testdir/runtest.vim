@@ -161,6 +161,10 @@ func RunTheTest(test)
     endtry
   endif
 
+  " Make "Q" switch to Ex mode.
+  " This does not work for all tests.
+  nnoremap Q gQ
+
   if a:test =~ 'Test_nocatch_'
     " Function handles errors itself.  This avoids skipping commands after the
     " error.

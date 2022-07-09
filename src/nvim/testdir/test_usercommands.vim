@@ -313,7 +313,7 @@ func CustomComplete(A, L, P)
 endfunc
 
 func CustomCompleteList(A, L, P)
-  return [ "Monday", "Tuesday", "Wednesday" ]
+  return [ "Monday", "Tuesday", "Wednesday", {}]
 endfunc
 
 func Test_CmdCompletion()
