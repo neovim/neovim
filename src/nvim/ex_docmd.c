@@ -7899,9 +7899,11 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
         need_wait_return = false;
         msg_scroll = 0;
         redraw_all_later(NOT_VALID);
+        pending_exmode_active = true;
 
         normal_enter(false, true);
 
+        pending_exmode_active = false;
         RedrawingDisabled = rd;
         no_wait_return = nwr;
         msg_scroll = ms;

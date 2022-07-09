@@ -70,6 +70,14 @@ function History_Tests(hist)
     call assert_equal('', histget(a:hist, i))
     call assert_equal('', histget(a:hist, i - 7 - 1))
   endfor
+
+  " Test for freeing an entry at the beginning of the history list
+  for i in range(1, 4)
+      call histadd(a:hist, 'text_' . i)
+  endfor
+  call histdel(a:hist, 1)
+  call assert_equal('', histget(a:hist, 1))
+  call assert_equal('text_4', histget(a:hist, 4))
 endfunction
 
 function Test_History()
@@ -115,14 +123,14 @@ endfunc
 func Test_history_size()
   let save_histsz = &history
   call histdel(':')
-  set history=5
+  set history=10
   for i in range(1, 5)
     call histadd(':', 'cmd' .. i)
   endfor
   call assert_equal(5, histnr(':'))
   call assert_equal('cmd5', histget(':', -1))
 
-  set history=10
+  set history=15
   for i in range(6, 10)
     call histadd(':', 'cmd' .. i)
   endfor
@@ -136,6 +144,15 @@ func Test_history_size()
   call assert_equal('', histget(':', 12))
   call assert_equal('cmd7', histget(':', 7))
   call assert_equal('abc', histget(':', -1))
+
+  " This test works only when the language is English
+  if v:lang == "C" || v:lang =~ '^[Ee]n'
+    set history=0
+    redir => v
+    call feedkeys(":history\<CR>", 'xt')
+    redir END
+    call assert_equal(["'history' option is zero"], split(v, "\n"))
+  endif
 
   let &history=save_histsz
 endfunc
@@ -156,6 +173,14 @@ func Test_history_search()
   call assert_equal(['pat2', 'pat1', ''], g:pat)
   cunmap <F2>
   delfunc SavePat
+endfunc
+
+" Test for making sure the key value is not stored in history
+func Test_history_crypt_key()
+  CheckFeature cryptv
+  call feedkeys(":set bs=2 key=abc ts=8\<CR>", 'xt')
+  call assert_equal('set bs=2 key= ts=8', histget(':'))
+  set key& bs& ts&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

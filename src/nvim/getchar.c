@@ -2475,6 +2475,11 @@ static int vgetorpeek(bool advance)
           }
           tc = c;
 
+          // return 0 in normal_check()
+          if (pending_exmode_active) {
+            exmode_active = true;
+          }
+
           // no chars to block abbreviations for
           typebuf.tb_no_abbr_cnt = 0;
 
