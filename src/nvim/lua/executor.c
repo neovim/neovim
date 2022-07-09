@@ -36,6 +36,7 @@
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/os.h"
+#include "nvim/profile.h"
 #include "nvim/screen.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -46,6 +47,8 @@ static int in_fast_callback = 0;
 
 // Initialized in nlua_init().
 static lua_State *global_lstate = NULL;
+
+static LuaRef require_ref = LUA_REFNIL;
 
 static uv_thread_t main_thread;
 
@@ -645,6 +648,16 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   nlua_common_vim_init(lstate, false);
 
+  // patch require() (only for --startuptime)
+  if (time_fd != NULL) {
+    lua_getglobal(lstate, "require");
+    // Must do this after nlua_common_vim_init where nlua_global_refs is initialized.
+    require_ref = nlua_ref_global(lstate, -1);
+    lua_pop(lstate, 1);
+    lua_pushcfunction(lstate, &nlua_require);
+    lua_setglobal(lstate, "require");
+  }
+
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
@@ -740,6 +753,7 @@ void nlua_free_all_mem(void)
     return;
   }
   lua_State *lstate = global_lstate;
+  nlua_unref_global(lstate, require_ref);
   nlua_common_free_all_mem(lstate);
 }
 
@@ -868,6 +882,62 @@ nlua_print_error:
   lua_pushlstring(lstate, buff, len);
   xfree(buff);
   return lua_error(lstate);
+}
+
+/// require() for --startuptime
+///
+/// @param  lstate  Lua interpreter state.
+static int nlua_require(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *name = luaL_checkstring(lstate, 1);
+  lua_settop(lstate, 1);
+  // [ name ]
+
+  // try cached module from package.loaded first
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "_LOADED");
+  lua_getfield(lstate, 2, name);
+  // [ name package.loaded module ]
+  if (lua_toboolean(lstate, -1)) {
+    return 1;
+  }
+  lua_pop(lstate, 2);
+  // [ name ]
+
+  // push original require below the module name
+  nlua_pushref(lstate, require_ref);
+  lua_insert(lstate, 1);
+  // [ require name ]
+
+  if (time_fd == NULL) {
+    // after log file was closed, try to restore
+    // global require to the original function...
+    lua_getglobal(lstate, "require");
+    // ...only if it's still referencing this wrapper,
+    // to not overwrite it in case someone happened to
+    // patch it in the meantime...
+    if (lua_iscfunction(lstate, -1) && lua_tocfunction(lstate, -1) == nlua_require) {
+      lua_pushvalue(lstate, 1);
+      lua_setglobal(lstate, "require");
+    }
+    lua_pop(lstate, 1);
+
+    // ...and then call require directly.
+    lua_call(lstate, 1, 1);
+    return 1;
+  }
+
+  proftime_T rel_time;
+  proftime_T start_time;
+  time_push(&rel_time, &start_time);
+  int status = lua_pcall(lstate, 1, 1, 0);
+  if (status == 0) {
+    vim_snprintf((char *)IObuff, IOSIZE, "require('%s')", name);
+    time_msg((char *)IObuff, &start_time);
+  }
+  time_pop(rel_time);
+
+  return status == 0 ? 1 : lua_error(lstate);
 }
 
 /// debug.debug: interaction with user while debugging.
