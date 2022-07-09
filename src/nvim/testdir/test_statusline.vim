@@ -9,6 +9,10 @@ source view_util.vim
 source check.vim
 source term_util.vim
 
+func SetUp()
+  set laststatus=2
+endfunc
+
 func s:get_statusline()
   return ScreenLines(&lines - 1, &columns)[0]
 endfunc
