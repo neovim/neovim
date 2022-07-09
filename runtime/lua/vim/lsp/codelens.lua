@@ -1,6 +1,6 @@
 local util = require('vim.lsp.util')
 local log = require('vim.lsp.log')
-local api = vim.api
+local a = vim.api
 local M = {}
 
 --- bufnr → true|nil
@@ -10,14 +10,14 @@ local active_refreshes = {}
 --- bufnr -> client_id -> lenses
 local lens_cache_by_buf = setmetatable({}, {
   __index = function(t, b)
-    local key = b > 0 and b or api.nvim_get_current_buf()
+    local key = b > 0 and b or a.nvim_get_current_buf()
     return rawget(t, key)
   end,
 })
 
 local namespaces = setmetatable({}, {
   __index = function(t, key)
-    local value = api.nvim_create_namespace('vim_lsp_codelens:' .. key)
+    local value = a.nvim_create_namespace('vim_lsp_codelens:' .. key)
     rawset(t, key, value)
     return value
   end,
@@ -29,7 +29,7 @@ M.__namespaces = namespaces
 ---@private
 local function execute_lens(lens, bufnr, client_id)
   local line = lens.range.start.line
-  api.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
+  a.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
 
   local client = vim.lsp.get_client_by_id(client_id)
   assert(client, 'Client is required to execute lens, client_id=' .. client_id)
@@ -78,8 +78,8 @@ end
 --- Run the code lens in the current line
 ---
 function M.run()
-  local line = api.nvim_win_get_cursor(0)[1]
-  local bufnr = api.nvim_get_current_buf()
+  local line = a.nvim_win_get_cursor(0)[1]
+  local bufnr = a.nvim_get_current_buf()
   local options = {}
   local lenses_by_client = lens_cache_by_buf[bufnr] or {}
   for client, lenses in pairs(lenses_by_client) do
@@ -127,10 +127,10 @@ function M.display(lenses, bufnr, client_id)
     table.insert(line_lenses, lens)
   end
   local ns = namespaces[client_id]
-  local num_lines = api.nvim_buf_line_count(bufnr)
+  local num_lines = a.nvim_buf_line_count(bufnr)
   for i = 0, num_lines do
     local line_lenses = lenses_by_lnum[i] or {}
-    api.nvim_buf_clear_namespace(bufnr, ns, i, i + 1)
+    a.nvim_buf_clear_namespace(bufnr, ns, i, i + 1)
     local chunks = {}
     local num_line_lenses = #line_lenses
     table.sort(line_lenses, function(a, b)
@@ -144,7 +144,7 @@ function M.display(lenses, bufnr, client_id)
       end
     end
     if #chunks > 0 then
-      api.nvim_buf_set_extmark(bufnr, ns, i, 0, {
+      a.nvim_buf_set_extmark(bufnr, ns, i, 0, {
         virt_text = chunks,
         hl_mode = 'combine',
       })
@@ -163,12 +163,12 @@ function M.save(lenses, bufnr, client_id)
     lenses_by_client = {}
     lens_cache_by_buf[bufnr] = lenses_by_client
     local ns = namespaces[client_id]
-    api.nvim_buf_attach(bufnr, false, {
+    a.nvim_buf_attach(bufnr, false, {
       on_detach = function(b)
         lens_cache_by_buf[b] = nil
       end,
       on_lines = function(_, b, _, first_lnum, last_lnum)
-        api.nvim_buf_clear_namespace(b, ns, first_lnum, last_lnum)
+        a.nvim_buf_clear_namespace(b, ns, first_lnum, last_lnum)
       end,
     })
   end
@@ -203,7 +203,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
           -- Eager display to have some sort of incremental feedback
           -- Once all lenses got resolved there will be a full redraw for all lenses
           -- So that multiple lens per line are properly displayed
-          api.nvim_buf_set_extmark(
+          a.nvim_buf_set_extmark(
             bufnr,
             ns,
             lens.range.start.line,
@@ -249,7 +249,7 @@ function M.refresh()
   local params = {
     textDocument = util.make_text_document_params(),
   }
-  local bufnr = api.nvim_get_current_buf()
+  local bufnr = a.nvim_get_current_buf()
   if active_refreshes[bufnr] then
     return
   end

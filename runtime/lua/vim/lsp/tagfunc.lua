@@ -1,5 +1,5 @@
 local lsp = vim.lsp
-local util = vim.lsp.util
+local util = lsp.util
 
 ---@private
 local function mk_tag_item(name, range, uri, offset_encoding)
@@ -15,7 +15,7 @@ end
 
 ---@private
 local function query_definition(pattern)
-  local params = lsp.util.make_position_params()
+  local params = util.make_position_params()
   local results_by_client, err = lsp.buf_request_sync(0, 'textDocument/definition', params, 1000)
   if err then
     return {}

@@ -11,7 +11,7 @@ local is_win = uv.os_uname().version:find('Windows')
 ---@param filename (string) path to check
 ---@returns (bool)
 local function is_dir(filename)
-  local stat = vim.loop.fs_stat(filename)
+  local stat = uv.fs_stat(filename)
   return stat and stat.type == 'directory' or false
 end
 
