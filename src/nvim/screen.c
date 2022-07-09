@@ -1869,7 +1869,7 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
     schar_from_ascii(dest[0], *p);
     s->prev_c = u8c;
   } else {
-    if (p_arshape && !p_tbidi && arabic_char(u8c)) {
+    if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
       // Do Arabic shaping.
       int pc, pc1, nc;
       int pcc[MAX_MCO];
@@ -3157,7 +3157,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
       } else if (mb_l == 0) {        // at the NUL at end-of-line
         mb_l = 1;
-      } else if (p_arshape && !p_tbidi && arabic_char(mb_c)) {
+      } else if (p_arshape && !p_tbidi && ARABIC_CHAR(mb_c)) {
         // Do Arabic shaping.
         int pc, pc1, nc;
         int pcc[MAX_MCO];

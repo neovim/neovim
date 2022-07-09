@@ -3,12 +3,7 @@
 
 #include <stdbool.h>
 
-/// Whether c belongs to the range of Arabic characters that might be shaped.
-static inline bool arabic_char(int c)
-{
-  // return c >= a_HAMZA && c <= a_MINI_ALEF;
-  return c >= 0x0621 && c <= 0x0670;
-}
+#define ARABIC_CHAR(ch)            (((ch) & 0xFF00) == 0x0600)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "arabic.h.generated.h"
