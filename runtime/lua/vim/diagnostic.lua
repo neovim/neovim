@@ -338,13 +338,6 @@ local function make_augroup_key(namespace, bufnr)
   return string.format('DiagnosticInsertLeave:%s:%s', bufnr, ns.name)
 end
 
---- Callback scheduled when leaving Insert mode.
----
---- This function must be exported publicly so that it is available to be
---- called from the Vimscript autocommand.
----
---- See @ref schedule_display()
----
 ---@private
 local function execute_scheduled_display(namespace, bufnr)
   local args = bufs_waiting_to_update[bufnr][namespace]
@@ -356,6 +349,19 @@ local function execute_scheduled_display(namespace, bufnr)
   bufs_waiting_to_update[bufnr][namespace] = nil
 
   M.show(namespace, bufnr, nil, args)
+end
+
+--- @deprecated
+--- Callback scheduled when leaving Insert mode.
+---
+--- called from the Vimscript autocommand.
+---
+--- See @ref schedule_display()
+---
+---@private
+function M._execute_scheduled_display(namespace, bufnr)
+  vim.deprecate('vim.diagnostic._execute_scheduled_display', 'execute_scheduled_display', '0.9')
+  execute_scheduled_display(namespace, bufnr)
 end
 
 --- Table of autocmd events to fire the update for displaying new diagnostic information
