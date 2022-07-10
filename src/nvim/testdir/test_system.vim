@@ -13,9 +13,9 @@ func Test_System()
   else
     call assert_equal("123\n", system('echo 123'))
     call assert_equal(["123\r"], systemlist('echo 123'))
-    call assert_equal("123",   system('more', '123'))
-    call assert_equal(["123"], systemlist('more', '123'))
-    call assert_equal(["as\<NL>df"], systemlist('more', ["as\<NL>df"]))
+    call assert_equal("123\n",   system('more', '123'))
+    call assert_equal(["123\r"], systemlist('more', '123'))
+    call assert_equal(["as\r", "df\r"], systemlist('more', ["as\<NL>df"]))
   endif
 
   if !executable('cat') || !executable('wc')
@@ -60,7 +60,7 @@ func Test_System()
     call assert_equal(['asdf', "pw\<NL>er", 'xxxx'],  out)
   else
     let out = systemlist('more', bufnr('%'))
-    call assert_equal(['asdf', "pw\<NL>er", 'xxxx'],  out)
+    call assert_equal(["asdf\r", "pw\r", "er\r", "xxxx\r"],  out)
   endif
   bwipe!
 
