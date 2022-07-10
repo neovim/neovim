@@ -931,7 +931,8 @@ msgstr "&Ок"
 msgid "+-%s%3ld line: "
 msgid_plural "+-%s%3ld lines: "
 msgstr[0] "+-%s%3ld линија: "
-msgstr[1] "+-%s%3ld линија: "
+msgstr[1] "+-%s%3ld линијe: "
+msgstr[2] "+-%s%3ld линија: "
 
 #, c-format
 msgid "E700: Unknown function: %s"
