@@ -562,7 +562,7 @@ end
 ---@private
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
----@param bufnr (Number) Number of the buffer, or 0 for current
+---@param bufnr number Number of the buffer, or 0 for current
 ---@param client Client object
 local function text_document_did_open_handler(bufnr, client)
   changetracking.init(client, bufnr)
@@ -948,6 +948,28 @@ function lsp.start_client(config)
   end
 
   ---@private
+  local function set_defaults(client, bufnr)
+    if client.server_capabilities.definitionProvider and vim.bo[bufnr].tagfunc == '' then
+      vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
+    end
+    if client.server_capabilities.completionProvider and vim.bo[bufnr].omnifunc == '' then
+      vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
+    end
+  end
+
+  ---@private
+  --- Reset defaults set by `set_defaults`.
+  --- Must only be called if the last client attached to a buffer exits.
+  local function unset_defaults(bufnr)
+    if vim.bo[bufnr].tagfunc == 'v:lua.vim.lsp.tagfunc' then
+      vim.bo[bufnr].tagfunc = nil
+    end
+    if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
+      vim.bo[bufnr].omnifunc = nil
+    end
+  end
+
+  ---@private
   --- Invoked on client exit.
   ---
   ---@param code (number) exit code of the process
@@ -971,6 +993,11 @@ function lsp.start_client(config)
         end)
 
         client_ids[client_id] = nil
+      end
+      if vim.tbl_isempty(client_ids) then
+        vim.schedule(function()
+          unset_defaults(bufnr)
+        end)
       end
     end
 
@@ -1324,6 +1351,8 @@ function lsp.start_client(config)
   ---@param bufnr (number) Buffer number
   function client._on_attach(bufnr)
     text_document_did_open_handler(bufnr, client)
+
+    set_defaults(client, bufnr)
 
     nvim_exec_autocmds('LspAttach', {
       buffer = bufnr,

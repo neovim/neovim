@@ -110,9 +110,13 @@ static void ga_concat_shorten_esc(garray_T *gap, const char_u *str)
 
 /// Fill "gap" with information about an assert error.
 static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_str,
-                              typval_T *exp_tv, typval_T *got_tv, assert_type_T atype)
+                              typval_T *exp_tv_arg, typval_T *got_tv_arg, assert_type_T atype)
 {
   char_u *tofree;
+  typval_T *exp_tv = exp_tv_arg;
+  typval_T *got_tv = got_tv_arg;
+  bool did_copy = false;
+  int omitted = 0;
 
   if (opt_msg_tv->v_type != VAR_UNKNOWN) {
     tofree = (char_u *)encode_tv2echo(opt_msg_tv, NULL);
@@ -130,6 +134,55 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
   }
 
   if (exp_str == NULL) {
+    // When comparing dictionaries, drop the items that are equal, so that
+    // it's a lot easier to see what differs.
+    if (atype != ASSERT_NOTEQUAL
+        && exp_tv->v_type == VAR_DICT && got_tv->v_type == VAR_DICT
+        && exp_tv->vval.v_dict != NULL && got_tv->vval.v_dict != NULL) {
+      dict_T *exp_d = exp_tv->vval.v_dict;
+      dict_T *got_d = got_tv->vval.v_dict;
+
+      did_copy = true;
+      exp_tv->vval.v_dict = tv_dict_alloc();
+      got_tv->vval.v_dict = tv_dict_alloc();
+
+      int todo = (int)exp_d->dv_hashtab.ht_used;
+      for (const hashitem_T *hi = exp_d->dv_hashtab.ht_array; todo > 0; hi++) {
+        if (!HASHITEM_EMPTY(hi)) {
+          dictitem_T *item2 = tv_dict_find(got_d, (const char *)hi->hi_key, -1);
+          if (item2 == NULL
+              || !tv_equal(&TV_DICT_HI2DI(hi)->di_tv, &item2->di_tv, false, false)) {
+            // item of exp_d not present in got_d or values differ.
+            const size_t key_len = STRLEN(hi->hi_key);
+            tv_dict_add_tv(exp_tv->vval.v_dict, (const char *)hi->hi_key, key_len,
+                           &TV_DICT_HI2DI(hi)->di_tv);
+            if (item2 != NULL) {
+              tv_dict_add_tv(got_tv->vval.v_dict, (const char *)hi->hi_key, key_len,
+                             &item2->di_tv);
+            }
+          } else {
+            omitted++;
+          }
+          todo--;
+        }
+      }
+
+      // Add items only present in got_d.
+      todo = (int)got_d->dv_hashtab.ht_used;
+      for (const hashitem_T *hi = got_d->dv_hashtab.ht_array; todo > 0; hi++) {
+        if (!HASHITEM_EMPTY(hi)) {
+          dictitem_T *item2 = tv_dict_find(exp_d, (const char *)hi->hi_key, -1);
+          if (item2 == NULL) {
+            // item of got_d not present in exp_d
+            const size_t key_len = STRLEN(hi->hi_key);
+            tv_dict_add_tv(got_tv->vval.v_dict, (const char *)hi->hi_key, key_len,
+                           &TV_DICT_HI2DI(hi)->di_tv);
+          }
+          todo--;
+        }
+      }
+    }
+
     tofree = (char_u *)encode_tv2string(exp_tv, NULL);
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
@@ -148,6 +201,17 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
     tofree = (char_u *)encode_tv2string(got_tv, NULL);
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
+
+    if (omitted != 0) {
+      char buf[100];
+      vim_snprintf(buf, 100, " - %d equal item%s omitted", omitted, omitted == 1 ? "" : "s");
+      ga_concat(gap, buf);
+    }
+  }
+
+  if (did_copy) {
+    tv_clear(exp_tv);
+    tv_clear(got_tv);
   }
 }
 
