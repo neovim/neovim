@@ -900,6 +900,15 @@ func Test_cmdline_complete_various()
   call feedkeys(":unlet one two\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"unlet one two", @:)
 
+  " completion for the :buffer command with curlies
+  " FIXME: what should happen on MS-Windows?
+  if !has('win32')
+    edit \{someFile}
+    call feedkeys(":buf someFile\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal("\"buf {someFile}", @:)
+    bwipe {someFile}
+  endif
+
   " completion for the :bdelete command
   call feedkeys(":bdel a b c\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"bdel a b c", @:)
