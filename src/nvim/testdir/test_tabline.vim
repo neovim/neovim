@@ -1,3 +1,4 @@
+" Test for tabline
 
 source shared.vim
 
@@ -17,6 +18,9 @@ func TablineWithError()
 endfunc
 
 func Test_caught_error_in_tabline()
+  if has('gui')
+    set guioptions-=e
+  endif
   let showtabline_save = &showtabline
   set showtabline=2
   let s:func_in_tabline_called = 0
@@ -30,6 +34,9 @@ func Test_caught_error_in_tabline()
 endfunc
 
 func Test_tabline_will_be_disabled_with_error()
+  if has('gui')
+    set guioptions-=e
+  endif
   let showtabline_save = &showtabline
   set showtabline=2
   let s:func_in_tabline_called = 0
