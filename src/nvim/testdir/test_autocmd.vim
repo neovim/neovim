@@ -2669,6 +2669,27 @@ func Test_autocmd_window()
   %bw!
 endfunc
 
+" Test for trying to close the temporary window used for executing an autocmd
+func Test_close_autocmd_window()
+  %bw!
+  edit one.txt
+  tabnew two.txt
+  augroup aucmd_win_test2
+    au!
+    " Nvim makes aucmd_win the last window
+    " au BufEnter * if expand('<afile>') == 'one.txt' | 1close | endif
+    au BufEnter * if expand('<afile>') == 'one.txt' | close | endif
+  augroup END
+
+  call assert_fails('doautoall BufEnter', 'E813:')
+
+  augroup aucmd_win_test2
+    au!
+  augroup END
+  augroup! aucmd_win_test2
+  %bw!
+endfunc
+
 " Test for trying to close the tab that has the temporary window for exeucing
 " an autocmd.
 func Test_close_autocmd_tab()

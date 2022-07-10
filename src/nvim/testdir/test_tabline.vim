@@ -72,6 +72,47 @@ func Test_redrawtabline()
   au! Bufadd
 endfunc
 
+" Test for the "%T" and "%X" flags in the 'tabline' option
+func MyTabLine()
+  let s = ''
+  for i in range(tabpagenr('$'))
+    " set the tab page number (for mouse clicks)
+    let s .= '%' . (i + 1) . 'T'
+
+    " the label is made by MyTabLabel()
+    let s .= ' %{MyTabLabel(' . (i + 1) . ')} '
+  endfor
+
+  " after the last tab fill with TabLineFill and reset tab page nr
+  let s .= '%T'
+
+  " right-align the label to close the current tab page
+  if tabpagenr('$') > 1
+    let s .= '%=%Xclose'
+  endif
+
+  return s
+endfunc
+
+func MyTabLabel(n)
+  let buflist = tabpagebuflist(a:n)
+  let winnr = tabpagewinnr(a:n)
+  return bufname(buflist[winnr - 1])
+endfunc
+
+func Test_tabline_flags()
+  if has('gui')
+    set guioptions-=e
+  endif
+  set tabline=%!MyTabLine()
+  edit Xtabline1
+  tabnew Xtabline2
+  redrawtabline
+  call assert_match('^ Xtabline1  Xtabline2\s\+close$', Screenline(1))
+  set tabline=
+  %bw!
+endfunc
+
 function EmptyTabname()
   return ""
 endfunction
