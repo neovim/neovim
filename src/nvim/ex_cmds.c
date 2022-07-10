@@ -1610,33 +1610,45 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
-  if (is_pwsh) {
-    xstrlcpy(buf, "Start-Process ", len);
-    xstrlcat(buf, cmd, len);
-  } else {
-    xstrlcpy(buf, cmd, len);
-  }
-  if (itmp != NULL) {
-    // If there is a pipe, we have to put the '<' in front of it.
-    // Don't do this when 'shellquote' is not empty, otherwise the
-    // redirection would be inside the quotes.
-    if (*p_shq == NUL) {
-      char *const p = find_pipe(buf);
-      if (p != NULL) {
-        *p = NUL;
-      }
-    }
-    if (is_pwsh) {
-      xstrlcat(buf, " -RedirectStandardInput ", len);
+  if (*p_sxe != NUL && *p_sxq == '(') {
+    if (itmp != NULL || otmp != NULL) {
+      vim_snprintf((char *)buf, len, "(%s)", (char *)cmd);
     } else {
-      xstrlcat(buf, " < ", len);
+      xstrlcpy(buf, cmd, len);
     }
-    xstrlcat(buf, itmp, len);
-    if (*p_shq == NUL) {
-      const char *const p = find_pipe(cmd);
-      if (p != NULL) {
-        xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
-        xstrlcat(buf, p, len - 1);
+    if (itmp != NULL) {
+      xstrlcat(buf, " < ", len - 1);
+      xstrlcat(buf, itmp, len - 1);
+    }
+  } else {
+    if (is_pwsh) {
+      xstrlcpy(buf, "Start-Process ", len);
+      xstrlcat(buf, cmd, len);
+    } else {
+      xstrlcpy(buf, cmd, len);
+    }
+    if (itmp != NULL) {
+      // If there is a pipe, we have to put the '<' in front of it.
+      // Don't do this when 'shellquote' is not empty, otherwise the
+      // redirection would be inside the quotes.
+      if (*p_shq == NUL) {
+        char *const p = find_pipe(buf);
+        if (p != NULL) {
+          *p = NUL;
+        }
+      }
+      if (is_pwsh) {
+        xstrlcat(buf, " -RedirectStandardInput ", len);
+      } else {
+        xstrlcat(buf, " < ", len);
+      }
+      xstrlcat(buf, itmp, len);
+      if (*p_shq == NUL) {
+        const char *const p = find_pipe(cmd);
+        if (p != NULL) {
+          xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
+          xstrlcat(buf, p, len - 1);
+        }
       }
     }
   }
@@ -1659,7 +1671,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 void append_redir(char *const buf, const size_t buflen, const char *const opt,
                   const char *const fname)
 {
-  char *const end = buf + strlen(buf);
+  char *end = buf + strlen(buf);
   // find "%s"
   const char *p = opt;
   for (; (p = strchr(p, '%')) != NULL; p++) {
@@ -1670,8 +1682,8 @@ void append_redir(char *const buf, const size_t buflen, const char *const opt,
     }
   }
   if (p != NULL) {
-    *end = ' ';  // not really needed? Not with sh, ksh or bash
-    vim_snprintf(end + 1, (size_t)((ptrdiff_t)buflen - (end + 1 - buf)), opt, fname);
+    *end++ = ' ';  // needed for powershell, etc.
+    vim_snprintf(end, (size_t)((ptrdiff_t)buflen - (end - buf)), opt, fname);
   } else {
     vim_snprintf(end, (size_t)((ptrdiff_t)buflen - (end - buf)), " %s %s", opt, fname);
   }
