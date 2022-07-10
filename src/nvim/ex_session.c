@@ -285,7 +285,7 @@ static char *ses_escape_fname(char *name, unsigned *flagp)
   }
 
   // Escape special characters.
-  p = vim_strsave_fnameescape(sname, false);
+  p = vim_strsave_fnameescape(sname, VSE_NONE);
   xfree(sname);
   return p;
 }

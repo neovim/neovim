@@ -2467,7 +2467,7 @@ static void f_fmod(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "fnameescape({string})" function
 static void f_fnameescape(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_string = vim_strsave_fnameescape(tv_get_string(&argvars[0]), false);
+  rettv->vval.v_string = vim_strsave_fnameescape(tv_get_string(&argvars[0]), VSE_NONE);
   rettv->v_type = VAR_STRING;
 }
 

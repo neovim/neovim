@@ -34,6 +34,11 @@
 #define WILD_BUFLASTUSED        0x1000
 #define BUF_DIFF_FILTER         0x2000
 
+// flags used by vim_strsave_fnameescape()
+#define VSE_NONE        0
+#define VSE_SHELL       1       ///< escape for a shell command
+#define VSE_BUFFER      2       ///< escape for a ":buffer" command
+
 /// Present history tables
 typedef enum {
   HIST_DEFAULT = -2,  ///< Default (current) history.

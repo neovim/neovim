@@ -4334,6 +4334,7 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
 {
   int i;
   char_u *p;
+  const int vse_what = xp->xp_context == EXPAND_BUFFERS ? VSE_BUFFER : VSE_NONE;
 
   /*
    * May change home directory back to "~"
@@ -4365,10 +4366,10 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
 #endif
         }
 #ifdef BACKSLASH_IN_FILENAME
-        p = (char_u *)vim_strsave_fnameescape((const char *)files[i], false);
+        p = (char_u *)vim_strsave_fnameescape((const char *)files[i], vse_what);
 #else
         p = (char_u *)vim_strsave_fnameescape((const char *)files[i],
-                                              xp->xp_shell);
+                                              xp->xp_shell ? VSE_SHELL : vse_what);
 #endif
         xfree(files[i]);
         files[i] = p;
@@ -4400,25 +4401,30 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
   }
 }
 
-/// Escape special characters in a file name for use as a command argument
+/// Escape special characters in "fname", depending on "what":
 ///
 /// @param[in]  fname  File name to escape.
-/// @param[in]  shell  What to escape for: if false, escapes for VimL command,
-///                    if true then it escapes for a shell command.
+/// @param[in]  what   What to escape for:
+/// - VSE_NONE: for when used as a file name argument after a Vim command.
+/// - VSE_SHELL: for a shell command.
+/// - VSE_BUFFER: for the ":buffer" command.
 ///
 /// @return [allocated] escaped file name.
-char *vim_strsave_fnameescape(const char *const fname, const bool shell FUNC_ATTR_UNUSED)
+char *vim_strsave_fnameescape(const char *const fname, const int what)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
 #ifdef BACKSLASH_IN_FILENAME
 # define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
+# define BUFFER_ESC_CHARS ((char_u *)" \t\n*?[`%#'\"|!<")
   char_u buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 
-  // Don't escape '[', '{' and '!' if they are in 'isfname'.
-  for (const char *s = PATH_ESC_CHARS; *s != NUL; s++) {
-    if ((*s != '[' && *s != '{' && *s != '!') || !vim_isfilec(*s)) {
-      buf[j++] = *s;
+  // Don't escape '[', '{' and '!' if they are in 'isfname' and for the
+  // ":buffer" command.
+  for (const char *p = what == VSE_BUFFER ? BUFFER_ESC_CHARS : PATH_ESC_CHARS;
+       *p != NUL; p++) {
+    if ((*p != '[' && *p != '{' && *p != '!') || !vim_isfilec(*p)) {
+      buf[j++] = *p;
     }
   }
   buf[j] = NUL;
@@ -4427,9 +4433,12 @@ char *vim_strsave_fnameescape(const char *const fname, const bool shell FUNC_ATT
 #else
 # define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
 # define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
+# define BUFFER_ESC_CHARS ((char_u *)" \t\n*?[`$\\%#'\"|!<")
   char *p =
-    (char *)vim_strsave_escaped((const char_u *)fname, (shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS));
-  if (shell && csh_like_shell()) {
+    (char *)vim_strsave_escaped((const char_u *)fname,
+                                what == VSE_SHELL ? SHELL_ESC_CHARS
+                                : what == VSE_BUFFER ? BUFFER_ESC_CHARS : PATH_ESC_CHARS);
+  if (what == VSE_SHELL && csh_like_shell()) {
     // For csh and similar shells need to put two backslashes before '!'.
     // One is taken by Vim, one by the shell.
     char *s = (char *)vim_strsave_escaped((const char_u *)p,
