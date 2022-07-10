@@ -1319,14 +1319,6 @@ func Test_cmdwin_jump_to_win()
   call assert_equal(1, winnr('$'))
 endfunc
 
-" Test for backtick expression in the command line
-func Test_cmd_backtick()
-  %argd
-  argadd `=['a', 'b', 'c']`
-  call assert_equal(['a', 'b', 'c'], argv())
-  %argd
-endfunc
-
 func Test_cmdlineclear_tabenter()
   " See test/functional/legacy/cmdline_spec.lua
   CheckScreendump
@@ -1344,6 +1336,32 @@ func Test_cmdlineclear_tabenter()
 
   call StopVimInTerminal(buf)
   call delete('XtestCmdlineClearTabenter')
+endfunc
+
+" Test for expanding special keywords in cmdline
+func Test_cmdline_expand_special()
+  new
+  %bwipe!
+  call assert_fails('e #', 'E194:')
+  call assert_fails('e <afile>', 'E495:')
+  call assert_fails('e <abuf>', 'E496:')
+  call assert_fails('e <amatch>', 'E497:')
+  call writefile([], 'Xfile.cpp')
+  call writefile([], 'Xfile.java')
+  new Xfile.cpp
+  call feedkeys(":e %:r\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xfile.cpp Xfile.java', @:)
+  close
+  call delete('Xfile.cpp')
+  call delete('Xfile.java')
+endfunc
+
+" Test for backtick expression in the command line
+func Test_cmd_backtick()
+  %argd
+  argadd `=['a', 'b', 'c']`
+  call assert_equal(['a', 'b', 'c'], argv())
+  %argd
 endfunc
 
 func Test_cmdwin_tabpage()
