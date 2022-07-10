@@ -783,8 +783,8 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 
   if (!ui_has(kUIMultigrid)) {
-    wp->w_height = MIN(wp->w_height, Rows - 1 - win_extra_height(wp));
-    wp->w_width = MIN(wp->w_width, Columns - win_extra_width(wp));
+    wp->w_height = MIN(wp->w_height, Rows - 1 - win_border_height(wp));
+    wp->w_width = MIN(wp->w_width, Columns - win_border_width(wp));
   }
 
   win_set_inner_size(wp);
@@ -1266,8 +1266,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   } else if (wp->w_floating) {
     new_frame(wp);
     wp->w_floating = false;
-    // non-floating window doesn't store float config.
+    // non-floating window doesn't store float config or have a border.
     wp->w_float_config = FLOAT_CONFIG_INIT;
+    memset(wp->w_border_adj, 0, sizeof(wp->w_border_adj));
   }
 
   /*
@@ -1940,7 +1941,7 @@ static void win_totop(int size, int flags)
     } else {
       // No longer a float, a non-multigrid UI shouldn't draw it as such
       ui_call_win_hide(curwin->w_grid_alloc.handle);
-      win_free_grid(curwin, false);
+      win_free_grid(curwin, true);
     }
   } else {
     // Remove the window and frame from the tree of frames.
@@ -5178,8 +5179,7 @@ void win_free_grid(win_T *wp, bool reinit)
   }
   grid_free(&wp->w_grid_alloc);
   if (reinit) {
-    // if a float is turned into a split and back into a float, the grid
-    // data structure will be reused
+    // if a float is turned into a split, the grid data structure will be reused
     memset(&wp->w_grid_alloc, 0, sizeof(wp->w_grid_alloc));
   }
 }
@@ -6330,18 +6330,18 @@ void win_set_inner_size(win_T *wp)
     terminal_check_size(wp->w_buffer->terminal);
   }
 
-  wp->w_height_outer = (wp->w_height_inner + win_extra_height(wp));
-  wp->w_width_outer = (wp->w_width_inner + win_extra_width(wp));
+  wp->w_height_outer = (wp->w_height_inner + win_border_height(wp) + wp->w_winbar_height);
+  wp->w_width_outer = (wp->w_width_inner + win_border_width(wp));
   wp->w_winrow_off = wp->w_border_adj[0] + wp->w_winbar_height;
   wp->w_wincol_off = wp->w_border_adj[3];
 }
 
-static int win_extra_height(win_T *wp)
+static int win_border_height(win_T *wp)
 {
-  return wp->w_border_adj[0] + wp->w_border_adj[2] + wp->w_winbar_height;
+  return wp->w_border_adj[0] + wp->w_border_adj[2];
 }
 
-static int win_extra_width(win_T *wp)
+static int win_border_width(win_T *wp)
 {
   return wp->w_border_adj[1] + wp->w_border_adj[3];
 }
