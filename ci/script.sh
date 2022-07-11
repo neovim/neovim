@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-ci/run_${CI_TARGET}.sh
+ci/run_tests.sh
 
 if [[ -s "${GCOV_ERROR_FILE}" ]]; then
   echo '=== Unexpected gcov errors: ==='
