@@ -7,6 +7,10 @@ source shared.vim
 source term_util.vim
 source load.vim
 
+func SetUp()
+  call timer_stopall()
+endfunc
+
 func MyHandler(timer)
   let g:val += 1
 endfunc
@@ -40,7 +44,6 @@ func Test_timer_repeat_three()
 endfunc
 
 func Test_timer_repeat_many()
-  call timer_stopall()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
   if has('mac')
@@ -94,7 +97,6 @@ func Test_timer_info()
 endfunc
 
 func Test_timer_stopall()
-  call timer_stopall()
   let id1 = timer_start(1000, 'MyHandler')
   let id2 = timer_start(2000, 'MyHandler')
   let info = timer_info()
