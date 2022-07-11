@@ -223,12 +223,24 @@ func Test_change_cmd()
   close!
 endfunc
 
+" Test for the :language command
+func Test_language_cmd()
+  CheckNotMSWindows  " FIXME: why does this fail on Windows CI?
+  CheckNotBSD  " FIXME: why does this fail on OpenBSD CI?
+  CheckFeature multi_lang
+
+  call assert_fails('language ctype non_existing_lang', 'E197:')
+  call assert_fails('language time non_existing_lang', 'E197:')
+endfunc
+
 " Test for the :confirm command dialog
 func Test_confirm_cmd()
   CheckNotGui
   CheckRunVimInTerminal
+
   call writefile(['foo1'], 'foo')
   call writefile(['bar1'], 'bar')
+
   " Test for saving all the modified buffers
   let buf = RunVimInTerminal('', {'rows': 20})
   call term_sendkeys(buf, ":set nomore\n")
@@ -241,8 +253,10 @@ func Test_confirm_cmd()
   call WaitForAssert({-> assert_match('\[Y\]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: ', term_getline(buf, 20))}, 1000)
   call term_sendkeys(buf, "A")
   call StopVimInTerminal(buf)
+
   call assert_equal(['foo2'], readfile('foo'))
   call assert_equal(['bar2'], readfile('bar'))
+
   " Test for discarding all the changes to modified buffers
   let buf = RunVimInTerminal('', {'rows': 20})
   call term_sendkeys(buf, ":set nomore\n")
@@ -255,8 +269,10 @@ func Test_confirm_cmd()
   call WaitForAssert({-> assert_match('\[Y\]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: ', term_getline(buf, 20))}, 1000)
   call term_sendkeys(buf, "D")
   call StopVimInTerminal(buf)
+
   call assert_equal(['foo2'], readfile('foo'))
   call assert_equal(['bar2'], readfile('bar'))
+
   " Test for saving and discarding changes to some buffers
   let buf = RunVimInTerminal('', {'rows': 20})
   call term_sendkeys(buf, ":set nomore\n")
@@ -271,6 +287,7 @@ func Test_confirm_cmd()
   call WaitForAssert({-> assert_match('\[Y\]es, (N)o, (C)ancel: ', term_getline(buf, 20))}, 1000)
   call term_sendkeys(buf, "Y")
   call StopVimInTerminal(buf)
+
   call assert_equal(['foo4'], readfile('foo'))
   call assert_equal(['bar2'], readfile('bar'))
 

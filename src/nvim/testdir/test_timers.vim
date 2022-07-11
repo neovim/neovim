@@ -94,6 +94,8 @@ func Test_timer_info()
 
   call timer_stop(id)
   call assert_equal([], timer_info(id))
+
+  call assert_fails('call timer_info("abc")', 'E39:')
 endfunc
 
 func Test_timer_stopall()
@@ -131,6 +133,8 @@ func Test_timer_paused()
   else
     call assert_inrange(0, 10, slept)
   endif
+
+  call assert_fails('call timer_pause("abc", 1)', 'E39:')
 endfunc
 
 func StopMyself(timer)
@@ -225,6 +229,10 @@ func Test_timer_errors()
   call WaitForAssert({-> assert_equal(3, g:call_count)})
   sleep 50m
   call assert_equal(3, g:call_count)
+
+  call assert_fails('call timer_start(100, "MyHandler", "abc")', 'E475:')
+  call assert_fails('call timer_start(100, [])', 'E921:')
+  call assert_fails('call timer_stop("abc")', 'E39:')
 endfunc
 
 func FuncWithCaughtError(timer)
@@ -386,6 +394,15 @@ func Test_timer_error_in_timer_callback()
 
   call delete('Xtest.vim')
   exe buf .. 'bwipe!'
+endfunc
+
+" Test for garbage collection when a timer is still running
+func Test_timer_garbage_collect()
+  let timer = timer_start(1000, function('MyHandler'), {'repeat' : 10})
+  call test_garbagecollect_now()
+  let l = timer_info(timer)
+  call assert_equal(function('MyHandler'), l[0].callback)
+  call timer_stop(timer)
 endfunc
 
 func Test_timer_invalid_callback()
