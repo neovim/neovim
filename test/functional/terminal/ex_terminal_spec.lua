@@ -179,7 +179,7 @@ describe(':terminal (with fake shell)', function()
 
   it('executes a given command through the shell', function()
     if helpers.pending_win32(pending) then return end
-    command('set shellxquote=')   -- win: avoid extra quotes
+    command('set shellxquote=')   -- win: avoid extra quoting
     terminal_with_fake_shell('echo hi')
     screen:expect([[
       ^ready $ echo hi                                   |
@@ -192,7 +192,7 @@ describe(':terminal (with fake shell)', function()
   it("executes a given command through the shell, when 'shell' has arguments", function()
     if helpers.pending_win32(pending) then return end
     nvim('set_option', 'shell', testprg('shell-test')..' -t jeff')
-    command('set shellxquote=')   -- win: avoid extra quotes
+    command('set shellxquote=')   -- win: avoid extra quoting
     terminal_with_fake_shell('echo hi')
     screen:expect([[
       ^jeff $ echo hi                                    |
@@ -204,7 +204,7 @@ describe(':terminal (with fake shell)', function()
 
   it('allows quotes and slashes', function()
     if helpers.pending_win32(pending) then return end
-    command('set shellxquote=')   -- win: avoid extra quotes
+    command('set shellxquote=')   -- win: avoid extra quoting
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
@@ -260,7 +260,7 @@ describe(':terminal (with fake shell)', function()
 
   it('works with gf', function()
     if helpers.pending_win32(pending) then return end
-    command('set shellxquote=')   -- win: avoid extra quotes
+    command('set shellxquote=')   -- win: avoid extra quoting
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
     retry(nil, 4 * screen.timeout, function()
     screen:expect([[

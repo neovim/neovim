@@ -2164,7 +2164,7 @@ return {
       varname='p_sxq',
       defaults={
         condition='WIN32',
-        if_true="\"",
+        if_true="(",
         if_false="",
       }
     },

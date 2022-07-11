@@ -41,7 +41,7 @@ describe(':edit term://*', function()
     local scr = get_screen(columns, lines)
     local rep = 97
     meths.set_option('shellcmdflag', 'REP ' .. rep)
-    command('set shellxquote=')  -- win: avoid extra quotes
+    command('set shellxquote=')  -- win: avoid extra quoting
     local sb = 10
     command('autocmd TermOpen * :setlocal scrollback='..tostring(sb)
             ..'|call feedkeys("G", "n")')

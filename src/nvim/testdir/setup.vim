@@ -57,8 +57,7 @@ if has('win32')
   let $SHELL = ''
   let $TERM = ''
   let &shell = empty($COMSPEC) ? exepath('cmd.exe') : $COMSPEC
-  set shellcmdflag=/s/c shellxquote=\" shellredir=>%s\ 2>&1
-  let &shellpipe = &shellredir
+  set shellcmdflag& shellpipe& shellredir& shellxquote&
 endif
 
 " Detect user modules for language providers

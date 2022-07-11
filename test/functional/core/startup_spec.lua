@@ -78,9 +78,6 @@ describe('startup', function()
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
-      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
-    end
     -- Running in :terminal
     command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\"]]
@@ -94,9 +91,6 @@ describe('startup', function()
     ]])
   end)
   it('output to pipe: has("ttyin")==1 has("ttyout")==0', function()
-    if iswin() then
-      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
-    end
     -- Running in :terminal
     command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\"]]
@@ -110,9 +104,6 @@ describe('startup', function()
     end)
   end)
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
-    if iswin() then
-      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
-    end
     -- Running in :terminal
     command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
             ..[[%s -u NONE -i NONE --cmd \"]]
@@ -129,9 +120,6 @@ describe('startup', function()
   it('input from pipe (implicit) #7679', function()
     local screen = Screen.new(25, 4)
     screen:attach()
-    if iswin() then
-      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
-    end
     -- Running in :terminal
     command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
             ..[[%s -u NONE -i NONE --cmd \"]]

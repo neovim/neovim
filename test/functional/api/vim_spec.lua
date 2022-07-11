@@ -2090,7 +2090,7 @@ describe('API', function()
             eval('&shell'),
             '/s',
             '/c',
-            fmt('"%s -u NONE -i NONE"', eval('shellescape(v:progpath)')),
+            fmt('(%s -u NONE -i NONE)', eval('shellescape(v:progpath)')),
           } or {
             eval('&shell'),
             eval('&shellcmdflag'),

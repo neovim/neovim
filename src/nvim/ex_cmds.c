@@ -1610,7 +1610,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 #else
   // For shells that don't understand braces around commands, at least allow
   // the use of commands in a pipe.
-  if (*p_sxe != NUL && *p_sxq == '(') {
+  if (*p_sxq == '(') {
     if (itmp != NULL || otmp != NULL) {
       vim_snprintf((char *)buf, len, "(%s)", (char *)cmd);
     } else {
