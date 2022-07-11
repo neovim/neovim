@@ -2415,6 +2415,8 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
    * Otherwise we re-use the current buffer.
    */
   if (other_file) {
+    const int prev_alt_fnum = curwin->w_alt_fnum;
+
     if (!(flags & (ECMD_ADDBUF | ECMD_ALTBUF))) {
       if ((cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
         curwin->w_alt_fnum = curbuf->b_fnum;
@@ -2457,6 +2459,10 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     }
     if (buf == NULL) {
       goto theend;
+    }
+    if (curwin->w_alt_fnum == buf->b_fnum && prev_alt_fnum != 0) {
+      // reusing the buffer, keep the old alternate file
+      curwin->w_alt_fnum = prev_alt_fnum;
     }
     if (buf->b_ml.ml_mfp == NULL) {
       // No memfile yet.

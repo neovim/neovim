@@ -579,7 +579,7 @@ func Test_undofile_2()
 
   " add 10 lines, delete 6 lines, undo 3
   set undofile
-  call setbufline(0, 1, ['one', 'two', 'three', 'four', 'five', 'six',
+  call setbufline('%', 1, ['one', 'two', 'three', 'four', 'five', 'six',
 	      \ 'seven', 'eight', 'nine', 'ten'])
   set undolevels=100
   normal 3Gdd
