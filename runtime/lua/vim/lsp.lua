@@ -460,6 +460,9 @@ do
         table.insert(buf_state.pending_changes, incremental_changes(client, buf_state))
       end
       buf_state.pending_change = function()
+        if buf_state.pending_change == nil then
+          return
+        end
         buf_state.pending_change = nil
         buf_state.last_flush = uv.hrtime()
         if client.is_stopped() or not vim.api.nvim_buf_is_valid(bufnr) then
