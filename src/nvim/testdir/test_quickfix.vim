@@ -2891,6 +2891,21 @@ func Test_vimgrep_incsearch()
   set noincsearch
 endfunc
 
+" Test vimgrep with the last search pattern not set
+func Test_vimgrep_with_no_last_search_pat()
+  let lines =<< trim [SCRIPT]
+    call assert_fails('vimgrep // *', 'E35:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
 " Test vimgrep without swap file
 func Test_vimgrep_without_swap_file()
   let lines =<< trim [SCRIPT]

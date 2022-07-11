@@ -57,3 +57,13 @@ func Test_different_script()
   call assert_fails('source XtwoScript', 'E121:')
   call delete('XtwoScript')
 endfunc
+
+" When sourcing a vim script, shebang should be ignored.
+func Test_source_ignore_shebang()
+  call writefile(['#!./xyzabc', 'let g:val=369'], 'Xfile.vim')
+  source Xfile.vim
+  call assert_equal(g:val, 369)
+  call delete('Xfile.vim')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

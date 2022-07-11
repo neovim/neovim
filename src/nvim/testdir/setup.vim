@@ -1,33 +1,34 @@
-" Align Nvim defaults to Vim.
-set backspace=
-set complete=.,w,b,u,t,i
-set directory&
-set directory^=.
-set fillchars=vert:\|,fold:-
-set formatoptions=tcq
-set fsync
-set laststatus=1
-set listchars=eol:$
-set joinspaces
-set nohidden nosmarttab noautoindent noautoread noruler noshowcmd
-set nohlsearch noincsearch
-set nrformats=bin,octal,hex
-set shortmess=filnxtToOS
-set sidescroll=0
-set tags=./tags,tags
-set undodir&
-set undodir^=.
-set wildoptions=
-set startofline
-set sessionoptions&
-set sessionoptions+=options
-set viewoptions&
-set viewoptions+=options
-set switchbuf=
-
-" Make "Q" switch to Ex mode.
-" This does not work for all tests.
-nnoremap Q gQ
+if exists('s:did_load')
+  " Align Nvim defaults to Vim.
+  set backspace=
+  set complete=.,w,b,u,t,i
+  set directory&
+  set directory^=.
+  set fillchars=vert:\|,fold:-
+  set formatoptions=tcq
+  set fsync
+  set laststatus=1
+  set listchars=eol:$
+  set joinspaces
+  set nohidden nosmarttab noautoindent noautoread noruler noshowcmd
+  set nohlsearch noincsearch
+  set nrformats=bin,octal,hex
+  set shortmess=filnxtToOS
+  set sidescroll=0
+  set tags=./tags,tags
+  set undodir&
+  set undodir^=.
+  set wildoptions=
+  set startofline
+  set sessionoptions&
+  set sessionoptions+=options
+  set viewoptions&
+  set viewoptions+=options
+  set switchbuf=
+  " Make "Q" switch to Ex mode.
+  " This does not work for all tests.
+  nnoremap Q gQ
+endif
 
 " Common preparations for running tests.
 

@@ -294,7 +294,7 @@ endfunc
 
 " Test for *:s%* on :substitute.
 func Test_sub_cmd_6()
-  throw "skipped: Nvim removed POSIX-related 'cpoptions' flags"
+  throw 'Skipped: Nvim does not support cpoptions flag "/"'
   set magic&
   set cpo+=/
 
@@ -806,6 +806,37 @@ func Test_sub_expand_text()
   s/b/\=repeat('B', 10)/g
   call assert_equal(repeat('aBBBBBBBBBBc', 8), getline(1))
   close!
+endfunc
+
+" Test for command failures when the last substitute pattern is not set.
+func Test_sub_with_no_last_pat()
+  let lines =<< trim [SCRIPT]
+    call assert_fails('~', 'E33:')
+    call assert_fails('s//abc/g', 'E476:')
+    call assert_fails('s\/bar', 'E476:')
+    call assert_fails('s\&bar&', 'E476:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+
+  " Nvim does not support cpoptions flag "/"'
+  " let lines =<< trim [SCRIPT]
+  "   set cpo+=/
+  "   call assert_fails('s/abc/%/', 'E33:')
+  "   call writefile(v:errors, 'Xresult')
+  "   qall!
+  " [SCRIPT]
+  " call writefile(lines, 'Xscript')
+  " if RunVim([], [], '--clean -S Xscript')
+  "   call assert_equal([], readfile('Xresult'))
+  " endif
+
+  call delete('Xscript')
+  call delete('Xresult')
 endfunc
 
 func Test_submatch_list_concatenate()

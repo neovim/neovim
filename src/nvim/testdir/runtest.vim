@@ -153,6 +153,9 @@ func RunTheTest(test)
   " directory after executing the test.
   let save_cwd = getcwd()
 
+  " Align Nvim defaults to Vim.
+  source setup.vim
+
   if exists("*SetUp")
     try
       call SetUp()
@@ -190,9 +193,6 @@ func RunTheTest(test)
       call add(v:errors, 'Caught exception in TearDown() after ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
     endtry
   endif
-
-  " Align Nvim defaults to Vim.
-  source setup.vim
 
   " Clear any autocommands and put back the catch-all for SwapExists.
   au!
