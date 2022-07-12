@@ -105,9 +105,9 @@ func Test_buflist_browse()
   call assert_equal(b2, bufnr())
   call assert_equal(1, line('.'))
 
-  brewind +/foo3
+  brewind +
   call assert_equal(b1, bufnr())
-  call assert_equal(3, line('.'))
+  call assert_equal(4, line('.'))
 
   blast +/baz2
   call assert_equal(b3, bufnr())

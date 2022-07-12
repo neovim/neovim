@@ -66,4 +66,25 @@ func Test_source_ignore_shebang()
   call delete('Xfile.vim')
 endfunc
 
+" Test for expanding <sfile> in a autocmd and for <slnum> and <sflnum>
+func Test_source_autocmd_sfile()
+  let code =<< trim [CODE]
+    let g:SfileName = ''
+    augroup sfiletest
+      au!
+      autocmd User UserAutoCmd let g:Sfile = '<sfile>:t'
+    augroup END
+    doautocmd User UserAutoCmd
+    let g:Slnum = expand('<slnum>')
+    let g:Sflnum = expand('<sflnum>')
+    augroup! sfiletest
+  [CODE]
+  call writefile(code, 'Xscript.vim')
+  source Xscript.vim
+  call assert_equal('Xscript.vim', g:Sfile)
+  call assert_equal('7', g:Slnum)
+  call assert_equal('8', g:Sflnum)
+  call delete('Xscript.vim')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

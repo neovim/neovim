@@ -1857,6 +1857,16 @@ func Test_deep_nest()
   call delete('Xscript')
 endfunc
 
+" Test for <sfile>, <slnum> in a function                           {{{1
+func Test_sfile_in_function()
+  func Xfunc()
+    call assert_match('..Test_sfile_in_function\[5]..Xfunc', expand('<sfile>'))
+    call assert_equal('2', expand('<slnum>'))
+  endfunc
+  call Xfunc()
+  delfunc Xfunc
+endfunc
+
 func Test_for_over_string()
   let res = ''
   for c in 'aéc̀d'

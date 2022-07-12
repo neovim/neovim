@@ -87,11 +87,22 @@ describe('Ex mode', function()
       :^                                                           |
     ]])
 
+    -- Pressing enter in ex mode should print the current line
+    feed('<CR>')
+    screen:expect([[
+        1 foo foo                                                 |
+              ^^^y                                                |
+        2 foo foo                                                 |
+          ^^^q                                                    |
+        3 foo foo                                                 |
+      :^                                                           |
+    ]])
+
     feed(':vi<CR>')
     screen:expect([[
         1 foo bar                                                 |
-        2 fo^o foo                                                 |
-        3 foo foo                                                 |
+        2 foo foo                                                 |
+        3 ^foo foo                                                 |
       ~                                                           |
       ~                                                           |
                                                                   |

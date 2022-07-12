@@ -437,6 +437,16 @@ func Test_redir_cmd()
     call assert_fails('redir! > Xfile', 'E190:')
     call delete('Xfile')
   endif
+
+  " Test for redirecting to a register
+  redir @q> | echon 'clean ' | redir END
+  redir @q>> | echon 'water' | redir END
+  call assert_equal('clean water', @q)
+
+  " Test for redirecting to a variable
+  redir => color | echon 'blue ' | redir END
+  redir =>> color | echon 'sky' | redir END
+  call assert_equal('blue sky', color)
 endfunc
 
 " Test for the :filetype command
@@ -447,6 +457,30 @@ endfunc
 " Test for the :mode command
 func Test_mode_cmd()
   call assert_fails('mode abc', 'E359:')
+endfunc
+
+" Test for the :sleep command
+func Test_sleep_cmd()
+  call assert_fails('sleep x', 'E475:')
+endfunc
+
+" Test for the :read command
+func Test_read_cmd()
+  call writefile(['one'], 'Xfile')
+  new
+  call assert_fails('read', 'E32:')
+  edit Xfile
+  read
+  call assert_equal(['one', 'one'], getline(1, '$'))
+  close!
+  new
+  read Xfile
+  call assert_equal(['', 'one'], getline(1, '$'))
+  call deletebufline('', 1, '$')
+  call feedkeys("Qr Xfile\<CR>visual\<CR>", 'xt')
+  call assert_equal(['one'], getline(1, '$'))
+  close!
+  call delete('Xfile')
 endfunc
 
 " Test for running Ex commands when text is locked.

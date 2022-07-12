@@ -139,7 +139,11 @@ function Test_tabpage()
   call assert_fails("tabmove -99", 'E474:')
   call assert_fails("tabmove -3+", 'E474:')
   call assert_fails("tabmove $3", 'E474:')
+  call assert_fails("%tabonly", 'E16:')
   1tabonly!
+  tabnew
+  call assert_fails("-2tabmove", 'E474:')
+  tabonly!
 endfunc
 
 " Test autocommands
@@ -605,6 +609,16 @@ func Test_tabpage_cmdheight()
 
   call StopVimInTerminal(buf)
   call delete('XTest_tabpage_cmdheight')
+endfunc
+
+" Test for closing the tab page from a command window
+func Test_tabpage_close_cmdwin()
+  tabnew
+  call feedkeys("q/:tabclose\<CR>\<Esc>", 'xt')
+  call assert_equal(2, tabpagenr('$'))
+  call feedkeys("q/:tabonly\<CR>\<Esc>", 'xt')
+  call assert_equal(2, tabpagenr('$'))
+  tabonly
 endfunc
 
 " Return the terminal key code for selecting a tab page from the tabline. This

@@ -437,5 +437,11 @@ func Test_join_lines()
   call setline(1, ['a', 'b', '', 'c', 'd'])
   normal 5J
   call assert_equal('a b c d', getline(1))
+  call setline(1, ['a', 'b', 'c'])
+  2,2join
+  call assert_equal(['a', 'b', 'c'], getline(1, '$'))
+  call assert_equal(2, line('.'))
+  2join
+  call assert_equal(['a', 'b c'], getline(1, '$'))
   bwipe!
 endfunc
