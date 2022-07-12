@@ -125,6 +125,11 @@ func Test_help_tagjump()
   call assert_true(getline('.') =~ '\*/\\bar\*')
   helpclose
 
+  help \_$
+  call assert_equal("help", &filetype)
+  call assert_true(getline('.') =~ '\*/\\_$\*')
+  helpclose
+
   help CTRL-\_CTRL-N
   call assert_equal("help", &filetype)
   call assert_true(getline('.') =~ '\*CTRL-\\_CTRL-N\*')

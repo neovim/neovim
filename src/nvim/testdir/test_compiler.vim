@@ -68,5 +68,9 @@ func Test_compiler_completion()
 endfunc
 
 func Test_compiler_error()
+  let g:current_compiler = 'abc'
   call assert_fails('compiler doesnotexist', 'E666:')
+  call assert_equal('abc', g:current_compiler)
+  call assert_fails('compiler! doesnotexist', 'E666:')
+  unlet! g:current_compiler
 endfunc

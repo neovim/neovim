@@ -2646,7 +2646,7 @@ char_u *getcmdline(int firstc, long count, int indent, bool do_concat FUNC_ATTR_
 /// @param[in]  highlight_callback  Callback used for highlighting user input.
 ///
 /// @return [allocated] Command line or NULL.
-char *getcmdline_prompt(const char firstc, const char *const prompt, const int attr,
+char *getcmdline_prompt(const int firstc, const char *const prompt, const int attr,
                         const int xp_context, const char *const xp_arg,
                         const Callback highlight_callback)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC

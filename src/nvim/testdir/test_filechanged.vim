@@ -237,7 +237,7 @@ func Test_file_changed_dialog()
   sleep 2
   silent !touch Xchanged_d
   let v:warningmsg = ''
-  checktime
+  checktime Xchanged_d
   call assert_equal('', v:warningmsg)
   call assert_equal(1, line('$'))
   call assert_equal('new line', getline(1))

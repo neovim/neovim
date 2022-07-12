@@ -3883,7 +3883,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
               prompt = xmallocz((size_t)ec + 1);
               memset(prompt, ' ', (size_t)sc);
               memset(prompt + sc, '^', (size_t)(ec - sc) + 1);
-              resp = getcmdline_prompt((char)(-1), prompt, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE);
+              resp = getcmdline_prompt(-1, prompt, 0, EXPAND_NOTHING, NULL, CALLBACK_NONE);
               msg_putchar('\n');
               xfree(prompt);
               if (resp != NULL) {
