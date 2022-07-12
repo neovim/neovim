@@ -5303,6 +5303,16 @@ void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   do_fuzzymatch(argvars, rettv, true);
 }
 
+/// Get line "lnum" and copy it into "buf[LSIZE]".
+/// The copy is made because the regexp may make the line invalid when using a
+/// mark.
+static char_u *get_line_and_copy(linenr_T lnum, char_u *buf)
+{
+  char_u *line = ml_get(lnum);
+  STRLCPY(buf, line, LSIZE);
+  return buf;
+}
+
 /// Find identifiers or defines in included files.
 /// If p_ic && (compl_cont_status & CONT_SOL) then ptr must be in lowercase.
 ///
@@ -5399,7 +5409,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   if (lnum > end_lnum) {                // do at least one line
     lnum = end_lnum;
   }
-  line = ml_get(lnum);
+  line = get_line_and_copy(lnum, file_line);
 
   for (;;) {
     if (incl_regmatch.regprog != NULL
@@ -5687,7 +5697,7 @@ search_line:
             if (lnum >= end_lnum) {
               goto exit_matched;
             }
-            line = ml_get(++lnum);
+            line = get_line_and_copy(++lnum, file_line);
           } else if (vim_fgets(line = file_line,
                                LSIZE, files[depth].fp)) {
             goto exit_matched;
@@ -5879,7 +5889,7 @@ exit_matched:
       if (++lnum > end_lnum) {
         break;
       }
-      line = ml_get(lnum);
+      line = get_line_and_copy(lnum, file_line);
     }
     already = NULL;
   }

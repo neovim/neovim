@@ -1180,9 +1180,20 @@ func Test_inc_search()
   close!
 endfunc
 
+" this was using a line from ml_get() freed by the regexp
+func Test_isearch_copy_line()
+  new
+  norm o
+  norm 0
+  0norm o
+  sil! norm bc0
+  sil! isearch \%')
+  bwipe!
+endfunc
+
 " Test for :dsearch, :dlist, :djump and :dsplit commands
 " Test for [d, ]d, [D, ]D, [ CTRL-D, ] CTRL-D and CTRL-W d commands
-func Test_def_search()
+func Test_macro_search()
   new
   call setline(1, ['#define FOO 1', '#define FOO 2', '#define FOO 3',
         \ '#define FOO 4', '#define FOO 5'])
