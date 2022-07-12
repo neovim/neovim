@@ -233,6 +233,7 @@ void do_exmode(void)
           if (prev_msg_row == Rows - 1) {
             msg_row--;
           }
+          msg_grid.throttled = false;
         }
         msg_col = 0;
         print_line_no_prefix(curwin->w_cursor.lnum, FALSE, FALSE);
