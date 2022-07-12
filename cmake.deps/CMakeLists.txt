@@ -140,8 +140,8 @@ set(HOSTDEPS_CXX_COMPILER "${DEPS_CXX_COMPILER}")
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/730e07e2f77a4001bdf6894112271c926399f5a8.tar.gz)
-set(LIBUV_SHA256 271869759a7dbdaf1d1bf75f1ec388a7307592153b34ebb52d3934715cbaac8a)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.44.2.tar.gz)
+set(LIBUV_SHA256 e6e2ba8b4c349a4182a33370bb9be5e23c51b32efb9b9e209d0e8556b73a48da)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-4.0.0/msgpack-c-4.0.0.tar.gz)
 set(MSGPACK_SHA256 420fe35e7572f2a168d17e660ef981a589c9cbe77faa25eb34a520e1fcc032c8)
