@@ -104,10 +104,10 @@ describe('Ex mode', function()
     -- Pressing enter in ex mode should print the current line
     feed('<CR>')
     screen:expect([[
-      {1:  1 }foo foo                                                 |
               ^^^y                                                |
       {1:  2 }foo foo                                                 |
           ^^^q                                                    |
+      {1:  2 }foo foo                                                 |
       {1:  3 }foo foo                                                 |
       :^                                                           |
     ]])
