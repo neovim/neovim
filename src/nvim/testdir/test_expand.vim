@@ -1,5 +1,7 @@
 " Test for expanding file names
 
+source shared.vim
+
 func Test_with_directories()
   call mkdir('Xdir1')
   call mkdir('Xdir2')
@@ -81,3 +83,30 @@ func Test_expandcmd()
   call assert_fails('call expandcmd("make %")', 'E499:')
   close
 endfunc
+
+" Test for expanding <sfile>, <slnum> and <sflnum> outside of sourcing a script
+func Test_source_sfile()
+  let lines =<< trim [SCRIPT]
+    :call assert_fails('echo expandcmd("<sfile>")', 'E498:')
+    :call assert_fails('echo expandcmd("<slnum>")', 'E842:')
+    :call assert_fails('echo expandcmd("<sflnum>")', 'E961:')
+    :call assert_fails('call expandcmd("edit <cfile>")', 'E446:')
+    :call assert_fails('call expandcmd("edit #")', 'E194:')
+    :call assert_fails('call expandcmd("edit #<2")', 'E684:')
+    :call assert_fails('call expandcmd("edit <cword>")', 'E348:')
+    :call assert_fails('call expandcmd("edit <cexpr>")', 'E348:')
+    :call assert_fails('autocmd User MyCmd echo "<sfile>"', 'E498:')
+    :call writefile(v:errors, 'Xresult')
+    :qall!
+
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -s Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

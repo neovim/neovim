@@ -893,6 +893,15 @@ func Test_window_only()
   new
   call assert_fails('only', 'E445:')
   only!
+  " Test for :only with a count
+  let wid = win_getid()
+  new
+  new
+  3only
+  call assert_equal(1, winnr('$'))
+  call assert_equal(wid, win_getid())
+  call assert_fails('close', 'E444:')
+  call assert_fails('%close', 'E16:')
 endfunc
 
 " Test for errors with :wincmd

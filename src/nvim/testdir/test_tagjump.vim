@@ -935,6 +935,11 @@ func Test_tag_multimatch()
   tag FIRST
   tnext
   call assert_equal(2, line('.'))
+  tlast
+  tprev
+  call assert_equal(2, line('.'))
+  tNext
+  call assert_equal(1, line('.'))
   set ignorecase&
 
   call delete('Xtags')
@@ -1075,6 +1080,202 @@ Type number and <Enter> (q or empty cancels):
   call delete('Xfoo')
   set tags&
   %bwipe
+endfunc
+
+" Test for :isearch, :ilist, :ijump and :isplit commands
+" Test for [i, ]i, [I, ]I, [ CTRL-I, ] CTRL-I and CTRL-W i commands
+func Test_inc_search()
+  new
+  call setline(1, ['1:foo', '2:foo', 'foo', '3:foo', '4:foo'])
+  call cursor(3, 1)
+
+  " Test for [i and ]i
+  call assert_equal('1:foo', execute('normal [i'))
+  call assert_equal('2:foo', execute('normal 2[i'))
+  call assert_fails('normal 3[i', 'E387:')
+  call assert_equal('3:foo', execute('normal ]i'))
+  call assert_equal('4:foo', execute('normal 2]i'))
+  call assert_fails('normal 3]i', 'E389:')
+
+  " Test for :isearch
+  call assert_equal('1:foo', execute('isearch foo'))
+  call assert_equal('3:foo', execute('isearch 4 /foo/'))
+  call assert_fails('isearch 3 foo', 'E387:')
+  call assert_equal('3:foo', execute('+1,$isearch foo'))
+  call assert_fails('1,.-1isearch 3 foo', 'E389:')
+  call assert_fails('isearch bar', 'E389:')
+  call assert_fails('isearch /foo/3', 'E488:')
+
+  " Test for [I and ]I
+  call assert_equal([
+        \ '  1:    1 1:foo',
+        \ '  2:    2 2:foo',
+        \ '  3:    3 foo',
+        \ '  4:    4 3:foo',
+        \ '  5:    5 4:foo'], split(execute('normal [I'), "\n"))
+  call assert_equal([
+        \ '  1:    4 3:foo',
+        \ '  2:    5 4:foo'], split(execute('normal ]I'), "\n"))
+
+  " Test for :ilist
+  call assert_equal([
+        \ '  1:    1 1:foo',
+        \ '  2:    2 2:foo',
+        \ '  3:    3 foo',
+        \ '  4:    4 3:foo',
+        \ '  5:    5 4:foo'], split(execute('ilist foo'), "\n"))
+  call assert_equal([
+        \ '  1:    4 3:foo',
+        \ '  2:    5 4:foo'], split(execute('+1,$ilist /foo/'), "\n"))
+  call assert_fails('ilist bar', 'E389:')
+
+  " Test for [ CTRL-I and ] CTRL-I
+  exe "normal [\t"
+  call assert_equal([1, 3], [line('.'), col('.')])
+  exe "normal 2j4[\t"
+  call assert_equal([4, 3], [line('.'), col('.')])
+  call assert_fails("normal k3[\t", 'E387:')
+  call assert_fails("normal 6[\t", 'E389:')
+  exe "normal ]\t"
+  call assert_equal([4, 3], [line('.'), col('.')])
+  exe "normal k2]\t"
+  call assert_equal([5, 3], [line('.'), col('.')])
+  call assert_fails("normal 2k3]\t", 'E389:')
+
+  " Test for :ijump
+  call cursor(3, 1)
+  ijump foo
+  call assert_equal([1, 3], [line('.'), col('.')])
+  call cursor(3, 1)
+  ijump 4 /foo/
+  call assert_equal([4, 3], [line('.'), col('.')])
+  call cursor(3, 1)
+  call assert_fails('ijump 3 foo', 'E387:')
+  +,$ijump 2 foo
+  call assert_equal([5, 3], [line('.'), col('.')])
+  call assert_fails('ijump bar', 'E389:')
+
+  " Test for CTRL-W i
+  call cursor(3, 1)
+  wincmd i
+  call assert_equal([1, 3, 3], [line('.'), col('.'), winnr('$')])
+  close
+  5wincmd i
+  call assert_equal([5, 3, 3], [line('.'), col('.'), winnr('$')])
+  close
+  call assert_fails('3wincmd i', 'E387:')
+  call assert_fails('6wincmd i', 'E389:')
+
+  " Test for :isplit
+  isplit foo
+  call assert_equal([1, 3, 3], [line('.'), col('.'), winnr('$')])
+  close
+  isplit 5 /foo/
+  call assert_equal([5, 3, 3], [line('.'), col('.'), winnr('$')])
+  close
+  call assert_fails('isplit 3 foo', 'E387:')
+  call assert_fails('isplit 6 foo', 'E389:')
+  call assert_fails('isplit bar', 'E389:')
+
+  close!
+endfunc
+
+" Test for :dsearch, :dlist, :djump and :dsplit commands
+" Test for [d, ]d, [D, ]D, [ CTRL-D, ] CTRL-D and CTRL-W d commands
+func Test_def_search()
+  new
+  call setline(1, ['#define FOO 1', '#define FOO 2', '#define FOO 3',
+        \ '#define FOO 4', '#define FOO 5'])
+  call cursor(3, 9)
+
+  " Test for [d and ]d
+  call assert_equal('#define FOO 1', execute('normal [d'))
+  call assert_equal('#define FOO 2', execute('normal 2[d'))
+  call assert_fails('normal 3[d', 'E387:')
+  call assert_equal('#define FOO 4', execute('normal ]d'))
+  call assert_equal('#define FOO 5', execute('normal 2]d'))
+  call assert_fails('normal 3]d', 'E388:')
+
+  " Test for :dsearch
+  call assert_equal('#define FOO 1', execute('dsearch FOO'))
+  call assert_equal('#define FOO 5', execute('dsearch 5 /FOO/'))
+  call assert_fails('dsearch 3 FOO', 'E387:')
+  call assert_equal('#define FOO 4', execute('+1,$dsearch FOO'))
+  call assert_fails('1,.-1dsearch 3 FOO', 'E388:')
+  call assert_fails('dsearch BAR', 'E388:')
+
+  " Test for [D and ]D
+  call assert_equal([
+        \ '  1:    1 #define FOO 1',
+        \ '  2:    2 #define FOO 2',
+        \ '  3:    3 #define FOO 3',
+        \ '  4:    4 #define FOO 4',
+        \ '  5:    5 #define FOO 5'], split(execute('normal [D'), "\n"))
+  call assert_equal([
+        \ '  1:    4 #define FOO 4',
+        \ '  2:    5 #define FOO 5'], split(execute('normal ]D'), "\n"))
+
+  " Test for :dlist
+  call assert_equal([
+        \ '  1:    1 #define FOO 1',
+        \ '  2:    2 #define FOO 2',
+        \ '  3:    3 #define FOO 3',
+        \ '  4:    4 #define FOO 4',
+        \ '  5:    5 #define FOO 5'], split(execute('dlist FOO'), "\n"))
+  call assert_equal([
+        \ '  1:    4 #define FOO 4',
+        \ '  2:    5 #define FOO 5'], split(execute('+1,$dlist /FOO/'), "\n"))
+  call assert_fails('dlist BAR', 'E388:')
+
+  " Test for [ CTRL-D and ] CTRL-D
+  exe "normal [\<C-D>"
+  call assert_equal([1, 9], [line('.'), col('.')])
+  exe "normal 2j4[\<C-D>"
+  call assert_equal([4, 9], [line('.'), col('.')])
+  call assert_fails("normal k3[\<C-D>", 'E387:')
+  call assert_fails("normal 6[\<C-D>", 'E388:')
+  exe "normal ]\<C-D>"
+  call assert_equal([4, 9], [line('.'), col('.')])
+  exe "normal k2]\<C-D>"
+  call assert_equal([5, 9], [line('.'), col('.')])
+  call assert_fails("normal 2k3]\<C-D>", 'E388:')
+
+  " Test for :djump
+  call cursor(3, 9)
+  djump FOO
+  call assert_equal([1, 9], [line('.'), col('.')])
+  call cursor(3, 9)
+  djump 4 /FOO/
+  call assert_equal([4, 9], [line('.'), col('.')])
+  call cursor(3, 9)
+  call assert_fails('djump 3 FOO', 'E387:')
+  +,$djump 2 FOO
+  call assert_equal([5, 9], [line('.'), col('.')])
+  call assert_fails('djump BAR', 'E388:')
+
+  " Test for CTRL-W d
+  call cursor(3, 9)
+  wincmd d
+  call assert_equal([1, 9, 3], [line('.'), col('.'), winnr('$')])
+  close
+  5wincmd d
+  call assert_equal([5, 9, 3], [line('.'), col('.'), winnr('$')])
+  close
+  call assert_fails('3wincmd d', 'E387:')
+  call assert_fails('6wincmd d', 'E388:')
+
+  " Test for :dsplit
+  dsplit FOO
+  call assert_equal([1, 9, 3], [line('.'), col('.'), winnr('$')])
+  close
+  dsplit 5 /FOO/
+  call assert_equal([5, 9, 3], [line('.'), col('.'), winnr('$')])
+  close
+  call assert_fails('dsplit 3 FOO', 'E387:')
+  call assert_fails('dsplit 6 FOO', 'E388:')
+  call assert_fails('dsplit BAR', 'E388:')
+
+  close!
 endfunc
 
 func Test_define_search()
