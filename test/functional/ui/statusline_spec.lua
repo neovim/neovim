@@ -20,7 +20,12 @@ describe('statusline clicks', function()
     command('set laststatus=2')
     exec([=[
       function! MyClickFunc(minwid, clicks, button, mods)
-        let g:testvar = printf("%d %d %s", a:minwid, a:clicks, a:button)
+        let mods = trim(a:mods)
+        if mods ==# ''
+          let g:testvar = printf("%d %d %s", a:minwid, a:clicks, a:button)
+        else
+          let g:testvar = printf("%d %d %s %s", a:minwid, a:clicks, a:button, mods)
+        endif
       endfunction
     ]=])
   end)
@@ -37,7 +42,7 @@ describe('statusline clicks', function()
     meths.set_option('winbar', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
     meths.input_mouse('left', 'press', '', 0, 0, 17)
     eq('0 1 l', eval("g:testvar"))
-    meths.input_mouse('right', 'press', '', 0, 6, 17)
+    meths.input_mouse('right', 'press', '', 0, 0, 17)
     eq('0 1 r', eval("g:testvar"))
   end)
 
@@ -83,6 +88,22 @@ describe('statusline clicks', function()
     meths.set_option('statusline', '%2XNot clicky stuff%X')
     meths.input_mouse('left', 'press', '', 0, 6, 0)
     eq(2, #meths.list_tabpages())
+  end)
+
+  it("right click works when statusline isn't focused #18994", function()
+    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+    meths.input_mouse('right', 'press', '', 0, 6, 17)
+    eq('0 1 r', eval("g:testvar"))
+    meths.input_mouse('right', 'press', '', 0, 6, 17)
+    eq('0 2 r', eval("g:testvar"))
+  end)
+
+  it("click works with modifiers #18994", function()
+    meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
+    meths.input_mouse('right', 'press', 's', 0, 6, 17)
+    eq('0 1 r s', eval("g:testvar"))
+    meths.input_mouse('left', 'press', 's', 0, 6, 17)
+    eq('0 1 l s', eval("g:testvar"))
   end)
 end)
 
