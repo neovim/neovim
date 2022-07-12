@@ -4415,6 +4415,20 @@ func Test_splitview()
   call assert_equal(0, getloclist(0, {'winid' : 0}).winid)
   new | only
 
+  " Using :split or :vsplit from a quickfix window should behave like a :new
+  " or a :vnew command
+  copen
+  split
+  call assert_equal(3, winnr('$'))
+  let l = getwininfo()
+  call assert_equal([0, 0, 1], [l[0].quickfix, l[1].quickfix, l[2].quickfix])
+  close
+  copen
+  vsplit
+  let l = getwininfo()
+  call assert_equal([0, 0, 1], [l[0].quickfix, l[1].quickfix, l[2].quickfix])
+  new | only
+
   call delete('Xtestfile1')
   call delete('Xtestfile2')
 endfunc

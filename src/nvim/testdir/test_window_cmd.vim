@@ -919,6 +919,14 @@ func Test_winpos_errors()
   call assert_fails('winpos 10', 'E466:')
 endfunc
 
+" Test for +cmd in a :split command
+func Test_split_cmd()
+  split +set\ readonly
+  call assert_equal(1, &readonly)
+  call assert_equal(2, winnr('$'))
+  close
+endfunc
+
 func Test_window_resize()
   throw 'Skipped: Nvim supports cmdheight=0'
   " Vertical :resize (absolute, relative, min and max size).

@@ -2226,7 +2226,7 @@ func Test_autocmd_bufreadpre()
   " (even though the position will be invalid, this should make Vim reset the
   " cursor position in the other window.
   wincmd p
-  1
+  1 " set cpo+=g
   " won't do anything, but try to set the cursor on an invalid lnum
   autocmd BufReadPre <buffer> :norm! 70gg
   " triggers BufReadPre, should not move the cursor in either window
@@ -2241,7 +2241,10 @@ func Test_autocmd_bufreadpre()
   close
   close
   call delete('XAutocmdBufReadPre.txt')
+  " set cpo-=g
 endfunc
+
+" FileChangedShell tested in test_filechanged.vim
 
 " Tests for the following autocommands:
 " - FileWritePre	writing a compressed file
@@ -2560,7 +2563,29 @@ func Test_BufWrite_lockmarks()
   call delete('Xtest2')
 endfunc
 
-" FileChangedShell tested in test_filechanged.vim
+" Test closing a window or editing another buffer from a FileChangedRO handler
+" in a readonly buffer
+func Test_FileChangedRO_winclose()
+  augroup FileChangedROTest
+    au!
+    autocmd FileChangedRO * quit
+  augroup END
+  new
+  set readonly
+  call assert_fails('normal i', 'E788:')
+  close
+  augroup! FileChangedROTest
+
+  augroup FileChangedROTest
+    au!
+    autocmd FileChangedRO * edit Xfile
+  augroup END
+  new
+  set readonly
+  call assert_fails('normal i', 'E788:')
+  close
+  augroup! FileChangedROTest
+endfunc
 
 func LogACmd()
   call add(g:logged, line('$'))
