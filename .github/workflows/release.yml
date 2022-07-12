@@ -138,7 +138,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: powershell ci\build.ps1 -NoTests
+      - run: powershell ci\build.ps1 -Package
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.archive }}

@@ -269,6 +269,7 @@ jobs:
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
       DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
+      CMAKE_BUILD_TYPE: "RelWithDebInfo"
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v3
@@ -278,7 +279,20 @@ jobs:
           path: ${{ env.DEPS_BUILD_DIR }}
           key: ${{ hashFiles('cmake.deps\**') }}
 
-      - name: Run CI
-        run: powershell ci\build.ps1
-        env:
-          CONFIGURATION: MSVC_64
+      - name: Build deps
+        run: .\ci\build.ps1 -BuildDeps
+
+      - name: Build nvim
+        run: .\ci\build.ps1 -Build
+
+      - name: Install test deps
+        continue-on-error: false
+        run: .\ci\build.ps1 -EnsureTestDeps
+
+      - if: "!cancelled()"
+        name: Run tests
+        run: .\ci\build.ps1 -Test
+
+      - if: "!cancelled()"
+        name: Run old tests
+        run: .\ci\build.ps1 -TestOld
