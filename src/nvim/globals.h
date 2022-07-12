@@ -229,7 +229,7 @@ EXTERN bool did_emsg;                       // set by emsg() when the message
 EXTERN bool called_vim_beep;                // set if vim_beep() is called
 EXTERN bool did_emsg_syntax;                // did_emsg set because of a
                                             // syntax error
-EXTERN int called_emsg;                     // always set by emsg()
+EXTERN int called_emsg;                     // always incremented by emsg()
 EXTERN int ex_exitval INIT(= 0);            // exit value for ex mode
 EXTERN bool emsg_on_display INIT(= false);  // there is an error message
 EXTERN bool rc_did_emsg INIT(= false);      // vim_regcomp() called emsg()

@@ -556,7 +556,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   long nmatched;
   int submatch = 0;
   bool first_match = true;
-  int save_called_emsg = called_emsg;
+  const int called_emsg_before = called_emsg;
   bool break_loop = false;
   linenr_T stop_lnum = 0;  // stop after this line number when != 0
   proftime_T *tm = NULL;   // timeout limit or NULL
@@ -579,7 +579,6 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   /*
    * find the string
    */
-  called_emsg = FALSE;
   do {  // loop for count
     // When not accepting a match at the start position set "extra_col" to a
     // non-zero value.  Don't do that when starting at MAXCOL, since MAXCOL + 1
@@ -651,7 +650,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           break;
         }
         // Abort searching on an error (e.g., out of stack).
-        if (called_emsg || (timed_out != NULL && *timed_out)) {
+        if (called_emsg > called_emsg_before || (timed_out != NULL && *timed_out)) {
           break;
         }
         if (nmatched > 0) {
@@ -908,7 +907,8 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
       // Stop the search if wrapscan isn't set, "stop_lnum" is
       // specified, after an interrupt, after a match and after looping
       // twice.
-      if (!p_ws || stop_lnum != 0 || got_int || called_emsg
+      if (!p_ws || stop_lnum != 0 || got_int
+          || called_emsg > called_emsg_before
           || (timed_out != NULL && *timed_out)
           || break_loop
           || found || loop) {
@@ -933,7 +933,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
         extra_arg->sa_wrapped = true;
       }
     }
-    if (got_int || called_emsg
+    if (got_int || called_emsg > called_emsg_before
         || (timed_out != NULL && *timed_out)
         || break_loop) {
       break;
@@ -941,8 +941,6 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   } while (--count > 0 && found);   // stop after count matches or no match
 
   vim_regfree(regmatch.regprog);
-
-  called_emsg |= save_called_emsg;
 
   if (!found) {             // did not find it
     if (got_int) {
@@ -4409,7 +4407,7 @@ static int is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direct
   int nmatched = 0;
   int result = -1;
   pos_T pos;
-  int save_called_emsg = called_emsg;
+  const int called_emsg_before = called_emsg;
   int flag = 0;
 
   if (pattern == NULL) {
@@ -4435,7 +4433,6 @@ static int is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direct
                SEARCH_KEEP + flag, RE_SEARCH, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
-    called_emsg = false;
     do {
       regmatch.startpos[0].col++;
       nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
@@ -4449,14 +4446,13 @@ static int is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direct
              ? regmatch.startpos[0].col < pos.col
              : regmatch.startpos[0].col > pos.col);
 
-    if (!called_emsg) {
+    if (called_emsg == called_emsg_before) {
       result = (nmatched != 0
                 && regmatch.startpos[0].lnum == regmatch.endpos[0].lnum
                 && regmatch.startpos[0].col == regmatch.endpos[0].col);
     }
   }
 
-  called_emsg |= save_called_emsg;
   vim_regfree(regmatch.regprog);
   return result;
 }

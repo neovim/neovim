@@ -7296,7 +7296,7 @@ void timer_due_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
   int save_did_emsg = did_emsg;
-  int save_called_emsg = called_emsg;
+  const int called_emsg_before = called_emsg;
   const bool save_ex_pressedreturn = get_pressedreturn();
 
   if (timer->stopped || timer->paused) {
@@ -7313,19 +7313,17 @@ void timer_due_cb(TimeWatcher *tw, void *data)
   argv[0].v_type = VAR_NUMBER;
   argv[0].vval.v_number = timer->timer_id;
   typval_T rettv = TV_INITIAL_VALUE;
-  called_emsg = false;
 
   callback_call(&timer->callback, 1, argv, &rettv);
 
   // Handle error message
-  if (called_emsg && did_emsg) {
+  if (called_emsg > called_emsg_before && did_emsg) {
     timer->emsg_count++;
     if (current_exception != NULL) {
       discard_current_exception();
     }
   }
   did_emsg = save_did_emsg;
-  called_emsg = save_called_emsg;
   set_pressedreturn(save_ex_pressedreturn);
 
   if (timer->emsg_count >= 3) {

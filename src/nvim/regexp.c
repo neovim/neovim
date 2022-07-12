@@ -2327,7 +2327,6 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
 {
   regprog_T *prog = NULL;
   char_u *expr = (char_u *)expr_arg;
-  int save_called_emsg;
 
   regexp_engine = p_re;
 
@@ -2360,8 +2359,7 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
   //
   // First try the NFA engine, unless backtracking was requested.
   //
-  save_called_emsg = called_emsg;
-  called_emsg = false;
+  const int called_emsg_before = called_emsg;
   if (regexp_engine != BACKTRACKING_ENGINE) {
     prog = nfa_regengine.regcomp(expr,
                                  re_flags + (regexp_engine == AUTOMATIC_ENGINE ? RE_AUTO : 0));
@@ -2388,13 +2386,12 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
     // also fails for patterns that it can't handle well but are still valid
     // patterns, thus a retry should work.
     // But don't try if an error message was given.
-    if (regexp_engine == AUTOMATIC_ENGINE && !called_emsg) {
+    if (regexp_engine == AUTOMATIC_ENGINE && called_emsg == called_emsg_before) {
       regexp_engine = BACKTRACKING_ENGINE;
       report_re_switch(expr);
       prog = bt_regengine.regcomp(expr, re_flags);
     }
   }
-  called_emsg |= save_called_emsg;
 
   if (prog != NULL) {
     // Store the info needed to call regcomp() again when the engine turns out

@@ -6533,13 +6533,11 @@ static void win_redr_ruler(win_T *wp, bool always)
   }
 
   if (*p_ruf && p_ch > 0 && !ui_has(kUIMessages)) {
-    int save_called_emsg = called_emsg;
-    called_emsg = false;
+    const int called_emsg_before = called_emsg;
     win_redr_custom(wp, false, true);
-    if (called_emsg) {
+    if (called_emsg > called_emsg_before) {
       set_string_option_direct("rulerformat", -1, "", OPT_FREE, SID_ERROR);
     }
-    called_emsg |= save_called_emsg;
     return;
   }
 
