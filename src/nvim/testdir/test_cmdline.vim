@@ -1385,6 +1385,35 @@ func Test_cmdwin_tabpage()
   tabclose!
 endfunc
 
+" Test for the :! command
+func Test_cmd_bang()
+  if !has('unix')
+    return
+  endif
+
+  let lines =<< trim [SCRIPT]
+    " Test for no previous command
+    call assert_fails('!!', 'E34:')
+    set nomore
+    " Test for cmdline expansion with :!
+    call setline(1, 'foo!')
+    silent !echo <cWORD> > Xfile.out
+    call assert_equal(['foo!'], readfile('Xfile.out'))
+    " Test for using previous command
+    silent !echo \! !
+    call assert_equal(['! echo foo!'], readfile('Xfile.out'))
+    call writefile(v:errors, 'Xresult')
+    call delete('Xfile.out')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
 " Test error: "E135: *Filter* Autocommands must not change current buffer"
 func Test_cmd_bang_E135()
   new

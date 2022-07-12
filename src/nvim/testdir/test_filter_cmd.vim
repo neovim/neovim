@@ -45,6 +45,14 @@ func Test_filter_fails()
   call assert_fails('filter /pat', 'E476:')
   call assert_fails('filter /pat/', 'E476:')
   call assert_fails('filter /pat/ asdf', 'E492:')
+  " Using assert_fails() causes E476 instead of E866. So use a try-catch.
+  let caught_e866 = 0
+  try
+    filter /\@>b/ ls
+  catch /E866:/
+    let caught_e866 = 1
+  endtry
+  call assert_equal(1, caught_e866)
 
   call assert_fails('filter!', 'E471:')
   call assert_fails('filter! pat', 'E476:')

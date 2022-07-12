@@ -507,6 +507,42 @@ func Test_run_excmd_with_text_locked()
   call assert_fails("call feedkeys(\":\<C-R>=execute('bnext')\<CR>\", 'xt')", 'E565:')
 endfunc
 
+" Test for the :verbose command
+func Test_verbose_cmd()
+  call assert_equal(['  verbose=1'], split(execute('verbose set vbs'), "\n"))
+  call assert_equal(['  verbose=0'], split(execute('0verbose set vbs'), "\n"))
+  let l = execute("4verbose set verbose | set verbose")
+  call assert_equal(['  verbose=4', '  verbose=0'], split(l, "\n"))
+endfunc
+
+" Test for the :delete command and the related abbreviated commands
+func Test_excmd_delete()
+  new
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['^Ibar$'], split(execute('dl'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['^Ibar$'], split(execute('dell'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['^Ibar$'], split(execute('delel'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['^Ibar$'], split(execute('deletl'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['^Ibar$'], split(execute('deletel'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['        bar'], split(execute('dp'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['        bar'], split(execute('dep'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['        bar'], split(execute('delp'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['        bar'], split(execute('delep'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['        bar'], split(execute('deletp'), "\n"))
+  call setline(1, ['foo', "\tbar"])
+  call assert_equal(['        bar'], split(execute('deletep'), "\n"))
+  close!
+endfunc
+
 func Test_not_break_expression_register()
   call setreg('=', '1+1')
   if 0

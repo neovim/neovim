@@ -66,6 +66,18 @@ func Test_global_print()
   close!
 endfunc
 
+" Test for global command with newline character
+func Test_global_newline()
+  new
+  call setline(1, ['foo'])
+  exe "g/foo/s/f/h/\<NL>s/o$/w/"
+  call assert_equal('how', getline(1))
+  call setline(1, ["foo\<NL>bar"])
+  exe "g/foo/s/foo\\\<NL>bar/xyz/"
+  call assert_equal('xyz', getline(1))
+  close!
+endfunc
+
 func Test_wrong_delimiter()
   call assert_fails('g x^bxd', 'E146:')
 endfunc

@@ -238,6 +238,7 @@ describe('argument list commands', function()
   end)
 
   it('quitting Vim with unedited files in the argument list throws E173', function()
+    command('set nomore')
     command('args a b c')
     eq('Vim(quit):E173: 2 more files to edit', pcall_err(command, 'quit'))
   end)

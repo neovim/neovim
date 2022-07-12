@@ -499,6 +499,7 @@ func Xtest_browse(cchar)
 		\ 'RegularLine2']
 
   Xfirst
+  call assert_fails('-5Xcc', 'E16:')
   call assert_fails('Xprev', 'E553')
   call assert_fails('Xpfile', 'E553')
   Xnfile

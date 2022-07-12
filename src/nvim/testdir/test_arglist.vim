@@ -520,8 +520,10 @@ func Test_quit_with_arglist()
     throw 'Skipped: cannot run vim in terminal'
   endif
   let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, ":set nomore\n")
   call term_sendkeys(buf, ":args a b c\n")
   call term_sendkeys(buf, ":quit\n")
+  call term_wait(buf)
   call WaitForAssert({-> assert_match('^E173:', term_getline(buf, 6))})
   call StopVimInTerminal(buf)
 
@@ -530,14 +532,18 @@ func Test_quit_with_arglist()
   call term_sendkeys(buf, ":set nomore\n")
   call term_sendkeys(buf, ":args a b c\n")
   call term_sendkeys(buf, ":confirm quit\n")
+  call term_wait(buf)
   call WaitForAssert({-> assert_match('^\[Y\]es, (N)o: *$',
         \ term_getline(buf, 6))})
   call term_sendkeys(buf, "N")
+  call term_wait(buf)
   call term_sendkeys(buf, ":confirm quit\n")
   call WaitForAssert({-> assert_match('^\[Y\]es, (N)o: *$',
         \ term_getline(buf, 6))})
   call term_sendkeys(buf, "Y")
-  call StopVimInTerminal(buf)
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal("finished", term_getstatus(buf))})
+  only!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -1782,6 +1782,29 @@ func Test_missing_end()
   call writefile(['try', 'echo "."'], 'Xscript')
   call assert_fails('source Xscript', 'E600:')
   call delete('Xscript')
+
+  " Using endfor with :while
+  let caught_e732 = 0
+  try
+    while v:true
+    endfor
+  catch /E732:/
+    let caught_e732 = 1
+  endtry
+  call assert_equal(1, caught_e732)
+
+  " Using endwhile with :for
+  let caught_e733 = 0
+  try
+    for i in range(1)
+    endwhile
+  catch /E733:/
+    let caught_e733 = 1
+  endtry
+  call assert_equal(1, caught_e733)
+
+  " Missing 'in' in a :for statement
+  call assert_fails('for i range(1) | endfor', 'E690:')
 endfunc
 
 " Test for deep nesting of if/for/while/try statements              {{{1
