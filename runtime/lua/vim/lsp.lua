@@ -746,6 +746,9 @@ function lsp.start(config, opts)
     end
   end
   local client_id = lsp.start_client(config)
+  if client_id == nil then
+    return nil -- lsp.start_client will have printed an error
+  end
   lsp.buf_attach_client(bufnr, client_id)
   return client_id
 end
