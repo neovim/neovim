@@ -44,67 +44,81 @@ describe('Ex mode', function()
   it('substitute confirmation prompt', function()
     command('set noincsearch nohlsearch inccommand=')
     local screen = Screen.new(60, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, reverse = true},  -- MsgSeparator
+      [1] = {foreground = Screen.colors.Brown},  -- LineNr
+      [2] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    })
     screen:attach()
     command([[call setline(1, ['foo foo', 'foo foo', 'foo foo'])]])
     command([[set number]])
     feed('gQ')
     screen:expect([[
-        1 foo foo                                                 |
-        2 foo foo                                                 |
-        3 foo foo                                                 |
-                                                                  |
+      {1:  1 }foo foo                                                 |
+      {1:  2 }foo foo                                                 |
+      {1:  3 }foo foo                                                 |
+      {0:                                                            }|
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
       :^                                                           |
     ]])
 
     feed('%s/foo/bar/gc<CR>')
     screen:expect([[
-        1 foo foo                                                 |
-                                                                  |
+      {1:  1 }foo foo                                                 |
+      {0:                                                            }|
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
       :%s/foo/bar/gc                                              |
-        1 foo foo                                                 |
+      {1:  1 }foo foo                                                 |
+          ^^^^                                                     |
+    ]])
+    feed('N<CR>')
+    screen:expect([[
+      Entering Ex mode.  Type "visual" to go to Normal mode.      |
+      :%s/foo/bar/gc                                              |
+      {1:  1 }foo foo                                                 |
+          ^^^N                                                    |
+      {1:  1 }foo foo                                                 |
           ^^^^                                                     |
     ]])
     feed('n<CR>')
     screen:expect([[
-      Entering Ex mode.  Type "visual" to go to Normal mode.      |
-      :%s/foo/bar/gc                                              |
-        1 foo foo                                                 |
+      {1:  1 }foo foo                                                 |
+          ^^^N                                                    |
+      {1:  1 }foo foo                                                 |
           ^^^n                                                    |
-        1 foo foo                                                 |
+      {1:  1 }foo foo                                                 |
               ^^^^                                                 |
     ]])
     feed('y<CR>')
 
     feed('q<CR>')
     screen:expect([[
-        1 foo foo                                                 |
+      {1:  1 }foo foo                                                 |
               ^^^y                                                |
-        2 foo foo                                                 |
+      {1:  2 }foo foo                                                 |
           ^^^q                                                    |
-        2 foo foo                                                 |
+      {1:  2 }foo foo                                                 |
       :^                                                           |
     ]])
 
     -- Pressing enter in ex mode should print the current line
     feed('<CR>')
     screen:expect([[
-        1 foo foo                                                 |
+      {1:  1 }foo foo                                                 |
               ^^^y                                                |
-        2 foo foo                                                 |
+      {1:  2 }foo foo                                                 |
           ^^^q                                                    |
-        3 foo foo                                                 |
+      {1:  3 }foo foo                                                 |
       :^                                                           |
     ]])
 
     feed(':vi<CR>')
     screen:expect([[
-        1 foo bar                                                 |
-        2 foo foo                                                 |
-        3 ^foo foo                                                 |
-      ~                                                           |
-      ~                                                           |
+      {1:  1 }foo bar                                                 |
+      {1:  2 }foo foo                                                 |
+      {1:  3 }^foo foo                                                 |
+      {2:~                                                           }|
+      {2:~                                                           }|
                                                                   |
     ]])
   end)
