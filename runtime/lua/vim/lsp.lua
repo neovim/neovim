@@ -739,10 +739,12 @@ function lsp.start(config, opts)
     end
   config.name = config.name or (config.cmd[1] and vim.fs.basename(config.cmd[1])) or nil
   local bufnr = api.nvim_get_current_buf()
-  for _, client in pairs(lsp.get_active_clients()) do
-    if reuse_client(client, config) then
-      lsp.buf_attach_client(bufnr, client.id)
-      return client.id
+  for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
+    for _, client in pairs(clients) do
+      if reuse_client(client, config) then
+        lsp.buf_attach_client(bufnr, client.id)
+        return client.id
+      end
     end
   end
   local client_id = lsp.start_client(config)
