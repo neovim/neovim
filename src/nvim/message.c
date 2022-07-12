@@ -637,7 +637,7 @@ static bool emsg_multiline(const char *s, bool multiline)
     return true;
   }
 
-  called_emsg = true;
+  called_emsg++;
 
   // If "emsg_severe" is true: When an error exception is to be thrown,
   // prefer this message over previous messages for the same command.

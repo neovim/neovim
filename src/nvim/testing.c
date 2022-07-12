@@ -405,15 +405,15 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const cmd = tv_get_string_chk(&argvars[0]);
   garray_T ga;
   int save_trylevel = trylevel;
+  const int called_emsg_before = called_emsg;
 
   // trylevel must be zero for a ":throw" command to be considered failed
   trylevel = 0;
-  called_emsg = false;
   suppress_errthrow = true;
   emsg_silent = true;
 
   do_cmdline_cmd(cmd);
-  if (!called_emsg) {
+  if (called_emsg == called_emsg_before) {
     prepare_assert_error(&ga);
     ga_concat(&ga, "command did not fail: ");
     assert_append_cmd_or_arg(&ga, argvars, cmd);
@@ -438,7 +438,6 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   trylevel = save_trylevel;
-  called_emsg = false;
   suppress_errthrow = false;
   emsg_silent = false;
   emsg_on_display = false;
