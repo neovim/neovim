@@ -278,7 +278,6 @@ func Test_swap_recover_ext()
     autocmd SwapExists * let v:swapchoice = 'r'
   augroup END
 
-
   " Create a valid swapfile by editing a file with a special extension.
   split Xtest.scr
   call setline(1, ['one', 'two', 'three'])
@@ -309,6 +308,46 @@ func Test_swap_recover_ext()
     autocmd!
   augroup END
   augroup! test_swap_recover_ext
+endfunc
+
+" Test for closing a split window automatically when a swap file is detected
+" and 'Q' is selected in the confirmation prompt.
+func Test_swap_split_win()
+  autocmd! SwapExists
+  augroup test_swap_splitwin
+    autocmd!
+    autocmd SwapExists * let v:swapchoice = 'q'
+  augroup END
+
+  " Create a valid swapfile by editing a file with a special extension.
+  split Xtest.scr
+  call setline(1, ['one', 'two', 'three'])
+  write  " file is written, not modified
+  write  " write again to make sure the swapfile is created
+  " read the swapfile as a Blob
+  let swapfile_name = swapname('%')
+  let swapfile_bytes = readfile(swapfile_name, 'B')
+
+  " Close and delete the file and recreate the swap file.
+  quit
+  call delete('Xtest.scr')
+  call writefile(swapfile_bytes, swapfile_name)
+  " Split edit the file again. This should fail to open the window
+  try
+    split Xtest.scr
+  catch
+    " E308 should be caught, not E306.
+    call assert_exception('E308:')  " Original file may have been changed
+  endtry
+  call assert_equal(1, winnr('$'))
+
+  call delete('Xtest.scr')
+  call delete(swapfile_name)
+
+  augroup test_swap_splitwin
+      autocmd!
+  augroup END
+  augroup! test_swap_splitwin
 endfunc
 
 " Test for selecting 'q' in the attention prompt

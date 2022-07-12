@@ -18,7 +18,7 @@ func Test_edit_bad()
   e! ++enc=utf8 Xfile
   call assert_equal('[?][?][???][??]', getline(1))
 
-  e! ++enc=utf8 ++bad=_ Xfile
+  e! ++encoding=utf8 ++bad=_ Xfile
   call assert_equal('[_][_][___][__]', getline(1))
 
   e! ++enc=utf8 ++bad=drop Xfile

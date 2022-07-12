@@ -499,6 +499,7 @@ func Xtest_browse(cchar)
 		\ 'RegularLine2']
 
   Xfirst
+  call assert_fails('-5Xcc', 'E16:')
   call assert_fails('Xprev', 'E553')
   call assert_fails('Xpfile', 'E553')
   Xnfile
@@ -4413,6 +4414,20 @@ func Test_splitview()
   exe "normal j\<C-W>\<CR>"
   call assert_notequal(locid, getloclist(0, {'id' : 0}).id)
   call assert_equal(0, getloclist(0, {'winid' : 0}).winid)
+  new | only
+
+  " Using :split or :vsplit from a quickfix window should behave like a :new
+  " or a :vnew command
+  copen
+  split
+  call assert_equal(3, winnr('$'))
+  let l = getwininfo()
+  call assert_equal([0, 0, 1], [l[0].quickfix, l[1].quickfix, l[2].quickfix])
+  close
+  copen
+  vsplit
+  let l = getwininfo()
+  call assert_equal([0, 0, 1], [l[0].quickfix, l[1].quickfix, l[2].quickfix])
   new | only
 
   call delete('Xtestfile1')

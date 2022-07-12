@@ -772,8 +772,12 @@ func Test_filetype_indent_off()
   new Xtest.vim
   filetype indent on
   call assert_equal(1, g:did_indent_on)
+  call assert_equal(['filetype detection:ON  plugin:OFF  indent:ON'],
+        \ execute('filetype')->split("\n"))
   filetype indent off
   call assert_equal(0, exists('g:did_indent_on'))
+  call assert_equal(['filetype detection:ON  plugin:OFF  indent:OFF'],
+        \ execute('filetype')->split("\n"))
   close
 endfunc
 

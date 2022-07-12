@@ -1996,6 +1996,47 @@ func Test_reload_in_try_catch()
   call delete('Xreload')
 endfunc
 
+" Test for errors with :catch, :throw, :finally                            {{{1
+func Test_try_catch_errors()
+  call assert_fails('throw |', 'E471:')
+  call assert_fails("throw \n ", 'E471:')
+  call assert_fails('catch abc', 'E603:')
+  call assert_fails('try | let i = 1| finally | catch | endtry', 'E604:')
+  call assert_fails('finally', 'E606:')
+  call assert_fails('try | finally | finally | endtry', 'E607:')
+  " v8.2.3486 has been ported, but v8.2.1183 hasn't, so E170 appears here.
+  " call assert_fails('try | for i in range(5) | endif | endtry', 'E580:')
+  call assert_fails('try | for i in range(5) | endif | endtry', 'E170:')
+  call assert_fails('try | while v:true | endtry', 'E170:')
+  call assert_fails('try | if v:true | endtry', 'E171:')
+endfunc
+
+" Test for verbose messages with :try :catch, and :finally                 {{{1
+func Test_try_catch_verbose()
+  " This test works only when the language is English
+  if v:lang != "C" && v:lang !~ '^[Ee]n'
+    return
+  endif
+
+  set verbose=14
+  redir => msg
+  try
+    echo i
+  catch /E121:/
+  finally
+  endtry
+  redir END
+  let expected = [
+        \ 'Exception thrown: Vim(echo):E121: Undefined variable: i',
+        \ '',
+        \ 'Exception caught: Vim(echo):E121: Undefined variable: i',
+        \ '',
+        \ 'Exception finished: Vim(echo):E121: Undefined variable: i'
+        \ ]
+  call assert_equal(expected, split(msg, "\n"))
+  set verbose&
+endfunc
+
 " Test for using throw in a called function with following error    {{{1
 func Test_user_command_throw_in_function_call()
   let lines =<< trim END

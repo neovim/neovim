@@ -1600,6 +1600,33 @@ func Test_search_tilde_pat()
   call delete('Xresult')
 endfunc
 
+" Test for searching a pattern that is not present with 'nowrapscan'
+func Test_search_pat_not_found()
+  new
+  set nowrapscan
+  let @/ = '1abcxyz2'
+  call assert_fails('normal n', 'E385:')
+  call assert_fails('normal N', 'E384:')
+  set wrapscan&
+  close
+endfunc
+
+" Test for v:searchforward variable
+func Test_searchforward_var()
+  new
+  call setline(1, ['foo', '', 'foo'])
+  call cursor(2, 1)
+  let @/ = 'foo'
+  let v:searchforward = 0
+  normal N
+  call assert_equal(3, line('.'))
+  call cursor(2, 1)
+  let v:searchforward = 1
+  normal N
+  call assert_equal(1, line('.'))
+  close!
+endfunc
+
 " Test 'smartcase' with utf-8.
 func Test_search_smartcase_utf8()
   new
