@@ -227,13 +227,14 @@ void do_exmode(void)
         emsg(_(e_emptybuf));
       } else {
         if (ex_pressedreturn) {
+          // Make sure the message overwrites the right line and isn't throttled.
+          msg_scroll_flush();
           // go up one line, to overwrite the ":<CR>" line, so the
           // output doesn't contain empty lines.
           msg_row = prev_msg_row;
           if (prev_msg_row == Rows - 1) {
             msg_row--;
           }
-          msg_grid.throttled = false;
         }
         msg_col = 0;
         print_line_no_prefix(curwin->w_cursor.lnum, FALSE, FALSE);
