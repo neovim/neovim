@@ -1172,7 +1172,7 @@ Doxyfile = textwrap.dedent('''
     INPUT_FILTER           = "{filter}"
     EXCLUDE                =
     EXCLUDE_SYMLINKS       = NO
-    EXCLUDE_PATTERNS       = */private/* */health.lua */_*.lua
+    EXCLUDE_PATTERNS       = */private/* */health.lua */_*.lua */spell.lua
     EXCLUDE_SYMBOLS        =
     EXTENSION_MAPPING      = lua=C
     EXTRACT_PRIVATE        = NO

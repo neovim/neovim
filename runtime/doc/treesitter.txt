@@ -340,7 +340,7 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
 <
 Treesitter Highlighting Priority            *lua-treesitter-highlight-priority*
 
-Tree-sitter uses |nvim_buf_set_extmark()| to set highlights with a default 
+Tree-sitter uses |nvim_buf_set_extmark()| to set highlights with a default
 priority of 100. This enables plugins to set a highlighting priority lower or
 higher than tree-sitter. It is also possible to change the priority of an
 individual query pattern manually by setting its `"priority"` metadata
@@ -352,6 +352,38 @@ attribute: >
       (set! "priority" 105)
     )
 <
+
+Treesitter Spell Highlighting                            *lua-treesitter-spell*
+
+Similar to syntax highlighting, spell regions are defined in the same query
+format. The spell regions are passed through |vim.spell.check()| to determine
+sub-strings to highlight.
+
+The exact query used is determined, in order, by:
+
+    1. First by looking for a `spell.scm` query file for the required language.
+    2. Then an attempt to define an inline query for all `(comment)` nodes.
+    3. Finally using `@comment` captures from `highlights.scm`.
+
+The `@spell` capture is used from queries in `spell.scm` files to define spell
+regions. For example, the following query will enable spellchecking on all
+comments and string literals:
+>
+    (comment) @spell
+    (string_literal) @spell
+<
+
+Spell highlighting is integrated with Nvim's built-in spellchecker, and nearly
+all spell related mappings and options should work as expected.
+
+This includes:
+
+    - Controllable with `set[local] [no]spell` (see |'spell'|).
+    - Functional mappings: `[s`, `]s`, `zg`, `zw`, etc. Note: `[S` and `]S` is
+      not currently implemented.
+    - Uses the built-in highlight groups: |hl-SpellBad|, |hl-SpellCap|,
+      |hl-SpellRare|, |hl-SpellLocal|.
+
 
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*

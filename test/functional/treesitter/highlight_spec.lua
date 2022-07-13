@@ -100,6 +100,7 @@ describe('treesitter highlighting', function()
       [9] = {foreground = Screen.colors.Magenta, background = Screen.colors.Red};
       [10] = {foreground = Screen.colors.Red, background = Screen.colors.Red};
       [11] = {foreground = Screen.colors.Cyan4};
+      [12] = {foreground = Screen.colors.Blue, special = Screen.colors.Red, undercurl = true};
     }
 
     exec_lua([[ hl_query = ... ]], hl_query)
@@ -268,6 +269,38 @@ describe('treesitter highlighting', function()
       {8:}}                                                                |
                                                                        |
     ]]}
+  end)
+
+  it('supports spellchecking', function()
+    if pending_c_parser(pending) then return end
+    screen:try_resize(30, 4)
+
+    insert(table.concat({
+      '// This is a baad word',
+      'int baad = 1;'
+    }, '\n'))
+
+    screen:expect{grid=[[
+      // This is a baad word        |
+      int baad = 1^;                 |
+      {1:~                             }|
+                                    |
+    ]]}
+
+    exec_lua [[
+      vim.wo.spell = true
+      local parser = vim.treesitter.get_parser(0, "c")
+      local highlighter = vim.treesitter.highlighter
+      test_hl = highlighter.new(parser, {queries = {c = hl_query}})
+    ]]
+
+    screen:expect{grid=[[
+      {2:// This is a }{12:baad}{2: word}        |
+      {3:int} baad = {5:1}^;                 |
+      {1:~                             }|
+                                    |
+    ]]}
+
   end)
 
   it('is updated with :sort', function()
