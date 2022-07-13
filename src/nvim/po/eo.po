@@ -25,6 +25,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "E831: bf_key_init() called with empty password"
 msgstr "E831: bf_key_init() alvokita kun malplena pasvorto"
@@ -1931,6 +1932,12 @@ msgstr "E350: Ne eblas krei faldon per la aktuala 'foldmethod'"
 
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: Ne eblas forviŝi faldon per la aktuala 'foldmethod'"
+
+#, c-format
+msgid "+-%s%3ld line: "
+msgid_plural "+-%s%3ld lines: "
+msgstr[0] "+-%s%3ld linio: "
+msgstr[1] "+-%s%3ld linioj: "
 
 msgid "E222: Add to read buffer"
 msgstr "E222: Aldoni al lega bufro"

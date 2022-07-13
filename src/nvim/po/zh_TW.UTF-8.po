@@ -827,8 +827,9 @@ msgstr ""
 
 #: ../eval.c:9229
 #, c-format
-msgid "+-%s%3ld lines: "
-msgstr "+-%s%3ld 行: "
+msgid "+-%s%3ld line: "
+msgid_plural "+-%s%3ld lines: "
+msgstr[0] "+-%s%3ld 行: "
 
 #: ../eval.c:9291
 #, fuzzy, c-format
