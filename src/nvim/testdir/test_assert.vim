@@ -50,6 +50,26 @@ func Test_assert_equal()
   call remove(v:errors, 0)
 endfunc
 
+func Test_assert_equal_dict()
+  call assert_equal(0, assert_equal(#{one: 1, two: 2}, #{two: 2, one: 1}))
+
+  call assert_equal(1, assert_equal(#{one: 1, two: 2}, #{two: 2, one: 3}))
+  call assert_match("Expected {'one': 1} but got {'one': 3} - 1 equal item omitted", v:errors[0])
+  call remove(v:errors, 0)
+
+  call assert_equal(1, assert_equal(#{one: 1, two: 2}, #{two: 22, one: 11}))
+  call assert_match("Expected {'one': 1, 'two': 2} but got {'one': 11, 'two': 22}", v:errors[0])
+  call remove(v:errors, 0)
+
+  call assert_equal(1, assert_equal(#{}, #{two: 2, one: 1}))
+  call assert_match("Expected {} but got {'one': 1, 'two': 2}", v:errors[0])
+  call remove(v:errors, 0)
+
+  call assert_equal(1, assert_equal(#{two: 2, one: 1}, #{}))
+  call assert_match("Expected {'one': 1, 'two': 2} but got {}", v:errors[0])
+  call remove(v:errors, 0)
+endfunc
+
 func Test_assert_equalfile()
   call assert_equal(1, assert_equalfile('abcabc', 'xyzxyz'))
   call assert_match("E485: Can't read file abcabc", v:errors[0])
