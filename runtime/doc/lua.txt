@@ -124,8 +124,7 @@ Note:
 ==============================================================================
 Lua Syntax Information                                       *lua-syntax-help*
 
-While Lua has a simple syntax, there are a few things to understand,
-particularly when looking at the documentation above.
+While Lua has a simple syntax, there are a few things worth clarifying.
 
                                                     *lua-syntax-call-function*
 
@@ -205,11 +204,12 @@ through |vim.regex()|.
 LUA PLUGIN EXAMPLE                                       *lua-require-example*
 
 The following example plugin adds a command `:MakeCharBlob` which transforms
-current buffer into a long `unsigned char` array. Lua contains transformation
-function in a module `lua/charblob.lua` which is imported in
-`autoload/charblob.vim` (`require("charblob")`). Example plugin is supposed
-to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in
-this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
+the current buffer into a long `unsigned char` array. The transformation
+function is declared in the `lua/charblob.lua` module, which is imported in
+`autoload/charblob.vim` via `require("charblob")`. This example plugin is
+supposed to be put into any directory from 'runtimepath', e.g.
+`~/.config/nvim` (in this case `lua/charblob.lua` means
+`~/.config/nvim/lua/charblob.lua`).
 
 autoload/charblob.vim: >
 
@@ -360,19 +360,9 @@ arguments separated by " " (space) instead of "\t" (tab).
 luaeval()                                                 *lua-eval* *luaeval()*
 
 The (dual) equivalent of "vim.eval" for passing Lua values to Nvim is
-"luaeval". "luaeval" takes an expression string and an optional argument used
-for _A inside expression and returns the result of the expression. It is
-semantically equivalent in Lua to: >
-
-    local chunkheader = "local _A = select(1, ...) return "
-    function luaeval (expstr, arg)
-        local chunk = assert(loadstring(chunkheader .. expstr, "luaeval"))
-        return chunk(arg) -- return typval
-    end
-<
-Lua nils, numbers, strings, tables and booleans are converted to their
-respective Vimscript types. If a Lua string contains a NUL byte, it will be
-converted to a |Blob|. Conversion of other Lua types is an error.
+"luaeval". "luaeval" takes an expression string and a second optional argument
+to be used by the expression string itself to manipulate its own arguments.
+The expression is then computed and returns the final result.
 
 The magic global "_A" contains the second argument to luaeval().
 
@@ -382,10 +372,24 @@ Example: >
     :echo luaeval('string.match(_A, "[a-z]+")', 'XYXfoo123')
     foo
 <
+
+"luaeval" is semantically equivalent in Lua to: >
+
+    local chunkheader = "local _A = select(1, ...) return "
+    function luaeval (expstr, arg)
+        local chunk = assert(loadstring(chunkheader .. expstr, "luaeval"))
+        return chunk(arg) -- return typval
+    end
+<
+
+Lua nils, numbers, strings, tables and booleans are converted to their
+respective Vimscript types. If a Lua string contains a NUL byte, it will be
+converted to a |Blob|. Conversion of other Lua types is an error.
+
 Lua tables are used as both dictionaries and lists, so it is impossible to
-determine whether empty table is meant to be empty list or empty dictionary.
-Additionally Lua does not have integer numbers. To distinguish between these
-cases there is the following agreement:
+determine whether an empty table is meant to be an empty list or an empty
+dictionary. Additionally, Lua does not have integer numbers. To distinguish
+between these cases there is the following agreement:
 
 0. Empty table is empty list.
 1. Table with N incrementally growing integral numbers, starting from 1 and
