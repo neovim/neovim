@@ -114,6 +114,7 @@ function Test_Search_history_window()
   bwipe!
 endfunc
 
+" Test for :history command option completion
 function Test_history_completion()
   call feedkeys(":history \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"history / : = > ? @ all cmd debug expr input search', @:)
@@ -122,8 +123,9 @@ endfunc
 " Test for increasing the 'history' option value
 func Test_history_size()
   let save_histsz = &history
-  call histdel(':')
   set history=10
+  call histadd(':', 'ls')
+  call histdel(':')
   for i in range(1, 5)
     call histadd(':', 'cmd' .. i)
   endfor
@@ -173,6 +175,13 @@ func Test_history_search()
   call assert_equal(['pat2', 'pat1', ''], g:pat)
   cunmap <F2>
   delfunc SavePat
+
+  " Recall patterns with 'history' set to 0
+  set history=0
+  let @/ = 'abc'
+  let cmd = 'call feedkeys("/\<Up>\<Down>\<S-Up>\<S-Down>\<CR>", "xt")'
+  call assert_fails(cmd, 'E486:')
+  set history&
 endfunc
 
 " Test for making sure the key value is not stored in history

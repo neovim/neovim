@@ -1558,6 +1558,7 @@ endfunc
 func Test_cmdline_edit()
   let str = ":one two\<C-U>"
   let str ..= "one two\<C-W>\<C-W>"
+  let str ..= "one\<BS>\<C-H>\<Del>"
   let str ..= "\<Left>five\<Right>"
   let str ..= "\<Home>two "
   let str ..= "\<C-Left>one "
@@ -1576,6 +1577,7 @@ func Test_cmdline_edit_rightleft()
   set rightleftcmd=search
   let str = "/one two\<C-U>"
   let str ..= "one two\<C-W>\<C-W>"
+  let str ..= "one\<BS>\<C-H>\<Del>"
   let str ..= "\<Right>five\<Left>"
   let str ..= "\<Home>two "
   let str ..= "\<C-Right>one "
@@ -1601,6 +1603,39 @@ func Test_cmdline_expr()
   " Insert literal <CTRL-\> in the command line
   call feedkeys(":\"e \<C-\>\<C-Y>\<CR>", 'xt')
   call assert_equal("\"e \<C-\>\<C-Y>", @:)
+endfunc
+
+" Test for 'imcmdline' and 'imsearch'
+" This test doesn't actually test the input method functionality.
+func Test_cmdline_inputmethod()
+  new
+  call setline(1, ['', 'abc', ''])
+  set imcmdline
+
+  call feedkeys(":\"abc\<CR>", 'xt')
+  call assert_equal("\"abc", @:)
+  call feedkeys(":\"\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal("\"abc", @:)
+  call feedkeys("/abc\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  call feedkeys("/\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+
+  " set imsearch=2
+  call cursor(1, 1)
+  call feedkeys("/abc\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  call cursor(1, 1)
+  call feedkeys("/\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  set imdisable
+  call feedkeys("/\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  set imdisable&
+  set imsearch&
+
+  set imcmdline&
+  %bwipe!
 endfunc
 
 " Test for normal mode commands not supported in the cmd window

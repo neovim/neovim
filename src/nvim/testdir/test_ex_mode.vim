@@ -141,6 +141,16 @@ func Test_Ex_escape_enter()
   call assert_equal("a\rb", l)
 endfunc
 
+" Test for :append! command in Ex mode
+func Test_Ex_append()
+  throw 'Skipped: Nvim only supports Vim Ex mode'
+  new
+  call setline(1, "\t   abc")
+  call feedkeys("Qappend!\npqr\nxyz\n.\nvisual\n", 'xt')
+  call assert_equal(["\t   abc", "\t   pqr", "\t   xyz"], getline(1, '$'))
+  close!
+endfunc
+
 func Test_ex_mode_errors()
   " Not allowed to enter ex mode when text is locked
   au InsertCharPre <buffer> normal! gQ<CR>
