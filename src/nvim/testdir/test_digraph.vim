@@ -466,10 +466,12 @@ endfunc
 
 func Test_digraph_cmndline()
   " Create digraph on commandline
-  " This is a hack, to let Vim create the digraph in commandline mode
-  let s = ''
-  exe "sil! norm! :let s.='\<c-k>Eu'\<cr>"
-  call assert_equal("€", s)
+  call feedkeys(":\"\<c-k>Eu\<cr>", 'xt')
+  call assert_equal('"€', @:)
+
+  " Canceling a CTRL-K on the cmdline
+  call feedkeys(":\"a\<c-k>\<esc>b\<cr>", 'xt')
+  call assert_equal('"ab', @:)
 endfunc
 
 func Test_show_digraph()
