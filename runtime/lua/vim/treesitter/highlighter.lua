@@ -1,5 +1,6 @@
 local a = vim.api
 local query = require('vim.treesitter.query')
+local spell = require('vim.treesitter.spell')
 
 -- support reload for quick experimentation
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
@@ -300,6 +301,7 @@ local function on_line_impl(self, buf, line)
           end_col = end_col,
           hl_group = hl,
           ephemeral = true,
+          spell = capture == 'spell',
           priority = tonumber(metadata.priority) or 100, -- Low but leaves room below
           conceal = metadata.conceal,
         })
@@ -330,7 +332,7 @@ function TSHighlighter._on_buf(_, buf)
 end
 
 ---@private
-function TSHighlighter._on_win(_, _win, buf, _topline)
+function TSHighlighter._on_win(_, win, buf, _topline)
   local self = TSHighlighter.active[buf]
   if not self then
     return false
@@ -338,6 +340,9 @@ function TSHighlighter._on_win(_, _win, buf, _topline)
 
   self:reset_highlight_state()
   self.redraw_count = self.redraw_count + 1
+
+  spell.on_win(win, buf)
+
   return true
 end
 
