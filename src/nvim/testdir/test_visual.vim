@@ -1169,8 +1169,8 @@ func Test_exclusive_selection()
   close!
 endfunc
 
-" Test for starting visual mode with a count
-" This test should be run withou any previous visual modes. So this should be
+" Test for starting visual mode with a count.
+" This test should be run without any previous visual modes. So this should be
 " run as a first test.
 func Test_AAA_start_visual_mode_with_count()
   new

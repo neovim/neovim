@@ -215,6 +215,7 @@ func Test_mark_error()
   call assert_fails('mark', 'E471:')
   call assert_fails('mark xx', 'E488:')
   call assert_fails('mark _', 'E191:')
+  call assert_beeps('normal! m~')
 endfunc
 
 " Test for :lockmarks when pasting content
@@ -239,6 +240,29 @@ func Test_marks_k_cmd()
   1,3kr
   call assert_equal([0, 3, 1, 0], getpos("'r"))
   close!
+endfunc
+
+" Test for file marks (A-Z)
+func Test_file_mark()
+  new Xone
+  call setline(1, ['aaa', 'bbb'])
+  norm! G$mB
+  w!
+  new Xtwo
+  call setline(1, ['ccc', 'ddd'])
+  norm! GmD
+  w!
+
+  enew
+  normal! `B
+  call assert_equal('Xone', bufname())
+  call assert_equal([2, 3], [line('.'), col('.')])
+  normal! 'D
+  call assert_equal('Xtwo', bufname())
+  call assert_equal([2, 1], [line('.'), col('.')])
+
+  call delete('Xone')
+  call delete('Xtwo')
 endfunc
 
 " Test for the getmarklist() function

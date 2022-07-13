@@ -425,6 +425,9 @@ func Test_execute_register()
   @q
   @
   call assert_equal(3, i)
+
+  " cannot execute a register in operator pending mode
+  call assert_beeps('normal! c@r')
 endfunc
 
 " Test for getting register info

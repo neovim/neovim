@@ -1,3 +1,4 @@
+" Test for character search commands - t, T, f, F, ; and ,
 
 func Test_charsearch()
   enew!
@@ -60,3 +61,16 @@ func Test_search_cmds()
   call assert_equal('ddd yee y', getline(6))
   enew!
 endfunc
+
+" Test for character search in virtual edit mode with <Tab>
+func Test_csearch_virtualedit()
+  new
+  set virtualedit=all
+  call setline(1, "a\tb")
+  normal! tb
+  call assert_equal([0, 1, 2, 6], getpos('.'))
+  set virtualedit&
+  close!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

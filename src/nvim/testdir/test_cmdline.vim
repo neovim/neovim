@@ -1278,6 +1278,10 @@ endfunc
 func Test_cmdwin_feedkeys()
   " This should not generate E488
   call feedkeys("q:\<CR>", 'x')
+  " Using feedkeys with q: only should automatically close the cmd window
+  call feedkeys('q:', 'xt')
+  call assert_equal(1, winnr('$'))
+  call assert_equal('', getcmdwintype())
 endfunc
 
 " Tests for the issues fixed in 7.4.441.
