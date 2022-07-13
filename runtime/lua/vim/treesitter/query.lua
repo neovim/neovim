@@ -221,6 +221,9 @@ end
 local predicate_handlers = {
   ['eq?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
+    if not node then
+      return true
+    end
     local node_text = M.get_node_text(node, source)
 
     local str
@@ -241,6 +244,9 @@ local predicate_handlers = {
 
   ['lua-match?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
+    if not node then
+      return true
+    end
     local regex = predicate[3]
     return string.find(M.get_node_text(node, source), regex)
   end,
@@ -265,6 +271,9 @@ local predicate_handlers = {
 
     return function(match, _, source, pred)
       local node = match[pred[2]]
+      if not node then
+        return true
+      end
       local regex = compiled_vim_regexes[pred[3]]
       return regex:match_str(M.get_node_text(node, source))
     end
@@ -272,6 +281,9 @@ local predicate_handlers = {
 
   ['contains?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
+    if not node then
+      return true
+    end
     local node_text = M.get_node_text(node, source)
 
     for i = 3, #predicate do
@@ -285,6 +297,9 @@ local predicate_handlers = {
 
   ['any-of?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
+    if not node then
+      return true
+    end
     local node_text = M.get_node_text(node, source)
 
     -- Since 'predicate' will not be used by callers of this function, use it
