@@ -1326,22 +1326,6 @@ func Test_cmdwin_autocmd()
   augroup! CmdWin
 endfunc
 
-func Test_cmdwin_jump_to_win()
-  call assert_fails('call feedkeys("q:\<C-W>\<C-W>\<CR>", "xt")', 'E11:')
-  new
-  set modified
-  call assert_fails('call feedkeys("q/:qall\<CR>", "xt")', 'E162:')
-  close!
-  call feedkeys("q/:close\<CR>", "xt")
-  call assert_equal(1, winnr('$'))
-  call feedkeys("q/:exit\<CR>", "xt")
-  call assert_equal(1, winnr('$'))
-
-  " opening command window twice should fail
-  call assert_beeps('call feedkeys("q:q:\<CR>\<CR>", "xt")')
-  call assert_equal(1, winnr('$'))
-endfunc
-
 func Test_cmdlineclear_tabenter()
   " See test/functional/legacy/cmdline_spec.lua
   CheckScreendump
@@ -1377,6 +1361,22 @@ func Test_cmdline_expand_special()
   close
   call delete('Xfile.cpp')
   call delete('Xfile.java')
+endfunc
+
+func Test_cmdwin_jump_to_win()
+  call assert_fails('call feedkeys("q:\<C-W>\<C-W>\<CR>", "xt")', 'E11:')
+  new
+  set modified
+  call assert_fails('call feedkeys("q/:qall\<CR>", "xt")', 'E162:')
+  close!
+  call feedkeys("q/:close\<CR>", "xt")
+  call assert_equal(1, winnr('$'))
+  call feedkeys("q/:exit\<CR>", "xt")
+  call assert_equal(1, winnr('$'))
+
+  " opening command window twice should fail
+  call assert_beeps('call feedkeys("q:q:\<CR>\<CR>", "xt")')
+  call assert_equal(1, winnr('$'))
 endfunc
 
 " Test for backtick expression in the command line
@@ -1698,6 +1698,27 @@ func Test_cmdwin_blocked_commands()
   call assert_fails('call feedkeys("q:Q\<CR>", "xt")', 'E11:')
   call assert_fails('call feedkeys("q:Z\<CR>", "xt")', 'E11:')
   call assert_fails('call feedkeys("q:\<F1>\<CR>", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>s", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>v", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>^", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>n", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>z", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>o", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>w", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>j", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>k", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>h", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>l", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>T", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>x", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>r", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>R", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>K", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>}", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>]", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>f", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>d", "xt")', 'E11:')
+  call assert_fails('call feedkeys("q:\<C-W>g", "xt")', 'E11:')
 endfunc
 
 " test that ";" works to find a match at the start of the first line
