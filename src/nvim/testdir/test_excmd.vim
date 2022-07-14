@@ -66,6 +66,10 @@ func Test_copy()
   1,3copy 2
   call assert_equal(['L1', 'L2', 'L1', 'L2', 'L3', 'L3', 'L4'], getline(1, 7))
 
+  " Specifying a count before using : to run an ex-command
+  exe "normal! gg4:yank\<CR>"
+  call assert_equal("L1\nL2\nL1\nL2\n", @")
+
   close!
 endfunc
 

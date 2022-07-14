@@ -776,6 +776,14 @@ func Test_increment_empty_line()
   call setline(1, ['0', '0', '0', '0', '0', '0', ''])
   exe "normal Gvgg\<C-A>"
   call assert_equal(['1', '1', '1', '1', '1', '1', ''], getline(1, 7))
+
+  " Ctrl-A/Ctrl-X should do nothing in operator pending mode
+  %d
+  call setline(1, 'one two')
+  exe "normal! c\<C-A>l"
+  exe "normal! c\<C-X>l"
+  call assert_equal('one two', getline(1))
+
   bwipe!
 endfunc
 

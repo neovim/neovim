@@ -114,6 +114,7 @@ function Test_Search_history_window()
   bwipe!
 endfunc
 
+" Test for :history command option completion
 function Test_history_completion()
   call feedkeys(":history \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"history / : = > ? @ all cmd debug expr input search', @:)
@@ -122,8 +123,9 @@ endfunc
 " Test for increasing the 'history' option value
 func Test_history_size()
   let save_histsz = &history
-  call histdel(':')
   set history=10
+  call histadd(':', 'ls')
+  call histdel(':')
   for i in range(1, 5)
     call histadd(':', 'cmd' .. i)
   endfor
@@ -173,6 +175,53 @@ func Test_history_search()
   call assert_equal(['pat2', 'pat1', ''], g:pat)
   cunmap <F2>
   delfunc SavePat
+
+  " Search for a pattern that is not present in the history
+  call assert_beeps('call feedkeys("/a1b2\<Up>\<CR>", "xt")')
+
+  " Recall patterns with 'history' set to 0
+  set history=0
+  let @/ = 'abc'
+  let cmd = 'call feedkeys("/\<Up>\<Down>\<S-Up>\<S-Down>\<CR>", "xt")'
+  call assert_fails(cmd, 'E486:')
+  set history&
+
+  " Recall patterns till the end of history
+  set history=4
+  call histadd('/', 'pat')
+  call histdel('/')
+  call histadd('/', 'pat1')
+  call histadd('/', 'pat2')
+  call assert_beeps('call feedkeys("/\<Up>\<Up>\<Up>\<C-U>\<cr>", "xt")')
+  call assert_beeps('call feedkeys("/\<Down><cr>", "xt")')
+
+  " Test for wrapping around the history list
+  for i in range(3, 7)
+    call histadd('/', 'pat' .. i)
+  endfor
+  let upcmd = "\<up>\<up>\<up>\<up>\<up>"
+  let downcmd = "\<down>\<down>\<down>\<down>\<down>"
+  try
+    call feedkeys("/" .. upcmd .. "\<cr>", 'xt')
+  catch /E486:/
+  endtry
+  call assert_equal('pat4', @/)
+  try
+    call feedkeys("/" .. upcmd .. downcmd .. "\<cr>", 'xt')
+  catch /E486:/
+  endtry
+  call assert_equal('pat4', @/)
+
+  " Test for changing the search command separator in the history
+  call assert_fails('call feedkeys("/def/\<cr>", "xt")', 'E486:')
+  call assert_fails('call feedkeys("?\<up>\<cr>", "xt")', 'E486:')
+  call assert_equal('def?', histget('/', -1))
+
+  call assert_fails('call feedkeys("/ghi?\<cr>", "xt")', 'E486:')
+  call assert_fails('call feedkeys("?\<up>\<cr>", "xt")', 'E486:')
+  call assert_equal('ghi\?', histget('/', -1))
+
+  set history&
 endfunc
 
 " Test for making sure the key value is not stored in history

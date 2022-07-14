@@ -286,7 +286,7 @@ func Test_edit_11()
   call cursor(2, 1)
   call feedkeys("i\<c-f>int c;\<esc>", 'tnix')
   call cursor(3, 1)
-  call feedkeys("i/* comment */", 'tnix')
+  call feedkeys("\<Insert>/* comment */", 'tnix')
   call assert_equal(['{', "\<tab>int c;", "/* comment */"], getline(1, '$'))
   " added changed cindentkeys slightly
   set cindent cinkeys+=*/
@@ -1651,6 +1651,39 @@ func Test_edit_noesckeys()
 
   bwipe!
   " set esckeys
+endfunc
+
+" Test for running an invalid ex command in insert mode using CTRL-O
+" Note that vim has a hard-coded sleep of 3 seconds. So this test will take
+" more than 3 seconds to complete.
+func Test_edit_ctrl_o_invalid_cmd()
+  new
+  set showmode showcmd
+  let caught_e492 = 0
+  try
+    call feedkeys("i\<C-O>:invalid\<CR>abc\<Esc>", "xt")
+  catch /E492:/
+    let caught_e492 = 1
+  endtry
+  call assert_equal(1, caught_e492)
+  call assert_equal('abc', getline(1))
+  set showmode& showcmd&
+  close!
+endfunc
+
+" Test for inserting text at the beginning of a line
+func Test_insert_before_first_nonblank()
+  throw 'Skipped: Nvim does not support cpoptions flag "H"'
+  new
+  call setline(1, '    ')
+  normal! Ia
+  call assert_equal('    a', getline(1))
+  set cpo+=H
+  call setline(1, '    ')
+  normal! Ia
+  call assert_equal('   a ', getline(1))
+  set cpo-=H
+  close!
 endfunc
 
 " Test for editing a directory

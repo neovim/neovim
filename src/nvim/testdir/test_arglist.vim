@@ -544,6 +544,11 @@ func Test_quit_with_arglist()
   call term_wait(buf)
   call WaitForAssert({-> assert_equal("finished", term_getstatus(buf))})
   only!
+  " When this test fails, swap files are left behind which breaks subsequent
+  " tests
+  call delete('.a.swp')
+  call delete('.b.swp')
+  call delete('.c.swp')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

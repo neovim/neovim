@@ -603,11 +603,21 @@ func Test_cmdline_paste()
   call feedkeys(":\"one\<C-R>\<C-X>two\<CR>", 'xt')
   call assert_equal('"onetwo', @:)
 
+  " Test for pasting register containing CTRL-H using CTRL-R and CTRL-R CTRL-R
   let @a = "xy\<C-H>z"
   call feedkeys(":\"\<C-R>a\<CR>", 'xt')
   call assert_equal('"xz', @:)
+  call feedkeys(":\"\<C-R>\<C-R>a\<CR>", 'xt')
+  call assert_equal("\"xy\<C-H>z", @:)
   call feedkeys(":\"\<C-R>\<C-O>a\<CR>", 'xt')
   call assert_equal("\"xy\<C-H>z", @:)
+
+  " Test for pasting register containing CTRL-V using CTRL-R and CTRL-R CTRL-R
+  let @a = "xy\<C-V>z"
+  call feedkeys(":\"\<C-R>=@a\<CR>\<cr>", 'xt')
+  call assert_equal('"xyz', @:)
+  call feedkeys(":\"\<C-R>\<C-R>=@a\<CR>\<cr>", 'xt')
+  call assert_equal("\"xy\<C-V>z", @:)
 
   call assert_beeps('call feedkeys(":\<C-R>=\<C-R>=\<Esc>", "xt")')
 
@@ -1268,6 +1278,10 @@ endfunc
 func Test_cmdwin_feedkeys()
   " This should not generate E488
   call feedkeys("q:\<CR>", 'x')
+  " Using feedkeys with q: only should automatically close the cmd window
+  call feedkeys('q:', 'xt')
+  call assert_equal(1, winnr('$'))
+  call assert_equal('', getcmdwintype())
 endfunc
 
 " Tests for the issues fixed in 7.4.441.
@@ -1558,6 +1572,7 @@ endfunc
 func Test_cmdline_edit()
   let str = ":one two\<C-U>"
   let str ..= "one two\<C-W>\<C-W>"
+  let str ..= "four\<BS>\<C-H>\<Del>\<kDel>"
   let str ..= "\<Left>five\<Right>"
   let str ..= "\<Home>two "
   let str ..= "\<C-Left>one "
@@ -1576,6 +1591,7 @@ func Test_cmdline_edit_rightleft()
   set rightleftcmd=search
   let str = "/one two\<C-U>"
   let str ..= "one two\<C-W>\<C-W>"
+  let str ..= "four\<BS>\<C-H>\<Del>\<kDel>"
   let str ..= "\<Right>five\<Left>"
   let str ..= "\<Home>two "
   let str ..= "\<C-Right>one "
@@ -1601,6 +1617,77 @@ func Test_cmdline_expr()
   " Insert literal <CTRL-\> in the command line
   call feedkeys(":\"e \<C-\>\<C-Y>\<CR>", 'xt')
   call assert_equal("\"e \<C-\>\<C-Y>", @:)
+endfunc
+
+" Test for 'imcmdline' and 'imsearch'
+" This test doesn't actually test the input method functionality.
+func Test_cmdline_inputmethod()
+  new
+  call setline(1, ['', 'abc', ''])
+  set imcmdline
+
+  call feedkeys(":\"abc\<CR>", 'xt')
+  call assert_equal("\"abc", @:)
+  call feedkeys(":\"\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal("\"abc", @:)
+  call feedkeys("/abc\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  call feedkeys("/\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+
+  " set imsearch=2
+  call cursor(1, 1)
+  call feedkeys("/abc\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  call cursor(1, 1)
+  call feedkeys("/\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  set imdisable
+  call feedkeys("/\<C-^>abc\<C-^>\<CR>", 'xt')
+  call assert_equal([2, 1], [line('.'), col('.')])
+  set imdisable&
+  set imsearch&
+
+  set imcmdline&
+  %bwipe!
+endfunc
+
+" Test for opening the command-line window when too many windows are present
+func Test_cmdwin_fail_to_open()
+  " Open as many windows as possible
+  for i in range(100)
+    try
+      new
+    catch /E36:/
+      break
+    endtry
+  endfor
+  call assert_beeps('call feedkeys("q:\<CR>", "xt")')
+  only
+endfunc
+
+" Test for recursively getting multiple command line inputs
+func Test_cmdwin_multi_input()
+  call feedkeys(":\<C-R>=input('P: ')\<CR>\"cyan\<CR>\<CR>", 'xt')
+  call assert_equal('"cyan', @:)
+endfunc
+
+" Test for using CTRL-_ in the command line with 'allowrevins'
+func Test_cmdline_revins()
+  CheckNotMSWindows
+  CheckFeature rightleft
+  call feedkeys(":\"abc\<c-_>\<cr>", 'xt')
+  call assert_equal("\"abc\<c-_>", @:)
+  set allowrevins
+  call feedkeys(":\"abc\<c-_>xyz\<c-_>\<CR>", 'xt')
+  call assert_equal('"abcñèæ', @:)
+  set allowrevins&
+endfunc
+
+" Test for typing UTF-8 composing characters in the command line
+func Test_cmdline_composing_chars()
+  call feedkeys(":\"\<C-V>u3046\<C-V>u3099\<CR>", 'xt')
+  call assert_equal('"ゔ', @:)
 endfunc
 
 " Test for normal mode commands not supported in the cmd window

@@ -46,3 +46,5 @@ func Test_getchangelist()
   call delete('Xfile1.txt')
   call delete('Xfile2.txt')
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
