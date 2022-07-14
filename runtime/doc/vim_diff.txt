@@ -350,7 +350,8 @@ Commands:
 Functions:
   |input()| and |inputdialog()| support for each other’s features (return on
   cancel and completion respectively) via dictionary argument (replaces all
-  other arguments if used).
+  other arguments if used), and "cancelreturn" can have any type if passed in
+  a dictionary.
   |input()| and |inputdialog()| support user-defined cmdline highlighting.
 
 Highlight groups:
