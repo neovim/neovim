@@ -1006,6 +1006,8 @@ static int command_line_check(VimState *state)
                            // that occurs while typing a command should
                            // cause the command not to be executed.
 
+  got_int = false;         // avoid infinite Ctrl-C loop in Ex mode
+
   cursorcmd();             // set the cursor on the right spot
   ui_cursor_shape();
   return 1;
