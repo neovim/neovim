@@ -9,6 +9,7 @@ local source = helpers.source
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local nvim_async = helpers.nvim_async
+local NIL = helpers.NIL
 
 local screen
 
@@ -200,6 +201,15 @@ describe('input()', function()
     feed(':let var = input({"cancelreturn": "BAR"})<CR>')
     feed('<Esc>')
     eq('BAR', meths.get_var('var'))
+    feed(':let var = input({"cancelreturn": []})<CR>')
+    feed('<Esc>')
+    eq({}, meths.get_var('var'))
+    feed(':let var = input({"cancelreturn": v:false})<CR>')
+    feed('<Esc>')
+    eq(false, meths.get_var('var'))
+    feed(':let var = input({"cancelreturn": v:null})<CR>')
+    feed('<Esc>')
+    eq(NIL, meths.get_var('var'))
   end)
   it('supports default string', function()
     feed(':let var = input("", "DEF1")<CR>')
@@ -219,8 +229,6 @@ describe('input()', function()
        exc_exec('call input("", "", [])'))
     eq('Vim(call):E730: using List as a String',
        exc_exec('call input({"prompt": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call input({"cancelreturn": []})'))
     eq('Vim(call):E730: using List as a String',
        exc_exec('call input({"default": []})'))
     eq('Vim(call):E730: using List as a String',
@@ -417,8 +425,6 @@ describe('inputdialog()', function()
        exc_exec('call inputdialog("", "", [])'))
     eq('Vim(call):E730: using List as a String',
        exc_exec('call inputdialog({"prompt": []})'))
-    eq('Vim(call):E730: using List as a String',
-       exc_exec('call inputdialog({"cancelreturn": []})'))
     eq('Vim(call):E730: using List as a String',
        exc_exec('call inputdialog({"default": []})'))
     eq('Vim(call):E730: using List as a String',

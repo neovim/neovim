@@ -6554,7 +6554,8 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
 
   const char *prompt = "";
   const char *defstr = "";
-  const char *cancelreturn = NULL;
+  typval_T *cancelreturn = NULL;
+  typval_T cancelreturn_strarg2 = TV_INITIAL_VALUE;
   const char *xp_name = NULL;
   Callback input_callback = { .type = kCallbackNone };
   char prompt_buf[NUMBUFLEN];
@@ -6576,13 +6577,9 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
     if (defstr == NULL) {
       return;
     }
-    cancelreturn = tv_dict_get_string_buf_chk(dict, S_LEN("cancelreturn"),
-                                              cancelreturn_buf, def);
-    if (cancelreturn == NULL) {  // error
-      return;
-    }
-    if (*cancelreturn == NUL) {
-      cancelreturn = NULL;
+    dictitem_T *cancelreturn_di = tv_dict_find(dict, S_LEN("cancelreturn"));
+    if (cancelreturn_di != NULL) {
+      cancelreturn = &cancelreturn_di->di_tv;
     }
     xp_name = tv_dict_get_string_buf_chk(dict, S_LEN("completion"),
                                          xp_name_buf, def);
@@ -6606,15 +6603,16 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
         return;
       }
       if (argvars[2].v_type != VAR_UNKNOWN) {
-        const char *const arg2 = tv_get_string_buf_chk(&argvars[2],
-                                                       cancelreturn_buf);
-        if (arg2 == NULL) {
+        const char *const strarg2 = tv_get_string_buf_chk(&argvars[2], cancelreturn_buf);
+        if (strarg2 == NULL) {
           return;
         }
         if (inputdialog) {
-          cancelreturn = arg2;
+          cancelreturn_strarg2.v_type = VAR_STRING;
+          cancelreturn_strarg2.vval.v_string = (char *)strarg2;
+          cancelreturn = &cancelreturn_strarg2;
         } else {
-          xp_name = arg2;
+          xp_name = strarg2;
         }
       }
     }
@@ -6662,7 +6660,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   callback_free(&input_callback);
 
   if (rettv->vval.v_string == NULL && cancelreturn != NULL) {
-    rettv->vval.v_string = xstrdup(cancelreturn);
+    tv_copy(cancelreturn, rettv);
   }
 
   xfree(xp_arg);
