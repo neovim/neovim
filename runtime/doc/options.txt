@@ -4184,8 +4184,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	middle click	    paste		paste
 
 	In the "popup" model the right mouse button produces a pop-up menu.
-	Nvim creates one on |startup| but you are free to redefine it.
-	See |popup-menu|.
+	Nvim creates a default |popup-menu| but you can redefine it.
 
 	Note that you can further refine the meaning of buttons with mappings.
 	See |mouse-overview|.  But mappings are NOT used for modeless selection.

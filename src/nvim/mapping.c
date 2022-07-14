@@ -2113,24 +2113,6 @@ void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_maparg(argvars, rettv, false);
 }
 
-void init_default_mappings(void)
-{
-  add_map("Y", "y$", MODE_NORMAL, false);
-
-  // Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>
-  // See https://github.com/neovim/neovim/issues/17473
-  add_map("<C-L>", "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
-          MODE_NORMAL, false);
-  add_map("<C-U>", "<C-G>u<C-U>", MODE_INSERT, false);
-  add_map("<C-W>", "<C-G>u<C-W>", MODE_INSERT, false);
-  add_map("*", "y/\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
-  add_map("#", "y?\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
-
-  // Use : instead of <Cmd> so that ranges are supported (e.g. 3& repeats the substitution on the
-  // next 3 lines)
-  add_map("&", ":&&<CR>", MODE_NORMAL, false);
-}
-
 /// Add a mapping. Unlike @ref do_map this copies the string arguments, so
 /// static or read-only strings can be used.
 ///
