@@ -2125,6 +2125,7 @@ void init_default_mappings(void)
   add_map("<C-W>", "<C-G>u<C-W>", MODE_INSERT, false);
   add_map("*", "y/\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
   add_map("#", "y?\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
+  add_map("&", ":&&<CR>", MODE_NORMAL, false);
 }
 
 /// Add a mapping. Unlike @ref do_map this copies the string arguments, so
