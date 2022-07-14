@@ -3905,12 +3905,12 @@ static wordnode_T *wordtree_alloc(spellinfo_T *spin)
 
 /// Return true if "word" contains valid word characters.
 /// Control characters and trailing '/' are invalid.  Space is OK.
-static bool valid_spell_word(const char_u *word)
+static bool valid_spell_word(const char_u *word, const char_u *end)
 {
-  if (!utf_valid_string(word, NULL)) {
+  if (!utf_valid_string(word, end)) {
     return false;
   }
-  for (const char_u *p = word; *p != NUL; p += utfc_ptr2len((const char *)p)) {
+  for (const char_u *p = word; *p != NUL && p < end; p += utfc_ptr2len((const char *)p)) {
     if (*p < ' ' || (p[0] == '/' && p[1] == NUL)) {
       return false;
     }
@@ -3939,7 +3939,7 @@ static int store_word(spellinfo_T *spin, char_u *word, int flags, int region, co
   int res = OK;
 
   // Avoid adding illegal bytes to the word tree.
-  if (!valid_spell_word(word)) {
+  if (!valid_spell_word(word, word + len)) {
     return FAIL;
   }
 
@@ -5536,7 +5536,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   int i;
   char_u *spf;
 
-  if (!valid_spell_word(word)) {
+  if (!valid_spell_word(word, word + len)) {
     emsg(_(e_illegal_character_in_word));
     return;
   }
