@@ -8,6 +8,7 @@ endif()
 find_program(GIT_EXECUTABLE git)
 if(NOT GIT_EXECUTABLE)
   message(AUTHOR_WARNING "Skipping version-string generation (cannot find git)")
+  file(WRITE "${OUTPUT}" "")
   return()
 endif()
 
