@@ -2125,6 +2125,9 @@ void init_default_mappings(void)
   add_map("<C-W>", "<C-G>u<C-W>", MODE_INSERT, false);
   add_map("*", "y/\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
   add_map("#", "y?\\\\V<C-R>\"<CR>", MODE_VISUAL, false);
+
+  // Use : instead of <Cmd> so that ranges are supported (e.g. 3& repeats the substitution on the
+  // next 3 lines)
   add_map("&", ":&&<CR>", MODE_NORMAL, false);
 }
 
