@@ -218,6 +218,9 @@ function TSHighlighter:get_highlight_state(tstree)
     self._highlight_states[tstree] = {
       next_row = 0,
       iter = nil,
+
+      spell_next_row = 0,
+      spell_iter = nil,
     }
   end
 

@@ -28,9 +28,31 @@ local function get_query(lang, default)
   return default
 end
 
-local function get_spell_marks(highlighter, bufnr, row)
-  highlighter = highlighter or vim.treesitter.highlighter.active[bufnr]
+local SPELL_CAPTURES = { 'spell', 'comment' }
 
+local function spell_check_node(bufnr, id, spell_query, range, row, marks)
+  if not vim.tbl_contains(SPELL_CAPTURES, spell_query.captures[id]) then
+    return
+  end
+
+  local start_row, start_col, end_row, end_col = unpack(range)
+  start_col = row == start_row and start_col or 0
+  local sub_end_col = row == end_row and end_col + 1 or -1
+
+  local line = api.nvim_buf_get_lines(bufnr, row, row + 1, true)[1]
+  local l = line:sub(start_col + 1, sub_end_col)
+
+  for _, r in ipairs(vim.spell.check(l)) do
+    local word, type, col = unpack(r)
+    marks[#marks + 1] = { start_col + col - 1, #word, type }
+  end
+end
+
+---@param highlighter table TSHighlighter to use
+---@param row integer Row to check
+---@param reuse_iter? boolean Use iterator from highlighter
+---@returns array of tuples (start_col, len, type) indicating positions in row
+local function get_spell_marks(highlighter, row, reuse_iter)
   local marks = {}
 
   highlighter.tree:for_each_tree(function(tstree, langtree)
@@ -57,21 +79,33 @@ local function get_spell_marks(highlighter, bufnr, row)
       return
     end
 
-    -- TODO(lewis6991): Figure out how we can re-use the iterator. Note for navigation we need to be
-    -- able to iterate forwards and backwards.
-    for id, node, metadata in spell_query:iter_captures(root_node, bufnr, row, row + 1) do
-      if vim.tbl_contains({ 'spell', 'comment' }, spell_query.captures[id]) then
-        local start_row, start_col, end_row, end_col = unpack(get_node_range(node, id, metadata))
+    local bufnr = highlighter.bufnr
 
-        start_col = row == start_row and start_col or 0
-        local sub_end_col = row == end_row and end_col + 1 or -1
+    if not reuse_iter then
+      for id, node, metadata in spell_query:iter_captures(root_node, bufnr, row, row + 1) do
+        local range = get_node_range(node, id, metadata)
+        spell_check_node(bufnr, id, spell_query, range, row, marks)
+      end
+    else
+      local state = highlighter:get_highlight_state(tstree)
 
-        local line = api.nvim_buf_get_lines(bufnr, row, row + 1, true)[1]
-        local l = line:sub(start_col + 1, sub_end_col)
+      if state.spell_iter == nil or state.spell_next_row < row then
+        state.spell_iter = spell_query:iter_captures(root_node, bufnr, row, root_end_row + 1)
+      end
 
-        for _, r in ipairs(vim.spell.check(l)) do
-          local word, type, col = unpack(r)
-          marks[#marks + 1] = { start_col + col - 1, #word, type }
+      while row >= state.spell_next_row do
+        local id, node, metadata = state.spell_iter()
+
+        if id == nil then
+          break
+        end
+
+        local range = get_node_range(node, id, metadata)
+        spell_check_node(bufnr, id, spell_query, range, row, marks)
+
+        local start_row = range[1]
+        if start_row > row then
+          state.spell_next_row = start_row
         end
       end
     end
@@ -87,26 +121,30 @@ local function enabled(winid, bufnr)
   return vim.wo[winid].spell
 end
 
-local function get_nav_target_forward(bufnr, row, col)
+local function get_nav_target_forward(bufnr, lnum, col)
+  local highlighter = vim.treesitter.highlighter.active[bufnr]
+
   -- TODO(lewis6991): support 'wrapscan' (with message)
-  for i = row, api.nvim_buf_line_count(bufnr) do
-    local marks = get_spell_marks(nil, bufnr, i - 1)
+  for i = lnum, api.nvim_buf_line_count(bufnr) do
+    local marks = get_spell_marks(highlighter, i - 1)
     for j = 1, #marks do
       local mcol = marks[j][1]
-      if i ~= row or col < mcol then
+      if i ~= lnum or col < mcol then
         return { i, mcol }
       end
     end
   end
 end
 
-local function get_nav_target_backward(bufnr, row, col)
+local function get_nav_target_backward(bufnr, lnum, col)
+  local highlighter = vim.treesitter.highlighter.active[bufnr]
+
   -- TODO(lewis6991): support 'wrapscan' (with message)
-  for i = row, 1, -1 do
-    local marks = get_spell_marks(nil, bufnr, i - 1)
+  for i = lnum, 1, -1 do
+    local marks = get_spell_marks(highlighter, i - 1)
     for j = #marks, 1, -1 do
       local mcol = marks[j][1]
-      if i ~= row or col > mcol then
+      if i ~= lnum or col > mcol then
         return { i, mcol }
       end
     end
@@ -122,9 +160,9 @@ local function nav(backward, fallback)
       return fallback
     end
 
-    local row, col = unpack(api.nvim_win_get_cursor(winid))
+    local lnum, col = unpack(api.nvim_win_get_cursor(winid))
     local get_nav_target = backward and get_nav_target_backward or get_nav_target_forward
-    local target = get_nav_target(bufnr, row, col)
+    local target = get_nav_target(bufnr, lnum, col)
 
     if target then
       vim.schedule(function()
@@ -168,7 +206,7 @@ function M.on_line(highlighter, winid, bufnr, row)
 
   local cur_lnum, cur_col = unpack(api.nvim_win_get_cursor(winid))
 
-  for _, mark in ipairs(get_spell_marks(highlighter, bufnr, row)) do
+  for _, mark in ipairs(get_spell_marks(highlighter, row, true)) do
     local col, len, type = unpack(mark)
 
     if cur_lnum - 1 == row and col <= cur_col and col + len >= cur_col then
