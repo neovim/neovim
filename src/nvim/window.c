@@ -331,6 +331,7 @@ newwindow:
 
   // move window to new tab page
   case 'T':
+    CHECK_CMDWIN;
     if (one_window(curwin)) {
       msg(_(m_onlyone));
     } else {
