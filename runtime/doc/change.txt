@@ -633,6 +633,9 @@ Directory for temporary files is created in the first possible directory of:
 			actually work differently.  You can use `:&&` to keep
 			the flags.
 
+								*&-default*
+			Mapped to ":&&<CR>" by default. |default-mappings|
+
 								*g&*
 g&			Synonym for `:%s//~/&` (repeat last substitute with
 			last search pattern on all lines with the same flags).
