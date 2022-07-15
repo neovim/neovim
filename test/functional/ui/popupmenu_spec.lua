@@ -2427,6 +2427,34 @@ describe('builtin popupmenu', function()
       :let g:menustr = 'baz'          |
     ]])
     eq('baz', meths.get_var('menustr'))
+    meths.input_mouse('right', 'press', '', 0, 0, 4)
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~  }{n: foo }{1:                        }|
+      {1:~  }{n: bar }{1:                        }|
+      {1:~  }{n: baz }{1:                        }|
+      {1:~                               }|
+      :let g:menustr = 'baz'          |
+    ]])
+    meths.input_mouse('right', 'drag', '', 0, 3, 6)
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~  }{n: foo }{1:                        }|
+      {1:~  }{n: bar }{1:                        }|
+      {1:~  }{s: baz }{1:                        }|
+      {1:~                               }|
+      :let g:menustr = 'baz'          |
+    ]])
+    meths.input_mouse('right', 'release', '', 0, 1, 6)
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :let g:menustr = 'foo'          |
+    ]])
+    eq('foo', meths.get_var('menustr'))
   end)
 end)
 
@@ -2571,5 +2599,68 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       :let g:menustr = 'baz'          |
     ]]})
     eq('baz', meths.get_var('menustr'))
+    meths.input_mouse('right', 'press', '', 2, 0, 4)
+    screen:expect({grid=[[
+    ## grid 1
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [3:--------------------------------]|
+    ## grid 2
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+    ## grid 3
+      :let g:menustr = 'baz'          |
+    ## grid 4
+      {n: foo }|
+      {n: bar }|
+      {n: baz }|
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    meths.input_mouse('right', 'drag', '', 2, 3, 6)
+    screen:expect({grid=[[
+    ## grid 1
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [3:--------------------------------]|
+    ## grid 2
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+    ## grid 3
+      :let g:menustr = 'baz'          |
+    ## grid 4
+      {n: foo }|
+      {n: bar }|
+      {s: baz }|
+    ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    meths.input_mouse('right', 'release', '', 2, 1, 6)
+    screen:expect({grid=[[
+    ## grid 1
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [2:--------------------------------]|
+      [3:--------------------------------]|
+    ## grid 2
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+    ## grid 3
+      :let g:menustr = 'foo'          |
+    ]]})
+    eq('foo', meths.get_var('menustr'))
   end)
 end)
