@@ -187,7 +187,7 @@ static int ses_do_win(win_T *wp)
   }
   if (wp->w_buffer->b_fname == NULL
       // When 'buftype' is "nofile" can't restore the window contents.
-      || (!wp->w_buffer->terminal && bt_nofile(wp->w_buffer))) {
+      || (!wp->w_buffer->terminal && bt_nofilename(wp->w_buffer))) {
     return ssop_flags & SSOP_BLANK;
   }
   if (bt_help(wp->w_buffer)) {
@@ -363,7 +363,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
         return FAIL;
       }
     } else if (wp->w_buffer->b_ffname != NULL
-               && (!bt_nofile(wp->w_buffer) || wp->w_buffer->terminal)) {
+               && (!bt_nofilename(wp->w_buffer) || wp->w_buffer->terminal)) {
       // Load the file.
 
       // Editing a file in this buffer: use ":edit file".
@@ -706,7 +706,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
       if (ses_do_win(wp)
           && wp->w_buffer->b_ffname != NULL
           && !bt_help(wp->w_buffer)
-          && !bt_nofile(wp->w_buffer)) {
+          && !bt_nofilename(wp->w_buffer)) {
         if (need_tabnext && put_line(fd, "tabnext") == FAIL) {
           return FAIL;
         }
