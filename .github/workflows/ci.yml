@@ -108,7 +108,7 @@ jobs:
 
       - if: "!cancelled()"
         name: lintcfull
-        run: ./ci/run_lint.sh lintcfull
+        run: make lintcfull
 
       - if: "!cancelled()"
         name: lintstylua
@@ -125,19 +125,19 @@ jobs:
 
       - if: "!cancelled()"
         name: lintlua
-        run: ./ci/run_lint.sh lintlua
+        run: make lintlua
 
       - if: "!cancelled()"
         name: lintpy
-        run: ./ci/run_lint.sh lintpy
+        run: make lintpy
 
       - if: "!cancelled()"
         name: lintsh
-        run: ./ci/run_lint.sh lintsh
+        run: make lintsh
 
       - if: "!cancelled()"
         name: check-single-includes
-        run: ./ci/run_lint.sh check-single-includes
+        run: make check-single-includes
 
       - name: Cache dependencies
         run: ./ci/before_cache.sh

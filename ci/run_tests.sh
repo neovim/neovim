@@ -33,3 +33,9 @@ for i in "${tests[@]}"; do
 done
 
 end_tests
+
+if [[ -s "${GCOV_ERROR_FILE}" ]]; then
+  echo '=== Unexpected gcov errors: ==='
+  cat "${GCOV_ERROR_FILE}"
+  exit 1
+fi
