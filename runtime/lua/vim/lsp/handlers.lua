@@ -2,7 +2,7 @@ local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local util = require('vim.lsp.util')
 local vim = vim
-local a = vim.api
+local api = vim.api
 
 local M = {}
 
@@ -13,7 +13,7 @@ local M = {}
 ---@param ... (table of strings) Will be concatenated before being written
 local function err_message(...)
   vim.notify(table.concat(vim.tbl_flatten({ ... })), vim.log.levels.ERROR)
-  a.nvim_command('redraw')
+  api.nvim_command('redraw')
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
@@ -61,7 +61,7 @@ local function progress_handler(_, result, ctx, _)
     client.messages.progress[token].done = true
   end
 
-  a.nvim_command('doautocmd <nomodeline> User LspProgressUpdate')
+  api.nvim_command('doautocmd <nomodeline> User LspProgressUpdate')
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
@@ -195,14 +195,14 @@ M['textDocument/references'] = function(_, result, ctx, config)
         items = util.locations_to_items(result, client.offset_encoding),
         context = ctx,
       })
-      a.nvim_command('lopen')
+      api.nvim_command('lopen')
     else
       vim.fn.setqflist({}, ' ', {
         title = 'References',
         items = util.locations_to_items(result, client.offset_encoding),
         context = ctx,
       })
-      a.nvim_command('botright copen')
+      api.nvim_command('botright copen')
     end
   end
 end
@@ -230,14 +230,14 @@ local function response_to_list(map_result, entity, title_fn)
           items = map_result(result, ctx.bufnr),
           context = ctx,
         })
-        a.nvim_command('lopen')
+        api.nvim_command('lopen')
       else
         vim.fn.setqflist({}, ' ', {
           title = title_fn(ctx),
           items = map_result(result, ctx.bufnr),
           context = ctx,
         })
-        a.nvim_command('botright copen')
+        api.nvim_command('botright copen')
       end
     end
   end
@@ -290,8 +290,8 @@ M['textDocument/completion'] = function(_, result, _, _)
   if vim.tbl_isempty(result or {}) then
     return
   end
-  local row, col = unpack(a.nvim_win_get_cursor(0))
-  local line = assert(a.nvim_buf_get_lines(0, row - 1, row, false)[1])
+  local row, col = unpack(api.nvim_win_get_cursor(0))
+  local line = assert(api.nvim_buf_get_lines(0, row - 1, row, false)[1])
   local line_to_cursor = line:sub(col + 1)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
   local prefix = line_to_cursor:sub(textMatch + 1)
@@ -358,7 +358,7 @@ local function location_handler(_, result, ctx, config)
         title = 'LSP locations',
         items = util.locations_to_items(result, client.offset_encoding),
       })
-      a.nvim_command('botright copen')
+      api.nvim_command('botright copen')
     end
   else
     util.jump_to_location(result, client.offset_encoding, config.reuse_win)
@@ -402,7 +402,7 @@ function M.signature_help(_, result, ctx, config)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   local triggers =
     vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
-  local ft = a.nvim_buf_get_option(ctx.bufnr, 'filetype')
+  local ft = api.nvim_buf_get_option(ctx.bufnr, 'filetype')
   local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
   lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
@@ -413,7 +413,7 @@ function M.signature_help(_, result, ctx, config)
   end
   local fbuf, fwin = util.open_floating_preview(lines, 'markdown', config)
   if hl then
-    a.nvim_buf_add_highlight(fbuf, -1, 'LspSignatureActiveParameter', 0, unpack(hl))
+    api.nvim_buf_add_highlight(fbuf, -1, 'LspSignatureActiveParameter', 0, unpack(hl))
   end
   return fbuf, fwin
 end
@@ -459,7 +459,7 @@ local make_call_hierarchy_handler = function(direction)
       end
     end
     vim.fn.setqflist({}, ' ', { title = 'LSP call hierarchy', items = items })
-    a.nvim_command('botright copen')
+    api.nvim_command('botright copen')
   end
 end
 
@@ -505,7 +505,7 @@ M['window/showMessage'] = function(_, result, ctx, _)
     err_message('LSP[', client_name, '] ', message)
   else
     local message_type_name = protocol.MessageType[message_type]
-    a.nvim_out_write(string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message))
+    api.nvim_out_write(string.format('LSP[%s][%s] %s\n', client_name, message_type_name, message))
   end
   return result
 end

@@ -2,7 +2,7 @@ local protocol = require('vim.lsp.protocol')
 local snippet = require('vim.lsp._snippet')
 local vim = vim
 local validate = vim.validate
-local a = vim.api
+local api = vim.api
 local list_extend = vim.list_extend
 local highlight = require('vim.highlight')
 local uv = vim.loop
@@ -238,14 +238,14 @@ local function get_lines(bufnr, rows)
 
   -- This is needed for bufload and bufloaded
   if bufnr == 0 then
-    bufnr = a.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
 
   ---@private
   local function buf_lines()
     local lines = {}
     for _, row in pairs(rows) do
-      lines[row] = (a.nvim_buf_get_lines(bufnr, row, row + 1, false) or { '' })[1]
+      lines[row] = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { '' })[1]
     end
     return lines
   end
@@ -264,7 +264,7 @@ local function get_lines(bufnr, rows)
     return buf_lines()
   end
 
-  local filename = a.nvim_buf_get_name(bufnr)
+  local filename = api.nvim_buf_get_name(bufnr)
 
   -- get the data from the file
   local fd = uv.fs_open(filename, 'r', 438)
@@ -389,10 +389,10 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   if not next(text_edits) then
     return
   end
-  if not a.nvim_buf_is_loaded(bufnr) then
+  if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
-  a.nvim_buf_set_option(bufnr, 'buflisted', true)
+  api.nvim_buf_set_option(bufnr, 'buflisted', true)
 
   -- Fix reversed range and indexing each text_edits
   local index = 0
@@ -427,7 +427,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Some LSP servers are depending on the VSCode behavior.
   -- The VSCode will re-locate the cursor position after applying TextEdit so we also do it.
-  local is_current_buf = a.nvim_get_current_buf() == bufnr
+  local is_current_buf = api.nvim_get_current_buf() == bufnr
   local cursor = (function()
     if not is_current_buf then
       return {
@@ -435,7 +435,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
         col = -1,
       }
     end
-    local cursor = a.nvim_win_get_cursor(0)
+    local cursor = api.nvim_win_get_cursor(0)
     return {
       row = cursor[1] - 1,
       col = cursor[2],
@@ -459,7 +459,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     }
 
     -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
-    local max = a.nvim_buf_line_count(bufnr)
+    local max = api.nvim_buf_line_count(bufnr)
     if max <= e.start_row or max <= e.end_row then
       local len = #(get_line(bufnr, max - 1) or '')
       if max <= e.start_row then
@@ -473,7 +473,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       end
       has_eol_text_edit = true
     end
-    a.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+    api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
 
     -- Fix cursor position.
     local row_count = (e.end_row - e.start_row) + 1
@@ -490,7 +490,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end
 
-  local max = a.nvim_buf_line_count(bufnr)
+  local max = api.nvim_buf_line_count(bufnr)
 
   -- Apply fixed cursor position.
   if is_cursor_fixed then
@@ -498,7 +498,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     is_valid_cursor = is_valid_cursor and cursor.row < max
     is_valid_cursor = is_valid_cursor and cursor.col <= #(get_line(bufnr, max - 1) or '')
     if is_valid_cursor then
-      a.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
+      api.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
     end
   end
 
@@ -506,12 +506,12 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   local fix_eol = has_eol_text_edit
   fix_eol = fix_eol
     and (
-      a.nvim_buf_get_option(bufnr, 'eol')
-      or (a.nvim_buf_get_option(bufnr, 'fixeol') and not a.nvim_buf_get_option(bufnr, 'binary'))
+      api.nvim_buf_get_option(bufnr, 'eol')
+      or (api.nvim_buf_get_option(bufnr, 'fixeol') and not api.nvim_buf_get_option(bufnr, 'binary'))
     )
   fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
-    a.nvim_buf_set_lines(bufnr, -2, -1, false, {})
+    api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
   end
 end
 
@@ -710,8 +710,8 @@ end
 ---@private
 --- Like vim.fn.bufwinid except it works across tabpages.
 local function bufwinid(bufnr)
-  for _, win in ipairs(a.nvim_list_wins()) do
-    if a.nvim_win_get_buf(win) == bufnr then
+  for _, win in ipairs(api.nvim_list_wins()) do
+    if api.nvim_win_get_buf(win) == bufnr then
       return win
     end
   end
@@ -733,7 +733,7 @@ function M.rename(old_fname, new_fname, opts)
   vim.fn.bufload(oldbuf)
 
   -- The there may be pending changes in the buffer
-  a.nvim_buf_call(oldbuf, function()
+  api.nvim_buf_call(oldbuf, function()
     vim.cmd('w!')
   end)
 
@@ -743,9 +743,9 @@ function M.rename(old_fname, new_fname, opts)
   local newbuf = vim.fn.bufadd(new_fname)
   local win = bufwinid(oldbuf)
   if win then
-    a.nvim_win_set_buf(win, newbuf)
+    api.nvim_win_set_buf(win, newbuf)
   end
-  a.nvim_buf_delete(oldbuf, { force = true })
+  api.nvim_buf_delete(oldbuf, { force = true })
 end
 
 ---@private
@@ -778,7 +778,7 @@ local function delete_file(change)
   local bufnr = vim.fn.bufadd(fname)
   local result = tonumber(vim.fn.delete(fname, flags))
   assert(result == 0, 'Could not delete file: ' .. fname .. ', stat: ' .. vim.inspect(stat))
-  a.nvim_buf_delete(bufnr, { force = true })
+  api.nvim_buf_delete(bufnr, { force = true })
 end
 
 --- Applies a `WorkspaceEdit`.
@@ -1013,7 +1013,7 @@ function M.make_floating_popup_options(width, height, opts)
     row = 0
   end
 
-  if vim.fn.wincol() + width + (opts.offset_x or 0) <= a.nvim_get_option('columns') then
+  if vim.fn.wincol() + width + (opts.offset_x or 0) <= api.nvim_get_option('columns') then
     anchor = anchor .. 'W'
     col = 0
   else
@@ -1065,15 +1065,15 @@ function M.jump_to_location(location, offset_encoding, reuse_win)
   --- Jump to new location (adjusting for UTF-16 encoding of characters)
   local win = reuse_win and bufwinid(bufnr)
   if win then
-    a.nvim_set_current_win(win)
+    api.nvim_set_current_win(win)
   else
-    a.nvim_buf_set_option(bufnr, 'buflisted', true)
-    a.nvim_set_current_buf(bufnr)
+    api.nvim_buf_set_option(bufnr, 'buflisted', true)
+    api.nvim_set_current_buf(bufnr)
   end
   local range = location.range or location.targetSelectionRange
   local row = range.start.line
   local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
-  a.nvim_win_set_cursor(0, { row + 1, col })
+  api.nvim_win_set_cursor(0, { row + 1, col })
   -- Open folds under the cursor
   vim.cmd('normal! zv')
   return true
@@ -1094,17 +1094,17 @@ function M.preview_location(location, opts)
     return
   end
   local bufnr = vim.uri_to_bufnr(uri)
-  if not a.nvim_buf_is_loaded(bufnr) then
+  if not api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
   end
   local range = location.targetRange or location.range
-  local contents = a.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line + 1, false)
-  local syntax = a.nvim_buf_get_option(bufnr, 'syntax')
+  local contents = api.nvim_buf_get_lines(bufnr, range.start.line, range['end'].line + 1, false)
+  local syntax = api.nvim_buf_get_option(bufnr, 'syntax')
   if syntax == '' then
     -- When no syntax is set, we use filetype as fallback. This might not result
     -- in a valid syntax definition. See also ft detection in stylize_markdown.
     -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
-    syntax = a.nvim_buf_get_option(bufnr, 'filetype')
+    syntax = api.nvim_buf_get_option(bufnr, 'filetype')
   end
   opts = opts or {}
   opts.focus_id = 'location'
@@ -1113,8 +1113,8 @@ end
 
 ---@private
 local function find_window_by_var(name, value)
-  for _, win in ipairs(a.nvim_list_wins()) do
-    if npcall(a.nvim_win_get_var, win, name) == value then
+  for _, win in ipairs(api.nvim_list_wins()) do
+    if npcall(api.nvim_win_get_var, win, name) == value then
       return win
     end
   end
@@ -1279,7 +1279,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   end
 
   -- Compute size of float needed to show (wrapped) lines
-  opts.wrap_at = opts.wrap_at or (vim.wo['wrap'] and a.nvim_win_get_width(0))
+  opts.wrap_at = opts.wrap_at or (vim.wo['wrap'] and api.nvim_win_get_width(0))
   local width = M._make_floating_popup_size(stripped, opts)
 
   local sep_line = string.rep('─', math.min(width, opts.wrap_at or width))
@@ -1290,7 +1290,7 @@ function M.stylize_markdown(bufnr, contents, opts)
     end
   end
 
-  a.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
+  api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
   local idx = 1
   ---@private
@@ -1315,7 +1315,7 @@ function M.stylize_markdown(bufnr, contents, opts)
     local lang = '@' .. ft:upper()
     if not langs[lang] then
       -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
-      pcall(a.nvim_buf_del_var, bufnr, 'current_syntax')
+      pcall(api.nvim_buf_del_var, bufnr, 'current_syntax')
       -- TODO(ashkan): better validation before this.
       if not pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft)) then
         return
@@ -1334,7 +1334,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   end
 
   -- needs to run in the buffer for the regions to work
-  a.nvim_buf_call(bufnr, function()
+  api.nvim_buf_call(bufnr, function()
     -- we need to apply lsp_markdown regions speperately, since otherwise
     -- markdown regions can "bleed" through the other syntax regions
     -- and mess up the formatting
@@ -1362,13 +1362,13 @@ end
 local function close_preview_window(winnr, bufnrs)
   vim.schedule(function()
     -- exit if we are in one of ignored buffers
-    if bufnrs and vim.tbl_contains(bufnrs, a.nvim_get_current_buf()) then
+    if bufnrs and vim.tbl_contains(bufnrs, api.nvim_get_current_buf()) then
       return
     end
 
     local augroup = 'preview_window_' .. winnr
-    pcall(a.nvim_del_augroup_by_name, augroup)
-    pcall(a.nvim_win_close, winnr, true)
+    pcall(api.nvim_del_augroup_by_name, augroup)
+    pcall(api.nvim_win_close, winnr, true)
   end)
 end
 
@@ -1380,13 +1380,13 @@ end
 ---@param bufnrs table list of buffers where the preview window will remain visible
 ---@see |autocmd-events|
 local function close_preview_autocmd(events, winnr, bufnrs)
-  local augroup = a.nvim_create_augroup('preview_window_' .. winnr, {
+  local augroup = api.nvim_create_augroup('preview_window_' .. winnr, {
     clear = true,
   })
 
   -- close the preview window when entered a buffer that is not
   -- the floating window buffer or the buffer that spawned it
-  a.nvim_create_autocmd('BufEnter', {
+  api.nvim_create_autocmd('BufEnter', {
     group = augroup,
     callback = function()
       close_preview_window(winnr, bufnrs)
@@ -1394,7 +1394,7 @@ local function close_preview_autocmd(events, winnr, bufnrs)
   })
 
   if #events > 0 then
-    a.nvim_create_autocmd(events, {
+    api.nvim_create_autocmd(events, {
       buffer = bufnrs[2],
       callback = function()
         close_preview_window(winnr)
@@ -1438,7 +1438,7 @@ function M._make_floating_popup_size(contents, opts)
   end
 
   local border_width = get_border_size(opts).width
-  local screen_width = a.nvim_win_get_width(0)
+  local screen_width = api.nvim_win_get_width(0)
   width = math.min(width, screen_width)
 
   -- make sure borders are always inside the screen
@@ -1511,35 +1511,35 @@ function M.open_floating_preview(contents, syntax, opts)
   opts.focus = opts.focus ~= false
   opts.close_events = opts.close_events or { 'CursorMoved', 'CursorMovedI', 'InsertCharPre' }
 
-  local bufnr = a.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
 
   -- check if this popup is focusable and we need to focus
   if opts.focus_id and opts.focusable ~= false and opts.focus then
     -- Go back to previous window if we are in a focusable one
-    local current_winnr = a.nvim_get_current_win()
-    if npcall(a.nvim_win_get_var, current_winnr, opts.focus_id) then
-      a.nvim_command('wincmd p')
+    local current_winnr = api.nvim_get_current_win()
+    if npcall(api.nvim_win_get_var, current_winnr, opts.focus_id) then
+      api.nvim_command('wincmd p')
       return bufnr, current_winnr
     end
     do
       local win = find_window_by_var(opts.focus_id, bufnr)
-      if win and a.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
+      if win and api.nvim_win_is_valid(win) and vim.fn.pumvisible() == 0 then
         -- focus and return the existing buf, win
-        a.nvim_set_current_win(win)
-        a.nvim_command('stopinsert')
-        return a.nvim_win_get_buf(win), win
+        api.nvim_set_current_win(win)
+        api.nvim_command('stopinsert')
+        return api.nvim_win_get_buf(win), win
       end
     end
   end
 
   -- check if another floating preview already exists for this buffer
   -- and close it if needed
-  local existing_float = npcall(a.nvim_buf_get_var, bufnr, 'lsp_floating_preview')
-  if existing_float and a.nvim_win_is_valid(existing_float) then
-    a.nvim_win_close(existing_float, true)
+  local existing_float = npcall(api.nvim_buf_get_var, bufnr, 'lsp_floating_preview')
+  if existing_float and api.nvim_win_is_valid(existing_float) then
+    api.nvim_win_close(existing_float, true)
   end
 
-  local floating_bufnr = a.nvim_create_buf(false, true)
+  local floating_bufnr = api.nvim_create_buf(false, true)
   local do_stylize = syntax == 'markdown' and opts.stylize_markdown
 
   -- Clean up input: trim empty lines from the end, pad
@@ -1550,33 +1550,33 @@ function M.open_floating_preview(contents, syntax, opts)
     contents = M.stylize_markdown(floating_bufnr, contents, opts)
   else
     if syntax then
-      a.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
+      api.nvim_buf_set_option(floating_bufnr, 'syntax', syntax)
     end
-    a.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
+    api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   end
 
   -- Compute size of float needed to show (wrapped) lines
   if opts.wrap then
-    opts.wrap_at = opts.wrap_at or a.nvim_win_get_width(0)
+    opts.wrap_at = opts.wrap_at or api.nvim_win_get_width(0)
   else
     opts.wrap_at = nil
   end
   local width, height = M._make_floating_popup_size(contents, opts)
 
   local float_option = M.make_floating_popup_options(width, height, opts)
-  local floating_winnr = a.nvim_open_win(floating_bufnr, false, float_option)
+  local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
   if do_stylize then
-    a.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
-    a.nvim_win_set_option(floating_winnr, 'concealcursor', 'n')
+    api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
+    api.nvim_win_set_option(floating_winnr, 'concealcursor', 'n')
   end
   -- disable folding
-  a.nvim_win_set_option(floating_winnr, 'foldenable', false)
+  api.nvim_win_set_option(floating_winnr, 'foldenable', false)
   -- soft wrapping
-  a.nvim_win_set_option(floating_winnr, 'wrap', opts.wrap)
+  api.nvim_win_set_option(floating_winnr, 'wrap', opts.wrap)
 
-  a.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  a.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
-  a.nvim_buf_set_keymap(
+  api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
+  api.nvim_buf_set_option(floating_bufnr, 'bufhidden', 'wipe')
+  api.nvim_buf_set_keymap(
     floating_bufnr,
     'n',
     'q',
@@ -1587,22 +1587,22 @@ function M.open_floating_preview(contents, syntax, opts)
 
   -- save focus_id
   if opts.focus_id then
-    a.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
+    api.nvim_win_set_var(floating_winnr, opts.focus_id, bufnr)
   end
-  a.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
+  api.nvim_buf_set_var(bufnr, 'lsp_floating_preview', floating_winnr)
 
   return floating_bufnr, floating_winnr
 end
 
 do --[[ References ]]
-  local reference_ns = a.nvim_create_namespace('vim_lsp_references')
+  local reference_ns = api.nvim_create_namespace('vim_lsp_references')
 
   --- Removes document highlights from a buffer.
   ---
   ---@param bufnr number Buffer id
   function M.buf_clear_references(bufnr)
     validate({ bufnr = { bufnr, 'n', true } })
-    a.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
+    api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
   end
 
   --- Shows a list of document highlights for a certain buffer.
@@ -1750,7 +1750,7 @@ function M.symbols_to_items(symbols, bufnr)
         local kind = M._get_symbol_kind_name(symbol.kind)
         table.insert(_items, {
           -- bufnr = _bufnr,
-          filename = a.nvim_buf_get_name(_bufnr),
+          filename = api.nvim_buf_get_name(_bufnr),
           lnum = symbol.selectionRange.start.line + 1,
           col = symbol.selectionRange.start.character + 1,
           kind = kind,
@@ -1824,11 +1824,11 @@ end
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 local function make_position_param(window, offset_encoding)
   window = window or 0
-  local buf = a.nvim_win_get_buf(window)
-  local row, col = unpack(a.nvim_win_get_cursor(window))
+  local buf = api.nvim_win_get_buf(window)
+  local row, col = unpack(api.nvim_win_get_cursor(window))
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   row = row - 1
-  local line = a.nvim_buf_get_lines(buf, row, row + 1, true)[1]
+  local line = api.nvim_buf_get_lines(buf, row, row + 1, true)[1]
   if not line then
     return { line = 0, character = 0 }
   end
@@ -1846,7 +1846,7 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params(window, offset_encoding)
   window = window or 0
-  local buf = a.nvim_win_get_buf(window)
+  local buf = api.nvim_win_get_buf(window)
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   return {
     textDocument = M.make_text_document_params(buf),
@@ -1898,7 +1898,7 @@ end
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
 function M.make_range_params(window, offset_encoding)
-  local buf = a.nvim_win_get_buf(window or 0)
+  local buf = api.nvim_win_get_buf(window or 0)
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   local position = make_position_param(window, offset_encoding)
   return {
@@ -1924,10 +1924,10 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
     end_pos = { end_pos, 't', true },
     offset_encoding = { offset_encoding, 's', true },
   })
-  bufnr = bufnr or a.nvim_get_current_buf()
+  bufnr = bufnr or api.nvim_get_current_buf()
   offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
-  local A = list_extend({}, start_pos or a.nvim_buf_get_mark(bufnr, '<'))
-  local B = list_extend({}, end_pos or a.nvim_buf_get_mark(bufnr, '>'))
+  local A = list_extend({}, start_pos or api.nvim_buf_get_mark(bufnr, '<'))
+  local B = list_extend({}, end_pos or api.nvim_buf_get_mark(bufnr, '>'))
   -- convert to 0-index
   A[1] = A[1] - 1
   B[1] = B[1] - 1

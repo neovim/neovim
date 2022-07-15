@@ -6,13 +6,13 @@ local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 
 local vim = vim
-local a = vim.api
+local api = vim.api
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option, nvim_exec_autocmds =
-  a.nvim_err_writeln,
-  a.nvim_buf_get_lines,
-  a.nvim_command,
-  a.nvim_buf_get_option,
-  a.nvim_exec_autocmds
+  api.nvim_err_writeln,
+  api.nvim_buf_get_lines,
+  api.nvim_command,
+  api.nvim_buf_get_option,
+  api.nvim_exec_autocmds
 local uv = vim.loop
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local validate = vim.validate
@@ -79,7 +79,7 @@ end
 local function resolve_bufnr(bufnr)
   validate({ bufnr = { bufnr, 'n', true } })
   if bufnr == nil or bufnr == 0 then
-    return a.nvim_get_current_buf()
+    return api.nvim_get_current_buf()
   end
   return bufnr
 end
@@ -505,7 +505,7 @@ do
         end
         buf_state.pending_change = nil
         buf_state.last_flush = uv.hrtime()
-        if client.is_stopped() or not a.nvim_buf_is_valid(bufnr) then
+        if client.is_stopped() or not api.nvim_buf_is_valid(bufnr) then
           return
         end
         local changes = state.use_incremental_sync and buf_state.pending_changes
@@ -572,7 +572,7 @@ local function text_document_did_open_handler(bufnr, client)
   if not vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
     return
   end
-  if not a.nvim_buf_is_loaded(bufnr) then
+  if not api.nvim_buf_is_loaded(bufnr) then
     return
   end
   local filetype = nvim_buf_get_option(bufnr, 'filetype')
@@ -592,7 +592,7 @@ local function text_document_did_open_handler(bufnr, client)
   vim.schedule(function()
     -- Protect against a race where the buffer disappears
     -- between `did_open_handler` and the scheduled function firing.
-    if a.nvim_buf_is_valid(bufnr) then
+    if api.nvim_buf_is_valid(bufnr) then
       local namespace = vim.lsp.diagnostic.get_namespace(client.id)
       vim.diagnostic.show(namespace, bufnr)
     end
@@ -738,7 +738,7 @@ function lsp.start(config, opts)
       return client.config.root_dir == conf.root_dir and client.name == conf.name
     end
   config.name = config.name or (config.cmd[1] and vim.fs.basename(config.cmd[1])) or nil
-  local bufnr = a.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
   for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
     for _, client in pairs(clients) do
       if reuse_client(client, config) then
@@ -1433,7 +1433,7 @@ function lsp.buf_attach_client(bufnr, client_id)
     client_id = { client_id, 'n' },
   })
   bufnr = resolve_bufnr(bufnr)
-  if not a.nvim_buf_is_loaded(bufnr) then
+  if not api.nvim_buf_is_loaded(bufnr) then
     local _ = log.warn()
       and log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
     return false
@@ -1451,9 +1451,9 @@ function lsp.buf_attach_client(bufnr, client_id)
         au BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)
       augroup END
     ]=]
-    a.nvim_exec(string.format(buf_did_save_autocommand, client_id, bufnr, bufnr), false)
+    api.nvim_exec(string.format(buf_did_save_autocommand, client_id, bufnr, bufnr), false)
     -- First time, so attach and set up stuff.
-    a.nvim_buf_attach(bufnr, false, {
+    api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler,
       on_reload = function()
         local params = { textDocument = { uri = uri } }
@@ -1888,8 +1888,8 @@ function lsp.omnifunc(findstart, base)
   -- Then, perform standard completion request
   local _ = log.info() and log.info('base ', base)
 
-  local pos = a.nvim_win_get_cursor(0)
-  local line = a.nvim_get_current_line()
+  local pos = api.nvim_win_get_cursor(0)
+  local line = api.nvim_get_current_line()
   local line_to_cursor = line:sub(1, pos[2])
   local _ = log.trace() and log.trace('omnifunc.line', pos, line)
 
