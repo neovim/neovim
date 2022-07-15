@@ -839,6 +839,10 @@ func Test_sub_with_no_last_pat()
   call delete('Xresult')
 endfunc
 
+func Test_substitute()
+  call assert_equal('a１a２a３a', substitute('１２３', '\zs', 'a', 'g'))
+endfunc
+
 func Test_submatch_list_concatenate()
   let pat = 'A\(.\)'
   let Rep = {-> string([submatch(0, 1)] + [[submatch(1)]])}
