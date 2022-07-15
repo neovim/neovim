@@ -1652,20 +1652,6 @@ func Test_cmdline_inputmethod()
   %bwipe!
 endfunc
 
-" Test for opening the command-line window when too many windows are present
-func Test_cmdwin_fail_to_open()
-  " Open as many windows as possible
-  for i in range(100)
-    try
-      new
-    catch /E36:/
-      break
-    endtry
-  endfor
-  call assert_beeps('call feedkeys("q:\<CR>", "xt")')
-  only
-endfunc
-
 " Test for recursively getting multiple command line inputs
 func Test_cmdwin_multi_input()
   call feedkeys(":\<C-R>=input('P: ')\<CR>\"cyan\<CR>\<CR>", 'xt')

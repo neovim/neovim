@@ -927,6 +927,114 @@ func Test_split_cmd()
   close
 endfunc
 
+" Create maximum number of horizontally or vertically split windows and then
+" run commands that create a new horizontally/vertically split window
+func Run_noroom_for_newwindow_test(dir_arg)
+  let dir = (a:dir_arg == 'v') ? 'vert ' : ''
+
+  " Open as many windows as possible
+  for i in range(500)
+    try
+      exe dir . 'new'
+    catch /E36:/
+      break
+    endtry
+  endfor
+
+  call writefile(['first', 'second', 'third'], 'Xfile1')
+  call writefile([], 'Xfile2')
+  call writefile([], 'Xfile3')
+
+  " Argument list related commands
+  args Xfile1 Xfile2 Xfile3
+  next
+  for cmd in ['sargument 2', 'snext', 'sprevious', 'sNext', 'srewind',
+			\ 'sfirst', 'slast']
+    call assert_fails(dir .. cmd, 'E36:')
+  endfor
+  %argdelete
+
+  " Buffer related commands
+  set modified
+  hide enew
+  for cmd in ['sbuffer Xfile1', 'sbnext', 'sbprevious', 'sbNext', 'sbrewind',
+		\ 'sbfirst', 'sblast', 'sball', 'sbmodified', 'sunhide']
+    call assert_fails(dir .. cmd, 'E36:')
+  endfor
+
+  " Window related commands
+  for cmd in ['split', 'split Xfile2', 'new', 'new Xfile3', 'sview Xfile1',
+		\ 'sfind runtest.vim']
+    call assert_fails(dir .. cmd, 'E36:')
+  endfor
+
+  " Help
+  call assert_fails(dir .. 'help', 'E36:')
+  call assert_fails(dir .. 'helpgrep window', 'E36:')
+
+  " Command-line window
+  if a:dir_arg == 'h'
+    " Cmd-line window is always a horizontally split window
+    call assert_beeps('call feedkeys("q:\<CR>", "xt")')
+  endif
+
+  " Quickfix and location list window
+  if has('quickfix')
+    cexpr ''
+    call assert_fails(dir .. 'copen', 'E36:')
+    lexpr ''
+    call assert_fails(dir .. 'lopen', 'E36:')
+
+    " Preview window
+    call assert_fails(dir .. 'pedit Xfile2', 'E36:')
+    call setline(1, 'abc')
+    call assert_fails(dir .. 'psearch abc', 'E36:')
+  endif
+
+  " Window commands (CTRL-W ^ and CTRL-W f)
+  if a:dir_arg == 'h'
+    call assert_fails('call feedkeys("\<C-W>^", "xt")', 'E36:')
+    call setline(1, 'Xfile1')
+    call assert_fails('call feedkeys("gg\<C-W>f", "xt")', 'E36:')
+  endif
+  enew!
+
+  " Tag commands (:stag, :stselect and :stjump)
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "second\tXfile1\t2",
+        \ "third\tXfile1\t3",],
+        \ 'Xtags')
+  set tags=Xtags
+  call assert_fails(dir .. 'stag second', 'E36:')
+  call assert_fails('call feedkeys(":" .. dir .. "stselect second\n1\n", "xt")', 'E36:')
+  call assert_fails(dir .. 'stjump second', 'E36:')
+  call assert_fails(dir .. 'ptag second', 'E36:')
+  set tags&
+  call delete('Xtags')
+
+  " :isplit and :dsplit
+  call setline(1, ['#define FOO 1', 'FOO'])
+  normal 2G
+  call assert_fails(dir .. 'isplit FOO', 'E36:')
+  call assert_fails(dir .. 'dsplit FOO', 'E36:')
+
+  " terminal
+  if has('terminal')
+    call assert_fails(dir .. 'terminal', 'E36:')
+  endif
+
+  %bwipe!
+  call delete('Xfile1')
+  call delete('Xfile2')
+  call delete('Xfile3')
+  only
+endfunc
+
+func Test_split_cmds_with_no_room()
+  call Run_noroom_for_newwindow_test('h')
+  call Run_noroom_for_newwindow_test('v')
+endfunc
+
 func Test_window_resize()
   throw 'Skipped: Nvim supports cmdheight=0'
   " Vertical :resize (absolute, relative, min and max size).
