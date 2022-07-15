@@ -2,29 +2,9 @@ local vim = vim
 local a = vim.api
 local validate = vim.validate
 local util = require('vim.lsp.util')
+local npcall = vim.F.npcall
 
 local M = {}
-
----@private
---- Returns nil if {status} is false or nil, otherwise returns the rest of the
---- arguments.
-local function ok_or_nil(status, ...)
-  if not status then
-    return
-  end
-  return ...
-end
-
----@private
---- Swallows errors.
----
----@param fn Function to run
----@param ... Function arguments
----@returns Result of `fn(...)` if there are no errors, otherwise nil.
---- Returns nil if errors occur during {fn}, otherwise returns
-local function npcall(fn, ...)
-  return ok_or_nil(pcall(fn, ...))
-end
 
 ---@private
 --- Sends an async request to all active clients attached to the current
