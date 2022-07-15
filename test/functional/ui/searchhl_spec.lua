@@ -5,6 +5,7 @@ local command = helpers.command
 local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
+local funcs = helpers.funcs
 local testprg = helpers.testprg
 
 describe('search highlighting', function()
@@ -321,100 +322,101 @@ describe('search highlighting', function()
   end)
 
   it('works with incsearch', function()
-    feed_command('set hlsearch')
-    feed_command('set incsearch')
+    command('set hlsearch')
+    command('set incsearch')
+    command('set laststatus=0')
     insert([[
       the first line
-      in a little file
-    ]])
+      in a little file]])
+    command('vsplit')
     feed("gg/li")
     screen:expect([[
-        the first {3:li}ne                        |
-        in a {2:li}ttle file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first {3:li}ne      │the first {2:li}ne     |
+      in a {2:li}ttle file    │in a {2:li}ttle file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /li^                                     |
     ]])
 
     -- check that consecutive matches are caught by C-g/C-t
     feed("<C-g>")
     screen:expect([[
-        the first {2:li}ne                        |
-        in a {3:li}ttle file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first {2:li}ne      │the first {2:li}ne     |
+      in a {3:li}ttle file    │in a {2:li}ttle file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /li^                                     |
     ]])
 
     feed("<C-t>")
     screen:expect([[
-        the first {3:li}ne                        |
-        in a {2:li}ttle file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first {3:li}ne      │the first {2:li}ne     |
+      in a {2:li}ttle file    │in a {2:li}ttle file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /li^                                     |
     ]])
 
     feed("t")
     screen:expect([[
-        the first line                        |
-        in a {3:lit}tle file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first line      │the first line     |
+      in a {3:lit}tle file    │in a {2:lit}tle file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /lit^                                    |
     ]])
 
     feed("<cr>")
     screen:expect([[
-        the first line                        |
-        in a {2:^lit}tle file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first line      │the first line     |
+      in a {2:^lit}tle file    │in a {2:lit}tle file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /lit                                    |
     ]])
 
     feed("/fir")
     screen:expect([[
-        the {3:fir}st line                        |
-        in a little file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the {3:fir}st line      │the {2:fir}st line     |
+      in a little file    │in a little file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /fir^                                    |
     ]])
 
     -- incsearch have priority over hlsearch
     feed("<esc>/ttle")
     screen:expect([[
-        the first line                        |
-        in a li{3:ttle} file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first line      │the first line     |
+      in a li{3:ttle} file    │in a li{2:ttle} file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /ttle^                                   |
     ]])
 
     -- cancelling search resets to the old search term
     feed('<esc>')
     screen:expect([[
-        the first line                        |
-        in a {2:^lit}tle file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first line      │the first line     |
+      in a {2:^lit}tle file    │in a {2:lit}tle file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
                                               |
     ]])
     eq('lit', eval('@/'))
@@ -422,91 +424,78 @@ describe('search highlighting', function()
     -- cancelling inc search restores the hl state
     feed(':noh<cr>')
     screen:expect([[
-        the first line                        |
-        in a ^little file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first line      │the first line     |
+      in a ^little file    │in a little file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       :noh                                    |
     ]])
 
     feed('/first')
     screen:expect([[
-        the {3:first} line                        |
-        in a little file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the {3:first} line      │the {2:first} line     |
+      in a little file    │in a little file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       /first^                                  |
     ]])
     feed('<esc>')
     screen:expect([[
-        the first line                        |
-        in a ^little file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the first line      │the first line     |
+      in a ^little file    │in a little file   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
                                               |
     ]])
 
     -- test that pressing C-g in an empty command line does not move the cursor
-    feed('/<C-g>')
-    screen:expect([[
-        the first line                        |
-        in a little file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      /^                                       |
-    ]])
-
-    -- same, for C-t
-    feed('<ESC>')
-    screen:expect([[
-        the first line                        |
-        in a ^little file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-                                              |
-    ]])
-    feed('/<C-t>')
-    screen:expect([[
-        the first line                        |
-        in a little file                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      /^                                       |
-    ]])
+    feed('gg0')
+    command([[let @/ = 'i']])
+    -- moves to next match of previous search pattern, just like /<cr>
+    feed('/<c-g><cr>')
+    eq({0, 1, 6, 0}, funcs.getpos('.'))
+    -- moves to next match of previous search pattern, just like /<cr>
+    feed('/<cr>')
+    eq({0, 1, 12, 0}, funcs.getpos('.'))
+    -- moves to next match of previous search pattern, just like /<cr>
+    feed('/<c-t><cr>')
+    eq({0, 2, 1, 0}, funcs.getpos('.'))
 
     -- 8.0.1304, test that C-g and C-t works with incsearch and empty pattern
     feed('<esc>/fi<CR>')
+    screen:expect([[
+      the {2:fi}rst line      │the {2:fi}rst line     |
+      in a little {2:^fi}le    │in a little {2:fi}le   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      /fi                                     |
+    ]])
     feed('//')
     screen:expect([[
-        the {3:fi}rst line                        |
-        in a little {2:fi}le                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the {3:fi}rst line      │the {2:fi}rst line     |
+      in a little {2:fi}le    │in a little {2:fi}le   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       //^                                      |
     ]])
-
     feed('<C-g>')
     screen:expect([[
-        the {2:fi}rst line                        |
-        in a little {3:fi}le                      |
-                                              |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      the {2:fi}rst line      │the {2:fi}rst line     |
+      in a little {3:fi}le    │in a little {2:fi}le   |
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|
       //^                                      |
     ]])
   end)
