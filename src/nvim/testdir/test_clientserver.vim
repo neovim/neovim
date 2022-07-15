@@ -39,6 +39,8 @@ func Test_client_server()
   call remote_send(name, ":let testvar = 'yes'\<CR>")
   call WaitFor('remote_expr("' . name . '", "exists(\"testvar\") ? testvar : \"\"", "", 1) == "yes"')
   call assert_equal('yes', remote_expr(name, "testvar", "", 2))
+  call assert_fails("let x=remote_expr(name, '2+x')", 'E449:')
+  call assert_fails("let x=remote_expr('[], '2+2')", 'E116:')
 
   if has('unix') && has('gui') && !has('gui_running')
     " Running in a terminal and the GUI is available: Tell the server to open
@@ -75,6 +77,7 @@ func Test_client_server()
     eval 'MYSELF'->remote_startserver()
     " May get MYSELF1 when running the test again.
     call assert_match('MYSELF', v:servername)
+    call assert_fails("call remote_startserver('MYSELF')", 'E941:')
   endif
   let g:testvar = 'myself'
   call assert_equal('myself', remote_expr(v:servername, 'testvar'))
@@ -107,7 +110,12 @@ func Test_client_server()
       call job_stop(job, 'kill')
     endif
   endtry
+
+  call assert_fails("let x=remote_peek([])", 'E730:')
+  call assert_fails("let x=remote_read('vim10')", 'E277:')
 endfunc
 
 " Uncomment this line to get a debugging log
 " call ch_logfile('channellog', 'w')
+
+" vim: shiftwidth=2 sts=2 expandtab

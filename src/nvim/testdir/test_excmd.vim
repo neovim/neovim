@@ -547,6 +547,71 @@ func Test_excmd_delete()
   close!
 endfunc
 
+" Test for commands that are blocked in a sandbox
+func Sandbox_tests()
+  call assert_fails("call histadd(':', 'ls')", 'E48:')
+  call assert_fails("call mkdir('Xdir')", 'E48:')
+  call assert_fails("call rename('a', 'b')", 'E48:')
+  call assert_fails("call setbufvar(1, 'myvar', 1)", 'E48:')
+  call assert_fails("call settabvar(1, 'myvar', 1)", 'E48:')
+  call assert_fails("call settabwinvar(1, 1, 'myvar', 1)", 'E48:')
+  call assert_fails("call setwinvar(1, 'myvar', 1)", 'E48:')
+  call assert_fails("call timer_start(100, '')", 'E48:')
+  if has('channel')
+    call assert_fails("call prompt_setcallback(1, '')", 'E48:')
+    call assert_fails("call prompt_setinterrupt(1, '')", 'E48:')
+    call assert_fails("call prompt_setprompt(1, '')", 'E48:')
+  endif
+  call assert_fails("let $TESTVAR=1", 'E48:')
+  call assert_fails("call feedkeys('ivim')", 'E48:')
+  call assert_fails("source! Xfile", 'E48:')
+  call assert_fails("call delete('Xfile')", 'E48:')
+  call assert_fails("call writefile([], 'Xfile')", 'E48:')
+  call assert_fails('!ls', 'E48:')
+  " call assert_fails('shell', 'E48:')
+  call assert_fails('stop', 'E48:')
+  call assert_fails('exe "normal \<C-Z>"', 'E48:')
+  " set insertmode
+  " call assert_fails('call feedkeys("\<C-Z>", "xt")', 'E48:')
+  " set insertmode&
+  call assert_fails('suspend', 'E48:')
+  call assert_fails('call system("ls")', 'E48:')
+  call assert_fails('call systemlist("ls")', 'E48:')
+  if has('clientserver')
+    call assert_fails('let s=remote_expr("gvim", "2+2")', 'E48:')
+    if !has('win32')
+      " remote_foreground() doesn't thrown an error message on MS-Windows
+      call assert_fails('call remote_foreground("gvim")', 'E48:')
+    endif
+    call assert_fails('let s=remote_peek("gvim")', 'E48:')
+    call assert_fails('let s=remote_read("gvim")', 'E48:')
+    call assert_fails('let s=remote_send("gvim", "abc")', 'E48:')
+    call assert_fails('let s=server2client("gvim", "abc")', 'E48:')
+  endif
+  if has('terminal')
+    call assert_fails('terminal', 'E48:')
+    call assert_fails('call term_start("vim")', 'E48:')
+    call assert_fails('call term_dumpwrite(1, "Xfile")', 'E48:')
+  endif
+  if has('channel')
+    call assert_fails("call ch_logfile('chlog')", 'E48:')
+    call assert_fails("call ch_open('localhost:8765')", 'E48:')
+  endif
+  if has('job')
+    call assert_fails("call job_start('vim')", 'E48:')
+  endif
+  if has('unix') && has('libcall')
+    call assert_fails("echo libcall('libc.so', 'getenv', 'HOME')", 'E48:')
+  endif
+  if has('unix')
+    call assert_fails('cd `pwd`', 'E48:')
+  endif
+endfunc
+
+func Test_sandbox()
+  sandbox call Sandbox_tests()
+endfunc
+
 func Test_not_break_expression_register()
   call setreg('=', '1+1')
   if 0

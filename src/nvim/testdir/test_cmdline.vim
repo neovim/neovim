@@ -1652,20 +1652,6 @@ func Test_cmdline_inputmethod()
   %bwipe!
 endfunc
 
-" Test for opening the command-line window when too many windows are present
-func Test_cmdwin_fail_to_open()
-  " Open as many windows as possible
-  for i in range(100)
-    try
-      new
-    catch /E36:/
-      break
-    endtry
-  endfor
-  call assert_beeps('call feedkeys("q:\<CR>", "xt")')
-  only
-endfunc
-
 " Test for recursively getting multiple command line inputs
 func Test_cmdwin_multi_input()
   call feedkeys(":\<C-R>=input('P: ')\<CR>\"cyan\<CR>\<CR>", 'xt')
@@ -1719,6 +1705,15 @@ func Test_cmdwin_blocked_commands()
   call assert_fails('call feedkeys("q:\<C-W>f\<CR>", "xt")', 'E11:')
   call assert_fails('call feedkeys("q:\<C-W>d\<CR>", "xt")', 'E11:')
   call assert_fails('call feedkeys("q:\<C-W>g\<CR>", "xt")', 'E11:')
+endfunc
+
+" Close the Cmd-line window in insert mode using CTRL-C
+func Test_cmdwin_insert_mode_close()
+  %bw!
+  let s = ''
+  exe "normal q:a\<C-C>let s='Hello'\<CR>"
+  call assert_equal('Hello', s)
+  call assert_equal(1, winnr('$'))
 endfunc
 
 " test that ";" works to find a match at the start of the first line

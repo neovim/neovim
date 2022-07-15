@@ -1,6 +1,8 @@
 " Test for various Normal mode commands
 
 source shared.vim
+source check.vim
+source view_util.vim
 
 func Setup_NewWindow()
   10new
@@ -3090,6 +3092,29 @@ func Test_normal_cpo_minus()
   call assert_fails(10, 'E16:')
   let &cpo = save_cpo
   close!
+endfunc
+
+" Test for displaying dollar when changing text ('$' flag in 'cpoptions')
+func Test_normal_cpo_dollar()
+  throw 'Skipped: use test/functional/legacy/cpoptions_spec.lua'
+  new
+  let g:Line = ''
+  func SaveFirstLine()
+    let g:Line = Screenline(1)
+    return ''
+  endfunc
+  inoremap <expr> <buffer> <F2> SaveFirstLine()
+  call test_override('redraw_flag', 1)
+  set cpo+=$
+  call setline(1, 'one two three')
+  redraw!
+  exe "normal c2w\<F2>vim"
+  call assert_equal('one tw$ three', g:Line)
+  call assert_equal('vim three', getline(1))
+  set cpo-=$
+  call test_override('ALL', 0)
+  delfunc SaveFirstLine
+  %bw!
 endfunc
 
 " Test for using : to run a multi-line Ex command in operator pending mode
