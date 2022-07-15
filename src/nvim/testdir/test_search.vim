@@ -19,9 +19,9 @@ func Test_search_cmdline()
   set noincsearch
   :1
   call feedkeys("/foobar\<cr>", 'tx')
-  call feedkeys("/the\<cr>",'tx')
+  call feedkeys("/the\<cr>", 'tx')
   call assert_equal('the', @/)
-  call feedkeys("/thes\<C-P>\<C-P>\<cr>",'tx')
+  call feedkeys("/thes\<C-P>\<C-P>\<cr>", 'tx')
   call assert_equal('foobar', @/)
 
   " Test 2
@@ -1484,7 +1484,7 @@ func Test_large_hex_chars2()
 endfunc
 
 func Test_one_error_msg()
-  " This  was also giving an internal error
+  " This was also giving an internal error
   call assert_fails('call search(" \\((\\v[[=P=]]){185}+             ")', 'E871:')
 endfunc
 
@@ -1527,6 +1527,20 @@ func Test_search_match_at_curpos()
   call assert_equal([3, 5], [line('.'), col('.')])
 
   close!
+endfunc
+
+" Test for error cases with the search() function
+func Test_search_errors()
+  call assert_fails("call search('pat', [])", 'E730:')
+  call assert_fails("call search('pat', 'b', {})", 'E728:')
+  call assert_fails("call search('pat', 'b', 1, [])", 'E745:')
+  call assert_fails("call search('pat', 'ns')", 'E475:')
+  call assert_fails("call search('pat', 'mr')", 'E475:')
+
+  new
+  call setline(1, ['foo', 'bar'])
+  call assert_fails('call feedkeys("/foo/;/bar/;\<CR>", "tx")', 'E386:')
+  bwipe!
 endfunc
 
 func Test_search_display_pattern()
