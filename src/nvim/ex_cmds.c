@@ -1990,7 +1990,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
            && vim_strchr(p_cpo, CPO_OVERNEW) == NULL)
        || (buf->b_flags & BF_READERR))
       && !p_wa
-      && !bt_nofile(buf)
+      && !bt_nofilename(buf)
       && os_path_exists((char_u *)ffname)) {
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX

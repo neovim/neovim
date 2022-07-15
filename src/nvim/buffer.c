@@ -5271,15 +5271,22 @@ bool bt_terminal(const buf_T *const buf)
   return buf != NULL && buf->b_p_bt[0] == 't';
 }
 
-/// @return  true if "buf" is a "nofile", "acwrite", "terminal" or "prompt" /
+/// @return  true if "buf" is a "nofile", "acwrite", "terminal" or "prompt"
 ///          buffer.  This means the buffer name is not a file name.
-bool bt_nofile(const buf_T *const buf)
+bool bt_nofilename(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
                          || buf->b_p_bt[0] == 'a'
                          || buf->terminal
                          || buf->b_p_bt[0] == 'p');
+}
+
+/// @return  true if "buf" has 'buftype' set to "nofile".
+bool bt_nofile(const buf_T *const buf)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return buf != NULL && buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f';
 }
 
 /// @return  true if "buf" is a "nowrite", "nofile", "terminal" or "prompt"
@@ -5333,7 +5340,7 @@ char *buf_spname(buf_T *buf)
   }
   // There is no _file_ when 'buftype' is "nofile", b_sfname
   // contains the name as specified by the user.
-  if (bt_nofile(buf)) {
+  if (bt_nofilename(buf)) {
     if (buf->b_fname != NULL) {
       return buf->b_fname;
     }

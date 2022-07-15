@@ -2286,7 +2286,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       && reset_changed
       && whole
       && buf == curbuf
-      && !bt_nofile(buf)
+      && !bt_nofilename(buf)
       && !filtering
       && (!append || vim_strchr(p_cpo, CPO_FNAMEAPP) != NULL)
       && vim_strchr(p_cpo, CPO_FNAMEW) != NULL) {
@@ -2360,22 +2360,22 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
     if (append) {
       if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEAPPENDCMD,
-                                           sfname, sfname, FALSE, curbuf, eap))) {
-        if (overwriting && bt_nofile(curbuf)) {
-          nofile_err = TRUE;
+                                           sfname, sfname, false, curbuf, eap))) {
+        if (overwriting && bt_nofilename(curbuf)) {
+          nofile_err = true;
         } else {
           apply_autocmds_exarg(EVENT_FILEAPPENDPRE,
-                               sfname, sfname, FALSE, curbuf, eap);
+                               sfname, sfname, false, curbuf, eap);
         }
       }
     } else if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERWRITEPRE,
-                           NULL, sfname, FALSE, curbuf, eap);
+                           NULL, sfname, false, curbuf, eap);
     } else if (reset_changed && whole) {
       int was_changed = curbufIsChanged();
 
       did_cmd = apply_autocmds_exarg(EVENT_BUFWRITECMD,
-                                     sfname, sfname, FALSE, curbuf, eap);
+                                     sfname, sfname, false, curbuf, eap);
       if (did_cmd) {
         if (was_changed && !curbufIsChanged()) {
           /* Written everything correctly and BufWriteCmd has reset
@@ -2385,21 +2385,21 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
           u_update_save_nr(curbuf);
         }
       } else {
-        if (overwriting && bt_nofile(curbuf)) {
-          nofile_err = TRUE;
+        if (overwriting && bt_nofilename(curbuf)) {
+          nofile_err = true;
         } else {
           apply_autocmds_exarg(EVENT_BUFWRITEPRE,
-                               sfname, sfname, FALSE, curbuf, eap);
+                               sfname, sfname, false, curbuf, eap);
         }
       }
     } else {
       if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD,
-                                           sfname, sfname, FALSE, curbuf, eap))) {
-        if (overwriting && bt_nofile(curbuf)) {
-          nofile_err = TRUE;
+                                           sfname, sfname, false, curbuf, eap))) {
+        if (overwriting && bt_nofilename(curbuf)) {
+          nofile_err = true;
         } else {
           apply_autocmds_exarg(EVENT_FILEWRITEPRE,
-                               sfname, sfname, FALSE, curbuf, eap);
+                               sfname, sfname, false, curbuf, eap);
         }
       }
     }
@@ -4306,7 +4306,7 @@ void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
   char *p;
 
   if (buf->b_fname != NULL
-      && !bt_nofile(buf)
+      && !bt_nofilename(buf)
       && !path_with_url(buf->b_fname)
       && (force
           || buf->b_sfname == NULL
