@@ -2656,7 +2656,7 @@ func Test_normal49_counts()
 endfunc
 
 func Test_normal50_commandline()
-  if !has("timers") || !has("cmdline_hist") || !has("vertsplit")
+  if !has("timers") || !has("cmdline_hist")
     return
   endif
   func! DoTimerWork(id)

@@ -786,8 +786,7 @@ void curs_columns(win_T *wp, int may_scroll)
     } else {
       wp->w_wrow = wp->w_height_inner - 1 - wp->w_empty_rows;
     }
-  } else if (wp->w_p_wrap
-             && wp->w_width_inner != 0) {
+  } else if (wp->w_p_wrap && wp->w_width_inner != 0) {
     width = textwidth + win_col_off2(wp);
 
     // long line wrapping, adjust wp->w_wrow
@@ -1083,8 +1082,7 @@ bool scrolldown(long line_count, int byfold)
    * and move the cursor onto the displayed part of the window.
    */
   int wrow = curwin->w_wrow;
-  if (curwin->w_p_wrap
-      && curwin->w_width_inner != 0) {
+  if (curwin->w_p_wrap && curwin->w_width_inner != 0) {
     validate_virtcol();
     validate_cheight();
     wrow += curwin->w_cline_height - 1 -

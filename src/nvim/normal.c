@@ -6012,8 +6012,7 @@ static void nv_g_home_m_cmd(cmdarg_T *cap)
 
   cap->oap->motion_type = kMTCharWise;
   cap->oap->inclusive = false;
-  if (curwin->w_p_wrap
-      && curwin->w_width_inner != 0) {
+  if (curwin->w_p_wrap && curwin->w_width_inner != 0) {
     int width1 = curwin->w_width_inner - curwin_col_off();
     int width2 = width1 + curwin_col_off2();
 

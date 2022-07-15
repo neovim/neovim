@@ -1018,8 +1018,7 @@ void check_arg_idx(win_T *win)
     // We are editing the current entry in the argument list.
     // Set "arg_had_last" if it's also the last one
     win->w_arg_idx_invalid = false;
-    if (win->w_arg_idx == WARGCOUNT(win) - 1
-        && win->w_alist == &global_alist) {
+    if (win->w_arg_idx == WARGCOUNT(win) - 1 && win->w_alist == &global_alist) {
       arg_had_last = true;
     }
   }
@@ -1150,8 +1149,7 @@ void do_argfile(exarg_T *eap, int argn)
     }
 
     curwin->w_arg_idx = argn;
-    if (argn == ARGCOUNT - 1
-        && curwin->w_alist == &global_alist) {
+    if (argn == ARGCOUNT - 1 && curwin->w_alist == &global_alist) {
       arg_had_last = true;
     }
 
