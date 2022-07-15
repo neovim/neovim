@@ -4343,7 +4343,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
 
   if (options[opt_idx].flags & P_UI_OPTION) {
     ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                       BOOLEAN_OBJ(value));
+                       BOOLEAN_OBJ(*varp));
   }
 
   comp_col();                       // in case 'ruler' or 'showcmd' changed
