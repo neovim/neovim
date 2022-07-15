@@ -488,25 +488,13 @@ void trunc_string(char *s, char *buf, int room_in, int buflen)
 int smsg(const char *s, ...)
   FUNC_ATTR_PRINTF(1, 2)
 {
-  if (!ui_has_messages()) {
-    // Use emsg() instead.  Because msg() does not work if no command line area
-    bool ret;
-    va_list arglist;
+  va_list arglist;
 
-    va_start(arglist, s);
-    ret = semsgv(s, arglist);
-    va_end(arglist);
+  va_start(arglist, s);
+  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
+  va_end(arglist);
 
-    return ret;
-  } else {
-    va_list arglist;
-
-    va_start(arglist, s);
-    vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
-    va_end(arglist);
-
-    return msg((char *)IObuff);
-  }
+  return msg((char *)IObuff);
 }
 
 int smsg_attr(int attr, const char *s, ...)
