@@ -86,7 +86,6 @@ describe('UI receives option updates', function()
     screen:expect(function()
       eq(expected, screen.options)
     end)
-    
     command("set pumblend=-1")
     expected.pumblend = 0
     screen:expect(function()
