@@ -19,9 +19,9 @@ func Test_search_cmdline()
   set noincsearch
   :1
   call feedkeys("/foobar\<cr>", 'tx')
-  call feedkeys("/the\<cr>",'tx')
+  call feedkeys("/the\<cr>", 'tx')
   call assert_equal('the', @/)
-  call feedkeys("/thes\<C-P>\<C-P>\<cr>",'tx')
+  call feedkeys("/thes\<C-P>\<C-P>\<cr>", 'tx')
   call assert_equal('foobar', @/)
 
   " Test 2
@@ -655,10 +655,49 @@ func Test_search_cmdline7()
   bw!
 endfunc
 
-" Tests for regexp with various magic settings
-func Test_search_regexp()
-  enew!
+func Test_search_cmdline8()
+  " Highlighting is cleared in all windows
+  " since hls applies to all windows
+  CheckOption incsearch
+  CheckFeature terminal
+  CheckNotGui
+  if has("win32")
+    throw "Skipped: Bug with sending <ESC> to terminal window not fixed yet"
+  endif
 
+  let h = winheight(0)
+  if h < 3
+    return
+  endif
+  " Prepare buffer text
+  let lines = ['abb vim vim vi', 'vimvivim']
+  call writefile(lines, 'Xsearch.txt')
+  let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile', 'Xsearch.txt'], {'term_rows': 3})
+
+  call WaitForAssert({-> assert_equal(lines, [term_getline(buf, 1), term_getline(buf, 2)])})
+
+  call term_sendkeys(buf, ":set incsearch hlsearch\<cr>")
+  call term_sendkeys(buf, ":14vsp\<cr>")
+  call term_sendkeys(buf, "/vim\<cr>")
+  call term_sendkeys(buf, "/b\<esc>")
+  call term_sendkeys(buf, "gg0")
+  call TermWait(buf, 250)
+  let screen_line = term_scrape(buf, 1)
+  let [a0,a1,a2,a3] = [screen_line[3].attr, screen_line[4].attr,
+        \ screen_line[18].attr, screen_line[19].attr]
+  call assert_notequal(a0, a1)
+  call assert_notequal(a0, a3)
+  call assert_notequal(a1, a2)
+  call assert_equal(a0, a2)
+  call assert_equal(a1, a3)
+  " clean up
+  call delete('Xsearch.txt')
+
+  bwipe!
+endfunc
+
+" Tests for regexp with various magic settings
+func Run_search_regexp_magic_opt()
   put ='1 a aa abb abbccc'
   exe 'normal! /a*b\{2}c\+/e' . "\<CR>"
   call assert_equal([0, 2, 17, 0], getpos('.'))
@@ -693,6 +732,18 @@ func Test_search_regexp()
   exe 'normal! /\V[ab]\(\[xy]\)\1' . "\<CR>"
   call assert_equal([0, 9, 7, 0], getpos('.'))
 
+  %d
+endfunc
+
+func Test_search_regexp()
+  enew!
+
+  set regexpengine=1
+  call Run_search_regexp_magic_opt()
+  set regexpengine=2
+  call Run_search_regexp_magic_opt()
+  set regexpengine&
+
   set undolevels=100
   put ='9 foobar'
   put =''
@@ -700,12 +751,12 @@ func Test_search_regexp()
   normal G
   exe 'normal! dv?bar?' . "\<CR>"
   call assert_equal('9 foo', getline('.'))
-  call assert_equal([0, 10, 5, 0], getpos('.'))
-  call assert_equal(10, line('$'))
+  call assert_equal([0, 2, 5, 0], getpos('.'))
+  call assert_equal(2, line('$'))
   normal u
   call assert_equal('9 foobar', getline('.'))
-  call assert_equal([0, 10, 6, 0], getpos('.'))
-  call assert_equal(11, line('$'))
+  call assert_equal([0, 2, 6, 0], getpos('.'))
+  call assert_equal(3, line('$'))
 
   set undolevels&
   enew!
@@ -1433,7 +1484,7 @@ func Test_large_hex_chars2()
 endfunc
 
 func Test_one_error_msg()
-  " This  was also giving an internal error
+  " This was also giving an internal error
   call assert_fails('call search(" \\((\\v[[=P=]]){185}+             ")', 'E871:')
 endfunc
 
@@ -1476,6 +1527,20 @@ func Test_search_match_at_curpos()
   call assert_equal([3, 5], [line('.'), col('.')])
 
   close!
+endfunc
+
+" Test for error cases with the search() function
+func Test_search_errors()
+  call assert_fails("call search('pat', [])", 'E730:')
+  call assert_fails("call search('pat', 'b', {})", 'E728:')
+  call assert_fails("call search('pat', 'b', 1, [])", 'E745:')
+  call assert_fails("call search('pat', 'ns')", 'E475:')
+  call assert_fails("call search('pat', 'mr')", 'E475:')
+
+  new
+  call setline(1, ['foo', 'bar'])
+  call assert_fails('call feedkeys("/foo/;/bar/;\<CR>", "tx")', 'E386:')
+  bwipe!
 endfunc
 
 func Test_search_display_pattern()
@@ -1625,6 +1690,46 @@ func Test_searchforward_var()
   normal N
   call assert_equal(1, line('.'))
   close!
+endfunc
+
+" Test for invalid regular expressions
+func Test_invalid_regexp()
+  set regexpengine=1
+  call assert_fails("call search(repeat('\\(.\\)', 10))", 'E51:')
+  call assert_fails("call search('\\%(')", 'E53:')
+  call assert_fails("call search('\\(')", 'E54:')
+  call assert_fails("call search('\\)')", 'E55:')
+  call assert_fails("call search('x\\@#')", 'E59:')
+  call assert_fails('call search(''\v%(%(%(%(%(%(%(%(%(%(%(a){1}){1}){1}){1}){1}){1}){1}){1}){1}){1}){1}'')', 'E60:')
+  call assert_fails("call search('a\\+*')", 'E61:')
+  call assert_fails("call search('\\_m')", 'E63:')
+  call assert_fails("call search('\\+')", 'E64:')
+  call assert_fails("call search('\\1')", 'E65:')
+  call assert_fails("call search('\\z\\(\\)')", 'E66:')
+  call assert_fails("call search('\\z2')", 'E67:')
+  call assert_fails("call search('\\zx')", 'E68:')
+  call assert_fails("call search('\\%[ab')", 'E69:')
+  call assert_fails("call search('\\%[]')", 'E70:')
+  call assert_fails("call search('\\%a')", 'E71:')
+  call assert_fails("call search('ab\\%[\\(cd\\)]')", 'E369:')
+  call assert_fails("call search('ab\\%[\\%(cd\\)]')", 'E369:')
+  set regexpengine=2
+  call assert_fails("call search('\\_')", 'E865:')
+  call assert_fails("call search('\\+')", 'E866:')
+  call assert_fails("call search('\\zx')", 'E867:')
+  call assert_fails("call search('\\%a')", 'E867:')
+  call assert_fails("call search('x\\@#')", 'E869:')
+  call assert_fails("call search(repeat('\\(.\\)', 10))", 'E872:')
+  call assert_fails("call search('\\_m')", 'E877:')
+  call assert_fails("call search('\\%(')", 'E53:')
+  call assert_fails("call search('\\(')", 'E54:')
+  call assert_fails("call search('\\)')", 'E55:')
+  call assert_fails("call search('\\z\\(\\)')", 'E66:')
+  call assert_fails("call search('\\%[ab')", 'E69:')
+  call assert_fails("call search('\\%[]')", 'E70:')
+  call assert_fails("call search('\\%9999999999999999999999999999v')", 'E951:')
+  set regexpengine&
+  call assert_fails("call search('\\%#=3ab')", 'E864:')
 endfunc
 
 " Test 'smartcase' with utf-8.
