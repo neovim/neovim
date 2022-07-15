@@ -1863,6 +1863,7 @@ parse_line:
         // For "normal" tags: Do a quick check if the tag matches.
         // This speeds up tag searching a lot!
         if (orgpat.headlen) {
+          memset(&tagp, 0, sizeof(tagp));
           tagp.tagname = lbuf;
           tagp.tagname_end = (char_u *)vim_strchr((char *)lbuf, TAB);
           if (tagp.tagname_end == NULL) {
@@ -2784,7 +2785,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
     // A :ta from a help file will keep the b_help flag set.  For ":ptag"
     // we need to use the flag from the window where we came from.
     if (l_g_do_tagpreview != 0) {
-      keep_help_flag = curwin_save->w_buffer->b_help;
+      keep_help_flag = bt_help(curwin_save->w_buffer);
     } else {
       keep_help_flag = curbuf->b_help;
     }

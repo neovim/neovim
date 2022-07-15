@@ -4862,8 +4862,7 @@ void ex_help(exarg_T *eap)
    * Re-use an existing help window or open a new one.
    * Always open a new one for ":tab help".
    */
-  if (!bt_help(curwin->w_buffer)
-      || cmdmod.cmod_tab != 0) {
+  if (!bt_help(curwin->w_buffer) || cmdmod.cmod_tab != 0) {
     if (cmdmod.cmod_tab != 0) {
       wp = NULL;
     } else {

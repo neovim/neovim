@@ -443,6 +443,7 @@ bool close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last, bool i
     return false;
   }
 
+  // check no autocommands closed the window
   if (win != NULL  // Avoid bogus clang warning.
       && win_valid_any_tab(win)) {
     // Set b_last_cursor when closing the last window for the buffer.
