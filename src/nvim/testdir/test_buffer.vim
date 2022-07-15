@@ -146,6 +146,7 @@ endfunc
 func Test_bdelete_cmd()
   %bwipe!
   call assert_fails('bdelete 5', 'E516:')
+  call assert_fails('1,1bdelete 1 2', 'E488:')
 
   " Deleting a unlisted and unloaded buffer
   edit Xfile1

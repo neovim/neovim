@@ -94,10 +94,18 @@ static char *e_buflocked = N_("E937: Attempt to delete a buffer that is in use")
 // Number of times free_buffer() was called.
 static int buf_free_count = 0;
 
+static int top_file_num = 1;            ///< highest file number
+
 typedef enum {
   kBffClearWinInfo = 1,
   kBffInitChangedtick = 2,
 } BufFreeFlags;
+
+/// @return  the highest possible buffer number
+int get_highest_fnum(void)
+{
+  return top_file_num - 1;
+}
 
 /// Read data from buffer for retrying.
 ///
@@ -1643,8 +1651,6 @@ void no_write_message_nobang(const buf_T *const buf)
 //
 // functions for dealing with the buffer list
 //
-
-static int top_file_num = 1;            ///< highest file number
 
 /// Initialize b:changedtick and changedtick_val attribute
 ///

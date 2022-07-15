@@ -172,6 +172,35 @@ func Test_window_split_edit_bufnr()
   %bw!
 endfunc
 
+func Test_window_split_no_room()
+  " N horizontal windows need >= 2*N + 1 lines:
+  " - 1 line + 1 status line in each window
+  " - 1 Ex command line
+  "
+  " 2*N + 1 <= &lines
+  " N <= (lines - 1)/2
+  "
+  " Beyond that number of windows, E36: Not enough room is expected.
+  let hor_win_count = (&lines - 1)/2
+  let hor_split_count = hor_win_count - 1
+  for s in range(1, hor_split_count) | split | endfor
+  call assert_fails('split', 'E36:')
+
+  " N vertical windows need >= 2*(N - 1) + 1 columns:
+  " - 1 column + 1 separator for each window (except last window)
+  " - 1 column for the last window which does not have separator
+  "
+  " 2*(N - 1) + 1 <= &columns
+  " 2*N - 1 <= &columns
+  " N <= (&columns + 1)/2
+  let ver_win_count = (&columns + 1)/2
+  let ver_split_count = ver_win_count - 1
+  for s in range(1, ver_split_count) | vsplit | endfor
+  call assert_fails('vsplit', 'E36:')
+
+  %bw!
+endfunc
+
 func Test_window_exchange()
   e Xa
 
