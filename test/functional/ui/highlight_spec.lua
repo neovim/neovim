@@ -1848,8 +1848,7 @@ describe("'winhighlight' highlight", function()
     ]], unchanged=true}
   end)
 
-
-  it('works local to the buffer', function()
+  it('works local to the window', function()
     insert("aa")
     command("split")
     command("setlocal winhl=Normal:Background1")
@@ -2239,5 +2238,36 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
                           |
     ]]}
+  end)
+
+  it('can override StatusLine and StatusLineNC', function()
+    command('set winhighlight=StatusLine:Background1,StatusLineNC:Background2')
+    command('split')
+    screen:expect([[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {1:[No Name]           }|
+                          |
+      {0:~                   }|
+      {5:[No Name]           }|
+                          |
+    ]])
+  end)
+
+  it('can override WinBar and WinBarNC #19345', function()
+    command('setlocal winbar=foobar')
+    command('set winhighlight=WinBar:Background1,WinBarNC:Background2')
+    command('split')
+    screen:expect([[
+      {1:foobar              }|
+      ^                    |
+      {0:~                   }|
+      {3:[No Name]           }|
+      {5:foobar              }|
+                          |
+      {4:[No Name]           }|
+                          |
+    ]])
   end)
 end)
