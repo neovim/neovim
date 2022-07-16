@@ -203,7 +203,37 @@ func Test_message_more()
   call term_sendkeys(buf, 'q')
   call WaitForAssert({-> assert_equal('100', term_getline(buf, 5))})
 
-  call term_sendkeys(buf, ':q!')
+  call term_sendkeys(buf, ":q!\n")
+  call StopVimInTerminal(buf)
+endfunc
+
+func Test_ask_yesno()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot run vim in terminal'
+  endif
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, ":call setline(1, range(1, 2))\n")
+
+  call term_sendkeys(buf, ":2,1s/^/n/\n")
+  call WaitForAssert({-> assert_equal('Backwards range given, OK to swap (y/n)?', term_getline(buf, 6))})
+  call term_sendkeys(buf, "n")
+  call WaitForAssert({-> assert_match('^Backwards range given, OK to swap (y/n)?n *1,1 *All$', term_getline(buf, 6))})
+  call WaitForAssert({-> assert_equal('1', term_getline(buf, 1))})
+
+  call term_sendkeys(buf, ":2,1s/^/Esc/\n")
+  call WaitForAssert({-> assert_equal('Backwards range given, OK to swap (y/n)?', term_getline(buf, 6))})
+  call term_sendkeys(buf, "\<Esc>")
+  call WaitForAssert({-> assert_match('^Backwards range given, OK to swap (y/n)?n *1,1 *All$', term_getline(buf, 6))})
+  call WaitForAssert({-> assert_equal('1', term_getline(buf, 1))})
+
+  call term_sendkeys(buf, ":2,1s/^/y/\n")
+  call WaitForAssert({-> assert_equal('Backwards range given, OK to swap (y/n)?', term_getline(buf, 6))})
+  call term_sendkeys(buf, "y")
+  call WaitForAssert({-> assert_match('^Backwards range given, OK to swap (y/n)?y *2,1 *All$', term_getline(buf, 6))})
+  call WaitForAssert({-> assert_equal('y1', term_getline(buf, 1))})
+  call WaitForAssert({-> assert_equal('y2', term_getline(buf, 2))})
+
+  call term_sendkeys(buf, ":q!\n")
   call StopVimInTerminal(buf)
 endfunc
 

@@ -287,6 +287,76 @@ describe('messages', function()
     end)
   end)
 
+  -- oldtest: Test_ask_yesno()
+  it('y/n prompt works', function()
+    screen = Screen.new(75, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+      [2] = {bold = true, reverse = true},  -- MsgSeparator
+    })
+    screen:attach()
+    command('set noincsearch nohlsearch inccommand=')
+    command('call setline(1, range(1, 2))')
+
+    feed(':2,1s/^/n/\n')
+    screen:expect([[
+      1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}^                                   |
+    ]])
+    feed('n')
+    screen:expect([[
+      ^1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}n                                  |
+    ]])
+
+    feed(':2,1s/^/Esc/\n')
+    screen:expect([[
+      1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}^                                   |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}n                                  |
+    ]])
+
+    feed(':2,1s/^/y/\n')
+    screen:expect([[
+      1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}^                                   |
+    ]])
+    feed('y')
+    screen:expect([[
+      y1                                                                         |
+      ^y2                                                                         |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}y                                  |
+    ]])
+  end)
+
   -- oldtest: Test_fileinfo_after_echo()
   it('fileinfo does not overwrite echo message vim-patch:8.2.4156', function()
     screen = Screen.new(40, 6)
