@@ -629,7 +629,7 @@ module.cmds = {
   },
   {
     command='const',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN),
+    flags=bit.bor(EXTRA, NOTRLCOM, SBOXOK, CMDWIN),
     addr_type='ADDR_NONE',
     func='ex_const',
   },
