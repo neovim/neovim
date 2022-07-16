@@ -301,6 +301,23 @@ func XwindowTests(cchar)
   call assert_equal(12, winwidth(0))
   Xclose
 
+  " Horizontally or vertically splitting the quickfix window should create a
+  " normal window/buffer
+  Xopen
+  wincmd s
+  call assert_equal(0, getwininfo(win_getid())[0].quickfix)
+  call assert_equal(0, getwininfo(win_getid())[0].loclist)
+  call assert_notequal('quickfix', &buftype)
+  close
+  Xopen
+  wincmd v
+  call assert_equal(0, getwininfo(win_getid())[0].quickfix)
+  call assert_equal(0, getwininfo(win_getid())[0].loclist)
+  call assert_notequal('quickfix', &buftype)
+  close
+  Xopen
+  Xclose
+
   if a:cchar == 'c'
       " Opening the quickfix window in multiple tab pages should reuse the
       " quickfix buffer

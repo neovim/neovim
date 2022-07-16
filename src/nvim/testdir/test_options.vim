@@ -813,6 +813,16 @@ func Test_opt_boolean()
   set number&
 endfunc
 
+" Test for the 'winminheight' option
+func Test_opt_winminheight()
+  only!
+  let &winheight = &lines + 4
+  call assert_fails('let &winminheight = &lines + 2', 'E36:')
+  call assert_true(&winminheight <= &lines)
+  set winminheight&
+  set winheight&
+endfunc
+
 func Test_opt_winminheight_term()
   " See test/functional/legacy/options_spec.lua
   CheckRunVimInTerminal
@@ -854,6 +864,16 @@ func Test_opt_winminheight_term_tabs()
 
   call StopVimInTerminal(buf)
   call delete('Xwinminheight')
+endfunc
+
+" Test for the 'winminwidth' option
+func Test_opt_winminwidth()
+  only!
+  let &winwidth = &columns + 4
+  call assert_fails('let &winminwidth = &columns + 2', 'E36:')
+  call assert_true(&winminwidth <= &columns)
+  set winminwidth&
+  set winwidth&
 endfunc
 
 " Test for setting option value containing spaces with isfname+=32

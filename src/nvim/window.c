@@ -1982,7 +1982,7 @@ void win_move_after(win_T *win1, win_T *win2)
       return;
     }
 
-    // may need move the status line, window bar, horizontal or vertical separator of the last
+    // may need to move the status line, window bar, horizontal or vertical separator of the last
     // window
     if (win1 == lastwin) {
       height = win1->w_prev->w_status_height;
