@@ -976,7 +976,7 @@ static void pum_select_mouse_pos(void)
   if (mouse_grid == pum_grid.handle) {
     pum_selected = mouse_row;
     return;
-  } else if (mouse_grid > 1) {
+  } else if (mouse_grid != pum_anchor_grid) {
     pum_selected = -1;
     return;
   }
