@@ -141,6 +141,8 @@ function Test_tabpage()
   call assert_fails("tabmove $3", 'E474:')
   call assert_fails("%tabonly", 'E16:')
   1tabonly!
+  tabmove 1
+  call assert_equal(1, tabpagenr())
   tabnew
   call assert_fails("-2tabmove", 'E474:')
   tabonly!
@@ -696,6 +698,69 @@ func Test_tabline_tabmenu()
   call assert_equal(5, tabpagenr())
   call assert_equal(5, tabpagenr('$'))
 
+  %bw!
+endfunc
+
+" Test for changing the current tab page from an autocmd when closing a tab
+" page.
+func Test_tabpage_switchtab_on_close()
+  only
+  tabnew
+  tabnew
+  " Test for BufLeave
+  augroup T1
+    au!
+    au BufLeave * tabfirst
+  augroup END
+  tabclose
+  call assert_equal(1, tabpagenr())
+  augroup T1
+    au!
+  augroup END
+
+  " Test for WinLeave
+  $tabnew
+  augroup T1
+    au!
+    au WinLeave * tabfirst
+  augroup END
+  tabclose
+  call assert_equal(1, tabpagenr())
+  augroup T1
+    au!
+  augroup END
+
+  " Test for TabLeave
+  $tabnew
+  augroup T1
+    au!
+    au TabLeave * tabfirst
+  augroup END
+  tabclose
+  call assert_equal(1, tabpagenr())
+  augroup T1
+    au!
+  augroup END
+  augroup! T1
+  tabonly
+endfunc
+
+" Test for closing the destination tabpage when jumping from one to another.
+func Test_tabpage_close_on_switch()
+  tabnew
+  tabnew
+  edit Xfile
+  augroup T2
+    au!
+    au BufLeave Xfile 1tabclose
+  augroup END
+  tabfirst
+  call assert_equal(2, tabpagenr())
+  call assert_equal('Xfile', @%)
+  augroup T2
+    au!
+  augroup END
+  augroup! T2
   %bw!
 endfunc
 

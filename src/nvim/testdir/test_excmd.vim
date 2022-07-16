@@ -509,6 +509,11 @@ func Test_run_excmd_with_text_locked()
   close
 
   call assert_fails("call feedkeys(\":\<C-R>=execute('bnext')\<CR>\", 'xt')", 'E565:')
+
+  " :tabfirst
+  tabnew
+  call assert_fails("call feedkeys(\":\<C-R>=execute('tabfirst')\<CR>\", 'xt')", 'E565:')
+  tabclose
 endfunc
 
 " Test for the :verbose command

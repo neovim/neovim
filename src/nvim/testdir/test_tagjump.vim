@@ -5,12 +5,57 @@ source screendump.vim
 
 " SEGV occurs in older versions.  (At least 7.4.1748 or older)
 func Test_ptag_with_notagstack()
+  CheckFeature quickfix
+
   set notagstack
   call assert_fails('ptag does_not_exist_tag_name', 'E426')
   set tagstack&vim
 endfunc
 
+func Test_ptjump()
+  CheckFeature quickfix
+
+  set tags=Xtags
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "one\tXfile\t1",
+        \ "three\tXfile\t3",
+        \ "two\tXfile\t2"],
+        \ 'Xtags')
+  call writefile(['one', 'two', 'three'], 'Xfile')
+
+  %bw!
+  ptjump two
+  call assert_equal(2, winnr())
+  wincmd p
+  call assert_equal(1, &previewwindow)
+  call assert_equal('Xfile', expand("%:p:t"))
+  call assert_equal(2, line('.'))
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, winnr())
+  close
+  call setline(1, ['one', 'two', 'three'])
+  exe "normal 3G\<C-W>g}"
+  call assert_equal(2, winnr())
+  wincmd p
+  call assert_equal(1, &previewwindow)
+  call assert_equal('Xfile', expand("%:p:t"))
+  call assert_equal(3, line('.'))
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, winnr())
+  close
+  exe "normal 3G5\<C-W>\<C-G>}"
+  wincmd p
+  call assert_equal(5, winheight(0))
+  close
+
+  call delete('Xtags')
+  call delete('Xfile')
+  set tags&
+endfunc
+
 func Test_cancel_ptjump()
+  CheckFeature quickfix
+
   set tags=Xtags
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
         \ "word\tfile1\tcmd1",
@@ -70,6 +115,8 @@ func Test_duplicate_tagjump()
 endfunc
 
 func Test_tagjump_switchbuf()
+  CheckFeature quickfix
+
   set tags=Xtags
   call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
         \ "second\tXfile1\t2",
@@ -1274,6 +1321,10 @@ func Test_macro_search()
   close
   call assert_fails('3wincmd d', 'E387:')
   call assert_fails('6wincmd d', 'E388:')
+  new
+  call assert_fails("normal \<C-W>d", 'E349:')
+  call assert_fails("normal \<C-W>\<C-D>", 'E349:')
+  close
 
   " Test for :dsplit
   dsplit FOO

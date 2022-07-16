@@ -63,11 +63,18 @@ func Test_gF()
   call assert_equal('Xfile', bufname('%'))
   call assert_equal(2, getcurpos()[1])
 
+  " jumping to the file/line with CTRL-W_F
+  %bw!
+  edit Xfile1
+  call setline(1, ['one', 'Xfile:4', 'three'])
+  exe "normal 2G\<C-W>F"
+  call assert_equal('Xfile', bufname('%'))
+  call assert_equal(4, getcurpos()[1])
+
   set isfname&
   call delete('Xfile')
   call delete('Xfile2')
-  bwipe Xfile
-  bwipe Xfile2
+  %bw!
 endfunc
 
 " Test for invoking 'gf' on a ${VAR} variable
