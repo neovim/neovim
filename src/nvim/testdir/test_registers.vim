@@ -684,6 +684,16 @@ func Test_insert_small_delete()
   bwipe!
 endfunc
 
+" Record in insert mode using CTRL-O
+func Test_record_in_insert_mode()
+  new
+  let @r = ''
+  call setline(1, ['foo'])
+  call feedkeys("i\<C-O>qrbaz\<C-O>q", 'xt')
+  call assert_equal('baz', @r)
+  bwipe!
+endfunc
+
 func Test_record_in_select_mode()
   new
   call setline(1, 'text')

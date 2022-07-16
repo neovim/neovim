@@ -261,6 +261,35 @@ describe('messages', function()
         ^100                                                                        |
                                                                                    |
       ]])
+
+      -- Execute a : command from the more prompt
+      feed(':%p#\n')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed(':')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        :^                                                                          |
+      ]])
+      feed("echo 'Hello'\n")
+      screen:expect([[
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        Hello                                                                      |
+        {1:Press ENTER or type command to continue}^                                    |
+      ]])
     end)
 
     -- oldtest: Test_quit_long_message()

@@ -114,9 +114,7 @@ endfunc
 
 " Test more-prompt (see :help more-prompt).
 func Test_message_more()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
   call term_sendkeys(buf, ":call setline(1, range(1, 100))\n")
 
@@ -203,14 +201,22 @@ func Test_message_more()
   call term_sendkeys(buf, 'q')
   call WaitForAssert({-> assert_equal('100', term_getline(buf, 5))})
 
-  call term_sendkeys(buf, ":q!\n")
+  " Execute a : command from the more prompt
+  call term_sendkeys(buf, ":%p#\n")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
+  call term_sendkeys(buf, ":")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal(':', term_getline(buf, 6))})
+  call term_sendkeys(buf, "echo 'Hello'\n")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal('Hello ', term_getline(buf, 5))})
+
   call StopVimInTerminal(buf)
 endfunc
 
 func Test_ask_yesno()
-  if !CanRunVimInTerminal()
-    throw 'Skipped: cannot run vim in terminal'
-  endif
+  CheckRunVimInTerminal
   let buf = RunVimInTerminal('', {'rows': 6})
   call term_sendkeys(buf, ":call setline(1, range(1, 2))\n")
 
@@ -233,7 +239,6 @@ func Test_ask_yesno()
   call WaitForAssert({-> assert_equal('y1', term_getline(buf, 1))})
   call WaitForAssert({-> assert_equal('y2', term_getline(buf, 2))})
 
-  call term_sendkeys(buf, ":q!\n")
   call StopVimInTerminal(buf)
 endfunc
 
