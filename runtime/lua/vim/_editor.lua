@@ -272,6 +272,8 @@ vim.fn = setmetatable({}, {
       _fn = function()
         error(string.format('Tried to call API function with vim.fn: use vim.api.%s instead', key))
       end
+    elseif vim.call("exists", "*" .. key) == 0 then
+      return nil
     else
       _fn = function(...)
         return vim.call(key, ...)

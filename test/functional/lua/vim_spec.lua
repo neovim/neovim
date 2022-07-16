@@ -795,6 +795,10 @@ describe('lua stdlib', function()
           pcall_err(exec_lua, "vim.fn.nvim_get_current_line()"))
   end)
 
+  it('vim.fn should return nil when accessing invalid function', function()
+    eq(true, exec_lua("vim.fn['bogus'] == nil"))
+  end)
+
   it('vim.fn is allowed in "fast" context by some functions #18306', function()
     exec_lua([[
       local timer = vim.loop.new_timer()
