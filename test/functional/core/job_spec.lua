@@ -73,9 +73,16 @@ describe('jobs', function()
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
 
-    expect_msg_seq({
-      {'notification', 'stdout', {0, {'hello world abc', ''}}},
-    })
+    expect_msg_seq(
+      {
+        {'notification', 'stdout', {0, {'hello world abc'}}},
+        {'notification', 'stdout', {0, {'', ''}}},
+      },
+      {
+        {'notification', 'stdout', {0, {'hello world abc', ''}}},
+        {'notification', 'stdout', {0, {''}}}
+      }
+    )
   end)
 
   it('append environment with pty #env', function()
@@ -89,9 +96,16 @@ describe('jobs', function()
     else
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
-    expect_msg_seq({
-      {'notification', 'stdout', {0, {'hello world abc', ''}}},
-    })
+    expect_msg_seq(
+      {
+        {'notification', 'stdout', {0, {'hello world abc'}}},
+        {'notification', 'stdout', {0, {'', ''}}},
+      },
+      {
+        {'notification', 'stdout', {0, {'hello world abc', ''}}},
+        {'notification', 'stdout', {0, {''}}}
+      }
+    )
   end)
 
   it('replace environment #env', function()
