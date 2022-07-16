@@ -504,6 +504,7 @@ static int access_option_value(char *key, long *numval, char **stringval, int op
 static int access_option_value_for(char *key, long *numval, char **stringval, int opt_flags,
                                    int opt_type, void *from, bool get, Error *err)
 {
+  bool need_switch = false;
   switchwin_T switchwin;
   aco_save_T aco;
   int result = 0;
@@ -511,24 +512,32 @@ static int access_option_value_for(char *key, long *numval, char **stringval, in
   try_start();
   switch (opt_type) {
   case SREQ_WIN:
-    if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
-        == FAIL) {
-      restore_win_noblock(&switchwin, true);
-      if (try_end(err)) {
+    need_switch = (win_T *)from != curwin;
+    if (need_switch) {
+      if (switch_win_noblock(&switchwin, (win_T *)from, win_find_tabpage((win_T *)from), true)
+          == FAIL) {
+        restore_win_noblock(&switchwin, true);
+        if (try_end(err)) {
+          return result;
+        }
+        api_set_error(err, kErrorTypeException, "Problem while switching windows");
         return result;
       }
-      api_set_error(err,
-                    kErrorTypeException,
-                    "Problem while switching windows");
-      return result;
     }
     result = access_option_value(key, numval, stringval, opt_flags, get, err);
-    restore_win_noblock(&switchwin, true);
+    if (need_switch) {
+      restore_win_noblock(&switchwin, true);
+    }
     break;
   case SREQ_BUF:
-    aucmd_prepbuf(&aco, (buf_T *)from);
+    need_switch = (buf_T *)from != curbuf;
+    if (need_switch) {
+      aucmd_prepbuf(&aco, (buf_T *)from);
+    }
     result = access_option_value(key, numval, stringval, opt_flags, get, err);
-    aucmd_restbuf(&aco);
+    if (need_switch) {
+      aucmd_restbuf(&aco);
+    }
     break;
   case SREQ_GLOBAL:
     result = access_option_value(key, numval, stringval, opt_flags, get, err);

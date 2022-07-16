@@ -1469,6 +1469,17 @@ describe('API', function()
       nvim('win_set_option', win, 'number', true)
       eq(true, nvim('get_option_value', 'number', {win = win}))
     end)
+
+    it('getting current buffer option does not adjust cursor #19381', function()
+      nvim('command', 'new')
+      local buf = nvim('get_current_buf').id
+      local win = nvim('get_current_win').id
+      insert('some text')
+      feed('0v$')
+      eq({1, 9}, nvim('win_get_cursor', win))
+      nvim('get_option_value', 'filetype', {buf = buf})
+      eq({1, 9}, nvim('win_get_cursor', win))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()
