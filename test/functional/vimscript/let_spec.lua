@@ -5,6 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local eval = helpers.eval
 local meths = helpers.meths
+local exec = helpers.exec
 local exec_capture = helpers.exec_capture
 local source = helpers.source
 local testprg = helpers.testprg
@@ -89,5 +90,21 @@ describe(':let', function()
       call feedkeys('i', 't')
     ]])
     eq(1, eval('1'))
+  end)
+end)
+
+describe(':let and :const', function()
+  it('have the same output when called without arguments', function()
+    eq(exec_capture('let'), exec_capture('const'))
+  end)
+
+  it('can be used in sandbox', function()
+    exec([[
+      func Func()
+        let l:foo = 'foo'
+        const l:bar = 'bar'
+      endfunc
+      sandbox call Func()
+    ]])
   end)
 end)
