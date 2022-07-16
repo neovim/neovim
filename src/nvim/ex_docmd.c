@@ -3028,6 +3028,8 @@ char *find_ex_command(exarg_T *eap, int *full)
       if (ASCII_ISLOWER(c2)) {
         eap->cmdidx += cmdidxs2[CHAR_ORD_LOW(c1)][CHAR_ORD_LOW(c2)];
       }
+    } else if (ASCII_ISUPPER(eap->cmd[0])) {
+      eap->cmdidx = CMD_Next;
     } else {
       eap->cmdidx = CMD_bang;
     }
