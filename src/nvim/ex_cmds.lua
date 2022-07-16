@@ -3298,6 +3298,7 @@ module.cmds = {
     addr_type='ADDR_LINES',
     func='ex_z',
   },
+  -- commands that don't start with a letter
   {
     command='!',
     enum='CMD_bang',
@@ -3348,17 +3349,18 @@ module.cmds = {
     func='ex_at',
   },
   {
-    command='Next',
-    flags=bit.bor(EXTRA, RANGE, COUNT, BANG, CMDARG, ARGOPT, TRLBAR),
-    addr_type='ADDR_OTHER',
-    func='ex_previous',
-  },
-  {
     command='~',
     enum='CMD_tilde',
     flags=bit.bor(RANGE, WHOLEFOLD, EXTRA, CMDWIN, MODIFY),
     addr_type='ADDR_LINES',
     func='ex_substitute',
+  },
+  -- commands that start with an uppercase letter
+  {
+    command='Next',
+    flags=bit.bor(EXTRA, RANGE, COUNT, BANG, CMDARG, ARGOPT, TRLBAR),
+    addr_type='ADDR_OTHER',
+    func='ex_previous',
   },
 }
 
