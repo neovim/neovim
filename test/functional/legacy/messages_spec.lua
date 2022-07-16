@@ -8,39 +8,389 @@ local feed = helpers.feed
 before_each(clear)
 
 describe('messages', function()
-  it('more prompt with control characters can be quit vim-patch:8.2.1844', function()
-    local screen = Screen.new(40, 6)
+  local screen
+
+  describe('more prompt', function()
+    before_each(function()
+      screen = Screen.new(75, 6)
+      screen:set_default_attr_ids({
+        [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+        [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+        [2] = {foreground = Screen.colors.Brown},  -- LineNr
+        [3] = {foreground = Screen.colors.Blue},  -- SpecialKey
+      })
+      screen:attach()
+      command('set more')
+    end)
+
+    -- oldtest: Test_message_more()
+    it('works', function()
+      command('call setline(1, range(1, 100))')
+
+      feed(':%p#\n')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      feed('?')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {1:-- More -- SPACE/d/j: screen/page/line down, b/u/k: up, q: quit }^           |
+      ]])
+
+      -- Down a line with j, <CR>, <NL> or <Down>.
+      feed('j')
+      screen:expect([[
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {2:  6 }6                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<NL>')
+      screen:expect([[
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {2:  6 }6                                                                      |
+        {2:  7 }7                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<CR>')
+      screen:expect([[
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {2:  6 }6                                                                      |
+        {2:  7 }7                                                                      |
+        {2:  8 }8                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<Down>')
+      screen:expect([[
+        {2:  5 }5                                                                      |
+        {2:  6 }6                                                                      |
+        {2:  7 }7                                                                      |
+        {2:  8 }8                                                                      |
+        {2:  9 }9                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- Down a screen with <Space>, f, or <PageDown>.
+      feed('f')
+      screen:expect([[
+        {2: 10 }10                                                                     |
+        {2: 11 }11                                                                     |
+        {2: 12 }12                                                                     |
+        {2: 13 }13                                                                     |
+        {2: 14 }14                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<Space>')
+      screen:expect([[
+        {2: 15 }15                                                                     |
+        {2: 16 }16                                                                     |
+        {2: 17 }17                                                                     |
+        {2: 18 }18                                                                     |
+        {2: 19 }19                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<PageDown>')
+      screen:expect([[
+        {2: 20 }20                                                                     |
+        {2: 21 }21                                                                     |
+        {2: 22 }22                                                                     |
+        {2: 23 }23                                                                     |
+        {2: 24 }24                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- Down a page (half a screen) with d.
+      feed('d')
+      screen:expect([[
+        {2: 23 }23                                                                     |
+        {2: 24 }24                                                                     |
+        {2: 25 }25                                                                     |
+        {2: 26 }26                                                                     |
+        {2: 27 }27                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- Down all the way with 'G'.
+      feed('G')
+      screen:expect([[
+        {2: 96 }96                                                                     |
+        {2: 97 }97                                                                     |
+        {2: 98 }98                                                                     |
+        {2: 99 }99                                                                     |
+        {2:100 }100                                                                    |
+        {1:Press ENTER or type command to continue}^                                    |
+      ]])
+
+      -- Up a line k, <BS> or <Up>.
+      feed('k')
+      screen:expect([[
+        {2: 95 }95                                                                     |
+        {2: 96 }96                                                                     |
+        {2: 97 }97                                                                     |
+        {2: 98 }98                                                                     |
+        {2: 99 }99                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<BS>')
+      screen:expect([[
+        {2: 94 }94                                                                     |
+        {2: 95 }95                                                                     |
+        {2: 96 }96                                                                     |
+        {2: 97 }97                                                                     |
+        {2: 98 }98                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<Up>')
+      screen:expect([[
+        {2: 93 }93                                                                     |
+        {2: 94 }94                                                                     |
+        {2: 95 }95                                                                     |
+        {2: 96 }96                                                                     |
+        {2: 97 }97                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- Up a screen with b or <PageUp>.
+      feed('b')
+      screen:expect([[
+        {2: 88 }88                                                                     |
+        {2: 89 }89                                                                     |
+        {2: 90 }90                                                                     |
+        {2: 91 }91                                                                     |
+        {2: 92 }92                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed('<PageUp>')
+      screen:expect([[
+        {2: 83 }83                                                                     |
+        {2: 84 }84                                                                     |
+        {2: 85 }85                                                                     |
+        {2: 86 }86                                                                     |
+        {2: 87 }87                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- Up a page (half a screen) with u.
+      feed('u')
+      screen:expect([[
+        {2: 80 }80                                                                     |
+        {2: 81 }81                                                                     |
+        {2: 82 }82                                                                     |
+        {2: 83 }83                                                                     |
+        {2: 84 }84                                                                     |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- Up all the way with 'g'.
+      feed('g')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- All the way down. Pressing f should do nothing but pressing
+      -- space should end the more prompt.
+      feed('G')
+      screen:expect([[
+        {2: 96 }96                                                                     |
+        {2: 97 }97                                                                     |
+        {2: 98 }98                                                                     |
+        {2: 99 }99                                                                     |
+        {2:100 }100                                                                    |
+        {1:Press ENTER or type command to continue}^                                    |
+      ]])
+      feed('f')
+      screen:expect_unchanged()
+      feed('<Space>')
+      screen:expect([[
+        96                                                                         |
+        97                                                                         |
+        98                                                                         |
+        99                                                                         |
+        ^100                                                                        |
+                                                                                   |
+      ]])
+
+      -- Pressing g< shows the previous command output.
+      feed('g<lt>')
+      screen:expect([[
+        {2: 96 }96                                                                     |
+        {2: 97 }97                                                                     |
+        {2: 98 }98                                                                     |
+        {2: 99 }99                                                                     |
+        {2:100 }100                                                                    |
+        {1:Press ENTER or type command to continue}^                                    |
+      ]])
+
+      feed(':%p#\n')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+
+      -- Stop command output with q, <Esc> or CTRL-C.
+      feed('q')
+      screen:expect([[
+        96                                                                         |
+        97                                                                         |
+        98                                                                         |
+        99                                                                         |
+        ^100                                                                        |
+                                                                                   |
+      ]])
+
+      -- Execute a : command from the more prompt
+      feed(':%p#\n')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        {1:-- More --}^                                                                 |
+      ]])
+      feed(':')
+      screen:expect([[
+        {2:  1 }1                                                                      |
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        :^                                                                          |
+      ]])
+      feed("echo 'Hello'\n")
+      screen:expect([[
+        {2:  2 }2                                                                      |
+        {2:  3 }3                                                                      |
+        {2:  4 }4                                                                      |
+        {2:  5 }5                                                                      |
+        Hello                                                                      |
+        {1:Press ENTER or type command to continue}^                                    |
+      ]])
+    end)
+
+    -- oldtest: Test_quit_long_message()
+    it('with control characters can be quit vim-patch:8.2.1844', function()
+      screen:try_resize(40, 6)
+      feed([[:echom range(9999)->join("\x01")<CR>]])
+      screen:expect([[
+        0{3:^A}1{3:^A}2{3:^A}3{3:^A}4{3:^A}5{3:^A}6{3:^A}7{3:^A}8{3:^A}9{3:^A}10{3:^A}11{3:^A}12|
+        {3:^A}13{3:^A}14{3:^A}15{3:^A}16{3:^A}17{3:^A}18{3:^A}19{3:^A}20{3:^A}21{3:^A}22|
+        {3:^A}23{3:^A}24{3:^A}25{3:^A}26{3:^A}27{3:^A}28{3:^A}29{3:^A}30{3:^A}31{3:^A}32|
+        {3:^A}33{3:^A}34{3:^A}35{3:^A}36{3:^A}37{3:^A}38{3:^A}39{3:^A}40{3:^A}41{3:^A}42|
+        {3:^A}43{3:^A}44{3:^A}45{3:^A}46{3:^A}47{3:^A}48{3:^A}49{3:^A}50{3:^A}51{3:^A}52|
+        {1:-- More --}^                              |
+      ]])
+      feed('q')
+      screen:expect([[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+                                                |
+      ]])
+    end)
+  end)
+
+  -- oldtest: Test_ask_yesno()
+  it('y/n prompt works', function()
+    screen = Screen.new(75, 6)
     screen:set_default_attr_ids({
-      [1] = {foreground = Screen.colors.Blue},  -- SpecialKey
-      [2] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
-      [3] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+      [2] = {bold = true, reverse = true},  -- MsgSeparator
     })
     screen:attach()
-    command('set more')
-    feed([[:echom range(9999)->join("\x01")<CR>]])
+    command('set noincsearch nohlsearch inccommand=')
+    command('call setline(1, range(1, 2))')
+
+    feed(':2,1s/^/n/\n')
     screen:expect([[
-      0{1:^A}1{1:^A}2{1:^A}3{1:^A}4{1:^A}5{1:^A}6{1:^A}7{1:^A}8{1:^A}9{1:^A}10{1:^A}11{1:^A}12|
-      {1:^A}13{1:^A}14{1:^A}15{1:^A}16{1:^A}17{1:^A}18{1:^A}19{1:^A}20{1:^A}21{1:^A}22|
-      {1:^A}23{1:^A}24{1:^A}25{1:^A}26{1:^A}27{1:^A}28{1:^A}29{1:^A}30{1:^A}31{1:^A}32|
-      {1:^A}33{1:^A}34{1:^A}35{1:^A}36{1:^A}37{1:^A}38{1:^A}39{1:^A}40{1:^A}41{1:^A}42|
-      {1:^A}43{1:^A}44{1:^A}45{1:^A}46{1:^A}47{1:^A}48{1:^A}49{1:^A}50{1:^A}51{1:^A}52|
-      {2:-- More --}^                              |
+      1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}^                                   |
     ]])
-    feed('q')
+    feed('n')
     screen:expect([[
-      ^                                        |
-      {3:~                                       }|
-      {3:~                                       }|
-      {3:~                                       }|
-      {3:~                                       }|
-                                              |
+      ^1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}n                                  |
+    ]])
+
+    feed(':2,1s/^/Esc/\n')
+    screen:expect([[
+      1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}^                                   |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}n                                  |
+    ]])
+
+    feed(':2,1s/^/y/\n')
+    screen:expect([[
+      1                                                                          |
+      2                                                                          |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}^                                   |
+    ]])
+    feed('y')
+    screen:expect([[
+      y1                                                                         |
+      ^y2                                                                         |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {1:Backwards range given, OK to swap (y/n)?}y                                  |
     ]])
   end)
 
+  -- oldtest: Test_fileinfo_after_echo()
   it('fileinfo does not overwrite echo message vim-patch:8.2.4156', function()
-    local screen = Screen.new(40, 6)
+    screen = Screen.new(40, 6)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
     })
     screen:attach()
     exec([[
@@ -60,10 +410,10 @@ describe('messages', function()
     feed('0$')
     screen:expect([[
       ^hi                                      |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
       'b' written                             |
     ]])
     os.remove('b.txt')
