@@ -519,12 +519,14 @@ func dist#ft#FTinc()
     " headers so assume POV-Ray
     elseif lines =~ '^\s*\%({\|(\*\)' || lines =~? s:ft_pascal_keywords
       setf pascal
+    elseif lines =~# '\<\%(require\|inherit\)\>' || lines =~# '\w\+ = '
+      setf bitbake
     else
       call dist#ft#FTasmsyntax()
       if exists("b:asmsyntax")
-	exe "setf " . fnameescape(b:asmsyntax)
+        exe "setf " . fnameescape(b:asmsyntax)
       else
-	setf pov
+        setf pov
       endif
     endif
   endif
