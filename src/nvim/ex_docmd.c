@@ -1590,9 +1590,15 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
       && !(curbuf->terminal && eap->cmdidx == CMD_put)) {
     ERROR(_(e_modifiable));
   }
-  if (text_locked() && !(eap->argt & EX_CMDWIN)
-      && !IS_USER_CMDIDX(eap->cmdidx)) {
-    ERROR(_(get_text_locked_msg()));
+  if (!IS_USER_CMDIDX(eap->cmdidx)) {
+    if (cmdwin_type != 0 && !(eap->argt & EX_CMDWIN)) {
+      // Command not allowed in the command line window
+      ERROR(_(e_cmdwin));
+    }
+    if (text_locked() && !(eap->argt & EX_LOCK_OK)) {
+      // Command not allowed when text is locked
+      ERROR(_(get_text_locked_msg()));
+    }
   }
   // Disallow editing another buffer when "curbuf->b_ro_locked" is set.
   // Do allow ":checktime" (it is postponed).
@@ -1967,11 +1973,17 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       goto doend;
     }
 
-    if (text_locked() && !(ea.argt & EX_CMDWIN)
-        && !IS_USER_CMDIDX(ea.cmdidx)) {
-      // Command not allowed when editing the command line.
-      errormsg = _(get_text_locked_msg());
-      goto doend;
+    if (!IS_USER_CMDIDX(ea.cmdidx)) {
+      if (cmdwin_type != 0 && !(ea.argt & EX_CMDWIN)) {
+        // Command not allowed in the command line window
+        errormsg = _(e_cmdwin);
+        goto doend;
+      }
+      if (text_locked() && !(ea.argt & EX_LOCK_OK)) {
+        // Command not allowed when text is locked
+        errormsg = _(get_text_locked_msg());
+        goto doend;
+      }
     }
 
     // Disallow editing another buffer when "curbuf->b_ro_locked" is set.

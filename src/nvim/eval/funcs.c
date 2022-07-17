@@ -1062,11 +1062,6 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  const int save_textlock = textlock;
-  // "textlock" is set when evaluating 'completefunc' but we can change text
-  // here.
-  textlock = 0;
-
   // Check for undo allowed here, because if something was already inserted
   // the line was already saved for undo and this check isn't done.
   if (!undo_allowed(curbuf)) {
@@ -1081,7 +1076,6 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       set_completion(startcol - 1, argvars[1].vval.v_list);
     }
   }
-  textlock = save_textlock;
 }
 
 /// "complete_add()" function

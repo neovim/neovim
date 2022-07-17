@@ -55,6 +55,14 @@ func CheckMSWindows()
   endif
 endfunc
 
+" Command to check for NOT running on MS-Windows
+command CheckNotMSWindows call CheckNotMSWindows()
+func CheckNotMSWindows()
+  if has('win32')
+    throw 'Skipped: does not work on MS-Windows'
+  endif
+endfunc
+
 " Command to check for running on Unix
 command CheckUnix call CheckUnix()
 func CheckUnix()
@@ -126,14 +134,6 @@ command CheckEnglish call CheckEnglish()
 func CheckEnglish()
   if v:lang != "C" && v:lang !~ '^[Ee]n'
       throw 'Skipped: only works in English language environment'
-  endif
-endfunc
-
-" Command to check for NOT running on MS-Windows
-command CheckNotMSWindows call CheckNotMSWindows()
-func CheckNotMSWindows()
-  if has('win32')
-    throw 'Skipped: does not work on MS-Windows'
   endif
 endfunc
 

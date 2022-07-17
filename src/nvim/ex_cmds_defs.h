@@ -57,11 +57,12 @@
 #define EX_BUFUNL        0x10000  // accepts unlisted buffer too
 #define EX_ARGOPT        0x20000  // allow "++opt=val" argument
 #define EX_SBOXOK        0x40000  // allowed in the sandbox
-#define EX_CMDWIN        0x80000  // allowed in cmdline window; when missing
-                                  // disallows editing another buffer when
-                                  // current buffer is locked
+#define EX_CMDWIN        0x80000  // allowed in cmdline window
 #define EX_MODIFY       0x100000  // forbidden in non-'modifiable' buffer
 #define EX_FLAGS        0x200000  // allow flags after count in argument
+#define EX_LOCK_OK     0x1000000  // command can be executed when textlock is
+                                  // set; when missing disallows editing another
+                                  // buffer when current buffer is locked
 #define EX_KEEPSCRIPT  0x4000000  // keep sctx of where command was invoked
 #define EX_PREVIEW     0x8000000  // allow incremental command preview
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
