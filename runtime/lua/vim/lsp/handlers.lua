@@ -61,7 +61,7 @@ local function progress_handler(_, result, ctx, _)
     client.messages.progress[token].done = true
   end
 
-  vim.api.nvim_command('doautocmd <nomodeline> User LspProgressUpdate')
+  api.nvim_command('doautocmd <nomodeline> User LspProgressUpdate')
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress

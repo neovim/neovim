@@ -1,30 +1,10 @@
 local vim = vim
+local api = vim.api
 local validate = vim.validate
-local vfn = vim.fn
 local util = require('vim.lsp.util')
+local npcall = vim.F.npcall
 
 local M = {}
-
----@private
---- Returns nil if {status} is false or nil, otherwise returns the rest of the
---- arguments.
-local function ok_or_nil(status, ...)
-  if not status then
-    return
-  end
-  return ...
-end
-
----@private
---- Swallows errors.
----
----@param fn Function to run
----@param ... Function arguments
----@returns Result of `fn(...)` if there are no errors, otherwise nil.
---- Returns nil if errors occur during {fn}, otherwise returns
-local function npcall(fn, ...)
-  return ok_or_nil(pcall(fn, ...))
-end
 
 ---@private
 --- Sends an async request to all active clients attached to the current
@@ -201,7 +181,7 @@ end
 
 function M.format(options)
   options = options or {}
-  local bufnr = options.bufnr or vim.api.nvim_get_current_buf()
+  local bufnr = options.bufnr or api.nvim_get_current_buf()
   local clients = vim.lsp.get_active_clients({
     id = options.id,
     bufnr = bufnr,
@@ -262,7 +242,7 @@ function M.formatting(options)
     vim.log.levels.WARN
   )
   local params = util.make_formatting_params(options)
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
   select_client('textDocument/formatting', function(client)
     if client == nil then
       return
@@ -290,7 +270,7 @@ function M.formatting_sync(options, timeout_ms)
     vim.log.levels.WARN
   )
   local params = util.make_formatting_params(options)
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
   select_client('textDocument/formatting', function(client)
     if client == nil then
       return
@@ -327,7 +307,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
     vim.log.levels.WARN
   )
   local clients = vim.tbl_values(vim.lsp.buf_get_clients())
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
 
   -- sort the clients according to `order`
   for _, client_name in pairs(order or {}) do
@@ -348,7 +328,7 @@ function M.formatting_seq_sync(options, timeout_ms, order)
         'textDocument/formatting',
         params,
         timeout_ms,
-        vim.api.nvim_get_current_buf()
+        api.nvim_get_current_buf()
       )
       if result and result.result then
         util.apply_text_edits(result.result, bufnr, client.offset_encoding)
@@ -394,7 +374,7 @@ end
 ---         this field.
 function M.rename(new_name, options)
   options = options or {}
-  local bufnr = options.bufnr or vim.api.nvim_get_current_buf()
+  local bufnr = options.bufnr or api.nvim_get_current_buf()
   local clients = vim.lsp.get_active_clients({
     bufnr = bufnr,
     name = options.name,
@@ -412,14 +392,14 @@ function M.rename(new_name, options)
     vim.notify('[LSP] Rename, no matching language servers with rename capability.')
   end
 
-  local win = vim.api.nvim_get_current_win()
+  local win = api.nvim_get_current_win()
 
   -- Compute early to account for cursor movements after going async
-  local cword = vfn.expand('<cword>')
+  local cword = vim.fn.expand('<cword>')
 
   ---@private
   local function get_text_at_range(range, offset_encoding)
-    return vim.api.nvim_buf_get_text(
+    return api.nvim_buf_get_text(
       bufnr,
       range.start.line,
       util._get_line_byte_from_position(bufnr, range.start, offset_encoding),
@@ -603,8 +583,8 @@ end
 --- not provided, the user will be prompted for a path using |input()|.
 function M.add_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder
-    or npcall(vfn.input, 'Workspace Folder: ', vfn.expand('%:p:h'), 'dir')
-  vim.api.nvim_command('redraw')
+    or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'), 'dir')
+  api.nvim_command('redraw')
   if not (workspace_folder and #workspace_folder > 0) then
     return
   end
@@ -640,8 +620,8 @@ end
 --- a path using |input()|.
 function M.remove_workspace_folder(workspace_folder)
   workspace_folder = workspace_folder
-    or npcall(vfn.input, 'Workspace Folder: ', vfn.expand('%:p:h'))
-  vim.api.nvim_command('redraw')
+    or npcall(vim.fn.input, 'Workspace Folder: ', vim.fn.expand('%:p:h'))
+  api.nvim_command('redraw')
   if not (workspace_folder and #workspace_folder > 0) then
     return
   end
@@ -669,7 +649,7 @@ end
 ---
 ---@param query (string, optional)
 function M.workspace_symbol(query)
-  query = query or npcall(vfn.input, 'Query: ')
+  query = query or npcall(vim.fn.input, 'Query: ')
   if query == nil then
     return
   end
@@ -838,7 +818,7 @@ end
 --- with all aggregated results
 ---@private
 local function code_action_request(params, options)
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
   local method = 'textDocument/codeAction'
   vim.lsp.buf_request_all(bufnr, method, params, function(results)
     local ctx = { bufnr = bufnr, method = method, params = params }
@@ -875,7 +855,7 @@ function M.code_action(options)
   end
   local context = options.context or {}
   if not context.diagnostics then
-    local bufnr = vim.api.nvim_get_current_buf()
+    local bufnr = api.nvim_get_current_buf()
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
   local params = util.make_range_params()
@@ -902,7 +882,7 @@ function M.range_code_action(context, start_pos, end_pos)
   validate({ context = { context, 't', true } })
   context = context or {}
   if not context.diagnostics then
-    local bufnr = vim.api.nvim_get_current_buf()
+    local bufnr = api.nvim_get_current_buf()
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
   local params = util.make_given_range_params(start_pos, end_pos)

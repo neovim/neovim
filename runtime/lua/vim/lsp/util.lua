@@ -238,14 +238,14 @@ local function get_lines(bufnr, rows)
 
   -- This is needed for bufload and bufloaded
   if bufnr == 0 then
-    bufnr = vim.api.nvim_get_current_buf()
+    bufnr = api.nvim_get_current_buf()
   end
 
   ---@private
   local function buf_lines()
     local lines = {}
     for _, row in pairs(rows) do
-      lines[row] = (vim.api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { '' })[1]
+      lines[row] = (api.nvim_buf_get_lines(bufnr, row, row + 1, false) or { '' })[1]
     end
     return lines
   end
@@ -427,7 +427,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Some LSP servers are depending on the VSCode behavior.
   -- The VSCode will re-locate the cursor position after applying TextEdit so we also do it.
-  local is_current_buf = vim.api.nvim_get_current_buf() == bufnr
+  local is_current_buf = api.nvim_get_current_buf() == bufnr
   local cursor = (function()
     if not is_current_buf then
       return {
@@ -435,7 +435,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
         col = -1,
       }
     end
-    local cursor = vim.api.nvim_win_get_cursor(0)
+    local cursor = api.nvim_win_get_cursor(0)
     return {
       row = cursor[1] - 1,
       col = cursor[2],
@@ -455,11 +455,11 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding),
       end_row = text_edit.range['end'].line,
       end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
-      text = vim.split(text_edit.newText, '\n', true),
+      text = split(text_edit.newText, '\n', true),
     }
 
     -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
-    local max = vim.api.nvim_buf_line_count(bufnr)
+    local max = api.nvim_buf_line_count(bufnr)
     if max <= e.start_row or max <= e.end_row then
       local len = #(get_line(bufnr, max - 1) or '')
       if max <= e.start_row then
@@ -473,7 +473,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       end
       has_eol_text_edit = true
     end
-    vim.api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+    api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
 
     -- Fix cursor position.
     local row_count = (e.end_row - e.start_row) + 1
@@ -490,7 +490,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end
 
-  local max = vim.api.nvim_buf_line_count(bufnr)
+  local max = api.nvim_buf_line_count(bufnr)
 
   -- Apply fixed cursor position.
   if is_cursor_fixed then
@@ -498,7 +498,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     is_valid_cursor = is_valid_cursor and cursor.row < max
     is_valid_cursor = is_valid_cursor and cursor.col <= #(get_line(bufnr, max - 1) or '')
     if is_valid_cursor then
-      vim.api.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
+      api.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
     end
   end
 
@@ -511,7 +511,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     )
   fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
-    vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
+    api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
   end
 end
 
@@ -724,7 +724,7 @@ end
 --         ignoreIfExists? bool
 function M.rename(old_fname, new_fname, opts)
   opts = opts or {}
-  local target_exists = vim.loop.fs_stat(new_fname) ~= nil
+  local target_exists = uv.fs_stat(new_fname) ~= nil
   if target_exists and not opts.overwrite or opts.ignoreIfExists then
     vim.notify('Rename target already exists. Skipping rename.')
     return
@@ -764,7 +764,7 @@ end
 local function delete_file(change)
   local opts = change.options or {}
   local fname = vim.uri_to_fname(change.uri)
-  local stat = vim.loop.fs_stat(fname)
+  local stat = uv.fs_stat(fname)
   if opts.ignoreIfNotExists and not stat then
     return
   end
@@ -906,7 +906,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     -- wrap inside a code block so stylize_markdown can render it properly
     label = ('```%s\n%s\n```'):format(ft, label)
   end
-  vim.list_extend(contents, vim.split(label, '\n', true))
+  list_extend(contents, split(label, '\n', true))
   if signature.documentation then
     M.convert_input_to_markdown_lines(signature.documentation, contents)
   end
@@ -1290,7 +1290,7 @@ function M.stylize_markdown(bufnr, contents, opts)
     end
   end
 
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
+  api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
 
   local idx = 1
   ---@private
@@ -1315,7 +1315,7 @@ function M.stylize_markdown(bufnr, contents, opts)
     local lang = '@' .. ft:upper()
     if not langs[lang] then
       -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
-      pcall(vim.api.nvim_buf_del_var, bufnr, 'current_syntax')
+      pcall(api.nvim_buf_del_var, bufnr, 'current_syntax')
       -- TODO(ashkan): better validation before this.
       if not pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft)) then
         return
@@ -1750,7 +1750,7 @@ function M.symbols_to_items(symbols, bufnr)
         local kind = M._get_symbol_kind_name(symbol.kind)
         table.insert(_items, {
           -- bufnr = _bufnr,
-          filename = vim.api.nvim_buf_get_name(_bufnr),
+          filename = api.nvim_buf_get_name(_bufnr),
           lnum = symbol.selectionRange.start.line + 1,
           col = symbol.selectionRange.start.character + 1,
           kind = kind,
@@ -1788,7 +1788,7 @@ function M.trim_empty_lines(lines)
       break
     end
   end
-  return vim.list_extend({}, lines, start, finish)
+  return list_extend({}, lines, start, finish)
 end
 
 --- Accepts markdown lines and tries to reduce them to a filetype if they
@@ -1824,7 +1824,7 @@ end
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 local function make_position_param(window, offset_encoding)
   window = window or 0
-  local buf = vim.api.nvim_win_get_buf(window)
+  local buf = api.nvim_win_get_buf(window)
   local row, col = unpack(api.nvim_win_get_cursor(window))
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   row = row - 1
@@ -1846,7 +1846,7 @@ end
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params(window, offset_encoding)
   window = window or 0
-  local buf = vim.api.nvim_win_get_buf(window)
+  local buf = api.nvim_win_get_buf(window)
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   return {
     textDocument = M.make_text_document_params(buf),
@@ -1898,7 +1898,7 @@ end
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
 function M.make_range_params(window, offset_encoding)
-  local buf = vim.api.nvim_win_get_buf(window or 0)
+  local buf = api.nvim_win_get_buf(window or 0)
   offset_encoding = offset_encoding or M._get_offset_encoding(buf)
   local position = make_position_param(window, offset_encoding)
   return {
@@ -1924,7 +1924,7 @@ function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
     end_pos = { end_pos, 't', true },
     offset_encoding = { offset_encoding, 's', true },
   })
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  bufnr = bufnr or api.nvim_get_current_buf()
   offset_encoding = offset_encoding or M._get_offset_encoding(bufnr)
   local A = list_extend({}, start_pos or api.nvim_buf_get_mark(bufnr, '<'))
   local B = list_extend({}, end_pos or api.nvim_buf_get_mark(bufnr, '>'))
