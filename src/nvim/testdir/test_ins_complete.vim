@@ -614,7 +614,7 @@ func Test_completefunc_error()
   endfunc
   set completefunc=CompleteFunc
   call setline(1, ['', 'abcd', ''])
-  call assert_fails('exe "normal 2G$a\<C-X>\<C-U>"', 'E840:')
+  call assert_fails('exe "normal 2G$a\<C-X>\<C-U>"', 'E565:')
 
   " delete text when called for the second time
   func CompleteFunc2(findstart, base)
