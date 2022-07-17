@@ -614,7 +614,7 @@ function vim._expand_pat(pat, env)
   local function insert_keys(obj)
     for k, _ in pairs(obj) do
       if type(k) == 'string' and string.sub(k, 1, string.len(match_part)) == match_part then
-        table.insert(keys, k)
+        keys[k] = true
       end
     end
   end
@@ -630,6 +630,7 @@ function vim._expand_pat(pat, env)
     insert_keys(vim._submodules)
   end
 
+  keys = vim.tbl_keys(keys)
   table.sort(keys)
 
   return keys, #prefix_match_pat
