@@ -520,10 +520,10 @@ func Xtest_browse(cchar)
   call assert_fails('Xprev', 'E553')
   call assert_fails('Xpfile', 'E553')
   Xnfile
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
   call assert_equal(10, line('.'))
   Xpfile
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
   call assert_equal(6, line('.'))
   5Xcc
   call assert_equal(5, g:Xgetlist({'idx':0}).idx)
@@ -539,7 +539,7 @@ func Xtest_browse(cchar)
   call assert_equal(6, g:Xgetlist({'idx':0}).idx)
   Xlast
   Xprev
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
   call assert_equal(11, line('.'))
   call assert_fails('Xnext', 'E553')
   call assert_fails('Xnfile', 'E553')
@@ -552,14 +552,14 @@ func Xtest_browse(cchar)
   endif
   call assert_equal(6, g:Xgetlist({'idx':0}).idx)
   Xrewind
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
   call assert_equal(5, line('.'))
 
   10Xnext
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
   call assert_equal(11, line('.'))
   10Xprev
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
   call assert_equal(5, line('.'))
 
   " Jumping to an error from the error window using cc command
@@ -570,7 +570,7 @@ func Xtest_browse(cchar)
   Xopen
   10Xcc
   call assert_equal(11, line('.'))
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
   Xopen
   call cursor(2, 1)
   if a:cchar == 'c'
@@ -579,14 +579,14 @@ func Xtest_browse(cchar)
     .ll
   endif
   call assert_equal(6, line('.'))
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
 
   " Jumping to an error from the error window (when only the error window is
   " present)
   Xopen | only
   Xlast 1
   call assert_equal(5, line('.'))
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
 
   Xexpr ""
   call assert_fails('Xnext', 'E42:')
@@ -1961,7 +1961,7 @@ func Test_switchbuf()
   copen | only
   cfirst
   call assert_equal(1, tabpagenr())
-  call assert_equal('Xqftestfile1', bufname(''))
+  call assert_equal('Xqftestfile1', @%)
 
   " If opening a file changes 'switchbuf', then the new value should be
   " retained.
@@ -2777,7 +2777,7 @@ func Test_cwindow_jump()
   wincmd b
   cfirst
   call assert_equal(2, winnr())
-  call assert_equal('F1', bufname(''))
+  call assert_equal('F1', @%)
   enew | only
   exe 'sb' bnum
   exe 'botright sb' bnum
@@ -2867,7 +2867,7 @@ func XvimgrepTests(cchar)
   edit +3 Xtestfile2
   Xvimgrep +\cemacs+j Xtestfile1
   let l = g:Xgetlist()
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal('Editor:Emacs EmAcS', l[0].text)
 
   " Test for unloading a buffer after vimgrep searched the buffer
@@ -3536,7 +3536,7 @@ func Xqfjump_tests(cchar)
   Xopen | only
   2Xnext
   call assert_equal(3, g:Xgetlist({'idx' : 0}).idx)
-  call assert_equal('F3', bufname('%'))
+  call assert_equal('F3', @%)
   Xnext
   call assert_equal(7, col('.'))
   Xnext
@@ -4230,20 +4230,20 @@ func Xjumpto_first_error_test(cchar)
   " Test for cexpr/lexpr
   enew
   Xexpr l
-  call assert_equal('Xtestfile1', bufname(''))
+  call assert_equal('Xtestfile1', @%)
   call assert_equal(2, line('.'))
 
   " Test for cfile/lfile
   enew
   call writefile(l, 'Xerr')
   Xfile Xerr
-  call assert_equal('Xtestfile1', bufname(''))
+  call assert_equal('Xtestfile1', @%)
   call assert_equal(2, line('.'))
 
   " Test for cbuffer/lbuffer
   edit Xerr
   Xbuffer
-  call assert_equal('Xtestfile1', bufname(''))
+  call assert_equal('Xtestfile1', @%)
   call assert_equal(2, line('.'))
 
   call delete('Xerr')
@@ -4268,7 +4268,7 @@ func Xautocmd_changelist(cchar)
   autocmd QuickFixCmdPost * Xolder
   call writefile(['Xtestfile2:4:Line4'], 'Xerr')
   Xfile Xerr
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(4, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -4279,7 +4279,7 @@ func Xautocmd_changelist(cchar)
   call writefile(['Xtestfile2:4:Line4'], 'Xerr')
   edit Xerr
   Xbuffer
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(4, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -4288,7 +4288,7 @@ func Xautocmd_changelist(cchar)
   Xexpr 'Xtestfile1:2:Line2'
   autocmd QuickFixCmdPost * Xolder
   Xexpr 'Xtestfile2:4:Line4'
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(4, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -4299,7 +4299,7 @@ func Xautocmd_changelist(cchar)
     Xexpr 'Xtestfile1:2:Line2'
     autocmd QuickFixCmdPost * Xolder
     silent Xgrep Line5 Xtestfile2
-    call assert_equal('Xtestfile2', bufname(''))
+    call assert_equal('Xtestfile2', @%)
     call assert_equal(5, line('.'))
     autocmd! QuickFixCmdPost
   endif
@@ -4309,7 +4309,7 @@ func Xautocmd_changelist(cchar)
   Xexpr 'Xtestfile1:2:Line2'
   autocmd QuickFixCmdPost * Xolder
   silent Xvimgrep Line5 Xtestfile2
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(5, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -4624,7 +4624,7 @@ func Test_winonly_autocmd()
   " positioned correctly.
   ll 3
   call assert_equal(loclistid, getloclist(0, {'id' : 0}).id)
-  call assert_equal('Xtest1', bufname(''))
+  call assert_equal('Xtest1', @%)
   call assert_equal(15, line('.'))
   " Cleanup
   autocmd! WinEnter
@@ -4685,51 +4685,51 @@ func Xtest_below(cchar)
   Xexpr ["X1:5:3:L5", "X2:5:2:L5", "X2:10:3:L10", "X2:15:4:L15", "X3:3:5:L3"]
   edit +7 X2
   Xabove
-  call assert_equal(['X2', 5], [bufname(''), line('.')])
+  call assert_equal(['X2', 5], [@%, line('.')])
   call assert_fails('Xabove', 'E553:')
   normal 7G
   Xbefore
-  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 2], [@%, line('.'), col('.')])
   call assert_fails('Xbefore', 'E553:')
 
   normal 2j
   Xbelow
-  call assert_equal(['X2', 10], [bufname(''), line('.')])
+  call assert_equal(['X2', 10], [@%, line('.')])
   normal 7G
   Xafter
-  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 3], [@%, line('.'), col('.')])
 
   " Last error in this file
   Xbelow 99
-  call assert_equal(['X2', 15], [bufname(''), line('.')])
+  call assert_equal(['X2', 15], [@%, line('.')])
   call assert_fails('Xbelow', 'E553:')
   normal gg
   Xafter 99
-  call assert_equal(['X2', 15, 4], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 4], [@%, line('.'), col('.')])
   call assert_fails('Xafter', 'E553:')
 
   " First error in this file
   Xabove 99
-  call assert_equal(['X2', 5], [bufname(''), line('.')])
+  call assert_equal(['X2', 5], [@%, line('.')])
   call assert_fails('Xabove', 'E553:')
   normal G
   Xbefore 99
-  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 2], [@%, line('.'), col('.')])
   call assert_fails('Xbefore', 'E553:')
 
   normal gg
   Xbelow 2
-  call assert_equal(['X2', 10], [bufname(''), line('.')])
+  call assert_equal(['X2', 10], [@%, line('.')])
   normal gg
   Xafter 2
-  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 3], [@%, line('.'), col('.')])
 
   normal G
   Xabove 2
-  call assert_equal(['X2', 10], [bufname(''), line('.')])
+  call assert_equal(['X2', 10], [@%, line('.')])
   normal G
   Xbefore 2
-  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 3], [@%, line('.'), col('.')])
 
   edit X4
   call assert_fails('Xabove', 'E42:')
@@ -4753,45 +4753,45 @@ func Xtest_below(cchar)
 	      \ "X2:15:1:L15_1", "X2:15:2:L15_2", "X2:15:3:L15_3", "X3:3:L3"]
   edit +1 X2
   Xbelow 2
-  call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 1], [@%, line('.'), col('.')])
   normal 1G
   Xafter 2
-  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 2], [@%, line('.'), col('.')])
 
   normal gg
   Xbelow 99
-  call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 1], [@%, line('.'), col('.')])
   normal gg
   Xafter 99
-  call assert_equal(['X2', 15, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 3], [@%, line('.'), col('.')])
 
   normal G
   Xabove 2
-  call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 1], [@%, line('.'), col('.')])
   normal G
   Xbefore 2
-  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 2], [@%, line('.'), col('.')])
 
   normal G
   Xabove 99
-  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 1], [@%, line('.'), col('.')])
   normal G
   Xbefore 99
-  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 1], [@%, line('.'), col('.')])
 
   normal 10G
   Xabove
-  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 1], [@%, line('.'), col('.')])
   normal 10G$
   2Xbefore
-  call assert_equal(['X2', 10, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 2], [@%, line('.'), col('.')])
 
   normal 10G
   Xbelow
-  call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 1], [@%, line('.'), col('.')])
   normal 9G
   5Xafter
-  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 2], [@%, line('.'), col('.')])
 
   " Invalid range
   if a:cchar == 'c'

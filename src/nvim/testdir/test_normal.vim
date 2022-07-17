@@ -811,8 +811,9 @@ func Test_normal17_z_scroll_hor2()
   bw!
 endfunc
 
-" Test for H, M and L commands with folds
-func Test_scroll_cmds()
+" Test for commands that scroll the window horizontally. Test with folds.
+"   H, M, L, CTRL-E, CTRL-Y, CTRL-U, CTRL-D, PageUp, PageDown commands
+func Test_vert_scroll_cmds()
   15new
   call setline(1, range(1, 100))
   exe "normal! 30ggz\<CR>"
@@ -821,6 +822,8 @@ func Test_scroll_cmds()
   40,43fold
   46,49fold
   let h = winheight(0)
+
+  " Test for H, M and L commands
   " Top of the screen = 30
   " Folded lines = 9
   " Bottom of the screen = 30 + h + 9 - 1
@@ -828,15 +831,107 @@ func Test_scroll_cmds()
   call assert_equal(35 + h, line('.'))
   normal! 4H
   call assert_equal(33, line('.'))
+
+  " Test for the CTRL-E and CTRL-Y commands with folds
+  %d
+  call setline(1, range(1, 10))
+  3,5fold
+  exe "normal 6G3\<C-E>"
+  call assert_equal(6, line('w0'))
+  exe "normal 2\<C-Y>"
+  call assert_equal(2, line('w0'))
+
+  " Test for CTRL-Y on a folded line
+  %d
+  call setline(1, range(1, 100))
+  exe (h + 2) .. "," .. (h + 4) .. "fold"
+  exe h + 5
+  normal z-
+  exe "normal \<C-Y>\<C-Y>"
+  call assert_equal(h + 1, line('w$'))
+
+  " Using <PageUp> and <PageDown> in an empty buffer should beep
+  %d
+  call assert_beeps('exe "normal \<PageUp>"')
+  call assert_beeps('exe "normal \<C-B>"')
+  call assert_beeps('exe "normal \<PageDown>"')
+  call assert_beeps('exe "normal \<C-F>"')
+
+  " Test for <C-U> and <C-D> with fold
+  %d
+  call setline(1, range(1, 100))
+  10,35fold
+  set scroll=10
+  exe "normal \<C-D>"
+  call assert_equal(36, line('.'))
+  exe "normal \<C-D>"
+  call assert_equal(46, line('.'))
+  exe "normal \<C-U>"
+  call assert_equal(36, line('.'))
+  exe "normal \<C-U>"
+  call assert_equal(10, line('.'))
+  exe "normal \<C-U>"
+  call assert_equal(1, line('.'))
+  set scroll&
+
+  " Test for scrolling to the top of the file with <C-U> and a fold
+  10
+  normal ztL
+  exe "normal \<C-U>\<C-U>"
+  call assert_equal(1, line('w0'))
+
+  " Test for CTRL-D on a folded line
+  %d
+  call setline(1, range(1, 100))
+  50,100fold
+  75
+  normal z-
+  exe "normal \<C-D>"
+  call assert_equal(50, line('.'))
+  call assert_equal(100, line('w$'))
+  normal z.
+  let lnum = winline()
+  exe "normal \<C-D>"
+  call assert_equal(lnum, winline())
+  call assert_equal(50, line('.'))
+  normal zt
+  exe "normal \<C-D>"
+  call assert_equal(50, line('w0'))
+
   set foldenable&
   close!
 endfunc
 
+" Test for the 'sidescroll' option
+func Test_sidescroll_opt()
+  new
+  20vnew
+
+  " scroll by 2 characters horizontally
+  set sidescroll=2 nowrap
+  call setline(1, repeat('a', 40))
+  normal g$l
+  call assert_equal(19, screenpos(0, 1, 21).col)
+  normal l
+  call assert_equal(20, screenpos(0, 1, 22).col)
+  normal g0h
+  call assert_equal(2, screenpos(0, 1, 2).col)
+  call assert_equal(20, screenpos(0, 1, 20).col)
+
+  " when 'sidescroll' is 0, cursor positioned at the center
+  set sidescroll=0
+  normal g$l
+  call assert_equal(11, screenpos(0, 1, 21).col)
+  normal g0h
+  call assert_equal(10, screenpos(0, 1, 10).col)
+
+  %bw!
+  set wrap& sidescroll&
+endfunc
+
+" basic tests for foldopen/folddelete
 func Test_normal18_z_fold()
-  " basic tests for foldopen/folddelete
-  if !has("folding")
-    return
-  endif
+  CheckFeature folding
   call Setup_NewWindow()
   50
   setl foldenable fdm=marker foldlevel=5
@@ -3145,6 +3240,42 @@ func Test_normal_word_move()
   normal 3Gyb
   call assert_equal("two\n  ", @")
 
+  close!
+endfunc
+
+" Test for 'scrolloff' with a long line that doesn't fit in the screen
+func Test_normal_scroloff()
+  10new
+  80vnew
+  call setline(1, repeat('a', 1000))
+  set scrolloff=10
+  normal gg10gj
+  call assert_equal(8, winline())
+  normal 10gj
+  call assert_equal(10, winline())
+  normal 10gk
+  call assert_equal(3, winline())
+  set scrolloff&
+  close!
+endfunc
+
+" Test for vertical scrolling with CTRL-F and CTRL-B with a long line
+func Test_normal_vert_scroll_longline()
+  10new
+  80vnew
+  call setline(1, range(1, 10))
+  call append(5, repeat('a', 1000))
+  exe "normal gg\<C-F>"
+  call assert_equal(6, line('.'))
+  exe "normal \<C-F>\<C-F>"
+  call assert_equal(11, line('.'))
+  call assert_equal(1, winline())
+  exe "normal \<C-B>"
+  call assert_equal(10, line('.'))
+  call assert_equal(3, winline())
+  exe "normal \<C-B>\<C-B>"
+  call assert_equal(5, line('.'))
+  call assert_equal(5, winline())
   close!
 endfunc
 
