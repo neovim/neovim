@@ -380,7 +380,7 @@ local function schedule_display(namespace, bufnr, args)
       callback = function()
         execute_scheduled_display(namespace, bufnr)
       end,
-      desc = 'Diagnostic ' .. table.concat(insert_leave_auto_cmds, ','),
+      desc = 'vim.diagnostic: display diagnostics',
     })
     registered_autocmds[key] = true
   end
