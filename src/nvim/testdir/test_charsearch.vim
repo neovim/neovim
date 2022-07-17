@@ -29,6 +29,17 @@ func Test_charsearch()
   set cpo-=;
   normal! ;;p
   call assert_equal('ZabcdeZfghijkZZemnokqretkZvwxyz', getline(3))
+
+  " check that repeating a search before and after a line fails
+  normal 3Gfv
+  call assert_beeps('normal ;')
+  call assert_beeps('normal ,')
+
+  " clear the character search
+  call setcharsearch({'char' : ''})
+  call assert_equal('', getcharsearch().char)
+
+  call assert_fails("call setcharsearch([])", 'E715:')
   enew!
 endfunc
 
@@ -70,6 +81,20 @@ func Test_csearch_virtualedit()
   normal! tb
   call assert_equal([0, 1, 2, 6], getpos('.'))
   set virtualedit&
+  close!
+endfunc
+
+" Test for character search failure in latin1 encoding
+func Test_charsearch_latin1()
+  new
+  let save_enc = &encoding
+  " set encoding=latin1
+  call setline(1, 'abcdefghijk')
+  call assert_beeps('normal fz')
+  call assert_beeps('normal tx')
+  call assert_beeps('normal $Fz')
+  call assert_beeps('normal $Tx')
+  let &encoding = save_enc
   close!
 endfunc
 

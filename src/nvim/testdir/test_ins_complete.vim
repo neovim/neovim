@@ -601,6 +601,26 @@ func Test_ins_compl_tag_sft()
   %bwipe!
 endfunc
 
+" Test for completing words following a completed word in a line
+func Test_complete_wrapscan()
+  " complete words from another buffer
+  new
+  call setline(1, ['one two', 'three four'])
+  new
+  setlocal complete=w
+  call feedkeys("itw\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>", 'xt')
+  call assert_equal('two three four', getline(1))
+  close!
+  " complete words from the current buffer
+  setlocal complete=.
+  %d
+  call setline(1, ['one two', ''])
+  call cursor(2, 1)
+  call feedkeys("ion\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>\<C-X>\<C-N>", 'xt')
+  call assert_equal('one two one two', getline(2))
+  close!
+endfunc
+
 " Test for completing special characters
 func Test_complete_special_chars()
   new

@@ -154,8 +154,24 @@ func Test_gn_command()
   norm! gg0f2vf7gNd
   call assert_equal(['1678'], getline(1,'$'))
   sil! %d _
-
   set wrapscan&vim
+
+  " Without 'wrapscan', in visual mode, running gn without a match should fail
+  " but the visual mode should be kept.
+  set nowrapscan
+  call setline('.', 'one two')
+  let @/ = 'one'
+  call assert_beeps('normal 0wvlgn')
+  exe "normal y"
+  call assert_equal('tw', @")
+
+  " with exclusive selection, run gn and gN
+  set selection=exclusive
+  normal 0gny
+  call assert_equal('one', @")
+  normal 0wgNy
+  call assert_equal('one', @")
+  set selection&
 endfunc
 
 func Test_gN_repeat()

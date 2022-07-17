@@ -1189,6 +1189,29 @@ func Test_AAA_start_visual_mode_with_count()
   close!
 endfunc
 
+" Test for visually selecting an inner block (iB)
+func Test_visual_inner_block()
+  new
+  call setline(1, ['one', '{', 'two', '{', 'three', '}', 'four', '}', 'five'])
+  call cursor(5, 1)
+  " visually select all the lines in the block and then execute iB
+  call feedkeys("ViB\<C-C>", 'xt')
+  call assert_equal([0, 5, 1, 0], getpos("'<"))
+  call assert_equal([0, 5, 6, 0], getpos("'>"))
+  " visually select two inner blocks
+  call feedkeys("ViBiB\<C-C>", 'xt')
+  call assert_equal([0, 3, 1, 0], getpos("'<"))
+  call assert_equal([0, 7, 5, 0], getpos("'>"))
+  " try to select non-existing inner block
+  call cursor(5, 1)
+  call assert_beeps('normal ViBiBiB')
+  " try to select a unclosed inner block
+  8,9d
+  call cursor(5, 1)
+  call assert_beeps('normal ViBiB')
+  close!
+endfunc
+
 func Test_visual_put_in_block()
   new
   call setline(1, ['xxxx', 'y∞yy', 'zzzz'])
