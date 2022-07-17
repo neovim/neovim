@@ -407,7 +407,7 @@ accordingly, proceeding as follows:
 	Nvim started with |--embed| waits for the UI to connect before
 	proceeding to load user configuration.
 
-4. Setup |default-mappings| and  |default-autocmds|.
+4. Setup |default-mappings| and |default-autocmds|.  Create |popup-menu|.
 
 5. Enable filetype and indent plugins.
 	This does the same as the command: >

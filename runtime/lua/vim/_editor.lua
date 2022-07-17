@@ -810,6 +810,44 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   end
 end
 
+--- Create builtin mappings (incl. menus).
+--- Called once on startup.
+function vim._init_default_mappings()
+  -- mappings
+
+  --@private
+  local function map(mode, lhs, rhs)
+    vim.api.nvim_set_keymap(mode, lhs, rhs, { noremap = true, desc = 'Nvim builtin' })
+  end
+
+  map('n', 'Y', 'y$')
+  -- Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>. #17473
+  map('n', '<C-L>', '<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>')
+  map('i', '<C-U>', '<C-G>u<C-U>')
+  map('i', '<C-W>', '<C-G>u<C-W>')
+  map('x', '*', 'y/\\V<C-R>"<CR>')
+  map('x', '#', 'y?\\V<C-R>"<CR>')
+  -- Use : instead of <Cmd> so that ranges are supported. #19365
+  map('n', '&', ':&&<CR>')
+
+  -- menus
+
+  -- TODO VimScript, no l10n
+  vim.cmd([[
+    aunmenu *
+    vnoremenu PopUp.Cut                     "+x
+    vnoremenu PopUp.Copy                    "+y
+    anoremenu PopUp.Paste                   "+gP
+    vnoremenu PopUp.Paste                   "+P
+    vnoremenu PopUp.Delete                  "_x
+    nnoremenu PopUp.Select\ All             ggVG
+    vnoremenu PopUp.Select\ All             gg0oG$
+    inoremenu PopUp.Select\ All             <C-Home><C-O>VG
+    anoremenu PopUp.-1-                     <Nop>
+    anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
+  ]])
+end
+
 require('vim._meta')
 
 return vim

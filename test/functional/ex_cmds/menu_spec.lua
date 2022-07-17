@@ -64,6 +64,8 @@ describe('menu_get', function()
   before_each(function()
     clear()
     command([=[
+      aunmenu *
+
       nnoremenu &Test.Test inormal<ESC>
       inoremenu Test.Test insert
       vnoremenu Test.Test x
@@ -396,6 +398,7 @@ describe('menu_get', function()
 
   before_each(function()
     clear()
+    command('aunmenu *')
   end)
 
   it('returns <keycode> representation of special keys', function()

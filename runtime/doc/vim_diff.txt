@@ -52,6 +52,8 @@ centralized reference of the differences.
 - 'langremap' is disabled
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
+- 'mouse' defaults to "nvi"
+- 'mousemodel' defaults to "popup_setpos"
 - 'nrformats' defaults to "bin,hex"
 - 'ruler' is enabled
 - 'sessionoptions' includes "unix,slash", excludes "options"
@@ -77,6 +79,30 @@ centralized reference of the differences.
 
 - |g:vimsyn_embed| defaults to "l" to enable Lua highlighting
 
+
+Default Mouse ~
+						*default-mouse* *disable-mouse*
+By default the mouse is enabled.  The right button click opens |popup-menu|
+with standard actions, such as "Cut", "Copy" and "Paste".
+
+If you don't like this you can add to your |config| any of the following:
+
+- ignore mouse completely >
+  set mouse=
+<
+- no |popup-menu| but the right button extends selection >
+  set mousemodel=extend
+>
+- pressing ALT+LeftMouse releases mouse until main cursor moves  >
+  nnoremap <M-LeftMouse> <Cmd>
+    \ set mouse=<Bar>
+    \ echo 'mouse OFF until next cursor-move'<Bar>
+    \ autocmd CursorMoved * ++once set mouse&<Bar>
+    \ echo 'mouse ON'<CR>
+<
+Also, mouse is not in use in |command-mode| or at |more-prompt|.  So if you
+need to copy/paste with your terminal then just pressing ':' makes Nvim to
+release the mouse cursor temporarily.
 
 Default Mappings ~
 							*default-mappings*

@@ -524,8 +524,8 @@ describe('sysinit', function()
     screen:expect([[
       ^                                                            |
       Entering Debug mode.  Type "cont" to continue.              |
-      pre-vimrc command line                                      |
-      cmd: set noruler                                            |
+      nvim_exec()                                                 |
+      cmd: aunmenu *                                              |
       >                                                           |
       <" -u NONE -i NONE --cmd "set noruler" -D 1,1            All|
                                                                   |

@@ -356,7 +356,14 @@ int main(int argc, char **argv)
     abort();  // unreachable
   }
 
-  init_default_mappings();  // Default mappings.
+  // Default mappings (incl. menus)
+  Error err = ERROR_INIT;
+  Object o = nlua_exec(STATIC_CSTR_AS_STRING("return vim._init_default_mappings()"),
+                       (Array)ARRAY_DICT_INIT, &err);
+  assert(!ERROR_SET(&err));
+  api_clear_error(&err);
+  assert(o.type == kObjectTypeNil);
+  api_free_object(o);
   TIME_MSG("init default mappings");
 
   init_default_autocmds();

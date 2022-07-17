@@ -4086,7 +4086,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	listing continues until finished.
 
 						*'mouse'*
-'mouse'			string	(default "")
+'mouse'			string	(default "nvi")
 			global
 
 	Enables mouse support. For example, to enable the mouse in Normal mode
@@ -4158,7 +4158,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The mouse pointer is restored when the mouse is moved.
 
 						*'mousemodel'* *'mousem'*
-'mousemodel' 'mousem'	string	(default "extend")
+'mousemodel' 'mousem'	string	(default "popup_setpos")
 			global
 	Sets the model to use for the mouse.  The name mostly specifies what
 	the right mouse button is used for:
@@ -4184,7 +4184,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	middle click	    paste		paste
 
 	In the "popup" model the right mouse button produces a pop-up menu.
-	You need to define this first, see |popup-menu|.
+	Nvim creates a default |popup-menu| but you can redefine it.
 
 	Note that you can further refine the meaning of buttons with mappings.
 	See |mouse-overview|.  But mappings are NOT used for modeless selection.

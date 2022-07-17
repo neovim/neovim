@@ -32,7 +32,7 @@ describe('ui/mouse/input', function()
       [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [7] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
-    command("set display-=msgsep")
+    command("set display-=msgsep mousemodel=extend")
     feed('itesting<cr>mouse<cr>support and selection<esc>')
     screen:expect([[
       testing                  |

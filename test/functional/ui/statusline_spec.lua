@@ -17,7 +17,7 @@ describe('statusline clicks', function()
     clear()
     screen = Screen.new(40, 8)
     screen:attach()
-    command('set laststatus=2')
+    command('set laststatus=2 mousemodel=extend')
     exec([=[
       function! MyClickFunc(minwid, clicks, button, mods)
         let mods = trim(a:mods)
