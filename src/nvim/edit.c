@@ -3961,7 +3961,9 @@ static void expand_by_function(int type, char_u *base)
   pos = curwin->w_cursor;
   curwin_save = curwin;
   curbuf_save = curbuf;
-  // Lock the text to avoid weird things from happening.
+  // Lock the text to avoid weird things from happening.  Also disallow
+  // switching to another window, it should not be needed and may end up in
+  // Insert mode in another buffer.
   textlock++;
 
   // Call a function, which returns a list or dict.

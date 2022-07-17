@@ -2696,14 +2696,12 @@ char_u *get_cmdprompt(void)
   return ccline.cmdprompt;
 }
 
-/*
- * Return TRUE when the text must not be changed and we can't switch to
- * another window or buffer.  Used when editing the command line etc.
- */
-int text_locked(void)
+/// Return true when the text must not be changed and we can't switch to
+/// another window or buffer.  True when editing the command line etc.
+bool text_locked(void)
 {
   if (cmdwin_type != 0) {
-    return TRUE;
+    return true;
   }
   return textlock != 0;
 }

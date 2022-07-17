@@ -3143,7 +3143,7 @@ endfunc
 func Test_vimgrep_with_textlock()
   new
 
-  " Simple way to execute something with "textwinlock" set.
+  " Simple way to execute something with "textlock" set.
   " Check that vimgrep without jumping can be executed.
   au InsertCharPre * vimgrep /RunTheTest/j runtest.vim
   normal ax

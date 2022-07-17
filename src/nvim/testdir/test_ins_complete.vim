@@ -628,31 +628,24 @@ func Test_completefunc_error()
   call setline(1, ['', 'abcd', ''])
   call assert_fails('exe "normal 2G$a\<C-X>\<C-U>"', 'E565:')
 
-  set completefunc&
-  delfunc CompleteFunc
-  delfunc CompleteFunc2
-  close!
-endfunc
-
-func Test_completefunc_error_not_asan()
-  " The following test causes an ASAN failure.
-  CheckNotAsan
-
   " Jump to a different window from the complete function
-  func! CompleteFunc(findstart, base)
+  func CompleteFunc3(findstart, base)
     if a:findstart == 1
       return col('.') - 1
     endif
     wincmd p
     return ['a', 'b']
   endfunc
-  set completefunc=CompleteFunc
+  set completefunc=CompleteFunc3
   new
-  call assert_fails('exe "normal a\<C-X>\<C-U>"', 'E839:')
+  call assert_fails('exe "normal a\<C-X>\<C-U>"', 'E565:')
   close!
 
   set completefunc&
   delfunc CompleteFunc
+  delfunc CompleteFunc2
+  delfunc CompleteFunc3
+  close!
 endfunc
 
 " Test for returning non-string values from 'completefunc'
