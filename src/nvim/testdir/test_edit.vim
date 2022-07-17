@@ -349,8 +349,8 @@ func Test_edit_11_indentexpr()
   bw!
 endfunc
 
+" Test changing indent in replace mode
 func Test_edit_12()
-  " Test changing indent in replace mode
   new
   call setline(1, ["\tabc", "\tdef"])
   call cursor(2, 4)
@@ -389,15 +389,15 @@ func Test_edit_12()
   call feedkeys("R\<c-t>\<c-t>", 'tnix')
   call assert_equal(["\tabc", "\t\t\tdef"], getline(1, '$'))
   call assert_equal([0, 2, 2, 0], getpos('.'))
-  set et
-  set sw& et&
+  set sw&
+
+  " In replace mode, after hitting enter in a line with tab characters,
+  " pressing backspace should restore the tab characters.
   %d
-  call setline(1, ["\t/*"])
-  set formatoptions=croql
-  call cursor(1, 3)
-  call feedkeys("A\<cr>\<cr>/", 'tnix')
-  call assert_equal(["\t/*", " *", " */"], getline(1, '$'))
-  set formatoptions&
+  setlocal autoindent backspace=2
+  call setline(1, "\tone\t\ttwo")
+  exe "normal ggRred\<CR>six" .. repeat("\<BS>", 8)
+  call assert_equal(["\tone\t\ttwo"], getline(1, '$'))
   bw!
 endfunc
 

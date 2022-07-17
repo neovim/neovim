@@ -1161,6 +1161,30 @@ func Test_whichwrap_multi_byte()
   bwipe!
 endfunc
 
+" Test for automatically adding comment leaders in insert mode
+func Test_threepiece_comment()
+  new
+  setlocal expandtab
+  call setline(1, ["\t/*"])
+  setlocal formatoptions=croql
+  call cursor(1, 3)
+  call feedkeys("A\<cr>\<cr>/", 'tnix')
+  call assert_equal(["\t/*", " *", " */"], getline(1, '$'))
+
+  " If a comment ends in a single line, then don't add it in the next line
+  %d
+  call setline(1, '/* line1 */')
+  call feedkeys("A\<CR>next line", 'xt')
+  call assert_equal(['/* line1 */', 'next line'], getline(1, '$'))
+
+  %d
+  " Copy the trailing indentation from the leader comment to a new line
+  setlocal autoindent noexpandtab
+  call feedkeys("a\t/*\tone\ntwo\n/", 'xt')
+  call assert_equal(["\t/*\tone", "\t *\ttwo", "\t */"], getline(1, '$'))
+  close!
+endfunc
+
 " Test for the 'f' flag in 'comments' (only the first line has the comment
 " string)
 func Test_firstline_comment()

@@ -601,6 +601,88 @@ func Test_ins_compl_tag_sft()
   %bwipe!
 endfunc
 
+" Test for 'completefunc' deleting text
+func Test_completefunc_error()
+  new
+  " delete text when called for the first time
+  func CompleteFunc(findstart, base)
+    if a:findstart == 1
+      normal dd
+      return col('.') - 1
+    endif
+    return ['a', 'b']
+  endfunc
+  set completefunc=CompleteFunc
+  call setline(1, ['', 'abcd', ''])
+  call assert_fails('exe "normal 2G$a\<C-X>\<C-U>"', 'E840:')
+
+  " delete text when called for the second time
+  func CompleteFunc2(findstart, base)
+    if a:findstart == 1
+      return col('.') - 1
+    endif
+    normal dd
+    return ['a', 'b']
+  endfunc
+  set completefunc=CompleteFunc2
+  call setline(1, ['', 'abcd', ''])
+  call assert_fails('exe "normal 2G$a\<C-X>\<C-U>"', 'E565:')
+
+  " Jump to a different window from the complete function
+  " TODO: The following test causes an ASAN failure. Once this issue is
+  " addressed, enable the following test.
+  "func! CompleteFunc(findstart, base)
+  "  if a:findstart == 1
+  "    return col('.') - 1
+  "  endif
+  "  wincmd p
+  "  return ['a', 'b']
+  "endfunc
+  "set completefunc=CompleteFunc
+  "new
+  "call assert_fails('exe "normal a\<C-X>\<C-U>"', 'E839:')
+  "close!
+
+  set completefunc&
+  delfunc CompleteFunc
+  delfunc CompleteFunc2
+  close!
+endfunc
+
+" Test for returning non-string values from 'completefunc'
+func Test_completefunc_invalid_data()
+  new
+  func! CompleteFunc(findstart, base)
+    if a:findstart == 1
+      return col('.') - 1
+    endif
+    return [{}, '', 'moon']
+  endfunc
+  set completefunc=CompleteFunc
+  exe "normal i\<C-X>\<C-U>"
+  call assert_equal('moon', getline(1))
+  set completefunc&
+  close!
+endfunc
+
+" Test for errors in using complete() function
+func Test_complete_func_error()
+  call assert_fails('call complete(1, ["a"])', 'E785:')
+  func ListColors()
+    call complete(col('.'), "blue")
+  endfunc
+  call assert_fails('exe "normal i\<C-R>=ListColors()\<CR>"', 'E474:')
+  func ListMonths()
+    call complete(col('.'), test_null_list())
+  endfunc
+  " Nvim allows a NULL list
+  " call assert_fails('exe "normal i\<C-R>=ListMonths()\<CR>"', 'E474:')
+  delfunc ListColors
+  delfunc ListMonths
+  call assert_fails('call complete_info({})', 'E714:')
+  call assert_equal([], complete_info(['items']).items)
+endfunc
+
 " Test for completing words following a completed word in a line
 func Test_complete_wrapscan()
   " complete words from another buffer
