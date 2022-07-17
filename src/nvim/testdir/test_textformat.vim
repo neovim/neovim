@@ -1060,7 +1060,7 @@ func Test_tw_2_fo_tm_replace()
 endfunc
 
 " Test for 'matchpairs' with multibyte chars
-func Test_mps()
+func Test_mps_multibyte()
   new
   let t =<< trim END
     {
@@ -1082,6 +1082,30 @@ func Test_mps()
 
   set mps&
   bwipe!
+endfunc
+
+" Test for 'matchpairs' in latin1 encoding
+func Test_mps_latin1()
+  new
+  let save_enc = &encoding
+  " set encoding=latin1
+  call setline(1, 'abc(def)ghi')
+  normal %
+  call assert_equal(8, col('.'))
+  normal %
+  call assert_equal(4, col('.'))
+  call cursor(1, 6)
+  normal [(
+  call assert_equal(4, col('.'))
+  normal %
+  call assert_equal(8, col('.'))
+  call cursor(1, 6)
+  normal ])
+  call assert_equal(8, col('.'))
+  normal %
+  call assert_equal(4, col('.'))
+  let &encoding = save_enc
+  close!
 endfunc
 
 func Test_empty_matchpairs()

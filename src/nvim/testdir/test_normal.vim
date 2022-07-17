@@ -811,8 +811,9 @@ func Test_normal17_z_scroll_hor2()
   bw!
 endfunc
 
-" Test for H, M and L commands with folds
-func Test_scroll_cmds()
+" Test for commands that scroll the window horizontally. Test with folds.
+"   H, M, L, CTRL-E, CTRL-Y, CTRL-U, CTRL-D, PageUp, PageDown commands
+func Test_vert_scroll_cmds()
   15new
   call setline(1, range(1, 100))
   exe "normal! 30ggz\<CR>"
@@ -821,6 +822,8 @@ func Test_scroll_cmds()
   40,43fold
   46,49fold
   let h = winheight(0)
+
+  " Test for H, M and L commands
   " Top of the screen = 30
   " Folded lines = 9
   " Bottom of the screen = 30 + h + 9 - 1
@@ -828,15 +831,107 @@ func Test_scroll_cmds()
   call assert_equal(35 + h, line('.'))
   normal! 4H
   call assert_equal(33, line('.'))
+
+  " Test for the CTRL-E and CTRL-Y commands with folds
+  %d
+  call setline(1, range(1, 10))
+  3,5fold
+  exe "normal 6G3\<C-E>"
+  call assert_equal(6, line('w0'))
+  exe "normal 2\<C-Y>"
+  call assert_equal(2, line('w0'))
+
+  " Test for CTRL-Y on a folded line
+  %d
+  call setline(1, range(1, 100))
+  exe (h + 2) .. "," .. (h + 4) .. "fold"
+  exe h + 5
+  normal z-
+  exe "normal \<C-Y>\<C-Y>"
+  call assert_equal(h + 1, line('w$'))
+
+  " Using <PageUp> and <PageDown> in an empty buffer should beep
+  %d
+  call assert_beeps('exe "normal \<PageUp>"')
+  call assert_beeps('exe "normal \<C-B>"')
+  call assert_beeps('exe "normal \<PageDown>"')
+  call assert_beeps('exe "normal \<C-F>"')
+
+  " Test for <C-U> and <C-D> with fold
+  %d
+  call setline(1, range(1, 100))
+  10,35fold
+  set scroll=10
+  exe "normal \<C-D>"
+  call assert_equal(36, line('.'))
+  exe "normal \<C-D>"
+  call assert_equal(46, line('.'))
+  exe "normal \<C-U>"
+  call assert_equal(36, line('.'))
+  exe "normal \<C-U>"
+  call assert_equal(10, line('.'))
+  exe "normal \<C-U>"
+  call assert_equal(1, line('.'))
+  set scroll&
+
+  " Test for scrolling to the top of the file with <C-U> and a fold
+  10
+  normal ztL
+  exe "normal \<C-U>\<C-U>"
+  call assert_equal(1, line('w0'))
+
+  " Test for CTRL-D on a folded line
+  %d
+  call setline(1, range(1, 100))
+  50,100fold
+  75
+  normal z-
+  exe "normal \<C-D>"
+  call assert_equal(50, line('.'))
+  call assert_equal(100, line('w$'))
+  normal z.
+  let lnum = winline()
+  exe "normal \<C-D>"
+  call assert_equal(lnum, winline())
+  call assert_equal(50, line('.'))
+  normal zt
+  exe "normal \<C-D>"
+  call assert_equal(50, line('w0'))
+
   set foldenable&
   close!
 endfunc
 
+" Test for the 'sidescroll' option
+func Test_sidescroll_opt()
+  new
+  20vnew
+
+  " scroll by 2 characters horizontally
+  set sidescroll=2 nowrap
+  call setline(1, repeat('a', 40))
+  normal g$l
+  call assert_equal(19, screenpos(0, 1, 21).col)
+  normal l
+  call assert_equal(20, screenpos(0, 1, 22).col)
+  normal g0h
+  call assert_equal(2, screenpos(0, 1, 2).col)
+  call assert_equal(20, screenpos(0, 1, 20).col)
+
+  " when 'sidescroll' is 0, cursor positioned at the center
+  set sidescroll=0
+  normal g$l
+  call assert_equal(11, screenpos(0, 1, 21).col)
+  normal g0h
+  call assert_equal(10, screenpos(0, 1, 10).col)
+
+  %bw!
+  set wrap& sidescroll&
+endfunc
+
+" basic tests for foldopen/folddelete
 func Test_normal18_z_fold()
-  " basic tests for foldopen/folddelete
-  if !has("folding")
-    return
-  endif
+  CheckFeature folding
   call Setup_NewWindow()
   50
   setl foldenable fdm=marker foldlevel=5
@@ -1566,10 +1661,26 @@ func Test_normal28_parenthesis()
   norm! $d(
   call assert_equal(['With some sentences!', '', ' ', '', 'This is a long sentence', ''], getline(1, '$'))
 
+  " Move to the next sentence from a paragraph macro
+  %d
+  call setline(1, ['.LP', 'blue sky!. blue sky.', 'blue sky. blue sky.'])
+  call cursor(1, 1)
+  normal )
+  call assert_equal([2, 1], [line('.'), col('.')])
+  normal )
+  call assert_equal([2, 12], [line('.'), col('.')])
+  normal ((
+  call assert_equal([1, 1], [line('.'), col('.')])
+
   " It is an error if a next sentence is not found
   %d
   call setline(1, '.SH')
   call assert_beeps('normal )')
+
+  " If only dot is present, don't treat that as a sentence
+  call setline(1, '. This is a sentence.')
+  normal $((
+  call assert_equal(3, col('.'))
 
   " Jumping to a fold should open the fold
   call setline(1, ['', '', 'one', 'two', 'three'])
@@ -2484,92 +2595,6 @@ func Test_normal42_halfpage()
   bw!
 endfunc
 
-" Tests for text object aw
-func Test_normal43_textobject1()
-  new
-  call append(0, ['foobar,eins,foobar', 'foo,zwei,foo    '])
-  " diw
-  norm! 1gg0diw
-  call assert_equal([',eins,foobar', 'foo,zwei,foo    ', ''], getline(1,'$'))
-  " daw
-  norm! 2ggEdaw
-  call assert_equal([',eins,foobar', 'foo,zwei,', ''], getline(1, '$'))
-  %d
-  call append(0, ["foo\teins\tfoobar", "foo\tzwei\tfoo   "])
-  " diW
-  norm! 2ggwd2iW
-  call assert_equal(['foo	eins	foobar', 'foo	foo   ', ''], getline(1,'$'))
-  " daW
-  norm! 1ggd2aW
-  call assert_equal(['foobar', 'foo	foo   ', ''], getline(1,'$'))
-
-  %d
-  call append(0, ["foo\teins\tfoobar", "foo\tzwei\tfoo   "])
-  " aw in visual line mode switches to characterwise mode
-  norm! 2gg$Vawd
-  call assert_equal(['foo	eins	foobar', 'foo	zwei	foo'], getline(1,'$'))
-  norm! 1gg$Viwd
-  call assert_equal(['foo	eins	', 'foo	zwei	foo'], getline(1,'$'))
-
-  " clean up
-  bw!
-endfunc
-
-" Test for is and as text objects
-func Test_normal44_textobjects2()
-  new
-  call append(0, ['This is a test. With some sentences!', '', 'Even with a question? And one more. And no sentence here'])
-  " Test for dis - does not remove trailing whitespace
-  norm! 1gg0dis
-  call assert_equal([' With some sentences!', '', 'Even with a question? And one more. And no sentence here', ''], getline(1,'$'))
-  " Test for das - removes leading whitespace
-  norm! 3ggf?ldas
-  call assert_equal([' With some sentences!', '', 'Even with a question? And no sentence here', ''], getline(1,'$'))
-  " when used in visual mode, is made characterwise
-  norm! 3gg$Visy
-  call assert_equal('v', visualmode())
-  " reset visualmode()
-  norm! 3ggVy
-  norm! 3gg$Vasy
-  call assert_equal('v', visualmode())
-  " basic testing for textobjects a< and at
-  %d
-  call setline(1, ['<div> ','<a href="foobar" class="foo">xyz</a>','    </div>', ' '])
-  " a<
-  norm! 1gg0da<
-  call assert_equal([' ', '<a href="foobar" class="foo">xyz</a>', '    </div>', ' '], getline(1,'$'))
-  norm! 1pj
-  call assert_equal([' <div>', '<a href="foobar" class="foo">xyz</a>', '    </div>', ' '], getline(1,'$'))
-  " at
-  norm! d2at
-  call assert_equal([' '], getline(1,'$'))
-  %d
-  call setline(1, ['<div> ','<a href="foobar" class="foo">xyz</a>','    </div>', ' '])
-  " i<
-  norm! 1gg0di<
-  call assert_equal(['<> ', '<a href="foobar" class="foo">xyz</a>', '    </div>', ' '], getline(1,'$'))
-  norm! 1Pj
-  call assert_equal(['<div> ', '<a href="foobar" class="foo">xyz</a>', '    </div>', ' '], getline(1,'$'))
-  norm! d2it
-  call assert_equal(['<div></div>',' '], getline(1,'$'))
-  " basic testing for a[ and i[ text object
-  %d
-  call setline(1, [' ', '[', 'one [two]', 'thre', ']'])
-  norm! 3gg0di[
-  call assert_equal([' ', '[', ']'], getline(1,'$'))
-  call setline(1, [' ', '[', 'one [two]', 'thre', ']'])
-  norm! 3gg0ftd2a[
-  call assert_equal([' '], getline(1,'$'))
-  %d
-  " Test for i" when cursor is in front of a quoted object
-  call append(0, 'foo "bar"')
-  norm! 1gg0di"
-  call assert_equal(['foo ""', ''], getline(1,'$'))
-
-  " clean up
-  bw!
-endfunc
-
 func Test_normal45_drop()
   if !has('dnd')
     " The ~ register does not exist
@@ -3178,6 +3203,79 @@ func Test_normal_colon_op()
   new
   call setline(1, ['one', 'two'])
   call assert_beeps("normal! Gc:d\<CR>")
+  close!
+endfunc
+
+" Test for 'w' and 'b' commands
+func Test_normal_word_move()
+  new
+  call setline(1, ['foo bar a', '', 'foo bar b'])
+  " copy a single character word at the end of a line
+  normal 1G$yw
+  call assert_equal('a', @")
+  " copy a single character word at the end of a file
+  normal G$yw
+  call assert_equal('b', @")
+  " check for a word movement handling an empty line properly
+  normal 1G$vwy
+  call assert_equal("a\n\n", @")
+
+  " copy using 'b' command
+  %d
+  " non-empty blank line at the start of file
+  call setline(1, ['  ', 'foo bar'])
+  normal 2Gyb
+  call assert_equal("  \n", @")
+  " try to copy backwards from the start of the file
+  call setline(1, ['one two', 'foo bar'])
+  call assert_beeps('normal ggyb')
+  " 'b' command should stop at an empty line
+  call setline(1, ['one two', '', 'foo bar'])
+  normal 3Gyb
+  call assert_equal("\n", @")
+  normal 3Gy2b
+  call assert_equal("two\n", @")
+  " 'b' command should not stop at a non-empty blank line
+  call setline(1, ['one two', '  ', 'foo bar'])
+  normal 3Gyb
+  call assert_equal("two\n  ", @")
+
+  close!
+endfunc
+
+" Test for 'scrolloff' with a long line that doesn't fit in the screen
+func Test_normal_scroloff()
+  10new
+  80vnew
+  call setline(1, repeat('a', 1000))
+  set scrolloff=10
+  normal gg10gj
+  call assert_equal(8, winline())
+  normal 10gj
+  call assert_equal(10, winline())
+  normal 10gk
+  call assert_equal(3, winline())
+  set scrolloff&
+  close!
+endfunc
+
+" Test for vertical scrolling with CTRL-F and CTRL-B with a long line
+func Test_normal_vert_scroll_longline()
+  10new
+  80vnew
+  call setline(1, range(1, 10))
+  call append(5, repeat('a', 1000))
+  exe "normal gg\<C-F>"
+  call assert_equal(6, line('.'))
+  exe "normal \<C-F>\<C-F>"
+  call assert_equal(11, line('.'))
+  call assert_equal(1, winline())
+  exe "normal \<C-B>"
+  call assert_equal(10, line('.'))
+  call assert_equal(3, winline())
+  exe "normal \<C-B>\<C-B>"
+  call assert_equal(5, line('.'))
+  call assert_equal(5, winline())
   close!
 endfunc
 

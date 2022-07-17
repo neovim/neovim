@@ -185,7 +185,9 @@ func Test_str2nr()
 
   call assert_fails('call str2nr([])', 'E730:')
   call assert_fails('call str2nr({->2})', 'E729:')
-  call assert_fails('call str2nr(1.2)', 'E806:')
+  if has('float')
+    call assert_fails('call str2nr(1.2)', 'E806:')
+  endif
   call assert_fails('call str2nr(10, [])', 'E474:')
 endfunc
 
@@ -325,11 +327,18 @@ func Test_simplify()
   call assert_equal('./file',      simplify('./dir/../file'))
   call assert_equal('../dir/file', simplify('dir/../../dir/file'))
   call assert_equal('./file',      simplify('dir/.././file'))
+  call assert_equal('../dir',      simplify('./../dir'))
+  call assert_equal('..',          simplify('../testdir/..'))
+  call mkdir('Xdir')
+  call assert_equal('.',           simplify('Xdir/../.'))
+  call delete('Xdir', 'd')
 
   call assert_fails('call simplify({->0})', 'E729:')
   call assert_fails('call simplify([])', 'E730:')
   call assert_fails('call simplify({})', 'E731:')
-  call assert_fails('call simplify(1.2)', 'E806:')
+  if has('float')
+    call assert_fails('call simplify(1.2)', 'E806:')
+  endif
 endfunc
 
 func Test_pathshorten()
