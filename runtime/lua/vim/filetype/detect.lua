@@ -62,7 +62,7 @@ end
 -- Checks the first 5 lines for a asmsyntax=foo override.
 -- Only whitespace characters can be present immediately before or after this statement.
 function M.asm_syntax(bufnr)
-  local lines = table.concat(getlines(bufnr, 1, 5), ' '):lower()
+  local lines = ' ' .. table.concat(getlines(bufnr, 1, 5), ' '):lower() .. ' '
   local match = lines:match('%sasmsyntax=([a-zA-Z0-9]+)%s')
   if match then
     return match
@@ -554,6 +554,8 @@ function M.inc(bufnr)
     -- headers so assume POV-Ray
   elseif findany(lines, { '^%s{', '^%s%(%*' }) or matchregex(lines, pascal_keywords) then
     return 'pascal'
+  elseif findany(lines, { '^%s*inherit ', '^%s*require ', '^%s*%w+%s+= ' }) then
+    return 'bitbake'
   else
     local syntax = M.asm_syntax(bufnr)
     if not syntax or syntax == '' then

@@ -253,6 +253,9 @@ au BufNewFile,BufRead *.db			call dist#ft#BindzoneCheck('')
 " Blank
 au BufNewFile,BufRead *.bl			setf blank
 
+" Bitbake
+au BufNewFile,BufRead *.bb,*.bbappend,*.bbclass,*/build/conf/*.conf,*/meta{-*,}/conf/*.conf	setf bitbake
+
 " Blkid cache file
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
 
