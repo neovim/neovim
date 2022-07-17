@@ -1395,6 +1395,7 @@ local function close_preview_autocmd(events, winnr, bufnrs)
 
   if #events > 0 then
     api.nvim_create_autocmd(events, {
+      group = augroup,
       buffer = bufnrs[2],
       callback = function()
         close_preview_window(winnr)
