@@ -1595,14 +1595,16 @@ function M.open_floating_preview(contents, syntax, opts)
 end
 
 do --[[ References ]]
-  local reference_ns = api.nvim_create_namespace('vim_lsp_references')
+  local reference_ns
 
   --- Removes document highlights from a buffer.
   ---
   ---@param bufnr number Buffer id
   function M.buf_clear_references(bufnr)
     validate({ bufnr = { bufnr, 'n', true } })
-    api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
+    if reference_ns then
+      api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
+    end
   end
 
   --- Shows a list of document highlights for a certain buffer.
@@ -1616,6 +1618,13 @@ do --[[ References ]]
       bufnr = { bufnr, 'n', true },
       offset_encoding = { offset_encoding, 'string', false },
     })
+
+    -- Defer the creation of the namespace, because the module can be potentially
+    -- loaded inside a fast event where API calls are not allowed.
+    if not reference_ns then
+      reference_ns = api.nvim_create_namespace('vim_lsp_references')
+    end
+
     for _, reference in ipairs(references) do
       local start_line, start_char =
         reference['range']['start']['line'], reference['range']['start']['character']
