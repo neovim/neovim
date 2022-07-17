@@ -25,6 +25,18 @@ func Test_spell_normal()
   let cnt=readfile('./Xspellfile.add')
   call assert_equal('goood', cnt[0])
 
+  " zg should fail in operator-pending mode
+  call assert_beeps('norm! czg')
+
+  " zg fails in visual mode when not able to get the visual text
+  call assert_beeps('norm! ggVjzg')
+  norm! V
+
+  " zg fails for a non-identifier word
+  call append(line('$'), '###')
+  call assert_fails('norm! Gzg', 'E349:')
+  $d
+
   " Test for zw
   2
   norm! $zw

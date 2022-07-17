@@ -378,14 +378,17 @@ endfunc
 
 func Test_Visual_paragraph_textobject()
   new
-  call setline(1, ['First line.',
-  \                '',
-  \                'Second line.',
-  \                'Third line.',
-  \                'Fourth line.',
-  \                'Fifth line.',
-  \                '',
-  \                'Sixth line.'])
+  let lines =<< trim [END]
+    First line.
+
+    Second line.
+    Third line.
+    Fourth line.
+    Fifth line.
+
+    Sixth line.
+  [END]
+  call setline(1, lines)
 
   " When start and end of visual area are identical, 'ap' or 'ip' select
   " the whole paragraph.
@@ -638,6 +641,20 @@ func Test_characterwise_visual_mode()
   call append('$', ['a', 'b', 'c'])
   normal Gkvj$d
   call assert_equal(['', 'a', ''], getline(1, '$'))
+
+  " characterwise visual mode: use a count with the visual mode
+  %d _
+  call setline(1, 'one two three')
+  norm! vy5vy
+  call assert_equal('one t', @")
+
+  " characterwise visual mode: use a count with the visual mode from the last
+  " line in the buffer
+  %d _
+  call setline(1, ['one', 'two', 'three', 'four'])
+  norm! vj$y
+  norm! G1vy
+  call assert_equal('four', @")
 
   " characterwise visual mode: replace a single character line and the eol
   %d _
