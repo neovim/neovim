@@ -1234,12 +1234,12 @@ function lsp.start_client(config)
       )
     end, function(request_id)
       client.requests[request_id] = nil
-      nvim_command('doautocmd <nomodeline> User LspRequest')
+      nvim_exec_autocmds('User', { pattern = 'LspRequest', modeline = false })
     end)
 
     if success then
       client.requests[request_id] = { type = 'pending', bufnr = bufnr, method = method }
-      nvim_command('doautocmd <nomodeline> User LspRequest')
+      nvim_exec_autocmds('User', { pattern = 'LspRequest', modeline = false })
     end
 
     return success, request_id
@@ -1308,7 +1308,7 @@ function lsp.start_client(config)
     local request = client.requests[id]
     if request and request.type == 'pending' then
       request.type = 'cancel'
-      nvim_command('doautocmd <nomodeline> User LspRequest')
+      nvim_exec_autocmds('User', { pattern = 'LspRequest', modeline = false })
     end
     return rpc.notify('$/cancelRequest', { id = id })
   end
@@ -1445,13 +1445,15 @@ function lsp.buf_attach_client(bufnr, client_id)
     all_buffer_active_clients[bufnr] = buffer_client_ids
 
     local uri = vim.uri_from_bufnr(bufnr)
-    local buf_did_save_autocommand = [=[
-      augroup lsp_c_%d_b_%d_did_save
-        au!
-        au BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)
-      augroup END
-    ]=]
-    api.nvim_exec(string.format(buf_did_save_autocommand, client_id, bufnr, bufnr), false)
+    local augroup = ('lsp_c_%d_b_%d_did_save'):format(client_id, bufnr)
+    api.nvim_create_autocmd('BufWritePost', {
+      group = api.nvim_create_augroup(augroup, { clear = true }),
+      buffer = bufnr,
+      callback = function()
+        lsp._text_document_did_save_handler(0)
+      end,
+      desc = 'vim.lsp: textDocument/didSave handler',
+    })
     -- First time, so attach and set up stuff.
     api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler,
@@ -1687,7 +1689,10 @@ function lsp._vim_exit_handler()
   end
 end
 
-nvim_command('autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()')
+api.nvim_create_autocmd('VimLeavePre', {
+  callback = lsp._vim_exit_handler,
+  desc = 'vim.lsp: exit handler',
+})
 
 --- Sends an async request for all active clients attached to the
 --- buffer.
