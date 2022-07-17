@@ -1,8 +1,5 @@
-local default_handlers = require('vim.lsp.handlers')
 local log = require('vim.lsp.log')
 local lsp_rpc = require('vim.lsp.rpc')
-local protocol = require('vim.lsp.protocol')
-local util = require('vim.lsp.util')
 local sync = require('vim.lsp.sync')
 
 local vim = vim
@@ -19,21 +16,41 @@ local validate = vim.validate
 local if_nil = vim.F.if_nil
 
 local lsp = {
-  protocol = protocol,
+  protocol = nil, ---@module 'vim.lsp.protocol'
 
-  handlers = default_handlers,
+  handlers = nil, ---@module 'vim.lsp.handlers'
 
-  buf = require('vim.lsp.buf'),
-  diagnostic = require('vim.lsp.diagnostic'),
-  codelens = require('vim.lsp.codelens'),
-  util = util,
+  buf = nil, ---@module 'vim.lsp.buf'
+  diagnostic = nil, ---@module 'vim.lsp.diagnostic'
+  codelens = nil, ---@module 'vim.lsp.codelens'
+  util = nil, ---@module 'vim.lsp.util'
 
   -- Allow raw RPC access.
   rpc = lsp_rpc,
 
   -- Export these directly from rpc.
   rpc_response_error = lsp_rpc.rpc_response_error,
+
+  -- Lazily loaded submodules
+  _submodules = {
+    protocol = true,
+    handlers = true,
+    buf = true,
+    diagnostic = true,
+    codelens = true,
+    util = true,
+  },
 }
+
+setmetatable(lsp, {
+  __index = function(self, key)
+    if lsp._submodules[key] then
+      local mod = require('vim.lsp.' .. key)
+      rawset(self, key, mod)
+      return mod
+    end
+  end,
+})
 
 -- maps request name to the required server_capability in the client.
 lsp._request_name_to_capability = {
@@ -359,7 +376,7 @@ do
     local use_incremental_sync = (
       if_nil(client.config.flags.allow_incremental_sync, true)
       and vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'change')
-        == protocol.TextDocumentSyncKind.Incremental
+        == lsp.protocol.TextDocumentSyncKind.Incremental
     )
     local state = state_by_client[client.id]
     if not state then
@@ -486,7 +503,7 @@ do
     return function(client)
       if
         vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'change')
-        == protocol.TextDocumentSyncKind.None
+        == lsp.protocol.TextDocumentSyncKind.None
       then
         return
       end
@@ -513,7 +530,7 @@ do
         client.notify('textDocument/didChange', {
           textDocument = {
             uri = uri,
-            version = util.buf_versions[bufnr],
+            version = lsp.util.buf_versions[bufnr],
           },
           contentChanges = changes,
         })
@@ -586,14 +603,14 @@ local function text_document_did_open_handler(bufnr, client)
     },
   }
   client.notify('textDocument/didOpen', params)
-  util.buf_versions[bufnr] = params.textDocument.version
+  lsp.util.buf_versions[bufnr] = params.textDocument.version
 
   -- Next chance we get, we should re-do the diagnostics
   vim.schedule(function()
     -- Protect against a race where the buffer disappears
     -- between `did_open_handler` and the scheduled function firing.
     if api.nvim_buf_is_valid(bufnr) then
-      local namespace = vim.lsp.diagnostic.get_namespace(client.id)
+      local namespace = lsp.diagnostic.get_namespace(client.id)
       vim.diagnostic.show(namespace, bufnr)
     end
   end)
@@ -901,7 +918,7 @@ function lsp.start_client(config)
   ---@param method (string) LSP method name
   ---@returns (fn) The handler for the given method, if defined, or the default from |vim.lsp.handlers|
   local function resolve_handler(method)
-    return handlers[method] or default_handlers[method]
+    return handlers[method] or lsp.handlers[method]
   end
 
   ---@private
@@ -932,7 +949,7 @@ function lsp.start_client(config)
       return handler(nil, params, { method = method, client_id = client_id })
     end
     local _ = log.warn() and log.warn('server_request: no handler found for', method)
-    return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
+    return nil, lsp.rpc_response_error(lsp.protocol.ErrorCodes.MethodNotFound)
   end
 
   ---@private
@@ -996,7 +1013,7 @@ function lsp.start_client(config)
             data = { client_id = client_id },
           })
 
-          local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+          local namespace = lsp.diagnostic.get_namespace(client_id)
           vim.diagnostic.reset(namespace, bufnr)
         end)
 
@@ -1111,7 +1128,7 @@ function lsp.start_client(config)
       -- User provided initialization options.
       initializationOptions = config.init_options,
       -- The capabilities provided by the client (editor or tool)
-      capabilities = config.capabilities or protocol.make_client_capabilities(),
+      capabilities = config.capabilities or lsp.protocol.make_client_capabilities(),
       -- The initial trace setting. If omitted trace is disabled ("off").
       -- trace = "off" | "messages" | "verbose";
       trace = valid_traces[config.trace] or 'off',
@@ -1135,7 +1152,7 @@ function lsp.start_client(config)
       -- when to send certain events to clients.
       client.server_capabilities =
         assert(result.capabilities, "initialize result doesn't contain capabilities")
-      client.server_capabilities = protocol.resolve_capabilities(client.server_capabilities)
+      client.server_capabilities = lsp.protocol.resolve_capabilities(client.server_capabilities)
 
       -- Deprecation wrapper: this will be removed in 0.8
       local mt = {}
@@ -1148,7 +1165,7 @@ function lsp.start_client(config)
               .. 'defined in the language server protocol',
             vim.log.levels.WARN
           )
-          rawset(table, key, protocol._resolve_capabilities_compat(client.server_capabilities))
+          rawset(table, key, lsp.protocol._resolve_capabilities_compat(client.server_capabilities))
           return rawget(table, key)
         else
           return rawget(table, key)
@@ -1391,7 +1408,7 @@ do
       if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
         return true
       end
-      util.buf_versions[bufnr] = changedtick
+      lsp.util.buf_versions[bufnr] = changedtick
       local compute_change_and_notify =
         changetracking.prepare(bufnr, firstline, lastline, new_lastline)
       for_each_buffer_client(bufnr, compute_change_and_notify)
@@ -1476,7 +1493,7 @@ function lsp.buf_attach_client(bufnr, client_id)
             client.notify('textDocument/didClose', params)
           end
         end)
-        util.buf_versions[bufnr] = nil
+        lsp.util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil
       end,
       -- TODO if we know all of the potential clients ahead of time, then we
@@ -1541,14 +1558,14 @@ function lsp.buf_detach_client(bufnr, client_id)
   end
 
   client.attached_buffers[bufnr] = nil
-  util.buf_versions[bufnr] = nil
+  lsp.util.buf_versions[bufnr] = nil
 
   all_buffer_active_clients[bufnr][client_id] = nil
   if #vim.tbl_keys(all_buffer_active_clients[bufnr]) == 0 then
     all_buffer_active_clients[bufnr] = nil
   end
 
-  local namespace = vim.lsp.diagnostic.get_namespace(client_id)
+  local namespace = lsp.diagnostic.get_namespace(client_id)
   vim.diagnostic.reset(namespace, bufnr)
 
   vim.notify(string.format('Detached buffer (id: %d) from client (id: %d)', bufnr, client_id))
@@ -1858,7 +1875,7 @@ local function adjust_start_col(lnum, line, items, encoding)
     end
   end
   if min_start_char then
-    return util._str_byteindex_enc(line, min_start_char, encoding)
+    return lsp.util._str_byteindex_enc(line, min_start_char, encoding)
   else
     return nil
   end
@@ -1900,7 +1917,7 @@ function lsp.omnifunc(findstart, base)
   -- Get the start position of the current keyword
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
 
-  local params = util.make_position_params()
+  local params = lsp.util.make_position_params()
 
   local items = {}
   lsp.buf_request(bufnr, 'textDocument/completion', params, function(err, result, ctx)
@@ -1925,10 +1942,10 @@ function lsp.omnifunc(findstart, base)
     --
     local client = lsp.get_client_by_id(ctx.client_id)
     local encoding = client and client.offset_encoding or 'utf-16'
-    local candidates = util.extract_completion_items(result)
+    local candidates = lsp.util.extract_completion_items(result)
     local startbyte = adjust_start_col(pos[1], line, candidates, encoding) or textMatch
     local prefix = line:sub(startbyte + 1, pos[2])
-    local matches = util.text_document_completion_list_to_complete_items(result, prefix)
+    local matches = lsp.util.text_document_completion_list_to_complete_items(result, prefix)
     -- TODO(ashkan): is this the best way to do this?
     vim.list_extend(items, matches)
     vim.fn.complete(startbyte + 1, items)
@@ -1963,23 +1980,23 @@ function lsp.formatexpr(opts)
 
   if start_line > 0 and end_line > 0 then
     local params = {
-      textDocument = util.make_text_document_params(),
+      textDocument = lsp.util.make_text_document_params(),
       range = {
         start = { line = start_line - 1, character = 0 },
         ['end'] = { line = end_line - 1, character = 0 },
       },
     }
-    params.options = util.make_formatting_params().options
+    params.options = lsp.util.make_formatting_params().options
     local client_results =
-      vim.lsp.buf_request_sync(0, 'textDocument/rangeFormatting', params, timeout_ms)
+      lsp.buf_request_sync(0, 'textDocument/rangeFormatting', params, timeout_ms)
 
     -- Apply the text edits from one and only one of the clients.
     for client_id, response in pairs(client_results) do
       if response.result then
-        vim.lsp.util.apply_text_edits(
+        lsp.util.apply_text_edits(
           response.result,
           0,
-          vim.lsp.get_client_by_id(client_id).offset_encoding
+          lsp.get_client_by_id(client_id).offset_encoding
         )
         return 0
       end

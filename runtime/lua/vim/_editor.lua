@@ -600,6 +600,11 @@ function vim._expand_pat(pat, env)
         field = rawget(mt.__index, key)
       elseif final_env == vim and vim._submodules[key] then
         field = vim[key]
+      else
+        local lsp = package.loaded['vim.lsp']
+        if lsp and final_env == lsp and lsp._submodules[key] then
+          field = lsp[key]
+        end
       end
     end
     final_env = field
@@ -628,6 +633,11 @@ function vim._expand_pat(pat, env)
   end
   if final_env == vim then
     insert_keys(vim._submodules)
+  else
+    local lsp = package.loaded['vim.lsp']
+    if lsp and final_env == lsp then
+      insert_keys(lsp._submodules)
+    end
   end
 
   table.sort(keys)
