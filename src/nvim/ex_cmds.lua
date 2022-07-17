@@ -1636,13 +1636,13 @@ module.cmds = {
   },
   {
     command='lvimgrep',
-    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE),
+    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE, LOCK_OK),
     addr_type='ADDR_OTHER',
     func='ex_vimgrep',
   },
   {
     command='lvimgrepadd',
-    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE),
+    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE, LOCK_OK),
     addr_type='ADDR_OTHER',
     func='ex_vimgrep',
   },
@@ -3073,13 +3073,13 @@ module.cmds = {
   },
   {
     command='vimgrep',
-    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE),
+    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE, LOCK_OK),
     addr_type='ADDR_OTHER',
     func='ex_vimgrep',
   },
   {
     command='vimgrepadd',
-    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE),
+    flags=bit.bor(RANGE, BANG, NEEDARG, EXTRA, NOTRLCOM, TRLBAR, XFILE, LOCK_OK),
     addr_type='ADDR_OTHER',
     func='ex_vimgrep',
   },
