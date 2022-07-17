@@ -1,24 +1,32 @@
-param([switch]$NoTests)
+[CmdletBinding(DefaultParameterSetName = "Build")]
+param(
+  [Parameter(ParameterSetName="Build")][switch]$Build,
+  [Parameter(ParameterSetName="BuildDeps")][switch]$BuildDeps,
+  [Parameter(ParameterSetName="EnsureTestDeps")][switch]$EnsureTestDeps,
+  [Parameter(ParameterSetName="Package")][switch]$Package,
+  [Parameter(ParameterSetName="Test")][switch]$Test,
+  [Parameter(ParameterSetName="TestOld")][switch]$TestOld
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
-$compiler = $Matches.compiler
-$compileOption = if ($Matches -contains 'option') {$Matches.option} else {''}
-$bits = $Matches.bits
-$cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
-$buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
+$projectDir = [System.IO.Path]::GetFullPath("$(Get-Location)")
+$buildDir = Join-Path -Path $projectDir -ChildPath "build"
+
+# $env:CMAKE_BUILD_TYPE is ignored by cmake when not using ninja
+$cmakeBuildType = $(if ($null -ne $env:CMAKE_BUILD_TYPE) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
 $depsCmakeVars = @{
-  CMAKE_BUILD_TYPE = $cmakeBuildType;
+  CMAKE_BUILD_TYPE=$cmakeBuildType;
 }
 $nvimCmakeVars = @{
-  CMAKE_BUILD_TYPE = $cmakeBuildType;
+  CMAKE_BUILD_TYPE=$cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
-  DEPS_PREFIX=$(if ($env:DEPS_PREFIX -ne $null) {$env:DEPS_PREFIX} else {".deps/usr"});
+  DEPS_PREFIX=$(if ($null -ne $env:DEPS_PREFIX) {$env:DEPS_PREFIX} else {".deps/usr"});
 }
-if ($env:DEPS_BUILD_DIR -eq $null) {
-  $env:DEPS_BUILD_DIR = ".deps";
+if ($null -eq $env:DEPS_BUILD_DIR) {
+  $env:DEPS_BUILD_DIR = Join-Path -Path $projectDir -ChildPath ".deps"
 }
 $uploadToCodeCov = $false
 
@@ -28,101 +36,95 @@ function exitIfFailed() {
   }
 }
 
-if (-not $NoTests) {
-  node --version
-  npm.cmd --version
+function convertToCmakeArgs($vars) {
+  return $vars.GetEnumerator() | ForEach-Object { "-D$($_.Key)=$($_.Value)" }
 }
-
-if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
-  write-host "cache dir not found: $($env:DEPS_BUILD_DIR)"
-  mkdir $env:DEPS_BUILD_DIR
-} else {
-  write-host "cache dir $($env:DEPS_BUILD_DIR) size: $(Get-ChildItem $env:DEPS_BUILD_DIR -recurse | Measure-Object -property length -sum | Select -expand sum)"
-}
-
-$cmakeGeneratorArgs = '/verbosity:normal'
-$cmakeGenerator = 'Visual Studio 16 2019'
 
 $installationPath = vswhere.exe -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-if ($installationPath -and (test-path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
-  & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x${bits} -no_logo && set" | foreach-object {
+if ($installationPath -and (Test-Path "$installationPath\Common7\Tools\vsdevcmd.bat")) {
+  & "${env:COMSPEC}" /s /c "`"$installationPath\Common7\Tools\vsdevcmd.bat`" -arch=x64 -no_logo && set" | ForEach-Object {
     $name, $value = $_ -split '=', 2
-    set-content env:\"$name" $value
+    Set-Content env:\"$name" $value
   }
 }
 
-if (-not $NoTests) {
-  python -m ensurepip
-  python -m pip install pynvim ; exitIfFailed
+function BuildDeps {
+
+  if (Test-Path -PathType container $env:DEPS_BUILD_DIR) {
+    $cachedBuildTypeStr = $(Get-Content $env:DEPS_BUILD_DIR\CMakeCache.txt | Select-String -Pattern "CMAKE_BUILD_TYPE.*=($cmakeBuildType)")
+    if (-not $cachedBuildTypeStr) {
+      Write-Warning " unable to validate build type from cache dir ${env:DEPS_BUILD_DIR}"
+    }
+  }
+
+  # we currently can't use ninja for cmake.deps, see #19405
+  $depsCmakeGenerator = "Visual Studio 16 2019"
+  $depsCmakeGeneratorPlf = "x64"
+  cmake -S "$projectDir\cmake.deps" -B $env:DEPS_BUILD_DIR -G $depsCmakeGenerator -A $depsCmakeGeneratorPlf $(convertToCmakeArgs($depsCmakeVars)); exitIfFailed
+
+  $depsCmakeNativeToolOptions= @('/verbosity:normal', '/m')
+  cmake --build $env:DEPS_BUILD_DIR --config $cmakeBuildType -- $depsCmakeNativeToolOptions; exitIfFailed
+}
+
+function Build {
+  cmake -S $projectDir -B $buildDir $(convertToCmakeArgs($nvimCmakeVars)) -G Ninja; exitIfFailed
+  cmake --build $buildDir --config $cmakeBuildType; exitIfFailed
+}
+
+function EnsureTestDeps {
+  & $buildDir\bin\nvim.exe "--version"; exitIfFailed
+
+  # Ensure that the "win32" feature is set.
+  & $buildDir\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"' ; exitIfFailed
+
+  python -m pip install pynvim
   # Sanity check
-  python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
+  python -c "import pynvim; print(str(pynvim))"; exitIfFailed
 
   gem.cmd install --pre neovim
-  Get-Command -CommandType Application neovim-ruby-host.bat
+  Get-Command -CommandType Application neovim-ruby-host.bat; exitIfFailed
 
-  npm.cmd install -g neovim
-  Get-Command -CommandType Application neovim-node-host.cmd
+  node --version
+  npm.cmd --version
+
+  npm.cmd install -g neovim; exitIfFailed
+  Get-Command -CommandType Application neovim-node-host.cmd; exitIfFailed
   npm.cmd link neovim
+
+  if ($env:USE_LUACOV -eq 1) {
+    & $env:DEPS_PREFIX\luarocks\luarocks.bat install cluacov
+  }
 }
 
-function convertToCmakeArgs($vars) {
-  return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
-}
-
-cd $env:DEPS_BUILD_DIR
-if ($bits -eq 32) {
-  cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/cmake.deps/" ; exitIfFailed
-} else {
-  cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/cmake.deps/" ; exitIfFailed
-}
-cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
-cd $buildDir
-
-# Build Neovim
-mkdir build
-cd build
-if ($bits -eq 32) {
-  cmake -G $cmakeGenerator -A Win32 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
-} else {
-  cmake -G $cmakeGenerator -A x64 $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
-}
-cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
-.\bin\nvim --version ; exitIfFailed
-
-# Ensure that the "win32" feature is set.
-.\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"' ; exitIfFailed
-
-if ($env:USE_LUACOV -eq 1) {
-  & $env:DEPS_PREFIX\luarocks\luarocks.bat install cluacov
-}
-
-if (-not $NoTests) {
+function Test {
   # Functional tests
   # The $LastExitCode from MSBuild can't be trusted
   $failed = $false
 
-  # Run only this test file:
-  # $env:TEST_FILE = "test\functional\foo.lua"
-  cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
-    foreach { $failed = $failed -or
+  cmake --build $buildDir --target functionaltest 2>&1 |
+    ForEach-Object { $failed = $failed -or
       $_ -match 'functional tests failed with error'; $_ }
 
-  if ($uploadToCodecov) {
-    if ($env:USE_LUACOV -eq 1) {
-      & $env:DEPS_PREFIX\bin\luacov.bat
-    }
-    bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
-  }
   if ($failed) {
     exit $LastExitCode
   }
 
+  if (-not $uploadToCodecov) {
+    return
+  }
+  if ($env:USE_LUACOV -eq 1) {
+    & $env:DEPS_PREFIX\bin\luacov.bat
+  }
+  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+}
+
+function TestOld {
   # Old tests
   # Add MSYS to path, required for e.g. `find` used in test scripts.
   # But would break functionaltests, where its `more` would be used then.
   $OldPath = $env:PATH
   $env:PATH = "C:\msys64\usr\bin;$env:PATH"
-  & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
+  & "C:\msys64\mingw64\bin\mingw32-make.exe" -C $(Convert-Path $projectDir\src\nvim\testdir) VERBOSE=1; exitIfFailed
   $env:PATH = $OldPath
 
   if ($uploadToCodecov) {
@@ -130,10 +132,12 @@ if (-not $NoTests) {
   }
 }
 
-# Ensure choco's cpack is not in PATH otherwise, it conflicts with CMake's
-if (Test-Path -Path $env:ChocolateyInstall\bin\cpack.exe) {
-  Remove-Item -Path $env:ChocolateyInstall\bin\cpack.exe -Force
+
+function Package {
+  cmake --build $buildDir --target package
 }
 
-# Build artifacts
-cpack -C $cmakeBuildType
+if ($PSCmdlet.ParameterSetName) {
+  & (Get-ChildItem "Function:$($PSCmdlet.ParameterSetName)")
+  exit
+}
