@@ -1398,8 +1398,9 @@ do
     end
 end
 
--- Buffer lifecycle handler for textDocument/didSave
-function lsp._text_document_did_save_handler(bufnr)
+---@private
+---Buffer lifecycle handler for textDocument/didSave
+local function text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(buf_get_full_text)
@@ -1449,10 +1450,10 @@ function lsp.buf_attach_client(bufnr, client_id)
     api.nvim_create_autocmd('BufWritePost', {
       group = api.nvim_create_augroup(augroup, { clear = true }),
       buffer = bufnr,
-      callback = function()
-        lsp._text_document_did_save_handler(0)
-      end,
       desc = 'vim.lsp: textDocument/didSave handler',
+      callback = function(ctx)
+        text_document_did_save_handler(ctx.buf)
+      end,
     })
     -- First time, so attach and set up stuff.
     api.nvim_buf_attach(bufnr, false, {
@@ -1636,62 +1637,60 @@ function lsp.get_active_clients(filter)
   return clients
 end
 
-function lsp._vim_exit_handler()
-  log.info('exit_handler', active_clients)
-  for _, client in pairs(uninitialized_clients) do
-    client.stop(true)
-  end
-  -- TODO handle v:dying differently?
-  if tbl_isempty(active_clients) then
-    return
-  end
-  for _, client in pairs(active_clients) do
-    client.stop()
-  end
-
-  local timeouts = {}
-  local max_timeout = 0
-  local send_kill = false
-
-  for client_id, client in pairs(active_clients) do
-    local timeout = if_nil(client.config.flags.exit_timeout, 500)
-    if timeout then
-      send_kill = true
-      timeouts[client_id] = timeout
-      max_timeout = math.max(timeout, max_timeout)
+api.nvim_create_autocmd('VimLeavePre', {
+  desc = 'vim.lsp: exit handler',
+  callback = function()
+    log.info('exit_handler', active_clients)
+    for _, client in pairs(uninitialized_clients) do
+      client.stop(true)
     end
-  end
-
-  local poll_time = 50
-
-  ---@private
-  local function check_clients_closed()
-    for client_id, timeout in pairs(timeouts) do
-      timeouts[client_id] = timeout - poll_time
+    -- TODO handle v:dying differently?
+    if tbl_isempty(active_clients) then
+      return
+    end
+    for _, client in pairs(active_clients) do
+      client.stop()
     end
 
-    for client_id, _ in pairs(active_clients) do
-      if timeouts[client_id] ~= nil and timeouts[client_id] > 0 then
-        return false
+    local timeouts = {}
+    local max_timeout = 0
+    local send_kill = false
+
+    for client_id, client in pairs(active_clients) do
+      local timeout = if_nil(client.config.flags.exit_timeout, 500)
+      if timeout then
+        send_kill = true
+        timeouts[client_id] = timeout
+        max_timeout = math.max(timeout, max_timeout)
       end
     end
-    return true
-  end
 
-  if send_kill then
-    if not vim.wait(max_timeout, check_clients_closed, poll_time) then
-      for client_id, client in pairs(active_clients) do
-        if timeouts[client_id] ~= nil then
-          client.stop(true)
+    local poll_time = 50
+
+    ---@private
+    local function check_clients_closed()
+      for client_id, timeout in pairs(timeouts) do
+        timeouts[client_id] = timeout - poll_time
+      end
+
+      for client_id, _ in pairs(active_clients) do
+        if timeouts[client_id] ~= nil and timeouts[client_id] > 0 then
+          return false
+        end
+      end
+      return true
+    end
+
+    if send_kill then
+      if not vim.wait(max_timeout, check_clients_closed, poll_time) then
+        for client_id, client in pairs(active_clients) do
+          if timeouts[client_id] ~= nil then
+            client.stop(true)
+          end
         end
       end
     end
-  end
-end
-
-api.nvim_create_autocmd('VimLeavePre', {
-  callback = lsp._vim_exit_handler,
-  desc = 'vim.lsp: exit handler',
+  end,
 })
 
 --- Sends an async request for all active clients attached to the

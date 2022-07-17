@@ -137,7 +137,7 @@ local function test_rpc_server(config)
   end
   stop()
   if config.test_name then
-    exec_lua("lsp._vim_exit_handler()")
+    exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
   end
 end
 
@@ -172,7 +172,7 @@ describe('LSP', function()
   end)
 
   after_each(function()
-    exec_lua("lsp._vim_exit_handler()")
+    exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
    -- exec_lua("lsp.stop_all_clients(true)")
   end)
 
@@ -249,7 +249,7 @@ describe('LSP', function()
     after_each(function()
       stop()
       exec_lua("lsp.stop_client(lsp.get_active_clients(), true)")
-      exec_lua("lsp._vim_exit_handler()")
+      exec_lua("vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })")
     end)
 
     it('should run correctly', function()
@@ -505,7 +505,7 @@ describe('LSP', function()
       }
     end)
 
-    it('_text_document_did_save_handler sends didSave with bool textDocumentSync.save', function()
+    it('BufWritePost sends didSave with bool textDocumentSync.save', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
         {NIL, {}, {method="start", client_id=1}};
@@ -526,7 +526,7 @@ describe('LSP', function()
             exec_lua([=[
               BUFFER = vim.api.nvim_get_current_buf()
               lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
-              lsp._text_document_did_save_handler(BUFFER)
+              vim.api.nvim_exec_autocmds('BufWritePost', { buffer = BUFFER, modeline = false })
             ]=])
           else
             client.stop()
@@ -535,7 +535,7 @@ describe('LSP', function()
       }
     end)
 
-    it('_text_document_did_save_handler sends didSave including text if server capability is set', function()
+    it('BufWritePost sends didSave including text if server capability is set', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
         {NIL, {}, {method="start", client_id=1}};
@@ -557,7 +557,7 @@ describe('LSP', function()
               BUFFER = vim.api.nvim_get_current_buf()
               vim.api.nvim_buf_set_lines(BUFFER, 0, -1, true, {"help me"})
               lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
-              lsp._text_document_did_save_handler(BUFFER)
+              vim.api.nvim_exec_autocmds('BufWritePost', { buffer = BUFFER, modeline = false })
             ]=])
           else
             client.stop()
