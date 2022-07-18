@@ -134,7 +134,8 @@ function TestOld {
 
 
 function Package {
-  cmake --build $buildDir --target package
+  cmake -S $projectDir -B $buildDir $(convertToCmakeArgs($nvimCmakeVars)) -G Ninja; exitIfFailed
+  cmake --build $buildDir --target package; exitIfFailed
 }
 
 if ($PSCmdlet.ParameterSetName) {
