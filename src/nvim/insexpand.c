@@ -42,6 +42,7 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/ui.h"
+#include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
@@ -2109,7 +2110,7 @@ theend:
 /// @return NOTDONE if the given string is already in the list of completions,
 ///         otherwise it is added to the list and  OK is returned. FAIL will be
 ///         returned in case of error.
-int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
+static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *word;
@@ -2195,7 +2196,7 @@ static void ins_compl_add_dict(dict_T *dict)
 ///
 /// @param startcol  where the matched text starts (1 is first column).
 /// @param list      the list of matches.
-void set_completion(colnr_T startcol, list_T *list)
+static void set_completion(colnr_T startcol, list_T *list)
 {
   int flags = CP_ORIGINAL_TEXT;
 
@@ -2251,6 +2252,47 @@ void set_completion(colnr_T startcol, list_T *list)
 
   may_trigger_modechanged();
   ui_flush();
+}
+
+/// "complete()" function
+void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if ((State & MODE_INSERT) == 0) {
+    emsg(_("E785: complete() can only be used in Insert mode"));
+    return;
+  }
+
+  // Check for undo allowed here, because if something was already inserted
+  // the line was already saved for undo and this check isn't done.
+  if (!undo_allowed(curbuf)) {
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_LIST) {
+    emsg(_(e_invarg));
+  } else {
+    const colnr_T startcol = (colnr_T)tv_get_number_chk(&argvars[0], NULL);
+    if (startcol > 0) {
+      set_completion(startcol - 1, argvars[1].vval.v_list);
+    }
+  }
+}
+
+/// "complete_add()" function
+void f_complete_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = ins_compl_add_tv(&argvars[0], 0, false);
+}
+
+/// "complete_check()" function
+void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int saved = RedrawingDisabled;
+
+  RedrawingDisabled = 0;
+  ins_compl_check_keys(0, true);
+  rettv->vval.v_number = ins_compl_interrupted();
+  RedrawingDisabled = saved;
 }
 
 /// Return Insert completion mode name string
@@ -2312,8 +2354,8 @@ static void ins_compl_update_sequence_numbers(void)
   }
 }
 
-// Get complete information
-void get_complete_info(list_T *what_list, dict_T *retdict)
+/// Get complete information
+static void get_complete_info(list_T *what_list, dict_T *retdict)
 {
 #define CI_WHAT_MODE            0x01
 #define CI_WHAT_PUM_VISIBLE     0x02
@@ -2395,6 +2437,23 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
   (void)ret;
   // TODO(vim):
   // if (ret == OK && (what_flag & CI_WHAT_INSERTED))
+}
+
+/// "complete_info()" function
+void f_complete_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_dict_alloc_ret(rettv);
+
+  list_T *what_list = NULL;
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    if (argvars[0].v_type != VAR_LIST) {
+      emsg(_(e_listreq));
+      return;
+    }
+    what_list = argvars[0].vval.v_list;
+  }
+  get_complete_info(what_list, rettv->vval.v_dict);
 }
 
 /// Returns true when using a user-defined function for thesaurus completion.
