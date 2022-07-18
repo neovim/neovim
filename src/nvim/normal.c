@@ -1908,6 +1908,13 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
     StlClickDefinition *click_defs = in_status_line ? wp->w_status_click_defs
                                                     : wp->w_winbar_click_defs;
 
+    if (in_status_line && global_stl_height() > 0) {
+      // global statusline is displayed for the current window,
+      // and spans the whole screen.
+      click_defs = curwin->w_status_click_defs;
+      click_col = mouse_col;
+    }
+
     if (click_defs != NULL) {
       switch (click_defs[click_col].type) {
       case kStlClickDisabled:

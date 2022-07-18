@@ -98,12 +98,40 @@ describe('statusline clicks', function()
     eq('0 2 r', eval("g:testvar"))
   end)
 
-  it("click works with modifiers #18994", function()
+  it("works with modifiers #18994", function()
     meths.set_option('statusline', 'Not clicky stuff %0@MyClickFunc@Clicky stuff%T')
     meths.input_mouse('right', 'press', 's', 0, 6, 17)
     eq('0 1 r s', eval("g:testvar"))
     meths.input_mouse('left', 'press', 's', 0, 6, 17)
     eq('0 1 l s', eval("g:testvar"))
+  end)
+
+  it("works for global statusline with vertical splits #19186", function()
+    command('set laststatus=3')
+    meths.set_option('statusline', '%0@MyClickFunc@Clicky stuff%T %= %0@MyClickFunc@Clicky stuff%T')
+    command('vsplit')
+    screen:expect([[
+      ^                    │                   |
+      ~                   │~                  |
+      ~                   │~                  |
+      ~                   │~                  |
+      ~                   │~                  |
+      ~                   │~                  |
+      Clicky stuff                Clicky stuff|
+                                              |
+    ]])
+
+    -- clickable area on the right
+    meths.input_mouse('left', 'press', '', 0, 6, 35)
+    eq('0 1 l', eval("g:testvar"))
+    meths.input_mouse('right', 'press', '', 0, 6, 35)
+    eq('0 1 r', eval("g:testvar"))
+
+    -- clickable area on the left
+    meths.input_mouse('left', 'press', '', 0, 6, 5)
+    eq('0 1 l', eval("g:testvar"))
+    meths.input_mouse('right', 'press', '', 0, 6, 5)
+    eq('0 1 r', eval("g:testvar"))
   end)
 end)
 
