@@ -160,7 +160,6 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 set(CONV_SOURCES
   lua/treesitter.c
   mbyte.c
-  memline.c
   regexp.c
   screen.c
   search.c
