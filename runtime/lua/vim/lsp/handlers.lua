@@ -193,11 +193,6 @@ M['textDocument/references'] = function(_, result, ctx, config)
     local items = util.locations_to_items(result, client.offset_encoding)
 
     if config.loclist then
-      vim.notify_once(
-        '[LSP] config.loclist is deprecated. '
-          .. 'Update your plugins or configuration to use options.on_list.',
-        vim.log.levels.WARN
-      )
       vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
       api.nvim_command('lopen')
     elseif config.on_list then
@@ -231,11 +226,6 @@ local function response_to_list(map_result, entity, title_fn)
       local items = map_result(result, ctx.bufnr)
 
       if config.loclist then
-        vim.notify_once(
-          '[LSP] config.loclist is deprecated. '
-            .. 'Update your plugins or configuration to use options.on_list.',
-          vim.log.levels.WARN
-        )
         vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
         api.nvim_command('lopen')
       elseif config.on_list then
