@@ -2048,6 +2048,12 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   (void)os_can_exe(tv_get_string(&argvars[0]), &path, true);
 
+#ifdef BACKSLASH_IN_FILENAME
+  if (path != NULL) {
+    slash_adjust((char_u *)path);
+  }
+#endif
+
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
 }

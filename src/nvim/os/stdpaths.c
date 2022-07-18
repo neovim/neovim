@@ -115,6 +115,10 @@ char *get_xdg_home(const XDGVarType idx)
 #else
     dir = concat_fnames_realloc(dir, "nvim", true);
 #endif
+
+#ifdef BACKSLASH_IN_FILENAME
+    slash_adjust((char_u *)dir);
+#endif
   }
   return dir;
 }
