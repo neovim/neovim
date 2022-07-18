@@ -127,7 +127,7 @@ jobs:
     env:
       DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
       DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
-      CONFIGURATION: ${{ matrix.config }}
+      CMAKE_BUILD_TYPE: "RelWithDebInfo"
     strategy:
       matrix:
         include:
@@ -138,7 +138,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: powershell ci\build.ps1 -Package
+      - name: Build deps
+        run: .\ci\build.ps1 -BuildDeps
+      - name: build package
+        run: .\ci\build.ps1 -Package
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.archive }}
