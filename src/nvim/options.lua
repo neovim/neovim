@@ -2355,6 +2355,7 @@ return {
       secure=true,
       expand=true,
       varname='p_spo',
+      redraw={'current_buffer'},
       defaults={if_true=""}
     },
     {

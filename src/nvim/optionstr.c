@@ -107,6 +107,7 @@ static char *(p_fdc_values[]) = { "auto", "auto:1", "auto:2", "auto:3", "auto:4"
                                   "auto:6", "auto:7", "auto:8", "auto:9", "0", "1", "2", "3", "4",
                                   "5", "6", "7", "8", "9", NULL };
 static char *(p_cb_values[]) = { "unnamed", "unnamedplus", NULL };
+static char *(p_spo_values[]) = { "camel", "noplainbuffer", NULL };
 static char *(p_icm_values[]) = { "nosplit", "split", NULL };
 static char *(p_jop_values[]) = { "stack", "view", NULL };
 static char *(p_tpf_values[]) = { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
@@ -1125,7 +1126,8 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     // When 'spellcapcheck' is set compile the regexp program.
     errmsg = compile_cap_prog(curwin->w_s);
   } else if (varp == &(curwin->w_s->b_p_spo)) {  // 'spelloptions'
-    if (**varp != NUL && STRCMP("camel", *varp) != 0) {
+    if (opt_strings_flags(curwin->w_s->b_p_spo, p_spo_values, &(curwin->w_s->b_p_spo_flags),
+                          true) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_sps) {  // 'spellsuggest'

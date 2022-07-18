@@ -2,6 +2,15 @@ return {
   context = {
     "types";
   };
+  set_decoration_provider = {
+    "on_start";
+    "on_buf";
+    "on_win";
+    "on_line";
+    "on_end";
+    "_on_hl_def";
+    "_on_spell_nav";
+  };
   set_extmark = {
     "id";
     "end_line";
@@ -28,6 +37,7 @@ return {
     "line_hl_group";
     "cursorline_hl_group";
     "conceal";
+    "spell";
     "ui_watched";
   };
   keymap = {
