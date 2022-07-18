@@ -3270,15 +3270,38 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           char_attr = 0;
         }
 
-        /* Check spelling (unless at the end of the line).
-         * Only do this when there is no syntax highlighting, the
-         * @Spell cluster is not used or the current syntax item
-         * contains the @Spell cluster. */
+        if (has_decor && v > 0) {
+          bool selected = (area_active || (area_highlighting && noinvcur
+                                           && (colnr_T)vcol == wp->w_virtcol));
+          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v - 1, off,
+                                              selected, &decor_state);
+          if (extmark_attr != 0) {
+            if (!attr_pri) {
+              char_attr = hl_combine_attr(char_attr, extmark_attr);
+            } else {
+              char_attr = hl_combine_attr(extmark_attr, char_attr);
+            }
+          }
+
+          decor_conceal = decor_state.conceal;
+          if (decor_conceal && decor_state.conceal_char) {
+            decor_conceal = 2;  // really??
+          }
+
+          if (decor_state.spell) {
+            has_spell = true;
+          }
+        }
+
+        // Check spelling (unless at the end of the line).
+        // Only do this when there is no syntax highlighting, the
+        // @Spell cluster is not used or the current syntax item
+        // contains the @Spell cluster.
         v = (ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
           if (!attr_pri) {
-            char_attr = syntax_attr;
+            char_attr = hl_combine_attr(char_attr, syntax_attr);
           }
           if (c != 0 && (!has_syntax || can_spell)) {
             char_u *prev_ptr;
@@ -3351,25 +3374,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
         if (wp->w_buffer->terminal) {
           char_attr = hl_combine_attr(term_attrs[vcol], char_attr);
-        }
-
-        if (has_decor && v > 0) {
-          bool selected = (area_active || (area_highlighting && noinvcur
-                                           && (colnr_T)vcol == wp->w_virtcol));
-          int extmark_attr = decor_redraw_col(wp->w_buffer, (colnr_T)v - 1, off,
-                                              selected, &decor_state);
-          if (extmark_attr != 0) {
-            if (!attr_pri) {
-              char_attr = hl_combine_attr(char_attr, extmark_attr);
-            } else {
-              char_attr = hl_combine_attr(extmark_attr, char_attr);
-            }
-          }
-
-          decor_conceal = decor_state.conceal;
-          if (decor_conceal && decor_state.conceal_char) {
-            decor_conceal = 2;  // really??
-          }
         }
 
         // Found last space before word: check for line break.

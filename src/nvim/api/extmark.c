@@ -472,6 +472,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   When a character is supplied it is used as |:syn-cchar|.
 ///                   "hl_group" is used as highlight for the cchar if provided,
 ///                   otherwise it defaults to |hl-Conceal|.
+///               - spell: boolean indicating that spell checking should be
+///                   performed within this extmark
 ///               - ui_watched: boolean that indicates the mark should be drawn
 ///                   by a UI. When set, the UI will receive win_extmark events.
 ///                   Note: the mark is positioned by virt_text attributes. Can be
@@ -717,6 +719,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   bool ephemeral = false;
   OPTION_TO_BOOL(ephemeral, ephemeral, false);
+
+  OPTION_TO_BOOL(decor.spell, spell, false);
+  if (decor.spell) {
+    has_decor = true;
+  }
 
   OPTION_TO_BOOL(decor.ui_watched, ui_watched, false);
   if (decor.ui_watched) {

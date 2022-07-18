@@ -28,6 +28,7 @@ return {
     "line_hl_group";
     "cursorline_hl_group";
     "conceal";
+    "spell";
     "ui_watched";
   };
   keymap = {

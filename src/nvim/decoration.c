@@ -306,6 +306,7 @@ next_mark:
   bool conceal = 0;
   int conceal_char = 0;
   int conceal_attr = 0;
+  bool spell = false;
 
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange item = kv_A(state->active, i);
@@ -339,6 +340,9 @@ next_mark:
         conceal_attr = item.attr_id;
       }
     }
+    if (active && item.decor.spell) {
+      spell = true;
+    }
     if ((item.start_row == state->row && item.start_col <= col)
         && decor_virt_pos(item.decor)
         && item.decor.virt_text_pos == kVTOverlay && item.win_col == -1) {
@@ -355,6 +359,7 @@ next_mark:
   state->conceal = conceal;
   state->conceal_char = conceal_char;
   state->conceal_attr = conceal_attr;
+  state->spell = spell;
   return attr;
 }
 
