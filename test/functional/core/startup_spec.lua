@@ -23,6 +23,7 @@ local iswin = helpers.iswin
 local startswith = helpers.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
+local alter_slashes = helpers.alter_slashes
 
 describe('startup', function()
   before_each(function()
@@ -521,10 +522,12 @@ describe('sysinit', function()
 end)
 
 describe('clean', function()
-  clear()
-  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) ~= nil)
-  clear('--clean')
-  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) == nil)
+  it('--clean', function()
+    clear()
+    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) ~= nil)
+    clear('--clean')
+    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) == nil)
+  end)
 end)
 
 describe('user config init', function()

@@ -17,6 +17,21 @@ describe('executable()', function()
     eq(1, call('executable', 'false'))
   end)
 
+  if iswin() then
+    it('exepath respects shellslash', function()
+      command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
+      eq([[test\functional\fixtures\bin\null.CMD]], call('fnamemodify', call('exepath', 'null'), ':.'))
+      command('set shellslash')
+      eq('test/functional/fixtures/bin/null.CMD', call('fnamemodify', call('exepath', 'null'), ':.'))
+    end)
+
+    it('stdpath respects shellslash', function()
+      eq([[build\Xtest_xdg\share\nvim-data]], call('fnamemodify', call('stdpath', 'data'), ':.'))
+      command('set shellslash')
+      eq('build/Xtest_xdg/share/nvim-data', call('fnamemodify', call('stdpath', 'data'), ':.'))
+    end)
+  end
+
   it('fails for invalid values', function()
     for _, input in ipairs({'v:null', 'v:true', 'v:false', '{}', '[]'}) do
       eq('Vim(call):E928: String required', exc_exec('call executable('..input..')'))
