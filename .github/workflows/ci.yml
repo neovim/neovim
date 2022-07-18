@@ -161,10 +161,7 @@ jobs:
             runner: ubuntu-20.04
             os: linux
           - cc: clang
-            runner: macos-10.15
-            os: osx
-          - cc: clang
-            runner: macos-11.0
+            runner: macos-11
             os: osx
 
             # functionaltest-lua is our dumping ground for non-mainline configurations.
