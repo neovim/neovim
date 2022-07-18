@@ -17,6 +17,7 @@
 #include "nvim/fold.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/insexpand.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/move.h"

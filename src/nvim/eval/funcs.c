@@ -36,6 +36,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/input.h"
+#include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mapping.h"
@@ -1091,7 +1092,7 @@ static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   RedrawingDisabled = 0;
   ins_compl_check_keys(0, true);
-  rettv->vval.v_number = compl_interrupted;
+  rettv->vval.v_number = ins_compl_interrupted();
   RedrawingDisabled = saved;
 }
 

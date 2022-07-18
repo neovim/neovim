@@ -95,6 +95,7 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/input.h"
+#include "nvim/insexpand.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -7012,7 +7013,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
       arridx[0] = 0;
       curi[0] = 1;
       while (depth >= 0 && !got_int
-             && (pat == NULL || !compl_interrupted)) {
+             && (pat == NULL || !ins_compl_interrupted())) {
         if (curi[depth] > byts[arridx[depth]]) {
           // Done all bytes at this node, go up one level.
           --depth;

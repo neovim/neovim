@@ -26,6 +26,7 @@
 #include "nvim/garray.h"
 #include "nvim/if_cscope.h"
 #include "nvim/input.h"
+#include "nvim/insexpand.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -1648,7 +1649,7 @@ int find_tags(char_u *pat, int *num_matches, char_u ***matchesp, int flags, int 
         if ((flags & TAG_INS_COMP)) {   // Double brackets for gcc
           ins_compl_check_keys(30, false);
         }
-        if (got_int || compl_interrupted) {
+        if (got_int || ins_compl_interrupted()) {
           stop_searching = true;
           break;
         }

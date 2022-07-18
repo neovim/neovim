@@ -163,10 +163,6 @@ EXTERN colnr_T dollar_vcol INIT(= -1);
 // by the match.)
 EXTERN int compl_length INIT(= 0);
 
-// Set when character typed while looking for matches and it means we should
-// stop looking for matches.
-EXTERN int compl_interrupted INIT(= false);
-
 // Set when doing something for completion that may call edit() recursively,
 // which is not allowed. Also used to disable folding during completion
 EXTERN bool compl_busy INIT(= false);

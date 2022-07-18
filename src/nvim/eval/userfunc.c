@@ -16,6 +16,7 @@
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
+#include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/os/input.h"
 #include "nvim/regexp.h"
