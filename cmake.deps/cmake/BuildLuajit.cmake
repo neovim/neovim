@@ -60,17 +60,10 @@ set(BUILDCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                               CCDEBUG+=-g
                               Q=)
 
+# Setting MACOSX_DEPLOYMENT_TARGET is mandatory for LuaJIT; use version set by
+# cmake.deps/CMakeLists.txt (either environment variable or current system version).
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  if(CMAKE_OSX_DEPLOYMENT_TARGET)
-    set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
-  else()
-    execute_process(COMMAND sw_vers -productVersion
-                    OUTPUT_VARIABLE MACOS_VERSION
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-    set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${MACOS_VERSION}")
-  endif()
-else()
-  set(DEPLOYMENT_TARGET "")
+  set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
 if((UNIX AND NOT APPLE) OR (APPLE AND NOT CMAKE_OSX_ARCHITECTURES))
