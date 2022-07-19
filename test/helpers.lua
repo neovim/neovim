@@ -5,6 +5,8 @@ local luv = require('luv')
 local lfs = require('lfs')
 local relpath = require('pl.path').relpath
 local Paths = require('test.cmakeconfig.paths')
+local busted = require('busted')
+
 
 assert:set_parameter('TableFormatLevel', 100)
 
@@ -83,6 +85,94 @@ function module.matches(pat, actual)
     return true
   end
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
+end
+
+
+function module.iswin()
+  return package.config:sub(1,1) == '\\'
+end
+
+function module.is_os(s)
+  if not (s == 'win' or s == 'mac' or s == 'unix') then
+    error('unknown platform: '..tostring(s))
+  return ((s == 'win' and module.iswin())
+  or (s == 'mac' and module.uname():match('darwin'))
+    or (s == 'unix'))
+  end
+end
+
+function module.get_pathsep()
+  return module.iswin() and '\\' or '/'
+end
+
+function module.join_paths(...)
+  local result = table.concat({ ... }, module.get_pathsep())
+  return result
+end
+
+local NEOVIM_BUILD_DIR = os.getenv('NEOVIM_BUILD_DIR') or module.join_paths(luv.cwd(), 'build')
+
+module.base_dirs = {
+  XDG_CONFIG_HOME = module.join_paths(NEOVIM_BUILD_DIR, 'Xtest_xdg', 'config'),
+  XDG_DATA_HOME = module.join_paths(NEOVIM_BUILD_DIR, 'Xtest_xdg', 'data'),
+  XDG_STATE_HOME = module.join_paths(NEOVIM_BUILD_DIR, 'Xtest_xdg', 'state'),
+  XDG_CACHE_HOME = module.join_paths(NEOVIM_BUILD_DIR, 'Xtest_xdg', 'cache'),
+  TMPDIR = module.join_paths(NEOVIM_BUILD_DIR, 'Xtest_tmpdir'),
+  LOG_DIR = module.join_paths(os.getenv('LOG_DIR') or NEOVIM_BUILD_DIR, 'Xtest_log'),
+  NVIM_RPLUGIN_MANIFEST = module.join_paths(NEOVIM_BUILD_DIR, 'Xtest_rplugin_manifest'),
+}
+
+function module.is_file(path)
+  local _, stat = pcall(luv.fs_stat, path)
+  return stat and stat.type == 'file' or false
+end
+
+function module.is_directory(path)
+  local _, stat = pcall(luv.fs_stat, path)
+  return stat and stat.type == 'directory' or false
+end
+
+-- credit: treesitter.actions.remove_dir()
+function module.rmdir(path)
+  if not module.is_directory(path) then
+    return
+  end
+  local handle = luv.fs_scandir(path)
+  if type(handle) == 'string' then
+    error(handle)
+  end
+
+  while true do
+    local name, t = luv.fs_scandir_next(handle)
+    if not name then
+      break
+    end
+
+    local new_cwd = module.join_paths(path, name)
+    if t == 'directory' then
+      local success = module.rmdir(new_cwd)
+      if not success then
+        return false
+      end
+    else
+      local success = luv.fs_unlink(new_cwd)
+      if not success then
+        return false
+      end
+    end
+  end
+
+  return luv.fs_rmdir(path)
+end
+
+-- Create folder with non existing parents
+function module.mkdir_p(path)
+  if module.is_directory(path) then
+    return
+  end
+  return os.execute((module.iswin()
+    and 'mkdir '..path
+    or 'mkdir -p '..path))
 end
 
 --- Asserts that `pat` matches (or *not* if inverse=true) any line in the tail of `logfile`.
@@ -210,128 +300,78 @@ function module.glob(initial_path, re, exc_re)
   return ret
 end
 
+function module.has_memory_errors(file)
+  local fd = io.open(file)
+  if not fd then
+    return
+  end
+  local start_msg = ('='):rep(20) .. ' File ' .. file .. ' ' .. ('='):rep(20)
+  local lines = {}
+  local warning_line = 0
+  for line in fd:lines() do
+    local cur_warning_line = check_logs_useless_lines[line]
+    if cur_warning_line == warning_line + 1 then
+      warning_line = cur_warning_line
+    else
+      lines[#lines + 1] = line
+    end
+  end
+  fd:close()
+  if #lines > 0 then
+    local status, f
+    local out = io.stdout
+    if os.getenv('SYMBOLIZER') then
+      status, f = pcall(module.popen_r, os.getenv('SYMBOLIZER'), '-l', file)
+    end
+    out:write(start_msg .. '\n')
+    if status then
+      for line in f:lines() do
+        out:write('= ' .. line .. '\n')
+      end
+      f:close()
+    else
+      out:write('= ' .. table.concat(lines, '\n= ') .. '\n')
+    end
+    out:write(select(1, start_msg:gsub('.', '=')) .. '\n')
+    return true
+  end
+  return false
+end
+
 function module.check_logs()
   local log_dir = os.getenv('LOG_DIR')
   local runtime_errors = {}
   if log_dir and lfs.attributes(log_dir, 'mode') == 'directory' then
     for tail in lfs.dir(log_dir) do
       if tail:sub(1, 30) == 'valgrind-' or tail:find('san%.') then
-        local file = log_dir .. '/' .. tail
-        local fd = io.open(file)
-        local start_msg = ('='):rep(20) .. ' File ' .. file .. ' ' .. ('='):rep(20)
-        local lines = {}
-        local warning_line = 0
-        for line in fd:lines() do
-          local cur_warning_line = check_logs_useless_lines[line]
-          if cur_warning_line == warning_line + 1 then
-            warning_line = cur_warning_line
-          else
-            lines[#lines + 1] = line
-          end
-        end
-        fd:close()
-        if #lines > 0 then
-          local status, f
-          local out = io.stdout
-          if os.getenv('SYMBOLIZER') then
-            status, f = pcall(module.popen_r, os.getenv('SYMBOLIZER'), '-l', file)
-          end
-          out:write(start_msg .. '\n')
-          if status then
-            for line in f:lines() do
-              out:write('= '..line..'\n')
-            end
-            f:close()
-          else
-            out:write('= ' .. table.concat(lines, '\n= ') .. '\n')
-          end
-          out:write(select(1, start_msg:gsub('.', '=')) .. '\n')
+        local file = module.join_paths(log_dir, tail)
+        if module.has_memory_errors(file) then
           table.insert(runtime_errors, file)
         end
-        os.remove(file)
       end
     end
   end
-  assert(0 == #runtime_errors, string.format(
-    'Found runtime errors in logfile(s): %s',
-    table.concat(runtime_errors, ', ')))
+  return runtime_errors
 end
 
-function module.iswin()
-  return package.config:sub(1,1) == '\\'
-end
-
--- Gets (lowercase) OS name from CMake, uname, or "win" if iswin().
-module.uname = (function()
-  local platform = nil
-  return (function()
-    if platform then
-      return platform
-    end
-
-    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_HOST_SYSTEM_NAME.
-      platform = string.lower(os.getenv("SYSTEM_NAME"))
-      return platform
-    end
-
-    local status, f = pcall(module.popen_r, 'uname', '-s')
-    if status then
-      platform = string.lower(f:read("*l"))
-      f:close()
-    elseif module.iswin() then
-      platform = 'windows'
-    else
-      error('unknown platform')
-    end
-    return platform
-  end)
-end)()
-
-function module.is_os(s)
-  if not (s == 'win' or s == 'mac' or s == 'unix') then
-    error('unknown platform: '..tostring(s))
-  end
-  return ((s == 'win' and module.iswin())
-    or (s == 'mac' and module.uname() == 'darwin')
-    or (s == 'unix'))
-end
-
-local function tmpdir_get()
-  return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
-end
-
--- Is temp directory `dir` defined local to the project workspace?
-local function tmpdir_is_local(dir)
-  return not not (dir and string.find(dir, 'Xtest'))
+module.uname = function()
+  return luv.os_uname().sysname:lower()
 end
 
 --- Creates a new temporary file for use by tests.
-module.tmpname = (function()
-  local seq = 0
-  local tmpdir = tmpdir_get()
-  return (function()
-    if tmpdir_is_local(tmpdir) then
-      -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
-      seq = seq + 1
-      -- "…/Xtest_tmpdir/T42.7"
-      local fname = ('%s/%s.%d'):format(tmpdir, (_G._nvim_test_id or 'nvim-test'), seq)
-      io.open(fname, 'w'):close()
-      return fname
-    else
-      local fname = os.tmpname()
-      if module.uname() == 'windows' and fname:sub(1, 2) == '\\s' then
-        -- In Windows tmpname() returns a filename starting with
-        -- special sequence \s, prepend $TEMP path
-        return tmpdir..fname
-      elseif fname:match('^/tmp') and module.uname() == 'darwin' then
-        -- In OS X /tmp links to /private/tmp
-        return '/private'..fname
-      else
-        return fname
-      end
-    end
-  end)
-end)()
+module.tmpname = function()
+  local fd, tmp_path = luv.fs_mkstemp(module.join_paths(module.base_dirs.TMPDIR, 'nvim_XXXXXXXXXX'))
+
+  -- if not open, open with (0700) permissions
+  fd = fd or luv.fs_open(tmp_path, 'w', 384)
+  if fd then
+    luv.fs_close(fd)
+  end
+
+  return tmp_path, function()
+    luv.fs_unlink(tmp_path)
+  end
+end
 
 function module.hasenv(name)
   local env = os.getenv(name)
@@ -353,12 +393,10 @@ function module.check_cores(app, force)
   local initial_path, re, exc_re
   local gdb_db_cmd = 'gdb -n -batch -ex "thread apply all bt full" "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
   local lldb_db_cmd = 'lldb -Q -o "bt all" -f "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
-  local random_skip = false
+  local random_skip = nil
   -- Workspace-local $TMPDIR, scrubbed and pattern-escaped.
   -- "./Xtest-tmpdir/" => "Xtest%-tmpdir"
-  local local_tmpdir = (tmpdir_is_local(tmpdir_get())
-    and relpath(tmpdir_get()):gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
-    or nil)
+  local local_tmpdir = relpath(module.base_dirs.TMPDIR):gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
   local db_cmd
   if module.hasenv('NVIM_TEST_CORE_GLOB_DIRECTORY') then
     initial_path = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
@@ -366,14 +404,14 @@ function module.check_cores(app, force)
     exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
     random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
-  elseif 'darwin' == module.uname() then
+  elseif module.uname():match('darwin') then
     initial_path = '/cores'
     re = nil
     exc_re = { local_tmpdir }
     db_cmd = lldb_db_cmd
   else
     initial_path = '.'
-    if 'freebsd' == module.uname() then
+    if module.uname():match('freebsd') then
       re = '/nvim.core$'
     else
       re = '/core[^/]*$'
@@ -398,7 +436,6 @@ function module.check_cores(app, force)
     os.execute(db_cmd:gsub('%$_NVIM_TEST_APP', app):gsub('%$_NVIM_TEST_CORE', core) .. ' 2>&1')
     out:write('\n')
     found_cores = found_cores + 1
-    os.remove(core)
   end
   if found_cores ~= 0 then
     out:write(('\nTests covered by this check: %u\n'):format(tests_skipped + 1))
@@ -773,6 +810,10 @@ end
 -- Dedent the given text and write it to the file name.
 function module.write_file(name, text, no_dedent, append)
   local file = io.open(name, (append and 'a' or 'w'))
+  if not file then
+    error("unable to write to file: " .. name)
+    return
+  end
   if type(text) == 'table' then
     -- Byte blob
     local bytes = text
@@ -818,5 +859,65 @@ function module.read_nvim_log(logfile, ci_rename)
 end
 
 module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))
+
+local testid = (function()
+  local id = 0
+  return (function()
+    id = id + 1
+    return id
+  end)
+end)()
+
+local function suite_setup()
+  for k, dir in pairs(module.base_dirs) do
+    module.mkdir_p(module.join_paths(dir, 'nvim'))
+    luv.os_setenv(k, dir)
+  end
+  luv.os_unsetenv('XDG_DATA_DIRS')
+end
+
+-- Global before_each. https://github.com/Olivine-Labs/busted/issues/613
+local function before_each(context)
+  local id = ('T%d'):format(testid())
+  context.nvim_test_id = id
+  _G._nvim_test_id = id
+
+  local prefix = module.join_paths(module.base_dirs.XDG_STATE_HOME, 'nvim')
+  module.mkdir_p(prefix)
+  local NVIM_LOG_FILE = module.join_paths(prefix, 'log.' .. id)
+  luv.os_setenv('NVIM_LOG_FILE', NVIM_LOG_FILE)
+  luv.os_unsetenv('NVIM') -- Clear $NVIM in case tests are running from Nvim. #11009
+  context.nvim_log_file = NVIM_LOG_FILE
+
+  return nil, true
+end
+
+function module.cleanup_artifacts()
+  pcall(function()
+    module.rmdir(module.join_paths(NEOVIM_BUILD_DIR, 'Xtest_xdg'))
+  end)
+  for _, dir in pairs(module.base_dirs) do
+    if dir:match('Xtest') then
+      pcall(module.rmdir, dir)
+    end
+  end
+end
+
+busted.subscribe({ 'suite', 'start' },
+  suite_setup,
+  {
+    priority = 1,
+})
+
+busted.subscribe({ 'test', 'start' },
+  before_each,
+  {
+    -- Ensure our --helper is handled before --output (see busted/runner.lua).
+    priority = 1,
+    -- Don't generate a test-id for skipped tests. /shrug
+    predicate = function (element, _, status)
+      return not ((element.descriptor == 'pending' or status == 'pending'))
+    end
+})
 
 return module

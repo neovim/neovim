@@ -175,7 +175,6 @@ return function(options)
     end
     io.write(globalSetup)
     io.flush()
-
     return nil, true
   end
 
@@ -194,10 +193,12 @@ return function(options)
     io.write(globalTeardown)
     io.write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
     io.write(getSummaryString())
-    if failureCount > 0 or errorCount > 0 then
-      io.write(global_helpers.read_nvim_log(nil, true))
-    end
     io.flush()
+
+    -- FIXME(kylo252): we should be able to check errorCount from the outside
+    if errorCount == 0 and failureCount == 0 then
+      global_helpers.cleanup_artifacts()
+    end
 
     return nil, true
   end
@@ -257,9 +258,27 @@ return function(options)
     return nil, true
   end
 
-  handler.error = function(element, _parent, _message, _debug)
+  handler.testFailure = function(element, _, _, _)
+    if not options.deferPrint then
+      io.write(global_helpers.read_nvim_log(element.nvim_log_file, true))
+      io.flush()
+    end
+    return nil, true
+  end
+
+  handler.testError = function(element, _, _, _)
+    if not options.deferPrint then
+      io.write(global_helpers.read_nvim_log(element.nvim_log_file, true))
+      io.flush()
+    end
+    return nil, true
+  end
+
+  handler.error = function(element,_ , _, _)
     if element.descriptor ~= 'it' then
-      write_status(element, failureDescription(handler.errors[#handler.errors]))
+      if not options.deferPrint then
+        write_status(element, failureDescription(handler.errors[#handler.errors]))
+      end
       errorCount = errorCount + 1
     end
 
@@ -273,6 +292,8 @@ return function(options)
   busted.subscribe({ 'file', 'end' }, handler.fileEnd)
   busted.subscribe({ 'test', 'start' }, handler.testStart, { predicate = handler.cancelOnPending })
   busted.subscribe({ 'test', 'end' }, handler.testEnd, { predicate = handler.cancelOnPending })
+  busted.subscribe({ 'failure', 'it' }, handler.testFailure)
+  busted.subscribe({ 'error', 'it' }, handler.testError)
   busted.subscribe({ 'failure' }, handler.error)
   busted.subscribe({ 'error' }, handler.error)
 

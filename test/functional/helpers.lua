@@ -16,10 +16,8 @@ local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
 local filter = global_helpers.tbl_filter
-local is_os = global_helpers.is_os
 local map = global_helpers.tbl_map
 local ok = global_helpers.ok
-local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
 local fail = global_helpers.fail
 
@@ -28,7 +26,6 @@ local module = {
   mkdir = lfs.mkdir,
 }
 
-local start_dir = lfs.currentdir()
 module.nvim_prog = (
   os.getenv('NVIM_PRG')
   or global_helpers.test_build_dir .. '/bin/nvim'
@@ -470,10 +467,15 @@ function module.new_argv(...)
         'MSAN_OPTIONS',
         'LD_LIBRARY_PATH',
         'PATH',
+        'LOG_DIR',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
         'GCOV_ERROR_FILE',
         'XDG_DATA_DIRS',
+        'XDG_CONFIG_HOME',
+        'XDG_DATA_HOME',
+        'XDG_STATE_HOME',
+        'XDG_CACHE_HOME',
         'TMPDIR',
         'VIMRUNTIME',
       }) do
@@ -658,63 +660,6 @@ function module.assert_visible(bufnr, visible)
   end
 end
 
-local function do_rmdir(path)
-  local mode, errmsg, errcode = lfs.attributes(path, 'mode')
-  if mode == nil then
-    if errcode == 2 then
-      -- "No such file or directory", don't complain.
-      return
-    end
-    error(string.format('rmdir: %s (%d)', errmsg, errcode))
-  end
-  if mode ~= 'directory' then
-    error(string.format('rmdir: not a directory: %s', path))
-  end
-  for file in lfs.dir(path) do
-    if file ~= '.' and file ~= '..' then
-      local abspath = path..'/'..file
-      if lfs.attributes(abspath, 'mode') == 'directory' then
-        do_rmdir(abspath)  -- recurse
-      else
-        local ret, err = os.remove(abspath)
-        if not ret then
-          if not session then
-            error('os.remove: '..err)
-          else
-            -- Try Nvim delete(): it handles `readonly` attribute on Windows,
-            -- and avoids Lua cross-version/platform incompatibilities.
-            if -1 == module.call('delete', abspath) then
-              local hint = (is_os('win')
-                and ' (hint: try :%bwipeout! before rmdir())' or '')
-              error('delete() failed'..hint..': '..abspath)
-            end
-          end
-        end
-      end
-    end
-  end
-  local ret, err = lfs.rmdir(path)
-  if not ret then
-    error('lfs.rmdir('..path..'): '..err)
-  end
-end
-
-function module.rmdir(path)
-  local ret, _ = pcall(do_rmdir, path)
-  if not ret and is_os('win') then
-    -- Maybe "Permission denied"; try again after changing the nvim
-    -- process to the top-level directory.
-    module.command([[exe 'cd '.fnameescape(']]..start_dir.."')")
-    ret, _ = pcall(do_rmdir, path)
-  end
-  -- During teardown, the nvim process may not exit quickly enough, then rmdir()
-  -- will fail (on Windows).
-  if not ret then  -- Try again.
-    sleep(1000)
-    do_rmdir(path)
-  end
-end
-
 function module.exc_exec(cmd)
   module.command(([[
     try
@@ -799,10 +744,6 @@ end
 
 function module.exec_lua(code, ...)
   return module.meths.exec_lua(code, {...})
-end
-
-function module.get_pathsep()
-  return iswin() and '\\' or '/'
 end
 
 --- Gets the filesystem root dir, namely "/" or "C:/".
@@ -899,19 +840,16 @@ function module.os_kill(pid)
     or  'kill -9 '..pid..' > /dev/null'))
 end
 
--- Create folder with non existing parents
-function module.mkdir_p(path)
-  return os.execute((iswin()
-    and 'mkdir '..path
-    or 'mkdir -p '..path))
-end
-
 module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)
   if after_each then
     after_each(function()
-      check_logs()
+      local runtime_errors = check_logs()
+      assert(
+        0 == #runtime_errors,
+        string.format('Found runtime errors in logfile(s): %s', table.concat(runtime_errors, ', '))
+      )
       check_cores('build/bin/nvim')
       if session then
         local msg = session:next_message(0)
