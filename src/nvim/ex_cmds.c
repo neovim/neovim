@@ -1544,84 +1544,71 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 
   size_t len = strlen(cmd) + 1;  // At least enough space for cmd + NULL.
 
-  len += is_fish_shell ?  sizeof("begin; " "; end") - 1
-                       :  is_pwsh ? sizeof("Start-Process ")
-                                  : sizeof("(" ")") - 1;
+  len += is_fish_shell ? sizeof("begin; " "; end") - 1
+                       : !is_pwsh ? sizeof("(" ")") - 1
+                                  : 0;
 
   if (itmp != NULL) {
-    len += is_pwsh  ? strlen(itmp) + sizeof(" -RedirectStandardInput ")
+    len += is_pwsh  ? strlen(itmp) + sizeof("Get-Content " " | & ") - 1
                     : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
   if (otmp != NULL) {
     len += strlen(otmp) + strlen(p_srr) + 2;  // two extra spaces ("  "),
   }
 
-  const char *const cmd_args = strchr(cmd, ' ');
-  len += (is_pwsh && cmd_args)
-      ? strlen(" -ArgumentList ") + 2  // two extra quotes
-      : 0;
-
   char *const buf = xmalloc(len);
 
   if (is_pwsh) {
-    xstrlcpy(buf, "Start-Process ", len);
-    if (cmd_args == NULL) {
-      xstrlcat(buf, cmd, len);
+    if (itmp != NULL) {
+      xstrlcpy(buf, "Get-Content ", len - 1);  // FIXME: should we add "-Encoding utf8"?
+      xstrlcat(buf, (const char *)itmp, len - 1);
+      xstrlcat(buf, " | & ", len - 1);  // FIXME: add `&` ourself or leave to user?
+      xstrlcat(buf, cmd, len - 1);
     } else {
-      xstrlcpy(buf + strlen(buf), cmd, (size_t)(cmd_args - cmd + 1));
-      xstrlcat(buf, " -ArgumentList \"", len);
-      xstrlcat(buf, cmd_args + 1, len);  // +1 to skip the leading space.
-      xstrlcat(buf, "\"", len);
+      xstrlcpy(buf, cmd, len - 1);
     }
+  } else {
 #if defined(UNIX)
     // Put delimiters around the command (for concatenated commands) when
     // redirecting input and/or output.
-  } else if (itmp != NULL || otmp != NULL) {
-    char *fmt = is_fish_shell ? "begin; %s; end"
-                              :       "(%s)";
-    vim_snprintf(buf, len, fmt, cmd);
-#endif
+    if (itmp != NULL || otmp != NULL) {
+      char *fmt = is_fish_shell ? "begin; %s; end"
+        :       "(%s)";
+      vim_snprintf(buf, len, fmt, cmd);
+    } else {
+      xstrlcpy(buf, cmd, len);
+    }
+
+    if (itmp != NULL) {
+      xstrlcat(buf, " < ", len - 1);
+      xstrlcat(buf, (const char *)itmp, len - 1);
+    }
+#else
     // For shells that don't understand braces around commands, at least allow
     // the use of commands in a pipe.
-  } else {
-    xstrlcpy(buf, cmd, len);
-  }
-
-#if defined(UNIX)
-  if (itmp != NULL) {
-    if (is_pwsh) {
-      xstrlcat(buf, " -RedirectStandardInput ", len - 1);
-    } else {
-      xstrlcat(buf, " < ", len - 1);
-    }
-    xstrlcat(buf, itmp, len - 1);
-  }
-#else
-  if (itmp != NULL) {
-    // If there is a pipe, we have to put the '<' in front of it.
-    // Don't do this when 'shellquote' is not empty, otherwise the
-    // redirection would be inside the quotes.
-    if (*p_shq == NUL) {
-      char *const p = find_pipe(buf);
-      if (p != NULL) {
-        *p = NUL;
+    xstrlcpy(buf, (char *)cmd, len);
+    if (itmp != NULL) {
+      // If there is a pipe, we have to put the '<' in front of it.
+      // Don't do this when 'shellquote' is not empty, otherwise the
+      // redirection would be inside the quotes.
+      if (*p_shq == NUL) {
+        char *const p = find_pipe(buf);
+        if (p != NULL) {
+          *p = NUL;
+        }
       }
-    }
-    if (is_pwsh) {
-      xstrlcat(buf, " -RedirectStandardInput ", len);
-    } else {
       xstrlcat(buf, " < ", len);
-    }
-    xstrlcat(buf, itmp, len);
-    if (*p_shq == NUL) {
-      const char *const p = find_pipe(cmd);
-      if (p != NULL) {
-        xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
-        xstrlcat(buf, p, len - 1);
+      xstrlcat(buf, (const char *)itmp, len);
+      if (*p_shq == NUL) {
+        const char *const p = find_pipe((const char *)cmd);
+        if (p != NULL) {
+          xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
+          xstrlcat(buf, p, len - 1);
+        }
       }
     }
-  }
 #endif
+  }
   if (otmp != NULL) {
     append_redir(buf, len, p_srr, otmp);
   }
