@@ -38,6 +38,14 @@ func Test_client_server()
   " When using valgrind it takes much longer.
   call WaitForAssert({-> assert_match(name, serverlist())})
 
+  if !has('win32')
+    if RunVim([], [], '--serverlist >Xtest_serverlist')
+      let lines = readfile('Xtest_serverlist')
+      call assert_true(index(lines, 'XVIMTEST') >= 0)
+    endif
+    call delete('Xtest_serverlist')
+  endif
+
   eval name->remote_foreground()
 
   call remote_send(name, ":let testvar = 'yes'\<CR>")

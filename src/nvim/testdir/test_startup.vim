@@ -1130,7 +1130,6 @@ func Test_n_arg()
     call assert_equal([], readfile('Xtestout'))
     call delete('Xtestout')
   endif
-  call delete('Xafter')
 endfunc
 
 " Test for the "-h" (help) argument
@@ -1164,7 +1163,21 @@ func Test_E_arg()
     call assert_equal([], readfile('Xtestout'))
     call delete('Xtestout')
   endif
-  call delete('Xafter')
+endfunc
+
+" Test for the "-D" (debugger) argument
+func Test_D_arg()
+  CheckRunVimInTerminal
+
+  let cmd = GetVimCommandCleanTerm() .. ' -D'
+  let buf = term_start(cmd, {'term_rows' : 10})
+  call WaitForAssert({-> assert_equal("running", term_getstatus(buf))})
+
+  call WaitForAssert({-> assert_equal('Entering Debug mode.  Type "cont" to continue.',
+  \                  term_getline(buf, 7))})
+  call WaitForAssert({-> assert_equal('>', term_getline(buf, 10))})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 " Test for too many edit argument errors
