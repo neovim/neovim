@@ -36,6 +36,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/input.h"
+#include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mapping.h"
@@ -1052,64 +1053,6 @@ win_T *get_optional_window(typval_T *argvars, int idx)
 static void f_col(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   get_col(argvars, rettv, false);
-}
-
-/// "complete()" function
-static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  if ((State & MODE_INSERT) == 0) {
-    emsg(_("E785: complete() can only be used in Insert mode"));
-    return;
-  }
-
-  // Check for undo allowed here, because if something was already inserted
-  // the line was already saved for undo and this check isn't done.
-  if (!undo_allowed(curbuf)) {
-    return;
-  }
-
-  if (argvars[1].v_type != VAR_LIST) {
-    emsg(_(e_invarg));
-  } else {
-    const colnr_T startcol = tv_get_number_chk(&argvars[0], NULL);
-    if (startcol > 0) {
-      set_completion(startcol - 1, argvars[1].vval.v_list);
-    }
-  }
-}
-
-/// "complete_add()" function
-static void f_complete_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = ins_compl_add_tv(&argvars[0], 0, false);
-}
-
-/// "complete_check()" function
-static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  int saved = RedrawingDisabled;
-
-  RedrawingDisabled = 0;
-  ins_compl_check_keys(0, true);
-  rettv->vval.v_number = compl_interrupted;
-  RedrawingDisabled = saved;
-}
-
-/// "complete_info()" function
-static void f_complete_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  tv_dict_alloc_ret(rettv);
-
-  list_T *what_list = NULL;
-
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    if (argvars[0].v_type != VAR_LIST) {
-      emsg(_(e_listreq));
-      return;
-    }
-    what_list = argvars[0].vval.v_list;
-  }
-  get_complete_info(what_list, rettv->vval.v_dict);
 }
 
 /// "confirm(message, buttons[, default [, type]])" function

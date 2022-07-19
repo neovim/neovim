@@ -14,6 +14,7 @@
 #include "nvim/eval.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
+#include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mapping.h"
 #include "nvim/memfile.h"
@@ -710,6 +711,7 @@ void free_all_mem(void)
   free_search_patterns();
   free_old_sub();
   free_last_insert();
+  free_insexpand_stuff();
   free_prev_shellcmd();
   free_regexp_stuff();
   free_tag_stuff();

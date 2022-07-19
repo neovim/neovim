@@ -21,6 +21,7 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/input.h"
+#include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"

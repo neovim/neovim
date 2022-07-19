@@ -92,6 +92,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
+#include "nvim/insexpand.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"

@@ -16,6 +16,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/insexpand.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/menu.h"
