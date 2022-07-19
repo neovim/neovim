@@ -1,16 +1,12 @@
 " Tests for the +clientserver feature.
 
-if !has('job') || !has('clientserver')
-  throw 'Skipped: job and/or clientserver feature missing'
-endif
+source check.vim
+CheckFeature job
+CheckFeature clientserver
 
 source shared.vim
 
-func Test_client_server()
-  let cmd = GetVimCommand()
-  if cmd == ''
-    return
-  endif
+func Check_X11_Connection()
   if has('x11')
     if empty($DISPLAY)
       throw 'Skipped: $DISPLAY is not set'
@@ -19,11 +15,19 @@ func Test_client_server()
       call remote_send('xxx', '')
     catch
       if v:exception =~ 'E240:'
-	throw 'Skipped: no connection to the X server'
+        throw 'Skipped: no connection to the X server'
       endif
       " ignore other errors
     endtry
   endif
+endfunc
+
+func Test_client_server()
+  let cmd = GetVimCommand()
+  if cmd == ''
+    return
+  endif
+  call Check_X11_Connection()
 
   let name = 'XVIMTEST'
   let cmd .= ' --servername ' . name
@@ -33,6 +37,14 @@ func Test_client_server()
   " Takes a short while for the server to be active.
   " When using valgrind it takes much longer.
   call WaitForAssert({-> assert_match(name, serverlist())})
+
+  if !has('win32')
+    if RunVim([], [], '--serverlist >Xtest_serverlist')
+      let lines = readfile('Xtest_serverlist')
+      call assert_true(index(lines, 'XVIMTEST') >= 0)
+    endif
+    call delete('Xtest_serverlist')
+  endif
 
   eval name->remote_foreground()
 
@@ -81,6 +93,10 @@ func Test_client_server()
   endif
   let g:testvar = 'myself'
   call assert_equal('myself', remote_expr(v:servername, 'testvar'))
+  call remote_send(v:servername, ":let g:testvar2 = 75\<CR>")
+  call feedkeys('', 'x')
+  call assert_equal(75, g:testvar2)
+  call assert_fails('let v = remote_expr(v:servername, "/2")', 'E449:')
 
   call remote_send(name, ":call server2client(expand('<client>'), 'got it')\<CR>", 'g:myserverid')
   call assert_equal('got it', g:myserverid->remote_read(2))
@@ -101,6 +117,55 @@ func Test_client_server()
   call assert_equal('another', g:peek_result)
   call assert_equal('another', remote_read(g:myserverid, 2))
 
+  if !has('gui_running')
+    " In GUI vim, the following tests display a dialog box
+
+    let cmd = GetVimProg() .. ' --servername ' .. name
+
+    " Run a separate instance to send a command to the server
+    call remote_expr(name, 'execute("only")')
+    call system(cmd .. ' --remote-send ":new Xfile<CR>"')
+    call assert_equal('2', remote_expr(name, 'winnr("$")'))
+    call assert_equal('Xfile', remote_expr(name, 'winbufnr(1)->bufname()'))
+    call remote_expr(name, 'execute("only")')
+
+    " Invoke a remote-expr. On MS-Windows, the returned value has a carriage
+    " return.
+    let l = system(cmd .. ' --remote-expr "2 + 2"')
+    call assert_equal(['4'], split(l, "\n"))
+
+    " Edit multiple files using --remote
+    call system(cmd .. ' --remote Xfile1 Xfile2 Xfile3')
+    call assert_equal("Xfile1\nXfile2\nXfile3\n", remote_expr(name, 'argv()'))
+    eval name->remote_send(":%bw!\<CR>")
+
+    " Edit files in separate tab pages
+    call system(cmd .. ' --remote-tab Xfile1 Xfile2 Xfile3')
+    call assert_equal('3', remote_expr(name, 'tabpagenr("$")'))
+    call assert_equal('Xfile2', remote_expr(name, 'bufname(tabpagebuflist(2)[0])'))
+    eval name->remote_send(":%bw!\<CR>")
+
+    " Edit a file using --remote-wait
+    eval name->remote_send(":source $VIMRUNTIME/plugin/rrhelper.vim\<CR>")
+    call system(cmd .. ' --remote-wait +enew Xfile1')
+    call assert_equal("Xfile1", remote_expr(name, 'bufname("#")'))
+    eval name->remote_send(":%bw!\<CR>")
+
+    " Edit files using --remote-tab-wait
+    call system(cmd .. ' --remote-tabwait +tabonly\|enew Xfile1 Xfile2')
+    call assert_equal('1', remote_expr(name, 'tabpagenr("$")'))
+    eval name->remote_send(":%bw!\<CR>")
+
+    " Error cases
+    if v:lang == "C" || v:lang =~ '^[Ee]n'
+      let l = split(system(cmd .. ' --remote +pwd'), "\n")
+      call assert_equal("Argument missing after: \"+pwd\"", l[1])
+    endif
+    let l = system(cmd .. ' --remote-expr "abcd"')
+    call assert_match('^E449: ', l)
+  endif
+
+  eval name->remote_send(":%bw!\<CR>")
   eval name->remote_send(":qa!\<CR>")
   try
     call WaitForAssert({-> assert_equal("dead", job_status(job))})
@@ -111,8 +176,8 @@ func Test_client_server()
     endif
   endtry
 
-  call assert_fails("let x=remote_peek([])", 'E730:')
-  call assert_fails("let x=remote_read('vim10')", 'E277:')
+  call assert_fails("let x = remote_peek([])", 'E730:')
+  call assert_fails("let x = remote_read('vim10')", 'E277:')
 endfunc
 
 " Uncomment this line to get a debugging log
