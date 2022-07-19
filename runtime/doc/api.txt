@@ -536,12 +536,6 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
-nvim__get_hl_defs({ns_id})                               *nvim__get_hl_defs()*
-                TODO: Documentation
-
-nvim__get_lib_dir()                                      *nvim__get_lib_dir()*
-                TODO: Documentation
-
 nvim__get_runtime({pat}, {all}, {*opts})                 *nvim__get_runtime()*
                 Find files in runtime directories
 
@@ -608,15 +602,6 @@ nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
                 NB: if your UI doesn't use hlstate, this will not return
                 hlstate first time.
 
-nvim__runtime_inspect()                              *nvim__runtime_inspect()*
-                TODO: Documentation
-
-nvim__screenshot({path})                                  *nvim__screenshot()*
-                TODO: Documentation
-
-                Attributes: ~
-                    |api-fast|
-
 nvim__set_hl_ns({ns_id})                                   *nvim__set_hl_ns()*
                 Set active namespace for highlights.
 
@@ -637,12 +622,6 @@ nvim__stats()                                                  *nvim__stats()*
 
                 Return: ~
                     Map of various internal stats.
-
-nvim__unpack({str})                                           *nvim__unpack()*
-                TODO: Documentation
-
-                Attributes: ~
-                    |api-fast|
 
 nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Calls many API methods atomically.
@@ -2123,13 +2102,6 @@ affected.
 
 You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()|
 to check whether a buffer is loaded.
-
-                                                    *nvim__buf_redraw_range()*
-nvim__buf_redraw_range({buffer}, {first}, {last})
-                TODO: Documentation
-
-nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
-                TODO: Documentation
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                 Activates buffer-update events on a channel, or as Lua

@@ -897,6 +897,8 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
             doc = fmt_node_as_vimhelp(fn['desc_node'], fmt_vimhelp=True)
         if not doc and fn['brief_desc_node']:
             doc = fmt_node_as_vimhelp(fn['brief_desc_node'])
+        if not doc and name.startswith("nvim__"):
+            continue
         if not doc:
             doc = 'TODO: Documentation'
 
