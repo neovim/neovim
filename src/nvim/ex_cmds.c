@@ -3597,7 +3597,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
   // check for a trailing count
   cmd = skipwhite(cmd);
   if (ascii_isdigit(*cmd)) {
-    i = getdigits_long((char_u **)&cmd, true, 0);
+    i = getdigits_long(&cmd, true, 0);
     if (i <= 0 && !eap->skip && subflags.do_error) {
       emsg(_(e_zerocount));
       return 0;
@@ -4858,14 +4858,14 @@ void ex_help(exarg_T *eap)
       semsg(_("E149: Sorry, no help for %s"), arg);
     }
     if (n != FAIL) {
-      FreeWild(num_matches, (char_u **)matches);
+      FreeWild(num_matches, matches);
     }
     return;
   }
 
   // The first match (in the requested language) is the best match.
   tag = xstrdup(matches[i]);
-  FreeWild(num_matches, (char_u **)matches);
+  FreeWild(num_matches, matches);
 
   /*
    * Re-use an existing help window or open a new one.
@@ -5287,7 +5287,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
   if (keep_lang) {
     flags |= TAG_KEEP_LANG;
   }
-  if (find_tags(IObuff, num_matches, (char_u ***)matches, flags, MAXCOL, NULL) == OK
+  if (find_tags(IObuff, num_matches, matches, flags, MAXCOL, NULL) == OK
       && *num_matches > 0) {
     // Sort the matches found on the heuristic number that is after the
     // tag name.
@@ -5424,8 +5424,8 @@ void fix_help_buffer(void)
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
           //       so `NameBuff == &NameBuff` according to C semantics.
           char *buff_list[1] = { (char *)NameBuff };
-          if (gen_expand_wildcards(1, (char_u **)buff_list, &fcount,
-                                   (char_u ***)&fnames, EW_FILE|EW_SILENT) == OK
+          if (gen_expand_wildcards(1, buff_list, &fcount,
+                                   &fnames, EW_FILE|EW_SILENT) == OK
               && fcount > 0) {
             // If foo.abx is found use it instead of foo.txt in
             // the same directory.
@@ -5526,7 +5526,7 @@ void fix_help_buffer(void)
               }
               fclose(fd);
             }
-            FreeWild(fcount, (char_u **)fnames);
+            FreeWild(fcount, fnames);
           }
         }
         xfree(rt);
@@ -5580,14 +5580,14 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
   char *buff_list[1] = { (char *)NameBuff };
-  const int res = gen_expand_wildcards(1, (char_u **)buff_list, &filecount, (char_u ***)&files,
+  const int res = gen_expand_wildcards(1, buff_list, &filecount, &files,
                                        EW_FILE|EW_SILENT);
   if (res == FAIL || filecount == 0) {
     if (!got_int) {
       semsg(_("E151: No match: %s"), NameBuff);
     }
     if (res != FAIL) {
-      FreeWild(filecount, (char_u **)files);
+      FreeWild(filecount, files);
     }
     return;
   }
@@ -5608,7 +5608,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     if (!ignore_writeerr) {
       semsg(_("E152: Cannot open %s for writing"), NameBuff);
     }
-    FreeWild(filecount, (char_u **)files);
+    FreeWild(filecount, files);
     return;
   }
 
@@ -5698,11 +5698,11 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     fclose(fd);
   }
 
-  FreeWild(filecount, (char_u **)files);
+  FreeWild(filecount, files);
 
   if (!got_int && ga.ga_data != NULL) {
     // Sort the tags.
-    sort_strings((char_u **)ga.ga_data, ga.ga_len);
+    sort_strings(ga.ga_data, ga.ga_len);
 
     // Check for duplicates.
     for (int i = 1; i < ga.ga_len; i++) {
@@ -5777,7 +5777,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
   char *buff_list[1] = { (char *)NameBuff };
-  if (gen_expand_wildcards(1, (char_u **)buff_list, &filecount, (char_u ***)&files,
+  if (gen_expand_wildcards(1, buff_list, &filecount, &files,
                            EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
     semsg(_("E151: No match: %s"), NameBuff);
@@ -5843,7 +5843,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   }
 
   ga_clear(&ga);
-  FreeWild(filecount, (char_u **)files);
+  FreeWild(filecount, files);
 }
 
 static void helptags_cb(char *fname, void *cookie)

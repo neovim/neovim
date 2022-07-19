@@ -5439,7 +5439,7 @@ static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
   }
 
   // Parse the list of arguments, wildcards have already been expanded.
-  if (get_arglist_exp((char_u *)p, &args->fcount, (char_u ***)&args->fnames, true) == FAIL) {
+  if (get_arglist_exp((char_u *)p, &args->fcount, &args->fnames, true) == FAIL) {
     return FAIL;
   }
   if (args->fcount == 0) {
@@ -5615,12 +5615,12 @@ void ex_vimgrep(exarg_T *eap)
   int status = vgr_process_files(wp, qi, &args, &redraw_for_dummy, &first_match_buf, &target_dir);
 
   if (status != OK) {
-    FreeWild(args.fcount, (char_u **)args.fnames);
+    FreeWild(args.fcount, args.fnames);
     decr_quickfix_busy();
     goto theend;
   }
 
-  FreeWild(args.fcount, (char_u **)args.fnames);
+  FreeWild(args.fcount, args.fnames);
 
   qf_list_T *qfl = qf_get_curlist(qi);
   qfl->qf_nonevalid = false;
@@ -7165,8 +7165,7 @@ static void hgr_search_files_in_dir(qf_list_T *qfl, char *dirname, regmatch_T *p
   // Find all "*.txt" and "*.??x" files in the "doc" directory.
   add_pathsep(dirname);
   STRCAT(dirname, "doc/*.\\(txt\\|??x\\)");  // NOLINT
-  if (gen_expand_wildcards(1, (char_u **)&dirname, &fcount,
-                           (char_u ***)&fnames, EW_FILE|EW_SILENT) == OK
+  if (gen_expand_wildcards(1, &dirname, &fcount, &fnames, EW_FILE|EW_SILENT) == OK
       && fcount > 0) {
     for (int fi = 0; fi < fcount && !got_int; fi++) {
       // Skip files for a different language.
@@ -7180,7 +7179,7 @@ static void hgr_search_files_in_dir(qf_list_T *qfl, char *dirname, regmatch_T *p
 
       hgr_search_file(qfl, fnames[fi], p_regmatch);
     }
-    FreeWild(fcount, (char_u **)fnames);
+    FreeWild(fcount, fnames);
   }
 }
 

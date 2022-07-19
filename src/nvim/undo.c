@@ -2765,7 +2765,7 @@ void ex_undolist(exarg_T *eap)
   if (GA_EMPTY(&ga)) {
     msg(_("Nothing to undo"));
   } else {
-    sort_strings((char_u **)ga.ga_data, ga.ga_len);
+    sort_strings(ga.ga_data, ga.ga_len);
 
     msg_start();
     msg_puts_attr(_("number changes  when               saved"),

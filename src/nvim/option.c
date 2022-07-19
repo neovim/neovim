@@ -6963,7 +6963,7 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
   }
 }
 
-int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)
+int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char ***file)
 {
   int num_normal = 0;  // Nr of matching non-term-code settings
   int match;
@@ -6985,7 +6985,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
           if (loop == 0) {
             num_normal++;
           } else {
-            (*file)[count++] = vim_strsave((char_u *)names[match]);
+            (*file)[count++] = xstrdup(names[match]);
           }
         }
       }
@@ -7012,7 +7012,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
         if (loop == 0) {
           num_normal++;
         } else {
-          (*file)[count++] = vim_strsave(str);
+          (*file)[count++] = (char *)vim_strsave(str);
         }
       }
     }
@@ -7023,18 +7023,18 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
       } else {
         return OK;
       }
-      *file = (char_u **)xmalloc((size_t)(*num_file) * sizeof(char_u *));
+      *file = xmalloc((size_t)(*num_file) * sizeof(char_u *));
     }
   }
   return OK;
 }
 
-void ExpandOldSetting(int *num_file, char_u ***file)
+void ExpandOldSetting(int *num_file, char ***file)
 {
   char_u *var = NULL;
 
   *num_file = 0;
-  *file = (char_u **)xmalloc(sizeof(char_u *));
+  *file = xmalloc(sizeof(char_u *));
 
   /*
    * For a terminal key code expand_option_idx is < 0.
@@ -7069,7 +7069,7 @@ void ExpandOldSetting(int *num_file, char_u ***file)
   }
 #endif
 
-  *file[0] = buf;
+  *file[0] = (char *)buf;
   *num_file = 1;
 }
 
@@ -7881,16 +7881,15 @@ static bool briopt_check(win_T *wp)
   bool bri_sbr = false;
   int bri_list = 0;
 
-  char_u *p = wp->w_p_briopt;
-  while (*p != NUL)
-  {
+  char *p = (char *)wp->w_p_briopt;
+  while (*p != NUL) {
     if (STRNCMP(p, "shift:", 6) == 0
         && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6]))) {
       p += 6;
-      bri_shift = getdigits_int((char **)&p, true, 0);
+      bri_shift = getdigits_int(&p, true, 0);
     } else if (STRNCMP(p, "min:", 4) == 0 && ascii_isdigit(p[4])) {
       p += 4;
-      bri_min = getdigits_int((char **)&p, true, 0);
+      bri_min = getdigits_int(&p, true, 0);
     } else if (STRNCMP(p, "sbr", 3) == 0) {
       p += 3;
       bri_sbr = true;

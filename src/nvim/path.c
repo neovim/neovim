@@ -1211,7 +1211,7 @@ static bool has_special_wildchar(char_u *p)
 ///                      If FAIL is returned, *num_file and *file are either
 ///                      unchanged or *num_file is set to 0 and *file is set
 ///                      to NULL or points to "".
-int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file, int flags)
+int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, int flags)
 {
   garray_T ga;
   char_u *p;
@@ -1240,8 +1240,8 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***fil
    * For `=expr` do use the internal function.
    */
   for (int i = 0; i < num_pat; i++) {
-    if (has_special_wildchar(pat[i])
-        && !(vim_backtick(pat[i]) && pat[i][1] == '=')) {
+    if (has_special_wildchar((char_u *)pat[i])
+        && !(vim_backtick((char_u *)pat[i]) && pat[i][1] == '=')) {
       return os_expand_wildcards(num_pat, pat, num_file, file, flags);
     }
   }
@@ -1256,13 +1256,13 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***fil
 
   for (int i = 0; i < num_pat; ++i) {
     add_pat = -1;
-    p = pat[i];
+    p = (char_u *)pat[i];
 
     if (vim_backtick(p)) {
       add_pat = expand_backtick(&ga, p, flags);
       if (add_pat == -1) {
         recursive = false;
-        FreeWild(ga.ga_len, (char_u **)ga.ga_data);
+        FreeWild(ga.ga_len, ga.ga_data);
         *num_file = 0;
         *file = NULL;
         return FAIL;
@@ -1272,7 +1272,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***fil
       if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
         p = expand_env_save_opt(p, true);
         if (p == NULL) {
-          p = pat[i];
+          p = (char_u *)pat[i];
         }
 #ifdef UNIX
         /*
@@ -1338,13 +1338,13 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***fil
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & EW_PATH)) {
       uniquefy_paths(&ga, p);
     }
-    if (p != pat[i]) {
+    if (p != (char_u *)pat[i]) {
       xfree(p);
     }
   }
 
   *num_file = ga.ga_len;
-  *file = (ga.ga_data != NULL) ? (char_u **)ga.ga_data : NULL;
+  *file = (ga.ga_data != NULL) ? ga.ga_data : NULL;
 
   recursive = false;
 
@@ -1352,7 +1352,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***fil
 }
 
 /// Free the list of files returned by expand_wildcards() or other expansion functions.
-void FreeWild(int count, char_u **files)
+void FreeWild(int count, char **files)
 {
   if (count <= 0 || files == NULL) {
     return;
@@ -2123,21 +2123,20 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 ///                        If FAIL is returned, *num_file and *file are either
 ///                        unchanged or *num_file is set to 0 and *file is set
 ///                        to NULL or points to "".
-int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file, int flags)
+int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
 {
   int ret = FAIL;
   char_u *eval_pat = NULL;
-  char_u *exp_pat = *pat;
+  char *exp_pat = (char *)(*pat);
   char *ignored_msg;
   size_t usedlen;
 
   if (*exp_pat == '%' || *exp_pat == '#' || *exp_pat == '<') {
-    ++emsg_off;
-    eval_pat = eval_vars(exp_pat, exp_pat, &usedlen,
-                         NULL, &ignored_msg, NULL);
-    --emsg_off;
+    emsg_off++;
+    eval_pat = eval_vars((char_u *)exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg, NULL);
+    emsg_off--;
     if (eval_pat != NULL) {
-      exp_pat = concat_str(eval_pat, exp_pat + usedlen);
+      exp_pat = (char *)concat_str(eval_pat, (char_u *)exp_pat + usedlen);
     }
   }
 
@@ -2167,7 +2166,7 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file, int flags
 ///                      If FAIL is returned, *num_file and *file are either
 ///                      unchanged or *num_file is set to 0 and *file is set to
 ///                      NULL or points to "".
-int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files, int flags)
+int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int flags)
 {
   int retval;
   int i, j;
@@ -2190,10 +2189,10 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
     // check all files in (*files)[]
     assert(*num_files == 0 || *files != NULL);
     for (i = 0; i < *num_files; i++) {
-      ffname = (char_u *)FullName_save((char *)(*files)[i], false);
+      ffname = (char_u *)FullName_save((*files)[i], false);
       assert((*files)[i] != NULL);
       assert(ffname != NULL);
-      if (match_file_list(p_wig, (*files)[i], ffname)) {
+      if (match_file_list(p_wig, (char_u *)(*files)[i], ffname)) {
         // remove this matching file from the list
         xfree((*files)[i]);
         for (j = i; j + 1 < *num_files; j++) {
@@ -2213,15 +2212,15 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
   if (*num_files > 1) {
     non_suf_match = 0;
     for (i = 0; i < *num_files; i++) {
-      if (!match_suffix((*files)[i])) {
+      if (!match_suffix((char_u *)(*files)[i])) {
         //
         // Move the name without matching suffix to the front of the list.
         //
-        p = (*files)[i];
+        p = (char_u *)(*files)[i];
         for (j = i; j > non_suf_match; j--) {
           (*files)[j] = (*files)[j - 1];
         }
-        (*files)[non_suf_match++] = p;
+        (*files)[non_suf_match++] = (char *)p;
       }
     }
   }

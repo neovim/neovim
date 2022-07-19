@@ -710,7 +710,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     fenc_alloced = false;
   } else {
     fenc_next = (char *)p_fencs;                // try items in 'fileencodings'
-    fenc = (char *)next_fenc((char_u **)&fenc_next, &fenc_alloced);
+    fenc = (char *)next_fenc(&fenc_next, &fenc_alloced);
   }
 
   /*
@@ -804,7 +804,7 @@ retry:
         xfree(fenc);
       }
       if (fenc_next != NULL) {
-        fenc = (char *)next_fenc((char_u **)&fenc_next, &fenc_alloced);
+        fenc = (char *)next_fenc(&fenc_next, &fenc_alloced);
       } else {
         fenc = "";
         fenc_alloced = false;
@@ -2060,7 +2060,7 @@ void set_forced_fenc(exarg_T *eap)
 /// NULL.
 /// When *pp is not set to NULL, the result is in allocated memory and "alloced"
 /// is set to true.
-static char_u *next_fenc(char_u **pp, bool *alloced)
+static char_u *next_fenc(char **pp, bool *alloced)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char_u *p;
@@ -2071,13 +2071,13 @@ static char_u *next_fenc(char_u **pp, bool *alloced)
     *pp = NULL;
     return (char_u *)"";
   }
-  p = (char_u *)vim_strchr((char *)(*pp), ',');
+  p = (char_u *)vim_strchr((*pp), ',');
   if (p == NULL) {
-    r = enc_canonize(*pp);
+    r = enc_canonize((char_u *)(*pp));
     *pp += STRLEN(*pp);
   } else {
-    r = vim_strnsave(*pp, (size_t)(p - *pp));
-    *pp = p + 1;
+    r = vim_strnsave((char_u *)(*pp), (size_t)(p - (char_u *)(*pp)));
+    *pp = (char *)p + 1;
     p = enc_canonize(r);
     xfree(r);
     r = p;
@@ -5401,7 +5401,7 @@ int readdir_core(garray_T *gap, const char *path, void *context, CheckItem check
   os_closedir(&dir);
 
   if (gap->ga_len > 0) {
-    sort_strings((char_u **)gap->ga_data, gap->ga_len);
+    sort_strings(gap->ga_data, gap->ga_len);
   }
 
   return OK;

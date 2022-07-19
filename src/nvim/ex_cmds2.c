@@ -857,7 +857,7 @@ static void get_arglist(garray_T *gap, char *str, int escaped)
 /// "fnames[fcountp]".  When "wig" is true, removes files matching 'wildignore'.
 ///
 /// @return  FAIL or OK.
-int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
+int get_arglist_exp(char_u *str, int *fcountp, char ***fnamesp, bool wig)
 {
   garray_T ga;
   int i;
@@ -865,10 +865,10 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
   get_arglist(&ga, (char *)str, true);
 
   if (wig) {
-    i = expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
+    i = expand_wildcards(ga.ga_len, ga.ga_data,
                          fcountp, fnamesp, EW_FILE|EW_NOTFOUND|EW_NOTWILD);
   } else {
-    i = gen_expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
+    i = gen_expand_wildcards(ga.ga_len, ga.ga_data,
                              fcountp, fnamesp, EW_FILE|EW_NOTFOUND|EW_NOTWILD);
   }
 
@@ -950,8 +950,8 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
     }
     ga_clear(&new_ga);
   } else {
-    int i = expand_wildcards(new_ga.ga_len, (char_u **)new_ga.ga_data,
-                             &exp_count, (char_u ***)&exp_files,
+    int i = expand_wildcards(new_ga.ga_len, new_ga.ga_data,
+                             &exp_count, &exp_files,
                              EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
     ga_clear(&new_ga);
     if (i == FAIL || exp_count == 0) {

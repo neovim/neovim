@@ -116,7 +116,7 @@ void ga_grow(garray_T *gap, int n)
 /// @param gap
 void ga_remove_duplicate_strings(garray_T *gap)
 {
-  char_u **fnames = gap->ga_data;
+  char **fnames = gap->ga_data;
 
   // sort the growing array, which puts duplicates next to each other
   sort_strings(fnames, gap->ga_len);

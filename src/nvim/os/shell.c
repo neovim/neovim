@@ -47,30 +47,30 @@ typedef struct {
 # include "os/shell.c.generated.h"
 #endif
 
-static void save_patterns(int num_pat, char_u **pat, int *num_file, char_u ***file)
+static void save_patterns(int num_pat, char **pat, int *num_file, char ***file)
 {
   *file = xmalloc((size_t)num_pat * sizeof(char_u *));
   for (int i = 0; i < num_pat; i++) {
-    char_u *s = vim_strsave(pat[i]);
+    char_u *s = vim_strsave((char_u *)pat[i]);
     // Be compatible with expand_filename(): halve the number of
     // backslashes.
     backslash_halve(s);
-    (*file)[i] = s;
+    (*file)[i] = (char *)s;
   }
   *num_file = num_pat;
 }
 
-static bool have_wildcard(int num, char_u **file)
+static bool have_wildcard(int num, char **file)
 {
   for (int i = 0; i < num; i++) {
-    if (path_has_wildcard(file[i])) {
+    if (path_has_wildcard((char_u *)file[i])) {
       return true;
     }
   }
   return false;
 }
 
-static bool have_dollars(int num, char_u **file)
+static bool have_dollars(int num, char **file)
 {
   for (int i = 0; i < num; i++) {
     if (vim_strchr((char *)file[i], '$') != NULL) {
@@ -98,7 +98,7 @@ static bool have_dollars(int num, char_u **file)
 ///                      copied into *file.
 ///
 /// @returns             OK for success or FAIL for error.
-int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file, int flags)
+int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, int flags)
   FUNC_ATTR_NONNULL_ARG(3)
   FUNC_ATTR_NONNULL_ARG(4)
 {
@@ -151,7 +151,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
   // Don't allow the use of backticks in secure.
   if (secure) {
     for (i = 0; i < num_pat; i++) {
-      if (vim_strchr((char *)pat[i], '`') != NULL
+      if (vim_strchr(pat[i], '`') != NULL
           && (check_secure())) {
         return FAIL;
       }
@@ -297,7 +297,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
         }
 
         // Copy one character.
-        *p++ = pat[i][j];
+        *p++ = (char_u)pat[i][j];
       }
       *p = NUL;
     }
@@ -471,7 +471,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
   // Isolate the individual file names.
   p = buffer;
   for (i = 0; i < *num_file; i++) {
-    (*file)[i] = p;
+    (*file)[i] = (char *)p;
     // Space or NL separates
     if (shell_style == STYLE_ECHO || shell_style == STYLE_BT
         || shell_style == STYLE_VIMGLOB) {
@@ -496,19 +496,19 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
   // Move the file names to allocated memory.
   for (j = 0, i = 0; i < *num_file; i++) {
     // Require the files to exist. Helps when using /bin/sh
-    if (!(flags & EW_NOTFOUND) && !os_path_exists((*file)[i])) {
+    if (!(flags & EW_NOTFOUND) && !os_path_exists((char_u *)(*file)[i])) {
       continue;
     }
 
     // check if this entry should be included
-    dir = (os_isdir((*file)[i]));
+    dir = (os_isdir((char_u *)(*file)[i]));
     if ((dir && !(flags & EW_DIR)) || (!dir && !(flags & EW_FILE))) {
       continue;
     }
 
     // Skip files that are not executable if we check for that.
     if (!dir && (flags & EW_EXEC)
-        && !os_can_exe((char *)(*file)[i], NULL, !(flags & EW_SHELLCMD))) {
+        && !os_can_exe((*file)[i], NULL, !(flags & EW_SHELLCMD))) {
       continue;
     }
 
@@ -517,7 +517,7 @@ int os_expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u ***file
     if (dir) {
       add_pathsep((char *)p);             // add '/' to a directory name
     }
-    (*file)[j++] = p;
+    (*file)[j++] = (char *)p;
   }
   xfree(buffer);
   *num_file = j;

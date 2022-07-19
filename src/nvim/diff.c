@@ -3066,8 +3066,8 @@ static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
   // change: {first}[,{last}]c{first}[,{last}]
   // append: {first}a{first}[,{last}]
   // delete: {first}[,{last}]d{first}
-  char_u *p = line;
-  linenr_T f1 = getdigits_int32((char **)&p, true, 0);
+  char *p = (char *)line;
+  linenr_T f1 = getdigits_int32(&p, true, 0);
   if (*p == ',') {
     p++;
     l1 = getdigits(&p, true, 0);
@@ -3077,7 +3077,7 @@ static int parse_diff_ed(char_u *line, diffhunk_T *hunk)
   if (*p != 'a' && *p != 'c' && *p != 'd') {
     return FAIL;        // invalid diff format
   }
-  int difftype = *p++;
+  int difftype = (uint8_t)(*p++);
   long f2 = getdigits(&p, true, 0);
   if (*p == ',') {
     p++;
@@ -3114,7 +3114,7 @@ static int parse_diff_unified(char_u *line, diffhunk_T *hunk)
 {
   // Parse unified diff hunk header:
   // @@ -oldline,oldcount +newline,newcount @@
-  char_u *p = line;
+  char *p = (char *)line;
   if (*p++ == '@' && *p++ == '@' && *p++ == ' ' && *p++ == '-') {
     long oldcount;
     long newline;

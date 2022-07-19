@@ -967,10 +967,10 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   int extra_len = 0;              // length of p_extra string
   int lead_len;                   // length of comment leader
   int comment_start = 0;          // start index of the comment leader
-  char_u *lead_flags;             // position in 'comments' for comment leader
-  char_u *leader = NULL;          // copy of comment leader
+  char *lead_flags;               // position in 'comments' for comment leader
+  char *leader = NULL;            // copy of comment leader
   char_u *allocated = NULL;       // allocated memory
-  char_u *p;
+  char *p;
   char_u saved_char = NUL;        // init for GCC
   pos_T *pos;
   bool do_si = may_do_si();
@@ -1008,9 +1008,9 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     // autoindent etc) a bit later.
     replace_push(NUL);      // Call twice because BS over NL expects it
     replace_push(NUL);
-    p = saved_line + curwin->w_cursor.col;
+    p = (char *)saved_line + curwin->w_cursor.col;
     while (*p != NUL) {
-      p += replace_push_mb(p);
+      p += replace_push_mb((char_u *)p);
     }
     saved_line[curwin->w_cursor.col] = NUL;
   }
@@ -1018,8 +1018,8 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   if ((State & MODE_INSERT) && (State & VREPLACE_FLAG) == 0) {
     p_extra = saved_line + curwin->w_cursor.col;
     if (do_si) {  // need first char after new line break
-      p = (char_u *)skipwhite((char *)p_extra);
-      first_char = *p;
+      p = skipwhite((char *)p_extra);
+      first_char = (unsigned char)(*p);
     }
     extra_len = (int)STRLEN(p_extra);
     saved_char = *p_extra;
@@ -1055,12 +1055,12 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     //   "if (condition) {"
     if (!trunc_line && do_si && *saved_line != NUL
         && (p_extra == NULL || first_char != '{')) {
-      char_u *ptr;
+      char *ptr;
 
       old_cursor = curwin->w_cursor;
-      ptr = saved_line;
+      ptr = (char *)saved_line;
       if (flags & OPENLINE_DO_COM) {
-        lead_len = get_leader_len((char *)ptr, NULL, false, true);
+        lead_len = get_leader_len(ptr, NULL, false, true);
       } else {
         lead_len = 0;
       }
@@ -1068,12 +1068,12 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // Skip preprocessor directives, unless they are recognised as comments.
         if (lead_len == 0 && ptr[0] == '#') {
           while (ptr[0] == '#' && curwin->w_cursor.lnum > 1) {
-            ptr = ml_get(--curwin->w_cursor.lnum);
+            ptr = (char *)ml_get(--curwin->w_cursor.lnum);
           }
           newindent = get_indent();
         }
         if (flags & OPENLINE_DO_COM) {
-          lead_len = get_leader_len((char *)ptr, NULL, false, true);
+          lead_len = get_leader_len(ptr, NULL, false, true);
         } else {
           lead_len = 0;
         }
@@ -1084,7 +1084,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           //      */
           //     #define IN_THE_WAY
           //     This should line up here;
-          p = (char_u *)skipwhite((char *)ptr);
+          p = skipwhite(ptr);
           if (p[0] == '/' && p[1] == '*') {
             p++;
           }
@@ -1108,7 +1108,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           while (p > ptr && ascii_iswhite(*p)) {
             p--;
           }
-          char_u last_char = *p;
+          char last_char = *p;
 
           // find the character just before the '{' or ';'
           if (last_char == '{' || last_char == ';') {
@@ -1130,7 +1130,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             if ((pos = findmatch(NULL, '(')) != NULL) {
               curwin->w_cursor.lnum = pos->lnum;
               newindent = get_indent();
-              ptr = get_cursor_line_ptr();
+              ptr = (char *)get_cursor_line_ptr();
             }
           }
           // If last character is '{' do indent, without
@@ -1142,7 +1142,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             // Don't do this if the previous line ended in ';' or
             // '}'.
           } else if (last_char != ';' && last_char != '}'
-                     && cin_is_cinword(ptr)) {
+                     && cin_is_cinword((char_u *)ptr)) {
             did_si = true;
           }
         }
@@ -1159,7 +1159,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             } else {
               was_backslashed = false;
             }
-            ptr = ml_get(++curwin->w_cursor.lnum);
+            ptr = (char *)ml_get(++curwin->w_cursor.lnum);
           }
           if (was_backslashed) {
             newindent = 0;  // Got to end of file
@@ -1167,7 +1167,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             newindent = get_indent();
           }
         }
-        p = (char_u *)skipwhite((char *)ptr);
+        p = skipwhite(ptr);
         if (*p == '}') {            // if line starts with '}': do indent
           did_si = true;
         } else {                    // can delete indent when '{' typed
@@ -1192,14 +1192,13 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // This may then be inserted in front of the new line.
   end_comment_pending = NUL;
   if (flags & OPENLINE_DO_COM) {
-    lead_len = get_leader_len((char *)saved_line, (char **)&lead_flags, dir == BACKWARD, true);
+    lead_len = get_leader_len((char *)saved_line, &lead_flags, dir == BACKWARD, true);
     if (lead_len == 0 && curbuf->b_p_cin && do_cindent && dir == FORWARD
         && (!has_format_option(FO_NO_OPEN_COMS) || (flags & OPENLINE_FORMAT))) {
       // Check for a line comment after code.
       comment_start = check_linecomment(saved_line);
       if (comment_start != MAXCOL) {
-        lead_len = get_leader_len((char *)saved_line + comment_start,
-                                  (char **)&lead_flags, false, true);
+        lead_len = get_leader_len((char *)saved_line + comment_start, &lead_flags, false, true);
         if (lead_len != 0) {
           lead_len += comment_start;
           if (did_do_comment != NULL) {
@@ -1212,11 +1211,11 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     lead_len = 0;
   }
   if (lead_len > 0) {
-    char_u *lead_repl = NULL;              // replaces comment leader
+    char *lead_repl = NULL;                 // replaces comment leader
     int lead_repl_len = 0;                  // length of *lead_repl
     char_u lead_middle[COM_MAX_LEN];        // middle-comment string
     char_u lead_end[COM_MAX_LEN];           // end-comment string
-    char_u *comment_end = NULL;            // where lead_end has been found
+    char_u *comment_end = NULL;             // where lead_end has been found
     int extra_space = false;                // append extra space
     int current_flag;
     int require_blank = false;              // requires blank after middle
@@ -1230,7 +1229,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         continue;
       }
       if (*p == COM_START || *p == COM_MIDDLE) {
-        current_flag = *p;
+        current_flag = (unsigned char)(*p);
         if (*p == COM_START) {
           // Doing "O" on a start of comment does not insert leader.
           if (dir == BACKWARD) {
@@ -1239,7 +1238,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
 
           // find start of middle part
-          (void)copy_option_part((char **)&p, (char *)lead_middle, COM_MAX_LEN, ",");
+          (void)copy_option_part(&p, (char *)lead_middle, COM_MAX_LEN, ",");
           require_blank = false;
         }
 
@@ -1250,7 +1249,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        (void)copy_option_part((char **)&p, (char *)lead_middle, COM_MAX_LEN, ",");
+        (void)copy_option_part(&p, (char *)lead_middle, COM_MAX_LEN, ",");
 
         while (*p && p[-1] != ':') {  // find end of end flags
           // Check whether we allow automatic ending of comments
@@ -1259,7 +1258,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        size_t n = copy_option_part((char **)&p, (char *)lead_end, COM_MAX_LEN, ",");
+        size_t n = copy_option_part(&p, (char *)lead_end, COM_MAX_LEN, ",");
 
         if (end_comment_pending == -1) {  // we can set it now
           end_comment_pending = lead_end[n - 1];
@@ -1268,9 +1267,9 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // If the end of the comment is in the same line, don't use
         // the comment leader.
         if (dir == FORWARD) {
-          for (p = saved_line + lead_len; *p; p++) {
+          for (p = (char *)saved_line + lead_len; *p; p++) {
             if (STRNCMP(p, lead_end, n) == 0) {
-              comment_end = p;
+              comment_end = (char_u *)p;
               lead_len = 0;
               break;
             }
@@ -1280,7 +1279,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // Doing "o" on a start of comment inserts the middle leader.
         if (lead_len > 0) {
           if (current_flag == COM_START) {
-            lead_repl = lead_middle;
+            lead_repl = (char *)lead_middle;
             lead_repl_len = (int)STRLEN(lead_middle);
           }
 
@@ -1310,10 +1309,10 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
         // Doing "O" on the end of a comment inserts the middle leader.
         // Find the string for the middle leader, searching backwards.
-        while (p > curbuf->b_p_com && *p != ',') {
+        while (p > (char *)curbuf->b_p_com && *p != ',') {
           p--;
         }
-        for (lead_repl = p; lead_repl > curbuf->b_p_com
+        for (lead_repl = p; lead_repl > (char *)curbuf->b_p_com
              && lead_repl[-1] != ':'; lead_repl--) {}
         lead_repl_len = (int)(p - lead_repl);
 
@@ -1322,7 +1321,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         extra_space = true;
 
         // Check whether we allow automatic ending of comments
-        for (p2 = p; *p2 && *p2 != ':'; p2++) {
+        for (p2 = (char_u *)p; *p2 && *p2 != ':'; p2++) {
           if (*p2 == COM_AUTO_END) {
             end_comment_pending = -1;  // means we want to set it
           }
@@ -1342,7 +1341,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         if (dir == BACKWARD) {
           lead_len = 0;
         } else {
-          lead_repl = (char_u *)"";
+          lead_repl = "";
           lead_repl_len = 0;
         }
         break;
@@ -1358,7 +1357,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
                   + 1;
       assert(bytes >= 0);
       leader = xmalloc((size_t)bytes);
-      allocated = leader;  // remember to free it later
+      allocated = (char_u *)leader;  // remember to free it later
 
       STRLCPY(leader, saved_line, lead_len + 1);
 
@@ -1376,9 +1375,9 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
         for (p = lead_flags; *p != NUL && *p != ':';) {
           if (*p == COM_RIGHT || *p == COM_LEFT) {
-            c = *p++;
+            c = (unsigned char)(*p++);
           } else if (ascii_isdigit(*p) || *p == '-') {
-            off = getdigits_int((char **)&p, true, 0);
+            off = getdigits_int(&p, true, 0);
           } else {
             p++;
           }
@@ -1392,15 +1391,14 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           // Compute the length of the replaced characters in
           // screen characters, not bytes.
           {
-            int repl_size = vim_strnsize(lead_repl,
-                                         lead_repl_len);
+            int repl_size = vim_strnsize((char_u *)lead_repl, lead_repl_len);
             int old_size = 0;
-            char_u *endp = p;
+            char *endp = p;
             int l;
 
             while (old_size < repl_size && p > leader) {
               MB_PTR_BACK(leader, p);
-              old_size += ptr2cells((char *)p);
+              old_size += ptr2cells(p);
             }
             l = lead_repl_len - (int)(endp - p);
             if (l != 0) {
@@ -1416,11 +1414,11 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
           // blank-out any other chars from the old leader.
           while (--p >= leader) {
-            int l = utf_head_off(leader, p);
+            int l = utf_head_off((char_u *)leader, (char_u *)p);
 
             if (l > 1) {
               p -= l;
-              if (ptr2cells((char *)p) > 1) {
+              if (ptr2cells(p) > 1) {
                 p[1] = ' ';
                 l--;
               }
@@ -1433,19 +1431,18 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             }
           }
         } else {  // left adjusted leader
-          p = (char_u *)skipwhite((char *)leader);
+          p = skipwhite(leader);
           // Compute the length of the replaced characters in
           // screen characters, not bytes. Move the part that is
           // not to be overwritten.
           {
-            int repl_size = vim_strnsize(lead_repl,
-                                         lead_repl_len);
+            int repl_size = vim_strnsize((char_u *)lead_repl, lead_repl_len);
             int i;
             int l;
 
             for (i = 0; i < lead_len && p[i] != NUL; i += l) {
-              l = utfc_ptr2len((char *)p + i);
-              if (vim_strnsize(p, i + l) > repl_size) {
+              l = utfc_ptr2len(p + i);
+              if (vim_strnsize((char_u *)p, i + l) > repl_size) {
                 break;
               }
             }
@@ -1467,10 +1464,10 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
                 lead_len--;
                 memmove(p, p + 1, (size_t)(leader + lead_len - p));
               } else {
-                int l = utfc_ptr2len((char *)p);
+                int l = utfc_ptr2len(p);
 
                 if (l > 1) {
-                  if (ptr2cells((char *)p) > 1) {
+                  if (ptr2cells(p) > 1) {
                     // Replace a double-wide char with
                     // two spaces
                     l--;
@@ -1488,7 +1485,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
         // Recompute the indent, it may have changed.
         if (curbuf->b_p_ai || do_si) {
-          newindent = get_indent_str_vtab(leader,
+          newindent = get_indent_str_vtab((char_u *)leader,
                                           curbuf->b_p_ts,
                                           curbuf->b_p_vts_array, false);
         }
@@ -1506,7 +1503,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         while (off > 0 && lead_len > 0
                && leader[lead_len - 1] == ' ') {
           // Don't do it when there is a tab before the space
-          if (vim_strchr(skipwhite((char *)leader), '\t') != NULL) {
+          if (vim_strchr(skipwhite(leader), '\t') != NULL) {
             break;
           }
           lead_len--;
@@ -1605,7 +1602,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       }
     }
     STRCAT(leader, p_extra);
-    p_extra = leader;
+    p_extra = (char_u *)leader;
     did_ai = true;          // So truncating blanks works with comments
     less_cols -= lead_len;
   } else {

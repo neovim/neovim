@@ -639,7 +639,7 @@ void ex_hardcopy(exarg_T *eap)
     char *errormsg = NULL;
 
     // Expand things like "%.ps".
-    if (expand_filename(eap, (char_u **)eap->cmdlinep, &errormsg) == FAIL) {
+    if (expand_filename(eap, eap->cmdlinep, &errormsg) == FAIL) {
       if (errormsg != NULL) {
         emsg(errormsg);
       }

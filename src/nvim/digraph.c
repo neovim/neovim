@@ -1662,28 +1662,28 @@ bool check_digraph_chars_valid(int char1, int char2)
 /// format: {c1}{c2} char {c1}{c2} char ...
 ///
 /// @param str
-void putdigraph(char_u *str)
+void putdigraph(char *str)
 {
   while (*str != NUL) {
-    str = (char_u *)skipwhite((char *)str);
+    str = skipwhite(str);
 
     if (*str == NUL) {
       return;
     }
-    char_u char1 = *str++;
-    char_u char2 = *str++;
+    uint8_t char1 = (uint8_t)(*str++);
+    uint8_t char2 = (uint8_t)(*str++);
 
     if (!check_digraph_chars_valid(char1, char2)) {
       return;
     }
 
-    str = (char_u *)skipwhite((char *)str);
+    str = skipwhite(str);
 
     if (!ascii_isdigit(*str)) {
       emsg(_(e_number_exp));
       return;
     }
-    int n = getdigits_int((char **)&str, true, 0);
+    int n = getdigits_int(&str, true, 0);
 
     registerdigraph(char1, char2, n);
   }

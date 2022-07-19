@@ -1862,7 +1862,7 @@ static long compress_added = 500000;    // word count
 // Sets "sps_flags".
 int spell_check_msm(void)
 {
-  char_u *p = p_msm;
+  char *p = (char *)p_msm;
   long start = 0;
   long incr = 0;
   long added = 0;
@@ -4879,7 +4879,7 @@ static int put_node(FILE *fd, wordnode_T *node, int idx, int regionmask, bool pr
 void ex_mkspell(exarg_T *eap)
 {
   int fcount;
-  char_u **fnames;
+  char **fnames;
   char_u *arg = (char_u *)eap->arg;
   bool ascii = false;
 
@@ -5270,11 +5270,11 @@ theend:
 /// @param ascii  -ascii argument given
 /// @param over_write  overwrite existing output file
 /// @param added_word  invoked through "zg"
-static void mkspell(int fcount, char_u **fnames, bool ascii, bool over_write, bool added_word)
+static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool added_word)
 {
   char_u *fname = NULL;
   char_u *wfname;
-  char_u **innames;
+  char **innames;
   int incount;
   afffile_T *(afile[MAXREGIONS]);
   int i;
@@ -5411,7 +5411,7 @@ static void mkspell(int fcount, char_u **fnames, bool ascii, bool over_write, bo
       } else {
         // No .aff file, try reading the file as a word list.  Store
         // the words in the trees.
-        if (spell_read_wordfile(&spin, innames[i]) == FAIL) {
+        if (spell_read_wordfile(&spin, (char_u *)innames[i]) == FAIL) {
           error = true;
         }
       }
@@ -5522,7 +5522,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   FILE *fd = NULL;
   buf_T *buf = NULL;
   bool new_spf = false;
-  char_u *fname;
+  char *fname;
   char_u *fnamebuf = NULL;
   char_u line[MAXWLEN * 2];
   long fpos, fpos_next = 0;
@@ -5541,7 +5541,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
         return;
       }
     }
-    fname = int_wordlist;
+    fname = (char *)int_wordlist;
   } else {
     // If 'spellfile' isn't set figure out a good default value.
     if (*curwin->w_s->b_p_spf == NUL) {
@@ -5578,13 +5578,13 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       return;
     }
 
-    fname = fnamebuf;
+    fname = (char *)fnamebuf;
   }
 
   if (what == SPELL_ADD_BAD || undo) {
     // When the word appears as good word we need to remove that one,
     // since its flags sort before the one with WF_BANNED.
-    fd = os_fopen((char *)fname, "r");
+    fd = os_fopen(fname, "r");
     if (fd != NULL) {
       while (!vim_fgets(line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
@@ -5598,14 +5598,14 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
           // the start of the line.  Mixing reading and writing
           // doesn't work for all systems, close the file first.
           fclose(fd);
-          fd = os_fopen((char *)fname, "r+");
+          fd = os_fopen(fname, "r+");
           if (fd == NULL) {
             break;
           }
           if (fseek(fd, fpos, SEEK_SET) == 0) {
             fputc('#', fd);
             if (undo) {
-              home_replace(NULL, (char *)fname, (char *)NameBuff, MAXPATHL, true);
+              home_replace(NULL, fname, (char *)NameBuff, MAXPATHL, true);
               smsg(_("Word '%.*s' removed from %s"), len, word, NameBuff);
             }
           }
@@ -5622,7 +5622,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   }
 
   if (!undo) {
-    fd = os_fopen((char *)fname, "a");
+    fd = os_fopen(fname, "a");
     if (fd == NULL && new_spf) {
       char_u *p;
 
@@ -5630,16 +5630,16 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       // file.  We may need to create the "spell" directory first.  We
       // already checked the runtime directory is writable in
       // init_spellfile().
-      if (!dir_of_file_exists(fname)
-          && (p = (char_u *)path_tail_with_sep((char *)fname)) != fname) {
+      if (!dir_of_file_exists((char_u *)fname)
+          && (p = (char_u *)path_tail_with_sep(fname)) != (char_u *)fname) {
         int c = *p;
 
         // The directory doesn't exist.  Try creating it and opening
         // the file again.
         *p = NUL;
-        os_mkdir((char *)fname, 0755);
+        os_mkdir(fname, 0755);
         *p = (char_u)c;
-        fd = os_fopen((char *)fname, "a");
+        fd = os_fopen(fname, "a");
       }
     }
 
@@ -5655,7 +5655,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       }
       fclose(fd);
 
-      home_replace(NULL, (char *)fname, (char *)NameBuff, MAXPATHL, true);
+      home_replace(NULL, fname, (char *)NameBuff, MAXPATHL, true);
       smsg(_("Word '%.*s' added to %s"), len, word, NameBuff);
     }
   }
