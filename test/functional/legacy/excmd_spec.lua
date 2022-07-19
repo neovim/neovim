@@ -407,12 +407,12 @@ describe(':confirm command dialog', function()
 
     -- Try to write with read-only file permissions.
     funcs.setfperm('Xconfirm_write_ro', 'r--r--r--')
-    feed(':set noro | undo | confirm w\n')
+    feed(':set noro | silent undo | confirm w\n')
     screen:expect([[
       foobar                                                                     |
       {0:~                                                                          }|
       {1:                                                                           }|
-      1 change; before #1  0 seconds ago                                         |
+      :set noro | silent undo | confirm w                                        |
       {3:File permissions of "Xconfirm_write_ro" are read-only.}                     |
       {3:It may still be possible to write it.}                                      |
       {3:Do you wish to try?}                                                        |
@@ -423,7 +423,7 @@ describe(':confirm command dialog', function()
       screen:expect([[
         foobar                                                                     |
         {1:                                                                           }|
-        1 change; before #1  0 seconds ago                                         |
+        :set noro | silent undo | confirm w                                        |
         {3:File permissions of "Xconfirm_write_ro" are read-only.}                     |
         {3:It may still be possible to write it.}                                      |
         {3:Do you wish to try?}                                                        |
@@ -434,7 +434,7 @@ describe(':confirm command dialog', function()
       screen:expect([[
         foobar                                                                     |
         {1:                                                                           }|
-        1 change; before #1  0 seconds ago                                         |
+        :set noro | silent undo | confirm w                                        |
         {3:File permissions of "Xconfirm_write_ro" are read-only.}                     |
         {3:It may still be possible to write it.}                                      |
         {3:Do you wish to try?}                                                        |
