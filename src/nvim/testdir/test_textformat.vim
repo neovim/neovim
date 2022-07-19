@@ -1260,6 +1260,41 @@ func Test_comment_nested()
   %bw!
 endfunc
 
+" Test for a space character in 'comments' setting
+func Test_comment_space()
+  new
+  setlocal comments=b:\ > fo+=ro
+  exe "normal i> B\nD\<C-C>ggOA\<C-C>joC"
+  exe "normal Go > F\nH\<C-C>kOE\<C-C>joG"
+  let expected =<< trim END
+    A
+    > B
+    C
+    D
+     > E
+     > F
+     > G
+     > H
+  END
+  call assert_equal(expected, getline(1, '$'))
+  %bw!
+endfunc
+
+" Test for the 'O' flag in 'comments'
+func Test_comment_O()
+  new
+  setlocal comments=Ob:* fo+=ro
+  exe "normal i* B\nD\<C-C>kOA\<C-C>joC"
+  let expected =<< trim END
+    A
+    * B
+    * C
+    * D
+  END
+  call assert_equal(expected, getline(1, '$'))
+  %bw!
+endfunc
+
 " Test for 'a' and 'w' flags in 'formatoptions'
 func Test_fo_a_w()
   new
@@ -1296,6 +1331,25 @@ func Test_fo_a_w()
 
   set tw=0
   set fo&
+  %bw!
+endfunc
+
+" Test for 'j' flag in 'formatoptions'
+func Test_fo_j()
+  new
+  setlocal fo+=j comments=://
+  call setline(1, ['i++; // comment1', '           // comment2'])
+  normal J
+  call assert_equal('i++; // comment1 comment2', getline(1))
+  setlocal fo-=j
+  call setline(1, ['i++; // comment1', '           // comment2'])
+  normal J
+  call assert_equal('i++; // comment1 // comment2', getline(1))
+  " Test with nested comments
+  setlocal fo+=j comments=n:>,n:)
+  call setline(1, ['i++; > ) > ) comment1', '           > ) comment2'])
+  normal J
+  call assert_equal('i++; > ) > ) comment1 comment2', getline(1))
   %bw!
 endfunc
 

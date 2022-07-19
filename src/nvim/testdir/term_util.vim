@@ -9,3 +9,5 @@ func CanRunVimInTerminal()
   " Nvim: always false, we use Lua screen-tests instead.
   return 0
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

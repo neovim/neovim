@@ -84,6 +84,15 @@ func Test_expandcmd()
   let $FOO="blue\tsky"
   call setline(1, "$FOO")
   call assert_equal("grep pat blue\tsky", expandcmd('grep pat <cfile>'))
+
+  " Test for expression expansion `=
+  let $FOO= "blue"
+  call assert_equal("blue sky", expandcmd("`=$FOO .. ' sky'`"))
+
+  " Test for env variable with spaces
+  let $FOO= "foo bar baz"
+  call assert_equal("e foo bar baz", expandcmd("e $FOO"))
+
   unlet $FOO
   close!
 endfunc

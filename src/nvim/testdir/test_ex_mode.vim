@@ -155,9 +155,7 @@ endfunc
 func Test_Ex_echo_backslash()
   throw 'Skipped: Nvim only supports Vim Ex mode'
   " This test works only when the language is English
-  if v:lang != "C" && v:lang !~ '^[Ee]n'
-    return
-  endif
+  CheckEnglish
   let bsl = '\\\\'
   let bsl2 = '\\\'
   call assert_fails('call feedkeys("Qecho " .. bsl .. "\nvisual\n", "xt")',
