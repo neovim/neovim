@@ -183,10 +183,10 @@ int ns_get_hl(NS ns_id, int hl_id, bool link, bool nodefault)
   bool valid_cache = it.version >= p->hl_valid;
 
   if (!valid_cache && p->hl_def != LUA_NOREF && !recursive) {
-    FIXED_TEMP_ARRAY(args, 3);
-    args.items[0] = INTEGER_OBJ((Integer)ns_id);
-    args.items[1] = STRING_OBJ(cstr_to_string((char *)syn_id2name(hl_id)));
-    args.items[2] = BOOLEAN_OBJ(link);
+    MAXSIZE_TEMP_ARRAY(args, 3);
+    ADD_C(args, INTEGER_OBJ((Integer)ns_id));
+    ADD_C(args, STRING_OBJ(cstr_to_string((char *)syn_id2name(hl_id))));
+    ADD_C(args, BOOLEAN_OBJ(link));
     // TODO(bfredl): preload the "global" attr dict?
 
     Error err = ERROR_INIT;

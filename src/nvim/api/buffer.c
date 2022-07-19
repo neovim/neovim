@@ -538,9 +538,9 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
                        Integer end_row, Integer end_col, ArrayOf(String) replacement, Error *err)
   FUNC_API_SINCE(7)
 {
-  FIXED_TEMP_ARRAY(scratch, 1);
+  MAXSIZE_TEMP_ARRAY(scratch, 1);
   if (replacement.size == 0) {
-    scratch.items[0] = STRING_OBJ(STATIC_CSTR_AS_STRING(""));
+    ADD_C(scratch, STRING_OBJ(STATIC_CSTR_AS_STRING("")));
     replacement = scratch;
   }
 

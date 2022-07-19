@@ -74,12 +74,6 @@
 #define ADD_C(array, item) \
   kv_push_c(array, item)
 
-#define FIXED_TEMP_ARRAY(name, fixsize) \
-  Array name = ARRAY_DICT_INIT; \
-  Object name##__items[fixsize]; \
-  name.size = fixsize; \
-  name.items = name##__items; \
-
 #define MAXSIZE_TEMP_ARRAY(name, maxsize) \
   Array name = ARRAY_DICT_INIT; \
   Object name##__items[maxsize]; \

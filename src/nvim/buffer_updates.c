@@ -316,23 +316,23 @@ void buf_updates_send_splice(buf_T *buf, int start_row, colnr_T start_col, bcoun
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
     if (cb.on_bytes != LUA_NOREF && (cb.preview || !cmdpreview)) {
-      FIXED_TEMP_ARRAY(args, 11);
+      MAXSIZE_TEMP_ARRAY(args, 11);
 
       // the first argument is always the buffer handle
-      args.items[0] = BUFFER_OBJ(buf->handle);
+      ADD_C(args, BUFFER_OBJ(buf->handle));
 
       // next argument is b:changedtick
-      args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+      ADD_C(args, INTEGER_OBJ(buf_get_changedtick(buf)));
 
-      args.items[2] = INTEGER_OBJ(start_row);
-      args.items[3] = INTEGER_OBJ(start_col);
-      args.items[4] = INTEGER_OBJ(start_byte);
-      args.items[5] = INTEGER_OBJ(old_row);
-      args.items[6] = INTEGER_OBJ(old_col);
-      args.items[7] = INTEGER_OBJ(old_byte);
-      args.items[8] = INTEGER_OBJ(new_row);
-      args.items[9] = INTEGER_OBJ(new_col);
-      args.items[10] = INTEGER_OBJ(new_byte);
+      ADD_C(args, INTEGER_OBJ(start_row));
+      ADD_C(args, INTEGER_OBJ(start_col));
+      ADD_C(args, INTEGER_OBJ(start_byte));
+      ADD_C(args, INTEGER_OBJ(old_row));
+      ADD_C(args, INTEGER_OBJ(old_col));
+      ADD_C(args, INTEGER_OBJ(old_byte));
+      ADD_C(args, INTEGER_OBJ(new_row));
+      ADD_C(args, INTEGER_OBJ(new_col));
+      ADD_C(args, INTEGER_OBJ(new_byte));
 
       textlock++;
       Object res = nlua_call_ref(cb.on_bytes, "bytes", args, true, NULL);
@@ -361,13 +361,13 @@ void buf_updates_changedtick(buf_T *buf)
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
     if (cb.on_changedtick != LUA_NOREF) {
-      FIXED_TEMP_ARRAY(args, 2);
+      MAXSIZE_TEMP_ARRAY(args, 2);
 
       // the first argument is always the buffer handle
-      args.items[0] = BUFFER_OBJ(buf->handle);
+      ADD_C(args, BUFFER_OBJ(buf->handle));
 
       // next argument is b:changedtick
-      args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+      ADD_C(args, INTEGER_OBJ(buf_get_changedtick(buf)));
 
       textlock++;
       Object res = nlua_call_ref(cb.on_changedtick, "changedtick",
