@@ -4,11 +4,11 @@ local clear = helpers.clear
 local command = helpers.command
 local exec = helpers.exec
 local exec_lua = helpers.exec_lua
+local expect_exit = helpers.expect_exit
 local feed = helpers.feed
 local funcs = helpers.funcs
 local iswin = helpers.iswin
 local meths = helpers.meths
-local poke_eventloop = helpers.poke_eventloop
 local read_file = helpers.read_file
 local source = helpers.source
 local eq = helpers.eq
@@ -94,8 +94,7 @@ describe(':confirm command dialog', function()
       {3:Save changes to "Xbar"?}                                                    |
       {3:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
-    feed('A')
-    poke_eventloop()
+    expect_exit(100, feed, 'A')
 
     eq('foo2\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
@@ -133,8 +132,7 @@ describe(':confirm command dialog', function()
       {3:Save changes to "Xbar"?}                                                    |
       {3:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
-    feed('D')
-    poke_eventloop()
+    expect_exit(100, feed, 'D')
 
     eq('foo2\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
@@ -195,8 +193,7 @@ describe(':confirm command dialog', function()
       {3:Save changes to "Xfoo"?}                                                    |
       {3:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
-    feed('Y')
-    poke_eventloop()
+    expect_exit(100, feed, 'Y')
 
     eq('foo4\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))

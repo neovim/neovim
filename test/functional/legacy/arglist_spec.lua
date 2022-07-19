@@ -4,6 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, command, eq = helpers.clear, helpers.command, helpers.eq
 local eval, exc_exec, neq = helpers.eval, helpers.exc_exec, helpers.neq
+local expect_exit = helpers.expect_exit
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 
@@ -275,6 +276,6 @@ describe('argument list commands', function()
       2 more files to edit.  Quit anyway?                         |
       [Y]es, (N)o: ^                                               |
     ]])
-    feed('Y')
+    expect_exit(100, feed, 'Y')
   end)
 end)
