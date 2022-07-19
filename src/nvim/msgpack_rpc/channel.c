@@ -239,7 +239,14 @@ static void parse_msgpack(Channel *channel)
 {
   Unpacker *p = channel->rpc.unpacker;
   while (unpacker_advance(p)) {
-    if (p->type == kMessageTypeResponse) {
+    if (p->type == kMessageTypeRedrawEvent) {
+      if (p->grid_line_event) {
+        ui_client_event_raw_line(p->grid_line_event);
+      } else if (p->ui_handler.fn != NULL && p->result.type == kObjectTypeArray) {
+        p->ui_handler.fn(p->result.data.array);
+        arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+      }
+    } else if (p->type == kMessageTypeResponse) {
       ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
       if (p->request_id != frame->request_id) {
         char buf[256];

@@ -86,6 +86,12 @@
   name.capacity = maxsize; \
   name.items = name##__items; \
 
+#define MAXSIZE_TEMP_DICT(name, maxsize) \
+  Dictionary name = ARRAY_DICT_INIT; \
+  KeyValuePair name##__items[maxsize]; \
+  name.capacity = maxsize; \
+  name.items = name##__items; \
+
 #define cbuf_as_string(d, s) ((String) { .data = d, .size = s })
 
 #define STATIC_CSTR_AS_STRING(s) ((String) { .data = s, .size = sizeof(s) - 1 })

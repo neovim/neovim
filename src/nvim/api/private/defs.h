@@ -36,6 +36,7 @@ typedef enum {
   kMessageTypeRequest = 0,
   kMessageTypeResponse = 1,
   kMessageTypeNotification = 2,
+  kMessageTypeRedrawEvent = 3,
 } MessageType;
 
 /// Mask for all internal calls

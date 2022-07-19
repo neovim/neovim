@@ -1409,7 +1409,7 @@ Dictionary get_global_hl_defs(void)
     Dictionary attrs = ARRAY_DICT_INIT;
     HlGroup *h = &hl_table[i - 1];
     if (h->sg_attr > 0) {
-      attrs = hlattrs2dict(syn_attr2entry(h->sg_attr), true);
+      attrs = hlattrs2dict(NULL, syn_attr2entry(h->sg_attr), true);
     } else if (h->sg_link > 0) {
       const char *link = (const char *)hl_table[h->sg_link - 1].sg_name;
       PUT(attrs, "link", STRING_OBJ(cstr_to_string(link)));

@@ -348,7 +348,8 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
   if (ui_count == MAX_UI_COUNT) {
     abort();
   }
-  if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]) {
+  if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]
+      && !ui_client_channel_id) {
     ui_comp_attach(ui);
   }
 
@@ -502,6 +503,9 @@ handle_T ui_cursor_grid(void)
 
 void ui_flush(void)
 {
+  if (!ui_active()) {
+    return;
+  }
   cmdline_ui_flush();
   win_ui_flush();
   msg_ext_ui_flush();

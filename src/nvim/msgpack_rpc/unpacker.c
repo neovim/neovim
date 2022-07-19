@@ -6,6 +6,7 @@
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/unpacker.h"
+#include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/unpacker.c.generated.h"
@@ -280,10 +281,20 @@ error:
 // is relatively small, just ~10 bytes + the method name. Thus we can simply refuse
 // to advance the stream beyond the header until it can be parsed in its entirety.
 //
-// Of course, later on, we want to specialize state 2 into sub-states depending
+// Later on, we want to specialize state 2 into more sub-states depending
 // on the specific method. "nvim_exec_lua" should just decode direct into lua
-// objects, and "redraw/grid_line" should use a hand-rolled decoder to avoid
-// a blizzard of small objects for each screen cell.
+// objects. For the moment "redraw/grid_line" uses a hand-rolled decoder,
+// to avoid a blizzard of small objects for each screen cell.
+//
+// <0>[2, "redraw", <10>[{11}["method", <12>[args], <12>[args], ...], <11>[...], ...]]
+//
+// Where [args] gets unpacked as an Array. Note: first {11} is not saved as a state.
+//
+// When method is "grid_line", we furthermore decode a cell at a time like:
+//
+// <0>[2, "redraw", <10>[{11}["grid_line", <13>[g, r, c, [<14>[cell], <14>[cell], ...]], ...], <11>[...], ...]]
+//
+// where [cell] is [char, repeat, attr], where 'repeat' and 'attr' is optional
 
 bool unpacker_advance(Unpacker *p)
 {
@@ -292,8 +303,27 @@ bool unpacker_advance(Unpacker *p)
     if (!unpacker_parse_header(p)) {
       return false;
     }
-    p->state = p->type == kMessageTypeResponse ? 1 : 2;
-    arena_start(&p->arena, &p->reuse_blk);
+    if (p->type == kMessageTypeNotification && p->handler.fn == handle_ui_client_redraw) {
+      p->type = kMessageTypeRedrawEvent;
+      p->state = 10;
+    } else {
+      p->state = p->type == kMessageTypeResponse ? 1 : 2;
+      arena_start(&p->arena, &p->reuse_blk);
+    }
+  }
+
+  if (p->state >= 10 && p->state != 12) {
+    if (!unpacker_parse_redraw(p)) {
+      return false;
+    }
+
+    if (p->state == 14) {
+      // grid_line event already unpacked
+      goto done;
+    } else {
+      // unpack other ui events using mpack_parse()
+      arena_start(&p->arena, &p->reuse_blk);
+    }
   }
 
   int result;
@@ -310,13 +340,173 @@ rerun:
     return false;
   }
 
-  if (p->state == 1) {
+done:
+  switch (p->state) {
+  case 1:
     p->error = p->result;
     p->state = 2;
     goto rerun;
-  } else {
-    assert(p->state == 2);
+  case 2:
     p->state = 0;
+    return true;
+  case 12:
+  case 14:
+    p->ncalls--;
+    if (p->ncalls > 0) {
+      p->state = (p->state == 14) ? 13 : 12;
+    } else if (p->nevents > 0) {
+      p->state = 11;
+    } else {
+      p->state = 0;
+    }
+    return true;
+  default:
+    abort();
   }
-  return true;
+}
+
+bool unpacker_parse_redraw(Unpacker *p)
+{
+  mpack_token_t tok;
+  int result;
+
+  const char *data = p->read_ptr;
+  size_t size = p->read_size;
+  GridLineEvent *g = p->grid_line_event;
+
+#define NEXT_TYPE(tok, typ) \
+  result = mpack_rtoken(&data, &size, &tok); \
+  if (result == MPACK_EOF) { \
+    return false; \
+  } else if (result || (tok.type != typ \
+                        && !(typ == MPACK_TOKEN_STR && tok.type == MPACK_TOKEN_BIN) \
+                        && !(typ == MPACK_TOKEN_SINT && tok.type == MPACK_TOKEN_UINT))) { \
+    p->state = -1; \
+    return false; \
+  }
+
+redo:
+  switch (p->state) {
+  case 10:
+    NEXT_TYPE(tok, MPACK_TOKEN_ARRAY);
+    p->nevents = (int)tok.length;
+    FALLTHROUGH;
+
+  case 11:
+    NEXT_TYPE(tok, MPACK_TOKEN_ARRAY);
+    p->ncalls = (int)tok.length;
+
+    if (p->ncalls-- == 0) {
+      p->state = -1;
+      return false;
+    }
+
+    NEXT_TYPE(tok, MPACK_TOKEN_STR);
+    if (tok.length > size) {
+      return false;
+    }
+
+    p->ui_handler = ui_client_get_redraw_handler(data, tok.length, NULL);
+    data += tok.length;
+    size -= tok.length;
+
+    p->nevents--;
+    p->read_ptr = data;
+    p->read_size = size;
+    if (p->ui_handler.fn != ui_client_event_grid_line) {
+      p->state = 12;
+      if (p->grid_line_event) {
+        arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+        p->grid_line_event = NULL;
+      }
+      return true;
+    } else {
+      p->state = 13;
+      arena_start(&p->arena, &p->reuse_blk);
+      p->grid_line_event = arena_alloc(&p->arena, sizeof *p->grid_line_event, true);
+      g = p->grid_line_event;
+      FALLTHROUGH;
+    }
+
+  case 13:
+    NEXT_TYPE(tok, MPACK_TOKEN_ARRAY);
+    int eventarrsize = (int)tok.length;
+    if (eventarrsize != 4) {
+      p->state = -1;
+      return false;
+    }
+
+    for (int i = 0; i < 3; i++) {
+      NEXT_TYPE(tok, MPACK_TOKEN_UINT);
+      g->args[i] = (int)tok.data.value.lo;
+    }
+
+    NEXT_TYPE(tok, MPACK_TOKEN_ARRAY);
+    g->ncells = (int)tok.length;
+    g->icell = 0;
+    g->coloff = 0;
+    g->cur_attr = -1;
+
+    p->read_ptr = data;
+    p->read_size = size;
+    p->state = 14;
+    FALLTHROUGH;
+
+  case 14:
+    assert(g->icell < g->ncells);
+
+    NEXT_TYPE(tok, MPACK_TOKEN_ARRAY);
+    int cellarrsize = (int)tok.length;
+    if (cellarrsize < 1 || cellarrsize > 3) {
+      p->state = -1;
+      return false;
+    }
+
+    NEXT_TYPE(tok, MPACK_TOKEN_STR);
+    if (tok.length > size) {
+      return false;
+    }
+
+    const char *cellbuf = data;
+    size_t cellsize = tok.length;
+    data += cellsize;
+    size -= cellsize;
+
+    if (cellarrsize >= 2) {
+      NEXT_TYPE(tok, MPACK_TOKEN_SINT);
+      g->cur_attr = (int)tok.data.value.lo;
+    }
+
+    int repeat = 1;
+    if (cellarrsize >= 3) {
+      NEXT_TYPE(tok, MPACK_TOKEN_UINT);
+      repeat = (int)tok.data.value.lo;
+    }
+
+    g->clear_width = 0;
+    if (g->icell == g->ncells - 1 && cellsize == 1 && cellbuf[0] == ' ' && repeat > 1) {
+      g->clear_width = repeat;
+    } else {
+      for (int r = 0; r < repeat; r++) {
+        if (g->coloff >= (int)grid_line_buf_size) {
+          p->state = -1;
+          return false;
+        }
+        memcpy(grid_line_buf_char[g->coloff], cellbuf, cellsize);
+        grid_line_buf_char[g->coloff][cellsize] = NUL;
+        grid_line_buf_attr[g->coloff++] = g->cur_attr;
+      }
+    }
+
+    g->icell++;
+    p->read_ptr = data;
+    p->read_size = size;
+    if (g->icell == g->ncells) {
+      return true;
+    }
+    goto redo;
+
+  default:
+    abort();
+  }
 }

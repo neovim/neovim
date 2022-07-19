@@ -949,7 +949,8 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
 
         func_doc = "\n".join(split_lines)
 
-        if name.startswith(CONFIG[target]['fn_name_prefix']):
+        if (name.startswith(CONFIG[target]['fn_name_prefix'])
+           and name != "nvim_error_event"):
             fns_txt[name] = func_doc
 
     return ('\n\n'.join(list(fns_txt.values())),

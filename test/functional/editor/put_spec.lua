@@ -879,9 +879,13 @@ describe('put command', function()
 	ine of words 2]], curbuf_contents())
     end)
 
-    local function bell_test(actions, should_ring)
-      local screen = Screen.new()
+    local screen
+    setup(function()
+      screen = Screen.new()
       screen:attach()
+    end)
+
+    local function bell_test(actions, should_ring)
       if should_ring then
         -- check bell is not set by nvim before the action
         screen:sleep(50)
@@ -899,7 +903,6 @@ describe('put command', function()
           end
         end
       end, unchanged=(not should_ring)}
-      screen:detach()
     end
 
     it('should not ring the bell with gp at end of line', function()
