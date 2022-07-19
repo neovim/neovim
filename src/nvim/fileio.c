@@ -5296,7 +5296,6 @@ static void vim_mktempdir(void)
   char user[40] = { 0 };
 
   (void)os_get_username(user, sizeof(user));
-
   // Usernames may contain slashes! #19240
   memchrsub(user, '/', '_', sizeof(user));
   memchrsub(user, '\\', '_', sizeof(user));
