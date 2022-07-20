@@ -1360,7 +1360,6 @@ func Test_win_move_separator()
 endfunc
 
 func Test_win_move_statusline()
-  redraw  " This test fails in Nvim without a redraw to clear messages.
   edit a
   leftabove split b
   let h = winheight(0)
