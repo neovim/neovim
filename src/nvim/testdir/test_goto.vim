@@ -122,6 +122,24 @@ func Test_gd()
   call XTest_goto_decl('gd', lines, 3, 14)
 endfunc
 
+" Using gd to jump to a declaration in a fold
+func Test_gd_with_fold()
+  new
+  let lines =<< trim END
+    #define ONE 1
+    #define TWO 2
+    #define THREE 3
+
+    TWO
+  END
+  call setline(1, lines)
+  1,3fold
+  call feedkeys('Ggd', 'xt')
+  call assert_equal(2, line('.'))
+  call assert_equal(-1, foldclosedend(2))
+  bw!
+endfunc
+
 func Test_gd_not_local()
   let lines =<< trim [CODE]
     int func1(void)

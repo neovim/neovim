@@ -492,6 +492,18 @@ func Test_normal11_showcmd()
   call assert_equal(3, line('$'))
   exe "norm! 0d3\<del>2l"
   call assert_equal('obar2foobar3', getline('.'))
+  " test for the visual block size displayed in the status line
+  call setline(1, ['aaaaa', 'bbbbb', 'ccccc'])
+  call feedkeys("ggl\<C-V>lljj", 'xt')
+  redraw!
+  call assert_match('3x3$', Screenline(&lines))
+  call feedkeys("\<C-V>", 'xt')
+  " test for visually selecting a multi-byte character
+  call setline(1, ["\U2206"])
+  call feedkeys("ggv", 'xt')
+  redraw!
+  call assert_match('1-3$', Screenline(&lines))
+  call feedkeys("v", 'xt')
   bw!
 endfunc
 
@@ -897,6 +909,18 @@ func Test_vert_scroll_cmds()
   exe "normal \<C-Y>\<C-Y>"
   call assert_equal(h + 1, line('w$'))
 
+  " Test for CTRL-Y from the first line and CTRL-E from the last line
+  %d
+  set scrolloff=2
+  call setline(1, range(1, 4))
+  exe "normal gg\<C-Y>"
+  call assert_equal(1, line('w0'))
+  call assert_equal(1, line('.'))
+  exe "normal G4\<C-E>\<C-E>"
+  call assert_equal(4, line('w$'))
+  call assert_equal(4, line('.'))
+  set scrolloff&
+
   " Using <PageUp> and <PageDown> in an empty buffer should beep
   %d
   call assert_beeps('exe "normal \<PageUp>"')
@@ -944,6 +968,18 @@ func Test_vert_scroll_cmds()
   normal zt
   exe "normal \<C-D>"
   call assert_equal(50, line('w0'))
+
+  " Test for <S-CR>. Page down.
+  %d
+  call setline(1, range(1, 100))
+  call feedkeys("\<S-CR>", 'xt')
+  call assert_equal(14, line('w0'))
+  call assert_equal(28, line('w$'))
+
+  " Test for <S-->. Page up.
+  call feedkeys("\<S-->", 'xt')
+  call assert_equal(1, line('w0'))
+  call assert_equal(15, line('w$'))
 
   set foldenable&
   close!
@@ -1953,7 +1989,7 @@ func Test_normal_section()
   close!
 endfunc
 
-" Test for ~ command
+" Test for changing case using u, U, gu, gU and ~ (tilde) commands
 func Test_normal30_changecase()
   new
   call append(0, 'This is a simple test: äüöß')
@@ -1973,6 +2009,9 @@ func Test_normal30_changecase()
   call assert_equal('this is a SIMPLE TEST: ÄÜÖSS', getline('.'))
   norm! V~
   call assert_equal('THIS IS A simple test: äüöss', getline('.'))
+  call assert_beeps('norm! c~')
+  %d
+  call assert_beeps('norm! ~')
 
   " Test for changing case across lines using 'whichwrap'
   call setline(1, ['aaaaaa', 'aaaaaa'])

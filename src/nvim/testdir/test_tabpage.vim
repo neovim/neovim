@@ -670,15 +670,19 @@ func Test_tabline_tabmenu()
   call assert_equal(3, tabpagenr('$'))
 
   " go to tab page 2 in operator-pending mode (should beep)
-  call assert_beeps('call feedkeys("f" .. TabLineSelectPageCode(2), "Lx!")')
+  call assert_beeps('call feedkeys("c" .. TabLineSelectPageCode(2), "Lx!")')
+  call assert_equal(2, tabpagenr())
+  call assert_equal(3, tabpagenr('$'))
 
   " open new tab page before tab page 1 in operator-pending mode (should beep)
-  call assert_beeps('call feedkeys("f" .. TabMenuNewItemCode(1), "Lx!")')
+  call assert_beeps('call feedkeys("c" .. TabMenuNewItemCode(1), "Lx!")')
+  call assert_equal(1, tabpagenr())
+  call assert_equal(4, tabpagenr('$'))
 
   " open new tab page after tab page 3 in normal mode
   call feedkeys(TabMenuNewItemCode(4), "Lx!")
   call assert_equal(4, tabpagenr())
-  call assert_equal(4, tabpagenr('$'))
+  call assert_equal(5, tabpagenr('$'))
 
   " go to tab page 2 in insert mode
   call feedkeys("i" .. TabLineSelectPageCode(2) .. "\<C-C>", "Lx!")
@@ -686,17 +690,17 @@ func Test_tabline_tabmenu()
 
   " close tab page 2 in insert mode
   call feedkeys("i" .. TabMenuCloseItemCode(2) .. "\<C-C>", "Lx!")
-  call assert_equal(3, tabpagenr('$'))
+  call assert_equal(4, tabpagenr('$'))
 
   " open new tab page before tab page 3 in insert mode
   call feedkeys("i" .. TabMenuNewItemCode(3) .. "\<C-C>", "Lx!")
   call assert_equal(3, tabpagenr())
-  call assert_equal(4, tabpagenr('$'))
+  call assert_equal(5, tabpagenr('$'))
 
   " open new tab page after tab page 4 in insert mode
   call feedkeys("i" .. TabMenuNewItemCode(5) .. "\<C-C>", "Lx!")
   call assert_equal(5, tabpagenr())
-  call assert_equal(5, tabpagenr('$'))
+  call assert_equal(6, tabpagenr('$'))
 
   %bw!
 endfunc
