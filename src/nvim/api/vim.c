@@ -473,10 +473,10 @@ Object nvim_exec_lua(String code, Array args, Error *err)
 Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
 {
-  FIXED_TEMP_ARRAY(args, 3);
-  args.items[0] = STRING_OBJ(msg);
-  args.items[1] = INTEGER_OBJ(log_level);
-  args.items[2] = DICTIONARY_OBJ(opts);
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, STRING_OBJ(msg));
+  ADD_C(args, INTEGER_OBJ(log_level));
+  ADD_C(args, DICTIONARY_OBJ(opts));
 
   return nlua_exec(STATIC_CSTR_AS_STRING("return vim.notify(...)"), args, err);
 }
@@ -1010,10 +1010,10 @@ static void term_write(char *buf, size_t size, void *data)
   if (cb == LUA_NOREF) {
     return;
   }
-  FIXED_TEMP_ARRAY(args, 3);
-  args.items[0] = INTEGER_OBJ((Integer)chan->id);
-  args.items[1] = BUFFER_OBJ(terminal_buf(chan->term));
-  args.items[2] = STRING_OBJ(((String){ .data = buf, .size = size }));
+  MAXSIZE_TEMP_ARRAY(args, 3);
+  ADD_C(args, INTEGER_OBJ((Integer)chan->id));
+  ADD_C(args, BUFFER_OBJ(terminal_buf(chan->term)));
+  ADD_C(args, STRING_OBJ(((String){ .data = buf, .size = size })));
   textlock++;
   nlua_call_ref(cb, "input", args, false, NULL);
   textlock--;

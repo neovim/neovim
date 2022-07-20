@@ -63,9 +63,9 @@ void decor_providers_start(DecorProviders *providers, int type, char **err)
 
     bool active;
     if (p->redraw_start != LUA_NOREF) {
-      FIXED_TEMP_ARRAY(args, 2);
-      args.items[0] = INTEGER_OBJ((int)display_tick);
-      args.items[1] = INTEGER_OBJ(type);
+      MAXSIZE_TEMP_ARRAY(args, 2);
+      ADD_C(args, INTEGER_OBJ((int)display_tick));
+      ADD_C(args, INTEGER_OBJ(type));
       active = decor_provider_invoke(p->ns_id, "start", p->redraw_start, args, true, err);
     } else {
       active = true;
@@ -96,12 +96,12 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
     if (p && p->redraw_win != LUA_NOREF) {
-      FIXED_TEMP_ARRAY(args, 4);
-      args.items[0] = WINDOW_OBJ(wp->handle);
-      args.items[1] = BUFFER_OBJ(wp->w_buffer->handle);
+      MAXSIZE_TEMP_ARRAY(args, 4);
+      ADD_C(args, WINDOW_OBJ(wp->handle));
+      ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       // TODO(bfredl): we are not using this, but should be first drawn line?
-      args.items[2] = INTEGER_OBJ(wp->w_topline - 1);
-      args.items[3] = INTEGER_OBJ(knownmax);
+      ADD_C(args, INTEGER_OBJ(wp->w_topline - 1));
+      ADD_C(args, INTEGER_OBJ(knownmax));
       if (decor_provider_invoke(p->ns_id, "win", p->redraw_win, args, true, err)) {
         kvi_push(*line_providers, p);
       }
@@ -124,10 +124,10 @@ void providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
     if (p && p->redraw_line != LUA_NOREF) {
-      FIXED_TEMP_ARRAY(args, 3);
-      args.items[0] = WINDOW_OBJ(wp->handle);
-      args.items[1] = BUFFER_OBJ(wp->w_buffer->handle);
-      args.items[2] = INTEGER_OBJ(row);
+      MAXSIZE_TEMP_ARRAY(args, 3);
+      ADD_C(args, WINDOW_OBJ(wp->handle));
+      ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
+      ADD_C(args, INTEGER_OBJ(row));
       if (decor_provider_invoke(p->ns_id, "line", p->redraw_line, args, true, err)) {
         *has_decor = true;
       } else {
@@ -150,8 +150,8 @@ void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers, char **er
   for (size_t i = 0; i < kv_size(*providers); i++) {
     DecorProvider *p = kv_A(*providers, i);
     if (p && p->redraw_buf != LUA_NOREF) {
-      FIXED_TEMP_ARRAY(args, 1);
-      args.items[0] = BUFFER_OBJ(buf->handle);
+      MAXSIZE_TEMP_ARRAY(args, 1);
+      ADD_C(args, BUFFER_OBJ(buf->handle));
       decor_provider_invoke(p->ns_id, "buf", p->redraw_buf, args, true, err);
     }
   }
@@ -167,8 +167,8 @@ void decor_providers_invoke_end(DecorProviders *providers, char **err)
   for (size_t i = 0; i < kv_size(*providers); i++) {
     DecorProvider *p = kv_A(*providers, i);
     if (p && p->active && p->redraw_end != LUA_NOREF) {
-      FIXED_TEMP_ARRAY(args, 1);
-      args.items[0] = INTEGER_OBJ((int)display_tick);
+      MAXSIZE_TEMP_ARRAY(args, 1);
+      ADD_C(args, INTEGER_OBJ((int)display_tick));
       decor_provider_invoke(p->ns_id, "end", p->redraw_end, args, true, err);
     }
   }

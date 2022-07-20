@@ -2052,8 +2052,8 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
       break;
     }
 
-    FIXED_TEMP_ARRAY(args, 1);
-    args.items[0] = DICTIONARY_OBJ(data);
+    MAXSIZE_TEMP_ARRAY(args, 1);
+    ADD_C(args, DICTIONARY_OBJ(data));
 
     Object result = nlua_call_ref(callback.data.luaref, NULL, args, true, NULL);
     if (result.type == kObjectTypeBoolean) {
