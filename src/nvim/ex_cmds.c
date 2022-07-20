@@ -1549,7 +1549,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
                                   : 0;
 
   if (itmp != NULL) {
-    len += is_pwsh  ? strlen(itmp) + sizeof("Get-Content " " | & ") - 1
+    len += is_pwsh  ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1
                     : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
   if (otmp != NULL) {
@@ -1560,10 +1560,11 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 
   if (is_pwsh) {
     if (itmp != NULL) {
-      xstrlcpy(buf, "Get-Content ", len - 1);  // FIXME: should we add "-Encoding utf8"?
+      xstrlcpy(buf, "& { Get-Content ", len - 1);  // FIXME: should we add "-Encoding utf8"?
       xstrlcat(buf, (const char *)itmp, len - 1);
       xstrlcat(buf, " | & ", len - 1);  // FIXME: add `&` ourself or leave to user?
       xstrlcat(buf, cmd, len - 1);
+      xstrlcat(buf, " }", len - 1);
     } else {
       xstrlcpy(buf, cmd, len - 1);
     }
