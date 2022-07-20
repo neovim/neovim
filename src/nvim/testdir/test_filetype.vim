@@ -546,7 +546,7 @@ let s:filename_checks = {
     \ 'template': ['file.tmpl'],
     \ 'teraterm': ['file.ttl'],
     \ 'terminfo': ['file.ti'],
-    \ 'terraform': ['file.tfvars'],
+    \ 'terraform-vars': ['file.tfvars'],
     \ 'tex': ['file.latex', 'file.sty', 'file.dtx', 'file.ltx', 'file.bbl'],
     \ 'texinfo': ['file.texinfo', 'file.texi', 'file.txi'],
     \ 'texmf': ['texmf.cnf'],
@@ -1670,6 +1670,18 @@ func Test_tf_file()
   bwipe!
 
   call delete('Xfile.tf')
+  filetype off
+endfunc
+
+func Test_tfvars_file()
+  filetype on
+
+  call writefile(['namespace = "default"'], 'Xfile.tfvars')
+  split Xfile.tfvars
+  call assert_equal('terraform-vars', &filetype)
+  bwipe!
+
+  call delete('Xfile.tfvars')
   filetype off
 endfunc
 
