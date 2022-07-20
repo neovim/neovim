@@ -4,6 +4,7 @@ if exists('s:did_load')
   set complete=.,w,b,u,t,i
   set directory&
   set directory^=.
+  set display=
   set fillchars=vert:\|,fold:-
   set formatoptions=tcq
   set fsync
