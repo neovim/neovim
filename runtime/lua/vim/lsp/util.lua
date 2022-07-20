@@ -2013,6 +2013,11 @@ function M.character_offset(buf, row, col, offset_encoding)
       vim.log.levels.WARN
     )
   end
+
+  if line == nil then
+    return _str_utfindex_enc(0, nil, offset_encoding)
+  end
+
   -- If the col is past the EOL, use the line length.
   if col > #line then
     return _str_utfindex_enc(line, nil, offset_encoding)
