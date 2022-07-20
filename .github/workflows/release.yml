@@ -112,14 +112,12 @@ jobs:
                CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= $OSX_FLAGS" \
                DEPS_CMAKE_FLAGS="$OSX_FLAGS"
           make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-macos" install
-      - name: Create package
-        run: |
-          cd "$GITHUB_WORKSPACE/build/release"
-          tar cfz nvim-macos.tar.gz nvim-macos
+          cd "$GITHUB_WORKSPACE/build/"
+          cpack -C "$NVIM_BUILD_TYPE"
       - uses: actions/upload-artifact@v3
         with:
           name: nvim-macos
-          path: build/release/nvim-macos.tar.gz
+          path: build/nvim-macos.tar.gz
           retention-days: 1
 
   windows:
