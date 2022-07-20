@@ -1597,16 +1597,18 @@ function M.toqflist(diagnostics)
 
   local list = {}
   for _, v in ipairs(diagnostics) do
-    local item = {
-      bufnr = v.bufnr,
-      lnum = v.lnum + 1,
-      col = v.col and (v.col + 1) or nil,
-      end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
-      end_col = v.end_col and (v.end_col + 1) or nil,
-      text = v.message,
-      type = errlist_type_map[v.severity] or 'E',
-    }
-    table.insert(list, item)
+    if vim.api.nvim_buf_is_valid(v.bufnr) then
+      local item = {
+        bufnr = v.bufnr,
+        lnum = v.lnum + 1,
+        col = v.col and (v.col + 1) or nil,
+        end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
+        end_col = v.end_col and (v.end_col + 1) or nil,
+        text = v.message,
+        type = errlist_type_map[v.severity] or 'E',
+      }
+      table.insert(list, item)
+    end
   end
   table.sort(list, function(a, b)
     if a.bufnr == b.bufnr then
