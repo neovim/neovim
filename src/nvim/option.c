@@ -3021,7 +3021,7 @@ ambw_end:
     }
     // add / remove window bars for 'winbar'
     if (gvarp == (char_u **)&p_wbr) {
-      set_winbar();
+      set_winbar(true);
     }
   } else if (gvarp == &p_cpt) {
     // check if it is a valid value for 'complete' -- Acevedo
@@ -6455,6 +6455,7 @@ void didset_window_options(win_T *wp)
   set_chars_option(wp, &wp->w_p_lcs, true);
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
   check_blending(wp);
+  set_winbar_win(wp, false);
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 

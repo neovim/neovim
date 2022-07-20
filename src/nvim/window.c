@@ -4111,7 +4111,6 @@ int win_new_tabpage(int after, char_u *filename)
 
     newtp->tp_topframe = topframe;
     last_status(false);
-    set_winbar();
 
     redraw_all_later(NOT_VALID);
 
@@ -6740,34 +6739,50 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
   }
 }
 
-// Add or remove window bars from windows depending on the value of 'winbar'.
-void set_winbar(void)
+/// Add or remove window bar from window "wp".
+///
+/// @param make_room Whether to resize frames to make room for winbar.
+///
+/// @return Success status.
+int set_winbar_win(win_T *wp, bool make_room)
+{
+  // Require the local value to be set in order to show winbar on a floating window.
+  int winbar_height = wp->w_floating ? ((*wp->w_p_wbr != NUL) ? 1 : 0)
+                                     : ((*p_wbr != NUL || *wp->w_p_wbr != NUL) ? 1 : 0);
+
+  if (wp->w_winbar_height != winbar_height) {
+    if (winbar_height == 1 && wp->w_height_inner <= 1) {
+      if (wp->w_floating) {
+        emsg(_(e_noroom));
+        return NOTDONE;
+      } else if (!make_room || !resize_frame_for_winbar(wp->w_frame)) {
+        return FAIL;
+      }
+    }
+    wp->w_winbar_height = winbar_height;
+    win_set_inner_size(wp);
+    wp->w_redr_status = wp->w_redr_status || winbar_height;
+
+    if (winbar_height == 0) {
+      // When removing winbar, deallocate the w_winbar_click_defs array
+      stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
+      xfree(wp->w_winbar_click_defs);
+      wp->w_winbar_click_defs_size = 0;
+      wp->w_winbar_click_defs = NULL;
+    }
+  }
+
+  return OK;
+}
+
+/// Add or remove window bars from all windows in tab depending on the value of 'winbar'.
+///
+/// @param make_room Whether to resize frames to make room for winbar.
+void set_winbar(bool make_room)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    // Require the local value to be set in order to show winbar on a floating window.
-    int winbar_height = wp->w_floating ? ((*wp->w_p_wbr != NUL) ? 1 : 0)
-                                       : ((*p_wbr != NUL || *wp->w_p_wbr != NUL) ? 1 : 0);
-
-    if (wp->w_winbar_height != winbar_height) {
-      if (winbar_height == 1 && wp->w_height_inner <= 1) {
-        if (wp->w_floating) {
-          emsg(_(e_noroom));
-          continue;
-        } else if (!resize_frame_for_winbar(wp->w_frame)) {
-          return;
-        }
-      }
-      wp->w_winbar_height = winbar_height;
-      win_set_inner_size(wp);
-      wp->w_redr_status = wp->w_redr_status || winbar_height;
-
-      if (winbar_height == 0) {
-        // When removing winbar, deallocate the w_winbar_click_defs array
-        stl_clear_click_defs(wp->w_winbar_click_defs, wp->w_winbar_click_defs_size);
-        xfree(wp->w_winbar_click_defs);
-        wp->w_winbar_click_defs_size = 0;
-        wp->w_winbar_click_defs = NULL;
-      }
+    if (set_winbar_win(wp, make_room) == FAIL) {
+      break;
     }
   }
 }
