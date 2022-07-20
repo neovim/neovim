@@ -578,3 +578,48 @@ describe('winbar', function()
     eq('Vim(set):E36: Not enough room', pcall_err(command, 'set winbar=test'))
   end)
 end)
+
+it('local winbar works with tabs', function()
+  clear()
+  local screen = Screen.new(60, 13)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {bold = true},
+    [2] = {reverse = true},
+    [3] = {bold = true, foreground = Screen.colors.Blue},
+    [4] = {underline = true, background = Screen.colors.LightGray}
+  })
+  meths.set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
+  command('tabnew')
+  screen:expect([[
+    {4: [No Name] }{1: [No Name] }{2:                                     }{4:X}|
+    ^                                                            |
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+                                                                |
+  ]])
+  command('tabnext')
+  screen:expect{grid=[[
+    {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
+    {1:foo                                                         }|
+    ^                                                            |
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+    {3:~                                                           }|
+                                                                |
+  ]]}
+end)
