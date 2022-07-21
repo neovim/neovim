@@ -230,16 +230,12 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
          && *ptr != NUL) {
     c = *ptr;
     // check if this is the first byte of a multibyte
-    if (len > 0) {
-      mbyte_blen = utfc_ptr2len_len(ptr, (int)((text + len) - ptr));
-    } else {
-      mbyte_blen = utfc_ptr2len((char *)ptr);
-    }
-    if (len >= 0) {
-      u8c = utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr));
-    } else {
-      u8c = utfc_ptr2char(ptr, u8cc);
-    }
+    mbyte_blen = len > 0
+      ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
+      : utfc_ptr2len((char *)ptr);
+    u8c = len >= 0
+      ? utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr))
+      : utfc_ptr2char(ptr, u8cc);
     mbyte_cells = utf_char2cells(u8c);
     if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
       // Do Arabic shaping.
@@ -248,8 +244,9 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
         nc = NUL;
         nc1 = NUL;
       } else {
-        nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
-                               (int)((text + len) - ptr - mbyte_blen));
+        nc = len >= 0
+          ? utfc_ptr2char_len(ptr + mbyte_blen, pcc, (int)((text + len) - ptr - mbyte_blen))
+          : utfc_ptr2char(ptr + mbyte_blen, pcc);
         nc1 = pcc[0];
       }
       pc = prev_c;
