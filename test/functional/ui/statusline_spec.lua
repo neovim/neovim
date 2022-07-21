@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local feed = helpers.feed
@@ -367,4 +368,12 @@ describe('global statusline', function()
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
     eq(1, meths.get_option('cmdheight'))
   end)
+end)
+
+it('statusline does not crash if it has Arabic characters #19447', function()
+  clear()
+  meths.set_option('statusline', 'غً')
+  meths.set_option('laststatus', 2)
+  command('redraw!')
+  assert_alive()
 end)
