@@ -2028,7 +2028,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   int mode;
   bool abbr = false;
   bool get_dict = false;
-  mapblock_T *mp;
+  mapblock_T *mp = NULL;
   int buffer_local;
   int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
 

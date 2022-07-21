@@ -2852,11 +2852,13 @@ int parse_cmd_address(exarg_T *eap, char **errormsg, bool silent)
           if (!mark_check(fm)) {
             goto theend;
           }
+          assert(fm != NULL);
           eap->line1 = fm->mark.lnum;
           fm = mark_get_visual(curbuf, '>');
           if (!mark_check(fm)) {
             goto theend;
           }
+          assert(fm != NULL);
           eap->line2 = fm->mark.lnum;
           eap->addr_count++;
         }
@@ -3285,7 +3287,6 @@ int cmd_exists(const char *const name)
 /// "fullcommand" function
 void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  exarg_T ea;
   char *name = argvars[0].vval.v_string;
 
   rettv->v_type = VAR_STRING;
@@ -3299,8 +3300,10 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   name = skip_range(name, NULL);
 
-  ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
-  ea.cmdidx = (cmdidx_T)0;
+  exarg_T ea = {
+    .cmd = (*name == '2' || *name == '3') ? name + 1 : name,
+    .cmdidx = (cmdidx_T)0,
+  };
   char *p = find_ex_command(&ea, NULL);
   if (p == NULL || ea.cmdidx == CMD_SIZE) {
     return;
@@ -4390,6 +4393,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
             cmd = NULL;
             goto error;
           }
+          assert(fm != NULL);
           lnum = fm->mark.lnum;
         }
       }
