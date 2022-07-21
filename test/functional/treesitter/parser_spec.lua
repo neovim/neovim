@@ -728,7 +728,7 @@ int x = INT_MAX;
         return list
         ]]
 
-        eq({ 'offset!', 'set!' }, res_list)
+        eq({ 'gsub!', 'offset!', 'set!' }, res_list)
       end)
     end)
   end)
