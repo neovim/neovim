@@ -27,8 +27,6 @@
   - src/nvim/terminal.*
 
 "column":
-  - src/nvim/mark.h
-  - src/nvim/mark.c
   - src/nvim/sign*
 
 "folds":
