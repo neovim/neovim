@@ -1587,12 +1587,10 @@ char_u *regtilde(char_u *source, int magic, bool preview)
 
   // Only change reg_prev_sub when not previewing.
   if (!preview) {
+    // Store a copy of newsub  in reg_prev_sub.  It is always allocated,
+    // because recursive calls may make the returned string invalid.
     xfree(reg_prev_sub);
-    if (newsub != source) {             // newsub was allocated, just keep it
-      reg_prev_sub = newsub;
-    } else {                            // no ~ found, need to save newsub
-      reg_prev_sub = vim_strsave(newsub);
-    }
+    reg_prev_sub = vim_strsave(newsub);
   }
 
   return newsub;
