@@ -157,6 +157,13 @@ describe('named marks', function()
     os.remove(file1)
   end)
 
+  it("errors when using a mark in another buffer in command range", function()
+    feed('ifoo<Esc>mA')
+    command('enew')
+    feed('ibar<Esc>')
+    eq('Vim(print):E20: Mark not set', pcall_err(command, [['Aprint]]))
+  end)
+
   it("leave a context mark when moving with '", function()
     command("edit " .. file1)
     feed("llmamA")

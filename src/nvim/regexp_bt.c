@@ -3705,8 +3705,6 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
           int cmp = OPERAND(scan)[1];
           pos_T *pos;
           size_t col = REG_MULTI ? rex.input - rex.line : 0;
-
-          // fm will be NULL if the mark is not set in reg_buf
           fmark_T *fm = mark_get(rex.reg_buf, curwin, NULL, kMarkBufLocal, mark);
 
           // Line may have been freed, get it again.

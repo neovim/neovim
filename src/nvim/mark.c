@@ -339,11 +339,11 @@ fmark_T *mark_get(buf_T *buf, win_T *win, fmark_T *fmp, MarkGet flag, int name)
   fmark_T *fm = NULL;
   if (ASCII_ISUPPER(name) || ascii_isdigit(name)) {
     // Global marks
-    xfmark_T *xfm = mark_get_global(!(flag & kMarkAllNoResolve), name);
+    xfmark_T *xfm = mark_get_global(flag != kMarkAllNoResolve, name);
     fm = &xfm->fmark;
-    // Only wanted marks belonging to the buffer
-    if ((flag & kMarkBufLocal) && xfm->fmark.fnum != buf->handle) {
-      return NULL;
+    if (flag == kMarkBufLocal && xfm->fmark.fnum != buf->handle) {
+      // Only wanted marks belonging to the buffer
+      return pos_to_mark(buf, NULL, (pos_T){ .lnum = 0 });
     }
   } else if (name > 0 && name < NMARK_LOCAL_MAX) {
     // Local Marks
@@ -508,11 +508,12 @@ fmark_T *mark_get_visual(buf_T *buf, int name)
 /// Pass an fmp if multiple c
 /// @note  view fields are set to 0.
 /// @param buf  for fmark->fnum.
-/// @param pos  for fmrak->mark.
+/// @param pos  for fmark->mark.
 /// @param fmp pointer to save the mark.
 ///
 /// @return[static] Mark with the given information.
 fmark_T *pos_to_mark(buf_T *buf, fmark_T *fmp, pos_T pos)
+  FUNC_ATTR_NONNULL_RET
 {
   static fmark_T fms = INIT_FMARK;
   fmark_T *fm = fmp == NULL ? &fms : fmp;

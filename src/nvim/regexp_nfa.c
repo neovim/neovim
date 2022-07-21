@@ -6930,10 +6930,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_MARK:
       case NFA_MARK_GT:
       case NFA_MARK_LT: {
-        fmark_T *fm;
         size_t col = REG_MULTI ? rex.input - rex.line : 0;
-        // fm will be NULL if the mark is not set, doesn't belong to reg_buf
-        fm = mark_get(rex.reg_buf, curwin, NULL, kMarkBufLocal, t->state->val);
+        fmark_T *fm = mark_get(rex.reg_buf, curwin, NULL, kMarkBufLocal, t->state->val);
 
         // Line may have been freed, get it again.
         if (REG_MULTI) {
