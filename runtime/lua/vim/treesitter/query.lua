@@ -363,6 +363,22 @@ local directive_handlers = {
       metadata[capture_id].range = range
     end
   end,
+
+  -- Transform the content of the node
+  -- Example: (#gsub! @_node ".*%.(.*)" "%1")
+  ['gsub!'] = function(match, _, bufnr, pred, metadata)
+    assert(#pred == 4)
+
+    local id = pred[2]
+    local node = match[id]
+    local text = M.get_node_text(node, bufnr) or ""
+
+    if not metadata[id] then
+      metadata[id] = {}
+    end
+    metadata[id].text = text:gsub(pred[3], pred[4])
+  end
+
 }
 
 --- Adds a new predicate to be used in queries

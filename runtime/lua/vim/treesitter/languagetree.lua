@@ -306,6 +306,14 @@ local function get_node_range(node, id, metadata)
   return { node:range() }
 end
 
+---@private
+local function get_node_text(node, id, metadata, source)
+  if metadata[id] and metadata[id].text then
+    return metadata[id].text
+  end
+  return query.get_node_text(node, source)
+end
+
 --- Gets language injection points by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -358,7 +366,7 @@ function LanguageTree:_get_injections()
 
         -- Lang should override any other language tag
         if name == 'language' and not lang then
-          lang = query.get_node_text(node, self._source)
+          lang = get_node_text(node, id, metadata, self._source)
         elseif name == 'combined' then
           combined = true
         elseif name == 'content' and #ranges == 0 then
