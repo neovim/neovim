@@ -3644,7 +3644,6 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
   assert(sub != NULL);
 
-  bool sub_needs_free = false;
   char *sub_copy = NULL;
 
   // If the substitute pattern starts with "\=" then it's an expression.
@@ -3656,11 +3655,12 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     sub = xstrdup(sub);
     sub_copy = sub;
   } else {
-    char *source = sub;
-    sub = (char *)regtilde((char_u *)sub, p_magic, cmdpreview);
-    // When previewing, the new pattern allocated by regtilde() needs to be freed
-    // in this function because it will not be used or freed by regtilde() later.
-    sub_needs_free = cmdpreview && sub != source;
+    char *newsub = (char *)regtilde((char_u *)sub, p_magic, cmdpreview);
+    if (newsub != sub) {
+      // newsub was allocated, free it later.
+      sub_copy = newsub;
+      sub = newsub;
+    }
   }
 
   bool cmdheight0 = p_ch < 1 && !ui_has(kUIMessages);
@@ -4459,9 +4459,6 @@ skip:
 
   vim_regfree(regmatch.regprog);
   xfree(sub_copy);
-  if (sub_needs_free) {
-    xfree(sub);
-  }
 
   // Restore the flag values, they can be used for ":&&".
   subflags.do_all = save_do_all;
