@@ -513,6 +513,7 @@ fmark_T *mark_get_visual(buf_T *buf, int name)
 ///
 /// @return[static] Mark with the given information.
 fmark_T *pos_to_mark(buf_T *buf, fmark_T *fmp, pos_T pos)
+  FUNC_ATTR_NONNULL_RET
 {
   static fmark_T fms = INIT_FMARK;
   fmark_T *fm = fmp == NULL ? &fms : fmp;
