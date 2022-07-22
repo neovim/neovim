@@ -1,7 +1,6 @@
 #ifndef NVIM_INSEXPAND_H
 #define NVIM_INSEXPAND_H
 
-#include "nvim/eval/funcs.h"
 #include "nvim/vim.h"
 
 /// state for pum_ext_select_item.

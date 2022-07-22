@@ -7,6 +7,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/fold.h"
 #include "nvim/highlight_group.h"
 #include "nvim/match.h"
