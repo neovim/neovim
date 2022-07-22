@@ -715,6 +715,12 @@ function M.set(namespace, bufnr, diagnostics, opts)
   end
 
   if vim.api.nvim_buf_is_loaded(bufnr) then
+    vim.api.nvim_buf_attach(bufnr, false, {
+      on_detach = function()
+        rawset(diagnostic_cache, bufnr, nil) -- clear cache
+      end,
+    })
+
     M.show(namespace, bufnr, nil, opts)
   end
 
@@ -1597,18 +1603,16 @@ function M.toqflist(diagnostics)
 
   local list = {}
   for _, v in ipairs(diagnostics) do
-    if vim.api.nvim_buf_is_valid(v.bufnr) then
-      local item = {
-        bufnr = v.bufnr,
-        lnum = v.lnum + 1,
-        col = v.col and (v.col + 1) or nil,
-        end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
-        end_col = v.end_col and (v.end_col + 1) or nil,
-        text = v.message,
-        type = errlist_type_map[v.severity] or 'E',
-      }
-      table.insert(list, item)
-    end
+    local item = {
+      bufnr = v.bufnr,
+      lnum = v.lnum + 1,
+      col = v.col and (v.col + 1) or nil,
+      end_lnum = v.end_lnum and (v.end_lnum + 1) or nil,
+      end_col = v.end_col and (v.end_col + 1) or nil,
+      text = v.message,
+      type = errlist_type_map[v.severity] or 'E',
+    }
+    table.insert(list, item)
   end
   table.sort(list, function(a, b)
     if a.bufnr == b.bufnr then
