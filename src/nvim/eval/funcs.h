@@ -4,8 +4,6 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 
-typedef void (*FunPtr)(void);
-
 /// Prototype of C function that implements VimL function
 typedef void (*VimLFunc)(typval_T *args, typval_T *rvar, FunPtr data);
 

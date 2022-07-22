@@ -22,6 +22,8 @@ typedef int handle_T;
 // absent callback etc.
 typedef int LuaRef;
 
+typedef void (*FunPtr)(void);
+
 typedef handle_T NS;
 
 typedef struct expand expand_T;

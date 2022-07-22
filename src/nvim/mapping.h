@@ -2,7 +2,6 @@
 #define NVIM_MAPPING_H
 
 #include "nvim/buffer_defs.h"
-#include "nvim/eval/funcs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"

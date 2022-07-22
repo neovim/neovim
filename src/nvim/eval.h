@@ -3,7 +3,6 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
-#include "nvim/eval/funcs.h"  // For FunPtr
 #include "nvim/event/time.h"  // For TimeWatcher
 #include "nvim/ex_cmds_defs.h"  // For exarg_T
 #include "nvim/os/fileio.h"  // For FileDescriptor

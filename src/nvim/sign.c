@@ -10,6 +10,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
 #include "nvim/highlight_group.h"
