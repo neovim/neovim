@@ -25,6 +25,7 @@
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/file_search.h"
@@ -3707,50 +3708,6 @@ static void f_gettabinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/// "gettabvar()" function
-static void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  bool done = false;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  const char *const varname = tv_get_string_chk(&argvars[1]);
-  tabpage_T *const tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
-  if (tp != NULL && varname != NULL) {
-    // Set tp to be our tabpage, temporarily.  Also set the window to the
-    // first window in the tabpage, otherwise the window is not valid.
-    win_T *const window = tp == curtab || tp->tp_firstwin == NULL
-        ? firstwin
-        : tp->tp_firstwin;
-    switchwin_T switchwin;
-    if (switch_win(&switchwin, window, tp, true) == OK) {
-      // look up the variable
-      // Let gettabvar({nr}, "") return the "t:" dictionary.
-      const dictitem_T *const v = find_var_in_ht(&tp->tp_vars->dv_hashtab, 't',
-                                                 varname, strlen(varname),
-                                                 false);
-      if (v != NULL) {
-        tv_copy(&v->di_tv, rettv);
-        done = true;
-      }
-    }
-
-    // restore previous notion of curwin
-    restore_win(&switchwin, true);
-  }
-
-  if (!done && argvars[2].v_type != VAR_UNKNOWN) {
-    tv_copy(&argvars[2], rettv);
-  }
-}
-
-/// "gettabwinvar()" function
-static void f_gettabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  getwinvar(argvars, rettv, 1);
-}
-
 /// "gettagstack()" function
 static void f_gettagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -3972,12 +3929,6 @@ static void f_getwinposx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_getwinposy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->vval.v_number = -1;
-}
-
-/// "getwinvar()" function
-static void f_getwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  getwinvar(argvars, rettv, 0);
 }
 
 /// "glob()" function
@@ -8856,43 +8807,6 @@ free_lstval:
   }
 }
 
-/// "settabvar()" function
-static void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = 0;
-
-  if (check_secure()) {
-    return;
-  }
-
-  tabpage_T *const tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
-  const char *const varname = tv_get_string_chk(&argvars[1]);
-  typval_T *const varp = &argvars[2];
-
-  if (varname != NULL && tp != NULL) {
-    tabpage_T *const save_curtab = curtab;
-    goto_tabpage_tp(tp, false, false);
-
-    const size_t varname_len = strlen(varname);
-    char *const tabvarname = xmalloc(varname_len + 3);
-    memcpy(tabvarname, "t:", 2);
-    memcpy(tabvarname + 2, varname, varname_len + 1);
-    set_var(tabvarname, varname_len + 2, varp, true);
-    xfree(tabvarname);
-
-    // Restore current tabpage.
-    if (valid_tabpage(save_curtab)) {
-      goto_tabpage_tp(save_curtab, false, false);
-    }
-  }
-}
-
-/// "settabwinvar()" function
-static void f_settabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  setwinvar(argvars, rettv, 1);
-}
-
 /// "settagstack()" function
 static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -8944,12 +8858,6 @@ static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (set_tagstack(wp, d, action) == OK) {
     rettv->vval.v_number = 0;
   }
-}
-
-/// "setwinvar()" function
-static void f_setwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  setwinvar(argvars, rettv, 0);
 }
 
 /// f_sha256 - sha256({string}) function
