@@ -4,10 +4,12 @@
 // eval/vars.c: functions for dealing with variables
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
@@ -1478,7 +1480,7 @@ bool valid_varname(const char *varname)
 /// getwinvar() and gettabwinvar()
 ///
 /// @param off  1 for gettabwinvar()
-void getwinvar(typval_T *argvars, typval_T *rettv, int off)
+static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 {
   win_T *win;
   dictitem_T *v;
@@ -1542,8 +1544,20 @@ void getwinvar(typval_T *argvars, typval_T *rettv, int off)
   }
 }
 
+/// Set option "varname" to the value of "varp" for the current buffer/window.
+static void set_option_from_tv(const char *varname, typval_T *varp)
+{
+  bool error = false;
+  char nbuf[NUMBUFLEN];
+  const long numval = (long)tv_get_number_chk(varp, &error);
+  const char *const strval = tv_get_string_buf_chk(varp, nbuf);
+  if (!error && strval != NULL) {
+    set_option_value(varname, numval, strval, OPT_LOCAL);
+  }
+}
+
 /// "setwinvar()" and "settabwinvar()" functions
-void setwinvar(typval_T *argvars, typval_T *rettv, int off)
+static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 {
   if (check_secure()) {
     return;
@@ -1564,16 +1578,7 @@ void setwinvar(typval_T *argvars, typval_T *rettv, int off)
     switchwin_T switchwin;
     if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
       if (*varname == '&') {
-        long numval;
-        bool error = false;
-
-        varname++;
-        numval = tv_get_number_chk(varp, &error);
-        char nbuf[NUMBUFLEN];
-        const char *const strval = tv_get_string_buf_chk(varp, nbuf);
-        if (!error && strval != NULL) {
-          set_option_value(varname, numval, strval, OPT_LOCAL);
-        }
+        set_option_from_tv(varname + 1, varp);
       } else {
         const size_t varname_len = strlen(varname);
         char *const winvarname = xmalloc(varname_len + 3);
@@ -1671,6 +1676,66 @@ void f_getwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   getwinvar(argvars, rettv, 0);
 }
 
+/// "getbufvar()" function
+void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  bool done = false;
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+
+  if (!tv_check_str_or_nr(&argvars[0])) {
+    goto f_getbufvar_end;
+  }
+
+  const char *varname = tv_get_string_chk(&argvars[1]);
+  emsg_off++;
+  buf_T *const buf = tv_get_buf(&argvars[0], false);
+
+  if (buf != NULL && varname != NULL) {
+    if (*varname == '&') {  // buffer-local-option
+      buf_T *const save_curbuf = curbuf;
+
+      // set curbuf to be our buf, temporarily
+      curbuf = buf;
+
+      if (varname[1] == NUL) {
+        // get all buffer-local options in a dict
+        dict_T *opts = get_winbuf_options(true);
+
+        if (opts != NULL) {
+          tv_dict_set_ret(rettv, opts);
+          done = true;
+        }
+      } else if (get_option_tv(&varname, rettv, true) == OK) {
+        // buffer-local-option
+        done = true;
+      }
+
+      // restore previous notion of curbuf
+      curbuf = save_curbuf;
+    } else {
+      // Look up the variable.
+      // Let getbufvar({nr}, "") return the "b:" dictionary.
+      dictitem_T *const v = *varname == NUL
+        ? (dictitem_T *)&buf->b_bufvar
+        : find_var_in_ht(&buf->b_vars->dv_hashtab, 'b',
+                         varname, strlen(varname), false);
+      if (v != NULL) {
+        tv_copy(&v->di_tv, rettv);
+        done = true;
+      }
+    }
+  }
+  emsg_off--;
+
+f_getbufvar_end:
+  if (!done && argvars[2].v_type != VAR_UNKNOWN) {
+    // use the default value
+    tv_copy(&argvars[2], rettv);
+  }
+}
+
 /// "settabvar()" function
 void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -1712,4 +1777,40 @@ void f_settabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 void f_setwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   setwinvar(argvars, rettv, 0);
+}
+
+/// "setbufvar()" function
+void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (check_secure()
+      || !tv_check_str_or_nr(&argvars[0])) {
+    return;
+  }
+  const char *varname = tv_get_string_chk(&argvars[1]);
+  buf_T *const buf = tv_get_buf(&argvars[0], false);
+  typval_T *varp = &argvars[2];
+
+  if (buf != NULL && varname != NULL) {
+    if (*varname == '&') {
+      aco_save_T aco;
+
+      // set curbuf to be our buf, temporarily
+      aucmd_prepbuf(&aco, buf);
+
+      set_option_from_tv(varname + 1, varp);
+
+      // reset notion of buffer
+      aucmd_restbuf(&aco);
+    } else {
+      const size_t varname_len = STRLEN(varname);
+      char *const bufvarname = xmalloc(varname_len + 3);
+      buf_T *const save_curbuf = curbuf;
+      curbuf = buf;
+      memcpy(bufvarname, "b:", 2);
+      memcpy(bufvarname + 2, varname, varname_len + 1);
+      set_var(bufvarname, varname_len + 2, varp, true);
+      xfree(bufvarname);
+      curbuf = save_curbuf;
+    }
+  }
 }

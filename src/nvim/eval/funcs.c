@@ -2804,66 +2804,6 @@ static void f_getbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_buffer_lines(buf, lnum, end, true, rettv);
 }
 
-/// "getbufvar()" function
-static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  bool done = false;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-
-  if (!tv_check_str_or_nr(&argvars[0])) {
-    goto f_getbufvar_end;
-  }
-
-  const char *varname = tv_get_string_chk(&argvars[1]);
-  emsg_off++;
-  buf_T *const buf = tv_get_buf(&argvars[0], false);
-
-  if (buf != NULL && varname != NULL) {
-    if (*varname == '&') {  // buffer-local-option
-      buf_T *const save_curbuf = curbuf;
-
-      // set curbuf to be our buf, temporarily
-      curbuf = buf;
-
-      if (varname[1] == NUL) {
-        // get all buffer-local options in a dict
-        dict_T *opts = get_winbuf_options(true);
-
-        if (opts != NULL) {
-          tv_dict_set_ret(rettv, opts);
-          done = true;
-        }
-      } else if (get_option_tv(&varname, rettv, true) == OK) {
-        // buffer-local-option
-        done = true;
-      }
-
-      // restore previous notion of curbuf
-      curbuf = save_curbuf;
-    } else {
-      // Look up the variable.
-      // Let getbufvar({nr}, "") return the "b:" dictionary.
-      dictitem_T *const v = *varname == NUL
-        ? (dictitem_T *)&buf->b_bufvar
-        : find_var_in_ht(&buf->b_vars->dv_hashtab, 'b',
-                         varname, strlen(varname), false);
-      if (v != NULL) {
-        tv_copy(&v->di_tv, rettv);
-        done = true;
-      }
-    }
-  }
-  emsg_off--;
-
-f_getbufvar_end:
-  if (!done && argvars[2].v_type != VAR_UNKNOWN) {
-    // use the default value
-    tv_copy(&argvars[2], rettv);
-  }
-}
-
 /// "getchangelist()" function
 static void f_getchangelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -8338,50 +8278,6 @@ static void f_setbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     lnum = tv_get_lnum_buf(&argvars[1], buf);
     set_buffer_lines(buf, lnum, false, &argvars[2], rettv);
-  }
-}
-
-/// "setbufvar()" function
-static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  if (check_secure()
-      || !tv_check_str_or_nr(&argvars[0])) {
-    return;
-  }
-  const char *varname = tv_get_string_chk(&argvars[1]);
-  buf_T *const buf = tv_get_buf(&argvars[0], false);
-  typval_T *varp = &argvars[2];
-
-  if (buf != NULL && varname != NULL) {
-    if (*varname == '&') {
-      long numval;
-      bool error = false;
-      aco_save_T aco;
-
-      // set curbuf to be our buf, temporarily
-      aucmd_prepbuf(&aco, buf);
-
-      varname++;
-      numval = tv_get_number_chk(varp, &error);
-      char nbuf[NUMBUFLEN];
-      const char *const strval = tv_get_string_buf_chk(varp, nbuf);
-      if (!error && strval != NULL) {
-        set_option_value(varname, numval, strval, OPT_LOCAL);
-      }
-
-      // reset notion of buffer
-      aucmd_restbuf(&aco);
-    } else {
-      const size_t varname_len = STRLEN(varname);
-      char *const bufvarname = xmalloc(varname_len + 3);
-      buf_T *const save_curbuf = curbuf;
-      curbuf = buf;
-      memcpy(bufvarname, "b:", 2);
-      memcpy(bufvarname + 2, varname, varname_len + 1);
-      set_var(bufvarname, varname_len + 2, varp, true);
-      xfree(bufvarname);
-      curbuf = save_curbuf;
-    }
   }
 }
 
