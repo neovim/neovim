@@ -1544,6 +1544,18 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
   }
 }
 
+/// Set option "varname" to the value of "varp" for the current buffer/window.
+static void set_option_from_tv(const char *varname, typval_T *varp)
+{
+  bool error = false;
+  char nbuf[NUMBUFLEN];
+  const long numval = (long)tv_get_number_chk(varp, &error);
+  const char *const strval = tv_get_string_buf_chk(varp, nbuf);
+  if (!error && strval != NULL) {
+    set_option_value(varname, numval, strval, OPT_LOCAL);
+  }
+}
+
 /// "setwinvar()" and "settabwinvar()" functions
 static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 {
@@ -1566,16 +1578,7 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
     switchwin_T switchwin;
     if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
       if (*varname == '&') {
-        long numval;
-        bool error = false;
-
-        varname++;
-        numval = tv_get_number_chk(varp, &error);
-        char nbuf[NUMBUFLEN];
-        const char *const strval = tv_get_string_buf_chk(varp, nbuf);
-        if (!error && strval != NULL) {
-          set_option_value(varname, numval, strval, OPT_LOCAL);
-        }
+        set_option_from_tv(varname + 1, varp);
       } else {
         const size_t varname_len = strlen(varname);
         char *const winvarname = xmalloc(varname_len + 3);
@@ -1789,20 +1792,12 @@ void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (buf != NULL && varname != NULL) {
     if (*varname == '&') {
-      long numval;
-      bool error = false;
       aco_save_T aco;
 
       // set curbuf to be our buf, temporarily
       aucmd_prepbuf(&aco, buf);
 
-      varname++;
-      numval = tv_get_number_chk(varp, &error);
-      char nbuf[NUMBUFLEN];
-      const char *const strval = tv_get_string_buf_chk(varp, nbuf);
-      if (!error && strval != NULL) {
-        set_option_value(varname, numval, strval, OPT_LOCAL);
-      }
+      set_option_from_tv(varname + 1, varp);
 
       // reset notion of buffer
       aucmd_restbuf(&aco);
