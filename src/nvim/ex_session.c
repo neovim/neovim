@@ -410,6 +410,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     if ((flagp == &ssop_flags) && alt != NULL && alt->b_fname != NULL
         && *alt->b_fname != NUL
         && alt->b_p_bl
+        // do not set balt if buffer is terminal and "terminal" is not set in options
+        && ( bt_terminal(wp->w_buffer) && ssop_flags & SSOP_TERMINAL)
         && (fputs("balt ", fd) < 0
             || ses_fname(fd, alt, flagp, true) == FAIL)) {
       return FAIL;
