@@ -2170,6 +2170,25 @@ func Test_autocmd_nested()
   call assert_fails('au WinNew * nested nested echo bad', 'E983:')
 endfunc
 
+func Test_autocmd_nested_cursor_invalid()
+  set laststatus=0
+  copen
+  cclose
+  call setline(1, ['foo', 'bar', 'baz'])
+  3
+  augroup nested_inv
+    autocmd User foo ++nested copen
+    autocmd BufAdd * let &laststatus = 2 - &laststatus
+  augroup END
+  doautocmd User foo
+
+  augroup nested_inv
+    au!
+  augroup END
+  set laststatus&
+  bwipe!
+endfunc
+
 func Test_autocmd_once()
   " Without ++once WinNew triggers twice
   let g:did_split = 0
