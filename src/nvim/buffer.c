@@ -2483,6 +2483,9 @@ void buflist_setfpos(buf_T *const buf, win_T *const win, linenr_T lnum, colnr_T 
       wip->wi_mark.view = mark_view_make(win->w_topline, wip->wi_mark.mark);
     }
   }
+  if (win != NULL) {
+    wip->wi_changelistidx = win->w_changelistidx;
+  }
   if (copy_options && win != NULL) {
     // Save the window-specific option values.
     copy_winopt(&win->w_onebuf_opt, &wip->wi_opt);
@@ -2585,6 +2588,9 @@ void get_winopts(buf_T *buf)
     cloneFoldGrowArray(&wip->wi_folds, &curwin->w_folds);
   } else {
     copy_winopt(&curwin->w_allbuf_opt, &curwin->w_onebuf_opt);
+  }
+  if (wip != NULL) {
+    curwin->w_changelistidx = wip->wi_changelistidx;
   }
 
   if (curwin->w_float_config.style == kWinStyleMinimal) {
