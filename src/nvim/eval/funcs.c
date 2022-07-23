@@ -2824,13 +2824,23 @@ static void f_getchangelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   list_T *const l = tv_list_alloc(buf->b_changelistlen);
   tv_list_append_list(rettv->vval.v_list, l);
-  // The current window change list index tracks only the position in the
-  // current buffer change list. For other buffers, use the change list
-  // length as the current index.
-  tv_list_append_number(rettv->vval.v_list,
-                        (buf == curwin->w_buffer)
-                        ? curwin->w_changelistidx
-                        : buf->b_changelistlen);
+  // The current window change list index tracks only the position for the
+  // current buffer. For other buffers use the stored index for the current
+  // window, or, if that's not available, the change list length.
+  int changelistindex;
+  if (buf == curwin->w_buffer) {
+    changelistindex = curwin->w_changelistidx;
+  } else {
+    wininfo_T *wip;
+
+    FOR_ALL_BUF_WININFO(buf, wip) {
+      if (wip->wi_win == curwin) {
+        break;
+      }
+    }
+    changelistindex = wip != NULL ? wip->wi_changelistidx : buf->b_changelistlen;
+  }
+  tv_list_append_number(rettv->vval.v_list, (varnumber_T)changelistindex);
 
   for (int i = 0; i < buf->b_changelistlen; i++) {
     if (buf->b_changelist[i].mark.lnum == 0) {

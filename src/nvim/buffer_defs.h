@@ -289,6 +289,7 @@ struct wininfo_S {
   winopt_T wi_opt;              // local window options
   bool wi_fold_manual;          // copy of w_fold_manual
   garray_T wi_folds;            // clone of w_folds
+  int wi_changelistidx;         // copy of w_changelistidx
 };
 
 /*
