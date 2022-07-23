@@ -618,7 +618,7 @@ function! s:check_node() abort
   if !executable('node') || (!executable('npm') && !executable('yarn') && !executable('pnpm'))
     call health#report_warn(
           \ '`node` and `npm` (or `yarn`, `pnpm`) must be in $PATH.',
-          \ ['Install Node.js and verify that `node` and `npm` (or `yarn, `pnpm`) commands work.'])
+          \ ['Install Node.js and verify that `node` and `npm` (or `yarn`, `pnpm`) commands work.'])
     return
   endif
   let node_v = get(split(s:system(['node', '-v']), "\n"), 0, '')
@@ -643,9 +643,8 @@ function! s:check_node() abort
   endif
   call health#report_info('Nvim node.js host: '. host)
 
-  if executable('npm')
-    let manager = 'npm'
-  elseif executable('yarn')
+  let manager = 'npm'
+  if executable('yarn')
     let manager = 'yarn'
   elseif executable('pnpm')
     let manager = 'pnpm'
