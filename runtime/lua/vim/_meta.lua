@@ -198,7 +198,10 @@ end
 --                  Can be done in a separate PR.
 local key_value_options = {
   fillchars = true,
+  fcs = true,
   listchars = true,
+  lcs = true,
+  winhighlight = true,
   winhl = true,
 }
 
