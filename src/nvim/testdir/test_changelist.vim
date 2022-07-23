@@ -1,5 +1,40 @@
 " Tests for the changelist functionality
 
+" When splitting a window the changelist position is wrong.
+" Test the changelist position after splitting a window.
+" Test for the bug fixed by 7.4.386
+func Test_changelist()
+  let save_ul = &ul
+  enew!
+  call append('$', ['1', '2'])
+  exe "normal i\<C-G>u"
+  exe "normal Gkylpa\<C-G>u"
+  set ul=100
+  exe "normal Gylpa\<C-G>u"
+  set ul=100
+  normal gg
+  vsplit
+  normal g;
+  call assert_equal([3, 2], [line('.'), col('.')])
+  normal g;
+  call assert_equal([2, 2], [line('.'), col('.')])
+  call assert_fails('normal g;', 'E662:')
+  new
+  call assert_fails('normal g;', 'E664:')
+  %bwipe!
+  let &ul = save_ul
+endfunc
+
+" Moving a split should not change its changelist index.
+func Test_changelist_index_move_split()
+  exe "norm! iabc\<C-G>u\ndef\<C-G>u\nghi"
+  vsplit
+  normal 99g;
+  call assert_equal(0, getchangelist('%')[1])
+  wincmd L
+  call assert_equal(0, getchangelist('%')[1])
+endfunc
+
 " Tests for the getchangelist() function
 func Test_changelist_index()
   edit Xfile1.txt
