@@ -6171,7 +6171,7 @@ msgstr "E484: 无法打开文件 %s"
 
 #: ../undo.c:1328
 msgid "File contents changed, cannot use undo info"
-msgstr "文件内容已改变，不能适用撤销信息"
+msgstr "文件内容已改变，不能使用撤销信息"
 
 #: ../undo.c:1497
 #, fuzzy, c-format
