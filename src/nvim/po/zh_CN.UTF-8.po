@@ -44,7 +44,7 @@ msgstr "[Quickfix 列表]"
 
 #: ../buffer.c:94
 msgid "E855: Autocommands caused command to abort"
-msgstr "E855: Autocommands 导致命令被停止"
+msgstr "E855: 自动命令导致命令被停止"
 
 #: ../buffer.c:135
 msgid "E82: Cannot allocate any buffer, exiting..."
@@ -401,11 +401,11 @@ msgstr "已到段落结尾"
 
 #: ../edit.c:101
 msgid "E839: Completion function changed window"
-msgstr "E839: 补全函数更改窗口"
+msgstr "E839: 补全函数更改了窗口"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr "E840: 补全函数删除文本"
+msgstr "E840: 补全函数删除了文本"
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
@@ -2674,7 +2674,7 @@ msgstr "E49: 无效的滚动大小"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr "E901: 工作表已经满"
+msgstr "E901: 任务表已经满"
 
 #: ../globals.h:1024
 #, c-format
@@ -3750,7 +3750,7 @@ msgstr ""
 
 #: ../memline.c:945
 msgid " has been damaged (page size is smaller than minimum value).\n"
-msgstr "已损坏（页面大小接近最小值）。\n"
+msgstr "已损坏（页面大小小于最小值）。\n"
 
 #: ../memline.c:974
 #, c-format
@@ -5000,7 +5000,7 @@ msgstr "E865: (NFA) 过早的结束了正则表达式"
 #: ../regexp_nfa.c:240
 #, c-format
 msgid "E866: (NFA regexp) Misplaced %c"
-msgstr "E866: (NFA regexp) 位置错误 %c"
+msgstr "E866: (NFA regexp) 错误位置的 %c"
 
 #: ../regexp_nfa.c:242
 #, c-format
