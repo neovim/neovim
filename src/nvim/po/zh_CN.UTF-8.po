@@ -2008,7 +2008,7 @@ msgstr "E199: 活动窗口或缓冲区已被删除"
 
 #: ../file_search.c:203
 msgid "E854: path too long for completion"
-msgstr "E854: 补全的路径太长"
+msgstr "E854: 补全用的路径太长"
 
 #: ../file_search.c:446
 #, c-format
@@ -3228,14 +3228,15 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
-"       c: 查找调用此函数的所有函数\n"
-"       d: 查找此函数调用的函数\n"
-"       e: 查找这个egrep 模式\n"
-"       f: 查找此文件\n"
-"       g: 查找定义\n"
-"       i: 查找文件 #including 这个文件\n"
-"       s: 查找这个C符号\n"
-"       t: 查找这个文本字符串\n"
+"       a: 搜索对此符号的赋值\n"
+"       c: 搜索调用此函数的函数\n"
+"       d: 搜索此函数调用的函数\n"
+"       e: 搜索此 egrep 模式\n"
+"       f: 搜索此文件\n"
+"       g: 搜索此定义\n"
+"       i: 搜索包含此文件的文件\n"
+"       s: 搜索此 C 符号\n"
+"       t: 搜索此文本字符串\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
@@ -4615,7 +4616,7 @@ msgstr "E834: 与'listchars'中的值发生冲突"
 
 #: ../option.c:3966
 msgid "E835: Conflicts with value of 'fillchars'"
-msgstr "E835:  与'fillchars'中的值冲突"
+msgstr "E835: 与'fillchars'中的值冲突"
 
 #: ../option.c:4163
 msgid "E524: Missing colon"
@@ -4995,12 +4996,12 @@ msgstr ""
 
 #: ../regexp_nfa.c:239
 msgid "E865: (NFA) Regexp end encountered prematurely"
-msgstr "E865: (NFA) 过早的结束了正则表达式"
+msgstr "E865: (NFA) 过早地遇到了正则表达式的结尾"
 
 #: ../regexp_nfa.c:240
 #, c-format
 msgid "E866: (NFA regexp) Misplaced %c"
-msgstr "E866: (NFA regexp) 错误位置的 %c"
+msgstr "E866: (NFA regexp) %c 放错了位置"
 
 #: ../regexp_nfa.c:242
 #, c-format
@@ -5029,7 +5030,7 @@ msgstr "E870: (NFA regexp) 读取重复限制时出错"
 #. Can't have a multi follow a multi.
 #: ../regexp_nfa.c:1895
 msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
-msgstr "E871: (NFA regexp) 不可以有一个muliti跟随一个multi！"
+msgstr "E871: (NFA regexp) 不能多个跟多个！"
 
 #. Too many `('
 #: ../regexp_nfa.c:2037
@@ -5043,7 +5044,7 @@ msgstr "E50: 太多 \\z("
 
 #: ../regexp_nfa.c:2066
 msgid "E873: (NFA regexp) proper termination error"
-msgstr "E873: (NFA regexp) 正确终止错误"
+msgstr "E873: (NFA regexp) 未适当终止"
 
 #: ../regexp_nfa.c:2599
 msgid "E874: (NFA) Could not pop the stack !"
@@ -5053,7 +5054,7 @@ msgstr "E874: (NFA) 无法出栈！"
 msgid ""
 "E875: (NFA regexp) (While converting from postfix to NFA), too many states "
 "left on stack"
-msgstr ""
+msgstr "E875: (NFA regexp) （从后缀转换到 NFA 时），栈上遗留了太多状态"
 
 #: ../regexp_nfa.c:3302
 msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
@@ -5332,7 +5333,7 @@ msgstr "%s 第 %d 行，在使用标志后出现 FLAG: %s"
 msgid ""
 "Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
 "%d"
-msgstr "在 PFX 项之后定义 COMPOUNDFORBIDFLAG 可能会在 %s 行中给出错误的结果"
+msgstr "在 PFX 项之后定义 COMPOUNDFORBIDFLAG （%s 第%d行）可能会给出错误的结果"
 "%d"
 
 #: ../spell.c:4731
@@ -5340,7 +5341,7 @@ msgstr "在 PFX 项之后定义 COMPOUNDFORBIDFLAG 可能会在 %s 行中给出�
 msgid ""
 "Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
 "%d"
-msgstr "在 PFX 项之后定义 COMPOUNDFORBIDFLAG 可能会在 %s 行中给出错误的结果"
+msgstr "在 PFX 项之后定义 COMPOUNDPERMITFLAG （%s 第%d行）可能会给出错误的结果"
 "%d"
 
 #: ../spell.c:4747
@@ -5506,7 +5507,7 @@ msgstr "读取单词文件 %s ……"
 #: ../spell.c:6155
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
-msgstr "重复的 /encoding= 行被忽略了在 %s line %d: %s"
+msgstr "%s 第 %ld 行，重复的 /encoding= 行已被忽略: %s"
 
 #: ../spell.c:6159
 #, c-format
@@ -5666,7 +5667,7 @@ msgstr "E779: 旧的.sug 文件，需要更新: %s"
 #: ../spell.c:9286
 #, c-format
 msgid "E780: .sug file is for newer version of Vim: %s"
-msgstr "E780: .sug 文件适用与较新的vim 版本: %s"
+msgstr "E780: .sug 文件适用于较新的vim 版本: %s"
 
 #: ../spell.c:9295
 #, c-format
@@ -5947,7 +5948,7 @@ msgstr "W18: 组名中含有无效字符"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"
-msgstr "E849: 太多的高亮在语法组中"
+msgstr "E849: 高亮和语法组过多"
 
 #: ../tag.c:104
 msgid "E555: at bottom of tag stack"
