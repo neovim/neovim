@@ -4234,14 +4234,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'mousemoveevent'* *'mousemev'*
 'mousemoveevent' 'mousemev'  boolean	(default off)
 			global
-			{only works in the GUI}
 	When on, mouse move events are delivered to the input queue and are
 	available for mapping. The default, off, avoids the mouse movement
 	overhead except when needed.
 	Warning: Setting this option can make pending mappings to be aborted
 	when the mouse is moved.
-	Currently only works in the GUI, may be made to work in a terminal
-	later.
 
 						*'mousescroll'*
 'mousescroll'		string	(default "ver:3,hor:6")

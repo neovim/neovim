@@ -2755,7 +2755,7 @@ describe('builtin popupmenu', function()
       menu PopUp.bar :let g:menustr = 'bar'<CR>
       menu PopUp.baz :let g:menustr = 'baz'<CR>
     ]])
-    meths.input_mouse('right', 'press', '', 0, 0, 4)
+    feed('<RightMouse><4,0>')
     screen:expect([[
       ^popup menu test                 |
       {1:~  }{n: foo }{1:                        }|
@@ -2792,7 +2792,7 @@ describe('builtin popupmenu', function()
       :let g:menustr = 'bar'          |
     ]])
     eq('bar', meths.get_var('menustr'))
-    meths.input_mouse('right', 'press', '', 0, 1, 20)
+    feed('<RightMouse><20,1>')
     screen:expect([[
       ^popup menu test                 |
       {1:~                               }|
@@ -2801,7 +2801,7 @@ describe('builtin popupmenu', function()
       {1:~                  }{n: baz }{1:        }|
       :let g:menustr = 'bar'          |
     ]])
-    meths.input_mouse('left', 'press', '', 0, 4, 22)
+    feed('<LeftMouse><22,4>')
     screen:expect([[
       ^popup menu test                 |
       {1:~                               }|
@@ -2811,7 +2811,7 @@ describe('builtin popupmenu', function()
       :let g:menustr = 'baz'          |
     ]])
     eq('baz', meths.get_var('menustr'))
-    meths.input_mouse('right', 'press', '', 0, 0, 4)
+    feed('<RightMouse><4,0>')
     screen:expect([[
       ^popup menu test                 |
       {1:~  }{n: foo }{1:                        }|
@@ -2820,7 +2820,7 @@ describe('builtin popupmenu', function()
       {1:~                               }|
       :let g:menustr = 'baz'          |
     ]])
-    meths.input_mouse('right', 'drag', '', 0, 3, 6)
+    feed('<RightDrag><6,3>')
     screen:expect([[
       ^popup menu test                 |
       {1:~  }{n: foo }{1:                        }|
@@ -2829,7 +2829,7 @@ describe('builtin popupmenu', function()
       {1:~                               }|
       :let g:menustr = 'baz'          |
     ]])
-    meths.input_mouse('right', 'release', '', 0, 1, 6)
+    feed('<RightRelease><6,1>')
     screen:expect([[
       ^popup menu test                 |
       {1:~                               }|
@@ -2839,6 +2839,34 @@ describe('builtin popupmenu', function()
       :let g:menustr = 'foo'          |
     ]])
     eq('foo', meths.get_var('menustr'))
+    feed('<RightMouse><4,0>')
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~  }{n: foo }{1:                        }|
+      {1:~  }{n: bar }{1:                        }|
+      {1:~  }{n: baz }{1:                        }|
+      {1:~                               }|
+      :let g:menustr = 'foo'          |
+    ]])
+    feed('<MouseMove><6,3>')
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~  }{n: foo }{1:                        }|
+      {1:~  }{n: bar }{1:                        }|
+      {1:~  }{s: baz }{1:                        }|
+      {1:~                               }|
+      :let g:menustr = 'foo'          |
+    ]])
+    feed('<LeftMouse><6,2>')
+    screen:expect([[
+      ^popup menu test                 |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :let g:menustr = 'bar'          |
+    ]])
+    eq('bar', meths.get_var('menustr'))
   end)
 end)
 
