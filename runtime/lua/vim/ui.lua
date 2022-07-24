@@ -71,7 +71,7 @@ end
 ---     - highlight (function)
 ---               Function that will be used for highlighting
 ---               user inputs.
----     - secret (bool|false)
+---     - secret (boolean)
 ---               If true, `*` will be shown when user types.
 ---@param on_confirm function ((input|nil) -> ())
 ---               Called once the user confirms or abort the input.
@@ -89,13 +89,13 @@ function M.input(opts, on_confirm)
     on_confirm = { on_confirm, 'function', false },
   })
 
-  local secret = opts['secret']
-  opts['secret'] = nil
-
   opts = (opts and not vim.tbl_isempty(opts)) and opts or vim.empty_dict()
 
+  local secret = opts.secret
+  opts.secret = nil
+
   local input
-  if secret ~= nil then
+  if secret then
     input = vim.fn.inputsecret(opts)
   else
     input = vim.fn.input(opts)
