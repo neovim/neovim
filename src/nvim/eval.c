@@ -4664,7 +4664,7 @@ static inline bool set_ref_dict(dict_T *dict, int copyID)
   return false;
 }
 
-/// Get the key for *{key: val} into "tv" and advance "arg".
+/// Get the key for #{key: val} into "tv" and advance "arg".
 ///
 /// @return  FAIL when there is no valid key.
 static int get_literal_key(char **arg, typval_T *tv)
@@ -4684,7 +4684,7 @@ static int get_literal_key(char **arg, typval_T *tv)
 }
 
 /// Allocate a variable for a Dictionary and fill it from "*arg".
-/// "literal" is true for *{key: val}
+/// "literal" is true for #{key: val}
 ///
 /// @return  OK or FAIL.  Returns NOTDONE for {expr}.
 static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
@@ -5587,58 +5587,6 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
   need_wait_return = false;
   msg_didout = false;
   cmd_silent = cmd_silent_save;
-}
-
-/// Turn a dictionary into a list
-///
-/// @param[in] tv      Dictionary to convert. Is checked for actually being
-///                    a dictionary, will give an error if not.
-/// @param[out] rettv  Location where result will be saved.
-/// @param[in] what    What to save in rettv.
-void dict_list(typval_T *const tv, typval_T *const rettv, const DictListType what)
-{
-  if (tv->v_type != VAR_DICT) {
-    emsg(_(e_dictreq));
-    return;
-  }
-  if (tv->vval.v_dict == NULL) {
-    return;
-  }
-
-  tv_list_alloc_ret(rettv, tv_dict_len(tv->vval.v_dict));
-
-  TV_DICT_ITER(tv->vval.v_dict, di, {
-    typval_T tv_item = { .v_lock = VAR_UNLOCKED };
-
-    switch (what) {
-      case kDictListKeys:
-        tv_item.v_type = VAR_STRING;
-        tv_item.vval.v_string = (char *)vim_strsave(di->di_key);
-        break;
-      case kDictListValues:
-        tv_copy(&di->di_tv, &tv_item);
-        break;
-      case kDictListItems: {
-        // items()
-        list_T *const sub_l = tv_list_alloc(2);
-        tv_item.v_type = VAR_LIST;
-        tv_item.vval.v_list = sub_l;
-        tv_list_ref(sub_l);
-
-        tv_list_append_owned_tv(sub_l, (typval_T) {
-          .v_type = VAR_STRING,
-          .v_lock = VAR_UNLOCKED,
-          .vval.v_string = xstrdup((const char *)di->di_key),
-        });
-
-        tv_list_append_tv(sub_l, &di->di_tv);
-
-        break;
-      }
-    }
-
-    tv_list_append_owned_tv(rettv->vval.v_list, tv_item);
-  });
 }
 
 /// Builds a process argument vector from a VimL object (typval_T).
