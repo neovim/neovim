@@ -365,7 +365,7 @@ static struct mousetable {
   { (int)KE_X2DRAG,           MOUSE_X2,       false,  true },
   { (int)KE_X2RELEASE,        MOUSE_X2,       false,  false },
   // DRAG without CLICK
-  { (int)K_MOUSEMOVE,         MOUSE_RELEASE,  false,  true },
+  { (int)KE_MOUSEMOVE,        MOUSE_RELEASE,  false,  true },
   // RELEASE without CLICK
   { (int)KE_IGNORE,           MOUSE_RELEASE,  false,  false },
   { 0,                        0,              0,      0 },
