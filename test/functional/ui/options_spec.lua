@@ -19,6 +19,7 @@ describe('UI receives option updates', function()
       linespace=0,
       pumblend=0,
       mousefocus=false,
+      mousemoveevent=false,
       showtabline=1,
       termguicolors=false,
       ttimeout=true,
@@ -127,6 +128,12 @@ describe('UI receives option updates', function()
 
     command("set mousefocus")
     expected.mousefocus = true
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
+
+    command("set mousemoveevent")
+    expected.mousemoveevent = true
     screen:expect(function()
       eq(expected, screen.options)
     end)

@@ -1625,6 +1625,7 @@ return {
       full_name='mousemoveevent', abbreviation='mousemev',
       short_desc=N_("deliver mouse move events to input queue"),
       type='bool', scope={'global'},
+      redraw={'ui_option'},
       varname='p_mousemev',
       defaults={if_true=false}
     },
