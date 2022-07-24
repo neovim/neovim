@@ -5683,7 +5683,7 @@ msgstr "E47: 读取错误文件失败"
 #. file.
 #: ../spell.c:11575
 msgid "E783: duplicate char in MAP entry"
-msgstr "E783: 重复的字符在 MAP 中"
+msgstr "E783: MAP 条目中有重复的字符"
 
 #: ../syntax.c:266
 msgid "No Syntax items defined for this buffer"
