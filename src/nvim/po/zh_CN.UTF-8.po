@@ -32,7 +32,7 @@ msgstr "选项参数后的内容无效"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
-msgstr ""
+msgstr "内部错误：未知的选项类型"
 
 #: ../buffer.c:92
 msgid "[Location List]"
@@ -44,7 +44,7 @@ msgstr "[Quickfix 列表]"
 
 #: ../buffer.c:94
 msgid "E855: Autocommands caused command to abort"
-msgstr ""
+msgstr "E855: 自动命令导致命令被停止"
 
 #: ../buffer.c:135
 msgid "E82: Cannot allocate any buffer, exiting..."
@@ -336,7 +336,7 @@ msgstr "E105: 不是在脚本文件中使用 :loadkeymap "
 
 #: ../digraph.c:1821
 msgid "E791: Empty keymap entry"
-msgstr ""
+msgstr "E791: 空的键位映射项"
 
 #: ../edit.c:82
 msgid " Keyword completion (^N^P)"
@@ -401,11 +401,11 @@ msgstr "已到段落结尾"
 
 #: ../edit.c:101
 msgid "E839: Completion function changed window"
-msgstr ""
+msgstr "E839: 补全函数更改了窗口"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr ""
+msgstr "E840: 补全函数删除了文本"
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
@@ -1209,6 +1209,9 @@ msgid ""
 "It may still be possible to write it.\n"
 "Do you wish to try?"
 msgstr ""
+"此文件权限 \"%s\" 是只读的。\n"
+"它仍然有可能被写入。\n"
+"你想继续尝试吗？"
 
 #: ../ex_cmds.c:2451
 #, fuzzy, c-format
@@ -1519,7 +1522,7 @@ msgstr "环境变量"
 
 #: ../ex_cmds2.c:2773
 msgid "error handler"
-msgstr ""
+msgstr "错误的处理程序"
 
 #: ../ex_cmds2.c:3020
 msgid "W15: Warning: Wrong line separator, ^M may be missing"
@@ -1836,7 +1839,7 @@ msgstr "捕获异常: %s"
 #: ../ex_eval.c:676
 #, c-format
 msgid "%s made pending"
-msgstr ""
+msgstr "%s 待定"
 
 #: ../ex_eval.c:679
 #, fuzzy, c-format
@@ -1846,7 +1849,7 @@ msgstr " 已返回\n"
 #: ../ex_eval.c:683
 #, c-format
 msgid "%s discarded"
-msgstr ""
+msgstr "%s 舍弃"
 
 #: ../ex_eval.c:708
 msgid "Exception"
@@ -2005,7 +2008,7 @@ msgstr "E199: 活动窗口或缓冲区已被删除"
 
 #: ../file_search.c:203
 msgid "E854: path too long for completion"
-msgstr ""
+msgstr "E854: 补全用的路径太长"
 
 #: ../file_search.c:446
 #, c-format
@@ -2432,7 +2435,7 @@ msgstr "--已删除--"
 #: ../fileio.c:5732
 #, c-format
 msgid "auto-removing autocommand: %s <buffer=%d>"
-msgstr ""
+msgstr "自动删除自动命令: %s <buffer=%d>"
 
 #. the group doesn't exist
 #: ../fileio.c:5772
@@ -2671,7 +2674,7 @@ msgstr "E49: 无效的滚动大小"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
+msgstr "E901: 任务表已经满"
 
 #: ../globals.h:1024
 #, c-format
@@ -3215,6 +3218,7 @@ msgstr "%-5s: %-30s (用法: %s)"
 #: ../if_cscope.c:1155
 msgid ""
 "\n"
+"       a: Find assignments to this symbol\n"
 "       c: Find functions calling this function\n"
 "       d: Find functions called by this function\n"
 "       e: Find this egrep pattern\n"
@@ -3224,6 +3228,16 @@ msgid ""
 "       s: Find this C symbol\n"
 "       t: Find this text string\n"
 msgstr ""
+"\n"
+"       a: 搜索对此符号的赋值\n"
+"       c: 搜索调用此函数的函数\n"
+"       d: 搜索此函数调用的函数\n"
+"       e: 搜索此 egrep 模式\n"
+"       f: 搜索此文件\n"
+"       g: 搜索此定义\n"
+"       i: 搜索包含此文件的文件\n"
+"       s: 搜索此 C 符号\n"
+"       t: 搜索此文本字符串\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
@@ -3455,7 +3469,7 @@ msgstr "-N\t\t\t不完全兼容传统的 Vi: 'nocompatible'"
 
 #: ../main.c:2215
 msgid "-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"
-msgstr ""
+msgstr "-V[N][fname]\t\t详细 [level N] [log messages to fname]"
 
 #: ../main.c:2216
 msgid "-D\t\t\tDebugging mode"
@@ -3547,7 +3561,7 @@ msgstr "-W <scriptout>\t将所有输入的命令写入到文件 <scriptout>"
 
 #: ../main.c:2240
 msgid "--startuptime <file>\tWrite startup timing messages to <file>"
-msgstr ""
+msgstr "--startuptime <file>\t将启动时间信息写入到文件 <file>"
 
 #: ../main.c:2242
 msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
@@ -3738,7 +3752,7 @@ msgstr ""
 
 #: ../memline.c:945
 msgid " has been damaged (page size is smaller than minimum value).\n"
-msgstr ""
+msgstr "已损坏（页面大小小于最小值）。\n"
 
 #: ../memline.c:974
 #, c-format
@@ -3844,7 +3858,7 @@ msgstr "再运行 diff 与原文件比较以检查是否有改变)\n"
 
 #: ../memline.c:1254
 msgid "Recovery completed. Buffer contents equals file contents."
-msgstr ""
+msgstr "恢复完成。缓冲区内容与文件内容相同。"
 
 #: ../memline.c:1255
 #, fuzzy
@@ -4553,7 +4567,7 @@ msgstr ""
 
 #: ../option.c:1238
 msgid "%<%f%h%m%=Page %N"
-msgstr ""
+msgstr "%<%f%h%m%=页 %N"
 
 #: ../option.c:1574
 msgid "Thanks for flying Vim"
@@ -4574,7 +4588,7 @@ msgstr "E520: 不允许在 modeline 中使用"
 
 #: ../option.c:2815
 msgid "E846: Key code not set"
-msgstr ""
+msgstr "E846: 未设置键位代码"
 
 #: ../option.c:2924
 msgid "E521: Number required after ="
@@ -4599,11 +4613,11 @@ msgstr "E589: 'backupext' 和 'patchmode' 相等"
 
 #: ../option.c:3964
 msgid "E834: Conflicts with value of 'listchars'"
-msgstr ""
+msgstr "E834: 与'listchars'中的值发生冲突"
 
 #: ../option.c:3966
 msgid "E835: Conflicts with value of 'fillchars'"
-msgstr ""
+msgstr "E835: 与'fillchars'中的值冲突"
 
 #: ../option.c:4163
 msgid "E524: Missing colon"
@@ -4978,49 +4992,50 @@ msgid ""
 "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
 "used "
 msgstr ""
+"E864: \\%#= 后面只能是0，1，或者2。自动引擎将会被使用"
 
 #: ../regexp_nfa.c:239
 msgid "E865: (NFA) Regexp end encountered prematurely"
-msgstr ""
+msgstr "E865: (NFA) 过早地遇到了正则表达式的结尾"
 
 #: ../regexp_nfa.c:240
 #, c-format
 msgid "E866: (NFA regexp) Misplaced %c"
-msgstr ""
+msgstr "E866: (NFA regexp) %c 放错了位置"
 
 #: ../regexp_nfa.c:242
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
-msgstr ""
+msgstr "E877: (NFA regexp) 不可用的字符类: %<PRId64>"
 
 #: ../regexp_nfa.c:1261
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
-msgstr ""
+msgstr "E867: (NFA) 未知的操作符 '\\z%c'"
 
 #: ../regexp_nfa.c:1387
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\%%%c'"
-msgstr ""
+msgstr "E867: (NFA) 未知的操作符 '\\%%%c'"
 
 #: ../regexp_nfa.c:1802
 #, c-format
 msgid "E869: (NFA) Unknown operator '\\@%c'"
-msgstr ""
+msgstr "E869: (NFA) 未知的操作符 '\\@%c'"
 
 #: ../regexp_nfa.c:1831
 msgid "E870: (NFA regexp) Error reading repetition limits"
-msgstr ""
+msgstr "E870: (NFA regexp) 读取重复限制时出错"
 
 #. Can't have a multi follow a multi.
 #: ../regexp_nfa.c:1895
 msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
-msgstr ""
+msgstr "E871: (NFA regexp) 不能多个跟多个！"
 
 #. Too many `('
 #: ../regexp_nfa.c:2037
 msgid "E872: (NFA regexp) Too many '('"
-msgstr ""
+msgstr "E872: (NFA regexp) 太多 '('"
 
 #: ../regexp_nfa.c:2042
 #, fuzzy
@@ -5029,31 +5044,32 @@ msgstr "E50: 太多 \\z("
 
 #: ../regexp_nfa.c:2066
 msgid "E873: (NFA regexp) proper termination error"
-msgstr ""
+msgstr "E873: (NFA regexp) 未适当终止"
 
 #: ../regexp_nfa.c:2599
 msgid "E874: (NFA) Could not pop the stack !"
-msgstr ""
+msgstr "E874: (NFA) 无法出栈！"
 
 #: ../regexp_nfa.c:3298
 msgid ""
 "E875: (NFA regexp) (While converting from postfix to NFA), too many states "
 "left on stack"
-msgstr ""
+msgstr "E875: (NFA regexp) （从后缀转换到 NFA 时），栈上遗留了太多状态"
 
 #: ../regexp_nfa.c:3302
 msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
-msgstr ""
+msgstr "E876: (NFA regexp) 没有足够的空间存储整个NFA "
 
 #: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
 msgid ""
 "Could not open temporary log file for writing, displaying on stderr ... "
 msgstr ""
+"无法打开临时日志文件进行写入，显示在 stderr 中..."
 
 #: ../regexp_nfa.c:4840
 #, c-format
 msgid "(NFA) COULD NOT OPEN %s !"
-msgstr ""
+msgstr "(NFA) 不能打开 %s !"
 
 #: ../regexp_nfa.c:6049
 #, fuzzy
@@ -5218,6 +5234,9 @@ msgid ""
 "# Last %sSearch Pattern:\n"
 "~"
 msgstr ""
+"\n"
+"# 最后 %s搜索模式:\n"
+"~"
 
 #: ../spell.c:951
 msgid "E759: Format error in spell file"
@@ -5314,14 +5333,16 @@ msgstr "%s 第 %d 行，在使用标志后出现 FLAG: %s"
 msgid ""
 "Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
 "%d"
-msgstr ""
+msgstr "在 PFX 项之后定义 COMPOUNDFORBIDFLAG （%s 第%d行）可能会给出错误的结果"
+"%d"
 
 #: ../spell.c:4731
 #, c-format
 msgid ""
 "Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
 "%d"
-msgstr ""
+msgstr "在 PFX 项之后定义 COMPOUNDPERMITFLAG （%s 第%d行）可能会给出错误的结果"
+"%d"
 
 #: ../spell.c:4747
 #, fuzzy, c-format
@@ -5486,7 +5507,7 @@ msgstr "读取单词文件 %s ……"
 #: ../spell.c:6155
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
-msgstr ""
+msgstr "%s 第 %ld 行，重复的 /encoding= 行已被忽略: %s"
 
 #: ../spell.c:6159
 #, c-format
@@ -5641,17 +5662,17 @@ msgstr "E778: 看起来不像是 .sug 文件: %s"
 #: ../spell.c:9282
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"
-msgstr ""
+msgstr "E779: 旧的.sug 文件，需要更新: %s"
 
 #: ../spell.c:9286
 #, c-format
 msgid "E780: .sug file is for newer version of Vim: %s"
-msgstr ""
+msgstr "E780: .sug 文件适用于较新的vim 版本: %s"
 
 #: ../spell.c:9295
 #, c-format
 msgid "E781: .sug file doesn't match .spl file: %s"
-msgstr ""
+msgstr "E781: .sug 文件不能匹配 .spl 文件: %s"
 
 #: ../spell.c:9305
 #, fuzzy, c-format
@@ -5662,7 +5683,7 @@ msgstr "E47: 读取错误文件失败"
 #. file.
 #: ../spell.c:11575
 msgid "E783: duplicate char in MAP entry"
-msgstr ""
+msgstr "E783: MAP 条目中有重复的字符"
 
 #: ../syntax.c:266
 msgid "No Syntax items defined for this buffer"
@@ -5927,7 +5948,7 @@ msgstr "W18: 组名中含有无效字符"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"
-msgstr ""
+msgstr "E849: 高亮和语法组过多"
 
 #: ../tag.c:104
 msgid "E555: at bottom of tag stack"
@@ -6002,7 +6023,7 @@ msgstr "查找 tag 文件 %s"
 
 #: ../tag.c:1545
 msgid "Ignoring long line in tags file"
-msgstr ""
+msgstr "忽略较长的行在 tags 文件中"
 
 #: ../tag.c:1915
 #, c-format
@@ -6094,25 +6115,25 @@ msgstr "E212: 无法打开并写入文件"
 #: ../undo.c:717
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
-msgstr ""
+msgstr "E825: 已损坏的撤销文件 (%s): %s"
 
 #: ../undo.c:1039
 msgid "Cannot write undo file in any directory in 'undodir'"
-msgstr ""
+msgstr "不能写入撤销文件到 'undodir' 中的任何文件夹"
 
 #: ../undo.c:1074
 #, c-format
 msgid "Will not overwrite with undo file, cannot read: %s"
-msgstr ""
+msgstr "不能重写撤销文件, 不可读取: %s"
 
 #: ../undo.c:1092
 #, c-format
 msgid "Will not overwrite, this is not an undo file: %s"
-msgstr ""
+msgstr "这个文件: %s 不是撤销文件，不可以重写"
 
 #: ../undo.c:1108
 msgid "Skipping undo file write, nothing to undo"
-msgstr ""
+msgstr "跳过写入撤销文件，没有任何撤销"
 
 #: ../undo.c:1121
 #, fuzzy, c-format
@@ -6127,7 +6148,7 @@ msgstr "E297: 交换文件写入错误"
 #: ../undo.c:1280
 #, c-format
 msgid "Not reading undo file, owner differs: %s"
-msgstr ""
+msgstr "不能读取撤销文件, 所有者不同: %s"
 
 #: ../undo.c:1292
 #, fuzzy, c-format
@@ -6151,7 +6172,7 @@ msgstr "E484: 无法打开文件 %s"
 
 #: ../undo.c:1328
 msgid "File contents changed, cannot use undo info"
-msgstr ""
+msgstr "文件内容已改变，不能使用撤销信息"
 
 #: ../undo.c:1497
 #, fuzzy, c-format
@@ -6218,7 +6239,7 @@ msgstr "无可撤销"
 
 #: ../undo.c:2330
 msgid "number changes  when               saved"
-msgstr ""
+msgstr "  编号    变更  时间                保存"
 
 #: ../undo.c:2360
 #, fuzzy, c-format
