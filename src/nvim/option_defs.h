@@ -616,6 +616,7 @@ EXTERN int p_ma;                ///< 'modifiable'
 EXTERN int p_mod;               ///< 'modified'
 EXTERN char *p_mouse;           // 'mouse'
 EXTERN char *p_mousem;          // 'mousemodel'
+EXTERN int p_mousemev;          ///< 'mousemoveevent'
 EXTERN int p_mousef;            // 'mousefocus'
 EXTERN char *p_mousescroll;     // 'mousescroll'
 EXTERN long p_mousescroll_vert INIT(= MOUSESCROLL_VERT_DFLT);
