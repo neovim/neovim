@@ -6023,7 +6023,7 @@ msgstr "查找 tag 文件 %s"
 
 #: ../tag.c:1545
 msgid "Ignoring long line in tags file"
-msgstr ""
+msgstr "忽略较长的行在 tags 文件中"
 
 #: ../tag.c:1915
 #, c-format
@@ -6239,7 +6239,7 @@ msgstr "无可撤销"
 
 #: ../undo.c:2330
 msgid "number changes  when               saved"
-msgstr ""
+msgstr "  编号    变更  时间                保存"
 
 #: ../undo.c:2360
 #, fuzzy, c-format
