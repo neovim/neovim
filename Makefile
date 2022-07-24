@@ -137,7 +137,7 @@ helphtml: | nvim build/runtime/doc/tags
 functionaltest functionaltest-lua unittest benchmark: | nvim
 	$(BUILD_TOOL) -C build $@
 
-lintlua lintsh lintpy lintuncrustify lintc lintcfull check-single-includes generated-sources lintcommit lint: | build/.ran-cmake
+lintlua lintsh lintpy lintuncrustify lintc lintcfull check-single-includes generated-sources lintcommit lint formatc formatlua format: | build/.ran-cmake
 	$(CMAKE_PRG) --build build --target $@
 
 test: functionaltest unittest
@@ -174,4 +174,4 @@ $(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lintlua lintpy lintsh functionaltest unittest lint lintc clean distclean nvim libnvim cmake deps install appimage checkprefix lintcommit
+.PHONY: test lintlua lintpy lintsh functionaltest unittest lint lintc clean distclean nvim libnvim cmake deps install appimage checkprefix lintcommit formatc formatlua format

@@ -218,6 +218,11 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 
 ### Style
 
+- You can format files by using:
+```
+  make format
+```
+This will format changed Lua and C files with all appropriate flags set.
 - Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
   the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
   ```
