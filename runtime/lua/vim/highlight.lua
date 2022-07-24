@@ -35,23 +35,28 @@ end
 
 --- Highlight range between two positions
 ---
----@param bufnr number of buffer to apply highlighting to
----@param ns namespace to add highlight to
----@param higroup highlight group to use for highlighting
----@param start first position (tuple {line,col})
----@param finish second position (tuple {line,col})
----@param opts table with options:
---             - regtype type of range (:help setreg, default charwise)
---             - inclusive boolean indicating whether the range is end-inclusive (default false)
---             - priority number indicating priority of highlight (default priorities.user)
-function M.range(bufnr, ns, higroup, start, finish, opts)
+---@param bufnr (integer) buffer to apply highlighting to
+---@param ns (integer) namespace to add highlight to
+---@param hlgroup (string) highlight group to use for highlighting
+---@param start (table|string) beginning of region
+---        - table: tuple `{line, col}`
+---        - string: `{expr}` (|line()|)
+---@param finish (table|string) end of region
+---@param opts (table) containing
+---            - regtype (string) type of range (|setreg|, default charwise)
+---            - inclusive (boolean) whether the range is end-inclusive (default false)
+---            - priority (number) priority of highlight (default `priorities.user`)
+function M.range(bufnr, ns, hlgroup, start, finish, opts)
   opts = opts or {}
   local regtype = opts.regtype or 'v'
   local inclusive = opts.inclusive or false
   local priority = opts.priority or M.priorities.user
 
   -- sanity check
-  if start[2] < 0 or finish[1] < start[1] then
+  if
+    (type(start) == 'table' and start[2] < 0)
+    or (type(start) == 'table' and type(finish) == 'table' and finish[1] < start[1])
+  then
     return
   end
 
@@ -63,7 +68,7 @@ function M.range(bufnr, ns, higroup, start, finish, opts)
       cols[2] = 0
     end
     api.nvim_buf_set_extmark(bufnr, ns, linenr, cols[1], {
-      hl_group = higroup,
+      hl_group = hlgroup,
       end_row = end_row,
       end_col = cols[2],
       priority = priority,
@@ -83,12 +88,12 @@ local yank_timer
 --- customize conditions (here: do not highlight a visual selection) via
 ---   au TextYankPost * lua vim.highlight.on_yank {on_visual=false}
 ---
--- @param opts table with options controlling the highlight:
---              - higroup   highlight group for yanked region (default "IncSearch")
---              - timeout   time in ms before highlight is cleared (default 150)
---              - on_macro  highlight when executing macro (default false)
---              - on_visual highlight when yanking visual selection (default true)
---              - event     event structure (default vim.v.event)
+---@param opts (table) options controlling the highlight:
+--              - hlgroup (string)    highlight group for yanked region (default "IncSearch")
+--              - timeout (number)    time in ms before highlight is cleared (default 150)
+--              - on_macro (boolean)  highlight when executing macro (default false)
+--              - on_visual (boolean) highlight when yanking visual selection (default true)
+--              - event (table)       event structure (default vim.v.event)
 function M.on_yank(opts)
   vim.validate({
     opts = {
@@ -118,7 +123,7 @@ function M.on_yank(opts)
     return
   end
 
-  local higroup = opts.higroup or 'IncSearch'
+  local hlgroup = opts.higroup or 'IncSearch'
   local timeout = opts.timeout or 150
 
   local bufnr = api.nvim_get_current_buf()
@@ -127,18 +132,12 @@ function M.on_yank(opts)
     yank_timer:close()
   end
 
-  local pos1 = vim.fn.getpos("'[")
-  local pos2 = vim.fn.getpos("']")
-
-  pos1 = { pos1[2] - 1, pos1[3] - 1 + pos1[4] }
-  pos2 = { pos2[2] - 1, pos2[3] - 1 + pos2[4] }
-
   M.range(
     bufnr,
     yank_ns,
-    higroup,
-    pos1,
-    pos2,
+    hlgroup,
+    "'[",
+    "']",
     { regtype = event.regtype, inclusive = event.inclusive, priority = M.priorities.user }
   )
 

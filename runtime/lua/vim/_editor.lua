@@ -399,14 +399,28 @@ end
 --- Get a table of lines with start, end columns for a region marked by two points
 ---
 ---@param bufnr number of buffer
----@param pos1 (line, column) tuple marking beginning of region
----@param pos2 (line, column) tuple marking end of region
----@param regtype type of selection (:help setreg)
----@param inclusive boolean indicating whether the selection is end-inclusive
----@return region lua table of the form {linenr = {startcol,endcol}}
+---@param pos1 (table|string) beginning of region
+---        - table: tuple `{line, col}`
+---        - string: `{expr}` (|line()|)
+---@param pos2 (table|string) end of region
+---@param regtype (string) type of selection (|setreg|)
+---@param inclusive (boolean) whether the selection is end-inclusive
+---@return (table) region of the form {linenr = {startcol,endcol}}
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
+  vim.validate({ pos1 = { 'table', 'string' }, pos2 = { 'table', 'string' } })
+
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
+  end
+
+  if type(pos1) == 'string' then
+    pos1 = vim.fn.getpos(pos1)
+    pos1 = { pos1[2] - 1, pos1[3] - 1 + pos1[4] }
+  end
+
+  if type(pos2) == 'string' then
+    pos2 = vim.fn.getpos(pos2)
+    pos2 = { pos2[2] - 1, pos2[3] - 1 + pos2[4] }
   end
 
   -- check that region falls within current buffer
