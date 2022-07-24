@@ -32,7 +32,7 @@ msgstr "选项参数后的内容无效"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
-msgstr "内部错误： 未知的选项类型"
+msgstr "内部错误：未知的选项类型"
 
 #: ../buffer.c:92
 msgid "[Location List]"
