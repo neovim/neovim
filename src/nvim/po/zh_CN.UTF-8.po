@@ -232,7 +232,7 @@ msgstr ""
 
 #: ../buffer.c:4289
 msgid "[Scratch]"
-msgstr "[]"
+msgstr ""
 
 #: ../buffer.c:4529
 msgid ""
