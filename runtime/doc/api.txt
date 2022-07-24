@@ -1067,9 +1067,11 @@ nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
         |api-fast|
 
     Parameters: ~
-        {button}    Mouse button: one of "left", "right", "middle", "wheel".
+        {button}    Mouse button: one of "left", "right", "middle", "wheel",
+                    "move".
         {action}    For ordinary buttons, one of "press", "drag", "release".
                     For the wheel, one of "up", "down", "left", "right".
+                    Ignored for "move".
         {modifier}  String of modifiers each represented by a single char. The
                     same specifiers are used as for a key press, except that
                     the "-" separator is optional, so "C-A-", "c-a" and "CA"
