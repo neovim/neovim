@@ -4992,8 +4992,7 @@ msgid ""
 "E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
 "used "
 msgstr ""
-"E864: \\%#= 后面只能是0，1，或者2。自动引擎将会 "
-"使用 "
+"E864: \\%#= 后面只能是0，1，或者2。自动引擎将会被使用"
 
 #: ../regexp_nfa.c:239
 msgid "E865: (NFA) Regexp end encountered prematurely"
