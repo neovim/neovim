@@ -1042,6 +1042,10 @@ void pum_show_popupmenu(vimmenu_T *menu)
   pum_scrollbar = 0;
   pum_height = pum_size;
   pum_position_at_mouse(20);
+  if (!p_mousemev) {
+    // Pretend 'mousemoveevent' is set.
+    ui_call_option_set(STATIC_CSTR_AS_STRING("mousemoveevent"), BOOLEAN_OBJ(true));
+  }
 
   pum_selected = -1;
   pum_first = 0;
@@ -1102,6 +1106,9 @@ void pum_show_popupmenu(vimmenu_T *menu)
 
   xfree(array);
   pum_undisplay(true);
+  if (!p_mousemev) {
+    ui_call_option_set(STATIC_CSTR_AS_STRING("mousemoveevent"), BOOLEAN_OBJ(false));
+  }
 }
 
 void pum_make_popup(const char *path_name, int use_mouse_pos)

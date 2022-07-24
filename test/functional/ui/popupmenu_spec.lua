@@ -2839,6 +2839,7 @@ describe('builtin popupmenu', function()
       :let g:menustr = 'foo'          |
     ]])
     eq('foo', meths.get_var('menustr'))
+    eq(false, screen.options.mousemoveevent)
     feed('<RightMouse><4,0>')
     screen:expect([[
       ^popup menu test                 |
@@ -2848,6 +2849,7 @@ describe('builtin popupmenu', function()
       {1:~                               }|
       :let g:menustr = 'foo'          |
     ]])
+    eq(true, screen.options.mousemoveevent)
     feed('<MouseMove><6,3>')
     screen:expect([[
       ^popup menu test                 |
@@ -2857,6 +2859,7 @@ describe('builtin popupmenu', function()
       {1:~                               }|
       :let g:menustr = 'foo'          |
     ]])
+    eq(true, screen.options.mousemoveevent)
     feed('<LeftMouse><6,2>')
     screen:expect([[
       ^popup menu test                 |
@@ -2866,6 +2869,7 @@ describe('builtin popupmenu', function()
       {1:~                               }|
       :let g:menustr = 'bar'          |
     ]])
+    eq(false, screen.options.mousemoveevent)
     eq('bar', meths.get_var('menustr'))
   end)
 end)
@@ -3075,6 +3079,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       :let g:menustr = 'foo'          |
     ]]})
     eq('foo', meths.get_var('menustr'))
+    eq(false, screen.options.mousemoveevent)
     meths.input_mouse('right', 'press', '', 2, 0, 4)
     screen:expect({grid=[[
     ## grid 1
@@ -3097,6 +3102,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       {n: bar }|
       {n: baz }|
     ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    eq(true, screen.options.mousemoveevent)
     meths.input_mouse('move', '', '', 2, 3, 6)
     screen:expect({grid=[[
     ## grid 1
@@ -3119,6 +3125,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
       {n: bar }|
       {s: baz }|
     ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 3, false, 100}}})
+    eq(true, screen.options.mousemoveevent)
     meths.input_mouse('left', 'press', '', 2, 2, 6)
     screen:expect({grid=[[
     ## grid 1
@@ -3137,6 +3144,7 @@ describe('builtin popupmenu with ui/ext_multigrid', function()
     ## grid 3
       :let g:menustr = 'bar'          |
     ]]})
+    eq(false, screen.options.mousemoveevent)
     eq('bar', meths.get_var('menustr'))
   end)
 end)
