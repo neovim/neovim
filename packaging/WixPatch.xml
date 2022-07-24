@@ -10,7 +10,7 @@
         Permanent='no'
         System='yes'
         Part='last'
-        Value='[INSTALL_ROOT]/bin'
+        Value='[INSTALL_ROOT]bin'
       />
     </CPackWiXFragment>
 </CPackWiXPatch>
