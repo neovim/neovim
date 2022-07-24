@@ -141,6 +141,19 @@ function M.is_ancestor(dest, source)
   return false
 end
 
+--- Get the node's range or unpack a range table
+---
+---@param node_or_range table
+---
+---@returns start_row, start_col, end_row, end_col
+function M.get_node_range(node_or_range)
+  if type(node_or_range) == 'table' then
+    return unpack(node_or_range)
+  else
+    return node_or_range:range()
+  end
+end
+
 ---Determines if a node contains a range
 ---@param node table The node
 ---@param range table The range
