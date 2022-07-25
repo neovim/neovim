@@ -36,22 +36,14 @@ test_executable(){
 
 ##! \brief sets the lua interpreter
 set_lua(){
-	if test -z "${EXE}"
-	then
+	if test -z "${EXE}"; then
 		test_executable 'luajit'
 	fi
 
-	if test -z "${EXE}"
-	then
-        test_executable 'texlua'
-    fi
-
-	if test -z "${EXE}"
-	then
+	if test -z "${EXE}"; then
 		test_executable 'lua'
 	fi
-	#echo "final EXE=\"${EXE}\""
-	}
+}
 
 ##! \brief makes canonical name of file
 ##! 
