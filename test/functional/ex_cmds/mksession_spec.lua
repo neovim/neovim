@@ -54,14 +54,26 @@ describe(':mksession', function()
     neq(funcs.winbufnr(1), funcs.winbufnr(3))
   end)
 
+  -- common testing procedure for testing "sessionoptions-=terminal"
+  local function test_terminal_session_disabled(expected_buf_count)
+    command('set sessionoptions-=terminal')
+
+    command('mksession ' .. session_file)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    -- Restore session.
+    command('source ' .. session_file)
+
+    eq(expected_buf_count, #meths.list_bufs())
+  end
+
   it(
     'do not restore :terminal if not set in sessionoptions, terminal in current window #13078',
     function()
-      command('set sessionoptions-=terminal')
-
       local tmpfile_base = file_prefix .. '-tmpfile'
-
-      command('edit ' .. tmpfile_base .. '1')
+      command('edit ' .. tmpfile_base)
       command('terminal')
 
       local buf_count = #meths.list_bufs()
@@ -69,30 +81,19 @@ describe(':mksession', function()
 
       eq('terminal', meths.buf_get_option(0, 'buftype'))
 
-      command('mksession ' .. session_file)
-      command('%bwipeout!')
-
-      -- Create a new test instance of Nvim.
-      clear()
-
-      -- Restore session.
-      command('source ' .. session_file)
+      test_terminal_session_disabled(2)
 
       -- no terminal should be set. As a side effect we end up with a blank buffer
-      eq(2, #meths.list_bufs())
       eq('', meths.buf_get_option(meths.list_bufs()[1], 'buftype'))
       eq('', meths.buf_get_option(meths.list_bufs()[2], 'buftype'))
     end
   )
 
   it('do not restore :terminal if not set in sessionoptions, terminal hidden #13078', function()
-    command('set sessionoptions-=terminal')
-
-    local tmpfile_base = file_prefix .. '-tmpfile'
-
     command('terminal')
     local terminal_bufnr = meths.get_current_buf()
 
+    local tmpfile_base = file_prefix .. '-tmpfile'
     -- make terminal hidden by opening a new file
     command('edit ' .. tmpfile_base .. '1')
 
@@ -101,40 +102,22 @@ describe(':mksession', function()
 
     eq(1, funcs.getbufinfo(terminal_bufnr)[1].hidden)
 
-    command('mksession ' .. session_file)
-    command('%bwipeout!')
-
-    eq(1, #meths.list_bufs())
-
-    -- Create a new test instance of Nvim.
-    clear()
-    -- Restore session.
-    command('source ' .. session_file)
+    test_terminal_session_disabled(1)
 
     -- no terminal should exist here
-    eq(1, #meths.list_bufs())
     neq('', meths.buf_get_name(meths.list_bufs()[1]))
   end)
 
   it('do not restore :terminal if not set in sessionoptions, only buffer #13078', function()
-    command('set sessionoptions-=terminal')
-
     command('terminal')
     eq('terminal', meths.buf_get_option(0, 'buftype'))
 
     local buf_count = #meths.list_bufs()
     eq(1, buf_count)
 
-    command('mksession ' .. session_file)
-    command('%bwipeout!')
-
-    -- Create a new test instance of Nvim.
-    clear()
-    -- Restore session.
-    command('source ' .. session_file)
+    test_terminal_session_disabled(1)
 
     -- no terminal should be set
-    eq(1, #meths.list_bufs())
     eq('', meths.buf_get_option(0, 'buftype'))
   end)
 
