@@ -1506,6 +1506,7 @@ static void get_var_from(const char *varname, typval_T *rettv, typval_T *deftv, 
                          tabpage_T *tp, win_T *win, buf_T *buf)
 {
   bool done = false;
+  const bool do_change_curbuf = buf != NULL && htname == 'b';
 
   emsg_off++;
 
@@ -1518,19 +1519,19 @@ static void get_var_from(const char *varname, typval_T *rettv, typval_T *deftv, 
     // autocommands get blocked.
     // If we have a buffer reference avoid the switching, we're saving and
     // restoring curbuf directly.
-    const bool need_switch_win = !(tp == curtab && win == curwin) || (buf != NULL);
+    const bool need_switch_win = !(tp == curtab && win == curwin) && !do_change_curbuf;
     switchwin_T switchwin;
     if (!need_switch_win || switch_win(&switchwin, win, tp, true) == OK) {
       if (*varname == '&' && htname != 't') {
         buf_T *const save_curbuf = curbuf;
 
         // Change curbuf so the option is read from the correct buffer.
-        if (buf != NULL && htname == 'b') {
+        if (do_change_curbuf) {
           curbuf = buf;
         }
 
         if (varname[1] == NUL) {
-          // get all window-local options in a dict
+          // get all window-local or buffer-local options in a dict
           dict_T *opts = get_winbuf_options(htname == 'b');
 
           if (opts != NULL) {
