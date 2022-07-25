@@ -115,7 +115,10 @@ void diff_buf_delete(buf_T *buf)
       tp->tp_diff_invalid = true;
 
       if (tp == curtab) {
-        diff_redraw(true);
+        // don't redraw right away, more might change or buffer state
+        // is invalid right now
+        need_diff_redraw = true;
+        redraw_later(curwin, VALID);
       }
     }
   }
@@ -648,7 +651,8 @@ void diff_redraw(bool dofold)
 
   need_diff_redraw = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (!wp->w_p_diff) {
+    // when closing windows or wiping buffers skip invalid window
+    if (!wp->w_p_diff || !buf_valid(wp->w_buffer)) {
       continue;
     }
     redraw_later(wp, SOME_VALID);

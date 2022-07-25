@@ -1446,5 +1446,17 @@ func Test_diff_scroll()
   call delete('Xright')
 endfunc
 
+" This was trying to update diffs for a buffer being closed
+func Test_diff_only()
+  silent! lfile
+  set diff
+  lopen
+  norm o
+  silent! norm o
+
+  set nodiff
+  %bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
