@@ -620,7 +620,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       emsg(_(e_letunexp));
     } else {
       varnumber_T n = 0;
-      int opt_type;
+      getoption_T opt_type;
       long numval;
       char *stringval = NULL;
       const char *s = NULL;
@@ -630,7 +630,10 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       *p = NUL;
 
       opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
-      if (opt_type == 1 || opt_type == -1) {
+      if (opt_type == gov_bool
+          || opt_type == gov_number
+          || opt_type == gov_hidden_bool
+          || opt_type == gov_hidden_number) {
         // number, possibly hidden
         n = (long)tv_get_number(tv);
       }
@@ -641,12 +644,13 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       }
 
       if (op != NULL && *op != '=') {
-        if ((opt_type == 1 && *op == '.')
-            || (opt_type == 0 && *op != '.')) {
+        if (((opt_type == gov_bool || opt_type == gov_number) && *op == '.')
+            || (opt_type == gov_string && *op != '.')) {
           semsg(_(e_letwrong), op);
           failed = true;  // don't set the value
         } else {
-          if (opt_type == 1) {  // number
+          // number or bool
+          if (opt_type == gov_number || opt_type == gov_bool) {
             switch (*op) {
             case '+':
               n = numval + n; break;
@@ -659,7 +663,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
             case '%':
               n = num_modulus(numval, n); break;
             }
-          } else if (opt_type == 0 && stringval != NULL && s != NULL) {
+          } else if (opt_type == gov_string && stringval != NULL && s != NULL) {
             // string
             char *const oldstringval = stringval;
             stringval = (char *)concat_str((const char_u *)stringval,
@@ -671,7 +675,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       }
 
       if (!failed) {
-        if (opt_type != 0 || s != NULL) {
+        if (opt_type != gov_string || s != NULL) {
           set_option_value(arg, n, s, opt_flags);
           arg_end = p;
         } else {

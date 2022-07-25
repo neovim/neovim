@@ -5046,28 +5046,29 @@ static int findoption(const char *const arg)
 /// @param stringval  NULL when only checking existence
 ///
 /// @returns:
-///           Toggle option: 2, *numval gets value.
-///           Number option: 1, *numval gets value.
-///           String option: 0, *stringval gets allocated string.
-/// Hidden Number or Toggle option: -1.
-///           hidden String option: -2.
-///                 unknown option: -3.
-int get_option_value(const char *name, long *numval, char **stringval, int opt_flags)
+///           Number option: gov_number, *numval gets value.
+///           Tottle option: gov_bool,   *numval gets value.
+///           String option: gov_string, *stringval gets allocated string.
+///           Hidden Number option: gov_hidden_number.
+///           Hidden Toggle option: gov_hidden_bool.
+///           Hidden String option: gov_hidden_string.
+///           Unknown option: gov_unknown.
+getoption_T get_option_value(const char *name, long *numval, char **stringval, int opt_flags)
 {
   if (get_tty_option(name, stringval)) {
-    return 0;
+    return gov_string;
   }
 
   int opt_idx = findoption(name);
-  if (opt_idx < 0) {  // Unknown option.
-    return -3;
+  if (opt_idx < 0) {  // option not in the table
+    return gov_unknown;
   }
 
   char_u *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
 
   if (options[opt_idx].flags & P_STRING) {
     if (varp == NULL) {  // hidden option
-      return -2;
+      return gov_hidden_string;
     }
     if (stringval != NULL) {
       if ((char_u **)varp == &p_pt) {  // 'pastetoggle'
@@ -5076,26 +5077,24 @@ int get_option_value(const char *name, long *numval, char **stringval, int opt_f
         *stringval = xstrdup(*(char **)(varp));
       }
     }
-    return 0;
+    return gov_string;
   }
 
   if (varp == NULL) {  // hidden option
-    return -1;
+    return (options[opt_idx].flags & P_NUM) ? gov_hidden_number : gov_hidden_bool;
   }
   if (options[opt_idx].flags & P_NUM) {
     *numval = *(long *)varp;
-    return 1;
-  }
-
-  // Special case: 'modified' is b_changed, but we also want to consider
-  // it set when 'ff' or 'fenc' changed.
-  if ((int *)varp == &curbuf->b_changed) {
-    *numval = curbufIsChanged();
   } else {
-    *numval = (long)*(int *)varp;  // NOLINT(whitespace/cast)
+    // Special case: 'modified' is b_changed, but we also want to consider
+    // it set when 'ff' or 'fenc' changed.
+    if ((int *)varp == &curbuf->b_changed) {
+      *numval = curbufIsChanged();
+    } else {
+      *numval = (long)(*(int *)varp);
+    }
   }
-
-  return 2;
+  return (options[opt_idx].flags & P_NUM) ? gov_number : gov_bool;
 }
 
 // Returns the option attributes and its value. Unlike the above function it
