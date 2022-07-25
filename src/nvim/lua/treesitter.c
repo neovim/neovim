@@ -14,10 +14,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/log.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/memline.h"
 #include "tree_sitter/api.h"
@@ -145,18 +147,27 @@ int tslua_has_language(lua_State *L)
   return 1;
 }
 
+// Creates the language into the internal language map.
+//
+// Returns true if the language is correctly loaded in the language map
 int tslua_add_language(lua_State *L)
 {
   const char *path = luaL_checkstring(L, 1);
   const char *lang_name = luaL_checkstring(L, 2);
+  const char *symbol_name = lang_name;
+
+  if (lua_gettop(L) >= 3 && !lua_isnil(L, 3)) {
+    symbol_name = luaL_checkstring(L, 3);
+  }
 
   if (pmap_has(cstr_t)(&langs, lang_name)) {
-    return 0;
+    lua_pushboolean(L, true);
+    return 1;
   }
 
 #define BUFSIZE 128
   char symbol_buf[BUFSIZE];
-  snprintf(symbol_buf, BUFSIZE, "tree_sitter_%s", lang_name);
+  snprintf(symbol_buf, BUFSIZE, "tree_sitter_%s", symbol_name);
 #undef BUFSIZE
 
   uv_lib_t lib;
@@ -179,6 +190,7 @@ int tslua_add_language(lua_State *L)
 
   TSLanguage *lang = lang_parser();
   if (lang == NULL) {
+    uv_dlclose(&lib);
     return luaL_error(L, "Failed to load parser %s: internal error", path);
   }
 
