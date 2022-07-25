@@ -619,26 +619,38 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
             && vim_strchr(endchars, *skipwhite(p)) == NULL)) {
       emsg(_(e_letunexp));
     } else {
-      int opt_type;
+      varnumber_T n = 0;
+      getoption_T opt_type;
       long numval;
       char *stringval = NULL;
       const char *s = NULL;
+      bool failed = false;
 
       const char c1 = *p;
       *p = NUL;
 
-      varnumber_T n = tv_get_number(tv);
-      if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
-        s = tv_get_string_chk(tv);  // != NULL if number or string.
+      opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
+      if (opt_type == gov_bool
+          || opt_type == gov_number
+          || opt_type == gov_hidden_bool
+          || opt_type == gov_hidden_number) {
+        // number, possibly hidden
+        n = (long)tv_get_number(tv);
       }
-      if (s != NULL && op != NULL && *op != '=') {
-        opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
-        if ((opt_type == 1 && *op == '.')
-            || (opt_type == 0 && *op != '.')) {
+
+      // Avoid setting a string option to the text "v:false" or similar.
+      if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+        s = tv_get_string_chk(tv);
+      }
+
+      if (op != NULL && *op != '=') {
+        if (((opt_type == gov_bool || opt_type == gov_number) && *op == '.')
+            || (opt_type == gov_string && *op != '.')) {
           semsg(_(e_letwrong), op);
-          s = NULL;  // don't set the value
+          failed = true;  // don't set the value
         } else {
-          if (opt_type == 1) {  // number
+          // number or bool
+          if (opt_type == gov_number || opt_type == gov_bool) {
             switch (*op) {
             case '+':
               n = numval + n; break;
@@ -651,7 +663,9 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
             case '%':
               n = num_modulus(numval, n); break;
             }
-          } else if (opt_type == 0 && stringval != NULL) {  // string
+            s = NULL;
+          } else if (opt_type == gov_string && stringval != NULL && s != NULL) {
+            // string
             char *const oldstringval = stringval;
             stringval = (char *)concat_str((const char_u *)stringval,
                                            (const char_u *)s);
@@ -660,10 +674,14 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           }
         }
       }
-      if (s != NULL || tv->v_type == VAR_BOOL
-          || tv->v_type == VAR_SPECIAL) {
-        set_option_value((const char *)arg, n, s, opt_flags);
-        arg_end = p;
+
+      if (!failed) {
+        if (opt_type != gov_string || s != NULL) {
+          set_option_value(arg, n, s, opt_flags);
+          arg_end = p;
+        } else {
+          emsg(_(e_stringreq));
+        }
       }
       *p = c1;
       xfree(stringval);
@@ -1547,10 +1565,18 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 /// Set option "varname" to the value of "varp" for the current buffer/window.
 static void set_option_from_tv(const char *varname, typval_T *varp)
 {
+  long numval = 0;
+  const char *strval;
   bool error = false;
   char nbuf[NUMBUFLEN];
-  const long numval = (long)tv_get_number_chk(varp, &error);
-  const char *const strval = tv_get_string_buf_chk(varp, nbuf);
+
+  if (varp->v_type == VAR_BOOL) {
+    numval = (long)varp->vval.v_number;
+    strval = "0";  // avoid using "false"
+  } else {
+    numval = (long)tv_get_number_chk(varp, &error);
+    strval = tv_get_string_buf_chk(varp, nbuf);
+  }
   if (!error && strval != NULL) {
     set_option_value(varname, numval, strval, OPT_LOCAL);
   }

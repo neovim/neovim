@@ -3,6 +3,17 @@
 
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
 
+/// Returned by get_option_value().
+typedef enum {
+  gov_unknown,
+  gov_bool,
+  gov_number,
+  gov_string,
+  gov_hidden_bool,
+  gov_hidden_number,
+  gov_hidden_string,
+} getoption_T;
+
 // flags for buf_copy_options()
 #define BCO_ENTER       1       // going to enter the buffer
 #define BCO_ALWAYS      2       // always copy the options

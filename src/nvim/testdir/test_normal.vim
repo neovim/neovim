@@ -580,6 +580,7 @@ endfunc
 func Test_normal_z_error()
   call assert_beeps('normal! z2p')
   call assert_beeps('normal! zq')
+  call assert_beeps('normal! cz1')
 endfunc
 
 func Test_normal15_z_scroll_vert()
@@ -619,7 +620,7 @@ func Test_normal15_z_scroll_vert()
   call assert_equal(10, winheight(0))
   exe "norm! z12\<cr>"
   call assert_equal(12, winheight(0))
-  exe "norm! z10\<cr>"
+  exe "norm! z15\<Del>0\<cr>"
   call assert_equal(10, winheight(0))
 
   " Test for z.

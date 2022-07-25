@@ -6880,7 +6880,7 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  get_option_value("spl", &dummy, &spl, OPT_LOCAL);
+  (void)get_option_value("spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");

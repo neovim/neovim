@@ -1332,4 +1332,50 @@ func Test_diff_binary()
   set diffopt&vim
 endfunc
 
+" Test for using the 'zi' command to invert 'foldenable' in diff windows (test
+" for the issue fixed by patch 6.2.317)
+func Test_diff_foldinvert()
+  %bw!
+  edit Xfile1
+  new Xfile2
+  new Xfile3
+  windo diffthis
+  " open a non-diff window
+  botright new
+  1wincmd w
+  call assert_true(getwinvar(1, '&foldenable'))
+  call assert_true(getwinvar(2, '&foldenable'))
+  call assert_true(getwinvar(3, '&foldenable'))
+  normal zi
+  call assert_false(getwinvar(1, '&foldenable'))
+  call assert_false(getwinvar(2, '&foldenable'))
+  call assert_false(getwinvar(3, '&foldenable'))
+  normal zi
+  call assert_true(getwinvar(1, '&foldenable'))
+  call assert_true(getwinvar(2, '&foldenable'))
+  call assert_true(getwinvar(3, '&foldenable'))
+
+  " If the current window has 'noscrollbind', then 'zi' should not change
+  " 'foldenable' in other windows.
+  1wincmd w
+  set noscrollbind
+  normal zi
+  call assert_false(getwinvar(1, '&foldenable'))
+  call assert_true(getwinvar(2, '&foldenable'))
+  call assert_true(getwinvar(3, '&foldenable'))
+
+  " 'zi' should not change the 'foldenable' for windows with 'noscrollbind'
+  1wincmd w
+  set scrollbind
+  normal zi
+  call setwinvar(2, '&scrollbind', v:false)
+  normal zi
+  call assert_false(getwinvar(1, '&foldenable'))
+  call assert_true(getwinvar(2, '&foldenable'))
+  call assert_false(getwinvar(3, '&foldenable'))
+
+  %bw!
+  set scrollbind&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

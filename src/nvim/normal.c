@@ -3485,7 +3485,8 @@ void scroll_redraw(int up, long count)
   redraw_later(curwin, VALID);
 }
 
-/// Get the count specified after a 'z' command.
+/// Get the count specified after a 'z' command. Only the 'z<CR>', 'zl', 'zh',
+/// 'z<Left>', and 'z<Right>' commands accept a count after 'z'.
 /// @return  true to process the 'z' command and false to skip it.
 static bool nv_z_get_count(cmdarg_T *cap, int *nchar_arg)
 {

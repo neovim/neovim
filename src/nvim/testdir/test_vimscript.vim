@@ -1661,16 +1661,25 @@ func Test_compound_assignment_operators()
     call assert_equal(6, &scrolljump)
     let &scrolljump %= 5
     call assert_equal(1, &scrolljump)
-    call assert_fails('let &scrolljump .= "j"', 'E734')
+    call assert_fails('let &scrolljump .= "j"', 'E734:')
     set scrolljump&vim
+
+    let &foldlevelstart = 2
+    let &foldlevelstart -= 1
+    call assert_equal(1, &foldlevelstart)
+    let &foldlevelstart -= 1
+    call assert_equal(0, &foldlevelstart)
+    let &foldlevelstart = 2
+    let &foldlevelstart -= 2
+    call assert_equal(0, &foldlevelstart)
 
     " Test for register
     let @/ = 1
-    call assert_fails('let @/ += 1', 'E734')
-    call assert_fails('let @/ -= 1', 'E734')
-    call assert_fails('let @/ *= 1', 'E734')
-    call assert_fails('let @/ /= 1', 'E734')
-    call assert_fails('let @/ %= 1', 'E734')
+    call assert_fails('let @/ += 1', 'E734:')
+    call assert_fails('let @/ -= 1', 'E734:')
+    call assert_fails('let @/ *= 1', 'E734:')
+    call assert_fails('let @/ /= 1', 'E734:')
+    call assert_fails('let @/ %= 1', 'E734:')
     let @/ .= 's'
     call assert_equal('1s', @/)
     let @/ = ''
