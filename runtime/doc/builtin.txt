@@ -1885,7 +1885,9 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 					To check for a supported command
 					always check the return value to be 2.
 			:2match		The |:2match| command.
-			:3match		The |:3match| command.
+			:3match		The |:3match| command (but you
+					probably should not use it, it is
+					reserved for internal usage)
 			#event		autocommand defined for this event
 			#event#pattern	autocommand defined for this event and
 					pattern (the pattern is taken
@@ -4905,8 +4907,10 @@ matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
 		message will appear and the match will not be added.  An ID
 		is specified as a positive integer (zero excluded).  IDs 1, 2
 		and 3 are reserved for |:match|, |:2match| and |:3match|,
-		respectively.  If the {id} argument is not specified or -1,
-		|matchadd()| automatically chooses a free ID.
+		respectively.  3 is reserved for use by the
+		|matchparen| plugin.
+		If the {id} argument is not specified or -1, |matchadd()|
+		automatically chooses a free ID.
 
 		The optional {dict} argument allows for further custom
 		values. Currently this is used to specify a match specific
@@ -6397,7 +6401,7 @@ searchcount([{options}])					*searchcount()*
 			" to 1)
 			let result = searchcount()
 <
-		The function is useful to add the count to |statusline|: >
+		The function is useful to add the count to 'statusline': >
 			function! LastSearchCount() abort
 			  let result = searchcount(#{recompute: 0})
 			  if empty(result)

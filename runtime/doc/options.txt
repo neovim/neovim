@@ -3571,7 +3571,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	help.  (Note that previously setting the global option to the empty
 	value did this, which is now deprecated.)
 	When the first character is ":", the command is invoked as a Vim
-	command prefixed with [count].
+	Ex command with [count] added as an argument if it is not zero.
 	When "man" or "man -s" is used, Vim will automatically translate
 	a [count] for the "K" command to a section number.
 	See |option-backslash| about including spaces and backslashes.
