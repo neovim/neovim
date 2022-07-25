@@ -43,7 +43,9 @@ func Test_other_type()
 endfunc
 
 " Filetypes detected just from matching the file name.
+" First one is checking that these files have no filetype.
 let s:filename_checks = {
+    \ 'none': ['bsd', 'some-bsd'],
     \ '8th': ['file.8th'],
     \ 'a2ps': ['/etc/a2ps.cfg', '/etc/a2ps/file.cfg', 'a2psrc', '.a2psrc', 'any/etc/a2ps.cfg', 'any/etc/a2ps/file.cfg'],
     \ 'a65': ['file.a65'],
@@ -85,7 +87,7 @@ let s:filename_checks = {
     \ 'bindzone': ['named.root', '/bind/db.file', '/named/db.file', 'any/bind/db.file', 'any/named/db.file'],
     \ 'bitbake': ['file.bb', 'file.bbappend', 'file.bbclass', 'build/conf/local.conf', 'meta/conf/layer.conf', 'build/conf/bbappend.conf', 'meta-layer/conf/distro/foo.conf'],
     \ 'blank': ['file.bl'],
-    \ 'bsdl': ['file.bsd', 'file.bsdl', 'bsd', 'some-bsd'],
+    \ 'bsdl': ['file.bsd', 'file.bsdl'],
     \ 'bst': ['file.bst'],
     \ 'bzl': ['file.bazel', 'file.bzl', 'WORKSPACE'],
     \ 'bzr': ['bzr_log.any', 'bzr_log.file'],
@@ -647,7 +649,8 @@ func CheckItems(checks)
       if &filetype == '' && &readonly
 	" File exists but not able to edit it (permission denied)
       else
-	call assert_equal(ft, &filetype, 'with file name: ' . names[i])
+        let expected = ft == 'none' ? '' : ft
+	call assert_equal(expected, &filetype, 'with file name: ' . names[i])
       endif
       bwipe!
     endfor

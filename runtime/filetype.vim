@@ -260,7 +260,7 @@ au BufNewFile,BufRead *.bb,*.bbappend,*.bbclass,*/build/conf/*.conf,*/meta{-*,}/
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
 
 " BSDL
-au BufNewFile,BufRead *bsd,*.bsdl		setf bsdl
+au BufNewFile,BufRead *.bsd,*.bsdl			setf bsdl
 
 " Bazel (http://bazel.io)
 autocmd BufRead,BufNewFile *.bzl,*.bazel,WORKSPACE	setf bzl
