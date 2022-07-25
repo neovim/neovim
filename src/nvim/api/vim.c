@@ -93,7 +93,6 @@ Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
 }
 
 /// Gets a highlight definition by id. |hlID()|
-///
 /// @param hl_id Highlight id as returned by |hlID()|
 /// @param rgb Export RGB colors
 /// @param[out] err Error details, if any
@@ -182,35 +181,38 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   }
 }
 
-/// Set active namespace for highlights.
+/// Set active namespace for highlights. This can be set for a single window,
+/// see |nvim_win_set_hl_ns|.
 ///
-/// NB: this function can be called from async contexts, but the
-/// semantics are not yet well-defined. To start with
-/// |nvim_set_decoration_provider| on_win and on_line callbacks
-/// are explicitly allowed to change the namespace during a redraw cycle.
+/// @param ns_id the namespace to use
+/// @param[out] err Error details, if any
+void nvim_set_hl_ns(Integer ns_id, Error *err)
+  FUNC_API_SINCE(10)
+{
+  if (ns_id < 0) {
+    api_set_error(err, kErrorTypeValidation, "no such namespace");
+    return;
+  }
+
+  ns_hl_global = (NS)ns_id;
+  hl_check_ns();
+  redraw_all_later(NOT_VALID);
+}
+
+/// Set active namespace for highlights while redrawing.
+///
+/// This function meant to be called while redrawing, primarily from
+/// |nvim_set_decoration_provider| on_win and on_line callbacks, which
+/// are allowed to change the namespace during a redraw cycle.
 ///
 /// @param ns_id the namespace to activate
 /// @param[out] err Error details, if any
-void nvim__set_hl_ns(Integer ns_id, Error *err)
+void nvim_set_hl_ns_fast(Integer ns_id, Error *err)
+  FUNC_API_SINCE(10)
   FUNC_API_FAST
 {
-  if (ns_id >= 0) {
-    ns_hl_active = (NS)ns_id;
-  }
-
-  // TODO(bfredl): this is a little bit hackish.  Eventually we want a standard
-  // event path for redraws caused by "fast" events. This could tie in with
-  // better throttling of async events causing redraws, such as non-batched
-  // nvim_buf_set_extmark calls from async contexts.
-  if (!provider_active && !ns_hl_changed && must_redraw < NOT_VALID) {
-    multiqueue_put(main_loop.events, on_redraw_event, 0);
-  }
-  ns_hl_changed = true;
-}
-
-static void on_redraw_event(void **argv)
-{
-  redraw_all_later(NOT_VALID);
+  ns_hl_fast = (NS)ns_id;
+  hl_check_ns();
 }
 
 /// Sends input-keys to Nvim, subject to various quirks controlled by `mode`
@@ -480,7 +482,7 @@ Object nvim_notify(String msg, Integer log_level, Dictionary opts, Error *err)
   ADD_C(args, INTEGER_OBJ(log_level));
   ADD_C(args, DICTIONARY_OBJ(opts));
 
-  return nlua_exec(STATIC_CSTR_AS_STRING("return vim.notify(...)"), args, err);
+  return NLUA_EXEC_STATIC("return vim.notify(...)", args, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.
@@ -1835,11 +1837,9 @@ Array nvim_get_proc_children(Integer pid, Error *err)
   if (rv == 2) {
     // syscall failed (possibly because of kernel options), try shelling out.
     DLOG("fallback to vim._os_proc_children()");
-    Array a = ARRAY_DICT_INIT;
+    MAXSIZE_TEMP_ARRAY(a, 1);
     ADD(a, INTEGER_OBJ(pid));
-    String s = STATIC_CSTR_AS_STRING("return vim._os_proc_children(...)");
-    Object o = nlua_exec(s, a, err);
-    api_free_array(a);
+    Object o = NLUA_EXEC_STATIC("return vim._os_proc_children(...)", a, err);
     if (o.type == kObjectTypeArray) {
       rvobj = o.data.array;
     } else if (!ERROR_SET(err)) {
@@ -1880,12 +1880,9 @@ Object nvim_get_proc(Integer pid, Error *err)
   }
 #else
   // Cross-platform process info APIs are miserable, so use `ps` instead.
-  Array a = ARRAY_DICT_INIT;
+  MAXSIZE_TEMP_ARRAY(a, 1);
   ADD(a, INTEGER_OBJ(pid));
-  String s = cstr_to_string("return vim._os_proc_info(select(1, ...))");
-  Object o = nlua_exec(s, a, err);
-  api_free_string(s);
-  api_free_array(a);
+  Object o = NLUA_EXEC_STATIC("return vim._os_proc_info(...)", a, err);
   if (o.type == kObjectTypeArray && o.data.array.size == 0) {
     return NIL;  // Process not found.
   } else if (o.type == kObjectTypeDictionary) {

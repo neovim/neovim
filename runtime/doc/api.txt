@@ -603,20 +603,6 @@ nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
     NB: if your UI doesn't use hlstate, this will not return hlstate first
     time.
 
-nvim__set_hl_ns({ns_id})                                   *nvim__set_hl_ns()*
-    Set active namespace for highlights.
-
-    NB: this function can be called from async contexts, but the semantics are
-    not yet well-defined. To start with |nvim_set_decoration_provider| on_win
-    and on_line callbacks are explicitly allowed to change the namespace
-    during a redraw cycle.
-
-    Attributes: ~
-        |api-fast|
-
-    Parameters: ~
-        {ns_id}  the namespace to activate
-
 nvim__stats()                                                  *nvim__stats()*
     Gets internal stats.
 
@@ -1413,6 +1399,26 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                  • cterm: cterm attribute map, like |highlight-args|. If not
                    set, cterm attributes will match those from the attribute
                    map documented above.
+
+nvim_set_hl_ns({ns_id})                                     *nvim_set_hl_ns()*
+    Set active namespace for highlights. This can be set for a single window,
+    see |nvim_win_set_hl_ns|.
+
+    Parameters: ~
+        {ns_id}  the namespace to use
+
+nvim_set_hl_ns_fast({ns_id})                           *nvim_set_hl_ns_fast()*
+    Set active namespace for highlights while redrawing.
+
+    This function meant to be called while redrawing, primarily from
+    |nvim_set_decoration_provider| on_win and on_line callbacks, which are
+    allowed to change the namespace during a redraw cycle.
+
+    Attributes: ~
+        |api-fast|
+
+    Parameters: ~
+        {ns_id}  the namespace to activate
 
 nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
     Sets a global |mapping| for the given mode.
@@ -2874,6 +2880,15 @@ nvim_win_set_height({window}, {height})                *nvim_win_set_height()*
     Parameters: ~
         {window}  Window handle, or 0 for current window
         {height}  Height as a count of rows
+
+nvim_win_set_hl_ns({window}, {ns_id})                   *nvim_win_set_hl_ns()*
+    Set highlight namespace for a window. This will use highlights defined in
+    this namespace, but fall back to global highlights (ns=0) when missing.
+
+    This takes predecence over the 'winhighlight' option.
+
+    Parameters: ~
+        {ns_id}  the namespace to use
 
 nvim_win_set_var({window}, {name}, {value})               *nvim_win_set_var()*
     Sets a window-scoped (w:) variable

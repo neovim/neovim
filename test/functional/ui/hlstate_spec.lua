@@ -119,13 +119,15 @@ describe('ext_hlstate detailed highlights', function()
         [3] = {{bold = true, reverse = true}, {{hi_name = "StatusLine", ui_name = "StatusLine", kind = "ui"}}},
         [4] = {{reverse = true}, {{hi_name = "StatusLineNC", ui_name = "StatusLineNC", kind = "ui"}}},
         [5] = {{background = Screen.colors.Red, foreground = Screen.colors.Grey100}, {{hi_name = "ErrorMsg", ui_name = "LineNr", kind = "ui"}}},
-        [6] = {{bold = true, reverse = true}, {{hi_name = "MsgSeparator", ui_name = "Normal", kind = "ui"}}},
+        [6] = {{bold = true, reverse = true}, {{hi_name = "Normal", ui_name = "Normal", kind = "ui"}}},
         [7] = {{foreground = Screen.colors.Brown, bold = true, reverse = true}, {6, 1}},
-        [8] = {{foreground = Screen.colors.Blue1, bold = true, reverse = true}, {6, 2}},
-        [9] = {{bold = true, foreground = Screen.colors.Brown}, {{hi_name = "Statement", ui_name = "NormalNC", kind = "ui"}}},
+        [8] = {{foreground = Screen.colors.Blue1, bold = true, reverse = true}, {6, 14}},
+        [9] = {{bold = true, foreground = Screen.colors.Brown}, {{hi_name = "NormalNC", ui_name = "NormalNC", kind = "ui"}}},
         [10] = {{bold = true, foreground = Screen.colors.Brown}, {9, 1}},
-        [11] = {{bold = true, foreground = Screen.colors.Blue1}, {9, 2}},
+        [11] = {{bold = true, foreground = Screen.colors.Blue1}, {9, 14}},
         [12] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
+        [13] = {{background = Screen.colors.Red1, foreground = Screen.colors.Gray100}, {{ui_name = "LineNr", kind = "ui", hi_name = "LineNr"}}};
+        [14] = {{bold = true, foreground = Screen.colors.Blue}, {{ui_name = "EndOfBuffer", kind = "ui", hi_name = "EndOfBuffer"}}};
     })
 
     command("set number")
@@ -143,16 +145,16 @@ describe('ext_hlstate detailed highlights', function()
     ]])
 
     command("set winhl=LineNr:ErrorMsg")
-    screen:expect([[
-      {5:  1 }^                                    |
-      {2:~                                       }|
-      {2:~                                       }|
+    screen:expect{grid=[[
+      {13:  1 }^                                    |
+      {14:~                                       }|
+      {14:~                                       }|
       {3:[No Name]                               }|
       {1:  1 }                                    |
       {2:~                                       }|
       {4:[No Name]                               }|
       {12:                                        }|
-    ]])
+    ]]}
 
     command("set winhl=Normal:MsgSeparator,NormalNC:Statement")
     screen:expect([[

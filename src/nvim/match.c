@@ -11,6 +11,7 @@
 #include "nvim/eval/funcs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fold.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/match.h"
 #include "nvim/memline.h"
@@ -696,7 +697,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
         }
         // Highlight the match were the cursor is using the CurSearch
         // group.
-        if (shl == search_hl && shl->has_cursor && (HL_ATTR(HLF_LC) || wp->w_hl_ids[HLF_LC])) {
+        if (shl == search_hl && shl->has_cursor && (HL_ATTR(HLF_LC) || win_hl_attr(wp, HLF_LC))) {
           shl->attr_cur = win_hl_attr(wp, HLF_LC) ? win_hl_attr(wp, HLF_LC) : HL_ATTR(HLF_LC);
         } else {
           shl->attr_cur = shl->attr;

@@ -17,6 +17,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/grid.h"
+#include "nvim/highlight.h"
 #include "nvim/insexpand.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

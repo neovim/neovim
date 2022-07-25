@@ -14,7 +14,7 @@ static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
   { ns_id, false, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, -1 }
+    LUA_NOREF, -1, false }
 
 static bool decor_provider_invoke(NS ns_id, const char *name, LuaRef ref, Array args,
                                   bool default_true, char **perr)
@@ -107,8 +107,6 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
       }
     }
   }
-
-  win_check_ns_hl(wp);
 }
 
 /// For each provider invoke the 'line' callback for a given window row.
@@ -135,7 +133,7 @@ void providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *
         kv_A(*providers, k) = NULL;
       }
 
-      win_check_ns_hl(wp);
+      hl_check_ns();
     }
   }
 }

@@ -1031,6 +1031,8 @@ void nvim_set_decoration_provider(Integer ns_id, DictionaryOf(LuaRef) opts, Erro
   }
 
   p->active = true;
+  p->hl_valid++;
+  p->hl_cached = false;
   return;
 error:
   decor_provider_clear(p);

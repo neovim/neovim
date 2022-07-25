@@ -1282,7 +1282,7 @@ static void normal_redraw(NormalState *s)
 
   if (VIsual_active) {
     redraw_curbuf_later(INVERTED);  // update inverted part
-    update_screen(INVERTED);
+    update_screen(0);
   } else if (must_redraw) {
     update_screen(0);
   } else if (redraw_cmdline || clear_cmdline || redraw_mode) {
@@ -1838,7 +1838,8 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
       }
       if (jump_flags) {
         jump_flags = jump_to_mouse(jump_flags, NULL, which_button);
-        update_curbuf(VIsual_active ? INVERTED : VALID);
+        redraw_curbuf_later(VIsual_active ? INVERTED : VALID);
+        update_screen(0);
         setcursor();
         ui_flush();  // Update before showing popup menu
       }

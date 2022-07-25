@@ -244,10 +244,12 @@ function module.run_session(lsession, request_cb, notification_cb, setup_cb, tim
     last_error = nil
     error(err)
   end
+
+  return session.eof_err
 end
 
 function module.run(request_cb, notification_cb, setup_cb, timeout)
-  module.run_session(session, request_cb, notification_cb, setup_cb, timeout)
+  return module.run_session(session, request_cb, notification_cb, setup_cb, timeout)
 end
 
 function module.stop()
