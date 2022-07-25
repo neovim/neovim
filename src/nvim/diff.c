@@ -115,7 +115,10 @@ void diff_buf_delete(buf_T *buf)
       tp->tp_diff_invalid = true;
 
       if (tp == curtab) {
-        diff_redraw(true);
+        // don't redraw right away, more might change or buffer state
+        // is invalid right now
+        need_diff_redraw = true;
+        redraw_later(curwin, VALID);
       }
     }
   }
@@ -369,9 +372,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
 
         // 2. 3. 4. 5.: inserted/deleted lines touching this diff.
         if (deleted > 0) {
+          off = 0;
           if (dp->df_lnum[idx] >= line1) {
-            off = dp->df_lnum[idx] - lnum_deleted;
-
             if (last <= line2) {
               // 4. delete all lines of diff
               if ((dp->df_next != NULL)
@@ -388,14 +390,13 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
               dp->df_count[idx] = 0;
             } else {
               // 5. delete lines at or just before top of diff
+              off = dp->df_lnum[idx] - lnum_deleted;
               n = off;
               dp->df_count[idx] -= line2 - dp->df_lnum[idx] + 1;
               check_unchanged = true;
             }
             dp->df_lnum[idx] = line1;
           } else {
-            off = 0;
-
             if (last < line2) {
               // 2. delete at end of diff
               dp->df_count[idx] -= last - lnum_deleted + 1;
@@ -648,7 +649,8 @@ void diff_redraw(bool dofold)
 
   need_diff_redraw = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (!wp->w_p_diff) {
+    // when closing windows or wiping buffers skip invalid window
+    if (!wp->w_p_diff || !buf_valid(wp->w_buffer)) {
       continue;
     }
     redraw_later(wp, SOME_VALID);

@@ -6,6 +6,7 @@ local clear = helpers.clear
 local command = helpers.command
 local insert = helpers.insert
 local write_file = helpers.write_file
+local dedent = helpers.dedent
 local exec = helpers.exec
 
 describe('Diff mode screen', function()
@@ -985,6 +986,93 @@ int main(int argc, char **argv)
       ]])
     end)
   end)
+
+  -- oldtest: Test_diff_scroll()
+  -- This was scrolling for 'cursorbind' but 'scrollbind' is more important
+  it('scrolling works correctly vim-patch:8.2.5155', function()
+    screen:try_resize(40, 12)
+    write_file(fname, dedent([[
+      line 1
+      line 2
+      line 3
+      line 4
+
+      // Common block
+      // one
+      // containing
+      // four lines
+
+      // Common block
+      // two
+      // containing
+      // four lines]]), false)
+    write_file(fname_2, dedent([[
+      line 1
+      line 2
+      line 3
+      line 4
+
+      Lorem
+      ipsum
+      dolor
+      sit
+      amet,
+      consectetur
+      adipiscing
+      elit.
+      Etiam
+      luctus
+      lectus
+      sodales,
+      dictum
+
+      // Common block
+      // one
+      // containing
+      // four lines
+
+      Vestibulum
+      tincidunt
+      aliquet
+      nulla.
+
+      // Common block
+      // two
+      // containing
+      // four lines]]), false)
+    reread()
+
+    feed('<C-W><C-W>jjjj')
+    screen:expect([[
+      {1:  }line 1           │{1:  }line 1            |
+      {1:  }line 2           │{1:  }line 2            |
+      {1:  }line 3           │{1:  }line 3            |
+      {1:  }line 4           │{1:  }line 4            |
+      {1:  }                 │{1:  }^                  |
+      {1:  }{2:-----------------}│{1:  }{4:Lorem             }|
+      {1:  }{2:-----------------}│{1:  }{4:ipsum             }|
+      {1:  }{2:-----------------}│{1:  }{4:dolor             }|
+      {1:  }{2:-----------------}│{1:  }{4:sit               }|
+      {1:  }{2:-----------------}│{1:  }{4:amet,             }|
+      {3:<nal-diff-screen-1  }{7:<al-diff-screen-1.2 }|
+      :e                                      |
+    ]])
+    feed('j')
+    screen:expect([[
+      {1:  }line 1           │{1:  }line 1            |
+      {1:  }line 2           │{1:  }line 2            |
+      {1:  }line 3           │{1:  }line 3            |
+      {1:  }line 4           │{1:  }line 4            |
+      {1:  }                 │{1:  }                  |
+      {1:  }{2:-----------------}│{1:  }{4:^Lorem             }|
+      {1:  }{2:-----------------}│{1:  }{4:ipsum             }|
+      {1:  }{2:-----------------}│{1:  }{4:dolor             }|
+      {1:  }{2:-----------------}│{1:  }{4:sit               }|
+      {1:  }{2:-----------------}│{1:  }{4:amet,             }|
+      {3:<nal-diff-screen-1  }{7:<al-diff-screen-1.2 }|
+      :e                                      |
+    ]])
+  end)
 end)
 
 it('win_update redraws lines properly', function()
@@ -1227,6 +1315,7 @@ it('Align the filler lines when changing text in diff mode', function()
   ]]}
 end)
 
+-- oldtest: Test_diff_binary()
 it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', function()
   clear()
   local screen = Screen.new(40, 20)
