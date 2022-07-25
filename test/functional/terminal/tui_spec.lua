@@ -436,8 +436,11 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed_data(':tab split\r:tabnew\r')
-    feed_data(':highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline\r')
+    child_session:request('nvim_command', [[
+      tab split
+      tabnew
+      highlight Tabline ctermbg=NONE ctermfg=NONE cterm=underline
+    ]])
     local attrs = screen:get_default_attr_ids()
     attrs[11] = {underline = true}
     screen:expect([[
