@@ -603,7 +603,7 @@ static int nlua_ui_attach(lua_State *lstate)
     return luaL_error(lstate, "ns_id must be an integer");
   }
 
-  uint32_t ns_id = (uint32_t)lua_tointeger(lstate, 1);
+  uint32_t ns_id = (uint32_t)luaL_checkinteger(lstate, 1);
 
   if (!ns_initialized(ns_id)) {
     return luaL_error(lstate, "invalid ns_id");
