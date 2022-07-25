@@ -175,7 +175,8 @@ func Test_message_more()
 
   " Up all the way with 'g'.
   call term_sendkeys(buf, 'g')
-  call WaitForAssert({-> assert_equal('  5 5', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal('  4 4', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal(':%p#', term_getline(buf, 1))})
   call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
 
   " All the way down. Pressing f should do nothing but pressing

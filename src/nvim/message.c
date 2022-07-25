@@ -2548,6 +2548,7 @@ void sb_text_start_cmdline(void)
 void sb_text_end_cmdline(void)
 {
   do_clear_sb_text = SB_CLEAR_CMDLINE_DONE;
+  msg_sb_eol();
 }
 
 /// Clear any text remembered for scrolling back.
@@ -2564,7 +2565,7 @@ void clear_sb_text(int all)
     if (last_msgchunk == NULL) {
       return;
     }
-    lastp = &last_msgchunk->sb_prev;
+    lastp = &msg_sb_start(last_msgchunk)->sb_prev;
   }
 
   while (*lastp != NULL) {
