@@ -1458,5 +1458,17 @@ func Test_diff_only()
   %bwipe!
 endfunc
 
+" This was causing invalid diff block values
+" FIXME: somehow this causes a valgrind error when run directly but not when
+" run as a test.
+func Test_diff_manipulations()
+  set diff
+  split 0
+  sil! norm RdoobdeuRdoobdeuRdoobdeu
+
+  set nodiff
+  %bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
