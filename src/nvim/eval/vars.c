@@ -1571,10 +1571,11 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
 
   if (varp->v_type == VAR_BOOL) {
     numval = (long)varp->vval.v_number;
+    strval = "0";  // avoid using "false"
   } else {
     numval = (long)tv_get_number_chk(varp, &error);
+    strval = tv_get_string_buf_chk(varp, nbuf);
   }
-  strval = tv_get_string_buf_chk(varp, nbuf);
   if (!error && strval != NULL) {
     set_option_value(varname, numval, strval, OPT_LOCAL);
   }
