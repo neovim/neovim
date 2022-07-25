@@ -1564,10 +1564,17 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 /// Set option "varname" to the value of "varp" for the current buffer/window.
 static void set_option_from_tv(const char *varname, typval_T *varp)
 {
+  long numval = 0;
+  const char *strval;
   bool error = false;
   char nbuf[NUMBUFLEN];
-  const long numval = (long)tv_get_number_chk(varp, &error);
-  const char *const strval = tv_get_string_buf_chk(varp, nbuf);
+
+  if (varp->v_type == VAR_BOOL) {
+    numval = (long)varp->vval.v_number;
+  } else {
+    numval = (long)tv_get_number_chk(varp, &error);
+  }
+  strval = tv_get_string_buf_chk(varp, nbuf);
   if (!error && strval != NULL) {
     set_option_value(varname, numval, strval, OPT_LOCAL);
   }
