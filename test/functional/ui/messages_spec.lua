@@ -1854,7 +1854,7 @@ aliquip ex ea commodo consequat.]])
 
     feed('k')
     screen:expect{grid=[[
-      {7:0}{8:                          }{7:)}{8:       }|
+      {7:0}{8:                                  }|
       {9:1}{10:                                  }|
       {9:2}{10:                                  }|
       {9:3}{10:                                  }|
@@ -1943,6 +1943,7 @@ aliquip ex ea commodo consequat.]])
     -- text is not reflown; existing lines get cut
     screen:try_resize(30, 12)
     screen:expect{grid=[[
+      :lua error(_G.x)              |
       {2:E5108: Error executing lua [st}|
       {2:":lua"]:1: Lorem ipsum dolor s}|
       {2:et, consectetur}               |
@@ -1953,12 +1954,27 @@ aliquip ex ea commodo consequat.]])
                                     |
                                     |
                                     |
-                                    |
       {4:-- More --}^                    |
     ]]}
 
     -- continues in a mostly consistent state, but only new lines are
     -- wrapped at the new screen size.
+    feed('<cr>')
+    screen:expect{grid=[[
+      {2:E5108: Error executing lua [st}|
+      {2:":lua"]:1: Lorem ipsum dolor s}|
+      {2:et, consectetur}               |
+      {2:adipisicing elit, sed do eiusm}|
+      {2:mpore}                         |
+      {2:incididunt ut labore et dolore}|
+      {2:a aliqua.}                     |
+      {2:Ut enim ad minim veniam, quis }|
+      {2:nostrud xercitation}           |
+      {2:ullamco laboris nisi ut}       |
+      {2:aliquip ex ea commodo consequa}|
+      {4:-- More --}^                    |
+    ]]}
+
     feed('<cr>')
     screen:expect{grid=[[
       {2:":lua"]:1: Lorem ipsum dolor s}|
