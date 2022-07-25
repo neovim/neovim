@@ -600,7 +600,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
     OBJ_TO_CMOD_FLAG(CMOD_SILENT, mods.silent, false, "'mods.silent'");
     OBJ_TO_CMOD_FLAG(CMOD_ERRSILENT, mods.emsg_silent, false, "'mods.emsg_silent'");
-    OBJ_TO_CMOD_FLAG(CMOD_UNSILENT, mods.silent, false, "'mods.unsilent'");
+    OBJ_TO_CMOD_FLAG(CMOD_UNSILENT, mods.unsilent, false, "'mods.unsilent'");
     OBJ_TO_CMOD_FLAG(CMOD_SANDBOX, mods.sandbox, false, "'mods.sandbox'");
     OBJ_TO_CMOD_FLAG(CMOD_NOAUTOCMD, mods.noautocmd, false, "'mods.noautocmd'");
     OBJ_TO_CMOD_FLAG(CMOD_BROWSE, mods.browse, false, "'mods.browse'");
