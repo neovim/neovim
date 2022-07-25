@@ -619,24 +619,32 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
             && vim_strchr(endchars, *skipwhite(p)) == NULL)) {
       emsg(_(e_letunexp));
     } else {
+      varnumber_T n = 0;
       int opt_type;
       long numval;
       char *stringval = NULL;
       const char *s = NULL;
+      bool failed = false;
 
       const char c1 = *p;
       *p = NUL;
 
-      varnumber_T n = tv_get_number(tv);
-      if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
-        s = tv_get_string_chk(tv);  // != NULL if number or string.
+      opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
+      if (opt_type == 1 || opt_type == -1) {
+        // number, possibly hidden
+        n = (long)tv_get_number(tv);
       }
-      if (s != NULL && op != NULL && *op != '=') {
-        opt_type = get_option_value(arg, &numval, &stringval, opt_flags);
+
+      // Avoid setting a string option to the text "v:false" or similar.
+      if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
+        s = tv_get_string_chk(tv);
+      }
+
+      if (op != NULL && *op != '=') {
         if ((opt_type == 1 && *op == '.')
             || (opt_type == 0 && *op != '.')) {
           semsg(_(e_letwrong), op);
-          s = NULL;  // don't set the value
+          failed = true;  // don't set the value
         } else {
           if (opt_type == 1) {  // number
             switch (*op) {
@@ -651,7 +659,8 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
             case '%':
               n = num_modulus(numval, n); break;
             }
-          } else if (opt_type == 0 && stringval != NULL) {  // string
+          } else if (opt_type == 0 && stringval != NULL && s != NULL) {
+            // string
             char *const oldstringval = stringval;
             stringval = (char *)concat_str((const char_u *)stringval,
                                            (const char_u *)s);
@@ -660,10 +669,14 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           }
         }
       }
-      if (s != NULL || tv->v_type == VAR_BOOL
-          || tv->v_type == VAR_SPECIAL) {
-        set_option_value((const char *)arg, n, s, opt_flags);
-        arg_end = p;
+
+      if (!failed) {
+        if (opt_type != 0 || s != NULL) {
+          set_option_value(arg, n, s, opt_flags);
+          arg_end = p;
+        } else {
+          emsg(_(e_stringreq));
+        }
       }
       *p = c1;
       xfree(stringval);
