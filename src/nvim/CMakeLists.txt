@@ -789,12 +789,20 @@ foreach(sfile ${LINT_NVIM_SOURCES})
 endforeach()
 add_custom_target(lintc DEPENDS ${LINT_TARGETS})
 
+add_custom_target(uncrustify-version
+  COMMAND ${CMAKE_COMMAND}
+    -D UNCRUSTIFY_PRG=${UNCRUSTIFY_PRG}
+    -D CONFIG_FILE=${PROJECT_SOURCE_DIR}/src/uncrustify.cfg
+    -P ${PROJECT_SOURCE_DIR}/cmake/CheckUncrustifyVersion.cmake)
+
 add_glob_targets(
   TARGET lintuncrustify
   COMMAND ${UNCRUSTIFY_PRG}
   FLAGS -c "${PROJECT_SOURCE_DIR}/src/uncrustify.cfg" -q --check
   FILES ${LINT_NVIM_SOURCES}
   )
+
+add_dependencies(lintuncrustify uncrustify-version)
 
 add_custom_target(
   lintcfull
