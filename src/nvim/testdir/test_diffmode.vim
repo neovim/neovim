@@ -33,7 +33,8 @@ func Test_diff_fold_sync()
   call win_gotoid(winone)
   call assert_equal(23, getcurpos()[1])
 
-  call assert_equal(1, g:update_count)
+  " depending on how redraw is done DiffUpdated may be triggered once or twice
+  call assert_inrange(1, 2, g:update_count)
   au! DiffUpdated
 
   windo diffoff
