@@ -3733,6 +3733,12 @@ describe('API', function()
       eq("", meths.cmd({ cmd = "Foo", bang = false }, { output = true }))
     end)
     it('works with modifiers', function()
+      -- with :silent output is still captured
+      eq('1',
+         meths.cmd({ cmd = 'echomsg', args = { '1' }, mods = { silent = true } },
+                   { output = true }))
+      -- with :silent message isn't added to message history
+      eq('', meths.cmd({ cmd = 'messages' }, { output = true }))
       meths.create_user_command("Foo", 'set verbose', {})
       eq("  verbose=1", meths.cmd({ cmd = "Foo", mods = { verbose = 1 } }, { output = true }))
       eq(0, meths.get_option_value("verbose", {}))
