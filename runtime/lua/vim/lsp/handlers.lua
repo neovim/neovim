@@ -189,19 +189,17 @@ M['textDocument/references'] = function(_, result, ctx, config)
   else
     local client = vim.lsp.get_client_by_id(ctx.client_id)
     config = config or {}
+    local title = 'References'
+    local items = util.locations_to_items(result, client.offset_encoding)
+
     if config.loclist then
-      vim.fn.setloclist(0, {}, ' ', {
-        title = 'References',
-        items = util.locations_to_items(result, client.offset_encoding),
-        context = ctx,
-      })
+      vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
       api.nvim_command('lopen')
+    elseif config.on_list then
+      assert(type(config.on_list) == 'function', 'on_list is not a function')
+      config.on_list({ title = title, items = items, context = ctx })
     else
-      vim.fn.setqflist({}, ' ', {
-        title = 'References',
-        items = util.locations_to_items(result, client.offset_encoding),
-        context = ctx,
-      })
+      vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
       api.nvim_command('botright copen')
     end
   end
@@ -224,19 +222,17 @@ local function response_to_list(map_result, entity, title_fn)
       vim.notify('No ' .. entity .. ' found')
     else
       config = config or {}
+      local title = title_fn(ctx)
+      local items = map_result(result, ctx.bufnr)
+
       if config.loclist then
-        vim.fn.setloclist(0, {}, ' ', {
-          title = title_fn(ctx),
-          items = map_result(result, ctx.bufnr),
-          context = ctx,
-        })
+        vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
         api.nvim_command('lopen')
+      elseif config.on_list then
+        assert(type(config.on_list) == 'function', 'on_list is not a function')
+        config.on_list({ title = title, items = items, context = ctx })
       else
-        vim.fn.setqflist({}, ' ', {
-          title = title_fn(ctx),
-          items = map_result(result, ctx.bufnr),
-          context = ctx,
-        })
+        vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
         api.nvim_command('botright copen')
       end
     end
@@ -354,11 +350,16 @@ local function location_handler(_, result, ctx, config)
     util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
 
     if #result > 1 then
-      vim.fn.setqflist({}, ' ', {
-        title = 'LSP locations',
-        items = util.locations_to_items(result, client.offset_encoding),
-      })
-      api.nvim_command('botright copen')
+      local title = 'LSP locations'
+      local items = util.locations_to_items(result, client.offset_encoding)
+
+      if config.on_list then
+        assert(type(config.on_list) == 'function', 'on_list is not a function')
+        config.on_list({ title = title, items = items })
+      else
+        vim.fn.setqflist({}, ' ', { title = title, items = items })
+        api.nvim_command('botright copen')
+      end
     end
   else
     util.jump_to_location(result, client.offset_encoding, config.reuse_win)

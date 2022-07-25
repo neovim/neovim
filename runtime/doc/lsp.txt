@@ -412,6 +412,31 @@ For the format of the response message, see:
 For the format of the notification message, see:
     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
 
+                                                                *on-list-handler*
+
+`on_list` receives a table with:
+
+ - `items` table[], structured like |setqflist-what|
+ - `title` string, title for the list.
+ - `context` table|nil. `ctx` from |lsp-handler|
+
+This table can be used with vim.fn.setqflist or vim.fn.setloclist. E.g.:
+
+  local function on_list(options)
+    vim.fn.setqflist({}, ' ', options)
+    vim.api.nvim_command('cfirst')
+  end
+
+  vim.lsp.buf.definition{on_list=on_list}
+  vim.lsp.buf.references(nil, {on_list=on_list})
+
+If you prefer loclist do something like this:
+
+  local function on_list(options)
+    vim.fn.setloclist(0, {}, ' ', options)
+    vim.api.nvim_command('lopen')
+  end
+
 ================================================================================
 LSP HIGHLIGHT                                                    *lsp-highlight*
 
@@ -1114,6 +1139,8 @@ declaration({options})                             *vim.lsp.buf.declaration()*
                     {options}  (table|nil) additional options
                                • reuse_win: (boolean) Jump to existing window
                                  if buffer is already open.
+                               • on_list: (function) handler for list results.
+                                 See |on-list-handler|
 
 definition({options})                               *vim.lsp.buf.definition()*
                 Jumps to the definition of the symbol under the cursor.
@@ -1122,6 +1149,8 @@ definition({options})                               *vim.lsp.buf.definition()*
                     {options}  (table|nil) additional options
                                • reuse_win: (boolean) Jump to existing window
                                  if buffer is already open.
+                               • on_list: (function) handler for list results.
+                                 See |on-list-handler|
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
                 Send request to the server to resolve document highlights for
@@ -1139,9 +1168,14 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
                 to see the actual highlights. |LspReferenceText|
                 |LspReferenceRead| |LspReferenceWrite|
 
-document_symbol()                              *vim.lsp.buf.document_symbol()*
+document_symbol({options})                     *vim.lsp.buf.document_symbol()*
                 Lists all symbols in the current buffer in the quickfix
                 window.
+
+                Parameters: ~
+                    {options}  (table|nil) additional options
+                               • on_list: (function) handler for list results.
+                                 See |on-list-handler|
 
 execute_command({command_params})              *vim.lsp.buf.execute_command()*
                 Executes an LSP server command.
@@ -1251,9 +1285,14 @@ hover()                                                  *vim.lsp.buf.hover()*
                 in a floating window. Calling the function twice will jump
                 into the floating window.
 
-implementation()                                *vim.lsp.buf.implementation()*
+implementation({options})                       *vim.lsp.buf.implementation()*
                 Lists all the implementations for the symbol under the cursor
                 in the quickfix window.
+
+                Parameters: ~
+                    {options}  (table|nil) additional options
+                               • on_list: (function) handler for list results.
+                                 See |on-list-handler|
 
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
                 Lists all the call sites of the symbol under the cursor in the
@@ -1300,12 +1339,15 @@ range_formatting({options}, {start_pos}, {end_pos})
                                  position. Defaults to the end of the last
                                  visual selection.
 
-references({context})                               *vim.lsp.buf.references()*
+references({context}, {options})                    *vim.lsp.buf.references()*
                 Lists all the references to the symbol under the cursor in the
                 quickfix window.
 
                 Parameters: ~
                     {context}  (table) Context for the request
+                    {options}  (table|nil) additional options
+                               • on_list: (function) handler for list results.
+                                 See |on-list-handler|
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
@@ -1351,8 +1393,10 @@ type_definition({options})                     *vim.lsp.buf.type_definition()*
                     {options}  (table|nil) additional options
                                • reuse_win: (boolean) Jump to existing window
                                  if buffer is already open.
+                               • on_list: (function) handler for list results.
+                                 See |on-list-handler|
 
-workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
+workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
                 Lists all symbols in the current workspace in the quickfix
                 window.
 
@@ -1362,7 +1406,10 @@ workspace_symbol({query})                     *vim.lsp.buf.workspace_symbol()*
                 done.
 
                 Parameters: ~
-                    {query}  (string, optional)
+                    {query}    (string, optional)
+                    {options}  (table|nil) additional options
+                               • on_list: (function) handler for list results.
+                                 See |on-list-handler|
 
 
 ==============================================================================
