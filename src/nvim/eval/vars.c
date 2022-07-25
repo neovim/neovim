@@ -663,6 +663,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
             case '%':
               n = num_modulus(numval, n); break;
             }
+            s = NULL;
           } else if (opt_type == gov_string && stringval != NULL && s != NULL) {
             // string
             char *const oldstringval = stringval;
