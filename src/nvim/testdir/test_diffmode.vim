@@ -1378,4 +1378,73 @@ func Test_diff_foldinvert()
   set scrollbind&
 endfunc
 
+" This was scrolling for 'cursorbind' but 'scrollbind' is more important
+func Test_diff_scroll()
+  CheckScreendump
+
+  let left =<< trim END
+      line 1
+      line 2
+      line 3
+      line 4
+
+      // Common block
+      // one
+      // containing
+      // four lines
+
+      // Common block
+      // two
+      // containing
+      // four lines
+  END
+  call writefile(left, 'Xleft')
+  let right =<< trim END
+      line 1
+      line 2
+      line 3
+      line 4
+
+      Lorem
+      ipsum
+      dolor
+      sit
+      amet,
+      consectetur
+      adipiscing
+      elit.
+      Etiam
+      luctus
+      lectus
+      sodales,
+      dictum
+
+      // Common block
+      // one
+      // containing
+      // four lines
+
+      Vestibulum
+      tincidunt
+      aliquet
+      nulla.
+
+      // Common block
+      // two
+      // containing
+      // four lines
+  END
+  call writefile(right, 'Xright')
+  let buf = RunVimInTerminal('-d Xleft Xright', {'rows': 12})
+  call term_sendkeys(buf, "\<C-W>\<C-W>jjjj")
+  call VerifyScreenDump(buf, 'Test_diff_scroll_1', {})
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_diff_scroll_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xleft')
+  call delete('Xright')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
