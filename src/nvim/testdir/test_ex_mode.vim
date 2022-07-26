@@ -135,6 +135,30 @@ func Test_Ex_global()
   bwipe!
 endfunc
 
+" Test for pressing Ctrl-C in :append inside a loop in Ex mode
+" This used to hang Vim
+func Test_Ex_append_in_loop()
+  CheckRunVimInTerminal
+  let buf = RunVimInTerminal('', {'rows': 6})
+
+  call term_sendkeys(buf, "gQ")
+  call term_sendkeys(buf, "for i in range(1)\<CR>")
+  call term_sendkeys(buf, "append\<CR>")
+  call WaitForAssert({-> assert_match(':  append', term_getline(buf, 5))}, 1000)
+  call term_sendkeys(buf, "\<C-C>")
+  " Wait for input to be flushed
+  call term_wait(buf)
+  call term_sendkeys(buf, "foo\<CR>")
+  call WaitForAssert({-> assert_match('foo', term_getline(buf, 5))}, 1000)
+  call term_sendkeys(buf, ".\<CR>")
+  call WaitForAssert({-> assert_match('.', term_getline(buf, 5))}, 1000)
+  call term_sendkeys(buf, "endfor\<CR>")
+  call term_sendkeys(buf, "vi\<CR>")
+  call WaitForAssert({-> assert_match('foo', term_getline(buf, 1))}, 1000)
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " In Ex-mode, a backslash escapes a newline
 func Test_Ex_escape_enter()
   call feedkeys("gQlet l = \"a\\\<kEnter>b\"\<cr>vi\<cr>", 'xt')

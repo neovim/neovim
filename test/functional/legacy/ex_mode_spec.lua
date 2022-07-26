@@ -6,6 +6,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local meths = helpers.meths
+local sleep = helpers.sleep
 
 before_each(clear)
 
@@ -119,6 +120,56 @@ describe('Ex mode', function()
       {1:  3 }^foo foo                                                 |
       {2:~                                                           }|
       {2:~                                                           }|
+                                                                  |
+    ]])
+  end)
+
+  it('pressing Ctrl-C in :append inside a loop in Ex mode does not hang', function()
+    local screen = Screen.new(60, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, reverse = true},  -- MsgSeparator
+      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    })
+    screen:attach()
+    feed('gQ')
+    feed('for i in range(1)<CR>')
+    feed('append<CR>')
+    screen:expect([[
+      {0:                                                            }|
+      Entering Ex mode.  Type "visual" to go to Normal mode.      |
+      :for i in range(1)                                          |
+                                                                  |
+      :  append                                                   |
+      ^                                                            |
+    ]])
+    feed('<C-C>')
+    sleep(10)  -- Wait for input to be flushed
+    feed('foo<CR>')
+    screen:expect([[
+      Entering Ex mode.  Type "visual" to go to Normal mode.      |
+      :for i in range(1)                                          |
+                                                                  |
+      :  append                                                   |
+      foo                                                         |
+      ^                                                            |
+    ]])
+    feed('.<CR>')
+    screen:expect([[
+      :for i in range(1)                                          |
+                                                                  |
+      :  append                                                   |
+      foo                                                         |
+      .                                                           |
+      :  ^                                                         |
+    ]])
+    feed('endfor<CR>')
+    feed('vi<CR>')
+    screen:expect([[
+      ^foo                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
                                                                   |
     ]])
   end)

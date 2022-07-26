@@ -2851,6 +2851,110 @@ func Test_v_event_readonly()
   au! TextYankPost
 endfunc
 
+" Test for ModeChanged pattern
+func Test_mode_changes()
+  let g:index = 0
+  let g:mode_seq = ['n', 'i', 'n', 'v', 'V', 'i', 'ix', 'i', 'ic', 'i', 'n', 'no', 'n', 'V', 'v', 's', 'n']
+  func! TestMode()
+    call assert_equal(g:mode_seq[g:index], get(v:event, "old_mode"))
+    call assert_equal(g:mode_seq[g:index + 1], get(v:event, "new_mode"))
+    call assert_equal(mode(1), get(v:event, "new_mode"))
+    let g:index += 1
+  endfunc
+
+  au ModeChanged * :call TestMode()
+  let g:n_to_any = 0
+  au ModeChanged n:* let g:n_to_any += 1
+  call feedkeys("i\<esc>vVca\<CR>\<C-X>\<C-L>\<esc>ggdG", 'tnix')
+
+  let g:V_to_v = 0
+  au ModeChanged V:v let g:V_to_v += 1
+  call feedkeys("Vv\<C-G>\<esc>", 'tnix')
+  call assert_equal(len(filter(g:mode_seq[1:], {idx, val -> val == 'n'})), g:n_to_any)
+  call assert_equal(1, g:V_to_v)
+  call assert_equal(len(g:mode_seq) - 1, g:index)
+
+  let g:n_to_i = 0
+  au ModeChanged n:i let g:n_to_i += 1
+  let g:n_to_niI = 0
+  au ModeChanged i:niI let g:n_to_niI += 1
+  let g:niI_to_i = 0
+  au ModeChanged niI:i let g:niI_to_i += 1
+  let g:nany_to_i = 0
+  au ModeChanged n*:i let g:nany_to_i += 1
+  let g:i_to_n = 0
+  au ModeChanged i:n let g:i_to_n += 1
+  let g:nori_to_any = 0
+  au ModeChanged [ni]:* let g:nori_to_any += 1
+  let g:i_to_any = 0
+  au ModeChanged i:* let g:i_to_any += 1
+  let g:index = 0
+  let g:mode_seq = ['n', 'i', 'niI', 'i', 'n']
+  call feedkeys("a\<C-O>l\<esc>", 'tnix')
+  call assert_equal(len(g:mode_seq) - 1, g:index)
+  call assert_equal(1, g:n_to_i)
+  call assert_equal(1, g:n_to_niI)
+  call assert_equal(1, g:niI_to_i)
+  call assert_equal(2, g:nany_to_i)
+  call assert_equal(1, g:i_to_n)
+  call assert_equal(2, g:i_to_any)
+  call assert_equal(3, g:nori_to_any)
+
+  if has('terminal')
+    let g:mode_seq += ['c', 'n', 't', 'nt', 'c', 'nt', 'n']
+    call feedkeys(":term\<CR>\<C-W>N:bd!\<CR>", 'tnix')
+    call assert_equal(len(g:mode_seq) - 1, g:index)
+    call assert_equal(1, g:n_to_i)
+    call assert_equal(1, g:n_to_niI)
+    call assert_equal(1, g:niI_to_i)
+    call assert_equal(2, g:nany_to_i)
+    call assert_equal(1, g:i_to_n)
+    call assert_equal(2, g:i_to_any)
+    call assert_equal(5, g:nori_to_any)
+  endif
+
+  if has('cmdwin')
+    let g:n_to_c = 0
+    au ModeChanged n:c let g:n_to_c += 1
+    let g:c_to_n = 0
+    au ModeChanged c:n let g:c_to_n += 1
+    let g:mode_seq += ['c', 'n', 'c', 'n']
+    call feedkeys("q:\<C-C>\<Esc>", 'tnix')
+    call assert_equal(len(g:mode_seq) - 1, g:index)
+    call assert_equal(2, g:n_to_c)
+    call assert_equal(2, g:c_to_n)
+    unlet g:n_to_c
+    unlet g:c_to_n
+  endif
+
+  au! ModeChanged
+  delfunc TestMode
+  unlet! g:mode_seq
+  unlet! g:index
+  unlet! g:n_to_any
+  unlet! g:V_to_v
+  unlet! g:n_to_i
+  unlet! g:n_to_niI
+  unlet! g:niI_to_i
+  unlet! g:nany_to_i
+  unlet! g:i_to_n
+  unlet! g:nori_to_any
+  unlet! g:i_to_any
+endfunc
+
+func Test_recursive_ModeChanged()
+  au! ModeChanged * norm 0u
+  sil! norm 
+  au! ModeChanged
+endfunc
+
+func Test_ModeChanged_starts_visual()
+  " This was triggering ModeChanged before setting VIsual, causing a crash.
+  au! ModeChanged * norm 0u
+  sil! norm 
+
+  au! ModeChanged
+endfunc
 
 func Test_noname_autocmd()
   augroup test_noname_autocmd_group

@@ -880,6 +880,12 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
         found_one = true;
       }
     }
+
+    if (*p_tal != NUL) {
+      redraw_tabline = true;
+      found_one = true;
+    }
+
     if (found_one) {
       redraw_statuslines();
     }
@@ -1068,7 +1074,8 @@ static int command_line_execute(VimState *state, int key)
   // Don't ignore it for the input() function.
   if ((s->c == Ctrl_C)
       && s->firstc != '@'
-      && !s->break_ctrl_c
+      // do clear got_int in Ex mode to avoid infinite Ctrl-C loop
+      && (!s->break_ctrl_c || exmode_active)
       && !global_busy) {
     got_int = false;
   }
@@ -6804,9 +6811,13 @@ static int open_cmdwin(void)
 
     // Avoid command-line window first character being concealed.
     curwin->w_p_cole = 0;
+    // First go back to the original window.
     wp = curwin;
     set_bufref(&bufref, curbuf);
     win_goto(old_curwin);
+
+    // win_goto() may trigger an autocommand that already closes the
+    // cmdline window.
     if (win_valid(wp) && wp != curwin) {
       win_close(wp, true, false);
     }

@@ -4025,6 +4025,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "cindent",
     "cmdline_compl",
     "cmdline_hist",
+    "cmdwin",
     "comments",
     "conceal",
     "cscope",
