@@ -268,7 +268,7 @@ foreach(sfile ${NVIM_SOURCES}
   set(depends "${HEADER_GENERATOR}" "${sfile}")
   if("${f}" STREQUAL "version.c")
     # Ensure auto/versiondef_git.h exists after "make clean".
-    list(APPEND depends "${NVIM_VERSION_GIT_H}")
+    list(APPEND depends update_version_stamp "${NVIM_VERSION_GIT_H}")
   endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
