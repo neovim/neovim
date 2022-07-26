@@ -18,6 +18,7 @@ local run = helpers.run
 local pcall_err = helpers.pcall_err
 local tbl_contains = global_helpers.tbl_contains
 local curbuf, curwin, curtab = helpers.curbuf, helpers.curwin, helpers.curtab
+local NIL = helpers.NIL
 
 describe('float window', function()
   before_each(function()
@@ -418,6 +419,15 @@ describe('float window', function()
       call sort(winids)
     ]])
     eq(winids, eval('winids'))
+  end)
+
+  it("no segfault when setting minimal style after clearing local 'fillchars' #19510", function()
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
+    local float_win = meths.open_win(0, true, float_opts)
+    meths.win_set_option(float_win, 'fillchars', NIL)
+    float_opts.style = 'minimal'
+    meths.win_set_config(float_win, float_opts)
+    assert_alive()
   end)
 
   describe('with only one tabpage,', function()

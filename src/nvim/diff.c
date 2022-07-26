@@ -1423,7 +1423,7 @@ void diff_win_options(win_T *wp, int addbuf)
     }
     wp->w_p_fdc_save = vim_strsave(wp->w_p_fdc);
   }
-  xfree(wp->w_p_fdc);
+  free_string_option(wp->w_p_fdc);
   wp->w_p_fdc = (char_u *)xstrdup("2");
   assert(diff_foldcolumn >= 0 && diff_foldcolumn <= 9);
   snprintf((char *)wp->w_p_fdc, STRLEN(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
