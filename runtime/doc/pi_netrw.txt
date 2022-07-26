@@ -3917,7 +3917,7 @@ netrw:
 				* Installed |g:netrw_clipboard| setting
 				* Installed option bypass for |'guioptions'|
 				  a/A settings
-				* Changed popup_beval() to |popup_atcursor|()
+				* Changed popup_beval() to |popup_atcursor()|
 				  in netrw#ErrorMsg (lacygoill). Apparently
 				  popup_beval doesn't reliably close the
 				  popup when the mouse is moved.

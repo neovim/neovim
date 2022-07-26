@@ -610,19 +610,20 @@ two bytes 0xc3 0xa1.  You don't want the 0xc3 byte to be mapped then or
 otherwise it would be impossible to type the á character.
 
 					*<Leader>* *mapleader*
-To define a mapping which uses the "mapleader" variable, the special string
-"<Leader>" can be used.  It is replaced with the string value of "mapleader".
-If "mapleader" is not set or empty, a backslash is used instead.  Example: >
-	:map <Leader>A  oanother line<Esc>
+To define a mapping which uses the "g:mapleader" variable, the special string
+"<Leader>" can be used.  It is replaced with the string value of
+"g:mapleader".  If "g:mapleader" is not set or empty, a backslash is used
+instead.  Example: >
+	map <Leader>A  oanother line<Esc>
 Works like: >
-	:map \A  oanother line<Esc>
-But after: >
-	:let mapleader = ","
+	map \A  oanother line<Esc>
+But after:
+	let mapleader = ","
 It works like: >
-	:map ,A  oanother line<Esc>
+	map ,A  oanother line<Esc>
 
-Note that the value of "mapleader" is used at the moment the mapping is
-defined.  Changing "mapleader" after that has no effect for already defined
+Note that the value of "g:mapleader" is used at the moment the mapping is
+defined.  Changing "g:mapleader" after that has no effect for already defined
 mappings.
 
 					*<LocalLeader>* *maplocalleader*

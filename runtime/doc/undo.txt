@@ -108,13 +108,13 @@ change again.  But you can do something like this: >
 
 After this a "u" command will undo the delete command and the previous
 change.
-							*undo-break*
-To do the opposite, break a change into two undo blocks, in Insert mode use
-CTRL-G u.  This is useful if you want an insert command to be undoable in
+					*undo-break* *undo-close-block*
+To do the opposite, use a new undo block for the next change, in Insert mode
+use CTRL-G u.  This is useful if you want an insert command to be undoable in
 parts.  E.g., for each sentence.  |i_CTRL-G_u|
 
-Setting the value of 'undolevels' also breaks undo.  Even when the new value
-is equal to the old value: >
+Setting the value of 'undolevels' also closes the undo block.  Even when the
+new value is equal to the old value: >
 	let &undolevels = &undolevels
 
 ==============================================================================
