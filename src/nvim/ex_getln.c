@@ -828,6 +828,36 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   setmouse();
   ui_cursor_shape();               // may show different cursor shape
 
+  TryState tstate;
+  Error err = ERROR_INIT;
+  bool tl_ret = true;
+  save_v_event_T save_v_event;
+  dict_T *dict = get_v_event(&save_v_event);
+  char firstcbuf[2];
+  firstcbuf[0] = (char)(firstc > 0 ? firstc : '-');
+  firstcbuf[1] = 0;
+
+  if (has_event(EVENT_CMDLINEENTER)) {
+    // set v:event to a dictionary with information about the commandline
+    tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
+    tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
+    tv_dict_set_keys_readonly(dict);
+    try_enter(&tstate);
+
+    apply_autocmds(EVENT_CMDLINEENTER, firstcbuf, firstcbuf, false, curbuf);
+    restore_v_event(dict, &save_v_event);
+
+    tl_ret = try_leave(&tstate, &err);
+    if (!tl_ret && ERROR_SET(&err)) {
+      msg_putchar('\n');
+      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      api_clear_error(&err);
+      redrawcmd();
+    }
+    tl_ret = true;
+  }
+  may_trigger_modechanged();
+
   init_history();
   s->hiscnt = hislen;              // set hiscnt to impossible history value
   s->histype = hist_char2type(s->firstc);
@@ -859,36 +889,6 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   got_int = false;
   s->state.check = command_line_check;
   s->state.execute = command_line_execute;
-
-  TryState tstate;
-  Error err = ERROR_INIT;
-  bool tl_ret = true;
-  save_v_event_T save_v_event;
-  dict_T *dict = get_v_event(&save_v_event);
-  char firstcbuf[2];
-  firstcbuf[0] = (char)(firstc > 0 ? firstc : '-');
-  firstcbuf[1] = 0;
-
-  if (has_event(EVENT_CMDLINEENTER)) {
-    // set v:event to a dictionary with information about the commandline
-    tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
-    tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
-    tv_dict_set_keys_readonly(dict);
-    try_enter(&tstate);
-
-    apply_autocmds(EVENT_CMDLINEENTER, firstcbuf, firstcbuf, false, curbuf);
-    restore_v_event(dict, &save_v_event);
-
-    tl_ret = try_leave(&tstate, &err);
-    if (!tl_ret && ERROR_SET(&err)) {
-      msg_putchar('\n');
-      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
-      api_clear_error(&err);
-      redrawcmd();
-    }
-    tl_ret = true;
-  }
-  may_trigger_modechanged();
 
   state_enter(&s->state);
 
@@ -959,6 +959,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     cmdpreview = save_cmdpreview;  // restore preview state
     redraw_all_later(SOME_VALID);
   }
+  may_trigger_modechanged();
   setmouse();
   ui_cursor_shape();            // may show different cursor shape
   sb_text_end_cmdline();
