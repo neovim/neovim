@@ -551,7 +551,7 @@ size_t mb_string2cells(const char *str)
   size_t clen = 0;
 
   for (const char_u *p = (char_u *)str; *p != NUL; p += utfc_ptr2len((char *)p)) {
-    clen += utf_ptr2cells((char *)p);
+    clen += (size_t)utf_ptr2cells((char *)p);
   }
 
   return clen;
@@ -569,8 +569,8 @@ size_t mb_string2cells_len(const char *str, size_t size)
   size_t clen = 0;
 
   for (const char_u *p = (char_u *)str; *p != NUL && p < (char_u *)str + size;
-       p += utfc_ptr2len_len(p, size + (p - (char_u *)str))) {
-    clen += utf_ptr2cells((char *)p);
+       p += utfc_ptr2len_len(p, (int)size + (int)(p - (char_u *)str))) {
+    clen += (size_t)utf_ptr2cells((char *)p);
   }
 
   return clen;
@@ -994,37 +994,37 @@ int utf_char2len(const int c)
 int utf_char2bytes(const int c, char *const buf)
 {
   if (c < 0x80) {  // 7 bits
-    buf[0] = c;
+    buf[0] = (char)c;
     return 1;
   } else if (c < 0x800) {  // 11 bits
-    buf[0] = 0xc0 + ((unsigned)c >> 6);
-    buf[1] = 0x80 + (c & 0x3f);
+    buf[0] = (char)(0xc0 + ((unsigned)c >> 6));
+    buf[1] = (char)(0x80 + ((unsigned)c & 0x3f));
     return 2;
   } else if (c < 0x10000) {  // 16 bits
-    buf[0] = 0xe0 + ((unsigned)c >> 12);
-    buf[1] = 0x80 + (((unsigned)c >> 6) & 0x3f);
-    buf[2] = 0x80 + (c & 0x3f);
+    buf[0] = (char)(0xe0 + ((unsigned)c >> 12));
+    buf[1] = (char)(0x80 + (((unsigned)c >> 6) & 0x3f));
+    buf[2] = (char)(0x80 + ((unsigned)c & 0x3f));
     return 3;
   } else if (c < 0x200000) {  // 21 bits
-    buf[0] = 0xf0 + ((unsigned)c >> 18);
-    buf[1] = 0x80 + (((unsigned)c >> 12) & 0x3f);
-    buf[2] = 0x80 + (((unsigned)c >> 6) & 0x3f);
-    buf[3] = 0x80 + (c & 0x3f);
+    buf[0] = (char)(0xf0 + ((unsigned)c >> 18));
+    buf[1] = (char)(0x80 + (((unsigned)c >> 12) & 0x3f));
+    buf[2] = (char)(0x80 + (((unsigned)c >> 6) & 0x3f));
+    buf[3] = (char)(0x80 + ((unsigned)c & 0x3f));
     return 4;
   } else if (c < 0x4000000) {  // 26 bits
-    buf[0] = 0xf8 + ((unsigned)c >> 24);
-    buf[1] = 0x80 + (((unsigned)c >> 18) & 0x3f);
-    buf[2] = 0x80 + (((unsigned)c >> 12) & 0x3f);
-    buf[3] = 0x80 + (((unsigned)c >> 6) & 0x3f);
-    buf[4] = 0x80 + (c & 0x3f);
+    buf[0] = (char)(0xf8 + ((unsigned)c >> 24));
+    buf[1] = (char)(0x80 + (((unsigned)c >> 18) & 0x3f));
+    buf[2] = (char)(0x80 + (((unsigned)c >> 12) & 0x3f));
+    buf[3] = (char)(0x80 + (((unsigned)c >> 6) & 0x3f));
+    buf[4] = (char)(0x80 + ((unsigned)c & 0x3f));
     return 5;
   } else {  // 31 bits
-    buf[0] = 0xfc + ((unsigned)c >> 30);
-    buf[1] = 0x80 + (((unsigned)c >> 24) & 0x3f);
-    buf[2] = 0x80 + (((unsigned)c >> 18) & 0x3f);
-    buf[3] = 0x80 + (((unsigned)c >> 12) & 0x3f);
-    buf[4] = 0x80 + (((unsigned)c >> 6) & 0x3f);
-    buf[5] = 0x80 + (c & 0x3f);
+    buf[0] = (char)(0xfc + ((unsigned)c >> 30));
+    buf[1] = (char)(0x80 + (((unsigned)c >> 24) & 0x3f));
+    buf[2] = (char)(0x80 + (((unsigned)c >> 18) & 0x3f));
+    buf[3] = (char)(0x80 + (((unsigned)c >> 12) & 0x3f));
+    buf[4] = (char)(0x80 + (((unsigned)c >> 6) & 0x3f));
+    buf[5] = (char)(0x80 + ((unsigned)c & 0x3f));
     return 6;
   }
 }
@@ -1251,7 +1251,7 @@ int mb_toupper(int a)
 #if defined(__STDC_ISO_10646__)
   // If towupper() is available and handles Unicode, use it.
   if (!(cmp_flags & CMP_INTERNAL)) {
-    return towupper(a);
+    return (int)towupper((wint_t)a);
   }
 #endif
 
@@ -1282,7 +1282,7 @@ int mb_tolower(int a)
 #if defined(__STDC_ISO_10646__)
   // If towlower() is available and handles Unicode, use it.
   if (!(cmp_flags & CMP_INTERNAL)) {
-    return towlower(a);
+    return (int)towlower((wint_t)a);
   }
 #endif
 
@@ -1347,10 +1347,10 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1, size_t n2
   // to fold just one character to determine the result of comparison.
 
   if (c1 != -1 && c2 == -1) {
-    n1 = utf_char2bytes(utf_fold(c1), (char *)buffer);
+    n1 = (size_t)utf_char2bytes(utf_fold(c1), (char *)buffer);
     s1 = (char_u *)buffer;
   } else if (c2 != -1 && c1 == -1) {
-    n2 = utf_char2bytes(utf_fold(c2), (char *)buffer);
+    n2 = (size_t)utf_char2bytes(utf_fold(c2), (char *)buffer);
     s2 = (char_u *)buffer;
   }
 
@@ -1487,7 +1487,7 @@ void mb_utflen(const char_u *s, size_t len, size_t *codepoints, size_t *codeunit
   size_t count = 0, extra = 0;
   size_t clen;
   for (size_t i = 0; i < len && s[i] != NUL; i += clen) {
-    clen = utf_ptr2len_len(s + i, len - i);
+    clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
     int c = (clen > 1) ? utf_ptr2char((char *)s + i) : s[i];
@@ -1509,7 +1509,7 @@ ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool us
     return 0;
   }
   for (i = 0; i < len && s[i] != NUL; i += clen) {
-    clen = utf_ptr2len_len(s + i, len - i);
+    clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
     int c = (clen > 1) ? utf_ptr2char((char *)s + i) : s[i];
@@ -1518,7 +1518,7 @@ ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool us
       count++;
     }
     if (count >= index) {
-      return i + clen;
+      return (ssize_t)(i + clen);
     }
   }
   return -1;
@@ -2165,7 +2165,7 @@ char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
     if (*s == '_') {
       *p++ = '-';
     } else {
-      *p++ = TOLOWER_ASC(*s);
+      *p++ = (char_u)TOLOWER_ASC(*s);
     }
   }
   *p = NUL;
@@ -2269,8 +2269,8 @@ char_u *enc_locale(void)
         && !isalnum((int)p[4]) && p[4] != '-' && p[-3] == '_') {
       // Copy "XY.EUC" to "euc-XY" to buf[10].
       memmove(buf, "euc-", 4);
-      buf[4] = (ASCII_ISALNUM(p[-2]) ? TOLOWER_ASC(p[-2]) : 0);
-      buf[5] = (ASCII_ISALNUM(p[-1]) ? TOLOWER_ASC(p[-1]) : 0);
+      buf[4] = (char)(ASCII_ISALNUM(p[-2]) ? TOLOWER_ASC(p[-2]) : 0);
+      buf[5] = (char)(ASCII_ISALNUM(p[-1]) ? TOLOWER_ASC(p[-1]) : 0);
       buf[6] = NUL;
     } else {
       s = p + 1;
@@ -2282,7 +2282,7 @@ enc_locale_copy_enc:
       if (s[i] == '_' || s[i] == '-') {
         buf[i] = '-';
       } else if (ASCII_ISALNUM((uint8_t)s[i])) {
-        buf[i] = TOLOWER_ASC(s[i]);
+        buf[i] = (char)TOLOWER_ASC(s[i]);
       } else {
         break;
       }
@@ -2406,14 +2406,14 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
       }
       l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
       from += l;
-      fromlen -= l;
+      fromlen -= (size_t)l;
     } else if (ICONV_ERRNO != ICONV_E2BIG) {
       // conversion failed
       XFREE_CLEAR(result);
       break;
     }
     // Not enough room or skipping illegal sequence.
-    done = to - (char *)result;
+    done = (size_t)(to - (char *)result);
   }
 
   if (resultlenp != NULL && result != NULL) {
@@ -2550,10 +2550,10 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
     for (size_t i = 0; i < len; ++i) {
       c = ptr[i];
       if (c < 0x80) {
-        *d++ = c;
+        *d++ = (char_u)c;
       } else {
-        *d++ = 0xc0 + ((unsigned)c >> 6);
-        *d++ = 0x80 + (c & 0x3f);
+        *d++ = (char_u)(0xc0 + (char_u)((unsigned)c >> 6));
+        *d++ = (char_u)(0x80 + (c & 0x3f));
       }
     }
     *d = NUL;
@@ -2597,8 +2597,8 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
   case CONV_TO_LATIN9:          // utf-8 to latin9 conversion
     retval = xmalloc(len + 1);
     d = retval;
-    for (size_t i = 0; i < len; ++i) {
-      l = utf_ptr2len_len(ptr + i, len - i);
+    for (size_t i = 0; i < len; i++) {
+      l = utf_ptr2len_len(ptr + i, (int)(len - i));
       if (l == 0) {
         *d++ = NUL;
       } else if (l == 1) {
@@ -2648,7 +2648,7 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
         }
         if (!utf_iscomposing(c)) {              // skip composing chars
           if (c < 0x100) {
-            *d++ = c;
+            *d++ = (char_u)c;
           } else if (vcp->vc_fail) {
             xfree(retval);
             return NULL;
@@ -2659,7 +2659,7 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
             }
           }
         }
-        i += l - 1;
+        i += (size_t)l - 1;
       }
     }
     *d = NUL;
