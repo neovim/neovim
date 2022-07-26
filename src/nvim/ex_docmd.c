@@ -6788,9 +6788,18 @@ char *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   if (idx < buf->b_ucmds.ga_len) {
     return (char *)USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
   }
+
   idx -= buf->b_ucmds.ga_len;
   if (idx < ucmds.ga_len) {
-    return (char *)USER_CMD(idx)->uc_name;
+    char *name = (char *)USER_CMD(idx)->uc_name;
+
+    for (int i = 0; i < buf->b_ucmds.ga_len; i++) {
+      if (STRCMP(name, USER_CMD_GA(&buf->b_ucmds, i)->uc_name) == 0) {
+        // global command is overruled by buffer-local one
+        return "";
+      }
+    }
+    return name;
   }
   return NULL;
 }

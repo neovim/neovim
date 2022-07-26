@@ -704,6 +704,16 @@ func Test_cmdline_complete_user_cmd()
   delcommand Foo
 endfunc
 
+func Test_complete_user_cmd()
+  command FooBar echo 'global'
+  command -buffer FooBar echo 'local'
+  call feedkeys(":Foo\<C-A>\<Home>\"\<CR>", 'tx')
+  call assert_equal('"FooBar', @:)
+
+  delcommand -buffer FooBar
+  delcommand FooBar
+endfunc
+
 func s:ScriptLocalFunction()
   echo 'yes'
 endfunc
