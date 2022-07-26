@@ -146,6 +146,7 @@ func Test_Ex_append_in_loop()
   call term_sendkeys(buf, "append\<CR>")
   call WaitForAssert({-> assert_match(':  append', term_getline(buf, 5))}, 1000)
   call term_sendkeys(buf, "\<C-C>")
+  " Wait for input to be flushed
   call term_wait(buf)
   call term_sendkeys(buf, "foo\<CR>")
   call WaitForAssert({-> assert_match('foo', term_getline(buf, 5))}, 1000)

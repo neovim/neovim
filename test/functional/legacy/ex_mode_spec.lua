@@ -143,7 +143,7 @@ describe('Ex mode', function()
       ^                                                            |
     ]])
     feed('<C-C>')
-    sleep(10)  -- Wait for Ctrl-C to flush input
+    sleep(10)  -- Wait for input to be flushed
     feed('foo<CR>')
     screen:expect([[
       Entering Ex mode.  Type "visual" to go to Normal mode.      |
