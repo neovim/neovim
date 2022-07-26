@@ -718,31 +718,31 @@ void win_set_minimal_style(win_T *wp)
     wp->w_p_fcs = ((*old == NUL)
                    ? (char_u *)xstrdup("eob: ")
                    : concat_str(old, (char_u *)",eob: "));
-    xfree(old);
+    free_string_option(old);
   }
   if (wp->w_hl_ids[HLF_EOB] != -1) {
     char_u *old = wp->w_p_winhl;
     wp->w_p_winhl = ((*old == NUL)
                      ? (char_u *)xstrdup("EndOfBuffer:")
                      : concat_str(old, (char_u *)",EndOfBuffer:"));
-    xfree(old);
+    free_string_option(old);
   }
 
   // signcolumn: use 'auto'
   if (wp->w_p_scl[0] != 'a' || STRLEN(wp->w_p_scl) >= 8) {
-    xfree(wp->w_p_scl);
+    free_string_option(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }
 
   // foldcolumn: use '0'
   if (wp->w_p_fdc[0] != '0') {
-    xfree(wp->w_p_fdc);
+    free_string_option(wp->w_p_fdc);
     wp->w_p_fdc = (char_u *)xstrdup("0");
   }
 
   // colorcolumn: cleared
   if (wp->w_p_cc != NULL && *wp->w_p_cc != NUL) {
-    xfree(wp->w_p_cc);
+    free_string_option(wp->w_p_cc);
     wp->w_p_cc = (char_u *)xstrdup("");
   }
 }
