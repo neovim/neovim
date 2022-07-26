@@ -445,7 +445,7 @@ void terminal_enter(void)
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
     if (save_w_p_culopt) {
-      xfree(curwin->w_p_culopt);
+      free_string_option(curwin->w_p_culopt);
       curwin->w_p_culopt = save_w_p_culopt;
     }
     curwin->w_p_culopt_flags = save_w_p_culopt_flags;
@@ -453,7 +453,7 @@ void terminal_enter(void)
     curwin->w_p_so = save_w_p_so;
     curwin->w_p_siso = save_w_p_siso;
   } else if (save_w_p_culopt) {
-    xfree(save_w_p_culopt);
+    free_string_option(save_w_p_culopt);
   }
 
   // draw the unfocused cursor
