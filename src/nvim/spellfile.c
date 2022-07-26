@@ -903,8 +903,8 @@ void suggest_load_files(void)
       }
 
       // <SUGHEADER>: <fileID> <versionnr> <timestamp>
-      for (i = 0; i < VIMSUGMAGICL; ++i) {
-        buf[i] = getc(fd);                              // <fileID>
+      for (i = 0; i < VIMSUGMAGICL; i++) {
+        buf[i] = (char_u)getc(fd);                              // <fileID>
       }
       if (STRNCMP(buf, VIMSUGMAGIC, VIMSUGMAGICL) != 0) {
         semsg(_("E778: This does not look like a .sug file: %s"),
@@ -965,7 +965,7 @@ someerror:
           if (c < 0) {
             goto someerror;
           }
-          GA_APPEND(char_u, &ga, c);
+          GA_APPEND(char_u, &ga, (char_u)c);
           if (c == NUL) {
             break;
           }
@@ -1009,7 +1009,7 @@ static char_u *read_cnt_string(FILE *fd, int cnt_bytes, int *cntp)
       *cntp = SP_TRUNCERROR;
       return NULL;
     }
-    cnt = (cnt << 8) + (unsigned)c;
+    cnt = (int)(((unsigned)cnt << 8) + (unsigned)c);
   }
   *cntp = cnt;
   if (cnt == 0) {
@@ -1081,7 +1081,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
     return SP_FORMERROR;
   }
 
-  lp->sl_prefprog = xcalloc(cnt, sizeof(regprog_T *));
+  lp->sl_prefprog = xcalloc((size_t)cnt, sizeof(regprog_T *));
   lp->sl_prefixcnt = cnt;
 
   for (int i = 0; i < cnt; i++) {
@@ -1146,7 +1146,7 @@ static int read_rep_section(FILE *fd, garray_T *gap, int16_t *first)
   for (int i = 0; i < gap->ga_len; ++i) {
     ftp = &((fromto_T *)gap->ga_data)[i];
     if (first[*ftp->ft_from] == -1) {
-      first[*ftp->ft_from] = i;
+      first[*ftp->ft_from] = (int16_t)i;
     }
   }
   return 0;
@@ -1193,7 +1193,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     if (ccnt < 0) {
       return SP_TRUNCERROR;
     }
-    p = xmalloc(ccnt + 2);
+    p = xmalloc((size_t)ccnt + 2);
     smp->sm_lead = p;
 
     // Read up to the first special char into sm_lead.
@@ -1203,7 +1203,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
       if (vim_strchr("0123456789(-<^$", c) != NULL) {
         break;
       }
-      *p++ = c;
+      *p++ = (char_u)c;
     }
     smp->sm_leadlen = (int)(p - smp->sm_lead);
     *p++ = NUL;
@@ -1216,7 +1216,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
         if (c == ')') {
           break;
         }
-        *p++ = c;
+        *p++ = (char_u)c;
       }
       *p++ = NUL;
       if (++i < ccnt) {
@@ -1230,7 +1230,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     smp->sm_rules = p;
     if (i < ccnt) {
       // store the char we got while checking for end of sm_lead
-      *p++ = c;
+      *p++ = (char_u)c;
     }
     i++;
     if (i < ccnt) {
@@ -1302,7 +1302,7 @@ static int read_words_section(FILE *fd, slang_T *lp, int len)
       if (c == EOF) {
         return SP_TRUNCERROR;
       }
-      word[i] = c;
+      word[i] = (char_u)c;
       if (word[i] == NUL) {
         break;
       }
@@ -1363,11 +1363,6 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   int todo = len;
   int c;
   int atstart;
-  char_u *pat;
-  char_u *pp;
-  char_u *cp;
-  char_u *ap;
-  char_u *crp;
   int cnt;
   garray_T *gap;
 
@@ -1432,25 +1427,25 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   // Conversion to utf-8 may double the size.
   c = todo * 2 + 7;
   c += todo * 2;
-  pat = xmalloc(c);
+  char_u *pat = xmalloc((size_t)c);
 
   // We also need a list of all flags that can appear at the start and one
   // for all flags.
-  cp = xmalloc(todo + 1);
+  char_u *cp = xmalloc((size_t)todo + 1);
   slang->sl_compstartflags = cp;
   *cp = NUL;
 
-  ap = xmalloc(todo + 1);
+  char_u *ap = xmalloc((size_t)todo + 1);
   slang->sl_compallflags = ap;
   *ap = NUL;
 
   // And a list of all patterns in their original form, for checking whether
   // compounding may work in match_compoundrule().  This is freed when we
   // encounter a wildcard, the check doesn't work then.
-  crp = xmalloc(todo + 1);
+  char_u *crp = xmalloc((size_t)todo + 1);
   slang->sl_comprules = crp;
 
-  pp = pat;
+  char_u *pp = pat;
   *pp++ = '^';
   *pp++ = '\\';
   *pp++ = '(';
@@ -1466,7 +1461,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     // Add all flags to "sl_compallflags".
     if (vim_strchr("?*+[]/", c) == NULL
         && !byte_in_str(slang->sl_compallflags, c)) {
-      *ap++ = c;
+      *ap++ = (char_u)c;
       *ap = NUL;
     }
 
@@ -1479,7 +1474,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
         atstart = 0;
       } else {
         if (!byte_in_str(slang->sl_compstartflags, c)) {
-          *cp++ = c;
+          *cp++ = (char_u)c;
           *cp = NUL;
         }
         if (atstart == 1) {
@@ -1494,7 +1489,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
         XFREE_CLEAR(slang->sl_comprules);
         crp = NULL;
       } else {
-        *crp++ = c;
+        *crp++ = (char_u)c;
       }
     }
 
@@ -1561,7 +1556,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
   // Allocate the lists.
   for (int i = 0; i < 256; i++) {
     if (lp->sl_sal_first[i] > 0) {
-      p = xmalloc(sizeof(int) * (lp->sl_sal_first[i] * 2 + 1));
+      p = xmalloc(sizeof(int) * (size_t)(lp->sl_sal_first[i] * 2 + 1));
       ((int **)gap->ga_data)[i] = (int *)p;
       *(int *)p = 0;
     }
@@ -1631,7 +1626,7 @@ static void set_sal_first(slang_T *lp)
           i++;
           n--;
           tsal = smp[i + n];
-          memmove(smp + i + 1, smp + i, sizeof(salitem_T) * n);
+          memmove(smp + i + 1, smp + i, sizeof(salitem_T) * (size_t)n);
           smp[i] = tsal;
         }
       }
@@ -1645,7 +1640,7 @@ static int *mb_str2wide(char_u *s)
 {
   int i = 0;
 
-  int *res = xmalloc((mb_charlen(s) + 1) * sizeof(int));
+  int *res = xmalloc(((size_t)mb_charlen(s) + 1) * sizeof(int));
   for (char_u *p = s; *p != NUL;) {
     res[i++] = mb_ptr2char_adv((const char_u **)&p);
   }
@@ -1682,18 +1677,18 @@ static int spell_read_tree(FILE *fd, char_u **bytsp, long *bytsp_len, idx_T **id
   }
   if (len > 0) {
     // Allocate the byte array.
-    bp = xmalloc(len);
+    bp = xmalloc((size_t)len);
     *bytsp = bp;
     if (bytsp_len != NULL) {
       *bytsp_len = len;
     }
 
     // Allocate the index array.
-    ip = xcalloc(len, sizeof(*ip));
+    ip = xcalloc((size_t)len, sizeof(*ip));
     *idxsp = ip;
 
     // Recursively read the tree and store it in the array.
-    idx = read_tree_node(fd, bp, ip, len, 0, prefixtree, prefixcnt);
+    idx = read_tree_node(fd, bp, ip, (int)len, 0, prefixtree, prefixcnt);
     if (idx < 0) {
       return idx;
     }
@@ -1733,7 +1728,7 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
   if (startidx + len >= maxidx) {
     return SP_FORMERROR;
   }
-  byts[idx++] = len;
+  byts[idx++] = (char_u)len;
 
   // Read the byte values, flag/region bytes and shared indexes.
   for (i = 1; i <= len; ++i) {
@@ -1793,7 +1788,7 @@ static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs, int maxidx, idx
         c = getc(fd);                                   // <xbyte>
       }
     }
-    byts[idx++] = c;
+    byts[idx++] = (char_u)c;
   }
 
   // Recursively read the children for non-shared siblings.
@@ -2257,7 +2252,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           if (compflags != NULL) {
             l += (int)STRLEN(compflags) + 1;
           }
-          p = getroom(spin, l, false);
+          p = getroom(spin, (size_t)l, false);
           if (compflags != NULL) {
             STRCPY(p, compflags);
             STRCAT(p, "/");
@@ -2885,7 +2880,7 @@ static unsigned get_affitem(int flagtype, char_u **pp)
       res = mb_ptr2char_adv((const char_u **)pp) + (res << 16);
     }
   }
-  return res;
+  return (unsigned)res;
 }
 
 // Process the "compflags" string used in an affix file and append it to
@@ -2911,7 +2906,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
   if (spin->si_compflags != NULL) {
     len += (int)STRLEN(spin->si_compflags) + 1;
   }
-  p = getroom(spin, len, false);
+  p = getroom(spin, (size_t)len, false);
   if (spin->si_compflags != NULL) {
     STRCPY(p, spin->si_compflags);
     STRCAT(p, "/");
@@ -2947,7 +2942,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
           ci->ci_newID = id;
           hash_add(&aff->af_comp, ci->ci_key);
         }
-        *tp++ = id;
+        *tp++ = (char_u)id;
       }
       if (aff->af_flagtype == AFT_NUM && *p == ',') {
         ++p;
@@ -2978,15 +2973,15 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
 
   switch (flagtype) {
   case AFT_CHAR:
-    return vim_strchr((char *)afflist, flag) != NULL;
+    return vim_strchr((char *)afflist, (int)flag) != NULL;
 
   case AFT_CAPLONG:
   case AFT_LONG:
     for (p = afflist; *p != NUL;) {
-      n = mb_ptr2char_adv((const char_u **)&p);
+      n = (unsigned)mb_ptr2char_adv((const char_u **)&p);
       if ((flagtype == AFT_LONG || (n >= 'A' && n <= 'Z'))
           && *p != NUL) {
-        n = mb_ptr2char_adv((const char_u **)&p) + (n << 16);
+        n = (unsigned)mb_ptr2char_adv((const char_u **)&p) + (n << 16);
       }
       if (n == flag) {
         return true;
@@ -3362,7 +3357,7 @@ static int get_pfxlist(afffile_T *affile, char_u *afflist, char_u *store_afflist
       if (!HASHITEM_EMPTY(hi)) {
         id = HI2AH(hi)->ah_newID;
         if (id != 0) {
-          store_afflist[cnt++] = id;
+          store_afflist[cnt++] = (char_u)id;
         }
       }
     }
@@ -3393,7 +3388,7 @@ static void get_compflags(afffile_T *affile, char_u *afflist, char_u *store_affl
       STRLCPY(key, prevp, p - prevp + 1);
       hi = hash_find(&affile->af_comp, (char *)key);
       if (!HASHITEM_EMPTY(hi)) {
-        store_afflist[cnt++] = HI2CI(hi)->ci_newID;
+        store_afflist[cnt++] = (char_u)HI2CI(hi)->ci_newID;
       }
     }
     if (affile->af_flagtype == AFT_NUM && *p == ',') {
@@ -3856,11 +3851,10 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
   if (align && bl != NULL) {
     // Round size up for alignment.  On some systems structures need to be
     // aligned to the size of a pointer (e.g., SPARC).
-    bl->sb_used = (bl->sb_used + sizeof(char *) - 1)
-                  & ~(sizeof(char *) - 1);
+    bl->sb_used = (int)(((size_t)bl->sb_used + sizeof(char *) - 1) & ~(sizeof(char *) - 1));
   }
 
-  if (bl == NULL || bl->sb_used + len > SBLOCKSIZE) {
+  if (bl == NULL || (size_t)bl->sb_used + len > SBLOCKSIZE) {
     // Allocate a block of memory. It is not freed until much later.
     bl = xcalloc(1, (sizeof(sblock_T) + SBLOCKSIZE));
     bl->sb_next = spin->si_blocks;
@@ -4072,9 +4066,9 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
     }
 
     if (word[i] == NUL) {
-      node->wn_flags = flags;
-      node->wn_region |= region;
-      node->wn_affixID = affixID;
+      node->wn_flags = (uint16_t)flags;
+      node->wn_region |= (int16_t)region;
+      node->wn_affixID = (char_u)affixID;
       break;
     }
     prev = &node->wn_child;
@@ -4298,12 +4292,12 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
   // Make a hash key for the node and its siblings, so that we can quickly
   // find a lookalike node.  This must be done after compressing the sibling
   // list, otherwise the hash key would become invalid by the compression.
-  node->wn_u1.hashkey[0] = len;
+  node->wn_u1.hashkey[0] = (char_u)len;
   nr = 0;
   for (np = node; np != NULL; np = np->wn_sibling) {
     if (np->wn_byte == NUL) {
       // end node: use wn_flags, wn_region and wn_affixID
-      n = np->wn_flags + (np->wn_region << 8) + (np->wn_affixID << 16);
+      n = (unsigned)(np->wn_flags + (np->wn_region << 8) + (np->wn_affixID << 16));
     } else {
       // byte node: use the byte value and the child pointer
       n = (unsigned)(np->wn_byte + ((uintptr_t)np->wn_child << 8));
@@ -4313,13 +4307,13 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
 
   // Avoid NUL bytes, it terminates the hash key.
   n = nr & 0xff;
-  node->wn_u1.hashkey[1] = n == 0 ? 1 : n;
+  node->wn_u1.hashkey[1] = n == 0 ? 1 : (char_u)n;
   n = (nr >> 8) & 0xff;
-  node->wn_u1.hashkey[2] = n == 0 ? 1 : n;
+  node->wn_u1.hashkey[2] = n == 0 ? 1 : (char_u)n;
   n = (nr >> 16) & 0xff;
-  node->wn_u1.hashkey[3] = n == 0 ? 1 : n;
+  node->wn_u1.hashkey[3] = n == 0 ? 1 : (char_u)n;
   n = (nr >> 24) & 0xff;
-  node->wn_u1.hashkey[4] = n == 0 ? 1 : n;
+  node->wn_u1.hashkey[4] = n == 0 ? 1 : (char_u)n;
   node->wn_u1.hashkey[5] = NUL;
 
   // Check for CTRL-C pressed now and then.
@@ -5034,7 +5028,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
         // We use the "flags" field for the MSB of the wordnr,
         // "region" for the LSB of the wordnr.
         if (tree_add_word(spin, tsalword, spin->si_foldroot,
-                          words_done >> 16, words_done & 0xffff,
+                          (int)(words_done >> 16), words_done & 0xffff,
                           0) == FAIL) {
           return FAIL;
         }
@@ -5054,7 +5048,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
         }
       } else {
         // Normal char, go one level deeper.
-        tword[depth++] = c;
+        tword[depth++] = (char_u)c;
         arridx[depth] = idxs[n];
         curi[depth] = 1;
         wordcount[depth] = 0;
@@ -5170,25 +5164,25 @@ static int offset2bytes(int nr, char_u *buf)
   b4 = rem / 255 + 1;
 
   if (b4 > 1 || b3 > 0x1f) {    // 4 bytes
-    buf[0] = 0xe0 + b4;
-    buf[1] = b3;
-    buf[2] = b2;
-    buf[3] = b1;
+    buf[0] = (char_u)(0xe0 + b4);
+    buf[1] = (char_u)b3;
+    buf[2] = (char_u)b2;
+    buf[3] = (char_u)b1;
     return 4;
   }
   if (b3 > 1 || b2 > 0x3f) {   // 3 bytes
-    buf[0] = 0xc0 + b3;
-    buf[1] = b2;
-    buf[2] = b1;
+    buf[0] = (char_u)(0xc0 + b3);
+    buf[1] = (char_u)b2;
+    buf[2] = (char_u)b1;
     return 3;
   }
   if (b2 > 1 || b1 > 0x7f) {   // 2 bytes
-    buf[0] = 0x80 + b2;
-    buf[1] = b1;
+    buf[0] = (char_u)(0x80 + b2);
+    buf[1] = (char_u)b1;
     return 2;
   }
   // 1 byte
-  buf[0] = b1;
+  buf[0] = (char_u)b1;
   return 1;
 }
 
@@ -5373,9 +5367,8 @@ static void mkspell(int fcount, char_u **fnames, bool ascii, bool over_write, bo
           semsg(_("E755: Invalid region in %s"), innames[i]);
           goto theend;
         }
-        spin.si_region_name[i * 2] = TOLOWER_ASC(innames[i][len - 2]);
-        spin.si_region_name[i * 2 + 1] =
-          TOLOWER_ASC(innames[i][len - 1]);
+        spin.si_region_name[i * 2] = (char_u)TOLOWER_ASC(innames[i][len - 2]);
+        spin.si_region_name[i * 2 + 1] = (char_u)TOLOWER_ASC(innames[i][len - 1]);
       }
     }
     spin.si_region_count = incount;
@@ -5645,7 +5638,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
         // the file again.
         *p = NUL;
         os_mkdir((char *)fname, 0755);
-        *p = c;
+        *p = (char_u)c;
         fd = os_fopen((char *)fname, "a");
       }
     }
@@ -5727,19 +5720,19 @@ static void init_spellfile(void)
         } else {
           // Create the "spell" directory if it doesn't exist yet.
           l = (int)STRLEN(buf);
-          vim_snprintf((char *)buf + l, MAXPATHL - l, "/spell");
+          vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, "/spell");
           if (os_file_is_writable((char *)buf) != 2) {
             os_mkdir((char *)buf, 0755);
           }
 
           l = (int)STRLEN(buf);
-          vim_snprintf((char *)buf + l, MAXPATHL - l,
+          vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l,
                        "/%.*s", (int)(lend - lstart), lstart);
         }
         l = (int)STRLEN(buf);
         fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)
                 ->lp_slang->sl_fname;
-        vim_snprintf((char *)buf + l, MAXPATHL - l, ".%s.add",
+        vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".%s.add",
                      ((fname != NULL
                        && strstr(path_tail((char *)fname), ".ascii.") != NULL)
                       ? "ascii"
@@ -5776,9 +5769,9 @@ static void set_spell_charflags(char_u *flags, int cnt, char_u *fol)
 
     if (*p != NUL) {
       c = mb_ptr2char_adv((const char_u **)&p);
-      new_st.st_fold[i + 128] = c;
+      new_st.st_fold[i + 128] = (char_u)c;
       if (i + 128 != c && new_st.st_isu[i + 128] && c < 256) {
-        new_st.st_upper[c] = i + 128;
+        new_st.st_upper[c] = (char_u)(i + 128);
       }
     }
   }
@@ -5878,11 +5871,10 @@ static void set_map_str(slang_T *lp, char_u *map)
       if (c >= 256) {
         int cl = utf_char2len(c);
         int headcl = utf_char2len(headc);
-        char *b;
         hash_T hash;
         hashitem_T *hi;
 
-        b = xmalloc(cl + headcl + 2);
+        char *b = xmalloc((size_t)(cl + headcl) + 2);
         utf_char2bytes(c, b);
         b[cl] = NUL;
         utf_char2bytes(headc, b + cl + 1);
