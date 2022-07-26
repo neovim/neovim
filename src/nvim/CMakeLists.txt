@@ -162,7 +162,6 @@ set(CONV_SOURCES
   mbyte.c
   regexp.c
   screen.c
-  search.c
   spell.c
   spellfile.c
   syntax.c
