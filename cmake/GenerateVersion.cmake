@@ -7,15 +7,11 @@ set(NVIM_VERSION_MEDIUM
     "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}")
 
 execute_process(
-  COMMAND git describe --first-parent --dirty
+  COMMAND git describe --first-parent --dirty --always
   OUTPUT_VARIABLE GIT_TAG
-  ERROR_VARIABLE ERR
-  RESULT_VARIABLE RES
-)
+  RESULT_VARIABLE RES)
 
-if(NOT RES EQUAL 0)
-  message(STATUS "Git tag extraction failed:\n"  "   ${GIT_TAG}${ERR}" )
-  # This will only be executed once since the file will get generated afterwards.
+if(RES AND NOT RES EQUAL 0)
   message(STATUS "Using NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
   file(WRITE "${OUTPUT}" "${NVIM_VERSION_STRING}")
   return()
