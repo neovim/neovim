@@ -1257,13 +1257,12 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
                     • true: Client may continue pasting.
                     • false: Client must cancel the paste.
 
-nvim_pty_set_size({chan}, {width}, {height})             *nvim_pty_set_size()*
+nvim_pty_set_size({chan}, {size})                        *nvim_pty_set_size()*
                 Resize pty.
 
                 Parameters: ~
-                    {chan}    id of the channel
-                    {width}   new pty width
-                    {height}  new pty height
+                    {chan}  id of the channel
+                    {size}  new size: (width, height) tuple
 
                 Return: ~
 

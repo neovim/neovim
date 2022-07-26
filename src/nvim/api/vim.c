@@ -1064,15 +1064,24 @@ void nvim_chan_send(Integer chan, String data, Error *err)
 /// Resize pty.
 ///
 /// @param chan id of the channel
-/// @param width new pty width
-/// @param height new pty height
+/// @param size new size: (width, height) tuple
 /// @param[out] err Error details, if any
 /// @return
 ///     - true: Success.
 ///     - false: Invalid channel.
-Boolean nvim_pty_set_size(Integer chan, Integer width, Integer height, Error *err)
+Boolean nvim_pty_set_size(Integer chan, ArrayOf(Integer, 2) size, Error *err)
   FUNC_API_SINCE(10)
 {
+  if (size.size != 2 || size.items[0].type != kObjectTypeInteger
+      || size.items[1].type != kObjectTypeInteger) {
+    api_set_error(err,
+                  kErrorTypeValidation,
+                  "Argument \"size\" must be a [width, height] array");
+    return false;
+  }
+
+  Integer width = size.items[0].data.integer;
+  Integer height = size.items[1].data.integer;
   if (width < 1 || width > UINT16_MAX) {
     api_set_error(err, kErrorTypeValidation, "Invalid width");
     return false;
