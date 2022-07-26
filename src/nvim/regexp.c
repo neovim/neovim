@@ -1270,8 +1270,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       if (reg_tofree == NULL || len >= (int)reg_tofreelen) {
         len += 50;              // get some extra
         xfree(reg_tofree);
-        reg_tofree = xmalloc(len);
-        reg_tofreelen = len;
+        reg_tofree = xmalloc((size_t)len);
+        reg_tofreelen = (unsigned)len;
       }
       STRCPY(reg_tofree, rex.line);
       rex.input = reg_tofree + (rex.input - rex.line);
@@ -1554,7 +1554,7 @@ char_u *regtilde(char_u *source, int magic, bool preview)
       if (reg_prev_sub != NULL) {
         // length = len(newsub) - 1 + len(prev_sub) + 1
         prevlen = (int)STRLEN(reg_prev_sub);
-        tmpsub = xmalloc(STRLEN(newsub) + prevlen);
+        tmpsub = xmalloc(STRLEN(newsub) + (size_t)prevlen);
         // copy prefix
         len = (int)(p - newsub);              // not including ~
         memmove(tmpsub, newsub, (size_t)len);
@@ -1633,7 +1633,7 @@ static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv, int arg
     if (s == NULL || rsm.sm_match->endp[i] == NULL) {
       s = NULL;
     } else {
-      s = vim_strnsave(s, rsm.sm_match->endp[i] - s);
+      s = vim_strnsave(s, (size_t)(rsm.sm_match->endp[i] - s));
     }
     TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
     TV_LIST_ITEM_TV(li)->vval.v_string = (char *)s;
@@ -1920,7 +1920,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
               iemsg("vim_regsub_both(): not enough space");
               return 0;
             }
-            *dst++ = c;
+            *dst++ = (char_u)c;
             *dst++ = *src++;
             *dst++ = *src++;
           } else {
@@ -2195,7 +2195,7 @@ char_u *reg_submatch(int no)
           if (round == 2) {
             STRCPY(retval + len, s);
           }
-          len += STRLEN(s);
+          len += (ssize_t)STRLEN(s);
           if (round == 2) {
             retval[len] = '\n';
           }
@@ -2213,7 +2213,7 @@ char_u *reg_submatch(int no)
       }
 
       if (retval == NULL) {
-        retval = xmalloc(len);
+        retval = xmalloc((size_t)len);
       }
     }
   } else {
@@ -2221,7 +2221,7 @@ char_u *reg_submatch(int no)
     if (s == NULL || rsm.sm_match->endp[no] == NULL) {
       retval = NULL;
     } else {
-      retval = vim_strnsave(s, rsm.sm_match->endp[no] - s);
+      retval = vim_strnsave(s, (size_t)(rsm.sm_match->endp[no] - s));
     }
   }
 
@@ -2326,7 +2326,7 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
   regprog_T *prog = NULL;
   char_u *expr = (char_u *)expr_arg;
 
-  regexp_engine = p_re;
+  regexp_engine = (int)p_re;
 
   // Check for prefix "\%#=", that sets the regexp engine
   if (STRNCMP(expr, "\\%#=", 4) == 0) {
@@ -2394,8 +2394,8 @@ regprog_T *vim_regcomp(char *expr_arg, int re_flags)
   if (prog != NULL) {
     // Store the info needed to call regcomp() again when the engine turns out
     // to be very slow when executing it.
-    prog->re_engine = regexp_engine;
-    prog->re_flags = re_flags;
+    prog->re_engine = (unsigned)regexp_engine;
+    prog->re_flags = (unsigned)re_flags;
   }
 
   return prog;
@@ -2473,8 +2473,8 @@ static bool vim_regexec_string(regmatch_T *rmp, char_u *line, colnr_T col, bool 
   // NFA engine aborted because it's very slow, use backtracking engine instead.
   if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
       && result == NFA_TOO_EXPENSIVE) {
-    int save_p_re = p_re;
-    int re_flags = rmp->regprog->re_flags;
+    int save_p_re = (int)p_re;
+    int re_flags = (int)rmp->regprog->re_flags;
     char_u *pat = vim_strsave(((nfa_regprog_T *)rmp->regprog)->pattern);
 
     p_re = BACKTRACKING_ENGINE;
@@ -2558,15 +2558,14 @@ long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, 
   }
   rex_in_use = true;
 
-  int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
-                                                   tm, timed_out);
+  long result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col, tm, timed_out);
   rmp->regprog->re_in_use = false;
 
   // NFA engine aborted because it's very slow, use backtracking engine instead.
   if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
       && result == NFA_TOO_EXPENSIVE) {
-    int save_p_re = p_re;
-    int re_flags = rmp->regprog->re_flags;
+    int save_p_re = (int)p_re;
+    int re_flags = (int)rmp->regprog->re_flags;
     char_u *pat = vim_strsave(((nfa_regprog_T *)rmp->regprog)->pattern);
 
     p_re = BACKTRACKING_ENGINE;
@@ -2587,8 +2586,7 @@ long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, 
       vim_regfree(prev_prog);
 
       rmp->regprog->re_in_use = true;
-      result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
-                                                   tm, timed_out);
+      result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col, tm, timed_out);
       rmp->regprog->re_in_use = false;
     }
 
