@@ -955,6 +955,25 @@ func Test_menu_only_exists_in_terminal()
   endtry
 endfunc
 
+" This used to crash before patch 8.1.1424
+func Test_popup_delete_when_shown()
+  CheckFeature menu
+  CheckNotGui
+
+  func Func()
+    popup Foo
+    return "\<Ignore>"
+  endfunc
+
+  nmenu Foo.Bar :
+  nnoremap <expr> <F2> Func()
+  call feedkeys("\<F2>\<F2>\<Esc>", 'xt')
+
+  delfunc Func
+  nunmenu Foo.Bar
+  nunmap <F2>
+endfunc
+
 func Test_popup_complete_info_01()
   new
   inoremap <buffer><F5> <C-R>=complete_info().mode<CR>
