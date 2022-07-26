@@ -7,7 +7,7 @@ set(NVIM_VERSION_MEDIUM
     "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}${NVIM_VERSION_PRERELEASE}")
 
 execute_process(
-  COMMAND git describe --first-parent --tags --always --dirty
+  COMMAND git describe --first-parent --dirty
   OUTPUT_VARIABLE GIT_TAG
   ERROR_VARIABLE ERR
   RESULT_VARIABLE RES
