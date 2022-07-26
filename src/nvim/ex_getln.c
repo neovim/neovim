@@ -880,6 +880,12 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
         found_one = true;
       }
     }
+
+    if (*p_tal != NUL) {
+      redraw_tabline = true;
+      found_one = true;
+    }
+
     if (found_one) {
       redraw_statuslines();
     }

@@ -3,11 +3,12 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local feed = helpers.feed
 local feed_command = helpers.feed_command
-local source = helpers.source
+local exec = helpers.exec
 
 describe('cmdline', function()
   before_each(clear)
 
+  -- oldtest: Test_cmdlineclear_tabenter()
   it('is cleared when switching tabs', function()
     local screen = Screen.new(30, 10)
     screen:attach()
@@ -91,10 +92,11 @@ describe('cmdline', function()
     ]])
   end)
 
+  -- oldtest: Test_verbose_option()
   it('prints every executed Ex command if verbose >= 16', function()
     local screen = Screen.new(60, 12)
     screen:attach()
-    source([[
+    exec([[
       command DoSomething echo 'hello' |set ts=4 |let v = '123' |echo v
       call feedkeys("\r", 't') " for the hit-enter prompt
       set verbose=20
@@ -113,6 +115,29 @@ describe('cmdline', function()
       Executing: echo v                                           |
       123                                                         |
       Press ENTER or type command to continue^                     |
+    ]])
+  end)
+
+  -- oldtest: Test_cmdline_redraw_tabline()
+  it('tabline is redrawn on entering cmdline', function()
+    local screen = Screen.new(30, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {reverse = true},  -- TabLineFill
+    })
+    screen:attach()
+    exec([[
+      set showtabline=2
+      autocmd CmdlineEnter * set tabline=foo
+    ]])
+    feed(':')
+    screen:expect([[
+      {1:foo                           }|
+                                    |
+      {0:~                             }|
+      {0:~                             }|
+      {0:~                             }|
+      :^                             |
     ]])
   end)
 end)
