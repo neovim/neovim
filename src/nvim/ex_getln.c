@@ -6805,9 +6805,13 @@ static int open_cmdwin(void)
 
     // Avoid command-line window first character being concealed.
     curwin->w_p_cole = 0;
+    // First go back to the original window.
     wp = curwin;
     set_bufref(&bufref, curbuf);
     win_goto(old_curwin);
+
+    // win_goto() may trigger an autocommand that already closes the
+    // cmdline window.
     if (win_valid(wp) && wp != curwin) {
       win_close(wp, true, false);
     }
