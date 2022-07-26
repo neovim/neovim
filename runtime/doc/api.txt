@@ -1257,6 +1257,19 @@ nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
                     • true: Client may continue pasting.
                     • false: Client must cancel the paste.
 
+nvim_pty_set_size({chan}, {width}, {height})             *nvim_pty_set_size()*
+                Resize pty.
+
+                Parameters: ~
+                    {chan}    id of the channel
+                    {width}   new pty width
+                    {height}  new pty height
+
+                Return: ~
+
+                    • true: Success.
+                    • false: Invalid channel.
+
 nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
                 Puts text at cursor, in any mode.
 

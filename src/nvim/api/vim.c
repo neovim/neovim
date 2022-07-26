@@ -1061,6 +1061,35 @@ void nvim_chan_send(Integer chan, String data, Error *err)
   }
 }
 
+/// Resize pty.
+///
+/// @param chan id of the channel
+/// @param width new pty width
+/// @param height new pty height
+/// @param[out] err Error details, if any
+/// @return
+///     - true: Success.
+///     - false: Invalid channel.
+Boolean nvim_pty_set_size(Integer chan, Integer width, Integer height, Error *err)
+  FUNC_API_SINCE(10)
+{
+  if (width < 1 || width > UINT16_MAX) {
+    api_set_error(err, kErrorTypeValidation, "Invalid width");
+    return false;
+  } else if (height < 1 || height > UINT16_MAX) {
+    api_set_error(err, kErrorTypeValidation, "Invalid height");
+    return false;
+  }
+
+  Channel *ch = find_channel((uint64_t)chan);
+  if (!ch || ch->stream.proc.type != kProcessTypePty || ch->stream.proc.closed) {
+    return false;
+  }
+
+  pty_process_resize(&ch->stream.pty, (uint16_t)width, (uint16_t)height);
+  return true;
+}
+
 /// Gets the current list of tabpage handles.
 ///
 /// @return List of tabpage handles
