@@ -554,7 +554,7 @@ function M.inc(bufnr)
     -- headers so assume POV-Ray
   elseif findany(lines, { '^%s{', '^%s%(%*' }) or matchregex(lines, pascal_keywords) then
     return 'pascal'
-  elseif findany(lines, { '^%s*inherit ', '^%s*require ', '^%s*%w+%s+= ' }) then
+  elseif findany(lines, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}]*%s+%??[?:+]?= ' }) then
     return 'bitbake'
   else
     local syntax = M.asm_syntax(bufnr)

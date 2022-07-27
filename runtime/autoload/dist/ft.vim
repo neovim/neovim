@@ -519,7 +519,7 @@ func dist#ft#FTinc()
     " headers so assume POV-Ray
     elseif lines =~ '^\s*\%({\|(\*\)' || lines =~? s:ft_pascal_keywords
       setf pascal
-    elseif lines =~# '\<\%(require\|inherit\)\>' || lines =~# '\w\+ = '
+    elseif lines =~# '\<\%(require\|inherit\)\>' || lines =~# '[A-Z][A-Za-z0-9_:${}]*\s\+\%(??\|[?:+]\)\?= '
       setf bitbake
     else
       call dist#ft#FTasmsyntax()
