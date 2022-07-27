@@ -306,7 +306,7 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
   char *cmdline = NULL;
   char *cmdname = NULL;
-  char **args = NULL;
+  ArrayOf(String) args;
   size_t argc = 0;
 
   String retv = (String)STRING_INIT;
@@ -416,18 +416,12 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
       VALIDATION_ERROR("Incorrect number of arguments supplied");
     }
 
-    if (argc != 0) {
-      args = xcalloc(argc, sizeof(char *));
-
-      for (size_t i = 0; i < argc; i++) {
-        args[i] = string_to_cstr(cmd->args.data.array.items[i].data.string);
-      }
-    }
+    args = cmd->args.data.array;
   }
 
   // Simply pass the first argument (if it exists) as the arg pointer to `set_cmd_addr_type()`
   // since it only ever checks the first argument.
-  set_cmd_addr_type(&ea, argc > 0 ? args[0] : NULL);
+  set_cmd_addr_type(&ea, argc > 0 ? args.items[0].data.string.data : NULL);
 
   if (HAS_KEY(cmd->range)) {
     if (!(ea.argt & EX_RANGE)) {
@@ -676,10 +670,6 @@ end:
   xfree(cmdname);
   xfree(ea.args);
   xfree(ea.arglens);
-  for (size_t i = 0; i < argc; i++) {
-    xfree(args[i]);
-  }
-  xfree(args);
 
   return retv;
 
@@ -704,12 +694,11 @@ static bool string_iswhite(String str)
 }
 
 /// Build cmdline string for command, used by `nvim_cmd()`.
-///
-/// @return OK or FAIL.
-static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdinfo, char **args,
-                              size_t argc)
+static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdinfo,
+                              ArrayOf(String) args, size_t argc)
 {
   StringBuilder cmdline = KV_INITIAL_VALUE;
+  kv_resize(cmdline, 32);  // Make it big enough to handle most typical commands
 
   // Add command modifiers
   if (cmdinfo->cmdmod.cmod_tab != 0) {
@@ -779,11 +768,11 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 
   // Keep the index of the position where command name starts, so eap->cmd can point to it.
   size_t cmdname_idx = cmdline.size;
-  kv_printf(cmdline, "%s", eap->cmd);
+  kv_concat(cmdline, eap->cmd);
 
   // Command bang.
   if (eap->argt & EX_BANG && eap->forceit) {
-    kv_printf(cmdline, "!");
+    kv_concat(cmdline, "!");
   }
 
   // Command register.
@@ -791,29 +780,35 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
     kv_printf(cmdline, " %c", eap->regname);
   }
 
-  // Iterate through each argument and store the starting index and length of each argument
-  size_t *argidx = xcalloc(argc, sizeof(size_t));
   eap->argc = argc;
   eap->arglens = xcalloc(argc, sizeof(size_t));
+  size_t argstart_idx = cmdline.size;
   for (size_t i = 0; i < argc; i++) {
-    argidx[i] = cmdline.size + 1;  // add 1 to account for the space.
-    eap->arglens[i] = STRLEN(args[i]);
-    kv_printf(cmdline, " %s", args[i]);
+    String s = args.items[i].data.string;
+    eap->arglens[i] = s.size;
+    kv_concat(cmdline, " ");
+    kv_concat_len(cmdline, s.data, s.size);
   }
+
+  // Done appending to cmdline, ensure it is NUL terminated
+  kv_push(cmdline, NUL);
 
   // Now that all the arguments are appended, use the command index and argument indices to set the
   // values of eap->cmd, eap->arg and eap->args.
   eap->cmd = cmdline.items + cmdname_idx;
   eap->args = xcalloc(argc, sizeof(char *));
+  size_t offset = argstart_idx;
   for (size_t i = 0; i < argc; i++) {
-    eap->args[i] = cmdline.items + argidx[i];
+    offset++;  // Account for space
+    eap->args[i] = cmdline.items + offset;
+    offset += eap->arglens[i];
   }
   // If there isn't an argument, make eap->arg point to end of cmdline.
-  eap->arg = argc > 0 ? eap->args[0] : cmdline.items + cmdline.size;
+  eap->arg = argc > 0 ? eap->args[0] :
+             cmdline.items + cmdline.size - 1;  // Subtract 1 to account for NUL
 
   // Finally, make cmdlinep point to the cmdline string.
   *cmdlinep = cmdline.items;
-  xfree(argidx);
 
   // Replace, :make and :grep with 'makeprg' and 'grepprg'.
   char *p = replace_makeprg(eap, eap->arg, cmdlinep);
