@@ -37,34 +37,34 @@
 // 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
 //    long name of the command.
 
-#define EX_RANGE           0x001  // allow a linespecs
-#define EX_BANG            0x002  // allow a ! after the command name
-#define EX_EXTRA           0x004  // allow extra args after command name
-#define EX_XFILE           0x008  // expand wildcards in extra part
-#define EX_NOSPC           0x010  // no spaces allowed in the extra part
-#define EX_DFLALL          0x020  // default file range is 1,$
-#define EX_WHOLEFOLD       0x040  // extend range to include whole fold also
-                                  // when less than two numbers given
-#define EX_NEEDARG         0x080  // argument required
-#define EX_TRLBAR          0x100  // check for trailing vertical bar
-#define EX_REGSTR          0x200  // allow "x for register designation
-#define EX_COUNT           0x400  // allow count in argument, after command
-#define EX_NOTRLCOM        0x800  // no trailing comment allowed
-#define EX_ZEROR          0x1000  // zero line number allowed
-#define EX_CTRLV          0x2000  // do not remove CTRL-V from argument
-#define EX_CMDARG         0x4000  // allow "+command" argument
-#define EX_BUFNAME        0x8000  // accepts buffer name
-#define EX_BUFUNL        0x10000  // accepts unlisted buffer too
-#define EX_ARGOPT        0x20000  // allow "++opt=val" argument
-#define EX_SBOXOK        0x40000  // allowed in the sandbox
-#define EX_CMDWIN        0x80000  // allowed in cmdline window
-#define EX_MODIFY       0x100000  // forbidden in non-'modifiable' buffer
-#define EX_FLAGS        0x200000  // allow flags after count in argument
-#define EX_LOCK_OK     0x1000000  // command can be executed when textlock is
-                                  // set; when missing disallows editing another
-                                  // buffer when current buffer is locked
-#define EX_KEEPSCRIPT  0x4000000  // keep sctx of where command was invoked
-#define EX_PREVIEW     0x8000000  // allow incremental command preview
+#define EX_RANGE           0x001u  // allow a linespecs
+#define EX_BANG            0x002u  // allow a ! after the command name
+#define EX_EXTRA           0x004u  // allow extra args after command name
+#define EX_XFILE           0x008u  // expand wildcards in extra part
+#define EX_NOSPC           0x010u  // no spaces allowed in the extra part
+#define EX_DFLALL          0x020u  // default file range is 1,$
+#define EX_WHOLEFOLD       0x040u  // extend range to include whole fold also
+                                   // when less than two numbers given
+#define EX_NEEDARG         0x080u  // argument required
+#define EX_TRLBAR          0x100u  // check for trailing vertical bar
+#define EX_REGSTR          0x200u  // allow "x for register designation
+#define EX_COUNT           0x400u  // allow count in argument, after command
+#define EX_NOTRLCOM        0x800u  // no trailing comment allowed
+#define EX_ZEROR          0x1000u  // zero line number allowed
+#define EX_CTRLV          0x2000u  // do not remove CTRL-V from argument
+#define EX_CMDARG         0x4000u  // allow "+command" argument
+#define EX_BUFNAME        0x8000u  // accepts buffer name
+#define EX_BUFUNL        0x10000u  // accepts unlisted buffer too
+#define EX_ARGOPT        0x20000u  // allow "++opt=val" argument
+#define EX_SBOXOK        0x40000u  // allowed in the sandbox
+#define EX_CMDWIN        0x80000u  // allowed in cmdline window
+#define EX_MODIFY       0x100000u  // forbidden in non-'modifiable' buffer
+#define EX_FLAGS        0x200000u  // allow flags after count in argument
+#define EX_LOCK_OK     0x1000000u  // command can be executed when textlock is
+                                   // set; when missing disallows editing another
+                                   // buffer when current buffer is locked
+#define EX_KEEPSCRIPT  0x4000000u  // keep sctx of where command was invoked
+#define EX_PREVIEW     0x8000000u  // allow incremental command preview
 #define EX_FILES (EX_XFILE | EX_EXTRA)  // multiple extra files allowed
 #define EX_FILE1 (EX_FILES | EX_NOSPC)  // 1 file, defaults to current file
 #define EX_WORD1 (EX_EXTRA | EX_NOSPC)  // one extra word allowed

@@ -1563,8 +1563,70 @@ err:
   return false;
 }
 
-static void execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
+static int execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
 {
+  // If filename expansion is enabled, expand filenames
+  if (eap->argt & EX_XFILE) {
+    if (expand_filename(eap, eap->cmdlinep, errormsg) == FAIL) {
+      return FAIL;
+    }
+  }
+
+  // Accept buffer name.  Cannot be used at the same time with a buffer
+  // number.  Don't do this for a user command.
+  if ((eap->argt & EX_BUFNAME) && *eap->arg != NUL && eap->addr_count == 0
+      && !IS_USER_CMDIDX(eap->cmdidx)) {
+    if (eap->args == NULL) {
+      // If argument positions are not specified, search the argument for the buffer name.
+      // :bdelete, :bwipeout and :bunload take several arguments, separated by spaces:
+      // find next space (skipping over escaped characters).
+      // The others take one argument: ignore trailing spaces.
+      char *p;
+
+      if (eap->cmdidx == CMD_bdelete || eap->cmdidx == CMD_bwipeout
+          || eap->cmdidx == CMD_bunload) {
+        p = skiptowhite_esc(eap->arg);
+      } else {
+        p = eap->arg + STRLEN(eap->arg);
+        while (p > eap->arg && ascii_iswhite(p[-1])) {
+          p--;
+        }
+      }
+      eap->line2 = buflist_findpat(eap->arg, p, (eap->argt & EX_BUFUNL) != 0,
+                                   false, false);
+      eap->addr_count = 1;
+      eap->arg = skipwhite(p);
+    } else {
+      // If argument positions are specified, just use the first argument
+      eap->line2 = buflist_findpat(eap->args[0],
+                                   eap->args[0] + eap->arglens[0],
+                                   (eap->argt & EX_BUFUNL) != 0, false, false);
+      eap->addr_count = 1;
+      // Shift each argument by 1
+      for (size_t i = 0; i < eap->argc - 1; i++) {
+        eap->args[i] = eap->args[i + 1];
+      }
+      // Make the last argument point to the NUL terminator at the end of string
+      eap->args[eap->argc - 1] = eap->args[eap->argc - 1] + eap->arglens[eap->argc - 1];
+      eap->argc -= 1;
+
+      eap->arg = eap->args[0];
+    }
+    if (eap->line2 < 0) {  // failed
+      return FAIL;
+    }
+  }
+
+  // The :try command saves the emsg_silent flag, reset it here when
+  // ":silent! try" was used, it should only apply to :try itself.
+  if (eap->cmdidx == CMD_try && cmdmod.cmod_did_esilent > 0) {
+    emsg_silent -= cmdmod.cmod_did_esilent;
+    if (emsg_silent < 0) {
+      emsg_silent = 0;
+    }
+    cmdmod.cmod_did_esilent = 0;
+  }
+
   // Execute the command
   if (IS_USER_CMDIDX(eap->cmdidx)) {
     // Execute a user-defined command.
@@ -1583,6 +1645,8 @@ static void execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
       *errormsg = _(eap->errmsg);
     }
   }
+
+  return OK;
 }
 
 /// Execute an Ex command using parsed command line information.
@@ -1642,58 +1706,6 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
     // at the end of a closed fold.
     (void)hasFolding(eap->line1, &eap->line1, NULL);
     (void)hasFolding(eap->line2, NULL, &eap->line2);
-  }
-
-  // If filename expansion is enabled, expand filenames
-  if (cmdinfo->magic.file) {
-    if (expand_filename(eap, eap->cmdlinep, &errormsg) == FAIL) {
-      goto end;
-    }
-  }
-
-  // Accept buffer name.  Cannot be used at the same time with a buffer
-  // number.  Don't do this for a user command.
-  if ((eap->argt & EX_BUFNAME) && *eap->arg != NUL && eap->addr_count == 0
-      && !IS_USER_CMDIDX(eap->cmdidx)) {
-    if (eap->args == NULL) {
-      // If argument positions are not specified, search the argument for the buffer name.
-      // :bdelete, :bwipeout and :bunload take several arguments, separated by spaces:
-      // find next space (skipping over escaped characters).
-      // The others take one argument: ignore trailing spaces.
-      char *p;
-
-      if (eap->cmdidx == CMD_bdelete || eap->cmdidx == CMD_bwipeout
-          || eap->cmdidx == CMD_bunload) {
-        p = skiptowhite_esc(eap->arg);
-      } else {
-        p = eap->arg + STRLEN(eap->arg);
-        while (p > eap->arg && ascii_iswhite(p[-1])) {
-          p--;
-        }
-      }
-      eap->line2 = buflist_findpat(eap->arg, p, (eap->argt & EX_BUFUNL) != 0,
-                                   false, false);
-      eap->addr_count = 1;
-      eap->arg = skipwhite(p);
-    } else {
-      // If argument positions are specified, just use the first argument
-      eap->line2 = buflist_findpat(eap->args[0],
-                                   eap->args[0] + eap->arglens[0],
-                                   (eap->argt & EX_BUFUNL) != 0, false, false);
-      eap->addr_count = 1;
-      // Shift each argument by 1
-      for (size_t i = 0; i < eap->argc - 1; i++) {
-        eap->args[i] = eap->args[i + 1];
-      }
-      // Make the last argument point to the NUL terminator at the end of string
-      eap->args[eap->argc - 1] = eap->args[eap->argc - 1] + eap->arglens[eap->argc - 1];
-      eap->argc -= 1;
-
-      eap->arg = eap->args[0];
-    }
-    if (eap->line2 < 0) {  // failed
-      goto end;
-    }
   }
 
   // Execute the command
@@ -2271,50 +2283,11 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     goto doend;
   }
 
-  if (ea.argt & EX_XFILE) {
-    if (expand_filename(&ea, cmdlinep, &errormsg) == FAIL) {
-      goto doend;
-    }
-  }
-
-  // Accept buffer name.  Cannot be used at the same time with a buffer
-  // number.  Don't do this for a user command.
-  if ((ea.argt & EX_BUFNAME) && *ea.arg != NUL && ea.addr_count == 0
-      && !IS_USER_CMDIDX(ea.cmdidx)) {
-    // :bdelete, :bwipeout and :bunload take several arguments, separated
-    // by spaces: find next space (skipping over escaped characters).
-    // The others take one argument: ignore trailing spaces.
-    if (ea.cmdidx == CMD_bdelete || ea.cmdidx == CMD_bwipeout
-        || ea.cmdidx == CMD_bunload) {
-      p = skiptowhite_esc(ea.arg);
-    } else {
-      p = ea.arg + STRLEN(ea.arg);
-      while (p > ea.arg && ascii_iswhite(p[-1])) {
-        p--;
-      }
-    }
-    ea.line2 = buflist_findpat(ea.arg, p, (ea.argt & EX_BUFUNL) != 0,
-                               false, false);
-    if (ea.line2 < 0) {  // failed
-      goto doend;
-    }
-    ea.addr_count = 1;
-    ea.arg = skipwhite(p);
-  }
-
-  // The :try command saves the emsg_silent flag, reset it here when
-  // ":silent! try" was used, it should only apply to :try itself.
-  if (ea.cmdidx == CMD_try && cmdmod.cmod_did_esilent > 0) {
-    emsg_silent -= cmdmod.cmod_did_esilent;
-    if (emsg_silent < 0) {
-      emsg_silent = 0;
-    }
-    cmdmod.cmod_did_esilent = 0;
-  }
-
   // 7. Execute the command.
   int retv = 0;
-  execute_cmd0(&retv, &ea, &errormsg, false);
+  if (execute_cmd0(&retv, &ea, &errormsg, false) == FAIL) {
+    goto doend;
+  }
 
   // If the command just executed called do_cmdline(), any throw or ":return"
   // or ":finish" encountered there must also check the cstack of the still
@@ -2346,7 +2319,7 @@ doend:
         STRCPY(IObuff, errormsg);
         errormsg = (char *)IObuff;
       }
-      append_command(*cmdlinep);
+      append_command(*ea.cmdlinep);
     }
     emsg(errormsg);
   }

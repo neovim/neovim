@@ -505,6 +505,11 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
     OBJ_TO_BOOL(cmdinfo.magic.file, magic.file, ea.argt & EX_XFILE, "'magic.file'");
     OBJ_TO_BOOL(cmdinfo.magic.bar, magic.bar, ea.argt & EX_TRLBAR, "'magic.bar'");
+    if (cmdinfo.magic.file) {
+      ea.argt |= EX_XFILE;
+    } else {
+      ea.argt &= ~EX_XFILE;
+    }
   } else {
     cmdinfo.magic.file = ea.argt & EX_XFILE;
     cmdinfo.magic.bar = ea.argt & EX_TRLBAR;
