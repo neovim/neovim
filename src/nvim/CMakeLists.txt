@@ -177,9 +177,6 @@ if(NOT MSVC)
   # xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
   set_source_files_properties(
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion")
-
-  set_source_files_properties(
-    eval/funcs.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
