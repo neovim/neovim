@@ -237,7 +237,7 @@ typedef struct trystate_S {
   state_T ts_state;             // state at this level, STATE_
   int ts_score;                 // score
   idx_T ts_arridx;              // index in tree array, start of node
-  short ts_curi;                // index in list of child nodes
+  int16_t ts_curi;              // index in list of child nodes
   char_u ts_fidx;               // index in fword[], case-folded bad word
   char_u ts_fidxtry;            // ts_fidx at which bytes may be changed
   char_u ts_twordlen;           // valid length of tword[]
