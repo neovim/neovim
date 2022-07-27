@@ -545,7 +545,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
     return NULL;
   }
 
-  ret = xmalloc(len);
+  ret = xmalloc((size_t)len);
   p = start->out->out;     // skip first char, it goes into regstart
   s = ret;
   while (p->c > 0) {
@@ -565,7 +565,7 @@ static void realloc_post_list(void)
 {
   // For weird patterns the number of states can be very high. Increasing by
   // 50% seems a reasonable compromise between memory use and speed.
-  const size_t new_max = (post_end - post_start) * 3 / 2;
+  const size_t new_max = (size_t)(post_end - post_start) * 3 / 2;
   int *new_start = xrealloc(post_start, new_max * sizeof(int));
   post_ptr = new_start + (post_ptr - post_start);
   post_end = new_start + new_max;
@@ -2079,7 +2079,7 @@ static int nfa_regatom(void)
       }
       // A NUL is stored in the text as NL
       // TODO(vim): what if a composing character follows?
-      EMIT(nr == 0 ? 0x0a : nr);
+      EMIT(nr == 0 ? 0x0a : (int)nr);
     }
     break;
 
@@ -2646,7 +2646,7 @@ static int nfa_regpiece(void)
     EMIT(i);
     if (i == NFA_PREV_ATOM_JUST_BEFORE
         || i == NFA_PREV_ATOM_JUST_BEFORE_NEG) {
-      EMIT(c2);
+      EMIT((int)c2);
     }
     break;
 
@@ -3850,7 +3850,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
   if (nfa_calc_size == false) {
     // Allocate space for the stack. Max states on the stack: "nstate".
-    stack = xmalloc((nstate + 1) * sizeof(Frag_T));
+    stack = xmalloc((size_t)(nstate + 1) * sizeof(Frag_T));
     stackp = stack;
     stack_end = stack + (nstate + 1);
   }
@@ -4472,10 +4472,9 @@ static void clear_sub(regsub_T *sub)
 {
   if (REG_MULTI) {
     // Use 0xff to set lnum to -1
-    memset(sub->list.multi, 0xff,
-           sizeof(struct multipos) * rex.nfa_nsubexpr);
+    memset(sub->list.multi, 0xff, sizeof(struct multipos) * (size_t)rex.nfa_nsubexpr);
   } else {
-    memset(sub->list.line, 0, sizeof(struct linepos) * rex.nfa_nsubexpr);
+    memset(sub->list.line, 0, sizeof(struct linepos) * (size_t)rex.nfa_nsubexpr);
   }
   sub->in_use = 0;
 }
@@ -4489,13 +4488,11 @@ static void copy_sub(regsub_T *to, regsub_T *from)
   if (from->in_use > 0) {
     // Copy the match start and end positions.
     if (REG_MULTI) {
-      memmove(&to->list.multi[0],
-              &from->list.multi[0],
-              sizeof(struct multipos) * from->in_use);
+      memmove(&to->list.multi[0], &from->list.multi[0],
+              sizeof(struct multipos) * (size_t)from->in_use);
     } else {
-      memmove(&to->list.line[0],
-              &from->list.line[0],
-              sizeof(struct linepos) * from->in_use);
+      memmove(&to->list.line[0], &from->list.line[0],
+              sizeof(struct linepos) * (size_t)from->in_use);
     }
   }
 }
@@ -4511,13 +4508,11 @@ static void copy_sub_off(regsub_T *to, regsub_T *from)
   if (from->in_use > 1) {
     // Copy the match start and end positions.
     if (REG_MULTI) {
-      memmove(&to->list.multi[1],
-              &from->list.multi[1],
-              sizeof(struct multipos) * (from->in_use - 1));
+      memmove(&to->list.multi[1], &from->list.multi[1],
+              sizeof(struct multipos) * (size_t)(from->in_use - 1));
     } else {
-      memmove(&to->list.line[1],
-              &from->list.line[1],
-              sizeof(struct linepos) * (from->in_use - 1));
+      memmove(&to->list.line[1], &from->list.line[1],
+              sizeof(struct linepos) * (size_t)(from->in_use - 1));
     }
   }
 }
@@ -4964,7 +4959,7 @@ skip_add:
     // be (a lot) bigger than anticipated.
     if (l->n == l->len) {
       const int newlen = l->len * 3 / 2 + 50;
-      const size_t newsize = newlen * sizeof(nfa_thread_T);
+      const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
         emsg(_(e_maxmempat));
@@ -5255,7 +5250,7 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
       // not enough space to move the new states, reallocate the list
       // and move the states to the right position
       const int newlen = l->len * 3 / 2 + 50;
-      const size_t newsize = newlen * sizeof(nfa_thread_T);
+      const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
       if ((long)(newsize >> 10) >= p_mmp) {
         emsg(_(e_maxmempat));
@@ -5265,13 +5260,13 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
       l->len = newlen;
       memmove(&(newl[0]),
               &(l->t[0]),
-              sizeof(nfa_thread_T) * listidx);
+              sizeof(nfa_thread_T) * (size_t)listidx);
       memmove(&(newl[listidx]),
               &(l->t[l->n - count]),
-              sizeof(nfa_thread_T) * count);
+              sizeof(nfa_thread_T) * (size_t)count);
       memmove(&(newl[listidx + count]),
               &(l->t[listidx + 1]),
-              sizeof(nfa_thread_T) * (l->n - count - listidx - 1));
+              sizeof(nfa_thread_T) * (size_t)(l->n - count - listidx - 1));
       xfree(l->t);
       l->t = newl;
     } else {
@@ -5279,10 +5274,10 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
       // end to the current position
       memmove(&(l->t[listidx + count]),
               &(l->t[listidx + 1]),
-              sizeof(nfa_thread_T) * (l->n - listidx - 1));
+              sizeof(nfa_thread_T) * (size_t)(l->n - listidx - 1));
       memmove(&(l->t[listidx]),
               &(l->t[l->n - 1]),
-              sizeof(nfa_thread_T) * count);
+              sizeof(nfa_thread_T) * (size_t)count);
     }
   }
   --l->n;
@@ -5621,7 +5616,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     // values and clear them.
     if (*listids == NULL || *listids_len < prog->nstate) {
       xfree(*listids);
-      *listids = xmalloc(sizeof(**listids) * prog->nstate);
+      *listids = xmalloc(sizeof(**listids) * (size_t)prog->nstate);
       *listids_len = prog->nstate;
     }
     nfa_save_listids(prog, *listids);
@@ -5888,7 +5883,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
         rex.reg_startpos[0].lnum = rex.lnum;
         rex.reg_startpos[0].col = col;
         rex.reg_endpos[0].lnum = rex.lnum;
-        rex.reg_endpos[0].col = s2 - rex.line;
+        rex.reg_endpos[0].col = (colnr_T)(s2 - rex.line);
       } else {
         rex.reg_startp[0] = rex.line + col;
         rex.reg_endp[0] = s2;
@@ -5969,7 +5964,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   nfa_match = false;
 
   // Allocate memory for the lists of nodes.
-  size_t size = (prog->nstate + 1) * sizeof(nfa_thread_T);
+  size_t size = (size_t)(prog->nstate + 1) * sizeof(nfa_thread_T);
   list[0].t = xmalloc(size);
   list[0].len = prog->nstate + 1;
   list[1].t = xmalloc(size);
@@ -6930,7 +6925,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_MARK:
       case NFA_MARK_GT:
       case NFA_MARK_LT: {
-        size_t col = REG_MULTI ? rex.input - rex.line : 0;
+        size_t col = REG_MULTI ? (size_t)(rex.input - rex.line) : 0;
         fmark_T *fm = mark_get(rex.reg_buf, curwin, NULL, kMarkBufLocal, t->state->val);
 
         // Line may have been freed, get it again.
@@ -7369,14 +7364,14 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *ti
             && mpos->end_col >= mpos->start_col) {
           re_extmatch_out->matches[i] =
             vim_strnsave(reg_getline(mpos->start_lnum) + mpos->start_col,
-                         mpos->end_col - mpos->start_col);
+                         (size_t)(mpos->end_col - mpos->start_col));
         }
       } else {
         struct linepos *lpos = &subs.synt.list.line[i];
 
         if (lpos->start != NULL && lpos->end != NULL) {
           re_extmatch_out->matches[i] =
-            vim_strnsave(lpos->start, lpos->end - lpos->start);
+            vim_strnsave(lpos->start, (size_t)(lpos->end - lpos->start));
         }
       }
     }
@@ -7567,7 +7562,7 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   post2nfa(postfix, post_ptr, true);
 
   // allocate the regprog with space for the compiled regexp
-  size_t prog_size = sizeof(nfa_regprog_T) + sizeof(nfa_state_T) * (nstate - 1);
+  size_t prog_size = sizeof(nfa_regprog_T) + sizeof(nfa_state_T) * (size_t)(nstate - 1);
   prog = xmalloc(prog_size);
   state_ptr = prog->state;
   prog->re_in_use = false;
@@ -7651,7 +7646,7 @@ static int nfa_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_
   rex.reg_ic = rmp->rm_ic;
   rex.reg_icombine = false;
   rex.reg_maxcol = 0;
-  return nfa_regexec_both(line, col, NULL, NULL);
+  return (int)nfa_regexec_both(line, col, NULL, NULL);
 }
 
 /// Matches a regexp against multiple lines.
