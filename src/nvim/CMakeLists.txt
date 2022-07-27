@@ -165,8 +165,7 @@ set(CONV_SOURCES
   search.c
   spell.c
   spellfile.c
-  syntax.c
-  window.c)
+  syntax.c)
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
