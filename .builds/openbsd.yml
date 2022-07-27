@@ -6,11 +6,11 @@ packages:
 - autoconf-2.71
 - automake-1.16.3
 - cmake
-- gettext-runtime-0.21p1
-- gettext-tools-0.21p1
+- gettext-runtime
+- gettext-tools
 - gmake
 - libtool
-- ninja-1.10.2p0
+- ninja
 - unzip-6.0p14
 - gdb
 
