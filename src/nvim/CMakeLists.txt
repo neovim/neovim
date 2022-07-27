@@ -160,8 +160,7 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 set(CONV_SOURCES
   lua/treesitter.c
   screen.c
-  spell.c
-  syntax.c)
+  spell.c)
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
