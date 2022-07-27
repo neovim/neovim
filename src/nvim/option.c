@@ -1327,7 +1327,6 @@ int do_set(char *arg, int opt_flags)
             char *saved_newval = NULL;
             unsigned newlen;
             int comma;
-            bool new_value_alloced = false;  // new string option was allocated
 
             // When using ":set opt=val" for a global option
             // with a local value the local value will be
@@ -1367,7 +1366,6 @@ int do_set(char *arg, int opt_flags)
               // default value was already expanded, only
               // required when an environment variable was set
               // later
-              new_value_alloced = true;
               if (newval == NULL) {
                 newval = empty_option;
               } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
@@ -1381,7 +1379,6 @@ int do_set(char *arg, int opt_flags)
               }
             } else if (nextchar == '<') {  // set to global val
               newval = vim_strsave(*(char_u **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
-              new_value_alloced = true;
             } else {
               arg++;                    // jump to after the '=' or ':'
 
@@ -1626,7 +1623,6 @@ int do_set(char *arg, int opt_flags)
               if (save_arg != NULL) {               // number for 'whichwrap'
                 arg = (char *)save_arg;
               }
-              new_value_alloced = true;
             }
 
             // Set the new value.
@@ -1661,8 +1657,7 @@ int do_set(char *arg, int opt_flags)
               // for ":set" on local options. Note: when setting
               // 'syntax' or 'filetype' autocommands may be
               // triggered that can cause havoc.
-              errmsg = did_set_string_option(opt_idx, (char_u **)varp,
-                                             new_value_alloced, oldval,
+              errmsg = did_set_string_option(opt_idx, (char_u **)varp, oldval,
                                              errbuf, sizeof(errbuf),
                                              opt_flags, &value_checked);
 
@@ -2301,9 +2296,9 @@ static char *set_string_option(const int opt_idx, const char *const value, const
   char *const saved_newval = xstrdup(s);
 
   int value_checked = false;
-  char *const r = did_set_string_option(opt_idx, (char_u **)varp, true,
-                                        (char_u *)oldval,
-                                        NULL, 0, opt_flags, &value_checked);
+  char *const r = did_set_string_option(opt_idx, (char_u **)varp, (char_u *)oldval,
+                                        NULL, 0,
+                                        opt_flags, &value_checked);
   if (r == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
@@ -2432,19 +2427,18 @@ static char *check_mousescroll(char *string)
 }
 
 /// Handle string options that need some action to perform when changed.
+/// The new value must be allocated.
 /// Returns NULL for success, or an error message for an error.
 ///
 /// @param opt_idx  index in options[] table
 /// @param varp  pointer to the option variable
-/// @param new_value_alloced  new value was allocated
 /// @param oldval  previous value of the option
 /// @param errbuf  buffer for errors, or NULL
 /// @param errbuflen  length of errors buffer
 /// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
-static char *did_set_string_option(int opt_idx, char_u **varp, bool new_value_alloced,
-                                   char_u *oldval, char *errbuf, size_t errbuflen, int opt_flags,
-                                   int *value_checked)
+static char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *errbuf,
+                                   size_t errbuflen, int opt_flags, int *value_checked)
 {
   char *errmsg = NULL;
   char_u *s, *p;
@@ -3099,11 +3093,8 @@ ambw_end:
                               (char **)&p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
                               CPO_TO_CPO_FLAGS);
       if (p != NULL) {
-        if (new_value_alloced) {
-          free_string_option(p_pt);
-        }
+        free_string_option(p_pt);
         p_pt = p;
-        new_value_alloced = true;
       }
     }
   } else if (varp == &p_bs) {  // 'backspace'
@@ -3346,9 +3337,7 @@ ambw_end:
    * If error detected, restore the previous value.
    */
   if (errmsg != NULL) {
-    if (new_value_alloced) {
-      free_string_option(*varp);
-    }
+    free_string_option(*varp);
     *varp = oldval;
     /*
      * When resetting some values, need to act on it.
@@ -3365,11 +3354,7 @@ ambw_end:
     if (free_oldval) {
       free_string_option(oldval);
     }
-    if (new_value_alloced) {
-      options[opt_idx].flags |= P_ALLOCED;
-    } else {
-      options[opt_idx].flags &= ~P_ALLOCED;
-    }
+    options[opt_idx].flags |= P_ALLOCED;
 
     if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
         && ((int)options[opt_idx].indir & PV_BOTH)) {

@@ -3470,7 +3470,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
 
   // Proceed character by character through the statusline format string
   // fmt_p is the current position in the input buffer
-  for (char *fmt_p = usefmt; *fmt_p;) {
+  for (char *fmt_p = usefmt; *fmt_p != NUL;) {
     if (curitem == (int)stl_items_len) {
       size_t new_len = stl_items_len * 3 / 2;
 
@@ -3484,7 +3484,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
       stl_items_len = new_len;
     }
 
-    if (*fmt_p != NUL && *fmt_p != '%') {
+    if (*fmt_p != '%') {
       prevchar_isflag = prevchar_isitem = false;
     }
 
