@@ -61,6 +61,8 @@ end
 ---@param path string Path to file
 ---@return string URI
 local function uri_from_fname(path)
+  -- ensure we are working with absolute paths (required by URI)
+  path = vim.fn.fnamemodify(path, ':p')
   local volume_path, fname = path:match('^([a-zA-Z]:)(.*)')
   local is_windows = volume_path ~= nil
   if is_windows then

@@ -3,6 +3,7 @@ local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local write_file = require('test.helpers').write_file
+local iswin = helpers.iswin
 
 describe('URI methods', function()
   before_each(function()
@@ -11,6 +12,9 @@ describe('URI methods', function()
 
   describe('file path to uri', function()
     describe('encode Unix file path', function()
+      -- skip on Windows
+      if iswin() then return end
+
       it('file path includes only ascii charactors', function()
         exec_lua("filepath = '/Foo/Bar/Baz.txt'")
 
@@ -32,6 +36,9 @@ describe('URI methods', function()
     end)
 
     describe('encode Windows filepath', function()
+      -- only on Windows
+      if not iswin() then return end
+
       it('file path includes only ascii charactors', function()
         exec_lua([[filepath = 'C:\\Foo\\Bar\\Baz.txt']])
 
