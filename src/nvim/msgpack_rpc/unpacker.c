@@ -425,8 +425,8 @@ redo:
       arena_start(&p->arena, &p->reuse_blk);
       p->grid_line_event = arena_alloc(&p->arena, sizeof *p->grid_line_event, true);
       g = p->grid_line_event;
-      FALLTHROUGH;
     }
+    FALLTHROUGH;
 
   case 13:
     NEXT_TYPE(tok, MPACK_TOKEN_ARRAY);

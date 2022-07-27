@@ -514,6 +514,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
               const char *const used_name = (arg == arg_subsc
                                              ? name
                                              : name_start);
+              assert(used_name != NULL);
               const ptrdiff_t name_size = (used_name == tofree
                                            ? (ptrdiff_t)strlen(used_name)
                                            : (arg - used_name));

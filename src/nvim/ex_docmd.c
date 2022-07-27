@@ -3052,6 +3052,7 @@ char *find_ex_command(exarg_T *eap, int *full)
     } else {
       eap->cmdidx = CMD_bang;
     }
+    assert(eap->cmdidx >= 0);
 
     for (; (int)eap->cmdidx < CMD_SIZE;
          eap->cmdidx = (cmdidx_T)((int)eap->cmdidx + 1)) {

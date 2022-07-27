@@ -491,7 +491,7 @@ fmark_T *mark_get_visual(buf_T *buf, int name)
       mark = pos_to_mark(buf, NULL, endp);
     }
 
-    if (mark != NULL && buf->b_visual.vi_mode == 'V') {
+    if (buf->b_visual.vi_mode == 'V') {
       if (name == '<') {
         mark->mark.col = 0;
       } else {

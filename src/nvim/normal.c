@@ -5102,6 +5102,7 @@ static void nv_brackets(cmdarg_T *cap)
   } else if (cap->nchar == '\'' || cap->nchar == '`') {
     // "['", "[`", "]'" and "]`": jump to next mark
     fmark_T *fm = pos_to_mark(curbuf, NULL, curwin->w_cursor);
+    assert(fm != NULL);
     fmark_T *prev_fm;
     for (n = cap->count1; n > 0; n--) {
       prev_fm = fm;

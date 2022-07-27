@@ -3336,7 +3336,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
 {
   Arena arena = ARENA_EMPTY;
   arena_start(&arena, &ui_ext_fixblk);
-  Array content = ARRAY_DICT_INIT;
+  Array content;
   if (cmdline_star) {
     content = arena_array(&arena, 1);
     size_t len = 0;
