@@ -161,7 +161,6 @@ set(CONV_SOURCES
   lua/treesitter.c
   regexp.c
   screen.c
-  search.c
   spell.c
   spellfile.c
   syntax.c
