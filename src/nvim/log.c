@@ -310,7 +310,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
     const char *parent = path_tail(os_getenv(ENV_NVIM));
     // Servername. Empty until starting=false.
     const char *serv = path_tail(get_vim_var_str(VV_SEND_SERVER));
-    if (parent && parent[0] != NUL) {
+    if (parent[0] != NUL) {
       snprintf(name, sizeof(name), "%s/c", parent);  // "/c" indicates child.
     } else if (serv[0] != NUL) {
       snprintf(name, sizeof(name), "%s", serv);

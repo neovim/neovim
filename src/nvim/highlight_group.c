@@ -956,8 +956,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         linep++;
       }
       size_t key_len = (size_t)(linep - key_start);
-      if (key_len > sizeof key - 1) {
-        semsg(_("E423: Illegal argument"));
+      if (key_len > sizeof(key) - 1) {
+        emsg(_("E423: Illegal argument"));
         error = true;
         break;
       }
@@ -1004,8 +1004,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         break;
       }
       size_t arg_len = (size_t)(linep - arg_start);
-      if (arg_len > sizeof arg - 1) {
-        semsg(_("E423: Illegal argument"));
+      if (arg_len > sizeof(arg) - 1) {
+        emsg(_("E423: Illegal argument"));
         error = true;
         break;
       }
