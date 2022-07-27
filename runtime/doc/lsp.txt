@@ -1096,7 +1096,7 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                 Parameters: ~
                     {options}  (table|nil) Optional table which holds the
                                following optional fields:
-                               • context (table|nil): Corresponds to `CodeActionContext` of the LSP specification:
+                               • context: (table|nil) Corresponds to `CodeActionContext` of the LSP specification:
                                  • diagnostics (table|nil): LSP`Diagnostic[]` . Inferred from the current position if not
                                    provided.
                                  • only (table|nil): List of LSP
@@ -1104,13 +1104,18 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                                    actions. Most language servers support
                                    values like `refactor` or `quickfix`.
 
-                               • filter (function|nil): Predicate function
-                                 taking an `CodeAction` and returning a
-                                 boolean.
-                               • apply (boolean|nil): When set to `true`, and
+                               • filter: (function|nil) Predicate taking an
+                                 `CodeAction` and returning a boolean.
+                               • apply: (boolean|nil) When set to `true`, and
                                  there is just one remaining action (after
                                  filtering), the action is applied without
                                  user query.
+                               • range: (table|nil) Range for which code
+                                 actions should be requested. If in visual
+                                 mode this defaults to the active selection.
+                                 Table must contain `start` and `end` keys
+                                 with {row, col} tuples using mark-like
+                                 indexing. See |api-indexing|
 
                 See also: ~
                     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
@@ -1606,7 +1611,7 @@ character_offset({buf}, {row}, {col}, {offset_encoding})
                 certain buffer.
 
                 Parameters: ~
-                    {buf}              buffer id (0 for current)
+                    {buf}              (number) buffer number (0 for current)
                     {row}              0-indexed line
                     {col}              0-indexed byte offset in line
                     {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
@@ -1768,17 +1773,17 @@ make_given_range_params({start_pos}, {end_pos}, {bufnr}, {offset_encoding})
                 that is similar to |vim.lsp.util.make_range_params()|.
 
                 Parameters: ~
-                    {start_pos}        ({number, number}, optional)
-                                       mark-indexed position. Defaults to the
-                                       start of the last visual selection.
-                    {end_pos}          ({number, number}, optional)
-                                       mark-indexed position. Defaults to the
-                                       end of the last visual selection.
-                    {bufnr}            (optional, number): buffer handle or 0
-                                       for current, defaults to current
-                    {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
-                                       defaults to `offset_encoding` of first
-                                       client of `bufnr`
+                    {start_pos}        number[]|nil {row, col} mark-indexed
+                                       position. Defaults to the start of the
+                                       last visual selection.
+                    {end_pos}          number[]|nil {row, col} mark-indexed
+                                       position. Defaults to the end of the
+                                       last visual selection.
+                    {bufnr}            (number|nil) buffer handle or 0 for
+                                       current, defaults to current
+                    {offset_encoding}  "utf-8"|"utf-16"|"utf-32"|nil defaults
+                                       to `offset_encoding` of first client of
+                                       `bufnr`
 
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
@@ -1790,8 +1795,8 @@ make_position_params({window}, {offset_encoding})
                 buffer and cursor position.
 
                 Parameters: ~
-                    {window}           (optional, number): window handle or 0
-                                       for current, defaults to current
+                    {window}           number|nil: window handle or 0 for
+                                       current, defaults to current
                     {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
                                        defaults to `offset_encoding` of first
                                        client of buffer of `window`
@@ -1811,11 +1816,11 @@ make_range_params({window}, {offset_encoding})
                 `textDocument/rangeFormatting`.
 
                 Parameters: ~
-                    {window}           (optional, number): window handle or 0
-                                       for current, defaults to current
-                    {offset_encoding}  (string) utf-8|utf-16|utf-32|nil
-                                       defaults to `offset_encoding` of first
-                                       client of buffer of `window`
+                    {window}           number|nil: window handle or 0 for
+                                       current, defaults to current
+                    {offset_encoding}  "utf-8"|"utf-16"|"utf-32"|nil defaults
+                                       to `offset_encoding` of first client of
+                                       buffer of `window`
 
                 Return: ~
                     { textDocument = { uri = `current_file_uri` }, range = {
@@ -1827,8 +1832,7 @@ make_text_document_params({bufnr})
                 buffer.
 
                 Parameters: ~
-                    {bufnr}  (optional, number): Buffer handle, defaults to
-                             current
+                    {bufnr}  number|nil: Buffer handle, defaults to current
 
                 Return: ~
                     `TextDocumentIdentifier`

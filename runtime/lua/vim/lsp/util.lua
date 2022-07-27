@@ -1821,7 +1821,7 @@ function M.try_trim_markdown_code_blocks(lines)
 end
 
 ---@private
----@param window (optional, number): window handle or 0 for current, defaults to current
+---@param window number|nil: window handle or 0 for current, defaults to current
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 local function make_position_param(window, offset_encoding)
   window = window or 0
@@ -1841,7 +1841,7 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
----@param window (optional, number): window handle or 0 for current, defaults to current
+---@param window number|nil: window handle or 0 for current, defaults to current
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@returns `TextDocumentPositionParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
@@ -1894,8 +1894,8 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
----@param window (optional, number): window handle or 0 for current, defaults to current
----@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
+---@param window number|nil: window handle or 0 for current, defaults to current
+---@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
 function M.make_range_params(window, offset_encoding)
@@ -1911,12 +1911,12 @@ end
 --- Using the given range in the current buffer, creates an object that
 --- is similar to |vim.lsp.util.make_range_params()|.
 ---
----@param start_pos ({number, number}, optional) mark-indexed position.
----Defaults to the start of the last visual selection.
----@param end_pos ({number, number}, optional) mark-indexed position.
----Defaults to the end of the last visual selection.
----@param bufnr (optional, number): buffer handle or 0 for current, defaults to current
----@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of `bufnr`
+---@param start_pos number[]|nil {row, col} mark-indexed position.
+--- Defaults to the start of the last visual selection.
+---@param end_pos number[]|nil {row, col} mark-indexed position.
+--- Defaults to the end of the last visual selection.
+---@param bufnr number|nil buffer handle or 0 for current, defaults to current
+---@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of `bufnr`
 ---@returns { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
 function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
@@ -1956,7 +1956,7 @@ end
 
 --- Creates a `TextDocumentIdentifier` object for the current buffer.
 ---
----@param bufnr (optional, number): Buffer handle, defaults to current
+---@param bufnr number|nil: Buffer handle, defaults to current
 ---@returns `TextDocumentIdentifier`
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 function M.make_text_document_params(bufnr)
@@ -2000,7 +2000,7 @@ end
 
 --- Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
 ---
----@param buf buffer id (0 for current)
+---@param buf number buffer number (0 for current)
 ---@param row 0-indexed line
 ---@param col 0-indexed byte offset in line
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of `buf`
