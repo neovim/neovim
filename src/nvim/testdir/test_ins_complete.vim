@@ -336,6 +336,19 @@ func Test_CompleteDone_undo()
   au! CompleteDone
 endfunc
 
+func Test_CompleteDone_modify()
+  let value = {
+        \ 'word': '',
+        \ 'abbr': '',
+        \ 'menu': '',
+        \ 'info': '',
+        \ 'kind': '',
+        \ 'user_data': '',
+        \ }
+  let v:completed_item = value
+  call assert_equal(v:completed_item, value)
+endfunc
+
 func CompleteTest(findstart, query)
   if a:findstart
     return col('.')

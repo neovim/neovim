@@ -206,7 +206,7 @@ static struct vimvar {
   VV(VV_OLDFILES,         "oldfiles",         VAR_LIST, 0),
   VV(VV_WINDOWID,         "windowid",         VAR_NUMBER, VV_RO_SBX),
   VV(VV_PROGPATH,         "progpath",         VAR_STRING, VV_RO),
-  VV(VV_COMPLETED_ITEM,   "completed_item",   VAR_DICT, VV_RO),
+  VV(VV_COMPLETED_ITEM,   "completed_item",   VAR_DICT, 0),
   VV(VV_OPTION_NEW,       "option_new",       VAR_STRING, VV_RO),
   VV(VV_OPTION_OLD,       "option_old",       VAR_STRING, VV_RO),
   VV(VV_OPTION_OLDLOCAL,  "option_oldlocal",  VAR_STRING, VV_RO),

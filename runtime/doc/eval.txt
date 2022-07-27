@@ -1736,6 +1736,8 @@ v:completed_item
 		Dictionary containing the most recent |complete-items| after
 		|CompleteDone|.  Empty if the completion failed, or after
 		leaving and re-entering insert mode.
+		Note: Plugins can modify the value to emulate the builtin
+		|CompleteDone| event behavior.
 
 					*v:count* *count-variable*
 v:count		The count given for the last Normal mode command.  Can be used
