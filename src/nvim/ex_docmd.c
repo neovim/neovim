@@ -1724,16 +1724,11 @@ end:
 static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter fgetline,
                         void *cookie)
 {
-  char *p;
-  linenr_T lnum;
   char *errormsg = NULL;  // error message
-  char *after_modifier = NULL;
-  exarg_T ea;
-  cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
   const bool save_pending_end_reg_executing = pending_end_reg_executing;
-  char *cmd;
 
+  exarg_T ea;
   memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
@@ -1749,11 +1744,9 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     --quitmore;
   }
 
-  /*
-   * Reset browse, confirm, etc..  They are restored when returning, for
-   * recursive calls.
-   */
-  save_cmdmod = cmdmod;
+  // Reset browse, confirm, etc..  They are restored when returning, for
+  // recursive calls.
+  cmdmod_T save_cmdmod = cmdmod;
 
   // "#!anything" is handled like a comment.
   if ((*cmdlinep)[0] == '#' && (*cmdlinep)[1] == '!') {
@@ -1775,7 +1768,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
   apply_cmdmod(&cmdmod);
 
-  after_modifier = ea.cmd;
+  char *after_modifier = ea.cmd;
 
   ea.skip = (did_emsg
              || got_int
@@ -1786,12 +1779,12 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // 3. Skip over the range to find the command. Let "p" point to after it.
   //
   // We need the command to know what kind of range it uses.
-  cmd = ea.cmd;
+  char *cmd = ea.cmd;
   ea.cmd = skip_range(ea.cmd, NULL);
   if (*ea.cmd == '*') {
     ea.cmd = skipwhite(ea.cmd + 1);
   }
-  p = find_ex_command(&ea, NULL);
+  char *p = find_ex_command(&ea, NULL);
 
   // Count this line for profiling if skip is TRUE.
   if (do_profiling == PROF_YES
@@ -1855,19 +1848,13 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     goto doend;
   }
 
-  /*
-   * 5. Parse the command.
-   */
+  // 5. Parse the command.
 
-  /*
-   * Skip ':' and any white space
-   */
+  // Skip ':' and any white space
   ea.cmd = skip_colon_white(ea.cmd, true);
 
-  /*
-   * If we got a line, but no command, then go to the line.
-   * If we find a '|' or '\n' we set ea.nextcmd.
-   */
+  // If we got a line, but no command, then go to the line.
+  // If we find a '|' or '\n' we set ea.nextcmd.
   if (*ea.cmd == NUL || *ea.cmd == '"'
       || (ea.nextcmd = (char *)check_nextcmd((char_u *)ea.cmd)) != NULL) {
     // strange vi behaviour:
@@ -2012,10 +1999,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     goto doend;
   }
 
-  /*
-   * Don't complain about the range if it is not used
-   * (could happen if line_count is accidentally set to 0).
-   */
+  // Don't complain about the range if it is not used
+  // (could happen if line_count is accidentally set to 0).
   if (!ea.skip && !ni && (ea.argt & EX_RANGE)) {
     // If the range is backwards, ask for confirmation and, if given, swap
     // ea.line1 & ea.line2 so it's forwards again.
@@ -2030,7 +2015,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
           goto doend;
         }
       }
-      lnum = ea.line1;
+      linenr_T lnum = ea.line1;
       ea.line1 = ea.line2;
       ea.line2 = lnum;
     }
@@ -2054,19 +2039,15 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     (void)hasFolding(ea.line2, NULL, &ea.line2);
   }
 
-  /*
-   * For the ":make" and ":grep" commands we insert the 'makeprg'/'grepprg'
-   * option here, so things like % get expanded.
-   */
+  // For the ":make" and ":grep" commands we insert the 'makeprg'/'grepprg'
+  // option here, so things like % get expanded.
   p = replace_makeprg(&ea, p, cmdlinep);
   if (p == NULL) {
     goto doend;
   }
 
-  /*
-   * Skip to start of argument.
-   * Don't do this for the ":!" command, because ":!! -l" needs the space.
-   */
+  // Skip to start of argument.
+  // Don't do this for the ":!" command, because ":!! -l" needs the space.
   if (ea.cmdidx == CMD_bang) {
     ea.arg = p;
   } else {
@@ -2078,10 +2059,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     goto doend;
   }
 
-  /*
-   * Check for "++opt=val" argument.
-   * Must be first, allow ":w ++enc=utf8 !cmd"
-   */
+  // Check for "++opt=val" argument.
+  // Must be first, allow ":w ++enc=utf8 !cmd"
   if (ea.argt & EX_ARGOPT) {
     while (ea.arg[0] == '+' && ea.arg[1] == '+') {
       if (getargopt(&ea) == FAIL && !ni) {
@@ -2124,18 +2103,14 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     ea.arg = skipwhite(ea.arg);
   }
 
-  /*
-   * Check for "+command" argument, before checking for next command.
-   * Don't do this for ":read !cmd" and ":write !cmd".
-   */
+  // Check for "+command" argument, before checking for next command.
+  // Don't do this for ":read !cmd" and ":write !cmd".
   if ((ea.argt & EX_CMDARG) && !ea.usefilter) {
     ea.do_ecmd_cmd = getargcmd(&ea.arg);
   }
 
-  /*
-   * Check for '|' to separate commands and '"' to start comments.
-   * Don't do this for ":read !cmd" and ":write !cmd".
-   */
+  // Check for '|' to separate commands and '"' to start comments.
+  // Don't do this for ":read !cmd" and ":write !cmd".
   if ((ea.argt & EX_TRLBAR) && !ea.usefilter) {
     separate_nextcmd(&ea);
   } else if (ea.cmdidx == CMD_bang
@@ -2146,18 +2121,18 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     // Check for <newline> to end a shell command.
     // Also do this for ":read !cmd", ":write !cmd" and ":global".
     // Any others?
-    for (p = ea.arg; *p; p++) {
+    for (char *s = ea.arg; *s; s++) {
       // Remove one backslash before a newline, so that it's possible to
       // pass a newline to the shell and also a newline that is preceded
       // with a backslash.  This makes it impossible to end a shell
       // command in a backslash, but that doesn't appear useful.
       // Halving the number of backslashes is incompatible with previous
       // versions.
-      if (*p == '\\' && p[1] == '\n') {
-        STRMOVE(p, p + 1);
-      } else if (*p == '\n') {
-        ea.nextcmd = p + 1;
-        *p = NUL;
+      if (*s == '\\' && s[1] == '\n') {
+        STRMOVE(s, s + 1);
+      } else if (*s == '\n') {
+        ea.nextcmd = s + 1;
+        *s = NUL;
         break;
       }
     }
@@ -2173,9 +2148,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     goto doend;
   }
 
-  /*
-   * Check for flags: 'l', 'p' and '#'.
-   */
+  // Check for flags: 'l', 'p' and '#'.
   if (ea.argt & EX_FLAGS) {
     get_flags(&ea);
   }
@@ -2191,12 +2164,10 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     goto doend;
   }
 
-  /*
-   * Skip the command when it's not going to be executed.
-   * The commands like :if, :endif, etc. always need to be executed.
-   * Also make an exception for commands that handle a trailing command
-   * themselves.
-   */
+  // Skip the command when it's not going to be executed.
+  // The commands like :if, :endif, etc. always need to be executed.
+  // Also make an exception for commands that handle a trailing command
+  // themselves.
   if (ea.skip) {
     switch (ea.cmdidx) {
     // commands that need evaluation
@@ -2295,17 +2266,13 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     }
   }
 
-  /*
-   * Accept buffer name.  Cannot be used at the same time with a buffer
-   * number.  Don't do this for a user command.
-   */
+  // Accept buffer name.  Cannot be used at the same time with a buffer
+  // number.  Don't do this for a user command.
   if ((ea.argt & EX_BUFNAME) && *ea.arg != NUL && ea.addr_count == 0
       && !IS_USER_CMDIDX(ea.cmdidx)) {
-    /*
-     * :bdelete, :bwipeout and :bunload take several arguments, separated
-     * by spaces: find next space (skipping over escaped characters).
-     * The others take one argument: ignore trailing spaces.
-     */
+    // :bdelete, :bwipeout and :bunload take several arguments, separated
+    // by spaces: find next space (skipping over escaped characters).
+    // The others take one argument: ignore trailing spaces.
     if (ea.cmdidx == CMD_bdelete || ea.cmdidx == CMD_bwipeout
         || ea.cmdidx == CMD_bunload) {
       p = skiptowhite_esc(ea.arg);
@@ -2336,14 +2303,10 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   // 7. Execute the command.
   if (IS_USER_CMDIDX(ea.cmdidx)) {
-    /*
-     * Execute a user-defined command.
-     */
+    // Execute a user-defined command.
     do_ucmd(&ea, false);
   } else {
-    /*
-     * Call the function to execute the command.
-     */
+    // Call the function to execute the command.
     ea.errmsg = NULL;
     (cmdnames[ea.cmdidx].cmd_func)(&ea);
     if (ea.errmsg != NULL) {
@@ -2351,13 +2314,11 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     }
   }
 
-  /*
-   * If the command just executed called do_cmdline(), any throw or ":return"
-   * or ":finish" encountered there must also check the cstack of the still
-   * active do_cmdline() that called this do_one_cmd().  Rethrow an uncaught
-   * exception, or reanimate a returned function or finished script file and
-   * return or finish it again.
-   */
+  // If the command just executed called do_cmdline(), any throw or ":return"
+  // or ":finish" encountered there must also check the cstack of the still
+  // active do_cmdline() that called this do_one_cmd().  Rethrow an uncaught
+  // exception, or reanimate a returned function or finished script file and
+  // return or finish it again.
   if (need_rethrow) {
     do_throw(cstack);
   } else if (check_cstack) {
