@@ -3271,6 +3271,7 @@ int cmd_exists(const char *const name)
   // For ":2match" and ":3match" we need to skip the number.
   ea.cmd = (char *)((*name == '2' || *name == '3') ? name + 1 : name);
   ea.cmdidx = (cmdidx_T)0;
+  ea.flags = 0;
   int full = false;
   p = find_ex_command(&ea, &full);
   if (p == NULL) {
@@ -3288,6 +3289,7 @@ int cmd_exists(const char *const name)
 /// "fullcommand" function
 void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  exarg_T ea;
   char *name = argvars[0].vval.v_string;
 
   rettv->v_type = VAR_STRING;
@@ -3301,10 +3303,9 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   name = skip_range(name, NULL);
 
-  exarg_T ea = {
-    .cmd = (*name == '2' || *name == '3') ? name + 1 : name,
-    .cmdidx = (cmdidx_T)0,
-  };
+  ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
+  ea.cmdidx = (cmdidx_T)0;
+  ea.flags = 0;
   char *p = find_ex_command(&ea, NULL);
   if (p == NULL || ea.cmdidx == CMD_SIZE) {
     return;
