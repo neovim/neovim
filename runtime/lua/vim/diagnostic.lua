@@ -48,6 +48,7 @@ local bufnr_and_namespace_cacher_mt = {
 local diagnostic_cache = setmetatable({}, {
   __index = function(t, bufnr)
     assert(bufnr > 0, 'Invalid buffer number')
+    vim.fn.bufload(bufnr)
     vim.api.nvim_buf_attach(bufnr, false, {
       on_detach = function()
         rawset(t, bufnr, nil) -- clear cache
@@ -715,12 +716,6 @@ function M.set(namespace, bufnr, diagnostics, opts)
   end
 
   if vim.api.nvim_buf_is_loaded(bufnr) then
-    vim.api.nvim_buf_attach(bufnr, false, {
-      on_detach = function()
-        rawset(diagnostic_cache, bufnr, nil) -- clear cache
-      end,
-    })
-
     M.show(namespace, bufnr, nil, opts)
   end
 
