@@ -257,6 +257,7 @@ end)
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_rename
 M['textDocument/rename'] = function(_, result, ctx, _)
   if not result then
+    vim.notify("Language server couldn't provide rename result", vim.log.levels.INFO)
     return
   end
   local client = vim.lsp.get_client_by_id(ctx.client_id)
