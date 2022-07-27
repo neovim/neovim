@@ -303,4 +303,8 @@ describe('setbufvar() function', function()
       pcall_err(funcs.setbufvar, 1, 'changedtick', true))
     eq(2, funcs.getbufvar(1, 'changedtick'))
   end)
+  it('throws error when setting a string option to a boolean value vim-patch:9.0.0090', function()
+    eq('Vim:E928: String required',
+      pcall_err(funcs.setbufvar, '', '&errorformat', true))
+  end)
 end)

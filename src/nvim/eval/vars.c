@@ -1617,6 +1617,10 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
   char nbuf[NUMBUFLEN];
 
   if (varp->v_type == VAR_BOOL) {
+    if (is_string_option(varname)) {
+      emsg(_(e_stringreq));
+      return;
+    }
     numval = (long)varp->vval.v_number;
     strval = "0";  // avoid using "false"
   } else {
