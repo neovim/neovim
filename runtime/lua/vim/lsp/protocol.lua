@@ -752,6 +752,7 @@ function protocol.make_client_capabilities()
         };
         hierarchicalWorkspaceSymbolSupport = true;
       };
+      configuration = true,
       workspaceFolders = true;
       applyEdit = true;
       workspaceEdit = {
