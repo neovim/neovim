@@ -1563,6 +1563,28 @@ err:
   return false;
 }
 
+static void execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
+{
+  // Execute the command
+  if (IS_USER_CMDIDX(eap->cmdidx)) {
+    // Execute a user-defined command.
+    *retv = do_ucmd(eap, preview);
+  } else {
+    // Call the function to execute the command or the preview callback.
+    eap->errmsg = NULL;
+
+    if (preview) {
+      *retv = (cmdnames[eap->cmdidx].cmd_preview_func)(eap, cmdpreview_get_ns(),
+                                                       cmdpreview_get_bufnr());
+    } else {
+      (cmdnames[eap->cmdidx].cmd_func)(eap);
+    }
+    if (eap->errmsg != NULL) {
+      *errormsg = _(eap->errmsg);
+    }
+  }
+}
+
 /// Execute an Ex command using parsed command line information.
 /// Does not do any validation of the Ex command arguments.
 ///
@@ -1675,23 +1697,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
   }
 
   // Execute the command
-  if (IS_USER_CMDIDX(eap->cmdidx)) {
-    // Execute a user-defined command.
-    retv = do_ucmd(eap, preview);
-  } else {
-    // Call the function to execute the command or the preview callback.
-    eap->errmsg = NULL;
-
-    if (preview) {
-      retv = (cmdnames[eap->cmdidx].cmd_preview_func)(eap, cmdpreview_get_ns(),
-                                                      cmdpreview_get_bufnr());
-    } else {
-      (cmdnames[eap->cmdidx].cmd_func)(eap);
-    }
-    if (eap->errmsg != NULL) {
-      errormsg = _(eap->errmsg);
-    }
-  }
+  execute_cmd0(&retv, eap, &errormsg, preview);
 
 end:
   if (errormsg != NULL && *errormsg != NUL) {
@@ -1702,6 +1708,142 @@ end:
   cmdmod = save_cmdmod;
   return retv;
 #undef ERROR
+}
+
+static void profile_cmd(const exarg_T *eap, cstack_T *cstack, LineGetter fgetline, void *cookie)
+{
+  // Count this line for profiling if skip is TRUE.
+  if (do_profiling == PROF_YES
+      && (!eap->skip || cstack->cs_idx == 0
+          || (cstack->cs_idx > 0
+              && (cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))) {
+    int skip = did_emsg || got_int || current_exception;
+
+    if (eap->cmdidx == CMD_catch) {
+      skip = !skip && !(cstack->cs_idx >= 0
+                        && (cstack->cs_flags[cstack->cs_idx] & CSF_THROWN)
+                        && !(cstack->cs_flags[cstack->cs_idx] & CSF_CAUGHT));
+    } else if (eap->cmdidx == CMD_else || eap->cmdidx == CMD_elseif) {
+      skip = skip || !(cstack->cs_idx >= 0
+                       && !(cstack->cs_flags[cstack->cs_idx]
+                            & (CSF_ACTIVE | CSF_TRUE)));
+    } else if (eap->cmdidx == CMD_finally) {
+      skip = false;
+    } else if (eap->cmdidx != CMD_endif
+               && eap->cmdidx != CMD_endfor
+               && eap->cmdidx != CMD_endtry
+               && eap->cmdidx != CMD_endwhile) {
+      skip = eap->skip;
+    }
+
+    if (!skip) {
+      if (getline_equal(fgetline, cookie, get_func_line)) {
+        func_line_exec(getline_cookie(fgetline, cookie));
+      } else if (getline_equal(fgetline, cookie, getsourceline)) {
+        script_line_exec();
+      }
+    }
+  }
+}
+
+static bool skip_cmd(const exarg_T *eap)
+{
+  // Skip the command when it's not going to be executed.
+  // The commands like :if, :endif, etc. always need to be executed.
+  // Also make an exception for commands that handle a trailing command
+  // themselves.
+  if (eap->skip) {
+    switch (eap->cmdidx) {
+    // commands that need evaluation
+    case CMD_while:
+    case CMD_endwhile:
+    case CMD_for:
+    case CMD_endfor:
+    case CMD_if:
+    case CMD_elseif:
+    case CMD_else:
+    case CMD_endif:
+    case CMD_try:
+    case CMD_catch:
+    case CMD_finally:
+    case CMD_endtry:
+    case CMD_function:
+      break;
+
+    // Commands that handle '|' themselves.  Check: A command should
+    // either have the EX_TRLBAR flag, appear in this list or appear in
+    // the list at ":help :bar".
+    case CMD_aboveleft:
+    case CMD_and:
+    case CMD_belowright:
+    case CMD_botright:
+    case CMD_browse:
+    case CMD_call:
+    case CMD_confirm:
+    case CMD_const:
+    case CMD_delfunction:
+    case CMD_djump:
+    case CMD_dlist:
+    case CMD_dsearch:
+    case CMD_dsplit:
+    case CMD_echo:
+    case CMD_echoerr:
+    case CMD_echomsg:
+    case CMD_echon:
+    case CMD_eval:
+    case CMD_execute:
+    case CMD_filter:
+    case CMD_help:
+    case CMD_hide:
+    case CMD_ijump:
+    case CMD_ilist:
+    case CMD_isearch:
+    case CMD_isplit:
+    case CMD_keepalt:
+    case CMD_keepjumps:
+    case CMD_keepmarks:
+    case CMD_keeppatterns:
+    case CMD_leftabove:
+    case CMD_let:
+    case CMD_lockmarks:
+    case CMD_lockvar:
+    case CMD_lua:
+    case CMD_match:
+    case CMD_mzscheme:
+    case CMD_noautocmd:
+    case CMD_noswapfile:
+    case CMD_perl:
+    case CMD_psearch:
+    case CMD_python:
+    case CMD_py3:
+    case CMD_python3:
+    case CMD_pythonx:
+    case CMD_pyx:
+    case CMD_return:
+    case CMD_rightbelow:
+    case CMD_ruby:
+    case CMD_silent:
+    case CMD_smagic:
+    case CMD_snomagic:
+    case CMD_substitute:
+    case CMD_syntax:
+    case CMD_tab:
+    case CMD_tcl:
+    case CMD_throw:
+    case CMD_tilde:
+    case CMD_topleft:
+    case CMD_unlet:
+    case CMD_unlockvar:
+    case CMD_verbose:
+    case CMD_vertical:
+    case CMD_wincmd:
+      break;
+
+    default:
+      return true;
+    }
+  }
+  return false;
 }
 
 /// Execute one Ex command.
@@ -1786,38 +1928,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
   char *p = find_ex_command(&ea, NULL);
 
-  // Count this line for profiling if skip is TRUE.
-  if (do_profiling == PROF_YES
-      && (!ea.skip || cstack->cs_idx == 0
-          || (cstack->cs_idx > 0
-              && (cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))) {
-    int skip = did_emsg || got_int || current_exception;
-
-    if (ea.cmdidx == CMD_catch) {
-      skip = !skip && !(cstack->cs_idx >= 0
-                        && (cstack->cs_flags[cstack->cs_idx] & CSF_THROWN)
-                        && !(cstack->cs_flags[cstack->cs_idx] & CSF_CAUGHT));
-    } else if (ea.cmdidx == CMD_else || ea.cmdidx == CMD_elseif) {
-      skip = skip || !(cstack->cs_idx >= 0
-                       && !(cstack->cs_flags[cstack->cs_idx]
-                            & (CSF_ACTIVE | CSF_TRUE)));
-    } else if (ea.cmdidx == CMD_finally) {
-      skip = false;
-    } else if (ea.cmdidx != CMD_endif
-               && ea.cmdidx != CMD_endfor
-               && ea.cmdidx != CMD_endtry
-               && ea.cmdidx != CMD_endwhile) {
-      skip = ea.skip;
-    }
-
-    if (!skip) {
-      if (getline_equal(fgetline, cookie, get_func_line)) {
-        func_line_exec(getline_cookie(fgetline, cookie));
-      } else if (getline_equal(fgetline, cookie, getsourceline)) {
-        script_line_exec();
-      }
-    }
-  }
+  profile_cmd(&ea, cstack, fgetline, cookie);
 
   // May go to debug mode.  If this happens and the ">quit" debug command is
   // used, throw an interrupt exception and skip the next command.
@@ -1934,12 +2045,12 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   const int ni = is_cmd_ni(ea.cmdidx);
 
   // Forced commands.
-  if (*p == '!' && ea.cmdidx != CMD_substitute
-      && ea.cmdidx != CMD_smagic && ea.cmdidx != CMD_snomagic) {
+  ea.forceit = *p == '!'
+               && ea.cmdidx != CMD_substitute
+               && ea.cmdidx != CMD_smagic
+               && ea.cmdidx != CMD_snomagic;
+  if (ea.forceit) {
     p++;
-    ea.forceit = true;
-  } else {
-    ea.forceit = false;
   }
 
   // 6. Parse arguments.  Then check for errors.
@@ -2048,11 +2159,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   // Skip to start of argument.
   // Don't do this for the ":!" command, because ":!! -l" needs the space.
-  if (ea.cmdidx == CMD_bang) {
-    ea.arg = p;
-  } else {
-    ea.arg = skipwhite(p);
-  }
+  ea.arg = ea.cmdidx == CMD_bang ? p : skipwhite(p);
 
   // ":file" cannot be run with an argument when "curbuf->b_ro_locked" is set
   if (ea.cmdidx == CMD_file && *ea.arg != NUL && curbuf_locked()) {
@@ -2082,9 +2189,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       ++ea.arg;
       ea.usefilter = TRUE;
     }
-  }
-
-  if (ea.cmdidx == CMD_read) {
+  } else if (ea.cmdidx == CMD_read) {
     if (ea.forceit) {
       ea.usefilter = TRUE;                      // :r! filter if ea.forceit
       ea.forceit = FALSE;
@@ -2092,9 +2197,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
       ++ea.arg;
       ea.usefilter = TRUE;
     }
-  }
-
-  if (ea.cmdidx == CMD_lshift || ea.cmdidx == CMD_rshift) {
+  } else if (ea.cmdidx == CMD_lshift || ea.cmdidx == CMD_rshift) {
     ea.amount = 1;
     while (*ea.arg == *ea.cmd) {                // count number of '>' or '<'
       ea.arg++;
@@ -2164,100 +2267,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     goto doend;
   }
 
-  // Skip the command when it's not going to be executed.
-  // The commands like :if, :endif, etc. always need to be executed.
-  // Also make an exception for commands that handle a trailing command
-  // themselves.
-  if (ea.skip) {
-    switch (ea.cmdidx) {
-    // commands that need evaluation
-    case CMD_while:
-    case CMD_endwhile:
-    case CMD_for:
-    case CMD_endfor:
-    case CMD_if:
-    case CMD_elseif:
-    case CMD_else:
-    case CMD_endif:
-    case CMD_try:
-    case CMD_catch:
-    case CMD_finally:
-    case CMD_endtry:
-    case CMD_function:
-      break;
-
-    // Commands that handle '|' themselves.  Check: A command should
-    // either have the EX_TRLBAR flag, appear in this list or appear in
-    // the list at ":help :bar".
-    case CMD_aboveleft:
-    case CMD_and:
-    case CMD_belowright:
-    case CMD_botright:
-    case CMD_browse:
-    case CMD_call:
-    case CMD_confirm:
-    case CMD_const:
-    case CMD_delfunction:
-    case CMD_djump:
-    case CMD_dlist:
-    case CMD_dsearch:
-    case CMD_dsplit:
-    case CMD_echo:
-    case CMD_echoerr:
-    case CMD_echomsg:
-    case CMD_echon:
-    case CMD_eval:
-    case CMD_execute:
-    case CMD_filter:
-    case CMD_help:
-    case CMD_hide:
-    case CMD_ijump:
-    case CMD_ilist:
-    case CMD_isearch:
-    case CMD_isplit:
-    case CMD_keepalt:
-    case CMD_keepjumps:
-    case CMD_keepmarks:
-    case CMD_keeppatterns:
-    case CMD_leftabove:
-    case CMD_let:
-    case CMD_lockmarks:
-    case CMD_lockvar:
-    case CMD_lua:
-    case CMD_match:
-    case CMD_mzscheme:
-    case CMD_noautocmd:
-    case CMD_noswapfile:
-    case CMD_perl:
-    case CMD_psearch:
-    case CMD_python:
-    case CMD_py3:
-    case CMD_python3:
-    case CMD_pythonx:
-    case CMD_pyx:
-    case CMD_return:
-    case CMD_rightbelow:
-    case CMD_ruby:
-    case CMD_silent:
-    case CMD_smagic:
-    case CMD_snomagic:
-    case CMD_substitute:
-    case CMD_syntax:
-    case CMD_tab:
-    case CMD_tcl:
-    case CMD_throw:
-    case CMD_tilde:
-    case CMD_topleft:
-    case CMD_unlet:
-    case CMD_unlockvar:
-    case CMD_verbose:
-    case CMD_vertical:
-    case CMD_wincmd:
-      break;
-
-    default:
-      goto doend;
-    }
+  if (skip_cmd(&ea)) {
+    goto doend;
   }
 
   if (ea.argt & EX_XFILE) {
@@ -2302,17 +2313,8 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
 
   // 7. Execute the command.
-  if (IS_USER_CMDIDX(ea.cmdidx)) {
-    // Execute a user-defined command.
-    do_ucmd(&ea, false);
-  } else {
-    // Call the function to execute the command.
-    ea.errmsg = NULL;
-    (cmdnames[ea.cmdidx].cmd_func)(&ea);
-    if (ea.errmsg != NULL) {
-      errormsg = _(ea.errmsg);
-    }
-  }
+  int retv = 0;
+  execute_cmd0(&retv, &ea, &errormsg, false);
 
   // If the command just executed called do_cmdline(), any throw or ":return"
   // or ":finish" encountered there must also check the cstack of the still
