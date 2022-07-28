@@ -172,6 +172,14 @@ func XlistTests(cchar)
 	\ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
 	\ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
 
+  " Very long line should be displayed.
+  let text = 'Line' .. repeat('1234567890', 130)
+  let lines = ['Xtestfile9:2:9:' .. text]
+  Xgetexpr lines
+
+  let l = split(execute('Xlist', ''), "\n")
+  call assert_equal([' 1 Xtestfile9:2 col 9: ' .. text] , l)
+
   " For help entries in the quickfix list, only the filename without directory
   " should be displayed
   Xhelpgrep setqflist()
