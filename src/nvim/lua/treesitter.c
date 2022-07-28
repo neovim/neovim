@@ -29,6 +29,9 @@
 #define TS_META_QUERYCURSOR "treesitter_querycursor"
 #define TS_META_TREECURSOR "treesitter_treecursor"
 
+#define TS_CAPTURE_NEEDS_TABLE(cquant) ((cquant) == TSQuantifierOneOrMore \
+                                        || (cquant) == TSQuantifierZeroOrMore)
+
 typedef struct {
   TSQueryCursor *cursor;
   int predicated_match;
@@ -1037,11 +1040,29 @@ static int node_prev_named_sibling(lua_State *L)
 }
 
 /// assumes the match table being on top of the stack
-static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx)
+static void set_match(lua_State *L, TSQuery *query, TSQueryMatch *match, int nodeidx)
 {
   for (int i = 0; i < match->capture_count; i++) {
-    push_node(L, match->captures[i].node, nodeidx);
-    lua_rawseti(L, -2, (int)match->captures[i].index + 1);
+    TSQueryCapture capture = match->captures[i];
+    TSQuantifier cquant = ts_query_capture_quantifier_for_id(query, match->pattern_index,
+                                                             capture.index);
+    if (TS_CAPTURE_NEEDS_TABLE(cquant)) {
+      lua_rawgeti(L, -1, (int)capture.index + 1);  // [match, maybetbl]
+
+      // Initialize the capture table if this has not already been done
+      if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);  // [match]
+        lua_createtable(L, 1, 0);  // [match, tbl]
+      }
+
+      // [match, tbl]
+
+      push_node(L, capture.node, nodeidx);  // [match, tbl, node]
+      lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);  // [match, tbl]
+    } else {
+      push_node(L, capture.node, nodeidx);  // [match, node]
+    }
+    lua_rawseti(L, -2, (int)match->captures[i].index + 1);  // [match]
   }
 }
 
@@ -1054,8 +1075,8 @@ static int query_next_match(lua_State *L)
   TSQueryMatch match;
   if (ts_query_cursor_next_match(cursor, &match)) {
     lua_pushinteger(L, match.pattern_index + 1);  // [index]
-    lua_createtable(L, (int)ts_query_capture_count(query), 2);  // [index, match]
-    set_match(L, &match, lua_upvalueindex(2));
+    lua_createtable(L, (int)ts_query_capture_count(query), 0);  // [index, match]
+    set_match(L, query, &match, lua_upvalueindex(2));
     return 2;
   }
   return 0;
@@ -1086,8 +1107,29 @@ static int query_next_capture(lua_State *L)
     TSQueryCapture capture = match.captures[capture_index];
 
     // TODO(vigoux): handle capture quantifiers here
+    TSQuantifier cquant = ts_query_capture_quantifier_for_id(query, match.pattern_index,
+                                                             capture.index);
+    assert(cquant != TSQuantifierZero);
+
     lua_pushinteger(L, capture.index + 1);  // [index]
-    push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
+
+    if (TS_CAPTURE_NEEDS_TABLE(cquant)) {
+      // This capture is quantified, so now just create a table, and push the
+      // nodes one by one in this thing
+      uint32_t saved_cid = capture.index;
+
+      lua_createtable(L, 0, 0);  // [index, tbl]
+      do {
+        capture = match.captures[capture_index];  // This is redundant during the
+                                                  // first iteration
+
+        push_node(L, capture.node, lua_upvalueindex(2));  // [index, tbl, node]
+        lua_rawseti(L, -2, (int)lua_objlen(L, -2) + 1);  // [index, tbl]
+      } while (ts_query_cursor_next_capture(cursor, &match, &capture_index)
+               && match.captures[capture_index].index == saved_cid);
+    } else {
+      push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
+    }
 
     // Now check if we need to run the predicates
     uint32_t n_pred;
@@ -1097,7 +1139,7 @@ static int query_next_capture(lua_State *L)
       ud->max_match_id = (int)match.id;
 
       lua_pushvalue(L, lua_upvalueindex(4));  // [index, node, match]
-      set_match(L, &match, lua_upvalueindex(2));
+      set_match(L, query, &match, lua_upvalueindex(2));
       lua_pushinteger(L, match.pattern_index + 1);
       lua_setfield(L, -2, "pattern");
 

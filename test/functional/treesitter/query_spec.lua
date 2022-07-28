@@ -30,6 +30,7 @@ void ui_refresh(void)
 }]]
 
 describe('treesitter query', function()
+  clear()
   if pending_c_parser(pending) then return end
 
   local query = [[
@@ -50,7 +51,7 @@ describe('treesitter query', function()
   it("supports caching", function()
     local long_query = query:rep(100)
     local function q(n)
-      return exec_lua ([[
+      return exec_lua([[
         local query, n = ...
         local before = vim.loop.hrtime()
         for i=1,n,1 do
@@ -65,7 +66,8 @@ describe('treesitter query', function()
     local manyruns = q(100)
 
     -- First run should be at least 4x slower.
-    assert(400 * manyruns < firstrun, ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
+    assert(400 * manyruns < firstrun,
+      ('firstrun: %d ms, manyruns: %d ms'):format(firstrun / 1000, manyruns / 1000))
   end)
 
   it('support iter by capture', function()
@@ -121,9 +123,11 @@ describe('treesitter query', function()
       { 2, { { "keyword", "for", 9, 2, 9, 5 } } },
       { 3, { { "type", "primitive_type", 9, 7, 9, 13 } } },
       { 4, { { "fieldarg", "identifier", 11, 16, 11, 18 } } },
-      { 1, { { "minfunc", "identifier", 11, 12, 11, 15 }, { "min_id", "identifier", 11, 27, 11, 32 } } },
+      { 1,
+        { { "minfunc", "identifier", 11, 12, 11, 15 }, { "min_id", "identifier", 11, 27, 11, 32 } } },
       { 4, { { "fieldarg", "identifier", 12, 17, 12, 19 } } },
-      { 1, { { "minfunc", "identifier", 12, 13, 12, 16 }, { "min_id", "identifier", 12, 29, 12, 35 } } },
+      { 1,
+        { { "minfunc", "identifier", 12, 13, 12, 16 }, { "min_id", "identifier", 12, 29, 12, 35 } } },
       { 4, { { "fieldarg", "identifier", 13, 14, 13, 16 } } }
     }, res)
   end)
@@ -212,9 +216,9 @@ describe('treesitter query', function()
         ))
       ]])
     eq({
-      { "fizzbuzz-strings", "string_literal", { 6, 15, 6, 38 }, "\"number= %d FizzBuzz\\n\""},
-      { "fizzbuzz-strings", "string_literal", { 8, 15, 8, 34 }, "\"number= %d Fizz\\n\""},
-      { "fizzbuzz-strings", "string_literal", { 10, 15, 10, 34 }, "\"number= %d Buzz\\n\""},
+      { "fizzbuzz-strings", "string_literal", { 6, 15, 6, 38 }, "\"number= %d FizzBuzz\\n\"" },
+      { "fizzbuzz-strings", "string_literal", { 8, 15, 8, 34 }, "\"number= %d Fizz\\n\"" },
+      { "fizzbuzz-strings", "string_literal", { 10, 15, 10, 34 }, "\"number= %d Buzz\\n\"" },
     }, res1)
   end)
 
@@ -277,9 +281,9 @@ describe('treesitter query', function()
     return nodes
     ]], custom_query)
 
-    eq({{0, 4, 0, 8}}, res)
+    eq({ { 0, 4, 0, 8 } }, res)
 
-    local res_list = exec_lua[[
+    local res_list = exec_lua [[
     local query = require'vim.treesitter.query'
 
     local list = query.list_predicates()
@@ -292,5 +296,86 @@ describe('treesitter query', function()
     eq({ 'any-of?', 'contains?', 'eq?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
   end)
 
+  describe('supports query quantifiers', function()
 
+    local quant_query = [[
+      (declaration (init_declarator)+ @test)
+    ]]
+
+    before_each(function()
+      insert(test_text)
+    end)
+
+    it('with iter_captures', function()
+      pending("TODO")
+      local res = exec_lua([[
+        cquery = vim.treesitter.parse_query("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for cid, tbl in cquery:iter_captures(tree:root(), 0, 0, 7) do
+          -- can't transmit node over RPC. just check the name and range
+          for _,node in ipairs(tbl) do
+            table.insert(res, {cquery.captures[cid], node:type(), node:range()})
+          end
+        end
+        return res
+      ]], quant_query)
+
+      eq({
+        {
+          'test',
+          'init_declarator',
+          2,
+          6,
+          2,
+          21
+        },
+        {
+          'test',
+          'init_declarator',
+          2,
+          24,
+          2,
+          39
+        },
+      }, res)
+    end)
+    it('with iter_matches', function()
+      local res = exec_lua([[
+        cquery = vim.treesitter.parse_query("c", ...)
+        parser = vim.treesitter.get_parser(0, "c")
+        tree = parser:parse()[1]
+        res = {}
+        for pid,match in cquery:iter_matches(tree:root(), 0, 0, 7) do
+          for cid, tbl in match do
+            -- can't transmit node over RPC. just check the name and range
+            for _,node in ipairs(tbl) do
+              table.insert(res, {cquery.captures[cid], node:type(), node:range()})
+            end
+          end
+        end
+        return res
+      ]], quant_query)
+
+      eq({
+        {
+          'test',
+          'init_declarator',
+          2,
+          6,
+          2,
+          21
+        },
+        {
+          'test',
+          'init_declarator',
+          2,
+          24,
+          2,
+          39
+        },
+      }, res)
+    end)
+  end)
 end)
