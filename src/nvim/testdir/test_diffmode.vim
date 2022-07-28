@@ -1471,5 +1471,19 @@ func Test_diff_manipulations()
   %bwipe!
 endfunc
 
+" This was causing the line number in the diff block to go below one.
+" FIXME: somehow this causes a valgrind error when run directly but not when
+" run as a test.
+func Test_diff_put_and_undo()
+  set diff
+  next 0
+  split 00
+  sil! norm o0gguudpo0ggJuudp
+
+  bwipe!
+  bwipe!
+  set nodiff
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
