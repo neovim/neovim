@@ -6901,11 +6901,14 @@ void reset_lnums(void)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == curbuf) {
-      // Restore the value if the autocommand didn't change it.
-      if (equalpos(wp->w_save_cursor.w_cursor_corr, wp->w_cursor)) {
+      // Restore the value if the autocommand didn't change it and it was
+      // set.
+      if (equalpos(wp->w_save_cursor.w_cursor_corr, wp->w_cursor)
+          && wp->w_save_cursor.w_cursor_save.lnum != 0) {
         wp->w_cursor = wp->w_save_cursor.w_cursor_save;
       }
-      if (wp->w_save_cursor.w_topline_corr == wp->w_topline) {
+      if (wp->w_save_cursor.w_topline_corr == wp->w_topline
+          && wp->w_save_cursor.w_topline_save != 0) {
         wp->w_topline = wp->w_save_cursor.w_topline_save;
       }
     }

@@ -2186,7 +2186,28 @@ func Test_autocmd_nested_cursor_invalid()
     au!
   augroup END
   set laststatus&
+  cclose
   bwipe!
+endfunc
+
+func Test_autocmd_nested_switch_window()
+  " run this in a separate Vim so that SafeState works
+  CheckRunVimInTerminal
+
+  let lines =<< trim END
+      vim9script
+      ['()']->writefile('Xautofile')
+      autocmd VimEnter * ++nested edit Xautofile | split
+      autocmd BufReadPost * autocmd SafeState * ++once foldclosed('.')
+      autocmd WinEnter * matchadd('ErrorMsg', 'pat')
+  END
+  call writefile(lines, 'Xautoscript')
+  let buf = RunVimInTerminal('-S Xautoscript', {'rows': 10})
+  call VerifyScreenDump(buf, 'Test_autocmd_nested_switch', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xautofile')
+  call delete('Xautoscript')
 endfunc
 
 func Test_autocmd_once()
