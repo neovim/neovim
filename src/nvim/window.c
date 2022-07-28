@@ -6855,30 +6855,51 @@ bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   return count <= 1;
 }
 
+/// Implementation of check_lnums() and check_lnums_nested().
+static void check_lnums_both(bool do_curwin, bool nested)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if ((do_curwin || wp != curwin) && wp->w_buffer == curbuf) {
+      if (!nested) {
+        // save the original cursor position and topline
+        wp->w_save_cursor.w_cursor_save = wp->w_cursor;
+        wp->w_save_cursor.w_topline_save = wp->w_topline;
+      }
+
+      bool need_adjust = wp->w_cursor.lnum > curbuf->b_ml.ml_line_count;
+      if (need_adjust) {
+        wp->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      }
+      if (need_adjust || !nested) {
+        // save the (corrected) cursor position
+        wp->w_save_cursor.w_cursor_corr = wp->w_cursor;
+      }
+
+      need_adjust = wp->w_topline > curbuf->b_ml.ml_line_count;
+      if (need_adjust) {
+        wp->w_topline = curbuf->b_ml.ml_line_count;
+      }
+      if (need_adjust || !nested) {
+        // save the (corrected) topline
+        wp->w_save_cursor.w_topline_corr = wp->w_topline;
+      }
+    }
+  }
+}
+
 /// Correct the cursor line number in other windows.  Used after changing the
 /// current buffer, and before applying autocommands.
 ///
 /// @param do_curwin  when true, also check current window.
 void check_lnums(bool do_curwin)
 {
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if ((do_curwin || wp != curwin) && wp->w_buffer == curbuf) {
-      // save the original cursor position and topline
-      wp->w_save_cursor.w_cursor_save = wp->w_cursor;
-      wp->w_save_cursor.w_topline_save = wp->w_topline;
+  check_lnums_both(do_curwin, false);
+}
 
-      if (wp->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        wp->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-      }
-      if (wp->w_topline > curbuf->b_ml.ml_line_count) {
-        wp->w_topline = curbuf->b_ml.ml_line_count;
-      }
-
-      // save the corrected cursor position and topline
-      wp->w_save_cursor.w_cursor_corr = wp->w_cursor;
-      wp->w_save_cursor.w_topline_corr = wp->w_topline;
-    }
-  }
+/// Like check_lnums() but for when check_lnums() was already called.
+void check_lnums_nested(bool do_curwin)
+{
+  check_lnums_both(do_curwin, true);
 }
 
 /// Reset cursor and topline to its stored values from check_lnums().
@@ -6887,11 +6908,14 @@ void reset_lnums(void)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == curbuf) {
-      // Restore the value if the autocommand didn't change it.
-      if (equalpos(wp->w_save_cursor.w_cursor_corr, wp->w_cursor)) {
+      // Restore the value if the autocommand didn't change it and it was
+      // set.
+      if (equalpos(wp->w_save_cursor.w_cursor_corr, wp->w_cursor)
+          && wp->w_save_cursor.w_cursor_save.lnum != 0) {
         wp->w_cursor = wp->w_save_cursor.w_cursor_save;
       }
-      if (wp->w_save_cursor.w_topline_corr == wp->w_topline) {
+      if (wp->w_save_cursor.w_topline_corr == wp->w_topline
+          && wp->w_save_cursor.w_topline_save != 0) {
         wp->w_topline = wp->w_save_cursor.w_topline_save;
       }
     }

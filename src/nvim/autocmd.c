@@ -1837,9 +1837,13 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     }
     ap->last = true;
 
+    // Make sure cursor and topline are valid.  The first time the current
+    // values are saved, restored by reset_lnums().  When nested only the
+    // values are corrected when needed.
     if (nesting == 1) {
-      // make sure cursor and topline are valid
       check_lnums(true);
+    } else {
+      check_lnums_nested(true);
     }
 
     // Execute the autocmd. The `getnextac` callback handles iteration.
