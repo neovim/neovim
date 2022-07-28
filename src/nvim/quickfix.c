@@ -3147,13 +3147,31 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   msg_puts(" ");
 
+  char_u *tbuf = IObuff;
+  size_t tbuflen = IOSIZE;
+  size_t len = STRLEN(qfp->qf_text) + 3;
+
+  if (len > IOSIZE) {
+    tbuf = xmalloc(len);
+    if (tbuf != NULL) {
+      tbuflen = len;
+    } else {
+      tbuf = IObuff;
+    }
+  }
+
   // Remove newlines and leading whitespace from the text.  For an
   // unrecognized line keep the indent, the compiler may mark a word
-  // with ^^^^. */
+  // with ^^^^.
   qf_fmt_text((fname != NULL || qfp->qf_lnum != 0)
               ? skipwhite(qfp->qf_text) : qfp->qf_text,
-              (char *)IObuff, IOSIZE);
-  msg_prt_line(IObuff, false);
+              (char *)tbuf, (int)tbuflen);
+  msg_prt_line(tbuf, false);
+
+  if (tbuf != IObuff) {
+    xfree(tbuf);
+  }
+
   ui_flush();  // show one line at a time
 }
 
