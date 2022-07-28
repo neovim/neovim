@@ -2190,6 +2190,17 @@ func Test_autocmd_nested_cursor_invalid()
   bwipe!
 endfunc
 
+func Test_autocmd_nested_keeps_cursor_pos()
+  enew
+  call setline(1, 'foo')
+  autocmd User foo ++nested normal! $a
+  autocmd InsertLeave * :
+  doautocmd User foo
+  call assert_equal([0, 1, 3, 0], getpos('.'))
+
+  bwipe!
+endfunc
+
 func Test_autocmd_nested_switch_window()
   " run this in a separate Vim so that SafeState works
   CheckRunVimInTerminal
