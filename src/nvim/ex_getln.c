@@ -3823,6 +3823,7 @@ void redrawcmd(void)
 
   redrawing_cmdline = true;
 
+  sb_text_restart_cmdline();
   msg_start();
   redrawcmdprompt();
 

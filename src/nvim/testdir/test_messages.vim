@@ -118,7 +118,9 @@ func Test_message_more()
   let buf = RunVimInTerminal('', {'rows': 6})
   call term_sendkeys(buf, ":call setline(1, range(1, 100))\n")
 
-  call term_sendkeys(buf, ":%p#\n")
+  call term_sendkeys(buf, ":%pfoo\<C-H>\<C-H>\<C-H>#")
+  call WaitForAssert({-> assert_equal(':%p#', term_getline(buf, 6))})
+  call term_sendkeys(buf, "\n")
   call WaitForAssert({-> assert_equal('  5 5', term_getline(buf, 5))})
   call WaitForAssert({-> assert_equal('-- More --', term_getline(buf, 6))})
 
@@ -192,6 +194,13 @@ func Test_message_more()
   " Pressing g< shows the previous command output.
   call term_sendkeys(buf, 'g<')
   call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 5))})
+  call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
+
+  " A command line that doesn't print text is appended to scrollback,
+  " even if it invokes a nested command line.
+  call term_sendkeys(buf, ":\<C-R>=':'\<CR>:\<CR>g<")
+  call WaitForAssert({-> assert_equal('100 100', term_getline(buf, 4))})
+  call WaitForAssert({-> assert_equal(':::', term_getline(buf, 5))})
   call WaitForAssert({-> assert_equal('Press ENTER or type command to continue', term_getline(buf, 6))})
 
   call term_sendkeys(buf, ":%p#\n")
