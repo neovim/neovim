@@ -4738,71 +4738,39 @@ static char *skip_grep_pat(exarg_T *eap)
 
 /// For the ":make" and ":grep" commands insert the 'makeprg'/'grepprg' option
 /// in the command line, so that things like % get expanded.
-char *replace_makeprg(exarg_T *eap, char *p, char **cmdlinep)
+char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
 {
-  char *new_cmdline;
-  char *program;
-  char *pos;
-  char *ptr;
-  int len;
-  size_t i;
+  bool isgrep = eap->cmdidx == CMD_grep
+                || eap->cmdidx == CMD_lgrep
+                || eap->cmdidx == CMD_grepadd
+                || eap->cmdidx == CMD_lgrepadd;
 
-  /*
-   * Don't do it when ":vimgrep" is used for ":grep".
-   */
-  if ((eap->cmdidx == CMD_make || eap->cmdidx == CMD_lmake
-       || eap->cmdidx == CMD_grep || eap->cmdidx == CMD_lgrep
-       || eap->cmdidx == CMD_grepadd
-       || eap->cmdidx == CMD_lgrepadd)
+  // Don't do it when ":vimgrep" is used for ":grep".
+  if ((eap->cmdidx == CMD_make || eap->cmdidx == CMD_lmake || isgrep)
       && !grep_internal(eap->cmdidx)) {
-    if (eap->cmdidx == CMD_grep || eap->cmdidx == CMD_lgrep
-        || eap->cmdidx == CMD_grepadd || eap->cmdidx == CMD_lgrepadd) {
-      if (*curbuf->b_p_gp == NUL) {
-        program = (char *)p_gp;
-      } else {
-        program = (char *)curbuf->b_p_gp;
-      }
-    } else {
-      if (*curbuf->b_p_mp == NUL) {
-        program = (char *)p_mp;
-      } else {
-        program = (char *)curbuf->b_p_mp;
-      }
-    }
+    const char *program = isgrep ? (*curbuf->b_p_gp == NUL ? (char *)p_gp : (char *)curbuf->b_p_gp)
+                                 : (*curbuf->b_p_mp == NUL ? (char *)p_mp : (char *)curbuf->b_p_mp);
 
-    p = skipwhite(p);
+    arg = skipwhite(arg);
 
-    if ((pos = strstr(program, "$*")) != NULL) {
-      // replace $* by given arguments
-      i = 1;
-      while ((pos = strstr(pos + 2, "$*")) != NULL) {
-        i++;
-      }
-      len = (int)STRLEN(p);
-      new_cmdline = xmalloc(STRLEN(program) + i * (size_t)(len - 2) + 1);
-      ptr = new_cmdline;
-      while ((pos = strstr(program, "$*")) != NULL) {
-        i = (size_t)(pos - program);
-        memcpy(ptr, program, i);
-        STRCPY(ptr += i, p);
-        ptr += len;
-        program = pos + 2;
-      }
-      STRCPY(ptr, program);
-    } else {
-      new_cmdline = xmalloc(STRLEN(program) + STRLEN(p) + 2);
+    char *new_cmdline;
+    // Replace $* by given arguments
+    if ((new_cmdline = strrep(program, "$*", arg)) == NULL) {
+      // No $* in arg, build "<makeprg> <arg>" instead
+      new_cmdline = xmalloc(STRLEN(program) + STRLEN(arg) + 2);
       STRCPY(new_cmdline, program);
       STRCAT(new_cmdline, " ");
-      STRCAT(new_cmdline, p);
+      STRCAT(new_cmdline, arg);
     }
-    msg_make((char_u *)p);
+
+    msg_make((char_u *)arg);
 
     // 'eap->cmd' is not set here, because it is not used at CMD_make
     xfree(*cmdlinep);
     *cmdlinep = new_cmdline;
-    p = new_cmdline;
+    arg = new_cmdline;
   }
-  return p;
+  return arg;
 }
 
 /// Expand file name in Ex command argument.
