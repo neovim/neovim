@@ -3324,6 +3324,272 @@ static bool ins_compl_use_match(int c)
   return true;
 }
 
+/// Get the pattern, column and length for normal completion (CTRL-N CTRL-P
+/// completion)
+/// Sets the global variables: compl_col, compl_length and compl_pattern.
+/// Uses the global variables: compl_cont_status and ctrl_x_mode
+static int get_normal_compl_info(char_u *line, int startcol, colnr_T curs_col)
+{
+  if ((compl_cont_status & CONT_SOL) || ctrl_x_mode_path_defines()) {
+    if (!(compl_cont_status & CONT_ADDING)) {
+      while (--startcol >= 0 && vim_isIDc(line[startcol])) {}
+      compl_col += ++startcol;
+      compl_length = curs_col - startcol;
+    }
+    if (p_ic) {
+      compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
+    } else {
+      compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+    }
+  } else if (compl_cont_status & CONT_ADDING) {
+    char_u *prefix = (char_u *)"\\<";
+
+    // we need up to 2 extra chars for the prefix
+    compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
+                                       compl_length) + 2);
+    if (!vim_iswordp(line + compl_col)
+        || (compl_col > 0 && (vim_iswordp(mb_prevptr(line, line + compl_col))))) {
+      prefix = (char_u *)"";
+    }
+    STRCPY(compl_pattern, prefix);
+    (void)quote_meta(compl_pattern + STRLEN(prefix),
+                     line + compl_col, compl_length);
+  } else if (--startcol < 0
+             || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
+    // Match any word of at least two chars
+    compl_pattern = vim_strsave((char_u *)"\\<\\k\\k");
+    compl_col += curs_col;
+    compl_length = 0;
+  } else {
+    // Search the point of change class of multibyte character
+    // or not a word single byte character backward.
+    startcol -= utf_head_off(line, line + startcol);
+    int base_class = mb_get_class(line + startcol);
+    while (--startcol >= 0) {
+      int head_off = utf_head_off(line, line + startcol);
+      if (base_class != mb_get_class(line + startcol - head_off)) {
+        break;
+      }
+      startcol -= head_off;
+    }
+    compl_col += ++startcol;
+    compl_length = (int)curs_col - startcol;
+    if (compl_length == 1) {
+      // Only match word with at least two chars -- webb
+      // there's no need to call quote_meta,
+      // xmalloc(7) is enough  -- Acevedo
+      compl_pattern = xmalloc(7);
+      STRCPY(compl_pattern, "\\<");
+      (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
+      STRCAT(compl_pattern, "\\k");
+    } else {
+      compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
+                                         compl_length) + 2);
+      STRCPY(compl_pattern, "\\<");
+      (void)quote_meta(compl_pattern + 2, line + compl_col,
+                       compl_length);
+    }
+  }
+
+  return OK;
+}
+
+/// Get the pattern, column and length for whole line completion or for the
+/// complete() function.
+/// Sets the global variables: compl_col, compl_length and compl_pattern.
+static int get_wholeline_compl_info(char_u *line, colnr_T curs_col)
+{
+  compl_col = (colnr_T)getwhitecols(line);
+  compl_length = (int)curs_col - (int)compl_col;
+  if (compl_length < 0) {  // cursor in indent: empty pattern
+    compl_length = 0;
+  }
+  if (p_ic) {
+    compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
+  } else {
+    compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+  }
+
+  return OK;
+}
+
+/// Get the pattern, column and length for filename completion.
+/// Sets the global variables: compl_col, compl_length and compl_pattern.
+static int get_filename_compl_info(char_u *line, int startcol, colnr_T curs_col)
+{
+  // Go back to just before the first filename character.
+  if (startcol > 0) {
+    char_u *p = line + startcol;
+
+    MB_PTR_BACK(line, p);
+    while (p > line && vim_isfilec(utf_ptr2char((char *)p))) {
+      MB_PTR_BACK(line, p);
+    }
+    if (p == line && vim_isfilec(utf_ptr2char((char *)p))) {
+      startcol = 0;
+    } else {
+      startcol = (int)(p - line) + 1;
+    }
+  }
+
+  compl_col += startcol;
+  compl_length = (int)curs_col - startcol;
+  compl_pattern = addstar(line + compl_col, (size_t)compl_length, EXPAND_FILES);
+
+  return OK;
+}
+
+/// Get the pattern, column and length for command-line completion.
+/// Sets the global variables: compl_col, compl_length and compl_pattern.
+static int get_cmdline_compl_info(char_u *line, colnr_T curs_col)
+{
+  compl_pattern = vim_strnsave(line, (size_t)curs_col);
+  set_cmd_context(&compl_xp, compl_pattern,
+                  (int)STRLEN(compl_pattern), curs_col, false);
+  if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
+      || compl_xp.xp_context == EXPAND_NOTHING) {
+    // No completion possible, use an empty pattern to get a
+    // "pattern not found" message.
+    compl_col = curs_col;
+  } else {
+    compl_col = (int)((char_u *)compl_xp.xp_pattern - compl_pattern);
+  }
+  compl_length = curs_col - compl_col;
+
+  return OK;
+}
+
+/// Get the pattern, column and length for user defined completion ('omnifunc',
+/// 'completefunc' and 'thesaurusfunc')
+/// Sets the global variables: compl_col, compl_length and compl_pattern.
+/// Uses the global variable: spell_bad_len
+static int get_userdefined_compl_info(colnr_T curs_col)
+{
+  // Call user defined function 'completefunc' with "a:findstart"
+  // set to 1 to obtain the length of text to use for completion.
+  const int save_State = State;
+
+  // Call 'completefunc' or 'omnifunc' and get pattern length as a string
+  char_u *funcname = get_complete_funcname(ctrl_x_mode);
+  if (*funcname == NUL) {
+    semsg(_(e_notset), ctrl_x_mode_function() ? "completefunc" : "omnifunc");
+    return FAIL;
+  }
+
+  typval_T args[3];
+  args[0].v_type = VAR_NUMBER;
+  args[1].v_type = VAR_STRING;
+  args[2].v_type = VAR_UNKNOWN;
+  args[0].vval.v_number = 1;
+  args[1].vval.v_string = "";
+
+  pos_T pos = curwin->w_cursor;
+  textlock++;
+  colnr_T col = (colnr_T)call_func_retnr((char *)funcname, 2, args);
+  textlock--;
+
+  State = save_State;
+  curwin->w_cursor = pos;  // restore the cursor position
+  validate_cursor();
+  if (!equalpos(curwin->w_cursor, pos)) {
+    emsg(_(e_compldel));
+    return FAIL;
+  }
+
+  // Return value -2 means the user complete function wants to cancel the
+  // complete without an error, do the same if the function did not execute
+  // successfully.
+  if (col == -2 || aborting()) {
+    return FAIL;
+  }
+  // Return value -3 does the same as -2 and leaves CTRL-X mode.
+  if (col == -3) {
+    ctrl_x_mode = CTRL_X_NORMAL;
+    edit_submode = NULL;
+    if (!shortmess(SHM_COMPLETIONMENU)) {
+      msg_clr_cmdline();
+    }
+    return FAIL;
+  }
+
+  // Reset extended parameters of completion, when start new
+  // completion.
+  compl_opt_refresh_always = false;
+
+  if (col < 0) {
+    col = curs_col;
+  }
+  compl_col = col;
+  if (compl_col > curs_col) {
+    compl_col = curs_col;
+  }
+
+  // Setup variables for completion.  Need to obtain "line" again,
+  // it may have become invalid.
+  char_u *line = ml_get(curwin->w_cursor.lnum);
+  compl_length = curs_col - compl_col;
+  compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+
+  return OK;
+}
+
+/// Get the pattern, column and length for spell completion.
+/// Sets the global variables: compl_col, compl_length and compl_pattern.
+/// Uses the global variable: spell_bad_len
+static int get_spell_compl_info(int startcol, colnr_T curs_col)
+{
+  if (spell_bad_len > 0) {
+    assert(spell_bad_len <= INT_MAX);
+    compl_col = curs_col - (int)spell_bad_len;
+  } else {
+    compl_col = spell_word_start(startcol);
+  }
+  if (compl_col >= (colnr_T)startcol) {
+    compl_length = 0;
+    compl_col = curs_col;
+  } else {
+    spell_expand_check_cap(compl_col);
+    compl_length = (int)curs_col - compl_col;
+  }
+  // Need to obtain "line" again, it may have become invalid.
+  char_u *line = ml_get(curwin->w_cursor.lnum);
+  compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+
+  return OK;
+}
+
+/// Get the completion pattern, column and length.
+static int compl_get_info(char_u *line, int startcol, colnr_T curs_col, bool *line_invalid)
+{
+  if (ctrl_x_mode_normal()
+      || ((ctrl_x_mode & CTRL_X_WANT_IDENT)
+          && !thesaurus_func_complete(ctrl_x_mode))) {
+    return get_normal_compl_info(line, startcol, curs_col);
+  } else if (ctrl_x_mode_line_or_eval()) {
+    return get_wholeline_compl_info(line, curs_col);
+  } else if (ctrl_x_mode_files()) {
+    return get_filename_compl_info(line, startcol, curs_col);
+  } else if (ctrl_x_mode == CTRL_X_CMDLINE) {
+    return get_cmdline_compl_info(line, curs_col);
+  } else if (ctrl_x_mode_function() || ctrl_x_mode_omni()
+             || thesaurus_func_complete(ctrl_x_mode)) {
+    if (get_userdefined_compl_info(curs_col) == FAIL) {
+      return FAIL;
+    }
+    *line_invalid = true;  // 'line' may have become invalid
+  } else if (ctrl_x_mode_spell()) {
+    if (get_spell_compl_info(startcol, curs_col) == FAIL) {
+      return FAIL;
+    }
+    *line_invalid = true;  // 'line' may have become invalid
+  } else {
+    internal_error("ins_complete()");
+    return FAIL;
+  }
+
+  return OK;
+}
+
 /// Do Insert mode completion.
 /// Called when character "c" was typed, which has a meaning for completion.
 /// Returns OK if completion was done, FAIL if something failed.
@@ -3338,6 +3604,7 @@ int ins_complete(int c, bool enable_pum)
   int insert_match;
   const bool save_did_ai = did_ai;
   int flags = CP_ORIGINAL_TEXT;
+  bool line_invalid = false;
 
   compl_direction = ins_compl_key2dir(c);
   insert_match = ins_compl_use_match(c);
@@ -3427,208 +3694,23 @@ int ins_complete(int c, bool enable_pum)
     }
 
     // Work out completion pattern and original text -- webb
-    if (ctrl_x_mode_normal()
-        || (ctrl_x_mode & CTRL_X_WANT_IDENT
-            && !thesaurus_func_complete(ctrl_x_mode))) {
-      if ((compl_cont_status & CONT_SOL) || ctrl_x_mode_path_defines()) {
-        if (!(compl_cont_status & CONT_ADDING)) {
-          while (--startcol >= 0 && vim_isIDc(line[startcol])) {}
-          compl_col += ++startcol;
-          compl_length = curs_col - startcol;
-        }
-        if (p_ic) {
-          compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
-        } else {
-          compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
-        }
-      } else if (compl_cont_status & CONT_ADDING) {
-        char_u *prefix = (char_u *)"\\<";
-
-        // we need up to 2 extra chars for the prefix
-        compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
-                                           compl_length) + 2);
-        if (!vim_iswordp(line + compl_col)
-            || (compl_col > 0 && (vim_iswordp(mb_prevptr(line, line + compl_col))))) {
-          prefix = (char_u *)"";
-        }
-        STRCPY(compl_pattern, prefix);
-        (void)quote_meta(compl_pattern + STRLEN(prefix),
-                         line + compl_col, compl_length);
-      } else if (--startcol < 0
-                 || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
-        // Match any word of at least two chars
-        compl_pattern = vim_strsave((char_u *)"\\<\\k\\k");
-        compl_col += curs_col;
-        compl_length = 0;
-      } else {
-        // Search the point of change class of multibyte character
-        // or not a word single byte character backward.
-        startcol -= utf_head_off(line, line + startcol);
-        int base_class = mb_get_class(line + startcol);
-        while (--startcol >= 0) {
-          int head_off = utf_head_off(line, line + startcol);
-          if (base_class != mb_get_class(line + startcol - head_off)) {
-            break;
-          }
-          startcol -= head_off;
-        }
-        compl_col += ++startcol;
-        compl_length = (int)curs_col - startcol;
-        if (compl_length == 1) {
-          // Only match word with at least two chars -- webb
-          // there's no need to call quote_meta,
-          // xmalloc(7) is enough  -- Acevedo
-          compl_pattern = xmalloc(7);
-          STRCPY(compl_pattern, "\\<");
-          (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
-          STRCAT(compl_pattern, "\\k");
-        } else {
-          compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
-                                             compl_length) + 2);
-          STRCPY(compl_pattern, "\\<");
-          (void)quote_meta(compl_pattern + 2, line + compl_col,
-                           compl_length);
-        }
-      }
-    } else if (ctrl_x_mode_line_or_eval()) {
-      compl_col = (colnr_T)getwhitecols(line);
-      compl_length = (int)curs_col - (int)compl_col;
-      if (compl_length < 0) {           // cursor in indent: empty pattern
-        compl_length = 0;
-      }
-      if (p_ic) {
-        compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
-      } else {
-        compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
-      }
-    } else if (ctrl_x_mode_files()) {
-      // Go back to just before the first filename character.
-      if (startcol > 0) {
-        char_u *p = line + startcol;
-
-        MB_PTR_BACK(line, p);
-        while (p > line && vim_isfilec(utf_ptr2char((char *)p))) {
-          MB_PTR_BACK(line, p);
-        }
-        if (p == line && vim_isfilec(utf_ptr2char((char *)p))) {
-          startcol = 0;
-        } else {
-          startcol = (int)(p - line) + 1;
-        }
-      }
-
-      compl_col += startcol;
-      compl_length = (int)curs_col - startcol;
-      compl_pattern = addstar(line + compl_col, (size_t)compl_length, EXPAND_FILES);
-    } else if (ctrl_x_mode == CTRL_X_CMDLINE) {
-      compl_pattern = vim_strnsave(line, (size_t)curs_col);
-      set_cmd_context(&compl_xp, compl_pattern,
-                      (int)STRLEN(compl_pattern), curs_col, false);
-      if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
-          || compl_xp.xp_context == EXPAND_NOTHING) {
-        // No completion possible, use an empty pattern to get a
-        // "pattern not found" message.
-        compl_col = curs_col;
-      } else {
-        compl_col = (int)((char_u *)compl_xp.xp_pattern - compl_pattern);
-      }
-      compl_length = curs_col - compl_col;
-    } else if (ctrl_x_mode_function() || ctrl_x_mode_omni()
-               || thesaurus_func_complete(ctrl_x_mode)) {
-      // Call user defined function 'completefunc' with "a:findstart"
-      // set to 1 to obtain the length of text to use for completion.
-      char_u *funcname;
-      pos_T pos;
-      const int save_State = State;
-
-      // Call 'completefunc' or 'omnifunc' and get pattern length as a string
-      funcname = get_complete_funcname(ctrl_x_mode);
-      if (*funcname == NUL) {
-        semsg(_(e_notset), ctrl_x_mode_function() ? "completefunc" : "omnifunc");
+    if (compl_get_info(line, startcol, curs_col, &line_invalid) == FAIL) {
+      if (ctrl_x_mode_function() || ctrl_x_mode_omni()
+          || thesaurus_func_complete(ctrl_x_mode)) {
         // restore did_ai, so that adding comment leader works
         did_ai = save_did_ai;
-        return FAIL;
       }
-
-      typval_T args[3];
-      args[0].v_type = VAR_NUMBER;
-      args[1].v_type = VAR_STRING;
-      args[2].v_type = VAR_UNKNOWN;
-      args[0].vval.v_number = 1;
-      args[1].vval.v_string = "";
-
-      pos = curwin->w_cursor;
-      textlock++;
-      colnr_T col = (colnr_T)call_func_retnr((char *)funcname, 2, args);
-      textlock--;
-
-      State = save_State;
-      curwin->w_cursor = pos;           // restore the cursor position
-      validate_cursor();
-      if (!equalpos(curwin->w_cursor, pos)) {
-        emsg(_(e_compldel));
-        return FAIL;
-      }
-
-      // Return value -2 means the user complete function wants to cancel the
-      // complete without an error, do the same if the function did not execute
-      // successfully.
-      if (col == -2 || aborting()) {
-        return FAIL;
-      }
-      // Return value -3 does the same as -2 and leaves CTRL-X mode.
-      if (col == -3) {
-        ctrl_x_mode = CTRL_X_NORMAL;
-        edit_submode = NULL;
-        if (!shortmess(SHM_COMPLETIONMENU)) {
-          msg_clr_cmdline();
-        }
-        return FAIL;
-      }
-
-      // Reset extended parameters of completion, when start new
-      // completion.
-      compl_opt_refresh_always = false;
-
-      if (col < 0) {
-        col = curs_col;
-      }
-      compl_col = col;
-      if (compl_col > curs_col) {
-        compl_col = curs_col;
-      }
-
-      // Setup variables for completion.  Need to obtain "line" again,
-      // it may have become invalid.
-      line = ml_get(curwin->w_cursor.lnum);
-      compl_length = curs_col - compl_col;
-      compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
-    } else if (ctrl_x_mode_spell()) {
-      if (spell_bad_len > 0) {
-        assert(spell_bad_len <= INT_MAX);
-        compl_col = curs_col - (int)spell_bad_len;
-      } else {
-        compl_col = spell_word_start(startcol);
-      }
-      if (compl_col >= (colnr_T)startcol) {
-        compl_length = 0;
-        compl_col = curs_col;
-      } else {
-        spell_expand_check_cap(compl_col);
-        compl_length = (int)curs_col - compl_col;
-      }
-      // Need to obtain "line" again, it may have become invalid.
-      line = ml_get(curwin->w_cursor.lnum);
-      compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
-    } else {
-      internal_error("ins_complete()");
       return FAIL;
+    }
+    // If "line" was changed while getting completion info get it again.
+    if (line_invalid) {
+      line = ml_get(curwin->w_cursor.lnum);
     }
 
     if (compl_cont_status & CONT_ADDING) {
       edit_submode_pre = (char_u *)_(" Adding");
       if (ctrl_x_mode_line_or_eval()) {
-        // Insert a new line, keep indentation but ignore 'comments'
+        // Insert a new line, keep indentation but ignore 'comments'.
         char_u *old = curbuf->b_p_com;
 
         curbuf->b_p_com = (char_u *)"";
