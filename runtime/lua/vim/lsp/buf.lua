@@ -11,8 +11,8 @@ local M = {}
 --- buffer.
 ---
 ---@param method (string) LSP method name
----@param params (optional, table) Parameters to send to the server
----@param handler (optional, functionnil) See |lsp-handler|. Follows |lsp-handler-resolution|
+---@param params (table|nil) Parameters to send to the server
+---@param handler (function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
 ---@returns 2-tuple:
 ---  - Map of client-id:request-id pairs for all successful requests.
@@ -842,20 +842,27 @@ end
 --- cursor position.
 ---
 ---@param options table|nil Optional table which holds the following optional fields:
----    - context (table|nil):
----        Corresponds to `CodeActionContext` of the LSP specification:
----          - diagnostics (table|nil):
----                        LSP `Diagnostic[]`. Inferred from the current
----                        position if not provided.
----          - only (table|nil):
----                 List of LSP `CodeActionKind`s used to filter the code actions.
----                 Most language servers support values like `refactor`
----                 or `quickfix`.
----    - filter (function|nil):
----             Predicate function taking an `CodeAction` and returning a boolean.
----    - apply (boolean|nil):
----             When set to `true`, and there is just one remaining action
----            (after filtering), the action is applied without user query.
+---  - context: (table|nil)
+---      Corresponds to `CodeActionContext` of the LSP specification:
+---        - diagnostics (table|nil):
+---                      LSP `Diagnostic[]`. Inferred from the current
+---                      position if not provided.
+---        - only (table|nil):
+---               List of LSP `CodeActionKind`s used to filter the code actions.
+---               Most language servers support values like `refactor`
+---               or `quickfix`.
+---  - filter: (function|nil)
+---           Predicate taking an `CodeAction` and returning a boolean.
+---  - apply: (boolean|nil)
+---           When set to `true`, and there is just one remaining action
+---          (after filtering), the action is applied without user query.
+---
+---  - range: (table|nil)
+---           Range for which code actions should be requested.
+---           If in visual mode this defaults to the active selection.
+---           Table must contain `start` and `end` keys with {row, col} tuples
+---           using mark-like indexing. See |api-indexing|
+---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 function M.code_action(options)
   validate({ options = { options, 't', true } })
@@ -870,7 +877,34 @@ function M.code_action(options)
     local bufnr = api.nvim_get_current_buf()
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
-  local params = util.make_range_params()
+  local params
+  local mode = api.nvim_get_mode().mode
+  if options.range then
+    assert(type(options.range) == 'table', 'code_action range must be a table')
+    local start = assert(options.range.start, 'range must have a `start` property')
+    local end_ = assert(options.range['end'], 'range must have a `end` property')
+    params = util.make_given_range_params(start, end_)
+  elseif mode == 'v' or mode == 'V' then
+    -- [bufnum, lnum, col, off]; both row and column 1-indexed
+    local start = vim.fn.getpos('v')
+    local end_ = vim.fn.getpos('.')
+    local start_row = start[2]
+    local start_col = start[3]
+    local end_row = end_[2]
+    local end_col = end_[3]
+
+    -- A user can start visual selection at the end and move backwards
+    -- Normalize the range to start < end
+    if start_row == end_row and end_col < start_col then
+      end_col, start_col = start_col, end_col
+    elseif end_row < start_row then
+      start_row, end_row = end_row, start_row
+      start_col, end_col = end_col, start_col
+    end
+    params = util.make_given_range_params({ start_row, start_col - 1 }, { end_row, end_col - 1 })
+  else
+    params = util.make_range_params()
+  end
   params.context = context
   code_action_request(params, options)
 end
@@ -891,6 +925,7 @@ end
 ---@param end_pos ({number, number}, optional) mark-indexed position.
 ---Defaults to the end of the last visual selection.
 function M.range_code_action(context, start_pos, end_pos)
+  vim.deprecate('vim.lsp.buf.range_code_action', 'vim.lsp.buf.code_action', '0.9.0')
   validate({ context = { context, 't', true } })
   context = context or {}
   if not context.diagnostics then
