@@ -157,7 +157,7 @@ end
 ---     - formatting_options (table|nil):
 ---         Can be used to specify FormattingOptions. Some unspecified options will be
 ---         automatically derived from the current Neovim options.
----         @see https://microsoft.github.io/language-server-protocol/specification#textDocument_formatting
+---         See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
 ---     - timeout_ms (integer|nil, default 1000):
 ---         Time in milliseconds to block for formatting requests. No effect if async=true
 ---     - bufnr (number|nil):
