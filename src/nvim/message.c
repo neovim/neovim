@@ -2503,6 +2503,7 @@ static void store_sb_text(char_u **sb_str, char_u *s, int attr, int *sb_col, int
   if (do_clear_sb_text == SB_CLEAR_ALL
       || do_clear_sb_text == SB_CLEAR_CMDLINE_DONE) {
     clear_sb_text(do_clear_sb_text == SB_CLEAR_ALL);
+    msg_sb_eol();  // prevent messages from overlapping
     do_clear_sb_text = SB_CLEAR_NONE;
   }
 
@@ -2537,18 +2538,47 @@ void may_clear_sb_text(void)
   do_clear_sb_text = SB_CLEAR_ALL;
 }
 
-/// Starting to edit the command line, do not clear messages now.
+/// Starting to edit the command line: do not clear messages now.
 void sb_text_start_cmdline(void)
 {
-  do_clear_sb_text = SB_CLEAR_CMDLINE_BUSY;
-  msg_sb_eol();
+  if (do_clear_sb_text == SB_CLEAR_CMDLINE_BUSY) {
+    // Invoking command line recursively: the previous-level command line
+    // doesn't need to be remembered as it will be redrawn when returning
+    // to that level.
+    sb_text_restart_cmdline();
+  } else {
+    msg_sb_eol();
+    do_clear_sb_text = SB_CLEAR_CMDLINE_BUSY;
+  }
 }
 
-/// Ending to edit the command line.  Clear old lines but the last one later.
+/// Redrawing the command line: clear the last unfinished line.
+void sb_text_restart_cmdline(void)
+{
+  // Needed when returning from nested command line.
+  do_clear_sb_text = SB_CLEAR_CMDLINE_BUSY;
+
+  if (last_msgchunk == NULL || last_msgchunk->sb_eol) {
+    // No unfinished line: don't clear anything.
+    return;
+  }
+
+  msgchunk_T *tofree = msg_sb_start(last_msgchunk);
+  last_msgchunk = tofree->sb_prev;
+  if (last_msgchunk != NULL) {
+    last_msgchunk->sb_next = NULL;
+  }
+  while (tofree != NULL) {
+    msgchunk_T *tofree_next = tofree->sb_next;
+    xfree(tofree);
+    tofree = tofree_next;
+  }
+}
+
+/// Ending to edit the command line: clear old lines but the last one later.
 void sb_text_end_cmdline(void)
 {
   do_clear_sb_text = SB_CLEAR_CMDLINE_DONE;
-  msg_sb_eol();
 }
 
 /// Clear any text remembered for scrolling back.

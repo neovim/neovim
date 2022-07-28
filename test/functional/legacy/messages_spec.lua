@@ -27,7 +27,16 @@ describe('messages', function()
     it('works', function()
       command('call setline(1, range(1, 100))')
 
-      feed(':%p#\n')
+      feed(':%pfoo<C-H><C-H><C-H>#')
+      screen:expect([[
+        1                                                                          |
+        2                                                                          |
+        3                                                                          |
+        4                                                                          |
+        5                                                                          |
+        :%p#^                                                                       |
+      ]])
+      feed('\n')
       screen:expect([[
         {2:  1 }1                                                                      |
         {2:  2 }2                                                                      |
@@ -238,6 +247,18 @@ describe('messages', function()
         {2: 98 }98                                                                     |
         {2: 99 }99                                                                     |
         {2:100 }100                                                                    |
+        {1:Press ENTER or type command to continue}^                                    |
+      ]])
+
+      -- A command line that doesn't print text is appended to scrollback,
+      -- even if it invokes a nested command line.
+      feed([[:<C-R>=':'<CR>:<CR>g<lt>]])
+      screen:expect([[
+        {2: 97 }97                                                                     |
+        {2: 98 }98                                                                     |
+        {2: 99 }99                                                                     |
+        {2:100 }100                                                                    |
+        :::                                                                        |
         {1:Press ENTER or type command to continue}^                                    |
       ]])
 
