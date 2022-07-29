@@ -3153,11 +3153,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
 
   if (len > IOSIZE) {
     tbuf = xmalloc(len);
-    if (tbuf != NULL) {
-      tbuflen = len;
-    } else {
-      tbuf = IObuff;
-    }
+    tbuflen = len;
   }
 
   // Remove newlines and leading whitespace from the text.  For an

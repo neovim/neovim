@@ -412,7 +412,6 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     if (!argc_valid) {
-      argc = 0;  // Ensure that args array isn't erroneously freed at the end.
       VALIDATION_ERROR("Incorrect number of arguments supplied");
     }
 

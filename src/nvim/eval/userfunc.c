@@ -1268,7 +1268,7 @@ void free_all_functions(void)
   // Clean up the current_funccal chain and the funccal stack.
   while (current_funccal != NULL) {
     tv_clear(current_funccal->rettv);
-    cleanup_function_call(current_funccal);
+    cleanup_function_call(current_funccal);  // -V595
     if (current_funccal == NULL && funccal_stack != NULL) {
       restore_funccal();
     }
