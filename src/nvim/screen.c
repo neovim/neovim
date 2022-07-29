@@ -2909,7 +2909,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
     if (draw_state == WL_LINE
         && has_fold
-        && vcol == 0
+        && col == win_col_offset
         && n_extra == 0
         && row == startrow) {
       char_attr = win_hl_attr(wp, HLF_FL);
