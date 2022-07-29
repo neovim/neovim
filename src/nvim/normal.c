@@ -2481,7 +2481,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char_u **te
   col = 0;
   // Search for point of changing multibyte character class.
   this_class = mb_get_class(ptr);
-  while (ptr[col] != NUL
+  while (ptr[col] != NUL  // -V781
          && ((i == 0
               ? mb_get_class(ptr + col) == this_class
               : mb_get_class(ptr + col) != 0)
