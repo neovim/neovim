@@ -1657,13 +1657,14 @@ void callback_copy(Callback *dest, Callback *src)
 /// Generate a string description of a callback
 char *callback_to_string(Callback *cb)
 {
-  size_t msglen = 100;
+  if (cb->type == kCallbackLua) {
+    return nlua_funcref_str(cb->data.luaref);
+  }
+
+  const size_t msglen = 100;
   char *msg = (char *)xmallocz(msglen);
 
   switch (cb->type) {
-  case kCallbackLua:
-    snprintf(msg, msglen, "<lua: %d>", cb->data.luaref);
-    break;
   case kCallbackFuncref:
     // TODO(tjdevries): Is this enough space for this?
     snprintf(msg, msglen, "<vim function: %s>", cb->data.funcref);
@@ -1672,7 +1673,7 @@ char *callback_to_string(Callback *cb)
     snprintf(msg, msglen, "<vim partial: %s>", cb->data.partial->pt_name);
     break;
   default:
-    snprintf(msg, msglen, "%s", "");
+    *msg = '\0';
     break;
   }
   return msg;
