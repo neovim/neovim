@@ -2915,7 +2915,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   }
 
   rmp->rmm_maxcol = (colnr_T)syn_buf->b_p_smc;
-  int r = (int)vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, syn_tm, &timed_out);
+  long r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, syn_tm, &timed_out);
 
   if (l_syn_time_on) {
     pt = profile_end(pt);
