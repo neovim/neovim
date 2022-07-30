@@ -820,5 +820,13 @@ func Test_check_empty_line()
   bwipe!
 endfunc
 
+func Test_spell_suggest_too_long()
+  " this was creating a word longer than MAXWLEN
+  new
+  call setline(1, 'a' .. repeat("\u0333", 150))
+  norm! z=
+  bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
