@@ -535,6 +535,46 @@ describe('LSP', function()
       }
     end)
 
+    it('saveas sends didOpen if filename changed', function()
+      local expected_handlers = {
+        { NIL, {}, { method = 'shutdown', client_id = 1 } },
+        { NIL, {}, { method = 'start', client_id = 1 } },
+      }
+      local client
+      test_rpc_server({
+        test_name = 'text_document_save_did_open',
+        on_init = function(c)
+          client = c
+        end,
+        on_exit = function(code, signal)
+          eq(0, code, 'exit code')
+          eq(0, signal, 'exit signal')
+        end,
+        on_handler = function(err, result, ctx)
+          eq(table.remove(expected_handlers), { err, result, ctx }, 'expected handler')
+          if ctx.method == 'start' then
+            local tmpfile_old = helpers.tmpname()
+            local tmpfile_new = helpers.tmpname()
+            os.remove(tmpfile_new)
+            exec_lua(
+              [=[
+              local oldname, newname = ...
+              BUFFER = vim.api.nvim_get_current_buf()
+              vim.api.nvim_buf_set_name(BUFFER, oldname)
+              vim.api.nvim_buf_set_lines(BUFFER, 0, -1, true, {"help me"})
+              lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)
+              vim.api.nvim_buf_call(BUFFER, function() vim.cmd('saveas ' .. newname) end)
+            ]=],
+              tmpfile_old,
+              tmpfile_new
+            )
+          else
+            client.stop()
+          end
+        end,
+      })
+    end)
+
     it('BufWritePost sends didSave including text if server capability is set', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
