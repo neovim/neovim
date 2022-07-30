@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2022 May 01
+" Last Change: 2022 Jul 25
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debchangelog.vim
 
 " Standard syntax initialization
@@ -20,22 +20,22 @@ let s:binNMU='binary-only=yes'
 let s:cpo = &cpo
 set cpo-=C
 let s:supported = [
-      \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental',
-      \ 'jessie', 'stretch', 'buster', 'bullseye', 'bookworm',
-      \ 'trixie', 'sid', 'rc-buggy',
+      \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental', 'sid', 'rc-buggy',
+      \ 'buster', 'bullseye', 'bookworm', 'trixie',
       \
-      \ 'trusty', 'xenial', 'bionic', 'focal', 'impish', 'jammy', 'kinetic',
+      \ 'trusty', 'xenial', 'bionic', 'focal', 'jammy', 'kinetic',
       \ 'devel'
       \ ]
 let s:unsupported = [
       \ 'frozen', 'buzz', 'rex', 'bo', 'hamm', 'slink', 'potato',
       \ 'woody', 'sarge', 'etch', 'lenny', 'squeeze', 'wheezy',
+      \ 'jessie', 'stretch',
       \
       \ 'warty', 'hoary', 'breezy', 'dapper', 'edgy', 'feisty',
       \ 'gutsy', 'hardy', 'intrepid', 'jaunty', 'karmic', 'lucid',
       \ 'maverick', 'natty', 'oneiric', 'precise', 'quantal', 'raring', 'saucy',
       \ 'utopic', 'vivid', 'wily', 'yakkety', 'zesty', 'artful', 'cosmic',
-      \ 'disco', 'eoan', 'hirsute', 'groovy'
+      \ 'disco', 'eoan', 'hirsute', 'impish', 'groovy'
       \ ]
 let &cpo=s:cpo
 

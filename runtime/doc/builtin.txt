@@ -4907,8 +4907,8 @@ matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
 		message will appear and the match will not be added.  An ID
 		is specified as a positive integer (zero excluded).  IDs 1, 2
 		and 3 are reserved for |:match|, |:2match| and |:3match|,
-		respectively.  3 is reserved for use by the
-		|matchparen| plugin.
+		respectively.  3 is reserved for use by the |matchparen|
+		plugin.
 		If the {id} argument is not specified or -1, |matchadd()|
 		automatically chooses a free ID.
 
