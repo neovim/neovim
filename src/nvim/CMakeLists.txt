@@ -158,8 +158,7 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 
 # Legacy files that do not yet pass -Wconversion.
 set(CONV_SOURCES
-  screen.c
-  spell.c)
+  screen.c)
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
