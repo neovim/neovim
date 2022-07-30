@@ -13,6 +13,7 @@ local exc_exec = helpers.exc_exec
 local matches = helpers.matches
 local exec_lua = helpers.exec_lua
 local sleep = helpers.sleep
+local funcs = helpers.funcs
 
 describe(':terminal buffer', function()
   local screen
@@ -299,6 +300,44 @@ describe(':terminal buffer', function()
     feed('<c-\\><c-n>')
     feed_command('put a')  -- register a is empty
     helpers.assert_alive()
+  end)
+
+  it([[can use temporary normal mode <c-\><c-o>]], function()
+    eq('t', funcs.mode(1))
+    feed [[<c-\><c-o>]]
+    screen:expect{grid=[[
+      tty ready                                         |
+      {2:^ }                                                 |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- (terminal) --}                                  |
+    ]]}
+    eq('ntT', funcs.mode(1))
+
+    feed [[:let g:x = 17]]
+    screen:expect{grid=[[
+      tty ready                                         |
+      {2: }                                                 |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      :let g:x = 17^                                     |
+    ]]}
+
+    feed [[<cr>]]
+    screen:expect{grid=[[
+      tty ready                                         |
+      {1: }                                                 |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    eq('t', funcs.mode(1))
   end)
 end)
 
