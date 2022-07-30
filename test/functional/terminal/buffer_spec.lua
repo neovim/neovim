@@ -5,6 +5,8 @@ local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local poke_eventloop = helpers.poke_eventloop
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
+local meths = helpers.meths
+local retry = helpers.retry
 local write_file = helpers.write_file
 local command = helpers.command
 local exc_exec = helpers.exc_exec
@@ -363,4 +365,12 @@ describe('on_lines does not emit out-of-bounds line indexes when', function()
     feed_command('bdelete!')
     eq('', exec_lua([[return _G.cb_error]]))
   end)
+end)
+
+it('terminal truncates number of composing characters to 5', function()
+  clear()
+  local chan = meths.open_term(0, {})
+  local composing = ('a̳'):sub(2)
+  meths.chan_send(chan, 'a' .. composing:rep(8))
+  retry(nil, nil, function() eq('a' .. composing:rep(5), meths.get_current_line()) end)
 end)
