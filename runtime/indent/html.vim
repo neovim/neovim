@@ -600,7 +600,7 @@ func s:Alien3()
   endif
   if b:hi_indent.scripttype == "javascript"
     " indent for further lines
-    return eval(b:hi_js1indent) + GetJavascriptIndent()
+    return GetJavascriptIndent()
   else
     return -1
   endif

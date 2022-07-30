@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2021 Dec 10
+" Last Change:	2022 Jun 28
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -84,12 +84,18 @@ syn keyword pythonStatement	as assert break continue del global
 syn keyword pythonStatement	lambda nonlocal pass return with yield
 syn keyword pythonStatement	class def nextgroup=pythonFunction skipwhite
 syn keyword pythonConditional	elif else if
-syn keyword pythonConditional	case match
 syn keyword pythonRepeat	for while
 syn keyword pythonOperator	and in is not or
 syn keyword pythonException	except finally raise try
 syn keyword pythonInclude	from import
 syn keyword pythonAsync		async await
+
+" Soft keywords
+" These keywords do not mean anything unless used in the right context
+" See https://docs.python.org/3/reference/lexical_analysis.html#soft-keywords 
+" for more on this.
+syn match   pythonConditional   "^\s*\zscase\%(\s\+.*:.*$\)\@="
+syn match   pythonConditional   "^\s*\zsmatch\%(\s\+.*:\s*\%(#.*\)\=$\)\@="
 
 " Decorators
 " A dot must be allowed because of @MyClass.myfunc decorators.

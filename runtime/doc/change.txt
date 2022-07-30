@@ -765,6 +765,8 @@ When the {string} starts with "\=" it is evaluated as an expression, see
 |sub-replace-expression|.  You can use that for complex replacement or special
 characters.
 
+The substitution is limited in recursion to 4 levels. *E1290*
+
 Otherwise these characters in {string} have a special meaning:
 
 magic	nomagic	  action    ~

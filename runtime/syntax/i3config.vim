@@ -17,6 +17,9 @@ endif
 
 scriptencoding utf-8
 
+" Error
+syn match i3ConfigError /.*/
+
 " Todo
 syn keyword i3ConfigTodo TODO FIXME XXX contained
 
@@ -54,8 +57,8 @@ syn match i3ConfigInclude /^\s*include\s\+.*$/ contains=i3ConfigIncludeKeyword,i
 " Gaps
 syn keyword i3ConfigGapStyleKeyword inner outer horizontal vertical top right bottom left current all set plus minus toggle up down contained
 syn match i3ConfigGapStyle /^\s*\(gaps\)\s\+\(inner\|outer\|horizontal\|vertical\|left\|top\|right\|bottom\)\(\s\+\(current\|all\)\)\?\(\s\+\(set\|plus\|minus\|toggle\)\)\?\(\s\+\(-\?\d\+\|\$.*\)\)$/ contains=i3ConfigGapStyleKeyword,i3ConfigNumber,i3ConfigVariable
-syn keyword i3ConfigSmartGapKeyword on inverse_outer contained
-syn match i3ConfigSmartGap /^\s*smart_gaps\s\+\(on\|inverse_outer\)\s\?$/ contains=i3ConfigSmartGapKeyword
+syn keyword i3ConfigSmartGapKeyword on inverse_outer off contained
+syn match i3ConfigSmartGap /^\s*smart_gaps\s\+\(on\|inverse_outer\|off\)\s\?$/ contains=i3ConfigSmartGapKeyword
 syn keyword i3ConfigSmartBorderKeyword on no_gaps contained
 syn match i3ConfigSmartBorder /^\s*smart_borders\s\+\(on\|no_gaps\)\s\?$/ contains=i3ConfigSmartBorderKeyword
 
@@ -74,7 +77,7 @@ syn match i3ConfigBind /^\s*\(bindsym\|bindcode\)\s\+.*$/ contains=i3ConfigVaria
 syn keyword i3ConfigSizeSpecial x contained
 syn match i3ConfigNegativeSize /-/ contained
 syn match i3ConfigSize /-\?\d\+\s\?x\s\?-\?\d\+/ contained contains=i3ConfigSizeSpecial,i3ConfigNumber,i3ConfigNegativeSize
-syn match i3ConfigFloating /^\s*floating_modifier\s\+\$\w\+\d\?/ contains=i3ConfigVariable
+syn match i3ConfigFloatingModifier /^\s*floating_modifier\s\+\$\w\+\d\?/ contains=i3ConfigVariable
 syn match i3ConfigFloating /^\s*floating_\(maximum\|minimum\)_size\s\+-\?\d\+\s\?x\s\?-\?\d\+/ contains=i3ConfigSize
 
 " Orientation
@@ -183,6 +186,7 @@ syn region i3ConfigBlock start=+^\s*[^#]*s\?{$+ end=+^\s*[^#]*}$+ contains=i3Con
 syn region i3ConfigLineCont start=/^.*\\$/ end=/^.*$/ contains=i3ConfigBlockKeyword,i3ConfigString,i3ConfigBind,i3ConfigComment,i3ConfigFont,i3ConfigFocusWrappingType,i3ConfigColor,i3ConfigVariable transparent keepend extend
 
 " Define the highlighting.
+hi def link i3ConfigError                           Error
 hi def link i3ConfigTodo                            Todo
 hi def link i3ConfigComment                         Comment
 hi def link i3ConfigFontContent                     Type
@@ -213,6 +217,7 @@ hi def link i3ConfigTimeUnit                        Constant
 hi def link i3ConfigModifier                        Constant
 hi def link i3ConfigString                          Constant
 hi def link i3ConfigNegativeSize                    Constant
+hi def link i3ConfigInclude                         Constant
 hi def link i3ConfigFontSeparator                   Special
 hi def link i3ConfigVariableModifier                Special
 hi def link i3ConfigSizeSpecial                     Special
@@ -233,6 +238,7 @@ hi def link i3ConfigLayout                          Identifier
 hi def link i3ConfigBorderStyle                     Identifier
 hi def link i3ConfigEdge                            Identifier
 hi def link i3ConfigFloating                        Identifier
+hi def link i3ConfigFloatingModifier                Identifier
 hi def link i3ConfigCommandKeyword                  Identifier
 hi def link i3ConfigNoFocusKeyword                  Identifier
 hi def link i3ConfigInitializeKeyword               Identifier
