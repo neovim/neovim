@@ -656,6 +656,7 @@ void diff_redraw(bool dofold)
     if (!wp->w_p_diff || !buf_valid(wp->w_buffer)) {
       continue;
     }
+
     redraw_later(wp, SOME_VALID);
     if (wp != curwin) {
       wp_other = wp;
@@ -664,8 +665,8 @@ void diff_redraw(bool dofold)
       foldUpdateAll(wp);
     }
 
-    // A change may have made filler lines invalid, need to take care
-    // of that for other windows.
+    // A change may have made filler lines invalid, need to take care of
+    // that for other windows.
     int n = diff_check(wp, wp->w_topline);
 
     if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
@@ -682,6 +683,7 @@ void diff_redraw(bool dofold)
       check_topfill(wp, false);
     }
   }
+
   if (wp_other != NULL && curwin->w_p_scb) {
     if (used_max_fill_curwin) {
       // The current window was set to use the maximum number of filler

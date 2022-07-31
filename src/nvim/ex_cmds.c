@@ -5793,6 +5793,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
     if (len <= 4) {
       continue;
     }
+
     if (STRICMP(files[i] + len - 4, ".txt") == 0) {
       // ".txt" -> language "en"
       lang[0] = 'e';

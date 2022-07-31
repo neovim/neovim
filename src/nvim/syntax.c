@@ -1390,24 +1390,21 @@ static bool syn_stack_equal(synstate_T *sp)
     if (bp[i].bs_extmatch == CUR_STATE(i).si_extmatch) {
       continue;
     }
-    // When the extmatch pointers are different, the strings in
-    // them can still be the same.  Check if the extmatch
-    // references are equal.
+    // When the extmatch pointers are different, the strings in them can
+    // still be the same.  Check if the extmatch references are equal.
     bsx = bp[i].bs_extmatch;
     six = CUR_STATE(i).si_extmatch;
-    // If one of the extmatch pointers is NULL the states are
-    // different.
+    // If one of the extmatch pointers is NULL the states are different.
     if (bsx == NULL || six == NULL) {
       break;
     }
     int j;
     for (j = 0; j < NSUBEXP; j++) {
-      // Check each referenced match string. They must all be
-      // equal.
+      // Check each referenced match string. They must all be equal.
       if (bsx->matches[j] != six->matches[j]) {
-        // If the pointer is different it can still be the
-        // same text.  Compare the strings, ignore case when
-        // the start item has the sp_ic flag set.
+        // If the pointer is different it can still be the same text.
+        // Compare the strings, ignore case when the start item has the
+        // sp_ic flag set.
         if (bsx->matches[j] == NULL || six->matches[j] == NULL) {
           break;
         }
@@ -1422,11 +1419,7 @@ static bool syn_stack_equal(synstate_T *sp)
       break;
     }
   }
-  if (i < 0) {
-    return true;
-  }
-
-  return false;
+  return i < 0 ? true : false;
 }
 
 /*
