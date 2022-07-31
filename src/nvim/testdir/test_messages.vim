@@ -338,14 +338,14 @@ func Test_cmdheight_zero()
 
   " Check change/restore cmdheight when macro
   call feedkeys("qa", "xt")
-  call assert_equal(&cmdheight, 1)
+  call assert_equal(1, &cmdheight)
   call feedkeys("q", "xt")
-  call assert_equal(&cmdheight, 0)
+  call assert_equal(0, &cmdheight)
 
   call setline(1, 'somestring')
   call feedkeys("y", "n")
   %s/somestring/otherstring/gc
-  call assert_equal(getline(1), 'otherstring')
+  call assert_equal('otherstring', getline(1))
 
   call feedkeys("g\<C-g>", "xt")
   call assert_match(
@@ -357,7 +357,16 @@ func Test_cmdheight_zero()
     split
   endfor
   only
-  call assert_equal(&cmdheight, 0)
+  call assert_equal(0, &cmdheight)
+
+  " Check that pressing ":" should not scroll a window
+  " Check for what patch 9.0.0115 fixes
+  botright 10new
+  call setline(1, range(12))
+  7
+  call feedkeys(":\"\<C-R>=line('w0')\<CR>\<CR>", "xt")
+  call assert_equal('"1', @:)
+  bwipe!
 
   set cmdheight&
   set showcmd&

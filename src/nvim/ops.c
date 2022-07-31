@@ -909,7 +909,7 @@ int do_record(int c)
       retval = OK;
 
       if (!ui_has_messages()) {
-        // Enable macro indicator temporary
+        // Enable macro indicator temporarily
         set_option_value("ch", 1L, NULL, 0);
         update_screen(VALID);
 
