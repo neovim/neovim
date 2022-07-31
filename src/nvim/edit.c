@@ -4311,8 +4311,8 @@ static bool ins_start_select(int c)
   case K_S_DOWN:
   case K_S_END:
   case K_S_HOME:
-    // Start selection right away, the cursor can move with
-    // CTRL-O when beyond the end of the line.
+    // Start selection right away, the cursor can move with CTRL-O when
+    // beyond the end of the line.
     start_selection();
 
     // Execute the key in (insert) Select mode.

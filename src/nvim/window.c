@@ -2150,12 +2150,11 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       } else {
         next_curwin_size = -1;
         FOR_ALL_FRAMES(fr, topfr->fr_child) {
-          // If 'winfixwidth' set keep the window width if
-          // possible.
-          // Watch out for this window being the next_curwin.
           if (!frame_fixed_width(fr)) {
             continue;
           }
+          // If 'winfixwidth' set keep the window width if possible.
+          // Watch out for this window being the next_curwin.
           n = frame_minwidth(fr, NOWIN);
           new_size = fr->fr_width;
           if (frame_has_win(fr, next_curwin)) {
@@ -2281,12 +2280,11 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       } else {
         next_curwin_size = -1;
         FOR_ALL_FRAMES(fr, topfr->fr_child) {
-          // If 'winfixheight' set keep the window height if
-          // possible.
-          // Watch out for this window being the next_curwin.
           if (!frame_fixed_height(fr)) {
             continue;
           }
+          // If 'winfixheight' set keep the window height if possible.
+          // Watch out for this window being the next_curwin.
           n = frame_minheight(fr, NOWIN);
           new_size = fr->fr_height;
           if (frame_has_win(fr, next_curwin)) {
@@ -3898,9 +3896,7 @@ void close_others(int message, int forceit)
         continue;
       }
     }
-    win_close(wp,
-              !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer),
-              false);
+    win_close(wp, !buf_hide(wp->w_buffer) && !bufIsChanged(wp->w_buffer), false);
   }
 
   if (message && !ONE_WINDOW) {
@@ -5555,6 +5551,7 @@ static void frame_setheight(frame_T *curfrp, int height)
   }
 
   if (curfrp->fr_parent == NULL) {
+    // topframe: can only change the command line
     if (height > ROWS_AVAIL) {
       // If height is greater than the available space, try to create space for
       // the frame by reducing 'cmdheight' if possible, while making sure
