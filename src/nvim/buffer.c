@@ -3288,7 +3288,7 @@ void maketitle(void)
       len = (int)STRLEN(buf_p);
       if (len > 100) {
         len -= 100;
-        len += mb_tail_off(buf_p, buf_p + len) + 1;
+        len += utf_cp_tail_off(buf_p, buf_p + len) + 1;
         buf_p += len;
       }
       STRCPY(icon_str, buf_p);
