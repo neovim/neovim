@@ -6501,7 +6501,7 @@ static void win_redr_ruler(win_T *wp, bool always)
   bool is_stl_global = global_stl_height() > 0;
   static bool did_show_ext_ruler = false;
 
-  // If 'ruler' off or redrawing disabled, don't do anything
+  // If 'ruler' off, don't do anything
   if (!p_ru) {
     return;
   }

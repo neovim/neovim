@@ -689,7 +689,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
 /// @param init_ccline  clear ccline first
 static uint8_t *command_line_enter(int firstc, long count, int indent, bool init_ccline)
 {
-  bool cmdheight0 = !ui_has_messages();
+  const bool cmdheight0 = !ui_has_messages();
 
   if (cmdheight0) {
     // If cmdheight is 0, cmdheight must be set to 1 when we enter command line.
@@ -993,7 +993,6 @@ theend:
   if (cmdheight0) {
     // Restore cmdheight
     set_option_value("ch", 0L, NULL, 0);
-
     // Redraw is needed for command line completion
     redraw_all_later(CLEAR);
   }

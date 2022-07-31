@@ -316,4 +316,51 @@ func Test_fileinfo_after_echo()
   call delete('b.txt')
 endfunc
 
+func Test_cmdheight_zero()
+  set cmdheight=0
+  set showcmd
+  redraw!
+
+  echo 'test echo'
+  call assert_equal(116, screenchar(&lines, 1))
+  redraw!
+
+  echomsg 'test echomsg'
+  call assert_equal(116, screenchar(&lines, 1))
+  redraw!
+
+  call feedkeys(":ls\<CR>", "xt")
+  call assert_equal(':ls', Screenline(&lines - 1))
+  redraw!
+
+  let char = getchar(0)
+  call assert_match(char, 0)
+
+  " Check change/restore cmdheight when macro
+  call feedkeys("qa", "xt")
+  call assert_equal(&cmdheight, 1)
+  call feedkeys("q", "xt")
+  call assert_equal(&cmdheight, 0)
+
+  call setline(1, 'somestring')
+  call feedkeys("y", "n")
+  %s/somestring/otherstring/gc
+  call assert_equal(getline(1), 'otherstring')
+
+  call feedkeys("g\<C-g>", "xt")
+  call assert_match(
+        \ 'Col 1 of 11; Line 1 of 1; Word 1 of 1',
+        \ Screenline(&lines))
+
+  " Check split behavior
+  for i in range(1, 10)
+    split
+  endfor
+  only
+  call assert_equal(&cmdheight, 0)
+
+  set cmdheight&
+  set showcmd&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

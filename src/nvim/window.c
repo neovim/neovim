@@ -5555,7 +5555,6 @@ static void frame_setheight(frame_T *curfrp, int height)
   }
 
   if (curfrp->fr_parent == NULL) {
-    // topframe: can only change the command line
     if (height > ROWS_AVAIL) {
       // If height is greater than the available space, try to create space for
       // the frame by reducing 'cmdheight' if possible, while making sure
