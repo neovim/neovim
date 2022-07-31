@@ -4210,7 +4210,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The 'mousemodel' option is set by the |:behave| command.
 
-					*'mousescroll'*
+						*'mousescroll'*
 'mousescroll'		string	(default "ver:3,hor:6")
 			global
 	This option controls the number of lines / columns to scroll by when

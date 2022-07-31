@@ -1737,7 +1737,7 @@ static bool at_ins_compl_key(void)
          || ((compl_cont_status & CONT_LOCAL) && (c == Ctrl_N || c == Ctrl_P));
 }
 
-/// Check if typebuf.tb_buf[] contains a modifer plus key that can be changed
+/// Check if typebuf.tb_buf[] contains a modifier plus key that can be changed
 /// into just a key, apply that.
 /// Check from typebuf.tb_buf[typebuf.tb_off] to typebuf.tb_buf[typebuf.tb_off + "max_offset"].
 /// @return  the length of the replaced bytes, 0 if nothing changed, -1 for error.

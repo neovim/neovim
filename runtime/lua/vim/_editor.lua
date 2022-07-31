@@ -312,7 +312,7 @@ end
 ---   vim.cmd('write! myfile.txt')
 ---   vim.cmd { cmd = 'write', args = { "myfile.txt" }, bang = true }
 ---   vim.cmd.write { args = { "myfile.txt" }, bang = true }
----   vim.cmd.write {"myfile.txt", bang = true })
+---   vim.cmd.write { "myfile.txt", bang = true }
 ---
 ---   -- Ex command :colorscheme blue
 ---   vim.cmd('colorscheme blue')

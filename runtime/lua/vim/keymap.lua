@@ -43,7 +43,7 @@ local keymap = {}
 ---                  - remap: (boolean) Make the mapping recursive. This is the
 ---                  inverse of the "noremap" option from |nvim_set_keymap()|.
 ---                  Default `false`.
----                  - replace_keycodes: (boolean) defaults to true.
+---                  - replace_keycodes: (boolean) defaults to true if "expr" is true.
 ---@see |nvim_set_keymap()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate({

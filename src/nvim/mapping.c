@@ -235,7 +235,7 @@ static void showmap(mapblock_T *mp, bool local)
 /// @param[in] orig_lhs   Original mapping LHS, with characters to replace.
 /// @param[in] orig_lhs_len   `strlen` of orig_lhs.
 /// @param[in] orig_rhs   Original mapping RHS, with characters to replace.
-/// @param[in] rhs_lua   Lua reference for Lua maps.
+/// @param[in] rhs_lua   Lua reference for Lua mappings.
 /// @param[in] orig_rhs_len   `strlen` of orig_rhs.
 /// @param[in] cpo_flags  See param docs for @ref replace_termcodes.
 /// @param[out] mapargs   MapArguments struct holding the replaced strings.
@@ -1633,7 +1633,7 @@ int makemap(FILE *fd, buf_T *buf)
           continue;
         }
 
-        // skip lua mappings and mappings that contain a <SNR> (script-local thing),
+        // skip Lua mappings and mappings that contain a <SNR> (script-local thing),
         // they probably don't work when loaded again
         if (mp->m_luaref != LUA_NOREF) {
           continue;
@@ -2601,7 +2601,7 @@ fail_and_free:
 ///
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
-/// @param  from_lua  Whether it is called from internal lua api.
+/// @param  from_lua  Whether it is called from internal Lua api.
 /// @returns Array of maparg()-like dictionaries describing mappings
 ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
 {

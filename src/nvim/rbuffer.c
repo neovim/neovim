@@ -156,7 +156,7 @@ void rbuffer_consumed(RBuffer *buf, size_t count)
 
 /// Use instead of rbuffer_consumed to use rbuffer in a linear, non-cyclic fashion.
 ///
-/// This is generally usefull if we can guarantee to parse all input
+/// This is generally useful if we can guarantee to parse all input
 /// except some small incomplete token, like when parsing msgpack.
 void rbuffer_consumed_compact(RBuffer *buf, size_t count)
   FUNC_ATTR_NONNULL_ALL

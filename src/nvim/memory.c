@@ -546,7 +546,7 @@ void arena_start(Arena *arena, ArenaMem *reuse_blk)
 
 /// Finnish the allocations in an arena.
 ///
-/// This does not immedately free the memory, but leaves existing allocated
+/// This does not immediately free the memory, but leaves existing allocated
 /// objects valid, and returns an opaque ArenaMem handle, which can be used to
 /// free the allocations using `arena_mem_free`, when the objects allocated
 /// from the arena are not needed anymore.
