@@ -1408,8 +1408,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     ga_init(gap, sizeof(char_u *), c);
     ga_grow(gap, c);
     while (--c >= 0) {
-      ((char_u **)(gap->ga_data))[gap->ga_len++] =
-        read_cnt_string(fd, 1, &cnt);
+      ((char **)(gap->ga_data))[gap->ga_len++] = (char *)read_cnt_string(fd, 1, &cnt);
       // <comppatlen> <comppattext>
       if (cnt < 0) {
         return cnt;
@@ -2300,18 +2299,15 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 
         // Only add the couple if it isn't already there.
         for (i = 0; i < gap->ga_len - 1; i += 2) {
-          if (STRCMP(((char_u **)(gap->ga_data))[i], items[1]) == 0
-              && STRCMP(((char_u **)(gap->ga_data))[i + 1],
-                        items[2]) == 0) {
+          if (STRCMP(((char **)(gap->ga_data))[i], items[1]) == 0
+              && STRCMP(((char **)(gap->ga_data))[i + 1], items[2]) == 0) {
             break;
           }
         }
         if (i >= gap->ga_len) {
           ga_grow(gap, 2);
-          ((char_u **)(gap->ga_data))[gap->ga_len++]
-            = getroom_save(spin, items[1]);
-          ((char_u **)(gap->ga_data))[gap->ga_len++]
-            = getroom_save(spin, items[2]);
+          ((char **)(gap->ga_data))[gap->ga_len++] = (char *)getroom_save(spin, items[1]);
+          ((char **)(gap->ga_data))[gap->ga_len++] = (char *)getroom_save(spin, items[2]);
         }
       } else if (is_aff_rule(items, itemcnt, "SYLLABLE", 2)
                  && syllable == NULL) {
@@ -2968,7 +2964,7 @@ static void check_renumber(spellinfo_T *spin)
 // Returns true if flag "flag" appears in affix list "afflist".
 static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
 {
-  char_u *p;
+  char *p;
   unsigned n;
 
   switch (flagtype) {
@@ -2977,7 +2973,7 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
 
   case AFT_CAPLONG:
   case AFT_LONG:
-    for (p = afflist; *p != NUL;) {
+    for (p = (char *)afflist; *p != NUL;) {
       n = (unsigned)mb_ptr2char_adv((const char_u **)&p);
       if ((flagtype == AFT_LONG || (n >= 'A' && n <= 'Z'))
           && *p != NUL) {
@@ -2990,8 +2986,8 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
     break;
 
   case AFT_NUM:
-    for (p = afflist; *p != NUL;) {
-      int digits = getdigits_int((char **)&p, true, 0);
+    for (p = (char *)afflist; *p != NUL;) {
+      int digits = getdigits_int(&p, true, 0);
       assert(digits >= 0);
       n = (unsigned int)digits;
       if (n == 0) {
@@ -4644,8 +4640,8 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
 
     size_t l = STRLEN(spin->si_compflags);
     assert(spin->si_comppat.ga_len >= 0);
-    for (size_t i = 0; i < (size_t)spin->si_comppat.ga_len; ++i) {
-      l += STRLEN(((char_u **)(spin->si_comppat.ga_data))[i]) + 1;
+    for (size_t i = 0; i < (size_t)spin->si_comppat.ga_len; i++) {
+      l += STRLEN(((char **)(spin->si_comppat.ga_data))[i]) + 1;
     }
     put_bytes(fd, l + 7, 4);                            // <sectionlen>
 
@@ -4655,8 +4651,8 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(0, fd);                // for Vim 7.0b compatibility
     putc(spin->si_compoptions, fd);                     // <compoptions>
     put_bytes(fd, (uintmax_t)spin->si_comppat.ga_len, 2);  // <comppatcount>
-    for (size_t i = 0; i < (size_t)spin->si_comppat.ga_len; ++i) {
-      char_u *p = ((char_u **)(spin->si_comppat.ga_data))[i];
+    for (size_t i = 0; i < (size_t)spin->si_comppat.ga_len; i++) {
+      char *p = ((char **)(spin->si_comppat.ga_data))[i];
       assert(STRLEN(p) < INT_MAX);
       putc((int)STRLEN(p), fd);                         // <comppatlen>
       fwv &= fwrite(p, STRLEN(p), 1, fd);               // <comppattext>
@@ -5815,7 +5811,7 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap, size_t *fwv)
   size_t totlen = 2 + (size_t)gap->ga_len;  // <prefcondcnt> and <condlen> bytes
   for (int i = 0; i < gap->ga_len; i++) {
     // <prefcond> : <condlen> <condstr>
-    char_u *p = ((char_u **)gap->ga_data)[i];
+    char *p = ((char **)gap->ga_data)[i];
     if (p != NULL) {
       size_t len = STRLEN(p);
       if (fd != NULL) {

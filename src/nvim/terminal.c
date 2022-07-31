@@ -681,7 +681,7 @@ static bool is_filter_char(int c)
   return !!(tpf_flags & flag);
 }
 
-void terminal_paste(long count, char_u **y_array, size_t y_size)
+void terminal_paste(long count, char **y_array, size_t y_size)
 {
   if (y_size == 0) {
     return;
@@ -702,7 +702,7 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
         buff_len = len;
       }
       char_u *dst = buff;
-      char_u *src = y_array[j];
+      char_u *src = (char_u *)y_array[j];
       while (*src != '\0') {
         len = (size_t)utf_ptr2len((char *)src);
         int c = utf_ptr2char((char *)src);

@@ -482,16 +482,14 @@ static char_u *skip_anyof(char *p)
   return (char_u *)p;
 }
 
-/*
- * Skip past regular expression.
- * Stop at end of "startp" or where "dirc" is found ('/', '?', etc).
- * Take care of characters with a backslash in front of it.
- * Skip strings inside [ and ].
- * When "newp" is not NULL and "dirc" is '?', make an allocated copy of the
- * expression and change "\?" to "?".  If "*newp" is not NULL the expression
- * is changed in-place.
- */
-char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
+/// Skip past regular expression.
+/// Stop at end of "startp" or where "dirc" is found ('/', '?', etc).
+/// Take care of characters with a backslash in front of it.
+/// Skip strings inside [ and ].
+/// When "newp" is not NULL and "dirc" is '?', make an allocated copy of the
+/// expression and change "\?" to "?".  If "*newp" is not NULL the expression
+/// is changed in-place.
+char_u *skip_regexp(char_u *startp, int dirc, int magic, char **newp)
 {
   int mymagic;
   char_u *p = startp;
@@ -517,8 +515,8 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
       if (dirc == '?' && newp != NULL && p[1] == '?') {
         // change "\?" to "?", make a copy first.
         if (*newp == NULL) {
-          *newp = vim_strsave(startp);
-          p = *newp + (p - startp);
+          *newp = (char *)vim_strsave(startp);
+          p = (char_u *)(*newp) + (p - startp);
         }
         STRMOVE(p, p + 1);
       } else {

@@ -3665,7 +3665,7 @@ static void restore_cmdline(struct cmdline_info *ccp)
 /// @returns FAIL for failure, OK otherwise
 static bool cmdline_paste(int regname, bool literally, bool remcr)
 {
-  char_u *arg;
+  char *arg;
   char_u *p;
   bool allocated;
 
@@ -3698,7 +3698,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 
     // When 'incsearch' is set and CTRL-R CTRL-W used: skip the duplicate
     // part of the word.
-    p = arg;
+    p = (char_u *)arg;
     if (p_is && regname == Ctrl_W) {
       char_u *w;
       int len;
@@ -5672,7 +5672,7 @@ static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 
 /// Expand `file` for all comma-separated directories in `path`.
 /// Adds matches to `ga`.
-void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
+void globpath(char *path, char_u *file, garray_T *ga, int expand_options)
 {
   expand_T xpc;
   ExpandInit(&xpc);
@@ -5683,7 +5683,7 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
   // Loop over all entries in {path}.
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
-    copy_option_part((char **)&path, (char *)buf, MAXPATHL, ",");
+    copy_option_part(&path, (char *)buf, MAXPATHL, ",");
     if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
       add_pathsep((char *)buf);
       STRCAT(buf, file);  // NOLINT
@@ -5845,26 +5845,26 @@ int get_cmdline_firstc(void)
 /// @param num2 to
 ///
 /// @return OK if parsed successfully, otherwise FAIL.
-int get_list_range(char_u **str, int *num1, int *num2)
+int get_list_range(char **str, int *num1, int *num2)
 {
   int len;
   int first = false;
   varnumber_T num;
 
-  *str = (char_u *)skipwhite((char *)(*str));
+  *str = skipwhite((*str));
   if (**str == '-' || ascii_isdigit(**str)) {  // parse "from" part of range
-    vim_str2nr(*str, NULL, &len, 0, &num, NULL, 0, false);
+    vim_str2nr((char_u *)(*str), NULL, &len, 0, &num, NULL, 0, false);
     *str += len;
     *num1 = (int)num;
     first = true;
   }
-  *str = (char_u *)skipwhite((char *)(*str));
+  *str = skipwhite((*str));
   if (**str == ',') {                   // parse "to" part of range
-    *str = (char_u *)skipwhite((char *)(*str) + 1);
-    vim_str2nr(*str, NULL, &len, 0, &num, NULL, 0, false);
+    *str = skipwhite((*str) + 1);
+    vim_str2nr((char_u *)(*str), NULL, &len, 0, &num, NULL, 0, false);
     if (len > 0) {
       *num2 = (int)num;
-      *str = (char_u *)skipwhite((char *)(*str) + len);
+      *str = skipwhite((*str) + len);
     } else if (!first) {                  // no number given at all
       return FAIL;
     }

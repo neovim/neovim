@@ -2063,7 +2063,7 @@ static void list_features(void)
 /// List string items nicely aligned in columns.
 /// When "size" is < 0 then the last entry is marked with NULL.
 /// The entry with index "current" is inclosed in [].
-void list_in_columns(char_u **items, int size, int current)
+void list_in_columns(char **items, int size, int current)
 {
   int item_count = 0;
   int width = 0;

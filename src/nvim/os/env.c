@@ -580,18 +580,18 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
 
   int prefix_len = (prefix == NULL) ? 0 : (int)STRLEN(prefix);
 
-  char_u *src = (char_u *)skipwhite((char *)srcp);
+  char *src = skipwhite((char *)srcp);
   dstlen--;  // leave one char space for "\,"
   while (*src && dstlen > 0) {
     // Skip over `=expr`.
     if (src[0] == '`' && src[1] == '=') {
-      var = src;
+      var = (char_u *)src;
       src += 2;
-      (void)skip_expr((char **)&src);
+      (void)skip_expr(&src);
       if (*src == '`') {
         src++;
       }
-      size_t len = (size_t)(src - var);
+      size_t len = (size_t)(src - (char *)var);
       if (len > (size_t)dstlen) {
         len = (size_t)dstlen;
       }
@@ -608,7 +608,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       // The variable name is copied into dst temporarily, because it may
       // be a string in read-only memory and a NUL needs to be appended.
       if (*src != '~') {  // environment var
-        tail = src + 1;
+        tail = (char_u *)src + 1;
         var = dst;
         int c = dstlen - 1;
 
@@ -646,11 +646,11 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
                  || vim_ispathsep(src[1])
                  || vim_strchr(" ,\t\n", src[1]) != NULL) {
         var = (char_u *)homedir;
-        tail = src + 1;
+        tail = (char_u *)src + 1;
       } else {  // user directory
 #if defined(UNIX)
         // Copy ~user to dst[], so we can put a NUL after it.
-        tail = src;
+        tail = (char_u *)src;
         var = dst;
         int c = dstlen - 1;
         while (c-- > 0
@@ -723,7 +723,7 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
           tail++;
         }
         dst += c;
-        src = tail;
+        src = (char *)tail;
         copy_char = false;
       }
       if (mustfree) {
@@ -737,17 +737,17 @@ void expand_env_esc(char_u *restrict srcp, char_u *restrict dst, int dstlen, boo
       // ":edit foo ~ foo".
       at_start = false;
       if (src[0] == '\\' && src[1] != NUL) {
-        *dst++ = *src++;
+        *dst++ = (char_u)(*src++);
         dstlen--;
       } else if ((src[0] == ' ' || src[0] == ',') && !one) {
         at_start = true;
       }
       if (dstlen > 0) {
-        *dst++ = *src++;
+        *dst++ = (char_u)(*src++);
         dstlen--;
 
         if (prefix != NULL
-            && src - prefix_len >= srcp
+            && src - prefix_len >= (char *)srcp
             && STRNCMP(src - prefix_len, prefix, prefix_len) == 0) {
           at_start = true;
         }
@@ -1069,9 +1069,8 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
     must_free = true;
     size_t usedlen = 0;
     size_t flen = strlen(homedir_env_mod);
-    char_u *fbuf = NULL;
-    (void)modify_fname(":p", false, &usedlen,
-                       &homedir_env_mod, (char **)&fbuf, &flen);
+    char *fbuf = NULL;
+    (void)modify_fname(":p", false, &usedlen, &homedir_env_mod, &fbuf, &flen);
     flen = strlen(homedir_env_mod);
     assert(homedir_env_mod != homedir_env);
     if (vim_ispathsep(homedir_env_mod[flen - 1])) {

@@ -2474,7 +2474,7 @@ static int ins_compl_get_exp(pos_T *ini)
 {
   static pos_T first_match_pos;
   static pos_T last_match_pos;
-  static char_u *e_cpt = (char_u *)"";   // curr. entry in 'complete'
+  static char *e_cpt = "";               // curr. entry in 'complete'
   static bool found_all = false;         // Found all matches of a
                                          // certain type.
   static buf_T *ins_buf = NULL;          // buffer being scanned
@@ -2503,8 +2503,7 @@ static int ins_compl_get_exp(pos_T *ini)
     }
     found_all = false;
     ins_buf = curbuf;
-    e_cpt = (compl_cont_status & CONT_LOCAL)
-            ? (char_u *)"." : curbuf->b_p_cpt;
+    e_cpt = (compl_cont_status & CONT_LOCAL) ? "." : (char *)curbuf->b_p_cpt;
     last_match_pos = first_match_pos = *ini;
   } else if (ins_buf != curbuf && !buf_valid(ins_buf)) {
     ins_buf = curbuf;  // In case the buffer was wiped out.
@@ -2584,7 +2583,7 @@ static int ins_compl_get_exp(pos_T *ini)
             type = CTRL_X_THESAURUS;
           }
           if (*++e_cpt != ',' && *e_cpt != NUL) {
-            dict = e_cpt;
+            dict = (char_u *)e_cpt;
             dict_f = DICT_FIRST;
           }
         } else if (*e_cpt == 'i') {
@@ -2601,7 +2600,7 @@ static int ins_compl_get_exp(pos_T *ini)
         }
 
         // in any case e_cpt is advanced to the next entry
-        (void)copy_option_part((char **)&e_cpt, (char *)IObuff, IOSIZE, ",");
+        (void)copy_option_part(&e_cpt, (char *)IObuff, IOSIZE, ",");
 
         found_all = true;
         if (type == -1) {

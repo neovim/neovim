@@ -292,8 +292,8 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
   char *ret = NULL;
   char_u *stringp;
   char_u *colonp;
-  char_u *commap;
-  char_u *p;
+  char *commap;
+  char *p;
   size_t idx = 0;                          // init for GCC
   int len;
 
@@ -315,9 +315,9 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
       ret = N_("E550: Missing colon");
       break;
     }
-    commap = (char_u *)vim_strchr((char *)stringp, ',');
+    commap = vim_strchr((char *)stringp, ',');
     if (commap == NULL) {
-      commap = option_str + STRLEN(option_str);
+      commap = (char *)option_str + STRLEN(option_str);
     }
 
     len = (int)(colonp - stringp);
@@ -333,8 +333,8 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
       break;
     }
 
-    p = colonp + 1;
-    table[idx].present = TRUE;
+    p = (char *)colonp + 1;
+    table[idx].present = true;
 
     if (table[idx].hasnum) {
       if (!ascii_isdigit(*p)) {
@@ -342,13 +342,13 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
         break;
       }
 
-      table[idx].number = getdigits_int((char **)&p, false, 0);
+      table[idx].number = getdigits_int(&p, false, 0);
     }
 
-    table[idx].string = p;
+    table[idx].string = (char_u *)p;
     table[idx].strlen = (int)(commap - p);
 
-    stringp = commap;
+    stringp = (char_u *)commap;
     if (*stringp == ',') {
       ++stringp;
     }

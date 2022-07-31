@@ -1320,7 +1320,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
 
     // Add all matches because tagfunc should do filtering.
     ga_grow(ga, 1);
-    ((char_u **)(ga->ga_data))[ga->ga_len++] = mfp;
+    ((char **)(ga->ga_data))[ga->ga_len++] = (char *)mfp;
     ntags++;
     result = OK;
   });
@@ -1411,7 +1411,7 @@ int find_tags(char_u *pat, int *num_matches, char ***matchesp, int flags, int mi
   int matchoff = 0;
   int save_emsg_off;
 
-  char_u *mfp;
+  char *mfp;
   garray_T ga_match[MT_COUNT];   // stores matches in sequence
   hashtab_T ht_match[MT_COUNT];  // stores matches by key
   hash_T hash = 0;
@@ -1476,7 +1476,7 @@ int find_tags(char_u *pat, int *num_matches, char ***matchesp, int flags, int mi
   lbuf = xmalloc((size_t)lbuf_size);
   tag_fname = xmalloc(MAXPATHL + 1);
   for (mtt = 0; mtt < MT_COUNT; mtt++) {
-    ga_init(&ga_match[mtt], sizeof(char_u *), 100);
+    ga_init(&ga_match[mtt], sizeof(char *), 100);
     hash_init(&ht_match[mtt]);
   }
 
@@ -2088,9 +2088,9 @@ parse_line:
             // The format is {tagname}@{lang}NUL{heuristic}NUL
             *tagp.tagname_end = NUL;
             len = (size_t)(tagp.tagname_end - tagp.tagname);
-            mfp = xmalloc(sizeof(char_u) + len + 10 + ML_EXTRA + 1);
+            mfp = xmalloc(sizeof(char) + len + 10 + ML_EXTRA + 1);
 
-            p = mfp;
+            p = (char_u *)mfp;
             STRCPY(p, tagp.tagname);
             p[len] = '@';
             STRCPY(p + len + 1, help_lang);
@@ -2122,7 +2122,7 @@ parse_line:
               get_it_again = false;
             } else {
               len = (size_t)(tagp.tagname_end - tagp.tagname);
-              mfp = xmalloc(sizeof(char_u) + len + 1);
+              mfp = xmalloc(sizeof(char) + len + 1);
               STRLCPY(mfp, tagp.tagname, len + 1);
 
               // if wanted, re-read line to get long form too
@@ -2140,8 +2140,8 @@ parse_line:
             // without Emacs tags: <mtt><tag_fname><0x02><lbuf><NUL>
             // Here <mtt> is the "mtt" value plus 1 to avoid NUL.
             len = tag_fname_len + STRLEN(lbuf) + 3;
-            mfp = xmalloc(sizeof(char_u) + len + 1);
-            p = mfp;
+            mfp = xmalloc(sizeof(char) + len + 1);
+            p = (char_u *)mfp;
             p[0] = (char_u)(mtt + 1);
             STRCPY(p + 1, tag_fname);
 #ifdef BACKSLASH_IN_FILENAME
@@ -2166,15 +2166,14 @@ parse_line:
             if (use_cscope) {
               hash++;
             } else {
-              hash = hash_hash(mfp);
+              hash = hash_hash((char_u *)mfp);
             }
             hi = hash_lookup(&ht_match[mtt], (const char *)mfp,
                              STRLEN(mfp), hash);
             if (HASHITEM_EMPTY(hi)) {
-              hash_add_item(&ht_match[mtt], hi, mfp, hash);
+              hash_add_item(&ht_match[mtt], hi, (char_u *)mfp, hash);
               ga_grow(&ga_match[mtt], 1);
-              ((char_u **)(ga_match[mtt].ga_data))
-              [ga_match[mtt].ga_len++] = mfp;
+              ((char **)(ga_match[mtt].ga_data))[ga_match[mtt].ga_len++] = mfp;
               match_count++;
             } else {
               // duplicate tag, drop it
@@ -2258,29 +2257,29 @@ findtag_end:
   }
 
   if (match_count > 0) {
-    matches = xmalloc((size_t)match_count * sizeof(char_u *));
+    matches = xmalloc((size_t)match_count * sizeof(char *));
   } else {
     matches = NULL;
   }
   match_count = 0;
   for (mtt = 0; mtt < MT_COUNT; mtt++) {
     for (i = 0; i < ga_match[mtt].ga_len; i++) {
-      mfp = ((char_u **)(ga_match[mtt].ga_data))[i];
+      mfp = ((char **)(ga_match[mtt].ga_data))[i];
       if (matches == NULL) {
         xfree(mfp);
       } else {
         if (!name_only) {
           // Change mtt back to zero-based.
-          *mfp = (char_u)(*mfp - 1);
+          *mfp = (char)(*mfp - 1);
 
           // change the TAG_SEP back to NUL
-          for (p = mfp + 1; *p != NUL; p++) {
+          for (p = (char_u *)mfp + 1; *p != NUL; p++) {
             if (*p == TAG_SEP) {
               *p = NUL;
             }
           }
         }
-        matches[match_count++] = (char *)mfp;
+        matches[match_count++] = mfp;
       }
     }
 
@@ -2353,7 +2352,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
      */
     if (first) {
       ga_clear_strings(&tag_fnames);
-      ga_init(&tag_fnames, (int)sizeof(char_u *), 10);
+      ga_init(&tag_fnames, (int)sizeof(char *), 10);
       do_in_runtimepath("doc/tags doc/tags-??", DIP_ALL,
                         found_tagfile_cb, NULL);
     }
@@ -2373,13 +2372,12 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
       simplify_filename(buf);
 
       for (int i = 0; i < tag_fnames.ga_len; i++) {
-        if (STRCMP(buf, ((char_u **)(tag_fnames.ga_data))[i]) == 0) {
+        if (STRCMP(buf, ((char **)(tag_fnames.ga_data))[i]) == 0) {
           return FAIL;  // avoid duplicate file names
         }
       }
     } else {
-      STRLCPY(buf, ((char_u **)(tag_fnames.ga_data))[tnp->tn_hf_idx++],
-              MAXPATHL);
+      STRLCPY(buf, ((char **)(tag_fnames.ga_data))[tnp->tn_hf_idx++], MAXPATHL);
     }
     return OK;
   }
@@ -2387,9 +2385,8 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
   if (first) {
     // Init.  We make a copy of 'tags', because autocommands may change
     // the value without notifying us.
-    tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL)
-        ? curbuf->b_p_tags : p_tags);
-    tnp->tn_np = tnp->tn_tags;
+    tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL) ? curbuf->b_p_tags : p_tags);
+    tnp->tn_np = (char *)tnp->tn_tags;
   }
 
   /*
@@ -2420,7 +2417,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
        * Copy next file name into buf.
        */
       buf[0] = NUL;
-      (void)copy_option_part((char **)&tnp->tn_np, (char *)buf, MAXPATHL - 1, " ,");
+      (void)copy_option_part(&tnp->tn_np, (char *)buf, MAXPATHL - 1, " ,");
 
       r_ptr = vim_findfile_stopdir(buf);
       // move the filename one char forward and truncate the

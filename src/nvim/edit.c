@@ -2022,7 +2022,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
 /// @param second_indent  indent for second line if >= 0
 void insertchar(int c, int flags, int second_indent)
 {
-  char_u *p;
+  char *p;
   int force_format = flags & INSCHAR_FORMAT;
 
   const int textwidth = comp_textwidth(force_format);
@@ -2081,13 +2081,13 @@ void insertchar(int c, int flags, int second_indent)
     // Need to remove existing (middle) comment leader and insert end
     // comment leader.  First, check what comment leader we can find.
     char_u *line = get_cursor_line_ptr();
-    int i = get_leader_len((char *)line, (char **)&p, false, true);
-    if (i > 0 && vim_strchr((char *)p, COM_MIDDLE) != NULL) {  // Just checking
+    int i = get_leader_len((char *)line, &p, false, true);
+    if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {  // Just checking
       // Skip middle-comment string
       while (*p && p[-1] != ':') {  // find end of middle flags
         p++;
       }
-      int middle_len = (int)copy_option_part((char **)&p, (char *)lead_end, COM_MAX_LEN, ",");
+      int middle_len = (int)copy_option_part(&p, (char *)lead_end, COM_MAX_LEN, ",");
       // Don't count trailing white space for middle_len
       while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1])) {
         middle_len--;
@@ -2097,7 +2097,7 @@ void insertchar(int c, int flags, int second_indent)
       while (*p && p[-1] != ':') {  // find end of end flags
         p++;
       }
-      int end_len = (int)copy_option_part((char **)&p, (char *)lead_end, COM_MAX_LEN, ",");
+      int end_len = (int)copy_option_part(&p, (char *)lead_end, COM_MAX_LEN, ",");
 
       // Skip white space before the cursor
       i = curwin->w_cursor.col;

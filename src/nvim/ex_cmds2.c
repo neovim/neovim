@@ -696,7 +696,7 @@ void ex_args(exarg_T *eap)
       for (int i = 0; i < ARGCOUNT; i++) {
         items[i] = alist_name(&ARGLIST[i]);
       }
-      list_in_columns((char_u **)items, ARGCOUNT, curwin->w_arg_idx);
+      list_in_columns(items, ARGCOUNT, curwin->w_arg_idx);
       xfree(items);
     }
   } else if (eap->cmdidx == CMD_arglocal) {

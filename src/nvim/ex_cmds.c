@@ -3544,7 +3544,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (char_u)(*cmd++);                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
-      cmd = (char *)skip_regexp((char_u *)cmd, delimiter, p_magic, (char_u **)&eap->arg);
+      cmd = (char *)skip_regexp((char_u *)cmd, delimiter, p_magic, &eap->arg);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
         has_second_delim = true;
@@ -4629,7 +4629,7 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    cmd = (char *)skip_regexp((char_u *)cmd, delim, p_magic, (char_u **)&eap->arg);
+    cmd = (char *)skip_regexp((char_u *)cmd, delim, p_magic, &eap->arg);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }

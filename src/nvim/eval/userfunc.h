@@ -64,8 +64,8 @@ typedef struct {
   .basetv = NULL, \
 }
 
-#define FUNCARG(fp, j)  ((char_u **)(fp->uf_args.ga_data))[j]
-#define FUNCLINE(fp, j) ((char_u **)(fp->uf_lines.ga_data))[j]
+#define FUNCARG(fp, j)  ((char **)(fp->uf_args.ga_data))[j]
+#define FUNCLINE(fp, j) ((char **)(fp->uf_lines.ga_data))[j]
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/userfunc.h.generated.h"

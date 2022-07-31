@@ -2039,7 +2039,7 @@ static int count_syllables(slang_T *slang, const char_u *word)
 char *did_set_spelllang(win_T *wp)
 {
   garray_T ga;
-  char_u *splp;
+  char *splp;
   char_u *region;
   char_u region_cp[3];
   bool filename;
@@ -2051,7 +2051,7 @@ char *did_set_spelllang(win_T *wp)
   int len;
   char_u *p;
   int round;
-  char_u *spf;
+  char *spf;
   char_u *use_region = NULL;
   bool dont_use_region = false;
   bool nobreak = false;
@@ -2081,9 +2081,9 @@ char *did_set_spelllang(win_T *wp)
   wp->w_s->b_cjk = 0;
 
   // Loop over comma separated language names.
-  for (splp = spl_copy; *splp != NUL;) {
+  for (splp = (char *)spl_copy; *splp != NUL;) {
     // Get one language name.
-    copy_option_part((char **)&splp, (char *)lang, MAXWLEN, ",");
+    copy_option_part(&splp, (char *)lang, MAXWLEN, ",");
     region = NULL;
     len = (int)STRLEN(lang);
 
@@ -2205,8 +2205,8 @@ char *did_set_spelllang(win_T *wp)
   // round 1: load first name in 'spellfile'.
   // round 2: load second name in 'spellfile.
   // etc.
-  spf = curwin->w_s->b_p_spf;
-  for (round = 0; round == 0 || *spf != NUL; ++round) {
+  spf = (char *)curwin->w_s->b_p_spf;
+  for (round = 0; round == 0 || *spf != NUL; round++) {
     if (round == 0) {
       // Internal wordlist, if there is one.
       if (int_wordlist == NULL) {
@@ -2215,7 +2215,7 @@ char *did_set_spelllang(win_T *wp)
       int_wordlist_spl(spf_name);
     } else {
       // One entry in 'spellfile'.
-      copy_option_part((char **)&spf, (char *)spf_name, MAXPATHL - 5, ",");
+      copy_option_part(&spf, (char *)spf_name, MAXPATHL - 5, ",");
       STRCAT(spf_name, ".spl");
 
       // If it was already found above then skip it.
@@ -2796,21 +2796,21 @@ static int sps_limit = 9999;            // max nr of suggestions given
 // Sets "sps_flags" and "sps_limit".
 int spell_check_sps(void)
 {
-  char_u *p;
-  char_u *s;
+  char *p;
+  char *s;
   char_u buf[MAXPATHL];
   int f;
 
   sps_flags = 0;
   sps_limit = 9999;
 
-  for (p = p_sps; *p != NUL;) {
-    copy_option_part((char **)&p, (char *)buf, MAXPATHL, ",");
+  for (p = (char *)p_sps; *p != NUL;) {
+    copy_option_part(&p, (char *)buf, MAXPATHL, ",");
 
     f = 0;
     if (ascii_isdigit(*buf)) {
-      s = buf;
-      sps_limit = getdigits_int((char **)&s, true, 0);
+      s = (char *)buf;
+      sps_limit = getdigits_int(&s, true, 0);
       if (*s != NUL && !ascii_isdigit(*s)) {
         f = -1;
       }
@@ -3240,7 +3240,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
 {
   hlf_T attr = HLF_COUNT;
   char_u buf[MAXPATHL];
-  char_u *p;
+  char *p;
   bool do_combine = false;
   char_u *sps_copy;
   static bool expr_busy = false;
@@ -3325,8 +3325,8 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   sps_copy = vim_strsave(p_sps);
 
   // Loop over the items in 'spellsuggest'.
-  for (p = sps_copy; *p != NUL;) {
-    copy_option_part((char **)&p, (char *)buf, MAXPATHL, ",");
+  for (p = (char *)sps_copy; *p != NUL;) {
+    copy_option_part(&p, (char *)buf, MAXPATHL, ",");
 
     if (STRNCMP(buf, "expr:", 5) == 0) {
       // Evaluate an expression.  Skip this when called recursively,

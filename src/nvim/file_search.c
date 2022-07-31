@@ -583,7 +583,7 @@ char_u *vim_findfile(void *search_ctx_arg)
   ff_stack_T *stackp = NULL;
   size_t len;
   char_u *p;
-  char_u *suf;
+  char *suf;
   ff_search_ctx_T *search_ctx;
 
   if (search_ctx_arg == NULL) {
@@ -824,9 +824,9 @@ char_u *vim_findfile(void *search_ctx_arg)
              */
             len = STRLEN(file_path);
             if (search_ctx->ffsc_tagfile) {
-              suf = (char_u *)"";
+              suf = "";
             } else {
-              suf = curbuf->b_p_sua;
+              suf = (char *)curbuf->b_p_sua;
             }
             for (;;) {
               // if file exists and we didn't already find it
@@ -891,7 +891,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                 break;
               }
               assert(MAXPATHL >= len);
-              copy_option_part((char **)&suf, (char *)file_path + len, MAXPATHL - len, ",");
+              copy_option_part(&suf, (char *)file_path + len, MAXPATHL - len, ",");
             }
           }
         } else {
@@ -1401,11 +1401,11 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
                                  char_u *path_option, int find_what, char_u *rel_fname,
                                  char_u *suffixes)
 {
-  static char_u *dir;
-  static int did_findfile_init = FALSE;
+  static char *dir;
+  static int did_findfile_init = false;
   char_u save_char;
   char_u *file_name = NULL;
-  char_u *buf = NULL;
+  char *buf = NULL;
   int rel_to_curdir;
 
   if (rel_fname != NULL && path_with_url((const char *)rel_fname)) {
@@ -1482,7 +1482,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
 
         /* When the file doesn't exist, try adding parts of
          * 'suffixesadd'. */
-        buf = suffixes;
+        buf = (char *)suffixes;
         for (;;) {
           if (
               (os_path_exists(NameBuff)
@@ -1496,7 +1496,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
             break;
           }
           assert(MAXPATHL >= l);
-          copy_option_part((char **)&buf, (char *)NameBuff + l, MAXPATHL - l, ",");
+          copy_option_part(&buf, (char *)NameBuff + l, MAXPATHL - l, ",");
         }
       }
     }
@@ -1509,8 +1509,8 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
     if (first == TRUE) {
       // vim_findfile_free_visited can handle a possible NULL pointer
       vim_findfile_free_visited(fdip_search_ctx);
-      dir = path_option;
-      did_findfile_init = FALSE;
+      dir = (char *)path_option;
+      did_findfile_init = false;
     }
 
     for (;;) {
@@ -1536,13 +1536,13 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
 
         // copy next path
         buf[0] = 0;
-        copy_option_part((char **)&dir, (char *)buf, MAXPATHL, " ,");
+        copy_option_part(&dir, buf, MAXPATHL, " ,");
 
         // get the stopdir string
-        r_ptr = vim_findfile_stopdir(buf);
-        fdip_search_ctx = vim_findfile_init(buf, ff_file_to_find,
-                                            r_ptr, 100, FALSE, find_what,
-                                            fdip_search_ctx, FALSE, rel_fname);
+        r_ptr = vim_findfile_stopdir((char_u *)buf);
+        fdip_search_ctx = vim_findfile_init((char_u *)buf, ff_file_to_find,
+                                            r_ptr, 100, false, find_what,
+                                            fdip_search_ctx, false, rel_fname);
         if (fdip_search_ctx != NULL) {
           did_findfile_init = TRUE;
         }

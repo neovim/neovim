@@ -5049,7 +5049,7 @@ static void init_syn_patterns(void)
  */
 static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
 {
-  char_u *end;
+  char *end;
   int *p;
   int idx;
   char *cpo_save;
@@ -5059,13 +5059,13 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
     return NULL;
   }
 
-  end = skip_regexp(arg + 1, *arg, TRUE, NULL);
-  if (*end != *arg) {                       // end delimiter not found
+  end = (char *)skip_regexp(arg + 1, *arg, true, NULL);
+  if (*end != (char)(*arg)) {                       // end delimiter not found
     semsg(_("E401: Pattern delimiter not found: %s"), arg);
     return NULL;
   }
   // store the pattern and compiled regexp program
-  ci->sp_pattern = vim_strnsave(arg + 1, (size_t)(end - arg) - 1);
+  ci->sp_pattern = vim_strnsave(arg + 1, (size_t)(end - (char *)arg) - 1);
 
   // Make 'cpoptions' empty, to avoid the 'l' flag
   cpo_save = p_cpo;
@@ -5107,7 +5107,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
         ci->sp_off_flags |= (int16_t)(1 << idx);
         if (idx == SPO_LC_OFF) {            // lc=99
           end += 3;
-          *p = getdigits_int((char **)&end, true, 0);
+          *p = getdigits_int(&end, true, 0);
 
           // "lc=" offset automatically sets "ms=" offset
           if (!(ci->sp_off_flags & (1 << SPO_MS_OFF))) {
@@ -5118,10 +5118,10 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
           end += 4;
           if (*end == '+') {
             end++;
-            *p = getdigits_int((char **)&end, true, 0);    // positive offset
+            *p = getdigits_int(&end, true, 0);    // positive offset
           } else if (*end == '-') {
             end++;
-            *p = -getdigits_int((char **)&end, true, 0);   // negative offset
+            *p = -getdigits_int(&end, true, 0);   // negative offset
           }
         }
         if (*end != ',') {
@@ -5136,7 +5136,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
     semsg(_("E402: Garbage after pattern: %s"), arg);
     return NULL;
   }
-  return (char_u *)skipwhite((char *)end);
+  return (char_u *)skipwhite(end);
 }
 
 /*
@@ -5145,7 +5145,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
 static void syn_cmd_sync(exarg_T *eap, int syncing)
 {
   char_u *arg_start = (char_u *)eap->arg;
-  char_u *arg_end;
+  char *arg_end;
   char_u *key = NULL;
   char_u *next_arg;
   int illegal = false;
@@ -5158,21 +5158,21 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   }
 
   while (!ends_excmd(*arg_start)) {
-    arg_end = skiptowhite(arg_start);
-    next_arg = (char_u *)skipwhite((char *)arg_end);
+    arg_end = (char *)skiptowhite(arg_start);
+    next_arg = (char_u *)skipwhite(arg_end);
     xfree(key);
-    key = vim_strnsave_up(arg_start, (size_t)(arg_end - arg_start));
+    key = vim_strnsave_up(arg_start, (size_t)(arg_end - (char *)arg_start));
     if (STRCMP(key, "CCOMMENT") == 0) {
       if (!eap->skip) {
         curwin->w_s->b_syn_sync_flags |= SF_CCOMMENT;
       }
       if (!ends_excmd(*next_arg)) {
-        arg_end = skiptowhite(next_arg);
+        arg_end = (char *)skiptowhite(next_arg);
         if (!eap->skip) {
           curwin->w_s->b_syn_sync_id =
-            (int16_t)syn_check_group((char *)next_arg, (size_t)(arg_end - next_arg));
+            (int16_t)syn_check_group((char *)next_arg, (size_t)(arg_end - (char *)next_arg));
         }
-        next_arg = (char_u *)skipwhite((char *)arg_end);
+        next_arg = (char_u *)skipwhite(arg_end);
       } else if (!eap->skip) {
         curwin->w_s->b_syn_sync_id = (int16_t)syn_name2id("Comment");
       }
@@ -5181,17 +5181,17 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
                || STRNCMP(key, "MAXLINES", 8) == 0
                || STRNCMP(key, "LINEBREAKS", 10) == 0) {
       if (key[4] == 'S') {
-        arg_end = key + 6;
+        arg_end = (char *)key + 6;
       } else if (key[0] == 'L') {
-        arg_end = key + 11;
+        arg_end = (char *)key + 11;
       } else {
-        arg_end = key + 9;
+        arg_end = (char *)key + 9;
       }
       if (arg_end[-1] != '=' || !ascii_isdigit(*arg_end)) {
         illegal = TRUE;
         break;
       }
-      linenr_T n = getdigits_int32((char **)&arg_end, false, 0);
+      linenr_T n = getdigits_int32(&arg_end, false, 0);
       if (!eap->skip) {
         if (key[4] == 'B') {
           curwin->w_s->b_syn_sync_linebreaks = n;
@@ -5216,16 +5216,16 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         finished = TRUE;
         break;
       }
-      arg_end = skip_regexp(next_arg + 1, *next_arg, TRUE, NULL);
-      if (*arg_end != *next_arg) {          // end delimiter not found
-        illegal = TRUE;
+      arg_end = (char *)skip_regexp(next_arg + 1, *next_arg, true, NULL);
+      if (*arg_end != (char)(*next_arg)) {          // end delimiter not found
+        illegal = true;
         break;
       }
 
       if (!eap->skip) {
         // store the pattern and compiled regexp program
         curwin->w_s->b_syn_linecont_pat =
-          vim_strnsave(next_arg + 1, (size_t)(arg_end - next_arg) - 1);
+          vim_strnsave(next_arg + 1, (size_t)(arg_end - (char *)next_arg) - 1);
         curwin->w_s->b_syn_linecont_ic = curwin->w_s->b_syn_ic;
 
         // Make 'cpoptions' empty, to avoid the 'l' flag
@@ -5242,7 +5242,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
           break;
         }
       }
-      next_arg = (char_u *)skipwhite((char *)arg_end + 1);
+      next_arg = (char_u *)skipwhite(arg_end + 1);
     } else {
       eap->arg = (char *)next_arg;
       if (STRCMP(key, "MATCH") == 0) {
