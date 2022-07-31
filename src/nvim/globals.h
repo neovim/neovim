@@ -1084,4 +1084,7 @@ EXTERN char windowsVersion[20] INIT(= { 0 });
 
 EXTERN int exit_need_delay INIT(= 0);
 
+// Set when 'cmdheight' is changed from non-zero to one temporarily.
+EXTERN int made_cmdheight_nonzero INIT(= false);
+
 #endif  // NVIM_GLOBALS_H
