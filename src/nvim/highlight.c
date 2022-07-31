@@ -778,6 +778,10 @@ Dictionary hlattrs2dict(Dictionary *hl_alloc, HlAttrs ae, bool use_rgb)
     PUT_C(hl, "strikethrough", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_NOCOMBINE) {
+    PUT_C(hl, "nocombine", BOOLEAN_OBJ(true));
+  }
+
   if (use_rgb) {
     if (mask & HL_FG_INDEXED) {
       PUT_C(hl, "fg_indexed", BOOLEAN_OBJ(true));
