@@ -2810,7 +2810,7 @@ void pop_showcmd(void)
 
 static void display_showcmd(void)
 {
-  if (p_ch < 1 && !ui_has(kUIMessages)) {
+  if (!ui_has_messages()) {
     return;
   }
 

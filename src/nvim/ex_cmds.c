@@ -3669,7 +3669,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     }
   }
 
-  bool cmdheight0 = p_ch < 1 && !ui_has(kUIMessages);
+  bool cmdheight0 = !ui_has_messages();
   if (cmdheight0) {
     // If cmdheight is 0, cmdheight must be set to 1 when we enter command line.
     set_option_value("ch", 1L, NULL, 0);

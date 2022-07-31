@@ -6143,10 +6143,6 @@ void unshowmode(bool force)
 // Clear the mode message.
 void clearmode(void)
 {
-  if (p_ch <= 0 && !ui_has(kUIMessages)) {
-    return;
-  }
-
   const int save_msg_row = msg_row;
   const int save_msg_col = msg_col;
 
@@ -6164,10 +6160,6 @@ void clearmode(void)
 
 static void recording_mode(int attr)
 {
-  if (p_ch <= 0 && !ui_has(kUIMessages)) {
-    return;
-  }
-
   msg_puts_attr(_("recording"), attr);
   if (!shortmess(SHM_RECORDING)) {
     char s[4];
@@ -6472,8 +6464,7 @@ int redrawing(void)
  */
 int messaging(void)
 {
-  return !(p_lz && char_avail() && !KeyTyped)
-         && (p_ch > 0 || ui_has(kUIMessages));
+  return !(p_lz && char_avail() && !KeyTyped) && ui_has_messages();
 }
 
 /// Show current status info in ruler and various other places
@@ -6587,7 +6578,7 @@ static void win_redr_ruler(win_T *wp, bool always)
       off = 0;
     }
 
-    if (!part_of_status && p_ch < 1 && !ui_has(kUIMessages)) {
+    if (!part_of_status && !ui_has_messages()) {
       return;
     }
 

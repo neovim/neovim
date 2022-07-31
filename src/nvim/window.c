@@ -5877,7 +5877,7 @@ void win_setminheight(void)
   // loop until there is a 'winminheight' that is possible
   while (p_wmh > 0) {
     const int room = Rows - (int)p_ch;
-    const int needed = min_rows() - 1;  // 1 was added for the cmdline
+    const int needed = min_rows();
     if (room >= needed) {
       break;
     }
@@ -6830,7 +6830,9 @@ int min_rows(void)
     }
   }
   total += tabline_height() + global_stl_height();
-  total += 1;           // count the room for the command line
+  if (p_ch > 0) {
+    total += 1;           // count the room for the command line
+  }
   return total;
 }
 

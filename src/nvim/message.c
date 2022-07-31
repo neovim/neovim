@@ -493,6 +493,7 @@ int smsg(const char *s, ...)
   va_start(arglist, s);
   vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
   va_end(arglist);
+
   return msg((char *)IObuff);
 }
 
@@ -1389,7 +1390,7 @@ void msg_start(void)
     need_fileinfo = false;
   }
 
-  bool no_msg_area = !ui_has(kUIMessages) && p_ch < 1;
+  bool no_msg_area = !ui_has_messages();
 
   if (need_clr_eos || (no_msg_area && redrawing_cmdline)) {
     // Halfway an ":echo" command and getting an (error) message: clear
@@ -3112,7 +3113,7 @@ void msg_clr_eos_force(void)
     msg_row = msg_grid_pos;
   }
 
-  if (p_ch > 0) {
+  if (ui_has_messages()) {
     grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol,
               ' ', ' ', HL_ATTR(HLF_MSG));
     grid_fill(&msg_grid_adj, msg_row + 1, Rows, 0, Columns,

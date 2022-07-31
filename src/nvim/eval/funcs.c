@@ -2899,6 +2899,11 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
   no_mapping--;
   allow_keys--;
 
+  if (!ui_has_messages()) {
+    // redraw the screen after getchar()
+    update_screen(CLEAR);
+  }
+
   set_vim_var_nr(VV_MOUSE_WIN, 0);
   set_vim_var_nr(VV_MOUSE_WINID, 0);
   set_vim_var_nr(VV_MOUSE_LNUM, 0);
