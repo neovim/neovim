@@ -6674,7 +6674,6 @@ setbufline({buf}, {lnum}, {text})			*setbufline()*
 		|bufload()| if needed.
 
 		To insert lines use |appendbufline()|.
-		Any text properties in {lnum} are cleared.
 
 		{text} can be a string to set one line, or a list of strings
 		to set multiple lines.  If the list extends below the last
@@ -8012,10 +8011,10 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		The result is a String, which is the {what} attribute of
 		syntax ID {synID}.  This can be used to obtain information
 		about a syntax item.
-		{mode} can be "gui", "cterm" or "term", to get the attributes
+		{mode} can be "gui" or "cterm", to get the attributes
 		for that mode.  When {mode} is omitted, or an invalid value is
 		used, the attributes for the currently active highlighting are
-		used (GUI, cterm or term).
+		used (GUI or cterm).
 		Use synIDtrans() to follow linked highlight groups.
 		{what}		result
 		"name"		the name of the syntax item
@@ -8040,15 +8039,15 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"underdouble"	"1" if double underlined
 		"underdotted"	"1" if dotted underlined
 		"underdashed"	"1" if dashed underlined
-		"strikethrough" "1" if struckthrough
+		"strikethrough"	"1" if struckthrough
 		"nocombine"	"1" if nocombine
+
+		Returns an empty string on error.
 
 		Example (echoes the color of the syntax item under the
 		cursor): >
 	:echo synIDattr(synIDtrans(synID(line("."), col("."), 1)), "fg")
 <
-		Returns an empty string on error.
-
 		Can also be used as a |method|: >
 	:echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
 

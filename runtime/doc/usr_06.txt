@@ -135,7 +135,6 @@ You could also write your own color scheme.  This is how you do it:
 
 2. Edit the color scheme file.  These entries are useful:
 
-	term		attributes in a B&W terminal
 	cterm		attributes in a color terminal
 	ctermfg		foreground color in a color terminal
 	ctermbg		background color in a color terminal

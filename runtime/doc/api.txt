@@ -1968,7 +1968,7 @@ nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
                     Option value
 
 nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
-                Sets a buffer option value. Passing 'nil' as value deletes the
+                Sets a buffer option value. Passing `nil` as value deletes the
                 option (only works if there's a global fallback)
 
                 Parameters: ~
@@ -2075,8 +2075,8 @@ nvim_win_get_option({window}, {name})                  *nvim_win_get_option()*
                     Option value
 
 nvim_win_set_option({window}, {name}, {value})         *nvim_win_set_option()*
-                Sets a window option value. Passing 'nil' as value deletes the
-                option(only works if there's a global fallback)
+                Sets a window option value. Passing `nil` as value deletes the
+                option (only works if there's a global fallback)
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window

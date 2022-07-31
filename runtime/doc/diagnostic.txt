@@ -74,7 +74,7 @@ Functions that take a severity as an optional parameter (e.g.
 
 2. A table with a "min" or "max" key (or both): >
 
-	vim.diagnostic.get(0, { severity = {min=vim.diagnostic.severity.WARN} })
+	vim.diagnostic.get(0, { severity = { min = vim.diagnostic.severity.WARN } })
 
 The latter form allows users to specify a range of severities.
 
@@ -298,7 +298,7 @@ EVENTS							*diagnostic-events*
 DiagnosticChanged	After diagnostics have changed.
 
 Example: >
-	autocmd DiagnosticChanged * lua vim.diagnostic.setqflist({open = false })
+	autocmd DiagnosticChanged * lua vim.diagnostic.setqflist({ open = false })
 <
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
@@ -315,12 +315,12 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
                 For example, if a user enables virtual text globally with >
 
-                   vim.diagnostic.config({virtual_text = true})
+                   vim.diagnostic.config({ virtual_text = true })
 <
 
                 and a diagnostic producer sets diagnostics with >
 
-                   vim.diagnostic.set(ns, 0, diagnostics, {virtual_text = false})
+                   vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
 <
 
                 then virtual text will not be enabled for those diagnostics.
@@ -570,8 +570,8 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
 
                  local s = "WARNING filename:27:3: Variable 'foo' does not exist"
                  local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
-                 local groups = {"severity", "lnum", "col", "message"}
-                 vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
+                 local groups = { "severity", "lnum", "col", "message" }
+                 vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
 <
 
                 Parameters: ~

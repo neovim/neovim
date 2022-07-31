@@ -586,12 +586,12 @@ end
 ---
 --- For example, if a user enables virtual text globally with
 --- <pre>
----   vim.diagnostic.config({virtual_text = true})
+---   vim.diagnostic.config({ virtual_text = true })
 --- </pre>
 ---
 --- and a diagnostic producer sets diagnostics with
 --- <pre>
----   vim.diagnostic.set(ns, 0, diagnostics, {virtual_text = false})
+---   vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
 --- </pre>
 ---
 --- then virtual text will not be enabled for those diagnostics.
@@ -1525,8 +1525,8 @@ end
 --- <pre>
 --- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
 --- local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
---- local groups = {"severity", "lnum", "col", "message"}
---- vim.diagnostic.match(s, pattern, groups, {WARNING = vim.diagnostic.WARN})
+--- local groups = { "severity", "lnum", "col", "message" }
+--- vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
 --- </pre>
 ---
 ---@param str string String to parse diagnostics from.
