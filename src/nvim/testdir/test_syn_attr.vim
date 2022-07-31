@@ -1,19 +1,39 @@
 " Test syntax highlighting functions.
 
 func Test_missing_attr()
-  hi Mine cterm=italic
+  throw 'Skipped: use test/functional/legacy/syn_attr_spec.lua'
+
+  hi Mine term=bold cterm=italic
   call assert_equal('Mine', synIDattr(hlID("Mine"), "name"))
+  call assert_equal('', synIDattr("Mine"->hlID(), "bg", 'term'))
+  call assert_equal('', synIDattr("Mine"->hlID(), "fg", 'term'))
+  call assert_equal('', synIDattr("Mine"->hlID(), "sp", 'term'))
+  call assert_equal('1', synIDattr(hlID("Mine"), "bold", 'term'))
   call assert_equal('1', synIDattr(hlID("Mine"), "italic", 'cterm'))
-  hi Mine cterm=inverse
+  hi Mine term=reverse cterm=inverse
+  call assert_equal('1', synIDattr(hlID("Mine"), "reverse", 'term'))
   call assert_equal('1', synIDattr(hlID("Mine"), "inverse", 'cterm'))
-  hi Mine cterm=standout gui=undercurl
+
+  hi Mine term=underline cterm=standout gui=undercurl
+  call assert_equal('1', synIDattr(hlID("Mine"), "underline", 'term'))
   call assert_equal('1', synIDattr(hlID("Mine"), "standout", 'cterm'))
   call assert_equal('1', synIDattr("Mine"->hlID(), "undercurl", 'gui'))
-  hi Mine gui=strikethrough
+
+  hi Mine term=underdouble cterm=underdotted gui=underdashed
+  call assert_equal('1', synIDattr(hlID("Mine"), "underdouble", 'term'))
+  call assert_equal('1', synIDattr(hlID("Mine"), "underdotted", 'cterm'))
+  call assert_equal('1', synIDattr("Mine"->hlID(), "underdashed", 'gui'))
+
+  hi Mine term=nocombine gui=strikethrough
   call assert_equal('1', synIDattr(hlID("Mine"), "strikethrough", 'gui'))
-  hi Mine cterm=NONE gui=NONE
+  call assert_equal('1', synIDattr(hlID("Mine"), "nocombine", 'term'))
+  call assert_equal('', synIDattr(hlID("Mine"), "nocombine", 'gui'))
+  hi Mine term=NONE cterm=NONE gui=NONE
+  call assert_equal('', synIDattr(hlID("Mine"), "bold", 'term'))
   call assert_equal('', synIDattr(hlID("Mine"), "italic", 'cterm'))
+  call assert_equal('', synIDattr(hlID("Mine"), "reverse", 'term'))
   call assert_equal('', synIDattr(hlID("Mine"), "inverse", 'cterm'))
+  call assert_equal('', synIDattr(hlID("Mine"), "underline", 'term'))
   call assert_equal('', synIDattr(hlID("Mine"), "standout", 'cterm'))
   call assert_equal('', synIDattr(hlID("Mine"), "undercurl", 'gui'))
   call assert_equal('', synIDattr(hlID("Mine"), "strikethrough", 'gui'))

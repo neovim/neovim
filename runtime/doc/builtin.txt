@@ -8041,6 +8041,7 @@ synIDattr({synID}, {what} [, {mode}])			*synIDattr()*
 		"underdotted"	"1" if dotted underlined
 		"underdashed"	"1" if dashed underlined
 		"strikethrough" "1" if struckthrough
+		"nocombine"	"1" if nocombine
 
 		Example (echoes the color of the syntax item under the
 		cursor): >
