@@ -1314,14 +1314,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
-			global
+			global or local to tab page
 	Number of screen lines to use for the command-line.  Helps avoiding
 	|hit-enter| prompts.
 	The value of this option is stored with the tab page, so that each tab
 	page can have a different value.
 
-	When 'cmdheight' is zero, it disables echo area and all outputs need
-	|hit-enter| prompt.
+	When 'cmdheight' is zero, there is no command-line unless it is being
+	used.  Any messages will cause the |hit-enter| prompt.
 
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	number	(default 7)
@@ -4850,7 +4850,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If 'rulerformat' is set, it will determine the contents of the ruler.
 	Each window has its own ruler.  If a window has a status line, the
 	ruler is shown there.  If a window doesn't have a status line and
-	'cmdheight' is 0, the ruler is not shown.  Otherwise it is shown in
+	'cmdheight' is zero, the ruler is not shown.  Otherwise it is shown in
 	the last line of the screen.  If the statusline is given by
 	'statusline' (i.e. not empty), this option takes precedence over
 	'ruler' and 'rulerformat'.
@@ -5559,7 +5559,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Show (partial) command in the last line of the screen.  Set this
 	option off if your terminal is slow.
-	The option is disabled if 'cmdheight' is 0.
+	The option has no effect when 'cmdheight' is zero.
 	In Visual mode the size of the selected area is shown:
 	- When selecting characters within a line, the number of characters.
 	  If the number of bytes is different it is also displayed: "2-6"
@@ -5606,7 +5606,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	If in Insert, Replace or Visual mode put a message on the last line.
 	The |hl-ModeMsg| highlight group determines the highlighting.
-	The option is disabled if 'cmdheight' is 0.
+	The option has no effect when 'cmdheight' is zero.
 
 						*'showtabline'* *'stal'*
 'showtabline' 'stal'	number	(default 1)

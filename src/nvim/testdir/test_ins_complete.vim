@@ -346,7 +346,7 @@ func Test_CompleteDone_modify()
         \ 'user_data': '',
         \ }
   let v:completed_item = value
-  call assert_equal(v:completed_item, value)
+  call assert_equal(value, v:completed_item)
 endfunc
 
 func CompleteTest(findstart, query)

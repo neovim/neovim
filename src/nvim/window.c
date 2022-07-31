@@ -5555,7 +5555,6 @@ static void frame_setheight(frame_T *curfrp, int height)
   }
 
   if (curfrp->fr_parent == NULL) {
-    // topframe: can only change the command line
     if (height > ROWS_AVAIL) {
       // If height is greater than the available space, try to create space for
       // the frame by reducing 'cmdheight' if possible, while making sure
@@ -6307,7 +6306,8 @@ void win_set_inner_size(win_T *wp)
 
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
-    if (!exiting) {
+    // Skip scroll_to_fraction() when 'cmdheight' was set to one from zero.
+    if (!exiting && !made_cmdheight_nonzero) {
       scroll_to_fraction(wp, prev_height);
     }
     redraw_later(wp, NOT_VALID);  // SOME_VALID??

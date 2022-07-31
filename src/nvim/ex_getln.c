@@ -689,12 +689,22 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
 /// @param init_ccline  clear ccline first
 static uint8_t *command_line_enter(int firstc, long count, int indent, bool init_ccline)
 {
-  bool cmdheight0 = !ui_has_messages();
+  const bool cmdheight0 = !ui_has_messages();
 
   if (cmdheight0) {
-    // If cmdheight is 0, cmdheight must be set to 1 when we enter command line.
+    const long save_so = lastwin->w_p_so;
+
+    // If cmdheight is 0, cmdheight must be set to 1 when we enter the
+    // command line.  Set "made_cmdheight_nonzero" and reset 'scrolloff' to
+    // avoid scrolling the last window.
+    made_cmdheight_nonzero = true;
+
+    lastwin->w_p_so = 0;
     set_option_value("ch", 1L, NULL, 0);
     update_screen(VALID);                 // redraw the screen NOW
+
+    made_cmdheight_nonzero = false;
+    lastwin->w_p_so = save_so;
   }
 
   // can be invoked recursively, identify each level
@@ -991,11 +1001,14 @@ theend:
   }
 
   if (cmdheight0) {
+    made_cmdheight_nonzero = true;
+
     // Restore cmdheight
     set_option_value("ch", 0L, NULL, 0);
-
     // Redraw is needed for command line completion
     redraw_all_later(CLEAR);
+
+    made_cmdheight_nonzero = false;
   }
 
   return p;

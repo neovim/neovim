@@ -1390,7 +1390,7 @@ void msg_start(void)
     need_fileinfo = false;
   }
 
-  bool no_msg_area = !ui_has_messages();
+  const bool no_msg_area = !ui_has_messages();
 
   if (need_clr_eos || (no_msg_area && redrawing_cmdline)) {
     // Halfway an ":echo" command and getting an (error) message: clear
