@@ -1508,7 +1508,9 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                             used to give a description to the mapping. When
                             called from Lua, also accepts a "callback" key
                             that takes a Lua function to call when the mapping
-                            is executed.
+                            is executed. "replace_keycodes" can be used with
+                            "expr" to replace keycodes, see
+                            |nvim_replace_termcodes()|.
 
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
                 Sets a global (g:) variable.

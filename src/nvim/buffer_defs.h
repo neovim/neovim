@@ -369,6 +369,7 @@ struct mapblock {
   char m_expr;                  // <expr> used, m_str is an expression
   sctx_T m_script_ctx;          // SCTX where map was defined
   char *m_desc;                 // description of keymap
+  bool m_replace_keycodes;      // replace termcodes in lua function
 };
 
 /// Used for highlighting in the status line.

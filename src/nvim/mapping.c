@@ -715,6 +715,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                   mp->m_mode = mode;
                   mp->m_simplified = keyround1_simplified;
                   mp->m_expr = args->expr;
+                  mp->m_replace_keycodes = args->replace_keycodes;
                   mp->m_script_ctx = current_sctx;
                   mp->m_script_ctx.sc_lnum += sourcing_lnum;
                   nlua_set_sctx(&mp->m_script_ctx);
@@ -806,6 +807,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     mp->m_mode = mode;
     mp->m_simplified = keyround1_simplified;  // Notice this when porting patch 8.2.0807
     mp->m_expr = args->expr;
+    mp->m_replace_keycodes = args->replace_keycodes;
     mp->m_script_ctx = current_sctx;
     mp->m_script_ctx.sc_lnum += sourcing_lnum;
     nlua_set_sctx(&mp->m_script_ctx);
@@ -1550,6 +1552,16 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
     if (err.type != kErrorTypeNone) {
       semsg_multiline("E5108: %s", err.msg);
       api_clear_error(&err);
+    }
+    if (p && mp->m_replace_keycodes) {
+      char *buf = NULL;
+      replace_termcodes((char *)p, STRLEN(p), &buf,
+                        REPTERM_FROM_PART|REPTERM_DO_LT,
+                        NULL, CPO_TO_CPO_FLAGS);
+      if (buf) {
+        xfree(p);
+        p = (char_u *)buf;
+      }
     }
   } else {
     p = (char_u *)eval_to_string((char *)expr, NULL, false);
@@ -2396,6 +2408,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     KEY_TO_BOOL(script);
     KEY_TO_BOOL(expr);
     KEY_TO_BOOL(unique);
+    KEY_TO_BOOL(replace_keycodes);
 #undef KEY_TO_BOOL
   }
   parsed_args.buffer = !global;

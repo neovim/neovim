@@ -39,6 +39,7 @@ return {
     "unique";
     "callback";
     "desc";
+    "replace_keycodes";
   };
   get_commands = {
     "builtin";

@@ -2228,10 +2228,6 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                             • buffer: (number or boolean) Add a mapping to the
                               given buffer. When "true" or 0, use the current
                               buffer.
-                            • replace_keycodes: (boolean, default true) When
-                              both this and expr is "true",
-                              |nvim_replace_termcodes()| is applied to the
-                              result of Lua expr maps.
                             • remap: (boolean) Make the mapping recursive.
                               This is the inverse of the "noremap" option from
                               |nvim_set_keymap()|. Default `false`.

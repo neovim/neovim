@@ -42,8 +42,6 @@ local keymap = {}
 ---                  listed in |nvim_set_keymap()|, this table also accepts the following keys:
 ---                  - buffer: (number or boolean) Add a mapping to the given buffer. When "true"
 ---                    or 0, use the current buffer.
----                  - replace_keycodes: (boolean, default true) When both this and expr is "true",
----                  |nvim_replace_termcodes()| is applied to the result of Lua expr maps.
 ---                  - remap: (boolean) Make the mapping recursive. This is the
 ---                  inverse of the "noremap" option from |nvim_set_keymap()|.
 ---                  Default `false`.
@@ -60,22 +58,9 @@ function keymap.set(mode, lhs, rhs, opts)
   local is_rhs_luaref = type(rhs) == 'function'
   mode = type(mode) == 'string' and { mode } or mode
 
-  if is_rhs_luaref and opts.expr then
-    local user_rhs = rhs
-    rhs = function()
-      local res = user_rhs()
-      if res == nil then
-        -- TODO(lewis6991): Handle this in C?
-        return ''
-      elseif opts.replace_keycodes ~= false then
-        return vim.api.nvim_replace_termcodes(res, true, true, true)
-      else
-        return res
-      end
-    end
+  if opts.expr and opts.replace_keycodes ~= false then
+    opts.replace_keycodes = true
   end
-  -- clear replace_keycodes from opts table
-  opts.replace_keycodes = nil
 
   if opts.remap == nil then
     -- default remap value is false
