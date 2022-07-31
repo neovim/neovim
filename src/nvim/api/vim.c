@@ -2044,7 +2044,7 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
   // Marks are from an open buffer it fnum is non zero
   if (mark->fmark.fnum != 0) {
     bufnr = mark->fmark.fnum;
-    filename = (char *)buflist_nr2name(bufnr, true, true);
+    filename = buflist_nr2name(bufnr, true, true);
     allocated = true;
     // Marks comes from shada
   } else {
@@ -2232,7 +2232,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
 
     // If first character doesn't have a defined highlight,
     // add the default highlight at the beginning of the highlight list
-    if (hltab->start == NULL || ((char *)hltab->start - buf) != 0) {
+    if (hltab->start == NULL || (hltab->start - buf) != 0) {
       Dictionary hl_info = ARRAY_DICT_INIT;
       grpname = get_default_stl_hl(wp, use_winbar);
 

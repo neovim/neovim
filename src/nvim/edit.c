@@ -1780,7 +1780,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
     backspace_until_column(0);
 
     // Insert new stuff into line again
-    ins_bytes(new_line);
+    ins_bytes((char *)new_line);
 
     xfree(new_line);
 
@@ -2595,7 +2595,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state we have backspaced over the text to be
       // moved, now we re-insert it into the new line.
-      ins_bytes(saved_text);
+      ins_bytes((char *)saved_text);
       xfree(saved_text);
     } else {
       /*
@@ -3689,9 +3689,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
   }
 
   if (*curbuf->b_p_inde != NUL) {
-    look = curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
+    look = (char_u *)curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
   } else {
-    look = curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
+    look = (char_u *)curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
   }
   while (*look) {
     /*

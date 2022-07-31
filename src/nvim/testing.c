@@ -457,7 +457,7 @@ void f_assert_exception(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     ga_clear(&ga);
     rettv->vval.v_number = 1;
   } else if (error != NULL
-             && strstr((char *)get_vim_var_str(VV_EXCEPTION), error) == NULL) {
+             && strstr(get_vim_var_str(VV_EXCEPTION), error) == NULL) {
     prepare_assert_error(&ga);
     fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
                       get_vim_var_tv(VV_EXCEPTION), ASSERT_OTHER);
@@ -493,7 +493,7 @@ void f_assert_fails(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     const char *const error = tv_get_string_buf_chk(&argvars[1], buf);
 
     if (error == NULL
-        || strstr((char *)get_vim_var_str(VV_ERRMSG), error) == NULL) {
+        || strstr(get_vim_var_str(VV_ERRMSG), error) == NULL) {
       prepare_assert_error(&ga);
       fill_assert_error(&ga, &argvars[2], NULL, &argvars[1],
                         get_vim_var_tv(VV_ERRMSG), ASSERT_OTHER);

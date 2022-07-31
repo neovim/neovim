@@ -1720,9 +1720,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
       fname = NULL;
     } else {
       if (event == EVENT_SYNTAX) {
-        fname = (char *)buf->b_p_syn;
+        fname = buf->b_p_syn;
       } else if (event == EVENT_FILETYPE) {
-        fname = (char *)buf->b_p_ft;
+        fname = buf->b_p_ft;
       } else {
         if (buf->b_sfname != NULL) {
           sfname = xstrdup(buf->b_sfname);

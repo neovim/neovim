@@ -376,16 +376,16 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
   const char *p1 = fname1;
   const char *p2 = fname2;
   while (len > 0) {
-    c1 = utf_ptr2char((const char_u *)p1);
-    c2 = utf_ptr2char((const char_u *)p2);
+    c1 = utf_ptr2char(p1);
+    c2 = utf_ptr2char(p2);
     if ((c1 == NUL || c2 == NUL
          || (!((c1 == '/' || c1 == '\\') && (c2 == '\\' || c2 == '/'))))
         && (p_fic ? (c1 != c2 && CH_FOLD(c1) != CH_FOLD(c2)) : c1 != c2)) {
       break;
     }
-    len -= (size_t)utfc_ptr2len((const char_u *)p1);
-    p1 += utfc_ptr2len((const char_u *)p1);
-    p2 += utfc_ptr2len((const char_u *)p2);
+    len -= (size_t)utfc_ptr2len(p1);
+    p1 += utfc_ptr2len(p1);
+    p2 += utfc_ptr2len(p2);
   }
   return p_fic ? CH_FOLD(c1) - CH_FOLD(c2) : c1 - c2;
 #else
@@ -843,7 +843,7 @@ static bool is_unique(char_u *maybe_unique, garray_T *gap, int i)
  */
 static void expand_path_option(char_u *curdir, garray_T *gap)
 {
-  char_u *path_option = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
+  char_u *path_option = *curbuf->b_p_path == NUL ? p_path : (char_u *)curbuf->b_p_path;
   char_u *buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
@@ -1684,7 +1684,7 @@ void simplify_filename(char_u *filename)
 static char *eval_includeexpr(const char *const ptr, const size_t len)
 {
   set_vim_var_string(VV_FNAME, ptr, (ptrdiff_t)len);
-  char *res = eval_to_string_safe((char *)curbuf->b_p_inex, NULL,
+  char *res = eval_to_string_safe(curbuf->b_p_inex, NULL,
                                   was_set_insecurely(curwin, "includeexpr", OPT_LOCAL));
   set_vim_var_string(VV_FNAME, NULL, 0);
   return res;

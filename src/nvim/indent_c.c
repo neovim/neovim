@@ -223,7 +223,7 @@ bool cin_is_cinword(const char_u *line)
   char_u *cinw_buf = xmalloc(cinw_len);
   line = (char_u *)skipwhite((char *)line);
 
-  for (char *cinw = (char *)curbuf->b_p_cinw; *cinw;) {
+  for (char *cinw = curbuf->b_p_cinw; *cinw;) {
     size_t len = copy_option_part(&cinw, (char *)cinw_buf, cinw_len, ",");
     if (STRNCMP(line, cinw_buf, len) == 0
         && (!vim_iswordc(line[len]) || !vim_iswordc(line[len - 1]))) {
@@ -519,7 +519,7 @@ bool cin_isscopedecl(const char_u *p)
 
   bool found = false;
 
-  for (char *cinsd = (char *)curbuf->b_p_cinsd; *cinsd;) {
+  for (char *cinsd = curbuf->b_p_cinsd; *cinsd;) {
     const size_t len = copy_option_part(&cinsd, (char *)cinsd_buf, cinsd_len, ",");
     if (STRNCMP(s, cinsd_buf, len) == 0) {
       const char_u *skip = cin_skipcomment(s + len);
@@ -1740,7 +1740,7 @@ void parse_cino(buf_T *buf)
   // Handle C #pragma directives
   buf->b_ind_pragma = 0;
 
-  for (p = (char *)buf->b_p_cino; *p;) {
+  for (p = buf->b_p_cino; *p;) {
     l = p++;
     if (*p == '-') {
       p++;
@@ -2063,7 +2063,7 @@ int get_c_indent(void)
     *lead_start = NUL;
     *lead_middle = NUL;
 
-    p = (char *)curbuf->b_p_com;
+    p = curbuf->b_p_com;
     while (*p != NUL) {
       int align = 0;
       int off = 0;

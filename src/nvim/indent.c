@@ -710,7 +710,7 @@ int get_number_indent(linenr_T lnum)
   if ((State & MODE_INSERT) || has_format_option(FO_Q_COMS)) {
     lead_len = get_leader_len((char *)ml_get(lnum), NULL, false, true);
   }
-  regmatch.regprog = vim_regcomp((char *)curbuf->b_p_flp, RE_MAGIC);
+  regmatch.regprog = vim_regcomp(curbuf->b_p_flp, RE_MAGIC);
 
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = false;
@@ -770,7 +770,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
   // add additional indent for numbered lists
   if (wp->w_briopt_list != 0) {
     regmatch_T regmatch = {
-      .regprog = vim_regcomp((char *)curbuf->b_p_flp,
+      .regprog = vim_regcomp(curbuf->b_p_flp,
                              RE_MAGIC + RE_STRING + RE_AUTO + RE_STRICT),
     };
 
@@ -855,7 +855,7 @@ int get_expr_indent(void)
 
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.
-  char_u *inde_copy = vim_strsave(curbuf->b_p_inde);
+  char_u *inde_copy = vim_strsave((char_u *)curbuf->b_p_inde);
   indent = (int)eval_to_number((char *)inde_copy);
   xfree(inde_copy);
 
@@ -1077,7 +1077,7 @@ static int lisp_match(char_u *p)
 {
   char_u buf[LSIZE];
   int len;
-  char *word = (char *)(*curbuf->b_p_lw != NUL ? curbuf->b_p_lw : p_lispwords);
+  char *word = (char *)(*curbuf->b_p_lw != NUL ? (char_u *)curbuf->b_p_lw : p_lispwords);
 
   while (*word != NUL) {
     (void)copy_option_part(&word, (char *)buf, LSIZE, ",");

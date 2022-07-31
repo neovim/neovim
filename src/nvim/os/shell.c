@@ -74,7 +74,7 @@ static bool have_wildcard(int num, char **file)
 static bool have_dollars(int num, char **file)
 {
   for (int i = 0; i < num; i++) {
-    if (vim_strchr((char *)file[i], '$') != NULL) {
+    if (vim_strchr(file[i], '$') != NULL) {
       return true;
     }
   }

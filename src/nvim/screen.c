@@ -69,7 +69,7 @@ bool conceal_cursor_line(const win_T *wp)
   } else {
     return false;
   }
-  return vim_strchr((char *)wp->w_p_cocu, c) != NULL;
+  return vim_strchr(wp->w_p_cocu, c) != NULL;
 }
 
 /// Whether cursorline is drawn in a special way
@@ -535,7 +535,7 @@ bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
     curwin = old_curwin;
     if (p == NULL || *p == NUL) {
       if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED) {
-        p = (char *)wp->w_buffer->b_p_keymap;
+        p = wp->w_buffer->b_p_keymap;
       } else {
         p = "lang";
       }
@@ -1347,16 +1347,16 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
     { &wp->w_p_lcs_chars.conceal, "conceal",  NUL },
   };
 
-  if (varp == &p_lcs || varp == &wp->w_p_lcs) {
+  if (varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
-    if (varp == &wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
+    if (varp == (char_u **)&wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
       varp = &p_lcs;
     }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
-    if (varp == &wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
+    if (varp == (char_u **)&wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
       varp = &p_fcs;
     }
   }
@@ -1370,7 +1370,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
           *(tab[i].cp) = tab[i].def;
         }
       }
-      if (varp == &p_lcs || varp == &wp->w_p_lcs) {
+      if (varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs) {
         wp->w_p_lcs_chars.tab1 = NUL;
         wp->w_p_lcs_chars.tab3 = NUL;
 
@@ -1439,7 +1439,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
       if (i == entries) {
         len = (int)STRLEN("multispace");
         len2 = (int)STRLEN("leadmultispace");
-        if ((varp == &p_lcs || varp == &wp->w_p_lcs)
+        if ((varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs)
             && STRNCMP(p, "multispace", len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
@@ -1470,7 +1470,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
             }
             p = s;
           }
-        } else if ((varp == &p_lcs || varp == &wp->w_p_lcs)
+        } else if ((varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs)
                    && STRNCMP(p, "leadmultispace", len2) == 0
                    && p[len2] == ':'
                    && p[len2 + 1] != NUL) {
@@ -1527,10 +1527,10 @@ char *check_chars_options(void)
     return e_conflicts_with_value_of_fillchars;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
+    if (set_chars_option(wp, (char_u **)&wp->w_p_lcs, true) != NULL) {
       return e_conflicts_with_value_of_listchars;
     }
-    if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
+    if (set_chars_option(wp, (char_u **)&wp->w_p_fcs, true) != NULL) {
       return e_conflicts_with_value_of_fillchars;
     }
   }

@@ -797,8 +797,8 @@ static int diff_write(buf_T *buf, diffin_T *din)
   }
 
   // Always use 'fileformat' set to "unix".
-  char_u *save_ff = buf->b_p_ff;
-  buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
+  char *save_ff = buf->b_p_ff;
+  buf->b_p_ff = xstrdup(FF_UNIX);
   const bool save_cmod_flags = cmdmod.cmod_flags;
   // Writing the buffer is an implementation detail of performing the diff,
   // so it shouldn't update the '[ and '] marks.
@@ -1413,7 +1413,7 @@ void diff_win_options(win_T *wp, int addbuf)
     if (wp->w_p_diff_saved) {
       free_string_option(wp->w_p_fdm_save);
     }
-    wp->w_p_fdm_save = vim_strsave(wp->w_p_fdm);
+    wp->w_p_fdm_save = xstrdup(wp->w_p_fdm);
   }
   set_string_option_direct_in_win(wp, "fdm", -1, "diff", OPT_LOCAL | OPT_FREE, 0);
 
@@ -1424,12 +1424,12 @@ void diff_win_options(win_T *wp, int addbuf)
     if (wp->w_p_diff_saved) {
       free_string_option(wp->w_p_fdc_save);
     }
-    wp->w_p_fdc_save = vim_strsave(wp->w_p_fdc);
+    wp->w_p_fdc_save = xstrdup(wp->w_p_fdc);
   }
   free_string_option(wp->w_p_fdc);
-  wp->w_p_fdc = (char_u *)xstrdup("2");
+  wp->w_p_fdc = xstrdup("2");
   assert(diff_foldcolumn >= 0 && diff_foldcolumn <= 9);
-  snprintf((char *)wp->w_p_fdc, STRLEN(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
+  snprintf(wp->w_p_fdc, STRLEN(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
   wp->w_p_fen = true;
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
@@ -1480,11 +1480,9 @@ void ex_diffoff(exarg_T *eap)
           }
         }
         free_string_option(wp->w_p_fdm);
-        wp->w_p_fdm = vim_strsave(*wp->w_p_fdm_save
-                                  ? wp->w_p_fdm_save
-                                  : (char_u *)"manual");
+        wp->w_p_fdm = xstrdup(*wp->w_p_fdm_save ? wp->w_p_fdm_save : "manual");
         free_string_option(wp->w_p_fdc);
-        wp->w_p_fdc = vim_strsave(wp->w_p_fdc_save);
+        wp->w_p_fdc = xstrdup(wp->w_p_fdc_save);
 
         if (wp->w_p_fdl == 0) {
           wp->w_p_fdl = wp->w_p_fdl_save;

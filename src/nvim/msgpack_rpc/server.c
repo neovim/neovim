@@ -216,7 +216,7 @@ bool server_stop(char *endpoint)
   watchers.ga_len--;
 
   // Bump v:servername to the next available server, if any.
-  if (strequal(addr, (char *)get_vim_var_str(VV_SEND_SERVER))) {
+  if (strequal(addr, get_vim_var_str(VV_SEND_SERVER))) {
     set_vservername(&watchers);
   }
 

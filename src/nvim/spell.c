@@ -1837,7 +1837,7 @@ char *did_set_spelllang(win_T *wp)
 
   // Make a copy of 'spelllang', the SpellFileMissing autocommands may change
   // it under our fingers.
-  spl_copy = vim_strsave(wp->w_s->b_p_spl);
+  spl_copy = vim_strsave((char_u *)wp->w_s->b_p_spl);
 
   wp->w_s->b_cjk = 0;
 
@@ -1966,7 +1966,7 @@ char *did_set_spelllang(win_T *wp)
   // round 1: load first name in 'spellfile'.
   // round 2: load second name in 'spellfile.
   // etc.
-  spf = (char *)curwin->w_s->b_p_spf;
+  spf = curwin->w_s->b_p_spf;
   for (round = 0; round == 0 || *spf != NUL; round++) {
     if (round == 0) {
       // Internal wordlist, if there is one.
@@ -2120,13 +2120,13 @@ static void use_midword(slang_T *lp, win_T *wp)
       wp->w_s->b_spell_ismw[c] = true;
     } else if (wp->w_s->b_spell_ismw_mb == NULL) {
       // First multi-byte char in "b_spell_ismw_mb".
-      wp->w_s->b_spell_ismw_mb = vim_strnsave(p, (size_t)l);
+      wp->w_s->b_spell_ismw_mb = (char *)vim_strnsave(p, (size_t)l);
     } else {
       // Append multi-byte chars to "b_spell_ismw_mb".
       const int n = (int)STRLEN(wp->w_s->b_spell_ismw_mb);
-      char_u *bp = vim_strnsave(wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
+      char_u *bp = vim_strnsave((char_u *)wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
       xfree(wp->w_s->b_spell_ismw_mb);
-      wp->w_s->b_spell_ismw_mb = bp;
+      wp->w_s->b_spell_ismw_mb = (char *)bp;
       STRLCPY(bp + n, p, l + 1);
     }
     p += l;
@@ -2359,7 +2359,7 @@ bool spell_iswordp(const char_u *p, const win_T *wp)
     if (c < 256
         ? wp->w_s->b_spell_ismw[c]
         : (wp->w_s->b_spell_ismw_mb != NULL
-           && vim_strchr((char *)wp->w_s->b_spell_ismw_mb, c) != NULL)) {
+           && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
       s = p + l;
     }
   }
@@ -2405,7 +2405,7 @@ static bool spell_iswordp_w(const int *p, const win_T *wp)
 
   if (*p <
       256 ? wp->w_s->b_spell_ismw[*p] : (wp->w_s->b_spell_ismw_mb != NULL
-                                         && vim_strchr((char *)wp->w_s->b_spell_ismw_mb,
+                                         && vim_strchr(wp->w_s->b_spell_ismw_mb,
                                                        *p) != NULL)) {
     s = p + 1;
   } else {
@@ -3599,7 +3599,7 @@ char *compile_cap_prog(synblock_T *synblock)
     synblock->b_cap_prog = NULL;
   } else {
     // Prepend a ^ so that we only match at one column
-    char_u *re = concat_str((char_u *)"^", synblock->b_p_spc);
+    char_u *re = concat_str((char_u *)"^", (char_u *)synblock->b_p_spc);
     synblock->b_cap_prog = vim_regcomp((char *)re, RE_MAGIC);
     xfree(re);
     if (synblock->b_cap_prog == NULL) {

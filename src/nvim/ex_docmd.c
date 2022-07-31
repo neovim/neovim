@@ -2602,7 +2602,7 @@ void undo_cmdmod(cmdmod_T *cmod)
   if (cmod->cmod_save_ei != NULL) {
     // Restore 'eventignore' to the value before ":noautocmd".
     set_string_option_direct("ei", -1, cmod->cmod_save_ei, OPT_FREE, SID_NONE);
-    free_string_option((char_u *)cmod->cmod_save_ei);
+    free_string_option(cmod->cmod_save_ei);
     cmod->cmod_save_ei = NULL;
   }
 
@@ -3646,8 +3646,8 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
   // Don't do it when ":vimgrep" is used for ":grep".
   if ((eap->cmdidx == CMD_make || eap->cmdidx == CMD_lmake || isgrep)
       && !grep_internal(eap->cmdidx)) {
-    const char *program = isgrep ? (*curbuf->b_p_gp == NUL ? (char *)p_gp : (char *)curbuf->b_p_gp)
-                                 : (*curbuf->b_p_mp == NUL ? (char *)p_mp : (char *)curbuf->b_p_mp);
+    const char *program = isgrep ? (*curbuf->b_p_gp == NUL ? (char *)p_gp : curbuf->b_p_gp)
+                                 : (*curbuf->b_p_mp == NUL ? (char *)p_mp : curbuf->b_p_mp);
 
     arg = skipwhite(arg);
 

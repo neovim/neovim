@@ -901,7 +901,7 @@ static void ins_compl_longest_match(compl_T *match)
 
     had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
-    ins_bytes(compl_leader + get_compl_len());
+    ins_bytes((char *)compl_leader + get_compl_len());
     ins_redraw(false);
 
     // When the match isn't there (to avoid matching itself) remove it
@@ -935,7 +935,7 @@ static void ins_compl_longest_match(compl_T *match)
     *p = NUL;
     had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
-    ins_bytes(compl_leader + get_compl_len());
+    ins_bytes((char *)compl_leader + get_compl_len());
     ins_redraw(false);
 
     // When the match isn't there (to avoid matching itself) remove it
@@ -1677,7 +1677,7 @@ static void ins_compl_new_leader(void)
 {
   ins_compl_del_pum();
   ins_compl_delete();
-  ins_bytes(compl_leader + get_compl_len());
+  ins_bytes((char *)compl_leader + get_compl_len());
   compl_used_match = false;
 
   if (compl_started) {
@@ -2224,11 +2224,11 @@ static char_u *get_complete_funcname(int type)
 {
   switch (type) {
   case CTRL_X_FUNCTION:
-    return curbuf->b_p_cfu;
+    return (char_u *)curbuf->b_p_cfu;
   case CTRL_X_OMNI:
-    return curbuf->b_p_ofu;
+    return (char_u *)curbuf->b_p_ofu;
   case CTRL_X_THESAURUS:
-    return *curbuf->b_p_tsrfu == NUL ? p_tsrfu : curbuf->b_p_tsrfu;
+    return *curbuf->b_p_tsrfu == NUL ? p_tsrfu : (char_u *)curbuf->b_p_tsrfu;
   default:
     return (char_u *)"";
   }
@@ -2823,8 +2823,8 @@ static void get_next_dict_tsr_completion(int compl_type, char_u *dict, int dict_
   } else {
     ins_compl_dictionaries(dict != NULL ? dict
                            : (compl_type == CTRL_X_THESAURUS
-                              ? (*curbuf->b_p_tsr == NUL ? p_tsr : curbuf->b_p_tsr)
-                              : (*curbuf->b_p_dict == NUL ? p_dict : curbuf->b_p_dict)),
+                              ? (*curbuf->b_p_tsr == NUL ? p_tsr : (char_u *)curbuf->b_p_tsr)
+                              : (*curbuf->b_p_dict == NUL ? p_dict : (char_u *)curbuf->b_p_dict)),
                            (char_u *)compl_pattern,
                            dict != NULL ? dict_f : 0,
                            compl_type == CTRL_X_THESAURUS);
@@ -3174,7 +3174,7 @@ static int ins_compl_get_exp(pos_T *ini)
     }
     st.found_all = false;
     st.ins_buf = curbuf;
-    st.e_cpt = (compl_cont_status & CONT_LOCAL) ? "." : (char *)curbuf->b_p_cpt;
+    st.e_cpt = (compl_cont_status & CONT_LOCAL) ? "." : curbuf->b_p_cpt;
     st.last_match_pos = st.first_match_pos = *ini;
   } else if (st.ins_buf != curbuf && !buf_valid(st.ins_buf)) {
     st.ins_buf = curbuf;  // In case the buffer was wiped out.
@@ -3319,7 +3319,7 @@ void ins_compl_delete(void)
 /// "in_compl_func" is true when called from complete_check().
 void ins_compl_insert(bool in_compl_func)
 {
-  ins_bytes(compl_shown_match->cp_str + get_compl_len());
+  ins_bytes((char *)compl_shown_match->cp_str + get_compl_len());
   compl_used_match = !match_at_original_text(compl_shown_match);
 
   dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
@@ -3511,13 +3511,13 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
 
   // Insert the text of the new completion, or the compl_leader.
   if (compl_no_insert && !started) {
-    ins_bytes(compl_orig_text + get_compl_len());
+    ins_bytes((char *)compl_orig_text + get_compl_len());
     compl_used_match = false;
   } else if (insert_match) {
     if (!compl_get_longest || compl_used_match) {
       ins_compl_insert(in_compl_func);
     } else {
-      ins_bytes(compl_leader + get_compl_len());
+      ins_bytes((char *)compl_leader + get_compl_len());
     }
   } else {
     compl_used_match = false;
@@ -4079,9 +4079,9 @@ static int ins_compl_start(void)
     edit_submode_pre = (char_u *)_(" Adding");
     if (ctrl_x_mode_line_or_eval()) {
       // Insert a new line, keep indentation but ignore 'comments'.
-      char_u *old = curbuf->b_p_com;
+      char *old = curbuf->b_p_com;
 
-      curbuf->b_p_com = (char_u *)"";
+      curbuf->b_p_com = "";
       compl_startpos.lnum = curwin->w_cursor.lnum;
       compl_startpos.col = compl_col;
       ins_eol('\r');

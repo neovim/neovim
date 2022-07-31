@@ -680,11 +680,11 @@ void ex_listdo(exarg_T *eap)
         // buffer was opened while Syntax autocommands were disabled,
         // need to trigger them now.
         if (buf == curbuf) {
-          apply_autocmds(EVENT_SYNTAX, (char *)curbuf->b_p_syn, curbuf->b_fname, true,
+          apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn, curbuf->b_fname, true,
                          curbuf);
         } else {
           aucmd_prepbuf(&aco, buf);
-          apply_autocmds(EVENT_SYNTAX, (char *)buf->b_p_syn, buf->b_fname, true, buf);
+          apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname, true, buf);
           aucmd_restbuf(&aco);
         }
 

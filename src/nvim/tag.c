@@ -202,7 +202,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
   }
 
   prev_num_matches = num_matches;
-  free_string_option(nofile_fname);
+  free_string_option((char *)nofile_fname);
   nofile_fname = NULL;
 
   clearpos(&saved_fmark.mark);          // shutup gcc 4.0
@@ -215,7 +215,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
     new_tag = true;
     if (g_do_tagpreview != 0) {
       tagstack_clear_entry(&ptag_entry);
-      ptag_entry.tagname = vim_strsave(tag);
+      ptag_entry.tagname = (char *)vim_strsave(tag);
     }
   } else {
     if (g_do_tagpreview != 0) {
@@ -239,7 +239,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
           cur_fnum = ptag_entry.cur_fnum;
         } else {
           tagstack_clear_entry(&ptag_entry);
-          ptag_entry.tagname = vim_strsave(tag);
+          ptag_entry.tagname = (char *)vim_strsave(tag);
         }
       } else {
         /*
@@ -261,7 +261,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         }
 
         // put the tag name in the tag stack
-        tagstack[tagstackidx].tagname = vim_strsave(tag);
+        tagstack[tagstackidx].tagname = (char *)vim_strsave(tag);
 
         curwin->w_tagstacklen = tagstacklen;
 
@@ -440,9 +440,9 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
 
     // When desired match not found yet, try to find it (and others).
     if (use_tagstack) {
-      name = tagstack[tagstackidx].tagname;
+      name = (char_u *)tagstack[tagstackidx].tagname;
     } else if (g_do_tagpreview != 0) {
-      name = ptag_entry.tagname;
+      name = (char_u *)ptag_entry.tagname;
     } else {
       name = tag;
     }
@@ -587,9 +587,9 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         if (use_tfu && parse_match((char_u *)matches[cur_match], &tagp2) == OK
             && tagp2.user_data) {
           XFREE_CLEAR(tagstack[tagstackidx].user_data);
-          tagstack[tagstackidx].user_data = vim_strnsave(tagp2.user_data,
-                                                         (size_t)(tagp2.user_data_end -
-                                                                  tagp2.user_data));
+          tagstack[tagstackidx].user_data = (char *)vim_strnsave(tagp2.user_data,
+                                                                 (size_t)(tagp2.user_data_end -
+                                                                          tagp2.user_data));
         }
 
         tagstackidx++;
@@ -1184,7 +1184,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
                flags & TAG_REGEXP   ? "r": "");
 
   save_pos = curwin->w_cursor;
-  result = call_vim_function((char *)curbuf->b_p_tfu, 3, args, &rettv);
+  result = call_vim_function(curbuf->b_p_tfu, 3, args, &rettv);
   curwin->w_cursor = save_pos;  // restore the cursor position
   d->dv_refcount--;
 
@@ -2388,7 +2388,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
   if (first) {
     // Init.  We make a copy of 'tags', because autocommands may change
     // the value without notifying us.
-    tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL) ? curbuf->b_p_tags : p_tags);
+    tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL) ? (char_u *)curbuf->b_p_tags : p_tags);
     tnp->tn_np = (char *)tnp->tn_tags;
   }
 
@@ -3365,7 +3365,7 @@ static void tagstack_push_item(win_T *wp, char_u *tagname, int cur_fnum, int cur
   }
 
   wp->w_tagstacklen++;
-  tagstack[idx].tagname = tagname;
+  tagstack[idx].tagname = (char *)tagname;
   tagstack[idx].cur_fnum = cur_fnum;
   tagstack[idx].cur_match = cur_match;
   if (tagstack[idx].cur_match < 0) {
@@ -3373,7 +3373,7 @@ static void tagstack_push_item(win_T *wp, char_u *tagname, int cur_fnum, int cur
   }
   tagstack[idx].fmark.mark = mark;
   tagstack[idx].fmark.fnum = fnum;
-  tagstack[idx].user_data = user_data;
+  tagstack[idx].user_data = (char *)user_data;
 }
 
 // Add a list of items to the tag stack in the specified window

@@ -254,14 +254,14 @@ void check_buf_options(buf_T *buf)
 /// memory, vim_strsave() returned NULL, which was replaced by empty_option by
 /// check_options().
 /// Does NOT check for P_ALLOCED flag!
-void free_string_option(char_u *p)
+void free_string_option(char *p)
 {
   if (p != empty_option) {
     xfree(p);
   }
 }
 
-void clear_string_option(char_u **pp)
+void clear_string_option(char **pp)
 {
   if (*pp != empty_option) {
     xfree(*pp);
@@ -269,7 +269,7 @@ void clear_string_option(char_u **pp)
   *pp = empty_option;
 }
 
-void check_string_option(char_u **pp)
+void check_string_option(char **pp)
 {
   if (*pp == NULL) {
     *pp = empty_option;
@@ -292,7 +292,7 @@ static void set_string_option_global(int opt_idx, char_u **varp)
   }
   if (!is_global_option(opt_idx) && p != varp) {
     s = vim_strsave(*varp);
-    free_string_option(*p);
+    free_string_option((char *)(*p));
     *p = s;
   }
 }
@@ -332,7 +332,7 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
   {
     varp = (char **)get_option_varp_scope(idx, both ? OPT_LOCAL : opt_flags);
     if ((opt_flags & OPT_FREE) && (get_option_flags(idx) & P_ALLOCED)) {
-      free_string_option((char_u *)(*varp));
+      free_string_option(*varp);
     }
     *varp = s;
 
@@ -346,8 +346,8 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
     // When setting both values of a global option with a local value,
     // make the local value empty, so that the global value is used.
     if (is_global_local_option(idx) && both) {
-      free_string_option((char_u *)(*varp));
-      *varp = (char *)empty_option;
+      free_string_option(*varp);
+      *varp = empty_option;
     }
     if (set_sid != SID_NONE) {
       sctx_T script_ctx;
@@ -662,7 +662,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     unsigned int *flags = &bkc_flags;
 
     if (opt_flags & OPT_LOCAL) {
-      bkc   = curbuf->b_p_bkc;
+      bkc = (char_u *)curbuf->b_p_bkc;
       flags = &curbuf->b_bkc_flags;
     }
 
@@ -687,12 +687,12 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
                *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
       errmsg = e_backupext_and_patchmode_are_equal;
     }
-  } else if (varp == &curwin->w_p_briopt) {  // 'breakindentopt'
+  } else if (varp == (char_u **)&curwin->w_p_briopt) {  // 'breakindentopt'
     if (briopt_check(curwin) == FAIL) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_isi
-             || varp == &(curbuf->b_p_isk)
+             || varp == (char_u **)&(curbuf->b_p_isk)
              || varp == &p_isp
              || varp == &p_isf) {
     // 'isident', 'iskeyword', 'isprint or 'isfname' option: refill g_chartab[]
@@ -712,12 +712,12 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     }
   } else if (varp == &p_rtp || varp == &p_pp) {  // 'runtimepath' 'packpath'
     runtime_search_path_invalidate();
-  } else if (varp == &curwin->w_p_culopt
-             || gvarp == &curwin->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
+  } else if (varp == (char_u **)&curwin->w_p_culopt
+             || gvarp == (char_u **)&curwin->w_allbuf_opt.wo_culopt) {  // 'cursorlineopt'
     if (**varp == NUL || fill_culopt_flags(*varp, curwin) != OK) {
       errmsg = e_invarg;
     }
-  } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
+  } else if (varp == (char_u **)&curwin->w_p_cc) {  // 'colorcolumn'
     errmsg = check_colorcolumn(curwin);
   } else if (varp == &p_hlg) {  // 'helplang'
     // Check for "", "ab", "ab,cd", etc.
@@ -780,9 +780,9 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
         // value, that's not what we want here.  Disable the color
         // scheme and set the colors again.
         do_unlet(S_LEN("g:colors_name"), true);
-        free_string_option(p_bg);
+        free_string_option((char *)p_bg);
         p_bg = vim_strsave((char_u *)(dark ? "dark" : "light"));
-        check_string_option(&p_bg);
+        check_string_option((char **)&p_bg);
         init_highlight(false, false);
       }
     } else {
@@ -841,7 +841,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     p = (char *)enc_canonize(p_penc);
     xfree(p_penc);
     p_penc = (char_u *)p;
-  } else if (varp == &curbuf->b_p_keymap) {
+  } else if (varp == (char_u **)&curbuf->b_p_keymap) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
@@ -960,11 +960,11 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         // If no error was returned above, we don't expect an error
         // here, so ignore the return value.
-        (void)set_chars_option(wp, &wp->w_p_lcs, true);
+        (void)set_chars_option(wp, (char_u **)&wp->w_p_lcs, true);
       }
       redraw_all_later(UPD_NOT_VALID);
     }
-  } else if (varp == &curwin->w_p_lcs) {  // local 'listchars'
+  } else if (varp == (char_u **)&curwin->w_p_lcs) {  // local 'listchars'
     errmsg = set_chars_option(curwin, varp, true);
   } else if (varp == &p_fcs) {  // global 'fillchars'
     errmsg = set_chars_option(curwin, varp, false);
@@ -977,11 +977,11 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         // If no error was returned above, we don't expect an error
         // here, so ignore the return value.
-        (void)set_chars_option(wp, &wp->w_p_fcs, true);
+        (void)set_chars_option(wp, (char_u **)&wp->w_p_fcs, true);
       }
       redraw_all_later(UPD_NOT_VALID);
     }
-  } else if (varp == &curwin->w_p_fcs) {  // local 'fillchars'
+  } else if (varp == (char_u **)&curwin->w_p_fcs) {  // local 'fillchars'
     errmsg = set_chars_option(curwin, varp, true);
   } else if (varp == &p_cedit) {  // 'cedit'
     errmsg = check_cedit();
@@ -1117,11 +1117,11 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     if (opt_strings_flags(p_cb, p_cb_values, &cb_flags, true) != OK) {
       errmsg = e_invarg;
     }
-  } else if (varp == &(curwin->w_s->b_p_spl)  // 'spell'
-             || varp == &(curwin->w_s->b_p_spf)) {
+  } else if (varp == (char_u **)&(curwin->w_s->b_p_spl)  // 'spell'
+             || varp == (char_u **)&(curwin->w_s->b_p_spf)) {
     // When 'spelllang' or 'spellfile' is set and there is a window for this
     // buffer in which 'spell' is set load the wordlists.
-    const bool is_spellfile = varp == &(curwin->w_s->b_p_spf);
+    const bool is_spellfile = varp == (char_u **)&(curwin->w_s->b_p_spf);
 
     if ((is_spellfile && !valid_spellfile(*varp))
         || (!is_spellfile && !valid_spelllang(*varp))) {
@@ -1129,10 +1129,10 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     } else {
       errmsg = did_set_spell_option(is_spellfile);
     }
-  } else if (varp == &(curwin->w_s->b_p_spc)) {
+  } else if (varp == (char_u **)&(curwin->w_s->b_p_spc)) {
     // When 'spellcapcheck' is set compile the regexp program.
     errmsg = compile_cap_prog(curwin->w_s);
-  } else if (varp == &(curwin->w_s->b_p_spo)) {  // 'spelloptions'
+  } else if (varp == (char_u **)&(curwin->w_s->b_p_spo)) {  // 'spelloptions'
     if (**varp != NUL && STRCMP("camel", *varp) != 0) {
       errmsg = e_invarg;
     }
@@ -1146,14 +1146,14 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     }
   } else if (gvarp == &p_bh) {
     // When 'bufhidden' is set, check for valid value.
-    if (check_opt_strings(curbuf->b_p_bh, p_bufhidden_values, false) != OK) {
+    if (check_opt_strings((char_u *)curbuf->b_p_bh, p_bufhidden_values, false) != OK) {
       errmsg = e_invarg;
     }
   } else if (gvarp == &p_bt) {
     // When 'buftype' is set, check for valid value.
     if ((curbuf->terminal && curbuf->b_p_bt[0] != 't')
         || (!curbuf->terminal && curbuf->b_p_bt[0] == 't')
-        || check_opt_strings(curbuf->b_p_bt, p_buftype_values, false) != OK) {
+        || check_opt_strings((char_u *)curbuf->b_p_bt, p_buftype_values, false) != OK) {
       errmsg = e_invarg;
     } else {
       if (curwin->w_status_height || global_stl_height()) {
@@ -1241,7 +1241,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       errmsg = e_invarg;
     }
 #endif
-  } else if (varp == &curwin->w_p_scl) {  // 'signcolumn'
+  } else if (varp == (char_u **)&curwin->w_p_scl) {  // 'signcolumn'
     if (check_signcolumn(*varp) != OK) {
       errmsg = e_invarg;
     }
@@ -1252,7 +1252,8 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
         && (curwin->w_p_nu || curwin->w_p_rnu)) {
       curwin->w_nrwidth_line_count = 0;
     }
-  } else if (varp == &curwin->w_p_fdc || varp == &curwin->w_allbuf_opt.wo_fdc) {
+  } else if (varp == (char_u **)&curwin->w_p_fdc
+             || varp == (char_u **)&curwin->w_allbuf_opt.wo_fdc) {
     // 'foldcolumn'
     if (**varp == NUL || check_opt_strings(*varp, p_fdc_values, false) != OK) {
       errmsg = e_invarg;
@@ -1266,7 +1267,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
                               &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
                               CPO_TO_CPO_FLAGS);
       if (p != NULL) {
-        free_string_option(p_pt);
+        free_string_option((char *)p_pt);
         p_pt = (char_u *)p;
       }
     }
@@ -1286,7 +1287,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     unsigned int *flags;
 
     if (opt_flags & OPT_LOCAL) {
-      p = (char *)curbuf->b_p_tc;
+      p = curbuf->b_p_tc;
       flags = &curbuf->b_tc_flags;
     } else {
       p = (char *)p_tc;
@@ -1308,7 +1309,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     if (diffopt_changed() == FAIL) {
       errmsg = e_invarg;
     }
-  } else if (gvarp == &curwin->w_allbuf_opt.wo_fdm) {  // 'foldmethod'
+  } else if (gvarp == (char_u **)&curwin->w_allbuf_opt.wo_fdm) {  // 'foldmethod'
     if (check_opt_strings(*varp, p_fdm_values, false) != OK
         || *curwin->w_p_fdm == NUL) {
       errmsg = e_invarg;
@@ -1318,11 +1319,11 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
         newFoldLevel();
       }
     }
-  } else if (varp == &curwin->w_p_fde) {  // 'foldexpr'
+  } else if (varp == (char_u **)&curwin->w_p_fde) {  // 'foldexpr'
     if (foldmethodIsExpr(curwin)) {
       foldUpdateAll(curwin);
     }
-  } else if (gvarp == &curwin->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
+  } else if (gvarp == (char_u **)&curwin->w_allbuf_opt.wo_fmr) {  // 'foldmarker'
     p = vim_strchr((char *)(*varp), ',');
     if (p == NULL) {
       errmsg = N_("E536: comma required");
@@ -1343,7 +1344,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     if (check_opt_strings(p_fcl, p_fcl_values, true) != OK) {
       errmsg = e_invarg;
     }
-  } else if (gvarp == &curwin->w_allbuf_opt.wo_fdi) {  // 'foldignore'
+  } else if (gvarp == (char_u **)&curwin->w_allbuf_opt.wo_fdi) {  // 'foldignore'
     if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
     }
@@ -1352,7 +1353,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     unsigned int *flags = &ve_flags;
 
     if (opt_flags & OPT_LOCAL) {
-      ve = curwin->w_p_ve;
+      ve = (char_u *)curwin->w_p_ve;
       flags = &curwin->w_ve_flags;
     }
 
@@ -1413,7 +1414,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       // even when the value comes from a modeline.
       *value_checked = true;
     }
-  } else if (varp == &curwin->w_p_winhl) {
+  } else if (varp == (char_u **)&curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
     }
@@ -1421,7 +1422,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     if (opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true) != OK) {
       errmsg = e_invarg;
     }
-  } else if (varp == &(curbuf->b_p_vsts)) {  // 'varsofttabstop'
+  } else if (varp == (char_u **)&(curbuf->b_p_vsts)) {  // 'varsofttabstop'
     char_u *cp;
 
     if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
@@ -1446,7 +1447,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
         }
       }
     }
-  } else if (varp == &(curbuf->b_p_vts)) {  // 'vartabstop'
+  } else if (varp == (char_u **)&(curbuf->b_p_vts)) {  // 'vartabstop'
     char_u *cp;
 
     if (!(*varp)[0] || ((*varp)[0] == '0' && !(*varp)[1])) {
@@ -1492,9 +1493,9 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       p = (char *)SHM_ALL;
     } else if (varp == (char_u **)&(p_cpo)) {  // 'cpoptions'
       p = CPO_VI;
-    } else if (varp == &(curbuf->b_p_fo)) {  // 'formatoptions'
+    } else if (varp == (char_u **)&(curbuf->b_p_fo)) {  // 'formatoptions'
       p = FO_ALL;
-    } else if (varp == &curwin->w_p_cocu) {  // 'concealcursor'
+    } else if (varp == (char_u **)&curwin->w_p_cocu) {  // 'concealcursor'
       p = COCU_ALL;
     } else if (varp == &p_mouse) {  // 'mouse'
       p = MOUSE_ALL;
@@ -1511,7 +1512,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
 
   // If error detected, restore the previous value.
   if (errmsg != NULL) {
-    free_string_option(*varp);
+    free_string_option((char *)(*varp));
     *varp = oldval;
     // When resetting some values, need to act on it.
     if (did_chartab) {
@@ -1524,7 +1525,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     // Use "free_oldval", because recursiveness may change the flags under
     // our fingers (esp. init_highlight()).
     if (free_oldval) {
-      free_string_option(oldval);
+      free_string_option((char *)oldval);
     }
     set_option_flag(opt_idx, P_ALLOCED);
 
@@ -1533,8 +1534,8 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       // global option with local value set to use global value; free
       // the local value and make it empty
       p = (char *)get_option_varp_scope(opt_idx, OPT_LOCAL);
-      free_string_option(*(char_u **)p);
-      *(char_u **)p = empty_option;
+      free_string_option(*(char **)p);
+      *(char **)p = empty_option;
     } else if (!(opt_flags & OPT_LOCAL) && opt_flags != OPT_GLOBAL) {
       // May set global value for local option.
       set_string_option_global(opt_idx, varp);
@@ -1542,17 +1543,17 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
 
     // Trigger the autocommand only after setting the flags.
     // When 'syntax' is set, load the syntax of that name
-    if (varp == &(curbuf->b_p_syn)) {
+    if (varp == (char_u **)&(curbuf->b_p_syn)) {
       static int syn_recursive = 0;
 
       syn_recursive++;
       // Only pass true for "force" when the value changed or not used
       // recursively, to avoid endless recurrence.
-      apply_autocmds(EVENT_SYNTAX, (char *)curbuf->b_p_syn, curbuf->b_fname,
+      apply_autocmds(EVENT_SYNTAX, curbuf->b_p_syn, curbuf->b_fname,
                      value_changed || syn_recursive == 1, curbuf);
       curbuf->b_flags |= BF_SYN_SET;
       syn_recursive--;
-    } else if (varp == &(curbuf->b_p_ft)) {
+    } else if (varp == (char_u **)&(curbuf->b_p_ft)) {
       // 'filetype' is set, trigger the FileType autocommand
       // Skip this when called from a modeline and the filetype was
       // already set to this value.
@@ -1568,19 +1569,19 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
         did_filetype = true;
         // Only pass true for "force" when the value changed or not
         // used recursively, to avoid endless recurrence.
-        apply_autocmds(EVENT_FILETYPE, (char *)curbuf->b_p_ft, curbuf->b_fname,
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname,
                        value_changed || ft_recursive == 1, curbuf);
         ft_recursive--;
         // Just in case the old "curbuf" is now invalid
-        if (varp != &(curbuf->b_p_ft)) {
+        if (varp != (char_u **)&(curbuf->b_p_ft)) {
           varp = NULL;
         }
         secure = secure_save;
       }
     }
-    if (varp == &(curwin->w_s->b_p_spl)) {
+    if (varp == (char_u **)&(curwin->w_s->b_p_spl)) {
       char_u fname[200];
-      char_u *q = curwin->w_s->b_p_spl;
+      char_u *q = (char_u *)curwin->w_s->b_p_spl;
 
       // Skip the first name if it is "cjk".
       if (STRNCMP(q, "cjk,", 4) == 0) {

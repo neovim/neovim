@@ -359,7 +359,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
       // Then ":help" will re-use both the buffer and the window and set
       // the options, even when "options" is not in 'sessionoptions'.
       if (0 < wp->w_tagstackidx && wp->w_tagstackidx <= wp->w_tagstacklen) {
-        curtag = (char *)wp->w_tagstack[wp->w_tagstackidx - 1].tagname;
+        curtag = wp->w_tagstack[wp->w_tagstackidx - 1].tagname;
       }
 
       if (put_line(fd, "enew | setl bt=help") == FAIL

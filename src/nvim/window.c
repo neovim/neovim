@@ -727,38 +727,38 @@ void win_set_minimal_style(win_T *wp)
 
   // Hide EOB region: use " " fillchar and cleared highlighting
   if (wp->w_p_fcs_chars.eob != ' ') {
-    char_u *old = wp->w_p_fcs;
+    char_u *old = (char_u *)wp->w_p_fcs;
     wp->w_p_fcs = ((*old == NUL)
-                   ? (char_u *)xstrdup("eob: ")
-                   : concat_str(old, (char_u *)",eob: "));
-    free_string_option(old);
+                   ? xstrdup("eob: ")
+                   : (char *)concat_str(old, (char_u *)",eob: "));
+    free_string_option((char *)old);
   }
 
   // TODO(bfredl): this could use a highlight namespace directly,
   // and avoid pecularities around window options
-  char_u *old = wp->w_p_winhl;
+  char_u *old = (char_u *)wp->w_p_winhl;
   wp->w_p_winhl = ((*old == NUL)
-                   ? (char_u *)xstrdup("EndOfBuffer:")
-                   : concat_str(old, (char_u *)",EndOfBuffer:"));
-  free_string_option(old);
+                   ? xstrdup("EndOfBuffer:")
+                   : (char *)concat_str(old, (char_u *)",EndOfBuffer:"));
+  free_string_option((char *)old);
   parse_winhl_opt(wp);
 
   // signcolumn: use 'auto'
   if (wp->w_p_scl[0] != 'a' || STRLEN(wp->w_p_scl) >= 8) {
     free_string_option(wp->w_p_scl);
-    wp->w_p_scl = (char_u *)xstrdup("auto");
+    wp->w_p_scl = xstrdup("auto");
   }
 
   // foldcolumn: use '0'
   if (wp->w_p_fdc[0] != '0') {
     free_string_option(wp->w_p_fdc);
-    wp->w_p_fdc = (char_u *)xstrdup("0");
+    wp->w_p_fdc = xstrdup("0");
   }
 
   // colorcolumn: cleared
   if (wp->w_p_cc != NULL && *wp->w_p_cc != NUL) {
     free_string_option(wp->w_p_cc);
-    wp->w_p_cc = (char_u *)xstrdup("");
+    wp->w_p_cc = xstrdup("");
   }
 }
 
@@ -1570,10 +1570,10 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
     taggy_T *tag = &newp->w_tagstack[i];
     *tag = oldp->w_tagstack[i];
     if (tag->tagname != NULL) {
-      tag->tagname = vim_strsave(tag->tagname);
+      tag->tagname = xstrdup(tag->tagname);
     }
     if (tag->user_data != NULL) {
-      tag->user_data = vim_strsave(tag->user_data);
+      tag->user_data = xstrdup(tag->user_data);
     }
   }
   newp->w_tagstackidx = oldp->w_tagstackidx;
@@ -7291,7 +7291,7 @@ char *check_colorcolumn(win_T *wp)
     return NULL;      // buffer was closed
   }
 
-  for (s = (char *)wp->w_p_cc; *s != NUL && count < 255;) {
+  for (s = wp->w_p_cc; *s != NUL && count < 255;) {
     if (*s == '-' || *s == '+') {
       // -N and +N: add to 'textwidth'
       col = (*s == '-') ? -1 : 1;

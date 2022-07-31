@@ -721,7 +721,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
     b0p->b0_flags &= (uint8_t) ~B0_HAS_FENC;
   } else {
     memmove((char *)b0p->b0_fname + size - n,
-            (char *)buf->b_p_fenc, (size_t)n);
+            buf->b_p_fenc, (size_t)n);
     *(b0p->b0_fname + size - n - 1) = NUL;
     b0p->b0_flags |= B0_HAS_FENC;
   }

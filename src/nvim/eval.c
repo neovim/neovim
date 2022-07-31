@@ -2192,7 +2192,7 @@ int pattern_match(char *pat, char *text, bool ic)
 
   // avoid 'l' flag in 'cpoptions'
   char *save_cpo = p_cpo;
-  p_cpo = (char *)empty_option;
+  p_cpo = empty_option;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = ic;
@@ -8326,7 +8326,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
 
   // Make 'cpoptions' empty, so that the 'l' flag doesn't work here
   char *save_cpo = p_cpo;
-  p_cpo = (char *)empty_option;
+  p_cpo = empty_option;
 
   ga_init(&ga, 1, 200);
 
@@ -8386,7 +8386,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
 
   char *ret = xstrdup(ga.ga_data == NULL ? str : ga.ga_data);
   ga_clear(&ga);
-  if ((char_u *)p_cpo == empty_option) {
+  if (p_cpo == empty_option) {
     p_cpo = save_cpo;
   } else {
     // Darn, evaluating {sub} expression or {expr} changed the value.
@@ -8395,7 +8395,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
     if (*p_cpo == NUL) {
       set_option_value_give_err("cpo", 0L, save_cpo, 0);
     }
-    free_string_option((char_u *)save_cpo);
+    free_string_option(save_cpo);
   }
 
   return ret;

@@ -536,9 +536,9 @@ void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
 
 /// Insert string "p" at the cursor position.  Stops at a NUL byte.
 /// Handles Replace mode and multi-byte characters.
-void ins_bytes(char_u *p)
+void ins_bytes(char *p)
 {
-  ins_bytes_len(p, STRLEN(p));
+  ins_bytes_len((char_u *)p, STRLEN(p));
 }
 
 /// Insert string "p" with length "len" at the cursor position.
@@ -1309,10 +1309,10 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
         // Doing "O" on the end of a comment inserts the middle leader.
         // Find the string for the middle leader, searching backwards.
-        while (p > (char *)curbuf->b_p_com && *p != ',') {
+        while (p > curbuf->b_p_com && *p != ',') {
           p--;
         }
-        for (lead_repl = p; lead_repl > (char *)curbuf->b_p_com
+        for (lead_repl = p; lead_repl > curbuf->b_p_com
              && lead_repl[-1] != ':'; lead_repl--) {}
         lead_repl_len = (int)(p - lead_repl);
 
@@ -1795,7 +1795,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     // Insert new stuff into line again
     curwin->w_cursor.col = 0;
     curwin->w_cursor.coladd = 0;
-    ins_bytes(p_extra);         // will call changed_bytes()
+    ins_bytes((char *)p_extra);         // will call changed_bytes()
     xfree(p_extra);
     next_line = NULL;
   }
@@ -1814,16 +1814,16 @@ theend:
 /// If "fixpos" is true fix the cursor position when done.
 void truncate_line(int fixpos)
 {
-  char_u *newp;
+  char *newp;
   linenr_T lnum = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
 
   if (col == 0) {
-    newp = vim_strsave((char_u *)"");
+    newp = xstrdup("");
   } else {
-    newp = vim_strnsave(ml_get(lnum), (size_t)col);
+    newp = (char *)vim_strnsave(ml_get(lnum), (size_t)col);
   }
-  ml_replace(lnum, (char *)newp, false);
+  ml_replace(lnum, newp, false);
 
   // mark the buffer as changed and prepare for displaying
   changed_bytes(lnum, curwin->w_cursor.col);
@@ -1900,7 +1900,7 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
   while (line[i] != NUL) {
     // scan through the 'comments' option for a match
     int found_one = false;
-    for (list = (char *)curbuf->b_p_com; *list;) {
+    for (list = curbuf->b_p_com; *list;) {
       // Get one option part into part_buf[].  Advance "list" to next
       // one.  Put "string" at start of string.
       if (!got_com && flags != NULL) {
@@ -2037,7 +2037,7 @@ int get_last_leader_offset(char *line, char **flags)
   while (--i >= lower_check_bound) {
     // scan through the 'comments' option for a match
     int found_one = false;
-    for (list = (char *)curbuf->b_p_com; *list;) {
+    for (list = curbuf->b_p_com; *list;) {
       char *flags_save = list;
 
       // Get one option part into part_buf[].  Advance list to next one.
@@ -2122,7 +2122,7 @@ int get_last_leader_offset(char *line, char **flags)
       }
       len1 = (int)STRLEN(com_leader);
 
-      for (list = (char *)curbuf->b_p_com; *list;) {
+      for (list = curbuf->b_p_com; *list;) {
         char *flags_save = list;
 
         (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
