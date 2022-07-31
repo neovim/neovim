@@ -1266,12 +1266,12 @@ theend:
 int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
 {
   int num_names;
-  char_u *(names[6]);
+  char *(names[6]);
   char_u *tail;
   char_u *p;
   int num_files;
   int file_count = 0;
-  char_u **files;
+  char **files;
   char_u *dirp;
   char_u *dir_name;
   char_u *fname_res = NULL;
@@ -1308,22 +1308,22 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
 
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     // check current dir
       if (fname == NULL) {
-        names[0] = vim_strsave((char_u *)"*.sw?");
+        names[0] = xstrdup("*.sw?");
         // For Unix names starting with a dot are special.  MS-Windows
         // supports this too, on some file systems.
-        names[1] = vim_strsave((char_u *)".*.sw?");
-        names[2] = vim_strsave((char_u *)".sw?");
+        names[1] = xstrdup(".*.sw?");
+        names[2] = xstrdup(".sw?");
         num_names = 3;
       } else {
         num_names = recov_file_names(names, fname_res, TRUE);
       }
     } else {                      // check directory dir_name
       if (fname == NULL) {
-        names[0] = (char_u *)concat_fnames((char *)dir_name, "*.sw?", true);
+        names[0] = concat_fnames((char *)dir_name, "*.sw?", true);
         // For Unix names starting with a dot are special.  MS-Windows
         // supports this too, on some file systems.
-        names[1] = (char_u *)concat_fnames((char *)dir_name, ".*.sw?", true);
-        names[2] = (char_u *)concat_fnames((char *)dir_name, ".sw?", true);
+        names[1] = concat_fnames((char *)dir_name, ".*.sw?", true);
+        names[2] = concat_fnames((char *)dir_name, ".sw?", true);
         num_names = 3;
       } else {
         int len = (int)STRLEN(dir_name);
@@ -1360,7 +1360,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
       if (swapname != NULL) {
         if (os_path_exists(swapname)) {
           files = xmalloc(sizeof(char_u *));
-          files[0] = swapname;
+          files[0] = (char *)swapname;
           swapname = NULL;
           num_files = 1;
         }
@@ -1376,7 +1376,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
       for (int i = 0; i < num_files; i++) {
         // Do not expand wildcards, on Windows would try to expand
         // "%tmp%" in "%tmp%file"
-        if (path_full_compare((char *)p, (char *)files[i], true, false) & kEqualFiles) {
+        if (path_full_compare((char *)p, files[i], true, false) & kEqualFiles) {
           // Remove the name from files[i].  Move further entries
           // down.  When the array becomes empty free it here, since
           // FreeWild() won't be called below.
@@ -1394,7 +1394,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
     if (nr > 0) {
       file_count += num_files;
       if (nr <= file_count) {
-        *fname_out = vim_strsave(files[nr - 1 + num_files - file_count]);
+        *fname_out = vim_strsave((char_u *)files[nr - 1 + num_files - file_count]);
         dirp = (char_u *)"";                        // stop searching
       }
     } else if (list) {
@@ -1415,9 +1415,9 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
           // print the swap file name
           msg_outnum((long)++file_count);
           msg_puts(".    ");
-          msg_puts((const char *)path_tail((char *)files[i]));
+          msg_puts((const char *)path_tail(files[i]));
           msg_putchar('\n');
-          (void)swapfile_info(files[i]);
+          (void)swapfile_info((char_u *)files[i]);
         }
       } else {
         msg_puts(_("      -- none --\n"));
@@ -1636,7 +1636,7 @@ static bool swapfile_unchanged(char *fname)
   return ret;
 }
 
-static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
+static int recov_file_names(char **names, char_u *path, int prepend_dot)
   FUNC_ATTR_NONNULL_ALL
 {
   int num_names = 0;
@@ -1644,7 +1644,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   // May also add the file name with a dot prepended, for swap file in same
   // dir as original file.
   if (prepend_dot) {
-    names[num_names] = (char_u *)modname((char *)path, ".sw?", true);
+    names[num_names] = modname((char *)path, ".sw?", true);
     if (names[num_names] == NULL) {
       return num_names;
     }
@@ -1652,9 +1652,9 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   }
 
   // Form the normal swap file name pattern by appending ".sw?".
-  names[num_names] = (char_u *)concat_fnames((char *)path, ".sw?", FALSE);
+  names[num_names] = concat_fnames((char *)path, ".sw?", false);
   if (num_names >= 1) {     // check if we have the same name twice
-    char_u *p = names[num_names - 1];
+    char_u *p = (char_u *)names[num_names - 1];
     int i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
     if (i > 0) {
       p += i;               // file name has been expanded to full path

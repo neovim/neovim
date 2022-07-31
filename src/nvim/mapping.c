@@ -1230,7 +1230,7 @@ char_u *set_context_in_map_cmd(expand_T *xp, char_u *cmd, char_u *arg, bool forc
 /// Find all mapping/abbreviation names that match regexp "regmatch".
 /// For command line expansion of ":[un]map" and ":[un]abbrev" in all modes.
 /// @return OK if matches found, FAIL otherwise.
-int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
+int ExpandMappings(regmatch_T *regmatch, int *num_file, char ***file)
 {
   mapblock_T *mp;
   int hash;
@@ -1270,7 +1270,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
         if (round == 1) {
           count++;
         } else {
-          (*file)[count++] = vim_strsave(p);
+          (*file)[count++] = (char *)vim_strsave(p);
         }
       }
     }
@@ -1293,7 +1293,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
             if (round == 1) {
               count++;
             } else {
-              (*file)[count++] = p;
+              (*file)[count++] = (char *)p;
               p = NULL;
             }
           }
@@ -1307,22 +1307,18 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
     }
 
     if (round == 1) {
-      *file = (char_u **)xmalloc((size_t)count * sizeof(char_u *));
+      *file = xmalloc((size_t)count * sizeof(char_u *));
     }
   }   // for (round)
 
   if (count > 1) {
-    char_u **ptr1;
-    char_u **ptr2;
-    char_u **ptr3;
-
     // Sort the matches
     sort_strings(*file, count);
 
     // Remove multiple entries
-    ptr1 = *file;
-    ptr2 = ptr1 + 1;
-    ptr3 = ptr1 + count;
+    char **ptr1 = *file;
+    char **ptr2 = ptr1 + 1;
+    char **ptr3 = ptr1 + count;
 
     while (ptr2 < ptr3) {
       if (STRCMP(*ptr1, *ptr2)) {

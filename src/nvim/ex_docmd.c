@@ -1396,7 +1396,7 @@ static int parse_count(exarg_T *eap, char **errormsg, bool validate)
   if ((eap->argt & EX_COUNT) && ascii_isdigit(*eap->arg)
       && (!(eap->argt & EX_BUFNAME) || *(p = skipdigits(eap->arg + 1)) == NUL
           || ascii_iswhite(*p))) {
-    n = getdigits_long((char_u **)&eap->arg, false, -1);
+    n = getdigits_long(&eap->arg, false, -1);
     eap->arg = skipwhite(eap->arg);
     if (n <= 0 && (eap->argt & EX_ZEROR) == 0) {
       if (errormsg != NULL) {
@@ -1624,7 +1624,7 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
 
   // If filename expansion is enabled, expand filenames
   if (cmdinfo->magic.file) {
-    if (expand_filename(eap, (char_u **)eap->cmdlinep, &errormsg) == FAIL) {
+    if (expand_filename(eap, eap->cmdlinep, &errormsg) == FAIL) {
       goto end;
     }
   }
@@ -2290,7 +2290,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   }
 
   if (ea.argt & EX_XFILE) {
-    if (expand_filename(&ea, (char_u **)cmdlinep, &errormsg) == FAIL) {
+    if (expand_filename(&ea, cmdlinep, &errormsg) == FAIL) {
       goto doend;
     }
   }
@@ -4489,7 +4489,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
 
     default:
       if (ascii_isdigit(*cmd)) {                // absolute line number
-        lnum = (linenr_T)getdigits((char_u **)&cmd, false, 0);
+        lnum = (linenr_T)getdigits(&cmd, false, 0);
       }
     }
 
@@ -4809,7 +4809,7 @@ char *replace_makeprg(exarg_T *eap, char *p, char **cmdlinep)
 /// When an error is detected, "errormsgp" is set to a non-NULL pointer.
 ///
 /// @return  FAIL for failure, OK otherwise.
-int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
+int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
 {
   int has_wildcards;            // need to expand wildcards
   char *repl;
@@ -4915,7 +4915,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
       repl = l;
     }
 
-    p = repl_cmdline(eap, p, srclen, repl, (char **)cmdlinep);
+    p = repl_cmdline(eap, p, srclen, repl, cmdlinep);
     xfree(repl);
   }
 
@@ -4942,7 +4942,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
         p = NULL;
       }
       if (p != NULL) {
-        (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, (char **)cmdlinep);
+        (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, cmdlinep);
       }
     }
 
@@ -4969,7 +4969,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char **errormsgp)
       if (p == NULL) {
         return FAIL;
       }
-      (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, (char **)cmdlinep);
+      (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, cmdlinep);
       xfree(p);
     }
   }
@@ -5253,7 +5253,7 @@ static int get_tabpage_arg(exarg_T *eap)
     }
 
     p_save = p;
-    tab_number = (int)getdigits((char_u **)&p, false, tab_number);
+    tab_number = (int)getdigits(&p, false, tab_number);
 
     if (relative == 0) {
       if (STRCMP(p, "$") == 0) {
@@ -5949,7 +5949,7 @@ two_count:
           return FAIL;
         }
 
-        *def = getdigits_long((char_u **)&p, true, 0);
+        *def = getdigits_long(&p, true, 0);
         *argt |= EX_ZEROR;
 
         if (p != val + vallen || vallen == 0) {
@@ -5975,7 +5975,7 @@ invalid_count:
           goto two_count;
         }
 
-        *def = getdigits_long((char_u **)&p, true, 0);
+        *def = getdigits_long(&p, true, 0);
 
         if (p != val + vallen) {
           goto invalid_count;
@@ -7757,7 +7757,7 @@ static void ex_tabnext(exarg_T *eap)
     if (eap->arg && *eap->arg != NUL) {
       char *p = eap->arg;
       char *p_save = p;
-      tab_number = (int)getdigits((char_u **)&p, false, 0);
+      tab_number = (int)getdigits(&p, false, 0);
       if (p == p_save || *p_save == '-' || *p_save == '+' || *p != NUL
           || tab_number == 0) {
         // No numbers as argument.
@@ -8738,7 +8738,7 @@ static void ex_later(exarg_T *eap)
   if (*p == NUL) {
     count = 1;
   } else if (isdigit(*p)) {
-    count = getdigits_long((char_u **)&p, false, 0);
+    count = getdigits_long(&p, false, 0);
     switch (*p) {
     case 's':
       ++p; sec = true; break;
@@ -9255,7 +9255,7 @@ static void ex_findpat(exarg_T *eap)
 
   n = 1;
   if (ascii_isdigit(*eap->arg)) {  // get count
-    n = getdigits_long((char_u **)&eap->arg, false, 0);
+    n = getdigits_long(&eap->arg, false, 0);
     eap->arg = skipwhite(eap->arg);
   }
   if (*eap->arg == '/') {   // Match regexp, not just whole words
@@ -10013,7 +10013,7 @@ static void ex_setfiletype(exarg_T *eap)
 static void ex_digraphs(exarg_T *eap)
 {
   if (*eap->arg != NUL) {
-    putdigraph((char_u *)eap->arg);
+    putdigraph(eap->arg);
   } else {
     listdigraphs(eap->forceit);
   }

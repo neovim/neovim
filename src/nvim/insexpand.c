@@ -202,7 +202,7 @@ static bool compl_started = false;
 static int ctrl_x_mode = CTRL_X_NORMAL;
 
 static int compl_matches = 0;
-static char_u *compl_pattern = NULL;
+static char *compl_pattern = NULL;
 static Direction compl_direction = FORWARD;
 static Direction compl_shows_dir = FORWARD;
 static int compl_pending = 0;           ///< > 1 for postponed CTRL-N
@@ -824,14 +824,14 @@ static void ins_compl_longest_match(compl_T *match)
 
 /// Add an array of matches to the list of matches.
 /// Frees matches[].
-static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
+static void ins_compl_add_matches(int num_matches, char **matches, int icase)
   FUNC_ATTR_NONNULL_ALL
 {
   int add_r = OK;
   Direction dir = compl_direction;
 
   for (int i = 0; i < num_matches && add_r != FAIL; i++) {
-    if ((add_r = ins_compl_add(matches[i], -1, NULL, NULL, false, NULL, dir,
+    if ((add_r = ins_compl_add((char_u *)matches[i], -1, NULL, NULL, false, NULL, dir,
                                CP_FAST | (icase ? CP_ICASE : 0),
                                false)) == OK) {
       // If dir was BACKWARD then honor it just once.
@@ -1135,11 +1135,11 @@ void ins_compl_show_pum(void)
 /// @param thesaurus  Thesaurus completion
 static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, int thesaurus)
 {
-  char_u *dict = dict_start;
+  char *dict = (char *)dict_start;
   char_u *ptr;
-  char_u *buf;
+  char *buf;
   regmatch_T regmatch;
-  char_u **files;
+  char **files;
   int count;
   int save_p_scs;
   Direction dir = compl_direction;
@@ -1148,7 +1148,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
     // When 'dictionary' is empty and spell checking is enabled use
     // "spell".
     if (!thesaurus && curwin->w_p_spell) {
-      dict = (char_u *)"spell";
+      dict = "spell";
     } else {
       return;
     }
@@ -1193,10 +1193,10 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
       // Expand wildcards in the dictionary name, but do not allow
       // backticks (for security, the 'dict' option may have been set in
       // a modeline).
-      copy_option_part((char **)&dict, (char *)buf, LSIZE, ",");
+      copy_option_part(&dict, buf, LSIZE, ",");
       if (!thesaurus && STRCMP(buf, "spell") == 0) {
         count = -1;
-      } else if (vim_strchr((char *)buf, '`') != NULL
+      } else if (vim_strchr(buf, '`') != NULL
                  || expand_wildcards(1, &buf, &count, &files,
                                      EW_FILE|EW_SILENT) != OK) {
         count = 0;
@@ -1214,7 +1214,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
       spell_dump_compl(ptr, regmatch.rm_ic, &dir, 0);
     } else if (count > 0) {  // avoid warning for using "files" uninit
       ins_compl_files(count, files, thesaurus, flags,
-                      &regmatch, buf, &dir);
+                      &regmatch, (char_u *)buf, &dir);
       if (flags != DICT_EXACT) {
         FreeWild(count, files);
       }
@@ -1230,8 +1230,8 @@ theend:
   xfree(buf);
 }
 
-static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
-                            regmatch_T *regmatch, char_u *buf, Direction *dir)
+static void ins_compl_files(int count, char **files, int thesaurus, int flags, regmatch_T *regmatch,
+                            char_u *buf, Direction *dir)
   FUNC_ATTR_NONNULL_ARG(2, 7)
 {
   char_u *ptr;
@@ -1240,11 +1240,11 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
   int add_r;
 
   for (i = 0; i < count && !got_int && !compl_interrupted; i++) {
-    fp = os_fopen((char *)files[i], "r");  // open dictionary file
+    fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT) {
       msg_hist_off = true;  // reset in msg_trunc_attr()
       vim_snprintf((char *)IObuff, IOSIZE,
-                   _("Scanning dictionary: %s"), (char *)files[i]);
+                   _("Scanning dictionary: %s"), files[i]);
       (void)msg_trunc_attr((char *)IObuff, true, HL_ATTR(HLF_R));
     }
 
@@ -1266,7 +1266,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
         }
         add_r = ins_compl_add_infercase(regmatch->startp[0],
                                         (int)(ptr - regmatch->startp[0]),
-                                        p_ic, files[i], *dir, false);
+                                        p_ic, (char_u *)files[i], *dir, false);
         if (thesaurus) {
           char_u *wstart;
 
@@ -1297,7 +1297,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
             // Add the word. Skip the regexp match.
             if (wstart != regmatch->startp[0]) {
               add_r = ins_compl_add_infercase(wstart, (int)(ptr - wstart),
-                                              p_ic, files[i], *dir, false);
+                                              p_ic, (char_u *)files[i], *dir, false);
             }
           }
         }
@@ -2480,7 +2480,7 @@ static int ins_compl_get_exp(pos_T *ini)
   static buf_T *ins_buf = NULL;          // buffer being scanned
 
   pos_T *pos;
-  char_u **matches;
+  char **matches;
   int save_p_scs;
   bool save_p_ws;
   int save_p_ic;
@@ -2621,7 +2621,7 @@ static int ins_compl_get_exp(pos_T *ini)
       break;
     case CTRL_X_PATH_PATTERNS:
     case CTRL_X_PATH_DEFINES:
-      find_pattern_in_path(compl_pattern, compl_direction,
+      find_pattern_in_path((char_u *)compl_pattern, compl_direction,
                            STRLEN(compl_pattern), false, false,
                            ((type == CTRL_X_PATH_DEFINES
                              && !(compl_cont_status & CONT_SOL))
@@ -2633,14 +2633,14 @@ static int ins_compl_get_exp(pos_T *ini)
     case CTRL_X_DICTIONARY:
     case CTRL_X_THESAURUS:
       if (thesaurus_func_complete(type)) {
-        expand_by_function(type, compl_pattern);
+        expand_by_function(type, (char_u *)compl_pattern);
       } else {
         ins_compl_dictionaries(dict != NULL ? dict
                                : (type == CTRL_X_THESAURUS
                                   ? (*curbuf->b_p_tsr == NUL ? p_tsr : curbuf->b_p_tsr)
                                   : (*curbuf->b_p_dict ==
                                      NUL ? p_dict : curbuf->b_p_dict)),
-                               compl_pattern,
+                               (char_u *)compl_pattern,
                                dict != NULL ? dict_f : 0, type == CTRL_X_THESAURUS);
       }
       dict = NULL;
@@ -2649,12 +2649,12 @@ static int ins_compl_get_exp(pos_T *ini)
     case CTRL_X_TAGS:
       // set p_ic according to p_ic, p_scs and pat for find_tags().
       save_p_ic = p_ic;
-      p_ic = ignorecase(compl_pattern);
+      p_ic = ignorecase((char_u *)compl_pattern);
 
       // Find up to TAG_MANY matches.  Avoids that an enormous number
       // of matches is found when compl_pattern is empty
       g_tag_at_cursor = true;
-      if (find_tags(compl_pattern, &num_matches, &matches,
+      if (find_tags((char_u *)compl_pattern, &num_matches, &matches,
                     TAG_REGEXP | TAG_NAMES | TAG_NOIC | TAG_INS_COMP
                     | (ctrl_x_mode_not_default() ? TAG_VERBOSE : 0),
                     TAG_MANY, (char_u *)curbuf->b_ffname) == OK && num_matches > 0) {
@@ -2668,7 +2668,7 @@ static int ins_compl_get_exp(pos_T *ini)
       if (expand_wildcards(1, &compl_pattern, &num_matches, &matches,
                            EW_FILE|EW_DIR|EW_ADDSLASH|EW_SILENT) == OK) {
         // May change home directory back to "~".
-        tilde_replace(compl_pattern, num_matches, matches);
+        tilde_replace((char_u *)compl_pattern, num_matches, matches);
 #ifdef BACKSLASH_IN_FILENAME
         if (curbuf->b_p_csl[0] != NUL) {
           for (int i = 0; i < num_matches; i++) {
@@ -2690,7 +2690,7 @@ static int ins_compl_get_exp(pos_T *ini)
 
     case CTRL_X_CMDLINE:
     case CTRL_X_CMDLINE_CTRL_X:
-      if (expand_cmdline(&compl_xp, compl_pattern,
+      if (expand_cmdline(&compl_xp, (char_u *)compl_pattern,
                          (int)STRLEN(compl_pattern),
                          &num_matches, &matches) == EXPAND_OK) {
         ins_compl_add_matches(num_matches, matches, false);
@@ -2699,12 +2699,12 @@ static int ins_compl_get_exp(pos_T *ini)
 
     case CTRL_X_FUNCTION:
     case CTRL_X_OMNI:
-      expand_by_function(type, compl_pattern);
+      expand_by_function(type, (char_u *)compl_pattern);
       break;
 
     case CTRL_X_SPELL:
       num_matches = expand_spelling(first_match_pos.lnum,
-                                    compl_pattern, &matches);
+                                    (char_u *)compl_pattern, &matches);
       if (num_matches > 0) {
         ins_compl_add_matches(num_matches, matches, p_ic);
       }
@@ -2739,11 +2739,11 @@ static int ins_compl_get_exp(pos_T *ini)
             || (compl_cont_status & CONT_SOL)) {
           found_new_match = search_for_exact_line(ins_buf, pos,
                                                   compl_direction,
-                                                  compl_pattern);
+                                                  (char_u *)compl_pattern);
         } else {
           found_new_match = searchit(NULL, ins_buf, pos, NULL,
                                      compl_direction,
-                                     compl_pattern, 1L,
+                                     (char_u *)compl_pattern, 1L,
                                      SEARCH_KEEP + SEARCH_NFMSG,
                                      RE_LAST, NULL);
         }
@@ -3337,9 +3337,9 @@ static int get_normal_compl_info(char_u *line, int startcol, colnr_T curs_col)
       compl_length = curs_col - startcol;
     }
     if (p_ic) {
-      compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
+      compl_pattern = (char *)str_foldcase(line + compl_col, compl_length, NULL, 0);
     } else {
-      compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+      compl_pattern = (char *)vim_strnsave(line + compl_col, (size_t)compl_length);
     }
   } else if (compl_cont_status & CONT_ADDING) {
     char_u *prefix = (char_u *)"\\<";
@@ -3352,12 +3352,12 @@ static int get_normal_compl_info(char_u *line, int startcol, colnr_T curs_col)
       prefix = (char_u *)"";
     }
     STRCPY(compl_pattern, prefix);
-    (void)quote_meta(compl_pattern + STRLEN(prefix),
+    (void)quote_meta((char_u *)compl_pattern + STRLEN(prefix),
                      line + compl_col, compl_length);
   } else if (--startcol < 0
              || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
     // Match any word of at least two chars
-    compl_pattern = vim_strsave((char_u *)"\\<\\k\\k");
+    compl_pattern = (char *)vim_strsave((char_u *)"\\<\\k\\k");
     compl_col += curs_col;
     compl_length = 0;
   } else {
@@ -3380,14 +3380,13 @@ static int get_normal_compl_info(char_u *line, int startcol, colnr_T curs_col)
       // xmalloc(7) is enough  -- Acevedo
       compl_pattern = xmalloc(7);
       STRCPY(compl_pattern, "\\<");
-      (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
+      (void)quote_meta((char_u *)compl_pattern + 2, line + compl_col, 1);
       STRCAT(compl_pattern, "\\k");
     } else {
       compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
                                          compl_length) + 2);
       STRCPY(compl_pattern, "\\<");
-      (void)quote_meta(compl_pattern + 2, line + compl_col,
-                       compl_length);
+      (void)quote_meta((char_u *)compl_pattern + 2, line + compl_col, compl_length);
     }
   }
 
@@ -3405,9 +3404,9 @@ static int get_wholeline_compl_info(char_u *line, colnr_T curs_col)
     compl_length = 0;
   }
   if (p_ic) {
-    compl_pattern = str_foldcase(line + compl_col, compl_length, NULL, 0);
+    compl_pattern = (char *)str_foldcase(line + compl_col, compl_length, NULL, 0);
   } else {
-    compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+    compl_pattern = (char *)vim_strnsave(line + compl_col, (size_t)compl_length);
   }
 
   return OK;
@@ -3434,7 +3433,7 @@ static int get_filename_compl_info(char_u *line, int startcol, colnr_T curs_col)
 
   compl_col += startcol;
   compl_length = (int)curs_col - startcol;
-  compl_pattern = addstar(line + compl_col, (size_t)compl_length, EXPAND_FILES);
+  compl_pattern = (char *)addstar(line + compl_col, (size_t)compl_length, EXPAND_FILES);
 
   return OK;
 }
@@ -3443,16 +3442,15 @@ static int get_filename_compl_info(char_u *line, int startcol, colnr_T curs_col)
 /// Sets the global variables: compl_col, compl_length and compl_pattern.
 static int get_cmdline_compl_info(char_u *line, colnr_T curs_col)
 {
-  compl_pattern = vim_strnsave(line, (size_t)curs_col);
-  set_cmd_context(&compl_xp, compl_pattern,
-                  (int)STRLEN(compl_pattern), curs_col, false);
+  compl_pattern = (char *)vim_strnsave(line, (size_t)curs_col);
+  set_cmd_context(&compl_xp, (char_u *)compl_pattern, (int)STRLEN(compl_pattern), curs_col, false);
   if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
       || compl_xp.xp_context == EXPAND_NOTHING) {
     // No completion possible, use an empty pattern to get a
     // "pattern not found" message.
     compl_col = curs_col;
   } else {
-    compl_col = (int)((char_u *)compl_xp.xp_pattern - compl_pattern);
+    compl_col = (int)(compl_xp.xp_pattern - compl_pattern);
   }
   compl_length = curs_col - compl_col;
 
@@ -3528,7 +3526,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
   // it may have become invalid.
   char_u *line = ml_get(curwin->w_cursor.lnum);
   compl_length = curs_col - compl_col;
-  compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+  compl_pattern = (char *)vim_strnsave(line + compl_col, (size_t)compl_length);
 
   return OK;
 }
@@ -3553,7 +3551,7 @@ static int get_spell_compl_info(int startcol, colnr_T curs_col)
   }
   // Need to obtain "line" again, it may have become invalid.
   char_u *line = ml_get(curwin->w_cursor.lnum);
-  compl_pattern = vim_strnsave(line + compl_col, (size_t)compl_length);
+  compl_pattern = (char *)vim_strnsave(line + compl_col, (size_t)compl_length);
 
   return OK;
 }

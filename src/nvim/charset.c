@@ -1351,10 +1351,10 @@ bool try_getdigits(char **pp, intmax_t *nr)
 /// @param def       Default value, if parsing fails or overflow occurs.
 ///
 /// @return Number read from the string, or `def` on parse failure or overflow.
-intmax_t getdigits(char_u **pp, bool strict, intmax_t def)
+intmax_t getdigits(char **pp, bool strict, intmax_t def)
 {
   intmax_t number;
-  int ok = try_getdigits((char **)pp, &number);
+  int ok = try_getdigits(pp, &number);
   if (strict && !ok) {
     abort();
   }
@@ -1366,7 +1366,7 @@ intmax_t getdigits(char_u **pp, bool strict, intmax_t def)
 /// @see getdigits
 int getdigits_int(char **pp, bool strict, int def)
 {
-  intmax_t number = getdigits((char_u **)pp, strict, def);
+  intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_INT
   if (strict) {
     assert(number >= INT_MIN && number <= INT_MAX);
@@ -1380,7 +1380,7 @@ int getdigits_int(char **pp, bool strict, int def)
 /// Gets a long number from a string.
 ///
 /// @see getdigits
-long getdigits_long(char_u **pp, bool strict, long def)
+long getdigits_long(char **pp, bool strict, long def)
 {
   intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_LONG
@@ -1398,7 +1398,7 @@ long getdigits_long(char_u **pp, bool strict, long def)
 /// @see getdigits
 int32_t getdigits_int32(char **pp, bool strict, long def)
 {
-  intmax_t number = getdigits((char_u **)pp, strict, def);
+  intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_INT32_T
   if (strict) {
     assert(number >= INT32_MIN && number <= INT32_MAX);

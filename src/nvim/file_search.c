@@ -82,10 +82,9 @@ typedef struct ff_stack {
   char_u *ffs_fix_path;
   char_u *ffs_wc_path;
 
-  /* files/dirs found in the above directory, matched by the first wildcard
-   * of wc_part
-   */
-  char_u **ffs_filearray;
+  // files/dirs found in the above directory, matched by the first wildcard
+  // of wc_part
+  char **ffs_filearray;
   int ffs_filearray_size;
   char_u ffs_filearray_cur;                  // needed for partly handled dirs
 
@@ -683,12 +682,12 @@ char_u *vim_findfile(void *search_ctx_arg)
        * to handle the expansion of '**' into an empty string.
        */
       if (stackp->ffs_filearray == NULL) {
-        char_u *dirptrs[2];
+        char *dirptrs[2];
 
         /* we use filepath to build the path expand_wildcards() should
          * expand.
          */
-        dirptrs[0] = file_path;
+        dirptrs[0] = (char *)file_path;
         dirptrs[1] = NULL;
 
         // if we have a start dir copy it in
@@ -743,7 +742,7 @@ char_u *vim_findfile(void *search_ctx_arg)
             if (stackp->ffs_star_star_empty == 0) {
               // if not done before, expand '**' to empty
               stackp->ffs_star_star_empty = 1;
-              dirptrs[1] = stackp->ffs_fix_path;
+              dirptrs[1] = (char *)stackp->ffs_fix_path;
             }
           }
 
@@ -773,9 +772,9 @@ char_u *vim_findfile(void *search_ctx_arg)
          * Expand wildcards like "*" and "$VAR".
          * If the path is a URL don't try this.
          */
-        if (path_with_url((char *)dirptrs[0])) {
+        if (path_with_url(dirptrs[0])) {
           stackp->ffs_filearray = xmalloc(sizeof(char *));
-          stackp->ffs_filearray[0] = vim_strsave(dirptrs[0]);
+          stackp->ffs_filearray[0] = xstrdup(dirptrs[0]);
           stackp->ffs_filearray_size = 1;
         } else {
           /* Add EW_NOTWILD because the expanded path may contain
@@ -801,10 +800,9 @@ char_u *vim_findfile(void *search_ctx_arg)
            * We don't have further wildcards to expand, so we have to
            * check for the final file now.
            */
-          for (int i = stackp->ffs_filearray_cur;
-               i < stackp->ffs_filearray_size; ++i) {
-            if (!path_with_url((char *)stackp->ffs_filearray[i])
-                && !os_isdir(stackp->ffs_filearray[i])) {
+          for (int i = stackp->ffs_filearray_cur; i < stackp->ffs_filearray_size; i++) {
+            if (!path_with_url(stackp->ffs_filearray[i])
+                && !os_isdir((char_u *)stackp->ffs_filearray[i])) {
               continue;                 // not a directory
             }
             // prepare the filename to be checked for existence below
@@ -897,17 +895,13 @@ char_u *vim_findfile(void *search_ctx_arg)
             }
           }
         } else {
-          /*
-           * still wildcards left, push the directories for further
-           * search
-           */
-          for (int i = stackp->ffs_filearray_cur;
-               i < stackp->ffs_filearray_size; ++i) {
-            if (!os_isdir(stackp->ffs_filearray[i])) {
+          // still wildcards left, push the directories for further search
+          for (int i = stackp->ffs_filearray_cur; i < stackp->ffs_filearray_size; i++) {
+            if (!os_isdir((char_u *)stackp->ffs_filearray[i])) {
               continue;                 // not a directory
             }
             ff_push(search_ctx,
-                    ff_create_stack_element(stackp->ffs_filearray[i],
+                    ff_create_stack_element((char_u *)stackp->ffs_filearray[i],
                                             rest_of_wildcards,
                                             stackp->ffs_level - 1, 0));
           }
@@ -927,11 +921,11 @@ char_u *vim_findfile(void *search_ctx_arg)
                        stackp->ffs_fix_path) == 0) {
             continue;             // don't repush same directory
           }
-          if (!os_isdir(stackp->ffs_filearray[i])) {
+          if (!os_isdir((char_u *)stackp->ffs_filearray[i])) {
             continue;               // not a directory
           }
           ff_push(search_ctx,
-                  ff_create_stack_element(stackp->ffs_filearray[i],
+                  ff_create_stack_element((char_u *)stackp->ffs_filearray[i],
                                           stackp->ffs_wc_path, stackp->ffs_level - 1, 1));
         }
       }

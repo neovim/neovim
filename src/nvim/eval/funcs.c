@@ -2130,11 +2130,11 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char *errormsg = NULL;
 
   rettv->v_type = VAR_STRING;
-  char_u *cmdstr = (char_u *)xstrdup(tv_get_string(&argvars[0]));
+  char *cmdstr = xstrdup(tv_get_string(&argvars[0]));
 
   exarg_T eap = {
-    .cmd = (char *)cmdstr,
-    .arg = (char *)cmdstr,
+    .cmd = cmdstr,
+    .arg = cmdstr,
     .usefilter = false,
     .nextcmd = NULL,
     .cmdidx = CMD_USER,
@@ -2145,7 +2145,7 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (errormsg != NULL && *errormsg != NUL) {
     emsg(errormsg);
   }
-  rettv->vval.v_string = (char *)cmdstr;
+  rettv->vval.v_string = cmdstr;
 }
 
 /// "flatten(list[, {maxdepth}])" function
@@ -8347,7 +8347,7 @@ static void f_setqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *const block_len)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u *stropt = *pp;
+  char *stropt = (char *)(*pp);
   switch (*stropt) {
   case 'v':
   case 'c':  // character-wise selection
@@ -8369,7 +8369,7 @@ static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *c
   default:
     return FAIL;
   }
-  *pp = stropt;
+  *pp = (char_u *)stropt;
   return OK;
 }
 

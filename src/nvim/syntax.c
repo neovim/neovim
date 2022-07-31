@@ -227,12 +227,10 @@ static int current_sub_char = 0;
 #define MAX_SYN_INC_TAG 999         // maximum before the above overflow
 #define MAX_CLUSTER_ID  (32767 - SYNID_CLUSTER)
 
-/*
- * Annoying Hack(TM):  ":syn include" needs this pointer to pass to
- * expand_filename().  Most of the other syntax commands don't need it, so
- * instead of passing it to them, we stow it here.
- */
-static char_u **syn_cmdlinep;
+// Annoying Hack(TM):  ":syn include" needs this pointer to pass to
+// expand_filename().  Most of the other syntax commands don't need it, so
+// instead of passing it to them, we stow it here.
+static char **syn_cmdlinep;
 
 /*
  * Another Annoying Hack(TM):  To prevent rules from other ":syn include"'d
@@ -5602,7 +5600,7 @@ void ex_syntax(exarg_T *eap)
   char_u *arg = (char_u *)eap->arg;
   char_u *subcmd_end;
 
-  syn_cmdlinep = (char_u **)eap->cmdlinep;
+  syn_cmdlinep = eap->cmdlinep;
 
   // isolate subcommand name
   for (subcmd_end = arg; ASCII_ISALPHA(*subcmd_end); subcmd_end++) {}

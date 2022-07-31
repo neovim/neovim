@@ -501,7 +501,7 @@ static int sort_compare(const void *s1, const void *s2)
   return STRCMP(*(char **)s1, *(char **)s2);
 }
 
-void sort_strings(char_u **files, int count)
+void sort_strings(char **files, int count)
 {
   qsort((void *)files, (size_t)count, sizeof(char_u *), sort_compare);
 }

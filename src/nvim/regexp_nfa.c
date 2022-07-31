@@ -1807,7 +1807,7 @@ static int nfa_regatom(void)
   int got_coll_char;
   char_u *p;
   char_u *endp;
-  char_u *old_regparse = regparse;
+  char_u *old_regparse = (char_u *)regparse;
   int extra = 0;
   int emit_range;
   int negated;
@@ -1905,7 +1905,7 @@ static int nfa_regatom(void)
     // When '.' is followed by a composing char ignore the dot, so that
     // the composing char is matched here.
     if (c == Magic('.') && utf_iscomposing(peekchr())) {
-      old_regparse = regparse;
+      old_regparse = (char_u *)regparse;
       c = getchr();
       goto nfa_do_multibyte;
     }
@@ -2226,16 +2226,15 @@ collection:
      * - ranges, two characters followed by NFA_RANGE.
      */
 
-    p = regparse;
-    endp = skip_anyof(p);
+    p = (char_u *)regparse;
+    endp = skip_anyof((char *)p);
     if (*endp == ']') {
       /*
        * Try to reverse engineer character classes. For example,
        * recognize that [0-9] stands for \d and [A-Za-z_] for \h,
        * and perform the necessary substitutions in the NFA.
        */
-      int result = nfa_recognize_char_class(regparse, endp,
-                                            extra == NFA_ADD_NL);
+      int result = nfa_recognize_char_class((char_u *)regparse, endp, extra == NFA_ADD_NL);
       if (result != FAIL) {
         if (result >= NFA_FIRST_NL && result <= NFA_LAST_NL) {
           EMIT(result - NFA_ADD_NL);
@@ -2244,7 +2243,7 @@ collection:
         } else {
           EMIT(result);
         }
-        regparse = endp;
+        regparse = (char *)endp;
         MB_PTR_ADV(regparse);
         return OK;
       }
@@ -2269,7 +2268,7 @@ collection:
       }
       // Emit the OR branches for each character in the []
       emit_range = false;
-      while (regparse < endp) {
+      while ((char_u *)regparse < endp) {
         int oldstartc = startc;
         startc = -1;
         got_coll_char = false;
@@ -2376,7 +2375,7 @@ collection:
         // accepts "\t", "\e", etc., but only when the 'l' flag in
         // 'cpoptions' is not included.
         if (*regparse == '\\'
-            && regparse + 1 <= endp
+            && (char_u *)regparse + 1 <= endp
             && (vim_strchr(REGEXP_INRANGE, regparse[1]) != NULL
                 || (!reg_cpo_lit
                     && vim_strchr(REGEXP_ABBR, regparse[1])
@@ -2479,7 +2478,7 @@ collection:
       }
 
       // skip the trailing ]
-      regparse = endp;
+      regparse = (char *)endp;
       MB_PTR_ADV(regparse);
 
       // Mark end of the collection.
@@ -2531,7 +2530,7 @@ nfa_do_multibyte:
         c = utf_ptr2char((char *)old_regparse + i);
       }
       EMIT(NFA_COMPOSING);
-      regparse = old_regparse + plen;
+      regparse = (char *)old_regparse + plen;
     } else {
       c = no_Magic(c);
       EMIT(c);

@@ -176,12 +176,10 @@ static int backslash_trans(int c)
   return c;
 }
 
-/*
- * Check for a character class name "[:name:]".  "pp" points to the '['.
- * Returns one of the CLASS_ items. CLASS_NONE means that no item was
- * recognized.  Otherwise "pp" is advanced to after the item.
- */
-static int get_char_class(char_u **pp)
+/// Check for a character class name "[:name:]".  "pp" points to the '['.
+/// Returns one of the CLASS_ items. CLASS_NONE means that no item was
+/// recognized.  Otherwise "pp" is advanced to after the item.
+static int get_char_class(char **pp)
 {
   static const char *(class_names[]) =
   {
@@ -306,7 +304,7 @@ static void init_class_tab(void)
 
 // Global work variables for vim_regcomp().
 
-static char_u *regparse;        ///< Input-scan pointer.
+static char *regparse;          ///< Input-scan pointer.
 static int regnpar;             ///< () count.
 static bool wants_nfa;          ///< regex should use NFA engine
 static int regnzpar;            ///< \z() count.
@@ -395,11 +393,11 @@ int re_multiline(const regprog_T *prog)
  * Returns a character representing the class. Zero means that no item was
  * recognized.  Otherwise "pp" is advanced to after the item.
  */
-static int get_equi_class(char_u **pp)
+static int get_equi_class(char **pp)
 {
   int c;
   int l = 1;
-  char_u *p = *pp;
+  char_u *p = (char_u *)(*pp);
 
   if (p[1] == '=' && p[2] != NUL) {
     l = utfc_ptr2len((char *)p + 2);
@@ -418,11 +416,11 @@ static int get_equi_class(char_u **pp)
  * "pp" is advanced to after the item.
  * Currently only single characters are recognized!
  */
-static int get_coll_element(char_u **pp)
+static int get_coll_element(char **pp)
 {
   int c;
   int l = 1;
-  char_u *p = *pp;
+  char_u *p = (char_u *)(*pp);
 
   if (p[0] != NUL && p[1] == '.' && p[2] != NUL) {
     l = utfc_ptr2len((char *)p + 2);
@@ -442,12 +440,10 @@ static void get_cpo_flags(void)
   reg_cpo_lit = vim_strchr(p_cpo, CPO_LITERAL) != NULL;
 }
 
-/*
- * Skip over a "[]" range.
- * "p" must point to the character after the '['.
- * The returned pointer is on the matching ']', or the terminating NUL.
- */
-static char_u *skip_anyof(char_u *p)
+/// Skip over a "[]" range.
+/// "p" must point to the character after the '['.
+/// The returned pointer is on the matching ']', or the terminating NUL.
+static char_u *skip_anyof(char *p)
 {
   int l;
 
@@ -458,7 +454,7 @@ static char_u *skip_anyof(char_u *p)
     p++;
   }
   while (*p != NUL && *p != ']') {
-    if ((l = utfc_ptr2len((char *)p)) > 1) {
+    if ((l = utfc_ptr2len(p)) > 1) {
       p += l;
     } else if (*p == '-') {
       p++;
@@ -482,7 +478,7 @@ static char_u *skip_anyof(char_u *p)
     }
   }
 
-  return p;
+  return (char_u *)p;
 }
 
 /*
@@ -512,7 +508,7 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
     }
     if ((p[0] == '[' && mymagic >= MAGIC_ON)
         || (p[0] == '\\' && p[1] == '[' && mymagic <= MAGIC_OFF)) {
-      p = skip_anyof(p + 1);
+      p = skip_anyof((char *)p + 1);
       if (p[0] == NUL) {
         break;
       }
@@ -547,7 +543,7 @@ static int prev_at_start;  // True when on the second character
  */
 static void initchr(char_u *str)
 {
-  regparse = str;
+  regparse = (char *)str;
   prevchr_len = 0;
   curchr = prevprevchr = prevchr = nextchr = -1;
   at_start = true;
@@ -560,7 +556,7 @@ static void initchr(char_u *str)
  */
 static void save_parse_state(parse_state_T *ps)
 {
-  ps->regparse = regparse;
+  ps->regparse = (char_u *)regparse;
   ps->prevchr_len = prevchr_len;
   ps->curchr = curchr;
   ps->prevchr = prevchr;
@@ -576,7 +572,7 @@ static void save_parse_state(parse_state_T *ps)
  */
 static void restore_parse_state(parse_state_T *ps)
 {
-  regparse = ps->regparse;
+  regparse = (char *)ps->regparse;
   prevchr_len = ps->prevchr_len;
   curchr = ps->curchr;
   prevchr = ps->prevchr;
@@ -598,7 +594,7 @@ static int peekchr(void)
     return curchr;
   }
 
-  switch (curchr = regparse[0]) {
+  switch (curchr = (uint8_t)regparse[0]) {
   case '.':
   case '[':
   case '~':
@@ -669,7 +665,7 @@ static int peekchr(void)
     // '$' is only magic as the very last char and if it's in front of
     // either "\|", "\)", "\&", or "\n"
     if (reg_magic >= MAGIC_OFF) {
-      char_u *p = regparse + 1;
+      char_u *p = (char_u *)regparse + 1;
       bool is_magic_all = (reg_magic == MAGIC_ALL);
 
       // ignore \c \C \m \M \v \V and \Z after '$'
@@ -696,7 +692,7 @@ static int peekchr(void)
     }
     break;
   case '\\': {
-    int c = regparse[1];
+    int c = (uint8_t)regparse[1];
 
     if (c == NUL) {
       curchr = '\\';  // trailing '\'
@@ -725,13 +721,13 @@ static int peekchr(void)
     } else {
       // Next character can never be (made) magic?
       // Then backslashing it won't do anything.
-      curchr = utf_ptr2char((char *)regparse + 1);
+      curchr = utf_ptr2char(regparse + 1);
     }
     break;
   }
 
   default:
-    curchr = utf_ptr2char((char *)regparse);
+    curchr = utf_ptr2char(regparse);
   }
 
   return curchr;
@@ -750,7 +746,7 @@ static void skipchr(void)
   }
   if (regparse[prevchr_len] != NUL) {
     // Exclude composing chars that utfc_ptr2len does include.
-    prevchr_len += utf_ptr2len((char *)regparse + prevchr_len);
+    prevchr_len += utf_ptr2len(regparse + prevchr_len);
   }
   regparse += prevchr_len;
   prev_at_start = at_start;
@@ -820,8 +816,8 @@ static int64_t gethexchrs(int maxinputlen)
   int c;
   int i;
 
-  for (i = 0; i < maxinputlen; ++i) {
-    c = regparse[0];
+  for (i = 0; i < maxinputlen; i++) {
+    c = (uint8_t)regparse[0];
     if (!ascii_isxdigit(c)) {
       break;
     }
@@ -846,8 +842,8 @@ static int64_t getdecchrs(void)
   int c;
   int i;
 
-  for (i = 0;; ++i) {
-    c = regparse[0];
+  for (i = 0;; i++) {
+    c = (uint8_t)regparse[0];
     if (c < '0' || c > '9') {
       break;
     }
@@ -878,7 +874,7 @@ static int64_t getoctchrs(void)
   int i;
 
   for (i = 0; i < 3 && nr < 040; i++) {  // -V536
-    c = regparse[0];
+    c = (uint8_t)regparse[0];
     if (c < '0' || c > '7') {
       break;
     }
@@ -910,7 +906,7 @@ static int read_limits(long *minval, long *maxval)
     regparse++;
     reverse = true;
   }
-  first_char = regparse;
+  first_char = (char_u *)regparse;
   *minval = getdigits_long(&regparse, false, 0);
   if (*regparse == ',') {           // There is a comma.
     if (ascii_isdigit(*++regparse)) {

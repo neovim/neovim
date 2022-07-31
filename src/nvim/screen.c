@@ -4761,8 +4761,7 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
 /// If inversion is possible we use it. Else '=' characters are used.
 ///
 /// @param matches  list of matches
-void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, int match,
-                             int showtail)
+void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int match, int showtail)
 {
 #define L_MATCH(m) (showtail ? sm_gettail(matches[m], false) : matches[m])
   int row;
@@ -4793,7 +4792,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
     highlight = false;
   }
   // count 1 for the ending ">"
-  clen = status_match_len(xp, L_MATCH(match)) + 3;
+  clen = status_match_len(xp, (char_u *)L_MATCH(match)) + 3;
   if (match == 0) {
     first_match = 0;
   } else if (match < first_match) {
@@ -4802,8 +4801,8 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
     add_left = true;
   } else {
     // check if match fits on the screen
-    for (i = first_match; i < match; ++i) {
-      clen += status_match_len(xp, L_MATCH(i)) + 2;
+    for (i = first_match; i < match; i++) {
+      clen += status_match_len(xp, (char_u *)L_MATCH(i)) + 2;
     }
     if (first_match > 0) {
       clen += 2;
@@ -4813,8 +4812,8 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
       first_match = match;
       // if showing the last match, we can add some on the left
       clen = 2;
-      for (i = match; i < num_matches; ++i) {
-        clen += status_match_len(xp, L_MATCH(i)) + 2;
+      for (i = match; i < num_matches; i++) {
+        clen += status_match_len(xp, (char_u *)L_MATCH(i)) + 2;
         if ((long)clen >= Columns) {
           break;
         }
@@ -4826,7 +4825,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
   }
   if (add_left) {
     while (first_match > 0) {
-      clen += status_match_len(xp, L_MATCH(first_match - 1)) + 2;
+      clen += status_match_len(xp, (char_u *)L_MATCH(first_match - 1)) + 2;
       if ((long)clen >= Columns) {
         break;
       }
@@ -4846,13 +4845,13 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char_u **matches, in
   clen = len;
 
   i = first_match;
-  while (clen + status_match_len(xp, L_MATCH(i)) + 2 < Columns) {
+  while (clen + status_match_len(xp, (char_u *)L_MATCH(i)) + 2 < Columns) {
     if (i == match) {
       selstart = buf + len;
       selstart_col = clen;
     }
 
-    s = L_MATCH(i);
+    s = (char_u *)L_MATCH(i);
     // Check for menu separators - replace with '|'
     emenu = (xp->xp_context == EXPAND_MENUS
              || xp->xp_context == EXPAND_MENUNAMES);

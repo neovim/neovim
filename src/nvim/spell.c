@@ -7319,7 +7319,7 @@ void spell_expand_check_cap(colnr_T col)
 // Used for Insert mode completion CTRL-X ?.
 // Returns the number of matches.  The matches are in "matchp[]", array of
 // allocated strings.
-int expand_spelling(linenr_T lnum, char_u *pat, char_u ***matchp)
+int expand_spelling(linenr_T lnum, char_u *pat, char ***matchp)
 {
   garray_T ga;
 

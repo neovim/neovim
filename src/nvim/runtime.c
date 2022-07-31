@@ -74,14 +74,14 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
 {
   char_u *tail;
   int num_files;
-  char_u **files;
+  char **files;
   int i;
   bool did_one = false;
 
   // Make a copy of 'runtimepath'.  Invoking the callback may change the
   // value.
   char_u *rtp_copy = vim_strsave(path);
-  char_u *buf = xmallocz(MAXPATHL);
+  char *buf = xmallocz(MAXPATHL);
   {
     if (p_verbose > 10 && name != NULL) {
       verbose_enter();
@@ -93,7 +93,7 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
     char_u *rtp = rtp_copy;
     while (*rtp != NUL && ((flags & DIP_ALL) || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
-      copy_option_part((char **)&rtp, (char *)buf, MAXPATHL, ",");
+      copy_option_part((char **)&rtp, buf, MAXPATHL, ",");
       size_t buflen = STRLEN(buf);
 
       // Skip after or non-after directories.
@@ -107,18 +107,19 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
       }
 
       if (name == NULL) {
-        (*callback)((char *)buf, cookie);
+        (*callback)(buf, cookie);
         did_one = true;
       } else if (buflen + STRLEN(name) + 2 < MAXPATHL) {
-        add_pathsep((char *)buf);
-        tail = buf + STRLEN(buf);
+        add_pathsep(buf);
+        tail = (char_u *)buf + STRLEN(buf);
 
         // Loop over all patterns in "name"
         char_u *np = (char_u *)name;
         while (*np != NUL && ((flags & DIP_ALL) || !did_one)) {
           // Append the pattern from "name" to buf[].
-          assert(MAXPATHL >= (tail - buf));
-          copy_option_part((char **)&np, (char *)tail, (size_t)(MAXPATHL - (tail - buf)), "\t ");
+          assert(MAXPATHL >= (tail - (char_u *)buf));
+          copy_option_part((char **)&np, (char *)tail, (size_t)(MAXPATHL - (tail - (char_u *)buf)),
+                           "\t ");
 
           if (p_verbose > 10) {
             verbose_enter();
@@ -132,7 +133,7 @@ int do_in_path(char_u *path, char *name, int flags, DoInRuntimepathCB callback, 
           // Expand wildcards, invoke the callback for each match.
           if (gen_expand_wildcards(1, &buf, &num_files, &files, ew_flags) == OK) {
             for (i = 0; i < num_files; i++) {
-              (*callback)((char *)files[i], cookie);
+              (*callback)(files[i], cookie);
               did_one = true;
               if (!(flags & DIP_ALL)) {
                 break;
@@ -211,7 +212,7 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
 {
   char_u *tail;
   int num_files;
-  char_u **files;
+  char **files;
   int i;
   bool did_one = false;
 
@@ -263,10 +264,10 @@ int do_in_cached_path(char_u *name, int flags, DoInRuntimepathCB callback, void 
                        | (flags & DIP_DIRFILE) ? (EW_DIR|EW_FILE) : 0;
 
         // Expand wildcards, invoke the callback for each match.
-        char_u *(pat[]) = { buf };
+        char *(pat[]) = { (char *)buf };
         if (gen_expand_wildcards(1, pat, &num_files, &files, ew_flags) == OK) {
           for (i = 0; i < num_files; i++) {
-            (*callback)((char *)files[i], cookie);
+            (*callback)(files[i], cookie);
             did_one = true;
             if (!(flags & DIP_ALL)) {
               break;
@@ -458,11 +459,11 @@ static void expand_rtp_entry(RuntimeSearchPath *search_path, Map(String, handle_
   }
 
   int num_files;
-  char_u **files;
-  char_u *(pat[]) = { (char_u *)entry };
+  char **files;
+  char *(pat[]) = { entry };
   if (gen_expand_wildcards(1, pat, &num_files, &files, EW_DIR) == OK) {
     for (int i = 0; i < num_files; i++) {
-      push_path(search_path, rtp_used, (char *)files[i], after);
+      push_path(search_path, rtp_used, files[i], after);
     }
     FreeWild(num_files, files);
   }
@@ -488,7 +489,7 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle
   }
 }
 
-static bool path_is_after(char_u *buf, size_t buflen)
+static bool path_is_after(char *buf, size_t buflen)
 {
   // NOTE: we only consider dirs exactly matching "after" to be an AFTER dir.
   // vim8 considers all dirs like "foo/bar_after", "Xafter" etc, as an
@@ -525,7 +526,7 @@ RuntimeSearchPath runtime_search_path_build(void)
     copy_option_part(&rtp_entry, (char *)buf, MAXPATHL, ",");
     size_t buflen = STRLEN(buf);
 
-    if (path_is_after(buf, buflen)) {
+    if (path_is_after((char *)buf, buflen)) {
       rtp_entry = cur_entry;
       break;
     }
@@ -557,7 +558,7 @@ RuntimeSearchPath runtime_search_path_build(void)
   // "after" dirs in rtp
   for (; *rtp_entry != NUL;) {
     copy_option_part(&rtp_entry, (char *)buf, MAXPATHL, ",");
-    expand_rtp_entry(&search_path, &rtp_used, (char *)buf, path_is_after(buf, STRLEN(buf)));
+    expand_rtp_entry(&search_path, &rtp_used, (char *)buf, path_is_after((char *)buf, STRLEN(buf)));
   }
 
   // strings are not owned
@@ -640,14 +641,14 @@ int source_in_path(char_u *path, char_u *name, int flags)
 
 // Expand wildcards in "pat" and invoke do_source()/nlua_exec_file()
 // for each match.
-static void source_all_matches(char_u *pat)
+static void source_all_matches(char *pat)
 {
   int num_files;
-  char_u **files;
+  char **files;
 
   if (gen_expand_wildcards(1, &pat, &num_files, &files, EW_FILE) == OK) {
     for (int i = 0; i < num_files; i++) {
-      (void)do_source((char *)files[i], false, DOSO_NONE);
+      (void)do_source(files[i], false, DOSO_NONE);
     }
     FreeWild(num_files, files);
   }
@@ -811,9 +812,9 @@ static int load_pack_plugin(bool opt, char_u *fname)
   char_u *pat = xmallocz(len);
 
   vim_snprintf((char *)pat, len, "%s/plugin/**/*.vim", ffname);  // NOLINT
-  source_all_matches(pat);
+  source_all_matches((char *)pat);
   vim_snprintf((char *)pat, len, "%s/plugin/**/*.lua", ffname);  // NOLINT
-  source_all_matches(pat);
+  source_all_matches((char *)pat);
 
   char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
 
@@ -822,9 +823,9 @@ static int load_pack_plugin(bool opt, char_u *fname)
   if (opt && eval_to_number((char *)cmd) > 0) {
     do_cmdline_cmd("augroup filetypedetect");
     vim_snprintf((char *)pat, len, ftpat, ffname);
-    source_all_matches(pat);
+    source_all_matches((char *)pat);
     vim_snprintf((char *)pat, len, "%s/ftdetect/*.lua", ffname);  // NOLINT
-    source_all_matches(pat);
+    source_all_matches((char *)pat);
     do_cmdline_cmd("augroup END");
   }
   xfree(cmd);
@@ -886,8 +887,8 @@ void add_pack_start_dirs(void)
 static bool pack_has_entries(char_u *buf)
 {
   int num_files;
-  char_u **files;
-  char_u *(pat[]) = { buf };
+  char **files;
+  char *(pat[]) = { (char *)buf };
   if (gen_expand_wildcards(1, pat, &num_files, &files, EW_DIR) == OK) {
     FreeWild(num_files, files);
   }

@@ -6474,7 +6474,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
     }
     // Only recognize ":123" here
     if (file_lnum != NULL && ptr[len] == ':' && isdigit(ptr[len + 1])) {
-      char_u *p = ptr + len + 1;
+      char *p = (char *)ptr + len + 1;
 
       *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
     }
@@ -6600,7 +6600,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
       }
       p = skipwhite(p);
       if (isdigit(*p)) {
-        *file_lnum = (linenr_T)getdigits_long((char_u **)&p, false, 0);
+        *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
       }
     }
   }
