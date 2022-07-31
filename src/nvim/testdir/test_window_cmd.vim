@@ -1074,7 +1074,6 @@ func Test_split_cmds_with_no_room()
 endfunc
 
 func Test_window_resize()
-  throw 'Skipped: Nvim supports cmdheight=0'
   " Vertical :resize (absolute, relative, min and max size).
   vsplit
   vert resize 8
