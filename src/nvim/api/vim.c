@@ -1447,7 +1447,8 @@ ArrayOf(Dictionary) nvim_get_keymap(uint64_t channel_id, String mode)
 ///               Unknown key is an error. "desc" can be used to give a
 ///               description to the mapping. When called from Lua, also accepts a
 ///               "callback" key that takes a Lua function to call when the
-///               mapping is executed.
+///               mapping is executed. "replace_keycodes" can be used with "expr"
+///               to replace keycodes, see |nvim_replace_termcodes()|.
 /// @param[out]   err   Error details, if any.
 void nvim_set_keymap(uint64_t channel_id, String mode, String lhs, String rhs, Dict(keymap) *opts,
                      Error *err)

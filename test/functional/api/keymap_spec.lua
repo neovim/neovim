@@ -822,12 +822,22 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it('can make lua expr mappings', function()
     exec_lua [[
-      vim.api.nvim_set_keymap ('n', 'aa', '', {callback = function() return vim.api.nvim_replace_termcodes(':lua SomeValue = 99<cr>', true, false, true) end, expr = true })
+      vim.api.nvim_set_keymap ('n', 'aa', '', {callback = function() return ':lua SomeValue = 99<cr>' end, expr = true, replace_keycodes = true })
     ]]
 
     feed('aa')
 
     eq(99, exec_lua[[return SomeValue]])
+  end)
+
+  it('can make lua expr mappings without replacing keycodes', function()
+    exec_lua [[
+      vim.api.nvim_set_keymap ('i', 'aa', '', {callback = function() return '<space>' end, expr = true })
+    ]]
+
+    feed('iaa<esc>')
+
+    eq({'<space>'}, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('does not reset pum in lua mapping', function()
@@ -1020,13 +1030,24 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
   it('can make lua expr mappings', function()
     exec_lua [[
-      vim.api.nvim_buf_set_keymap (0, 'n', 'aa', '', {callback = function() return vim.api.nvim_replace_termcodes(':lua SomeValue = 99<cr>', true, false, true) end, expr = true })
+      vim.api.nvim_buf_set_keymap (0, 'n', 'aa', '', {callback = function() return ':lua SomeValue = 99<cr>' end, expr = true, replace_keycodes = true })
     ]]
 
     feed('aa')
 
     eq(99, exec_lua[[return SomeValue ]])
   end)
+
+  it('can make lua expr mappings without replacing keycodes', function()
+    exec_lua [[
+      vim.api.nvim_buf_set_keymap (0, 'i', 'aa', '', {callback = function() return '<space>' end, expr = true })
+    ]]
+
+    feed('iaa<esc>')
+
+    eq({'<space>'}, meths.buf_get_lines(0, 0, -1, false))
+  end)
+
 
   it('can overwrite lua mappings', function()
     eq(0, exec_lua [[

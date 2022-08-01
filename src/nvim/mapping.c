@@ -715,6 +715,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                   mp->m_mode = mode;
                   mp->m_simplified = keyround1_simplified;
                   mp->m_expr = args->expr;
+                  mp->m_replace_keycodes = args->replace_keycodes;
                   mp->m_script_ctx = current_sctx;
                   mp->m_script_ctx.sc_lnum += sourcing_lnum;
                   nlua_set_sctx(&mp->m_script_ctx);
@@ -806,6 +807,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     mp->m_mode = mode;
     mp->m_simplified = keyround1_simplified;  // Notice this when porting patch 8.2.0807
     mp->m_expr = args->expr;
+    mp->m_replace_keycodes = args->replace_keycodes;
     mp->m_script_ctx = current_sctx;
     mp->m_script_ctx.sc_lnum += sourcing_lnum;
     nlua_set_sctx(&mp->m_script_ctx);
@@ -1513,7 +1515,6 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
 /// @param c  NUL or typed character for abbreviation
 char_u *eval_map_expr(mapblock_T *mp, int c)
 {
-  char_u *res;
   char_u *p = NULL;
   char_u *expr = NULL;
   pos_T save_cursor;
@@ -1560,8 +1561,15 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
   if (p == NULL) {
     return NULL;
   }
-  // Escape K_SPECIAL in the result to be able to use the string as typeahead.
-  res = (char_u *)vim_strsave_escape_ks((char *)p);
+
+  char_u *res = NULL;
+
+  if (mp->m_replace_keycodes) {
+    replace_termcodes((char *)p, STRLEN(p), (char **)&res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+  } else {
+    // Escape K_SPECIAL in the result to be able to use the string as typeahead.
+    res = (char_u *)vim_strsave_escape_ks((char *)p);
+  }
   xfree(p);
 
   return res;
@@ -2011,6 +2019,9 @@ static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, l
   tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)mp->m_script_ctx.sc_lnum);
   tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
   tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
+  if (mp->m_replace_keycodes) {
+    tv_dict_add_nr(dict, S_LEN("replace_keycodes"), 1);
+  }
   tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
 }
 
@@ -2392,9 +2403,15 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     KEY_TO_BOOL(script);
     KEY_TO_BOOL(expr);
     KEY_TO_BOOL(unique);
+    KEY_TO_BOOL(replace_keycodes);
 #undef KEY_TO_BOOL
   }
   parsed_args.buffer = !global;
+
+  if (parsed_args.replace_keycodes && !parsed_args.expr) {
+    api_set_error(err, kErrorTypeValidation,  "\"replace_keycodes\" requires \"expr\"");
+    goto fail_and_free;
+  }
 
   if (!set_maparg_lhs_rhs(lhs.data, lhs.size,
                           rhs.data, rhs.size, lua_funcref,
