@@ -1519,13 +1519,11 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
 /// @param c  NUL or typed character for abbreviation
 char_u *eval_map_expr(mapblock_T *mp, int c)
 {
-  char_u *res;
   char_u *p = NULL;
   char_u *expr = NULL;
   pos_T save_cursor;
   int save_msg_col;
   int save_msg_row;
-  bool replaced = false;
 
   // Remove escaping of K_SPECIAL, because "str" is in a format to be used as
   // typeahead.
@@ -1554,15 +1552,6 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
       semsg_multiline("E5108: %s", err.msg);
       api_clear_error(&err);
     }
-    if (p && mp->m_replace_keycodes) {
-      char *buf = NULL;
-      replace_termcodes((char *)p, STRLEN(p), &buf, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
-      if (buf) {
-        xfree(p);
-        p = (char_u *)buf;
-        replaced = true;
-      }
-    }
   } else {
     p = (char_u *)eval_to_string((char *)expr, NULL, false);
     xfree(expr);
@@ -1576,8 +1565,15 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
   if (p == NULL) {
     return NULL;
   }
-  // Escape K_SPECIAL in the result to be able to use the string as typeahead.
-  res = replaced ? p : (char_u *)vim_strsave_escape_ks((char *)p);
+
+  char_u *res = NULL;
+
+  if (mp->m_replace_keycodes) {
+    replace_termcodes((char *)p, STRLEN(p), (char **)&res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+  } else {
+    // Escape K_SPECIAL in the result to be able to use the string as typeahead.
+    res = (char_u *)vim_strsave_escape_ks((char *)p);
+  }
   xfree(p);
 
   return res;
