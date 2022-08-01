@@ -196,7 +196,6 @@ static void aupat_show(AutoPat *ap, event_T event, int previous_group)
     if (ac->desc != NULL) {
       size_t msglen = 100;
       char *msg = (char *)xmallocz(msglen);
-      // TODO(ii14): move desc to a new line
       if (ac->exec.type == CALLABLE_CB) {
         msg_puts_attr(exec_to_string, HL_ATTR(HLF_8));
         snprintf(msg, msglen, " [%s]", ac->desc);
