@@ -253,6 +253,27 @@ func Check_ctrlb_map(d, check_alt)
   endif
 endfunc
 
+func Test_map_local()
+  nmap a global
+  nmap <buffer>a local
+
+  let prev_map_list = split(execute('nmap a'), "\n")
+  call assert_match('n\s*a\s*@local', prev_map_list[0])
+  call assert_match('n\s*a\s*global', prev_map_list[1])
+
+  let mapping = maparg('a', 'n', 0, 1)
+  call assert_equal(1, mapping.buffer)
+  let mapping.rhs = 'new_local'
+  call mapset('n', 0, mapping)
+
+  " Check that the global mapping is left untouched.
+  let map_list = split(execute('nmap a'), "\n")
+  call assert_match('n\s*a\s*@new_local', map_list[0])
+  call assert_match('n\s*a\s*global', map_list[1])
+
+  nunmap a
+endfunc
+
 func Test_map_restore()
   " Test restoring map with alternate keycode
   nmap <C-B> back

@@ -2171,23 +2171,21 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     .silent = tv_dict_get_number(d, "silent") != 0,
     .nowait = tv_dict_get_number(d, "nowait") != 0,
   };
-
   scid_T sid = (scid_T)tv_dict_get_number(d, "sid");
   linenr_T lnum = (linenr_T)tv_dict_get_number(d, "lnum");
-
-  mapblock_T **map_table = maphash;
-  mapblock_T **abbr_table = &first_abbr;
-
-  if (tv_dict_get_number(d, "buffer") != 0) {
-    map_table = curbuf->b_maphash;
-    abbr_table = &curbuf->b_first_abbr;
-  }
+  bool buffer = tv_dict_get_number(d, "buffer") != 0;
   // mode from the dict is not used
 
+  mapblock_T **map_table = buffer ? curbuf->b_maphash : maphash;
+  mapblock_T **abbr_table = buffer ? &curbuf->b_first_abbr : &first_abbr;
+
   // Delete any existing mapping for this lhs and mode.
-  char_u *arg = vim_strsave((char_u *)lhs);
-  do_map(1, arg, mode, is_abbr);  // TODO: refactor this later
-  xfree(arg);
+  MapArguments unmap_args = MAP_ARGUMENTS_INIT;
+  set_maparg_lhs_rhs(lhs, strlen(lhs), rhs, strlen(rhs), LUA_NOREF, 0, &unmap_args);
+  unmap_args.buffer = buffer;
+  buf_do_map(1, &unmap_args, mode, false, curbuf);
+  xfree(unmap_args.rhs);
+  xfree(unmap_args.orig_rhs);
 
   if (lhsrawalt != NULL) {
     map_add(curbuf, map_table, abbr_table, (char_u *)lhsrawalt, &args, noremap, mode, is_abbr,
@@ -2219,7 +2217,7 @@ void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// @param buffer  If true, make a buffer-local mapping for curbuf
 void add_map(char *lhs, char *rhs, int mode, bool buffer)
 {
-  MapArguments args = { 0 };
+  MapArguments args = MAP_ARGUMENTS_INIT;
   set_maparg_lhs_rhs(lhs, strlen(lhs), rhs, strlen(rhs), LUA_NOREF, 0, &args);
   args.buffer = buffer;
 
