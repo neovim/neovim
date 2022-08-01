@@ -85,6 +85,12 @@ func Test_maparg()
   call assert_equal(['{', 'w', 's'], [d.lhs, d.rhs, d.mode])
   sunmap {
 
+  map <C-I> foo
+  unmap <Tab>
+  " This used to cause a segfault
+  call maparg('<C-I>', '', 0, 1)
+  unmap <C-I>
+
   map abc <Nop>
   call assert_equal("<Nop>", maparg('abc'))
   unmap abc
@@ -93,6 +99,7 @@ func Test_maparg()
   let d = maparg('esc', 'i', 1, 1)
   call assert_equal(['esc', "\<C-V>\<C-V>\<Esc>", '!'], [d.lhs, d.rhs, d.mode])
   abclear
+  unlet d
 endfunc
 
 func Test_mapcheck()
