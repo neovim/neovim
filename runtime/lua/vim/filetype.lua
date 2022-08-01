@@ -2275,9 +2275,9 @@ end
 ---       priority = -math.huge,
 ---       function(path, bufnr)
 ---         local content = vim.filetype.getlines(bufnr, 1)
----         if vim.filetype.matchregex(content, { [[^#!.*\\<mine\\>]] }) then
+---         if vim.filetype.matchregex(content, [[^#!.*\\<mine\\>]]) then
 ---           return 'mine'
----         elseif vim.filetype.matchregex(content, { [[\\<drawing\\>]] }) then
+---         elseif vim.filetype.matchregex(content, [[\\<drawing\\>]]) then
 ---           return 'drawing'
 ---         end
 ---       end,
