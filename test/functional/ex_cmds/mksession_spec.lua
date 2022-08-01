@@ -37,7 +37,6 @@ describe(':mksession', function()
 
     -- Create three windows: first two from top show same terminal, third -
     -- another one (created earlier).
-    command('set sessionoptions+=terminal')
     command('terminal')
     command('split')
     command('terminal')
@@ -173,7 +172,6 @@ describe(':mksession', function()
     cwd_dir = cwd_dir:gsub([[\]], '/') -- :mksession always uses unix slashes.
     local session_path = cwd_dir .. '/' .. session_file
 
-    command('set sessionoptions+=terminal')
     command('cd ' .. tab_dir)
     command('terminal')
     command('cd ' .. cwd_dir)
@@ -223,7 +221,6 @@ describe(':mksession', function()
     screen:expect(expected_screen)
 
     command('cd ' .. cwd_dir)
-    command('set sessionoptions+=terminal')
     command('mksession ' .. session_path)
     command('%bwipeout!')
 
