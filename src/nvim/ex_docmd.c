@@ -5829,8 +5829,11 @@ static void uc_list(char *name, size_t name_len)
       if (cmd->uc_luaref != LUA_NOREF) {
         char *fn = nlua_funcref_str(cmd->uc_luaref);
         msg_puts_attr(fn, HL_ATTR(HLF_8));
-        msg_putchar(' ');
         xfree(fn);
+        // put the description on a new line
+        if (*cmd->uc_rep != NUL) {
+          msg_puts("\n                                               ");
+        }
       }
 
       msg_outtrans_special(cmd->uc_rep, false,
