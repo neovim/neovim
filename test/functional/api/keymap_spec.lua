@@ -35,6 +35,7 @@ describe('nvim_get_keymap', function()
     mode='n',
     noremap=1,
     lnum=0,
+    replace_keycodes=0,
   }
 
   it('returns empty list when no map', function()
@@ -258,6 +259,7 @@ describe('nvim_get_keymap', function()
       nowait=0,
       noremap=1,
       lnum=0,
+      replace_keycodes=0,
     }
     local function cpomap(lhs, rhs, mode)
       local ret = shallowcopy(cpo_table)
@@ -316,6 +318,7 @@ describe('nvim_get_keymap', function()
       nowait=0,
       noremap=1,
       lnum=0,
+      replace_keycodes=0,
     }
     command('nnoremap \\|<Char-0x20><Char-32><Space><Bar> \\|<Char-0x20><Char-32><Space> <Bar>')
     eq({space_table}, meths.get_keymap('n'))
@@ -349,6 +352,7 @@ describe('nvim_get_keymap', function()
       mode='n',
       noremap=0,
       lnum=0,
+      replace_keycodes=0,
     }, mapargs[1])
   end)
 
@@ -366,7 +370,8 @@ describe('nvim_get_keymap', function()
       mode='n',
       noremap=0,
       lnum=0,
-      desc='map description'
+      desc='map description',
+      replace_keycodes=0,
     }, meths.get_keymap('n')[1])
   end)
 end)
