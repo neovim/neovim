@@ -2231,6 +2231,7 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                             • remap: (boolean) Make the mapping recursive.
                               This is the inverse of the "noremap" option from
                               |nvim_set_keymap()|. Default `false`.
+                            • replace_keycodes: (boolean) defaults to true.
 
                 See also: ~
                     |nvim_set_keymap()|
