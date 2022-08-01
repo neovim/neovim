@@ -790,10 +790,9 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'sourcehut' or name == 'github')
-  local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
+  assert(any or name == 'github')
   local gh = ((any or name == 'github') and nil ~= os.getenv('GITHUB_ACTIONS'))
-  return sh or gh
+  return gh
 
 end
 
