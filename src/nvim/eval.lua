@@ -250,6 +250,7 @@ return {
     map={args=2, base=1},
     maparg={args={1, 4}, base=1},
     mapcheck={args={1, 3}, base=1},
+    mapset={args=3, base=1},
     match={args={2, 4}, base=1},
     matchadd={args={2, 5}, base=1},
     matchaddpos={args={2, 5}, base=1},

@@ -295,6 +295,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])
 					rhs of mapping {name} in mode {mode}
 mapcheck({name} [, {mode} [, {abbr}]])
 				String	check for mappings matching {name}
+mapset({name}, {mode}, {abbr}, {dict}
+				none	restore mapping from |maparg()| result
 match({expr}, {pat} [, {start} [, {count}]])
 				Number	position where {pat} matches in {expr}
 matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
@@ -4716,6 +4718,7 @@ map({expr1}, {expr2})					*map()*
 		Can also be used as a |method|: >
 			mylist->map(expr2)
 
+
 maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		When {dict} is omitted or zero: Return the rhs of mapping
 		{name} in mode {mode}.  The returned String has special
@@ -4767,6 +4770,10 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		  "lnum"     The line number in "sid", zero if unknown.
 		  "nowait"   Do not wait for other, longer mappings.
 			     (|:map-<nowait>|).
+		  "simplified"
+
+		The dictionary can be used to restore a mapping with
+		|mapset()|.
 
 		The mappings local to the current buffer are checked first,
 		then the global mappings.
@@ -4813,6 +4820,18 @@ mapcheck({name} [, {mode} [, {abbr}]])			*mapcheck()*
 		Can also be used as a |method|: >
 			GetKey()->mapcheck('n')
 
+mapset({mode}, {abbr}, {dict})				*mapset()*
+		Restore a mapping from a dictionary returned by |maparg()|.
+		{name}, {mode} and {abbr} should be the same as for the call
+		to |maparg()|.
+		{mode} is used to define the mode in which the mapping is set,
+		not the "mode" entry in {dict}.
+		Example for saving and restoring a mapping: >
+			let save_map = maparg('K', 'n', 0, 1)
+			nnoremap K somethingelse
+			...
+			call mapset('n', 0, save_map)
+<
 match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		When {expr} is a |List| then this returns the index of the
 		first item where {pat} matches.  Each item is used as a

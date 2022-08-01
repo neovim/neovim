@@ -428,6 +428,63 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
   return 0;
 }
 
+/// @param sid  -1 to use current_sctx
+static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table, const char_u *keys,
+                    MapArguments *args, int noremap, int mode, bool is_abbr, scid_T sid,
+                    linenr_T lnum, bool simplified)
+{
+  mapblock_T *mp = xcalloc(1, sizeof(mapblock_T));
+
+  // If CTRL-C has been mapped, don't always use it for Interrupting.
+  if (*keys == Ctrl_C) {
+    if (map_table == buf->b_maphash) {
+      buf->b_mapped_ctrl_c |= mode;
+    } else {
+      mapped_ctrl_c |= mode;
+    }
+  }
+
+  mp->m_keys = vim_strsave(keys);
+  mp->m_str = args->rhs;
+  mp->m_orig_str = args->orig_rhs;
+  mp->m_luaref = args->rhs_lua;
+  if (!simplified) {
+    args->rhs = NULL;
+    args->orig_rhs = NULL;
+    args->rhs_lua = LUA_NOREF;
+  }
+  mp->m_keylen = (int)STRLEN(mp->m_keys);
+  mp->m_noremap = noremap;
+  mp->m_nowait = args->nowait;
+  mp->m_silent = args->silent;
+  mp->m_mode = mode;
+  mp->m_simplified = simplified;
+  mp->m_expr = args->expr;
+  mp->m_replace_keycodes = args->replace_keycodes;
+  if (sid >= 0) {
+    mp->m_script_ctx.sc_sid = sid;
+    mp->m_script_ctx.sc_lnum = lnum;
+  } else {
+    mp->m_script_ctx = current_sctx;
+    mp->m_script_ctx.sc_lnum += sourcing_lnum;
+    nlua_set_sctx(&mp->m_script_ctx);
+  }
+  mp->m_desc = NULL;
+  if (args->desc != NULL) {
+    mp->m_desc = xstrdup(args->desc);
+  }
+
+  // add the new entry in front of the abbrlist or maphash[] list
+  if (is_abbr) {
+    mp->m_next = *abbr_table;
+    *abbr_table = mp;
+  } else {
+    const int n = MAP_HASH(mp->m_mode, mp->m_keys[0]);
+    mp->m_next = map_table[n];
+    map_table[n] = mp;
+  }
+}
+
 /// Sets or removes a mapping or abbreviation in buffer `buf`.
 ///
 /// @param maptype    @see do_map
@@ -780,51 +837,10 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     // Get here when adding a new entry to the maphash[] list or abbrlist.
-    mp = xmalloc(sizeof(mapblock_T));
-
-    // If CTRL-C has been mapped, don't always use it for Interrupting.
-    if (*lhs == Ctrl_C) {
-      if (map_table == buf->b_maphash) {
-        buf->b_mapped_ctrl_c |= mode;
-      } else {
-        mapped_ctrl_c |= mode;
-      }
-    }
-
-    mp->m_keys = vim_strsave(lhs);
-    mp->m_str = args->rhs;
-    mp->m_orig_str = args->orig_rhs;
-    mp->m_luaref = args->rhs_lua;
-    if (!keyround1_simplified) {
-      args->rhs = NULL;
-      args->orig_rhs = NULL;
-      args->rhs_lua = LUA_NOREF;
-    }
-    mp->m_keylen = (int)STRLEN(mp->m_keys);
-    mp->m_noremap = noremap;
-    mp->m_nowait = args->nowait;
-    mp->m_silent = args->silent;
-    mp->m_mode = mode;
-    mp->m_simplified = keyround1_simplified;  // Notice this when porting patch 8.2.0807
-    mp->m_expr = args->expr;
-    mp->m_replace_keycodes = args->replace_keycodes;
-    mp->m_script_ctx = current_sctx;
-    mp->m_script_ctx.sc_lnum += sourcing_lnum;
-    nlua_set_sctx(&mp->m_script_ctx);
-    mp->m_desc = NULL;
-    if (args->desc != NULL) {
-      mp->m_desc = xstrdup(args->desc);
-    }
-
-    // add the new entry in front of the abbrlist or maphash[] list
-    if (is_abbrev) {
-      mp->m_next = *abbr_table;
-      *abbr_table = mp;
-    } else {
-      n = MAP_HASH(mp->m_mode, mp->m_keys[0]);
-      mp->m_next = map_table[n];
-      map_table[n] = mp;
-    }
+    map_add(buf, map_table, abbr_table, lhs, args, noremap, mode, is_abbrev,
+            -1,  // sid
+            0,   // lnum
+            keyround1_simplified);
   }
 
 theend:
@@ -2023,6 +2039,7 @@ static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, l
     tv_dict_add_nr(dict, S_LEN("replace_keycodes"), 1);
   }
   tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
+  tv_dict_add_nr(dict, S_LEN("simplified"), mp->m_simplified ? 1 : 0);
 }
 
 static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
@@ -2106,6 +2123,73 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 
   xfree(keys_buf);
   xfree(alt_keys_buf);
+}
+
+/// "mapset()" function
+void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char buf[NUMBUFLEN];
+  const char *which = tv_get_string_buf_chk(&argvars[0], buf);
+  int mode = get_map_mode((char **)&which, 0);
+  bool is_abbr = tv_get_number(&argvars[1]) != 0;
+
+  if (argvars[2].v_type != VAR_DICT) {
+    emsg(_(e_dictreq));
+    return;
+  }
+  dict_T *d = argvars[2].vval.v_dict;
+
+  // Get the values in the same order as above in get_maparg().
+  char *lhs = tv_dict_get_string(d, "lhs", false);
+  if (lhs == NULL) {
+    emsg(_("E99: lhs entry missing in mapset() dict argument"));
+    return;
+  }
+  char *rhs = tv_dict_get_string(d, "rhs", false);
+  if (rhs == NULL) {
+    emsg(_("E99: rhs entry missing in mapset() dict argument"));
+    return;
+  }
+
+  int noremap = tv_dict_get_number(d, "noremap") ? REMAP_NONE : 0;
+  if (tv_dict_get_number(d, "script") != 0) {
+    noremap = REMAP_SCRIPT;
+  }
+
+  // TODO: support "callback" and "desc"
+  MapArguments args = {
+    .rhs = vim_strsave((char_u *)rhs),
+    .rhs_lua = LUA_NOREF,
+    .orig_rhs = vim_strsave((char_u *)rhs),
+    .expr = tv_dict_get_number(d, "expr") != 0,
+    .silent = tv_dict_get_number(d, "silent") != 0,
+    .nowait = tv_dict_get_number(d, "nowait") != 0,
+  };
+
+  scid_T sid = (scid_T)tv_dict_get_number(d, "sid");
+  linenr_T lnum = (linenr_T)tv_dict_get_number(d, "lnum");
+
+  mapblock_T **map_table = maphash;
+  mapblock_T **abbr_table = &first_abbr;
+
+  if (tv_dict_get_number(d, "buffer") != 0) {
+    map_table = curbuf->b_maphash;
+    abbr_table = &curbuf->b_first_abbr;
+  }
+  // mode from the dict is not used
+  bool simplified = tv_dict_get_number(d, "simplified") != 0;
+
+  // Delete any existing mapping for this lhs and mode.
+  char_u *arg = vim_strsave((char_u *)lhs);
+  do_map(1, arg, mode, is_abbr);  // TODO: refactor this later
+  xfree(arg);
+
+  char *keys_buf = NULL;
+  char *keys = replace_termcodes(lhs, STRLEN(lhs), &keys_buf, REPTERM_FROM_PART | REPTERM_DO_LT,
+                                 NULL, CPO_TO_CPO_FLAGS);
+  map_add(curbuf, map_table, abbr_table, (char_u *)keys, &args, noremap, mode, is_abbr, sid, lnum,
+          simplified);
+  xfree(keys_buf);
 }
 
 /// "maparg()" function
