@@ -1525,6 +1525,7 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
   pos_T save_cursor;
   int save_msg_col;
   int save_msg_row;
+  bool replaced = false;
 
   // Remove escaping of K_SPECIAL, because "str" is in a format to be used as
   // typeahead.
@@ -1561,6 +1562,7 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
       if (buf) {
         xfree(p);
         p = (char_u *)buf;
+        replaced = true;
       }
     }
   } else {
@@ -1577,7 +1579,7 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
     return NULL;
   }
   // Escape K_SPECIAL in the result to be able to use the string as typeahead.
-  res = (char_u *)vim_strsave_escape_ks((char *)p);
+  res = replaced ? p : (char_u *)vim_strsave_escape_ks((char *)p);
   xfree(p);
 
   return res;
