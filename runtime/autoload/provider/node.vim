@@ -82,6 +82,13 @@ function! provider#node#Detect() abort
     let yarn_opts.job_id = jobstart('yarn global dir', yarn_opts)
   endif
 
+  let pnpm_opts = {}
+  if executable('pnpm')
+    let pnpm_opts = deepcopy(s:NodeHandler)
+    let pnpm_opts.entry_point = '/neovim/bin/cli.js'
+    let pnpm_opts.job_id = jobstart('pnpm --loglevel silent root -g', pnpm_opts)
+  endif
+
   " npm returns the directory faster, so let's check that first
   if !empty(npm_opts)
     let result = jobwait([npm_opts.job_id])
@@ -94,6 +101,13 @@ function! provider#node#Detect() abort
     let result = jobwait([yarn_opts.job_id])
     if result[0] == 0 && yarn_opts.result != ''
       return [yarn_opts.result, '']
+    endif
+  endif
+
+  if !empty(pnpm_opts)
+    let result = jobwait([pnpm_opts.job_id])
+    if result[0] == 0 && pnpm_opts.result != ''
+      return [pnpm_opts.result, '']
     endif
   endif
 
