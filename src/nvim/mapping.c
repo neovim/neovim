@@ -1556,9 +1556,7 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
     }
     if (p && mp->m_replace_keycodes) {
       char *buf = NULL;
-      replace_termcodes((char *)p, STRLEN(p), &buf,
-                        REPTERM_FROM_PART|REPTERM_DO_LT,
-                        NULL, CPO_TO_CPO_FLAGS);
+      replace_termcodes((char *)p, STRLEN(p), &buf, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
       if (buf) {
         xfree(p);
         p = (char_u *)buf;
