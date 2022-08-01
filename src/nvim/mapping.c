@@ -509,7 +509,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   abbr_table = &first_abbr;
 
   // For ":noremap" don't remap, otherwise do remap.
-  if (maptype == 2) {
+  if (maptype == MAPTYPE_NOREMAP) {
     noremap = REMAP_NONE;
   } else {
     noremap = REMAP_YES;
@@ -527,10 +527,10 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
 
   const bool has_lhs = (args->lhs[0] != NUL);
   const bool has_rhs = args->rhs_lua != LUA_NOREF || (args->rhs[0] != NUL) || args->rhs_is_noop;
-  const bool do_print = !has_lhs || (maptype != 1 && !has_rhs);
+  const bool do_print = !has_lhs || (maptype != MAPTYPE_UNMAP && !has_rhs);
 
   // check for :unmap without argument
-  if (maptype == 1 && !has_lhs) {
+  if (maptype == MAPTYPE_UNMAP && !has_lhs) {
     retval = 1;
     goto theend;
   }
@@ -564,13 +564,11 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
         goto theend;
       }
 
-      if (is_abbrev && maptype != 1) {
-        //
+      if (is_abbrev && maptype != MAPTYPE_UNMAP) {
         // If an abbreviation ends in a keyword character, the
         // rest must be all keyword-char or all non-keyword-char.
         // Otherwise we won't be able to find the start of it in a
         // vi-compatible way.
-        //
         int same = -1;
 
         const int first = vim_iswordp(lhs);
@@ -608,7 +606,8 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     // Check if a new local mapping wasn't already defined globally.
-    if (args->unique && map_table == buf->b_maphash && has_lhs && has_rhs && maptype != 1) {
+    if (args->unique && map_table == buf->b_maphash && has_lhs && has_rhs
+        && maptype != MAPTYPE_UNMAP) {
       // need to loop over all global hash lists
       for (int hash = 0; hash < 256 && !got_int; hash++) {
         if (is_abbrev) {
@@ -638,7 +637,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     // When listing global mappings, also list buffer-local ones here.
-    if (map_table != buf->b_maphash && !has_rhs && maptype != 1) {
+    if (map_table != buf->b_maphash && !has_rhs && maptype != MAPTYPE_UNMAP) {
       // need to loop over all global hash lists
       for (int hash = 0; hash < 256 && !got_int; hash++) {
         if (is_abbrev) {
@@ -673,7 +672,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     // entry with a matching 'to' part. This was done to allow ":ab foo bar"
     // to be unmapped by typing ":unab foo", where "foo" will be replaced by
     // "bar" because of the abbreviation.
-    for (int round = 0; (round == 0 || maptype == 1) && round <= 1
+    for (int round = 0; (round == 0 || maptype == MAPTYPE_UNMAP) && round <= 1
          && !did_it && !got_int; round++) {
       int hash_start, hash_end;
       if (has_lhs || is_abbrev) {
@@ -707,7 +706,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
               p = mp->m_keys;
             }
             if (STRNCMP(p, lhs, (size_t)(n < len ? n : len)) == 0) {
-              if (maptype == 1) {
+              if (maptype == MAPTYPE_UNMAP) {
                 // Delete entry.
                 // Only accept a full match.  For abbreviations
                 // we ignore trailing space when matching with
@@ -803,7 +802,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
       }
     }
 
-    if (maptype == 1) {
+    if (maptype == MAPTYPE_UNMAP) {
       // delete entry
       if (!did_it) {
         if (!keyround1_simplified) {
@@ -879,7 +878,9 @@ theend:
 /// for :cabbr mode is MODE_CMDLINE
 /// ```
 ///
-/// @param maptype  0 for |:map|, 1 for |:unmap|, 2 for |noremap|.
+/// @param maptype  MAPTYPE_MAP for |:map|
+///                 MAPTYPE_UNMAP for |:unmap|
+///                 MAPTYPE_NOREMAP for |noremap|.
 /// @param arg      C-string containing the arguments of the map/abbrev
 ///                 command, i.e. everything except the initial `:[X][nore]map`.
 ///                 - Cannot be a read-only string; it will be modified.
@@ -896,7 +897,7 @@ theend:
 int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
 {
   MapArguments parsed_args;
-  int result = str_to_mapargs(arg, maptype == 1, &parsed_args);
+  int result = str_to_mapargs(arg, maptype == MAPTYPE_UNMAP, &parsed_args);
   switch (result) {
   case 0:
     break;
@@ -2183,7 +2184,7 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   MapArguments unmap_args = MAP_ARGUMENTS_INIT;
   set_maparg_lhs_rhs(lhs, strlen(lhs), rhs, strlen(rhs), LUA_NOREF, 0, &unmap_args);
   unmap_args.buffer = buffer;
-  buf_do_map(1, &unmap_args, mode, false, curbuf);
+  buf_do_map(MAPTYPE_UNMAP, &unmap_args, mode, false, curbuf);
   xfree(unmap_args.rhs);
   xfree(unmap_args.orig_rhs);
 
@@ -2221,7 +2222,7 @@ void add_map(char *lhs, char *rhs, int mode, bool buffer)
   set_maparg_lhs_rhs(lhs, strlen(lhs), rhs, strlen(rhs), LUA_NOREF, 0, &args);
   args.buffer = buffer;
 
-  buf_do_map(2, &args, mode, false, curbuf);
+  buf_do_map(MAPTYPE_NOREMAP, &args, mode, false, curbuf);
   xfree(args.rhs);
   xfree(args.orig_rhs);
 }
@@ -2401,7 +2402,8 @@ static void do_exmap(exarg_T *eap, int isabbrev)
   char *cmdp = eap->cmd;
   mode = get_map_mode(&cmdp, eap->forceit || isabbrev);
 
-  switch (do_map((*cmdp == 'n') ? 2 : (*cmdp == 'u'),
+  switch (do_map((*cmdp == 'n') ? MAPTYPE_NOREMAP
+                 : (*cmdp == 'u') ? MAPTYPE_UNMAP : MAPTYPE_MAP,
                  (char_u *)eap->arg, mode, isabbrev)) {
   case 1:
     emsg(_(e_invarg));
@@ -2561,11 +2563,11 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
 
   // buf_do_map() reads noremap/unmap as its own argument.
-  int maptype_val = 0;
+  int maptype_val = MAPTYPE_MAP;
   if (is_unmap) {
-    maptype_val = 1;
+    maptype_val = MAPTYPE_UNMAP;
   } else if (is_noremap) {
-    maptype_val = 2;
+    maptype_val = MAPTYPE_NOREMAP;
   }
 
   switch (buf_do_map(maptype_val, &parsed_args, mode_val, 0, target_buf)) {

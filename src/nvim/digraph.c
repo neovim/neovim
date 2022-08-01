@@ -2121,7 +2121,7 @@ void ex_loadkeymap(exarg_T *eap)
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
-    (void)do_map(0, buf, MODE_LANGMAP, false);
+    (void)do_map(MAPTYPE_MAP, buf, MODE_LANGMAP, false);
   }
 
   p_cpo = save_cpo;
@@ -2158,7 +2158,7 @@ static void keymap_unload(void)
 
   for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
     vim_snprintf(buf, sizeof(buf), "<buffer> %s", kp[i].from);
-    (void)do_map(1, (char_u *)buf, MODE_LANGMAP, false);
+    (void)do_map(MAPTYPE_UNMAP, (char_u *)buf, MODE_LANGMAP, false);
   }
   keymap_ga_clear(&curbuf->b_kmap_ga);
 
