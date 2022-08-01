@@ -5826,8 +5826,14 @@ static void uc_list(char *name, size_t name_len)
       IObuff[len] = '\0';
       msg_outtrans((char *)IObuff);
 
-      msg_outtrans_special(cmd->uc_rep, false,
-                           name_len == 0 ? Columns - 47 : 0);
+      if (cmd->uc_luaref == LUA_NOREF || *cmd->uc_rep != NUL) {
+        msg_outtrans_special(cmd->uc_rep, false,
+                            name_len == 0 ? Columns - 47 : 0);
+      } else {
+        char *fn = nlua_funcref_str(cmd->uc_luaref);
+        msg_puts_attr(fn, HL_ATTR(HLF_8));
+        xfree(fn);
+      }
       if (p_verbose > 0) {
         last_set_msg(cmd->uc_script_ctx);
       }

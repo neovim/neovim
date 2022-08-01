@@ -1105,16 +1105,13 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
     goto err;
   }
 
-  bool rep_free = false;
   switch (command.type) {
   case kObjectTypeLuaRef:
     luaref = api_new_luaref(command.data.luaref);
     if (opts->desc.type == kObjectTypeString) {
       rep = opts->desc.data.string.data;
     } else {
-      // TODO(ii14): print both luaref and desc
-      rep = nlua_funcref_str(luaref);
-      rep_free = true;
+      rep = "";
     }
     break;
   case kObjectTypeString:
@@ -1129,10 +1126,6 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
                      preview_luaref, addr_type_arg, luaref, force) != OK) {
     api_set_error(err, kErrorTypeException, "Failed to create user command");
     // Do not goto err, since uc_add_command now owns luaref, compl_luaref, and compl_arg
-  }
-
-  if (rep_free) {
-    xfree(rep);
   }
 
   return;
