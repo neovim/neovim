@@ -239,6 +239,8 @@ func Test_mapset()
   iunmap K
   let &cpo = cpo_save
   bwipe!
+
+  call assert_fails('call mapset([], v:false, {})', 'E730:')
 endfunc
 
 func Check_ctrlb_map(d, check_alt)

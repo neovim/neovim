@@ -2132,8 +2132,11 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char buf[NUMBUFLEN];
   const char *which = tv_get_string_buf_chk(&argvars[0], buf);
-  int mode = get_map_mode((char **)&which, 0);
-  bool is_abbr = tv_get_number(&argvars[1]) != 0;
+  if (which == NULL) {
+    return;
+  }
+  const int mode = get_map_mode((char **)&which, 0);
+  const bool is_abbr = tv_get_number(&argvars[1]) != 0;
 
   if (argvars[2].v_type != VAR_DICT) {
     emsg(_(e_dictreq));
