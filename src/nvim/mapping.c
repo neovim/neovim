@@ -2023,7 +2023,9 @@ static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, l
   tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)mp->m_script_ctx.sc_lnum);
   tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
   tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
-  tv_dict_add_nr(dict, S_LEN("replace_keycodes"), mp->m_replace_keycodes ? 1 : 0);
+  if (mp->m_replace_keycodes) {
+    tv_dict_add_nr(dict, S_LEN("replace_keycodes"), 1);
+  }
   tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
 }
 
