@@ -17,24 +17,28 @@ func Test_maparg()
   vnoremap <script> <buffer> <expr> <silent> bar isbar
   call assert_equal("is<F4>foo", maparg('foo<C-V>'))
   call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo<C-V>',
+        \ 'lhsraw': "foo\x80\xfc\x04V", 'lhsrawalt': "foo\x16",
         \ 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': sid, 'lnum': lnum + 1, 
-	\ 'simplified': 1, 'rhs': 'is<F4>foo', 'buffer': 0},
+	\ 'rhs': 'is<F4>foo', 'buffer': 0},
 	\ maparg('foo<C-V>', '', 0, 1))
-  call assert_equal({'silent': 1, 'noremap': 1, 'script': 1, 'lhs': 'bar', 'mode': 'v',
+  call assert_equal({'silent': 1, 'noremap': 1, 'script': 1, 'lhs': 'bar',
+        \ 'lhsraw': 'bar', 'mode': 'v',
         \ 'nowait': 0, 'expr': 1, 'sid': sid, 'lnum': lnum + 2,
-	\ 'simplified': 0, 'rhs': 'isbar', 'buffer': 1},
+	\ 'rhs': 'isbar', 'buffer': 1},
         \ 'bar'->maparg('', 0, 1))
   let lnum = expand('<sflnum>')
   map <buffer> <nowait> foo bar
-  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo', 'mode': ' ',
+  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo',
+        \ 'lhsraw': 'foo', 'mode': ' ',
         \ 'nowait': 1, 'expr': 0, 'sid': sid, 'lnum': lnum + 1, 'rhs': 'bar',
-	\ 'simplified': 0, 'buffer': 1},
+	\ 'buffer': 1},
         \ maparg('foo', '', 0, 1))
   let lnum = expand('<sflnum>')
   tmap baz foo
-  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'baz', 'mode': 't',
+  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'baz',
+        \ 'lhsraw': 'baz', 'mode': 't',
         \ 'nowait': 0, 'expr': 0, 'sid': sid, 'lnum': lnum + 1, 'rhs': 'foo',
-	\ 'simplified': 0, 'buffer': 0},
+	\ 'buffer': 0},
         \ maparg('baz', 't', 0, 1))
 
   map abc x<char-114>x
@@ -213,7 +217,6 @@ func Test_mapset()
   call assert_equal('one<CR>two', getline(1))
 
   iunmap K
-  let &cpo = cpo_save
 
   " Test literal <CR> using CTRL-V
   inoremap K one<CR>two
@@ -235,8 +238,35 @@ func Test_mapset()
 
   iunmap K
   let &cpo = cpo_save
-
   bwipe!
+endfunc
+
+func Check_ctrlb_map(d, check_alt)
+  call assert_equal('<C-B>', a:d.lhs)
+  if a:check_alt
+    call assert_equal("\x80\xfc\x04B", a:d.lhsraw)
+    call assert_equal("\x02", a:d.lhsrawalt)
+  else
+    call assert_equal("\x02", a:d.lhsraw)
+  endif
+endfunc
+
+func Test_map_restore()
+  " Test restoring map with alternate keycode
+  nmap <C-B> back
+  let d = maparg('<C-B>', 'n', 0, 1)
+  call Check_ctrlb_map(d, 1)
+  let dsimp = maparg("\x02", 'n', 0, 1)
+  call Check_ctrlb_map(dsimp, 0)
+  nunmap <C-B>
+  call mapset('n', 0, d)
+  let d = maparg('<C-B>', 'n', 0, 1)
+  call Check_ctrlb_map(d, 1)
+  let dsimp = maparg("\x02", 'n', 0, 1)
+  call Check_ctrlb_map(dsimp, 0)
+
+  nunmap <C-B>
+
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

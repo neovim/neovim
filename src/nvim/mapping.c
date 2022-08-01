@@ -1993,9 +1993,9 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// @param mp            The maphash that contains the mapping information
 /// @param buffer_value  The "buffer" value
 /// @param compatible    True for compatible with old maparg() dict
-static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, long buffer_value,
-                               bool compatible)
-  FUNC_ATTR_NONNULL_ALL
+static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp,
+                               const char *lhsrawalt, long buffer_value, bool compatible)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char *const lhs = str2special_save((const char *)mp->m_keys,
                                      compatible, !compatible);
@@ -2027,6 +2027,11 @@ static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, l
     tv_dict_add_allocated_str(dict, S_LEN("desc"), xstrdup(mp->m_desc));
   }
   tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
+  tv_dict_add_str(dict, S_LEN("lhsraw"), (const char *)mp->m_keys);
+  if (lhsrawalt != NULL) {
+    // Also add the value for the simplified entry.
+    tv_dict_add_str(dict, S_LEN("lhsrawalt"), lhsrawalt);
+  }
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
   tv_dict_add_nr(dict, S_LEN("script"), mp->m_noremap == REMAP_SCRIPT ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
@@ -2039,23 +2044,10 @@ static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp, l
     tv_dict_add_nr(dict, S_LEN("replace_keycodes"), 1);
   }
   tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
-  tv_dict_add_nr(dict, S_LEN("simplified"), mp->m_simplified ? 1 : 0);
 }
 
 static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 {
-  char *keys_buf = NULL;
-  char_u *alt_keys_buf = NULL;
-  bool did_simplify = false;
-  char_u *rhs;
-  LuaRef rhs_lua;
-  int mode;
-  bool abbr = false;
-  bool get_dict = false;
-  mapblock_T *mp = NULL;
-  int buffer_local;
-  int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
-
   // Return empty string for failure.
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
@@ -2065,8 +2057,11 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     return;
   }
 
-  char buf[NUMBUFLEN];
   const char *which;
+  char buf[NUMBUFLEN];
+  bool abbr = false;
+  bool get_dict = false;
+
   if (argvars[1].v_type != VAR_UNKNOWN) {
     which = tv_get_string_buf_chk(&argvars[1], buf);
     if (argvars[2].v_type != VAR_UNKNOWN) {
@@ -2082,13 +2077,19 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     return;
   }
 
-  mode = get_map_mode((char **)&which, 0);
+  char *keys_buf = NULL;
+  char_u *alt_keys_buf = NULL;
+  bool did_simplify = false;
+  const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
+  const int mode = get_map_mode((char **)&which, 0);
 
   char_u *keys_simplified
-    = (char_u *)replace_termcodes(keys,
-                                  STRLEN(keys), &keys_buf, flags, &did_simplify,
+    = (char_u *)replace_termcodes(keys, STRLEN(keys), &keys_buf, flags, &did_simplify,
                                   CPO_TO_CPO_FLAGS);
-  rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
+  mapblock_T *mp = NULL;
+  int buffer_local;
+  LuaRef rhs_lua;
+  char_u *rhs = check_map(keys_simplified, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   if (did_simplify) {
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
@@ -2117,7 +2118,8 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     tv_dict_alloc_ret(rettv);
     if (mp != NULL && (rhs != NULL || rhs_lua != LUA_NOREF)) {
       // Return a dictionary.
-      mapblock_fill_dict(rettv->vval.v_dict, mp, buffer_local, true);
+      mapblock_fill_dict(rettv->vval.v_dict, mp, did_simplify ? (char *)keys_simplified : NULL,
+                         buffer_local, true);
     }
   }
 
@@ -2141,13 +2143,11 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Get the values in the same order as above in get_maparg().
   char *lhs = tv_dict_get_string(d, "lhs", false);
-  if (lhs == NULL) {
-    emsg(_("E99: lhs entry missing in mapset() dict argument"));
-    return;
-  }
+  char *lhsraw = tv_dict_get_string(d, "lhsraw", false);
+  char *lhsrawalt = tv_dict_get_string(d, "lhsrawalt", false);
   char *rhs = tv_dict_get_string(d, "rhs", false);
-  if (rhs == NULL) {
-    emsg(_("E99: rhs entry missing in mapset() dict argument"));
+  if (lhs == NULL || lhsraw == NULL || rhs == NULL) {
+    emsg(_("E460: entries missing in mapset() dict argument"));
     return;
   }
   char *orig_rhs = rhs;
@@ -2180,19 +2180,18 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     abbr_table = &curbuf->b_first_abbr;
   }
   // mode from the dict is not used
-  bool simplified = tv_dict_get_number(d, "simplified") != 0;
 
   // Delete any existing mapping for this lhs and mode.
   char_u *arg = vim_strsave((char_u *)lhs);
   do_map(1, arg, mode, is_abbr);  // TODO: refactor this later
   xfree(arg);
 
-  char *keys_buf = NULL;
-  char *keys = replace_termcodes(lhs, STRLEN(lhs), &keys_buf, REPTERM_FROM_PART | REPTERM_DO_LT,
-                                 NULL, CPO_TO_CPO_FLAGS);
-  map_add(curbuf, map_table, abbr_table, (char_u *)keys, &args, noremap, mode, is_abbr, sid, lnum,
-          simplified);
-  xfree(keys_buf);
+  if (lhsrawalt != NULL) {
+    map_add(curbuf, map_table, abbr_table, (char_u *)lhsrawalt, &args, noremap, mode, is_abbr,
+            sid, lnum, true);
+  }
+  map_add(curbuf, map_table, abbr_table, (char_u *)lhsraw, &args, noremap, mode, is_abbr,
+          sid, lnum, false);
 }
 
 /// "maparg()" function
@@ -2623,7 +2622,7 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
       }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
-        mapblock_fill_dict(dict, current_maphash, buffer_value, false);
+        mapblock_fill_dict(dict, current_maphash, NULL, buffer_value, false);
         Object api_dict = vim_to_object((typval_T[]) { { .v_type = VAR_DICT,
                                                          .vval.v_dict = dict } });
         if (from_lua) {

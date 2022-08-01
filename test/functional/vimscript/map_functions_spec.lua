@@ -13,6 +13,7 @@ describe('maparg()', function()
 
   local foo_bar_map_table = {
       lhs='foo',
+      lhsraw='foo',
       script=0,
       silent=0,
       rhs='bar',
@@ -141,6 +142,7 @@ describe('maparg()', function()
     local function acmap(lhs, rhs)
       return {
         lhs = ac(lhs),
+        lhsraw = ac(lhs),
         rhs = ac(rhs),
 
         buffer = 0,
