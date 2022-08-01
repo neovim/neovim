@@ -193,6 +193,9 @@ static int ses_do_win(win_T *wp)
   if (bt_help(wp->w_buffer)) {
     return ssop_flags & SSOP_HELP;
   }
+  if (bt_terminal(wp->w_buffer)) {
+    return ssop_flags & SSOP_TERMINAL;
+  }
   return true;
 }
 
@@ -407,6 +410,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     if ((flagp == &ssop_flags) && alt != NULL && alt->b_fname != NULL
         && *alt->b_fname != NUL
         && alt->b_p_bl
+        // do not set balt if buffer is terminal and "terminal" is not set in options
+        && !(bt_terminal(alt) && !(ssop_flags & SSOP_TERMINAL))
         && (fputs("balt ", fd) < 0
             || ses_fname(fd, alt, flagp, true) == FAIL)) {
       return FAIL;
@@ -616,6 +621,7 @@ static int makeopens(FILE *fd, char_u *dirnow)
   FOR_ALL_BUFFERS(buf) {
     if (!(only_save_windows && buf->b_nwindows == 0)
         && !(buf->b_help && !(ssop_flags & SSOP_HELP))
+        && !(bt_terminal(buf) && !(ssop_flags & SSOP_TERMINAL))
         && buf->b_fname != NULL
         && buf->b_p_bl) {
       if (fprintf(fd, "badd +%" PRId64 " ",

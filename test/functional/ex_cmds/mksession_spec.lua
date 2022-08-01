@@ -41,16 +41,83 @@ describe(':mksession', function()
     command('split')
     command('terminal')
     command('split')
-    command('mksession '..session_file)
+    command('mksession ' .. session_file)
     command('%bwipeout!')
 
     -- Create a new test instance of Nvim.
     clear()
     -- Restore session.
-    command('source '..session_file)
+    command('source ' .. session_file)
 
     eq(funcs.winbufnr(1), funcs.winbufnr(2))
     neq(funcs.winbufnr(1), funcs.winbufnr(3))
+  end)
+
+  -- common testing procedure for testing "sessionoptions-=terminal"
+  local function test_terminal_session_disabled(expected_buf_count)
+    command('set sessionoptions-=terminal')
+
+    command('mksession ' .. session_file)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    -- Restore session.
+    command('source ' .. session_file)
+
+    eq(expected_buf_count, #meths.list_bufs())
+  end
+
+  it(
+    'do not restore :terminal if not set in sessionoptions, terminal in current window #13078',
+    function()
+      local tmpfile_base = file_prefix .. '-tmpfile'
+      command('edit ' .. tmpfile_base)
+      command('terminal')
+
+      local buf_count = #meths.list_bufs()
+      eq(2, buf_count)
+
+      eq('terminal', meths.buf_get_option(0, 'buftype'))
+
+      test_terminal_session_disabled(2)
+
+      -- no terminal should be set. As a side effect we end up with a blank buffer
+      eq('', meths.buf_get_option(meths.list_bufs()[1], 'buftype'))
+      eq('', meths.buf_get_option(meths.list_bufs()[2], 'buftype'))
+    end
+  )
+
+  it('do not restore :terminal if not set in sessionoptions, terminal hidden #13078', function()
+    command('terminal')
+    local terminal_bufnr = meths.get_current_buf()
+
+    local tmpfile_base = file_prefix .. '-tmpfile'
+    -- make terminal hidden by opening a new file
+    command('edit ' .. tmpfile_base .. '1')
+
+    local buf_count = #meths.list_bufs()
+    eq(2, buf_count)
+
+    eq(1, funcs.getbufinfo(terminal_bufnr)[1].hidden)
+
+    test_terminal_session_disabled(1)
+
+    -- no terminal should exist here
+    neq('', meths.buf_get_name(meths.list_bufs()[1]))
+  end)
+
+  it('do not restore :terminal if not set in sessionoptions, only buffer #13078', function()
+    command('terminal')
+    eq('terminal', meths.buf_get_option(0, 'buftype'))
+
+    local buf_count = #meths.list_bufs()
+    eq(1, buf_count)
+
+    test_terminal_session_disabled(1)
+
+    -- no terminal should be set
+    eq('', meths.buf_get_option(0, 'buftype'))
   end)
 
   it('restores tab-local working directories', function()
@@ -102,27 +169,27 @@ describe(':mksession', function()
 
   it('restores CWD for :terminal buffers #11288', function()
     local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    cwd_dir = cwd_dir:gsub([[\]], '/')  -- :mksession always uses unix slashes.
-    local session_path = cwd_dir..'/'..session_file
+    cwd_dir = cwd_dir:gsub([[\]], '/') -- :mksession always uses unix slashes.
+    local session_path = cwd_dir .. '/' .. session_file
 
-    command('cd '..tab_dir)
+    command('cd ' .. tab_dir)
     command('terminal')
-    command('cd '..cwd_dir)
-    command('mksession '..session_path)
+    command('cd ' .. cwd_dir)
+    command('mksession ' .. session_path)
     command('%bwipeout!')
     if iswin() then
-      sleep(100)  -- Make sure all child processes have exited.
+      sleep(100) -- Make sure all child processes have exited.
     end
 
     -- Create a new test instance of Nvim.
     clear()
-    command('silent source '..session_path)
+    command('silent source ' .. session_path)
 
-    local expected_cwd = cwd_dir..'/'..tab_dir
-    matches('^term://'..pesc(expected_cwd)..'//%d+:', funcs.expand('%'))
+    local expected_cwd = cwd_dir .. '/' .. tab_dir
+    matches('^term://' .. pesc(expected_cwd) .. '//%d+:', funcs.expand('%'))
     command('%bwipeout!')
     if iswin() then
-      sleep(100)  -- Make sure all child processes have exited.
+      sleep(100) -- Make sure all child processes have exited.
     end
   end)
 
@@ -134,10 +201,10 @@ describe(':mksession', function()
 
     local screen
     local cwd_dir = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    local session_path = cwd_dir..'/'..session_file
+    local session_path = cwd_dir .. '/' .. session_file
 
     screen = Screen.new(50, 6)
-    screen:attach({rgb=false})
+    screen:attach({ rgb = false })
     local expected_screen = [[
       ^/                                                 |
                                                         |
@@ -153,15 +220,15 @@ describe(':mksession', function()
     -- Verify that the terminal's working directory is "/".
     screen:expect(expected_screen)
 
-    command('cd '..cwd_dir)
-    command('mksession '..session_path)
+    command('cd ' .. cwd_dir)
+    command('mksession ' .. session_path)
     command('%bwipeout!')
 
     -- Create a new test instance of Nvim.
     clear()
     screen = Screen.new(50, 6)
-    screen:attach({rgb=false})
-    command('silent source '..session_path)
+    screen:attach({ rgb = false })
+    command('silent source ' .. session_path)
 
     -- Verify that the terminal's working directory is "/".
     screen:expect(expected_screen)
@@ -179,7 +246,7 @@ describe(':mksession', function()
       height = 3,
       row = 0,
       col = 1,
-      style = 'minimal'
+      style = 'minimal',
     }
     meths.open_win(buf, false, config)
     local cmdheight = meths.get_option('cmdheight')

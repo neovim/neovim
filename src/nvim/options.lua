@@ -2063,7 +2063,7 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       varname='p_ssop',
-      defaults={if_true="blank,buffers,curdir,folds,help,tabpages,winsize"}
+      defaults={if_true="blank,buffers,curdir,folds,help,tabpages,winsize,terminal"}
     },
     {
       full_name='shada', abbreviation='sd',
