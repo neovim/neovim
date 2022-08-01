@@ -86,7 +86,7 @@ typedef struct ff_stack {
   // of wc_part
   char **ffs_filearray;
   int ffs_filearray_size;
-  char_u ffs_filearray_cur;                  // needed for partly handled dirs
+  int ffs_filearray_cur;                  // needed for partly handled dirs
 
   /* to store status of partly handled directories
    * 0: we work on this directory for the first time
@@ -860,8 +860,8 @@ char_u *vim_findfile(void *search_ctx_arg)
 #endif
 
                 // push dir to examine rest of subdirs later
-                assert(i < UCHAR_MAX - 1);
-                stackp->ffs_filearray_cur = (char_u)(i + 1);
+                assert(i < INT_MAX);
+                stackp->ffs_filearray_cur = i + 1;
                 ff_push(search_ctx, stackp);
 
                 if (!path_with_url((char *)file_path)) {

@@ -194,4 +194,27 @@ func Test_gf_includeexpr()
   delfunc IncFunc
 endfunc
 
+" Check that expanding directories can handle more than 255 entries.
+func Test_gf_subdirs_wildcard()
+  let cwd = getcwd()
+  let dir = 'Xtestgf_dir'
+  call mkdir(dir)
+  call chdir(dir)
+  for i in range(300)
+    call mkdir(i)
+    call writefile([], i .. '/' .. i, 'S')
+  endfor
+  set path=./**
+
+  new | only
+  call setline(1, '99')
+  w! Xtest1
+  normal gf
+  call assert_equal('99', fnamemodify(bufname(''), ":t"))
+
+  call chdir(cwd)
+  call delete(dir, 'rf')
+  set path&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
