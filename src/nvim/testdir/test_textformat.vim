@@ -1534,4 +1534,16 @@ func Test_autoformat_comments()
   close!
 endfunc
 
+" This was leaving the cursor after the end of a line.  Complicated way to
+" have the problem show up with valgrind.
+func Test_correct_cursor_position()
+  " set encoding=iso8859
+  new
+  norm a0000
+  sil! norm gggg0i0gw0gg
+
+  bwipe!
+  set encoding=utf8
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

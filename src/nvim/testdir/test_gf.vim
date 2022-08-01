@@ -138,6 +138,22 @@ func Test_gf_visual()
   call assert_equal('Xtest_gf_visual', bufname('%'))
   call assert_equal(3, getcurpos()[1])
 
+  " do not include the NUL at the end
+  call writefile(['x'], 'X')
+  let save_enc = &enc
+  " for enc in ['latin1', 'utf-8']
+  for enc in ['utf-8']
+    exe "set enc=" .. enc
+    new
+    call setline(1, 'X')
+    set nomodified
+    exe "normal \<C-V>$gf"
+    call assert_equal('X', bufname())
+    bwipe!
+  endfor
+  let &enc = save_enc
+  call delete('X')
+
   " line number in visual area is used for file name
   if has('unix')
     bwipe!
