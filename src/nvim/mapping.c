@@ -428,6 +428,9 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
   return 0;
 }
 
+/// @param args  "rhs", "rhs_lua", "orig_rhs", "expr", "silent", "nowait", "replace_keycodes" and
+///              and "desc" fields are used.
+///              "rhs", "rhs_lua", "orig_rhs" fields are cleared if "simplified" is false.
 /// @param sid  -1 to use current_sctx
 static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table, const char_u *keys,
                     MapArguments *args, int noremap, int mode, bool is_abbr, scid_T sid,
@@ -2162,15 +2165,15 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (tv_dict_get_number(d, "script") != 0) {
     noremap = REMAP_SCRIPT;
   }
-
-  // TODO: support "callback" and "desc"
-  MapArguments args = {
+  MapArguments args = {  // TODO(zeertzjq): support restoring "callback"?
     .rhs = (char_u *)rhs,
     .rhs_lua = LUA_NOREF,
     .orig_rhs = vim_strsave((char_u *)orig_rhs),
     .expr = tv_dict_get_number(d, "expr") != 0,
     .silent = tv_dict_get_number(d, "silent") != 0,
     .nowait = tv_dict_get_number(d, "nowait") != 0,
+    .replace_keycodes = tv_dict_get_number(d, "replace_keycodes") != 0,
+    .desc = tv_dict_get_string(d, "desc", false),
   };
   scid_T sid = (scid_T)tv_dict_get_number(d, "sid");
   linenr_T lnum = (linenr_T)tv_dict_get_number(d, "lnum");
