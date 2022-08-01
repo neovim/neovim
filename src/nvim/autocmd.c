@@ -197,9 +197,16 @@ static void aupat_show(AutoPat *ap, event_T event, int previous_group)
       size_t msglen = 100;
       char *msg = (char *)xmallocz(msglen);
       // TODO(ii14): move desc to a new line
-      snprintf(msg, msglen, "%s [%s]", exec_to_string, ac->desc);
+      if (ac->exec.type == CALLABLE_CB) {
+        msg_puts_attr(exec_to_string, HL_ATTR(HLF_8));
+        snprintf(msg, msglen, " [%s]", ac->desc);
+      } else {
+        snprintf(msg, msglen, "%s [%s]", exec_to_string, ac->desc);
+      }
       msg_outtrans(msg);
       XFREE_CLEAR(msg);
+    } else if (ac->exec.type == CALLABLE_CB) {
+      msg_puts_attr(exec_to_string, HL_ATTR(HLF_8));
     } else {
       msg_outtrans(exec_to_string);
     }
