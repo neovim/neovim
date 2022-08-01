@@ -2414,6 +2414,11 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
   }
   parsed_args.buffer = !global;
 
+  if (parsed_args.replace_keycodes && !parsed_args.expr) {
+    api_set_error(err, kErrorTypeValidation,  "\"replace_keycodes\" requires \"expr\"");
+    goto fail_and_free;
+  }
+
   if (!set_maparg_lhs_rhs(lhs.data, lhs.size,
                           rhs.data, rhs.size, lua_funcref,
                           CPO_TO_CPO_FLAGS, &parsed_args)) {
