@@ -371,7 +371,9 @@ do
       state_by_client[client.id] = state
     end
     if not state.buffers[bufnr] then
-      local buf_state = {}
+      local buf_state = {
+        name = api.nvim_buf_get_name(bufnr),
+      }
       state.buffers[bufnr] = buf_state
       if use_incremental_sync then
         buf_state.lines = nvim_buf_get_lines(bufnr, 0, -1, true)
@@ -379,6 +381,15 @@ do
         buf_state.pending_changes = {}
       end
     end
+  end
+
+  ---@private
+  function changetracking._get_and_set_name(client, bufnr, name)
+    local state = state_by_client[client.id] or {}
+    local buf_state = (state.buffers or {})[bufnr]
+    local old_name = buf_state.name
+    buf_state.name = name
+    return old_name
   end
 
   ---@private
@@ -1405,6 +1416,19 @@ local function text_document_did_save_handler(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(buf_get_full_text)
   for_each_buffer_client(bufnr, function(client)
+    local name = api.nvim_buf_get_name(bufnr)
+    local old_name = changetracking._get_and_set_name(client, bufnr, name)
+    if old_name and name ~= old_name then
+      client.notify('textDocument/didOpen', {
+        textDocument = {
+          version = 0,
+          uri = uri,
+          languageId = client.config.get_language_id(bufnr, vim.bo[bufnr].filetype),
+          text = buf_get_full_text(bufnr),
+        },
+      })
+      util.buf_versions[bufnr] = 0
+    end
     local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
     if save_capability then
       local included_text

@@ -67,10 +67,12 @@ local function expect_notification(method, params, ...)
   local message = read_message()
   assert_eq(method, message.method,
       ..., "expect_notification", "method")
-  assert_eq(params, message.params,
-      ..., "expect_notification", method, "params")
-  assert_eq({jsonrpc = "2.0"; method=method, params=params}, message,
-      ..., "expect_notification", "message")
+  if params then
+    assert_eq(params, message.params,
+        ..., "expect_notification", method, "params")
+    assert_eq({jsonrpc = "2.0"; method=method, params=params}, message,
+        ..., "expect_notification", "message")
+  end
 end
 
 local function expect_request(method, handler, ...)
@@ -253,6 +255,26 @@ function tests.basic_check_capabilities()
       }
     end;
     body = function()
+    end;
+  }
+end
+
+function tests.text_document_save_did_open()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          textDocumentSync = {
+            save = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didOpen')
+      expect_notification('textDocument/didSave')
+      notify('shutdown')
     end;
   }
 end
