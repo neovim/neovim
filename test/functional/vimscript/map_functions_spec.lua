@@ -3,7 +3,10 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
+local expect = helpers.expect
+local feed = helpers.feed
 local funcs = helpers.funcs
+local meths = helpers.meths
 local nvim = helpers.nvim
 local source = helpers.source
 local command = helpers.command
@@ -13,6 +16,7 @@ describe('maparg()', function()
 
   local foo_bar_map_table = {
       lhs='foo',
+      lhsraw='foo',
       script=0,
       silent=0,
       rhs='bar',
@@ -141,6 +145,7 @@ describe('maparg()', function()
     local function acmap(lhs, rhs)
       return {
         lhs = ac(lhs),
+        lhsraw = ac(lhs),
         rhs = ac(rhs),
 
         buffer = 0,
@@ -159,5 +164,34 @@ describe('maparg()', function()
     eq(acmap('a',  'b`'), funcs.maparg(ac('a'),  'n', 0, 1))
     eq(acmap('c`', 'd'),  funcs.maparg(ac('c`'), 'n', 0, 1))
     eq(acmap('e`', 'f`'), funcs.maparg(ac('e`'), 'n', 0, 1))
+  end)
+end)
+
+describe('mapset()', function()
+  before_each(clear)
+
+  it('can restore mapping description from the dict returned by maparg()', function()
+    meths.set_keymap('n', 'lhs', 'rhs', {desc = 'map description'})
+    eq('\nn  lhs           rhs\n                 map description',
+       helpers.exec_capture("nmap lhs"))
+    local mapargs = funcs.maparg('lhs', 'n', false, true)
+    meths.del_keymap('n', 'lhs')
+    eq('\nNo mapping found', helpers.exec_capture("nmap lhs"))
+    funcs.mapset('n', false, mapargs)
+    eq('\nn  lhs           rhs\n                 map description',
+       helpers.exec_capture("nmap lhs"))
+  end)
+
+  it('can restore "replace_keycodes" from the dict returned by maparg()', function()
+    meths.set_keymap('i', 'foo', [['<l' .. 't>']], {expr = true, replace_keycodes = true})
+    feed('Afoo')
+    expect('<')
+    local mapargs = funcs.maparg('foo', 'i', false, true)
+    meths.set_keymap('i', 'foo', [['<l' .. 't>']], {expr = true})
+    feed('foo')
+    expect('<<lt>')
+    funcs.mapset('i', false, mapargs)
+    feed('foo')
+    expect('<<lt><')
   end)
 end)

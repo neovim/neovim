@@ -25,6 +25,7 @@ describe('nvim_get_keymap', function()
   local foo_bar_string = 'nnoremap foo bar'
   local foo_bar_map_table = {
     lhs='foo',
+    lhsraw='foo',
     script=0,
     silent=0,
     rhs='bar',
@@ -56,6 +57,7 @@ describe('nvim_get_keymap', function()
     command('nnoremap foo_longer bar_longer')
     local foolong_bar_map_table = shallowcopy(foo_bar_map_table)
     foolong_bar_map_table['lhs'] = 'foo_longer'
+    foolong_bar_map_table['lhsraw'] = 'foo_longer'
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
     eq({foolong_bar_map_table, foo_bar_map_table},
@@ -87,6 +89,7 @@ describe('nvim_get_keymap', function()
     command('nnoremap foo_longer bar_longer')
     local foolong_bar_map_table = shallowcopy(foo_bar_map_table)
     foolong_bar_map_table['lhs'] = 'foo_longer'
+    foolong_bar_map_table['lhsraw'] = 'foo_longer'
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
     local buffer_table = shallowcopy(foo_bar_map_table)
@@ -283,6 +286,16 @@ describe('nvim_get_keymap', function()
     command('onoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
     command('onoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
+    -- wrapper around get_keymap() that drops "lhsraw" and "lhsrawalt" which are hard to check
+    local function get_keymap_noraw(...)
+      local ret = meths.get_keymap(...)
+      for _, item in ipairs(ret) do
+        item.lhsraw = nil
+        item.lhsrawalt = nil
+      end
+      return ret
+    end
+
     for _, cmd in ipairs({
       'set cpo-=B',
       'set cpo+=B',
@@ -290,22 +303,23 @@ describe('nvim_get_keymap', function()
       command(cmd)
       eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
           cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n')},
-         meths.get_keymap('n'))
+         get_keymap_noraw('n'))
       eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
           cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'x')},
-         meths.get_keymap('x'))
+         get_keymap_noraw('x'))
       eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
           cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's')},
-         meths.get_keymap('s'))
+         get_keymap_noraw('s'))
       eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
           cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 'o')},
-         meths.get_keymap('o'))
+         get_keymap_noraw('o'))
     end
   end)
 
   it('always uses space for space and bar for bar', function()
     local space_table = {
       lhs='|   |',
+      lhsraw='|   |',
       rhs='|    |',
       mode='n',
       script=0,
@@ -340,6 +354,7 @@ describe('nvim_get_keymap', function()
     mapargs[1].callback = nil
     eq({
       lhs='asdf',
+      lhsraw='asdf',
       script=0,
       silent=0,
       expr=0,
@@ -356,6 +371,7 @@ describe('nvim_get_keymap', function()
     meths.set_keymap('n', 'lhs', 'rhs', {desc="map description"})
     eq({
       lhs='lhs',
+      lhsraw='lhs',
       rhs='rhs',
       script=0,
       silent=0,
@@ -413,7 +429,11 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   -- Gets a maparg() dict from Nvim, if one exists.
   local function get_mapargs(mode, lhs)
-    return funcs.maparg(lhs, normalize_mapmode(mode), false, true)
+    local mapargs = funcs.maparg(lhs, normalize_mapmode(mode), false, true)
+    -- drop "lhsraw" and "lhsrawalt" which are hard to check
+    mapargs.lhsraw = nil
+    mapargs.lhsrawalt = nil
+    return mapargs
   end
 
   it('error on empty LHS', function()
@@ -817,6 +837,8 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     local mapargs = funcs.maparg('asdf', 'n', false, true)
     assert(type(mapargs.callback) == 'number', 'callback is not luaref number')
     mapargs.callback = nil
+    mapargs.lhsraw = nil
+    mapargs.lhsrawalt = nil
     eq(generate_mapargs('n', 'asdf', nil, {sid=sid_lua}), mapargs)
   end)
 
