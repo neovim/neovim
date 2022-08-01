@@ -5504,7 +5504,7 @@ char *uc_validate_name(char *name)
 /// This function takes ownership of compl_arg, compl_luaref, and luaref.
 ///
 /// @return  OK if the command is created, FAIL otherwise.
-int uc_add_command(char *name, size_t name_len, char *rep, uint32_t argt, long def, int flags,
+int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, long def, int flags,
                    int compl, char *compl_arg, LuaRef compl_luaref, LuaRef preview_luaref,
                    cmd_addr_T addr_type, LuaRef luaref, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)

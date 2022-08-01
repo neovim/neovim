@@ -939,7 +939,7 @@ void create_user_command(String name, Object command, Dict(user_command) *opts, 
   cmd_addr_T addr_type_arg = ADDR_NONE;
   int compl = EXPAND_NOTHING;
   char *compl_arg = NULL;
-  char *rep = NULL;
+  const char *rep = NULL;
   LuaRef luaref = LUA_NOREF;
   LuaRef compl_luaref = LUA_NOREF;
   LuaRef preview_luaref = LUA_NOREF;
