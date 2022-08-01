@@ -6,7 +6,7 @@ func s:SID()
   return str2nr(matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$'))
 endfunc
 
-funct Test_maparg()
+func Test_maparg()
   new
   set cpo-=<
   set encoding=utf8
@@ -170,6 +170,73 @@ endfunc
 func Test_mapset()
   call One_mapset_test('K')
   call One_mapset_test('<F3>')
+
+  " Check <> key conversion
+  new
+  inoremap K one<Left>x
+  call feedkeys("iK\<Esc>", 'xt')
+  call assert_equal('onxe', getline(1))
+
+  let orig = maparg('K', 'i', 0, 1)
+  call assert_equal('K', orig.lhs)
+  call assert_equal('one<Left>x', orig.rhs)
+  call assert_equal('i', orig.mode)
+
+  iunmap K
+  let d = maparg('K', 'i', 0, 1)
+  call assert_equal({}, d)
+
+  call mapset('i', 0, orig)
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('onxe', getline(1))
+
+  iunmap K
+
+  " Test literal <CR> using a backslash
+  let cpo_save = &cpo
+  set cpo-=B
+  inoremap K one\<CR>two
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('one<CR>two', getline(1))
+
+  let orig = maparg('K', 'i', 0, 1)
+  call assert_equal('K', orig.lhs)
+  call assert_equal('one\<CR>two', orig.rhs)
+  call assert_equal('i', orig.mode)
+
+  iunmap K
+  let d = maparg('K', 'i', 0, 1)
+  call assert_equal({}, d)
+
+  call mapset('i', 0, orig)
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('one<CR>two', getline(1))
+
+  iunmap K
+  let &cpo = cpo_save
+
+  " Test literal <CR> using CTRL-V
+  inoremap K one<CR>two
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('one<CR>two', getline(1))
+
+  let orig = maparg('K', 'i', 0, 1)
+  call assert_equal('K', orig.lhs)
+  call assert_equal("one\x16<CR>two", orig.rhs)
+  call assert_equal('i', orig.mode)
+
+  iunmap K
+  let d = maparg('K', 'i', 0, 1)
+  call assert_equal({}, d)
+
+  call mapset('i', 0, orig)
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('one<CR>two', getline(1))
+
+  iunmap K
+  let &cpo = cpo_save
+
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

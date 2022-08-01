@@ -2150,6 +2150,9 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     emsg(_("E99: rhs entry missing in mapset() dict argument"));
     return;
   }
+  char *orig_rhs = rhs;
+  char *arg_buf = NULL;
+  rhs = replace_termcodes(rhs, STRLEN(rhs), &arg_buf, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
 
   int noremap = tv_dict_get_number(d, "noremap") ? REMAP_NONE : 0;
   if (tv_dict_get_number(d, "script") != 0) {
@@ -2158,9 +2161,9 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // TODO: support "callback" and "desc"
   MapArguments args = {
-    .rhs = vim_strsave((char_u *)rhs),
+    .rhs = (char_u *)rhs,
     .rhs_lua = LUA_NOREF,
-    .orig_rhs = vim_strsave((char_u *)rhs),
+    .orig_rhs = vim_strsave((char_u *)orig_rhs),
     .expr = tv_dict_get_number(d, "expr") != 0,
     .silent = tv_dict_get_number(d, "silent") != 0,
     .nowait = tv_dict_get_number(d, "nowait") != 0,
