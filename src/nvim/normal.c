@@ -4169,9 +4169,10 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char_u *kp, bool kp_help, bool kp_ex, c
   if (kp_ex) {
     // 'keywordprg' is an ex command
     if (cap->count0 != 0) {  // Send the count to the ex command.
-      snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
+      snprintf(buf, buf_size, "%s %ld", kp, cap->count0);
+    } else {
+      STRCPY(buf, kp);
     }
-    STRCAT(buf, kp);
     STRCAT(buf, " ");
     return n;
   }
