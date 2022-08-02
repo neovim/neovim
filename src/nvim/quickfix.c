@@ -1521,8 +1521,8 @@ static int qf_parse_get_fields(char *linebuf, size_t linelen, efm_T *fmt_ptr, qf
   fields->type = 0;
   *tail = NULL;
 
-  // Always ignore case when looking for a matching error.
   regmatch_T regmatch;
+  // Always ignore case when looking for a matching error.
   regmatch.rm_ic = true;
   regmatch.regprog = fmt_ptr->prog;
   int r = vim_regexec(&regmatch, linebuf, (colnr_T)0);
