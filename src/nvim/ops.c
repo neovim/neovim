@@ -1828,7 +1828,7 @@ static void mb_adjust_opend(oparg_T *oap)
 {
   if (oap->inclusive) {
     char *p = (char *)ml_get(oap->end.lnum);
-    oap->end.col += mb_tail_off(p, p + oap->end.col);
+    oap->end.col += utf_cp_tail_off(p, p + oap->end.col);
   }
 }
 

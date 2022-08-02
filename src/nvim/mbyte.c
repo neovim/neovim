@@ -1837,10 +1837,10 @@ int mb_off_next(const char_u *base, const char_u *p)
   return i;
 }
 
-/// Return the offset from "p" to the last byte of the character it points
-/// into.  Can start anywhere in a stream of bytes.
-/// Composing characters are not included.
-int mb_tail_off(const char *base, const char *p_in)
+/// Return the offset from `p_in` to the last byte of the codepoint it points
+/// to.  Can start anywhere in a stream of bytes.
+/// Note: Counts individual codepoints of composed characters separately.
+int utf_cp_tail_off(const char *base, const char *p_in)
 {
   const uint8_t *p = (uint8_t *)p_in;
   int i;
@@ -1866,15 +1866,16 @@ int mb_tail_off(const char *base, const char *p_in)
   return i;
 }
 
-/// Return the offset from "p" to the first byte of the character it points
-/// into. Can start anywhere in a stream of bytes.
-/// Unlike utf_head_off() this doesn't include composing characters and returns a negative value.
+/// Return the offset from "p" to the first byte of the codepoint it points
+/// to. Can start anywhere in a stream of bytes.
+/// Note: Unlike `utf_head_off`, this counts individual codepoints of composed characters
+/// separately and returns a negative offset.
 ///
 /// @param[in] base  Pointer to start of string
 /// @param[in] p     Pointer to byte for which to return the offset to the previous codepoint
 //
 /// @return 0 if invalid sequence, else offset to previous codepoint
-int mb_head_off(const char_u *base, const char_u *p)
+int utf_cp_head_off(const char_u *base, const char_u *p)
 {
   int i;
   int j;
