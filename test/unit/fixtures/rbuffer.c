@@ -15,7 +15,7 @@ void ut_rbuffer_each_read_chunk(RBuffer *buf, each_ptr_cb cb)
 
 void ut_rbuffer_each_write_chunk(RBuffer *buf, each_ptr_cb cb)
 {
-  RBUFFER_UNTIL_FULL(buf, wptr, wcnt) {
+  RBUFFER_UNTIL_FULL(buf, wptr, wcnt) {  // -V1044
     cb(wptr, wcnt);
     rbuffer_produced(buf, wcnt);
   }

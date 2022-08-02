@@ -17,22 +17,22 @@ describe('buffer functions', function()
     return buffer.buflist_new(c_file, c_file, 1, flags)
   end
 
-  local close_buffer = function(win, buf, action, abort_if_last)
-    return buffer.close_buffer(win, buf, action, abort_if_last)
+  local close_buffer = function(win, buf, action, abort_if_last, ignore_abort)
+    return buffer.close_buffer(win, buf, action, abort_if_last, ignore_abort)
   end
 
   local path1 = 'test_file_path'
   local path2 = 'file_path_test'
   local path3 = 'path_test_file'
 
-  before_each(function()
+  setup(function()
     -- create the files
     io.open(path1, 'w').close()
     io.open(path2, 'w').close()
     io.open(path3, 'w').close()
   end)
 
-  after_each(function()
+  teardown(function()
     os.remove(path1)
     os.remove(path2)
     os.remove(path3)
@@ -53,7 +53,7 @@ describe('buffer functions', function()
     itp('should view a closed and hidden buffer as valid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      close_buffer(NULL, buf, 0, 0)
+      close_buffer(NULL, buf, 0, 0, 0)
 
       eq(true, buffer.buf_valid(buf))
     end)
@@ -61,7 +61,7 @@ describe('buffer functions', function()
     itp('should view a closed and unloaded buffer as valid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      close_buffer(NULL, buf, buffer.DOBUF_UNLOAD, 0)
+      close_buffer(NULL, buf, buffer.DOBUF_UNLOAD, 0, 0)
 
       eq(true, buffer.buf_valid(buf))
     end)
@@ -69,7 +69,7 @@ describe('buffer functions', function()
     itp('should view a closed and wiped buffer as invalid', function()
       local buf = buflist_new(path1, buffer.BLN_LISTED)
 
-      close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0, 0)
 
       eq(false, buffer.buf_valid(buf))
     end)
@@ -90,7 +90,7 @@ describe('buffer functions', function()
 
       eq(buf.handle, buflist_findpat(path1, ONLY_LISTED))
 
-      close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf, buffer.DOBUF_WIPE, 0, 0)
     end)
 
     itp('should prefer to match the start of a file path', function()
@@ -102,9 +102,9 @@ describe('buffer functions', function()
       eq(buf2.handle, buflist_findpat("file", ONLY_LISTED))
       eq(buf3.handle, buflist_findpat("path", ONLY_LISTED))
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0, 0)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0, 0)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0, 0)
     end)
 
     itp('should prefer to match the end of a file over the middle', function()
@@ -118,7 +118,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We close buf2
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0, 0)
 
       -- And: Open buf1, which has 'file' in the middle of its name
       local buf1 = buflist_new(path1, buffer.BLN_LISTED)
@@ -127,8 +127,8 @@ describe('buffer functions', function()
       eq(buf3.handle, buflist_findpat("file", ONLY_LISTED))
       --}
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0, 0)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0, 0)
     end)
 
     itp('should match a unique fragment of a file path', function()
@@ -138,9 +138,9 @@ describe('buffer functions', function()
 
       eq(buf3.handle, buflist_findpat("_test_", ONLY_LISTED))
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0, 0)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0, 0)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0, 0)
     end)
 
     itp('should include / ignore unlisted buffers based on the flag.', function()
@@ -152,7 +152,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We unlist the buffer
-      close_buffer(NULL, buf3, buffer.DOBUF_DEL, 0)
+      close_buffer(NULL, buf3, buffer.DOBUF_DEL, 0, 0)
 
       -- Then: It should not find the buffer when searching only listed buffers
       eq(-1, buflist_findpat("_test_", ONLY_LISTED))
@@ -162,7 +162,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We wipe the buffer
-      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf3, buffer.DOBUF_WIPE, 0, 0)
 
       -- Then: It should not find the buffer at all
       eq(-1, buflist_findpat("_test_", ONLY_LISTED))
@@ -180,7 +180,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: The first buffer is unlisted
-      close_buffer(NULL, buf1, buffer.DOBUF_DEL, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_DEL, 0, 0)
 
       -- Then: The second buffer is preferred because
       --       unlisted buffers are not allowed
@@ -194,7 +194,7 @@ describe('buffer functions', function()
       --}
 
       --{ When: We unlist the second buffer
-      close_buffer(NULL, buf2, buffer.DOBUF_DEL, 0)
+      close_buffer(NULL, buf2, buffer.DOBUF_DEL, 0, 0)
 
       -- Then: The first buffer is preferred again
       --       because buf1 matches better which takes precedence
@@ -205,8 +205,8 @@ describe('buffer functions', function()
       eq(-1, buflist_findpat("test", ONLY_LISTED))
       --}
 
-      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
-      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
+      close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0, 0)
+      close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0, 0)
     end)
   end)
 
@@ -249,7 +249,7 @@ describe('buffer functions', function()
     --
     -- @param arg Options can be placed in an optional dictionary as the last parameter
     --    .expected_cell_count The expected number of cells build_stl_str_hl will return
-    --    .expected_byte_length The expected byte length of the string
+    --    .expected_byte_length The expected byte length of the string (defaults to byte length of expected_stl)
     --    .file_name The name of the file to be tested (useful in %f type tests)
     --    .fillchar The character that will be used to fill any 'extra' space in the stl
     local function statusline_test (description,
@@ -264,7 +264,7 @@ describe('buffer functions', function()
 
       local fillchar = option.fillchar or (' '):byte()
       local expected_cell_count = option.expected_cell_count or statusline_cell_count
-      local expected_byte_length = option.expected_byte_length or expected_cell_count
+      local expected_byte_length = option.expected_byte_length or #expected_stl
 
       itp(description, function()
         if option.file_name then
@@ -312,12 +312,12 @@ describe('buffer functions', function()
     statusline_test('should put fillchar `~` in between text', 10,
       'abc%=def',            'abc~~~~def',
       {fillchar=('~'):byte()})
+    statusline_test('should put fillchar `━` in between text', 10,
+      'abc%=def',            'abc━━━━def',
+      {fillchar=0x2501})
     statusline_test('should handle zero-fillchar as a space', 10,
       'abcde%=',             'abcde     ',
       {fillchar=0})
-    statusline_test('should handle multibyte-fillchar as a dash', 10,
-      'abcde%=',             'abcde-----',
-      {fillchar=0x80})
     statusline_test('should print the tail file name', 80,
       '%t',                  'buffer_spec.lua',
       {file_name='test/unit/buffer_spec.lua', expected_cell_count=15})
@@ -366,70 +366,86 @@ describe('buffer functions', function()
 
     statusline_test('should ignore trailing %', 3, 'abc%', 'abc')
 
-    -- alignment testing
-    statusline_test('should right align when using =', 20,
-      'neo%=vim',            'neo              vim')
-    statusline_test('should, when possible, center text when using %=text%=', 20,
-      'abc%=neovim%=def',    'abc    neovim    def')
-    statusline_test('should handle uneven spacing in the buffer when using %=text%=', 20,
-      'abc%=neo_vim%=def',   'abc   neo_vim    def')
-    statusline_test('should have equal spaces even with non-equal sides when using =', 20,
-      'foobar%=test%=baz',   'foobar   test    baz')
-    statusline_test('should have equal spaces even with longer right side when using =', 20,
-      'a%=test%=longtext',   'a   test    longtext')
-    statusline_test('should handle an empty left side when using ==', 20,
-      '%=test%=baz',         '      test       baz')
-    statusline_test('should handle an empty right side when using ==', 20,
-      'foobar%=test%=',      'foobar     test     ')
-    statusline_test('should handle consecutive empty ==', 20,
-      '%=%=test%=',          '          test      ')
-    statusline_test('should handle an = alone', 20,
-      '%=',                  '                    ')
-    statusline_test('should right align text when it is alone with =', 20,
-      '%=foo',               '                 foo')
-    statusline_test('should left align text when it is alone with =', 20,
-      'foo%=',               'foo                 ')
+    -- alignment testing with fillchar
+    local function statusline_test_align (description,
+                                                       statusline_cell_count,
+                                                       input_stl,
+                                                       expected_stl,
+                                                       arg)
+      arg = arg or {}
+      statusline_test(description .. ' without fillchar',
+        statusline_cell_count, input_stl, expected_stl:gsub('%~', ' '), arg)
+      arg.fillchar = ('!'):byte()
+      statusline_test(description .. ' with fillchar `!`',
+        statusline_cell_count, input_stl, expected_stl:gsub('%~', '!'), arg)
+      arg.fillchar = 0x2501
+      statusline_test(description .. ' with fillchar `━`',
+        statusline_cell_count, input_stl, expected_stl:gsub('%~', '━'), arg)
+    end
 
-    statusline_test('should approximately center text when using %=text%=', 21,
-      'abc%=neovim%=def',    'abc    neovim     def')
-    statusline_test('should completely fill the buffer when using %=text%=', 21,
-      'abc%=neo_vim%=def',   'abc    neo_vim    def')
-    statusline_test('should have equal spaces even with non-equal sides when using =', 21,
-      'foobar%=test%=baz',   'foobar    test    baz')
-    statusline_test('should have equal spaces even with longer right side when using =', 21,
-      'a%=test%=longtext',   'a    test    longtext')
-    statusline_test('should handle an empty left side when using ==', 21,
-      '%=test%=baz',         '       test       baz')
-    statusline_test('should handle an empty right side when using ==', 21,
-      'foobar%=test%=',      'foobar     test      ')
+    statusline_test_align('should right align when using =', 20,
+      'neo%=vim',            'neo~~~~~~~~~~~~~~vim')
+    statusline_test_align('should, when possible, center text when using %=text%=', 20,
+      'abc%=neovim%=def',    'abc~~~~neovim~~~~def')
+    statusline_test_align('should handle uneven spacing in the buffer when using %=text%=', 20,
+      'abc%=neo_vim%=def',   'abc~~~neo_vim~~~~def')
+    statusline_test_align('should have equal spaces even with non-equal sides when using =', 20,
+      'foobar%=test%=baz',   'foobar~~~test~~~~baz')
+    statusline_test_align('should have equal spaces even with longer right side when using =', 20,
+      'a%=test%=longtext',   'a~~~test~~~~longtext')
+    statusline_test_align('should handle an empty left side when using ==', 20,
+      '%=test%=baz',         '~~~~~~test~~~~~~~baz')
+    statusline_test_align('should handle an empty right side when using ==', 20,
+      'foobar%=test%=',      'foobar~~~~~test~~~~~')
+    statusline_test_align('should handle consecutive empty ==', 20,
+      '%=%=test%=',          '~~~~~~~~~~test~~~~~~')
+    statusline_test_align('should handle an = alone', 20,
+      '%=',                  '~~~~~~~~~~~~~~~~~~~~')
+    statusline_test_align('should right align text when it is alone with =', 20,
+      '%=foo',               '~~~~~~~~~~~~~~~~~foo')
+    statusline_test_align('should left align text when it is alone with =', 20,
+      'foo%=',               'foo~~~~~~~~~~~~~~~~~')
 
-    statusline_test('should quadrant the text when using 3 %=', 40,
-      'abcd%=n%=eovim%=ef',  'abcd         n         eovim          ef')
-    statusline_test('should work well with %t', 40,
-      '%t%=right_aligned',   'buffer_spec.lua            right_aligned',
+    statusline_test_align('should approximately center text when using %=text%=', 21,
+      'abc%=neovim%=def',    'abc~~~~neovim~~~~~def')
+    statusline_test_align('should completely fill the buffer when using %=text%=', 21,
+      'abc%=neo_vim%=def',   'abc~~~~neo_vim~~~~def')
+    statusline_test_align('should have equal spacing even with non-equal sides when using =', 21,
+      'foobar%=test%=baz',   'foobar~~~~test~~~~baz')
+    statusline_test_align('should have equal spacing even with longer right side when using =', 21,
+      'a%=test%=longtext',   'a~~~~test~~~~longtext')
+    statusline_test_align('should handle an empty left side when using ==', 21,
+      '%=test%=baz',         '~~~~~~~test~~~~~~~baz')
+    statusline_test_align('should handle an empty right side when using ==', 21,
+      'foobar%=test%=',      'foobar~~~~~test~~~~~~')
+
+    statusline_test_align('should quadrant the text when using 3 %=', 40,
+      'abcd%=n%=eovim%=ef',  'abcd~~~~~~~~~n~~~~~~~~~eovim~~~~~~~~~~ef')
+    statusline_test_align('should work well with %t', 40,
+      '%t%=right_aligned',   'buffer_spec.lua~~~~~~~~~~~~right_aligned',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %t and regular text', 40,
-      'l%=m_l %t m_r%=r',    'l       m_l buffer_spec.lua m_r        r',
+    statusline_test_align('should work well with %t and regular text', 40,
+      'l%=m_l %t m_r%=r',    'l~~~~~~~m_l buffer_spec.lua m_r~~~~~~~~r',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %=, %t, %L, and %l', 40,
-      '%t %= %L %= %l',      'buffer_spec.lua           1            0',
+    statusline_test_align('should work well with %=, %t, %L, and %l', 40,
+      '%t %= %L %= %l',      'buffer_spec.lua ~~~~~~~~~ 1 ~~~~~~~~~~ 0',
       {file_name='test/unit/buffer_spec.lua'})
 
-    statusline_test('should quadrant the text when using 3 %=', 41,
-      'abcd%=n%=eovim%=ef',  'abcd         n         eovim           ef')
-    statusline_test('should work well with %t', 41,
-      '%t%=right_aligned',   'buffer_spec.lua             right_aligned',
+    statusline_test_align('should quadrant the text when using 3 %=', 41,
+      'abcd%=n%=eovim%=ef',  'abcd~~~~~~~~~n~~~~~~~~~eovim~~~~~~~~~~~ef')
+    statusline_test_align('should work well with %t', 41,
+      '%t%=right_aligned',   'buffer_spec.lua~~~~~~~~~~~~~right_aligned',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %t and regular text', 41,
-      'l%=m_l %t m_r%=r',    'l        m_l buffer_spec.lua m_r        r',
+    statusline_test_align('should work well with %t and regular text', 41,
+      'l%=m_l %t m_r%=r',    'l~~~~~~~~m_l buffer_spec.lua m_r~~~~~~~~r',
       {file_name='test/unit/buffer_spec.lua'})
-    statusline_test('should work well with %=, %t, %L, and %l', 41,
-      '%t %= %L %= %l',      'buffer_spec.lua            1            0',
+    statusline_test_align('should work well with %=, %t, %L, and %l', 41,
+      '%t %= %L %= %l',      'buffer_spec.lua ~~~~~~~~~~ 1 ~~~~~~~~~~ 0',
       {file_name='test/unit/buffer_spec.lua'})
 
-    statusline_test('should work with 10 %=', 50,
+    statusline_test_align('should work with 10 %=', 50,
       'aaaa%=b%=c%=d%=e%=fg%=hi%=jk%=lmnop%=qrstuv%=wxyz',
-      'aaaa  b  c  d  e  fg  hi  jk  lmnop  qrstuv   wxyz')
+      'aaaa~~b~~c~~d~~e~~fg~~hi~~jk~~lmnop~~qrstuv~~~wxyz')
 
     -- stl item testing
     local tabline = ''
@@ -452,11 +468,10 @@ describe('buffer functions', function()
 
     -- multi-byte testing
     statusline_test('should handle multibyte characters', 10,
-      'Ĉ%=x',                'Ĉ        x',
-      {expected_byte_length=11})
+      'Ĉ%=x',                'Ĉ        x')
     statusline_test('should handle multibyte characters and different fillchars', 10,
       'Ą%=mid%=end',         'Ą@mid@@end',
-      {fillchar=('@'):byte(), expected_byte_length=11})
+      {fillchar=('@'):byte()})
 
     -- escaping % testing
     statusline_test('should handle escape of %', 4, 'abc%%', 'abc%')

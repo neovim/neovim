@@ -33,8 +33,8 @@ syn cluster texParaGroup add=@rnoweb
 
 " Highlighting of R code using an existing r.vim syntax file if available {{{1
 syn include @rnowebR syntax/r.vim
-syn region rnowebChunk matchgroup=rnowebDelimiter start="^<<.*>>=" matchgroup=rnowebDelimiter end="^@" contains=@rnowebR,rnowebChunkReference,rnowebChunk fold keepend
-syn match rnowebChunkReference "^<<.*>>$" contained
+syn region rnowebChunk matchgroup=rnowebDelimiter start="^\s*<<.*>>=" matchgroup=rnowebDelimiter end="^@" contains=@rnowebR,rnowebChunkReference,rnowebChunk fold keepend
+syn match rnowebChunkReference "^\s*<<.*>>$" contained
 syn region rnowebSexpr matchgroup=Delimiter start="\\Sexpr{" matchgroup=Delimiter end="}" contains=@rnowebR contained
 
 " Sweave options command {{{1

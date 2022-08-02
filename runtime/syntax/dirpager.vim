@@ -6,7 +6,7 @@
 " Description:	  display directory content inside Vim with syntax
 "		  highlighting
 " File:		  runtime/syntax/dirpager.vim
-" Last Change:	  2012 May 19
+" Last Change:	  2022 Jun 14
 " Modeline:	  vim: ts=8:sw=2:sts=2:
 "
 " Credits:	  dirpager.vim is derived from Nikolai Weibulls dircolors.vim

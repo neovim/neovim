@@ -5,10 +5,10 @@
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/event/socket.h"
-#include "nvim/event/process.h"
-#include "nvim/vim.h"
 #include "nvim/channel.h"
+#include "nvim/event/process.h"
+#include "nvim/event/socket.h"
+#include "nvim/vim.h"
 
 #define METHOD_MAXLEN 512
 
@@ -16,7 +16,6 @@
 ///       Events on this queue are async-safe, but they need the resolved state
 ///       of os_inchar(), so they are processed "just-in-time".
 EXTERN MultiQueue *ch_before_blocking_events INIT(= NULL);
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/channel.h.generated.h"

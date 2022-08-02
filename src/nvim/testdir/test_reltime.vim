@@ -1,18 +1,18 @@
 " Tests for reltime()
 
-if !has('reltime') || !has('float')
-  finish
-endif
+source check.vim
+CheckFeature reltime
+CheckFeature float
 
 func Test_reltime()
   let now = reltime()
   sleep 10m
   let later = reltime()
-  let elapsed = reltime(now)
+  let elapsed = now->reltime()
   call assert_true(reltimestr(elapsed) =~ '0\.0')
-  call assert_true(reltimestr(elapsed) != '0.0')
+  call assert_true(elapsed->reltimestr() != '0.0')
   call assert_true(reltimefloat(elapsed) < 0.1)
-  call assert_true(reltimefloat(elapsed) > 0.0)
+  call assert_true(elapsed->reltimefloat() > 0.0)
 
   let same = reltime(now, now)
   call assert_equal('0.000', split(reltimestr(same))[0][:4])

@@ -138,3 +138,50 @@ describe('vim_strchr()', function()
     eq(nil, vim_strchr('«\237\175\191\237\188\128»', 0x10FF00))
   end)
 end)
+
+describe('strcase_save()' , function()
+  local strcase_save = function(input_string, upper)
+    local res = strings.strcase_save(to_cstr(input_string), upper)
+    return ffi.string(res)
+  end
+
+  itp('decodes overlong encoded characters.', function()
+    eq("A", strcase_save("\xc1\x81", true))
+    eq("a", strcase_save("\xc1\x81", false))
+  end)
+end)
+
+describe("reverse_text", function()
+  local reverse_text = function(str)
+    return helpers.internalize(strings.reverse_text(to_cstr(str)))
+  end
+
+  itp("handles empty string", function()
+    eq("", reverse_text(""))
+  end)
+
+  itp("handles simple cases", function()
+    eq("a", reverse_text("a"))
+    eq("ba", reverse_text("ab"))
+  end)
+
+  itp("handles multibyte characters", function()
+    eq("bα", reverse_text("αb"))
+    eq("Yötön yö", reverse_text("öy nötöY"))
+  end)
+
+  itp("handles combining chars", function()
+    local utf8_COMBINING_RING_ABOVE = "\204\138"
+    local utf8_COMBINING_RING_BELOW = "\204\165"
+    eq("bba" .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. "aa",
+       reverse_text("aaa" .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. "bb"))
+  end)
+
+  itp("treats invalid utf as separate characters", function()
+    eq("\192ba", reverse_text("ab\192"))
+  end)
+
+  itp("treats an incomplete utf continuation sequence as valid", function()
+    eq("\194ba", reverse_text("ab\194"))
+  end)
+end)

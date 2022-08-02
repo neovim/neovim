@@ -92,9 +92,9 @@ Help on help files					*helphelp*
 				:help k| only
 <			Note that a space before the '|' is seen as part of
 			the ":help" argument.
-			You can also use <LF> or <CR> to separate the help
+			You can also use <NL> or <CR> to separate the help
 			command from a following command.  You need to type
-			CTRL-V first to insert the <LF> or <CR>.  Example: >
+			CTRL-V first to insert the <NL> or <CR>.  Example: >
 				:help so<C-V><CR>only
 <
 
@@ -103,7 +103,11 @@ Help on help files					*helphelp*
 			current file.  See |help-translated|.
 
 							*:helpc* *:helpclose*
-:helpc[lose]            Close one help window, if there is one.
+:helpc[lose]		Close one help window, if there is one.
+			Vim will try to restore the window layout (including
+			cursor position) to the same layout it was before
+			opening the help window initially.  This might cause
+			triggering several autocommands.
 
 							*:helpg* *:helpgrep*
 :helpg[rep] {pattern}[@xx]
@@ -155,8 +159,30 @@ When no argument is given to |:help| the file given with the 'helpfile' option
 will be opened.  Otherwise the specified tag is searched for in all "doc/tags"
 files in the directories specified in the 'runtimepath' option.
 
+If you would like to open the help in the current window, see this tip:
+|help-curwin|.
+
 The initial height of the help window can be set with the 'helpheight' option
 (default 20).
+						*help-buffer-options*
+When the help buffer is created, several local options are set to make sure
+the help text is displayed as it was intended:
+    'iskeyword'		nearly all ASCII chars except ' ', '*', '"' and '|'
+    'foldmethod'	"manual"
+    'tabstop'		8
+    'arabic'		off
+    'binary'		off
+    'buflisted'		off
+    'cursorbind'	off
+    'diff'		off
+    'foldenable'	off
+    'list'		off
+    'modifiable'	off
+    'number'		off
+    'relativenumber'	off
+    'rightleft'		off
+    'scrollbind'	off
+    'spell'		off
 
 Jump to specific subjects by using tags.  This can be done in two ways:
 - Use the "CTRL-]" command while standing on the name of a command or option.
@@ -193,7 +219,7 @@ command: >
 <
 
 					*:helpt* *:helptags*
-			*E154* *E150* *E151* *E152* *E153* *E670* *E856*
+			*E150* *E151* *E152* *E153* *E154* *E670* *E856*
 :helpt[ags] [++t] {dir}
 			Generate the help tags file(s) for directory {dir}.
 			When {dir} is ALL then all "doc" directories in
@@ -223,7 +249,6 @@ command: >
 
 It is possible to add translated help files, next to the original English help
 files.  Vim will search for all help in "doc" directories in 'runtimepath'.
-This is only available when compiled with the |+multi_lang| feature.
 
 At this moment translations are available for:
 	Chinese  - multiple authors
@@ -294,21 +319,25 @@ Hints for translators:
 3. Writing help files					*help-writing*
 
 For ease of use, a Vim help file for a plugin should follow the format of the
-standard Vim help files.  If you are writing a new help file it's best to copy
-one of the existing files and use it as a template.
+standard Vim help files, except for the first line.  If you are writing a new
+help file it's best to copy one of the existing files and use it as a
+template.
 
 The first line in a help file should have the following format:
 
-*helpfile_name.txt*	For Vim version 7.3	Last change: 2010 June 4
+*plugin_name.txt*	{short description of the plugin}
 
-The first field is a link to the help file name.  The second field describes
-the applicable Vim version.  The last field specifies the last modification
-date of the file.  Each field is separated by a tab.
+The first field is a help tag where ":help plugin_name" will jump to.  The
+remainder of the line, after a Tab, describes the plugin purpose in a short
+way.  This will show up in the "LOCAL ADDITIONS" section of the main help
+file.  Check there that it shows up properly: |local-additions|.
+
+If you want to add a version number or last modification date, put it in the
+second line, right aligned.
 
 At the bottom of the help file, place a Vim modeline to set the 'textwidth'
 and 'tabstop' options and the 'filetype' to "help".  Never set a global option
-in such a modeline, that can have consequences undesired by whoever reads that
-help.
+in such a modeline, that can have undesired consequences.
 
 
 TAGS
@@ -329,7 +358,7 @@ When referring to a Vim option in the help file, place the option name between
 two single quotes, eg. 'statusline'
 
 When referring to any other technical term, such as a filename or function
-parameter, surround it in backticks (`), eg. `~/.path/to/init.vim`.
+parameter, surround it in backticks, eg. `~/.path/to/init.vim`.
 
 
 HIGHLIGHTING
@@ -363,5 +392,6 @@ highlighting.  So do these:
 	*Error	something wrong
 
 You can find the details in $VIMRUNTIME/syntax/help.vim
+
 
  vim:tw=78:ts=8:noet:ft=help:norl:

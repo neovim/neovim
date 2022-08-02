@@ -84,14 +84,14 @@ What you need:
   create it with the shell command "mkid file1 file2 ..".
 
 Put this in your |init.vim|: >
-	map _u :call ID_search()<Bar>execute "/\\<" . g:word . "\\>"<CR>
-	map _n :n<Bar>execute "/\\<" . g:word . "\\>"<CR>
+	map _u :call ID_search()<Bar>execute "/\\<" .. g:word .. "\\>"<CR>
+	map _n :n<Bar>execute "/\\<" .. g:word .. "\\>"<CR>
 
 	function! ID_search()
 	  let g:word = expand("<cword>")
-	  let x = system("lid --key=none ". g:word)
+	  let x = system("lid --key=none " .. g:word)
 	  let x = substitute(x, "\n", " ", "g")
-	  execute "next " . x
+	  execute "next " .. x
 	endfun
 
 To use it, place the cursor on a word, type "_u" and vim will load the file
@@ -285,13 +285,13 @@ This mapping will format any bullet list.  It requires that there is an empty
 line above and below each list entry.  The expression commands are used to
 be able to give comments to the parts of the mapping. >
 
-	:let m =     ":map _f  :set ai<CR>"    " need 'autoindent' set
-	:let m = m . "{O<Esc>"		      " add empty line above item
-	:let m = m . "}{)^W"		      " move to text after bullet
-	:let m = m . "i     <CR>     <Esc>"    " add space for indent
-	:let m = m . "gq}"		      " format text after the bullet
-	:let m = m . "{dd"		      " remove the empty line
-	:let m = m . "5lDJ"		      " put text after bullet
+	:let m =     ":map _f  :set ai<CR>"   " need 'autoindent' set
+	:let m ..= "{O<Esc>"		      " add empty line above item
+	:let m ..= "}{)^W"		      " move to text after bullet
+	:let m ..= "i     <CR>     <Esc>"     " add space for indent
+	:let m ..= "gq}"		      " format text after the bullet
+	:let m ..= "{dd"		      " remove the empty line
+	:let m ..= "5lDJ"		      " put text after bullet
 	:execute m			      |" define the mapping
 
 (<> notation |<>|.  Note that this is all typed literally.  ^W is "^" "W", not
@@ -429,15 +429,15 @@ A slightly more advanced version is used in the |matchparen| plugin.
 	    let c = '\['
 	    let c2 = '\]'
 	  endif
-	  let s_skip ='synIDattr(synID(line("."), col("."), 0), "name") ' .
+	  let s_skip ='synIDattr(synID(line("."), col("."), 0), "name") ' ..
 		\ '=~?	"string\\|comment"'
 	  execute 'if' s_skip '| let s_skip = 0 | endif'
 
 	  let [m_lnum, m_col] = searchpairpos(c, '', c2, s_flags, s_skip)
 
 	  if m_lnum > 0 && m_lnum >= line('w0') && m_lnum <= line('w$')
-	    exe 'match Search /\(\%' . c_lnum . 'l\%' . c_col .
-		  \ 'c\)\|\(\%' . m_lnum . 'l\%' . m_col . 'c\)/'
+	    exe 'match Search /\(\%' .. c_lnum .. 'l\%' .. c_col ..
+		  \ 'c\)\|\(\%' .. m_lnum .. 'l\%' .. m_col .. 'c\)/'
 	    let s:paren_hl_on = 1
 	  endif
 	endfunction
@@ -445,5 +445,30 @@ A slightly more advanced version is used in the |matchparen| plugin.
 	autocmd CursorMoved,CursorMovedI * call s:Highlight_Matching_Paren()
 	autocmd InsertEnter * match none
 <
+
+==============================================================================
+Opening help in the current window				*help-curwin*
+
+By default, help is displayed in a split window.  If you prefer it opens in
+the current window, try this custom `:HelpCurwin` command:
+>
+	command -bar -nargs=? -complete=help HelpCurwin execute s:HelpCurwin(<q-args>)
+	let s:did_open_help = v:false
+	
+	function s:HelpCurwin(subject) abort
+	  let mods = 'silent noautocmd keepalt'
+	  if !s:did_open_help
+	    execute mods .. ' help'
+	    execute mods .. ' helpclose'
+	    let s:did_open_help = v:true
+	  endif
+	  if !empty(getcompletion(a:subject, 'help'))
+	    execute mods .. ' edit ' .. &helpfile
+	    set buftype=help
+	  endif
+	  return 'help ' .. a:subject
+	endfunction
+<
+
 
  vim:tw=78:ts=8:noet:ft=help:norl:

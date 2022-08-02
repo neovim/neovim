@@ -39,7 +39,7 @@ let s:Parser.LINE_BUFFER_MAX_LEN = 100
 " Create a new Parser instance with the initial state and a target. The target
 " is a dictionary that will be the `self` of every State method call associated
 " with the parser, and may contain options normally passed to
-" `jobstart`(on_stdout/on_stderr will be overriden). Returns the target so it
+" `jobstart`(on_stdout/on_stderr will be overridden). Returns the target so it
 " can be called directly as the second argument of `jobstart`:
 "
 " call jobstart(prog_argv, vimexpect#Parser(initial_state, {'pty': 1}))

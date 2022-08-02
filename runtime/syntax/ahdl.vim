@@ -38,7 +38,7 @@ syn keyword ahdlMegafunction lpm_rom lpm_dff lpm_tff clklock pll ntsc
 
 syn keyword ahdlTodo contained TODO
 
-" String contstants
+" String constants
 syn region ahdlString start=+"+  skip=+\\"+  end=+"+
 
 " valid integer number formats (decimal, binary, octal, hex)

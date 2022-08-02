@@ -1,9 +1,8 @@
 " Test for pyx* commands and functions with Python 2.
 
+source check.vim
+CheckFeature python
 set pyx=2
-if !has('python')
-  finish
-endif
 
 let s:py2pattern = '^2\.[0-7]\.\d\+'
 let s:py3pattern = '^3\.\d\+\.\d\+'
@@ -35,7 +34,7 @@ endfunc
 
 func Test_pyxeval()
   pyx import sys
-  call assert_match(s:py2pattern, split(pyxeval('sys.version'))[0])
+  call assert_match(s:py2pattern, split('sys.version'->pyxeval())[0])
 endfunc
 
 

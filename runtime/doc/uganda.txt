@@ -129,11 +129,12 @@ Kibaale Children's Centre		*kcc* *Kibaale*  *charity*
 Kibaale Children's Centre (KCC) is located in Kibaale, a small town in the
 south of Uganda, near Tanzania, in East Africa.  The area is known as Rakai
 District.  The population is mostly farmers.  Although people are poor, there
-is enough food.  But this district is suffering from AIDS more than any other
-part of the world.  Some say that it started there.  Estimations are that 10
-to 30% of the Ugandans are infected with HIV.  Because parents die, there are
-many orphans.  In this district about 60,000 children have lost one or both
-parents, out of a population of 350,000.  And this is still continuing.
+usually is enough food.  But this district is suffering from AIDS more than
+any other part of the world.  Some say that it started there.  Estimations are
+that in the past 10 to 30% of the Ugandans are infected with HIV.  Because
+parents die, there are many orphans.  In this district about 60,000 children
+have lost one or both parents, out of a population of 350,000.  Although AIDS
+is now mostly under control, the problems are still continuing.
 
 The children need a lot of help.  The KCC is working hard to provide the needy
 with food, medical care and education.  Food and medical care to keep them
@@ -212,7 +213,7 @@ Check the ICCF web site for the latest information!  See |iccf| for the URL.
 USA:		The methods mentioned below can be used.
 		Sending a check to the Nehemiah Group Outreach Society (NGOS)
 		is no longer possible, unfortunately. We are looking for
-		another way to get you an IRS tax receipt. 
+		another way to get you an IRS tax receipt.
 		For sponsoring a child contact KCF in Canada (see below). US
 		checks can be sent to them to lower banking costs.
 

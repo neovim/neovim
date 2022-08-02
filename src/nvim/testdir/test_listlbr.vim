@@ -1,14 +1,10 @@
 " Test for linebreak and list option (non-utf8)
 
-" Nvim does not allow setting 'encoding', so skip this test.
-finish
-
-set encoding=latin1
 scriptencoding latin1
 
-if !exists("+linebreak") || !has("conceal")
-  finish
-endif
+source check.vim
+CheckOption linebreak
+CheckFeature conceal
 
 source view_util.vim
 
@@ -46,6 +42,8 @@ func Test_set_linebreak()
 endfunc
 
 func Test_linebreak_with_list()
+  throw 'skipped: Nvim does not support enc=latin1'
+  set listchars=
   call s:test_windows('setl ts=4 sbr=+ list listchars=')
   call setline(1, "\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP ")
   let lines = s:screen_lines([1, 4], winwidth(0))
@@ -57,6 +55,7 @@ func Test_linebreak_with_list()
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()
+  set listchars&vim
 endfunc
 
 func Test_linebreak_with_nolist()
@@ -217,6 +216,7 @@ func Test_norm_after_block_visual()
 endfunc
 
 func Test_block_replace_after_wrapping()
+  throw 'skipped: Nvim does not support enc=latin1'
   call s:test_windows()
   call setline(1, repeat("a", 150))
   exe "norm! 0yypk147|\<C-V>jr0"

@@ -56,7 +56,7 @@ endfunc
 
 func Test_strgetchar()
   call assert_equal(char2nr('a'), strgetchar('axb', 0))
-  call assert_equal(char2nr('x'), strgetchar('axb', 1))
+  call assert_equal(char2nr('x'), 'axb'->strgetchar(1))
   call assert_equal(char2nr('b'), strgetchar('axb', 2))
 
   call assert_equal(-1, strgetchar('axb', -1))
@@ -66,7 +66,7 @@ endfunc
 
 func Test_strcharpart()
   call assert_equal('a', strcharpart('axb', 0, 1))
-  call assert_equal('x', strcharpart('axb', 1, 1))
+  call assert_equal('x', 'axb'->strcharpart(1, 1))
   call assert_equal('b', strcharpart('axb', 2, 1))
   call assert_equal('xb', strcharpart('axb', 1))
 
@@ -147,7 +147,7 @@ function Test_printf_spec_s()
   call assert_equal(string(value), printf('%s', value))
 
   " funcref
-  call assert_equal('printf', printf('%s', function('printf')))
+  call assert_equal('printf', printf('%s', 'printf'->function()))
 
   " partial
   call assert_equal(string(function('printf', ['%s'])), printf('%s', function('printf', ['%s'])))
@@ -282,6 +282,71 @@ function Test_printf_misc()
 
   call assert_equal('🐍', printf('%.2S', '🐍🐍'))
   call assert_equal('', printf('%.1S', '🐍🐍'))
+
+  call assert_equal('[    あいう]', printf('[%10.6S]', 'あいうえお'))
+  call assert_equal('[  あいうえ]', printf('[%10.8S]', 'あいうえお'))
+  call assert_equal('[あいうえお]', printf('[%10.10S]', 'あいうえお'))
+  call assert_equal('[あいうえお]', printf('[%10.12S]', 'あいうえお'))
+
+  call assert_equal('あいう', printf('%S', 'あいう'))
+  call assert_equal('あいう', printf('%#S', 'あいう'))
+
+  call assert_equal('あb', printf('%2S', 'あb'))
+  call assert_equal('あb', printf('%.4S', 'あb'))
+  call assert_equal('あ', printf('%.2S', 'あb'))
+  call assert_equal(' あb', printf('%4S', 'あb'))
+  call assert_equal('0あb', printf('%04S', 'あb'))
+  call assert_equal('あb ', printf('%-4S', 'あb'))
+  call assert_equal('あ  ', printf('%-4.2S', 'あb'))
+
+  call assert_equal('aい', printf('%2S', 'aい'))
+  call assert_equal('aい', printf('%.4S', 'aい'))
+  call assert_equal('a', printf('%.2S', 'aい'))
+  call assert_equal(' aい', printf('%4S', 'aい'))
+  call assert_equal('0aい', printf('%04S', 'aい'))
+  call assert_equal('aい ', printf('%-4S', 'aい'))
+  call assert_equal('a   ', printf('%-4.2S', 'aい'))
+
+  call assert_equal('[あいう]', printf('[%05S]', 'あいう'))
+  call assert_equal('[あいう]', printf('[%06S]', 'あいう'))
+  call assert_equal('[0あいう]', printf('[%07S]', 'あいう'))
+
+  call assert_equal('[あiう]', printf('[%05S]', 'あiう'))
+  call assert_equal('[0あiう]', printf('[%06S]', 'あiう'))
+  call assert_equal('[00あiう]', printf('[%07S]', 'あiう'))
+
+  call assert_equal('[0あい]', printf('[%05.4S]', 'あいう'))
+  call assert_equal('[00あい]', printf('[%06.4S]', 'あいう'))
+  call assert_equal('[000あい]', printf('[%07.4S]', 'あいう'))
+
+  call assert_equal('[00あi]', printf('[%05.4S]', 'あiう'))
+  call assert_equal('[000あi]', printf('[%06.4S]', 'あiう'))
+  call assert_equal('[0000あi]', printf('[%07.4S]', 'あiう'))
+
+  call assert_equal('[0あい]', printf('[%05.5S]', 'あいう'))
+  call assert_equal('[00あい]', printf('[%06.5S]', 'あいう'))
+  call assert_equal('[000あい]', printf('[%07.5S]', 'あいう'))
+
+  call assert_equal('[あiう]', printf('[%05.5S]', 'あiう'))
+  call assert_equal('[0あiう]', printf('[%06.5S]', 'あiう'))
+  call assert_equal('[00あiう]', printf('[%07.5S]', 'あiう'))
+
+  call assert_equal('[0000000000]', printf('[%010.0S]', 'あいう'))
+  call assert_equal('[0000000000]', printf('[%010.1S]', 'あいう'))
+  call assert_equal('[00000000あ]', printf('[%010.2S]', 'あいう'))
+  call assert_equal('[00000000あ]', printf('[%010.3S]', 'あいう'))
+  call assert_equal('[000000あい]', printf('[%010.4S]', 'あいう'))
+  call assert_equal('[000000あい]', printf('[%010.5S]', 'あいう'))
+  call assert_equal('[0000あいう]', printf('[%010.6S]', 'あいう'))
+  call assert_equal('[0000あいう]', printf('[%010.7S]', 'あいう'))
+
+  call assert_equal('[0000000000]', printf('[%010.1S]', 'あiう'))
+  call assert_equal('[00000000あ]', printf('[%010.2S]', 'あiう'))
+  call assert_equal('[0000000あi]', printf('[%010.3S]', 'あiう'))
+  call assert_equal('[0000000あi]', printf('[%010.4S]', 'あiう'))
+  call assert_equal('[00000あiう]', printf('[%010.5S]', 'あiう'))
+  call assert_equal('[00000あiう]', printf('[%010.6S]', 'あiう'))
+  call assert_equal('[00000あiう]', printf('[%010.7S]', 'あiう'))
 
   call assert_equal('1%', printf('%d%%', 1))
 endfunc
@@ -477,7 +542,7 @@ func Test_funcref()
   endfunc
   call assert_equal(2, OneByName())
   call assert_equal(1, OneByRef())
-  let OneByRef = funcref('One')
+  let OneByRef = 'One'->funcref()
   call assert_equal(2, OneByRef())
   call assert_fails('echo funcref("{")', 'E475:')
   let OneByRef = funcref("One", repeat(["foo"], 20))
@@ -493,11 +558,31 @@ func Test_setmatches()
     let set[0]['conceal'] = 5
     let exp[0]['conceal'] = '5'
   endif
-  call setmatches(set)
+  eval set->setmatches()
   call assert_equal(exp, getmatches())
 endfunc
 
 func Test_empty_concatenate()
   call assert_equal('b', 'a'[4:0] . 'b')
   call assert_equal('b', 'b' . 'a'[4:0])
+endfunc
+
+func Test_broken_number()
+  let X = 'bad'
+  call assert_fails('echo 1X', 'E15:')
+  call assert_fails('echo 0b1X', 'E15:')
+  call assert_fails('echo 0b12', 'E15:')
+  call assert_fails('echo 0x1X', 'E15:')
+  call assert_fails('echo 011X', 'E15:')
+  call assert_equal(2, str2nr('2a'))
+  call assert_fails('inoremap <Char-0b1z> b', 'E474:')
+endfunc
+
+func Test_eval_after_if()
+  let s:val = ''
+  func SetVal(x)
+    let s:val ..= a:x
+  endfunc
+  if 0 | eval SetVal('a') | endif | call SetVal('b')
+  call assert_equal('b', s:val)
 endfunc

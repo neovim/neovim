@@ -31,4 +31,13 @@ describe('CursorMoved', function()
     eq({'aaa'}, funcs.nvim_buf_get_lines(eval('g:buf'), 0, -1, true))
     eq(0, eval('g:cursormoved'))
   end)
+
+  it("is not triggered by cursor movement prior to first CursorMoved instantiation", function()
+    source([[
+    let g:cursormoved = 0
+    autocmd! CursorMoved
+    autocmd CursorMoved * let g:cursormoved += 1
+    ]])
+    eq(0, eval('g:cursormoved'))
+  end)
 end)

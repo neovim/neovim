@@ -1,9 +1,15 @@
 " Tests for regexp in latin1 encoding
-set encoding=latin1
+
+" set encoding=latin1
 scriptencoding latin1
 
+source check.vim
+
 func s:equivalence_test()
-  let str = "AÃ€ÃÃ‚ÃƒÃ„Ã… B C D EÃˆÃ‰ÃŠÃ‹ F G H IÃŒÃÃÃ J K L M NÃ‘ OÃ’Ã“Ã”Ã•Ã–Ã˜ P Q R S T UÃ™ÃšÃ›Ãœ V W X YÃ Z aÃ Ã¡Ã¢Ã£Ã¤Ã¥ b c d eÃ¨Ã©ÃªÃ« f g h iÃ¬Ã­Ã®Ã¯ j k l m nÃ± oÃ²Ã³Ã´ÃµÃ¶Ã¸ p q r s t uÃ¹ÃºÃ»Ã¼ v w x yÃ½Ã¿ z"
+  let str = 'AÀÁÂÃÄÅ B C D EÈÉÊË F G H IÌÍÎÏ J K L M NÑ OÒÓÔÕÖØ P Q R S T UÙÚÛÜ V W X Yİ Z '
+  \      .. 'aàáâãäå b c d eèéêë f g h iìíîï j k l m nñ oòóôõöø p q r s t uùúûü v w x yıÿ z '
+  \      .. "0 1 2 3 4 5 6 7 8 9 "
+  \      .. "` ~ ! ? ; : . , / \\ ' \" | < > [ ] { } ( ) @ # $ % ^ & * _ - + \b \e \f \n \r \t"
   let groups = split(str)
   for group1 in groups
       for c in split(group1, '\zs')
@@ -22,11 +28,13 @@ func s:equivalence_test()
 endfunc
 
 func Test_equivalence_re1()
+  throw 'skipped: Nvim does not support enc=latin1'
   set re=1
   call s:equivalence_test()
 endfunc
 
 func Test_equivalence_re2()
+  throw 'skipped: Nvim does not support enc=latin1'
   set re=2
   call s:equivalence_test()
 endfunc
@@ -37,6 +45,17 @@ func Test_range_with_newline()
   call assert_equal(0, search("[ -*\\n- ]"))
   call assert_equal(0, search("[ -*\\t-\\n]"))
   bwipe!
+endfunc
+
+func Test_pattern_compile_speed()
+  CheckOption spellcapcheck
+  CheckFunction reltimefloat
+
+  let start = reltime()
+  " this used to be very slow, not it should be about a second
+  set spc=\\v(((((Nxxxxxxx&&xxxx){179})+)+)+){179}
+  call assert_inrange(0.01, 10.0, reltimefloat(reltime(start)))
+  set spc=
 endfunc
 
 func Test_get_equi_class()
@@ -87,6 +106,7 @@ func Test_multi_failure()
 endfunc
 
 func Test_recursive_addstate()
+  throw 'skipped: TODO: '
   " This will call addstate() recursively until it runs into the limit.
   let lnum = search('\v((){328}){389}')
   call assert_equal(0, lnum)
@@ -102,7 +122,10 @@ endfunc
 " Tests for regexp patterns without multi-byte support.
 func Test_regexp_single_line_pat()
   " tl is a List of Lists with:
-  "    regexp engine
+  "    regexp engines to test
+  "       0 - test with 'regexpengine' values 0 and 1
+  "       1 - test with 'regexpengine' values 0 and 2
+  "       2 - test with 'regexpengine' values 0, 1 and 2
   "    regexp pattern
   "    text to test the pattern on
   "    expected match (optional)
@@ -123,6 +146,8 @@ func Test_regexp_single_line_pat()
   call add(tl, [2, 'c*', 'abdef', ''])
   call add(tl, [2, 'bc\+', 'abccccdef', 'bcccc'])
   call add(tl, [2, 'bc\+', 'abdef']) " no match
+  " match newline character in a string
+  call add(tl, [2, 'o\nb', "foo\nbar", "o\nb"])
 
   " operator \|
   call add(tl, [2, 'a\|ab', 'cabd', 'a']) " alternation is ordered
@@ -320,7 +345,7 @@ func Test_regexp_single_line_pat()
   call add(tl, [2, '\v((ab)|c*)+', 'abcccaba', 'abcccab', '', 'ab'])
   call add(tl, [2, '\v(a(c*)+b)+', 'acbababaaa', 'acbabab', 'ab', ''])
   call add(tl, [2, '\v(a|b*)+', 'aaaa', 'aaaa', ''])
-  call add(tl, [2, '\p*', 'aÃ¡ 	', 'aÃ¡ '])
+  call add(tl, [2, '\p*', 'aá 	', 'aá '])
 
   " Test greedy-ness and lazy-ness
   call add(tl, [2, 'a\{-2,7}','aaaaaaaaaaaaa', 'aa'])
@@ -546,6 +571,9 @@ func Test_regexp_single_line_pat()
   " Test \%V atom
   call add(tl, [2, '\%>70vGesamt', 'Jean-Michel Charlier & Victor Hubinon\Gesamtausgabe [Salleck]    Buck Danny {Jean-Michel Charlier & Victor Hubinon}\Gesamtausgabe', 'Gesamt'])
 
+  " Test for ignoring case and matching repeated characters
+  call add(tl, [2, '\cb\+', 'aAbBbBcC', 'bBbB'])
+
   " Run the tests
   for t in tl
     let re = t[0]
@@ -605,6 +633,14 @@ endfunc
 
 " Tests for multi-line regexp patterns without multi-byte support.
 func Test_regexp_multiline_pat()
+  " tl is a List of Lists with:
+  "    regexp engines to test
+  "       0 - test with 'regexpengine' values 0 and 1
+  "       1 - test with 'regexpengine' values 0 and 2
+  "       2 - test with 'regexpengine' values 0, 1 and 2
+  "    regexp pattern
+  "    List with text to test the pattern on
+  "    List with the expected match
   let tl = []
 
   " back references
@@ -613,6 +649,70 @@ func Test_regexp_multiline_pat()
 
   " line breaks
   call add(tl, [2, '\S.*\nx', ['abc', 'def', 'ghi', 'xjk', 'lmn'], ['abc', 'def', 'XXjk', 'lmn']])
+
+  " Any single character or end-of-line
+  call add(tl, [2, '\_.\+', ['a', 'b', 'c'], ['XX']])
+  " Any identifier or end-of-line
+  call add(tl, [2, '\_i\+', ['a', 'b', ';', '2'], ['XX;XX']])
+  " Any identifier but excluding digits or end-of-line
+  call add(tl, [2, '\_I\+', ['a', 'b', ';', '2'], ['XX;XX2XX']])
+  " Any keyword or end-of-line
+  call add(tl, [2, '\_k\+', ['a', 'b', '=', '2'], ['XX=XX']])
+  " Any keyword but excluding digits or end-of-line
+  call add(tl, [2, '\_K\+', ['a', 'b', '=', '2'], ['XX=XX2XX']])
+  " Any filename character or end-of-line
+  call add(tl, [2, '\_f\+', ['a', 'b', '.', '5'], ['XX']])
+  " Any filename character but excluding digits or end-of-line
+  call add(tl, [2, '\_F\+', ['a', 'b', '.', '5'], ['XX5XX']])
+  " Any printable character or end-of-line
+  call add(tl, [2, '\_p\+', ['a', 'b', '=', '4'], ['XX']])
+  " Any printable character excluding digits or end-of-line
+  call add(tl, [2, '\_P\+', ['a', 'b', '=', '4'], ['XX4XX']])
+  " Any whitespace character or end-of-line
+  call add(tl, [2, '\_s\+', [' ', ' ', 'a', 'b'], ['XXaXXbXX']])
+  " Any non-whitespace character or end-of-line
+  call add(tl, [2, '\_S\+', [' ', ' ', 'a', 'b'], [' XX XX']])
+  " Any decimal digit or end-of-line
+  call add(tl, [2, '\_d\+', ['1', 'a', '2', 'b', '3'], ['XXaXXbXX']])
+  " Any non-decimal digit or end-of-line
+  call add(tl, [2, '\_D\+', ['1', 'a', '2', 'b', '3'], ['1XX2XX3XX']])
+  " Any hexadecimal digit or end-of-line
+  call add(tl, [2, '\_x\+', ['1', 'a', 'g', '9', '8'], ['XXgXX']])
+  " Any non-hexadecimal digit or end-of-line
+  call add(tl, [2, '\_X\+', ['1', 'a', 'g', '9', '8'], ['1XXaXX9XX8XX']])
+  " Any octal digit or end-of-line
+  call add(tl, [2, '\_o\+', ['0', '7', '8', '9', '0'], ['XX8XX9XX']])
+  " Any non-octal digit or end-of-line
+  call add(tl, [2, '\_O\+', ['0', '7', '8', '9', '0'], ['0XX7XX0XX']])
+  " Any word character or end-of-line
+  call add(tl, [2, '\_w\+', ['A', 'B', '=', 'C', 'D'], ['XX=XX']])
+  " Any non-word character or end-of-line
+  call add(tl, [2, '\_W\+', ['A', 'B', '=', 'C', 'D'], ['AXXBXXCXXDXX']])
+  " Any head-of-word character or end-of-line
+  call add(tl, [2, '\_h\+', ['a', '1', 'b', '2', 'c'], ['XX1XX2XX']])
+  " Any non-head-of-word character or end-of-line
+  call add(tl, [2, '\_H\+', ['a', '1', 'b', '2', 'c'], ['aXXbXXcXX']])
+  " Any alphabetic character or end-of-line
+  call add(tl, [2, '\_a\+', ['a', '1', 'b', '2', 'c'], ['XX1XX2XX']])
+  " Any non-alphabetic character or end-of-line
+  call add(tl, [2, '\_A\+', ['a', '1', 'b', '2', 'c'], ['aXXbXXcXX']])
+  " Any lowercase character or end-of-line
+  call add(tl, [2, '\_l\+', ['a', 'A', 'b', 'B'], ['XXAXXBXX']])
+  " Any non-lowercase character or end-of-line
+  call add(tl, [2, '\_L\+', ['a', 'A', 'b', 'B'], ['aXXbXX']])
+  " Any uppercase character or end-of-line
+  call add(tl, [2, '\_u\+', ['a', 'A', 'b', 'B'], ['aXXbXX']])
+  " Any non-uppercase character or end-of-line
+  call add(tl, [2, '\_U\+', ['a', 'A', 'b', 'B'], ['XXAXXBXX']])
+  " Collection or end-of-line
+  call add(tl, [2, '\_[a-z]\+', ['a', 'A', 'b', 'B'], ['XXAXXBXX']])
+  " start of line anywhere in the text
+  call add(tl, [2, 'one\zs\_s*\_^\zetwo',
+        \ ['', 'one', ' two', 'one', '', 'two'],
+        \ ['', 'one', ' two', 'oneXXtwo']])
+  " end of line anywhere in the text
+  call add(tl, [2, 'one\zs\_$\_s*two',
+        \ ['', 'one', ' two', 'one', '', 'two'], ['', 'oneXX', 'oneXX']])
 
   " Check that \_[0-9] matching EOL does not break a following \>
   call add(tl, [2, '\<\(\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\.\)\{3\}\(25\_[0-5]\|2\_[0-4]\_[0-9]\|\_[01]\?\_[0-9]\_[0-9]\?\)\>', ['', 'localnet/192.168.0.1', ''], ['', 'localnet/XX', '']])
@@ -629,7 +729,7 @@ func Test_regexp_multiline_pat()
     let before = t[2]
     let after = t[3]
     for engine in [0, 1, 2]
-      if engine == 2 && re == 0 || engine == 1 && re ==1
+      if engine == 2 && re == 0 || engine == 1 && re == 1
         continue
       endif
       let &regexpengine = engine
@@ -666,7 +766,7 @@ func Test_matchstr_with_ze()
   bwipe!
 endfunc
 
-" Check a pattern with a look beind crossing a line boundary
+" Check a pattern with a look behind crossing a line boundary
 func Test_lookbehind_across_line()
   new
   call append(0, ['Behind:', 'asdfasd<yyy', 'xxstart1', 'asdfasd<yy',
@@ -677,9 +777,8 @@ func Test_lookbehind_across_line()
   bwipe!
 endfunc
 
-" Check matching Visual area
-func Test_matching_visual_area()
-  new
+" Test for the \%V atom (match inside the visual area)
+func Regex_Match_Visual_Area()
   call append(0, ['Visual:', 'thexe the thexethe', 'andaxand andaxand',
         \ 'oooxofor foroxooo', 'oooxofor foroxooo'])
   call cursor(1, 1)
@@ -688,12 +787,22 @@ func Test_matching_visual_area()
   exe "normal jfx\<C-V>fxj:s/\\%Vo/O/g\<CR>"
   call assert_equal(['Visual:', 'thexE thE thExethe', 'AndAxAnd AndAxAnd',
         \ 'oooxOfOr fOrOxooo', 'oooxOfOr fOrOxooo', ''], getline(1, '$'))
+  %d
+endfunc
+
+" Check matching Visual area
+func Test_matching_visual_area()
+  new
+  set regexpengine=1
+  call Regex_Match_Visual_Area()
+  set regexpengine=2
+  call Regex_Match_Visual_Area()
+  set regexpengine&
   bwipe!
 endfunc
 
 " Check matching marks
-func Test_matching_marks()
-  new
+func Regex_Mark()
   call append(0, ['', '', '', 'Marks:', 'asdfSasdfsadfEasdf', 'asdfSas',
         \ 'dfsadfEasdf', '', '', '', '', ''])
   call cursor(4, 1)
@@ -701,6 +810,15 @@ func Test_matching_marks()
   exe "normal jfSmsj0fEme:.-4,.+6s/.\\%>'s\\_.*\\%<'e../again/\<CR>"
   call assert_equal(['', '', '', 'Marks:', 'asdfhereasdf', 'asdfagainasdf',
         \ '', '', '', '', '', ''], getline(1, '$'))
+  %d
+endfunc
+
+func Test_matching_marks()
+  new
+  set regexpengine=1
+  call Regex_Mark()
+  set regexpengine=2
+  call Regex_Mark()
   bwipe!
 endfunc
 
@@ -741,8 +859,7 @@ func Test_matching_curpos()
 endfunc
 
 " Test for matching the start and end of a buffer
-func Test_start_end_of_buffer_match()
-  new
+func Regex_start_end_buffer()
   call setline(1, repeat(['vim edit'], 20))
   /\%^
   call assert_equal([0, 1, 1, 0], getpos('.'))
@@ -752,6 +869,15 @@ func Test_start_end_of_buffer_match()
   call assert_equal([0, 20, 8, 0], getpos('.'))
   exe "normal 6gg/..\\%$\<CR>"
   call assert_equal([0, 20, 7, 0], getpos('.'))
+  %d
+endfunc
+
+func Test_start_end_of_buffer_match()
+  new
+  set regexpengine=1
+  call Regex_start_end_buffer()
+  set regexpengine=2
+  call Regex_start_end_buffer()
   bwipe!
 endfunc
 
@@ -764,10 +890,152 @@ endfunc
 
 " Check for detecting error
 func Test_regexp_error()
-  set regexpengine=2
-  call assert_fails("call matchlist('x x', ' \\ze*')", 'E888:')
-  call assert_fails("call matchlist('x x', ' \\zs*')", 'E888:')
+  call assert_fails("call matchlist('x x', '\\%#=1 \\zs*')", 'E888:')
+  call assert_fails("call matchlist('x x', '\\%#=1 \\ze*')", 'E888:')
+  call assert_fails("call matchlist('x x', '\\%#=2 \\zs*')", 'E888:')
+  call assert_fails("call matchlist('x x', '\\%#=2 \\ze*')", 'E888:')
+  call assert_fails('exe "normal /\\%#=1\\%[x\\%[x]]\<CR>"', 'E369:')
+endfunc
+
+" Test for using the last substitute string pattern (~)
+func Test_regexp_last_subst_string()
+  new
+  s/bar/baz/e
+  call assert_equal(matchstr("foo\nbaz\nbar", "\\%#=1\~"), "baz")
+  call assert_equal(matchstr("foo\nbaz\nbar", "\\%#=2\~"), "baz")
+  close!
+endfunc
+
+" Check patterns matching cursor position.
+func s:curpos_test2()
+  new
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 2, 10, 0])
+  s/\%.c.*//g
+  call setpos('.', [0, 3, 15, 0])
+  s/\%.l.*//g
+  call setpos('.', [0, 5, 3, 0])
+  s/\%.v.*/_/g
+  call assert_equal(['1',
+        \ '2 foobar ',
+        \ '',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	_',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'],
+        \ getline(1, '$'))
+  call assert_fails('call search("\\%.1l")', 'E1204:')
+  call assert_fails('call search("\\%.1c")', 'E1204:')
+  call assert_fails('call search("\\%.1v")', 'E1204:')
+  bwipe!
+endfunc
+
+" Check patterns matching before or after cursor position.
+func s:curpos_test3()
+  new
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 2, 10, 0])
+  " Note: This removes all columns, except for the column directly in front of
+  " the cursor. Bug????
+  :s/^.*\%<.c//
+  call setpos('.', [0, 3, 10, 0])
+  :s/\%>.c.*$//
+  call setpos('.', [0, 5, 4, 0])
+  " Note: This removes all columns, except for the column directly in front of
+  " the cursor. Bug????
+  :s/^.*\%<.v/_/
+  call setpos('.', [0, 6, 4, 0])
+  :s/\%>.v.*$/_/
+  call assert_equal(['1',
+        \ ' eins zwei drei vier fünf sechse',
+        \ '3 foobar e',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '_foobar eins zwei drei vier fünf sechse',
+        \ '6	fo_',
+        \ '7	foobar eins zwei drei vier fünf sechse'],
+        \ getline(1, '$'))
+  sil %d
+  call setline(1, ['1', '2 foobar eins zwei drei vier fünf sechse',
+        \ '3 foobar eins zwei drei vier fünf sechse',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '6	foobar eins zwei drei vier fünf sechse',
+        \ '7	foobar eins zwei drei vier fünf sechse'])
+  call setpos('.', [0, 4, 4, 0])
+  %s/\%<.l.*//
+  call setpos('.', [0, 5, 4, 0])
+  %s/\%>.l.*//
+  call assert_equal(['', '', '',
+        \ '4 foobar eins zwei drei vier fünf sechse',
+        \ '5	foobar eins zwei drei vier fünf sechse',
+        \ '', ''],
+        \ getline(1, '$'))
+  bwipe!
+endfunc
+
+" Test that matching below, at or after the
+" cursor position work
+func Test_matching_pos()
+  for val in range(3)
+    exe "set re=" .. val
+    " Match at cursor position
+    call s:curpos_test2()
+    " Match before or after cursor position
+    call s:curpos_test3()
+  endfor
   set re&
+endfunc
+
+func Test_using_mark_position()
+  " this was using freed memory
+  " new engine
+  new
+  norm O0
+  call assert_fails("s/\\%')", 'E486:')
+  bwipe!
+
+  " old engine
+  new
+  norm O0
+  call assert_fails("s/\\%#=1\\%')", 'E486:')
+  bwipe!
+endfunc
+
+func Test_using_visual_position()
+  " this was using freed memory
+  new
+  exe "norm 0o\<Esc>\<C-V>k\<C-X>o0"
+  /\%V
+  bwipe!
+endfunc
+
+func Test_using_invalid_visual_position()
+  " this was going beyond the end of the line
+  new
+  exe "norm 0o000\<Esc>0\<C-V>$s0"
+  /\%V
+  bwipe!
+endfunc
+
+func Test_recursive_substitute_expr()
+  new
+  func Repl()
+    s
+  endfunc
+  silent! s/\%')/~\=Repl()
+
+  bwipe!
+  delfunc Repl
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

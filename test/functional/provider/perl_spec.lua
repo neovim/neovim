@@ -83,7 +83,7 @@ describe('perl provider', function()
       use Neovim::Ext;
       use Neovim::Ext::MsgPack::RPC;
 
-      my $session = Neovim::Ext::MsgPack::RPC::socket_session($ENV{NVIM_LISTEN_ADDRESS});
+      my $session = Neovim::Ext::MsgPack::RPC::socket_session($ENV{NVIM});
       my $nvim = Neovim::Ext::from_session($session);
       $nvim->command('let g:job_out = "hello"');
       1;
@@ -116,7 +116,7 @@ describe('perl provider', function()
       use Neovim::Ext;
       use Neovim::Ext::MsgPack::RPC;
 
-      my $session = Neovim::Ext::MsgPack::RPC::socket_session($ENV{NVIM_LISTEN_ADDRESS});
+      my $session = Neovim::Ext::MsgPack::RPC::socket_session($ENV{NVIM});
       my $nvim = Neovim::Ext::from_session($session);
       my $plugin = TestPlugin->new($nvim);
       $plugin->test_command();

@@ -28,7 +28,10 @@ local function assert_eq(a, b, ...)
   if not vim.deep_equal(a, b) then
     error(message_parts(": ",
       ..., "assert_eq failed",
-      string.format("left == %q, right == %q", vim.inspect(a), vim.inspect(b))
+      string.format("left == %q, right == %q",
+        table.concat(vim.split(vim.inspect(a), "\n"), ""),
+        table.concat(vim.split(vim.inspect(b), "\n"), "")
+      )
     ))
   end
 end
@@ -43,11 +46,11 @@ end
 local function read_message()
   local line = io.read("*l")
   local length = line:lower():match("content%-length:%s*(%d+)")
-  return vim.fn.json_decode(io.read(2 + length):sub(2))
+  return vim.json.decode(io.read(2 + length):sub(2))
 end
 
 local function send(payload)
-  io.stdout:write(format_message_with_content_length(vim.fn.json_encode(payload)))
+  io.stdout:write(format_message_with_content_length(vim.json.encode(payload)))
 end
 
 local function respond(id, err, result)
@@ -64,10 +67,12 @@ local function expect_notification(method, params, ...)
   local message = read_message()
   assert_eq(method, message.method,
       ..., "expect_notification", "method")
-  assert_eq(params, message.params,
-      ..., "expect_notification", method, "params")
-  assert_eq({jsonrpc = "2.0"; method=method, params=params}, message,
-      ..., "expect_notification", "message")
+  if params then
+    assert_eq(params, message.params,
+        ..., "expect_notification", method, "params")
+    assert_eq({jsonrpc = "2.0"; method=method, params=params}, message,
+        ..., "expect_notification", "message")
+  end
 end
 
 local function expect_request(method, handler, ...)
@@ -100,13 +105,30 @@ local tests = {}
 
 function tests.basic_init()
   skeleton {
-    on_init = function(_params)
-      return { capabilities = {} }
+    on_init = function(_)
+      return {
+        capabilities = {
+          textDocumentSync = protocol.TextDocumentSyncKind.None;
+        }
+      }
     end;
     body = function()
       notify('test')
     end;
   }
+end
+
+function tests.basic_init_did_change_configuration()
+  skeleton({
+    on_init = function(_)
+      return {
+        capabilities = {},
+      }
+    end,
+    body = function()
+      expect_notification('workspace/didChangeConfiguration', { settings = { dummy = 1 } })
+    end,
+  })
 end
 
 function tests.check_workspace_configuration()
@@ -119,8 +141,102 @@ function tests.check_workspace_configuration()
       notify('workspace/configuration', { items = {
               { section = "testSetting1" };
               { section = "testSetting2" };
+              { section = "test.Setting3" };
+              { section = "test.Setting4" };
           } })
-      expect_notification('workspace/configuration', { true; vim.NIL})
+      expect_notification('workspace/configuration', { true; false; 'nested'; vim.NIL})
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_nil()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = {
+            prepareProvider = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_placeholder()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = {
+            prepareProvider = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, {placeholder = 'placeholder'}
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_range()
+  skeleton {
+    on_init = function()
+      return { capabilities = {
+        renameProvider = {
+            prepareProvider = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return nil, {
+          start = { line = 1, character = 8 },
+          ['end'] = { line = 1, character = 12 },
+        }
+      end)
+      expect_request('textDocument/rename', function(params)
+        assert_eq(params.newName, 'renameto')
+        return nil, nil
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.prepare_rename_error()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          renameProvider = {
+            prepareProvider = true
+          },
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/prepareRename', function()
+        return {}, nil
+      end)
       notify('shutdown')
     end;
   }
@@ -134,10 +250,76 @@ function tests.basic_check_capabilities()
       return {
         capabilities = {
           textDocumentSync = protocol.TextDocumentSyncKind.Full;
+          codeLensProvider = false
         }
       }
     end;
     body = function()
+    end;
+  }
+end
+
+function tests.text_document_save_did_open()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          textDocumentSync = {
+            save = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didOpen')
+      expect_notification('textDocument/didSave')
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.text_document_sync_save_bool()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          textDocumentSync = {
+            save = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didSave', {textDocument = { uri = "file://" }})
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.text_document_sync_save_includeText()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          textDocumentSync = {
+            save = {
+              includeText = true
+            }
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didSave', {
+        textDocument = {
+          uri = "file://"
+        },
+        text = "help me\n"
+      })
+      notify('shutdown')
     end;
   }
 end
@@ -152,12 +334,92 @@ function tests.capabilities_for_client_supports_method()
           textDocumentSync = protocol.TextDocumentSyncKind.Full;
           completionProvider = true;
           hoverProvider = true;
+          renameProvider = false;
           definitionProvider = false;
           referencesProvider = false;
+          codeLensProvider = { resolveProvider = true; };
         }
       }
     end;
     body = function()
+    end;
+  }
+end
+
+function tests.check_forward_request_cancelled()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_request("error_code_test", function()
+        return {code = -32800}, nil, {method = "error_code_test", client_id=1}
+      end)
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_forward_content_modified()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      expect_request("error_code_test", function()
+        return {code = -32801}, nil, {method = "error_code_test", client_id=1}
+      end)
+      expect_notification('finish')
+      notify('finish')
+    end;
+  }
+end
+
+function tests.check_pending_request_tracked()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('release')
+        respond(msg.id, nil, {})
+        expect_notification('finish')
+        notify('finish')
+    end;
+  }
+end
+
+function tests.check_cancel_request_tracked()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('$/cancelRequest', {id=msg.id})
+        expect_notification('release')
+        respond(msg.id, {code = -32800}, nil)
+        notify('finish')
+    end;
+  }
+end
+
+function tests.check_tracked_requests_cleared()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+        local msg = read_message()
+        assert_eq('slow_request', msg.method)
+        expect_notification('$/cancelRequest', {id=msg.id})
+        expect_notification('release')
+        respond(msg.id, nil, {})
+        expect_notification('finish')
+        notify('finish')
     end;
   }
 end
@@ -380,7 +642,15 @@ function tests.basic_check_buffer_open_and_change_incremental()
       assert_eq(params.capabilities, expected_capabilities)
       return {
         capabilities = {
-          textDocumentSync = protocol.TextDocumentSyncKind.Incremental;
+          textDocumentSync = {
+            openClose = true,
+            change = protocol.TextDocumentSyncKind.Incremental,
+            willSave = true,
+            willSaveWaitUntil = true,
+            save = {
+              includeText = true,
+            }
+          }
         }
       }
     end;
@@ -402,11 +672,11 @@ function tests.basic_check_buffer_open_and_change_incremental()
         contentChanges = {
           {
             range = {
-              start = { line = 1; character = 0; };
-              ["end"] = { line = 2; character = 0; };
+              start = { line = 1; character = 3; };
+              ["end"] = { line = 1; character = 3; };
             };
-            rangeLength = 4;
-            text = "boop\n";
+            rangeLength = 0;
+            text = "boop";
           };
         }
       })
@@ -461,6 +731,200 @@ end
 
 function tests.invalid_header()
   io.stdout:write("Content-length: \r\n")
+end
+
+function tests.decode_nil()
+  skeleton {
+    on_init = function(_)
+      return { capabilities = {} }
+    end;
+    body = function()
+      notify('start')
+      notify("workspace/executeCommand", {
+        arguments = { "EXTRACT_METHOD", {metadata = {field = vim.NIL}}, 3, 0, 6123, vim.NIL },
+        command = "refactor.perform",
+        title = "EXTRACT_METHOD"
+      })
+      notify('finish')
+    end;
+  }
+end
+
+
+function tests.code_action_with_resolve()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          codeActionProvider = {
+            resolveProvider = true
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      local cmd = {
+        title = 'Command 1',
+        command = 'dummy1'
+      }
+      expect_request('textDocument/codeAction', function()
+        return nil, { cmd, }
+      end)
+      expect_request('codeAction/resolve', function()
+        return nil, cmd
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.code_action_server_side_command()
+  skeleton({
+    on_init = function()
+      return {
+        capabilities = {
+          codeActionProvider = {
+            resolveProvider = false,
+          },
+        },
+      }
+    end,
+    body = function()
+      notify('start')
+      local cmd = {
+        title = 'Command 1',
+        command = 'dummy1',
+      }
+      expect_request('textDocument/codeAction', function()
+        return nil, { cmd }
+      end)
+      expect_request('workspace/executeCommand', function()
+        return nil, cmd
+      end)
+      notify('shutdown')
+    end,
+  })
+end
+
+
+function tests.code_action_filter()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          codeActionProvider = {
+            resolveProvider = false
+          }
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      local action = {
+        title = 'Action 1',
+        command = 'command'
+      }
+      local preferred_action = {
+        title = 'Action 2',
+        isPreferred = true,
+        command = 'preferred_command',
+      }
+      local quickfix_action = {
+        title = 'Action 3',
+        kind = 'quickfix',
+        command = 'quickfix_command',
+      }
+      local quickfix_foo_action = {
+        title = 'Action 4',
+        kind = 'quickfix.foo',
+        command = 'quickfix_foo_command',
+      }
+      expect_request('textDocument/codeAction', function()
+        return nil, { action, preferred_action, quickfix_action, quickfix_foo_action, }
+      end)
+      expect_request('textDocument/codeAction', function()
+        return nil, { action, preferred_action, quickfix_action, quickfix_foo_action, }
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.clientside_commands()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {}
+      }
+    end;
+    body = function()
+      notify('start')
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.codelens_refresh_lock()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          codeLensProvider = { resolveProvider = true; };
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request("textDocument/codeLens", function ()
+        return {code = -32002, message = "ServerNotInitialized"}, nil
+      end)
+      expect_request("textDocument/codeLens", function ()
+        local lenses = {
+          {
+            range = {
+              start = { line = 0, character = 0, },
+              ['end'] = { line = 0, character = 3 }
+            },
+            command = { title = 'Lens1', command = 'Dummy' }
+          },
+        }
+        return nil, lenses
+      end)
+      expect_request("textDocument/codeLens", function ()
+        local lenses = {
+          {
+            range = {
+              start = { line = 0, character = 0, },
+              ['end'] = { line = 0, character = 3 }
+            },
+            command = { title = 'Lens2', command = 'Dummy' }
+          },
+        }
+        return nil, lenses
+      end)
+      notify('shutdown')
+    end;
+  }
+end
+
+function tests.basic_formatting()
+  skeleton {
+    on_init = function()
+      return {
+        capabilities = {
+          documentFormattingProvider = true,
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/formatting', function()
+        return nil, {}
+      end)
+      notify('shutdown')
+    end;
+  }
 end
 
 -- Tests will be indexed by TEST_NAME

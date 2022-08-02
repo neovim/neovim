@@ -2,7 +2,7 @@ local ffi = require('ffi')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
-local Paths = require('test.config.paths')
+local Paths = require('test.cmakeconfig.paths')
 local global_helpers = require('test.helpers')
 local assert = require('luassert')
 local say = require('say')
@@ -96,6 +96,7 @@ local init = only_separate(function()
     c.func(unpack(c.args))
   end
   libnvim.time_init()
+  libnvim.fs_init()
   libnvim.event_init()
   libnvim.early_init(nil)
   if child_calls_mod then
@@ -778,7 +779,8 @@ local function cppimport(path)
   return cimport(Paths.test_source_path .. '/test/includes/pre/' .. path)
 end
 
-cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h')
+cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h',
+        './src/nvim/os/fs.h')
 
 local function conv_enum(etab, eval)
   local n = tonumber(eval)

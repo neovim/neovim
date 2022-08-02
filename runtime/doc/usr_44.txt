@@ -673,20 +673,9 @@ syntax file, earlier in 'runtimepath' was already loaded: >
 	  finish
 	endif
 
-To be compatible with Vim 5.8 use: >
-
-	if version < 600
-	  syntax clear
-	elseif exists("b:current_syntax")
-	  finish
-	endif
-
 Set "b:current_syntax" to the name of the syntax at the end.  Don't forget
 that included files do this too, you might have to reset "b:current_syntax" if
 you include two files.
-
-If you want your syntax file to work with Vim 5.x, add a check for v:version.
-Find an syntax file in the Vim 7.2 distribution for an example.
 
 Do not include anything that is a user preference.  Don't set 'tabstop',
 'expandtab', etc.  These belong in a filetype plugin.

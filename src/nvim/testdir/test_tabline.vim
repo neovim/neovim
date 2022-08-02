@@ -1,3 +1,4 @@
+" Test for tabline
 
 source shared.vim
 
@@ -17,6 +18,9 @@ func TablineWithError()
 endfunc
 
 func Test_caught_error_in_tabline()
+  if has('gui')
+    set guioptions-=e
+  endif
   let showtabline_save = &showtabline
   set showtabline=2
   let s:func_in_tabline_called = 0
@@ -30,6 +34,9 @@ func Test_caught_error_in_tabline()
 endfunc
 
 func Test_tabline_will_be_disabled_with_error()
+  if has('gui')
+    set guioptions-=e
+  endif
   let showtabline_save = &showtabline
   set showtabline=2
   let s:func_in_tabline_called = 0
@@ -65,6 +72,47 @@ func Test_redrawtabline()
   au! Bufadd
 endfunc
 
+" Test for the "%T" and "%X" flags in the 'tabline' option
+func MyTabLine()
+  let s = ''
+  for i in range(tabpagenr('$'))
+    " set the tab page number (for mouse clicks)
+    let s .= '%' . (i + 1) . 'T'
+
+    " the label is made by MyTabLabel()
+    let s .= ' %{MyTabLabel(' . (i + 1) . ')} '
+  endfor
+
+  " after the last tab fill with TabLineFill and reset tab page nr
+  let s .= '%T'
+
+  " right-align the label to close the current tab page
+  if tabpagenr('$') > 1
+    let s .= '%=%Xclose'
+  endif
+
+  return s
+endfunc
+
+func MyTabLabel(n)
+  let buflist = tabpagebuflist(a:n)
+  let winnr = tabpagewinnr(a:n)
+  return bufname(buflist[winnr - 1])
+endfunc
+
+func Test_tabline_flags()
+  if has('gui')
+    set guioptions-=e
+  endif
+  set tabline=%!MyTabLine()
+  edit Xtabline1
+  tabnew Xtabline2
+  redrawtabline
+  call assert_match('^ Xtabline1  Xtabline2\s\+close$', Screenline(1))
+  set tabline=
+  %bw!
+endfunc
+
 function EmptyTabname()
   return ""
 endfunction
@@ -86,6 +134,17 @@ func Test_tabline_empty_group()
   set tabline=
 endfunc
 
+" When there are exactly 20 tabline format items (the exact size of the
+" initial tabline items array), test that we don't write beyond the size
+" of the array.
+func Test_tabline_20_format_items_no_overrun()
+  set showtabline=2
 
+  let tabline = repeat('%#StatColorHi2#', 20)
+  let &tabline = tabline
+  redrawtabline
+
+  set showtabline& tabline&
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -105,7 +105,7 @@ fun InnerCall(funcref)
 endfu
 
 fun OuterCall()
-  let opt = { 'func' : function('sin') }
+  let opt = { 'func' : function('max') }
   call InnerCall(opt.func)
 endfu
 

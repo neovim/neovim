@@ -1,16 +1,21 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, feed_command, nvim = helpers.clear, helpers.feed_command, helpers.nvim
+local clear, feed_command = helpers.clear, helpers.feed_command
 local feed, next_msg, eq = helpers.feed, helpers.next_msg, helpers.eq
 local command = helpers.command
 local expect = helpers.expect
+local curbuf_contents = helpers.curbuf_contents
+local meths = helpers.meths
+local exec_lua = helpers.exec_lua
 local write_file = helpers.write_file
+local funcs = helpers.funcs
+local eval = helpers.eval
 local Screen = require('test.functional.ui.screen')
 
-describe('mappings', function()
-  local cid
+before_each(clear)
 
+describe('mappings', function()
   local add_mapping = function(mapping, send)
-    local cmd = "nnoremap "..mapping.." :call rpcnotify("..cid..", 'mapped', '"
+    local cmd = "nnoremap "..mapping.." :call rpcnotify(1, 'mapped', '"
                 ..send:gsub('<', '<lt>').."')<cr>"
     feed_command(cmd)
   end
@@ -21,8 +26,6 @@ describe('mappings', function()
   end
 
   before_each(function()
-    clear()
-    cid = nvim('get_api_info')[1]
     add_mapping('<C-L>', '<C-L>')
     add_mapping('<C-S-L>', '<C-S-L>')
     add_mapping('<s-up>', '<s-up>')
@@ -50,6 +53,8 @@ describe('mappings', function()
     add_mapping('<kenter>','<kenter>')
     add_mapping('<kcomma>','<kcomma>')
     add_mapping('<kequal>','<kequal>')
+    add_mapping('<f38>','<f38>')
+    add_mapping('<f63>','<f63>')
   end)
 
   it('ok', function()
@@ -106,6 +111,8 @@ describe('mappings', function()
     check_mapping('<KPComma>','<kcomma>')
     check_mapping('<kequal>','<kequal>')
     check_mapping('<KPEquals>','<kequal>')
+    check_mapping('<f38>','<f38>')
+    check_mapping('<f63>','<f63>')
   end)
 
   it('support meta + multibyte char mapping', function()
@@ -114,12 +121,196 @@ describe('mappings', function()
   end)
 end)
 
-describe('input utf sequences that contain CSI/K_SPECIAL', function()
-  before_each(clear)
+describe('input utf sequences that contain K_SPECIAL (0x80)', function()
   it('ok', function()
     feed('i…<esc>')
     expect('…')
   end)
+
+  it('can be mapped', function()
+    command('inoremap … E280A6')
+    feed('i…<esc>')
+    expect('E280A6')
+  end)
+end)
+
+describe('input utf sequences that contain CSI (0x9B)', function()
+  it('ok', function()
+    feed('iě<esc>')
+    expect('ě')
+  end)
+
+  it('can be mapped', function()
+    command('inoremap ě C49B')
+    feed('iě<esc>')
+    expect('C49B')
+  end)
+end)
+
+describe('input split utf sequences', function()
+  it('ok', function()
+    local str = '►'
+    feed('i' .. str:sub(1, 1))
+    helpers.sleep(10)
+    feed(str:sub(2, 3))
+    expect('►')
+  end)
+
+  it('can be mapped', function()
+    command('inoremap ► E296BA')
+    local str = '►'
+    feed('i' .. str:sub(1, 1))
+    helpers.sleep(10)
+    feed(str:sub(2, 3))
+    expect('E296BA')
+  end)
+end)
+
+describe('input pairs', function()
+  describe('<tab> / <c-i>', function()
+    it('ok', function()
+      feed('i<tab><c-i><esc>')
+      eq('\t\t', curbuf_contents())
+    end)
+
+    describe('can be mapped separately', function()
+      it('if <tab> is mapped after <c-i>', function()
+        command('inoremap <c-i> CTRL-I!')
+        command('inoremap <tab> TAB!')
+        feed('i<tab><c-i><esc>')
+        eq('TAB!CTRL-I!', curbuf_contents())
+      end)
+
+      it('if <tab> is mapped before <c-i>', function()
+        command('inoremap <tab> TAB!')
+        command('inoremap <c-i> CTRL-I!')
+        feed('i<tab><c-i><esc>')
+        eq('TAB!CTRL-I!', curbuf_contents())
+      end)
+    end)
+  end)
+
+  describe('<cr> / <c-m>', function()
+    it('ok', function()
+      feed('iunos<c-m>dos<cr>tres<esc>')
+      eq('unos\ndos\ntres', curbuf_contents())
+    end)
+
+    describe('can be mapped separately', function()
+      it('if <cr> is mapped after <c-m>', function()
+        command('inoremap <c-m> SNIPPET!')
+        command('inoremap <cr> , and then<cr>')
+        feed('iunos<c-m>dos<cr>tres<esc>')
+        eq('unosSNIPPET!dos, and then\ntres', curbuf_contents())
+      end)
+
+      it('if <cr> is mapped before <c-m>', function()
+        command('inoremap <cr> , and then<cr>')
+        command('inoremap <c-m> SNIPPET!')
+        feed('iunos<c-m>dos<cr>tres<esc>')
+        eq('unosSNIPPET!dos, and then\ntres', curbuf_contents())
+      end)
+    end)
+  end)
+
+  describe('<esc> / <c-[>', function()
+    it('ok', function()
+      feed('2adouble<c-[>asingle<esc>')
+      eq('doubledoublesingle', curbuf_contents())
+    end)
+
+    describe('can be mapped separately', function()
+      it('if <esc> is mapped after <c-[>', function()
+        command('inoremap <c-[> HALLOJ!')
+        command('inoremap <esc> ,<esc>')
+        feed('2adubbel<c-[>upp<esc>')
+        eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
+      end)
+
+      it('if <esc> is mapped before <c-[>', function()
+        command('inoremap <esc> ,<esc>')
+        command('inoremap <c-[> HALLOJ!')
+        feed('2adubbel<c-[>upp<esc>')
+        eq('dubbelHALLOJ!upp,dubbelHALLOJ!upp,', curbuf_contents())
+      end)
+    end)
+  end)
+end)
+
+it('Ctrl-6 is Ctrl-^ vim-patch:8.1.2333', function()
+  command('split aaa')
+  command('edit bbb')
+  feed('<C-6>')
+  eq('aaa', funcs.bufname())
+end)
+
+it('c_CTRL-R_CTRL-R, i_CTRL-R_CTRL-R, i_CTRL-G_CTRL-K work properly vim-patch:8.1.2346', function()
+  command('set timeoutlen=10')
+
+  command([[let @a = 'aaa']])
+  feed([[:let x = '<C-R><C-R>a'<CR>]])
+  eq([[let x = 'aaa']], eval('@:'))
+
+  feed('a<C-R><C-R>a<Esc>')
+  expect('aaa')
+  command('bwipe!')
+
+  feed('axx<CR>yy<C-G><C-K>a<Esc>')
+  expect([[
+  axx
+  yy]])
+end)
+
+it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2.0839', function()
+  local screen = Screen.new(60,8)
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [2] = {bold = true, reverse = true},  -- MsgSeparator
+    [3] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+  })
+  screen:attach()
+  command([[nnoremap <C-6> <Cmd>echo 'hit ctrl-6'<CR>]])
+  feed_command('ls')
+  screen:expect([[
+                                                                |
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {2:                                                            }|
+    :ls                                                         |
+      1 %a   "[No Name]"                    line 1              |
+    {3:Press ENTER or type command to continue}^                     |
+  ]])
+  feed('<C-6>')
+  screen:expect([[
+    ^                                                            |
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    {1:~                                                           }|
+    hit ctrl-6                                                  |
+  ]])
+end)
+
+it('mixing simplified and unsimplified keys can trigger mapping vim-patch:8.2.0916', function()
+  command('set timeoutlen=10')
+  command([[imap ' <C-W>]])
+  command('imap <C-W><C-A> c-a')
+  feed([[a'<C-A>]])
+  expect('c-a')
+end)
+
+it('unsimplified mapping works when there was a partial match vim-patch:8.2.4504', function()
+  command('set timeoutlen=10')
+  command('nnoremap <C-J> a')
+  command('nnoremap <NL> x')
+  command('nnoremap <C-J>x <Nop>')
+  funcs.setline(1, 'x')
+  -- CTRL-J b should have trigger the <C-J> mapping and then insert "b"
+  feed('<C-J>b<Esc>')
+  expect('xb')
 end)
 
 describe('input non-printable chars', function()
@@ -129,7 +320,6 @@ describe('input non-printable chars', function()
 
   it("doesn't crash when echoing them back", function()
     write_file("Xtest-overwrite", [[foobar]])
-    clear()
     local screen = Screen.new(60,8)
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
@@ -148,7 +338,7 @@ describe('input non-printable chars', function()
       {1:~                                                           }|
       {1:~                                                           }|
       {1:~                                                           }|
-      "Xtest-overwrite" [noeol] 1L, 6C                            |
+      "Xtest-overwrite" [noeol] 1L, 6B                            |
     ]])
 
     -- The timestamp is in second resolution, wait two seconds to be sure.
@@ -212,6 +402,74 @@ describe('input non-printable chars', function()
       {1:~                                                           }|
       {1:~                                                           }|
                                                                   |
+    ]])
+  end)
+end)
+
+describe("event processing and input", function()
+  it('not blocked by event bursts', function()
+    meths.set_keymap('', '<f2>', "<cmd>lua vim.rpcnotify(1, 'stop') winning = true <cr>", {noremap=true})
+
+    exec_lua [[
+      winning = false
+      burst = vim.schedule_wrap(function(tell)
+        if tell then
+          vim.rpcnotify(1, 'start')
+        end
+        -- Are we winning, son?
+        if not winning then
+          burst(false)
+        end
+      end)
+      burst(true)
+    ]]
+
+    eq({'notification', 'start', {}}, next_msg())
+    feed '<f2>'
+    eq({'notification', 'stop', {}}, next_msg())
+  end)
+end)
+
+describe('display is updated', function()
+  local screen
+  before_each(function()
+    screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},  -- NonText
+      [2] = {bold = true},  -- ModeMsg
+    })
+    screen:attach()
+  end)
+
+  it('in Insert mode after <Nop> mapping #17911', function()
+    command('imap <Plug>test <Nop>')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it('in Insert mode after empty string <expr> mapping #17911', function()
+    command('imap <expr> <Plug>test ""')
+    command('imap <F2> abc<CR><Plug>test')
+    feed('i<F2>')
+    screen:expect([[
+      abc                                                         |
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {2:-- INSERT --}                                                |
     ]])
   end)
 end)

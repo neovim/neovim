@@ -1,4 +1,4 @@
-" Test for the quickfix commands.
+" Test for the quickfix feature.
 
 source check.vim
 CheckFeature quickfix
@@ -14,7 +14,7 @@ func s:setup_commands(cchar)
     command! -nargs=* Xaddexpr <mods>caddexpr <args>
     command! -nargs=* -count Xolder <mods><count>colder <args>
     command! -nargs=* Xnewer <mods>cnewer <args>
-    command! -nargs=* Xopen <mods>copen <args>
+    command! -nargs=* Xopen <mods> copen <args>
     command! -nargs=* Xwindow <mods>cwindow <args>
     command! -nargs=* Xbottom <mods>cbottom <args>
     command! -nargs=* Xclose <mods>cclose <args>
@@ -32,8 +32,8 @@ func s:setup_commands(cchar)
     command! -count -nargs=* -bang Xnfile <mods><count>cnfile<bang> <args>
     command! -nargs=* -bang Xpfile <mods>cpfile<bang> <args>
     command! -nargs=* Xexpr <mods>cexpr <args>
-    command! -range -nargs=* Xvimgrep <mods><count>vimgrep <args>
-    command! -nargs=* Xvimgrepadd <mods>vimgrepadd <args>
+    command! -count=999 -nargs=* Xvimgrep <mods> <count>vimgrep <args>
+    command! -nargs=* Xvimgrepadd <mods> vimgrepadd <args>
     command! -nargs=* Xgrep <mods> grep <args>
     command! -nargs=* Xgrepadd <mods> grepadd <args>
     command! -nargs=* Xhelpgrep helpgrep <args>
@@ -51,7 +51,7 @@ func s:setup_commands(cchar)
     command! -nargs=* Xaddexpr <mods>laddexpr <args>
     command! -nargs=* -count Xolder <mods><count>lolder <args>
     command! -nargs=* Xnewer <mods>lnewer <args>
-    command! -nargs=* Xopen <mods>lopen <args>
+    command! -nargs=* Xopen <mods> lopen <args>
     command! -nargs=* Xwindow <mods>lwindow <args>
     command! -nargs=* Xbottom <mods>lbottom <args>
     command! -nargs=* Xclose <mods>lclose <args>
@@ -69,8 +69,8 @@ func s:setup_commands(cchar)
     command! -count -nargs=* -bang Xnfile <mods><count>lnfile<bang> <args>
     command! -nargs=* -bang Xpfile <mods>lpfile<bang> <args>
     command! -nargs=* Xexpr <mods>lexpr <args>
-    command! -range -nargs=* Xvimgrep <mods><count>lvimgrep <args>
-    command! -nargs=* Xvimgrepadd <mods>lvimgrepadd <args>
+    command! -count=999 -nargs=* Xvimgrep <mods> <count>lvimgrep <args>
+    command! -nargs=* Xvimgrepadd <mods> lvimgrepadd <args>
     command! -nargs=* Xgrep <mods> lgrep <args>
     command! -nargs=* Xgrepadd <mods> lgrepadd <args>
     command! -nargs=* Xhelpgrep lhelpgrep <args>
@@ -134,6 +134,21 @@ func XlistTests(cchar)
   call assert_equal([' 2 Xtestfile1:1 col 3: Line1',
 		   \ ' 3: non-error 2', ' 4 Xtestfile2:2 col 2: Line2'], l)
 
+  " Ranged entries
+  call g:Xsetlist([{'lnum':10,'text':'Line1'},
+	      \ {'lnum':20,'col':10,'text':'Line2'},
+	      \ {'lnum':30,'col':15,'end_col':20,'text':'Line3'},
+	      \ {'lnum':40,'end_lnum':45,'text':'Line4'},
+	      \ {'lnum':50,'end_lnum':55,'col':15,'text':'Line5'},
+	      \ {'lnum':60,'end_lnum':65,'col':25,'end_col':35,'text':'Line6'}])
+  let l = split(execute('Xlist', ""), "\n")
+  call assert_equal([' 1:10: Line1',
+	      \ ' 2:20 col 10: Line2',
+	      \ ' 3:30 col 15-20: Line3',
+	      \ ' 4:40-45: Line4',
+	      \ ' 5:50-55 col 15: Line5',
+	      \ ' 6:60-65 col 25-35: Line6'], l)
+
   " Different types of errors
   call g:Xsetlist([{'lnum':10,'col':5,'type':'W', 'text':'Warning','nr':11},
 	      \ {'lnum':20,'col':10,'type':'e','text':'Error','nr':22},
@@ -154,8 +169,22 @@ func XlistTests(cchar)
         \ {'lnum':30,'col':15,'type':'W','filename':'Data/Text.hs','text':'FileWarning','nr':33,'valid':v:true}])
   let l = split(execute('Xlist', ""), "\n")
   call assert_equal([' 1 Data.Text:10 col 5 warning  11: ModuleWarning',
-        \ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
-        \ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
+	\ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
+	\ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
+
+  " Very long line should be displayed.
+  let text = 'Line' .. repeat('1234567890', 130)
+  let lines = ['Xtestfile9:2:9:' .. text]
+  Xgetexpr lines
+
+  let l = split(execute('Xlist', ''), "\n")
+  call assert_equal([' 1 Xtestfile9:2 col 9: ' .. text] , l)
+
+  " For help entries in the quickfix list, only the filename without directory
+  " should be displayed
+  Xhelpgrep setqflist()
+  let l = split(execute('Xlist 1', ''), "\n")
+  call assert_match('^ 1 [^\\/]\{-}:', l[0])
 
   " Error cases
   call assert_fails('Xlist abc', 'E488:')
@@ -255,13 +284,13 @@ func XwindowTests(cchar)
   " Open the window
   Xopen 5
   call assert_true(winnr('$') == 2 && getline('.') ==# '|| non-error 1'
-		      \  && winheight('.') == 5)
+		      \  && winheight(0) == 5)
 
   " Opening the window again, should move the cursor to that window
   wincmd t
   Xopen 7
   call assert_true(winnr('$') == 2 && winnr() == 2 &&
-	\ winheight('.') == 7 &&
+	\ winheight(0) == 7 &&
 	\ getline('.') ==# '|| non-error 1')
 
   " :cnext in quickfix window should move to the next entry
@@ -271,6 +300,31 @@ func XwindowTests(cchar)
   " Calling cwindow should close the quickfix window with no valid errors
   Xwindow
   call assert_true(winnr('$') == 1)
+
+  " Specifying the width should adjust the width for a vertically split
+  " quickfix window.
+  vert Xopen
+  call assert_equal(10, winwidth(0))
+  vert Xopen 12
+  call assert_equal(12, winwidth(0))
+  Xclose
+
+  " Horizontally or vertically splitting the quickfix window should create a
+  " normal window/buffer
+  Xopen
+  wincmd s
+  call assert_equal(0, getwininfo(win_getid())[0].quickfix)
+  call assert_equal(0, getwininfo(win_getid())[0].loclist)
+  call assert_notequal('quickfix', &buftype)
+  close
+  Xopen
+  wincmd v
+  call assert_equal(0, getwininfo(win_getid())[0].quickfix)
+  call assert_equal(0, getwininfo(win_getid())[0].loclist)
+  call assert_notequal('quickfix', &buftype)
+  close
+  Xopen
+  Xclose
 
   if a:cchar == 'c'
       " Opening the quickfix window in multiple tab pages should reuse the
@@ -351,6 +405,13 @@ func XfileTests(cchar)
   call assert_true(len(l) == 2 &&
 	\ l[0].lnum == 222 && l[0].col == 77 && l[0].text ==# 'Line 222' &&
 	\ l[1].lnum == 333 && l[1].col == 88 && l[1].text ==# 'Line 333')
+
+  " Test for a file with a long line and without a newline at the end
+  let text = repeat('x', 1024)
+  let t = 'a.txt:18:' . text
+  call writefile([t], 'Xqftestfile1', 'b')
+  silent! Xfile Xqftestfile1
+  call assert_equal(text, g:Xgetlist()[0].text)
 
   call delete('Xqftestfile1')
 endfunc
@@ -463,35 +524,50 @@ func Xtest_browse(cchar)
 		\ 'RegularLine2']
 
   Xfirst
+  call assert_fails('-5Xcc', 'E16:')
   call assert_fails('Xprev', 'E553')
   call assert_fails('Xpfile', 'E553')
   Xnfile
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
   call assert_equal(10, line('.'))
   Xpfile
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
   call assert_equal(6, line('.'))
   5Xcc
   call assert_equal(5, g:Xgetlist({'idx':0}).idx)
   2Xcc
   call assert_equal(2, g:Xgetlist({'idx':0}).idx)
+  if a:cchar == 'c'
+    cc
+  else
+    ll
+  endif
+  call assert_equal(2, g:Xgetlist({'idx':0}).idx)
   10Xcc
   call assert_equal(6, g:Xgetlist({'idx':0}).idx)
   Xlast
   Xprev
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
   call assert_equal(11, line('.'))
   call assert_fails('Xnext', 'E553')
   call assert_fails('Xnfile', 'E553')
+  " To process the range using quickfix list entries, directly use the
+  " quickfix commands (don't use the user defined commands)
+  if a:cchar == 'c'
+    $cc
+  else
+    $ll
+  endif
+  call assert_equal(6, g:Xgetlist({'idx':0}).idx)
   Xrewind
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
   call assert_equal(5, line('.'))
 
   10Xnext
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
   call assert_equal(11, line('.'))
   10Xprev
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
   call assert_equal(5, line('.'))
 
   " Jumping to an error from the error window using cc command
@@ -502,14 +578,23 @@ func Xtest_browse(cchar)
   Xopen
   10Xcc
   call assert_equal(11, line('.'))
-  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal('Xqftestfile2', @%)
+  Xopen
+  call cursor(2, 1)
+  if a:cchar == 'c'
+    .cc
+  else
+    .ll
+  endif
+  call assert_equal(6, line('.'))
+  call assert_equal('Xqftestfile1', @%)
 
   " Jumping to an error from the error window (when only the error window is
   " present)
   Xopen | only
   Xlast 1
   call assert_equal(5, line('.'))
-  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal('Xqftestfile1', @%)
 
   Xexpr ""
   call assert_fails('Xnext', 'E42:')
@@ -564,6 +649,7 @@ func s:test_xhelpgrep(cchar)
   call assert_true(&buftype == 'help')
   call assert_true(winnr() == 1)
   call assert_true(winnr('$') == 2)
+  call assert_match('|\d\+ col \d\+-\d\+|', getbufline(winbufnr(2), 1)[0])
 
   " This wipes out the buffer, make sure that doesn't cause trouble.
   Xclose
@@ -654,6 +740,23 @@ func Test_vimgreptitle()
   augroup! QfBufWinEnter
 endfunc
 
+func Test_bufwinenter_once()
+  augroup QfBufWinEnter
+    au!
+    au BufWinEnter * let g:got_afile ..= 'got ' .. expand('<afile>')
+  augroup END
+  let g:got_afile = ''
+  copen
+  call assert_equal('got quickfix', g:got_afile)
+
+  cclose
+  unlet g:got_afile
+  augroup QfBufWinEnter
+    au!
+  augroup END
+  augroup! QfBufWinEnter
+endfunc
+
 func XqfTitleTests(cchar)
   call s:setup_commands(a:cchar)
 
@@ -728,101 +831,102 @@ func ReadTestProtocol(name)
 endfunc
 
 func Test_locationlist()
-    enew
+  enew
 
-    augroup testgroup
-      au!
-      autocmd BufReadCmd test://* call ReadTestProtocol(expand("<amatch>"))
-    augroup END
+  augroup testgroup
+    au!
+    autocmd BufReadCmd test://* call ReadTestProtocol(expand("<amatch>"))
+  augroup END
 
-    let words = [ "foo", "bar", "baz", "quux", "shmoo", "spam", "eggs" ]
+  let words = [ "foo", "bar", "baz", "quux", "shmoo", "spam", "eggs" ]
 
-    let qflist = []
-    for word in words
-      call add(qflist, {'filename': 'test://' . word . '.txt', 'text': 'file ' . word . '.txt', })
-      " NOTE: problem 1:
-      " intentionally not setting 'lnum' so that the quickfix entries are not
-      " valid
-      call setloclist(0, qflist, ' ')
-    endfor
+  let qflist = []
+  for word in words
+    call add(qflist, {'filename': 'test://' . word . '.txt', 'text': 'file ' . word . '.txt', })
+    " NOTE: problem 1:
+    " intentionally not setting 'lnum' so that the quickfix entries are not
+    " valid
+    eval qflist->setloclist(0, ' ')
+  endfor
 
-    " Test A
-    lrewind
-    enew
-    lopen
-    4lnext
-    vert split
-    wincmd L
-    lopen
-    wincmd p
-    lnext
-    let fileName = expand("%")
-    wincmd p
-    let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')
-    let fileName = substitute(fileName, '\\', '/', 'g')
-    let locationListFileName = substitute(locationListFileName, '\\', '/', 'g')
-    call assert_equal("test://bar.txt", fileName)
-    call assert_equal("test://bar.txt", locationListFileName)
+  " Test A
+  lrewind
+  enew
+  lopen
+  4lnext
+  vert split
+  wincmd L
+  lopen
+  wincmd p
+  lnext
+  let fileName = expand("%")
+  wincmd p
+  let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')
+  let fileName = substitute(fileName, '\\', '/', 'g')
+  let locationListFileName = substitute(locationListFileName, '\\', '/', 'g')
+  call assert_equal("test://bar.txt", fileName)
+  call assert_equal("test://bar.txt", locationListFileName)
 
-    wincmd n | only
+  wincmd n | only
 
-    " Test B:
-    lrewind
-    lopen
-    2
-    exe "normal \<CR>"
-    wincmd p
-    3
-    exe "normal \<CR>"
-    wincmd p
-    4
-    exe "normal \<CR>"
-    call assert_equal(2, winnr('$'))
-    wincmd n | only
+  " Test B:
+  lrewind
+  lopen
+  2
+  exe "normal \<CR>"
+  wincmd p
+  3
+  exe "normal \<CR>"
+  wincmd p
+  4
+  exe "normal \<CR>"
+  call assert_equal(2, winnr('$'))
+  wincmd n | only
 
-    " Test C:
-    lrewind
-    lopen
-    " Let's move the location list window to the top to check whether it (the
-    " first window found) will be reused when we try to open new windows:
-    wincmd K
-    2
-    exe "normal \<CR>"
-    wincmd p
-    3
-    exe "normal \<CR>"
-    wincmd p
-    4
-    exe "normal \<CR>"
-    1wincmd w
-    call assert_equal('quickfix', &buftype)
-    2wincmd w
-    let bufferName = expand("%")
-    let bufferName = substitute(bufferName, '\\', '/', 'g')
-    call assert_equal('test://quux.txt', bufferName)
+  " Test C:
+  lrewind
+  lopen
+  " Let's move the location list window to the top to check whether it (the
+  " first window found) will be reused when we try to open new windows:
+  wincmd K
+  2
+  exe "normal \<CR>"
+  wincmd p
+  3
+  exe "normal \<CR>"
+  wincmd p
+  4
+  exe "normal \<CR>"
+  1wincmd w
+  call assert_equal('quickfix', &buftype)
+  2wincmd w
+  let bufferName = expand("%")
+  let bufferName = substitute(bufferName, '\\', '/', 'g')
+  call assert_equal('test://quux.txt', bufferName)
 
-    wincmd n | only
+  wincmd n | only
 
-    augroup! testgroup
+  augroup! testgroup
 endfunc
 
 func Test_locationlist_curwin_was_closed()
-    augroup testgroup
-      au!
-      autocmd BufReadCmd test_curwin.txt call R(expand("<amatch>"))
-    augroup END
+  augroup testgroup
+    au!
+    autocmd BufReadCmd test_curwin.txt call R(expand("<amatch>"))
+  augroup END
 
-    func! R(n)
-      quit
-    endfunc
+  func! R(n)
+    quit
+  endfunc
 
-    new
-    let q = []
-    call add(q, {'filename': 'test_curwin.txt' })
-    call setloclist(0, q)
-    call assert_fails('lrewind', 'E924:')
+  new
+  let q = []
+  call add(q, {'filename': 'test_curwin.txt' })
+  call setloclist(0, q)
+  call assert_fails('lrewind', 'E924:')
 
-    augroup! testgroup
+  augroup! testgroup
+  delfunc R
 endfunc
 
 func Test_locationlist_cross_tab_jump()
@@ -856,7 +960,7 @@ func Test_efm1()
       Xtestfile:9: parse error before `asd'
       make: *** [vim] Error 1
       in file "Xtestfile" linenr 10: there is an error
-  
+
       2 returned
       "Xtestfile", line 11 col 1; this is an error
       "Xtestfile", line 12 col 2; this is another error
@@ -879,7 +983,7 @@ func Test_efm1()
       x should be a dot
       	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
       	       ^
-  
+
       Does anyone know what is the problem and how to correction it?
       "Xtestfile", line 21 col 9: What is the title of the quickfix window?
       "Xtestfile", line 22 col 9: What is the title of the quickfix window?
@@ -969,21 +1073,20 @@ func s:dir_stack_tests(cchar)
   let save_efm=&efm
   set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
 
-  let lines =<< trim [DATA]
-  Entering dir 'dir1/a'
-  habits2.txt:1:Nine Healthy Habits
-  Entering dir 'b'
-  habits3.txt:2:0 Hours of television
-  habits2.txt:7:5 Small meals
-  Entering dir 'dir1/c'
-  habits4.txt:3:1 Hour of exercise
-  Leaving dir 'dir1/c'
-  Leaving dir 'dir1/a'
-  habits1.txt:4:2 Liters of water
-  Entering dir 'dir2'
-  habits5.txt:5:3 Cups of hot green tea
-  Leaving dir 'dir2
-  [DATA]
+  let lines = ["Entering dir 'dir1/a'",
+		\ 'habits2.txt:1:Nine Healthy Habits',
+		\ "Entering dir 'b'",
+		\ 'habits3.txt:2:0 Hours of television',
+		\ 'habits2.txt:7:5 Small meals',
+		\ "Entering dir 'dir1/c'",
+		\ 'habits4.txt:3:1 Hour of exercise',
+		\ "Leaving dir 'dir1/c'",
+		\ "Leaving dir 'dir1/a'",
+		\ 'habits1.txt:4:2 Liters of water',
+		\ "Entering dir 'dir2'",
+		\ 'habits5.txt:5:3 Cups of hot green tea',
+		\ "Leaving dir 'dir2'"
+		\]
 
   Xexpr ""
   for l in lines
@@ -992,17 +1095,17 @@ func s:dir_stack_tests(cchar)
 
   let qf = g:Xgetlist()
 
-  call assert_equal(expand('dir1/a/habits2.txt'), bufname(qf[1].bufnr))
+  call assert_equal('dir1/a/habits2.txt', bufname(qf[1].bufnr))
   call assert_equal(1, qf[1].lnum)
-  call assert_equal(expand('dir1/a/b/habits3.txt'), bufname(qf[3].bufnr))
+  call assert_equal('dir1/a/b/habits3.txt', bufname(qf[3].bufnr))
   call assert_equal(2, qf[3].lnum)
-  call assert_equal(expand('dir1/a/habits2.txt'), bufname(qf[4].bufnr))
+  call assert_equal('dir1/a/habits2.txt', bufname(qf[4].bufnr))
   call assert_equal(7, qf[4].lnum)
-  call assert_equal(expand('dir1/c/habits4.txt'), bufname(qf[6].bufnr))
+  call assert_equal('dir1/c/habits4.txt', bufname(qf[6].bufnr))
   call assert_equal(3, qf[6].lnum)
   call assert_equal('habits1.txt', bufname(qf[9].bufnr))
   call assert_equal(4, qf[9].lnum)
-  call assert_equal(expand('dir2/habits5.txt'), bufname(qf[11].bufnr))
+  call assert_equal('dir2/habits5.txt', bufname(qf[11].bufnr))
   call assert_equal(5, qf[11].lnum)
 
   let &efm=save_efm
@@ -1017,19 +1120,18 @@ func Test_efm_dirstack()
   call mkdir('dir1/c')
   call mkdir('dir2')
 
-  let lines =<< trim [DATA]
-  Nine Healthy Habits,
-  0 Hours of television,
-  1 Hour of exercise,
-  2 Liters of water,
-  3 Cups of hot green tea,
-  4 Short mental breaks,
-  5 Small meals,
-  6 AM wake up time,
-  7 Minutes of laughter,
-  8 Hours of sleep (at least),
-  9 PM end of the day and off to bed
-  [DATA]
+  let lines = ["Nine Healthy Habits",
+		\ "0 Hours of television",
+		\ "1 Hour of exercise",
+		\ "2 Liters of water",
+		\ "3 Cups of hot green tea",
+		\ "4 Short mental breaks",
+		\ "5 Small meals",
+		\ "6 AM wake up time",
+		\ "7 Minutes of laughter",
+		\ "8 Hours of sleep (at least)",
+		\ "9 PM end of the day and off to bed"
+		\ ]
 
   call writefile(lines, 'habits1.txt')
   call writefile(lines, 'dir1/a/habits2.txt')
@@ -1095,6 +1197,10 @@ func Xinvalid_efm_Tests(cchar)
   set efm=%f:%l:%m,%f:%l:%m:%R
   call assert_fails('Xexpr "abc.txt:1:Hello world"', 'E377:')
 
+  " Invalid regular expression
+  set efm=%\\%%k
+  call assert_fails('Xexpr "abc.txt:1:Hello world"', 'E867:')
+
   set efm=
   call assert_fails('Xexpr "abc.txt:1:Hello world"', 'E378:')
 
@@ -1125,6 +1231,11 @@ func Test_efm2()
   let l = split(execute('clist', ''), "\n")
   call assert_equal([' 1 Xtestfile:^\VLine search text\$:  '], l)
 
+  " Test for a long line
+  cexpr 'Xtestfile:' . repeat('a', 1026)
+  let l = getqflist()
+  call assert_equal('^\V' . repeat('a', 1019) . '\$', l[0].pattern)
+
   " Test for %P, %Q and %t format specifiers
   let lines =<< trim [DATA]
     [Xtestfile1]
@@ -1142,6 +1253,7 @@ func Test_efm2()
     (67,3)  warning: 's' already defined
     --
   [DATA]
+
   set efm=%+P[%f]%r,(%l\\,%c)%*[\ ]%t%*[^:]:\ %m,%+Q--%r
   " To exercise the push/pop file functionality in quickfix, the test files
   " need to be created.
@@ -1161,6 +1273,14 @@ func Test_efm2()
   call delete('Xtestfile1')
   call delete('Xtestfile2')
   call delete('Xtestfile3')
+
+  " Test for %P, %Q with non-existing files
+  cexpr lines
+  let l = getqflist()
+  call assert_equal(14, len(l))
+  call assert_equal('[Xtestfile1]', l[0].text)
+  call assert_equal('[Xtestfile2]', l[6].text)
+  call assert_equal('[Xtestfile3]', l[9].text)
 
   " Tests for %E, %C and %Z format specifiers
   let lines =<< trim [DATA]
@@ -1194,27 +1314,29 @@ func Test_efm2()
 
   " Test for %A, %C and other formats
   let lines =<< trim [DATA]
-  ==============================================================
-  FAIL: testGetTypeIdCachesResult (dbfacadeTest.DjsDBFacadeTest)
-  --------------------------------------------------------------
-  Traceback (most recent call last):
-    File "unittests/dbfacadeTest.py", line 89, in testFoo
-      self.assertEquals(34, dtid)
-    File "/usr/lib/python2.2/unittest.py", line 286, in
-   failUnlessEqual
-      raise self.failureException, \\
-  AssertionError: 34 != 33
-
-  --------------------------------------------------------------
-  Ran 27 tests in 0.063s
+    ==============================================================
+    FAIL: testGetTypeIdCachesResult (dbfacadeTest.DjsDBFacadeTest)
+    --------------------------------------------------------------
+    Traceback (most recent call last):
+      File "unittests/dbfacadeTest.py", line 89, in testFoo
+        self.assertEquals(34, dtid)
+      File "/usr/lib/python2.2/unittest.py", line 286, in
+     failUnlessEqual
+        raise self.failureException, \\
+    W:AssertionError: 34 != 33
+  
+    --------------------------------------------------------------
+    Ran 27 tests in 0.063s
   [DATA]
-  set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
+
+  set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%t:%m
   cgetexpr lines
   let l = getqflist()
   call assert_equal(8, len(l))
   call assert_equal(89, l[4].lnum)
   call assert_equal(1, l[4].valid)
-  call assert_equal(expand('unittests/dbfacadeTest.py'), bufname(l[4].bufnr))
+  call assert_equal('unittests/dbfacadeTest.py', bufname(l[4].bufnr))
+  call assert_equal('W', l[4].type)
 
   " Test for %o
   set efm=%f(%o):%l\ %m
@@ -1230,6 +1352,14 @@ func Test_efm2()
   cclose
   bd
   call delete("Xotestfile")
+
+  " Test for a long module name
+  cexpr 'Xtest(' . repeat('m', 1026) . '):15 message'
+  let l = getqflist()
+  " call assert_equal(repeat('m', 1024), l[0].module)
+  call assert_equal(repeat('m', 1023), l[0].module)
+  call assert_equal(15, l[0].lnum)
+  call assert_equal('message', l[0].text)
 
   " The following sequence of commands used to crash Vim
   set efm=%W%m
@@ -1287,6 +1417,29 @@ func Test_efm_error_type()
         \ ' 3 Xfile1:30 info   6: msg3',
         \ ' 4 Xfile1:40 note   8: msg4',
         \ ' 5 Xfile1:50 R   3: msg5'], output)
+  let &efm = save_efm
+endfunc
+
+" Test for end_lnum ('%e') and end_col ('%k') fields in 'efm'
+func Test_efm_end_lnum_col()
+  let save_efm = &efm
+
+  " single line
+  set efm=%f:%l-%e:%c-%k:%t:%m
+  cexpr ["Xfile1:10-20:1-2:E:msg1", "Xfile1:20-30:2-3:W:msg2",]
+  let output = split(execute('clist'), "\n")
+  call assert_equal([
+        \ ' 1 Xfile1:10-20 col 1-2 error: msg1',
+        \ ' 2 Xfile1:20-30 col 2-3 warning: msg2'], output)
+
+  " multiple lines
+  set efm=%A%n)%m,%Z%f:%l-%e:%c-%k
+  cexpr ["1)msg1", "Xfile1:14-24:1-2",
+        \ "2)msg2", "Xfile1:24-34:3-4"]
+  let output = split(execute('clist'), "\n")
+  call assert_equal([
+        \ ' 1 Xfile1:14-24 col 1-2 error   1: msg1',
+        \ ' 2 Xfile1:24-34 col 3-4 error   2: msg2'], output)
   let &efm = save_efm
 endfunc
 
@@ -1376,10 +1529,13 @@ func SetXlistTests(cchar, bnum)
   call s:setup_commands(a:cchar)
 
   call g:Xsetlist([{'bufnr': a:bnum, 'lnum': 1},
-	      \  {'bufnr': a:bnum, 'lnum': 2}])
+	      \  {'bufnr': a:bnum, 'lnum': 2, 'end_lnum': 3, 'col': 4, 'end_col': 5}])
   let l = g:Xgetlist()
   call assert_equal(2, len(l))
   call assert_equal(2, l[1].lnum)
+  call assert_equal(3, l[1].end_lnum)
+  call assert_equal(4, l[1].col)
+  call assert_equal(5, l[1].end_col)
 
   Xnext
   call g:Xsetlist([{'bufnr': a:bnum, 'lnum': 3}], 'a')
@@ -1535,7 +1691,7 @@ func XquickfixSetListWithAct(cchar)
           \    {'filename': 'fnameD', 'text': 'D'},
           \    {'filename': 'fnameE', 'text': 'E'}]
 
-  " {action} is unspecified.  Same as specifing ' '.
+  " {action} is unspecified.  Same as specifying ' '.
   new | only
   silent! Xnewer 99
   call g:Xsetlist(list1)
@@ -1602,7 +1758,7 @@ endfunc
 
 func Test_setqflist_invalid_nr()
   " The following command used to crash Vim
-  call setqflist([], ' ', {'nr' : $XXX_DOES_NOT_EXIST})
+  eval []->setqflist(' ', {'nr' : $XXX_DOES_NOT_EXIST})
 endfunc
 
 func Test_setqflist_user_sets_buftype()
@@ -1716,9 +1872,11 @@ func Test_switchbuf()
   call assert_equal(winid, win_getid())
   2cnext
   call assert_equal(winid, win_getid())
-  enew
 
+  " Test for 'switchbuf' set to search for files in windows in the current
+  " tabpage and jump to an existing window (if present)
   set switchbuf=useopen
+  enew
   cfirst | cnext
   call assert_equal(file1_winid, win_getid())
   2cnext
@@ -1726,6 +1884,8 @@ func Test_switchbuf()
   2cnext
   call assert_equal(file2_winid, win_getid())
 
+  " Test for 'switchbuf' set to search for files in tabpages and jump to an
+  " existing tabpage (if present)
   enew | only
   set switchbuf=usetab
   tabedit Xqftestfile1
@@ -1744,6 +1904,7 @@ func Test_switchbuf()
   call assert_equal(4, tabpagenr())
   tabfirst | tabonly | enew
 
+  " Test for 'switchbuf' set to open a new window for every file
   set switchbuf=split
   cfirst | cnext
   call assert_equal(1, winnr('$'))
@@ -1751,9 +1912,10 @@ func Test_switchbuf()
   call assert_equal(2, winnr('$'))
   cnext | cnext
   call assert_equal(3, winnr('$'))
-  enew | only
 
+  " Test for 'switchbuf' set to open a new tabpage for every file
   set switchbuf=newtab
+  enew | only
   cfirst | cnext
   call assert_equal(1, tabpagenr('$'))
   cnext | cnext
@@ -1770,6 +1932,8 @@ func Test_switchbuf()
   call assert_equal(last_winid, win_getid())
   enew | only
 
+  " With an empty 'switchbuf', jumping to a quickfix entry should open the
+  " file in an existing window (if present)
   set switchbuf=
   edit Xqftestfile1
   let file1_winid = win_getid()
@@ -1799,6 +1963,33 @@ func Test_switchbuf()
   call assert_equal(4, tabpagenr())
   tabfirst | tabonly | enew | only
 
+  " Jumping to a file that is not present in any of the tabpages and the
+  " current tabpage doesn't have any usable windows, should open it in a new
+  " window in the current tabpage.
+  copen | only
+  cfirst
+  call assert_equal(1, tabpagenr())
+  call assert_equal('Xqftestfile1', @%)
+
+  " If opening a file changes 'switchbuf', then the new value should be
+  " retained.
+  set modeline&vim
+  call writefile(["vim: switchbuf=split"], 'Xqftestfile1')
+  enew | only
+  set switchbuf&vim
+  cexpr "Xqftestfile1:1:10"
+  call assert_equal('split', &switchbuf)
+  call writefile(["vim: switchbuf=usetab"], 'Xqftestfile1')
+  enew | only
+  set switchbuf=useopen
+  cexpr "Xqftestfile1:1:10"
+  call assert_equal('usetab', &switchbuf)
+  call writefile(["vim: switchbuf&vim"], 'Xqftestfile1')
+  enew | only
+  set switchbuf=useopen
+  cexpr "Xqftestfile1:1:10"
+  call assert_equal('uselast', &switchbuf)
+
   call delete('Xqftestfile1')
   call delete('Xqftestfile2')
   call delete('Xqftestfile3')
@@ -1825,10 +2016,15 @@ func Xadjust_qflnum(cchar)
   call append(6, ['Buffer', 'Window'])
 
   let l = g:Xgetlist()
-
   call assert_equal(5, l[0].lnum)
   call assert_equal(6, l[2].lnum)
   call assert_equal(13, l[3].lnum)
+
+  " If a file doesn't have any quickfix entries, then deleting lines in the
+  " file should not update the quickfix list
+  call g:Xsetlist([], 'f')
+  1,2delete
+  call assert_equal([], g:Xgetlist())
 
   enew!
   call delete(fname)
@@ -1860,6 +2056,7 @@ func s:test_xgrep(cchar)
   enew
   set makeef=Temp_File_##
   silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
+  call assert_true(len(g:Xgetlist()) == 9)
 
   " Try with 'grepprg' set to 'internal'
   set grepprg=internal
@@ -1868,12 +2065,12 @@ func s:test_xgrep(cchar)
   call assert_true(len(g:Xgetlist()) == 9)
   set grepprg&vim
 
-   call writefile(['Vim'], 'XtestTempFile')
-   set makeef=XtestTempFile
-   silent Xgrep Grep_Test_Text: test_quickfix.vim
-   call assert_equal(5, len(g:Xgetlist()))
-   call assert_false(filereadable('XtestTempFile'))
-   set makeef&vim
+  call writefile(['Vim'], 'XtestTempFile')
+  set makeef=XtestTempFile
+  silent Xgrep Grep_Test_Text: test_quickfix.vim
+  call assert_equal(5, len(g:Xgetlist()))
+  call assert_false(filereadable('XtestTempFile'))
+  set makeef&vim
 endfunc
 
 func Test_grep()
@@ -1912,11 +2109,11 @@ func Test_two_windows()
   laddexpr 'one.txt:3:one one one'
 
   let loc_one = getloclist(one_id)
-  call assert_equal(expand('Xone/a/one.txt'), bufname(loc_one[1].bufnr))
+  call assert_equal('Xone/a/one.txt', bufname(loc_one[1].bufnr))
   call assert_equal(3, loc_one[1].lnum)
 
   let loc_two = getloclist(two_id)
-  call assert_equal(expand('Xtwo/a/two.txt'), bufname(loc_two[1].bufnr))
+  call assert_equal('Xtwo/a/two.txt', bufname(loc_two[1].bufnr))
   call assert_equal(5, loc_two[1].lnum)
 
   call win_gotoid(one_id)
@@ -2102,6 +2299,10 @@ func Xproperty_tests(cchar)
     call g:Xsetlist([], 'a', {'context':246})
     let d = g:Xgetlist({'context':1})
     call assert_equal(246, d.context)
+    " set other Vim data types as context
+    call g:Xsetlist([], 'a', {'context' : v:_null_blob})
+    call g:Xsetlist([], 'a', {'context' : ''})
+    call test_garbagecollect_now()
     if a:cchar == 'l'
 	" Test for copying context across two different location lists
 	new | only
@@ -2542,7 +2743,7 @@ func Test_cwindow_jump()
   " Open a new window and create a location list
   " Open the location list window and close the other window
   " Jump to an entry.
-  " Should create a new window and jump to the entry. The scrtach buffer
+  " Should create a new window and jump to the entry. The scratch buffer
   " should not be used.
   enew | only
   set buftype=nofile
@@ -2575,7 +2776,26 @@ func Test_cwindow_jump()
   call assert_true(winnr('$') == 2)
   call assert_true(winnr() == 1)
 
-  " Jumping to a file from the location list window should find a usuable
+  " open the quickfix buffer in two windows and jump to an entry. Should open
+  " the file in the first quickfix window.
+  enew | only
+  copen
+  let bnum = bufnr('')
+  exe 'sbuffer ' . bnum
+  wincmd b
+  cfirst
+  call assert_equal(2, winnr())
+  call assert_equal('F1', @%)
+  enew | only
+  exe 'sb' bnum
+  exe 'botright sb' bnum
+  wincmd t
+  clast
+  call assert_equal(2, winnr())
+  call assert_equal('quickfix', getwinvar(1, '&buftype'))
+  call assert_equal('quickfix', getwinvar(3, '&buftype'))
+
+  " Jumping to a file from the location list window should find a usable
   " window by wrapping around the window list.
   enew | only
   call setloclist(0, [], 'f')
@@ -2590,6 +2810,28 @@ func Test_cwindow_jump()
 
   enew | only
   set efm&vim
+endfunc
+
+func Test_cwindow_highlight()
+  CheckScreendump
+
+  let lines =<< trim END
+	call setline(1, ['some', 'text', 'with', 'matches'])
+	write XCwindow
+	vimgrep e XCwindow
+	redraw
+	cwindow 4
+  END
+  call writefile(lines, 'XtestCwindow')
+  let buf = RunVimInTerminal('-S XtestCwindow', #{rows: 12})
+  call VerifyScreenDump(buf, 'Test_quickfix_cwindow_1', {})
+  call term_sendkeys(buf, ":cnext\<CR>")
+  call VerifyScreenDump(buf, 'Test_quickfix_cwindow_2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XtestCwindow')
+  call delete('XCwindow')
 endfunc
 
 func XvimgrepTests(cchar)
@@ -2617,11 +2859,13 @@ func XvimgrepTests(cchar)
   call assert_equal(2, len(l))
   call assert_equal('Editor:Notepad NOTEPAD', l[0].text)
 
-  Xvimgrep #\cvim#g Xtestfile?
+  10Xvimgrep #\cvim#g Xtestfile?
   let l = g:Xgetlist()
   call assert_equal(2, len(l))
   call assert_equal(8, l[0].col)
+  call assert_equal(11, l[0].end_col)
   call assert_equal(12, l[1].col)
+  call assert_equal(15, l[1].end_col)
 
   1Xvimgrep ?Editor? Xtestfile*
   let l = g:Xgetlist()
@@ -2631,7 +2875,7 @@ func XvimgrepTests(cchar)
   edit +3 Xtestfile2
   Xvimgrep +\cemacs+j Xtestfile1
   let l = g:Xgetlist()
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal('Editor:Emacs EmAcS', l[0].text)
 
   " Test for unloading a buffer after vimgrep searched the buffer
@@ -2660,7 +2904,7 @@ endfunc
 " Test for incsearch highlighting of the :vimgrep pattern
 " This test used to cause "E315: ml_get: invalid lnum" errors.
 func Test_vimgrep_incsearch()
-  throw 'skipped: Nvim does not support test_override()'
+  CheckFunction test_override
   enew
   set incsearch
   call test_override("char_avail", 1)
@@ -2671,6 +2915,21 @@ func Test_vimgrep_incsearch()
 
   call test_override("ALL", 0)
   set noincsearch
+endfunc
+
+" Test vimgrep with the last search pattern not set
+func Test_vimgrep_with_no_last_search_pat()
+  let lines =<< trim [SCRIPT]
+    call assert_fails('vimgrep // *', 'E35:')
+    call writefile(v:errors, 'Xresult')
+    qall!
+  [SCRIPT]
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -S Xscript')
+    call assert_equal([], readfile('Xresult'))
+  endif
+  call delete('Xscript')
+  call delete('Xresult')
 endfunc
 
 " Test vimgrep without swap file
@@ -2843,7 +3102,7 @@ func Test_cclose_in_autocmd()
   " call test_override('starting', 0)
 endfunc
 
-" Check that ":file" without an argument is possible even when "curbuf_lock"
+" Check that ":file" without an argument is possible even when curbuf is locked
 " is set.
 func Test_file_from_copen()
   " Works without argument.
@@ -2873,20 +3132,80 @@ func Test_file_from_copen()
 endfunc
 
 func Test_resize_from_copen()
+  augroup QF_Test
+    au!
+    au FileType qf resize 5
+  augroup END
+  try
+    " This should succeed without any exception.  No other buffers are
+    " involved in the autocmd.
+    copen
+  finally
     augroup QF_Test
-	au!
-        au FileType qf resize 5
+      au!
     augroup END
-    try
-	" This should succeed without any exception.  No other buffers are
-	" involved in the autocmd.
-	copen
-    finally
-	augroup QF_Test
-	    au!
-	augroup END
-	augroup! QF_Test
-    endtry
+    augroup! QF_Test
+  endtry
+endfunc
+
+func Test_vimgrep_with_textlock()
+  new
+
+  " Simple way to execute something with "textlock" set.
+  " Check that vimgrep without jumping can be executed.
+  au InsertCharPre * vimgrep /RunTheTest/j runtest.vim
+  normal ax
+  let qflist = getqflist()
+  call assert_true(len(qflist) > 0)
+  call assert_match('RunTheTest', qflist[0].text)
+  call setqflist([], 'r')
+  au! InsertCharPre
+
+  " Check that vimgrepadd without jumping can be executed.
+  au InsertCharPre * vimgrepadd /RunTheTest/j runtest.vim
+  normal ax
+  let qflist = getqflist()
+  call assert_true(len(qflist) > 0)
+  call assert_match('RunTheTest', qflist[0].text)
+  call setqflist([], 'r')
+  au! InsertCharPre
+
+  " Check that lvimgrep without jumping can be executed.
+  au InsertCharPre * lvimgrep /RunTheTest/j runtest.vim
+  normal ax
+  let qflist = getloclist(0)
+  call assert_true(len(qflist) > 0)
+  call assert_match('RunTheTest', qflist[0].text)
+  call setloclist(0, [], 'r')
+  au! InsertCharPre
+
+  " Check that lvimgrepadd without jumping can be executed.
+  au InsertCharPre * lvimgrepadd /RunTheTest/j runtest.vim
+  normal ax
+  let qflist = getloclist(0)
+  call assert_true(len(qflist) > 0)
+  call assert_match('RunTheTest', qflist[0].text)
+  call setloclist(0, [], 'r')
+  au! InsertCharPre
+
+  " trying to jump will give an error
+  au InsertCharPre * vimgrep /RunTheTest/ runtest.vim
+  call assert_fails('normal ax', 'E565:')
+  au! InsertCharPre
+
+  au InsertCharPre * vimgrepadd /RunTheTest/ runtest.vim
+  call assert_fails('normal ax', 'E565:')
+  au! InsertCharPre
+
+  au InsertCharPre * lvimgrep /RunTheTest/ runtest.vim
+  call assert_fails('normal ax', 'E565:')
+  au! InsertCharPre
+
+  au InsertCharPre * lvimgrepadd /RunTheTest/ runtest.vim
+  call assert_fails('normal ax', 'E565:')
+  au! InsertCharPre
+
+  bwipe!
 endfunc
 
 " Tests for the quickfix buffer b:changedtick variable
@@ -3285,7 +3604,7 @@ func Xqfjump_tests(cchar)
   Xopen | only
   2Xnext
   call assert_equal(3, g:Xgetlist({'idx' : 0}).idx)
-  call assert_equal('F3', bufname('%'))
+  call assert_equal('F3', @%)
   Xnext
   call assert_equal(7, col('.'))
   Xnext
@@ -3360,19 +3679,21 @@ func Xgetlist_empty_tests(cchar)
   call assert_equal(0, g:Xgetlist({'changedtick' : 0}).changedtick)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0,
-		  \ 'items' : [], 'nr' : 0, 'size' : 0,
-		  \ 'title' : '', 'winid' : 0, 'changedtick': 0},
-		  \ g:Xgetlist({'all' : 0}))
+		  \ 'items' : [], 'nr' : 0, 'size' : 0, 'qfbufnr' : 0,
+		  \ 'title' : '', 'winid' : 0, 'changedtick': 0,
+                  \ 'quickfixtextfunc' : ''}, g:Xgetlist({'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0,
 		\ 'items' : [], 'nr' : 0, 'size' : 0, 'title' : '',
-		\ 'winid' : 0, 'changedtick': 0, 'filewinid' : 0},
+		\ 'winid' : 0, 'changedtick': 0, 'filewinid' : 0,
+		\ 'qfbufnr' : 0, 'quickfixtextfunc' : ''},
 		\ g:Xgetlist({'all' : 0}))
   endif
 
   " Quickfix window with empty stack
   silent! Xopen
   let qfwinid = (a:cchar == 'c') ? win_getid() : 0
+  let qfbufnr = (a:cchar == 'c') ? bufnr('') : 0
   call assert_equal(qfwinid, g:Xgetlist({'winid' : 0}).winid)
   Xclose
 
@@ -3404,11 +3725,13 @@ func Xgetlist_empty_tests(cchar)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
+		\ 'qfbufnr' : qfbufnr, 'quickfixtextfunc' : '',
 		\ 'changedtick' : 0}, g:Xgetlist({'id' : qfid, 'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0, 'filewinid' : 0},
+		\ 'changedtick' : 0, 'filewinid' : 0, 'qfbufnr' : 0,
+                \ 'quickfixtextfunc' : ''},
 		\ g:Xgetlist({'id' : qfid, 'all' : 0}))
   endif
 
@@ -3425,12 +3748,13 @@ func Xgetlist_empty_tests(cchar)
   if a:cchar == 'c'
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0}, g:Xgetlist({'nr' : 5, 'all' : 0}))
+		\ 'changedtick' : 0, 'qfbufnr' : qfbufnr,
+                \ 'quickfixtextfunc' : ''}, g:Xgetlist({'nr' : 5, 'all' : 0}))
   else
     call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [],
 		\ 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0,
-		\ 'changedtick' : 0, 'filewinid' : 0},
-		\ g:Xgetlist({'nr' : 5, 'all' : 0}))
+		\ 'changedtick' : 0, 'filewinid' : 0, 'qfbufnr' : 0,
+                \ 'quickfixtextfunc' : ''}, g:Xgetlist({'nr' : 5, 'all' : 0}))
   endif
 endfunc
 
@@ -3485,6 +3809,9 @@ func Xqftick_tests(cchar)
 	      \ {'filename' : 'F7', 'lnum' : 11, 'text' : 'L11'}], 'r')
   call assert_equal(2, g:Xgetlist({'changedtick' : 0}).changedtick)
 
+  if isdirectory("Xone")
+    call delete("Xone", 'rf')
+  endif
   call writefile(["F8:80:L80", "F8:81:L81"], "Xone")
   Xfile Xone
   call assert_equal(1, g:Xgetlist({'changedtick' : 0}).changedtick)
@@ -3688,6 +4015,41 @@ func Test_vimgrep_autocmd()
   call delete('Xtest1.txt')
   call delete('Xtest2.txt')
   call setqflist([], 'f')
+endfunc
+
+" Test for an autocmd changing the current directory when running vimgrep
+func Xvimgrep_autocmd_cd(cchar)
+  call s:setup_commands(a:cchar)
+
+  %bwipe
+  let save_cwd = getcwd()
+
+  augroup QF_Test
+    au!
+    autocmd BufRead * silent cd %:p:h
+  augroup END
+
+  10Xvimgrep /vim/ Xdir/**
+  let l = g:Xgetlist()
+  call assert_equal('f1.txt', bufname(l[0].bufnr))
+  call assert_equal('f2.txt', fnamemodify(bufname(l[2].bufnr), ':t'))
+
+  augroup QF_Test
+    au!
+  augroup END
+
+  exe 'cd ' . save_cwd
+endfunc
+
+func Test_vimgrep_autocmd_cd()
+  call mkdir('Xdir/a', 'p')
+  call mkdir('Xdir/b', 'p')
+  call writefile(['a_L1_vim', 'a_L2_vim'], 'Xdir/a/f1.txt')
+  call writefile(['b_L1_vim', 'b_L2_vim'], 'Xdir/b/f2.txt')
+  call Xvimgrep_autocmd_cd('c')
+  call Xvimgrep_autocmd_cd('l')
+  %bwipe
+  call delete('Xdir', 'rf')
 endfunc
 
 " The following test used to crash Vim
@@ -3936,20 +4298,20 @@ func Xjumpto_first_error_test(cchar)
   " Test for cexpr/lexpr
   enew
   Xexpr l
-  call assert_equal('Xtestfile1', bufname(''))
+  call assert_equal('Xtestfile1', @%)
   call assert_equal(2, line('.'))
 
   " Test for cfile/lfile
   enew
   call writefile(l, 'Xerr')
   Xfile Xerr
-  call assert_equal('Xtestfile1', bufname(''))
+  call assert_equal('Xtestfile1', @%)
   call assert_equal(2, line('.'))
 
   " Test for cbuffer/lbuffer
   edit Xerr
   Xbuffer
-  call assert_equal('Xtestfile1', bufname(''))
+  call assert_equal('Xtestfile1', @%)
   call assert_equal(2, line('.'))
 
   call delete('Xerr')
@@ -3974,7 +4336,7 @@ func Xautocmd_changelist(cchar)
   autocmd QuickFixCmdPost * Xolder
   call writefile(['Xtestfile2:4:Line4'], 'Xerr')
   Xfile Xerr
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(4, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -3985,7 +4347,7 @@ func Xautocmd_changelist(cchar)
   call writefile(['Xtestfile2:4:Line4'], 'Xerr')
   edit Xerr
   Xbuffer
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(4, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -3994,7 +4356,7 @@ func Xautocmd_changelist(cchar)
   Xexpr 'Xtestfile1:2:Line2'
   autocmd QuickFixCmdPost * Xolder
   Xexpr 'Xtestfile2:4:Line4'
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(4, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -4005,7 +4367,7 @@ func Xautocmd_changelist(cchar)
     Xexpr 'Xtestfile1:2:Line2'
     autocmd QuickFixCmdPost * Xolder
     silent Xgrep Line5 Xtestfile2
-    call assert_equal('Xtestfile2', bufname(''))
+    call assert_equal('Xtestfile2', @%)
     call assert_equal(5, line('.'))
     autocmd! QuickFixCmdPost
   endif
@@ -4015,7 +4377,7 @@ func Xautocmd_changelist(cchar)
   Xexpr 'Xtestfile1:2:Line2'
   autocmd QuickFixCmdPost * Xolder
   silent Xvimgrep Line5 Xtestfile2
-  call assert_equal('Xtestfile2', bufname(''))
+  call assert_equal('Xtestfile2', @%)
   call assert_equal(5, line('.'))
   autocmd! QuickFixCmdPost
 
@@ -4130,13 +4492,27 @@ func Test_splitview()
   new | only
 
   " When split opening files from a helpgrep location list window, a new help
-  " window should be opend with a copy of the location list.
+  " window should be opened with a copy of the location list.
   lhelpgrep window
   let locid = getloclist(0, {'id' : 0}).id
   lwindow
   exe "normal j\<C-W>\<CR>"
   call assert_notequal(locid, getloclist(0, {'id' : 0}).id)
   call assert_equal(0, getloclist(0, {'winid' : 0}).winid)
+  new | only
+
+  " Using :split or :vsplit from a quickfix window should behave like a :new
+  " or a :vnew command
+  copen
+  split
+  call assert_equal(3, winnr('$'))
+  let l = getwininfo()
+  call assert_equal([0, 0, 1], [l[0].quickfix, l[1].quickfix, l[2].quickfix])
+  close
+  copen
+  vsplit
+  let l = getwininfo()
+  call assert_equal([0, 0, 1], [l[0].quickfix, l[1].quickfix, l[2].quickfix])
   new | only
 
   call delete('Xtestfile1')
@@ -4226,10 +4602,18 @@ func Xqfbuf_test(cchar)
   Xclose
   " Even after the quickfix window is closed, the buffer should be loaded
   call assert_true(bufloaded(qfbnum))
+  call assert_true(qfbnum, g:Xgetlist({'qfbufnr' : 0}).qfbufnr)
   Xopen
   " Buffer should be reused when opening the window again
   call assert_equal(qfbnum, bufnr(''))
   Xclose
+
+  " When quickfix buffer is wiped out, getqflist() should return 0
+  %bw!
+  Xexpr ""
+  Xopen
+  bw!
+  call assert_equal(0, g:Xgetlist({'qfbufnr': 0}).qfbufnr)
 
   if a:cchar == 'l'
     %bwipe
@@ -4244,7 +4628,7 @@ func Xqfbuf_test(cchar)
     close
     " When the location list window is closed, the buffer name should not
     " change to 'Quickfix List'
-    call assert_match(qfbnum . '  h-  "\[Location List]"', execute('ls'))
+    call assert_match(qfbnum . 'u h-  "\[Location List]"', execute('ls!'))
     call assert_true(bufloaded(qfbnum))
 
     " After deleting a location list buffer using ":bdelete", opening the
@@ -4261,6 +4645,7 @@ func Xqfbuf_test(cchar)
     " removed
     call setloclist(0, [], 'f')
     call assert_false(bufexists(qfbnum))
+    call assert_equal(0, getloclist(0, {'qfbufnr' : 0}).qfbufnr)
 
     " When the location list is freed with the location list window open, the
     " location list buffer should not be lost. It should be reused when the
@@ -4285,9 +4670,34 @@ func Xqfbuf_test(cchar)
 endfunc
 
 func Test_qfbuf()
-  throw 'skipped: enable after porting patch 8.1.0877'
   call Xqfbuf_test('c')
   call Xqfbuf_test('l')
+endfunc
+
+" If there is an autocmd to use only one window, then opening the location
+" list window used to crash Vim.
+func Test_winonly_autocmd()
+  call s:create_test_file('Xtest1')
+  " Autocmd to show only one Vim window at a time
+  autocmd WinEnter * only
+  new
+  " Load the location list
+  lexpr "Xtest1:5:Line5\nXtest1:10:Line10\nXtest1:15:Line15"
+  let loclistid = getloclist(0, {'id' : 0}).id
+  " Open the location list window. Only this window will be shown and the file
+  " window is closed.
+  lopen
+  call assert_equal(loclistid, getloclist(0, {'id' : 0}).id)
+  " Jump to an entry in the location list and make sure that the cursor is
+  " positioned correctly.
+  ll 3
+  call assert_equal(loclistid, getloclist(0, {'id' : 0}).id)
+  call assert_equal('Xtest1', @%)
+  call assert_equal(15, line('.'))
+  " Cleanup
+  autocmd! WinEnter
+  new | only
+  call delete('Xtest1')
 endfunc
 
 " Test to make sure that an empty quickfix buffer is not reused for loading
@@ -4343,51 +4753,51 @@ func Xtest_below(cchar)
   Xexpr ["X1:5:3:L5", "X2:5:2:L5", "X2:10:3:L10", "X2:15:4:L15", "X3:3:5:L3"]
   edit +7 X2
   Xabove
-  call assert_equal(['X2', 5], [bufname(''), line('.')])
+  call assert_equal(['X2', 5], [@%, line('.')])
   call assert_fails('Xabove', 'E553:')
   normal 7G
   Xbefore
-  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 2], [@%, line('.'), col('.')])
   call assert_fails('Xbefore', 'E553:')
 
   normal 2j
   Xbelow
-  call assert_equal(['X2', 10], [bufname(''), line('.')])
+  call assert_equal(['X2', 10], [@%, line('.')])
   normal 7G
   Xafter
-  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 3], [@%, line('.'), col('.')])
 
   " Last error in this file
   Xbelow 99
-  call assert_equal(['X2', 15], [bufname(''), line('.')])
+  call assert_equal(['X2', 15], [@%, line('.')])
   call assert_fails('Xbelow', 'E553:')
   normal gg
   Xafter 99
-  call assert_equal(['X2', 15, 4], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 4], [@%, line('.'), col('.')])
   call assert_fails('Xafter', 'E553:')
 
   " First error in this file
   Xabove 99
-  call assert_equal(['X2', 5], [bufname(''), line('.')])
+  call assert_equal(['X2', 5], [@%, line('.')])
   call assert_fails('Xabove', 'E553:')
   normal G
   Xbefore 99
-  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 2], [@%, line('.'), col('.')])
   call assert_fails('Xbefore', 'E553:')
 
   normal gg
   Xbelow 2
-  call assert_equal(['X2', 10], [bufname(''), line('.')])
+  call assert_equal(['X2', 10], [@%, line('.')])
   normal gg
   Xafter 2
-  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 3], [@%, line('.'), col('.')])
 
   normal G
   Xabove 2
-  call assert_equal(['X2', 10], [bufname(''), line('.')])
+  call assert_equal(['X2', 10], [@%, line('.')])
   normal G
   Xbefore 2
-  call assert_equal(['X2', 10, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 3], [@%, line('.'), col('.')])
 
   edit X4
   call assert_fails('Xabove', 'E42:')
@@ -4411,45 +4821,45 @@ func Xtest_below(cchar)
 	      \ "X2:15:1:L15_1", "X2:15:2:L15_2", "X2:15:3:L15_3", "X3:3:L3"]
   edit +1 X2
   Xbelow 2
-  call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 1], [@%, line('.'), col('.')])
   normal 1G
   Xafter 2
-  call assert_equal(['X2', 5, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 2], [@%, line('.'), col('.')])
 
   normal gg
   Xbelow 99
-  call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 1], [@%, line('.'), col('.')])
   normal gg
   Xafter 99
-  call assert_equal(['X2', 15, 3], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 3], [@%, line('.'), col('.')])
 
   normal G
   Xabove 2
-  call assert_equal(['X2', 10, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 1], [@%, line('.'), col('.')])
   normal G
   Xbefore 2
-  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 2], [@%, line('.'), col('.')])
 
   normal G
   Xabove 99
-  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 1], [@%, line('.'), col('.')])
   normal G
   Xbefore 99
-  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 1], [@%, line('.'), col('.')])
 
   normal 10G
   Xabove
-  call assert_equal(['X2', 5, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 5, 1], [@%, line('.'), col('.')])
   normal 10G$
   2Xbefore
-  call assert_equal(['X2', 10, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 10, 2], [@%, line('.'), col('.')])
 
   normal 10G
   Xbelow
-  call assert_equal(['X2', 15, 1], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 1], [@%, line('.'), col('.')])
   normal 9G
   5Xafter
-  call assert_equal(['X2', 15, 2], [bufname(''), line('.'), col('.')])
+  call assert_equal(['X2', 15, 2], [@%, line('.'), col('.')])
 
   " Invalid range
   if a:cchar == 'c'
@@ -4689,7 +5099,42 @@ func Test_add_invalid_entry_with_qf_window()
   call setqflist(['bb'], 'a')
   call assert_equal(1, line('$'))
   call assert_equal(['Xfile1|10| aa'], getline(1, '$'))
-  call assert_equal([{'lnum': 10, 'bufnr': bufnr('Xfile1'), 'col': 0, 'pattern': '', 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'module': '', 'text': 'aa'}], getqflist())
+  call assert_equal([{'lnum': 10                    , 'end_lnum': 0    , 'bufnr': bufnr('Xfile1') , 'col': 0   , 'end_col': 0    , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
+
+  call setqflist([{'lnum': 10                                          , 'bufnr': bufnr('Xfile1') , 'col': 0                     , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , 'r')
+  call assert_equal(1                               , line('$'))
+  call assert_equal(['Xfile1|10| aa']               , getline(1        , '$'))
+  call assert_equal([{'lnum': 10                    , 'end_lnum': 0    , 'bufnr': bufnr('Xfile1') , 'col': 0   , 'end_col': 0    , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
+
+  call setqflist([{'lnum': 10                       , 'end_lnum': 0    , 'bufnr': bufnr('Xfile1') , 'col': 0   , 'end_col': 0    , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , 'r')
+  call assert_equal(1                               , line('$'))
+  call assert_equal(['Xfile1|10| aa']               , getline(1        , '$'))
+  call assert_equal([{'lnum': 10                    , 'end_lnum': 0    , 'bufnr': bufnr('Xfile1') , 'col': 0   , 'end_col': 0    , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
+
+  call setqflist([{'lnum': 10                       , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 0   , 'end_col': -456 , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , 'r')
+  call assert_equal(1                               , line('$'))
+  call assert_equal(['Xfile1|10| aa']               , getline(1        , '$'))
+  call assert_equal([{'lnum': 10                    , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 0   , 'end_col': -456 , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
+
+  call setqflist([{'lnum': 10                       , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': 0    , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , 'r')
+  call assert_equal(1                               , line('$'))
+  call assert_equal(['Xfile1|10 col 666| aa']       , getline(1        , '$'))
+  call assert_equal([{'lnum': 10                    , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': 0    , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
+
+  call setqflist([{'lnum': 10                       , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': -456 , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , 'r')
+  call assert_equal(1                               , line('$'))
+  call assert_equal(['Xfile1|10 col 666| aa']       , getline(1        , '$'))
+  call assert_equal([{'lnum': 10                    , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': -456 , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
+
+  call setqflist([{'lnum': 10                       , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': 222  , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , 'r')
+  call assert_equal(1                               , line('$'))
+  call assert_equal(['Xfile1|10 col 666-222| aa']   , getline(1        , '$'))
+  call assert_equal([{'lnum': 10                    , 'end_lnum': -123 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': 222  , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
+
+  call setqflist([{'lnum': 10                       , 'end_lnum': 6 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': 222  , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , 'r')
+  call assert_equal(1                               , line('$'))
+  call assert_equal(['Xfile1|10-6 col 666-222| aa'] , getline(1        , '$'))
+  call assert_equal([{'lnum': 10                    , 'end_lnum': 6 , 'bufnr': bufnr('Xfile1') , 'col': 666 , 'end_col': 222  , 'pattern': '' , 'valid': 1 , 'vcol': 0 , 'nr': -1 , 'type': '' , 'module': '' , 'text': 'aa'}] , getqflist())
   cclose
 endfunc
 
@@ -4728,7 +5173,7 @@ func Test_quickfix_window_fails_to_open()
   call delete('XquickfixFails')
 endfunc
 
-" Test for updating the quickfix buffer whenever the assocaited quickfix list
+" Test for updating the quickfix buffer whenever the associated quickfix list
 " is changed.
 func Xqfbuf_update(cchar)
   call s:setup_commands(a:cchar)
@@ -4785,5 +5230,429 @@ func Test_qfbuf_update()
   call Xqfbuf_update('c')
   call Xqfbuf_update('l')
 endfunc
+
+" Test for the :vimgrep 'f' flag (fuzzy match)
+func Xvimgrep_fuzzy_match(cchar)
+  call s:setup_commands(a:cchar)
+
+  Xvimgrep /three one/f Xfile*
+  let l = g:Xgetlist()
+  call assert_equal(2, len(l))
+  call assert_equal(['Xfile1', 1, 9, 'one two three'],
+        \ [bufname(l[0].bufnr), l[0].lnum, l[0].col, l[0].text])
+  call assert_equal(['Xfile2', 2, 1, 'three one two'],
+        \ [bufname(l[1].bufnr), l[1].lnum, l[1].col, l[1].text])
+
+  Xvimgrep /the/f Xfile*
+  let l = g:Xgetlist()
+  call assert_equal(3, len(l))
+  call assert_equal(['Xfile1', 1, 9, 'one two three'],
+        \ [bufname(l[0].bufnr), l[0].lnum, l[0].col, l[0].text])
+  call assert_equal(['Xfile2', 2, 1, 'three one two'],
+        \ [bufname(l[1].bufnr), l[1].lnum, l[1].col, l[1].text])
+  call assert_equal(['Xfile2', 4, 4, 'aaathreeaaa'],
+        \ [bufname(l[2].bufnr), l[2].lnum, l[2].col, l[2].text])
+
+  Xvimgrep /aaa/fg Xfile*
+  let l = g:Xgetlist()
+  call assert_equal(4, len(l))
+  call assert_equal(['Xfile1', 2, 1, 'aaaaaa'],
+        \ [bufname(l[0].bufnr), l[0].lnum, l[0].col, l[0].text])
+  call assert_equal(['Xfile1', 2, 4, 'aaaaaa'],
+        \ [bufname(l[1].bufnr), l[1].lnum, l[1].col, l[1].text])
+  call assert_equal(['Xfile2', 4, 1, 'aaathreeaaa'],
+        \ [bufname(l[2].bufnr), l[2].lnum, l[2].col, l[2].text])
+  call assert_equal(['Xfile2', 4, 9, 'aaathreeaaa'],
+        \ [bufname(l[3].bufnr), l[3].lnum, l[3].col, l[3].text])
+
+  call assert_fails('Xvimgrep /xyz/fg Xfile*', 'E480:')
+endfunc
+
+func Test_vimgrep_fuzzy_match()
+  call writefile(['one two three', 'aaaaaa'], 'Xfile1')
+  call writefile(['one', 'three one two', 'two', 'aaathreeaaa'], 'Xfile2')
+  call Xvimgrep_fuzzy_match('c')
+  call Xvimgrep_fuzzy_match('l')
+  call delete('Xfile1')
+  call delete('Xfile2')
+endfunc
+
+" Test for getting a specific item from a quickfix list
+func Xtest_getqflist_by_idx(cchar)
+  call s:setup_commands(a:cchar)
+  " Empty list
+  call assert_equal([], g:Xgetlist({'idx' : 1, 'items' : 0}).items)
+  Xexpr ['F1:10:L10', 'F1:20:L20']
+  let l = g:Xgetlist({'idx' : 2, 'items' : 0}).items
+  call assert_equal(bufnr('F1'), l[0].bufnr)
+  call assert_equal(20, l[0].lnum)
+  call assert_equal('L20', l[0].text)
+  call assert_equal([], g:Xgetlist({'idx' : -1, 'items' : 0}).items)
+  call assert_equal([], g:Xgetlist({'idx' : 3, 'items' : 0}).items)
+  %bwipe!
+endfunc
+
+func Test_getqflist_by_idx()
+  call Xtest_getqflist_by_idx('c')
+  call Xtest_getqflist_by_idx('l')
+endfunc
+
+" Test for the 'quickfixtextfunc' setting
+func Tqfexpr(info)
+  if a:info.quickfix
+    let qfl = getqflist({'id' : a:info.id, 'items' : 1}).items
+  else
+    let qfl = getloclist(a:info.winid, {'id' : a:info.id, 'items' : 1}).items
+  endif
+
+
+  let l = []
+  for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)
+    let e = qfl[idx]
+    let s = ''
+    if e.bufnr != 0
+      let bname = bufname(e.bufnr)
+      let s ..= fnamemodify(bname, ':.')
+    endif
+    let s ..= '-'
+    let s ..= 'L' .. string(e.lnum) .. 'C' .. string(e.col) .. '-'
+    let s ..= e.text
+    call add(l, s)
+  endfor
+
+  return l
+endfunc
+
+func Xtest_qftextfunc(cchar)
+  call s:setup_commands(a:cchar)
+
+  set efm=%f:%l:%c:%m
+  set quickfixtextfunc=Tqfexpr
+  call assert_equal('Tqfexpr', &quickfixtextfunc)
+  call assert_equal('',
+        \ g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc)
+  call g:Xsetlist([
+        \ { 'filename': 'F1', 'lnum': 10, 'col': 2,
+        \   'end_col': 7, 'text': 'green'},
+        \ { 'filename': 'F1', 'lnum': 20, 'end_lnum': 25, 'col': 4,
+        \   'end_col': 8, 'text': 'blue'},
+        \ ])
+
+  Xwindow
+  call assert_equal('F1-L10C2-green', getline(1))
+  call assert_equal('F1-L20C4-blue', getline(2))
+  Xclose
+  set quickfixtextfunc&vim
+  Xwindow
+  call assert_equal('F1|10 col 2-7| green', getline(1))
+  call assert_equal('F1|20-25 col 4-8| blue', getline(2))
+  Xclose
+  set efm&
+  set quickfixtextfunc&
+
+  " Test for per list 'quickfixtextfunc' setting
+  func PerQfText(info)
+    if a:info.quickfix
+      let qfl = getqflist({'id' : a:info.id, 'items' : 1}).items
+    else
+      let qfl = getloclist(a:info.winid, {'id' : a:info.id, 'items' : 1}).items
+    endif
+    if empty(qfl)
+      return []
+    endif
+    let l = []
+    for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)
+      call add(l, 'Line ' .. qfl[idx].lnum .. ', Col ' .. qfl[idx].col)
+    endfor
+    return l
+  endfunc
+  set quickfixtextfunc=Tqfexpr
+  call g:Xsetlist([], ' ', {'quickfixtextfunc' : "PerQfText"})
+  Xaddexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal('Line 10, Col 2', getline(1))
+  call assert_equal('Line 20, Col 4', getline(2))
+  Xclose
+  call assert_equal(function('PerQfText'),
+        \ g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc)
+  " Add entries to the list when the quickfix buffer is hidden
+  Xaddexpr ['F1:30:6:red']
+  Xwindow
+  call assert_equal('Line 30, Col 6', getline(3))
+  Xclose
+  call g:Xsetlist([], 'r', {'quickfixtextfunc' : ''})
+  call assert_equal('', g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc)
+  set quickfixtextfunc&
+  delfunc PerQfText
+
+  " Non-existing function
+  set quickfixtextfunc=Tabc
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
+  call assert_fails("Xwindow", 'E117:')
+  Xclose
+  set quickfixtextfunc&
+
+  " set option to a non-function
+  set quickfixtextfunc=[10,\ 20]
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E117:')
+  call assert_fails("Xwindow", 'E117:')
+  Xclose
+  set quickfixtextfunc&
+
+  " set option to a function with different set of arguments
+  func Xqftext(a, b, c)
+    return a:a .. a:b .. a:c
+  endfunc
+  set quickfixtextfunc=Xqftext
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue']", 'E119:')
+  call assert_fails("Xwindow", 'E119:')
+  Xclose
+
+  " set option to a function that returns a list with non-strings
+  func Xqftext2(d)
+    return ['one', [], 'two']
+  endfunc
+  set quickfixtextfunc=Xqftext2
+  call assert_fails("Xexpr ['F1:10:2:green', 'F1:20:4:blue', 'F1:30:6:red']",
+                                                                  \ 'E730:')
+  call assert_fails('Xwindow', 'E730:')
+  call assert_equal(['one', 'F1|20 col 4| blue', 'F1|30 col 6| red'],
+        \ getline(1, '$'))
+  Xclose
+
+  set quickfixtextfunc&
+  delfunc Xqftext
+  delfunc Xqftext2
+
+  " set the global option to a lambda function
+  set quickfixtextfunc={d\ ->\ map(g:Xgetlist({'id'\ :\ d.id,\ 'items'\ :\ 1}).items[d.start_idx-1:d.end_idx-1],\ 'v:val.text')}
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal(['green', 'blue'], getline(1, '$'))
+  Xclose
+  call assert_equal("{d -> map(g:Xgetlist({'id' : d.id, 'items' : 1}).items[d.start_idx-1:d.end_idx-1], 'v:val.text')}", &quickfixtextfunc)
+  set quickfixtextfunc&
+
+  " use a lambda function that returns an empty list
+  set quickfixtextfunc={d\ ->\ []}
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal(['F1|10 col 2| green', 'F1|20 col 4| blue'],
+        \ getline(1, '$'))
+  Xclose
+  set quickfixtextfunc&
+
+  " use a lambda function that returns a list with empty strings
+  set quickfixtextfunc={d\ ->\ ['',\ '']}
+  Xexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal(['F1|10 col 2| green', 'F1|20 col 4| blue'],
+        \ getline(1, '$'))
+  Xclose
+  set quickfixtextfunc&
+
+  " set the per-quickfix list text function to a lambda function
+  call g:Xsetlist([], ' ',
+        \ {'quickfixtextfunc' :
+        \   {d -> map(g:Xgetlist({'id' : d.id, 'items' : 1}).items[d.start_idx-1:d.end_idx-1],
+        \ "'Line ' .. v:val.lnum .. ', Col ' .. v:val.col")}})
+  Xaddexpr ['F1:10:2:green', 'F1:20:4:blue']
+  Xwindow
+  call assert_equal('Line 10, Col 2', getline(1))
+  call assert_equal('Line 20, Col 4', getline(2))
+  Xclose
+  call assert_match("function('<lambda>\\d\\+')", string(g:Xgetlist({'quickfixtextfunc' : 1}).quickfixtextfunc))
+  call g:Xsetlist([], 'f')
+endfunc
+
+func Test_qftextfunc()
+  call Xtest_qftextfunc('c')
+  call Xtest_qftextfunc('l')
+endfunc
+
+" Test for updating a location list for some other window and check that
+" 'qftextfunc' uses the correct location list.
+func Test_qftextfunc_other_loclist()
+  %bw!
+  call setloclist(0, [], 'f')
+
+  " create a window and a location list for it and open the location list
+  " window
+  lexpr ['F1:10:12:one', 'F1:20:14:two']
+  let w1_id = win_getid()
+  call setloclist(0, [], ' ',
+        \ {'lines': ['F1:10:12:one', 'F1:20:14:two'],
+        \  'quickfixtextfunc':
+        \    {d -> map(getloclist(d.winid, {'id' : d.id,
+        \                'items' : 1}).items[d.start_idx-1:d.end_idx-1],
+        \          "'Line ' .. v:val.lnum .. ', Col ' .. v:val.col")}})
+  lwindow
+  let w2_id = win_getid()
+
+  " create another window and a location list for it and open the location
+  " list window
+  topleft new
+  let w3_id = win_getid()
+  call setloclist(0, [], ' ',
+        \ {'lines': ['F2:30:32:eleven', 'F2:40:34:twelve'],
+        \  'quickfixtextfunc':
+        \    {d -> map(getloclist(d.winid, {'id' : d.id,
+        \                'items' : 1}).items[d.start_idx-1:d.end_idx-1],
+        \          "'Ligne ' .. v:val.lnum .. ', Colonne ' .. v:val.col")}})
+  lwindow
+  let w4_id = win_getid()
+
+  topleft new
+  lexpr ['F3:50:52:green', 'F3:60:54:blue']
+  let w5_id = win_getid()
+
+  " change the location list for some other window
+  call setloclist(0, [], 'r', {'lines': ['F3:55:56:aaa', 'F3:57:58:bbb']})
+  call setloclist(w1_id, [], 'r', {'lines': ['F1:62:63:bbb', 'F1:64:65:ccc']})
+  call setloclist(w3_id, [], 'r', {'lines': ['F2:76:77:ddd', 'F2:78:79:eee']})
+  call assert_equal(['Line 62, Col 63', 'Line 64, Col 65'],
+        \ getbufline(winbufnr(w2_id), 1, '$'))
+  call assert_equal(['Ligne 76, Colonne 77', 'Ligne 78, Colonne 79'],
+        \ getbufline(winbufnr(w4_id), 1, '$'))
+  call setloclist(w2_id, [], 'r', {'lines': ['F1:32:33:fff', 'F1:34:35:ggg']})
+  call setloclist(w4_id, [], 'r', {'lines': ['F2:46:47:hhh', 'F2:48:49:jjj']})
+  call assert_equal(['Line 32, Col 33', 'Line 34, Col 35'],
+        \ getbufline(winbufnr(w2_id), 1, '$'))
+  call assert_equal(['Ligne 46, Colonne 47', 'Ligne 48, Colonne 49'],
+        \ getbufline(winbufnr(w4_id), 1, '$'))
+
+  call win_gotoid(w5_id)
+  lwindow
+  call assert_equal(['F3|55 col 56| aaa', 'F3|57 col 58| bbb'],
+        \ getline(1, '$'))
+  %bw!
+endfunc
+
+func Test_locationlist_open_in_newtab()
+  call s:create_test_file('Xqftestfile1')
+  call s:create_test_file('Xqftestfile2')
+  call s:create_test_file('Xqftestfile3')
+
+  %bwipe!
+
+  lgetexpr ['Xqftestfile1:5:Line5',
+		\ 'Xqftestfile2:10:Line10',
+		\ 'Xqftestfile3:16:Line16']
+
+  silent! llast
+  call assert_equal(1, tabpagenr('$'))
+  call assert_equal('Xqftestfile3', bufname())
+
+  set switchbuf=newtab
+
+  silent! lfirst
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal('Xqftestfile1', bufname())
+
+  silent! lnext
+  call assert_equal(3, tabpagenr('$'))
+  call assert_equal('Xqftestfile2', bufname())
+
+  call delete('Xqftestfile1')
+  call delete('Xqftestfile2')
+  call delete('Xqftestfile3')
+  set switchbuf&vim
+
+  %bwipe!
+endfunc
+
+" Test for win_gettype() in quickfix and location list windows
+func Test_win_gettype()
+  copen
+  call assert_equal("quickfix", win_gettype())
+  let wid = win_getid()
+  wincmd p
+  call assert_equal("quickfix", win_gettype(wid))
+  cclose
+  lexpr ''
+  lopen
+  call assert_equal("loclist", win_gettype())
+  let wid = win_getid()
+  wincmd p
+  call assert_equal("loclist", win_gettype(wid))
+  lclose
+endfunc
+
+" Test for opening the quickfix window in two tab pages and then closing one
+" of the quickfix windows. This should not make the quickfix buffer unlisted.
+" (github issue #9300).
+func Test_two_qf_windows()
+  cexpr "F1:1:line1"
+  copen
+  tabnew
+  copen
+  call assert_true(&buflisted)
+  cclose
+  tabfirst
+  call assert_true(&buflisted)
+  let bnum = bufnr()
+  cclose
+  " if all the quickfix windows are closed, then buffer should be unlisted.
+  call assert_false(buflisted(bnum))
+  %bw!
+
+  " Repeat the test for a location list
+  lexpr "F2:2:line2"
+  lopen
+  let bnum = bufnr()
+  tabnew
+  exe "buffer" bnum
+  tabfirst
+  lclose
+  tablast
+  call assert_true(buflisted(bnum))
+  tabclose
+  lopen
+  call assert_true(buflisted(bnum))
+  lclose
+  call assert_false(buflisted(bnum))
+  %bw!
+endfunc
+
+" Weird sequence of commands that caused entering a wiped-out buffer
+func Test_lopen_bwipe()
+  func R()
+    silent! tab lopen
+    e x
+    silent! lfile
+  endfunc
+
+  cal R()
+  cal R()
+  cal R()
+  bw!
+  delfunc R
+endfunc
+
+" Another sequence of commands that caused all buffers to be wiped out
+func Test_lopen_bwipe_all()
+  let lines =<< trim END
+    func R()
+      silent! tab lopen
+      e foo
+      silent! lfile
+    endfunc
+    cal R()
+    exe "norm \<C-W>\<C-V>0"
+    cal R()
+    bwipe
+
+    call writefile(['done'], 'Xresult')
+    qall!
+  END
+  call writefile(lines, 'Xscript')
+  if RunVim([], [], '--clean -n -S Xscript')
+    call assert_equal(['done'], readfile('Xresult'))
+  endif
+
+  call delete('Xscript')
+  call delete('Xresult')
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

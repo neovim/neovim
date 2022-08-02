@@ -14,4 +14,6 @@ hi def link tarComment	Comment
 hi def link tarFilename	Constant
 hi def link tarDirectory Type
 
+let b:current_syntax = 'tar'
+
 " vim: ts=8

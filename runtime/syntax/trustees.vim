@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     trustees
 " Maintainer:   Nima Talebi <nima@it.net.au>
-" Last Change:  2005-10-12
+" Last Change:  2022 Jun 14
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -40,3 +40,5 @@ syntax match tfsRuleWho ~\(\*\|[+]\{0,1\}[a-zA-Z0-9/]\+\)~ contained contains=tf
 highlight link tfsRuleWho Identifier
 syntax match tfsRuleWhat ~[RWEBXODCU!]\+~ contained contains=tfsSpecialChar
 highlight link tfsRuleWhat Structure
+
+let b:current_syntax = 'trustees'

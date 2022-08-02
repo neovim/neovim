@@ -6,8 +6,8 @@
 #include <string.h>
 
 #include "nvim/memory.h"
-#include "nvim/vim.h"
 #include "nvim/rbuffer.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "rbuffer.c.generated.h"
@@ -144,13 +144,30 @@ void rbuffer_consumed(RBuffer *buf, size_t count)
 
   buf->read_ptr += count;
   if (buf->read_ptr >= buf->end_ptr) {
-      buf->read_ptr -= rbuffer_capacity(buf);
+    buf->read_ptr -= rbuffer_capacity(buf);
   }
 
   bool was_full = buf->size == rbuffer_capacity(buf);
   buf->size -= count;
   if (buf->nonfull_cb && was_full) {
     buf->nonfull_cb(buf, buf->data);
+  }
+}
+
+/// Use instead of rbuffer_consumed to use rbuffer in a linear, non-cyclic fashion.
+///
+/// This is generally usefull if we can guarantee to parse all input
+/// except some small incomplete token, like when parsing msgpack.
+void rbuffer_consumed_compact(RBuffer *buf, size_t count)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(buf->read_ptr <= buf->write_ptr);
+  rbuffer_consumed(buf, count);
+  if (buf->read_ptr > buf->start_ptr) {
+    assert((size_t)(buf->read_ptr - buf->write_ptr) == buf->size);
+    memmove(buf->start_ptr, buf->read_ptr, buf->size);
+    buf->read_ptr = buf->start_ptr;
+    buf->write_ptr = buf->read_ptr + buf->size;
   }
 }
 
@@ -224,4 +241,3 @@ int rbuffer_cmp(RBuffer *buf, const char *str, size_t count)
 
   return memcmp(str + n, buf->start_ptr, count);
 }
-

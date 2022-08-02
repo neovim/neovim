@@ -5,6 +5,7 @@
 " Authored By:	Riccardo Casini <ric@libero.it>
 " Script URL:	http://www.vim.org/scripts/script.php?script_id=1239
 " ChangeLog:	Please visit the script URL for detailed change information
+" 		Included change from #970.
 
 " Quit when a syntax file was already loaded.
 if exists("b:current_syntax")
@@ -932,7 +933,7 @@ syn match autoitConst "\$SD_POWERDOWN"
 " constants - string
 syn match autoitConst "\$STR_NOCASESENSE"
 syn match autoitConst "\$STR_CASESENSE"
-syn match autoitConst "\STR_STRIPLEADING"
+syn match autoitConst "\$STR_STRIPLEADING"
 syn match autoitConst "\$STR_STRIPTRAILING"
 syn match autoitConst "\$STR_STRIPSPACES"
 syn match autoitConst "\$STR_STRIPALL"

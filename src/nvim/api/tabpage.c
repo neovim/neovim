@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/api/tabpage.h"
-#include "nvim/api/vim.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/tabpage.h"
+#include "nvim/api/vim.h"
 #include "nvim/memory.h"
 #include "nvim/window.h"
 
@@ -53,7 +53,7 @@ Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_get_value(tab->tp_vars, name, err);
@@ -65,10 +65,7 @@ Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
 /// @param name     Variable name
 /// @param value    Variable value
 /// @param[out] err Error details, if any
-void nvim_tabpage_set_var(Tabpage tabpage,
-                          String name,
-                          Object value,
-                          Error *err)
+void nvim_tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -105,11 +102,10 @@ void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
 Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
 {
-  Window rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab || !valid_tabpage(tab)) {
-    return rv;
+    return 0;
   }
 
   if (tab == curtab) {
@@ -133,11 +129,10 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
 Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
 {
-  Integer rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab) {
-    return rv;
+    return 0;
   }
 
   return tabpage_index(tab);
@@ -155,4 +150,3 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
   api_clear_error(&stub);
   return ret;
 }
-

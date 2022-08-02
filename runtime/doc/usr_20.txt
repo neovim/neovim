@@ -289,11 +289,11 @@ In chapter 3 we briefly mentioned the history.  The basics are that you can
 use the <Up> key to recall an older command line.  <Down> then takes you back
 to newer commands.
 
-There are actually four histories.  The ones we will mention here are for ":"
+There are actually five histories.  The ones we will mention here are for ":"
 commands and for "/" and "?" search commands.  The "/" and "?" commands share
-the same history, because they are both search commands.  The two other
-histories are for expressions and input lines for the input() function.
-|cmdline-history|
+the same history, because they are both search commands.  The three other
+histories are for expressions, debug mode commands and input lines for the
+input() function.  |cmdline-history|
 
 Suppose you have done a ":set" command, typed ten more colon commands and then
 want to repeat that ":set" command again.  You could press ":" and then ten
@@ -327,10 +327,10 @@ for next.
 ==============================================================================
 *20.5*	Command line window
 
-Typing the text in the command line works different from typing text in Insert
-mode.  It doesn't allow many commands to change the text.  For most commands
-that's OK, but sometimes you have to type a complicated command.  That's where
-the command line window is useful.
+Typing the text in the command line works differently from typing text in
+Insert mode.  It doesn't allow many commands to change the text.  For most
+commands that's OK, but sometimes you have to type a complicated command.
+That's where the command line window is useful.
 
 Open the command line window with this command: >
 

@@ -16,6 +16,7 @@
 "		15.10.2006 MK Bram's suggestion for runtime integration
 "		05.11.2006 MK Bram suggested to save on spaces
 "		19.09.2007 NO g: missing before ada#Comment
+"		2022 April: b:undo_indent added by Doug Kearns
 "    Help Page: ft-vim-indent
 "------------------------------------------------------------------------------
 " ToDo:
@@ -34,6 +35,8 @@ let b:did_indent = 45
 setlocal indentexpr=GetAdaIndent()
 setlocal indentkeys-=0{,0}
 setlocal indentkeys+=0=~then,0=~end,0=~elsif,0=~when,0=~exception,0=~begin,0=~is,0=~record
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the functions once.
 if exists("*GetAdaIndent")
@@ -219,7 +222,7 @@ function GetAdaIndent()
       " Move indent in twice (next 'when' will move back)
       let ind = ind + 2 * shiftwidth()
    elseif line =~ '^\s*end\s*record\>'
-      " Move indent back to tallying 'type' preceeding the 'record'.
+      " Move indent back to tallying 'type' preceding the 'record'.
       " Allow indent to be equal to 'end record's.
       let ind = s:MainBlockIndent( ind+shiftwidth(), lnum, 'type\>', '' )
    elseif line =~ '\(^\s*new\>.*\)\@<!)\s*[;,]\s*$'

@@ -3,7 +3,7 @@ local screen = require('test.functional.ui.screen')
 
 local curbufmeths = helpers.curbufmeths
 local curwinmeths = helpers.curwinmeths
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 local command = helpers.command
 local funcs = helpers.funcs
 local meths = helpers.meths
@@ -21,7 +21,7 @@ describe(':edit term://*', function()
 
   before_each(function()
     clear()
-    meths.set_option('shell', nvim_dir .. '/shell-test')
+    meths.set_option('shell', testprg('shell-test'))
     meths.set_option('shellcmdflag', 'EXE')
   end)
 
@@ -36,6 +36,7 @@ describe(':edit term://*', function()
   end)
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
+    if helpers.pending_win32(pending) then return end
     local columns, lines = 20, 4
     local scr = get_screen(columns, lines)
     local rep = 97

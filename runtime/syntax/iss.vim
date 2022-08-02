@@ -1,11 +1,11 @@
 " Vim syntax file
 " Language:             Inno Setup File (iss file) and My InnoSetup extension
 " Maintainer:           Jason Mills (jmills@cs.mun.ca)
-" Previous Maintainer:  Dominique Stéphan (dominique@mggen.com)
-" Last Change:          2004 Dec 14
+" Previous Maintainer:  Dominique StÃ©phan (dominique@mggen.com)
+" Last Change:          2021 Aug 30
 "
 " Todo:
-"  - The paramter String: is matched as flag string (because of case ignore).
+"  - The parameter String: is matched as flag string (because of case ignore).
 "  - Pascal scripting syntax is not recognized.
 "  - Embedded double quotes confuse string matches. e.g. "asfd""asfa"
 
@@ -45,13 +45,13 @@ syn match  issParam	"Components:\|Description:\|GroupDescription:\|Types:\|Extra
 syn match  issParam	"StatusMsg:\|RunOnceId:\|Tasks:"
 syn match  issParam	"MessagesFile:\|LicenseFile:\|InfoBeforeFile:\|InfoAfterFile:"
 
-syn match  issComment	"^\s*;.*$"
+syn match  issComment	"^\s*;.*$" contains=@Spell
 
 " folder constant
-syn match  issFolder	"{[^{]*}"
+syn match  issFolder	"{[^{]*}" contains=@NoSpell
 
 " string
-syn region issString	start=+"+ end=+"+ contains=issFolder
+syn region issString	start=+"+ end=+"+ contains=issFolder,@Spell
 
 " [Dirs]
 syn keyword issDirsFlags deleteafterinstall uninsalwaysuninstall uninsneveruninstall

@@ -1,6 +1,6 @@
 
 " Test that a deleted mark is restored after delete-undo-redo-undo.
-function! Test_Restore_DelMark()
+func Test_Restore_DelMark()
   enew!
   call append(0, ["	textline A", "	textline B", "	textline C"])
   normal! 2gg
@@ -11,10 +11,10 @@ function! Test_Restore_DelMark()
   call assert_equal(2, pos[1])
   call assert_equal(1, pos[2])
   enew!
-endfunction
+endfunc
 
 " Test that CTRL-A and CTRL-X updates last changed mark '[, '].
-function! Test_Incr_Marks()
+func Test_Incr_Marks()
   enew!
   call append(0, ["123 123 123", "123 123 123", "123 123 123"])
   normal! gg
@@ -23,7 +23,17 @@ function! Test_Incr_Marks()
   call assert_equal("123 XXXXXXX", getline(2))
   call assert_equal("XXX 123 123", getline(3))
   enew!
-endfunction
+endfunc
+
+func Test_previous_jump_mark()
+  new
+  call setline(1, ['']->repeat(6))
+  normal Ggg
+  call assert_equal(6, getpos("''")[1])
+  normal jjjjj
+  call assert_equal(6, getpos("''")[1])
+  bwipe!
+endfunc
 
 func Test_setpos()
   new Xone
@@ -205,6 +215,57 @@ func Test_mark_error()
   call assert_fails('mark', 'E471:')
   call assert_fails('mark xx', 'E488:')
   call assert_fails('mark _', 'E191:')
+  call assert_beeps('normal! m~')
+
+  call setpos("'k", [0, 100, 1, 0])
+  call assert_fails("normal 'k", 'E19:')
+endfunc
+
+" Test for :lockmarks when pasting content
+func Test_lockmarks_with_put()
+  new
+  call append(0, repeat(['sky is blue'], 4))
+  normal gg
+  1,2yank r
+  put r
+  normal G
+  lockmarks put r
+  call assert_equal(2, line("'["))
+  call assert_equal(3, line("']"))
+
+  bwipe!
+endfunc
+
+" Test for :k command to set a mark
+func Test_marks_k_cmd()
+  new
+  call setline(1, ['foo', 'bar', 'baz', 'qux'])
+  1,3kr
+  call assert_equal([0, 3, 1, 0], getpos("'r"))
+  close!
+endfunc
+
+" Test for file marks (A-Z)
+func Test_file_mark()
+  new Xone
+  call setline(1, ['aaa', 'bbb'])
+  norm! G$mB
+  w!
+  new Xtwo
+  call setline(1, ['ccc', 'ddd'])
+  norm! GmD
+  w!
+
+  enew
+  normal! `B
+  call assert_equal('Xone', bufname())
+  call assert_equal([2, 3], [line('.'), col('.')])
+  normal! 'D
+  call assert_equal('Xtwo', bufname())
+  call assert_equal([2, 1], [line('.'), col('.')])
+
+  call delete('Xone')
+  call delete('Xtwo')
 endfunc
 
 " Test for the getmarklist() function
@@ -227,7 +288,9 @@ func Test_getmarklist()
   call cursor(2, 2)
   normal mr
   call assert_equal({'mark' : "'r", 'pos' : [bufnr(), 2, 2, 0]},
-        \ getmarklist(bufnr())[0])
-  call assert_equal([], getmarklist({}))
+        \ bufnr()->getmarklist()[0])
+  call assert_equal([], {}->getmarklist())
   close!
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

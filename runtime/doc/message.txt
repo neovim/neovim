@@ -17,17 +17,17 @@ The ":messages" command can be used to view previously given messages.  This
 is especially useful when messages have been overwritten or truncated.  This
 depends on the 'shortmess' option.
 
-	:messages		Show all messages.
+	:mes[sages]		Show all messages.
 
-	:{count}messages	Show the {count} most recent messages.
+	:{count}mes[sages]	Show the {count} most recent messages.
 
-	:messages clear		Clear all messages.
+	:mes[sages] clear	Clear all messages.
 
-	:{count}messages clear	Clear messages, keeping only the {count} most
+	:{count}mes[sages] clear
+				Clear messages, keeping only the {count} most
 				recent ones.
 
-The number of remembered messages is fixed at 20 for the tiny version and 200
-for other versions.
+The number of remembered messages is fixed at 200.
 
 								*g<*
 The "g<" command can be used to see the last page of previous command output.
@@ -61,13 +61,13 @@ If you are lazy, it also works without the shift key: >
 
 When an error message is displayed, but it is removed before you could read
 it, you can see it again with: >
-  :echo errmsg
+  :echo v:errmsg
 Or view a list of recent messages with: >
   :messages
 See `:messages` above.
 
 LIST OF MESSAGES
-			*E222* *E228* *E232* *E256* *E293* *E298* *E304* *E317*
+			*E222* *E228* *E232* *E293* *E298* *E304* *E317*
 			*E318* *E356* *E438* *E439* *E440* *E316* *E320* *E322*
 			*E323* *E341* *E473* *E570* *E685* *E292*  >
   Add to read buffer
@@ -111,7 +111,8 @@ wiped out a buffer which contains a mark or is referenced in another way.
 							*E95*  >
   Buffer with this name already exists
 
-You cannot have two buffers with the same name.
+You cannot have two buffers with exactly the same name.  This includes the
+path leading to the file.
 
 							*E72*  >
   Close error on swap file
@@ -512,10 +513,10 @@ If you type "gq", it will execute this mapping, which will call "gq" again.
 							*E22*  >
   Scripts nested too deep
 
-Scripts can be read with the "-s" command-line argument and with the ":source"
-command.  The script can then again read another script.  This can continue
-for about 14 levels.  When more nesting is done, Vim assumes that there is a
-recursive loop somewhere and stops with this error message.
+Scripts can be read with the "-s" command-line argument and with the
+`:source!` command.  The script can then again read another script.  This can
+continue for about 14 levels.  When more nesting is done, Vim assumes that
+there is a recursive loop and stops with this error message.
 
 							*E300*  >
   Swap file already exists (symlink attack?)
@@ -685,6 +686,7 @@ Ex command or function was given an invalid argument. Or |jobstart()| or
   Trailing characters
 
 An argument was given to an Ex command that does not permit one.
+Or the argument has invalid characters and has not been recognized.
 
 							*E477* *E478*  >
   No ! allowed
@@ -761,6 +763,9 @@ and the screen is about to be redrawn:
 -> Press <Enter> or <Space> to redraw the screen and continue, without that
    key being used otherwise.
 -> Press ':' or any other Normal mode command character to start that command.
+   Note that after an external command some special keys, such as the cursor
+   keys, may not work normally, because the terminal is still set to a state
+   for executing the external command.
 -> Press 'k', <Up>, 'u', 'b' or 'g' to scroll back in the messages.  This
    works the same way as at the |more-prompt|.  Only works when 'more' is on.
 -> Pressing 'j', 'f', 'd' or <Down> is ignored when messages scrolled off the

@@ -2,7 +2,9 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local feed_command, expect, poke_eventloop = helpers.feed_command, helpers.expect, helpers.poke_eventloop
+local expect, poke_eventloop = helpers.expect, helpers.poke_eventloop
+local command, eq, eval, meths = helpers.command, helpers.eq, helpers.eval, helpers.meths
+local sleep = helpers.sleep
 
 describe('mapping', function()
   before_each(clear)
@@ -13,7 +15,7 @@ describe('mapping', function()
       ]])
 
     -- Abbreviations with р (0x80) should work.
-    feed_command('inoreab чкпр   vim')
+    command('inoreab чкпр   vim')
     feed('GAчкпр <esc>')
 
     expect([[
@@ -23,17 +25,15 @@ describe('mapping', function()
 
   it('Ctrl-c works in Insert mode', function()
     -- Mapping of ctrl-c in insert mode
-    feed_command('set cpo-=< cpo-=k')
-    feed_command('inoremap <c-c> <ctrl-c>')
-    feed_command('cnoremap <c-c> dummy')
-    feed_command('cunmap <c-c>')
+    command('set cpo-=< cpo-=k')
+    command('inoremap <c-c> <ctrl-c>')
+    command('cnoremap <c-c> dummy')
+    command('cunmap <c-c>')
     feed('GA<cr>')
-    feed('TEST2: CTRL-C |')
+    -- XXX: editor must be in Insert mode before <C-C> is put into input buffer
     poke_eventloop()
-    feed('<c-c>A|<cr><esc>')
-    poke_eventloop()
-    feed_command('unmap <c-c>')
-    feed_command('unmap! <c-c>')
+    feed('TEST2: CTRL-C |<c-c>A|<cr><esc>')
+    command('unmap! <c-c>')
 
     expect([[
 
@@ -42,13 +42,12 @@ describe('mapping', function()
   end)
 
   it('Ctrl-c works in Visual mode', function()
-    feed_command([[vnoremap <c-c> :<C-u>$put ='vmap works'<cr>]])
+    command([[vnoremap <c-c> :<C-u>$put ='vmap works'<cr>]])
     feed('GV')
-    -- XXX: For some reason the mapping is only triggered
-    -- when <C-c> is in a separate feed command.
+    -- XXX: editor must be in Visual mode before <C-C> is put into input buffer
     poke_eventloop()
-    feed('<c-c>')
-    feed_command('vunmap <c-c>')
+    feed('vV<c-c>')
+    command('vunmap <c-c>')
 
     expect([[
 
@@ -57,23 +56,23 @@ describe('mapping', function()
 
   it('langmap', function()
     -- langmap should not get remapped in insert mode.
-    feed_command('inoremap { FAIL_ilangmap')
-    feed_command('set langmap=+{ langnoremap')
+    command('inoremap { FAIL_ilangmap')
+    command('set langmap=+{ langnoremap')
     feed('o+<esc>')
 
     -- Insert mode expr mapping with langmap.
-    feed_command('inoremap <expr> { "FAIL_iexplangmap"')
+    command('inoremap <expr> { "FAIL_iexplangmap"')
     feed('o+<esc>')
 
     -- langmap should not get remapped in cmdline mode.
-    feed_command('cnoremap { FAIL_clangmap')
+    command('cnoremap { FAIL_clangmap')
     feed('o+<esc>')
-    feed_command('cunmap {')
+    command('cunmap {')
 
     -- cmdline mode expr mapping with langmap.
-    feed_command('cnoremap <expr> { "FAIL_cexplangmap"')
+    command('cnoremap <expr> { "FAIL_cexplangmap"')
     feed('o+<esc>')
-    feed_command('cunmap {')
+    command('cunmap {')
 
     -- Assert buffer contents.
     expect([[
@@ -91,10 +90,10 @@ describe('mapping', function()
       ]])
 
     -- Vim's issue #212 (feedkeys insert mapping at current position)
-    feed_command('nnoremap . :call feedkeys(".", "in")<cr>')
+    command('nnoremap . :call feedkeys(".", "in")<cr>')
     feed('/^a b<cr>')
     feed('0qqdw.ifoo<esc>qj0@q<esc>')
-    feed_command('unmap .')
+    command('unmap .')
     expect([[
       fooc d
       fooc d
@@ -103,15 +102,15 @@ describe('mapping', function()
 
   it('i_CTRL-G_U', function()
     -- <c-g>U<cursor> works only within a single line
-    feed_command('imapclear')
-    feed_command('imap ( ()<c-g>U<left>')
+    command('imapclear')
+    command('imap ( ()<c-g>U<left>')
     feed('G2o<esc>ki<cr>Test1: text with a (here some more text<esc>k.')
     -- test undo
     feed('G2o<esc>ki<cr>Test2: text wit a (here some more text [und undo]<c-g>u<esc>k.u')
-    feed_command('imapclear')
-    feed_command('set whichwrap=<,>,[,]')
+    command('imapclear')
+    command('set whichwrap=<,>,[,]')
     feed('G3o<esc>2k')
-    feed_command([[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]])
+    command([[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]])
 
     expect([[
 
@@ -125,5 +124,59 @@ describe('mapping', function()
       Test3: text with a (parenthesis here
       new line here
       ]])
+  end)
+
+  it('dragging starts Select mode even if coming from mapping vim-patch:8.2.4806', function()
+    command('set mouse=a')
+    command('set selectmode=mouse')
+
+    command('nnoremap <LeftDrag> <LeftDrag><Cmd><CR>')
+    sleep(10)
+    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    sleep(10)
+    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    sleep(10)
+    eq('s', eval('mode()'))
+  end)
+
+  it('<LeftDrag> mapping in Insert mode works correctly vim-patch:8.2.4692', function()
+    command('set mouse=a')
+
+    command('inoremap <LeftDrag> <LeftDrag><Cmd>let g:dragged = 1<CR>')
+    feed('i')
+    sleep(10)
+    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    sleep(10)
+    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    sleep(10)
+    eq(1, eval('g:dragged'))
+    eq('v', eval('mode()'))
+    feed([[<C-\><C-N>]])
+
+    command([[inoremap <LeftDrag> <LeftDrag><C-\><C-N>]])
+    feed('i')
+    sleep(10)
+    meths.input_mouse('left', 'press', '', 0, 0, 0)
+    sleep(10)
+    meths.input_mouse('left', 'drag', '', 0, 0, 1)
+    sleep(10)
+    eq('n', eval('mode()'))
+  end)
+
+  it('timeout works after an <Nop> mapping is triggered on timeout vim-patch:8.1.0052', function()
+    command('set timeout timeoutlen=400')
+    command('inoremap ab TEST')
+    command('inoremap a <Nop>')
+    -- Enter Insert mode
+    feed('i')
+    -- Wait for the "a" mapping to time out
+    feed('a')
+    sleep(500)
+    -- Send "a" and wait for a period shorter than 'timeoutlen'
+    feed('a')
+    sleep(100)
+    -- Send "b", should trigger the "ab" mapping
+    feed('b')
+    expect('TEST')
   end)
 end)

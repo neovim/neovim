@@ -41,7 +41,7 @@ set nowrapscan
 " Start at the first "msgid" line.
 let wsv = winsaveview()
 1
-/^msgid\>
+keeppatterns /^msgid\>
 
 " When an error is detected this is set to the line number.
 " Note: this is used in the Makefile.
@@ -104,7 +104,7 @@ while 1
 
   " Find next msgid.  Quit when there is no more.
   let lnum = line('.')
-  silent! /^msgid\>
+  silent! keeppatterns /^msgid\>
   if line('.') == lnum
     break
   endif
@@ -137,7 +137,7 @@ endfunc
 " Check that the \n at the end of the msgid line is also present in the msgstr
 " line.  Skip over the header.
 1
-/^"MIME-Version:
+keeppatterns /^"MIME-Version:
 while 1
   let lnum = search('^msgid\>')
   if lnum <= 0
@@ -162,7 +162,10 @@ endwhile
 " Check that the file is well formed according to msgfmts understanding
 if executable("msgfmt")
   let filename = expand("%")
-  let a = system("msgfmt --statistics OLD_PO_FILE_INPUT=yes " . filename)
+  " Newer msgfmt does not take OLD_PO_FILE_INPUT argument, must be in
+  " environment.
+  let $OLD_PO_FILE_INPUT = 'yes'
+  let a = system("msgfmt --statistics " . filename)
   if v:shell_error != 0
     let error = matchstr(a, filename.':\zs\d\+\ze:')+0
     for line in split(a, '\n') | echomsg line | endfor

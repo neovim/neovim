@@ -3,24 +3,26 @@
 
 #include <assert.h>
 
-#include "nvim/lib/kvec.h"
-
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/state.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/getchar.h"
-#include "nvim/option_defs.h"
-#include "nvim/ui.h"
-#include "nvim/os/input.h"
+#include "nvim/autocmd.h"
+#include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/edit.h"
+#include "nvim/getchar.h"
+#include "nvim/insexpand.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/option.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/input.h"
+#include "nvim/screen.h"
+#include "nvim/state.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
 #endif
-
 
 void state_enter(VimState *s)
 {
@@ -37,15 +39,27 @@ void state_enter(VimState *s)
     int key;
 
 getkey:
-    if (char_avail() || using_script() || input_available()) {
-      // Don't block for events if there's a character already available for
-      // processing. Characters can come from mappings, scripts and other
-      // sources, so this scenario is very common.
+    // Apply mappings first by calling vpeekc() directly.
+    // - If vpeekc() returns non-NUL, there is a character already available for processing, so
+    //   don't block for events. vgetc() may still block, in case of an incomplete UTF-8 sequence.
+    // - If vpeekc() returns NUL, vgetc() will block, and there are three cases:
+    //   - There is no input available.
+    //   - All of available input maps to an empty string.
+    //   - There is an incomplete mapping.
+    //   A blocking wait for a character should only be done in the third case, which is the only
+    //   case of the three where typebuf.tb_len > 0 after vpeekc() returns NUL.
+    if (vpeekc() != NUL || typebuf.tb_len > 0) {
       key = safe_vgetc();
     } else if (!multiqueue_empty(main_loop.events)) {
       // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
     } else {
+      // Duplicate display updating logic in vgetorpeek()
+      if (((State & MODE_INSERT) != 0 || p_lz) && (State & MODE_CMDLINE) == 0
+          && must_redraw != 0 && !need_wait_return) {
+        update_screen(0);
+        setcursor();  // put cursor back where it belongs
+      }
       // Flush screen updates before blocking
       ui_flush();
       // Call `os_inchar` directly to block for events or user input without
@@ -53,17 +67,22 @@ getkey:
       // mapping engine.
       (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
-      key = !multiqueue_empty(main_loop.events)
-            ? K_EVENT
-            : safe_vgetc();
+      if (!multiqueue_empty(main_loop.events)) {
+        key = K_EVENT;
+      } else {
+        goto getkey;
+      }
     }
 
     if (key == K_EVENT) {
+      // An event handler may use the value of reg_executing.
+      // Clear it if it should be cleared when getting the next character.
+      check_end_reg_executing(true);
       may_sync_undo();
     }
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-    log_key(DEBUG_LOG_LEVEL, key);
+#if MIN_LOG_LEVEL <= LOGLVL_DBG
+    log_key(LOGLVL_DBG, key);
 #endif
 
     int execute_result = s->execute(s, key);
@@ -75,95 +94,161 @@ getkey:
   }
 }
 
+/// process events on main_loop, but interrupt if input is available
+///
+/// This should be used to handle K_EVENT in states accepting input
+/// otherwise bursts of events can block break checking indefinitely.
+void state_handle_k_event(void)
+{
+  while (true) {
+    Event event = multiqueue_get(main_loop.events);
+    if (event.handler) {
+      event.handler(event.argv);
+    }
+
+    if (multiqueue_empty(main_loop.events)) {
+      // don't breakcheck before return, caller should return to main-loop
+      // and handle input already.
+      return;
+    }
+
+    // TODO(bfredl): as an further micro-optimization, we could check whether
+    // event.handler already checked input.
+    os_breakcheck();
+    if (input_available() || got_int) {
+      return;
+    }
+  }
+}
+
 /// Return true if in the current mode we need to use virtual.
 bool virtual_active(void)
 {
+  unsigned int cur_ve_flags = get_ve_flags();
+
   // While an operator is being executed we return "virtual_op", because
   // VIsual_active has already been reset, thus we can't check for "block"
   // being used.
   if (virtual_op != kNone) {
     return virtual_op;
   }
-  return ve_flags == VE_ALL
-         || ((ve_flags & VE_BLOCK) && VIsual_active && VIsual_mode == Ctrl_V)
-         || ((ve_flags & VE_INSERT) && (State & INSERT));
+  return cur_ve_flags == VE_ALL
+         || ((cur_ve_flags & VE_BLOCK) && VIsual_active && VIsual_mode == Ctrl_V)
+         || ((cur_ve_flags & VE_INSERT) && (State & MODE_INSERT));
 }
 
-/// VISUAL, SELECTMODE and OP_PENDING State are never set, they are equal to
-/// NORMAL State with a condition.  This function returns the real State.
+/// MODE_VISUAL, MODE_SELECT and MODE_OP_PENDING State are never set, they are
+/// equal to MODE_NORMAL State with a condition.  This function returns the real
+/// State.
 int get_real_state(void)
 {
-  if (State & NORMAL) {
+  if (State & MODE_NORMAL) {
     if (VIsual_active) {
       if (VIsual_select) {
-        return SELECTMODE;
+        return MODE_SELECT;
       }
-      return VISUAL;
+      return MODE_VISUAL;
     } else if (finish_op) {
-      return OP_PENDING;
+      return MODE_OP_PENDING;
     }
   }
   return State;
 }
 
-/// @returns[allocated] mode string
-char *get_mode(void)
+/// Returns the current mode as a string in "buf[MODE_MAX_LENGTH]", NUL
+/// terminated.
+/// The first character represents the major mode, the following ones the minor
+/// ones.
+void get_mode(char *buf)
 {
-  char *buf = xcalloc(4, sizeof(char));
+  int i = 0;
 
   if (VIsual_active) {
     if (VIsual_select) {
-      buf[0] = (char)(VIsual_mode + 's' - 'v');
+      buf[i++] = (char)(VIsual_mode + 's' - 'v');
     } else {
-      buf[0] = (char)VIsual_mode;
+      buf[i++] = (char)VIsual_mode;
+      if (restart_VIsual_select) {
+        buf[i++] = 's';
+      }
     }
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
-             || State == CONFIRM) {
-    buf[0] = 'r';
-    if (State == ASKMORE) {
-      buf[1] = 'm';
-    } else if (State == CONFIRM) {
-      buf[1] = '?';
+  } else if (State == MODE_HITRETURN || State == MODE_ASKMORE || State == MODE_SETWSIZE
+             || State == MODE_CONFIRM) {
+    buf[i++] = 'r';
+    if (State == MODE_ASKMORE) {
+      buf[i++] = 'm';
+    } else if (State == MODE_CONFIRM) {
+      buf[i++] = '?';
     }
-  } else if (State == EXTERNCMD) {
-    buf[0] = '!';
-  } else if (State & INSERT) {
+  } else if (State == MODE_EXTERNCMD) {
+    buf[i++] = '!';
+  } else if (State & MODE_INSERT) {
     if (State & VREPLACE_FLAG) {
-      buf[0] = 'R';
-      buf[1] = 'v';
+      buf[i++] = 'R';
+      buf[i++] = 'v';
     } else {
       if (State & REPLACE_FLAG) {
-        buf[0] = 'R';
+        buf[i++] = 'R';
       } else {
-        buf[0] = 'i';
-      }
-      if (ins_compl_active()) {
-        buf[1] = 'c';
-      } else if (ctrl_x_mode_not_defined_yet()) {
-        buf[1] = 'x';
+        buf[i++] = 'i';
       }
     }
-  } else if ((State & CMDLINE) || exmode_active) {
-    buf[0] = 'c';
-    if (exmode_active == EXMODE_VIM) {
-      buf[1] = 'v';
-    } else if (exmode_active == EXMODE_NORMAL) {
-      buf[1] = 'e';
+    if (ins_compl_active()) {
+      buf[i++] = 'c';
+    } else if (ctrl_x_mode_not_defined_yet()) {
+      buf[i++] = 'x';
     }
-  } else if (State & TERM_FOCUS) {
-    buf[0] = 't';
+  } else if ((State & MODE_CMDLINE) || exmode_active) {
+    buf[i++] = 'c';
+    if (exmode_active) {
+      buf[i++] = 'v';
+    }
+  } else if (State & MODE_TERMINAL) {
+    buf[i++] = 't';
   } else {
-    buf[0] = 'n';
+    buf[i++] = 'n';
     if (finish_op) {
-      buf[1] = 'o';
+      buf[i++] = 'o';
       // to be able to detect force-linewise/blockwise/charwise operations
-      buf[2] = (char)motion_force;
+      buf[i++] = (char)motion_force;
     } else if (restart_edit == 'I' || restart_edit == 'R'
                || restart_edit == 'V') {
-      buf[1] = 'i';
-      buf[2] = (char)restart_edit;
+      buf[i++] = 'i';
+      buf[i++] = (char)restart_edit;
+    } else if (curbuf->terminal) {
+      buf[i++] = 't';
     }
   }
 
-  return buf;
+  buf[i] = NUL;
+}
+
+/// Fires a ModeChanged autocmd if appropriate.
+void may_trigger_modechanged(void)
+{
+  if (!has_event(EVENT_MODECHANGED)) {
+    return;
+  }
+
+  char curr_mode[MODE_MAX_LENGTH];
+  char pattern_buf[2 * MODE_MAX_LENGTH];
+
+  get_mode(curr_mode);
+  if (STRCMP(curr_mode, last_mode) == 0) {
+    return;
+  }
+
+  save_v_event_T save_v_event;
+  dict_T *v_event = get_v_event(&save_v_event);
+  tv_dict_add_str(v_event, S_LEN("new_mode"), curr_mode);
+  tv_dict_add_str(v_event, S_LEN("old_mode"), last_mode);
+  tv_dict_set_keys_readonly(v_event);
+
+  // concatenate modes in format "old_mode:new_mode"
+  vim_snprintf(pattern_buf, sizeof(pattern_buf), "%s:%s", last_mode, curr_mode);
+
+  apply_autocmds(EVENT_MODECHANGED, pattern_buf, NULL, false, curbuf);
+  STRCPY(last_mode, curr_mode);
+
+  restore_v_event(v_event, &save_v_event);
 }

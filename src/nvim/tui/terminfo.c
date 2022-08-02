@@ -5,11 +5,10 @@
 
 #include <stdbool.h>
 #include <string.h>
-
 #include <unibilium.h>
 
-#include "nvim/log.h"
 #include "nvim/globals.h"
+#include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
@@ -29,12 +28,12 @@ bool terminfo_is_term_family(const char *term, const char *family)
   size_t tlen = strlen(term);
   size_t flen = strlen(family);
   return tlen >= flen
-    && 0 == memcmp(term, family, flen)
-    // Per commentary in terminfo, minus is the only valid suffix separator.
-    // The screen terminfo may have a terminal name like screen.xterm. By making
-    // the dot(.) a valid separator, such terminal names will also be the
-    // terminal family of the screen.
-    && ('\0' == term[flen] || '-' == term[flen] || '.' == term[flen]);
+         && 0 == memcmp(term, family, flen)
+         // Per commentary in terminfo, minus is the only valid suffix separator.
+         // The screen terminfo may have a terminal name like screen.xterm. By making
+         // the dot(.) a valid separator, such terminal names will also be the
+         // terminal family of the screen.
+         && ('\0' == term[flen] || '-' == term[flen] || '.' == term[flen]);
 }
 
 bool terminfo_is_bsd_console(const char *term)

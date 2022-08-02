@@ -69,9 +69,33 @@ func Test_retab()
   call assert_equal("    a       b        c    ",         Retab('!', 3))
   call assert_equal("    a       b        c    ",         Retab('',  5))
   call assert_equal("    a       b        c    ",         Retab('!', 5))
+
+  set tabstop& expandtab&
 endfunc
 
 func Test_retab_error()
   call assert_fails('retab -1',  'E487:')
   call assert_fails('retab! -1', 'E487:')
+  call assert_fails('ret -1000', 'E487:')
+  call assert_fails('ret 10000', 'E475:')
+  call assert_fails('ret 80000000000000000000', 'E475:')
 endfunc
+
+func Test_retab_endless()
+  new
+  call setline(1, "\t0\t")
+  let caught = 'no'
+  try
+    while 1
+      set ts=4000
+      retab 4
+    endwhile
+  catch /E1240/
+    let caught = 'yes'
+  endtry
+  bwipe!
+  set tabstop&
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

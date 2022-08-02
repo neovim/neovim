@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
+local command = helpers.command
 local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 local matches = helpers.matches
@@ -45,7 +46,7 @@ describe('treesitter API', function()
       return {keys, lang.fields, symbols}
     ]]))
 
-    eq({fields=true, symbols=true}, keys)
+    eq({fields=true, symbols=true, _abi_version=true}, keys)
 
     local fset = {}
     for _,f in pairs(fields) do
@@ -66,6 +67,17 @@ describe('treesitter API', function()
       end
     end
     eq({true,true}, {has_named,has_anonymous})
+  end)
+
+  it('checks if vim.treesitter.get_parser tries to create a new parser on filetype change', function ()
+    if pending_c_parser(pending) then return end
+    command("set filetype=c")
+    -- Should not throw an error when filetype is c
+    eq('c', exec_lua("return vim.treesitter.get_parser(0):lang()"))
+    command("set filetype=borklang")
+    -- Should throw an error when filetype changes to borklang
+    eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
+       pcall_err(exec_lua, "new_parser = vim.treesitter.get_parser(0)"))
   end)
 end)
 

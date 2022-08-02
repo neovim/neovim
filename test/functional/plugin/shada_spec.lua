@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local eq, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
-  helpers.eq, helpers.eval, helpers.command, helpers.nvim, helpers.exc_exec,
+local eq, meths, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
+  helpers.eq, helpers.meths, helpers.eval, helpers.command, helpers.nvim, helpers.exc_exec,
   helpers.funcs, helpers.feed, helpers.curbuf
 local neq = helpers.neq
 local read_file = helpers.read_file
@@ -2161,6 +2161,16 @@ describe('plugin/shada.vim', function()
     reset()
     wshada('\004\000\009\147\000\196\002ab\196\001a')
     wshada_tmp('\004\000\009\147\000\196\002ab\196\001b')
+
+
+    local bufread_commands = meths.get_autocmds({ group = "ShaDaCommands", event = "BufReadCmd" })
+    eq(2, #bufread_commands--[[, vim.inspect(bufread_commands) ]])
+
+    -- Need to set nohidden so that the buffer containing 'fname' is not unloaded
+    -- after loading 'fname_tmp', otherwise the '++opt not supported' test below
+    -- won't work since the BufReadCmd autocmd won't be triggered.
+    nvim_command('set nohidden')
+
     nvim_command('edit ' .. fname)
     eq({
       'History entry with timestamp ' .. epoch .. ':',

@@ -1,5 +1,7 @@
 " Tests for put commands, e.g. ":put", "p", "gp", "P", "gP", etc.
 
+source check.vim
+
 func Test_put_block()
   new
   call feedkeys("i\<C-V>u2500\<CR>x\<ESC>", 'x')
@@ -39,7 +41,7 @@ func Test_put_lines()
   call assert_equal(['Line 3', '', 'Line 1', 'Line2'], getline(1, '$'))
   " clean up
   bw!
-  call setreg('a', a[0], a[1])
+  eval a[0]->setreg('a', a[1])
 endfunc
 
 func Test_put_expr()
@@ -111,3 +113,127 @@ func Test_put_p_indent_visual()
   call assert_equal('select that text', getline(2))
   bwipe!
 endfunc
+
+" Test for deleting all the contents of a buffer with a put
+func Test_put_visual_delete_all_lines()
+  new
+  call setline(1, ['one', 'two', 'three'])
+  let @r = ''
+  normal! VG"rgp
+  call assert_equal(1, line('$'))
+  close!
+endfunc
+
+func Test_gp_with_count_leaves_cursor_at_end()
+  new
+  call setline(1, '<---->')
+  call setreg('@', "foo\nbar", 'c')
+  normal 1G3|3gp
+  call assert_equal([0, 4, 4, 0], getpos("."))
+  call assert_equal(['<--foo', 'barfoo', 'barfoo', 'bar-->'], getline(1, '$'))
+  call assert_equal([0, 4, 3, 0], getpos("']"))
+
+  bwipe!
+endfunc
+
+func Test_p_with_count_leaves_mark_at_end()
+  new
+  call setline(1, '<---->')
+  call setreg('@', "start\nend", 'c')
+  normal 1G3|3p
+  call assert_equal([0, 1, 4, 0], getpos("."))
+  call assert_equal(['<--start', 'endstart', 'endstart', 'end-->'], getline(1, '$'))
+  call assert_equal([0, 4, 3, 0], getpos("']"))
+
+  bwipe!
+endfunc
+
+func Test_very_large_count()
+  new
+  " total put-length (21474837 * 100) brings 32 bit int overflow
+  let @" = repeat('x', 100)
+  call assert_fails('norm 21474837p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_64bit()
+  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
+
+  if v:sizeoflong < 8
+    throw 'Skipped: only works with 64 bit long ints'
+  endif
+
+  new
+  let @" = repeat('x', 100)
+  call assert_fails('norm 999999999p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_block()
+  new
+  " total put-length (21474837 * 100) brings 32 bit int overflow
+  call setline(1, repeat('x', 100))
+  exe "norm \<C-V>99ly"
+  call assert_fails('norm 21474837p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_very_large_count_block_64bit()
+  throw 'Skipped: v:sizeoflong is N/A'  " use legacy/put_spec.lua instead
+
+  if v:sizeoflong < 8
+    throw 'Skipped: only works with 64 bit long ints'
+  endif
+
+  new
+  call setline(1, repeat('x', 100))
+  exe "norm \<C-V>$y"
+  call assert_fails('norm 999999999p', 'E1240:')
+  bwipe!
+endfunc
+
+func Test_put_above_first_line()
+  new
+  let @" = 'text'
+  silent! normal 0o00
+  0put
+  call assert_equal('text', getline(1))
+  bwipe!
+endfunc
+
+func Test_multibyte_op_end_mark()
+  new
+  call setline(1, 'тест')
+  normal viwdp
+  call assert_equal([0, 1, 7, 0], getpos("'>"))
+  call assert_equal([0, 1, 7, 0], getpos("']"))
+
+  normal Vyp
+  call assert_equal([0, 1, 2147483647, 0], getpos("'>"))
+  call assert_equal([0, 2, 7, 0], getpos("']"))
+  bwipe!
+endfunc
+
+" this was putting a mark before the start of a line
+func Test_put_empty_register()
+  new
+  norm yy
+  norm [Pi00ggv)s0
+  sil! norm [P
+  bwipe!
+endfunc
+
+" this was putting the end mark after the end of the line
+func Test_put_visual_mode()
+  edit! SomeNewBuffer
+  set selection=exclusive
+  exe "norm o\t"
+  m0
+  sil! norm pp
+
+  bwipe!
+  set selection&
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

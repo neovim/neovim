@@ -141,7 +141,7 @@ sy	keyword	cscBPMacro	contained EndLoop AllMembers SelectedMembers If Else EndIf
 sy	match	cscBPMacro	contained	"!"
 sy	match	cscBPW	"!\s*\a*"	contains=cscBPmacro
 
-" when wanted, highlighting lhs members or erros in asignments (may lag the editing)
+" when wanted, highlighting lhs members or errors in assignments (may lag the editing)
 if exists("csc_asignment")
 	sy	match	cscEqError	'\("[^"]*"\s*\|[^][\t !%()*+,--/:;<=>{}~]\+\s*\|->\s*\)*=\([^=]\@=\|$\)'
 	sy	region	cscFormula	transparent matchgroup=cscVarName start='\("[^"]*"\|[^][\t !%()*+,--/:;<=>{}~]\+\)\s*=\([^=]\@=\|\n\)' skip='"[^"]*"' end=';' contains=ALLBUT,cscFormula,cscFormulaIn,cscBPMacro,cscCondition

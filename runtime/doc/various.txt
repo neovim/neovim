@@ -14,6 +14,10 @@ Various commands					*various*
 							*CTRL-L*
 CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
+							*CTRL-L-default*
+			By default, also clears search highlighting
+			|:nohlsearch| and updates diffs |:diffupdate|.
+			|default-mappings|
 
 							*:mod* *:mode*
 :mod[e]			Clears and redraws the screen.
@@ -26,10 +30,10 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			function (or a mapping if 'lazyredraw' set).
 
 						*:redraws* *:redrawstatus*
-:redraws[tatus][!]	Redraws the status line of the current window, or all
-			status lines if "!" is included.
-			Useful if 'statusline' includes an item that doesn't
-			cause automatic updating.
+:redraws[tatus][!]	Redraws the status line and window bar of the current
+			window, or all status lines and window bars if "!" is
+			included. Useful if 'statusline' or 'winbar' includes
+			an item that doesn't cause automatic updating.
 
 						*:redrawt* *:redrawtabline*
 :redrawt[abline]	Redraw the tabline.  Useful to update the tabline when
@@ -92,7 +96,7 @@ g8			Print the hex values of the bytes used in the
 			encoding because it contains illegal bytes.
 			Does not wrap around the end of the file.
 			Note that when the cursor is on an illegal byte or the
-			cursor is halfway through a multi-byte character the
+			cursor is halfway through a multibyte character the
 			command won't move the cursor.
 
 						*:p* *:pr* *:print* *E749*
@@ -112,9 +116,9 @@ g8			Print the hex values of the bytes used in the
 
 							*:l* *:list*
 :[range]l[ist] [count] [flags]
-			Same as :print, but display unprintable characters
-			with '^' and put $ after the line.  This can be
-			further changed with the 'listchars' option.
+			Same as :print, but show tabs as ">", trailing spaces
+			as "-", and non-breakable space characters as "+" by
+			default.  Further changed by the 'listchars' option.
 			See |ex-flags| for [flags].
 
 							*:nu* *:number*
@@ -134,19 +138,21 @@ g8			Print the hex values of the bytes used in the
 				quit
 <
 							*:z* *E144*
-:{range}z[+-^.=]{count}	Display several lines of text surrounding the line
-			specified with {range}, or around the current line
-			if there is no {range}.  If there is a {count}, that's
-			how many lines you'll see; if there is only one window
-			then twice the value of the 'scroll' option is used,
-			otherwise the current window height minus 3 is used.
+:[range]z[+-^.=][count]	Display several lines of text surrounding the line
+			specified with [range], or around the current line
+			if there is no [range].
 
-			If there is a {count} the 'window' option is set to
+			If there is a [count], that's how many lines you'll
+			see; if there is no [count] and only one window then
+			twice the value of the 'scroll' option is used,
+			otherwise the current window height minus 3 is used.
+			This is the value of "scr" in the table below.
+
+			If there is a [count] the 'window' option is set to
 			its value.
 
 			:z can be used either alone or followed by any of
-			several punctuation marks.  These have the following
-			effect:
+			several marks.  These have the following effect:
 
 			mark   first line    last line      new cursor line ~
 			----   ----------    ---------      ------------
@@ -160,9 +166,13 @@ g8			Print the hex values of the bytes used in the
 			If the mark is "=", a line of dashes is printed
 			around the current line.
 
-:{range}z#[+-^.=]{count}				*:z#*
-			Like ":z", but number the lines.
-			{not in all versions of Vi, not with these arguments}
+							*:z!*
+:[range]z![+-^.=][count]
+			Like ":z", but when [count] is not specified, it
+			defaults to the Vim window height minus one.
+
+:[range]z[!]#[+-^.=][count]				*:z#*
+			Like ":z" or ":z!", but number the lines.
 
 							*:=*
 := [flags]		Print the last line number.
@@ -197,8 +207,6 @@ g8			Print the hex values of the bytes used in the
 
 			{commands} cannot start with a space.  Put a count of
 			1 (one) before it, "1 " is one space.
-
-			The 'insertmode' option is ignored for {commands}.
 
 			This command cannot be followed by another command,
 			since any '|' is considered part of the command.
@@ -239,7 +247,7 @@ g8			Print the hex values of the bytes used in the
 			To enter |Terminal-mode| automatically: >
 			      autocmd TermOpen * startinsert
 <
-							*:!cmd* *:!* *E34*
+							*:!cmd* *:!*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
 			The command runs in a non-interactive shell connected
@@ -251,6 +259,7 @@ g8			Print the hex values of the bytes used in the
 			Use |jobstart()| instead. >
 				:call jobstart('foo', {'detach':1})
 <
+							*E34*
 			Any "!" in {cmd} is replaced with the previous
 			external command (see also 'cpoptions'), unless
 			escaped by a backslash.  Example: ":!ls" followed by
@@ -260,10 +269,11 @@ g8			Print the hex values of the bytes used in the
 			use it to append a Vim command.  See |:bar|.
 
 			Any "%" in {cmd} is expanded to the current file name.
+			Any "#" in {cmd} is expanded to the alternate file name.
 			Special characters are not escaped, use quotes or
 			|shellescape()|: >
 				:!ls "%"
-				:exe "!ls " . shellescape(expand("%"))
+				:exe "!ls " .. shellescape(expand("%"))
 <
 			Newline character ends {cmd} unless a backslash
 			precedes the newline.  What follows is interpreted as
@@ -336,9 +346,13 @@ g8			Print the hex values of the bytes used in the
 			Only string variables can be used.  After the
 			redirection starts, if the variable is removed or
 			locked or the variable type is changed, then further
-			command output messages will cause errors.
+			command output messages will cause errors.  When using
+			a local variable (l:var in a function or s:var in a
+			script) and another `:redir` causes the current one to
+			end, the scope might be different and the assignment
+			fails.
 			To get the output of one command the |execute()|
-			function can be used.
+			function can be used instead of redirection.
 
 :redi[r] =>> {var}	Append messages to an existing variable.  Only string
 			variables can be used.
@@ -346,19 +360,19 @@ g8			Print the hex values of the bytes used in the
 :redi[r] END		End redirecting messages.
 
 							*:filt* *:filter*
-:filt[er][!] {pat} {command}
-:filt[er][!] /{pat}/ {command}
+:filt[er][!] {pattern} {command}
+:filt[er][!] /{pattern}/ {command}
 			Restrict the output of {command} to lines matching
-			with {pat}.  For example, to list only xml files: >
+			with {pattern}.  For example, to list only xml files: >
 				:filter /\.xml$/ oldfiles
 <			If the [!] is given, restrict the output of {command}
-			to lines that do NOT match {pat}.
+			to lines that do NOT match {pattern}.
 
-			{pat} is a Vim search pattern.  Instead of enclosing
+			{pattern} is a Vim search pattern.  Instead of enclosing
 			it in / any non-ID character (see |'isident'|) can be
-			used, so long as it does not appear in {pat}.  Without
-			the enclosing character the pattern cannot include the
-			bar character.
+			used, so long as it does not appear in {pattern}.
+			Without the enclosing character the pattern cannot
+			include the bar character. 'ignorecase' is not used.
 
 			The pattern is matched against the relevant part of
 			the output, not necessarily the whole line. Only some
@@ -376,7 +390,9 @@ g8			Print the hex values of the bytes used in the
 			   |:marks|      - filter by text in the current file,
 					   or file name for other files
 			   |:oldfiles|   - filter by file name
-			   |:set|        - filter by variable name
+			   |:registers|  - filter by register contents
+					   (does not work multi-line)
+			   |:set|        - filter by option name
 
 			Only normal messages are filtered, error messages are
 			not.
@@ -418,7 +434,7 @@ g8			Print the hex values of the bytes used in the
 			used.  In this example |:silent| is used to avoid the
 			message about reading the file and |:unsilent| to be
 			able to list the first line of each file. >
-    		:silent argdo unsilent echo expand('%') . ": " . getline(1)
+		:silent argdo unsilent echo expand('%') .. ": " .. getline(1)
 <
 
 						*:verb* *:verbose*
@@ -447,26 +463,21 @@ g8			Print the hex values of the bytes used in the
 							*:verbose-cmd*
 When 'verbose' is non-zero, listing the value of a Vim option or a key map or
 an abbreviation or a user-defined function or a command or a highlight group
-or an autocommand will also display where it was last defined.  If it was
-defined manually then there will be no "Last set" message.  When it was
-defined while executing a function, user command or autocommand, the script in
-which it was defined is reported.
+or an autocommand will also display where it was last defined. If they were
+defined in Lua they will only be located if 'verbose' is set. So Start
+nvim with -V1 arg to see them. If it was defined manually then there
+will be no "Last set" message.  When it was defined while executing a function,
+user command or autocommand, the script in which it was defined is reported.
 
 							*K*
-[count]K       		Run a program to lookup the keyword under the
-			cursor.  The name of the program is given with the
-			'keywordprg' (kp) option (default is "man").  The
-			keyword is formed of letters, numbers and the
-			characters in 'iskeyword'.  The keyword under or
-			right of the cursor is used.  The same can be done
-			with the command >
-				:!{program} {keyword}
+[count]K       		Runs the program given by 'keywordprg' to lookup the
+			|word| (defined by 'iskeyword') under or right of the
+			cursor. Default is "man". Works like this: >
+				:tabnew | terminal {program} {keyword}
 <			Special cases:
 			- If 'keywordprg' begins with ":" it is invoked as
 			  a Vim command with [count].
-			- If 'keywordprg' is empty, the ":help" command is
-			  used.  It's a good idea to include more characters
-			  in 'iskeyword' then, to be able to find more help.
+			- If 'keywordprg' is empty, |:help| is used.
 			- When 'keywordprg' is equal to "man", a [count]
 			  before "K" is inserted after the "man" command and
 			  before the keyword.  For example, using "2K" while
@@ -502,6 +513,10 @@ gO			Show a filetype-specific, navigable "outline" of the
 			if at a visible position.
 			Queued messages are processed during the sleep.
 
+							*:sl!* *:sleep!*
+:[N]sl[eep]! [N][m]	Same as above. Unlike Vim, it does not hide the
+			cursor. |vim-differences|
+
 ==============================================================================
 2. Using Vim like less or more					*less*
 
@@ -514,7 +529,7 @@ up mappings to simulate the commands that less supports.  Otherwise, you can
 still use the Vim commands.
 
 This isn't perfect.  For example, when viewing a short file Vim will still use
-the whole screen.  But it works good enough for most uses, and you get syntax
+the whole screen.  But it works well enough for most uses, and you get syntax
 highlighting.
 
 The "h" key will give you a short overview of the available commands.

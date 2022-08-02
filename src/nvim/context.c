@@ -3,13 +3,15 @@
 
 // Context: snapshot of the entire editor state as one big object/map
 
+#include "nvim/api/private/converter.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/vimscript.h"
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
-#include "nvim/api/vim.h"
-#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"
@@ -31,6 +33,7 @@ void ctx_free_all(void)
 
 /// Returns the size of the context stack.
 size_t ctx_size(void)
+  FUNC_ATTR_PURE
 {
   return kv_size(ctx_stack);
 }
@@ -38,6 +41,7 @@ size_t ctx_size(void)
 /// Returns pointer to Context object with given zero-based index from the top
 /// of context stack or NULL if index is out of bounds.
 Context *ctx_get(size_t index)
+  FUNC_ATTR_PURE
 {
   if (index < kv_size(ctx_stack)) {
     return &kv_Z(ctx_stack, index);
@@ -125,7 +129,7 @@ bool ctx_restore(Context *ctx, const int flags)
     free_ctx = true;
   }
 
-  char_u *op_shada;
+  char *op_shada;
   get_option_value("shada", NULL, &op_shada, OPT_GLOBAL);
   set_option_value("shada", 0L, "!,'100,%", OPT_GLOBAL);
 
@@ -153,7 +157,7 @@ bool ctx_restore(Context *ctx, const int flags)
     ctx_free(ctx);
   }
 
-  set_option_value("shada", 0L, (char *)op_shada, OPT_GLOBAL);
+  set_option_value("shada", 0L, op_shada, OPT_GLOBAL);
   xfree(op_shada);
 
   return true;
@@ -254,7 +258,8 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
       size_t cmd_len = sizeof("func! ") + STRLEN(name);
       char *cmd = xmalloc(cmd_len);
       snprintf(cmd, cmd_len, "func! %s", name);
-      String func_body = nvim_exec(cstr_as_string(cmd), true, &err);
+      String func_body = nvim_exec(VIML_INTERNAL_CALL, cstr_as_string(cmd),
+                                   true, &err);
       xfree(cmd);
       if (!ERROR_SET(&err)) {
         ADD(ctx->funcs, STRING_OBJ(func_body));
@@ -314,7 +319,7 @@ static inline msgpack_sbuffer array_to_sbuf(Array array)
   object_to_vim(ARRAY_OBJ(array), &list_tv, &err);
 
   if (!encode_vim_list_to_buf(list_tv.vval.v_list, &sbuf.size, &sbuf.data)) {
-    EMSG(_("E474: Failed to convert list to msgpack string buffer"));
+    emsg(_("E474: Failed to convert list to msgpack string buffer"));
   }
   sbuf.alloc = sbuf.size;
 

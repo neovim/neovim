@@ -1,27 +1,26 @@
 #ifndef NVIM_LOG_H
 #define NVIM_LOG_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "auto/config.h"
 #include "nvim/macros.h"
 
-// USDT probes. Example invokation:
+// USDT probes. Example invocation:
 //     NVIM_PROBE(nvim_foo_bar, 1, string.data);
 #if defined(HAVE_SYS_SDT_H)
-#include <sys/sdt.h> // NOLINT
-#define NVIM_PROBE(name, n, ...) STAP_PROBE##n(neovim, name, __VA_ARGS__)
+# include <sys/sdt.h>  // NOLINT
+# define NVIM_PROBE(name, n, ...) STAP_PROBE##n(neovim, name, __VA_ARGS__)
 #else
-#define NVIM_PROBE(name, n, ...)
+# define NVIM_PROBE(name, n, ...)
 #endif
 
-
-#define TRACE_LOG_LEVEL 0
-#define DEBUG_LOG_LEVEL 1
-#define INFO_LOG_LEVEL 2
-#define WARN_LOG_LEVEL 3
-#define ERROR_LOG_LEVEL 4
+#define LOGLVL_TRC 0
+#define LOGLVL_DBG 1
+#define LOGLVL_INF 2
+#define LOGLVL_WRN 3
+#define LOGLVL_ERR 4
 
 #define DLOG(...)
 #define DLOGN(...)
@@ -33,46 +32,37 @@
 #define ELOGN(...)
 
 #ifndef MIN_LOG_LEVEL
-#  define MIN_LOG_LEVEL INFO_LOG_LEVEL
+# define MIN_LOG_LEVEL LOGLVL_INF
 #endif
 
-#define LOG(level, ...) logmsg((level), NULL, __func__, __LINE__, true, \
-                               __VA_ARGS__)
+#define LOG(level, ...) logmsg((level), NULL, __func__, __LINE__, true, __VA_ARGS__)
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+#if MIN_LOG_LEVEL <= LOGLVL_DBG
 # undef DLOG
 # undef DLOGN
-# define DLOG(...) logmsg(DEBUG_LOG_LEVEL, NULL, __func__, __LINE__, true, \
-                          __VA_ARGS__)
-# define DLOGN(...) logmsg(DEBUG_LOG_LEVEL, NULL, __func__, __LINE__, false, \
-                           __VA_ARGS__)
+# define DLOG(...) logmsg(LOGLVL_DBG, NULL, __func__, __LINE__, true, __VA_ARGS__)
+# define DLOGN(...) logmsg(LOGLVL_DBG, NULL, __func__, __LINE__, false, __VA_ARGS__)
 #endif
 
-#if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
+#if MIN_LOG_LEVEL <= LOGLVL_INF
 # undef ILOG
 # undef ILOGN
-# define ILOG(...) logmsg(INFO_LOG_LEVEL, NULL, __func__, __LINE__, true, \
-                          __VA_ARGS__)
-# define ILOGN(...) logmsg(INFO_LOG_LEVEL, NULL, __func__, __LINE__, false, \
-                           __VA_ARGS__)
+# define ILOG(...) logmsg(LOGLVL_INF, NULL, __func__, __LINE__, true, __VA_ARGS__)
+# define ILOGN(...) logmsg(LOGLVL_INF, NULL, __func__, __LINE__, false, __VA_ARGS__)
 #endif
 
-#if MIN_LOG_LEVEL <= WARN_LOG_LEVEL
+#if MIN_LOG_LEVEL <= LOGLVL_WRN
 # undef WLOG
 # undef WLOGN
-# define WLOG(...) logmsg(WARN_LOG_LEVEL, NULL, __func__, __LINE__, true, \
-                          __VA_ARGS__)
-# define WLOGN(...) logmsg(WARN_LOG_LEVEL, NULL, __func__, __LINE__, false, \
-                           __VA_ARGS__)
+# define WLOG(...) logmsg(LOGLVL_WRN, NULL, __func__, __LINE__, true, __VA_ARGS__)
+# define WLOGN(...) logmsg(LOGLVL_WRN, NULL, __func__, __LINE__, false, __VA_ARGS__)
 #endif
 
-#if MIN_LOG_LEVEL <= ERROR_LOG_LEVEL
+#if MIN_LOG_LEVEL <= LOGLVL_ERR
 # undef ELOG
 # undef ELOGN
-# define ELOG(...) logmsg(ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true, \
-                          __VA_ARGS__)
-# define ELOGN(...) logmsg(ERROR_LOG_LEVEL, NULL, __func__, __LINE__, false, \
-                           __VA_ARGS__)
+# define ELOG(...) logmsg(LOGLVL_ERR, NULL, __func__, __LINE__, true, __VA_ARGS__)
+# define ELOGN(...) logmsg(LOGLVL_ERR, NULL, __func__, __LINE__, false, __VA_ARGS__)
 #endif
 
 #ifdef HAVE_EXECINFO_BACKTRACE

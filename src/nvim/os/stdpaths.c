@@ -3,17 +3,19 @@
 
 #include <stdbool.h>
 
-#include "nvim/os/stdpaths_defs.h"
-#include "nvim/os/os.h"
-#include "nvim/path.h"
-#include "nvim/memory.h"
 #include "nvim/ascii.h"
+#include "nvim/fileio.h"
+#include "nvim/memory.h"
+#include "nvim/os/os.h"
+#include "nvim/os/stdpaths_defs.h"
+#include "nvim/path.h"
 
 /// Names of the environment variables, mapped to XDGVarType values
 static const char *xdg_env_vars[] = {
   [kXDGConfigHome] = "XDG_CONFIG_HOME",
   [kXDGDataHome] = "XDG_DATA_HOME",
   [kXDGCacheHome] = "XDG_CACHE_HOME",
+  [kXDGStateHome] = "XDG_STATE_HOME",
   [kXDGRuntimeDir] = "XDG_RUNTIME_DIR",
   [kXDGConfigDirs] = "XDG_CONFIG_DIRS",
   [kXDGDataDirs] = "XDG_DATA_DIRS",
@@ -24,7 +26,8 @@ static const char *const xdg_defaults_env_vars[] = {
   [kXDGConfigHome] = "LOCALAPPDATA",
   [kXDGDataHome] = "LOCALAPPDATA",
   [kXDGCacheHome] = "TEMP",
-  [kXDGRuntimeDir] = NULL,
+  [kXDGStateHome] = "LOCALAPPDATA",
+  [kXDGRuntimeDir] = NULL,  // Decided by vim_mktempdir().
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
 };
@@ -38,14 +41,16 @@ static const char *const xdg_defaults[] = {
   [kXDGConfigHome] = "~\\AppData\\Local",
   [kXDGDataHome] = "~\\AppData\\Local",
   [kXDGCacheHome] = "~\\AppData\\Local\\Temp",
-  [kXDGRuntimeDir] = NULL,
+  [kXDGStateHome] = "~\\AppData\\Local",
+  [kXDGRuntimeDir] = NULL,  // Decided by vim_mktempdir().
   [kXDGConfigDirs] = NULL,
   [kXDGDataDirs] = NULL,
 #else
   [kXDGConfigHome] = "~/.config",
   [kXDGDataHome] = "~/.local/share",
   [kXDGCacheHome] = "~/.cache",
-  [kXDGRuntimeDir] = NULL,
+  [kXDGStateHome] = "~/.local/state",
+  [kXDGRuntimeDir] = NULL,  // Decided by vim_mktempdir().
   [kXDGConfigDirs] = "/etc/xdg/",
   [kXDGDataDirs] = "/usr/local/share/:/usr/share/",
 #endif
@@ -78,7 +83,12 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   if (env_val != NULL) {
     ret = xstrdup(env_val);
   } else if (fallback) {
-    ret = (char *)expand_env_save((char_u *)fallback);
+    ret = expand_env_save((char *)fallback);
+  } else if (idx == kXDGRuntimeDir) {
+    // Special-case: stdpath('run') is defined at startup.
+    ret = vim_gettempdir();
+    size_t len = strlen(ret);
+    ret = xstrndup(ret, len >= 2 ? len - 1 : 0);  // Trim trailing slash.
   }
 
   return ret;
@@ -99,10 +109,15 @@ char *get_xdg_home(const XDGVarType idx)
   if (dir) {
 #if defined(WIN32)
     dir = concat_fnames_realloc(dir,
-                                (idx == kXDGDataHome ? "nvim-data" : "nvim"),
+                                ((idx == kXDGDataHome
+                                  || idx == kXDGStateHome) ? "nvim-data" : "nvim"),
                                 true);
 #else
     dir = concat_fnames_realloc(dir, "nvim", true);
+#endif
+
+#ifdef BACKSLASH_IN_FILENAME
+    slash_adjust((char_u *)dir);
 #endif
   }
   return dir;
@@ -133,21 +148,31 @@ char *stdpaths_user_conf_subpath(const char *fname)
 /// Return subpath of $XDG_DATA_HOME
 ///
 /// @param[in]  fname  New component of the path.
+///
+/// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`
+char *stdpaths_user_data_subpath(const char *fname)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  return concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
+}
+
+/// Return subpath of $XDG_STATE_HOME
+///
+/// @param[in]  fname  New component of the path.
 /// @param[in]  trailing_pathseps  Amount of trailing path separators to add.
 /// @param[in]  escape_commas  If true, all commas will be escaped.
 ///
-/// @return [allocated] `$XDG_DATA_HOME/nvim/{fname}`.
-char *stdpaths_user_data_subpath(const char *fname,
-                                 const size_t trailing_pathseps,
-                                 const bool escape_commas)
+/// @return [allocated] `$XDG_STATE_HOME/nvim/{fname}`.
+char *stdpaths_user_state_subpath(const char *fname, const size_t trailing_pathseps,
+                                  const bool escape_commas)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  char *ret = concat_fnames_realloc(get_xdg_home(kXDGDataHome), fname, true);
+  char *ret = concat_fnames_realloc(get_xdg_home(kXDGStateHome), fname, true);
   const size_t len = strlen(ret);
   const size_t numcommas = (escape_commas ? memcnt(ret, ',', len) : 0);
   if (numcommas || trailing_pathseps) {
     ret = xrealloc(ret, len + trailing_pathseps + numcommas + 1);
-    for (size_t i = 0 ; i < len + numcommas ; i++) {
+    for (size_t i = 0; i < len + numcommas; i++) {
       if (ret[i] == ',') {
         memmove(ret + i + 1, ret + i, len - i + numcommas);
         ret[i] = '\\';

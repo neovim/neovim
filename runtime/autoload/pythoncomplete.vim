@@ -1,7 +1,8 @@
 "pythoncomplete.vim - Omni Completion for python
-" Maintainer: Aaron Griffin <aaronmgriffin@gmail.com>
+" Maintainer: <vacancy>
+" Previous Maintainer: Aaron Griffin <aaronmgriffin@gmail.com>
 " Version: 0.9
-" Last Updated: 18 Jun 2009
+" Last Updated: 2020 Oct 9
 "
 " Changes
 " TODO:
@@ -81,7 +82,7 @@ function! pythoncomplete#Complete(findstart, base)
                 break
             endif
         endwhile
-        execute "python vimcomplete('" . cword . "', '" . a:base . "')"
+        execute "python vimcomplete('" . escape(cword, "'") . "', '" . escape(a:base, "'") . "')"
         return g:pythoncomplete_completions
     endif
 endfunction
@@ -190,7 +191,7 @@ class Completer(object):
                 pass
         if len(arg_text) == 0:
             # The doc string sometimes contains the function signature
-            #  this works for alot of C modules that are part of the
+            #  this works for a lot of C modules that are part of the
             #  standard library
             doc = func_obj.__doc__
             if doc:

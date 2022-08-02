@@ -1,16 +1,16 @@
 " Vim syntax file
-" Language:	Pascal
-" Version: 2.8
-" Last Change:	2004/10/17 17:47:30
-" Maintainer:  Xavier Crégut <xavier.cregut@enseeiht.fr>
-" Previous Maintainer:	Mario Eusebio <bio@dq.fct.unl.pt>
+" Language:		Pascal
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainers:	Xavier CrÃ©gut <xavier.cregut@enseeiht.fr>
+"			Mario Eusebio <bio@dq.fct.unl.pt>
+" Last Change:		2021 May 20
 
 " Contributors: Tim Chase <tchase@csc.com>,
-"	Stas Grabois <stsi@vtrails.com>,
-"	Mazen NEIFER <mazen.neifer.2001@supaero.fr>,
-"	Klaus Hast <Klaus.Hast@arcor.net>,
-"	Austin Ziegler <austin@halostatue.ca>,
-"	Markus Koenig <markus@stber-koenig.de>
+"		Stas Grabois <stsi@vtrails.com>,
+"		Mazen NEIFER <mazen.neifer.2001@supaero.fr>,
+"		Klaus Hast <Klaus.Hast@arcor.net>,
+"		Austin Ziegler <austin@halostatue.ca>,
+"		Markus Koenig <markus@stber-koenig.de>
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -25,10 +25,10 @@ syn keyword pascalBoolean	true false
 syn keyword pascalConditional	if else then
 syn keyword pascalConstant	nil maxint
 syn keyword pascalLabel		case goto label
-syn keyword pascalOperator	and div downto in mod not of or packed with
+syn keyword pascalOperator	and div downto in mod not of or packed
 syn keyword pascalRepeat	do for do repeat while to until
 syn keyword pascalStatement	procedure function
-syn keyword pascalStatement	program begin end const var type
+syn keyword pascalStatement	program begin end const var type with
 syn keyword pascalStruct	record
 syn keyword pascalType		array boolean char integer file pointer real set
 syn keyword pascalType		string text variant
@@ -40,12 +40,12 @@ syn keyword pascalTodo contained	TODO FIXME XXX DEBUG NOTE
     " 20010723az: When wanted, highlight the trailing whitespace -- this is
     " based on c_space_errors; to enable, use "pascal_space_errors".
 if exists("pascal_space_errors")
-    if !exists("pascal_no_trail_space_error")
-        syn match pascalSpaceError "\s\+$"
-    endif
-    if !exists("pascal_no_tab_space_error")
-        syn match pascalSpaceError " \+\t"me=e-1
-    endif
+  if !exists("pascal_no_trail_space_error")
+    syn match pascalSpaceError "\s\+$"
+  endif
+  if !exists("pascal_no_tab_space_error")
+    syn match pascalSpaceError " \+\t"me=e-1
+  endif
 endif
 
 
@@ -98,9 +98,24 @@ if exists("pascal_symbol_operator")
 endif
 
 syn match  pascalNumber		"-\=\<\d\+\>"
+if !exists("pascal_traditional")
+  syn match  pascalHexNumber	"\$\x\+\>"
+endif
+if exists("pascal_fpc")
+  syn match	pascalOctNumber "&\o\+\>"
+  syn match	pascalBinNumber	"%[01]\+\>"
+endif
+if exists("pascal_gpc")
+  syn match  pascalExtendedNumber	"\%([2-9]\|[12]\d\|3[0-6]\)#[[:alnum:]]\+\>"
+endif
+
 syn match  pascalFloat		"-\=\<\d\+\.\d\+\>"
 syn match  pascalFloat		"-\=\<\d\+\.\d\+[eE]-\=\d\+\>"
-syn match  pascalHexNumber	"\$[0-9a-fA-F]\+\>"
+
+if !exists("pascal_traditional")
+  " allow leading zeros
+  syn match pascalControlCharacter	"#\%([01]\=\d\=\d\|2[0-4]\d\|25[0-5]\)\>"
+endif
 
 if exists("pascal_no_tabs")
   syn match pascalShowTab "\t"
@@ -142,7 +157,7 @@ if !exists("pascal_traditional")
   syn keyword pascalStatement	interface unit uses
   syn keyword pascalModifier	absolute assembler external far forward inline
   syn keyword pascalModifier	interrupt near virtual 
-  syn keyword pascalAcces	private public 
+  syn keyword pascalAccess	private public strict
   syn keyword pascalStruct	object 
   syn keyword pascalOperator	shl shr xor
 
@@ -157,6 +172,7 @@ if !exists("pascal_traditional")
   syn keyword pascalType	Single Double Extended Comp
   syn keyword pascalType	PChar
 
+  syn keyword pascalPredefined	self
 
   if !exists ("pascal_fpc")
     syn keyword pascalPredefined	Result
@@ -166,11 +182,11 @@ if !exists("pascal_traditional")
     syn region pascalComment        start="//" end="$" contains=pascalTodo,pascalSpaceError
     syn keyword pascalStatement	fail otherwise operator
     syn keyword pascalDirective	popstack
-    syn keyword pascalPredefined self
     syn keyword pascalType	ShortString AnsiString WideString
   endif
 
   if exists("pascal_gpc")
+    syn region pascalComment        start="//" end="$" contains=pascalTodo,pascalSpaceError
     syn keyword pascalType	SmallInt
     syn keyword pascalType	AnsiChar
     syn keyword pascalType	PAnsiChar
@@ -178,6 +194,8 @@ if !exists("pascal_traditional")
 
   if exists("pascal_delphi")
     syn region pascalComment	start="//"  end="$" contains=pascalTodo,pascalSpaceError
+    syn region pascalDocumentation	start="///" end="$" contains=pascalTodo,pascalSpaceError
+    syn region pascalDocumentation	start="{!"  end="}" contains=pascalTodo,pascalSpaceError
     syn keyword pascalType	SmallInt Int64
     syn keyword pascalType	Real48 Currency
     syn keyword pascalType	AnsiChar WideChar
@@ -192,11 +210,11 @@ if !exists("pascal_traditional")
     syn keyword pascalStatement	initialization finalization uses exports
     syn keyword pascalStatement	property out resourcestring threadvar
     syn keyword pascalModifier	contains
-    syn keyword pascalModifier	overridden reintroduce abstract
+    syn keyword pascalModifier	overridden reintroduce abstract sealed
     syn keyword pascalModifier	override export dynamic name message
     syn keyword pascalModifier	dispid index stored default nodefault readonly
     syn keyword pascalModifier	writeonly implements overload requires resident
-    syn keyword pascalAcces	protected published automated
+    syn keyword pascalAccess	protected published automated
     syn keyword pascalDirective	register pascal cvar cdecl stdcall safecall
     syn keyword pascalOperator	as is
   endif
@@ -319,37 +337,43 @@ endif
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
-hi def link pascalAcces		pascalStatement
+hi def link pascalAccess		pascalStatement
 hi def link pascalBoolean		Boolean
 hi def link pascalComment		Comment
-hi def link pascalConditional	Conditional
+hi def link pascalDocumentation		Comment
+hi def link pascalConditional		Conditional
 hi def link pascalConstant		Constant
-hi def link pascalDelimiter	Identifier
-hi def link pascalDirective	pascalStatement
-hi def link pascalException	Exception
-hi def link pascalFloat		Float
+hi def link pascalControlCharacter	Character
+hi def link pascalDelimiter		Identifier
+hi def link pascalDirective		pascalStatement
+hi def link pascalException		Exception
+hi def link pascalFloat			Float
 hi def link pascalFunction		Function
-hi def link pascalLabel		Label
+hi def link pascalLabel			Label
 hi def link pascalMatrixDelimiter	Identifier
 hi def link pascalModifier		Type
 hi def link pascalNumber		Number
+hi def link pascalExtendedNumber	Number
+hi def link pascalBinNumber		pascalNumber
+hi def link pascalHexNumber		pascalNumber
+hi def link pascalOctNumber		pascalNumber
 hi def link pascalOperator		Operator
-hi def link pascalPredefined	pascalStatement
+hi def link pascalPredefined		pascalStatement
 hi def link pascalPreProc		PreProc
 hi def link pascalRepeat		Repeat
-hi def link pascalSpaceError	Error
-hi def link pascalStatement	Statement
+hi def link pascalSpaceError		Error
+hi def link pascalStatement		Statement
 hi def link pascalString		String
-hi def link pascalStringEscape	Special
+hi def link pascalStringEscape		Special
 hi def link pascalStringEscapeGPC	Special
-hi def link pascalStringError	Error
+hi def link pascalStringError		Error
 hi def link pascalStruct		pascalStatement
 hi def link pascalSymbolOperator	pascalOperator
-hi def link pascalTodo		Todo
-hi def link pascalType		Type
-hi def link pascalUnclassified	pascalStatement
+hi def link pascalTodo			Todo
+hi def link pascalType			Type
+hi def link pascalUnclassified		pascalStatement
 "  hi def link pascalAsm		Assembler
-hi def link pascalError		Error
+hi def link pascalError			Error
 hi def link pascalAsmKey		pascalStatement
 hi def link pascalShowTab		Error
 
@@ -357,4 +381,4 @@ hi def link pascalShowTab		Error
 
 let b:current_syntax = "pascal"
 
-" vim: ts=8 sw=2
+" vim: nowrap sw=2 sts=2 ts=8 noet:

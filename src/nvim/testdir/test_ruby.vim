@@ -60,7 +60,7 @@ func Test_ruby_set_cursor()
   " Check that movement after setting cursor position keeps current column.
   normal j
   call assert_equal([2, 6], [line('.'), col('.')])
-  call assert_equal([2, 5], rubyeval('$curwin.cursor'))
+  call assert_equal([2, 5], '$curwin.cursor'->rubyeval())
 
   " call assert_fails('ruby $curwin.cursor = [1]',
   "      \           'ArgumentError: array length must be 2')

@@ -1,9 +1,7 @@
 "   Vim indent file
 "   Language:	    Objective-C
 "   Maintainer:	    Kazunobu Kuriyama <kazunobu.kuriyama@nifty.com>
-"   Last Change:    2004 May 16
-"
-
+"   Last Change:    2022 Apr 06
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -15,9 +13,11 @@ setlocal cindent
 " Set the function to do the work.
 setlocal indentexpr=GetObjCIndent()
 
-" To make a colon (:) suggest an indentation other than a goto/swich label,
+" To make a colon (:) suggest an indentation other than a goto/switch label,
 setlocal indentkeys-=:
 setlocal indentkeys+=<:>
+
+let b:undo_indent = "setl cin< inde< indk<"
 
 " Only define the function once.
 if exists("*GetObjCIndent")

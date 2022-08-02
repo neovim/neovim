@@ -1,6 +1,4 @@
-"
 " Tests for register operations
-"
 
 source check.vim
 source view_util.vim
@@ -13,6 +11,8 @@ func Test_aaa_empty_reg_test()
   call assert_fails('normal @!', 'E354:')
   call assert_fails('normal @:', 'E30:')
   call assert_fails('normal @.', 'E29:')
+  call assert_fails('put /', 'E35:')
+  call assert_fails('put .', 'E29:')
 endfunc
 
 func Test_yank_shows_register()
@@ -43,6 +43,10 @@ func Test_yank_shows_register()
 endfunc
 
 func Test_display_registers()
+    " Disable clipboard
+    let save_clipboard = get(g:, 'clipboard', {})
+    let g:clipboard = {}
+
     e file1
     e file2
     call setline(1, ['foo', 'bar'])
@@ -58,7 +62,6 @@ func Test_display_registers()
     call assert_match('^\nType Name Content\n'
           \ .         '  c  ""   a\n'
           \ .         '  c  "0   ba\n'
-          \ .         '  c  "1   b\n'
           \ .         '  c  "a   b\n'
           \ .         '.*'
           \ .         '  c  "-   a\n'
@@ -78,6 +81,91 @@ func Test_display_registers()
           \ .         '  c  ":   ls', a)
 
     bwipe!
+    let g:clipboard = save_clipboard
+endfunc
+
+func Test_register_one()
+  " delete a line goes into register one
+  new
+  call setline(1, "one")
+  normal dd
+  call assert_equal("one\n", @1)
+
+  " delete a word does not change register one, does change "-
+  call setline(1, "two")
+  normal de
+  call assert_equal("one\n", @1)
+  call assert_equal("two", @-)
+
+  " delete a word with a register does not change register one
+  call setline(1, "three")
+  normal "ade
+  call assert_equal("three", @a)
+  call assert_equal("one\n", @1)
+
+  " delete a word with register DOES change register one with one of a list of
+  " operators
+  " %
+  call setline(1, ["(12)3"])
+  normal "ad%
+  call assert_equal("(12)", @a)
+  call assert_equal("(12)", @1)
+
+  " (
+  call setline(1, ["first second"])
+  normal $"ad(
+  call assert_equal("first secon", @a)
+  call assert_equal("first secon", @1)
+
+  " )
+  call setline(1, ["First Second."])
+  normal gg0"ad)
+  call assert_equal("First Second.", @a)
+  call assert_equal("First Second.", @1)
+
+  " `
+  call setline(1, ["start here."])
+  normal gg0fhmx0"ad`x
+  call assert_equal("start ", @a)
+  call assert_equal("start ", @1)
+
+  " /
+  call setline(1, ["searchX"])
+  exe "normal gg0\"ad/X\<CR>"
+  call assert_equal("search", @a)
+  call assert_equal("search", @1)
+
+  " ?
+  call setline(1, ["Ysearch"])
+  exe "normal gg$\"ad?Y\<CR>"
+  call assert_equal("Ysearc", @a)
+  call assert_equal("Ysearc", @1)
+
+  " n
+  call setline(1, ["Ynext"])
+  normal gg$"adn
+  call assert_equal("Ynex", @a)
+  call assert_equal("Ynex", @1)
+
+  " N
+  call setline(1, ["prevY"])
+  normal gg0"adN
+  call assert_equal("prev", @a)
+  call assert_equal("prev", @1)
+
+  " }
+  call setline(1, ["one", ""])
+  normal gg0"ad}
+  call assert_equal("one\n", @a)
+  call assert_equal("one\n", @1)
+
+  " {
+  call setline(1, ["", "two"])
+  normal 2G$"ad{
+  call assert_equal("\ntw", @a)
+  call assert_equal("\ntw", @1)
+
+  bwipe!
 endfunc
 
 func Test_recording_status_in_ex_line()
@@ -109,7 +197,20 @@ func Test_recording_esc_sequence()
   bwipe!
   if exists('save_F2')
     let &t_F2 = save_F2
+  else
+    set t_F2=
   endif
+endfunc
+
+func Test_recording_with_select_mode()
+  new
+  call feedkeys("qacc12345\<Esc>gH98765\<Esc>q", "tx")
+  call assert_equal("98765", getline(1))
+  call assert_equal("cc12345\<Esc>gH98765\<Esc>", @a)
+  call setline(1, 'asdf')
+  normal! @a
+  call assert_equal("98765", getline(1))
+  bwipe!
 endfunc
 
 " Test for executing the last used register (@)
@@ -134,6 +235,14 @@ func Test_last_used_exec_reg()
   normal @@
   call assert_equal('EditEdit', a)
 
+  " Test for repeating the last command-line in visual mode
+  call append(0, 'register')
+  normal gg
+  let @r = ''
+  call feedkeys("v:yank R\<CR>", 'xt')
+  call feedkeys("v@:", 'xt')
+  call assert_equal("\nregister\nregister\n", @r)
+
   enew!
 endfunc
 
@@ -156,6 +265,19 @@ func Test_get_register()
   call assert_equal('', getreg("\<C-L>"))
 
   call assert_equal('', getregtype('!'))
+
+  " Test for inserting an invalid register content
+  call assert_beeps('exe "normal i\<C-R>!"')
+
+  " Test for inserting a register with multiple lines
+  call deletebufline('', 1, '$')
+  call setreg('r', ['a', 'b'])
+  exe "normal i\<C-R>r"
+  call assert_equal(['a', 'b', ''], getline(1, '$'))
+
+  " Test for inserting a multi-line register in the command line
+  call feedkeys(":\<C-R>r\<Esc>", 'xt')
+  call assert_equal("a\rb", histget(':', -1))  " Modified because of #6137
 
   enew!
 endfunc
@@ -180,7 +302,212 @@ func Test_set_register()
   call setreg('=', 'b', 'a')
   call assert_equal('regwrite', getreg('='))
 
+  " Test for setting a list of lines to special registers
+  call setreg('/', [])
+  call assert_equal('', @/)
+  call setreg('=', [])
+  call assert_equal('', @=)
+  call assert_fails("call setreg('/', ['a', 'b'])", 'E883:')
+  call assert_fails("call setreg('=', ['a', 'b'])", 'E883:')
+  call assert_equal(0, setreg('_', ['a', 'b']))
+
+  " Test for recording to a invalid register
+  call assert_beeps('normal q$')
+
+  " Appending to a register when recording
+  call append(0, "text for clipboard test")
+  normal gg
+  call feedkeys('qrllq', 'xt')
+  call feedkeys('qRhhq', 'xt')
+  call assert_equal('llhh', getreg('r'))
+
+  " Appending a list of characters to a register from different lines
+  let @r = ''
+  call append(0, ['abcdef', '123456'])
+  normal gg"ry3l
+  call cursor(2, 4)
+  normal "Ry3l
+  call assert_equal('abc456', @r)
+
+  " Test for gP with multiple lines selected using characterwise motion
+  %delete
+  call append(0, ['vim editor', 'vim editor'])
+  let @r = ''
+  exe "normal ggwy/vim /e\<CR>gP"
+  call assert_equal(['vim editor', 'vim editor', 'vim editor'], getline(1, 3))
+
+  " Test for gP with . register
+  %delete
+  normal iabc
+  normal ".gp
+  call assert_equal('abcabc', getline(1))
+  normal 0".gP
+  call assert_equal('abcabcabc', getline(1))
+
   enew!
+endfunc
+
+" Test for clipboard registers (* and +)
+func Test_clipboard_regs()
+  throw 'skipped: needs clipboard=autoselect,autoselectplus'
+
+  CheckNotGui
+  CheckFeature clipboard_working
+
+  new
+  call append(0, "text for clipboard test")
+  normal gg"*yiw
+  call assert_equal('text', getreg('*'))
+  normal gg2w"+yiw
+  call assert_equal('clipboard', getreg('+'))
+
+  " Test for replacing the clipboard register contents
+  set clipboard=unnamed
+  let @* = 'food'
+  normal ggviw"*p
+  call assert_equal('text', getreg('*'))
+  call assert_equal('food for clipboard test', getline(1))
+  normal ggviw"*p
+  call assert_equal('food', getreg('*'))
+  call assert_equal('text for clipboard test', getline(1))
+
+  " Test for replacing the selection register contents
+  set clipboard=unnamedplus
+  let @+ = 'food'
+  normal ggviw"+p
+  call assert_equal('text', getreg('+'))
+  call assert_equal('food for clipboard test', getline(1))
+  normal ggviw"+p
+  call assert_equal('food', getreg('+'))
+  call assert_equal('text for clipboard test', getline(1))
+
+  " Test for auto copying visually selected text to clipboard register
+  call setline(1, "text for clipboard test")
+  let @* = ''
+  set clipboard=autoselect
+  normal ggwwviwy
+  call assert_equal('clipboard', @*)
+
+  " Test for auto copying visually selected text to selection register
+  let @+ = ''
+  set clipboard=autoselectplus
+  normal ggwviwy
+  call assert_equal('for', @+)
+
+  set clipboard&vim
+  bwipe!
+endfunc
+
+" Test for restarting the current mode (insert or virtual replace) after
+" executing the contents of a register
+func Test_put_reg_restart_mode()
+  new
+  call append(0, 'editor')
+  normal gg
+  let @r = "ivim \<Esc>"
+  call feedkeys("i\<C-O>@r\<C-R>=mode()\<CR>", 'xt')
+  call assert_equal('vimi editor', getline(1))
+
+  call setline(1, 'editor')
+  normal gg
+  call feedkeys("gR\<C-O>@r\<C-R>=mode()\<CR>", 'xt')
+  call assert_equal('vimReditor', getline(1))
+
+  bwipe!
+endfunc
+
+" Test for executing a register using :@ command
+func Test_execute_register()
+  call setreg('r', [])
+  call assert_beeps('@r')
+  let i = 1
+  let @q = 'let i+= 1'
+  @q
+  @
+  call assert_equal(3, i)
+
+  " cannot execute a register in operator pending mode
+  call assert_beeps('normal! c@r')
+endfunc
+
+" Test for getting register info
+func Test_get_reginfo()
+  enew
+  call setline(1, ['foo', 'bar'])
+
+  exe 'norm! "zyy'
+  let info = getreginfo('"')
+  call assert_equal('z', info.points_to)
+  call setreg('y', 'baz')
+  call assert_equal('z', getreginfo('').points_to)
+  call setreg('y', { 'isunnamed': v:true })
+  call assert_equal('y', getreginfo('"').points_to)
+
+  exe '$put'
+  call assert_equal(getreg('y'), getline(3))
+  call setreg('', 'qux')
+  call assert_equal('0', getreginfo('').points_to)
+  call setreg('x', 'quux')
+  call assert_equal('0', getreginfo('').points_to)
+
+  let info = getreginfo('')
+  call assert_equal(getreg('', 1, 1), info.regcontents)
+  call assert_equal(getregtype(''), info.regtype)
+
+  exe "norm! 0\<c-v>e" .. '"zy'
+  let info = getreginfo('z')
+  call assert_equal(getreg('z', 1, 1), info.regcontents)
+  call assert_equal(getregtype('z'), info.regtype)
+  call assert_equal(1, +info.isunnamed)
+
+  let info = getreginfo('"')
+  call assert_equal('z', info.points_to)
+
+  bwipe!
+endfunc
+
+" Test for restoring register with dict from getreginfo
+func Test_set_register_dict()
+  enew!
+
+  call setreg('"', #{ regcontents: ['one', 'two'],
+        \ regtype: 'V', points_to: 'z' })
+  call assert_equal(['one', 'two'], getreg('"', 1, 1))
+  let info = getreginfo('"')
+  call assert_equal('z', info.points_to)
+  call assert_equal('V', info.regtype)
+  call assert_equal(1, +getreginfo('z').isunnamed)
+
+  call setreg('x', #{ regcontents: ['three', 'four'],
+        \ regtype: 'v', isunnamed: v:true })
+  call assert_equal(['three', 'four'], getreg('"', 1, 1))
+  let info = getreginfo('"')
+  call assert_equal('x', info.points_to)
+  call assert_equal('v', info.regtype)
+  call assert_equal(1, +getreginfo('x').isunnamed)
+
+  call setreg('y', #{ regcontents: 'five',
+        \ regtype: "\<c-v>", isunnamed: v:false })
+  call assert_equal("\<c-v>4", getreginfo('y').regtype)
+  call assert_equal(0, +getreginfo('y').isunnamed)
+  call assert_equal(['three', 'four'], getreg('"', 1, 1))
+  call assert_equal('x', getreginfo('"').points_to)
+
+  call setreg('"', #{ regcontents: 'six' })
+  call assert_equal('0', getreginfo('"').points_to)
+  call assert_equal(1, +getreginfo('0').isunnamed)
+  call assert_equal(['six'], getreginfo('0').regcontents)
+  call assert_equal(['six'], getreginfo('"').regcontents)
+
+  let @x = 'one'
+  call setreg('x', {})
+  call assert_equal(1, len(split(execute('reg x'), '\n')))
+
+  call assert_fails("call setreg('0', #{regtype: 'V'}, 'v')", 'E118:')
+  call assert_fails("call setreg('0', #{regtype: 'X'})", 'E475:')
+  call assert_fails("call setreg('0', #{regtype: 'vy'})", 'E475:')
+
+  bwipe!
 endfunc
 
 func Test_v_register()
@@ -252,6 +579,82 @@ func Test_v_register()
   bwipe!
 endfunc
 
+" Test for executing the contents of a register as an Ex command with line
+" continuation.
+func Test_execute_reg_as_ex_cmd()
+  " Line continuation with just two lines
+  let code =<< trim END
+    let l = [
+      \ 1]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1], l)
+
+  " Line continuation with more than two lines
+  let code =<< trim END
+    let l = [
+      \ 1,
+      \ 2,
+      \ 3]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2, 3], l)
+
+  " use comments interspersed with code
+  let code =<< trim END
+    let l = [
+      "\ one
+      \ 1,
+      "\ two
+      \ 2,
+      "\ three
+      \ 3]
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2, 3], l)
+
+  " use line continuation in the middle
+  let code =<< trim END
+    let a = "one"
+    let l = [
+      \ 1,
+      \ 2]
+    let b = "two"
+  END
+  let @r = code->join("\n")
+  let l = []
+  @r
+  call assert_equal([1, 2], l)
+  call assert_equal("one", a)
+  call assert_equal("two", b)
+
+  " only one line with a \
+  let @r = "\\let l = 1"
+  call assert_fails('@r', 'E10:')
+
+  " only one line with a "\
+  let @r = '   "\ let i = 1'
+  @r
+  call assert_false(exists('i'))
+
+  " first line also begins with a \
+  let @r = "\\let l = [\n\\ 1]"
+  call assert_fails('@r', 'E10:')
+
+  " Test with a large number of lines
+  let @r = "let str = \n"
+  let @r ..= repeat("  \\ 'abcdefghijklmnopqrstuvwxyz' ..\n", 312)
+  let @r ..= '  \ ""'
+  @r
+  call assert_equal(repeat('abcdefghijklmnopqrstuvwxyz', 312), str)
+endfunc
+
 func Test_ve_blockpaste()
   new
   set ve=all
@@ -280,5 +683,75 @@ func Test_insert_small_delete()
   call assert_equal("'foo' 'foobar' 'bar'", getline(1))
   bwipe!
 endfunc
+
+" Record in insert mode using CTRL-O
+func Test_record_in_insert_mode()
+  new
+  let @r = ''
+  call setline(1, ['foo'])
+  call feedkeys("i\<C-O>qrbaz\<C-O>q", 'xt')
+  call assert_equal('baz', @r)
+  bwipe!
+endfunc
+
+func Test_record_in_select_mode()
+  new
+  call setline(1, 'text')
+  sil norm q00
+  sil norm q
+  call assert_equal('0ext', getline(1))
+
+  %delete
+  let @r = ''
+  call setline(1, ['abc', 'abc', 'abc'])
+  smap <F2> <Right><Right>,
+  call feedkeys("qrgh\<F2>Dk\<Esc>q", 'xt')
+  call assert_equal("gh\<F2>Dk\<Esc>", @r)
+  norm j0@rj0@@
+  call assert_equal([',Dk', ',Dk', ',Dk'], getline(1, 3))
+  sunmap <F2>
+
+  bwipe!
+endfunc
+
+" mapping that ends macro recording should be removed from recorded macro
+func Test_end_record_using_mapping()
+  call setline(1, 'aaa')
+  nnoremap s q
+  call feedkeys('safas', 'tx')
+  call assert_equal('fa', @a)
+  nunmap s
+
+  nnoremap xx q
+  call feedkeys('0xxafaxx', 'tx')
+  call assert_equal('fa', @a)
+  nunmap xx
+
+  nnoremap xsx q
+  call feedkeys('0qafaxsx', 'tx')
+  call assert_equal('fa', @a)
+  nunmap xsx
+
+  bwipe!
+endfunc
+
+func Test_end_reg_executing()
+  nnoremap s <Nop>
+  let @a = 's'
+  call feedkeys("@aqaq\<Esc>", 'tx')
+  call assert_equal('', @a)
+  call assert_equal('', getline(1))
+
+  call setline(1, 'aaa')
+  nnoremap s qa
+  let @a = 'fa'
+  call feedkeys("@asq\<Esc>", 'tx')
+  call assert_equal('', @a)
+  call assert_equal('aaa', getline(1))
+
+  nunmap s
+  bwipe!
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

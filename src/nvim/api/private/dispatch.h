@@ -10,6 +10,7 @@ typedef Object (*ApiDispatchWrapper)(uint64_t channel_id,
 /// The rpc_method_handlers table, used in msgpack_rpc_dispatch(), stores
 /// functions of this type.
 typedef struct {
+  const char *name;
   ApiDispatchWrapper fn;
   bool fast;  // Function is safe to be executed immediately while running the
               // uv loop (the loop is run very frequently due to breakcheck).

@@ -1,8 +1,8 @@
 #ifndef NVIM_MAIN_H
 #define NVIM_MAIN_H
 
-#include "nvim/normal.h"
 #include "nvim/event/loop.h"
+#include "nvim/normal.h"
 
 // Maximum number of commands from + or -c arguments.
 #define MAX_ARG_CMDS 10
@@ -19,17 +19,18 @@ typedef struct {
 
   int n_commands;                       // no. of commands from + or -c
   char *commands[MAX_ARG_CMDS];         // commands from + or -c arg
-  char_u cmds_tofree[MAX_ARG_CMDS];     // commands that need free()
+  char cmds_tofree[MAX_ARG_CMDS];       // commands that need free()
   int n_pre_commands;                   // no. of commands from --cmd
   char *pre_commands[MAX_ARG_CMDS];     // commands from --cmd argument
 
   int edit_type;                        // type of editing to do
-  char_u *tagname;                      // tag from -t argument
-  char_u *use_ef;                       // 'errorfile' from -q argument
+  char *tagname;                        // tag from -t argument
+  char *use_ef;                         // 'errorfile' from -q argument
 
   bool input_isatty;                    // stdin is a terminal
   bool output_isatty;                   // stdout is a terminal
   bool err_isatty;                      // stderr is a terminal
+  bool input_neverscript;               // never treat stdin as script (-E/-Es)
   int no_swap_file;                     // "-n" argument used
   int use_debug_break_level;
   int window_count;                     // number of windows to use
@@ -38,6 +39,8 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
+  int remote;                           // --remote-[subcmd] {file1} {file2}
+  char *server_addr;                    // --server {address}
 } mparm_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

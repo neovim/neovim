@@ -2,7 +2,7 @@
 " Language:     SAS
 " Maintainer:   Zhen-Huan Hu <wildkeny@gmail.com>
 " Version:      3.0.3
-" Last Change:  Jun 26, 2018
+" Last Change:  2022 Apr 06
 
 if exists("b:did_indent")
   finish
@@ -11,6 +11,8 @@ let b:did_indent = 1
 
 setlocal indentexpr=GetSASIndent()
 setlocal indentkeys+=;,=~data,=~proc,=~macro
+
+let b:undo_indent = "setl inde< indk<"
 
 if exists("*GetSASIndent")
   finish

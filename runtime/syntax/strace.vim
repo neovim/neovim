@@ -1,8 +1,7 @@
 " Vim syntax file
-" This is a GENERATED FILE. Please always refer to source file at the URI below.
 " Language: strace output
 " Maintainer: David Necas (Yeti) <yeti@physics.muni.cz>
-" Last Change: 2015-01-16
+" Last Change: 2022 Jan 29
 
 " Setup
 " quit when a syntax file was already loaded

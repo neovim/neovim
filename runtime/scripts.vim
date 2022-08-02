@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2020 Jun 07
+" Last change:	2021 Jan 22
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -11,6 +11,10 @@
 " 'ignorecase' option making a difference.  Where case is to be ignored use
 " =~? instead.  Do not use =~ anywhere.
 
+" Only run when using legacy filetype
+if !exists('g:do_legacy_filetype')
+  finish
+endif
 
 " Only do the rest when the FileType autocommand has not been triggered yet.
 if did_filetype()
@@ -110,10 +114,6 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'lua'
     set ft=lua
 
-    " Perl 6
-  elseif s:name =~# 'perl6'
-    set ft=perl6
-
     " Perl
   elseif s:name =~# 'perl'
     set ft=perl
@@ -129,6 +129,10 @@ if s:line1 =~# "^#!"
     " Groovy
   elseif s:name =~# '^groovy\>'
     set ft=groovy
+
+    " Raku
+  elseif s:name =~# 'raku'
+    set ft=raku
 
     " Ruby
   elseif s:name =~# 'ruby'
@@ -150,7 +154,7 @@ if s:line1 =~# "^#!"
   elseif s:name =~# 'ocaml'
     set ft=ocaml
 
-    " Awk scripts
+    " Awk scripts; also finds "gawk"
   elseif s:name =~# 'awk\>'
     set ft=awk
 
@@ -189,6 +193,26 @@ if s:line1 =~# "^#!"
     " Fennel
   elseif s:name =~# 'fennel\>'
     set ft=fennel
+
+    " MikroTik RouterOS script
+  elseif s:name =~# 'rsc\>'
+    set ft=routeros
+
+    " Fish shell
+  elseif s:name =~# 'fish\>'
+    set ft=fish
+
+    " Gforth
+  elseif s:name =~# 'gforth\>'
+    set ft=forth
+
+    " Icon
+  elseif s:name =~# 'icon\>'
+    set ft=icon
+
+    " Guile
+  elseif s:name =~# 'guile'
+    set ft=scheme
 
   endif
   unlet s:name
@@ -372,7 +396,7 @@ else
     set ft=scheme
 
   " Git output
-  elseif s:line1 =~# '^\(commit\|tree\|object\) \x\{40\}\>\|^tag \S\+$'
+  elseif s:line1 =~# '^\(commit\|tree\|object\) \x\{40,\}\>\|^tag \S\+$'
     set ft=git
 
    " Gprof (gnu profiler)
@@ -389,6 +413,16 @@ else
   " YAML
   elseif s:line1 =~# '^%YAML'
     set ft=yaml
+
+  " MikroTik RouterOS script
+  elseif s:line1 =~# '^#.*by RouterOS.*$'
+    set ft=routeros
+
+  " Sed scripts
+  " #ncomment is allowed but most likely a false positive so require a space
+  " before any trailing comment text
+  elseif s:line1 =~# '^#n\%($\|\s\)'
+    set ft=sed
 
   " CVS diff
   else

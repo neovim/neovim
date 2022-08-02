@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language: Scheme (CHICKEN)
-" Last Change: 2018-02-05
+" Last Change: 2021 Oct 01
 " Author: Evan Hanson <evhan@foldling.org>
 " Maintainer: Evan Hanson <evhan@foldling.org>
+" Repository: https://git.foldling.org/vim-scheme.git
 " URL: https://foldling.org/vim/syntax/chicken.vim
 " Notes: This is supplemental syntax, to be loaded after the core Scheme
 " syntax file (syntax/scheme.vim). Enable it by setting b:is_chicken=1
@@ -36,9 +37,23 @@ if len(s:c)
   syn region c matchgroup=schemeComment start=/#>/ end=/<#/ contains=@c
 endif
 
+" SRFI 26
+syn match schemeSyntax /\(([ \t\n]*\)\@<=\(cut\|cute\)\>/
+
+syn keyword schemeSyntax and-let*
 syn keyword schemeSyntax define-record
+syn keyword schemeSyntax set!-values
+syn keyword schemeSyntax fluid-let
+syn keyword schemeSyntax let-optionals
+syn keyword schemeSyntax let-optionals*
+syn keyword schemeSyntax letrec-values
+syn keyword schemeSyntax nth-value
+syn keyword schemeSyntax receive
 
 syn keyword schemeLibrarySyntax declare
+syn keyword schemeLibrarySyntax define-interface
+syn keyword schemeLibrarySyntax functor
+syn keyword schemeLibrarySyntax include-relative
 syn keyword schemeLibrarySyntax module
 syn keyword schemeLibrarySyntax reexport
 syn keyword schemeLibrarySyntax require-library
@@ -52,10 +67,12 @@ syn keyword schemeTypeSyntax define-specialization
 syn keyword schemeTypeSyntax define-type
 syn keyword schemeTypeSyntax the
 
-syn keyword schemeExtraSyntax and-let*
 syn keyword schemeExtraSyntax match
 syn keyword schemeExtraSyntax match-lambda
 syn keyword schemeExtraSyntax match-lambda*
+syn keyword schemeExtraSyntax match-let
+syn keyword schemeExtraSyntax match-let*
+syn keyword schemeExtraSyntax match-letrec
 
 syn keyword schemeSpecialSyntax define-compiler-syntax
 syn keyword schemeSpecialSyntax define-constant

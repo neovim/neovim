@@ -10,4 +10,3 @@
 #endif
 
 #endif  // NVIM_EX_SESSION_H
-

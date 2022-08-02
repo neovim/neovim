@@ -28,7 +28,7 @@ describe('utf8', function()
     expect([[
       start:
       axaa
-      xあああ
+       xあああ
       bxbb]])
   end)
 

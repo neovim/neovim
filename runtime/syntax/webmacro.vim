@@ -34,9 +34,9 @@ syn region webmacroList contained matchgroup=Structure start="\[" matchgroup=Str
 
 syn region webmacroIf start="#if" start="#else" end="{"me=e-1 contains=webmacroVariable,webmacroNumber,webmacroString,webmacroBoolean,webmacroList nextgroup=webmacroBraces
 syn region webmacroForeach start="#foreach" end="{"me=e-1 contains=webmacroVariable,webmacroNumber,webmacroString,webmacroBoolean,webmacroList nextgroup=webmacroBraces
-syn match webmacroSet "#set .*$" contains=webmacroVariable,webmacroNumber,webmacroNumber,webmacroBoolean,webmacroString,webmacroList
-syn match webmacroInclude "#include .*$" contains=webmacroVariable,webmacroNumber,webmacroNumber,webmacroBoolean,webmacroString,webmacroList
-syn match webmacroParse "#parse .*$" contains=webmacroVariable,webmacroNumber,webmacroNumber,webmacroBoolean,webmacroString,webmacroList
+syn match webmacroSet "#set .*$" contains=webmacroVariable,webmacroNumber,webmacroBoolean,webmacroString,webmacroList
+syn match webmacroInclude "#include .*$" contains=webmacroVariable,webmacroNumber,webmacroBoolean,webmacroString,webmacroList
+syn match webmacroParse "#parse .*$" contains=webmacroVariable,webmacroNumber,webmacroBoolean,webmacroString,webmacroList
 syn region webmacroUse matchgroup=PreProc start="#use .*" matchgroup=PreProc end="^-.*" contains=webmacroHash,@HtmlTop
 syn region webmacroBraces matchgroup=Structure start="{" matchgroup=Structure end="}" contained transparent
 syn match webmacroBracesError "[{}]"

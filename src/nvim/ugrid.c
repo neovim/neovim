@@ -2,14 +2,14 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <limits.h>
 
 #include "nvim/assert.h"
-#include "nvim/vim.h"
-#include "nvim/ui.h"
 #include "nvim/ugrid.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ugrid.c.generated.h"
@@ -39,12 +39,12 @@ void ugrid_resize(UGrid *grid, int width, int height)
 
 void ugrid_clear(UGrid *grid)
 {
-  clear_region(grid, 0, grid->height-1, 0, grid->width-1, 0);
+  clear_region(grid, 0, grid->height - 1, 0, grid->width - 1, 0);
 }
 
 void ugrid_clear_chunk(UGrid *grid, int row, int col, int endcol, sattr_T attr)
 {
-  clear_region(grid, row, row, col, endcol-1, attr);
+  clear_region(grid, row, row, col, endcol - 1, attr);
 }
 
 void ugrid_goto(UGrid *grid, int row, int col)
@@ -79,11 +79,10 @@ void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right, int count)
   }
 }
 
-static void clear_region(UGrid *grid, int top, int bot, int left, int right,
-                         sattr_T attr)
+static void clear_region(UGrid *grid, int top, int bot, int left, int right, sattr_T attr)
 {
   for (int row = top; row <= bot; row++) {
-    UGRID_FOREACH_CELL(grid, row, left, right+1, {
+    UGRID_FOREACH_CELL(grid, row, left, right + 1, {
       cell->data[0] = ' ';
       cell->data[1] = 0;
       cell->attr = attr;
@@ -100,4 +99,3 @@ static void destroy_cells(UGrid *grid)
     XFREE_CLEAR(grid->cells);
   }
 }
-

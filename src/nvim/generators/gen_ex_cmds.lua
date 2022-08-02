@@ -65,20 +65,31 @@ for _, cmd in ipairs(defs) do
     assert(cmd.addr_type ~= 'ADDR_OTHER' and cmd.addr_type ~= 'ADDR_NONE',
            string.format('ex_cmds.lua:%s: Missing misplaced DFLALL\n', cmd.command))
   end
+  if bit.band(cmd.flags, flags.PREVIEW) == flags.PREVIEW then
+    assert(cmd.preview_func ~= nil,
+           string.format('ex_cmds.lua:%s: Missing preview_func\n', cmd.command))
+  end
   local enumname = cmd.enum or ('CMD_' .. cmd.command)
   local byte_cmd = cmd.command:sub(1, 1):byte()
   if byte_a <= byte_cmd and byte_cmd <= byte_z then
     table.insert(cmds, cmd.command)
   end
+  local preview_func
+  if cmd.preview_func then
+    preview_func = string.format("(ex_preview_func_T)&%s", cmd.preview_func)
+  else
+    preview_func = "NULL"
+  end
   enumfile:write('  ' .. enumname .. ',\n')
   defsfile:write(string.format([[
   [%s] = {
-    .cmd_name = (char_u *) "%s",
+    .cmd_name = "%s",
     .cmd_func = (ex_func_T)&%s,
+    .cmd_preview_func = %s,
     .cmd_argt = %uL,
     .cmd_addr_type = %s
   },
-]], enumname, cmd.command, cmd.func, cmd.flags, cmd.addr_type))
+]], enumname, cmd.command, cmd.func, preview_func, cmd.flags, cmd.addr_type))
 end
 for i = #cmds, 1, -1 do
   local cmd = cmds[i]

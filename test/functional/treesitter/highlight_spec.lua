@@ -23,7 +23,7 @@ local hl_query = [[
   "enum" @type
   "extern" @type
 
-  (string_literal) @string
+  (string_literal) @string.nonexistent-specializer-for-string.should-fallback-to-string
 
   (number_literal) @number
   (char_literal) @string
@@ -445,7 +445,7 @@ describe('treesitter highlighting', function()
 
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c", {
-        queries = {c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}
+        injections = {c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}
       })
       local highlighter = vim.treesitter.highlighter
       test_hl = highlighter.new(parser, {queries = {c = hl_query}})
@@ -471,5 +471,273 @@ describe('treesitter highlighting', function()
       {1:~                                                                }|
                                                                        |
     ]]}
+  end)
+
+  it("supports overriding queries, like ", function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+    int x = INT_MAX;
+    #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+    #define foo void main() { \
+                  return 42;  \
+                }
+    ]])
+
+    exec_lua [[
+      local injection_query = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"
+      require('vim.treesitter.query').set_query("c", "highlights", hl_query)
+      require('vim.treesitter.query').set_query("c", "injections", injection_query)
+
+      vim.treesitter.highlighter.new(vim.treesitter.get_parser(0, "c"))
+    ]]
+
+    screen:expect{grid=[[
+      {3:int} x = {5:INT_MAX};                                                 |
+      #define {5:READ_STRING}(x, y) ({3:char_u} *)read_string((x), ({3:size_t})(y))|
+      #define foo {3:void} main() { \                                      |
+                    {4:return} {5:42};  \                                      |
+                  }                                                    |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
+
+  it("supports highlighting with custom highlight groups", function()
+    if pending_c_parser(pending) then return end
+
+    insert(hl_text)
+
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query}})
+    ]]
+
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queue}             |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
+      {                                                                |
+        {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
+            || {6:lstate} != {6:lstate}) {                                     |
+          {11:lua_pushliteral}(lstate, {5:"vim.schedule: expected function"});  |
+          {4:return} {11:lua_error}(lstate);                                    |
+        }                                                              |
+                                                                       |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
+                                                                       |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
+        {4:return} {5:0};                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+
+    -- This will change ONLY the literal strings to look like comments
+    -- The only literal string is the "vim.schedule: expected function" in this test.
+    exec_lua [[vim.cmd("highlight link cString comment")]]
+    screen:expect{grid=[[
+      {2:/// Schedule Lua callback on main loop's event queue}             |
+      {3:static} {3:int} {11:nlua_schedule}({3:lua_State} *{3:const} lstate)                |
+      {                                                                |
+        {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
+            || {6:lstate} != {6:lstate}) {                                     |
+          {11:lua_pushliteral}(lstate, {2:"vim.schedule: expected function"});  |
+          {4:return} {11:lua_error}(lstate);                                    |
+        }                                                              |
+                                                                       |
+        {7:LuaRef} cb = {11:nlua_ref}(lstate, {5:1});                               |
+                                                                       |
+        multiqueue_put(main_loop.events, {11:nlua_schedule_event},          |
+                       {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
+        {4:return} {5:0};                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+    screen:expect{ unchanged=true }
+  end)
+
+  it("supports highlighting with priority", function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+    int x = INT_MAX;
+    #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
+    #define foo void main() { \
+                  return 42;  \
+                }
+    ]])
+
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = hl_query..'\n((translation_unit) @Error (set! "priority" 101))\n'}})
+    ]]
+    -- expect everything to have Error highlight
+    screen:expect{grid=[[
+      {12:int}{8: x = INT_MAX;}                                                 |
+      {8:#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))}|
+      {8:#define foo void main() { \}                                      |
+      {8:              return 42;  \}                                      |
+      {8:            }}                                                    |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]], attr_ids={
+      [1] = {bold = true, foreground = Screen.colors.Blue1};
+      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red};
+      -- bold will not be overwritten at the moment
+      [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Grey100};
+    }}
+    end)
+
+  it("allows to use captures with dots (don't use fallback when specialization of foo exists)", function()
+    if pending_c_parser(pending) then return end
+
+    insert([[
+    char* x = "Will somebody ever read this?";
+    ]])
+
+    screen:expect{grid=[[
+      char* x = "Will somebody ever read this?";                       |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+
+    exec_lua [[
+      local parser = vim.treesitter.get_parser(0, "c", {})
+      local highlighter = vim.treesitter.highlighter
+      highlighter.hl_map['foo.bar'] = 'Type'
+      highlighter.hl_map['foo'] = 'String'
+      test_hl = highlighter.new(parser, {queries = {c = "(primitive_type) @foo.bar (string_literal) @foo"}})
+    ]]
+
+    screen:expect{grid=[[
+      {3:char}* x = {5:"Will somebody ever read this?"};                       |
+      ^                                                                 |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
+
+  it("supports conceal attribute", function()
+    if pending_c_parser(pending) then return end
+    insert(hl_text)
+
+    -- conceal can be empty or a single cchar.
+    exec_lua [=[
+      vim.opt.cole = 2
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = [[
+        ("static" @keyword
+         (set! conceal "R"))
+
+        ((identifier) @Identifier
+         (set! conceal "")
+         (eq? @Identifier "lstate"))
+      ]]}})
+    ]=]
+
+    screen:expect{grid=[[
+      /// Schedule Lua callback on main loop's event queue             |
+      {4:R} int nlua_schedule(lua_State *const )                           |
+      {                                                                |
+        if (lua_type(, 1) != LUA_TFUNCTION                             |
+            ||  != ) {                                                 |
+          lua_pushliteral(, "vim.schedule: expected function");        |
+          return lua_error();                                          |
+        }                                                              |
+                                                                       |
+        LuaRef cb = nlua_ref(, 1);                                     |
+                                                                       |
+        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                       1, (void *)(ptrdiff_t)cb);                      |
+        return 0;                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
+
+  it("hl_map has the correct fallback behavior", function()
+    exec_lua [[
+      local hl_map = vim.treesitter.highlighter.hl_map
+      hl_map["foo"] = 1
+      hl_map["foo.bar"] = 2
+      hl_map["foo.bar.baz"] = 3
+
+      assert(hl_map["foo"] == 1)
+      assert(hl_map["foo.a.b.c.d"] == 1)
+      assert(hl_map["foo.bar"] == 2)
+      assert(hl_map["foo.bar.a.b.c.d"] == 2)
+      assert(hl_map["foo.bar.baz"] == 3)
+      assert(hl_map["foo.bar.baz.d"] == 3)
+
+      hl_map["FOO"] = 1
+      hl_map["FOO.BAR"] = 2
+      assert(hl_map["FOO.BAR.BAZ"] == 2)
+
+      hl_map["foo.missing.exists"] = 3
+      assert(hl_map["foo.missing"] == 1)
+      assert(hl_map["foo.missing.exists"] == 3)
+      assert(hl_map["foo.missing.exists.bar"] == 3)
+      assert(hl_map["total.nonsense.but.a.lot.of.dots"] == nil)
+      -- It will not perform a second look up of this variable but return a sentinel value
+      assert(hl_map["total.nonsense.but.a.lot.of.dots"] == "__notfound")
+    ]]
+
   end)
 end)

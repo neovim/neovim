@@ -1,16 +1,18 @@
 " Tests for stat functions and checktime
 
+source check.vim
+
 func CheckFileTime(doSleep)
   let fnames = ['Xtest1.tmp', 'Xtest2.tmp', 'Xtest3.tmp']
   let times = []
   let result = 0
 
-  " Use three files istead of localtim(), with a network filesystem the file
+  " Use three files instead of localtim(), with a network filesystem the file
   " times may differ at bit
   let fl = ['Hello World!']
   for fname in fnames
     call writefile(fl, fname)
-    call add(times, getftime(fname))
+    call add(times, fname->getftime())
     if a:doSleep
       sleep 1
     endif
@@ -19,8 +21,8 @@ func CheckFileTime(doSleep)
   let time_correct = (times[0] <= times[1] && times[1] <= times[2])
   if a:doSleep || time_correct
     call assert_true(time_correct, printf('Expected %s <= %s <= %s', times[0], times[1], times[2]))
-    call assert_equal(strlen(fl[0] . "\n"), getfsize(fnames[0]))
-    call assert_equal('file', getftype(fnames[0]))
+    call assert_equal(strlen(fl[0] . "\n"), fnames[0]->getfsize())
+    call assert_equal('file', fnames[0]->getftype())
     call assert_equal('rw-', getfperm(fnames[0])[0:2])
     let result = 1
   endif
@@ -72,6 +74,44 @@ func Test_checktime()
   call assert_equal(fl[0], getline(1))
 
   call delete(fname)
+endfunc
+
+func Test_checktime_fast()
+  CheckFeature nanotime
+
+  let fname = 'Xtest.tmp'
+
+  let fl = ['Hello World!']
+  call writefile(fl, fname)
+  set autoread
+  exec 'e' fname
+  let fl = readfile(fname)
+  let fl[0] .= ' - checktime'
+  sleep 10m  " make test less flaky in Nvim
+  call writefile(fl, fname)
+  checktime
+  call assert_equal(fl[0], getline(1))
+
+  call delete(fname)
+endfunc
+
+func Test_autoread_fast()
+  CheckFeature nanotime
+
+  " this is timing sensitive
+  let g:test_is_flaky = 1
+
+  new Xautoread
+  setlocal autoread
+  call setline(1, 'foo')
+  w!
+  sleep 10m
+  call writefile(['bar'], 'Xautoread')
+  sleep 10m
+  checktime
+  call assert_equal('bar', trim(getline(1)))
+
+  call delete('Xautoread')
 endfunc
 
 func Test_autoread_file_deleted()

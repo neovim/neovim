@@ -481,6 +481,7 @@ SynMenu R.RCS.RCS\ file:rcs
 SynMenu R.Readline\ config:readline
 SynMenu R.Rebol:rebol
 SynMenu R.ReDIF:redif
+SynMenu R.Rego:rego
 SynMenu R.Relax\ NG:rng
 SynMenu R.Remind:remind
 SynMenu R.Relax\ NG\ compact:rnc

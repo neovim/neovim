@@ -109,8 +109,8 @@ must be configurable.  The filetype plugin attempts to define many of the
 standard objects, plus many additional ones.  In order to make this as
 flexible as possible, you can override the list of objects from within your
 |vimrc| with the following: >
-    let g:ftplugin_sql_objects = 'function,procedure,event,table,trigger' .
-		\ ',schema,service,publication,database,datatype,domain' .
+    let g:ftplugin_sql_objects = 'function,procedure,event,table,trigger' ..
+		\ ',schema,service,publication,database,datatype,domain' ..
 		\ ',index,subscription,synchronization,view,variable'
 
 The following |Normal| mode and |Visual| mode maps have been created which use
@@ -131,10 +131,10 @@ Repeatedly pressing ]} will cycle through each of these create statements: >
     create index i1 on t1 (c1);
 
 The default setting for g:ftplugin_sql_objects is: >
-    let g:ftplugin_sql_objects = 'function,procedure,event,' .
-		\ '\\(existing\\\\|global\\s\\+temporary\\s\\+\\)\\\{,1}' .
-		\ 'table,trigger' .
-		\ ',schema,service,publication,database,datatype,domain' .
+    let g:ftplugin_sql_objects = 'function,procedure,event,' ..
+		\ '\\(existing\\\\|global\\s\\+temporary\\s\\+\\)\\\{,1}' ..
+		\ 'table,trigger' ..
+		\ ',schema,service,publication,database,datatype,domain' ..
 		\ ',index,subscription,synchronization,view,variable'
 
 The above will also handle these cases: >
@@ -308,7 +308,7 @@ can create any of the following: >
 	~/.config/nvim/indent/sqlite.vim
 
 No changes are necessary to the SQLSetType function.  It will automatically
-pickup the new SQL files and load them when you issue the SQLSetType command.
+pick up the new SQL files and load them when you issue the SQLSetType command.
 
 
 ==============================================================================
@@ -338,8 +338,8 @@ The defaults static maps are: >
     imap <buffer> <C-C>T <C-\><C-O>:call sqlcomplete#Map('sqlType')<CR><C-X><C-O>
     imap <buffer> <C-C>s <C-\><C-O>:call sqlcomplete#Map('sqlStatement')<CR><C-X><C-O>
 
-The use of "<C-C>" can be user chosen by using the following in your 
-|init.vim| as it may not work properly on all platforms: >
+The use of "<C-C>" can be user chosen by using the following in your |init.vim|
+as it may not work properly on all platforms: >
     let g:ftplugin_sql_omni_key = '<C-C>'
 >
 The static maps (which are based on the syntax highlight groups) follow this
@@ -436,7 +436,7 @@ the space bar):
 			     replace the column list with the list of tables.
 			   - This allows you to quickly drill down into a
 			     table to view its columns and back again.
-			   - <Right> and <Left> can be also be chosen via
+			   - <Right> and <Left> can also be chosen via
 			     your |init.vim| >
                                 let g:ftplugin_sql_omni_key_right = '<Right>'
                                 let g:ftplugin_sql_omni_key_left  = '<Left>'
@@ -502,7 +502,7 @@ documentation.
 Assuming you have followed the dbext-tutorial you can press <C-C>t to
 display a list of tables.  There is a delay while dbext is creating the table
 list.  After the list is displayed press <C-W>.  This will remove both the
-popup window and the table name already chosen when the list became active. >
+popup window and the table name already chosen when the list became active.
 
  4.3.1 Table Completion:			*sql-completion-tables*
 
@@ -510,15 +510,15 @@ Press <C-C>t to display a list of tables from within the database you
 have connected via the dbext plugin.
 NOTE: All of the SQL completion popups support typing a prefix before pressing
 the key map.  This will limit the contents of the popup window to just items
-beginning with those characters.  >
+beginning with those characters.
 
  4.3.2 Column Completion:			*sql-completion-columns*
 
 The SQL completion plugin can also display a list of columns for particular
-tables.  The column completion is trigger via <C-C>c.
+tables.  The column completion is triggered via <C-C>c.
 
 NOTE: The following example uses <Right> to trigger a column list while
-      the popup window is active.  
+      the popup window is active.
 
 Example of using column completion:
      - Press <C-C>t again to display the list of tables.
@@ -555,7 +555,7 @@ the SQL completion plugin. >
 <	1. After typing SELECT press <C-C>t to display a list of tables.
 	2. Highlight the table you need the column list for.
 	3. Press <Enter> to choose the table from the list.
-	4. Press <C-C>l to request a comma separated list of all columns
+	4. Press <C-C>l to request a comma-separated list of all columns
 	   for this table.
 	5. Based on the table name chosen in step 3, the plugin attempts to
 	   decide on a reasonable table alias.	You are then prompted to
@@ -583,13 +583,13 @@ popup a list of columns for the customer table.  It does this by looking back
 to the beginning of the select statement and finding a list of the tables
 specified in the FROM clause.  In this case it notes that in the string
 "customer c", "c" is an alias for the customer table.  The optional "AS"
-keyword is also supported, "customer AS c". >
+keyword is also supported, "customer AS c".
 
 
  4.3.3 Procedure Completion:			*sql-completion-procedures*
 
 Similar to the table list, <C-C>p, will display a list of stored
-procedures stored within the database. >
+procedures stored within the database.
 
  4.3.4 View Completion:				*sql-completion-views*
 
@@ -609,7 +609,7 @@ your |init.vim|: >
 >
     omni_sql_use_tbl_alias
 <	- Default: a
-	- This setting is only used when generating a comma separated
+	- This setting is only used when generating a comma-separated
 	  column list.	By default the map is <C-C>l.  When generating
 	  a column list, an alias can be prepended to the beginning of each
 	  column, for example:	e.emp_id, e.emp_name.  This option has three
@@ -693,9 +693,9 @@ plugin. >
     <C-C>c
 <       - Displays a list of columns for a specific table. >
     <C-C>l
-<       - Displays a comma separated list of columns for a specific table. >
+<       - Displays a comma-separated list of columns for a specific table. >
     <C-C>L
-<       - Displays a comma separated list of columns for a specific table.
+<       - Displays a comma-separated list of columns for a specific table.
 	  This should only be used when the completion window is active. >
     <Right>
 <	- Displays a list of columns for the table currently highlighted in
@@ -723,7 +723,7 @@ your platform (often a case on *nix) you define the following variable in
 your |init.vim|: >
     let g:omni_sql_no_default_maps = 1
 
-Do no edit ftplugin/sql.vim directly!  If you change this file your changes
+Do not edit ftplugin/sql.vim directly!  If you change this file your changes
 will be over written on future updates.  Vim has a special directory structure
 which allows you to make customizations without changing the files that are
 included with the Vim distribution.  If you wish to customize the maps

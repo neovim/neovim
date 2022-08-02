@@ -78,13 +78,13 @@ void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs,
 void hl_group_set(String name, Integer id)
   FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL;
 void grid_resize(Integer grid, Integer width, Integer height)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_CLIENT_IMPL;
 void grid_clear(Integer grid)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
 void grid_cursor_goto(Integer grid, Integer row, Integer col)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_line(Integer grid, Integer row, Integer col_start, Array data)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY FUNC_API_CLIENT_IMPL;
 void grid_scroll(Integer grid, Integer top, Integer bot,
                  Integer left, Integer right, Integer rows, Integer cols)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
@@ -99,14 +99,15 @@ void raw_line(Integer grid, Integer row, Integer startcol,
               LineFlags flags, const schar_T *chunk, const sattr_T *attrs)
   FUNC_API_NOEXPORT FUNC_API_COMPOSITOR_IMPL;
 
-void event(char *name, Array args, bool *args_consumed)
+void event(char *name, Array args)
   FUNC_API_NOEXPORT;
 
 void win_pos(Integer grid, Window win, Integer startrow,
              Integer startcol, Integer width, Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_float_pos(Integer grid, Window win, String anchor, Integer anchor_grid,
-                   Float anchor_row, Float anchor_col, Boolean focusable)
+                   Float anchor_row, Float anchor_col, Boolean focusable,
+                   Integer zindex)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_external_pos(Integer grid, Window win)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
@@ -118,8 +119,13 @@ void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
   FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
 
 void win_viewport(Integer grid, Window win, Integer topline,
-                  Integer botline, Integer curline, Integer curcol)
+                  Integer botline, Integer curline, Integer curcol,
+                  Integer line_count)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_ONLY;
+
+void win_extmark(Integer grid, Window win, Integer ns_id, Integer mark_id,
+                 Integer row, Integer col)
+  FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
 
 void popupmenu_show(Array items, Integer selected,
                     Integer row, Integer col, Integer grid)
@@ -129,7 +135,8 @@ void popupmenu_hide(void)
 void popupmenu_select(Integer selected)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
-void tabline_update(Tabpage current, Array tabs)
+void tabline_update(Tabpage current, Array tabs,
+                    Buffer current_buffer, Array buffers)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void cmdline_show(Array content, Integer pos, String firstc, String prompt,
@@ -167,4 +174,6 @@ void msg_ruler(Array content)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_history_show(Array entries)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_history_clear(void)
+  FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
 #endif  // NVIM_API_UI_EVENTS_IN_H

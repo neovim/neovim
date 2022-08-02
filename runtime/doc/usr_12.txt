@@ -180,14 +180,14 @@ after it.  That way you don't have this problem again.
 The |:global| command can be combined with the |:move| command to move all the
 lines before the first line, resulting in a reversed file.  The command is: >
 
-	:global/^/m 0
+	:global/^/move 0
 
 Abbreviated: >
 
 	:g/^/m 0
 
 The "^" regular expression matches the beginning of the line (even if the line
-is blank).  The |:move| command moves the matching line to after the mythical
+is blank).  The |:move| command moves the matching line to after the imaginary
 zeroth line, so the current matching line becomes the first line of the file.
 As the |:global| command is not confused by the changing line numbering,
 |:global| proceeds to match all remaining lines of the file and puts each as

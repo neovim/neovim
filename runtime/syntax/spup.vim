@@ -25,7 +25,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-" don't hightlight several keywords like subsections
+" don't highlight several keywords like subsections
 "let strict_subsections = 1
 
 " highlight types usually found in DECLARE section
@@ -177,7 +177,7 @@ syn cluster spupOrdinary  contains=spupNumber,spupIdentifier,spupSymbol
 syn cluster spupOrdinary  add=spupError,spupString,spupComment
 syn cluster spupTextproc  contains=spupTextprocGeneric,spupTextprocError
 
-" define syncronizing; especially OPERATION sections can become very large
+" define synchronizing; especially OPERATION sections can become very large
 syn sync clear
 syn sync minlines=100
 syn sync maxlines=500

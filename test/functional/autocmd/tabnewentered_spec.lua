@@ -7,7 +7,7 @@ local eval = helpers.eval
 local eq = helpers.eq
 local feed = helpers.feed
 local nvim = helpers.nvim
-local redir_exec = helpers.redir_exec
+local exec_capture = helpers.exec_capture
 
 describe('TabNewEntered', function()
   describe('au TabNewEntered', function()
@@ -77,7 +77,6 @@ describe('tabpage/previous', function()
 
         eq(dedent([=[
 
-
           Tab page 1
               [No Name]
           Tab page 2
@@ -86,7 +85,7 @@ describe('tabpage/previous', function()
           >   [No Name]
           Tab page 4
           #   [No Name]]=]),
-           redir_exec('tabs')
+           exec_capture('tabs')
         )
 
         -- The previous tab is now the fourth.
@@ -117,7 +116,6 @@ describe('tabpage/previous', function()
       feed(characters)
       eq(dedent([=[
 
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -128,7 +126,7 @@ describe('tabpage/previous', function()
              [No Name]
          Tab page 5
              [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the third.
@@ -161,7 +159,6 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
          #   [No Name]
          Tab page 2
@@ -170,7 +167,7 @@ describe('tabpage/previous', function()
              [No Name]
          Tab page 4
          >   [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the first.
@@ -205,7 +202,6 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
          >   [No Name]
          Tab page 2
@@ -214,7 +210,7 @@ describe('tabpage/previous', function()
              [No Name]
          Tab page 4
          #   [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the fourth.
@@ -247,7 +243,6 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -256,7 +251,7 @@ describe('tabpage/previous', function()
          #   [No Name]
          Tab page 4
          >   [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the third.
@@ -291,7 +286,6 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
          #   [No Name]
          Tab page 2
@@ -300,7 +294,7 @@ describe('tabpage/previous', function()
          >   [No Name]
          Tab page 4
              [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the first.
@@ -333,7 +327,6 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -342,7 +335,7 @@ describe('tabpage/previous', function()
              [No Name]
          Tab page 4
          >   [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the second.
@@ -377,7 +370,6 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -386,7 +378,7 @@ describe('tabpage/previous', function()
              [No Name]
          Tab page 4
          #   [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the fourth.
@@ -444,14 +436,13 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
              [No Name]
          Tab page 2
              [No Name]
          Tab page 3
          >   [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
 
       -- The previous tab is now the "zero".
@@ -567,7 +558,6 @@ describe('tabpage/previous', function()
 
       eq(dedent([=[
 
-
          Tab page 1
              [No Name]
          Tab page 2
@@ -578,7 +568,7 @@ describe('tabpage/previous', function()
              [No Name]
          Tab page 4
          >   [No Name]]=]),
-         redir_exec('tabs')
+         exec_capture('tabs')
       )
   end)
 end)

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	BIND configuration file
 " Maintainer:	Nick Hibma <nick@van-laarhoven.org>
-" Last Change:	2007-01-30
+" Last Change:	2019 Oct 08
 " Filenames:	named.conf, rndc.conf
 " Location:	http://www.van-laarhoven.org/vim/syntax/named.vim
 "
@@ -54,7 +54,7 @@ syn match	namedIntIdent	contained /"\=\k\+"\=/ nextgroup=namedIntSection skipwhi
 syn region	namedSection	contained start=+{+ end=+};+ contains=namedSection,namedIntKeyword
 
 " --- IntSection: section that does not contain other sections
-syn region	namedIntSection	contained start=+{+ end=+}+ contains=namedIntKeyword,namedError
+syn region	namedIntSection	contained start=+{+ end=+}+ contains=namedIntKeyword,namedError,namedComment
 
 " --- IntKeyword: keywords contained within `{ ... }' sections only
 " + these keywords are contained within `key' and `acl' sections

@@ -12,6 +12,7 @@
 #     - CMakeLists.txt: Unset NVIM_VERSION_PRERELEASE
 #     - CMakeLists.txt: Unset NVIM_API_PRERELEASE
 #     - Create test/functional/fixtures/api_level_N.mpack
+#     - Add date and version to runtime/nvim.appdata.xml
 #     - Tag the commit.
 #   Create the "version bump" commit:
 #     - CMakeLists.txt: Set NVIM_VERSION_PRERELEASE to "-dev"
@@ -62,12 +63,15 @@ _do_release_commit() {
     git add test/functional/fixtures/api_level_$__API_LEVEL.mpack
   fi
 
+  $__sed -i.bk 's,(<releases>),\1\
+    <release date="'"${__DATE}"'" version="'"${__VERSION}"'"/>,' runtime/nvim.appdata.xml
+  git add runtime/nvim.appdata.xml
+
   if ! test "$ARG1" = '--use-current-commit' ; then
     echo "Building changelog since ${__LAST_TAG}..."
-    __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:[^[:space:]]')"
 
     git add CMakeLists.txt
-    git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
+    (echo "${__RELEASE_MSG}"; ./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:[^[:space:]]') | git commit --edit -F -
   fi
 
   git tag --sign -a v"${__VERSION}" -m "NVIM v${__VERSION}"
@@ -76,14 +80,12 @@ _do_release_commit() {
 _do_bump_commit() {
   $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
   $__sed -i.bk 's/set\((NVIM_VERSION_PATCH) [[:digit:]]/set(\1 ?/' CMakeLists.txt
-  $__sed -i.bk 's,(<releases>),\1\
-    <release date="'"${__DATE}"'" version="xxx"/>,' runtime/nvim.appdata.xml
-  rm CMakeLists.txt.bk
-  rm runtime/nvim.appdata.xml.bk
+  rm -f CMakeLists.txt.bk
+  rm -f runtime/nvim.appdata.xml.bk
   nvim +'/NVIM_VERSION' +1new +'exe "norm! iUpdate version numbers!!!"' \
-    -O CMakeLists.txt runtime/nvim.appdata.xml
+    -O CMakeLists.txt
 
-  git add CMakeLists.txt runtime/nvim.appdata.xml
+  git add CMakeLists.txt
   git commit -m "$__BUMP_MSG"
 }
 
@@ -93,11 +95,7 @@ fi
 _do_bump_commit
 echo "
 Next steps:
-    - Update runtime/nvim.appdata.xml on _master_
     - Run tests/CI (version_spec.lua)!
     - Push the tag:
         git push --follow-tags
-    - Update the 'stable' tag:
-        git push --force upstream HEAD^:refs/tags/stable
-        git fetch --tags
     - Update website: index.html"

@@ -4,9 +4,9 @@
 " Contributors: Edwin Fine <efine145_nospam01 at usa dot net>
 "               Pawel 'kTT' Salata <rockplayer.pl@gmail.com>
 "               Ricardo Catalinas Jiménez <jimenezrick@gmail.com>
-" Last Update:  2013-Jul-21
+" Last Update:  2020-Jun-11
 " License:      Vim license
-" URL:          https://github.com/hcs42/vim-erlang
+" URL:          https://github.com/vim-erlang/vim-erlang-runtime
 
 " Note About Usage:
 "   This indentation script works best with the Erlang syntax file created by
@@ -56,7 +56,8 @@ endfunction
 " Line tokenizer library {{{1
 " ======================
 
-" Indtokens are "indentation tokens".
+" Indtokens are "indentation tokens". See their exact format in the
+" documentation of the s:GetTokensFromLine function.
 
 " Purpose:
 "   Calculate the new virtual column after the given segment of a line.
@@ -74,7 +75,7 @@ endfunction
 "   s:CalcVCol("\t'\tx', b", 1, 4, 4)  -> 10
 function! s:CalcVCol(line, first_index, last_index, vcol, tabstop)
 
-  " We copy the relevent segment of the line, otherwise if the line were
+  " We copy the relevant segment of the line, otherwise if the line were
   " e.g. `"\t", term` then the else branch below would consume the `", term`
   " part at once.
   let line = a:line[a:first_index : a:last_index]
@@ -119,9 +120,10 @@ endfunction
 " Returns:
 "   indtokens = [indtoken]
 "   indtoken = [token, vcol, col]
-"   token = string (examples: 'begin', '<variable>', '}')
-"   vcol = integer (the virtual column of the first character of the token)
-"   col = integer
+"   token = string (examples: 'begin', '<quoted_atom>', '}')
+"   vcol = integer (the virtual column of the first character of the token;
+"                   counting starts from 0)
+"   col = integer (counting starts from 0)
 function! s:GetTokensFromLine(line, string_continuation, atom_continuation,
                              \tabstop)
 
@@ -386,9 +388,12 @@ endfunction
 "   lnum: integer
 "   direction: 'up' | 'down'
 " Returns:
-"   result: [] -- the result is an empty list if we hit the beginning or end
-"                  of the file
-"           | indtoken
+"   result: [[], 0, 0]
+"             -- the result is an empty list if we hit the beginning or end of
+"             the file
+"           | [indtoken, lnum, i]
+"             -- the content, lnum and token index of the next (or previous)
+"             indtoken
 function! s:FindIndToken(lnum, dir)
   let lnum = a:lnum
   while 1
@@ -396,9 +401,12 @@ function! s:FindIndToken(lnum, dir)
     let [lnum, indtokens] = s:TokenizeLine(lnum, a:dir)
     if lnum ==# 0
       " We hit the beginning or end of the file
-      return []
+      return [[], 0, 0]
     elseif !empty(indtokens)
-      return indtokens[a:dir ==# 'up' ? -1 : 0]
+      " We found a non-empty line. If we were moving up, we return the last
+      " token of this line. Otherwise we return the first token if this line.
+      let i = (a:dir ==# 'up' ? len(indtokens) - 1 : 0)
+      return [indtokens[i], lnum, i]
     endif
   endwhile
 endfunction
@@ -417,7 +425,7 @@ function! s:PrevIndToken(lnum, i)
 
   " If the current line has a previous token, return that
   if a:i > 0
-    return s:all_tokens[a:lnum][a:i - 1]
+    return [s:all_tokens[a:lnum][a:i - 1], a:lnum, a:i - 1]
   else
     return s:FindIndToken(a:lnum, 'up')
   endif
@@ -437,7 +445,7 @@ function! s:NextIndToken(lnum, i)
 
   " If the current line has a next token, return that
   if len(s:all_tokens[a:lnum]) > a:i + 1
-    return s:all_tokens[a:lnum][a:i + 1]
+    return [s:all_tokens[a:lnum][a:i + 1], a:lnum, a:i + 1]
   else
     return s:FindIndToken(a:lnum, 'down')
   endif
@@ -518,7 +526,9 @@ endfunction
 "       ok.          % IsLineAtomContinuation = false
 function! s:IsLineAtomContinuation(lnum)
   if has('syntax_items')
-    return synIDattr(synID(a:lnum, 1, 0), 'name') =~# '^erlangQuotedAtom'
+    let syn_name = synIDattr(synID(a:lnum, 1, 0), 'name')
+    return syn_name =~# '^erlangQuotedAtom' ||
+         \ syn_name =~# '^erlangQuotedRecord'
   else
     return 0
   endif
@@ -535,7 +545,7 @@ endfunction
 "   is_standalone: bool
 function! s:IsCatchStandalone(lnum, i)
   call s:Log('    IsCatchStandalone called: lnum=' . a:lnum . ', i=' . a:i)
-  let prev_indtoken = s:PrevIndToken(a:lnum, a:i)
+  let [prev_indtoken, _, _] = s:PrevIndToken(a:lnum, a:i)
 
   " If we hit the beginning of the file, it is not a catch in a try block
   if prev_indtoken == []
@@ -544,7 +554,7 @@ function! s:IsCatchStandalone(lnum, i)
 
   let prev_token = prev_indtoken[0]
 
-  if prev_token =~# '[A-Z_@0-9]'
+  if prev_token =~# '^[A-Z_@0-9]'
     let is_standalone = 0
   elseif prev_token =~# '[a-z]'
     if index(['after', 'and', 'andalso', 'band', 'begin', 'bnot', 'bor', 'bsl',
@@ -594,7 +604,7 @@ endfunction
 function! s:BeginElementFoundIfEmpty(stack, token, curr_vcol, stored_vcol, sw)
   if empty(a:stack)
     if a:stored_vcol ==# -1
-      call s:Log('    "' . a:token . '" directly preceeds LTI -> return')
+      call s:Log('    "' . a:token . '" directly precedes LTI -> return')
       return [1, a:curr_vcol + a:sw]
     else
       call s:Log('    "' . a:token .
@@ -659,11 +669,14 @@ endfunction
 "   stack: [token]
 "   token: string
 "   stored_vcol: integer
+"   lnum: the line number of the "end of clause" mark (or 0 if we hit the
+"         beginning of the file)
+"   i: the index of the "end of clause" token within its own line
 " Returns:
 "   result: [should_return, indent]
 "   should_return: bool -- if true, the caller should return `indent` to Vim
 "   indent -- integer
-function! s:BeginningOfClauseFound(stack, token, stored_vcol)
+function! s:BeginningOfClauseFound(stack, token, stored_vcol, lnum, i)
   if !empty(a:stack) && a:stack[0] ==# 'when'
     call s:Log('    BeginningOfClauseFound: "when" found in stack')
     call s:Pop(a:stack)
@@ -681,13 +694,45 @@ function! s:BeginningOfClauseFound(stack, token, stored_vcol)
       return [1, a:stored_vcol + shiftwidth()]
     elseif a:stack[0] ==# ';'
       call s:Pop(a:stack)
-      if empty(a:stack)
-        call s:Log('    Stack is ["->", ";"], so LTI is in a function head ' .
-                  \'-> return')
-        return [0, a:stored_vcol]
-      else
+
+      if !empty(a:stack)
         return [1, s:UnexpectedToken(a:token, a:stack)]
       endif
+
+      if a:lnum ==# 0
+        " Set lnum and i to be NextIndToken-friendly
+        let lnum = 1
+        let i = -1 
+      else
+        let lnum = a:lnum
+        let i = a:i
+      endif
+
+      " Are we after a "-spec func() ...;" clause?
+      let [next1_indtoken, next1_lnum, next1_i] = s:NextIndToken(lnum, i)
+      if !empty(next1_indtoken) && next1_indtoken[0] =~# '-'
+        let [next2_indtoken, next2_lnum, next2_i] =
+           \s:NextIndToken(next1_lnum, next1_i)
+        if !empty(next2_indtoken) && next2_indtoken[0] =~# 'spec'
+          let [next3_indtoken, next3_lnum, next3_i] =
+             \s:NextIndToken(next2_lnum, next2_i)
+          if !empty(next3_indtoken)
+            let [next4_indtoken, next4_lnum, next4_i] =
+               \s:NextIndToken(next3_lnum, next3_i)
+            if !empty(next4_indtoken)
+              " Yes, we are.
+              call s:Log('    Stack is ["->", ";"], so LTI is in a "-spec" ' .
+                        \'attribute -> return')
+              return [1, next4_indtoken[1]]
+            endif
+          endif
+        endif
+      endif
+
+      call s:Log('    Stack is ["->", ";"], so LTI is in a function head ' .
+                \'-> return')
+      return [1, a:stored_vcol]
+
     else
       return [1, s:UnexpectedToken(a:token, a:stack)]
     endif
@@ -714,7 +759,7 @@ function! s:SearchEndPair(lnum, curr_col)
   return s:SearchPair(
          \ a:lnum, a:curr_col,
          \ '\C\<\%(case\|try\|begin\|receive\|if\)\>\|' .
-         \ '\<fun\>\%(\s\|\n\|%.*$\)*(',
+         \ '\<fun\>\%(\s\|\n\|%.*$\|[A-Z_@][a-zA-Z_@]*\)*(',
          \ '',
          \ '\<end\>')
 endfunction
@@ -756,7 +801,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
     " Hit the start of the file
     if lnum ==# 0
       let [ret, res] = s:BeginningOfClauseFound(stack, 'beginning_of_file',
-                                               \stored_vcol)
+                                               \stored_vcol, 0, 0)
       if ret | return res | endif
 
       return 0
@@ -775,11 +820,12 @@ function! s:ErlangCalcIndent2(lnum, stack)
       endif
 
       if token ==# '<end_of_clause>'
-        let [ret, res] = s:BeginningOfClauseFound(stack, token, stored_vcol)
+        let [ret, res] = s:BeginningOfClauseFound(stack, token, stored_vcol,
+                                                 \lnum, i)
         if ret | return res | endif
 
         if stored_vcol ==# -1
-          call s:Log('    End of clause directly preceeds LTI -> return')
+          call s:Log('    End of clause directly precedes LTI -> return')
           return 0
         else
           call s:Log('    End of clause (but not end of line) -> return')
@@ -787,7 +833,7 @@ function! s:ErlangCalcIndent2(lnum, stack)
         endif
 
       elseif stack == ['prev_term_plus']
-        if token =~# '[a-zA-Z_@]' ||
+        if token =~# '[a-zA-Z_@#]' ||
          \ token ==# '<string>' || token ==# '<string_start>' ||
          \ token ==# '<quoted_atom>' || token ==# '<quoted_atom_start>'
           call s:Log('    previous token found: curr_vcol + plus = ' .
@@ -917,8 +963,17 @@ function! s:ErlangCalcIndent2(lnum, stack)
         if ret | return res | endif
 
       elseif token ==# 'fun'
-        let next_indtoken = s:NextIndToken(lnum, i)
+        let [next_indtoken, next_lnum, next_i] = s:NextIndToken(lnum, i)
         call s:Log('    Next indtoken = ' . string(next_indtoken))
+
+        if !empty(next_indtoken) && next_indtoken[0] =~# '^[A-Z_@]'
+          " The "fun" is followed by a variable, so we might have a named fun:
+          " "fun Fun() -> ok end". Thus we take the next token to decide
+          " whether this is a function definition ("fun()") or just a function
+          " reference ("fun Mod:Fun").
+          let [next_indtoken, _, _] = s:NextIndToken(next_lnum, next_i)
+          call s:Log('    Next indtoken = ' . string(next_indtoken))
+        endif
 
         if !empty(next_indtoken) && next_indtoken[0] ==# '('
           " We have an anonymous function definition
@@ -1327,6 +1382,26 @@ function! ErlangIndent()
     return -1
   endif
 
+  " If the line starts with the comment, and so is the previous non-blank line
+  if currline =~# '^\s*%'
+    let lnum = prevnonblank(v:lnum - 1)
+    if lnum ==# 0
+      call s:Log('First non-empty line of the file -> return 0.')
+      return 0
+    else
+      let ml = matchlist(getline(lnum), '^\(\s*\)%')
+      " If the previous line also starts with a comment, then return the same
+      " indentation that line has. Otherwise exit from this special "if" and
+      " don't care that the current line is a comment.
+      if !empty(ml)
+        let new_col = s:CalcVCol(ml[1], 0, len(ml[1]) - 1, 0, &tabstop)
+        call s:Log('Comment line after another comment line -> ' .
+                  \'use same indent: ' . new_col)
+        return new_col
+      endif
+    endif
+  endif
+
   let ml = matchlist(currline,
                     \'^\(\s*\)\(\%(end\|of\|catch\|after\)\>\|[)\]}]\|>>\)')
 
@@ -1379,6 +1454,24 @@ function! ErlangIndent()
 
   return new_col
 
+endfunction
+
+" ErlangShowTokensInLine functions {{{1
+" ================================
+
+" These functions are useful during development.
+
+function! ErlangShowTokensInLine(line)
+  echo "Line: " . a:line
+  let indtokens = s:GetTokensFromLine(a:line, 0, 0, &tabstop)
+  echo "Tokens:"
+  for it in indtokens
+    echo it
+  endfor
+endfunction
+
+function! ErlangShowTokensInCurrentLine()
+  return ErlangShowTokensInLine(getline('.'))
 endfunction
 
 " Cleanup {{{1

@@ -109,7 +109,7 @@ when the 'wrap' option has been reset (more about that later).
 
 When there are vertically split windows, only the windows on the right side
 will have a scrollbar.  However, when you move the cursor to a window on the
-left, it will be this one the that scrollbar controls.  This takes a bit of
+left, it will be this one that the scrollbar controls.  This takes a bit of
 time to get used to.
    When you work with vertically split windows, consider adding a scrollbar on
 the left.  This can be done with a menu item, or with the 'guioptions' option:

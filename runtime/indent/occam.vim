@@ -1,7 +1,8 @@
 " Vim indent file
 " Language:	occam
-" Maintainer:	Mario Schweigler <ms44@kent.ac.uk>
-" Last Change:	23 April 2003
+" Maintainer:	Mario Schweigler <ms44@kent.ac.uk> (Invalid email address)
+" 		Doug Kearns <dougkearns@gmail.com>
+" Last Change:	2022 Apr 06
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -15,6 +16,8 @@ setlocal indentexpr=GetOccamIndent()
 " Indent after new line and after initial colon
 setlocal indentkeys=o,O,0=:
 "}}}
+
+let b:undo_indent = "setl inde< indk<"
 
 " Only define the function once
 if exists("*GetOccamIndent")

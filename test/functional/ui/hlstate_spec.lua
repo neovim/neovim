@@ -5,7 +5,7 @@ local clear, insert = helpers.clear, helpers.insert
 local command = helpers.command
 local meths = helpers.meths
 local iswin = helpers.iswin
-local nvim_dir = helpers.nvim_dir
+local testprg = helpers.testprg
 local thelpers = require('test.functional.terminal.helpers')
 
 describe('ext_hlstate detailed highlights', function()
@@ -14,6 +14,7 @@ describe('ext_hlstate detailed highlights', function()
   before_each(function()
     clear()
     command('syntax on')
+    command('hi VertSplit gui=reverse')
     screen = Screen.new(40, 8)
     screen:attach({ext_hlstate=true})
   end)
@@ -59,7 +60,7 @@ describe('ext_hlstate detailed highlights', function()
 
   it('work with cleared UI highlights', function()
     screen:set_default_attr_ids({
-      [1] = {{}, {{hi_name = "VertSplit", ui_name = "VertSplit", kind = "ui"}}},
+      [1] = {{}, {{hi_name = "Normal", ui_name = "WinSeparator", kind = "ui"}}},
       [2] = {{bold = true, foreground = Screen.colors.Blue1},
              {{hi_name = "NonText", ui_name = "EndOfBuffer", kind = "ui"}}},
       [3] = {{bold = true, reverse = true},
@@ -179,6 +180,8 @@ describe('ext_hlstate detailed highlights', function()
   end)
 
   it("work with :terminal", function()
+    if helpers.pending_win32(pending) then return end
+
     screen:set_default_attr_ids({
       [1] = {{}, {{hi_name = "TermCursorNC", ui_name = "TermCursorNC", kind = "ui"}}},
       [2] = {{foreground = tonumber('0x00ccff'), fg_indexed=true}, {{kind = "term"}}},
@@ -188,7 +191,7 @@ describe('ext_hlstate detailed highlights', function()
       [6] = {{foreground = tonumber('0x40ffff'), fg_indexed=true}, {5, 1}},
       [7] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
     })
-    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     screen:expect([[
       ^tty ready                               |
       {1: }                                       |

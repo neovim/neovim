@@ -60,7 +60,7 @@ The example will:
       return nil
     end
     local dir = bufname
-    -- Just in case our algo is buggy, don't infinite loop.
+    -- Just in case our algorithm is buggy, don't infinite loop.
     for _ = 1, 100 do
       local did_change
       dir, did_change = dirname(dir)

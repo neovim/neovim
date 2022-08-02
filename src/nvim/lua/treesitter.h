@@ -1,9 +1,9 @@
 #ifndef NVIM_LUA_TREESITTER_H
 #define NVIM_LUA_TREESITTER_H
 
+#include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
-#include <lauxlib.h>
 
 #include "tree_sitter/api.h"
 

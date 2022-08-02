@@ -3,7 +3,6 @@
 
 #include <stdarg.h>
 #include <stdint.h>
-
 #include <uv.h>
 
 #include "nvim/event/loop.h"
@@ -13,7 +12,6 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.c.generated.h"
 #endif
-
 
 void loop_init(Loop *loop, void *data)
 {
@@ -29,6 +27,7 @@ void loop_init(Loop *loop, void *data)
   uv_signal_init(&loop->uv, &loop->children_watcher);
   uv_timer_init(&loop->uv, &loop->children_kill_timer);
   uv_timer_init(&loop->uv, &loop->poll_timer);
+  uv_timer_init(&loop->uv, &loop->exit_delay_timer);
   loop->poll_timer.data = xmalloc(sizeof(bool));  // "timeout expired" flag
 }
 
@@ -76,7 +75,7 @@ bool loop_poll_events(Loop *loop, int ms)
 /// @note Event is queued into `fast_events`, which is processed outside of the
 ///       primary `events` queue by loop_poll_events(). For `main_loop`, that
 ///       means `fast_events` is NOT processed in an "editor mode"
-///       (VimState.execute), so redraw and other side-effects are likely to be
+///       (VimState.execute), so redraw and other side effects are likely to be
 ///       skipped.
 /// @see loop_schedule_deferred
 void loop_schedule_fast(Loop *loop, Event event)
@@ -138,13 +137,14 @@ bool loop_close(Loop *loop, bool wait)
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
   uv_close((uv_handle_t *)&loop->poll_timer, timer_close_cb);
+  uv_close((uv_handle_t *)&loop->exit_delay_timer, NULL);
   uv_close((uv_handle_t *)&loop->async, NULL);
   uint64_t start = wait ? os_hrtime() : 0;
   bool didstop = false;
   while (true) {
     // Run the loop to tickle close-callbacks (which should then free memory).
     // Use UV_RUN_NOWAIT to avoid a hang. #11820
-    uv_run(&loop->uv, didstop ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
+    uv_run(&loop->uv, didstop ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);  // -V547
     if ((uv_loop_close(&loop->uv) != UV_EBUSY) || !wait) {
       break;
     }

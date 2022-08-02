@@ -1,20 +1,22 @@
 " Vim filetype plugin file
-" Language:	csh
-" Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
-" Last Changed: 20 Jan 2009
-" URL:		http://dwsharp.users.sourceforge.net/vim/ftplugin
+" Language:		csh
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Dan Sharp
+" Contributor:		Johannes Zellner <johannes@zellner.org>
+" Last Change:		2021 Oct 15
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
 
-" Make sure the continuation lines below do not cause problems in
-" compatibility mode.
 let s:save_cpo = &cpo
 set cpo-=C
 
+setlocal comments=:#
 setlocal commentstring=#%s
 setlocal formatoptions-=t
 setlocal formatoptions+=crql
+
+let b:undo_ftplugin = "setlocal com< cms< fo<"
 
 " Csh:  thanks to Johannes Zellner
 " - Both foreach and end must appear alone on separate lines.
@@ -23,26 +25,27 @@ setlocal formatoptions+=crql
 " - Each case label and the default label must appear at the start of a
 "   line.
 " - while and end must appear alone on their input lines.
-if exists("loaded_matchit")
-    let b:match_words =
-      \ '^\s*\<if\>.*(.*).*\<then\>:'.
-      \   '^\s*\<else\>\s\+\<if\>.*(.*).*\<then\>:^\s*\<else\>:'.
-      \   '^\s*\<endif\>,'.
-      \ '\%(^\s*\<foreach\>\s\+\S\+\|^s*\<while\>\).*(.*):'.
-      \   '\<break\>:\<continue\>:^\s*\<end\>,'.
-      \ '^\s*\<switch\>.*(.*):^\s*\<case\>\s\+:^\s*\<default\>:^\s*\<endsw\>'
+if exists("loaded_matchit") && !exists("b:match_words")
+  let s:line_start = '\%(^\s*\)\@<='
+  let b:match_words =
+	\ s:line_start .. 'if\s*(.*)\s*then\>:' ..
+	\   s:line_start .. 'else\s\+if\s*(.*)\s*then\>:' .. s:line_start .. 'else\>:' ..
+	\   s:line_start .. 'endif\>,' ..
+	\ s:line_start .. '\%(\<foreach\s\+\h\w*\|while\)\s*(:' ..
+	\   '\<break\>:\<continue\>:' ..
+	\   s:line_start .. 'end\>,' ..
+	\ s:line_start .. 'switch\s*(:' ..
+	\   s:line_start .. 'case\s\+:' .. s:line_start .. 'default\>:\<breaksw\>:' ..
+	\   s:line_start .. 'endsw\>'
+  unlet s:line_start
+  let b:undo_ftplugin ..= " | unlet b:match_words"
 endif
 
-" Change the :browse e filter to primarily show csh-related files.
-if has("gui_win32")
-    let  b:browsefilter="csh Scripts (*.csh)\t*.csh\n" .
-		\	"All Files (*.*)\t*.*\n"
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
+  let  b:browsefilter="csh Scripts (*.csh)\t*.csh\n" ..
+	\	      "All Files (*.*)\t*.*\n"
+  let b:undo_ftplugin ..= " | unlet b:browsefilter"
 endif
 
-" Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal commentstring< formatoptions<" .
-		\     " | unlet! b:match_words b:browsefilter"
-
-" Restore the saved compatibility options.
 let &cpo = s:save_cpo
 unlet s:save_cpo

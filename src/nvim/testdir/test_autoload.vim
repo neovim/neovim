@@ -8,6 +8,8 @@ func Test_autoload_dict_func()
   call g:foo#bar.echo()
   call assert_equal(1, g:loaded_foo_vim)
   call assert_equal(1, g:called_foo_bar_echo)
+
+  eval 'bar'->g:foo#addFoo()->assert_equal('barfoo')
 endfunc
 
 func Test_source_autoload()

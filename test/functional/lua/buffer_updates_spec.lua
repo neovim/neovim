@@ -252,9 +252,8 @@ describe('lua buffer event callbacks: on_lines', function()
     eq(2, meths.win_get_cursor(0)[1])
   end)
 
-  it('does not SEGFAULT when calling win_findbuf in on_detach', function()
-
-    exec_lua[[
+  it('does not SEGFAULT when accessing window buffer info in on_detach #14998', function()
+    local code = [[
       local buf = vim.api.nvim_create_buf(false, false)
 
       vim.cmd"split"
@@ -262,12 +261,18 @@ describe('lua buffer event callbacks: on_lines', function()
 
       vim.api.nvim_buf_attach(buf, false, {
         on_detach = function(_, buf)
+          vim.fn.tabpagebuflist()
           vim.fn.win_findbuf(buf)
         end
       })
     ]]
 
+    exec_lua(code)
     command("q!")
+    helpers.assert_alive()
+
+    exec_lua(code)
+    command("bd!")
     helpers.assert_alive()
   end)
 
@@ -401,8 +406,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
         }
         feed '<cr>'
         check_events {
-          { "test1", "bytes", 1, 4, 8, 0, 115, 0, 4, 4, 0, 0, 0 };
-          { "test1", "bytes", 1, 5, 7, 4, 118, 0, 0, 0, 1, 4, 5 };
+          { "test1", "bytes", 1, 4, 7, 0, 114, 0, 4, 4, 0, 0, 0 };
+          { "test1", "bytes", 1, 5, 7, 0, 114, 0, 0, 0, 1, 4, 5 };
         }
     end)
 
@@ -447,8 +452,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
       feed '<CR>'
       check_events {
-        { "test1", "bytes", 1, 6, 2, 2, 16, 0, 1, 1, 0, 0, 0 };
-        { "test1", "bytes", 1, 7, 1, 3, 14, 0, 0, 0, 1, 3, 4 };
+        { "test1", "bytes", 1, 6, 1, 2, 13, 0, 1, 1, 0, 0, 0 };
+        { "test1", "bytes", 1, 7, 1, 2, 13, 0, 0, 0, 1, 3, 4 };
       }
     end)
 
@@ -458,6 +463,36 @@ describe('lua: nvim_buf_attach on_bytes', function()
       feed 'ia'
       check_events {
         { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
+      }
+    end)
+
+    it("deleting lines", function()
+      local check_events = setup_eventcheck(verify, origlines)
+
+      feed("dd")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 1, 0, 16, 0, 0, 0 };
+      }
+
+      feed("d2j")
+
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 3, 0, 48, 0, 0, 0 };
+      }
+
+      feed("ld<c-v>2j")
+
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 1, 1, 16, 0, 1, 1, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 2, 1, 31, 0, 1, 1, 0, 0, 0 };
+      }
+
+      feed("vjwd")
+
+      check_events {
+        { "test1", "bytes", 1, 10, 0, 1, 1, 1, 9, 23, 0, 0, 0 };
       }
     end)
 
@@ -537,19 +572,88 @@ describe('lua: nvim_buf_attach on_bytes', function()
     end)
 
     it('inccomand=nosplit and substitute', function()
-      local check_events = setup_eventcheck(verify, {"abcde"})
+      local check_events = setup_eventcheck(verify,
+                                            {"abcde", "12345"})
       meths.set_option('inccommand', 'nosplit')
 
-      feed ':%s/bcd/'
+      -- linewise substitute
+      feed(':%s/bcd/')
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 0, 0 };
         { "test1", "bytes", 1, 5, 0, 1, 1, 0, 0, 0, 0, 3, 3 };
       }
 
-      feed 'a'
+      feed('a')
       check_events {
         { "test1", "bytes", 1, 3, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
         { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 3, 3 };
+      }
+
+      feed("<esc>")
+
+      -- splitting lines
+      feed([[:%s/abc/\r]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 1, 0, 1 };
+        { "test1", "bytes", 1, 6, 0, 0, 0, 1, 0, 1, 0, 3, 3 };
+      }
+
+      feed("<esc>")
+      -- multi-line regex
+      feed([[:%s/de\n123/a]])
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 3, 3, 1, 3, 6, 0, 1, 1 };
+        { "test1", "bytes", 1, 6, 0, 3, 3, 0, 1, 1, 1, 3, 6 };
+      }
+
+      feed("<esc>")
+      -- replacing with unicode
+      feed(":%s/b/→")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 3, 3 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 3, 3, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with expression register
+      feed([[:%s/b/\=5+5]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with backslash
+      feed([[:%s/b/\\]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with backslash from expression register
+      feed([[:%s/b/\='\']])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with backslash followed by another character
+      feed([[:%s/b/\\!]])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 };
+      }
+
+      feed("<esc>")
+      -- replacing with backslash followed by another character from expression register
+      feed([[:%s/b/\='\!']])
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 2, 2, 0, 1, 1 };
       }
     end)
 
@@ -666,8 +770,424 @@ describe('lua: nvim_buf_attach on_bytes', function()
       }
     end)
 
+    it("tab with noexpandtab and softtabstop", function()
+      command("set noet")
+      command("set ts=4")
+      command("set sw=2")
+      command("set sts=4")
+
+      local check_events = setup_eventcheck(verify, {'asdfasdf'})
+
+      feed("gg0i<tab>")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 4, 0, 1, 1, 0, 0, 0, 0, 1, 1 },
+      }
+      feed("<tab>")
+
+      -- when spaces are merged into a tabstop
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 2, 2, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 6, 0, 3, 3, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 7, 0, 0, 0, 0, 4, 4, 0, 1, 1 },
+      }
+
+
+      feed("<esc>u")
+      check_events {
+        { "test1", "bytes", 1, 8, 0, 0, 0, 0, 1, 1, 0, 4, 4 },
+        { "test1", "bytes", 1, 8, 0, 0, 0, 0, 4, 4, 0, 0, 0 }
+      }
+
+      -- in REPLACE mode
+      feed("R<tab><tab>")
+      check_events {
+        { "test1", "bytes", 1, 9, 0, 0, 0, 0, 1, 1, 0, 1, 1 },
+        { "test1", "bytes", 1, 10, 0, 1, 1, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 11, 0, 2, 2, 0, 1, 1, 0, 1, 1 },
+        { "test1", "bytes", 1, 12, 0, 3, 3, 0, 0, 0, 0, 1, 1 },
+        { "test1", "bytes", 1, 13, 0, 0, 0, 0, 4, 4, 0, 1, 1 },
+      }
+      feed("<esc>u")
+      check_events {
+        { "test1", "bytes", 1, 14, 0, 0, 0, 0, 1, 1, 0, 4, 4 },
+        { "test1", "bytes", 1, 14, 0, 2, 2, 0, 2, 2, 0, 1, 1 },
+        { "test1", "bytes", 1, 14, 0, 0, 0, 0, 2, 2, 0, 1, 1 }
+      }
+
+      -- in VISUALREPLACE mode
+      feed("gR<tab><tab>")
+      check_events {
+          { "test1", "bytes", 1, 15, 0, 0, 0, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 16, 0, 1, 1, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 17, 0, 2, 2, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 18, 0, 3, 3, 0, 1, 1, 0, 1, 1 };
+          { "test1", "bytes", 1, 19, 0, 3, 3, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 20, 0, 3, 3, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 22, 0, 2, 2, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 23, 0, 2, 2, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 25, 0, 1, 1, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 26, 0, 1, 1, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 28, 0, 0, 0, 0, 1, 1, 0, 0, 0 };
+          { "test1", "bytes", 1, 29, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
+          { "test1", "bytes", 1, 31, 0, 0, 0, 0, 4, 4, 0, 1, 1 };
+      }
+
+      -- inserting tab after other tabs
+      command("set sw=4")
+      feed("<esc>0a<tab>")
+      check_events {
+        { "test1", "bytes", 1, 32, 0, 1, 1, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 33, 0, 2, 2, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 34, 0, 3, 3, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 35, 0, 4, 4, 0, 0, 0, 0, 1, 1 };
+        { "test1", "bytes", 1, 36, 0, 1, 1, 0, 4, 4, 0, 1, 1 };
+      }
+    end)
+
+    it("retab", function()
+      command("set noet")
+      command("set ts=4")
+
+      local check_events = setup_eventcheck(verify, {"			asdf"})
+      command("retab 8")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 7, 7, 0, 9, 9 };
+      }
+    end)
+
+    it("sends events when undoing with undofile", function()
+      write_file("Xtest-undofile", dedent([[
+      12345
+      hello world
+      ]]))
+
+      command("e! Xtest-undofile")
+      command("set undodir=. | set undofile")
+
+      local ns = helpers.request('nvim_create_namespace', "ns1")
+      meths.buf_set_extmark(0, ns, 0, 0, {})
+
+      eq({"12345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      -- splice
+      feed("gg0d2l")
+
+      eq({"345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      -- move
+      command(".m+1")
+
+      eq({"hello world", "345"}, meths.buf_get_lines(0, 0, -1, true))
+
+      -- reload undofile and undo changes
+      command("w")
+      command("set noundofile")
+      command("bw!")
+      command("e! Xtest-undofile")
+
+      command("set undofile")
+
+      local check_events = setup_eventcheck(verify, nil)
+
+      feed("u")
+      eq({"345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      check_events {
+        { "test1", "bytes", 2, 6, 1, 0, 12, 1, 0, 4, 0, 0, 0 },
+        { "test1", "bytes", 2, 6, 0, 0, 0, 0, 0, 0, 1, 0, 4 }
+      }
+
+      feed("u")
+      eq({"12345", "hello world"}, meths.buf_get_lines(0, 0, -1, true))
+
+      check_events {
+        { "test1", "bytes", 2, 8, 0, 0, 0, 0, 0, 0, 0, 2, 2 }
+      }
+      command("bw!")
+    end)
+
+    it("blockwise paste with uneven line lengths", function()
+      local check_events = setup_eventcheck(verify, {'aaaa', 'aaa', 'aaa'})
+
+      -- eq({}, meths.buf_get_lines(0, 0, -1, true))
+      feed("gg0<c-v>jj$d")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 4, 4, 0, 0, 0 },
+        { "test1", "bytes", 1, 3, 1, 0, 1, 0, 3, 3, 0, 0, 0 },
+        { "test1", "bytes", 1, 3, 2, 0, 2, 0, 3, 3, 0, 0, 0 },
+      }
+
+      feed("p")
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 0, 0, 0, 0, 4, 4 },
+        { "test1", "bytes", 1, 4, 1, 0, 5, 0, 0, 0, 0, 3, 3 },
+        { "test1", "bytes", 1, 4, 2, 0, 9, 0, 0, 0, 0, 3, 3 },
+      }
+
+    end)
+
+    it(":luado", function()
+      local check_events = setup_eventcheck(verify, {"abc", "12345"})
+
+      command(".luado return 'a'")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 0, 1, 1 };
+      }
+
+      command("luado return 10")
+
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 0, 1, 1, 0, 2, 2 };
+        { "test1", "bytes", 1, 5, 1, 0, 3, 0, 5, 5, 0, 2, 2 };
+      }
+
+    end)
+
+    it("flushes deleted bytes on move", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC", "DDD"})
+
+      feed(":.move+1<cr>")
+
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 4, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 1, 0, 4, 0, 0, 0, 1, 0, 4 };
+      }
+
+      feed("jd2j")
+
+      check_events {
+        { "test1", "bytes", 1, 6, 2, 0, 8, 2, 0, 8, 0, 0, 0 };
+      }
+    end)
+
+    it("virtual edit", function ()
+      local check_events = setup_eventcheck(verify, { "", "	" })
+
+      meths.set_option("virtualedit", "all")
+
+      feed [[<Right><Right>iab<ESC>]]
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 0, 0, 0, 2, 2 };
+        { "test1", "bytes", 1, 4, 0, 2, 2, 0, 0, 0, 0, 2, 2 };
+      }
+
+      feed [[j<Right><Right>iab<ESC>]]
+
+      check_events {
+        { "test1", "bytes", 1, 5, 1, 0, 5, 0, 1, 1, 0, 8, 8 };
+        { "test1", "bytes", 1, 6, 1, 5, 10, 0, 0, 0, 0, 2, 2 };
+      }
+    end)
+
+    it("block visual paste", function()
+      local check_events = setup_eventcheck(verify, {"AAA",
+                                                     "BBB",
+                                                     "CCC",
+                                                     "DDD",
+                                                     "EEE",
+                                                     "FFF"})
+      funcs.setreg("a", "___")
+      feed([[gg0l<c-v>3jl"ap]])
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 1, 1, 0, 2, 2, 0, 0, 0 };
+        { "test1", "bytes", 1, 3, 1, 1, 3, 0, 2, 2, 0, 0, 0 };
+        { "test1", "bytes", 1, 3, 2, 1, 5, 0, 2, 2, 0, 0, 0 };
+        { "test1", "bytes", 1, 3, 3, 1, 7, 0, 2, 2, 0, 0, 0 };
+        { "test1", "bytes", 1, 5, 0, 1, 1, 0, 0, 0, 0, 3, 3 };
+        { "test1", "bytes", 1, 6, 1, 1, 6, 0, 0, 0, 0, 3, 3 };
+        { "test1", "bytes", 1, 7, 2, 1, 11, 0, 0, 0, 0, 3, 3 };
+        { "test1", "bytes", 1, 8, 3, 1, 16, 0, 0, 0, 0, 3, 3 };
+      }
+    end)
+
+    it("visual paste", function()
+      local check_events= setup_eventcheck(verify, { "aaa {", "b", "}" })
+      -- Setting up
+      feed[[jdd]]
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 6, 1, 0, 2, 0, 0, 0 };
+      }
+
+      -- Actually testing
+      feed[[v%p]]
+      check_events {
+        { "test1", "bytes", 1, 8, 0, 4, 4, 1, 1, 3, 0, 0, 0 };
+        { "test1", "bytes", 1, 8, 0, 4, 4, 0, 0, 0, 2, 0, 3 };
+      }
+    end)
+
+    it("nvim_buf_set_lines", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
+
+      -- delete
+      meths.buf_set_lines(0, 0, 1, true, {})
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 1, 0, 4, 0, 0, 0 };
+      }
+
+      -- add
+      meths.buf_set_lines(0, 0, 0, true, {'asdf'})
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 0, 0, 0, 1, 0, 5 };
+      }
+
+      -- replace
+      meths.buf_set_lines(0, 0, 1, true, {'asdf', 'fdsa'})
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 5, 2, 0, 10 };
+      }
+    end)
+
+    it("flushes delbytes on substitute", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      feed("gg0")
+      command("s/AAA/GGG/")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 3, 3, 0, 3, 3 };
+      }
+
+      -- check that byte updates for :delete (which uses curbuf->deleted_bytes2)
+      -- are correct
+      command("delete")
+      check_events {
+        { "test1", "bytes", 1, 4, 0, 0, 0, 1, 0, 4, 0, 0, 0 };
+      }
+    end)
+
+    it("flushes delbytes on join", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      feed("gg0J")
+
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 3, 3, 1, 0, 1, 0, 1, 1 };
+      }
+
+      command("delete")
+      check_events {
+        { "test1", "bytes", 1, 5, 0, 0, 0, 1, 0, 8, 0, 0, 0 };
+      }
+    end)
+
+    it("sends updates on U", function()
+      feed("ggiAAA<cr>BBB")
+      feed("<esc>gg$a CCC")
+
+      local check_events = setup_eventcheck(verify, nil)
+
+      feed("ggU")
+
+      check_events {
+         { "test1", "bytes", 1, 6, 0, 7, 7, 0, 0, 0, 0, 3, 3 };
+      }
+    end)
+
+    it("delete in completely empty buffer", function()
+      local check_events = setup_eventcheck(verify, nil)
+
+      command "delete"
+      check_events { }
+    end)
+
+    it("delete the only line of a buffer", function()
+      local check_events = setup_eventcheck(verify, {"AAA"})
+
+      command "delete"
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 1, 0, 4, 1, 0, 1 };
+      }
+    end)
+
+    it("delete the last line of a buffer with two lines", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB"})
+
+      command "2delete"
+      check_events {
+        { "test1", "bytes", 1, 3, 1, 0, 4, 1, 0, 4, 0, 0, 0 };
+      }
+    end)
+
+    it(":sort lines", function()
+      local check_events = setup_eventcheck(verify, {"CCC", "BBB", "AAA"})
+
+      command "%sort"
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 3, 0, 12 };
+      }
+    end)
+
+    it("handles already sorted lines", function()
+      local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+      command "%sort"
+      check_events { }
+    end)
+
+    it("works with accepting spell suggestions", function()
+      local check_events = setup_eventcheck(verify, {"hallo"})
+
+      feed("gg0z=4<cr><cr>") -- accepts 'Hello'
+      check_events {
+        { "test1", "bytes", 1, 3, 0, 0, 0, 0, 2, 2, 0, 2, 2 };
+      }
+    end)
+
+    local function test_lockmarks(mode)
+      local description = (mode ~= "") and mode or "(baseline)"
+      it("test_lockmarks " .. description .. " %delete _", function()
+        local check_events = setup_eventcheck(verify, {"AAA", "BBB", "CCC"})
+
+        command(mode .. " %delete _")
+        check_events {
+          { "test1", "bytes", 1, 3, 0, 0, 0, 3, 0, 12, 1, 0, 1 };
+        }
+      end)
+
+      it("test_lockmarks " .. description .. " append()", function()
+        local check_events = setup_eventcheck(verify)
+
+        command(mode .. " call append(0, 'CCC')")
+        check_events {
+          { "test1", "bytes", 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 4 };
+        }
+
+        command(mode .. " call append(1, 'BBBB')")
+        check_events {
+          { "test1", "bytes", 1, 3, 1, 0, 4, 0, 0, 0, 1, 0, 5 };
+        }
+
+        command(mode .. " call append(2, '')")
+        check_events {
+          { "test1", "bytes", 1, 4, 2, 0, 9, 0, 0, 0, 1, 0, 1 };
+        }
+
+        command(mode .. " $delete _")
+        check_events {
+          { "test1", "bytes", 1, 5, 3, 0, 10, 1, 0, 1, 0, 0, 0 };
+        }
+
+        eq("CCC|BBBB|", table.concat(meths.buf_get_lines(0, 0, -1, true), "|"))
+      end)
+    end
+
+    -- check that behavior is identical with and without "lockmarks"
+    test_lockmarks ""
+    test_lockmarks "lockmarks"
+
     teardown(function()
       os.remove "Xtest-reload"
+      os.remove "Xtest-undofile"
+      os.remove ".Xtest-undofile.un~"
     end)
   end
 

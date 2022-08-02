@@ -16,6 +16,7 @@ func Screenline(lnum)
   return matchstr(line, '^.\{-}\ze\s*$')
 endfunc
 
+" Get text on the screen, including composing characters.
 " ScreenLines(lnum, width) or
 " ScreenLines([start, end], width)
 function! ScreenLines(lnum, width) abort
@@ -29,7 +30,7 @@ function! ScreenLines(lnum, width) abort
   endif
   let lines = []
   for l in range(start, end)
-    let lines += [join(map(range(1, a:width), 'nr2char(screenchar(l, v:val))'), '')]
+    let lines += [join(map(range(1, a:width), 'screenstring(l, v:val)'), '')]
   endfor
   return lines
 endfunction

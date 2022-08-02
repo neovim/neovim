@@ -8,7 +8,7 @@ WEBHOOK_PAYLOAD="$(cat "${SNAP_DIR}/.snapcraft_payload")"
 PAYLOAD_SIG="${SECRET_SNAP_SIG}"
 
 
-snap_realease_needed() {
+snap_release_needed() {
   last_committed_tag="$(git tag -l --sort=refname|head -1)"
   last_snap_release="$(snap info nvim | awk '$1 == "latest/edge:" { print $2 }' | perl -lpe 's/v\d.\d.\d-//g')"
   git fetch -f --tags
@@ -24,7 +24,7 @@ snap_realease_needed() {
 
 trigger_snapcraft_webhook() {
   [[ -n "${PAYLOAD_SIG}" ]] || exit
-  echo "Triggering new snap relase via webhook..."
+  echo "Triggering new snap release via webhook..."
   curl -X POST \
     -H "Content-Type: application/json" \
     -H "X-Hub-Signature: sha1=${PAYLOAD_SIG}" \
@@ -33,7 +33,7 @@ trigger_snapcraft_webhook() {
 }
 
 
-if $(snap_realease_needed); then
+if $(snap_release_needed); then
   echo "New snap release required"
   trigger_snapcraft_webhook
 fi

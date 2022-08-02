@@ -10,6 +10,7 @@
 " 20190923 - Fix xmlEndTag to match xmlTag (vim/vim#884)
 " 20190924 - Fix xmlAttribute property (amadeus/vim-xml@d8ce1c946)
 " 20191103 - Enable spell checking globally
+" 20210428 - Improve syntax synchronizing
 
 " CONFIGURATION:
 "   syntax folding can be turned on by
@@ -302,9 +303,12 @@ unlet b:current_syntax
 
 
 " synchronizing
-" TODO !!! to be improved !!!
 
-syn sync match xmlSyncDT grouphere  xmlDocType +\_.\(<!DOCTYPE\)\@=+
+syn sync match xmlSyncComment grouphere xmlComment +<!--+
+syn sync match xmlSyncComment groupthere NONE +-->+
+
+" The following is slow on large documents (and the doctype is optional
+" syn sync match xmlSyncDT grouphere  xmlDocType +\_.\(<!DOCTYPE\)\@=+
 " syn sync match xmlSyncDT groupthere  NONE       +]>+
 
 if exists('g:xml_syntax_folding')
@@ -313,7 +317,7 @@ if exists('g:xml_syntax_folding')
     syn sync match xmlSync groupthere  xmlRegion  +</[^ /!?<>"']\+>+
 endif
 
-syn sync minlines=100
+syn sync minlines=100 maxlines=200
 
 
 " The default highlighting.
@@ -354,4 +358,4 @@ let b:current_syntax = "xml"
 let &cpo = s:xml_cpo_save
 unlet s:xml_cpo_save
 
-" vim: ts=8
+" vim: ts=4

@@ -2,7 +2,7 @@
 " Language:	Haml
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Filenames:	*.haml
-" Last Change:	2016 Aug 29
+" Last Change:	2019 Dec 05
 
 if exists("b:current_syntax")
   finish
@@ -38,7 +38,7 @@ syn match   hamlDespacer "[<>]" contained nextgroup=hamlDespacer,hamlSelfCloser,
 syn match   hamlSelfCloser "/" contained
 syn match   hamlClassChar "\." contained nextgroup=hamlClass
 syn match   hamlIdChar "#{\@!" contained nextgroup=hamlId
-syn match   hamlClass "\%(\w\|-\)\+" contained nextgroup=@hamlComponent
+syn match   hamlClass "\%(\w\|-\|\:\)\+" contained nextgroup=@hamlComponent
 syn match   hamlId    "\%(\w\|-\)\+" contained nextgroup=@hamlComponent
 syn region  hamlDocType start="^\s*!!!" end="$"
 

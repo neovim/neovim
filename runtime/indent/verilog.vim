@@ -76,7 +76,7 @@ function GetVerilogIndent()
     let vverb = 0
   endif
 
-  " Indent accoding to last line
+  " Indent according to last line
   " End of multiple-line comment
   if last_line =~ '\*/\s*$' && last_line !~ '/\*.\{-}\*/'
     let ind = ind - offset_comment1
@@ -219,7 +219,7 @@ function GetVerilogIndent()
 
   endif
 
-  " Return the indention
+  " Return the indentation
   return ind
 endfunction
 

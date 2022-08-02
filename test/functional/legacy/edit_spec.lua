@@ -1,25 +1,26 @@
--- Test for edit functions
--- See also: src/nvim/testdir/test_edit.vim
-
 local helpers = require('test.functional.helpers')(after_each)
-local source = helpers.source
-local eq, eval = helpers.eq, helpers.eval
-local funcs = helpers.funcs
 local clear = helpers.clear
+local command = helpers.command
+local expect = helpers.expect
+local feed = helpers.feed
+local sleep = helpers.sleep
 
-describe('edit', function()
-  before_each(clear)
+before_each(clear)
 
-  it('reset insertmode from i_ctrl-r_=', function()
-    source([=[
-      call setline(1, ['abc'])
-      call cursor(1, 4)
-      call feedkeys(":set im\<cr>ZZZ\<c-r>=setbufvar(1,'&im', 0)\<cr>",'tnix')
-    ]=])
-    eq({'abZZZc'}, funcs.getline(1,'$'))
-    eq({0, 1, 1, 0}, funcs.getpos('.'))
-    eq(0, eval('&im'))
-  end)
-
+-- oldtest: Test_autoindent_remove_indent()
+it('autoindent removes indent when Insert mode is stopped', function()
+  command('set autoindent')
+  -- leaving insert mode in a new line with indent added by autoindent, should
+  -- remove the indent.
+  feed('i<Tab>foo<CR><Esc>')
+  -- Need to delay for sometime, otherwise the code in getchar.c will not be
+  -- exercised.
+  sleep(50)
+  -- when a line is wrapped and the cursor is at the start of the second line,
+  -- leaving insert mode, should move the cursor back to the first line.
+  feed('o' .. ('x'):rep(20) .. '<Esc>')
+  -- Need to delay for sometime, otherwise the code in getchar.c will not be
+  -- exercised.
+  sleep(50)
+  expect('\tfoo\n\n' .. ('x'):rep(20))
 end)
-

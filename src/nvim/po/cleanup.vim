@@ -12,6 +12,10 @@ setl nodiff
 silent g/^#, c-format\n#/.d
 silent g/^#\..*\n#/.d
 
+" c-format comments have no effect, the check.vim scripts checks it.
+" But they might still be useful?
+" silent g/^#, c-format$/d
+
 silent g/^#[:~] /d
 silent g/^#, fuzzy\(, .*\)\=\nmsgid ""\@!/.+1,/^$/-1s/^/#\~ /
 silent g/^msgstr"/s//msgstr "/

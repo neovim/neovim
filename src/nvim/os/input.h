@@ -1,8 +1,8 @@
 #ifndef NVIM_OS_INPUT_H
 #define NVIM_OS_INPUT_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/event/multiqueue.h"

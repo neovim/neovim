@@ -2,12 +2,14 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local Screen = require('test.functional.ui.screen')
 
+local assert_alive = helpers.assert_alive
 local meths = helpers.meths
 local command = helpers.command
 local clear = helpers.clear
 local exc_exec = helpers.exc_exec
 local eval = helpers.eval
 local eq = helpers.eq
+local ok = helpers.ok
 local funcs = helpers.funcs
 local insert = helpers.insert
 local iswin = helpers.iswin
@@ -16,6 +18,7 @@ local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
 local tbl_contains = helpers.tbl_contains
+local expect_exit = helpers.expect_exit
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -162,7 +165,7 @@ describe('startup defaults', function()
   end)
 
   it("'shadafile' ('viminfofile')", function()
-    local env = {XDG_DATA_HOME='Xtest-userdata', XDG_CONFIG_HOME='Xtest-userconfig'}
+    local env = {XDG_DATA_HOME='Xtest-userdata', XDG_STATE_HOME='Xtest-userstate', XDG_CONFIG_HOME='Xtest-userconfig'}
     clear{args={}, args_rm={'-i'}, env=env}
     -- Default 'shadafile' is empty.
     -- This means use the default location. :help shada-file-name
@@ -173,11 +176,11 @@ describe('startup defaults', function()
     command('write')
     local f = eval('fnamemodify(@%,":p")')
     assert(string.len(f) > 3)
-    command('qall')
+    expect_exit(command, 'qall')
     clear{args={}, args_rm={'-i'}, env=env}
     eq({ f }, eval('v:oldfiles'))
     os.remove('Xtest-foo')
-    rmdir('Xtest-userdata')
+    rmdir('Xtest-userstate')
 
     -- Handles viminfo/viminfofile as alias for shada/shadafile.
     eq('\n  shadafile=', eval('execute("set shadafile?")'))
@@ -205,7 +208,7 @@ describe('startup defaults', function()
 
   describe('$NVIM_LOG_FILE', function()
     local xdgdir = 'Xtest-startup-xdg-logpath'
-    local xdgcachedir = xdgdir..'/nvim'
+    local xdgstatedir = iswin() and xdgdir..'/nvim-data' or xdgdir..'/nvim'
     after_each(function()
       os.remove('Xtest-logpath')
       rmdir(xdgdir)
@@ -217,26 +220,26 @@ describe('startup defaults', function()
       }})
       eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
     end)
-    it('defaults to stdpath("cache")/log if empty', function()
-      eq(true, mkdir(xdgdir) and mkdir(xdgcachedir))
+    it('defaults to stdpath("log")/log if empty', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({env={
-        XDG_CACHE_HOME=xdgdir,
+        XDG_STATE_HOME=xdgdir,
         NVIM_LOG_FILE='',  -- Empty is invalid.
       }})
-      eq(xdgcachedir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      eq(xdgstatedir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
-    it('defaults to stdpath("cache")/log if invalid', function()
-      eq(true, mkdir(xdgdir) and mkdir(xdgcachedir))
+    it('defaults to stdpath("log")/log if invalid', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgstatedir))
       clear({env={
-        XDG_CACHE_HOME=xdgdir,
+        XDG_STATE_HOME=xdgdir,
         NVIM_LOG_FILE='.',  -- Any directory is invalid.
       }})
-      eq(xdgcachedir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      eq(xdgstatedir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
   end)
 end)
 
-describe('XDG-based defaults', function()
+describe('XDG defaults', function()
   -- Need separate describe() blocks to not run clear() twice.
   -- Do not put before_each() here for the same reasons.
 
@@ -263,6 +266,7 @@ describe('XDG-based defaults', function()
         XDG_CONFIG_HOME=nil,
         XDG_DATA_HOME=nil,
         XDG_CACHE_HOME=nil,
+        XDG_STATE_HOME=nil,
         XDG_RUNTIME_DIR=nil,
         XDG_CONFIG_DIRS=nil,
         XDG_DATA_DIRS=nil,
@@ -279,6 +283,7 @@ describe('XDG-based defaults', function()
       eq('.', meths.get_option('viewdir'))
       eq('.', meths.get_option('directory'))
       eq('.', meths.get_option('undodir'))
+      ok((funcs.tempname()):len() > 4)
     end)
   end)
 
@@ -292,6 +297,7 @@ describe('XDG-based defaults', function()
 
   local env_sep = iswin() and ';' or ':'
   local data_dir = iswin() and 'nvim-data' or 'nvim'
+  local state_dir = iswin() and 'nvim-data' or 'nvim'
   local root_path = iswin() and 'C:' or ''
 
   describe('with too long XDG variables', function()
@@ -302,6 +308,8 @@ describe('XDG-based defaults', function()
                          .. env_sep.. root_path .. ('/b'):rep(2048)
                          .. (env_sep .. root_path .. '/c'):rep(512)),
         XDG_DATA_HOME=(root_path .. ('/X'):rep(4096)),
+        XDG_RUNTIME_DIR=(root_path .. ('/X'):rep(4096)),
+        XDG_STATE_HOME=(root_path .. ('/X'):rep(4096)),
         XDG_DATA_DIRS=(root_path .. ('/A'):rep(2048)
                        .. env_sep .. root_path .. ('/B'):rep(2048)
                        .. (env_sep .. root_path .. '/C'):rep(512)),
@@ -354,13 +362,13 @@ describe('XDG-based defaults', function()
           .. ',' .. root_path .. ('/a'):rep(2048) .. '/nvim/after'
           .. ',' .. root_path .. ('/x'):rep(4096) .. '/nvim/after'
       ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
-      eq('.,' .. root_path .. ('/X'):rep(4096).. '/' .. data_dir .. '/backup',
+      eq('.,' .. root_path .. ('/X'):rep(4096).. '/' .. state_dir .. '/backup//',
          (meths.get_option('backupdir'):gsub('\\', '/')))
-      eq(root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/swap//',
+      eq(root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/swap//',
          (meths.get_option('directory')):gsub('\\', '/'))
-      eq(root_path .. ('/X'):rep(4096) .. '/' .. data_dir .. '/undo',
+      eq(root_path .. ('/X'):rep(4096) .. '/' .. state_dir .. '/undo//',
          (meths.get_option('undodir')):gsub('\\', '/'))
-      eq(root_path .. ('/X'):rep(4096) .. '/'  ..  data_dir .. '/view',
+      eq(root_path .. ('/X'):rep(4096) .. '/'  ..  state_dir .. '/view//',
          (meths.get_option('viewdir')):gsub('\\', '/'))
     end)
   end)
@@ -371,6 +379,8 @@ describe('XDG-based defaults', function()
         XDG_CONFIG_HOME='$XDG_DATA_HOME',
         XDG_CONFIG_DIRS='$XDG_DATA_DIRS',
         XDG_DATA_HOME='$XDG_CONFIG_HOME',
+        XDG_RUNTIME_DIR='$XDG_RUNTIME_DIR',
+        XDG_STATE_HOME='$XDG_CONFIG_HOME',
         XDG_DATA_DIRS='$XDG_CONFIG_DIRS',
       }})
     end)
@@ -404,13 +414,13 @@ describe('XDG-based defaults', function()
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
       ):gsub('\\', '/')), (meths.get_option('runtimepath')):gsub('\\', '/'))
-      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup'),
+      eq(('.,$XDG_CONFIG_HOME/' .. state_dir .. '/backup//'),
           meths.get_option('backupdir'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/swap//'),
+      eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/swap//'),
           meths.get_option('directory'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo'),
+      eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/undo//'),
           meths.get_option('undodir'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view'),
+      eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
           meths.get_option('viewdir'):gsub('\\', '/'))
       meths.command('set all&')
       eq(('$XDG_DATA_HOME/nvim'
@@ -424,14 +434,15 @@ describe('XDG-based defaults', function()
           .. ',$XDG_DATA_DIRS/nvim/after'
           .. ',$XDG_DATA_HOME/nvim/after'
       ):gsub('\\', '/'), (meths.get_option('runtimepath')):gsub('\\', '/'))
-      eq(('.,$XDG_CONFIG_HOME/' .. data_dir .. '/backup'),
+      eq(('.,$XDG_CONFIG_HOME/' .. state_dir .. '/backup//'),
           meths.get_option('backupdir'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/swap//'),
+      eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/swap//'),
           meths.get_option('directory'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/undo'),
+      eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/undo//'),
           meths.get_option('undodir'):gsub('\\', '/'))
-      eq(('$XDG_CONFIG_HOME/' .. data_dir .. '/view'),
+      eq(('$XDG_CONFIG_HOME/' .. state_dir .. '/view//'),
           meths.get_option('viewdir'):gsub('\\', '/'))
+      eq(nil, (funcs.tempname()):match('XDG_RUNTIME_DIR'))
     end)
   end)
 
@@ -441,6 +452,7 @@ describe('XDG-based defaults', function()
         XDG_CONFIG_HOME=', , ,',
         XDG_CONFIG_DIRS=',-,-,' .. env_sep .. '-,-,-',
         XDG_DATA_HOME=',=,=,',
+        XDG_STATE_HOME=',=,=,',
         XDG_DATA_DIRS=',≡,≡,' .. env_sep .. '≡,≡,≡',
       }})
     end)
@@ -483,13 +495,13 @@ describe('XDG-based defaults', function()
           .. ',\\,-\\,-\\,' .. path_sep ..'nvim' .. path_sep ..'after'
           .. ',\\, \\, \\,' .. path_sep ..'nvim' .. path_sep ..'after'
       ), meths.get_option('runtimepath'))
-      eq('.,\\,=\\,=\\,' .. path_sep .. data_dir .. '' .. path_sep ..'backup',
+      eq('.,\\,=\\,=\\,' .. path_sep .. state_dir .. '' .. path_sep ..'backup' .. (path_sep):rep(2),
           meths.get_option('backupdir'))
-      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'swap' .. (path_sep):rep(2),
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. state_dir .. '' .. path_sep ..'swap' .. (path_sep):rep(2),
           meths.get_option('directory'))
-      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'undo',
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. state_dir .. '' .. path_sep ..'undo' .. (path_sep):rep(2),
           meths.get_option('undodir'))
-      eq('\\,=\\,=\\,' .. path_sep ..'' .. data_dir .. '' .. path_sep ..'view',
+      eq('\\,=\\,=\\,' .. path_sep ..'' .. state_dir .. '' .. path_sep ..'view' .. (path_sep):rep(2),
           meths.get_option('viewdir'))
     end)
   end)
@@ -498,8 +510,9 @@ end)
 
 describe('stdpath()', function()
   -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
-  -- due to XDG_CONFIG_HOME and XDG_DATA_HOME being the same.
+  -- due to XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_STATE_HOME being the same.
   local datadir = iswin() and 'nvim-data' or 'nvim'
+  local statedir = iswin() and 'nvim-data' or 'nvim'
   local env_sep = iswin() and ';' or ':'
 
   it('acceptance', function()
@@ -508,10 +521,11 @@ describe('stdpath()', function()
     eq('nvim', funcs.fnamemodify(funcs.stdpath('cache'), ':t'))
     eq('nvim', funcs.fnamemodify(funcs.stdpath('config'), ':t'))
     eq(datadir, funcs.fnamemodify(funcs.stdpath('data'), ':t'))
+    eq(statedir, funcs.fnamemodify(funcs.stdpath('state'), ':t'))
     eq('table', type(funcs.stdpath('config_dirs')))
     eq('table', type(funcs.stdpath('data_dirs')))
-    -- Check for crash. #8393
-    eq(2, eval('1+1'))
+    eq('string', type(funcs.stdpath('run')))
+    assert_alive()  -- Check for crash. #8393
   end)
 
   context('returns a String', function()
@@ -579,6 +593,39 @@ describe('stdpath()', function()
           XDG_DATA_HOME=alter_slashes('~/frobnitz'),
         }})
         eq(alter_slashes('~/frobnitz/'..datadir), funcs.stdpath('data'))
+      end)
+    end)
+
+    describe('with "state"' , function ()
+      it('knows XDG_STATE_HOME', function()
+        clear({env={
+          XDG_STATE_HOME=alter_slashes('/home/docwhat/.local'),
+        }})
+        eq(alter_slashes('/home/docwhat/.local/'..statedir), funcs.stdpath('state'))
+      end)
+
+      it('handles changes during runtime', function()
+        clear({env={
+          XDG_STATE_HOME=alter_slashes('/home/original'),
+        }})
+        eq(alter_slashes('/home/original/'..statedir), funcs.stdpath('state'))
+        command("let $XDG_STATE_HOME='"..alter_slashes('/home/new').."'")
+        eq(alter_slashes('/home/new/'..statedir), funcs.stdpath('state'))
+      end)
+
+      it("doesn't expand $VARIABLES", function()
+        clear({env={
+          XDG_STATE_HOME='$VARIABLES',
+          VARIABLES='this-should-not-happen',
+        }})
+        eq(alter_slashes('$VARIABLES/'..statedir), funcs.stdpath('state'))
+      end)
+
+      it("doesn't expand ~/", function()
+        clear({env={
+          XDG_STATE_HOME=alter_slashes('~/frobnitz'),
+        }})
+        eq(alter_slashes('~/frobnitz/'..statedir), funcs.stdpath('state'))
       end)
     end)
 

@@ -108,6 +108,58 @@ and right scroll margins as well.  If Nvim detects that the terminal is Xterm,
 it will make use of this ability to speed up scrolling that is not the full
 width of the terminal.
 
+							*tui-input*
+Nvim uses libtermkey to convert terminal escape sequences to key codes.
+|terminfo| is used first, and CSI sequences not in |terminfo| (including
+extended keys a.k.a. modifyOtherKeys or "CSI u") can also be parsed.
+For example, when running Nvim in tmux, this makes Nvim leave Insert mode and
+go to the window below: >
+	tmux send-keys 'Escape' [ 2 7 u 'C-W' j
+Where `'Escape' [ 2 7 u` is an unambiguous "CSI u" sequence for the <Esc> key.
+
+The kitty keyboard protocol https://sw.kovidgoyal.net/kitty/keyboard-protocol/
+is partially supported, including keypad keys in Unicode Private Use Area.
+For example, this sequence is recognized by Nvim as <C-kEnter>: >
+	CSI 57414 ; 5 u
+and can be used differently from <C-CR> in mappings.
+
+						*tui-modifyOtherKeys* *tui-csiu*
+Historically, terminal emulators could not distinguish between certain control
+key modifiers and other keys. For example, <C-I> and <Tab> are represented the
+same way, as are <Esc> and <C-[>, <CR> and <C-M>, and <NL> and <C-J>. This
+meant that Nvim also could not map these keys separately.
+
+Modern terminal emulators are able to distinguish between these pairs of keys
+by encoding control modifiers differently. There are two common but distinct
+ways of doing this, known as "modifyOtherKeys" and "CSI u". Nvim supports both
+encoding methods and at startup will tell the terminal emulator that it
+understands these key encodings. If your terminal emulator supports it then
+this will allow you to map the key pairs listed above separately.
+
+At startup Nvim will query your terminal to see if it supports the CSI u
+encoding by writing the sequence >
+
+	CSI ? u CSI c
+
+If your terminal emulator responds with >
+
+	CSI ? <flags> u
+
+this means your terminal supports the CSI u encoding and Nvim will tell your
+terminal to enable it by writing the sequence >
+
+	CSI > 1 u
+
+If your terminal does not support CSI u then Nvim will instead enable the
+"modifyOtherKeys" encoding by writing the sequence >
+
+	CSI > 4 ; 2 m
+
+When Nvim exits cleanly it will send the corresponding sequence to disable the
+special key encoding. If Nvim does not exit cleanly then your terminal
+emulator could be in a bad state. If this happens, simply run "reset".
+
+
 							*tui-colors*
 Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
 including "linux" (whose virtual terminals have had 256-colour support since
@@ -133,7 +185,7 @@ capabilities as if they had been in the terminfo definition.
 
 If terminfo does not (yet) have this flag, Nvim will fall back to $TERM and
 other environment variables.  It will add constructed "setrgbf" and "setrgbb"
-capabilities in the case of the the "rxvt", "linux", "st", "tmux", and "iterm"
+capabilities in the case of the "rxvt", "linux", "st", "tmux", and "iterm"
 terminal types, or when Konsole, genuine Xterm, a libvte terminal emulator
 version 0.36 or later, or a terminal emulator that sets the COLORTERM
 environment variable to "truecolor" is detected.
@@ -289,7 +341,7 @@ border, the text is scrolled.
 A selection can be started by pressing the left mouse button on the first
 character, moving the mouse to the last character, then releasing the mouse
 button.  You will not always see the selection until you release the button,
-only in some versions (GUI, Windows) will the dragging be shown immediately.
+only in some versions (GUI, Win32) will the dragging be shown immediately.
 Note that you can make the text scroll by moving the mouse at least one
 character in the first/last line in the window when 'scrolloff' is non-zero.
 
@@ -306,7 +358,7 @@ alt key is pressed (it may move the window).
 
 							*double-click*
 Double, triple and quadruple clicks are supported when the GUI is active, for
-Windows and for an xterm.  For selecting text, extra clicks extend the
+Win32 and for an xterm.  For selecting text, extra clicks extend the
 selection:
 	click		select ~
 	double		word or % match		*<2-LeftMouse>*
@@ -318,11 +370,10 @@ A double click on a word selects that word.  'iskeyword' is used to specify
 which characters are included in a word.  A double click on a character
 that has a match selects until that match (like using "v%").  If the match is
 an #if/#else/#endif block, the selection becomes linewise.
-For MS-DOS and xterm the time for double clicking can be set with the
-'mousetime' option.  For the other systems this time is defined outside of
-Vim.
+For MS-Windows and xterm the time for double clicking can be set with the
+'mousetime' option. For the other systems this time is defined outside of Vim.
 An example, for using a double click to jump to the tag under the cursor: >
-	:map <2-LeftMouse> :exe "tag ". expand("<cword>")<CR>
+	:map <2-LeftMouse> :exe "tag " .. expand("<cword>")<CR>
 
 Dragging the mouse with a double click (button-down, button-up, button-down
 and then drag) will result in whole words to be selected.  This continues

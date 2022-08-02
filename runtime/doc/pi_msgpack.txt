@@ -68,7 +68,7 @@ msgpack#strftime({format}, {msgpack-integer})		*msgpack#strftime()*
 
 							*msgpack#strptime*
 msgpack#strptime({format}, {time})			*msgpack#strptime()*
-	Reverse of |msgpack#strptime()|: for any time and format 
+	Reverse of |msgpack#strftime()|: for any time and format 
 	|msgpack#equal|( |msgpack#strptime|(format, |msgpack#strftime|(format, 
 	time)), time) be true.  Requires |+python| or |+python3|, without it 
 	only supports non-|msgpack-special-dict| nonnegative times and format 
@@ -88,7 +88,7 @@ msgpack#type({msgpack-value})				*msgpack#type()*
 	Returns name of the key in |v:msgpack_types| that represents 
 	{msgpack-value} type.  Never returns zero: this function returns 
 	msgpack type which will be dumped by |msgpackdump()| should it receive 
-	a list with singe {msgpack-value} as input.
+	a list with single {msgpack-value} as input.
 
 msgpack#deepcopy({msgpack-value})			*msgpack#deepcopy()*
 	Like |deepcopy()|, but works correctly with |msgpack-special-dict| 

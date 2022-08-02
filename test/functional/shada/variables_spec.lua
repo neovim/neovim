@@ -1,7 +1,8 @@
 -- ShaDa variables saving/reading support
 local helpers = require('test.functional.helpers')(after_each)
-local meths, funcs, nvim_command, eq =
-  helpers.meths, helpers.funcs, helpers.command, helpers.eq
+local meths, funcs, nvim_command, eq, eval =
+  helpers.meths, helpers.funcs, helpers.command, helpers.eq, helpers.eval
+local expect_exit = helpers.expect_exit
 
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
@@ -30,10 +31,12 @@ describe('ShaDa support code', function()
       else
         meths.set_var(varname, varval)
       end
+      local vartype = eval('type(g:' .. varname .. ')')
       -- Exit during `reset` is not a regular exit: it does not write shada
       -- automatically
-      nvim_command('qall')
+      expect_exit(nvim_command, 'qall')
       reset('set shada+=!')
+      eq(vartype, eval('type(g:' .. varname .. ')'))
       eq(varval, meths.get_var(varname))
     end)
   end
@@ -47,6 +50,8 @@ describe('ShaDa support code', function()
   autotest('false', 'FALSEVAR', false)
   autotest('null', 'NULLVAR', 'v:null', true)
   autotest('ext', 'EXTVAR', '{"_TYPE": v:msgpack_types.ext, "_VAL": [2, ["", ""]]}', true)
+  autotest('blob', 'BLOBVAR', '0z12ab34cd', true)
+  autotest('blob (with NULs)', 'BLOBVARNULS', '0z004e554c7300', true)
 
   it('does not read back variables without `!` in &shada', function()
     meths.set_var('STRVAR', 'foo')
@@ -94,7 +99,7 @@ describe('ShaDa support code', function()
     meths.set_var('LSTVAR', {'«'})
     meths.set_var('DCTVAR', {['«']='«'})
     meths.set_var('NESTEDVAR', {['«']={{'«'}, {['«']='«'}, {a='Test'}}})
-    nvim_command('qall')
+    expect_exit(nvim_command, 'qall')
     reset()
     eq('«', meths.get_var('STRVAR'))
     eq({'«'}, meths.get_var('LSTVAR'))
@@ -112,7 +117,7 @@ describe('ShaDa support code', function()
     meths.set_var('DCTVAR', {['«\171']='«\171'})
     meths.set_var('NESTEDVAR', {['\171']={{'\171«'}, {['\171']='\171'},
                                 {a='Test'}}})
-    nvim_command('qall')
+    expect_exit(nvim_command, 'qall')
     reset()
     eq('\171', meths.get_var('STRVAR'))
     eq({'\171'}, meths.get_var('LSTVAR'))

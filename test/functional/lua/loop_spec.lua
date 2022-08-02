@@ -84,14 +84,14 @@ describe('vim.loop', function()
 
     screen:expect([[
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
       {2:                                                  }|
       {3:Error executing luv callback:}                     |
       {3:[string "<nvim>"]:5: E5560: nvim_set_var must not }|
       {3:be called in a lua loop callback}                  |
+      {3:stack traceback:}                                  |
+      {3:        [C]: in function 'nvim_set_var'}           |
+      {3:        [string "<nvim>"]:5: in function <[string }|
+      {3:"<nvim>"]:2>}                                      |
       {4:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')

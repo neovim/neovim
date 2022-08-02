@@ -1,6 +1,7 @@
 " Tests for the swap feature
 
 source check.vim
+source shared.vim
 
 func s:swapname()
   return trim(execute('swapname'))
@@ -113,7 +114,7 @@ func Test_swapinfo()
   w
   let fname = s:swapname()
   call assert_match('Xswapinfo', fname)
-  let info = swapinfo(fname)
+  let info = fname->swapinfo()
 
   let ver = printf('VIM %d.%d', v:version / 100, v:version % 100)
   call assert_equal(ver, info.version)
@@ -155,7 +156,7 @@ func Test_swapname()
   let buf = bufnr('%')
   let expected = s:swapname()
   wincmd p
-  call assert_equal(expected, swapname(buf))
+  call assert_equal(expected, buf->swapname())
 
   new Xtest3
   setlocal noswapfile
@@ -168,7 +169,6 @@ func Test_swapname()
 endfunc
 
 func Test_swapfile_delete()
-  throw 'skipped: need the "blob" feature for this test'
   autocmd! SwapExists
   function s:swap_exists()
     let v:swapchoice = s:swap_choice
@@ -199,14 +199,17 @@ func Test_swapfile_delete()
   quit
   call assert_equal(fnamemodify(swapfile_name, ':t'), fnamemodify(s:swapname, ':t'))
 
-  " Write the swapfile with a modified PID, now it will be automatically
-  " deleted. Process one should never be Vim.
-  let swapfile_bytes[24:27] = 0z01000000
-  call writefile(swapfile_bytes, swapfile_name)
-  let s:swapname = ''
-  split XswapfileText
-  quit
-  call assert_equal('', s:swapname)
+  " This test won't work as root because root can successfully run kill(1, 0)
+  if !IsRoot()
+    " Write the swapfile with a modified PID, now it will be automatically
+    " deleted. Process one should never be Vim.
+    let swapfile_bytes[24:27] = 0z01000000
+    call writefile(swapfile_bytes, swapfile_name)
+    let s:swapname = ''
+    split XswapfileText
+    quit
+    call assert_equal('', s:swapname)
+  endif
 
   " Now set the modified flag, the swap file will not be deleted
   let swapfile_bytes[28 + 80 + 899] = 0x55
@@ -275,7 +278,6 @@ func Test_swap_recover_ext()
     autocmd SwapExists * let v:swapchoice = 'r'
   augroup END
 
-
   " Create a valid swapfile by editing a file with a special extension.
   split Xtest.scr
   call setline(1, ['one', 'two', 'three'])
@@ -308,6 +310,46 @@ func Test_swap_recover_ext()
   augroup! test_swap_recover_ext
 endfunc
 
+" Test for closing a split window automatically when a swap file is detected
+" and 'Q' is selected in the confirmation prompt.
+func Test_swap_split_win()
+  autocmd! SwapExists
+  augroup test_swap_splitwin
+    autocmd!
+    autocmd SwapExists * let v:swapchoice = 'q'
+  augroup END
+
+  " Create a valid swapfile by editing a file with a special extension.
+  split Xtest.scr
+  call setline(1, ['one', 'two', 'three'])
+  write  " file is written, not modified
+  write  " write again to make sure the swapfile is created
+  " read the swapfile as a Blob
+  let swapfile_name = swapname('%')
+  let swapfile_bytes = readfile(swapfile_name, 'B')
+
+  " Close and delete the file and recreate the swap file.
+  quit
+  call delete('Xtest.scr')
+  call writefile(swapfile_bytes, swapfile_name)
+  " Split edit the file again. This should fail to open the window
+  try
+    split Xtest.scr
+  catch
+    " E308 should be caught, not E306.
+    call assert_exception('E308:')  " Original file may have been changed
+  endtry
+  call assert_equal(1, winnr('$'))
+
+  call delete('Xtest.scr')
+  call delete(swapfile_name)
+
+  augroup test_swap_splitwin
+      autocmd!
+  augroup END
+  augroup! test_swap_splitwin
+endfunc
+
 " Test for selecting 'q' in the attention prompt
 func Test_swap_prompt_splitwin()
   CheckRunVimInTerminal
@@ -319,6 +361,7 @@ func Test_swap_prompt_splitwin()
   let buf = RunVimInTerminal('', {'rows': 20})
   call term_sendkeys(buf, ":set nomore\n")
   call term_sendkeys(buf, ":set noruler\n")
+
   call term_sendkeys(buf, ":split Xfile1\n")
   call term_wait(buf)
   call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: $', term_getline(buf, 20))})
@@ -330,8 +373,19 @@ func Test_swap_prompt_splitwin()
   call term_wait(buf)
   call WaitForAssert({-> assert_match('^1$', term_getline(buf, 20))})
   call StopVimInTerminal(buf)
+
+  " This caused Vim to crash when typing "q".
+  " TODO: it does not actually reproduce the crash.
+  call writefile(['au BufAdd * set virtualedit=all'], 'Xvimrc')
+
+  let buf = RunVimInTerminal('-u Xvimrc Xfile1', {'rows': 20, 'wait_for_ruler': 0})
+  call TermWait(buf)
+  call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort:', term_getline(buf, 20))})
+  call term_sendkeys(buf, "q")
+
   %bwipe!
   call delete('Xfile1')
+  call delete('Xvimrc')
 endfunc
 
 func Test_swap_symlink()
@@ -362,6 +416,10 @@ func Test_swap_symlink()
   call delete('Xtestfile')
   call delete('Xtestlink')
   call delete('Xswapdir', 'rf')
+endfunc
+
+func Test_no_swap_file()
+  call assert_equal("\nNo swap file", execute('swapname'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

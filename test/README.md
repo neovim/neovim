@@ -38,7 +38,7 @@ Layout
 - `/test/functional` : functional tests
 - `/test/unit` : unit tests
 - `/test/config` : contains `*.in` files which are transformed into `*.lua`
-  files using `configure_file` CMake command: this is for acessing CMake
+  files using `configure_file` CMake command: this is for accessing CMake
   variables in lua tests.
 - `/test/includes` : include-files for use by luajit `ffi.cdef` C definitions
   parser: normally used to make macros not accessible via this mechanism
@@ -91,32 +91,40 @@ or:
 Debugging tests
 ---------------
 
+- Each test gets a test id which looks like "T123". This also appears in the
+  log file. Child processes spawned from a test appear in the logs with the
+  *parent* name followed by "/c". Example:
+  ```
+    DBG 2022-06-15T18:37:45.226 T57.58016.0   UI: flush
+    DBG 2022-06-15T18:37:45.226 T57.58016.0   inbuf_poll:442: blocking... events_enabled=0 events_pending=0
+    DBG 2022-06-15T18:37:45.227 T57.58016.0/c UI: stop
+    INF 2022-06-15T18:37:45.227 T57.58016.0/c os_exit:595: Nvim exit: 0
+    DBG 2022-06-15T18:37:45.229 T57.58016.0   read_cb:118: closing Stream (0x7fd5d700ea18): EOF (end of file)
+    INF 2022-06-15T18:37:45.229 T57.58016.0   on_process_exit:400: exited: pid=58017 status=0 stoptime=0
+  ```
 - You can set `$GDB` to [run tests under gdbserver](https://github.com/neovim/neovim/pull/1527).
   And if `$VALGRIND` is set it will pass `--vgdb=yes` to valgrind instead of
   starting gdbserver directly.
-- Hanging tests often happen due to unexpected `:h press-enter` prompts. The
+- Hanging tests can happen due to unexpected "press-enter" prompts. The
   default screen width is 50 columns. Commands that try to print lines longer
   than 50 columns in the command-line, e.g. `:edit very...long...path`, will
-  trigger the prompt. In this case, a shorter path or `:silent edit` should be
-  used.
+  trigger the prompt. Try using a shorter path, or `:silent edit`.
 - If you can't figure out what is going on, try to visualize the screen. Put
   this at the beginning of your test:
-
-    ```lua
-    local Screen = require('test.functional.ui.screen')
-    local screen = Screen.new()
-    screen:attach()
-    ```
-
-  Afterwards, put `screen:snapshot_util()` at any position in your test. See the
-  comment at the top of `test/functional/ui/screen.lua` for more.
+  ```lua
+  local Screen = require('test.functional.ui.screen')
+  local screen = Screen.new()
+  screen:attach()
+  ```
+  Then put `screen:snapshot_util()` anywhere in your test. See the comments in
+  `test/functional/ui/screen.lua` for more info.
 
 Filtering Tests
 ---------------
 
 ### Filter by name
 
-Another filter method is by setting a pattern of test name to `TEST_FILTER`.
+Another filter method is by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
 
 ``` lua
 it('foo api',function()
@@ -130,6 +138,10 @@ end)
 To run only test with filter name:
 
     TEST_FILTER='foo.*api' make functionaltest
+
+To run all tests except ones matching a filter:
+
+    TEST_FILTER_OUT='foo.*api' make functionaltest
 
 ### Filter by file
 
@@ -193,7 +205,7 @@ Guidelines
   (success + fail + error + pending) is the same in all environments.
     - *Note:* `pending()` is ignored if it is missing an argument, unless it is
       [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
-      Provide empty function argument if the `pending()` call is outside of `it()`
+      Provide empty function argument if the `pending()` call is outside `it()`
       ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
 - Really long `source([=[...]=])` blocks may break Vim's Lua syntax
   highlighting. Try `:syntax sync fromstart` to fix it.
@@ -243,11 +255,16 @@ Number; !must be defined to function properly):
 
 - `BUSTED_ARGS` (F) (U): arguments forwarded to `busted`.
 
+- `CC` (U) (S): specifies which C compiler to use to preprocess files.
+  Currently only compilers with gcc-compatible arguments are supported.
+
 - `GDB` (F) (D): makes nvim instances to be run under `gdbserver`. It will be
   accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote
   :7777` inside.
 
 - `GDBSERVER_PORT` (F) (I): overrides port used for `GDB`.
+
+- `LOG_DIR` (FU) (S!): specifies where to seek for valgrind and ASAN log files.
 
 - `VALGRIND` (F) (D): makes nvim instances to be run under `valgrind`. Log
   files are named `valgrind-%p.log` in this case. Note that non-empty valgrind
@@ -256,13 +273,16 @@ Number; !must be defined to function properly):
 
 - `VALGRIND_LOG` (F) (S): overrides valgrind log file name used for `VALGRIND`.
 
+- `TEST_COLORS` (F) (U) (D): enable pretty colors in test runner.
+
 - `TEST_SKIP_FRAGILE` (F) (D): makes test suite skip some fragile tests.
 
-- `NVIM_PROG`, `NVIM_PRG` (F) (S): override path to Neovim executable (default
-  to `build/bin/nvim`).
+- `TEST_TIMEOUT` (FU) (I): specifies maximum time, in seconds, before the test
+  suite run is killed
 
-- `CC` (U) (S): specifies which C compiler to use to preprocess files.
-  Currently only compilers with gcc-compatible arguments are supported.
+- `NVIM_LUA_NOTRACK` (F) (D): disable reference counting of Lua objects
+
+- `NVIM_PRG` (F) (S): path to Nvim executable (default: `build/bin/nvim`).
 
 - `NVIM_TEST_MAIN_CDEFS` (U) (1): makes `ffi.cdef` run in main process. This
   raises a possibility of bugs due to conflicts in header definitions, despite
@@ -283,8 +303,6 @@ Number; !must be defined to function properly):
 
 - `NVIM_TEST_RUN_FAILING_TESTS` (U) (1): makes `itp` run tests which are known
   to fail (marked by setting third argument to `true`).
-
-- `LOG_DIR` (FU) (S!): specifies where to seek for valgrind and ASAN log files.
 
 - `NVIM_TEST_CORE_*` (FU) (S): a set of environment variables which specify
   where to search for core files. Are supposed to be defined all at once.

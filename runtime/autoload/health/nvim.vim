@@ -45,7 +45,7 @@ function! s:check_config() abort
   let shadafile = empty(&shada) ? &shada : substitute(matchstr(
         \ split(&shada, ',')[-1], '^n.\+'), '^n', '', '')
   let shadafile = empty(&shadafile) ? empty(shadafile) ?
-        \ stdpath('data').'/shada/main.shada' : expand(shadafile)
+        \ stdpath('state').'/shada/main.shada' : expand(shadafile)
         \ : &shadafile ==# 'NONE' ? '' : &shadafile
   if !empty(shadafile) && empty(glob(shadafile))
     " Since this may be the first time neovim has been run, we will try to
@@ -104,8 +104,8 @@ function! s:check_rplugin_manifest() abort
         if !has_key(existing_rplugins, script)
           let msg = printf('"%s" is not registered.', fnamemodify(path, ':t'))
           if python_version ==# 'pythonx'
-            if !has('python2') && !has('python3')
-              let msg .= ' (python2 and python3 not available)'
+            if !has('python3')
+              let msg .= ' (python3 not available)'
             endif
           elseif !has(python_version)
             let msg .= printf(' (%s not available)', python_version)
@@ -144,18 +144,28 @@ function! s:check_performance() abort
           \ ['Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
           \  s:suggest_faq])
   endif
+
+  " check for slow shell invocation
+  let slow_cmd_time = 1.5
+  let start_time = reltime()
+  call system('echo')
+  let elapsed_time = reltimefloat(reltime(start_time))
+  if elapsed_time > slow_cmd_time
+    call health#report_warn(
+          \ 'Slow shell invocation (took '.printf('%.2f', elapsed_time).' seconds).')
+  endif
 endfunction
 
 function! s:get_tmux_option(option) abort
   let cmd = 'tmux show-option -qvg '.a:option  " try global scope
-  let out = system(cmd)
+  let out = system(split(cmd))
   let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
   if v:shell_error
     call health#report_error('command failed: '.cmd."\n".out)
     return 'error'
   elseif empty(val)
     let cmd = 'tmux show-option -qvgs '.a:option  " try session scope
-    let out = system(cmd)
+    let out = system(split(cmd))
     let val = substitute(out, '\v(\s|\r|\n)', '', 'g')
     if v:shell_error
       call health#report_error('command failed: '.cmd."\n".out)
@@ -202,11 +212,11 @@ function! s:check_tmux() abort
   " check default-terminal and $TERM
   call health#report_info('$TERM: '.$TERM)
   let cmd = 'tmux show-option -qvg default-terminal'
-  let out = system(cmd)
+  let out = system(split(cmd))
   let tmux_default_term = substitute(out, '\v(\s|\r|\n)', '', 'g')
   if empty(tmux_default_term)
     let cmd = 'tmux show-option -qvgs default-terminal'
-    let out = system(cmd)
+    let out = system(split(cmd))
     let tmux_default_term = substitute(out, '\v(\s|\r|\n)', '', 'g')
   endif
 
@@ -225,7 +235,7 @@ function! s:check_tmux() abort
   endif
 
   " check for RGB capabilities
-  let info = system('tmux server-info')
+  let info = system(['tmux', 'server-info'])
   let has_tc = stridx(info, " Tc: (flag) true") != -1
   let has_rgb = stridx(info, " RGB: (flag) true") != -1
   if !has_tc && !has_rgb
@@ -242,7 +252,7 @@ function! s:check_terminal() abort
   endif
   call health#report_start('terminal')
   let cmd = 'infocmp -L'
-  let out = system(cmd)
+  let out = system(split(cmd))
   let kbs_entry   = matchstr(out, 'key_backspace=[^,[:space:]]*')
   let kdch1_entry = matchstr(out, 'key_dc=[^,[:space:]]*')
 

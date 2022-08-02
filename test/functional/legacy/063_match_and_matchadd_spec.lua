@@ -6,7 +6,7 @@ local Screen = require('test.functional.ui.screen')
 local eval, clear, command = helpers.eval, helpers.clear, helpers.command
 local eq, neq = helpers.eq, helpers.neq
 local insert = helpers.insert
-local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
 
 describe('063: Test for ":match", "matchadd()" and related functions', function()
   setup(clear)
@@ -67,9 +67,7 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
 
     -- matchdelete throws error and returns -1 on failure
     neq(true, pcall(function() eval('matchdelete(42)') end))
-    eq('\nE803: ID not found: 42',
-       redir_exec("let r2 = matchdelete(42)"))
-    eq(-1, eval('r2'))
+    eq('Vim(let):E803: ID not found: 42', pcall_err(command, 'let r2 = matchdelete(42)'))
 
     -- Check that "clearmatches()" clears all matches defined by ":match" and
     -- "matchadd()".
@@ -105,9 +103,8 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     -- Check that "setmatches()" will not add two matches with the same ID. The
     -- expected behaviour (for now) is to add the first match but not the
     -- second and to return -1.
-    eq('\nE801: ID already taken: 1',
-       redir_exec("let r1 = setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}, {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 10, 'id': 1}])"))
-    eq(-1, eval("r1"))
+    eq('Vim(let):E801: ID already taken: 1',
+       pcall_err(command, "let r1 = setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}, {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 10, 'id': 1}])"))
     eq({{group = 'MyGroup1', pattern = 'TODO', priority = 10, id = 1}}, eval('getmatches()'))
 
     -- Check that "setmatches()" returns 0 if successful and otherwise -1.
@@ -116,14 +113,11 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     eq(0,eval("setmatches([])"))
     eq(0,eval("setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}])"))
     command("call clearmatches()")
-    eq('\nE714: List required', redir_exec("let rf1 = setmatches(0)"))
-    eq(-1, eval('rf1'))
-    eq('\nE474: List item 0 is either not a dictionary or an empty one',
-       redir_exec("let rf2 = setmatches([0])"))
-    eq(-1, eval('rf2'))
-    eq('\nE474: List item 0 is missing one of the required keys',
-       redir_exec("let rf3 = setmatches([{'wrong key': 'wrong value'}])"))
-    eq(-1, eval('rf3'))
+    eq('Vim(let):E714: List required', pcall_err(command, 'let rf1 = setmatches(0)'))
+    eq('Vim(let):E474: List item 0 is either not a dictionary or an empty one',
+       pcall_err(command, 'let rf2 = setmatches([0])'))
+    eq('Vim(let):E474: List item 0 is missing one of the required keys',
+       pcall_err(command, "let rf3 = setmatches([{'wrong key': 'wrong value'}])"))
 
     -- Check that "matchaddpos()" positions matches correctly
     insert('abcdefghijklmnopq')

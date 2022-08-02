@@ -1,9 +1,10 @@
 " Vim indent file
-" Language:      Perl 5
+" Language:      Perl
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
-" Homepage:      http://github.com/vim-perl/vim-perl
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2017-01-04
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
+" Last Change:   2021 Sep 24
 
 " Suggestions and improvements by :
 "   Aaron J. Sherman (use syntax for hints)
@@ -34,6 +35,8 @@ setlocal indentkeys+=0=,0),0],0=or,0=and
 if !b:indent_use_syntax
     setlocal indentkeys+=0=EO
 endif
+
+let b:undo_indent = "setl inde< indk<"
 
 let s:cpo_save = &cpo
 set cpo-=C

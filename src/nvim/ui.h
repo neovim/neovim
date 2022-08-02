@@ -1,13 +1,14 @@
 #ifndef NVIM_UI_H
 #define NVIM_UI_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/globals.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/memory.h"
 
 typedef enum {
   kUICmdline = 0,
@@ -46,6 +47,8 @@ enum {
 
 typedef int LineFlags;
 
+EXTERN ArenaMem ui_ext_fixblk INIT(= NULL);
+
 struct ui_t {
   bool rgb;
   bool override;  ///< Force highest-requested UI capabilities.
@@ -70,9 +73,9 @@ struct ui_t {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
+
 # include "ui_events_call.h.generated.h"
 #endif
-
 
 EXTERN MultiQueue *resize_events;
 #endif  // NVIM_UI_H

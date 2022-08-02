@@ -1,12 +1,12 @@
 #ifndef NVIM_MEMFILE_DEFS_H
 #define NVIM_MEMFILE_DEFS_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/types.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 /// A block number.
 ///
@@ -101,7 +101,7 @@ typedef struct memfile {
   blocknr_T mf_neg_count;            /// number of negative blocks numbers
   blocknr_T mf_infile_count;         /// number of pages in the file
   unsigned mf_page_size;             /// number of bytes in a page
-  bool mf_dirty;                      /// TRUE if there are dirty blocks
+  bool mf_dirty;                     /// true if there are dirty blocks
 } memfile_T;
 
 #endif  // NVIM_MEMFILE_DEFS_H

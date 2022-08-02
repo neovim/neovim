@@ -67,7 +67,7 @@ func Test_win_getid()
 
   call win_gotoid(id2)
   call assert_equal("two", expand("%"))
-  call win_gotoid(id4)
+  eval id4->win_gotoid()
   call assert_equal("four", expand("%"))
   call win_gotoid(id1)
   call assert_equal("one", expand("%"))
@@ -75,17 +75,17 @@ func Test_win_getid()
   call assert_equal("five", expand("%"))
 
   call assert_equal(0, win_id2win(9999))
-  call assert_equal(nr5, win_id2win(id5))
+  call assert_equal(nr5, id5->win_id2win())
   call assert_equal(0, win_id2win(id1))
   tabnext
   call assert_equal(nr1, win_id2win(id1))
 
   call assert_equal([0, 0], win_id2tabwin(9999))
-  call assert_equal([1, nr2], win_id2tabwin(id2))
+  call assert_equal([1, nr2], id2->win_id2tabwin())
   call assert_equal([2, nr4], win_id2tabwin(id4))
 
   call assert_equal([], win_findbuf(9999))
-  call assert_equal([id2], win_findbuf(bufnr2))
+  call assert_equal([id2], bufnr2->win_findbuf())
   call win_gotoid(id5)
   split
   call assert_equal(sort([id5, win_getid()]), sort(win_findbuf(bufnr5)))
@@ -98,7 +98,7 @@ func Test_win_getid_curtab()
   tabfirst
   copen
   only
-  call assert_equal(win_getid(1), win_getid(1, 1))
+  call assert_equal(win_getid(1), 1->win_getid( 1))
   tabclose!
 endfunc
 
@@ -120,4 +120,11 @@ func Test_winlayout()
   call assert_equal(['col', [['leaf', w3], ['row', [['leaf', w4], ['leaf', w2]]], ['leaf', w1]]], winlayout())
 
   only!
+
+  let w1 = win_getid()
+  call assert_equal(['leaf', w1], winlayout(1))
+  tabnew
+  let w2 = win_getid()
+  call assert_equal(['leaf', w2], 2->winlayout())
+  tabclose
 endfunc

@@ -1,0 +1,24 @@
+{
+    "runtime.version": "LuaJIT",
+    "diagnostics": {
+        "enable": true,
+        "globals": [
+          "vim",
+          "describe",
+          "pending",
+          "it",
+          "before_each",
+          "after_each",
+          "setup",
+          "teardown"
+        ]
+    },
+    "workspace": {
+        "library": {
+            "runtime/lua": true
+        },
+        "maxPreload": 2000,
+        "preloadFileSize": 1000
+    },
+    "telemetry.enable": false
+}

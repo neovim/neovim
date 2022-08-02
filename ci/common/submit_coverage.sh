@@ -4,7 +4,7 @@
 # Args:
 # $1: Flag(s) for codecov, separated by comma.
 
-set -ex
+set -e
 
 # Change to grandparent dir (POSIXly).
 CDPATH='' cd -P -- "$(dirname -- "$0")/../.." || exit
@@ -18,12 +18,12 @@ if ! [ -f "$codecov_sh" ]; then
   curl --retry 5 --silent --fail -o "$codecov_sh" https://codecov.io/bash
   chmod +x "$codecov_sh"
 
-  python3 -m pip install --quiet --user gcovr
+  python -m pip install --quiet --user gcovr
 fi
 
 (
   cd build
-  python3 -m gcovr --branches --exclude-unreachable-branches --print-summary -j 2 --exclude '.*/auto/.*' --root .. --delete -o ../coverage.xml --xml
+  python -m gcovr --branches --exclude-unreachable-branches --print-summary -j 2 --exclude '.*/auto/.*' --root .. --delete -o ../coverage.xml --xml
 )
 
 # Upload to codecov.

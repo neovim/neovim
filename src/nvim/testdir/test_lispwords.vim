@@ -1,4 +1,5 @@
-" Tests for 'lispwords' settings being global-local
+" Tests for 'lispwords' settings being global-local.
+" And  other lisp indent stuff.
 
 set nocompatible viminfo+=nviminfo
 
@@ -43,6 +44,10 @@ func Test_lisp_indent()
 	      \ ',@body',
 	      \ '(princ "</a>")))'
 	      \ ])
+  call assert_equal(7, lispindent(2))
+  call assert_equal(5, 6->lispindent())
+  call assert_equal(-1, lispindent(-1))
+
   set lisp
   set lispwords&
   let save_copt = &cpoptions
@@ -80,3 +85,14 @@ func Test_lisp_indent()
   let &cpoptions=save_copt
   set nolisp
 endfunc
+
+func Test_lisp_indent_works()
+  " This was reading beyond the end of the line
+  new
+  exe "norm a\tü(\<CR>="
+  set lisp
+  norm ==
+  bwipe!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

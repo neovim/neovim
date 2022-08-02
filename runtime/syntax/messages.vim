@@ -4,6 +4,7 @@
 " Latest Revision:  2008-06-29
 " Changes:          2008-06-29 support for RFC3339 tuimestamps James Vega
 " 		    2016 Jan 19: messagesDate changed by Bram
+" 		    2021 Jan 27: messagesHourRFC3339 changed from #946
 
 if exists("b:current_syntax")
   finish
@@ -26,7 +27,7 @@ syn match   messagesDateRFC3339 contained display '\d\{4}-\d\d-\d\d'
 syn match   messagesRFC3339T    contained display '\cT'
                                 \ nextgroup=messagesHourRFC3339
 
-syn match   messagesHourRFC3339 contained display '\c\d\d:\d\d:\d\d\(\.\d\+\)\=\([+-]\d\d:\d\d\|Z\)'
+syn match   messagesHourRFC3339 contained display '\c\d\d:\d\d:\d\d\(\.\d\+\)\=\([+-]\d\d:\d\d\|Z\)\s*'
                                 \ nextgroup=messagesHost
 
 syn match   messagesHost        contained display '\S*\s*'

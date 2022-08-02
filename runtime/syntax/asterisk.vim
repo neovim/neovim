@@ -19,7 +19,7 @@ syn match       asteriskComment         ";.*" contains=asteriskTodo
 syn match       asteriskContext         "\[.\{-}\]"
 syn match       asteriskExten           "^\s*\zsexten\s*=>\?\s*[^,]\+\ze," contains=asteriskPattern nextgroup=asteriskPriority
 syn match       asteriskExten           "^\s*\zssame\s*=>\?\s*\ze" nextgroup=asteriskPriority
-syn match       asteriskExten           "^\s*\(register\|channel\|ignorepat\|include\|\(no\)\?load\)\s*=>\?"
+syn match       asteriskExten           "^\s*\(register\|channel\|ignorepat\|include\|l\?e\?switch\|\(no\)\?load\)\s*=>\?"
 syn match       asteriskPattern         "_\(\[[[:alnum:]#*\-]\+\]\|[[:alnum:]#*]\)*\.\?" contained
 syn match       asteriskPattern         "[^A-Za-z0-9,]\zs[[:alnum:]#*]\+\ze" contained
 syn match       asteriskApp             ",\zs[a-zA-Z]\+\ze$"
@@ -39,7 +39,7 @@ syn match       asteriskVarLen          "\${_\{0,2}[[:alpha:]][[:alnum:]_]*(.*)}
 syn match       asteriskVarLen          "(\zs[[:alpha:]][[:alnum:]_]*(.\{-})\ze=" contains=asteriskVar,asteriskVarLen,asteriskExp
 syn match       asteriskExp             "\$\[.\{-}\]" contains=asteriskVar,asteriskVarLen,asteriskExp
 syn match       asteriskCodecsPermit    "^\s*\(allow\|disallow\)\s*=\s*.*$" contains=asteriskCodecs
-syn match       asteriskCodecs          "\(g723\|gsm\|ulaw\|alaw\|g726\|adpcm\|slin\|lpc10\|g729\|speex\|ilbc\|all\s*$\)"
+syn match       asteriskCodecs          "\(vp9\|vp8\|h264\|h263p\|h263\|h261\|jpeg\|opus\|g722\|g723\|gsm\|ulaw\|alaw\|g719\|g726\|g726aal2\|siren7\|siren14\|adpcm\|slin\|lpc10\|g729\|speex\|ilbc\|wav\|all\s*$\)"
 syn match       asteriskError           "^\(type\|auth\|permit\|deny\|bindaddr\|host\)\s*=.*$"
 syn match       asteriskType            "^\zstype=\ze\<\(peer\|user\|friend\)\>$" contains=asteriskTypeType
 syn match       asteriskTypeType        "\<\(peer\|user\|friend\)\>" contained

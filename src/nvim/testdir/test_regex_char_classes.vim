@@ -293,3 +293,5 @@ func Test_regex_char_classes()
   enew!
   close
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

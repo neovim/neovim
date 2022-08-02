@@ -11,6 +11,7 @@ local meths = helpers.meths
 local spawn, merge_args = helpers.spawn, helpers.merge_args
 local set_session = helpers.set_session
 local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 
 describe('server -> client', function()
   local cid
@@ -33,7 +34,7 @@ describe('server -> client', function()
 
       call jobstop(ch1)
     ]])
-    eq(2, eval("1+1"))  -- Still alive?
+    assert_alive()
   end)
 
   describe('simple call', function()
@@ -158,7 +159,7 @@ describe('server -> client', function()
           -- do some busywork, so the first request will return
           -- before this one
           for _ = 1, 5 do
-            eq(2, eval("1+1"))
+            assert_alive()
           end
           eq(1, eval('rpcnotify('..cid..', "nested_done")'))
           return 'done!'
@@ -169,7 +170,7 @@ describe('server -> client', function()
         if method == "notification" then
           eq('done!', eval('rpcrequest('..cid..', "nested")'))
         elseif method == "nested_done" then
-          ok(false, 'this should never have been sent')
+          ok(false, 'never sent', 'sent')
         end
       end
 
@@ -180,12 +181,6 @@ describe('server -> client', function()
   end)
 
   describe('recursive (child) nvim client', function()
-    if helpers.isCI('travis') and helpers.is_os('mac') then
-      -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]", function() end)
-      return
-    end
-
     before_each(function()
       command("let vim = rpcstart('"..nvim_prog.."', ['-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile', '--embed', '--headless'])")
       neq(0, eval('vim'))
@@ -277,8 +272,9 @@ describe('server -> client', function()
     local nvim_argv = merge_args(helpers.nvim_argv, {'--headless'})
     local function connect_test(server, mode, address)
       local serverpid = funcs.getpid()
-      local client = spawn(nvim_argv)
-      set_session(client, true)
+      local client = spawn(nvim_argv, false, nil, true)
+      set_session(client)
+
       local clientpid = funcs.getpid()
       neq(serverpid, clientpid)
       local id = funcs.sockconnect(mode, address, {rpc=true})
@@ -287,7 +283,7 @@ describe('server -> client', function()
       funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
       local client_id = funcs.rpcrequest(id, 'nvim_get_api_info')[1]
 
-      set_session(server, true)
+      set_session(server)
       eq(serverpid, funcs.getpid())
       eq('hello', meths.get_current_line())
 
@@ -295,7 +291,7 @@ describe('server -> client', function()
       funcs.rpcrequest(client_id, 'nvim_set_current_line', 'howdy!')
       eq(id, funcs.rpcrequest(client_id, 'nvim_get_api_info')[1])
 
-      set_session(client, true)
+      set_session(client)
       eq(clientpid, funcs.getpid())
       eq('howdy!', meths.get_current_line())
 

@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, nvim, eq = helpers.clear, helpers.nvim, helpers.eq
+local clear, nvim, eq, assert_alive = helpers.clear, helpers.nvim, helpers.eq, helpers.assert_alive
 
 describe('sign', function()
   before_each(clear)
@@ -19,6 +19,13 @@ describe('sign', function()
         eq("--- Signs ---\n", nvim('exec', 'sign place buffer='..buf1, true))
         eq("--- Signs ---\n", nvim('exec', 'sign place buffer='..buf2, true))
       end)
+    end)
+  end)
+
+  describe('define {id}', function()
+    it ('does not leak memory when specifying multiple times the same argument', function()
+      nvim('command', 'sign define Foo culhl=Normal culhl=Normal')
+      assert_alive()
     end)
   end)
 end)

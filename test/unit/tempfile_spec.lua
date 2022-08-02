@@ -24,7 +24,7 @@ describe('tempfile related functions', function()
   end
 
   describe('vim_gettempdir', function()
-    itp('returns path to Neovim own temp directory', function()
+    itp('returns path to Nvim own temp directory', function()
       local dir = vim_gettempdir()
       assert.True(dir ~= nil and dir:len() > 0)
       -- os_file_is_writable returns 2 for a directory which we have rights
@@ -36,9 +36,7 @@ describe('tempfile related functions', function()
     end)
 
     itp('returns the same directory on each call', function()
-      local dir1 = vim_gettempdir()
-      local dir2 = vim_gettempdir()
-      eq(dir1, dir2)
+      eq(vim_gettempdir(), vim_gettempdir())
     end)
   end)
 
@@ -54,12 +52,10 @@ describe('tempfile related functions', function()
     end)
 
     itp('generate different names on each call', function()
-      local fst = vim_tempname()
-      local snd = vim_tempname()
-      neq(fst, snd)
+      neq(vim_tempname(), vim_tempname())
     end)
 
-    itp('generate file name in Neovim own temp directory', function()
+    itp('generate file name in Nvim own temp directory', function()
       local dir = vim_gettempdir()
       local file = vim_tempname()
       eq(string.sub(file, 1, string.len(dir)), dir)

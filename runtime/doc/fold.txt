@@ -497,11 +497,13 @@ Note the use of backslashes to avoid some characters to be interpreted by the
     :function MyFoldText()
     :  let line = getline(v:foldstart)
     :  let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
-    :  return v:folddashes . sub
+    :  return v:folddashes .. sub
     :endfunction
 
 Evaluating 'foldtext' is done in the |sandbox|.  The current window is set to
-the window that displays the line.  Errors are ignored.
+the window that displays the line.
+
+Errors are ignored.  For debugging set the 'debug' option to "throw".
 
 The default value is |foldtext()|.  This returns a reasonable text for most
 types of folding.  If you don't like it, you can specify your own 'foldtext'
@@ -534,6 +536,8 @@ characters below it.  This column stops where the open fold stops.  When folds
 nest, the nested fold is one character right of the fold it's contained in.
 
 A closed fold is indicated with a '+'.
+
+These characters can be changed with the 'fillchars' option.
 
 Where the fold column is too narrow to display all nested folds, digits are
 shown to indicate the nesting level.

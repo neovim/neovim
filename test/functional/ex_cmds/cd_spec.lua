@@ -173,7 +173,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       -- Change tab-local working directory and verify it is different
       command('silent t' .. cmd .. ' ' .. directories.tab)
       eq(globalDir .. pathsep .. directories.tab, cwd())
-      eq(cwd(), tcwd())  -- working directory maches tab directory
+      eq(cwd(), tcwd())  -- working directory matches tab directory
       eq(1, tlwd())
       eq(cwd(), wcwd())  -- still no window-directory
       eq(0, wlwd())
@@ -294,7 +294,16 @@ describe("getcwd()", function ()
     command('set autochdir')
     command('edit ' .. directories.global .. '/foo')
     eq(curdir .. pathsep .. directories.global, cwd())
+    eq(curdir, wcwd())
+    call('mkdir', 'bar')
+    command('edit ' .. 'bar/foo')
+    eq(curdir .. pathsep .. directories.global .. pathsep .. 'bar', cwd())
+    eq(curdir, wcwd())
+    command('lcd ..')
+    eq(curdir .. pathsep .. directories.global, cwd())
+    eq(curdir .. pathsep .. directories.global, wcwd())
+    command('edit')
+    eq(curdir .. pathsep .. directories.global .. pathsep .. 'bar', cwd())
+    eq(curdir .. pathsep .. directories.global, wcwd())
   end)
 end)
-
-

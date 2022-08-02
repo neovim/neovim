@@ -1,12 +1,13 @@
 " Vim indent file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	47
-" Last Change:	2016 Oct. 29
-" Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
+" Version:	(v49) 2022 May 14
+" Maintainer:	Ajit J. Thakkar <thakkar.ajit@gmail.com>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-indent from Vim
 " Credits:
-"  Useful suggestions were made, in chronological order, by:
-"  Albert Oliver Serra, Takuya Fujiwara and Philipp Edelmann.
+"  Version 0.1 was created in September 2000 by Ajit Thakkar.
+"  Since then, useful suggestions and contributions have been made, in order, by:
+"  Albert Oliver Serra, Takuya Fujiwara, Philipp Edelmann, Eisuke Kawashima,
+"  Louis Cochen, and Doug Kearns.
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -16,6 +17,7 @@ let b:did_indent = 1
 
 let s:cposet=&cpoptions
 set cpoptions&vim
+let b:undo_indent = "setl inde< indk<"
 
 setlocal indentkeys+==~end,=~case,=~if,=~else,=~do,=~where,=~elsewhere,=~select
 setlocal indentkeys+==~endif,=~enddo,=~endwhere,=~endselect,=~elseif
@@ -39,10 +41,10 @@ if !exists("b:fortran_fixed_source")
   elseif exists("fortran_fixed_source")
     " User guarantees fixed source form
     let b:fortran_fixed_source = 1
-  elseif expand("%:e") ==? "f\<90\|95\|03\|08\>"
+  elseif expand("%:e") =~? '^f\%(90\|95\|03\|08\)$'
     " Free-form file extension defaults as in Intel ifort, gcc(gfortran), NAG, Pathscale, and Cray compilers
     let b:fortran_fixed_source = 0
-  elseif expand("%:e") ==? "f\|f77\|for"
+  elseif expand("%:e") =~? '^\%(f\|f77\|for\)$'
     " Fixed-form file extension defaults
     let b:fortran_fixed_source = 1
   else
@@ -73,11 +75,15 @@ endif
 if (b:fortran_fixed_source == 1)
   setlocal indentexpr=FortranGetFixedIndent()
   if exists("*FortranGetFixedIndent")
+    let &cpoptions = s:cposet
+    unlet s:cposet
     finish
   endif
 else
   setlocal indentexpr=FortranGetFreeIndent()
   if exists("*FortranGetFreeIndent")
+    let &cpoptions = s:cposet
+    unlet s:cposet
     finish
   endif
 endif
@@ -145,7 +151,7 @@ function FortranGetIndent(lnum)
         \. 'type\|forall\|associate\|enum\|block\)\)\>'
     let ind = ind - shiftwidth()
     " Fix indent for case statement immediately after select
-    if prevstat =~? '\<select\s\+\(case\|type\)\>'
+    if prevstat =~? '\<select\s*\(case\|type\)\>'
       let ind = ind + shiftwidth()
     endif
   endif
@@ -212,7 +218,7 @@ function FortranGetFixedIndent()
   return ind
 endfunction
 
-let &cpoptions=s:cposet
+let &cpoptions = s:cposet
 unlet s:cposet
 
 " vim:sw=2 tw=130

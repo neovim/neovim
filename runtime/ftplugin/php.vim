@@ -1,8 +1,10 @@
 " Vim filetype plugin file
 " Language:	php
-" Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
+"
+" This runtime file is looking for a new maintainer.
+"
+" Former maintainer:	Dan Sharp
 " Last Changed: 20 Jan 2009
-" URL:		http://dwsharp.users.sourceforge.net/vim/ftplugin
 
 if exists("b:did_ftplugin") | finish | endif
 
@@ -71,10 +73,11 @@ exe 'nno <buffer> <silent> ]] /' . escape(s:section, '|') . '/<CR>:nohls<CR>'
 exe 'ono <buffer> <silent> [[ ?' . escape(s:section, '|') . '?<CR>:nohls<CR>'
 exe 'ono <buffer> <silent> ]] /' . escape(s:section, '|') . '/<CR>:nohls<CR>'
 
+setlocal suffixesadd=.php
 setlocal commentstring=/*%s*/
 
 " Undo the stuff we changed.
-let b:undo_ftplugin = "setlocal commentstring< include< omnifunc<" .
+let b:undo_ftplugin = "setlocal suffixesadd< commentstring< include< omnifunc<" .
 	    \	      " | unlet! b:browsefilter b:match_words | " .
 	    \	      s:undo_ftplugin
 

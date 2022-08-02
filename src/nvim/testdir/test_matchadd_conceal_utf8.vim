@@ -1,21 +1,21 @@
 " Test for matchadd() and conceal feature using utf-8.
-if !has('conceal')
-  finish
-endif
 
-function! s:screenline(lnum) abort
+source check.vim
+CheckFeature conceal
+
+func s:screenline(lnum) abort
   let line = []
   for c in range(1, winwidth(0))
-    call add(line, nr2char(screenchar(a:lnum, c)))
+    call add(line, nr2char(a:lnum->screenchar(c)))
   endfor
   return s:trim(join(line, ''))
-endfunction
+endfunc
 
-function! s:trim(str) abort
+func s:trim(str) abort
   return matchstr(a:str,'^\s*\zs.\{-}\ze\s*$')
-endfunction
+endfunc
 
-function! Test_match_using_multibyte_conceal_char()
+func Test_match_using_multibyte_conceal_char()
   new
   setlocal concealcursor=n conceallevel=1
 

@@ -1,9 +1,11 @@
+" Vim syntax file
 " Language:      TT2 (Perl Template Toolkit)
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Author:        Moriki, Atsushi <4woods+vim@gmail.com>
-" Homepage:      http://github.com/vim-perl/vim-perl
-" Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2015-04-25
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
+" Last Change:   2018 Mar 28
 "
 " Installation:
 "   put tt2.vim and tt2html.vim in to your syntax directory.
@@ -42,9 +44,6 @@
 "               Release
 "           0.1.0
 "               Internal
-"
-" License: follow Vim :help uganda
-"
 
 if !exists("b:tt2_syn_tags")
     let b:tt2_syn_tags = '\[% %]'
@@ -95,7 +94,7 @@ if exists("b:tt2_syn_tags")
 
         "Include Perl syntax when 'PERL' 'RAWPERL' block
         if b:tt2_syn_inc_perl
-            syn include @Perl $VIMRUNTIME/syntax/perl.vim
+            syn include @Perl syntax/perl.vim
             exec 'syn region tt2_perlcode '.
                         \ 'start=+\(\(RAW\)\=PERL\s*[-]\=' . s:ed . '\(\n\)\=\)\@<=+ ' .
                         \ 'end=+' . s:st . '[-]\=\s*END+me=s-1 contains=@Perl keepend'
@@ -122,7 +121,7 @@ else
 
     "Include Perl syntax when 'PERL' 'RAWPERL' block
     if b:tt2_syn_inc_perl
-        syn include @Perl $VIMRUNTIME/syntax/perl.vim
+        syn include @Perl syntax/perl.vim
         syn region tt2_perlcode
                     \ start=+\(\(RAW\)\=PERL\s*[-]\=%]\(\n\)\=\)\@<=+
                     \ end=+\[%[-]\=\s*END+me=s-1
@@ -155,7 +154,7 @@ syn match   tt2_operator  "[!=<>]=\=\|&&\|||"               contained
 syn match   tt2_operator  "\(\s\)\@<=_\(\s\)\@="            contained
 syn match   tt2_operator  "=>\|,"                           contained
 syn match   tt2_deref     "\([[:alnum:]_)\]}]\s*\)\@<=\."   contained
-syn match   tt2_comment   +#.*$+                            contained extend
+syn match   tt2_comment   +#.*$+                            contained
 syn match   tt2_func      +\<\I\w*\(\s*(\)\@=+              contained nextgroup=tt2_bracket_r skipempty skipwhite
 "
 syn region  tt2_bracket_r  start=+(+ end=+)+                contained contains=@tt2_statement_cluster keepend extend

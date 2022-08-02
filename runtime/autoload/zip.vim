@@ -1,10 +1,10 @@
 " zip.vim: Handles browsing zipfiles
 "            AUTOLOAD PORTION
-" Date:		Sep 13, 2016
-" Version:	28
-" Maintainer:	Charles E Campbell <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
+" Date:		Nov 08, 2021
+" Version:	32
+" Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " License:	Vim License  (see vim's :help license)
-" Copyright:    Copyright (C) 2005-2013 Charles E. Campbell {{{1
+" Copyright:    Copyright (C) 2005-2019 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
 "               notice is copied with it. Like anything else that's free,
@@ -20,7 +20,7 @@
 if &cp || exists("g:loaded_zip")
  finish
 endif
-let g:loaded_zip= "v28"
+let g:loaded_zip= "v32"
 if v:version < 702
  echohl WarningMsg
  echo "***warning*** this version of zip needs vim 7.2 or later"
@@ -65,10 +65,10 @@ endif
 " zip#Browse: {{{2
 fun! zip#Browse(zipfile)
 "  call Dfunc("zip#Browse(zipfile<".a:zipfile.">)")
-  " sanity check: ensure that the zipfile has "PK" as its first two letters
+  " sanity check: insure that the zipfile has "PK" as its first two letters
   "               (zipped files have a leading PK as a "magic cookie")
   if !filereadable(a:zipfile) || readfile(a:zipfile, "", 1)[0] !~ '^PK'
-   exe "noautocmd e ".fnameescape(a:zipfile)
+   exe "noswapfile noautocmd noswapfile e ".fnameescape(a:zipfile)
 "   call Dret("zip#Browse : not a zipfile<".a:zipfile.">")
    return
 "  else        " Decho
@@ -81,7 +81,7 @@ fun! zip#Browse(zipfile)
   " sanity checks
   if !exists("*fnameescape")
    if &verbose > 1
-    echoerr "the zip plugin is not available (your vim doens't support fnameescape())"
+    echoerr "the zip plugin is not available (your vim doesn't support fnameescape())"
    endif
    return
   endif
@@ -115,7 +115,13 @@ fun! zip#Browse(zipfile)
   setlocal bufhidden=hide
   setlocal nobuflisted
   setlocal nowrap
-  set ft=tar
+
+  " Oct 12, 2021: need to re-use Bram's syntax/tar.vim.
+  " Setting the filetype to zip doesn't do anything (currently),
+  " but it is perhaps less confusing to curious perusers who do
+  " a :echo &ft
+  setf zip
+  run! syntax/tar.vim
 
   " give header
   call append(0, ['" zip.vim version '.g:loaded_zip,
@@ -141,8 +147,11 @@ fun! zip#Browse(zipfile)
 
   " Maps associated with zip plugin
   setlocal noma nomod ro
-  noremap <silent> <buffer> <cr>	:call <SID>ZipBrowseSelect()<cr>
-  noremap <silent> <buffer> x		:call zip#Extract()<cr>
+  noremap <silent> <buffer>	<cr>		:call <SID>ZipBrowseSelect()<cr>
+  noremap <silent> <buffer>	x		:call zip#Extract()<cr>
+  if &mouse != ""
+   noremap <silent> <buffer>	<leftmouse>	<leftmouse>:call <SID>ZipBrowseSelect()<cr>
+  endif
 
   let &report= repkeep
 "  call Dret("zip#Browse")
@@ -175,17 +184,17 @@ fun! s:ZipBrowseSelect()
 
   " get zipfile to the new-window
   let zipfile = b:zipfile
-  let curfile= expand("%")
+  let curfile = expand("%")
 "  call Decho("zipfile<".zipfile.">")
 "  call Decho("curfile<".curfile.">")
 
-  new
+  noswapfile new
   if !exists("g:zip_nomax") || g:zip_nomax == 0
    wincmd _
   endif
   let s:zipfile_{winnr()}= curfile
-"  call Decho("exe e ".fnameescape("zipfile:".zipfile.'::'.fname))
-  exe "e ".fnameescape("zipfile:".zipfile.'::'.fname)
+"  call Decho("exe e ".fnameescape("zipfile://".zipfile.'::'.fname))
+  exe "noswapfile e ".fnameescape("zipfile://".zipfile.'::'.fname)
   filetype detect
 
   let &report= repkeep
@@ -200,11 +209,11 @@ fun! zip#Read(fname,mode)
   set report=10
 
   if has("unix")
-   let zipfile = substitute(a:fname,'zipfile:\(.\{-}\)::[^\\].*$','\1','')
-   let fname   = substitute(a:fname,'zipfile:.\{-}::\([^\\].*\)$','\1','')
+   let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
+   let fname   = substitute(a:fname,'zipfile://.\{-}::\([^\\].*\)$','\1','')
   else
-   let zipfile = substitute(a:fname,'^.\{-}zipfile:\(.\{-}\)::[^\\].*$','\1','')
-   let fname   = substitute(a:fname,'^.\{-}zipfile:.\{-}::\([^\\].*\)$','\1','')
+   let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
+   let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
    let fname   = substitute(fname, '[', '[[]', 'g')
   endif
 "  call Decho("zipfile<".zipfile.">")
@@ -221,7 +230,7 @@ fun! zip#Read(fname,mode)
 
   " the following code does much the same thing as
   "   exe "keepj sil! r! ".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fnameescape(fname),1)
-  " but allows zipfile:... entries in quickfix lists
+  " but allows zipfile://... entries in quickfix lists
   let temp = tempname()
 "  call Decho("using temp file<".temp.">")
   let fn   = expand('%:p')
@@ -293,11 +302,11 @@ fun! zip#Write(fname)
 "  call Decho("current directory now: ".getcwd())
 
   if has("unix")
-   let zipfile = substitute(a:fname,'zipfile:\(.\{-}\)::[^\\].*$','\1','')
-   let fname   = substitute(a:fname,'zipfile:.\{-}::\([^\\].*\)$','\1','')
+   let zipfile = substitute(a:fname,'zipfile://\(.\{-}\)::[^\\].*$','\1','')
+   let fname   = substitute(a:fname,'zipfile://.\{-}::\([^\\].*\)$','\1','')
   else
-   let zipfile = substitute(a:fname,'^.\{-}zipfile:\(.\{-}\)::[^\\].*$','\1','')
-   let fname   = substitute(a:fname,'^.\{-}zipfile:.\{-}::\([^\\].*\)$','\1','')
+   let zipfile = substitute(a:fname,'^.\{-}zipfile://\(.\{-}\)::[^\\].*$','\1','')
+   let fname   = substitute(a:fname,'^.\{-}zipfile://.\{-}::\([^\\].*\)$','\1','')
   endif
 "  call Decho("zipfile<".zipfile.">")
 "  call Decho("fname  <".fname.">")
@@ -339,7 +348,7 @@ fun! zip#Write(fname)
    let binkeep= &binary
    let eikeep = &ei
    set binary ei=all
-   exe "e! ".fnameescape(zipfile)
+   exe "noswapfile e! ".fnameescape(zipfile)
    call netrw#NetWrite(netzipfile)
    let &ei     = eikeep
    let &binary = binkeep

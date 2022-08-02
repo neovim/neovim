@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	APT config file
 " Maintainer:	Yann Amar <quidame@poivron.org>
-" Last Change:	2015 Dec 22
+" Last Change:	2021 Jul 12
 
 " quit when a syntax file was already loaded
 if !exists("main_syntax")
@@ -396,10 +396,13 @@ syn cluster	aptconfSynaptic_ contains=aptconfSynaptic,
 " }}}
 " Unattended Upgrade: {{{
 syn keyword	aptconfUnattendedUpgrade contained
-	\ AutoFixInterruptedDpkg Automatic-Reboot Automatic-Reboot-Time
-	\ Automatic-Reboot-WithUsers InstallOnShutdown Mail MailOnlyOnError
-	\ MinimalSteps Origins-Pattern Package-Blacklist
-	\ Remove-Unused-Dependencies
+	\ Allow-APT-Mark-Fallback Allow-downgrade AutoFixInterruptedDpkg
+	\ Automatic-Reboot Automatic-Reboot-Time Automatic-Reboot-WithUsers
+	\ Debug InstallOnShutdown Mail MailOnlyOnError MailReport MinimalSteps
+	\ OnlyOnACPower Origins-Pattern Package-Blacklist
+	\ Remove-New-Unused-Dependencies Remove-Unused-Dependencies
+	\ Remove-Unused-Kernel-Packages Skip-Updates-On-Metered-Connections
+	\ SyslogEnable SyslogFacility Verbose
 
 syn cluster	aptconfUnattendedUpgrade_ contains=aptconfUnattendedUpgrade
 " }}}

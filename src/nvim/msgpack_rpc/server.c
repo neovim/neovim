@@ -2,27 +2,27 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
+#include "nvim/ascii.h"
+#include "nvim/eval.h"
+#include "nvim/event/socket.h"
+#include "nvim/fileio.h"
+#include "nvim/garray.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
-#include "nvim/event/socket.h"
-#include "nvim/ascii.h"
-#include "nvim/eval.h"
-#include "nvim/garray.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/memory.h"
-#include "nvim/log.h"
-#include "nvim/fileio.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
+#include "nvim/vim.h"
 
 #define MAX_CONNECTIONS 32
-#define LISTEN_ADDRESS_ENV_VAR "NVIM_LISTEN_ADDRESS"
+#define ENV_LISTEN "NVIM_LISTEN_ADDRESS"  // deprecated
 
 static garray_T watchers = GA_EMPTY_INIT_VALUE;
 
@@ -35,20 +35,29 @@ bool server_init(const char *listen_addr)
 {
   ga_init(&watchers, sizeof(SocketWatcher *), 1);
 
-  // $NVIM_LISTEN_ADDRESS
-  const char *env_addr = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  int rv = listen_addr == NULL ? 1 : server_start(listen_addr);
+  // $NVIM_LISTEN_ADDRESS (deprecated)
+  if (!listen_addr && os_env_exists(ENV_LISTEN)) {
+    listen_addr = os_getenv(ENV_LISTEN);
+  }
 
+  int rv = listen_addr ? server_start(listen_addr) : 1;
   if (0 != rv) {
-    rv = env_addr == NULL ? 1 : server_start(env_addr);
-    if (0 != rv) {
-      listen_addr = server_address_new();
-      if (listen_addr == NULL) {
-        return false;
-      }
-      rv = server_start(listen_addr);
-      xfree((char *)listen_addr);
+    listen_addr = server_address_new(NULL);
+    if (!listen_addr) {
+      return false;
     }
+    rv = server_start(listen_addr);
+    xfree((char *)listen_addr);
+  }
+
+  if (os_env_exists(ENV_LISTEN)) {
+    // Unset $NVIM_LISTEN_ADDRESS, it's a liability hereafter.
+    os_unsetenv(ENV_LISTEN);
+  }
+
+  // TODO(justinmk): this is for logging_spec. Can remove this after nvim_log #7062 is merged.
+  if (os_env_exists("__NVIM_TEST_LOG")) {
+    ELOG("test log message");
   }
 
   return rv == 0;
@@ -60,8 +69,8 @@ static void close_socket_watcher(SocketWatcher **watcher)
   socket_watcher_close(*watcher, free_server);
 }
 
-/// Set v:servername to the first server in the server list, or unset it if no
-/// servers are known.
+/// Sets the "primary address" (v:servername and $NVIM) to the first server in
+/// the server list, or unsets if no servers are known.
 static void set_vservername(garray_T *srvs)
 {
   char *default_server = (srvs->ga_len > 0)
@@ -78,23 +87,26 @@ void server_teardown(void)
 
 /// Generates unique address for local server.
 ///
-/// In Windows this is a named pipe in the format
-///     \\.\pipe\nvim-<PID>-<COUNTER>.
-///
-/// For other systems it is a path returned by vim_tempname().
-///
-/// This function is NOT thread safe
-char *server_address_new(void)
+/// Named pipe format:
+/// - Windows: "\\.\pipe\<name>.<pid>.<counter>"
+/// - Other: "/tmp/nvim.user/xxx/<name>.<pid>.<counter>"
+char *server_address_new(const char *name)
 {
-#ifdef WIN32
   static uint32_t count = 0;
-  char template[ADDRESS_MAX_SIZE];
-  snprintf(template, ADDRESS_MAX_SIZE,
-    "\\\\.\\pipe\\nvim-%" PRIu64 "-%" PRIu32, os_get_pid(), count++);
-  return xstrdup(template);
+  char fmt[ADDRESS_MAX_SIZE];
+#ifdef WIN32
+  int r = snprintf(fmt, sizeof(fmt), "\\\\.\\pipe\\%s.%" PRIu64 ".%" PRIu32,
+                   name ? name : "nvim", os_get_pid(), count++);
 #else
-  return (char *)vim_tempname();
+  char *dir = stdpaths_get_xdg_var(kXDGRuntimeDir);
+  int r = snprintf(fmt, sizeof(fmt), "%s/%s.%" PRIu64 ".%" PRIu32,
+                   dir, name ? name : "nvim", os_get_pid(), count++);
+  xfree(dir);
 #endif
+  if ((size_t)r >= sizeof(fmt)) {
+    ELOG("truncated server address");
+  }
+  return xstrdup(fmt);
 }
 
 /// Check if this instance owns a pipe address.
@@ -109,35 +121,35 @@ bool server_owns_pipe_address(const char *path)
   return false;
 }
 
-/// Starts listening for API calls.
+/// Starts listening for RPC calls.
 ///
-/// The socket type is determined by parsing `endpoint`: If it's a valid IPv4
-/// or IPv6 address in 'ip:[port]' format, then it will be a TCP socket.
-/// Otherwise it will be a Unix socket or named pipe (Windows).
+/// Socket type is decided by the format of `addr`:
+/// - TCP socket if it looks like an IPv4/6 address ("ip:[port]").
+///   - If [port] is omitted, a random one is assigned.
+/// - Unix socket (or named pipe on Windows) otherwise.
+///   - If the name doesn't contain slashes it is appended to a generated path. #8519
 ///
-/// If no port is given, a random one will be assigned.
-///
-/// @param endpoint Address of the server. Either a 'ip:[port]' string or an
-///                 arbitrary identifier (trimmed to 256 bytes) for the Unix
-///                 socket or named pipe.
-/// @returns 0: success, 1: validation error, 2: already listening,
-///          -errno: failed to bind or listen.
-int server_start(const char *endpoint)
+/// @param addr Server address: a "ip:[port]" string or arbitrary name or filepath (max 256 bytes)
+///             for the Unix socket or named pipe.
+/// @returns 0: success, 1: validation error, 2: already listening, -errno: failed to bind/listen.
+int server_start(const char *addr)
 {
-  if (endpoint == NULL || endpoint[0] == '\0') {
-    WLOG("Empty or NULL endpoint");
+  if (addr == NULL || addr[0] == '\0') {
+    WLOG("Empty or NULL address");
     return 1;
   }
 
+  bool isname = !strstr(addr, ":") && !strstr(addr, "/") && !strstr(addr, "\\");
+  char *addr_gen = isname ? server_address_new(addr) : NULL;
   SocketWatcher *watcher = xmalloc(sizeof(SocketWatcher));
-
-  int result = socket_watcher_init(&main_loop, watcher, endpoint);
+  int result = socket_watcher_init(&main_loop, watcher, isname ? addr_gen : addr);
+  xfree(addr_gen);
   if (result < 0) {
     xfree(watcher);
     return result;
   }
 
-  // Check if a watcher for the endpoint already exists
+  // Check if a watcher for the address already exists.
   for (int i = 0; i < watchers.ga_len; i++) {
     if (!strcmp(watcher->addr, ((SocketWatcher **)watchers.ga_data)[i]->addr)) {
       ELOG("Already listening on %s", watcher->addr);
@@ -154,12 +166,6 @@ int server_start(const char *endpoint)
     WLOG("Failed to start server: %s: %s", uv_strerror(result), watcher->addr);
     socket_watcher_close(watcher, free_server);
     return result;
-  }
-
-  // Update $NVIM_LISTEN_ADDRESS, if not set.
-  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  if (listen_address == NULL) {
-    os_setenv(LISTEN_ADDRESS_ENV_VAR, watcher->addr, 1);
   }
 
   // Add the watcher to the list.
@@ -200,12 +206,6 @@ bool server_stop(char *endpoint)
     return false;
   }
 
-  // Unset $NVIM_LISTEN_ADDRESS if it is the stopped address.
-  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  if (listen_address && STRCMP(addr, listen_address) == 0) {
-    os_unsetenv(LISTEN_ADDRESS_ENV_VAR);
-  }
-
   socket_watcher_close(watcher, free_server);
 
   // Remove this server from the list by swapping it with the last item.
@@ -215,8 +215,8 @@ bool server_stop(char *endpoint)
   }
   watchers.ga_len--;
 
-  // If v:servername is the stopped address, re-initialize it.
-  if (STRCMP(addr, get_vim_var_str(VV_SEND_SERVER)) == 0) {
+  // Bump v:servername to the next available server, if any.
+  if (strequal(addr, (char *)get_vim_var_str(VV_SEND_SERVER))) {
     set_vservername(&watchers);
   }
 

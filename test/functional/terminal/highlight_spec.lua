@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local nvim_dir, command = helpers.nvim_dir, helpers.command
+local testprg, command = helpers.testprg, helpers.command
 local nvim_prog_abs = helpers.nvim_prog_abs
 local eq, eval = helpers.eq, helpers.eval
 local funcs = helpers.funcs
@@ -28,7 +28,7 @@ describe(':terminal highlight', function()
       [11] = {background = 11},
     })
     screen:attach({rgb=false})
-    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |
@@ -173,7 +173,7 @@ describe(':terminal highlight forwarding', function()
       [4] = {{foreground = tonumber('0xff8000')}, {}},
     })
     screen:attach()
-    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |
@@ -214,7 +214,7 @@ describe(':terminal highlight with custom palette', function()
     clear()
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
-      [1] = {foreground = tonumber('0x123456')}, -- no fg_indexed when overriden
+      [1] = {foreground = tonumber('0x123456')}, -- no fg_indexed when overridden
       [2] = {foreground = 12},
       [3] = {bold = true, reverse = true},
       [5] = {background = 11},
@@ -225,7 +225,7 @@ describe(':terminal highlight with custom palette', function()
     })
     screen:attach({rgb=true})
     nvim('set_var', 'terminal_color_3', '#123456')
-    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    command(("enew | call termopen(['%s'])"):format(testprg('tty-test')))
     feed('i')
     screen:expect([[
       tty ready                                         |
@@ -304,10 +304,17 @@ describe('synIDattr()', function()
     eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
   end)
 
-  it('returns "1" if group has "strikethrough" attribute', function()
-    eq('', eval('synIDattr(hlID("Normal"), "strikethrough")'))
-    eq('1', eval('synIDattr(hlID("Keyword"), "strikethrough")'))
-    eq('1', eval('synIDattr(hlID("Keyword"), "strikethrough", "gui")'))
+  it('returns "1" if group has given highlight attribute', function()
+    local hl_attrs = {
+      'underline', 'undercurl', 'underdouble', 'underdotted', 'underdashed', 'strikethrough'
+    }
+    for _,hl_attr in ipairs(hl_attrs) do
+      local context = 'using ' .. hl_attr .. ' attr'
+      command('highlight Keyword cterm=' .. hl_attr .. ' gui=' .. hl_attr)
+      eq('', eval('synIDattr(hlID("Normal"), "'.. hl_attr .. '")'), context)
+      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '")'), context)
+      eq('1', eval('synIDattr(hlID("Keyword"), "' .. hl_attr .. '", "gui")'), context)
+    end
   end)
 end)
 

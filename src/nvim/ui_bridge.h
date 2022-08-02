@@ -5,11 +5,11 @@
 
 #include <uv.h>
 
-#include "nvim/ui.h"
 #include "nvim/event/defs.h"
+#include "nvim/ui.h"
 
 typedef struct ui_bridge_data UIBridgeData;
-typedef void(*ui_main_fn)(UIBridgeData *bridge, UI *ui);
+typedef void (*ui_main_fn)(UIBridgeData *bridge, UI *ui);
 struct ui_bridge_data {
   UI bridge;  // actual UI passed to ui_attach
   UI *ui;     // UI pointer that will have its callback called in
@@ -37,7 +37,6 @@ struct ui_bridge_data {
     uv_cond_signal(&d->cond); \
     uv_mutex_unlock(&d->mutex); \
   } while (0)
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.h.generated.h"

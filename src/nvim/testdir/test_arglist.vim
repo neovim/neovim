@@ -1,5 +1,12 @@
 " Test argument list commands
 
+source shared.vim
+source term_util.vim
+
+func Reset_arglist()
+  args a | %argd
+endfunc
+
 func Test_argidx()
   args a b c
   last
@@ -26,6 +33,8 @@ func Test_argidx()
 endfunc
 
 func Test_argadd()
+  call Reset_arglist()
+
   %argdelete
   argadd a b c
   call assert_equal(0, argidx())
@@ -88,10 +97,10 @@ func Test_argadd_empty_curbuf()
   argadd Xargadd
   call assert_equal(curbuf, bufnr('%'))
   call assert_equal('', bufname('%'))
-  call assert_equal(1, line('$'))
+  call assert_equal(1, '$'->line())
   rew
-  call assert_notequal(curbuf, bufnr('%'))
-  call assert_equal('Xargadd', bufname('%'))
+  call assert_notequal(curbuf, '%'->bufnr())
+  call assert_equal('Xargadd', '%'->bufname())
   call assert_equal(2, line('$'))
 
   %argd
@@ -115,8 +124,7 @@ endfunc
 " Test for [count]argument and [count]argdelete commands
 " Ported from the test_argument_count.in test script
 func Test_argument()
-  " Clean the argument list
-  arga a | %argd
+  call Reset_arglist()
 
   let save_hidden = &hidden
   set hidden
@@ -244,8 +252,7 @@ endfunc
 " Test for 0argadd and 0argedit
 " Ported from the test_argument_0count.in test script
 func Test_zero_argadd()
-  " Clean the argument list
-  arga a | %argd
+  call Reset_arglist()
 
   arga a b c d
   2argu
@@ -270,10 +277,6 @@ func Test_zero_argadd()
   argedit file\ with\ spaces another file
   call assert_equal(['edited', 'a', 'file with spaces', 'another', 'file', 'third', 'b', 'c', 'd'], argv())
   call assert_equal('file with spaces', expand('%'))
-endfunc
-
-func Reset_arglist()
-  args a | %argd
 endfunc
 
 " Test for argc()
@@ -510,3 +513,42 @@ func Test_argdo()
   call assert_equal(['Xa.c', 'Xb.c', 'Xc.c'], l)
   bwipe Xa.c Xb.c Xc.c
 endfunc
+
+" Test for quiting Vim with unedited files in the argument list
+func Test_quit_with_arglist()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot run vim in terminal'
+  endif
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, ":set nomore\n")
+  call term_sendkeys(buf, ":args a b c\n")
+  call term_sendkeys(buf, ":quit\n")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_match('^E173:', term_getline(buf, 6))})
+  call StopVimInTerminal(buf)
+
+  " Try :confirm quit with unedited files in arglist
+  let buf = RunVimInTerminal('', {'rows': 6})
+  call term_sendkeys(buf, ":set nomore\n")
+  call term_sendkeys(buf, ":args a b c\n")
+  call term_sendkeys(buf, ":confirm quit\n")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_match('^\[Y\]es, (N)o: *$',
+        \ term_getline(buf, 6))})
+  call term_sendkeys(buf, "N")
+  call term_wait(buf)
+  call term_sendkeys(buf, ":confirm quit\n")
+  call WaitForAssert({-> assert_match('^\[Y\]es, (N)o: *$',
+        \ term_getline(buf, 6))})
+  call term_sendkeys(buf, "Y")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_equal("finished", term_getstatus(buf))})
+  only!
+  " When this test fails, swap files are left behind which breaks subsequent
+  " tests
+  call delete('.a.swp')
+  call delete('.b.swp')
+  call delete('.c.swp')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

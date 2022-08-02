@@ -1,15 +1,13 @@
 #ifndef NVIM_API_PRIVATE_HELPERS_H
 #define NVIM_API_PRIVATE_HELPERS_H
 
-#include <stdbool.h>
-
 #include "nvim/api/private/defs.h"
-#include "nvim/vim.h"
-#include "nvim/getchar.h"
-#include "nvim/memory.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_eval.h"
+#include "nvim/getchar.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/memory.h"
+#include "nvim/vim.h"
 
 #define OBJECT_OBJ(o) o
 
@@ -59,21 +57,38 @@
 #define NIL ((Object)OBJECT_INIT)
 #define NULL_STRING ((String)STRING_INIT)
 
+// currently treat key=vim.NIL as if the key was missing
+#define HAS_KEY(o) ((o).type != kObjectTypeNil)
+
 #define PUT(dict, k, v) \
   kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))
+
+#define PUT_C(dict, k, v) \
+  kv_push_c(dict, ((KeyValuePair) { .key = cstr_as_string(k), .value = v }))
 
 #define PUT_BOOL(dict, name, condition) PUT(dict, name, BOOLEAN_OBJ(condition));
 
 #define ADD(array, item) \
   kv_push(array, item)
 
-#define FIXED_TEMP_ARRAY(name, fixsize) \
+#define ADD_C(array, item) \
+  kv_push_c(array, item)
+
+#define MAXSIZE_TEMP_ARRAY(name, maxsize) \
   Array name = ARRAY_DICT_INIT; \
-  Object name##__items[fixsize]; \
-  name.size = fixsize; \
+  Object name##__items[maxsize]; \
+  name.capacity = maxsize; \
   name.items = name##__items; \
 
-#define STATIC_CSTR_AS_STRING(s) ((String) {.data = s, .size = sizeof(s) - 1})
+#define MAXSIZE_TEMP_DICT(name, maxsize) \
+  Dictionary name = ARRAY_DICT_INIT; \
+  KeyValuePair name##__items[maxsize]; \
+  name.capacity = maxsize; \
+  name.items = name##__items; \
+
+#define cbuf_as_string(d, s) ((String) { .data = d, .size = s })
+
+#define STATIC_CSTR_AS_STRING(s) ((String) { .data = s, .size = sizeof(s) - 1 })
 
 /// Create a new String instance, putting data in allocated memory
 ///
@@ -101,6 +116,14 @@
 #define api_free_window(value)
 #define api_free_tabpage(value)
 
+EXTERN PMap(handle_T) buffer_handles INIT(= MAP_INIT);
+EXTERN PMap(handle_T) window_handles INIT(= MAP_INIT);
+EXTERN PMap(handle_T) tabpage_handles INIT(= MAP_INIT);
+
+#define handle_get_buffer(h) pmap_get(handle_T)(&buffer_handles, (h))
+#define handle_get_window(h) pmap_get(handle_T)(&window_handles, (h))
+#define handle_get_tabpage(h) pmap_get(handle_T)(&tabpage_handles, (h))
+
 /// Structure used for saving state for :try
 ///
 /// Used when caller is supposed to be operating when other VimL code is being
@@ -126,10 +149,31 @@ typedef struct {
     msg_list = &private_msg_list; \
     private_msg_list = NULL; \
     code \
-    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+      msg_list = saved_msg_list;  /* Restore the exception context. */ \
   } while (0)
+
+// Useful macro for executing some `code` for each item in an array.
+#define FOREACH_ITEM(a, __foreach_item, code) \
+  for (size_t (__foreach_item##_index) = 0; (__foreach_item##_index) < (a).size; \
+       (__foreach_item##_index)++) { \
+    Object __foreach_item = (a).items[__foreach_item##_index]; \
+    code; \
+  }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
+# include "keysets.h.generated.h"
 #endif
+
+#define WITH_SCRIPT_CONTEXT(channel_id, code) \
+  do { \
+    const sctx_T save_current_sctx = current_sctx; \
+    current_sctx.sc_sid = \
+      (channel_id) == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT; \
+    current_sctx.sc_lnum = 0; \
+    current_channel_id = channel_id; \
+    code; \
+    current_sctx = save_current_sctx; \
+  } while (0);
+
 #endif  // NVIM_API_PRIVATE_HELPERS_H

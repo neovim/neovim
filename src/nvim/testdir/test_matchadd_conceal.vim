@@ -7,7 +7,7 @@ source shared.vim
 source term_util.vim
 source view_util.vim
 
-function! Test_simple_matchadd()
+func Test_simple_matchadd()
   new
 
   1put='# This is a Test'
@@ -333,7 +333,26 @@ func Test_matchadd_and_syn_conceal()
   call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
-endfunction
+endfunc
+
+func Test_interaction_matchadd_syntax()
+  new
+  " Test for issue #7268 fix.
+  " When redrawing the second column, win_line() was comparing the sequence
+  " number of the syntax-concealed region with a bogus zero value that was
+  " returned for the matchadd-concealed region. Before 8.0.0672 the sequence
+  " number was never reset, thus masking the problem.
+  call setline(1, 'aaa|bbb|ccc')
+  call matchadd('Conceal', '^..', 10, -1, #{conceal: 'X'})
+  syn match foobar '^.'
+  setl concealcursor=n conceallevel=1
+  redraw!
+
+  call assert_equal('Xa|bbb|ccc', Screenline(1))
+  call assert_notequal(screenattr(1, 1), screenattr(1, 2))
+
+  bwipe!
+endfunc
 
 func Test_cursor_column_in_concealed_line_after_window_scroll()
   CheckRunVimInTerminal

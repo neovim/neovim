@@ -27,7 +27,7 @@
 
 # With non-Debug builds interprocedural optimization (IPO) (which includes
 # link-time optimization (LTO)) is enabled by default, which causes the link
-# step to take a significant amout of time, which is relevant when building
+# step to take a significant amount of time, which is relevant when building
 # often.  You can disable it explicitly:
 # CMAKE_EXTRA_FLAGS += -DENABLE_LTO=OFF
 

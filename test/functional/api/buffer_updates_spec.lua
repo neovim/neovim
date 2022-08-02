@@ -96,6 +96,8 @@ local function reopenwithfolds(b)
 end
 
 describe('API: buffer events:', function()
+  before_each(clear)
+
   it('when lines are added', function()
     local b, tick = editoriginal(true)
 
@@ -159,9 +161,8 @@ describe('API: buffer events:', function()
     tick = tick + 1
     expectn('nvim_buf_lines_event', {b, tick, 29, 29, firstfour, false})
 
-    -- create a new empty buffer and wipe out the old one ... this will
-    -- turn off buffer events
-    command('enew!')
+    -- delete the current buffer to turn off buffer events
+    command('bdelete!')
     expectn('nvim_buf_detach_event', {b})
 
     -- add a line at the start of an empty file
@@ -269,7 +270,7 @@ describe('API: buffer events:', function()
                                            'original foo'}, false})
 
     -- type text into the first line of a blank file, one character at a time
-    command('enew!')
+    command('bdelete!')
     tick = 2
     expectn('nvim_buf_detach_event', {b})
     local bnew = nvim('get_current_buf')
@@ -666,7 +667,8 @@ describe('API: buffer events:', function()
     tick = tick + 1
     expectn('nvim_buf_changedtick_event', {b, tick})
 
-    -- close our buffer by creating a new one
+    -- close our buffer and create a new one
+    command('bdelete')
     command('enew')
     expectn('nvim_buf_detach_event', {b})
 
@@ -785,7 +787,8 @@ describe('API: buffer events:', function()
 
   local function lines_subset(first, second)
     for i = 1,#first do
-      if first[i] ~= second[i] then
+      -- need to ignore trailing spaces
+      if first[i]:gsub(' +$', '') ~= second[i]:gsub(' +$', '') then
         return false
       end
     end

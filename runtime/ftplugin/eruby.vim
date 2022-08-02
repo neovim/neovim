@@ -3,7 +3,7 @@
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2019 Jan 06
+" Last Change:		2020 Jun 28
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -118,7 +118,7 @@ endif
 " TODO: comments=
 setlocal commentstring=<%#%s%>
 
-let b:undo_ftplugin = "setl cms< "
+let b:undo_ftplugin = "setl cms< " .
       \ " | unlet! b:browsefilter b:match_words | " . s:undo_ftplugin
 
 let &cpo = s:save_cpo

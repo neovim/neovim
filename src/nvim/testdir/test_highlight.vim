@@ -3,6 +3,7 @@
 source view_util.vim
 source screendump.vim
 source check.vim
+source script_util.vim
 
 func Test_highlight()
   " basic test if ":highlight" doesn't crash
@@ -145,7 +146,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^  ^^^^^^^^^   no highlight
   "      ^             'Search' highlight
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   let attrs0 = ScreenAttrs(1, 15)[0]
   call assert_equal(repeat([attrs0[0]], 4), attrs0[0:3])
   call assert_equal(repeat([attrs0[0]], 9), attrs0[6:14])
@@ -159,7 +160,7 @@ func Test_highlight_eol_with_cursorline_vertsplit()
   " 'abcd |abcd     '
   "  ^^^^              underline
   "      ^             'Search' highlight with underline
-  "       ^            'VertSplit' highlight
+  "       ^            'WinSeparator' highlight
   "        ^^^^^^^^^   no highlight
 
   " underline
@@ -425,6 +426,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
   let [hiCursorLine, hi_ul, hi_bg] = HiCursorLine()
 
   call NewWindow('topleft 5', 10)
+  set showbreak=xxx
   setlocal breakindent breakindentopt=min:0,shift:1 showbreak=>
   call setline(1, ' ' . repeat('a', 9) . 'bcd')
   call matchadd('Search', '\n')
@@ -482,6 +484,7 @@ func Test_highlight_eol_with_cursorline_breakindent()
 
   call CloseWindow()
   set showbreak=
+  setlocal showbreak=
   exe hiCursorLine
 endfunc
 
@@ -594,6 +597,122 @@ func Test_cursorline_with_visualmode()
   call delete('Xtest_cursorline_with_visualmode')
 endfunc
 
+func Test_cursorcolumn_insert_on_tab()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['123456789', "a\tb"])
+    set cursorcolumn
+    call cursor(2, 2)
+  END
+  call writefile(lines, 'Xcuc_insert_on_tab')
+
+  let buf = RunVimInTerminal('-S Xcuc_insert_on_tab', #{rows: 8})
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_1', {})
+
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
+
+  call term_sendkeys(buf, "\<C-O>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_3', {})
+
+  call term_sendkeys(buf, 'i')
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_insert_on_tab_2', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcuc_insert_on_tab')
+endfunc
+
+func Test_cursorcolumn_callback()
+  CheckScreendump
+  CheckFeature timers
+
+  let lines =<< trim END
+      call setline(1, ['aaaaa', 'bbbbb', 'ccccc', 'ddddd'])
+      set cursorcolumn
+      call cursor(4, 5)
+
+      func Func(timer)
+        call cursor(1, 1)
+      endfunc
+
+      call timer_start(300, 'Func')
+  END
+  call writefile(lines, 'Xcuc_timer')
+
+  let buf = RunVimInTerminal('-S Xcuc_timer', #{rows: 8})
+  call TermWait(buf, 310)
+  call VerifyScreenDump(buf, 'Test_cursorcolumn_callback_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xcuc_timer')
+endfunc
+
+func Test_colorcolumn()
+  CheckScreendump
+
+  " check that setting 'colorcolumn' when entering a buffer works
+  let lines =<< trim END
+	split
+	edit X
+	call setline(1, ["1111111111","22222222222","3333333333"])
+	set nomodified
+	set colorcolumn=3,9
+	set number cursorline cursorlineopt=number
+	wincmd w
+	buf X
+  END
+  call writefile(lines, 'Xtest_colorcolumn')
+  let buf = RunVimInTerminal('-S Xtest_colorcolumn', {'rows': 10})
+  call term_sendkeys(buf, ":\<CR>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_colorcolumn_1', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_colorcolumn')
+endfunc
+
+func Test_colorcolumn_bri()
+  CheckScreendump
+
+  " check 'colorcolumn' when 'breakindent' is set
+  let lines =<< trim END
+	call setline(1, 'The quick brown fox jumped over the lazy dogs')
+  END
+  call writefile(lines, 'Xtest_colorcolumn_bri')
+  let buf = RunVimInTerminal('-S Xtest_colorcolumn_bri', {'rows': 10,'columns': 40})
+  call term_sendkeys(buf, ":set co=40 linebreak bri briopt=shift:2 cc=40,41,43\<CR>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_colorcolumn_2', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_colorcolumn_bri')
+endfunc
+
+func Test_colorcolumn_sbr()
+  CheckScreendump
+
+  " check 'colorcolumn' when 'showbreak' is set
+  let lines =<< trim END
+	call setline(1, 'The quick brown fox jumped over the lazy dogs')
+  END
+  call writefile(lines, 'Xtest_colorcolumn_srb')
+  let buf = RunVimInTerminal('-S Xtest_colorcolumn_srb', {'rows': 10,'columns': 40})
+  call term_sendkeys(buf, ":set co=40 showbreak=+++>\\  cc=40,41,43\<CR>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_colorcolumn_3', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('Xtest_colorcolumn_srb')
+endfunc
+
 " This test must come before the Test_cursorline test, as it appears this
 " defines the Normal highlighting group anyway.
 func Test_1_highlight_Normalgroup_exists()
@@ -612,6 +731,23 @@ func Test_1_highlight_Normalgroup_exists()
   endif
 endfunc
 
+function Test_no_space_before_xxx()
+  " Note: we need to create this highlight group in the test because it does not exist in Neovim
+  execute('hi StatusLineTermNC ctermfg=green')
+  let l:org_columns = &columns
+  set columns=17
+  let l:hi_StatusLineTermNC = join(split(execute('hi StatusLineTermNC')))
+  call assert_match('StatusLineTermNC xxx', l:hi_StatusLineTermNC)
+  let &columns = l:org_columns
+endfunction
+
+" Test for :highlight command errors
+func Test_highlight_cmd_errors()
+  if has('gui_running') || has('nvim')
+    call assert_fails('hi ' .. repeat('a', 201) .. ' ctermfg=black', 'E1249:')
+  endif
+endfunc
+
 " Test for using RGB color values in a highlight group
 func Test_xxlast_highlight_RGB_color()
   CheckCanRunGui
@@ -620,6 +756,105 @@ func Test_xxlast_highlight_RGB_color()
   call assert_equal('#110000', synIDattr(synIDtrans(hlID('MySearch')), 'fg#'))
   call assert_equal('#001100', synIDattr(synIDtrans(hlID('MySearch')), 'bg#'))
   call assert_equal('#000011', synIDattr(synIDtrans(hlID('MySearch')), 'sp#'))
+  hi clear
+endfunc
+
+func Test_highlight_clear_restores_links()
+  let aaa_id = hlID('aaa')
+  call assert_equal(aaa_id, 0)
+
+  " create default link aaa --> bbb
+  hi def link aaa bbb
+  let id_aaa = hlID('aaa')
+  let hl_aaa_bbb = HighlightArgs('aaa')
+
+  " try to redefine default link aaa --> ccc; check aaa --> bbb
+  hi def link aaa ccc
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " clear aaa; check aaa --> bbb
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " link aaa --> ccc; clear aaa; check aaa --> bbb
+  hi link aaa ccc
+  let id_ccc = hlID('ccc')
+  call assert_equal(synIDtrans(id_aaa), id_ccc)
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_bbb)
+
+  " forcibly set default link aaa --> ddd
+  hi! def link aaa ddd
+  let id_ddd = hlID('ddd')
+  let hl_aaa_ddd = HighlightArgs('aaa')
+  call assert_equal(synIDtrans(id_aaa), id_ddd)
+
+  " link aaa --> eee; clear aaa; check aaa --> ddd
+  hi link aaa eee
+  let eee_id = hlID('eee')
+  call assert_equal(synIDtrans(id_aaa), eee_id)
+  hi clear aaa
+  call assert_equal(HighlightArgs('aaa'), hl_aaa_ddd)
+endfunc
+
+func Test_highlight_clear_restores_context()
+  func FuncContextDefault()
+    hi def link Context ContextDefault
+  endfun
+
+  func FuncContextRelink()
+    " Dummy line
+    hi link Context ContextRelink
+  endfunc
+
+  let scriptContextDefault = MakeScript("FuncContextDefault")
+  let scriptContextRelink = MakeScript("FuncContextRelink")
+  let patContextDefault = fnamemodify(scriptContextDefault, ':t') .. ' line 1'
+  let patContextRelink = fnamemodify(scriptContextRelink, ':t') .. ' line 2'
+
+  exec "source" scriptContextDefault
+  let hlContextDefault = execute("verbose hi Context")
+  call assert_match(patContextDefault, hlContextDefault)
+
+  exec "source" scriptContextRelink
+  let hlContextRelink = execute("verbose hi Context")
+  call assert_match(patContextRelink, hlContextRelink)
+
+  hi clear
+  let hlContextAfterClear = execute("verbose hi Context")
+  call assert_match(patContextDefault, hlContextAfterClear)
+
+  delfunc FuncContextDefault
+  delfunc FuncContextRelink
+  call delete(scriptContextDefault)
+  call delete(scriptContextRelink)
+endfunc
+
+func Test_highlight_default_colorscheme_restores_links()
+  hi link TestLink Identifier
+  hi TestHi ctermbg=red
+
+  let hlTestLinkPre = HighlightArgs('TestLink')
+  let hlTestHiPre = HighlightArgs('TestHi')
+
+  " Test colorscheme
+  hi clear
+  if exists('syntax_on')
+    syntax reset
+  endif
+  let g:colors_name = 'test'
+  hi link TestLink ErrorMsg
+  hi TestHi ctermbg=green
+
+  " Restore default highlighting
+  colorscheme default
+  " 'default' should work no matter if highlight group was cleared
+  hi def link TestLink Identifier
+  hi def TestHi ctermbg=red
+  let hlTestLinkPost = HighlightArgs('TestLink')
+  let hlTestHiPost = HighlightArgs('TestHi')
+  call assert_equal(hlTestLinkPre, hlTestLinkPost)
+  call assert_equal(hlTestHiPre, hlTestHiPost)
   hi clear
 endfunc
 

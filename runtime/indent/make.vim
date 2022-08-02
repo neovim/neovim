@@ -1,7 +1,8 @@
 " Vim indent file
-" Language:             Makefile
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2007-05-07
+" Language:		Makefile
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Last Change:		2022 Apr 06
 
 if exists("b:did_indent")
   finish
@@ -12,6 +13,8 @@ setlocal indentexpr=GetMakeIndent()
 setlocal indentkeys=!^F,o,O,<:>,=else,=endif
 setlocal nosmartindent
 
+let b:undo_indent = "setl inde< indk< si<"
+
 if exists("*GetMakeIndent")
   finish
 endif
@@ -20,8 +23,8 @@ let s:comment_rx = '^\s*#'
 let s:rule_rx = '^[^ \t#:][^#:]*:\{1,2}\%([^=:]\|$\)'
 let s:continued_rule_rx = '^[^#:]*:\{1,2}\%([^=:]\|$\)'
 let s:continuation_rx = '\\$'
-let s:assignment_rx = '^\s*\h\w*\s*[+?]\==\s*\zs.*\\$'
-let s:folded_assignment_rx = '^\s*\h\w*\s*[+?]\=='
+let s:assignment_rx = '^\s*\h\w*\s*[+:?]\==\s*\zs.*\\$'
+let s:folded_assignment_rx = '^\s*\h\w*\s*[+:?]\=='
 " TODO: This needs to be a lot more restrictive in what it matches.
 let s:just_inserted_rule_rx = '^\s*[^#:]\+:\{1,2}$'
 let s:conditional_directive_rx = '^ *\%(ifn\=\%(eq\|def\)\|else\)\>'

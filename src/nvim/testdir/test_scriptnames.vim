@@ -23,4 +23,10 @@ func Test_scriptnames()
 
   bwipe
   call delete('Xscripting')
+
+  let msgs = execute('messages')
+  scriptnames
+  call assert_equal(msgs, execute('messages'))
 endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

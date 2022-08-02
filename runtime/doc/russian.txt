@@ -47,10 +47,6 @@ different codepages from
 
     http://www.sourceforge.net/projects/ruvim/
 
-Make sure that your Vim is at least 6.2.506 and use ruvim 0.5 or later for
-automatic installs.  Vim also needs to be compiled with |+gettext| feature for
-user interface items translations to work.
-
 After downloading an archive from RuVim project, unpack it into your
 $VIMRUNTIME directory.  We recommend using UTF-8 archive.
 

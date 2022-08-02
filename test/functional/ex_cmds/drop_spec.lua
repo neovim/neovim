@@ -41,34 +41,35 @@ describe(":drop", function()
     feed_command("edit tmp2")
     feed_command("drop tmp1")
     screen:expect([[
-                    {2:│}^                    |
-      {0:~             }{2:│}{0:~                   }|
-      {0:~             }{2:│}{0:~                   }|
-      {0:~             }{2:│}{0:~                   }|
-      {0:~             }{2:│}{0:~                   }|
-      {0:~             }{2:│}{0:~                   }|
-      {0:~             }{2:│}{0:~                   }|
-      {0:~             }{2:│}{0:~                   }|
+                    │^                    |
+      {0:~             }│{0:~                   }|
+      {0:~             }│{0:~                   }|
+      {0:~             }│{0:~                   }|
+      {0:~             }│{0:~                   }|
+      {0:~             }│{0:~                   }|
+      {0:~             }│{0:~                   }|
+      {0:~             }│{0:~                   }|
       {2:tmp2           }{1:tmp1                }|
       :drop tmp1                         |
     ]])
   end)
 
   it("splits off a new window when a buffer can't be abandoned", function()
+    command("set nohidden")
     feed_command("edit tmp1")
     feed_command("vsplit")
     feed_command("edit tmp2")
     feed("iABC<esc>")
     feed_command("drop tmp3")
     screen:expect([[
-      ^                    {2:│}              |
-      {0:~                   }{2:│}{0:~             }|
-      {0:~                   }{2:│}{0:~             }|
-      {0:~                   }{2:│}{0:~             }|
-      {1:tmp3                }{2:│}{0:~             }|
-      ABC                 {2:│}{0:~             }|
-      {0:~                   }{2:│}{0:~             }|
-      {0:~                   }{2:│}{0:~             }|
+      ^                    │              |
+      {0:~                   }│{0:~             }|
+      {0:~                   }│{0:~             }|
+      {0:~                   }│{0:~             }|
+      {1:tmp3                }│{0:~             }|
+      ABC                 │{0:~             }|
+      {0:~                   }│{0:~             }|
+      {0:~                   }│{0:~             }|
       {2:tmp2 [+]             tmp1          }|
       "tmp3" [New]                       |
     ]])

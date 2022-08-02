@@ -250,7 +250,7 @@ endfunc
 
 func Test_noinsert_complete()
   func! s:complTest1() abort
-    call complete(1, ['source', 'soundfold'])
+    eval ['source', 'soundfold']->complete(1)
     return ''
   endfunc
 
@@ -325,6 +325,21 @@ func Test_compl_vim_cmds_after_register_expr()
   bwipe!
 endfunc
 
+func Test_compl_ignore_mappings()
+  call setline(1, ['foo', 'bar', 'baz', 'foobar'])
+  inoremap <C-P> (C-P)
+  inoremap <C-N> (C-N)
+  normal! G
+  call feedkeys("o\<C-X>\<C-N>\<C-N>\<C-N>\<C-P>\<C-N>\<C-Y>", 'tx')
+  call assert_equal('baz', getline('.'))
+  " Also test with unsimplified keys
+  call feedkeys("o\<C-X>\<*C-N>\<*C-N>\<*C-N>\<*C-P>\<*C-N>\<C-Y>", 'tx')
+  call assert_equal('baz', getline('.'))
+  iunmap <C-P>
+  iunmap <C-N>
+  bwipe!
+endfunc
+
 func DummyCompleteOne(findstart, base)
   if a:findstart
     return 0
@@ -334,19 +349,17 @@ func DummyCompleteOne(findstart, base)
   endif
 endfunc
 
-" Test that nothing happens if the 'completefunc' opens
-" a new window (no completion, no crash)
+" Test that nothing happens if the 'completefunc' tries to open
+" a new window (fails to open window, continues)
 func Test_completefunc_opens_new_window_one()
   new
   let winid = win_getid()
   setlocal completefunc=DummyCompleteOne
   call setline(1, 'one')
   /^one
-  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E839:')
-  call assert_notequal(winid, win_getid())
-  q!
+  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E565:')
   call assert_equal(winid, win_getid())
-  call assert_equal('', getline(1))
+  call assert_equal('oneDEF', getline(1))
   q!
 endfunc
 
@@ -369,11 +382,11 @@ func Test_completefunc_opens_new_window_two()
   setlocal completefunc=DummyCompleteTwo
   call setline(1, 'two')
   /^two
-  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E764:')
-  call assert_notequal(winid, win_getid())
-  q!
+  call assert_fails('call feedkeys("A\<C-X>\<C-U>\<C-N>\<Esc>", "x")', 'E565:')
   call assert_equal(winid, win_getid())
-  call assert_equal('two', getline(1))
+  " v8.2.1919 hasn't been ported yet
+  " call assert_equal('twodef', getline(1))
+  call assert_equal('twoDEF', getline(1))
   q!
 endfunc
 
@@ -403,7 +416,7 @@ func DummyCompleteFour(findstart, base)
     return 0
   else
     call complete_add('four1')
-    call complete_add('four2')
+    eval 'four2'->complete_add()
     call complete_check()
     call complete_add('four3')
     call complete_add('four4')
@@ -642,8 +655,8 @@ func Test_complete_func_mess()
   set completefunc=MessComplete
   new
   call setline(1, 'Ju')
-  call feedkeys("A\<c-x>\<c-u>/\<esc>", 'tx')
-  call assert_equal('Oct/Oct', getline(1))
+  call assert_fails('call feedkeys("A\<c-x>\<c-u>/\<esc>", "tx")', 'E565:')
+  call assert_equal('Jan/', getline(1))
   bwipe!
   set completefunc=
 endfunc
@@ -850,6 +863,34 @@ func Test_popup_position()
   call delete('Xtest')
 endfunc
 
+func Test_popup_command()
+  if !CanRunVimInTerminal() || !has('menu')
+    return
+  endif
+
+  call writefile([
+	\ 'one two three four five',
+	\ 'and one two Xthree four five',
+	\ 'one more two three four five',
+	\ ], 'Xtest')
+  let buf = RunVimInTerminal('Xtest', {})
+  call term_sendkeys(buf, ":source $VIMRUNTIME/menu.vim\<CR>")
+  call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_01', {})
+
+  " Select a word
+  call term_sendkeys(buf, "jj")
+  call VerifyScreenDump(buf, 'Test_popup_command_02', {})
+
+  " Select a word
+  call term_sendkeys(buf, "j\<CR>")
+  call VerifyScreenDump(buf, 'Test_popup_command_03', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xtest')
+endfunc
+
 func Test_popup_complete_backwards()
   new
   call setline(1, ['Post', 'Port', 'Po'])
@@ -870,8 +911,8 @@ func Test_popup_complete_backwards_ctrl_p()
   bwipe!
 endfunc
 
-fun! Test_complete_o_tab()
-  throw 'skipped: Nvim does not support test_override()'
+func Test_complete_o_tab()
+  CheckFunction test_override
   let s:o_char_pressed = 0
 
   fun! s:act_on_text_changed()
@@ -879,7 +920,7 @@ fun! Test_complete_o_tab()
       let s:o_char_pressed = 0
       call feedkeys("\<c-x>\<c-n>", 'i')
     endif
-  endf
+  endfunc
 
   set completeopt=menu,noselect
   new
@@ -898,7 +939,40 @@ fun! Test_complete_o_tab()
   bwipe!
   set completeopt&
   delfunc s:act_on_text_changed
-endf
+endfunc
+
+func Test_menu_only_exists_in_terminal()
+  if !exists(':tlmenu') || has('gui_running')
+    return
+  endif
+  tlnoremenu  &Edit.&Paste<Tab>"+gP  <C-W>"+
+  aunmenu *
+  try
+    popup Edit
+    call assert_false(1, 'command should have failed')
+  catch
+    call assert_exception('E328:')
+  endtry
+endfunc
+
+" This used to crash before patch 8.1.1424
+func Test_popup_delete_when_shown()
+  CheckFeature menu
+  CheckNotGui
+
+  func Func()
+    popup Foo
+    return "\<Ignore>"
+  endfunc
+
+  nmenu Foo.Bar :
+  nnoremap <expr> <F2> Func()
+  call feedkeys("\<F2>\<F2>\<Esc>", 'xt')
+
+  delfunc Func
+  nunmenu Foo.Bar
+  nunmap <F2>
+endfunc
 
 func Test_popup_complete_info_01()
   new
@@ -922,6 +996,10 @@ func Test_popup_complete_info_01()
         \ ["\<C-X>", 'ctrl_x'],
         \ ["\<C-X>\<C-N>", 'keyword'],
         \ ["\<C-X>\<C-P>", 'keyword'],
+        \ ["\<C-X>\<C-E>", 'scroll'],
+        \ ["\<C-X>\<C-Y>", 'scroll'],
+        \ ["\<C-X>\<C-E>\<C-E>\<C-Y>", 'scroll'],
+        \ ["\<C-X>\<C-Y>\<C-E>\<C-Y>", 'scroll'],
         \ ["\<C-X>\<C-L>", 'whole_line'],
         \ ["\<C-X>\<C-F>", 'files'],
         \ ["\<C-X>\<C-]>", 'tags'],
@@ -961,7 +1039,7 @@ func GetCompleteInfo()
   if empty(g:compl_what)
     let g:compl_info = complete_info()
   else
-    let g:compl_info = complete_info(g:compl_what)
+    let g:compl_info = g:compl_what->complete_info()
   endif
   return ''
 endfunc
@@ -1075,6 +1153,79 @@ func Test_pum_getpos()
   call assert_equal( {}, pum_getpos() )
   bw!
   unlet g:pum_pos
+endfunc
+
+" Test for the popup menu with the 'rightleft' option set
+func Test_pum_rightleft()
+  CheckFeature rightleft
+  CheckScreendump
+
+  let lines =<< trim END
+    abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+    vim
+    victory
+  END
+  call writefile(lines, 'Xtest1')
+  let buf = RunVimInTerminal('--cmd "set rightleft" Xtest1', {})
+  call term_wait(buf)
+  call term_sendkeys(buf, "Go\<C-P>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_pum_rightleft_01', {'rows': 8})
+  call term_sendkeys(buf, "\<C-P>\<C-Y>")
+  call term_wait(buf)
+  redraw!
+  call assert_match('\s*miv', Screenline(5))
+
+  " Test for expanding tabs to spaces in the popup menu
+  let lines =<< trim END
+    one	two
+    one	three
+    four
+  END
+  call writefile(lines, 'Xtest2')
+  call term_sendkeys(buf, "\<Esc>:e! Xtest2\<CR>")
+  call term_wait(buf)
+  call term_sendkeys(buf, "Goone\<C-X>\<C-L>")
+  call term_wait(buf)
+  redraw!
+  call VerifyScreenDump(buf, 'Test_pum_rightleft_02', {'rows': 7})
+  call term_sendkeys(buf, "\<C-Y>")
+  call term_wait(buf)
+  redraw!
+  call assert_match('\s*eerht     eno', Screenline(4))
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest1')
+  call delete('Xtest2')
+endfunc
+
+" Test for a popup menu with a scrollbar
+func Test_pum_scrollbar()
+  CheckScreendump
+  let lines =<< trim END
+    one
+    two
+    three
+  END
+  call writefile(lines, 'Xtest1')
+  let buf = RunVimInTerminal('--cmd "set pumheight=2" Xtest1', {})
+  call term_wait(buf)
+  call term_sendkeys(buf, "Go\<C-P>\<C-P>\<C-P>")
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_pum_scrollbar_01', {'rows': 7})
+  call term_sendkeys(buf, "\<C-E>\<Esc>dd")
+  call term_wait(buf)
+
+  if has('rightleft')
+    call term_sendkeys(buf, ":set rightleft\<CR>")
+    call term_wait(buf)
+    call term_sendkeys(buf, "Go\<C-P>\<C-P>\<C-P>")
+    call term_wait(buf)
+    call VerifyScreenDump(buf, 'Test_pum_scrollbar_02', {'rows': 7})
+  endif
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest1')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

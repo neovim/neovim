@@ -1,21 +1,23 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local feed_command = helpers.feed_command
 local feed = helpers.feed
 local eq = helpers.eq
 local expect = helpers.expect
 local eval = helpers.eval
 local funcs = helpers.funcs
 local insert = helpers.insert
+local write_file = helpers.write_file
 local exc_exec = helpers.exc_exec
-local source = helpers.source
+local command = helpers.command
 local Screen = require('test.functional.ui.screen')
 
 describe('mappings with <Cmd>', function()
   local screen
+  local tmpfile = 'X_ex_cmds_cmd_map'
+
   local function cmdmap(lhs, rhs)
-    feed_command('noremap '..lhs..' <Cmd>'..rhs..'<cr>')
-    feed_command('noremap! '..lhs..' <Cmd>'..rhs..'<cr>')
+    command('noremap '..lhs..' <Cmd>'..rhs..'<cr>')
+    command('noremap! '..lhs..' <Cmd>'..rhs..'<cr>')
   end
 
   before_each(function()
@@ -39,7 +41,7 @@ describe('mappings with <Cmd>', function()
     cmdmap('<F4>', 'normal! ww')
     cmdmap('<F5>', 'normal! "ay')
     cmdmap('<F6>', 'throw "very error"')
-    feed_command([[
+    command([[
         function! TextObj()
             if mode() !=# "v"
                 normal! v
@@ -55,11 +57,15 @@ describe('mappings with <Cmd>', function()
     feed('gg')
     cmdmap('<F8>', 'startinsert')
     cmdmap('<F9>', 'stopinsert')
-    feed_command("abbr foo <Cmd>let g:y = 17<cr>bar")
+    command("abbr foo <Cmd>let g:y = 17<cr>bar")
+  end)
+
+  after_each(function()
+    os.remove(tmpfile)
   end)
 
   it('can be displayed', function()
-    feed_command('map <F3>')
+    command('map <F3>')
     screen:expect([[
       ^some short lines                                                 |
       of test text                                                     |
@@ -73,8 +79,8 @@ describe('mappings with <Cmd>', function()
   end)
 
   it('handles invalid mappings', function()
-    feed_command('let x = 0')
-    feed_command('noremap <F3> <Cmd><Cmd>let x = 1<cr>')
+    command('let x = 0')
+    command('noremap <F3> <Cmd><Cmd>let x = 1<cr>')
     feed('<F3>')
     screen:expect([[
       ^some short lines                                                 |
@@ -87,20 +93,7 @@ describe('mappings with <Cmd>', function()
       {2:E5521: <Cmd> mapping must end with <CR> before second <Cmd>}      |
     ]])
 
-    feed_command('noremap <F3> <Cmd><F3>let x = 2<cr>')
-    feed('<F3>')
-    screen:expect([[
-      ^some short lines                                                 |
-      of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {2:E5522: <Cmd> mapping must not include <F3> key}                   |
-    ]])
-
-    feed_command('noremap <F3> <Cmd>let x = 3')
+    command('noremap <F3> <Cmd>let x = 3')
     feed('<F3>')
     screen:expect([[
       ^some short lines                                                 |
@@ -113,6 +106,47 @@ describe('mappings with <Cmd>', function()
       {2:E5520: <Cmd> mapping must end with <CR>}                          |
     ]])
     eq(0, eval('x'))
+  end)
+
+  it('allows special keys and modifiers', function()
+    command('noremap <F3> <Cmd>normal! <Down><CR>')
+    feed('<F3>')
+    screen:expect([[
+      some short lines                                                 |
+      ^of test text                                                     |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]])
+
+    command('noremap <F3> <Cmd>normal! <C-Right><CR>')
+    feed('<F3>')
+    screen:expect([[
+      some short lines                                                 |
+      of ^test text                                                     |
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]])
+  end)
+
+  it('handles string containing K_SPECIAL (0x80) bytes correctly', function()
+    command([[noremap <F3> <Cmd>let g:str = 'foo…bar'<CR>]])
+    feed('<F3>')
+    eq('foo…bar', eval('g:str'))
+    local str = eval([["foo\<D-…>bar"]])
+    command([[noremap <F3> <Cmd>let g:str = ']]..str..[['<CR>]])
+    feed('<F3>')
+    eq(str, eval('g:str'))
+    command([[noremap <F3> <Cmd>let g:str = 'foo<D-…>bar'<CR>]])
+    feed('<F3>')
+    eq(str, eval('g:str'))
   end)
 
   it('works in various modes and sees correct `mode()` value', function()
@@ -137,7 +171,7 @@ describe('mappings with <Cmd>', function()
     eq('n', eval('mode(1)'))
 
     -- select mode mapping
-    feed_command('snoremap <F3> <Cmd>let m = mode(1)<cr>')
+    command('snoremap <F3> <Cmd>let m = mode(1)<cr>')
     feed('gh<F3>')
     eq('s', eval('m'))
     -- didn't leave select mode
@@ -184,8 +218,8 @@ describe('mappings with <Cmd>', function()
     eq('n', eval('mode(1)'))
 
     -- terminal mode
-    feed_command('tnoremap <F3> <Cmd>let m = mode(1)<cr>')
-    feed_command('split | terminal')
+    command('tnoremap <F3> <Cmd>let m = mode(1)<cr>')
+    command('split | terminal')
     feed('i')
     eq('t', eval('mode(1)'))
     feed('<F3>')
@@ -264,11 +298,11 @@ describe('mappings with <Cmd>', function()
   end)
 
   it('works in :normal command', function()
-    feed_command('noremap ,x <Cmd>call append(1, "xx")\\| call append(1, "aa")<cr>')
-    feed_command('noremap ,f <Cmd>nosuchcommand<cr>')
-    feed_command('noremap ,e <Cmd>throw "very error"\\| call append(1, "yy")<cr>')
-    feed_command('noremap ,m <Cmd>echoerr "The message."\\| call append(1, "zz")<cr>')
-    feed_command('noremap ,w <Cmd>for i in range(5)\\|if i==1\\|echoerr "Err"\\|endif\\|call append(1, i)\\|endfor<cr>')
+    command('noremap ,x <Cmd>call append(1, "xx")\\| call append(1, "aa")<cr>')
+    command('noremap ,f <Cmd>nosuchcommand<cr>')
+    command('noremap ,e <Cmd>throw "very error"\\| call append(1, "yy")<cr>')
+    command('noremap ,m <Cmd>echoerr "The message."\\| call append(1, "zz")<cr>')
+    command('noremap ,w <Cmd>for i in range(5)\\|if i==1\\|echoerr "Err"\\|endif\\|call append(1, i)\\|endfor<cr>')
 
     feed(":normal ,x<cr>")
     screen:expect([[
@@ -297,7 +331,7 @@ describe('mappings with <Cmd>', function()
       :normal ,x                                                       |
     ]])
 
-    feed_command(':%d')
+    command(':%d')
     eq('Vim(echoerr):Err', exc_exec("normal ,w"))
     screen:expect([[
       ^                                                                 |
@@ -310,8 +344,8 @@ describe('mappings with <Cmd>', function()
       --No lines in buffer--                                           |
     ]])
 
-    feed_command(':%d')
-    feed_command(':normal ,w')
+    command(':%d')
+    feed(':normal ,w<cr>')
     screen:expect([[
       ^                                                                 |
       4                                                                |
@@ -401,8 +435,8 @@ describe('mappings with <Cmd>', function()
   end)
 
   it('works in select mode', function()
-    feed_command('snoremap <F1> <cmd>throw "very error"<cr>')
-    feed_command('snoremap <F2> <cmd>normal! <c-g>"by<cr>')
+    command('snoremap <F1> <cmd>throw "very error"<cr>')
+    command('snoremap <F2> <cmd>normal! <c-g>"by<cr>')
     -- can extend select mode
     feed('gh<F4>')
     screen:expect([[
@@ -830,12 +864,14 @@ describe('mappings with <Cmd>', function()
   end)
 
   it("works with <SID> mappings", function()
-    source([[
+    command('new!')
+    write_file(tmpfile, [[
       map <f2> <Cmd>call <SID>do_it()<Cr>
       function! s:do_it()
         let g:x = 10
       endfunction
     ]])
+    command('source '..tmpfile)
     feed('<f2>')
     eq('', eval('v:errmsg'))
     eq(10, eval('g:x'))

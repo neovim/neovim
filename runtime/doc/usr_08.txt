@@ -235,7 +235,7 @@ windows like this:
 	+----------------------------------+
 
 Clearly the last one should be at the top.  Go to that window (using CTRL-W w)
-and the type this command: >
+and then type this command: >
 
 	CTRL-W K
 
@@ -401,7 +401,7 @@ Another way to start in diff mode can be done from inside Vim.  Edit the
 "main.c" file, then make a split and show the differences: >
 
 	:edit main.c
-	:vertical diffsplit main.c~ 
+	:vertical diffsplit main.c~
 
 The ":vertical" command is used to make the window split vertically.  If you
 omit this, you will get a horizontal split.
@@ -482,6 +482,8 @@ statusline:
 	0	never
 	1	only when there are split windows (the default)
 	2	always
+	3	have a global statusline at the bottom instead of one for each
+		window
 
 Many commands that edit another file have a variant that splits the window.
 For Command-line commands this is done by prepending an "s".  For example:

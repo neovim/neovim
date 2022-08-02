@@ -43,11 +43,23 @@ func Test_tagfunc()
   call assert_equal('one', g:tagfunc_args[0])
   call assert_equal('c', g:tagfunc_args[1])
 
+  let g:tagfunc_args=[]
+  execute "tag /foo$"
+  call assert_equal('foo$', g:tagfunc_args[0])
+  call assert_equal('r', g:tagfunc_args[1])
+
   set cpt=t
   let g:tagfunc_args=[]
   execute "normal! i\<c-n>\<c-y>"
-  call assert_equal('ci', g:tagfunc_args[1])
+  call assert_equal('\<\k\k', g:tagfunc_args[0])
+  call assert_equal('cir', g:tagfunc_args[1])
   call assert_equal('nothing1', getline('.')[0:7])
+
+  let g:tagfunc_args=[]
+  execute "normal! ono\<c-n>\<c-n>\<c-y>"
+  call assert_equal('\<no', g:tagfunc_args[0])
+  call assert_equal('cir', g:tagfunc_args[1])
+  call assert_equal('nothing2', getline('.')[0:7])
 
   func BadTagFunc1(...)
     return 0
@@ -79,6 +91,30 @@ func Test_tagfunc()
   bwipe!
   set tags& tfu& cpt& 
   call delete('Xfile1')
+endfunc
+
+" Test for modifying the tag stack from a tag function and jumping to a tag
+" from a tag function
+func Test_tagfunc_settagstack()
+  func Mytagfunc1(pat, flags, info)
+    call settagstack(1, {'tagname' : 'mytag', 'from' : [0, 10, 1, 0]})
+    return [{'name' : 'mytag', 'filename' : 'Xtest', 'cmd' : '1'}]
+  endfunc
+  set tagfunc=Mytagfunc1
+  call writefile([''], 'Xtest')
+  call assert_fails('tag xyz', 'E986:')
+
+  func Mytagfunc2(pat, flags, info)
+    tag test_tag
+    return [{'name' : 'mytag', 'filename' : 'Xtest', 'cmd' : '1'}]
+  endfunc
+  set tagfunc=Mytagfunc2
+  call assert_fails('tag xyz', 'E986:')
+
+  call delete('Xtest')
+  set tagfunc&
+  delfunc Mytagfunc1
+  delfunc Mytagfunc2
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

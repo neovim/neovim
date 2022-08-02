@@ -1,10 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
-  nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
+  testprg, ok, source, write_file, mkdir, rmdir = helpers.clear,
   helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_msg, helpers.nvim,
-  helpers.nvim_dir, helpers.ok, helpers.source,
+  helpers.testprg, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
+local assert_alive = helpers.assert_alive
 local command = helpers.command
 local funcs = helpers.funcs
 local os_kill = helpers.os_kill
@@ -15,6 +16,7 @@ local poke_eventloop = helpers.poke_eventloop
 local iswin = helpers.iswin
 local get_pathsep = helpers.get_pathsep
 local pathroot = helpers.pathroot
+local exec_lua = helpers.exec_lua
 local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
@@ -71,12 +73,20 @@ describe('jobs', function()
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
 
-    expect_msg_seq({
-      {'notification', 'stdout', {0, {'hello world abc', ''}}},
-    })
+    expect_msg_seq(
+      {
+        {'notification', 'stdout', {0, {'hello world abc'}}},
+        {'notification', 'stdout', {0, {'', ''}}},
+      },
+      {
+        {'notification', 'stdout', {0, {'hello world abc', ''}}},
+        {'notification', 'stdout', {0, {''}}}
+      }
+    )
   end)
 
   it('append environment with pty #env', function()
+    if helpers.pending_win32(pending) then return end
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let $TOTO = 'goodbye world'")
     nvim('command', "let g:job_opts.pty = v:true")
@@ -86,9 +96,16 @@ describe('jobs', function()
     else
       nvim('command', [[call jobstart('echo $TOTO $VAR', g:job_opts)]])
     end
-    expect_msg_seq({
-      {'notification', 'stdout', {0, {'hello world abc', ''}}},
-    })
+    expect_msg_seq(
+      {
+        {'notification', 'stdout', {0, {'hello world abc'}}},
+        {'notification', 'stdout', {0, {'', ''}}},
+      },
+      {
+        {'notification', 'stdout', {0, {'hello world abc', ''}}},
+        {'notification', 'stdout', {0, {''}}}
+      }
+    )
   end)
 
   it('replace environment #env', function()
@@ -116,6 +133,32 @@ describe('jobs', function()
         {'notification', 'stdout', {0, {'hello world', ''}}}
       })
     end
+  end)
+
+  it('handles case-insensitively matching #env vars', function()
+    nvim('command', "let $TOTO = 'abc'")
+    -- Since $Toto is being set in the job, it should take precedence over the
+    -- global $TOTO on Windows
+    nvim('command', "let g:job_opts = {'env': {'Toto': 'def'}, 'stdout_buffered': v:true}")
+    if iswin() then
+      nvim('command', [[let j = jobstart('set | find /I "toto="', g:job_opts)]])
+    else
+      nvim('command', [[let j = jobstart('env | grep -i toto=', g:job_opts)]])
+    end
+    nvim('command', "call jobwait([j])")
+    nvim('command', "let g:output = Normalize(g:job_opts.stdout)")
+    local actual = eval('g:output')
+    local expected
+    if iswin() then
+      -- Toto is normalized to TOTO so we can detect duplicates, and because
+      -- Windows doesn't care about case
+      expected = {'TOTO=def', ''}
+    else
+      expected = {'TOTO=abc', 'Toto=def', ''}
+    end
+    table.sort(actual)
+    table.sort(expected)
+    eq(expected, actual)
   end)
 
   it('uses &shell and &shellcmdflag if passed a string', function()
@@ -180,7 +223,7 @@ describe('jobs', function()
     ok(string.find(err, "E475: Invalid argument: expected valid directory$") ~= nil)
   end)
 
-  it('produces error when using non-executable `cwd`', function()
+  it('error on non-executable `cwd`', function()
     if iswin() then return end  -- N/A for Windows
 
     local dir = 'Xtest_not_executable_dir'
@@ -221,7 +264,7 @@ describe('jobs', function()
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
-  it('allows interactive commands', function()
+  it('interactive commands', function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     nvim('command', 'call jobsend(j, "abc\\n")')
@@ -267,13 +310,7 @@ describe('jobs', function()
     nvim('command', "call jobstop(j)")
   end)
 
-  it("will not buffer data if it doesn't end in newlines", function()
-    if helpers.isCI('travis') and os.getenv('CC') == 'gcc-4.9'
-      and helpers.is_os('mac') then
-      -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]")
-    end
-
+  it("emits partial lines (does NOT buffer data lacking newlines)", function()
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
     eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
@@ -322,6 +359,12 @@ describe('jobs', function()
     eq(false, pcall(function()
       nvim('command', 'call jobsend(j, ["some data"])')
     end))
+
+    command("let g:job_opts.stdin = 'null'")
+    nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
+    eq(false, pcall(function()
+      nvim('command', 'call jobsend(j, ["some data"])')
+    end))
   end)
 
   it('disallows jobsend on a non-existent job', function()
@@ -350,7 +393,7 @@ describe('jobs', function()
     eq(NIL, meths.get_proc(pid))
   end)
 
-  it("do not survive the exit of nvim", function()
+  it("disposed on Nvim exit", function()
     -- use sleep, which doesn't die on stdin close
     nvim('command', "let g:j =  jobstart(has('win32') ? ['ping', '-n', '1001', '127.0.0.1'] : ['sleep', '1000'], g:job_opts)")
     local pid = eval('jobpid(g:j)')
@@ -618,6 +661,44 @@ describe('jobs', function()
     )
   end)
 
+  it('jobstart() environment: $NVIM, $NVIM_LISTEN_ADDRESS #11009', function()
+    local function get_env_in_child_job(envname, env)
+      return exec_lua([[
+        local envname, env = ...
+        local join = function(s) return vim.fn.join(s, '') end
+        local stdout = {}
+        local stderr = {}
+        local opt = {
+          env = env,
+          stdout_buffered = true,
+          stderr_buffered = true,
+          on_stderr = function(chan, data, name) stderr = data end,
+          on_stdout = function(chan, data, name) stdout = data end,
+        }
+        local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1',( '+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' }, opt)
+        vim.fn.jobwait({ j1 }, 10000)
+        return join({ join(stdout), join(stderr) })
+      ]],
+      envname,
+      env)
+    end
+
+    local addr = eval('v:servername')
+    ok((addr):len() > 0)
+    -- $NVIM is _not_ defined in the top-level Nvim process.
+    eq('', eval('$NVIM'))
+    -- jobstart() shares its v:servername with the child via $NVIM.
+    eq('NVIM='..addr, get_env_in_child_job('NVIM'))
+    -- $NVIM_LISTEN_ADDRESS is unset by server_init in the child.
+    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS'))
+    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS',
+      { NVIM_LISTEN_ADDRESS='Xtest_jobstart_env' }))
+    -- User can explicitly set $NVIM_LOG_FILE, $VIM, $VIMRUNTIME.
+    eq('NVIM_LOG_FILE=Xtest_jobstart_env',
+      get_env_in_child_job('NVIM_LOG_FILE', { NVIM_LOG_FILE='Xtest_jobstart_env' }))
+    os.remove('Xtest_jobstart_env')
+  end)
+
   describe('jobwait', function()
     before_each(function()
       if iswin() then
@@ -838,7 +919,7 @@ describe('jobs', function()
     -- loop tick. This is also prevented by try-block, so feed must be used.
     feed_command("call DoIt()")
     feed('<cr>') -- press RETURN
-    eq(2,eval('1+1'))
+    assert_alive()
   end)
 
   it('jobstop() kills entire process tree #6530', function()
@@ -963,8 +1044,10 @@ describe('jobs', function()
       return rv
     end
 
+    local j
     local function send(str)
-      nvim('command', 'call jobsend(j, "'..str..'")')
+      -- check no nvim_chan_free double free with pty job (#14198)
+      meths.chan_send(j, str)
     end
 
     before_each(function()
@@ -974,11 +1057,11 @@ describe('jobs', function()
         return a:data
       endfunction
       ]])
-      local ext = iswin() and '.exe' or ''
-      insert(nvim_dir..'/tty-test'..ext)  -- Full path to tty-test.
+      insert(testprg('tty-test'))
       nvim('command', 'let g:job_opts.pty = 1')
       nvim('command', 'let exec = [expand("<cfile>:p")]')
       nvim('command', "let j = jobstart(exec, g:job_opts)")
+      j = eval'j'
       eq('tty ready', next_chunk())
     end)
 
@@ -1007,7 +1090,7 @@ describe('jobs', function()
       local other_jobid = eval("jobstart(['cat', '-'], g:job_opts)")
       local other_pid = eval('jobpid(' .. other_jobid .. ')')
 
-      -- Other job doesn't block first job from recieving SIGHUP on jobclose()
+      -- Other job doesn't block first job from receiving SIGHUP on jobclose()
       command('call jobclose(j)')
       -- Have to wait so that the SIGHUP can be processed by tty-test on time.
       -- Can't wait for the next message in case this test fails, if it fails

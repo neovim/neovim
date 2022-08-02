@@ -14,7 +14,7 @@ function Test_match()
   2match MyGroup2 /FIXME/
   3match MyGroup3 /XXX/
   call assert_equal(['MyGroup1', 'TODO'], matcharg(1))
-  call assert_equal(['MyGroup2', 'FIXME'], matcharg(2))
+  call assert_equal(['MyGroup2', 'FIXME'], 2->matcharg())
   call assert_equal(['MyGroup3', 'XXX'], matcharg(3))
 
   " --- Check that "matcharg()" returns an empty list if the argument is not 1,
@@ -43,7 +43,7 @@ function Test_match()
   " --- Check that "matchdelete()" deletes the matches defined in the previous
   " --- test correctly.
   call matchdelete(m1)
-  call matchdelete(m2)
+  eval m2->matchdelete()
   call matchdelete(m3)
   call assert_equal([], getmatches())
 
@@ -55,7 +55,7 @@ function Test_match()
   " --- Check that "clearmatches()" clears all matches defined by ":match" and
   " --- "matchadd()".
   let m1 = matchadd("MyGroup1", "TODO")
-  let m2 = matchadd("MyGroup2", "FIXME", 42)
+  let m2 = "MyGroup2"->matchadd("FIXME", 42)
   let m3 = matchadd("MyGroup3", "XXX", 60, 17)
   match MyGroup1 /COFFEE/
   2match MyGroup2 /HUMPPA/
@@ -117,7 +117,7 @@ function Test_match()
   call clearmatches()
 
   call setline(1, 'abcdΣabcdef')
-  call matchaddpos("MyGroup1", [[1, 4, 2], [1, 9, 2]])
+  eval "MyGroup1"->matchaddpos([[1, 4, 2], [1, 9, 2]])
   1
   redraw!
   let v1 = screenattr(1, 1)
@@ -157,7 +157,10 @@ func Test_match_error()
 endfunc
 
 func Test_matchadd_error()
-  call assert_fails("call matchadd('GroupDoesNotExist', 'X')", 'E28:')
+  call clearmatches()
+  " Nvim: not an error anymore:
+  call matchadd('GroupDoesNotExist', 'X')
+  call assert_equal([{'group': 'GroupDoesNotExist', 'pattern': 'X', 'priority': 10, 'id': 13}], getmatches())
   call assert_fails("call matchadd('Search', '\\(')", 'E475:')
   call assert_fails("call matchadd('Search', 'XXX', 1, 123, 1)", 'E715:')
   call assert_fails("call matchadd('Error', 'XXX', 1, 3)", 'E798:')
@@ -239,7 +242,7 @@ func Test_matchaddpos_otherwin()
         \]
   call assert_equal(expect, savematches)
 
-  call clearmatches(winid)
+  eval winid->clearmatches()
   call assert_equal([], getmatches(winid))
 
   call setmatches(savematches, winid)

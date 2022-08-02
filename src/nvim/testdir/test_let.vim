@@ -126,10 +126,15 @@ endfunction
 
 func s:set_varg7(...) abort
   let b = a:000
-  call add(b, 1)
+  let b += [1]
 endfunction
 
 func s:set_varg8(...) abort
+  let b = a:000
+  call add(b, 1)
+endfunction
+
+func s:set_varg9(...) abort
   let b = a:000
   let b[0][0] = 1
 endfunction
@@ -142,7 +147,8 @@ func Test_let_varg_fail()
   call s:set_varg5([0])
   call assert_fails('call s:set_varg6(1)', 'E742:')
   call assert_fails('call s:set_varg7(1)', 'E742:')
-  call s:set_varg8([0])
+  call assert_fails('call s:set_varg8(1)', 'E742:')
+  call s:set_varg9([0])
 endfunction
 
 func Test_let_utf8_environment()

@@ -7,11 +7,14 @@
 
 // winsock2.h must be first to avoid incompatibilities
 // with winsock.h (included by windows.h)
+
+// uncrustify:off
 #include <winsock2.h>
-#include <windows.h>
-#include <sys/stat.h>
+// uncrustify:on
 #include <io.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <windows.h>
 
 // Windows does not have S_IFLNK but libuv defines it
 // and sets the flag for us when calling uv_fs_stat.
@@ -33,7 +36,7 @@
 // Windows defines a RGB macro that produces 0x00bbggrr color values for use
 // with GDI. Our macro is different, and we don't use GDI.
 // Duplicated from macros.h to avoid include-order sensitivity.
-#define RGB_(r, g, b) ((r << 16) | (g << 8) | b)
+#define RGB_(r, g, b) (((r) << 16) | ((g) << 8) | (b))
 
 #ifdef _MSC_VER
 # ifndef inline

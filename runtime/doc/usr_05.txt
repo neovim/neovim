@@ -11,13 +11,12 @@ Vim's capabilities.  Or define your own macros.
 
 |05.1|	The vimrc file
 |05.2|	The example vimrc file explained
-|05.3|	The defaults.vim file explained
-|05.4|	Simple mappings
-|05.5|	Adding a package
-|05.6|	Adding a plugin
-|05.7|	Adding a help file
-|05.8|	The option window
-|05.9|	Often used options
+|05.3|	Simple mappings
+|05.4|	Adding a package
+|05.5|	Adding a plugin
+|05.6|	Adding a help file
+|05.7|	The option window
+|05.8|	Often used options
 
      Next chapter: |usr_06.txt|  Using syntax highlighting
  Previous chapter: |usr_04.txt|  Making small changes
@@ -45,8 +44,8 @@ This file is always used and is recommended:
 	~/AppData/Local/nvim/init.vim   (Windows) ~
 
 The vimrc file can contain all the commands that you type after a colon.  The
-most simple ones are for setting options.  For example, if you want Vim to
-always start with the 'ignorecase' option on, add this line your vimrc file: >
+simplest ones are for setting options.  For example, if you want Vim to always
+start with the 'ignorecase' option on, add this line your vimrc file: >
 
 	set ignorecase
 
@@ -132,7 +131,7 @@ it worked before Vim 5.0.  Otherwise the "Q" command starts Ex mode, but you
 will not need it.
 
 >
-	vnoremap _g y:exe "grep /" . escape(@", '\\/') . "/ *.c *.h"<CR>
+	vnoremap _g y:exe "grep /" .. escape(@", '\\/') .. "/ *.c *.h"<CR>
 
 This mapping yanks the visually selected text and searches for it in C files.
 This is a complicated mapping.  You can see that mappings can be used to do
@@ -140,13 +139,11 @@ quite complicated things.  Still, it is just a sequence of commands that are
 executed like you typed them.
 
 >
-	syntax on
 	set hlsearch
 
-This switches on syntax highlighting.  And the 'hlsearch' option tells Vim to
-highlight matches with the last used search pattern.  The "if" command is very
-useful to set options only when some condition is met.  More about that in
-|usr_41.txt|.
+This option tells Vim to highlight matches with the last used search pattern.
+The "if" command is very useful to set options only when some condition is
+met.  More about that in |usr_41.txt|.
 
 							*vimrc-filetype*  >
 	filetype plugin indent on
@@ -175,10 +172,8 @@ This switches on three very clever mechanisms:
 
 
 				*restore-cursor* *last-position-jump*  >
-    autocmd BufReadPost *
-      \ if line("'\"") >= 1 && line("'\"") <= line("$") && &ft !~# 'commit'
-      \ |   exe "normal! g`\""
-      \ | endif
+    autocmd BufRead * autocmd FileType <buffer> ++once
+      \ if &ft !~# 'commit\|rebase' && line("'\"") > 1 && line("'\"") <= line("$") | exe 'normal! g`"' | endif
 
 Another autocommand.  This time it is used after reading any file.  The
 complicated stuff after it checks if the '" mark is defined, and jumps to it
@@ -202,7 +197,7 @@ mapping.  If set (default), this may break plugins (but it's backward
 compatible).  See 'langremap'.
 
 ==============================================================================
-*05.4*	Simple mappings
+*05.3*	Simple mappings
 
 A mapping enables you to bind a set of Vim commands to a single key.  Suppose,
 for example, that you need to surround certain words with curly braces.  In
@@ -249,7 +244,7 @@ The ":map" command (with no arguments) lists your current mappings.  At
 least the ones for Normal mode.  More about mappings in section |40.1|.
 
 ==============================================================================
-*05.5*	Adding a package			*add-package* *vimball-install*
+*05.4*	Adding a package			*add-package* *vimball-install*
 
 A package is a set of files that you can add to Vim.  There are two kinds of
 packages: optional and automatically loaded on startup.
@@ -289,7 +284,7 @@ an archive or as a repository.  For an archive you can follow these steps:
 More information about packages can be found here: |packages|.
 
 ==============================================================================
-*05.6*	Adding a plugin					*add-plugin* *plugin*
+*05.5*	Adding a plugin					*add-plugin* *plugin*
 
 Vim's functionality can be extended by adding plugins.  A plugin is nothing
 more than a Vim script file that is loaded automatically when Vim starts.  You
@@ -411,7 +406,7 @@ Examples for the "stuff" filetype on Unix: >
 The <filetype> part is the name of the filetype the plugin is to be used for.
 Only files of this filetype will use the settings from the plugin.  The <name>
 part of the plugin file doesn't matter, you can use it to have several plugins
-for the same filetype.  Note that it must end in ".vim".
+for the same filetype.  Note that it must end in ".vim" or ".lua".
 
 
 Further reading:
@@ -425,7 +420,7 @@ Further reading:
 |new-filetype|		How to detect a new file type.
 
 ==============================================================================
-*05.7*	Adding a help file		                   *add-local-help*
+*05.6*	Adding a help file		                   *add-local-help*
 
 If you are lucky, the plugin you installed also comes with a help file.  We
 will explain how to install the help file, so that you can easily find help
@@ -458,7 +453,7 @@ them through the tag.
 For writing a local help file, see |write-local-help|.
 
 ==============================================================================
-*05.8*	The option window
+*05.7*	The option window
 
 If you are looking for an option that does what you want, you can search in
 the help files here: |options|.  Another way is by using this command: >
@@ -497,7 +492,7 @@ border.  This is what the 'scrolloff' option does, it specifies an offset
 from the window border where scrolling starts.
 
 ==============================================================================
-*05.9*	Often used options
+*05.8*	Often used options
 
 There are an awful lot of options.  Most of them you will hardly ever use.
 Some of the more useful ones will be mentioned here.  Don't forget you can

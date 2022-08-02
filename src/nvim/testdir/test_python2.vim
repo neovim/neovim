@@ -1,9 +1,8 @@
 " Test for python 2 commands.
 " TODO: move tests from test86.in here.
 
-if !has('python')
-  finish
-endif
+source check.vim
+CheckFeature python
 
 func Test_pydo()
   " Check deleting lines does not trigger ml_get error.
@@ -59,7 +58,7 @@ func Test_vim_function()
 
   try
     py f = vim.Function('\x80\xfdR' + vim.eval('s:foo()'))
-    call assert_equal(name, pyeval('f.name'))
+    call assert_equal(name, 'f.name'->pyeval())
   catch
     call assert_false(v:exception)
   endtry

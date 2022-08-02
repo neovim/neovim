@@ -24,8 +24,6 @@ describe('Ex cmds', function()
       pcall_err(command, ':menu 9999999999999999999999999999999999999999'))
     eq('Vim(bdelete):E939: Positive count required',
       pcall_err(command, ':bdelete 9999999999999999999999999999999999999999'))
-    eq('Vim(retab):E487: Argument must be positive',
-      pcall_err(command, ':retab 9999999999999999999999999999999999999999'))
     assert_alive()
   end)
 end)

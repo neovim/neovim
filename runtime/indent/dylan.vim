@@ -1,8 +1,9 @@
 " Vim indent file
 " Language:	Dylan
+" Maintainer:	Brent A. Fulgham <bfulgham@debian.org> (Invalid email address)
+" 		Doug Kearns <dougkearns@gmail.com>
 " Version:	0.01
-" Last Change:	2017 Jun 13
-" Maintainer:	Brent A. Fulgham <bfulgham@debian.org>
+" Last Change:	2022 Apr 06
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -14,6 +15,9 @@ setlocal indentkeys+==~begin,=~block,=~case,=~cleanup,=~define,=~end,=~else,=~el
 
 " Define the appropriate indent function but only once
 setlocal indentexpr=DylanGetIndent()
+
+let b:undo_indent = "setl inde< indk<"
+
 if exists("*DylanGetIndent")
   finish
 endif

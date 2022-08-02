@@ -3,27 +3,25 @@
 
 #include <assert.h>
 #include <stdbool.h>
-
 #include <uv.h>
 #ifndef WIN32
 # include <signal.h>  // for sigset_t
 #endif
 
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/vim.h"
-#include "nvim/globals.h"
-#include "nvim/memline.h"
 #include "nvim/eval.h"
-#include "nvim/fileio.h"
-#include "nvim/main.h"
-#include "nvim/memory.h"
-#include "nvim/misc1.h"
-#include "nvim/event/signal.h"
-#include "nvim/os/signal.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/signal.h"
+#include "nvim/fileio.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/os/signal.h"
+#include "nvim/vim.h"
 
-static SignalWatcher spipe, shup, squit, sterm, susr1;
+static SignalWatcher spipe, shup, squit, sterm, susr1, swinch;
 #ifdef SIGPWR
 static SignalWatcher spwr;
 #endif
@@ -56,6 +54,9 @@ void signal_init(void)
 #ifdef SIGUSR1
   signal_watcher_init(&main_loop, &susr1, NULL);
 #endif
+#ifdef SIGWINCH
+  signal_watcher_init(&main_loop, &swinch, NULL);
+#endif
   signal_start();
 }
 
@@ -71,6 +72,9 @@ void signal_teardown(void)
 #endif
 #ifdef SIGUSR1
   signal_watcher_close(&susr1, NULL);
+#endif
+#ifdef SIGWINCH
+  signal_watcher_close(&swinch, NULL);
 #endif
 }
 
@@ -90,6 +94,9 @@ void signal_start(void)
 #ifdef SIGUSR1
   signal_watcher_start(&susr1, on_signal, SIGUSR1);
 #endif
+#ifdef SIGWINCH
+  signal_watcher_start(&swinch, on_signal, SIGWINCH);
+#endif
 }
 
 void signal_stop(void)
@@ -108,6 +115,9 @@ void signal_stop(void)
 #ifdef SIGUSR1
   signal_watcher_stop(&susr1);
 #endif
+#ifdef SIGWINCH
+  signal_watcher_stop(&swinch);
+#endif
 }
 
 void signal_reject_deadly(void)
@@ -120,46 +130,50 @@ void signal_accept_deadly(void)
   rejecting_deadly = false;
 }
 
-static char * signal_name(int signum)
+static char *signal_name(int signum)
 {
   switch (signum) {
 #ifdef SIGPWR
-    case SIGPWR:
-      return "SIGPWR";
+  case SIGPWR:
+    return "SIGPWR";
 #endif
 #ifdef SIGPIPE
-    case SIGPIPE:
-      return "SIGPIPE";
+  case SIGPIPE:
+    return "SIGPIPE";
 #endif
-    case SIGTERM:
-      return "SIGTERM";
+  case SIGTERM:
+    return "SIGTERM";
 #ifdef SIGQUIT
-    case SIGQUIT:
-      return "SIGQUIT";
+  case SIGQUIT:
+    return "SIGQUIT";
 #endif
-    case SIGHUP:
-      return "SIGHUP";
+  case SIGHUP:
+    return "SIGHUP";
 #ifdef SIGUSR1
-    case SIGUSR1:
-      return "SIGUSR1";
+  case SIGUSR1:
+    return "SIGUSR1";
 #endif
-    default:
-      return "Unknown";
+#ifdef SIGWINCH
+  case SIGWINCH:
+    return "SIGWINCH";
+#endif
+  default:
+    return "Unknown";
   }
 }
 
 // This function handles deadly signals.
 // It tries to preserve any swap files and exit properly.
 // (partly from Elvis).
-// NOTE: Avoid unsafe functions, such as allocating memory, they can result in
-// a deadlock.
+// NOTE: this is scheduled on the event loop, not called directly from a signal handler.
 static void deadly_signal(int signum)
+  FUNC_ATTR_NORETURN
 {
   // Set the v:dying variable.
   set_vim_var_nr(VV_DYING, 1);
   v_dying = 1;
 
-  WLOG("got signal %d (%s)", signum, signal_name(signum));
+  ILOG("got signal %d (%s)", signum, signal_name(signum));
 
   snprintf((char *)IObuff, sizeof(IObuff), "Vim: Caught deadly signal '%s'\r\n",
            signal_name(signum));
@@ -173,34 +187,38 @@ static void on_signal(SignalWatcher *handle, int signum, void *data)
   assert(signum >= 0);
   switch (signum) {
 #ifdef SIGPWR
-    case SIGPWR:
-      // Signal of a power failure(eg batteries low), flush the swap files to
-      // be safe
-      ml_sync_all(false, false, true);
-      break;
+  case SIGPWR:
+    // Signal of a power failure(eg batteries low), flush the swap files to
+    // be safe
+    ml_sync_all(false, false, true);
+    break;
 #endif
 #ifdef SIGPIPE
-    case SIGPIPE:
-      // Ignore
-      break;
+  case SIGPIPE:
+    // Ignore
+    break;
 #endif
-    case SIGTERM:
+  case SIGTERM:
 #ifdef SIGQUIT
-    case SIGQUIT:
+  case SIGQUIT:
 #endif
-    case SIGHUP:
-      if (!rejecting_deadly) {
-        deadly_signal(signum);
-      }
-      break;
+  case SIGHUP:
+    if (!rejecting_deadly) {
+      deadly_signal(signum);
+    }
+    break;
 #ifdef SIGUSR1
-    case SIGUSR1:
-      apply_autocmds(EVENT_SIGNAL, (char_u *)"SIGUSR1", curbuf->b_fname, true,
-                     curbuf);
-      break;
+  case SIGUSR1:
+    apply_autocmds(EVENT_SIGNAL, "SIGUSR1", curbuf->b_fname, true, curbuf);
+    break;
 #endif
-    default:
-      ELOG("invalid signal: %d", signum);
-      break;
+#ifdef SIGWINCH
+  case SIGWINCH:
+    apply_autocmds(EVENT_SIGNAL, "SIGWINCH", curbuf->b_fname, true, curbuf);
+    break;
+#endif
+  default:
+    ELOG("invalid signal: %d", signum);
+    break;
   }
 }

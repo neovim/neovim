@@ -1,4 +1,4 @@
-mpack = require('mpack')
+local mpack = require('mpack')
 
 if arg[1] == '--help' then
   print('Usage: lua genvimvim.lua src/nvim runtime/syntax/vim/generated.vim')
@@ -44,15 +44,17 @@ local function cmd_kw(prev_cmd, cmd)
 end
 
 -- Exclude these from the vimCommand keyword list, they are handled specially
--- in syntax/vim.vim (vimAugroupKey, vimAutoCmd). #9327
-local function is_autocmd_cmd(cmd)
+-- in syntax/vim.vim (vimAugroupKey, vimAutoCmd, vimGlobal, vimSubst). #9327
+local function is_special_cased_cmd(cmd)
   return (cmd == 'augroup'
           or cmd == 'autocmd'
           or cmd == 'doautocmd'
-          or cmd == 'doautoall')
+          or cmd == 'doautoall'
+          or cmd == 'global'
+          or cmd == 'substitute')
 end
 
-vimcmd_start = 'syn keyword vimCommand contained '
+local vimcmd_start = 'syn keyword vimCommand contained '
 w(vimcmd_start)
 local prev_cmd = nil
 for _, cmd_desc in ipairs(ex_cmds.cmds) do
@@ -60,7 +62,7 @@ for _, cmd_desc in ipairs(ex_cmds.cmds) do
     w('\n' .. vimcmd_start)
   end
   local cmd = cmd_desc.command
-  if cmd:match('%w') and cmd ~= 'z' and not is_autocmd_cmd(cmd) then
+  if cmd:match('%w') and cmd ~= 'z' and not is_special_cased_cmd(cmd) then
     w(' ' .. cmd_kw(prev_cmd, cmd))
   end
   prev_cmd = cmd
@@ -123,9 +125,8 @@ end
 w('\n\nsyn case match')
 local vimfun_start = 'syn keyword vimFuncName contained '
 w('\n\n' .. vimfun_start)
-funcs = mpack.unpack(io.open(funcs_file):read("*all"))
-local started = 0
-for name, def in pairs(funcs) do
+local funcs = mpack.unpack(io.open(funcs_file, 'rb'):read("*all"))
+for name, _ in pairs(funcs) do
   if name then
     if lld.line_length > 850 then
       w('\n' .. vimfun_start)

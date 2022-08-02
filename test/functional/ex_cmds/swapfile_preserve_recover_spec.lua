@@ -3,12 +3,14 @@ local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
 local eq, eval, expect, source =
   helpers.eq, helpers.eval, helpers.expect, helpers.source
+local assert_alive = helpers.assert_alive
 local clear = helpers.clear
 local command = helpers.command
 local feed = helpers.feed
 local nvim_prog = helpers.nvim_prog
 local ok = helpers.ok
 local rmdir = helpers.rmdir
+local os_kill = helpers.os_kill
 local set_session = helpers.set_session
 local spawn = helpers.spawn
 local nvim_async = helpers.nvim_async
@@ -26,7 +28,7 @@ describe(':recover', function()
     -- Also check filename ending with ".swp". #9504
     eq('Vim(recover):E306: Cannot open '..swapname2,
       pcall_err(command, 'recover '..swapname2))  -- Should not segfault. #2117
-    eq(2, eval('1+1'))  -- Still alive?
+    assert_alive()
   end)
 
 end)
@@ -61,6 +63,7 @@ describe(':preserve', function()
 
     local swappath1 = eval('g:swapname')
 
+    os_kill(eval('getpid()'))
     -- Start another Nvim instance.
     local nvim2 = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
                                 true)
@@ -121,6 +124,7 @@ describe('swapfile detection', function()
     feed('isometext<esc>')
     command('preserve')
 
+    os_kill(eval('getpid()'))
     -- Start another Nvim instance.
     local nvim2 = spawn({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--embed'},
                         true)

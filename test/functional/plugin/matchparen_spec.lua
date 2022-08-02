@@ -27,7 +27,7 @@ describe('matchparen', function()
     feed('{<cr>')
     feed('}')
 
-    -- critical part: up + cr should result in an empty line inbetween the
+    -- critical part: up + cr should result in an empty line in between the
     -- brackets... if the bug is there, the empty line will be before the '{'
     feed('<up>')
     feed('<cr>')

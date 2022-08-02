@@ -1,6 +1,7 @@
 " Vim indent file
 " Language:     ChaiScript
 " Maintainer:	Jason Turner <lefticus 'at' gmail com>
+" Last Change: 	2022 Apr 06
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -10,6 +11,8 @@ let b:did_indent = 1
 
 setlocal indentexpr=GetChaiScriptIndent()
 setlocal autoindent
+
+let b:undo_indent = "setl ai< inde<"
 
 " Only define the function once.
 if exists("*GetChaiScriptIndent")

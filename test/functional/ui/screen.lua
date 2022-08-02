@@ -75,7 +75,7 @@ local busted = require('busted')
 local deepcopy = helpers.deepcopy
 local shallowcopy = helpers.shallowcopy
 local concat_tables = helpers.concat_tables
-local request, run_session = helpers.request, helpers.run_session
+local run_session = helpers.run_session
 local eq = helpers.eq
 local dedent = helpers.dedent
 local get_session = helpers.get_session
@@ -89,8 +89,6 @@ end
 
 local Screen = {}
 Screen.__index = Screen
-
-local debug_screen
 
 local default_timeout_factor = 1
 if os.getenv('VALGRIND') then
@@ -121,18 +119,6 @@ do
   session:close()
   Screen.colors = colors
   Screen.colornames = colornames
-end
-
-function Screen.debug(command)
-  if not command then
-    command = 'pynvim -n -c '
-  end
-  command = command .. request('vim_eval', '$NVIM_LISTEN_ADDRESS')
-  if debug_screen then
-    debug_screen:close()
-  end
-  debug_screen = io.popen(command, 'r')
-  debug_screen:read()
 end
 
 function Screen.new(width, height)
@@ -179,6 +165,7 @@ function Screen.new(width, height)
     _width = width,
     _height = height,
     _grids = {},
+    _grid_win_extmarks = {},
     _cursor = {
       grid = 1, row = 1, col = 1
     },
@@ -255,7 +242,7 @@ end
 -- canonical order of ext keys, used  to generate asserts
 local ext_keys = {
   'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos',
-  'messages', 'showmode', 'showcmd', 'ruler', 'float_pos', 'win_viewport'
+  'messages', 'msg_history', 'showmode', 'showcmd', 'ruler', 'float_pos', 'win_viewport'
 }
 
 -- Asserts that the screen state eventually matches an expected state.
@@ -278,6 +265,8 @@ local ext_keys = {
 --              attributes in the final state are an error.
 --              Use screen:set_default_attr_ids() to define attributes for many
 --              expect() calls.
+-- extmarks:    Expected win_extmarks accumulated for the grids. For each grid,
+--              the win_extmark messages are accumulated into an array.
 -- condition:   Function asserting some arbitrary condition. Return value is
 --              ignored, throw an error (use eq() or similar) to signal failure.
 -- any:         Lua pattern string expected to match a screen line. NB: the
@@ -320,7 +309,7 @@ function Screen:expect(expected, attr_ids, ...)
     assert(not (attr_ids ~= nil))
     local is_key = {grid=true, attr_ids=true, condition=true, mouse_enabled=true,
                     any=true, mode=true, unchanged=true, intermediate=true,
-                    reset=true, timeout=true, request_cb=true, hl_groups=true}
+                    reset=true, timeout=true, request_cb=true, hl_groups=true, extmarks=true}
     for _, v in ipairs(ext_keys) do
       is_key[v] = true
     end
@@ -394,7 +383,7 @@ function Screen:expect(expected, attr_ids, ...)
       for i, row in ipairs(expected_rows) do
         msg_expected_rows[i] = row
         local m = (row ~= actual_rows[i] and row:match('{MATCH:(.*)}') or nil)
-        if row ~= actual_rows[i] and (not m or not actual_rows[i]:match(m)) then
+        if row ~= actual_rows[i] and (not m or not (actual_rows[i] and actual_rows[i]:match(m))) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
             actual_rows[i] = '*' .. actual_rows[i]
@@ -429,6 +418,15 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
       extstate.win_viewport = nil
     end
 
+    if expected.float_pos then
+      expected.float_pos = deepcopy(expected.float_pos)
+      for _, v in pairs(expected.float_pos) do
+        if not v.external and v[7] == nil then
+          v[7] = 50
+        end
+      end
+    end
+
     -- Convert assertion errors into invalid screen state descriptions.
     for _, k in ipairs(concat_tables(ext_keys, {'mode', 'mouse_enabled'})) do
       -- Empty states are considered the default and need not be mentioned.
@@ -447,6 +445,25 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
         local status, res = pcall(eq, expected_hl, actual_hl, "highlight "..name)
         if not status then
           return tostring(res)
+        end
+      end
+    end
+
+    if expected.extmarks ~= nil then
+      for gridid, expected_marks in pairs(expected.extmarks) do
+        local stored_marks = self._grid_win_extmarks[gridid]
+        if stored_marks == nil then
+          return 'no win_extmark for grid '..tostring(gridid)
+        end
+        local status, res = pcall(eq, expected_marks, stored_marks, "extmarks for grid "..tostring(gridid))
+        if not status then
+          return tostring(res)
+        end
+      end
+      for gridid, _ in pairs(self._grid_win_extmarks) do
+        local expected_marks = expected.extmarks[gridid]
+        if expected_marks == nil then
+          return 'unexpected win_extmark for grid '..tostring(gridid)
         end
       end
     end
@@ -535,7 +552,7 @@ function Screen:_wait(check, flags)
   elseif not checked then
     err = check()
     if not err and flags.unchanged then
-      -- expecting NO screen change: use a shorter timout
+      -- expecting NO screen change: use a shorter timeout
       success_seen = true
     end
   end
@@ -567,16 +584,16 @@ to the test if they make sense.
     print([[
 
 warning: Screen changes were received after the expected state. This indicates
-indeterminism in the test. Try adding screen:expect(...) (or wait()) between
-asynchronous (feed(), nvim_input()) and synchronous API calls.
+indeterminism in the test. Try adding screen:expect(...) (or poke_eventloop())
+between asynchronous (feed(), nvim_input()) and synchronous API calls.
   - Use screen:redraw_debug() to investigate; it may find relevant intermediate
     states that should be added to the test to make it more robust.
   - If the purpose of the test is to assert state after some user input sent
     with feed(), adding screen:expect() before the feed() will help to ensure
     the input is sent when Nvim is in a predictable state. This is preferable
-    to wait(), for being closer to real user interaction.
-  - wait() can trigger redraws and consequently generate more indeterminism.
-    Try removing wait().
+    to poke_eventloop(), for being closer to real user interaction.
+  - poke_eventloop() can trigger redraws and thus generate more indeterminism.
+    Try removing poke_eventloop().
       ]])
     did_warn = true
   end
@@ -694,6 +711,7 @@ function Screen:_reset()
   self.cmdline_block = {}
   self.wildmenu_items = nil
   self.wildmenu_pos = nil
+  self._grid_win_extmarks = {}
 end
 
 function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
@@ -764,13 +782,14 @@ function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
   self.float_pos[grid] = nil
 end
 
-function Screen:_handle_win_viewport(grid, win, topline, botline, curline, curcol)
+function Screen:_handle_win_viewport(grid, win, topline, botline, curline, curcol, linecount)
   self.win_viewport[grid] = {
     win = win,
     topline = topline,
     botline = botline,
     curline = curline,
-    curcol = curcol
+    curcol = curcol,
+    linecount = linecount
   }
 end
 
@@ -791,6 +810,13 @@ end
 
 function Screen:_handle_win_close(grid)
   self.float_pos[grid] = nil
+end
+
+function Screen:_handle_win_extmark(grid, ...)
+  if self._grid_win_extmarks[grid] == nil then
+    self._grid_win_extmarks[grid] = {}
+  end
+  table.insert(self._grid_win_extmarks[grid], {...})
 end
 
 function Screen:_handle_busy_start()
@@ -1057,6 +1083,10 @@ function Screen:_handle_msg_history_show(entries)
   self.msg_history = entries
 end
 
+function Screen:_handle_msg_history_clear()
+  self.msg_history = {}
+end
+
 function Screen:_clear_block(grid, top, bot, left, right)
   for i = top, bot do
     self:_clear_row_section(grid, i, left, right)
@@ -1145,7 +1175,7 @@ function Screen:_extstate_repr(attr_state)
 
   local msg_history = {}
   for i, entry in ipairs(self.msg_history) do
-    messages[i] = {kind=entry[1], content=self:_chunks_repr(entry[2], attr_state)}
+    msg_history[i] = {kind=entry[1], content=self:_chunks_repr(entry[2], attr_state)}
   end
 
   local win_viewport = (next(self.win_viewport) and self.win_viewport) or nil
@@ -1287,21 +1317,31 @@ function Screen:get_snapshot(attrs, ignore)
 end
 
 local function fmt_ext_state(name, state)
+  local function remove_all_metatables(item, path)
+    if path[#path] ~= inspect.METATABLE then
+      return item
+    end
+  end
   if name == "win_viewport" then
     local str = "{\n"
     for k,v in pairs(state) do
       str = (str.."  ["..k.."] = {win = {id = "..v.win.id.."}, topline = "
              ..v.topline..", botline = "..v.botline..", curline = "..v.curline
-             ..", curcol = "..v.curcol.."};\n")
+             ..", curcol = "..v.curcol..", linecount = "..v.linecount.."};\n")
+    end
+    return str .. "}"
+  elseif name == "float_pos" then
+    local str = "{\n"
+    for k,v in pairs(state) do
+      str = str.."  ["..k.."] = {{id = "..v[1].id.."}"
+      for i = 2, #v do
+        str = str..", "..inspect(v[i])
+      end
+      str = str .. "};\n"
     end
     return str .. "}"
   else
     -- TODO(bfredl): improve formatting of more states
-    local function remove_all_metatables(item, path)
-      if path[#path] ~= inspect.METATABLE then
-        return item
-      end
-    end
     return inspect(state,{process=remove_all_metatables})
   end
 end
@@ -1540,9 +1580,10 @@ end
 function Screen:_equal_attrs(a, b)
     return a.bold == b.bold and a.standout == b.standout and
        a.underline == b.underline and a.undercurl == b.undercurl and
-       a.italic == b.italic and a.reverse == b.reverse and
-       a.foreground == b.foreground and a.background == b.background and
-       a.special == b.special and a.blend == b.blend and
+       a.underdouble == b.underdouble and a.underdotted == b.underdotted and
+       a.underdashed == b.underdashed and a.italic == b.italic and
+       a.reverse == b.reverse and a.foreground == b.foreground and
+       a.background == b.background and a.special == b.special and a.blend == b.blend and
        a.strikethrough == b.strikethrough and
        a.fg_indexed == b.fg_indexed and a.bg_indexed == b.bg_indexed
 end

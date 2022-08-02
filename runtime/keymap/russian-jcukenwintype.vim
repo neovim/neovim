@@ -4,7 +4,7 @@
 " Useful mainly with utf-8 but may work with other encodings
 
 " Derived from russian-jcuken.vim by Artem Chuprina <ran@ran.pp.ru>
-" Typewriter variant of standart russian layout
+" Typewriter variant of standard russian layout
 " Maintainer:   Denis Proskurin <danwerspb@gmail.com>
 " Last Changed: 2015 May 15
 

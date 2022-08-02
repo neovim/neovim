@@ -36,7 +36,7 @@ func Test_find_complete()
   " We shouldn't find any file till this point
 
   call mkdir('in/path', 'p')
-  exe 'cd ' . cwd
+  call chdir(cwd)
   call writefile(['Holy Grail'], 'Xfind/file.txt')
   call writefile(['Jimmy Hoffa'], 'Xfind/in/file.txt')
   call writefile(['Another Holy Grail'], 'Xfind/in/stuff.txt')
@@ -133,12 +133,12 @@ func Test_find_complete()
   call assert_equal('Voyager 2', getline(1))
 
   " Check for correct handling of shorten_fname()'s behavior on windows
-  exec "cd " . cwd . "/Xfind/in"
+  call chdir(cwd .. "/Xfind/in")
   call feedkeys(":find file\t\n", "xt")
   call assert_equal('Jimmy Hoffa', getline(1))
 
   " Test for relative to current buffer 'path' item
-  exec "cd " . cwd . "/Xfind/"
+  call chdir(cwd . "/Xfind/")
   set path=./path
   " Open the file where Jimmy Hoffa is found
   e in/file.txt
@@ -157,7 +157,7 @@ func Test_find_complete()
   call assert_equal('Another Holy Grail', getline(1))
 
   enew | only
-  exe 'cd ' . cwd
+  call chdir(cwd)
   call delete('Xfind', 'rf')
   set path&
 endfunc

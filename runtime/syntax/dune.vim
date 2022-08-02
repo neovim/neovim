@@ -1,7 +1,8 @@
+" Vim syntax file
 " Language:    Dune buildsystem
 " Maintainer:  Markus Mottl        <markus.mottl@gmail.com>
 "              Anton Kochkov       <anton.kochkov@gmail.com>
-" URL:         https://github.com/rgrinberg/vim-ocaml
+" URL:         https://github.com/ocaml/vim-ocaml
 " Last Change:
 "              2019 Feb 27 - Add newer keywords to the syntax (Simon Cruanes)
 "              2018 May 8 - Check current_syntax (Kawahara Satoru)
@@ -28,7 +29,7 @@ syn keyword lispKey ppx_runtime_libraries virtual_deps js_of_ocaml link_flags
 syn keyword lispKey javascript_files flags ocamlc_flags ocamlopt_flags pps staged_pps
 syn keyword lispKey library_flags c_flags c_library_flags kind package action
 syn keyword lispKey deps targets locks fallback
-syn keyword lispKey inline_tests tests names
+syn keyword lispKey inline_tests tests test names
 
 syn keyword lispAtom true false
 

@@ -6,7 +6,7 @@ if helpers.pending_win32(pending) then return end
 
 describe('api', function()
   local screen
-  local socket_name = "Xtest_functional_api.sock"
+  local socket_name = "./Xtest_functional_api.sock"
 
   before_each(function()
     helpers.clear()
@@ -29,7 +29,7 @@ describe('api', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
-      ]]..socket_name..[[                         |
+      ]]..socket_name..[[                       |
       {3:-- TERMINAL --}                                    |
     ]])
 
@@ -48,8 +48,8 @@ describe('api', function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    ok(socket_session1:request("nvim_ui_attach", 42, 6, {rgb=true}))
-    ok(socket_session2:request("nvim_ui_attach", 25, 30, {rgb=true}))
+    ok((socket_session1:request("nvim_ui_attach", 42, 6, {rgb=true})))
+    ok((socket_session2:request("nvim_ui_attach", 25, 30, {rgb=true})))
 
     socket_session1:notify("nvim_input", "\n[socket 1] this is more than 25 columns")
     socket_session2:notify("nvim_input", "\n[socket 2] input")

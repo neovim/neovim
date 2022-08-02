@@ -2,17 +2,16 @@
 #define NVIM_EVENT_LOOP_H
 
 #include <stdint.h>
-
 #include <uv.h>
 
+#include "nvim/event/multiqueue.h"
 #include "nvim/lib/klist.h"
 #include "nvim/os/time.h"
-#include "nvim/event/multiqueue.h"
 
-typedef void * WatcherPtr;
+typedef void *WatcherPtr;
 
-#define _noop(x)
-KLIST_INIT(WatcherPtr, WatcherPtr, _noop)
+#define _NOOP(x)
+KLIST_INIT(WatcherPtr, WatcherPtr, _NOOP)
 
 typedef struct loop {
   uv_loop_t uv;
@@ -36,6 +35,8 @@ typedef struct loop {
 
   // generic timer, used by loop_poll_events()
   uv_timer_t poll_timer;
+
+  uv_timer_t exit_delay_timer;
 
   uv_async_t async;
   uv_mutex_t mutex;
@@ -65,7 +66,7 @@ typedef struct loop {
         break; \
       } else if (remaining > 0) { \
         uint64_t now = os_hrtime(); \
-        remaining -= (int) ((now - before) / 1000000); \
+        remaining -= (int)((now - before) / 1000000); \
         before = now; \
         if (remaining <= 0) { \
           break; \
@@ -82,7 +83,6 @@ typedef struct loop {
       loop_poll_events(loop, timeout); \
     } \
   } while (0)
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.h.generated.h"

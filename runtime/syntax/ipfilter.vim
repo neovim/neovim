@@ -1,7 +1,7 @@
 " ipfilter syntax file
 " Language: ipfilter configuration file
 " Maintainer: Hendrik Scholz <hendrik@scholz.net>
-" Last Change: 2005 Jan 27
+" Last Change: 2022 Jun 14
 "
 " http://www.wormulon.net/files/misc/ipfilter.vim
 "
@@ -52,3 +52,4 @@ hi def link IPFNetmask	String
 hi def link IPFAny		Statement
 hi def link IPFProto	Identifier
 
+let b:current_syntax = 'ipfilter'

@@ -1,12 +1,11 @@
 " Vim indent file
-" Language:     Clojure
-" Author:       Meikel Brandmeyer <mb@kotka.de>
-" URL:          http://kotka.de/projects/clojure/vimclojure.html
-"
-" Maintainer:   Sung Pae <self@sungpae.com>
-" URL:          https://github.com/guns/vim-clojure-static
-" License:      Same as Vim
-" Last Change:  18 July 2016
+" Language:           Clojure
+" Maintainer:         Alex Vear <alex@vear.uk>
+" Former Maintainers: Sung Pae <self@sungpae.com>
+"                     Meikel Brandmeyer <mb@kotka.de>
+" URL:                https://github.com/clojure-vim/clojure.vim
+" License:            Vim (see :h license)
+" Last Change:        2022-03-24
 
 if exists("b:did_indent")
 	finish
@@ -25,7 +24,7 @@ setlocal indentkeys=!,o,O
 if exists("*searchpairpos")
 
 	if !exists('g:clojure_maxlines')
-		let g:clojure_maxlines = 100
+		let g:clojure_maxlines = 300
 	endif
 
 	if !exists('g:clojure_fuzzy_indent')
@@ -72,14 +71,10 @@ if exists("*searchpairpos")
 		return s:current_char() =~# '\v[\(\)\[\]\{\}]' && !s:ignored_region()
 	endfunction
 
-	" Returns 1 if string matches a pattern in 'patterns', which may be a
-	" list of patterns, or a comma-delimited string of implicitly anchored
-	" patterns.
+	" Returns 1 if string matches a pattern in 'patterns', which should be
+	" a list of patterns.
 	function! s:match_one(patterns, string)
-		let list = type(a:patterns) == type([])
-		           \ ? a:patterns
-		           \ : map(split(a:patterns, ','), '"^" . v:val . "$"')
-		for pat in list
+		for pat in a:patterns
 			if a:string =~# pat | return 1 | endif
 		endfor
 	endfunction
@@ -87,7 +82,7 @@ if exists("*searchpairpos")
 	function! s:match_pairs(open, close, stopat)
 		" Stop only on vector and map [ resp. {. Ignore the ones in strings and
 		" comments.
-		if a:stopat == 0
+		if a:stopat == 0 && g:clojure_maxlines > 0
 			let stopat = max([line(".") - g:clojure_maxlines, 0])
 		else
 			let stopat = a:stopat
@@ -121,7 +116,7 @@ if exists("*searchpairpos")
 			if s:syn_id_name() !~? "string"
 				return -1
 			endif
-			if s:current_char() != '\\'
+			if s:current_char() != '\'
 				return -1
 			endif
 			call cursor(0, col("$") - 1)
@@ -170,7 +165,35 @@ if exists("*searchpairpos")
 
 		call search('\S', 'W')
 		let w = s:strip_namespace_and_macro_chars(s:current_word())
+
 		if g:clojure_special_indent_words =~# '\V\<' . w . '\>'
+
+			" `letfn` is a special-special-case.
+			if w ==# 'letfn'
+				" Earlier code left the cursor at:
+				"     (letfn [...] ...)
+				"      ^
+
+				" Search and get coordinates of first `[`
+				"     (letfn [...] ...)
+				"            ^
+				call search('\[', 'W')
+				let pos = getcurpos()
+				let letfn_bracket = [pos[1], pos[2]]
+
+				" Move cursor to start of the form this function was
+				" initially called on.  Grab the coordinates of the
+				" closest outer `[`.
+				call cursor(a:position)
+				let outer_bracket = s:match_pairs('\[', '\]', 0)
+
+				" If the located square brackets are not the same,
+				" don't use special-case formatting.
+				if outer_bracket != letfn_bracket
+					return 0
+				endif
+			endif
+
 			return 1
 		endif
 
@@ -188,13 +211,10 @@ if exists("*searchpairpos")
 	endfunction
 
 	" Check if form is a reader conditional, that is, it is prefixed by #?
-	" or @#?
+	" or #?@
 	function! s:is_reader_conditional_special_case(position)
-		if getline(a:position[0])[a:position[1] - 3 : a:position[1] - 2] == "#?"
-			return 1
-		endif
-
-		return 0
+		return getline(a:position[0])[a:position[1] - 3 : a:position[1] - 2] == "#?"
+			\|| getline(a:position[0])[a:position[1] - 4 : a:position[1] - 2] == "#?@"
 	endfunction
 
 	" Returns 1 for opening brackets, -1 for _anything else_.
@@ -261,7 +281,7 @@ if exists("*searchpairpos")
 		call cursor(paren)
 
 		if s:is_method_special_case(paren)
-			return [paren[0], paren[1] + shiftwidth() - 1]
+			return [paren[0], paren[1] + &shiftwidth - 1]
 		endif
 
 		if s:is_reader_conditional_special_case(paren)
@@ -292,6 +312,19 @@ if exists("*searchpairpos")
 			return paren
 		endif
 
+		" If the keyword begins with #, check if it is an anonymous
+		" function or set, in which case we indent by the shiftwidth
+		" (minus one if g:clojure_align_subforms = 1), or if it is
+		" ignored, in which case we use the ( position for indent.
+		if w[0] == "#"
+			" TODO: Handle #=() and other rare reader invocations?
+			if w[1] == '(' || w[1] == '{'
+				return [paren[0], paren[1] + (g:clojure_align_subforms ? 0 : &shiftwidth - 1)]
+			elseif w[1] == '_'
+				return paren
+			endif
+		endif
+
 		" Test words without namespace qualifiers and leading reader macro
 		" metacharacters.
 		"
@@ -299,19 +332,19 @@ if exists("*searchpairpos")
 		let ww = s:strip_namespace_and_macro_chars(w)
 
 		if &lispwords =~# '\V\<' . ww . '\>'
-			return [paren[0], paren[1] + shiftwidth() - 1]
+			return [paren[0], paren[1] + &shiftwidth - 1]
 		endif
 
 		if g:clojure_fuzzy_indent
 			\ && !s:match_one(g:clojure_fuzzy_indent_blacklist, ww)
 			\ && s:match_one(g:clojure_fuzzy_indent_patterns, ww)
-			return [paren[0], paren[1] + shiftwidth() - 1]
+			return [paren[0], paren[1] + &shiftwidth - 1]
 		endif
 
 		call search('\v\_s', 'cW')
 		call search('\v\S', 'W')
 		if paren[0] < line(".")
-			return [paren[0], paren[1] + (g:clojure_align_subforms ? 0 : shiftwidth() - 1)]
+			return [paren[0], paren[1] + (g:clojure_align_subforms ? 0 : &shiftwidth - 1)]
 		endif
 
 		call search('\v\S', 'bW')

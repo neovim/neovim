@@ -1,0 +1,19 @@
+# vim: set filetype=bitbake :
+
+# START_INDENT
+FOO = " \
+    bar \
+    baz \
+    qux \
+    "
+
+do_configure() {
+oe_conf
+}
+
+python do_task() {
+def foo(x):
+if y:
+print(x)
+}
+# END_INDENT

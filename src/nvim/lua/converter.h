@@ -6,12 +6,11 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/func_attr.h"
 #include "nvim/eval.h"
+#include "nvim/func_attr.h"
 
 typedef struct {
   LuaRef func_ref;
-  LuaRef table_ref;
 } LuaCallable;
 
 typedef struct {

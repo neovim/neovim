@@ -30,10 +30,11 @@ Table of contents: |usr_toc.txt|
 
 To move the cursor forward one word, use the "w" command.  Like most Vim
 commands, you can use a numeric prefix to move past multiple words.  For
-example, "3w" moves three words.  This figure shows how it works:
+example, "3w" moves three words.  This figure shows how it works (starting at
+the position marked with "x"):
 
 	This is a line with example text ~
-	  --->-->->----------------->
+	  x-->-->->----------------->
 	   w  w  w    3w
 
 Notice that "w" moves to the start of the next word if it already is at the
@@ -41,15 +42,15 @@ start of a word.
    The "b" command moves backward to the start of the previous word:
 
 	This is a line with example text ~
-	<----<--<-<---------<---
+	<----<--<-<---------<--x
 	   b   b b    2b      b
 
 There is also the "e" command that moves to the next end of a word and "ge",
 which moves to the previous end of a word:
 
 	This is a line with example text ~
-	   <-   <--- ----->   ---->
-	   ge    ge     e       e
+	   <----<----x---->------------>
+	   2ge   ge     e       2e
 
 If you are at the last word of a line, the "w" command will take you to the
 first word in the next line.  Thus you can use this to move through a
@@ -81,13 +82,13 @@ The "$" command moves the cursor to the end of a line.  If your keyboard has
 an <End> key it will do the same thing.
 
 The "^" command moves to the first non-blank character of the line.  The "0"
-command (zero) moves to the very first character of the line.  The <Home> key
-does the same thing.  In a picture:
+command (zero) moves to the very first character of the line, and the <Home>
+key does the same thing.  In a picture ("." indicates a space):
 
 		  ^
-	     <------------
+	     <-----------x
 	.....This is a line with example text ~
-	<-----------------   --------------->
+	<----------------x   x-------------->
 		0		   $
 
 (the "....." indicates blanks here)
@@ -222,7 +223,8 @@ you can see?  This figure shows the three commands you can use:
 		L -->	| text sample text	    |
 			+---------------------------+
 
-Hints: "H" stands for Home, "M" for Middle and "L" for Last.
+Hints: "H" stands for Home, "M" for Middle and "L" for Last.  Alternatively,
+"H" for high, "M" for Middle and "L" for low.
 
 ==============================================================================
 *03.6*	Telling where you are
@@ -299,22 +301,22 @@ To scroll one line at a time use CTRL-E (scroll up) and CTRL-Y (scroll down).
 Think of CTRL-E to give you one line Extra.  (If you use MS-Windows compatible
 key mappings CTRL-Y will redo a change instead of scroll.)
 
-To scroll forward by a whole screen (except for two lines) use CTRL-F.  The
-other way is backward, CTRL-B is the command to use.  Fortunately CTRL-F is
-Forward and CTRL-B is Backward, that's easy to remember.
+To scroll forward by a whole screen (except for two lines) use CTRL-F.  To
+scroll backwards, use CTRL-B.  These should be easy to remember: F for
+Forwards and B for Backwards.
 
 A common issue is that after moving down many lines with "j" your cursor is at
 the bottom of the screen.  You would like to see the context of the line with
 the cursor.  That's done with the "zz" command.
 
 	+------------------+		 +------------------+
-	| some text	   |		 | some text	    |
-	| some text	   |		 | some text	    |
-	| some text	   |		 | some text	    |
-	| some text	   |   zz  -->	 | line with cursor |
-	| some text	   |		 | some text	    |
-	| some text	   |		 | some text	    |
-	| line with cursor |		 | some text	    |
+	| earlier text	   |		 | earlier text	    |
+	| earlier text	   |		 | earlier text	    |
+	| earlier text	   |		 | earlier text	    |
+	| earlier text	   |   zz  -->	 | line with cursor |
+	| earlier text	   |		 | later text	    |
+	| earlier text	   |		 | later text	    |
+	| line with cursor |		 | later text	    |
 	+------------------+		 +------------------+
 
 The "zt" command puts the cursor line at the top, "zb" at the bottom.  There
@@ -346,7 +348,8 @@ to find the first #include after the cursor: >
 
 And then type "n" several times.  You will move to each #include in the text.
 You can also use a count if you know which match you want.  Thus "3n" finds
-the third match.  Using a count with "/" doesn't work.
+the third match.  You can also use a count with "/": "4/the" goes to the
+fourth match of "the".
 
 The "?" command works like "/" but searches backwards: >
 
@@ -354,7 +357,7 @@ The "?" command works like "/" but searches backwards: >
 
 The "N" command repeats the last search the opposite direction.  Thus using
 "N" after a "/" command searches backwards, using "N" after "?" searches
-forward.
+forwards.
 
 
 IGNORING CASE
@@ -458,8 +461,8 @@ essential ones:
 	:set nowrapscan
 
 This stops the search at the end of the file.  Or, when you are searching
-backwards, at the start of the file.  The 'wrapscan' option is on by default,
-thus searching wraps around the end of the file.
+backwards, it stops the search at the start of the file.  The 'wrapscan'
+option is on by default, thus searching wraps around the end of the file.
 >
 	:set noincsearch
 
@@ -481,7 +484,8 @@ Vim.  Example: >
 	Go:set hlsearch<Esc>
 
 "G" moves to the end of the file.  "o" starts a new line, where you type the
-":set" command.  You end insert mode with <Esc>.  Then write the file: >
+":set" command.  You end insert mode with <Esc>.  Then write and close the
+file: >
 
 	ZZ
 
@@ -495,8 +499,8 @@ Regular expressions are an extremely powerful and compact way to specify a
 search pattern.  Unfortunately, this power comes at a price, because regular
 expressions are a bit tricky to specify.
    In this section we mention only a few essential ones.  More about search
-patterns and commands in chapter 27 |usr_27.txt|.  You can find the full
-explanation here: |pattern|.
+patterns and commands can be found in chapter 27 |usr_27.txt|.  You can find
+the full explanation here: |pattern|.
 
 
 BEGINNING AND END OF A LINE
@@ -522,9 +526,9 @@ And with "/^the" we find this one:
 	the solder holding one of the chips melted and the ~
 	xxx
 
-You can try searching with "/^the$", it will only match a single line
-consisting of "the".  White space does matter here, thus if a line contains a
-space after the word, like "the ", the pattern will not match.
+You can try searching with "/^the$"; it will only match a single line
+consisting entirely of "the".  White space does matter here, thus if a line
+contains a space after the word, like "the ", the pattern will not match.
 
 
 MATCHING ANY SINGLE CHARACTER
@@ -559,20 +563,20 @@ where you came from, use this command: >
 
 This ` is a backtick or open single-quote character.
    If you use the same command a second time you will jump back again.  That's
-because the ` command is a jump itself, and the position from before this jump
-is remembered.
+because the "`" command is a jump itself, and the position from before this
+jump is remembered.
 
 Generally, every time you do a command that can move the cursor further than
 within the same line, this is called a jump.  This includes the search
 commands "/" and "n" (it doesn't matter how far away the match is).  But not
 the character searches with "fx" and "tx" or the word movements "w" and "e".
-   Also, "j" and "k" are not considered to be a jump.  Even when you use a
+   Also, "j" and "k" are not considered to be a jump, even when you use a
 count to make them move the cursor quite a long way away.
 
-The `` command jumps back and forth, between two points.  The CTRL-O command
+The "``" command jumps back and forth, between two points.  The CTRL-O command
 jumps to older positions (Hint: O for older).  CTRL-I then jumps back to newer
-positions (Hint: I is just next to O on the keyboard).  Consider this sequence
-of commands: >
+positions (Hint: for many common keyboard layouts, I is just next to O).
+Consider this sequence of commands: >
 
 	33G
 	/^The
@@ -610,9 +614,9 @@ Thus to move to the a mark:
 >
 	`a
 
-The command 'mark (single quotation mark, or apostrophe) moves you to the
-beginning of the line containing the mark.  This differs from the `mark
-command, which moves you to marked column.
+The command "'mark" (single quotation mark, or apostrophe) moves you to the
+beginning of the line containing the mark.  This differs from the "`mark"
+command, which also moves you to the marked column.
 
 The marks can be very useful when working on two related parts in a file.
 Suppose you have some text near the start of the file you need to look at,

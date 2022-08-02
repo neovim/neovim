@@ -19,11 +19,7 @@ func Test_gf_url()
   call search("^second")
   call search("URL")
   call assert_equal("URL://machine.name/tmp/vimtest2b", expand("<cfile>"))
-  if has("ebcdic")
-      set isf=@,240-249,/,.,-,_,+,,,$,:,~,\
-  else
-      set isf=@,48-57,/,.,-,_,+,,,$,~,\
-  endif
+  set isf=@,48-57,/,.,-,_,+,,,$,~,\
   call search("^third")
   call search("name")
   call assert_equal("URL:\\\\machine.name\\vimtest2c", expand("<cfile>"))
@@ -38,6 +34,13 @@ func Test_gf_url()
   call search("^sixth")
   call search("URL")
   call assert_equal("URL://machine.name:1234?q=vim", expand("<cfile>"))
+
+  %d
+  call setline(1, "demo://remote_file")
+  wincmd f
+  call assert_equal('demo://remote_file', @%)
+  call assert_equal(2, winnr('$'))
+  close!
 
   set isf&vim
   enew!
@@ -67,20 +70,23 @@ func Test_gF()
   call assert_equal('Xfile', bufname('%'))
   call assert_equal(2, getcurpos()[1])
 
+  " jumping to the file/line with CTRL-W_F
+  %bw!
+  edit Xfile1
+  call setline(1, ['one', 'Xfile:4', 'three'])
+  exe "normal 2G\<C-W>F"
+  call assert_equal('Xfile', bufname('%'))
+  call assert_equal(4, getcurpos()[1])
+
   set isfname&
   call delete('Xfile')
   call delete('Xfile2')
-  bwipe Xfile
-  bwipe Xfile2
+  %bw!
 endfunc
 
 " Test for invoking 'gf' on a ${VAR} variable
 func Test_gf()
-  if has("ebcdic")
-    set isfname=@,240-249,/,.,-,_,+,,,$,:,~,{,}
-  else
-    set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
-  endif
+  set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
 
   call writefile(["Test for gf command"], "Xtest1")
   if has("unix")
@@ -132,6 +138,22 @@ func Test_gf_visual()
   call assert_equal('Xtest_gf_visual', bufname('%'))
   call assert_equal(3, getcurpos()[1])
 
+  " do not include the NUL at the end
+  call writefile(['x'], 'X')
+  let save_enc = &enc
+  " for enc in ['latin1', 'utf-8']
+  for enc in ['utf-8']
+    exe "set enc=" .. enc
+    new
+    call setline(1, 'X')
+    set nomodified
+    exe "normal \<C-V>$gf"
+    call assert_equal('X', bufname())
+    bwipe!
+  endfor
+  let &enc = save_enc
+  call delete('X')
+
   " line number in visual area is used for file name
   if has('unix')
     bwipe!
@@ -155,5 +177,60 @@ func Test_gf_error()
   call setline(1, '/doesnotexist')
   call assert_fails('normal gf', 'E447:')
   call assert_fails('normal gF', 'E447:')
+  call assert_fails('normal [f', 'E447:')
+
+  " gf is not allowed when text is locked
+  au InsertCharPre <buffer> normal! gF<CR>
+  let caught_e565 = 0
+  try
+    call feedkeys("ix\<esc>", 'xt')
+  catch /^Vim\%((\a\+)\)\=:E565/ " catch E565
+    let caught_e565 = 1
+  endtry
+  call assert_equal(1, caught_e565)
+  au! InsertCharPre
+
   bwipe!
 endfunc
+
+" If a file is not found by 'gf', then 'includeexpr' should be used to locate
+" the file.
+func Test_gf_includeexpr()
+  new
+  let g:Inc_fname = ''
+  func IncFunc()
+    let g:Inc_fname = v:fname
+    return v:fname
+  endfunc
+  setlocal includeexpr=IncFunc()
+  call setline(1, 'somefile.java')
+  call assert_fails('normal gf', 'E447:')
+  call assert_equal('somefile.java', g:Inc_fname)
+  close!
+  delfunc IncFunc
+endfunc
+
+" Check that expanding directories can handle more than 255 entries.
+func Test_gf_subdirs_wildcard()
+  let cwd = getcwd()
+  let dir = 'Xtestgf_dir'
+  call mkdir(dir)
+  call chdir(dir)
+  for i in range(300)
+    call mkdir(i)
+    call writefile([], i .. '/' .. i, 'S')
+  endfor
+  set path=./**
+
+  new | only
+  call setline(1, '99')
+  w! Xtest1
+  normal gf
+  call assert_equal('99', fnamemodify(bufname(''), ":t"))
+
+  call chdir(cwd)
+  call delete(dir, 'rf')
+  set path&
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

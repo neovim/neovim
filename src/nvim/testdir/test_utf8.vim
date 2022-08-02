@@ -1,12 +1,14 @@
 " Tests for Unicode manipulations
  
+source check.vim
+source view_util.vim
 
 " Visual block Insert adjusts for multi-byte char
 func Test_visual_block_insert()
   new
   call setline(1, ["aaa", "あああ", "bbb"])
   exe ":norm! gg0l\<C-V>jjIx\<Esc>"
-  call assert_equal(['axaa', 'xあああ', 'bxbb'], getline(1, '$'))
+  call assert_equal(['axaa', ' xあああ', 'bxbb'], getline(1, '$'))
   bwipeout!
 endfunc
 
@@ -16,7 +18,7 @@ func Test_strchars()
   let exp = [[1, 1, 1], [3, 3, 3], [2, 2, 1], [3, 3, 1], [1, 1, 1]]
   for i in range(len(inp))
     call assert_equal(exp[i][0], strchars(inp[i]))
-    call assert_equal(exp[i][1], strchars(inp[i], 0))
+    call assert_equal(exp[i][1], inp[i]->strchars(0))
     call assert_equal(exp[i][2], strchars(inp[i], 1))
   endfor
 endfunc
@@ -61,6 +63,40 @@ func Test_getvcol()
   call assert_equal(2, virtcol("']"))
 endfunc
 
+func Test_screenchar_utf8()
+  new
+
+  " 1-cell, with composing characters 
+  call setline(1, ["ABC\u0308"])
+  redraw
+  call assert_equal([0x0041], screenchars(1, 1))
+  call assert_equal([0x0042], 1->screenchars(2))
+  call assert_equal([0x0043, 0x0308], screenchars(1, 3))
+  call assert_equal("A", screenstring(1, 1))
+  call assert_equal("B", screenstring(1, 2))
+  call assert_equal("C\u0308", screenstring(1, 3))
+
+  " 2-cells, with composing characters 
+  let text = "\u3042\u3044\u3046\u3099"
+  call setline(1, text)
+  redraw
+  call assert_equal([0x3042], screenchars(1, 1))
+  call assert_equal([0], screenchars(1, 2))
+  call assert_equal([0x3044], screenchars(1, 3))
+  call assert_equal([0], screenchars(1, 4))
+  call assert_equal([0x3046, 0x3099], screenchars(1, 5))
+
+  call assert_equal("\u3042", screenstring(1, 1))
+  call assert_equal("", screenstring(1, 2))
+  call assert_equal("\u3044", screenstring(1, 3))
+  call assert_equal("", screenstring(1, 4))
+  call assert_equal("\u3046\u3099", screenstring(1, 5))
+
+  call assert_equal([text . '  '], ScreenLines(1, 8))
+
+  bwipe!
+endfunc
+
 func Test_list2str_str2list_utf8()
   " One Unicode codepoint
   let s = "\u3042\u3044"
@@ -76,7 +112,7 @@ func Test_list2str_str2list_utf8()
   let s = "\u304b\u3099\u3044"
   let l = [0x304b, 0x3099, 0x3044]
   call assert_equal(l, str2list(s, 1))
-  call assert_equal(s, list2str(l, 1))
+  call assert_equal(s, l->list2str(1))
   if &enc ==# 'utf-8'
     call assert_equal(str2list(s), str2list(s, 1))
     call assert_equal(list2str(l), list2str(l, 1))
@@ -84,7 +120,7 @@ func Test_list2str_str2list_utf8()
 
   " Null list is the same as an empty list
   call assert_equal('', list2str([]))
-  " call assert_equal('', list2str(test_null_list()))
+  call assert_equal('', list2str(v:_null_list))
 endfunc
 
 func Test_list2str_str2list_latin1()
@@ -146,6 +182,57 @@ func Test_setcellwidths()
   call assert_fails('call setcellwidths([[0x111, 0x122, 1], [0x122, 0x123, 2]])', 'E1113:')
 
   call assert_fails('call setcellwidths([[0x33, 0x44, 2]])', 'E1114:')
+endfunc
+
+func Test_recording_with_select_mode_utf8()
+  call Run_test_recording_with_select_mode_utf8()
+endfunc
+
+func Run_test_recording_with_select_mode_utf8()
+  new
+
+  " No escaping
+  call feedkeys("qacc12345\<Esc>gH哦\<Esc>q", "tx")
+  call assert_equal("哦", getline(1))
+  call assert_equal("cc12345\<Esc>gH哦\<Esc>", @a)
+  call setline(1, 'asdf')
+  normal! @a
+  call assert_equal("哦", getline(1))
+
+  " 固 is 0xE5 0x9B 0xBA where 0x9B is CSI
+  call feedkeys("qacc12345\<Esc>gH固\<Esc>q", "tx")
+  call assert_equal("固", getline(1))
+  call assert_equal("cc12345\<Esc>gH固\<Esc>", @a)
+  call setline(1, 'asdf')
+  normal! @a
+  call assert_equal("固", getline(1))
+
+  " 四 is 0xE5 0x9B 0x9B where 0x9B is CSI
+  call feedkeys("qacc12345\<Esc>gH四\<Esc>q", "tx")
+  call assert_equal("四", getline(1))
+  call assert_equal("cc12345\<Esc>gH四\<Esc>", @a)
+  call setline(1, 'asdf')
+  normal! @a
+  call assert_equal("四", getline(1))
+
+  " 倒 is 0xE5 0x80 0x92 where 0x80 is K_SPECIAL
+  call feedkeys("qacc12345\<Esc>gH倒\<Esc>q", "tx")
+  call assert_equal("倒", getline(1))
+  call assert_equal("cc12345\<Esc>gH倒\<Esc>", @a)
+  call setline(1, 'asdf')
+  normal! @a
+  call assert_equal("倒", getline(1))
+
+  bwipe!
+endfunc
+
+" This must be done as one of the last tests, because it starts the GUI, which
+" cannot be undone.
+func Test_zz_recording_with_select_mode_utf8_gui()
+  CheckCanRunGui
+
+  gui -f
+  call Run_test_recording_with_select_mode_utf8()
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

@@ -54,7 +54,7 @@ main() {
   includes="$includes -I$PROJECT_SOURCE_DIR/src"
   includes="$includes -I$PROJECT_BINARY_DIR/src/nvim/auto"
   includes="$includes -I$PROJECT_BINARY_DIR/include"
-  includes="$includes -I$PROJECT_BINARY_DIR/config"
+  includes="$includes -I$PROJECT_BINARY_DIR/cmake.config"
   includes="$includes -I/host-includes"
 
   local defines=

@@ -1,4 +1,3 @@
-
 " Tests for :help
 
 func Test_help_restore_snapshot()
@@ -10,9 +9,45 @@ func Test_help_restore_snapshot()
   helpclose
 endfunc
 
+func Test_help_restore_snapshot_split()
+  " Squeeze the unnamed buffer, Xfoo and the help one side-by-side and focus
+  " the first one before calling :help.
+  let bnr = bufnr()
+  botright vsp Xfoo
+  wincmd h
+  help
+  wincmd L
+  let g:did_bufenter = v:false
+  augroup T
+    au!
+    au BufEnter Xfoo let g:did_bufenter = v:true
+  augroup END
+  helpclose
+  augroup! T
+  " We're back to the unnamed buffer.
+  call assert_equal(bnr, bufnr())
+  " No BufEnter was triggered for Xfoo.
+  call assert_equal(v:false, g:did_bufenter)
+
+  close!
+  bwipe!
+endfunc
+
 func Test_help_errors()
   call assert_fails('help doesnotexist', 'E149:')
   call assert_fails('help!', 'E478:')
+  if has('multi_lang')
+    call assert_fails('help help@xy', 'E661:')
+  endif
+
+  let save_hf = &helpfile
+  set helpfile=help_missing
+  help
+  call assert_equal(1, winnr('$'))
+  call assert_notequal('help', &buftype)
+  let &helpfile = save_hf
+
+  call assert_fails('help ' . repeat('a', 1048), 'E149:')
 
   new
   set keywordprg=:help
@@ -55,6 +90,11 @@ func Test_help_local_additions()
 
   call delete('Xruntime', 'rf')
   let &rtp = rtp_save
+endfunc
+
+func Test_help_completion()
+  call feedkeys(":help :undo\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"help :undo :undoj :undol :undojoin :undolist', @:)
 endfunc
 
 " Test for the :helptags command
@@ -100,5 +140,14 @@ func Test_helptag_cmd()
 
   call delete('Xdir', 'rf')
 endfunc
+
+func Test_help_long_argument()
+  try
+    exe 'help \%' .. repeat('0', 1021)
+  catch
+    call assert_match("E149:", v:exception)
+  endtry
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

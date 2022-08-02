@@ -37,8 +37,10 @@ return {
     'CursorHoldI',            -- idem, in Insert mode
     'CursorMoved',            -- cursor was moved
     'CursorMovedI',           -- cursor was moved in Insert mode
+    'DiagnosticChanged',      -- diagnostics in a buffer were modified
     'DiffUpdated',            -- diffs have been updated
     'DirChanged',             -- directory changed
+    'DirChangedPre',          -- directory is going to change
     'EncodingChanged',        -- after changing the 'encoding' option
     'ExitPre',                -- before exiting
     'FileAppendCmd',          -- append to a file using command
@@ -68,12 +70,18 @@ return {
     'InsertEnter',            -- when entering Insert mode
     'InsertLeave',            -- just after leaving Insert mode
     'InsertLeavePre',         -- just before leaving Insert mode
+    'LspAttach',              -- after an LSP client attaches to a buffer
+    'LspDetach',              -- after an LSP client detaches from a buffer
     'MenuPopup',              -- just before popup menu is displayed
+    'ModeChanged',            -- after changing the mode
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
     'QuitPre',                -- before :quit
+    'RecordingEnter',         -- when starting to record a macro
+    'RecordingLeave',         -- just before a macro stops recording
     'RemoteReply',            -- upon string reception from a remote vim
+    'SearchWrapped',          -- after the search wrapped around
     'SessionLoadPost',        -- after loading a session file
     'ShellCmdPost',           -- after ":!cmd"
     'ShellFilterPost',        -- after ":1,2!cmd", ":w !cmd", ":r !cmd".
@@ -126,16 +134,16 @@ return {
   -- syntax file
   nvim_specific = {
     BufModifiedSet=true,
-    DirChanged=true,
+    DiagnosticChanged=true,
+    LspAttach=true,
+    LspDetach=true,
+    RecordingEnter=true,
+    RecordingLeave=true,
     Signal=true,
-    TabClosed=true,
-    TabNew=true,
     TabNewEntered=true,
     TermClose=true,
     TermOpen=true,
     UIEnter=true,
     UILeave=true,
-    WinClosed=true,
-    WinScrolled=true,
   },
 }

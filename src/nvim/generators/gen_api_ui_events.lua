@@ -3,16 +3,20 @@ local mpack = require('mpack')
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
-assert(#arg == 7)
+assert(#arg == 8)
 local input = io.open(arg[2], 'rb')
 local proto_output = io.open(arg[3], 'wb')
 local call_output = io.open(arg[4], 'wb')
 local remote_output = io.open(arg[5], 'wb')
 local bridge_output = io.open(arg[6], 'wb')
 local metadata_output = io.open(arg[7], 'wb')
+local client_output = io.open(arg[8], 'wb')
 
 local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
+
+_G.vim = loadfile(nvimdir..'/../../runtime/lua/vim/shared.lua')()
+local hashy = require'generators.hashy'
 
 local function write_signature(output, ev, prefix, notype)
   output:write('('..prefix)
@@ -32,22 +36,60 @@ local function write_signature(output, ev, prefix, notype)
   output:write(')')
 end
 
-local function write_arglist(output, ev, need_copy)
-  output:write('  Array args = ARRAY_DICT_INIT;\n')
+local function write_arglist(output, ev)
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
     local kind = string.upper(param[1])
-    local do_copy = need_copy and (kind == "ARRAY" or kind == "DICTIONARY" or kind == "STRING" or kind == "OBJECT")
-    output:write('  ADD(args, ')
-    if do_copy then
-      output:write('copy_object(')
-    end
+    output:write('  ADD_C(args, ')
     output:write(kind..'_OBJ('..param[2]..')')
-    if do_copy then
-      output:write(')')
-    end
     output:write(');\n')
   end
+end
+
+local function call_ui_event_method(output, ev)
+  output:write('void ui_client_event_'..ev.name..'(Array args)\n{\n')
+
+  local hlattrs_args_count = 0
+  if #ev.parameters > 0 then
+    output:write('  if (args.size < '..(#ev.parameters))
+    for j = 1, #ev.parameters do
+      local kind = ev.parameters[j][1]
+      if kind ~= "Object" then
+        if kind == 'HlAttrs' then kind = 'Dictionary' end
+        output:write('\n      || args.items['..(j-1)..'].type != kObjectType'..kind..'')
+      end
+    end
+    output:write(') {\n')
+    output:write('    ELOG("Error handling ui event \''..ev.name..'\'");\n')
+    output:write('    return;\n')
+    output:write('  }\n')
+  end
+
+  for j = 1, #ev.parameters do
+    local param = ev.parameters[j]
+    local kind = param[1]
+    output:write('  '..kind..' arg_'..j..' = ')
+    if kind == 'HlAttrs' then
+      -- The first HlAttrs argument is rgb_attrs and second is cterm_attrs
+      output:write('ui_client_dict2hlattrs(args.items['..(j-1)..'].data.dictionary, '..(hlattrs_args_count == 0 and 'true' or 'false')..');\n')
+      hlattrs_args_count = hlattrs_args_count + 1
+    elseif kind == 'Object' then
+      output:write('args.items['..(j-1)..'];\n')
+    else
+      output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
+    end
+  end
+
+  output:write('  ui_call_'..ev.name..'(')
+  for j = 1, #ev.parameters do
+    output:write('arg_'..j)
+    if j ~= #ev.parameters then
+      output:write(', ')
+    end
+  end
+  output:write(');\n')
+
+  output:write('}\n\n')
 end
 
 for i = 1, #events do
@@ -69,7 +111,9 @@ for i = 1, #events do
       remote_output:write('static void remote_ui_'..ev.name)
       write_signature(remote_output, ev, 'UI *ui')
       remote_output:write('\n{\n')
-      write_arglist(remote_output, ev, true)
+      remote_output:write('  UIData *data = ui->data;\n')
+      remote_output:write('  Array args = data->call_buf;\n')
+      write_arglist(remote_output, ev)
       remote_output:write('  push_call(ui, "'..ev.name..'", args);\n')
       remote_output:write('}\n\n')
     end
@@ -136,9 +180,10 @@ for i = 1, #events do
     write_signature(call_output, ev, '')
     call_output:write('\n{\n')
     if ev.remote_only then
-      write_arglist(call_output, ev, false)
+      call_output:write('  Array args = call_buf;\n')
+      write_arglist(call_output, ev)
       call_output:write('  UI_LOG('..ev.name..');\n')
-      call_output:write('  ui_event("'..ev.name..'", args);\n')
+      call_output:write('  ui_call_event("'..ev.name..'", args);\n')
     elseif ev.compositor_impl then
       call_output:write('  UI_CALL')
       write_signature(call_output, ev, '!ui->composed, '..ev.name..', ui', true)
@@ -160,12 +205,36 @@ for i = 1, #events do
     call_output:write(";\n")
     call_output:write("}\n\n")
   end
+
+  if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) then
+    call_ui_event_method(client_output, ev)
+  end
 end
+
+local client_events = {}
+for _,ev in ipairs(events) do
+  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) then
+    client_events[ev.name] = ev
+  end
+end
+
+local hashorder, hashfun = hashy.hashy_hash("ui_client_handler", vim.tbl_keys(client_events), function (idx)
+  return "event_handlers["..idx.."].name"
+end)
+
+client_output:write("static const UIClientHandler event_handlers[] = {\n")
+
+for _, name in ipairs(hashorder) do
+  client_output:write('  { .name = "'..name..'", .fn = ui_client_event_'..name..'},\n')
+end
+
+client_output:write('\n};\n\n')
+client_output:write(hashfun)
 
 proto_output:close()
 call_output:close()
 remote_output:close()
-bridge_output:close()
+client_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
 local exported_attributes = {'name', 'parameters',

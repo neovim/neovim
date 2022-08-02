@@ -1,17 +1,17 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	100
-" Last Change:	2016 Oct. 29
+" Version:	(v104) 2021 April 06
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
-"  Version 0.1 (April 2000) for Fortran 95 was based on the Fortran 77 syntax file by
-"  Mario Eusebio and Preben Guldberg. Since then, useful suggestions and contributions
-"  have been made, in chronological order, by:
+"  Version 0.1 for Fortran 95 was created in April 2000 by Ajit Thakkar from an
+"  older Fortran 77 syntax file by Mario Eusebio and Preben Guldberg.
+"  Since then, useful suggestions and contributions have been made, in order, by:
 "  Andrej Panjkov, Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
-"  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
+"  Walter Dieudonne, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, Matt Thompson, Jan Hermann,
-"  Stefano Zaghi, Vishnu V. Krishnan and Judicaël Grasset
+"  Stefano Zaghi, Vishnu V. Krishnan, Judicael Grasset, Takuma Yoshida,
+"  Eisuke Kawashima, Andre Chalella, and Fritz Reese.
 
 if exists("b:current_syntax")
   finish
@@ -53,10 +53,10 @@ if !exists("b:fortran_fixed_source")
   elseif exists("fortran_fixed_source")
     " User guarantees fixed source form for all fortran files
     let b:fortran_fixed_source = 1
-  elseif expand("%:e") ==? "f\<90\|95\|03\|08\>"
+  elseif expand("%:e") =~? '^f\%(90\|95\|03\|08\)$'
     " Free-form file extension defaults as in Intel ifort, gcc(gfortran), NAG, Pathscale, and Cray compilers
     let b:fortran_fixed_source = 0
-  elseif expand("%:e") ==? "f\|f77\|for"
+  elseif expand("%:e") =~? '^\%(f\|f77\|for\)$'
     " Fixed-form file extension defaults
     let b:fortran_fixed_source = 1
   else
@@ -92,15 +92,17 @@ else
   syn match fortranConstructName	"^\s*\zs\a\w*\ze\s*:"
 endif
 if exists("fortran_more_precise")
-  syn match fortranConstructName "\(\<end\s*do\s\+\)\@<=\a\w*"
-  syn match fortranConstructName "\(\<end\s*if\s\+\)\@<=\a\w*"
-  syn match fortranConstructName "\(\<end\s*select\s\+\)\@<=\a\w*"
+  syn match fortranConstructName "\(\<end\s*do\s\+\)\@11<=\a\w*"
+  syn match fortranConstructName "\(\<end\s*if\s\+\)\@11<=\a\w*"
+  syn match fortranConstructName "\(\<end\s*select\s\+\)\@15<=\a\w*"
 endif
 
 syn match fortranUnitHeader	"\<end\>"
 syn match fortranType		"\<character\>"
 syn match fortranType		"\<complex\>"
 syn match fortranType		"\<integer\>"
+syn match fortranType		"\<real\>"
+syn match fortranType		"\<logical\>"
 syn keyword fortranType		intrinsic
 syn match fortranType		"\<implicit\>"
 syn keyword fortranStructure	dimension
@@ -148,11 +150,9 @@ syn keyword fortranExtraIntrinsic	algama cdabs cdcos cdexp cdlog cdsin cdsqrt cq
 syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 char cmplx conjg cos cosh exp ichar index int log log10 max min nint sign sin sinh sqrt tan tanh
 syn match fortranIntrinsic	"\<len\s*[(,]"me=s+3
 syn match fortranIntrinsic	"\<real\s*("me=s+4
-syn match fortranType		"\<implicit\s\+real"
-syn match fortranType		"^\s*real\>"
 syn match fortranIntrinsic	"\<logical\s*("me=s+7
-syn match fortranType		"\<implicit\s\+logical"
-syn match fortranType		"^\s*logical\>"
+syn match fortranType           "\<implicit\s\+real\>"
+syn match fortranType           "\<implicit\s\+logical\>"
 
 "Numbers of various sorts
 " Integers
@@ -167,6 +167,12 @@ syn match fortranFloatIll	display	"\<\d\+\.\([deq][-+]\=\d\+\)\=\(_\a\w*\)\=\>"
 syn match fortranFloatIll	display	"\<\d\+\.\d\+\([dq][-+]\=\d\+\)\=\(_\a\w*\)\=\>"
 " floating point number
 syn match fortranFloat	display	"\<\d\+\.\d\+\(e[-+]\=\d\+\)\=\(_\a\w*\)\=\>"
+" binary number
+syn match fortranBinary	display	"b["'][01]\+["']"
+" octal number
+syn match fortranOctal	display	"o["'][0-7]\+["']"
+" hexadecimal number
+syn match fortranHex	display	"z["'][0-9A-F]\+["']"
 " Numbers in formats
 syn match fortranFormatSpec	display	"\d*f\d\+\.\d\+"
 syn match fortranFormatSpec	display	"\d*e[sn]\=\d\+\.\d\+\(e\d+\>\)\="
@@ -185,8 +191,8 @@ syn match fortranLabelNumber	display	"^    \d\s"ms=s+4,me=e-1
 if exists("fortran_more_precise")
   " Numbers as targets
   syn match fortranTarget	display	"\(\<if\s*(.\+)\s*\)\@<=\(\d\+\s*,\s*\)\{2}\d\+\>"
-  syn match fortranTarget	display	"\(\<do\s\+\)\@<=\d\+\>"
-  syn match fortranTarget	display	"\(\<go\s*to\s*(\=\)\@<=\(\d\+\s*,\s*\)*\d\+\>"
+  syn match fortranTarget	display	"\(\<do\s\+\)\@11<=\d\+\>"
+  syn match fortranTarget	display	"\(\<go\s*to\s*(\=\)\@11<=\(\d\+\s*,\s*\)*\d\+\>"
 endif
 
 syn keyword fortranTypeR	external
@@ -214,7 +220,6 @@ syn match fortranUnitHeader	"\<submodule\>"
 syn keyword fortranUnitHeader	use only contains
 syn keyword fortranUnitHeader	result operator assignment
 syn match fortranUnitHeader	"\<interface\>"
-syn match fortranUnitHeader	"\<recursive\>"
 syn keyword fortranKeyword	allocate deallocate nullify cycle exit
 syn match fortranConditional	"\<select\>"
 syn keyword fortranConditional	case default where elsewhere
@@ -273,8 +278,9 @@ syn keyword fortranIntrinsic	null cpu_time
 syn match fortranType			"\<elemental\>"
 syn match fortranType			"\<pure\>"
 syn match fortranType			"\<impure\>"
+syn match fortranType           	"\<recursive\>"
 if exists("fortran_more_precise")
-  syn match fortranConstructName "\(\<end\s*forall\s\+\)\@<=\a\w*\>"
+  syn match fortranConstructName "\(\<end\s*forall\s\+\)\@15<=\a\w*\>"
 endif
 
 if b:fortran_dialect == "f08"
@@ -354,8 +360,15 @@ syn cluster fortranCommentGroup contains=fortranTodo
 
 if (b:fortran_fixed_source == 1)
   if !exists("fortran_have_tabs")
-    "Flag items beyond column 72
-    syn match fortranSerialNumber	excludenl "^.\{73,}$"lc=72
+    " Fixed format requires a textwidth of 72 for code,
+    " but some vendor extensions allow longer lines
+    if exists("fortran_extended_line_length")
+      syn match fortranSerialNumber	excludenl "^.\{133,}$"lc=132
+    elseif exists("fortran_cardimage_line_length")
+      syn match fortranSerialNumber	excludenl "^.\{81,}$"lc=80
+    else
+      syn match fortranSerialNumber	excludenl "^.\{73,}$"lc=72
+    endif
     "Flag left margin errors
     syn match fortranLabelError	"^.\{-,4}[^0-9 ]" contains=fortranTab
     syn match fortranLabelError	"^.\{4}\d\S"
@@ -375,7 +388,8 @@ syn match	cPreProc		"^\s*#\s*\(define\|ifdef\)\>.*"
 syn match	cPreProc		"^\s*#\s*\(elif\|if\)\>.*"
 syn match	cPreProc		"^\s*#\s*\(ifndef\|undef\)\>.*"
 syn match	cPreCondit		"^\s*#\s*\(else\|endif\)\>.*"
-syn region	cIncluded	contained start=+"[^(]+ skip=+\\\\\|\\"+ end=+"+ contains=fortranLeftMargin,fortranContinueMark,fortranSerialNumber
+syn region	cIncluded	contained start=+"[^("]+ skip=+\\\\\|\\"+ end=+"+ contains=fortranLeftMargin,fortranContinueMark,fortranSerialNumber
+"syn region	cIncluded	        contained start=+"[^("]+ skip=+\\\\\|\\"+ end=+"+
 syn match	cIncluded		contained "<[^>]*>"
 syn match	cInclude		"^\s*#\s*include\>\s*["<]" contains=cIncluded
 
@@ -451,6 +465,9 @@ hi def link fortranTodo		Todo
 hi def link fortranContinueMark	Special
 hi def link fortranString	String
 hi def link fortranNumber	Number
+hi def link fortranBinary	Number
+hi def link fortranOctal	Number
+hi def link fortranHex  	Number
 hi def link fortranOperator	Operator
 hi def link fortranBoolean	Boolean
 hi def link fortranLabelError	Error

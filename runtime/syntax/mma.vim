@@ -12,7 +12,7 @@
 "
 "       let filetype_m="mma"
 "
-" I also recommend setting the default 'Comment' hilighting to something
+" I also recommend setting the default 'Comment' highlighting to something
 " other than the color used for 'Function', since both are plentiful in
 " most mathematica files, and they are often the same color (when using
 " background=dark).
@@ -109,7 +109,7 @@ syntax match mmaemPHAsis "\%(^\|\s\)(\@<!\*[a-zA-Z0-9]\+\%([- \t':]\+[a-zA-Z0-9]
 syntax region mmaComment start=+(\*+ end=+\*)+ skipempty contains=@mmaNotes,mmaItem,@mmaCommentStrings,mmaemPHAsis,mmaComment
 
 " Function Comments:
-"   just like a normal comment except the first sentance is Special ala Java
+"   just like a normal comment except the first sentence is Special ala Java
 "   (** *)
 "   TODO - fix this for nesting, or not...
 syntax region mmaFunctionComment start="(\*\*\+" end="\*\+)" contains=@mmaNotes,mmaItem,mmaFunctionTitle,@mmaCommentStrings,mmaemPHAsis,mmaComment

@@ -1,7 +1,11 @@
-" Vim Compiler File
-" Compiler:     Perl syntax checks (perl -Wc)
-" Maintainer:   Christian J. Robinson <heptite@gmail.com>
-" Last Change:  2019 Jul 22
+" Vim compiler file
+" Compiler:      Perl syntax checks (perl -Wc)
+" Maintainer:    vim-perl <vim-perl@googlegroups.com>
+" Author:        Christian J. Robinson <heptite@gmail.com>
+" Homepage:      https://github.com/vim-perl/vim-perl
+" Bugs/requests: https://github.com/vim-perl/vim-perl/issues
+" License:       Vim License (see :help license)
+" Last Change:   2021 Nov 2
 
 if exists("current_compiler")
   finish
@@ -15,10 +19,10 @@ endif
 let s:savecpo = &cpo
 set cpo&vim
 
-if exists('g:perl_compiler_force_warnings') && g:perl_compiler_force_warnings == 0
-	let s:warnopt = 'w'
-else
+if get(g:, 'perl_compiler_force_warnings', 1)
 	let s:warnopt = 'W'
+else
+	let s:warnopt = 'w'
 endif
 
 if getline(1) =~# '-[^ ]*T'

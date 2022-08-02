@@ -3,9 +3,10 @@
 set encoding=utf-8
 scriptencoding utf-8
 
-if !exists("+linebreak") || !has("conceal") || !has("signs")
-  finish
-endif
+source check.vim
+CheckOption linebreak
+CheckFeature conceal
+CheckFeature signs
 
 source view_util.vim
 
@@ -67,6 +68,16 @@ func Test_nolinebreak_with_list()
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()
+endfunc
+
+" this was causing a crash
+func Test_linebreak_with_list_and_tabs()
+  set linebreak list listchars=tab:⇤\ ⇥ tabstop=100
+  new
+  call setline(1, "\t\t\ttext")
+  redraw
+  bwipe!
+  set nolinebreak nolist listchars&vim tabstop=8
 endfunc
 
 func Test_linebreak_with_nolist()

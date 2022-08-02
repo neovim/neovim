@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:     Abaqus finite element input file (www.abaqus.com)
 " Maintainer:   Carl Osterwisch <osterwischc@asme.org>
-" Last Change:  2012 Apr 30
+" Last Change:  2022 May 09
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -86,11 +86,11 @@ let b:undo_ftplugin .= "|unmap <buffer> [[|unmap <buffer> ]]"
     \ . "|unmap <buffer> <LocalLeader><LocalLeader>"
 
 " Undo must be done in nocompatible mode for <LocalLeader>.
-let b:undo_ftplugin = "let s:cpo_save = &cpoptions|"
+let b:undo_ftplugin = "let b:cpo_save = &cpoptions|"
     \ . "set cpoptions&vim|"
     \ . b:undo_ftplugin
-    \ . "|let &cpoptions = s:cpo_save"
-    \ . "|unlet s:cpo_save"
+    \ . "|let &cpoptions = b:cpo_save"
+    \ . "|unlet b:cpo_save"
 
 " Restore saved compatibility options
 let &cpoptions = s:cpo_save

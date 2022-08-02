@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Bazel (http://bazel.io)
 " Maintainer:	David Barnett (https://github.com/google/vim-ft-bzl)
-" Last Change:	2015 Aug 11
+" Last Change:	2021 Jan 19
 
 ""
 " @section Introduction, intro
@@ -51,6 +51,8 @@ if get(g:, 'ft_bzl_fold', 0)
 endif
 
 if exists('*BzlFoldText')
+  let &cpo = s:save_cpo
+  unlet s:save_cpo
   finish
 endif
 

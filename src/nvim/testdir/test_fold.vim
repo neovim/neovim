@@ -88,7 +88,7 @@ func Test_indent_fold2()
     setl fen fdm=marker
     2
     norm! >>
-    let a=map(range(1,5), 'foldclosed(v:val)')
+    let a=map(range(1,5), 'v:val->foldclosed()')
     call assert_equal([-1,-1,-1,4,4], a)
     bw!
 endfunc
@@ -132,7 +132,7 @@ func Test_indent_fold_with_read()
   call assert_equal(0, foldlevel(3))
   call assert_equal(0, foldlevel(4))
   call assert_equal(1, foldlevel(5))
-  call assert_equal(7, foldclosedend(5))
+  call assert_equal(7, 5->foldclosedend())
 
   bwipe!
   set foldmethod&
@@ -207,13 +207,33 @@ func Test_update_folds_expr_read()
   %foldclose
   call assert_equal(2, foldclosedend(1))
   call assert_equal(0, foldlevel(3))
-  call assert_equal(0, foldlevel(4))
+  call assert_equal(0, 4->foldlevel())
   call assert_equal(6, foldclosedend(5))
   call assert_equal(10, foldclosedend(7))
   call assert_equal(14, foldclosedend(11))
 
   call delete('Xfile')
   bwipe!
+  set foldmethod& foldexpr&
+endfunc
+
+" Test for what patch 8.1.0535 fixes.
+func Test_foldexpr_no_interrupt_addsub()
+  new
+  func! FoldFunc()
+    call setpos('.', getcurpos())
+    return '='
+  endfunc
+
+  set foldmethod=expr
+  set foldexpr=FoldFunc()
+  call setline(1, '1.2')
+
+  exe "norm! $\<C-A>"
+  call assert_equal('1.3', getline(1))
+
+  bwipe!
+  delfunc FoldFunc
   set foldmethod& foldexpr&
 endfunc
 
@@ -663,7 +683,7 @@ func Test_fold_move()
   call assert_equal(10, foldclosed(10))
   call assert_equal(11, foldclosedend(10))
   call assert_equal('+--  2 lines: Line2', foldtextresult(2))
-  call assert_equal('+--  2 lines: Line8', foldtextresult(10))
+  call assert_equal('+--  2 lines: Line8', 10->foldtextresult())
 
   set fdm& sw& fdl&
   enew!
@@ -796,6 +816,25 @@ func Test_fold_delete_first_line()
   set foldmethod&
 endfunc
 
+func Test_undo_fold_deletion()
+  new
+  set fdm=marker
+  let lines =<< trim END
+      " {{{
+      " }}}1
+      " {{{
+  END
+  call setline(1, lines)
+  3d
+  g/"/d
+  undo
+  redo
+  eval getline(1, '$')->assert_equal([''])
+
+  set fdm&vim
+  bwipe!
+endfunc
+
 " this was crashing
 func Test_move_no_folds()
   new
@@ -823,31 +862,36 @@ func Test_fold_create_delete()
 endfunc
 
 func Test_fold_relative_move()
-  enew!
+  new
   set fdm=indent sw=2 wrap tw=80
 
-  let content = [ '  foo', '  bar', '  baz',
-              \   repeat('x', &columns + 1),
-              \   '  foo', '  bar', '  baz'
+  let longtext = repeat('x', &columns + 1)
+  let content = [ '  foo', '  ' .. longtext, '  baz',
+              \   longtext,
+              \   '  foo', '  ' .. longtext, '  baz'
               \ ]
   call append(0, content)
 
   normal zM
 
-  call cursor(3, 1)
-  call assert_true(foldclosed(line('.')))
-  normal gj
-  call assert_equal(2, winline())
+  for lnum in range(1, 3)
+    call cursor(lnum, 1)
+    call assert_true(foldclosed(line('.')))
+    normal gj
+    call assert_equal(2, winline())
+  endfor
 
   call cursor(2, 1)
   call assert_true(foldclosed(line('.')))
   normal 2gj
   call assert_equal(3, winline())
 
-  call cursor(5, 1)
-  call assert_true(foldclosed(line('.')))
-  normal gk
-  call assert_equal(3, winline())
+  for lnum in range(5, 7)
+    call cursor(lnum, 1)
+    call assert_true(foldclosed(line('.')))
+    normal gk
+    call assert_equal(3, winline())
+  endfor
 
   call cursor(6, 1)
   call assert_true(foldclosed(line('.')))
@@ -855,6 +899,94 @@ func Test_fold_relative_move()
   call assert_equal(2, winline())
 
   set fdm& sw& wrap& tw&
+endfunc
+
+" Make sure a fold containing a nested fold is split correctly when using
+" foldmethod=indent
+func Test_fold_split()
+  new
+  let lines =<< trim END
+    line 1
+      line 2
+      line 3
+        line 4
+        line 5
+  END
+  call setline(1, lines)
+  setlocal sw=2
+  setlocal foldmethod=indent foldenable
+  call assert_equal([0, 1, 1, 2, 2], range(1, 5)->map('foldlevel(v:val)'))
+  call append(2, 'line 2.5')
+  call assert_equal([0, 1, 0, 1, 2, 2], range(1, 6)->map('foldlevel(v:val)'))
+  bw!
+endfunc
+
+" Make sure that when you append under a blank line that is under a fold with
+" the same indent level as your appended line, the fold expands across the
+" blank line
+func Test_indent_append_under_blank_line()
+  new
+  let lines =<< trim END
+    line 1
+      line 2
+      line 3
+  END
+  call setline(1, lines)
+  setlocal sw=2
+  setlocal foldmethod=indent foldenable
+  call assert_equal([0, 1, 1], range(1, 3)->map('foldlevel(v:val)'))
+  call append(3, '')
+  call append(4, '  line 5')
+  call assert_equal([0, 1, 1, 1, 1], range(1, 5)->map('foldlevel(v:val)'))
+  bw!
+endfunc
+
+" Make sure that when you delete 1 line of a fold whose length is 2 lines, the
+" fold can't be closed since its length (1) is now less than foldminlines.
+func Test_indent_one_line_fold_close()
+  let lines =<< trim END
+    line 1
+      line 2
+      line 3
+  END
+
+  new
+  setlocal sw=2 foldmethod=indent
+  call setline(1, lines)
+  " open all folds, delete line, then close all folds
+  normal zR
+  3delete
+  normal zM
+  call assert_equal(-1, foldclosed(2)) " the fold should not be closed
+
+  " Now do the same, but delete line 2 this time; this covers different code.
+  " (Combining this code with the above code doesn't expose both bugs.)
+  1,$delete
+  call setline(1, lines)
+  normal zR
+  2delete
+  normal zM
+  call assert_equal(-1, foldclosed(2))
+  bw!
+endfunc
+
+" Make sure that when appending [an indented line then a blank line] right
+" before a single indented line, the resulting extended fold can be closed
+func Test_indent_append_blank_small_fold_close()
+  new
+  setlocal sw=2 foldmethod=indent
+  " at first, the fold at the second line can't be closed since it's smaller
+  " than foldminlines
+  let lines =<< trim END
+    line 1
+      line 4
+  END
+  call setline(1, lines)
+  call append(1, ['  line 2', ''])
+  " close all folds
+  normal zM
+  call assert_notequal(-1, foldclosed(2)) " the fold should be closed now
+  bw!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

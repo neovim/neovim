@@ -3,6 +3,7 @@
 " Author:       Steven Oliver <oliver.steven@gmail.com>
 " Copyright:    Copyright (c) 2009-2013 Steven Oliver
 " License:      You may redistribute this under the same terms as Vim itself
+" Last Update:  2020 Oct 10
 " --------------------------------------------------------------------------
 
 " Only do this when not done yet for this buffer
@@ -14,7 +15,7 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo&vim
 
-setlocal softtabstop=4 shiftwidth=4 fileencoding=utf-8
+setlocal softtabstop=4 shiftwidth=4
 setlocal suffixesadd=.fal,.ftd
 
 " Matchit support

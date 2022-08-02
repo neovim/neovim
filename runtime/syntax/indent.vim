@@ -1,7 +1,8 @@
 " Vim syntax file
-" Language:             indent(1) configuration file
-" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2010-01-23
+" Language:		indent(1) configuration file
+" Maintainer:		Doug Kearns <dougkearns@gmail.com>
+" Previous Maintainer:	Nikolai Weibull <now@bitwi.se>
+" Last Change:		2021 Nov 17
 "   indent_is_bsd:      If exists, will change somewhat to match BSD implementation
 "
 " TODO:     is the deny-all (a la lilo.vim nice or no?)...
@@ -27,7 +28,7 @@ syn region  indentComment start='//' skip='\\$' end='$'
                           \ contains=indentTodo,@Spell
 
 if !exists("indent_is_bsd")
-  syn match indentOptions '-i\|--indentation-level\|-il\|--indent-level'
+  syn match indentOptions '-i\|--indent-level\|-il\|--indent-label'
                         \ nextgroup=indentNumber skipwhite skipempty
 endif
 syn match   indentOptions '-\%(bli\|c\%([bl]i\|[dip]\)\=\|di\=\|ip\=\|lc\=\|pp\=i\|sbi\|ts\|-\%(brace-indent\|comment-indentation\|case-brace-indentation\|declaration-comment-column\|continuation-indentation\|case-indentation\|else-endif-column\|line-comments-indentation\|declaration-indentation\|indent-level\|parameter-indentation\|line-length\|comment-line-length\|paren-indentation\|preprocessor-indentation\|struct-brace-indentation\|tab-size\)\)'

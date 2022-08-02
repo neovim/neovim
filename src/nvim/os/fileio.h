@@ -68,7 +68,7 @@ enum {
   /// Read or write buffer size
   ///
   /// Currently equal to (IOSIZE - 1), but they do not need to be connected.
-  kRWBufferSize = 1024
+  kRWBufferSize = 1024,
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

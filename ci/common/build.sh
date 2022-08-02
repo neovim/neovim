@@ -8,8 +8,6 @@ _stat() {
 
 top_make() {
   printf '%78s\n' | tr ' ' '='
-  # Travis has 1.5 virtual cores according to:
-  # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
   ninja "$@"
 }
 
@@ -37,7 +35,7 @@ build_deps() {
   # update CMake configuration and update to newer deps versions.
   cd "${DEPS_BUILD_DIR}"
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
-  CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/third-party/"
+  CC= cmake -G Ninja ${DEPS_CMAKE_FLAGS} "${CI_BUILD_DIR}/cmake.deps/"
 
   if ! top_make; then
     exit 1
@@ -46,7 +44,9 @@ build_deps() {
   cd "${CI_BUILD_DIR}"
 }
 
-prepare_build() {
+build_nvim() {
+  check_core_dumps --delete quiet
+
   if test -n "${CLANG_SANITIZER}" ; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCLANG_${CLANG_SANITIZER}=ON"
   fi
@@ -55,9 +55,8 @@ prepare_build() {
   cd "${BUILD_DIR}"
   echo "Configuring with '${CMAKE_FLAGS} $@'."
   cmake -G Ninja ${CMAKE_FLAGS} "$@" "${CI_BUILD_DIR}"
-}
 
-build_nvim() {
+
   echo "Building nvim."
   if ! top_make nvim ; then
     exit 1

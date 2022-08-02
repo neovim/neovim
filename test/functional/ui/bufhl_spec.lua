@@ -564,6 +564,16 @@ describe('Buffer highlighting', function()
     ]]
 
     clear_namespace(id, 0, -1)
+    screen:expect{grid=[[
+      fooba^r                                  |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
 
     set_extmark(id, 0, 0, {
       end_line = 0,
@@ -755,12 +765,26 @@ describe('Buffer highlighting', function()
       -- TODO: only a virtual text from the same ns curretly overrides
       -- an existing virtual text. We might add a prioritation system.
       set_virtual_text(id1, 0, s1, {})
-      eq({{1, 0, 0, { priority = 0, virt_text = s1}}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
+      eq({{1, 0, 0, {
+        priority = 0,
+        virt_text = s1,
+        -- other details
+        right_gravity = true,
+        virt_text_pos = 'eol',
+        virt_text_hide = false,
+      }}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
 
       -- TODO: is this really valid? shouldn't the max be line_count()-1?
       local lastline = line_count()
       set_virtual_text(id1, line_count(), s2, {})
-      eq({{3, lastline, 0, { priority = 0, virt_text = s2}}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {details=true}))
+      eq({{3, lastline, 0, {
+        priority = 0,
+        virt_text = s2,
+        -- other details
+        right_gravity = true,
+        virt_text_pos = 'eol',
+        virt_text_hide = false,
+      }}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {details=true}))
 
       eq({}, get_extmarks(id1, {lastline+9000,0}, {lastline+9000, -1}, {}))
     end)
@@ -858,8 +882,8 @@ describe('Buffer highlighting', function()
     it('works with cursorline', function()
       command("set cursorline")
 
-      screen:expect([[
-        {14:^1 + 2 }{15:=}{16: 3}{14:                               }|
+      screen:expect{grid=[[
+        {14:^1 + 2 }{3:=}{2: 3}{14:                               }|
         3 + {11:ERROR:} invalid syntax               |
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
@@ -867,32 +891,32 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
 
       feed('j')
-      screen:expect([[
+      screen:expect{grid=[[
         1 + 2 {3:=}{2: 3}                               |
-        {14:^3 + }{11:ERROR:}{14: invalid syntax               }|
+        {14:^3 + }{11:ERROR:} invalid syntax{14:               }|
         5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
         x = 4                                   |
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
 
 
       feed('j')
-      screen:expect([[
+      screen:expect{grid=[[
         1 + 2 {3:=}{2: 3}                               |
         3 + {11:ERROR:} invalid syntax               |
         {14:^5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}|
-        {14:, 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s}|
+        {14:, 5, 5, 5, 5, 5, 5,  }Lorem ipsum dolor s|
         x = 4                                   |
         {1:~                                       }|
         {1:~                                       }|
                                                 |
-      ]])
+      ]]}
     end)
 
     it('works with color column', function()
@@ -910,11 +934,11 @@ describe('Buffer highlighting', function()
 
       command("set colorcolumn=9")
       screen:expect{grid=[[
-        ^1 + 2 {3:=}{2: }{17:3}                               |
+        ^1 + 2 {3:=}{2: 3}                               |
         3 + {11:ERROR:} invalid syntax               |
         5, 5, 5,{18: }5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
         , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
-        x = 4 {12:暗}{19:x}{12:事}                             |
+        x = 4 {12:暗x事}                             |
         {1:~                                       }|
         {1:~                                       }|
                                                 |

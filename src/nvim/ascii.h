@@ -3,17 +3,17 @@
 
 #include <stdbool.h>
 
-#include "nvim/macros.h"
 #include "nvim/func_attr.h"
+#include "nvim/macros.h"
 #include "nvim/os/os_defs.h"
 
 // Definitions of various common control characters.
 
-#define CharOrd(x)      ((uint8_t)(x) < 'a' \
-                         ? (uint8_t)(x) - 'A'\
-                         : (uint8_t)(x) - 'a')
-#define CharOrdLow(x)   ((uint8_t)(x) - 'a')
-#define CharOrdUp(x)    ((uint8_t)(x) - 'A')
+#define CHAR_ORD(x)      ((uint8_t)(x) < 'a' \
+                          ? (uint8_t)(x) - 'A' \
+                          : (uint8_t)(x) - 'a')
+#define CHAR_ORD_LOW(x)   ((uint8_t)(x) - 'a')
+#define CHAR_ORD_UP(x)    ((uint8_t)(x) - 'A')
 #define ROT13(c, a)     (((((c) - (a)) + 13) % 26) + (a))
 
 #define NUL             '\000'
@@ -35,8 +35,8 @@
 
 #define POUND           0xA3
 
-#define Ctrl_chr(x)     (TOUPPER_ASC(x) ^ 0x40)  // '?' -> DEL, '@' -> ^@, etc.
-#define Meta(x)         ((x) | 0x80)
+#define CTRL_CHR(x)     (TOUPPER_ASC(x) ^ 0x40)  // '?' -> DEL, '@' -> ^@, etc.
+#define META(x)         ((x) | 0x80)
 
 #define CTRL_F_STR      "\006"
 #define CTRL_H_STR      "\010"
@@ -74,7 +74,6 @@
 #define Ctrl_RSB        29  // ] Right Square Bracket
 #define Ctrl_HAT        30  // ^
 #define Ctrl__          31
-
 
 // Character that separates dir names in a path.
 #ifdef BACKSLASH_IN_FILENAME
@@ -167,6 +166,14 @@ static inline bool ascii_isident(int c)
 static inline bool ascii_isbdigit(int c)
 {
   return (c == '0' || c == '1');
+}
+
+/// Checks if `c` is an octal digit, that is, 0-7.
+///
+/// @see {ascii_isdigit}
+static inline bool ascii_isodigit(int c)
+{
+  return (c >= '0' && c <= '7');
 }
 
 /// Checks if `c` is a white-space character, that is,

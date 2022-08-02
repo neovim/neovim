@@ -26,8 +26,8 @@ func Test_suspend()
   " Wait for shell prompt.
   call WaitForAssert({-> assert_match('[$#] $', term_getline(buf, '.'))})
 
-  call term_sendkeys(buf, v:progpath
-        \               . " --clean -X"
+  call term_sendkeys(buf, GetVimCommandClean()
+        \               . " -X"
         \               . " -c 'set nu'"
         \               . " -c 'call setline(1, \"foo\")'"
         \               . " Xfoo\<CR>")

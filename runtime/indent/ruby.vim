@@ -4,7 +4,7 @@
 " Previous Maintainer:	Nikolai Weibull <now at bitwi.se>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2019 Jan 06
+" Last Change:		2022 Mar 22
 
 " 0. Initialization {{{1
 " =================
@@ -27,7 +27,12 @@ endif
 
 if !exists('g:ruby_indent_block_style')
   " Possible values: "expression", "do"
-  let g:ruby_indent_block_style = 'expression'
+  let g:ruby_indent_block_style = 'do'
+endif
+
+if !exists('g:ruby_indent_hanging_elements')
+  " Non-zero means hanging indents are enabled, zero means disabled
+  let g:ruby_indent_hanging_elements = 1
 endif
 
 setlocal nosmartindent
@@ -35,8 +40,10 @@ setlocal nosmartindent
 " Now, set up our indentation expression and keys that trigger it.
 setlocal indentexpr=GetRubyIndent(v:lnum)
 setlocal indentkeys=0{,0},0),0],!^F,o,O,e,:,.
-setlocal indentkeys+==end,=else,=elsif,=when,=ensure,=rescue,==begin,==end
+setlocal indentkeys+==end,=else,=elsif,=when,=in\ ,=ensure,=rescue,==begin,==end
 setlocal indentkeys+==private,=protected,=public
+
+let b:undo_indent = "setlocal indentexpr< indentkeys< smartindent<"
 
 " Only define the function once.
 if exists("*GetRubyIndent")
@@ -51,15 +58,27 @@ set cpo&vim
 
 " Syntax group names that are strings.
 let s:syng_string =
-      \ ['String', 'Interpolation', 'InterpolationDelimiter', 'NoInterpolation', 'StringEscape']
+      \ ['String', 'Interpolation', 'InterpolationDelimiter', 'StringEscape']
 
 " Syntax group names that are strings or documentation.
 let s:syng_stringdoc = s:syng_string + ['Documentation']
 
 " Syntax group names that are or delimit strings/symbols/regexes or are comments.
-let s:syng_strcom = s:syng_stringdoc +
-      \ ['Regexp', 'RegexpDelimiter', 'RegexpEscape',
-      \ 'Symbol', 'StringDelimiter', 'ASCIICode', 'Comment']
+let s:syng_strcom = s:syng_stringdoc + [
+      \ 'Character',
+      \ 'Comment',
+      \ 'HeredocDelimiter',
+      \ 'PercentRegexpDelimiter',
+      \ 'PercentStringDelimiter',
+      \ 'PercentSymbolDelimiter',
+      \ 'Regexp',
+      \ 'RegexpCharClass',
+      \ 'RegexpDelimiter',
+      \ 'RegexpEscape',
+      \ 'StringDelimiter',
+      \ 'Symbol',
+      \ 'SymbolDelimiter',
+      \ ]
 
 " Expression used to check whether we should skip a match with searchpair().
 let s:skip_expr =
@@ -68,14 +87,17 @@ let s:skip_expr =
 " Regex used for words that, at the start of a line, add a level of indent.
 let s:ruby_indent_keywords =
       \ '^\s*\zs\<\%(module\|class\|if\|for' .
-      \   '\|while\|until\|else\|elsif\|case\|when\|unless\|begin\|ensure\|rescue' .
-      \   '\|\%(\K\k*[!?]\?\)\=\s*def\):\@!\>' .
+      \   '\|while\|until\|else\|elsif\|case\|when\|in\|unless\|begin\|ensure\|rescue' .
+      \   '\|\%(\K\k*[!?]\?\s\+\)\=def\):\@!\>' .
       \ '\|\%([=,*/%+-]\|<<\|>>\|:\s\)\s*\zs' .
       \    '\<\%(if\|for\|while\|until\|case\|unless\|begin\):\@!\>'
 
+" Def without an end clause: def method_call(...) = <expression>
+let s:ruby_endless_def = '\<def\s\+\k\+[!?]\=\%((.*)\|\s\)\s*='
+
 " Regex used for words that, at the start of a line, remove a level of indent.
 let s:ruby_deindent_keywords =
-      \ '^\s*\zs\<\%(ensure\|else\|rescue\|elsif\|when\|end\):\@!\>'
+      \ '^\s*\zs\<\%(ensure\|else\|rescue\|elsif\|when\|in\|end\):\@!\>'
 
 " Regex that defines the start-match for the 'end' keyword.
 "let s:end_start_regex = '\%(^\|[^.]\)\<\%(module\|class\|def\|if\|for\|while\|until\|case\|unless\|begin\|do\)\>'
@@ -83,19 +105,35 @@ let s:ruby_deindent_keywords =
 let s:end_start_regex =
       \ '\C\%(^\s*\|[=,*/%+\-|;{]\|<<\|>>\|:\s\)\s*\zs' .
       \ '\<\%(module\|class\|if\|for\|while\|until\|case\|unless\|begin' .
-      \   '\|\%(\K\k*[!?]\?\)\=\s*def\):\@!\>' .
+      \   '\|\%(\K\k*[!?]\?\s\+\)\=def\):\@!\>' .
       \ '\|\%(^\|[^.:@$]\)\@<=\<do:\@!\>'
 
 " Regex that defines the middle-match for the 'end' keyword.
-let s:end_middle_regex = '\<\%(ensure\|else\|\%(\%(^\|;\)\s*\)\@<=\<rescue:\@!\>\|when\|elsif\):\@!\>'
+let s:end_middle_regex = '\<\%(ensure\|else\|\%(\%(^\|;\)\s*\)\@<=\<rescue:\@!\>\|when\|\%(\%(^\|;\)\s*\)\@<=\<in\|elsif\):\@!\>'
 
 " Regex that defines the end-match for the 'end' keyword.
 let s:end_end_regex = '\%(^\|[^.:@$]\)\@<=\<end:\@!\>'
 
-" Expression used for searchpair() call for finding match for 'end' keyword.
-let s:end_skip_expr = s:skip_expr .
-      \ ' || (expand("<cword>") == "do"' .
-      \ ' && getline(".") =~ "^\\s*\\<\\(while\\|until\\|for\\):\\@!\\>")'
+" Expression used for searchpair() call for finding a match for an 'end' keyword.
+function! s:EndSkipExpr()
+  if eval(s:skip_expr)
+    return 1
+  elseif expand('<cword>') == 'do'
+        \ && getline(".") =~ '^\s*\<\(while\|until\|for\):\@!\>'
+    return 1
+  elseif getline('.') =~ s:ruby_endless_def
+    return 1
+  elseif getline('.') =~ '\<def\s\+\k\+[!?]\=([^)]*$'
+    " Then it's a `def method(` with a possible `) =` later
+    call search('\<def\s\+\k\+\zs(', 'W', line('.'))
+    normal! %
+    return getline('.') =~ ')\s*='
+  else
+    return 0
+  endif
+endfunction
+
+let s:end_skip_expr = function('s:EndSkipExpr')
 
 " Regex that defines continuation lines, not including (, {, or [.
 let s:non_bracket_continuation_regex =
@@ -146,7 +184,7 @@ let s:block_regex =
 let s:block_continuation_regex = '^\s*[^])}\t ].*'.s:block_regex
 
 " Regex that describes a leading operator (only a method call's dot for now)
-let s:leading_operator_regex = '^\s*[.]'
+let s:leading_operator_regex = '^\s*\%(&\=\.\)'
 
 " 2. GetRubyIndent Function {{{1
 " =========================
@@ -248,7 +286,7 @@ function! GetRubyIndent(...) abort
         \ ]
 
   " Most Significant line based on the previous one -- in case it's a
-  " contination of something above
+  " continuation of something above
   let indent_info.plnum_msl = s:GetMSL(indent_info.plnum)
 
   for callback_name in indent_callback_names
@@ -310,7 +348,11 @@ function! s:ClosingBracketOnEmptyLine(cline_info) abort
 
     if searchpair(escape(bracket_pair[0], '\['), '', bracket_pair[1], 'bW', s:skip_expr) > 0
       if closing_bracket == ')' && col('.') != col('$') - 1
-        let ind = virtcol('.') - 1
+        if g:ruby_indent_hanging_elements
+          let ind = virtcol('.') - 1
+        else
+          let ind = indent(line('.'))
+        end
       elseif g:ruby_indent_block_style == 'do'
         let ind = indent(line('.'))
       else " g:ruby_indent_block_style == 'expression'
@@ -535,7 +577,9 @@ function! s:AfterUnbalancedBracket(pline_info) abort
     let [opening, closing] = s:ExtraBrackets(info.plnum)
 
     if opening.pos != -1
-      if opening.type == '(' && searchpair('(', '', ')', 'bW', s:skip_expr) > 0
+      if !g:ruby_indent_hanging_elements
+        return indent(info.plnum) + info.sw
+      elseif opening.type == '(' && searchpair('(', '', ')', 'bW', s:skip_expr) > 0
         if col('.') + 1 == col('$')
           return indent(info.plnum) + info.sw
         else
@@ -548,6 +592,11 @@ function! s:AfterUnbalancedBracket(pline_info) abort
     elseif closing.pos != -1
       call cursor(info.plnum, closing.pos + 1)
       normal! %
+
+      if strpart(info.pline, closing.pos) =~ '^)\s*='
+        " special case: the closing `) =` of an endless def
+        return indent(s:GetMSL(line('.')))
+      endif
 
       if s:Match(line('.'), s:ruby_indent_keywords)
         return indent('.') + info.sw
@@ -587,7 +636,7 @@ function! s:AfterIndentKeyword(pline_info) abort
   let info = a:pline_info
   let col = s:Match(info.plnum, s:ruby_indent_keywords)
 
-  if col > 0
+  if col > 0 && s:Match(info.plnum, s:ruby_endless_def) <= 0
     call cursor(info.plnum, col)
     let ind = virtcol('.') - 1 + info.sw
     " TODO: make this better (we need to count them) (or, if a searchpair
@@ -620,8 +669,7 @@ function! s:PreviousNotMSL(msl_info) abort
       " TODO (2016-10-07) Wrong/unused? How could it be "1"?
       return indent(info.plnum) - 1
       " If previous line is a continuation return its indent.
-      " TODO: the || s:IsInString() thing worries me a bit.
-    elseif s:Match(info.plnum, s:non_bracket_continuation_regex) || s:IsInString(info.plnum, strlen(line))
+    elseif s:Match(info.plnum, s:non_bracket_continuation_regex)
       return indent(info.plnum)
     endif
   endif
@@ -635,7 +683,7 @@ function! s:IndentingKeywordInMSL(msl_info) abort
   " TODO: this does not take into account contrived things such as
   " module Foo; class Bar; end
   let col = s:Match(info.plnum_msl, s:ruby_indent_keywords)
-  if col > 0
+  if col > 0 && s:Match(info.plnum_msl, s:ruby_endless_def) <= 0
     let ind = indent(info.plnum_msl) + info.sw
     if s:Match(info.plnum_msl, s:end_end_regex)
       let ind = ind - info.sw
@@ -695,7 +743,10 @@ endfunction
 
 " Check if the character at lnum:col is inside a string delimiter
 function! s:IsInStringDelimiter(lnum, col) abort
-  return s:IsInRubyGroup(['StringDelimiter'], a:lnum, a:col)
+  return s:IsInRubyGroup(
+        \ ['HeredocDelimiter', 'PercentStringDelimiter', 'StringDelimiter'],
+        \ a:lnum, a:col
+        \ )
 endfunction
 
 function! s:IsAssignment(str, pos) abort

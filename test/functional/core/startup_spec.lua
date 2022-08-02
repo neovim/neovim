@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
+local assert_alive = helpers.assert_alive
+local assert_log = helpers.assert_log
 local clear = helpers.clear
 local command = helpers.command
 local ok = helpers.ok
@@ -11,6 +13,7 @@ local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local funcs = helpers.funcs
 local mkdir = helpers.mkdir
+local mkdir_p = helpers.mkdir_p
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
@@ -18,8 +21,32 @@ local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
 local iswin = helpers.iswin
+local startswith = helpers.startswith
 local write_file = helpers.write_file
 local meths = helpers.meths
+local alter_slashes = helpers.alter_slashes
+
+local testfile = 'Xtest_startuptime'
+after_each(function()
+  os.remove(testfile)
+end)
+
+describe('startup', function()
+  it('--clean', function()
+    clear()
+    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) ~= nil)
+    clear('--clean')
+    ok(string.find(alter_slashes(meths.get_option('runtimepath')), funcs.stdpath('config'), 1, true) == nil)
+  end)
+
+  it('--startuptime', function()
+    clear({ args = {'--startuptime', testfile}})
+    retry(nil, 1000, function()
+      assert_log('sourcing', testfile, 100)
+      assert_log("require%('vim%._editor'%)", testfile, 100)
+    end)
+  end)
+end)
 
 describe('startup', function()
   before_each(function()
@@ -221,6 +248,23 @@ describe('startup', function()
     end
   end)
 
+  it('-e sets ex mode', function()
+    local screen = Screen.new(25, 3)
+    clear('-e')
+    screen:attach()
+    -- Verify we set the proper mode both before and after :vi.
+    feed("put =mode(1)<CR>vi<CR>:put =mode(1)<CR>")
+    screen:expect([[
+      cv                       |
+      ^n                        |
+      :put =mode(1)            |
+    ]])
+
+    eq('cv\n',
+       funcs.system({nvim_prog, '-n', '-es' },
+                    { 'put =mode(1)', 'print', '' }))
+  end)
+
   it('fails on --embed with -es/-Es', function()
     matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
       funcs.system({nvim_prog, '--embed', '-es' }))
@@ -230,11 +274,12 @@ describe('startup', function()
 
   it('does not crash if --embed is given twice', function()
     clear{args={'--embed'}}
-    eq(2, eval('1+1'))
+    assert_alive()
   end)
 
   it('does not crash when expanding cdpath during early_init', function()
     clear{env={CDPATH='~doesnotexist'}}
+    assert_alive()
     eq(',~doesnotexist', eval('&cdpath'))
   end)
 
@@ -246,9 +291,9 @@ describe('startup', function()
     [[" -u NONE -i NONE --cmd "set noruler" --cmd "let g:foo = g:bar"')]])
     screen:expect([[
       ^                                                            |
+                                                                  |
       Error detected while processing pre-vimrc command line:     |
       E121: Undefined variable: g:bar                             |
-      E15: Invalid expression: g:bar                              |
       Press ENTER or type command to continue                     |
                                                                   |
     ]])
@@ -308,7 +353,8 @@ describe('startup', function()
   end)
 
   local function pack_clear(cmd)
-    clear('--cmd', 'set packpath=test/functional/fixtures', '--cmd', cmd)
+    -- add packages after config dir in rtp but before config/after
+    clear{args={'--cmd', 'set packpath=test/functional/fixtures', '--cmd', 'let paths=split(&rtp, ",")', '--cmd', 'let &rtp = paths[0]..",test/functional/fixtures,test/functional/fixtures/middle,"..join(paths[1:],",")', '--cmd', cmd}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
   end
 
 
@@ -324,8 +370,17 @@ describe('startup', function()
     eq({9003, '\thowdy'}, exec_lua [[ return { _G.y, _G.z } ]])
   end)
 
+  it("handles require from &packpath in an async handler", function()
+      -- NO! you cannot just speed things up by calling async functions during startup!
+      -- It doesn't make anything actually faster! NOOOO!
+    pack_clear [[ lua require'async_leftpad'('brrrr', 'async_res') ]]
+
+    -- haha, async leftpad go brrrrr
+    eq('\tbrrrr', exec_lua [[ return _G.async_res ]])
+  end)
+
   it("handles :packadd during startup", function()
-    -- control group: opt/bonus is not availabe by default
+    -- control group: opt/bonus is not available by default
     pack_clear [[
       try
         let g:x = bonus#secret()
@@ -345,6 +400,67 @@ describe('startup', function()
 
     pack_clear [[ packadd! bonus | lua _G.y = require'bonus'.launch() ]]
     eq('CPE 1704 TKS', exec_lua [[ return _G.y ]])
+  end)
+
+  it("handles the correct order with start packages and after/", function()
+    pack_clear [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]
+    eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with start packages and after/ after startup", function()
+    pack_clear [[ lua _G.test_loadorder = {} ]]
+    command [[ runtime! filen.lua ]]
+    eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with globpath(&rtp, ...)", function()
+    pack_clear [[ set loadplugins | lua _G.test_loadorder = {} ]]
+    command [[
+      for x in globpath(&rtp, "filen.lua",1,1)
+        call v:lua.dofile(x)
+      endfor
+    ]]
+    eq({'ordinary', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+
+    local rtp = meths.get_option'rtp'
+    ok(startswith(rtp, 'test/functional/fixtures/nvim,test/functional/fixtures/pack/*/start/*,test/functional/fixtures/start/*,test/functional/fixtures,test/functional/fixtures/middle,'),
+      'startswith(…)', 'rtp='..rtp)
+  end)
+
+  it("handles the correct order with opt packages and after/", function()
+    pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! superspecial\nruntime! filen.lua" ]]
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'mittel', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with opt packages and after/ after startup", function()
+    pack_clear [[ lua _G.test_loadorder = {} ]]
+    command [[
+      packadd! superspecial
+      runtime! filen.lua
+    ]]
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'mittel', 'FANCY after', 'SuperSpecial after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with opt packages and globpath(&rtp, ...)", function()
+    pack_clear [[ set loadplugins | lua _G.test_loadorder = {} ]]
+    command [[
+      packadd! superspecial
+      for x in globpath(&rtp, "filen.lua",1,1)
+        call v:lua.dofile(x)
+      endfor
+    ]]
+    eq({'ordinary', 'SuperSpecial', 'FANCY', 'mittel', 'SuperSpecial after', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+  end)
+
+  it("handles the correct order with a package that changes packpath", function()
+    pack_clear [[ lua _G.test_loadorder = {} vim.cmd "packadd! funky\nruntime! filen.lua" ]]
+    eq({'ordinary', 'funky!', 'FANCY', 'mittel', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
+    eq({'ordinary', 'funky!', 'mittel', 'ordinary after'}, exec_lua [[ return _G.nested_order ]])
+  end)
+
+  it("handles the correct order when prepending packpath", function()
+    clear{args={'--cmd', 'set packpath^=test/functional/fixtures',  '--cmd', [[ lua _G.test_loadorder = {} vim.cmd "runtime! filen.lua" ]]}, env={XDG_CONFIG_HOME='test/functional/fixtures/'}}
+    eq({'ordinary', 'FANCY', 'FANCY after', 'ordinary after'}, exec_lua [[ return _G.test_loadorder ]])
   end)
 end)
 
@@ -402,21 +518,23 @@ describe('sysinit', function()
 
   it('fixed hang issue with -D (#12647)', function()
     local screen
-    screen = Screen.new(60, 6)
+    screen = Screen.new(60, 7)
     screen:attach()
     command([[let g:id = termopen('"]]..nvim_prog..
     [[" -u NONE -i NONE --cmd "set noruler" -D')]])
     screen:expect([[
       ^                                                            |
       Entering Debug mode.  Type "cont" to continue.              |
-      cmd: augroup nvim_terminal                                  |
+      nvim_exec()                                                 |
+      cmd: aunmenu *                                              |
       >                                                           |
-      <" -u NONE -i NONE --cmd "set noruler" -D 1,0-1          All|
+      <" -u NONE -i NONE --cmd "set noruler" -D 1,1            All|
                                                                   |
     ]])
     command([[call chansend(g:id, "cont\n")]])
     screen:expect([[
       ^                                                            |
+      ~                                                           |
       ~                                                           |
       [No Name]                                                   |
                                                                   |
@@ -426,26 +544,19 @@ describe('sysinit', function()
   end)
 end)
 
-describe('clean', function()
-  clear()
-  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) ~= nil)
-  clear('--clean')
-  ok(string.find(meths.get_option('runtimepath'), funcs.stdpath('config'), 1, true) == nil)
-end)
-
 describe('user config init', function()
   local xhome = 'Xhome'
   local pathsep = helpers.get_pathsep()
   local xconfig = xhome .. pathsep .. 'Xconfig'
+  local xdata = xhome .. pathsep .. 'Xdata'
   local init_lua_path = table.concat({xconfig, 'nvim', 'init.lua'}, pathsep)
+  local xenv = { XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata }
 
   before_each(function()
     rmdir(xhome)
 
-    -- TODO, make mkdir_p helper
-    mkdir(xhome)
-    mkdir(xconfig)
-    mkdir(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xdata)
 
     write_file(init_lua_path, [[
       vim.g.lua_rc = 1
@@ -457,10 +568,10 @@ describe('user config init', function()
   end)
 
   it('loads init.lua from XDG config home by default', function()
-    clear{ args_rm={'-u' }, env={ XDG_CONFIG_HOME=xconfig }}
+    clear{ args_rm={'-u' }, env=xenv }
 
     eq(1, eval('g:lua_rc'))
-    eq(init_lua_path, eval('$MYVIMRC'))
+    eq(funcs.fnamemodify(init_lua_path, ':p'), eval('$MYVIMRC'))
   end)
 
   describe 'with explicitly provided config'(function()
@@ -472,7 +583,7 @@ describe('user config init', function()
     end)
 
     it('loads custom lua config and does not set $MYVIMRC', function()
-      clear{ args={'-u', custom_lua_path }, env={ XDG_CONFIG_HOME=xconfig }}
+      clear{ args={'-u', custom_lua_path }, env=xenv }
       eq(1, eval('g:custom_lua_rc'))
       eq('', eval('$MYVIMRC'))
     end)
@@ -486,11 +597,102 @@ describe('user config init', function()
     end)
 
     it('loads default lua config, but shows an error', function()
-      clear{ args_rm={'-u'}, env={ XDG_CONFIG_HOME=xconfig }}
-      feed('<cr>') -- TODO check this, test execution is blocked without it
+      clear{ args_rm={'-u'}, env=xenv }
+      feed('<cr><c-c>')  -- Dismiss "Conflicting config …" message.
       eq(1, eval('g:lua_rc'))
-      matches('Conflicting configs', meths.exec('messages', true))
+      matches('^E5422: Conflicting configs', meths.exec('messages', true))
     end)
+  end)
+end)
+
+describe('runtime:', function()
+  local xhome = 'Xhome'
+  local pathsep = helpers.get_pathsep()
+  local xconfig = xhome .. pathsep .. 'Xconfig'
+  local xdata = xhome .. pathsep .. 'Xdata'
+  local xenv = { XDG_CONFIG_HOME=xconfig, XDG_DATA_HOME=xdata }
+
+  setup(function()
+    rmdir(xhome)
+    mkdir_p(xconfig .. pathsep .. 'nvim')
+    mkdir_p(xdata)
+  end)
+
+  teardown(function()
+    rmdir(xhome)
+  end)
+
+  it('loads plugin/*.lua from XDG config home', function()
+    local plugin_folder_path = table.concat({xconfig, 'nvim', 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[ vim.g.lua_plugin = 1 ]])
+
+    clear{ args_rm={'-u'}, env=xenv }
+
+    eq(1, eval('g:lua_plugin'))
+    rmdir(plugin_folder_path)
+  end)
+
+  it('loads plugin/*.lua from start packages', function()
+    local plugin_path = table.concat({xconfig, 'nvim', 'pack', 'catagory',
+    'start', 'test_plugin'}, pathsep)
+    local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'},
+    pathsep)
+    local profiler_file = 'test_startuptime.log'
+
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[vim.g.lua_plugin = 2]])
+
+    clear{ args_rm={'-u'}, args={'--startuptime', profiler_file}, env=xenv }
+
+    eq(2, eval('g:lua_plugin'))
+    -- Check if plugin_file_path is listed in :scriptname
+    local scripts = meths.exec(':scriptnames', true)
+    assert(scripts:find(plugin_file_path))
+
+    -- Check if plugin_file_path is listed in startup profile
+    local profile_reader = io.open(profiler_file, 'r')
+    local profile_log = profile_reader:read('*a')
+    profile_reader:close()
+    assert(profile_log:find(plugin_file_path))
+
+    os.remove(profiler_file)
+    rmdir(plugin_path)
+  end)
+
+  it('loads plugin/*.lua from site packages', function()
+    local nvimdata = iswin() and "nvim-data" or "nvim"
+    local plugin_path = table.concat({xdata, nvimdata, 'site', 'pack', 'xa', 'start', 'yb'}, pathsep)
+    local plugin_folder_path = table.concat({plugin_path, 'plugin'}, pathsep)
+    local plugin_after_path = table.concat({plugin_path, 'after', 'plugin'}, pathsep)
+    local plugin_file_path = table.concat({plugin_folder_path, 'plugin.lua'}, pathsep)
+    local plugin_after_file_path = table.concat({plugin_after_path, 'helloo.lua'}, pathsep)
+
+    mkdir_p(plugin_folder_path)
+    write_file(plugin_file_path, [[table.insert(_G.lista, "unos")]])
+    mkdir_p(plugin_after_path)
+    write_file(plugin_after_file_path, [[table.insert(_G.lista, "dos")]])
+
+    clear{ args_rm={'-u'}, args={'--cmd', 'lua _G.lista = {}'}, env=xenv }
+
+    eq({'unos', 'dos'}, exec_lua "return _G.lista")
+
+    rmdir(plugin_path)
+  end)
+
+
+  it('loads ftdetect/*.lua', function()
+    local ftdetect_folder = table.concat({xconfig, 'nvim', 'ftdetect'}, pathsep)
+    local ftdetect_file = table.concat({ftdetect_folder , 'new-ft.lua'}, pathsep)
+    mkdir_p(ftdetect_folder)
+    write_file(ftdetect_file , [[vim.g.lua_ftdetect = 1]])
+
+    clear{ args_rm={'-u'}, env=xenv }
+
+    eq(1, eval('g:lua_ftdetect'))
+    rmdir(ftdetect_folder)
   end)
 end)
 

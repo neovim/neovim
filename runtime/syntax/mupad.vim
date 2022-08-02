@@ -279,5 +279,6 @@ hi def link mupadType		Type
 hi def link mupadDefine		Define
 hi def link mupadIdentifier	Identifier
 
+let b:current_syntax = 'mupad'
 
 " TODO  More comprehensive listing.

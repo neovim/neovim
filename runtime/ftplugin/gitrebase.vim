@@ -1,22 +1,20 @@
 " Vim filetype plugin
 " Language:	git rebase --interactive
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2019 Dec 05
+" Last Change:	2022 Jan 05
 
 " Only do this when not done yet for this buffer
 if (exists("b:did_ftplugin"))
   finish
 endif
 
-runtime! ftplugin/git.vim
 let b:did_ftplugin = 1
 
-setlocal comments=:# commentstring=#\ %s formatoptions-=t
+let &l:comments = ':' . (matchstr(getline('$'), '^[#;@!$%^&|:]\S\@!') . '#')[0]
+let &l:commentstring = &l:comments[1] . ' %s'
+setlocal formatoptions-=t
 setlocal nomodeline
-if !exists("b:undo_ftplugin")
-  let b:undo_ftplugin = ""
-endif
-let b:undo_ftplugin = b:undo_ftplugin."|setl com< cms< fo< ml<"
+let b:undo_ftplugin = "setl com< cms< fo< ml<"
 
 function! s:choose(word) abort
   s/^\(\w\+\>\)\=\(\s*\)\ze\x\{4,40\}\>/\=(strlen(submatch(1)) == 1 ? a:word[0] : a:word) . substitute(submatch(2),'^$',' ','')/e
@@ -41,8 +39,7 @@ if exists("g:no_plugin_maps") || exists("g:no_gitrebase_maps")
   finish
 endif
 
-nnoremap <buffer> <expr> K col('.') < 7 && expand('<Lt>cword>') =~ '\X' && getline('.') =~ '^\w\+\s\+\x\+\>' ? 'wK' : 'K'
 nnoremap <buffer> <silent> <C-A> :<C-U><C-R>=v:count1<CR>Cycle<CR>
 nnoremap <buffer> <silent> <C-X> :<C-U><C-R>=v:count1<CR>Cycle!<CR>
 
-let b:undo_ftplugin = b:undo_ftplugin . "|exe 'nunmap <buffer> K'|exe 'nunmap <buffer> <C-A>'|exe 'nunmap <buffer> <C-X>'"
+let b:undo_ftplugin = b:undo_ftplugin . "|exe 'nunmap <buffer> <C-A>'|exe 'nunmap <buffer> <C-X>'"

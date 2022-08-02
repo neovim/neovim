@@ -2,8 +2,10 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local assert_visible = helpers.assert_visible
+local assert_alive = helpers.assert_alive
 local dedent = helpers.dedent
 local eq = helpers.eq
+local neq = helpers.neq
 local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
@@ -13,7 +15,9 @@ local funcs = helpers.funcs
 local expect = helpers.expect
 local command = helpers.command
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
 local curbufmeths = helpers.curbufmeths
+local retry = helpers.retry
 local source = helpers.source
 
 describe('autocmd', function()
@@ -53,6 +57,23 @@ describe('autocmd', function()
     command('close')
     command('new testfile2')
     command('bdelete 1')
+    eq(expected, eval('g:evs'))
+  end)
+
+  it('first edit causes BufUnload on NoName', function()
+    local expected = {
+      {'BufUnload', ''},
+      {'BufDelete', ''},
+      {'BufWipeout', ''},
+      {'BufEnter', 'testfile1'},
+    }
+    command('let g:evs = []')
+    command('autocmd BufEnter * :call add(g:evs, ["BufEnter", expand("<afile>")])')
+    command('autocmd BufDelete * :call add(g:evs, ["BufDelete", expand("<afile>")])')
+    command('autocmd BufLeave * :call add(g:evs, ["BufLeave", expand("<afile>")])')
+    command('autocmd BufUnload * :call add(g:evs, ["BufUnload", expand("<afile>")])')
+    command('autocmd BufWipeout * :call add(g:evs, ["BufWipeout", expand("<afile>")])')
+    command('edit testfile1')
     eq(expected, eval('g:evs'))
   end)
 
@@ -98,6 +119,17 @@ describe('autocmd', function()
     eq({
       {'WinClosed', '2'},
       {'WinClosed', '1'},
+    }, eval('g:evs'))
+  end)
+
+  it('WinClosed from root directory', function()
+    command('cd /')
+    command('let g:evs = []')
+    command('autocmd WinClosed * :call add(g:evs, ["WinClosed", expand("<afile>")])')
+    command('new')
+    command('close')
+    eq({
+      {'WinClosed', '1001'},
     }, eval('g:evs'))
   end)
 
@@ -322,6 +354,87 @@ describe('autocmd', function()
       pcall_err(command, "call nvim_set_current_win(g:winid)"))
   end)
 
+  it("`aucmd_win` cannot be changed into a normal window #13699", function()
+    local screen = Screen.new(50, 10)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {reverse = true},
+      [3] = {bold = true, reverse = true},
+    }
+
+    -- Create specific layout and ensure it's left unchanged.
+    -- Use nvim_buf_call on a hidden buffer so aucmd_win is used.
+    exec_lua [[
+      vim.cmd "wincmd s | wincmd _"
+      _G.buf = vim.api.nvim_create_buf(true, true)
+      vim.api.nvim_buf_call(_G.buf, function() vim.cmd "wincmd J" end)
+    ]]
+    screen:expect [[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {3:[No Name]                                         }|
+                                                        |
+      {2:[No Name]                                         }|
+                                                        |
+    ]]
+    -- This used to crash after making aucmd_win a normal window via the above.
+    exec_lua [[
+      vim.cmd "tabnew | tabclose # | wincmd s | wincmd _"
+      vim.api.nvim_buf_call(_G.buf, function() vim.cmd "wincmd K" end)
+    ]]
+    assert_alive()
+    screen:expect_unchanged()
+
+    -- Ensure splitting still works from inside the aucmd_win.
+    exec_lua [[vim.api.nvim_buf_call(_G.buf, function() vim.cmd "split" end)]]
+    screen:expect [[
+      ^                                                  |
+      {1:~                                                 }|
+      {3:[No Name]                                         }|
+                                                        |
+      {1:~                                                 }|
+      {2:[Scratch]                                         }|
+                                                        |
+      {1:~                                                 }|
+      {2:[No Name]                                         }|
+                                                        |
+    ]]
+
+    -- After all of our messing around, aucmd_win should still be floating.
+    -- Use :only to ensure _G.buf is hidden again (so the aucmd_win is used).
+    eq("editor", exec_lua [[
+      vim.cmd "only"
+      vim.api.nvim_buf_call(_G.buf, function()
+        _G.config = vim.api.nvim_win_get_config(0)
+      end)
+      return _G.config.relative
+    ]])
+  end)
+
+  describe('closing last non-floating window in tab from `aucmd_win`', function()
+    before_each(function()
+      command('edit Xa.txt')
+      command('tabnew Xb.txt')
+      command('autocmd BufAdd Xa.txt 1close')
+    end)
+
+    it('gives E814 when there are no other floating windows', function()
+      eq('Vim(close):E814: Cannot close window, only autocmd window would remain',
+         pcall_err(command, 'doautoall BufAdd'))
+    end)
+
+    it('gives E814 when there are other floating windows', function()
+      meths.open_win(0, true, {width = 10, height = 10, relative = 'editor', row = 10, col = 10})
+      eq('Vim(close):E814: Cannot close window, only autocmd window would remain',
+         pcall_err(command, 'doautoall BufAdd'))
+    end)
+  end)
+
   it(':doautocmd does not warn "No matching autocommands" #10689', function()
     local screen = Screen.new(32, 3)
     screen:attach()
@@ -342,5 +455,126 @@ describe('autocmd', function()
       {1:~                               }|
       :doautocmd SessionLoadPost      |
     ]]}
+  end)
+
+  describe('v:event is readonly #18063', function()
+    it('during ChanOpen event', function()
+      command('autocmd ChanOpen * let v:event.info.id = 0')
+      funcs.jobstart({'cat'})
+      retry(nil, nil, function()
+        eq('E46: Cannot change read-only variable "v:event.info"', meths.get_vvar('errmsg'))
+      end)
+    end)
+
+    it('during ChanOpen event', function()
+      command('autocmd ChanInfo * let v:event.info.id = 0')
+      meths.set_client_info('foo', {}, 'remote', {}, {})
+      retry(nil, nil, function()
+        eq('E46: Cannot change read-only variable "v:event.info"', meths.get_vvar('errmsg'))
+      end)
+    end)
+
+    it('during RecordingLeave event', function()
+      command([[autocmd RecordingLeave * let v:event.regname = '']])
+      eq('Vim(let):E46: Cannot change read-only variable "v:event.regname"',
+         pcall_err(command, 'normal! qqq'))
+    end)
+
+    it('during TermClose event', function()
+      command('autocmd TermClose * let v:event.status = 0')
+      command('terminal')
+      eq('Vim(let):E46: Cannot change read-only variable "v:event.status"',
+         pcall_err(command, 'bdelete!'))
+    end)
+  end)
+
+  describe('old_tests', function()
+    it('vimscript: WinNew ++once', function()
+      source [[
+        " Without ++once WinNew triggers twice
+        let g:did_split = 0
+        augroup Testing
+          au!
+          au WinNew * let g:did_split += 1
+        augroup END
+        split
+        split
+        call assert_equal(2, g:did_split)
+        call assert_true(exists('#WinNew'))
+        close
+        close
+
+        " With ++once WinNew triggers once
+        let g:did_split = 0
+        augroup Testing
+          au!
+          au WinNew * ++once let g:did_split += 1
+        augroup END
+        split
+        split
+        call assert_equal(1, g:did_split)
+        call assert_false(exists('#WinNew'))
+        close
+        close
+
+        call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+      ]]
+
+      meths.set_var('did_split', 0)
+
+      source [[
+        augroup Testing
+          au!
+          au WinNew * let g:did_split += 1
+        augroup END
+
+        split
+        split
+      ]]
+
+      eq(2, meths.get_var('did_split'))
+      eq(1, funcs.exists('#WinNew'))
+
+      -- Now with once
+      meths.set_var('did_split', 0)
+
+      source [[
+        augroup Testing
+          au!
+          au WinNew * ++once let g:did_split += 1
+        augroup END
+
+        split
+        split
+      ]]
+
+      eq(1, meths.get_var('did_split'))
+      eq(0, funcs.exists('#WinNew'))
+
+      -- call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+      local ok, msg = pcall(source, [[
+        au WinNew * ++once ++once echo bad
+      ]])
+
+      eq(false, ok)
+      eq(true, not not string.find(msg, 'E983:'))
+    end)
+
+    it('should have autocmds in filetypedetect group', function()
+      source [[filetype on]]
+      neq({}, meths.get_autocmds { group = "filetypedetect" })
+    end)
+
+    it('should allow comma-separated patterns', function()
+      source [[
+        augroup TestingPatterns
+          au!
+          autocmd BufReadCmd *.shada,*.shada.tmp.[a-z] echo 'hello'
+          autocmd BufReadCmd *.shada,*.shada.tmp.[a-z] echo 'hello'
+        augroup END
+      ]]
+
+      eq(4, #meths.get_autocmds { event = "BufReadCmd", group = "TestingPatterns" })
+    end)
   end)
 end)

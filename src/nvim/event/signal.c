@@ -10,7 +10,6 @@
 # include "event/signal.c.generated.h"
 #endif
 
-
 void signal_watcher_init(Loop *loop, SignalWatcher *watcher, void *data)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {

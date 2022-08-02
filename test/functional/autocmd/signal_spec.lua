@@ -30,6 +30,12 @@ describe('autocmd Signal', function()
     eq({'notification', 'foo', {}}, next_msg())
   end)
 
+  it('matches SIGWINCH', function()
+    command('autocmd Signal SIGWINCH call rpcnotify(1, "foo")')
+    posix_kill('WINCH', funcs.getpid())
+    eq({'notification', 'foo', {}}, next_msg())
+  end)
+
   it('does not match unknown patterns', function()
     command('autocmd Signal SIGUSR2 call rpcnotify(1, "foo")')
     posix_kill('USR1', funcs.getpid())

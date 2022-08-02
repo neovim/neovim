@@ -3,7 +3,7 @@
 "   Maintainer:	Christian Brabandt <cb@256bit.org>
 " Last Changed: Dec 07th, 2018
 "   Repository: https://github.com/chrisbra/vim-xml-ftplugin
-" Previous Maintainer:	Dan Sharp <dwsharp at users dot sourceforge dot net>
+" Previous Maintainer:	Dan Sharp
 "          URL:		      http://dwsharp.users.sourceforge.net/vim/ftplugin
 
 if exists("b:did_ftplugin") | finish | endif

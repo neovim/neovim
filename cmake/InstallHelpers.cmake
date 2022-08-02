@@ -154,3 +154,25 @@ function(install_helper)
       ${RENAME})
   endif()
 endfunction()
+
+# Without CONFIGURE_DEPENDS globbing reuses cached file tree on rebuild.
+# For example it will ignore new files.
+# CONFIGURE_DEPENDS was introduced in 3.12
+
+function(glob_wrapper outvar)
+  if(${CMAKE_VERSION} VERSION_LESS 3.12)
+    file(GLOB ${outvar} ${ARGN})
+  else()
+    file(GLOB ${outvar} CONFIGURE_DEPENDS ${ARGN})
+  endif()
+  set(${outvar} ${${outvar}} PARENT_SCOPE)
+endfunction()
+
+function(globrecurse_wrapper outvar root)
+  if(${CMAKE_VERSION} VERSION_LESS 3.12)
+    file(GLOB_RECURSE ${outvar} RELATIVE ${root} ${ARGN})
+  else()
+    file(GLOB_RECURSE ${outvar} CONFIGURE_DEPENDS RELATIVE ${root} ${ARGN})
+  endif()
+  set(${outvar} ${${outvar}} PARENT_SCOPE)
+endfunction()

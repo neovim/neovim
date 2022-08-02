@@ -6,8 +6,6 @@
 
 source test_charsearch_utf8.vim
 source test_expr_utf8.vim
-source test_listlbr_utf8.vim
-source test_matchadd_conceal_utf8.vim
 source test_mksession_utf8.vim
 source test_regexp_utf8.vim
 source test_source_utf8.vim

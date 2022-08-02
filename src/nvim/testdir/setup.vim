@@ -1,3 +1,36 @@
+if exists('s:did_load')
+  " Align Nvim defaults to Vim.
+  set backspace=
+  set complete=.,w,b,u,t,i
+  set directory&
+  set directory^=.
+  set display=
+  set fillchars=vert:\|,fold:-
+  set formatoptions=tcq
+  set fsync
+  set laststatus=1
+  set listchars=eol:$
+  set joinspaces
+  set nohidden nosmarttab noautoindent noautoread noruler noshowcmd
+  set nohlsearch noincsearch
+  set nrformats=bin,octal,hex
+  set shortmess=filnxtToOS
+  set sidescroll=0
+  set tags=./tags,tags
+  set undodir&
+  set undodir^=.
+  set wildoptions=
+  set startofline
+  set sessionoptions&
+  set sessionoptions+=options
+  set viewoptions&
+  set viewoptions+=options
+  set switchbuf=
+  " Make "Q" switch to Ex mode.
+  " This does not work for all tests.
+  nnoremap Q gQ
+endif
+
 " Common preparations for running tests.
 
 " Only load this once.
@@ -6,21 +39,9 @@ if exists('s:did_load')
 endif
 let s:did_load = 1
 
-" Align Nvim defaults to Vim.
-set backspace=
-set directory^=.
-set fillchars=vert:\|,fold:-
-set laststatus=1
-set listchars=eol:$
-set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
-set nrformats+=octal
-set shortmess-=F
-set sidescroll=0
-set tags=./tags,tags
-set undodir^=.
-set wildoptions=
-set startofline
-set sessionoptions&vi
+" Clear Nvim default mappings.
+mapclear
+mapclear!
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'

@@ -135,8 +135,7 @@ func BackOne(expected)
 endfunc
 
 func Test_undo_del_chars()
-  throw 'skipped: Nvim does not support test_settime()'
-
+  throw 'Skipped: Nvim does not support test_settime()'
   " Setup a buffer without creating undo entries
   new
   set ul=-1
@@ -297,6 +296,8 @@ func Test_undo_write()
   close!
   call delete('Xtest')
   bwipe! Xtest
+
+  call assert_fails('earlier xyz', 'E475:')
 endfunc
 
 func Test_insert_expr()
@@ -330,8 +331,9 @@ func Test_insert_expr()
 endfunc
 
 func Test_undofile_earlier()
-  throw 'skipped: Nvim does not support test_settime()'
-
+  throw 'Skipped: Nvim does not support test_settime()'
+  " Issue #1254
+  " create undofile with timestamps older than Vim startup time.
   let t0 = localtime() - 43200
   call test_settime(t0)
   new Xfile
@@ -364,9 +366,8 @@ func Test_wundo_errors()
   bwipe!
 endfunc
 
-" Check that reading a truncted undo file doesn't hang.
+" Check that reading a truncated undo file doesn't hang.
 func Test_undofile_truncated()
-  throw 'skipped: TODO: '
   new
   call setline(1, 'hello')
   set ul=100
@@ -428,31 +429,6 @@ func Test_cmd_in_reg_undo()
   let @a = ''
 endfunc
 
-" undo or redo are noop if there is nothing to undo or redo
-func Test_undo_redo_noop()
-  new
-  call assert_fails('undo 2', 'E830:')
-
-  message clear
-  undo
-  let messages = split(execute('message'), "\n")
-  call assert_equal('Already at oldest change', messages[-1])
-
-  message clear
-  redo
-  let messages = split(execute('message'), "\n")
-  call assert_equal('Already at newest change', messages[-1])
-
-  bwipe!
-endfunc
-
-func Test_redo_empty_line()
-  new
-  exe "norm\x16r\x160"
-  exe "norm."
-  bwipe!
-endfunc
-
 " This used to cause an illegal memory access
 func Test_undo_append()
   new
@@ -460,47 +436,6 @@ func Test_undo_append()
   undo
   norm o
   quit
-endfunc
-
-funct Test_undofile()
-  " Test undofile() without setting 'undodir'.
-  if has('persistent_undo')
-    call assert_equal(fnamemodify('.Xundofoo.un~', ':p'), undofile('Xundofoo'))
-  else
-    call assert_equal('', undofile('Xundofoo'))
-  endif
-  call assert_equal('', undofile(''))
-
-  " Test undofile() with 'undodir' set to to an existing directory.
-  call mkdir('Xundodir')
-  set undodir=Xundodir
-  let cwd = getcwd()
-  if has('win32')
-    " Replace windows drive such as C:... into C%...
-    let cwd = substitute(cwd, '^\([a-zA-Z]\):', '\1%', 'g')
-  endif
-  let cwd = substitute(cwd . '/Xundofoo', '/', '%', 'g')
-  if has('persistent_undo')
-    call assert_equal('Xundodir/' . cwd, undofile('Xundofoo'))
-  else
-    call assert_equal('', undofile('Xundofoo'))
-  endif
-  call assert_equal('', undofile(''))
-  call delete('Xundodir', 'd')
-
-  " Test undofile() with 'undodir' set to a non-existing directory.
-  " call assert_equal('', undofile('Xundofoo'))
-
-  if isdirectory('/tmp')
-    set undodir=/tmp
-    if has('osx')
-      call assert_equal('/tmp/%private%tmp%file', undofile('///tmp/file'))
-    else
-      call assert_equal('/tmp/%tmp%file', undofile('///tmp/file'))
-    endif
-  endif
-
-  set undodir&
 endfunc
 
 func Test_undo_0()
@@ -547,6 +482,72 @@ func Test_undo_0()
   bwipe!
 endfunc
 
+" undo or redo are noop if there is nothing to undo or redo
+func Test_undo_redo_noop()
+  new
+  call assert_fails('undo 2', 'E830:')
+
+  message clear
+  undo
+  let messages = split(execute('message'), "\n")
+  call assert_equal('Already at oldest change', messages[-1])
+
+  message clear
+  redo
+  let messages = split(execute('message'), "\n")
+  call assert_equal('Already at newest change', messages[-1])
+
+  bwipe!
+endfunc
+
+func Test_redo_empty_line()
+  new
+  exe "norm\x16r\x160"
+  exe "norm."
+  bwipe!
+endfunc
+
+funct Test_undofile()
+  " Test undofile() without setting 'undodir'.
+  if has('persistent_undo')
+    call assert_equal(fnamemodify('.Xundofoo.un~', ':p'), undofile('Xundofoo'))
+  else
+    call assert_equal('', undofile('Xundofoo'))
+  endif
+  call assert_equal('', undofile(''))
+
+  " Test undofile() with 'undodir' set to to an existing directory.
+  call mkdir('Xundodir')
+  set undodir=Xundodir
+  let cwd = getcwd()
+  if has('win32')
+    " Replace windows drive such as C:... into C%...
+    let cwd = substitute(cwd, '^\([a-zA-Z]\):', '\1%', 'g')
+  endif
+  let cwd = substitute(cwd . '/Xundofoo', '/', '%', 'g')
+  if has('persistent_undo')
+    call assert_equal('Xundodir/' . cwd, undofile('Xundofoo'))
+  else
+    call assert_equal('', undofile('Xundofoo'))
+  endif
+  call assert_equal('', undofile(''))
+  call delete('Xundodir', 'd')
+
+  " Test undofile() with 'undodir' set to a non-existing directory.
+  " call assert_equal('', 'Xundofoo'->undofile())
+
+  if isdirectory('/tmp')
+    set undodir=/tmp
+    if has('osx')
+      call assert_equal('/tmp/%private%tmp%file', undofile('///tmp/file'))
+    else
+      call assert_equal('/tmp/%tmp%file', undofile('///tmp/file'))
+    endif
+  endif
+
+  set undodir&
+endfunc
+
 " Tests for the undo file
 " Explicitly break changes up in undo-able pieces by setting 'undolevels'.
 func Test_undofile_2()
@@ -578,7 +579,7 @@ func Test_undofile_2()
 
   " add 10 lines, delete 6 lines, undo 3
   set undofile
-  call setbufline(0, 1, ['one', 'two', 'three', 'four', 'five', 'six',
+  call setbufline('%', 1, ['one', 'two', 'three', 'four', 'five', 'six',
 	      \ 'seven', 'eight', 'nine', 'ten'])
   set undolevels=100
   normal 3Gdd
@@ -730,6 +731,46 @@ func Test_undofile_cryptmethod_blowfish2()
   let ufile = has('vms') ? '_un_Xtestfile' : '.Xtestfile.un~'
   call delete(ufile)
   set undofile& undolevels& cryptmethod&
+endfunc
+
+" Test for redoing with incrementing numbered registers
+func Test_redo_repeat_numbered_register()
+  new
+  for [i, v] in [[1, 'one'], [2, 'two'], [3, 'three'],
+        \ [4, 'four'], [5, 'five'], [6, 'six'],
+        \ [7, 'seven'], [8, 'eight'], [9, 'nine']]
+    exe 'let @' .. i .. '="' .. v .. '\n"'
+  endfor
+  call feedkeys('"1p.........', 'xt')
+  call assert_equal(['', 'one', 'two', 'three', 'four', 'five', 'six',
+        \ 'seven', 'eight', 'nine', 'nine'], getline(1, '$'))
+  bwipe!
+endfunc
+
+" Test for redo in insert mode using CTRL-O with multibyte characters
+func Test_redo_multibyte_in_insert_mode()
+  new
+  call feedkeys("a\<C-K>ft", 'xt')
+  call feedkeys("uiHe\<C-O>.llo", 'xt')
+  call assert_equal("He\ufb05llo", getline(1))
+  bwipe!
+endfunc
+
+func Test_undo_mark()
+  new
+  " The undo is applied to the only line.
+  call setline(1, 'hello')
+  call feedkeys("ggyiw$p", 'xt')
+  undo
+  call assert_equal([0, 1, 1, 0], getpos("'["))
+  call assert_equal([0, 1, 1, 0], getpos("']"))
+  " The undo removes the last line.
+  call feedkeys("Goaaaa\<Esc>", 'xt')
+  call feedkeys("obbbb\<Esc>", 'xt')
+  undo
+  call assert_equal([0, 2, 1, 0], getpos("'["))
+  call assert_equal([0, 2, 1, 0], getpos("']"))
+  bwipe!
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

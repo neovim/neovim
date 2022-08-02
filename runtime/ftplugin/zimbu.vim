@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	Zimbu
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Dec 05
+" Last Change:	2021 Nov 12
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -34,9 +34,11 @@ setlocal errorformat^=%f\ line\ %l\ col\ %c:\ %m,ERROR:\ %m
 
 " When the matchit plugin is loaded, this makes the % command skip parens and
 " braces in comments.
-let b:match_words = '\(^\s*\)\@<=\(MODULE\|CLASS\|INTERFACE\|BITS\|ENUM\|SHARED\|FUNC\|REPLACE\|DEFINE\|PROC\|EQUAL\|MAIN\|IF\|GENERATE_IF\|WHILE\|REPEAT\|WITH\|DO\|FOR\|SWITCH\|TRY\)\>\|{\s*$:\(^\s*\)\@<=\(ELSE\|ELSEIF\|GENERATE_ELSE\|GENERATE_ELSEIF\|CATCH\|FINALLY\)\>:\(^\s*\)\@<=\(}\|\<UNTIL\>\)'
-
-let b:match_skip = 's:comment\|string\|zimbuchar'
+if exists("loaded_matchit") && !exists("b:match_words")
+  let b:match_words = '\(^\s*\)\@<=\(MODULE\|CLASS\|INTERFACE\|BITS\|ENUM\|SHARED\|FUNC\|REPLACE\|DEFINE\|PROC\|EQUAL\|MAIN\|IF\|GENERATE_IF\|WHILE\|REPEAT\|WITH\|DO\|FOR\|SWITCH\|TRY\)\>\|{\s*$:\(^\s*\)\@<=\(ELSE\|ELSEIF\|GENERATE_ELSE\|GENERATE_ELSEIF\|CATCH\|FINALLY\)\>:\(^\s*\)\@<=\(}\|\<UNTIL\>\)'
+  let b:match_skip = 's:comment\|string\|zimbuchar'
+  let b:undo_ftplugin ..= " | unlet! b:match_words b:match_skip"
+endif
 
 setlocal tw=78
 setlocal et sts=2 sw=2
@@ -135,9 +137,60 @@ iabbr <buffer> <expr> until GCUpperSpace("until")
 iabbr <buffer> <expr> while GCUpperSpace("while")
 iabbr <buffer> <expr> repeat GCUpper("repeat")
 
+let b:undo_ftplugin ..=
+      \ " | iunabbr <buffer> alias" ..
+      \ " | iunabbr <buffer> arg" ..
+      \ " | iunabbr <buffer> break" ..
+      \ " | iunabbr <buffer> case" ..
+      \ " | iunabbr <buffer> catch" ..
+      \ " | iunabbr <buffer> check" ..
+      \ " | iunabbr <buffer> class" ..
+      \ " | iunabbr <buffer> interface" ..
+      \ " | iunabbr <buffer> implements" ..
+      \ " | iunabbr <buffer> shared" ..
+      \ " | iunabbr <buffer> continue" ..
+      \ " | iunabbr <buffer> default" ..
+      \ " | iunabbr <buffer> extends" ..
+      \ " | iunabbr <buffer> do" ..
+      \ " | iunabbr <buffer> else" ..
+      \ " | iunabbr <buffer> elseif" ..
+      \ " | iunabbr <buffer> enum" ..
+      \ " | iunabbr <buffer> exit" ..
+      \ " | iunabbr <buffer> false" ..
+      \ " | iunabbr <buffer> fail" ..
+      \ " | iunabbr <buffer> finally" ..
+      \ " | iunabbr <buffer> for" ..
+      \ " | iunabbr <buffer> func" ..
+      \ " | iunabbr <buffer> if" ..
+      \ " | iunabbr <buffer> import" ..
+      \ " | iunabbr <buffer> in" ..
+      \ " | iunabbr <buffer> io" ..
+      \ " | iunabbr <buffer> main" ..
+      \ " | iunabbr <buffer> module" ..
+      \ " | iunabbr <buffer> new" ..
+      \ " | iunabbr <buffer> nil" ..
+      \ " | iunabbr <buffer> ok" ..
+      \ " | iunabbr <buffer> proc" ..
+      \ " | iunabbr <buffer> proceed" ..
+      \ " | iunabbr <buffer> return" ..
+      \ " | iunabbr <buffer> step" ..
+      \ " | iunabbr <buffer> switch" ..
+      \ " | iunabbr <buffer> sys" ..
+      \ " | iunabbr <buffer> this" ..
+      \ " | iunabbr <buffer> throw" ..
+      \ " | iunabbr <buffer> try" ..
+      \ " | iunabbr <buffer> to" ..
+      \ " | iunabbr <buffer> true" ..
+      \ " | iunabbr <buffer> until" ..
+      \ " | iunabbr <buffer> while" ..
+      \ " | iunabbr <buffer> repeat"
+
 if !exists("no_plugin_maps") && !exists("no_zimbu_maps")
   nnoremap <silent> <buffer> [[ m`:call ZimbuGoStartBlock()<CR>
   nnoremap <silent> <buffer> ]] m`:call ZimbuGoEndBlock()<CR>
+  let b:undo_ftplugin ..=
+	\ " | silent! exe 'nunmap <buffer> [['" ..
+	\ " | silent! exe 'nunmap <buffer> ]]'"
 endif
 
 " Using a function makes sure the search pattern is restored

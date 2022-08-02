@@ -13,6 +13,9 @@
 " For csh:
 "     setenv TEST_FILTER Test_channel
 "
+" While working on a test you can make $TEST_NO_RETRY non-empty to not retry:
+"     export TEST_NO_RETRY=yes
+"
 " To ignore failure for tests that are known to fail in a certain environment,
 " set $TEST_MAY_FAIL to a comma separated list of function names.  E.g. for
 " sh/bash:
@@ -61,6 +64,9 @@ if has('reltime')
   let s:start_time = reltime()
 endif
 
+" Always use forward slashes.
+set shellslash
+
 " Common with all tests on all systems.
 source setup.vim
 
@@ -100,9 +106,6 @@ lang mess C
 
 " Nvim: append runtime from build dir, which contains the generated doc/tags.
 let &runtimepath .= ','.expand($BUILD_DIR).'/runtime/'
-
-" Always use forward slashes.
-set shellslash
 
 let s:t_bold = &t_md
 let s:t_normal = &t_me
@@ -150,6 +153,9 @@ func RunTheTest(test)
   " directory after executing the test.
   let save_cwd = getcwd()
 
+  " Align Nvim defaults to Vim.
+  source setup.vim
+
   if exists("*SetUp")
     try
       call SetUp()
@@ -194,7 +200,12 @@ func RunTheTest(test)
 
   " Close any extra tab pages and windows and make the current one not modified.
   while tabpagenr('$') > 1
+    let winid = win_getid()
     quit!
+    if winid == win_getid()
+      echoerr 'Could not quit window'
+      break
+    endif
   endwhile
 
   while 1
@@ -353,28 +364,26 @@ let s:flaky_tests = [
       \ 'Test_cursorhold_insert()',
       \ 'Test_exit_callback_interval()',
       \ 'Test_map_timeout_with_timer_interrupt()',
-      \ 'Test_oneshot()',
       \ 'Test_out_cb()',
-      \ 'Test_paused()',
       \ 'Test_popup_and_window_resize()',
       \ 'Test_quoteplus()',
       \ 'Test_quotestar()',
       \ 'Test_reltime()',
-      \ 'Test_repeat_many()',
-      \ 'Test_repeat_three()',
       \ 'Test_state()',
-      \ 'Test_stop_all_in_callback()',
       \ 'Test_term_mouse_double_click_to_create_tab()',
       \ 'Test_term_mouse_multiple_clicks_to_visually_select()',
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',
       \ 'Test_terminal_tmap()',
+      \ 'Test_timer_oneshot()',
+      \ 'Test_timer_paused()',
+      \ 'Test_timer_repeat_many()',
+      \ 'Test_timer_repeat_three()',
+      \ 'Test_timer_stop_all_in_callback()',
+      \ 'Test_timer_stop_in_callback()',
+      \ 'Test_timer_with_partial_callback()',
       \ 'Test_termwinscroll()',
-      \ 'Test_with_partial_callback()',
       \ ]
-
-" Pattern indicating a common flaky test failure.
-let s:flaky_errors_re = 'StopVimInTerminal\|VerifyScreenDump'
 
 " Locate Test_ functions and execute them.
 redir @q
@@ -410,14 +419,19 @@ for s:test in sort(s:tests)
   let total_errors = []
   let run_nr = 1
 
+  " A test can set g:test_is_flaky to retry running the test.
+  let g:test_is_flaky = 0
+
   call RunTheTest(s:test)
 
   " Repeat a flaky test.  Give up when:
+  " - $TEST_NO_RETRY is not empty
   " - it fails again with the same message
   " - it fails five times (with a different message)
   if len(v:errors) > 0
+        \ && $TEST_NO_RETRY == ''
         \ && (index(s:flaky_tests, s:test) >= 0
-        \      || v:errors[0] =~ s:flaky_errors_re)
+        \      || g:test_is_flaky)
     while 1
       call add(s:messages, 'Found errors in ' . s:test . ':')
       call extend(s:messages, v:errors)

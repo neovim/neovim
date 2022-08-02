@@ -23,16 +23,16 @@
 #endif
 
 #if defined(__APPLE__) || defined(BSD)
-# include <sys/sysctl.h>
 # include <pwd.h>
+# include <sys/sysctl.h>
 #endif
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
-#include "nvim/os/process.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/os/process.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/process.c.generated.h"
