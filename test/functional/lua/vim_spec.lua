@@ -2792,12 +2792,12 @@ describe('vim.keymap', function()
 
   it('can make an expr mapping', function()
     exec_lua [[
-      vim.keymap.set('n', 'aa', function() return ':lua SomeValue = 99<cr>' end, {expr = true})
+      vim.keymap.set('n', 'aa', function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, {expr = true})
     ]]
 
     feed('aa')
 
-    eq(99, exec_lua[[return SomeValue]])
+    eq({'π<M-π>foo<'}, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('can overwrite a mapping', function()

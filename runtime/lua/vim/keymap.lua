@@ -31,12 +31,10 @@ local keymap = {}
 ---    vim.keymap.set('n', 'asdf', function() return require('jkl').my_fun() end)
 --- </pre>
 ---
----@param mode string|table   Same mode short names as |nvim_set_keymap()|.
+---@param mode string|table    Same mode short names as |nvim_set_keymap()|.
 ---                            Can also be list of modes to create mapping on multiple modes.
----@param lhs string          Left-hand side |{lhs}| of the mapping.
+---@param lhs string           Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
----                            If a Lua function and `opts.expr == true`, returning `nil` is
----                            equivalent to an empty string.
 --
 ---@param opts table A table of |:map-arguments| such as "silent". In addition to the options
 ---                  listed in |nvim_set_keymap()|, this table also accepts the following keys:

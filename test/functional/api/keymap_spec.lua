@@ -523,6 +523,11 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {buffer = true}))
   end)
 
+  it('error when "replace_keycodes" is used without "expr"', function()
+    eq('"replace_keycodes" requires "expr"',
+      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {replace_keycodes = true}))
+  end)
+
   local optnames = {'nowait', 'silent', 'script', 'expr', 'unique'}
   for _, opt in ipairs(optnames) do
     -- note: need '%' to escape hyphens, which have special meaning in lua
@@ -842,14 +847,14 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq(generate_mapargs('n', 'asdf', nil, {sid=sid_lua}), mapargs)
   end)
 
-  it('can make lua expr mappings', function()
+  it('can make lua expr mappings replacing keycodes', function()
     exec_lua [[
-      vim.api.nvim_set_keymap ('n', 'aa', '', {callback = function() return ':lua SomeValue = 99<cr>' end, expr = true, replace_keycodes = true })
+      vim.api.nvim_set_keymap ('n', 'aa', '', {callback = function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, expr = true, replace_keycodes = true })
     ]]
 
     feed('aa')
 
-    eq(99, exec_lua[[return SomeValue]])
+    eq({'π<M-π>foo<'}, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('can make lua expr mappings without replacing keycodes', function()
@@ -860,6 +865,16 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     feed('iaa<esc>')
 
     eq({'<space>'}, meths.buf_get_lines(0, 0, -1, false))
+  end)
+
+  it('lua expr mapping returning nil is equivalent to returnig an empty string', function()
+    exec_lua [[
+      vim.api.nvim_set_keymap ('i', 'aa', '', {callback = function() return nil end, expr = true })
+    ]]
+
+    feed('iaa<esc>')
+
+    eq({''}, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('does not reset pum in lua mapping', function()
@@ -1050,14 +1065,14 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
     eq(1, exec_lua[[return GlobalCount]])
   end)
 
-  it('can make lua expr mappings', function()
+  it('can make lua expr mappings replacing keycodes', function()
     exec_lua [[
-      vim.api.nvim_buf_set_keymap (0, 'n', 'aa', '', {callback = function() return ':lua SomeValue = 99<cr>' end, expr = true, replace_keycodes = true })
+      vim.api.nvim_buf_set_keymap (0, 'n', 'aa', '', {callback = function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, expr = true, replace_keycodes = true })
     ]]
 
     feed('aa')
 
-    eq(99, exec_lua[[return SomeValue ]])
+    eq({'π<M-π>foo<'}, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('can make lua expr mappings without replacing keycodes', function()
