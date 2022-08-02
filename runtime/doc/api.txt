@@ -974,7 +974,7 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
                     {mode}  Mode short-name ("n", "i", "v", ...)
 
                 Return: ~
-                    Array of maparg()-like dictionaries describing mappings.
+                    Array of |maparg()|-like dictionaries describing mappings.
                     The "buffer" key is always zero.
 
 nvim_get_mark({name}, {opts})                                *nvim_get_mark()*
@@ -1508,9 +1508,12 @@ nvim_set_keymap({mode}, {lhs}, {rhs}, {*opts})             *nvim_set_keymap()*
                             used to give a description to the mapping. When
                             called from Lua, also accepts a "callback" key
                             that takes a Lua function to call when the mapping
-                            is executed. "replace_keycodes" can be used with
-                            "expr" to replace keycodes, see
-                            |nvim_replace_termcodes()|.
+                            is executed. When "expr" is true,
+                            "replace_keycodes" (boolean) can be used to
+                            replace keycodes in the resulting string (see
+                            |nvim_replace_termcodes()|), and a Lua callback
+                            returning `nil` is equivalent to returning an
+                            empty string.
 
 nvim_set_var({name}, {value})                                 *nvim_set_var()*
                 Sets a global (g:) variable.
@@ -2299,7 +2302,7 @@ nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
                     {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
-                    Array of maparg()-like dictionaries describing mappings.
+                    Array of |maparg()|-like dictionaries describing mappings.
                     The "buffer" key holds the associated buffer handle.
 
                                                         *nvim_buf_get_lines()*

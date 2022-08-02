@@ -1537,9 +1537,6 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
 {
   char_u *p = NULL;
   char_u *expr = NULL;
-  pos_T save_cursor;
-  int save_msg_col;
-  int save_msg_row;
 
   // Remove escaping of K_SPECIAL, because "str" is in a format to be used as
   // typeahead.
@@ -1553,9 +1550,9 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
   textlock++;
   ex_normal_lock++;
   set_vim_var_char(c);    // set v:char to the typed character
-  save_cursor = curwin->w_cursor;
-  save_msg_col = msg_col;
-  save_msg_row = msg_row;
+  const pos_T save_cursor = curwin->w_cursor;
+  const int save_msg_col = msg_col;
+  const int save_msg_row = msg_row;
   if (mp->m_luaref != LUA_NOREF) {
     Error err = ERROR_INIT;
     Array args = ARRAY_DICT_INIT;

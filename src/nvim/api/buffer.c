@@ -932,7 +932,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
 /// @param  buffer     Buffer handle, or 0 for current buffer
 /// @param[out]  err   Error details, if any
-/// @returns Array of maparg()-like dictionaries describing mappings.
+/// @returns Array of |maparg()|-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
 ArrayOf(Dictionary) nvim_buf_get_keymap(uint64_t channel_id, Buffer buffer, String mode, Error *err)
   FUNC_API_SINCE(3)
