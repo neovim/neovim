@@ -1223,10 +1223,10 @@ bool edit(int cmdchar, bool startln, long count)
       // the value of `restart_edit` before `ex_normal` returns.
       restart_edit = 'i';
       force_restart_edit = true;
+      return false;
     } else {
-      terminal_enter();
+      return terminal_enter();
     }
-    return false;
   }
 
   // Don't allow inserting in the sandbox.

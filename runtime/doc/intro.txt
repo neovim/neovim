@@ -458,7 +458,7 @@ Ex mode			Like Command-line mode, but after entering a command
 Terminal mode		In Terminal mode all input (except CTRL-\) is sent to
 			the process running in the current |terminal| buffer.
 			If CTRL-\ is pressed, the next key is sent unless it
-			is CTRL-N (|CTRL-\_CTRL-N|).
+			is CTRL-N (|CTRL-\_CTRL-N|) or CTRL-O (|t_CTRL-\_CTRL-O|).
 			If the 'showmode' option is on "-- TERMINAL --" is shown
 			at the bottom of the window.
 
@@ -550,7 +550,8 @@ Ex		 :vi	  --	  --	 --	    --	      --
 *6 Go from Select mode to Insert mode by typing a printable character.  The
    selection is deleted and the character is inserted.
 
-	*CTRL-\_CTRL-N* *i_CTRL-\_CTRL-N* *c_CTRL-\_CTRL-N* *v_CTRL-\_CTRL-N*
+			*CTRL-\_CTRL-N* *i_CTRL-\_CTRL-N* *c_CTRL-\_CTRL-N*
+				      *v_CTRL-\_CTRL-N* *t_CTRL-\_CTRL-N*
 Additionally the command CTRL-\ CTRL-N or <C-\><C-N> can be used to go to
 Normal mode from any other mode.  This can be used to make sure Vim is in
 Normal mode, without causing a beep like <Esc> would.  However, this does not

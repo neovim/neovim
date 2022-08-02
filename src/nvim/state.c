@@ -211,12 +211,15 @@ void get_mode(char *buf)
       buf[i++] = 'o';
       // to be able to detect force-linewise/blockwise/charwise operations
       buf[i++] = (char)motion_force;
+    } else if (curbuf->terminal) {
+      buf[i++] = 't';
+      if (restart_edit == 'I') {
+        buf[i++] = 'T';
+      }
     } else if (restart_edit == 'I' || restart_edit == 'R'
                || restart_edit == 'V') {
       buf[i++] = 'i';
       buf[i++] = (char)restart_edit;
-    } else if (curbuf->terminal) {
-      buf[i++] = 't';
     }
   }
 
