@@ -4293,7 +4293,7 @@ static int leave_tabpage(buf_T *new_curbuf, bool trigger_leave_autocmds)
   tp->tp_prevwin = prevwin;
   tp->tp_firstwin = firstwin;
   tp->tp_lastwin = lastwin;
-  tp->tp_old_Rows = Rows;
+  tp->tp_old_Rows_avail = ROWS_AVAIL;
   tp->tp_old_Columns = Columns;
   firstwin = NULL;
   lastwin = NULL;
@@ -4333,10 +4333,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   const int row = win_comp_pos();  // recompute w_winrow for all windows
   diff_need_scrollbind = true;
 
-  // The tabpage line may have appeared or disappeared, may need to resize
-  // the frames for that.  When the Vim window was resized need to update
-  // frame sizes too.  Use the stored value of p_ch, so that it can be
-  // different for each tab page.
+  // Use the stored value of p_ch, so that it can be different for each tab page.
   if (p_ch != curtab->tp_ch_used) {
     clear_cmdline = true;
   }
@@ -4349,7 +4346,9 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
     clear_cmdline = true;
   }
 
-  if (curtab->tp_old_Rows != Rows || (old_off != firstwin->w_winrow)) {
+  // The tabpage line may have appeared or disappeared, may need to resize the frames for that.
+  // When the Vim window was resized or ROWS_AVAIL changed need to update frame sizes too.
+  if (curtab->tp_old_Rows_avail != ROWS_AVAIL || (old_off != firstwin->w_winrow)) {
     win_new_screen_rows();
   }
   if (curtab->tp_old_Columns != Columns && starting == 0) {
