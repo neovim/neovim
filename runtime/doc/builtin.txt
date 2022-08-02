@@ -397,6 +397,7 @@ setbufline({expr}, {lnum}, {text})
 setbufvar({buf}, {varname}, {val})	set {varname} in buffer {buf} to {val}
 setcharpos({expr}, {list})	Number	set the {expr} position to {list}
 setcharsearch({dict})		Dict	set character search from {dict}
+setcmdline({str})		Number	set command-line
 setcmdpos({pos})		Number	set cursor position in command-line
 setcursorcharpos({list})	Number	move cursor to position in {list}
 setenv({name}, {val})		none	set environment variable
@@ -2850,7 +2851,8 @@ getcmdcompltype()					*getcmdcompltype()*
 		Only works when the command line is being edited, thus
 		requires use of |c_CTRL-\_e| or |c_CTRL-R_=|.
 		See |:command-completion| for the return string.
-		Also see |getcmdtype()|, |setcmdpos()| and |getcmdline()|.
+		Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()| and
+		|setcmdline()|.
 		Returns an empty string when completion is not defined.
 
 getcmdline()						*getcmdline()*
@@ -2859,7 +2861,8 @@ getcmdline()						*getcmdline()*
 		|c_CTRL-R_=|.
 		Example: >
 			:cmap <F7> <C-\>eescape(getcmdline(), ' \')<CR>
-<		Also see |getcmdtype()|, |getcmdpos()| and |setcmdpos()|.
+<		Also see |getcmdtype()|, |getcmdpos()|, |setcmdpos()| and
+		|setcmdline()|.
 		Returns an empty string when entering a password or using
 		|inputsecret()|.
 
@@ -2869,7 +2872,8 @@ getcmdpos()						*getcmdpos()*
 		Only works when editing the command line, thus requires use of
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 		Returns 0 otherwise.
-		Also see |getcmdtype()|, |setcmdpos()| and |getcmdline()|.
+		Also see |getcmdtype()|, |setcmdpos()|, |getcmdline()| and
+		|setcmdline()|.
 
 getcmdscreenpos()					*getcmdscreenpos()*
 		Return the screen position of the cursor in the command line
@@ -2893,7 +2897,8 @@ getcmdtype()						*getcmdtype()*
 		Only works when editing the command line, thus requires use of
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 		Returns an empty string otherwise.
-		Also see |getcmdpos()|, |setcmdpos()| and |getcmdline()|.
+		Also see |getcmdpos()|, |setcmdpos()|, |getcmdline()| and
+		|setcmdline()|.
 
 getcmdwintype()						*getcmdwintype()*
 		Return the current |command-line-window| type. Possible return
@@ -6773,6 +6778,14 @@ setcharsearch({dict})					*setcharsearch()*
 
 		Can also be used as a |method|: >
 			SavedSearch()->setcharsearch()
+
+setcmdline({str})					*setcmdline()*
+		Set the command line to {str}.
+		Returns FALSE when successful, TRUE when not editing the
+		command line.
+
+		Can also be used as a |method|: >
+			SetCmdline()->setcmdline()
 
 setcmdpos({pos})					*setcmdpos()*
 		Set the cursor position in the command line to byte position

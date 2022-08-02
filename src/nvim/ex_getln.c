@@ -6250,6 +6250,58 @@ int get_cmdline_screen_pos(void)
   return p->cmdspos;
 }
 
+// Set the command line str to "str".
+// Returns 1 when failed, 0 when OK.
+int set_cmdline_str(const char *str)
+{
+  struct cmdline_info *p = get_ccline_ptr();
+
+  if (p == NULL) {
+    return 1;
+  }
+
+  int len = (int)STRLEN(str);
+  realloc_cmdbuff(len + 1);
+  p->cmdlen = len;
+  STRCPY(p->cmdbuff, str);
+
+  p->cmdpos = p->cmdlen;
+  new_cmdpos = p->cmdpos;
+
+  redrawcmd();
+
+  // Trigger CmdlineChanged autocommands.
+  if (has_event(EVENT_CMDLINECHANGED)) {
+    TryState tstate;
+    Error err = ERROR_INIT;
+    save_v_event_T save_v_event;
+    dict_T *dict = get_v_event(&save_v_event);
+
+    char firstcbuf[2];
+    firstcbuf[0] = (char)ccline.cmdfirstc;
+    firstcbuf[1] = 0;
+
+    // set v:event to a dictionary with information about the commandline
+    tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
+    tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
+    tv_dict_set_keys_readonly(dict);
+    try_enter(&tstate);
+
+    apply_autocmds(EVENT_CMDLINECHANGED, firstcbuf, firstcbuf, false, curbuf);
+    restore_v_event(dict, &save_v_event);
+
+    bool tl_ret = try_leave(&tstate, &err);
+    if (!tl_ret && ERROR_SET(&err)) {
+      msg_putchar('\n');
+      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      api_clear_error(&err);
+      redrawcmd();
+    }
+  }
+
+  return 0;
+}
+
 /*
  * Set the command line byte position to "pos".  Zero is the first position.
  * Only works when the command line is being edited.
