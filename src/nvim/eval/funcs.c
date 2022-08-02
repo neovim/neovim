@@ -8141,7 +8141,7 @@ static int tv_nr_compare(const void *a1, const void *a2)
   return li1->li_tv.vval.v_number - li2->li_tv.vval.v_number;
 }
 
-// "setcellwidths()" function
+/// "setcellwidths()" function
 static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   list_T *l;
