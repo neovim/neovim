@@ -778,8 +778,15 @@ add_glob_targets(
   FLAGS -c "${PROJECT_SOURCE_DIR}/src/uncrustify.cfg" -q --check
   FILES ${LINT_NVIM_SOURCES}
   )
-
 add_dependencies(lintuncrustify uncrustify-version)
+
+add_custom_target(formatc
+  COMMAND ${CMAKE_COMMAND}
+    -D FORMAT_PRG=${UNCRUSTIFY_PRG}
+    -D LANG=c
+    -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+add_dependencies(formatc uncrustify-version)
 
 add_custom_target(
   lintcfull

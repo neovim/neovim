@@ -675,6 +675,19 @@ add_dependencies(lintcommit nvim)
 add_custom_target(lint)
 add_dependencies(lint check-single-includes lintc lintlua lintpy lintsh lintcommit lintuncrustify)
 
+#
+# Format
+#
+add_custom_target(formatlua
+  COMMAND ${CMAKE_COMMAND}
+    -D FORMAT_PRG=${STYLUA_PRG}
+    -D LANG=lua
+    -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_custom_target(format)
+add_dependencies(format formatc formatlua)
+
 install_helper(
   FILES ${CMAKE_SOURCE_DIR}/src/man/nvim.1
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
@@ -797,4 +810,3 @@ add_custom_target(uninstall
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   add_subdirectory(cmake.packaging)
 endif()
-
