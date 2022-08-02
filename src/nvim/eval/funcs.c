@@ -8150,6 +8150,8 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int i;
   listitem_T **ptrs;
   cw_interval_T   *table;
+  cw_interval_T   *cw_table_save;
+  size_t          cw_table_size_save;
 
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
     semsg(_(e_listreq));
@@ -8240,7 +8242,35 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   xfree(ptrs);
-  set_cw_table(table, l->lv_len);
+
+  cw_table_save = cw_table;
+  cw_table_size_save = cw_table_size;
+  cw_table = table;
+  cw_table_size = l->lv_len;
+
+  // Check that the new value does not conflict with 'fillchars' or 'listchars'.
+  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
+    semsg(_("E835: Conflicts with value of 'fillchars'"));
+    cw_table = cw_table_save;
+    cw_table_size = cw_table_size_save;
+    xfree(table);
+    return;
+  } else {
+    tabpage_T   *tp;
+    win_T       *wp;
+
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (set_chars_option(wp, &wp->w_p_lcs, false) != NULL) {
+        semsg(_("E834: Conflicts with value of 'listchars'"));
+        cw_table = cw_table_save;
+        cw_table_size = cw_table_size_save;
+        xfree(table);
+        return;
+      }
+    }
+  }
+
+  xfree(cw_table_save);
 }
 
 /// "setcharpos()" function

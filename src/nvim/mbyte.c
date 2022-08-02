@@ -461,9 +461,6 @@ static bool intable(const struct interval *table, size_t n_items, int c)
   return false;
 }
 
-cw_interval_T *cw_table = NULL;
-size_t cw_table_size = 0;
-
 /// Return the value of the cellwidth table for the character `c`.
 ///
 /// @param c The source character.
