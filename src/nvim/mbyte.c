@@ -527,27 +527,12 @@ int utf_char2cells(int c)
     if (n != 0) {
       return n;
     }
-#ifdef USE_WCHAR_FUNCTIONS
-    //
-    // Assume the library function wcwidth() works better than our own
-    // stuff.  It should return 1 for ambiguous width chars!
-    //
-    n = wcwidth(c);
-
-    if (n < 0) {
-      return 6;                 // unprintable, displays <xxxx>
-    }
-    if (n > 1) {
-      return n;
-    }
-#else
     if (!utf_printable(c)) {
       return 6;                 // unprintable, displays <xxxx>
     }
     if (intable(doublewidth, ARRAY_SIZE(doublewidth), c)) {
       return 2;
     }
-#endif
     if (p_emoji && intable(emoji_width, ARRAY_SIZE(emoji_width), c)) {
       return 2;
     }
