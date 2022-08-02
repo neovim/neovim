@@ -2790,7 +2790,7 @@ describe('vim.keymap', function()
     eq(1, exec_lua[[return GlobalCount]])
   end)
 
-  it('can make an expr mapping', function()
+  it('"replace_keycodes" defaults to true for expr mapping with Lua callback', function()
     exec_lua [[
       vim.keymap.set('n', 'aa', function() return '<Insert>π<C-V><M-π>foo<lt><Esc>' end, {expr = true})
     ]]
@@ -2798,6 +2798,31 @@ describe('vim.keymap', function()
     feed('aa')
 
     eq({'π<M-π>foo<'}, meths.buf_get_lines(0, 0, -1, false))
+  end)
+
+  it('"replace_keycodes" defaults to false for expr mapping with string RHS', function()
+    exec [[
+      func Foo()
+        return "\<Insert>π\<C-V>\<M-π>foo\<lt>\<Esc>"
+      endfunc
+    ]]
+    exec_lua [[
+      vim.keymap.set('n', 'aa', 'Foo()', {expr = true})
+    ]]
+
+    feed('aa')
+
+    eq({'π<M-π>foo<'}, meths.buf_get_lines(0, 0, -1, false))
+  end)
+
+  it('can make Lua expr mappings without replacing keycodes', function()
+    exec_lua [[
+      vim.keymap.set('i', 'aa', '', {callback = function() return '<space>' end, expr = true, replace_keycodes = false })
+    ]]
+
+    feed('iaa<esc>')
+
+    eq({'<space>'}, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('can overwrite a mapping', function()

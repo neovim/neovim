@@ -43,7 +43,8 @@ local keymap = {}
 ---                  - remap: (boolean) Make the mapping recursive. This is the
 ---                  inverse of the "noremap" option from |nvim_set_keymap()|.
 ---                  Default `false`.
----                  - replace_keycodes: (boolean) defaults to true.
+---                  - replace_keycodes: (boolean) defaults to true if "expr" is true and "rhs" is
+---                    a Lua function.
 ---@see |nvim_set_keymap()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate({
@@ -57,7 +58,7 @@ function keymap.set(mode, lhs, rhs, opts)
   local is_rhs_luaref = type(rhs) == 'function'
   mode = type(mode) == 'string' and { mode } or mode
 
-  if opts.expr and opts.replace_keycodes ~= false then
+  if is_rhs_luaref and opts.expr and opts.replace_keycodes ~= false then
     opts.replace_keycodes = true
   end
 
