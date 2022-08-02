@@ -8152,7 +8152,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   cw_interval_T   *table;
 
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
-    EMSG(_(e_listreq));
+    semsg(_(e_listreq));
     return;
   }
   l = argvars[0].vval.v_list;
@@ -8174,7 +8174,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     varnumber_T n1;
 
     if (li->li_tv.v_type != VAR_LIST || li->li_tv.vval.v_list == NULL) {
-      EMSGN(_("E1109: List item %lld is not a List"), item);
+      semsg(_("E1109: List item %lld is not a List"), item);
       xfree(ptrs);
       return;
     }
@@ -8186,23 +8186,23 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (i == 0) {
         n1 = lili->li_tv.vval.v_number;
         if (n1 < 0x100) {
-          EMSG(_("E1114: Only values of 0x100 and higher supported"));
+          semsg(_("E1114: Only values of 0x100 and higher supported"));
           xfree(ptrs);
           return;
         }
       } else if (i == 1 && lili->li_tv.vval.v_number < n1) {
-        EMSGN(_("E1111: List item %lld range invalid"), item);
+        semsg(_("E1111: List item %lld range invalid"), item);
         xfree(ptrs);
         return;
       } else if (i == 2 && (lili->li_tv.vval.v_number < 1
                             || lili->li_tv.vval.v_number > 2)) {
-        EMSGN(_("E1112: List item %lld cell width invalid"), item);
+        semsg(_("E1112: List item %lld cell width invalid"), item);
         xfree(ptrs);
         return;
       }
     }
     if (i != 3) {
-      EMSGN(_("E1110: List item %lld does not contain 3 numbers"), item);
+      semsg(_("E1110: List item %lld does not contain 3 numbers"), item);
       xfree(ptrs);
       return;
     }
@@ -8226,7 +8226,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     n1 = lili->li_tv.vval.v_number;
     if (item > 0 && n1 <= table[item - 1].last) {
-      EMSGN(_("E1113: Overlapping ranges for 0x%llx"), (long)n1);
+      semsg(_("E1113: Overlapping ranges for 0x%llx"), (long)n1);
       xfree(ptrs);
       xfree(table);
       return;
