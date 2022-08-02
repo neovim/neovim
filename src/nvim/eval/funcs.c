@@ -7619,6 +7619,17 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   }
 }
 
+/// "setcmdline()" function
+static void f_setcmdline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_STRING) {
+    emsg(_(e_invarg));
+    return;
+  }
+
+  rettv->vval.v_number = set_cmdline_str(tv_get_string_chk(&argvars[0]));
+}
+
 /// "setcmdpos()" function
 static void f_setcmdpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

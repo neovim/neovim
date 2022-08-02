@@ -2185,4 +2185,19 @@ func Test_wildmenu_pum_disable_while_shown()
   set wildoptions& wildmenu&
 endfunc
 
+func Test_setcmdline()
+  func SetText(text)
+    call assert_equal(0, setcmdline(a:text))
+    call assert_equal(a:text, getcmdline())
+    call assert_equal(len(a:text) + 1, getcmdpos())
+    return ''
+  endfunc
+
+  call feedkeys(":\<C-R>=SetText('set rtp?')\<CR>\<CR>", 'xt')
+  call assert_equal('set rtp?', @:)
+
+  " setcmdline() returns 1 when not editing the command line.
+  call assert_equal(1, 'foo'->setcmdline())
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
