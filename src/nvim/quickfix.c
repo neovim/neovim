@@ -3099,9 +3099,9 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
 // ":llist": list all locations
 void qf_list(exarg_T *eap)
 {
-  qf_info_T *qi = qf_cmd_get_stack(eap, true);
   char *arg = eap->arg;
-  int all = eap->forceit;     // if not :cl!, only show
+  int all = eap->forceit;     // if not :cl!, only show recognised errors
+  qf_info_T *qi = qf_cmd_get_stack(eap, true);
 
   if (qi == NULL) {
     return;
