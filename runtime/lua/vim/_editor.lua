@@ -581,7 +581,6 @@ function vim._on_key(char)
 end
 
 --- Generate a list of possible completions for the string.
---- String starts with ^ and then has the pattern.
 ---
 ---     1. Can we get it to just return things in the global namespace with that name prefix
 ---     2. Can we get it to return things from global namespace even with `print(` in front.

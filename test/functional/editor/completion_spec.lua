@@ -930,11 +930,63 @@ describe('completion', function()
       ]], unchanged = true }
     end)
 
+    it('prefix is not included in completion for cmdline mode', function()
+      feed(':lua math.a<Tab>')
+      screen:expect([[
+                                                                    |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {10:abs}{9:  acos  asin  atan  atan2                                }|
+        :lua math.abs^                                               |
+      ]])
+      feed('<Tab>')
+      screen:expect([[
+                                                                    |
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {9:abs  }{10:acos}{9:  asin  atan  atan2                                }|
+        :lua math.acos^                                              |
+      ]])
+    end)
+
+    it('prefix is not included in completion for i_CTRL-X_CTRL-V #19623', function()
+      feed('ilua math.a<C-X><C-V>')
+      screen:expect([[
+        lua math.abs^                                                |
+        {0:~       }{2: abs            }{0:                                    }|
+        {0:~       }{1: acos           }{0:                                    }|
+        {0:~       }{1: asin           }{0:                                    }|
+        {0:~       }{1: atan           }{0:                                    }|
+        {0:~       }{1: atan2          }{0:                                    }|
+        {0:~                                                           }|
+        {3:-- Command-line completion (^V^N^P) }{4:match 1 of 5}            |
+      ]])
+      feed('<C-V>')
+      screen:expect([[
+        lua math.acos^                                               |
+        {0:~       }{1: abs            }{0:                                    }|
+        {0:~       }{2: acos           }{0:                                    }|
+        {0:~       }{1: asin           }{0:                                    }|
+        {0:~       }{1: atan           }{0:                                    }|
+        {0:~       }{1: atan2          }{0:                                    }|
+        {0:~                                                           }|
+        {3:-- Command-line completion (^V^N^P) }{4:match 2 of 5}            |
+      ]])
+    end)
+
     it('provides completion from `getcompletion()`', function()
       eq({'vim'}, funcs.getcompletion('vi', 'lua'))
       eq({'api'}, funcs.getcompletion('vim.ap', 'lua'))
       eq({'tbl_filter'}, funcs.getcompletion('vim.tbl_fil', 'lua'))
       eq({'vim'}, funcs.getcompletion('print(vi', 'lua'))
+      eq({'abs', 'acos', 'asin', 'atan', 'atan2'}, funcs.getcompletion('math.a', 'lua'))
+      eq({'abs', 'acos', 'asin', 'atan', 'atan2'}, funcs.getcompletion('lua math.a', 'cmdline'))
     end)
   end)
 

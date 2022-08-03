@@ -5,7 +5,7 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 
 local get_completions = function(input, env)
-  return exec_lua("return {vim._expand_pat(...)}", '^' .. input, env)
+  return exec_lua("return {vim._expand_pat(...)}", input, env)
 end
 
 local get_compl_parts = function(parts)

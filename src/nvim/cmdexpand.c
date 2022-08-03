@@ -196,11 +196,6 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
                    use_options, type);
     xfree(p1);
 
-    // xp->xp_pattern might have been modified by ExpandOne (for example,
-    // in lua completion), so recompute the pattern index and length
-    i = (int)((char_u *)xp->xp_pattern - ccline->cmdbuff);
-    xp->xp_pattern_len = (size_t)ccline->cmdpos - (size_t)i;
-
     // Longest match: make sure it is not shorter, happens with :help.
     if (p2 != NULL && type == WILD_LONGEST) {
       for (j = 0; (size_t)j < xp->xp_pattern_len; j++) {
@@ -789,14 +784,14 @@ char_u *addstar(char_u *fname, size_t len, int context)
     // For help tags the translation is done in find_help_tags().
     // For a tag pattern starting with "/" no translation is needed.
     if (context == EXPAND_HELP
-        || context == EXPAND_CHECKHEALTH
         || context == EXPAND_COLORS
         || context == EXPAND_COMPILER
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
         || context == EXPAND_PACKADD
-        || ((context == EXPAND_TAGS_LISTFILES || context == EXPAND_TAGS)
-            && fname[0] == '/')) {
+        || ((context == EXPAND_TAGS_LISTFILES || context == EXPAND_TAGS) && fname[0] == '/')
+        || context == EXPAND_CHECKHEALTH
+        || context == EXPAND_LUA) {
       retval = vim_strnsave(fname, len);
     } else {
       new_len = len + 2;                // +2 for '^' at start, NUL at end
@@ -1748,7 +1743,7 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
     break;
 
   case CMD_lua:
-    xp->xp_context = EXPAND_LUA;
+    set_context_in_lua_cmd(xp, arg);
     break;
 
   default:
@@ -2059,8 +2054,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
   }
 
   if (xp->xp_context == EXPAND_LUA) {
-    ILOG("PAT %s", pat);
-    return nlua_expand_pat(xp, pat, num_file, file);
+    return nlua_expand_pat(num_file, file);
   }
 
   regmatch.regprog = vim_regcomp((char *)pat, p_magic ? RE_MAGIC : 0);
@@ -2806,6 +2800,11 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (xpc.xp_context == EXPAND_SIGN) {
     set_context_in_sign_cmd(&xpc, (char_u *)xpc.xp_pattern);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  }
+
+  if (xpc.xp_context == EXPAND_LUA) {
+    set_context_in_lua_cmd(&xpc, (const char *)xpc.xp_pattern);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
