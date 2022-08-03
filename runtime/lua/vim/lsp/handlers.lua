@@ -348,19 +348,19 @@ local function location_handler(_, result, ctx, config)
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
 
   if vim.tbl_islist(result) then
-    util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
+    local title = 'LSP locations'
+    local items = util.locations_to_items(result, client.offset_encoding)
 
-    if #result > 1 then
-      local title = 'LSP locations'
-      local items = util.locations_to_items(result, client.offset_encoding)
-
-      if config.on_list then
-        assert(type(config.on_list) == 'function', 'on_list is not a function')
-        config.on_list({ title = title, items = items })
-      else
-        vim.fn.setqflist({}, ' ', { title = title, items = items })
-        api.nvim_command('botright copen')
+    if config.on_list then
+      assert(type(config.on_list) == 'function', 'on_list is not a function')
+      config.on_list({ title = title, items = items })
+    else
+      if #result == 1 then
+        util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
+        return
       end
+      vim.fn.setqflist({}, ' ', { title = title, items = items })
+      api.nvim_command('botright copen')
     end
   else
     util.jump_to_location(result, client.offset_encoding, config.reuse_win)
