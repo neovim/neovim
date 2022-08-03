@@ -7627,7 +7627,18 @@ static void f_setcmdline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  rettv->vval.v_number = set_cmdline_str(tv_get_string_chk(&argvars[0]));
+  int pos = -1;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    bool error = false;
+
+    pos = (int)tv_get_number_chk(&argvars[1], &error) - 1;
+    if (error || pos < 0) {
+      rettv->vval.v_number = 1;
+      return;
+    }
+  }
+
+  rettv->vval.v_number = set_cmdline_str(tv_get_string_chk(&argvars[0]), pos);
 }
 
 /// "setcmdpos()" function
