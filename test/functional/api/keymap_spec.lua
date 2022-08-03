@@ -822,7 +822,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       vim.api.nvim_set_keymap ('n', 'asdf', '', {callback = function() print('jkl;') end })
     ]]
     assert.truthy(string.match(exec_lua[[return vim.api.nvim_exec(':nmap asdf', true)]],
-                  "^\nn  asdf          <Lua function %d+>"))
+                  "^\nn  asdf          <Lua %d+>"))
   end)
 
   it ('mapcheck() returns lua mapping correctly', function()
@@ -830,7 +830,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       vim.api.nvim_set_keymap ('n', 'asdf', '', {callback = function() print('jkl;') end })
     ]]
     assert.truthy(string.match(funcs.mapcheck('asdf', 'n'),
-                  "^<Lua function %d+>"))
+                  "^<Lua %d+>"))
   end)
 
   it ('maparg() returns lua mapping correctly', function()
@@ -838,7 +838,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       vim.api.nvim_set_keymap ('n', 'asdf', '', {callback = function() print('jkl;') end })
     ]]
     assert.truthy(string.match(funcs.maparg('asdf', 'n'),
-                  "^<Lua function %d+>"))
+                  "^<Lua %d+>"))
     local mapargs = funcs.maparg('asdf', 'n', false, true)
     assert(type(mapargs.callback) == 'number', 'callback is not luaref number')
     mapargs.callback = nil

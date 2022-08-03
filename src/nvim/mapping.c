@@ -196,9 +196,9 @@ static void showmap(mapblock_T *mp, bool local)
   // Use false below if we only want things like <Up> to show up as such on
   // the rhs, and not M-x etc, true gets both -- webb
   if (mp->m_luaref != LUA_NOREF) {
-    char msg[100];
-    snprintf(msg, sizeof(msg), "<Lua function %d>", mp->m_luaref);
-    msg_puts_attr(msg, HL_ATTR(HLF_8));
+    char *str = nlua_funcref_str(mp->m_luaref);
+    msg_puts_attr(str, HL_ATTR(HLF_8));
+    xfree(str);
   } else if (mp->m_str[0] == NUL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
@@ -2110,10 +2110,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
         rettv->vval.v_string = str2special_save((char *)rhs, false, false);
       }
     } else if (rhs_lua != LUA_NOREF) {
-      size_t msglen = 100;
-      char *msg = (char *)xmalloc(msglen);
-      snprintf(msg, msglen, "<Lua function %d>", mp->m_luaref);
-      rettv->vval.v_string = msg;
+      rettv->vval.v_string = nlua_funcref_str(mp->m_luaref);
     }
   } else {
     tv_dict_alloc_ret(rettv);

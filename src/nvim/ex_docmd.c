@@ -5440,7 +5440,7 @@ char *uc_validate_name(char *name)
 /// This function takes ownership of compl_arg, compl_luaref, and luaref.
 ///
 /// @return  OK if the command is created, FAIL otherwise.
-int uc_add_command(char *name, size_t name_len, char *rep, uint32_t argt, long def, int flags,
+int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, long def, int flags,
                    int compl, char *compl_arg, LuaRef compl_luaref, LuaRef preview_luaref,
                    cmd_addr_T addr_type, LuaRef luaref, bool force)
   FUNC_ATTR_NONNULL_ARG(1, 3)
@@ -5761,6 +5761,16 @@ static void uc_list(char *name, size_t name_len)
 
       IObuff[len] = '\0';
       msg_outtrans((char *)IObuff);
+
+      if (cmd->uc_luaref != LUA_NOREF) {
+        char *fn = nlua_funcref_str(cmd->uc_luaref);
+        msg_puts_attr(fn, HL_ATTR(HLF_8));
+        xfree(fn);
+        // put the description on a new line
+        if (*cmd->uc_rep != NUL) {
+          msg_puts("\n                                               ");
+        }
+      }
 
       msg_outtrans_special(cmd->uc_rep, false,
                            name_len == 0 ? Columns - 47 : 0);

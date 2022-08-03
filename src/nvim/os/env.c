@@ -1143,7 +1143,7 @@ size_t home_replace(const buf_T *const buf, const char *src, char *const dst, si
 /// Like home_replace, store the replaced string in allocated memory.
 /// @param buf When not NULL, check for help files
 /// @param src Input file name
-char *home_replace_save(buf_T *buf, char *src)
+char *home_replace_save(buf_T *buf, const char *src)
   FUNC_ATTR_NONNULL_RET
 {
   size_t len = 3;             // space for "~/" and trailing NUL

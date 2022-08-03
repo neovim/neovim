@@ -2076,3 +2076,34 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 
   return retv;
 }
+
+/// String representation of a Lua function reference
+///
+/// @return Allocated string
+char *nlua_funcref_str(LuaRef ref)
+{
+  lua_State *const lstate = global_lstate;
+  StringBuilder str = KV_INITIAL_VALUE;
+  kv_resize(str, 16);
+
+  if (!lua_checkstack(lstate, 1)) {
+    goto plain;
+  }
+  nlua_pushref(lstate, ref);
+  if (!lua_isfunction(lstate, -1)) {
+    lua_pop(lstate, 1);
+    goto plain;
+  }
+
+  lua_Debug ar;
+  if (lua_getinfo(lstate, ">S", &ar) && *ar.source == '@' && ar.linedefined >= 0) {
+    char *src = home_replace_save(NULL, ar.source + 1);
+    kv_printf(str, "<Lua %d: %s:%d>", ref, src, ar.linedefined);
+    xfree(src);
+    return str.items;
+  }
+
+plain:
+  kv_printf(str, "<Lua %d>", ref);
+  return str.items;
+}
