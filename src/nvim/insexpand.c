@@ -825,7 +825,6 @@ static void ins_compl_longest_match(compl_T *match)
 /// Add an array of matches to the list of matches.
 /// Frees matches[].
 static void ins_compl_add_matches(int num_matches, char **matches, int icase)
-  FUNC_ATTR_NONNULL_ALL
 {
   int add_r = OK;
   Direction dir = compl_direction;
