@@ -7,10 +7,8 @@
 //
 // Any special key code sequences are replaced by these codes.
 
-//
-// For MS-DOS some keys produce codes larger than 0xff. They are split into two
-// chars, the first one is K_NUL.
-//
+/// For MS-DOS some keys produce codes larger than 0xff. They are split into two
+/// chars, the first one is K_NUL.
 #define K_NUL                   (0xce)  // for MS-DOS: special key follows
 
 /// K_SPECIAL is the first byte of a special key code and is always followed by
@@ -59,13 +57,13 @@
 #define KS_SELECT               245
 #define K_SELECT_STRING         (char_u *)"\200\365X"
 
-// Used a termcap entry that produces a normal character.
+/// Used a termcap entry that produces a normal character.
 #define KS_KEY                  242
 
-// Used for click in a tab pages label.
+/// Used for click in a tab pages label.
 #define KS_TABLINE              240
 
-// Used for menu in a tab pages line.
+/// Used for menu in a tab pages line.
 #define KS_TABMENU              239
 
 /// Filler used after KS_SPECIAL and others
@@ -89,18 +87,19 @@
 #define TO_SPECIAL(a, b)    ((a) == KS_SPECIAL ? K_SPECIAL : (a) == \
                              KS_ZERO ? K_ZERO : TERMCAP2KEY(a, b))
 
-// Codes for keys that do not have a termcap name.
-// The numbers are fixed to make sure that recorded key sequences remain valid.
-// Add new entries at the end, not halfway.
-//
-// K_SPECIAL KS_EXTRA KE_xxx
-//
-// Entries must be in the range 0x02-0x7f (see comment at K_SPECIAL).
+/// Codes for keys that do not have a termcap name.
+/// The numbers are fixed to make sure that recorded key sequences remain valid.
+/// Add new entries at the end, not halfway.
+///
+/// K_SPECIAL KS_EXTRA KE_xxx
+///
+/// Entries must be in the range 0x02-0x7f (see comment at K_SPECIAL).
 enum key_extra {
   KE_S_UP = 4,              // shift-up
-  KE_S_DOWN = 5,             // shift-down
+  KE_S_DOWN = 5,            // shift-down
 
-  KE_S_F1 = 6,              // shifted function keys
+  // shifted function keys
+  KE_S_F1 = 6,
   KE_S_F2 = 7,
   KE_S_F3 = 8,
   KE_S_F4 = 9,
@@ -141,7 +140,7 @@ enum key_extra {
   KE_S_F36 = 41,
   KE_S_F37 = 42,
 
-  KE_MOUSE = 43,             // mouse event start
+  KE_MOUSE = 43,            // mouse event start
 
   // Symbols for pseudo keys which are translated from the real key symbols
   // above.
@@ -153,14 +152,14 @@ enum key_extra {
   KE_MIDDLERELEASE = 49,    // Middle mouse button release
   KE_RIGHTMOUSE = 50,       // Right mouse button click
   KE_RIGHTDRAG = 51,        // Drag with right mouse button down
-  KE_RIGHTRELEASE = 52,      // Right mouse button release
+  KE_RIGHTRELEASE = 52,     // Right mouse button release
 
-  KE_IGNORE = 53,            // Ignored mouse drag/release
+  KE_IGNORE = 53,           // Ignored mouse drag/release
 
   KE_TAB = 54,              // unshifted TAB key
-  KE_S_TAB_OLD = 55,         // shifted TAB key (no longer used)
+  KE_S_TAB_OLD = 55,        // shifted TAB key (no longer used)
 
-  // , KE_SNIFF_UNUSED = 56   // obsolete
+  // KE_SNIFF_UNUSED = 56,  // obsolete
   KE_XF1 = 57,              // extra vt100 function keys for xterm
   KE_XF2 = 58,
   KE_XF3 = 59,
@@ -175,7 +174,7 @@ enum key_extra {
   KE_XRIGHT = 68,
 
   KE_LEFTMOUSE_NM = 69,     // non-mappable Left mouse button click
-  KE_LEFTRELEASE_NM = 70,    // non-mappable left mouse button release
+  KE_LEFTRELEASE_NM = 70,   // non-mappable left mouse button release
 
   KE_S_XF1 = 71,            // vt100 shifted function keys for xterm
   KE_S_XF2 = 72,
@@ -188,20 +187,20 @@ enum key_extra {
   KE_MOUSEDOWN = 75,        // scroll wheel pseudo-button Down
   KE_MOUSEUP = 76,          // scroll wheel pseudo-button Up
   KE_MOUSELEFT = 77,        // scroll wheel pseudo-button Left
-  KE_MOUSERIGHT = 78,        // scroll wheel pseudo-button Right
+  KE_MOUSERIGHT = 78,       // scroll wheel pseudo-button Right
 
   KE_KINS = 79,             // keypad Insert key
-  KE_KDEL = 80,              // keypad Delete key
+  KE_KDEL = 80,             // keypad Delete key
 
   // KE_CSI = 81,           // Nvim doesn't need escaping CSI
   KE_SNR = 82,              // <SNR>
   KE_PLUG = 83,             // <Plug>
-  KE_CMDWIN = 84,            // open command-line window from Command-line Mode
+  KE_CMDWIN = 84,           // open command-line window from Command-line Mode
 
   KE_C_LEFT = 85,           // control-left
   KE_C_RIGHT = 86,          // control-right
   KE_C_HOME = 87,           // control-home
-  KE_C_END = 88,             // control-end
+  KE_C_END = 88,            // control-end
 
   KE_X1MOUSE = 89,          // X1/X2 mouse-buttons
   KE_X1DRAG = 90,
@@ -210,16 +209,16 @@ enum key_extra {
   KE_X2DRAG = 93,
   KE_X2RELEASE = 94,
 
-  KE_DROP = 95,              // DnD data is available
-  // , KE_CURSORHOLD = 96     // CursorHold event
-  KE_NOP = 97,               // no-op: does nothing
-  // , KE_FOCUSGAINED = 98    // focus gained
-  // , KE_FOCUSLOST = 99      // focus lost
-  KE_MOUSEMOVE = 100,        // mouse moved with no button down
-  // , KE_CANCEL = 101        // return from vgetc
+  KE_DROP = 95,             // DnD data is available
+  // KE_CURSORHOLD = 96,    // CursorHold event
+  KE_NOP = 97,              // no-op: does nothing
+  // KE_FOCUSGAINED = 98,   // focus gained
+  // KE_FOCUSLOST = 99,     // focus lost
+  KE_MOUSEMOVE = 100,       // mouse moved with no button down
+  // KE_CANCEL = 101,       // return from vgetc()
   KE_EVENT = 102,           // event
-  KE_LUA = 103,  // lua special key
-  KE_COMMAND = 104,  // <Cmd> special key
+  KE_LUA = 103,             // Lua special key
+  KE_COMMAND = 104,         // <Cmd> special key
 };
 
 // the three byte codes are replaced with the following int when using vgetc()
@@ -259,7 +258,8 @@ enum key_extra {
 #define K_XLEFT         TERMCAP2KEY(KS_EXTRA, KE_XLEFT)
 #define K_XRIGHT        TERMCAP2KEY(KS_EXTRA, KE_XRIGHT)
 
-#define K_F1            TERMCAP2KEY('k', '1')   // function keys
+// function keys
+#define K_F1            TERMCAP2KEY('k', '1')
 #define K_F2            TERMCAP2KEY('k', '2')
 #define K_F3            TERMCAP2KEY('k', '3')
 #define K_F4            TERMCAP2KEY('k', '4')
@@ -463,13 +463,13 @@ enum key_extra {
 /// Current longest is <M-C-S-T-D-A-4-ScrollWheelRight> (length includes '<' and '>').
 #define MAX_KEY_NAME_LEN    32
 
-// Maximum length of a special key event as tokens.  This includes modifiers.
-// The longest event is something like <M-C-S-T-4-LeftDrag> which would be the
-// following string of tokens:
-//
-// <K_SPECIAL> <KS_MODIFIER> bitmask <K_SPECIAL> <KS_EXTRA> <KE_LEFTDRAG>.
-//
-// This is a total of 6 tokens, and is currently the longest one possible.
+/// Maximum length of a special key event as tokens.  This includes modifiers.
+/// The longest event is something like <M-C-S-T-4-LeftDrag> which would be the
+/// following string of tokens:
+///
+/// <K_SPECIAL> <KS_MODIFIER> bitmask <K_SPECIAL> <KS_EXTRA> <KE_LEFTDRAG>.
+///
+/// This is a total of 6 tokens, and is currently the longest one possible.
 #define MAX_KEY_CODE_LEN    6
 
 #define FLAG_CPO_BSLASH    0x01
@@ -477,7 +477,7 @@ enum key_extra {
                             ? 0 \
                             : FLAG_CPO_BSLASH)
 
-// Flags for replace_termcodes()
+/// Flags for replace_termcodes()
 enum {
   REPTERM_FROM_PART   = 1,
   REPTERM_DO_LT       = 2,
@@ -485,7 +485,7 @@ enum {
   REPTERM_NO_SIMPLIFY = 8,
 };
 
-// Flags for find_special_key()
+/// Flags for find_special_key()
 enum {
   FSK_KEYCODE    = 0x01,  ///< prefer key code, e.g. K_DEL in place of DEL
   FSK_KEEP_X_KEY = 0x02,  ///< don’t translate xHome to Home key

@@ -43,7 +43,7 @@ cursorentry_T shape_table[SHAPE_IDX_COUNT] =
 };
 
 /// Converts cursor_shapes into an Array of Dictionaries
-/// @param arena initialized arena where memory will be alocated
+/// @param arena initialized arena where memory will be allocated
 ///
 /// @return Array of the form {[ "cursor_shape": ... ], ...}
 Array mode_style_array(Arena *arena)

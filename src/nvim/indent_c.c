@@ -2002,7 +2002,7 @@ int get_c_indent(void)
   }
 
   // #defines and so on go at the left when included in 'cinkeys',
-  // exluding pragmas when customized in 'cinoptions'
+  // excluding pragmas when customized in 'cinoptions'
   if (*theline == '#' && (*linecopy == '#' || in_cinkeys('#', ' ', true))) {
     const char_u *const directive = (char_u *)skipwhite((char *)theline + 1);
     if (curbuf->b_ind_pragma == 0 || STRNCMP(directive, "pragma", 6) != 0) {

@@ -27,7 +27,7 @@ typedef struct {
   uint64_t channel_id;
 
 #define UI_BUF_SIZE 4096  ///< total buffer size for pending msgpack data.
-  /// guranteed size available for each new event (so packing of simple events
+  /// guaranteed size available for each new event (so packing of simple events
   /// and the header of grid_line will never fail)
 #define EVENT_BUF_SIZE 256
   char buf[UI_BUF_SIZE];  ///< buffer of packed but not yet sent msgpack data
@@ -43,7 +43,7 @@ typedef struct {
 
   // We start packing the two outermost msgpack arrays before knowing the total
   // number of elements. Thus track the location where array size will need
-  // to be written in the msgpack buffer, once the specifc array is finished.
+  // to be written in the msgpack buffer, once the specific array is finished.
   char *nevents_pos;
   char *ncalls_pos;
   uint32_t nevents;  ///< number of distinct events (top-level args to "redraw"

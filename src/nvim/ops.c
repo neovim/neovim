@@ -4889,7 +4889,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
   linenr_T amount = Prenum1;
 
   // do_addsub() might trigger re-evaluation of 'foldexpr' halfway, when the
-  // buffer is not completly updated yet. Postpone updating folds until before
+  // buffer is not completely updated yet. Postpone updating folds until before
   // the call to changed_lines().
   disable_fold_update++;
 

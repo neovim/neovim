@@ -704,7 +704,7 @@ regex:match_str({str})                                     *regex:match_str()*
         As any integer is truth-y, `regex:match()` can be directly used
         as a condition in an if-statement.
 
-regex:match_line({bufnr}, {line_idx}[, {start}, {end}])   *regex:match_line()*
+regex:match_line({bufnr}, {line_idx} [, {start}, {end}])  *regex:match_line()*
         Match line {line_idx} (zero-based) in buffer {bufnr}. If {start} and
         {end} are supplied, match only this byte index range. Otherwise see
         |regex:match_str()|. If {start} is used, then the returned byte
@@ -855,13 +855,13 @@ vim.empty_dict()                                            *vim.empty_dict()*
         Note: If numeric keys are present in the table, Nvim ignores the
         metatable marker and converts the dict to a list/array anyway.
 
-vim.rpcnotify({channel}, {method}[, {args}...])              *vim.rpcnotify()*
+vim.rpcnotify({channel}, {method} [, {args}...])             *vim.rpcnotify()*
         Sends {event} to {channel} via |RPC| and returns immediately. If
         {channel} is 0, the event is broadcast to all channels.
 
         This function also works in a fast callback |lua-loop-callbacks|.
 
-vim.rpcrequest({channel}, {method}[, {args}...])            *vim.rpcrequest()*
+vim.rpcrequest({channel}, {method} [, {args}...])           *vim.rpcrequest()*
         Sends a request to {channel} to invoke {method} via |RPC| and blocks
         until a response is received.
 
@@ -873,7 +873,7 @@ vim.stricmp({a}, {b})                                          *vim.stricmp()*
         are equal, {a} is greater than {b} or {a} is lesser than {b},
         respectively.
 
-vim.str_utfindex({str}[, {index}])                        *vim.str_utfindex()*
+vim.str_utfindex({str} [, {index}])                       *vim.str_utfindex()*
         Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
         supplied, the length of the string is used. All indices are zero-based.
         Returns two values: the UTF-32 and UTF-16 indices respectively.
@@ -883,7 +883,7 @@ vim.str_utfindex({str}[, {index}])                        *vim.str_utfindex()*
         point each. An {index} in the middle of a UTF-8 sequence is rounded
         upwards to the end of that sequence.
 
-vim.str_byteindex({str}, {index}[, {use_utf16}])         *vim.str_byteindex()*
+vim.str_byteindex({str}, {index} [, {use_utf16}])        *vim.str_byteindex()*
         Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
         supplied, it defaults to false (use UTF-32). Returns the byte index.
 
@@ -1315,7 +1315,7 @@ cmd({command})                                                     *vim.cmd()*
                    vim.cmd('write! myfile.txt')
                    vim.cmd { cmd = 'write', args = { "myfile.txt" }, bang = true }
                    vim.cmd.write { args = { "myfile.txt" }, bang = true }
-                   vim.cmd.write {"myfile.txt", bang = true })
+                   vim.cmd.write { "myfile.txt", bang = true }
 
                    -- Ex command :colorscheme blue
                    vim.cmd('colorscheme blue')
@@ -2229,7 +2229,8 @@ set({mode}, {lhs}, {rhs}, {opts})                           *vim.keymap.set()*
                             • remap: (boolean) Make the mapping recursive.
                               This is the inverse of the "noremap" option from
                               |nvim_set_keymap()|. Default `false`.
-                            • replace_keycodes: (boolean) defaults to true.
+                            • replace_keycodes: (boolean) defaults to true if
+                              "expr" is true.
 
                 See also: ~
                     |nvim_set_keymap()|

@@ -1649,7 +1649,7 @@ static void clear_submatch_list(staticList10_T *sl)
 /// vim_regexec_multi() match.
 ///
 /// If "flags" has REGSUB_COPY really copy into "dest[destlen]".
-/// Oterwise nothing is copied, only compue the length of the result.
+/// Otherwise nothing is copied, only compute the length of the result.
 ///
 /// If "flags" has REGSUB_MAGIC then behave like 'magic' is set.
 ///
