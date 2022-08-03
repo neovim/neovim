@@ -77,7 +77,7 @@ set(LINT_SUPPRESSES_ROOT ${PROJECT_BINARY_DIR}/errors)
 set(LINT_SUPPRESSES_URL "${LINT_SUPPRESS_URL_BASE}/errors.tar.gz")
 set(LINT_SUPPRESSES_ARCHIVE ${LINT_SUPPRESSES_ROOT}/errors.tar.gz)
 set(LINT_SUPPRESSES_TOUCH_FILE "${TOUCHES_DIR}/unpacked-clint-errors-archive")
-set(LINT_SUPPRESSES_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/InstallClintErrors.cmake")
+set(CLINT_REPORT_PATH ${LINT_SUPPRESSES_ROOT}/src/home/runner/work/doc/doc/gh-pages/reports/clint)
 
 glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
 glob_wrapper(API_HEADERS api/*.h)
@@ -225,7 +225,7 @@ foreach(sfile ${NVIM_SOURCES}
               "${GENERATED_KEYSETS}"
               "${GENERATED_UI_EVENTS_CLIENT}"
               )
-  get_filename_component(full_d ${sfile} PATH)
+  get_filename_component(full_d ${sfile} DIRECTORY)
   file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
   if(${d} MATCHES "^[.][.]|auto/")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
@@ -597,10 +597,7 @@ set_target_properties(
     POSITION_INDEPENDENT_CODE ON
     OUTPUT_NAME ${LIBNVIM_NAME}
 )
-set_property(
-  TARGET libnvim
-  APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
-)
+target_compile_options(libnvim PRIVATE -DMAKE_LIB)
 
 if(NOT LUAJIT_FOUND)
   message(STATUS "luajit not found, skipping nvim-test (unit tests) target")
@@ -626,10 +623,7 @@ else()
     PROPERTIES
       POSITION_INDEPENDENT_CODE ON
   )
-  set_property(
-    TARGET nvim-test
-    APPEND_STRING PROPERTY COMPILE_FLAGS " -DUNIT_TESTING "
-  )
+  target_compile_options(nvim-test PRIVATE -DUNIT_TESTING)
 endif()
 
 if(CLANG_ASAN_UBSAN)
@@ -664,7 +658,7 @@ elseif(CLANG_TSAN)
 endif()
 
 function(get_test_target prefix sfile relative_path_var target_var)
-  get_filename_component(full_d "${sfile}" PATH)
+  get_filename_component(full_d "${sfile}" DIRECTORY)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
   if(d MATCHES "^[.][.]")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
@@ -730,13 +724,9 @@ add_custom_command(
   OUTPUT ${LINT_SUPPRESSES_TOUCH_FILE}
   WORKING_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src
   COMMAND ${CMAKE_COMMAND} -E tar xfz ${LINT_SUPPRESSES_ARCHIVE}
-  COMMAND
-    ${CMAKE_COMMAND}
-      -DTARGET=${LINT_SUPPRESSES_ROOT}
-      -P ${LINT_SUPPRESSES_INSTALL_SCRIPT}
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CLINT_REPORT_PATH} "${LINT_SUPPRESSES_ROOT}"
   COMMAND ${CMAKE_COMMAND} -E touch ${LINT_SUPPRESSES_TOUCH_FILE}
-  DEPENDS
-    ${LINT_SUPPRESSES_ARCHIVE} ${LINT_SUPPRESSES_INSTALL_SCRIPT}
+  DEPENDS ${LINT_SUPPRESSES_ARCHIVE}
 )
 
 add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
