@@ -59,7 +59,7 @@ describe('tabpage', function()
     screen:set_default_attr_ids({
       [0] = {bold = true, foreground = Screen.colors.Blue},
       [1] = {bold = true, reverse = true},  -- StatusLine
-      [2] = {reverse = true},  -- StatusLineNC, TabLineFill
+      [2] = {reverse = true},  -- TabLineFill
       [3] = {bold = true}, -- TabLineSel
       [4] = {background = Screen.colors.LightGrey, underline = true},  -- TabLine
       [5] = {bold = true, foreground = Screen.colors.Magenta},

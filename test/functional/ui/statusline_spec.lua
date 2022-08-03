@@ -407,3 +407,40 @@ it('statusline does not crash if it has Arabic characters #19447', function()
   command('redraw!')
   assert_alive()
 end)
+
+it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
+  clear()
+  local screen = Screen.new(40, 8)
+  screen:set_default_attr_ids({
+    [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [1] = {bold = true, reverse = true},  -- StatusLine
+  })
+  screen:attach()
+  exec([[
+    set laststatus=2
+    nnoremap <Up> <cmd>resize -1<CR>
+    nnoremap <Down> <cmd>resize +1<CR>
+  ]])
+  feed('<Up>')
+  screen:expect([[
+    ^                                        |
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {1:[No Name]                               }|
+                                            |
+                                            |
+  ]])
+  feed('<Down>')
+  screen:expect([[
+    ^                                        |
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {1:[No Name]                               }|
+                                            |
+  ]])
+end)
