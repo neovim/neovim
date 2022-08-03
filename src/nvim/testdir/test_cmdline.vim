@@ -1876,14 +1876,20 @@ func Test_cmdline_redraw_tabline()
 endfunc
 
 func Test_setcmdline()
-  func SetText(text)
+  func SetText(text, pos)
     call assert_equal(0, setcmdline(a:text))
     call assert_equal(a:text, getcmdline())
     call assert_equal(len(a:text) + 1, getcmdpos())
+
+    call assert_equal(0, setcmdline(a:text, a:pos))
+    call assert_equal(a:text, getcmdline())
+    call assert_equal(a:pos, getcmdpos())
+
+    call assert_equal(1, setcmdline(a:text, -1))
     return ''
   endfunc
 
-  call feedkeys(":\<C-R>=SetText('set rtp?')\<CR>\<CR>", 'xt')
+  call feedkeys(":\<C-R>=SetText('set rtp?', 2)\<CR>\<CR>", 'xt')
   call assert_equal('set rtp?', @:)
 
   " setcmdline() returns 1 when not editing the command line.
