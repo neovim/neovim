@@ -106,6 +106,7 @@ end
 
 ---@private
 local function split_lines(value)
+  value, _ = string.gsub(value, '\r\n?', '\n')
   return split(value, '\n', true)
 end
 
