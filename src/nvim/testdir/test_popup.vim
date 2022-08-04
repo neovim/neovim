@@ -864,15 +864,21 @@ func Test_popup_position()
 endfunc
 
 func Test_popup_command()
-  if !CanRunVimInTerminal() || !has('menu')
-    return
-  endif
+  CheckScreendump
+  CheckFeature menu
 
-  call writefile([
-	\ 'one two three four five',
-	\ 'and one two Xthree four five',
-	\ 'one more two three four five',
-	\ ], 'Xtest')
+  menu Test.Foo Foo
+  call assert_fails('popup Test.Foo', 'E336:')
+  call assert_fails('popup Test.Foo.X', 'E327:')
+  call assert_fails('popup Foo', 'E337:')
+  unmenu Test.Foo
+
+  let lines =<< trim END
+	one two three four five
+	and one two Xthree four five
+	one more two three four five
+  END
+  call writefile(lines, 'Xtest')
   let buf = RunVimInTerminal('Xtest', {})
   call term_sendkeys(buf, ":source $VIMRUNTIME/menu.vim\<CR>")
   call term_sendkeys(buf, "/X\<CR>:popup PopUp\<CR>")

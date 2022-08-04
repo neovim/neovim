@@ -972,7 +972,7 @@ Window size and position:			*window-size-functions*
 	winsaveview()		get view of current window
 	winrestview()		restore saved view of current window
 
-Mappings:				    *mapping-functions*
+Mappings and Menus:			    *mapping-functions*
 	digraph_get()		get |digraph|
 	digraph_getlist()	get all |digraph|s
 	digraph_set()		register |digraph|
@@ -981,6 +981,7 @@ Mappings:				    *mapping-functions*
 	mapcheck()		check if a matching mapping exists
 	maparg()		get rhs of a mapping
 	mapset()		restore a mapping
+	menu_info()		get information about a menu item
 	wildmenumode()		check if the wildmode is active
 
 Signs:						*sign-functions*
