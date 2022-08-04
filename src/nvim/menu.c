@@ -1892,9 +1892,22 @@ static char *menu_translate_tab_and_shift(char *arg_start)
 }
 
 /// Get the information about a menu item in mode 'which'
-static void menuitem_getinfo(const vimmenu_T *menu, int modes, dict_T *dict)
+static void menuitem_getinfo(const char *menu_name, const vimmenu_T *menu, int modes, dict_T *dict)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (*menu_name == NUL) {
+    // Return all the top-level menus
+    list_T *const l = tv_list_alloc(kListLenMayKnow);
+    tv_dict_add_list(dict, S_LEN("submenus"), l);
+    // get all the children.  Skip PopUp[nvoci].
+    for (const vimmenu_T *topmenu = menu; topmenu != NULL; topmenu = topmenu->next) {
+      if (!menu_is_hidden(topmenu->dname)) {
+        tv_list_append_string(l, topmenu->dname, -1);
+      }
+    }
+    return;
+  }
+
   tv_dict_add_str(dict, S_LEN("name"), menu->name);
   tv_dict_add_str(dict, S_LEN("display"), menu->dname);
   if (menu->actext != NULL) {
@@ -1990,6 +2003,6 @@ void f_menu_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (menu->modes & modes) {
-    menuitem_getinfo(menu, modes, retdict);
+    menuitem_getinfo(menu_name, menu, modes, retdict);
   }
 }

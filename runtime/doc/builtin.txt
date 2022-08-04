@@ -5259,7 +5259,8 @@ menu_get({path} [, {modes}])				*menu_get()*
 menu_info({name} [, {mode}])				*menu_info()*
 		Return information about the specified menu {name} in
 		mode {mode}. The menu name should be specified without the
-		shortcut character ('&').
+		shortcut character ('&'). If {name} is "", then the top-level
+		menu names are returned.
 
 		{mode} can be one of these strings:
 			"n"	Normal
@@ -5310,6 +5311,20 @@ menu_info({name} [, {mode}])				*menu_info()*
 		Examples: >
 			:echo menu_info('Edit.Cut')
 			:echo menu_info('File.Save', 'n')
+
+			" Display the entire menu hierarchy in a buffer
+			func ShowMenu(name, pfx)
+			  let m = menu_info(a:name)
+			  call append(line('$'), a:pfx .. m.display)
+			  for child in m->get('submenus', [])
+			    call ShowMenu(a:name .. '.' .. escape(child, '.'),
+							\ a:pfx .. '    ')
+			  endfor
+			endfunc
+			new
+			for topmenu in menu_info('').submenus
+			  call ShowMenu(topmenu, '')
+			endfor
 <
 		Can also be used as a |method|: >
 			GetMenuName()->menu_info('v')

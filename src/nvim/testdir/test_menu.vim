@@ -362,6 +362,9 @@ func Test_menu_info()
         \ shortcut: '', modes: ' ', submenus: ['menu']},
         \ menu_info(']Test'))
   unmenu ]Test
+
+  " Test for getting all the top-level menu names
+  call assert_notequal(menu_info('').submenus, [])
 endfunc
 
 " Test for <special> keyword in a menu with 'cpo' containing '<'
