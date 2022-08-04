@@ -648,6 +648,7 @@ List manipulation:					*list-functions*
 	deepcopy()		make a full copy of a List
 	filter()		remove selected items from a List
 	map()			change each List item
+	reduce()		reduce a List to a value
 	sort()			sort a List
 	reverse()		reverse the order of a List
 	uniq()			remove copies of repeated adjacent items
@@ -705,6 +706,8 @@ Floating point computation:				*float-functions*
 	sinh()			hyperbolic sine
 	cosh()			hyperbolic cosine
 	tanh()			hyperbolic tangent
+	isinf()			check for infinity
+	isnan()			check for not a number
 
 Other computation:					*bitwise-function*
 	and()			bitwise AND
@@ -712,6 +715,8 @@ Other computation:					*bitwise-function*
 	or()			bitwise OR
 	xor()			bitwise XOR
 	sha256()		SHA-256 hash
+	rand()			get a pseudo-random number
+	srand()			initialize seed used by rand()
 
 Variables:						*var-functions*
 	type()			type of a variable
@@ -765,6 +770,7 @@ Working with text in the current buffer:		*text-functions*
 	prevnonblank()		find previous non-blank line
 	search()		find a match for a pattern
 	searchpos()		find a match for a pattern
+	searchcount()		get number of matches before/after the cursor
 	searchpair()		find the other end of a start/skip/end
 	searchpairpos()		find the other end of a start/skip/end
 	searchdecl()		search for the declaration of a name
@@ -841,9 +847,11 @@ Buffers, windows and the argument list:
 	deletebufline()		delete lines from a specified buffer
 	win_findbuf()		find windows containing a buffer
 	win_getid()		get window ID of a window
+	win_gettype()		get type of window
 	win_gotoid()		go to window with ID
 	win_id2tabwin()		get tab and window nr from window ID
 	win_id2win()		get window nr from window ID
+	win_splitmove()		move window to a split of another window
 	win_move_separator()	move window vertical separator
 	win_move_statusline()	move window status line
 	getbufinfo()		get a list with buffer information
@@ -926,6 +934,7 @@ Interactive:					*interactive-functions*
 	confirm()		let the user make a choice
 	getchar()		get a character from the user
 	getcharmod()		get modifiers for the last typed character
+	getmousepos()		get last known mouse position
 	feedkeys()		put characters in the typeahead queue
 	input()			get a line from the user
 	inputlist()		let the user pick an entry from a list
@@ -971,6 +980,7 @@ Mappings:				    *mapping-functions*
 	hasmapto()		check if a mapping exists
 	mapcheck()		check if a matching mapping exists
 	maparg()		get rhs of a mapping
+	mapset()		restore a mapping
 	wildmenumode()		check if the wildmode is active
 
 Signs:						*sign-functions*
@@ -1054,10 +1064,12 @@ Various:					*various-functions*
 
 	wordcount()		get byte/word/char count of buffer
 
-	luaeval()		evaluate Lua expression
+	luaeval()		evaluate |Lua| expression
 	py3eval()		evaluate Python expression (|+python3|)
 	pyeval()		evaluate Python expression (|+python|)
 	pyxeval()		evaluate |python_x| expression
+	rubyeval()		evaluate |Ruby| expression
+
 	debugbreak()		interrupt a program being debugged
 
 ==============================================================================
