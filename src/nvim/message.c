@@ -1748,8 +1748,8 @@ const char *str2special(const char **const sp, const bool replace_spaces, const 
       *sp = str + 1;
     }
   } else {
-    // single-byte character or illegal byte
-    *sp = str + 1;
+    // single-byte character, NUL or illegal byte
+    *sp = str + (*str == NUL ? 0 : 1);
   }
 
   // Make special keys and C0 control characters in <> form, also <M-Space>.

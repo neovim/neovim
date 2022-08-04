@@ -530,4 +530,17 @@ func Test_tmenu()
   tunmenu Test
 endfunc
 
+func Test_only_modifier()
+  exe "tmenu a.b \x80\xfc0"
+  let exp =<< trim [TEXT]
+  --- Menus ---
+  500 a
+    500 b
+        t  - <T-2-^@>
+  [TEXT]
+  call assert_equal(exp, split(execute('tmenu'), "\n"))
+
+  tunmenu a.b
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
