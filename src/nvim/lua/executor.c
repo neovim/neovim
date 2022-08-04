@@ -539,15 +539,17 @@ static void nlua_common_vim_init(lua_State *lstate, bool is_thread)
   lua_pop(lstate, 3);
 }
 
+#define NLUA_RUNTIME "@$VIMRUNTIME/lua/"
+
 static int nlua_module_preloader(lua_State *lstate)
 {
   size_t i = (size_t)lua_tointeger(lstate, lua_upvalueindex(1));
   ModuleDef def = builtin_modules[i];
-  char name[256];
-  name[0] = '@';
-  size_t off = xstrlcpy(name + 1, def.name, (sizeof name) - 2);
-  strchrsub(name + 1, '.', '/');
-  xstrlcpy(name + 1 + off, ".lua", (sizeof name) - 2 - off);
+  char name[256] = NLUA_RUNTIME;
+  char *p = name + sizeof(NLUA_RUNTIME) - 1;
+  size_t off = xstrlcpy(p, def.name, (sizeof name) - (sizeof NLUA_RUNTIME));
+  strchrsub(p, '.', '/');
+  xstrlcpy(p + off, ".lua", (sizeof name) - (sizeof NLUA_RUNTIME) - off);
 
   if (luaL_loadbuffer(lstate, (const char *)def.data, def.size - 1, name)) {
     return lua_error(lstate);
@@ -1876,8 +1878,8 @@ void nlua_set_sctx(sctx_T *current)
   // Files where internal wrappers are defined so we can ignore them
   // like vim.o/opt etc are defined in _meta.lua
   char *ignorelist[] = {
-    "vim/_meta.lua",
-    "vim/keymap.lua",
+    "$VIMRUNTIME/lua/vim/_meta.lua",
+    "$VIMRUNTIME/lua/vim/keymap.lua",
   };
   int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
 
