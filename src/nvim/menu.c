@@ -1913,16 +1913,18 @@ static void menuitem_getinfo(const vimmenu_T *menu, int modes, dict_T *dict)
     // Get the first mode in which the menu is available
     for (bit = 0; (bit < MENU_MODES) && !((1 << bit) & modes); bit++) {}
 
-    if (menu->strings[bit] != NULL) {
-      tv_dict_add_allocated_str(dict, S_LEN("rhs"),
-                                *menu->strings[bit] == NUL
-                                ? xstrdup("<Nop>")
-                                : str2special_save(menu->strings[bit], false, false));
+    if (bit < MENU_MODES) {  // just in case, avoid Coverity warning
+      if (menu->strings[bit] != NULL) {
+        tv_dict_add_allocated_str(dict, S_LEN("rhs"),
+                                  *menu->strings[bit] == NUL
+                                  ? xstrdup("<Nop>")
+                                  : str2special_save(menu->strings[bit], false, false));
+      }
+      tv_dict_add_bool(dict, S_LEN("noremenu"), menu->noremap[bit] == REMAP_NONE);
+      tv_dict_add_bool(dict, S_LEN("script"), menu->noremap[bit] == REMAP_SCRIPT);
+      tv_dict_add_bool(dict, S_LEN("silent"), menu->silent[bit]);
+      tv_dict_add_bool(dict, S_LEN("enabled"), (menu->enabled & (1 << bit)) != 0);
     }
-    tv_dict_add_bool(dict, S_LEN("noremenu"), menu->noremap[bit] == REMAP_NONE);
-    tv_dict_add_bool(dict, S_LEN("script"), menu->noremap[bit] == REMAP_SCRIPT);
-    tv_dict_add_bool(dict, S_LEN("silent"), menu->silent[bit]);
-    tv_dict_add_bool(dict, S_LEN("enabled"), (menu->enabled & (1 << bit)) != 0);
   } else {
     // If there are submenus, add all the submenu display names
     list_T *const l = tv_list_alloc(kListLenMayKnow);
