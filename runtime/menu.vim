@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Mar 19
+" Last Change:	2020 Mar 29
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
 " in all modes and avoid side effects from mappings defined by the user.
@@ -672,7 +672,7 @@ func s:BMAdd()
       call s:BMShow()
     else
       let name = expand("<afile>")
-      let num = expand("<abuf>")
+      let num = expand("<abuf>") + 0 " add zero to convert to a number type
       if s:BMCanAdd(name, num)
 	call <SID>BMFilename(name, num)
 	let s:bmenu_count += 1

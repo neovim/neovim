@@ -33,10 +33,17 @@ func Test_buffer_menu_special_buffers()
 
   let orig_buffer_menus = execute("nmenu Buffers")
 
+  " Test that regular new buffer results in a new buffer menu item.
+  new
+  let new_buffer_menus = execute('nmenu Buffers')
+  call assert_equal(len(split(orig_buffer_menus, "\n")) + 2, len(split(new_buffer_menus, "\n")))
+  bwipe!
+  call assert_equal(orig_buffer_menus, execute("nmenu Buffers"))
+
   " Make a new command-line window, test that it does not create a new buffer
   " menu.
   call feedkeys("q::let cmdline_buffer_menus=execute('nmenu Buffers')\<CR>:q\<CR>", 'ntx')
-  call assert_equal(len(split(orig_buffer_menus, "\n")), len(split(cmdline_buffer_menus, "\n")))
+  call assert_equal(len(split(orig_buffer_menus, "\n")) + 2, len(split(cmdline_buffer_menus, "\n")))
   call assert_equal(orig_buffer_menus, execute("nmenu Buffers"))
 
   if has('terminal')
@@ -44,7 +51,7 @@ func Test_buffer_menu_special_buffers()
     " item.
     terminal
     let term_buffer_menus = execute('nmenu Buffers')
-    call assert_equal(len(split(orig_buffer_menus, "\n")), len(split(term_buffer_menus, "\n")))
+    call assert_equal(len(split(orig_buffer_menus, "\n")) + 2, len(split(term_buffer_menus, "\n")))
     bwipe!
     call assert_equal(orig_buffer_menus, execute("nmenu Buffers"))
   endif
@@ -155,6 +162,9 @@ endfunc
 
 " Test for menu item completion in command line
 func Test_menu_expand()
+  " Make sure we don't have stale menu items like Buffers menu.
+  source $VIMRUNTIME/delmenu.vim
+
   " Create the menu itmes for test
   menu Dummy.Nothing lll
   for i in range(1, 4)
