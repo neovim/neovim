@@ -5639,7 +5639,9 @@ void wipe_buffer(buf_T *buf, bool aucmd)
 void buf_open_scratch(handle_T bufnr, char *bufname)
 {
   (void)do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
+  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   (void)setfname(curbuf, bufname, NULL, true);
+  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
   set_option_value("bh", 0L, "hide", OPT_LOCAL);
   set_option_value("bt", 0L, "nofile", OPT_LOCAL);
   set_option_value("swf", 0L, NULL, OPT_LOCAL);

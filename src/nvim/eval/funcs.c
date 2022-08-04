@@ -9914,7 +9914,11 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // at this point the buffer has no terminal instance associated yet, so unset
   // the 'swapfile' option to ensure no swap file will be created
   curbuf->b_p_swf = false;
+
+  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   (void)setfname(curbuf, (char *)NameBuff, NULL, true);
+  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+
   // Save the job id and pid in b:terminal_job_{id,pid}
   Error err = ERROR_INIT;
   // deprecated: use 'channel' buffer option
