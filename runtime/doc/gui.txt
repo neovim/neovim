@@ -201,9 +201,11 @@ tooltips for menus. See |terminal-input|.
 
 Special characters in a menu name:
 
+							*menu-shortcut*
 	&	The next character is the shortcut key.  Make sure each
 		shortcut key is only used once in a (sub)menu.  If you want to
 		insert a literal "&" in the menu name use "&&".
+							*menu-text*
 	<Tab>	Separates the menu name from right-aligned text.  This can be
 		used to show the equivalent typed command.  The text "<Tab>"
 		can be used here for convenience.  If you are using a real
@@ -561,7 +563,7 @@ item for the keyword under the cursor.  The register "z" is used. >
 mappings, or put these lines in your gvimrc; "<C-R>" is CTRL-R, "<CR>" is
 the <CR> key.  |<>|)
 
-
+							*tooltips* *menu-tips*
 Tooltips & Menu tips
 
 See section |42.4| in the user manual.

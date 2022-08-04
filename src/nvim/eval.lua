@@ -264,6 +264,7 @@ return {
     matchstrpos={args={2,4}, base=1},
     max={args=1, base=1},
     menu_get={args={1, 2}},
+    menu_info={args={1, 2}, base=1},
     min={args=1, base=1},
     mkdir={args={1, 3}, base=1},
     mode={args={0, 1}, base=1},
