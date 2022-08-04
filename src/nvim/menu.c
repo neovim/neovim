@@ -810,17 +810,23 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
 /// Show the mapping associated with a menu item or hierarchy in a sub-menu.
 static int show_menus(char *const path_name, int modes)
 {
-  // First, find the (sub)menu with the given name
-  vimmenu_T *menu = find_menu(*get_root_menu(path_name), path_name, modes);
-  if (!menu) {
-    return FAIL;
+  vimmenu_T *menu = *get_root_menu(path_name);
+  if (menu != NULL) {
+    // First, find the (sub)menu with the given name
+    menu = find_menu(menu, path_name, modes);
+    if (menu == NULL) {
+      return FAIL;
+    }
   }
+  // When there are no menus at all, the title still needs to be shown.
 
   // Now we have found the matching menu, and we list the mappings
   // Highlight title
   msg_puts_title(_("\n--- Menus ---"));
 
-  show_menus_recursive(menu->parent, modes, 0);
+  if (menu != NULL) {
+    show_menus_recursive(menu->parent, modes, 0);
+  }
   return OK;
 }
 
