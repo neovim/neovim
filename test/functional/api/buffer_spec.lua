@@ -7,6 +7,7 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
 local feed_command = helpers.feed_command
 local insert = helpers.insert
 local NIL = helpers.NIL
@@ -564,6 +565,17 @@ describe('api/buf', function()
       text]])
       eq('start is higher than end', pcall_err(set_text, 1, 0, 0, 0, {}))
       eq('start is higher than end', pcall_err(set_text, 0, 1, 0, 0, {}))
+    end)
+
+    it('no heap-use-after-free when called consecutively #19643', function()
+      set_text(0, 0, 0, 0, {'one', '', '', 'two'})
+      eq({'one', '', '', 'two'}, get_lines(0, 4, true))
+      meths.win_set_cursor(0, {1, 0})
+      exec_lua([[
+        vim.api.nvim_buf_set_text(0, 0, 3, 1, 0, {''})
+        vim.api.nvim_buf_set_text(0, 0, 3, 1, 0, {''})
+      ]])
+      eq({'one', 'two'}, get_lines(0, 2, true))
     end)
   end)
 
