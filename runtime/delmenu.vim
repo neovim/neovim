@@ -7,6 +7,31 @@
 aunmenu *
 tlunmenu *
 
+if exists('#SetupLazyloadMenus')
+  au! SetupLazyloadMenus
+  augroup! SetupLazyloadMenus
+endif
+
+if exists('#buffer_list')
+  au! buffer_list
+  augroup! buffer_list
+endif
+
+if exists('#LoadBufferMenu')
+  au! LoadBufferMenu
+  augroup! LoadBufferMenu
+endif
+
+if exists('#spellmenu')
+  au! spellmenu
+  augroup! spellmenu
+endif
+
+if exists('#SpellPopupMenu')
+  au! SpellPopupMenu
+  augroup! SpellPopupMenu
+endif
+
 unlet! g:did_install_default_menus
 unlet! g:did_install_syntax_menu
 
