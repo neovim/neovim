@@ -690,8 +690,8 @@ describe('jobs', function()
     -- jobstart() shares its v:servername with the child via $NVIM.
     eq('NVIM='..addr, get_env_in_child_job('NVIM'))
     -- $NVIM_LISTEN_ADDRESS is unset by server_init in the child.
-    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS'))
-    eq('NVIM_LISTEN_ADDRESS=null', get_env_in_child_job('NVIM_LISTEN_ADDRESS',
+    eq('NVIM_LISTEN_ADDRESS=v:null', get_env_in_child_job('NVIM_LISTEN_ADDRESS'))
+    eq('NVIM_LISTEN_ADDRESS=v:null', get_env_in_child_job('NVIM_LISTEN_ADDRESS',
       { NVIM_LISTEN_ADDRESS='Xtest_jobstart_env' }))
     -- User can explicitly set $NVIM_LOG_FILE, $VIM, $VIMRUNTIME.
     eq('NVIM_LOG_FILE=Xtest_jobstart_env',

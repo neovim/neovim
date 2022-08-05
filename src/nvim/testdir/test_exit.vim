@@ -95,7 +95,7 @@ func Test_exit_code()
   [CODE]
 
   if RunVim(before, ['quit'], '')
-    call assert_equal(['qp = null', 'ep = null', 'lp = 0', 'l = 0'], readfile('Xtestout'))
+    call assert_equal(['qp = v:null', 'ep = v:null', 'lp = 0', 'l = 0'], readfile('Xtestout'))
   endif
   call delete('Xtestout')
 
