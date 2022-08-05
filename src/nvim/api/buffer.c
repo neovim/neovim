@@ -565,27 +565,33 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     return;
   }
 
-  char *str_at_start = (char *)ml_get_buf(buf, (linenr_T)start_row, false);
-  if (start_col < 0 || (size_t)start_col > strlen(str_at_start)) {
+  char *str_at_start = NULL;
+  char *str_at_end = NULL;
+
+  // Another call to ml_get_buf() may free the line, so make a copy.
+  str_at_start = xstrdup((char *)ml_get_buf(buf, (linenr_T)start_row, false));
+  size_t len_at_start = strlen(str_at_start);
+  if (start_col < 0 || (size_t)start_col > len_at_start) {
     api_set_error(err, kErrorTypeValidation, "start_col out of bounds");
-    return;
+    goto early_end;
   }
 
-  char *str_at_end = (char *)ml_get_buf(buf, (linenr_T)end_row, false);
+  // Another call to ml_get_buf() may free the line, so make a copy.
+  str_at_end = xstrdup((char *)ml_get_buf(buf, (linenr_T)end_row, false));
   size_t len_at_end = strlen(str_at_end);
   if (end_col < 0 || (size_t)end_col > len_at_end) {
     api_set_error(err, kErrorTypeValidation, "end_col out of bounds");
-    return;
+    goto early_end;
   }
 
   if (start_row > end_row || (end_row == start_row && start_col > end_col)) {
     api_set_error(err, kErrorTypeValidation, "start is higher than end");
-    return;
+    goto early_end;
   }
 
   bool disallow_nl = (channel_id != VIML_INTERNAL_CALL);
   if (!check_string_array(replacement, disallow_nl, err)) {
-    return;
+    goto early_end;
   }
 
   size_t new_len = replacement.size;
@@ -597,7 +603,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   if (start_row == end_row) {
     old_byte = (bcount_t)end_col - start_col;
   } else {
-    old_byte += (bcount_t)strlen(str_at_start) - start_col;
+    old_byte += (bcount_t)len_at_start - start_col;
     for (int64_t i = 1; i < end_row - start_row; i++) {
       int64_t lnum = start_row + i;
 
@@ -611,7 +617,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   String last_item = replacement.items[replacement.size - 1].data.string;
 
   size_t firstlen = (size_t)start_col + first_item.size;
-  size_t last_part_len = strlen(str_at_end) - (size_t)end_col;
+  size_t last_part_len = len_at_end - (size_t)end_col;
   if (replacement.size == 1) {
     firstlen += last_part_len;
   }
@@ -751,6 +757,10 @@ end:
   xfree(lines);
   aucmd_restbuf(&aco);
   try_end(err);
+
+early_end:
+  xfree(str_at_start);
+  xfree(str_at_end);
 }
 
 /// Gets a range from the buffer.
