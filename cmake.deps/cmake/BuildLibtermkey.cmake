@@ -18,7 +18,7 @@ ExternalProject_Add(libtermkey
       -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
       # Pass toolchain
       -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
-      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      ${BUILD_TYPE_STRING}
       # Hack to avoid -rdynamic in Mingw
       -DCMAKE_SHARED_LIBRARY_LINK_C_FLAGS=""
       -DCMAKE_GENERATOR=${CMAKE_GENERATOR}

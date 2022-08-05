@@ -8,6 +8,11 @@ include(CheckCCompilerFlag)
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT isMultiConfig)
+  set(BUILD_TYPE_STRING -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+endif()
+
 # In Windows/MSVC CMAKE_BUILD_TYPE changes the paths/linking of the build
 # recipes (libuv, msgpack), make sure it is set
 if(NOT CMAKE_BUILD_TYPE)
