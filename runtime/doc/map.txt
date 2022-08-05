@@ -1494,7 +1494,7 @@ supports incremental command preview:
 
 	  for i, line in ipairs(lines) do
 	    local start_idx, end_idx = string.find(line, '%s+$')
-	
+
 	    if start_idx then
 	      -- Highlight the match
 	      vim.api.nvim_buf_add_highlight(
