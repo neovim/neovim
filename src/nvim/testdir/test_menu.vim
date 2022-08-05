@@ -19,6 +19,48 @@ func Test_load_menu()
   call assert_equal('', v:errmsg)
 endfunc
 
+func Test_buffer_menu_special_buffers()
+  " Load in runtime menus
+  try
+    source $VIMRUNTIME/menu.vim
+  catch
+    call assert_report('error while loading menus: ' . v:exception)
+  endtry
+
+  let v:errmsg = ''
+  doautocmd LoadBufferMenu VimEnter
+  call assert_equal('', v:errmsg)
+
+  let orig_buffer_menus = execute("nmenu Buffers")
+
+  " Test that regular new buffer results in a new buffer menu item.
+  new
+  let new_buffer_menus = execute('nmenu Buffers')
+  call assert_equal(len(split(orig_buffer_menus, "\n")) + 2, len(split(new_buffer_menus, "\n")))
+  bwipe!
+  call assert_equal(orig_buffer_menus, execute("nmenu Buffers"))
+
+  " Make a new command-line window, test that it does not create a new buffer
+  " menu.
+  call feedkeys("q::let cmdline_buffer_menus=execute('nmenu Buffers')\<CR>:q\<CR>", 'ntx')
+  call assert_equal(len(split(orig_buffer_menus, "\n")) + 2, len(split(cmdline_buffer_menus, "\n")))
+  call assert_equal(orig_buffer_menus, execute("nmenu Buffers"))
+
+  if has('terminal')
+    " Open a terminal window and test that it does not create a buffer menu
+    " item.
+    terminal
+    let term_buffer_menus = execute('nmenu Buffers')
+    call assert_equal(len(split(orig_buffer_menus, "\n")) + 2, len(split(term_buffer_menus, "\n")))
+    bwipe!
+    call assert_equal(orig_buffer_menus, execute("nmenu Buffers"))
+  endif
+
+  " Remove menus to clean up
+  source $VIMRUNTIME/delmenu.vim
+  call assert_equal('', v:errmsg)
+endfunc
+
 func Test_translate_menu()
   if !has('multi_lang')
     return
@@ -120,7 +162,11 @@ endfunc
 
 " Test for menu item completion in command line
 func Test_menu_expand()
+  " Make sure we don't have stale menu items like Buffers menu.
+  source $VIMRUNTIME/delmenu.vim
+
   " Create the menu itmes for test
+  menu Dummy.Nothing lll
   for i in range(1, 4)
     let m = 'menu Xmenu.A' .. i .. '.A' .. i
     for j in range(1, 4)
@@ -146,7 +192,7 @@ func Test_menu_expand()
   " Test for <Up> to go up a menu
   call feedkeys(":emenu Xmenu.A\<Tab>\<Down>\<Up>\<Up>\<Up>" ..
         \ "\<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"emenu Buffers. Xmenu.', @:)
+  call assert_equal('"emenu Dummy. Xmenu.', @:)
 
   " Test for expanding only submenus
   call feedkeys(":popup Xmenu.\<C-A>\<C-B>\"\<CR>", 'xt')
@@ -166,6 +212,7 @@ func Test_menu_expand()
 
   set wildmenu&
   unmenu Xmenu
+  unmenu Dummy
 
   " Test for expanding popup menus with some hidden items
   menu Xmenu.foo.A1 a1
@@ -175,7 +222,6 @@ func Test_menu_expand()
   call feedkeys(":popup Xmenu.\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"popup Xmenu.foo', @:)
   unmenu Xmenu
-
 endfunc
 
 " Test for the menu_info() function
@@ -482,6 +528,19 @@ func Test_tmenu()
   [TEXT]
   call assert_equal(exp, split(execute('tmenu'), "\n"))
   tunmenu Test
+endfunc
+
+func Test_only_modifier()
+  exe "tmenu a.b \x80\xfc0"
+  let exp =<< trim [TEXT]
+  --- Menus ---
+  500 a
+    500 b
+        t  - <T-2-^@>
+  [TEXT]
+  call assert_equal(exp, split(execute('tmenu'), "\n"))
+
+  tunmenu a.b
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
