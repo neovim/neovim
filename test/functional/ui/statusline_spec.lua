@@ -1,7 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, command, feed = helpers.clear, helpers.command, helpers.feed
-local eq, funcs, meths = helpers.eq, helpers.funcs, helpers.meths
+local assert_alive = helpers.assert_alive
+local clear = helpers.clear
+local command = helpers.command
+local feed = helpers.feed
+local eq = helpers.eq
+local funcs = helpers.funcs
+local meths = helpers.meths
+local exec = helpers.exec
 
 describe('global statusline', function()
   local screen
@@ -257,4 +263,49 @@ describe('global statusline', function()
     meths.input_mouse('left', 'drag', '', 0, 14, 10)
     eq(1, meths.get_option('cmdheight'))
   end)
+end)
+
+it('statusline does not crash if it has Arabic characters #19447', function()
+  clear()
+  meths.set_option('statusline', 'غً')
+  meths.set_option('laststatus', 2)
+  command('redraw!')
+  assert_alive()
+end)
+
+it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
+  clear()
+  local screen = Screen.new(40, 8)
+  screen:set_default_attr_ids({
+    [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+    [1] = {bold = true, reverse = true},  -- StatusLine
+  })
+  screen:attach()
+  exec([[
+    set laststatus=2
+    nnoremap <Up> <cmd>resize -1<CR>
+    nnoremap <Down> <cmd>resize +1<CR>
+  ]])
+  feed('<Up>')
+  screen:expect([[
+    ^                                        |
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {1:[No Name]                               }|
+                                            |
+                                            |
+  ]])
+  feed('<Down>')
+  screen:expect([[
+    ^                                        |
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {0:~                                       }|
+    {1:[No Name]                               }|
+                                            |
+  ]])
 end)

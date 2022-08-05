@@ -5503,6 +5503,7 @@ void win_setheight_win(int height, win_T *win)
     msg_row = row;
     msg_col = 0;
     redraw_all_later(NOT_VALID);
+    redraw_cmdline = true;
   }
 }
 
