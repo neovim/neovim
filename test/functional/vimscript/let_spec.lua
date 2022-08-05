@@ -29,7 +29,7 @@ describe(':let', function()
   it(":unlet self-referencing node in a List graph #6070", function()
     -- :unlet-ing a self-referencing List must not allow GC on indirectly
     -- referenced in-scope Lists. Before #6070 this caused use-after-free.
-    expect_exit(100, source, [=[
+    expect_exit(1000, source, [=[
       let [l1, l2] = [[], []]
       echo 'l1:' . id(l1)
       echo 'l2:' . id(l2)
