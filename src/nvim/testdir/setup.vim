@@ -39,9 +39,11 @@ if exists('s:did_load')
 endif
 let s:did_load = 1
 
-" Clear Nvim default mappings.
+" Clear Nvim default mappings and menus.
 mapclear
 mapclear!
+aunmenu *
+tlunmenu *
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
