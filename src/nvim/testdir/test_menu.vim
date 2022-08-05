@@ -162,9 +162,6 @@ endfunc
 
 " Test for menu item completion in command line
 func Test_menu_expand()
-  " Make sure we don't have stale menu items like Buffers menu.
-  source $VIMRUNTIME/delmenu.vim
-
   " Create the menu itmes for test
   menu Dummy.Nothing lll
   for i in range(1, 4)
@@ -370,6 +367,10 @@ func Test_menu_info()
         \ display: 'tlnoremenu', modes: 'tl', enabled: v:true, silent: v:false,
         \ rhs: ':tlnoremenu<CR>', noremenu: v:true, script: v:false},
         \ menu_info('Test.tlnoremenu', 'tl'))
+
+  " Test for getting all the top-level menu names
+  call assert_notequal(menu_info('').submenus, [])
+
   aunmenu Test
   tlunmenu Test
   call assert_equal({}, menu_info('Test'))
@@ -408,9 +409,6 @@ func Test_menu_info()
         \ shortcut: '', modes: ' ', submenus: ['menu']},
         \ menu_info(']Test'))
   unmenu ]Test
-
-  " Test for getting all the top-level menu names
-  call assert_notequal(menu_info('').submenus, [])
 endfunc
 
 " Test for <special> keyword in a menu with 'cpo' containing '<'
