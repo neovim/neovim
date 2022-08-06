@@ -916,17 +916,17 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
 ///
 /// @param query    When string gets information about the function under this name.
 ///                 When dictionary lists functions. The following keys are accepted:
-///                 - builtin (boolean, default false) Include builtin functions
+///                 - builtin (boolean, default false) Include builtin functions.
 ///                 - user    (boolean, default true) Include user functions. Equivalent
 ///                           to global=true and script=true.
-///                 - global  (boolean) Global user functions.
-///                 - script  (boolean) Script-local user functions.
+///                 - global  (boolean) Include global user functions.
+///                 - script  (boolean) Include script-local user functions.
 /// @param opts     Options dictionary:
 ///                 - details (boolean) Include function details.
 ///                 - lines   (boolean) Include user function lines. Ignored for builtin
 ///                           functions.
 /// @param[out] err Error details, if any
-/// @return Dictionary
+/// @return Map of function names to dictionaries describing them.
 Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
   FUNC_API_SINCE(10)
 {
