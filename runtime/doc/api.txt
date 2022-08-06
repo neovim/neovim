@@ -1642,9 +1642,9 @@ nvim_get_functions({query}, {opts})                     *nvim_get_functions()*
                 Lists Vimscript functions.
 
                 Parameters: ~
-                    {query}  When string gets information about the user
-                             function under this name. When dictionary lists
-                             functions. The following keys are accepted:
+                    {query}  When string gets information about the function
+                             under this name. When dictionary lists functions.
+                             The following keys are accepted:
                              • builtin (boolean, default false) Include
                                builtin functions
                              • user (boolean, default true) Include user

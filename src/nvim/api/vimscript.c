@@ -877,9 +877,45 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
   return dict;
 }
 
+static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool details)
+{
+  Dictionary dict = ARRAY_DICT_INIT;
+  kv_resize(dict, details ? 6 : 2);
+
+  dict.items[dict.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_TO_STRING("name"),
+    .value = STRING_OBJ(copy_string(name)),
+  };
+  dict.items[dict.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_TO_STRING("type"),
+    .value = CSTR_TO_OBJ("builtin"),
+  };
+
+  if (details) {
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("min_argc"),
+      .value = INTEGER_OBJ(fn->min_argc),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("max_argc"),
+      .value = INTEGER_OBJ(fn->max_argc),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("base_arg"),
+      .value = INTEGER_OBJ(fn->base_arg),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("fast"),
+      .value = BOOLEAN_OBJ(fn->fast),
+    };
+  }
+
+  return dict;
+}
+
 /// Lists Vimscript functions.
 ///
-/// @param query    When string gets information about the user function under this name.
+/// @param query    When string gets information about the function under this name.
 ///                 When dictionary lists functions. The following keys are accepted:
 ///                 - builtin (boolean, default false) Include builtin functions
 ///                 - user    (boolean, default true) Include user functions. Equivalent
@@ -926,22 +962,34 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
     }
   }
 
-  // Find user function
+  // Find function
   if (query.type == kObjectTypeString) {
     String name = query.data.string;
-    char *funcname = string_to_cstr(name);
-    ufunc_T *fp = find_func((char_u *)funcname);
-    xfree(funcname);
-    if (fp != NULL) {
-      kv_resize(rv, 1);
-      String key = user_function_name(fp);
-      Dictionary dict = user_function_dict(fp, key, details, lines);
+    char *func_name = string_to_cstr(name);
+
+    // Find builtin function
+    const EvalFuncDef *fn = find_internal_func(func_name);
+    if (fn != NULL) {
       KeyValuePair pair = {
-        .key = key,
-        .value = DICTIONARY_OBJ(dict),
+        .key = copy_string(name),
+        .value = DICTIONARY_OBJ(builtin_function_dict(fn, name, details)),
       };
       kv_push(rv, pair);
+    } else {
+      // Find user function
+      ufunc_T *fp = find_func((char_u *)func_name);
+      if (fp != NULL) {
+        String key = user_function_name(fp);
+        Dictionary dict = user_function_dict(fp, key, details, lines);
+        KeyValuePair pair = {
+          .key = key,
+          .value = DICTIONARY_OBJ(dict),
+        };
+        kv_push(rv, pair);
+      }
     }
+
+    xfree(func_name);
     return rv;
   }
 
