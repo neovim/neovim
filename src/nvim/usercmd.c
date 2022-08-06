@@ -1103,7 +1103,7 @@ static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc,
         if (*p == NUL) {
           break;
         }
-        len += 3;       // ","
+        len += 4;  // ", "
       } else {
         const int charlen = utfc_ptr2len(p);
 
@@ -1129,7 +1129,7 @@ static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc,
       }
 
       if (i != argc - 1) {
-        len += 3;  // ","
+        len += 4;  // ", "
       }
     }
   }
@@ -1159,6 +1159,7 @@ static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc,
         }
         *q++ = '"';
         *q++ = ',';
+        *q++ = ' ';
         *q++ = '"';
       } else {
         mb_copy_char((const char_u **)&p, (char_u **)&q);
@@ -1180,6 +1181,7 @@ static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc,
       if (i != argc - 1) {
         *q++ = '"';
         *q++ = ',';
+        *q++ = ' ';
         *q++ = '"';
       }
     }
