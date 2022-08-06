@@ -130,16 +130,14 @@ set(ROCKS_DIR ${HOSTDEPS_LIB_DIR}/luarocks/rocks-${LUA_VERSION})
 
 # mpack
 add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
-  COMMAND ${LUAROCKS_BINARY}
-  ARGS build mpack 1.0.8-0 ${LUAROCKS_BUILDARGS}
+  COMMAND ${LUAROCKS_BINARY} build mpack 1.0.8-0 ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
 add_custom_target(mpack DEPENDS ${ROCKS_DIR}/mpack)
 list(APPEND THIRD_PARTY_DEPS mpack)
 
 # lpeg
 add_custom_command(OUTPUT ${ROCKS_DIR}/lpeg
-  COMMAND ${LUAROCKS_BINARY}
-  ARGS build lpeg 1.0.2-1 ${LUAROCKS_BUILDARGS}
+  COMMAND ${LUAROCKS_BINARY} build lpeg 1.0.2-1 ${LUAROCKS_BUILDARGS}
   DEPENDS mpack)
 add_custom_target(lpeg DEPENDS ${ROCKS_DIR}/lpeg)
 list(APPEND THIRD_PARTY_DEPS lpeg)
@@ -147,8 +145,7 @@ list(APPEND THIRD_PARTY_DEPS lpeg)
 if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
   # luabitop
   add_custom_command(OUTPUT ${ROCKS_DIR}/luabitop
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build luabitop 1.0.2-3 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build luabitop 1.0.2-3 ${LUAROCKS_BUILDARGS}
     DEPENDS lpeg)
   add_custom_target(luabitop DEPENDS ${ROCKS_DIR}/luabitop)
   list(APPEND THIRD_PARTY_DEPS luabitop)
@@ -163,8 +160,7 @@ if(USE_BUNDLED_BUSTED)
 
   # penlight
   add_custom_command(OUTPUT ${ROCKS_DIR}/penlight
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build penlight 1.5.4-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build penlight 1.5.4-1 ${LUAROCKS_BUILDARGS}
     DEPENDS ${PENLIGHT_DEPENDS})
   add_custom_target(penlight DEPENDS ${ROCKS_DIR}/penlight)
 
@@ -177,15 +173,13 @@ if(USE_BUNDLED_BUSTED)
     set(LUACHECK_EXE "${HOSTDEPS_BIN_DIR}/luacheck")
   endif()
   add_custom_command(OUTPUT ${BUSTED_EXE}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build busted 2.0.0 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build busted 2.0.0 ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted DEPENDS ${BUSTED_EXE})
 
   # luacheck
   add_custom_command(OUTPUT ${LUACHECK_EXE}
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build luacheck 0.23.0-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build luacheck 0.23.0-1 ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck DEPENDS ${LUACHECK_EXE})
 
@@ -195,8 +189,7 @@ if(USE_BUNDLED_BUSTED)
     set(NVIM_CLIENT_DEPS luacheck luv-static lua-compat-5.3)
   else()
     add_custom_command(OUTPUT ${ROCKS_DIR}/luv
-      COMMAND ${LUAROCKS_BINARY}
-      ARGS build luv ${LUV_VERSION} ${LUAROCKS_BUILDARGS}
+      COMMAND ${LUAROCKS_BINARY} build luv ${LUV_VERSION} ${LUAROCKS_BUILDARGS}
       DEPENDS luacheck)
     add_custom_target(luv DEPENDS ${ROCKS_DIR}/luv)
     set(NVIM_CLIENT_DEPS luv)
@@ -204,8 +197,7 @@ if(USE_BUNDLED_BUSTED)
 
   # nvim-client: https://github.com/neovim/lua-client
   add_custom_command(OUTPUT ${ROCKS_DIR}/nvim-client
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS build nvim-client 0.2.4-1 ${LUAROCKS_BUILDARGS}
+    COMMAND ${LUAROCKS_BINARY} build nvim-client 0.2.4-1 ${LUAROCKS_BUILDARGS}
     DEPENDS ${NVIM_CLIENT_DEPS})
   add_custom_target(nvim-client DEPENDS ${ROCKS_DIR}/nvim-client)
 
