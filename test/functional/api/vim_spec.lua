@@ -3945,9 +3945,14 @@ describe('API', function()
       }) do
         local name
         if case.user then
-          name = fmt('builtin=%s user=%s', case.builtin, case.user)
+          name = fmt('builtin=%s user=%s',
+              tostring(case.builtin),
+              tostring(case.user))
         else
-          name = fmt('builtin=%s global=%s script=%s', case.builtin, case.global, case.script)
+          name = fmt('builtin=%s global=%s script=%s',
+              tostring(case.builtin),
+              tostring(case.global),
+              tostring(case.script))
         end
 
         it(name, function()
