@@ -3902,6 +3902,26 @@ describe('API', function()
       }}, meths.get_functions('<SNR>1_MyFun', { details = true }))
     end)
 
+    it('can get default arguments and attributes', function()
+      nvim('exec', dedent[[
+        function! MyFun(x, y = 'test', ...) abort
+          return a:x
+        endfunction]], false)
+
+      eq({ MyFun = {
+        name = 'MyFun',
+        type = 'user',
+        args = { { name = 'x' }, { name = 'y', default = [['test']] } },
+        varargs = true,
+        abort = true,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = -10,
+        lnum = 0,
+      }}, meths.get_functions('MyFun', { details = true }))
+    end)
+
     describe('list', function()
       before_each(function()
         nvim('exec', dedent[[
