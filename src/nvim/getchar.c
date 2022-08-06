@@ -17,6 +17,7 @@
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/event/loop.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
