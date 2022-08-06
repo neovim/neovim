@@ -22,7 +22,7 @@ typedef struct {
   FunPtr data;       ///< Userdata for function implementation.
 } EvalFuncDef;
 
-extern const EvalFuncDef* builtin_functions;
+extern const EvalFuncDef *builtin_functions;
 extern const size_t builtin_functions_len;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

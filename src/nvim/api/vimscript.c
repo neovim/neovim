@@ -22,7 +22,6 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/window.h"
-#include "nvim/ex_cmds2.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vimscript.c.generated.h"
@@ -810,7 +809,7 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
           arg.items[arg.size++] = (KeyValuePair) {
             .key = STATIC_CSTR_TO_STRING("default"),
             .value = CSTR_TO_OBJ(((char **)(fp->uf_def_args.ga_data))
-                  [j - fp->uf_args.ga_len + fp->uf_def_args.ga_len]),
+                                 [j - fp->uf_args.ga_len + fp->uf_def_args.ga_len]),
           };
         }
         args.items[args.size++] = DICTIONARY_OBJ(arg);
@@ -1015,7 +1014,8 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
           api_set_error(err, kErrorTypeValidation, "user is not a boolean");
           return rv;
         } else if (gs_set) {
-          api_set_error(err, kErrorTypeValidation, "user cannot be used with global and script options");
+          api_set_error(err, kErrorTypeValidation,
+                        "user cannot be used with global and script options");
           return rv;
         }
         global = v->data.boolean;
@@ -1065,7 +1065,7 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
 
   // List builtin functions
   if (builtin) {
-    for (const EvalFuncDef* fn = builtin_functions; fn->name != NULL; fn++) {
+    for (const EvalFuncDef *fn = builtin_functions; fn->name != NULL; fn++) {
       Dictionary dict = ARRAY_DICT_INIT;
       kv_resize(dict, details ? 6 : 2);
       dict.items[dict.size++] = (KeyValuePair) {

@@ -100,7 +100,7 @@ PRAGMA_DIAG_POP
 PRAGMA_DIAG_POP
 #endif
 
-const EvalFuncDef* builtin_functions = functions;
+const EvalFuncDef *builtin_functions = functions;
 const size_t builtin_functions_len = ARRAY_SIZE(functions) - 1;
 
 static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
