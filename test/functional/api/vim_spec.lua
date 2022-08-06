@@ -28,6 +28,7 @@ local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
 local expect_exit = helpers.expect_exit
+local dedent = helpers.dedent
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -3821,6 +3822,77 @@ describe('API', function()
       ]], {})
       feed("[l")
       neq(nil, string.find(eval("v:errmsg"), "E5108:"))
+    end)
+  end)
+
+  describe('nvim_get_functions', function()
+    it('can get a builtin function', function ()
+      eq({ abs = {
+        name = 'abs',
+        type = 'builtin',
+      }}, meths.get_functions('abs', {}))
+    end)
+    it('can get details about a builtin function', function ()
+      eq({ abs = {
+        name = 'abs',
+        type = 'builtin',
+        min_argc = 1,
+        max_argc = 1,
+        base_arg = 1,
+        fast = false,
+      }}, meths.get_functions('abs', { details = true }))
+    end)
+
+    describe('user function', function()
+      before_each(function()
+        nvim('exec', dedent[[
+          function! MyFun(x)
+            return a:x
+          endfunction]], false)
+      end)
+
+      it('can get it', function ()
+        eq({ MyFun = {
+          name = 'MyFun',
+          type = 'user',
+        }}, meths.get_functions('MyFun', {}))
+      end)
+      it('can get details about it', function ()
+        eq({ MyFun = {
+          name = 'MyFun',
+          type = 'user',
+          args = { { name = 'x' } },
+          varargs = false,
+          abort = false,
+          range = false,
+          dict = false,
+          closure = false,
+          sid = -10,
+          lnum = 0,
+        }}, meths.get_functions('MyFun', { details = true }))
+      end)
+      it('can get its lines', function ()
+        eq({ MyFun = {
+          name = 'MyFun',
+          type = 'user',
+          lines = { '  return a:x' },
+        }}, meths.get_functions('MyFun', { lines = true }))
+      end)
+      it('can get both details and lines', function ()
+        eq({ MyFun = {
+          name = 'MyFun',
+          type = 'user',
+          args = { { name = 'x' } },
+          varargs = false,
+          abort = false,
+          range = false,
+          dict = false,
+          closure = false,
+          sid = -10,
+          lnum = 0,
+          lines = { '  return a:x' },
+        }}, meths.get_functions('MyFun', { details = true, lines = true }))
+      end)
     end)
   end)
 end)
