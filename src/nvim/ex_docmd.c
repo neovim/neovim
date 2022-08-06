@@ -1693,6 +1693,8 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
     ERROR(_(e_cannot_edit_other_buf));
   }
 
+  correct_range(eap);
+
   if (((eap->argt & EX_WHOLEFOLD) || eap->addr_count >= 2) && !global_busy
       && eap->addr_type == ADDR_LINES) {
     // Put the first line at the start of a closed fold, put the last line
