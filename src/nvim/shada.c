@@ -16,11 +16,12 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/cmdhist.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/garray.h"
 #include "nvim/globals.h"
@@ -2449,6 +2450,27 @@ static inline void find_removable_bufs(khash_t(bufset) *removable_bufs)
       (void)kh_put(bufset, removable_bufs, (uintptr_t)buf, &kh_ret);
     }
   }
+}
+
+/// Translate a history type number to the associated character
+static int hist_type2char(const int type)
+  FUNC_ATTR_CONST
+{
+  switch (type) {
+  case HIST_CMD:
+    return ':';
+  case HIST_SEARCH:
+    return '/';
+  case HIST_EXPR:
+    return '=';
+  case HIST_INPUT:
+    return '@';
+  case HIST_DEBUG:
+    return '>';
+  default:
+    abort();
+  }
+  return NUL;
 }
 
 /// Write ShaDa file

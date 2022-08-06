@@ -3,8 +3,6 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
-#include "nvim/ex_cmds_defs.h"
-#include "nvim/os/time.h"
 #include "nvim/regexp_defs.h"
 
 // Values for nextwild() and ExpandOne().  See ExpandOne() for meaning.
@@ -39,29 +37,7 @@
 #define VSE_SHELL       1       ///< escape for a shell command
 #define VSE_BUFFER      2       ///< escape for a ":buffer" command
 
-/// Present history tables
-typedef enum {
-  HIST_DEFAULT = -2,  ///< Default (current) history.
-  HIST_INVALID = -1,  ///< Unknown history.
-  HIST_CMD = 0,       ///< Colon commands.
-  HIST_SEARCH,        ///< Search commands.
-  HIST_EXPR,          ///< Expressions (e.g. from entering = register).
-  HIST_INPUT,         ///< input() lines.
-  HIST_DEBUG,         ///< Debug commands.
-} HistoryType;
-
-/// Number of history tables
-#define HIST_COUNT      (HIST_DEBUG + 1)
-
 typedef char *(*CompleteListItemGetter)(expand_T *, int);
-
-/// History entry definition
-typedef struct hist_entry {
-  int hisnum;           ///< Entry identifier number.
-  char_u *hisstr;       ///< Actual entry, separator char after the NUL.
-  Timestamp timestamp;  ///< Time when entry was added.
-  list_T *additional_elements;  ///< Additional entries from ShaDa file.
-} histentry_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.h.generated.h"

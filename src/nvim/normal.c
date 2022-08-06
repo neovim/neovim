@@ -18,6 +18,7 @@
 #include "nvim/buffer.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
@@ -4379,9 +4380,11 @@ static void nv_ident(cmdarg_T *cap)
         && vim_iswordp(mb_prevptr(get_cursor_line_ptr(), ptr))) {
       STRCAT(buf, "\\>");
     }
+
     // put pattern in search history
     init_history();
     add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
+
     (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0,
                         NULL);
   } else {
