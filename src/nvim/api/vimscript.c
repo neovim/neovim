@@ -879,8 +879,17 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
 
 /// Lists Vimscript functions.
 ///
-/// @param query    Dictionary or string
-/// @param opts     Options
+/// @param query    When string gets information about the user function under this name.
+///                 When dictionary lists functions. The following keys are accepted:
+///                 - builtin (boolean, default false) Include builtin functions
+///                 - user    (boolean, default true) Include user functions. Equivalent
+///                           to global=true and script=true.
+///                 - global  (boolean) Global user functions.
+///                 - script  (boolean) Script-local user functions.
+/// @param opts     Options dictionary:
+///                 - details (boolean) Include function details.
+///                 - lines   (boolean) Include user function lines. Ignored for builtin
+///                           functions.
 /// @param[out] err Error details, if any
 /// @return Dictionary
 Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
