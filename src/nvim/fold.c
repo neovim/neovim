@@ -1336,7 +1336,7 @@ void foldMarkAdjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
   // If deleting marks from line1 to line2, but not deleting all those
   // lines, set line2 so that only deleted lines have their folds removed.
   if (amount == MAXLNUM && line2 >= line1 && line2 - line1 >= -amount_after) {
-    line2 = line1 - amount_after - 1;
+    line2 += amount_after;
   }
   // If appending a line in Insert mode, it should be included in the fold
   // just above the line.

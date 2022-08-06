@@ -395,6 +395,7 @@ describe('api/buf', function()
 
   describe('nvim_buf_set_text', function()
     local get_lines, set_text = curbufmeths.get_lines, curbufmeths.set_text
+    local set_lines = curbufmeths.set_lines
 
     it('works', function()
       insert([[
@@ -576,6 +577,43 @@ describe('api/buf', function()
         vim.api.nvim_buf_set_text(0, 0, 3, 1, 0, {''})
       ]])
       eq({'one', 'two'}, get_lines(0, 2, true))
+    end)
+
+    it('updates folds #19571', function()
+      local screen = Screen.new(40, 5)
+      screen:attach()
+      local lines = {
+        '',
+        'FOLD START',
+        '',
+        'FOLD END',
+        '',
+      }
+      set_lines(0, -1, false, lines)
+      command('2,4fold')
+      screen:expect{grid=[[
+        ^                                        |
+        +--  3 lines: FOLD START················|
+                                                |
+        ~                                       |
+                                                |
+      ]]}
+      set_lines(4, 5, false, {})
+      screen:expect{grid=[[
+        ^                                        |
+        +--  3 lines: FOLD START················|
+        ~                                       |
+        ~                                       |
+                                                |
+      ]]}
+      set_lines(0, -1, false, lines)
+      screen:expect{grid=[[
+        ^                                        |
+        FOLD START                              |
+                                                |
+        FOLD END                                |
+                                                |
+      ]]}
     end)
   end)
 
