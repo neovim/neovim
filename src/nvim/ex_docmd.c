@@ -1566,6 +1566,25 @@ static void shift_cmd_args(exarg_T *eap)
 
 static int execute_cmd0(int *retv, exarg_T *eap, const char **errormsg, bool preview)
 {
+  correct_range(eap);
+
+  if (((eap->argt & EX_WHOLEFOLD) || eap->addr_count >= 2) && !global_busy
+      && eap->addr_type == ADDR_LINES) {
+    // Put the first line at the start of a closed fold, put the last line
+    // at the end of a closed fold.
+    (void)hasFolding(eap->line1, &eap->line1, NULL);
+    (void)hasFolding(eap->line2, NULL, &eap->line2);
+  }
+
+  // Use first argument as count when possible
+  if (parse_count(eap, errormsg, true) == FAIL) {
+    return FAIL;
+  }
+
+  if (skip_cmd(eap)) {
+    return FAIL;
+  }
+
   // If filename expansion is enabled, expand filenames
   if (eap->argt & EX_XFILE) {
     if (expand_filename(eap, eap->cmdlinep, errormsg) == FAIL) {
@@ -1690,21 +1709,6 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
       && !(eap->cmdidx == CMD_file && *eap->arg == NUL)
       && !IS_USER_CMDIDX(eap->cmdidx)
       && curbuf_locked()) {
-    goto end;
-  }
-
-  correct_range(eap);
-
-  if (((eap->argt & EX_WHOLEFOLD) || eap->addr_count >= 2) && !global_busy
-      && eap->addr_type == ADDR_LINES) {
-    // Put the first line at the start of a closed fold, put the last line
-    // at the end of a closed fold.
-    (void)hasFolding(eap->line1, &eap->line1, NULL);
-    (void)hasFolding(eap->line2, NULL, &eap->line2);
-  }
-
-  // Use first argument as count when possible
-  if (parse_count(eap, &errormsg, true) == FAIL) {
     goto end;
   }
 
@@ -2157,16 +2161,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     ea.line2 = 1;
   }
 
-  correct_range(&ea);
-
-  if (((ea.argt & EX_WHOLEFOLD) || ea.addr_count >= 2) && !global_busy
-      && ea.addr_type == ADDR_LINES) {
-    // Put the first line at the start of a closed fold, put the last line
-    // at the end of a closed fold.
-    (void)hasFolding(ea.line1, &ea.line1, NULL);
-    (void)hasFolding(ea.line2, NULL, &ea.line2);
-  }
-
   // For the ":make" and ":grep" commands we insert the 'makeprg'/'grepprg'
   // option here, so things like % get expanded.
   p = replace_makeprg(&ea, p, cmdlinep);
@@ -2264,9 +2258,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   // Parse register and count
   parse_register(&ea);
-  if (parse_count(&ea, &errormsg, true) == FAIL) {
-    goto doend;
-  }
 
   // Check for flags: 'l', 'p' and '#'.
   if (ea.argt & EX_FLAGS) {
@@ -2281,10 +2272,6 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   if (!ni && (ea.argt & EX_NEEDARG) && *ea.arg == NUL) {
     errormsg = _(e_argreq);
-    goto doend;
-  }
-
-  if (skip_cmd(&ea)) {
     goto doend;
   }
 
