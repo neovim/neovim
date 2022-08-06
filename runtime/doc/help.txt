@@ -185,6 +185,7 @@ Other ~
 |channel.txt|		Nvim asynchronous IO
 |dev_style.txt|		Nvim style guide
 |job_control.txt|	Spawn and control multiple processes
+|lua51refvim.txt|	Lua 5.1 reference manual
 
 						*standard-plugin-list*
 Standard plugins ~
