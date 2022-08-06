@@ -3831,8 +3831,6 @@ describe('API', function()
         name = 'abs',
         type = 'builtin',
       }}, meths.get_functions('abs', {}))
-    end)
-    it('can get details about a builtin function', function ()
       eq({ abs = {
         name = 'abs',
         type = 'builtin',
@@ -3843,56 +3841,125 @@ describe('API', function()
       }}, meths.get_functions('abs', { details = true }))
     end)
 
-    describe('user function', function()
+    it('can get a user function', function()
+      nvim('exec', dedent[[
+        function! MyFun(x)
+          return a:x
+        endfunction]], false)
+
+      eq({ MyFun = {
+        name = 'MyFun',
+        type = 'user',
+      }}, meths.get_functions('MyFun', {}))
+      eq({ MyFun = {
+        name = 'MyFun',
+        type = 'user',
+        args = { { name = 'x' } },
+        varargs = false,
+        abort = false,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = -10,
+        lnum = 0,
+      }}, meths.get_functions('MyFun', { details = true }))
+      eq({ MyFun = {
+        name = 'MyFun',
+        type = 'user',
+        lines = { '  return a:x' },
+      }}, meths.get_functions('MyFun', { lines = true }))
+      eq({ MyFun = {
+        name = 'MyFun',
+        type = 'user',
+        args = { { name = 'x' } },
+        varargs = false,
+        abort = false,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = -10,
+        lnum = 0,
+        lines = { '  return a:x' },
+      }}, meths.get_functions('MyFun', { details = true, lines = true }))
+    end)
+
+    it('can get a script function', function()
+      nvim('exec', dedent[[
+        function! s:MyFun(x)
+          return a:x
+        endfunction]], false)
+      eq({ ['<SNR>1_MyFun'] = {
+        name = '<SNR>1_MyFun',
+        type = 'user',
+        args = { { name = 'x' } },
+        varargs = false,
+        abort = false,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = 1,
+        lnum = 0,
+      }}, meths.get_functions('<SNR>1_MyFun', { details = true }))
+    end)
+
+    describe('list', function()
       before_each(function()
         nvim('exec', dedent[[
           function! MyFun(x)
             return a:x
+          endfunction
+          function! s:MyFun(x)
+            return a:x
           endfunction]], false)
       end)
 
-      it('can get it', function ()
-        eq({ MyFun = {
-          name = 'MyFun',
-          type = 'user',
-        }}, meths.get_functions('MyFun', {}))
-      end)
-      it('can get details about it', function ()
-        eq({ MyFun = {
-          name = 'MyFun',
-          type = 'user',
-          args = { { name = 'x' } },
-          varargs = false,
-          abort = false,
-          range = false,
-          dict = false,
-          closure = false,
-          sid = -10,
-          lnum = 0,
-        }}, meths.get_functions('MyFun', { details = true }))
-      end)
-      it('can get its lines', function ()
-        eq({ MyFun = {
-          name = 'MyFun',
-          type = 'user',
-          lines = { '  return a:x' },
-        }}, meths.get_functions('MyFun', { lines = true }))
-      end)
-      it('can get both details and lines', function ()
-        eq({ MyFun = {
-          name = 'MyFun',
-          type = 'user',
-          args = { { name = 'x' } },
-          varargs = false,
-          abort = false,
-          range = false,
-          dict = false,
-          closure = false,
-          sid = -10,
-          lnum = 0,
-          lines = { '  return a:x' },
-        }}, meths.get_functions('MyFun', { details = true, lines = true }))
-      end)
+      for _, case in ipairs({
+        { builtin = true, user = true },
+        { builtin = true, user = false },
+        { builtin = true, global = true, script = true },
+        { builtin = true, global = false, script = false },
+        { builtin = true, global = true, script = false },
+        { builtin = true, global = false, script = true },
+        { builtin = false, global = true, script = false },
+        { builtin = false, global = false, script = true },
+      }) do
+        local name
+        if case.user then
+          name = ('builtin=%s user=%s'):format(case.builtin, case.user)
+        else
+          name = ('builtin=%s global=%s script=%s'):format(case.builtin, case.global, case.script)
+        end
+
+        it(name, function()
+          local fns = meths.get_functions(case, {})
+          if case.user ~= nil then
+            case.global = case.user
+            case.script = case.user
+          end
+          eq(case.builtin and { name='abs', type='builtin' } or nil, fns.abs)
+          eq(case.global and { name='MyFun', type='user' } or nil, fns.MyFun)
+          eq(case.script and { name='<SNR>1_MyFun', type='user' } or nil, fns['<SNR>1_MyFun'])
+        end)
+      end
+
+      for _, case in ipairs({
+        { user = true, script = true },
+        { user = true, global = true },
+        { user = true, global = true, script = true },
+      }) do
+        local name = 'user=true'
+        if case.global then name = name..' global=true' end
+        if case.script then name = name..' script=true' end
+
+        it('fails with '..name, function()
+          local status, rv = pcall(meths.get_functions, case, {})
+          eq(false, status)
+        end)
+      end
+    end)
+
+    it('returns empty dict when function was not found', function()
+      eq({}, meths.get_functions('Nothing', {}))
     end)
   end)
 end)
