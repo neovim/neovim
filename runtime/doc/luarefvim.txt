@@ -98,12 +98,12 @@ procedural programming with data description facilities.  It also offers good
 support for object-oriented programming, functional programming, and
 data-driven programming.  Lua is intended to be used as a powerful,
 light-weight scripting language for any program that needs one.  Lua is
-implemented as a library, written in@clean@C (that is, in the common subset
+implemented as a library, written in `clean` C (that is, in the common subset
 of ANSI C and C++).
 
 Being an extension language, Lua has no notion of a "main" program: it only
-works@embedded@in a host client, called the@embedding program@or simply
-the@host@. This host program can invoke functions to execute a piece of Lua
+works `embedded` in a host client, called the `embedding program` or simply
+the `host` . This host program can invoke functions to execute a piece of Lua
 code, can write and read Lua variables, and can register C functions to be
 called by Lua code.  Through the use of C functions, Lua can be augmented to
 cope with a wide range of different domains, thus creating customized
@@ -119,7 +119,7 @@ Lua's official web site, `www.lua.org` .
 Like any other reference manual, this document is dry in places. For a
 discussion of the decisions behind the design of Lua, see references at
 |luaref-bibliography|. For a detailed introduction to programming in Lua, see
-Roberto's book,@Programming in Lua@.
+Roberto's book, `Programming in Lua` .
 
 Lua means "moon" in Portuguese and is pronounced LOO-ah.
 
@@ -133,8 +133,8 @@ other words, this section describes which tokens are valid, how they can be
 combined, and what their combinations mean.
 
 The language constructs will be explained using the usual extended BNF
-notation, in which {@a@} means 0 or more@a@'s, and [@a@] means an optional@a@.
-Non-terminals are shown in@italics@, keywords are shown in#bold#, and other
+notation, in which { `a` } means 0 or more `a` 's, and [ `a` ] means an optional `a` .
+Non-terminals are shown in `italics` , keywords are shown in#bold#, and other
 terminal symbols are shown in `typewriter` color, enclosed in single quotes.
 
 
@@ -143,14 +143,14 @@ terminal symbols are shown in `typewriter` color, enclosed in single quotes.
 
 
                                                  *luaref-names* *luaref-identifiers*
-@Names@(also called@identifiers@) in Lua can be any string of letters, digits,
+ `Names` (also called `identifiers` ) in Lua can be any string of letters, digits,
 and underscores, not beginning with a digit. This coincides with the
 definition of identifiers in most languages. (The definition of letter depends
 on the current locale: any character considered alphabetic by the current
 locale can be used in an identifier.) Identifiers are used to name variables
 and table fields.
 
-The following@keywords@are reserved and cannot be used as names:
+The following `keywords` are reserved and cannot be used as names:
 >
        and       break     do        else      elseif
        end       false     for       function  if
@@ -170,7 +170,7 @@ The following strings denote other tokens:
        ;     :     ,     .     ..    ...
 >
                                                                  *luaref-literal*
-@Literal strings@can be delimited by matching single or double quotes, and can
+ `Literal strings` can be delimited by matching single or double quotes, and can
 contain the following C-like escape sequences:
 
   #o# `\a` : bell
@@ -186,7 +186,7 @@ contain the following C-like escape sequences:
 
 Moreover, a backslash followed by a real newline results in a newline in the
 string. A character in a string may also be specified by its numerical value
-using the escape sequence ``\ddd'` , where@ddd@is a sequence of up to three
+using the escape sequence ``\ddd'` , where `ddd` is a sequence of up to three
 decimal digits. (Note that if a numerical escape is to be followed by a digit,
 it must be expressed using exactly three digits.) Strings in Lua may contain
 any 8-bit value, including embedded zeros, which can be specified as ``\0'` .
@@ -198,11 +198,11 @@ literal. (Some control characters may cause problems for the file system, but
 Lua has no problem with them.)
 
 Literal strings can also be defined using a long format enclosed by
-@long brackets@. We define an@opening long bracket of level n@as an opening
-square bracket followed by@n@ equal signs followed by another opening square
+ `long brackets` . We define an `opening long bracket of level n` as an opening
+square bracket followed by `n`  equal signs followed by another opening square
 bracket. So, an opening long bracket of level 0 is written as `[[` , an opening
 long bracket of level 1 is written as `[=[` , and so on.
-A@closing long bracket@is defined similarly; for instance, a closing long
+A `closing long bracket` is defined similarly; for instance, a closing long
 bracket of level 4 is written as `]====]` . A long string starts with an opening
 long bracket of any level and ends at the first closing long bracket of the
 same level. Literals in this bracketed form may run for several lines, do not
@@ -224,41 +224,41 @@ coded as 49), the five literals below denote the same string:
        123"]==]
 >
                                                              *luaref-numconstant*
-A@numerical constant@may be written with an optional decimal part and an
+A `numerical constant` may be written with an optional decimal part and an
 optional decimal exponent. Lua also accepts integer hexadecimal constants, by
 prefixing them with `0x` . Examples of valid numerical constants are
 >
      3     3.0     3.1416  314.16e-2   0.31416E1   0xff   0x56
 >
                                                                  *luaref-comment*
-A@comment@starts with a double hyphen ( `--` ) anywhere outside a string. If the
+A `comment` starts with a double hyphen ( `--` ) anywhere outside a string. If the
 text immediately after `--` is not an opening long bracket, the comment is
-a@short comment@, which runs until the end of the line. Otherwise, it is
-a@long comment@, which runs until the corresponding closing long bracket. Long
+a `short comment` , which runs until the end of the line. Otherwise, it is
+a `long comment` , which runs until the corresponding closing long bracket. Long
 comments are frequently used to disable code temporarily.
 
 ==============================================================================
 2.2  Values and Types                                       *luaref-langValTypes*
 
 
-Lua is a@dynamically typed language@. This means that variables do not have
+Lua is a `dynamically typed language` . This means that variables do not have
 types; only values do. There are no type definitions in the language. All
 values carry their own type.
 
-All values in Lua are@first-class values@. This means that all values can be
+All values in Lua are `first-class values` . This means that all values can be
 stored in variables, passed as arguments to other functions, and returned as
 results.
 
         *luaref-types* *luaref-nil* *luaref-true* *luaref-false* *luaref-number* *luaref-string*
-There are eight basic types in Lua:@nil@,@boolean@,@number@,@string@,
-@function@,@userdata@,@thread@, and@table@.@Nil@is the type of the value#nil#,
+There are eight basic types in Lua: `nil` , `boolean` , `number` , `string` ,
+ `function` , `userdata` , `thread` , and `table` . `Nil` is the type of the value#nil#,
 whose main property is to be different from any other value; it usually
-represents the absence of a useful value.@Boolean@is the type of the
+represents the absence of a useful value. `Boolean` is the type of the
 values#false#and#true#. Both#nil#and#false#make a condition false; any other
-value makes it true.@Number@represents real (double-precision floating-point)
+value makes it true. `Number` represents real (double-precision floating-point)
 numbers. (It is easy to build Lua interpreters that use other internal
 representations for numbers, such as single-precision float or long
-integers; see file `luaconf.h` .)@String@represents arrays of characters. Lua is
+integers; see file `luaconf.h` .) `String` represents arrays of characters. Lua is
 8-bit clean: strings may contain any 8-bit character, including embedded zeros
 ( `'\0'` ) (see |luaref-literal|).
 
@@ -266,24 +266,24 @@ Lua can call (and manipulate) functions written in Lua and functions written
 in C (see |luaref-langFuncCalls|).
 
                                                             *luaref-userdatatype*
-The type@userdata@is provided to allow arbitrary C data to be stored in Lua
+The type `userdata` is provided to allow arbitrary C data to be stored in Lua
 variables. This type corresponds to a block of raw memory and has no
 pre-defined operations in Lua, except assignment and identity test. However,
-by using@metatables@, the programmer can define operations for userdata values
+by using `metatables` , the programmer can define operations for userdata values
 (see |luaref-langMetatables|). Userdata values cannot be created or modified in
 Lua, only through the C API. This guarantees the integrity of data owned by
 the host program.
 
                                                                   *luaref-thread*
-The type@thread@represents independent threads of execution and it is used to
+The type `thread` represents independent threads of execution and it is used to
 implement coroutines (see |luaref-langCoro|). Do not confuse Lua threads with
 operating-system threads. Lua supports coroutines on all systems, even those
 that do not support threads.
 
                                                                    *luaref-table*
-The type@table@implements associative arrays, that is, arrays that can be
+The type `table` implements associative arrays, that is, arrays that can be
 indexed not only with numbers, but with any value (except#nil#). Tables can
-be@heterogeneous@; that is, they can contain values of all types
+be `heterogeneous` ; that is, they can contain values of all types
 (except#nil#). Tables are the sole data structuring mechanism in Lua; they may
 be used to represent ordinary arrays, symbol tables, sets, records, graphs,
 trees, etc. To represent records, Lua uses the field name as an index. The
@@ -293,10 +293,10 @@ for `a["name"]` . There are several convenient ways to create tables in Lua (see
 
 Like indices, the value of a table field can be of any type (except#nil#). In
 particular, because functions are first-class values, table fields may contain
-functions. Thus tables may also carry@methods@(see |luaref-langFuncDefs|).
+functions. Thus tables may also carry `methods` (see |luaref-langFuncDefs|).
 
-Tables, functions, threads and (full) userdata values are@objects@: variables
-do not actually@contain@these values, only@references@to them. Assignment,
+Tables, functions, threads and (full) userdata values are `objects` : variables
+do not actually `contain` these values, only `references` to them. Assignment,
 parameter passing, and function returns always manipulate references to such
 values; these operations do not imply any kind of copy.
 
@@ -331,7 +331,7 @@ function's formal parameter, which is a particular form of local variable):
 Name denotes identifiers, as defined in |luaref-langLexConv|.
 
 Any variable is assumed to be global unless explicitly declared as a local
-(see |luaref-langLocalDec|). Local variables are@lexically scoped@: local
+(see |luaref-langLocalDec|). Local variables are `lexically scoped` : local
 variables can be freely accessed by functions defined inside their scope (see
 |luaref-langVisibRules|).
 
@@ -341,8 +341,8 @@ Square brackets are used to index a table:
 
        `var ::= prefixexp` #`['# `exp` #`]'#
 
-The first expression (@prefixexp@) should result in a table value; the second
-expression (@exp@) identifies a specific entry inside that table. The
+The first expression ( `prefixexp` ) should result in a table value; the second
+expression ( `exp` ) identifies a specific entry inside that table. The
 expression denoting the table to be indexed has a restricted syntax; see
 |luaref-langExpressions| for details.
 
@@ -351,7 +351,7 @@ The syntax `var.NAME` is just syntactic sugar for `var["NAME"]` :
        `var ::= prefixexp` #`.'# `Name`
 
 All global variables live as fields in ordinary Lua tables, called
-@environment tables@or simply@environments@(see |luaref-langEnvironments|).
+ `environment tables` or simply `environments` (see |luaref-langEnvironments|).
 Each function has its own reference to an environment, so that all global
 variables in this function will refer to this environment table. When a
 function is created, it inherits the environment from the function that
@@ -388,7 +388,7 @@ calls, and variable declarations.
 2.4.1  Chunks                                     *luaref-chunk* *luaref-langChunks*
 
 
-The unit of execution of Lua is called a@chunk@. A chunk is simply a sequence
+The unit of execution of Lua is called a `chunk` . A chunk is simply a sequence
 of statements, which are executed sequentially. Each statement can be
 optionally followed by a semicolon:
 
@@ -443,7 +443,7 @@ side. The elements in both lists are separated by commas:
 
 Expressions are discussed in |luaref-langExpressions|.
 
-Before the assignment, the list of values is@adjusted@to the length of the
+Before the assignment, the list of values is `adjusted` to the length of the
 list of variables. If there are more values than needed, the excess values are
 thrown away. If there are fewer values than needed, the list is extended with
 as many#nil#'s as needed. If the list of expressions ends with a function
@@ -518,7 +518,7 @@ or#for#loop, skipping to the next statement after the loop:
 
 A#break#ends the innermost enclosing loop.
 
-The#return#and#break#statements can only be written as the@last@statement of a
+The#return#and#break#statements can only be written as the `last` statement of a
 block. If it is really necessary to#return#or#break#in the middle of a block,
 then an explicit inner block can be used, as in the idioms
  ``do return end'` and ``do break end'` , because now#return#and#break#are the
@@ -536,21 +536,21 @@ through an arithmetic progression. It has the following syntax:
 
        `stat ::=` #for# `Name` #`='# `exp` #`,'# `exp [` #`,'# `exp ]` #do# `block` #end#
 
-The@block@is repeated for@name@starting at the value of the first@exp@, until
-it passes the second@exp@by steps of the third@exp@. More precisely,
+The `block` is repeated for `name` starting at the value of the first `exp` , until
+it passes the second `exp` by steps of the third `exp` . More precisely,
 a#for#statement like
 
-       `for var =` @e1, e2, e3@ `do` @block@ `end`
+       `for var =`  `e1, e2, e3`  `do`  `block`  `end`
 
 is equivalent to the code:
 
        `do`
-         `local` @var, limit, step@ `= tonumber(e1), tonumber(e2), tonumber(e3)`
-         `if not (` @var@ `and` @limit@ `and` @step@ `) then error() end`
-         `while (` @step@ `>0 and` @var@ `<=` @limit@ `)`
-                 `or (` @step@ `<=0 and` @var@ `>=` @limit@ `) do`
+         `local`  `var, limit, step`  `= tonumber(e1), tonumber(e2), tonumber(e3)`
+         `if not (`  `var`  `and`  `limit`  `and`  `step`  `) then error() end`
+         `while (`  `step`  `>0 and`  `var`  `<=`  `limit`  `)`
+                 `or (`  `step`  `<=0 and`  `var`  `>=`  `limit`  `) do`
             `block`
-           @var@ `=` @var@ `+` @step@
+            `var`  `=`  `var`  `+`  `step`
          `end`
        `end`
 
@@ -558,7 +558,7 @@ Note the following:
 
   #o#All three control expressions are evaluated only once, before the loop
      starts. They must all result in numbers.
-  #o#@var@,@limit@and@step@are invisible variables. The names are here for
+  #o# `var` , `limit` and `step` are invisible variables. The names are here for
      explanatory purposes only.
   #o#If the third expression (the step) is absent, then a step of 1 is used.
   #o#You can use#break#to exit a#for#loop.
@@ -567,7 +567,7 @@ Note the following:
      another variable before breaking or exiting the loop.
 
                                                                       *luaref-in*
-The generic#for#statement works over functions, called@iterators@. On each
+The generic#for#statement works over functions, called `iterators` . On each
 iteration, the iterator function is called to produce a new value, stopping
 when this new value is#nil#. The generic#for#loop has the following syntax:
 
@@ -576,28 +576,28 @@ when this new value is#nil#. The generic#for#loop has the following syntax:
 
 A#for#statement like
 
-       `for` @var1, ..., varn@ `in` @explist@ `do` @block@ `end`
+       `for`  `var1, ..., varn`  `in`  `explist`  `do`  `block`  `end`
 
 is equivalent to the code:
 
        `do`
-         `local` @f, s, var@ `=` @explist@
+         `local`  `f, s, var`  `=`  `explist`
          `while true do`
-             `local` @var1, ..., varn@ `=` @f(s, var)@
-            @var@ `=` @var1@
-             `if` @var@ `== nil then break end`
-            @block@
+             `local`  `var1, ..., varn`  `=`  `f(s, var)`
+             `var`  `=`  `var1`
+             `if`  `var`  `== nil then break end`
+             `block`
          `end`
        `end`
 
 Note the following:
 
-  #o#@explist@is evaluated only once. Its results are an@iterator@function,
-     a@state@, and an initial value for the first@iterator variable@.
-  #o#@f@,@s@, and@var@are invisible variables. The names are here for
+  #o# `explist` is evaluated only once. Its results are an `iterator` function,
+     a `state` , and an initial value for the first `iterator variable` .
+  #o# `f` , `s` , and `var` are invisible variables. The names are here for
      explanatory purposes only.
   #o#You can use#break#to exit a#for#loop.
-  #o#The loop variables@var1, ..., varn@are local to the loop; you cannot use
+  #o#The loop variables `var1, ..., varn` are local to the loop; you cannot use
      their values after the#for#ends. If you need these values, then assign
      them to other variables before breaking or exiting the loop.
 
@@ -664,7 +664,7 @@ Binary operators comprise arithmetic operators (see |luaref-langArithOp|),
 relational operators (see |luaref-langRelOp|), logical operators (see
 |luaref-langLogOp|), and the concatenation operator (see |luaref-langConcat|).
 Unary operators comprise the unary minus (see |luaref-labgArithOp|), the unary
-#not# (see |luaref-langLogOp|), and the unary@length operator@(see
+#not# (see |luaref-langLogOp|), and the unary `length operator` (see
 |luaref-langLength|).
 
 Both function calls and vararg expressions may result in multiple values. If
@@ -732,15 +732,15 @@ These operators always result in#false#or#true#.
 Equality ( `==` ) first compares the type of its operands. If the types are
 different, then the result is#false#. Otherwise, the values of the operands
 are compared. Numbers and strings are compared in the usual way. Objects
-(tables, userdata, threads, and functions) are compared by@reference@: two
-objects are considered equal only if they are the@same@object. Every time you
+(tables, userdata, threads, and functions) are compared by `reference` : two
+objects are considered equal only if they are the `same` object. Every time you
 create a new object (a table, userdata, or function), this new object is
 different from any previously existing object.
 
 You can change the way that Lua compares tables and userdata using the "eq"
 metamethod (see |luaref-langMetatables|).
 
-The conversion rules of coercion |luaref-langCoercion|@do not@apply to equality
+The conversion rules of coercion |luaref-langCoercion| `do not` apply to equality
 comparisons. Thus, `"0"==0` evaluates to#false#, and `t[0]` and `t["0"]` denote
 different entries in a table.
 
@@ -885,18 +885,18 @@ A function call in Lua has the following syntax:
 >
        functioncall ::= prefixexp args
 >
-In a function call, first@prefixexp@and@args@are evaluated. If the value
-of@prefixexp@has type@function@, then this function is called with the given
-arguments. Otherwise, the@prefixexp@"call" metamethod is called, having as
-first parameter the value of@prefixexp@, followed by the original call
+In a function call, first `prefixexp` and `args` are evaluated. If the value
+of `prefixexp` has type `function` , then this function is called with the given
+arguments. Otherwise, the `prefixexp` "call" metamethod is called, having as
+first parameter the value of `prefixexp` , followed by the original call
 arguments (see |luaref-langMetatables|).
 
 The form
 
        `functioncall ::= prefixexp` #`:'# `Name args`
 
-can be used to call "methods". A call `v:name(` @args@ `)` is syntactic sugar
-for `v.name(v,` @args@ `)` , except that `v` is evaluated only once.
+can be used to call "methods". A call `v:name(`  `args`  `)` is syntactic sugar
+for `v.name(v,`  `args`  `)` , except that `v` is evaluated only once.
 
 Arguments have the following syntax:
 
@@ -905,10 +905,10 @@ Arguments have the following syntax:
        `args ::= String`
 
 All argument expressions are evaluated before the call.  A call of the
-form `f{` @fields@ `}` is syntactic sugar for  `f({` @fields@ `})` , that is, the
-argument list is a single new table. A call of the form `f'` @string@ `'`
-(or `f"` @string@ `"` or `f[[` @string@ `]]` ) is syntactic sugar for
- `f('` @string@ `')` , that is, the argument list is a single literal string.
+form `f{`  `fields`  `}` is syntactic sugar for  `f({`  `fields`  `})` , that is, the
+argument list is a single new table. A call of the form `f'`  `string`  `'`
+(or `f"`  `string`  `"` or `f[[`  `string`  `]]` ) is syntactic sugar for
+ `f('`  `string`  `')` , that is, the argument list is a single literal string.
 
 As an exception to the free-format syntax of Lua, you cannot put a line break
 before the `'('`  in a function call. This restriction avoids some ambiguities
@@ -922,8 +922,8 @@ statements, you must add a semi-colon between them. If you actually want to
 call `f` , you must remove the line break before `(g)` .
 
                                                                 *luaref-tailcall*
-A call of the form `return` @functioncall@is called a@tail call@. Lua
-implements@proper tail calls@(or@proper tail recursion@): in a tail call, the
+A call of the form `return`  `functioncall` is called a `tail call` . Lua
+implements `proper tail calls` (or `proper tail recursion` ): in a tail call, the
 called function reuses the stack entry of the calling function. Therefore,
 there is no limit on the number of nested tail calls that a program can
 execute. However, a tail call erases any debug information about the calling
@@ -956,40 +956,40 @@ The following syntactic sugar simplifies function definitions:
 
 The statement
 
-       `function f ()` @body@ `end`
+       `function f ()`  `body`  `end`
 
 translates to
 
-       `f = function ()` @body@ `end`
+       `f = function ()`  `body`  `end`
 
 The statement
 
-       `function t.a.b.c.f ()` @body@ `end`
+       `function t.a.b.c.f ()`  `body`  `end`
 
 translates to
 
-       `t.a.b.c.f = function ()` @body@ `end`
+       `t.a.b.c.f = function ()`  `body`  `end`
 
 The statement
 
-       `local function f ()` @body@ `end`
+       `local function f ()`  `body`  `end`
 
 translates to
 
-       `local f; f = function f ()` @body@ `end`
+       `local f; f = function f ()`  `body`  `end`
 
-@not@to
+ `not` to
 
-       `local f = function f ()` @body@ `end`
+       `local f = function f ()`  `body`  `end`
 
 (This only makes a difference when the body of the function contains
 references to `f` .)
 
                                                                  *luaref-closure*
 A function definition is an executable expression, whose value has
-type@function@. When Lua pre-compiles a chunk, all its function bodies are
+type `function` . When Lua pre-compiles a chunk, all its function bodies are
 pre-compiled too. Then, whenever Lua executes the function definition, the
-function is@instantiated@(or@closed@). This function instance (or@closure@)
+function is `instantiated` (or `closed` ). This function instance (or `closure` )
 is the final value of the expression. Different instances of the same
 function may refer to different external local variables and may have
 different environment tables.
@@ -1001,10 +1001,10 @@ values:
 
                                                                   *luaref-vararg*
 When a function is called, the list of arguments is adjusted to the length of
-the list of parameters, unless the function is a variadic or@vararg function@,
+the list of parameters, unless the function is a variadic or `vararg function` ,
 which is indicated by three dots ( ``...'` ) at the end of its parameter list.
 A vararg function does not adjust its argument list; instead, it collects all
-extra arguments and supplies them to the function through a@vararg expression@,
+extra arguments and supplies them to the function through a `vararg expression` ,
 which is also written as three dots. The value of this expression is a list of
 all actual extra arguments, similar to a function with multiple results. If a
 vararg expression is used inside another expression or in the middle of a list
@@ -1039,14 +1039,14 @@ If control reaches the end of a function without encountering
 a#return#statement, then the function returns with no results.
 
                                                              *luaref-colonsyntax*
-The@colon@syntax is used for defining@methods@, that is, functions that have
+The `colon` syntax is used for defining `methods` , that is, functions that have
 an implicit extra parameter `self` . Thus, the statement
 
-       `function t.a.b.c:f (` @params@ `)` @body@ `end`
+       `function t.a.b.c:f (`  `params`  `)`  `body`  `end`
 
 is syntactic sugar for
 
-       `t.a.b.c:f = function (self, (` @params@ `)` @body@ `end`
+       `t.a.b.c:f = function (self, (`  `params`  `)`  `body`  `end`
 
 
 ==============================================================================
@@ -1054,7 +1054,7 @@ is syntactic sugar for
 
 
 Lua is a lexically scoped language. The scope of variables begins at the
-first statement@after@their declaration and lasts until the end of the
+first statement `after` their declaration and lasts until the end of the
 innermost block that includes the declaration. Consider the following example:
 >
        x = 10                -- global variable
@@ -1076,7 +1076,7 @@ not in scope yet, and so the second `x` refers to the outside variable.
                                                                  *luaref-upvalue*
 Because of the lexical scoping rules, local variables can be freely accessed
 by functions defined inside their scope. A local variable used by an inner
-function is called an@upvalue@, or@external local variable@, inside the inner
+function is called an `upvalue` , or `external local variable` , inside the inner
 function.
 
 Notice that each execution of a#local#statement defines new local variables.
@@ -1113,7 +1113,7 @@ the `pcall` function (see |luaref-pcall|).
 2.8  Metatables                           *luaref-metatable* *luaref-langMetatables*
 
 
-Every value in Lua may have a@metatable@. This@metatable@is an ordinary Lua
+Every value in Lua may have a `metatable` . This `metatable` is an ordinary Lua
 table that defines the behavior of the original table and userdata under
 certain special operations. You can change several aspects of the behavior of
 an object by setting specific fields in its metatable. For instance, when a
@@ -1121,7 +1121,7 @@ non-numeric value is the operand of an addition, Lua checks for a function in
 the field `"__add"` in its metatable. If it finds one, Lua calls that function
 to perform the addition.
 
-We call the keys in a metatable@events@and the values@metamethods@. In the
+We call the keys in a metatable `events` and the values `metamethods` . In the
 previous example, the event is `"add"` and the metamethod is the function that
 performs the addition.
 
@@ -1140,10 +1140,10 @@ numbers, and for all strings, etc.
 A metatable may control how an object behaves in arithmetic operations, order
 comparisons, concatenation, length operation, and indexing. A metatable can
 also define a function to be called when a userdata is garbage collected. For
-each of those operations Lua associates a specific key called an@event@. When
+each of those operations Lua associates a specific key called an `event` . When
 Lua performs one of those operations over a value, it checks whether this
 value has a metatable with the corresponding event. If so, the value
-associated with that key (the@metamethod@) controls how Lua will perform the
+associated with that key (the `metamethod` ) controls how Lua will perform the
 operation.
 
 Metatables control the operations listed next. Each operation is identified by
@@ -1429,14 +1429,14 @@ called when Lua calls a value.
 
 
 Besides metatables, objects of types thread, function, and userdata have
-another table associated with them, called their@environment@. Like
+another table associated with them, called their `environment` . Like
 metatables, environments are regular tables and multiple objects can share the
 same environment.
 
 Environments associated with userdata have no meaning for Lua. It is only a
 convenience feature for programmers to associate a table to a userdata.
 
-Environments associated with threads are called@global environments@. They are
+Environments associated with threads are called `global environments` . They are
 used as the default environment for their threads and non-nested functions
 created by the thread (through `loadfile` |luaref-loadfile|,
  `loadstring` |luaref-loadstring| or `load` |luaref-load|) and can be directly accessed
@@ -1465,14 +1465,14 @@ threads) you must use the C API.
 Lua performs automatic memory management. This means that you do not have to
 worry neither about allocating memory for new objects nor about freeing it
 when the objects are no longer needed. Lua manages memory automatically by
-running a@garbage collector@from time to time to collect all@dead objects@
+running a `garbage collector` from time to time to collect all `dead objects`
 (that is, these objects that are no longer accessible from Lua). All objects
 in Lua are subject to automatic management: tables, userdata, functions,
 threads, and strings.
 
 Lua implements an incremental mark-and-sweep collector. It uses two numbers to
-control its garbage-collection cycles: the@garbage-collector pause@and the
-@garbage-collector step multiplier@.
+control its garbage-collection cycles: the `garbage-collector pause` and the
+ `garbage-collector step multiplier` .
 
 The garbage-collector pause controls how long the collector waits before
 starting a new cycle. Larger values make the collector less aggressive. Values
@@ -1499,7 +1499,7 @@ it).
 
 
 Using the C API, you can set garbage-collector metamethods for userdata (see
-|luaref-langMetatables|). These metamethods are also called@finalizers@.
+|luaref-langMetatables|). These metamethods are also called `finalizers` .
 Finalizers allow you to coordinate Lua's garbage collection with external
 resource management (such as closing files, network or database connections,
 or freeing your own memory).
@@ -1518,7 +1518,7 @@ userdata in that list:
        end
 >
 At the end of each garbage-collection cycle, the finalizers for userdata are
-called in@reverse@order of their creation, among these collected in that
+called in `reverse` order of their creation, among these collected in that
 cycle. That is, the first finalizer to be called is the one associated with
 the userdata created last in the program.
 
@@ -1527,7 +1527,7 @@ the userdata created last in the program.
 2.10.2 - Weak Tables                      *luaref-weaktable* *luaref-langWeaktables*
 
 
-A@weak table@is a table whose elements are@weak references@. A weak reference
+A `weak table` is a table whose elements are `weak references` . A weak reference
 is ignored by the garbage collector. In other words, if the only references to
 an object are weak references, then the garbage collector will collect this
 object.
@@ -1551,7 +1551,7 @@ metatable is undefined.
 2.11  Coroutines                                *luaref-coroutine* *luaref-langCoro*
 
 
-Lua supports coroutines, also called@collaborative multithreading@.
+Lua supports coroutines, also called `collaborative multithreading` .
 A coroutine in Lua represents an independent thread of execution. Unlike
 threads in multithread systems, however, a coroutine only suspends its
 execution by explicitly calling a yield function.
@@ -1559,14 +1559,14 @@ execution by explicitly calling a yield function.
 You create a coroutine with a call to `coroutine.create` (see
 |luaref-coroutine.create|). Its sole argument is a function that is the main
 function of the coroutine. The `create` function only creates a new coroutine
-and returns a handle to it (an object of type@thread@); it does not start the
+and returns a handle to it (an object of type `thread` ); it does not start the
 coroutine execution.
 
 When you first call `coroutine.resume` (see |luaref-coroutine.resume|), passing as
 its first argument the thread returned by `coroutine.create` , the coroutine
 starts its execution, at the first line of its main function. Extra arguments
 passed to `coroutine.resume` are passed on to the coroutine main function. After
-the coroutine starts running, it runs until it terminates or@yields@.
+the coroutine starts running, it runs until it terminates or `yields` .
 
 A coroutine can terminate its execution in two ways: normally, when its main
 function returns (explicitly or implicitly, after the last instruction); and
@@ -1636,7 +1636,7 @@ available to the host program to communicate with Lua. All API functions and
 related types and constants are declared in the header file `lua.h` .
 
 Even when we use the term "function", any facility in the API may be provided
-as a@macro@instead. All such macros use each of its arguments exactly once
+as a `macro` instead. All such macros use each of its arguments exactly once
 (except for the first argument, which is always a Lua state), and so do not
 generate hidden side-effects.
 
@@ -1649,7 +1649,7 @@ Lua with a proper definition for the macro `luai_apicheck` ,in file `luaconf.h` 
 3.1  The Stack                                      *luaref-stack* *luaref-apiStack*
 
 
-Lua uses a@virtual stack@to pass values to and from C. Each element in this
+Lua uses a `virtual stack` to pass values to and from C. Each element in this
 stack represents a Lua value (#nil#, number, string, etc.).
 
 Whenever Lua calls C, the called function gets a new stack, which is
@@ -1661,13 +1661,13 @@ is where the C function pushes its results to be returned to the caller (see
                                                               *luaref-stackindex*
 For convenience, most query operations in the API do not follow a strict stack
 discipline. Instead, they can refer to any element in the stack by using an
-@index@: a positive index represents an@absolute@stack position (starting
-at 1); a negative index represents an@offset@from the top of the stack.
-More specifically, if the stack has@n@elements, then index 1 represents the
+ `index` : a positive index represents an `absolute` stack position (starting
+at 1); a negative index represents an `offset` from the top of the stack.
+More specifically, if the stack has `n` elements, then index 1 represents the
 first element (that is, the element that was pushed onto the stack first) and
-index@n@represents the last element; index@-1@also represents the last element
-(that is, the element at the top) and index@-n@represents the first element.
-We say that an index is@valid@if it lies between 1 and the stack top (that is,
+index `n` represents the last element; index `-1` also represents the last element
+(that is, the element at the top) and index `-n` represents the first element.
+We say that an index is `valid` if it lies between 1 and the stack top (that is,
 if `1 <= abs(index) <= top` ).
 
 
@@ -1676,7 +1676,7 @@ if `1 <= abs(index) <= top` ).
 
 
 When you interact with Lua API, you are responsible for ensuring consistency.
-In particular, @you are responsible for controlling stack overflow@. You can
+In particular,  `you are responsible for controlling stack overflow` . You can
 use the function `lua_checkstack` to grow the stack size (see
 |luaref-lua_checkstack|).
 
@@ -1687,8 +1687,8 @@ the stack.
 
 Most query functions accept as indices any value inside the available stack
 space, that is, indices up to the maximum stack size you have set
-through `lua_checkstack` . Such indices are called@acceptable indices@. More
-formally, we define an@acceptable index@as follows:
+through `lua_checkstack` . Such indices are called `acceptable indices` . More
+formally, we define an `acceptable index` as follows:
 >
     (index < 0 && abs(index) <= top) || (index > 0 && index <= stackspace)
 >
@@ -1700,7 +1700,7 @@ Note that 0 is never an acceptable index.
 
 
 Unless otherwise noted, any function that accepts valid indices can also be
-called with@pseudo-indices@, which represent some Lua values that are
+called with `pseudo-indices` , which represent some Lua values that are
 accessible to the C code but which are not in the stack. Pseudo-indices are
 used to access the thread environment, the function environment, the registry,
 and the upvalues of a C function (see |luaref-apiCClosures|).
@@ -1721,7 +1721,7 @@ global variable, do
 
 
 When a C function is created, it is possible to associate some values with it,
-thus creating a@C closure@; these values are called@upvalues@and are
+thus creating a `C closure` ; these values are called `upvalues` and are
 accessible to the function whenever it is called (see |luaref-lua_pushcclosure|).
 
 
@@ -1729,7 +1729,7 @@ Whenever a C function is called, its upvalues are located at specific
 pseudo-indices. These pseudo-indices are produced by the macro
  `lua_upvalueindex` (see |luaref-lua_upvalueindex|). The first value associated
 with a function is at position `lua_upvalueindex(1)` , and so on. Any access to
- `lua_upvalueindex(` @n@ `)` , where@n@is greater than the number of upvalues of
+ `lua_upvalueindex(`  `n`  `)` , where `n` is greater than the number of upvalues of
 the current function, produces an acceptable (but invalid) index.
 
 
@@ -1737,7 +1737,7 @@ the current function, produces an acceptable (but invalid) index.
 3.5  Registry                                 *luaref-registry* *luaref-apiRegistry*
 
 
-Lua provides a@registry@, a pre-defined table that can be used by any
+Lua provides a `registry` , a pre-defined table that can be used by any
 C code to store whatever Lua value it needs to store. This table is always
 located at pseudo-index `LUA_REGISTRYINDEX` . Any C library can store data into
 this table, but it should take care to choose keys different from those used
@@ -1757,8 +1757,8 @@ other purposes.
 Internally, Lua uses the C `longjmp` facility to handle errors. (You can also
 choose to use exceptions if you use C++; see file `luaconf.h` .) When Lua faces
 any error (such as memory allocation errors, type errors, syntax errors, and
-runtime errors) it@raises@an error; that is, it does a long jump.
-A@protected environment@uses `setjmp` to set a recover point; any error jumps to
+runtime errors) it `raises` an error; that is, it does a long jump.
+A `protected environment` uses `setjmp` to set a recover point; any error jumps to
 the most recent active recover point.
 
 Almost any function in the API may raise an error, for instance due to a
@@ -1826,8 +1826,8 @@ behaviors.
 >
 Sets a new panic function and returns the old one.
 
-If an error happens outside any protected environment, Lua calls a@panic@
-@function@and then calls `exit(EXIT_FAILURE)` , thus exiting the host
+If an error happens outside any protected environment, Lua calls a `panic`
+ `function` and then calls `exit(EXIT_FAILURE)` , thus exiting the host
 application. Your panic function may avoid this exit by never returning (e.g.,
 doing a long jump).
 
@@ -1848,7 +1848,7 @@ you call `lua_call` ; `nargs` is the number of arguments that you pushed onto th
 stack. All arguments and the function value are popped from the stack when the
 function is called. The function results are pushed onto the stack when the
 function returns. The number of results is adjusted to `nresults` , unless
- `nresults` is `LUA_MULTRET` . In this case,@all@results from the function are
+ `nresults` is `LUA_MULTRET` . In this case, `all` results from the function are
 pushed. Lua takes care that the returned values fit into the stack space. The
 function results are pushed onto the stack in direct order (the first result
 is pushed first), so that after the call the last result is on the top of the
@@ -2037,11 +2037,11 @@ This function performs several tasks, according to the value of the parameter
       non-specified way. If you want to control the step size you must
       experimentally tune the value of `data` . The function returns 1 if the
       step finished a garbage-collection cycle.
-  #o# `LUA_GCSETPAUSE` : sets `data` /100 as the new value for the@pause@of the
+  #o# `LUA_GCSETPAUSE` : sets `data` /100 as the new value for the `pause` of the
       collector (see |luaref-langGC|). The function returns the previous value of
       the pause.
-  #o# `LUA_GCSETSTEPMUL` : sets `data` /100 as the new value for the@step@
-     @multiplier@ of the collector (see |luaref-langGC|). The function returns
+  #o# `LUA_GCSETSTEPMUL` : sets `data` /100 as the new value for the `step`
+      `multiplier`  of the collector (see |luaref-langGC|). The function returns
       the previous value of the step multiplier.
 
 
@@ -2311,7 +2311,7 @@ the stack a new full userdata with the block address, and returns this
 address.
 
                                                                 *luaref-userdata*
-Userdata represents C values in Lua. A@full userdata@represents a block of
+Userdata represents C values in Lua. A `full userdata` represents a block of
 memory. It is an object (like a table): you must create it, it can have its
 own metatable, and you can detect when it is being collected. A full userdata
 is only equal to itself (under raw equality).
@@ -2346,7 +2346,7 @@ A typical traversal looks like this:
 >
 While traversing a table, do not call `lua_tolstring` (see |luaref-lua_tolstring|)
 directly on a key, unless you know that the key is actually a string. Recall
-that `lua_tolstring` @changes@the value at the given index; this confuses the
+that `lua_tolstring`  `changes` the value at the given index; this confuses the
 next call to `lua_next` .
 
 
@@ -2388,8 +2388,8 @@ code. Like  `lua_call` , `lua_pcall` always removes the function and its argumen
 from the stack.
 
 If `errfunc` is 0, then the error message returned on the stack is exactly the
-original error message. Otherwise, `errfunc` is the stack index of an@error@
-@handler function@. (In the current implementation, this index cannot be a
+original error message. Otherwise, `errfunc` is the stack index of an `error`
+ `handler function` . (In the current implementation, this index cannot be a
 pseudo-index.) In case of runtime errors, this function will be called with
 the error message and its return value will be the message returned on the
 stack by `lua_pcall` .
@@ -2492,7 +2492,7 @@ Pushes a number with value `n` onto the stack.
 Pushes a light userdata onto the stack.
 
                                                            *luaref-lightuserdata*
-Userdata represents C values in Lua. A@light userdata@represents a pointer. It
+Userdata represents C values in Lua. A `light userdata` represents a pointer. It
 is a value (like a number): you do not create it, it has no individual
 metatable, and it is not collected (as it was never created). A light userdata
 is equal to "any" light userdata with the same C address.
@@ -2824,8 +2824,8 @@ If the number is not an integer, it is truncated in some non-specified way.
 Converts the Lua value at the given acceptable index to a C string. If `len` is
 not `NULL` , it also sets `*len` with the string length. The Lua value must be a
 string or a number; otherwise, the function returns `NULL` . If the value is a
-number, then `lua_tolstring`  also@changes the actual value in the stack to a@
-@string@. (This change confuses `lua_next` |luaref-lua_next| when `lua_tolstring` is
+number, then `lua_tolstring`  also `changes the actual value in the stack to a`
+ `string` . (This change confuses `lua_next` |luaref-lua_next| when `lua_tolstring` is
 applied to keys during a table traversal.)
 
  `lua_tolstring` returns a fully aligned pointer to a string inside the Lua
@@ -2929,7 +2929,7 @@ error and stops `lua_dump` from calling the writer again.
 >
     void lua_xmove (lua_State *from, lua_State *to, int n);
 >
-Exchange values between different threads of the@same@global state.
+Exchange values between different threads of the `same` global state.
 
 This function pops `n` values from the stack `from` , and pushes them onto the
 stack `to` .
@@ -2973,7 +2973,7 @@ As an example of stack manipulation, if the stack starts as
 
 
 Lua has no built-in debugging facilities. Instead, it offers a special
-interface by means of functions and@hooks@. This interface allows the
+interface by means of functions and `hooks` . This interface allows the
 construction of different kinds of debuggers, profilers, and other tools that
 need "inside information" from the interpreter.
 
@@ -2993,7 +2993,7 @@ need "inside information" from the interpreter.
         `int lastlinedefined;        /* (S) */`
         `char short_src[LUA_IDSIZE]; /* (S) */`
         `/* private part */`
-       @other fields@
+        `other fields`
     `} lua_Debug;`
 
 
@@ -3087,7 +3087,7 @@ be filled or a value to be pushed on the stack:
   #o# `'f'` : pushes onto the stack the function that is running at the given
       level;
   #o# `'L'` : pushes onto the stack a table whose indices are the numbers of the
-      lines that are valid on the function. (A@valid line@is a line with some
+      lines that are valid on the function. (A `valid line` is a line with some
       associated code, that is, a line where you can put a break point.
       Non-valid lines include empty lines and comments.)
 
@@ -3122,9 +3122,9 @@ active local variables.
 Gets information about the interpreter runtime stack.
 
 This function fills parts of a `lua_Debug` (see |luaref-lua_Debug|) structure with
-an identification of the@activation record@of the function executing at a
-given level. Level 0 is the current running function, whereas level@n+1@is the
-function that has called level@n@. When there are no errors, `lua_getstack`
+an identification of the `activation record` of the function executing at a
+given level. Level 0 is the current running function, whereas level `n+1` is the
+function that has called level `n` . When there are no errors, `lua_getstack`
 returns 1; when called with a level greater than the stack depth, it
 returns 0.
 
@@ -3178,7 +3178,7 @@ without any calls to hooks.
 Sets the debugging hook function.
 
 Argument `f` is the hook function. `mask` specifies on which events the hook will
-be called: it is formed by a bitwise@or@of the constants `LUA_MASKCALL` ,
+be called: it is formed by a bitwise `or` of the constants `LUA_MASKCALL` ,
  `LUA_MASKRET` , `LUA_MASKLINE` , and `LUA_MASKCOUNT` . The `count` argument is only
 meaningful when the mask includes `LUA_MASKCOUNT` . For each event, the hook is
 called as explained below:
@@ -3258,7 +3258,7 @@ and upvalues for a function at a given level of the stack:
 ==============================================================================
 
 
-The@auxiliary library@provides several convenient functions to interface C
+The `auxiliary library` provides several convenient functions to interface C
 with Lua. While the basic API provides the primitive functions for all
 interactions between C and Lua, the auxiliary library provides higher-level
 functions for some common tasks.
@@ -3356,7 +3356,7 @@ call stack:
        bad argument #<narg> to <func> (<extramsg>)
 >
 This function never returns, but it is an idiom to use it in C functions as
- `return luaL_argerror(` @args@ `)` .
+ `return luaL_argerror(`  `args`  `)` .
 
 
  `luaL_Buffer`                                                 *luaL_Buffer*
@@ -3364,7 +3364,7 @@ This function never returns, but it is an idiom to use it in C functions as
 >
     typedef struct luaL_Buffer luaL_Buffer;
 >
-Type for a@string buffer@.
+Type for a `string buffer` .
 
 A string buffer allows C code to build Lua strings piecemeal. Its pattern of
 use is as follows:
@@ -3557,7 +3557,7 @@ name and the line number where the error occurred, if this information is
 available.
 
 This function never returns, but it is an idiom to use it in C functions as
- `return luaL_error(` @args@ `)` .
+ `return luaL_error(`  `args`  `)` .
 
 
  `luaL_getmetafield`                                     *luaL_getmetafield*
@@ -3761,7 +3761,7 @@ Finishes the use of buffer `B` leaving the final string on the top of the stack.
 >
     int luaL_ref (lua_State *L, int t);
 >
-Creates and returns a@reference@, in the table at index `t` , for the object at
+Creates and returns a `reference` , in the table at index `t` , for the object at
 the top of the stack (and pops the object).
 
 A reference is a unique integer key. As long as you do not manually add
@@ -3825,10 +3825,10 @@ Returns the name of the type of the value at index `idx` .
 >
 Generates an error with a message like the following:
 
- @location@ `: bad argument` @narg@ `to` @'func'@ `(` @tname@ `expected, got` @rt@ `)`
+  `location`  `: bad argument`  `narg`  `to`  `'func'`  `(`  `tname`  `expected, got`  `rt`  `)`
 
-where@location@is produced by `luaL_where`  (see |luaref-luaL_where|),@func@is the
-name of the current function, and@rt@is the type name of the actual argument.
+where `location` is produced by `luaL_where`  (see |luaref-luaL_where|), `func` is the
+name of the current function, and `rt` is the type name of the actual argument.
 
 
  `luaL_unref`                                                   *luaL_unref*
@@ -3852,7 +3852,7 @@ Pushes onto the stack a string identifying the current position of the control
 at level `lvl` in the call stack. Typically this string has the following
 format:
 
-   @chunkname:currentline:@
+    `chunkname:currentline:`
 
 Level 0 is the running function, level 1 is the function that called the
 running function, etc.
@@ -3929,9 +3929,9 @@ different functions according to its first argument, `opt` :
       controlled by `arg` (larger values mean more steps) in a non-specified
       way. If you want to control the step size you must experimentally tune
       the value of `arg` . Returns#true#if the step finished a collection cycle.
-  #o##"setpause"#: sets `arg` /100 as the new value for the@pause@of the
+  #o##"setpause"#: sets `arg` /100 as the new value for the `pause` of the
       collector (see |luaref-langGC|).
-  #o##"setstepmul"#: sets `arg` /100 as the new value for the@step multiplier@of
+  #o##"setstepmul"#: sets `arg` /100 as the new value for the `step multiplier` of
       the collector (see |luaref-langGC|).
 
 
@@ -3986,7 +3986,7 @@ returns the metatable of the given object.
 Returns three values: an iterator function, the table `t` , and 0, so that the
 construction
 
-       `for i,v in ipairs(t) do` @body@ `end`
+       `for i,v in ipairs(t) do`  `body`  `end`
 
 will iterate over the pairs ( `1,t[1]` ), ( `2,t[2]` ), ..., up to the first
 integer key absent from the table.
@@ -4030,11 +4030,11 @@ called with the last index, or with#nil#in an empty table, `next` returns#nil#.
 If the second argument is absent, then it is interpreted as#nil#. In
 particular, you can use `next(t)` to check whether a table is empty.
 
-The order in which the indices are enumerated is not specified,@even for@
-@numeric indices@. (To traverse a table in numeric order, use a numerical#for#
+The order in which the indices are enumerated is not specified, `even for`
+ `numeric indices` . (To traverse a table in numeric order, use a numerical#for#
 or the `ipairs` |luaref-ipairs| function.)
 
-The behavior of `next` is@undefined@if, during the traversal, you assign any
+The behavior of `next` is `undefined` if, during the traversal, you assign any
 value to a non-existent field in the table. You may however modify existing
 fields. In particular, you may clear existing fields.
 
@@ -4044,14 +4044,14 @@ fields. In particular, you may clear existing fields.
 Returns three values: the `next` |luaref-next| function, the table `t` , and#nil#, so
 that the construction
 
-       `for k,v in pairs(t) do` @body@ `end`
+       `for k,v in pairs(t) do`  `body`  `end`
 
 will iterate over all key-value pairs of table `t` .
 
 
  `pcall (f, arg1, ...)`                                              *luaref-pcall*
 ----------------------
-Calls function `f` with the given arguments in@protected mode@. This means that
+Calls function `f` with the given arguments in `protected mode` . This means that
 any error inside `f` is not propagated; instead, `pcall` catches the error and
 returns a status code. Its first result is the status code (a boolean), which
 is#true#if the call succeeds without errors. In such case, `pcall` also returns
@@ -4266,7 +4266,7 @@ If `name` is a compound name (that is, one with components separated by dots),
 For instance, if `name` is `a.b.c` , then `module` stores the module table in field
  `c` of field `b` of global `a` .
 
-This function may receive optional@options@after the module name, where each
+This function may receive optional `options` after the module name, where each
 option is a function to be applied over the module.
 
 
@@ -4275,13 +4275,13 @@ option is a function to be applied over the module.
 Loads the given module. The function starts by looking into the
  `package.loaded` table to determine whether `modname` is already loaded. If it
 is, then `require` returns the value stored at `package.loaded[modname]` .
-Otherwise, it tries to find a@loader@for the module.
+Otherwise, it tries to find a `loader` for the module.
 
 To find a loader, first `require` queries `package.preload[modname]` . If it has a
 value, this value (which should be a function) is the loader. Otherwise
  `require` searches for a Lua loader using the path stored in `package.path` .
 If that also fails, it searches for a C loader using the path stored in
- `package.cpath` . If that also fails, it tries an@all-in-one@loader (see
+ `package.cpath` . If that also fails, it tries an `all-in-one` loader (see
 below).
 
 When loading a C library, `require` first uses a dynamic link facility to link
@@ -4293,7 +4293,7 @@ prefix up to (and including) the first hyphen is removed. For instance, if the
 module name is `a.v1-b.c` , the function name will be `luaopen_b_c` .
 
 If `require` finds neither a Lua library nor a C library for a module, it calls
-the@all-in-one loader@. This loader searches the C path for a library for the
+the `all-in-one loader` . This loader searches the C path for a library for the
 root name of the given module. For instance, when requiring `a.b.c` , it will
 search for a C library for `a` . If found, it looks into it for an open function
 for the submodule; in our example, that would be `luaopen_a_b_c` . With this
@@ -4354,7 +4354,7 @@ variable `LUA_PATH` or with a default path defined in `luaconf.h` , if the
 environment variable is not defined. Any `";;"` in the value of the environment
 variable is replaced by the default path.
 
-A path is a sequence of@templates@separated by semicolons. For each template,
+A path is a sequence of `templates` separated by semicolons. For each template,
  `require` will change each interrogation mark in the template by `filename` ,
 which is `modname` with each dot replaced by a "directory separator" (such as
  `"/"`  in Unix); then it will try to load the resulting file name. So, for
@@ -4495,8 +4495,8 @@ a function. `gsub` also returns, as its second value, the total number of
 substitutions made.
 
 If `repl` is a string, then its value is used for replacement. The character `%`
-works as an escape character: any sequence in `repl` of the form `%n` , with@n@
-between 1 and 9, stands for the value of the@n@-th captured substring (see
+works as an escape character: any sequence in `repl` of the form `%n` , with `n`
+between 1 and 9, stands for the value of the `n` -th captured substring (see
 below). The sequence `%0` stands for the whole match. The sequence `%%` stands for
 a single `%` .
 
@@ -4556,7 +4556,7 @@ of what an uppercase letter is depends on the current locale.
 
  `string.match (s, pattern [, init])`                         *string.match*
 ------------------------------------
-Looks for the first@match@of `pattern` in the string `s` . If it finds one, then
+Looks for the first `match` of `pattern` in the string `s` . If it finds one, then
  `match` returns the captures from the pattern; otherwise it returns#nil#.
 If `pattern` specifies no captures, then the whole match is returned. A third,
 optional numerical argument `init` specifies where to start the search; its
@@ -4576,7 +4576,7 @@ Returns a string that is the string `s` reversed.
  `string.sub (s, i [, j])`                                      *string.sub*
 -------------------------
 Returns the substring of `s` that starts at `i` and continues until `j` ; `i` and `j`
-may be negative. If `j` is absent, then it is assumed to be equal to@-1@(which
+may be negative. If `j` is absent, then it is assumed to be equal to `-1` (which
 is the same as the string length). In particular, the call `string.sub(s,1,j)`
 returns a prefix of `s` with length `j` , and `string.sub(s,-i)` returns a suffix
 of `s` with length `i` .
@@ -4593,11 +4593,11 @@ of what a lowercase letter is depends on the current locale.
 5.4.1  Patterns                              *luaref-patterns* *luaref-libStringPat*
 
 
-A@character class@is used to represent a set of characters. The following
+A `character class` is used to represent a set of characters. The following
 combinations are allowed in describing a character class:
 
-  #o#@x@: (where@x@is not one of@the magic characters@ ^$()%.[]*+-? )
-      represents the character@x@itself.
+  #o# `x` : (where `x` is not one of `the magic characters`  ^$()%.[]*+-? )
+      represents the character `x` itself.
   #o# `.` : (a dot) represents all characters.
   #o# `%a` : represents all letters.
   #o# `%c` : represents all control characters.
@@ -4609,15 +4609,15 @@ combinations are allowed in describing a character class:
   #o# `%w` : represents all alphanumeric characters.
   #o# `%x` : represents all hexadecimal digits.
   #o# `%z` : represents the character with representation 0.
-  #o# `%x` (where@x@is any non-alphanumeric character) represents the
-      character@x@. This is the standard way to escape the magic characters.
+  #o# `%x` (where `x` is any non-alphanumeric character) represents the
+      character `x` . This is the standard way to escape the magic characters.
       Any punctuation character (even the non-magic) can be preceded by a
       `'%'` when used to represent itself in a pattern.
 
   #o# `[set]` : represents the class which is the union of all characters in
-     @set@. A range of characters may be specified by separating the end
+      `set` . A range of characters may be specified by separating the end
       characters of the range with a `'-'` . All classes `%x` described above may
-      also be used as components in@set@. All other characters in@set@
+      also be used as components in `set` . All other characters in `set`
       represent themselves. For example, `[%w_]` (or `[_%w]` ) represents all
       alphanumeric characters plus the underscore, `[0-7]` represents the octal
       digits, and `[0-7%l%-]` represents the octal digits plus the lowercase
@@ -4626,7 +4626,7 @@ combinations are allowed in describing a character class:
       The interaction between ranges and classes is not defined. Therefore,
       patterns like `[%a-z]` or `[a-%%]` have no meaning.
 
-  #o# `[^set]` : represents the complement of@set@, where@set@is interpreted
+  #o# `[^set]` : represents the complement of `set` , where `set` is interpreted
       as above.
 
 For all classes represented by single letters ( `%a` , `%c` , etc.), the
@@ -4639,7 +4639,7 @@ current locale. In particular, the class `[a-z]` may not be equivalent to `%l` .
                                                              *luaref-patternitem*
 Pattern Item:~
 -------------
-A@pattern item@may be
+A `pattern item` may be
 
   #o# a single character class, which matches any single character in the
       class;
@@ -4651,22 +4651,22 @@ A@pattern item@may be
       always match the longest possible sequence;
   #o# a single character class followed by `'-'` , which also matches 0 or
       more repetitions of characters in the class. Unlike `'*'` , these
-      repetition items will always match the@shortest@possible sequence;
+      repetition items will always match the `shortest` possible sequence;
   #o# a single character class followed by `'?'` , which matches 0 or 1
       occurrences of a character in the class;
-  #o# `%n` , for@n@between 1 and 9; such item matches a substring equal to the
-     @n@-th captured string (see below);
-  #o# `%bxy` , where@x@and@y@are two distinct characters; such item matches
-      strings that start with@x@, end with@y@, and where the@x@and@y@
-      are@balanced@. This means that, if one reads the string from left to
-      right, counting@+1@for an@x@and@-1@for a@y@, the ending@y@is the first
-     @y@where the count reaches 0. For instance, the item `%b()` matches
+  #o# `%n` , for `n` between 1 and 9; such item matches a substring equal to the
+      `n` -th captured string (see below);
+  #o# `%bxy` , where `x` and `y` are two distinct characters; such item matches
+      strings that start with `x` , end with `y` , and where the `x` and `y`
+      are `balanced` . This means that, if one reads the string from left to
+      right, counting `+1` for an `x` and `-1` for a `y` , the ending `y` is the first
+      `y` where the count reaches 0. For instance, the item `%b()` matches
       expressions with balanced parentheses.
 
                                                                  *luaref-pattern*
 Pattern:~
 --------
-A@pattern@is a sequence of pattern items. A `'^'` at the beginning of a pattern
+A `pattern` is a sequence of pattern items. A `'^'` at the beginning of a pattern
 anchors the match at the beginning of the subject string. A '$' at the end of
 a pattern anchors the match at the end of the subject string. At other
 positions, `'^'` and '$' have no special meaning and represent themselves.
@@ -4675,8 +4675,8 @@ positions, `'^'` and '$' have no special meaning and represent themselves.
 Captures:~
 ---------
 A pattern may contain sub-patterns enclosed in parentheses; they describe
-@captures@. When a match succeeds, the substrings of the subject string that
-match captures are stored (@captured@) for future use. Captures are numbered
+ `captures` . When a match succeeds, the substrings of the subject string that
+match captures are stored ( `captured` ) for future use. Captures are numbered
 according to their left parentheses. For instance, in the pattern
  `"(a*(.)%w(%s*))"` , the part of the string matching `"a*(.)%w(%s*)"` is
 stored as the first capture (and therefore has number 1); the character
@@ -4754,14 +4754,14 @@ table `t` .
 
  `table.sort (table [, comp])`                                  *table.sort*
 -----------------------------
-Sorts table elements in a given order,@in-place@, from `table[1]` to `table[n]` ,
+Sorts table elements in a given order, `in-place` , from `table[1]` to `table[n]` ,
 where `n` is the length of the table (see |luaref-langLength|). If `comp` is given,
 then it must be a function that receives two table elements, and returns true
 when the first is less than the second (so that `not comp(a[i+1],a[i])` will be
 true after the sort). If `comp` is not given, then the standard Lua
 operator `<` is used instead.
 
-The sort algorithm is@not@stable, that is, elements considered equal by the
+The sort algorithm is `not` stable, that is, elements considered equal by the
 given order may have their relative positions changed by the sort.
 
 
@@ -4838,7 +4838,7 @@ Returns the remainder of the division of `x` by `y` .
  `math.frexp (x)`                                               *math.frexp*
 ----------------
 Returns `m` and `e` such that `x = m * 2^e` , `e` is an integer and the absolute value
-of `m` is in the range@[0.5, 1)@(or zero when `x` is zero).
+of `m` is in the range `[0.5, 1)` (or zero when `x` is zero).
 
 
  `math.huge`                                                     *math.huge*
@@ -4879,7 +4879,7 @@ Returns two numbers, the integral part of `x` and the fractional part of `x` .
 
  `math.pi`                                                         *math.pi*
 ---------
-The value of@pi@.
+The value of `pi` .
 
 
  `math.pow (x, y)`                                                *math.pow*
@@ -4899,9 +4899,9 @@ This function is an interface to the simple pseudo-random generator function
 properties.)
 
 When called without arguments, returns a pseudo-random real number in the
-range@[0,1)@. When called with a number `m` , `math.random` returns a
-pseudo-random integer in the range@[1, m]@. When called with two numbers `m`
-and `n` , `math.random` returns a pseudo-random integer in the range@[m, n]@.
+range `[0,1)` . When called with a number `m` , `math.random` returns a
+pseudo-random integer in the range `[1, m]` . When called with two numbers `m`
+and `n` , `math.random` returns a pseudo-random integer in the range `[m, n]` .
 
 
  `math.randomseed (x)`                                     *math.randomseed*
@@ -4986,7 +4986,7 @@ Opens the given file name in read mode and returns an iterator function that,
 each time it is called, returns a new line from the file. Therefore, the
 construction
 
-       `for line in io.lines(filename) do` @body@ `end`
+       `for line in io.lines(filename) do`  `body`  `end`
 
 will iterate over all lines of the file. When the iterator function detects
 the end of file, it returns#nil#(to finish the loop) and automatically closes
@@ -5004,12 +5004,12 @@ returns a new file handle, or, in case of errors,#nil#plus an error message.
 
 The `mode` string can be any of the following:
 
-  #o#@"r"@: read mode (the default);
-  #o#@"w"@: write mode;
-  #o#@"a"@: append mode;
-  #o#@"r+"@: update mode, all previous data is preserved;
-  #o#@"w+"@: update mode, all previous data is erased;
-  #o#@"a+"@: append update mode, previous data is preserved, writing is only
+  #o# `"r"` : read mode (the default);
+  #o# `"w"` : write mode;
+  #o# `"a"` : append mode;
+  #o# `"r+"` : update mode, all previous data is preserved;
+  #o# `"w+"` : update mode, all previous data is erased;
+  #o# `"a+"` : append update mode, previous data is preserved, writing is only
       allowed at the end of file.
 
 The `mode` string may also have a `'b'` at the end, which is needed in some
@@ -5070,7 +5070,7 @@ Saves any written data to `file` .
 Returns an iterator function that, each time it is called, returns a new line
 from the file. Therefore, the construction
 
-       `for line in file:lines() do` @body@ `end`
+       `for line in file:lines() do`  `body`  `end`
 
 will iterate over all lines of the file. (Unlike `io.lines` , this function does
 not close the file when the loop ends.)
@@ -5092,7 +5092,7 @@ The available formats are
       file, it returns the empty string.
   #o##"*l"#: reads the next line (skipping the end of line), returning#nil#on
       end of file. This is the default format.
-  #o#@number@: reads a string with up to that number of characters, returning
+  #o# `number` : reads a string with up to that number of characters, returning
      #nil#on end of file. If number is zero, it reads nothing and returns an
       empty string, or#nil#on end of file.
 
@@ -5350,9 +5350,9 @@ Sets the given function as a hook. The string `mask` and the number `count`
 describe when the hook will be called. The string mask may have the following
 characters, with the given meaning:
 
-  #o#@"c"@: The hook is called every time Lua calls a function;
-  #o#@"r"@: The hook is called every time Lua returns from a function;
-  #o#@"l"@: The hook is called every time Lua enters a new line of code.
+  #o# `"c"` : The hook is called every time Lua calls a function;
+  #o# `"r"` : The hook is called every time Lua returns from a function;
+  #o# `"l"` : The hook is called every time Lua enters a new line of code.
 
 With a `count` different from zero, the hook is called after every `count`
 instructions.
@@ -5414,15 +5414,15 @@ standard libraries, including the debug library. Its usage is:
 >
 The options are:
 
-  #o# `-e` @stat@: executes string@stat@;
-  #o# `-l` @mod@: "requires"@mod@;
-  #o# `-i` : enters interactive mode after running@script@;
+  #o# `-e`  `stat` : executes string `stat` ;
+  #o# `-l`  `mod` : "requires" `mod` ;
+  #o# `-i` : enters interactive mode after running `script` ;
   #o# `-v` : prints version information;
   #o# `--` : stops handling options;
   #o# `-` : executes `stdin` as a file and stops handling options.
 
-After handling its options, `lua` runs the given@script@, passing to it the
-given@args@as string arguments. When called without arguments, `lua` behaves
+After handling its options, `lua` runs the given `script` , passing to it the
+given `args` as string arguments. When called without arguments, `lua` behaves
 as `lua -v -i` when the standard input ( `stdin` ) is a terminal, and as
  `lua -` otherwise.
 
@@ -5501,19 +5501,19 @@ Lua is discussed in these references:
 
   #o#R. Ierusalimschy, L. H. de Figueiredo, and W. Celes.,
      "Lua --- an extensible extension language".
-    @Software: Practice & Experience@#26##6 (1996) 635-652.
+     `Software: Practice & Experience` #26##6 (1996) 635-652.
 
   #o#L. H. de Figueiredo, R. Ierusalimschy, and W. Celes.,
      "The design and implementation of a language for extending applications".
-    @Proc. of XXI Brazilian Seminar on Software and Hardware@(1994) 273-283.
+     `Proc. of XXI Brazilian Seminar on Software and Hardware` (1994) 273-283.
 
   #o#L. H. de Figueiredo, R. Ierusalimschy, and W. Celes.,
      "Lua: an extensible embedded language".
-    @Dr. Dobb's Journal@#21##12 (Dec 1996) 26-33.
+     `Dr. Dobb's Journal` #21##12 (Dec 1996) 26-33.
 
   #o#R. Ierusalimschy, L. H. de Figueiredo, and W. Celes.,
      "The evolution of an extension language: a history of Lua".
-    @Proc. of V Brazilian Symposium on Programming Languages@(2001) B-14-B-28.
+     `Proc. of V Brazilian Symposium on Programming Languages` (2001) B-14-B-28.
 
 
 ==============================================================================
