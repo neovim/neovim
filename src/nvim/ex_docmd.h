@@ -33,27 +33,6 @@ typedef struct {
   tasave_T tabuf;
 } save_state_T;
 
-typedef struct ucmd {
-  char_u *uc_name;              // The command name
-  uint32_t uc_argt;             // The argument type
-  char_u *uc_rep;               // The command's replacement string
-  long uc_def;                  // The default value for a range/count
-  int uc_compl;                 // completion type
-  cmd_addr_T uc_addr_type;      // The command's address type
-  sctx_T uc_script_ctx;         // SCTX where the command was defined
-  char_u *uc_compl_arg;         // completion argument if any
-  LuaRef uc_compl_luaref;       // Reference to Lua completion function
-  LuaRef uc_preview_luaref;     // Reference to Lua preview function
-  LuaRef uc_luaref;             // Reference to Lua function
-} ucmd_T;
-
-#define UC_BUFFER       1       // -buffer: local to current buffer
-
-extern garray_T ucmds;
-
-#define USER_CMD(i) (&((ucmd_T *)(ucmds.ga_data))[i])
-#define USER_CMD_GA(gap, i) (&((ucmd_T *)((gap)->ga_data))[i])
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.h.generated.h"
 #endif

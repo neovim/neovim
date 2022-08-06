@@ -14,6 +14,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/ops.h"
 #include "nvim/regexp.h"
+#include "nvim/usercmd.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
