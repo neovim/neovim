@@ -12,6 +12,7 @@
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/eval.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
@@ -21,6 +22,7 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/window.h"
+#include "nvim/ex_cmds2.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vimscript.c.generated.h"
@@ -744,4 +746,331 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
   viml_pexpr_free_ast(east);
   viml_parser_destroy(&pstate);
   return ret;
+}
+
+static String user_function_name(ufunc_T *fp)
+{
+  String name;
+  const size_t name_len = STRLEN(fp->uf_name);
+  if (fp->uf_name[0] == K_SPECIAL) {
+    // Replace [ K_SPECIAL KS_EXTRA KE_SNR ] with "<SNR>"
+    name.size = name_len + 2;
+    name.data = xmalloc(name.size + 1);
+    name.data[0] = '<';
+    name.data[1] = 'S';
+    name.data[2] = 'N';
+    name.data[3] = 'R';
+    name.data[4] = '>';
+    memcpy(name.data + 5, fp->uf_name + 3, name_len - 3);
+    name.data[name.size] = '\0';
+  } else {
+    name.size = name_len;
+    name.data = xmalloc(name.size + 1);
+    memcpy(name.data, fp->uf_name, name_len);
+    name.data[name.size] = '\0';
+  }
+  return name;
+}
+
+static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, bool lines)
+{
+  Dictionary dict = ARRAY_DICT_INIT;
+  size_t dict_size = 2;
+  if (details) {
+    dict_size += 8;
+  }
+  if (lines) {
+    dict_size += 1;
+  }
+  kv_resize(dict, dict_size);
+
+  // Function name
+  dict.items[dict.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_TO_STRING("name"),
+    .value = STRING_OBJ(copy_string(name)),
+  };
+  dict.items[dict.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_TO_STRING("type"),
+    .value = CSTR_TO_OBJ("user"),
+  };
+
+  if (details) {
+    // Arguments
+    Array args = ARRAY_DICT_INIT;
+    if (fp->uf_args.ga_len > 0) {
+      kv_resize(args, (size_t)fp->uf_args.ga_len);
+      for (int j = 0; j < fp->uf_args.ga_len; j++) {
+        Dictionary arg = ARRAY_DICT_INIT;
+        kv_resize(arg, 2);
+        arg.items[arg.size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("name"),
+          .value = CSTR_TO_OBJ((const char *)FUNCARG(fp, j)),
+        };
+        if (j >= fp->uf_args.ga_len - fp->uf_def_args.ga_len) {
+          arg.items[arg.size++] = (KeyValuePair) {
+            .key = STATIC_CSTR_TO_STRING("default"),
+            .value = CSTR_TO_OBJ(((char **)(fp->uf_def_args.ga_data))
+                  [j - fp->uf_args.ga_len + fp->uf_def_args.ga_len]),
+          };
+        }
+        args.items[args.size++] = DICTIONARY_OBJ(arg);
+      }
+    }
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("args"),
+      .value = ARRAY_OBJ(args),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("varargs"),
+      .value = BOOLEAN_OBJ(fp->uf_varargs),
+    };
+
+    // Attributes
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("abort"),
+      .value = BOOLEAN_OBJ(fp->uf_flags & FC_ABORT),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("range"),
+      .value = BOOLEAN_OBJ(fp->uf_flags & FC_RANGE),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("dict"),
+      .value = BOOLEAN_OBJ(fp->uf_flags & FC_DICT),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("closure"),
+      .value = BOOLEAN_OBJ(fp->uf_flags & FC_CLOSURE),
+    };
+
+    // Script
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("sid"),
+      .value = INTEGER_OBJ(fp->uf_script_ctx.sc_sid),
+    };
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("lnum"),
+      .value = INTEGER_OBJ(fp->uf_script_ctx.sc_lnum),
+    };
+  }
+
+  // Source lines
+  if (lines) {
+    Array array = ARRAY_DICT_INIT;
+    if (fp->uf_lines.ga_len > 0) {
+      kv_resize(array, (size_t)fp->uf_lines.ga_len);
+      for (int j = 0; j < fp->uf_lines.ga_len; j++) {
+        const char *line = (const char *)FUNCLINE(fp, j);
+        if (line != NULL) {
+          kv_push(array, CSTR_TO_OBJ(line));
+        } else {
+          kv_push(array, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+        }
+      }
+    }
+    dict.items[dict.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_TO_STRING("lines"),
+      .value = ARRAY_OBJ(array),
+    };
+  }
+
+  return dict;
+}
+
+/// Lists Vimscript functions.
+///
+/// @param query    Dictionary or string
+/// @param opts     Options
+/// @param[out] err Error details, if any
+/// @return Dictionary
+Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
+  FUNC_API_SINCE(10)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+
+  if (query.type != kObjectTypeString && query.type != kObjectTypeDictionary
+      && (query.type == kObjectTypeArray && query.data.array.size != 0)) {
+    api_set_error(err, kErrorTypeValidation, "query is not a dictionary or string %d", query.type);
+    return rv;
+  }
+
+  bool details = false;
+  bool lines = false;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("details", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "details is not a boolean");
+        return rv;
+      }
+      details = v->data.boolean;
+    } else if (strequal("lines", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "lines is not a boolean");
+        return rv;
+      }
+      lines = v->data.boolean;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return rv;
+    }
+  }
+
+  // Find user function
+  if (query.type == kObjectTypeString) {
+    String name = query.data.string;
+    char *funcname = string_to_cstr(name);
+    ufunc_T *fp = find_func((char_u *)funcname);
+    xfree(funcname);
+    if (fp != NULL) {
+      kv_resize(rv, 1);
+      String key = user_function_name(fp);
+      Dictionary dict = user_function_dict(fp, key, details, lines);
+      KeyValuePair pair = {
+        .key = key,
+        .value = DICTIONARY_OBJ(dict),
+      };
+      kv_push(rv, pair);
+    }
+    return rv;
+  }
+
+  // Parse list options
+  bool builtin = false;
+  bool global = true;
+  bool script = true;
+  if (query.type == kObjectTypeDictionary) {
+    bool u_set = false;  // user option was set
+    bool gs_set = false;  // global or script option was set
+    Dictionary list = query.data.dictionary;
+    for (size_t i = 0; i < list.size; i++) {
+      String k = list.items[i].key;
+      Object *v = &list.items[i].value;
+      if (strequal("builtin", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "builtin is not a boolean");
+          return rv;
+        }
+        builtin = v->data.boolean;
+      } else if (strequal("user", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "user is not a boolean");
+          return rv;
+        } else if (gs_set) {
+          api_set_error(err, kErrorTypeValidation, "user cannot be used with global and script options");
+          return rv;
+        }
+        global = v->data.boolean;
+        script = v->data.boolean;
+        u_set = true;
+      } else if (strequal("global", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "global is not a boolean");
+          return rv;
+        } else if (u_set) {
+          api_set_error(err, kErrorTypeValidation, "global cannot be used with user option");
+          return rv;
+        }
+        global = v->data.boolean;
+        gs_set = true;
+      } else if (strequal("script", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "script is not a boolean");
+          return rv;
+        } else if (u_set) {
+          api_set_error(err, kErrorTypeValidation, "script cannot be used with user option");
+          return rv;
+        }
+        script = v->data.boolean;
+        gs_set = true;
+      } else {
+        api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+        return rv;
+      }
+    }
+  }
+
+  if (!builtin && !global && !script) {
+    api_set_error(err, kErrorTypeValidation, "nothing to list");
+    return rv;
+  }
+
+  // Preallocate output array
+  size_t size = 0;
+  if (builtin) {
+    size += builtin_functions_len;
+  }
+  if (global || script) {
+    size += func_hashtab.ht_used;
+  }
+  kv_resize(rv, size);
+
+  // List builtin functions
+  if (builtin) {
+    for (const EvalFuncDef* fn = builtin_functions; fn->name != NULL; fn++) {
+      Dictionary dict = ARRAY_DICT_INIT;
+      kv_resize(dict, details ? 6 : 2);
+      dict.items[dict.size++] = (KeyValuePair) {
+        .key = STATIC_CSTR_TO_STRING("name"),
+        .value = CSTR_TO_OBJ(fn->name),
+      };
+      dict.items[dict.size++] = (KeyValuePair) {
+        .key = STATIC_CSTR_TO_STRING("type"),
+        .value = CSTR_TO_OBJ("builtin"),
+      };
+      if (details) {
+        dict.items[dict.size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("min_argc"),
+          .value = INTEGER_OBJ(fn->min_argc),
+        };
+        dict.items[dict.size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("max_argc"),
+          .value = INTEGER_OBJ(fn->max_argc),
+        };
+        dict.items[dict.size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("base_arg"),
+          .value = INTEGER_OBJ(fn->base_arg),
+        };
+        dict.items[dict.size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("fast"),
+          .value = BOOLEAN_OBJ(fn->fast),
+        };
+      }
+      KeyValuePair pair = {
+        .key = cstr_to_string(fn->name),
+        .value = DICTIONARY_OBJ(dict),
+      };
+      kv_push(rv, pair);
+    }
+  }
+
+  // List user functions
+  if (global || script) {
+    int todo = (int)func_hashtab.ht_used;
+    for (hashitem_T *hi = func_hashtab.ht_array; todo > 0; hi++) {
+      if (HASHITEM_EMPTY(hi)) {
+        continue;
+      }
+      --todo;
+      ufunc_T *fp = HI2UF(hi);
+      // Filter script local functions
+      if (isdigit(*fp->uf_name) || *fp->uf_name == '<') {  // func_name_refcount
+        continue;
+      }
+
+      const bool is_script = fp->uf_name[0] == K_SPECIAL;
+      if ((!is_script && global) || (is_script && script)) {
+        String key = user_function_name(fp);
+        Dictionary dict = user_function_dict(fp, key, details, lines);
+        KeyValuePair pair = {
+          .key = key,
+          .value = DICTIONARY_OBJ(dict),
+        };
+        kv_push(rv, pair);
+      }
+    }
+  }
+
+  return rv;
 }
