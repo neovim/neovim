@@ -25,8 +25,8 @@
 
 garray_T ucmds = { 0, 0, sizeof(ucmd_T), 4, NULL };
 
-static char e_complete_used_without_nargs[]
-  = N_("E1208: -complete used without -nargs");
+static char e_complete_used_without_allowing_arguments[]
+  = N_("E1208: -complete used without allowing arguments");
 static char e_no_such_user_defined_command_str[]
   = N_("E184: No such user-defined command: %s");
 static char e_no_such_user_defined_command_in_current_buffer_str[]
@@ -955,7 +955,7 @@ void ex_command(exarg_T *eap)
   } else if (name_len <= 4 && STRNCMP(name, "Next", name_len) == 0) {
     emsg(_("E841: Reserved name, cannot be used for user defined command"));
   } else if (compl > 0 && (argt & EX_EXTRA) == 0) {
-    emsg(_(e_complete_used_without_nargs));
+    emsg(_(e_complete_used_without_allowing_arguments));
   } else {
     uc_add_command(name, name_len, p, argt, def, flags, compl, compl_arg, LUA_NOREF, LUA_NOREF,
                    addr_type_arg, LUA_NOREF, eap->forceit);
