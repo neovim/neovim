@@ -152,8 +152,8 @@ endfunc
 func Test_setcellwidths()
   call setcellwidths([
         \ [0x1330, 0x1330, 2],
-        \ [0x1337, 0x1339, 2],
         \ [9999, 10000, 1],
+        \ [0x1337, 0x1339, 2],
         \])
 
   call assert_equal(2, strwidth("\u1330"))
