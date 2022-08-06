@@ -1097,7 +1097,7 @@ theend:
       if (HASHITEM_EMPTY(hi)) {
         continue;
       }
-      --todo;
+      todo--;
       ufunc_T *fp = HI2UF(hi);
       // Filter script local functions
       if (isdigit(*fp->uf_name) || *fp->uf_name == '<') {  // func_name_refcount
