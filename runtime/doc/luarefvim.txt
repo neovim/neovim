@@ -84,12 +84,9 @@
 
            6   LUA STAND-ALONE.....................|luaref-LuaSA|
 
-           A   INDEX...............................|luaref-index|
-           B   BIBLIOGRAPHY........................|luaref-bibliography|
-           C   COPYRIGHT & LICENSES................|luaref-copyright|
-           D   LUAREFVIM DOC.......................|luaref-doc|
-           D.1  Installation.......................|luaref-docInstall|
-           D.2  Usage..............................|luaref-docUsage|
+           A   BIBLIOGRAPHY........................|luaref-bibliography|
+           B   COPYRIGHT & LICENSES................|luaref-copyright|
+           C   LUAREFVIM DOC.......................|luaref-doc|
 
 
 ==============================================================================
@@ -5566,51 +5563,6 @@ information on these files. For copyright information, see |luaref-copyright|.
 The main ideas and concepts on how to implement this reference were taken from
 Christian Habermann's CRefVim project
 ($http://www.vim.org/scripts/script.php?script_id=614$).
-
-
-==============================================================================
-C.1  Installation                                             *luaref-docInstall*
-
-
-This reference consists of three files: the manual itself,$luarefvim.txt$,
-a plugin file,$luarefvim.vim$, to load key bindings, and a help file syntax
-extension$help.vim$. To install luarefvim, copy these files to their
-respective locations:
-
-     +-----------------+----------------+
-     |# file          #|# location     #|
-     + ----------------+----------------+
-     |$ luarefvim.txt $|$ doc          $|
-     |$ luarefvim.vim $|$ plugin       $|
-     |$ help.vim      $|$ after/syntax $|
-     +-----------------+----------------+
-
-where #location# is relative to 'runtimepath', that is, $HOME/.vim for a local
-Un*x install or $HOME/vimfiles for a local Win32 install, for example.
-Finally, to generate the tags, change dir to$doc$above (where you installed
-$luarefvim.txt$), start Vim, and issue$:helptags .$For more information on
-installing help files, call$:help add-local-help$.
-
-
-==============================================================================
-C.2  Usage                                                      *luaref-docUsage*
-
-
-The usage is really simple, and similar to CRefVim:
-
-     +----------+--------------+----------------------------------------+
-     |#  edit  #|#    key     #|                                        |
-     |#  mode  #|#  sequence  #|#             action                   #|
-     +----------+--------------+----------------------------------------+
-     |@ normal @|  <Leader>lr  |  reference for word under cursor       |
-     |@ visual @|  <Leader>lr  |  reference for visually selected text  |
-     |$ any    $|  <Leader>lc  |  manual's table of contents            |
-     +----------+--------------+----------------------------------------+
-
-Since by default <Leader> is mapped to$'\'$, just pressing$\lc$would bring the
-table of contents, for example.$lr$stands for@(l)ua (r)eference@, while$lc$
-stands for@(l)ua (c)ontents@.
-
 
 ------------------------------------------------------------------------------
  vi:tw=78:ts=4:ft=help:norl:noai
