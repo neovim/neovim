@@ -964,30 +964,45 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
   // Find function
   if (query.type == kObjectTypeString) {
     String name = query.data.string;
-    char *func_name = string_to_cstr(name);
+    char_u *func_name;
+    if (name.size > 7 && memcmp(name.data, "<SNR>", 5) == 0) {
+      func_name = xmalloc(name.size - 1);  // resolve "<SNR>" + 1 null byte
+      func_name[0] = K_SPECIAL;
+      func_name[1] = KS_EXTRA;
+      func_name[2] = KE_SNR;
+      memcpy(func_name + 3, name.data + 5, name.size - 5);
+      func_name[name.size - 2] = '\0';
+    } else {
+      func_name = (char_u *)string_to_cstr(name);
+    }
 
     // Find builtin function
-    const EvalFuncDef *fn = find_internal_func(func_name);
-    if (fn != NULL) {
-      KeyValuePair pair = {
-        .key = copy_string(name),
-        .value = DICTIONARY_OBJ(builtin_function_dict(fn, name, details)),
-      };
-      kv_push(rv, pair);
-    } else {
-      // Find user function
-      ufunc_T *fp = find_func((char_u *)func_name);
-      if (fp != NULL) {
-        String key = user_function_name(fp);
-        Dictionary dict = user_function_dict(fp, key, details, lines);
+    if (func_name[0] != K_SPECIAL) {
+      const EvalFuncDef *fn = find_internal_func((char *)func_name);
+      if (fn != NULL) {
         KeyValuePair pair = {
-          .key = key,
-          .value = DICTIONARY_OBJ(dict),
+          .key = copy_string(name),
+          .value = DICTIONARY_OBJ(builtin_function_dict(fn, name, details)),
         };
         kv_push(rv, pair);
+        goto theend;
       }
     }
 
+    // Find user function
+    ufunc_T *fp = find_func(func_name);
+    if (fp != NULL) {
+      String key = user_function_name(fp);
+      Dictionary dict = user_function_dict(fp, key, details, lines);
+      KeyValuePair pair = {
+        .key = key,
+        .value = DICTIONARY_OBJ(dict),
+      };
+      kv_push(rv, pair);
+      goto theend;
+    }
+
+theend:
     xfree(func_name);
     return rv;
   }
