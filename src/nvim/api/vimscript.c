@@ -1066,37 +1066,10 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
   // List builtin functions
   if (builtin) {
     for (const EvalFuncDef *fn = builtin_functions; fn->name != NULL; fn++) {
-      Dictionary dict = ARRAY_DICT_INIT;
-      kv_resize(dict, details ? 6 : 2);
-      dict.items[dict.size++] = (KeyValuePair) {
-        .key = STATIC_CSTR_TO_STRING("name"),
-        .value = CSTR_TO_OBJ(fn->name),
-      };
-      dict.items[dict.size++] = (KeyValuePair) {
-        .key = STATIC_CSTR_TO_STRING("type"),
-        .value = CSTR_TO_OBJ("builtin"),
-      };
-      if (details) {
-        dict.items[dict.size++] = (KeyValuePair) {
-          .key = STATIC_CSTR_TO_STRING("min_argc"),
-          .value = INTEGER_OBJ(fn->min_argc),
-        };
-        dict.items[dict.size++] = (KeyValuePair) {
-          .key = STATIC_CSTR_TO_STRING("max_argc"),
-          .value = INTEGER_OBJ(fn->max_argc),
-        };
-        dict.items[dict.size++] = (KeyValuePair) {
-          .key = STATIC_CSTR_TO_STRING("base_arg"),
-          .value = INTEGER_OBJ(fn->base_arg),
-        };
-        dict.items[dict.size++] = (KeyValuePair) {
-          .key = STATIC_CSTR_TO_STRING("fast"),
-          .value = BOOLEAN_OBJ(fn->fast),
-        };
-      }
+      String name = cstr_to_string(fn->name);
       KeyValuePair pair = {
-        .key = cstr_to_string(fn->name),
-        .value = DICTIONARY_OBJ(dict),
+        .key = name,
+        .value = DICTIONARY_OBJ(builtin_function_dict(fn, name, details)),
       };
       kv_push(rv, pair);
     }
