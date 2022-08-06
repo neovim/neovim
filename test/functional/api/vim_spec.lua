@@ -3972,7 +3972,7 @@ describe('API', function()
         if case.script then name = name..' script=true' end
 
         it('fails with '..name, function()
-          local status, rv = pcall(meths.get_functions, case, {})
+          local status = pcall(meths.get_functions, case, {})
           eq(false, status)
         end)
       end
