@@ -3933,7 +3933,7 @@ describe('API', function()
           endfunction]], false)
       end)
 
-      for _, args in ipairs({
+      for _, case in ipairs({
         { builtin = true, user = true },
         { builtin = true, user = false },
         { builtin = true, global = true, script = true },
@@ -3944,35 +3944,35 @@ describe('API', function()
         { builtin = false, global = false, script = true },
       }) do
         local name
-        if args.user then
-          name = ('builtin=%s user=%s'):format(args.builtin, args.user)
+        if case.user then
+          name = fmt('builtin=%s user=%s', case.builtin, case.user)
         else
-          name = ('builtin=%s global=%s script=%s'):format(args.builtin, args.global, args.script)
+          name = fmt('builtin=%s global=%s script=%s', case.builtin, case.global, case.script)
         end
 
         it(name, function()
-          local fns = meths.get_functions(args, {})
-          if args.user ~= nil then
-            args.global = args.user
-            args.script = args.user
+          local fns = meths.get_functions(case, {})
+          if case.user ~= nil then
+            case.global = case.user
+            case.script = case.user
           end
-          eq(args.builtin and { name='abs', type='builtin' } or nil, fns.abs)
-          eq(args.global and { name='MyFun', type='user' } or nil, fns.MyFun)
-          eq(args.script and { name='<SNR>1_MyFun', type='user' } or nil, fns['<SNR>1_MyFun'])
+          eq(case.builtin and { name='abs', type='builtin' } or nil, fns.abs)
+          eq(case.global and { name='MyFun', type='user' } or nil, fns.MyFun)
+          eq(case.script and { name='<SNR>1_MyFun', type='user' } or nil, fns['<SNR>1_MyFun'])
         end)
       end
 
-      for _, args in ipairs({
+      for _, case in ipairs({
         { user = true, script = true },
         { user = true, global = true },
         { user = true, global = true, script = true },
       }) do
         local name = 'user=true'
-        if args.global then name = name..' global=true' end
-        if args.script then name = name..' script=true' end
+        if case.global then name = name..' global=true' end
+        if case.script then name = name..' script=true' end
 
         it('fails with '..name, function()
-          local status = pcall(meths.get_functions, args, {})
+          local status = pcall(meths.get_functions, case, {})
           eq(false, status)
         end)
       end
