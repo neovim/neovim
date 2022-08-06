@@ -8159,7 +8159,10 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   l = argvars[0].vval.v_list;
   if (l->lv_len == 0) {
-    clear_cw_table();
+    // Clearing the table.
+    xfree(cw_table);
+    cw_table = NULL;
+    cw_table_sizfuncse = 0;
     return;
   }
 

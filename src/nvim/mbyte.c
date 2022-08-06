@@ -494,14 +494,6 @@ static int cw_value(int c)
   return 0;
 }
 
-void clear_cw_table(void)
-{
-  xfree(cw_table);
-  cw_table = NULL;
-  cw_table_size = 0;
-  return;
-}
-
 void set_cw_table(cw_interval_T *table, int len)
 {
   xfree(cw_table);
