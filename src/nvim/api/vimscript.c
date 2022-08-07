@@ -911,7 +911,7 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
     if (fn->argnames != NULL) {
       Array overloads = ARRAY_DICT_INIT;
       Array names = ARRAY_DICT_INIT;
-      char buf[64] = {0};
+      char buf[64] = { 0 };
       size_t pos = 0;
 
       // Argument are separated with unit separator (ascii \x1F),
@@ -931,7 +931,7 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
           } else if (*p == '\x1E') {  // record separator: overload separator
             kv_push(names, STRING_OBJ(str));
             kv_push(overloads, ARRAY_OBJ(names));
-            names = (Array) ARRAY_DICT_INIT;
+            names = (Array)ARRAY_DICT_INIT;
           } else {  // NUL
             kv_push(names, STRING_OBJ(str));
             kv_push(overloads, ARRAY_OBJ(names));
