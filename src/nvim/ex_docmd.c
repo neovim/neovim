@@ -1635,7 +1635,7 @@ static int execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
       (cmdnames[eap->cmdidx].cmd_func)(eap);
     }
     if (eap->errmsg != NULL) {
-      *errormsg = _(eap->errmsg);
+      *errormsg = eap->errmsg;
     }
   }
 
@@ -4381,7 +4381,7 @@ static void get_flags(exarg_T *eap)
 void ex_ni(exarg_T *eap)
 {
   if (!eap->skip) {
-    eap->errmsg = N_("E319: The command is not available in this version");
+    eap->errmsg = _("E319: The command is not available in this version");
   }
 }
 
@@ -5018,7 +5018,7 @@ static int get_tabpage_arg(exarg_T *eap)
       } else if (p == p_save || *p_save == '-' || *p != NUL
                  || tab_number > LAST_TAB_NR) {
         // No numbers as argument.
-        eap->errmsg = e_invarg;
+        eap->errmsg = ex_errmsg(e_invarg2, eap->arg);
         goto theend;
       }
     } else {
@@ -5026,20 +5026,20 @@ static int get_tabpage_arg(exarg_T *eap)
         tab_number = 1;
       } else if (p == p_save || *p_save == '-' || *p != NUL || tab_number == 0) {
         // No numbers as argument.
-        eap->errmsg = e_invarg;
+        eap->errmsg = ex_errmsg(e_invarg2, eap->arg);
         goto theend;
       }
       tab_number = tab_number * relative + tabpage_index(curtab);
       if (!unaccept_arg0 && relative == -1) {
-        --tab_number;
+        tab_number--;
       }
     }
     if (tab_number < unaccept_arg0 || tab_number > LAST_TAB_NR) {
-      eap->errmsg = e_invarg;
+      eap->errmsg = ex_errmsg(e_invarg2, eap->arg);
     }
   } else if (eap->addr_count > 0) {
     if (unaccept_arg0 && eap->line2 == 0) {
-      eap->errmsg = e_invrange;
+      eap->errmsg = _(e_invrange);
       tab_number = 0;
     } else {
       tab_number = (int)eap->line2;
@@ -5048,7 +5048,7 @@ static int get_tabpage_arg(exarg_T *eap)
       if (!unaccept_arg0 && *cmdp == '-') {
         tab_number--;
         if (tab_number < unaccept_arg0) {
-          eap->errmsg = e_invarg;
+          eap->errmsg = _(e_invrange);
         }
       }
     }
@@ -5078,7 +5078,7 @@ static void ex_autocmd(exarg_T *eap)
   // directory for security reasons.
   if (secure) {
     secure = 2;
-    eap->errmsg = e_curdir;
+    eap->errmsg = _(e_curdir);
   } else if (eap->cmdidx == CMD_autocmd) {
     do_autocmd(eap->arg, eap->forceit);
   } else {
@@ -5119,7 +5119,7 @@ static void ex_bunload(exarg_T *eap)
 static void ex_buffer(exarg_T *eap)
 {
   if (*eap->arg) {
-    eap->errmsg = e_trailing;
+    eap->errmsg = ex_errmsg(e_trailing_arg, eap->arg);
   } else {
     if (eap->addr_count == 0) {  // default is current buffer
       goto_buffer(eap, DOBUF_CURRENT, FORWARD, 0);
@@ -5943,7 +5943,7 @@ static void ex_recover(exarg_T *eap)
 /// Command modifier used in a wrong way.
 static void ex_wrongmodifier(exarg_T *eap)
 {
-  eap->errmsg = e_invcmd;
+  eap->errmsg = _(e_invcmd);
 }
 
 /// :sview [+command] file       split window with new file, read-only
@@ -6052,7 +6052,7 @@ static void ex_tabnext(exarg_T *eap)
       if (p == p_save || *p_save == '-' || *p_save == '+' || *p != NUL
           || tab_number == 0) {
         // No numbers as argument.
-        eap->errmsg = e_invarg;
+        eap->errmsg = ex_errmsg(e_invarg2, eap->arg);
         return;
       }
     } else {
@@ -6061,7 +6061,7 @@ static void ex_tabnext(exarg_T *eap)
       } else {
         tab_number = (int)eap->line2;
         if (tab_number < 1) {
-          eap->errmsg = e_invrange;
+          eap->errmsg = _(e_invrange);
           return;
         }
       }
@@ -6339,7 +6339,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
 /// ":gui" and ":gvim" when there is no GUI.
 static void ex_nogui(exarg_T *eap)
 {
-  eap->errmsg = N_("E25: Nvim does not have a built-in GUI");
+  eap->errmsg = _("E25: Nvim does not have a built-in GUI");
 }
 
 static void ex_popup(exarg_T *eap)
@@ -7559,7 +7559,7 @@ static void ex_findpat(exarg_T *eap)
 
       // Check for trailing illegal characters.
       if (!ends_excmd(*p)) {
-        eap->errmsg = e_trailing;
+        eap->errmsg = ex_errmsg(e_trailing_arg, p);
       } else {
         eap->nextcmd = (char *)check_nextcmd((char_u *)p);
       }

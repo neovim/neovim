@@ -133,18 +133,18 @@ function Test_tabpage()
   call assert_fails("99tabmove", 'E16:')
   call assert_fails("+99tabmove", 'E16:')
   call assert_fails("-99tabmove", 'E16:')
-  call assert_fails("tabmove foo", 'E474:')
-  call assert_fails("tabmove 99", 'E474:')
-  call assert_fails("tabmove +99", 'E474:')
-  call assert_fails("tabmove -99", 'E474:')
-  call assert_fails("tabmove -3+", 'E474:')
-  call assert_fails("tabmove $3", 'E474:')
+  call assert_fails("tabmove foo", 'E475:')
+  call assert_fails("tabmove 99", 'E475:')
+  call assert_fails("tabmove +99", 'E475:')
+  call assert_fails("tabmove -99", 'E475:')
+  call assert_fails("tabmove -3+", 'E475:')
+  call assert_fails("tabmove $3", 'E475:')
   call assert_fails("%tabonly", 'E16:')
   1tabonly!
   tabmove 1
   call assert_equal(1, tabpagenr())
   tabnew
-  call assert_fails("-2tabmove", 'E474:')
+  call assert_fails("-2tabmove", 'E16:')
   tabonly!
 endfunc
 
@@ -320,14 +320,14 @@ function Test_tabpage_with_tabnext()
   call Check_tab_count(4, 'tabnext -', 3)
   call Check_tab_count(4, 'tabnext -2', 2)
   call Check_tab_count(3, 'tabnext $', 5)
-  call assert_fails('tabnext 0', 'E474:')
-  call assert_fails('tabnext .', 'E474:')
-  call assert_fails('tabnext -+', 'E474:')
-  call assert_fails('tabnext +2-', 'E474:')
-  call assert_fails('tabnext $3', 'E474:')
-  call assert_fails('tabnext 99', 'E474:')
-  call assert_fails('tabnext +99', 'E474:')
-  call assert_fails('tabnext -99', 'E474:')
+  call assert_fails('tabnext 0', 'E475:')
+  call assert_fails('tabnext .', 'E475:')
+  call assert_fails('tabnext -+', 'E475:')
+  call assert_fails('tabnext +2-', 'E475:')
+  call assert_fails('tabnext $3', 'E475:')
+  call assert_fails('tabnext 99', 'E475:')
+  call assert_fails('tabnext +99', 'E475:')
+  call assert_fails('tabnext -99', 'E475:')
 
   1tabonly!
 endfunction
@@ -352,7 +352,7 @@ function Test_tabpage_with_tabprevious()
           let err_code = 'E16:'
         else
           let entire_cmd = cmd . ' ' . c
-          let err_code = 'E474:'
+          let err_code = 'E475:'
         endif
         call assert_fails(entire_cmd, err_code)
       endfor
@@ -451,7 +451,7 @@ function Test_tabpage_with_tabclose()
         let err_code = 'E16:'
       else
         let entire_cmd = 'tabclose ' . c
-        let err_code = 'E474:'
+        let err_code = 'E475:'
       endif
       call assert_fails(entire_cmd, err_code)
       call assert_equal(6, tabpagenr('$'))
@@ -460,8 +460,8 @@ function Test_tabpage_with_tabclose()
 
   call assert_fails('3tabclose', 'E37:')
   call assert_fails('tabclose 3', 'E37:')
-  call assert_fails('tabclose -+', 'E474:')
-  call assert_fails('tabclose +2-', 'E474:')
+  call assert_fails('tabclose -+', 'E475:')
+  call assert_fails('tabclose +2-', 'E475:')
   call assert_equal(6, tabpagenr('$'))
 
   1tabonly!
@@ -506,7 +506,7 @@ function Test_tabpage_with_tabonly()
         let err_code = 'E16:'
       else
         let entire_cmd = 'tabonly ' . c
-        let err_code = 'E474:'
+        let err_code = 'E475:'
       endif
       call assert_fails(entire_cmd, err_code)
       call assert_equal(6, tabpagenr('$'))
@@ -517,13 +517,13 @@ function Test_tabpage_with_tabonly()
   for c in tc
     call s:reconstruct_tabpage_for_test(6)
     let entire_cmd = 'tabonly' . c[2] . ' ' . c[1]
-    let err_code = 'E474:'
+    let err_code = 'E475:'
     call assert_fails(entire_cmd, err_code)
     call assert_equal(6, tabpagenr('$'))
   endfor
 
-  call assert_fails('tabonly -+', 'E474:')
-  call assert_fails('tabonly +2-', 'E474:')
+  call assert_fails('tabonly -+', 'E475:')
+  call assert_fails('tabonly +2-', 'E475:')
   call assert_equal(6, tabpagenr('$'))
 
   1tabonly!

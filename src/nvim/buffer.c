@@ -969,7 +969,7 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
   } else {
     if (addr_count == 2) {
       if (*arg) {               // both range and argument is not allowed
-        return _(e_trailing);
+        return ex_errmsg(e_trailing_arg, arg);
       }
       bnr = start_bnr;
     } else {    // addr_count == 1
