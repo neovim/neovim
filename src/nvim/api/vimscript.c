@@ -776,13 +776,7 @@ static String user_function_name(ufunc_T *fp)
 static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, bool lines)
 {
   Dictionary dict = ARRAY_DICT_INIT;
-  size_t dict_size = 2;
-  if (details) {
-    dict_size += 8;
-  }
-  if (lines) {
-    dict_size += 1;
-  }
+  size_t dict_size = 2U + (details ? 8 : 0) + (lines ? 1 : 0);
   kv_resize(dict, dict_size);
 
   // Function name
