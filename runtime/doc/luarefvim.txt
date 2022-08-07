@@ -1,14 +1,14 @@
-*luarefvim.txt*           Lua Reference Manual for Vim
-                                Vim version 7.0
+*luarefvim.txt*           Nvim
+                                                   *luaref* *Lua-Reference*
+
+                             LUA REFERENCE MANUAL
 
 
-                                                      *luaref* *Lua-Reference*
-                             Lua Reference for Vim
-                           =========================
-                                 Version 0.2.0
-                              November, 25th, 2006
+                                 Version 0.3.0
+                                August 7th, 2022
 
-                           (c) 2006 by Luis Carvalho
+
+                    Vimdoc version (c) 2006 by Luis Carvalho
                          <lexcarvalho at gmail dot com>
 
                     Adapted from "Lua: 5.1 reference manual"
@@ -5466,6 +5466,9 @@ a few exceptions and adaptations -- a copy of the Lua 5.1 Reference Manual
 The main ideas and concepts on how to implement this reference were taken from
 Christian Habermann's CRefVim project
 (`http://www.vim.org/scripts/script.php?script_id=614`).
+
+Adapted for bundled Nvim documentation; the original plugin can be found at
+http://www.vim.org/scripts/script.php?script_id=1291
 
 ------------------------------------------------------------------------------
  vi:tw=78:ts=4:ft=help:norl:noai
