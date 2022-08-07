@@ -1,3 +1,9 @@
+-- Generates API <=> Lua bridge C code.
+--
+-- Look for the results here:
+--    build/src/nvim/auto/lua_api_c_bindings.generated.c
+--    build/src/nvim/auto/api/private/dispatch_wrappers.generated.h
+
 local mpack = require('mpack')
 
 -- we need at least 4 arguments since the last two are output files
@@ -125,7 +131,7 @@ for _,f in ipairs(shallowcopy(functions)) do
       -- duplicate
       print("Function "..f.name.." has deprecated alias\n"
             ..newname.." which has a separate implementation.\n"..
-            "Please remove it from src/nvim/api/dispatch_deprecated.lua")
+            "Remove it from src/nvim/api/dispatch_deprecated.lua")
       os.exit(1)
     end
     local newf = shallowcopy(f)
@@ -406,6 +412,10 @@ output:write('\n')
 
 local lua_c_functions = {}
 
+-- Generates C code to bridge RPC API <=> Lua.
+--
+-- Look for the result here:
+--    build/src/nvim/auto/api/private/dispatch_wrappers.generated.h
 local function process_function(fn)
   local lua_c_function_name = ('nlua_api_%s'):format(fn.name)
   write_shifted_output(output, string.format([[

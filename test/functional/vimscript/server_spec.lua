@@ -6,6 +6,10 @@ local ok = helpers.ok
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 local mkdir = helpers.mkdir
+local exec_lua = helpers.exec_lua
+local command = helpers.command
+local retry = helpers.retry
+local expect_exit = helpers.expect_exit
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
@@ -13,7 +17,7 @@ local function clear_serverlist()
   end
 end
 
-describe('server', function()
+describe('#server', function()
   it('serverstart() stores sockets in $XDG_RUNTIME_DIR', function()
     local dir = 'Xtest_xdg_run'
     mkdir(dir)
@@ -23,7 +27,6 @@ describe('server', function()
       matches(dir, funcs.serverstart())
     end
   end)
-
 
   it('serverstart(), serverstop() does not set $NVIM', function()
     clear()
@@ -173,5 +176,70 @@ describe('startup --listen', function()
     -- Address without slashes is a "name" which is appended to a generated path. #8519
     clear({ args={ '--listen', 'test-name' } })
     matches([[.*[/\\]test%-name[^/\\]*]], meths.get_vvar('servername'))
+  end)
+end)
+
+describe('#client (child nvim)', function()
+  before_each(clear)
+
+  it('creates v:parent channel from $NVIM', function()
+    local nrchans = #meths.list_chans()
+    exec_lua([[return vim.fn.jobstart({ vim.v.progpath }, vim.empty_dict())]])
+    local chanid = retry(nil, 5000, function()
+      return assert(meths.get_chan_info(nrchans + 2).id)
+    end)
+    ok(chanid > 0)
+    local chan = meths.get_chan_info(chanid)
+
+    -- Check the channel info from the parent side.
+    local version = funcs.api_info()['version']
+    -- See comment in vim._server_init()
+    version['prerelease'] = version['prerelease'] and 'dev' or nil
+    eq({
+        id = chan.id,
+        mode = 'rpc',
+        stream = 'socket',
+        client = {
+          attributes = {},
+          methods = {},
+          name = 'nvim-child',
+          type = 'remote',
+          version = version,
+        },
+      },
+      chan)
+
+    -- Check v:parent in the child.
+    eq({
+        id = nrchans + 1,
+        mode = 'rpc',
+        stream = 'socket',
+        client = {},
+      },
+      funcs.rpcrequest(chan.id, 'nvim_eval', 'v:parent'))
+
+    -- v:parent is immutable.
+    eq(
+      [[Vim:Error invoking 'nvim_exec' on channel 4 (nvim-child):]]
+      ..'\n'
+      ..[[Vim(let):E46: Cannot change read-only variable "v:parent"]],
+      pcall_err(funcs.rpcrequest, chan.id, 'nvim_exec', 'let v:parent={}', true))
+    eq(
+      [[Vim:Error invoking 'nvim_exec' on channel 4 (nvim-child):]]
+      ..'\n'
+      ..[[Vim(let):E46: Cannot change read-only variable "v:parent.id"]],
+      pcall_err(funcs.rpcrequest, chan.id, 'nvim_exec', 'let v:parent.id={}', true))
+
+    funcs.rpcnotify(chan.id, 'nvim_exec', 'qa!', false)
+    expect_exit(command, 'qa!')
+  end)
+
+  it('fails if $NVIM is invalid', function()
+    local nrchans = #meths.list_chans()
+    exec_lua([[return vim.fn.jobstart({ vim.v.progpath }, {env={NVIM='bogus-address'}})]])
+    -- TODO: check logs, check v:parent
+
+    -- No channels were created by the child (+1 for the jobstart() call).
+    eq(nrchans + 1, #meths.list_chans())
   end)
 end)

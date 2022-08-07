@@ -835,7 +835,7 @@ You can use them to jump from file to file.  You can only use an uppercase
 mark with an operator if the mark is in the current file.  The line number of
 the mark remains correct, even if you insert/delete lines or edit another file
 for a moment.  When the 'shada' option is not empty, uppercase marks are
-kept in the .shada file.  See |shada-file-marks|.
+kept in the |shada| file.  See |shada-file-marks|.
 
 Numbered marks '0 to '9 are quite different.  They can not be set directly.
 They are only present when using a shada file |shada-file|.  Basically '0
