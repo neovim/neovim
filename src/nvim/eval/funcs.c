@@ -8165,7 +8165,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // Clearing the table.
     xfree(cw_table);
     cw_table = NULL;
-    cw_table_sizfuncse = 0;
+    cw_table_size = 0;
     return;
   }
 
