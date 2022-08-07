@@ -2,12 +2,14 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local assert_alive = helpers.assert_alive
 local clear = helpers.clear
-local feed, nvim = helpers.feed, helpers.nvim
+local feed = helpers.feed
 local feed_command = helpers.feed_command
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
+local meths = helpers.meths
 local iswin = helpers.iswin
+local sleep = helpers.sleep
 local retry = helpers.retry
 
 describe(':terminal', function()
@@ -17,10 +19,10 @@ describe(':terminal', function()
     clear()
     -- set the statusline to a constant value because of variables like pid
     -- and current directory and to improve visibility of splits
-    nvim('set_option', 'statusline', '==========')
-    nvim('command', 'highlight StatusLine cterm=NONE')
-    nvim('command', 'highlight StatusLineNC cterm=NONE')
-    nvim('command', 'highlight VertSplit cterm=NONE')
+    meths.set_option('statusline', '==========')
+    command('highlight StatusLine cterm=NONE')
+    command('highlight StatusLineNC cterm=NONE')
+    command('highlight VertSplit cterm=NONE')
     screen = thelpers.screen_setup(3)
   end)
 
@@ -65,6 +67,27 @@ describe(':terminal', function()
                                                         |
       ==========                                        |
       :wincmd p                                         |
+    ]])
+  end)
+
+  it('does not change size if updated when not visible in any window #19665', function()
+    local channel = meths.buf_get_option(0, 'channel')
+    command('enew')
+    sleep(100)
+    meths.chan_send(channel, 'foo')
+    sleep(100)
+    command('bprevious')
+    screen:expect([[
+      tty ready                                         |
+      ^foo{2: }                                              |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
     ]])
   end)
 
