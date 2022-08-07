@@ -3120,7 +3120,7 @@ void qf_list(exarg_T *eap)
   int idx1 = 1;
   int idx2 = -1;
   if (!get_list_range((char_u **)&arg, &idx1, &idx2) || *arg != NUL) {
-    emsg(_(e_trailing));
+    semsg(_(e_trailing_arg), arg);
     return;
   }
   qf_list_T *qfl = qf_get_curlist(qi);

@@ -1193,7 +1193,7 @@ void ex_match(exarg_T *eap)
     if (!eap->skip) {
       if (*end != NUL && !ends_excmd(*skipwhite((char *)end + 1))) {
         xfree(g);
-        eap->errmsg = e_trailing;
+        eap->errmsg = ex_errmsg(e_trailing_arg, (const char *)end);
         return;
       }
       if (*end != *p) {

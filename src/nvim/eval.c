@@ -544,9 +544,9 @@ int var_redir_start(char *name, int append)
     clear_lval(redir_lval);
     if (redir_endp != NULL && *redir_endp != NUL) {
       // Trailing characters are present after the variable name
-      emsg(_(e_trailing));
+      semsg(_(e_trailing_arg), redir_endp);
     } else {
-      emsg(_(e_invarg));
+      semsg(_(e_invarg2), name);
     }
     redir_endp = NULL;      // don't store a value, only cleanup
     var_redir_stop();
@@ -1326,7 +1326,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
     // Don't expand the name when we already know there is an error.
     if (unlet && !ascii_iswhite(*p) && !ends_excmd(*p)
         && *p != '[' && *p != '.') {
-      emsg(_(e_trailing));
+      semsg(_(e_trailing_arg), p);
       return NULL;
     }
 

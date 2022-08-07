@@ -80,7 +80,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
     marker = skipwhite(cmd);
     p = (char *)skiptowhite((char_u *)marker);
     if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
-      emsg(_(e_trailing));
+      semsg(_(e_trailing_arg), p);
       return NULL;
     }
     *p = NUL;
@@ -460,7 +460,7 @@ static const char *list_arg_vars(exarg_T *eap, const char *arg, int *first)
       arg = find_name_end(arg, NULL, NULL, FNE_INCL_BR | FNE_CHECK_START);
       if (!ascii_iswhite(*arg) && !ends_excmd(*arg)) {
         emsg_severe = true;
-        emsg(_(e_trailing));
+        semsg(_(e_trailing_arg), arg);
         break;
       }
     } else {
@@ -808,7 +808,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
           || (!ascii_iswhite(*name_end) && !ends_excmd(*name_end))) {
         if (name_end != NULL) {
           emsg_severe = true;
-          emsg(_(e_trailing));
+          semsg(_(e_trailing_arg), name_end);
         }
         if (!(eap->skip || error)) {
           clear_lval(&lv);

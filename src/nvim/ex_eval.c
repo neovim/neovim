@@ -812,7 +812,7 @@ void ex_if(exarg_T *eap)
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1) {
-    eap->errmsg = N_("E579: :if nesting too deep");
+    eap->errmsg = _("E579: :if nesting too deep");
   } else {
     ++cstack->cs_idx;
     cstack->cs_flags[cstack->cs_idx] = 0;
@@ -840,7 +840,7 @@ void ex_endif(exarg_T *eap)
   if (eap->cstack->cs_idx < 0
       || (eap->cstack->cs_flags[eap->cstack->cs_idx]
           & (CSF_WHILE | CSF_FOR | CSF_TRY))) {
-    eap->errmsg = N_("E580: :endif without :if");
+    eap->errmsg = _("E580: :endif without :if");
   } else {
     // When debugging or a breakpoint was encountered, display the debug
     // prompt (if not already done).  This shows the user that an ":endif"
@@ -870,17 +870,17 @@ void ex_else(exarg_T *eap)
       || (cstack->cs_flags[cstack->cs_idx]
           & (CSF_WHILE | CSF_FOR | CSF_TRY))) {
     if (eap->cmdidx == CMD_else) {
-      eap->errmsg = N_("E581: :else without :if");
+      eap->errmsg = _("E581: :else without :if");
       return;
     }
-    eap->errmsg = N_("E582: :elseif without :if");
+    eap->errmsg = _("E582: :elseif without :if");
     skip = true;
   } else if (cstack->cs_flags[cstack->cs_idx] & CSF_ELSE) {
     if (eap->cmdidx == CMD_else) {
-      eap->errmsg = N_("E583: multiple :else");
+      eap->errmsg = _("E583: multiple :else");
       return;
     }
-    eap->errmsg = N_("E584: :elseif after :else");
+    eap->errmsg = _("E584: :elseif after :else");
     skip = true;
   }
 
@@ -940,7 +940,7 @@ void ex_while(exarg_T *eap)
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1) {
-    eap->errmsg = N_("E585: :while/:for nesting too deep");
+    eap->errmsg = _("E585: :while/:for nesting too deep");
   } else {
     /*
      * The loop flag is set when we have jumped back from the matching
@@ -1019,7 +1019,7 @@ void ex_continue(exarg_T *eap)
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
-    eap->errmsg = N_("E586: :continue without :while or :for");
+    eap->errmsg = _("E586: :continue without :while or :for");
   } else {
     // Try to find the matching ":while".  This might stop at a try
     // conditional not in its finally clause (which is then to be executed
@@ -1051,7 +1051,7 @@ void ex_break(exarg_T *eap)
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
-    eap->errmsg = N_("E587: :break without :while or :for");
+    eap->errmsg = _("E587: :break without :while or :for");
   } else {
     // Deactivate conditionals until the matching ":while" or a try
     // conditional not in its finally clause (which is then to be
@@ -1083,7 +1083,7 @@ void ex_endwhile(exarg_T *eap)
   }
 
   if (cstack->cs_looplevel <= 0 || cstack->cs_idx < 0) {
-    eap->errmsg = err;
+    eap->errmsg = _(err);
   } else {
     fl = cstack->cs_flags[cstack->cs_idx];
     if (!(fl & csf)) {
@@ -1097,9 +1097,9 @@ void ex_endwhile(exarg_T *eap)
     }
     if (!(fl & (CSF_WHILE | CSF_FOR))) {
       if (!(fl & CSF_TRY)) {
-        eap->errmsg = e_endif;
+        eap->errmsg = _(e_endif);
       } else if (fl & CSF_FINALLY) {
-        eap->errmsg = e_endtry;
+        eap->errmsg = _(e_endtry);
       }
       // Try to find the matching ":while" and report what's missing.
       for (idx = cstack->cs_idx; idx > 0; --idx) {
@@ -1107,7 +1107,7 @@ void ex_endwhile(exarg_T *eap)
         if ((fl & CSF_TRY) && !(fl & CSF_FINALLY)) {
           // Give up at a try conditional not in its finally clause.
           // Ignore the ":endwhile"/":endfor".
-          eap->errmsg = err;
+          eap->errmsg = _(err);
           return;
         }
         if (fl & csf) {
@@ -1230,7 +1230,7 @@ void ex_try(exarg_T *eap)
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1) {
-    eap->errmsg = N_("E601: :try nesting too deep");
+    eap->errmsg = _("E601: :try nesting too deep");
   } else {
     ++cstack->cs_idx;
     ++cstack->cs_trylevel;
@@ -1289,7 +1289,7 @@ void ex_catch(exarg_T *eap)
   char *pat;
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
-    eap->errmsg = N_("E603: :catch without :try");
+    eap->errmsg = _("E603: :catch without :try");
     give_up = true;
   } else {
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
@@ -1306,7 +1306,7 @@ void ex_catch(exarg_T *eap)
     if (cstack->cs_flags[idx] & CSF_FINALLY) {
       // Give up for a ":catch" after ":finally" and ignore it.
       // Just parse.
-      eap->errmsg = N_("E604: :catch after :finally");
+      eap->errmsg = _("E604: :catch after :finally");
       give_up = true;
     } else {
       rewind_conditionals(cstack, idx, CSF_WHILE | CSF_FOR,
@@ -1341,7 +1341,7 @@ void ex_catch(exarg_T *eap)
     if (!skip && (cstack->cs_flags[idx] & CSF_THROWN)
         && !(cstack->cs_flags[idx] & CSF_CAUGHT)) {
       if (end != NULL && *end != NUL && !ends_excmd(*skipwhite(end + 1))) {
-        emsg(_(e_trailing));
+        semsg(_(e_trailing_arg), end);
         return;
       }
 
@@ -1436,7 +1436,7 @@ void ex_finally(exarg_T *eap)
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
-    eap->errmsg = N_("E606: :finally without :try");
+    eap->errmsg = _("E606: :finally without :try");
   } else {
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       eap->errmsg = get_end_emsg(cstack);
@@ -1455,7 +1455,7 @@ void ex_finally(exarg_T *eap)
 
     if (cstack->cs_flags[idx] & CSF_FINALLY) {
       // Give up for a multiple ":finally" and ignore it.
-      eap->errmsg = N_("E607: multiple :finally");
+      eap->errmsg = _("E607: multiple :finally");
       return;
     }
     rewind_conditionals(cstack, idx, CSF_WHILE | CSF_FOR,
@@ -1559,7 +1559,7 @@ void ex_endtry(exarg_T *eap)
   cstack_T *const cstack = eap->cstack;
 
   if (cstack->cs_trylevel <= 0 || cstack->cs_idx < 0) {
-    eap->errmsg = N_("E602: :endtry without :try");
+    eap->errmsg = _("E602: :endtry without :try");
   } else {
     // Don't do something after an error, interrupt or throw in the try
     // block, catch clause, or finally clause preceding this ":endtry" or
@@ -1998,12 +1998,12 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
 static char *get_end_emsg(cstack_T *cstack)
 {
   if (cstack->cs_flags[cstack->cs_idx] & CSF_WHILE) {
-    return e_endwhile;
+    return _(e_endwhile);
   }
   if (cstack->cs_flags[cstack->cs_idx] & CSF_FOR) {
-    return e_endfor;
+    return _(e_endfor);
   }
-  return e_endif;
+  return _(e_endif);
 }
 
 /// Rewind conditionals until index "idx" is reached.  "cond_type" and
