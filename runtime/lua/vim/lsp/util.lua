@@ -113,7 +113,7 @@ end
 --- Convert byte index to `encoding` index.
 --- Convenience wrapper around vim.str_utfindex
 ---@param line string line to be indexed
----@param index number byte index (utf-8), or `nil` for length
+---@param index number|nil byte index (utf-8), or `nil` for length
 ---@param encoding string utf-8|utf-16|utf-32|nil defaults to utf-16
 ---@return number `encoding` index of `index` in `line`
 function M._str_utfindex_enc(line, index, encoding)
