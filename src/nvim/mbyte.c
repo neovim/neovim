@@ -461,6 +461,9 @@ static bool intable(const struct interval *table, size_t n_items, int c)
   return false;
 }
 
+cw_interval_T *cw_table = NULL;
+size_t cw_table_size = 0;
+
 /// Return the value of the cellwidth table for the character `c`.
 ///
 /// @param c The source character.
@@ -492,13 +495,6 @@ static int cw_value(int c)
     }
   }
   return 0;
-}
-
-void set_cw_table(cw_interval_T *table, int len)
-{
-  xfree(cw_table);
-  cw_table = table;
-  cw_table_size = len;
 }
 
 /// For UTF-8 character "c" return 2 for a double-width character, 1 for others.

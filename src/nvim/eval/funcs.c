@@ -44,7 +44,6 @@
 #include "nvim/mark.h"
 #include "nvim/match.h"
 #include "nvim/math.h"
-#include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
@@ -8140,6 +8139,9 @@ static int tv_nr_compare(const void *a1, const void *a2)
 
   return (int)(li1->li_tv.vval.v_number - li2->li_tv.vval.v_number);
 }
+
+extern cw_interval_T *cw_table;
+extern size_t cw_table_size;
 
 /// "setcellwidths()" function
 static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)

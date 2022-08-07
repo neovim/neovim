@@ -3605,7 +3605,7 @@ static int get_encoded_char_adv(char_u **p)
 ///
 /// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
 /// @return error message, NULL if it's OK.
-static char *set_chars_option(win_T *wp, char_u **varp, bool set)
+char *set_chars_option(win_T *wp, char_u **varp, bool set)
 {
   int round, i, len, len2, entries;
   char_u *p, *s;

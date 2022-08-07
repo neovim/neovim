@@ -93,6 +93,3 @@ static inline int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
   return (ic ? mb_stricmp(s1, s2) : strcmp(s1, s2));
 }
 #endif  // NVIM_MBYTE_H
-
-cw_interval_T *cw_table = NULL;
-size_t cw_table_size = 0;
