@@ -8266,7 +8266,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         break;
       }
       if (set_chars_option(wp, &wp->w_p_fcs, false) != NULL) {
-        error = "E834: Conflicts with value of 'fillchars'";
+        error = "E835: Conflicts with value of 'fillchars'";
         break;
       }
     }
