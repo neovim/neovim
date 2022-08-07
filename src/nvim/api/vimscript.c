@@ -747,6 +747,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
   return ret;
 }
 
+/// Translates and returns allocated user function name.
 static String user_function_name(ufunc_T *fp)
 {
   String name;
@@ -771,6 +772,7 @@ static String user_function_name(ufunc_T *fp)
   return name;
 }
 
+/// Copies name.
 static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, bool lines)
 {
   Dictionary dict = ARRAY_DICT_INIT;
@@ -876,6 +878,7 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
   return dict;
 }
 
+/// Copies name.
 static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool details)
 {
   Dictionary dict = ARRAY_DICT_INIT;
@@ -963,7 +966,8 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
 ///                 - lines   (boolean) Include user function lines. Ignored for builtin
 ///                           functions.
 /// @param[out] err Error details, if any
-/// @return Map of function names to dictionaries describing them.
+/// @return A dictionary describing a function when {query} is a string, or a map of
+///         function names to dictionaries describing them when {query} is a dictionary.
 Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
   FUNC_API_SINCE(10)
 {
@@ -1017,11 +1021,7 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
     if (func_name[0] != K_SPECIAL) {
       const EvalFuncDef *fn = find_internal_func((char *)func_name);
       if (fn != NULL) {
-        KeyValuePair pair = {
-          .key = copy_string(name),
-          .value = DICTIONARY_OBJ(builtin_function_dict(fn, name, details)),
-        };
-        kv_push(rv, pair);
+        rv = builtin_function_dict(fn, name, details);
         goto theend;
       }
     }
@@ -1029,15 +1029,15 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
     // Find user function
     ufunc_T *fp = find_func(func_name);
     if (fp != NULL) {
-      String key = user_function_name(fp);
-      Dictionary dict = user_function_dict(fp, key, details, lines);
-      KeyValuePair pair = {
-        .key = key,
-        .value = DICTIONARY_OBJ(dict),
-      };
-      kv_push(rv, pair);
+      String ufname = user_function_name(fp);
+      rv = user_function_dict(fp, ufname, details, lines);
+      xfree(ufname.data);
       goto theend;
     }
+
+    xfree(func_name);
+    api_set_error(err, kErrorTypeException, "No function with this name");
+    return rv;
 
 theend:
     xfree(func_name);
@@ -1072,7 +1072,7 @@ theend:
   }
 
   if (!builtin && !user) {
-    api_set_error(err, kErrorTypeValidation, "nothing to list");
+    api_set_error(err, kErrorTypeValidation, "Nothing to list");
     return rv;
   }
 
@@ -1112,10 +1112,10 @@ theend:
         continue;
       }
 
-      String key = user_function_name(fp);
-      Dictionary dict = user_function_dict(fp, key, details, lines);
+      String name = user_function_name(fp);
+      Dictionary dict = user_function_dict(fp, name, details, lines);
       KeyValuePair pair = {
-        .key = key,
+        .key = name,
         .value = DICTIONARY_OBJ(dict),
       };
       kv_push(rv, pair);

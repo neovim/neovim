@@ -3827,11 +3827,11 @@ describe('API', function()
 
   describe('nvim_get_functions', function()
     it('can get a builtin function', function ()
-      eq({ abs = {
+      eq({
         name = 'abs',
         type = 'builtin',
-      }}, meths.get_functions('abs', {}))
-      eq({ abs = {
+      }, meths.get_functions('abs', {}))
+      eq({
         name = 'abs',
         type = 'builtin',
         min_argc = 1,
@@ -3839,7 +3839,7 @@ describe('API', function()
         base_arg = 1,
         fast = false,
         argnames = { { 'expr' } },
-      }}, meths.get_functions('abs', { details = true }))
+      }, meths.get_functions('abs', { details = true }))
     end)
 
     it('can get a user function', function()
@@ -3848,28 +3848,11 @@ describe('API', function()
           return a:x
         endfunction]], false)
 
-      eq({ MyFun = {
+      eq({
         name = 'MyFun',
         type = 'user',
-      }}, meths.get_functions('MyFun', {}))
-      eq({ MyFun = {
-        name = 'MyFun',
-        type = 'user',
-        args = { { name = 'x' } },
-        varargs = false,
-        abort = false,
-        range = false,
-        dict = false,
-        closure = false,
-        sid = -10,
-        lnum = 0,
-      }}, meths.get_functions('MyFun', { details = true }))
-      eq({ MyFun = {
-        name = 'MyFun',
-        type = 'user',
-        lines = { '  return a:x' },
-      }}, meths.get_functions('MyFun', { lines = true }))
-      eq({ MyFun = {
+      }, meths.get_functions('MyFun', {}))
+      eq({
         name = 'MyFun',
         type = 'user',
         args = { { name = 'x' } },
@@ -3880,8 +3863,25 @@ describe('API', function()
         closure = false,
         sid = -10,
         lnum = 0,
+      }, meths.get_functions('MyFun', { details = true }))
+      eq({
+        name = 'MyFun',
+        type = 'user',
         lines = { '  return a:x' },
-      }}, meths.get_functions('MyFun', { details = true, lines = true }))
+      }, meths.get_functions('MyFun', { lines = true }))
+      eq({
+        name = 'MyFun',
+        type = 'user',
+        args = { { name = 'x' } },
+        varargs = false,
+        abort = false,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = -10,
+        lnum = 0,
+        lines = { '  return a:x' },
+      }, meths.get_functions('MyFun', { details = true, lines = true }))
     end)
 
     it('can get a script function', function()
@@ -3889,7 +3889,7 @@ describe('API', function()
         function! s:MyFun(x)
           return a:x
         endfunction]], false)
-      eq({ ['<SNR>1_MyFun'] = {
+      eq({
         name = '<SNR>1_MyFun',
         type = 'user',
         args = { { name = 'x' } },
@@ -3900,7 +3900,7 @@ describe('API', function()
         closure = false,
         sid = 1,
         lnum = 0,
-      }}, meths.get_functions('<SNR>1_MyFun', { details = true }))
+      }, meths.get_functions('<SNR>1_MyFun', { details = true }))
     end)
 
     it('can get default arguments and attributes', function()
@@ -3909,7 +3909,7 @@ describe('API', function()
           return a:x
         endfunction]], false)
 
-      eq({ MyFun = {
+      eq({
         name = 'MyFun',
         type = 'user',
         args = { { name = 'x' }, { name = 'y', default = [['test']] } },
@@ -3920,7 +3920,7 @@ describe('API', function()
         closure = false,
         sid = -10,
         lnum = 0,
-      }}, meths.get_functions('MyFun', { details = true }))
+      }, meths.get_functions('MyFun', { details = true }))
     end)
 
     describe('list', function()
@@ -3955,9 +3955,9 @@ describe('API', function()
       local status = pcall(meths.get_functions, { builtin = false, user = false }, {})
       eq(false, status)
     end)
-
-    it('returns empty dict when function was not found', function()
-      eq({}, meths.get_functions('Nothing', {}))
+    it('returns error when function was not found', function()
+      local status = pcall(meths.get_functions, 'Nothing', {})
+      eq(false, status)
     end)
   end)
 end)

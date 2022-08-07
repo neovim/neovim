@@ -1655,7 +1655,9 @@ nvim_get_functions({query}, {opts})                     *nvim_get_functions()*
                                Ignored for builtin functions.
 
                 Return: ~
-                    Map of function names to dictionaries describing them.
+                    A dictionary describing a function when {query} is a
+                    string, or a map of function names to dictionaries
+                    describing them when {query} is a dictionary.
 
                                                      *nvim_parse_expression()*
 nvim_parse_expression({expr}, {flags}, {highlight})
