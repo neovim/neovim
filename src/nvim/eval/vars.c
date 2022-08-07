@@ -678,8 +678,11 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
 
       if (!failed) {
         if (opt_type != gov_string || s != NULL) {
-          set_option_value(arg, n, s, opt_flags);
+          char *err = set_option_value(arg, n, s, opt_flags);
           arg_end = p;
+          if (err != NULL) {
+            emsg(_(err));
+          }
         } else {
           emsg(_(e_stringreq));
         }
