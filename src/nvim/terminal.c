@@ -367,7 +367,12 @@ void terminal_check_size(Terminal *term)
   vterm_get_size(term->vt, &curheight, &curwidth);
   uint16_t width = 0, height = 0;
 
+  // Check if there is a window that displays the terminal and find the maximum width and height.
+  // Skip the autocommand window which isn't actually displayed.
   FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp == aucmd_win) {
+      continue;
+    }
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
       const uint16_t win_width =
         (uint16_t)(MAX(0, wp->w_width_inner - win_col_off(wp)));
