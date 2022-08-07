@@ -772,7 +772,7 @@ static String user_function_name(ufunc_T *fp)
   return name;
 }
 
-/// Copies name.
+/// Takes ownership of name.
 static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, bool lines)
 {
   Dictionary dict = ARRAY_DICT_INIT;
@@ -788,7 +788,7 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
   // Function name
   dict.items[dict.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("name"),
-    .value = STRING_OBJ(copy_string(name)),
+    .value = STRING_OBJ(name),
   };
   dict.items[dict.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("type"),
@@ -878,7 +878,7 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
   return dict;
 }
 
-/// Copies name.
+/// Takes ownership of name.
 static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool details)
 {
   Dictionary dict = ARRAY_DICT_INIT;
@@ -886,7 +886,7 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
 
   dict.items[dict.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("name"),
-    .value = STRING_OBJ(copy_string(name)),
+    .value = STRING_OBJ(name),
   };
   dict.items[dict.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("type"),
@@ -1021,7 +1021,7 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
     if (func_name[0] != K_SPECIAL) {
       const EvalFuncDef *fn = find_internal_func((char *)func_name);
       if (fn != NULL) {
-        rv = builtin_function_dict(fn, name, details);
+        rv = builtin_function_dict(fn, copy_string(name), details);
         goto theend;
       }
     }
@@ -1029,9 +1029,7 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
     // Find user function
     ufunc_T *fp = find_func(func_name);
     if (fp != NULL) {
-      String ufname = user_function_name(fp);
-      rv = user_function_dict(fp, ufname, details, lines);
-      xfree(ufname.data);
+      rv = user_function_dict(fp, user_function_name(fp), details, lines);
       goto theend;
     }
 
@@ -1092,7 +1090,7 @@ theend:
       String name = cstr_to_string(fn->name);
       KeyValuePair pair = {
         .key = name,
-        .value = DICTIONARY_OBJ(builtin_function_dict(fn, name, details)),
+        .value = DICTIONARY_OBJ(builtin_function_dict(fn, copy_string(name), details)),
       };
       kv_push(rv, pair);
     }
@@ -1113,7 +1111,7 @@ theend:
       }
 
       String name = user_function_name(fp);
-      Dictionary dict = user_function_dict(fp, name, details, lines);
+      Dictionary dict = user_function_dict(fp, copy_string(name), details, lines);
       KeyValuePair pair = {
         .key = name,
         .value = DICTIONARY_OBJ(dict),
