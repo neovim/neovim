@@ -8258,7 +8258,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (set_chars_option(curwin, &p_fcs, false) != NULL) {
     error = "E835: Conflicts with value of 'fillchars'";
   } else if (set_chars_option(curwin, &p_lcs, false) != NULL) {
-    error = "E835: Conflicts with value of 'listchars'";
+    error = "E834: Conflicts with value of 'listchars'";
   } else {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       if (set_chars_option(wp, &wp->w_p_lcs, false) != NULL) {
