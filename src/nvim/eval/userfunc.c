@@ -2039,7 +2039,7 @@ void ex_function(exarg_T *eap)
   //
   if (!paren) {
     if (!ends_excmd(*skipwhite((char *)p))) {
-      emsg(_(e_trailing));
+      semsg(_(e_trailing_arg), p);
       goto ret_free;
     }
     eap->nextcmd = (char *)check_nextcmd(p);
@@ -2163,7 +2163,7 @@ void ex_function(exarg_T *eap)
   if (*p == '\n') {
     line_arg = p + 1;
   } else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg) {
-    emsg(_(e_trailing));
+    semsg(_(e_trailing_arg), p);
   }
 
   /*
@@ -2703,7 +2703,7 @@ void ex_delfunction(exarg_T *eap)
   }
   if (!ends_excmd(*skipwhite((char *)p))) {
     xfree(name);
-    emsg(_(e_trailing));
+    semsg(_(e_trailing_arg), p);
     return;
   }
   eap->nextcmd = (char *)check_nextcmd(p);
@@ -3021,7 +3021,7 @@ void ex_call(exarg_T *eap)
     if (!ends_excmd(*arg)) {
       if (!failed && !aborting()) {
         emsg_severe = true;
-        emsg(_(e_trailing));
+        semsg(_(e_trailing_arg), arg);
       }
     } else {
       eap->nextcmd = (char *)check_nextcmd(arg);

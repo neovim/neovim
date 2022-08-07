@@ -175,7 +175,7 @@ void ex_menu(exarg_T *eap)
     show_menus(menu_path, modes);
     goto theend;
   } else if (*map_to != NUL && (unmenu || enable != kNone)) {
-    emsg(_(e_trailing));
+    semsg(_(e_trailing_arg), map_to);
     goto theend;
   }
 

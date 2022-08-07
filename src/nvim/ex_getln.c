@@ -6525,7 +6525,7 @@ void ex_history(exarg_T *eap)
         histype1 = 0;
         histype2 = HIST_COUNT - 1;
       } else {
-        emsg(_(e_trailing));
+        semsg(_(e_trailing_arg), arg);
         return;
       }
     } else {
@@ -6535,7 +6535,7 @@ void ex_history(exarg_T *eap)
     end = arg;
   }
   if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != NUL) {
-    emsg(_(e_trailing));
+    semsg(_(e_trailing_arg), end);
     return;
   }
 

@@ -1839,7 +1839,7 @@ static void f_eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->v_type = VAR_NUMBER;
     rettv->vval.v_number = 0;
   } else if (*s != NUL) {
-    emsg(_(e_trailing));
+    semsg(_(e_trailing_arg), s);
   }
 }
 
@@ -4702,7 +4702,7 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                                                FNE_CHECK_START);
   if (end != NULL && lv.ll_name != NULL) {
     if (*end != NUL) {
-      emsg(_(e_trailing));
+      semsg(_(e_trailing_arg), end);
     } else {
       if (lv.ll_tv == NULL) {
         di = find_var(lv.ll_name, lv.ll_name_len, NULL, true);

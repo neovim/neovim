@@ -1395,7 +1395,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
       filename = arg;
       *buf = buflist_findnr(getdigits_int((char **)&arg, true, 0));
       if (*skipwhite((char *)arg) != NUL) {
-        emsg(_(e_trailing));
+        semsg(_(e_trailing_arg), arg);
       }
       break;
     } else {
