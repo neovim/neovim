@@ -3838,6 +3838,7 @@ describe('API', function()
         max_argc = 1,
         base_arg = 1,
         fast = false,
+        argnames = { { 'expr' } },
       }}, meths.get_functions('abs', { details = true }))
     end)
 

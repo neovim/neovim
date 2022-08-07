@@ -879,7 +879,7 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
 static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool details)
 {
   Dictionary dict = ARRAY_DICT_INIT;
-  kv_resize(dict, details ? 6 : 2);
+  kv_resize(dict, details ? 7 : 2);
 
   dict.items[dict.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("name"),
@@ -907,6 +907,46 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
       .key = STATIC_CSTR_TO_STRING("fast"),
       .value = BOOLEAN_OBJ(fn->fast),
     };
+
+    if (fn->argnames != NULL) {
+      Array overloads = ARRAY_DICT_INIT;
+      Array names = ARRAY_DICT_INIT;
+      char buf[64] = {0};
+      size_t pos = 0;
+
+      // Argument are separated with unit separator (ascii \x1F),
+      // overloads with record separator (ascii \x1E).
+      for (const char *p = fn->argnames;; p++) {
+        if (*p == NUL || *p == '\x1F' || *p == '\x1E') {
+          assert(pos < 64);
+          buf[pos++] = NUL;
+          String str = {
+            .data = xmemdupz(buf, pos),
+            .size = pos - 1,
+          };
+          pos = 0;
+
+          if (*p == '\x1F') {  // unit separator: argument separator
+            kv_push(names, STRING_OBJ(str));
+          } else if (*p == '\x1E') {  // record separator: overload separator
+            kv_push(names, STRING_OBJ(str));
+            kv_push(overloads, ARRAY_OBJ(names));
+            names = (Array) ARRAY_DICT_INIT;
+          } else {  // NUL
+            kv_push(names, STRING_OBJ(str));
+            kv_push(overloads, ARRAY_OBJ(names));
+            break;
+          }
+        } else {
+          buf[pos++] = *p;
+        }
+      }
+
+      dict.items[dict.size++] = (KeyValuePair) {
+        .key = STATIC_CSTR_TO_STRING("argnames"),
+        .value = ARRAY_OBJ(overloads),
+      };
+    }
   }
 
   return dict;
