@@ -780,14 +780,8 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
   kv_resize(dict, dict_size);
 
   // Function name
-  dict.items[dict.size++] = (KeyValuePair) {
-    .key = STATIC_CSTR_TO_STRING("name"),
-    .value = STRING_OBJ(name),
-  };
-  dict.items[dict.size++] = (KeyValuePair) {
-    .key = STATIC_CSTR_TO_STRING("type"),
-    .value = CSTR_TO_OBJ("user"),
-  };
+  PUT(dict, "name", STRING_OBJ(name));
+  PUT(dict, "type", CSTR_TO_OBJ("user"));
 
   if (details) {
     // Arguments
@@ -796,57 +790,25 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
       kv_resize(args, (size_t)fp->uf_args.ga_len);
       for (int j = 0; j < fp->uf_args.ga_len; j++) {
         Dictionary arg = ARRAY_DICT_INIT;
-        kv_resize(arg, 2);
-        arg.items[arg.size++] = (KeyValuePair) {
-          .key = STATIC_CSTR_TO_STRING("name"),
-          .value = CSTR_TO_OBJ((const char *)FUNCARG(fp, j)),
-        };
+        PUT(arg, "name", CSTR_TO_OBJ((const char *)FUNCARG(fp, j)));
         if (j >= fp->uf_args.ga_len - fp->uf_def_args.ga_len) {
-          arg.items[arg.size++] = (KeyValuePair) {
-            .key = STATIC_CSTR_TO_STRING("default"),
-            .value = CSTR_TO_OBJ(((char **)(fp->uf_def_args.ga_data))
-                                 [j - fp->uf_args.ga_len + fp->uf_def_args.ga_len]),
-          };
+          PUT(arg, "default",
+              CSTR_TO_OBJ(((char **)(fp->uf_def_args.ga_data))
+                          [j - fp->uf_args.ga_len + fp->uf_def_args.ga_len]));
         }
-        args.items[args.size++] = DICTIONARY_OBJ(arg);
+        kv_push(args, DICTIONARY_OBJ(arg));
       }
     }
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("args"),
-      .value = ARRAY_OBJ(args),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("varargs"),
-      .value = BOOLEAN_OBJ(fp->uf_varargs),
-    };
-
+    PUT(dict, "args", ARRAY_OBJ(args));
+    PUT(dict, "varargs", BOOLEAN_OBJ(fp->uf_varargs));
     // Attributes
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("abort"),
-      .value = BOOLEAN_OBJ(fp->uf_flags & FC_ABORT),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("range"),
-      .value = BOOLEAN_OBJ(fp->uf_flags & FC_RANGE),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("dict"),
-      .value = BOOLEAN_OBJ(fp->uf_flags & FC_DICT),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("closure"),
-      .value = BOOLEAN_OBJ(fp->uf_flags & FC_CLOSURE),
-    };
-
+    PUT(dict, "abort", BOOLEAN_OBJ(fp->uf_flags & FC_ABORT));
+    PUT(dict, "range", BOOLEAN_OBJ(fp->uf_flags & FC_RANGE));
+    PUT(dict, "dict", BOOLEAN_OBJ(fp->uf_flags & FC_DICT));
+    PUT(dict, "closure", BOOLEAN_OBJ(fp->uf_flags & FC_CLOSURE));
     // Script
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("sid"),
-      .value = INTEGER_OBJ(fp->uf_script_ctx.sc_sid),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("lnum"),
-      .value = INTEGER_OBJ(fp->uf_script_ctx.sc_lnum),
-    };
+    PUT(dict, "sid", INTEGER_OBJ(fp->uf_script_ctx.sc_sid));
+    PUT(dict, "lnum", INTEGER_OBJ(fp->uf_script_ctx.sc_lnum));
   }
 
   // Source lines
@@ -863,10 +825,7 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
         }
       }
     }
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("lines"),
-      .value = ARRAY_OBJ(array),
-    };
+    PUT(dict, "lines", ARRAY_OBJ(array));
   }
 
   return dict;
@@ -878,32 +837,14 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
   Dictionary dict = ARRAY_DICT_INIT;
   kv_resize(dict, details ? 7 : 2);
 
-  dict.items[dict.size++] = (KeyValuePair) {
-    .key = STATIC_CSTR_TO_STRING("name"),
-    .value = STRING_OBJ(name),
-  };
-  dict.items[dict.size++] = (KeyValuePair) {
-    .key = STATIC_CSTR_TO_STRING("type"),
-    .value = CSTR_TO_OBJ("builtin"),
-  };
+  PUT(dict, "name", STRING_OBJ(name));
+  PUT(dict, "type", CSTR_TO_OBJ("builtin"));
 
   if (details) {
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("min_argc"),
-      .value = INTEGER_OBJ(fn->min_argc),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("max_argc"),
-      .value = INTEGER_OBJ(fn->max_argc),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("base_arg"),
-      .value = INTEGER_OBJ(fn->base_arg),
-    };
-    dict.items[dict.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("fast"),
-      .value = BOOLEAN_OBJ(fn->fast),
-    };
+    PUT(dict, "min_argc", INTEGER_OBJ(fn->min_argc));
+    PUT(dict, "max_argc", INTEGER_OBJ(fn->max_argc));
+    PUT(dict, "base_arg", INTEGER_OBJ(fn->base_arg));
+    PUT(dict, "fast", BOOLEAN_OBJ(fn->fast));
 
     // Argument names
     if (fn->argnames != NULL) {
@@ -940,10 +881,7 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
         }
       }
 
-      dict.items[dict.size++] = (KeyValuePair) {
-        .key = STATIC_CSTR_TO_STRING("argnames"),
-        .value = ARRAY_OBJ(overloads),
-      };
+      PUT(dict, "argnames", ARRAY_OBJ(overloads));
     }
   }
 
