@@ -8138,7 +8138,7 @@ static int tv_nr_compare(const void *a1, const void *a2)
   listitem_T *li1 = *(listitem_T **)a1;
   listitem_T *li2 = *(listitem_T **)a2;
 
-  return li1->li_tv.vval.v_number - li2->li_tv.vval.v_number;
+  return (int)(li1->li_tv.vval.v_number - li2->li_tv.vval.v_number);
 }
 
 /// "setcellwidths()" function
@@ -8155,7 +8155,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char *error = NULL;
 
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
-    semsg(_(e_listreq));
+    emsg(_(e_listreq));
     return;
   }
   l = argvars[0].vval.v_list;
@@ -8167,7 +8167,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  ptrs = xmalloc(l->lv_len * sizeof(listitem_T *));
+  ptrs = xmalloc((unsigned long)l->lv_len * sizeof(listitem_T *));
   if (ptrs == NULL) {
     return;
   }
@@ -8180,7 +8180,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     varnumber_T n1;
 
     if (li->li_tv.v_type != VAR_LIST || li->li_tv.vval.v_list == NULL) {
-      semsg(_("E1109: List item %lld is not a List"), item);
+      semsg(_("E1109: List item %d is not a List"), item);
       xfree(ptrs);
       return;
     }
@@ -8198,18 +8198,18 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           return;
         }
       } else if (i == 1 && lili->li_tv.vval.v_number < n1) {
-        semsg(_("E1111: List item %lld range invalid"), item);
+        semsg(_("E1111: List item %d range invalid"), item);
         xfree(ptrs);
         return;
       } else if (i == 2 && (lili->li_tv.vval.v_number < 1
                             || lili->li_tv.vval.v_number > 2)) {
-        semsg(_("E1112: List item %lld cell width invalid"), item);
+        semsg(_("E1112: List item %d cell width invalid"), item);
         xfree(ptrs);
         return;
       }
     }
     if (i != 3) {
-      semsg(_("E1110: List item %lld does not contain 3 numbers"), item);
+      semsg(_("E1110: List item %d does not contain 3 numbers"), item);
       xfree(ptrs);
       return;
     }
@@ -8219,7 +8219,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Sort the list on the first number.
   qsort((void *)ptrs, (size_t)l->lv_len, sizeof(listitem_T *), tv_nr_compare);
 
-  table = xmalloc(l->lv_len * sizeof(cw_interval_T));
+  table = xmalloc((unsigned long)l->lv_len * sizeof(cw_interval_T));
   if (table == NULL) {
     xfree(ptrs);
     return;
@@ -8233,7 +8233,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     n1 = lili->li_tv.vval.v_number;
     if (item > 0 && n1 <= table[item - 1].last) {
-      semsg(_("E1113: Overlapping ranges for 0x%llx"), (long)n1);
+      semsg(_("E1113: Overlapping ranges for 0x%llx"), (long long)n1);
       xfree(ptrs);
       xfree(table);
       return;
@@ -8242,7 +8242,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     lili = lili->li_next;
     table[item].last = lili->li_tv.vval.v_number;
     lili = lili->li_next;
-    table[item].width = lili->li_tv.vval.v_number;
+    table[item].width = (char)lili->li_tv.vval.v_number;
   }
 
   xfree(ptrs);
@@ -8250,17 +8250,14 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   cw_table_save = cw_table;
   cw_table_size_save = cw_table_size;
   cw_table = table;
-  cw_table_size = l->lv_len;
+  cw_table_size = (size_t)l->lv_len;
 
   // Check that the new value does not conflict with 'fillchars' or 'listchars'.
   if (set_chars_option(curwin, &p_fcs, false) != NULL) {
     error = "E835: Conflicts with value of 'fillchars'";
-  } else if (set_chars_option(curwin, &p_lcs) != NULL) {
+  } else if (set_chars_option(curwin, &p_lcs, false) != NULL) {
     error = "E835: Conflicts with value of 'listchars'";
   } else {
-    tabpage_T *tp;
-    win_T *wp;
-
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       if (set_chars_option(wp, &wp->w_p_lcs, false) != NULL) {
         error = "E834: Conflicts with value of 'listchars'";
@@ -8273,7 +8270,7 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   if (error != NULL) {
-    semsg(_(error));
+    emsg(_(error));
     cw_table = cw_table_save;
     cw_table_size = cw_table_size_save;
     xfree(table);
