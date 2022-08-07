@@ -911,6 +911,7 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
       .value = BOOLEAN_OBJ(fn->fast),
     };
 
+    // Argument names
     if (fn->argnames != NULL) {
       Array overloads = ARRAY_DICT_INIT;
       Array names = ARRAY_DICT_INIT;
@@ -1005,9 +1006,11 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
   // Find function
   if (query.type == kObjectTypeString) {
     String name = query.data.string;
+
+    // Translate "<SNR>"
     char_u *func_name;
-    if (name.size > 7 && memcmp(name.data, "<SNR>", 5) == 0) {
-      func_name = xmalloc(name.size - 1);  // resolve "<SNR>" + 1 null byte
+    if (name.size > 7 && memcmp(name.data, "<SNR>", 5) == 0) {  // Size of at least "<SNR>1_"
+      func_name = xmalloc(name.size - 1);  // For translated "<SNR>" + 1 null byte
       func_name[0] = K_SPECIAL;
       func_name[1] = KS_EXTRA;
       func_name[2] = KE_SNR;
@@ -1015,10 +1018,7 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
       func_name[name.size - 2] = '\0';
     } else {
       func_name = (char_u *)string_to_cstr(name);
-    }
-
-    // Find builtin function
-    if (func_name[0] != K_SPECIAL) {
+      // Find builtin function. Name can't start with <SNR>
       const EvalFuncDef *fn = find_internal_func((char *)func_name);
       if (fn != NULL) {
         rv = builtin_function_dict(fn, copy_string(name), details);
@@ -1072,13 +1072,7 @@ theend:
   }
 
   // Preallocate output array
-  size_t size = 0;
-  if (builtin) {
-    size += builtin_functions_len;
-  }
-  if (user) {
-    size += func_hashtab.ht_used;
-  }
+  size_t size = (builtin ? builtin_functions_len : 0) + (user ? func_hashtab.ht_used : 0);
   kv_resize(rv, size);
 
   // List builtin functions
@@ -1102,18 +1096,15 @@ theend:
       }
       todo--;
       ufunc_T *fp = HI2UF(hi);
-
-      if (isdigit(*fp->uf_name) || *fp->uf_name == '<') {  // func_name_refcount
-        continue;
+      // No numbered functions or lambdas
+      if (!isdigit(*fp->uf_name) && *fp->uf_name != '<') {
+        String name = user_function_name(fp);
+        KeyValuePair pair = {
+          .key = name,
+          .value = DICTIONARY_OBJ(user_function_dict(fp, copy_string(name), details, lines)),
+        };
+        kv_push(rv, pair);
       }
-
-      String name = user_function_name(fp);
-      Dictionary dict = user_function_dict(fp, copy_string(name), details, lines);
-      KeyValuePair pair = {
-        .key = name,
-        .value = DICTIONARY_OBJ(dict),
-      };
-      kv_push(rv, pair);
     }
   }
 
