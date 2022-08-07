@@ -3937,51 +3937,23 @@ describe('API', function()
       for _, case in ipairs({
         { builtin = true, user = true },
         { builtin = true, user = false },
-        { builtin = true, global = true, script = true },
-        { builtin = true, global = false, script = false },
-        { builtin = true, global = true, script = false },
-        { builtin = true, global = false, script = true },
-        { builtin = false, global = true, script = false },
-        { builtin = false, global = false, script = true },
+        { builtin = false, user = true },
       }) do
-        local name
-        if case.user then
-          name = fmt('builtin=%s user=%s',
-              tostring(case.builtin),
-              tostring(case.user))
-        else
-          name = fmt('builtin=%s global=%s script=%s',
-              tostring(case.builtin),
-              tostring(case.global),
-              tostring(case.script))
-        end
-
+        local name = fmt('builtin=%s user=%s',
+            tostring(case.builtin),
+            tostring(case.user))
         it(name, function()
           local fns = meths.get_functions(case, {})
-          if case.user ~= nil then
-            case.global = case.user
-            case.script = case.user
-          end
           eq(case.builtin and { name='abs', type='builtin' } or nil, fns.abs)
-          eq(case.global and { name='MyFun', type='user' } or nil, fns.MyFun)
-          eq(case.script and { name='<SNR>1_MyFun', type='user' } or nil, fns['<SNR>1_MyFun'])
+          eq(case.user and { name='MyFun', type='user' } or nil, fns.MyFun)
+          eq(case.user and { name='<SNR>1_MyFun', type='user' } or nil, fns['<SNR>1_MyFun'])
         end)
       end
+    end)
 
-      for _, case in ipairs({
-        { user = true, script = true },
-        { user = true, global = true },
-        { user = true, global = true, script = true },
-      }) do
-        local name = 'user=true'
-        if case.global then name = name..' global=true' end
-        if case.script then name = name..' script=true' end
-
-        it('fails with '..name, function()
-          local status = pcall(meths.get_functions, case, {})
-          eq(false, status)
-        end)
-      end
+    it('list requires builtin or user option', function()
+      local status = pcall(meths.get_functions, { builtin = false, user = false }, {})
+      eq(false, status)
     end)
 
     it('returns empty dict when function was not found', function()

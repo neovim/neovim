@@ -957,11 +957,8 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
 /// @param query    When string gets information about the function under this name.
 ///                 When dictionary lists functions. The following keys are accepted:
 ///                 - builtin (boolean, default false) Include builtin functions.
-///                 - user    (boolean, default true) Include user functions. Equivalent
-///                           to global=true and script=true.
-///                 - global  (boolean) Include global user functions.
-///                 - script  (boolean) Include script-local user functions.
-/// @param opts     Options dictionary:
+///                 - user    (boolean, default true) Include user functions.
+///                 /// @param opts     Options dictionary:
 ///                 - details (boolean) Include function details.
 ///                 - lines   (boolean) Include user function lines. Ignored for builtin
 ///                           functions.
@@ -1049,11 +1046,8 @@ theend:
 
   // Parse list options
   bool builtin = false;
-  bool global = true;
-  bool script = true;
+  bool user = true;
   if (query.type == kObjectTypeDictionary) {
-    bool u_set = false;  // user option was set
-    bool gs_set = false;  // global or script option was set
     Dictionary list = query.data.dictionary;
     for (size_t i = 0; i < list.size; i++) {
       String k = list.items[i].key;
@@ -1068,34 +1062,8 @@ theend:
         if (v->type != kObjectTypeBoolean) {
           api_set_error(err, kErrorTypeValidation, "user is not a boolean");
           return rv;
-        } else if (gs_set) {
-          api_set_error(err, kErrorTypeValidation,
-                        "user cannot be used with global and script options");
-          return rv;
         }
-        global = v->data.boolean;
-        script = v->data.boolean;
-        u_set = true;
-      } else if (strequal("global", k.data)) {
-        if (v->type != kObjectTypeBoolean) {
-          api_set_error(err, kErrorTypeValidation, "global is not a boolean");
-          return rv;
-        } else if (u_set) {
-          api_set_error(err, kErrorTypeValidation, "global cannot be used with user option");
-          return rv;
-        }
-        global = v->data.boolean;
-        gs_set = true;
-      } else if (strequal("script", k.data)) {
-        if (v->type != kObjectTypeBoolean) {
-          api_set_error(err, kErrorTypeValidation, "script is not a boolean");
-          return rv;
-        } else if (u_set) {
-          api_set_error(err, kErrorTypeValidation, "script cannot be used with user option");
-          return rv;
-        }
-        script = v->data.boolean;
-        gs_set = true;
+        user = v->data.boolean;
       } else {
         api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
         return rv;
@@ -1103,7 +1071,7 @@ theend:
     }
   }
 
-  if (!builtin && !global && !script) {
+  if (!builtin && !user) {
     api_set_error(err, kErrorTypeValidation, "nothing to list");
     return rv;
   }
@@ -1113,7 +1081,7 @@ theend:
   if (builtin) {
     size += builtin_functions_len;
   }
-  if (global || script) {
+  if (user) {
     size += func_hashtab.ht_used;
   }
   kv_resize(rv, size);
@@ -1131,7 +1099,7 @@ theend:
   }
 
   // List user functions
-  if (global || script) {
+  if (user) {
     int todo = (int)func_hashtab.ht_used;
     for (hashitem_T *hi = func_hashtab.ht_array; todo > 0; hi++) {
       if (HASHITEM_EMPTY(hi)) {
@@ -1139,21 +1107,18 @@ theend:
       }
       todo--;
       ufunc_T *fp = HI2UF(hi);
-      // Filter script local functions
+
       if (isdigit(*fp->uf_name) || *fp->uf_name == '<') {  // func_name_refcount
         continue;
       }
 
-      const bool is_script = fp->uf_name[0] == K_SPECIAL;
-      if ((!is_script && global) || (is_script && script)) {
-        String key = user_function_name(fp);
-        Dictionary dict = user_function_dict(fp, key, details, lines);
-        KeyValuePair pair = {
-          .key = key,
-          .value = DICTIONARY_OBJ(dict),
-        };
-        kv_push(rv, pair);
-      }
+      String key = user_function_name(fp);
+      Dictionary dict = user_function_dict(fp, key, details, lines);
+      KeyValuePair pair = {
+        .key = key,
+        .value = DICTIONARY_OBJ(dict),
+      };
+      kv_push(rv, pair);
     }
   }
 
