@@ -182,7 +182,7 @@ Lua Patterns                                                    *lua-patterns*
 
 For performance reasons, Lua does not support regular expressions natively.
 Instead, the Lua `string` standard library allows manipulations using a
-restricted set of "patterns", see https://www.lua.org/manual/5.1/manual.html#5.4.1
+restricted set of "patterns", see |luaref-patterns|.
 
 Examples (`string.match` extracts the first match): >
 
@@ -1603,7 +1603,7 @@ list_slice({list}, {start}, {finish})                       *vim.list_slice()*
                     (inclusive)
 
 pesc({s})                                                         *vim.pesc()*
-                Escapes magic chars in a Lua pattern.
+                Escapes magic chars in |lua-patterns|.
 
                 Parameters: ~
                     {s}  (string) String to escape
