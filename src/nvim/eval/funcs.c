@@ -8149,9 +8149,9 @@ static void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int item;
   int i;
   listitem_T **ptrs;
-  cw_interval_T   *table;
-  cw_interval_T   *cw_table_save;
-  size_t          cw_table_size_save;
+  cw_interval_T *table;
+  cw_interval_T *cw_table_save;
+  size_t cw_table_size_save;
 
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
     semsg(_(e_listreq));
