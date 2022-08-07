@@ -1033,10 +1033,7 @@ Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
       goto theend;
     }
 
-    xfree(func_name);
     api_set_error(err, kErrorTypeException, "No function with this name");
-    return rv;
-
 theend:
     xfree(func_name);
     return rv;
