@@ -133,9 +133,7 @@ other words, this section describes which tokens are valid, how they can be
 combined, and what their combinations mean.
 
 The language constructs will be explained using the usual extended BNF
-notation, in which { `a` } means 0 or more `a` 's, and [ `a` ] means an optional `a`.
-Non-terminals are shown in `italics`, keywords are shown in#bold#, and other
-terminal symbols are shown in `typewriter` color, enclosed in single quotes.
+notation, in which { `a` } means 0 or more `a`'s, and [ `a` ] means an optional `a`.
 
 
 ==============================================================================
@@ -5553,13 +5551,8 @@ C  LUAREFVIM DOC               *luarefvim* *luarefvimdoc* *luaref-help* *luaref-
 
 This is a Vim help file containing a reference for Lua 5.1, and it is -- with
 a few exceptions and adaptations -- a copy of the Lua 5.1 Reference Manual
-(see |luaref-bibliography|). For usage information, refer to |luaref-docUsage|; for
-instalation, refer to |luaref-docInstall|.
-
-This manual is composed of three parts: this file, `luarefvim.txt`, that is,
-the manual itself; a plugin file, `luarefvim.vim`, defining key bindings; and
-a help file syntax extension, `help.vim`. See |luaref-docInstall| for more
-information on these files. For copyright information, see |luaref-copyright|.
+(see |luaref-bibliography|). For usage information, refer to
+|luaref-docUsage|. For copyright information, see |luaref-copyright|.
 
 The main ideas and concepts on how to implement this reference were taken from
 Christian Habermann's CRefVim project
