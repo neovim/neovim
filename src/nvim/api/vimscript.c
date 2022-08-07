@@ -817,12 +817,7 @@ static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, boo
     if (fp->uf_lines.ga_len > 0) {
       kv_resize(array, (size_t)fp->uf_lines.ga_len);
       for (int j = 0; j < fp->uf_lines.ga_len; j++) {
-        const char *line = (const char *)FUNCLINE(fp, j);
-        if (line != NULL) {
-          kv_push(array, CSTR_TO_OBJ(line));
-        } else {
-          kv_push(array, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
-        }
+        kv_push(array, CSTR_TO_OBJ((const char *)FUNCLINE(fp, j)));
       }
     }
     PUT(dict, "lines", ARRAY_OBJ(array));
