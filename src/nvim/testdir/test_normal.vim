@@ -1975,7 +1975,8 @@ func Test_normal31_r_cmd()
   " using CTRL-Y and CTRL-E.
   " Different code paths are used for utf-8 and latin1 encodings
   set showmatch
-  for enc in ['latin1', 'utf-8']
+  " for enc in ['latin1', 'utf-8']
+  for enc in ['utf-8']
     enew!
     let &encoding = enc
     call setline(1, [' {a}', 'xxxxxxxxxx', '      [b]'])
