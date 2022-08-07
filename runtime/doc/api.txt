@@ -1648,10 +1648,6 @@ nvim_get_functions({query}, {opts})                     *nvim_get_functions()*
                              • builtin (boolean, default false) Include
                                builtin functions.
                              • user (boolean, default true) Include user
-                               functions. Equivalent to global=true and
-                               script=true.
-                             • global (boolean) Include global user functions.
-                             • script (boolean) Include script-local user
                                functions.
                     {opts}   Options dictionary:
                              • details (boolean) Include function details.

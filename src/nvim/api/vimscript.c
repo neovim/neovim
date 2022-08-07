@@ -958,7 +958,7 @@ static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool
 ///                 When dictionary lists functions. The following keys are accepted:
 ///                 - builtin (boolean, default false) Include builtin functions.
 ///                 - user    (boolean, default true) Include user functions.
-///                 /// @param opts     Options dictionary:
+/// @param opts     Options dictionary:
 ///                 - details (boolean) Include function details.
 ///                 - lines   (boolean) Include user function lines. Ignored for builtin
 ///                           functions.
