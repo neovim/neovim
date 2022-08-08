@@ -26,7 +26,7 @@ Each function :help block is formatted as follows:
 
   - Max width of 78 columns (`text_width`).
   - Indent with spaces (not tabs).
-  - Indent of 16 columns for body text.
+  - Indent of 4 columns for body text (`indentation`).
   - Function signature and helptag (right-aligned) on the same line.
     - Signature and helptag must have a minimum of 8 spaces between them.
     - If the signature is too long, it is placed on the line after the helptag.
@@ -80,6 +80,7 @@ LOG_LEVELS = {
 }
 
 text_width = 78
+indentation = 4
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
 out_dir = os.path.join(base_dir, 'tmp-{target}-doc')
@@ -456,7 +457,7 @@ def max_name(names):
     return max(len(name) for name in names)
 
 
-def update_params_map(parent, ret_map, width=62):
+def update_params_map(parent, ret_map, width=text_width - indentation):
     """Updates `ret_map` with name:desc key-value pairs extracted
     from Doxygen XML node `parent`.
     """
@@ -483,7 +484,8 @@ def update_params_map(parent, ret_map, width=62):
     return ret_map
 
 
-def render_node(n, text, prefix='', indent='', width=62, fmt_vimhelp=False):
+def render_node(n, text, prefix='', indent='', width=text_width - indentation,
+                fmt_vimhelp=False):
     """Renders a node as Vim help text, recursively traversing all descendants."""
 
     def ind(s):
@@ -562,7 +564,7 @@ def render_node(n, text, prefix='', indent='', width=62, fmt_vimhelp=False):
     return text
 
 
-def para_as_map(parent, indent='', width=62, fmt_vimhelp=False):
+def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=False):
     """Extracts a Doxygen XML <para> node to a map.
 
     Keys:
@@ -656,7 +658,8 @@ def para_as_map(parent, indent='', width=62, fmt_vimhelp=False):
     return chunks, xrefs
 
 
-def fmt_node_as_vimhelp(parent, width=62, indent='', fmt_vimhelp=False):
+def fmt_node_as_vimhelp(parent, width=text_width - indentation, indent='',
+                        fmt_vimhelp=False):
     """Renders (nested) Doxygen <para> nodes as Vim :help text.
 
     NB: Blank lines in a docstring manifest as <para> tags.
@@ -838,7 +841,8 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             log.debug(
                 textwrap.indent(
                     re.sub(r'\n\s*\n+', '\n',
-                           desc.toprettyxml(indent='  ', newl='\n')), ' ' * 16))
+                           desc.toprettyxml(indent='  ', newl='\n')),
+                    ' ' * indentation))
 
         fn = {
             'annotations': list(annotations),
@@ -918,7 +922,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
             doc += '\n<'
 
         func_doc = fn['signature'] + '\n'
-        func_doc += textwrap.indent(clean_lines(doc), ' ' * 16)
+        func_doc += textwrap.indent(clean_lines(doc), ' ' * indentation)
 
         # Verbatim handling.
         func_doc = re.sub(r'^\s+([<>])$', r'\1', func_doc, flags=re.M)
@@ -1114,7 +1118,7 @@ def main(config, args):
             docs += '\n\n\n'
 
         docs = docs.rstrip() + '\n\n'
-        docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
+        docs += f' vim:tw=78:ts=8:sw={indentation}:sts={indentation}:et:ft=help:norl:\n'
 
         doc_file = os.path.join(base_dir, 'runtime', 'doc',
                                 CONFIG[target]['filename'])
