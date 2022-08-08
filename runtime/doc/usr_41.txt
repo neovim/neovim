@@ -202,9 +202,9 @@ message when it doesn't, append !: >
 
 	:unlet! s:count
 
-When a script finishes, the local variables used there will not be
-automatically freed.  The next time the script executes, it can still use the
-old value.  Example: >
+When a script has been processed to the end, the local variables declared
+there will not be deleted.  Functions defined in the script can use them.
+Example:
 
 	:if !exists("s:call_count")
 	:  let s:call_count = 0

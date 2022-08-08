@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Abaqus finite element input file (www.hks.com)
-" Maintainer:	Carl Osterwisch <osterwischc@asme.org>
+" Maintainer:	Carl Osterwisch <costerwi@gmail.com>
 " Last Change:	2002 Feb 24
 " Remark:	Huge improvement in folding performance--see filetype plugin
 
@@ -28,8 +28,7 @@ syn match abaqusBadLine	"^\s\+\*.*" display
 hi def link abaqusComment	Comment
 hi def link abaqusKeyword	Statement
 hi def link abaqusParameter	Identifier
-hi def link abaqusValue	Constant
-hi def link abaqusBadLine    Error
-
+hi def link abaqusValue		Constant
+hi def link abaqusBadLine    	Error
 
 let b:current_syntax = "abaqus"

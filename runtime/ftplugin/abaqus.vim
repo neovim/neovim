@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:     Abaqus finite element input file (www.abaqus.com)
-" Maintainer:   Carl Osterwisch <osterwischc@asme.org>
-" Last Change:  2022 May 09
+" Maintainer:   Carl Osterwisch <costerwi@gmail.com>
+" Last Change:  2022 Aug 03
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin") | finish | endif
@@ -46,7 +46,7 @@ if has("folding")
 endif
 
 " Set the file browse filter (currently only supported under Win32 gui)
-if has("gui_win32") && !exists("b:browsefilter")
+if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
     let b:browsefilter = "Abaqus Input Files (*.inp *.inc)\t*.inp;*.inc\n" .
     \ "Abaqus Results (*.dat)\t*.dat\n" .
     \ "Abaqus Messages (*.pre *.msg *.sta)\t*.pre;*.msg;*.sta\n" .
@@ -57,7 +57,7 @@ endif
 " Define patterns for the matchit plugin
 if exists("loaded_matchit") && !exists("b:match_words")
     let b:match_ignorecase = 1
-    let b:match_words = 
+    let b:match_words =
     \ '\*part:\*end\s*part,' .
     \ '\*assembly:\*end\s*assembly,' .
     \ '\*instance:\*end\s*instance,' .
@@ -65,25 +65,27 @@ if exists("loaded_matchit") && !exists("b:match_words")
     let b:undo_ftplugin .= "|unlet! b:match_ignorecase b:match_words"
 endif
 
-" Define keys used to move [count] keywords backward or forward.
-noremap <silent><buffer> [[ ?^\*\a<CR>:nohlsearch<CR>
-noremap <silent><buffer> ]] /^\*\a<CR>:nohlsearch<CR>
+if !exists("no_plugin_maps") && !exists("no_abaqus_maps")
+  " Define keys used to move [count] keywords backward or forward.
+  noremap <silent><buffer> [[ ?^\*\a<CR>:nohlsearch<CR>
+  noremap <silent><buffer> ]] /^\*\a<CR>:nohlsearch<CR>
 
-" Define key to toggle commenting of the current line or range
-noremap <silent><buffer> <LocalLeader><LocalLeader> 
-    \ :call <SID>Abaqus_ToggleComment()<CR>j
-function! <SID>Abaqus_ToggleComment() range
-    if strpart(getline(a:firstline), 0, 2) == "**"
-        " Un-comment all lines in range
-        silent execute a:firstline . ',' . a:lastline . 's/^\*\*//'
-    else
-        " Comment all lines in range
-        silent execute a:firstline . ',' . a:lastline . 's/^/**/'
-    endif
-endfunction
+  " Define key to toggle commenting of the current line or range
+  noremap <silent><buffer> <LocalLeader><LocalLeader>
+      \ :call <SID>Abaqus_ToggleComment()<CR>j
+  function! <SID>Abaqus_ToggleComment() range
+      if strpart(getline(a:firstline), 0, 2) == "**"
+	  " Un-comment all lines in range
+	  silent execute a:firstline . ',' . a:lastline . 's/^\*\*//'
+      else
+	  " Comment all lines in range
+	  silent execute a:firstline . ',' . a:lastline . 's/^/**/'
+      endif
+  endfunction
 
-let b:undo_ftplugin .= "|unmap <buffer> [[|unmap <buffer> ]]"
-    \ . "|unmap <buffer> <LocalLeader><LocalLeader>"
+  let b:undo_ftplugin .= "|unmap <buffer> [[|unmap <buffer> ]]"
+      \ . "|unmap <buffer> <LocalLeader><LocalLeader>"
+endif
 
 " Undo must be done in nocompatible mode for <LocalLeader>.
 let b:undo_ftplugin = "let b:cpo_save = &cpoptions|"

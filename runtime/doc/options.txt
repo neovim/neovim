@@ -1325,7 +1325,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	page can have a different value.
 
 	When 'cmdheight' is zero, there is no command-line unless it is being
-	used.  Any messages will cause the |hit-enter| prompt.
+	used.  Some informative messages will not be displayed, any other
+	messages will cause the |hit-enter| prompt.
 
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	number	(default 7)
@@ -3735,8 +3736,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'lispwords'* *'lw'*
 'lispwords' 'lw'	string	(default is very long)
 			global or local to buffer |global-local|
-	Comma-separated list of words that influence the Lisp indenting.
-	|'lisp'|
+	Comma-separated list of words that influence the Lisp indenting when
+	enabled with the |'lisp'| option.
 
 						*'list'* *'nolist'*
 'list'			boolean	(default off)

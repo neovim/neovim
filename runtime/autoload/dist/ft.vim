@@ -348,7 +348,7 @@ func dist#ft#FTidl()
   setf idl
 endfunc
 
-" Distinguish between "default" and Cproto prototype file. */
+" Distinguish between "default", Prolog and Cproto prototype file. */
 func dist#ft#ProtoCheck(default)
   " Cproto files have a comment in the first line and a function prototype in
   " the second line, it always ends in ";".  Indent files may also have
@@ -358,7 +358,14 @@ func dist#ft#ProtoCheck(default)
   if getline(2) =~ '.;$'
     setf cpp
   else
-    exe 'setf ' . a:default
+    " recognize Prolog by specific text in the first non-empty line
+    " require a blank after the '%' because Perl uses "%list" and "%translate"
+    let l = getline(nextnonblank(1))
+    if l =~ '\<prolog\>' || l =~ '^\s*\(%\+\(\s\|$\)\|/\*\)' || l =~ ':-'
+      setf prolog
+    else
+      exe 'setf ' .. a:default
+    endif
   endif
 endfunc
 

@@ -930,7 +930,7 @@ function M.progress_pascal(bufnr)
   return 'progress'
 end
 
--- Distinguish between "default" and Cproto prototype file.
+-- Distinguish between "default", Prolog and Cproto prototype file.
 function M.proto(bufnr, default)
   -- Cproto files have a comment in the first line and a function prototype in
   -- the second line, it always ends in ";".  Indent files may also have
@@ -940,7 +940,18 @@ function M.proto(bufnr, default)
   if getlines(bufnr, 2):find('.;$') then
     return 'cpp'
   else
-    return default
+    -- Recognize Prolog by specific text in the first non-empty line;
+    -- require a blank after the '%' because Perl uses "%list" and "%translate"
+    local line = nextnonblank(bufnr, 1)
+    if
+      line and line:find(':%-')
+      or matchregex(line, [[\c\<prolog\>]])
+      or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
+    then
+      return 'prolog'
+    else
+      return default
+    end
   end
 end
 
