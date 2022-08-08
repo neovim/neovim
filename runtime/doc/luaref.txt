@@ -233,7 +233,7 @@ comments are frequently used to disable code temporarily.
 ==============================================================================
 2.2  Values and Types                                      *luaref-langValTypes*
 
-Lua is a `dynamically typed language`. This means that variables do not have
+Lua is a `dynamically typed language` . This means that variables do not have
 types; only values do. There are no type definitions in the language. All
 values carry their own type.
 
