@@ -13,7 +13,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
 #include "nvim/macros.h"
-#include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/message.h"
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/profile.h"  // for proftime_T
