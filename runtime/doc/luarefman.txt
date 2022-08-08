@@ -2700,7 +2700,7 @@ lua_touserdata                                                *lua_touserdata()*
         its block address. If the value is a light userdata, returns its
         pointer. Otherwise, it returns `NULL`.
 
-`lua_type`                                                            *lua_type()*
+lua_type                                                            *lua_type()*
 >
     int lua_type (lua_State *L, int index);
 >
