@@ -166,16 +166,16 @@ The following strings denote other tokens:
 `Literal strings` can be delimited by matching single or double quotes, and can
 contain the following C-like escape sequences:
 
- - `\a` : bell
- - `\b` : backspace
- - `\f` : form feed
- - `\n` : newline
- - `\r` : carriage return
- - `\t` : horizontal tab
- - `\v` : vertical tab
- - `\\` : backslash
- - `\"` : quotation mark (double quote)
- - `\'` : apostrophe (single quote)
+    - `\a`  bell
+    - `\b`  backspace
+    - `\f`  form feed
+    - `\n`  newline
+    - `\r`  carriage return
+    - `\t`  horizontal tab
+    - `\v`  vertical tab
+    - `\\`  backslash
+    - `\"`  quotation mark (double quote)
+    - `\'`  apostrophe (single quote)
 
 Moreover, a backslash followed by a real newline results in a newline in the
 string. A character in a string may also be specified by its numerical value
@@ -3588,14 +3588,14 @@ implementation in C (e.g., `sort`).
 All libraries are implemented through the official C API and are provided as
 separate C modules. Currently, Lua has the following standard libraries:
 
- - basic library;
- - package library;
- - string manipulation;
- - table manipulation;
- - mathematical functions (sin, log, etc.);
- - input and output;
- - operating system facilities;
- - debug facilities.
+- basic library;
+- package library;
+- string manipulation;
+- table manipulation;
+- mathematical functions (sin, log, etc.);
+- input and output;
+- operating system facilities;
+- debug facilities.
 
 Except for the basic and package libraries, each library provides all its
 functions as fields of a global table or as methods of its objects.
@@ -4228,38 +4228,38 @@ string.upper({s})                                               *string.upper()*
 A `character class` is used to represent a set of characters. The following
 combinations are allowed in describing a character class:
 
- - `x` : (where `x` is not one of the magic characters `^$()%.[]*+-?`)
-        represents the character `x` itself.
- - `.` : (a dot) represents all characters.
- - `%a` : represents all letters.
- - `%c` : represents all control characters.
- - `%d` : represents all digits.
- - `%l` : represents all lowercase letters.
- - `%p` : represents all punctuation characters.
- - `%s` : represents all space characters.
- - `%u` : represents all uppercase letters.
- - `%w` : represents all alphanumeric characters.
- - `%x` : represents all hexadecimal digits.
- - `%z` : represents the character with representation `0`.
- - `%x` : (where `x` is any non-alphanumeric character) represents the
-        character `x`. This is the standard way to escape the magic characters.
-        Any punctuation character (even the non-magic) can be preceded by a
-        `'%'` when used to represent itself in a pattern.
+    - `x`   (where `x` is not one of the magic characters `^$()%.[]*+-?`)
+          represents the character `x` itself.
+    - `.`   (a dot) represents all characters.
+    - `%a`  represents all letters.
+    - `%c`  represents all control characters.
+    - `%d`  represents all digits.
+    - `%l`  represents all lowercase letters.
+    - `%p`  represents all punctuation characters.
+    - `%s`  represents all space characters.
+    - `%u`  represents all uppercase letters.
+    - `%w`  represents all alphanumeric characters.
+    - `%x`  represents all hexadecimal digits.
+    - `%z`  represents the character with representation `0`.
+    - `%x`  (where `x` is any non-alphanumeric character) represents the
+          character `x`. This is the standard way to escape the magic
+          characters. Any punctuation character (even the non-magic) can be
+          preceded by a `'%'` when used to represent itself in a pattern.
 
- - `[set]` : represents the class which is the union of all characters in
- `set`. A range of characters may be specified by separating the end
- characters of the range with a `'-'`. All classes `%x` described above may
- also be used as components in `set`. All other characters in `set`
- represent themselves. For example, `[%w_]` (or `[_%w]`) represents all
- alphanumeric characters plus the underscore, `[0-7]` represents the octal
- digits, and `[0-7%l%-]` represents the octal digits plus the lowercase
- letters plus the `'-'` character.
+    - `[set]`  represents the class which is the union of all characters in
+         `set`. A range of characters may be specified by separating the end
+         characters of the range with a `'-'`. All classes `%x` described
+         above may also be used as components in `set`. All other characters
+         in `set` represent themselves. For example, `[%w_]` (or `[_%w]`)
+         represents all alphanumeric characters plus the underscore, `[0-7]`
+         represents the octal digits, and `[0-7%l%-]` represents the octal
+         digits plus the lowercase letters plus the `'-'` character.
 
- The interaction between ranges and classes is not defined. Therefore,
- patterns like `[%a-z]` or `[a-%%]` have no meaning.
+         The interaction between ranges and classes is not defined. Therefore,
+         patterns like `[%a-z]` or `[a-%%]` have no meaning.
 
- - `[^set]` : represents the complement of `set`, where `set` is interpreted
-            as above.
+    - `[^set]`  represents the complement of `set`, where `set` is interpreted
+         as above.
 
 For all classes represented by single letters (`%a`, `%c`, etc.), the
 corresponding uppercase letter represents the complement of the class. For
@@ -4273,27 +4273,27 @@ Pattern Item:~
 -------------
 A `pattern item` may be
 
- - a single character class, which matches any single character in the
-    class;
- - a single character class followed by `'*'`, which matches 0 or more
-    repetitions of characters in the class. These repetition items will
-    always match the longest possible sequence;
- - a single character class followed by `'+'`, which matches 1 or more
-    repetitions of characters in the class. These repetition items will
-    always match the longest possible sequence;
- - a single character class followed by `'-'`, which also matches 0 or
-    more repetitions of characters in the class. Unlike `'*'`, these
-    repetition items will always match the `shortest` possible sequence;
- - a single character class followed by `'?'`, which matches 0 or 1
-    occurrences of a character in the class;
- - `%n`, for `n` between 1 and 9; such item matches a substring equal to the
-    `n` -th captured string (see below);
- - `%bxy`, where `x` and `y` are two distinct characters; such item matches
-    strings that start with `x`, end with `y`, and where the `x` and `y`
-    are `balanced`. This means that, if one reads the string from left to
-    right, counting `+1` for an `x` and `-1` for a `y`, the ending `y` is the first
-    `y` where the count reaches 0. For instance, the item `%b()` matches
-    expressions with balanced parentheses.
+   - a single character class, which matches any single character in the
+      class;
+   - a single character class followed by `'*'`, which matches 0 or more
+      repetitions of characters in the class. These repetition items will
+      always match the longest possible sequence;
+   - a single character class followed by `'+'`, which matches 1 or more
+      repetitions of characters in the class. These repetition items will
+      always match the longest possible sequence;
+   - a single character class followed by `'-'`, which also matches 0 or
+      more repetitions of characters in the class. Unlike `'*'`, these
+      repetition items will always match the `shortest` possible sequence;
+   - a single character class followed by `'?'`, which matches 0 or 1
+      occurrences of a character in the class;
+   - `%n`, for `n` between 1 and 9; such item matches a substring equal to the
+      `n` -th captured string (see below);
+   - `%bxy`, where `x` and `y` are two distinct characters; such item matches
+      strings that start with `x`, end with `y`, and where the `x` and `y`
+      are `balanced`. This means that, if one reads the string from left to
+      right, counting `+1` for an `x` and `-1` for a `y`, the ending `y` is the first
+      `y` where the count reaches 0. For instance, the item `%b()` matches
+      expressions with balanced parentheses.
 
                                                                 *luaref-pattern*
 Pattern:~
@@ -4558,13 +4558,13 @@ io.open({filename} [, {mode}])                                       *io.open()*
 
         The {mode} string can be any of the following:
 
-         - `"r"` : read mode (the default);
-         - `"w"` : write mode;
-         - `"a"` : append mode;
-         - `"r+"` : update mode, all previous data is preserved;
-         - `"w+"` : update mode, all previous data is erased;
-         - `"a+"` : append update mode, previous data is preserved, writing is
-                    only allowed at the end of file.
+         - `"r"`   read mode (the default);
+         - `"w"`   write mode;
+         - `"a"`   append mode;
+         - `"r+"`  update mode, all previous data is preserved;
+         - `"w+"`  update mode, all previous data is erased;
+         - `"a+"`  append update mode, previous data is preserved, writing is
+                 only allowed at the end of file.
 
         The {mode} string may also have a `'b'` at the end, which is needed in
         some systems to open the file in binary mode. This string is exactly
