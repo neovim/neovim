@@ -83,7 +83,7 @@ static char e_list_item_nr_range_invalid[]
 static char e_list_item_nr_cell_width_invalid[]
   = N_("E1112: List item %d cell width invalid");
 static char e_overlapping_ranges_for_nr[]
-  = N_("E1113: Overlapping ranges for %lx");
+  = N_("E1113: Overlapping ranges for 0x%lx");
 static char e_only_values_of_0x100_and_higher_supported[]
   = N_("E1114: Only values of 0x100 and higher supported");
 
@@ -2740,8 +2740,8 @@ static int cw_value(int c)
 
 static int tv_nr_compare(const void *a1, const void *a2)
 {
-  const listitem_T *const li1 = (const listitem_T *)a1;
-  const listitem_T *const li2 = (const listitem_T *)a2;
+  const listitem_T *const li1 = *(const listitem_T **)a1;
+  const listitem_T *const li2 = *(const listitem_T **)a2;
 
   return (int)(TV_LIST_ITEM_TV(li1)->vval.v_number - TV_LIST_ITEM_TV(li2)->vval.v_number);
 }
@@ -2778,9 +2778,10 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     const list_T *const li_l = li_tv->vval.v_list;
     const listitem_T *lili = tv_list_first(li_l);
-    int i = 0;
+    ptrs[item] = lili;
+    int i;
     varnumber_T n1;
-    for (; lili != NULL; lili = TV_LIST_ITEM_NEXT(li_l, lili), i++) {
+    for (i = 0; lili != NULL; lili = TV_LIST_ITEM_NEXT(li_l, lili), i++) {
       const typval_T *const lili_tv = TV_LIST_ITEM_TV(lili);
       if (lili_tv->v_type != VAR_NUMBER) {
         break;
@@ -2809,7 +2810,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
 
-    ptrs[item++] = lili;
+    item++;
   });
 
   // Sort the list on the first number.
@@ -2818,10 +2819,8 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   cw_interval_T *table = xmalloc(sizeof(cw_interval_T) * (size_t)tv_list_len(l));
 
   // Store the items in the new table.
-  item = 0;
-  TV_LIST_ITER_CONST(l, li, {
-    const list_T *const li_l = TV_LIST_ITEM_TV(li)->vval.v_list;
-    const listitem_T *lili = tv_list_first(li_l);
+  for (item = 0; item < tv_list_len(l); item++) {
+    const listitem_T *lili = ptrs[item];
     const varnumber_T n1 = TV_LIST_ITEM_TV(lili)->vval.v_number;
     if (item > 0 && n1 <= table[item - 1].last) {
       semsg(_(e_overlapping_ranges_for_nr), (long)n1);
@@ -2830,12 +2829,11 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
     table[item].first = n1;
-    lili = TV_LIST_ITEM_NEXT(li_l, lili);
+    lili = TV_LIST_ITEM_NEXT(, lili);  // TODO: get list which lili belongs to
     table[item].last = TV_LIST_ITEM_TV(lili)->vval.v_number;
-    lili = TV_LIST_ITEM_NEXT(li_l, lili);
+    lili = TV_LIST_ITEM_NEXT(, lili);  // TODO: get list which lili belongs to
     table[item].width = (char)TV_LIST_ITEM_TV(lili)->vval.v_number;
-    item++;
-  });
+  }
 
   xfree(ptrs);
   xfree(cw_table);
