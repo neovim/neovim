@@ -2853,11 +2853,11 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     error = e_conflicts_with_value_of_listchars;
   } else {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
-      if (set_chars_option(wp, &wp->w_p_lcs, false) != NULL) {
+      if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
         error = e_conflicts_with_value_of_listchars;
         break;
       }
-      if (set_chars_option(wp, &wp->w_p_fcs, false) != NULL) {
+      if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
         error = e_conflicts_with_value_of_fillchars;
         break;
       }
@@ -2872,4 +2872,5 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   xfree(cw_table_save);
+  redraw_all_later(NOT_VALID);
 }

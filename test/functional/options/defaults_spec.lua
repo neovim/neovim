@@ -161,6 +161,36 @@ describe('startup defaults', function()
         ~                        |~                       |
                                                           |
       ]])
+
+      -- change "vert" character to single-cell
+      funcs.setcellwidths({{0x2502, 0x2502, 1}})
+      screen:expect([[
+        1                        │1                       |
+        ^+--  2 lines: 2----------│+--  2 lines: 2---------|
+        4                        │4                       |
+        ~                        │~                       |
+                                                          |
+      ]])
+
+      -- change "vert" character to double-cell
+      funcs.setcellwidths({{0x2502, 0x2502, 2}})
+      screen:expect([[
+        1                        |1                       |
+        ^+--  2 lines: 2----------|+--  2 lines: 2---------|
+        4                        |4                       |
+        ~                        |~                       |
+                                                          |
+      ]])
+
+      -- "vert" character should still default to single-byte fillchars because of setcellwidths().
+      command('set ambiwidth=single')
+      screen:expect([[
+        1                        |1                       |
+        ^+--  2 lines: 2··········|+--  2 lines: 2·········|
+        4                        |4                       |
+        ~                        |~                       |
+                                                          |
+      ]])
     end)
   end)
 
