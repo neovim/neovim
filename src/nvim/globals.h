@@ -1000,6 +1000,11 @@ EXTERN char e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 EXTERN char e_cannot_edit_other_buf[] INIT(= N_("E788: Not allowed to edit another buffer now"));
 
+EXTERN char e_conflicts_with_value_of_listchars[]
+INIT(= N_("E834: Conflicts with value of 'listchars'"));
+EXTERN char e_conflicts_with_value_of_fillchars[]
+INIT(= N_("E835: Conflicts with value of 'fillchars'"));
+
 EXTERN char e_autocmd_err[] INIT(= N_("E5500: autocmd has thrown an exception: %s"));
 EXTERN char e_cmdmap_err[] INIT(= N_("E5520: <Cmd> mapping must end with <CR>"));
 EXTERN char e_cmdmap_repeated[]

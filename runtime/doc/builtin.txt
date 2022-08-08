@@ -396,6 +396,7 @@ setbufline({expr}, {lnum}, {text})
 				Number	set line {lnum} to {text} in buffer
 					{expr}
 setbufvar({buf}, {varname}, {val})	set {varname} in buffer {buf} to {val}
+setcellwidths({list})		none	set character cell width overrides
 setcharpos({expr}, {list})	Number	set the {expr} position to {list}
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
@@ -6816,6 +6817,32 @@ setbufvar({buf}, {varname}, {val})			*setbufvar()*
 		Can also be used as a |method|, the base is passed as the
 		third argument: >
 			GetValue()->setbufvar(buf, varname)
+
+
+setcellwidths({list})					*setcellwidths()*
+		Specify overrides for cell widths of character ranges.  This
+		tells Vim how wide characters are, counted in screen cells.
+		This overrides 'ambiwidth'.  Example: >
+		   setcellwidths([[0xad, 0xad, 1],
+		   		\ [0x2194, 0x2199, 2]])
+
+<					*E1109* *E1110* *E1111* *E1112* *E1113*
+		The {list} argument is a list of lists with each three
+		numbers. These three numbers are [low, high, width].  "low"
+		and "high" can be the same, in which case this refers to one
+		character. Otherwise it is the range of characters from "low"
+		to "high" (inclusive).  "width" is either 1 or 2, indicating
+		the character width in screen cells.
+		An error is given if the argument is invalid, also when a
+		range overlaps with another.
+		Only characters with value 0x100 and higher can be used.
+
+		If the new value causes 'fillchars' or 'listchars' to become
+		invalid it is rejected and an error is given.
+
+		To clear the overrides pass an empty list: >
+		   setcellwidths([]);
+
 
 setcharpos({expr}, {list})				*setcharpos()*
 		Same as |setpos()| but uses the specified column number as the

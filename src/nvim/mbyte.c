@@ -74,6 +74,19 @@ struct interval {
 # include "unicode_tables.generated.h"
 #endif
 
+static char e_list_item_nr_is_not_list[]
+  = N_("E1109: List item %d is not a List");
+static char e_list_item_nr_does_not_contain_3_numbers[]
+  = N_("E1110: List item %d does not contain 3 numbers");
+static char e_list_item_nr_range_invalid[]
+  = N_("E1111: List item %d range invalid");
+static char e_list_item_nr_cell_width_invalid[]
+  = N_("E1112: List item %d cell width invalid");
+static char e_overlapping_ranges_for_nr[]
+  = N_("E1113: Overlapping ranges for 0x%lx");
+static char e_only_values_of_0x100_and_higher_supported[]
+  = N_("E1114: Only values of 0x100 and higher supported");
+
 // To speed up BYTELEN(); keep a lookup table to quickly get the length in
 // bytes of a UTF-8 character from the first byte of a UTF-8 string.  Bytes
 // which are illegal when used as the first byte have a 1.  The NUL byte has
@@ -472,13 +485,18 @@ static bool intable(const struct interval *table, size_t n_items, int c)
 int utf_char2cells(int c)
 {
   if (c >= 0x100) {
+    int n = cw_value(c);
+    if (n != 0) {
+      return n;
+    }
+
     if (!utf_printable(c)) {
       return 6;                 // unprintable, displays <xxxx>
     }
     if (intable(doublewidth, ARRAY_SIZE(doublewidth), c)) {
       return 2;
     }
-    if (p_emoji && intable(emoji_width, ARRAY_SIZE(emoji_width), c)) {
+    if (p_emoji && intable(emoji_wide, ARRAY_SIZE(emoji_wide), c)) {
       return 2;
     }
   } else if (c >= 0x80 && !vim_isprintc(c)) {
@@ -2677,4 +2695,182 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
   }
 
   return retval;
+}
+
+/// Table set by setcellwidths().
+typedef struct {
+  long first;
+  long last;
+  char width;
+} cw_interval_T;
+
+static cw_interval_T *cw_table = NULL;
+static size_t cw_table_size = 0;
+
+/// Return the value of the cellwidth table for the character `c`.
+///
+/// @param c The source character.
+/// @return 1 or 2 when `c` is in the cellwidth table, 0 if not.
+static int cw_value(int c)
+{
+  if (cw_table == NULL) {
+    return 0;
+  }
+
+  // first quick check for Latin1 etc. characters
+  if (c < cw_table[0].first) {
+    return 0;
+  }
+
+  // binary search in table
+  int bot = 0;
+  int top = (int)cw_table_size - 1;
+  while (top >= bot) {
+    int mid = (bot + top) / 2;
+    if (cw_table[mid].last < c) {
+      bot = mid + 1;
+    } else if (cw_table[mid].first > c) {
+      top = mid - 1;
+    } else {
+      return cw_table[mid].width;
+    }
+  }
+  return 0;
+}
+
+static int tv_nr_compare(const void *a1, const void *a2)
+{
+  const listitem_T *const li1 = tv_list_first(*(const list_T **)a1);
+  const listitem_T *const li2 = tv_list_first(*(const list_T **)a2);
+
+  return (int)(TV_LIST_ITEM_TV(li1)->vval.v_number - TV_LIST_ITEM_TV(li2)->vval.v_number);
+}
+
+/// "setcellwidths()" function
+void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
+    emsg(_(e_listreq));
+    return;
+  }
+  const list_T *const l = argvars[0].vval.v_list;
+  if (tv_list_len(l) == 0) {
+    // Clearing the table.
+    xfree(cw_table);
+    cw_table = NULL;
+    cw_table_size = 0;
+    return;
+  }
+
+  // Note: use list_T instead of listitem_T so that TV_LIST_ITEM_NEXT can be used properly below.
+  const list_T **ptrs = xmalloc(sizeof(const list_T *) * (size_t)tv_list_len(l));
+
+  // Check that all entries are a list with three numbers, the range is
+  // valid and the cell width is valid.
+  int item = 0;
+  TV_LIST_ITER_CONST(l, li, {
+    const typval_T *const li_tv = TV_LIST_ITEM_TV(li);
+
+    if (li_tv->v_type != VAR_LIST || li_tv->vval.v_list == NULL) {
+      semsg(_(e_list_item_nr_is_not_list), item);
+      xfree(ptrs);
+      return;
+    }
+
+    const list_T *const li_l = li_tv->vval.v_list;
+    ptrs[item] = li_l;
+    const listitem_T *lili = tv_list_first(li_l);
+    int i;
+    varnumber_T n1;
+    for (i = 0; lili != NULL; lili = TV_LIST_ITEM_NEXT(li_l, lili), i++) {
+      const typval_T *const lili_tv = TV_LIST_ITEM_TV(lili);
+      if (lili_tv->v_type != VAR_NUMBER) {
+        break;
+      }
+      if (i == 0) {
+        n1 = lili_tv->vval.v_number;
+        if (n1 < 0x100) {
+          emsg(_(e_only_values_of_0x100_and_higher_supported));
+          xfree(ptrs);
+          return;
+        }
+      } else if (i == 1 && lili_tv->vval.v_number < n1) {
+        semsg(_(e_list_item_nr_range_invalid), item);
+        xfree(ptrs);
+        return;
+      } else if (i == 2 && (lili_tv->vval.v_number < 1 || lili_tv->vval.v_number > 2)) {
+        semsg(_(e_list_item_nr_cell_width_invalid), item);
+        xfree(ptrs);
+        return;
+      }
+    }
+
+    if (i != 3) {
+      semsg(_(e_list_item_nr_does_not_contain_3_numbers), item);
+      xfree(ptrs);
+      return;
+    }
+
+    item++;
+  });
+
+  // Sort the list on the first number.
+  qsort((void *)ptrs, (size_t)tv_list_len(l), sizeof(const list_T *), tv_nr_compare);
+
+  cw_interval_T *table = xmalloc(sizeof(cw_interval_T) * (size_t)tv_list_len(l));
+
+  // Store the items in the new table.
+  for (item = 0; item < tv_list_len(l); item++) {
+    const list_T *const li_l = ptrs[item];
+    const listitem_T *lili = tv_list_first(li_l);
+    const varnumber_T n1 = TV_LIST_ITEM_TV(lili)->vval.v_number;
+    if (item > 0 && n1 <= table[item - 1].last) {
+      semsg(_(e_overlapping_ranges_for_nr), (long)n1);
+      xfree(ptrs);
+      xfree(table);
+      return;
+    }
+    table[item].first = n1;
+    lili = TV_LIST_ITEM_NEXT(li_l, lili);
+    table[item].last = TV_LIST_ITEM_TV(lili)->vval.v_number;
+    lili = TV_LIST_ITEM_NEXT(li_l, lili);
+    table[item].width = (char)TV_LIST_ITEM_TV(lili)->vval.v_number;
+  }
+
+  xfree(ptrs);
+
+  cw_interval_T *const cw_table_save = cw_table;
+  const size_t cw_table_size_save = cw_table_size;
+  cw_table = table;
+  cw_table_size = (size_t)tv_list_len(l);
+
+  // Check that the new value does not conflict with 'fillchars' or
+  // 'listchars'.
+  char *error = NULL;
+  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
+    error = e_conflicts_with_value_of_fillchars;
+  } else if (set_chars_option(curwin, &p_lcs, false) != NULL) {
+    error = e_conflicts_with_value_of_listchars;
+  } else {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
+        error = e_conflicts_with_value_of_listchars;
+        break;
+      }
+      if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
+        error = e_conflicts_with_value_of_fillchars;
+        break;
+      }
+    }
+  }
+  if (error != NULL) {
+    emsg(_(error));
+    cw_table = cw_table_save;
+    cw_table_size = cw_table_size_save;
+    xfree(table);
+    return;
+  }
+
+  xfree(cw_table_save);
+  redraw_all_later(NOT_VALID);
 }

@@ -2580,11 +2580,11 @@ static char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, c
     } else {
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
-          errmsg = _("E834: Conflicts with value of 'listchars'");
+          errmsg = _(e_conflicts_with_value_of_listchars);
           goto ambw_end;
         }
         if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
-          errmsg = _("E835: Conflicts with value of 'fillchars'");
+          errmsg = _(e_conflicts_with_value_of_fillchars);
           goto ambw_end;
         }
       }
@@ -3605,7 +3605,7 @@ static int get_encoded_char_adv(char_u **p)
 ///
 /// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
 /// @return error message, NULL if it's OK.
-static char *set_chars_option(win_T *wp, char_u **varp, bool set)
+char *set_chars_option(win_T *wp, char_u **varp, bool set)
 {
   int round, i, len, len2, entries;
   char_u *p, *s;
@@ -3624,21 +3624,22 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
   };
   struct chars_tab *tab;
 
+  // XXX: Characters taking 2 columns is forbidden (TUI limitation?). Set old defaults in this case.
   struct chars_tab fcs_tab[] = {
     { &wp->w_p_fcs_chars.stl,        "stl",        ' '  },
     { &wp->w_p_fcs_chars.stlnc,      "stlnc",      ' '  },
     { &wp->w_p_fcs_chars.wbr,        "wbr",        ' '  },
-    { &wp->w_p_fcs_chars.horiz,      "horiz",      9472 },  // ─
-    { &wp->w_p_fcs_chars.horizup,    "horizup",    9524 },  // ┴
-    { &wp->w_p_fcs_chars.horizdown,  "horizdown",  9516 },  // ┬
-    { &wp->w_p_fcs_chars.vert,       "vert",       9474 },  // │
-    { &wp->w_p_fcs_chars.vertleft,   "vertleft",   9508 },  // ┤
-    { &wp->w_p_fcs_chars.vertright,  "vertright",  9500 },  // ├
-    { &wp->w_p_fcs_chars.verthoriz,  "verthoriz",  9532 },  // ┼
-    { &wp->w_p_fcs_chars.fold,       "fold",       183  },  // ·
+    { &wp->w_p_fcs_chars.horiz,      "horiz",      char2cells(0x2500) == 1 ? 0x2500 : '-' },  // ─
+    { &wp->w_p_fcs_chars.horizup,    "horizup",    char2cells(0x2534) == 1 ? 0x2534 : '-' },  // ┴
+    { &wp->w_p_fcs_chars.horizdown,  "horizdown",  char2cells(0x252c) == 1 ? 0x252c : '-' },  // ┬
+    { &wp->w_p_fcs_chars.vert,       "vert",       char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
+    { &wp->w_p_fcs_chars.vertleft,   "vertleft",   char2cells(0x2524) == 1 ? 0x2524 : '|' },  // ┤
+    { &wp->w_p_fcs_chars.vertright,  "vertright",  char2cells(0x251c) == 1 ? 0x251c : '|' },  // ├
+    { &wp->w_p_fcs_chars.verthoriz,  "verthoriz",  char2cells(0x253c) == 1 ? 0x253c : '+' },  // ┼
+    { &wp->w_p_fcs_chars.fold,       "fold",       char2cells(0x00b7) == 1 ? 0x00b7 : '-' },  // ·
     { &wp->w_p_fcs_chars.foldopen,   "foldopen",   '-'  },
     { &wp->w_p_fcs_chars.foldclosed, "foldclose",  '+'  },
-    { &wp->w_p_fcs_chars.foldsep,    "foldsep",    9474 },  // │
+    { &wp->w_p_fcs_chars.foldsep,    "foldsep",    char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
     { &wp->w_p_fcs_chars.diff,       "diff",       '-'  },
     { &wp->w_p_fcs_chars.msgsep,     "msgsep",     ' '  },
     { &wp->w_p_fcs_chars.eob,        "eob",        '~'  },
@@ -3666,19 +3667,6 @@ static char *set_chars_option(win_T *wp, char_u **varp, bool set)
     entries = ARRAY_SIZE(fcs_tab);
     if (varp == &wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
       varp = &p_fcs;
-    }
-    if (*p_ambw == 'd') {
-      // XXX: If ambiwidth=double then some characters take 2 columns,
-      // which is forbidden (TUI limitation?). Set old defaults.
-      fcs_tab[3].def  = '-';
-      fcs_tab[4].def  = '-';
-      fcs_tab[5].def  = '-';
-      fcs_tab[6].def  = '|';
-      fcs_tab[7].def  = '|';
-      fcs_tab[8].def  = '|';
-      fcs_tab[9].def  = '+';
-      fcs_tab[10].def  = '-';
-      fcs_tab[13].def = '|';
     }
   }
 
