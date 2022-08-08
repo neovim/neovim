@@ -591,7 +591,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"double":	Use twice the width of ASCII characters.
 							*E834* *E835*
 	The value "double" cannot be used if 'listchars' or 'fillchars'
-	contains a character that would be double width.
+
+	The values are overruled for characters specified with
+	|setcellwidths()|.
 
 	There are a number of CJK fonts for which the width of glyphs for
 	those characters are solely based on how many octets they take in
