@@ -179,10 +179,10 @@ contain the following C-like escape sequences:
 
 Moreover, a backslash followed by a real newline results in a newline in the
 string. A character in a string may also be specified by its numerical value
-using the escape sequence ``\ddd'`, where `ddd` is a sequence of up to three
+using the escape sequence `\ddd`, where `ddd` is a sequence of up to three
 decimal digits. (Note that if a numerical escape is to be followed by a digit,
 it must be expressed using exactly three digits.) Strings in Lua may contain
-any 8-bit value, including embedded zeros, which can be specified as ``\0'`.
+any 8-bit value, including embedded zeros, which can be specified as `\0`.
 
 To put a double (single) quote, a newline, a backslash, or an embedded zero
 inside a literal string enclosed by double (single) quotes you must use an
@@ -204,7 +204,7 @@ They may contain anything except a closing bracket of the proper level.
 
 For convenience, when the opening long bracket is immediately followed by a
 newline, the newline is not included in the string. As an example, in a system
-using ASCII (in which ``a'` is coded as 97, newline is coded as 10, and ``1'` is
+using ASCII (in which `a` is coded as 97, newline is coded as 10, and `1` is
 coded as 49), the five literals below denote the same string:
 >
        a = 'alo\n123"'
@@ -254,7 +254,7 @@ numbers. (It is easy to build Lua interpreters that use other internal
 representations for numbers, such as single-precision float or long
 integers; see file `luaconf.h`.) `String` represents arrays of characters. Lua is
 8-bit clean: strings may contain any 8-bit character, including embedded zeros
-(`'\0'`) (see |luaref-literal|).
+(`\0`) (see |luaref-literal|).
 
 Lua can call (and manipulate) functions written in Lua and functions written
 in C (see |luaref-langFuncCalls|).
@@ -381,7 +381,7 @@ optionally followed by a semicolon:
 >
        chunk ::= {stat [ ; ]}
 <
-There are no empty statements and thus ``;;'` is not legal.
+There are no empty statements and thus `;;` is not legal.
 
 Lua handles a chunk as the body of an anonymous function with a variable
 number of arguments (see |luaref-langFuncDefs|). As such, chunks can define
@@ -429,7 +429,7 @@ Expressions are discussed in |luaref-langExpressions|.
 Before the assignment, the list of values is `adjusted` to the length of the
 list of variables. If there are more values than needed, the excess values are
 thrown away. If there are fewer values than needed, the list is extended with
-as many `nil`'s as needed. If the list of expressions ends with a function
+as many `nil`s as needed. If the list of expressions ends with a function
 call, then all values returned by this call enter in the list of values,
 before the adjustment (except when the call is enclosed in parentheses; see
 |luaref-langExpressions|).
@@ -503,7 +503,7 @@ A `break` ends the innermost enclosing loop.
 The `return` and `break` statements can only be written as the `last`
 statement of a block. If it is really necessary to `return` or `break` in the
 middle of a block, then an explicit inner block can be used, as in the idioms
-``do return end'` and ``do break end'`, because now `return` and `break` are
+`do return end` and `do break end`, because now `return` and `break` are
 the last statements in their (inner) blocks.
 
 ------------------------------------------------------------------------------
@@ -631,7 +631,7 @@ Numbers and literal strings are explained in |luaref-langLexConv|; variables are
 explained in |luaref-langVariables|; function definitions are explained in
 |luaref-langFuncDefs|; function calls are explained in |luaref-langFuncCalls|;
 table constructors are explained in |luaref-langTableConst|. Vararg expressions,
-denoted by three dots (``...'`), can only be used inside vararg functions;
+denoted by three dots (`...`), can only be used inside vararg functions;
 they are explained in |luaref-langFuncDefs|.
 
 Binary operators comprise arithmetic operators (see |luaref-langArithOp|),
@@ -754,7 +754,7 @@ evaluated only if necessary. Here are some examples:
 ------------------------------------------------------------------------------
 2.5.4  Concatenation                                         *luaref-langConcat*
 
-The string concatenation operator in Lua is denoted by two dots (``..'`).
+The string concatenation operator in Lua is denoted by two dots (`..`).
 If both operands are strings or numbers, then they are converted to strings
 according to the rules mentioned in |luaref-langCoercion|. Otherwise, the
 "concat" metamethod is called (see |luaref-langMetatables|).
@@ -790,7 +790,7 @@ priority:
        ^
 <
 As usual, you can use parentheses to change the precedences in an expression.
-The concatenation (``..'`) and exponentiation (``^'`) operators are right
+The concatenation (`..`) and exponentiation (`^`) operators are right
 associative. All other binary operators are left associative.
 
 ------------------------------------------------------------------------------
@@ -869,7 +869,7 @@ argument list is a single new table. A call of the form `f'` `string` `'`
 `f('` `string` `')`, that is, the argument list is a single literal string.
 
 As an exception to the free-format syntax of Lua, you cannot put a line break
-before the `'('`  in a function call. This restriction avoids some ambiguities
+before the `(` in a function call. This restriction avoids some ambiguities
 in the language. If you write
 >
        a = f
@@ -959,7 +959,7 @@ values:
                                                                  *luaref-vararg*
 When a function is called, the list of arguments is adjusted to the length of
 the list of parameters, unless the function is a variadic or `vararg function`,
-which is indicated by three dots (``...'`) at the end of its parameter list.
+which is indicated by three dots (`...`) at the end of its parameter list.
 A vararg function does not adjust its argument list; instead, it collects all
 extra arguments and supplies them to the function through a `vararg expression`,
 which is also written as three dots. The value of this expression is a list of
@@ -1014,11 +1014,11 @@ innermost block that includes the declaration. Consider the following example:
 >
        x = 10                -- global variable
        do                    -- new block
-         local x = x         -- new `x', with value 10
+         local x = x         -- new `x`, with value 10
          print(x)            --> 10
          x = x+1
          do                  -- another block
-           local x = x+1     -- another `x'
+           local x = x+1     -- another `x`
            print(x)          --> 12
          end
          print(x)            --> 11
@@ -1099,7 +1099,7 @@ operation.
 
 Metatables control the operations listed next. Each operation is identified by
 its corresponding name. The key for each operation is a string with its name
-prefixed by two underscores, `'__'`; for instance, the key for operation "add"
+prefixed by two underscores, `__`; for instance, the key for operation "add"
 is the string `"__add"`. The semantics of these operations is better explained
 by a Lua function describing how the interpreter executes that operation.
 
@@ -1136,7 +1136,7 @@ By using this function, the behavior of the `op1 + op2` is
        function add_event (op1, op2)
          local o1, o2 = tonumber(op1), tonumber(op2)
          if o1 and o2 then  -- both operands are numeric?
-           return o1 + o2   -- `+' here is the primitive `add'
+           return o1 + o2   -- `+` here is the primitive `add`
          else  -- at least one of the operands is not numeric
            local h = getbinhandler(op1, op2, "__add")
            if h then
@@ -1177,7 +1177,7 @@ the unary `-` operation.
        function unm_event (op)
          local o = tonumber(op)
          if o then  -- operand is numeric?
-           return -o  -- '-' here is the primitive 'unm'
+           return -o  -- `-` here is the primitive `unm`
          else  -- the operand is not numeric.
            -- Try to get a handler from the operand
            local h = metatable(op).__unm
@@ -1483,8 +1483,8 @@ A table with both weak keys and weak values allows the collection of both keys
 and values. In any case, if either the key or the value is collected, the
 whole pair is removed from the table. The weakness of a table is controlled by
 the value of the `__mode` field of its metatable. If the `__mode` field is a
-string containing the character `'k'`, the keys in the table are weak.
-If `__mode` contains `'v'`, the values in the table are weak.
+string containing the character `k`, the keys in the table are weak.
+If `__mode` contains `v`, the values in the table are weak.
 
 After you use a table as a metatable, you should not change the value of its
 field `__mode`. Otherwise, the weak behavior of the tables controlled by this
@@ -2242,7 +2242,7 @@ lua_objlen                                                        *lua_objlen()*
 <
         Returns the "length" of the value at the given acceptable index: for
         strings, this is the string length; for tables, this is the result of
-        the length operator (`'#'`); for userdata, this is the size of the
+        the length operator (`#`); for userdata, this is the size of the
         block of memory allocated for the userdata; for other values, it is 0.
 
 lua_pcall                                                          *lua_pcall()*
@@ -2337,11 +2337,11 @@ lua_pushfstring                                              *lua_pushfstring()*
            Lua string and Lua takes care of memory allocation (and
            deallocation, through garbage collection).
          - The conversion specifiers are quite restricted. There are no flags,
-           widths, or precisions. The conversion specifiers can only be `'%%'`
-           (inserts a `'%'` in the string), `'%s'` (inserts a zero-terminated
-           string, with no size restrictions), `'%f'` (inserts a
-           `lua_Number`), `'%p'` (inserts a pointer as a hexadecimal numeral),
-           `'%d'` (inserts an `int`), and `'%c'` (inserts an `int` as a
+           widths, or precisions. The conversion specifiers can only be `%%`
+           (inserts a `%` in the string), `%s` (inserts a zero-terminated
+           string, with no size restrictions), `%f` (inserts a
+           `lua_Number`), `%p` (inserts a pointer as a hexadecimal numeral),
+           `%d` (inserts an `int`), and `%c` (inserts an `int` as a
            character).
 
 lua_pushinteger                                              *lua_pushinteger()*
@@ -2653,7 +2653,7 @@ lua_tolstring                                                  *lua_tolstring()*
         to keys during a table traversal.)
 
         `lua_tolstring` returns a fully aligned pointer to a string inside the
-        Lua state. This string always has a zero (`'\0'`) after its last
+        Lua state. This string always has a zero (`\0`) after its last
         character (as in C), but may contain other zeros in its body. Because
         Lua has garbage collection, there is no guarantee that the pointer
         returned by `lua_tolstring` will be valid after the corresponding
@@ -2764,7 +2764,7 @@ lua_yield                                                          *lua_yield()*
 
                                                            *luaref-stackexample*
         As an example of stack manipulation, if the stack starts as
-        `10 20 30 40 50*` (from bottom to top; the `'*'` marks the top), then
+        `10 20 30 40 50*` (from bottom to top; the `*` marks the top), then
 >
                lua_pushvalue(L, 3)    --> 10 20 30 40 50 30*
                lua_pushvalue(L, -1)   --> 10 20 30 40 50 30 30*
@@ -2811,7 +2811,7 @@ The fields of `lua_Debug`  have the following meaning:
 
     `source`           If the function was defined in a string, then `source` is
                      that string. If the function was defined in a file, then
-                     `source` starts with a `'@'` followed by the file name.
+                     `source` starts with a `@` followed by the file name.
     `short_src`        a "printable" version of `source`, to be used in error messages.
     `linedefined`      the line number where the definition of the function starts.
     `lastlinedefined`  the line number where the definition of the function ends.
@@ -2867,7 +2867,7 @@ lua_getinfo                                                      *lua_getinfo()*
         a hook (see |luaref-lua_Hook|).
 
         To get information about a function you push it onto the stack and
-        start the `what` string with the character `'>'`. (In that case,
+        start the `what` string with the character `>`. (In that case,
         `lua_getinfo` pops the function in the top of the stack.) For
         instance, to know in which line a function `f` was defined, you can
         write the following code:
@@ -2908,7 +2908,7 @@ lua_getlocal                                                    *lua_getlocal()*
         variable). `lua_getlocal` pushes the variable's value onto the stack
         and returns its name.
 
-        Variable names starting with `'('` (open parentheses) represent
+        Variable names starting with `(` (open parentheses) represent
         internal variables (loop control variables, temporaries, and C
         function locals).
 
@@ -3444,8 +3444,7 @@ luaL_optlstring                                              *luaL_optlstring()*
         this argument is absent or is `nil`, returns `d`. Otherwise, raises an
         error.
 
-        If `l` is not `NULL`, fills the position `*l` with the results's
-        length.
+        If `l` is not `NULL`, fills the position `*l` with the results' length.
 
 luaL_optnumber                                                *luaL_optnumber()*
 >
@@ -3804,11 +3803,11 @@ tonumber({e} [, {base}])                                     *luaref-tonumber()*
 
         An optional argument specifies the base to interpret the numeral. The
         base may be any integer between 2 and 36, inclusive. In bases above
-        10, the letter `'A'` (in either upper or lower case) represents 10,
-        `'B'` represents 11, and so forth, with `'Z'` representing 35. In base
-        10 (the default), the number may have a decimal part, as well as an
-           optional exponent part (see |luaref-langLexConv|). In other bases,
-           only unsigned integers are accepted.
+        10, the letter `A` (in either upper or lower case) represents 10, `B`
+        represents 11, and so forth, with `Z'` representing 35. In base 10
+        (the default), the number may have a decimal part, as well as an
+        optional exponent part (see |luaref-langLexConv|). In other bases,
+        only unsigned integers are accepted.
 
 tostring({e})                                                *luaref-tostring()*
         Receives an argument of any type and converts it to a string in a
@@ -4248,16 +4247,16 @@ combinations are allowed in describing a character class:
     - `%x`  (where `x` is any non-alphanumeric character) represents the
           character `x`. This is the standard way to escape the magic
           characters. Any punctuation character (even the non-magic) can be
-          preceded by a `'%'` when used to represent itself in a pattern.
+          preceded by a `%` when used to represent itself in a pattern.
 
     - `[set]`  represents the class which is the union of all characters in
          `set`. A range of characters may be specified by separating the end
-         characters of the range with a `'-'`. All classes `%x` described
+         characters of the range with a `-`. All classes `%x` described
          above may also be used as components in `set`. All other characters
          in `set` represent themselves. For example, `[%w_]` (or `[_%w]`)
          represents all alphanumeric characters plus the underscore, `[0-7]`
          represents the octal digits, and `[0-7%l%-]` represents the octal
-         digits plus the lowercase letters plus the `'-'` character.
+         digits plus the lowercase letters plus the `-` character.
 
          The interaction between ranges and classes is not defined. Therefore,
          patterns like `[%a-z]` or `[a-%%]` have no meaning.
@@ -4279,16 +4278,16 @@ A `pattern item` may be
 
    - a single character class, which matches any single character in the
       class;
-   - a single character class followed by `'*'`, which matches 0 or more
+   - a single character class followed by `*`, which matches 0 or more
       repetitions of characters in the class. These repetition items will
       always match the longest possible sequence;
-   - a single character class followed by `'+'`, which matches 1 or more
+   - a single character class followed by `+`, which matches 1 or more
       repetitions of characters in the class. These repetition items will
       always match the longest possible sequence;
-   - a single character class followed by `'-'`, which also matches 0 or
-      more repetitions of characters in the class. Unlike `'*'`, these
+   - a single character class followed by `-`, which also matches 0 or
+      more repetitions of characters in the class. Unlike `*`, these
       repetition items will always match the `shortest` possible sequence;
-   - a single character class followed by `'?'`, which matches 0 or 1
+   - a single character class followed by `?`, which matches 0 or 1
       occurrences of a character in the class;
    - `%n`, for `n` between 1 and 9; such item matches a substring equal to the
       `n` -th captured string (see below);
@@ -4302,10 +4301,10 @@ A `pattern item` may be
                                                                 *luaref-pattern*
 Pattern:~
 --------
-A `pattern` is a sequence of pattern items. A `'^'` at the beginning of a pattern
-anchors the match at the beginning of the subject string. A '$' at the end of
+A `pattern` is a sequence of pattern items. A `^` at the beginning of a pattern
+anchors the match at the beginning of the subject string. A `$` at the end of
 a pattern anchors the match at the end of the subject string. At other
-positions, `'^'` and '$' have no special meaning and represent themselves.
+positions, `^` and `$` have no special meaning and represent themselves.
 
                                                                 *luaref-capture*
 Captures:~
@@ -4570,7 +4569,7 @@ io.open({filename} [, {mode}])                                       *io.open()*
          - `"a+"`  append update mode, previous data is preserved, writing is
                  only allowed at the end of file.
 
-        The {mode} string may also have a `'b'` at the end, which is needed in
+        The {mode} string may also have a `b` at the end, which is needed in
         some systems to open the file in binary mode. This string is exactly
         what is used in the standard C function `fopen`.
 
@@ -4695,7 +4694,7 @@ os.date([{format} [, {time}]])                                       *os.date()*
         (see the `os.time` function |luaref-os.time| for a description of this
         value). Otherwise, `date` formats the current time.
 
-        If {format} starts with `'!'`, then the date is formatted in
+        If {format} starts with `!`, then the date is formatted in
         Coordinated Universal Time. After this optional character, if {format}
         is the string `"*t"`, then `date` returns a table with the following
         fields: `year` (four digits), `month` (1-12), `day` (1-31), `hour`
@@ -4811,8 +4810,8 @@ debug.getinfo([{thread},] {function} [, {what}])               *debug.getinfo()*
         `lua_getinfo` (see |luaref-lua_getinfo|), with the string {what}
         describing which fields to fill in. The default for {what} is to get
         all information available, except the table of valid lines. If
-        present, the option `'f'` adds a field named `func` with the function
-        itself. If present, the option `'L'` adds a field named `activelines`
+        present, the option `f` adds a field named `func` with the function
+        itself. If present, the option `L` adds a field named `activelines`
         with the table of valid lines.
 
         For instance, the expression `debug.getinfo(1,"n").name` returns the
@@ -4829,7 +4828,7 @@ debug.getlocal([{thread},] {level}, {local})                  *debug.getlocal()*
         with a {level} out of range. (You can call `debug.getinfo`
         |luaref-debug.getinfo| to check whether the level is valid.)
 
-        Variable names starting with `'('` (open parentheses) represent
+        Variable names starting with `(` (open parentheses) represent
         internal variables (loop control variables, temporaries, and C
         function locals).
 
