@@ -107,9 +107,6 @@ Lua code.  Through the use of C functions, Lua can be augmented to cope with a
 wide range of different domains, thus creating customized programming
 languages sharing a syntactical framework.
 
-The Lua distribution includes a sample host program called lua, which uses the
-Lua library to offer a complete, stand-alone Lua interpreter.
-
 Lua is free software, and is provided as usual with no guarantees, as stated
 in its license. The implementation described in this manual is available at
 Lua's official web site, www.lua.org.
