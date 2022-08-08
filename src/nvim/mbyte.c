@@ -2740,8 +2740,8 @@ static int cw_value(int c)
 
 static int tv_nr_compare(const void *a1, const void *a2)
 {
-  const listitem_T *const li1 = *(const listitem_T **)a1;
-  const listitem_T *const li2 = *(const listitem_T **)a2;
+  const listitem_T *const li1 = tv_list_first(*(const list_T **)a1);
+  const listitem_T *const li2 = tv_list_first(*(const list_T **)a2);
 
   return (int)(TV_LIST_ITEM_TV(li1)->vval.v_number - TV_LIST_ITEM_TV(li2)->vval.v_number);
 }
@@ -2762,7 +2762,8 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  const listitem_T **ptrs = xmalloc(sizeof(const listitem_T *) * (size_t)tv_list_len(l));
+  // Note: use list_T instead of listitem_T so that TV_LIST_ITEM_NEXT can be used properly below.
+  const list_T **ptrs = xmalloc(sizeof(const list_T *) * (size_t)tv_list_len(l));
 
   // Check that all entries are a list with three numbers, the range is
   // valid and the cell width is valid.
@@ -2777,8 +2778,8 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     const list_T *const li_l = li_tv->vval.v_list;
+    ptrs[item] = li_l;
     const listitem_T *lili = tv_list_first(li_l);
-    ptrs[item] = lili;
     int i;
     varnumber_T n1;
     for (i = 0; lili != NULL; lili = TV_LIST_ITEM_NEXT(li_l, lili), i++) {
@@ -2814,13 +2815,14 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   });
 
   // Sort the list on the first number.
-  qsort((void *)ptrs, (size_t)tv_list_len(l), sizeof(const listitem_T *), tv_nr_compare);
+  qsort((void *)ptrs, (size_t)tv_list_len(l), sizeof(const list_T *), tv_nr_compare);
 
   cw_interval_T *table = xmalloc(sizeof(cw_interval_T) * (size_t)tv_list_len(l));
 
   // Store the items in the new table.
   for (item = 0; item < tv_list_len(l); item++) {
-    const listitem_T *lili = ptrs[item];
+    const list_T *const li_l = ptrs[item];
+    const listitem_T *lili = tv_list_first(li_l);
     const varnumber_T n1 = TV_LIST_ITEM_TV(lili)->vval.v_number;
     if (item > 0 && n1 <= table[item - 1].last) {
       semsg(_(e_overlapping_ranges_for_nr), (long)n1);
@@ -2829,9 +2831,9 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
     table[item].first = n1;
-    lili = TV_LIST_ITEM_NEXT(, lili);  // TODO: get list which lili belongs to
+    lili = TV_LIST_ITEM_NEXT(li_l, lili);
     table[item].last = TV_LIST_ITEM_TV(lili)->vval.v_number;
-    lili = TV_LIST_ITEM_NEXT(, lili);  // TODO: get list which lili belongs to
+    lili = TV_LIST_ITEM_NEXT(li_l, lili);
     table[item].width = (char)TV_LIST_ITEM_TV(lili)->vval.v_number;
   }
 
