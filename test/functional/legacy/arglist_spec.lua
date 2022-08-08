@@ -276,6 +276,6 @@ describe('argument list commands', function()
       2 more files to edit.  Quit anyway?                         |
       [Y]es, (N)o: ^                                               |
     ]])
-    expect_exit(100, feed, 'Y')
+    expect_exit(1000, feed, 'Y')
   end)
 end)

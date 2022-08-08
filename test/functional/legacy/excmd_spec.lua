@@ -94,7 +94,7 @@ describe(':confirm command dialog', function()
       {3:Save changes to "Xbar"?}                                                    |
       {3:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
-    expect_exit(100, feed, 'A')
+    expect_exit(1000, feed, 'A')
 
     eq('foo2\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
@@ -132,7 +132,7 @@ describe(':confirm command dialog', function()
       {3:Save changes to "Xbar"?}                                                    |
       {3:[Y]es, (N)o, Save (A)ll, (D)iscard All, (C)ancel: }^                         |
     ]])
-    expect_exit(100, feed, 'D')
+    expect_exit(1000, feed, 'D')
 
     eq('foo2\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
@@ -193,7 +193,7 @@ describe(':confirm command dialog', function()
       {3:Save changes to "Xfoo"?}                                                    |
       {3:[Y]es, (N)o, (C)ancel: }^                                                    |
     ]])
-    expect_exit(100, feed, 'Y')
+    expect_exit(1000, feed, 'Y')
 
     eq('foo4\n', read_file('Xfoo'))
     eq('bar2\n', read_file('Xbar'))
