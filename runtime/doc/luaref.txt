@@ -96,28 +96,28 @@ procedural programming with data description facilities.  It also offers good
 support for object-oriented programming, functional programming, and
 data-driven programming.  Lua is intended to be used as a powerful,
 light-weight scripting language for any program that needs one.  Lua is
-implemented as a library, written in `clean` C (that is, in the common subset
-of ANSI C and C++).
+implemented as a library, written in clean C (that is, in the common subset of
+ANSI C and C++).
 
 Being an extension language, Lua has no notion of a "main" program: it only
-works `embedded` in a host client, called the `embedding program` or simply
-the `host`. This host program can invoke functions to execute a piece of Lua
-code, can write and read Lua variables, and can register C functions to be
-called by Lua code.  Through the use of C functions, Lua can be augmented to
-cope with a wide range of different domains, thus creating customized
-programming languages sharing a syntactical framework.
+works embedded in a host client, called the embedding program or simply the
+host. This host program can invoke functions to execute a piece of Lua code,
+can write and read Lua variables, and can register C functions to be called by
+Lua code.  Through the use of C functions, Lua can be augmented to cope with a
+wide range of different domains, thus creating customized programming
+languages sharing a syntactical framework.
 
-The Lua distribution includes a sample host program called `lua`, which uses
-the Lua library to offer a complete, stand-alone Lua interpreter.
+The Lua distribution includes a sample host program called lua, which uses the
+Lua library to offer a complete, stand-alone Lua interpreter.
 
 Lua is free software, and is provided as usual with no guarantees, as stated
 in its license. The implementation described in this manual is available at
-Lua's official web site, `www.lua.org`.
+Lua's official web site, www.lua.org.
 
 Like any other reference manual, this document is dry in places. For a
 discussion of the decisions behind the design of Lua, see references at
 |luaref-bibliography|. For a detailed introduction to programming in Lua, see
-Roberto's book, `Programming in Lua`.
+Roberto's book, Programming in Lua.
 
 Lua means "moon" in Portuguese and is pronounced LOO-ah.
 
@@ -136,14 +136,14 @@ notation, in which { `a` } means 0 or more `a`'s, and [ `a` ] means an optional 
 2.1  Lexical Conventions                                    *luaref-langLexConv*
 
                                                *luaref-names* *luaref-identifiers*
-`Names` (also called `identifiers`) in Lua can be any string of letters, digits,
+Names (also called identifiers) in Lua can be any string of letters, digits,
 and underscores, not beginning with a digit. This coincides with the
 definition of identifiers in most languages. (The definition of letter depends
 on the current locale: any character considered alphabetic by the current
 locale can be used in an identifier.) Identifiers are used to name variables
 and table fields.
 
-The following `keywords` are reserved and cannot be used as names:
+The following keywords are reserved and cannot be used as names:
 >
        and       break     do        else      elseif
        end       false     for       function  if
@@ -163,7 +163,7 @@ The following strings denote other tokens:
        ;     :     ,     .     ..    ...
 <
                                                                 *luaref-literal*
-`Literal strings` can be delimited by matching single or double quotes, and can
+Literal strings can be delimited by matching single or double quotes, and can
 contain the following C-like escape sequences:
 
     - `\a`  bell
@@ -190,17 +190,17 @@ escape sequence. Any other character may be directly inserted into the
 literal. (Some control characters may cause problems for the file system, but
 Lua has no problem with them.)
 
-Literal strings can also be defined using a long format enclosed by
-`long brackets` . We define an `opening long bracket of level n` as an opening
-square bracket followed by `n`  equal signs followed by another opening square
-bracket. So, an opening long bracket of level 0 is written as `[[`, an opening
-long bracket of level 1 is written as `[=[`, and so on.
-A `closing long bracket` is defined similarly; for instance, a closing long
-bracket of level 4 is written as `]====]`. A long string starts with an opening
-long bracket of any level and ends at the first closing long bracket of the
-same level. Literals in this bracketed form may run for several lines, do not
-interpret any escape sequences, and ignore long brackets of any other level.
-They may contain anything except a closing bracket of the proper level.
+Literal strings can also be defined using a long format enclosed by long
+brackets. We define an opening long bracket of level n as an opening square
+bracket followed by n equal signs followed by another opening square bracket.
+So, an opening long bracket of level 0 is written as `[[`, an opening long
+bracket of level 1 is written as `[=[`, and so on.
+A closing long bracket is defined similarly; for instance, a closing long
+bracket of level 4 is written as `]====]`. A long string starts with an
+opening long bracket of any level and ends at the first closing long bracket
+of the same level. Literals in this bracketed form may run for several lines,
+do not interpret any escape sequences, and ignore long brackets of any other
+level. They may contain anything except a closing bracket of the proper level.
 
 For convenience, when the opening long bracket is immediately followed by a
 newline, the newline is not included in the string. As an example, in a system
@@ -217,27 +217,27 @@ coded as 49), the five literals below denote the same string:
        123"]==]
 <
                                                             *luaref-numconstant*
-A `numerical constant` may be written with an optional decimal part and an
+A numerical constant may be written with an optional decimal part and an
 optional decimal exponent. Lua also accepts integer hexadecimal constants, by
 prefixing them with `0x`. Examples of valid numerical constants are
 >
      3     3.0     3.1416  314.16e-2   0.31416E1   0xff   0x56
 <
                                                                 *luaref-comment*
-A `comment` starts with a double hyphen (`--`) anywhere outside a string. If the
-text immediately after `--` is not an opening long bracket, the comment is
-a `short comment`, which runs until the end of the line. Otherwise, it is
-a `long comment`, which runs until the corresponding closing long bracket. Long
+A comment starts with a double hyphen (`--`) anywhere outside a string. If the
+text immediately after `--` is not an opening long bracket, the comment is a
+short comment, which runs until the end of the line. Otherwise, it is a long
+comment, which runs until the corresponding closing long bracket. Long
 comments are frequently used to disable code temporarily.
 
 ==============================================================================
 2.2  Values and Types                                      *luaref-langValTypes*
 
-Lua is a `dynamically typed language` . This means that variables do not have
+Lua is a dynamically typed language. This means that variables do not have
 types; only values do. There are no type definitions in the language. All
 values carry their own type.
 
-All values in Lua are `first-class values`. This means that all values can be
+All values in Lua are first-class values. This means that all values can be
 stored in variables, passed as arguments to other functions, and returned as
 results.
 
@@ -245,27 +245,27 @@ results.
                                                       *luaref-true* *luaref-false*
                                                    *luaref-number* *luaref-string*
 There are eight basic types in Lua: `nil`, `boolean`, `number`, `string`,
-`function`, `userdata`, `thread`, and `table`. `Nil` is the type of the value `nil`,
-whose main property is to be different from any other value; it usually
-represents the absence of a useful value. `Boolean` is the type of the
-values `false` and `true`. Both `nil` and `false` make a condition false; any other
-value makes it true. `Number` represents real (double-precision floating-point)
+`function`, `userdata`, `thread`, and `table`. Nil is the type of the value
+`nil`, whose main property is to be different from any other value; it usually
+represents the absence of a useful value. Boolean is the type of the values
+`false` and `true`. Both `nil` and `false` make a condition false; any other
+value makes it true. Number represents real (double-precision floating-point)
 numbers. (It is easy to build Lua interpreters that use other internal
-representations for numbers, such as single-precision float or long
-integers; see file `luaconf.h`.) `String` represents arrays of characters. Lua is
-8-bit clean: strings may contain any 8-bit character, including embedded zeros
+representations for numbers, such as single-precision float or long integers;
+see file `luaconf.h`.) String represents arrays of characters. Lua is 8-bit
+clean: strings may contain any 8-bit character, including embedded zeros
 (`\0`) (see |luaref-literal|).
 
 Lua can call (and manipulate) functions written in Lua and functions written
 in C (see |luaref-langFuncCalls|).
 
                                                            *luaref-userdatatype*
-The type `userdata` is provided to allow arbitrary C data to be stored in Lua
+The type userdata is provided to allow arbitrary C data to be stored in Lua
 variables. This type corresponds to a block of raw memory and has no
 pre-defined operations in Lua, except assignment and identity test. However,
-by using `metatables`, the programmer can define operations for userdata values
-(see |luaref-langMetatables|). Userdata values cannot be created or modified in
-Lua, only through the C API. This guarantees the integrity of data owned by
+by using metatables, the programmer can define operations for userdata values
+(see |luaref-langMetatables|). Userdata values cannot be created or modified
+in Lua, only through the C API. This guarantees the integrity of data owned by
 the host program.
 
                                                                  *luaref-thread*
@@ -277,7 +277,7 @@ that do not support threads.
                                                                   *luaref-table*
 The type `table` implements associative arrays, that is, arrays that can be
 indexed not only with numbers, but with any value (except `nil`). Tables can
-be `heterogeneous`; that is, they can contain values of all types (except
+be heterogeneous; that is, they can contain values of all types (except
 `nil`). Tables are the sole data structuring mechanism in Lua; they may be
 used to represent ordinary arrays, symbol tables, sets, records, graphs,
 trees, etc. To represent records, Lua uses the field name as an index. The
@@ -287,10 +287,10 @@ for `a["name"]`. There are several convenient ways to create tables in Lua
 
 Like indices, the value of a table field can be of any type (except `nil`). In
 particular, because functions are first-class values, table fields may contain
-functions. Thus tables may also carry `methods` (see |luaref-langFuncDefs|).
+functions. Thus tables may also carry methods (see |luaref-langFuncDefs|).
 
-Tables, functions, threads and (full) userdata values are `objects`: variables
-do not actually `contain` these values, only `references` to them. Assignment,
+Tables, functions, threads and (full) userdata values are objects: variables
+do not actually contain these values, only references to them. Assignment,
 parameter passing, and function returns always manipulate references to such
 values; these operations do not imply any kind of copy.
 
@@ -322,7 +322,7 @@ function's formal parameter, which is a particular form of local variable):
 Name denotes identifiers, as defined in |luaref-langLexConv|.
 
 Any variable is assumed to be global unless explicitly declared as a local
-(see |luaref-langLocalDec|). Local variables are `lexically scoped`: local
+(see |luaref-langLocalDec|). Local variables are lexically scoped: local
 variables can be freely accessed by functions defined inside their scope (see
 |luaref-langVisibRules|).
 
@@ -341,15 +341,15 @@ The syntax `var.NAME` is just syntactic sugar for `var["NAME"]` :
 >
        var ::= prefixexp . Name
 <
-All global variables live as fields in ordinary Lua tables, called
-`environment tables` or simply `environments` (see |luaref-langEnvironments|).
-Each function has its own reference to an environment, so that all global
-variables in this function will refer to this environment table. When a
-function is created, it inherits the environment from the function that
-created it. To get the environment table of a Lua function, you
-call `getfenv` (see |luaref-getfenv|). To replace it, you call `setfenv` (see
-|luaref-setfenv|). (You can only manipulate the environment of C functions
-through the debug library; see |luaref-libDebug|.)
+All global variables live as fields in ordinary Lua tables, called environment
+tables or simply environments (see |luaref-langEnvironments|). Each function
+has its own reference to an environment, so that all global variables in this
+function will refer to this environment table. When a function is created, it
+inherits the environment from the function that created it. To get the
+environment table of a Lua function, you call `getfenv` (see
+|luaref-getfenv|). To replace it, you call `setfenv` (see |luaref-setfenv|).
+(You can only manipulate the environment of C functions through the debug
+library; see |luaref-libDebug|.)
 
 An access to a global variable `x` is equivalent to `_env.x`, which in turn is
 equivalent to
@@ -375,7 +375,7 @@ calls, and variable declarations.
 ------------------------------------------------------------------------------
 2.4.1  Chunks                                   *luaref-chunk* *luaref-langChunks*
 
-The unit of execution of Lua is called a `chunk`. A chunk is simply a sequence
+The unit of execution of Lua is called a chunk. A chunk is simply a sequence
 of statements, which are executed sequentially. Each statement can be
 optionally followed by a semicolon:
 >
@@ -426,7 +426,7 @@ side. The elements in both lists are separated by commas:
 <
 Expressions are discussed in |luaref-langExpressions|.
 
-Before the assignment, the list of values is `adjusted` to the length of the
+Before the assignment, the list of values is adjusted to the length of the
 list of variables. If there are more values than needed, the excess values are
 thrown away. If there are fewer values than needed, the list is extended with
 as many `nil`s as needed. If the list of expressions ends with a function
@@ -547,7 +547,7 @@ Note the following:
    another variable before breaking or exiting the loop.
 
                                                                      *luaref-in*
-The generic `for` statement works over functions, called `iterators`. On each
+The generic `for` statement works over functions, called iterators. On each
 iteration, the iterator function is called to produce a new value, stopping
 when this new value is `nil`. The generic `for` loop has the following syntax:
 >
@@ -572,8 +572,8 @@ is equivalent to the code:
 
 Note the following:
 
- - `explist` is evaluated only once. Its results are an `iterator` function,
-   a `state`, and an initial value for the first `iterator variable`.
+ - `explist` is evaluated only once. Its results are an iterator function,
+   a `state`, and an initial value for the first iterator variable.
  - `f`, `s`, and `var` are invisible variables. The names are here for
    explanatory purposes only.
  - You can use `break` to exit a `for` loop.
@@ -638,7 +638,7 @@ Binary operators comprise arithmetic operators (see |luaref-langArithOp|),
 relational operators (see |luaref-langRelOp|), logical operators (see
 |luaref-langLogOp|), and the concatenation operator (see |luaref-langConcat|).
 Unary operators comprise the unary minus (see |luaref-labgArithOp|), the unary
-`not` (see |luaref-langLogOp|), and the unary `length operator` (see
+`not` (see |luaref-langLogOp|), and the unary length operator (see
 |luaref-langLength|).
 
 Both function calls and vararg expressions may result in multiple values. If
@@ -702,17 +702,17 @@ These operators always result in `false` or `true`.
 Equality (`==`) first compares the type of its operands. If the types are
 different, then the result is `false`. Otherwise, the values of the operands
 are compared. Numbers and strings are compared in the usual way. Objects
-(tables, userdata, threads, and functions) are compared by `reference`: two
-objects are considered equal only if they are the `same` object. Every time you
+(tables, userdata, threads, and functions) are compared by reference: two
+objects are considered equal only if they are the same object. Every time you
 create a new object (a table, userdata, or function), this new object is
 different from any previously existing object.
 
 You can change the way that Lua compares tables and userdata using the "eq"
 metamethod (see |luaref-langMetatables|).
 
-The conversion rules of coercion |luaref-langCoercion| `do not` apply to equality
-comparisons. Thus, `"0"==0` evaluates to `false`, and `t[0]` and `t["0"]` denote
-different entries in a table.
+The conversion rules of coercion |luaref-langCoercion| do not apply to
+equality comparisons. Thus, `"0"==0` evaluates to `false`, and `t[0]` and
+`t["0"]` denote different entries in a table.
 
 The operator `~=` is exactly the negation of equality (`==`).
 
@@ -880,8 +880,8 @@ statements, you must add a semi-colon between them. If you actually want to
 call `f`, you must remove the line break before `(g)`.
 
                                                                *luaref-tailcall*
-A call of the form `return` `functioncall` is called a `tail call`. Lua
-implements `proper tail calls` (or `proper tail recursion`): in a tail call, the
+A call of the form `return` `functioncall` is called a tail call. Lua
+implements proper tail calls (or proper tail recursion): in a tail call, the
 called function reuses the stack entry of the calling function. Therefore,
 there is no limit on the number of nested tail calls that a program can
 execute. However, a tail call erases any debug information about the calling
@@ -943,13 +943,13 @@ not to
 references to `f`.)
 
                                                                 *luaref-closure*
-A function definition is an executable expression, whose value has
-type `function`. When Lua pre-compiles a chunk, all its function bodies are
+A function definition is an executable expression, whose value has type
+`function`. When Lua pre-compiles a chunk, all its function bodies are
 pre-compiled too. Then, whenever Lua executes the function definition, the
-function is `instantiated` (or `closed`). This function instance (or `closure`)
-is the final value of the expression. Different instances of the same
-function may refer to different external local variables and may have
-different environment tables.
+function is instantiated (or closed). This function instance (or closure) is
+the final value of the expression. Different instances of the same function
+may refer to different external local variables and may have different
+environment tables.
 
 Parameters act as local variables that are initialized with the argument
 values:
@@ -958,10 +958,10 @@ values:
 <
                                                                  *luaref-vararg*
 When a function is called, the list of arguments is adjusted to the length of
-the list of parameters, unless the function is a variadic or `vararg function`,
-which is indicated by three dots (`...`) at the end of its parameter list.
-A vararg function does not adjust its argument list; instead, it collects all
-extra arguments and supplies them to the function through a `vararg expression`,
+the list of parameters, unless the function is a variadic or vararg function,
+which is indicated by three dots (`...`) at the end of its parameter list. A
+vararg function does not adjust its argument list; instead, it collects all
+extra arguments and supplies them to the function through a vararg expression,
 which is also written as three dots. The value of this expression is a list of
 all actual extra arguments, similar to a function with multiple results. If a
 vararg expression is used inside another expression or in the middle of a list
@@ -996,8 +996,8 @@ If control reaches the end of a function without encountering
 a `return` statement, then the function returns with no results.
 
                                                             *luaref-colonsyntax*
-The `colon` syntax is used for defining `methods`, that is, functions that have
-an implicit extra parameter `self`. Thus, the statement
+The colon syntax is used for defining methods, that is, functions that have an
+implicit extra parameter `self`. Thus, the statement
 
        `function t.a.b.c:f (`  `params`  `)`  `body`  `end`
 
@@ -1008,9 +1008,9 @@ is syntactic sugar for
 ==============================================================================
 2.6  Visibility Rules                                    *luaref-langVisibRules*
 
-Lua is a lexically scoped language. The scope of variables begins at the
-first statement `after` their declaration and lasts until the end of the
-innermost block that includes the declaration. Consider the following example:
+Lua is a lexically scoped language. The scope of variables begins at the first
+statement after their declaration and lasts until the end of the innermost
+block that includes the declaration. Consider the following example:
 >
        x = 10                -- global variable
        do                    -- new block
@@ -1031,10 +1031,10 @@ not in scope yet, and so the second `x` refers to the outside variable.
                                                                 *luaref-upvalue*
 Because of the lexical scoping rules, local variables can be freely accessed
 by functions defined inside their scope. A local variable used by an inner
-function is called an `upvalue`, or `external local variable`, inside the inner
+function is called an upvalue, or external local variable, inside the inner
 function.
 
-Notice that each execution of a `local` statement defines new local variables.
+Notice that each execution of a local statement defines new local variables.
 Consider the following example:
 >
        a = {}
@@ -1064,7 +1064,7 @@ the `pcall` function (see |luaref-pcall|).
 ==============================================================================
 2.8  Metatables                         *luaref-metatable* *luaref-langMetatables*
 
-Every value in Lua may have a `metatable`. This `metatable` is an ordinary Lua
+Every value in Lua may have a metatable. This metatable is an ordinary Lua
 table that defines the behavior of the original table and userdata under
 certain special operations. You can change several aspects of the behavior of
 an object by setting specific fields in its metatable. For instance, when a
@@ -1072,8 +1072,8 @@ non-numeric value is the operand of an addition, Lua checks for a function in
 the field `"__add"` in its metatable. If it finds one, Lua calls that function
 to perform the addition.
 
-We call the keys in a metatable `events` and the values `metamethods`. In the
-previous example, the event is `"add"` and the metamethod is the function that
+We call the keys in a metatable events and the values metamethods. In the
+previous example, the event is "add" and the metamethod is the function that
 performs the addition.
 
 You can query the metatable of any value through the `getmetatable` function
@@ -1091,16 +1091,16 @@ numbers, and for all strings, etc.
 A metatable may control how an object behaves in arithmetic operations, order
 comparisons, concatenation, length operation, and indexing. A metatable can
 also define a function to be called when a userdata is garbage collected. For
-each of those operations Lua associates a specific key called an `event`. When
+each of those operations Lua associates a specific key called an event. When
 Lua performs one of those operations over a value, it checks whether this
 value has a metatable with the corresponding event. If so, the value
-associated with that key (the `metamethod`) controls how Lua will perform the
+associated with that key (the metamethod) controls how Lua will perform the
 operation.
 
 Metatables control the operations listed next. Each operation is identified by
 its corresponding name. The key for each operation is a string with its name
 prefixed by two underscores, `__`; for instance, the key for operation "add"
-is the string `"__add"`. The semantics of these operations is better explained
+is the string "__add". The semantics of these operations is better explained
 by a Lua function describing how the interpreter executes that operation.
 
 The code shown here in Lua is only illustrative; the real behavior is hard
@@ -1379,15 +1379,15 @@ called when Lua calls a value.
 2.9  Environments                   *luaref-environment* *luaref-langEnvironments*
 
 Besides metatables, objects of types thread, function, and userdata have
-another table associated with them, called their `environment`. Like
-metatables, environments are regular tables and multiple objects can share the
-same environment.
+another table associated with them, called their environment. Like metatables,
+environments are regular tables and multiple objects can share the same
+environment.
 
 Environments associated with userdata have no meaning for Lua. It is only a
 convenience feature for programmers to associate a table to a userdata.
 
-Environments associated with threads are called `global environments`. They
-are used as the default environment for their threads and non-nested functions
+Environments associated with threads are called global environments. They are
+used as the default environment for their threads and non-nested functions
 created by the thread (through `loadfile` |luaref-loadfile|, `loadstring`
 |luaref-loadstring| or `load` |luaref-load|) and can be directly accessed by C
 code (see |luaref-apiPseudoIndices|).
@@ -1413,14 +1413,14 @@ threads) you must use the C API.
 Lua performs automatic memory management. This means that you do not have to
 worry neither about allocating memory for new objects nor about freeing it
 when the objects are no longer needed. Lua manages memory automatically by
-running a `garbage collector` from time to time to collect all `dead objects`
+running a garbage collector from time to time to collect all dead objects
 (that is, these objects that are no longer accessible from Lua). All objects
 in Lua are subject to automatic management: tables, userdata, functions,
 threads, and strings.
 
 Lua implements an incremental mark-and-sweep collector. It uses two numbers to
-control its garbage-collection cycles: the `garbage-collector pause` and the
-`garbage-collector step multiplier`.
+control its garbage-collection cycles: the garbage-collector pause and the
+garbage-collector step multiplier.
 
 The garbage-collector pause controls how long the collector waits before
 starting a new cycle. Larger values make the collector less aggressive. Values
@@ -1445,7 +1445,7 @@ restart it).
 2.10.1  Garbage-Collection Metamethods                       *luaref-langGCMeta*
 
 Using the C API, you can set garbage-collector metamethods for userdata (see
-|luaref-langMetatables|). These metamethods are also called `finalizers`.
+|luaref-langMetatables|). These metamethods are also called finalizers.
 Finalizers allow you to coordinate Lua's garbage collection with external
 resource management (such as closing files, network or database connections,
 or freeing your own memory).
@@ -1464,14 +1464,14 @@ userdata in that list:
        end
 <
 At the end of each garbage-collection cycle, the finalizers for userdata are
-called in `reverse` order of their creation, among these collected in that
+called in reverse order of their creation, among these collected in that
 cycle. That is, the first finalizer to be called is the one associated with
 the userdata created last in the program.
 
 ------------------------------------------------------------------------------
 2.10.2 - Weak Tables                    *luaref-weaktable* *luaref-langWeaktables*
 
-A `weak table` is a table whose elements are `weak references`. A weak reference
+A weak table is a table whose elements are weak references. A weak reference
 is ignored by the garbage collector. In other words, if the only references to
 an object are weak references, then the garbage collector will collect this
 object.
@@ -1493,9 +1493,9 @@ metatable is undefined.
 ==============================================================================
 2.11  Coroutines                              *luaref-coroutine* *luaref-langCoro*
 
-Lua supports coroutines, also called `collaborative multithreading`. A
-coroutine in Lua represents an independent thread of execution. Unlike threads
-in multithread systems, however, a coroutine only suspends its execution by
+Lua supports coroutines, also called collaborative multithreading. A coroutine
+in Lua represents an independent thread of execution. Unlike threads in
+multithread systems, however, a coroutine only suspends its execution by
 explicitly calling a yield function.
 
 You create a coroutine with a call to `coroutine.create` (see
@@ -1591,7 +1591,7 @@ Lua with a proper definition for the macro `luai_apicheck`,in file
 ==============================================================================
 3.1  The Stack                                    *luaref-stack* *luaref-apiStack*
 
-Lua uses a `virtual stack` to pass values to and from C. Each element in this
+Lua uses a virtual stack to pass values to and from C. Each element in this
 stack represents a Lua value (`nil`, number, string, etc.).
 
 Whenever Lua calls C, the called function gets a new stack, which is
@@ -1603,13 +1603,13 @@ is where the C function pushes its results to be returned to the caller (see
                                                              *luaref-stackindex*
 For convenience, most query operations in the API do not follow a strict stack
 discipline. Instead, they can refer to any element in the stack by using an
-`index`: a positive index represents an `absolute` stack position (starting
-at 1); a negative index represents an `offset` from the top of the stack.
-More specifically, if the stack has `n` elements, then index 1 represents the
-first element (that is, the element that was pushed onto the stack first) and
-index `n` represents the last element; index `-1` also represents the last element
+index: a positive index represents an absolute stack position (starting at 1);
+a negative index represents an offset from the top of the stack. More
+specifically, if the stack has `n` elements, then index 1 represents the first
+element (that is, the element that was pushed onto the stack first) and index
+`n` represents the last element; index `-1` also represents the last element
 (that is, the element at the top) and index `-n` represents the first element.
-We say that an index is `valid` if it lies between 1 and the stack top (that is,
+We say that an index is valid if it lies between 1 and the stack top (that is,
 if `1 <= abs(index) <= top`).
 
 ==============================================================================
@@ -1626,9 +1626,9 @@ have to worry about stack space unless your code has loops pushing elements
 onto the stack.
 
 Most query functions accept as indices any value inside the available stack
-space, that is, indices up to the maximum stack size you have set
-through `lua_checkstack`. Such indices are called `acceptable indices`. More
-formally, we define an `acceptable index` as follows:
+space, that is, indices up to the maximum stack size you have set through
+`lua_checkstack`. Such indices are called acceptable indices. More formally,
+we define an acceptable index as follows:
 >
     (index < 0 && abs(index) <= top) || (index > 0 && index <= stackspace)
 <
@@ -1638,7 +1638,7 @@ Note that 0 is never an acceptable index.
 3.3  Pseudo-Indices                 *luaref-pseudoindex* *luaref-apiPseudoIndices*
 
 Unless otherwise noted, any function that accepts valid indices can also be
-called with `pseudo-indices`, which represent some Lua values that are
+called with pseudo-indices, which represent some Lua values that are
 accessible to the C code but which are not in the stack. Pseudo-indices are
 used to access the thread environment, the function environment, the registry,
 and the upvalues of a C function (see |luaref-apiCClosures|).
@@ -1658,8 +1658,8 @@ global variable, do
 3.4  C Closures                            *luaref-cclosure* *luaref-apiCClosures*
 
 When a C function is created, it is possible to associate some values with it,
-thus creating a `C closure`; these values are called `upvalues` and are
-accessible to the function whenever it is called (see |luaref-lua_pushcclosure|).
+thus creating a C closure; these values are called upvalues and are accessible
+to the function whenever it is called (see |luaref-lua_pushcclosure|).
 
 Whenever a C function is called, its upvalues are located at specific
 pseudo-indices. These pseudo-indices are produced by the macro
@@ -1671,11 +1671,11 @@ the current function, produces an acceptable (but invalid) index.
 ==============================================================================
 3.5  Registry                               *luaref-registry* *luaref-apiRegistry*
 
-Lua provides a `registry`, a pre-defined table that can be used by any
-C code to store whatever Lua value it needs to store. This table is always
-located at pseudo-index `LUA_REGISTRYINDEX`. Any C library can store data into
-this table, but it should take care to choose keys different from those used
-by other libraries, to avoid collisions. Typically, you should use as key a
+Lua provides a registry, a pre-defined table that can be used by any C code to
+store whatever Lua value it needs to store. This table is always located at
+pseudo-index `LUA_REGISTRYINDEX`. Any C library can store data into this
+table, but it should take care to choose keys different from those used by
+other libraries, to avoid collisions. Typically, you should use as key a
 string containing your library name or a light userdata with the address of a
 C object in your code.
 
@@ -1689,9 +1689,9 @@ other purposes.
 Internally, Lua uses the C `longjmp` facility to handle errors. (You can also
 choose to use exceptions if you use C++; see file `luaconf.h`.) When Lua faces
 any error (such as memory allocation errors, type errors, syntax errors, and
-runtime errors) it `raises` an error; that is, it does a long jump. A
-`protected environment` uses `setjmp` to set a recover point; any error jumps
-to the most recent active recover point.
+runtime errors) it raises an error; that is, it does a long jump. A protected
+environment uses `setjmp` to set a recover point; any error jumps to the most
+recent active recover point.
 
 Almost any function in the API may raise an error, for instance due to a
 memory allocation error. The following functions run in protected mode (that
@@ -2188,11 +2188,11 @@ lua_newuserdata                                              *lua_newuserdata()*
         returns this address.
 
                                                                *luaref-userdata*
-        Userdata represents C values in Lua. A `full userdata` represents a
-        block of memory. It is an object (like a table): you must create it,
-        it can have its own metatable, and you can detect when it is being
-        collected. A full userdata is only equal to itself (under raw
-        equality).
+	Userdata represents C values in Lua. A full userdata represents a
+	block of memory. It is an object (like a table): you must create it,
+	it can have its own metatable, and you can detect when it is being
+	collected. A full userdata is only equal to itself (under raw
+	equality).
 
         When Lua collects a full userdata with a `gc` metamethod, Lua calls
         the metamethod and marks the userdata as finalized. When this userdata
@@ -2357,11 +2357,11 @@ lua_pushlightuserdata                                  *lua_pushlightuserdata()*
         Pushes a light userdata onto the stack.
 
                                                           *luaref-lightuserdata*
-        Userdata represents C values in Lua. A `light userdata` represents a
-        pointer. It is a value (like a number): you do not create it, it has
-        no individual metatable, and it is not collected (as it was never
-        created). A light userdata is equal to "any" light userdata with the
-        same C address.
+	Userdata represents C values in Lua. A light userdata represents a
+	pointer. It is a value (like a number): you do not create it, it has
+	no individual metatable, and it is not collected (as it was never
+	created). A light userdata is equal to "any" light userdata with the
+	same C address.
 
 lua_pushlstring                                              *lua_pushlstring()*
 >
@@ -2781,7 +2781,7 @@ lua_yield                                                          *lua_yield()*
 3.8  The Debug Interface                                       *luaref-apiDebug*
 
 Lua has no built-in debugging facilities. Instead, it offers a special
-interface by means of functions and `hooks`. This interface allows the
+interface by means of functions and hooks. This interface allows the
 construction of different kinds of debuggers, profilers, and other tools that
 need "inside information" from the interpreter.
 
@@ -3049,7 +3049,7 @@ lua_setupvalue                                                *lua_setupvalue()*
 4  THE AUXILIARY LIBRARY                                            *luaref-aux*
 ==============================================================================
 
-The `auxiliary library` provides several convenient functions to interface C
+The auxiliary library provides several convenient functions to interface C
 with Lua. While the basic API provides the primitive functions for all
 interactions between C and Lua, the auxiliary library provides higher-level
 functions for some common tasks.
@@ -3063,7 +3063,7 @@ so they provide nothing that cannot be done with this API.
 Several functions in the auxiliary library are used to check C function
 arguments. Their names are always `luaL_check*` or `luaL_opt*`. All of these
 functions raise an error if the check is not satisfied. Because the error
-message is formatted for arguments (e.g., `"bad argument #1"`), you should not
+message is formatted for arguments (e.g., "bad argument #1"), you should not
 use these functions for other stack values.
 
 ==============================================================================
@@ -4228,7 +4228,7 @@ string.upper({s})                                               *string.upper()*
 ------------------------------------------------------------------------------
 5.4.1  Patterns                            *luaref-patterns* *luaref-libStringPat*
 
-A `character class` is used to represent a set of characters. The following
+A character class is used to represent a set of characters. The following
 combinations are allowed in describing a character class:
 
     - `x`   (where `x` is not one of the magic characters `^$()%.[]*+-?`)
@@ -4274,7 +4274,7 @@ current locale. In particular, the class `[a-z]` may not be equivalent to `%l`.
                                                             *luaref-patternitem*
 Pattern Item:~
 -------------
-A `pattern item` may be
+A pattern item may be
 
    - a single character class, which matches any single character in the
       class;
@@ -4286,14 +4286,14 @@ A `pattern item` may be
       always match the longest possible sequence;
    - a single character class followed by `-`, which also matches 0 or
       more repetitions of characters in the class. Unlike `*`, these
-      repetition items will always match the `shortest` possible sequence;
+      repetition items will always match the shortest possible sequence;
    - a single character class followed by `?`, which matches 0 or 1
       occurrences of a character in the class;
    - `%n`, for `n` between 1 and 9; such item matches a substring equal to the
       `n` -th captured string (see below);
    - `%bxy`, where `x` and `y` are two distinct characters; such item matches
       strings that start with `x`, end with `y`, and where the `x` and `y`
-      are `balanced`. This means that, if one reads the string from left to
+      are balanced. This means that, if one reads the string from left to
       right, counting `+1` for an `x` and `-1` for a `y`, the ending `y` is the first
       `y` where the count reaches 0. For instance, the item `%b()` matches
       expressions with balanced parentheses.
@@ -4301,7 +4301,7 @@ A `pattern item` may be
                                                                 *luaref-pattern*
 Pattern:~
 --------
-A `pattern` is a sequence of pattern items. A `^` at the beginning of a pattern
+A pattern is a sequence of pattern items. A `^` at the beginning of a pattern
 anchors the match at the beginning of the subject string. A `$` at the end of
 a pattern anchors the match at the end of the subject string. At other
 positions, `^` and `$` have no special meaning and represent themselves.
@@ -4310,12 +4310,12 @@ positions, `^` and `$` have no special meaning and represent themselves.
 Captures:~
 ---------
 A pattern may contain sub-patterns enclosed in parentheses; they describe
-`captures`. When a match succeeds, the substrings of the subject string that
-match captures are stored (`captured`) for future use. Captures are numbered
+captures. When a match succeeds, the substrings of the subject string that
+match captures are stored (captured) for future use. Captures are numbered
 according to their left parentheses. For instance, in the pattern
-`"(a*(.)%w(%s*))"`, the part of the string matching `"a*(.)%w(%s*)"` is
-stored as the first capture (and therefore has number 1); the character
-matching `.` is captured with number 2, and the part matching `%s*` has number 3.
+`"(a*(.)%w(%s*))"`, the part of the string matching `"a*(.)%w(%s*)"` is stored
+as the first capture (and therefore has number 1); the character matching `.`
+is captured with number 2, and the part matching `%s*` has number 3.
 
 As a special case, the empty capture `()` captures the current string position
 (a number). For instance, if we apply the pattern `"()aa()"` on the
@@ -4904,25 +4904,25 @@ A  BIBLIOGRAPHY                                            *luaref-bibliography*
 This help file is a minor adaptation from this main reference:
 
  - R. Ierusalimschy, L. H. de Figueiredo, and W. Celes.,
-   "Lua: 5.1 reference manual", `http://www.lua.org/manual/5.1/manual.html`
+   "Lua: 5.1 reference manual", http://www.lua.org/manual/5.1/manual.html
 
 Lua is discussed in these references:
 
  - R. Ierusalimschy, L. H. de Figueiredo, and W. Celes.,
    "Lua --- an extensible extension language".
-   `Software: Practice & Experience` 26, 6 (1996) 635-652.
+   "Software: Practice & Experience" 26, 6 (1996) 635-652.
 
  - L. H. de Figueiredo, R. Ierusalimschy, and W. Celes.,
    "The design and implementation of a language for extending applications".
-   `Proc. of XXI Brazilian Seminar on Software and Hardware` (1994) 273-283.
+   "Proc. of XXI Brazilian Seminar on Software and Hardware" (1994) 273-283.
 
  - L. H. de Figueiredo, R. Ierusalimschy, and W. Celes.,
    "Lua: an extensible embedded language".
-   `Dr. Dobb's Journal` 21, 12 (Dec 1996) 26-33.
+   "Dr. Dobb's Journal" 21, 12 (Dec 1996) 26-33.
 
  - R. Ierusalimschy, L. H. de Figueiredo, and W. Celes.,
    "The evolution of an extension language: a history of Lua".
-   `Proc. of V Brazilian Symposium on Programming Languages` (2001) B-14-B-28.
+   "Proc. of V Brazilian Symposium on Programming Languages" (2001) B-14-B-28.
 
 ==============================================================================
 B  COPYRIGHT & LICENSES                                       *luaref-copyright*
@@ -4962,7 +4962,7 @@ a few exceptions and adaptations -- a copy of the Lua 5.1 Reference Manual
 
 The main ideas and concepts on how to implement this reference were taken from
 Christian Habermann's CRefVim project
-(`http://www.vim.org/scripts/script.php?script_id=614`).
+(http://www.vim.org/scripts/script.php?script_id=614).
 
 Adapted for bundled Nvim documentation; the original plugin can be found at
 http://www.vim.org/scripts/script.php?script_id=1291
