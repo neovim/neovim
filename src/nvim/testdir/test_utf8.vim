@@ -173,6 +173,16 @@ func Test_setcellwidths()
   call assert_fails('call setcellwidths([[0x111, 0x122, 1], [0x122, 0x123, 2]])', 'E1113:')
 
   call assert_fails('call setcellwidths([[0x33, 0x44, 2]])', 'E1114:')
+
+  set listchars=tab:--\\u2192
+  call assert_fails('call setcellwidths([[0x2192, 0x2192, 2]])', 'E834:')
+
+  set fillchars=stl:\\u2501
+  call assert_fails('call setcellwidths([[0x2501, 0x2501, 2]])', 'E835:')
+
+  set listchars&
+  set fillchars&
+  call setcellwidths([])
 endfunc
 
 func Test_print_overlong()

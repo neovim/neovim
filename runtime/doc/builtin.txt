@@ -6837,6 +6837,9 @@ setcellwidths({list})					*setcellwidths()*
 		range overlaps with another.
 		Only characters with value 0x100 and higher can be used.
 
+		If the new value causes 'fillchars' or 'listchars' to become
+		invalid it is rejected and an error is given.
+
 		To clear the overrides pass an empty list: >
 		   setcellwidths([]);
 

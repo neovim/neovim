@@ -2838,7 +2838,38 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   xfree(ptrs);
-  xfree(cw_table);
+
+  cw_interval_T *const cw_table_save = cw_table;
+  const size_t cw_table_size_save = cw_table_size;
   cw_table = table;
   cw_table_size = (size_t)tv_list_len(l);
+
+  // Check that the new value does not conflict with 'fillchars' or
+  // 'listchars'.
+  char *error = NULL;
+  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
+    error = e_conflicts_with_value_of_fillchars;
+  } else if (set_chars_option(curwin, &p_lcs, false) != NULL) {
+    error = e_conflicts_with_value_of_listchars;
+  } else {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (set_chars_option(wp, &wp->w_p_lcs, false) != NULL) {
+        error = e_conflicts_with_value_of_listchars;
+        break;
+      }
+      if (set_chars_option(wp, &wp->w_p_fcs, false) != NULL) {
+        error = e_conflicts_with_value_of_fillchars;
+        break;
+      }
+    }
+  }
+  if (error != NULL) {
+    emsg(_(error));
+    cw_table = cw_table_save;
+    cw_table_size = cw_table_size_save;
+    xfree(table);
+    return;
+  }
+
+  xfree(cw_table_save);
 }

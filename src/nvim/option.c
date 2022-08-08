@@ -2580,11 +2580,11 @@ static char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, c
     } else {
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
-          errmsg = _("E834: Conflicts with value of 'listchars'");
+          errmsg = _(e_conflicts_with_value_of_listchars);
           goto ambw_end;
         }
         if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
-          errmsg = _("E835: Conflicts with value of 'fillchars'");
+          errmsg = _(e_conflicts_with_value_of_fillchars);
           goto ambw_end;
         }
       }
@@ -3605,7 +3605,7 @@ static int get_encoded_char_adv(char_u **p)
 ///
 /// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
 /// @return error message, NULL if it's OK.
-static char *set_chars_option(win_T *wp, char_u **varp, bool set)
+char *set_chars_option(win_T *wp, char_u **varp, bool set)
 {
   int round, i, len, len2, entries;
   char_u *p, *s;
