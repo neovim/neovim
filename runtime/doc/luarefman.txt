@@ -2700,6 +2700,17 @@ lua_touserdata                                                *lua_touserdata()*
         its block address. If the value is a light userdata, returns its
         pointer. Otherwise, it returns `NULL`.
 
+`lua_type`                                                            *lua_type()*
+>
+    int lua_type (lua_State *L, int index);
+>
+        Returns the type of the value in the given acceptable index, or
+        `LUA_TNONE` for a non-valid index (that is, an index to an "empty"
+        stack position). The types returned by `lua_type` are coded by the
+        following constants defined in `lua.h` : `LUA_TNIL`, `LUA_TNUMBER`,
+        `LUA_TBOOLEAN`, `LUA_TSTRING`, `LUA_TTABLE`, `LUA_TFUNCTION`,
+        `LUA_TUSERDATA`, `LUA_TTHREAD`, and `LUA_TLIGHTUSERDATA`.
+
 lua_typename                                                    *lua_typename()*
 >
     const char *lua_typename  (lua_State *L, int tp);
