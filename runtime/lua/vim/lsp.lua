@@ -968,11 +968,19 @@ function lsp.start_client(config)
 
   ---@private
   local function set_defaults(client, bufnr)
-    if client.server_capabilities.definitionProvider and vim.bo[bufnr].tagfunc == '' then
+    local capabilities = client.server_capabilities
+    if capabilities.definitionProvider and vim.bo[bufnr].tagfunc == '' then
       vim.bo[bufnr].tagfunc = 'v:lua.vim.lsp.tagfunc'
     end
-    if client.server_capabilities.completionProvider and vim.bo[bufnr].omnifunc == '' then
+    if capabilities.completionProvider and vim.bo[bufnr].omnifunc == '' then
       vim.bo[bufnr].omnifunc = 'v:lua.vim.lsp.omnifunc'
+    end
+    if
+      capabilities.documentRangeFormattingProvider
+      and vim.bo[bufnr].formatprg == ''
+      and vim.bo[bufnr].formatexpr == ''
+    then
+      vim.bo[bufnr].formatexpr = 'v:lua.vim.lsp.formatexpr()'
     end
   end
 
@@ -985,6 +993,9 @@ function lsp.start_client(config)
     end
     if vim.bo[bufnr].omnifunc == 'v:lua.vim.lsp.omnifunc' then
       vim.bo[bufnr].omnifunc = nil
+    end
+    if vim.bo[bufnr].formatexpr == 'v:lua.vim.lsp.formatexpr()' then
+      vim.bo[bufnr].formatexpr = nil
     end
   end
 

@@ -59,6 +59,9 @@ language server supports the functionality.
 - |tagfunc| is set to |vim.lsp.tagfunc|. This enables features like
   go-to-definition, |:tjump|, and keymaps like |CTRL-]|, |CTRL-W_]|,
   |CTRL-W_}| to utilize the language server.
+- |formatexpr| is set to |vim.lsp.formatexpr| if both |formatprg| and
+  |formatexpr| are empty. This allows to format lines via |gq| if the language
+  server supports it.
 
 To use other LSP features like hover, rename, etc. you can setup some
 additional keymaps. It's recommended to setup them in a |LspAttach| autocmd to
