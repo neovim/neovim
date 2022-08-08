@@ -191,7 +191,7 @@ literal. (Some control characters may cause problems for the file system, but
 Lua has no problem with them.)
 
 Literal strings can also be defined using a long format enclosed by
-`long brackets`. We define an `opening long bracket of level n` as an opening
+`long brackets` . We define an `opening long bracket of level n` as an opening
 square bracket followed by `n`  equal signs followed by another opening square
 bracket. So, an opening long bracket of level 0 is written as `[[`, an opening
 long bracket of level 1 is written as `[=[`, and so on.
@@ -233,7 +233,7 @@ comments are frequently used to disable code temporarily.
 ==============================================================================
 2.2  Values and Types                                      *luaref-langValTypes*
 
-Lua is a `dynamically typed language`. This means that variables do not have
+Lua is a `dynamically typed language` . This means that variables do not have
 types; only values do. There are no type definitions in the language. All
 values carry their own type.
 
@@ -1734,16 +1734,16 @@ lua_Alloc                                                          *lua_Alloc()*
         in the auxiliary library by `luaL_newstate` (see
         |luaref-luaL_newstate|).
 >
-    static void *l_alloc (void *ud, void *ptr, size_t osize,
-                                               size_t nsize) {
-      (void)ud;  (void)osize;  /* not used */
-      if (nsize == 0) {
-        free(ptr);
-        return NULL;
-      }
-      else
-        return realloc(ptr, nsize);
-    }
+            static void *l_alloc (void *ud, void *ptr, size_t osize,
+                                                       size_t nsize) {
+              (void)ud;  (void)osize;  /* not used */
+              if (nsize == 0) {
+                free(ptr);
+                return NULL;
+              }
+              else
+                return realloc(ptr, nsize);
+            }
 <
         This code assumes that `free(NULL)` has no effect and that
         `realloc(NULL, size)` is equivalent to `malloc(size)`. ANSI C ensures both
@@ -1829,21 +1829,21 @@ lua_CFunction                             *luaref-cfunction* *lua_CFunction()*
         As an example, the following function receives a variable number of
         numerical arguments and returns their average and sum:
 >
-    static int foo (lua_State *L) {
-      int n = lua_gettop(L);    /* number of arguments */
-      lua_Number sum = 0;
-      int i;
-      for (i = 1; i &lt;= n; i++) {
-        if (!lua_isnumber(L, i)) {
-          lua_pushstring(L, "incorrect argument");
-          lua_error(L);
-        }
-        sum += lua_tonumber(L, i);
-      }
-      lua_pushnumber(L, sum/n); /* first result */
-      lua_pushnumber(L, sum);   /* second result */
-      return 2;                 /* number of results */
-    }
+            static int foo (lua_State *L) {
+              int n = lua_gettop(L);    /* number of arguments */
+              lua_Number sum = 0;
+              int i;
+              for (i = 1; i &lt;= n; i++) {
+                if (!lua_isnumber(L, i)) {
+                  lua_pushstring(L, "incorrect argument");
+                  lua_error(L);
+                }
+                sum += lua_tonumber(L, i);
+              }
+              lua_pushnumber(L, sum/n); /* first result */
+              lua_pushnumber(L, sum);   /* second result */
+              return 2;                 /* number of results */
+            }
 <
 
 lua_checkstack                                                *lua_checkstack()*
@@ -1909,8 +1909,7 @@ lua_dump                                                            *lua_dump()*
         |luaref-lua_Writer|) with the given `data` to write them.
 
         The value returned is the error code returned by the last call to the
-        writer;
-        0 means no errors.
+        writer; 0 means no errors.
 
         This function does not pop the Lua function from the stack.
 
@@ -1938,26 +1937,30 @@ lua_gc                                                                *lua_gc()*
         Controls the garbage collector.
 
         This function performs several tasks, according to the value of the
-        parameter `what` :
+        parameter `what`:
 
-         - `LUA_GCSTOP` : stops the garbage collector.
-         - `LUA_GCRESTART` : restarts the garbage collector.
-         - `LUA_GCCOLLECT` : performs a full garbage-collection cycle.
-         - `LUA_GCCOUNT` : returns the current amount of memory (in Kbytes) in
-           use by Lua.
-         - `LUA_GCCOUNTB` : returns the remainder of dividing the current
-           amount of bytes of memory in use by Lua by 1024.
-         - `LUA_GCSTEP` : performs an incremental step of garbage collection.
-           The step "size" is controlled by `data` (larger values mean more
-           steps) in a non-specified way. If you want to control the step size
-           you must experimentally tune the value of `data`. The function
-           returns 1 if the step finished a garbage-collection cycle.
-         - `LUA_GCSETPAUSE` : sets `data` /100 as the new value for the
-           `pause` of the collector (see |luaref-langGC|). The function
-           returns the previous value of the pause.
-         - `LUA_GCSETSTEPMUL` : sets `data` /100 as the new value for the
-           `step` `multiplier`  of the collector (see |luaref-langGC|). The
-           function returns the previous value of the step multiplier.
+        `LUA_GCSTOP`        stops the garbage collector.
+        `LUA_GCRESTART`     restarts the garbage collector.
+        `LUA_GCCOLLECT`     performs a full garbage-collection cycle.
+        `LUA_GCCOUNT`       returns the current amount of memory (in Kbytes) in
+                          use by Lua.
+        `LUA_GCCOUNTB`      returns the remainder of dividing the current
+                          amount of bytes of memory in use by Lua by 1024.
+        `LUA_GCSTEP`        performs an incremental step of garbage collection.
+                          The step "size" is controlled by `data` (larger
+                          values mean more steps) in a non-specified way. If
+                          you want to control the step size you must
+                          experimentally tune the value of `data`. The
+                          function returns 1 if the step finished a
+                          garbage-collection cycle.
+        `LUA_GCSETPAUSE`    sets `data` /100 as the new value for the
+                          `pause` of the collector (see |luaref-langGC|).
+                          The function returns the previous value of the
+                          pause.
+        `LUA_GCSETSTEPMUL`  sets `data` /100 as the new value for the
+                          `step` `multiplier`  of the collector (see
+                          |luaref-langGC|). The function returns the
+                          previous value of the step multiplier.
 
 lua_getallocf                                                  *lua_getallocf()*
 >
@@ -2272,10 +2275,10 @@ lua_pcall                                                          *lua_pcall()*
         The `lua_pcall` function returns 0 in case of success or one of the
         following error codes (defined in `lua.h`):
 
-         - `LUA_ERRRUN` : a runtime error.
-         - `LUA_ERRMEM` : memory allocation error. For such errors, Lua does
-           not call the error handler function.
-         - `LUA_ERRERR` : error while running the error handler function.
+        - `LUA_ERRRUN`  a runtime error.
+        - `LUA_ERRMEM`  memory allocation error. For such errors, Lua does
+                      not call the error handler function.
+        - `LUA_ERRERR`  error while running the error handler function.
 
 lua_pop                                                              *lua_pop()*
 >
@@ -2806,32 +2809,33 @@ useful information, call `lua_getinfo` (see |luaref-lua_getinfo|).
 
 The fields of `lua_Debug`  have the following meaning:
 
- - `source` : If the function was defined in a string, then `source` is that
-    string. If the function was defined in a file, then `source` starts with a
-   `'@'` followed by the file name.
- - `short_src` : a "printable" version of `source`, to be used in error
-    messages.
- - `linedefined` : the line number where the definition of the function
-    starts.
- - `lastlinedefined` : the line number where the definition of the function
-    ends.
- - `what` : the string `"Lua"` if the function is a Lua function, `"C"` if it is
-    a C function, `"main"` if it is the main part of a chunk, and `"tail"` if it
-    was a function that did a tail call. In the latter case, Lua has no
-    other information about the function.
- - `currentline` : the current line where the given function is executing.
-    When no line information is available, `currentline` is set to -1.
- - `name` : a reasonable name for the given function. Because functions in
-    Lua are first-class values, they do not have a fixed name: some
-    functions may be the value of multiple global variables, while others
-    may be stored only in a table field. The `lua_getinfo` function checks how
-    the function was called to find a suitable name. If it cannot find a
-    name, then `name` is set to `NULL`.
- - `namewhat` : explains the `name` field. The value of `namewhat` can be
-   `"global"`, `"local"`, `"method"`, `"field"`, `"upvalue"`, or `""` (the empty
-    string), according to how the function was called. (Lua uses the empty
-    string when no other option seems to apply.)
- - `nups` : the number of upvalues of the function.
+    `source`           If the function was defined in a string, then `source` is
+                     that string. If the function was defined in a file, then
+                     `source` starts with a `'@'` followed by the file name.
+    `short_src`        a "printable" version of `source`, to be used in error messages.
+    `linedefined`      the line number where the definition of the function starts.
+    `lastlinedefined`  the line number where the definition of the function ends.
+    `what`             the string `"Lua"` if the function is a Lua function,
+                     `"C"` if it is a C function, `"main"` if it is the main
+                     part of a chunk, and `"tail"` if it was a function that
+                     did a tail call. In the latter case, Lua has no other
+                     information about the function.
+    `currentline`      the current line where the given function is executing.
+                     When no line information is available, `currentline` is
+                     set to -1.
+    `name`             a reasonable name for the given function. Because
+                     functions in Lua are first-class values, they do not have
+                     a fixed name: some functions may be the value of multiple
+                     global variables, while others may be stored only in a
+                     table field. The `lua_getinfo` function checks how the
+                     function was called to find a suitable name. If it cannot
+                     find a name, then `name` is set to `NULL`.
+    `namewhat`         explains the `name` field. The value of `namewhat` can be
+                     `"global"`, `"local"`, `"method"`, `"field"`,
+                     `"upvalue"`, or `""` (the empty string), according to how
+                     the function was called. (Lua uses the empty string when
+                     no other option seems to apply.) `nups`  the number of
+                     upvalues of the function.
 
 lua_gethook                                                      *lua_gethook()*
 >
@@ -2876,17 +2880,17 @@ lua_getinfo                                                      *lua_getinfo()*
         Each character in the string `what` selects some fields of the
         structure `ar` to be filled or a value to be pushed on the stack:
 
-         - `'n'` : fills in the field `name` and `namewhat`;
-         - `'S'` : fills in the fields `source`, `short_src`, `linedefined`,
-           `lastlinedefined`, and `what`;
-         - `'l'` : fills in the field `currentline`;
-         - `'u'` : fills in the field `nups`;
-         - `'f'` : pushes onto the stack the function that is running at the
-           given level;
-         - `'L'` : pushes onto the stack a table whose indices are the numbers
-           of the lines that are valid on the function. (A `valid line` is a
-           line with some associated code, that is, a line where you can put a
-           break point. Non-valid lines include empty lines and comments.)
+        `'n'`  fills in the field `name` and `namewhat`
+        `'S'`  fills in the fields `source`, `short_src`, `linedefined`,
+             `lastlinedefined`, and `what`
+        `'l'`  fills in the field `currentline`
+        `'u'`  fills in the field `nups`
+        `'f'`  pushes onto the stack the function that is running at the
+             given level
+        `'L'`  pushes onto the stack a table whose indices are the numbers
+             of the lines that are valid on the function. (A `valid line` is a
+             line with some associated code, that is, a line where you can put
+             a break point. Non-valid lines include empty lines and comments.)
 
         This function returns 0 on error (for instance, an invalid option in
         `what`).
@@ -3020,25 +3024,25 @@ lua_setupvalue                                                *lua_setupvalue()*
         As an example, the following function lists the names of all local
         variables and upvalues for a function at a given level of the stack:
 >
-       int listvars (lua_State *L, int level) {
-         lua_Debug ar;
-         int i;
-         const char *name;
-         if (lua_getstack(L, level, &ar) == 0)
-           return 0;  /* failure: no such level in the stack */
-         i = 1;
-         while ((name = lua_getlocal(L, &ar, i++)) != NULL) {
-           printf("local %d %s\n", i-1, name);
-           lua_pop(L, 1);  /* remove variable value */
-         }
-         lua_getinfo(L, "f", &ar);  /* retrieves function */
-         i = 1;
-         while ((name = lua_getupvalue(L, -1, i++)) != NULL) {
-           printf("upvalue %d %s\n", i-1, name);
-           lua_pop(L, 1);  /* remove upvalue value */
-         }
-         return 1;
-       }
+               int listvars (lua_State *L, int level) {
+                 lua_Debug ar;
+                 int i;
+                 const char *name;
+                 if (lua_getstack(L, level, &ar) == 0)
+                   return 0;  /* failure: no such level in the stack */
+                 i = 1;
+                 while ((name = lua_getlocal(L, &ar, i++)) != NULL) {
+                   printf("local %d %s\n", i-1, name);
+                   lua_pop(L, 1);  /* remove variable value */
+                 }
+                 lua_getinfo(L, "f", &ar);  /* retrieves function */
+                 i = 1;
+                 while ((name = lua_getupvalue(L, -1, i++)) != NULL) {
+                   printf("upvalue %d %s\n", i-1, name);
+                   lua_pop(L, 1);  /* remove upvalue value */
+                 }
+                 return 1;
+               }
 <
 
 ==============================================================================
@@ -3626,21 +3630,21 @@ assert({v} [, {message}])                                      *luaref-assert()*
 
 collectgarbage({opt} [, {arg}])                        *luaref-collectgarbage()*
         This function is a generic interface to the garbage collector. It
-        performs different functions according to its first argument, {opt} :
+        performs different functions according to its first argument, {opt}:
 
-         - `"stop"`: stops the garbage collector.
-         - `"restart"`: restarts the garbage collector.
-         - `"collect"`: performs a full garbage-collection cycle.
-         - `"count"`: returns the total memory in use by Lua (in Kbytes).
-         - `"step"`: performs a garbage-collection step. The step "size" is
-           controlled by {arg} (larger values mean more steps) in a
-           non-specified way. If you want to control the step size you must
-           experimentally tune the value of {arg}. Returns `true` if the step
-           finished a collection cycle.
-         - `"setpause"`: sets {arg} /100 as the new value for the `pause` of
-           the collector (see |luaref-langGC|).
-         - `"setstepmul"`: sets {arg} /100 as the new value for the `step
-           multiplier` of the collector (see |luaref-langGC|).
+        `"stop"`       stops the garbage collector.
+        `"restart"`    restarts the garbage collector.
+        `"collect"`    performs a full garbage-collection cycle.
+        `"count"`      returns the total memory in use by Lua (in Kbytes).
+        `"step"`       performs a garbage-collection step. The step "size" is
+                     controlled by {arg} (larger values mean more steps) in a
+                     non-specified way. If you want to control the step size
+                     you must experimentally tune the value of {arg}. Returns
+                     `true` if the step finished a collection cycle.
+        `"setpause"`   sets {arg} /100 as the new value for the `pause` of
+                     the collector (see |luaref-langGC|).
+        `"setstepmul"` sets {arg} /100 as the new value for the `step
+                     multiplier` of the collector (see |luaref-langGC|).
 
 dofile({filename})                                             *luaref-dofile()*
         Opens the named file and executes its contents as a Lua chunk. When
@@ -4622,16 +4626,15 @@ file:read({...})                                            *luaref-file:read()*
 
         The available formats are
 
-         - `"*n"`: reads a number; this is the only format that returns a
-           number instead of a string.
-         - `"*a"`: reads the whole file, starting at the current position. On
-           end of
-            file, it returns the empty string.
-         - `"*l"`: reads the next line (skipping the end of line), returning
-           `nil` on end of file. This is the default format.
-         - `number` : reads a string with up to that number of characters,
-           returning `nil` on end of file. If number is zero, it reads nothing
-           and returns an empty string, or `nil` on end of file.
+         `"*n"`    reads a number; this is the only format that returns a
+                 number instead of a string.
+         `"*a"`    reads the whole file, starting at the current position. On
+                 end of file, it returns the empty string.
+         `"*l"`    reads the next line (skipping the end of line), returning
+                 `nil` on end of file. This is the default format.
+         `number`  reads a string with up to that number of characters,
+                 returning `nil` on end of file. If number is zero, it reads
+                 nothing and returns an empty string, or `nil` on end of file.
 
 file:seek([{whence}] [, {offset}])                          *luaref-file:seek()*
         Sets and gets the file position, measured from the beginning of the
@@ -4657,14 +4660,14 @@ file:setvbuf({mode} [, {size}])                          *luaref-file:setvbuf()*
         Sets the buffering mode for an output file. There are three available
         modes:
 
-         - `"no"`: no buffering; the result of any output operation appears
-           immediately.
-         - `"full"`: full buffering; output operation is performed only when
-           the buffer is full (or when you explicitly `flush` the file (see
-           |luaref-io.flush|).
-         - `"line"`: line buffering; output is buffered until a newline is
-           output or there is any input from some special files (such as a
-           terminal device).
+         `"no"`    no buffering; the result of any output operation appears
+                 immediately.
+         `"full"`  full buffering; output operation is performed only when
+                 the buffer is full (or when you explicitly `flush` the file
+                 (see |luaref-io.flush|).
+         `"line"`  line buffering; output is buffered until a newline is
+                 output or there is any input from some special files (such as
+                 a terminal device).
 
         For the last two cases, {size} specifies the size of the buffer, in
         bytes. The default is an appropriate size.
