@@ -62,10 +62,29 @@ for _, name in ipairs(neworder) do
   local func = def.func or ('f_' .. name)
   local data = def.data or "NULL"
   local fast = def.fast and 'true' or 'false'
-  hashpipe:write(('  { "%s", %s, %s, %s, %s, &%s, (FunPtr)%s },\n')
-                  :format(name, args[1], args[2], base, fast, func, data))
+
+  -- Serialize argument names: arguments are separated with a
+  -- unit separator, overloads with a record separator.
+  local argnames = 'NULL'
+  if def.argnames then
+    if type(def.argnames[1]) == 'string' then
+      argnames = table.concat(def.argnames, '\31')
+    elseif type(def.argnames[1]) == 'table' then
+      argnames = {}
+      for i, t in ipairs(def.argnames) do
+        argnames[i] = table.concat(t, '\31')
+      end
+      argnames = table.concat(argnames, '\30')
+    else
+      error('invalid argnames')
+    end
+    argnames = '"' .. argnames .. '"'
+  end
+
+  hashpipe:write(('  { "%s", %s, %s, %s, %s, &%s, (FunPtr)%s, %s },\n')
+                  :format(name, args[1], args[2], base, fast, func, data, argnames))
 end
-hashpipe:write('  { NULL, 0, 0, BASE_NONE, false, NULL, NULL },\n')
+hashpipe:write('  { NULL, 0, 0, BASE_NONE, false, NULL, NULL, NULL },\n')
 hashpipe:write("};\n\n")
 hashpipe:write(hashfun)
 hashpipe:close()

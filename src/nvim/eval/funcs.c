@@ -100,6 +100,9 @@ PRAGMA_DIAG_POP
 PRAGMA_DIAG_POP
 #endif
 
+const EvalFuncDef *builtin_functions = functions;
+const size_t builtin_functions_len = ARRAY_SIZE(functions) - 1;
+
 static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");

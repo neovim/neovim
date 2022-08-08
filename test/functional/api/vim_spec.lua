@@ -28,6 +28,7 @@ local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
 local expect_exit = helpers.expect_exit
+local dedent = helpers.dedent
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -3828,6 +3829,142 @@ describe('API', function()
       command('undo')
       eq({'aa'}, meths.buf_get_lines(0, 0, 1, false))
       assert_alive()
+    end)
+  end)
+
+  describe('nvim_get_functions', function()
+    it('can get a builtin function', function ()
+      eq({
+        name = 'abs',
+        type = 'builtin',
+      }, meths.get_functions('abs', {}))
+      eq({
+        name = 'abs',
+        type = 'builtin',
+        min_argc = 1,
+        max_argc = 1,
+        base_arg = 1,
+        fast = false,
+        argnames = { { 'expr' } },
+      }, meths.get_functions('abs', { details = true }))
+    end)
+
+    it('can get a user function', function()
+      nvim('exec', dedent[[
+        function! MyFun(x)
+          return a:x
+        endfunction]], false)
+
+      eq({
+        name = 'MyFun',
+        type = 'user',
+      }, meths.get_functions('MyFun', {}))
+      eq({
+        name = 'MyFun',
+        type = 'user',
+        args = { { name = 'x' } },
+        varargs = false,
+        abort = false,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = -10,
+        lnum = 0,
+      }, meths.get_functions('MyFun', { details = true }))
+      eq({
+        name = 'MyFun',
+        type = 'user',
+        lines = { '  return a:x' },
+      }, meths.get_functions('MyFun', { lines = true }))
+      eq({
+        name = 'MyFun',
+        type = 'user',
+        args = { { name = 'x' } },
+        varargs = false,
+        abort = false,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = -10,
+        lnum = 0,
+        lines = { '  return a:x' },
+      }, meths.get_functions('MyFun', { details = true, lines = true }))
+    end)
+
+    it('can get a script function', function()
+      nvim('exec', dedent[[
+        function! s:MyFun(x)
+          return a:x
+        endfunction]], false)
+      eq({
+        name = '<SNR>1_MyFun',
+        type = 'user',
+        args = { { name = 'x' } },
+        varargs = false,
+        abort = false,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = 1,
+        lnum = 0,
+      }, meths.get_functions('<SNR>1_MyFun', { details = true }))
+    end)
+
+    it('can get default arguments and attributes', function()
+      nvim('exec', dedent[[
+        function! MyFun(x, y = 'test', ...) abort
+          return a:x
+        endfunction]], false)
+
+      eq({
+        name = 'MyFun',
+        type = 'user',
+        args = { { name = 'x' }, { name = 'y', default = [['test']] } },
+        varargs = true,
+        abort = true,
+        range = false,
+        dict = false,
+        closure = false,
+        sid = -10,
+        lnum = 0,
+      }, meths.get_functions('MyFun', { details = true }))
+    end)
+
+    describe('list', function()
+      before_each(function()
+        nvim('exec', dedent[[
+          function! MyFun(x)
+            return a:x
+          endfunction
+          function! s:MyFun(x)
+            return a:x
+          endfunction]], false)
+      end)
+
+      for _, case in ipairs({
+        { builtin = true, user = true },
+        { builtin = true, user = false },
+        { builtin = false, user = true },
+      }) do
+        local name = fmt('builtin=%s user=%s',
+            tostring(case.builtin),
+            tostring(case.user))
+        it(name, function()
+          local fns = meths.get_functions(case, {})
+          eq(case.builtin and { name='abs', type='builtin' } or nil, fns.abs)
+          eq(case.user and { name='MyFun', type='user' } or nil, fns.MyFun)
+          eq(case.user and { name='<SNR>1_MyFun', type='user' } or nil, fns['<SNR>1_MyFun'])
+        end)
+      end
+    end)
+
+    it('list requires builtin or user option', function()
+      local status = pcall(meths.get_functions, { builtin = false, user = false }, {})
+      eq(false, status)
+    end)
+    it('returns error when function was not found', function()
+      local status = pcall(meths.get_functions, 'Nothing', {})
+      eq(false, status)
     end)
   end)
 end)

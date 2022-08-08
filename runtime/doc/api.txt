@@ -1638,6 +1638,27 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
                     |nvim_command()|
                     |nvim_cmd()|
 
+nvim_get_functions({query}, {opts})                     *nvim_get_functions()*
+                Lists Vimscript functions.
+
+                Parameters: ~
+                    {query}  When string gets information about the function
+                             under this name. When dictionary lists functions.
+                             The following keys are accepted:
+                             • builtin (boolean, default false) Include
+                               builtin functions.
+                             • user (boolean, default true) Include user
+                               functions.
+                    {opts}   Options dictionary:
+                             • details (boolean) Include function details.
+                             • lines (boolean) Include user function lines.
+                               Ignored for builtin functions.
+
+                Return: ~
+                    A dictionary describing a function when {query} is a
+                    string, or a map of function names to dictionaries
+                    describing them when {query} is a dictionary.
+
                                                      *nvim_parse_expression()*
 nvim_parse_expression({expr}, {flags}, {highlight})
                 Parse a VimL expression.

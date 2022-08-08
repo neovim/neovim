@@ -12,6 +12,7 @@
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/eval.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds2.h"
@@ -744,4 +745,295 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight, E
   viml_pexpr_free_ast(east);
   viml_parser_destroy(&pstate);
   return ret;
+}
+
+/// Translates and returns allocated user function name.
+static String user_function_name(ufunc_T *fp)
+{
+  String name;
+  const size_t name_len = STRLEN(fp->uf_name);
+  if (fp->uf_name[0] == K_SPECIAL) {
+    // Replace [ K_SPECIAL KS_EXTRA KE_SNR ] with "<SNR>"
+    name.size = name_len + 2;
+    name.data = xmalloc(name.size + 1);
+    name.data[0] = '<';
+    name.data[1] = 'S';
+    name.data[2] = 'N';
+    name.data[3] = 'R';
+    name.data[4] = '>';
+    memcpy(name.data + 5, fp->uf_name + 3, name_len - 3);
+    name.data[name.size] = '\0';
+  } else {
+    name.size = name_len;
+    name.data = xmalloc(name.size + 1);
+    memcpy(name.data, fp->uf_name, name_len);
+    name.data[name.size] = '\0';
+  }
+  return name;
+}
+
+/// Takes ownership of name.
+static Dictionary user_function_dict(ufunc_T *fp, String name, bool details, bool lines)
+{
+  Dictionary dict = ARRAY_DICT_INIT;
+  size_t dict_size = 2U + (details ? 8 : 0) + (lines ? 1 : 0);
+  kv_resize(dict, dict_size);
+
+  // Function name
+  PUT(dict, "name", STRING_OBJ(name));
+  PUT(dict, "type", CSTR_TO_OBJ("user"));
+
+  if (details) {
+    // Arguments
+    Array args = ARRAY_DICT_INIT;
+    if (fp->uf_args.ga_len > 0) {
+      kv_resize(args, (size_t)fp->uf_args.ga_len);
+      for (int j = 0; j < fp->uf_args.ga_len; j++) {
+        Dictionary arg = ARRAY_DICT_INIT;
+        PUT(arg, "name", CSTR_TO_OBJ((const char *)FUNCARG(fp, j)));
+        if (j >= fp->uf_args.ga_len - fp->uf_def_args.ga_len) {
+          PUT(arg, "default",
+              CSTR_TO_OBJ(((char **)(fp->uf_def_args.ga_data))
+                          [j - fp->uf_args.ga_len + fp->uf_def_args.ga_len]));
+        }
+        kv_push(args, DICTIONARY_OBJ(arg));
+      }
+    }
+    PUT(dict, "args", ARRAY_OBJ(args));
+    PUT(dict, "varargs", BOOLEAN_OBJ(fp->uf_varargs));
+    // Attributes
+    PUT(dict, "abort", BOOLEAN_OBJ(fp->uf_flags & FC_ABORT));
+    PUT(dict, "range", BOOLEAN_OBJ(fp->uf_flags & FC_RANGE));
+    PUT(dict, "dict", BOOLEAN_OBJ(fp->uf_flags & FC_DICT));
+    PUT(dict, "closure", BOOLEAN_OBJ(fp->uf_flags & FC_CLOSURE));
+    // Script
+    PUT(dict, "sid", INTEGER_OBJ(fp->uf_script_ctx.sc_sid));
+    PUT(dict, "lnum", INTEGER_OBJ(fp->uf_script_ctx.sc_lnum));
+  }
+
+  // Source lines
+  if (lines) {
+    Array array = ARRAY_DICT_INIT;
+    if (fp->uf_lines.ga_len > 0) {
+      kv_resize(array, (size_t)fp->uf_lines.ga_len);
+      for (int j = 0; j < fp->uf_lines.ga_len; j++) {
+        kv_push(array, CSTR_TO_OBJ((const char *)FUNCLINE(fp, j)));
+      }
+    }
+    PUT(dict, "lines", ARRAY_OBJ(array));
+  }
+
+  return dict;
+}
+
+/// Takes ownership of name.
+static Dictionary builtin_function_dict(const EvalFuncDef *fn, String name, bool details)
+{
+  Dictionary dict = ARRAY_DICT_INIT;
+  kv_resize(dict, details ? 7 : 2);
+
+  PUT(dict, "name", STRING_OBJ(name));
+  PUT(dict, "type", CSTR_TO_OBJ("builtin"));
+
+  if (details) {
+    PUT(dict, "min_argc", INTEGER_OBJ(fn->min_argc));
+    PUT(dict, "max_argc", INTEGER_OBJ(fn->max_argc));
+    PUT(dict, "base_arg", INTEGER_OBJ(fn->base_arg));
+    PUT(dict, "fast", BOOLEAN_OBJ(fn->fast));
+
+    // Argument names
+    if (fn->argnames != NULL) {
+      Array overloads = ARRAY_DICT_INIT;
+      Array names = ARRAY_DICT_INIT;
+      char buf[64] = { 0 };
+      size_t pos = 0;
+
+      // Argument are separated with unit separator (ascii \x1F),
+      // overloads with record separator (ascii \x1E).
+      for (const char *p = fn->argnames;; p++) {
+        if (*p == NUL || *p == '\x1F' || *p == '\x1E') {
+          assert(pos < 64);
+          buf[pos++] = NUL;
+          String str = {
+            .data = xmemdupz(buf, pos),
+            .size = pos - 1,
+          };
+          pos = 0;
+
+          if (*p == '\x1F') {  // unit separator: argument separator
+            kv_push(names, STRING_OBJ(str));
+          } else if (*p == '\x1E') {  // record separator: overload separator
+            kv_push(names, STRING_OBJ(str));
+            kv_push(overloads, ARRAY_OBJ(names));
+            names = (Array)ARRAY_DICT_INIT;
+          } else {  // NUL
+            kv_push(names, STRING_OBJ(str));
+            kv_push(overloads, ARRAY_OBJ(names));
+            break;
+          }
+        } else {
+          buf[pos++] = *p;
+        }
+      }
+
+      PUT(dict, "argnames", ARRAY_OBJ(overloads));
+    }
+  }
+
+  return dict;
+}
+
+/// Lists Vimscript functions.
+///
+/// @param query    When string gets information about the function under this name.
+///                 When dictionary lists functions. The following keys are accepted:
+///                 - builtin (boolean, default false) Include builtin functions.
+///                 - user    (boolean, default true) Include user functions.
+/// @param opts     Options dictionary:
+///                 - details (boolean) Include function details.
+///                 - lines   (boolean) Include user function lines. Ignored for builtin
+///                           functions.
+/// @param[out] err Error details, if any
+/// @return A dictionary describing a function when {query} is a string, or a map of
+///         function names to dictionaries describing them when {query} is a dictionary.
+Dictionary nvim_get_functions(Object query, Dictionary opts, Error *err)
+  FUNC_API_SINCE(10)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+
+  if (query.type != kObjectTypeString && query.type != kObjectTypeDictionary
+      && (query.type == kObjectTypeArray && query.data.array.size != 0)) {
+    api_set_error(err, kErrorTypeValidation, "query is not a dictionary or string %d", query.type);
+    return rv;
+  }
+
+  bool details = false;
+  bool lines = false;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("details", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "details is not a boolean");
+        return rv;
+      }
+      details = v->data.boolean;
+    } else if (strequal("lines", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "lines is not a boolean");
+        return rv;
+      }
+      lines = v->data.boolean;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return rv;
+    }
+  }
+
+  // Find function
+  if (query.type == kObjectTypeString) {
+    String name = query.data.string;
+
+    // Translate "<SNR>"
+    char_u *func_name;
+    if (name.size > 7 && memcmp(name.data, "<SNR>", 5) == 0) {  // Size of at least "<SNR>1_"
+      func_name = xmalloc(name.size - 1);  // For translated "<SNR>" + 1 null byte
+      func_name[0] = K_SPECIAL;
+      func_name[1] = KS_EXTRA;
+      func_name[2] = KE_SNR;
+      memcpy(func_name + 3, name.data + 5, name.size - 5);
+      func_name[name.size - 2] = '\0';
+    } else {
+      func_name = (char_u *)string_to_cstr(name);
+      // Find builtin function. Name can't start with <SNR>
+      const EvalFuncDef *fn = find_internal_func((char *)func_name);
+      if (fn != NULL) {
+        rv = builtin_function_dict(fn, copy_string(name), details);
+        goto theend;
+      }
+    }
+
+    // Find user function
+    ufunc_T *fp = find_func(func_name);
+    if (fp != NULL) {
+      rv = user_function_dict(fp, user_function_name(fp), details, lines);
+      goto theend;
+    }
+
+    api_set_error(err, kErrorTypeException, "No function with this name");
+theend:
+    xfree(func_name);
+    return rv;
+  }
+
+  // Parse list options
+  bool builtin = false;
+  bool user = true;
+  if (query.type == kObjectTypeDictionary) {
+    Dictionary list = query.data.dictionary;
+    for (size_t i = 0; i < list.size; i++) {
+      String k = list.items[i].key;
+      Object *v = &list.items[i].value;
+      if (strequal("builtin", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "builtin is not a boolean");
+          return rv;
+        }
+        builtin = v->data.boolean;
+      } else if (strequal("user", k.data)) {
+        if (v->type != kObjectTypeBoolean) {
+          api_set_error(err, kErrorTypeValidation, "user is not a boolean");
+          return rv;
+        }
+        user = v->data.boolean;
+      } else {
+        api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+        return rv;
+      }
+    }
+  }
+
+  if (!builtin && !user) {
+    api_set_error(err, kErrorTypeValidation, "Nothing to list");
+    return rv;
+  }
+
+  // Preallocate output array
+  size_t size = (builtin ? builtin_functions_len : 0) + (user ? func_hashtab.ht_used : 0);
+  kv_resize(rv, size);
+
+  // List builtin functions
+  if (builtin) {
+    for (const EvalFuncDef *fn = builtin_functions; fn->name != NULL; fn++) {
+      String name = cstr_to_string(fn->name);
+      KeyValuePair pair = {
+        .key = name,
+        .value = DICTIONARY_OBJ(builtin_function_dict(fn, copy_string(name), details)),
+      };
+      kv_push(rv, pair);
+    }
+  }
+
+  // List user functions
+  if (user) {
+    int todo = (int)func_hashtab.ht_used;
+    for (hashitem_T *hi = func_hashtab.ht_array; todo > 0; hi++) {
+      if (HASHITEM_EMPTY(hi)) {
+        continue;
+      }
+      todo--;
+      ufunc_T *fp = HI2UF(hi);
+      // No numbered functions or lambdas
+      if (!isdigit(*fp->uf_name) && *fp->uf_name != '<') {
+        String name = user_function_name(fp);
+        KeyValuePair pair = {
+          .key = name,
+          .value = DICTIONARY_OBJ(user_function_dict(fp, copy_string(name), details, lines)),
+        };
+        kv_push(rv, pair);
+      }
+    }
+  }
+
+  return rv;
 }
