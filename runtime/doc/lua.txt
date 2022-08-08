@@ -516,8 +516,8 @@ management. Try this command to see available functions: >
 
     :lua print(vim.inspect(vim.loop))
 <
-Reference: https://github.com/luvit/luv/blob/master/docs.md
-Examples:  https://github.com/luvit/luv/tree/master/examples
+Internally, `vim.loop` wraps the "luv" Lua bindings for the LibUV library;
+see |luv-intro| for a full reference manual.
 
                                                     *E5560* *lua-loop-callbacks*
 It is an error to directly invoke `vim.api` functions (except |api-fast|) in

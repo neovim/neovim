@@ -186,6 +186,7 @@ Other ~
 |dev_style.txt|		Nvim style guide
 |job_control.txt|	Spawn and control multiple processes
 |luaref.txt|		Lua reference manual
+|luvref.txt|		Luv (|vim.loop|) reference manual
 
 						*standard-plugin-list*
 Standard plugins ~
