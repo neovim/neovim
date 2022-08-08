@@ -2183,13 +2183,12 @@ lua_newuserdata                                              *lua_newuserdata()*
         This function allocates a new block of memory with the given size,
         pushes onto the stack a new full userdata with the block address, and
         returns this address.
-
                                                                *luaref-userdata*
-	Userdata represents C values in Lua. A full userdata represents a
-	block of memory. It is an object (like a table): you must create it,
-	it can have its own metatable, and you can detect when it is being
-	collected. A full userdata is only equal to itself (under raw
-	equality).
+        Userdata represents C values in Lua. A full userdata represents a
+        block of memory. It is an object (like a table): you must create it,
+        it can have its own metatable, and you can detect when it is being
+        collected. A full userdata is only equal to itself (under raw
+        equality).
 
         When Lua collects a full userdata with a `gc` metamethod, Lua calls
         the metamethod and marks the userdata as finalized. When this userdata
@@ -2352,13 +2351,12 @@ lua_pushlightuserdata                                  *lua_pushlightuserdata()*
     void lua_pushlightuserdata (lua_State *L, void *p);
 <
         Pushes a light userdata onto the stack.
-
                                                           *luaref-lightuserdata*
-	Userdata represents C values in Lua. A light userdata represents a
-	pointer. It is a value (like a number): you do not create it, it has
-	no individual metatable, and it is not collected (as it was never
-	created). A light userdata is equal to "any" light userdata with the
-	same C address.
+        Userdata represents C values in Lua. A light userdata represents a
+        pointer. It is a value (like a number): you do not create it, it has
+        no individual metatable, and it is not collected (as it was never
+        created). A light userdata is equal to "any" light userdata with the
+        same C address.
 
 lua_pushlstring                                              *lua_pushlstring()*
 >
