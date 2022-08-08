@@ -1015,12 +1015,13 @@ start_client({config})                                *vim.lsp.start_client()*
                                            notifications to the server by the
                                            given number in milliseconds. No
                                            debounce occurs if nil
-                                         • exit_timeout (number, default 500):
-                                           Milliseconds to wait for server to
-                                           exit cleanly after sending the
-                                           'shutdown' request before sending
-                                           kill -15. If set to false, nvim
-                                           exits immediately after sending the
+                                         • exit_timeout (number|boolean,
+                                           default false): Milliseconds to
+                                           wait for server to exit cleanly
+                                           after sending the 'shutdown'
+                                           request before sending kill -15. If
+                                           set to false, nvim exits
+                                           immediately after sending the
                                            'shutdown' request to the server.
                     {root_dir}           (string) Directory where the LSP
                                          server will base its

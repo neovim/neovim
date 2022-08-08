@@ -871,7 +871,7 @@ end
 --- - debounce_text_changes (number, default 150): Debounce didChange
 ---       notifications to the server by the given number in milliseconds. No debounce
 ---       occurs if nil
---- - exit_timeout (number, default 500): Milliseconds to wait for server to
+--- - exit_timeout (number|boolean, default false): Milliseconds to wait for server to
 ---       exit cleanly after sending the 'shutdown' request before sending kill -15.
 ---       If set to false, nvim exits immediately after sending the 'shutdown' request to the server.
 ---
@@ -1681,7 +1681,7 @@ api.nvim_create_autocmd('VimLeavePre', {
     local send_kill = false
 
     for client_id, client in pairs(active_clients) do
-      local timeout = if_nil(client.config.flags.exit_timeout, 500)
+      local timeout = if_nil(client.config.flags.exit_timeout, false)
       if timeout then
         send_kill = true
         timeouts[client_id] = timeout
