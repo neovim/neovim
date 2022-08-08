@@ -4939,7 +4939,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ==============================================================================
-C  LUAREFVIM DOC*
+C  LUAREFVIM DOC*                *luarefvim* *luarefvimdoc* *luaref-help* *luaref-doc*
 ==============================================================================
 
 This is a Vim help file containing a reference for Lua 5.1, and it is -- with
