@@ -2703,7 +2703,7 @@ lua_touserdata                                                *lua_touserdata()*
 lua_type                                                            *lua_type()*
 >
     int lua_type (lua_State *L, int index);
->
+<
         Returns the type of the value in the given acceptable index, or
         `LUA_TNONE` for a non-valid index (that is, an index to an "empty"
         stack position). The types returned by `lua_type` are coded by the
