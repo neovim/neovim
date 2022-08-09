@@ -16,7 +16,7 @@ on:
 # Upgrade to gcc-11 to prevent it from using its builtins (#14150)
 jobs:
   linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     outputs:
       version: ${{ steps.build.outputs.version }}
       release: ${{ steps.build.outputs.release }}
@@ -50,7 +50,7 @@ jobs:
           retention-days: 1
 
   appimage:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
         with:
@@ -150,7 +150,7 @@ jobs:
 
   publish:
     needs: [linux, appimage, macOS, windows]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
