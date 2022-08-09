@@ -20,6 +20,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
 #include "nvim/diff.h"
@@ -3343,6 +3344,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, char *sub, char *cmd, boo
       if ((cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
         save_re_pat(RE_SUBST, (char_u *)pat, p_magic);
       }
+      // put pattern in history
       add_to_history(HIST_SEARCH, (char_u *)pat, true, NUL);
     }
 

@@ -619,6 +619,7 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 
 # include "nvim/buffer.h"
 # include "nvim/charset.h"
+# include "nvim/cmdhist.h"
 # include "nvim/diff.h"
 # include "nvim/edit.h"
 # include "nvim/eval/typval.h"

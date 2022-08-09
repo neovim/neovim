@@ -13,6 +13,7 @@
 #include "nvim/buffer.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
 #include "nvim/debugger.h"
 #include "nvim/diff.h"
@@ -601,10 +602,9 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
     if (next_cmdline == NULL) {
       XFREE_CLEAR(cmdline_copy);
-      //
+
       // If the command was typed, remember it for the ':' register.
       // Do this AFTER executing the command to make :@: work.
-      //
       if (getline_equal(fgetline, cookie, getexline)
           && new_last_cmdline != NULL) {
         xfree(last_cmdline);
