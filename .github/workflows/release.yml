@@ -238,5 +238,5 @@ jobs:
           identifier: Neovim.Neovim
           # the latter one is a fallback value, reference:
           # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
-          release-tag: ${{ github.ref || github.event.inputs.tag_name }}
+          release-tag: ${{ github.event.inputs.tag_name || github.ref }}
           token: ${{ secrets.WINGET_TOKEN }}
