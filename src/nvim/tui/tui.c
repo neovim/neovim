@@ -875,6 +875,53 @@ safe_move:
   ugrid_goto(grid, row, col);
 }
 
+static void print_spaces(UI *ui, int width)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  out(ui, data->space_buf, (size_t)width);
+  grid->col += width;
+  if (data->immediate_wrap_after_last_column) {
+    // Printing at the right margin immediately advances the cursor.
+    final_column_wrap(ui);
+  }
+}
+
+/// Move cursor to the position given by `row` and `col` and print the character in `cell`.
+/// This allows the grid and the host terminal to assume different widths of ambiguous-width chars.
+///
+/// @param is_doublewidth  whether the character is double-width on the grid.
+///                        If true and the character is ambiguous-width, clear two cells.
+static void print_cell_at_pos(UI *ui, int row, int col, UCell *cell, bool is_doublewidth)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  if (grid->row == -1 && cell->data[0] == NUL) {
+    // If cursor needs to repositioned and there is nothing to print, don't move cursor.
+    return;
+  }
+
+  cursor_goto(ui, row, col);
+
+  bool is_ambiwidth = utf_ambiguous_width(utf_ptr2char(cell->data));
+  if (is_ambiwidth && is_doublewidth) {
+    // Clear the two screen cells.
+    // If the character is single-width in the host terminal it won't change the second cell.
+    update_attrs(ui, cell->attr);
+    print_spaces(ui, 2);
+    cursor_goto(ui, row, col);
+  }
+
+  print_cell(ui, cell);
+
+  if (is_ambiwidth) {
+    // Force repositioning cursor after printing an ambiguous-width character.
+    grid->row = -1;
+  }
+}
+
 static void clear_region(UI *ui, int top, int bot, int left, int right, int attr_id)
 {
   TUIData *data = ui->data;
@@ -888,7 +935,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right, int attr
       && left == 0 && right == ui->width && bot == ui->height) {
     if (top == 0) {
       unibi_out(ui, unibi_clear_screen);
-      ugrid_goto(&data->grid, top, left);
+      ugrid_goto(grid, top, left);
     } else {
       cursor_goto(ui, top, 0);
       unibi_out(ui, unibi_clr_eos);
@@ -905,12 +952,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right, int attr
         UNIBI_SET_NUM_VAR(data->params[0], width);
         unibi_out(ui, unibi_erase_chars);
       } else {
-        out(ui, data->space_buf, (size_t)width);
-        grid->col += width;
-        if (data->immediate_wrap_after_last_column) {
-          // Printing at the right margin immediately advances the cursor.
-          final_column_wrap(ui);
-        }
+        print_spaces(ui, width);
       }
     }
   }
@@ -1302,8 +1344,8 @@ static void tui_flush(UI *ui)
       }
 
       UGRID_FOREACH_CELL(grid, row, r.left, clear_col, {
-        cursor_goto(ui, row, curcol);
-        print_cell(ui, cell);
+        print_cell_at_pos(ui, row, curcol, cell,
+                          curcol < clear_col - 1 && (cell + 1)->data[0] == NUL);
       });
       if (clear_col < r.right) {
         clear_region(ui, row, row + 1, clear_col, r.right, clear_attr);
@@ -1439,8 +1481,8 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol, I
     grid->cells[linerow][c].attr = attrs[c - startcol];
   }
   UGRID_FOREACH_CELL(grid, (int)linerow, (int)startcol, (int)endcol, {
-    cursor_goto(ui, (int)linerow, curcol);
-    print_cell(ui, cell);
+    print_cell_at_pos(ui, (int)linerow, curcol, cell,
+                      curcol < endcol - 1 && (cell + 1)->data[0] == NUL);
   });
 
   if (clearcol > endcol) {
@@ -1458,8 +1500,8 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol, I
     if (endcol != grid->width) {
       // Print the last char of the row, if we haven't already done so.
       int size = grid->cells[linerow][grid->width - 1].data[0] == NUL ? 2 : 1;
-      cursor_goto(ui, (int)linerow, grid->width - size);
-      print_cell(ui, &grid->cells[linerow][grid->width - size]);
+      print_cell_at_pos(ui, (int)linerow, grid->width - size,
+                        &grid->cells[linerow][grid->width - size], size == 2);
     }
 
     // Wrap the cursor over to the next line. The next line will be
