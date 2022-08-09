@@ -2844,25 +2844,9 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   cw_table = table;
   cw_table_size = (size_t)tv_list_len(l);
 
-  // Check that the new value does not conflict with 'fillchars' or
-  // 'listchars'.
-  char *error = NULL;
-  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
-    error = e_conflicts_with_value_of_fillchars;
-  } else if (set_chars_option(curwin, &p_lcs, false) != NULL) {
-    error = e_conflicts_with_value_of_listchars;
-  } else {
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
-        error = e_conflicts_with_value_of_listchars;
-        break;
-      }
-      if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
-        error = e_conflicts_with_value_of_fillchars;
-        break;
-      }
-    }
-  }
+  // Check that the new value does not conflict with 'listchars' or
+  // 'fillchars'.
+  const char *const error = check_chars_options();
   if (error != NULL) {
     emsg(_(error));
     cw_table = cw_table_save;
