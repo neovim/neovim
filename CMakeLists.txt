@@ -6,12 +6,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(nvim C)
 
-if(POLICY CMP0065)
-  cmake_policy(SET CMP0065 NEW)
-endif()
-if(POLICY CMP0060)
-  cmake_policy(SET CMP0060 NEW)
-endif()
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
 endif()

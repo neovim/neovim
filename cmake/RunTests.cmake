@@ -1,11 +1,6 @@
 # Set LC_ALL to meet expectations of some locale-sensitive tests.
 set(ENV{LC_ALL} "en_US.UTF-8")
 
-if(POLICY CMP0012)
-  # Handle CI=true, without dev warnings.
-  cmake_policy(SET CMP0012 NEW)
-endif()
-
 set(ENV{VIMRUNTIME} ${WORKING_DIR}/runtime)
 set(ENV{NVIM_RPLUGIN_MANIFEST} ${BUILD_DIR}/Xtest_rplugin_manifest)
 set(ENV{XDG_CONFIG_HOME} ${BUILD_DIR}/Xtest_xdg/config)
