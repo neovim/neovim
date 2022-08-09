@@ -368,9 +368,17 @@ func Test_set_errors()
   call assert_fails('set sessionoptions=curdir,sesdir', 'E474:')
   call assert_fails('set foldmarker={{{,', 'E474:')
   call assert_fails('set sessionoptions=sesdir,curdir', 'E474:')
-  call assert_fails('set listchars=trail:· ambiwidth=double', 'E834:')
+  setlocal listchars=trail:·
+  call assert_fails('set ambiwidth=double', 'E834:')
+  setlocal listchars=trail:-
+  setglobal listchars=trail:·
+  call assert_fails('set ambiwidth=double', 'E834:')
   set listchars&
-  call assert_fails('set fillchars=stl:· ambiwidth=double', 'E835:')
+  setlocal fillchars=stl:·
+  call assert_fails('set ambiwidth=double', 'E835:')
+  setlocal fillchars=stl:-
+  setglobal fillchars=stl:·
+  call assert_fails('set ambiwidth=double', 'E835:')
   set fillchars&
   call assert_fails('set fileencoding=latin1,utf-8', 'E474:')
   set nomodifiable

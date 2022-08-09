@@ -339,6 +339,9 @@ static char_u SHM_ALL[] = {
 static char e_unclosed_expression_sequence[] = N_("E540: Unclosed expression sequence");
 static char e_unbalanced_groups[] = N_("E542: unbalanced groups");
 
+static char e_conflicts_with_value_of_listchars[] = N_("E834: Conflicts with value of 'listchars'");
+static char e_conflicts_with_value_of_fillchars[] = N_("E835: Conflicts with value of 'fillchars'");
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
 #endif
@@ -2578,18 +2581,7 @@ static char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, c
     if (check_opt_strings(p_ambw, p_ambw_values, false) != OK) {
       errmsg = e_invarg;
     } else {
-      FOR_ALL_TAB_WINDOWS(tp, wp) {
-        if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
-          errmsg = _(e_conflicts_with_value_of_listchars);
-          goto ambw_end;
-        }
-        if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
-          errmsg = _(e_conflicts_with_value_of_fillchars);
-          goto ambw_end;
-        }
-      }
-ambw_end:
-      {}  // clint prefers {} over ; as an empty statement
+      errmsg = check_chars_options();
     }
   } else if (varp == &p_bg) {  // 'background'
     if (check_opt_strings(p_bg, p_bg_values, false) == OK) {
@@ -3821,6 +3813,29 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
   }
 
   return NULL;          // no error
+}
+
+/// Check all global and local values of 'listchars' and 'fillchars'.
+/// May set different defaults in case character widths change.
+///
+/// @return  an untranslated error message if any of them is invalid, NULL otherwise.
+char *check_chars_options(void)
+{
+  if (set_chars_option(curwin, &p_lcs, false) != NULL) {
+    return e_conflicts_with_value_of_listchars;
+  }
+  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
+    return e_conflicts_with_value_of_fillchars;
+  }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
+      return e_conflicts_with_value_of_listchars;
+    }
+    if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
+      return e_conflicts_with_value_of_fillchars;
+    }
+  }
+  return NULL;
 }
 
 /// Check validity of options with the 'statusline' format.
