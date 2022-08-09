@@ -243,9 +243,6 @@ Examples:
 	comment character) you can >
 		:let b:match_skip = 'r:\(^\|[^\\]\)\(\\\\\)*%'
 <
-	See the $VIMRUNTIME/ftplugin/vim.vim for an example that uses both
-	syntax and a regular expression.
-
 ==============================================================================
 4. Supporting a New Language				*matchit-newlang*
 							*b:match_words*

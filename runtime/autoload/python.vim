@@ -3,12 +3,27 @@
 let s:keepcpo= &cpo
 set cpo&vim
 
+" searchpair() can be slow, limit the time to 150 msec or what is put in
+" g:pyindent_searchpair_timeout
+let s:searchpair_timeout = get(g:, 'pyindent_searchpair_timeout', 150)
+
+" Identing inside parentheses can be very slow, regardless of the searchpair()
+" timeout, so let the user disable this feature if he doesn't need it
+let s:disable_parentheses_indenting = get(g:, 'pyindent_disable_parentheses_indenting', v:false)
+
+let s:maxoff = 50       " maximum number of lines to look backwards for ()
+
+function s:SearchBracket(fromlnum, flags)
+  return searchpairpos('[[({]', '', '[])}]', a:flags,
+          \ {-> synID('.', col('.'), v:true)->synIDattr('name')
+          \ =~ '\%(Comment\|Todo\|String\)$'},
+          \ [0, a:fromlnum - s:maxoff]->max(), s:searchpair_timeout)
+endfunction
+
 " See if the specified line is already user-dedented from the expected value.
 function s:Dedented(lnum, expected)
   return indent(a:lnum) <= a:expected - shiftwidth()
 endfunction
-
-let s:maxoff = 50       " maximum number of lines to look backwards for ()
 
 " Some other filetypes which embed Python have slightly different indent
 " rules (e.g. bitbake). Those filetypes can pass an extra funcref to this
@@ -39,30 +54,30 @@ function python#GetIndent(lnum, ...)
     return 0
   endif
 
-  call cursor(plnum, 1)
-
-  " Identing inside parentheses can be very slow, regardless of the searchpair()
-  " timeout, so let the user disable this feature if he doesn't need it
-  let disable_parentheses_indenting = get(g:, "pyindent_disable_parentheses_indenting", 0)
-
-  if disable_parentheses_indenting == 1
+  if s:disable_parentheses_indenting == 1
     let plindent = indent(plnum)
     let plnumstart = plnum
   else
-    " searchpair() can be slow sometimes, limit the time to 150 msec or what is
-    " put in g:pyindent_searchpair_timeout
-    let searchpair_stopline = 0
-    let searchpair_timeout = get(g:, 'pyindent_searchpair_timeout', 150)
+    " Indent inside parens.
+    " Align with the open paren unless it is at the end of the line.
+    " E.g.
+    "     open_paren_not_at_EOL(100,
+    "                           (200,
+    "                            300),
+    "                           400)
+    "     open_paren_at_EOL(
+    "         100, 200, 300, 400)
+    call cursor(a:lnum, 1)
+    let [parlnum, parcol] = s:SearchBracket(a:lnum, 'nbW')
+    if parlnum > 0 && parcol != col([parlnum, '$']) - 1
+      return parcol
+    endif
+
+    call cursor(plnum, 1)
 
     " If the previous line is inside parenthesis, use the indent of the starting
     " line.
-    " Trick: use the non-existing "dummy" variable to break out of the loop when
-    " going too far back.
-    let parlnum = searchpair('(\|{\|\[', '', ')\|}\|\]', 'nbW',
-            \ "line('.') < " . (plnum - s:maxoff) . " ? dummy :"
-            \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-            \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
-            \ searchpair_stopline, searchpair_timeout)
+    let [parlnum, _] = s:SearchBracket(plnum, 'nbW')
     if parlnum > 0
       if a:0 > 0 && ExtraFunc(parlnum)
         " We may have found the opening brace of a bitbake Python task, e.g. 'python do_task {'
@@ -85,11 +100,7 @@ function python#GetIndent(lnum, ...)
     "       + b
     "       + c)
     call cursor(a:lnum, 1)
-    let p = searchpair('(\|{\|\[', '', ')\|}\|\]', 'bW',
-            \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
-            \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-            \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
-            \ searchpair_stopline, searchpair_timeout)
+    let [p, _] = s:SearchBracket(a:lnum, 'bW')
     if p > 0
       if a:0 > 0 && ExtraFunc(p)
         " Currently only used by bitbake
@@ -109,11 +120,7 @@ function python#GetIndent(lnum, ...)
       else
         if p == plnum
           " When the start is inside parenthesis, only indent one 'shiftwidth'.
-          let pp = searchpair('(\|{\|\[', '', ')\|}\|\]', 'bW',
-              \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
-              \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-              \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
-              \ searchpair_stopline, searchpair_timeout)
+          let [pp, _] = s:SearchBracket(a:lnum, 'bW')
           if pp > 0
             return indent(plnum) + (exists("g:pyindent_nested_paren") ? eval(g:pyindent_nested_paren) : shiftwidth())
           endif
@@ -136,12 +143,12 @@ function python#GetIndent(lnum, ...)
     " If the last character in the line is a comment, do a binary search for
     " the start of the comment.  synID() is slow, a linear search would take
     " too long on a long line.
-    if synIDattr(synID(plnum, pline_len, 1), "name") =~ "\\(Comment\\|Todo\\)$"
+    if synIDattr(synID(plnum, pline_len, 1), "name") =~ "\\(Comment\\|Todo\\)"
       let min = 1
       let max = pline_len
       while min < max
 	let col = (min + max) / 2
-	if synIDattr(synID(plnum, col, 1), "name") =~ "\\(Comment\\|Todo\\)$"
+	if synIDattr(synID(plnum, col, 1), "name") =~ "\\(Comment\\|Todo\\)"
 	  let max = col
 	else
 	  let min = col + 1
