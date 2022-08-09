@@ -1145,6 +1145,47 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]=])
   end)
+
+  it('allows grid to assume wider ambiguous-width characters than host terminal #19686', function()
+    child_session:request('nvim_buf_set_lines', 0, 0, 0, true, { ('℃'):rep(60), ('℃'):rep(60) })
+    child_session:request('nvim_win_set_option', 0, 'cursorline', true)
+    child_session:request('nvim_win_set_option', 0, 'list', true)
+    child_session:request('nvim_win_set_option', 0, 'listchars', 'eol:$')
+    local attrs = screen:get_default_attr_ids()
+    attrs[11] = {underline = true}  -- CursorLine
+    attrs[12] = {underline = true, reverse = true}  -- CursorLine and TermCursor
+    attrs[13] = {underline = true, foreground = 12}  -- CursorLine and NonText
+    feed_data('gg')
+    local singlewidth_screen = [[
+      {12:℃}{11:℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃}|
+      {11:℃℃℃℃℃℃℃℃℃℃}{13:$}{11:                                       }|
+      ℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃℃|
+      ℃℃℃℃℃℃℃℃℃℃{4:$}                                       |
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]
+    -- When grid assumes "℃" to be double-width but host terminal assumes it to be single-width, the
+    -- second cell of "℃" is a space and the attributes of the "℃" are applied to it.
+    local doublewidth_screen = [[
+      {12:℃}{11: ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ }|
+      {11:℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ }|
+      {11:℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ }{13:$}{11:                             }|
+      ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ >{4:@@@}|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]
+    screen:expect(singlewidth_screen, attrs)
+    child_session:request('nvim_set_option', 'ambiwidth', 'double')
+    screen:expect(doublewidth_screen, attrs)
+    child_session:request('nvim_set_option', 'ambiwidth', 'single')
+    screen:expect(singlewidth_screen, attrs)
+    child_session:request('nvim_call_function', 'setcellwidths', {{{0x2103, 0x2103, 2}}})
+    screen:expect(doublewidth_screen, attrs)
+    child_session:request('nvim_call_function', 'setcellwidths', {{{0x2103, 0x2103, 1}}})
+    screen:expect(singlewidth_screen, attrs)
+  end)
 end)
 
 describe('TUI', function()
