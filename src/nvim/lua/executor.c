@@ -587,6 +587,11 @@ static bool nlua_init_packages(lua_State *lstate)
   return true;
 }
 
+static const char *const verbose_ignorelist[] = {
+  "vim/_meta.lua",
+  "vim/keymap.lua",
+};
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -646,6 +651,16 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // wait
   lua_pushcfunction(lstate, &nlua_wait);
   lua_setfield(lstate, -2, "wait");
+
+  // verboseignore
+  lua_createtable(lstate, 0, ARRAY_SIZE(verbose_ignorelist));
+  for (size_t i = 0; i < ARRAY_SIZE(verbose_ignorelist); i++) {
+    lua_pushboolean(lstate, true);
+    lua_setfield(lstate, -2, verbose_ignorelist[i]);
+  }
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, LUA_REGISTRYINDEX, "vim.verboseignore");
+  lua_setfield(lstate, -2, "verboseignore");
 
   nlua_common_vim_init(lstate, false);
 
@@ -1870,49 +1885,39 @@ void nlua_set_sctx(sctx_T *current)
   if (p_verbose <= 0 || current->sc_sid != SID_LUA) {
     return;
   }
+
   lua_State *const lstate = global_lstate;
-  lua_Debug *info = (lua_Debug *)xmalloc(sizeof(lua_Debug));
+  lua_Debug info;
 
-  // Files where internal wrappers are defined so we can ignore them
-  // like vim.o/opt etc are defined in _meta.lua
-  char *ignorelist[] = {
-    "vim/_meta.lua",
-    "vim/keymap.lua",
-  };
-  int ignorelist_size = sizeof(ignorelist) / sizeof(ignorelist[0]);
+  if (!lua_checkstack(lstate, 2)) {
+    return;
+  }
 
+  // Lookup table of files that contain ignored wrappers,
+  // like vim.o/opt etc that are defined in _meta.lua
+  lua_getfield(lstate, LUA_REGISTRYINDEX, "vim.verboseignore");
   for (int level = 1; true; level++) {
-    if (lua_getstack(lstate, level, info) != 1) {
+    if (!lua_getstack(lstate, level, &info) || !lua_getinfo(lstate, "nSl", &info)) {
       goto cleanup;
-    }
-    if (lua_getinfo(lstate, "nSl", info) == 0) {
-      goto cleanup;
-    }
-
-    bool is_ignored = false;
-    if (info->what[0] == 'C' || info->source[0] != '@') {
-      is_ignored = true;
-    } else {
-      for (int i = 0; i < ignorelist_size; i++) {
-        if (strncmp(ignorelist[i], info->source + 1, strlen(ignorelist[i])) == 0) {
-          is_ignored = true;
-          break;
-        }
+    } else if (info.what[0] != 'C' && info.source[0] == '@') {
+      // Skip if source is in the vim.verboseignore table
+      lua_getfield(lstate, -1, info.source + 1);
+      bool ignored = lua_toboolean(lstate, -1);
+      lua_pop(lstate, 1);
+      if (!ignored) {
+        break;
       }
     }
-    if (is_ignored) {
-      continue;
-    }
-    break;
   }
-  char *source_path = fix_fname(info->source + 1);
+
+  char *source_path = fix_fname(info.source + 1);
   get_current_script_id((char_u *)source_path, current);
   xfree(source_path);
-  current->sc_lnum = info->currentline;
+  current->sc_lnum = info.currentline;
   current->sc_seq = -1;
 
 cleanup:
-  xfree(info);
+  lua_pop(lstate, 1);
 }
 
 /// @param preview Invoke the callback as a |:command-preview| handler.
