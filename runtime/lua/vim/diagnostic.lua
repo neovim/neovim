@@ -901,22 +901,30 @@ M.handlers.signs = {
     end
 
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.sign_group then
-      ns.user_data.sign_group = string.format('vim.diagnostic.%s', ns.name)
+    if not ns.user_data.sign_ns then
+      ns.user_data.sign_ns = vim.api.nvim_create_namespace('')
     end
 
-    local sign_group = ns.user_data.sign_group
+    local sign_ns = ns.user_data.sign_ns
     for _, diagnostic in ipairs(diagnostics) do
-      vim.fn.sign_place(0, sign_group, sign_highlight_map[diagnostic.severity], bufnr, {
+      local lnum = diagnostic.lnum
+      local col = diagnostic.col
+      local sign_text = opts.sign_text and opts.sign_text[diagnostic.severity] or M.severity[diagnostic.severity]:sub(1,1)
+      local sign_opts = {
+        sign_text = sign_text,
+        sign_hl_group = sign_highlight_map[diagnostic.severity],
         priority = get_priority(diagnostic.severity),
-        lnum = diagnostic.lnum + 1,
-      })
+      }
+      pcall(vim.api.nvim_buf_set_extmark, bufnr, sign_ns, lnum, col, sign_opts)
+      save_extmarks(sign_ns, bufnr)
     end
   end,
+
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
-    if ns.user_data.sign_group then
-      vim.fn.sign_unplace(ns.user_data.sign_group, { buffer = bufnr })
+    if ns.user_data.sign_ns then
+      diagnostic_cache_extmarks[bufnr][ns.user_data.sign_ns] = {}
+      vim.api.nvim_buf_clear_namespace(bufnr, ns.user_data.sign_ns, 0, -1)
     end
   end,
 }
