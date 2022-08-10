@@ -372,7 +372,7 @@ CTRL-W o						*CTRL-W_o* *E445*
 CTRL-W CTRL-O					*CTRL-W_CTRL-O* *:on* *:only*
 		Make the current window the only one on the screen. All other
 		windows are closed.  For {count} see the `:quit` command
- 		above |:count_quit|.
+		above |:count_quit|.
 
 		When the 'hidden' option is set, all buffers in closed windows
 		become hidden.

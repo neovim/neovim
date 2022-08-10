@@ -441,8 +441,8 @@ CompleteChanged 					*CompleteChanged*
 				Non-recursive (event cannot trigger itself).
 				Cannot change the text. |textlock|
 
-  				The size and position of the popup are also
- 				available by calling |pum_getpos()|.
+				The size and position of the popup are also
+				available by calling |pum_getpos()|.
 
 							*CompleteDonePre*
 CompleteDonePre			After Insert mode completion is done.  Either

@@ -743,6 +743,7 @@ Cursor and mark position:		*cursor-functions* *mark-functions*
 	cursor()		position the cursor at a line/column
 	screencol()		get screen column of the cursor
 	screenrow()		get screen row of the cursor
+	screenpos()		screen row and col of a text character
 	getcurpos()		get position of the cursor
 	getpos()		get position of cursor, mark, etc.
 	setpos()		set position of cursor, mark, etc.
@@ -852,9 +853,9 @@ Buffers, windows and the argument list:
 	win_gotoid()		go to window with ID
 	win_id2tabwin()		get tab and window nr from window ID
 	win_id2win()		get window nr from window ID
-	win_splitmove()		move window to a split of another window
 	win_move_separator()	move window vertical separator
 	win_move_statusline()	move window status line
+	win_splitmove()		move window to a split of another window
 	getbufinfo()		get a list with buffer information
 	gettabinfo()		get a list with tab page information
 	getwininfo()		get a list with window information

@@ -119,7 +119,7 @@ dictwatcherdel({dict}, {pattern}, {callback})
 did_filetype()			Number	|TRUE| if FileType autocommand event used
 diff_filler({lnum})		Number	diff filler lines about {lnum}
 diff_hlID({lnum}, {col})	Number	diff highlighting at {lnum}/{col}
-digraph_get({chars})		String	get the digraph of {chars}
+digraph_get({chars})		String	get the |digraph| of {chars}
 digraph_getlist([{listall}])	List	get all |digraph|s
 digraph_set({chars}, {digraph})	Boolean	register |digraph|
 digraph_setlist({digraphlist})	Boolean	register multiple |digraph|s
@@ -239,8 +239,8 @@ haslocaldir([{winnr} [, {tabnr}]])
 					the tab executed |:tcd|
 hasmapto({what} [, {mode} [, {abbr}]])
 				Number	|TRUE| if mapping to {what} exists
-histadd({history}, {item})	String	add an item to a history
-histdel({history} [, {item}])	String	remove an item from a history
+histadd({history}, {item})	Number	add an item to a history
+histdel({history} [, {item}])	Number	remove an item from a history
 histget({history} [, {index}])	String	get the item {index} from a history
 histnr({history})		Number	highest index of a history
 hlID({name})			Number	syntax ID of highlight group {name}
@@ -587,7 +587,7 @@ acos({expr})							*acos()*
 		{expr} must evaluate to a |Float| or a |Number| in the range
 		[-1, 1].
 		Returns NaN if {expr} is outside the range [-1, 1].  Returns
- 		0.0 if {expr} is not a |Float| or a |Number|.
+		0.0 if {expr} is not a |Float| or a |Number|.
 		Examples: >
 			:echo acos(0)
 <			1.570796 >
@@ -1136,8 +1136,8 @@ cindent({lnum})						*cindent()*
 			GetLnum()->cindent()
 
 clearmatches([{win}])					*clearmatches()*
- 		Clears all matches previously defined for the current window
- 		by |matchadd()| and the |:match| commands.
+		Clears all matches previously defined for the current window
+		by |matchadd()| and the |:match| commands.
 		If {win} is specified, use the window with this number or
 		window ID instead of the current window.
 
@@ -1989,6 +1989,7 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 			<afile>		autocmd file name
 			<abuf>		autocmd buffer number (as a String!)
 			<amatch>	autocmd matched name
+			<cexpr>		C expression under the cursor
 			<sfile>		sourced script file or function name
 			<slnum>		sourced script line number or function
 					line number
@@ -2981,10 +2982,10 @@ getcurpos([{winid}])
 		current value of the buffer if it is not the current window.
 		If {winid} is invalid a list with zeroes is returned.
 
- 		This can be used to save and restore the cursor position: >
- 			let save_cursor = getcurpos()
- 			MoveTheCursorAround
- 			call setpos('.', save_cursor)
+		This can be used to save and restore the cursor position: >
+			let save_cursor = getcurpos()
+			MoveTheCursorAround
+			call setpos('.', save_cursor)
 <		Note that this only works within the window.  See
 		|winrestview()| for restoring more state.
 
@@ -3119,7 +3120,7 @@ getjumplist([{winnr} [, {tabnr}]])			*getjumplist()*
 		{winnr} can also be a |window-ID|.
 		With {winnr} and {tabnr} use the window in the specified tab
 		page.  If {winnr} or {tabnr} is invalid, an empty list is
- 		returned.
+		returned.
 
 		The returned list contains two entries: a list with the jump
 		locations and the last used jump position number in the list.
@@ -3506,7 +3507,7 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		Get the value of window-local variable {varname} in window
 		{winnr} in tab page {tabnr}.
 		The {varname} argument is a string.  When {varname} is empty a
- 		dictionary with all window-local variables is returned.
+		dictionary with all window-local variables is returned.
 		When {varname} is equal to "&" get the values of all
 		window-local options in a |Dictionary|.
 		Otherwise, when {varname} starts with "&" get the value of a
@@ -4728,9 +4729,9 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 		listing.
 
 		When there is no mapping for {name}, an empty String is
- 		returned if {dict} is FALSE, otherwise returns an empty Dict.
- 		When the mapping for {name} is empty, then "<Nop>" is
- 		returned.
+		returned if {dict} is FALSE, otherwise returns an empty Dict.
+		When the mapping for {name} is empty, then "<Nop>" is
+		returned.
 
 		The {name} can have special key names, like in the ":map"
 		command.
@@ -5904,7 +5905,7 @@ pum_getpos()						*pum_getpos()*
 			size		total nr of items
 			scrollbar	|TRUE| if scrollbar is visible
 
-  		The values are the same as in |v:event| during |CompleteChanged|.
+		The values are the same as in |v:event| during |CompleteChanged|.
 
 pumvisible()						*pumvisible()*
 		Returns non-zero when the popup menu is visible, zero
@@ -6654,7 +6655,7 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip}
 		When {skip} is omitted or empty, every match is accepted.
 		When evaluating {skip} causes an error the search is aborted
 		and -1 returned.
- 		{skip} can be a string, a lambda, a funcref or a partial.
+		{skip} can be a string, a lambda, a funcref or a partial.
 		Anything else makes the function fail.
 
 		For {stopline} and {timeout} see |search()|.
@@ -7692,15 +7693,15 @@ stdpath({what})					*stdpath()* *E6100*
 
 
 str2float({string} [, {quoted}])				*str2float()*
- 		Convert String {string} to a Float.  This mostly works the
- 		same as when using a floating point number in an expression,
- 		see |floating-point-format|.  But it's a bit more permissive.
- 		E.g., "1e40" is accepted, while in an expression you need to
- 		write "1.0e40".  The hexadecimal form "0x123" is also
- 		accepted, but not others, like binary or octal.
- 		When {quoted} is present and non-zero then embedded single
- 		quotes before the dot are ignored, thus "1'000.0" is a
- 		thousand.
+		Convert String {string} to a Float.  This mostly works the
+		same as when using a floating point number in an expression,
+		see |floating-point-format|.  But it's a bit more permissive.
+		E.g., "1e40" is accepted, while in an expression you need to
+		write "1.0e40".  The hexadecimal form "0x123" is also
+		accepted, but not others, like binary or octal.
+		When {quoted} is present and non-zero then embedded single
+		quotes before the dot are ignored, thus "1'000.0" is a
+		thousand.
 		Text after the number is silently ignored.
 		The decimal point is always '.', no matter what the locale is
 		set to.  A comma ends the number: "12,345.67" is converted to
