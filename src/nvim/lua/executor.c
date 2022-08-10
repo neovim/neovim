@@ -1027,7 +1027,7 @@ int nlua_call(lua_State *lstate)
     // TODO(bfredl): this should be simplified in error handling refactor
     force_abort = false;
     suppress_errthrow = false;
-    current_exception = NULL;
+    did_throw = false;
     did_emsg = false;
 
     try_start();

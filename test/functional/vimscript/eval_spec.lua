@@ -219,3 +219,31 @@ it('Error when if/for/while/try/function is nested too deep',function()
   feed(':call Test5()<CR>')
   screen:expect({any = 'E1058: '})
 end)
+
+describe("uncaught exception", function()
+  before_each(clear)
+  after_each(function()
+    os.remove('throw1.vim')
+    os.remove('throw2.vim')
+    os.remove('throw3.vim')
+  end)
+
+  it('is not forgotten #13490', function()
+    command('autocmd BufWinEnter * throw "i am error"')
+    eq('i am error', exc_exec('try | new | endtry'))
+
+    -- Like Vim, throwing here aborts the processing of the script, but does not stop :runtime!
+    -- from processing the others.
+    -- Only the first thrown exception should be rethrown from the :try below, though.
+    for i = 1, 3 do
+      write_file('throw' .. i .. '.vim', ([[
+        let result ..= '%d'
+        throw 'throw%d'
+        let result ..= 'X'
+      ]]):format(i, i))
+    end
+    command('set runtimepath+=. | let result = ""')
+    eq('throw1', exc_exec('try | runtime! throw*.vim | endtry'))
+    eq('123', eval('result'))
+  end)
+end)
