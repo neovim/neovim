@@ -1889,24 +1889,41 @@ void nlua_set_sctx(sctx_T *current)
   lua_State *const lstate = global_lstate;
   lua_Debug info;
 
-  if (!lua_checkstack(lstate, 2)) {
+  if (!lua_checkstack(lstate, 3)) {
     return;
   }
 
-  // Lookup table of files that contain ignored wrappers,
-  // like vim.o/opt etc that are defined in _meta.lua
+  // Lookup table of files and functions to ignore,
+  // like vim.o/opt that are defined in _meta.lua
   lua_getfield(lstate, LUA_REGISTRYINDEX, "vim.verboseignore");
   for (int level = 1; true; level++) {
-    if (!lua_getstack(lstate, level, &info) || !lua_getinfo(lstate, "nSl", &info)) {
+    if (!lua_getstack(lstate, level, &info) || !lua_getinfo(lstate, "nSlf", &info)) {
       goto cleanup;
-    } else if (info.what[0] != 'C' && info.source[0] == '@') {
-      // Skip if source is in the vim.verboseignore table
-      lua_getfield(lstate, -1, info.source + 1);
-      bool ignored = lua_toboolean(lstate, -1);
+    }
+    // [ verboseignore function ]
+
+    if (info.what[0] == 'C' || info.source[0] != '@') {
       lua_pop(lstate, 1);
-      if (!ignored) {
-        break;
-      }
+      continue;
+    }
+
+    // Skip if source is in the vim.verboseignore table
+    lua_getfield(lstate, -2, info.source + 1);
+    // [ verboseignore function contains_source ]
+    if (lua_toboolean(lstate, -1)) {
+      lua_pop(lstate, 2);
+      continue;
+    }
+    lua_pop(lstate, 1);
+    // [ verboseignore function ]
+
+    // Skip if function is in the vim.verboseignore table
+    lua_gettable(lstate, -2);
+    // [ verboseignore contains_function ]
+    bool ignored = lua_toboolean(lstate, -1);
+    lua_pop(lstate, 1);
+    if (!ignored) {
+      break;
     }
   }
 
