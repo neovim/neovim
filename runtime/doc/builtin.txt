@@ -77,6 +77,7 @@ changenr()			Number	current change number
 chanclose({id} [, {stream}])	Number	Closes a channel or one of its streams
 chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr} [, {utf8}])	Number	ASCII/UTF-8 value of first char in {expr}
+charclass({string})		Number	character class of {string}
 charcol({expr})			Number	column number of cursor or mark
 charidx({string}, {idx} [, {countcc}])
 				Number	char index of byte {idx} in {string}
@@ -1064,7 +1065,19 @@ char2nr({string} [, {utf8}])					*char2nr()*
 
 		Can also be used as a |method|: >
 			GetChar()->char2nr()
-<
+
+charclass({string})					*charclass()*
+		Return the character class of the first character in {string}.
+		The character class is one of:
+			0	blank
+			1	punctuation
+			2	word character
+			3	emoji
+			other	specific Unicode class
+		The class is used in patterns and word motions.
+		Returns 0 if {string} is not a |String|.
+
+
 							*charcol()*
 charcol({expr})	Same as |col()| but returns the character index of the column
 		position given with {expr} instead of the byte position.

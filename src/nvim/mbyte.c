@@ -1182,6 +1182,11 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
     return 1;               // punctuation
   }
 
+  // emoji
+  if (intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+    return 3;
+  }
+
   // binary search in table
   while (top >= bot) {
     mid = (bot + top) / 2;
@@ -1192,11 +1197,6 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
     } else {
       return (int)classes[mid].class;
     }
-  }
-
-  // emoji
-  if (intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
-    return 3;
   }
 
   // most other characters are "word" characters
@@ -2857,4 +2857,15 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   xfree(cw_table_save);
   redraw_all_later(NOT_VALID);
+}
+
+void f_charclass(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_STRING
+      || argvars[0].vval.v_string == NULL
+      || *argvars[0].vval.v_string == NUL) {
+    emsg(_(e_stringreq));
+    return;
+  }
+  rettv->vval.v_number = mb_get_class((const char_u *)argvars[0].vval.v_string);
 }
