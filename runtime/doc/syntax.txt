@@ -5250,7 +5250,7 @@ TabLineSel	Tab pages line, active tab page label.
 Title		Titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*
 Visual		Visual mode selection.
- 							*hl-VisualNOS*
+							*hl-VisualNOS*
 VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
 							*hl-WarningMsg*
 WarningMsg	Warning messages.

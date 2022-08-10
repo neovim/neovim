@@ -2144,7 +2144,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When on all Unicode emoji characters are considered to be full width.
 	This excludes "text emoji" characters, which are normally displayed as
 	single width.  Unfortunately there is no good specification for this
-	and it has been determined on trial-and-error basis.
+	and it has been determined on trial-and-error basis.  Use the
+	|setcellwidths()| function to change the behavior.
 
 					*'encoding'* *'enc'* *E543*
 'encoding' 'enc'
@@ -4717,8 +4718,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	in read-only mode ("vim -R") or when the executable is called "view".
 	When using ":w!" the 'readonly' option is reset for the current
 	buffer, unless the 'Z' flag is in 'cpoptions'.
-	When using the ":view" command the 'readonly' option is
-	set for the newly edited buffer.
+	When using the ":view" command the 'readonly' option is set for the
+	newly edited buffer.
 	See 'modifiable' for disallowing changes to the buffer.
 
 						*'redrawdebug'* *'rdb'*
@@ -4839,7 +4840,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 		search		"/" and "?" commands
 
-	This is useful for languages such as Hebrew and Arabic.
+	This is useful for languages such as Hebrew, Arabic and Farsi.
 	The 'rightleft' option must be set for 'rightleftcmd' to take effect.
 
 					 *'ruler'* *'ru'* *'noruler'* *'noru'*
@@ -6190,7 +6191,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	This option controls the behavior when switching between buffers.
 	Mostly for |quickfix| commands some values are also used for other
- 	commands, as mentioned below.
+	commands, as mentioned below.
 	Possible values (comma-separated list):
 	   useopen	If included, jump to the first open window that
 			contains the specified buffer (if there is one).

@@ -875,7 +875,7 @@ Note: these are typed literally, they are not special keys!
 		   match with (for FileType, Syntax and SpellFileMissing
 		   events).
 		   When the match is with a file name, it is expanded to the
- 		   full path.
+		   full path.
 							*:<sfile>* *<sfile>*
 	<sfile>    When executing a `:source` command, is replaced with the
 		   file name of the sourced file.  *E498*
