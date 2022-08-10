@@ -1532,6 +1532,9 @@ au BufNewFile,BufRead *.ptl,*.pyi,SConstruct		   setf python
 " QL
 au BufRead,BufNewFile *.ql,*.qll		setf ql
 
+" Quarto
+au BufRead,BufNewFile *.qmd     setf quarto
+
 " Radiance
 au BufNewFile,BufRead *.rad,*.mat		setf radiance
 

@@ -776,6 +776,7 @@ local extension = {
   ptl = 'python',
   ql = 'ql',
   qll = 'ql',
+  qmd = 'quarto',
   R = function(path, bufnr)
     return require('vim.filetype.detect').r(bufnr)
   end,
