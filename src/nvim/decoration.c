@@ -394,7 +394,7 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, sign_attrs_T sattrs
 
     int j;
     for (j = (*num_signs); j > 0; j--) {
-      if (sattrs[j].sat_prio <= decor->priority) {
+      if (sattrs[j - 1].sat_prio >= decor->priority) {
         break;
       }
       sattrs[j] = sattrs[j-1];
