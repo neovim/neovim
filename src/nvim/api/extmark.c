@@ -441,8 +441,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   the extmark end position (if it exists) will be shifted
 ///                   in when new text is inserted (true for right, false
 ///                   for left). Defaults to false.
-///               - priority: a priority value for the highlight group. For
-///                   example treesitter highlighting uses a value of 100.
+///               - priority: a priority value for the highlight group or sign
+///                   attribute. For example treesitter highlighting uses a
+///                   value of 100.
 ///               - strict: boolean that indicates extmark should not be placed
 ///                   if the line or column value is past the end of the
 ///                   buffer or end of the line respectively. Defaults to true.
