@@ -224,7 +224,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height, Dictiona
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
 
-  memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
+  CLEAR_FIELD(ui->ui_ext);
 
   for (size_t i = 0; i < options.size; i++) {
     ui_set_option(ui, true, options.items[i].key, options.items[i].value, err);

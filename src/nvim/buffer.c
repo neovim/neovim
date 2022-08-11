@@ -793,8 +793,8 @@ static void free_buffer(buf_T *buf)
   if (autocmd_busy) {
     // Do not free the buffer structure while autocommands are executing,
     // it's still needed. Free it when autocmd_busy is reset.
-    memset(&buf->b_namedm[0], 0, sizeof(buf->b_namedm));
-    memset(&buf->b_changelist[0], 0, sizeof(buf->b_changelist));
+    CLEAR_FIELD(buf->b_namedm);
+    CLEAR_FIELD(buf->b_changelist);
     buf->b_next = au_pending_free_buf;
     au_pending_free_buf = buf;
   } else {

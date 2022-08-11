@@ -2189,7 +2189,7 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
       k = kh_put(file_marks, &wms->file_marks, fname, &kh_ret);
       FileMarks *const filemarks = &kh_val(&wms->file_marks, k);
       if (kh_ret > 0) {
-        memset(filemarks, 0, sizeof(*filemarks));
+        CLEAR_POINTER(filemarks);
       }
       if (entry.timestamp > filemarks->greatest_timestamp) {
         filemarks->greatest_timestamp = entry.timestamp;
@@ -2752,7 +2752,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
       k = kh_put(file_marks, &wms->file_marks, fname, &kh_ret);
       FileMarks *const filemarks = &kh_val(&wms->file_marks, k);
       if (kh_ret > 0) {
-        memset(filemarks, 0, sizeof(*filemarks));
+        CLEAR_POINTER(filemarks);
       }
       do {
         fmark_T fm;
@@ -3478,7 +3478,7 @@ shada_read_next_item_start:
   // data union are NULL so they are safe to xfree(). This is needed in case
   // somebody calls goto shada_read_next_item_error before anything is set in
   // the switch.
-  memset(entry, 0, sizeof(*entry));
+  CLEAR_POINTER(entry);
   if (sd_reader->eof) {
     return kSDReadStatusFinished;
   }

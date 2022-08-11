@@ -5122,7 +5122,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   // file, not reset the syntax highlighting, clear marks, diff status, etc.
   // Force the fileformat and encoding to be the same.
   if (reload_options) {
-    memset(&ea, 0, sizeof(ea));
+    CLEAR_FIELD(ea);
   } else {
     prep_exarg(&ea, buf);
   }

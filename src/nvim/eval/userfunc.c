@@ -1702,7 +1702,7 @@ char_u *trans_function_name(char_u **pp, bool skip, int flags, funcdict_T *fdp, 
   lval_T lv;
 
   if (fdp != NULL) {
-    memset(fdp, 0, sizeof(funcdict_T));
+    CLEAR_POINTER(fdp);
   }
   start = *pp;
 

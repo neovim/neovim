@@ -565,7 +565,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
    * add lines in front of entry list
    */
   uep = xmalloc(sizeof(u_entry_T));
-  memset(uep, 0, sizeof(u_entry_T));
+  CLEAR_POINTER(uep);
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
 #endif
@@ -895,7 +895,7 @@ static bool serialize_uhp(bufinfo_T *bi, u_header_T *uhp)
 static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
 {
   u_header_T *uhp = xmalloc(sizeof(u_header_T));
-  memset(uhp, 0, sizeof(u_header_T));
+  CLEAR_POINTER(uhp);
 #ifdef U_DEBUG
   uhp->uh_magic = UH_MAGIC;
 #endif
@@ -1083,7 +1083,7 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
 static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_name)
 {
   u_entry_T *uep = xmalloc(sizeof(u_entry_T));
-  memset(uep, 0, sizeof(u_entry_T));
+  CLEAR_POINTER(uep);
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
 #endif
@@ -1183,7 +1183,6 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   FILE *fp = NULL;
   int perm;
   bool write_ok = false;
-  bufinfo_T bi;
 
   if (name == NULL) {
     file_name = u_get_undo_file_name(buf->b_ffname, false);
@@ -1310,11 +1309,11 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
   // Undo must be synced.
   u_sync(true);
 
-  /*
-   * Write the header.
-   */
-  bi.bi_buf = buf;
-  bi.bi_fp = fp;
+  // Write the header.
+  bufinfo_T bi = {
+    .bi_buf = buf,
+    .bi_fp = fp,
+  };
   if (!serialize_header(&bi, hash)) {
     goto write_error;
   }
@@ -1437,9 +1436,10 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
     goto error;
   }
 
-  bufinfo_T bi;
-  bi.bi_buf = curbuf;
-  bi.bi_fp = fp;
+  bufinfo_T bi = {
+    .bi_buf = curbuf,
+    .bi_fp = fp,
+  };
 
   // Read the undo file header.
   char_u magic_buf[UF_START_MAGIC_LEN];

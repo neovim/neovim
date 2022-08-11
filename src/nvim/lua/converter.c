@@ -59,7 +59,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
   size_t other_keys_num = 0;  // Number of keys that are not string, integral
                               // or type keys.
   LuaTableProps ret;
-  memset(&ret, 0, sizeof(ret));
+  CLEAR_FIELD(ret);
   if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
     semsg(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 2);
     ret.type = kObjectTypeNil;

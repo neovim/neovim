@@ -178,7 +178,7 @@ static inline void hist_free_entry(histentry_T *hisptr)
 static inline void clear_hist_entry(histentry_T *hisptr)
   FUNC_ATTR_NONNULL_ALL
 {
-  memset(hisptr, 0, sizeof(*hisptr));
+  CLEAR_POINTER(hisptr);
 }
 
 /// Check if command line 'str' is already in history.
@@ -714,7 +714,7 @@ const void *hist_iter(const void *const iter, const uint8_t history_type, const 
   }
   *hist = *hiter;
   if (zero) {
-    memset(hiter, 0, sizeof(*hiter));
+    CLEAR_POINTER(hiter);
   }
   if (hiter == hlast) {
     return NULL;

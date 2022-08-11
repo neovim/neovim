@@ -1308,7 +1308,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
   int quiet = flags & GLV_QUIET;
 
   // Clear everything in "lp".
-  memset(lp, 0, sizeof(lval_T));
+  CLEAR_POINTER(lp);
 
   if (skip) {
     // When skipping just find the end of the name.

@@ -6515,7 +6515,7 @@ void buf_copy_options(buf_T *buf, int flags)
     }
 
     if (should_copy || (flags & BCO_ALWAYS)) {
-      memset(buf->b_p_script_ctx, 0, sizeof(buf->b_p_script_ctx));
+      CLEAR_FIELD(buf->b_p_script_ctx);
       init_buf_opt_idx();
       // Don't copy the options specific to a help buffer when
       // BCO_NOHELP is given or the options were initialized already

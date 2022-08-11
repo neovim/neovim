@@ -171,7 +171,7 @@ UI *tui_start(void)
   ui->option_set = tui_option_set;
   ui->raw_line = tui_raw_line;
 
-  memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
+  CLEAR_FIELD(ui->ui_ext);
   ui->ui_ext[kUILinegrid] = true;
   ui->ui_ext[kUITermColors] = true;
 

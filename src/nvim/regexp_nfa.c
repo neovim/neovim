@@ -5055,7 +5055,7 @@ skip_add:
 
     // avoid compiler warnings
     save_ptr = NULL;
-    memset(&save_multipos, 0, sizeof(save_multipos));
+    CLEAR_FIELD(save_multipos);
 
     // Set the position (with "off" added) in the subexpression.  Save
     // and restore it when it was in use.  Otherwise fill any gap.
@@ -5180,7 +5180,7 @@ skip_add:
       save_ptr = sub->list.line[subidx].end;
       sub->list.line[subidx].end = rex.input + off;
       // avoid compiler warnings
-      memset(&save_multipos, 0, sizeof(save_multipos));
+      CLEAR_FIELD(save_multipos);
     }
 
     subs = addstate(l, state->out, subs, pim, off_arg);

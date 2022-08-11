@@ -2640,7 +2640,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (argvars[0].v_type == VAR_PARTIAL) {
       pt = argvars[0].vval.v_partial;
     } else {
-      memset(&fref_pt, 0, sizeof(fref_pt));
+      CLEAR_FIELD(fref_pt);
       fref_pt.pt_name = (char_u *)argvars[0].vval.v_string;
       pt = &fref_pt;
     }
@@ -7127,7 +7127,6 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   long time_limit = 0;
   int options = SEARCH_KEEP;
   int subpatnum;
-  searchit_arg_T sia;
   bool use_skip = false;
 
   const char *const pat = tv_get_string(&argvars[0]);
@@ -7178,9 +7177,10 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 
   pos = save_cursor = curwin->w_cursor;
   pos_T firstpos = { 0 };
-  memset(&sia, 0, sizeof(sia));
-  sia.sa_stop_lnum = (linenr_T)lnum_stop;
-  sia.sa_tm = &tm;
+  searchit_arg_T sia = {
+    .sa_stop_lnum = (linenr_T)lnum_stop,
+    .sa_tm = &tm,
+  };
 
   // Repeat until {skip} returns false.
   for (;;) {
@@ -7799,10 +7799,10 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
   clearpos(&foundpos);
   pat = pat3;
   for (;;) {
-    searchit_arg_T sia;
-    memset(&sia, 0, sizeof(sia));
-    sia.sa_stop_lnum = lnum_stop;
-    sia.sa_tm = &tm;
+    searchit_arg_T sia = {
+      .sa_stop_lnum = lnum_stop,
+      .sa_tm = &tm,
+    };
 
     n = searchit(curwin, curbuf, &pos, NULL, dir, pat, 1L,
                  options, RE_SEARCH, &sia);
@@ -9500,7 +9500,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const linenr_T lnum = tv_get_lnum(argvars);
   const colnr_T col = (colnr_T)tv_get_number(&argvars[1]) - 1;
 
-  memset(str, NUL, sizeof(str));
+  CLEAR_FIELD(str);
 
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
       && (size_t)col <= STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
