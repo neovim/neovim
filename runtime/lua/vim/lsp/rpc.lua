@@ -58,12 +58,10 @@ end
 ---@private
 --- Parses an LSP Message's header
 ---
----@param header: The header to parse.
----@returns Parsed headers
+---@param header string: The header to parse.
+---@return table parsed headers
 local function parse_headers(header)
-  if type(header) ~= 'string' then
-    return nil
-  end
+  assert(type(header) == 'string', 'header must be a string')
   local headers = {}
   for line in vim.gsplit(header, '\r\n', true) do
     if line == '' then
@@ -189,9 +187,9 @@ end
 
 --- Creates an RPC response object/table.
 ---
----@param code RPC error code defined in `vim.lsp.protocol.ErrorCodes`
----@param message (optional) arbitrary message to send to server
----@param data (optional) arbitrary data to send to server
+---@param code number RPC error code defined in `vim.lsp.protocol.ErrorCodes`
+---@param message string|nil arbitrary message to send to server
+---@param data any|nil arbitrary data to send to server
 local function rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
   local code_name = assert(protocol.ErrorCodes[code], 'Invalid RPC error code')
@@ -248,13 +246,13 @@ end
 ---
 ---@param cmd (string) Command to start the LSP server.
 ---@param cmd_args (table) List of additional string arguments to pass to {cmd}.
----@param dispatchers (table, optional) Dispatchers for LSP message types. Valid
+---@param dispatchers table|nil Dispatchers for LSP message types. Valid
 ---dispatcher names are:
 --- - `"notification"`
 --- - `"server_request"`
 --- - `"on_error"`
 --- - `"on_exit"`
----@param extra_spawn_params (table, optional) Additional context for the LSP
+---@param extra_spawn_params table|nil Additional context for the LSP
 --- server process. May contain:
 --- - {cwd} (string) Working directory for the LSP server process
 --- - {env} (table) Additional environment variables for LSP server process
@@ -434,7 +432,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     end
   end
 
-  stderr:read_start(function(_err, chunk)
+  stderr:read_start(function(_, chunk)
     if chunk then
       local _ = log.error() and log.error('rpc', cmd, 'stderr', chunk)
     end
@@ -520,7 +518,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
       -- This works because we are expecting vim.NIL here
     elseif decoded.id and (decoded.result ~= vim.NIL or decoded.error ~= vim.NIL) then
       -- We sent a number, so we expect a number.
-      local result_id = tonumber(decoded.id)
+      local result_id = assert(tonumber(decoded.id), 'response id must be a number')
 
       -- Notify the user that a response was received for the request
       local notify_reply_callback = notify_reply_callbacks and notify_reply_callbacks[result_id]
