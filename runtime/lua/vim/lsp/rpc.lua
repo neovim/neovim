@@ -340,6 +340,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
     end
     handle, pid = uv.spawn(cmd, spawn_params, onexit)
     if handle == nil then
+      stdin:close()
+      stdout:close()
+      stderr:close()
       local msg = string.format('Spawning language server with cmd: `%s` failed', cmd)
       if string.match(pid, 'ENOENT') then
         msg = msg
