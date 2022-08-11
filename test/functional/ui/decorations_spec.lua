@@ -1797,6 +1797,15 @@ l5
       {1:          }l2        |
                           |
     ]]}
+
+    -- Check truncation works too
+    meths.win_set_option(0, 'signcolumn', 'auto')
+
+    screen:expect{grid=[[
+      S5^l1                |
+      {1:  }l2                |
+                          |
+    ]]}
   end)
 end)
 
