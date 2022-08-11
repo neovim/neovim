@@ -83,5 +83,13 @@ build_nvim() {
   fi
   check_sanitizer "${LOG_DIR}"
 
+  if test "${CACHE_ENABLE}" = "true" ; then
+    # Check the generated build scripts contain references to ccache
+    if ! grep -r ccache ${CI_BUILD_DIR}/build/CMakeFiles; then
+      echo "ccache was not successfully enabled"
+      exit 1
+    fi
+  fi
+
   cd "${CI_BUILD_DIR}"
 }
