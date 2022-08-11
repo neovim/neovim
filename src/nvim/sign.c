@@ -444,25 +444,22 @@ static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char_u *group
 /// @return Attrs of the matching sign, or NULL
 sign_attrs_T *sign_get_attr(SignType type, sign_attrs_T sattrs[], int idx, int max_signs)
 {
-  sign_attrs_T *matches[SIGN_SHOW_MAX];
-  int nr_matches = 0;
+  int match_idx = 0;
 
   for (int i = 0; i < SIGN_SHOW_MAX; i++) {
     if ((type == SIGN_TEXT && sattrs[i].sat_text != NULL)
         || (type == SIGN_LINEHL && sattrs[i].sat_linehl != 0)
         || (type == SIGN_NUMHL && sattrs[i].sat_numhl != 0)) {
-      matches[nr_matches] = &sattrs[i];
-      nr_matches++;
+      if (match_idx == idx) {
+        return &sattrs[i];
+      }
+      match_idx++;
       // attr list is sorted with most important (priority, id), thus we
       // may stop as soon as we have max_signs matches
-      if (nr_matches >= max_signs) {
+      if (match_idx >= max_signs) {
         break;
       }
     }
-  }
-
-  if (nr_matches > idx) {
-    return matches[nr_matches - idx - 1];
   }
 
   return NULL;

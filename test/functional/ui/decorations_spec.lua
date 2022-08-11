@@ -1594,7 +1594,7 @@ l5
 
     screen:expect{grid=[[
       {1:    }^l1                                            |
-      S2S1l2                                            |
+      S1S2l2                                            |
       {1:    }l3                                            |
       {1:    }l4                                            |
       {1:    }l5                                            |
@@ -1680,8 +1680,8 @@ l5
     meths.buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
     screen:expect{grid=[[
-      S4S1^l1                                            |
-      x S2l2                                            |
+      S1S4^l1                                            |
+      S2x l2                                            |
       S5{1:  }l3                                            |
       {1:    }l4                                            |
       {1:    }l5                                            |
@@ -1766,15 +1766,15 @@ l5
     end
 
     screen:expect{grid=[[
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:^h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W Z Y X {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:^h}                 |
                                               |
     ]]}
   end)
@@ -1793,7 +1793,7 @@ l5
     meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1', priority=1})
 
     screen:expect{grid=[[
-      S1S2O3S4S5^l1        |
+      S5S4O3S2S1^l1        |
       {1:          }l2        |
                           |
     ]]}
