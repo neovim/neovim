@@ -189,6 +189,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
       mch_errmsg(e_outofmem);
       mch_errmsg("\n");
       preserve_exit();
+      return 0;
     }
     const char *error = lua_tostring(lstate, -1);
 
