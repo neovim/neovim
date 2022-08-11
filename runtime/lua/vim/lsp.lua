@@ -690,7 +690,7 @@ end
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
 ---@param bufnr number Number of the buffer, or 0 for current
----@param client Client object
+---@param client table Client object
 local function text_document_did_open_handler(bufnr, client)
   changetracking.init(client, bufnr)
   if not vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
@@ -1148,7 +1148,11 @@ function lsp.start_client(config)
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
 
-    changetracking.reset(client)
+    -- Client can be absent if executable starts, but initialize fails
+    -- init/attach won't have happened
+    if client then
+      changetracking.reset(client)
+    end
     if code ~= 0 or (signal ~= 0 and signal ~= 15) then
       local msg =
         string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
