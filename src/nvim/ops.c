@@ -5789,7 +5789,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char_u *str
 
 void clear_oparg(oparg_T *oap)
 {
-  memset(oap, 0, sizeof(oparg_T));
+  CLEAR_POINTER(oap);
 }
 
 ///  Count the number of bytes, characters and "words" in a line.

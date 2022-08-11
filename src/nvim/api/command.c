@@ -300,10 +300,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
   FUNC_API_SINCE(10)
 {
   exarg_T ea;
-  memset(&ea, 0, sizeof(ea));
+  CLEAR_FIELD(ea);
 
   CmdParseInfo cmdinfo;
-  memset(&cmdinfo, 0, sizeof(cmdinfo));
+  CLEAR_FIELD(cmdinfo);
 
   char *cmdline = NULL;
   char *cmdname = NULL;

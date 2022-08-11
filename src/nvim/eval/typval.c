@@ -233,7 +233,7 @@ void tv_list_init_static10(staticList10_T *const sl)
 #define SL_SIZE ARRAY_SIZE(sl->sl_items)
   list_T *const l = &sl->sl_list;
 
-  memset(sl, 0, sizeof(staticList10_T));
+  CLEAR_POINTER(sl);
   l->lv_first = &sl->sl_items[0];
   l->lv_last = &sl->sl_items[SL_SIZE - 1];
   l->lv_refcount = DO_NOT_FREE_CNT;
@@ -261,7 +261,7 @@ void tv_list_init_static10(staticList10_T *const sl)
 void tv_list_init_static(list_T *const l)
   FUNC_ATTR_NONNULL_ALL
 {
-  memset(l, 0, sizeof(*l));
+  CLEAR_POINTER(l);
   l->lv_refcount = DO_NOT_FREE_CNT;
   list_log(l, NULL, NULL, "sinit");
 }

@@ -199,6 +199,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 // Size in bytes of the hash used in the undo file.
 #define UNDO_HASH_SIZE 32
 
+#define CLEAR_FIELD(field)  memset(&(field), 0, sizeof(field))
 #define CLEAR_POINTER(ptr)  memset((ptr), 0, sizeof(*(ptr)))
 
 // defines to avoid typecasts from (char_u *) to (char *) and back

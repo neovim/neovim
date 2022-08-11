@@ -821,7 +821,7 @@ static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
 /// Initialize an empty hash table.
 static void mf_hash_init(mf_hashtab_T *mht)
 {
-  memset(mht, 0, sizeof(mf_hashtab_T));
+  CLEAR_POINTER(mht);
   mht->mht_buckets = mht->mht_small_buckets;
   mht->mht_mask = MHT_INIT_SIZE - 1;
 }
@@ -924,7 +924,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
     /// a power of two.
 
     mf_hashitem_T *tails[MHT_GROWTH_FACTOR];
-    memset(tails, 0, sizeof(tails));
+    CLEAR_FIELD(tails);
 
     for (mf_hashitem_T *mhi = mht->mht_buckets[i];
          mhi != NULL; mhi = mhi->mhi_next) {

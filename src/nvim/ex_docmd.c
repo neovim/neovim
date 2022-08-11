@@ -391,7 +391,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   if (flags & DOCMD_EXCRESET) {
     save_dbg_stuff(&debug_saved);
   } else {
-    memset(&debug_saved, 0, sizeof(debug_saved));
+    CLEAR_FIELD(debug_saved);
   }
 
   initial_trylevel = trylevel;
@@ -1428,16 +1428,17 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   char *after_modifier = NULL;
 
   // Initialize cmdinfo
-  memset(cmdinfo, 0, sizeof(*cmdinfo));
+  CLEAR_POINTER(cmdinfo);
 
   // Initialize eap
-  memset(eap, 0, sizeof(*eap));
-  eap->line1 = 1;
-  eap->line2 = 1;
-  eap->cmd = cmdline;
-  eap->cmdlinep = &cmdline;
-  eap->getline = NULL;
-  eap->cookie = NULL;
+  *eap = (exarg_T){
+    .line1 = 1,
+    .line2 = 1,
+    .cmd = cmdline,
+    .cmdlinep = &cmdline,
+    .getline = NULL,
+    .cookie = NULL,
+  };
 
   const bool save_ex_pressedreturn = ex_pressedreturn;
   // Parse command modifiers
@@ -1877,10 +1878,10 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   const int save_reg_executing = reg_executing;
   const bool save_pending_end_reg_executing = pending_end_reg_executing;
 
-  exarg_T ea;
-  memset(&ea, 0, sizeof(ea));
-  ea.line1 = 1;
-  ea.line2 = 1;
+  exarg_T ea = {
+    .line1 = 1,
+    .line2 = 1,
+  };
   ex_nesting_level++;
 
   // When the last file has not been edited :q has to be typed twice.
@@ -6021,12 +6022,11 @@ theend:
 /// Open a new tab page.
 void tabpage_new(void)
 {
-  exarg_T ea;
-
-  memset(&ea, 0, sizeof(ea));
-  ea.cmdidx = CMD_tabnew;
-  ea.cmd = "tabn";
-  ea.arg = "";
+  exarg_T ea = {
+    .cmdidx = CMD_tabnew,
+    .cmd = "tabn",
+    .arg = "",
+  };
   ex_splitview(&ea);
 }
 

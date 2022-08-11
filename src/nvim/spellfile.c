@@ -4146,8 +4146,8 @@ static wordnode_T *get_wordnode(spellinfo_T *spin)
   } else {
     n = spin->si_first_free;
     spin->si_first_free = n->wn_child;
-    memset(n, 0, sizeof(wordnode_T));
-    --spin->si_free_count;
+    CLEAR_POINTER(n);
+    spin->si_free_count--;
   }
 #ifdef SPELL_PRINTTREE
   if (n != NULL) {
@@ -5282,7 +5282,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
   bool error = false;
   spellinfo_T spin;
 
-  memset(&spin, 0, sizeof(spin));
+  CLEAR_FIELD(spin);
   spin.si_verbose = !added_word;
   spin.si_ascii = ascii;
   spin.si_followup = true;

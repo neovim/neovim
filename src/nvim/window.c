@@ -1270,7 +1270,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     wp->w_floating = false;
     // non-floating window doesn't store float config or have a border.
     wp->w_float_config = FLOAT_CONFIG_INIT;
-    memset(wp->w_border_adj, 0, sizeof(wp->w_border_adj));
+    CLEAR_FIELD(wp->w_border_adj);
   }
 
   /*
@@ -5175,7 +5175,7 @@ void win_free_grid(win_T *wp, bool reinit)
   grid_free(&wp->w_grid_alloc);
   if (reinit) {
     // if a float is turned into a split, the grid data structure will be reused
-    memset(&wp->w_grid_alloc, 0, sizeof(wp->w_grid_alloc));
+    CLEAR_FIELD(wp->w_grid_alloc);
   }
 }
 
@@ -7095,7 +7095,7 @@ int switch_win(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_displa
 // As switch_win() but without blocking autocommands.
 int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool no_display)
 {
-  memset(switchwin, 0, sizeof(switchwin_T));
+  CLEAR_POINTER(switchwin);
   switchwin->sw_curwin = curwin;
   if (win == curwin) {
     switchwin->sw_same_win = true;

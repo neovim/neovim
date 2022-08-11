@@ -490,7 +490,7 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
 
     if (sign->se_lnum == lnum) {
       sign_attrs_T sattr;
-      memset(&sattr, 0, sizeof(sattr));
+      CLEAR_FIELD(sattr);
       sattr.sat_typenr = sign->se_typenr;
       sp = find_sign_by_typenr(sign->se_typenr);
       if (sp != NULL) {

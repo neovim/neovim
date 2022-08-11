@@ -1765,7 +1765,7 @@ static int syn_add_group(const char *name, size_t len)
 
   // Append another syntax_highlight entry.
   HlGroup *hlgp = GA_APPEND_VIA_PTR(HlGroup, &highlight_ga);
-  memset(hlgp, 0, sizeof(*hlgp));
+  CLEAR_POINTER(hlgp);
   hlgp->sg_name = (char_u *)arena_memdupz(&highlight_arena, name, len);
   hlgp->sg_rgb_bg = -1;
   hlgp->sg_rgb_fg = -1;
@@ -1863,7 +1863,7 @@ static void combine_stl_hlt(int id, int id_S, int id_alt, int hlcnt, int i, int 
   HlGroup *const hlt = hl_table;
 
   if (id_alt == 0) {
-    memset(&hlt[hlcnt + i], 0, sizeof(HlGroup));
+    CLEAR_POINTER(&hlt[hlcnt + i]);
     hlt[hlcnt + i].sg_cterm = highlight_attr[hlf];
     hlt[hlcnt + i].sg_gui = highlight_attr[hlf];
   } else {
@@ -1945,7 +1945,7 @@ void highlight_changed(void)
   hlcnt = highlight_ga.ga_len;
   if (id_S == -1) {
     // Make sure id_S is always valid to simplify code below. Use the last entry
-    memset(&hl_table[hlcnt + 9], 0, sizeof(HlGroup));
+    CLEAR_POINTER(&hl_table[hlcnt + 9]);
     id_S = hlcnt + 10;
   }
   for (int i = 0; i < 9; i++) {

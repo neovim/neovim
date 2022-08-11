@@ -466,7 +466,7 @@ static void regcomp_start(char_u *expr, int re_flags)                        // 
 
   num_complex_braces = 0;
   regnpar = 1;
-  memset(had_endbrace, 0, sizeof(had_endbrace));
+  CLEAR_FIELD(had_endbrace);
   regnzpar = 1;
   re_has_z = 0;
   regsize = 0L;

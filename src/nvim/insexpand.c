@@ -2139,7 +2139,7 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     }
   } else {
     word = tv_get_string_chk(tv);
-    memset(cptext, 0, sizeof(cptext));
+    CLEAR_FIELD(cptext);
   }
   if (word == NULL || (!empty && *word == NUL)) {
     for (size_t i = 0; i < CPT_COUNT; i++) {

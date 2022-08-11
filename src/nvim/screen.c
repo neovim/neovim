@@ -2399,7 +2399,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     }
   }
 
-  memset(sattrs, 0, sizeof(sattrs));
+  CLEAR_FIELD(sattrs);
   num_signs = buf_get_signattrs(wp->w_buffer, lnum, sattrs);
   decor_redraw_signs(buf, lnum - 1, &num_signs, sattrs);
 

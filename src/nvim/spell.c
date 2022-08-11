@@ -374,7 +374,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     return 1;
   }
 
-  memset(&mi, 0, sizeof(matchinf_T));
+  CLEAR_FIELD(mi);
 
   // A number is always OK.  Also skip hexadecimal numbers 0xFF99 and
   // 0X99FF.  But always do check spelling to find "3GPP" and "11
@@ -2338,7 +2338,7 @@ theend:
 // Clear the midword characters for buffer "buf".
 static void clear_midword(win_T *wp)
 {
-  memset(wp->w_s->b_spell_ismw, 0, 256);
+  CLEAR_FIELD(wp->w_s->b_spell_ismw);
   XFREE_CLEAR(wp->w_s->b_spell_ismw_mb);
 }
 
@@ -2610,9 +2610,9 @@ void clear_spell_chartab(spelltab_T *sp)
 {
   int i;
 
-  // Init everything to false.
-  memset(sp->st_isw, false, sizeof(sp->st_isw));
-  memset(sp->st_isu, false, sizeof(sp->st_isu));
+  // Init everything to false (zero).
+  CLEAR_FIELD(sp->st_isw);
+  CLEAR_FIELD(sp->st_isu);
 
   for (i = 0; i < 256; i++) {
     sp->st_fold[i] = (char_u)i;
@@ -3248,7 +3248,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   bool did_intern = false;
 
   // Set the info in "*su".
-  memset(su, 0, sizeof(suginfo_T));
+  CLEAR_POINTER(su);
   ga_init(&su->su_ga, (int)sizeof(suggest_T), 10);
   ga_init(&su->su_sga, (int)sizeof(suggest_T), 10);
   if (*badptr == NUL) {
@@ -3760,7 +3760,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   // word).
   depth = 0;
   sp = &stack[0];
-  memset(sp, 0, sizeof(trystate_T));  // -V512
+  CLEAR_POINTER(sp);  // -V1068
   sp->ts_curi = 1;
 
   if (soundfold) {

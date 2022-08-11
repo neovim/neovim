@@ -1520,7 +1520,7 @@ int find_tags(char_u *pat, int *num_matches, char ***matchesp, int flags, int mi
 
   // This is only to avoid a compiler warning for using search_info
   // uninitialised.
-  memset(&search_info, 0, 1);  // -V512
+  CLEAR_FIELD(search_info);
 
   if (*curbuf->b_p_tfu != NUL && use_tfu && !tfu_in_use) {
     tfu_in_use = true;
@@ -1860,7 +1860,7 @@ parse_line:
         // For "normal" tags: Do a quick check if the tag matches.
         // This speeds up tag searching a lot!
         if (orgpat.headlen) {
-          memset(&tagp, 0, sizeof(tagp));
+          CLEAR_FIELD(tagp);
           tagp.tagname = lbuf;
           tagp.tagname_end = (char_u *)vim_strchr((char *)lbuf, TAB);
           if (tagp.tagname_end == NULL) {
@@ -2342,7 +2342,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
   char_u *r_ptr;
 
   if (first) {
-    memset(tnp, 0, sizeof(tagname_T));
+    CLEAR_POINTER(tnp);
   }
 
   if (curbuf->b_help) {

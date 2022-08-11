@@ -391,7 +391,7 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, sign_attrs_T sattrs
       sattrs[j] = sattrs[j - 1];
     }
     if (j < SIGN_SHOW_MAX) {
-      memset(&sattrs[j], 0, sizeof(sign_attrs_T));
+      CLEAR_FIELD(sattrs[j]);
       sattrs[j].sat_text = decor->sign_text;
       if (decor->sign_hl_id != 0) {
         sattrs[j].sat_texthl = syn_id2attr(decor->sign_hl_id);

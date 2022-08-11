@@ -999,7 +999,7 @@ static void pum_execute_menu(vimmenu_T *menu, int mode)
 
   for (vimmenu_T *mp = menu->children; mp != NULL; mp = mp->next) {
     if ((mp->modes & mp->enabled & mode) && idx++ == pum_selected) {
-      memset(&ea, 0, sizeof(ea));
+      CLEAR_FIELD(ea);
       execute_menu(&ea, mp, -1);
       break;
     }

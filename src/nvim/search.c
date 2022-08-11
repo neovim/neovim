@@ -272,7 +272,7 @@ void free_search_patterns(void)
   free_spat(&spats[0]);
   free_spat(&spats[1]);
 
-  memset(spats, 0, sizeof(spats));
+  CLEAR_FIELD(spats);
 
   if (mr_pattern_alloced) {
     xfree(mr_pattern);
@@ -432,7 +432,7 @@ void set_last_csearch(int c, char_u *s, int len)
   if (len) {
     memcpy(lastc_bytes, s, (size_t)len);
   } else {
-    memset(lastc_bytes, 0, sizeof(lastc_bytes));
+    CLEAR_FIELD(lastc_bytes);
   }
 }
 
@@ -4552,7 +4552,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
   static buf_T *lbuf = NULL;
   proftime_T start;
 
-  memset(stat, 0, sizeof(searchstat_T));
+  CLEAR_POINTER(stat);
 
   if (dirc == 0 && !recompute && !EMPTY_POS(lastpos)) {
     stat->cur = cur;
@@ -5997,7 +5997,7 @@ void get_search_pattern(SearchPattern *const pat)
 void get_substitute_pattern(SearchPattern *const pat)
 {
   memcpy(pat, &(spats[1]), sizeof(spats[1]));
-  memset(&(pat->off), 0, sizeof(pat->off));
+  CLEAR_FIELD(pat->off);
 }
 
 /// Set last search pattern
@@ -6013,7 +6013,7 @@ void set_substitute_pattern(const SearchPattern pat)
 {
   free_spat(&spats[1]);
   memcpy(&(spats[1]), &pat, sizeof(spats[1]));
-  memset(&(spats[1].off), 0, sizeof(spats[1].off));
+  CLEAR_FIELD(spats[1].off);
 }
 
 /// Set last used search pattern

@@ -956,13 +956,13 @@ void ex_diffupdate(exarg_T *eap)
 
   // Only use the internal method if it did not fail for one of the buffers.
   diffio_T diffio;
-  memset(&diffio, 0, sizeof(diffio));
+  CLEAR_FIELD(diffio);
   diffio.dio_internal = diff_internal() && !diff_internal_failed();
 
   diff_try_update(&diffio, idx_orig, eap);
   if (diffio.dio_internal && diff_internal_failed()) {
     // Internal diff failed, use external diff instead.
-    memset(&diffio, 0, sizeof(diffio));
+    CLEAR_FIELD(diffio);
     diff_try_update(&diffio, idx_orig, eap);
   }
 
@@ -1075,9 +1075,9 @@ static int diff_file_internal(diffio_T *diffio)
   xdemitconf_t emit_cfg;
   xdemitcb_t emit_cb;
 
-  memset(&param, 0, sizeof(param));
-  memset(&emit_cfg, 0, sizeof(emit_cfg));
-  memset(&emit_cb, 0, sizeof(emit_cb));
+  CLEAR_FIELD(param);
+  CLEAR_FIELD(emit_cfg);
+  CLEAR_FIELD(emit_cb);
 
   param.flags = (unsigned long)diff_algorithm;
 

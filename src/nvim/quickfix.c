@@ -1224,7 +1224,7 @@ static void qf_new_list(qf_info_T *qi, const char *qf_title)
     qi->qf_curlist = qi->qf_listcount++;
   }
   qf_list_T *qfl = qf_get_curlist(qi);
-  memset(qfl, 0, sizeof(qf_list_T));
+  CLEAR_POINTER(qfl);
   qf_store_title(qfl, qf_title);
   qfl->qfl_type = qi->qfl_type;
   qfl->qf_id = ++last_qf_id;
@@ -5299,7 +5299,7 @@ static bool existing_swapfile(const buf_T *buf)
 /// :{count}vimgrep /{pattern}/[g][j] {file} ...
 static int vgr_process_args(exarg_T *eap, vgr_args_T *args)
 {
-  memset(args, 0, sizeof(*args));
+  CLEAR_POINTER(args);
 
   args->regmatch.regprog = NULL;
   args->qf_title = xstrdup(qf_cmdtitle(*eap->cmdlinep));

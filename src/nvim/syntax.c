@@ -2506,7 +2506,7 @@ static void update_si_end(stateitem_T *sip, int startcol, bool force)
 static void push_current_state(int idx)
 {
   stateitem_T *p = GA_APPEND_VIA_PTR(stateitem_T, &current_state);
-  memset(p, 0, sizeof(*p));
+  CLEAR_POINTER(p);
   p->si_idx = idx;
 }
 
@@ -4453,7 +4453,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
 
   // get the pattern.
   init_syn_patterns();
-  memset(&item, 0, sizeof(item));
+  CLEAR_FIELD(item);
   rest = get_syn_pattern(rest, &item);
   if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
     syn_opt_arg.flags |= HL_HAS_EOL;
@@ -4945,7 +4945,7 @@ static int syn_add_cluster(char_u *name)
 
   syn_cluster_T *scp = GA_APPEND_VIA_PTR(syn_cluster_T,
                                          &curwin->w_s->b_syn_clusters);
-  memset(scp, 0, sizeof(*scp));
+  CLEAR_POINTER(scp);
   scp->scl_name = name;
   scp->scl_name_u = vim_strsave_up(name);
   scp->scl_list = NULL;
@@ -5624,8 +5624,7 @@ void ex_ownsyntax(exarg_T *eap)
   char_u *new_value;
 
   if (curwin->w_s == &curwin->w_buffer->b_s) {
-    curwin->w_s = xmalloc(sizeof(synblock_T));
-    memset(curwin->w_s, 0, sizeof(synblock_T));
+    curwin->w_s = xcalloc(1, sizeof(synblock_T));
     hash_init(&curwin->w_s->b_keywtab);
     hash_init(&curwin->w_s->b_keywtab_ic);
     // TODO: Keep the spell checking as it was. NOLINT(readability/todo)

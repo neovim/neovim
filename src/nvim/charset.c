@@ -126,7 +126,7 @@ int buf_init_chartab(buf_T *buf, int global)
   }
 
   // Init word char flags all to false
-  memset(buf->b_chartab, 0, (size_t)32);
+  CLEAR_FIELD(buf->b_chartab);
 
   // In lisp mode the '-' character is included in keywords.
   if (buf->b_p_lisp) {

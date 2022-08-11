@@ -311,7 +311,6 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   int delim;
   char *end;
   char *dummy;
-  exarg_T ea;
   pos_T save_cursor;
   bool use_last_pat;
   bool retval = false;
@@ -336,11 +335,12 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   }
 
   emsg_off++;
-  memset(&ea, 0, sizeof(ea));
-  ea.line1 = 1;
-  ea.line2 = 1;
-  ea.cmd = (char *)ccline.cmdbuff;
-  ea.addr_type = ADDR_LINES;
+  exarg_T ea = {
+    .line1 = 1,
+    .line2 = 1,
+    .cmd = (char *)ccline.cmdbuff,
+    .addr_type = ADDR_LINES,
+  };
 
   cmdmod_T dummy_cmdmod;
   parse_command_modifiers(&ea, &dummy, &dummy_cmdmod, true);
@@ -453,7 +453,6 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
 {
   pos_T end_pos;
   proftime_T tm;
-  searchit_arg_T sia;
   int skiplen, patlen;
   char_u next_char;
   char_u use_last_pat;
@@ -516,8 +515,9 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
       search_flags += SEARCH_START;
     }
     ccline.cmdbuff[skiplen + patlen] = NUL;
-    memset(&sia, 0, sizeof(sia));
-    sia.sa_tm = &tm;
+    searchit_arg_T sia = {
+      .sa_tm = &tm,
+    };
     found = do_search(NULL, firstc == ':' ? '/' : firstc, search_delim,
                       ccline.cmdbuff + skiplen, count,
                       search_flags, &sia);
@@ -731,7 +731,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     save_cmdline(&save_ccline);
     did_save_ccline = true;
   } else if (init_ccline) {
-    memset(&ccline, 0, sizeof(struct cmdline_info));
+    CLEAR_FIELD(ccline);
   }
 
   if (s->firstc == -1) {
@@ -2677,7 +2677,7 @@ char *getcmdline_prompt(const int firstc, const char *const prompt, const int at
     save_cmdline(&save_ccline);
     did_save_ccline = true;
   } else {
-    memset(&ccline, 0, sizeof(struct cmdline_info));
+    CLEAR_FIELD(ccline);
   }
   ccline.prompt_id = last_prompt_id++;
   ccline.cmdprompt = (char_u *)prompt;
@@ -3640,7 +3640,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
 static void save_cmdline(struct cmdline_info *ccp)
 {
   *ccp = ccline;
-  memset(&ccline, 0, sizeof(struct cmdline_info));
+  CLEAR_FIELD(ccline);
   ccline.prev_ccline = ccp;
   ccline.cmdbuff = NULL;  // signal that ccline is not in use
 }
@@ -6029,7 +6029,7 @@ int get_list_range(char_u **str, int *num1, int *num2)
 
 void cmdline_init(void)
 {
-  memset(&ccline, 0, sizeof(struct cmdline_info));
+  CLEAR_FIELD(ccline);
 }
 
 /// Open a window on the current command line and history.  Allow editing in

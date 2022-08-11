@@ -333,7 +333,7 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
 {
   const char_u *to_parse = strargs;
   to_parse = (char_u *)skipwhite((char *)to_parse);
-  memset(mapargs, 0, sizeof(*mapargs));
+  CLEAR_POINTER(mapargs);
 
   // Accept <buffer>, <nowait>, <silent>, <expr>, <script>, and <unique> in
   // any order.

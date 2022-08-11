@@ -1418,7 +1418,7 @@ scripterror:
  * copied, so that they can be changed. */
 static void init_params(mparm_T *paramp, int argc, char **argv)
 {
-  memset(paramp, 0, sizeof(*paramp));
+  CLEAR_POINTER(paramp);
   paramp->argc = argc;
   paramp->argv = argv;
   paramp->use_debug_break_level = -1;

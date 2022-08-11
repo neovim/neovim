@@ -447,7 +447,7 @@ static nlua_ref_state_t *nlua_new_ref_state(lua_State *lstate, bool is_thread)
   FUNC_ATTR_NONNULL_ALL
 {
   nlua_ref_state_t *ref_state = lua_newuserdata(lstate, sizeof(*ref_state));
-  memset(ref_state, 0, sizeof(*ref_state));
+  CLEAR_POINTER(ref_state);
   ref_state->nil_ref = LUA_NOREF;
   ref_state->empty_dict_ref = LUA_NOREF;
   if (!is_thread) {
