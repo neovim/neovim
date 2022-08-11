@@ -1681,7 +1681,7 @@ l5
 
     screen:expect{grid=[[
       S4S1^l1                                            |
-      S2x l2                                            |
+      x S2l2                                            |
       S5{1:  }l3                                            |
       {1:    }l4                                            |
       {1:    }l5                                            |
@@ -1779,6 +1779,34 @@ l5
     ]]}
   end)
 
+  it('works with priority #19716', function()
+    screen:try_resize(20, 3)
+    insert(example_text)
+    feed 'gg'
+
+    helpers.command('sign define Oldsign text=O3')
+    helpers.command([[exe 'sign place 42 line=1 name=Oldsign priority=10 buffer=' . bufnr('')]])
+
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S4', priority=100})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S2', priority=5})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S5', priority=200})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1', priority=1})
+
+    screen:expect{grid=[[
+      S1S2O3S4S5^l1        |
+      {1:          }l2        |
+                          |
+    ]]}
+
+    -- Check truncation works too
+    meths.win_set_option(0, 'signcolumn', 'auto')
+
+    screen:expect{grid=[[
+      S5^l1                |
+      {1:  }l2                |
+                          |
+    ]]}
+  end)
 end)
 
 describe('decorations: virt_text', function()
