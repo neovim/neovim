@@ -1,7 +1,8 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
-#include "nvim/eval.h"
+#include "nvim/eval/typval.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/func_attr.h"
 #include "nvim/macros.h"
 #include "nvim/memline.h"

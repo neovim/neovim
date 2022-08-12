@@ -48,6 +48,7 @@
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/eval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"

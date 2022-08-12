@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/ex_docmd.h"
+#include "nvim/ex_cmds_defs.h"
 
 typedef struct scriptitem_S {
   char_u *sn_name;

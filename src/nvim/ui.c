@@ -14,7 +14,6 @@
 #include "nvim/cursor_shape.h"
 #include "nvim/diff.h"
 #include "nvim/event/loop.h"
-#include "nvim/ex_cmds2.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
