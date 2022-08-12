@@ -12,11 +12,6 @@ mkdir -p "${HOME}/.cache"
 echo "before_cache.sh: cache size"
 du -chd 1 "${HOME}/.cache" | sort -rh | head -20
 
-echo "before_cache.sh: ccache stats"
-ccache -s 2>/dev/null || true
-# Do not keep ccache stats (uploaded to cache otherwise; reset initially anyway).
-find "${HOME}/.ccache" -name stats -delete
-
 # Update the third-party dependency cache only if the build was successful.
 if ended_successfully && [ -d "${DEPS_BUILD_DIR}" ]; then
   # Do not cache downloads.  They should not be needed with up-to-date deps.

@@ -24,9 +24,7 @@ build_deps() {
   mkdir -p "${DEPS_BUILD_DIR}"
 
   # Use cached dependencies if $CACHE_MARKER exists.
-  if test "${CACHE_ENABLE}" = "false" ; then
-    export CCACHE_RECACHE=1
-  elif test -f "${CACHE_MARKER}" ; then
+  if test -f "${CACHE_MARKER}"; then
     echo "Using third-party dependencies from cache (last update: $(_stat "${CACHE_MARKER}"))."
     cp -a "${CACHE_NVIM_DEPS_DIR}"/. "${DEPS_BUILD_DIR}"
   fi

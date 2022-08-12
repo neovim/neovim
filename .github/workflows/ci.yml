@@ -42,7 +42,6 @@ jobs:
             autoconf \
             automake \
             build-essential \
-            ccache \
             cmake \
             flake8 \
             gettext \
@@ -97,7 +96,6 @@ jobs:
         with:
           path: |
             ${{ env.CACHE_NVIM_DEPS_DIR }}
-            ~/.ccache
           key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
 
       - name: Build third-party deps
@@ -190,7 +188,7 @@ jobs:
         if: matrix.os == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf automake build-essential ccache cmake cpanminus cscope gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+          sudo apt-get install -y autoconf automake build-essential cmake cpanminus cscope gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
 
       - name: Install minimum required version of cmake
         if: matrix.cmake == 'minimum_required'
@@ -222,7 +220,7 @@ jobs:
         if: matrix.os == 'osx'
         run: |
           brew update --quiet
-          brew install automake ccache cpanminus ninja
+          brew install automake cpanminus ninja
 
       - name: Setup interpreter packages
         run: ./ci/install.sh
@@ -232,7 +230,6 @@ jobs:
         with:
           path: |
             ${{ env.CACHE_NVIM_DEPS_DIR }}
-            ~/.ccache
           key: ${{ matrix.runner }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'cmake.deps/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
 
       - name: Build third-party deps
