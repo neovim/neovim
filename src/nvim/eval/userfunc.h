@@ -4,6 +4,11 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
 
+// From user function to hashitem and back.
+#define UF2HIKEY(fp) ((fp)->uf_name)
+#define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
+#define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
+
 ///< Structure used by trans_function_name()
 typedef struct {
   dict_T *fd_dict;  ///< Dictionary used.

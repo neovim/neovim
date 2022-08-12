@@ -74,8 +74,6 @@ struct source_cookie {
   vimconv_T conv;               ///< type of conversion
 };
 
-#define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds2.c.generated.h"
 #endif
@@ -123,119 +121,6 @@ void ex_perlfile(exarg_T *eap)
 void ex_perldo(exarg_T *eap)
 {
   script_host_do_range("perl", eap);
-}
-
-/// Start profiling a script.
-static void profile_init(scriptitem_T *si)
-{
-  si->sn_pr_count = 0;
-  si->sn_pr_total = profile_zero();
-  si->sn_pr_self = profile_zero();
-
-  ga_init(&si->sn_prl_ga, sizeof(sn_prl_T), 100);
-  si->sn_prl_idx = -1;
-  si->sn_prof_on = true;
-  si->sn_pr_nest = 0;
-}
-
-/// Save time when starting to invoke another script or function.
-///
-/// @param tm  place to store wait time
-void script_prof_save(proftime_T *tm)
-{
-  scriptitem_T *si;
-
-  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
-    if (si->sn_prof_on && si->sn_pr_nest++ == 0) {
-      si->sn_pr_child = profile_start();
-    }
-  }
-  *tm = profile_get_wait();
-}
-
-/// Count time spent in children after invoking another script or function.
-void script_prof_restore(proftime_T *tm)
-{
-  scriptitem_T *si;
-
-  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
-    si = &SCRIPT_ITEM(current_sctx.sc_sid);
-    if (si->sn_prof_on && --si->sn_pr_nest == 0) {
-      si->sn_pr_child = profile_end(si->sn_pr_child);
-      // don't count wait time
-      si->sn_pr_child = profile_sub_wait(*tm, si->sn_pr_child);
-      si->sn_pr_children = profile_add(si->sn_pr_children, si->sn_pr_child);
-      si->sn_prl_children = profile_add(si->sn_prl_children, si->sn_pr_child);
-    }
-  }
-}
-
-/// Dump the profiling results for all scripts in file "fd".
-void script_dump_profile(FILE *fd)
-{
-  scriptitem_T *si;
-  FILE *sfd;
-  sn_prl_T *pp;
-
-  for (int id = 1; id <= script_items.ga_len; id++) {
-    si = &SCRIPT_ITEM(id);
-    if (si->sn_prof_on) {
-      fprintf(fd, "SCRIPT  %s\n", si->sn_name);
-      if (si->sn_pr_count == 1) {
-        fprintf(fd, "Sourced 1 time\n");
-      } else {
-        fprintf(fd, "Sourced %d times\n", si->sn_pr_count);
-      }
-      fprintf(fd, "Total time: %s\n", profile_msg(si->sn_pr_total));
-      fprintf(fd, " Self time: %s\n", profile_msg(si->sn_pr_self));
-      fprintf(fd, "\n");
-      fprintf(fd, "count  total (s)   self (s)\n");
-
-      sfd = os_fopen((char *)si->sn_name, "r");
-      if (sfd == NULL) {
-        fprintf(fd, "Cannot open file!\n");
-      } else {
-        // Keep going till the end of file, so that trailing
-        // continuation lines are listed.
-        for (int i = 0;; i++) {
-          if (vim_fgets(IObuff, IOSIZE, sfd)) {
-            break;
-          }
-          // When a line has been truncated, append NL, taking care
-          // of multi-byte characters .
-          if (IObuff[IOSIZE - 2] != NUL && IObuff[IOSIZE - 2] != NL) {
-            int n = IOSIZE - 2;
-
-            // Move to the first byte of this char.
-            // utf_head_off() doesn't work, because it checks
-            // for a truncated character.
-            while (n > 0 && (IObuff[n] & 0xc0) == 0x80) {
-              n--;
-            }
-
-            IObuff[n] = NL;
-            IObuff[n + 1] = NUL;
-          }
-          if (i < si->sn_prl_ga.ga_len
-              && (pp = &PRL_ITEM(si, i))->snp_count > 0) {
-            fprintf(fd, "%5d ", pp->snp_count);
-            if (profile_equal(pp->sn_prl_total, pp->sn_prl_self)) {
-              fprintf(fd, "           ");
-            } else {
-              fprintf(fd, "%s ", profile_msg(pp->sn_prl_total));
-            }
-            fprintf(fd, "%s ", profile_msg(pp->sn_prl_self));
-          } else {
-            fprintf(fd, "                            ");
-          }
-          fprintf(fd, "%s", IObuff);
-        }
-        fclose(sfd);
-      }
-      fprintf(fd, "\n");
-    }
-  }
 }
 
 /// If 'autowrite' option set, try to write the file.
@@ -2255,79 +2140,6 @@ retry:
 
   xfree(ga.ga_data);
   return NULL;
-}
-
-/// Called when starting to read a script line.
-/// "sourcing_lnum" must be correct!
-/// When skipping lines it may not actually be executed, but we won't find out
-/// until later and we need to store the time now.
-void script_line_start(void)
-{
-  scriptitem_T *si;
-  sn_prl_T *pp;
-
-  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
-    return;
-  }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
-  if (si->sn_prof_on && sourcing_lnum >= 1) {
-    // Grow the array before starting the timer, so that the time spent
-    // here isn't counted.
-    (void)ga_grow(&si->sn_prl_ga, sourcing_lnum - si->sn_prl_ga.ga_len);
-    si->sn_prl_idx = sourcing_lnum - 1;
-    while (si->sn_prl_ga.ga_len <= si->sn_prl_idx
-           && si->sn_prl_ga.ga_len < si->sn_prl_ga.ga_maxlen) {
-      // Zero counters for a line that was not used before.
-      pp = &PRL_ITEM(si, si->sn_prl_ga.ga_len);
-      pp->snp_count = 0;
-      pp->sn_prl_total = profile_zero();
-      pp->sn_prl_self = profile_zero();
-      si->sn_prl_ga.ga_len++;
-    }
-    si->sn_prl_execed = false;
-    si->sn_prl_start = profile_start();
-    si->sn_prl_children = profile_zero();
-    si->sn_prl_wait = profile_get_wait();
-  }
-}
-
-/// Called when actually executing a function line.
-void script_line_exec(void)
-{
-  scriptitem_T *si;
-
-  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
-    return;
-  }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
-  if (si->sn_prof_on && si->sn_prl_idx >= 0) {
-    si->sn_prl_execed = true;
-  }
-}
-
-/// Called when done with a function line.
-void script_line_end(void)
-{
-  scriptitem_T *si;
-  sn_prl_T *pp;
-
-  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
-    return;
-  }
-  si = &SCRIPT_ITEM(current_sctx.sc_sid);
-  if (si->sn_prof_on && si->sn_prl_idx >= 0
-      && si->sn_prl_idx < si->sn_prl_ga.ga_len) {
-    if (si->sn_prl_execed) {
-      pp = &PRL_ITEM(si, si->sn_prl_idx);
-      pp->snp_count++;
-      si->sn_prl_start = profile_end(si->sn_prl_start);
-      si->sn_prl_start = profile_sub_wait(si->sn_prl_wait, si->sn_prl_start);
-      pp->sn_prl_total = profile_add(pp->sn_prl_total, si->sn_prl_start);
-      pp->sn_prl_self = profile_self(pp->sn_prl_self, si->sn_prl_start,
-                                     si->sn_prl_children);
-    }
-    si->sn_prl_idx = -1;
-  }
 }
 
 /// ":scriptencoding": Set encoding conversion for a sourced script.

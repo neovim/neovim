@@ -45,7 +45,7 @@
 # include "eval/userfunc.c.generated.h"
 #endif
 
-hashtab_T func_hashtab;
+static hashtab_T func_hashtab;
 
 // Used by get_func_tv()
 static garray_T funcargs = GA_EMPTY_INIT_VALUE;
@@ -65,6 +65,12 @@ static char *e_nofunc = N_("E130: Unknown function: %s");
 void func_init(void)
 {
   hash_init(&func_hashtab);
+}
+
+/// Return the function hash table
+hashtab_T *func_tbl_get(void)
+{
+  return &func_hashtab;
 }
 
 /// Get function arguments.

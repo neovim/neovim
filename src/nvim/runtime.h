@@ -30,13 +30,6 @@ typedef struct scriptitem_S {
 extern garray_T script_items;
 #define SCRIPT_ITEM(id) (((scriptitem_T *)script_items.ga_data)[(id) - 1])
 
-/// Struct used in sn_prl_ga for every line of a script.
-typedef struct sn_prl_S {
-  int snp_count;                ///< nr of times line was executed
-  proftime_T sn_prl_total;      ///< time spent in a line + children
-  proftime_T sn_prl_self;       ///< time spent in a line itself
-} sn_prl_T;
-
 typedef void (*DoInRuntimepathCB)(char *, void *);
 
 typedef struct {
