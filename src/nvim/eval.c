@@ -44,6 +44,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
+#include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -1190,42 +1191,6 @@ void *call_func_retlist(const char *func, int argc, typval_T *argv)
   }
 
   return rettv.vval.v_list;
-}
-
-/// Prepare profiling for entering a child or something else that is not
-/// counted for the script/function itself.
-/// Should always be called in pair with prof_child_exit().
-///
-/// @param tm  place to store waittime
-void prof_child_enter(proftime_T *tm)
-{
-  funccall_T *fc = get_current_funccal();
-
-  if (fc != NULL && fc->func->uf_profiling) {
-    fc->prof_child = profile_start();
-  }
-
-  script_prof_save(tm);
-}
-
-/// Take care of time spent in a child.
-/// Should always be called after prof_child_enter().
-///
-/// @param tm  where waittime was stored
-void prof_child_exit(proftime_T *tm)
-{
-  funccall_T *fc = get_current_funccal();
-
-  if (fc != NULL && fc->func->uf_profiling) {
-    fc->prof_child = profile_end(fc->prof_child);
-    // don't count waiting time
-    fc->prof_child = profile_sub_wait(*tm, fc->prof_child);
-    fc->func->uf_tm_children =
-      profile_add(fc->func->uf_tm_children, fc->prof_child);
-    fc->func->uf_tml_children =
-      profile_add(fc->func->uf_tml_children, fc->prof_child);
-  }
-  script_prof_restore(tm);
 }
 
 /// Evaluate 'foldexpr'.  Returns the foldlevel, and any character preceding
@@ -7941,38 +7906,6 @@ const char *find_option_end(const char **const arg, int *const opt_flags)
   return p;
 }
 
-/// Start profiling function "fp".
-void func_do_profile(ufunc_T *fp)
-{
-  int len = fp->uf_lines.ga_len;
-
-  if (!fp->uf_prof_initialized) {
-    if (len == 0) {
-      len = 1;  // avoid getting error for allocating zero bytes
-    }
-    fp->uf_tm_count = 0;
-    fp->uf_tm_self = profile_zero();
-    fp->uf_tm_total = profile_zero();
-
-    if (fp->uf_tml_count == NULL) {
-      fp->uf_tml_count = xcalloc((size_t)len, sizeof(int));
-    }
-
-    if (fp->uf_tml_total == NULL) {
-      fp->uf_tml_total = xcalloc((size_t)len, sizeof(proftime_T));
-    }
-
-    if (fp->uf_tml_self == NULL) {
-      fp->uf_tml_self = xcalloc((size_t)len, sizeof(proftime_T));
-    }
-
-    fp->uf_tml_idx = -1;
-    fp->uf_prof_initialized = true;
-  }
-
-  fp->uf_profiling = TRUE;
-}
-
 /// Dump the profiling results for all functions in file "fd".
 void func_dump_profile(FILE *fd)
 {
@@ -8049,66 +7982,6 @@ void func_dump_profile(FILE *fd)
   xfree(sorttab);
 }
 
-/// @param prefer_self  when equal print only self time
-static void prof_sort_list(FILE *fd, ufunc_T **sorttab, int st_len, char *title, int prefer_self)
-{
-  int i;
-  ufunc_T *fp;
-
-  fprintf(fd, "FUNCTIONS SORTED ON %s TIME\n", title);
-  fprintf(fd, "count  total (s)   self (s)  function\n");
-  for (i = 0; i < 20 && i < st_len; ++i) {
-    fp = sorttab[i];
-    prof_func_line(fd, fp->uf_tm_count, &fp->uf_tm_total, &fp->uf_tm_self,
-                   prefer_self);
-    if (fp->uf_name[0] == K_SPECIAL) {
-      fprintf(fd, " <SNR>%s()\n", fp->uf_name + 3);
-    } else {
-      fprintf(fd, " %s()\n", fp->uf_name);
-    }
-  }
-  fprintf(fd, "\n");
-}
-
-/// Print the count and times for one function or function line.
-///
-/// @param prefer_self  when equal print only self time
-static void prof_func_line(FILE *fd, int count, proftime_T *total, proftime_T *self,
-                           int prefer_self)
-{
-  if (count > 0) {
-    fprintf(fd, "%5d ", count);
-    if (prefer_self && profile_equal(*total, *self)) {
-      fprintf(fd, "           ");
-    } else {
-      fprintf(fd, "%s ", profile_msg(*total));
-    }
-    if (!prefer_self && profile_equal(*total, *self)) {
-      fprintf(fd, "           ");
-    } else {
-      fprintf(fd, "%s ", profile_msg(*self));
-    }
-  } else {
-    fprintf(fd, "                            ");
-  }
-}
-
-/// Compare function for total time sorting.
-static int prof_total_cmp(const void *s1, const void *s2)
-{
-  ufunc_T *p1 = *(ufunc_T **)s1;
-  ufunc_T *p2 = *(ufunc_T **)s2;
-  return profile_cmp(p1->uf_tm_total, p2->uf_tm_total);
-}
-
-/// Compare function for self time sorting.
-static int prof_self_cmp(const void *s1, const void *s2)
-{
-  ufunc_T *p1 = *(ufunc_T **)s1;
-  ufunc_T *p2 = *(ufunc_T **)s2;
-  return profile_cmp(p1->uf_tm_self, p2->uf_tm_self);
-}
-
 /// Return the autoload script name for a function or variable name
 /// Caller must make sure that "name" contains AUTOLOAD_CHAR.
 ///
@@ -8181,61 +8054,6 @@ bool script_autoload(const char *const name, const size_t name_len, const bool r
 
   xfree(tofree);
   return ret;
-}
-
-/// Called when starting to read a function line.
-/// "sourcing_lnum" must be correct!
-/// When skipping lines it may not actually be executed, but we won't find out
-/// until later and we need to store the time now.
-void func_line_start(void *cookie)
-{
-  funccall_T *fcp = (funccall_T *)cookie;
-  ufunc_T *fp = fcp->func;
-
-  if (fp->uf_profiling && sourcing_lnum >= 1
-      && sourcing_lnum <= fp->uf_lines.ga_len) {
-    fp->uf_tml_idx = sourcing_lnum - 1;
-    // Skip continuation lines.
-    while (fp->uf_tml_idx > 0 && FUNCLINE(fp, fp->uf_tml_idx) == NULL) {
-      fp->uf_tml_idx--;
-    }
-    fp->uf_tml_execed = false;
-    fp->uf_tml_start = profile_start();
-    fp->uf_tml_children = profile_zero();
-    fp->uf_tml_wait = profile_get_wait();
-  }
-}
-
-/// Called when actually executing a function line.
-void func_line_exec(void *cookie)
-{
-  funccall_T *fcp = (funccall_T *)cookie;
-  ufunc_T *fp = fcp->func;
-
-  if (fp->uf_profiling && fp->uf_tml_idx >= 0) {
-    fp->uf_tml_execed = TRUE;
-  }
-}
-
-/// Called when done with a function line.
-void func_line_end(void *cookie)
-{
-  funccall_T *fcp = (funccall_T *)cookie;
-  ufunc_T *fp = fcp->func;
-
-  if (fp->uf_profiling && fp->uf_tml_idx >= 0) {
-    if (fp->uf_tml_execed) {
-      ++fp->uf_tml_count[fp->uf_tml_idx];
-      fp->uf_tml_start = profile_end(fp->uf_tml_start);
-      fp->uf_tml_start = profile_sub_wait(fp->uf_tml_wait, fp->uf_tml_start);
-      fp->uf_tml_total[fp->uf_tml_idx] =
-        profile_add(fp->uf_tml_total[fp->uf_tml_idx], fp->uf_tml_start);
-      fp->uf_tml_self[fp->uf_tml_idx] =
-        profile_self(fp->uf_tml_self[fp->uf_tml_idx], fp->uf_tml_start,
-                     fp->uf_tml_children);
-    }
-    fp->uf_tml_idx = -1;
-  }
 }
 
 static var_flavour_T var_flavour(char *varname)

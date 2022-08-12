@@ -6,11 +6,18 @@
 #include <stdio.h>
 
 #include "nvim/assert.h"
+#include "nvim/charset.h"
+#include "nvim/debugger.h"
+#include "nvim/eval.h"
+#include "nvim/eval/userfunc.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/func_attr.h"
 #include "nvim/globals.h"  // for the global `time_fd` (startuptime)
-#include "nvim/os/os_defs.h"
+#include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/profile.h"
+#include "nvim/runtime.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.c.generated.h"
@@ -193,6 +200,388 @@ int profile_cmp(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
     return 0;
   }
   return profile_signed(tm2 - tm1) < 0 ? -1 : 1;
+}
+
+static char *profile_fname = NULL;
+
+/// Reset all profiling information.
+void profile_reset(void)
+{
+  // Reset sourced files.
+  for (int id = 1; id <= script_items.ga_len; id++) {
+    scriptitem_T *si = &SCRIPT_ITEM(id);
+    if (si->sn_prof_on) {
+      si->sn_prof_on      = false;
+      si->sn_pr_force     = false;
+      si->sn_pr_child     = profile_zero();
+      si->sn_pr_nest      = 0;
+      si->sn_pr_count     = 0;
+      si->sn_pr_total     = profile_zero();
+      si->sn_pr_self      = profile_zero();
+      si->sn_pr_start     = profile_zero();
+      si->sn_pr_children  = profile_zero();
+      ga_clear(&si->sn_prl_ga);
+      si->sn_prl_start    = profile_zero();
+      si->sn_prl_children = profile_zero();
+      si->sn_prl_wait     = profile_zero();
+      si->sn_prl_idx      = -1;
+      si->sn_prl_execed   = 0;
+    }
+  }
+
+  // Reset functions.
+  size_t n  = func_hashtab.ht_used;
+  hashitem_T *hi = func_hashtab.ht_array;
+
+  for (; n > (size_t)0; hi++) {
+    if (!HASHITEM_EMPTY(hi)) {
+      n--;
+      ufunc_T *uf = HI2UF(hi);
+      if (uf->uf_prof_initialized) {
+        uf->uf_profiling    = 0;
+        uf->uf_tm_count     = 0;
+        uf->uf_tm_total     = profile_zero();
+        uf->uf_tm_self      = profile_zero();
+        uf->uf_tm_children  = profile_zero();
+
+        for (int i = 0; i < uf->uf_lines.ga_len; i++) {
+          uf->uf_tml_count[i] = 0;
+          uf->uf_tml_total[i] = uf->uf_tml_self[i] = 0;
+        }
+
+        uf->uf_tml_start    = profile_zero();
+        uf->uf_tml_children = profile_zero();
+        uf->uf_tml_wait     = profile_zero();
+        uf->uf_tml_idx      = -1;
+        uf->uf_tml_execed   = 0;
+      }
+    }
+  }
+
+  XFREE_CLEAR(profile_fname);
+}
+
+/// ":profile cmd args"
+void ex_profile(exarg_T *eap)
+{
+  static proftime_T pause_time;
+
+  char *e;
+  int len;
+
+  e = (char *)skiptowhite((char_u *)eap->arg);
+  len = (int)(e - eap->arg);
+  e = skipwhite(e);
+
+  if (len == 5 && STRNCMP(eap->arg, "start", 5) == 0 && *e != NUL) {
+    xfree(profile_fname);
+    profile_fname = (char *)expand_env_save_opt((char_u *)e, true);
+    do_profiling = PROF_YES;
+    profile_set_wait(profile_zero());
+    set_vim_var_nr(VV_PROFILING, 1L);
+  } else if (do_profiling == PROF_NONE) {
+    emsg(_("E750: First use \":profile start {fname}\""));
+  } else if (STRCMP(eap->arg, "stop") == 0) {
+    profile_dump();
+    do_profiling = PROF_NONE;
+    set_vim_var_nr(VV_PROFILING, 0L);
+    profile_reset();
+  } else if (STRCMP(eap->arg, "pause") == 0) {
+    if (do_profiling == PROF_YES) {
+      pause_time = profile_start();
+    }
+    do_profiling = PROF_PAUSED;
+  } else if (STRCMP(eap->arg, "continue") == 0) {
+    if (do_profiling == PROF_PAUSED) {
+      pause_time = profile_end(pause_time);
+      profile_set_wait(profile_add(profile_get_wait(), pause_time));
+    }
+    do_profiling = PROF_YES;
+  } else if (STRCMP(eap->arg, "dump") == 0) {
+    profile_dump();
+  } else {
+    // The rest is similar to ":breakadd".
+    ex_breakadd(eap);
+  }
+}
+
+/// Command line expansion for :profile.
+static enum {
+  PEXP_SUBCMD,          ///< expand :profile sub-commands
+  PEXP_FUNC,  ///< expand :profile func {funcname}
+} pexpand_what;
+
+static char *pexpand_cmds[] = {
+  "continue",
+  "dump",
+  "file",
+  "func",
+  "pause",
+  "start",
+  "stop",
+  NULL
+};
+
+/// Function given to ExpandGeneric() to obtain the profile command
+/// specific expansion.
+char *get_profile_name(expand_T *xp, int idx)
+  FUNC_ATTR_PURE
+{
+  switch (pexpand_what) {
+  case PEXP_SUBCMD:
+    return pexpand_cmds[idx];
+  // case PEXP_FUNC: TODO
+  default:
+    return NULL;
+  }
+}
+
+/// Handle command line completion for :profile command.
+void set_context_in_profile_cmd(expand_T *xp, const char *arg)
+{
+  // Default: expand subcommands.
+  xp->xp_context = EXPAND_PROFILE;
+  pexpand_what = PEXP_SUBCMD;
+  xp->xp_pattern = (char *)arg;
+
+  char_u *const end_subcmd = skiptowhite((const char_u *)arg);
+  if (*end_subcmd == NUL) {
+    return;
+  }
+
+  if ((const char *)end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
+    xp->xp_context = EXPAND_FILES;
+    xp->xp_pattern = skipwhite((char *)end_subcmd);
+    return;
+  }
+
+  // TODO(tarruda): expand function names after "func"
+  xp->xp_context = EXPAND_NOTHING;
+}
+
+/// Dump the profiling info.
+void profile_dump(void)
+{
+  FILE *fd;
+
+  if (profile_fname != NULL) {
+    fd = os_fopen(profile_fname, "w");
+    if (fd == NULL) {
+      semsg(_(e_notopen), profile_fname);
+    } else {
+      script_dump_profile(fd);
+      func_dump_profile(fd);
+      fclose(fd);
+    }
+  }
+}
+
+static proftime_T inchar_time;
+
+/// Called when starting to wait for the user to type a character.
+void prof_inchar_enter(void)
+{
+  inchar_time = profile_start();
+}
+
+/// Called when finished waiting for the user to type a character.
+void prof_inchar_exit(void)
+{
+  inchar_time = profile_end(inchar_time);
+  profile_set_wait(profile_add(profile_get_wait(), inchar_time));
+}
+
+/// @return  true when a function defined in the current script should be
+///          profiled.
+bool prof_def_func(void)
+  FUNC_ATTR_PURE
+{
+  if (current_sctx.sc_sid > 0) {
+    return SCRIPT_ITEM(current_sctx.sc_sid).sn_pr_force;
+  }
+  return false;
+}
+
+/// @param prefer_self  when equal print only self time
+void prof_sort_list(FILE *fd, ufunc_T **sorttab, int st_len, char *title, int prefer_self)
+{
+  int i;
+  ufunc_T *fp;
+
+  fprintf(fd, "FUNCTIONS SORTED ON %s TIME\n", title);
+  fprintf(fd, "count  total (s)   self (s)  function\n");
+  for (i = 0; i < 20 && i < st_len; i++) {
+    fp = sorttab[i];
+    prof_func_line(fd, fp->uf_tm_count, &fp->uf_tm_total, &fp->uf_tm_self,
+                   prefer_self);
+    if (fp->uf_name[0] == K_SPECIAL) {
+      fprintf(fd, " <SNR>%s()\n", fp->uf_name + 3);
+    } else {
+      fprintf(fd, " %s()\n", fp->uf_name);
+    }
+  }
+  fprintf(fd, "\n");
+}
+
+/// Print the count and times for one function or function line.
+///
+/// @param prefer_self  when equal print only self time
+void prof_func_line(FILE *fd, int count, proftime_T *total, proftime_T *self, int prefer_self)
+{
+  if (count > 0) {
+    fprintf(fd, "%5d ", count);
+    if (prefer_self && profile_equal(*total, *self)) {
+      fprintf(fd, "           ");
+    } else {
+      fprintf(fd, "%s ", profile_msg(*total));
+    }
+    if (!prefer_self && profile_equal(*total, *self)) {
+      fprintf(fd, "           ");
+    } else {
+      fprintf(fd, "%s ", profile_msg(*self));
+    }
+  } else {
+    fprintf(fd, "                            ");
+  }
+}
+
+/// Compare function for total time sorting.
+int prof_total_cmp(const void *s1, const void *s2)
+{
+  ufunc_T *p1 = *(ufunc_T **)s1;
+  ufunc_T *p2 = *(ufunc_T **)s2;
+  return profile_cmp(p1->uf_tm_total, p2->uf_tm_total);
+}
+
+/// Compare function for self time sorting.
+int prof_self_cmp(const void *s1, const void *s2)
+{
+  ufunc_T *p1 = *(ufunc_T **)s1;
+  ufunc_T *p2 = *(ufunc_T **)s2;
+  return profile_cmp(p1->uf_tm_self, p2->uf_tm_self);
+}
+
+/// Start profiling function "fp".
+void func_do_profile(ufunc_T *fp)
+{
+  int len = fp->uf_lines.ga_len;
+
+  if (!fp->uf_prof_initialized) {
+    if (len == 0) {
+      len = 1;  // avoid getting error for allocating zero bytes
+    }
+    fp->uf_tm_count = 0;
+    fp->uf_tm_self = profile_zero();
+    fp->uf_tm_total = profile_zero();
+
+    if (fp->uf_tml_count == NULL) {
+      fp->uf_tml_count = xcalloc((size_t)len, sizeof(int));
+    }
+
+    if (fp->uf_tml_total == NULL) {
+      fp->uf_tml_total = xcalloc((size_t)len, sizeof(proftime_T));
+    }
+
+    if (fp->uf_tml_self == NULL) {
+      fp->uf_tml_self = xcalloc((size_t)len, sizeof(proftime_T));
+    }
+
+    fp->uf_tml_idx = -1;
+    fp->uf_prof_initialized = true;
+  }
+
+  fp->uf_profiling = true;
+}
+
+/// Prepare profiling for entering a child or something else that is not
+/// counted for the script/function itself.
+/// Should always be called in pair with prof_child_exit().
+///
+/// @param tm  place to store waittime
+void prof_child_enter(proftime_T *tm)
+{
+  funccall_T *fc = get_current_funccal();
+
+  if (fc != NULL && fc->func->uf_profiling) {
+    fc->prof_child = profile_start();
+  }
+
+  script_prof_save(tm);
+}
+
+/// Take care of time spent in a child.
+/// Should always be called after prof_child_enter().
+///
+/// @param tm  where waittime was stored
+void prof_child_exit(proftime_T *tm)
+{
+  funccall_T *fc = get_current_funccal();
+
+  if (fc != NULL && fc->func->uf_profiling) {
+    fc->prof_child = profile_end(fc->prof_child);
+    // don't count waiting time
+    fc->prof_child = profile_sub_wait(*tm, fc->prof_child);
+    fc->func->uf_tm_children =
+      profile_add(fc->func->uf_tm_children, fc->prof_child);
+    fc->func->uf_tml_children =
+      profile_add(fc->func->uf_tml_children, fc->prof_child);
+  }
+  script_prof_restore(tm);
+}
+
+/// Called when starting to read a function line.
+/// "sourcing_lnum" must be correct!
+/// When skipping lines it may not actually be executed, but we won't find out
+/// until later and we need to store the time now.
+void func_line_start(void *cookie)
+{
+  funccall_T *fcp = (funccall_T *)cookie;
+  ufunc_T *fp = fcp->func;
+
+  if (fp->uf_profiling && sourcing_lnum >= 1
+      && sourcing_lnum <= fp->uf_lines.ga_len) {
+    fp->uf_tml_idx = sourcing_lnum - 1;
+    // Skip continuation lines.
+    while (fp->uf_tml_idx > 0 && FUNCLINE(fp, fp->uf_tml_idx) == NULL) {
+      fp->uf_tml_idx--;
+    }
+    fp->uf_tml_execed = false;
+    fp->uf_tml_start = profile_start();
+    fp->uf_tml_children = profile_zero();
+    fp->uf_tml_wait = profile_get_wait();
+  }
+}
+
+/// Called when actually executing a function line.
+void func_line_exec(void *cookie)
+{
+  funccall_T *fcp = (funccall_T *)cookie;
+  ufunc_T *fp = fcp->func;
+
+  if (fp->uf_profiling && fp->uf_tml_idx >= 0) {
+    fp->uf_tml_execed = true;
+  }
+}
+
+/// Called when done with a function line.
+void func_line_end(void *cookie)
+{
+  funccall_T *fcp = (funccall_T *)cookie;
+  ufunc_T *fp = fcp->func;
+
+  if (fp->uf_profiling && fp->uf_tml_idx >= 0) {
+    if (fp->uf_tml_execed) {
+      fp->uf_tml_count[fp->uf_tml_idx]++;
+      fp->uf_tml_start = profile_end(fp->uf_tml_start);
+      fp->uf_tml_start = profile_sub_wait(fp->uf_tml_wait, fp->uf_tml_start);
+      fp->uf_tml_total[fp->uf_tml_idx] =
+        profile_add(fp->uf_tml_total[fp->uf_tml_idx], fp->uf_tml_start);
+      fp->uf_tml_self[fp->uf_tml_idx] =
+        profile_self(fp->uf_tml_self[fp->uf_tml_idx], fp->uf_tml_start,
+                     fp->uf_tml_children);
+    }
+    fp->uf_tml_idx = -1;
+  }
 }
 
 /// globals for use in the startuptime related functionality (time_*).

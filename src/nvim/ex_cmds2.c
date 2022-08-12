@@ -54,17 +54,6 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 
-/// Growarray to store info about already sourced scripts.
-static garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
-#define SCRIPT_ITEM(id) (((scriptitem_T *)script_items.ga_data)[(id) - 1])
-
-// Struct used in sn_prl_ga for every line of a script.
-typedef struct sn_prl_S {
-  int snp_count;                ///< nr of times line was executed
-  proftime_T sn_prl_total;      ///< time spent in a line + children
-  proftime_T sn_prl_self;       ///< time spent in a line itself
-} sn_prl_T;
-
 /// Structure used to store info for each sourced file.
 /// It is shared between do_source() and getsourceline().
 /// This is required, because it needs to be handed to do_cmdline() and
@@ -90,52 +79,6 @@ struct source_cookie {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds2.c.generated.h"
 #endif
-
-static char *profile_fname = NULL;
-
-/// ":profile cmd args"
-void ex_profile(exarg_T *eap)
-{
-  static proftime_T pause_time;
-
-  char *e;
-  int len;
-
-  e = (char *)skiptowhite((char_u *)eap->arg);
-  len = (int)(e - eap->arg);
-  e = skipwhite(e);
-
-  if (len == 5 && STRNCMP(eap->arg, "start", 5) == 0 && *e != NUL) {
-    xfree(profile_fname);
-    profile_fname = (char *)expand_env_save_opt((char_u *)e, true);
-    do_profiling = PROF_YES;
-    profile_set_wait(profile_zero());
-    set_vim_var_nr(VV_PROFILING, 1L);
-  } else if (do_profiling == PROF_NONE) {
-    emsg(_("E750: First use \":profile start {fname}\""));
-  } else if (STRCMP(eap->arg, "stop") == 0) {
-    profile_dump();
-    do_profiling = PROF_NONE;
-    set_vim_var_nr(VV_PROFILING, 0L);
-    profile_reset();
-  } else if (STRCMP(eap->arg, "pause") == 0) {
-    if (do_profiling == PROF_YES) {
-      pause_time = profile_start();
-    }
-    do_profiling = PROF_PAUSED;
-  } else if (STRCMP(eap->arg, "continue") == 0) {
-    if (do_profiling == PROF_PAUSED) {
-      pause_time = profile_end(pause_time);
-      profile_set_wait(profile_add(profile_get_wait(), pause_time));
-    }
-    do_profiling = PROF_YES;
-  } else if (STRCMP(eap->arg, "dump") == 0) {
-    profile_dump();
-  } else {
-    // The rest is similar to ":breakadd".
-    ex_breakadd(eap);
-  }
-}
 
 void ex_ruby(exarg_T *eap)
 {
@@ -180,134 +123,6 @@ void ex_perlfile(exarg_T *eap)
 void ex_perldo(exarg_T *eap)
 {
   script_host_do_range("perl", eap);
-}
-
-// Command line expansion for :profile.
-static enum {
-  PEXP_SUBCMD,          ///< expand :profile sub-commands
-  PEXP_FUNC,  ///< expand :profile func {funcname}
-} pexpand_what;
-
-static char *pexpand_cmds[] = {
-  "continue",
-  "dump",
-  "file",
-  "func",
-  "pause",
-  "start",
-  "stop",
-  NULL
-};
-
-/// Function given to ExpandGeneric() to obtain the profile command
-/// specific expansion.
-char *get_profile_name(expand_T *xp, int idx)
-  FUNC_ATTR_PURE
-{
-  switch (pexpand_what) {
-  case PEXP_SUBCMD:
-    return pexpand_cmds[idx];
-  // case PEXP_FUNC: TODO
-  default:
-    return NULL;
-  }
-}
-
-/// Handle command line completion for :profile command.
-void set_context_in_profile_cmd(expand_T *xp, const char *arg)
-{
-  // Default: expand subcommands.
-  xp->xp_context = EXPAND_PROFILE;
-  pexpand_what = PEXP_SUBCMD;
-  xp->xp_pattern = (char *)arg;
-
-  char_u *const end_subcmd = skiptowhite((const char_u *)arg);
-  if (*end_subcmd == NUL) {
-    return;
-  }
-
-  if ((const char *)end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
-    xp->xp_context = EXPAND_FILES;
-    xp->xp_pattern = skipwhite((char *)end_subcmd);
-    return;
-  }
-
-  // TODO(tarruda): expand function names after "func"
-  xp->xp_context = EXPAND_NOTHING;
-}
-
-/// Dump the profiling info.
-void profile_dump(void)
-{
-  FILE *fd;
-
-  if (profile_fname != NULL) {
-    fd = os_fopen(profile_fname, "w");
-    if (fd == NULL) {
-      semsg(_(e_notopen), profile_fname);
-    } else {
-      script_dump_profile(fd);
-      func_dump_profile(fd);
-      fclose(fd);
-    }
-  }
-}
-
-/// Reset all profiling information.
-static void profile_reset(void)
-{
-  // Reset sourced files.
-  for (int id = 1; id <= script_items.ga_len; id++) {
-    scriptitem_T *si = &SCRIPT_ITEM(id);
-    if (si->sn_prof_on) {
-      si->sn_prof_on      = false;
-      si->sn_pr_force     = false;
-      si->sn_pr_child     = profile_zero();
-      si->sn_pr_nest      = 0;
-      si->sn_pr_count     = 0;
-      si->sn_pr_total     = profile_zero();
-      si->sn_pr_self      = profile_zero();
-      si->sn_pr_start     = profile_zero();
-      si->sn_pr_children  = profile_zero();
-      ga_clear(&si->sn_prl_ga);
-      si->sn_prl_start    = profile_zero();
-      si->sn_prl_children = profile_zero();
-      si->sn_prl_wait     = profile_zero();
-      si->sn_prl_idx      = -1;
-      si->sn_prl_execed   = 0;
-    }
-  }
-
-  // Reset functions.
-  size_t n  = func_hashtab.ht_used;
-  hashitem_T *hi = func_hashtab.ht_array;
-
-  for (; n > (size_t)0; hi++) {
-    if (!HASHITEM_EMPTY(hi)) {
-      n--;
-      ufunc_T *uf = HI2UF(hi);
-      if (uf->uf_prof_initialized) {
-        uf->uf_profiling    = 0;
-        uf->uf_tm_count     = 0;
-        uf->uf_tm_total     = profile_zero();
-        uf->uf_tm_self      = profile_zero();
-        uf->uf_tm_children  = profile_zero();
-
-        for (int i = 0; i < uf->uf_lines.ga_len; i++) {
-          uf->uf_tml_count[i] = 0;
-          uf->uf_tml_total[i] = uf->uf_tml_self[i] = 0;
-        }
-
-        uf->uf_tml_start    = profile_zero();
-        uf->uf_tml_children = profile_zero();
-        uf->uf_tml_wait     = profile_zero();
-        uf->uf_tml_idx      = -1;
-        uf->uf_tml_execed   = 0;
-      }
-    }
-  }
-
-  XFREE_CLEAR(profile_fname);
 }
 
 /// Start profiling a script.
@@ -356,23 +171,8 @@ void script_prof_restore(proftime_T *tm)
   }
 }
 
-static proftime_T inchar_time;
-
-/// Called when starting to wait for the user to type a character.
-void prof_inchar_enter(void)
-{
-  inchar_time = profile_start();
-}
-
-/// Called when finished waiting for the user to type a character.
-void prof_inchar_exit(void)
-{
-  inchar_time = profile_end(inchar_time);
-  profile_set_wait(profile_add(profile_get_wait(), inchar_time));
-}
-
 /// Dump the profiling results for all scripts in file "fd".
-static void script_dump_profile(FILE *fd)
+void script_dump_profile(FILE *fd)
 {
   scriptitem_T *si;
   FILE *sfd;
@@ -436,17 +236,6 @@ static void script_dump_profile(FILE *fd)
       fprintf(fd, "\n");
     }
   }
-}
-
-/// @return  true when a function defined in the current script should be
-///          profiled.
-bool prof_def_func(void)
-  FUNC_ATTR_PURE
-{
-  if (current_sctx.sc_sid > 0) {
-    return SCRIPT_ITEM(current_sctx.sc_sid).sn_pr_force;
-  }
-  return false;
 }
 
 /// If 'autowrite' option set, try to write the file.

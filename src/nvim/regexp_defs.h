@@ -15,7 +15,6 @@
 #include <stdbool.h>
 
 #include "nvim/pos.h"
-#include "nvim/profile.h"
 #include "nvim/types.h"
 
 /*

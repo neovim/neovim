@@ -5,6 +5,38 @@
 
 #include "nvim/ex_docmd.h"
 
+typedef struct scriptitem_S {
+  char_u *sn_name;
+  bool sn_prof_on;              ///< true when script is/was profiled
+  bool sn_pr_force;             ///< forceit: profile functions in this script
+  proftime_T sn_pr_child;       ///< time set when going into first child
+  int sn_pr_nest;               ///< nesting for sn_pr_child
+  // profiling the script as a whole
+  int sn_pr_count;              ///< nr of times sourced
+  proftime_T sn_pr_total;       ///< time spent in script + children
+  proftime_T sn_pr_self;        ///< time spent in script itself
+  proftime_T sn_pr_start;       ///< time at script start
+  proftime_T sn_pr_children;    ///< time in children after script start
+  // profiling the script per line
+  garray_T sn_prl_ga;           ///< things stored for every line
+  proftime_T sn_prl_start;      ///< start time for current line
+  proftime_T sn_prl_children;   ///< time spent in children for this line
+  proftime_T sn_prl_wait;       ///< wait start time for current line
+  linenr_T sn_prl_idx;          ///< index of line being timed; -1 if none
+  int sn_prl_execed;            ///< line being timed was executed
+} scriptitem_T;
+
+/// Growarray to store info about already sourced scripts.
+extern garray_T script_items;
+#define SCRIPT_ITEM(id) (((scriptitem_T *)script_items.ga_data)[(id) - 1])
+
+/// Struct used in sn_prl_ga for every line of a script.
+typedef struct sn_prl_S {
+  int snp_count;                ///< nr of times line was executed
+  proftime_T sn_prl_total;      ///< time spent in a line + children
+  proftime_T sn_prl_self;       ///< time spent in a line itself
+} sn_prl_T;
+
 typedef void (*DoInRuntimepathCB)(char *, void *);
 
 typedef struct {

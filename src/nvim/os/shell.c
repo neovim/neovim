@@ -25,6 +25,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/path.h"
+#include "nvim/profile.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
