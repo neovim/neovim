@@ -5396,8 +5396,10 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
 
   buf->b_signcols.sentinel = 0;
 
+  int *col_pris = buf->b_signcols.col_pris;
+
   for (int i = 0; i < SIGN_SHOW_MAX; i++) {
-    buf->b_signcols.col_pris[i] = -1;
+    col_pris[i] = -1;
   }
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
@@ -5405,7 +5407,7 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
       // Counted all signs, now add extmark signs
       if (curline > 0) {
         linesum += decor_signcols(buf, &decor_state, (int)curline - 1, (int)curline - 1,
-                                  maximum - linesum);
+                                  maximum - linesum, &col_pris[linesum]);
       }
       curline = sign->se_lnum;
       if (linesum > signcols) {
@@ -5418,8 +5420,8 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
       linesum = 0;
     }
     if (sign->se_has_text_or_icon) {
-      if (sign->se_priority > buf->b_signcols.col_pris[linesum]) {
-        buf->b_signcols.col_pris[linesum] = sign->se_priority;
+      if (sign->se_priority > col_pris[linesum]) {
+        col_pris[linesum] = sign->se_priority;
       }
       linesum++;
     }
@@ -5427,7 +5429,7 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
 
   if (curline > 0) {
     linesum += decor_signcols(buf, &decor_state, (int)curline - 1, (int)curline - 1,
-                              maximum - linesum);
+                              maximum - linesum, &col_pris[linesum]);
   }
   if (linesum > signcols) {
     signcols = linesum;
@@ -5437,7 +5439,8 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
   }
 
   // Check extmarks between signs
-  linesum = decor_signcols(buf, &decor_state, 0, (int)buf->b_ml.ml_line_count - 1, maximum);
+  linesum = decor_signcols(buf, &decor_state, 0, (int)buf->b_ml.ml_line_count - 1,
+                           maximum, col_pris);
 
   if (linesum > signcols) {
     signcols = linesum;
@@ -5516,7 +5519,7 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
     linesum++;
   }
   linesum += decor_signcols(buf, &decor_state, (int)s->se_lnum - 1, (int)s->se_lnum - 1,
-                            SIGN_SHOW_MAX - linesum);
+                            SIGN_SHOW_MAX - linesum, NULL);
 
   if (linesum > buf->b_signcols.size) {
     buf->b_signcols.size = linesum;

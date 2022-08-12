@@ -416,12 +416,13 @@ next_mark:
 
 // Get the maximum required amount of sign columns needed between row and
 // end_row.
-int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max)
+int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max, int *col_pri)
 {
   int count = 0;         // count for the number of signs on a given row
   int count_remove = 0;  // how much to decrement count by when iterating marks for a new row
   int signcols = 0;      // highest value of count
   int currow = -1;       // current row
+  int col_pri_idx = 0;
 
   if (max <= 1 && buf->b_signs >= (size_t)max) {
     return max;
@@ -449,6 +450,22 @@ int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max)
 
     if (!decor.sign_text) {
       goto next_mark;
+    }
+
+    // Unlike the sign list, priorities in the mark tree are not pre-sorted
+    // so we need to mesh it in
+    if (col_pri != NULL) {
+      int i;
+      for (i = col_pri_idx; i > 0; i--) {
+        if (col_pri[i-1] >= decor.priority) {
+          break;
+        }
+        col_pri[i] = col_pri[i-1];
+      }
+      col_pri[i] = decor.priority;
+      if (col_pri_idx < max - 1) {
+        col_pri_idx++;
+      }
     }
 
     if (mark.pos.row > currow) {

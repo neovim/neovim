@@ -638,5 +638,45 @@ describe('Signs', function()
                     |
       ]])
     end)
+
+    it('can align signs (extmarks)', function()
+      screen:try_resize(10, 4)
+
+      meths.set_option_value('signcolumn', 'auto:3', {})
+      curbufmeths.set_lines(0, -1, false, {'', '', ''})
+
+      local ns = meths.create_namespace('signs')
+
+      curbufmeths.set_extmark(ns, 0, -1, {sign_text = 'A', priority=300})
+      curbufmeths.set_extmark(ns, 0, -1, {sign_text = 'B', priority=200})
+      curbufmeths.set_extmark(ns, 0, -1, {sign_text = 'C', priority=100})
+      curbufmeths.set_extmark(ns, 1, -1, {sign_text = 'B', priority=200})
+      curbufmeths.set_extmark(ns, 1, -1, {sign_text = 'C', priority=100})
+      curbufmeths.set_extmark(ns, 2, -1, {sign_text = 'C', priority=100})
+
+      screen:expect([[
+        A B C ^      |
+        {2:  }B C       |
+        {2:    }C       |
+                    |
+      ]])
+
+      meths.set_option_value('signcolumn', 'auto:2', {})
+
+      screen:expect([[
+        A B ^        |
+        B C         |
+        {2:  }C         |
+                    |
+      ]])
+
+      meths.set_option_value('signcolumn', 'auto:1', {})
+      screen:expect([[
+        A ^          |
+        B           |
+        C           |
+                    |
+      ]])
+    end)
   end)
 end)
