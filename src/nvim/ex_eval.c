@@ -151,8 +151,8 @@ int aborted_in_try(void)
 bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
   FUNC_ATTR_NONNULL_ALL
 {
-  struct msglist *elem;
-  struct msglist **plist;
+  msglist_T *elem;
+  msglist_T **plist;
 
   /*
    * Do nothing when displaying the interrupt message or reporting an
@@ -254,7 +254,7 @@ bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
         plist = &(*plist)->next;
       }
 
-      elem = xmalloc(sizeof(struct msglist));
+      elem = xmalloc(sizeof(msglist_T));
       elem->msg = xstrdup(mesg);
       elem->next = NULL;
       elem->throw_msg = NULL;
@@ -281,9 +281,9 @@ bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
 }
 
 /// Free a "msg_list" and the messages it contains.
-static void free_msglist(struct msglist *l)
+static void free_msglist(msglist_T *l)
 {
-  struct msglist *messages, *next;
+  msglist_T *messages, *next;
 
   messages = l;
   while (messages != NULL) {
@@ -389,7 +389,7 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
 
   if (type == ET_ERROR) {
     *should_free = true;
-    mesg = ((struct msglist *)value)->throw_msg;
+    mesg = ((msglist_T *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
       size_t cmdlen = STRLEN(cmdname);
       ret = xstrnsave("Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
@@ -469,7 +469,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
   if (type == ET_ERROR) {
     // Store the original message and prefix the exception value with
     // "Vim:" or, if a command name is given, "Vim(cmdname):".
-    excp->messages = (struct msglist *)value;
+    excp->messages = (msglist_T *)value;
   }
 
   excp->value = get_exception_string(value, type, cmdname, &should_free);

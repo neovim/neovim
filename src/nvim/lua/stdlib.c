@@ -20,6 +20,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/func_attr.h"

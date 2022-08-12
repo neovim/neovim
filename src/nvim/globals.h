@@ -6,7 +6,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/event/loop.h"
-#include "nvim/ex_eval.h"
+#include "nvim/ex_eval_defs.h"
 #include "nvim/iconv.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
@@ -296,7 +296,7 @@ EXTERN int force_abort INIT(= false);
 /// same as the "msg" field of that element, but can be identical to the "msg"
 /// field of a later list element, when the "emsg_severe" flag was set when the
 /// emsg() call was made.
-EXTERN struct msglist **msg_list INIT(= NULL);
+EXTERN msglist_T **msg_list INIT(= NULL);
 
 /// When set, don't convert an error to an exception.  Used when displaying the
 /// interrupt message or reporting an exception that is still uncaught at the

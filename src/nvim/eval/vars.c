@@ -15,6 +15,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_eval.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/search.h"
