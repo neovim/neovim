@@ -30,6 +30,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
 #include "nvim/fileio.h"

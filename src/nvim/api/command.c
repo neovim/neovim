@@ -11,6 +11,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/autocmd.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_eval.h"
 #include "nvim/lua/executor.h"
 #include "nvim/ops.h"
 #include "nvim/regexp.h"

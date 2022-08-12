@@ -14,6 +14,7 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"

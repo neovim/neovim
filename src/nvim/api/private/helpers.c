@@ -19,6 +19,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_eval.h"
 #include "nvim/extmark.h"
 #include "nvim/fileio.h"
 #include "nvim/highlight_group.h"
@@ -54,7 +55,7 @@ void try_enter(TryState *const tstate)
   //              save_dbg_stuff()/restore_dbg_stuff().
   *tstate = (TryState) {
     .current_exception = current_exception,
-    .msg_list = (const struct msglist *const *)msg_list,
+    .msg_list = (const msglist_T *const *)msg_list,
     .private_msg_list = NULL,
     .trylevel = trylevel,
     .got_int = got_int,
@@ -89,7 +90,7 @@ bool try_leave(const TryState *const tstate, Error *const err)
   assert(msg_list == &tstate->private_msg_list);
   assert(*msg_list == NULL);
   assert(current_exception == NULL);
-  msg_list = (struct msglist **)tstate->msg_list;
+  msg_list = (msglist_T **)tstate->msg_list;
   current_exception = tstate->current_exception;
   trylevel = tstate->trylevel;
   got_int = tstate->got_int;

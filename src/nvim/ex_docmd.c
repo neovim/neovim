@@ -321,8 +321,8 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   int *dbg_tick = NULL;            // ptr to dbg_tick field in cookie
   struct dbg_stuff debug_saved;         // saved things for debug mode
   int initial_trylevel;
-  struct msglist **saved_msg_list = NULL;
-  struct msglist *private_msg_list;
+  msglist_T **saved_msg_list = NULL;
+  msglist_T *private_msg_list;
 
   // "fgetline" and "cookie" passed to do_one_cmd()
   char *(*cmd_getline)(int, void *, int, bool);
@@ -802,8 +802,8 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       char *p = NULL;
       char *saved_sourcing_name;
       linenr_T saved_sourcing_lnum;
-      struct msglist *messages = NULL;
-      struct msglist *next;
+      msglist_T *messages = NULL;
+      msglist_T *next;
 
       /*
        * If the uncaught exception is a user exception, report it as an

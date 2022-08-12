@@ -21,6 +21,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/event/stream.h"
+#include "nvim/ex_eval.h"
 #include "nvim/fileio.h"
 #include "nvim/if_cscope.h"
 #include "nvim/memory.h"
