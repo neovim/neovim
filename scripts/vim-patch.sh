@@ -245,6 +245,10 @@ preprocess_patch() {
   LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/profiler\(\.[ch]\)/\1\/profile\2/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename scriptfile.c to runtime.c
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/scriptfile\(\.[ch]\)/\1\/runtime\2/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename session.c to ex_session.c
   LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/session\(\.[ch]\)/\1\/ex_session\2/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
