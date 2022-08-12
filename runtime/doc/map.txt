@@ -1452,6 +1452,9 @@ Incremental preview ~
 Commands can show an 'inccommand' (as-you-type) preview by defining a preview
 handler (only from Lua, see |nvim_create_user_command()|).
 
+Before the preview callback is executed, Nvim will temporarily disable
+'cursorline' and 'cursorcolumn' to avoid highlighting issues.
+
 The preview callback must be a Lua function with this signature: >
 
     function cmdpreview(opts, ns, buf)
