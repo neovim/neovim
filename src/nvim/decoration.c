@@ -414,6 +414,27 @@ next_mark:
   }
 }
 
+static void update_sign_col_pri(DecorPriority decor_pri, int *col_pri_idx, int col_pri[], int max)
+{
+  if (col_pri == NULL) {
+    return;
+  }
+
+  // Unlike the sign list, priorities in the mark tree are not pre-sorted
+  // so we need to mesh it in
+  int i;
+  for (i = *col_pri_idx; i > 0; i--) {
+    if (col_pri[i-1] >= decor_pri) {
+      break;
+    }
+    col_pri[i] = col_pri[i-1];
+  }
+  col_pri[i] = decor_pri;
+  if (*col_pri_idx < max - 1) {
+    (*col_pri_idx)++;
+  }
+}
+
 // Get the maximum required amount of sign columns needed between row and
 // end_row.
 int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max, int *col_pri)
@@ -452,21 +473,7 @@ int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max,
       goto next_mark;
     }
 
-    // Unlike the sign list, priorities in the mark tree are not pre-sorted
-    // so we need to mesh it in
-    if (col_pri != NULL) {
-      int i;
-      for (i = col_pri_idx; i > 0; i--) {
-        if (col_pri[i-1] >= decor.priority) {
-          break;
-        }
-        col_pri[i] = col_pri[i-1];
-      }
-      col_pri[i] = decor.priority;
-      if (col_pri_idx < max - 1) {
-        col_pri_idx++;
-      }
-    }
+    update_sign_col_pri(decor.priority, &col_pri_idx, col_pri, max);
 
     if (mark.pos.row > currow) {
       count -= count_remove;
