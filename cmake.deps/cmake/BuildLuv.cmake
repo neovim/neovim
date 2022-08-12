@@ -56,11 +56,6 @@ set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
   "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
 
-# Replace luv default rockspec with the alternate one under the "rockspecs"
-# directory
-set(LUV_PATCH_COMMAND
-    ${CMAKE_COMMAND} -E copy_directory ${LUV_SRC_DIR}/rockspecs ${LUV_SRC_DIR})
-
 set(LUV_CONFIGURE_COMMAND_COMMON
   ${CMAKE_COMMAND} ${LUV_SRC_DIR}
   -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
@@ -90,7 +85,8 @@ endif()
 if(USE_BUNDLED_LIBUV)
   set(LUV_CONFIGURE_COMMAND_COMMON
     ${LUV_CONFIGURE_COMMAND_COMMON}
-    -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR})
+    -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_DIR}
+    -DLIBUV_LIBRARIES=uv_a)
 endif()
 
 if(MSVC)
@@ -127,6 +123,8 @@ BuildLuv(PATCH_COMMAND ${LUV_PATCH_COMMAND}
 list(APPEND THIRD_PARTY_DEPS luv-static)
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luv-static luajit)
+elseif(USE_BUNDLED_LUA)
+  add_dependencies(luv-static lua)
 endif()
 if(USE_BUNDLED_LIBUV)
   add_dependencies(luv-static libuv)
