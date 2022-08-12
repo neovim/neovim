@@ -668,6 +668,21 @@ local extension = {
   moo = 'moo',
   moon = 'moonscript',
   mp = 'mp',
+  mpiv = function(path, bufnr)
+    return 'mp', function(b)
+      vim.b[b].mp_metafun = 1
+    end
+  end,
+  mpvi = function(path, bufnr)
+    return 'mp', function(b)
+      vim.b[b].mp_metafun = 1
+    end
+  end,
+  mpxl = function(path, bufnr)
+    return 'mp', function(b)
+      vim.b[b].mp_metafun = 1
+    end
+  end,
   mof = 'msidl',
   odl = 'msidl',
   msql = 'msql',
