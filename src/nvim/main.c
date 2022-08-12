@@ -151,8 +151,10 @@ bool event_teardown(void)
     return true;
   }
 
-  multiqueue_process_events(main_loop.events);
-  loop_poll_events(&main_loop, 0);  // Drain thread_events, fast_events.
+  do {
+    multiqueue_process_events(main_loop.events);
+    loop_poll_events(&main_loop, 0);  // Drain thread_events, fast_events.
+  } while (!multiqueue_empty(main_loop.events));
   input_stop();
   channel_teardown();
   process_teardown(&main_loop);

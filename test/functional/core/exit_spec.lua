@@ -104,3 +104,11 @@ describe(':cquit', function()
     test_cq('cquit -1', nil, 'nvim_exec2(): Vim(cquit):E488: Trailing characters: -1: cquit -1')
   end)
 end)
+
+it('no memory leak with nested vim.defer_fn() on exit #19727', function()
+  helpers.clear()
+  funcs.system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-c',
+                'lua ' .. ('vim.defer_fn(function() '):rep(5) .. (' end, 0)'):rep(5),
+                '-c', 'quit'})
+  eq(0, eval('v:shell_error'))
+end)
