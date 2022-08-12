@@ -1845,13 +1845,14 @@ api.nvim_create_autocmd('VimLeavePre', {
   end,
 })
 
+---@private
 --- Sends an async request for all active clients attached to the
 --- buffer.
 ---
 ---@param bufnr (number) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
----@param params (optional, table) Parameters to send to the server
----@param handler (optional, function) See |lsp-handler|
+---@param params table|nil Parameters to send to the server
+---@param handler function|nil See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
 ---@returns 2-tuple:
