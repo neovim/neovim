@@ -19,7 +19,6 @@
 #include "nvim/cursor_shape.h"
 #include "nvim/eval.h"
 #include "nvim/eval/vars.h"
-#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"

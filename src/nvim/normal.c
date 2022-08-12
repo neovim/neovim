@@ -23,6 +23,7 @@
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/edit.h"
+#include "nvim/eval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds.h"

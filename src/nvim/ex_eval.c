@@ -16,12 +16,12 @@
 #include "nvim/debugger.h"
 #include "nvim/eval.h"
 #include "nvim/eval/userfunc.h"
-#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"
 

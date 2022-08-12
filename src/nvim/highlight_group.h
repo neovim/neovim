@@ -1,7 +1,8 @@
 #ifndef NVIM_HIGHLIGHT_GROUP_H
 #define NVIM_HIGHLIGHT_GROUP_H
 
-#include "nvim/eval.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/types.h"
 
 #define MAX_HL_ID 20000   // maximum value for a highlight ID.

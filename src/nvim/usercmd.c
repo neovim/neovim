@@ -12,6 +12,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/lua/executor.h"

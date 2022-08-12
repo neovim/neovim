@@ -10,7 +10,6 @@
 #include "nvim/ascii.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
-#include "nvim/ex_cmds2.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/keycodes.h"

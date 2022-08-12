@@ -20,6 +20,7 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/eval.h"
 #include "nvim/event/stream.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fileio.h"

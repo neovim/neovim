@@ -10,7 +10,6 @@
 #include "nvim/debugger.h"
 #include "nvim/eval.h"
 #include "nvim/eval/userfunc.h"
-#include "nvim/ex_cmds2.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/globals.h"  // for the global `time_fd` (startuptime)

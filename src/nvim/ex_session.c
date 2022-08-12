@@ -18,7 +18,6 @@
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
-#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
@@ -34,6 +33,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
+#include "nvim/runtime.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
