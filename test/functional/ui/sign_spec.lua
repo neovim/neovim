@@ -594,12 +594,41 @@ describe('Signs', function()
                                                              |
       ]])
     end)
+  end)
 
-    it('can align signs', function()
+  describe('alignment', function()
+    before_each(function()
       screen:try_resize(10, 4)
-
-      meths.set_option_value('signcolumn', 'auto:3', {})
       curbufmeths.set_lines(0, -1, false, {'', '', ''})
+    end)
+
+    local function check()
+      meths.set_option_value('signcolumn', 'auto:3', {})
+      screen:expect([[
+        A B C ^      |
+        {2:  }B C       |
+        {2:    }C       |
+                    |
+      ]])
+
+      meths.set_option_value('signcolumn', 'auto:2', {})
+      screen:expect([[
+        A B ^        |
+        B C         |
+        {2:  }C         |
+                    |
+      ]])
+
+      meths.set_option_value('signcolumn', 'auto:1', {})
+      screen:expect([[
+        A ^          |
+        B           |
+        C           |
+                    |
+      ]])
+    end
+
+    it('works with legacy signs', function()
 
       funcs.sign_define('SignA', { text = 'A' })
       funcs.sign_define('SignB', { text = 'B' })
@@ -614,69 +643,42 @@ describe('Signs', function()
 
       funcs.sign_place(0, '', 'SignC', 1, {lnum = 3, priority=100})
 
-      screen:expect([[
-        A B C ^      |
-        {2:  }B C       |
-        {2:    }C       |
-                    |
-      ]])
-
-      meths.set_option_value('signcolumn', 'auto:2', {})
-
-      screen:expect([[
-        A B ^        |
-        B C         |
-        {2:  }C         |
-                    |
-      ]])
-
-      meths.set_option_value('signcolumn', 'auto:1', {})
-      screen:expect([[
-        A ^          |
-        B           |
-        C           |
-                    |
-      ]])
+      check()
     end)
 
-    it('can align signs (extmarks)', function()
-      screen:try_resize(10, 4)
-
-      meths.set_option_value('signcolumn', 'auto:3', {})
-      curbufmeths.set_lines(0, -1, false, {'', '', ''})
-
+    it('works with extmarks', function()
       local ns = meths.create_namespace('signs')
 
       curbufmeths.set_extmark(ns, 0, -1, {sign_text = 'A', priority=300})
       curbufmeths.set_extmark(ns, 0, -1, {sign_text = 'B', priority=200})
       curbufmeths.set_extmark(ns, 0, -1, {sign_text = 'C', priority=100})
+
       curbufmeths.set_extmark(ns, 1, -1, {sign_text = 'B', priority=200})
       curbufmeths.set_extmark(ns, 1, -1, {sign_text = 'C', priority=100})
+
       curbufmeths.set_extmark(ns, 2, -1, {sign_text = 'C', priority=100})
 
-      screen:expect([[
-        A B C ^      |
-        {2:  }B C       |
-        {2:    }C       |
-                    |
-      ]])
+      check()
+    end)
 
-      meths.set_option_value('signcolumn', 'auto:2', {})
+    it('works with mixed signs', function()
 
-      screen:expect([[
-        A B ^        |
-        B C         |
-        {2:  }C         |
-                    |
-      ]])
+      local ns = meths.create_namespace('signs')
 
-      meths.set_option_value('signcolumn', 'auto:1', {})
-      screen:expect([[
-        A ^          |
-        B           |
-        C           |
-                    |
-      ]])
+      funcs.sign_define('SignA', { text = 'A' })
+      funcs.sign_define('SignB', { text = 'B' })
+      funcs.sign_define('SignC', { text = 'C' })
+
+      funcs.sign_place(0, '', 'SignA', 1, {lnum = 1, priority=300})
+      funcs.sign_place(0, '', 'SignB', 1, {lnum = 1, priority=200})
+      curbufmeths.set_extmark(ns, 0, -1, {sign_text = 'C', priority=100})
+
+      curbufmeths.set_extmark(ns, 1, -1, {sign_text = 'B', priority=200})
+      funcs.sign_place(0, '', 'SignC', 1, {lnum = 2, priority=100})
+
+      curbufmeths.set_extmark(ns, 2, -1, {sign_text = 'C', priority=100})
+
+      check()
     end)
   end)
 end)
