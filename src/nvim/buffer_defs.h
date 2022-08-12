@@ -873,6 +873,7 @@ struct file_buffer {
     bool valid;                 // calculated sign columns is valid
     linenr_T sentinel;          // a line number which is holding up the signcolumn
     int max;                    // Maximum value size is valid for.
+    int col_pris[SIGN_SHOW_MAX];
   } b_signcols;
 
   Terminal *terminal;           // Terminal instance associated with the buffer

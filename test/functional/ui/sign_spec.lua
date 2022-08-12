@@ -1,6 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
+local funcs = helpers.funcs
+local meths = helpers.meths
+local curbufmeths = helpers.curbufmeths
 local source = helpers.source
 
 describe('Signs', function()
@@ -589,6 +592,50 @@ describe('Signs', function()
         {0:~                                                    }|
         {0:~                                                    }|
                                                              |
+      ]])
+    end)
+
+    it('can align signs', function()
+      screen:try_resize(10, 4)
+
+      meths.set_option_value('signcolumn', 'auto:3', {})
+      curbufmeths.set_lines(0, -1, false, {'', '', ''})
+
+      funcs.sign_define('SignA', { text = 'A' })
+      funcs.sign_define('SignB', { text = 'B' })
+      funcs.sign_define('SignC', { text = 'C' })
+
+      funcs.sign_place(0, '', 'SignA', 1, {lnum = 1, priority=300})
+      funcs.sign_place(0, '', 'SignB', 1, {lnum = 1, priority=200})
+      funcs.sign_place(0, '', 'SignC', 1, {lnum = 1, priority=100})
+
+      funcs.sign_place(0, '', 'SignB', 1, {lnum = 2, priority=200})
+      funcs.sign_place(0, '', 'SignC', 1, {lnum = 2, priority=100})
+
+      funcs.sign_place(0, '', 'SignC', 1, {lnum = 3, priority=100})
+
+      screen:expect([[
+        A B C ^      |
+        {2:  }B C       |
+        {2:    }C       |
+                    |
+      ]])
+
+      meths.set_option_value('signcolumn', 'auto:2', {})
+
+      screen:expect([[
+        A B ^        |
+        B C         |
+        {2:  }C         |
+                    |
+      ]])
+
+      meths.set_option_value('signcolumn', 'auto:1', {})
+      screen:expect([[
+        A ^          |
+        B           |
+        C           |
+                    |
       ]])
     end)
   end)

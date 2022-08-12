@@ -2405,7 +2405,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
   // If this line has a sign with line highlighting set line_attr.
   // TODO(bfredl, vigoux): this should not take priority over decoration!
-  sign_attrs_T *sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1);
+  sign_attrs_T *sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1, NULL);
   if (sattr != NULL) {
     line_attr = sattr->sat_linehl;
   }
@@ -2713,7 +2713,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           // in 'lnum', then display the sign instead of the line
           // number.
           if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
-              && num_signs > 0 && sign_get_attr(SIGN_TEXT, sattrs, 0, 1)) {
+              && num_signs > 0
+              && sign_get_attr(SIGN_TEXT, sattrs, 0, 1, buf->b_signcols.col_pris)) {
             get_sign_display_info(true, wp, lnum, sattrs, row,
                                   startrow, filler_lines, filler_todo,
                                   &c_extra, &c_final, extra, sizeof(extra),
@@ -4426,7 +4427,7 @@ static bool use_cursor_line_nr(win_T *wp, linenr_T lnum, int row, int startrow, 
 static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
                                 sign_attrs_T *sattrs)
 {
-  sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
+  sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1, NULL);
   if (num_sattr != NULL) {
     // :sign defined with "numhl" highlight.
     return num_sattr->sat_numhl;
@@ -4479,7 +4480,8 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
   }
 
   if (row == startrow + filler_lines && filler_todo <= 0) {
-    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, sign_idx, wp->w_scwidth);
+    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, sign_idx, wp->w_scwidth,
+                                        wp->w_buffer->b_signcols.col_pris);
     if (sattr != NULL) {
       *pp_extra = sattr->sat_text;
       if (*pp_extra != NULL) {

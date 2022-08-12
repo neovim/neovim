@@ -433,6 +433,27 @@ static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char_u *group
   return (linenr_T)0;
 }
 
+static int sign_col_pri_idx_offset(int col, int sat_pri, int col_pris[], int max)
+{
+  if (col_pris == NULL) {
+    return 0;
+  }
+
+  int idx_offset = 0;
+
+  for (int j = col; j < SIGN_SHOW_MAX; j++) {
+    if (sat_pri >= col_pris[j]) {
+      break;
+    }
+    idx_offset++;
+    if (idx_offset >= max) {
+      return max;
+    }
+  }
+
+  return idx_offset;
+}
+
 /// Return the sign attrs which has the attribute specified by 'type'. Returns
 /// NULL if a sign is not found with the specified attribute.
 /// @param type Type of sign to look for
@@ -442,15 +463,30 @@ static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char_u *group
 /// @param max_signs the number of signs, with priority for the ones
 ///        with the highest Ids.
 /// @return Attrs of the matching sign, or NULL
-sign_attrs_T *sign_get_attr(SignType type, sign_attrs_T sattrs[], int idx, int max_signs)
+sign_attrs_T *sign_get_attr(SignType type, sign_attrs_T sattrs[], int idx, int max_signs,
+                            int col_pris[])
 {
   int match_idx = 0;
+
+  int text_signs = 0;
+  if (col_pris != NULL) {
+    for (int i = 0; i < SIGN_SHOW_MAX; i++) {
+      if (type == SIGN_TEXT && sattrs[i].sat_text != NULL) {
+        text_signs++;
+      }
+    }
+  }
+
+  int remain = MAX(0, max_signs - text_signs);
 
   for (int i = 0; i < SIGN_SHOW_MAX; i++) {
     if ((type == SIGN_TEXT && sattrs[i].sat_text != NULL)
         || (type == SIGN_LINEHL && sattrs[i].sat_linehl != 0)
         || (type == SIGN_NUMHL && sattrs[i].sat_numhl != 0)) {
-      if (match_idx == idx) {
+      // Offset the idx depending on the column priorities
+      int idx_offset = sign_col_pri_idx_offset(match_idx, sattrs[i].sat_prio, col_pris, remain);
+
+      if (match_idx + idx_offset == idx) {
         return &sattrs[i];
       }
       match_idx++;

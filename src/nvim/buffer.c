@@ -5396,6 +5396,10 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
 
   buf->b_signcols.sentinel = 0;
 
+  for (int i = 0; i < SIGN_SHOW_MAX; i++) {
+    buf->b_signcols.col_pris[i] = -1;
+  }
+
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (sign->se_lnum > curline) {
       // Counted all signs, now add extmark signs
@@ -5414,6 +5418,9 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
       linesum = 0;
     }
     if (sign->se_has_text_or_icon) {
+      if (sign->se_priority > buf->b_signcols.col_pris[linesum]) {
+        buf->b_signcols.col_pris[linesum] = sign->se_priority;
+      }
       linesum++;
     }
   }
@@ -5451,6 +5458,9 @@ static int buf_signcols_inner(buf_T *buf, int maximum)
 /// @param line2 end of region being deleted
 void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
 {
+  // TODO(lewis6991): Need to invalidate so b_signcols.col_pris are recalculated
+  buf->b_signcols.valid = false;
+
   if (!buf->b_signcols.valid) {
     return;
   }
@@ -5474,6 +5484,9 @@ void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
 /// @param added sign being added
 void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
 {
+  // TODO(lewis6991): Need to invalidate so b_signcols.col_pris are recalculated
+  buf->b_signcols.valid = false;
+
   if (!buf->b_signcols.valid) {
     return;
   }
