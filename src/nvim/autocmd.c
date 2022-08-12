@@ -24,6 +24,7 @@
 #include "nvim/map.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
+#include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
 #include "nvim/state.h"

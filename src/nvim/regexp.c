@@ -28,6 +28,7 @@
 #include "nvim/message.h"
 #include "nvim/os/input.h"
 #include "nvim/plines.h"
+#include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"

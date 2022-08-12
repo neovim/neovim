@@ -14,12 +14,15 @@
 #include "nvim/lua/executor.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
+#include "nvim/profile.h"
 #include "nvim/runtime.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "runtime.c.generated.h"
 #endif
+
+garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
 
 static bool runtime_search_path_valid = false;
 static int *runtime_search_path_ref = NULL;

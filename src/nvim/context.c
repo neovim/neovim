@@ -9,6 +9,7 @@
 #include "nvim/api/vimscript.h"
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
@@ -249,7 +250,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
   ctx->funcs = (Array)ARRAY_DICT_INIT;
   Error err = ERROR_INIT;
 
-  HASHTAB_ITER(&func_hashtab, hi, {
+  HASHTAB_ITER(func_tbl_get(), hi, {
     const char_u *const name = hi->hi_key;
     bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
     bool isscript = (name[0] == K_SPECIAL);

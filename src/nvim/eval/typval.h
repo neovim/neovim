@@ -16,7 +16,6 @@
 #include "nvim/mbyte_defs.h"
 #include "nvim/message.h"
 #include "nvim/pos.h"      // for linenr_T
-#include "nvim/profile.h"  // for proftime_T
 #include "nvim/types.h"
 #ifdef LOG_LIST_ACTIONS
 # include "nvim/memory.h"

@@ -51,6 +51,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/plines.h"
+#include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"

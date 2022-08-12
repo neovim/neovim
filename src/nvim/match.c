@@ -12,6 +12,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/match.h"
 #include "nvim/memline.h"
+#include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/screen.h"

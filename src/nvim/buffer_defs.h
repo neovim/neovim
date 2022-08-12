@@ -36,8 +36,6 @@ typedef struct {
 #include "nvim/hashtab.h"
 // for dict_T
 #include "nvim/eval/typval.h"
-// for proftime_T
-#include "nvim/profile.h"
 // for String
 #include "nvim/api/private/defs.h"
 // for Map(K, V)

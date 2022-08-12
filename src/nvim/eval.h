@@ -11,15 +11,6 @@
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)
 
-// All user-defined functions are found in this hashtable.
-extern hashtab_T func_hashtab;
-
-// From user function to hashitem and back.
-EXTERN ufunc_T dumuf;
-#define UF2HIKEY(fp) ((fp)->uf_name)
-#define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
-#define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
-
 /*
  * Structure returned by get_lval() and used by set_var_lval().
  * For a plain name:

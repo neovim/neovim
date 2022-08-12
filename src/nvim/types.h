@@ -28,6 +28,8 @@ typedef handle_T NS;
 
 typedef struct expand expand_T;
 
+typedef uint64_t proftime_T;
+
 typedef enum {
   kNone  = -1,
   kFalse = 0,

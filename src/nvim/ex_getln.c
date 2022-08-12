@@ -65,6 +65,7 @@
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/popupmnu.h"
+#include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
