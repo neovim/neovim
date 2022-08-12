@@ -2557,7 +2557,7 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   foldinfo_T info = fold_info(curwin, lnum);
   if (info.fi_lines > 0) {
-    text = get_foldtext(curwin, lnum, lnum + (linenr_T)info.fi_lines - 1, info, buf);
+    text = get_foldtext(curwin, lnum, lnum + info.fi_lines - 1, info, buf);
     if (text == buf) {
       text = vim_strsave(text);
     }
@@ -3967,7 +3967,7 @@ static void f_globpath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (file != NULL && !error) {
     garray_T ga;
     ga_init(&ga, (int)sizeof(char_u *), 10);
-    globpath((char_u *)tv_get_string(&argvars[0]), (char_u *)file, &ga, flags);
+    globpath((char *)tv_get_string(&argvars[0]), (char_u *)file, &ga, flags);
 
     if (rettv->v_type == VAR_STRING) {
       rettv->vval.v_string = ga_concat_strings_sep(&ga, "\n");
@@ -8266,10 +8266,10 @@ static void f_setqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// Translate a register type string to the yank type and block length
-static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *const block_len)
+static int get_yank_type(char **const pp, MotionType *const yank_type, long *const block_len)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *stropt = (char *)(*pp);
+  char *stropt = *pp;
   switch (*stropt) {
   case 'v':
   case 'c':  // character-wise selection
@@ -8291,7 +8291,7 @@ static int get_yank_type(char_u **const pp, MotionType *const yank_type, long *c
   default:
     return FAIL;
   }
-  *pp = (char_u *)stropt;
+  *pp = stropt;
   return OK;
 }
 
@@ -8323,7 +8323,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     if (tv_dict_len(d) == 0) {
       // Empty dict, clear the register (like setreg(0, []))
-      char_u *lstval[2] = { NULL, NULL };
+      char *lstval[2] = { NULL, NULL };
       write_reg_contents_lst(regname, lstval, false, kMTUnknown, -1);
       return;
     }
@@ -8335,7 +8335,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     const char *stropt = tv_dict_get_string(d, "regtype", false);
     if (stropt != NULL) {
-      const int ret = get_yank_type((char_u **)&stropt, &yank_type, &block_len);
+      const int ret = get_yank_type((char **)&stropt, &yank_type, &block_len);
 
       if (ret == FAIL || *(++stropt) != NUL) {
         semsg(_(e_invargval), "value");
@@ -8378,7 +8378,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         set_unnamed = true;
         break;
       default:
-        get_yank_type((char_u **)&stropt, &yank_type, &block_len);
+        get_yank_type((char **)&stropt, &yank_type, &block_len);
       }
     }
   }
@@ -8412,7 +8412,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     });
     *curval++ = NULL;
 
-    write_reg_contents_lst(regname, (char_u **)lstval, append, yank_type, (colnr_T)block_len);
+    write_reg_contents_lst(regname, lstval, append, yank_type, (colnr_T)block_len);
 
 free_lstval:
     while (curallocval > allocval) {
@@ -9632,20 +9632,20 @@ static int get_winnr(tabpage_T *tp, typval_T *argvar)
       }
     } else {
       // Extract the window count (if specified). e.g. winnr('3j')
-      char_u *endp;
-      long count = strtol((char *)arg, (char **)&endp, 10);
+      char *endp;
+      long count = strtol((char *)arg, &endp, 10);
       if (count <= 0) {
         // if count is not specified, default to 1
         count = 1;
       }
       if (endp != NULL && *endp != '\0') {
-        if (strequal((char *)endp, "j")) {
+        if (strequal(endp, "j")) {
           twin = win_vert_neighbor(tp, twin, false, count);
-        } else if (strequal((char *)endp, "k")) {
+        } else if (strequal(endp, "k")) {
           twin = win_vert_neighbor(tp, twin, true, count);
-        } else if (strequal((char *)endp, "h")) {
+        } else if (strequal(endp, "h")) {
           twin = win_horz_neighbor(tp, twin, true, count);
-        } else if (strequal((char *)endp, "l")) {
+        } else if (strequal(endp, "l")) {
           twin = win_horz_neighbor(tp, twin, false, count);
         } else {
           invalid_arg = true;

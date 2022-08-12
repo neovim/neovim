@@ -416,16 +416,15 @@ static int cs_add_common(char *arg1, char *arg2, char *flags)
   char *fname2 = NULL;
   char *ppath = NULL;
   size_t usedlen = 0;
-  char_u *fbuf = NULL;
+  char *fbuf = NULL;
 
   // get the filename (arg1), expand it, and try to stat it
   fname = xmalloc(MAXPATHL + 1);
 
   expand_env((char_u *)arg1, (char_u *)fname, MAXPATHL);
   size_t len = STRLEN(fname);
-  fbuf = (char_u *)fname;
-  (void)modify_fname(":p", false, &usedlen,
-                     &fname, (char **)&fbuf, &len);
+  fbuf = fname;
+  (void)modify_fname(":p", false, &usedlen, &fname, &fbuf, &len);
   if (fname == NULL) {
     goto add_err;
   }

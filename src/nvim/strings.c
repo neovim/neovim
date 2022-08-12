@@ -191,7 +191,7 @@ char *vim_strnsave_unquoted(const char *const string, const size_t length)
 char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_newline)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char_u *d;
+  char *d;
   char_u *escaped_string;
   size_t l;
   int csh_like;
@@ -238,7 +238,7 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
 
   // Allocate memory for the result and fill it.
   escaped_string = xmalloc(length);
-  d = escaped_string;
+  d = (char *)escaped_string;
 
   // add opening quote
 #ifdef WIN32
@@ -248,7 +248,7 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
 #endif
   *d++ = '\'';
 
-  for (const char_u *p = string; *p != NUL;) {
+  for (const char *p = (char *)string; *p != NUL;) {
 #ifdef WIN32
     if (!p_ssl) {
       if (*p == '"') {
@@ -276,7 +276,7 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
       *d++ = *p++;
       continue;
     }
-    if (do_special && find_cmdline_var(p, &l) >= 0) {
+    if (do_special && find_cmdline_var((char_u *)p, &l) >= 0) {
       *d++ = '\\';                    // insert backslash
       while (--l != SIZE_MAX) {  // copy the var
         *d++ = *p++;

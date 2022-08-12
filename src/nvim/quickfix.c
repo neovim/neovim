@@ -3119,7 +3119,7 @@ void qf_list(exarg_T *eap)
   }
   int idx1 = 1;
   int idx2 = -1;
-  if (!get_list_range((char_u **)&arg, &idx1, &idx2) || *arg != NUL) {
+  if (!get_list_range(&arg, &idx1, &idx2) || *arg != NUL) {
     semsg(_(e_trailing_arg), arg);
     return;
   }

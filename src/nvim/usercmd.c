@@ -1162,7 +1162,7 @@ static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc,
         *q++ = ' ';
         *q++ = '"';
       } else {
-        mb_copy_char((const char_u **)&p, (char_u **)&q);
+        mb_copy_char((const char **)&p, &q);
       }
     }
   } else {
@@ -1175,7 +1175,7 @@ static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc,
           *q++ = '\\';
           *q++ = *p++;
         } else {
-          mb_copy_char((const char_u **)&p, (char_u **)&q);
+          mb_copy_char((const char **)&p, &q);
         }
       }
       if (i != argc - 1) {

@@ -5580,14 +5580,14 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   char_u *regpat;
   char allow_dirs;
   bool match;
-  char_u *p;
+  char *p;
 
   tail = (char_u *)path_tail((char *)sfname);
 
   // try all patterns in 'wildignore'
-  p = list;
+  p = (char *)list;
   while (*p) {
-    copy_option_part((char **)&p, (char *)buf, ARRAY_SIZE(buf), ",");
+    copy_option_part(&p, (char *)buf, ARRAY_SIZE(buf), ",");
     regpat = (char_u *)file_pat_to_reg_pat((char *)buf, NULL, &allow_dirs, false);
     if (regpat == NULL) {
       break;

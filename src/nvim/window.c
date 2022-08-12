@@ -122,7 +122,7 @@ void do_window(int nchar, long Prenum, int xchar)
 {
   long Prenum1;
   win_T *wp;
-  char_u *ptr;
+  char *ptr;
   linenr_T lnum = -1;
   int type = FIND_DEFINE;
   size_t len;
@@ -483,14 +483,14 @@ newwindow:
 wingotofile:
     CHECK_CMDWIN;
 
-    ptr = grab_file_name(Prenum1, &lnum);
+    ptr = (char *)grab_file_name(Prenum1, &lnum);
     if (ptr != NULL) {
       tabpage_T *oldtab = curtab;
       win_T *oldwin = curwin;
       setpcmark();
       if (win_split(0, 0) == OK) {
         RESET_BINDING(curwin);
-        if (do_ecmd(0, (char *)ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
+        if (do_ecmd(0, ptr, NULL, NULL, ECMD_LASTL, ECMD_HIDE, NULL) == FAIL) {
           // Failed to open the file, close the window opened for it.
           win_close(curwin, false, false);
           goto_tabpage_win(oldtab, oldwin);
@@ -518,9 +518,9 @@ wingotofile:
     }
 
     // Make a copy, if the line was changed it will be freed.
-    ptr = vim_strnsave(ptr, len);
+    ptr = xstrnsave(ptr, len);
 
-    find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
+    find_pattern_in_path((char_u *)ptr, 0, len, true, Prenum == 0,
                          type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
     xfree(ptr);
     curwin->w_set_curswant = true;
@@ -6465,17 +6465,17 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
   int options = FNAME_MESS | FNAME_EXP | FNAME_REL | FNAME_UNESC;
   if (VIsual_active) {
     size_t len;
-    char_u *ptr;
+    char *ptr;
     if (get_visual_text(NULL, &ptr, &len) == FAIL) {
       return NULL;
     }
     // Only recognize ":123" here
     if (file_lnum != NULL && ptr[len] == ':' && isdigit(ptr[len + 1])) {
-      char *p = (char *)ptr + len + 1;
+      char *p = ptr + len + 1;
 
       *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
     }
-    return find_file_name_in_path(ptr, len, options, count, (char_u *)curbuf->b_ffname);
+    return find_file_name_in_path((char_u *)ptr, len, options, count, (char_u *)curbuf->b_ffname);
   }
   return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
 }

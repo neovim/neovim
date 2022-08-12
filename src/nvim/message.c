@@ -2123,7 +2123,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
   int t_col = 0;  // Screen cells todo, 0 when "t_s" not used.
   int l;
   int cw;
-  const char_u *sb_str = str;
+  const char *sb_str = (char *)str;
   int sb_col = msg_col;
   int wrap;
   int did_last_char;
@@ -2208,7 +2208,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
 
       if (p_more) {
         // Store text for scrolling back.
-        store_sb_text((char_u **)&sb_str, (char_u *)s, attr, &sb_col, true);
+        store_sb_text((char **)&sb_str, (char *)s, attr, &sb_col, true);
       }
 
       inc_msg_scrolled();
@@ -2255,7 +2255,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
 
     if (wrap && p_more && !recurse) {
       // Store text for scrolling back.
-      store_sb_text((char_u **)&sb_str, (char_u *)s, attr, &sb_col, true);
+      store_sb_text((char **)&sb_str, (char *)s, attr, &sb_col, true);
     }
 
     if (*s == '\n') {               // go to next line
@@ -2314,7 +2314,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
     t_puts(&t_col, t_s, s, attr);
   }
   if (p_more && !recurse) {
-    store_sb_text((char_u **)&sb_str, (char_u *)s, attr, &sb_col, false);
+    store_sb_text((char **)&sb_str, (char *)s, attr, &sb_col, false);
   }
 
   msg_check();
@@ -2497,7 +2497,7 @@ static sb_clear_T do_clear_sb_text = SB_CLEAR_NONE;
 /// @param sb_str  start of string
 /// @param s  just after string
 /// @param finish  line ends
-static void store_sb_text(char_u **sb_str, char_u *s, int attr, int *sb_col, int finish)
+static void store_sb_text(char **sb_str, char *s, int attr, int *sb_col, int finish)
 {
   msgchunk_T *mp;
 

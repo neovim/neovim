@@ -2888,7 +2888,7 @@ static void append_command(char *cmd)
     } else if ((char_u *)d - IObuff + utfc_ptr2len(s) + 1 >= IOSIZE) {
       break;
     } else {
-      mb_copy_char((const char_u **)&s, (char_u **)&d);
+      mb_copy_char((const char **)&s, &d);
     }
   }
   *d = NUL;
@@ -3787,7 +3787,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
         } else if (context == EXPAND_COMMANDS) {
           return arg;
         } else if (context == EXPAND_MAPPINGS) {
-          return (const char *)set_context_in_map_cmd(xp, (char_u *)"map", (char_u *)arg, forceit,
+          return (const char *)set_context_in_map_cmd(xp, "map", (char_u *)arg, forceit,
                                                       false, false,
                                                       CMD_map);
         }
@@ -3825,7 +3825,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_snoremap:
   case CMD_xmap:
   case CMD_xnoremap:
-    return (const char *)set_context_in_map_cmd(xp, (char_u *)cmd, (char_u *)arg, forceit, false,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, false,
                                                 false, ea.cmdidx);
   case CMD_unmap:
   case CMD_nunmap:
@@ -3836,7 +3836,7 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_lunmap:
   case CMD_sunmap:
   case CMD_xunmap:
-    return (const char *)set_context_in_map_cmd(xp, (char_u *)cmd, (char_u *)arg, forceit, false,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, false,
                                                 true, ea.cmdidx);
   case CMD_mapclear:
   case CMD_nmapclear:
@@ -3857,12 +3857,12 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
   case CMD_cnoreabbrev:
   case CMD_iabbrev:
   case CMD_inoreabbrev:
-    return (const char *)set_context_in_map_cmd(xp, (char_u *)cmd, (char_u *)arg, forceit, true,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, true,
                                                 false, ea.cmdidx);
   case CMD_unabbreviate:
   case CMD_cunabbrev:
   case CMD_iunabbrev:
-    return (const char *)set_context_in_map_cmd(xp, (char_u *)cmd, (char_u *)arg, forceit, true,
+    return (const char *)set_context_in_map_cmd(xp, (char *)cmd, (char_u *)arg, forceit, true,
                                                 true, ea.cmdidx);
   case CMD_menu:
   case CMD_noremenu:
@@ -7788,7 +7788,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
   if (spec_idx == SPEC_CWORD
       || spec_idx == SPEC_CCWORD
       || spec_idx == SPEC_CEXPR) {
-    resultlen = find_ident_under_cursor((char_u **)&result,
+    resultlen = find_ident_under_cursor(&result,
                                         spec_idx == SPEC_CWORD
         ? (FIND_IDENT | FIND_STRING)
         : (spec_idx == SPEC_CEXPR

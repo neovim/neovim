@@ -2143,14 +2143,14 @@ int diffopt_changed(void)
   long diff_algorithm_new = 0;
   long diff_indent_heuristic = 0;
 
-  char_u *p = p_dip;
+  char *p = (char *)p_dip;
   while (*p != NUL) {
     if (STRNCMP(p, "filler", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_FILLER;
     } else if ((STRNCMP(p, "context:", 8) == 0) && ascii_isdigit(p[8])) {
       p += 8;
-      diff_context_new = getdigits_int((char **)&p, false, diff_context_new);
+      diff_context_new = getdigits_int(&p, false, diff_context_new);
     } else if (STRNCMP(p, "iblank", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_IBLANK;
@@ -2174,7 +2174,7 @@ int diffopt_changed(void)
       diff_flags_new |= DIFF_VERTICAL;
     } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && ascii_isdigit(p[11])) {
       p += 11;
-      diff_foldcolumn_new = getdigits_int((char **)&p, false, diff_foldcolumn_new);
+      diff_foldcolumn_new = getdigits_int(&p, false, diff_foldcolumn_new);
     } else if (STRNCMP(p, "hiddenoff", 9) == 0) {
       p += 9;
       diff_flags_new |= DIFF_HIDDEN_OFF;

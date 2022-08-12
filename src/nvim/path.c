@@ -1141,7 +1141,7 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
   if (flags & EW_ADDSLASH) {
     glob_flags |= WILD_ADD_SLASH;
   }
-  globpath(paths, pattern, gap, glob_flags);
+  globpath((char *)paths, pattern, gap, glob_flags);
   xfree(paths);
 
   return gap->ga_len;

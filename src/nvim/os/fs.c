@@ -339,7 +339,7 @@ static bool is_executable_ext(const char *name, char **abspath)
 
     const char *ext_end = ext;
     size_t ext_len =
-      copy_option_part((char_u **)&ext_end, (char_u *)buf_end,
+      copy_option_part(&ext_end, (char_u *)buf_end,
                        sizeof(os_buf) - (size_t)(buf_end - os_buf), ENV_SEPSTR);
     if (ext_len != 0) {
       bool in_pathext = nameext_len == ext_len

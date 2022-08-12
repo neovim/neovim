@@ -383,7 +383,7 @@ void ml_setname(buf_T *buf)
   bool success = false;
   memfile_T *mfp;
   char_u *fname;
-  char_u *dirp;
+  char *dirp;
 
   mfp = buf->b_ml.ml_mfp;
   if (mfp->mf_fd < 0) {             // there is no swap file yet
@@ -397,17 +397,14 @@ void ml_setname(buf_T *buf)
     return;
   }
 
-  /*
-   * Try all directories in the 'directory' option.
-   */
-  dirp = p_dir;
+  // Try all directories in the 'directory' option.
+  dirp = (char *)p_dir;
   bool found_existing_dir = false;
   for (;;) {
     if (*dirp == NUL) {             // tried all directories, fail
       break;
     }
-    fname = (char_u *)findswapname(buf, (char **)&dirp, (char *)mfp->mf_fname,
-                                   &found_existing_dir);
+    fname = (char_u *)findswapname(buf, &dirp, (char *)mfp->mf_fname, &found_existing_dir);
     // alloc's fname
     if (dirp == NULL) {             // out of memory
       break;
@@ -472,7 +469,7 @@ void ml_open_file(buf_T *buf)
 {
   memfile_T *mfp;
   char_u *fname;
-  char_u *dirp;
+  char *dirp;
 
   mfp = buf->b_ml.ml_mfp;
   if (mfp == NULL || mfp->mf_fd >= 0 || !buf->b_p_swf
@@ -491,10 +488,8 @@ void ml_open_file(buf_T *buf)
     return;
   }
 
-  /*
-   * Try all directories in 'directory' option.
-   */
-  dirp = p_dir;
+  // Try all directories in 'directory' option.
+  dirp = (char *)p_dir;
   bool found_existing_dir = false;
   for (;;) {
     if (*dirp == NUL) {
@@ -503,8 +498,7 @@ void ml_open_file(buf_T *buf)
     // There is a small chance that between choosing the swap file name
     // and creating it, another Vim creates the file.  In that case the
     // creation will fail and we will use another directory.
-    fname = (char_u *)findswapname(buf, (char **)&dirp, NULL,
-                                   &found_existing_dir);
+    fname = (char_u *)findswapname(buf, &dirp, NULL, &found_existing_dir);
     if (dirp == NULL) {
       break;        // out of memory
     }
@@ -1272,7 +1266,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
   int num_files;
   int file_count = 0;
   char **files;
-  char_u *dirp;
+  char *dirp;
   char_u *dir_name;
   char_u *fname_res = NULL;
 #ifdef HAVE_READLINK
@@ -1299,12 +1293,12 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
   // Do the loop for every directory in 'directory'.
   // First allocate some memory to put the directory name in.
   dir_name = xmalloc(STRLEN(p_dir) + 1);
-  dirp = p_dir;
+  dirp = (char *)p_dir;
   while (*dirp) {
     // Isolate a directory name from *dirp and put it in dir_name (we know
     // it is large enough, so use 31000 for length).
     // Advance dirp to next directory name.
-    (void)copy_option_part((char **)&dirp, (char *)dir_name, 31000, ",");
+    (void)copy_option_part(&dirp, (char *)dir_name, 31000, ",");
 
     if (dir_name[0] == '.' && dir_name[1] == NUL) {     // check current dir
       if (fname == NULL) {
@@ -1395,7 +1389,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
       file_count += num_files;
       if (nr <= file_count) {
         *fname_out = vim_strsave((char_u *)files[nr - 1 + num_files - file_count]);
-        dirp = (char_u *)"";                        // stop searching
+        dirp = "";                        // stop searching
       }
     } else if (list) {
       if (dir_name[0] == '.' && dir_name[1] == NUL) {

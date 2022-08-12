@@ -1818,9 +1818,9 @@ bool utf_allow_break(int cc, int ncc)
 ///
 /// @param[in,out]  fp  Source of the character to copy.
 /// @param[in,out]  tp  Destination to copy to.
-void mb_copy_char(const char_u **const fp, char_u **const tp)
+void mb_copy_char(const char **const fp, char **const tp)
 {
-  const size_t l = (size_t)utfc_ptr2len((char *)(*fp));
+  const size_t l = (size_t)utfc_ptr2len(*fp);
 
   memmove(*tp, *fp, l);
   *tp += l;

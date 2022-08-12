@@ -1038,7 +1038,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
   char_u *p;
   long c;
   char_u *dircp;
-  char_u *strcopy = NULL;
+  char *strcopy = NULL;
   char_u *ps;
   char_u *msgbuf = NULL;
   size_t len;
@@ -1125,13 +1125,13 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
        * Find end of regular expression.
        * If there is a matching '/' or '?', toss it.
        */
-      ps = strcopy;
+      ps = (char_u *)strcopy;
       p = skip_regexp(pat, search_delim, p_magic, &strcopy);
-      if (strcopy != ps) {
+      if (strcopy != (char *)ps) {
         // made a copy of "pat" to change "\?" to "?"
         searchcmdlen += (int)(STRLEN(pat) - STRLEN(strcopy));
-        pat = strcopy;
-        searchstr = strcopy;
+        pat = (char_u *)strcopy;
+        searchstr = (char_u *)strcopy;
       }
       if (*p == search_delim) {
         dircp = p;              // remember where we put the NUL

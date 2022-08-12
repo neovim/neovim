@@ -223,8 +223,8 @@ bool cin_is_cinword(const char_u *line)
   char_u *cinw_buf = xmalloc(cinw_len);
   line = (char_u *)skipwhite((char *)line);
 
-  for (char_u *cinw = curbuf->b_p_cinw; *cinw;) {
-    size_t len = copy_option_part((char **)&cinw, (char *)cinw_buf, cinw_len, ",");
+  for (char *cinw = (char *)curbuf->b_p_cinw; *cinw;) {
+    size_t len = copy_option_part(&cinw, (char *)cinw_buf, cinw_len, ",");
     if (STRNCMP(line, cinw_buf, len) == 0
         && (!vim_iswordc(line[len]) || !vim_iswordc(line[len - 1]))) {
       retval = true;
@@ -519,8 +519,8 @@ bool cin_isscopedecl(const char_u *p)
 
   bool found = false;
 
-  for (char_u *cinsd = curbuf->b_p_cinsd; *cinsd;) {
-    const size_t len = copy_option_part((char **)&cinsd, (char *)cinsd_buf, cinsd_len, ",");
+  for (char *cinsd = (char *)curbuf->b_p_cinsd; *cinsd;) {
+    const size_t len = copy_option_part(&cinsd, (char *)cinsd_buf, cinsd_len, ",");
     if (STRNCMP(s, cinsd_buf, len) == 0) {
       const char_u *skip = cin_skipcomment(s + len);
       if (*skip == ':' && skip[1] != ':') {
@@ -1601,8 +1601,8 @@ static int find_last_paren(const char_u *l, int start, int end)
  */
 void parse_cino(buf_T *buf)
 {
-  char_u *p;
-  char_u *l;
+  char *p;
+  char *l;
   int divider;
   int fraction = 0;
   int sw = get_sw_value(buf);
@@ -1740,16 +1740,16 @@ void parse_cino(buf_T *buf)
   // Handle C #pragma directives
   buf->b_ind_pragma = 0;
 
-  for (p = buf->b_p_cino; *p;) {
+  for (p = (char *)buf->b_p_cino; *p;) {
     l = p++;
     if (*p == '-') {
       p++;
     }
-    char_u *digits_start = p;   // remember where the digits start
-    int n = getdigits_int((char **)&p, true, 0);
+    char *digits_start = p;   // remember where the digits start
+    int n = getdigits_int(&p, true, 0);
     divider = 0;
     if (*p == '.') {        // ".5s" means a fraction.
-      fraction = atoi((char *)++p);
+      fraction = atoi(++p);
       while (ascii_isdigit(*p)) {
         p++;
         if (divider) {
@@ -2052,7 +2052,7 @@ int get_c_indent(void)
     char lead_start[COM_MAX_LEN];             // start-comment string
     char lead_middle[COM_MAX_LEN];            // middle-comment string
     char lead_end[COM_MAX_LEN];               // end-comment string
-    char_u *p;
+    char *p;
     int start_align = 0;
     int start_off = 0;
     int done = FALSE;
@@ -2063,7 +2063,7 @@ int get_c_indent(void)
     *lead_start = NUL;
     *lead_middle = NUL;
 
-    p = curbuf->b_p_com;
+    p = (char *)curbuf->b_p_com;
     while (*p != NUL) {
       int align = 0;
       int off = 0;
@@ -2071,11 +2071,11 @@ int get_c_indent(void)
 
       while (*p != NUL && *p != ':') {
         if (*p == COM_START || *p == COM_END || *p == COM_MIDDLE) {
-          what = *p++;
+          what = (unsigned char)(*p++);
         } else if (*p == COM_LEFT || *p == COM_RIGHT) {
-          align = *p++;
+          align = (unsigned char)(*p++);
         } else if (ascii_isdigit(*p) || *p == '-') {
-          off = getdigits_int((char **)&p, true, 0);
+          off = getdigits_int(&p, true, 0);
         } else {
           p++;
         }
@@ -2084,7 +2084,7 @@ int get_c_indent(void)
       if (*p == ':') {
         p++;
       }
-      (void)copy_option_part((char **)&p, lead_end, COM_MAX_LEN, ",");
+      (void)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
       if (what == COM_START) {
         STRCPY(lead_start, lead_end);
         lead_start_len = (int)STRLEN(lead_start);
