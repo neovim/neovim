@@ -1,4 +1,5 @@
 " Script to fill the window with emoji characters, one per line.
+" Source this script: :source %
 
 if &modified
   new
