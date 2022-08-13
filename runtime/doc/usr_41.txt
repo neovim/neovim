@@ -606,6 +606,7 @@ String manipulation:					*string-functions*
 	strtrans()		translate a string to make it printable
 	tolower()		turn a string to lowercase
 	toupper()		turn a string to uppercase
+	charclass()		class of a character
 	match()			position where a pattern matches in a string
 	matchend()		position where a pattern match ends in a string
 	matchfuzzy()		fuzzy matches a string in a list of strings

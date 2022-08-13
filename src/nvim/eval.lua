@@ -72,6 +72,7 @@ return {
     chanclose={args={1, 2}},
     chansend={args=2},
     char2nr={args={1, 2}, base=1},
+    charclass={args=1, base=1},
     charcol={args=1, base=1},
     charidx={args={2, 3}, base=1},
     chdir={args=1, base=1},
