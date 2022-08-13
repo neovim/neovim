@@ -29,6 +29,7 @@
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -469,7 +470,7 @@ static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
     mp->m_script_ctx.sc_lnum = lnum;
   } else {
     mp->m_script_ctx = current_sctx;
-    mp->m_script_ctx.sc_lnum += sourcing_lnum;
+    mp->m_script_ctx.sc_lnum += SOURCING_LNUM;
     nlua_set_sctx(&mp->m_script_ctx);
   }
   mp->m_desc = NULL;
@@ -776,7 +777,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                   mp->m_expr = args->expr;
                   mp->m_replace_keycodes = args->replace_keycodes;
                   mp->m_script_ctx = current_sctx;
-                  mp->m_script_ctx.sc_lnum += sourcing_lnum;
+                  mp->m_script_ctx.sc_lnum += SOURCING_LNUM;
                   nlua_set_sctx(&mp->m_script_ctx);
                   if (args->desc != NULL) {
                     mp->m_desc = xstrdup(args->desc);

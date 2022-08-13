@@ -49,6 +49,7 @@
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/sign.h"
@@ -4185,6 +4186,23 @@ bool garbage_collect(bool testing)
     want_garbage_collect = false;
     may_garbage_collect = false;
     garbage_collect_at_exit = false;
+  }
+
+  // The execution stack can grow big, limit the size.
+  if (exestack.ga_maxlen - exestack.ga_len > 500) {
+    // Keep 150% of the current size, with a minimum of the growth size.
+    int n = exestack.ga_len / 2;
+    if (n < exestack.ga_growsize) {
+      n = exestack.ga_growsize;
+    }
+
+    // Don't make it bigger though.
+    if (exestack.ga_len + n < exestack.ga_maxlen) {
+      size_t new_len = (size_t)exestack.ga_itemsize * (size_t)(exestack.ga_len + n);
+      char *pp = xrealloc(exestack.ga_data, new_len);
+      exestack.ga_maxlen = exestack.ga_len + n;
+      exestack.ga_data = pp;
+    }
   }
 
   // We advance by two (COPYID_INC) because we add one for items referenced
@@ -8613,8 +8631,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
   provider_caller_scope = (struct caller_scope) {
     .script_ctx = current_sctx,
-    .sourcing_name = sourcing_name,
-    .sourcing_lnum = sourcing_lnum,
+    .es_entry = ((estack_T *)exestack.ga_data)[exestack.ga_len - 1],
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
     .autocmd_bufnr = autocmd_bufnr,
@@ -8713,8 +8730,8 @@ bool eval_has_provider(const char *feat)
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
 void eval_fmt_source_name_line(char *buf, size_t bufsize)
 {
-  if (sourcing_name) {
-    snprintf(buf, bufsize, "%s:%" PRIdLINENR, sourcing_name, sourcing_lnum);
+  if (SOURCING_NAME) {
+    snprintf(buf, bufsize, "%s:%" PRIdLINENR, SOURCING_NAME, SOURCING_LNUM);
   } else {
     snprintf(buf, bufsize, "?");
   }

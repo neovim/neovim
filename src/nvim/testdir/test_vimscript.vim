@@ -1573,6 +1573,23 @@ func Test_script_local_func()
   enew! | close
 endfunc
 
+func Test_script_expand_sfile()
+  let lines =<< trim END
+    func s:snr()
+      return expand('<sfile>')
+    endfunc
+    let g:result = s:snr()
+  END
+  call writefile(lines, 'Xexpand')
+  source Xexpand
+  call assert_match('<SNR>\d\+_snr', g:result)
+  source Xexpand
+  call assert_match('<SNR>\d\+_snr', g:result)
+
+  call delete('Xexpand')
+  unlet g:result
+endfunc
+
 func Test_compound_assignment_operators()
     " Test for number
     let x = 1

@@ -37,6 +37,7 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/os.h"
 #include "nvim/profile.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/undo.h"
 #include "nvim/usercmd.h"
@@ -1313,12 +1314,11 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
 
 int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
 {
-  const linenr_T save_sourcing_lnum = sourcing_lnum;
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = 0;
-  sourcing_lnum = 0;
+  estack_push(ETYPE_SCRIPT, NULL, 0);
 
   garray_T ga;
   char_u *line = NULL;
@@ -1331,7 +1331,7 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
   size_t len = strlen(code);
   nlua_typval_exec(code, len, name, NULL, 0, false, NULL);
 
-  sourcing_lnum = save_sourcing_lnum;
+  estack_pop();
   current_sctx = save_current_sctx;
   ga_clear_strings(&ga);
   xfree(code);

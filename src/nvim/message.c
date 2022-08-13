@@ -38,6 +38,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -524,7 +525,7 @@ int smsg_attr_keep(int attr, const char *s, ...)
  * isn't printed each time when it didn't change.
  */
 static int last_sourcing_lnum = 0;
-static char_u *last_sourcing_name = NULL;
+static char *last_sourcing_name = NULL;
 
 /// Reset the last used sourcing name/lnum.  Makes sure it is displayed again
 /// for the next error message;
@@ -534,16 +535,16 @@ void reset_last_sourcing(void)
   last_sourcing_lnum = 0;
 }
 
-/// @return  TRUE if "sourcing_name" differs from "last_sourcing_name".
-static int other_sourcing_name(void)
+/// @return  true if "SOURCING_NAME" differs from "last_sourcing_name".
+static bool other_sourcing_name(void)
 {
-  if (sourcing_name != NULL) {
+  if (SOURCING_NAME != NULL) {
     if (last_sourcing_name != NULL) {
-      return STRCMP(sourcing_name, last_sourcing_name) != 0;
+      return strcmp(SOURCING_NAME, last_sourcing_name) != 0;
     }
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /// Get the message about the source, as used for an error message
@@ -553,11 +554,19 @@ static int other_sourcing_name(void)
 static char *get_emsg_source(void)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (sourcing_name != NULL && other_sourcing_name()) {
+  if (SOURCING_NAME != NULL && other_sourcing_name()) {
+    char *sname = estack_sfile();
+    char *tofree = sname;
+
+    if (sname == NULL) {
+      sname = SOURCING_NAME;
+    }
+
     const char *const p = _("Error detected while processing %s:");
-    const size_t buf_len = STRLEN(sourcing_name) + strlen(p) + 1;
+    const size_t buf_len = STRLEN(sname) + strlen(p) + 1;
     char *const buf = xmalloc(buf_len);
-    snprintf(buf, buf_len, p, sourcing_name);
+    snprintf(buf, buf_len, p, sname);
+    xfree(tofree);
     return buf;
   }
   return NULL;
@@ -572,13 +581,13 @@ static char *get_emsg_lnum(void)
 {
   // lnum is 0 when executing a command from the command line
   // argument, we don't want a line number then
-  if (sourcing_name != NULL
-      && (other_sourcing_name() || sourcing_lnum != last_sourcing_lnum)
-      && sourcing_lnum != 0) {
+  if (SOURCING_NAME != NULL
+      && (other_sourcing_name() || SOURCING_LNUM != last_sourcing_lnum)
+      && SOURCING_LNUM != 0) {
     const char *const p = _("line %4ld:");
     const size_t buf_len = 20 + strlen(p);
     char *const buf = xmalloc(buf_len);
-    snprintf(buf, buf_len, p, (long)sourcing_lnum);
+    snprintf(buf, buf_len, p, (long)SOURCING_LNUM);
     return buf;
   }
   return NULL;
@@ -599,16 +608,16 @@ void msg_source(int attr)
   if (p != NULL) {
     msg_attr(p, HL_ATTR(HLF_N));
     xfree(p);
-    last_sourcing_lnum = sourcing_lnum;      // only once for each line
+    last_sourcing_lnum = SOURCING_LNUM;      // only once for each line
   }
 
   // remember the last sourcing name printed, also when it's empty
-  if (sourcing_name == NULL || other_sourcing_name()) {
+  if (SOURCING_NAME == NULL || other_sourcing_name()) {
     xfree(last_sourcing_name);
-    if (sourcing_name == NULL) {
+    if (SOURCING_NAME == NULL) {
       last_sourcing_name = NULL;
     } else {
-      last_sourcing_name = vim_strsave((char_u *)sourcing_name);
+      last_sourcing_name = xstrdup(SOURCING_NAME);
     }
   }
   --no_wait_return;
@@ -686,9 +695,9 @@ static bool emsg_multiline(const char *s, bool multiline)
       }
 
       // Log (silent) errors as debug messages.
-      if (sourcing_name != NULL && sourcing_lnum != 0) {
+      if (SOURCING_NAME != NULL && SOURCING_LNUM != 0) {
         DLOG("(:silent) %s (%s (line %ld))",
-             s, sourcing_name, (long)sourcing_lnum);
+             s, SOURCING_NAME, (long)SOURCING_LNUM);
       } else {
         DLOG("(:silent) %s", s);
       }
@@ -697,8 +706,8 @@ static bool emsg_multiline(const char *s, bool multiline)
     }
 
     // Log editor errors as INFO.
-    if (sourcing_name != NULL && sourcing_lnum != 0) {
-      ILOG("%s (%s (line %ld))", s, sourcing_name, (long)sourcing_lnum);
+    if (SOURCING_NAME != NULL && SOURCING_LNUM != 0) {
+      ILOG("%s (%s (line %ld))", s, SOURCING_NAME, (long)SOURCING_LNUM);
     } else {
       ILOG("%s", s);
     }
@@ -2457,7 +2466,7 @@ void msg_reset_scroll(void)
 static void inc_msg_scrolled(void)
 {
   if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
-    char *p = sourcing_name;
+    char *p = SOURCING_NAME;
     char *tofree = NULL;
 
     // v:scrollstart is empty, set it to the script/function name and line
@@ -2468,7 +2477,7 @@ static void inc_msg_scrolled(void)
       size_t len = strlen(p) + 40;
       tofree = xmalloc(len);
       vim_snprintf(tofree, len, _("%s line %" PRId64),
-                   p, (int64_t)sourcing_lnum);
+                   p, (int64_t)SOURCING_LNUM);
       p = tofree;
     }
     set_vim_var_string(VV_SCROLLSTART, p, -1);

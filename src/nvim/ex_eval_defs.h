@@ -38,11 +38,13 @@ enum {
 /// A list of error messages that can be converted to an exception.  "throw_msg"
 /// is only set in the first element of the list.  Usually, it points to the
 /// original message stored in that element, but sometimes it points to a later
-/// message in the list.  See cause_errthrow() below.
+/// message in the list.  See cause_errthrow().
 typedef struct msglist msglist_T;
 struct msglist {
-  char *msg;        ///< original message
+  char *msg;        ///< original message, allocated
   char *throw_msg;  ///< msg to throw: usually original one
+  char *sfile;      ///< value from estack_sfile(), allocated
+  linenr_T slnum;   ///< line number for "sfile"
   msglist_T *next;  ///< next of several messages in a row
 };
 

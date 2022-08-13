@@ -532,9 +532,8 @@ void func_line_start(void *cookie)
   funccall_T *fcp = (funccall_T *)cookie;
   ufunc_T *fp = fcp->func;
 
-  if (fp->uf_profiling && sourcing_lnum >= 1
-      && sourcing_lnum <= fp->uf_lines.ga_len) {
-    fp->uf_tml_idx = sourcing_lnum - 1;
+  if (fp->uf_profiling && SOURCING_LNUM >= 1 && SOURCING_LNUM <= fp->uf_lines.ga_len) {
+    fp->uf_tml_idx = SOURCING_LNUM - 1;
     // Skip continuation lines.
     while (fp->uf_tml_idx > 0 && FUNCLINE(fp, fp->uf_tml_idx) == NULL) {
       fp->uf_tml_idx--;
@@ -798,11 +797,11 @@ void script_line_start(void)
     return;
   }
   si = &SCRIPT_ITEM(current_sctx.sc_sid);
-  if (si->sn_prof_on && sourcing_lnum >= 1) {
+  if (si->sn_prof_on && SOURCING_LNUM >= 1) {
     // Grow the array before starting the timer, so that the time spent
     // here isn't counted.
-    (void)ga_grow(&si->sn_prl_ga, sourcing_lnum - si->sn_prl_ga.ga_len);
-    si->sn_prl_idx = sourcing_lnum - 1;
+    (void)ga_grow(&si->sn_prl_ga, SOURCING_LNUM - si->sn_prl_ga.ga_len);
+    si->sn_prl_idx = SOURCING_LNUM - 1;
     while (si->sn_prl_ga.ga_len <= si->sn_prl_idx
            && si->sn_prl_ga.ga_len < si->sn_prl_ga.ga_maxlen) {
       // Zero counters for a line that was not used before.

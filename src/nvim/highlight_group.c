@@ -691,12 +691,12 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     g->sg_cleared = false;
     g->sg_link = link_id;
     g->sg_script_ctx = current_sctx;
-    g->sg_script_ctx.sc_lnum += sourcing_lnum;
+    g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
     g->sg_set |= SG_LINK;
     if (is_default) {
       g->sg_deflink = link_id;
       g->sg_deflink_sctx = current_sctx;
-      g->sg_deflink_sctx.sc_lnum += sourcing_lnum;
+      g->sg_deflink_sctx.sc_lnum += SOURCING_LNUM;
     }
     return;
   }
@@ -735,7 +735,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   g->sg_blend = attrs.hl_blend;
 
   g->sg_script_ctx = current_sctx;
-  g->sg_script_ctx.sc_lnum += sourcing_lnum;
+  g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
 
   g->sg_attr = hl_get_syn_attr(0, id, attrs);
 
@@ -863,7 +863,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (dodefault && (forceit || hlgroup->sg_deflink == 0)) {
         hlgroup->sg_deflink = to_id;
         hlgroup->sg_deflink_sctx = current_sctx;
-        hlgroup->sg_deflink_sctx.sc_lnum += sourcing_lnum;
+        hlgroup->sg_deflink_sctx.sc_lnum += SOURCING_LNUM;
         nlua_set_sctx(&hlgroup->sg_deflink_sctx);
       }
     }
@@ -873,7 +873,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // for the group, unless '!' is used
       if (to_id > 0 && !forceit && !init
           && hl_has_settings(from_id - 1, dodefault)) {
-        if (sourcing_name == NULL && !dodefault) {
+        if (SOURCING_NAME == NULL && !dodefault) {
           emsg(_("E414: group has settings, highlight link ignored"));
         }
       } else if (hlgroup->sg_link != to_id
@@ -884,7 +884,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         }
         hlgroup->sg_link = to_id;
         hlgroup->sg_script_ctx = current_sctx;
-        hlgroup->sg_script_ctx.sc_lnum += sourcing_lnum;
+        hlgroup->sg_script_ctx.sc_lnum += SOURCING_LNUM;
         nlua_set_sctx(&hlgroup->sg_script_ctx);
         hlgroup->sg_cleared = false;
         redraw_all_later(SOME_VALID);
@@ -1274,7 +1274,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     set_hl_attr(idx);
   }
   hl_table[idx].sg_script_ctx = current_sctx;
-  hl_table[idx].sg_script_ctx.sc_lnum += sourcing_lnum;
+  hl_table[idx].sg_script_ctx.sc_lnum += SOURCING_LNUM;
   nlua_set_sctx(&hl_table[idx].sg_script_ctx);
 
   // Only call highlight_changed() once, after a sequence of highlight

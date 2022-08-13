@@ -275,6 +275,11 @@ bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
           (*msg_list)->throw_msg = tmsg;
         }
       }
+
+      // Get the source name and lnum now, it may change before
+      // reaching do_errthrow().
+      elem->sfile = estack_sfile();
+      elem->slnum = SOURCING_LNUM;
     }
     return true;
   }
@@ -289,6 +294,7 @@ static void free_msglist(msglist_T *l)
   while (messages != NULL) {
     next = messages->next;
     xfree(messages->msg);
+    xfree(messages->sfile);
     xfree(messages);
     messages = next;
   }
@@ -478,8 +484,18 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
   }
 
   excp->type = type;
-  excp->throw_name = xstrdup(sourcing_name == NULL ? "" : sourcing_name);
-  excp->throw_lnum = sourcing_lnum;
+  if (type == ET_ERROR && ((msglist_T *)value)->sfile != NULL) {
+    msglist_T *entry = (msglist_T *)value;
+    excp->throw_name = entry->sfile;
+    entry->sfile = NULL;
+    excp->throw_lnum = entry->slnum;
+  } else {
+    excp->throw_name = estack_sfile();
+    if (excp->throw_name == NULL) {
+      excp->throw_name = xstrdup("");
+    }
+    excp->throw_lnum = SOURCING_LNUM;
+  }
 
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;

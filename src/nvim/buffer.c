@@ -70,6 +70,7 @@
 #include "nvim/plines.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/sign.h"
 #include "nvim/spell.h"
@@ -5149,8 +5150,6 @@ static int chk_modeline(linenr_T lnum, int flags)
   intmax_t vers;
   int end;
   int retval = OK;
-  char *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
 
   prev = -1;
   for (s = (char *)ml_get(lnum); *s != NUL; s++) {
@@ -5195,10 +5194,8 @@ static int chk_modeline(linenr_T lnum, int flags)
 
   s = linecopy = xstrdup(s);      // copy the line, it will change
 
-  save_sourcing_lnum = sourcing_lnum;
-  save_sourcing_name = sourcing_name;
-  sourcing_lnum = lnum;               // prepare for emsg()
-  sourcing_name = "modelines";
+  // prepare for emsg()
+  estack_push(ETYPE_MODELINE, "modelines", lnum);
 
   end = false;
   while (end == false) {
@@ -5238,7 +5235,7 @@ static int chk_modeline(linenr_T lnum, int flags)
       const sctx_T save_current_sctx = current_sctx;
       current_sctx.sc_sid = SID_MODELINE;
       current_sctx.sc_seq = 0;
-      current_sctx.sc_lnum = 0;
+      current_sctx.sc_lnum = lnum;
       // Make sure no risky things are executed as a side effect.
       secure = 1;
 
@@ -5253,9 +5250,7 @@ static int chk_modeline(linenr_T lnum, int flags)
     s = e + 1;                        // advance to next part
   }
 
-  sourcing_lnum = save_sourcing_lnum;
-  sourcing_name = save_sourcing_name;
-
+  estack_pop();
   xfree(linecopy);
 
   return retval;
