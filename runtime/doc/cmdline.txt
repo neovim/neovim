@@ -879,12 +879,18 @@ Note: these are typed literally, they are not special keys!
 							*:<sfile>* *<sfile>*
 	<sfile>    When executing a `:source` command, is replaced with the
 		   file name of the sourced file.  *E498*
-		   When executing a function, is replaced with:
-		   "function {function-name}[{lnum}]"
-		   function call nesting is indicated like this:
-		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
+		   When executing a function, is replaced with the call stack,
+		   as with <stack> (this is for backwards compatibility, using
+		   <stack> is preferred).
 		   Note that filename-modifiers are useless when <sfile> is
-		   used inside a function.
+		   not used inside a script.
+							*:<stack>* *<stack>*
+	<stack>	   is replaced with the call stack, using
+		   "function {function-name}[{lnum}]" for a function line
+		   and "script {file-name}[{lnum}]" for a script line, and
+		   ".." in between items.  E.g.:
+		   "function {function-name1}[{lnum}]..{function-name2}[{lnum}]"
+		   If there is no call stack you get error *E489* .
 							*:<slnum>* *<slnum>*
 	<slnum>	   When executing a `:source` command, is replaced with the
 		   line number.  *E842*

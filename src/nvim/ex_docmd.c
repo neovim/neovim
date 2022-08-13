@@ -7912,9 +7912,12 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
-      result = estack_sfile();
+    case SPEC_STACK:            // call stack
+      result = estack_sfile(spec_idx == SPEC_SFILE);
       if (result == NULL) {
-        *errormsg = _("E498: no :source file name to substitute for \"<sfile>\"");
+        *errormsg = spec_idx == SPEC_SFILE
+          ? _("E498: no :source file name to substitute for \"<sfile>\"")
+          : _("E489: no call stack to substitute for \"<stack>\"");
         return NULL;
       }
       resultbuf = result;  // remember allocated string

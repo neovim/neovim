@@ -100,42 +100,55 @@ void estack_pop(void)
 }
 
 /// Get the current value for <sfile> in allocated memory.
-char *estack_sfile(void)
+/// @param is_sfile  true for <sfile> itself.
+char *estack_sfile(bool is_sfile)
 {
   estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len - 1;
-  if (entry->es_name == NULL) {
-    return NULL;
-  }
-  if (entry->es_info.ufunc == NULL) {
+  if (is_sfile && entry->es_type != ETYPE_UFUNC) {
+    if (entry->es_name == NULL) {
+      return NULL;
+    }
     return xstrdup(entry->es_name);
   }
 
+  // Give information about each stack entry up to the root.
   // For a function we compose the call stack, as it was done in the past:
   //   "function One[123]..Two[456]..Three"
-  size_t len = STRLEN(entry->es_name) + 10;
-  int idx;
-  for (idx = exestack.ga_len - 2; idx >= 0; idx--) {
+  garray_T ga;
+  ga_init(&ga, sizeof(char), 100);
+  etype_T last_type = ETYPE_SCRIPT;
+  for (int idx = 0; idx < exestack.ga_len; idx++) {
     entry = ((estack_T *)exestack.ga_data) + idx;
-    if (entry->es_name == NULL || entry->es_info.ufunc == NULL) {
-      idx++;
-      break;
+    if (entry->es_name != NULL) {
+      size_t len = strlen(entry->es_name) + 15;
+      char *type_name = "";
+      if (entry->es_type != last_type) {
+        switch (entry->es_type) {
+        case ETYPE_SCRIPT:
+          type_name = "script "; break;
+        case ETYPE_UFUNC:
+          type_name = "function "; break;
+        default:
+          type_name = ""; break;
+        }
+        last_type = entry->es_type;
+      }
+      len += strlen(type_name);
+      ga_grow(&ga, (int)len);
+      if (idx == exestack.ga_len - 1 || entry->es_lnum == 0) {
+        // For the bottom entry: do not add the line number, it is used
+        // in <slnum>.  Also leave it out when the number is not set.
+        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
+                     type_name, entry->es_name, idx == exestack.ga_len - 1 ? "" : "..");
+      } else {
+        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]..",
+                     type_name, entry->es_name, entry->es_lnum);
+      }
+      ga.ga_len += (int)strlen((char *)ga.ga_data + ga.ga_len);
     }
-    len += STRLEN(entry->es_name) + 15;
   }
 
-  char *res = (char *)xmalloc(len);
-  STRCPY(res, "function ");
-  size_t done;
-  while (idx < exestack.ga_len - 1) {
-    done = STRLEN(res);
-    entry = ((estack_T *)exestack.ga_data) + idx;
-    vim_snprintf(res + done, len - done, "%s[%" PRIdLINENR "]..", entry->es_name, entry->es_lnum);
-    idx++;
-  }
-  done = STRLEN(res);
-  entry = ((estack_T *)exestack.ga_data) + idx;
-  vim_snprintf(res + done, len - done, "%s", entry->es_name);
-  return res;
+  return (char *)ga.ga_data;
 }
 
 static bool runtime_search_path_valid = false;

@@ -37,17 +37,28 @@ func Test_expand_sflnum()
   delcommand Flnum
 endfunc
 
-func Test_expand_sfile()
+func Test_expand_sfile_and_stack()
   call assert_match('test_expand_func\.vim$', s:sfile)
-  call assert_match('^function .*\.\.Test_expand_sfile$', expand('<sfile>'))
+  let expected = 'script .*testdir/runtest.vim\[\d\+\]\.\.function RunTheTest\[\d\+\]\.\.Test_expand_sfile_and_stack$'
+  call assert_match(expected , expand('<sfile>'))
+  call assert_match(expected , expand('<stack>'))
 
   " Call in script-local function
-  call assert_match('^function .*\.\.Test_expand_sfile\[5\]\.\.<SNR>\d\+_expand_sfile$', s:expand_sfile())
+  call assert_match('script .*testdir/runtest.vim\[\d\+\]\.\.function RunTheTest\[\d\+\]\.\.Test_expand_sfile_and_stack\[7\]\.\.<SNR>\d\+_expand_sfile$', s:expand_sfile())
 
   " Call in command
   command Sfile echo expand('<sfile>')
-  call assert_match('^function .*\.\.Test_expand_sfile$', trim(execute('Sfile')))
+  call assert_match('script .*testdir/runtest.vim\[\d\+\]\.\.function RunTheTest\[\d\+\]\.\.Test_expand_sfile_and_stack$', trim(execute('Sfile')))
   delcommand Sfile
+
+  " Use <stack> from sourced script.
+  let lines =<< trim END
+    let g:stack_value = expand('<stack>')
+  END
+  call writefile(lines, 'Xstack')
+  source Xstack
+  call assert_match('\<Xstack$', g:stack_value)
+  call delete('Xstack')
 endfunc
 
 func Test_expand_slnum()
