@@ -6353,8 +6353,8 @@ bool redrawing(void)
          && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
 }
 
-/// Return TRUE if printing messages should currently be done.
-int messaging(void)
+/// Return true if printing messages should currently be done.
+bool messaging(void)
 {
   return !(p_lz && char_avail() && !KeyTyped) && ui_has_messages();
 }
