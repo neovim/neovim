@@ -12,6 +12,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/menu.h"
 #include "nvim/os/os_defs.h"
+#include "nvim/runtime.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
 
@@ -345,8 +346,8 @@ EXTERN bool did_source_packages INIT(= false);
 // provider function call
 EXTERN struct caller_scope {
   sctx_T script_ctx;
-  char *sourcing_name, *autocmd_fname, *autocmd_match;
-  linenr_T sourcing_lnum;
+  estack_T es_entry;
+  char *autocmd_fname, *autocmd_match;
   int autocmd_bufnr;
   void *funccalp;
 } provider_caller_scope;

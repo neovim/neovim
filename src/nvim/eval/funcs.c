@@ -7293,7 +7293,6 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "rpcrequest()" function
 static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-#if 0  // TODO:
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
   const int l_provider_call_nesting = provider_call_nesting;
@@ -7319,8 +7318,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   sctx_T save_current_sctx;
-  char *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
-  linenr_T save_sourcing_lnum;
+  char *save_autocmd_fname, *save_autocmd_match;
   int save_autocmd_bufnr;
   funccal_entry_T funccal_entry;
 
@@ -7328,16 +7326,14 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // If this is called from a provider function, restore the scope
     // information of the caller.
     save_current_sctx = current_sctx;
-    save_sourcing_name = sourcing_name;
-    save_sourcing_lnum = sourcing_lnum;
     save_autocmd_fname = autocmd_fname;
     save_autocmd_match = autocmd_match;
     save_autocmd_bufnr = autocmd_bufnr;
     save_funccal(&funccal_entry);
 
     current_sctx = provider_caller_scope.script_ctx;
-    sourcing_name = provider_caller_scope.sourcing_name;
-    sourcing_lnum = provider_caller_scope.sourcing_lnum;
+    ga_grow(&exestack, 1);
+    ((estack_T *)exestack.ga_data)[exestack.ga_len++] = provider_caller_scope.es_entry;
     autocmd_fname = provider_caller_scope.autocmd_fname;
     autocmd_match = provider_caller_scope.autocmd_match;
     autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
@@ -7354,8 +7350,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (l_provider_call_nesting) {
     current_sctx = save_current_sctx;
-    sourcing_name = save_sourcing_name;
-    sourcing_lnum = save_sourcing_lnum;
+    exestack.ga_len--;
     autocmd_fname = save_autocmd_fname;
     autocmd_match = save_autocmd_match;
     autocmd_bufnr = save_autocmd_bufnr;
@@ -7387,7 +7382,6 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 end:
   arena_mem_free(res_mem, NULL);
   api_clear_error(&err);
-#endif
 }
 
 /// "rpcstart()" function (DEPRECATED)

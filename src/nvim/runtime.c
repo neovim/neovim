@@ -1731,19 +1731,19 @@ scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
 
 static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
 {
-#if 0  // TODO:
-  char *save_sourcing_name = sourcing_name;
-  linenr_T save_sourcing_lnum = sourcing_lnum;
+  char *save_sourcing_name = SOURCING_NAME;
+  linenr_T save_sourcing_lnum = SOURCING_LNUM;
   char sourcing_name_buf[256];
+  char *sname;
   if (save_sourcing_name == NULL) {
-    sourcing_name = (char *)traceback_name;
+    sname = (char *)traceback_name;
   } else {
     snprintf((char *)sourcing_name_buf, sizeof(sourcing_name_buf),
              "%s called at %s:%" PRIdLINENR, traceback_name, save_sourcing_name,
              save_sourcing_lnum);
-    sourcing_name = sourcing_name_buf;  // -V507 reassigned below, before return.
+    sname = sourcing_name_buf;
   }
-  sourcing_lnum = 0;
+  estack_push(ETYPE_SCRIPT, sname, 0);
 
   const sctx_T save_current_sctx = current_sctx;
   if (current_sctx.sc_sid != SID_LUA) {
@@ -1755,12 +1755,10 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   save_funccal(&entry);
   int retval = do_cmdline(NULL, fgetline, cookie,
                           DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
-  sourcing_lnum = save_sourcing_lnum;
-  sourcing_name = save_sourcing_name;
+  estack_pop();
   current_sctx = save_current_sctx;
   restore_funccal();
   return retval;
-#endif
 }
 
 static void cmd_source_buffer(const exarg_T *const eap)
@@ -1982,17 +1980,14 @@ int do_source(char *fname, int check_other, int is_vimrc)
   }
 
   if (path_with_extension((const char *)fname_exp, "lua")) {
-#if 0  // TODO:
     const sctx_T current_sctx_backup = current_sctx;
-    const linenr_T sourcing_lnum_backup = sourcing_lnum;
     current_sctx.sc_sid = SID_LUA;
     current_sctx.sc_lnum = 0;
-    sourcing_lnum = 0;
+    estack_push(ETYPE_SCRIPT, NULL, 0);
     // Source the file as lua
     nlua_exec_file((const char *)fname_exp);
     current_sctx = current_sctx_backup;
-    sourcing_lnum = sourcing_lnum_backup;
-#endif
+    estack_pop();
   } else {
     // Call do_cmdline, which will call getsourceline() to get the lines.
     do_cmdline((char *)firstline, getsourceline, (void *)&cookie,

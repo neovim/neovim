@@ -8614,8 +8614,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
   provider_caller_scope = (struct caller_scope) {
     .script_ctx = current_sctx,
-    .sourcing_name = SOURCING_NAME,
-    .sourcing_lnum = SOURCING_LNUM,
+    .es_entry = ((estack_T *)exestack.ga_data)[exestack.ga_len - 1],
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
     .autocmd_bufnr = autocmd_bufnr,
