@@ -129,8 +129,8 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-#define MB_FILLER_CHAR '<'  /* character used when a double-width character
-                             * doesn't fit. */
+#define MB_FILLER_CHAR '<'  // character used when a double-width character
+                            // doesn't fit.
 
 static match_T search_hl;       // used for 'hlsearch' highlight matching
 
@@ -185,9 +185,7 @@ void redraw_later(win_T *wp, int type)
   }
 }
 
-/*
- * Mark all windows to be redrawn later.
- */
+/// Mark all windows to be redrawn later.
 void redraw_all_later(int type)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -207,9 +205,7 @@ void screen_invalidate_highlights(void)
   }
 }
 
-/*
- * Mark all windows that are editing the current buffer to be updated later.
- */
+/// Mark all windows that are editing the current buffer to be updated later.
 void redraw_curbuf_later(int type)
 {
   redraw_buf_later(curbuf, type);
@@ -250,14 +246,12 @@ void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
   }
 }
 
-/*
- * Changed something in the current window, at buffer line "lnum", that
- * requires that line and possibly other lines to be redrawn.
- * Used when entering/leaving Insert mode with the cursor on a folded line.
- * Used to remove the "$" from a change command.
- * Note that when also inserting/deleting lines w_redraw_top and w_redraw_bot
- * may become invalid and the whole window will have to be redrawn.
- */
+/// Changed something in the current window, at buffer line "lnum", that
+/// requires that line and possibly other lines to be redrawn.
+/// Used when entering/leaving Insert mode with the cursor on a folded line.
+/// Used to remove the "$" from a change command.
+/// Note that when also inserting/deleting lines w_redraw_top and w_redraw_bot
+/// may become invalid and the whole window will have to be redrawn.
 void redrawWinline(win_T *wp, linenr_T lnum)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -347,8 +341,8 @@ int update_screen(int type)
     type = NOT_VALID;
   }
 
-  /* Postpone the redrawing when it's not needed and when being called
-   * recursively. */
+  // Postpone the redrawing when it's not needed and when being called
+  // recursively.
   if (!redrawing() || updating_screen) {
     must_redraw = type;
     if (type > INVERTED_ALL) {
@@ -489,17 +483,15 @@ int update_screen(int type)
     check_for_delay(false);
   }
 
-  /* Force redraw when width of 'number' or 'relativenumber' column
-   * changes. */
+  // Force redraw when width of 'number' or 'relativenumber' column
+  // changes.
   if (curwin->w_redr_type < NOT_VALID
       && curwin->w_nrwidth != ((curwin->w_p_nu || curwin->w_p_rnu)
                                ? number_width(curwin) : 0)) {
     curwin->w_redr_type = NOT_VALID;
   }
 
-  /*
-   * Only start redrawing if there is really something to do.
-   */
+  // Only start redrawing if there is really something to do.
   if (type == INVERTED) {
     update_curswant();
   }
@@ -514,8 +506,7 @@ int update_screen(int type)
                && curwin->w_old_cursor_lnum == curwin->w_cursor.lnum
                && curwin->w_old_visual_mode == VIsual_mode
                && (curwin->w_valid & VALID_VIRTCOL)
-               && curwin->w_old_curswant == curwin->w_curswant)
-           )) {
+               && curwin->w_old_curswant == curwin->w_curswant))) {
     curwin->w_redr_type = type;
   }
 
@@ -530,10 +521,8 @@ int update_screen(int type)
     draw_tabline();
   }
 
-  /*
-   * Correct stored syntax highlighting info for changes in each displayed
-   * buffer.  Each buffer must only be done once.
-   */
+  // Correct stored syntax highlighting info for changes in each displayed
+  // buffer.  Each buffer must only be done once.
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     update_window_hl(wp, type >= NOT_VALID || hl_changed);
 
@@ -552,10 +541,8 @@ int update_screen(int type)
     }
   }
 
-  /*
-   * Go from top to bottom through the windows, redrawing the ones that need
-   * it.
-   */
+  // Go from top to bottom through the windows, redrawing the ones that need
+  // it.
   bool did_one = false;
   search_hl.rm.regprog = NULL;
 
@@ -594,16 +581,16 @@ int update_screen(int type)
     pum_redraw();
   }
 
-  /* Reset b_mod_set flags.  Going through all windows is probably faster
-   * than going through all buffers (there could be many buffers). */
+  // Reset b_mod_set flags.  Going through all windows is probably faster
+  // than going through all buffers (there could be many buffers).
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     wp->w_buffer->b_mod_set = false;
   }
 
   updating_screen = 0;
 
-  /* Clear or redraw the command line.  Done last, because scrolling may
-   * mess up the command line. */
+  // Clear or redraw the command line.  Done last, because scrolling may
+  // mess up the command line.
   if (clear_cmdline || redraw_cmdline) {
     showmode();
   }
@@ -669,33 +656,31 @@ bool win_cursorline_standout(const win_T *wp)
   return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
 
-/*
- * Update a single window.
- *
- * This may cause the windows below it also to be redrawn (when clearing the
- * screen or scrolling lines).
- *
- * How the window is redrawn depends on wp->w_redr_type.  Each type also
- * implies the one below it.
- * NOT_VALID    redraw the whole window
- * SOME_VALID   redraw the whole window but do scroll when possible
- * REDRAW_TOP   redraw the top w_upd_rows window lines, otherwise like VALID
- * INVERTED     redraw the changed part of the Visual area
- * INVERTED_ALL redraw the whole Visual area
- * VALID        1. scroll up/down to adjust for a changed w_topline
- *              2. update lines at the top when scrolled down
- *              3. redraw changed text:
- *                 - if wp->w_buffer->b_mod_set set, update lines between
- *                   b_mod_top and b_mod_bot.
- *                 - if wp->w_redraw_top non-zero, redraw lines between
- *                   wp->w_redraw_top and wp->w_redr_bot.
- *                 - continue redrawing when syntax status is invalid.
- *              4. if scrolled up, update lines at the bottom.
- * This results in three areas that may need updating:
- * top: from first row to top_end (when scrolled down)
- * mid: from mid_start to mid_end (update inversion or changed text)
- * bot: from bot_start to last row (when scrolled up)
- */
+/// Update a single window.
+///
+/// This may cause the windows below it also to be redrawn (when clearing the
+/// screen or scrolling lines).
+///
+/// How the window is redrawn depends on wp->w_redr_type.  Each type also
+/// implies the one below it.
+/// NOT_VALID    redraw the whole window
+/// SOME_VALID   redraw the whole window but do scroll when possible
+/// REDRAW_TOP   redraw the top w_upd_rows window lines, otherwise like VALID
+/// INVERTED     redraw the changed part of the Visual area
+/// INVERTED_ALL redraw the whole Visual area
+/// VALID        1. scroll up/down to adjust for a changed w_topline
+///              2. update lines at the top when scrolled down
+///              3. redraw changed text:
+///                 - if wp->w_buffer->b_mod_set set, update lines between
+///                   b_mod_top and b_mod_bot.
+///                 - if wp->w_redraw_top non-zero, redraw lines between
+///                   wp->w_redraw_top and wp->w_redr_bot.
+///                 - continue redrawing when syntax status is invalid.
+///              4. if scrolled up, update lines at the bottom.
+/// This results in three areas that may need updating:
+/// top: from first row to top_end (when scrolled down)
+/// mid: from mid_start to mid_end (update inversion or changed text)
+/// bot: from bot_start to last row (when scrolled up)
 static void win_update(win_T *wp, DecorProviders *providers)
 {
   bool called_decor_providers = false;
@@ -703,14 +688,14 @@ win_update_start:
   ;
   buf_T *buf = wp->w_buffer;
   int type;
-  int top_end = 0;              /* Below last row of the top area that needs
-                                   updating.  0 when no top area updating. */
-  int mid_start = 999;          /* first row of the mid area that needs
-                                   updating.  999 when no mid area updating. */
-  int mid_end = 0;              /* Below last row of the mid area that needs
-                                   updating.  0 when no mid area updating. */
-  int bot_start = 999;          /* first row of the bot area that needs
-                                   updating.  999 when no bot area updating */
+  int top_end = 0;              // Below last row of the top area that needs
+                                // updating.  0 when no top area updating.
+  int mid_start = 999;          // first row of the mid area that needs
+                                // updating.  999 when no mid area updating.
+  int mid_end = 0;              // Below last row of the mid area that needs
+                                // updating.  0 when no mid area updating.
+  int bot_start = 999;          // first row of the bot area that needs
+                                // updating.  999 when no bot area updating
   bool scrolled_down = false;   // true when scrolled down when w_topline got smaller a bit
   bool top_to_mod = false;      // redraw above mod_top
 
@@ -764,8 +749,8 @@ win_update_start:
 
   init_search_hl(wp, &search_hl);
 
-  /* Force redraw when width of 'number' or 'relativenumber' column
-   * changes. */
+  // Force redraw when width of 'number' or 'relativenumber' column
+  // changes.
   i = (wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) : 0;
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
@@ -782,10 +767,8 @@ win_update_start:
     // everything (only happens when redrawing is off for while).
     type = NOT_VALID;
   } else {
-    /*
-     * Set mod_top to the first line that needs displaying because of
-     * changes.  Set mod_bot to the first line after the changes.
-     */
+    // Set mod_top to the first line that needs displaying because of
+    // changes.  Set mod_bot to the first line after the changes.
     mod_top = wp->w_redraw_top;
     if (wp->w_redraw_bot != 0) {
       mod_bot = wp->w_redraw_bot + 1;
@@ -795,8 +778,8 @@ win_update_start:
     if (buf->b_mod_set) {
       if (mod_top == 0 || mod_top > buf->b_mod_top) {
         mod_top = buf->b_mod_top;
-        /* Need to redraw lines above the change that may be included
-         * in a pattern match. */
+        // Need to redraw lines above the change that may be included
+        // in a pattern match.
         if (syntax_present(wp)) {
           mod_top -= buf->b_s.b_syn_sync_linebreaks;
           if (mod_top < 1) {
@@ -831,21 +814,19 @@ win_update_start:
     if (mod_top != 0 && hasAnyFolding(wp)) {
       linenr_T lnumt, lnumb;
 
-      /*
-       * A change in a line can cause lines above it to become folded or
-       * unfolded.  Find the top most buffer line that may be affected.
-       * If the line was previously folded and displayed, get the first
-       * line of that fold.  If the line is folded now, get the first
-       * folded line.  Use the minimum of these two.
-       */
+      // A change in a line can cause lines above it to become folded or
+      // unfolded.  Find the top most buffer line that may be affected.
+      // If the line was previously folded and displayed, get the first
+      // line of that fold.  If the line is folded now, get the first
+      // folded line.  Use the minimum of these two.
 
-      /* Find last valid w_lines[] entry above mod_top.  Set lnumt to
-       * the line below it.  If there is no valid entry, use w_topline.
-       * Find the first valid w_lines[] entry below mod_bot.  Set lnumb
-       * to this line.  If there is no valid entry, use MAXLNUM. */
+      // Find last valid w_lines[] entry above mod_top.  Set lnumt to
+      // the line below it.  If there is no valid entry, use w_topline.
+      // Find the first valid w_lines[] entry below mod_bot.  Set lnumb
+      // to this line.  If there is no valid entry, use MAXLNUM.
       lnumt = wp->w_topline;
       lnumb = MAXLNUM;
-      for (i = 0; i < wp->w_lines_valid; ++i) {
+      for (i = 0; i < wp->w_lines_valid; i++) {
         if (wp->w_lines[i].wl_valid) {
           if (wp->w_lines[i].wl_lastlnum < mod_top) {
             lnumt = wp->w_lines[i].wl_lastlnum + 1;
@@ -875,10 +856,10 @@ win_update_start:
       }
     }
 
-    /* When a change starts above w_topline and the end is below
-     * w_topline, start redrawing at w_topline.
-     * If the end of the change is above w_topline: do like no change was
-     * made, but redraw the first line to find changes in syntax. */
+    // When a change starts above w_topline and the end is below
+    // w_topline, start redrawing at w_topline.
+    // If the end of the change is above w_topline: do like no change was
+    // made, but redraw the first line to find changes in syntax.
     if (mod_top != 0 && mod_top < wp->w_topline) {
       if (mod_bot > wp->w_topline) {
         mod_top = wp->w_topline;
@@ -887,8 +868,8 @@ win_update_start:
       }
     }
 
-    /* When line numbers are displayed need to redraw all lines below
-     * inserted/deleted lines. */
+    // When line numbers are displayed need to redraw all lines below
+    // inserted/deleted lines.
     if (mod_top != 0 && buf->b_mod_xlines != 0 && wp->w_p_nu) {
       mod_bot = MAXLNUM;
     }
@@ -896,13 +877,11 @@ win_update_start:
   wp->w_redraw_top = 0;  // reset for next time
   wp->w_redraw_bot = 0;
 
-  /*
-   * When only displaying the lines at the top, set top_end.  Used when
-   * window has scrolled down for msg_scrolled.
-   */
+  // When only displaying the lines at the top, set top_end.  Used when
+  // window has scrolled down for msg_scrolled.
   if (type == REDRAW_TOP) {
     j = 0;
-    for (i = 0; i < wp->w_lines_valid; ++i) {
+    for (i = 0; i < wp->w_lines_valid; i++) {
       j += wp->w_lines[i].wl_size;
       if (j >= wp->w_upd_rows) {
         top_end = (int)j;
@@ -918,14 +897,12 @@ win_update_start:
     }
   }
 
-  /*
-   * If there are no changes on the screen that require a complete redraw,
-   * handle three cases:
-   * 1: we are off the top of the screen by a few lines: scroll down
-   * 2: wp->w_topline is below wp->w_lines[0].wl_lnum: may scroll up
-   * 3: wp->w_topline is wp->w_lines[0].wl_lnum: find first entry in
-   *    w_lines[] that needs updating.
-   */
+  // If there are no changes on the screen that require a complete redraw,
+  // handle three cases:
+  // 1: we are off the top of the screen by a few lines: scroll down
+  // 2: wp->w_topline is below wp->w_lines[0].wl_lnum: may scroll up
+  // 3: wp->w_topline is wp->w_lines[0].wl_lnum: find first entry in
+  //    w_lines[] that needs updating.
   if ((type == VALID || type == SOME_VALID
        || type == INVERTED || type == INVERTED_ALL)
       && !wp->w_botfill && !wp->w_old_botfill) {
@@ -938,16 +915,13 @@ win_update_start:
     } else if (wp->w_lines[0].wl_valid
                && (wp->w_topline < wp->w_lines[0].wl_lnum
                    || (wp->w_topline == wp->w_lines[0].wl_lnum
-                       && wp->w_topfill > wp->w_old_topfill)
-                   )) {
-      /*
-       * New topline is above old topline: May scroll down.
-       */
+                       && wp->w_topfill > wp->w_old_topfill))) {
+      // New topline is above old topline: May scroll down.
       if (hasAnyFolding(wp)) {
         linenr_T ln;
 
-        /* count the number of lines we are off, counting a sequence
-         * of folded lines as one */
+        // count the number of lines we are off, counting a sequence
+        // of folded lines as one
         j = 0;
         for (ln = wp->w_topline; ln < wp->w_lines[0].wl_lnum; ln++) {
           j++;
@@ -995,11 +969,9 @@ win_update_start:
         mid_start = 0;  // redraw all lines
       }
     } else {
-      /*
-       * New topline is at or below old topline: May scroll up.
-       * When topline didn't change, find first entry in w_lines[] that
-       * needs updating.
-       */
+      // New topline is at or below old topline: May scroll up.
+      // When topline didn't change, find first entry in w_lines[] that
+      // needs updating.
 
       // try to find wp->w_topline in wp->w_lines[].wl_lnum
       j = -1;
@@ -1013,16 +985,15 @@ win_update_start:
         row += wp->w_lines[i].wl_size;
       }
       if (j == -1) {
-        /* if wp->w_topline is not in wp->w_lines[].wl_lnum redraw all
-         * lines */
+        // if wp->w_topline is not in wp->w_lines[].wl_lnum redraw all
+        // lines
         mid_start = 0;
       } else {
-        /*
-         * Try to delete the correct number of lines.
-         * wp->w_topline is at wp->w_lines[i].wl_lnum.
-         */
-        /* If the topline didn't change, delete old filler lines,
-         * otherwise delete filler lines of the new topline... */
+        // Try to delete the correct number of lines.
+        // wp->w_topline is at wp->w_lines[i].wl_lnum.
+
+        // If the topline didn't change, delete old filler lines,
+        // otherwise delete filler lines of the new topline...
         if (wp->w_lines[0].wl_lnum == wp->w_topline) {
           row += wp->w_old_topfill;
         } else {
@@ -1035,18 +1006,16 @@ win_update_start:
           bot_start = wp->w_grid.rows - row;
         }
         if ((row == 0 || bot_start < 999) && wp->w_lines_valid != 0) {
-          /*
-           * Skip the lines (below the deleted lines) that are still
-           * valid and don't need redrawing.    Copy their info
-           * upwards, to compensate for the deleted lines.  Set
-           * bot_start to the first row that needs redrawing.
-           */
+          // Skip the lines (below the deleted lines) that are still
+          // valid and don't need redrawing.    Copy their info
+          // upwards, to compensate for the deleted lines.  Set
+          // bot_start to the first row that needs redrawing.
           bot_start = 0;
           idx = 0;
           for (;;) {
             wp->w_lines[idx] = wp->w_lines[j];
-            /* stop at line that didn't fit, unless it is still
-             * valid (no lines deleted) */
+            // stop at line that didn't fit, unless it is still
+            // valid (no lines deleted)
             if (row > 0 && bot_start + row
                 + (int)wp->w_lines[j].wl_size > wp->w_grid.rows) {
               wp->w_lines_valid = idx + 1;
@@ -1119,11 +1088,9 @@ win_update_start:
           to = wp->w_old_visual_lnum;
         }
       } else {
-        /*
-         * Find the line numbers that need to be updated: The lines
-         * between the old cursor position and the current cursor
-         * position.  Also check if the Visual position changed.
-         */
+        // Find the line numbers that need to be updated: The lines
+        // between the old cursor position and the current cursor
+        // position.  Also check if the Visual position changed.
         if (curwin->w_cursor.lnum < wp->w_old_cursor_lnum) {
           from = curwin->w_cursor.lnum;
           to = wp->w_old_cursor_lnum;
@@ -1153,11 +1120,9 @@ win_update_start:
         }
       }
 
-      /*
-       * If in block mode and changed column or curwin->w_curswant:
-       * update all lines.
-       * First compute the actual start and end column.
-       */
+      // If in block mode and changed column or curwin->w_curswant:
+      // update all lines.
+      // First compute the actual start and end column.
       if (VIsual_mode == Ctrl_V) {
         colnr_T fromc, toc;
         unsigned int save_ve_flags = curwin->w_ve_flags;
@@ -1219,17 +1184,13 @@ win_update_start:
       }
     }
 
-    /*
-     * There is no need to update lines above the top of the window.
-     */
+    // There is no need to update lines above the top of the window.
     if (from < wp->w_topline) {
       from = wp->w_topline;
     }
 
-    /*
-     * If we know the value of w_botline, use it to restrict the update to
-     * the lines that are visible in the window.
-     */
+    // If we know the value of w_botline, use it to restrict the update to
+    // the lines that are visible in the window.
     if (wp->w_valid & VALID_BOTLINE) {
       if (from >= wp->w_botline) {
         from = wp->w_botline - 1;
@@ -1239,15 +1200,13 @@ win_update_start:
       }
     }
 
-    /*
-     * Find the minimal part to be updated.
-     * Watch out for scrolling that made entries in w_lines[] invalid.
-     * E.g., CTRL-U makes the first half of w_lines[] invalid and sets
-     * top_end; need to redraw from top_end to the "to" line.
-     * A middle mouse click with a Visual selection may change the text
-     * above the Visual area and reset wl_valid, do count these for
-     * mid_end (in srow).
-     */
+    // Find the minimal part to be updated.
+    // Watch out for scrolling that made entries in w_lines[] invalid.
+    // E.g., CTRL-U makes the first half of w_lines[] invalid and sets
+    // top_end; need to redraw from top_end to the "to" line.
+    // A middle mouse click with a Visual selection may change the text
+    // above the Visual area and reset wl_valid, do count these for
+    // mid_end (in srow).
     if (mid_start > 0) {
       lnum = wp->w_topline;
       idx = 0;
@@ -1263,11 +1222,11 @@ win_update_start:
         } else if (!scrolled_down) {
           srow += wp->w_lines[idx].wl_size;
         }
-        ++idx;
+        idx++;
         if (idx < wp->w_lines_valid && wp->w_lines[idx].wl_valid) {
           lnum = wp->w_lines[idx].wl_lnum;
         } else {
-          ++lnum;
+          lnum++;
         }
       }
       srow += mid_start;
@@ -1304,9 +1263,7 @@ win_update_start:
   proftime_T syntax_tm = profile_setlimit(p_rdt);
   syn_set_timeout(&syntax_tm);
 
-  /*
-   * Update all the window rows.
-   */
+  // Update all the window rows.
   idx = 0;              // first entry in w_lines[].wl_size
   row = 0;
   srow = 0;
@@ -1330,8 +1287,8 @@ win_update_start:
   bool cursorline_standout = win_cursorline_standout(wp);
 
   for (;;) {
-    /* stop updating when reached the end of the window (check for _past_
-     * the end of the window is at the end of the loop) */
+    // stop updating when reached the end of the window (check for _past_
+    // the end of the window is at the end of the loop)
     if (row == wp->w_grid.rows) {
       didline = true;
       break;
@@ -1343,8 +1300,8 @@ win_update_start:
       break;
     }
 
-    /* Remember the starting row of the line that is going to be dealt
-     * with.  It is used further down when the line doesn't fit. */
+    // Remember the starting row of the line that is going to be dealt
+    // with.  It is used further down when the line doesn't fit.
     srow = row;
 
     // Update a line when it is in an area that needs updating, when it
@@ -1379,13 +1336,11 @@ win_update_start:
         top_to_mod = false;
       }
 
-      /*
-       * When at start of changed lines: May scroll following lines
-       * up or down to minimize redrawing.
-       * Don't do this when the change continues until the end.
-       * Don't scroll when dollar_vcol >= 0, keep the "$".
-       * Don't scroll when redrawing the top, scrolled already above.
-       */
+      // When at start of changed lines: May scroll following lines
+      // up or down to minimize redrawing.
+      // Don't do this when the change continues until the end.
+      // Don't scroll when dollar_vcol >= 0, keep the "$".
+      // Don't scroll when redrawing the top, scrolled already above.
       if (lnum == mod_top
           && mod_bot != MAXLNUM
           && !(dollar_vcol >= 0 && mod_bot == mod_top + 1)
@@ -1395,12 +1350,12 @@ win_update_start:
         int xtra_rows;
         linenr_T l;
 
-        /* Count the old number of window rows, using w_lines[], which
-         * should still contain the sizes for the lines as they are
-         * currently displayed. */
-        for (i = idx; i < wp->w_lines_valid; ++i) {
-          /* Only valid lines have a meaningful wl_lnum.  Invalid
-           * lines are part of the changed area. */
+        // Count the old number of window rows, using w_lines[], which
+        // should still contain the sizes for the lines as they are
+        // currently displayed.
+        for (i = idx; i < wp->w_lines_valid; i++) {
+          // Only valid lines have a meaningful wl_lnum.  Invalid
+          // lines are part of the changed area.
           if (wp->w_lines[i].wl_valid
               && wp->w_lines[i].wl_lnum == mod_bot) {
             break;
@@ -1408,9 +1363,9 @@ win_update_start:
           old_rows += wp->w_lines[i].wl_size;
           if (wp->w_lines[i].wl_valid
               && wp->w_lines[i].wl_lastlnum + 1 == mod_bot) {
-            /* Must have found the last valid entry above mod_bot.
-             * Add following invalid entries. */
-            ++i;
+            // Must have found the last valid entry above mod_bot.
+            // Add following invalid entries.
+            i++;
             while (i < wp->w_lines_valid
                    && !wp->w_lines[i].wl_valid) {
               old_rows += wp->w_lines[i++].wl_size;
@@ -1420,13 +1375,13 @@ win_update_start:
         }
 
         if (i >= wp->w_lines_valid) {
-          /* We can't find a valid line below the changed lines,
-           * need to redraw until the end of the window.
-           * Inserting/deleting lines has no use. */
+          // We can't find a valid line below the changed lines,
+          // need to redraw until the end of the window.
+          // Inserting/deleting lines has no use.
           bot_start = 0;
         } else {
-          /* Able to count old number of rows: Count new window
-           * rows, and may insert/delete lines */
+          // Able to count old number of rows: Count new window
+          // rows, and may insert/delete lines
           j = idx;
           for (l = lnum; l < mod_bot; l++) {
             if (hasFoldingWin(wp, l, NULL, &l, true, NULL)) {
@@ -1445,10 +1400,10 @@ win_update_start:
           }
           xtra_rows = new_rows - old_rows;
           if (xtra_rows < 0) {
-            /* May scroll text up.  If there is not enough
-             * remaining text or scrolling fails, must redraw the
-             * rest.  If scrolling works, must redraw the text
-             * below the scrolled text. */
+            // May scroll text up.  If there is not enough
+            // remaining text or scrolling fails, must redraw the
+            // rest.  If scrolling works, must redraw the text
+            // below the scrolled text.
             if (row - xtra_rows >= wp->w_grid.rows - 2) {
               mod_bot = MAXLNUM;
             } else {
@@ -1456,9 +1411,9 @@ win_update_start:
               bot_start = wp->w_grid.rows + xtra_rows;
             }
           } else if (xtra_rows > 0) {
-            /* May scroll text down.  If there is not enough
-             * remaining text of scrolling fails, must redraw the
-             * rest. */
+            // May scroll text down.  If there is not enough
+            // remaining text of scrolling fails, must redraw the
+            // rest.
             if (row + xtra_rows >= wp->w_grid.rows - 2) {
               mod_bot = MAXLNUM;
             } else {
@@ -1471,8 +1426,8 @@ win_update_start:
             }
           }
 
-          /* When not updating the rest, may need to move w_lines[]
-           * entries. */
+          // When not updating the rest, may need to move w_lines[]
+          // entries.
           if (mod_bot != MAXLNUM && i != j) {
             if (j < i) {
               int x = row + new_rows;
@@ -1492,7 +1447,7 @@ win_update_start:
                   break;
                 }
                 x += wp->w_lines[j++].wl_size;
-                ++i;
+                i++;
               }
               if (bot_start > x) {
                 bot_start = x;
@@ -1508,23 +1463,21 @@ win_update_start:
                 wp->w_lines[i] = wp->w_lines[i - j];
               }
 
-              /* The w_lines[] entries for inserted lines are
-               * now invalid, but wl_size may be used above.
-               * Reset to zero. */
+              // The w_lines[] entries for inserted lines are
+              // now invalid, but wl_size may be used above.
+              // Reset to zero.
               while (i >= idx) {
                 wp->w_lines[i].wl_size = 0;
-                wp->w_lines[i--].wl_valid = FALSE;
+                wp->w_lines[i--].wl_valid = false;
               }
             }
           }
         }
       }
 
-      /*
-       * When lines are folded, display one line for all of them.
-       * Otherwise, display normally (can be several display lines when
-       * 'wrap' is on).
-       */
+      // When lines are folded, display one line for all of them.
+      // Otherwise, display normally (can be several display lines when
+      // 'wrap' is on).
       foldinfo_T foldinfo = fold_info(wp, lnum);
 
       if (foldinfo.fi_lines == 0
@@ -1603,9 +1556,7 @@ win_update_start:
       break;
     }
   }
-  /*
-   * End of loop over all window lines.
-   */
+  // End of loop over all window lines.
 
   // Now that the window has been redrawn with the old and new cursor line,
   // update w_last_cursorline.
@@ -1617,27 +1568,21 @@ win_update_start:
     wp->w_lines_valid = idx;
   }
 
-  /*
-   * Let the syntax stuff know we stop parsing here.
-   */
+  // Let the syntax stuff know we stop parsing here.
   if (syntax_last_parsed != 0 && syntax_present(wp)) {
     syntax_end_parsing(syntax_last_parsed + 1);
   }
 
-  /*
-   * If we didn't hit the end of the file, and we didn't finish the last
-   * line we were working on, then the line didn't fit.
-   */
+  // If we didn't hit the end of the file, and we didn't finish the last
+  // line we were working on, then the line didn't fit.
   wp->w_empty_rows = 0;
   wp->w_filler_rows = 0;
   if (!eof && !didline) {
     int at_attr = hl_combine_attr(wp->w_hl_attr_normal,
                                   win_hl_attr(wp, HLF_AT));
     if (lnum == wp->w_topline) {
-      /*
-       * Single line that does not fit!
-       * Don't overwrite it, it can be edited.
-       */
+      // Single line that does not fit!
+      // Don't overwrite it, it can be edited.
       wp->w_botline = lnum + 1;
     } else if (win_get_fill(wp, lnum) >= wp->w_grid.rows - srow) {
       // Window ends in filler lines.
@@ -1708,18 +1653,16 @@ win_update_start:
   }
 
   if (dollar_vcol == -1) {
-    /*
-     * There is a trick with w_botline.  If we invalidate it on each
-     * change that might modify it, this will cause a lot of expensive
-     * calls to plines_win() in update_topline() each time.  Therefore the
-     * value of w_botline is often approximated, and this value is used to
-     * compute the value of w_topline.  If the value of w_botline was
-     * wrong, check that the value of w_topline is correct (cursor is on
-     * the visible part of the text).  If it's not, we need to redraw
-     * again.  Mostly this just means scrolling up a few lines, so it
-     * doesn't look too bad.  Only do this for the current window (where
-     * changes are relevant).
-     */
+    // There is a trick with w_botline.  If we invalidate it on each
+    // change that might modify it, this will cause a lot of expensive
+    // calls to plines_win() in update_topline() each time.  Therefore the
+    // value of w_botline is often approximated, and this value is used to
+    // compute the value of w_topline.  If the value of w_botline was
+    // wrong, check that the value of w_topline is correct (cursor is on
+    // the visible part of the text).  If it's not, we need to redraw
+    // again.  Mostly this just means scrolling up a few lines, so it
+    // doesn't look too bad.  Only do this for the current window (where
+    // changes are relevant).
     wp->w_valid |= VALID_BOTLINE;
     wp->w_viewport_invalid = true;
     if (wp == curwin && wp->w_botline != old_botline && !recursive) {
@@ -1828,7 +1771,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, i
 static bool advance_color_col(int vcol, int **color_cols)
 {
   while (**color_cols >= 0 && vcol > **color_cols) {
-    ++*color_cols;
+    (*color_cols)++;
   }
   return **color_cols >= 0;
 }
@@ -2071,7 +2014,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   int search_attr = 0;                  // attributes desired by 'hlsearch'
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int syntax_attr = 0;                  // attributes desired by syntax
-  int has_syntax = FALSE;               // this buffer has syntax highl.
+  bool has_syntax = false;              // this buffer has syntax highl.
   int save_did_emsg;
   int eol_hl_off = 0;                   // 1 if highlighted char after EOL
   bool draw_color_col = false;          // highlight colorcolumn
@@ -2080,13 +2023,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 #define SPWORDLEN 150
   char_u nextline[SPWORDLEN * 2];       // text with start of the next line
   int nextlinecol = 0;                  // column where nextline[] starts
-  int nextline_idx = 0;                 /* index in nextline[] where next line
-                                           starts */
+  int nextline_idx = 0;                 // index in nextline[] where next line
+                                        // starts
   int spell_attr = 0;                   // attributes desired by spelling
   int word_end = 0;                     // last byte with same spell_attr
   static linenr_T checked_lnum = 0;     // line number for "checked_col"
-  static int checked_col = 0;           /* column in "checked_lnum" up to which
-                                         * there are no spell errors */
+  static int checked_col = 0;           // column in "checked_lnum" up to which
+                                        // there are no spell errors
   static int cap_col = -1;              // column to check for Cap word
   static linenr_T capcol_lnum = 0;      // line number where "cap_col"
   int cur_checked_col = 0;              // checked column for current line
@@ -2433,9 +2376,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       cap_col = (int)getwhitecols(line);
     }
 
-    /* To be able to spell-check over line boundaries copy the end of the
-     * current line into nextline[].  Above the start of the next line was
-     * copied to nextline[SPWORDLEN]. */
+    // To be able to spell-check over line boundaries copy the end of the
+    // current line into nextline[].  Above the start of the next line was
+    // copied to nextline[SPWORDLEN].
     if (nextline[SPWORDLEN] == NUL) {
       // No next line or it is empty.
       nextlinecol = MAXCOL;
@@ -2443,8 +2386,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     } else {
       v = (long)STRLEN(line);
       if (v < SPWORDLEN) {
-        /* Short line, use it completely and append the start of the
-         * next line. */
+        // Short line, use it completely and append the start of the
+        // next line.
         nextlinecol = 0;
         memmove(nextline, line, (size_t)v);
         STRMOVE(nextline + v, nextline + SPWORDLEN);
@@ -2491,10 +2434,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     }
   }
 
-  /*
-   * 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
-   * first character to be displayed.
-   */
+  // 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
+  // first character to be displayed.
   if (wp->w_p_wrap) {
     v = wp->w_skipcol;
   } else {
@@ -2522,8 +2463,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       vcol = v;
     }
 
-    /* Handle a character that's not completely on the screen: Put ptr at
-     * that character but skip the first few screen characters. */
+    // Handle a character that's not completely on the screen: Put ptr at
+    // that character but skip the first few screen characters.
     if (vcol > v) {
       vcol -= c;
       ptr = prev_ptr;
@@ -2534,10 +2475,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
     }
 
-    /*
-     * Adjust for when the inverted text is before the screen,
-     * and when the start of the inverted text is before the screen.
-     */
+    // Adjust for when the inverted text is before the screen,
+    // and when the start of the inverted text is before the screen.
     if (tocol <= vcol) {
       fromcol = 0;
     } else if (fromcol >= 0 && fromcol < vcol) {
@@ -2565,8 +2504,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       ptr = line + linecol;
 
       if (len == 0 || (int)wp->w_cursor.col > ptr - line) {
-        /* no bad word found at line start, don't check until end of a
-         * word */
+        // no bad word found at line start, don't check until end of a
+        // word
         spell_hlf = HLF_COUNT;
         word_end = (int)(spell_to_word_end(ptr, wp) - line + 1);
       } else {
@@ -2588,15 +2527,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     }
   }
 
-  /*
-   * Correct highlighting for cursor that can't be disabled.
-   * Avoids having to check this for each character.
-   */
+  // Correct highlighting for cursor that can't be disabled.
+  // Avoids having to check this for each character.
   if (fromcol >= 0) {
     if (noinvcur) {
       if ((colnr_T)fromcol == wp->w_virtcol) {
-        /* highlighting starts at cursor, let it start just after the
-         * cursor */
+        // highlighting starts at cursor, let it start just after the
+        // cursor
         fromcol_prev = fromcol;
         fromcol = -1;
       } else if ((colnr_T)fromcol < wp->w_virtcol) {
@@ -2686,8 +2623,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // sign column, this is hit until sign_idx reaches count
       if (draw_state == WL_SIGN - 1 && n_extra == 0) {
         draw_state = WL_SIGN;
-        /* Show the sign column when there are any signs in this
-         * buffer or when using Netbeans. */
+        // Show the sign column when there are any signs in this
+        // buffer or when using Netbeans.
         if (wp->w_scwidth > 0) {
           get_sign_display_info(false, wp, lnum, sattrs, row,
                                 startrow, filler_lines, filler_todo,
@@ -2704,8 +2641,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
       if (draw_state == WL_NR - 1 && n_extra == 0) {
         draw_state = WL_NR;
-        /* Display the absolute or relative line number. After the
-         * first fill with blanks when the 'n' flag isn't in 'cpo' */
+        // Display the absolute or relative line number. After the
+        // first fill with blanks when the 'n' flag isn't in 'cpo'
         if ((wp->w_p_nu || wp->w_p_rnu)
             && (row == startrow + filler_lines
                 || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
@@ -3014,12 +2951,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
       } else if (search_attr != 0) {
         char_attr = hl_combine_attr(line_attr, search_attr);
-      }
-      // Use line_attr when not in the Visual or 'incsearch' area
-      // (area_attr may be 0 when "noinvcur" is set).
-      else if (line_attr != 0 && ((fromcol == -10 && tocol == MAXCOL)
-                                  || vcol < fromcol || vcol_prev < fromcol_prev
-                                  || vcol >= tocol)) {
+      } else if (line_attr != 0 && ((fromcol == -10 && tocol == MAXCOL)
+                                    || vcol < fromcol || vcol_prev < fromcol_prev
+                                    || vcol >= tocol)) {
+        // Use line_attr when not in the Visual or 'incsearch' area
+        // (area_attr may be 0 when "noinvcur" is set).
         char_attr = line_attr;
       } else {
         attr_pri = false;
@@ -3221,21 +3157,21 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       if (extra_check) {
         bool can_spell = true;
 
-        /* Get syntax attribute, unless still at the start of the line
-         * (double-wide char that doesn't fit). */
+        // Get syntax attribute, unless still at the start of the line
+        // (double-wide char that doesn't fit).
         v = (ptr - line);
         if (has_syntax && v > 0) {
-          /* Get the syntax attribute for the character.  If there
-           * is an error, disable syntax highlighting. */
+          // Get the syntax attribute for the character.  If there
+          // is an error, disable syntax highlighting.
           save_did_emsg = did_emsg;
-          did_emsg = FALSE;
+          did_emsg = false;
 
           syntax_attr = get_syntax_attr((colnr_T)v - 1,
                                         has_spell ? &can_spell : NULL, false);
 
           if (did_emsg) {
-            wp->w_s->b_syn_error = TRUE;
-            has_syntax = FALSE;
+            wp->w_s->b_syn_error = true;
+            has_syntax = false;
           } else {
             did_emsg = save_did_emsg;
           }
@@ -3271,10 +3207,10 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           char_attr = 0;
         }
 
-        /* Check spelling (unless at the end of the line).
-         * Only do this when there is no syntax highlighting, the
-         * @Spell cluster is not used or the current syntax item
-         * contains the @Spell cluster. */
+        // Check spelling (unless at the end of the line).
+        // Only do this when there is no syntax highlighting, the
+        // @Spell cluster is not used or the current syntax item
+        // contains the @Spell cluster.
         v = (ptr - line);
         if (has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
@@ -3289,8 +3225,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             prev_ptr = ptr - mb_l;
             v -= mb_l - 1;
 
-            /* Use nextline[] if possible, it has the start of the
-             * next line concatenated. */
+            // Use nextline[] if possible, it has the start of the
+            // next line concatenated.
             if ((prev_ptr - line) - nextlinecol >= 0) {
               p = nextline + ((prev_ptr - line) - nextlinecol);
             } else {
@@ -3302,8 +3238,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             len = (int)tmplen;
             word_end = (int)v + len;
 
-            /* In Insert mode only highlight a word that
-             * doesn't touch the cursor. */
+            // In Insert mode only highlight a word that
+            // doesn't touch the cursor.
             if (spell_hlf != HLF_COUNT
                 && (State & MODE_INSERT)
                 && wp->w_cursor.lnum == lnum
@@ -3316,8 +3252,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
             if (spell_hlf == HLF_COUNT && p != prev_ptr
                 && (p - nextline) + len > nextline_idx) {
-              /* Remember that the good word continues at the
-               * start of the next line. */
+              // Remember that the good word continues at the
+              // start of the next line.
               checked_lnum = lnum + 1;
               checked_col = (int)((p - nextline) + len - nextline_idx);
             }
@@ -3330,8 +3266,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             if (cap_col > 0) {
               if (p != prev_ptr
                   && (p - nextline) + cap_col >= nextline_idx) {
-                /* Remember that the word in the next line
-                 * must start with a capital. */
+                // Remember that the word in the next line
+                // must start with a capital.
                 capcol_lnum = lnum + 1;
                 cap_col = (int)((p - nextline) + cap_col
                                 - nextline_idx);
@@ -3378,7 +3314,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             && !vim_isbreak((int)(*ptr))) {
           int mb_off = utf_head_off(line, ptr - 1);
           char_u *p = ptr - (mb_off + 1);
-          // TODO: is passing p for start of the line OK?
+          // TODO(neovim): is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
 
           // We have just drawn the showbreak value, no need to add
@@ -3478,9 +3414,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
       }
 
-      /*
-       * Handling of non-printable characters.
-       */
+      // Handling of non-printable characters.
       if (!vim_isprintc(c)) {
         // when getting a character from the file, we may have to
         // turn it into something else on the way to putting it on the screen.
@@ -3752,8 +3686,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
     }  // end of printing from buffer content
 
-    /* In the cursor line and we may be concealing characters: correct
-     * the cursor column when we reach its position. */
+    // In the cursor line and we may be concealing characters: correct
+    // the cursor column when we reach its position.
     if (!did_wcol && draw_state == WL_LINE
         && wp == curwin && lnum == wp->w_cursor.lnum
         && conceal_cursor_line(wp)
@@ -3856,13 +3790,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
         linebuf_attr[off] = eol_attr;
         if (wp->w_p_rl) {
-          --col;
-          --off;
+          col--;
+          off--;
         } else {
-          ++col;
-          ++off;
+          col++;
+          off++;
         }
-        ++vcol;
+        vcol++;
         eol_hl_off = 1;
       }
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
@@ -3984,10 +3918,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
                        wp->w_hl_attr_normal, false);
       row++;
 
-      /*
-       * Update w_cline_height and w_cline_folded if the cursor line was
-       * updated (saves a call to plines_win() later).
-       */
+      // Update w_cline_height and w_cline_folded if the cursor line was
+      // updated (saves a call to plines_win() later).
       if (wp == curwin && lnum == curwin->w_cursor.lnum) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = row - startrow;
@@ -4096,37 +4028,35 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
         if (wp->w_p_rl) {
           // now it's time to backup one cell
-          --off;
-          --col;
+          off--;
+          col--;
         }
       }
       if (wp->w_p_rl) {
-        --off;
-        --col;
+        off--;
+        col--;
       } else {
-        ++off;
-        ++col;
+        off++;
+        col++;
       }
     } else if (wp->w_p_cole > 0 && is_concealing) {
-      --n_skip;
-      ++vcol_off;
+      n_skip--;
+      vcol_off++;
       if (n_extra > 0) {
         vcol_off += n_extra;
       }
       if (wp->w_p_wrap) {
-        /*
-         * Special voodoo required if 'wrap' is on.
-         *
-         * Advance the column indicator to force the line
-         * drawing to wrap early. This will make the line
-         * take up the same screen space when parts are concealed,
-         * so that cursor line computations aren't messed up.
-         *
-         * To avoid the fictitious advance of 'col' causing
-         * trailing junk to be written out of the screen line
-         * we are building, 'boguscols' keeps track of the number
-         * of bad columns we have advanced.
-         */
+        // Special voodoo required if 'wrap' is on.
+        //
+        // Advance the column indicator to force the line
+        // drawing to wrap early. This will make the line
+        // take up the same screen space when parts are concealed,
+        // so that cursor line computations aren't messed up.
+        //
+        // To avoid the fictitious advance of 'col' causing
+        // trailing junk to be written out of the screen line
+        // we are building, 'boguscols' keeps track of the number
+        // of bad columns we have advanced.
         if (n_extra > 0) {
           vcol += n_extra;
           if (wp->w_p_rl) {
@@ -4143,20 +4073,20 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         if (utf_char2cells(mb_c) > 1) {
           // Need to fill two screen columns.
           if (wp->w_p_rl) {
-            --boguscols;
-            --col;
+            boguscols--;
+            col--;
           } else {
-            ++boguscols;
-            ++col;
+            boguscols++;
+            col++;
           }
         }
 
         if (wp->w_p_rl) {
-          --boguscols;
-          --col;
+          boguscols--;
+          col--;
         } else {
-          ++boguscols;
-          ++col;
+          boguscols++;
+          col++;
         }
       } else {
         if (n_extra > 0) {
@@ -4166,14 +4096,14 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
         }
       }
     } else {
-      --n_skip;
+      n_skip--;
     }
 
-    /* Only advance the "vcol" when after the 'number' or 'relativenumber'
-     * column. */
+    // Only advance the "vcol" when after the 'number' or 'relativenumber'
+    // column.
     if (draw_state > WL_NR
         && filler_todo <= 0) {
-      ++vcol;
+      vcol++;
     }
 
     if (vcol_save_attr >= 0) {
@@ -4190,10 +4120,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       char_attr = saved_attr2;
     }
 
-    /*
-     * At end of screen line and there is more to come: Display the line
-     * so far.  If there is no more to display it is caught above.
-     */
+    // At end of screen line and there is more to come: Display the line
+    // so far.  If there is no more to display it is caught above.
     if ((wp->w_p_rl ? (col < 0) : (col >= grid->cols))
         && foldinfo.fi_lines == 0
         && (draw_state != WL_LINE
@@ -4242,11 +4170,9 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       boguscols = 0;
       row++;
 
-      /* When not wrapping and finished diff lines, or when displayed
-       * '$' and highlighting until last column, break here. */
-      if ((!wp->w_p_wrap
-           && filler_todo <= 0
-           ) || lcs_eol_one == -1) {
+      // When not wrapping and finished diff lines, or when displayed
+      // '$' and highlighting until last column, break here.
+      if ((!wp->w_p_wrap && filler_todo <= 0) || lcs_eol_one == -1) {
         break;
       }
 
@@ -4258,7 +4184,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
 
       // When line got too long for screen break here.
       if (row == endrow) {
-        ++row;
+        row++;
         break;
       }
 
@@ -4524,16 +4450,14 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
   }
 }
 
-/*
- * Mirror text "str" for right-left displaying.
- * Only works for single-byte characters (e.g., numbers).
- */
+/// Mirror text "str" for right-left displaying.
+/// Only works for single-byte characters (e.g., numbers).
 void rl_mirror(char_u *str)
 {
   char_u *p1, *p2;
   char_u t;
 
-  for (p1 = str, p2 = str + STRLEN(str) - 1; p1 < p2; ++p1, --p2) {
+  for (p1 = str, p2 = str + STRLEN(str) - 1; p1 < p2; p1++, p2--) {
     t = *p1;
     *p1 = *p2;
     *p2 = t;
@@ -4574,9 +4498,7 @@ void status_redraw_buf(buf_T *buf)
   }
 }
 
-/*
- * Redraw all status lines that need to be redrawn.
- */
+/// Redraw all status lines that need to be redrawn.
 void redraw_statuslines(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -4590,9 +4512,7 @@ void redraw_statuslines(void)
   }
 }
 
-/*
- * Redraw all status lines at the bottom of frame "frp".
- */
+/// Redraw all status lines at the bottom of frame "frp".
 void win_redraw_last_status(const frame_T *frp)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -4733,10 +4653,8 @@ static int status_match_len(expand_T *xp, char_u *s)
   return len;
 }
 
-/*
- * Return the number of characters that should be skipped in a status match.
- * These are backslashes used for escaping.  Do show backslashes in help tags.
- */
+/// Return the number of characters that should be skipped in a status match.
+/// These are backslashes used for escaping.  Do show backslashes in help tags.
 static int skip_status_match_char(expand_T *xp, char_u *s)
 {
   if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
@@ -4861,7 +4779,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
       len += l;
       clen += l;
     } else {
-      for (; *s != NUL; ++s) {
+      for (; *s != NUL; s++) {
         s += skip_status_match_char(xp, s);
         clen += ptr2cells((char *)s);
         if ((l = utfc_ptr2len((char *)s)) > 1) {
@@ -4888,7 +4806,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
 
   if (i != num_matches) {
     *(buf + len++) = '>';
-    ++clen;
+    clen++;
   }
 
   buf[len] = NUL;
@@ -4955,7 +4873,7 @@ static void win_redr_status(win_T *wp)
   int width;
   int this_ru_col;
   bool is_stl_global = global_stl_height() > 0;
-  static int busy = false;
+  static bool busy = false;
 
   // May get here recursively when 'statusline' (indirectly)
   // invokes ":redrawstatus".  Simply ignore the call then.
@@ -5031,7 +4949,7 @@ static void win_redr_status(win_T *wp)
       if (i > 0) {
         p = p + i - 1;
         *p = '<';
-        ++len;
+        len++;
       }
     }
 
@@ -5050,9 +4968,7 @@ static void win_redr_status(win_T *wp)
     win_redr_ruler(wp, true);
   }
 
-  /*
-   * May need to draw the character below the vertical separator.
-   */
+  // May need to draw the character below the vertical separator.
   if (wp->w_vsep_width != 0 && wp->w_status_height != 0 && redrawing()) {
     if (stl_connected(wp)) {
       fillchar = fillchar_status(&attr, wp);
@@ -5061,20 +4977,18 @@ static void win_redr_status(win_T *wp)
     }
     grid_putchar(&default_grid, fillchar, W_ENDROW(wp), W_ENDCOL(wp), attr);
   }
-  busy = FALSE;
+  busy = false;
 }
 
-/*
- * Redraw the status line according to 'statusline' and take care of any
- * errors encountered.
- */
+/// Redraw the status line according to 'statusline' and take care of any
+/// errors encountered.
 static void redraw_custom_statusline(win_T *wp)
 {
   static bool entered = false;
   int saved_did_emsg = did_emsg;
 
-  /* When called recursively return.  This can happen when the statusline
-   * contains an expression that triggers a redraw. */
+  // When called recursively return.  This can happen when the statusline
+  // contains an expression that triggers a redraw.
   if (entered) {
     return;
   }
@@ -5287,9 +5201,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
   ScreenGrid *grid = &default_grid;
 
-  /* There is a tiny chance that this gets called recursively: When
-   * redrawing a status line triggers redrawing the ruler or tabline.
-   * Avoid trouble by not allowing recursion. */
+  // There is a tiny chance that this gets called recursively: When
+  // redrawing a status line triggers redrawing the ruler or tabline.
+  // Avoid trouble by not allowing recursion.
   if (entered) {
     return;
   }
@@ -5386,14 +5300,14 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     goto theend;
   }
 
-  /* Temporarily reset 'cursorbind', we don't want a side effect from moving
-   * the cursor away and back. */
+  // Temporarily reset 'cursorbind', we don't want a side effect from moving
+  // the cursor away and back.
   ewp = wp == NULL ? curwin : wp;
   p_crb_save = ewp->w_p_crb;
-  ewp->w_p_crb = FALSE;
+  ewp->w_p_crb = false;
 
-  /* Make a copy, because the statusline may include a function call that
-   * might change the option value and free the memory. */
+  // Make a copy, because the statusline may include a function call that
+  // might change the option value and free the memory.
   stl = vim_strsave(stl);
   width =
     build_stl_str_hl(ewp, buf, sizeof(buf), (char *)stl, use_sandbox,
@@ -5414,9 +5328,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   }
   buf[len] = NUL;
 
-  /*
-   * Draw each snippet with the specified highlighting.
-   */
+  // Draw each snippet with the specified highlighting.
   grid_puts_line_start(grid, row);
 
   curattr = attr;
@@ -5539,9 +5451,7 @@ static void win_redr_border(win_T *wp)
   }
 }
 
-/*
- * Prepare for 'hlsearch' highlighting.
- */
+/// Prepare for 'hlsearch' highlighting.
 static void start_search_hl(void)
 {
   if (p_hls && !no_hlsearch) {
@@ -5552,9 +5462,7 @@ static void start_search_hl(void)
   }
 }
 
-/*
- * Clean up for 'hlsearch' highlighting.
- */
+/// Clean up for 'hlsearch' highlighting.
 static void end_search_hl(void)
 {
   if (search_hl.rm.regprog != NULL) {
@@ -5616,11 +5524,9 @@ retry:
     return;
   }
 
-  /*
-   * Note that the window sizes are updated before reallocating the arrays,
-   * thus we must not redraw here!
-   */
-  ++RedrawingDisabled;
+  // Note that the window sizes are updated before reallocating the arrays,
+  // thus we must not redraw here!
+  RedrawingDisabled++;
 
   // win_new_screensize will recompute floats position, but tell the
   // compositor to not redraw them yet
@@ -5664,10 +5570,8 @@ retry:
 
   RedrawingDisabled--;
 
-  /*
-   * Do not apply autocommands more than 3 times to avoid an endless loop
-   * in case applying autocommands always changes Rows or Columns.
-   */
+  // Do not apply autocommands more than 3 times to avoid an endless loop
+  // in case applying autocommands always changes Rows or Columns.
   if (starting == 0 && ++retry_count <= 3) {
     apply_autocmds(EVENT_VIMRESIZED, NULL, NULL, false, curbuf);
     // In rare cases, autocommands may have altered Rows or Columns,
@@ -5808,15 +5712,13 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
   }
 }
 
-/*
- * The rest of the routines in this file perform screen manipulations. The
- * given operation is performed physically on the screen. The corresponding
- * change is also made to the internal screen image. In this way, the editor
- * anticipates the effect of editing changes on the appearance of the screen.
- * That way, when we call screenupdate a complete redraw isn't usually
- * necessary. Another advantage is that we can keep adding code to anticipate
- * screen changes, and in the meantime, everything still works.
- */
+// The rest of the routines in this file perform screen manipulations. The
+// given operation is performed physically on the screen. The corresponding
+// change is also made to the internal screen image. In this way, the editor
+// anticipates the effect of editing changes on the appearance of the screen.
+// That way, when we call screenupdate a complete redraw isn't usually
+// necessary. Another advantage is that we can keep adding code to anticipate
+// screen changes, and in the meantime, everything still works.
 
 /// insert lines on the screen and move the existing lines down
 /// 'line_count' is the number of lines to be inserted.
@@ -5927,7 +5829,7 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 // Return the length of the message (0 if no message).
 int showmode(void)
 {
-  int need_clear;
+  bool need_clear;
   int length = 0;
   int do_mode;
   int attr;
@@ -6077,7 +5979,7 @@ int showmode(void)
         msg_puts_attr(" --", attr);
       }
 
-      need_clear = TRUE;
+      need_clear = true;
     }
     if (reg_recording != 0
         && edit_submode == NULL             // otherwise it gets too long
@@ -6121,9 +6023,7 @@ int showmode(void)
   return length;
 }
 
-/*
- * Position for a mode message.
- */
+/// Position for a mode message.
 static void msg_pos_mode(void)
 {
   msg_col = 0;
@@ -6171,9 +6071,7 @@ static void recording_mode(int attr)
   }
 }
 
-/*
- * Draw the tab pages line at the top of the Vim window.
- */
+/// Draw the tab pages line at the top of the Vim window.
 void draw_tabline(void)
 {
   int tabcount = 0;
@@ -6191,8 +6089,7 @@ void draw_tabline(void)
   int attr_fill = HL_ATTR(HLF_TPF);
   char_u *p;
   int room;
-  int use_sep_chars = (t_colors < 8
-                       );
+  int use_sep_chars = (t_colors < 8);
 
   if (default_grid.chars == NULL) {
     return;
@@ -6226,7 +6123,7 @@ void draw_tabline(void)
     did_emsg |= saved_did_emsg;
   } else {
     FOR_ALL_TABS(tp) {
-      ++tabcount;
+      tabcount++;
     }
 
     if (tabcount > 0) {
@@ -6395,10 +6292,8 @@ void ui_ext_tabline_update(void)
   arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
 }
 
-/*
- * Get buffer name for "buf" into NameBuff[].
- * Takes care of special buffer names and translates special characters.
- */
+/// Get buffer name for "buf" into NameBuff[].
+/// Takes care of special buffer names and translates special characters.
 void get_trans_bufname(buf_T *buf)
 {
   if (buf_spname(buf) != NULL) {
@@ -6409,9 +6304,7 @@ void get_trans_bufname(buf_T *buf)
   trans_characters((char *)NameBuff, MAXPATHL);
 }
 
-/*
- * Get the character to use in a status line.  Get its attributes in "*attr".
- */
+/// Get the character to use in a status line.  Get its attributes in "*attr".
 int fillchar_status(int *attr, win_T *wp)
 {
   int fill;
@@ -6453,19 +6346,15 @@ static int fillchar_hsep(win_T *wp, int *attr)
   return wp->w_p_fcs_chars.horiz;
 }
 
-/*
- * Return TRUE if redrawing should currently be done.
- */
-int redrawing(void)
+/// Return true if redrawing should currently be done.
+bool redrawing(void)
 {
   return !RedrawingDisabled
          && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
 }
 
-/*
- * Return TRUE if printing messages should currently be done.
- */
-int messaging(void)
+/// Return true if printing messages should currently be done.
+bool messaging(void)
 {
   return !(p_lz && char_avail() && !KeyTyped) && ui_has_messages();
 }
@@ -6509,10 +6398,8 @@ static void win_redr_ruler(win_T *wp, bool always)
     return;
   }
 
-  /*
-   * Check if cursor.lnum is valid, since win_redr_ruler() may be called
-   * after deleting lines, before cursor.lnum is corrected.
-   */
+  // Check if cursor.lnum is valid, since win_redr_ruler() may be called
+  // after deleting lines, before cursor.lnum is corrected.
   if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
     return;
   }
@@ -6540,9 +6427,7 @@ static void win_redr_ruler(win_T *wp, bool always)
     empty_line = true;
   }
 
-  /*
-   * Only draw the ruler when something changed.
-   */
+  // Only draw the ruler when something changed.
   validate_virtcol_win(wp);
   if (redraw_cmdline
       || always
@@ -6596,23 +6481,19 @@ static void win_redr_ruler(win_T *wp, bool always)
 #define RULER_BUF_LEN 70
     char buffer[RULER_BUF_LEN];
 
-    /*
-     * Some sprintfs return the length, some return a pointer.
-     * To avoid portability problems we use strlen() here.
-     */
+    // Some sprintfs return the length, some return a pointer.
+    // To avoid portability problems we use strlen() here.
     vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
-                 (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? (int64_t)0L
-                                                          : (int64_t)wp->w_cursor.lnum);
+                 (wp->w_buffer->b_ml.ml_flags &
+                  ML_EMPTY) ? (int64_t)0L : (int64_t)wp->w_cursor.lnum);
     size_t len = STRLEN(buffer);
     col_print(buffer + len, RULER_BUF_LEN - len,
               empty_line ? 0 : (int)wp->w_cursor.col + 1,
               (int)virtcol + 1);
 
-    /*
-     * Add a "50%" if there is room for it.
-     * On the last line, don't print in the last column (scrolls the
-     * screen up on some terminals).
-     */
+    // Add a "50%" if there is room for it.
+    // On the last line, don't print in the last column (scrolls the
+    // screen up on some terminals).
     int i = (int)STRLEN(buffer);
     get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
     int o = i + vim_strsize(buffer + i + 1);
@@ -6676,11 +6557,9 @@ static void win_redr_ruler(win_T *wp, bool always)
   }
 }
 
-/*
- * Return the width of the 'number' and 'relativenumber' column.
- * Caller may need to check if 'number' or 'relativenumber' is set.
- * Otherwise it depends on 'numberwidth' and the line count.
- */
+/// Return the width of the 'number' and 'relativenumber' column.
+/// Caller may need to check if 'number' or 'relativenumber' is set.
+/// Otherwise it depends on 'numberwidth' and the line count.
 int number_width(win_T *wp)
 {
   int n;
@@ -6702,7 +6581,7 @@ int number_width(win_T *wp)
   n = 0;
   do {
     lnum /= 10;
-    ++n;
+    n++;
   } while (lnum > 0);
 
   // 'numberwidth' gives the minimal width plus one
@@ -6783,10 +6662,9 @@ void screen_resize(int width, int height)
     return;
   }
 
-  /* curwin->w_buffer can be NULL when we are closing a window and the
-   * buffer has already been closed and removing a scrollbar causes a resize
-   * event. Don't resize then, it will happen after entering another buffer.
-   */
+  // curwin->w_buffer can be NULL when we are closing a window and the
+  // buffer has already been closed and removing a scrollbar causes a resize
+  // event. Don't resize then, it will happen after entering another buffer.
   if (curwin->w_buffer == NULL) {
     return;
   }
@@ -6821,16 +6699,14 @@ void screen_resize(int width, int height)
     changed_line_abv_curs();
     invalidate_botline();
 
-    /*
-     * We only redraw when it's needed:
-     * - While at the more prompt or executing an external command, don't
-     *   redraw, but position the cursor.
-     * - While editing the command line, only redraw that.
-     * - in Ex mode, don't redraw anything.
-     * - Otherwise, redraw right now, and position the cursor.
-     * Always need to call update_screen() or screenalloc(), to make
-     * sure Rows/Columns and the size of the screen is correct!
-     */
+    // We only redraw when it's needed:
+    // - While at the more prompt or executing an external command, don't
+    //   redraw, but position the cursor.
+    // - While editing the command line, only redraw that.
+    // - in Ex mode, don't redraw anything.
+    // - Otherwise, redraw right now, and position the cursor.
+    // Always need to call update_screen() or screenalloc(), to make
+    // sure Rows/Columns and the size of the screen is correct!
     if (State == MODE_ASKMORE || State == MODE_EXTERNCMD || State == MODE_CONFIRM
         || exmode_active) {
       screenalloc();
