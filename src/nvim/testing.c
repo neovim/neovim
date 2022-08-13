@@ -18,7 +18,7 @@
 static void prepare_assert_error(garray_T *gap)
 {
   char buf[NUMBUFLEN];
-  char *sname = estack_sfile(false);
+  char *sname = estack_sfile(ESTACK_NONE);
 
   ga_init(gap, 1, 100);
   if (sname != NULL) {

@@ -278,7 +278,7 @@ bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
 
       // Get the source name and lnum now, it may change before
       // reaching do_errthrow().
-      elem->sfile = estack_sfile(false);
+      elem->sfile = estack_sfile(ESTACK_NONE);
       elem->slnum = SOURCING_LNUM;
     }
     return true;
@@ -490,7 +490,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
     entry->sfile = NULL;
     excp->throw_lnum = entry->slnum;
   } else {
-    excp->throw_name = estack_sfile(false);
+    excp->throw_name = estack_sfile(ESTACK_NONE);
     if (excp->throw_name == NULL) {
       excp->throw_name = xstrdup("");
     }

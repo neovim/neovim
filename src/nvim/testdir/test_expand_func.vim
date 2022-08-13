@@ -39,9 +39,9 @@ endfunc
 
 func Test_expand_sfile_and_stack()
   call assert_match('test_expand_func\.vim$', s:sfile)
-  let expected = 'script .*testdir/runtest.vim\[\d\+\]\.\.function RunTheTest\[\d\+\]\.\.Test_expand_sfile_and_stack$'
-  call assert_match(expected , expand('<sfile>'))
-  call assert_match(expected , expand('<stack>'))
+  let expected = 'script .*testdir/runtest.vim\[\d\+\]\.\.function RunTheTest\[\d\+\]\.\.Test_expand_sfile_and_stack'
+  call assert_match(expected .. '$', expand('<sfile>'))
+  call assert_match(expected .. '\[4\]' , expand('<stack>'))
 
   " Call in script-local function
   call assert_match('script .*testdir/runtest.vim\[\d\+\]\.\.function RunTheTest\[\d\+\]\.\.Test_expand_sfile_and_stack\[7\]\.\.<SNR>\d\+_expand_sfile$', s:expand_sfile())
@@ -53,11 +53,12 @@ func Test_expand_sfile_and_stack()
 
   " Use <stack> from sourced script.
   let lines =<< trim END
+    " comment here
     let g:stack_value = expand('<stack>')
   END
   call writefile(lines, 'Xstack')
   source Xstack
-  call assert_match('\<Xstack$', g:stack_value)
+  call assert_match('\<Xstack\[2\]', g:stack_value)
   call delete('Xstack')
 endfunc
 

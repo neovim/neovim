@@ -42,6 +42,13 @@ extern garray_T exestack;
 /// line number in the message source or zero
 #define SOURCING_LNUM (((estack_T *)exestack.ga_data)[exestack.ga_len - 1].es_lnum)
 
+/// Argument for estack_sfile().
+typedef enum {
+  ESTACK_NONE,
+  ESTACK_SFILE,
+  ESTACK_STACK,
+} estack_arg_T;
+
 typedef struct scriptitem_S {
   char_u *sn_name;
   bool sn_prof_on;              ///< true when script is/was profiled

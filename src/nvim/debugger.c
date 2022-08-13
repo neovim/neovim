@@ -99,7 +99,7 @@ void do_debug(char_u *cmd)
     xfree(debug_newval);
     debug_newval = NULL;
   }
-  char *sname = estack_sfile(false);
+  char *sname = estack_sfile(ESTACK_NONE);
   if (sname != NULL) {
     msg(sname);
   }
@@ -324,7 +324,7 @@ static void do_checkbacktracelevel(void)
     debug_backtrace_level = 0;
     msg(_("frame is zero"));
   } else {
-    char *sname = estack_sfile(false);
+    char *sname = estack_sfile(ESTACK_NONE);
     int max = get_maxbacktrace_level(sname);
 
     if (debug_backtrace_level > max) {
@@ -337,7 +337,7 @@ static void do_checkbacktracelevel(void)
 
 static void do_showbacktrace(char_u *cmd)
 {
-  char *sname = estack_sfile(false);
+  char *sname = estack_sfile(ESTACK_NONE);
   int max = get_maxbacktrace_level(sname);
   if (sname != NULL) {
     int i = 0;

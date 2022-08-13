@@ -100,11 +100,11 @@ void estack_pop(void)
 }
 
 /// Get the current value for <sfile> in allocated memory.
-/// @param is_sfile  true for <sfile> itself.
-char *estack_sfile(bool is_sfile)
+/// @param which  ESTACK_SFILE for <sfile> and ESTACK_STACK for <stack>.
+char *estack_sfile(estack_arg_T which)
 {
   estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len - 1;
-  if (is_sfile && entry->es_type != ETYPE_UFUNC) {
+  if (which == ESTACK_SFILE && entry->es_type != ETYPE_UFUNC) {
     if (entry->es_name == NULL) {
       return NULL;
     }
@@ -135,14 +135,21 @@ char *estack_sfile(bool is_sfile)
       }
       len += strlen(type_name);
       ga_grow(&ga, (int)len);
-      if (idx == exestack.ga_len - 1 || entry->es_lnum == 0) {
-        // For the bottom entry: do not add the line number, it is used
-        // in <slnum>.  Also leave it out when the number is not set.
+      linenr_T lnum = 0;
+      if (idx == exestack.ga_len - 1) {
+        lnum = which == ESTACK_STACK ? SOURCING_LNUM : 0;
+      } else {
+        lnum = entry->es_lnum;
+      }
+      if (lnum == 0) {
+        // For the bottom entry of <sfile>: do not add the line number,
+        // it is used in <slnum>.  Also leave it out when the number is
+        // not set.
         vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
                      type_name, entry->es_name, idx == exestack.ga_len - 1 ? "" : "..");
       } else {
         vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]..",
-                     type_name, entry->es_name, entry->es_lnum);
+                     type_name, entry->es_name, lnum);
       }
       ga.ga_len += (int)strlen((char *)ga.ga_data + ga.ga_len);
     }
