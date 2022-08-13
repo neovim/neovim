@@ -27,6 +27,7 @@
 #include "nvim/os/input.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/ui_compositor.h"
@@ -1143,7 +1144,7 @@ int autocmd_register(int64_t id, event_T event, char *pat, int patlen, int group
   ac->id = id;
   ac->exec = aucmd_exec_copy(aucmd);
   ac->script_ctx = current_sctx;
-  ac->script_ctx.sc_lnum += sourcing_lnum;
+  ac->script_ctx.sc_lnum += SOURCING_LNUM;
   nlua_set_sctx(&ac->script_ctx);
   ac->next = NULL;
   ac->once = once;
@@ -1771,10 +1772,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 
   // Don't redraw while doing autocommands.
   RedrawingDisabled++;
-  char *save_sourcing_name = sourcing_name;
-  sourcing_name = NULL;  // don't free this one
-  linenr_T save_sourcing_lnum = sourcing_lnum;
-  sourcing_lnum = 0;  // no line number here
+
+  // name and lnum are filled in later
+  estack_push(ETYPE_AUCMD, NULL, 0);
 
   const sctx_T save_current_sctx = current_sctx;
 
@@ -1878,9 +1878,8 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   autocmd_busy = save_autocmd_busy;
   filechangeshell_busy = false;
   autocmd_nested = save_autocmd_nested;
-  xfree(sourcing_name);
-  sourcing_name = save_sourcing_name;
-  sourcing_lnum = save_sourcing_lnum;
+  xfree(SOURCING_NAME);
+  estack_pop();
   xfree(autocmd_fname);
   autocmd_fname = save_autocmd_fname;
   autocmd_bufnr = save_autocmd_bufnr;
@@ -1983,8 +1982,9 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
   AutoPat *ap;
   AutoCmd *cp;
   char *s;
+  char **const sourcing_namep = &SOURCING_NAME;
 
-  XFREE_CLEAR(sourcing_name);
+  XFREE_CLEAR(*sourcing_namep);
 
   for (ap = apc->curpat; ap != NULL && !got_int; ap = ap->next) {
     apc->curpat = NULL;
@@ -2009,11 +2009,11 @@ void auto_next_pat(AutoPatCmd *apc, int stop_at_last)
         const size_t sourcing_name_len
           = (STRLEN(s) + strlen(name) + (size_t)ap->patlen + 1);
 
-        sourcing_name = xmalloc(sourcing_name_len);
-        snprintf(sourcing_name, sourcing_name_len, s, name, ap->pat);
+        *sourcing_namep = xmalloc(sourcing_name_len);
+        snprintf(*sourcing_namep, sourcing_name_len, s, name, ap->pat);
         if (p_verbose >= 8) {
           verbose_enter();
-          smsg(_("Executing %s"), sourcing_name);
+          smsg(_("Executing %s"), *sourcing_namep);
           verbose_leave();
         }
 

@@ -49,6 +49,7 @@
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/sign.h"
@@ -8613,8 +8614,8 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
   provider_caller_scope = (struct caller_scope) {
     .script_ctx = current_sctx,
-    .sourcing_name = sourcing_name,
-    .sourcing_lnum = sourcing_lnum,
+    .sourcing_name = SOURCING_NAME,
+    .sourcing_lnum = SOURCING_LNUM,
     .autocmd_fname = autocmd_fname,
     .autocmd_match = autocmd_match,
     .autocmd_bufnr = autocmd_bufnr,
@@ -8713,8 +8714,8 @@ bool eval_has_provider(const char *feat)
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
 void eval_fmt_source_name_line(char *buf, size_t bufsize)
 {
-  if (sourcing_name) {
-    snprintf(buf, bufsize, "%s:%" PRIdLINENR, sourcing_name, sourcing_lnum);
+  if (SOURCING_NAME) {
+    snprintf(buf, bufsize, "%s:%" PRIdLINENR, SOURCING_NAME, SOURCING_LNUM);
   } else {
     snprintf(buf, bufsize, "?");
   }

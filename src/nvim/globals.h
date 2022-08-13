@@ -248,9 +248,6 @@ EXTERN int lines_left INIT(= -1);           // lines left for listing
 EXTERN int msg_no_more INIT(= false);       // don't use more prompt, truncate
                                             // messages
 
-EXTERN char *sourcing_name INIT(= NULL);    // name of error message source
-EXTERN linenr_T sourcing_lnum INIT(= 0);    // line number of the source file
-
 EXTERN int ex_nesting_level INIT(= 0);          // nesting level
 EXTERN int debug_break_level INIT(= -1);        // break below this level
 EXTERN bool debug_did_msg INIT(= false);        // did "debug mode" message

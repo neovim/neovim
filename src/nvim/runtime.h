@@ -3,7 +3,44 @@
 
 #include <stdbool.h>
 
+#include "nvim/autocmd.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_eval_defs.h"
+
+/// Entry in the execution stack "exestack".
+typedef enum {
+  ETYPE_TOP,       // toplevel
+  ETYPE_SCRIPT,    // sourcing script, use es_info.sctx
+  ETYPE_UFUNC,     // user function, use es_info.ufunc
+  ETYPE_AUCMD,     // autocomand, use es_info.aucmd
+  ETYPE_MODELINE,  // modeline, use es_info.sctx
+  ETYPE_EXCEPT,    // exception, use es_info.exception
+  ETYPE_ARGS,      // command line argument
+  ETYPE_ENV,       // environment variable
+  ETYPE_INTERNAL,  // internal operation
+  ETYPE_SPELL,     // loading spell file
+} etype_T;
+
+typedef struct {
+  linenr_T es_lnum;     ///< replaces "sourcing_lnum"
+  char *es_name;        ///< replaces "sourcing_name"
+  etype_T es_type;
+  union {
+    sctx_T *sctx;       ///< script and modeline info
+    ufunc_T *ufunc;     ///< function info
+    AutoPatCmd *aucmd;  ///< autocommand info
+    except_T *except;   ///< exception info
+  } es_info;
+} estack_T;
+
+/// Stack of execution contexts.  Each entry is an estack_T.
+/// Current context is at ga_len - 1.
+extern garray_T exestack;
+/// name of error message source
+#define SOURCING_NAME (((estack_T *)exestack.ga_data)[exestack.ga_len - 1].es_name)
+/// line number in the message source or zero
+#define SOURCING_LNUM (((estack_T *)exestack.ga_data)[exestack.ga_len - 1].es_lnum)
 
 typedef struct scriptitem_S {
   char_u *sn_name;

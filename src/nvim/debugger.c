@@ -17,6 +17,7 @@
 #include "nvim/os/os.h"
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"
@@ -98,14 +99,17 @@ void do_debug(char_u *cmd)
     xfree(debug_newval);
     debug_newval = NULL;
   }
-  if (sourcing_name != NULL) {
-    msg(sourcing_name);
+  char *sname = estack_sfile();
+  if (sname != NULL) {
+    msg(sname);
   }
-  if (sourcing_lnum != 0) {
-    smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
+  xfree(sname);
+  if (SOURCING_LNUM != 0) {
+    smsg(_("line %" PRId64 ": %s"), (int64_t)SOURCING_LNUM, cmd);
   } else {
     smsg(_("cmd: %s"), cmd);
   }
+
   // Repeat getting a command and executing it.
   for (;;) {
     msg_scroll = true;
@@ -287,12 +291,12 @@ void do_debug(char_u *cmd)
   debug_did_msg = true;
 }
 
-static int get_maxbacktrace_level(void)
+static int get_maxbacktrace_level(char *sname)
 {
   int maxbacktrace = 0;
 
-  if (sourcing_name != NULL) {
-    char *p = sourcing_name;
+  if (sname != NULL) {
+    char *p = sname;
     char *q;
     while ((q = strstr(p, "..")) != NULL) {
       p = q + 2;
@@ -320,20 +324,24 @@ static void do_checkbacktracelevel(void)
     debug_backtrace_level = 0;
     msg(_("frame is zero"));
   } else {
-    int max = get_maxbacktrace_level();
+    char *sname = estack_sfile();
+    int max = get_maxbacktrace_level(sname);
+
     if (debug_backtrace_level > max) {
       debug_backtrace_level = max;
       smsg(_("frame at highest level: %d"), max);
     }
+    xfree(sname);
   }
 }
 
 static void do_showbacktrace(char_u *cmd)
 {
-  if (sourcing_name != NULL) {
+  char *sname = estack_sfile();
+  int max = get_maxbacktrace_level(sname);
+  if (sname != NULL) {
     int i = 0;
-    int max = get_maxbacktrace_level();
-    char *cur = sourcing_name;
+    char *cur = sname;
     while (!got_int) {
       char *next = strstr(cur, "..");
       if (next != NULL) {
@@ -351,9 +359,11 @@ static void do_showbacktrace(char_u *cmd)
       *next = '.';
       cur = next + 2;
     }
+    xfree(sname);
   }
-  if (sourcing_lnum != 0) {
-    smsg(_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
+
+  if (SOURCING_LNUM != 0) {
+    smsg(_("line %" PRId64 ": %s"), (int64_t)SOURCING_LNUM, cmd);
   } else {
     smsg(_("cmd: %s"), cmd);
   }

@@ -22,7 +22,8 @@ typedef struct {
   bool save_VIsual_active;        ///< saved VIsual_active
 } aco_save_T;
 
-typedef struct AutoCmd {
+typedef struct AutoCmd_S AutoCmd;
+struct AutoCmd_S {
   AucmdExecutable exec;
   bool once;                            // "One shot": removed after execution
   bool nested;                          // If autocommands nest here
@@ -30,11 +31,12 @@ typedef struct AutoCmd {
   int64_t id;                           // ID used for uniquely tracking an autocmd.
   sctx_T script_ctx;                    // script context where defined
   char *desc;                           // Description for the autocmd.
-  struct AutoCmd *next;                 // Next AutoCmd in list
-} AutoCmd;
+  AutoCmd *next;                        // Next AutoCmd in list
+};
 
-typedef struct AutoPat {
-  struct AutoPat *next;                 // next AutoPat in AutoPat list; MUST
+typedef struct AutoPat_S AutoPat;
+struct AutoPat_S {
+  AutoPat *next;                        // next AutoPat in AutoPat list; MUST
                                         // be the first entry
   char *pat;                            // pattern as typed (NULL when pattern
                                         // has been removed)
@@ -45,10 +47,11 @@ typedef struct AutoPat {
   int buflocal_nr;                      // !=0 for buffer-local AutoPat
   char allow_dirs;                      // Pattern may match whole path
   char last;                            // last pattern for apply_autocmds()
-} AutoPat;
+};
 
 /// Struct used to keep status while executing autocommands for an event.
-typedef struct AutoPatCmd {
+typedef struct AutoPatCmd_S AutoPatCmd;
+struct AutoPatCmd_S {
   AutoPat *curpat;          // next AutoPat to examine
   AutoCmd *nextcmd;         // next AutoCmd to execute
   int group;                // group being used
@@ -58,8 +61,8 @@ typedef struct AutoPatCmd {
   event_T event;            // current event
   int arg_bufnr;            // initially equal to <abuf>, set to zero when buf is deleted
   Object *data;             // arbitrary data
-  struct AutoPatCmd *next;  // chain of active apc-s for auto-invalidation
-} AutoPatCmd;
+  AutoPatCmd *next;         // chain of active apc-s for auto-invalidation
+};
 
 // Set by the apply_autocmds_group function if the given event is equal to
 // EVENT_FILETYPE. Used by the readfile function in order to determine if

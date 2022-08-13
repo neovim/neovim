@@ -62,6 +62,7 @@
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/sha256.h"
@@ -7292,6 +7293,7 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "rpcrequest()" function
 static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+#if 0  // TODO:
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
   const int l_provider_call_nesting = provider_call_nesting;
@@ -7385,6 +7387,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 end:
   arena_mem_free(res_mem, NULL);
   api_clear_error(&err);
+#endif
 }
 
 /// "rpcstart()" function (DEPRECATED)

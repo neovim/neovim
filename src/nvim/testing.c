@@ -7,6 +7,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/os/os.h"
+#include "nvim/runtime.h"
 #include "nvim/testing.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -17,21 +18,23 @@
 static void prepare_assert_error(garray_T *gap)
 {
   char buf[NUMBUFLEN];
+  char *sname = estack_sfile();
 
   ga_init(gap, 1, 100);
-  if (sourcing_name != NULL) {
-    ga_concat(gap, (char *)sourcing_name);
-    if (sourcing_lnum > 0) {
+  if (sname != NULL) {
+    ga_concat(gap, sname);
+    if (SOURCING_LNUM > 0) {
       ga_concat(gap, " ");
     }
   }
-  if (sourcing_lnum > 0) {
-    vim_snprintf(buf, ARRAY_SIZE(buf), "line %" PRId64, (int64_t)sourcing_lnum);
+  if (SOURCING_LNUM > 0) {
+    vim_snprintf(buf, ARRAY_SIZE(buf), "line %" PRId64, (int64_t)SOURCING_LNUM);
     ga_concat(gap, buf);
   }
-  if (sourcing_name != NULL || sourcing_lnum > 0) {
+  if (sname != NULL || SOURCING_LNUM > 0) {
     ga_concat(gap, ": ");
   }
+  xfree(sname);
 }
 
 /// Append "p[clen]" to "gap", escaping unprintable characters.

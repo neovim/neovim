@@ -60,6 +60,7 @@
 #include "nvim/popupmnu.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
+#include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/shada.h"
 #include "nvim/sign.h"
@@ -159,6 +160,7 @@ bool event_teardown(void)
 void early_init(mparm_T *paramp)
 {
   env_init();
+  estack_init();
   cmdline_init();
   eval_init();          // init global variables
   init_path(argv0 ? argv0 : "nvim");
@@ -1814,12 +1816,12 @@ static void exe_pre_commands(mparm_T *parmp)
 
   if (cnt > 0) {
     curwin->w_cursor.lnum = 0;     // just in case..
-    sourcing_name = _("pre-vimrc command line");
+    estack_push(ETYPE_ARGS, _("pre-vimrc command line"), 0);
     current_sctx.sc_sid = SID_CMDARG;
     for (i = 0; i < cnt; i++) {
       do_cmdline_cmd(cmds[i]);
     }
-    sourcing_name = NULL;
+    estack_pop();
     current_sctx.sc_sid = 0;
     TIME_MSG("--cmd commands");
   }
@@ -1841,7 +1843,7 @@ static void exe_commands(mparm_T *parmp)
   if (parmp->tagname == NULL && curwin->w_cursor.lnum <= 1) {
     curwin->w_cursor.lnum = 0;
   }
-  sourcing_name = "command line";
+  estack_push(ETYPE_ARGS, "command line", 0);
   current_sctx.sc_sid = SID_CARG;
   current_sctx.sc_seq = 0;
   for (i = 0; i < parmp->n_commands; i++) {
@@ -1850,7 +1852,7 @@ static void exe_commands(mparm_T *parmp)
       xfree(parmp->commands[i]);
     }
   }
-  sourcing_name = NULL;
+  estack_pop();
   current_sctx.sc_sid = 0;
   if (curwin->w_cursor.lnum == 0) {
     curwin->w_cursor.lnum = 1;
@@ -2059,17 +2061,14 @@ static int execute_env(char *env)
 {
   const char *initstr = os_getenv(env);
   if (initstr != NULL) {
-    char_u *save_sourcing_name = (char_u *)sourcing_name;
-    linenr_T save_sourcing_lnum = sourcing_lnum;
-    sourcing_name = env;
-    sourcing_lnum = 0;
+    estack_push(ETYPE_ENV, env, 0);
     const sctx_T save_current_sctx = current_sctx;
     current_sctx.sc_sid = SID_ENV;
     current_sctx.sc_seq = 0;
     current_sctx.sc_lnum = 0;
     do_cmdline_cmd((char *)initstr);
-    sourcing_name = (char *)save_sourcing_name;
-    sourcing_lnum = save_sourcing_lnum;
+
+    estack_pop();
     current_sctx = save_current_sctx;
     return OK;
   }

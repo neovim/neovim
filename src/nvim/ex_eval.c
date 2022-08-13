@@ -478,8 +478,11 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
   }
 
   excp->type = type;
-  excp->throw_name = xstrdup(sourcing_name == NULL ? "" : sourcing_name);
-  excp->throw_lnum = sourcing_lnum;
+  excp->throw_name = estack_sfile();
+  if (excp->throw_name == NULL) {
+    excp->throw_name = xstrdup("");
+  }
+  excp->throw_lnum = SOURCING_LNUM;
 
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;

@@ -1313,6 +1313,7 @@ static void nlua_typval_exec(const char *lcmd, size_t lcmd_len, const char *name
 
 int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
 {
+#if 0  // TODO:
   const linenr_T save_sourcing_lnum = sourcing_lnum;
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = SID_STR;
@@ -1336,6 +1337,7 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
   ga_clear_strings(&ga);
   xfree(code);
   return OK;
+#endif
 }
 
 /// Call a LuaCallable given some typvals

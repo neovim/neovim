@@ -50,7 +50,93 @@ struct source_cookie {
 # include "runtime.c.generated.h"
 #endif
 
+garray_T exestack = { 0, 0, sizeof(estack_T), 50, NULL };
 garray_T script_items = { 0, 0, sizeof(scriptitem_T), 4, NULL };
+
+/// Initialize the execution stack.
+void estack_init(void)
+{
+  ga_grow(&exestack, 10);
+  estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len;
+  entry->es_type = ETYPE_TOP;
+  entry->es_name = NULL;
+  entry->es_lnum = 0;
+  entry->es_info.ufunc = NULL;
+  exestack.ga_len++;
+}
+
+/// Add an item to the execution stack.
+/// @return  the new entry
+estack_T *estack_push(etype_T type, char *name, linenr_T lnum)
+{
+  ga_grow(&exestack, 1);
+  estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len;
+  entry->es_type = type;
+  entry->es_name = name;
+  entry->es_lnum = lnum;
+  entry->es_info.ufunc = NULL;
+  exestack.ga_len++;
+  return entry;
+}
+
+/// Add a user function to the execution stack.
+void estack_push_ufunc(etype_T type, ufunc_T *ufunc, linenr_T lnum)
+{
+  estack_T *entry = estack_push(type,
+                                (char *)(ufunc->uf_name_exp != NULL
+                                         ? ufunc->uf_name_exp : ufunc->uf_name),
+                                lnum);
+  if (entry != NULL) {
+    entry->es_info.ufunc = ufunc;
+  }
+}
+
+/// Take an item off of the execution stack.
+void estack_pop(void)
+{
+  if (exestack.ga_len > 1) {
+    exestack.ga_len--;
+  }
+}
+
+/// Get the current value for <sfile> in allocated memory.
+char *estack_sfile(void)
+{
+  estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len - 1;
+  if (entry->es_name == NULL) {
+    return NULL;
+  }
+  if (entry->es_info.ufunc == NULL) {
+    return xstrdup(entry->es_name);
+  }
+
+  // For a function we compose the call stack, as it was done in the past:
+  //   "function One[123]..Two[456]..Three"
+  size_t len = STRLEN(entry->es_name) + 10;
+  int idx;
+  for (idx = exestack.ga_len - 2; idx >= 0; idx--) {
+    entry = ((estack_T *)exestack.ga_data) + idx;
+    if (entry->es_name == NULL || entry->es_info.ufunc == NULL) {
+      idx++;
+      break;
+    }
+    len += STRLEN(entry->es_name) + 15;
+  }
+
+  char *res = (char *)xmalloc(len);
+  STRCPY(res, "function ");
+  size_t done;
+  while (idx < exestack.ga_len - 1) {
+    done = STRLEN(res);
+    entry = ((estack_T *)exestack.ga_data) + idx;
+    vim_snprintf(res + done, len - done, "%s[%" PRIdLINENR "]..", entry->es_name, entry->es_lnum);
+    idx++;
+  }
+  done = STRLEN(res);
+  entry = ((estack_T *)exestack.ga_data) + idx;
+  vim_snprintf(res + done, len - done, "%s", entry->es_name);
+  return res;
+}
 
 static bool runtime_search_path_valid = false;
 static int *runtime_search_path_ref = NULL;
@@ -1645,6 +1731,7 @@ scriptitem_T *new_script_item(char *const name, scid_T *const sid_out)
 
 static int source_using_linegetter(void *cookie, LineGetter fgetline, const char *traceback_name)
 {
+#if 0  // TODO:
   char *save_sourcing_name = sourcing_name;
   linenr_T save_sourcing_lnum = sourcing_lnum;
   char sourcing_name_buf[256];
@@ -1673,6 +1760,7 @@ static int source_using_linegetter(void *cookie, LineGetter fgetline, const char
   current_sctx = save_current_sctx;
   restore_funccal();
   return retval;
+#endif
 }
 
 static void cmd_source_buffer(const exarg_T *const eap)
@@ -1736,8 +1824,6 @@ int do_source_str(const char *cmd, const char *traceback_name)
 int do_source(char *fname, int check_other, int is_vimrc)
 {
   struct source_cookie cookie;
-  char *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
   char *p;
   char *fname_exp;
   uint8_t *firstline = NULL;
@@ -1791,11 +1877,11 @@ int do_source(char *fname, int check_other, int is_vimrc)
   if (cookie.fp == NULL) {
     if (p_verbose > 1) {
       verbose_enter();
-      if (sourcing_name == NULL) {
+      if (SOURCING_NAME == NULL) {
         smsg(_("could not source \"%s\""), fname);
       } else {
         smsg(_("line %" PRId64 ": could not source \"%s\""),
-             (int64_t)sourcing_lnum, fname);
+             (int64_t)SOURCING_LNUM, fname);
       }
       verbose_leave();
     }
@@ -1807,11 +1893,10 @@ int do_source(char *fname, int check_other, int is_vimrc)
   // - For a vimrc file, may want to call vimrc_found().
   if (p_verbose > 1) {
     verbose_enter();
-    if (sourcing_name == NULL) {
+    if (SOURCING_NAME == NULL) {
       smsg(_("sourcing \"%s\""), fname);
     } else {
-      smsg(_("line %" PRId64 ": sourcing \"%s\""),
-           (int64_t)sourcing_lnum, fname);
+      smsg(_("line %" PRId64 ": sourcing \"%s\""), (int64_t)SOURCING_LNUM, fname);
     }
     verbose_leave();
   }
@@ -1841,10 +1926,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   cookie.level = ex_nesting_level;
 
   // Keep the sourcing name/lnum, for recursive calls.
-  save_sourcing_name = sourcing_name;
-  sourcing_name = fname_exp;
-  save_sourcing_lnum = sourcing_lnum;
-  sourcing_lnum = 0;
+  estack_push(ETYPE_SCRIPT, fname_exp, 0);
 
   // start measuring script load time if --startuptime was passed and
   // time_fd was successfully opened afterwards.
@@ -1900,6 +1982,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   }
 
   if (path_with_extension((const char *)fname_exp, "lua")) {
+#if 0  // TODO:
     const sctx_T current_sctx_backup = current_sctx;
     const linenr_T sourcing_lnum_backup = sourcing_lnum;
     current_sctx.sc_sid = SID_LUA;
@@ -1909,6 +1992,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
     nlua_exec_file((const char *)fname_exp);
     current_sctx = current_sctx_backup;
     sourcing_lnum = sourcing_lnum_backup;
+#endif
   } else {
     // Call do_cmdline, which will call getsourceline() to get the lines.
     do_cmdline((char *)firstline, getsourceline, (void *)&cookie,
@@ -1931,13 +2015,12 @@ int do_source(char *fname, int check_other, int is_vimrc)
   if (got_int) {
     emsg(_(e_interr));
   }
-  sourcing_name = save_sourcing_name;
-  sourcing_lnum = save_sourcing_lnum;
+  estack_pop();
   if (p_verbose > 1) {
     verbose_enter();
     smsg(_("finished sourcing %s"), fname);
-    if (sourcing_name != NULL) {
-      smsg(_("continuing in %s"), sourcing_name);
+    if (SOURCING_NAME != NULL) {
+      smsg(_("continuing in %s"), SOURCING_NAME);
     }
     verbose_leave();
   }
@@ -2110,7 +2193,7 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
 {
   return fgetline == getsourceline
         ? ((struct source_cookie *)cookie)->sourcing_lnum
-        : sourcing_lnum;
+        : SOURCING_LNUM;
 }
 
 /// Get one full line from a sourced file.
@@ -2126,14 +2209,14 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
 
   // If breakpoints have been added/deleted need to check for it.
   if (sp->dbg_tick < debug_tick) {
-    sp->breakpoint = dbg_find_breakpoint(true, (char_u *)sp->fname, sourcing_lnum);
+    sp->breakpoint = dbg_find_breakpoint(true, (char_u *)sp->fname, SOURCING_LNUM);
     sp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES) {
     script_line_end();
   }
   // Set the current sourcing line number.
-  sourcing_lnum = sp->sourcing_lnum + 1;
+  SOURCING_LNUM = sp->sourcing_lnum + 1;
   // Get current line.  If there is a read-ahead line, use it, otherwise get
   // one now.
   if (sp->finished) {
@@ -2191,10 +2274,10 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   }
 
   // Did we encounter a breakpoint?
-  if (sp->breakpoint != 0 && sp->breakpoint <= sourcing_lnum) {
-    dbg_breakpoint((char_u *)sp->fname, sourcing_lnum);
+  if (sp->breakpoint != 0 && sp->breakpoint <= SOURCING_LNUM) {
+    dbg_breakpoint((char_u *)sp->fname, SOURCING_LNUM);
     // Find next breakpoint.
-    sp->breakpoint = dbg_find_breakpoint(true, (char_u *)sp->fname, sourcing_lnum);
+    sp->breakpoint = dbg_find_breakpoint(true, (char_u *)sp->fname, SOURCING_LNUM);
     sp->dbg_tick = debug_tick;
   }
 
