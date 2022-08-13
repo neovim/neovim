@@ -360,7 +360,7 @@ let s:filename_checks = {
     \ 'monk': ['file.isc', 'file.monk', 'file.ssc', 'file.tsc'],
     \ 'moo': ['file.moo'],
     \ 'moonscript': ['file.moon'],
-    \ 'mp': ['file.mp'],
+    \ 'mp': ['file.mp', 'file.mpxl', 'file.mpiv', 'file.mpvi'],
     \ 'mplayerconf': ['mplayer.conf', '/.mplayer/config', 'any/.mplayer/config'],
     \ 'mrxvtrc': ['mrxvtrc', '.mrxvtrc'],
     \ 'msidl': ['file.odl', 'file.mof'],
