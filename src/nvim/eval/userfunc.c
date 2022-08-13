@@ -1015,7 +1015,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     sandbox++;
   }
 
-  estack_push_ufunc(ETYPE_UFUNC, fp, 1);
+  estack_push_ufunc(fp, 1);
   if (p_verbose >= 12) {
     ++no_wait_return;
     verbose_enter_scroll();
