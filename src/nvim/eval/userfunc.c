@@ -2442,9 +2442,12 @@ void ex_function(exarg_T *eap)
         fp = NULL;
         overwrite = true;
       } else {
-        // redefine existing function
+        char_u *exp_name = fp->uf_name_exp;
+        // redefine existing function, keep the expanded name
         XFREE_CLEAR(name);
+        fp->uf_name_exp = NULL;
         func_clear_items(fp);
+        fp->uf_name_exp = exp_name;
         fp->uf_profiling = false;
         fp->uf_prof_initialized = false;
       }
