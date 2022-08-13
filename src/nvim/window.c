@@ -705,7 +705,7 @@ win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
   wp->w_vsep_width = 0;
 
   win_config_float(wp, fconfig);
-  win_set_inner_size(wp);
+  win_set_inner_size(wp, true);
   wp->w_pos_changed = true;
   redraw_later(wp, VALID);
   return wp;
@@ -789,7 +789,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
     wp->w_width = MIN(wp->w_width, Columns - win_border_width(wp));
   }
 
-  win_set_inner_size(wp);
+  win_set_inner_size(wp, true);
   must_redraw = MAX(must_redraw, VALID);
 
   wp->w_pos_changed = true;
@@ -6162,7 +6162,7 @@ void win_new_height(win_T *wp, int height)
 
   wp->w_height = height;
   wp->w_pos_changed = true;
-  win_set_inner_size(wp);
+  win_set_inner_size(wp, true);
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
@@ -6271,7 +6271,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   invalidate_botline_win(wp);
 }
 
-void win_set_inner_size(win_T *wp)
+void win_set_inner_size(win_T *wp, bool valid_cursor)
 {
   int width = wp->w_width_request;
   if (width == 0) {
@@ -6285,7 +6285,7 @@ void win_set_inner_size(win_T *wp)
   }
 
   if (height != prev_height) {
-    if (height > 0) {
+    if (height > 0 && valid_cursor) {
       if (wp == curwin) {
         // w_wrow needs to be valid. When setting 'laststatus' this may
         // call win_new_height() recursively.
@@ -6304,7 +6304,7 @@ void win_set_inner_size(win_T *wp)
     // There is no point in adjusting the scroll position when exiting.  Some
     // values might be invalid.
     // Skip scroll_to_fraction() when 'cmdheight' was set to one from zero.
-    if (!exiting && !made_cmdheight_nonzero) {
+    if (!exiting && !made_cmdheight_nonzero && valid_cursor) {
       scroll_to_fraction(wp, prev_height);
     }
     redraw_later(wp, NOT_VALID);  // SOME_VALID??
@@ -6313,11 +6313,13 @@ void win_set_inner_size(win_T *wp)
   if (width != wp->w_width_inner) {
     wp->w_width_inner = width;
     wp->w_lines_valid = 0;
-    changed_line_abv_curs_win(wp);
-    invalidate_botline_win(wp);
-    if (wp == curwin) {
-      update_topline(wp);
-      curs_columns(wp, true);  // validate w_wrow
+    if (valid_cursor) {
+      changed_line_abv_curs_win(wp);
+      invalidate_botline_win(wp);
+      if (wp == curwin) {
+        update_topline(wp);
+        curs_columns(wp, true);  // validate w_wrow
+      }
     }
     redraw_later(wp, NOT_VALID);
   }
@@ -6346,7 +6348,7 @@ static int win_border_width(win_T *wp)
 void win_new_width(win_T *wp, int width)
 {
   wp->w_width = width;
-  win_set_inner_size(wp);
+  win_set_inner_size(wp, true);
 
   wp->w_redr_status = true;
   wp->w_pos_changed = true;
@@ -6738,9 +6740,11 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
 /// Add or remove window bar from window "wp".
 ///
 /// @param make_room Whether to resize frames to make room for winbar.
+/// @param valid_cursor Whether the cursor is valid and should be used while
+///                     resizing.
 ///
 /// @return Success status.
-int set_winbar_win(win_T *wp, bool make_room)
+int set_winbar_win(win_T *wp, bool make_room, bool valid_cursor)
 {
   // Require the local value to be set in order to show winbar on a floating window.
   int winbar_height = wp->w_floating ? ((*wp->w_p_wbr != NUL) ? 1 : 0)
@@ -6756,7 +6760,7 @@ int set_winbar_win(win_T *wp, bool make_room)
       }
     }
     wp->w_winbar_height = winbar_height;
-    win_set_inner_size(wp);
+    win_set_inner_size(wp, valid_cursor);
     wp->w_redr_status = wp->w_redr_status || winbar_height;
 
     if (winbar_height == 0) {
@@ -6777,7 +6781,7 @@ int set_winbar_win(win_T *wp, bool make_room)
 void set_winbar(bool make_room)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (set_winbar_win(wp, make_room) == FAIL) {
+    if (set_winbar_win(wp, make_room, true) == FAIL) {
       break;
     }
   }
