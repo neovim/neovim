@@ -227,3 +227,16 @@ jobs:
           if [ "$TAG_NAME" != "nightly" ]; then
             gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
           fi
+  publish-winget:
+    needs: publish # run after publish job is finished
+    # publish to winget only on stable releases
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+    runs-on: windows-latest # action can only be run on windows
+    steps:
+      - uses: vedantmgoyal2009/winget-releaser@latest
+        with:
+          identifier: Neovim.Neovim
+          # the latter one is a fallback value, reference:
+          # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+          release-tag: ${{ github.event.inputs.tag_name || github.ref }}
+          token: ${{ secrets.WINGET_TOKEN }}
