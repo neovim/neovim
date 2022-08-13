@@ -113,6 +113,12 @@
 #include "nvim/types.h"
 #include "nvim/undo.h"
 
+/// Structure passed around between undofile functions.
+typedef struct {
+  buf_T *bi_buf;
+  FILE *bi_fp;
+} bufinfo_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "undo.c.generated.h"
 #endif

@@ -9,10 +9,10 @@
 #endif
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/eval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
-#include "nvim/fileio.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"

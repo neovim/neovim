@@ -74,10 +74,4 @@ struct u_header {
 #define UH_EMPTYBUF 0x02        // buffer was empty
 #define UH_RELOAD   0x04        // buffer was reloaded
 
-/// Structure passed around between undofile functions.
-typedef struct {
-  buf_T *bi_buf;
-  FILE *bi_fp;
-} bufinfo_T;
-
 #endif  // NVIM_UNDO_DEFS_H

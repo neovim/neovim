@@ -50,6 +50,7 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/file_search.h"

@@ -1,7 +1,6 @@
 #ifndef NVIM_FILEIO_H
 #define NVIM_FILEIO_H
 
-#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/garray.h"
