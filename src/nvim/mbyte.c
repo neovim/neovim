@@ -2861,10 +2861,8 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 void f_charclass(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (argvars[0].v_type != VAR_STRING
-      || argvars[0].vval.v_string == NULL
-      || *argvars[0].vval.v_string == NUL) {
-    emsg(_(e_stringreq));
+  if (tv_check_for_string(&argvars[0]) == FAIL
+      || argvars[0].vval.v_string == NULL) {
     return;
   }
   rettv->vval.v_number = mb_get_class((const char_u *)argvars[0].vval.v_string);

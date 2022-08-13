@@ -6838,9 +6838,9 @@ setcellwidths({list})					*setcellwidths()*
 		tells Vim how wide characters are, counted in screen cells.
 		This overrides 'ambiwidth'.  Example: >
 		   setcellwidths([[0xad, 0xad, 1],
-		   		\ [0x2194, 0x2199, 2]])
+				\ [0x2194, 0x2199, 2]])
 
-<					*E1109* *E1110* *E1111* *E1112* *E1113*
+<				*E1109* *E1110* *E1111* *E1112* *E1113* *E1114*
 		The {list} argument is a list of lists with each three
 		numbers. These three numbers are [low, high, width].  "low"
 		and "high" can be the same, in which case this refers to one
@@ -6856,7 +6856,8 @@ setcellwidths({list})					*setcellwidths()*
 
 		To clear the overrides pass an empty list: >
 		   setcellwidths([]);
-
+<		You can use the script $VIMRUNTIME/tools/emoji_list.vim to see
+		the effect for known emoji characters.
 
 setcharpos({expr}, {list})				*setcharpos()*
 		Same as |setpos()| but uses the specified column number as the
