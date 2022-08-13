@@ -125,9 +125,9 @@ describe('Special values', function()
   end)
 
   it('work with . (concat) properly', function()
-    eq("true", eval('"" . v:true'))
-    eq("null", eval('"" . v:null'))
-    eq("false", eval('"" . v:false'))
+    eq("v:true", eval('"" . v:true'))
+    eq("v:null", eval('"" . v:null'))
+    eq("v:false", eval('"" . v:false'))
   end)
 
   it('work with type()', function()

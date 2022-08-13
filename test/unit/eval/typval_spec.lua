@@ -2992,9 +2992,9 @@ describe('typval.c', function()
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', ''},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
             -- Using to_cstr in place of Neovim allocated string, cannot
@@ -3036,9 +3036,9 @@ describe('typval.c', function()
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', nil},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3078,9 +3078,9 @@ describe('typval.c', function()
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', ''},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
             -- Using to_cstr, cannot free with tv_clear
@@ -3121,9 +3121,9 @@ describe('typval.c', function()
             {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', nil},
             {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
             {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
-            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'true'},
-            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'false'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'v:null'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarTrue}, nil, 'v:true'},
+            {lib.VAR_BOOL, {v_bool=lib.kBoolVarFalse}, nil, 'v:false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
             -- Using to_cstr, cannot free with tv_clear

@@ -30,12 +30,12 @@
 #include "nvim/vim.h"  // For _()
 
 const char *const encode_bool_var_names[] = {
-  [kBoolVarTrue] = "true",
-  [kBoolVarFalse] = "false",
+  [kBoolVarTrue] = "v:true",
+  [kBoolVarFalse] = "v:false",
 };
 
 const char *const encode_special_var_names[] = {
-  [kSpecialVarNull] = "null",
+  [kSpecialVarNull] = "v:null",
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
