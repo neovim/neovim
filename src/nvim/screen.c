@@ -6484,7 +6484,8 @@ static void win_redr_ruler(win_T *wp, bool always)
     // Some sprintfs return the length, some return a pointer.
     // To avoid portability problems we use strlen() here.
     vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
-                 (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? (int64_t)0L : (int64_t)wp->w_cursor.lnum);
+                 (wp->w_buffer->b_ml.ml_flags &
+                  ML_EMPTY) ? (int64_t)0L : (int64_t)wp->w_cursor.lnum);
     size_t len = STRLEN(buffer);
     col_print(buffer + len, RULER_BUF_LEN - len,
               empty_line ? 0 : (int)wp->w_cursor.col + 1,
