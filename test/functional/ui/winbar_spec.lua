@@ -579,47 +579,95 @@ describe('winbar', function()
   end)
 end)
 
-it('local winbar works with tabs', function()
-  clear()
-  local screen = Screen.new(60, 13)
-  screen:attach()
-  screen:set_default_attr_ids({
-    [1] = {bold = true},
-    [2] = {reverse = true},
-    [3] = {bold = true, foreground = Screen.colors.Blue},
-    [4] = {underline = true, background = Screen.colors.LightGray}
-  })
-  meths.set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
-  command('tabnew')
-  screen:expect([[
-    {4: [No Name] }{1: [No Name] }{2:                                     }{4:X}|
-    ^                                                            |
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-                                                                |
-  ]])
-  command('tabnext')
-  screen:expect{grid=[[
-    {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
-    {1:foo                                                         }|
-    ^                                                            |
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-    {3:~                                                           }|
-                                                                |
-  ]]}
+describe('local winbar with tabs', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(60, 10)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true},
+      [2] = {reverse = true},
+      [3] = {bold = true, foreground = Screen.colors.Blue},
+      [4] = {underline = true, background = Screen.colors.LightGray}
+    })
+    meths.set_option_value('winbar', 'foo', { scope = 'local', win = 0 })
+  end)
+
+  it('works', function()
+    command('tabnew')
+    screen:expect([[
+      {4: [No Name] }{1: [No Name] }{2:                                     }{4:X}|
+      ^                                                            |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]])
+    command('tabnext')
+    screen:expect{grid=[[
+      {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
+      {1:foo                                                         }|
+      ^                                                            |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
+  end)
+
+  it('can edit new empty buffer #19458', function()
+    insert [[
+      some
+      goofy
+      text]]
+    screen:expect{grid=[[
+      {1:foo                                                         }|
+      some                                                        |
+      goofy                                                       |
+      tex^t                                                        |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
+
+    -- this used to throw an E315 ml_get error
+    command 'tabedit'
+    screen:expect{grid=[[
+      {4: + [No Name] }{1: [No Name] }{2:                                   }{4:X}|
+      ^                                                            |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
+
+    command 'tabprev'
+    screen:expect{grid=[[
+      {1: + [No Name] }{4: [No Name] }{2:                                   }{4:X}|
+      {1:foo                                                         }|
+      some                                                        |
+      goofy                                                       |
+      tex^t                                                        |
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+      {3:~                                                           }|
+                                                                  |
+    ]]}
+  end)
 end)

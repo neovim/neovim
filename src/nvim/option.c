@@ -1981,7 +1981,7 @@ static void didset_options(void)
   (void)check_cedit();
   // initialize the table for 'breakat'.
   fill_breakat_flags();
-  didset_window_options(curwin);
+  didset_window_options(curwin, true);
 }
 
 // More side effects of setting options.
@@ -6303,7 +6303,7 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
 {
   copy_winopt(&wp_from->w_onebuf_opt, &wp_to->w_onebuf_opt);
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
-  didset_window_options(wp_to);
+  didset_window_options(wp_to, true);
 }
 
 /// Copy the options from one winopt_T to another.
@@ -6428,7 +6428,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option((char_u **)&wop->wo_wbr);
 }
 
-void didset_window_options(win_T *wp)
+void didset_window_options(win_T *wp, bool valid_cursor)
 {
   check_colorcolumn(wp);
   briopt_check(wp);
@@ -6437,7 +6437,7 @@ void didset_window_options(win_T *wp)
   set_chars_option(wp, &wp->w_p_lcs, true);
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
   check_blending(wp);
-  set_winbar_win(wp, false);
+  set_winbar_win(wp, false, valid_cursor);
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 

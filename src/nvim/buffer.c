@@ -2596,7 +2596,7 @@ void get_winopts(buf_T *buf)
   }
 
   if (curwin->w_float_config.style == kWinStyleMinimal) {
-    didset_window_options(curwin);
+    didset_window_options(curwin, false);
     win_set_minimal_style(curwin);
   }
 
@@ -2604,7 +2604,7 @@ void get_winopts(buf_T *buf)
   if (p_fdls >= 0) {
     curwin->w_p_fdl = p_fdls;
   }
-  didset_window_options(curwin);
+  didset_window_options(curwin, false);
 }
 
 /// Find the mark for the buffer 'buf' for the current window.
