@@ -6346,8 +6346,8 @@ static int fillchar_hsep(win_T *wp, int *attr)
   return wp->w_p_fcs_chars.horiz;
 }
 
-/// Return TRUE if redrawing should currently be done.
-int redrawing(void)
+/// Return true if redrawing should currently be done.
+bool redrawing(void)
 {
   return !RedrawingDisabled
          && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
