@@ -58,7 +58,7 @@ func Test_expand_sfile_and_stack()
   END
   call writefile(lines, 'Xstack')
   source Xstack
-  call assert_match('\<Xstack\[2\]', g:stack_value)
+  call assert_match('\<Xstack\[2\]$', g:stack_value)
   call delete('Xstack')
 endfunc
 

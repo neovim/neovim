@@ -135,21 +135,19 @@ char *estack_sfile(estack_arg_T which)
       }
       len += strlen(type_name);
       ga_grow(&ga, (int)len);
-      linenr_T lnum = 0;
-      if (idx == exestack.ga_len - 1) {
-        lnum = which == ESTACK_STACK ? SOURCING_LNUM : 0;
-      } else {
-        lnum = entry->es_lnum;
-      }
+      linenr_T lnum = idx == exestack.ga_len - 1
+        ? which == ESTACK_STACK ? SOURCING_LNUM : 0
+        : entry->es_lnum;
+      char *dots = idx == exestack.ga_len - 1 ? "" : "..";
       if (lnum == 0) {
         // For the bottom entry of <sfile>: do not add the line number,
         // it is used in <slnum>.  Also leave it out when the number is
         // not set.
         vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
-                     type_name, entry->es_name, idx == exestack.ga_len - 1 ? "" : "..");
+                     type_name, entry->es_name, dots);
       } else {
-        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]..",
-                     type_name, entry->es_name, lnum);
+        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]%s",
+                     type_name, entry->es_name, lnum, dots);
       }
       ga.ga_len += (int)strlen((char *)ga.ga_data + ga.ga_len);
     }
