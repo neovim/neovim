@@ -142,6 +142,7 @@ local extension = {
   asp = function(path, bufnr)
     return require('vim.filetype.detect').asp(bufnr)
   end,
+  astro = 'astro',
   atl = 'atlas',
   as = 'atlas',
   ahk = 'autohotkey',

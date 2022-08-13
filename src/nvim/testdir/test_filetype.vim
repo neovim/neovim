@@ -71,6 +71,7 @@ let s:filename_checks = {
     \ 'asciidoc': ['file.asciidoc', 'file.adoc'],
     \ 'asn': ['file.asn', 'file.asn1'],
     \ 'asterisk': ['asterisk/file.conf', 'asterisk/file.conf-file', 'some-asterisk/file.conf', 'some-asterisk/file.conf-file'],
+    \ 'astro': ['file.astro'],
     \ 'atlas': ['file.atl', 'file.as'],
     \ 'autohotkey': ['file.ahk'],
     \ 'autoit': ['file.au3'],
