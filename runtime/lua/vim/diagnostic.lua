@@ -219,30 +219,6 @@ local floating_highlight_map = make_highlight_map('Floating')
 local sign_highlight_map = make_highlight_map('Sign')
 
 ---@private
-local define_default_signs = (function()
-  local signs_defined = false
-  return function()
-    if signs_defined then
-      return
-    end
-
-    for severity, sign_hl_name in pairs(sign_highlight_map) do
-      if vim.tbl_isempty(vim.fn.sign_getdefined(sign_hl_name)) then
-        local severity_name = M.severity[severity]
-        vim.fn.sign_define(sign_hl_name, {
-          text = (severity_name or 'U'):sub(1, 1),
-          texthl = sign_hl_name,
-          linehl = '',
-          numhl = '',
-        })
-      end
-    end
-
-    signs_defined = true
-  end
-end)()
-
----@private
 local function get_bufnr(bufnr)
   if not bufnr or bufnr == 0 then
     return vim.api.nvim_get_current_buf()
@@ -643,6 +619,27 @@ end
 ---                * priority: (number, default 10) Base priority to use for signs. When
 ---                {severity_sort} is used, the priority of a sign is adjusted based on
 ---                its severity. Otherwise, all signs use the same priority.
+---                * sign_text: (table) Table of vim.diagnostic.severity symbol pairs.
+---                Text values in this table take priority over existing sign definitions
+---                but will not be prioritized over a sign_text field for an individual
+---                diagnostic. Individual diagnostic's sign_text can be set within a function
+---                passed to the filter parameter.
+---                * filter: (function) A function which will be run prior to determining the signs
+---                This function takes the diagnostics table as a parameter and can be used to filter
+---                or otherwise customize how signs will appear. Example
+---                <pre>
+---                  function(diagnostic)
+---                    -- Replace signs for diagnostics relating to <symbol> being unused with 'U'
+---                    if string.lower(diagnostic.message):find('unused') then
+---                       diagnostic.sign_text = 'U'
+---                    end
+---                    -- do not show signs for any INFO severity diagnostic
+---                    if diagnostic.severity == vim.diagnostic.severity.INFO then
+---                      return
+---                    end
+---                    return diagnostic
+---                  end
+---                </pre>
 ---       - float: Options for floating windows. See |vim.diagnostic.open_float()|.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
@@ -859,6 +856,13 @@ function M.goto_next(opts)
   return diagnostic_move_pos(opts, M.get_next_pos(opts))
 end
 
+local get_fallback_sign = function (severity)
+  local sign = vim.fn.sign_getdefined(sign_highlight_map[severity])
+  if sign and sign[1] and not vim.tbl_isempty(sign[1]) then
+    return sign[1].text
+  end
+end
+
 M.handlers.signs = {
   show = function(namespace, bufnr, diagnostics, opts)
     vim.validate({
@@ -875,11 +879,13 @@ M.handlers.signs = {
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
 
+    if opts.filter then
+      diagnostics = vim.tbl_map(opts.filter, diagnostics)
+    end
+
     if opts.signs and opts.signs.severity then
       diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
     end
-
-    define_default_signs()
 
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
@@ -902,22 +908,23 @@ M.handlers.signs = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.sign_ns then
-      ns.user_data.sign_ns = vim.api.nvim_create_namespace('')
+      local sign_ns = string.format('vim.diagnostic.%s', ns.name)
+      ns.user_data.sign_ns = vim.api.nvim_create_namespace(sign_ns)
     end
 
     local sign_ns = ns.user_data.sign_ns
     for _, diagnostic in ipairs(diagnostics) do
       local lnum = diagnostic.lnum
-      local col = diagnostic.col
-      local sign_text = opts.sign_text and opts.sign_text[diagnostic.severity] or M.severity[diagnostic.severity]:sub(1,1)
+      local sign_text = diagnostic.sign_text or opts.sign_text and opts.sign_text[diagnostic.severity]
+        sign_text = sign_text or get_fallback_sign(diagnostic.severity) or M.severity[diagnostic.severity]:sub(1,1)
       local sign_opts = {
         sign_text = sign_text,
         sign_hl_group = sign_highlight_map[diagnostic.severity],
         priority = get_priority(diagnostic.severity),
       }
-      pcall(vim.api.nvim_buf_set_extmark, bufnr, sign_ns, lnum, col, sign_opts)
-      save_extmarks(sign_ns, bufnr)
+      vim.api.nvim_buf_set_extmark(bufnr, sign_ns, lnum, 0, sign_opts)
     end
+    save_extmarks(sign_ns, bufnr)
   end,
 
   hide = function(namespace, bufnr)
