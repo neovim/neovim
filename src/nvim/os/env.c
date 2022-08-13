@@ -10,7 +10,6 @@
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
-#include "nvim/fileio.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"

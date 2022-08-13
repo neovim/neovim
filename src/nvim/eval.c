@@ -15,6 +15,7 @@
 #endif
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
 #include "nvim/channel.h"
@@ -34,7 +35,6 @@
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/ex_session.h"
-#include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"

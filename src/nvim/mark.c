@@ -19,7 +19,6 @@
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/extmark.h"
-#include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"

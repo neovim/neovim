@@ -8,9 +8,9 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
-#include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/keycodes.h"
 #include "nvim/main.h"

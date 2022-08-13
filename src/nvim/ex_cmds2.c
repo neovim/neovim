@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/globals.h"
 #include "nvim/vim.h"
 #ifdef HAVE_LOCALE_H
