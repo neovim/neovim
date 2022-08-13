@@ -36,14 +36,17 @@ local keymap = {}
 ---@param lhs string           Left-hand side |{lhs}| of the mapping.
 ---@param rhs string|function  Right-hand side |{rhs}| of the mapping. Can also be a Lua function.
 --
----@param opts table A table of |:map-arguments| such as "silent". In addition to the options
----                  listed in |nvim_set_keymap()|, this table also accepts the following keys:
----                  - buffer: (number or boolean) Add a mapping to the given buffer. When "true"
----                    or 0, use the current buffer.
----                  - remap: (boolean) Make the mapping recursive. This is the
----                  inverse of the "noremap" option from |nvim_set_keymap()|.
----                  Default `false`.
----                  - replace_keycodes: (boolean) defaults to true if "expr" is true.
+---@param opts table A table of |:map-arguments|.
+---                  + Accepts options accepted by the {opts} parameter in |nvim_set_keymap()|,
+---                    with the following notable differences:
+---                    - replace_keycodes: Defaults to `true` if "expr" is `true`.
+---                    - noremap: Always overridden with the inverse of "remap" (see below).
+---                  + In addition to those options, the table accepts the following keys:
+---                    - buffer: (number or boolean) Add a mapping to the given buffer.
+---                    When `0` or `true`, use the current buffer.
+---                    - remap: (boolean) Make the mapping recursive.
+---                    This is the inverse of the "noremap" option from |nvim_set_keymap()|.
+---                    Defaults to `false`.
 ---@see |nvim_set_keymap()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate({
