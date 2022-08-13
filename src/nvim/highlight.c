@@ -437,52 +437,52 @@ int hl_combine_attr(int char_attr, int prim_attr)
   }
 
   HlAttrs char_aep = syn_attr2entry(char_attr);
-  HlAttrs spell_aep = syn_attr2entry(prim_attr);
+  HlAttrs prim_aep = syn_attr2entry(prim_attr);
 
   // start with low-priority attribute, and override colors if present below.
   HlAttrs new_en = char_aep;
 
-  if (spell_aep.cterm_ae_attr & HL_NOCOMBINE) {
-    new_en.cterm_ae_attr = spell_aep.cterm_ae_attr;
+  if (prim_aep.cterm_ae_attr & HL_NOCOMBINE) {
+    new_en.cterm_ae_attr = prim_aep.cterm_ae_attr;
   } else {
-    new_en.cterm_ae_attr |= spell_aep.cterm_ae_attr;
+    new_en.cterm_ae_attr |= prim_aep.cterm_ae_attr;
   }
-  if (spell_aep.rgb_ae_attr & HL_NOCOMBINE) {
-    new_en.rgb_ae_attr = spell_aep.rgb_ae_attr;
+  if (prim_aep.rgb_ae_attr & HL_NOCOMBINE) {
+    new_en.rgb_ae_attr = prim_aep.rgb_ae_attr;
   } else {
-    new_en.rgb_ae_attr |= spell_aep.rgb_ae_attr;
+    new_en.rgb_ae_attr |= prim_aep.rgb_ae_attr;
   }
 
-  if (spell_aep.cterm_fg_color > 0) {
-    new_en.cterm_fg_color = spell_aep.cterm_fg_color;
+  if (prim_aep.cterm_fg_color > 0) {
+    new_en.cterm_fg_color = prim_aep.cterm_fg_color;
     new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
+                           | (prim_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
-  if (spell_aep.cterm_bg_color > 0) {
-    new_en.cterm_bg_color = spell_aep.cterm_bg_color;
+  if (prim_aep.cterm_bg_color > 0) {
+    new_en.cterm_bg_color = prim_aep.cterm_bg_color;
     new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
+                           | (prim_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
-  if (spell_aep.rgb_fg_color >= 0) {
-    new_en.rgb_fg_color = spell_aep.rgb_fg_color;
+  if (prim_aep.rgb_fg_color >= 0) {
+    new_en.rgb_fg_color = prim_aep.rgb_fg_color;
     new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
+                           | (prim_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
-  if (spell_aep.rgb_bg_color >= 0) {
-    new_en.rgb_bg_color = spell_aep.rgb_bg_color;
+  if (prim_aep.rgb_bg_color >= 0) {
+    new_en.rgb_bg_color = prim_aep.rgb_bg_color;
     new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
-                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
+                           | (prim_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
-  if (spell_aep.rgb_sp_color >= 0) {
-    new_en.rgb_sp_color = spell_aep.rgb_sp_color;
+  if (prim_aep.rgb_sp_color >= 0) {
+    new_en.rgb_sp_color = prim_aep.rgb_sp_color;
   }
 
-  if (spell_aep.hl_blend >= 0) {
-    new_en.hl_blend = spell_aep.hl_blend;
+  if (prim_aep.hl_blend >= 0) {
+    new_en.hl_blend = prim_aep.hl_blend;
   }
 
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
