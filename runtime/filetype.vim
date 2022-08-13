@@ -173,6 +173,9 @@ au BufNewFile,BufRead *.asm,*.[sS],*.[aA],*.mac,*.lst	call dist#ft#FTasm()
 " Assembly - Macro (VAX)
 au BufNewFile,BufRead *.mar			setf vmasm
 
+" Astro
+au BufNewFile,BufRead *.astro			setf astro
+
 " Atlas
 au BufNewFile,BufRead *.atl,*.as		setf atlas
 
