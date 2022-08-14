@@ -119,6 +119,18 @@ jobs:
         name: uncrustify
         run: |
           ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
+
+      - if: "!cancelled()"
+        name: suggester / uncrustify
+        uses: reviewdog/action-suggester@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tool_name: uncrustify
+          cleanup: false
+
+      - if: "!cancelled()"
+        name: check uncrustify
+        run: |
           git diff --color --exit-code
 
       - if: "!cancelled()"
