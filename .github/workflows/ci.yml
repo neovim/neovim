@@ -123,8 +123,8 @@ jobs:
         run: ./ci/run_tests.sh build_nvim
 
       - if: "!cancelled()"
-        name: lintcfull
-        run: make lintcfull
+        name: lintc
+        run: make lintc
 
       - if: "!cancelled()"
         name: lintstylua
