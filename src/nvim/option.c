@@ -72,6 +72,7 @@
 #include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
+#include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"

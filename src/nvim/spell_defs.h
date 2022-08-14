@@ -35,6 +35,8 @@ typedef int idx_T;
 #define WF_FIXCAP   0x40        // keep-case word, allcap not allowed
 #define WF_KEEPCAP  0x80        // keep-case word
 
+#define WF_CAPMASK (WF_ONECAP | WF_ALLCAP | WF_KEEPCAP | WF_FIXCAP)
+
 // for <flags2>, shifted up one byte to be used in wn_flags
 #define WF_HAS_AFF  0x0100      // word includes affix
 #define WF_NEEDCOMP 0x0200      // word only valid in compound
@@ -208,56 +210,6 @@ typedef struct {
   char_u st_upper[256];       // chars: upper case
 } spelltab_T;
 
-// For finding suggestions: At each node in the tree these states are tried:
-typedef enum {
-  STATE_START = 0,      // At start of node check for NUL bytes (goodword
-                        // ends); if badword ends there is a match, otherwise
-                        // try splitting word.
-  STATE_NOPREFIX,       // try without prefix
-  STATE_SPLITUNDO,      // Undo splitting.
-  STATE_ENDNUL,         // Past NUL bytes at start of the node.
-  STATE_PLAIN,          // Use each byte of the node.
-  STATE_DEL,            // Delete a byte from the bad word.
-  STATE_INS_PREP,       // Prepare for inserting bytes.
-  STATE_INS,            // Insert a byte in the bad word.
-  STATE_SWAP,           // Swap two bytes.
-  STATE_UNSWAP,         // Undo swap two characters.
-  STATE_SWAP3,          // Swap two characters over three.
-  STATE_UNSWAP3,        // Undo Swap two characters over three.
-  STATE_UNROT3L,        // Undo rotate three characters left
-  STATE_UNROT3R,        // Undo rotate three characters right
-  STATE_REP_INI,        // Prepare for using REP items.
-  STATE_REP,            // Use matching REP items from the .aff file.
-  STATE_REP_UNDO,       // Undo a REP item replacement.
-  STATE_FINAL,  // End of this node.
-} state_T;
-
-// Struct to keep the state at each level in suggest_try_change().
-typedef struct trystate_S {
-  state_T ts_state;             // state at this level, STATE_
-  int ts_score;                 // score
-  idx_T ts_arridx;              // index in tree array, start of node
-  int16_t ts_curi;              // index in list of child nodes
-  char_u ts_fidx;               // index in fword[], case-folded bad word
-  char_u ts_fidxtry;            // ts_fidx at which bytes may be changed
-  char_u ts_twordlen;           // valid length of tword[]
-  char_u ts_prefixdepth;        // stack depth for end of prefix or
-                                // PFD_PREFIXTREE or PFD_NOPREFIX
-  char_u ts_flags;              // TSF_ flags
-  char_u ts_tcharlen;           // number of bytes in tword character
-  char_u ts_tcharidx;           // current byte index in tword character
-  char_u ts_isdiff;             // DIFF_ values
-  char_u ts_fcharstart;         // index in fword where badword char started
-  char_u ts_prewordlen;         // length of word in "preword[]"
-  char_u ts_splitoff;           // index in "tword" after last split
-  char_u ts_splitfidx;          // "ts_fidx" at word split
-  char_u ts_complen;            // nr of compound words used
-  char_u ts_compsplit;          // index for "compflags" where word was spit
-  char_u ts_save_badflags;      // su_badflags saved here
-  char_u ts_delidx;             // index in fword for char that was deleted,
-                                // valid when "ts_flags" has TSF_DIDDEL
-} trystate_T;
-
 // Use our own character-case definitions, because the current locale may
 // differ from what the .spl file uses.
 // These must not be called with negative number!
@@ -289,5 +241,18 @@ typedef enum {
   SPELL_ADD_BAD = 1,
   SPELL_ADD_RARE = 2,
 } SpellAddType;
+
+typedef struct wordcount_S {
+  uint16_t wc_count;                ///< nr of times word was seen
+  char_u wc_word[1];                ///< word, actually longer
+} wordcount_T;
+
+#define WC_KEY_OFF   offsetof(wordcount_T, wc_word)
+#define HI2WC(hi)    ((wordcount_T *)((hi)->hi_key - WC_KEY_OFF))
+#define MAXWORDCOUNT 0xffff
+
+// Remember what "z?" replaced.
+extern char_u *repl_from;
+extern char_u *repl_to;
 
 #endif  // NVIM_SPELL_DEFS_H
