@@ -34,9 +34,12 @@ endfunction()
 if(WIN32)
   if(MSVC)
     set(LIBVTERM_PATCH_COMMAND
-    ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm init
-      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libvterm apply --ignore-whitespace
-        ${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Remove-VLAs-for-MSVC.patch)
+    ${CMAKE_COMMAND}
+    -D START_DIR=${DEPS_BUILD_DIR}/src/libvterm
+    -D PATCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/patches/libvterm-Remove-VLAs-for-MSVC.patch
+    -D PATCH_CMD=${PATCH_CMD}
+    -D PATCH_EXE=${PATCH_EXE}
+    -P ${PROJECT_SOURCE_DIR}/cmake/Patch.cmake)
   endif()
   set(LIBVTERM_CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibvtermCMakeLists.txt

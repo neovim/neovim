@@ -18,9 +18,11 @@ ExternalProject_Add(libuv
     -DTARGET=libuv
     -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-  PATCH_COMMAND
-    ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv init
-      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply --ignore-whitespace
-        ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-disable-shared.patch)
+  PATCH_COMMAND ${CMAKE_COMMAND}
+    -D START_DIR=${DEPS_BUILD_DIR}/src/libuv
+    -D PATCH_FILE=${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-disable-shared.patch
+    -D PATCH_CMD=${PATCH_CMD}
+    -D PATCH_EXE=${PATCH_EXE}
+    -P ${PROJECT_SOURCE_DIR}/cmake/Patch.cmake)
 
 list(APPEND THIRD_PARTY_DEPS libuv)

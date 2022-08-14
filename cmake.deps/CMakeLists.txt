@@ -68,9 +68,17 @@ endif()
 
 option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
 
-find_package(Git)
-if(NOT Git_FOUND)
-  message(FATAL_ERROR "Git is required to apply patches.")
+find_package(Git QUIET)
+find_package(Patch QUIET)
+
+if(Git_FOUND)
+  set(PATCH_CMD git)
+  set(PATCH_EXE ${GIT_EXECUTABLE})
+elseif(Patch_FOUND AND UNIX)
+  set(PATCH_CMD patch)
+  set(PATCH_EXE ${Patch_EXECUTABLE})
+else()
+  message(FATAL_ERROR "Either git or patch is required to apply patches.")
 endif()
 
 if(UNIX)
