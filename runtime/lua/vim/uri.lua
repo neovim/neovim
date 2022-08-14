@@ -83,10 +83,7 @@ local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
 ---@param bufnr number
 ---@return string URI
 local function uri_from_bufnr(bufnr)
-  local relative_name
-  vim.api.nvim_buf_call(bufnr, function()
-    relative_name = vim.api.nvim_exec(":echo @%", true)
-  end)
+  local relative_name = vim.fn.bufname(bufnr)
   if relative_name:match("deno:") then
     return relative_name
   end
