@@ -5876,6 +5876,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			suggestions is never more than the value of 'lines'
 			minus two.
 
+	timeout:{millisec}   Limit the time searching for suggestions to
+			{millisec} milli seconds.  Applies to the following
+			methods.  When omitted the limit is 5000. When
+			negative there is no limit.
+
 	file:{filename} Read file {filename}, which must have two columns,
 			separated by a slash.  The first column contains the
 			bad word, the second column the suggested good word.

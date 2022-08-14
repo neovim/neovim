@@ -200,6 +200,8 @@ typedef struct trystate_S {
 #define PFD_PREFIXTREE  0xfe    // walking through the prefix tree
 #define PFD_NOTSPECIAL  0xfd    // highest value that's not special
 
+static long spell_suggest_timeout = 5000;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "spellsuggest.c.generated.h"
 #endif
@@ -375,7 +377,10 @@ int spell_check_sps(void)
     } else if (STRCMP(buf, "double") == 0) {
       f = SPS_DOUBLE;
     } else if (STRNCMP(buf, "expr:", 5) != 0
-               && STRNCMP(buf, "file:", 5) != 0) {
+               && STRNCMP(buf, "file:", 5) != 0
+               && (STRNCMP(buf, "timeout:", 8) != 0
+                   || (!ascii_isdigit(buf[8])
+                       && !(buf[8] == '-' && ascii_isdigit(buf[9]))))) {
       f = -1;
     }
 
@@ -473,6 +478,7 @@ void spell_suggest(int count)
 
   // Make a copy of current line since autocommands may free the line.
   line = vim_strsave(get_cursor_line_ptr());
+  spell_suggest_timeout = 5000;
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
@@ -769,6 +775,9 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
     } else if (STRNCMP(buf, "file:", 5) == 0) {
       // Use list of suggestions in a file.
       spell_suggest_file(su, buf + 5);
+    } else if (STRNCMP(buf, "timeout:", 8) == 0) {
+      // Limit the time searching for suggestions.
+      spell_suggest_timeout = atol((char *)buf + 8);
     } else if (!did_intern) {
       // Use internal method once.
       spell_suggest_intern(su, interactive);
@@ -1174,9 +1183,12 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     }
   }
 
-  // The loop may take an indefinite amount of time. Break out after five
-  // sectonds. TODO(vim): add an option for the time limit.
-  proftime_T time_limit = profile_setlimit(5000);
+  // The loop may take an indefinite amount of time. Break out after some
+  // time.
+  proftime_T time_limit;
+  if (spell_suggest_timeout > 0) {
+    time_limit = profile_setlimit(spell_suggest_timeout);
+  }
 
   // Loop to find all suggestions.  At each round we either:
   // - For the current state try one operation, advance "ts_curi",
@@ -2310,7 +2322,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       if (--breakcheckcount == 0) {
         os_breakcheck();
         breakcheckcount = 1000;
-        if (profile_passed_limit(time_limit)) {
+        if (spell_suggest_timeout > 0 && profile_passed_limit(time_limit)) {
           got_int = true;
         }
       }
