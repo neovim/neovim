@@ -686,26 +686,26 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
     // Convert an interrupt to an exception if appropriate.
     (void)do_intthrow(&cstack);
-  }
-  // Continue executing command lines when:
-  // - no CTRL-C typed, no aborting error, no exception thrown or try
-  //   conditionals need to be checked for executing finally clauses or
-  //   catching an interrupt exception
-  // - didn't get an error message or lines are not typed
-  // - there is a command after '|', inside a :if, :while, :for or :try, or
-  //   looping for ":source" command or function call.
-  while (!((got_int || (did_emsg && force_abort) || current_exception)
-           && cstack.cs_trylevel == 0)
-         && !(did_emsg
-              // Keep going when inside try/catch, so that the error can be
-              // deal with, except when it is a syntax error, it may cause
-              // the :endtry to be missed.
-              && (cstack.cs_trylevel == 0 || did_emsg_syntax)
-              && used_getline
-              && getline_equal(fgetline, cookie, getexline))
-         && (next_cmdline != NULL
-             || cstack.cs_idx >= 0
-             || (flags & DOCMD_REPEAT)));
+
+    // Continue executing command lines when:
+    // - no CTRL-C typed, no aborting error, no exception thrown or try
+    //   conditionals need to be checked for executing finally clauses or
+    //   catching an interrupt exception
+    // - didn't get an error message or lines are not typed
+    // - there is a command after '|', inside a :if, :while, :for or :try, or
+    //   looping for ":source" command or function call.
+  } while (!((got_int || (did_emsg && force_abort) || current_exception)
+             && cstack.cs_trylevel == 0)
+           && !(did_emsg
+                // Keep going when inside try/catch, so that the error can be
+                // deal with, except when it is a syntax error, it may cause
+                // the :endtry to be missed.
+                && (cstack.cs_trylevel == 0 || did_emsg_syntax)
+                && used_getline
+                && getline_equal(fgetline, cookie, getexline))
+           && (next_cmdline != NULL
+               || cstack.cs_idx >= 0
+               || (flags & DOCMD_REPEAT)));
 
   xfree(cmdline_copy);
   did_emsg_syntax = false;
