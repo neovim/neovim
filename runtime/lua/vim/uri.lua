@@ -78,14 +78,17 @@ end
 
 local URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):.*'
 local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
+--https://url.spec.whatwg.org/#special-scheme
+local SPECIAL_SCHEME  = {'ftp', 'file', 'http', 'https', 'ws', 'wss'}
 
 --- Get a URI from a bufnr
 ---@param bufnr number
 ---@return string URI
 local function uri_from_bufnr(bufnr)
   local relative_name = vim.fn.bufname(bufnr)
-  if relative_name:match("deno:") then
-    return relative_name
+  local maybe_scheme = relative_name:match(URI_SCHEME_PATTERN)
+  if maybe_scheme and not vim.tbl_contains(SPECIAL_SCHEME, maybe_scheme) then
+          return relative_name
   end
 
   local fname = vim.api.nvim_buf_get_name(bufnr)
