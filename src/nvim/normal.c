@@ -58,6 +58,7 @@
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
+#include "nvim/spellsuggest.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"

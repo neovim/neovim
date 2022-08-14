@@ -68,6 +68,7 @@
 #include "nvim/sha256.h"
 #include "nvim/sign.h"
 #include "nvim/spell.h"
+#include "nvim/spellsuggest.h"
 #include "nvim/state.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
