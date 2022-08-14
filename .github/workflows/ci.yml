@@ -98,33 +98,8 @@ jobs:
             ${{ env.CACHE_NVIM_DEPS_DIR }}
           key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
 
-      - if: "!cancelled()"
-        name: uncrustify
-        run: |
-          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
-
-      - if: "!cancelled()"
-        name: suggester / uncrustify
-        uses: reviewdog/action-suggester@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tool_name: uncrustify
-          cleanup: false
-
-      - if: "!cancelled()"
-        name: check uncrustify
-        run: |
-          git diff --color --exit-code
-
       - name: Build third-party deps
         run: ./ci/before_script.sh
-
-      - name: Build nvim
-        run: ./ci/run_tests.sh build_nvim
-
-      - if: "!cancelled()"
-        name: lintc
-        run: make lintc
 
       - if: "!cancelled()"
         name: lintstylua
@@ -144,6 +119,31 @@ jobs:
       - if: "!cancelled()"
         name: lintsh
         run: make lintsh
+
+      - if: "!cancelled()"
+        name: uncrustify
+        run: |
+          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
+
+      - if: "!cancelled()"
+        name: suggester / uncrustify
+        uses: reviewdog/action-suggester@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tool_name: uncrustify
+          cleanup: false
+
+      - if: "!cancelled()"
+        name: check uncrustify
+        run: |
+          git diff --color --exit-code
+
+      - name: Build nvim
+        run: ./ci/run_tests.sh build_nvim
+
+      - if: "!cancelled()"
+        name: lintc
+        run: make lintc
 
       - if: "!cancelled()"
         name: check-single-includes
