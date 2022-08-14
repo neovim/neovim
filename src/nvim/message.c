@@ -598,6 +598,14 @@ static char *get_emsg_lnum(void)
 /// is only displayed if it changed.
 void msg_source(int attr)
 {
+  static bool recursive = false;
+
+  // Bail out if something called here causes an error.
+  if (recursive) {
+    return;
+  }
+  recursive = true;
+
   no_wait_return++;
   char *p = get_emsg_source();
   if (p != NULL) {
@@ -613,14 +621,14 @@ void msg_source(int attr)
 
   // remember the last sourcing name printed, also when it's empty
   if (SOURCING_NAME == NULL || other_sourcing_name()) {
-    xfree(last_sourcing_name);
-    if (SOURCING_NAME == NULL) {
-      last_sourcing_name = NULL;
-    } else {
+    XFREE_CLEAR(last_sourcing_name);
+    if (SOURCING_NAME != NULL) {
       last_sourcing_name = xstrdup(SOURCING_NAME);
     }
   }
-  --no_wait_return;
+  no_wait_return--;
+
+  recursive = false;
 }
 
 /// @return  TRUE if not giving error messages right now:
