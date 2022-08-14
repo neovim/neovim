@@ -606,6 +606,7 @@ void msg_source(int attr)
   }
   recursive = true;
 
+  msg_scroll = true;  // this will take more than one line
   no_wait_return++;
   char *p = get_emsg_source();
   if (p != NULL) {
@@ -739,7 +740,6 @@ static bool emsg_multiline(const char *s, bool multiline)
   }
 
   emsg_on_display = true;     // remember there is an error message
-  msg_scroll++;               // don't overwrite a previous message
   attr = HL_ATTR(HLF_E);      // set highlight mode for error messages
   if (msg_scrolled != 0) {
     need_wait_return = true;  // needed in case emsg() is called after
@@ -750,9 +750,8 @@ static bool emsg_multiline(const char *s, bool multiline)
     msg_ext_set_kind("emsg");
   }
 
-  /*
-   * Display name and line number for the source of the error.
-   */
+  // Display name and line number for the source of the error.
+  // Sets "msg_scroll".
   msg_source(attr);
 
   // Display the error message itself.

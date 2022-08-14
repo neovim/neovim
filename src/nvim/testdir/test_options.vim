@@ -820,11 +820,16 @@ func Test_rightleftcmd()
   set rightleft&
 endfunc
 
-" Test for the "debug" option
+" Test for the 'debug' option
 func Test_debug_option()
+  " redraw to avoid matching previous messages
+  redraw
   set debug=beep
   exe "normal \<C-c>"
   call assert_equal('Beep!', Screenline(&lines))
+  call assert_equal('line    4:', Screenline(&lines - 1))
+  " only match the final colon in the line that shows the source
+  call assert_match(':$', Screenline(&lines - 2))
   set debug&
 endfunc
 
