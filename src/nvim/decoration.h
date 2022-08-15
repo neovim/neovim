@@ -60,9 +60,28 @@ struct Decoration {
   int conceal_char;
   bool ui_watched;  // watched for win_extmark
 };
-#define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, \
-                          kHlModeUnknown, false, false, false, false, DECOR_PRIORITY_BASE, \
-                          0, 0, NULL, 0, 0, 0, 0, 0, false }
+
+#define DECORATION_INIT { \
+  KV_INITIAL_VALUE,     /* virt_text        */ \
+  KV_INITIAL_VALUE,     /* virt_lines       */ \
+  0,                    /* hl_id            */ \
+  kVTEndOfLine,         /* virt_text_pos    */ \
+  kHlModeUnknown,       /* hl_mode          */ \
+  false,                /* virt_text_hide   */ \
+  false,                /* hl_eol           */ \
+  false,                /* virt_lines_above */ \
+  false,                /* conceal          */ \
+  DECOR_PRIORITY_BASE,  /* priority         */ \
+  0,                    /* col              */ \
+  0,                    /* virt_text_width  */ \
+  NULL,                 /* sign_text        */ \
+  0,                    /* sign_hl_id       */ \
+  0,                    /* number_hl_id     */ \
+  0,                    /* line_hl_id       */ \
+  0,                    /* cursorline_hl_id */ \
+  0,                    /* conceal_char     */ \
+  false,                /* ui_watched       */ \
+}
 
 typedef struct {
   int start_row;
