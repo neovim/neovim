@@ -136,7 +136,7 @@ struct dbg_stuff {
 # define ex_language            ex_ni
 #endif
 
-/// Declare cmdnames[].
+// Declare cmdnames[].
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds_defs.generated.h"
 #endif
