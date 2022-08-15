@@ -101,6 +101,8 @@ function Test {
   # The $LastExitCode from MSBuild can't be trusted
   $failed = $false
 
+  # Run only this test file:
+  # $env:TEST_FILE = "test\functional\foo.lua"
   cmake --build $buildDir --target functionaltest 2>&1 |
     ForEach-Object { $failed = $failed -or
       $_ -match 'functional tests failed with error'; $_ }
