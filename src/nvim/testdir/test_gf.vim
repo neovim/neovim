@@ -191,6 +191,22 @@ func Test_gf_error()
   au! InsertCharPre
 
   bwipe!
+
+  " gf is not allowed when buffer is locked
+  new
+  augroup Test_gf
+    au!
+    au OptionSet diff norm! gf
+  augroup END
+  call setline(1, ['Xfile1', 'line2', 'line3', 'line4'])
+  " Nvim does not support test_override()
+  " call test_override('starting', 1)
+  " call assert_fails('diffthis', 'E788:')
+  " call test_override('starting', 0)
+  augroup Test_gf
+    au!
+  augroup END
+  bw!
 endfunc
 
 " If a file is not found by 'gf', then 'includeexpr' should be used to locate

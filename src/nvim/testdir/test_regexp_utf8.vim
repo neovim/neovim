@@ -522,8 +522,8 @@ endfunc
 func Test_search_with_end_offset()
   new
   call setline(1, ['', 'dog(a', 'cat('])
-  exe "normal /(/e+" .. "\<CR>"
-  normal "ayn
+  exe "normal /(/e+\<CR>"
+  normal n"ayn
   call assert_equal("a\ncat(", @a)
   close!
 endfunc

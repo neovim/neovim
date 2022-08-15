@@ -1133,7 +1133,7 @@ endfunc
 " Test for [i, ]i, [I, ]I, [ CTRL-I, ] CTRL-I and CTRL-W i commands
 func Test_inc_search()
   new
-  call setline(1, ['1:foo', '2:foo', 'foo', '3:foo', '4:foo'])
+  call setline(1, ['1:foo', '2:foo', 'foo', '3:foo', '4:foo', '==='])
   call cursor(3, 1)
 
   " Test for [i and ]i
@@ -1143,6 +1143,9 @@ func Test_inc_search()
   call assert_equal('3:foo', execute('normal ]i'))
   call assert_equal('4:foo', execute('normal 2]i'))
   call assert_fails('normal 3]i', 'E389:')
+  call assert_fails('normal G]i', 'E349:')
+  call assert_fails('normal [i', 'E349:')
+  call cursor(3, 1)
 
   " Test for :isearch
   call assert_equal('1:foo', execute('isearch foo'))
@@ -1163,6 +1166,9 @@ func Test_inc_search()
   call assert_equal([
         \ '  1:    4 3:foo',
         \ '  2:    5 4:foo'], split(execute('normal ]I'), "\n"))
+  call assert_fails('normal G]I', 'E349:')
+  call assert_fails('normal [I', 'E349:')
+  call cursor(3, 1)
 
   " Test for :ilist
   call assert_equal([
@@ -1188,6 +1194,9 @@ func Test_inc_search()
   exe "normal k2]\t"
   call assert_equal([5, 3], [line('.'), col('.')])
   call assert_fails("normal 2k3]\t", 'E389:')
+  call assert_fails("normal G[\t", 'E349:')
+  call assert_fails("normal ]\t", 'E349:')
+  call cursor(3, 1)
 
   " Test for :ijump
   call cursor(3, 1)
@@ -1212,6 +1221,8 @@ func Test_inc_search()
   close
   call assert_fails('3wincmd i', 'E387:')
   call assert_fails('6wincmd i', 'E389:')
+  call assert_fails("normal G\<C-W>i", 'E349:')
+  call cursor(3, 1)
 
   " Test for :isplit
   isplit foo
