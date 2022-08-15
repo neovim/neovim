@@ -6995,8 +6995,8 @@ static void ex_redraw(exarg_T *eap)
   if (eap->forceit) {
     redraw_all_later(NOT_VALID);
   }
-  update_screen(eap->forceit ? NOT_VALID :
-                VIsual_active ? INVERTED : 0);
+  update_screen(eap->forceit ? NOT_VALID
+                : VIsual_active ? INVERTED : 0);
   if (need_maketitle) {
     maketitle();
   }
