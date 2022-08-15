@@ -3322,9 +3322,9 @@ const char *set_one_cmd_context(expand_T *xp, const char *buff)
           bow = p + 1;
         }
         in_quote = !in_quote;
-      } else if (c == '|' || c == '\n' || c == '"' || ascii_iswhite(c)) {
         // An argument can contain just about everything, except
-        // characters that end the command and white space. */
+        // characters that end the command and white space.
+      } else if (c == '|' || c == '\n' || c == '"' || ascii_iswhite(c)) {
         len = 0;          // avoid getting stuck when space is in 'isfname'
         while (*p != NUL) {
           c = utf_ptr2char(p);
