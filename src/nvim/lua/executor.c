@@ -1318,7 +1318,7 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = 0;
-  estack_push(ETYPE_SCRIPT, NULL, 0);
+  estack_push(ETYPE_SCRIPT, name, 0);
 
   garray_T ga;
   char_u *line = NULL;
