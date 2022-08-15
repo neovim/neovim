@@ -1659,26 +1659,19 @@ void ex_emenu(exarg_T *eap)
   if (arg[0] && ascii_iswhite(arg[1])) {
     switch (arg[0]) {
     case 'n':
-      mode_idx = MENU_INDEX_NORMAL;
-      break;
+      mode_idx = MENU_INDEX_NORMAL; break;
     case 'v':
-      mode_idx = MENU_INDEX_VISUAL;
-      break;
+      mode_idx = MENU_INDEX_VISUAL; break;
     case 's':
-      mode_idx = MENU_INDEX_SELECT;
-      break;
+      mode_idx = MENU_INDEX_SELECT; break;
     case 'o':
-      mode_idx = MENU_INDEX_OP_PENDING;
-      break;
+      mode_idx = MENU_INDEX_OP_PENDING; break;
     case 't':
-      mode_idx = MENU_INDEX_TERMINAL;
-      break;
+      mode_idx = MENU_INDEX_TERMINAL; break;
     case 'i':
-      mode_idx = MENU_INDEX_INSERT;
-      break;
+      mode_idx = MENU_INDEX_INSERT; break;
     case 'c':
-      mode_idx = MENU_INDEX_CMDLINE;
-      break;
+      mode_idx = MENU_INDEX_CMDLINE; break;
     default:
       semsg(_(e_invarg2), arg);
       return;
