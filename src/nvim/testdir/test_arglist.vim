@@ -87,6 +87,10 @@ func Test_argadd()
   new
   arga
   call assert_equal(0, len(argv()))
+
+  if has('unix')
+    call assert_fails('argadd `Xdoes_not_exist`', 'E479:')
+  endif
 endfunc
 
 func Test_argadd_empty_curbuf()
@@ -420,6 +424,8 @@ func Test_argdelete()
   call assert_equal(['b'], argv())
   call assert_fails('argdelete', 'E610:')
   call assert_fails('1,100argdelete', 'E16:')
+  call assert_fails('argdel /\)/', 'E55:')
+  call assert_fails('1argdel 1', 'E474:')
 
   call Reset_arglist()
   args a b c d
@@ -427,6 +433,8 @@ func Test_argdelete()
   argdel
   call Assert_argc(['a', 'c', 'd'])
   %argdel
+
+  call assert_fails('argdel does_not_exist', 'E480:')
 endfunc
 
 func Test_argdelete_completion()
@@ -472,13 +480,16 @@ func Test_arglist_autocmd()
   new
   " redefine arglist; go to Xxx1
   next! Xxx1 Xxx2 Xxx3
-  " open window for all args
+  " open window for all args; Reading Xxx2 will change the arglist and the
+  " third window will get Xxx1:
+  "   win 1: Xxx1
+  "   win 2: Xxx2
+  "   win 3: Xxx1
   all
   call assert_equal('test file Xxx1', getline(1))
   wincmd w
   wincmd w
   call assert_equal('test file Xxx1', getline(1))
-  " should now be in Xxx2
   rewind
   call assert_equal('test file Xxx2', getline(1))
 
