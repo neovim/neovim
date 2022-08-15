@@ -47,6 +47,7 @@
 #include "nvim/match.h"
 #include "nvim/math.h"
 #include "nvim/memline.h"
+#include "nvim/menu.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel.h"

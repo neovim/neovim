@@ -6,11 +6,12 @@
 
 #include "nvim/ascii.h"
 #include "nvim/event/loop.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/iconv.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
-#include "nvim/menu.h"
+#include "nvim/menu_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/syntax_defs.h"
