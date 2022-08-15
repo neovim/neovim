@@ -6994,6 +6994,7 @@ static void ex_redraw(exarg_T *eap)
   update_topline(curwin);
   if (eap->forceit) {
     redraw_all_later(NOT_VALID);
+    redraw_cmdline = true;
   }
   update_screen(eap->forceit ? NOT_VALID
                 : VIsual_active ? INVERTED : 0);
