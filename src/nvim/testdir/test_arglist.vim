@@ -87,6 +87,10 @@ func Test_argadd()
   new
   arga
   call assert_equal(0, len(argv()))
+
+  if has('unix')
+    call assert_fails('argadd `Xdoes_not_exist`', 'E479:')
+  endif
 endfunc
 
 func Test_argadd_empty_curbuf()
@@ -429,6 +433,8 @@ func Test_argdelete()
   argdel
   call Assert_argc(['a', 'c', 'd'])
   %argdel
+
+  call assert_fails('argdel does_not_exist', 'E480:')
 endfunc
 
 func Test_argdelete_completion()

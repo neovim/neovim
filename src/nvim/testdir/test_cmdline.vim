@@ -916,6 +916,14 @@ func Test_cmdline_complete_various()
   call feedkeys(":doautocmd BufNew,BufEn\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"doautocmd BufNew,BufEnter", @:)
 
+  " completion of file name in :doautocmd
+  call writefile([], 'Xfile1')
+  call writefile([], 'Xfile2')
+  call feedkeys(":doautocmd BufEnter Xfi\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"doautocmd BufEnter Xfile1 Xfile2", @:)
+  call delete('Xfile1')
+  call delete('Xfile2')
+
   " completion for the :augroup command
   augroup XTest
   augroup END
@@ -1396,14 +1404,6 @@ func Test_cmdwin_jump_to_win()
   call assert_equal(1, winnr('$'))
 endfunc
 
-" Test for backtick expression in the command line
-func Test_cmd_backtick()
-  %argd
-  argadd `=['a', 'b', 'c']`
-  call assert_equal(['a', 'b', 'c'], argv())
-  %argd
-endfunc
-
 func Test_cmdwin_tabpage()
   tabedit
   " v8.2.1919 isn't ported yet, so E492 is thrown after E11 here.
@@ -1416,11 +1416,22 @@ func Test_cmdwin_tabpage()
   tabclose!
 endfunc
 
+" Test for backtick expression in the command line
+func Test_cmd_backtick()
+  CheckNotMSWindows  " FIXME: see #19297
+  %argd
+  argadd `=['a', 'b', 'c']`
+  call assert_equal(['a', 'b', 'c'], argv())
+  %argd
+
+  argadd `echo abc def`
+  call assert_equal(['abc def'], argv())
+  %argd
+endfunc
+
 " Test for the :! command
 func Test_cmd_bang()
-  if !has('unix')
-    return
-  endif
+  CheckUnix
 
   let lines =<< trim [SCRIPT]
     " Test for no previous command
