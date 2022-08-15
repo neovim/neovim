@@ -358,7 +358,8 @@ next_mark:
   return attr;
 }
 
-void decor_redraw_signs(buf_T *buf, int row, int *num_signs, sign_attrs_T sattrs[])
+void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattrs[],
+                        HlPriAttr *num_attrs, HlPriAttr *line_attrs, HlPriAttr *cul_attrs)
 {
   if (!buf->b_signs) {
     return;
@@ -383,30 +384,37 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, sign_attrs_T sattrs
       goto next_mark;
     }
 
-    int j;
-    for (j = (*num_signs); j > 0; j--) {
-      if (sattrs[j - 1].sat_prio >= decor->priority) {
-        break;
+    if (decor->sign_text) {
+      int j;
+      for (j = (*num_signs); j > 0; j--) {
+        if (sattrs[j - 1].priority >= decor->priority) {
+          break;
+        }
+        sattrs[j] = sattrs[j - 1];
       }
-      sattrs[j] = sattrs[j - 1];
+      if (j < SIGN_SHOW_MAX) {
+        sattrs[j] = (SignTextAttrs) {
+          .text = decor->sign_text,
+          .hl_attr_id = decor->sign_hl_id == 0 ? 0 : syn_id2attr(decor->sign_hl_id),
+          .priority = decor->priority
+        };
+        (*num_signs)++;
+      }
     }
-    if (j < SIGN_SHOW_MAX) {
-      CLEAR_FIELD(sattrs[j]);
-      sattrs[j].sat_text = decor->sign_text;
-      if (decor->sign_hl_id != 0) {
-        sattrs[j].sat_texthl = syn_id2attr(decor->sign_hl_id);
+
+    struct { HlPriAttr *dest; int hl; } cattrs[] = {
+      { line_attrs, decor->line_hl_id        },
+      { num_attrs,  decor->number_hl_id      },
+      { cul_attrs,  decor->cursorline_hl_id  },
+      { NULL, -1 },
+    };
+    for (int i = 0; cattrs[i].dest; i++) {
+      if (cattrs[i].hl != 0 && decor->priority >= cattrs[i].dest->priority) {
+        *cattrs[i].dest = (HlPriAttr) {
+          .attr_id = syn_id2attr(cattrs[i].hl),
+          .priority = decor->priority
+        };
       }
-      if (decor->number_hl_id != 0) {
-        sattrs[j].sat_numhl = syn_id2attr(decor->number_hl_id);
-      }
-      if (decor->line_hl_id != 0) {
-        sattrs[j].sat_linehl = syn_id2attr(decor->line_hl_id);
-      }
-      if (decor->cursorline_hl_id != 0) {
-        sattrs[j].sat_culhl = syn_id2attr(decor->cursorline_hl_id);
-      }
-      sattrs[j].sat_prio = decor->priority;
-      (*num_signs)++;
     }
 
 next_mark:

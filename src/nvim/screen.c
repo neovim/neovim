@@ -1943,6 +1943,44 @@ static inline void get_line_number_str(win_T *wp, linenr_T lnum, char_u *buf, si
   snprintf((char *)buf, buf_len, fmt, number_width(wp), num);
 }
 
+static void apply_cursorline_highlight(win_T *wp, linenr_T lnum, int *line_attr, int *cul_attr,
+                                       int *line_attr_lowprio)
+{
+  *cul_attr = win_hl_attr(wp, HLF_CUL);
+  HlAttrs ae = syn_attr2entry(*cul_attr);
+  // We make a compromise here (#7383):
+  //  * low-priority CursorLine if fg is not set
+  //  * high-priority ("same as Vim" priority) CursorLine if fg is set
+  if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
+    *line_attr_lowprio = *cul_attr;
+  } else {
+    if (!(State & MODE_INSERT) && bt_quickfix(wp->w_buffer)
+        && qf_current_entry(wp) == lnum) {
+      *line_attr = hl_combine_attr(*cul_attr, *line_attr);
+    } else {
+      *line_attr = *cul_attr;
+    }
+  }
+}
+
+static int get_sign_attrs(buf_T *buf, linenr_T lnum, SignTextAttrs *sattrs, int *line_attr,
+                          int *num_attr, int *cul_attr)
+{
+  HlPriAttr line_attrs = { *line_attr, 0 };
+  HlPriAttr num_attrs  = { *num_attr,  0 };
+  HlPriAttr cul_attrs  = { *cul_attr,  0 };
+
+  // TODO(bfredl, vigoux): line_attr should not take priority over decoration!
+  int num_signs = buf_get_signattrs(buf, lnum, sattrs, &num_attrs, &line_attrs, &cul_attrs);
+  decor_redraw_signs(buf, lnum - 1, &num_signs, sattrs, &num_attrs, &line_attrs, &cul_attrs);
+
+  *line_attr = line_attrs.attr_id;
+  *num_attr = num_attrs.attr_id;
+  *cul_attr = cul_attrs.attr_id;
+
+  return num_signs;
+}
+
 /// Display line "lnum" of window 'wp' on the screen.
 /// wp->w_virtcol needs to be valid.
 ///
@@ -2049,8 +2087,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   bool in_multispace = false;           // in multiple consecutive spaces
   int multispace_pos = 0;               // position in lcs-multispace string
   bool need_showbreak = false;          // overlong line, skip first x chars
-  sign_attrs_T sattrs[SIGN_SHOW_MAX];   // attributes for signs
-  int num_signs;                        // number of signs for line
   int line_attr = 0;                    // attribute for the whole line
   int line_attr_save;
   int line_attr_lowprio = 0;            // low-priority attribute for the line
@@ -2320,21 +2356,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       cul_screenline = (wp->w_p_wrap
                         && (wp->w_p_culopt_flags & CULOPT_SCRLINE));
       if (!cul_screenline) {
-        cul_attr = win_hl_attr(wp, HLF_CUL);
-        HlAttrs ae = syn_attr2entry(cul_attr);
-        // We make a compromise here (#7383):
-        //  * low-priority CursorLine if fg is not set
-        //  * high-priority ("same as Vim" priority) CursorLine if fg is set
-        if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
-          line_attr_lowprio = cul_attr;
-        } else {
-          if (!(State & MODE_INSERT) && bt_quickfix(wp->w_buffer)
-              && qf_current_entry(wp) == lnum) {
-            line_attr = hl_combine_attr(cul_attr, line_attr);
-          } else {
-            line_attr = cul_attr;
-          }
-        }
+        apply_cursorline_highlight(wp, lnum, &line_attr, &cul_attr, &line_attr_lowprio);
       } else {
         margin_columns_win(wp, &left_curline_col, &right_curline_col);
       }
@@ -2342,16 +2364,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     }
   }
 
+  SignTextAttrs sattrs[SIGN_SHOW_MAX];  // sign attributes for the sign column
+  int sign_num_attr = 0;                // sign attribute for the number column
+  int sign_cul_attr = 0;                // sign attribute for cursorline
   CLEAR_FIELD(sattrs);
-  num_signs = buf_get_signattrs(wp->w_buffer, lnum, sattrs);
-  decor_redraw_signs(buf, lnum - 1, &num_signs, sattrs);
-
-  // If this line has a sign with line highlighting set line_attr.
-  // TODO(bfredl, vigoux): this should not take priority over decoration!
-  sign_attrs_T *sattr = sign_get_attr(SIGN_LINEHL, sattrs, 0, 1);
-  if (sattr != NULL) {
-    line_attr = sattr->sat_linehl;
-  }
+  int num_signs = get_sign_attrs(buf, lnum, sattrs, &line_attr, &sign_num_attr, &sign_cul_attr);
 
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
@@ -2623,13 +2640,13 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       // sign column, this is hit until sign_idx reaches count
       if (draw_state == WL_SIGN - 1 && n_extra == 0) {
         draw_state = WL_SIGN;
-        // Show the sign column when there are any signs in this
-        // buffer or when using Netbeans.
+        // Show the sign column when there are any signs in this buffer
         if (wp->w_scwidth > 0) {
           get_sign_display_info(false, wp, lnum, sattrs, row,
                                 startrow, filler_lines, filler_todo,
                                 &c_extra, &c_final, extra, sizeof(extra),
-                                &p_extra, &n_extra, &char_attr, sign_idx);
+                                &p_extra, &n_extra, &char_attr, sign_idx,
+                                sign_cul_attr);
           sign_idx++;
           if (sign_idx < wp->w_scwidth) {
             draw_state = WL_SIGN - 1;
@@ -2649,12 +2666,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
           // If 'signcolumn' is set to 'number' and a sign is present
           // in 'lnum', then display the sign instead of the line
           // number.
-          if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u'
-              && num_signs > 0 && sign_get_attr(SIGN_TEXT, sattrs, 0, 1)) {
+          if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && num_signs > 0) {
             get_sign_display_info(true, wp, lnum, sattrs, row,
                                   startrow, filler_lines, filler_todo,
                                   &c_extra, &c_final, extra, sizeof(extra),
-                                  &p_extra, &n_extra, &char_attr, sign_idx);
+                                  &p_extra, &n_extra, &char_attr, sign_idx,
+                                  sign_cul_attr);
           } else {
             // Draw the line number (empty space after wrapping).
             if (row == startrow + filler_lines) {
@@ -2681,7 +2698,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
             }
             c_final = NUL;
             n_extra = number_width(wp) + 1;
-            char_attr = get_line_number_attr(wp, lnum, row, startrow, filler_lines, sattrs);
+            if (sign_num_attr > 0) {
+              char_attr = sign_num_attr;
+            } else {
+              char_attr = get_line_number_attr(wp, lnum, row, startrow, filler_lines);
+            }
           }
         }
       }
@@ -2810,18 +2831,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
     if (cul_screenline && draw_state == WL_LINE
         && vcol >= left_curline_col
         && vcol < right_curline_col) {
-      cul_attr = win_hl_attr(wp, HLF_CUL);
-      HlAttrs ae = syn_attr2entry(cul_attr);
-      if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
-        line_attr_lowprio = cul_attr;
-      } else {
-        if (!(State & MODE_INSERT) && bt_quickfix(wp->w_buffer)
-            && qf_current_entry(wp) == lnum) {
-          line_attr = hl_combine_attr(cul_attr, line_attr);
-        } else {
-          line_attr = cul_attr;
-        }
-      }
+      apply_cursorline_highlight(wp, lnum, &line_attr, &cul_attr, &line_attr_lowprio);
     }
 
     // When still displaying '$' of change command, stop at cursor
@@ -4349,15 +4359,8 @@ static bool use_cursor_line_nr(win_T *wp, linenr_T lnum, int row, int startrow, 
                  && (wp->w_p_culopt_flags & CULOPT_LINE)));
 }
 
-static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines,
-                                sign_attrs_T *sattrs)
+static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow, int filler_lines)
 {
-  sign_attrs_T *num_sattr = sign_get_attr(SIGN_NUMHL, sattrs, 0, 1);
-  if (num_sattr != NULL) {
-    // :sign defined with "numhl" highlight.
-    return num_sattr->sat_numhl;
-  }
-
   if (wp->w_p_rnu) {
     if (lnum < wp->w_cursor.lnum) {
       // Use LineNrAbove
@@ -4385,10 +4388,11 @@ static int get_line_number_attr(win_T *wp, linenr_T lnum, int row, int startrow,
 // @param count max number of signs
 // @param[out] n_extrap number of characters from pp_extra to display
 // @param sign_idxp Index of the displayed sign
-static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_attrs_T sattrs[],
+static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, SignTextAttrs sattrs[],
                                   int row, int startrow, int filler_lines, int filler_todo,
                                   int *c_extrap, int *c_finalp, char_u *extra, size_t extra_size,
-                                  char_u **pp_extra, int *n_extrap, int *char_attrp, int sign_idx)
+                                  char_u **pp_extra, int *n_extrap, int *char_attrp, int sign_idx,
+                                  int cul_attr)
 {
   // Draw cells with the sign value or blank.
   *c_extrap = ' ';
@@ -4405,9 +4409,9 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
   }
 
   if (row == startrow + filler_lines && filler_todo <= 0) {
-    sign_attrs_T *sattr = sign_get_attr(SIGN_TEXT, sattrs, sign_idx, wp->w_scwidth);
+    SignTextAttrs *sattr = sign_get_attr(sign_idx, sattrs, wp->w_scwidth);
     if (sattr != NULL) {
-      *pp_extra = sattr->sat_text;
+      *pp_extra = sattr->text;
       if (*pp_extra != NULL) {
         *c_extrap = NUL;
         *c_finalp = NUL;
@@ -4423,28 +4427,28 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, sign_att
           *pp_extra = extra;
           *n_extrap = (int)STRLEN(*pp_extra);
         } else {
-          int symbol_blen = (int)STRLEN(*pp_extra);
+          size_t symbol_blen = STRLEN(*pp_extra);
 
           // TODO(oni-link): Is sign text already extended to
           // full cell width?
           assert((size_t)win_signcol_width(wp) >= mb_string2cells((char *)(*pp_extra)));
           // symbol(s) bytes + (filling spaces) (one byte each)
-          *n_extrap = symbol_blen + win_signcol_width(wp) -
+          *n_extrap = (int)symbol_blen + win_signcol_width(wp) -
                       (int)mb_string2cells((char *)(*pp_extra));
 
-          assert(extra_size > (size_t)symbol_blen);
+          assert(extra_size > symbol_blen);
           memset(extra, ' ', extra_size);
-          memcpy(extra, *pp_extra, (size_t)symbol_blen);
+          memcpy(extra, *pp_extra, symbol_blen);
 
           *pp_extra = extra;
           (*pp_extra)[*n_extrap] = NUL;
         }
       }
 
-      if (use_cursor_line_sign(wp, lnum) && sattr->sat_culhl > 0) {
-        *char_attrp = sattr->sat_culhl;
+      if (use_cursor_line_sign(wp, lnum) && cul_attr > 0) {
+        *char_attrp = cul_attr;
       } else {
-        *char_attrp = sattr->sat_texthl;
+        *char_attrp = sattr->hl_attr_id;
       }
     }
   }

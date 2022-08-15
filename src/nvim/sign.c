@@ -442,27 +442,24 @@ static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char_u *group
 /// @param max_signs the number of signs, with priority for the ones
 ///        with the highest Ids.
 /// @return Attrs of the matching sign, or NULL
-sign_attrs_T *sign_get_attr(SignType type, sign_attrs_T sattrs[], int idx, int max_signs)
+SignTextAttrs *sign_get_attr(int idx, SignTextAttrs sattrs[], int max_signs)
 {
-  sign_attrs_T *matches[SIGN_SHOW_MAX];
-  int nr_matches = 0;
+  SignTextAttrs *matches[SIGN_SHOW_MAX];
+  int sattr_matches = 0;
 
   for (int i = 0; i < SIGN_SHOW_MAX; i++) {
-    if ((type == SIGN_TEXT && sattrs[i].sat_text != NULL)
-        || (type == SIGN_LINEHL && sattrs[i].sat_linehl != 0)
-        || (type == SIGN_NUMHL && sattrs[i].sat_numhl != 0)) {
-      matches[nr_matches] = &sattrs[i];
-      nr_matches++;
+    if (sattrs[i].text != NULL) {
+      matches[sattr_matches++] = &sattrs[i];
       // attr list is sorted with most important (priority, id), thus we
       // may stop as soon as we have max_signs matches
-      if (nr_matches >= max_signs) {
+      if (sattr_matches >= max_signs) {
         break;
       }
     }
   }
 
-  if (nr_matches > idx) {
-    return matches[nr_matches - idx - 1];
+  if (sattr_matches > idx) {
+    return matches[sattr_matches - idx - 1];
   }
 
   return NULL;
@@ -474,12 +471,12 @@ sign_attrs_T *sign_get_attr(SignType type, sign_attrs_T sattrs[], int idx, int m
 /// @param lnum Line in which to search
 /// @param sattrs Output array for attrs
 /// @return Number of signs of which attrs were found
-int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
+int buf_get_signattrs(buf_T *buf, linenr_T lnum, SignTextAttrs sattrs[], HlPriAttr *num_attrs,
+                      HlPriAttr *line_attrs, HlPriAttr *cul_attrs)
 {
   sign_entry_T *sign;
-  sign_T *sp;
 
-  int nr_matches = 0;
+  int sattr_matches = 0;
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (sign->se_lnum > lnum) {
@@ -488,37 +485,39 @@ int buf_get_signattrs(buf_T *buf, linenr_T lnum, sign_attrs_T sattrs[])
       break;
     }
 
-    if (sign->se_lnum == lnum) {
-      sign_attrs_T sattr;
-      CLEAR_FIELD(sattr);
-      sattr.sat_typenr = sign->se_typenr;
-      sp = find_sign_by_typenr(sign->se_typenr);
-      if (sp != NULL) {
-        sattr.sat_text = sp->sn_text;
-        if (sattr.sat_text != NULL && sp->sn_text_hl != 0) {
-          sattr.sat_texthl = syn_id2attr(sp->sn_text_hl);
-        }
-        if (sp->sn_line_hl != 0) {
-          sattr.sat_linehl = syn_id2attr(sp->sn_line_hl);
-        }
-        if (sp->sn_cul_hl != 0) {
-          sattr.sat_culhl = syn_id2attr(sp->sn_cul_hl);
-        }
-        if (sp->sn_num_hl != 0) {
-          sattr.sat_numhl = syn_id2attr(sp->sn_num_hl);
-        }
-        // Store the priority so we can mesh in extmark signs later
-        sattr.sat_prio = sign->se_priority;
-      }
+    if (sign->se_lnum < lnum) {
+      continue;
+    }
 
-      sattrs[nr_matches] = sattr;
-      nr_matches++;
-      if (nr_matches == SIGN_SHOW_MAX) {
-        break;
+    sign_T *sp = find_sign_by_typenr(sign->se_typenr);
+    if (sp == NULL) {
+      continue;
+    }
+
+    if (sp->sn_text != NULL && sattr_matches < SIGN_SHOW_MAX) {
+      sattrs[sattr_matches++] = (SignTextAttrs) {
+        .text = sp->sn_text,
+        .hl_attr_id = sp->sn_text_hl == 0 ? 0 : syn_id2attr(sp->sn_text_hl),
+        .priority = sign->se_priority
+      };
+    }
+
+    struct { HlPriAttr *dest; int hl; } cattrs[] = {
+      { line_attrs, sp->sn_line_hl },
+      { num_attrs,  sp->sn_num_hl  },
+      { cul_attrs,  sp->sn_cul_hl  },
+      { NULL, -1 },
+    };
+    for (int i = 0; cattrs[i].dest; i++) {
+      if (cattrs[i].hl != 0 && sign->se_priority >= cattrs[i].dest->priority) {
+        *cattrs[i].dest = (HlPriAttr) {
+          .attr_id = syn_id2attr(cattrs[i].hl),
+          .priority = sign->se_priority
+        };
       }
     }
   }
-  return nr_matches;
+  return sattr_matches;
 }
 
 /// Delete sign 'id' in group 'group' from buffer 'buf'.
