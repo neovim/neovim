@@ -1941,9 +1941,6 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   cookie.level = ex_nesting_level;
 
-  // Keep the sourcing name/lnum, for recursive calls.
-  estack_push(ETYPE_SCRIPT, fname_exp, 0);
-
   // start measuring script load time if --startuptime was passed and
   // time_fd was successfully opened afterwards.
   proftime_T rel_time;
@@ -1965,6 +1962,9 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   const sctx_T save_current_sctx = current_sctx;
   si = get_current_script_id(&fname_exp, &current_sctx);
+
+  // Keep the sourcing name/lnum, for recursive calls.
+  estack_push(ETYPE_SCRIPT, (char *)si->sn_name, 0);
 
   if (l_do_profiling == PROF_YES) {
     bool forceit = false;
