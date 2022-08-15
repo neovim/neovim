@@ -6143,7 +6143,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
                 old_curwin == NULL ? curwin : NULL) == FAIL) {
       // Editing the file failed.  If the window was split, close it.
       if (old_curwin != NULL) {
-        int need_hide = (curbufIsChanged() && curbuf->b_nwindows <= 1);
+        bool need_hide = (curbufIsChanged() && curbuf->b_nwindows <= 1);
         if (!need_hide || buf_hide(curbuf)) {
           cleanup_T cs;
 
