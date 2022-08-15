@@ -468,7 +468,11 @@ LspCodeLens
     |nvim_buf_set_extmark()|.
 
 LspCodeLensSeparator                                 *hl-LspCodeLensSeparator*
+<<<<<<< HEAD
     Used to color the separator between two or more code lens.
+=======
+   Used to color the separator between two or more code lenses.
+>>>>>>> 99bf52ad2 (docs: fix small typo in lsp docs.)
 
                                                      *lsp-highlight-signature*
 
