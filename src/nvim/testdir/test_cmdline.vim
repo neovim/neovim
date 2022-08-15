@@ -925,11 +925,13 @@ func Test_cmdline_complete_various()
   call delete('Xfile2')
 
   " completion for the :augroup command
-  augroup XTest
+  augroup XTest.test
   augroup END
   call feedkeys(":augroup X\<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal("\"augroup XTest", @:)
-  augroup! XTest
+  call assert_equal("\"augroup XTest.test", @:)
+  call feedkeys(":au X\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"au XTest.test", @:)
+  augroup! XTest.test
 
   " completion for the :unlet command
   call feedkeys(":unlet one two\<C-A>\<C-B>\"\<CR>", 'xt')
