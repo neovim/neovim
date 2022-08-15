@@ -209,7 +209,7 @@ Commands:
   |:Man| is available by default, with many improvements such as completion
   |:sign-define| accepts a `numhl` argument, to highlight the line number
   |:match| can be invoked before highlight group is defined
-  |:source| works with Lua and anonymous (no file) scripts
+  |:source| works with Lua
   User commands can support |:command-preview| to show results as you type
 
 Events:
@@ -271,7 +271,6 @@ Options:
   'signcolumn'  supports up to 9 dynamic/fixed columns
   'statusline'  supports unlimited alignment sections
   'tabline'     %@Func@foo%X can call any function on mouse-click
-  'wildoptions' "pum" flag to use popupmenu for wildmode completion
   'winblend'    pseudo-transparency in floating windows |api-floatwin|
   'winhighlight' window-local highlights
 
