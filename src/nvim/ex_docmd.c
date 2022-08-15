@@ -5357,7 +5357,7 @@ void ex_win_close(int forceit, win_T *win, tabpage_T *tp)
 
   buf_T *buf = win->w_buffer;
 
-  int need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
+  bool need_hide = (bufIsChanged(buf) && buf->b_nwindows <= 1);
   if (need_hide && !buf_hide(buf) && !forceit) {
     if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && p_write) {
       bufref_T bufref;
