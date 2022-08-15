@@ -13,6 +13,10 @@ local exec_lua = helpers.exec_lua
 local eval = helpers.eval
 local exec_capture = helpers.exec_capture
 local neq = helpers.neq
+local matches = helpers.matches
+local iswin = helpers.iswin
+local mkdir = helpers.mkdir
+local rmdir = helpers.rmdir
 
 describe(':source', function()
   before_each(function()
@@ -37,6 +41,30 @@ describe(':source', function()
     command('source ' .. test_file)
     os.remove(other_file)
     os.remove(test_file)
+  end)
+
+  it("changing 'shellslash' changes the result of expand()", function()
+    if not iswin() then
+      pending("'shellslash' only works on Windows")
+      return
+    end
+    mkdir('Xshellslash')
+    local script = [[
+      let g:result1 = expand('<stack>')
+      set shellslash
+      let g:result2 = expand('<stack>')
+      set noshellslash
+      let g:result3 = expand('<stack>')
+    ]]
+    write_file([[Xshellslash/Xexpand.vim]], script)
+
+    meths.set_option('shellslash', false)
+    command([[source Xshellslash/Xexpand.vim]])
+    matches([[Xshellslash\Xexpand%.vim]], meths.get_var('result1'))
+    matches([[Xshellslash/Xexpand%.vim]], meths.get_var('result2'))
+    matches([[Xshellslash\Xexpand%.vim]], meths.get_var('result3'))
+
+    rmdir('Xshellslash')
   end)
 
   it('current buffer', function()

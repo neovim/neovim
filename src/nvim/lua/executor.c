@@ -1906,7 +1906,7 @@ void nlua_set_sctx(sctx_T *current)
     break;
   }
   char *source_path = fix_fname(info->source + 1);
-  get_current_script_id((char_u *)source_path, current);
+  get_current_script_id(&source_path, current);
   xfree(source_path);
   current->sc_lnum = info->currentline;
   current->sc_seq = -1;

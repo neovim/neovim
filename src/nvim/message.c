@@ -555,7 +555,7 @@ static char *get_emsg_source(void)
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (SOURCING_NAME != NULL && other_sourcing_name()) {
-    char *sname = estack_sfile();
+    char *sname = estack_sfile(ESTACK_NONE);
     char *tofree = sname;
 
     if (sname == NULL) {

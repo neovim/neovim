@@ -100,42 +100,60 @@ void estack_pop(void)
 }
 
 /// Get the current value for <sfile> in allocated memory.
-char *estack_sfile(void)
+/// @param which  ESTACK_SFILE for <sfile> and ESTACK_STACK for <stack>.
+char *estack_sfile(estack_arg_T which)
 {
   estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len - 1;
-  if (entry->es_name == NULL) {
-    return NULL;
-  }
-  if (entry->es_info.ufunc == NULL) {
+  if (which == ESTACK_SFILE && entry->es_type != ETYPE_UFUNC) {
+    if (entry->es_name == NULL) {
+      return NULL;
+    }
     return xstrdup(entry->es_name);
   }
 
+  // Give information about each stack entry up to the root.
   // For a function we compose the call stack, as it was done in the past:
   //   "function One[123]..Two[456]..Three"
-  size_t len = STRLEN(entry->es_name) + 10;
-  int idx;
-  for (idx = exestack.ga_len - 2; idx >= 0; idx--) {
+  garray_T ga;
+  ga_init(&ga, sizeof(char), 100);
+  etype_T last_type = ETYPE_SCRIPT;
+  for (int idx = 0; idx < exestack.ga_len; idx++) {
     entry = ((estack_T *)exestack.ga_data) + idx;
-    if (entry->es_name == NULL || entry->es_info.ufunc == NULL) {
-      idx++;
-      break;
+    if (entry->es_name != NULL) {
+      size_t len = strlen(entry->es_name) + 15;
+      char *type_name = "";
+      if (entry->es_type != last_type) {
+        switch (entry->es_type) {
+        case ETYPE_SCRIPT:
+          type_name = "script "; break;
+        case ETYPE_UFUNC:
+          type_name = "function "; break;
+        default:
+          type_name = ""; break;
+        }
+        last_type = entry->es_type;
+      }
+      len += strlen(type_name);
+      ga_grow(&ga, (int)len);
+      linenr_T lnum = idx == exestack.ga_len - 1
+        ? which == ESTACK_STACK ? SOURCING_LNUM : 0
+        : entry->es_lnum;
+      char *dots = idx == exestack.ga_len - 1 ? "" : "..";
+      if (lnum == 0) {
+        // For the bottom entry of <sfile>: do not add the line number,
+        // it is used in <slnum>.  Also leave it out when the number is
+        // not set.
+        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
+                     type_name, entry->es_name, dots);
+      } else {
+        vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]%s",
+                     type_name, entry->es_name, lnum, dots);
+      }
+      ga.ga_len += (int)strlen((char *)ga.ga_data + ga.ga_len);
     }
-    len += STRLEN(entry->es_name) + 15;
   }
 
-  char *res = (char *)xmalloc(len);
-  STRCPY(res, "function ");
-  size_t done;
-  while (idx < exestack.ga_len - 1) {
-    done = STRLEN(res);
-    entry = ((estack_T *)exestack.ga_data) + idx;
-    vim_snprintf(res + done, len - done, "%s[%" PRIdLINENR "]..", entry->es_name, entry->es_lnum);
-    idx++;
-  }
-  done = STRLEN(res);
-  entry = ((estack_T *)exestack.ga_data) + idx;
-  vim_snprintf(res + done, len - done, "%s", entry->es_name);
-  return res;
+  return (char *)ga.ga_data;
 }
 
 static bool runtime_search_path_valid = false;
@@ -1946,7 +1964,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   save_funccal(&funccalp_entry);
 
   const sctx_T save_current_sctx = current_sctx;
-  si = get_current_script_id((char_u *)fname_exp, &current_sctx);
+  si = get_current_script_id(&fname_exp, &current_sctx);
 
   if (l_do_profiling == PROF_YES) {
     bool forceit = false;
@@ -2059,9 +2077,9 @@ theend:
 /// Check if fname was sourced before to finds its SID.
 /// If it's new, generate a new SID.
 ///
-/// @param[in] fname file path of script
-/// @param[out] ret_sctx sctx of this script
-scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
+/// @param[in,out] fnamep  pointer to file path of script
+/// @param[out] ret_sctx   sctx of this script
+scriptitem_T *get_current_script_id(char **fnamep, sctx_T *ret_sctx)
 {
   static int last_current_SID_seq = 0;
 
@@ -2078,13 +2096,14 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
     // - If a script is deleted and another script is written, with a
     //   different name, the inode may be re-used.
     si = &SCRIPT_ITEM(script_sctx.sc_sid);
-    if (si->sn_name != NULL && FNAMECMP(si->sn_name, fname) == 0) {
+    if (si->sn_name != NULL && FNAMECMP(si->sn_name, *fnamep) == 0) {
       // Found it!
       break;
     }
   }
   if (script_sctx.sc_sid == 0) {
-    si = new_script_item((char *)vim_strsave(fname), &script_sctx.sc_sid);
+    si = new_script_item(*fnamep, &script_sctx.sc_sid);
+    *fnamep = xstrdup((char *)si->sn_name);
   }
   if (ret_sctx != NULL) {
     *ret_sctx = script_sctx;
