@@ -1983,30 +1983,27 @@ int do_source(char *fname, int check_other, int is_vimrc)
 
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
-  // Read the first line so we can check for a UTF-8 BOM.
-  firstline = (uint8_t *)getsourceline(0, (void *)&cookie, 0, true);
-  if (firstline != NULL && STRLEN(firstline) >= 3 && firstline[0] == 0xef
-      && firstline[1] == 0xbb && firstline[2] == 0xbf) {
-    // Found BOM; setup conversion, skip over BOM and recode the line.
-    convert_setup(&cookie.conv, (char_u *)"utf-8", p_enc);
-    p = (char *)string_convert(&cookie.conv, (char_u *)firstline + 3, NULL);
-    if (p == NULL) {
-      p = xstrdup((char *)firstline + 3);
-    }
-    xfree(firstline);
-    firstline = (uint8_t *)p;
-  }
-
   if (path_with_extension((const char *)fname_exp, "lua")) {
     const sctx_T current_sctx_backup = current_sctx;
     current_sctx.sc_sid = SID_LUA;
     current_sctx.sc_lnum = 0;
-    estack_push(ETYPE_SCRIPT, NULL, 0);
     // Source the file as lua
     nlua_exec_file((const char *)fname_exp);
     current_sctx = current_sctx_backup;
-    estack_pop();
   } else {
+    // Read the first line so we can check for a UTF-8 BOM.
+    firstline = (uint8_t *)getsourceline(0, (void *)&cookie, 0, true);
+    if (firstline != NULL && STRLEN(firstline) >= 3 && firstline[0] == 0xef
+        && firstline[1] == 0xbb && firstline[2] == 0xbf) {
+      // Found BOM; setup conversion, skip over BOM and recode the line.
+      convert_setup(&cookie.conv, (char_u *)"utf-8", p_enc);
+      p = (char *)string_convert(&cookie.conv, (char_u *)firstline + 3, NULL);
+      if (p == NULL) {
+        p = xstrdup((char *)firstline + 3);
+      }
+      xfree(firstline);
+      firstline = (uint8_t *)p;
+    }
     // Call do_cmdline, which will call getsourceline() to get the lines.
     do_cmdline((char *)firstline, getsourceline, (void *)&cookie,
                DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
