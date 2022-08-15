@@ -337,6 +337,95 @@ describe('messages', function()
     end)
   end)
 
+  describe('mode is cleared when', function()
+    before_each(function()
+      screen = Screen.new(40, 6)
+      screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+        [2] = {bold = true},  -- ModeMsg
+        [3] = {bold = true, reverse=true},  -- StatusLine
+      })
+      screen:attach()
+    end)
+
+    -- oldtest: Test_mode_message_at_leaving_insert_by_ctrl_c()
+    it('leaving Insert mode with Ctrl-C vim-patch:8.1.1189', function()
+      exec([[
+        func StatusLine() abort
+          return ""
+        endfunc
+        set statusline=%!StatusLine()
+        set laststatus=2
+      ]])
+      feed('i')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {3:                                        }|
+        {2:-- INSERT --}                            |
+      ]])
+      feed('<C-C>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {3:                                        }|
+                                                |
+      ]])
+    end)
+
+    -- oldtest: Test_mode_message_at_leaving_insert_with_esc_mapped()
+    it('leaving Insert mode with ESC in the middle of a mapping vim-patch:8.1.1192', function()
+      exec([[
+        set laststatus=2
+        inoremap <Esc> <Esc>00
+      ]])
+      feed('i')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {3:[No Name]                               }|
+        {2:-- INSERT --}                            |
+      ]])
+      feed('<Esc>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {3:[No Name]                               }|
+                                                |
+      ]])
+    end)
+
+    -- oldtest: Test_mode_updated_after_ctrl_c()
+    it('pressing Ctrl-C in i_CTRL-O', function()
+      feed('i<C-O>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {2:-- (insert) --}                          |
+      ]])
+      feed('<C-C>')
+      screen:expect([[
+        ^                                        |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]])
+    end)
+  end)
+
   -- oldtest: Test_ask_yesno()
   it('y/n prompt works', function()
     screen = Screen.new(75, 6)

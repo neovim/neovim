@@ -1243,6 +1243,19 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                                                                   |
     ]])
   end)
+
+  it('echo messages are shown correctly when getchar() immediately follows', function()
+    feed([[:echo 'foo' | echo 'bar' | call getchar()<CR>]])
+    screen:expect([[
+                                                                  |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {3:                                                            }|
+      foo                                                         |
+      bar^                                                         |
+    ]])
+  end)
 end)
 
 describe('ui/ext_messages', function()

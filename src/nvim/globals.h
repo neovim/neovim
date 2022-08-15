@@ -145,6 +145,7 @@ EXTERN int vgetc_char INIT(= 0);
 EXTERN int cmdline_row;
 
 EXTERN bool redraw_cmdline INIT(= false);          // cmdline must be redrawn
+EXTERN bool redraw_mode INIT(= false);             // mode must be redrawn
 EXTERN bool clear_cmdline INIT(= false);           // cmdline must be cleared
 EXTERN bool mode_displayed INIT(= false);          // mode is being displayed
 EXTERN int cmdline_star INIT(= false);             // cmdline is encrypted

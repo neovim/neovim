@@ -3,6 +3,7 @@
 source shared.vim
 source check.vim
 source view_util.vim
+source screendump.vim
 
 func Setup_NewWindow()
   10new
@@ -2038,9 +2039,9 @@ func Test_normal33_g_cmd2()
   call assert_equal(2, line('.'))
   call assert_fails(':norm! g;', 'E662')
   call assert_fails(':norm! g,', 'E663')
-  let &ul=&ul
+  let &ul = &ul
   call append('$', ['a', 'b', 'c', 'd'])
-  let &ul=&ul
+  let &ul = &ul
   call append('$', ['Z', 'Y', 'X', 'W'])
   let a = execute(':changes')
   call assert_match('2\s\+0\s\+2', a)
@@ -2887,6 +2888,20 @@ func Test_message_when_using_ctrl_c()
   call assert_match("Type  :qa!  and press <Enter> to abandon all changes and exit Nvim", Screenline(&lines))
 
   bwipe!
+endfunc
+
+func Test_mode_updated_after_ctrl_c()
+  CheckScreendump
+
+  let buf = RunVimInTerminal('', {'rows': 5})
+  call term_sendkeys(buf, "i")
+  call term_sendkeys(buf, "\<C-O>")
+  " wait a moment so that the "-- (insert) --" message is displayed
+  call TermWait(buf, 50)
+  call term_sendkeys(buf, "\<C-C>")
+  call VerifyScreenDump(buf, 'Test_mode_updated_1', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 " Test for '[m', ']m', '[M' and ']M'
