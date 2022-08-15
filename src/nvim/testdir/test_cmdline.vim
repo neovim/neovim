@@ -912,6 +912,10 @@ func Test_cmdline_complete_various()
   call feedkeys(":doautocmd User MyCmd a.c\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"doautocmd User MyCmd a.c\<C-A>", @:)
 
+  " completion of autocmd group after comma
+  call feedkeys(":doautocmd BufNew,BufEn\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"doautocmd BufNew,BufEnter", @:)
+
   " completion for the :augroup command
   augroup XTest
   augroup END

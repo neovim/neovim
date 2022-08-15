@@ -649,6 +649,8 @@ func Test_reduce()
   call assert_fails("call reduce({}, { acc, val -> acc + val }, 1)", 'E897:')
   call assert_fails("call reduce(0, { acc, val -> acc + val }, 1)", 'E897:')
   call assert_fails("call reduce('', { acc, val -> acc + val }, 1)", 'E897:')
+  call assert_fails("call reduce([1, 2], 'Xdoes_not_exist')", 'E117:')
+  call assert_fails("echo reduce(0z01, { acc, val -> 2 * acc + val }, '')", 'E39:')
 
   let g:lut = [1, 2, 3, 4]
   func EvilRemove()
