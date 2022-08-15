@@ -676,12 +676,17 @@ function(get_test_target prefix sfile relative_path_var target_var)
   endif()
 endfunction()
 
-set(NO_SINGLE_CHECK_HEADERS
-  os/win_defs.h
-  os/pty_process_win.h
-  os/pty_conpty_win.h
-  os/os_win_console.h
-)
+if(WIN32)
+  set(NO_SINGLE_CHECK_HEADERS
+    os/pty_process_unix.h
+    os/unix_defs.h)
+else()
+  set(NO_SINGLE_CHECK_HEADERS
+    os/win_defs.h
+    os/pty_process_win.h
+    os/pty_conpty_win.h
+    os/os_win_console.h)
+endif()
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)
 

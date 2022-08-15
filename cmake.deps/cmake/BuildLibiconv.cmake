@@ -1,5 +1,4 @@
 if(MSVC)
-
   ExternalProject_Add(libiconv
     PREFIX ${DEPS_BUILD_DIR}
     URL ${LIBICONV_URL}
@@ -19,12 +18,11 @@ if(MSVC)
         -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
         # Pass toolchain
         -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        ${BUILD_TYPE_STRING}
         -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
         -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
     INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
-
 else()
   message(FATAL_ERROR "Trying to build libiconv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
