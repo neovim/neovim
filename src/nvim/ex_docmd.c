@@ -935,7 +935,7 @@ static void store_loop_line(garray_T *gap, char *line)
 /// "func".  * Otherwise return true when "fgetline" equals "func".
 ///
 /// @param cookie  argument for fgetline()
-int getline_equal(LineGetter fgetline, void *cookie, LineGetter func)
+bool getline_equal(LineGetter fgetline, void *cookie, LineGetter func)
 {
   // When "fgetline" is "get_loop_line()" use the "cookie" to find the
   // function that's originally used to obtain the lines.  This may be
