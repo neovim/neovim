@@ -1964,7 +1964,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
   save_funccal(&funccalp_entry);
 
   const sctx_T save_current_sctx = current_sctx;
-  si = get_current_script_id((char_u *)fname_exp, &current_sctx);
+  si = get_current_script_id(&fname_exp, &current_sctx);
 
   if (l_do_profiling == PROF_YES) {
     bool forceit = false;
@@ -2077,9 +2077,9 @@ theend:
 /// Check if fname was sourced before to finds its SID.
 /// If it's new, generate a new SID.
 ///
-/// @param[in] fname file path of script
-/// @param[out] ret_sctx sctx of this script
-scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
+/// @param[in,out] fnamep  pointer to file path of script
+/// @param[out] ret_sctx   sctx of this script
+scriptitem_T *get_current_script_id(char **fnamep, sctx_T *ret_sctx)
 {
   static int last_current_SID_seq = 0;
 
@@ -2096,13 +2096,14 @@ scriptitem_T *get_current_script_id(char_u *fname, sctx_T *ret_sctx)
     // - If a script is deleted and another script is written, with a
     //   different name, the inode may be re-used.
     si = &SCRIPT_ITEM(script_sctx.sc_sid);
-    if (si->sn_name != NULL && FNAMECMP(si->sn_name, fname) == 0) {
+    if (si->sn_name != NULL && FNAMECMP(si->sn_name, *fnamep) == 0) {
       // Found it!
       break;
     }
   }
   if (script_sctx.sc_sid == 0) {
-    si = new_script_item((char *)vim_strsave(fname), &script_sctx.sc_sid);
+    si = new_script_item(*fnamep, &script_sctx.sc_sid);
+    *fnamep = xstrdup((char *)si->sn_name);
   }
   if (ret_sctx != NULL) {
     *ret_sctx = script_sctx;
