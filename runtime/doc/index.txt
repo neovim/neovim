@@ -1143,6 +1143,7 @@ tag		command		action ~
 				be remapped
 |:args|		:ar[gs]		print the argument list
 |:argadd|	:arga[dd]	add items to the argument list
+|:argdedupe|	:argded[upe]	remove duplicates from the argument list
 |:argdelete|	:argd[elete]	delete items from the argument list
 |:argedit|	:arge[dit]	add item to the argument list and edit it
 |:argdo|	:argdo		do a command on all items in the argument list
