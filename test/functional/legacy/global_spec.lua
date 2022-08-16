@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local exec = helpers.exec
 local feed = helpers.feed
-local sleep = helpers.sleep
+local poke_eventloop = helpers.poke_eventloop
 
 before_each(clear)
 
@@ -24,7 +24,7 @@ describe(':global', function()
     ]])
 
     feed(':g/foo/norm :<C-V>;<CR>')
-    sleep(10)  -- Wait for :sleep to start
+    poke_eventloop()  -- Wait for :sleep to start
     feed('<C-C>')
     screen:expect([[
       ^foo                                                                        |
@@ -37,7 +37,7 @@ describe(':global', function()
 
     -- Also test in Ex mode
     feed('gQg/foo/norm :<C-V>;<CR>')
-    sleep(10)  -- Wait for :sleep to start
+    poke_eventloop()  -- Wait for :sleep to start
     feed('<C-C>')
     screen:expect([[
       {0:                                                                           }|
