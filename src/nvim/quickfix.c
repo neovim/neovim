@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "nvim/api/private/helpers.h"
+#include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

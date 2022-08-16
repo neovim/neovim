@@ -4853,18 +4853,6 @@ static int get_env_tv(char **arg, typval_T *rettv, int evaluate)
   return OK;
 }
 
-/// Get the argument list for a given window
-void get_arglist_as_rettv(aentry_T *arglist, int argcount, typval_T *rettv)
-{
-  tv_list_alloc_ret(rettv, argcount);
-  if (arglist != NULL) {
-    for (int idx = 0; idx < argcount; idx++) {
-      tv_list_append_string(rettv->vval.v_list,
-                            (const char *)alist_name(&arglist[idx]), -1);
-    }
-  }
-}
-
 /// Add an assert error to v:errors.
 void assert_error(garray_T *gap)
 {

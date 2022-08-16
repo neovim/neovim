@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"

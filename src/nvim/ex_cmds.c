@@ -15,6 +15,7 @@
 
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
