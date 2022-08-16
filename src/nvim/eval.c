@@ -3660,6 +3660,7 @@ static int eval_index(char **arg, typval_T *rettv, int evaluate, int verbose)
 int get_option_tv(const char **const arg, typval_T *const rettv, const bool evaluate)
   FUNC_ATTR_NONNULL_ARG(1)
 {
+  bool working = (**arg == '+');  // has("+option")
   int opt_flags;
 
   // Isolate the option name and find its value.
@@ -3678,7 +3679,6 @@ int get_option_tv(const char **const arg, typval_T *const rettv, const bool eval
 
   long numval;
   char *stringval;
-  bool working = (**arg == '+');  // has("+option")
   int ret = OK;
 
   char c = *option_end;
