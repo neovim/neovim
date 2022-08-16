@@ -317,17 +317,17 @@ static bool cin_has_js_key(const char_u *text)
   if (*s == '\'' || *s == '"') {
     // can be 'key': or "key":
     quote = *s;
-    ++s;
+    s++;
   }
   if (!vim_isIDc(*s)) {     // need at least one ID character
     return false;
   }
 
   while (vim_isIDc(*s)) {
-    ++s;
+    s++;
   }
   if (*s && *s == quote) {
-    ++s;
+    s++;
   }
 
   s = cin_skipcomment(s);
@@ -1768,7 +1768,7 @@ void parse_cino(buf_T *buf)
           n += (sw * fraction + divider / 2) / divider;
         }
       }
-      ++p;
+      p++;
     }
     if (l[1] == '-') {
       n = -n;
@@ -3334,7 +3334,7 @@ int get_c_indent(void)
                 amount += curbuf->b_ind_open_extra;
               }
             }
-            ++whilelevel;
+            whilelevel++;
           }
           /*
            * We are after a "normal" statement.
@@ -3848,7 +3848,7 @@ static int find_match(int lookfor, linenr_T ourscope)
      * another "do", so increment whilelevel.  XXX
      */
     if (cin_iswhileofdo(look, curwin->w_cursor.lnum)) {
-      ++whilelevel;
+      whilelevel++;
       continue;
     }
 

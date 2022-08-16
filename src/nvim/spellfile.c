@@ -840,7 +840,7 @@ static void tree_count_words(char_u *byts, idx_T *idxs)
         wordcount[depth - 1] += wordcount[depth];
       }
 
-      --depth;
+      depth--;
       fast_breakcheck();
     } else {
       // Do one more byte at this node.
@@ -855,12 +855,12 @@ static void tree_count_words(char_u *byts, idx_T *idxs)
         // Skip over any other NUL bytes (same word with different
         // flags).
         while (byts[n + 1] == 0) {
-          ++n;
-          ++curi[depth];
+          n++;
+          curi[depth]++;
         }
       } else {
         // Normal char, go one level deeper to count the words.
-        ++depth;
+        depth++;
         arridx[depth] = idxs[n];
         curi[depth] = 1;
         wordcount[depth] = 0;
@@ -1371,21 +1371,21 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   if (todo < 2) {
     return SP_FORMERROR;        // need at least two bytes
   }
-  --todo;
+  todo--;
   c = getc(fd);                                         // <compmax>
   if (c < 2) {
     c = MAXWLEN;
   }
   slang->sl_compmax = c;
 
-  --todo;
+  todo--;
   c = getc(fd);                                         // <compminlen>
   if (c < 1) {
     c = 0;
   }
   slang->sl_compminlen = c;
 
-  --todo;
+  todo--;
   c = getc(fd);                                         // <compsylmax>
   if (c < 1) {
     c = MAXWLEN;
@@ -1396,9 +1396,9 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   if (c != 0) {
     ungetc(c, fd);          // be backwards compatible with Vim 7.0b
   } else {
-    --todo;
+    todo--;
     c = getc(fd);           // only use the lower byte for now
-    --todo;
+    todo--;
     slang->sl_compoptions = c;
 
     gap = &slang->sl_comppat;
@@ -2065,7 +2065,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   // Read all the lines in the file one by one.
   while (!vim_fgets(rline, MAXLINELEN, fd) && !got_int) {
     line_breakcheck();
-    ++lnum;
+    lnum++;
 
     // Skip comment lines.
     if (*rline == '#') {
@@ -2092,7 +2092,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
     itemcnt = 0;
     for (p = line;;) {
       while (*p != NUL && *p <= ' ') {  // skip white space and CR/NL
-        ++p;
+        p++;
       }
       if (*p == NUL) {
         break;
@@ -2104,11 +2104,11 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       // A few items have arbitrary text argument, don't split them.
       if (itemcnt == 2 && spell_info_item(items[0])) {
         while (*p >= ' ' || *p == TAB) {  // skip until CR/NL
-          ++p;
+          p++;
         }
       } else {
         while (*p > ' ') {  // skip until white space or CR/NL
-          ++p;
+          p++;
         }
       }
       if (*p == NUL) {
@@ -2385,7 +2385,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         // Check for the "S" flag, which apparently means that another
         // block with the same affix name is following.
         if (itemcnt > lasti && STRCMP(items[lasti], "S") == 0) {
-          ++lasti;
+          lasti++;
           cur_aff->ah_follows = true;
         } else {
           cur_aff->ah_follows = false;
@@ -2807,7 +2807,7 @@ static void aff_process_flags(afffile_T *affile, affentry_T *entry)
         }
       }
       if (affile->af_flagtype == AFT_NUM && *p == ',') {
-        ++p;
+        p++;
       }
     }
     if (*entry->ae_flags == NUL) {
@@ -2943,7 +2943,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
         *tp++ = (char_u)id;
       }
       if (aff->af_flagtype == AFT_NUM && *p == ',') {
-        ++p;
+        p++;
       }
     }
   }
@@ -3070,7 +3070,7 @@ static void spell_free_aff(afffile_T *aff)
     todo = (int)ht->ht_used;
     for (hi = ht->ht_array; todo > 0; ++hi) {
       if (!HASHITEM_EMPTY(hi)) {
-        --todo;
+        todo--;
         ah = HI2AH(hi);
         for (ae = ah->ah_first; ae != NULL; ae = ae->ae_next) {
           vim_regfree(ae->ae_prog);
@@ -3140,7 +3140,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   // the hashtable.
   while (!vim_fgets(line, MAXLINELEN, fd) && !got_int) {
     line_breakcheck();
-    ++lnum;
+    lnum++;
     if (line[0] == '#' || line[0] == '/') {
       continue;         // comment line
     }
@@ -3148,7 +3148,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     // the word is kept to allow multi-word terms like "et al.".
     l = (int)STRLEN(line);
     while (l > 0 && line[l - 1] <= ' ') {
-      --l;
+      l--;
     }
     if (l == 0) {
       continue;         // empty line
@@ -3184,7 +3184,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
 
     // Skip non-ASCII words when "spin->si_ascii" is true.
     if (spin->si_ascii && has_non_ascii(w)) {
-      ++non_ascii;
+      non_ascii++;
       xfree(pc);
       continue;
     }
@@ -3225,7 +3225,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
         smsg(_("First duplicate word in %s line %d: %s"),
              fname, lnum, dw);
       }
-      ++duplicate;
+      duplicate++;
     } else {
       hash_add_item(&ht, hi, dw, hash);
     }
@@ -3360,7 +3360,7 @@ static int get_pfxlist(afffile_T *affile, char_u *afflist, char_u *store_afflist
       }
     }
     if (affile->af_flagtype == AFT_NUM && *p == ',') {
-      ++p;
+      p++;
     }
   }
 
@@ -3390,7 +3390,7 @@ static void get_compflags(afffile_T *affile, char_u *afflist, char_u *store_affl
       }
     }
     if (affile->af_flagtype == AFT_NUM && *p == ',') {
-      ++p;
+      p++;
     }
   }
 
@@ -3436,7 +3436,7 @@ static int store_aff_word(spellinfo_T *spin, char_u *word, char_u *afflist, afff
   todo = (int)ht->ht_used;
   for (hi = ht->ht_array; todo > 0 && retval == OK; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
-      --todo;
+      todo--;
       ah = HI2AH(hi);
 
       // Check that the affix combines, if required, and that the word
@@ -3684,7 +3684,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
   // Read all the lines in the file one by one.
   while (!vim_fgets(rline, MAXLINELEN, fd) && !got_int) {
     line_breakcheck();
-    ++lnum;
+    lnum++;
 
     // Skip comment lines.
     if (*rline == '#') {
@@ -3694,7 +3694,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     // Remove CR, LF and white space from the end.
     l = (int)STRLEN(rline);
     while (l > 0 && rline[l - 1] <= ' ') {
-      --l;
+      l--;
     }
     if (l == 0) {
       continue;         // empty or blank line
@@ -3717,7 +3717,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     }
 
     if (*line == '/') {
-      ++line;
+      line++;
       if (STRNCMP(line, "encoding=", 9) == 0) {
         if (spin->si_conv.vc_type != CONV_NONE) {
           smsg(_("Duplicate /encoding= line ignored in %s line %ld: %s"),
@@ -3800,13 +3800,13 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
                fname, lnum, p);
           break;
         }
-        ++p;
+        p++;
       }
     }
 
     // Skip non-ASCII words when "spin->si_ascii" is true.
     if (spin->si_ascii && has_non_ascii(line)) {
-      ++non_ascii;
+      non_ascii++;
       continue;
     }
 
@@ -4171,7 +4171,7 @@ static int deref_wordnode(spellinfo_T *spin, wordnode_T *node)
         cnt += deref_wordnode(spin, np->wn_child);
       }
       free_wordnode(spin, np);
-      ++cnt;
+      cnt++;
     }
     ++cnt;          // length field
   }
@@ -4246,7 +4246,7 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
   // Note that with "child" we mean not just the node that is pointed to,
   // but the whole list of siblings of which the child node is the first.
   for (np = node; np != NULL && !got_int; np = np->wn_sibling) {
-    ++len;
+    len++;
     if ((child = np->wn_child) != NULL) {
       // Compress the child first.  This fills hashkey.
       compressed += node_compress(spin, child, ht, tot);
@@ -4579,7 +4579,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
           if (round == 2) {                             // <word>
             fwv &= fwrite(hi->hi_key, l, 1, fd);
           }
-          --todo;
+          todo--;
         }
       }
       if (round == 1) {
@@ -4780,7 +4780,7 @@ static int put_node(FILE *fd, wordnode_T *node, int idx, int regionmask, bool pr
   // Count the number of siblings.
   int siblingcount = 0;
   for (wordnode_T *np = node; np != NULL; np = np->wn_sibling) {
-    ++siblingcount;
+    siblingcount++;
   }
 
   // Write the sibling count.
@@ -5010,7 +5010,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
         wordcount[depth - 1] += wordcount[depth];
       }
 
-      --depth;
+      depth--;
       line_breakcheck();
     } else {
       // Do one more byte at this node.
@@ -5031,8 +5031,8 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
           return FAIL;
         }
 
-        ++words_done;
-        ++wordcount[depth];
+        words_done++;
+        wordcount[depth]++;
 
         // Reset the block count each time to avoid compression
         // kicking in.

@@ -1338,7 +1338,7 @@ static void closescript(void)
   file_free(scriptin[curscript], false);
   scriptin[curscript] = NULL;
   if (curscript > 0) {
-    --curscript;
+    curscript--;
   }
 }
 
@@ -2396,7 +2396,7 @@ static int vgetorpeek(bool advance)
     return NUL;
   }
 
-  ++vgetc_busy;
+  vgetc_busy++;
 
   if (advance) {
     KeyStuffed = FALSE;
@@ -2783,7 +2783,7 @@ static int vgetorpeek(bool advance)
     gotchars(nop_buf, 3);
   }
 
-  --vgetc_busy;
+  vgetc_busy--;
 
   return c;
 }

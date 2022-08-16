@@ -465,7 +465,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
       // when the argument starts with '/', use it as a regexp
       if (!no_regexp && *name == '/') {
         flags = TAG_REGEXP;
-        ++name;
+        name++;
       } else {
         flags = TAG_NOIC;
       }
@@ -653,13 +653,13 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
                     || cur_match < num_matches - 1))) {
           error_cur_match = cur_match;
           if (use_tagstack) {
-            --tagstackidx;
+            tagstackidx--;
           }
           if (type == DT_PREV) {
-            --cur_match;
+            cur_match--;
           } else {
             type = DT_NEXT;
-            ++cur_match;
+            cur_match++;
           }
           continue;
         }
@@ -1076,9 +1076,9 @@ static int tag_strnicmp(char_u *s1, char_u *s2, size_t len)
     if (*s1 == NUL) {
       break;                            // strings match until NUL
     }
-    ++s1;
-    ++s2;
-    --len;
+    s1++;
+    s2++;
+    len--;
   }
   return 0;                             // strings match
 }
@@ -1612,7 +1612,7 @@ int find_tags(char_u *pat, int *num_matches, char ***matchesp, int flags, int mi
               // unless found already.
               help_pri++;
               if (STRICMP(help_lang, "en") != 0) {
-                ++help_pri;
+                help_pri++;
               }
             }
           }
@@ -2475,7 +2475,7 @@ static int parse_tag_line(char_u *lbuf, tagptrs_T *tagp)
 
   // Isolate file name, from first to second white space
   if (*p != NUL) {
-    ++p;
+    p++;
   }
   tagp->fname = p;
   p = (char_u *)vim_strchr((char *)p, TAB);
@@ -2486,7 +2486,7 @@ static int parse_tag_line(char_u *lbuf, tagptrs_T *tagp)
 
   // find start of search command, after second white space
   if (*p != NUL) {
-    ++p;
+    p++;
   }
   if (*p == NUL) {
     return FAIL;
@@ -2717,7 +2717,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
     goto erret;
   }
 
-  ++RedrawingDisabled;
+  RedrawingDisabled++;
 
   if (l_g_do_tagpreview != 0) {
     postponed_split = 0;        // don't split again below
@@ -3168,7 +3168,7 @@ static int add_tag_field(dict_T *dict, const char *field_name, const char_u *sta
     if (end == NULL) {
       end = start + STRLEN(start);
       while (end > start && (end[-1] == '\r' || end[-1] == '\n')) {
-        --end;
+        end--;
       }
     }
     len = (int)(end - start);
@@ -3247,13 +3247,13 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
             // separated by Tabs.
             n = p;
             while (*p != NUL && *p >= ' ' && *p < 127 && *p != ':') {
-              ++p;
+              p++;
             }
             len = (int)(p - n);
             if (*p == ':' && len > 0) {
               s = ++p;
               while (*p != NUL && *p >= ' ') {
-                ++p;
+                p++;
               }
               n[len] = NUL;
               if (add_tag_field(dict, (char *)n, s, p) == FAIL) {
@@ -3263,7 +3263,7 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
             } else {
               // Skip field without colon.
               while (*p != NUL && *p >= ' ') {
-                ++p;
+                p++;
               }
             }
             if (*p == NUL) {

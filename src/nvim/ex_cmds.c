@@ -303,7 +303,7 @@ void ex_align(exarg_T *eap)
               new_indent--;
               break;
             }
-            --new_indent;
+            new_indent--;
           }
         }
       }
@@ -1094,12 +1094,12 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
     if (line1 == n) {
       line1 = curwin->w_cursor.lnum;
     }
-    ++line1;
+    line1++;
     if (curwin->w_cursor.lnum < line1) {
-      ++line1;
+      line1++;
     }
     if (curwin->w_cursor.lnum < line2) {
-      ++line2;
+      line2++;
     }
     ++curwin->w_cursor.lnum;
   }
@@ -1201,7 +1201,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
           break;
         }
       }
-      ++p;
+      p++;
     }
   } while (trailarg != NULL);
 
@@ -1445,7 +1445,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     }
 
     beginline(BL_WHITE | BL_FIX);           // cursor on first non-blank
-    --no_wait_return;
+    no_wait_return--;
 
     if (linecount > p_report) {
       if (do_in) {
@@ -1463,8 +1463,8 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
 error:
     // put cursor back in same position for ":w !cmd"
     curwin->w_cursor = cursor_save;
-    --no_wait_return;
-    wait_return(FALSE);
+    no_wait_return--;
+    wait_return(false);
   }
 
 filterend:
@@ -2114,7 +2114,7 @@ void do_wqall(exarg_T *eap)
      * 4. if overwriting is allowed (even after a dialog)
      */
     if (not_writing()) {
-      ++error;
+      error++;
       break;
     }
     if (buf->b_ffname == NULL) {
@@ -2249,7 +2249,7 @@ int getfile(int fnum, char *ffname_arg, char *sfname_arg, int setpm, linenr_T ln
     }
   }
   if (other) {
-    --no_wait_return;
+    no_wait_return--;
   }
   if (setpm) {
     setpcmark();
@@ -2962,7 +2962,7 @@ void ex_append(exarg_T *eap)
   }
 
   if (eap->cmdidx != CMD_append) {
-    --lnum;
+    lnum--;
   }
 
   // when the buffer is empty need to delete the dummy line
@@ -3018,7 +3018,7 @@ void ex_append(exarg_T *eap)
     vcol = 0;
     for (p = theline; indent > vcol; ++p) {
       if (*p == ' ') {
-        ++vcol;
+        vcol++;
       } else if (*p == TAB) {
         vcol += 8 - vcol % 8;
       } else {
@@ -3047,7 +3047,7 @@ void ex_append(exarg_T *eap)
     }
 
     xfree(theline);
-    ++lnum;
+    lnum++;
 
     if (empty) {
       ml_delete(2L, false);
@@ -3139,10 +3139,10 @@ void ex_z(exarg_T *eap)
   kind = x;
   if (*kind == '-' || *kind == '+' || *kind == '='
       || *kind == '^' || *kind == '.') {
-    ++x;
+    x++;
   }
   while (*x == '-' || *x == '+') {
-    ++x;
+    x++;
   }
 
   if (*x != 0) {
@@ -3199,7 +3199,7 @@ void ex_z(exarg_T *eap)
     if (*kind == '+') {
       start += (linenr_T)bigness * (linenr_T)(x - kind - 1) + 1;
     } else if (eap->addr_count == 0) {
-      ++start;
+      start++;
     }
     end = start + (linenr_T)bigness - 1;
     curs = end;
@@ -4300,7 +4300,7 @@ skip:
                * has been appended to new_start, we don't need
                * it in the buffer.
                */
-              ++lnum;
+              lnum++;
               if (u_savedel(lnum, nmatch_tl) != OK) {
                 break;
               }
@@ -5500,7 +5500,7 @@ void fix_help_buffer(void)
                     }
                     s += l - 1;
                   }
-                  ++s;
+                  s++;
                 }
                 // The help file is latin1 or utf-8;
                 // conversion to the current
@@ -5722,8 +5722,8 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
           *p2 = '\t';
           break;
         }
-        ++p1;
-        ++p2;
+        p1++;
+        p2++;
       }
     }
 

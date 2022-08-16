@@ -227,7 +227,7 @@ char_u *get_past_head(const char_u *path)
 #endif
 
   while (vim_ispathsep(*retval)) {
-    ++retval;
+    retval++;
   }
 
   return (char_u *)retval;
@@ -666,8 +666,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   for (p = buf + wildoff; p < s; ++p) {
     if (rem_backslash(p)) {
       STRMOVE(p, p + 1);
-      --e;
-      --s;
+      e--;
+      s--;
     }
   }
 
@@ -695,11 +695,11 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   regmatch.rm_ic = true;  // Always ignore case on Windows.
 #endif
   if (flags & (EW_NOERROR | EW_NOTWILD)) {
-    ++emsg_silent;
+    emsg_silent++;
   }
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC);
   if (flags & (EW_NOERROR | EW_NOTWILD)) {
-    --emsg_silent;
+    emsg_silent--;
   }
   xfree(pat);
 
@@ -742,9 +742,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
            * find matches. */
           STRCPY(buf + len, "/**");
           STRCPY(buf + len + 3, path_end);
-          ++stardepth;
+          stardepth++;
           (void)do_path_expand(gap, buf, len + 1, flags, true);
-          --stardepth;
+          stardepth--;
         }
 
         STRCPY(buf + len, path_end);
@@ -1401,7 +1401,7 @@ static int expand_backtick(garray_T *gap, char_u *pat, int flags)
     cmd = skipwhite(cmd);               // skip over white space
     p = cmd;
     while (*p != NUL && *p != '\r' && *p != '\n') {  // skip over entry
-      ++p;
+      p++;
     }
     // add an entry if it is not empty
     if (p > cmd) {
@@ -1409,11 +1409,11 @@ static int expand_backtick(garray_T *gap, char_u *pat, int flags)
       *p = NUL;
       addfile(gap, (char_u *)cmd, flags);
       *p = i;
-      ++cnt;
+      cnt++;
     }
     cmd = p;
     while (*cmd != NUL && (*cmd == '\r' || *cmd == '\n')) {
-      ++cmd;
+      cmd++;
     }
   }
 
@@ -1656,12 +1656,12 @@ void simplify_filename(char_u *filename)
             *p = NUL;
           } else {
             if (p > start && tail[-1] == '.') {
-              --p;
+              p--;
             }
             STRMOVE(p, tail);                   // strip previous component
           }
 
-          --components;
+          components--;
         }
       } else if (p == start && !relative) {     // leading "/.." or "/../"
         STRMOVE(p, tail);                       // strip ".." or "../"

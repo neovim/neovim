@@ -1927,8 +1927,8 @@ static int op_replace(oparg_T *oap, int c)
       // times.
       if (utf_char2cells(c) > 1) {
         if ((numc & 1) && !bd.is_short) {
-          ++bd.endspaces;
-          ++n;
+          bd.endspaces++;
+          n++;
         }
         numc = numc / 2;
       }
@@ -3104,7 +3104,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             if (y_array != NULL) {
               *ptr = NUL;
             }
-            ++ptr;
+            ptr++;
             // A trailing '\n' makes the register linewise.
             if (*ptr == NUL) {
               y_type = kMTLineWise;
@@ -3442,12 +3442,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
       }
       curbuf->b_op_start = curwin->w_cursor;
-    }
-    /*
-     * Line mode: BACKWARD is the same as FORWARD on the previous line
-     */
-    else if (dir == BACKWARD) {
-      --lnum;
+    } else if (dir == BACKWARD) {
+      // Line mode: BACKWARD is the same as FORWARD on the previous line
+      lnum--;
     }
     new_cursor = curwin->w_cursor;
 
@@ -3586,7 +3583,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             new_lnum++;
           }
           lnum++;
-          ++nr_lines;
+          nr_lines++;
           if (flags & PUT_FIXINDENT) {
             old_pos = curwin->w_cursor;
             curwin->w_cursor.lnum = lnum;
@@ -4001,7 +3998,7 @@ char_u *skip_comment(char_u *line, bool process, bool include_space, bool *is_co
         || *comment_flags == ':') {
       break;
     }
-    ++comment_flags;
+    comment_flags++;
   }
 
   // If we found a colon, it means that we are not processing a line
@@ -4285,7 +4282,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
       }
     } else {
       while (ascii_iswhite(line1[idx1])) {
-        ++idx1;
+        idx1++;
       }
     }
   }
@@ -4698,7 +4695,7 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
      */
     flags = *leader_flags;
     while (*flags && *flags != ':' && *flags != COM_END) {
-      ++flags;
+      flags++;
     }
   }
 

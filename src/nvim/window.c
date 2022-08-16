@@ -1671,7 +1671,7 @@ int win_count(void)
   int count = 0;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    ++count;
+    count++;
   }
   return count;
 }
@@ -2460,7 +2460,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
   tabpage_T *tp, *nexttp;
   int h = tabline_height();
 
-  ++RedrawingDisabled;
+  RedrawingDisabled++;
 
   // Start from lastwin to close floating windows with the same buffer first.
   // When the autocommand window is involved win_close() may need to print an error message.
@@ -2497,7 +2497,7 @@ void close_windows(buf_T *buf, bool keep_curwin)
     }
   }
 
-  --RedrawingDisabled;
+  RedrawingDisabled--;
 
   redraw_tabline = true;
   if (h != tabline_height()) {
@@ -3821,7 +3821,7 @@ static int frame_minwidth(frame_T *topfrp, win_T *next_curwin)
       m = (int)p_wmw + topfrp->fr_win->w_vsep_width;
       // Current window is minimal one column wide
       if (p_wmw == 0 && topfrp->fr_win == curwin && next_curwin == NULL) {
-        ++m;
+        m++;
       }
     }
   } else if (topfrp->fr_layout == FR_COL) {
@@ -4094,7 +4094,7 @@ int win_new_tabpage(int after, char_u *filename)
         n = 2;
         for (tp = first_tabpage; tp->tp_next != NULL
              && n < after; tp = tp->tp_next) {
-          ++n;
+          n++;
         }
       }
       newtp->tp_next = tp->tp_next;
@@ -4240,7 +4240,7 @@ tabpage_T *find_tabpage(int n)
   int i = 1;
 
   for (tp = first_tabpage; tp != NULL && i != n; tp = tp->tp_next) {
-    ++i;
+    i++;
   }
   return tp;
 }
@@ -4255,7 +4255,7 @@ int tabpage_index(tabpage_T *ftp)
   tabpage_T *tp;
 
   for (tp = first_tabpage; tp != NULL && tp != ftp; tp = tp->tp_next) {
-    ++i;
+    i++;
   }
   return i;
 }
@@ -4517,7 +4517,7 @@ void tabpage_move(int nr)
   }
 
   for (tp = first_tabpage; tp->tp_next != NULL && n < nr; tp = tp->tp_next) {
-    ++n;
+    n++;
   }
 
   if (tp == curtab || (nr > 0 && tp->tp_next != NULL
@@ -6226,7 +6226,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
         if (lnum == 1) {
           // first line in buffer is folded
           line_size = 1;
-          --sline;
+          sline--;
           break;
         }
         lnum--;
@@ -6564,7 +6564,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
 
     if (ptr[len] == '\\' && ptr[len + 1] == ' ') {
       // Skip over the "\" in "\ ".
-      ++len;
+      len++;
     }
     len += (size_t)(utfc_ptr2len(ptr + len));
   }
@@ -6575,7 +6575,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
    */
   if (len > 2 && vim_strchr(".,:;!", ptr[len - 1]) != NULL
       && ptr[len - 2] != '.') {
-    --len;
+    len--;
   }
 
   if (file_lnum != NULL) {

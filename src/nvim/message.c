@@ -319,7 +319,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   if (entered >= 3) {
     return TRUE;
   }
-  ++entered;
+  entered++;
 
   // Add message to history (unless it's a repeated kept message or a
   // truncated message)
@@ -356,7 +356,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   need_fileinfo = false;
 
   xfree(buf);
-  --entered;
+  entered--;
   return retval;
 }
 
@@ -1015,7 +1015,7 @@ int delete_first_msg(void)
   xfree(p->msg);
   hl_msg_free(p->multiattr);
   xfree(p);
-  --msg_hist_len;
+  msg_hist_len--;
   return OK;
 }
 
@@ -1980,13 +1980,13 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
     msg_col -= cw;
     if (msg_col == 0) {
       msg_col = Columns;
-      ++msg_row;
+      msg_row++;
     }
   } else {
     msg_col += cw;
     if (msg_col >= Columns) {
       msg_col = 0;
-      ++msg_row;
+      msg_row++;
     }
   }
   return s + l;
@@ -2239,7 +2239,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
        * for a character.
        */
       if (lines_left > 0) {
-        --lines_left;
+        lines_left--;
       }
       if (p_more && lines_left == 0 && State != MODE_HITRETURN
           && !msg_no_more && !exmode_active) {
@@ -2288,7 +2288,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
       msg_col = 0;
     } else if (*s == '\b') {      // go to previous char
       if (msg_col) {
-        --msg_col;
+        msg_col--;
       }
     } else if (*s == TAB) {       // translate Tab into spaces
       do {
@@ -2322,7 +2322,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
         s += l - 1;
       }
     }
-    ++s;
+    s++;
   }
 
   // Output any postponed text.
@@ -2670,7 +2670,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
     msg_col = mp->sb_msg_col;
     p = mp->sb_text;
     if (*p == '\n') {       // don't display the line break
-      ++p;
+      p++;
     }
     msg_puts_display(p, -1, mp->sb_attr, TRUE);
     if (mp->sb_eol || mp->sb_next == NULL) {
@@ -2699,7 +2699,7 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
   }
   if (msg_col >= Columns) {
     msg_col = 0;
-    ++msg_row;
+    msg_row++;
   }
 }
 
@@ -2954,7 +2954,7 @@ static int do_more_prompt(int typed_char)
                       HL_ATTR(HLF_MSG));
             for (i = 0; mp != NULL && i < Rows - 1; i++) {
               mp = disp_sb_line(i, mp);
-              ++msg_scrolled;
+              msg_scrolled++;
             }
             to_redraw = false;
           }
@@ -3053,12 +3053,12 @@ static void msg_screen_putchar(int c, int attr)
   if (cmdmsg_rl) {
     if (--msg_col == 0) {
       msg_col = Columns;
-      ++msg_row;
+      msg_row++;
     }
   } else {
     if (++msg_col >= Columns) {
       msg_col = 0;
-      ++msg_row;
+      msg_row++;
     }
   }
 }
@@ -3355,7 +3355,7 @@ int redirecting(void)
 void verbose_enter(void)
 {
   if (*p_vfile != NUL) {
-    ++msg_silent;
+    msg_silent++;
   }
 }
 
@@ -3374,7 +3374,7 @@ void verbose_leave(void)
 void verbose_enter_scroll(void)
 {
   if (*p_vfile != NUL) {
-    ++msg_silent;
+    msg_silent++;
   } else {
     // always scroll up, don't overwrite
     msg_scroll = TRUE;
@@ -3536,7 +3536,7 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
    * Since we wait for a keypress, don't make the
    * user press RETURN as well afterwards.
    */
-  ++no_wait_return;
+  no_wait_return++;
   hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   for (;;) {
@@ -3585,7 +3585,7 @@ int do_dialog(int type, char_u *title, char_u *message, char_u *buttons, int dfl
   msg_silent = save_msg_silent;
   State = oldState;
   setmouse();
-  --no_wait_return;
+  no_wait_return--;
   msg_end_prompt();
 
   return retval;
@@ -3739,7 +3739,7 @@ static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons, int def
       }
     } else if (*r == DLG_HOTKEY_CHAR || first_hotkey) {
       if (*r == DLG_HOTKEY_CHAR) {
-        ++r;
+        r++;
       }
 
       first_hotkey = false;

@@ -505,7 +505,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
     } else {
       verbose_enter();
     }
-    ++no_wait_return;
+    no_wait_return++;
     if (debug_break_level > 0 || *p_vfile == NUL) {
       msg_scroll = TRUE;            // always scroll up, don't overwrite
     }
@@ -515,7 +515,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
     if (debug_break_level > 0 || *p_vfile == NUL) {
       cmdline_row = msg_row;
     }
-    --no_wait_return;
+    no_wait_return--;
     if (debug_break_level > 0) {
       msg_silent = save_msg_silent;
     } else {
@@ -558,7 +558,7 @@ static void discard_exception(except_T *excp, bool was_finished)
     } else {
       verbose_enter();
     }
-    ++no_wait_return;
+    no_wait_return++;
     if (debug_break_level > 0 || *p_vfile == NUL) {
       msg_scroll = TRUE;            // always scroll up, don't overwrite
     }
@@ -626,7 +626,7 @@ static void catch_exception(except_T *excp)
     } else {
       verbose_enter();
     }
-    ++no_wait_return;
+    no_wait_return++;
     if (debug_break_level > 0 || *p_vfile == NUL) {
       msg_scroll = TRUE;            // always scroll up, don't overwrite
     }
@@ -636,7 +636,7 @@ static void catch_exception(except_T *excp)
     if (debug_break_level > 0 || *p_vfile == NUL) {
       cmdline_row = msg_row;
     }
-    --no_wait_return;
+    no_wait_return--;
     if (debug_break_level > 0) {
       msg_silent = save_msg_silent;
     } else {
@@ -748,12 +748,12 @@ static void report_pending(int action, int pending, void *value)
   if (debug_break_level > 0) {
     msg_silent = FALSE;         // display messages
   }
-  ++no_wait_return;
-  msg_scroll = TRUE;            // always scroll up, don't overwrite
+  no_wait_return++;
+  msg_scroll = true;            // always scroll up, don't overwrite
   smsg(mesg, s);
   msg_puts("\n");  // don't overwrite this either
   cmdline_row = msg_row;
-  --no_wait_return;
+  no_wait_return--;
   if (debug_break_level > 0) {
     msg_silent = save_msg_silent;
   }
@@ -2054,7 +2054,7 @@ int has_loop_cmd(char *p)
   // skip modifiers, white space and ':'
   for (;;) {
     while (*p == ' ' || *p == '\t' || *p == ':') {
-      ++p;
+      p++;
     }
     len = modifier_len(p);
     if (len == 0) {

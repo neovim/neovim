@@ -515,7 +515,7 @@ void last_pat_prog(regmmatch_T *regmatch)
   }
   ++emsg_off;           // So it doesn't beep if bad expr
   (void)search_regcomp((char_u *)"", 0, last_idx, SEARCH_KEEP, regmatch);
-  --emsg_off;
+  emsg_off--;
 }
 
 /// Lowest level search function.
@@ -1162,9 +1162,9 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
         } else {  // single '+'
           spats[0].off.off = 1;
         }
-        ++p;
+        p++;
         while (ascii_isdigit(*p)) {  // skip number
-          ++p;
+          p++;
         }
       }
 
@@ -1428,7 +1428,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
       emsg(_("E386: Expected '?' or '/'  after ';'"));
       goto end_do_search;
     }
-    ++pat;
+    pat++;
   }
 
   if (options & SEARCH_MARK) {
@@ -2138,10 +2138,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         }
         if (*ptr == '"'
             && (ptr == linep || ptr[-1] != '\'' || ptr[1] != '\'')) {
-          ++do_quotes;
+          do_quotes++;
         }
         if (*ptr == '\\' && ptr[1] != NUL) {
-          ++ptr;
+          ptr++;
         }
       }
       do_quotes &= 1;               // result is 1 with even number of quotes
@@ -2344,7 +2344,7 @@ int check_linecomment(const char_u *line)
           && !is_pos_in_string(line, (colnr_T)(p - line))) {
         break;
       }
-      ++p;
+      p++;
     }
   }
 
@@ -2631,7 +2631,7 @@ bool findpar(bool *pincl, int dir, long count, int what, int both)
   }
   setpcmark();
   if (both && *ml_get(curr) == '}') {   // include line with '}'
-    ++curr;
+    curr++;
   }
   curwin->w_cursor.lnum = curr;
   if (curr == curbuf->b_ml.ml_line_count && what != '}') {
@@ -2669,7 +2669,7 @@ static int inmacro(char_u *opt, char_u *s)
                 && (s[0] == NUL || s[1] == NUL || s[1] == ' ')))) {
       break;
     }
-    ++macro;
+    macro++;
     if (macro[0] == NUL) {
       break;
     }
@@ -3112,7 +3112,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
       oap->start = start_pos;
       oap->motion_type = kMTCharWise;
     }
-    --count;
+    count--;
   }
 
   /*
@@ -3162,7 +3162,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
         }
       }
     }
-    --count;
+    count--;
   }
 
   if (include_white && (cls() != 0
@@ -3325,7 +3325,7 @@ extend:
   } else {
     ncount = count;
     if (start_blank) {
-      --ncount;
+      ncount--;
     }
   }
   if (ncount > 0) {
@@ -3853,7 +3853,7 @@ extend:
         break;
       }
     }
-    --start_lnum;
+    start_lnum--;
   }
 
   /*
@@ -3861,13 +3861,13 @@ extend:
    */
   end_lnum = start_lnum;
   while (end_lnum <= curbuf->b_ml.ml_line_count && linewhite(end_lnum)) {
-    ++end_lnum;
+    end_lnum++;
   }
 
   end_lnum--;
   i = (int)count;
   if (!include && white_in_front) {
-    --i;
+    i--;
   }
   while (i--) {
     if (end_lnum == curbuf->b_ml.ml_line_count) {
@@ -3879,14 +3879,12 @@ extend:
     }
 
     if (include || !do_white) {
-      ++end_lnum;
-      /*
-       * skip to end of paragraph
-       */
+      end_lnum++;
+      // skip to end of paragraph
       while (end_lnum < curbuf->b_ml.ml_line_count
              && !linewhite(end_lnum + 1)
              && !startPS(end_lnum + 1, 0, 0)) {
-        ++end_lnum;
+        end_lnum++;
       }
     }
 
@@ -3900,7 +3898,7 @@ extend:
     if (include || do_white) {
       while (end_lnum < curbuf->b_ml.ml_line_count
              && linewhite(end_lnum + 1)) {
-        ++end_lnum;
+        end_lnum++;
       }
     }
   }
@@ -3911,7 +3909,7 @@ extend:
    */
   if (!white_in_front && !linewhite(end_lnum) && include) {
     while (start_lnum > 1 && linewhite(start_lnum - 1)) {
-      --start_lnum;
+      start_lnum--;
     }
   }
 
@@ -3985,7 +3983,7 @@ static int find_prev_quote(char_u *line, int col_start, int quotechar, char_u *e
     if (escape != NULL) {
       while (col_start - n > 0 && vim_strchr((char *)escape,
                                              line[col_start - n - 1]) != NULL) {
-        ++n;
+        n++;
       }
     }
     if (n & 1) {
@@ -4171,11 +4169,11 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
   if (include) {
     if (ascii_iswhite(line[col_end + 1])) {
       while (ascii_iswhite(line[col_end + 1])) {
-        ++col_end;
+        col_end++;
       }
     } else {
       while (col_start > 0 && ascii_iswhite(line[col_start - 1])) {
-        --col_start;
+        col_start--;
       }
     }
   }
@@ -5469,7 +5467,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
         }
         did_show = true;
         while (depth_displayed < depth && !got_int) {
-          ++depth_displayed;
+          depth_displayed++;
           for (i = 0; i < depth_displayed; i++) {
             msg_puts("  ");
           }
@@ -5511,11 +5509,11 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
               // Avoid checking before the start of the line, can
               // happen if \zs appears in the regexp.
               if (p[-1] == '"' || p[-1] == '<') {
-                --p;
-                ++i;
+                p--;
+                i++;
               }
               if (p[i] == '"' || p[i] == '>') {
-                ++i;
+                i++;
               }
             }
             save_char = p[i];
@@ -5563,7 +5561,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
             // Something wrong. We will forget one of our already visited files
             // now.
             xfree(files[old_files].name);
-            ++old_files;
+            old_files++;
           }
           files[depth].name = curr_fname = new_fname;
           files[depth].lnum = 0;
@@ -5862,7 +5860,7 @@ exit_matched:
     while (depth >= 0 && !already
            && vim_fgets(line = file_line, LSIZE, files[depth].fp)) {
       fclose(files[depth].fp);
-      --old_files;
+      old_files--;
       files[old_files].name = files[depth].name;
       files[old_files].matched = files[depth].matched;
       depth--;
@@ -5950,10 +5948,10 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
     if (fp != NULL) {
       // We used fgets(), so get rid of newline at end
       if (p >= line && *p == '\n') {
-        --p;
+        p--;
       }
       if (p >= line && *p == '\r') {
-        --p;
+        p--;
       }
       *(p + 1) = NUL;
     }
