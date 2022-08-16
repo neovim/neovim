@@ -13,6 +13,9 @@ synload.vim	Contains autocommands to load a language file when a certain
 nosyntax.vim	Used for the ":syntax off" command.  Undo the loading of
 		synload.vim.
 
+The "shared" directory contains generated files and what is used by more than
+one syntax.
+
 
 A few special files:
 

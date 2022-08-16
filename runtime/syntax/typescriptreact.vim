@@ -133,7 +133,7 @@ syntax region tsxEscJs
 
 """""""""""""""""""""""""""""""""""""""""""""""""""
 " Source the part common with typescriptreact.vim
-source <sfile>:h/typescriptcommon.vim
+source <sfile>:h/shared/typescriptcommon.vim
 
 
 syntax cluster typescriptExpression add=tsxRegion,tsxFragment

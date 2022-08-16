@@ -1326,7 +1326,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	When 'cmdheight' is zero, there is no command-line unless it is being
 	used.  Some informative messages will not be displayed, any other
-	messages will cause the |hit-enter| prompt.
+	messages will cause the |hit-enter| prompt.  Expect some other
+	unexpected behavior too.
 
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	number	(default 7)
