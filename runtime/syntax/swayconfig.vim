@@ -2,8 +2,8 @@
 " Language: sway window manager config
 " Original Author: James Eapen <james.eapen@vai.org>
 " Maintainer: James Eapen <james.eapen@vai.org>
-" Version: 0.11.0
-" Last Change: 2022 Jun 07
+" Version: 0.11.1
+" Last Change: 2022 Aug 08
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -36,8 +36,8 @@ syn keyword swayConfigBindGestureCommand swipe pinch hold contained
 syn keyword swayConfigBindGestureDirection up down left right next prev contained
 syn keyword swayConfigBindGesturePinchDirection inward outward clockwise counterclockwise contained
 syn match swayConfigBindGestureHold /^\s*\(bindgesture\)\s\+hold\(:[1-5]\)\?\s\+.*$/ contains=swayConfigBindKeyword,swayConfigBindGestureCommand,swayConfigBindGestureDirection,i3ConfigWorkspaceKeyword,i3ConfigAction
-syn match swayConfigBindGestureSwipe /^\s*\(bindgesture\)\s\+swipe\(:[1-5]\)\?:\(up\|down\|left\|right\)\s\+.*$/ contains=swayConfigBindKeyword,swayConfigBindGestureCommand,swayConfigBindGestureDirection,i3ConfigWorkspaceKeyword,i3ConfigAction
-syn match swayConfigBindGesturePinch /^\s*\(bindgesture\)\s\+\(pinch\):.*$/ contains=swayConfigBindKeyword,swayConfigBindGestureCommand,swayConfigBindGestureDirection,swayConfigBindGesturePinchDirection,i3ConfigWorkspaceKeyword,i3ConfigAction
+syn match swayConfigBindGestureSwipe /^\s*\(bindgesture\)\s\+swipe\(:[3-5]\)\?:\(up\|down\|left\|right\)\s\+.*$/ contains=swayConfigBindKeyword,swayConfigBindGestureCommand,swayConfigBindGestureDirection,i3ConfigWorkspaceKeyword,i3ConfigAction
+syn match swayConfigBindGesturePinch /^\s*\(bindgesture\)\s\+pinch\(:[2-5]\)\?:\(up\|down\|left\|right\|inward\|outward\|clockwise\|counterclockwise\)\(+\(up\|down\|left\|right\|inward\|outward\|clockwise\|counterclockwise\)\)\?.*$/ contains=swayConfigBindKeyword,swayConfigBindGestureCommand,swayConfigBindGestureDirection,swayConfigBindGesturePinchDirection,i3ConfigWorkspaceKeyword,i3ConfigAction
 
 " floating
 syn keyword swayConfigFloatingKeyword floating contained

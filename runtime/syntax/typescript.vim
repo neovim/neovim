@@ -35,7 +35,7 @@ syntax region typescriptTypeCast matchgroup=typescriptTypeBrackets
 
 """""""""""""""""""""""""""""""""""""""""""""""""""
 " Source the part common with typescriptreact.vim
-source <sfile>:h/typescriptcommon.vim
+source <sfile>:h/shared/typescriptcommon.vim
 
 
 let b:current_syntax = "typescript"
