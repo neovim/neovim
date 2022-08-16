@@ -19,6 +19,9 @@ EXTERN ScreenGrid default_grid INIT(= SCREEN_GRID_INIT);
 
 #define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 
+/// While resizing the screen this flag is set.
+EXTERN bool resizing_screen INIT(= 0);
+
 EXTERN schar_T *linebuf_char INIT(= NULL);
 EXTERN sattr_T *linebuf_attr INIT(= NULL);
 

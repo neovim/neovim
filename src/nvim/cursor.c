@@ -9,6 +9,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
 #include "nvim/mark.h"
@@ -17,7 +18,6 @@
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/plines.h"
-#include "nvim/screen.h"
 #include "nvim/state.h"
 #include "nvim/vim.h"
 

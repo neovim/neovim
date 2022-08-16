@@ -9,6 +9,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_docmd.h"
@@ -19,7 +20,6 @@
 #include "nvim/match.h"
 #include "nvim/option.h"
 #include "nvim/runtime.h"
-#include "nvim/screen.h"
 
 /// \addtogroup SG_SET
 /// @{

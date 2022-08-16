@@ -39,6 +39,7 @@
 #include "nvim/arabic.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
@@ -52,7 +53,6 @@
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
-#include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 

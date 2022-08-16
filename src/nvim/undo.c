@@ -86,6 +86,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
+#include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
@@ -105,7 +106,6 @@
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"  // MAXLNUM
-#include "nvim/screen.h"
 #include "nvim/sha256.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
