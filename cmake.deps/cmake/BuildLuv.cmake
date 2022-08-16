@@ -110,10 +110,8 @@ else()
   endif()
 endif()
 
-set(LUV_BUILD_COMMAND
-  ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE})
-set(LUV_INSTALL_COMMAND
-  ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
+set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>)
+set(LUV_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>)
 
 BuildLuv(PATCH_COMMAND ${LUV_PATCH_COMMAND}
   CONFIGURE_COMMAND ${LUV_CONFIGURE_COMMAND}

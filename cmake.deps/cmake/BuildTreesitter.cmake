@@ -45,8 +45,8 @@ if(MSVC)
       -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
       ${BUILD_TYPE_STRING}
       -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE}
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>
     )
 else()
   set(TS_CFLAGS "-O3 -Wall -Wextra")

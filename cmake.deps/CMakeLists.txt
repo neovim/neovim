@@ -2,22 +2,18 @@
 cmake_minimum_required (VERSION 3.10)
 project(NVIM_DEPS C)
 
-# Needed for: check_c_compiler_flag()
-include(CheckCCompilerFlag)
-
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
+
+include(CheckCCompilerFlag)
+include(Util)
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
   set(BUILD_TYPE_STRING -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 endif()
 
-# In Windows/MSVC CMAKE_BUILD_TYPE changes the paths/linking of the build
-# recipes (libuv, msgpack), make sure it is set
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
+set_default_buildtype()
 
 set(DEFAULT_MAKE_CFLAGS CFLAGS+=-g)
 

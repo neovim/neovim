@@ -21,8 +21,8 @@ if(MSVC)
         ${BUILD_TYPE_STRING}
         -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
         -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>)
 else()
   message(FATAL_ERROR "Trying to build libiconv in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
