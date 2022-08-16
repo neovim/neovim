@@ -281,8 +281,8 @@ describe('API', function()
       ]]}
     end)
 
-    it('does\'t display messages when output=true', function()
-      local screen = Screen.new(40, 8)
+    it('doesn\'t display messages when output=true', function()
+      local screen = Screen.new(40, 6)
       screen:attach()
       screen:set_default_attr_ids({
         [0] = {bold=true, foreground=Screen.colors.Blue},
@@ -294,9 +294,21 @@ describe('API', function()
         {0:~                                       }|
         {0:~                                       }|
         {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
                                                 |
+      ]]}
+      exec([[
+        func Print()
+          call nvim_exec('echo "hello"', v:true)
+        endfunc
+      ]])
+      feed([[:echon 1 | call Print() | echon 5<CR>]])
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        15                                      |
       ]]}
     end)
   end)
@@ -3835,6 +3847,36 @@ describe('API', function()
       assert_alive()
       meths.cmd({ cmd = 'make', args = { 'foo', 'bar' } }, {})
       assert_alive()
+    end)
+    it('doesn\'t display messages when output=true', function()
+      local screen = Screen.new(40, 6)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold=true, foreground=Screen.colors.Blue},
+      })
+      meths.cmd({cmd = 'echo', args = {[['hello']]}}, {output = true})
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+                                                |
+      ]]}
+      exec([[
+        func Print()
+          call nvim_cmd(#{cmd: 'echo', args: ['"hello"']}, #{output: v:true})
+        endfunc
+      ]])
+      feed([[:echon 1 | call Print() | echon 5<CR>]])
+      screen:expect{grid=[[
+        ^                                        |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        15                                      |
+      ]]}
     end)
   end)
 end)
