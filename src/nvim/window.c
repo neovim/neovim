@@ -6399,6 +6399,13 @@ void command_height(void)
     return;
   }
 
+  // If cmdline_row is smaller than what it is supposed to be for 'cmdheight'
+  // then set old_p_ch to what it would be, so that the windows get resized
+  // properly for the new value.
+  if (cmdline_row < Rows - p_ch) {
+    old_p_ch = Rows - cmdline_row;
+  }
+
   // Find bottom frame with width of screen.
   frp = lastwin_nofloating()->w_frame;
   while (frp->fr_width != Columns && frp->fr_parent != NULL) {
