@@ -33,7 +33,7 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-#define URL_SLASH       1               // path_is_url() has found "://"
+#define URL_SLASH       1               // path_is_url() has found ":/"
 #define URL_BACKSLASH   2               // path_is_url() has found ":\\"
 
 #ifdef gen_expand_wildcards
@@ -1749,12 +1749,26 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
   return file_name;
 }
 
-// Check if the "://" of a URL is at the pointer, return URL_SLASH.
+/// Checks for a Windows drive letter ("C:/") at the start of the path.
+///
+/// @see https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
+bool path_has_drive_letter(const char *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return strlen(p) >= 2
+         && ASCII_ISALPHA(p[0])
+         && (p[1] == ':' || p[1] == '|')
+         && (strlen(p) == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
+}
+
+// Check if the ":/" of a URL is at the pointer, return URL_SLASH.
 // Also check for ":\\", which MS Internet Explorer accepts, return
 // URL_BACKSLASH.
 int path_is_url(const char *p)
 {
-  if (strncmp(p, "://", 3) == 0) {
+  // In the spec ':' is enough to recognize a scheme
+  // https://url.spec.whatwg.org/#scheme-state
+  if (strncmp(p, ":/", 2) == 0) {
     return URL_SLASH;
   } else if (strncmp(p, ":\\\\", 3) == 0) {
     return URL_BACKSLASH;
@@ -1779,6 +1793,10 @@ int path_with_url(const char *fname)
     return 0;
   }
 
+  if (path_has_drive_letter(fname)) {
+    return 0;
+  }
+
   // check body: alpha or dash
   for (p = fname + 1; (isalpha(*p) || (*p == '-')); p++) {}
 
@@ -1787,7 +1805,7 @@ int path_with_url(const char *fname)
     return 0;
   }
 
-  // "://" or ":\\" must follow
+  // ":/" or ":\\" must follow
   return path_is_url(p);
 }
 
