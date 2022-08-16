@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
@@ -5510,16 +5511,6 @@ static void ex_only(exarg_T *eap)
   close_others(true, eap->forceit);
 }
 
-/// ":all" and ":sall".
-/// Also used for ":tab drop file ..." after setting the argument list.
-void ex_all(exarg_T *eap)
-{
-  if (eap->addr_count == 0) {
-    eap->line2 = 9999;
-  }
-  do_arg_all((int)eap->line2, eap->forceit, eap->cmdidx == CMD_drop);
-}
-
 static void ex_hide(exarg_T *eap)
 {
   // ":hide" or ":hide | cmd": hide current window
@@ -5631,158 +5622,6 @@ static void ex_goto(exarg_T *eap)
 {
   goto_byte(eap->line2);
 }
-
-/// Clear an argument list: free all file names and reset it to zero entries.
-void alist_clear(alist_T *al)
-{
-#define FREE_AENTRY_FNAME(arg) xfree((arg)->ae_fname)
-  GA_DEEP_CLEAR(&al->al_ga, aentry_T, FREE_AENTRY_FNAME);
-}
-
-/// Init an argument list.
-void alist_init(alist_T *al)
-{
-  ga_init(&al->al_ga, (int)sizeof(aentry_T), 5);
-}
-
-/// Remove a reference from an argument list.
-/// Ignored when the argument list is the global one.
-/// If the argument list is no longer used by any window, free it.
-void alist_unlink(alist_T *al)
-{
-  if (al != &global_alist && --al->al_refcount <= 0) {
-    alist_clear(al);
-    xfree(al);
-  }
-}
-
-/// Create a new argument list and use it for the current window.
-void alist_new(void)
-{
-  curwin->w_alist = xmalloc(sizeof(*curwin->w_alist));
-  curwin->w_alist->al_refcount = 1;
-  curwin->w_alist->id = ++max_alist_id;
-  alist_init(curwin->w_alist);
-}
-
-#if !defined(UNIX)
-
-/// Expand the file names in the global argument list.
-/// If "fnum_list" is not NULL, use "fnum_list[fnum_len]" as a list of buffer
-/// numbers to be re-used.
-void alist_expand(int *fnum_list, int fnum_len)
-{
-  char *save_p_su = p_su;
-
-  // Don't use 'suffixes' here.  This should work like the shell did the
-  // expansion.  Also, the vimrc file isn't read yet, thus the user
-  // can't set the options.
-  p_su = empty_option;
-  char **old_arg_files = xmalloc(sizeof(*old_arg_files) * GARGCOUNT);
-  for (int i = 0; i < GARGCOUNT; i++) {
-    old_arg_files[i] = vim_strsave(GARGLIST[i].ae_fname);
-  }
-  int old_arg_count = GARGCOUNT;
-  char **new_arg_files;
-  int new_arg_file_count;
-  if (expand_wildcards(old_arg_count, old_arg_files,
-                       &new_arg_file_count, &new_arg_files,
-                       EW_FILE|EW_NOTFOUND|EW_ADDSLASH|EW_NOERROR) == OK
-      && new_arg_file_count > 0) {
-    alist_set(&global_alist, new_arg_file_count, new_arg_files,
-              true, fnum_list, fnum_len);
-    FreeWild(old_arg_count, old_arg_files);
-  }
-  p_su = save_p_su;
-}
-#endif
-
-/// Set the argument list for the current window.
-/// Takes over the allocated files[] and the allocated fnames in it.
-void alist_set(alist_T *al, int count, char **files, int use_curbuf, int *fnum_list, int fnum_len)
-{
-  static int recursive = 0;
-
-  if (recursive) {
-    emsg(_(e_au_recursive));
-    return;
-  }
-  recursive++;
-
-  alist_clear(al);
-  ga_grow(&al->al_ga, count);
-  {
-    for (int i = 0; i < count; i++) {
-      if (got_int) {
-        // When adding many buffers this can take a long time.  Allow
-        // interrupting here.
-        while (i < count) {
-          xfree(files[i++]);
-        }
-        break;
-      }
-
-      // May set buffer name of a buffer previously used for the
-      // argument list, so that it's re-used by alist_add.
-      if (fnum_list != NULL && i < fnum_len) {
-        buf_set_name(fnum_list[i], files[i]);
-      }
-
-      alist_add(al, files[i], use_curbuf ? 2 : 1);
-      os_breakcheck();
-    }
-    xfree(files);
-  }
-
-  if (al == &global_alist) {
-    arg_had_last = false;
-  }
-  recursive--;
-}
-
-/// Add file "fname" to argument list "al".
-/// "fname" must have been allocated and "al" must have been checked for room.
-///
-/// @param set_fnum  1: set buffer number; 2: re-use curbuf
-void alist_add(alist_T *al, char *fname, int set_fnum)
-{
-  if (fname == NULL) {          // don't add NULL file names
-    return;
-  }
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(fname);
-#endif
-  AARGLIST(al)[al->al_ga.ga_len].ae_fname = (char_u *)fname;
-  if (set_fnum > 0) {
-    AARGLIST(al)[al->al_ga.ga_len].ae_fnum =
-      buflist_add(fname, BLN_LISTED | (set_fnum == 2 ? BLN_CURBUF : 0));
-  }
-  al->al_ga.ga_len++;
-}
-
-#if defined(BACKSLASH_IN_FILENAME)
-
-/// Adjust slashes in file names.  Called after 'shellslash' was set.
-void alist_slash_adjust(void)
-{
-  for (int i = 0; i < GARGCOUNT; i++) {
-    if (GARGLIST[i].ae_fname != NULL) {
-      slash_adjust(GARGLIST[i].ae_fname);
-    }
-  }
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->w_alist != &global_alist) {
-      for (int i = 0; i < WARGCOUNT(wp); i++) {
-        if (WARGLIST(wp)[i].ae_fname != NULL) {
-          slash_adjust(WARGLIST(wp)[i].ae_fname);
-        }
-      }
-    }
-  }
-}
-
-#endif
 
 /// ":preserve".
 static void ex_preserve(exarg_T *eap)
@@ -7828,62 +7667,6 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
   }
   xfree(resultbuf);
   return (char_u *)result;
-}
-
-/// Concatenate all files in the argument list, separated by spaces, and return
-/// it in one allocated string.
-/// Spaces and backslashes in the file names are escaped with a backslash.
-static char *arg_all(void)
-{
-  char *retval = NULL;
-
-  // Do this loop two times:
-  // first time: compute the total length
-  // second time: concatenate the names
-  for (;;) {
-    int len = 0;
-    for (int idx = 0; idx < ARGCOUNT; idx++) {
-      char *p = alist_name(&ARGLIST[idx]);
-      if (p == NULL) {
-        continue;
-      }
-      if (len > 0) {
-        // insert a space in between names
-        if (retval != NULL) {
-          retval[len] = ' ';
-        }
-        len++;
-      }
-      for (; *p != NUL; p++) {
-        if (*p == ' '
-#ifndef BACKSLASH_IN_FILENAME
-            || *p == '\\'
-#endif
-            || *p == '`') {
-          // insert a backslash
-          if (retval != NULL) {
-            retval[len] = '\\';
-          }
-          len++;
-        }
-        if (retval != NULL) {
-          retval[len] = *p;
-        }
-        len++;
-      }
-    }
-
-    // second time: break here
-    if (retval != NULL) {
-      retval[len] = NUL;
-      break;
-    }
-
-    // allocate memory
-    retval = xmalloc((size_t)len + 1);
-  }
-
-  return retval;
 }
 
 /// Expand the <sfile> string in "arg".

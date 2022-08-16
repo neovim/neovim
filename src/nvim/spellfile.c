@@ -230,6 +230,7 @@
 #include <stdio.h>
 #include <wctype.h>
 
+#include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

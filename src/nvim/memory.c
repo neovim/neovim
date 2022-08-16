@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "nvim/api/extmark.h"
+#include "nvim/arglist.h"
 #include "nvim/context.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/eval.h"

@@ -7,6 +7,7 @@
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
+#include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/buffer.h"
@@ -371,77 +372,6 @@ static void f_appendbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     const linenr_T lnum = tv_get_lnum_buf(&argvars[1], buf);
     set_buffer_lines(buf, lnum, true, &argvars[2], rettv);
-  }
-}
-
-static void f_argc(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  if (argvars[0].v_type == VAR_UNKNOWN) {
-    // use the current window
-    rettv->vval.v_number = ARGCOUNT;
-  } else if (argvars[0].v_type == VAR_NUMBER
-             && tv_get_number(&argvars[0]) == -1) {
-    // use the global argument list
-    rettv->vval.v_number = GARGCOUNT;
-  } else {
-    // use the argument list of the specified window
-    win_T *wp = find_win_by_nr_or_id(&argvars[0]);
-    if (wp != NULL) {
-      rettv->vval.v_number = WARGCOUNT(wp);
-    } else {
-      rettv->vval.v_number = -1;
-    }
-  }
-}
-
-/// "argidx()" function
-static void f_argidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = curwin->w_arg_idx;
-}
-
-/// "arglistid" function
-static void f_arglistid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = -1;
-  win_T *wp = find_tabwin(&argvars[0], &argvars[1]);
-  if (wp != NULL) {
-    rettv->vval.v_number = wp->w_alist->id;
-  }
-}
-
-/// "argv(nr)" function
-static void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  aentry_T *arglist = NULL;
-  int argcount = -1;
-
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    if (argvars[1].v_type == VAR_UNKNOWN) {
-      arglist = ARGLIST;
-      argcount = ARGCOUNT;
-    } else if (argvars[1].v_type == VAR_NUMBER
-               && tv_get_number(&argvars[1]) == -1) {
-      arglist = GARGLIST;
-      argcount = GARGCOUNT;
-    } else {
-      win_T *wp = find_win_by_nr_or_id(&argvars[1]);
-      if (wp != NULL) {
-        // Use the argument list of the specified window
-        arglist = WARGLIST(wp);
-        argcount = WARGCOUNT(wp);
-      }
-    }
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
-    int idx = (int)tv_get_number_chk(&argvars[0], NULL);
-    if (arglist != NULL && idx >= 0 && idx < argcount) {
-      rettv->vval.v_string = xstrdup((const char *)alist_name(&arglist[idx]));
-    } else if (idx == -1) {
-      get_arglist_as_rettv(arglist, argcount, rettv);
-    }
-  } else {
-    get_arglist_as_rettv(ARGLIST, ARGCOUNT, rettv);
   }
 }
 

@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
