@@ -6,7 +6,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local meths = helpers.meths
-local sleep = helpers.sleep
+local poke_eventloop = helpers.poke_eventloop
 
 before_each(clear)
 
@@ -143,7 +143,7 @@ describe('Ex mode', function()
       ^                                                            |
     ]])
     feed('<C-C>')
-    sleep(10)  -- Wait for input to be flushed
+    poke_eventloop()  -- Wait for input to be flushed
     feed('foo<CR>')
     screen:expect([[
       Entering Ex mode.  Type "visual" to go to Normal mode.      |

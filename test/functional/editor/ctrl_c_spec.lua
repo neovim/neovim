@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, source = helpers.clear, helpers.feed, helpers.source
 local command = helpers.command
+local poke_eventloop = helpers.poke_eventloop
 local sleep = helpers.sleep
 
 describe("CTRL-C (mapped)", function()
@@ -57,11 +58,9 @@ describe("CTRL-C (mapped)", function()
   it('interrupts :sleep', function()
     command('nnoremap <C-C> <Nop>')
     feed(':sleep 100<CR>')
-    -- wait for :sleep to start
-    sleep(10)
+    poke_eventloop()  -- wait for :sleep to start
     feed('foo<C-C>')
-    -- wait for input buffer to be flushed
-    sleep(10)
+    poke_eventloop()  -- wait for input buffer to be flushed
     feed('i')
     screen:expect([[
       ^                                                    |
@@ -77,10 +76,9 @@ describe("CTRL-C (mapped)", function()
     command('nnoremap <C-C> <Nop>')
     command('nmap <F2> <Ignore><F2>')
     feed('<F2>')
-    sleep(10)
+    sleep(10)  -- wait for the key to enter typeahead
     feed('foo<C-C>')
-    -- wait for input buffer to be flushed
-    sleep(10)
+    poke_eventloop()  -- wait for input buffer to be flushed
     feed('i')
     screen:expect([[
       ^                                                    |
