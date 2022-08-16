@@ -2096,8 +2096,7 @@ void ex_function(exarg_T *eap)
     }
     if (arg != NULL && (fudi.fd_di == NULL || !tv_is_func(fudi.fd_di->di_tv))) {
       int j = (*arg == K_SPECIAL) ? 3 : 0;
-      while (arg[j] != NUL && (j == 0 ? eval_isnamec1(arg[j])
-                                      : eval_isnamec(arg[j]))) {
+      while (arg[j] != NUL && (j == 0 ? eval_isnamec1(arg[j]) : eval_isnamec(arg[j]))) {
         j++;
       }
       if (arg[j] != NUL) {

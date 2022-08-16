@@ -3794,11 +3794,8 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       while (*look == '>') {
         look++;
       }
-    }
-    /*
-     * Is it a word: "=word"?
-     */
-    else if (*look == '=' && look[1] != ',' && look[1] != NUL) {
+      // Is it a word: "=word"?
+    } else if (*look == '=' && look[1] != ',' && look[1] != NUL) {
       look++;
       if (*look == '~') {
         icase = true;
@@ -5219,7 +5216,7 @@ static bool ins_tab(void)
     // Find first white before the cursor
     fpos = curwin->w_cursor;
     while (fpos.col > 0 && ascii_iswhite(ptr[-1])) {
-      --fpos.col;
+      fpos.col--;
       ptr--;
     }
 
@@ -5252,7 +5249,7 @@ static bool ins_tab(void)
           }
         }
       }
-      ++fpos.col;
+      fpos.col++;
       ptr++;
       vcol += i;
     }

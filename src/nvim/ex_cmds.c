@@ -1464,7 +1464,7 @@ error:
     // put cursor back in same position for ":w !cmd"
     curwin->w_cursor = cursor_save;
     no_wait_return--;
-    wait_return(FALSE);
+    wait_return(false);
   }
 
 filterend:

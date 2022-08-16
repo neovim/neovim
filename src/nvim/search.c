@@ -3880,9 +3880,7 @@ extend:
 
     if (include || !do_white) {
       end_lnum++;
-      /*
-       * skip to end of paragraph
-       */
+      // skip to end of paragraph
       while (end_lnum < curbuf->b_ml.ml_line_count
              && !linewhite(end_lnum + 1)
              && !startPS(end_lnum + 1, 0, 0)) {

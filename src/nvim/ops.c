@@ -1927,7 +1927,7 @@ static int op_replace(oparg_T *oap, int c)
       // times.
       if (utf_char2cells(c) > 1) {
         if ((numc & 1) && !bd.is_short) {
-          ++bd.endspaces;
+          bd.endspaces++;
           n++;
         }
         numc = numc / 2;
@@ -3442,11 +3442,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
       }
       curbuf->b_op_start = curwin->w_cursor;
-    }
-    /*
-     * Line mode: BACKWARD is the same as FORWARD on the previous line
-     */
-    else if (dir == BACKWARD) {
+    } else if (dir == BACKWARD) {
+      // Line mode: BACKWARD is the same as FORWARD on the previous line
       lnum--;
     }
     new_cursor = curwin->w_cursor;

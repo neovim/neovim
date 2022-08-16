@@ -4821,7 +4821,7 @@ int check_timestamps(int focus)
       }
     }
     no_wait_return--;
-    need_check_timestamps = FALSE;
+    need_check_timestamps = false;
     if (need_wait_return && didit == 2) {
       // make sure msg isn't overwritten
       msg_puts("\n");

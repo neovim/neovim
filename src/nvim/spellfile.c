@@ -856,7 +856,7 @@ static void tree_count_words(char_u *byts, idx_T *idxs)
         // flags).
         while (byts[n + 1] == 0) {
           n++;
-          ++curi[depth];
+          curi[depth]++;
         }
       } else {
         // Normal char, go one level deeper to count the words.
@@ -5032,7 +5032,7 @@ static int sug_filltree(spellinfo_T *spin, slang_T *slang)
         }
 
         words_done++;
-        ++wordcount[depth];
+        wordcount[depth]++;
 
         // Reset the block count each time to avoid compression
         // kicking in.

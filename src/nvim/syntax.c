@@ -4709,7 +4709,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
               SYN_ITEMS(curwin->w_s)[idx].sp_next_list =
                 syn_opt_arg.next_list;
             }
-            ++curwin->w_s->b_syn_patterns.ga_len;
+            curwin->w_s->b_syn_patterns.ga_len++;
             idx++;
             if (syn_opt_arg.flags & HL_FOLD) {
               ++curwin->w_s->b_syn_folditems;

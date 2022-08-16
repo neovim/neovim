@@ -749,7 +749,7 @@ static void report_pending(int action, int pending, void *value)
     msg_silent = FALSE;         // display messages
   }
   no_wait_return++;
-  msg_scroll = TRUE;            // always scroll up, don't overwrite
+  msg_scroll = true;            // always scroll up, don't overwrite
   smsg(mesg, s);
   msg_puts("\n");  // don't overwrite this either
   cmdline_row = msg_row;
