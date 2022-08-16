@@ -223,4 +223,10 @@ typedef struct {
 #define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, \
                                  .version = -1, .is_default = false }
 
+/// highlight attributes with associated priorities
+typedef struct {
+  int attr_id;
+  int priority;
+} HlPriAttr;
+
 #endif  // NVIM_HIGHLIGHT_DEFS_H
