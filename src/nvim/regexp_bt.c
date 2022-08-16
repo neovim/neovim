@@ -2189,7 +2189,7 @@ collection:
 
         while (*regparse != NUL && *regparse != ']') {
           if (*regparse == '-') {
-            ++regparse;
+            regparse++;
             // The '-' is not used for a range at the end and
             // after or before a '\n'.
             if (*regparse == ']' || *regparse == NUL
@@ -2619,7 +2619,7 @@ static char_u *regpiece(int *flagp)
       regoptail(ret, regnode(BACK));
       regoptail(ret, ret);
       reginsert_limits(BRACE_LIMITS, minval, maxval, ret);
-      ++num_complex_braces;
+      num_complex_braces++;
     }
     if (minval > 0 && maxval > 0) {
       *flagp = (HASWIDTH | (flags & (HASNL | HASLOOKBH)));
@@ -2792,7 +2792,7 @@ static char_u *reg(int paren, int *flagp)
       EMSG2_RET_NULL(_("E51: Too many %s("), reg_magic == MAGIC_ALL);
     }
     parno = regnpar;
-    ++regnpar;
+    regnpar++;
     ret = regnode(MOPEN + parno);
   } else if (paren == REG_NPAREN) {
     // Make a NOPEN node.
@@ -3181,7 +3181,7 @@ static int regrepeat(char_u *p, long maxcount)
       } else {
         break;
       }
-      ++count;
+      count++;
     }
     break;
 
@@ -3299,7 +3299,7 @@ do_class:
       } else {
         break;
       }
-      ++count;
+      count++;
     }
     break;
 
@@ -3415,7 +3415,7 @@ do_class:
           break;
         }
         scan += len;
-        ++count;
+        count++;
       }
     }
   }
@@ -3453,7 +3453,7 @@ do_class:
         }
         scan++;
       }
-      ++count;
+      count++;
     }
     break;
 

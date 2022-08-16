@@ -350,7 +350,7 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
 
     stringp = (char_u *)commap;
     if (*stringp == ',') {
-      ++stringp;
+      stringp++;
     }
   }
 
@@ -837,7 +837,7 @@ void ex_hardcopy(exarg_T *eap)
         }
       }
       if (settings.duplex && prtpos.file_line <= eap->line2) {
-        ++page_count;
+        page_count++;
       }
 
       // Remember the position where the next page starts.

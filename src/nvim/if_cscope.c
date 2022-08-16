@@ -663,7 +663,7 @@ static char *cs_create_cmd(char *csoption, char *pattern)
   pat = pattern;
   if (search != 4 && search != 6) {
     while (ascii_iswhite(*pat)) {
-      ++pat;
+      pat++;
     }
   }
 

@@ -1056,7 +1056,7 @@ bool scrolldown(long line_count, int byfold)
       // A sequence of folded lines only counts for one logical line
       linenr_T first;
       if (hasFolding(curwin->w_topline, &first, NULL)) {
-        ++done;
+        done++;
         if (!byfold) {
           line_count -= curwin->w_topline - first - 1;
         }
@@ -1092,7 +1092,7 @@ bool scrolldown(long line_count, int byfold)
   while (wrow >= curwin->w_height_inner && curwin->w_cursor.lnum > 1) {
     linenr_T first;
     if (hasFolding(curwin->w_cursor.lnum, &first, NULL)) {
-      --wrow;
+      wrow--;
       if (first == 1) {
         curwin->w_cursor.lnum = 1;
       } else {
@@ -1406,8 +1406,8 @@ void scroll_cursor_top(int min_scroll, int always)
   }
 
   if (hasFolding(curwin->w_cursor.lnum, &top, &bot)) {
-    --top;
-    ++bot;
+    top--;
+    bot++;
   } else {
     top = curwin->w_cursor.lnum - 1;
     bot = curwin->w_cursor.lnum + 1;
@@ -1453,8 +1453,8 @@ void scroll_cursor_top(int min_scroll, int always)
 
     extra += i;
     new_topline = top;
-    --top;
-    ++bot;
+    top--;
+    bot++;
   }
 
   /*
@@ -1664,7 +1664,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     for (i = 0; i < scrolled && boff.lnum < curwin->w_botline;) {
       botline_forw(curwin, &boff);
       i += boff.height;
-      ++line_count;
+      line_count++;
     }
     if (i < scrolled) {         // below curwin->w_botline, don't scroll
       line_count = 9999;
@@ -1726,7 +1726,7 @@ void scroll_cursor_halfway(int atend)
       } else {
         ++below;                    // count a "~" line
         if (atend) {
-          ++used;
+          used++;
         }
       }
     }
@@ -1835,7 +1835,7 @@ void cursor_correct(void)
       if (topline < botline) {
         above += win_get_fill(curwin, topline + 1);
       }
-      ++topline;
+      topline++;
     }
   }
   if (topline == botline || botline == 0) {

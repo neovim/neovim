@@ -264,7 +264,7 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
       *d++ = '\\';
       *d++ = '\'';
       *d++ = '\'';
-      ++p;
+      p++;
       continue;
     }
     if ((*p == '\n' && (csh_like || do_newline))
@@ -431,8 +431,8 @@ int vim_stricmp(const char *s1, const char *s2)
     if (*s1 == NUL) {
       break;                                // strings match until NUL
     }
-    ++s1;
-    ++s2;
+    s1++;
+    s2++;
   }
   return 0;                                 // strings match
 }
@@ -457,9 +457,9 @@ int vim_strnicmp(const char *s1, const char *s2, size_t len)
     if (*s1 == NUL) {
       break;                                // strings match until NUL
     }
-    ++s1;
-    ++s2;
-    --len;
+    s1++;
+    s2++;
+    len--;
   }
   return 0;                                 // strings match
 }

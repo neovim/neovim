@@ -307,7 +307,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
       search_ctx->ffsc_start_dir = vim_strnsave(rel_fname, len);
     }
     if (*++path != NUL) {
-      ++path;
+      path++;
     }
   } else if (*path == NUL || !vim_isAbsName(path)) {
 #ifdef BACKSLASH_IN_FILENAME

@@ -821,7 +821,7 @@ static int64_t gethexchrs(int maxinputlen)
     }
     nr <<= 4;
     nr |= hex2nr(c);
-    ++regparse;
+    regparse++;
   }
 
   if (i == 0) {
@@ -878,7 +878,7 @@ static int64_t getoctchrs(void)
     }
     nr <<= 3;
     nr |= hex2nr(c);
-    ++regparse;
+    regparse++;
   }
 
   if (i == 0) {
@@ -2095,8 +2095,8 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest, int des
                 dst++;
               }
 
-              ++s;
-              --len;
+              s++;
+              len--;
             }
           }
         }

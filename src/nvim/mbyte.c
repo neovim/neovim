@@ -1605,7 +1605,7 @@ void show_utf8(void)
     }
     sprintf((char *)IObuff + rlen, "%02x ",
             (line[i] == NL) ? NUL : line[i]);          // NUL is stored as NL
-    --clen;
+    clen--;
     rlen += (int)STRLEN(IObuff + rlen);
     if (rlen > IOSIZE - 20) {
       break;
@@ -1638,7 +1638,7 @@ int utf_head_off(const char_u *base, const char_u *p)
 
     // Move q to the first byte of this char.
     while (q > base && (*q & 0xc0) == 0x80) {
-      --q;
+      q--;
     }
     // Check for illegal sequence. Do allow an illegal byte after where we
     // started.
@@ -1659,10 +1659,10 @@ int utf_head_off(const char_u *base, const char_u *p)
     if (arabic_maycombine(c)) {
       // Advance to get a sneak-peak at the next char
       const char_u *j = q;
-      --j;
+      j--;
       // Move j to the first byte of this char.
       while (j > base && (*j & 0xc0) == 0x80) {
-        --j;
+        j--;
       }
       if (arabic_combine(utf_ptr2char((char *)j), c)) {
         continue;

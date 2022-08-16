@@ -1747,7 +1747,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
         replace_push(replaced);
         replaced = NUL;
       }
-      ++start_col;
+      start_col++;
     }
   }
 
@@ -1913,7 +1913,7 @@ int get_literal(bool no_simplify)
         cc = cc * 10 + nc - '0';
       }
 
-      ++i;
+      i++;
     }
 
     if (cc > 255
@@ -1948,7 +1948,7 @@ int get_literal(bool no_simplify)
     cc = '\n';
   }
 
-  --no_mapping;
+  no_mapping--;
   if (nc) {
     vungetc(nc);
     // A character typed with i_CTRL-V_digit cannot have modifiers.
@@ -3253,7 +3253,7 @@ int cursor_down(long n, int upd_topline)
         if (hasFolding(lnum, NULL, &last)) {
           lnum = last + 1;
         } else {
-          ++lnum;
+          lnum++;
         }
         if (lnum >= curbuf->b_ml.ml_line_count) {
           break;
@@ -3433,7 +3433,7 @@ void replace_push(int c)
     memmove(p + 1, p, (size_t)replace_offset);
   }
   *p = (char_u)c;
-  ++replace_stack_nr;
+  replace_stack_nr++;
 }
 
 /*
@@ -3468,7 +3468,7 @@ static void replace_join(int off)
 {
   for (ssize_t i = replace_stack_nr; --i >= 0;) {
     if (replace_stack[i] == NUL && off-- <= 0) {
-      --replace_stack_nr;
+      replace_stack_nr--;
       memmove(replace_stack + i, replace_stack + i + 1,
               (size_t)(replace_stack_nr - i));
       return;
@@ -3799,7 +3799,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
      * Is it a word: "=word"?
      */
     else if (*look == '=' && look[1] != ',' && look[1] != NUL) {
-      ++look;
+      look++;
       if (*look == '~') {
         icase = true;
         look++;
@@ -5220,7 +5220,7 @@ static bool ins_tab(void)
     fpos = curwin->w_cursor;
     while (fpos.col > 0 && ascii_iswhite(ptr[-1])) {
       --fpos.col;
-      --ptr;
+      ptr--;
     }
 
     // In Replace mode, don't change characters before the insert point.
@@ -5253,7 +5253,7 @@ static bool ins_tab(void)
         }
       }
       ++fpos.col;
-      ++ptr;
+      ptr++;
       vcol += i;
     }
 
@@ -5264,8 +5264,8 @@ static bool ins_tab(void)
       // Skip over the spaces we need.
       while (vcol < want_vcol && *ptr == ' ') {
         vcol += lbr_chartabsize(line, ptr, vcol);
-        ++ptr;
-        ++repl_off;
+        ptr++;
+        repl_off++;
       }
       if (vcol > want_vcol) {
         // Must have a char with 'showbreak' just before it.

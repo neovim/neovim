@@ -150,7 +150,7 @@ static void u_check_tree(u_header_T *uhp, u_header_T *exp_uh_next, u_header_T *e
   if (uhp == NULL) {
     return;
   }
-  ++header_count;
+  header_count++;
   if (uhp == curbuf->b_u_curhead && ++seen_b_u_curhead > 1) {
     emsg("b_u_curhead found twice (looping?)");
     return;
@@ -1334,7 +1334,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
     if (uhp->uh_walk != mark) {
       uhp->uh_walk = mark;
 #ifdef U_DEBUG
-      ++headers_written;
+      headers_written++;
 #endif
       if (!serialize_uhp(&bi, uhp)) {
         goto write_error;
@@ -2598,7 +2598,7 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
   }
 
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
-    --u_newcount;
+    u_newcount--;
   }
 
   u_oldcount -= u_newcount;
@@ -2742,7 +2742,7 @@ void ex_undolist(exarg_T *eap)
     if (uhp->uh_prev.ptr != NULL && uhp->uh_prev.ptr->uh_walk != nomark
         && uhp->uh_prev.ptr->uh_walk != mark) {
       uhp = uhp->uh_prev.ptr;
-      ++changes;
+      changes++;
     }
     // go to alternate branch if we haven't been there
     else if (uhp->uh_alt_next.ptr != NULL
@@ -2755,7 +2755,7 @@ void ex_undolist(exarg_T *eap)
                && uhp->uh_next.ptr->uh_walk != nomark
                && uhp->uh_next.ptr->uh_walk != mark) {
       uhp = uhp->uh_next.ptr;
-      --changes;
+      changes--;
     } else {
       // need to backtrack; mark this node as done
       uhp->uh_walk = nomark;
@@ -2763,7 +2763,7 @@ void ex_undolist(exarg_T *eap)
         uhp = uhp->uh_alt_prev.ptr;
       } else {
         uhp = uhp->uh_next.ptr;
-        --changes;
+        changes--;
       }
     }
   }

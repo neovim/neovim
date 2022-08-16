@@ -386,7 +386,7 @@ retnomove:
       count = 0;
       for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count;) {
         if (curwin->w_topfill > 0) {
-          ++count;
+          count++;
         } else {
           count += plines_win(curwin, curwin->w_topline, true);
         }
@@ -514,7 +514,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       break;                    // past end of file
     }
     row -= count;
-    ++lnum;
+    lnum++;
   }
 
   if (!retval) {
