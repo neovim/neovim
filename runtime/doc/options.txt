@@ -6951,7 +6951,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	CTRL-P/CTRL-N, cause the highlight to move to the appropriate match.
 	'wildmode' must specify "full": "longest" and "list" do not start
 	'wildmenu' mode. You can check the current mode with |wildmenumode()|.
-	The menu is canceled when a key is hit that is not used for selecting
+	The menu is cancelled when a key is hit that is not used for selecting
 	a completion.
 
 	While the menu is active these keys have special meanings:
