@@ -107,6 +107,12 @@ module.cmds = {
     func='ex_listdo',
   },
   {
+    command='argdedupe',
+    flags=TRLBAR,
+    addr_type='ADDR_NONE',
+    func='ex_argdedupe',
+  },
+  {
     command='argedit',
     flags=bit.bor(BANG, NEEDARG, RANGE, ZEROR, FILES, CMDARG, ARGOPT, TRLBAR),
     addr_type='ADDR_ARGUMENTS',

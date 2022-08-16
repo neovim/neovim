@@ -613,11 +613,18 @@ list of the current window.
 			And after the last one:
 				:+2argadd y	a b c x y
 			There is no check for duplicates, it is possible to
-			add a file to the argument list twice.
-			The currently edited file is not changed.
+			add a file to the argument list twice.  You can use
+			|:argdedupe| to fix it afterwards: >
+				:argadd *.txt | argdedupe
+<			The currently edited file is not changed.
 			Note: you can also use this method: >
 				:args ## x
 <			This will add the "x" item and sort the new list.
+
+:argded[upe]					*:argded* *:argdedupe*
+			Remove duplicate filenames from the argument list.
+			If your current file is a duplicate, your current file
+			will change to the original file index.
 
 :argd[elete] {pattern} ..		*:argd* *:argdelete* *E480* *E610*
 			Delete files from the argument list that match the

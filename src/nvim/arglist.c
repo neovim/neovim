@@ -620,6 +620,29 @@ void ex_next(exarg_T *eap)
   }
 }
 
+/// ":argdedupe"
+void ex_argdedupe(exarg_T *eap FUNC_ATTR_UNUSED)
+{
+  for (int i = 0; i < ARGCOUNT; i++) {
+    for (int j = i + 1; j < ARGCOUNT; j++) {
+      if (FNAMECMP(ARGLIST[i].ae_fname, ARGLIST[j].ae_fname) == 0) {
+        xfree(ARGLIST[j].ae_fname);
+        memmove(ARGLIST + j, ARGLIST + j + 1,
+                (size_t)(ARGCOUNT - j - 1) * sizeof(aentry_T));
+        ARGCOUNT--;
+
+        if (curwin->w_arg_idx == j) {
+          curwin->w_arg_idx = i;
+        } else if (curwin->w_arg_idx > j) {
+          curwin->w_arg_idx--;
+        }
+
+        j--;
+      }
+    }
+  }
+}
+
 /// ":argedit"
 void ex_argedit(exarg_T *eap)
 {
