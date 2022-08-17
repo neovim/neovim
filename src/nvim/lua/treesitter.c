@@ -6,6 +6,7 @@
 // trees and nodes, and could be broken out as a reusable lua package
 
 #include <assert.h>
+#include <bits/types.h>
 #include <inttypes.h>
 #include <lauxlib.h>
 #include <lua.h>
@@ -20,6 +21,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/memline.h"
+#include "nvim/option_defs.h"
 #include "tree_sitter/api.h"
 
 #define TS_META_PARSER "treesitter_parser"
@@ -45,6 +47,7 @@ static struct luaL_Reg parser_meta[] = {
   { "parse", parser_parse },
   { "set_included_ranges", parser_set_ranges },
   { "included_ranges", parser_get_ranges },
+  { "reset", parser_reset },
   { NULL, NULL }
 };
 
@@ -291,6 +294,16 @@ static int parser_tostring(lua_State *L)
   return 1;
 }
 
+static int parser_reset(lua_State *L)
+{
+  TSParser **p = parser_check(L, 1);
+  if (p) {
+    ts_parser_reset(*p);
+  }
+
+  return 0;
+}
+
 static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position,
                             uint32_t *bytes_read)
 {
@@ -362,6 +375,9 @@ static int parser_parse(lua_State *L)
   buf_T *buf;
   TSInput input;
 
+  // Use redrawtime to determine the timeout
+  ts_parser_set_timeout_micros(*p, (uint64_t)p_rdt * 1000);
+
   // This switch is necessary because of the behavior of lua_isstring, that
   // consider numbers as strings...
   switch (lua_type(L, 3)) {
@@ -391,10 +407,11 @@ static int parser_parse(lua_State *L)
     return luaL_argerror(L, 3, "expected either string or buffer handle");
   }
 
-  // Sometimes parsing fails (timeout, or wrong parser ABI)
-  // In those case, just return an error.
+  // As we ensure that the parser ABIs are correct when creating the languages,
+  // we are sure that the only reason of receiving a NULL is because of a
+  // timeout.
   if (!new_tree) {
-    return luaL_error(L, "An error occurred when parsing.");
+    return luaL_error(L, "Parsing time exceeded 'redrawtime'.");
   }
 
   // The new tree will be pushed to the stack, without copy, ownership is now to
