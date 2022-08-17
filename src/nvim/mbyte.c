@@ -1006,8 +1006,9 @@ int utf_char2len(const int c)
 
 /// Convert Unicode character to UTF-8 string
 ///
-/// @param c character to convert to \p buf
-/// @param[out] buf UTF-8 string generated from \p c, does not add \0
+/// @param c         character to convert to UTF-8 string in \p buf
+/// @param[out] buf  UTF-8 string generated from \p c, does not add \0
+///                  must have room for at least 6 bytes
 /// @return Number of bytes (1-6).
 int utf_char2bytes(const int c, char *const buf)
 {

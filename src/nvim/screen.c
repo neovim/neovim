@@ -6400,6 +6400,7 @@ void showruler(bool always)
       || (p_title && (stl_syntax & STL_IN_TITLE))) {
     maketitle();
   }
+
   // Redraw the tab pages line if needed.
   if (redraw_tabline) {
     draw_tabline();
@@ -6714,6 +6715,7 @@ void screen_resize(int width, int height)
 
   if (starting != NO_SCREEN) {
     maketitle();
+
     changed_line_abv_curs();
     invalidate_botline();
 
