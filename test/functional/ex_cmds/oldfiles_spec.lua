@@ -29,7 +29,6 @@ describe(':oldfiles', function()
   it('shows most recently used files', function()
     local screen = Screen.new(100, 5)
     screen:attach()
-    feed_command("set display-=msgsep")
     feed_command('edit testfile1')
     feed_command('edit testfile2')
     feed_command('wshada')
@@ -37,7 +36,7 @@ describe(':oldfiles', function()
     local oldfiles = helpers.meths.get_vvar('oldfiles')
     feed_command('oldfiles')
     screen:expect([[
-      testfile2                                                                                           |
+                                                                                                          |
       1: ]].. add_padding(oldfiles[1]) ..[[ |
       2: ]].. add_padding(oldfiles[2]) ..[[ |
                                                                                                           |

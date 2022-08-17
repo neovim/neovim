@@ -96,9 +96,9 @@ describe('clipboard', function()
       [0] = {bold = true, foreground = Screen.colors.Blue},
       [1] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [2] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [3] = {bold = true, reverse = true};
     })
     screen:attach()
-    command("set display-=msgsep")
   end)
 
   it('unnamed register works without provider', function()
@@ -123,10 +123,10 @@ describe('clipboard', function()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect{grid=[[
-      {0:~                                                                       }|
-      clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
-      {1:E492: Not an editor command: bogus_cmd | redir END}                      |
-      {2:Press ENTER or type command to continue}^                                 |
+    {3:                                                                        }|
+    clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
+    {1:E492: Not an editor command: bogus_cmd | redir END}                      |
+    {2:Press ENTER or type command to continue}^                                 |
     ]]}
   end)
 
