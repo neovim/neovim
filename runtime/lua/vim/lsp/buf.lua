@@ -61,7 +61,7 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
----     - on_list: (function) handler for list results. See |on-list-handler|
+---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.declaration(options)
   local params = util.make_position_params()
   request_with_options('textDocument/declaration', params, options)
@@ -71,7 +71,7 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
----     - on_list: (function) handler for list results. See |on-list-handler|
+---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.definition(options)
   local params = util.make_position_params()
   request_with_options('textDocument/definition', params, options)
@@ -81,7 +81,7 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
----     - on_list: (function) handler for list results. See |on-list-handler|
+---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.type_definition(options)
   local params = util.make_position_params()
   request_with_options('textDocument/typeDefinition', params, options)
@@ -91,7 +91,7 @@ end
 --- quickfix window.
 ---
 ---@param options table|nil additional options
----     - on_list: (function) handler for list results. See |on-list-handler|
+---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.implementation(options)
   local params = util.make_position_params()
   request_with_options('textDocument/implementation', params, options)
@@ -503,7 +503,7 @@ end
 ---@param context (table) Context for the request
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
 ---@param options table|nil additional options
----     - on_list: (function) handler for list results. See |on-list-handler|
+---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.references(context, options)
   validate({ context = { context, 't', true } })
   local params = util.make_position_params()
@@ -516,7 +516,7 @@ end
 --- Lists all symbols in the current buffer in the quickfix window.
 ---
 ---@param options table|nil additional options
----     - on_list: (function) handler for list results. See |on-list-handler|
+---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.document_symbol(options)
   local params = { textDocument = util.make_text_document_params() }
   request_with_options('textDocument/documentSymbol', params, options)
@@ -659,7 +659,7 @@ end
 ---
 ---@param query (string, optional)
 ---@param options table|nil additional options
----     - on_list: (function) handler for list results. See |on-list-handler|
+---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.workspace_symbol(query, options)
   query = query or npcall(vim.fn.input, 'Query: ')
   if query == nil then
