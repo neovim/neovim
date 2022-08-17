@@ -303,8 +303,6 @@ int hl_get_ui_attr(int ns_id, int idx, int final_id, bool optional)
     if (pum_drawn()) {
       must_redraw_pum = true;
     }
-  } else if (idx == HLF_MSG && ns_id == -1) {
-    msg_grid.blending = attrs.hl_blend > -1;
   }
 
   if (optional && !available) {
