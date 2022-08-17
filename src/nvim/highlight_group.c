@@ -1790,11 +1790,18 @@ static int syn_add_group(const char *name, size_t len)
 /// @see syn_attr2entry
 int syn_id2attr(int hl_id)
 {
-  hl_id = syn_get_final_id(hl_id);
+  return syn_ns_id2attr(-1, hl_id, false);
+}
+
+int syn_ns_id2attr(int ns_id, int hl_id, bool optional)
+{
+  hl_id = syn_ns_get_final_id(&ns_id, hl_id);
   HlGroup *sgp = &hl_table[hl_id - 1];  // index is ID minus one
 
-  int attr = ns_get_hl(-1, hl_id, false, sgp->sg_set);
-  if (attr >= 0) {
+  int attr = ns_get_hl(&ns_id, hl_id, false, sgp->sg_set);
+
+  // if a highlight group is optional, don't use the global value
+  if (attr >= 0 || (optional && ns_id > 0)) {
     return attr;
   }
   return sgp->sg_attr;
@@ -1803,10 +1810,16 @@ int syn_id2attr(int hl_id)
 /// Translate a group ID to the final group ID (following links).
 int syn_get_final_id(int hl_id)
 {
+  int id = curwin->w_ns_hl_active;
+  return syn_ns_get_final_id(&id, hl_id);
+}
+
+int syn_ns_get_final_id(int *ns_id, int hl_id)
+{
   int count;
 
   if (hl_id > highlight_ga.ga_len || hl_id < 1) {
-    return 0;                           // Can be called from eval!!
+    return 0;  // Can be called from eval!!
   }
 
   // Follow links until there is no more.
@@ -1814,10 +1827,10 @@ int syn_get_final_id(int hl_id)
   for (count = 100; --count >= 0;) {
     HlGroup *sgp = &hl_table[hl_id - 1];  // index is ID minus one
 
-    // ACHTUNG: when using "tmp" attribute (no link) the function might be
+    // TODO(bfredl): when using "tmp" attribute (no link) the function might be
     // called twice. it needs be smart enough to remember attr only to
     // syn_id2attr time
-    int check = ns_get_hl(-1, hl_id, true, sgp->sg_set);
+    int check = ns_get_hl(ns_id, hl_id, true, sgp->sg_set);
     if (check == 0) {
       return hl_id;  // how dare! it broke the link!
     } else if (check > 0) {
@@ -1915,14 +1928,15 @@ void highlight_changed(void)
     if (id == 0) {
       abort();
     }
-    int final_id = syn_get_final_id(id);
+    int ns_id = -1;
+    int final_id = syn_ns_get_final_id(&ns_id, id);
     if (hlf == HLF_SNC) {
       id_SNC = final_id;
     } else if (hlf == HLF_S) {
       id_S = final_id;
     }
 
-    highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
+    highlight_attr[hlf] = hl_get_ui_attr(ns_id, hlf, final_id,
                                          (hlf == HLF_INACTIVE || hlf == HLF_LC));
 
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
@@ -1934,6 +1948,9 @@ void highlight_changed(void)
       highlight_attr_last[hlf] = highlight_attr[hlf];
     }
   }
+
+  // sentinel value. used when no hightlight namespace is active
+  highlight_attr[HLF_COUNT] = 0;
 
   //
   // Setup the user highlights

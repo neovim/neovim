@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
@@ -28,6 +29,7 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
+#include "nvim/highlight.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
@@ -700,7 +702,7 @@ win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
     win_remove(wp, NULL);
     win_append(lastwin_nofloating(), wp);
   }
-  wp->w_floating = 1;
+  wp->w_floating = true;
   wp->w_status_height = 0;
   wp->w_winbar_height = 0;
   wp->w_hsep_height = 0;
@@ -730,13 +732,15 @@ void win_set_minimal_style(win_T *wp)
                    : concat_str(old, (char_u *)",eob: "));
     free_string_option(old);
   }
-  if (wp->w_hl_ids[HLF_EOB] != -1) {
-    char_u *old = wp->w_p_winhl;
-    wp->w_p_winhl = ((*old == NUL)
-                     ? (char_u *)xstrdup("EndOfBuffer:")
-                     : concat_str(old, (char_u *)",EndOfBuffer:"));
-    free_string_option(old);
-  }
+
+  // TODO(bfredl): this could use a highlight namespace directly,
+  // and avoid pecularities around window options
+  char_u *old = wp->w_p_winhl;
+  wp->w_p_winhl = ((*old == NUL)
+                   ? (char_u *)xstrdup("EndOfBuffer:")
+                   : concat_str(old, (char_u *)",EndOfBuffer:"));
+  free_string_option(old);
+  parse_winhl_opt(wp);
 
   // signcolumn: use 'auto'
   if (wp->w_p_scl[0] != 'a' || STRLEN(wp->w_p_scl) >= 8) {
@@ -4865,10 +4869,17 @@ static void win_enter_ext(win_T *const wp, const int flags)
     redraw_later(curwin, VALID);  // causes status line redraw
   }
 
-  if (HL_ATTR(HLF_INACTIVE)
-      || (prevwin && prevwin->w_hl_ids[HLF_INACTIVE])
-      || curwin->w_hl_ids[HLF_INACTIVE]) {
-    redraw_all_later(NOT_VALID);
+  // change background color according to NormalNC,
+  // but only if actually defined (otherwise no extra redraw)
+  if (curwin->w_hl_attr_normal != curwin->w_hl_attr_normalnc) {
+    // TODO(bfredl): eventually we should be smart enough
+    // to only recompose the window, not redraw it.
+    redraw_later(curwin, NOT_VALID);
+  }
+  if (prevwin) {
+    if (prevwin->w_hl_attr_normal != prevwin->w_hl_attr_normalnc) {
+      redraw_later(prevwin, NOT_VALID);
+    }
   }
 
   // set window height to desired minimal value
@@ -5036,6 +5047,8 @@ static win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_floating = 0;
   new_wp->w_float_config = FLOAT_CONFIG_INIT;
   new_wp->w_viewport_invalid = true;
+
+  new_wp->w_ns_hl = -1;
 
   // use global option for global-local options
   new_wp->w_p_so = -1;

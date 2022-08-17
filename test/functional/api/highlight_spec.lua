@@ -243,7 +243,7 @@ describe("API: set highlight", function()
 
   local function get_ns()
     local ns = meths.create_namespace('Test_set_hl')
-    meths._set_hl_ns(ns)
+    meths.set_hl_ns(ns)
     return ns
   end
 

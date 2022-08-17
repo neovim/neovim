@@ -1143,11 +1143,14 @@ struct window_S {
 
   synblock_T *w_s;                 ///< for :ownsyntax
 
+  int w_ns_hl;
+  int w_ns_hl_winhl;
+  int w_ns_hl_active;
+  int *w_ns_hl_attr;
+
   int w_hl_id_normal;               ///< 'winhighlight' normal id
   int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
-
-  int w_hl_ids[HLF_COUNT];          ///< 'winhighlight' id
-  int w_hl_attrs[HLF_COUNT];        ///< 'winhighlight' final attrs
+  int w_hl_attr_normalnc;           ///< 'winhighlight' NormalNC final attrs
 
   int w_hl_needs_update;            ///< attrs need to be recalculated
 
@@ -1468,11 +1471,6 @@ struct window_S {
   // Size of the w_winbar_click_defs array
   size_t w_winbar_click_defs_size;
 };
-
-static inline int win_hl_attr(win_T *wp, int hlf)
-{
-  return wp->w_hl_attrs[hlf];
-}
 
 /// Macros defined in Vim, but not in Neovim
 #define CHANGEDTICK(buf) \

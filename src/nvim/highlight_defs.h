@@ -180,7 +180,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_CU] = "Cursor",
 });
 
-EXTERN int highlight_attr[HLF_COUNT];       // Highl. attr for each context.
+EXTERN int highlight_attr[HLF_COUNT + 1];     // Highl. attr for each context.
 EXTERN int highlight_attr_last[HLF_COUNT];  // copy for detecting changed groups
 EXTERN int highlight_user[9];                   // User[1-9] attributes
 EXTERN int highlight_stlnc[9];                  // On top of user
@@ -189,6 +189,13 @@ EXTERN int cterm_normal_bg_color INIT(= 0);
 EXTERN RgbValue normal_fg INIT(= -1);
 EXTERN RgbValue normal_bg INIT(= -1);
 EXTERN RgbValue normal_sp INIT(= -1);
+
+EXTERN NS ns_hl_global INIT(= 0);  // global highlight namespace
+EXTERN NS ns_hl_win INIT(= -1);    // highlight namespace for the current window
+EXTERN NS ns_hl_fast INIT(= -1);   // highlight namespace specified in a fast callback
+EXTERN NS ns_hl_active INIT(= 0);  // currently active/cached namespace
+
+EXTERN int *hl_attr_active INIT(= highlight_attr);
 
 typedef enum {
   kHlUnknown,
@@ -219,9 +226,10 @@ typedef struct {
   int link_id;
   int version;
   bool is_default;
+  bool link_global;
 } ColorItem;
-#define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, \
-                                 .version = -1, .is_default = false }
+#define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, .version = -1, \
+                                 .is_default = false, .link_global = false }
 
 /// highlight attributes with associated priorities
 typedef struct {

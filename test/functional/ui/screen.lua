@@ -546,7 +546,7 @@ function Screen:_wait(check, flags)
 
     return true
   end
-  run_session(self._session, flags.request_cb, notification_cb, nil, minimal_timeout)
+  local eof = run_session(self._session, flags.request_cb, notification_cb, nil, minimal_timeout)
   if not did_flush then
     err = "no flush received"
   elseif not checked then
@@ -557,9 +557,9 @@ function Screen:_wait(check, flags)
     end
   end
 
-  if not success_seen then
+  if not success_seen and not eof then
     did_miminal_timeout = true
-    run_session(self._session, flags.request_cb, notification_cb, nil, timeout-minimal_timeout)
+    eof = run_session(self._session, flags.request_cb, notification_cb, nil, timeout-minimal_timeout)
   end
 
   local did_warn = false
@@ -600,8 +600,10 @@ between asynchronous (feed(), nvim_input()) and synchronous API calls.
 
 
   if err then
+    if eof then err = err..'\n\n'..eof[2] end
     busted.fail(err, 3)
   elseif did_warn then
+    if eof then print(eof[2]) end
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
     print(string.sub(tb,1,index))

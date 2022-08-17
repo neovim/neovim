@@ -7096,10 +7096,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 'winhighlight' 'winhl'	string (default empty)
 			local to window
 	Window-local highlights.  Comma-delimited list of highlight
-	|group-name| pairs "{hl-builtin}:{hl},..." where each {hl-builtin} is
-	a built-in |highlight-groups| item to be overridden by {hl} group in
-	the window.  Only built-in |highlight-groups| are supported, not
-	syntax highlighting (use |:ownsyntax| for that).
+	|group-name| pairs "{hl-from}:{hl-to},..." where each {hl-from} is
+	a |highlight-groups| item to be overridden by {hl-to} group in
+	the window.
+
+	Note: highlight namespaces take precedence over 'winhighlight'.
+	See |nvim_win_set_hl_ns| and |nvim_set_hl|.
 
 	Highlights of vertical separators are determined by the window to the
 	left of the separator.  The 'tabline' highlight of a tabpage is

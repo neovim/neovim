@@ -24,6 +24,8 @@ typedef struct {
 #endif
 } nlua_ref_state_t;
 
+#define NLUA_EXEC_STATIC(cstr, arg, err) nlua_exec(STATIC_CSTR_AS_STRING(cstr), arg, err)
+
 #define NLUA_CLEAR_REF(x) \
   do { \
     /* Take the address to avoid double evaluation. #1375 */ \
