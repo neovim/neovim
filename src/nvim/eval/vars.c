@@ -18,6 +18,7 @@
 #include "nvim/ex_eval.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/window.h"
 

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/buffer_defs.h"
-#include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 

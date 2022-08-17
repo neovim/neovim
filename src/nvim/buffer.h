@@ -4,10 +4,10 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/func_attr.h"
+#include "nvim/grid_defs.h"  // for StlClickRecord
 #include "nvim/macros.h"
 #include "nvim/memline.h"
 #include "nvim/pos.h"  // for linenr_T
-#include "nvim/screen.h"  // for StlClickRecord
 
 // Values for buflist_getfile()
 enum getf_values {
