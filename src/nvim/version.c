@@ -14,6 +14,7 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/grid.h"
 #include "nvim/iconv.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"

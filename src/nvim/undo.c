@@ -107,6 +107,7 @@
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/pos.h"  // MAXLNUM
+#include "nvim/screen.h"
 #include "nvim/sha256.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"

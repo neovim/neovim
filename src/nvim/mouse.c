@@ -9,6 +9,7 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/fold.h"
+#include "nvim/grid.h"
 #include "nvim/memline.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"

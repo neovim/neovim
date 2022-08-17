@@ -23,6 +23,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
+#include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"

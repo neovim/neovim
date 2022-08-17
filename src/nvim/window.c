@@ -26,6 +26,7 @@
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
