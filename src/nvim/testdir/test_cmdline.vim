@@ -126,6 +126,40 @@ func Test_wildmenu_screendump()
   call delete('XTest_wildmenu')
 endfunc
 
+func Test_changing_cmdheight()
+  CheckScreendump
+
+  let lines =<< trim END
+      set cmdheight=1 laststatus=2
+  END
+  call writefile(lines, 'XTest_cmdheight')
+
+  let buf = RunVimInTerminal('-S XTest_cmdheight', {'rows': 8})
+  call term_sendkeys(buf, ":resize -3\<CR>")
+  call VerifyScreenDump(buf, 'Test_changing_cmdheight_1', {})
+
+  " using the space available doesn't change the status line
+  call term_sendkeys(buf, ":set cmdheight+=3\<CR>")
+  call VerifyScreenDump(buf, 'Test_changing_cmdheight_2', {})
+
+  " using more space moves the status line up
+  call term_sendkeys(buf, ":set cmdheight+=1\<CR>")
+  call VerifyScreenDump(buf, 'Test_changing_cmdheight_3', {})
+
+  " reducing cmdheight moves status line down
+  call term_sendkeys(buf, ":set cmdheight-=2\<CR>")
+  call VerifyScreenDump(buf, 'Test_changing_cmdheight_4', {})
+
+  " reducing window size and then setting cmdheight
+  call term_sendkeys(buf, ":resize -1\<CR>")
+  call term_sendkeys(buf, ":set cmdheight=1\<CR>")
+  call VerifyScreenDump(buf, 'Test_changing_cmdheight_5', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_cmdheight')
+endfunc
+
 func Test_map_completion()
   if !has('cmdline_compl')
     return

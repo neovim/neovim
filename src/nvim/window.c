@@ -5552,7 +5552,7 @@ static void frame_setheight(frame_T *curfrp, int height)
   }
 
   if (curfrp->fr_parent == NULL) {
-    // topframe: can only change the command line
+    // topframe: can only change the command line height
     if (height > ROWS_AVAIL) {
       // If height is greater than the available space, try to create space for
       // the frame by reducing 'cmdheight' if possible, while making sure
@@ -5915,6 +5915,13 @@ void win_drag_status_line(win_T *dragwin, int offset)
   int row;
   bool up;                      // if true, drag status line up, otherwise down
   int n;
+  static bool p_ch_was_zero = false;
+
+  // If the user explicitly set 'cmdheight' to zero, then allow for dragging
+  // the status line making it zero again.
+  if (p_ch == 0) {
+    p_ch_was_zero = true;
+  }
 
   fr = dragwin->w_frame;
   curfr = fr;
@@ -5965,6 +5972,8 @@ void win_drag_status_line(win_T *dragwin, int offset)
     room = Rows - cmdline_row;
     if (curfr->fr_next != NULL) {
       room -= (int)p_ch + global_stl_height();
+    } else if (!p_ch_was_zero) {
+      room--;
     }
     if (room < 0) {
       room = 0;
@@ -6020,7 +6029,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
     clear_cmdline = true;
   }
   cmdline_row = row;
-  p_ch = MAX(Rows - cmdline_row, 0);
+  p_ch = MAX(Rows - cmdline_row, p_ch_was_zero ? 0 : 1);
   curtab->tp_ch_used = p_ch;
   redraw_all_later(SOME_VALID);
   showmode();
@@ -6383,6 +6392,19 @@ void command_height(void)
   // GUI starts up, we can't be sure in what order things happen.  And when
   // p_ch was changed in another tab page.
   curtab->tp_ch_used = p_ch;
+
+  // If the space for the command line is already more than 'cmdheight' there
+  // is nothing to do (window size must have decreased).
+  if (p_ch > old_p_ch && cmdline_row <= Rows - p_ch) {
+    return;
+  }
+
+  // If cmdline_row is smaller than what it is supposed to be for 'cmdheight'
+  // then set old_p_ch to what it would be, so that the windows get resized
+  // properly for the new value.
+  if (cmdline_row < Rows - p_ch) {
+    old_p_ch = Rows - cmdline_row;
+  }
 
   // Find bottom frame with width of screen.
   frp = lastwin_nofloating()->w_frame;
