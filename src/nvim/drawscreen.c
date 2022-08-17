@@ -1018,6 +1018,9 @@ win_update_start:
   bool scrolled_down = false;   // true when scrolled down when w_topline got smaller a bit
   bool top_to_mod = false;      // redraw above mod_top
 
+  int bot_scroll_start = 999;   // first line that needs to be redrawn due to
+                                // scrolling. only used for EOB
+
   int row;                      // current window row to display
   linenr_T lnum;                // current buffer lnum to display
   int idx;                      // current index in w_lines[]
@@ -1195,6 +1198,7 @@ win_update_start:
       mod_bot = MAXLNUM;
     }
   }
+
   wp->w_redraw_top = 0;  // reset for next time
   wp->w_redraw_bot = 0;
 
@@ -1265,6 +1269,7 @@ win_update_start:
           // If not the last window, delete the lines at the bottom.
           // win_ins_lines may fail when the terminal can't do it.
           win_scroll_lines(wp, 0, i);
+          bot_scroll_start = 0;
           if (wp->w_lines_valid != 0) {
             // Need to update rows that are new, stop at the
             // first one that scrolled down.
@@ -1325,6 +1330,7 @@ win_update_start:
         if (row > 0) {
           win_scroll_lines(wp, 0, -row);
           bot_start = wp->w_grid.rows - row;
+          bot_scroll_start = bot_start;
         }
         if ((row == 0 || bot_start < 999) && wp->w_lines_valid != 0) {
           // Skip the lines (below the deleted lines) that are still
@@ -1702,6 +1708,7 @@ win_update_start:
           // need to redraw until the end of the window.
           // Inserting/deleting lines has no use.
           bot_start = 0;
+          bot_scroll_start = 0;
         } else {
           // Able to count old number of rows: Count new window
           // rows, and may insert/delete lines
@@ -1732,6 +1739,7 @@ win_update_start:
             } else {
               win_scroll_lines(wp, row, xtra_rows);
               bot_start = wp->w_grid.rows + xtra_rows;
+              bot_scroll_start = bot_start;
             }
           } else if (xtra_rows > 0) {
             // May scroll text down.  If there is not enough
@@ -1741,6 +1749,7 @@ win_update_start:
               mod_bot = MAXLNUM;
             } else {
               win_scroll_lines(wp, row + old_rows, xtra_rows);
+              bot_scroll_start = 0;
               if (top_end > row + old_rows) {
                 // Scrolled the part at the top that requires
                 // updating down.
@@ -1930,6 +1939,7 @@ win_update_start:
       wp->w_botline = lnum;
     } else {
       win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.rows, HLF_AT);
+      set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     }
   } else {
@@ -1950,8 +1960,18 @@ win_update_start:
     // Make sure the rest of the screen is blank.
     // write the "eob" character from 'fillchars' to rows that aren't part
     // of the file.
-    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, row, wp->w_grid.rows,
+    // TODO(bfredl): just keep track of the valid EOB area from last redraw?
+    int lastline = bot_scroll_start;
+    if (mid_end >= row) {
+      lastline = MIN(lastline, mid_start);
+    }
+    if (mod_bot > buf->b_ml.ml_line_count + 1) {
+      lastline = 0;
+    }
+
+    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, MAX(lastline, row), wp->w_grid.rows,
                  HLF_EOB);
+    set_empty_rows(wp, row);
   }
 
   kvi_destroy(line_providers);
@@ -2063,12 +2083,14 @@ void redraw_buf_later(buf_T *buf, int type)
   }
 }
 
-void redraw_buf_line_later(buf_T *buf,  linenr_T line)
+void redraw_buf_line_later(buf_T *buf, linenr_T line, bool force)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf
-        && line >= wp->w_topline && line < wp->w_botline) {
-      redrawWinline(wp, line);
+    if (wp->w_buffer == buf) {
+      redrawWinline(wp, MIN(line, buf->b_ml.ml_line_count));
+      if (force && line > buf->b_ml.ml_line_count) {
+        wp->w_redraw_bot = line;
+      }
     }
   }
 }

@@ -2638,6 +2638,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       // When the window is too narrow draw all "@" lines.
       if (draw_state != WL_LINE && filler_todo <= 0) {
         win_draw_end(wp, '@', ' ', true, row, wp->w_grid.rows, HLF_AT);
+        set_empty_rows(wp, row);
         row = endrow;
       }
 

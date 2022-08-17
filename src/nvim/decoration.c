@@ -75,12 +75,11 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
   }
 
   if (decor && decor_virt_pos(*decor)) {
-    redraw_buf_line_later(buf, row1 + 1);
+    redraw_buf_line_later(buf, row1 + 1, false);
   }
 
   if (decor && kv_size(decor->virt_lines)) {
-    redraw_buf_line_later(buf, MIN(buf->b_ml.ml_line_count,
-                                   row1 + 1 + (decor->virt_lines_above?0:1)));
+    redraw_buf_line_later(buf, row1 + 1 + (decor->virt_lines_above?0:1), true);
   }
 }
 
