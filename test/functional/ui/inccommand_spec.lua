@@ -66,7 +66,6 @@ local function common_setup(screen, inccommand, text)
     command("syntax on")
     command("set nohlsearch")
     command("hi Substitute guifg=red guibg=yellow")
-    command("set display-=msgsep")
     screen:attach()
     screen:set_default_attr_ids({
       [1]  = {foreground = Screen.colors.Fuchsia},
@@ -142,11 +141,11 @@ describe(":substitute, 'inccommand' preserves", function()
     feed_command("ls")
 
     screen:expect([[
+      BAC                           |
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {11:                              }|
       :ls                           |
         1 %a + "[No Name]"          |
                 line 1              |
@@ -1469,14 +1468,14 @@ describe("inccommand=nosplit", function()
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
     screen:expect([[
+      Inc substitution on |
       two lines           |
       Inc substitution on |
       two lines           |
                           |
       {15:~                   }|
       {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {11:                    }|
       :silent tabedit %s/t|
       w/to^                |
     ]])
@@ -2656,6 +2655,7 @@ describe(":substitute", function()
 
     feed("\\rѫ ab   \\rXXXX")
     screen:expect([[
+      7 8 9                         |
       K L M                         |
       {12:JLKR £}                        |
       {12:ѫ ab   }                       |
@@ -2667,8 +2667,7 @@ describe(":substitute", function()
       {12:ѫ ab   }                       |
       {11:[No Name] [+]                 }|
       | 7| {12:JLKR £}                   |
-      | 8|{12: ѫ ab   }                  |
-      {10:[Preview]                     }|
+      {11:                              }|
       :%s/[a-z]/JLKR £\rѫ ab   \rXXX|
       X^                             |
     ]])
@@ -3001,8 +3000,8 @@ it('long :%s/ with inccommand does not collapse cmdline', function()
   feed(':%s/AAAAAAA', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
     'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A')
   screen:expect([[
-    {15:~           }|
-    {15:~           }|
+                |
+    {11:            }|
     :%s/AAAAAAAA|
     AAAAAAAAAAAA|
     AAAAAAA^     |

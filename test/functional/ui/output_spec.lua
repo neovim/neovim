@@ -100,45 +100,52 @@ describe("shell command :!", function()
       pending('missing printf')
     end
     local screen = Screen.new(50, 4)
+    screen:set_default_attr_ids {
+      [1] = {bold = true, reverse = true};
+      [2] = {bold = true, foreground = Screen.colors.SeaGreen};
+      [3] = {foreground = Screen.colors.Blue};
+    }
     screen:attach()
-    command("set display-=msgsep")
     -- Print TAB chars. #2958
     feed([[:!printf '1\t2\t3'<CR>]])
-    screen:expect([[
-      ~                                                 |
+    screen:expect{grid=[[
+      {1:                                                  }|
       :!printf '1\t2\t3'                                |
       1       2       3                                 |
-      Press ENTER or type command to continue^           |
-    ]])
+      {2:Press ENTER or type command to continue}^           |
+    ]]}
     feed([[<CR>]])
+
     -- Print BELL control code. #4338
     screen.bell = false
     feed([[:!printf '\007\007\007\007text'<CR>]])
     screen:expect{grid=[[
-      ~                                                 |
+      {1:                                                  }|
       :!printf '\007\007\007\007text'                   |
       text                                              |
-      Press ENTER or type command to continue^           |
+      {2:Press ENTER or type command to continue}^           |
     ]], condition=function()
       eq(true, screen.bell)
     end}
     feed([[<CR>]])
+
     -- Print BS control code.
     feed([[:echo system('printf ''\010\n''')<CR>]])
     screen:expect([[
-      ~                                                 |
-      ^H                                                |
+      {1:                                                  }|
+      {3:^H}                                                |
                                                         |
-      Press ENTER or type command to continue^           |
+      {2:Press ENTER or type command to continue}^           |
     ]])
     feed([[<CR>]])
+
     -- Print LF control code.
     feed([[:!printf '\n'<CR>]])
     screen:expect([[
       :!printf '\n'                                     |
                                                         |
                                                         |
-      Press ENTER or type command to continue^           |
+      {2:Press ENTER or type command to continue}^           |
     ]])
     feed([[<CR>]])
   end)

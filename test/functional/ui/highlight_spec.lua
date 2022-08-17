@@ -93,16 +93,22 @@ describe('highlight defaults', function()
   before_each(function()
     clear()
     screen = Screen.new()
+    screen:set_default_attr_ids {
+      [0] = {bold=true, foreground=Screen.colors.Blue};
+      [1] = {reverse = true, bold = true};
+      [2] = {reverse = true};
+      [3] = {bold = true};
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen};
+      [5] = {foreground = Screen.colors.Red1, background = Screen.colors.WebGreen};
+      [6] = {background = Screen.colors.Red1, foreground = Screen.colors.Grey100};
+      [7] = {foreground = Screen.colors.Red};
+      [8] = {foreground = Screen.colors.Blue};
+      [9] = {italic = true};
+    }
     screen:attach()
-    command("set display-=msgsep")
   end)
 
   it('window status bar', function()
-    screen:set_default_attr_ids({
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {reverse = true, bold = true},  -- StatusLine
-      [2] = {reverse = true}                -- StatusLineNC
-    })
     feed_command('sp', 'vsp', 'vsp')
     screen:expect([[
       ^                    │                │               |
@@ -201,31 +207,29 @@ describe('highlight defaults', function()
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
-      {1:-- INSERT --}                                         |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {bold = true}})
+      {3:-- INSERT --}                                         |
+    ]])
   end)
 
   it('end of file markers', function()
     screen:try_resize(53, 4)
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|
-      {1:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
                                                            |
-    ]], {[1] = {bold = true, foreground = Screen.colors.Blue}})
+    ]])
   end)
 
   it('"wait return" text', function()
     screen:try_resize(53, 4)
     feed(':ls<cr>')
     screen:expect([[
-      {0:~                                                    }|
+      {1:                                                     }|
       :ls                                                  |
         1 %a   "[No Name]"                    line 1       |
-      {1:Press ENTER or type command to continue}^              |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {bold = true, foreground = Screen.colors.SeaGreen}})
+      {4:Press ENTER or type command to continue}^              |
+    ]])
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
 
@@ -238,8 +242,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
       -- INSERT --                                         |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {bold=true}})
+    ]])
     feed('<esc>')
     feed_command('highlight CustomHLGroup guifg=red guibg=green')
     feed_command('highlight link ModeMsg CustomHLGroup')
@@ -248,9 +251,8 @@ describe('highlight defaults', function()
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
-      {1:-- INSERT --}                                         |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
-    [1] = {foreground = Screen.colors.Red, background = Screen.colors.Green}})
+      {5:-- INSERT --}                                         |
+    ]])
   end)
 
   it('can be cleared by assigning NONE', function()
@@ -259,14 +261,11 @@ describe('highlight defaults', function()
     feed_command('hi link TmpKeyword ErrorMsg')
     insert('neovim')
     screen:expect([[
-      {1:neovi^m}                                               |
+      {6:neovi^m}                                               |
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {
-      [0] = {bold=true, foreground=Screen.colors.Blue},
-      [1] = {foreground = Screen.colors.White, background = Screen.colors.Red}
-    })
+    ]])
     feed_command("hi ErrorMsg term=NONE cterm=NONE ctermfg=NONE ctermbg=NONE"
             .. " gui=NONE guifg=NONE guibg=NONE guisp=NONE")
     screen:expect([[
@@ -274,7 +273,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+    ]])
   end)
 
   it('linking updates window highlight immediately #16552', function()
@@ -284,7 +283,7 @@ describe('highlight defaults', function()
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+    ]])
     feed_command("hi NonTextAlt guifg=Red")
     feed_command("hi! link NonText NonTextAlt")
     screen:expect([[
@@ -306,56 +305,44 @@ describe('highlight defaults', function()
     feed_command('set listchars=space:.,tab:>-,trail:*,eol:¬ list')
     insert('   ne \t o\tv  im  ')
     screen:expect([[
-      ne{0:.>----.}o{0:>-----}v{0:..}im{0:*^*¬}                             |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      ne{7:.>----.}o{7:>-----}v{7:..}im{7:*^*¬}                             |
+      {7:~                                                    }|
+      {7:~                                                    }|
                                                            |
-    ]], {
-      [0] = {foreground=Screen.colors.Red},
-      [1] = {foreground=Screen.colors.Blue},
-    })
+    ]])
     feed_command('highlight Whitespace gui=NONE guifg=#0000FF')
     screen:expect([[
-      ne{1:.>----.}o{1:>-----}v{1:..}im{1:*^*}{0:¬}                             |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      ne{8:.>----.}o{8:>-----}v{8:..}im{8:*^*}{7:¬}                             |
+      {7:~                                                    }|
+      {7:~                                                    }|
       :highlight Whitespace gui=NONE guifg=#0000FF         |
-    ]], {
-      [0] = {foreground=Screen.colors.Red},
-      [1] = {foreground=Screen.colors.Blue},
-    })
+    ]])
   end)
 
   it('are sent to UIs', function()
     screen:try_resize(53, 4)
-    screen:set_default_attr_ids({
-      [0] = {},
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {italic=true}
-    })
     screen:expect{grid=[[
       ^                                                     |
-      {1:~                                                    }|
-      {1:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
                                                            |
-    ]], hl_groups={EndOfBuffer=1, MsgSeparator=2}}
+    ]], hl_groups={EndOfBuffer=0, MsgSeparator=1}}
 
     command('highlight EndOfBuffer gui=italic')
     screen:expect{grid=[[
       ^                                                     |
-      {3:~                                                    }|
-      {3:~                                                    }|
+      {9:~                                                    }|
+      {9:~                                                    }|
                                                            |
-    ]], hl_groups={EndOfBuffer=3, MsgSeparator=2}}
+    ]], hl_groups={EndOfBuffer=9, MsgSeparator=1}}
 
     command('highlight clear EndOfBuffer')
     screen:expect{grid=[[
       ^                                                     |
-      {1:~                                                    }|
-      {1:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
                                                            |
-    ]], hl_groups={EndOfBuffer=1, MsgSeparator=2}}
+    ]], hl_groups={EndOfBuffer=0, MsgSeparator=1}}
   end)
 end)
 
