@@ -23,6 +23,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/help.h"
 #include "nvim/highlight_group.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"

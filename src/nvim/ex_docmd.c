@@ -40,6 +40,7 @@
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/hardcopy.h"
+#include "nvim/help.h"
 #include "nvim/highlight_group.h"
 #include "nvim/if_cscope.h"
 #include "nvim/input.h"
