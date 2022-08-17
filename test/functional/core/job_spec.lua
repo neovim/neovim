@@ -21,6 +21,7 @@ local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
 local pcall_err = helpers.pcall_err
+local matches = helpers.matches
 local Screen = require('test.functional.ui.screen')
 
 describe('jobs', function()
@@ -229,8 +230,8 @@ describe('jobs', function()
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
     funcs.setfperm(dir, 'rw-------')
-    eq('Vim(call):E475: Invalid argument: expected valid directory',
-      pcall_err(nvim, 'command', "call jobstart('pwd', {'cwd': '"..dir.."'})"))
+    matches('^Vim%(call%):E903: Process failed to start: permission denied: .*',
+            pcall_err(nvim, 'command', "call jobstart(['pwd'], {'cwd': '"..dir.."'})"))
     rmdir(dir)
   end)
 
