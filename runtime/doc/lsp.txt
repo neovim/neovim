@@ -415,7 +415,7 @@ For the format of the response message, see:
 For the format of the notification message, see:
     https://microsoft.github.io/language-server-protocol/specifications/specification-current/#notificationMessage
 
-                                                                *on-list-handler*
+                                                                *lsp-on-list-handler*
 
 `on_list` receives a table with:
 
@@ -1070,7 +1070,7 @@ declaration({options})                             *vim.lsp.buf.declaration()*
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
                    • on_list: (function) handler for list results. See
-                     |on-list-handler|
+                     |lsp-on-list-handler|
 
 definition({options})                               *vim.lsp.buf.definition()*
     Jumps to the definition of the symbol under the cursor.
@@ -1080,7 +1080,7 @@ definition({options})                               *vim.lsp.buf.definition()*
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
                    • on_list: (function) handler for list results. See
-                     |on-list-handler|
+                     |lsp-on-list-handler|
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
@@ -1102,7 +1102,7 @@ document_symbol({options})                     *vim.lsp.buf.document_symbol()*
     Parameters: ~
         {options}  (table|nil) additional options
                    • on_list: (function) handler for list results. See
-                     |on-list-handler|
+                     |lsp-on-list-handler|
 
 execute_command({command_params})              *vim.lsp.buf.execute_command()*
     Executes an LSP server command.
@@ -1211,7 +1211,7 @@ implementation({options})                       *vim.lsp.buf.implementation()*
     Parameters: ~
         {options}  (table|nil) additional options
                    • on_list: (function) handler for list results. See
-                     |on-list-handler|
+                     |lsp-on-list-handler|
 
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
@@ -1260,7 +1260,7 @@ references({context}, {options})                    *vim.lsp.buf.references()*
         {context}  (table) Context for the request
         {options}  (table|nil) additional options
                    • on_list: (function) handler for list results. See
-                     |on-list-handler|
+                     |lsp-on-list-handler|
 
     See also: ~
         https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
@@ -1302,7 +1302,7 @@ type_definition({options})                     *vim.lsp.buf.type_definition()*
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
                    • on_list: (function) handler for list results. See
-                     |on-list-handler|
+                     |lsp-on-list-handler|
 
 workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
@@ -1315,7 +1315,7 @@ workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
         {query}    (string, optional)
         {options}  (table|nil) additional options
                    • on_list: (function) handler for list results. See
-                     |on-list-handler|
+                     |lsp-on-list-handler|
 
 
 ==============================================================================
