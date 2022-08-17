@@ -261,17 +261,6 @@ done:
   return cells;
 }
 
-static inline void provider_err_virt_text(linenr_T lnum, char *err)
-{
-  Decoration err_decor = DECORATION_INIT;
-  int hl_err = syn_check_group(S_LEN("ErrorMsg"));
-  kv_push(err_decor.virt_text,
-          ((VirtTextChunk){ .text = err,
-                            .hl_id = hl_err }));
-  err_decor.virt_text_width = (int)mb_string2cells(err);
-  decor_add_ephemeral(lnum - 1, 0, lnum - 1, 0, &err_decor, 0, 0);
-}
-
 static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int max_col,
                            int win_row)
 {
@@ -1083,7 +1072,7 @@ static void win_line_continue(winlinevars_T *wlv)
 ///
 /// @return             the number of last row the line occupies.
 int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_only, spellvars_T *spv,
-             foldinfo_T foldinfo, DecorProviders *providers, char **provider_err)
+             foldinfo_T foldinfo, DecorProviders *providers)
 {
   winlinevars_T wlv;                  // variables passed between functions
 
@@ -1226,13 +1215,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
     has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
 
-    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err);
-
-    if (*provider_err) {
-      provider_err_virt_text(lnum, *provider_err);
-      has_decor = true;
-      *provider_err = NULL;
-    }
+    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor);
 
     if (has_decor) {
       extra_check = true;

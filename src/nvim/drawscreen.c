@@ -123,8 +123,6 @@ static bool redraw_popupmenu = false;
 static bool msg_grid_invalid = false;
 static bool resizing_autocmd = false;
 
-static char *provider_err = NULL;
-
 /// Check if the cursor line needs to be redrawn because of 'concealcursor'.
 ///
 /// When cursor is moved at the same time, both lines will be redrawn regardless.
@@ -542,7 +540,7 @@ int update_screen(void)
   ui_comp_set_screen_valid(true);
 
   DecorProviders providers;
-  decor_providers_start(&providers, &provider_err);
+  decor_providers_start(&providers);
 
   // "start" callback could have changed highlights for global elements
   if (win_check_ns_hl(NULL)) {
@@ -589,7 +587,7 @@ int update_screen(void)
       }
 
       if (buf->b_mod_tick_decor < display_tick) {
-        decor_providers_invoke_buf(buf, &providers, &provider_err);
+        decor_providers_invoke_buf(buf, &providers);
         buf->b_mod_tick_decor = display_tick;
       }
     }
@@ -669,7 +667,7 @@ int update_screen(void)
   }
   did_intro = true;
 
-  decor_providers_invoke_end(&providers, &provider_err);
+  decor_providers_invoke_end(&providers);
   kvi_destroy(providers);
 
   // either cmdline is cleared, not drawn or mode is last drawn
@@ -1446,7 +1444,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   decor_redraw_reset(wp, &decor_state);
 
   DecorProviders line_providers;
-  decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
+  decor_providers_invoke_win(wp, providers, &line_providers);
 
   redraw_win_signcol(wp);
 
@@ -2237,7 +2235,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         spellvars_T zero_spv = { 0 };
         row = win_line(wp, lnum, srow, wp->w_grid.rows, false,
                        foldinfo.fi_lines > 0 ? &zero_spv : &spv,
-                       foldinfo, &line_providers, &provider_err);
+                       foldinfo, &line_providers);
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
@@ -2275,8 +2273,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum ?
                           cursorline_fi : fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv,
-                       info, &line_providers, &provider_err);
+        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info, &line_providers);
       }
 
       // This line does not need to be drawn, advance to the next one.
@@ -2297,7 +2294,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       lnum = wp->w_topline;
       wp->w_lines_valid = 0;
       wp->w_valid &= ~VALID_WCOL;
-      decor_providers_invoke_win(wp, providers, &line_providers, &provider_err);
+      decor_providers_invoke_win(wp, providers, &line_providers);
       continue;
     }
 
@@ -2375,7 +2372,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         spellvars_T zero_spv = { 0 };
         foldinfo_T zero_foldinfo = { 0 };
         row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, false, &zero_spv,
-                       zero_foldinfo, &line_providers, &provider_err);
+                       zero_foldinfo, &line_providers);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;

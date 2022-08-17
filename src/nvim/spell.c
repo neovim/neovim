@@ -1214,11 +1214,10 @@ static void decor_spell_nav_start(win_T *wp)
   decor_redraw_reset(wp, &decor_state);
 }
 
-static TriState decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_lnum, int col,
-                                    char **decor_error)
+static TriState decor_spell_nav_col(win_T *wp, linenr_T lnum, linenr_T *decor_lnum, int col)
 {
   if (*decor_lnum != lnum) {
-    decor_providers_invoke_spell(wp, lnum - 1, col, lnum - 1, -1, decor_error);
+    decor_providers_invoke_spell(wp, lnum - 1, col, lnum - 1, -1);
     decor_redraw_line(wp, lnum - 1, &decor_state);
     *decor_lnum = lnum;
   }
@@ -1277,7 +1276,6 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
   linenr_T lnum = wp->w_cursor.lnum;
   clearpos(&found_pos);
 
-  char *decor_error = NULL;
   // Ephemeral extmarks are currently stored in the global decor_state.
   // When looking for spell errors, we need to:
   //  - temporarily reset decor_state
@@ -1362,7 +1360,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
             bool no_plain_buffer = (wp->w_s->b_p_spo_flags & SPO_NPBUFFER) != 0;
             bool can_spell = !no_plain_buffer;
-            switch (decor_spell_nav_col(wp, lnum, &decor_lnum, col, &decor_error)) {
+            switch (decor_spell_nav_col(wp, lnum, &decor_lnum, col)) {
             case kTrue:
               can_spell = true; break;
             case kFalse:
@@ -1488,7 +1486,6 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
 theend:
   decor_state_free(&decor_state);
-  xfree(decor_error);
   decor_state = saved_decor_start;
   xfree(buf);
   return ret;

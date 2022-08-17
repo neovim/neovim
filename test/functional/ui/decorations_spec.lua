@@ -37,6 +37,7 @@ describe('decorations providers', function()
       [15] = {special = Screen.colors.Blue, undercurl = true},
       [16] = {special = Screen.colors.Red, undercurl = true},
       [17] = {foreground = Screen.colors.Red},
+      [18] = {bold = true, foreground = Screen.colors.SeaGreen};
     }
   end)
 
@@ -610,6 +611,27 @@ describe('decorations providers', function()
     exec_lua([[
       assert(eok == false)
     ]])
+  end)
+
+  it('errors gracefully', function()
+    insert(mulholland)
+
+    setup_provider [[
+    function on_do(...)
+      error "Foo"
+    end
+    ]]
+
+    screen:expect{grid=[[
+      {2:Error in decoration provider ns1.start:} |
+      {2:Error executing lua: [string "<nvim>"]:4}|
+      {2:: Foo}                                   |
+      {2:stack traceback:}                        |
+      {2:        [C]: in function 'error'}        |
+      {2:        [string "<nvim>"]:4: in function}|
+      {2: <[string "<nvim>"]:3>}                  |
+      {18:Press ENTER or type command to continue}^ |
+    ]]}
   end)
 end)
 

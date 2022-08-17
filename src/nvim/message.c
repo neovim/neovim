@@ -885,6 +885,24 @@ void msg_schedule_semsg(const char *const fmt, ...)
   loop_schedule_deferred(&main_loop, event_create(msg_semsg_event, 1, s));
 }
 
+static void msg_semsg_multiline_event(void **argv)
+{
+  char *s = argv[0];
+  (void)emsg_multiline(s, true);
+  xfree(s);
+}
+
+void msg_schedule_semsg_multiline(const char *const fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  vim_vsnprintf((char *)IObuff, IOSIZE, fmt, ap);
+  va_end(ap);
+
+  char *s = xstrdup((char *)IObuff);
+  loop_schedule_deferred(&main_loop, event_create(msg_semsg_multiline_event, 1, s));
+}
+
 /// Like msg(), but truncate to a single line if p_shm contains 't', or when
 /// "force" is true.  This truncates in another way as for normal messages.
 /// Careful: The string may be changed by msg_may_trunc()!
