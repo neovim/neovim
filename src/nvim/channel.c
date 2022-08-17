@@ -315,8 +315,6 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
                            ChannelStdinMode stdin_mode, const char *cwd, uint16_t pty_width,
                            uint16_t pty_height, dict_T *env, varnumber_T *status_out)
 {
-  assert(cwd == NULL || os_isdir_executable(cwd));
-
   Channel *chan = channel_alloc(kChannelStreamProc);
   chan->on_data = on_stdout;
   chan->on_stderr = on_stderr;

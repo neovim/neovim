@@ -144,25 +144,6 @@ bool os_isdir(const char_u *name)
   return true;
 }
 
-/// Check if the given path is a directory and is executable.
-/// Gives the same results as `os_isdir()` on Windows.
-///
-/// @return `true` if `name` is a directory and executable.
-bool os_isdir_executable(const char *name)
-  FUNC_ATTR_NONNULL_ALL
-{
-  int32_t mode = os_getperm(name);
-  if (mode < 0) {
-    return false;
-  }
-
-#ifdef WIN32
-  return (S_ISDIR(mode));
-#else
-  return (S_ISDIR(mode) && (S_IXUSR & mode));
-#endif
-}
-
 /// Check what `name` is:
 /// @return NODE_NORMAL: file or directory (or doesn't exist)
 ///         NODE_WRITABLE: writable device, socket, fifo, etc.
