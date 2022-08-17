@@ -890,9 +890,9 @@ int utf_ptr2len_len(const char_u *p, int size)
   return len;
 }
 
-/// Return the number of bytes occupied by a UTF-8 character in a string
-///
+/// Return the number of bytes occupied by a UTF-8 character in a string.
 /// This includes following composing characters.
+/// Returns zero for NUL.
 int utfc_ptr2len(const char *const p_in)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {

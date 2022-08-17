@@ -75,6 +75,18 @@ func Test_for_invalid()
   redraw
 endfunc
 
+func Test_for_over_null_string()
+  let save_enc = &enc
+  " set enc=iso8859
+  let cnt = 0
+  for c in v:_null_string
+    let cnt += 1
+  endfor
+  call assert_equal(0, cnt)
+
+  let &enc = save_enc
+endfunc
+
 func Test_readfile_binary()
   new
   call setline(1, ['one', 'two', 'three'])
