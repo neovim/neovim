@@ -35,6 +35,7 @@
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/grid_defs.h"
+#include "nvim/help.h"
 #include "nvim/indent.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"

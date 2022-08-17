@@ -23,6 +23,7 @@
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
+#include "nvim/help.h"
 #include "nvim/if_cscope.h"
 #include "nvim/input.h"
 #include "nvim/insexpand.h"
