@@ -137,7 +137,7 @@ func Common_vert_split()
 
   " Test diffoff
   diffoff!
-  1wincmd 2
+  1wincmd w
   let &diff = 1
   let &fdm = diff_fdm
   let &fdc = diff_fdc

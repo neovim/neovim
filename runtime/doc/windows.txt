@@ -442,6 +442,7 @@ position is set to keep the same Visual area selected.
 These commands can also be executed with ":wincmd":
 
 :[count]winc[md] {arg}
+:winc[md] [count] {arg}
 		Like executing CTRL-W [count] {arg}.  Example: >
 			:wincmd j
 <		Moves to the window below the current one.

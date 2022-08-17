@@ -372,6 +372,7 @@ Lua interface (|lua.txt|):
 
 Commands:
   |:doautocmd| does not warn about "No matching autocommands".
+  |:wincmd| accepts a count.
 
 Functions:
   |input()| and |inputdialog()| support for each other’s features (return on
