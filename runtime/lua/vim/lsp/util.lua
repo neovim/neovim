@@ -772,14 +772,8 @@ local function create_file(change)
   -- from spec: Overwrite wins over `ignoreIfExists`
   local fname = vim.uri_to_fname(change.uri)
   if not opts.ignoreIfExists or opts.overwrite then
-    io.create_missing_dir_open = function(filename, mode)
-        local dir = vim.fs.dirname(filename)
-        if vim.fn.isdirectory(dir) == 0 then
-            vim.fn.mkdir(dir, "p")
-        end
-        return io.open(filename, mode).
-    end
-    local file = io.create_missing_dir_open(fname, 'w')
+    vim.fn.mkdir(vim.fs.dirname(fname), "p")
+    local file = io.open(fname, 'w')
     file:close()
   end
   vim.fn.bufadd(fname)
