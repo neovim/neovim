@@ -5221,7 +5221,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (new_cwd && *new_cwd != NUL) {
       cwd = new_cwd;
       // The new cwd must be a directory.
-      if (!os_isdir_executable((const char *)cwd)) {
+      if (!os_isdir((const char_u *)cwd)) {
         semsg(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
@@ -10737,7 +10737,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (new_cwd && *new_cwd != NUL) {
       cwd = new_cwd;
       // The new cwd must be a directory.
-      if (!os_isdir_executable(cwd)) {
+      if (!os_isdir((const char_u *)cwd)) {
         semsg(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
