@@ -1,5 +1,5 @@
-#ifndef NVIM_POPUPMNU_H
-#define NVIM_POPUPMNU_H
+#ifndef NVIM_POPUPMENU_H
+#define NVIM_POPUPMENU_H
 
 #include "nvim/grid_defs.h"
 #include "nvim/macros.h"
@@ -17,6 +17,6 @@ typedef struct {
 EXTERN ScreenGrid pum_grid INIT(= SCREEN_GRID_INIT);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "popupmnu.h.generated.h"
+# include "popupmenu.h.generated.h"
 #endif
-#endif  // NVIM_POPUPMNU_H
+#endif  // NVIM_POPUPMENU_H
