@@ -2351,6 +2351,7 @@ describe('highlight namespaces', function()
       [5] = {background = Screen.colors.Magenta4, foreground = Screen.colors.Crimson};
       [6] = {bold = true, reverse = true};
       [7] = {reverse = true};
+      [8] = {foreground = Screen.colors.Gray20};
     }
 
     ns1 = meths.create_namespace 'grungy'
@@ -2438,6 +2439,35 @@ describe('highlight namespaces', function()
       {2:                         }|
       {3:~                        }|
       {7:[No Name]                }|
+                               |
+    ]]}
+  end)
+
+  it('redraws correctly when ns=0', function()
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]]}
+
+    meths.set_hl(0, 'EndOfBuffer', {fg='#333333'})
+    screen:expect{grid=[[
+      ^                         |
+      {8:~                        }|
+      {8:~                        }|
+      {8:~                        }|
+      {8:~                        }|
+      {8:~                        }|
+      {8:~                        }|
+      {8:~                        }|
+      {8:~                        }|
                                |
     ]]}
   end)

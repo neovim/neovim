@@ -698,7 +698,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
       g->sg_deflink_sctx = current_sctx;
       g->sg_deflink_sctx.sc_lnum += SOURCING_LNUM;
     }
-    return;
+    goto update;
   }
 
   g->sg_cleared = false;
@@ -753,6 +753,12 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
       ui_mode_info_set();
     }
   }
+
+update:
+  if (!updating_screen) {
+    redraw_all_later(NOT_VALID);
+  }
+  need_highlight_changed = true;
 }
 
 /// Handle ":highlight" command
@@ -1942,6 +1948,8 @@ void highlight_changed(void)
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
       if (hlf == HLF_MSG) {
         clear_cmdline = true;
+        HlAttrs attrs = syn_attr2entry(highlight_attr[hlf]);
+        msg_grid.blending = attrs.hl_blend > -1;
       }
       ui_call_hl_group_set(cstr_as_string((char *)hlf_names[hlf]),
                            highlight_attr[hlf]);
