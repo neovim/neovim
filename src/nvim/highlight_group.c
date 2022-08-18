@@ -1750,11 +1750,11 @@ static int syn_add_group(const char *name, size_t len)
     if (!vim_isprintc(c)) {
       emsg(_("E669: Unprintable character in group name"));
       return 0;
-    } else if (!ASCII_ISALNUM(c) && c != '_') {
-      // This is an error, but since there previously was no check only give a warning.
+    } else if (!ASCII_ISALNUM(c) && c != '_' && c != '.' && c != '@') {
+      // '.' and '@' are allowed characters for use with treesitter capture names.
       msg_source(HL_ATTR(HLF_W));
-      msg(_("W18: Invalid character in group name"));
-      break;
+      emsg(_(e_highlight_group_name_invalid_char));
+      return 0;
     }
   }
 

@@ -5913,8 +5913,8 @@ msgstr ""
 msgid "E669: Unprintable character in group name"
 msgstr ""
 
-#: ../syntax.c:7434
-msgid "W18: Invalid character in group name"
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
 msgstr ""
 
 #: ../syntax.c:7448

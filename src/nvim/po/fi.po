@@ -5369,8 +5369,8 @@ msgstr "E424: Liikaa eri korostusattribuutteja"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Tulostuskelvoton merkki ryhmän nimessä"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Virheellinen merkki ryhmän nimessä"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Virheellinen merkki ryhmän nimessä"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: Liikaa korostuksia ja syntaksiryhmiä"

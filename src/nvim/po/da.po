@@ -5599,8 +5599,8 @@ msgstr "E424: For mange forskellige fremhævningsattributter i brug"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Tegn som ikke kan udskrives i gruppenavn"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Ugyldige tegn i gruppenavn"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Ugyldige tegn i gruppenavn"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: For mange fremhævnings- og syntaksgrupper"

@@ -6070,8 +6070,8 @@ msgid "E669: Unprintable character in group name"
 msgstr "E669: Caractere não-imprimível no nome do grupo"
 
 #: ../syntax.c:7320
-msgid "W18: Invalid character in group name"
-msgstr "W18: Caractere inválido no nome do grupo"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Caractere inválido no nome do grupo"
 
 #: ../syntax.c:7334
 msgid "E849: Too many highlight and syntax groups"

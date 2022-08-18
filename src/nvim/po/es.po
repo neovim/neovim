@@ -6053,9 +6053,9 @@ msgstr "E669: Carácter no imprimible en el nombre del grupo"
 
 # This is an error, but since there previously was no check only
 # * give a warning.
-#: ../syntax.c:7434
-msgid "W18: Invalid character in group name"
-msgstr "W18: Hay un carácter no válido en el nombre del grupo"
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Hay un carácter no válido en el nombre del grupo"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"

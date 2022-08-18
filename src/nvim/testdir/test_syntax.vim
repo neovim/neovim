@@ -389,7 +389,7 @@ func Test_invalid_name()
   syn keyword Nop yes
   call assert_fails("syntax keyword Wr\x17ong bar", 'E669:')
   syntax keyword @Wrong bar
-  call assert_match('W18:', execute('1messages'))
+  call assert_fails("syntax keyword @#Wrong bar", 'E5248:')
   syn clear
   hi clear Nop
   hi clear @Wrong

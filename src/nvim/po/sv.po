@@ -2056,8 +2056,8 @@ msgid "E669: Unprintable character in group name"
 msgstr "E669: Outskrivbart tecken i gruppnamn"
 
 #: ../syntax.c:7292
-msgid "W18: Invalid character in group name"
-msgstr "W18: Ogiltigt tecken i gruppnamn"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Ogiltigt tecken i gruppnamn"
 
 #: ../syntax.c:7306
 msgid "E849: Too many highlight and syntax groups"
