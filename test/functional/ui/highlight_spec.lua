@@ -2317,6 +2317,22 @@ describe("'winhighlight' highlight", function()
                           |
     ]]}
   end)
+
+  it('can be disabled in newly opened window #19823', function()
+    command('split | set winhl=Normal:ErrorMsg | set winhl=')
+    screen:expect{grid=[[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+      {0:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]]}
+
+    helpers.assert_alive()
+  end)
 end)
 
 describe('highlight namespaces', function()
