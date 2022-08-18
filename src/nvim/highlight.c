@@ -319,7 +319,7 @@ void update_window_hl(win_T *wp, bool invalid)
   int ns_id = wp->w_ns_hl;
 
   update_ns_hl(ns_id);
-  if (ns_id != wp->w_ns_hl_active) {
+  if (ns_id != wp->w_ns_hl_active || wp->w_ns_hl_attr == NULL) {
     wp->w_ns_hl_active = ns_id;
 
     wp->w_ns_hl_attr = *(NSHlAttr *)pmap_get(handle_T)(&ns_hl_attr, ns_id);
