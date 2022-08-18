@@ -53,7 +53,7 @@
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/process.h"
-#include "nvim/popupmnu.h"
+#include "nvim/popupmenu.h"
 #include "nvim/runtime.h"
 #include "nvim/screen.h"
 #include "nvim/state.h"

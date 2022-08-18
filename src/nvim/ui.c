@@ -31,7 +31,7 @@
 #include "nvim/os/signal.h"
 #include "nvim/os/time.h"
 #include "nvim/os_unix.h"
-#include "nvim/popupmnu.h"
+#include "nvim/popupmenu.h"
 #include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"

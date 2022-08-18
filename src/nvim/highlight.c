@@ -13,7 +13,7 @@
 #include "nvim/map.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
-#include "nvim/popupmnu.h"
+#include "nvim/popupmenu.h"
 #include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"

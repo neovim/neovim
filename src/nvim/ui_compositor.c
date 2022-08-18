@@ -23,7 +23,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/os.h"
-#include "nvim/popupmnu.h"
+#include "nvim/popupmenu.h"
 #include "nvim/ugrid.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"

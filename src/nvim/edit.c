@@ -47,7 +47,7 @@
 #include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
-#include "nvim/popupmnu.h"
+#include "nvim/popupmenu.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"

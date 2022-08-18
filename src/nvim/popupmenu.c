@@ -1,7 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/// @file popupmnu.c
+/// @file popupmenu.c
 ///
 /// Popup menu (PUM)
 
@@ -24,7 +24,7 @@
 #include "nvim/menu.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
-#include "nvim/popupmnu.h"
+#include "nvim/popupmenu.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
@@ -57,7 +57,7 @@ static bool pum_external = false;
 static bool pum_invalid = false;  // the screen was just cleared
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "popupmnu.c.generated.h"
+# include "popupmenu.c.generated.h"
 #endif
 #define PUM_DEF_HEIGHT 10
 
@@ -465,7 +465,7 @@ void pum_redraw(void)
                 / (pum_size - pum_height);
   }
 
-  for (i = 0; i < pum_height; ++i) {
+  for (i = 0; i < pum_height; i++) {
     idx = i + pum_first;
     attr = (idx == pum_selected) ? attr_select : attr_norm;
 
@@ -485,7 +485,7 @@ void pum_redraw(void)
     grid_col = col_off;
     totwidth = 0;
 
-    for (round = 1; round <= 3; ++round) {
+    for (round = 1; round <= 3; round++) {
       width = 0;
       s = NULL;
 
@@ -641,11 +641,11 @@ void pum_redraw(void)
 /// @param n
 /// @param repeat
 ///
-/// @returns TRUE when the window was resized and the location of the popup
+/// @returns true when the window was resized and the location of the popup
 /// menu must be recomputed.
-static int pum_set_selected(int n, int repeat)
+static bool pum_set_selected(int n, int repeat)
 {
-  int resized = FALSE;
+  int resized = false;
   int context = pum_height / 2;
 
   pum_selected = n;
@@ -778,12 +778,12 @@ static int pum_set_selected(int n, int repeat)
 
             if (curwin->w_height < lnum) {
               win_setheight((int)lnum);
-              resized = TRUE;
+              resized = true;
             }
           }
 
           curbuf->b_changed = false;
-          curbuf->b_p_ma = FALSE;
+          curbuf->b_p_ma = false;
           curwin->w_cursor.lnum = 1;
           curwin->w_cursor.col = 0;
 
@@ -797,7 +797,7 @@ static int pum_set_selected(int n, int repeat)
             // window is not resized, skip the preview window's
             // status line redrawing.
             if (ins_compl_active() && !resized) {
-              curwin->w_redr_status = FALSE;
+              curwin->w_redr_status = false;
             }
 
             // Return cursor to where we were
@@ -906,7 +906,7 @@ void pum_recompose(void)
 /// Gets the height of the menu.
 ///
 /// @return the height of the popup menu, the number of entries visible.
-/// Only valid when pum_visible() returns TRUE!
+/// Only valid when pum_visible() returns true!
 int pum_get_height(void)
 {
   if (pum_external) {
