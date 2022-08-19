@@ -312,6 +312,17 @@ Note: In the future more global options can be made |global-local|.  Using
 ":setlocal" on a global option might work differently then.
 
 
+						*option-value-function*
+Some options ('completefunc', 'imactivatefunc', 'imstatusfunc', 'omnifunc',
+'operatorfunc', 'quickfixtextfunc' and 'tagfunc') are set to a function name
+or a function reference or a lambda function.  Examples:
+>
+	set opfunc=MyOpFunc
+	set opfunc=function("MyOpFunc")
+	set opfunc=funcref("MyOpFunc")
+	set opfunc={t\ ->\ MyOpFunc(t)}
+<
+
 Setting the filetype
 
 :setf[iletype] [FALLBACK] {filetype}			*:setf* *:setfiletype*
@@ -4402,7 +4413,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 'operatorfunc' 'opfunc'	string	(default: empty)
 			global
 	This option specifies a function to be called by the |g@| operator.
-	See |:map-operator| for more info and an example.
+	See |:map-operator| for more info and an example.  The value can be
+	the name of a function, a |lambda| or a |Funcref|. See
+	|option-value-function| for more information.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
@@ -4696,8 +4709,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	customize the information displayed in the quickfix or location window
 	for each entry in the corresponding quickfix or location list.  See
 	|quickfix-window-function| for an explanation of how to write the
-	function and an example. The value can be the name of a function or a
-	lambda.
+	function and an example.  The value can be the name of a function, a
+	|lambda| or a |Funcref|. See |option-value-function| for more
+	information.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.

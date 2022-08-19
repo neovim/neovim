@@ -3829,38 +3829,11 @@ static buf_T *qf_find_buf(qf_info_T *qi)
   return NULL;
 }
 
-// Process the 'quickfixtextfunc' option value.
-bool qf_process_qftf_option(void)
+/// Process the 'quickfixtextfunc' option value.
+/// @return  OK or FAIL
+int qf_process_qftf_option(void)
 {
-  if (p_qftf == NULL || *p_qftf == NUL) {
-    callback_free(&qftf_cb);
-    return true;
-  }
-
-  typval_T *tv;
-  if (*p_qftf == '{') {
-    // Lambda expression
-    tv = eval_expr((char *)p_qftf);
-    if (tv == NULL) {
-      return false;
-    }
-  } else {
-    // treat everything else as a function name string
-    tv = xcalloc(1, sizeof(*tv));
-    tv->v_type = VAR_STRING;
-    tv->vval.v_string = (char *)vim_strsave(p_qftf);
-  }
-
-  Callback cb;
-  if (!callback_from_typval(&cb, tv)) {
-    tv_free(tv);
-    return false;
-  }
-
-  callback_free(&qftf_cb);
-  qftf_cb = cb;
-  tv_free(tv);
-  return true;
+  return option_set_callback_func(p_qftf, &qftf_cb);
 }
 
 /// Update the w:quickfix_title variable in the quickfix/location list window in

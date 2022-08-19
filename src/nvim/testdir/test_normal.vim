@@ -352,6 +352,70 @@ func Test_normal09a_operatorfunc()
   norm V10j,,
   call assert_equal(22, g:a)
 
+  " Use a lambda function for 'opfunc'
+  unmap <buffer> ,,
+  call cursor(1, 1)
+  let g:a=0
+  nmap <buffer><silent> ,, :set opfunc={type\ ->\ CountSpaces(type)}<CR>g@
+  vmap <buffer><silent> ,, :<C-U>call CountSpaces(visualmode(), 1)<CR>
+  50
+  norm V2j,,
+  call assert_equal(6, g:a)
+  norm V,,
+  call assert_equal(2, g:a)
+  norm ,,l
+  call assert_equal(0, g:a)
+  50
+  exe "norm 0\<c-v>10j2l,,"
+  call assert_equal(11, g:a)
+  50
+  norm V10j,,
+  call assert_equal(22, g:a)
+
+  " use a partial function for 'opfunc'
+  let g:OpVal = 0
+  func! Test_opfunc1(x, y, type)
+    let g:OpVal =  a:x + a:y
+  endfunc
+  set opfunc=function('Test_opfunc1',\ [5,\ 7])
+  normal! g@l
+  call assert_equal(12, g:OpVal)
+  " delete the function and try to use g@
+  delfunc Test_opfunc1
+  call test_garbagecollect_now()
+  call assert_fails('normal! g@l', 'E117:')
+  set opfunc=
+
+  " use a funcref for 'opfunc'
+  let g:OpVal = 0
+  func! Test_opfunc2(x, y, type)
+    let g:OpVal =  a:x + a:y
+  endfunc
+  set opfunc=funcref('Test_opfunc2',\ [4,\ 3])
+  normal! g@l
+  call assert_equal(7, g:OpVal)
+  " delete the function and try to use g@
+  delfunc Test_opfunc2
+  call test_garbagecollect_now()
+  call assert_fails('normal! g@l', 'E933:')
+  set opfunc=
+
+  " Try to use a function with two arguments for 'operatorfunc'
+  let g:OpVal = 0
+  func! Test_opfunc3(x, y)
+    let g:OpVal = 4
+  endfunc
+  set opfunc=Test_opfunc3
+  call assert_fails('normal! g@l', 'E119:')
+  call assert_equal(0, g:OpVal)
+  set opfunc=
+  delfunc Test_opfunc3
+  unlet g:OpVal
+
+  " Try to use a lambda function with two arguments for 'operatorfunc'
+  set opfunc={x,\ y\ ->\ 'done'}
+  call assert_fails('normal! g@l', 'E119:')
+
   " clean up
   unmap <buffer> ,,
   set opfunc=
