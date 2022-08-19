@@ -148,7 +148,7 @@ struct cmdline_info {
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
 
-// Struct to store the viewstate during 'incsearch' highlighting.
+// Struct to store the viewstate during 'incsearch' highlighting and 'inccommand' preview.
 typedef struct {
   colnr_T vs_curswant;
   colnr_T vs_leftcol;
@@ -200,6 +200,32 @@ typedef struct command_line_state {
   long *b_im_ptr;
 } CommandLineState;
 
+typedef struct cmdpreview_win_info {
+  win_T *win;
+  pos_T save_w_cursor;
+  viewstate_T save_viewstate;
+  int save_w_p_cul;
+  int save_w_p_cuc;
+} CpWinInfo;
+
+typedef struct cmdpreview_buf_info {
+  buf_T *buf;
+  time_t save_b_u_time_cur;
+  long save_b_u_seq_cur;
+  u_header_T *save_b_u_newhead;
+  long save_b_p_ul;
+  int save_b_changed;
+  varnumber_T save_changedtick;
+} CpBufInfo;
+
+typedef struct cmdpreview_info {
+  kvec_t(CpWinInfo) win_info;
+  kvec_t(CpBufInfo) buf_info;
+  bool save_hls;
+  cmdmod_T save_cmdmod;
+  garray_T save_view;
+} CpInfo;
+
 typedef struct cmdline_info CmdlineInfo;
 
 /// The current cmdline_info.  It is initialized in getcmdline() and after that
@@ -242,26 +268,26 @@ static long cmdpreview_ns = 0;
 
 static int cmd_hkmap = 0;  // Hebrew mapping during command line
 
-static void save_viewstate(viewstate_T *vs)
+static void save_viewstate(win_T *wp, viewstate_T *vs)
   FUNC_ATTR_NONNULL_ALL
 {
-  vs->vs_curswant = curwin->w_curswant;
-  vs->vs_leftcol = curwin->w_leftcol;
-  vs->vs_topline = curwin->w_topline;
-  vs->vs_topfill = curwin->w_topfill;
-  vs->vs_botline = curwin->w_botline;
-  vs->vs_empty_rows = curwin->w_empty_rows;
+  vs->vs_curswant = wp->w_curswant;
+  vs->vs_leftcol = wp->w_leftcol;
+  vs->vs_topline = wp->w_topline;
+  vs->vs_topfill = wp->w_topfill;
+  vs->vs_botline = wp->w_botline;
+  vs->vs_empty_rows = wp->w_empty_rows;
 }
 
-static void restore_viewstate(viewstate_T *vs)
+static void restore_viewstate(win_T *wp, viewstate_T *vs)
   FUNC_ATTR_NONNULL_ALL
 {
-  curwin->w_curswant = vs->vs_curswant;
-  curwin->w_leftcol = vs->vs_leftcol;
-  curwin->w_topline = vs->vs_topline;
-  curwin->w_topfill = vs->vs_topfill;
-  curwin->w_botline = vs->vs_botline;
-  curwin->w_empty_rows = vs->vs_empty_rows;
+  wp->w_curswant = vs->vs_curswant;
+  wp->w_leftcol = vs->vs_leftcol;
+  wp->w_topline = vs->vs_topline;
+  wp->w_topfill = vs->vs_topfill;
+  wp->w_botline = vs->vs_botline;
+  wp->w_empty_rows = vs->vs_empty_rows;
 }
 
 static void init_incsearch_state(incsearch_state_T *s)
@@ -273,8 +299,8 @@ static void init_incsearch_state(incsearch_state_T *s)
   clearpos(&s->match_end);
   s->save_cursor = curwin->w_cursor;  // may be restored later
   s->search_start = curwin->w_cursor;
-  save_viewstate(&s->init_viewstate);
-  save_viewstate(&s->old_viewstate);
+  save_viewstate(curwin, &s->init_viewstate);
+  save_viewstate(curwin, &s->old_viewstate);
 }
 
 /// Completion for |:checkhealth| command.
@@ -554,7 +580,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
 
   // first restore the old curwin values, so the screen is
   // positioned in the same way as the actual search command
-  restore_viewstate(&s->old_viewstate);
+  restore_viewstate(curwin, &s->old_viewstate);
   changed_cline_bef_curs();
   update_topline(curwin);
 
@@ -664,7 +690,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
       }
       curwin->w_cursor = s->search_start;  // -V519
     }
-    restore_viewstate(&s->old_viewstate);
+    restore_viewstate(curwin, &s->old_viewstate);
     highlight_match = false;
 
     // by default search all lines
@@ -1663,7 +1689,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
     update_topline(curwin);
     validate_cursor();
     highlight_match = true;
-    save_viewstate(&s->old_viewstate);
+    save_viewstate(curwin, &s->old_viewstate);
     update_screen(NOT_VALID);
     highlight_match = false;
     redrawcmdline();
@@ -2395,6 +2421,126 @@ static void cmdpreview_close_win(void)
   }
 }
 
+/// Save current state and prepare windows and buffers for command preview.
+static void cmdpreview_prepare(CpInfo *cpinfo)
+{
+  kv_init(cpinfo->buf_info);
+  kv_init(cpinfo->win_info);
+
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+    buf_T *buf = win->w_buffer;
+
+    // Don't save state of command preview buffer or preview window.
+    if (buf->handle == cmdpreview_bufnr) {
+      continue;
+    }
+
+    CpBufInfo cp_bufinfo;
+    cp_bufinfo.buf = buf;
+
+    cp_bufinfo.save_b_u_time_cur = buf->b_u_time_cur;
+    cp_bufinfo.save_b_u_seq_cur = buf->b_u_seq_cur;
+    cp_bufinfo.save_b_u_newhead = buf->b_u_newhead;
+    cp_bufinfo.save_b_p_ul = buf->b_p_ul;
+    cp_bufinfo.save_b_changed = buf->b_changed;
+    cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
+
+    kv_push(cpinfo->buf_info, cp_bufinfo);
+
+    buf->b_p_ul = LONG_MAX;     // Make sure we can undo all changes
+
+    CpWinInfo cp_wininfo;
+    cp_wininfo.win = win;
+
+    // Save window cursor position and viewstate
+    cp_wininfo.save_w_cursor = win->w_cursor;
+    save_viewstate(win, &cp_wininfo.save_viewstate);
+
+    // Save 'cursorline' and 'cursorcolumn'
+    cp_wininfo.save_w_p_cul = win->w_p_cul;
+    cp_wininfo.save_w_p_cuc = win->w_p_cuc;
+
+    kv_push(cpinfo->win_info, cp_wininfo);
+
+    win->w_p_cul = false;       // Disable 'cursorline' so it doesn't mess up the highlights
+    win->w_p_cuc = false;       // Disable 'cursorcolumn' so it doesn't mess up the highlights
+  }
+
+  cpinfo->save_hls = p_hls;
+  cpinfo->save_cmdmod = cmdmod;
+  win_size_save(&cpinfo->save_view);
+  save_search_patterns();
+
+  p_hls = false;                 // Don't show search highlighting during live substitution
+  cmdmod.cmod_split = 0;         // Disable :leftabove/botright modifiers
+  cmdmod.cmod_tab = 0;           // Disable :tab modifier
+  cmdmod.cmod_flags |= CMOD_NOSWAPFILE;  // Disable swap for preview buffer
+}
+
+// Restore the state of buffers and windows before command preview.
+static void cmdpreview_restore_state(CpInfo *cpinfo)
+{
+  for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
+    CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
+    buf_T *buf = cp_bufinfo.buf;
+
+    buf->b_changed = cp_bufinfo.save_b_changed;
+
+    if (buf->b_u_seq_cur != cp_bufinfo.save_b_u_seq_cur) {
+      int count = 0;
+
+      // Calculate how many undo steps are necessary to restore earlier state.
+      for (u_header_T *uhp = buf->b_u_curhead ? buf->b_u_curhead : buf->b_u_newhead;
+           uhp != NULL && uhp->uh_seq > cp_bufinfo.save_b_u_seq_cur;
+           uhp = uhp->uh_next.ptr, ++count) {}
+
+      aco_save_T aco;
+      aucmd_prepbuf(&aco, buf);
+      // Undo invisibly. This also moves the cursor!
+      if (!u_undo_and_forget(count)) {
+        abort();
+      }
+      aucmd_restbuf(&aco);
+
+      // Restore newhead. It is meaningless when curhead is valid, but we must
+      // restore it so that undotree() is identical before/after the preview.
+      buf->b_u_newhead = cp_bufinfo.save_b_u_newhead;
+      buf->b_u_time_cur = cp_bufinfo.save_b_u_time_cur;
+    }
+    if (cp_bufinfo.save_changedtick != buf_get_changedtick(buf)) {
+      buf_set_changedtick(buf, cp_bufinfo.save_changedtick);
+    }
+
+    buf->b_p_ul = cp_bufinfo.save_b_p_ul;        // Restore 'undolevels'
+
+    // Clear preview highlights.
+    extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
+  }
+  for (size_t i = 0; i < cpinfo->win_info.size; i++) {
+    CpWinInfo cp_wininfo = cpinfo->win_info.items[i];
+    win_T *win = cp_wininfo.win;
+
+    // Restore window cursor position and viewstate
+    win->w_cursor = cp_wininfo.save_w_cursor;
+    restore_viewstate(win, &cp_wininfo.save_viewstate);
+
+    // Restore 'cursorline' and 'cursorcolumn'
+    win->w_p_cul = cp_wininfo.save_w_p_cul;
+    win->w_p_cuc = cp_wininfo.save_w_p_cuc;
+
+    update_topline(win);
+  }
+
+  cmdmod = cpinfo->save_cmdmod;                // Restore cmdmod
+  p_hls = cpinfo->save_hls;                    // Restore 'hlsearch'
+  restore_search_patterns();           // Restore search patterns
+  win_size_restore(&cpinfo->save_view);        // Restore window sizes
+
+  ga_clear(&cpinfo->save_view);
+  kv_destroy(cpinfo->win_info);
+  kv_destroy(cpinfo->buf_info);
+}
+
 /// Show 'inccommand' preview if command is previewable. It works like this:
 ///    1. Store current undo information so we can revert to current state later.
 ///    2. Execute the preview callback with the parsed command, preview buffer number and preview
@@ -2439,35 +2585,18 @@ static bool cmdpreview_may_show(CommandLineState *s)
     ea.line2 = lnum;
   }
 
-  time_t save_b_u_time_cur = curbuf->b_u_time_cur;
-  long save_b_u_seq_cur = curbuf->b_u_seq_cur;
-  u_header_T *save_b_u_newhead = curbuf->b_u_newhead;
-  long save_b_p_ul = curbuf->b_p_ul;
-  int save_b_changed = curbuf->b_changed;
-  int save_w_p_cul = curwin->w_p_cul;
-  int save_w_p_cuc = curwin->w_p_cuc;
-  bool save_hls = p_hls;
-  varnumber_T save_changedtick = buf_get_changedtick(curbuf);
+  CpInfo cpinfo;
   bool icm_split = *p_icm == 's';  // inccommand=split
   buf_T *cmdpreview_buf;
   win_T *cmdpreview_win;
-  cmdmod_T save_cmdmod = cmdmod;
 
-  cmdpreview = true;
   emsg_silent++;                 // Block error reporting as the command may be incomplete,
                                  // but still update v:errmsg
   msg_silent++;                  // Block messages, namely ones that prompt
   block_autocmds();              // Block events
-  garray_T save_view;
-  win_size_save(&save_view);     // Save current window sizes
-  save_search_patterns();        // Save search patterns
-  curbuf->b_p_ul = LONG_MAX;     // Make sure we can undo all changes
-  curwin->w_p_cul = false;       // Disable 'cursorline' so it doesn't mess up the highlights
-  curwin->w_p_cuc = false;       // Disable 'cursorcolumn' so it doesn't mess up the highlights
-  p_hls = false;                 // Don't show search highlighting during live substitution
-  cmdmod.cmod_split = 0;         // Disable :leftabove/botright modifiers
-  cmdmod.cmod_tab = 0;           // Disable :tab modifier
-  cmdmod.cmod_flags |= CMOD_NOSWAPFILE;  // Disable swap for preview buffer
+
+  // Save current state and prepare for command preview.
+  cmdpreview_prepare(&cpinfo);
 
   // Open preview buffer if inccommand=split.
   if (!icm_split) {
@@ -2475,11 +2604,13 @@ static bool cmdpreview_may_show(CommandLineState *s)
   } else if ((cmdpreview_buf = cmdpreview_open_buf()) == NULL) {
     abort();
   }
-
   // Setup preview namespace if it's not already set.
   if (!cmdpreview_ns) {
     cmdpreview_ns = (int)nvim_create_namespace((String)STRING_INIT);
   }
+
+  // Set cmdpreview state.
+  cmdpreview = true;
 
   // Execute the preview callback and use its return value to determine whether to show preview or
   // open the preview window. The preview callback also handles doing the changes and highlights for
@@ -2499,7 +2630,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
     cmdpreview_type = 1;
   }
 
-  // If preview callback is nonzero, update screen now.
+  // If preview callback return value is nonzero, update screen now.
   if (cmdpreview_type != 0) {
     int save_rd = RedrawingDisabled;
     RedrawingDisabled = 0;
@@ -2511,44 +2642,13 @@ static bool cmdpreview_may_show(CommandLineState *s)
   if (icm_split && cmdpreview_type == 2 && cmdpreview_win != NULL) {
     cmdpreview_close_win();
   }
-  // Clear preview highlights.
-  extmark_clear(curbuf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
 
-  curbuf->b_changed = save_b_changed;  // Preserve 'modified' during preview
+  // Restore state.
+  cmdpreview_restore_state(&cpinfo);
 
-  if (curbuf->b_u_seq_cur != save_b_u_seq_cur) {
-    // Undo invisibly. This also moves the cursor!
-    while (curbuf->b_u_seq_cur != save_b_u_seq_cur) {
-      if (!u_undo_and_forget(1)) {
-        abort();
-      }
-    }
-    // Restore newhead. It is meaningless when curhead is valid, but we must
-    // restore it so that undotree() is identical before/after the preview.
-    curbuf->b_u_newhead = save_b_u_newhead;
-    curbuf->b_u_time_cur = save_b_u_time_cur;
-  }
-  if (save_changedtick != buf_get_changedtick(curbuf)) {
-    buf_set_changedtick(curbuf, save_changedtick);
-  }
-
-  cmdmod = save_cmdmod;                // Restore cmdmod
-  p_hls = save_hls;                    // Restore 'hlsearch'
-  curwin->w_p_cul = save_w_p_cul;      // Restore 'cursorline'
-  curwin->w_p_cuc = save_w_p_cuc;      // Restore 'cursorcolumn'
-  curbuf->b_p_ul = save_b_p_ul;        // Restore 'undolevels'
-  restore_search_patterns();           // Restore search patterns
-  win_size_restore(&save_view);        // Restore window sizes
-  ga_clear(&save_view);
   unblock_autocmds();                  // Unblock events
   msg_silent--;                        // Unblock messages
   emsg_silent--;                       // Unblock error reporting
-
-  // Restore the window "view".
-  curwin->w_cursor   = s->is_state.save_cursor;
-  restore_viewstate(&s->is_state.old_viewstate);
-  update_topline(curwin);
-
   redrawcmdline();
 end:
   xfree(cmdline);
