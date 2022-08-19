@@ -33,6 +33,7 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/runtime.h"
+#include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"

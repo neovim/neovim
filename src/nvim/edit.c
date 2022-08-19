@@ -1349,7 +1349,7 @@ void ins_redraw(bool ready)
   } else if (clear_cmdline || redraw_cmdline) {
     showmode();  // clear cmdline and show mode
   }
-  showruler(false);
+  show_cursor_info(false);
   setcursor();
   emsg_on_display = false;      // may remove error message now
 }

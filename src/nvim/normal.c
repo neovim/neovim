@@ -1322,7 +1322,7 @@ static void normal_redraw(NormalState *s)
   did_emsg = false;
   msg_didany = false;  // reset lines_left in msg_start()
   may_clear_sb_text();  // clear scroll-back text on next msg
-  showruler(false);
+  show_cursor_info(false);
 
   setcursor();
 }

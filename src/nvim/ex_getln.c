@@ -4264,7 +4264,7 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
         compl_selected = findex;
         cmdline_pum_display(false);
       } else if (p_wmnu) {
-        win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files, findex, cmd_showtail);
+        redraw_wildmenu(xp, xp->xp_numfiles, xp->xp_files, findex, cmd_showtail);
       }
       if (findex == -1) {
         return vim_strsave(orig_save);
@@ -4679,7 +4679,7 @@ static int showmatches(expand_T *xp, int wildmenu)
   if (got_int) {
     got_int = false;            // only int. the completion, not the cmd line
   } else if (wildmenu) {
-    win_redr_status_matches(xp, num_files, files_found, -1, showtail);
+    redraw_wildmenu(xp, num_files, files_found, -1, showtail);
   } else {
     // find the length of the longest file name
     maxlen = 0;
@@ -4791,7 +4791,7 @@ static int showmatches(expand_T *xp, int wildmenu)
   return EXPAND_OK;
 }
 
-/// Private path_tail for showmatches() (and win_redr_status_matches()):
+/// Private path_tail for showmatches() (and redraw_wildmenu()):
 /// Find tail of file name path, but ignore trailing "/".
 char *sm_gettail(char *s, bool eager)
 {

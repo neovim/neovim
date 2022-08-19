@@ -2423,7 +2423,7 @@ void showmatch(int c)
       curwin->w_cursor = mpos;          // move to matching char
       *so = 0;                          // don't use 'scrolloff' here
       *siso = 0;                        // don't use 'sidescrolloff' here
-      showruler(false);
+      show_cursor_info(false);
       setcursor();
       ui_flush();
       // Restore dollar_vcol(), because setcursor() may call curs_rows()
