@@ -8,6 +8,7 @@ set cpo&vim
 func! Test_check_colors()
   let l:savedview = winsaveview()
   call cursor(1,1)
+
   " err is
   " {
   "    colors_name: "message",
@@ -213,6 +214,7 @@ func! Test_check_colors()
   " print Result
   call Result(err)
 endfu
+
 
 fu! Result(err)
   let do_groups = 0
