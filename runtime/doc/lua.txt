@@ -1238,41 +1238,54 @@ vim.go          :setglobal          set                 -
 
 vim.o                                                                  *vim.o*
     Get or set editor options, like |:set|. Invalid key is an error.
+
     Example: >
         vim.o.cmdheight = 4
         print(vim.o.columns)
+        print(vim.o.foo)     -- error: invalid key
 <
 vim.go                                                                *vim.go*
     Get or set an |option|. Invalid key is an error.
 
-    This is a wrapper around |nvim_set_option()| and |nvim_get_option()|.
+    This is a wrapper around |nvim_set_option_value()| and
+    |nvim_get_option_value()|.
 
-    NOTE: This is different than |vim.o| because this ONLY sets the global
+    NOTE: This is different from |vim.o| because this ONLY sets the global
     option, which generally produces confusing behavior for options with
     |global-local| values.
 
     Example: >
         vim.go.cmdheight = 4
+        print(vim.go.columns)
+        print(vim.go.bar)     -- error: invalid key
 <
-vim.bo                                                                *vim.bo*
-    Get or set buffer-scoped |local-options|. Invalid key is an error.
+vim.bo[{bufnr}]                                                                *vim.bo*
+    Get or set buffer-scoped |local-options| for the buffer with number {bufnr}.
+    If [{bufnr}] is omitted, use the current buffer. Invalid {bufnr} or key is
+    an error.
 
-    This is a wrapper around |nvim_buf_set_option()| and
-    |nvim_buf_get_option()|.
+    This is a wrapper around |nvim_set_option_value()| and
+    |nvim_get_option_value()| with `opts = {scope = local, buf = bufnr}` .
 
     Example: >
-        vim.bo.buflisted = true
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.bo[bufnr].buflisted = true    -- same as vim.bo.buflisted = true
         print(vim.bo.comments)
+        print(vim.bo.baz)                 -- error: invalid key
 <
-vim.wo                                                                *vim.wo*
-    Get or set window-scoped |local-options|. Invalid key is an error.
+vim.wo[{winid}]                                                                *vim.wo*
+    Get or set window-scoped |local-options| for the window with handle {winid}.
+    If [{winid}] is omitted, use the current window. Invalid {winid} or key
+    is an error.
 
-    This is a wrapper around |nvim_win_set_option()| and
-    |nvim_win_get_option()|.
+    This is a wrapper around |nvim_set_option_value()| and
+    |nvim_get_option_value()| with `opts = {scope = local, win = winid}` .
 
     Example: >
-        vim.wo.cursorcolumn = true
+        local winid = vim.api.nvim_get_current_win()
+        vim.wo[winid].number = true    -- same as vim.wo.number = true
         print(vim.wo.foldmarker)
+        print(vim.wo.quux)             -- error: invalid key
 <
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
