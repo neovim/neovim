@@ -3607,3 +3607,71 @@ int expand_spelling(linenr_T lnum, char_u *pat, char ***matchp)
   *matchp = ga.ga_data;
   return ga.ga_len;
 }
+
+/// Return true if "val" is a valid 'spelllang' value.
+bool valid_spelllang(const char_u *val)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return valid_name(val, ".-_,@");
+}
+
+/// Return true if "val" is a valid 'spellfile' value.
+bool valid_spellfile(const char_u *val)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  for (const char_u *s = val; *s != NUL; s++) {
+    if (!vim_isfilec(*s) && *s != ',' && *s != ' ') {
+      return false;
+    }
+  }
+  return true;
+}
+
+char *did_set_spell_option(bool is_spellfile)
+{
+  char *errmsg = NULL;
+
+  if (is_spellfile) {
+    int l = (int)STRLEN(curwin->w_s->b_p_spf);
+    if (l > 0
+        && (l < 4 || STRCMP(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
+      errmsg = e_invarg;
+    }
+  }
+
+  if (errmsg == NULL) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_buffer == curbuf && wp->w_p_spell) {
+        errmsg = did_set_spelllang(wp);
+        break;
+      }
+    }
+  }
+
+  return errmsg;
+}
+
+/// Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
+/// Return error message when failed, NULL when OK.
+char *compile_cap_prog(synblock_T *synblock)
+  FUNC_ATTR_NONNULL_ALL
+{
+  regprog_T *rp = synblock->b_cap_prog;
+  char_u *re;
+
+  if (synblock->b_p_spc == NULL || *synblock->b_p_spc == NUL) {
+    synblock->b_cap_prog = NULL;
+  } else {
+    // Prepend a ^ so that we only match at one column
+    re = concat_str((char_u *)"^", synblock->b_p_spc);
+    synblock->b_cap_prog = vim_regcomp((char *)re, RE_MAGIC);
+    xfree(re);
+    if (synblock->b_cap_prog == NULL) {
+      synblock->b_cap_prog = rp;         // restore the previous program
+      return e_invarg;
+    }
+  }
+
+  vim_regfree(rp);
+  return NULL;
+}

@@ -23,6 +23,7 @@
 #include "nvim/grid.h"
 #include "nvim/hardcopy.h"
 #include "nvim/highlight_group.h"
+#include "nvim/indent.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

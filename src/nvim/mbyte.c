@@ -50,9 +50,9 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
+#include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 

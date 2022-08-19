@@ -5781,7 +5781,7 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
 /// If qf_idx is -1, use the current list. Otherwise, use the specified list.
 /// If eidx is not 0, then return only the specified entry. Otherwise return
 /// all the entries.
-int get_errorlist(qf_info_T *qi_arg, win_T *wp, int qf_idx, int eidx, list_T *list)
+static int get_errorlist(qf_info_T *qi_arg, win_T *wp, int qf_idx, int eidx, list_T *list)
 {
   qf_info_T *qi = qi_arg;
 
@@ -6151,7 +6151,7 @@ static int qf_getprop_qftf(qf_list_T *qfl, dict_T *retdict)
 /// Return quickfix/location list details (title) as a dictionary.
 /// 'what' contains the details to return. If 'list_idx' is -1,
 /// then current list is used. Otherwise the specified list is used.
-int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
+static int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
 {
   qf_info_T *qi = &ql_info;
   dictitem_T *di = NULL;
@@ -7158,4 +7158,138 @@ void ex_helpgrep(exarg_T *eap)
       curwin->w_llist = qi;
     }
   }
+}
+
+static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg, typval_T *rettv)
+{
+  if (what_arg->v_type == VAR_UNKNOWN) {
+    tv_list_alloc_ret(rettv, kListLenMayKnow);
+    if (is_qf || wp != NULL) {
+      (void)get_errorlist(NULL, wp, -1, 0, rettv->vval.v_list);
+    }
+  } else {
+    tv_dict_alloc_ret(rettv);
+    if (is_qf || wp != NULL) {
+      if (what_arg->v_type == VAR_DICT) {
+        dict_T *d = what_arg->vval.v_dict;
+
+        if (d != NULL) {
+          qf_get_properties(wp, d, rettv->vval.v_dict);
+        }
+      } else {
+        emsg(_(e_dictreq));
+      }
+    }
+  }
+}
+
+/// "getloclist()" function
+void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+  get_qf_loc_list(false, wp, &argvars[1], rettv);
+}
+
+/// "getqflist()" functions
+void f_getqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  get_qf_loc_list(true, NULL, &argvars[0], rettv);
+}
+
+/// Create quickfix/location list from VimL values
+///
+/// Used by `setqflist()` and `setloclist()` functions. Accepts invalid
+/// args argument in which case errors out, including VAR_UNKNOWN parameters.
+///
+/// @param[in,out]  wp  Window to create location list for. May be NULL in
+///                     which case quickfix list will be created.
+/// @param[in]  args  [list, action, what]
+/// @param[in]  args[0]  Quickfix list contents.
+/// @param[in]  args[1]  Optional. Action to perform:
+///                      append to an existing list, replace its content,
+///                      or create a new one.
+/// @param[in]  args[2]  Optional. Quickfix list properties or title.
+///                      Defaults to caller function name.
+/// @param[out]  rettv  Return value: 0 in case of success, -1 otherwise.
+static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(2, 3)
+{
+  static char *e_invact = N_("E927: Invalid action: '%s'");
+  const char *title = NULL;
+  char action = ' ';
+  static int recursive = 0;
+  rettv->vval.v_number = -1;
+  dict_T *what = NULL;
+
+  typval_T *list_arg = &args[0];
+  if (list_arg->v_type != VAR_LIST) {
+    emsg(_(e_listreq));
+    return;
+  } else if (recursive != 0) {
+    emsg(_(e_au_recursive));
+    return;
+  }
+
+  typval_T *action_arg = &args[1];
+  if (action_arg->v_type == VAR_UNKNOWN) {
+    // Option argument was not given.
+    goto skip_args;
+  } else if (action_arg->v_type != VAR_STRING) {
+    emsg(_(e_stringreq));
+    return;
+  }
+  const char *const act = tv_get_string_chk(action_arg);
+  if ((*act == 'a' || *act == 'r' || *act == ' ' || *act == 'f')
+      && act[1] == NUL) {
+    action = *act;
+  } else {
+    semsg(_(e_invact), act);
+    return;
+  }
+
+  typval_T *const what_arg = &args[2];
+  if (what_arg->v_type == VAR_UNKNOWN) {
+    // Option argument was not given.
+    goto skip_args;
+  } else if (what_arg->v_type == VAR_STRING) {
+    title = tv_get_string_chk(what_arg);
+    if (!title) {
+      // Type error. Error already printed by tv_get_string_chk().
+      return;
+    }
+  } else if (what_arg->v_type == VAR_DICT && what_arg->vval.v_dict != NULL) {
+    what = what_arg->vval.v_dict;
+  } else {
+    emsg(_(e_dictreq));
+    return;
+  }
+
+skip_args:
+  if (!title) {
+    title = (wp ? ":setloclist()" : ":setqflist()");
+  }
+
+  recursive++;
+  list_T *const l = list_arg->vval.v_list;
+  if (set_errorlist(wp, l, action, (char *)title, what) == OK) {
+    rettv->vval.v_number = 0;
+  }
+  recursive--;
+}
+
+/// "setloclist()" function
+void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = -1;
+
+  win_T *win = find_win_by_nr_or_id(&argvars[0]);
+  if (win != NULL) {
+    set_qf_ll_list(win, &argvars[1], rettv);
+  }
+}
+
+/// "setqflist()" function
+void f_setqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  set_qf_ll_list(NULL, argvars, rettv);
 }
