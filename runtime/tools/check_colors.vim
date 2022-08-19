@@ -218,7 +218,7 @@ fu! Result(err)
   let do_groups = 0
   echohl Title|echomsg "---------------"|echohl Normal
   for key in sort(keys(a:err))
-    if key == 'highlight'
+    if key ==# 'highlight'
       let do_groups = !empty(a:err[key])
       continue
     else
