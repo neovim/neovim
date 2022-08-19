@@ -830,8 +830,13 @@ static bool semsgv(const char *fmt, va_list ap)
 /// detected when fuzzing vim.
 void iemsg(const char *s)
 {
+  if (emsg_not_now()) {
+    return;
+  }
+
   emsg(s);
 #ifdef ABORT_ON_INTERNAL_ERROR
+  set_vim_var_string(VV_ERRMSG, s, -1);
   abort();
 #endif
 }

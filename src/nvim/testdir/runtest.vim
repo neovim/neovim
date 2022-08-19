@@ -257,6 +257,7 @@ endfunc
 func EarlyExit(test)
   " It's OK for the test we use to test the quit detection.
   if a:test != 'Test_zz_quit_detected()'
+    call add(v:errors, v:errmsg)
     call add(v:errors, 'Test caused Vim to exit: ' . a:test)
   endif
 
