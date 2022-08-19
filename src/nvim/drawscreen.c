@@ -75,6 +75,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
+#include "nvim/statusline.h"
 #include "nvim/syntax.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
@@ -736,190 +737,10 @@ static void win_redr_border(win_T *wp)
   }
 }
 
-/// Redraw the status line of window `wp`.
-///
-/// If inversion is possible we use it. Else '=' characters are used.
-static void win_redr_status(win_T *wp)
-{
-  int row;
-  int col;
-  char_u *p;
-  int len;
-  int fillchar;
-  int attr;
-  int width;
-  int this_ru_col;
-  bool is_stl_global = global_stl_height() > 0;
-  static bool busy = false;
-
-  // May get here recursively when 'statusline' (indirectly)
-  // invokes ":redrawstatus".  Simply ignore the call then.
-  if (busy
-      // Also ignore if wildmenu is showing.
-      || (wild_menu_showing != 0 && !ui_has(kUIWildmenu))) {
-    return;
-  }
-  busy = true;
-
-  wp->w_redr_status = false;
-  if (wp->w_status_height == 0 && !(is_stl_global && wp == curwin)) {
-    // no status line, either global statusline is enabled or the window is a last window
-    redraw_cmdline = true;
-  } else if (!redrawing()) {
-    // Don't redraw right now, do it later. Don't update status line when
-    // popup menu is visible and may be drawn over it
-    wp->w_redr_status = true;
-  } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
-    // redraw custom status line
-    redraw_custom_statusline(wp);
-  } else {
-    fillchar = fillchar_status(&attr, wp);
-    width = is_stl_global ? Columns : wp->w_width;
-
-    get_trans_bufname(wp->w_buffer);
-    p = NameBuff;
-    len = (int)STRLEN(p);
-
-    if (bt_help(wp->w_buffer)
-        || wp->w_p_pvw
-        || bufIsChanged(wp->w_buffer)
-        || wp->w_buffer->b_p_ro) {
-      *(p + len++) = ' ';
-    }
-    if (bt_help(wp->w_buffer)) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", _("[Help]"));
-      len += (int)STRLEN(p + len);
-    }
-    if (wp->w_p_pvw) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", _("[Preview]"));
-      len += (int)STRLEN(p + len);
-    }
-    if (bufIsChanged(wp->w_buffer)) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", "[+]");
-      len += (int)STRLEN(p + len);
-    }
-    if (wp->w_buffer->b_p_ro) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
-      // len += (int)STRLEN(p + len);  // dead assignment
-    }
-
-    this_ru_col = ru_col - (Columns - width);
-    if (this_ru_col < (width + 1) / 2) {
-      this_ru_col = (width + 1) / 2;
-    }
-    if (this_ru_col <= 1) {
-      p = (char_u *)"<";                // No room for file name!
-      len = 1;
-    } else {
-      int clen = 0, i;
-
-      // Count total number of display cells.
-      clen = (int)mb_string2cells((char *)p);
-
-      // Find first character that will fit.
-      // Going from start to end is much faster for DBCS.
-      for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
-           i += utfc_ptr2len((char *)p + i)) {
-        clen -= utf_ptr2cells((char *)p + i);
-      }
-      len = clen;
-      if (i > 0) {
-        p = p + i - 1;
-        *p = '<';
-        len++;
-      }
-    }
-
-    row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
-    col = is_stl_global ? 0 : wp->w_wincol;
-    grid_puts(&default_grid, p, row, col, attr);
-    grid_fill(&default_grid, row, row + 1, len + col,
-              this_ru_col + col, fillchar, fillchar, attr);
-
-    if (get_keymap_str(wp, "<%s>", (char *)NameBuff, MAXPATHL)
-        && this_ru_col - len > (int)(STRLEN(NameBuff) + 1)) {
-      grid_puts(&default_grid, NameBuff, row,
-                (int)((size_t)this_ru_col - STRLEN(NameBuff) - 1), attr);
-    }
-
-    win_redr_ruler(wp, true);
-  }
-
-  // May need to draw the character below the vertical separator.
-  if (wp->w_vsep_width != 0 && wp->w_status_height != 0 && redrawing()) {
-    if (stl_connected(wp)) {
-      fillchar = fillchar_status(&attr, wp);
-    } else {
-      fillchar = fillchar_vsep(wp, &attr);
-    }
-    grid_putchar(&default_grid, fillchar, W_ENDROW(wp), W_ENDCOL(wp), attr);
-  }
-  busy = false;
-}
-
-/// Redraw the status line according to 'statusline' and take care of any
-/// errors encountered.
-static void redraw_custom_statusline(win_T *wp)
-{
-  static bool entered = false;
-  int saved_did_emsg = did_emsg;
-
-  // When called recursively return.  This can happen when the statusline
-  // contains an expression that triggers a redraw.
-  if (entered) {
-    return;
-  }
-  entered = true;
-
-  did_emsg = false;
-  win_redr_custom(wp, false, false);
-  if (did_emsg) {
-    // When there is an error disable the statusline, otherwise the
-    // display is messed up with errors and a redraw triggers the problem
-    // again and again.
-    set_string_option_direct("statusline", -1, "",
-                             OPT_FREE | (*wp->w_p_stl != NUL
-                                         ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
-  }
-  did_emsg |= saved_did_emsg;
-  entered = false;
-}
-
-static void win_redr_winbar(win_T *wp)
-{
-  static bool entered = false;
-
-  // Return when called recursively. This can happen when the winbar contains an expression
-  // that triggers a redraw.
-  if (entered) {
-    return;
-  }
-  entered = true;
-
-  if (wp->w_winbar_height == 0 || !redrawing()) {
-    // Do nothing.
-  } else if (*p_wbr != NUL || *wp->w_p_wbr != NUL) {
-    int saved_did_emsg = did_emsg;
-
-    did_emsg = false;
-    win_redr_custom(wp, true, false);
-    if (did_emsg) {
-      // When there is an error disable the winbar, otherwise the
-      // display is messed up with errors and a redraw triggers the problem
-      // again and again.
-      set_string_option_direct("winbar", -1, "",
-                               OPT_FREE | (*wp->w_p_stl != NUL
-                                           ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
-    }
-    did_emsg |= saved_did_emsg;
-  }
-  entered = false;
-}
-
-/// Show current status info in ruler and various other places
+/// Show current cursor info in ruler and various other places
 ///
 /// @param always  if false, only show ruler if position has changed.
-void showruler(bool always)
+void show_cursor_info(bool always)
 {
   if (!always && !redrawing()) {
     return;
@@ -2300,6 +2121,26 @@ void redraw_statuslines(void)
   }
   if (redraw_tabline) {
     draw_tabline();
+  }
+}
+
+/// Redraw all status lines at the bottom of frame "frp".
+void win_redraw_last_status(const frame_T *frp)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (frp->fr_layout == FR_LEAF) {
+    frp->fr_win->w_redr_status = true;
+  } else if (frp->fr_layout == FR_ROW) {
+    FOR_ALL_FRAMES(frp, frp->fr_child) {
+      win_redraw_last_status(frp);
+    }
+  } else {
+    assert(frp->fr_layout == FR_COL);
+    frp = frp->fr_child;
+    while (frp->fr_next != NULL) {
+      frp = frp->fr_next;
+    }
+    win_redraw_last_status(frp);
   }
 }
 

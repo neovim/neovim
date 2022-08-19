@@ -9,6 +9,7 @@ local NULL    = helpers.NULL
 
 local globals = helpers.cimport("./src/nvim/globals.h")
 local buffer = helpers.cimport("./src/nvim/buffer.h")
+local stl = helpers.cimport("./src/nvim/statusline.h")
 
 describe('buffer functions', function()
 
@@ -228,7 +229,7 @@ describe('buffer functions', function()
       local fillchar = arg.fillchar or (' '):byte()
       local maximum_cell_count = arg.maximum_cell_count or buffer_byte_size
 
-      return buffer.build_stl_str_hl(globals.curwin,
+      return stl.build_stl_str_hl(globals.curwin,
                                      output_buffer,
                                      buffer_byte_size,
                                      to_cstr(pat),

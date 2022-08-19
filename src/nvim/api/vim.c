@@ -57,6 +57,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/runtime.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"

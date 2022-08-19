@@ -16,6 +16,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
@@ -34,6 +35,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
+#include "nvim/statusline.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
@@ -249,7 +251,7 @@ void rl_mirror(char_u *str)
 }
 
 /// Get the length of an item as it will be shown in the status line.
-static int status_match_len(expand_T *xp, char_u *s)
+static int wildmenu_match_len(expand_T *xp, char_u *s)
 {
   int len = 0;
 
@@ -262,7 +264,7 @@ static int status_match_len(expand_T *xp, char_u *s)
   }
 
   while (*s != NUL) {
-    s += skip_status_match_char(xp, s);
+    s += skip_wildmenu_char(xp, s);
     len += ptr2cells((char *)s);
     MB_PTR_ADV(s);
   }
@@ -270,29 +272,9 @@ static int status_match_len(expand_T *xp, char_u *s)
   return len;
 }
 
-/// Redraw all status lines at the bottom of frame "frp".
-void win_redraw_last_status(const frame_T *frp)
-  FUNC_ATTR_NONNULL_ARG(1)
-{
-  if (frp->fr_layout == FR_LEAF) {
-    frp->fr_win->w_redr_status = true;
-  } else if (frp->fr_layout == FR_ROW) {
-    FOR_ALL_FRAMES(frp, frp->fr_child) {
-      win_redraw_last_status(frp);
-    }
-  } else {
-    assert(frp->fr_layout == FR_COL);
-    frp = frp->fr_child;
-    while (frp->fr_next != NULL) {
-      frp = frp->fr_next;
-    }
-    win_redraw_last_status(frp);
-  }
-}
-
-/// Return the number of characters that should be skipped in a status match.
+/// Return the number of characters that should be skipped in the wildmenu
 /// These are backslashes used for escaping.  Do show backslashes in help tags.
-static int skip_status_match_char(expand_T *xp, char_u *s)
+static int skip_wildmenu_char(expand_T *xp, char_u *s)
 {
   if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
       || ((xp->xp_context == EXPAND_MENUS
@@ -300,6 +282,10 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
           && (s[0] == '\t'
               || (s[0] == '\\' && s[1] != NUL)))) {
 #ifndef BACKSLASH_IN_FILENAME
+    // TODO(bfredl): Why in the actual fuck are we special casing the
+    // shell variety deep in the redraw logic? Shell special snowflakiness
+    // should already be eliminated multiple layers before reaching the
+    // screen infracstructure.
     if (xp->xp_shell && csh_like_shell() && s[1] == '\\' && s[2] == '!') {
       return 2;
     }
@@ -316,7 +302,7 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
 /// If inversion is possible we use it. Else '=' characters are used.
 ///
 /// @param matches  list of matches
-void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int match, int showtail)
+void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, int showtail)
 {
 #define L_MATCH(m) (showtail ? sm_gettail(matches[m], false) : matches[m])
   int row;
@@ -347,7 +333,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
     highlight = false;
   }
   // count 1 for the ending ">"
-  clen = status_match_len(xp, (char_u *)L_MATCH(match)) + 3;
+  clen = wildmenu_match_len(xp, (char_u *)L_MATCH(match)) + 3;
   if (match == 0) {
     first_match = 0;
   } else if (match < first_match) {
@@ -357,7 +343,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
   } else {
     // check if match fits on the screen
     for (i = first_match; i < match; i++) {
-      clen += status_match_len(xp, (char_u *)L_MATCH(i)) + 2;
+      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
     }
     if (first_match > 0) {
       clen += 2;
@@ -368,7 +354,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
       // if showing the last match, we can add some on the left
       clen = 2;
       for (i = match; i < num_matches; i++) {
-        clen += status_match_len(xp, (char_u *)L_MATCH(i)) + 2;
+        clen += wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2;
         if ((long)clen >= Columns) {
           break;
         }
@@ -380,7 +366,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
   }
   if (add_left) {
     while (first_match > 0) {
-      clen += status_match_len(xp, (char_u *)L_MATCH(first_match - 1)) + 2;
+      clen += wildmenu_match_len(xp, (char_u *)L_MATCH(first_match - 1)) + 2;
       if ((long)clen >= Columns) {
         break;
       }
@@ -400,7 +386,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
   clen = len;
 
   i = first_match;
-  while (clen + status_match_len(xp, (char_u *)L_MATCH(i)) + 2 < Columns) {
+  while (clen + wildmenu_match_len(xp, (char_u *)L_MATCH(i)) + 2 < Columns) {
     if (i == match) {
       selstart = buf + len;
       selstart_col = clen;
@@ -417,7 +403,7 @@ void win_redr_status_matches(expand_T *xp, int num_matches, char **matches, int 
       clen += l;
     } else {
       for (; *s != NUL; s++) {
-        s += skip_status_match_char(xp, s);
+        s += skip_wildmenu_char(xp, s);
         clen += ptr2cells((char *)s);
         if ((l = utfc_ptr2len((char *)s)) > 1) {
           STRNCPY(buf + len, s, l);  // NOLINT(runtime/printf)
@@ -559,223 +545,6 @@ bool get_keymap_str(win_T *wp, char *fmt, char *buf, int len)
     xfree(s);
   }
   return buf[0] != NUL;
-}
-
-/// Redraw the status line, window bar or ruler of window "wp".
-/// When "wp" is NULL redraw the tab pages line from 'tabline'.
-void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
-{
-  static bool entered = false;
-  int attr;
-  int curattr;
-  int row;
-  int col = 0;
-  int maxwidth;
-  int width;
-  int n;
-  int len;
-  int fillchar;
-  char buf[MAXPATHL];
-  char_u *stl;
-  char *p;
-  stl_hlrec_t *hltab;
-  StlClickRecord *tabtab;
-  int use_sandbox = false;
-  win_T *ewp;
-  int p_crb_save;
-  bool is_stl_global = global_stl_height() > 0;
-
-  ScreenGrid *grid = &default_grid;
-
-  // There is a tiny chance that this gets called recursively: When
-  // redrawing a status line triggers redrawing the ruler or tabline.
-  // Avoid trouble by not allowing recursion.
-  if (entered) {
-    return;
-  }
-  entered = true;
-
-  // setup environment for the task at hand
-  if (wp == NULL) {
-    // Use 'tabline'.  Always at the first line of the screen.
-    stl = p_tal;
-    row = 0;
-    fillchar = ' ';
-    attr = HL_ATTR(HLF_TPF);
-    maxwidth = Columns;
-    use_sandbox = was_set_insecurely(wp, "tabline", 0);
-  } else if (draw_winbar) {
-    stl = (char_u *)((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
-    row = -1;  // row zero is first row of text
-    col = 0;
-    grid = &wp->w_grid;
-    grid_adjust(&grid, &row, &col);
-
-    if (row < 0) {
-      return;
-    }
-
-    fillchar = wp->w_p_fcs_chars.wbr;
-    attr = (wp == curwin) ? win_hl_attr(wp, HLF_WBR) : win_hl_attr(wp, HLF_WBRNC);
-    maxwidth = wp->w_width_inner;
-    use_sandbox = was_set_insecurely(wp, "winbar", 0);
-
-    stl_clear_click_defs(wp->w_winbar_click_defs, (long)wp->w_winbar_click_defs_size);
-    // Allocate / resize the click definitions array for winbar if needed.
-    if (wp->w_winbar_height && wp->w_winbar_click_defs_size < (size_t)maxwidth) {
-      xfree(wp->w_winbar_click_defs);
-      wp->w_winbar_click_defs_size = (size_t)maxwidth;
-      wp->w_winbar_click_defs = xcalloc(wp->w_winbar_click_defs_size, sizeof(StlClickRecord));
-    }
-  } else {
-    row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
-    fillchar = fillchar_status(&attr, wp);
-    maxwidth = is_stl_global ? Columns : wp->w_width;
-
-    stl_clear_click_defs(wp->w_status_click_defs, (long)wp->w_status_click_defs_size);
-    // Allocate / resize the click definitions array for statusline if needed.
-    if (wp->w_status_click_defs_size < (size_t)maxwidth) {
-      xfree(wp->w_status_click_defs);
-      wp->w_status_click_defs_size = (size_t)maxwidth;
-      wp->w_status_click_defs = xcalloc(wp->w_status_click_defs_size, sizeof(StlClickRecord));
-    }
-
-    if (draw_ruler) {
-      stl = p_ruf;
-      // advance past any leading group spec - implicit in ru_col
-      if (*stl == '%') {
-        if (*++stl == '-') {
-          stl++;
-        }
-        if (atoi((char *)stl)) {
-          while (ascii_isdigit(*stl)) {
-            stl++;
-          }
-        }
-        if (*stl++ != '(') {
-          stl = p_ruf;
-        }
-      }
-      col = ru_col - (Columns - maxwidth);
-      if (col < (maxwidth + 1) / 2) {
-        col = (maxwidth + 1) / 2;
-      }
-      maxwidth = maxwidth - col;
-      if (!wp->w_status_height && !is_stl_global) {
-        grid = &msg_grid_adj;
-        row = Rows - 1;
-        maxwidth--;  // writing in last column may cause scrolling
-        fillchar = ' ';
-        attr = HL_ATTR(HLF_MSG);
-      }
-
-      use_sandbox = was_set_insecurely(wp, "rulerformat", 0);
-    } else {
-      if (*wp->w_p_stl != NUL) {
-        stl = wp->w_p_stl;
-      } else {
-        stl = p_stl;
-      }
-      use_sandbox = was_set_insecurely(wp, "statusline", *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
-    }
-
-    col += is_stl_global ? 0 : wp->w_wincol;
-  }
-
-  if (maxwidth <= 0) {
-    goto theend;
-  }
-
-  // Temporarily reset 'cursorbind', we don't want a side effect from moving
-  // the cursor away and back.
-  ewp = wp == NULL ? curwin : wp;
-  p_crb_save = ewp->w_p_crb;
-  ewp->w_p_crb = false;
-
-  // Make a copy, because the statusline may include a function call that
-  // might change the option value and free the memory.
-  stl = vim_strsave(stl);
-  width =
-    build_stl_str_hl(ewp, buf, sizeof(buf), (char *)stl, use_sandbox,
-                     fillchar, maxwidth, &hltab, &tabtab);
-  xfree(stl);
-  ewp->w_p_crb = p_crb_save;
-
-  // Make all characters printable.
-  p = transstr(buf, true);
-  len = (int)STRLCPY(buf, p, sizeof(buf));
-  len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
-  xfree(p);
-
-  // fill up with "fillchar"
-  while (width < maxwidth && len < (int)sizeof(buf) - 1) {
-    len += utf_char2bytes(fillchar, buf + len);
-    width++;
-  }
-  buf[len] = NUL;
-
-  // Draw each snippet with the specified highlighting.
-  grid_puts_line_start(grid, row);
-
-  curattr = attr;
-  p = buf;
-  for (n = 0; hltab[n].start != NULL; n++) {
-    int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(grid, (char_u *)p, textlen, row, col, curattr);
-    col += vim_strnsize((char_u *)p, textlen);
-    p = hltab[n].start;
-
-    if (hltab[n].userhl == 0) {
-      curattr = attr;
-    } else if (hltab[n].userhl < 0) {
-      curattr = syn_id2attr(-hltab[n].userhl);
-    } else if (wp != NULL && wp != curwin && wp->w_status_height != 0) {
-      curattr = highlight_stlnc[hltab[n].userhl - 1];
-    } else {
-      curattr = highlight_user[hltab[n].userhl - 1];
-    }
-  }
-  // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(grid, p >= buf + len ? (char_u *)"" : (char_u *)p, row, col,
-            curattr);
-
-  grid_puts_line_flush(false);
-
-  // Fill the tab_page_click_defs, w_status_click_defs or w_winbar_click_defs array for clicking
-  // in the tab page line, status line or window bar
-  StlClickDefinition *click_defs = (wp == NULL) ? tab_page_click_defs
-                                                : draw_winbar ? wp->w_winbar_click_defs
-                                                              : wp->w_status_click_defs;
-
-  if (click_defs == NULL) {
-    goto theend;
-  }
-
-  col = 0;
-  len = 0;
-  p = buf;
-  StlClickDefinition cur_click_def = {
-    .type = kStlClickDisabled,
-  };
-  for (n = 0; tabtab[n].start != NULL; n++) {
-    len += vim_strnsize((char_u *)p, (int)(tabtab[n].start - p));
-    while (col < len) {
-      click_defs[col++] = cur_click_def;
-    }
-    p = (char *)tabtab[n].start;
-    cur_click_def = tabtab[n].def;
-    if ((wp != NULL) && !(cur_click_def.type == kStlClickDisabled
-                          || cur_click_def.type == kStlClickFuncRun)) {
-      // window bar and status line only support click functions
-      cur_click_def.type = kStlClickDisabled;
-    }
-  }
-  while (col < maxwidth) {
-    click_defs[col++] = cur_click_def;
-  }
-
-theend:
-  entered = false;
 }
 
 /// Prepare for 'hlsearch' highlighting.
@@ -1378,32 +1147,6 @@ void get_trans_bufname(buf_T *buf)
   trans_characters((char *)NameBuff, MAXPATHL);
 }
 
-/// Get the character to use in a status line.  Get its attributes in "*attr".
-int fillchar_status(int *attr, win_T *wp)
-{
-  int fill;
-  bool is_curwin = (wp == curwin);
-  if (is_curwin) {
-    *attr = win_hl_attr(wp, HLF_S);
-    fill = wp->w_p_fcs_chars.stl;
-  } else {
-    *attr = win_hl_attr(wp, HLF_SNC);
-    fill = wp->w_p_fcs_chars.stlnc;
-  }
-  // Use fill when there is highlighting, and highlighting of current
-  // window differs, or the fillchars differ, or this is not the
-  // current window
-  if (*attr != 0 && ((win_hl_attr(wp, HLF_S) != win_hl_attr(wp, HLF_SNC)
-                      || !is_curwin || ONE_WINDOW)
-                     || (wp->w_p_fcs_chars.stl != wp->w_p_fcs_chars.stlnc))) {
-    return fill;
-  }
-  if (is_curwin) {
-    return '^';
-  }
-  return '=';
-}
-
 /// Get the character to use in a separator between vertically split windows.
 /// Get its attributes in "*attr".
 int fillchar_vsep(win_T *wp, int *attr)
@@ -1431,175 +1174,6 @@ bool redrawing(void)
 bool messaging(void)
 {
   return !(p_lz && char_avail() && !KeyTyped) && ui_has_messages();
-}
-
-void win_redr_ruler(win_T *wp, bool always)
-{
-  bool is_stl_global = global_stl_height() > 0;
-  static bool did_show_ext_ruler = false;
-
-  // If 'ruler' off, don't do anything
-  if (!p_ru) {
-    return;
-  }
-
-  // Check if cursor.lnum is valid, since win_redr_ruler() may be called
-  // after deleting lines, before cursor.lnum is corrected.
-  if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
-    return;
-  }
-
-  // Don't draw the ruler while doing insert-completion, it might overwrite
-  // the (long) mode message.
-  if (wp == lastwin && lastwin->w_status_height == 0 && !is_stl_global) {
-    if (edit_submode != NULL) {
-      return;
-    }
-  }
-
-  if (*p_ruf && p_ch > 0 && !ui_has(kUIMessages)) {
-    const int called_emsg_before = called_emsg;
-    win_redr_custom(wp, false, true);
-    if (called_emsg > called_emsg_before) {
-      set_string_option_direct("rulerformat", -1, "", OPT_FREE, SID_ERROR);
-    }
-    return;
-  }
-
-  // Check if not in Insert mode and the line is empty (will show "0-1").
-  int empty_line = false;
-  if ((State & MODE_INSERT) == 0 && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false) == NUL) {
-    empty_line = true;
-  }
-
-  // Only draw the ruler when something changed.
-  validate_virtcol_win(wp);
-  if (redraw_cmdline
-      || always
-      || wp->w_cursor.lnum != wp->w_ru_cursor.lnum
-      || wp->w_cursor.col != wp->w_ru_cursor.col
-      || wp->w_virtcol != wp->w_ru_virtcol
-      || wp->w_cursor.coladd != wp->w_ru_cursor.coladd
-      || wp->w_topline != wp->w_ru_topline
-      || wp->w_buffer->b_ml.ml_line_count != wp->w_ru_line_count
-      || wp->w_topfill != wp->w_ru_topfill
-      || empty_line != wp->w_ru_empty) {
-    int width;
-    int row;
-    int fillchar;
-    int attr;
-    int off;
-    bool part_of_status = false;
-
-    if (wp->w_status_height) {
-      row = W_ENDROW(wp);
-      fillchar = fillchar_status(&attr, wp);
-      off = wp->w_wincol;
-      width = wp->w_width;
-      part_of_status = true;
-    } else if (is_stl_global) {
-      row = Rows - (int)p_ch - 1;
-      fillchar = fillchar_status(&attr, wp);
-      off = 0;
-      width = Columns;
-      part_of_status = true;
-    } else {
-      row = Rows - 1;
-      fillchar = ' ';
-      attr = HL_ATTR(HLF_MSG);
-      width = Columns;
-      off = 0;
-    }
-
-    if (!part_of_status && !ui_has_messages()) {
-      return;
-    }
-
-    // In list mode virtcol needs to be recomputed
-    colnr_T virtcol = wp->w_virtcol;
-    if (wp->w_p_list && wp->w_p_lcs_chars.tab1 == NUL) {
-      wp->w_p_list = false;
-      getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
-      wp->w_p_list = true;
-    }
-
-#define RULER_BUF_LEN 70
-    char buffer[RULER_BUF_LEN];
-
-    // Some sprintfs return the length, some return a pointer.
-    // To avoid portability problems we use strlen() here.
-    vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
-                 (wp->w_buffer->b_ml.ml_flags &
-                  ML_EMPTY) ? (int64_t)0L : (int64_t)wp->w_cursor.lnum);
-    size_t len = STRLEN(buffer);
-    col_print(buffer + len, RULER_BUF_LEN - len,
-              empty_line ? 0 : (int)wp->w_cursor.col + 1,
-              (int)virtcol + 1);
-
-    // Add a "50%" if there is room for it.
-    // On the last line, don't print in the last column (scrolls the
-    // screen up on some terminals).
-    int i = (int)STRLEN(buffer);
-    get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
-    int o = i + vim_strsize(buffer + i + 1);
-    if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
-      o++;
-    }
-    int this_ru_col = ru_col - (Columns - width);
-    if (this_ru_col < 0) {
-      this_ru_col = 0;
-    }
-    // Never use more than half the window/screen width, leave the other half
-    // for the filename.
-    if (this_ru_col < (width + 1) / 2) {
-      this_ru_col = (width + 1) / 2;
-    }
-    if (this_ru_col + o < width) {
-      // Need at least 3 chars left for get_rel_pos() + NUL.
-      while (this_ru_col + o < width && RULER_BUF_LEN > i + 4) {
-        i += utf_char2bytes(fillchar, buffer + i);
-        o++;
-      }
-      get_rel_pos(wp, buffer + i, RULER_BUF_LEN - i);
-    }
-
-    if (ui_has(kUIMessages) && !part_of_status) {
-      MAXSIZE_TEMP_ARRAY(content, 1);
-      MAXSIZE_TEMP_ARRAY(chunk, 2);
-      ADD_C(chunk, INTEGER_OBJ(attr));
-      ADD_C(chunk, STRING_OBJ(cstr_as_string((char *)buffer)));
-      ADD_C(content, ARRAY_OBJ(chunk));
-      ui_call_msg_ruler(content);
-      did_show_ext_ruler = true;
-    } else {
-      if (did_show_ext_ruler) {
-        ui_call_msg_ruler((Array)ARRAY_DICT_INIT);
-        did_show_ext_ruler = false;
-      }
-      // Truncate at window boundary.
-      o = 0;
-      for (i = 0; buffer[i] != NUL; i += utfc_ptr2len(buffer + i)) {
-        o += utf_ptr2cells(buffer + i);
-        if (this_ru_col + o > width) {
-          buffer[i] = NUL;
-          break;
-        }
-      }
-
-      ScreenGrid *grid = part_of_status ? &default_grid : &msg_grid_adj;
-      grid_puts(grid, (char_u *)buffer, row, this_ru_col + off, attr);
-      grid_fill(grid, row, row + 1,
-                this_ru_col + off + (int)STRLEN(buffer), off + width, fillchar,
-                fillchar, attr);
-    }
-
-    wp->w_ru_cursor = wp->w_cursor;
-    wp->w_ru_virtcol = wp->w_virtcol;
-    wp->w_ru_empty = (char)empty_line;
-    wp->w_ru_topline = wp->w_topline;
-    wp->w_ru_line_count = wp->w_buffer->b_ml.ml_line_count;
-    wp->w_ru_topfill = wp->w_topfill;
-  }
 }
 
 #define COL_RULER 17        // columns needed by standard ruler
