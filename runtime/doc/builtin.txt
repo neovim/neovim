@@ -2074,10 +2074,13 @@ expandcmd({string})					*expandcmd()*
 		like with |expand()|, and environment variables, anywhere in
 		{string}.  "~user" and "~/path" are only expanded at the
 		start.
-		Returns the expanded string.  Example: >
+		Returns the expanded string.  If an error is encountered
+		during expansion, the unmodified {string} is returned.
+		Example: >
 			:echo expandcmd('make %<.o')
+<			make /path/runtime/doc/builtin.o ~
 
-<		Can also be used as a |method|: >
+		Can also be used as a |method|: >
 			GetCommand()->expandcmd()
 <
 extend({expr1}, {expr2} [, {expr3}])			*extend()*
