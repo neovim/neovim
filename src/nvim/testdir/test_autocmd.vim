@@ -2737,6 +2737,59 @@ func Test_autocmd_sigusr1()
   unlet g:sigusr1_passed
 endfunc
 
+" Test for BufReadPre autocmd deleting the file
+func Test_BufReadPre_delfile()
+  augroup TestAuCmd
+    au!
+    autocmd BufReadPre Xfile call delete('Xfile')
+  augroup END
+  call writefile([], 'Xfile')
+  call assert_fails('new Xfile', 'E200:')
+  call assert_equal('Xfile', @%)
+  call assert_equal(1, &readonly)
+  call delete('Xfile')
+  augroup TestAuCmd
+    au!
+  augroup END
+  close!
+endfunc
+
+" Test for BufReadPre autocmd changing the current buffer
+func Test_BufReadPre_changebuf()
+  augroup TestAuCmd
+    au!
+    autocmd BufReadPre Xfile edit Xsomeotherfile
+  augroup END
+  call writefile([], 'Xfile')
+  call assert_fails('new Xfile', 'E201:')
+  call assert_equal('Xsomeotherfile', @%)
+  call assert_equal(1, &readonly)
+  call delete('Xfile')
+  augroup TestAuCmd
+    au!
+  augroup END
+  close!
+endfunc
+
+" Test for BufWipeouti autocmd changing the current buffer when reading a file
+" in an empty buffer with 'f' flag in 'cpo'
+func Test_BufDelete_changebuf()
+  new
+  augroup TestAuCmd
+    au!
+    autocmd BufWipeout * let bufnr = bufadd('somefile') | exe "b " .. bufnr
+  augroup END
+  let save_cpo = &cpo
+  set cpo+=f
+  call assert_fails('r Xfile', 'E484:')
+  call assert_equal('somefile', @%)
+  let &cpo = save_cpo
+  augroup TestAuCmd
+    au!
+  augroup END
+  close!
+endfunc
+
 " Test for the temporary internal window used to execute autocmds
 func Test_autocmd_window()
   %bw!

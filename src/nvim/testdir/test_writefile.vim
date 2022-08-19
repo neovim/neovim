@@ -128,6 +128,25 @@ func Test_nowrite_quit_split()
   bwipe Xfile
 endfunc
 
+func Test_writefile_sync_arg()
+  " This doesn't check if fsync() works, only that the argument is accepted.
+  call writefile(['one'], 'Xtest', 's')
+  call writefile(['two'], 'Xtest', 'S')
+  call delete('Xtest')
+endfunc
+
+func Test_writefile_sync_dev_stdout()
+  if !has('unix')
+    return
+  endif
+  if filewritable('/dev/stdout')
+    " Just check that this doesn't cause an error.
+    call writefile(['one'], '/dev/stdout', 's')
+  else
+    throw 'Skipped: /dev/stdout is not writable'
+  endif
+endfunc
+
 func Test_writefile_autowrite()
   set autowrite
   new
@@ -237,29 +256,18 @@ func Test_write_errors()
   call delete('Xfile')
 endfunc
 
-func Test_writefile_sync_dev_stdout()
-  if !has('unix')
-    return
-  endif
-  if filewritable('/dev/stdout')
-    " Just check that this doesn't cause an error.
-    call writefile(['one'], '/dev/stdout', 's')
-  else
-    throw 'Skipped: /dev/stdout is not writable'
-  endif
-endfunc
-
-func Test_writefile_sync_arg()
-  " This doesn't check if fsync() works, only that the argument is accepted.
-  call writefile(['one'], 'Xtest', 's')
-  call writefile(['two'], 'Xtest', 'S')
-  call delete('Xtest')
+" Test for writing a file using invalid file encoding
+func Test_write_invalid_encoding()
+  new
+  call setline(1, 'abc')
+  call assert_fails('write ++enc=axbyc Xfile', 'E213:')
+  close!
 endfunc
 
 " Tests for reading and writing files with conversion for Win32.
 func Test_write_file_encoding()
-  CheckMSWindows
   throw 'skipped: Nvim does not support :w ++enc=cp1251'
+  CheckMSWindows
   let save_encoding = &encoding
   let save_fileencodings = &fileencodings
   set encoding& fileencodings&

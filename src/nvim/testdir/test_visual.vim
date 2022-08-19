@@ -664,92 +664,6 @@ func Test_characterwise_visual_mode()
   bwipe!
 endfunc
 
-func Test_characterwise_select_mode()
-  new
-
-  " Select mode maps
-  snoremap <lt>End> <End>
-  snoremap <lt>Down> <Down>
-  snoremap <lt>Del> <Del>
-
-  " characterwise select mode: delete middle line
-  call deletebufline('', 1, '$')
-  call append('$', ['a', 'b', 'c'])
-  exe "normal Gkkgh\<End>\<Del>"
-  call assert_equal(['', 'b', 'c'], getline(1, '$'))
-
-  " characterwise select mode: delete middle two lines
-  call deletebufline('', 1, '$')
-  call append('$', ['a', 'b', 'c'])
-  exe "normal Gkkgh\<Down>\<End>\<Del>"
-  call assert_equal(['', 'c'], getline(1, '$'))
-
-  " characterwise select mode: delete last line
-  call deletebufline('', 1, '$')
-  call append('$', ['a', 'b', 'c'])
-  exe "normal Ggh\<End>\<Del>"
-  call assert_equal(['', 'a', 'b', ''], getline(1, '$'))
-
-  " characterwise select mode: delete last two lines
-  call deletebufline('', 1, '$')
-  call append('$', ['a', 'b', 'c'])
-  exe "normal Gkgh\<Down>\<End>\<Del>"
-  call assert_equal(['', 'a', ''], getline(1, '$'))
-
-  " CTRL-H in select mode behaves like 'x'
-  call setline(1, 'abcdef')
-  exe "normal! gggh\<Right>\<Right>\<Right>\<C-H>"
-  call assert_equal('ef', getline(1))
-
-  " CTRL-O in select mode switches to visual mode for one command
-  call setline(1, 'abcdef')
-  exe "normal! gggh\<C-O>3lm"
-  call assert_equal('mef', getline(1))
-
-  sunmap <lt>End>
-  sunmap <lt>Down>
-  sunmap <lt>Del>
-  bwipe!
-endfunc
-
-func Test_linewise_select_mode()
-  new
-
-  " linewise select mode: delete middle line
-  call append('$', ['a', 'b', 'c'])
-  exe "normal GkkgH\<Del>"
-  call assert_equal(['', 'b', 'c'], getline(1, '$'))
-
-  " linewise select mode: delete middle two lines
-  call deletebufline('', 1, '$')
-  call append('$', ['a', 'b', 'c'])
-  exe "normal GkkgH\<Down>\<Del>"
-  call assert_equal(['', 'c'], getline(1, '$'))
-
-  " linewise select mode: delete last line
-  call deletebufline('', 1, '$')
-  call append('$', ['a', 'b', 'c'])
-  exe "normal GgH\<Del>"
-  call assert_equal(['', 'a', 'b'], getline(1, '$'))
-
-  " linewise select mode: delete last two lines
-  call deletebufline('', 1, '$')
-  call append('$', ['a', 'b', 'c'])
-  exe "normal GkgH\<Down>\<Del>"
-  call assert_equal(['', 'a'], getline(1, '$'))
-
-  bwipe!
-endfunc
-
-" Test for blockwise select mode (g CTRL-H)
-func Test_blockwise_select_mode()
-  new
-  call setline(1, ['foo', 'bar'])
-  call feedkeys("g\<BS>\<Right>\<Down>mm", 'xt')
-  call assert_equal(['mmo', 'mmr'], getline(1, '$'))
-  close!
-endfunc
-
 func Test_visual_mode_put()
   new
 
@@ -789,16 +703,16 @@ func Test_visual_mode_put()
   bwipe!
 endfunc
 
-func Test_select_mode_gv()
+func Test_gv_with_exclusive_selection()
   new
 
-  " gv in exclusive select mode after operation
+  " gv with exclusive selection after an operation
   call append('$', ['zzz ', 'Ã¤Ã '])
   set selection=exclusive
   normal Gkv3lyjv3lpgvcxxx
   call assert_equal(['', 'zzz ', 'xxx '], getline(1, '$'))
 
-  " gv in exclusive select mode without operation
+  " gv with exclusive selection without an operation
   call deletebufline('', 1, '$')
   call append('$', 'zzz ')
   set selection=exclusive
@@ -1144,32 +1058,6 @@ func Test_star_register()
 
   delmarks < >
   call assert_fails('*yank', 'E20:')
-  close!
-endfunc
-
-" Test for using visual mode maps in select mode
-func Test_select_mode_map()
-  new
-  vmap <buffer> <F2> 3l
-  call setline(1, 'Test line')
-  call feedkeys("gh\<F2>map", 'xt')
-  call assert_equal('map line', getline(1))
-
-  vmap <buffer> <F2> ygV
-  call feedkeys("0gh\<Right>\<Right>\<F2>cwabc", 'xt')
-  call assert_equal('abc line', getline(1))
-
-  vmap <buffer> <F2> :<C-U>let v=100<CR>
-  call feedkeys("gggh\<Right>\<Right>\<F2>foo", 'xt')
-  call assert_equal('foo line', getline(1))
-
-  " reselect the select mode using gv from a visual mode map
-  vmap <buffer> <F2> gv
-  set selectmode=cmd
-  call feedkeys("0gh\<F2>map", 'xt')
-  call assert_equal('map line', getline(1))
-  set selectmode&
-
   close!
 endfunc
 
