@@ -449,6 +449,16 @@ static void apply_cursorline_highlight(win_T *wp, linenr_T lnum, int *line_attr,
   }
 }
 
+static bool check_mb_utf8(int *c, int *u8cc)
+{
+  if (utf_char2len(*c) > 1) {
+    *u8cc = 0;
+    *c = 0xc0;
+    return true;
+  }
+  return false;
+}
+
 /// Display line "lnum" of window 'wp' on the screen.
 /// wp->w_virtcol needs to be valid.
 ///
@@ -1460,13 +1470,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       if (c_extra != NUL || (n_extra == 1 && c_final != NUL)) {
         c = (n_extra == 1 && c_final != NUL) ? c_final : c_extra;
         mb_c = c;               // doesn't handle non-utf-8 multi-byte!
-        if (utf_char2len(c) > 1) {
-          mb_utf8 = true;
-          u8cc[0] = 0;
-          c = 0xc0;
-        } else {
-          mb_utf8 = false;
-        }
+        mb_utf8 = check_mb_utf8(&c, u8cc);
       } else {
         assert(p_extra != NULL);
         c = *p_extra;
@@ -1855,13 +1859,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (utf_char2len(c) > 1) {
-            mb_utf8 = true;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else {
-            mb_utf8 = false;
-          }
+          mb_utf8 = check_mb_utf8(&c, u8cc);
         }
 
         if (c == ' ' && ((trailcol != MAXCOL && ptr > line + trailcol)
@@ -1884,13 +1882,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
-          if (utf_char2len(c) > 1) {
-            mb_utf8 = true;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else {
-            mb_utf8 = false;
-          }
+          mb_utf8 = check_mb_utf8(&c, u8cc);
         }
       }
 
@@ -2004,11 +1996,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = char_attr;  // save current attr
             mb_c = c;
-            if (utf_char2len(c) > 1) {
-              mb_utf8 = true;
-              u8cc[0] = 0;
-              c = 0xc0;
-            }
+            mb_utf8 = check_mb_utf8(&c, u8cc);
           } else {
             c_final = NUL;
             c_extra = ' ';
@@ -2051,13 +2039,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           extra_attr = win_hl_attr(wp, HLF_AT);
           n_attr = 1;
           mb_c = c;
-          if (utf_char2len(c) > 1) {
-            mb_utf8 = true;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else {
-            mb_utf8 = false;                    // don't draw as UTF-8
-          }
+          mb_utf8 = check_mb_utf8(&c, u8cc);
         } else if (c != NUL) {
           p_extra = transchar_buf(wp->w_buffer, c);
           if (n_extra == 0) {
@@ -2148,13 +2130,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           n_skip = 1;
         }
         mb_c = c;
-        if (utf_char2len(c) > 1) {
-          mb_utf8 = true;
-          u8cc[0] = 0;
-          c = 0xc0;
-        } else {
-          mb_utf8 = false;              // don't draw as UTF-8
-        }
+        mb_utf8 = check_mb_utf8(&c, u8cc);
       } else {
         prev_syntax_id = 0;
         is_concealing = false;
@@ -2208,13 +2184,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         extra_attr = win_hl_attr(wp, HLF_AT);
       }
       mb_c = c;
-      if (utf_char2len(c) > 1) {
-        mb_utf8 = true;
-        u8cc[0] = 0;
-        c = 0xc0;
-      } else {
-        mb_utf8 = false;  // don't draw as UTF-8
-      }
+      mb_utf8 = check_mb_utf8(&c, u8cc);
       saved_attr3 = char_attr;  // save current attr
       char_attr = win_hl_attr(wp, HLF_AT);  // overwriting char_attr
       n_attr3 = 1;
@@ -2424,13 +2394,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       c = wp->w_p_lcs_chars.ext;
       char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
-      if (utf_char2len(c) > 1) {
-        mb_utf8 = true;
-        u8cc[0] = 0;
-        c = 0xc0;
-      } else {
-        mb_utf8 = false;
-      }
+      mb_utf8 = check_mb_utf8(&c, u8cc);
     }
 
     // advance to the next 'colorcolumn'
