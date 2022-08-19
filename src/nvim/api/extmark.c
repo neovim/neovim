@@ -10,11 +10,11 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/charset.h"
 #include "nvim/decoration_provider.h"
+#include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memline.h"
-#include "nvim/screen.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/extmark.c.generated.h"

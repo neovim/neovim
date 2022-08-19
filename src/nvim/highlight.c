@@ -6,6 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/decoration_provider.h"
+#include "nvim/drawscreen.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
@@ -14,7 +15,6 @@
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/popupmenu.h"
-#include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 

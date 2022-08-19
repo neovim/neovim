@@ -1,10 +1,19 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+// Most of the routines in this file perform screen (grid) manipulations. The
+// given operation is performed physically on the screen. The corresponding
+// change is also made to the internal screen image. In this way, the editor
+// anticipates the effect of editing changes on the appearance of the screen.
+// That way, when we call update_screen() a complete redraw isn't usually
+// necessary. Another advantage is that we can keep adding code to anticipate
+// screen changes, and in the meantime, everything still works.
+//
+// The grid_*() functions write to the screen and handle updating grid->lines[].
+
 #include "nvim/arabic.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
-#include "nvim/screen.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
@@ -779,4 +788,124 @@ void grid_assign_handle(ScreenGrid *grid)
   if (grid->handle == 0) {
     grid->handle = ++last_grid_handle;
   }
+}
+
+/// insert lines on the screen and move the existing lines down
+/// 'line_count' is the number of lines to be inserted.
+/// 'end' is the line after the scrolled part. Normally it is Rows.
+/// 'col' is the column from with we start inserting.
+//
+/// 'row', 'col' and 'end' are relative to the start of the region.
+void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col, int width)
+{
+  int i;
+  int j;
+  unsigned temp;
+
+  int row_off = 0;
+  grid_adjust(&grid, &row_off, &col);
+  row += row_off;
+  end += row_off;
+
+  if (line_count <= 0) {
+    return;
+  }
+
+  // Shift line_offset[] line_count down to reflect the inserted lines.
+  // Clear the inserted lines.
+  for (i = 0; i < line_count; i++) {
+    if (width != grid->cols) {
+      // need to copy part of a line
+      j = end - 1 - i;
+      while ((j -= line_count) >= row) {
+        linecopy(grid, j + line_count, j, col, width);
+      }
+      j += line_count;
+      grid_clear_line(grid, grid->line_offset[j] + (size_t)col, width, false);
+      grid->line_wraps[j] = false;
+    } else {
+      j = end - 1 - i;
+      temp = (unsigned)grid->line_offset[j];
+      while ((j -= line_count) >= row) {
+        grid->line_offset[j + line_count] = grid->line_offset[j];
+        grid->line_wraps[j + line_count] = grid->line_wraps[j];
+      }
+      grid->line_offset[j + line_count] = temp;
+      grid->line_wraps[j + line_count] = false;
+      grid_clear_line(grid, temp, grid->cols, false);
+    }
+  }
+
+  if (!grid->throttled) {
+    ui_call_grid_scroll(grid->handle, row, end, col, col + width, -line_count, 0);
+  }
+}
+
+/// delete lines on the screen and move lines up.
+/// 'end' is the line after the scrolled part. Normally it is Rows.
+/// When scrolling region used 'off' is the offset from the top for the region.
+/// 'row' and 'end' are relative to the start of the region.
+void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col, int width)
+{
+  int j;
+  int i;
+  unsigned temp;
+
+  int row_off = 0;
+  grid_adjust(&grid, &row_off, &col);
+  row += row_off;
+  end += row_off;
+
+  if (line_count <= 0) {
+    return;
+  }
+
+  // Now shift line_offset[] line_count up to reflect the deleted lines.
+  // Clear the inserted lines.
+  for (i = 0; i < line_count; i++) {
+    if (width != grid->cols) {
+      // need to copy part of a line
+      j = row + i;
+      while ((j += line_count) <= end - 1) {
+        linecopy(grid, j - line_count, j, col, width);
+      }
+      j -= line_count;
+      grid_clear_line(grid, grid->line_offset[j] + (size_t)col, width, false);
+      grid->line_wraps[j] = false;
+    } else {
+      // whole width, moving the line pointers is faster
+      j = row + i;
+      temp = (unsigned)grid->line_offset[j];
+      while ((j += line_count) <= end - 1) {
+        grid->line_offset[j - line_count] = grid->line_offset[j];
+        grid->line_wraps[j - line_count] = grid->line_wraps[j];
+      }
+      grid->line_offset[j - line_count] = temp;
+      grid->line_wraps[j - line_count] = false;
+      grid_clear_line(grid, temp, grid->cols, false);
+    }
+  }
+
+  if (!grid->throttled) {
+    ui_call_grid_scroll(grid->handle, row, end, col, col + width, line_count, 0);
+  }
+}
+
+static void linecopy(ScreenGrid *grid, int to, int from, int col, int width)
+{
+  unsigned off_to = (unsigned)(grid->line_offset[to] + (size_t)col);
+  unsigned off_from = (unsigned)(grid->line_offset[from] + (size_t)col);
+
+  memmove(grid->chars + off_to, grid->chars + off_from, (size_t)width * sizeof(schar_T));
+  memmove(grid->attrs + off_to, grid->attrs + off_from, (size_t)width * sizeof(sattr_T));
+}
+
+win_T *get_win_by_grid_handle(handle_T handle)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_grid_alloc.handle == handle) {
+      return wp;
+    }
+  }
+  return NULL;
 }
