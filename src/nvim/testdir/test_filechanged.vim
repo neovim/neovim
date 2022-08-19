@@ -242,6 +242,15 @@ func Test_file_changed_dialog()
   call assert_equal(1, line('$'))
   call assert_equal('new line', getline(1))
 
+  " File created after starting to edit it
+  call delete('Xchanged_d')
+  new Xchanged_d
+  call writefile(['one'], 'Xchanged_d')
+  call feedkeys('L', 'L')
+  checktime Xchanged_d
+  call assert_equal(['one'], getline(1, '$'))
+  close!
+
   bwipe!
   call delete('Xchanged_d')
 endfunc
