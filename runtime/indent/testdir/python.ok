@@ -1,6 +1,14 @@
-" vim: set ft=python sw=4 et:
+# vim: set ft=python sw=4 et:
 
-" START_INDENT
+# START_INDENT
+# INDENT_EXE syntax match pythonFoldMarkers /{{{\d*/ contained containedin=pythonComment
+# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx {{{1
+
+if True:
+    pass
+# END_INDENT
+
+# START_INDENT
 open_paren_not_at_EOL(100,
                       (200,
                        300),
@@ -65,4 +73,4 @@ open_paren_not_at_EOL(100,
 open_paren_at_EOL(
         100, 200, 300, 400)
 
-" END_INDENT
+# END_INDENT
