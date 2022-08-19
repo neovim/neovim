@@ -3097,13 +3097,6 @@ static void f_getline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   get_buffer_lines(curbuf, lnum, end, retlist, rettv);
 }
 
-/// "getloclist()" function
-static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
-  get_qf_loc_list(false, wp, &argvars[1], rettv);
-}
-
 /// "getmarklist()" function
 static void f_getmarklist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -3184,12 +3177,6 @@ static void f_getcursorcharpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_getpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   getpos_both(argvars, rettv, false, false);
-}
-
-/// "getqflist()" functions
-static void f_getqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  get_qf_loc_list(true, NULL, &argvars[0], rettv);
 }
 
 /// Common between getreg(), getreginfo() and getregtype(): get the register
@@ -7761,108 +7748,10 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   set_buffer_lines(curbuf, lnum, false, &argvars[1], rettv);
 }
 
-/// Create quickfix/location list from VimL values
-///
-/// Used by `setqflist()` and `setloclist()` functions. Accepts invalid
-/// args argument in which case errors out, including VAR_UNKNOWN parameters.
-///
-/// @param[in,out]  wp  Window to create location list for. May be NULL in
-///                     which case quickfix list will be created.
-/// @param[in]  args  [list, action, what]
-/// @param[in]  args[0]  Quickfix list contents.
-/// @param[in]  args[1]  Optional. Action to perform:
-///                      append to an existing list, replace its content,
-///                      or create a new one.
-/// @param[in]  args[2]  Optional. Quickfix list properties or title.
-///                      Defaults to caller function name.
-/// @param[out]  rettv  Return value: 0 in case of success, -1 otherwise.
-static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ARG(2, 3)
-{
-  static char *e_invact = N_("E927: Invalid action: '%s'");
-  const char *title = NULL;
-  char action = ' ';
-  static int recursive = 0;
-  rettv->vval.v_number = -1;
-  dict_T *what = NULL;
-
-  typval_T *list_arg = &args[0];
-  if (list_arg->v_type != VAR_LIST) {
-    emsg(_(e_listreq));
-    return;
-  } else if (recursive != 0) {
-    emsg(_(e_au_recursive));
-    return;
-  }
-
-  typval_T *action_arg = &args[1];
-  if (action_arg->v_type == VAR_UNKNOWN) {
-    // Option argument was not given.
-    goto skip_args;
-  } else if (action_arg->v_type != VAR_STRING) {
-    emsg(_(e_stringreq));
-    return;
-  }
-  const char *const act = tv_get_string_chk(action_arg);
-  if ((*act == 'a' || *act == 'r' || *act == ' ' || *act == 'f')
-      && act[1] == NUL) {
-    action = *act;
-  } else {
-    semsg(_(e_invact), act);
-    return;
-  }
-
-  typval_T *const what_arg = &args[2];
-  if (what_arg->v_type == VAR_UNKNOWN) {
-    // Option argument was not given.
-    goto skip_args;
-  } else if (what_arg->v_type == VAR_STRING) {
-    title = tv_get_string_chk(what_arg);
-    if (!title) {
-      // Type error. Error already printed by tv_get_string_chk().
-      return;
-    }
-  } else if (what_arg->v_type == VAR_DICT && what_arg->vval.v_dict != NULL) {
-    what = what_arg->vval.v_dict;
-  } else {
-    emsg(_(e_dictreq));
-    return;
-  }
-
-skip_args:
-  if (!title) {
-    title = (wp ? ":setloclist()" : ":setqflist()");
-  }
-
-  recursive++;
-  list_T *const l = list_arg->vval.v_list;
-  if (set_errorlist(wp, l, action, (char *)title, what) == OK) {
-    rettv->vval.v_number = 0;
-  }
-  recursive--;
-}
-
-/// "setloclist()" function
-static void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->vval.v_number = -1;
-
-  win_T *win = find_win_by_nr_or_id(&argvars[0]);
-  if (win != NULL) {
-    set_qf_ll_list(win, &argvars[1], rettv);
-  }
-}
-
 /// "setpos()" function
 static void f_setpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   set_position(argvars, rettv, false);
-}
-
-/// "setqflist()" function
-static void f_setqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  set_qf_ll_list(NULL, argvars, rettv);
 }
 
 /// Translate a register type string to the yank type and block length

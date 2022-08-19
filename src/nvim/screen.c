@@ -42,6 +42,9 @@
 # include "screen.c.generated.h"
 #endif
 
+static char e_conflicts_with_value_of_listchars[] = N_("E834: Conflicts with value of 'listchars'");
+static char e_conflicts_with_value_of_fillchars[] = N_("E835: Conflicts with value of 'fillchars'");
+
 /// Return true if the cursor line in window "wp" may be concealed, according
 /// to the 'concealcursor' option.
 bool conceal_cursor_line(const win_T *wp)
@@ -1599,6 +1602,46 @@ void win_redr_ruler(win_T *wp, bool always)
   }
 }
 
+#define COL_RULER 17        // columns needed by standard ruler
+
+/// Compute columns for ruler and shown command. 'sc_col' is also used to
+/// decide what the maximum length of a message on the status line can be.
+/// If there is a status line for the last window, 'sc_col' is independent
+/// of 'ru_col'.
+void comp_col(void)
+{
+  int last_has_status = (p_ls > 1 || (p_ls == 1 && !ONE_WINDOW));
+
+  sc_col = 0;
+  ru_col = 0;
+  if (p_ru) {
+    ru_col = (ru_wid ? ru_wid : COL_RULER) + 1;
+    // no last status line, adjust sc_col
+    if (!last_has_status) {
+      sc_col = ru_col;
+    }
+  }
+  if (p_sc) {
+    sc_col += SHOWCMD_COLS;
+    if (!p_ru || last_has_status) {         // no need for separating space
+      sc_col++;
+    }
+  }
+  assert(sc_col >= 0
+         && INT_MIN + sc_col <= Columns);
+  sc_col = Columns - sc_col;
+  assert(ru_col >= 0
+         && INT_MIN + ru_col <= Columns);
+  ru_col = Columns - ru_col;
+  if (sc_col <= 0) {            // screen too narrow, will become a mess
+    sc_col = 1;
+  }
+  if (ru_col <= 0) {
+    ru_col = 1;
+  }
+  set_vim_var_nr(VV_ECHOSPACE, sc_col - 1);
+}
+
 /// Return the width of the 'number' and 'relativenumber' column.
 /// Caller may need to check if 'number' or 'relativenumber' is set.
 /// Otherwise it depends on 'numberwidth' and the line count.
@@ -1640,6 +1683,284 @@ int number_width(win_T *wp)
 
   wp->w_nrwidth_width = n;
   return n;
+}
+
+/// Calls mb_cptr2char_adv(p) and returns the character.
+/// If "p" starts with "\x", "\u" or "\U" the hex or unicode value is used.
+/// Returns 0 for invalid hex or invalid UTF-8 byte.
+static int get_encoded_char_adv(char_u **p)
+{
+  char_u *s = *p;
+
+  if (s[0] == '\\' && (s[1] == 'x' || s[1] == 'u' || s[1] == 'U')) {
+    int64_t num = 0;
+    int bytes;
+    int n;
+    for (bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
+      *p += 2;
+      n = hexhex2nr(*p);
+      if (n < 0) {
+        return 0;
+      }
+      num = num * 256 + n;
+    }
+    *p += 2;
+    return (int)num;
+  }
+
+  // TODO(bfredl): use schar_T representation and utfc_ptr2len
+  int clen = utf_ptr2len((char *)s);
+  int c = mb_cptr2char_adv((const char_u **)p);
+  if (clen == 1 && c > 127) {  // Invalid UTF-8 byte
+    return 0;
+  }
+  return c;
+}
+
+/// Handle setting 'listchars' or 'fillchars'.
+/// Assume monocell characters
+///
+/// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
+/// @return error message, NULL if it's OK.
+char *set_chars_option(win_T *wp, char_u **varp, bool set)
+{
+  int round, i, len, len2, entries;
+  char_u *p, *s;
+  int c1;
+  int c2 = 0;
+  int c3 = 0;
+  char_u *last_multispace = NULL;   // Last occurrence of "multispace:"
+  char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
+  int multispace_len = 0;           // Length of lcs-multispace string
+  int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
+
+  struct chars_tab {
+    int *cp;    ///< char value
+    char *name;  ///< char id
+    int def;    ///< default value
+  };
+  struct chars_tab *tab;
+
+  // XXX: Characters taking 2 columns is forbidden (TUI limitation?). Set old defaults in this case.
+  struct chars_tab fcs_tab[] = {
+    { &wp->w_p_fcs_chars.stl,        "stl",       ' ' },
+    { &wp->w_p_fcs_chars.stlnc,      "stlnc",     ' ' },
+    { &wp->w_p_fcs_chars.wbr,        "wbr",       ' ' },
+    { &wp->w_p_fcs_chars.horiz,      "horiz",     char2cells(0x2500) == 1 ? 0x2500 : '-' },  // ─
+    { &wp->w_p_fcs_chars.horizup,    "horizup",   char2cells(0x2534) == 1 ? 0x2534 : '-' },  // ┴
+    { &wp->w_p_fcs_chars.horizdown,  "horizdown", char2cells(0x252c) == 1 ? 0x252c : '-' },  // ┬
+    { &wp->w_p_fcs_chars.vert,       "vert",      char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
+    { &wp->w_p_fcs_chars.vertleft,   "vertleft",  char2cells(0x2524) == 1 ? 0x2524 : '|' },  // ┤
+    { &wp->w_p_fcs_chars.vertright,  "vertright", char2cells(0x251c) == 1 ? 0x251c : '|' },  // ├
+    { &wp->w_p_fcs_chars.verthoriz,  "verthoriz", char2cells(0x253c) == 1 ? 0x253c : '+' },  // ┼
+    { &wp->w_p_fcs_chars.fold,       "fold",      char2cells(0x00b7) == 1 ? 0x00b7 : '-' },  // ·
+    { &wp->w_p_fcs_chars.foldopen,   "foldopen",  '-' },
+    { &wp->w_p_fcs_chars.foldclosed, "foldclose", '+' },
+    { &wp->w_p_fcs_chars.foldsep,    "foldsep",   char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
+    { &wp->w_p_fcs_chars.diff,       "diff",      '-' },
+    { &wp->w_p_fcs_chars.msgsep,     "msgsep",    ' ' },
+    { &wp->w_p_fcs_chars.eob,        "eob",       '~' },
+  };
+  struct chars_tab lcs_tab[] = {
+    { &wp->w_p_lcs_chars.eol,     "eol",      NUL },
+    { &wp->w_p_lcs_chars.ext,     "extends",  NUL },
+    { &wp->w_p_lcs_chars.nbsp,    "nbsp",     NUL },
+    { &wp->w_p_lcs_chars.prec,    "precedes", NUL },
+    { &wp->w_p_lcs_chars.space,   "space",    NUL },
+    { &wp->w_p_lcs_chars.tab2,    "tab",      NUL },
+    { &wp->w_p_lcs_chars.lead,    "lead",     NUL },
+    { &wp->w_p_lcs_chars.trail,   "trail",    NUL },
+    { &wp->w_p_lcs_chars.conceal, "conceal",  NUL },
+  };
+
+  if (varp == &p_lcs || varp == &wp->w_p_lcs) {
+    tab = lcs_tab;
+    entries = ARRAY_SIZE(lcs_tab);
+    if (varp == &wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
+      varp = &p_lcs;
+    }
+  } else {
+    tab = fcs_tab;
+    entries = ARRAY_SIZE(fcs_tab);
+    if (varp == &wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
+      varp = &p_fcs;
+    }
+  }
+
+  // first round: check for valid value, second round: assign values
+  for (round = 0; round <= (set ? 1 : 0); round++) {
+    if (round > 0) {
+      // After checking that the value is valid: set defaults
+      for (i = 0; i < entries; i++) {
+        if (tab[i].cp != NULL) {
+          *(tab[i].cp) = tab[i].def;
+        }
+      }
+      if (varp == &p_lcs || varp == &wp->w_p_lcs) {
+        wp->w_p_lcs_chars.tab1 = NUL;
+        wp->w_p_lcs_chars.tab3 = NUL;
+
+        xfree(wp->w_p_lcs_chars.multispace);
+        if (multispace_len > 0) {
+          wp->w_p_lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(int));
+          wp->w_p_lcs_chars.multispace[multispace_len] = NUL;
+        } else {
+          wp->w_p_lcs_chars.multispace = NULL;
+        }
+
+        xfree(wp->w_p_lcs_chars.leadmultispace);
+        if (lead_multispace_len > 0) {
+          wp->w_p_lcs_chars.leadmultispace
+            = xmalloc(((size_t)lead_multispace_len + 1) * sizeof(int));
+          wp->w_p_lcs_chars.leadmultispace[lead_multispace_len] = NUL;
+        } else {
+          wp->w_p_lcs_chars.leadmultispace = NULL;
+        }
+      }
+    }
+    p = *varp;
+    while (*p) {
+      for (i = 0; i < entries; i++) {
+        len = (int)STRLEN(tab[i].name);
+        if (STRNCMP(p, tab[i].name, len) == 0
+            && p[len] == ':'
+            && p[len + 1] != NUL) {
+          c2 = c3 = 0;
+          s = p + len + 1;
+          c1 = get_encoded_char_adv(&s);
+          if (c1 == 0 || char2cells(c1) > 1) {
+            return e_invarg;
+          }
+          if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
+            if (*s == NUL) {
+              return e_invarg;
+            }
+            c2 = get_encoded_char_adv(&s);
+            if (c2 == 0 || char2cells(c2) > 1) {
+              return e_invarg;
+            }
+            if (!(*s == ',' || *s == NUL)) {
+              c3 = get_encoded_char_adv(&s);
+              if (c3 == 0 || char2cells(c3) > 1) {
+                return e_invarg;
+              }
+            }
+          }
+          if (*s == ',' || *s == NUL) {
+            if (round > 0) {
+              if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
+                wp->w_p_lcs_chars.tab1 = c1;
+                wp->w_p_lcs_chars.tab2 = c2;
+                wp->w_p_lcs_chars.tab3 = c3;
+              } else if (tab[i].cp != NULL) {
+                *(tab[i].cp) = c1;
+              }
+            }
+            p = s;
+            break;
+          }
+        }
+      }
+
+      if (i == entries) {
+        len = (int)STRLEN("multispace");
+        len2 = (int)STRLEN("leadmultispace");
+        if ((varp == &p_lcs || varp == &wp->w_p_lcs)
+            && STRNCMP(p, "multispace", len) == 0
+            && p[len] == ':'
+            && p[len + 1] != NUL) {
+          s = p + len + 1;
+          if (round == 0) {
+            // Get length of lcs-multispace string in the first round
+            last_multispace = p;
+            multispace_len = 0;
+            while (*s != NUL && *s != ',') {
+              c1 = get_encoded_char_adv(&s);
+              if (c1 == 0 || char2cells(c1) > 1) {
+                return e_invarg;
+              }
+              multispace_len++;
+            }
+            if (multispace_len == 0) {
+              // lcs-multispace cannot be an empty string
+              return e_invarg;
+            }
+            p = s;
+          } else {
+            int multispace_pos = 0;
+            while (*s != NUL && *s != ',') {
+              c1 = get_encoded_char_adv(&s);
+              if (p == last_multispace) {
+                wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
+              }
+            }
+            p = s;
+          }
+        } else if ((varp == &p_lcs || varp == &wp->w_p_lcs)
+                   && STRNCMP(p, "leadmultispace", len2) == 0
+                   && p[len2] == ':'
+                   && p[len2 + 1] != NUL) {
+          s = p + len2 + 1;
+          if (round == 0) {
+            // get length of lcs-leadmultispace string in first round
+            last_lmultispace = p;
+            lead_multispace_len = 0;
+            while (*s != NUL && *s != ',') {
+              c1 = get_encoded_char_adv(&s);
+              if (c1 == 0 || char2cells(c1) > 1) {
+                return e_invarg;
+              }
+              lead_multispace_len++;
+            }
+            if (lead_multispace_len == 0) {
+              // lcs-leadmultispace cannot be an empty string
+              return e_invarg;
+            }
+            p = s;
+          } else {
+            int multispace_pos = 0;
+            while (*s != NUL && *s != ',') {
+              c1 = get_encoded_char_adv(&s);
+              if (p == last_lmultispace) {
+                wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
+              }
+            }
+            p = s;
+          }
+        } else {
+          return e_invarg;
+        }
+      }
+      if (*p == ',') {
+        p++;
+      }
+    }
+  }
+
+  return NULL;          // no error
+}
+
+/// Check all global and local values of 'listchars' and 'fillchars'.
+/// May set different defaults in case character widths change.
+///
+/// @return  an untranslated error message if any of them is invalid, NULL otherwise.
+char *check_chars_options(void)
+{
+  if (set_chars_option(curwin, &p_lcs, false) != NULL) {
+    return e_conflicts_with_value_of_listchars;
+  }
+  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
+    return e_conflicts_with_value_of_fillchars;
+  }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
+      return e_conflicts_with_value_of_listchars;
+    }
+    if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
+      return e_conflicts_with_value_of_fillchars;
+    }
+  }
+  return NULL;
 }
 
 /// Check if the new Nvim application "screen" dimensions are valid.
