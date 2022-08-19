@@ -176,16 +176,13 @@ describe("shell command :!", function()
       command(helpers.iswin()
         and [[nnoremap <silent>\l :!dir /b bang_filter_spec<cr>]]
         or  [[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
-      local result = (helpers.iswin()
-        and [[:!dir /b bang_filter_spec]]
-        or  [[:!ls bang_filter_spec    ]])
       feed([[\l]])
       screen:expect([[
                                                              |
         {1:~                                                    }|
         {1:~                                                    }|
         {4:                                                     }|
-        ]]..result..[[                            |
+                                                             |
         f1                                                   |
         f2                                                   |
         f3                                                   |

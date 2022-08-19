@@ -398,7 +398,7 @@ describe('API', function()
 
     it('returns shell |:!| output', function()
       local win_lf = iswin() and '\r' or ''
-      eq(':!echo foo\r\n\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
+      eq('\nfoo'..win_lf..'\n', nvim('command_output', [[!echo foo]]))
     end)
 
     it('VimL validation error: fails with specific error', function()

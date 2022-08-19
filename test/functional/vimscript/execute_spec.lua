@@ -266,7 +266,7 @@ describe('execute()', function()
   -- with how nvim currently displays the output.
   it('captures shell-command output', function()
     local win_lf = iswin() and '\13' or ''
-    eq('\n:!echo foo\r\n\nfoo'..win_lf..'\n', funcs.execute('!echo foo'))
+    eq('\n\nfoo'..win_lf..'\n', funcs.execute('!echo foo'))
   end)
 
   describe('{silent} argument', function()

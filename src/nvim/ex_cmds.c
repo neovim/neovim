@@ -1231,14 +1231,6 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     free_newcmd = true;
   }
   if (addr_count == 0) {                // :!
-    // echo the command
-    msg_start();
-    msg_putchar(':');
-    msg_putchar('!');
-    msg_outtrans(newcmd);
-    msg_clr_eos();
-    ui_cursor_goto(msg_row, msg_col);
-
     do_shell(newcmd, 0);
   } else {                            // :range!
     // Careful: This may recursively call do_bang() again! (because of
@@ -1506,7 +1498,6 @@ void do_shell(char *cmd, int flags)
    * For autocommands we want to get the output on the current screen, to
    * avoid having to type return below.
    */
-  msg_putchar('\r');                    // put cursor at start of line
   msg_putchar('\n');                    // may shift screen one line up
 
   // warning message before calling the shell
