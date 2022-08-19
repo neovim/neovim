@@ -94,6 +94,12 @@ static char e_ambiguous_use_of_user_defined_command[]
   = N_("E464: Ambiguous use of user-defined command");
 static char e_not_an_editor_command[]
   = N_("E492: Not an editor command");
+static char e_no_source_file_name_to_substitute_for_sfile[]
+  = N_("E498: no :source file name to substitute for \"<sfile>\"");
+static char e_no_call_stack_to_substitute_for_stack[]
+  = N_("E489: no call stack to substitute for \"<stack>\"");
+static char e_no_script_file_name_to_substitute_for_script[]
+  = N_("E1274: No script file name to substitute for \"<script>\"");
 
 static int quitmore = 0;
 static bool ex_pressedreturn = false;
@@ -6564,6 +6570,7 @@ enum {
   SPEC_SFILE,
   SPEC_SLNUM,
   SPEC_STACK,
+  SPEC_SCRIPT,
   SPEC_AFILE,
   SPEC_ABUF,
   SPEC_AMATCH,
@@ -6588,6 +6595,7 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
     [SPEC_SFILE] = "<sfile>",           // ":so" file name
     [SPEC_SLNUM] = "<slnum>",           // ":so" file line number
     [SPEC_STACK] = "<stack>",           // call stack
+    [SPEC_SCRIPT] = "<script>",         // script file name
     [SPEC_AFILE] = "<afile>",           // autocommand file name
     [SPEC_ABUF] = "<abuf>",             // autocommand buffer number
     [SPEC_AMATCH] = "<amatch>",         // autocommand match name
@@ -6801,12 +6809,25 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
-    case SPEC_STACK:            // call stack
-      result = estack_sfile(spec_idx == SPEC_SFILE ? ESTACK_SFILE : ESTACK_STACK);
+      result = estack_sfile(ESTACK_SFILE);
       if (result == NULL) {
-        *errormsg = spec_idx == SPEC_SFILE
-          ? _("E498: no :source file name to substitute for \"<sfile>\"")
-          : _("E489: no call stack to substitute for \"<stack>\"");
+        *errormsg = _(e_no_source_file_name_to_substitute_for_sfile);
+        return NULL;
+      }
+      resultbuf = result;  // remember allocated string
+      break;
+    case SPEC_STACK:            // call stack
+      result = estack_sfile(ESTACK_STACK);
+      if (result == NULL) {
+        *errormsg = _(e_no_call_stack_to_substitute_for_stack);
+        return NULL;
+      }
+      resultbuf = result;  // remember allocated string
+      break;
+    case SPEC_SCRIPT:           // script file name
+      result = estack_sfile(ESTACK_SCRIPT);
+      if (result == NULL) {
+        *errormsg = _(e_no_script_file_name_to_substitute_for_script);
         return NULL;
       }
       resultbuf = result;  // remember allocated string

@@ -2013,6 +2013,8 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 					a function
 			<SID>		"<SNR>123_"  where "123" is the
 					current script ID  |<SID>|
+			<script>	sourced script file, or script file
+					where the current function was defined
 			<stack>		call stack
 			<cword>		word under the cursor
 			<cWORD>		WORD under the cursor

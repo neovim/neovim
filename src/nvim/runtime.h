@@ -47,6 +47,7 @@ typedef enum {
   ESTACK_NONE,
   ESTACK_SFILE,
   ESTACK_STACK,
+  ESTACK_SCRIPT,
 } estack_arg_T;
 
 typedef struct scriptitem_S {

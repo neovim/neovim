@@ -100,7 +100,8 @@ void estack_pop(void)
 }
 
 /// Get the current value for <sfile> in allocated memory.
-/// @param which  ESTACK_SFILE for <sfile> and ESTACK_STACK for <stack>.
+/// @param which  ESTACK_SFILE for <sfile>, ESTACK_STACK for <stack> or
+///               ESTACK_SCRIPT for <script>.
 char *estack_sfile(estack_arg_T which)
 {
   estack_T *entry = ((estack_T *)exestack.ga_data) + exestack.ga_len - 1;
@@ -109,6 +110,27 @@ char *estack_sfile(estack_arg_T which)
       return NULL;
     }
     return xstrdup(entry->es_name);
+  }
+
+  // If evaluated in a function return the path of the script where the
+  // function is defined, at script level the current script path is returned
+  // instead.
+  if (which == ESTACK_SCRIPT) {
+    if (entry->es_type == ETYPE_UFUNC) {
+      sctx_T *def_ctx = &entry->es_info.ufunc->uf_script_ctx;
+      if (def_ctx->sc_sid > 0) {
+        return xstrdup((char *)(SCRIPT_ITEM(def_ctx->sc_sid).sn_name));
+      }
+    } else if (exestack.ga_len > 0) {
+      // Walk the stack backwards, starting from the current frame.
+      for (int idx = exestack.ga_len - 1; idx; idx--) {
+        entry = ((estack_T *)exestack.ga_data) + idx;
+        if (entry->es_type == ETYPE_SCRIPT) {
+          return xstrdup(entry->es_name);
+        }
+      }
+    }
+    return NULL;
   }
 
   // Give information about each stack entry up to the root.
