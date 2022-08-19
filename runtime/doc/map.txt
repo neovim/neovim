@@ -905,6 +905,17 @@ or `unnamedplus`.
 The `mode()` function will return the state as it will be after applying the
 operator.
 
+Here is an example for using a lambda function to create a normal-mode
+operator to add quotes around text in the current line: >
+
+	nnoremap <F4> <Cmd>let &opfunc='{t ->
+				\ getline(".")
+				\ ->split("\\zs")
+				\ ->insert("\"", col("'']"))
+				\ ->insert("\"", col("''[") - 1)
+				\ ->join("")
+				\ ->setline(".")}'<CR>g@
+
 ==============================================================================
 2. Abbreviations			*abbreviations* *Abbreviations*
 

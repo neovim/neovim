@@ -66,6 +66,7 @@
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os_unix.h"
@@ -782,6 +783,7 @@ void free_all_options(void)
       clear_string_option((char_u **)options[i].var);
     }
   }
+  free_operatorfunc_option();
 }
 #endif
 
@@ -3264,8 +3266,12 @@ static char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, c
         }
       }
     }
-  } else if (varp == &p_qftf) {
-    if (!qf_process_qftf_option()) {
+  } else if (varp == &p_opfunc) {  // 'operatorfunc'
+    if (set_operatorfunc_option() == FAIL) {
+      errmsg = e_invarg;
+    }
+  } else if (varp == &p_qftf) {  // 'quickfixtextfunc'
+    if (qf_process_qftf_option() == FAIL) {
       errmsg = e_invarg;
     }
   } else {
@@ -6914,6 +6920,44 @@ static int fill_culopt_flags(char_u *val, win_T *wp)
   }
   wp->w_p_culopt_flags = culopt_flags_new;
 
+  return OK;
+}
+
+/// Set the callback function value for an option that accepts a function name,
+/// lambda, et al. (e.g. 'operatorfunc', 'tagfunc', etc.)
+/// @return  OK if the option is successfully set to a function, otherwise FAIL
+int option_set_callback_func(char_u *optval, Callback *optcb)
+{
+  if (optval == NULL || *optval == NUL) {
+    callback_free(optcb);
+    return OK;
+  }
+
+  typval_T *tv;
+  if (*optval == '{'
+      || (STRNCMP(optval, "function(", 9) == 0)
+      || (STRNCMP(optval, "funcref(", 8) == 0)) {
+    // Lambda expression or a funcref
+    tv = eval_expr((char *)optval);
+    if (tv == NULL) {
+      return FAIL;
+    }
+  } else {
+    // treat everything else as a function name string
+    tv = xcalloc(1, sizeof(*tv));
+    tv->v_type = VAR_STRING;
+    tv->vval.v_string = (char *)vim_strsave(optval);
+  }
+
+  Callback cb;
+  if (!callback_from_typval(&cb, tv)) {
+    tv_free(tv);
+    return FAIL;
+  }
+
+  callback_free(optcb);
+  *optcb = cb;
+  tv_free(tv);
   return OK;
 }
 
