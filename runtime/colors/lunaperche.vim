@@ -11,7 +11,7 @@
 hi clear
 let g:colors_name = 'lunaperche'
 
-let s:t_Co = exists('&t_Co') ? (&t_Co ?? 0) : -1
+let s:t_Co = exists('&t_Co') ? (&t_Co ? &t_Co : 0) : -1
 
 hi! link helpVim Title
 hi! link helpHeader Title

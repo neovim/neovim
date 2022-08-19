@@ -12,7 +12,7 @@ set background=dark
 hi clear
 let g:colors_name = 'koehler'
 
-let s:t_Co = exists('&t_Co') ? (&t_Co ?? 0) : -1
+let s:t_Co = exists('&t_Co') ? (&t_Co ? &t_Co : 0) : -1
 
 hi! link Terminal Normal
 hi! link Boolean Constant
