@@ -1,6 +1,7 @@
 " Test for expanding file names
 
 source shared.vim
+source check.vim
 
 func Test_with_directories()
   call mkdir('Xdir1')
@@ -131,7 +132,13 @@ func Test_expand_filename_multicmd()
   call assert_equal(4, winnr('$'))
   call assert_equal('foo!', bufname(winbufnr(1)))
   call assert_equal('foo', bufname(winbufnr(2)))
+  call assert_fails('e %:s/.*//', 'E500:')
   %bwipe!
+endfunc
+
+func Test_expandcmd_shell_nonomatch()
+  CheckNotMSWindows
+  call assert_equal('$*', expandcmd('$*'))
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
