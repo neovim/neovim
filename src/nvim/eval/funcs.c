@@ -2052,10 +2052,10 @@ static void f_expandcmd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   };
   eap.argt |= EX_NOSPC;
 
+  emsg_off++;
   expand_filename(&eap, &cmdstr, &errormsg);
-  if (errormsg != NULL && *errormsg != NUL) {
-    emsg(errormsg);
-  }
+  emsg_off--;
+
   rettv->vval.v_string = cmdstr;
 }
 
