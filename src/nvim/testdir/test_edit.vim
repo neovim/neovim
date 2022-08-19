@@ -262,22 +262,6 @@ func Test_edit_09()
   bw!
 endfunc
 
-func Test_edit_10()
-  " Test for starting selectmode
-  new
-  set selectmode=key keymodel=startsel
-  call setline(1, ['abc', 'def', 'ghi'])
-  call cursor(1, 4)
-  call feedkeys("A\<s-home>start\<esc>", 'txin')
-  call assert_equal(['startdef', 'ghi'], getline(1, '$'))
-  " start select mode again with gv
-  set selectmode=cmd
-  call feedkeys('gvabc', 'xt')
-  call assert_equal('abctdef', getline(1))
-  set selectmode= keymodel=
-  bw!
-endfunc
-
 func Test_edit_11()
   " Test that indenting kicks in
   new
