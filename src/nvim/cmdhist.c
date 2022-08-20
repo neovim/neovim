@@ -6,6 +6,7 @@
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/cmdhist.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/ex_getln.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"

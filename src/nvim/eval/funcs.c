@@ -14,6 +14,7 @@
 #include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
@@ -28,6 +29,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
+#include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
@@ -2749,84 +2751,6 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = NULL;
   rettv->vval.v_string = xmallocz(1);
   rettv->vval.v_string[0] = (char)cmdwin_type;
-}
-
-/// "getcompletion()" function
-static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  char_u *pat;
-  expand_T xpc;
-  bool filtered = false;
-  int options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
-                | WILD_NO_BEEP | WILD_HOME_REPLACE;
-
-  if (argvars[1].v_type != VAR_STRING) {
-    semsg(_(e_invarg2), "type must be a string");
-    return;
-  }
-  const char *const type = tv_get_string(&argvars[1]);
-
-  if (argvars[2].v_type != VAR_UNKNOWN) {
-    filtered = (bool)tv_get_number_chk(&argvars[2], NULL);
-  }
-
-  if (p_wic) {
-    options |= WILD_ICASE;
-  }
-
-  // For filtered results, 'wildignore' is used
-  if (!filtered) {
-    options |= WILD_KEEP_ALL;
-  }
-
-  if (argvars[0].v_type != VAR_STRING) {
-    emsg(_(e_invarg));
-    return;
-  }
-  const char *pattern = tv_get_string(&argvars[0]);
-
-  if (strcmp(type, "cmdline") == 0) {
-    set_one_cmd_context(&xpc, pattern);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
-    xpc.xp_col = (int)STRLEN(pattern);
-    goto theend;
-  }
-
-  ExpandInit(&xpc);
-  xpc.xp_pattern = (char *)pattern;
-  xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
-  xpc.xp_context = cmdcomplete_str_to_type(type);
-  if (xpc.xp_context == EXPAND_NOTHING) {
-    semsg(_(e_invarg2), type);
-    return;
-  }
-
-  if (xpc.xp_context == EXPAND_MENUS) {
-    set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
-  }
-
-  if (xpc.xp_context == EXPAND_CSCOPE) {
-    set_context_in_cscope_cmd(&xpc, (const char *)xpc.xp_pattern, CMD_cscope);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
-  }
-
-  if (xpc.xp_context == EXPAND_SIGN) {
-    set_context_in_sign_cmd(&xpc, (char_u *)xpc.xp_pattern);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
-  }
-
-theend:
-  pat = addstar((char_u *)xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
-  ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
-  tv_list_alloc_ret(rettv, xpc.xp_numfiles);
-
-  for (int i = 0; i < xpc.xp_numfiles; i++) {
-    tv_list_append_string(rettv->vval.v_list, (const char *)xpc.xp_files[i],
-                          -1);
-  }
-  xfree(pat);
-  ExpandCleanup(&xpc);
 }
 
 /// `getcwd([{win}[, {tab}]])` function
