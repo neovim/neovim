@@ -725,7 +725,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
     // Find all matching entries.
     char_u *name;
     scandir_next_with_dots(NULL);  // initialize
-    while ((name = (char_u *)scandir_next_with_dots(&dir)) != NULL) {
+    while (!got_int && (name = (char_u *)scandir_next_with_dots(&dir)) != NULL) {
       if ((name[0] != '.'
            || starts_with_dot
            || ((flags & EW_DODOT)
@@ -774,8 +774,10 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   xfree(buf);
   vim_regfree(regmatch.regprog);
 
+  // When interrupted the matches probably won't be used and sorting can be
+  // slow, thus skip it.
   size_t matches = (size_t)(gap->ga_len - start_len);
-  if (matches > 0) {
+  if (matches > 0 && !got_int) {
     qsort(((char_u **)gap->ga_data) + start_len, matches,
           sizeof(char_u *), pstrcmp);
   }
@@ -1254,7 +1256,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
    */
   ga_init(&ga, (int)sizeof(char_u *), 30);
 
-  for (int i = 0; i < num_pat; ++i) {
+  for (int i = 0; i < num_pat && !got_int; i++) {
     add_pat = -1;
     p = (char_u *)pat[i];
 
@@ -2205,17 +2207,14 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
     }
   }
 
-  //
   // Move the names where 'suffixes' match to the end.
-  //
+  // Skip when interrupted, the result probably won't be used.
   assert(*num_files == 0 || *files != NULL);
-  if (*num_files > 1) {
+  if (*num_files > 1 && !got_int) {
     non_suf_match = 0;
     for (i = 0; i < *num_files; i++) {
       if (!match_suffix((char_u *)(*files)[i])) {
-        //
         // Move the name without matching suffix to the front of the list.
-        //
         p = (char_u *)(*files)[i];
         for (j = i; j > non_suf_match; j--) {
           (*files)[j] = (*files)[j - 1];
