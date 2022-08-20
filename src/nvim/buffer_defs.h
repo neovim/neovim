@@ -677,6 +677,7 @@ struct file_buffer {
   char *b_p_cfu;                ///< 'completefunc'
   char *b_p_ofu;                ///< 'omnifunc'
   char *b_p_tfu;                ///< 'tagfunc'
+  Callback b_tfu_cb;            ///< 'tagfunc' callback
   int b_p_eof;                  ///< 'endoffile'
   int b_p_eol;                  ///< 'endofline'
   int b_p_fixeol;               ///< 'fixendofline'

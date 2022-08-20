@@ -1981,6 +1981,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_tags);
   clear_string_option(&buf->b_p_tc);
   clear_string_option(&buf->b_p_tfu);
+  callback_free(&buf->b_tfu_cb);
   clear_string_option(&buf->b_p_dict);
   clear_string_option(&buf->b_p_tsr);
   clear_string_option(&buf->b_p_qe);

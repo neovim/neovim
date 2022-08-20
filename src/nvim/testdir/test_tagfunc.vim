@@ -117,4 +117,54 @@ func Test_tagfunc_settagstack()
   delfunc Mytagfunc2
 endfunc
 
+" Test for different ways of setting the 'tagfunc' option
+func Test_tagfunc_callback()
+  " Test for using a function()
+  func MytagFunc1(pat, flags, info)
+    let g:MytagFunc1_args = [a:pat, a:flags, a:info]
+    return v:null
+  endfunc
+  let g:MytagFunc1_args = []
+  set tagfunc=function('MytagFunc1')
+  call assert_fails('tag abc', 'E433:')
+  call assert_equal(['abc', '', {}], g:MytagFunc1_args)
+
+  " Test for using a funcref()
+  new
+  func MytagFunc2(pat, flags, info)
+    let g:MytagFunc2_args = [a:pat, a:flags, a:info]
+    return v:null
+  endfunc
+  let g:MytagFunc2_args = []
+  set tagfunc=funcref('MytagFunc2')
+  call assert_fails('tag def', 'E433:')
+  call assert_equal(['def', '', {}], g:MytagFunc2_args)
+
+  " Test for using a lambda function
+  new
+  func MytagFunc3(pat, flags, info)
+    let g:MytagFunc3_args = [a:pat, a:flags, a:info]
+    return v:null
+  endfunc
+  let g:MytagFunc3_args = []
+  let &tagfunc= '{a, b, c -> MytagFunc3(a, b, c)}'
+  call assert_fails('tag ghi', 'E433:')
+  call assert_equal(['ghi', '', {}], g:MytagFunc3_args)
+
+  " Test for clearing the 'tagfunc' option
+  set tagfunc=''
+  set tagfunc&
+
+  call assert_fails("set tagfunc=function('abc')", "E700:")
+  call assert_fails("set tagfunc=funcref('abc')", "E700:")
+  let &tagfunc = "{a -> 'abc'}"
+  call assert_fails("echo taglist('a')", "E987:")
+
+  " cleanup
+  delfunc MytagFunc1
+  delfunc MytagFunc2
+  delfunc MytagFunc3
+  %bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

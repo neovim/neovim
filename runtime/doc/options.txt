@@ -318,9 +318,9 @@ Some options ('completefunc', 'imactivatefunc', 'imstatusfunc', 'omnifunc',
 or a function reference or a lambda function.  Examples:
 >
 	set opfunc=MyOpFunc
-	set opfunc=function("MyOpFunc")
-	set opfunc=funcref("MyOpFunc")
-	set opfunc={t\ ->\ MyOpFunc(t)}
+	set opfunc=function('MyOpFunc')
+	set opfunc=funcref('MyOpFunc')
+	let &opfunc = "{t -> MyOpFunc(t)}"
 <
 
 Setting the filetype
@@ -6443,7 +6443,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option specifies a function to be used to perform tag searches.
 	The function gets the tag pattern and should return a List of matching
 	tags.  See |tag-function| for an explanation of how to write the
-	function and an example.
+	function and an example.  The value can be the name of a function, a
+	|lambda| or a |Funcref|. See |option-value-function| for more
+	information.
 
 						*'taglength'* *'tl'*
 'taglength' 'tl'	number	(default 0)
