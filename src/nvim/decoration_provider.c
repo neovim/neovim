@@ -174,6 +174,7 @@ void decor_providers_invoke_end(DecorProviders *providers, char **err)
 
 DecorProvider *get_decor_provider(NS ns_id, bool force)
 {
+  assert(ns_id > 0);
   size_t i;
   size_t len = kv_size(decor_providers);
   for (i = 0; i < len; i++) {
