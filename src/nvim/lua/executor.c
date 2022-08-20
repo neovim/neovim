@@ -1939,8 +1939,13 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 
   // Split args by unescaped whitespace |<f-args>| (nargs dependent)
   if (cmd->uc_argt & EX_NOSPC) {
-    // Commands where nargs = 1 or "?" fargs is the same as args
-    lua_rawseti(lstate, -2, 1);
+    if ((cmd->uc_argt & EX_NEEDARG) || STRLEN(eap->arg)) {
+      // For commands where nargs is 1 or "?" and argument is passed, fargs = { args }
+      lua_rawseti(lstate, -2, 1);
+    } else {
+      // if nargs = "?" and no argument is passed, fargs = {}
+      lua_pop(lstate, 1);  // Pop the reference of opts.args
+    }
   } else if (eap->args == NULL) {
     // For commands with more than one possible argument, split if argument list isn't available.
     lua_pop(lstate, 1);  // Pop the reference of opts.args
