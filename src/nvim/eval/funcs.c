@@ -56,6 +56,7 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"

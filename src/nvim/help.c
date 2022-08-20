@@ -17,6 +17,7 @@
 #include "nvim/help.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/input.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
