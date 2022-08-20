@@ -1110,25 +1110,7 @@ fail:
 
   return ret;
 }
-/// Call Vim script function and return the result as a number
-///
-/// @param[in]  func  Function name.
-/// @param[in]  argc  Number of arguments.
-/// @param[in]  argv  Array with typval_T arguments.
-///
-/// @return -1 when calling function fails, result of function otherwise.
-varnumber_T call_func_retnr(const char *func, int argc, typval_T *argv)
-  FUNC_ATTR_NONNULL_ALL
-{
-  typval_T rettv;
 
-  if (call_vim_function((char *)func, argc, argv, &rettv) == FAIL) {
-    return -1;
-  }
-  varnumber_T retval = tv_get_number_chk(&rettv, NULL);
-  tv_clear(&rettv);
-  return retval;
-}
 /// Call Vim script function and return the result as a string
 ///
 /// @param[in]  func  Function name.
@@ -1151,6 +1133,7 @@ char *call_func_retstr(const char *const func, int argc, typval_T *argv)
   tv_clear(&rettv);
   return retval;
 }
+
 /// Call Vim script function and return the result as a List
 ///
 /// @param[in]  func  Function name.

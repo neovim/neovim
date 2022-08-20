@@ -1473,6 +1473,18 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
         }
       }
     }
+  } else if (gvarp == &p_cfu) {  // 'completefunc'
+    if (set_completefunc_option() == FAIL) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_ofu) {  // 'omnifunc'
+    if (set_omnifunc_option() == FAIL) {
+      errmsg = e_invarg;
+    }
+  } else if (gvarp == &p_tsrfu) {  // 'thesaurusfunc'
+    if (set_thesaurusfunc_option() == FAIL) {
+      errmsg = e_invarg;
+    }
   } else if (varp == &p_opfunc) {  // 'operatorfunc'
     if (set_operatorfunc_option() == FAIL) {
       errmsg = e_invarg;

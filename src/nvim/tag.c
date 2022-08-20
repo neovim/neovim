@@ -149,7 +149,7 @@ void free_tagfunc_option(void)
 
 /// Copy the global 'tagfunc' callback function to the buffer-local 'tagfunc'
 /// callback for 'buf'.
-void buf_set_tfu_callback(buf_T *buf)
+void set_buflocal_tfu_callback(buf_T *buf)
 {
   callback_free(&buf->b_tfu_cb);
   if (tfu_cb.data.funcref != NULL && *tfu_cb.data.funcref != NUL) {

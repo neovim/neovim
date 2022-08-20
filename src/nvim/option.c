@@ -51,6 +51,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/locale.h"
 #include "nvim/macros.h"
@@ -4381,11 +4382,13 @@ void buf_copy_options(buf_T *buf, int flags)
 #endif
       buf->b_p_cfu = xstrdup(p_cfu);
       COPY_OPT_SCTX(buf, BV_CFU);
+      set_buflocal_cfu_callback(buf);
       buf->b_p_ofu = xstrdup(p_ofu);
       COPY_OPT_SCTX(buf, BV_OFU);
+      set_buflocal_ofu_callback(buf);
       buf->b_p_tfu = xstrdup(p_tfu);
       COPY_OPT_SCTX(buf, BV_TFU);
-      buf_set_tfu_callback(buf);
+      set_buflocal_tfu_callback(buf);
       buf->b_p_sts = p_sts;
       COPY_OPT_SCTX(buf, BV_STS);
       buf->b_p_sts_nopaste = p_sts_nopaste;

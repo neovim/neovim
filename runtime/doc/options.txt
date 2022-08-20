@@ -314,8 +314,8 @@ Note: In the future more global options can be made |global-local|.  Using
 
 						*option-value-function*
 Some options ('completefunc', 'imactivatefunc', 'imstatusfunc', 'omnifunc',
-'operatorfunc', 'quickfixtextfunc' and 'tagfunc') are set to a function name
-or a function reference or a lambda function.  Examples:
+'operatorfunc', 'quickfixtextfunc', 'tagfunc' and 'thesaurusfunc') are set to
+a function name or a function reference or a lambda function.  Examples:
 >
 	set opfunc=MyOpFunc
 	set opfunc=function('MyOpFunc')
@@ -1454,7 +1454,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option specifies a function to be used for Insert mode completion
 	with CTRL-X CTRL-U. |i_CTRL-X_CTRL-U|
 	See |complete-functions| for an explanation of how the function is
-	invoked and what it should return.
+	invoked and what it should return.  The value can be the name of a
+	function, a |lambda| or a |Funcref|. See |option-value-function| for
+	more information.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -4421,7 +4423,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option specifies a function to be used for Insert mode omni
 	completion with CTRL-X CTRL-O. |i_CTRL-X_CTRL-O|
 	See |complete-functions| for an explanation of how the function is
-	invoked and what it should return.
+	invoked and what it should return.  The value can be the name of a
+	function, a |lambda| or a |Funcref|. See |option-value-function| for
+	more information.
 	This option is usually set by a filetype plugin:
 	|:filetype-plugin-on|
 	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -6576,6 +6580,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global or local to buffer |global-local|
 	This option specifies a function to be used for thesaurus completion
 	with CTRL-X CTRL-T. |i_CTRL-X_CTRL-T| See |compl-thesaurusfunc|.
+	The value can be the name of a function, a |lambda| or a |Funcref|.
+	See |option-value-function| for more information.
 
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.

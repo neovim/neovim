@@ -1393,6 +1393,24 @@ func_call_skip_call:
   return r;
 }
 
+/// call the 'callback' function and return the result as a number.
+/// Returns -1 when calling the function fails.  Uses argv[0] to argv[argc - 1]
+/// for the function arguments. argv[argc] should have type VAR_UNKNOWN.
+///
+/// @param argcount  number of "argvars"
+/// @param argvars   vars for arguments, must have "argcount" PLUS ONE elements!
+varnumber_T callback_call_retnr(Callback *callback, int argcount, typval_T *argvars)
+{
+  typval_T rettv;
+  if (!callback_call(callback, argcount, argvars, &rettv)) {
+    return -1;
+  }
+
+  varnumber_T retval = tv_get_number_chk(&rettv, NULL);
+  tv_clear(&rettv);
+  return retval;
+}
+
 /// Give an error message for the result of a function.
 /// Nothing if "error" is FCERR_NONE.
 static void user_func_error(int error, const char_u *name)

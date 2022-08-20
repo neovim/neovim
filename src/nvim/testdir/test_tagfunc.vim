@@ -117,6 +117,12 @@ func Test_tagfunc_settagstack()
   delfunc Mytagfunc2
 endfunc
 
+" Script local tagfunc callback function
+func s:ScriptLocalTagFunc(pat, flags, info)
+  let g:ScriptLocalFuncArgs = [a:pat, a:flags, a:info]
+  return v:null
+endfunc
+
 " Test for different ways of setting the 'tagfunc' option
 func Test_tagfunc_callback()
   " Test for using a function()
@@ -159,6 +165,21 @@ func Test_tagfunc_callback()
   call assert_equal(['a14', '', {}], g:MytagFunc2_args)
   call assert_fails('let &tagfunc = Fn', 'E729:')
 
+  " Test for using a script local function
+  set tagfunc=<SID>ScriptLocalTagFunc
+  new | only
+  let g:ScriptLocalFuncArgs = []
+  call assert_fails('tag a15', 'E433:')
+  call assert_equal(['a15', '', {}], g:ScriptLocalFuncArgs)
+
+  " Test for using a script local funcref variable
+  let Fn = function("s:ScriptLocalTagFunc")
+  let &tagfunc= string(Fn)
+  new | only
+  let g:ScriptLocalFuncArgs = []
+  call assert_fails('tag a16', 'E433:')
+  call assert_equal(['a16', '', {}], g:ScriptLocalFuncArgs)
+
   " Test for using a lambda function
   func MytagFunc3(pat, flags, info)
     let g:MytagFunc3_args = [a:pat, a:flags, a:info]
@@ -167,30 +188,30 @@ func Test_tagfunc_callback()
   set tagfunc={a,\ b,\ c\ ->\ MytagFunc3(a,\ b,\ c)}
   new | only
   let g:MytagFunc3_args = []
-  call assert_fails('tag a15', 'E433:')
-  call assert_equal(['a15', '', {}], g:MytagFunc3_args)
+  call assert_fails('tag a17', 'E433:')
+  call assert_equal(['a17', '', {}], g:MytagFunc3_args)
 
   " Set 'tagfunc' to a lambda expression
   let &tagfunc = '{a, b, c -> MytagFunc3(a, b, c)}'
   new | only
   let g:MytagFunc3_args = []
-  call assert_fails('tag a16', 'E433:')
-  call assert_equal(['a16', '', {}], g:MytagFunc3_args)
+  call assert_fails('tag a18', 'E433:')
+  call assert_equal(['a18', '', {}], g:MytagFunc3_args)
 
   " Set 'tagfunc' to a variable with a lambda expression
   let Lambda = {a, b, c -> MytagFunc3(a, b, c)}
   let &tagfunc = string(Lambda)
   new | only
   let g:MytagFunc3_args = []
-  call assert_fails("tag a17", "E433:")
-  call assert_equal(['a17', '', {}], g:MytagFunc3_args)
+  call assert_fails("tag a19", "E433:")
+  call assert_equal(['a19', '', {}], g:MytagFunc3_args)
   call assert_fails('let &tagfunc = Lambda', 'E729:')
 
   " Test for using a lambda function with incorrect return value
   let Lambda = {s -> strlen(s)}
   let &tagfunc = string(Lambda)
   new | only
-  call assert_fails("tag a17", "E987:")
+  call assert_fails("tag a20", "E987:")
 
   " Test for clearing the 'tagfunc' option
   set tagfunc=''

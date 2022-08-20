@@ -675,7 +675,9 @@ struct file_buffer {
   char *b_p_csl;                ///< 'completeslash'
 #endif
   char *b_p_cfu;                ///< 'completefunc'
+  Callback b_cfu_cb;            ///< 'completefunc' callback
   char *b_p_ofu;                ///< 'omnifunc'
+  Callback b_ofu_cb;            ///< 'omnifunc' callback
   char *b_p_tfu;                ///< 'tagfunc'
   Callback b_tfu_cb;            ///< 'tagfunc' callback
   int b_p_eof;                  ///< 'endoffile'
@@ -749,6 +751,7 @@ struct file_buffer {
   char *b_p_dict;               ///< 'dictionary' local value
   char *b_p_tsr;                ///< 'thesaurus' local value
   char *b_p_tsrfu;              ///< 'thesaurusfunc' local value
+  Callback b_tsrfu_cb;          ///< 'thesaurusfunc' callback
   long b_p_ul;                  ///< 'undolevels' local value
   int b_p_udf;                  ///< 'undofile'
   char *b_p_lw;                 ///< 'lispwords' local value

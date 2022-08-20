@@ -18,6 +18,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/userfunc.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
@@ -2224,6 +2225,82 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
   return buf;
 }
 
+static Callback cfu_cb;    ///< 'completefunc' callback function
+static Callback ofu_cb;    ///< 'omnifunc' callback function
+static Callback tsrfu_cb;  ///< 'thesaurusfunc' callback function
+
+/// Copy a global callback function to a buffer local callback.
+static void copy_global_to_buflocal_cb(Callback *globcb, Callback *bufcb)
+{
+  callback_free(bufcb);
+  if (globcb->data.funcref != NULL && *globcb->data.funcref != NUL) {
+    callback_copy(bufcb, globcb);
+  }
+}
+
+/// Parse the 'completefunc' option value and set the callback function.
+/// Invoked when the 'completefunc' option is set. The option value can be a
+/// name of a function (string), or function(<name>) or funcref(<name>) or a
+/// lambda expression.
+int set_completefunc_option(void)
+{
+  int retval = option_set_callback_func(curbuf->b_p_cfu, &cfu_cb);
+  if (retval == OK) {
+    set_buflocal_cfu_callback(curbuf);
+  }
+
+  return retval;
+}
+
+/// Copy the global 'completefunc' callback function to the buffer-local
+/// 'completefunc' callback for "buf".
+void set_buflocal_cfu_callback(buf_T *buf)
+{
+  copy_global_to_buflocal_cb(&cfu_cb, &buf->b_cfu_cb);
+}
+
+/// Parse the 'omnifunc' option value and set the callback function.
+/// Invoked when the 'omnifunc' option is set. The option value can be a
+/// name of a function (string), or function(<name>) or funcref(<name>) or a
+/// lambda expression.
+int set_omnifunc_option(void)
+{
+  int retval = option_set_callback_func(curbuf->b_p_ofu, &ofu_cb);
+  if (retval == OK) {
+    set_buflocal_ofu_callback(curbuf);
+  }
+
+  return retval;
+}
+
+/// Copy the global 'omnifunc' callback function to the buffer-local 'omnifunc'
+/// callback for "buf".
+void set_buflocal_ofu_callback(buf_T *buf)
+{
+  copy_global_to_buflocal_cb(&ofu_cb, &buf->b_ofu_cb);
+}
+
+/// Parse the 'thesaurusfunc' option value and set the callback function.
+/// Invoked when the 'thesaurusfunc' option is set. The option value can be a
+/// name of a function (string), or function(<name>) or funcref(<name>) or a
+/// lambda expression.
+int set_thesaurusfunc_option(void)
+{
+  int retval;
+
+  if (*curbuf->b_p_tsrfu != NUL) {
+    // buffer-local option set
+    callback_free(&curbuf->b_tsrfu_cb);
+    retval = option_set_callback_func(curbuf->b_p_tsrfu, &curbuf->b_tsrfu_cb);
+  } else {
+    // global option set
+    callback_free(&tsrfu_cb);
+    retval = option_set_callback_func(p_tsrfu, &tsrfu_cb);
+  }
+
+  return retval;
+}
+
 /// Get the user-defined completion function name for completion "type"
 static char_u *get_complete_funcname(int type)
 {
@@ -2237,6 +2314,19 @@ static char_u *get_complete_funcname(int type)
   default:
     return (char_u *)"";
   }
+}
+
+/// Get the callback to use for insert mode completion.
+static Callback *get_insert_callback(int type)
+{
+  if (type == CTRL_X_FUNCTION) {
+    return &curbuf->b_cfu_cb;
+  }
+  if (type == CTRL_X_OMNI) {
+    return &curbuf->b_ofu_cb;
+  }
+  // CTRL_X_THESAURUS
+  return (*curbuf->b_p_tsrfu != NUL) ? &curbuf->b_tsrfu_cb : &tsrfu_cb;
 }
 
 /// Execute user defined complete function 'completefunc', 'omnifunc' or
@@ -2272,8 +2362,10 @@ static void expand_by_function(int type, char_u *base)
   // Insert mode in another buffer.
   textlock++;
 
+  Callback *cb = get_insert_callback(type);
+
   // Call a function, which returns a list or dict.
-  if (call_vim_function((char *)funcname, 2, args, &rettv) == OK) {
+  if (callback_call(cb, 2, args, &rettv)) {
     switch (rettv.v_type) {
     case VAR_LIST:
       matchlist = rettv.vval.v_list;
@@ -3851,7 +3943,8 @@ static int get_userdefined_compl_info(colnr_T curs_col)
 
   pos_T pos = curwin->w_cursor;
   textlock++;
-  colnr_T col = (colnr_T)call_func_retnr((char *)funcname, 2, args);
+  Callback *cb = get_insert_callback(ctrl_x_mode);
+  colnr_T col = (colnr_T)callback_call_retnr(cb, 2, args);
   textlock--;
 
   State = save_State;
@@ -4354,6 +4447,9 @@ static unsigned quote_meta(char_u *dest, char_u *src, int len)
 void free_insexpand_stuff(void)
 {
   XFREE_CLEAR(compl_orig_text);
+  callback_free(&cfu_cb);
+  callback_free(&ofu_cb);
+  callback_free(&tsrfu_cb);
 }
 #endif
 
