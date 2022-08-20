@@ -1,7 +1,7 @@
-" vim: set ft=html sw=4 ts=8 :
+% vim: set ft=html sw=4 ts=8 :
 
 
-" START_INDENT
+% START_INDENT
 <html>
     <body>
 <style>
@@ -50,7 +50,7 @@ text
     </body>
 </html>
 
-" END_INDENT
+% END_INDENT
 
 % START_INDENT
 % INDENT_EXE let g:html_indent_style1 = "inc"
