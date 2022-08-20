@@ -456,9 +456,10 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
     findex = -1;  // next p_wc gets first one
   }
 
-  // Concatenate all matching names
+  // Concatenate all matching names.  Unless interrupted, this can be slow
+  // and the result probably won't be used.
   // TODO(philix): use xstpcpy instead of strcat in a loop (ExpandOne)
-  if (mode == WILD_ALL && xp->xp_numfiles > 0) {
+  if (mode == WILD_ALL && xp->xp_numfiles > 0 && !got_int) {
     size_t len = 0;
     for (i = 0; i < xp->xp_numfiles; i++) {
       len += STRLEN(xp->xp_files[i]) + 1;
