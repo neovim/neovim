@@ -69,6 +69,7 @@
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/input.h"
 #include "nvim/state.h"
 #include "nvim/terminal.h"

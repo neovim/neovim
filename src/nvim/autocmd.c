@@ -25,7 +25,7 @@
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
-#include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/input.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"

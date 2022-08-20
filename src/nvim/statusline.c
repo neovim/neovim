@@ -19,6 +19,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/statusline.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"

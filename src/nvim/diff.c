@@ -34,6 +34,7 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
@@ -1407,8 +1408,6 @@ void diff_win_options(win_T *wp, int addbuf)
     }
     wp->w_p_wrap = false;
   }
-  curwin = wp;  // -V519
-  curbuf = curwin->w_buffer;
 
   if (!wp->w_p_diff) {
     if (wp->w_p_diff_saved) {
@@ -1416,9 +1415,7 @@ void diff_win_options(win_T *wp, int addbuf)
     }
     wp->w_p_fdm_save = vim_strsave(wp->w_p_fdm);
   }
-  set_string_option_direct("fdm", -1, "diff", OPT_LOCAL | OPT_FREE, 0);
-  curwin = old_curwin;
-  curbuf = curwin->w_buffer;
+  set_string_option_direct_in_win(wp, "fdm", -1, "diff", OPT_LOCAL | OPT_FREE, 0);
 
   if (!wp->w_p_diff) {
     wp->w_p_fen_save = wp->w_p_fen;

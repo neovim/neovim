@@ -42,6 +42,7 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/os/os.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"

@@ -30,6 +30,7 @@
 #include "nvim/menu.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/optionstr.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"

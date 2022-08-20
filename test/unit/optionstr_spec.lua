@@ -4,7 +4,7 @@ local itp = helpers.gen_itp(it)
 local to_cstr = helpers.to_cstr
 local eq      = helpers.eq
 
-local option = helpers.cimport("./src/nvim/option.h")
+local option = helpers.cimport("./src/nvim/optionstr.h")
 
 local check_ff_value = function(ff)
   return option.check_ff_value(to_cstr(ff))
