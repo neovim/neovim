@@ -6191,7 +6191,7 @@ static void op_function(const oparg_T *oap)
     finish_op = false;
 
     typval_T rettv;
-    if (callback_call(&opfunc_cb, 1, argv, &rettv) != FAIL) {
+    if (callback_call(&opfunc_cb, 1, argv, &rettv)) {
       tv_clear(&rettv);
     }
 
