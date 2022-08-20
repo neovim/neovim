@@ -8,8 +8,8 @@
 
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
-#include "nvim/ex_getln.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"

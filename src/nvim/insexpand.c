@@ -12,6 +12,7 @@
 #include "nvim/buffer.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"

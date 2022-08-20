@@ -61,6 +61,7 @@
 
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_getln.h"
