@@ -2239,10 +2239,10 @@ static char_u *get_complete_funcname(int type)
   }
 }
 
-/// Execute user defined complete function 'completefunc' or 'omnifunc', and
-/// get matches in "matches".
+/// Execute user defined complete function 'completefunc', 'omnifunc' or
+/// 'thesaurusfunc', and get matches in "matches".
 ///
-/// @param type  CTRL_X_OMNI or CTRL_X_FUNCTION
+/// @param type  either CTRL_X_OMNI or CTRL_X_FUNCTION or CTRL_X_THESAURUS
 static void expand_by_function(int type, char_u *base)
 {
   list_T *matchlist = NULL;

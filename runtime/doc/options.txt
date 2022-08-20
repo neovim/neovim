@@ -320,7 +320,15 @@ or a function reference or a lambda function.  Examples:
 	set opfunc=MyOpFunc
 	set opfunc=function('MyOpFunc')
 	set opfunc=funcref('MyOpFunc')
-	let &opfunc = "{t -> MyOpFunc(t)}"
+	set opfunc={a\ ->\ MyOpFunc(a)}
+	" set using a funcref variable
+	let Fn = function('MyTagFunc')
+	let &tagfunc = string(Fn)
+	" set using a lambda expression
+	let &tagfunc = "{t -> MyTagFunc(t)}"
+	" set using a variable with lambda expression
+	let L = {a, b, c -> MyTagFunc(a, b , c)}
+	let &tagfunc = string(L)
 <
 
 Setting the filetype
