@@ -10,6 +10,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdhist.h"
+#include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/userfunc.h"
@@ -40,6 +41,7 @@
 #include "nvim/ui.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim.h"
+#include "nvim/window.h"
 
 /// Type used by ExpandGeneric()
 typedef char *(*CompleteListItemGetter)(expand_T *, int);
@@ -53,15 +55,13 @@ typedef void *(*user_expand_func_T)(const char_u *, int, typval_T *);
 
 static int cmd_showtail;  ///< Only show path tail in lists ?
 
-// TODO(zeertzjq): make these four variables static in cmdexpand.c
-
 /// "compl_match_array" points the currently displayed list of entries in the
 /// popup menu.  It is NULL when there is no popup menu.
-pumitem_T *compl_match_array = NULL;
-int compl_match_arraysize;
+pumitem_T *compl_match_array = NULL;  // TODO(zeertzjq): make this static in cmdexpand.c
+static int compl_match_arraysize;
 /// First column in cmdline of the matched item for completion.
-int compl_startcol;
-int compl_selected;
+static int compl_startcol;
+static int compl_selected;
 
 static int sort_func_compare(const void *s1, const void *s2)
 {
@@ -2507,6 +2507,227 @@ void globpath(char *path, char_u *file, garray_T *ga, int expand_options)
   }
 
   xfree(buf);
+}
+
+/// Translate some keys pressed when 'wildmenu' is used.
+int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, int did_wild_list)
+{
+  int c = key;
+
+  if (did_wild_list && p_wmnu) {
+    if (c == K_LEFT) {
+      c = Ctrl_P;
+    } else if (c == K_RIGHT) {
+      c = Ctrl_N;
+    }
+  }
+  // Hitting CR after "emenu Name.": complete submenu
+  if (xp->xp_context == EXPAND_MENUNAMES && p_wmnu
+      && cclp->cmdpos > 1
+      && cclp->cmdbuff[cclp->cmdpos - 1] == '.'
+      && cclp->cmdbuff[cclp->cmdpos - 2] != '\\'
+      && (c == '\n' || c == '\r' || c == K_KENTER)) {
+    c = K_DOWN;
+  }
+
+  return c;
+}
+
+/// Delete characters on the command line, from "from" to the current position.
+static void cmdline_del(CmdlineInfo *cclp, int from)
+{
+  assert(cclp->cmdpos <= cclp->cmdlen);
+  memmove(cclp->cmdbuff + from, cclp->cmdbuff + cclp->cmdpos,
+          (size_t)cclp->cmdlen - (size_t)cclp->cmdpos + 1);
+  cclp->cmdlen -= cclp->cmdpos - from;
+  cclp->cmdpos = from;
+}
+
+/// Handle a key pressed when wild menu is displayed
+int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
+{
+  int c = key;
+
+  if (!p_wmnu) {
+    return c;
+  }
+
+  // Special translations for 'wildmenu'
+  if (xp->xp_context == EXPAND_MENUNAMES) {
+    // Hitting <Down> after "emenu Name.": complete submenu
+    if (c == K_DOWN && cclp->cmdpos > 0
+        && cclp->cmdbuff[cclp->cmdpos - 1] == '.') {
+      c = (int)p_wc;
+      KeyTyped = true;  // in case the key was mapped
+    } else if (c == K_UP) {
+      // Hitting <Up>: Remove one submenu name in front of the
+      // cursor
+      int found = false;
+
+      int j = (int)((char_u *)xp->xp_pattern - cclp->cmdbuff);
+      int i = 0;
+      while (--j > 0) {
+        // check for start of menu name
+        if (cclp->cmdbuff[j] == ' '
+            && cclp->cmdbuff[j - 1] != '\\') {
+          i = j + 1;
+          break;
+        }
+
+        // check for start of submenu name
+        if (cclp->cmdbuff[j] == '.'
+            && cclp->cmdbuff[j - 1] != '\\') {
+          if (found) {
+            i = j + 1;
+            break;
+          } else {
+            found = true;
+          }
+        }
+      }
+      if (i > 0) {
+        cmdline_del(cclp, i);
+      }
+      c = (int)p_wc;
+      KeyTyped = true;  // in case the key was mapped
+      xp->xp_context = EXPAND_NOTHING;
+    }
+  }
+  if (xp->xp_context == EXPAND_FILES
+      || xp->xp_context == EXPAND_DIRECTORIES
+      || xp->xp_context == EXPAND_SHELLCMD) {
+    char_u upseg[5];
+
+    upseg[0] = PATHSEP;
+    upseg[1] = '.';
+    upseg[2] = '.';
+    upseg[3] = PATHSEP;
+    upseg[4] = NUL;
+
+    if (c == K_DOWN
+        && cclp->cmdpos > 0
+        && cclp->cmdbuff[cclp->cmdpos - 1] == PATHSEP
+        && (cclp->cmdpos < 3
+            || cclp->cmdbuff[cclp->cmdpos - 2] != '.'
+            || cclp->cmdbuff[cclp->cmdpos - 3] != '.')) {
+      // go down a directory
+      c = (int)p_wc;
+      KeyTyped = true;  // in case the key was mapped
+    } else if (STRNCMP(xp->xp_pattern, upseg + 1, 3) == 0
+               && c == K_DOWN) {
+      // If in a direct ancestor, strip off one ../ to go down
+      int found = false;
+
+      int j = cclp->cmdpos;
+      int i = (int)((char_u *)xp->xp_pattern - cclp->cmdbuff);
+      while (--j > i) {
+        j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
+        if (vim_ispathsep(cclp->cmdbuff[j])) {
+          found = true;
+          break;
+        }
+      }
+      if (found
+          && cclp->cmdbuff[j - 1] == '.'
+          && cclp->cmdbuff[j - 2] == '.'
+          && (vim_ispathsep(cclp->cmdbuff[j - 3]) || j == i + 2)) {
+        cmdline_del(cclp, j - 2);
+        c = (int)p_wc;
+        KeyTyped = true;  // in case the key was mapped
+      }
+    } else if (c == K_UP) {
+      // go up a directory
+      int found = false;
+
+      int j = cclp->cmdpos - 1;
+      int i = (int)((char_u *)xp->xp_pattern - cclp->cmdbuff);
+      while (--j > i) {
+        j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
+        if (vim_ispathsep(cclp->cmdbuff[j])
+#ifdef BACKSLASH_IN_FILENAME
+            && vim_strchr((const char_u *)" *?[{`$%#", cclp->cmdbuff[j + 1])
+            == NULL
+#endif
+            ) {
+          if (found) {
+            i = j + 1;
+            break;
+          } else {
+            found = true;
+          }
+        }
+      }
+
+      if (!found) {
+        j = i;
+      } else if (STRNCMP(cclp->cmdbuff + j, upseg, 4) == 0) {
+        j += 4;
+      } else if (STRNCMP(cclp->cmdbuff + j, upseg + 1, 3) == 0
+                 && j == i) {
+        j += 3;
+      } else {
+        j = 0;
+      }
+
+      if (j > 0) {
+        // TODO(tarruda): this is only for DOS/Unix systems - need to put in
+        // machine-specific stuff here and in upseg init
+        cmdline_del(cclp, j);
+        put_on_cmdline(upseg + 1, 3, false);
+      } else if (cclp->cmdpos > i) {
+        cmdline_del(cclp, i);
+      }
+
+      // Now complete in the new directory. Set KeyTyped in case the
+      // Up key came from a mapping.
+      c = (int)p_wc;
+      KeyTyped = true;
+    }
+  }
+
+  return c;
+}
+
+/// Free expanded names when finished walking through the matches
+void wildmenu_cleanup(CmdlineInfo *cclp)
+{
+  if (!p_wmnu || wild_menu_showing == 0) {
+    return;
+  }
+
+  const bool skt = KeyTyped;
+  int old_RedrawingDisabled = RedrawingDisabled;
+
+  if (cclp->input_fn) {
+    RedrawingDisabled = 0;
+  }
+
+  if (wild_menu_showing == WM_SCROLLED) {
+    // Entered command line, move it up
+    cmdline_row--;
+    redrawcmd();
+    wild_menu_showing = 0;
+  } else if (save_p_ls != -1) {
+    // restore 'laststatus' and 'winminheight'
+    p_ls = save_p_ls;
+    p_wmh = save_p_wmh;
+    last_status(false);
+    update_screen(VALID);                 // redraw the screen NOW
+    redrawcmd();
+    save_p_ls = -1;
+    wild_menu_showing = 0;
+    // don't redraw statusline if WM_LIST is showing
+  } else if (wild_menu_showing != WM_LIST) {
+    win_redraw_last_status(topframe);
+    wild_menu_showing = 0;  // must be before redraw_statuslines #8385
+    redraw_statuslines();
+  } else {
+    wild_menu_showing = 0;
+  }
+  KeyTyped = skt;
+  if (cclp->input_fn) {
+    RedrawingDisabled = old_RedrawingDisabled;
+  }
 }
 
 /// "getcompletion()" function

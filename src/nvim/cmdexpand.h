@@ -2,6 +2,7 @@
 #define NVIM_CMDEXPAND_H
 
 #include "nvim/eval/typval.h"
+#include "nvim/ex_getln.h"
 #include "nvim/garray.h"
 #include "nvim/types.h"
 
