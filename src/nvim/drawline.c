@@ -2502,7 +2502,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             col_attr = cuc_attr;
           } else if (draw_color_col && VCOL_HLC == *color_cols) {
             col_attr = mc_attr;
-            c = wp->w_p_fcs_chars.colorcol;
+            c = wp->w_p_fcs_chars.colorc;
             schar_from_char(linebuf_char[off], c);
           }
 
