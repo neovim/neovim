@@ -7629,9 +7629,9 @@ static void f_setenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[1].v_type == VAR_SPECIAL
       && argvars[1].vval.v_special == kSpecialVarNull) {
-    os_unsetenv(name);
+    vim_unsetenv_ext(name);
   } else {
-    os_setenv(name, tv_get_string_buf(&argvars[1], valbuf), 1);
+    vim_setenv_ext(name, tv_get_string_buf(&argvars[1], valbuf));
   }
 }
 
