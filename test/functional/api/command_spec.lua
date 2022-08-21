@@ -326,7 +326,7 @@ describe('nvim_create_user_command', function()
     -- f-args doesn't split when command nargs is 1 or "?"
     exec_lua [[
       result = {}
-      vim.api.nvim_create_user_command('CommandWithOneArg', function(opts)
+      vim.api.nvim_create_user_command('CommandWithOneOrNoArg', function(opts)
         result = opts
       end, {
         nargs = "?",
@@ -366,7 +366,89 @@ describe('nvim_create_user_command', function()
       count = 2,
       reg = "",
     }, exec_lua [[
-      vim.api.nvim_command('CommandWithOneArg hello I\'m one argument')
+      vim.api.nvim_command('CommandWithOneOrNoArg hello I\'m one argument')
+      return result
+    ]])
+
+    -- f-args is an empty table if no args were passed
+    eq({
+      args = "",
+      fargs = {},
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      smods = {
+        browse = false,
+        confirm = false,
+        emsg_silent = false,
+        hide = false,
+        keepalt = false,
+        keepjumps = false,
+        keepmarks = false,
+        keeppatterns = false,
+        lockmarks = false,
+        noautocmd = false,
+        noswapfile = false,
+        sandbox = false,
+        silent = false,
+        split = "",
+        tab = 0,
+        unsilent = false,
+        verbose = -1,
+        vertical = false,
+      },
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [[
+      vim.api.nvim_command('CommandWithOneOrNoArg')
+      return result
+    ]])
+
+    -- f-args is an empty table when the command nargs=0
+    exec_lua [[
+      result = {}
+      vim.api.nvim_create_user_command('CommandWithNoArgs', function(opts)
+        result = opts
+      end, {
+        nargs = 0,
+        bang = true,
+        count = 2,
+      })
+    ]]
+    eq({
+      args = "",
+      fargs = {},
+      bang = false,
+      line1 = 1,
+      line2 = 1,
+      mods = "",
+      smods = {
+        browse = false,
+        confirm = false,
+        emsg_silent = false,
+        hide = false,
+        keepalt = false,
+        keepjumps = false,
+        keepmarks = false,
+        keeppatterns = false,
+        lockmarks = false,
+        noautocmd = false,
+        noswapfile = false,
+        sandbox = false,
+        silent = false,
+        split = "",
+        tab = 0,
+        unsilent = false,
+        verbose = -1,
+        vertical = false,
+      },
+      range = 0,
+      count = 2,
+      reg = "",
+    }, exec_lua [[
+      vim.cmd('CommandWithNoArgs')
       return result
     ]])
 
