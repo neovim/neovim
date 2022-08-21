@@ -614,7 +614,6 @@ static int shada_idx = -1;
 
 /// Handle string options that need some action to perform when changed.
 /// The new value must be allocated.
-/// Returns NULL for success, or an error message for an error.
 ///
 /// @param opt_idx  index in options[] table
 /// @param varp  pointer to the option variable
@@ -623,6 +622,8 @@ static int shada_idx = -1;
 /// @param errbuflen  length of errors buffer
 /// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
+///
+/// @return  NULL for success, or an untranslated error message for an error
 char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *errbuf,
                             size_t errbuflen, int opt_flags, int *value_checked)
 {
@@ -698,12 +699,10 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
   } else if (varp == &p_hf) {  // 'helpfile'
     // May compute new values for $VIM and $VIMRUNTIME
     if (didset_vim) {
-      os_setenv("VIM", "", 1);
-      didset_vim = false;
+      vim_unsetenv_ext("VIM");
     }
     if (didset_vimruntime) {
-      os_setenv("VIMRUNTIME", "", 1);
-      didset_vimruntime = false;
+      vim_unsetenv_ext("VIMRUNTIME");
     }
   } else if (varp == &p_rtp || varp == &p_pp) {  // 'runtimepath' 'packpath'
     runtime_search_path_invalidate();

@@ -593,15 +593,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           }
         }
         if (p != NULL) {
-          os_setenv(name, p, 1);
-          if (STRICMP(name, "HOME") == 0) {
-            init_homedir();
-          } else if (didset_vim && STRICMP(name, "VIM") == 0) {
-            didset_vim = false;
-          } else if (didset_vimruntime
-                     && STRICMP(name, "VIMRUNTIME") == 0) {
-            didset_vimruntime = false;
-          }
+          vim_setenv_ext(name, p);
           arg_end = arg;
         }
         name[len] = c1;
@@ -859,7 +851,7 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
 
     // Environment variable, normal name or expanded name.
     if (*lp->ll_name == '$') {
-      os_unsetenv(lp->ll_name + 1);
+      vim_unsetenv_ext(lp->ll_name + 1);
     } else if (do_unlet(lp->ll_name, lp->ll_name_len, forceit) == FAIL) {
       ret = FAIL;
     }
