@@ -186,12 +186,13 @@ describe('api/buf', function()
     end)
   end)
 
-  describe('nvim_buf_get_lines, nvim_buf_set_lines', function()
-    local get_lines, set_lines = curbufmeths.get_lines, curbufmeths.set_lines
-    local line_count = curbufmeths.line_count
+  describe_lua_and_rpc('nvim_buf_get_lines, nvim_buf_set_lines', function(api)
+    local get_lines = api.curbufmeths.get_lines
+    local set_lines = api.curbufmeths.set_lines
+    local line_count = api.curbufmeths.line_count
 
     it('fails correctly when input is not valid', function()
-      eq(1, curbufmeths.get_number())
+      eq(1, api.curbufmeths.get_number())
       eq([[String cannot contain newlines]],
         pcall_err(bufmeths.set_lines, 1, 1, 2, false, {'b\na'}))
     end)
@@ -199,7 +200,7 @@ describe('api/buf', function()
     it("fails if 'nomodifiable'", function()
       command('set nomodifiable')
       eq([[Buffer is not 'modifiable']],
-        pcall_err(bufmeths.set_lines, 1, 1, 2, false, {'a','b'}))
+        pcall_err(api.bufmeths.set_lines, 1, 1, 2, false, {'a','b'}))
     end)
 
     it('has correct line_count when inserting and deleting', function()
@@ -355,7 +356,7 @@ describe('api/buf', function()
         Who would win?
         A real window
         with proper text]])
-      local buf = meths.create_buf(false,true)
+      local buf = api.meths.create_buf(false,true)
       screen:expect([[
         Who would win?      |
         A real window       |
@@ -364,7 +365,7 @@ describe('api/buf', function()
                             |
       ]])
 
-      meths.buf_set_lines(buf, 0, -1, true, {'or some', 'scratchy text'})
+      api.meths.buf_set_lines(buf, 0, -1, true, {'or some', 'scratchy text'})
       feed('i') -- provoke redraw
       screen:expect([[
         Who would win?      |
@@ -380,15 +381,15 @@ describe('api/buf', function()
         visible buffer line 1
         line 2
       ]])
-      local hiddenbuf = meths.create_buf(false,true)
+      local hiddenbuf = api.meths.create_buf(false,true)
       command('vsplit')
       command('vsplit')
       feed('<c-w>l<c-w>l<c-w>l')
       eq(3, funcs.winnr())
       feed('<c-w>h')
       eq(2, funcs.winnr())
-      meths.buf_set_lines(hiddenbuf, 0, -1, true,
-                          {'hidden buffer line 1', 'line 2'})
+      api.meths.buf_set_lines(hiddenbuf, 0, -1, true,
+                              {'hidden buffer line 1', 'line 2'})
       feed('<c-w>p')
       eq(3, funcs.winnr())
     end)
