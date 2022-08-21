@@ -7,7 +7,6 @@ local insert = helpers.insert
 local meths = helpers.meths
 local command = helpers.command
 local funcs = helpers.funcs
-local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
@@ -1785,6 +1784,8 @@ describe('builtin popupmenu', function()
     screen:try_resize(32,10)
     command('set wildmenu')
     command('set wildoptions=pum')
+    command('set shellslash')
+    command("cd test/functional/fixtures/wildpum")
 
     feed(':sign ')
     screen:expect([[
@@ -1800,7 +1801,7 @@ describe('builtin popupmenu', function()
       :sign ^                          |
     ]])
 
-    feed('<tab>')
+    feed('<Tab>')
     screen:expect([[
                                       |
       {1:~                               }|
@@ -1814,21 +1815,199 @@ describe('builtin popupmenu', function()
       :sign define^                    |
     ]])
 
-    feed('<left>')
+    feed('<Right><Right>')
     screen:expect([[
                                       |
       {1:~                               }|
       {1:~                               }|
       {1:~    }{n: define         }{1:           }|
       {1:~    }{n: jump           }{1:           }|
+      {1:~    }{s: list           }{1:           }|
+      {1:~    }{n: place          }{1:           }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign list^                      |
+    ]])
+
+    feed('<C-N>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~    }{n: define         }{1:           }|
+      {1:~    }{n: jump           }{1:           }|
+      {1:~    }{n: list           }{1:           }|
+      {1:~    }{s: place          }{1:           }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign place^                     |
+    ]])
+
+    feed('<C-P>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~    }{n: define         }{1:           }|
+      {1:~    }{n: jump           }{1:           }|
+      {1:~    }{s: list           }{1:           }|
+      {1:~    }{n: place          }{1:           }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign list^                      |
+    ]])
+
+    feed('<Left>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~    }{n: define         }{1:           }|
+      {1:~    }{s: jump           }{1:           }|
       {1:~    }{n: list           }{1:           }|
       {1:~    }{n: place          }{1:           }|
       {1:~    }{n: undefine       }{1:           }|
       {1:~    }{n: unplace        }{1:           }|
+      :sign jump^                      |
+    ]])
+
+    -- pressing <C-E> should end completion and go back to the original match
+    feed('<C-E>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
       :sign ^                          |
     ]])
 
-    feed('<left>')
+    -- pressing <C-Y> should select the current match and end completion
+    feed('<Tab><C-P><C-P><C-Y>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplace^                   |
+    ]])
+
+    -- showing popup menu in different columns in the cmdline
+    feed('<C-U>sign define <Tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~           }{s: culhl=         }{1:    }|
+      {1:~           }{n: icon=          }{1:    }|
+      {1:~           }{n: linehl=        }{1:    }|
+      {1:~           }{n: numhl=         }{1:    }|
+      {1:~           }{n: text=          }{1:    }|
+      {1:~           }{n: texthl=        }{1:    }|
+      :sign define culhl=^             |
+    ]])
+
+    feed('<Space><Tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                  }{s: culhl=     }{1: }|
+      {1:~                  }{n: icon=      }{1: }|
+      {1:~                  }{n: linehl=    }{1: }|
+      {1:~                  }{n: numhl=     }{1: }|
+      {1:~                  }{n: text=      }{1: }|
+      {1:~                  }{n: texthl=    }{1: }|
+      :sign define culhl= culhl=^      |
+    ]])
+
+    feed('<C-U>e Xdi<Tab><Tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~      }{s: XdirA/         }{1:         }|
+      {1:~      }{n: XfileA         }{1:         }|
+      :e Xdir/XdirA/^                  |
+    ]])
+
+    -- Pressing <Down> on a directory name should go into that directory
+    feed('<Down>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~            }{s: XdirB/         }{1:   }|
+      {1:~            }{n: XfileB         }{1:   }|
+      :e Xdir/XdirA/XdirB/^            |
+    ]])
+
+    -- Pressing <Up> on a directory name should go to the parent directory
+    feed('<Up>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~      }{s: XdirA/         }{1:         }|
+      {1:~      }{n: XfileA         }{1:         }|
+      :e Xdir/XdirA/^                  |
+    ]])
+
+    -- Pressing <C-A> when the popup menu is displayed should list all the
+    -- matches and remove the popup menu
+    feed(':<C-U>sign <Tab><C-A>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:                                }|
+      :sign define jump list place und|
+      efine unplace^                   |
+    ]])
+
+    -- Pressing <C-D> when the popup menu is displayed should remove the popup
+    -- menu
+    feed('<C-U>sign <Tab><C-D>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:                                }|
+      :sign define                    |
+      define                          |
+      :sign define^                    |
+    ]])
+
+    -- Pressing <S-Tab> should open the popup menu with the last entry selected
+    feed('<C-U><CR>:sign <S-Tab><C-P>')
     screen:expect([[
                                       |
       {1:~                               }|
@@ -1837,12 +2016,28 @@ describe('builtin popupmenu', function()
       {1:~    }{n: jump           }{1:           }|
       {1:~    }{n: list           }{1:           }|
       {1:~    }{n: place          }{1:           }|
-      {1:~    }{n: undefine       }{1:           }|
-      {1:~    }{s: unplace        }{1:           }|
-      :sign unplace^                   |
+      {1:~    }{s: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign undefine^                  |
     ]])
 
-    feed('x')
+    -- Pressing <Esc> should close the popup menu and cancel the cmd line
+    feed('<C-U><CR>:sign <Tab><Esc>')
+    screen:expect([[
+      ^                                |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+                                      |
+    ]])
+
+    -- Typing a character when the popup is open, should close the popup
+    feed(':sign <Tab>x')
     screen:expect([[
                                       |
       {1:~                               }|
@@ -1853,7 +2048,114 @@ describe('builtin popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
-      :sign unplacex^                  |
+      :sign definex^                   |
+    ]])
+
+    -- When the popup is open, entering the cmdline window should close the popup
+    feed('<C-U>sign <Tab><C-F>')
+    screen:expect([[
+                                      |
+      {3:[No Name]                       }|
+      {1::}sign define                    |
+      {1::}sign define^                    |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:[Command Line]                  }|
+      :sign define                    |
+    ]])
+    feed(':q<CR>')
+
+    -- After the last popup menu item, <C-N> should show the original string
+    feed(':sign u<Tab><C-N><C-N>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~    }{n: undefine       }{1:           }|
+      {1:~    }{n: unplace        }{1:           }|
+      :sign u^                         |
+    ]])
+
+    -- Use the popup menu for the command name
+    feed('<C-U>bu<Tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {s: bufdo          }{1:                }|
+      {n: buffer         }{1:                }|
+      {n: buffers        }{1:                }|
+      {n: bunload        }{1:                }|
+      :bufdo^                          |
+    ]])
+
+    -- Pressing <BS> should remove the popup menu and erase the last character
+    feed('<C-E><C-U>sign <Tab><BS>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign defin^                     |
+    ]])
+
+    -- Pressing <C-W> should remove the popup menu and erase the previous word
+    feed('<C-E><C-U>sign <Tab><C-W>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+    ]])
+
+    -- Pressing <C-U> should remove the popup menu and erase the entire line
+    feed('<C-E><C-U>sign <Tab><C-U>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :^                               |
+    ]])
+
+    -- Using <C-E> to cancel the popup menu and then pressing <Up> should recall
+    -- the cmdline from history
+    feed('sign xyz<Esc>:sign <Tab><C-E><Up>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign xyz^                       |
     ]])
 
     feed('<esc>')
@@ -1932,7 +2234,6 @@ describe('builtin popupmenu', function()
     feed('<esc>')
     command("close")
     command('set wildmode=full')
-    command("cd test/functional/fixtures/")
     feed(':e compdir/<tab>')
     screen:expect([[
                                                         |
@@ -1949,7 +2250,7 @@ describe('builtin popupmenu', function()
       {1:~                                                 }|
       {1:~         }{s: file1          }{1:                        }|
       {1:~         }{n: file2          }{1:                        }|
-      :e compdir]]..get_pathsep()..[[file1^                                  |
+      :e compdir/file1^                                  |
     ]])
   end)
 
@@ -2007,7 +2308,9 @@ describe('builtin popupmenu', function()
     command('set wildoptions=pum')
     command('set wildmode=longest,full')
 
-    feed(':sign u<tab>')
+    -- With 'wildmode' set to 'longest,full', completing a match should display
+    -- the longest match, the wildmenu should not be displayed.
+    feed(':sign u<Tab>')
     screen:expect{grid=[[
                                     |
       {1:~                             }|
@@ -2020,7 +2323,8 @@ describe('builtin popupmenu', function()
     ]]}
     eq(0, funcs.wildmenumode())
 
-    feed('<tab>')
+    -- pressing <Tab> should display the wildmenu
+    feed('<Tab>')
     screen:expect{grid=[[
                                     |
       {1:~                             }|
@@ -2032,6 +2336,19 @@ describe('builtin popupmenu', function()
       :sign undefine^                |
     ]]}
     eq(1, funcs.wildmenumode())
+
+    -- pressing <Tab> second time should select the next entry in the menu
+    feed('<Tab>')
+    screen:expect{grid=[[
+                                    |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~    }{n: undefine       }{1:         }|
+      {1:~    }{s: unplace        }{1:         }|
+      :sign unplace^                 |
+    ]]}
   end)
 
   it("'pumblend' RGB-color", function()

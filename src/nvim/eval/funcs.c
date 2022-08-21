@@ -9633,7 +9633,7 @@ static void f_visualmode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "wildmenumode()" function
 static void f_wildmenumode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (wild_menu_showing || ((State & MODE_CMDLINE) && pum_visible())) {
+  if (wild_menu_showing || ((State & MODE_CMDLINE) && cmdline_pum_active())) {
     rettv->vval.v_number = 1;
   }
 }

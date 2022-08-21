@@ -1801,6 +1801,10 @@ static int command_line_handle_key(CommandLineState *s)
     if (nextwild(&s->xpc, WILD_ALL, 0, s->firstc != '@') == FAIL) {
       break;
     }
+    if (cmdline_pum_active()) {
+      cmdline_pum_cleanup(&ccline);
+      s->xpc.xp_context = EXPAND_NOTHING;
+    }
     return command_line_changed(s);
 
   case Ctrl_L:

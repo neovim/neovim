@@ -258,7 +258,7 @@ void cmdline_pum_display(bool changed_array)
 
 bool cmdline_pum_active(void)
 {
-  // return p_wmnu && pum_visible() && compl_match_array != NULL;
+  // compl_match_array != NULL should already imply pum_visible() in Nvim.
   return compl_match_array != NULL;
 }
 
@@ -267,6 +267,12 @@ void cmdline_pum_remove(void)
 {
   pum_undisplay(true);
   XFREE_CLEAR(compl_match_array);
+}
+
+void cmdline_pum_cleanup(CmdlineInfo *cclp)
+{
+  cmdline_pum_remove();
+  wildmenu_cleanup(cclp);
 }
 
 /// Do wildcard expansion on the string 'str'.
