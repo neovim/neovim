@@ -174,6 +174,11 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
 {
   static int recursive = 0;
 
+  if (*ns_hl == 0) {
+    // ns=0 (the default namespace) does not have a provider so stop here
+    return -1;
+  }
+
   if (*ns_hl < 0) {
     if (ns_hl_active <= 0) {
       return -1;
