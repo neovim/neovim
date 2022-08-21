@@ -705,6 +705,10 @@ EXTERN int recoverymode INIT(= false);      // Set to true for "-r" option
 // typeahead buffer
 EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
 
+/// Flag used to indicate that vgetorpeek() returned a char like Esc when the
+/// :normal argument was exhausted.
+EXTERN bool typebuf_was_empty INIT(= false);
+
 EXTERN int ex_normal_busy INIT(= 0);     // recursiveness of ex_normal()
 EXTERN int ex_normal_lock INIT(= 0);     // forbid use of ex_normal()
 EXTERN int ignore_script INIT(= false);  // ignore script input

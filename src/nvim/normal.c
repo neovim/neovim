@@ -6943,10 +6943,10 @@ static void nv_esc(cmdarg_T *cap)
       got_int = false;          // don't stop executing autocommands et al.
       return;
     }
-  } else if (cmdwin_type != 0 && ex_normal_busy) {
+  } else if (cmdwin_type != 0 && ex_normal_busy && typebuf_was_empty) {
     // When :normal runs out of characters while in the command line window
-    // vgetorpeek() will return ESC.  Exit the cmdline window to break the
-    // loop.
+    // vgetorpeek() will repeatedly return ESC.  Exit the cmdline window to
+    // break the loop.
     cmdwin_result = K_IGNORE;
     return;
   }
