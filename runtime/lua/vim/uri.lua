@@ -53,8 +53,8 @@ do
 end
 
 ---@private
-local function is_windows_file_uri(uri)
-  return uri:match('^file:/+[a-zA-Z]:') ~= nil
+local function in_windows()
+  return vim.loop.os_uname().sysname == 'Windows'
 end
 
 --- Get a URI from a file path.
@@ -62,7 +62,7 @@ end
 ---@return string URI
 local function uri_from_fname(path)
   local volume_path, fname = path:match('^([a-zA-Z]:)(.*)')
-  local is_windows = volume_path ~= nil
+  local is_windows = in_windows()
   if is_windows then
     path = volume_path .. uri_encode(fname:gsub('\\', '/'))
   else
@@ -84,10 +84,8 @@ local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
 ---@return string URI
 local function uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
-  local volume_path = fname:match('^([a-zA-Z]:).*')
-  local is_windows = volume_path ~= nil
   local scheme
-  if is_windows then
+  if in_windows() then
     fname = fname:gsub('\\', '/')
     scheme = fname:match(WINDOWS_URI_SCHEME_PATTERN)
   else
@@ -109,8 +107,7 @@ local function uri_to_fname(uri)
     return uri
   end
   uri = uri_decode(uri)
-  -- TODO improve this.
-  if is_windows_file_uri(uri) then
+  if in_windows() then
     uri = uri:gsub('^file:/+', '')
     uri = uri:gsub('/', '\\')
   else
