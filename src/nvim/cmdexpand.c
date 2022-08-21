@@ -57,7 +57,7 @@ static int cmd_showtail;  ///< Only show path tail in lists ?
 
 /// "compl_match_array" points the currently displayed list of entries in the
 /// popup menu.  It is NULL when there is no popup menu.
-pumitem_T *compl_match_array = NULL;  // TODO(zeertzjq): make this static in cmdexpand.c
+static pumitem_T *compl_match_array = NULL;
 static int compl_match_arraysize;
 /// First column in cmdline of the matched item for completion.
 static int compl_startcol;
@@ -254,6 +254,19 @@ void cmdline_pum_display(bool changed_array)
 {
   pum_display(compl_match_array, compl_match_arraysize, compl_selected,
               changed_array, compl_startcol);
+}
+
+bool cmdline_pum_active(void)
+{
+  // return p_wmnu && pum_visible() && compl_match_array != NULL;
+  return compl_match_array != NULL;
+}
+
+/// Remove the cmdline completion popup menu
+void cmdline_pum_remove(void)
+{
+  pum_undisplay(true);
+  XFREE_CLEAR(compl_match_array);
 }
 
 /// Do wildcard expansion on the string 'str'.
@@ -545,10 +558,14 @@ int showmatches(expand_T *xp, int wildmenu)
   if (compl_use_pum) {
     assert(num_files >= 0);
     compl_match_arraysize = num_files;
-    compl_match_array = xcalloc((size_t)compl_match_arraysize,
-                                sizeof(pumitem_T));
+    compl_match_array = xmalloc(sizeof(pumitem_T) * (size_t)compl_match_arraysize);
     for (i = 0; i < num_files; i++) {
-      compl_match_array[i].pum_text = (char_u *)L_SHOWFILE(i);
+      compl_match_array[i] = (pumitem_T){
+        .pum_text = (char_u *)L_SHOWFILE(i),
+        .pum_info = NULL,
+        .pum_extra = NULL,
+        .pum_kind = NULL,
+      };
     }
     char_u *endpos = (char_u *)(showtail ? sm_gettail(xp->xp_pattern, true) : xp->xp_pattern);
     if (ui_has(kUICmdline)) {
@@ -2514,15 +2531,16 @@ int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, int did_wil
 {
   int c = key;
 
-  if (did_wild_list && p_wmnu) {
+  if (did_wild_list) {
     if (c == K_LEFT) {
       c = Ctrl_P;
     } else if (c == K_RIGHT) {
       c = Ctrl_N;
     }
   }
+
   // Hitting CR after "emenu Name.": complete submenu
-  if (xp->xp_context == EXPAND_MENUNAMES && p_wmnu
+  if (xp->xp_context == EXPAND_MENUNAMES
       && cclp->cmdpos > 1
       && cclp->cmdbuff[cclp->cmdpos - 1] == '.'
       && cclp->cmdbuff[cclp->cmdpos - 2] != '\\'
@@ -2547,10 +2565,6 @@ static void cmdline_del(CmdlineInfo *cclp, int from)
 int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
 {
   int c = key;
-
-  if (!p_wmnu) {
-    return c;
-  }
 
   // Special translations for 'wildmenu'
   if (xp->xp_context == EXPAND_MENUNAMES) {
@@ -2696,7 +2710,7 @@ void wildmenu_cleanup(CmdlineInfo *cclp)
   }
 
   const bool skt = KeyTyped;
-  int old_RedrawingDisabled = RedrawingDisabled;
+  const int old_RedrawingDisabled = RedrawingDisabled;
 
   if (cclp->input_fn) {
     RedrawingDisabled = 0;
