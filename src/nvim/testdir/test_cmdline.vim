@@ -1857,6 +1857,179 @@ func Test_recalling_cmdline()
   cunmap <Plug>(save-cmdline)
 endfunc
 
+" Test for using a popup menu for the command line completion matches
+" (wildoptions=pum)
+func Test_wildmenu_pum()
+  CheckRunVimInTerminal
+
+  let commands =<< trim [CODE]
+    set wildmenu
+    set wildoptions=pum
+    set shm+=I
+    set noruler
+    set noshowcmd
+  [CODE]
+  call writefile(commands, 'Xtest')
+
+  let buf = RunVimInTerminal('-S Xtest', #{rows: 10})
+
+  call term_sendkeys(buf, ":sign \<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_01', {})
+
+  call term_sendkeys(buf, "\<Down>\<Down>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_02', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_03', {})
+
+  call term_sendkeys(buf, "\<C-P>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_04', {})
+
+  call term_sendkeys(buf, "\<Up>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_05', {})
+
+  " pressing <C-E> should end completion and go back to the original match
+  call term_sendkeys(buf, "\<C-E>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_06', {})
+
+  " pressing <C-Y> should select the current match and end completion
+  call term_sendkeys(buf, "\<Tab>\<C-P>\<C-P>\<C-Y>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_07', {})
+
+  " With 'wildmode' set to 'longest,full', completing a match should display
+  " the longest match, the wildmenu should not be displayed.
+  call term_sendkeys(buf, ":\<C-U>set wildmode=longest,full\<CR>")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":sign u\<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_08', {})
+
+  " pressing <Tab> should display the wildmenu
+  call term_sendkeys(buf, "\<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_09', {})
+
+  " pressing <Tab> second time should select the next entry in the menu
+  call term_sendkeys(buf, "\<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_10', {})
+
+  call term_sendkeys(buf, ":\<C-U>set wildmode=full\<CR>")
+  " " showing popup menu in different columns in the cmdline
+  call term_sendkeys(buf, ":sign define \<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_11', {})
+
+  call term_sendkeys(buf, " \<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_12', {})
+
+  call term_sendkeys(buf, " \<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_13', {})
+
+  " Directory name completion
+  call mkdir('Xdir/XdirA/XdirB', 'p')
+  call writefile([], 'Xdir/XfileA')
+  call writefile([], 'Xdir/XdirA/XfileB')
+  call writefile([], 'Xdir/XdirA/XdirB/XfileC')
+
+  call term_sendkeys(buf, "\<C-U>e Xdi\<Tab>\<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_14', {})
+
+  " Pressing <Right> on a directory name should go into that directory
+  call term_sendkeys(buf, "\<Right>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_15', {})
+
+  " Pressing <Left> on a directory name should go to the parent directory
+  call term_sendkeys(buf, "\<Left>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_16', {})
+
+  " Pressing <C-A> when the popup menu is displayed should list all the
+  " matches and remove the popup menu
+  call term_sendkeys(buf, "\<C-U>sign \<Tab>\<C-A>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_17', {})
+
+  " Pressing <C-D> when the popup menu is displayed should remove the popup
+  " menu
+  call term_sendkeys(buf, "\<C-U>sign \<Tab>\<C-D>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_18', {})
+
+  " Pressing <S-Tab> should open the popup menu with the last entry selected
+  call term_sendkeys(buf, "\<C-U>\<CR>:sign \<S-Tab>\<C-P>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_19', {})
+
+  " Pressing <Esc> should close the popup menu and cancel the cmd line
+  call term_sendkeys(buf, "\<C-U>\<CR>:sign \<Tab>\<Esc>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_20', {})
+
+  " Typing a character when the popup is open, should close the popup
+  call term_sendkeys(buf, ":sign \<Tab>x")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_21', {})
+
+  " When the popup is open, entering the cmdline window should close the popup
+  call term_sendkeys(buf, "\<C-U>sign \<Tab>\<C-F>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_22', {})
+  call term_sendkeys(buf, ":q\<CR>")
+
+  " After the last popup menu item, <C-N> should show the original string
+  call term_sendkeys(buf, ":sign u\<Tab>\<C-N>\<C-N>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_23', {})
+
+  " Use the popup menu for the command name
+  call term_sendkeys(buf, "\<C-U>bu\<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_24', {})
+
+  " Pressing the left arrow should remove the popup menu
+  call term_sendkeys(buf, "\<Left>\<Left>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_25', {})
+
+  " Pressing <BS> should remove the popup menu and erase the last character
+  call term_sendkeys(buf, "\<C-E>\<C-U>sign \<Tab>\<BS>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_26', {})
+
+  " Pressing <C-W> should remove the popup menu and erase the previous word
+  call term_sendkeys(buf, "\<C-E>\<C-U>sign \<Tab>\<C-W>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_27', {})
+
+  " Pressing <C-U> should remove the popup menu and erase the entire line
+  call term_sendkeys(buf, "\<C-E>\<C-U>sign \<Tab>\<C-U>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_28', {})
+
+  " Using <C-E> to cancel the popup menu and then pressing <Up> should recall
+  " the cmdline from history
+  call term_sendkeys(buf, "sign xyz\<Esc>:sign \<Tab>\<C-E>\<Up>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_29', {})
+
+  call term_sendkeys(buf, "\<C-U>\<CR>")
+  call StopVimInTerminal(buf)
+  call delete('Xtest')
+  call delete('Xdir', 'rf')
+endfunc
+
 " this was going over the end of IObuff
 func Test_report_error_with_composing()
   let caught = 'no'
