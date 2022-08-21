@@ -1372,7 +1372,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to window
 	'colorcolumn' is a comma-separated list of screen columns that are
 	highlighted with ColorColumn |hl-ColorColumn| and drawn using the
-	colocol option from 'fillchars'.  Useful to align
+	"colorcol" option from 'fillchars'.  Useful to align
 	text.  Will make screen redrawing slower.
 	The screen column can be an absolute number, or a number preceded with
 	'+' or '-', which is added to or subtracted from 'textwidth'. >
