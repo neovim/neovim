@@ -3,6 +3,8 @@
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
+local in_windows = vim.loop.os_uname().sysname == 'Windows'
+
 local uri_decode
 do
   local schar = string.char
@@ -52,24 +54,18 @@ do
   end
 end
 
----@private
-local function in_windows()
-  return vim.loop.os_uname().sysname == 'Windows'
-end
-
 --- Get a URI from a file path.
 ---@param path string Path to file
 ---@return string URI
 local function uri_from_fname(path)
   local volume_path, fname = path:match('^([a-zA-Z]:)(.*)')
-  local is_windows = in_windows()
-  if is_windows then
+  if in_windows then
     path = volume_path .. uri_encode(fname:gsub('\\', '/'))
   else
     path = uri_encode(path)
   end
   local uri_parts = { 'file://' }
-  if is_windows then
+  if in_windows then
     table.insert(uri_parts, '/')
   end
   table.insert(uri_parts, path)
@@ -85,7 +81,7 @@ local WINDOWS_URI_SCHEME_PATTERN = '^([a-zA-Z]+[a-zA-Z0-9.+-]*):[a-zA-Z]:.*'
 local function uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
   local scheme
-  if in_windows() then
+  if in_windows then
     fname = fname:gsub('\\', '/')
     scheme = fname:match(WINDOWS_URI_SCHEME_PATTERN)
   else
@@ -107,7 +103,7 @@ local function uri_to_fname(uri)
     return uri
   end
   uri = uri_decode(uri)
-  if in_windows() then
+  if in_windows then
     uri = uri:gsub('^file:/+', '')
     uri = uri:gsub('/', '\\')
   else
