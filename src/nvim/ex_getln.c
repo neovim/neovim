@@ -170,12 +170,7 @@ static Array cmdline_block = ARRAY_DICT_INIT;
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
-// TODO(zeertzjq): make these four variables static in cmdexpand.c
-
-extern pumitem_T *compl_match_array;
-extern int compl_match_arraysize;
-extern int compl_startcol;
-extern int compl_selected;
+extern pumitem_T *compl_match_array;  // TODO(zeertzjq): make this static in cmdexpand.c
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -1028,14 +1023,8 @@ static int command_line_execute(VimState *state, int key)
     s->c = Ctrl_P;
   }
 
-  // Special translations for 'wildmenu'
-  if (s->did_wild_list && p_wmnu) {
-    if (s->c == K_LEFT) {
-      s->c = Ctrl_P;
-    } else if (s->c == K_RIGHT) {
-      s->c = Ctrl_N;
-    }
-  }
+  s->c = wildmenu_translate_key(&ccline, s->c, &s->xpc, s->did_wild_list);
+
   if (compl_match_array || s->did_wild_list) {
     if (s->c == Ctrl_E) {
       s->res = nextwild(&s->xpc, WILD_CANCEL, WILD_NO_BEEP,
@@ -1045,15 +1034,6 @@ static int command_line_execute(VimState *state, int key)
                         s->firstc != '@');
       s->c = Ctrl_E;
     }
-  }
-
-  // Hitting CR after "emenu Name.": complete submenu
-  if (s->xpc.xp_context == EXPAND_MENUNAMES && p_wmnu
-      && ccline.cmdpos > 1
-      && ccline.cmdbuff[ccline.cmdpos - 1] == '.'
-      && ccline.cmdbuff[ccline.cmdpos - 2] != '\\'
-      && (s->c == '\n' || s->c == '\r' || s->c == K_KENTER)) {
-    s->c = K_DOWN;
   }
 
   // free expanded names when finished walking through matches
@@ -1072,175 +1052,10 @@ static int command_line_execute(VimState *state, int key)
       s->xpc.xp_context = EXPAND_NOTHING;
     }
     s->wim_index = 0;
-    if (p_wmnu && wild_menu_showing != 0) {
-      const bool skt = KeyTyped;
-      int old_RedrawingDisabled = RedrawingDisabled;
-
-      if (ccline.input_fn) {
-        RedrawingDisabled = 0;
-      }
-
-      if (wild_menu_showing == WM_SCROLLED) {
-        // Entered command line, move it up
-        cmdline_row--;
-        redrawcmd();
-        wild_menu_showing = 0;
-      } else if (save_p_ls != -1) {
-        // restore 'laststatus' and 'winminheight'
-        p_ls = save_p_ls;
-        p_wmh = save_p_wmh;
-        last_status(false);
-        update_screen(VALID);                 // redraw the screen NOW
-        redrawcmd();
-        save_p_ls = -1;
-        wild_menu_showing = 0;
-        // don't redraw statusline if WM_LIST is showing
-      } else if (wild_menu_showing != WM_LIST) {
-        win_redraw_last_status(topframe);
-        wild_menu_showing = 0;  // must be before redraw_statuslines #8385
-        redraw_statuslines();
-      } else {
-        wild_menu_showing = 0;
-      }
-      KeyTyped = skt;
-      if (ccline.input_fn) {
-        RedrawingDisabled = old_RedrawingDisabled;
-      }
-    }
+    wildmenu_cleanup(&ccline);
   }
 
-  // Special translations for 'wildmenu'
-  if (s->xpc.xp_context == EXPAND_MENUNAMES && p_wmnu) {
-    // Hitting <Down> after "emenu Name.": complete submenu
-    if (s->c == K_DOWN && ccline.cmdpos > 0
-        && ccline.cmdbuff[ccline.cmdpos - 1] == '.') {
-      s->c = (int)p_wc;
-      KeyTyped = true;  // in case the key was mapped
-    } else if (s->c == K_UP) {
-      // Hitting <Up>: Remove one submenu name in front of the
-      // cursor
-      int found = false;
-
-      int j = (int)((char_u *)s->xpc.xp_pattern - ccline.cmdbuff);
-      int i = 0;
-      while (--j > 0) {
-        // check for start of menu name
-        if (ccline.cmdbuff[j] == ' '
-            && ccline.cmdbuff[j - 1] != '\\') {
-          i = j + 1;
-          break;
-        }
-
-        // check for start of submenu name
-        if (ccline.cmdbuff[j] == '.'
-            && ccline.cmdbuff[j - 1] != '\\') {
-          if (found) {
-            i = j + 1;
-            break;
-          } else {
-            found = true;
-          }
-        }
-      }
-      if (i > 0) {
-        cmdline_del(i);
-      }
-      s->c = (int)p_wc;
-      KeyTyped = true;  // in case the key was mapped
-      s->xpc.xp_context = EXPAND_NOTHING;
-    }
-  }
-  if ((s->xpc.xp_context == EXPAND_FILES
-       || s->xpc.xp_context == EXPAND_DIRECTORIES
-       || s->xpc.xp_context == EXPAND_SHELLCMD) && p_wmnu) {
-    char_u upseg[5];
-
-    upseg[0] = PATHSEP;
-    upseg[1] = '.';
-    upseg[2] = '.';
-    upseg[3] = PATHSEP;
-    upseg[4] = NUL;
-
-    if (s->c == K_DOWN
-        && ccline.cmdpos > 0
-        && ccline.cmdbuff[ccline.cmdpos - 1] == PATHSEP
-        && (ccline.cmdpos < 3
-            || ccline.cmdbuff[ccline.cmdpos - 2] != '.'
-            || ccline.cmdbuff[ccline.cmdpos - 3] != '.')) {
-      // go down a directory
-      s->c = (int)p_wc;
-      KeyTyped = true;  // in case the key was mapped
-    } else if (STRNCMP(s->xpc.xp_pattern, upseg + 1, 3) == 0
-               && s->c == K_DOWN) {
-      // If in a direct ancestor, strip off one ../ to go down
-      int found = false;
-
-      int j = ccline.cmdpos;
-      int i = (int)((char_u *)s->xpc.xp_pattern - ccline.cmdbuff);
-      while (--j > i) {
-        j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + j);
-        if (vim_ispathsep(ccline.cmdbuff[j])) {
-          found = true;
-          break;
-        }
-      }
-      if (found
-          && ccline.cmdbuff[j - 1] == '.'
-          && ccline.cmdbuff[j - 2] == '.'
-          && (vim_ispathsep(ccline.cmdbuff[j - 3]) || j == i + 2)) {
-        cmdline_del(j - 2);
-        s->c = (int)p_wc;
-        KeyTyped = true;  // in case the key was mapped
-      }
-    } else if (s->c == K_UP) {
-      // go up a directory
-      int found = false;
-
-      int j = ccline.cmdpos - 1;
-      int i = (int)((char_u *)s->xpc.xp_pattern - ccline.cmdbuff);
-      while (--j > i) {
-        j -= utf_head_off(ccline.cmdbuff, ccline.cmdbuff + j);
-        if (vim_ispathsep(ccline.cmdbuff[j])
-#ifdef BACKSLASH_IN_FILENAME
-            && vim_strchr((const char_u *)" *?[{`$%#", ccline.cmdbuff[j + 1])
-            == NULL
-#endif
-            ) {
-          if (found) {
-            i = j + 1;
-            break;
-          } else {
-            found = true;
-          }
-        }
-      }
-
-      if (!found) {
-        j = i;
-      } else if (STRNCMP(ccline.cmdbuff + j, upseg, 4) == 0) {
-        j += 4;
-      } else if (STRNCMP(ccline.cmdbuff + j, upseg + 1, 3) == 0
-                 && j == i) {
-        j += 3;
-      } else {
-        j = 0;
-      }
-
-      if (j > 0) {
-        // TODO(tarruda): this is only for DOS/Unix systems - need to put in
-        // machine-specific stuff here and in upseg init
-        cmdline_del(j);
-        put_on_cmdline(upseg + 1, 3, false);
-      } else if (ccline.cmdpos > i) {
-        cmdline_del(i);
-      }
-
-      // Now complete in the new directory. Set KeyTyped in case the
-      // Up key came from a mapping.
-      s->c = (int)p_wc;
-      KeyTyped = true;
-    }
-  }
+  s->c = wildmenu_process_key(&ccline, s->c, &s->xpc);
 
   // CTRL-\ CTRL-N goes to Normal mode, CTRL-\ e prompts for an expression.
   if (s->c == Ctrl_BSL) {
@@ -3747,16 +3562,6 @@ void cmdline_paste_str(char_u *s, int literally)
       stuffcharReadbuff(c);
     }
   }
-}
-
-/// Delete characters on the command line, from "from" to the current position.
-static void cmdline_del(int from)
-{
-  assert(ccline.cmdpos <= ccline.cmdlen);
-  memmove(ccline.cmdbuff + from, ccline.cmdbuff + ccline.cmdpos,
-          (size_t)ccline.cmdlen - (size_t)ccline.cmdpos + 1);
-  ccline.cmdlen -= ccline.cmdpos - from;
-  ccline.cmdpos = from;
 }
 
 // This function is called when the screen size changes and with incremental
