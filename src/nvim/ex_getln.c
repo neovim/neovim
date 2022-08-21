@@ -170,8 +170,6 @@ static Array cmdline_block = ARRAY_DICT_INIT;
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
-extern pumitem_T *compl_match_array;  // TODO(zeertzjq): make this static in cmdexpand.c
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
 #endif
@@ -1023,15 +1021,14 @@ static int command_line_execute(VimState *state, int key)
     s->c = Ctrl_P;
   }
 
-  s->c = wildmenu_translate_key(&ccline, s->c, &s->xpc, s->did_wild_list);
+  if (p_wmnu) {
+    s->c = wildmenu_translate_key(&ccline, s->c, &s->xpc, s->did_wild_list);
+  }
 
-  if (compl_match_array || s->did_wild_list) {
-    if (s->c == Ctrl_E) {
-      s->res = nextwild(&s->xpc, WILD_CANCEL, WILD_NO_BEEP,
-                        s->firstc != '@');
-    } else if (s->c == Ctrl_Y) {
-      s->res = nextwild(&s->xpc, WILD_APPLY, WILD_NO_BEEP,
-                        s->firstc != '@');
+  if (cmdline_pum_active() || s->did_wild_list) {
+    if (s->c == Ctrl_E || s->c == Ctrl_Y) {
+      const int wild_type = (s->c == Ctrl_E) ? WILD_CANCEL : WILD_APPLY;
+      s->res = nextwild(&s->xpc, wild_type, WILD_NO_BEEP, s->firstc != '@');
       s->c = Ctrl_E;
     }
   }
@@ -1040,9 +1037,8 @@ static int command_line_execute(VimState *state, int key)
   if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm && s->c != Ctrl_Z
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
-    if (compl_match_array) {
-      pum_undisplay(true);
-      XFREE_CLEAR(compl_match_array);
+    if (cmdline_pum_active()) {
+      cmdline_pum_remove();
     }
     if (s->xpc.xp_numfiles != -1) {
       (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
@@ -1055,7 +1051,9 @@ static int command_line_execute(VimState *state, int key)
     wildmenu_cleanup(&ccline);
   }
 
-  s->c = wildmenu_process_key(&ccline, s->c, &s->xpc);
+  if (p_wmnu) {
+    s->c = wildmenu_process_key(&ccline, s->c, &s->xpc);
+  }
 
   // CTRL-\ CTRL-N goes to Normal mode, CTRL-\ e prompts for an expression.
   if (s->c == Ctrl_BSL) {
@@ -1279,8 +1277,8 @@ static int command_line_execute(VimState *state, int key)
   // <S-Tab> goes to last match, in a clumsy way
   if (s->c == K_S_TAB && KeyTyped) {
     if (nextwild(&s->xpc, WILD_EXPAND_KEEP, 0, s->firstc != '@') == OK) {
-      showmatches(&s->xpc, p_wmnu
-                  && ((wim_flags[s->wim_index] & WIM_LIST) == 0));
+      // Trigger the popup menu when wildoptions=pum
+      showmatches(&s->xpc, p_wmnu && ((wim_flags[s->wim_index] & WIM_LIST) == 0));
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
       nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
       return command_line_changed(s);
