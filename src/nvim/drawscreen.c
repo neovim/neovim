@@ -748,6 +748,8 @@ void show_cursor_info(bool always)
   if (!always && !redrawing()) {
     return;
   }
+
+  win_check_ns_hl(curwin);
   if ((*p_stl != NUL || *curwin->w_p_stl != NUL)
       && (curwin->w_status_height || global_stl_height())) {
     redraw_custom_statusline(curwin);
@@ -764,6 +766,7 @@ void show_cursor_info(bool always)
     maketitle();
   }
 
+  win_check_ns_hl(NULL);
   // Redraw the tab pages line if needed.
   if (redraw_tabline) {
     draw_tabline();
@@ -2119,10 +2122,13 @@ void redraw_statuslines(void)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_status) {
+      win_check_ns_hl(wp);
       win_redr_winbar(wp);
       win_redr_status(wp);
     }
   }
+
+  win_check_ns_hl(NULL);
   if (redraw_tabline) {
     draw_tabline();
   }
