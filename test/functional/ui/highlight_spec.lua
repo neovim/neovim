@@ -2333,6 +2333,26 @@ describe("'winhighlight' highlight", function()
 
     helpers.assert_alive()
   end)
+
+  it("works for statusline", function ()
+    command("set stl=%#Normal#Statusline")
+    command("set ls=2")
+    command("hi NormalCustom ctermbg=grey")
+    command("hi Normal ctermbg=blue")
+    command("set winhighlight=Normal:NormalCustom")
+    screen:expect{grid=[[
+      ^                    |
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+      {1:~                   }|
+      Statusline          |
+                          |
+    ]], attr_ids={
+      [1] = {foreground = Screen.colors.Blue, bold = true};
+    }}
+  end)
 end)
 
 describe('highlight namespaces', function()
