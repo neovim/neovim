@@ -294,7 +294,7 @@ func Test_blob_index()
   call assert_equal(2, index(0zDEADBEEF, 0xBE))
   call assert_equal(-1, index(0zDEADBEEF, 0))
   call assert_equal(2, index(0z11111111, 0x11, 2))
-  call assert_equal(3, index(0z11110111, 0x11, 2))
+  call assert_equal(3, 0z11110111->index(0x11, 2))
   call assert_equal(2, index(0z11111111, 0x11, -2))
   call assert_equal(3, index(0z11110111, 0x11, -2))
 
