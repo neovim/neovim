@@ -1376,7 +1376,7 @@ void ex_catch(exarg_T *eap)
           *end = NUL;
         }
         save_cpo = p_cpo;
-        p_cpo = "";
+        p_cpo = (char *)empty_option;
         // Disable error messages, it will make current exception
         // invalid
         emsg_off++;

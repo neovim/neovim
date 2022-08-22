@@ -2192,7 +2192,7 @@ int pattern_match(char *pat, char *text, bool ic)
 
   // avoid 'l' flag in 'cpoptions'
   char *save_cpo = p_cpo;
-  p_cpo = "";
+  p_cpo = (char *)empty_option;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = ic;
@@ -8389,6 +8389,11 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
     p_cpo = save_cpo;
   } else {
     // Darn, evaluating {sub} expression or {expr} changed the value.
+    // If it's still empty it was changed and restored, need to restore in
+    // the complicated way.
+    if (*p_cpo == NUL) {
+      set_option_value("cpo", 0L, save_cpo, 0);
+    }
     free_string_option((char_u *)save_cpo);
   }
 

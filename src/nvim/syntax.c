@@ -5070,7 +5070,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
 
   // Make 'cpoptions' empty, to avoid the 'l' flag
   cpo_save = p_cpo;
-  p_cpo = "";
+  p_cpo = (char *)empty_option;
   ci->sp_prog = vim_regcomp((char *)ci->sp_pattern, RE_MAGIC);
   p_cpo = cpo_save;
 
@@ -5231,7 +5231,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 
         // Make 'cpoptions' empty, to avoid the 'l' flag
         cpo_save = p_cpo;
-        p_cpo = "";
+        p_cpo = (char *)empty_option;
         curwin->w_s->b_syn_linecont_prog =
           vim_regcomp((char *)curwin->w_s->b_syn_linecont_pat, RE_MAGIC);
         p_cpo = cpo_save;
