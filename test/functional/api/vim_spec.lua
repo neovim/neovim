@@ -3668,6 +3668,55 @@ describe('API', function()
         :^                                                           |
       ]])
     end)
+    it('does not move cursor or change search history/pattern #19878 #19890', function()
+      meths.buf_set_lines(0, 0, -1, true, {'foo', 'bar', 'foo', 'bar'})
+      eq({1, 0}, meths.win_get_cursor(0))
+      eq('', funcs.getreg('/'))
+      eq('', funcs.histget('search'))
+      feed(':')  -- call the API in cmdline mode to test whether it changes search history
+      eq({
+        cmd = 'normal',
+        args = {'x'},
+        bang = true,
+        range = {3, 4},
+        count = -1,
+        reg = '',
+        addr = 'line',
+        magic = {
+          file = false,
+          bar = false,
+        },
+        nargs = '+',
+        nextcmd = '',
+        mods = {
+          browse = false,
+          confirm = false,
+          emsg_silent = false,
+          filter = {
+            pattern = "",
+            force = false,
+          },
+          hide = false,
+          keepalt = false,
+          keepjumps = false,
+          keepmarks = false,
+          keeppatterns = false,
+          lockmarks = false,
+          noautocmd = false,
+          noswapfile = false,
+          sandbox = false,
+          silent = false,
+          split = "",
+          tab = 0,
+          unsilent = false,
+          verbose = -1,
+          vertical = false,
+        }
+      }, meths.parse_cmd('+2;/bar/normal! x', {}))
+      eq({1, 0}, meths.win_get_cursor(0))
+      eq('', funcs.getreg('/'))
+      eq('', funcs.histget('search'))
+    end)
   end)
   describe('nvim_cmd', function()
     it('works', function ()

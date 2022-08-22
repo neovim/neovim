@@ -1361,6 +1361,13 @@ bool is_cmd_ni(cmdidx_T cmdidx)
 bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **errormsg)
 {
   char *after_modifier = NULL;
+  bool retval = false;
+  // parsing the command modifiers may set ex_pressedreturn
+  const bool save_ex_pressedreturn = ex_pressedreturn;
+  // parsing the command range may require moving the cursor
+  const pos_T save_cursor = curwin->w_cursor;
+  // parsing the command range may set the last search pattern
+  save_last_search_pattern();
 
   // Initialize cmdinfo
   CLEAR_POINTER(cmdinfo);
@@ -1375,13 +1382,10 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
     .cookie = NULL,
   };
 
-  const bool save_ex_pressedreturn = ex_pressedreturn;
   // Parse command modifiers
   if (parse_command_modifiers(eap, errormsg, &cmdinfo->cmdmod, false) == FAIL) {
-    ex_pressedreturn = save_ex_pressedreturn;
-    goto err;
+    goto end;
   }
-  ex_pressedreturn = save_ex_pressedreturn;
   after_modifier = eap->cmd;
 
   // Save location after command modifiers
@@ -1394,21 +1398,21 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   char *p = find_ex_command(eap, NULL);
   if (p == NULL) {
     *errormsg = _(e_ambiguous_use_of_user_defined_command);
-    goto err;
+    goto end;
   }
 
   // Set command address type and parse command range
   set_cmd_addr_type(eap, p);
   eap->cmd = cmd;
-  if (parse_cmd_address(eap, errormsg, false) == FAIL) {
-    goto err;
+  if (parse_cmd_address(eap, errormsg, true) == FAIL) {
+    goto end;
   }
 
   // Skip colon and whitespace
   eap->cmd = skip_colon_white(eap->cmd, true);
   // Fail if command is a comment or if command doesn't exist
   if (*eap->cmd == NUL || *eap->cmd == '"') {
-    goto err;
+    goto end;
   }
   // Fail if command is invalid
   if (eap->cmdidx == CMD_SIZE) {
@@ -1417,7 +1421,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
     char *cmdname = after_modifier ? after_modifier : cmdline;
     append_command(cmdname);
     *errormsg = (char *)IObuff;
-    goto err;
+    goto end;
   }
 
   // Correctly set 'forceit' for commands
@@ -1456,12 +1460,12 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   // Fail if command doesn't support bang but is used with a bang
   if (!(eap->argt & EX_BANG) && eap->forceit) {
     *errormsg = _(e_nobang);
-    goto err;
+    goto end;
   }
   // Fail if command doesn't support a range but it is given a range
   if (!(eap->argt & EX_RANGE) && eap->addr_count > 0) {
     *errormsg = _(e_norange);
-    goto err;
+    goto end;
   }
   // Set default range for command if required
   if ((eap->argt & EX_DFLALL) && eap->addr_count == 0) {
@@ -1471,7 +1475,7 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
   // Parse register and count
   parse_register(eap);
   if (parse_count(eap, errormsg, false) == FAIL) {
-    goto err;
+    goto end;
   }
 
   // Remove leading whitespace and colon from next command
@@ -1487,10 +1491,15 @@ bool parse_cmdline(char *cmdline, exarg_T *eap, CmdParseInfo *cmdinfo, char **er
     cmdinfo->magic.bar = true;
   }
 
-  return true;
-err:
-  undo_cmdmod(&cmdinfo->cmdmod);
-  return false;
+  retval = true;
+end:
+  if (!retval) {
+    undo_cmdmod(&cmdinfo->cmdmod);
+  }
+  ex_pressedreturn = save_ex_pressedreturn;
+  curwin->w_cursor = save_cursor;
+  restore_last_search_pattern();
+  return retval;
 }
 
 static int execute_cmd0(int *retv, exarg_T *eap, char **errormsg, bool preview)
