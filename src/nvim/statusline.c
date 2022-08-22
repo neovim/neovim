@@ -1398,7 +1398,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
       if (*fmt_p == '#') {
         stl_items[curitem].type = Highlight;
         stl_items[curitem].start = out_p;
-        stl_items[curitem].minwid = -syn_name2id_len(t, (size_t)(fmt_p - t));
+        stl_items[curitem].minwid = -syn_get_final_id(syn_name2id_len(t, (size_t)(fmt_p - t)));
         curitem++;
         fmt_p++;
       }
