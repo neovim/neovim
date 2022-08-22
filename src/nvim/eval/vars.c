@@ -1627,7 +1627,7 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
     strval = tv_get_string_buf_chk(varp, nbuf);
   }
   if (!error && strval != NULL) {
-    set_option_value(varname, numval, strval, OPT_LOCAL);
+    set_option_value_give_err(varname, numval, strval, OPT_LOCAL);
   }
 }
 

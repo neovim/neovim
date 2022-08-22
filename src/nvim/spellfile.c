@@ -5735,7 +5735,7 @@ static void init_spellfile(void)
                        && strstr(path_tail((char *)fname), ".ascii.") != NULL)
                       ? "ascii"
                       : (const char *)spell_enc()));
-        set_option_value("spellfile", 0L, (const char *)buf, OPT_LOCAL);
+        set_option_value_give_err("spellfile", 0L, (const char *)buf, OPT_LOCAL);
         break;
       }
       aspath = false;

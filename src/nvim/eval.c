@@ -8392,7 +8392,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
     // If it's still empty it was changed and restored, need to restore in
     // the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value("cpo", 0L, save_cpo, 0);
+      set_option_value_give_err("cpo", 0L, save_cpo, 0);
     }
     free_string_option((char_u *)save_cpo);
   }

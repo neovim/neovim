@@ -1374,7 +1374,7 @@ static void set_diff_option(win_T *wp, int value)
   curwin = wp;
   curbuf = curwin->w_buffer;
   curbuf->b_ro_locked++;
-  set_option_value("diff", (long)value, NULL, OPT_LOCAL);
+  set_option_value_give_err("diff", (long)value, NULL, OPT_LOCAL);
   curbuf->b_ro_locked--;
   curwin = old_curwin;
   curbuf = curwin->w_buffer;

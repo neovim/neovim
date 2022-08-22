@@ -4074,7 +4074,7 @@ static int open_cmdwin(void)
   // Create empty command-line buffer.
   buf_open_scratch(0, _("[Command Line]"));
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
-  set_option_value("bh", 0L, "wipe", OPT_LOCAL);
+  set_option_value_give_err("bh", 0L, "wipe", OPT_LOCAL);
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = false;
   curbuf->b_p_ma = true;
@@ -4092,7 +4092,7 @@ static int open_cmdwin(void)
       add_map("<Tab>", "<C-X><C-V>", MODE_INSERT, true);
       add_map("<Tab>", "a<C-X><C-V>", MODE_NORMAL, true);
     }
-    set_option_value("ft", 0L, "vim", OPT_LOCAL);
+    set_option_value_give_err("ft", 0L, "vim", OPT_LOCAL);
   }
   curbuf->b_ro_locked--;
 

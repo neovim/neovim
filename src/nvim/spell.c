@@ -1828,8 +1828,8 @@ static int count_syllables(slang_T *slang, const char_u *word)
   return cnt;
 }
 
-// Parse 'spelllang' and set w_s->b_langp accordingly.
-// Returns NULL if it's OK, an error message otherwise.
+/// Parse 'spelllang' and set w_s->b_langp accordingly.
+/// @return  NULL if it's OK, an untranslated error message otherwise.
 char *did_set_spelllang(win_T *wp)
 {
   garray_T ga;
@@ -3155,8 +3155,8 @@ void ex_spelldump(exarg_T *eap)
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value("spell", true, "", OPT_LOCAL);
-  set_option_value("spl",  dummy, spl, OPT_LOCAL);
+  set_option_value_give_err("spell", true, "", OPT_LOCAL);
+  set_option_value_give_err("spl",  dummy, spl, OPT_LOCAL);
   xfree(spl);
 
   if (!buf_is_empty(curbuf)) {
