@@ -140,7 +140,8 @@ func Test_FileChangedShell_edit()
 endfunc
 
 func Test_FileChangedShell_edit_dialog()
-  throw 'Skipped: requires a UI to be active'
+  " requires a UI to be active
+  throw 'Skipped: use test/functional/legacy/filechanged_spec.lua'
   CheckNotGui
   CheckUnix  " Using low level feedkeys() does not work on MS-Windows.
 
@@ -190,7 +191,8 @@ func Test_FileChangedShell_edit_dialog()
 endfunc
 
 func Test_file_changed_dialog()
-  throw 'Skipped: requires a UI to be active'
+  " requires a UI to be active
+  throw 'Skipped: use test/functional/legacy/filechanged_spec.lua'
   CheckUnix
   CheckNotGui
   au! FileChangedShell
