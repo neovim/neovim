@@ -1727,7 +1727,7 @@ func Test_confirm()
 
   " <Esc> requires another character to avoid it being seen as the start of an
   " escape sequence.  Zero should be harmless.
-  call feedkeys("\<Esc>0", 'L')
+  eval "\<Esc>0"->feedkeys('L')
   let a = confirm('Are you sure?', "&Yes\n&No")
   call assert_equal(0, a)
 
