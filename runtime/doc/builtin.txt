@@ -1136,6 +1136,9 @@ chdir({dir})						*chdir()*
 			   " ... do some work
 			   call chdir(save_dir)
 			endif
+
+<		Can also be used as a |method|: >
+			GetDir()->chdir()
 <
 cindent({lnum})						*cindent()*
 		Get the amount of indent for line {lnum} according the C
@@ -1525,6 +1528,18 @@ cursor({list})
 
 		Can also be used as a |method|: >
 			GetCursorPos()->cursor()
+
+debugbreak({pid})					*debugbreak()*
+		Specifically used to interrupt a program being debugged.  It
+		will cause process {pid} to get a SIGTRAP.  Behavior for other
+		processes is undefined. See |terminal-debugger|.
+		{Sends a SIGINT to a process {pid} other than MS-Windows}
+
+		Returns |TRUE| if successfully interrupted the program.
+		Otherwise returns |FALSE|.
+
+		Can also be used as a |method|: >
+			GetPid()->debugbreak()
 
 deepcopy({expr} [, {noref}])				*deepcopy()* *E698*
 		Make a copy of {expr}.  For Numbers and Strings this isn't
@@ -1966,18 +1981,6 @@ exp({expr})						*exp()*
 
 		Can also be used as a |method|: >
 			Compute()->exp()
-
-debugbreak({pid})					*debugbreak()*
-		Specifically used to interrupt a program being debugged.  It
-		will cause process {pid} to get a SIGTRAP.  Behavior for other
-		processes is undefined. See |terminal-debugger|.
-		{Sends a SIGINT to a process {pid} other than MS-Windows}
-
-		Returns |TRUE| if successfully interrupted the program.
-		Otherwise returns |FALSE|.
-
-		Can also be used as a |method|: >
-			GetPid()->debugbreak()
 
 expand({string} [, {nosuf} [, {list}]])				*expand()*
 		Expand wildcards and the following special keywords in 
