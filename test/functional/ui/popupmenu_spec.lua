@@ -2160,6 +2160,38 @@ describe('builtin popupmenu', function()
 
     feed('<esc>')
 
+    -- Check "list" still works
+    command('set wildmode=longest,list')
+    feed(':cn<Tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:                                }|
+      :cn                             |
+      cnewer       cnoreabbrev        |
+      cnext        cnoremap           |
+      cnfile       cnoremenu          |
+      :cn^                             |
+    ]])
+    feed('s')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:                                }|
+      :cn                             |
+      cnewer       cnoreabbrev        |
+      cnext        cnoremap           |
+      cnfile       cnoremenu          |
+      :cns^                            |
+    ]])
+
+    feed('<esc>')
+    command('set wildmode=full')
+
     -- check positioning with multibyte char in pattern
     command("e långfile1")
     command("sp långfile2")
@@ -2229,11 +2261,12 @@ describe('builtin popupmenu', function()
       :b långfile^                                       |
     ]])
 
-    -- special case: when patterns ends with "/", show menu items aligned
-    -- after the "/"
     feed('<esc>')
     command("close")
     command('set wildmode=full')
+
+    -- special case: when patterns ends with "/", show menu items aligned
+    -- after the "/"
     feed(':e compdir/<tab>')
     screen:expect([[
                                                         |

@@ -2024,6 +2024,15 @@ func Test_wildmenu_pum()
   call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_29', {})
 
+  " Check "list" still works
+  call term_sendkeys(buf, "\<C-U>set wildmode=longest,list\<CR>")
+  call term_sendkeys(buf, ":cn\<Tab>")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_30', {})
+  call term_sendkeys(buf, "s")
+  call TermWait(buf)
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_31', {})
+
   call term_sendkeys(buf, "\<C-U>\<CR>")
   call StopVimInTerminal(buf)
   call delete('Xtest')
