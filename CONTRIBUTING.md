@@ -219,10 +219,10 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 ### Style
 
 - You can format files by using:
-```
-  make format
-```
-This will format changed Lua and C files with all appropriate flags set.
+  ```
+    make format
+  ```
+  This will format changed Lua and C files with all appropriate flags set.
 - Style rules are (mostly) defined by `src/uncrustify.cfg` which tries to match
   the [style-guide]. To use the Nvim `gq` command with `uncrustify`:
   ```
@@ -245,15 +245,26 @@ This will format changed Lua and C files with all appropriate flags set.
   ```
   git config blame.ignoreRevsFile .git-blame-ignore-revs
   ```
-- Use **[universal-ctags](https://github.com/universal-ctags/ctags).**
-  ("Exuberant ctags", the typical `ctags` binary provided by your distro, is
-  unmaintained and won't recognize many function signatures in Neovim source.)
+
+- Recommendation is to use **[clangd]**.
+  Can use the maintained config in [nvim-lspconfig/clangd].
 - Explore the source code [on the web](https://sourcegraph.com/github.com/neovim/neovim).
-- If using [lua-language-server][], symlink `contrib/luarc.json` into the
+- If using [lua-language-server], symlink `contrib/luarc.json` into the
   project root:
 
       $ ln -s contrib/luarc.json .luarc.json
 
+### Includes
+
+For managing includes in C files, use [include-what-you-use].
+
+- [Install include-what-you-use][include-what-you-use-install]
+- Run with:
+  ```
+  make CMAKE_EXTRA_FLAGS=-DCMAKE_C_INCLUDE_WHAT_YOU_USE=include-what-you-use | tee iwyu.txt
+  ```
+
+See [#549][549] for more details.
 
 Reviewing
 ---------
@@ -271,30 +282,35 @@ commits in the feature branch which aren't in the `master` branch; `-p`
 shows each commit's diff. To show the whole surrounding function of a change
 as context, use the `-W` argument as well.
 
+[549]: https://github.com/neovim/neovim/issues/549
+[1820]: https://github.com/neovim/neovim/pull/1820
+[3174]: https://github.com/neovim/neovim/issues/3174
+[ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
+[Clang report]: https://neovim.io/doc/reports/clang/
+[GitHub Actions]: https://github.com/neovim/neovim/actions
+[clangd]: https://clangd.llvm.org
+[Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
+[complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
+[conventional_commits]: https://www.conventionalcommits.org
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
+[gh]: https://cli.github.com/
 [git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
 [git-feature-branch]: https://www.atlassian.com/git/tutorials/comparing-workflows
 [git-history-filtering]: https://www.atlassian.com/git/tutorials/git-log/filtering-the-commit-history
 [git-history-rewriting]: http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
 [git-rebasing]: http://git-scm.com/book/en/v2/Git-Branching-Rebasing
 [github-issues]: https://github.com/neovim/neovim/issues
-[1820]: https://github.com/neovim/neovim/pull/1820
-[gh]: https://cli.github.com/
-[conventional_commits]: https://www.conventionalcommits.org
-[style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
-[ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
-[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
-[wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
-[review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
-[3174]: https://github.com/neovim/neovim/issues/3174
-[sourcehut]: https://builds.sr.ht/~jmk
-[GitHub Actions]: https://github.com/neovim/neovim/actions
-[Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
-[Clang report]: https://neovim.io/doc/reports/clang/
-[complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
+[include-what-you-use-install]: https://github.com/include-what-you-use/include-what-you-use#how-to-install
+[include-what-you-use]: https://github.com/include-what-you-use/include-what-you-use#using-with-cmake
+[lua-language-server]: https://github.com/sumneko/lua-language-server/
 [master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
-[wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
+[nvim-lspconfig/clangd]: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
 [pr-draft]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
+[review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
+[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
+[sourcehut]: https://builds.sr.ht/~jmk
+[style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [uncrustify]: http://uncrustify.sourceforge.net/
-[lua-language-server]: https://github.com/sumneko/lua-language-server/
+[wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
+[wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
