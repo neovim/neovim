@@ -3625,15 +3625,15 @@ bool tv_check_num(const typval_T *const tv)
   return false;
 }
 
-#define FUNC_ERROR "E729: using Funcref as a String"
+#define FUNC_ERROR "E729: Using a Funcref as a String"
 
 static const char *const str_errors[] = {
   [VAR_PARTIAL]=N_(FUNC_ERROR),
   [VAR_FUNC]=N_(FUNC_ERROR),
-  [VAR_LIST]=N_("E730: using List as a String"),
-  [VAR_DICT]=N_("E731: using Dictionary as a String"),
+  [VAR_LIST]=N_("E730: Using a List as a String"),
+  [VAR_DICT]=N_("E731: Using a Dictionary as a String"),
   [VAR_FLOAT]=((const char *)e_float_as_string),
-  [VAR_BLOB]=N_("E976: using Blob as a String"),
+  [VAR_BLOB]=N_("E976: Using a Blob as a String"),
   [VAR_UNKNOWN]=N_("E908: using an invalid value as a String"),
 };
 
