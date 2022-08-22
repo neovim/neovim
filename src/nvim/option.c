@@ -91,6 +91,19 @@
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
 
+static char e_unknown_option[]
+  = N_("E518: Unknown option");
+static char e_not_allowed_in_modeline[]
+  = N_("E520: Not allowed in a modeline");
+static char e_not_allowed_in_modeline_when_modelineexpr_is_off[]
+  = N_("E992: Not allowed in a modeline when 'modelineexpr' is off");
+static char e_key_code_not_set[]
+  = N_("E846: Key code not set");
+static char e_number_required_after_equal[]
+  = N_("E521: Number required after =");
+static char e_preview_window_already_exists[]
+  = N_("E590: A preview window already exists");
+
 /*
  * The options that are local to a window or buffer have "indir" set to one of
  * these values.  Special values:
@@ -404,7 +417,7 @@ void set_init_1(bool clean_arg)
   // NOTE: mlterm's author is being asked to 'set' a variable
   //       instead of an environment variable due to inheritance.
   if (os_env_exists("MLTERM")) {
-    set_option_value("tbidi", 1L, NULL, 0);
+    set_option_value_give_err("tbidi", 1L, NULL, 0);
   }
 
   didset_options2();
@@ -915,7 +928,7 @@ int do_set(char *arg, int opt_flags)
       nextchar = (uint8_t)arg[len];
 
       if (opt_idx == -1 && key == 0) {          // found a mismatch: skip
-        errmsg = N_("E518: Unknown option");
+        errmsg = e_unknown_option;
         goto skip;
       }
 
@@ -926,7 +939,7 @@ int do_set(char *arg, int opt_flags)
           if (vim_strchr("=:!&<", nextchar) == NULL
               && (!(options[opt_idx].flags & P_BOOL)
                   || nextchar == '?')) {
-            errmsg = _(e_unsupportedoption);
+            errmsg = e_unsupportedoption;
           }
           goto skip;
         }
@@ -953,11 +966,11 @@ int do_set(char *arg, int opt_flags)
       // Disallow changing some options from modelines.
       if (opt_flags & OPT_MODELINE) {
         if (flags & (P_SECURE | P_NO_ML)) {
-          errmsg = N_("E520: Not allowed in a modeline");
+          errmsg = e_not_allowed_in_modeline;
           goto skip;
         }
         if ((flags & P_MLE) && !p_mle) {
-          errmsg = N_("E992: Not allowed in a modeline when 'modelineexpr' is off");
+          errmsg = e_not_allowed_in_modeline_when_modelineexpr_is_off;
           goto skip;
         }
         // In diff mode some options are overruled.  This avoids that
@@ -1025,7 +1038,7 @@ int do_set(char *arg, int opt_flags)
             }
           }
         } else {
-          errmsg = N_("E846: Key code not set");
+          errmsg = e_key_code_not_set;
           goto skip;
         }
         if (nextchar != '?'
@@ -1118,11 +1131,11 @@ int do_set(char *arg, int opt_flags)
               // Allow negative, octal and hex numbers.
               vim_str2nr((char_u *)arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
               if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
-                errmsg = N_("E521: Number required after =");
+                errmsg = e_number_required_after_equal;
                 goto skip;
               }
             } else {
-              errmsg = N_("E521: Number required after =");
+              errmsg = e_number_required_after_equal;
               goto skip;
             }
 
@@ -1971,6 +1984,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
 {
   int old_value = *(int *)varp;
   int old_global_value = 0;
+  char *errmsg = NULL;
 
   // Disallow changing some options from secure mode
   if ((secure || sandbox != 0)
@@ -2092,7 +2106,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
       FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
         if (win->w_p_pvw && win != curwin) {
           curwin->w_p_pvw = false;
-          return N_("E590: A preview window already exists");
+          return e_preview_window_already_exists;
         }
       }
     }
@@ -2151,10 +2165,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     }
   } else if ((int *)varp == &curwin->w_p_spell) {  // 'spell'
     if (curwin->w_p_spell) {
-      char *errmsg = did_set_spelllang(curwin);
-      if (errmsg != NULL) {
-        emsg(_(errmsg));
-      }
+      errmsg = did_set_spelllang(curwin);
     }
   }
 
@@ -2191,7 +2202,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
       p_deco = true;
 
       // Force-set the necessary keymap for arabic.
-      set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
+      errmsg = set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
     } else {
       /*
        * 'arabic' is reset, handle various sub-settings.
@@ -2271,7 +2282,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
   }
   check_redraw(options[opt_idx].flags);
 
-  return NULL;
+  return errmsg;
 }
 
 /// Set the value of a number option, taking care of side effects
@@ -2898,7 +2909,7 @@ void set_tty_background(const char *value)
                    ? "autocmd VimEnter * ++once ++nested set bg=light"
                    : "autocmd VimEnter * ++once ++nested set bg=dark");
   } else {
-    set_option_value("bg", 0L, value, 0);
+    set_option_value_give_err("bg", 0L, value, 0);
     reset_option_was_set("bg");
   }
 }
@@ -3147,7 +3158,7 @@ bool is_hidden_option(int opt_idx)
 ///                        is cleared  (the exact semantics of this depend
 ///                        on the option).
 ///
-/// @return NULL on success, error message on error.
+/// @return NULL on success, an untranslated error message on error.
 char *set_option_value(const char *const name, const long number, const char *const string,
                        const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -3215,6 +3226,18 @@ char *set_option_value(const char *const name, const long number, const char *co
     }
   }
   return NULL;
+}
+
+/// Call set_option_value() and when an error is returned report it.
+///
+/// @param opt_flags  OPT_LOCAL or 0 (both)
+void set_option_value_give_err(const char *name, long number, const char *string, int opt_flags)
+{
+  char *errmsg = set_option_value(name, number, string, opt_flags);
+
+  if (errmsg != NULL) {
+    emsg(_(errmsg));
+  }
 }
 
 /// Return true if "name" is a string option.

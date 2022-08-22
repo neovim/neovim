@@ -45,8 +45,14 @@
 # include "optionstr.c.generated.h"
 #endif
 
-static char e_unclosed_expression_sequence[] = N_("E540: Unclosed expression sequence");
-static char e_unbalanced_groups[] = N_("E542: unbalanced groups");
+static char e_unclosed_expression_sequence[]
+  = N_("E540: Unclosed expression sequence");
+static char e_unbalanced_groups[]
+  = N_("E542: unbalanced groups");
+static char e_backupext_and_patchmode_are_equal[]
+  = N_("E589: 'backupext' and 'patchmode' are equal");
+static char e_showbreak_contains_unprintable_or_wide_character[]
+  = N_("E595: 'showbreak' contains unprintable or wide character");
 
 static char *(p_ambw_values[]) = { "single", "double", NULL };
 static char *(p_bg_values[]) = { "light", "dark", NULL };
@@ -381,7 +387,7 @@ void set_string_option_direct_in_win(win_T *wp, const char *name, int opt_idx, c
 /// @param[in]  opt_flags  Option flags: expected to contain #OPT_LOCAL and/or
 ///                        #OPT_GLOBAL.
 ///
-/// @return NULL on success, error message on error.
+/// @return NULL on success, an untranslated error message on error.
 char *set_string_option(const int opt_idx, const char *const value, const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -413,15 +419,15 @@ char *set_string_option(const int opt_idx, const char *const value, const int op
   char *const saved_newval = xstrdup(s);
 
   int value_checked = false;
-  char *const r = did_set_string_option(opt_idx, (char_u **)varp, (char_u *)oldval,
-                                        NULL, 0,
-                                        opt_flags, &value_checked);
-  if (r == NULL) {
+  char *const errmsg = did_set_string_option(opt_idx, (char_u **)varp, (char_u *)oldval,
+                                             NULL, 0,
+                                             opt_flags, &value_checked);
+  if (errmsg == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
 
   // call autocommand after handling side effects
-  if (r == NULL) {
+  if (errmsg == NULL) {
     if (!starting) {
       trigger_optionsset_string(opt_idx, opt_flags, saved_oldval, saved_oldval_l, saved_oldval_g,
                                 saved_newval);
@@ -436,7 +442,7 @@ char *set_string_option(const int opt_idx, const char *const value, const int op
   xfree(saved_oldval_g);
   xfree(saved_newval);
 
-  return r;
+  return errmsg;
 }
 
 /// Return true if "val" is a valid 'filetype' name.
@@ -679,7 +685,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
   } else if (varp == &p_bex || varp == &p_pm) {  // 'backupext' and 'patchmode'
     if (STRCMP(*p_bex == '.' ? p_bex + 1 : p_bex,
                *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
-      errmsg = N_("E589: 'backupext' and 'patchmode' are equal");
+      errmsg = e_backupext_and_patchmode_are_equal;
     }
   } else if (varp == &curwin->w_p_briopt) {  // 'breakindentopt'
     if (briopt_check(curwin) == FAIL) {
@@ -1041,7 +1047,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
   } else if (gvarp == &p_sbr) {  // 'showbreak'
     for (s = (char *)(*varp); *s;) {
       if (ptr2cells(s) != 1) {
-        errmsg = N_("E595: 'showbreak' contains unprintable or wide character");
+        errmsg = e_showbreak_contains_unprintable_or_wide_character;
       }
       MB_PTR_ADV(s);
     }

@@ -6945,15 +6945,15 @@ void dialog_msg(char *buff, char *format, char *fname)
 static void ex_behave(exarg_T *eap)
 {
   if (STRCMP(eap->arg, "mswin") == 0) {
-    set_option_value("selection", 0L, "exclusive", 0);
-    set_option_value("selectmode", 0L, "mouse,key", 0);
-    set_option_value("mousemodel", 0L, "popup", 0);
-    set_option_value("keymodel", 0L, "startsel,stopsel", 0);
+    set_option_value_give_err("selection", 0L, "exclusive", 0);
+    set_option_value_give_err("selectmode", 0L, "mouse,key", 0);
+    set_option_value_give_err("mousemodel", 0L, "popup", 0);
+    set_option_value_give_err("keymodel", 0L, "startsel,stopsel", 0);
   } else if (STRCMP(eap->arg, "xterm") == 0) {
-    set_option_value("selection", 0L, "inclusive", 0);
-    set_option_value("selectmode", 0L, "", 0);
-    set_option_value("mousemodel", 0L, "extend", 0);
-    set_option_value("keymodel", 0L, "", 0);
+    set_option_value_give_err("selection", 0L, "inclusive", 0);
+    set_option_value_give_err("selectmode", 0L, "", 0);
+    set_option_value_give_err("mousemodel", 0L, "extend", 0);
+    set_option_value_give_err("keymodel", 0L, "", 0);
   } else {
     semsg(_(e_invarg2), eap->arg);
   }
@@ -7073,7 +7073,7 @@ static void ex_setfiletype(exarg_T *eap)
       arg += 9;
     }
 
-    set_option_value("filetype", 0L, arg, OPT_LOCAL);
+    set_option_value_give_err("filetype", 0L, arg, OPT_LOCAL);
     if (arg != eap->arg) {
       did_filetype = false;
     }

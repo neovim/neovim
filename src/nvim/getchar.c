@@ -2112,7 +2112,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       }
 
       del_typebuf(mlen, 0);  // remove the chars
-      set_option_value("paste", !p_paste, NULL, 0);
+      set_option_value_give_err("paste", !p_paste, NULL, 0);
       if (!(State & MODE_INSERT)) {
         msg_col = 0;
         msg_row = Rows - 1;
