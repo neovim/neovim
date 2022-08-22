@@ -2192,6 +2192,23 @@ describe('builtin popupmenu', function()
     feed('<esc>')
     command('set wildmode=full')
 
+    -- Tests a directory name contained full-width characters.
+    feed(':e あいう/<Tab>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~        }{s: 123            }{1:       }|
+      {1:~        }{n: abc            }{1:       }|
+      {1:~        }{n: xyz            }{1:       }|
+      :e あいう/123^                   |
+    ]])
+
+    feed('<esc>')
+
     -- check positioning with multibyte char in pattern
     command("e långfile1")
     command("sp långfile2")
