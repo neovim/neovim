@@ -15,14 +15,18 @@ func CheckCWD()
 endfunc
 command! -nargs=0 -bar CheckCWD call CheckCWD()
 
+" "options" argument can contain:
+" 'msec' - time to wait for a match
+" 'match' - "pattern" to use "lines" as pattern instead of text
 func CheckDbgOutput(buf, lines, options = {})
   " Verify the expected output
   let lnum = 20 - len(a:lines)
+  let msec = get(a:options, 'msec', 1000)
   for l in a:lines
     if get(a:options, 'match', 'equal') ==# 'pattern'
-      call WaitForAssert({-> assert_match(l, term_getline(a:buf, lnum))}, 200)
+      call WaitForAssert({-> assert_match(l, term_getline(a:buf, lnum))}, msec)
     else
-      call WaitForAssert({-> assert_equal(l, term_getline(a:buf, lnum))}, 200)
+      call WaitForAssert({-> assert_equal(l, term_getline(a:buf, lnum))}, msec)
     endif
     let lnum += 1
   endfor
@@ -198,7 +202,7 @@ func Test_Debugger()
 
   " Start a debug session, so that reading the last line from the terminal
   " works properly.
-  call RunDbgCmd(buf, ':debug echo Foo()')
+  call RunDbgCmd(buf, ':debug echo Foo()', ['cmd: echo Foo()'])
 
   " No breakpoints
   call RunDbgCmd(buf, 'breakl', ['No breakpoints defined'])
@@ -814,9 +818,10 @@ func Test_Backtrace_CmdLine()
         \ '-S Xtest1.vim -c "debug call GlobalFunction()"',
         \ {'wait_for_ruler': 0})
 
-  " Need to wait for the vim-in-terminal to be ready
+  " Need to wait for the vim-in-terminal to be ready.
+  " With valgrind this can take quite long.
   call CheckDbgOutput(buf, ['command line',
-                            \ 'cmd: call GlobalFunction()'])
+                            \ 'cmd: call GlobalFunction()'], #{msec: 5000})
 
   " At this point the ontly thing in the stack is the cmdline
   call RunDbgCmd(buf, 'backtrace', [
@@ -967,14 +972,14 @@ func Test_debug_backtrace_level()
   " set a breakpoint and source file1.vim
   let buf = RunVimInTerminal(
         \ '-c "breakadd file 1 Xtest1.vim" -S Xtest1.vim',
-        \ #{ wait_for_ruler: 0 } )
+        \ #{wait_for_ruler: 0})
 
   call CheckDbgOutput(buf, [
         \ 'Breakpoint in "' .. file1 .. '" line 1',
         \ 'Entering Debug mode.  Type "cont" to continue.',
         \ 'command line..script ' .. file1,
         \ 'line 1: let s:file1_var = ''file1'''
-        \ ])
+        \ ], #{msec: 5000})
 
   " step through the initial declarations
   call RunDbgCmd(buf, 'step', [ 'line 2: let g:global_var = ''global''' ] )

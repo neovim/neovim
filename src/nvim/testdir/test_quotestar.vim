@@ -98,8 +98,6 @@ func Do_test_quotestar_for_x11()
 
     " Running in a terminal and the GUI is available: Tell the server to open
     " the GUI and check that the remote command still works.
-    " Need to wait for the GUI to start up, otherwise the send hangs in trying
-    " to send to the terminal window.
     if has('gui_athena') || has('gui_motif')
       " For those GUIs, ignore the 'failed to create input context' error.
       call remote_send(name, ":call test_ignore_error('E285') | gui -f\<CR>")
@@ -107,7 +105,10 @@ func Do_test_quotestar_for_x11()
       call remote_send(name, ":gui -f\<CR>")
     endif
     " Wait for the server in the GUI to be up and answering requests.
+    " First need to wait for the GUI to start up, otherwise the send hangs in
+    " trying to send to the terminal window.
     " On some systems and with valgrind this can be very slow.
+    sleep 1
     call WaitForAssert({-> assert_match("1", remote_expr(name, "has('gui_running')", "", 1))}, 10000)
 
     call remote_send(name, ":let @* = 'maybe'\<CR>")

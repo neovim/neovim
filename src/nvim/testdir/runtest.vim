@@ -114,6 +114,13 @@ if has('win32')
   let $PROMPT = '$P$G'
 endif
 
+if has('mac')
+  " In MacOS, when starting a shell in a terminal, a bash deprecation warning
+  " message is displayed. This breaks the terminal test. Disable the warning
+  " message.
+  let $BASH_SILENCE_DEPRECATION_WARNING = 1
+endif
+
 " Prepare for calling test_garbagecollect_now().
 let v:testing = 1
 

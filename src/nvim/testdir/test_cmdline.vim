@@ -1809,6 +1809,36 @@ func Test_read_shellcmd()
   endif
 endfunc
 
+" Test for going up and down the directory tree using 'wildmenu'
+func Test_wildmenu_dirstack()
+  CheckUnix
+  %bw!
+  call mkdir('Xdir1/dir2/dir3', 'p')
+  call writefile([], 'Xdir1/file1_1.txt')
+  call writefile([], 'Xdir1/file1_2.txt')
+  call writefile([], 'Xdir1/dir2/file2_1.txt')
+  call writefile([], 'Xdir1/dir2/file2_2.txt')
+  call writefile([], 'Xdir1/dir2/dir3/file3_1.txt')
+  call writefile([], 'Xdir1/dir2/dir3/file3_2.txt')
+  cd Xdir1/dir2/dir3
+  set wildmenu
+
+  call feedkeys(":e \<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e file3_1.txt', @:)
+  call feedkeys(":e \<Tab>\<Up>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e ../dir3/', @:)
+  call feedkeys(":e \<Tab>\<Up>\<Up>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e ../../dir2/', @:)
+  call feedkeys(":e \<Tab>\<Up>\<Up>\<Down>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e ../../dir2/dir3/', @:)
+  call feedkeys(":e \<Tab>\<Up>\<Up>\<Down>\<Down>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e ../../dir2/dir3/file3_1.txt', @:)
+
+  cd -
+  call delete('Xdir1', 'rf')
+  set wildmenu&
+endfunc
+
 " Test for recalling newer or older cmdline from history with <Up>, <Down>,
 " <S-Up>, <S-Down>, <PageUp>, <PageDown>, <C-p>, or <C-n>.
 func Test_recalling_cmdline()
