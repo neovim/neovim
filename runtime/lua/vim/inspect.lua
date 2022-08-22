@@ -89,8 +89,38 @@ local function escape(str)
   )
 end
 
+-- List of lua keywords
+local luaKeywords = {
+  ['and'] = true,
+  ['break'] = true,
+  ['do'] = true,
+  ['else'] = true,
+  ['elseif'] = true,
+  ['end'] = true,
+  ['false'] = true,
+  ['for'] = true,
+  ['function'] = true,
+  ['goto'] = true,
+  ['if'] = true,
+  ['in'] = true,
+  ['local'] = true,
+  ['nil'] = true,
+  ['not'] = true,
+  ['or'] = true,
+  ['repeat'] = true,
+  ['return'] = true,
+  ['then'] = true,
+  ['true'] = true,
+  ['until'] = true,
+  ['while'] = true,
+}
+
 local function isIdentifier(str)
-  return type(str) == 'string' and not not str:match('^[_%a][_%a%d]*$')
+  return type(str) == 'string'
+    -- identifier must start with a letter and underscore, and be followed by letters, numbers, and underscores
+    and not not str:match('^[_%a][_%a%d]*$')
+    -- lua keywords are not valid identifiers
+    and not luaKeywords[str]
 end
 
 local flr = math.floor
