@@ -588,7 +588,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   int save_magic = p_magic;
   p_magic = true;
   char *save_cpo = p_cpo;
-  p_cpo = "";
+  p_cpo = (char *)empty_option;
 
   buf_T *buf = buflist_findnr(buflist_findpat((char *)name, (char *)name + STRLEN(name),
                                               true, false, curtab_only));
@@ -4893,7 +4893,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = "";
+  p_cpo = (char *)empty_option;
 
   rettv->vval.v_number = -1;
   switch (type) {
@@ -7413,6 +7413,11 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
     p_cpo = save_cpo;
   } else {
     // Darn, evaluating the {skip} expression changed the value.
+    // If it's still empty it was changed and restored, need to restore in
+    // the complicated way.
+    if (*p_cpo == NUL) {
+      set_option_value("cpo", 0L, save_cpo, 0);
+    }
     free_string_option((char_u *)save_cpo);
   }
 
@@ -8167,7 +8172,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = "";
+  p_cpo = (char *)empty_option;
 
   const char *str = tv_get_string(&argvars[0]);
   const char *pat = NULL;
