@@ -73,7 +73,7 @@ centralized reference of the differences.
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
 
-- |man.vim| plugin is enabled, so |:Man| is available by default.
+- |man.lua| plugin is enabled, so |:Man| is available by default.
 - |matchit| plugin is enabled. To disable it in your config: >
     :let loaded_matchit = 1
 

@@ -586,12 +586,12 @@ Local mappings:
 	to the end of the file in Normal mode.  This means "> " is inserted in
 	each line.
 
-MAN					*ft-man-plugin* *:Man* *man.vim*
+MAN					*ft-man-plugin* *:Man* *man.lua*
 
 View manpages in Nvim. Supports highlighting, completion, locales, and
 navigation. Also see |find-manpage|.
 
-man.vim will always attempt to reuse the closest man window (above/left) but
+man.lua will always attempt to reuse the closest man window (above/left) but
 otherwise create a split.
 
 The case sensitivity of completion is controlled by 'fileignorecase'.

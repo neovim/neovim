@@ -40,8 +40,8 @@ func Test_profile_func()
   call writefile(lines, 'Xprofile_func.vim')
   call system(GetVimCommand()
     \ . ' -es --clean'
-    \ . ' -c "so Xprofile_func.vim"'
-    \ . ' -c "qall!"')
+    \ . ' --cmd "so Xprofile_func.vim"'
+    \ . ' --cmd "qall!"')
   call assert_equal(0, v:shell_error)
 
   let lines = readfile('Xprofile_func.log')
@@ -475,7 +475,7 @@ func Test_profdel_func()
     call Foo3()
   [CODE]
   call writefile(lines, 'Xprofile_file.vim')
-  call system(GetVimCommandClean() . ' -es -c "so Xprofile_file.vim" -c q')
+  call system(GetVimCommandClean() . ' -es --cmd "so Xprofile_file.vim" --cmd q')
   call assert_equal(0, v:shell_error)
 
   let lines = readfile('Xprofile_file.log')
