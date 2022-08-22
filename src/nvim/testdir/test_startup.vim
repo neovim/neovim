@@ -603,7 +603,7 @@ func Test_invalid_args()
   call assert_equal(0, v:shell_error)
 
   if has('quickfix')
-    " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
+    " Detect invalid repeated arguments '-t foo -t foo', '-q foo -q foo'.
     for opt in ['-t', '-q']
       let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
       call assert_equal(1, v:shell_error)
@@ -855,7 +855,7 @@ func Test_t_arg()
   call writefile(['    first', '    second', '    third'], 'Xfile1')
 
   for t_arg in ['-t second', '-tsecond']
-    if RunVim(before, after, '-t second')
+    if RunVim(before, after, t_arg)
       call assert_equal(['Xfile1:L2C5'], readfile('Xtestout'), t_arg)
       call delete('Xtestout')
     endif

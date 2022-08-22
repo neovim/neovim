@@ -874,7 +874,8 @@ static void f_charidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type != VAR_STRING
       || argvars[1].v_type != VAR_NUMBER
       || (argvars[2].v_type != VAR_UNKNOWN
-          && argvars[2].v_type != VAR_NUMBER)) {
+          && argvars[2].v_type != VAR_NUMBER
+          && argvars[2].v_type != VAR_BOOL)) {
     emsg(_(e_invarg));
     return;
   }
@@ -9457,6 +9458,11 @@ static void f_trim(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
   if (head == NULL) {
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_UNKNOWN && argvars[1].v_type != VAR_STRING) {
+    semsg(_(e_invarg2), tv_get_string(&argvars[1]));
     return;
   }
 
