@@ -1700,6 +1700,63 @@ func Test_platform_name()
   endif
 endfunc
 
+" Test confirm({msg} [, {choices} [, {default} [, {type}]]])
+func Test_confirm()
+  " requires a UI to be active
+  throw 'Skipped: use test/functional/vimscript/input_spec.lua'
+  if !has('unix') || has('gui_running')
+    return
+  endif
+
+  call feedkeys('o', 'L')
+  let a = confirm('Press O to proceed')
+  call assert_equal(1, a)
+
+  call feedkeys('y', 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(1, a)
+
+  call feedkeys('n', 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(2, a)
+
+  " confirm() should return 0 when pressing CTRL-C.
+  call feedkeys("\<C-c>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(0, a)
+
+  " <Esc> requires another character to avoid it being seen as the start of an
+  " escape sequence.  Zero should be harmless.
+  call feedkeys("\<Esc>0", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(0, a)
+
+  " Default choice is returned when pressing <CR>.
+  call feedkeys("\<CR>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No")
+  call assert_equal(1, a)
+
+  call feedkeys("\<CR>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No", 2)
+  call assert_equal(2, a)
+
+  call feedkeys("\<CR>", 'L')
+  let a = confirm('Are you sure?', "&Yes\n&No", 0)
+  call assert_equal(0, a)
+
+  " Test with the {type} 4th argument
+  for type in ['Error', 'Question', 'Info', 'Warning', 'Generic']
+    call feedkeys('y', 'L')
+    let a = confirm('Are you sure?', "&Yes\n&No\n", 1, type)
+    call assert_equal(1, a)
+  endfor
+
+  call assert_fails('call confirm([])', 'E730:')
+  call assert_fails('call confirm("Are you sure?", [])', 'E730:')
+  call assert_fails('call confirm("Are you sure?", "&Yes\n&No\n", [])', 'E745:')
+  call assert_fails('call confirm("Are you sure?", "&Yes\n&No\n", 0, [])', 'E730:')
+endfunc
+
 func Test_readdir()
   call mkdir('Xdir')
   call writefile([], 'Xdir/foo.txt')
