@@ -774,7 +774,13 @@ func Test_shell()
   CheckUnix
   let save_shell = &shell
   set shell=
-  call assert_fails('shell', 'E91:')
+  let caught_e91 = 0
+  try
+    shell
+  catch /E91:/
+    let caught_e91 = 1
+  endtry
+  call assert_equal(1, caught_e91)
   let &shell = save_shell
 endfunc
 
