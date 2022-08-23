@@ -405,7 +405,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   --
   --- Sends a notification to the LSP server.
   ---@param method (string) The invoked LSP method
-  ---@param params (table): Parameters for the invoked LSP method
+  ---@param params (table|nil): Parameters for the invoked LSP method
   ---@returns (bool) `true` if notification could be sent, `false` if not
   local function notify(method, params)
     return encode_and_send({
@@ -432,7 +432,7 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   --- Sends a request to the LSP server and runs {callback} upon response.
   ---
   ---@param method (string) The invoked LSP method
-  ---@param params (table) Parameters for the invoked LSP method
+  ---@param params (table|nil) Parameters for the invoked LSP method
   ---@param callback (function) Callback to invoke
   ---@param notify_reply_callback (function|nil) Callback to invoke as soon as a request is no longer pending
   ---@returns (bool, number) `(true, message_id)` if request could be sent, `false` if not
@@ -626,8 +626,12 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   end))
 
   return {
-    pid = pid,
-    handle = handle,
+    is_closing = function()
+      return handle:is_closing()
+    end,
+    terminate = function()
+      handle:kill(15)
+    end,
     request = request,
     notify = notify,
   }

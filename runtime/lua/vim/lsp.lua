@@ -1464,14 +1464,13 @@ function lsp.start_client(config)
   --- you request to stop a client which has previously been requested to
   --- shutdown, it will automatically escalate and force shutdown.
   ---
-  ---@param force (bool, optional)
+  ---@param force boolean|nil
   function client.stop(force)
-    local handle = rpc.handle
-    if handle:is_closing() then
+    if rpc.is_closing() then
       return
     end
     if force or not client.initialized or graceful_shutdown_failed then
-      handle:kill(15)
+      rpc.terminate()
       return
     end
     -- Sending a signal after a process has exited is acceptable.
@@ -1480,7 +1479,7 @@ function lsp.start_client(config)
         rpc.notify('exit')
       else
         -- If there was an error in the shutdown request, then term to be safe.
-        handle:kill(15)
+        rpc.terminate()
         graceful_shutdown_failed = true
       end
     end)
@@ -1492,7 +1491,7 @@ function lsp.start_client(config)
   ---@returns (bool) true if client is stopped or in the process of being
   ---stopped; false otherwise
   function client.is_stopped()
-    return rpc.handle:is_closing()
+    return rpc.is_closing()
   end
 
   ---@private

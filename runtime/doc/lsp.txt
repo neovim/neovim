@@ -1904,7 +1904,7 @@ notify({method}, {params})                              *vim.lsp.rpc.notify()*
 
     Parameters: ~
         {method}  (string) The invoked LSP method
-        {params}  (table): Parameters for the invoked LSP method
+        {params}  (table|nil): Parameters for the invoked LSP method
 
     Return: ~
         (bool) `true` if notification could be sent, `false` if not
@@ -1915,7 +1915,8 @@ request({method}, {params}, {callback}, {notify_reply_callback})
 
     Parameters: ~
         {method}                 (string) The invoked LSP method
-        {params}                 (table) Parameters for the invoked LSP method
+        {params}                 (table|nil) Parameters for the invoked LSP
+                                 method
         {callback}               (function) Callback to invoke
         {notify_reply_callback}  (function|nil) Callback to invoke as soon as
                                  a request is no longer pending
