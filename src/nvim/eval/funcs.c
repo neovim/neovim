@@ -1958,7 +1958,6 @@ static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "expand()" function
 static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char *errormsg;
   int options = WILD_SILENT|WILD_USE_NL|WILD_LIST_NOTFOUND;
   bool error = false;
 #ifdef BACKSLASH_IN_FILENAME
@@ -1978,10 +1977,17 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   const char *s = tv_get_string(&argvars[0]);
   if (*s == '%' || *s == '#' || *s == '<') {
-    emsg_off++;
+    if (p_verbose == 0) {
+      emsg_off++;
+    }
     size_t len;
+    char *errormsg = NULL;
     char_u *result = eval_vars((char_u *)s, (char_u *)s, &len, NULL, &errormsg, NULL);
-    emsg_off--;
+    if (p_verbose == 0) {
+      emsg_off--;
+    } else if (errormsg != NULL) {
+      emsg(errormsg);
+    }
     if (rettv->v_type == VAR_LIST) {
       tv_list_alloc_ret(rettv, (result != NULL));
       if (result != NULL) {

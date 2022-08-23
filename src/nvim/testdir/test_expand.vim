@@ -116,13 +116,21 @@ func Test_source_sfile()
     :call assert_equal('edit <cword>', expandcmd("edit <cword>"))
     :call assert_equal('edit <cexpr>', expandcmd("edit <cexpr>"))
     :call assert_fails('autocmd User MyCmd echo "<sfile>"', 'E498:')
+    :
+    :call assert_equal('', expand('<script>'))
+    :verbose echo expand('<script>')
+    :call add(v:errors, v:errmsg)
+    :verbose echo expand('<sfile>')
+    :call add(v:errors, v:errmsg)
     :call writefile(v:errors, 'Xresult')
     :qall!
-
   [SCRIPT]
   call writefile(lines, 'Xscript')
   if RunVim([], [], '--clean -s Xscript')
-    call assert_equal([], readfile('Xresult'))
+    call assert_equal([
+          \ 'E1274: No script file name to substitute for "<script>"',
+          \ 'E498: no :source file name to substitute for "<sfile>"'],
+          \ readfile('Xresult'))
   endif
   call delete('Xscript')
   call delete('Xresult')
