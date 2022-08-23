@@ -96,7 +96,7 @@ end
 --- determine if any child languages should be created.
 function LanguageTree:parse()
   if self._valid then
-    return self._trees
+    return self._trees, {} -- no changes
   end
 
   local parser = self._parser
