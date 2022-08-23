@@ -3047,7 +3047,7 @@ int cmd_exists(const char *const name)
 }
 
 /// "fullcommand" function
-void f_fullcommand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_fullcommand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char *name = argvars[0].vval.v_string;
 

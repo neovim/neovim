@@ -1074,7 +1074,7 @@ char *arg_all(void)
 }
 
 /// "argc([window id])" function
-void f_argc(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_argc(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (argvars[0].v_type == VAR_UNKNOWN) {
     // use the current window
@@ -1095,13 +1095,13 @@ void f_argc(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "argidx()" function
-void f_argidx(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_argidx(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = curwin->w_arg_idx;
 }
 
 /// "arglistid()" function
-void f_arglistid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_arglistid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = -1;
   win_T *wp = find_tabwin(&argvars[0], &argvars[1]);
@@ -1123,7 +1123,7 @@ static void get_arglist_as_rettv(aentry_T *arglist, int argcount, typval_T *rett
 }
 
 /// "argv(nr)" function
-void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_argv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   aentry_T *arglist = NULL;
   int argcount = -1;

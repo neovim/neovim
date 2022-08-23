@@ -25,9 +25,6 @@
 typedef int64_t varnumber_T;
 typedef uint64_t uvarnumber_T;
 
-/// Type used for VimL VAR_FLOAT values
-typedef double float_T;
-
 /// Refcount for dict or list that should not be freed
 enum { DO_NOT_FREE_CNT = (INT_MAX / 2), };
 

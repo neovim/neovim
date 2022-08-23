@@ -304,7 +304,8 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
   evdata->channel = channel;
   evdata->handler = p->handler;
   evdata->args = args;
-  evdata->used_mem = arena_finish(&p->arena);
+  evdata->used_mem = p->arena;
+  p->arena = (Arena)ARENA_EMPTY;
   evdata->request_id = p->request_id;
   channel_incref(channel);
   if (p->handler.fast) {
@@ -344,7 +345,8 @@ static void request_event(void **argv)
     // channel was closed, abort any pending requests
     goto free_ret;
   }
-  Object result = handler.fn(channel->id, e->args, &error);
+
+  Object result = handler.fn(channel->id, e->args, &e->used_mem, &error);
   if (e->type == kMessageTypeRequest || ERROR_SET(&error)) {
     // Send the response.
     msgpack_packer response;
@@ -355,13 +357,14 @@ static void request_event(void **argv)
                                               &error,
                                               result,
                                               &out_buffer));
-  } else {
+  }
+  if (!handler.arena_return) {
     api_free_object(result);
   }
 
 free_ret:
-  // e->args is allocated in an arena
-  arena_mem_free(e->used_mem, &channel->rpc.unpacker->reuse_blk);
+  // e->args (and possibly result) are allocated in an arena
+  arena_mem_free(arena_finish(&e->used_mem), &channel->rpc.unpacker->reuse_blk);
   channel_decref(channel);
   xfree(e);
   api_clear_error(&error);
@@ -624,7 +627,6 @@ static WBuffer *serialize_response(uint64_t channel_id, MessageType type, uint32
                                    1,  // responses only go though 1 channel
                                    xfree);
   msgpack_sbuffer_clear(sbuffer);
-  api_free_object(arg);
   return rv;
 }
 

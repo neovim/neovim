@@ -55,7 +55,7 @@ UIClientHandler ui_client_get_redraw_handler(const char *name, size_t name_len, 
 /// async 'redraw' events, which are expected when nvim acts as an ui client.
 /// get handled in msgpack_rpc/unpacker.c and directly dispatched to handlers
 /// of specific ui events, like ui_client_event_grid_resize and so on.
-Object handle_ui_client_redraw(uint64_t channel_id, Array args, Error *error)
+Object handle_ui_client_redraw(uint64_t channel_id, Array args, Arena *arena, Error *error)
 {
   api_set_error(error, kErrorTypeValidation, "'redraw' cannot be sent as a request");
   return NIL;

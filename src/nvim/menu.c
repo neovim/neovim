@@ -1945,7 +1945,7 @@ static void menuitem_getinfo(const char *menu_name, const vimmenu_T *menu, int m
 
 /// "menu_info()" function
 /// Return information about a menu (including all the child menus)
-void f_menu_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_menu_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_dict_alloc_ret(rettv);
   dict_T *const retdict = rettv->vval.v_dict;

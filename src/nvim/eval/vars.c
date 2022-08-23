@@ -1702,7 +1702,7 @@ bool var_exists(const char *var)
 }
 
 /// "gettabvar()" function
-void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_gettabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *const varname = tv_get_string_chk(&argvars[1]);
   tabpage_T *const tp = find_tabpage((int)tv_get_number_chk(&argvars[0], NULL));
@@ -1716,19 +1716,19 @@ void f_gettabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "gettabwinvar()" function
-void f_gettabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_gettabwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getwinvar(argvars, rettv, 1);
 }
 
 /// "getwinvar()" function
-void f_getwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getwinvar(argvars, rettv, 0);
 }
 
 /// "getbufvar()" function
-void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *const varname = tv_get_string_chk(&argvars[1]);
   buf_T *const buf = tv_get_buf_from_arg(&argvars[0]);
@@ -1737,7 +1737,7 @@ void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "settabvar()" function
-void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_settabvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = 0;
 
@@ -1768,19 +1768,19 @@ void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "settabwinvar()" function
-void f_settabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_settabwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   setwinvar(argvars, rettv, 1);
 }
 
 /// "setwinvar()" function
-void f_setwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setwinvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   setwinvar(argvars, rettv, 0);
 }
 
 /// "setbufvar()" function
-void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setbufvar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (check_secure()
       || !tv_check_str_or_nr(&argvars[0])) {

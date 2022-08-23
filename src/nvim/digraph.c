@@ -1917,7 +1917,7 @@ static bool digraph_set_common(const typval_T *argchars, const typval_T *argdigr
 }
 
 /// "digraph_get()" function
-void f_digraph_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_digraph_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;  // Return empty string for failure
@@ -1938,7 +1938,7 @@ void f_digraph_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "digraph_getlist()" function
-void f_digraph_getlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_digraph_getlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   bool flag_list_all;
 
@@ -1957,7 +1957,7 @@ void f_digraph_getlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "digraph_set()" function
-void f_digraph_set(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_digraph_set(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_BOOL;
   rettv->vval.v_bool = kBoolVarFalse;
@@ -1970,7 +1970,7 @@ void f_digraph_set(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "digraph_setlist()" function
-void f_digraph_setlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_digraph_setlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_BOOL;
   rettv->vval.v_bool = kBoolVarFalse;

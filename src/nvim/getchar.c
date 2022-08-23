@@ -1810,13 +1810,13 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
 }
 
 /// "getchar()" function
-void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getchar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getchar_common(argvars, rettv);
 }
 
 /// "getcharstr()" function
-void f_getcharstr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getcharstr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   getchar_common(argvars, rettv);
 
@@ -1836,7 +1836,7 @@ void f_getcharstr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "getcharmod()" function
-void f_getcharmod(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getcharmod(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = mod_mask;
 }

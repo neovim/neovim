@@ -3212,19 +3212,19 @@ static void foldclosed_both(typval_T *argvars, typval_T *rettv, int end)
 }
 
 /// "foldclosed()" function
-void f_foldclosed(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_foldclosed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   foldclosed_both(argvars, rettv, false);
 }
 
 /// "foldclosedend()" function
-void f_foldclosedend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_foldclosedend(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   foldclosed_both(argvars, rettv, true);
 }
 
 /// "foldlevel()" function
-void f_foldlevel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_foldlevel(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const linenr_T lnum = tv_get_lnum(argvars);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count) {
@@ -3233,7 +3233,7 @@ void f_foldlevel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "foldtext()" function
-void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_foldtext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
@@ -3279,7 +3279,7 @@ void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "foldtextresult(lnum)" function
-void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_foldtextresult(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char_u buf[FOLD_TEXT_LEN];
   static bool entered = false;

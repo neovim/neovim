@@ -1629,11 +1629,11 @@ Array nvim_list_chans(void)
 /// an error, it is a three-element array with the zero-based index of the call
 /// which resulted in an error, the error type and the error message. If an
 /// error occurred, the values from all preceding calls will still be returned.
-Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
+Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
-  Array rv = ARRAY_DICT_INIT;
-  Array results = ARRAY_DICT_INIT;
+  Array rv = arena_array(arena, 2);
+  Array results = arena_array(arena, calls.size);
   Error nested_error = ERROR_INIT;
 
   size_t i;  // also used for freeing the variables
@@ -1676,29 +1676,32 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     if (ERROR_SET(&nested_error)) {
       break;
     }
-    Object result = handler.fn(channel_id, args, &nested_error);
+
+    Object result = handler.fn(channel_id, args, arena, &nested_error);
     if (ERROR_SET(&nested_error)) {
       // error handled after loop
       break;
     }
+    if (!handler.arena_return && result.type != kObjectTypeNil) {
+      // TODO: fix to not leak memory as fuck
+    }
 
-    ADD(results, result);
+    ADD_C(results, result);
   }
 
-  ADD(rv, ARRAY_OBJ(results));
+  ADD_C(rv, ARRAY_OBJ(results));
   if (ERROR_SET(&nested_error)) {
-    Array errval = ARRAY_DICT_INIT;
-    ADD(errval, INTEGER_OBJ((Integer)i));
-    ADD(errval, INTEGER_OBJ(nested_error.type));
-    ADD(errval, STRING_OBJ(cstr_to_string(nested_error.msg)));
-    ADD(rv, ARRAY_OBJ(errval));
+    Array errval = arena_array(arena, 3);
+    ADD_C(errval, INTEGER_OBJ((Integer)i));
+    ADD_C(errval, INTEGER_OBJ(nested_error.type));
+    ADD_C(errval, STRING_OBJ(cstr_to_string(nested_error.msg))); // TODO
+    ADD_C(rv, ARRAY_OBJ(errval));
   } else {
-    ADD(rv, NIL);
+    ADD_C(rv, NIL);
   }
   goto theend;
 
 validation_error:
-  api_free_array(results);
 theend:
   api_clear_error(&nested_error);
   return rv;
@@ -1803,6 +1806,7 @@ Dictionary nvim__stats(void)
   PUT(rv, "log_skip", INTEGER_OBJ(g_stats.log_skip));
   PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_get_global_ref_count()));
   PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
+  PUT(rv, "arena_alloc_count", INTEGER_OBJ((Integer)arena_alloc_count));
   return rv;
 }
 

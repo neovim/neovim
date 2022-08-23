@@ -534,15 +534,18 @@ void arena_start(Arena *arena, ArenaMem *reuse_blk)
   if (reuse_blk && *reuse_blk) {
     arena->cur_blk = (char *)(*reuse_blk);
     *reuse_blk = NULL;
+    arena->size = ARENA_BLOCK_SIZE;
+    arena->pos = 0;
+
+    // address is the same as as (struct consumed_blk *)arena->cur_blk
+    struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
+    assert((char *)blk == (char *)arena->cur_blk);
+    blk->prev = NULL;
   } else {
-    arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+    arena->cur_blk = NULL;
+    arena->size = 0;
+    arena->pos = 0;
   }
-  arena->pos = 0;
-  arena->size = ARENA_BLOCK_SIZE;
-  // address is the same as as (struct consumed_blk *)arena->cur_blk
-  struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
-  assert((char *)blk == (char *)arena->cur_blk);
-  blk->prev = NULL;
 }
 
 /// Finnish the allocations in an arena.
@@ -558,17 +561,35 @@ ArenaMem arena_finish(Arena *arena)
   return res;
 }
 
+void alloc_block(Arena *arena)
+{
+  struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
+  arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+  arena->pos = 0;
+  arena->size = ARENA_BLOCK_SIZE;
+  struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
+  blk->prev = prev_blk;
+  arena_alloc_count++;
+}
+
+/// @param size if zero, will still return a non-null pointer, but not a unique one
 void *arena_alloc(Arena *arena, size_t size, bool align)
 {
   if (align) {
     arena->pos = (arena->pos + (ARENA_ALIGN - 1)) & ~(ARENA_ALIGN - 1);
   }
-  if (arena->pos + size > arena->size) {
-    if (size > (arena->size - sizeof(struct consumed_blk)) >> 1) {
+  if (arena->pos + size > arena->size || !arena->cur_blk) {
+    if (size > (ARENA_BLOCK_SIZE - sizeof(struct consumed_blk)) >> 1) {
       // if allocation is too big, allocate a large block with the requested
       // size, but still with block pointer head. We do this even for
       // arena->size / 2, as there likely is space left for the next
       // small allocation in the current block.
+      if (!arena->cur_blk) {
+        // to simplify free-list management, arena->cur_blk must
+        // always be a normal, ARENA_BLOCK_SIZE sized, block
+        alloc_block(arena);
+      }
+      arena_alloc_count++;
       char *alloc = xmalloc(size + sizeof(struct consumed_blk));
       struct consumed_blk *cur_blk = (struct consumed_blk *)arena->cur_blk;
       struct consumed_blk *fix_blk = (struct consumed_blk *)alloc;
@@ -576,12 +597,7 @@ void *arena_alloc(Arena *arena, size_t size, bool align)
       cur_blk->prev = fix_blk;
       return (alloc + sizeof(struct consumed_blk));
     } else {
-      struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
-      arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
-      arena->pos = 0;
-      arena->size = ARENA_BLOCK_SIZE;
-      struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
-      blk->prev = prev_blk;
+      alloc_block(arena);
     }
   }
 

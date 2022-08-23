@@ -2256,7 +2256,7 @@ static void set_completion(colnr_T startcol, list_T *list)
 }
 
 /// "complete()" function
-void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_complete(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if ((State & MODE_INSERT) == 0) {
     emsg(_("E785: complete() can only be used in Insert mode"));
@@ -2280,13 +2280,13 @@ void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "complete_add()" function
-void f_complete_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_complete_add(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = ins_compl_add_tv(&argvars[0], 0, false);
 }
 
 /// "complete_check()" function
-void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_complete_check(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int saved = RedrawingDisabled;
 
@@ -2441,7 +2441,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 }
 
 /// "complete_info()" function
-void f_complete_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_complete_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_dict_alloc_ret(rettv);
 
