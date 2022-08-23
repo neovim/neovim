@@ -154,6 +154,24 @@ func Test_bdelete_cmd()
   set nobuflisted
   enew
   call assert_fails('bdelete ' .. bnr, 'E516:')
+
+  " Deleting more than one buffer
+  new Xbuf1
+  new Xbuf2
+  exe 'bdel ' .. bufnr('Xbuf2') .. ' ' .. bufnr('Xbuf1')
+  call assert_equal(1, winnr('$'))
+  call assert_equal(0, getbufinfo('Xbuf1')[0].loaded)
+  call assert_equal(0, getbufinfo('Xbuf2')[0].loaded)
+
+  " Deleting more than one buffer and an invalid buffer
+  new Xbuf1
+  new Xbuf2
+  let cmd = "exe 'bdel ' .. bufnr('Xbuf2') .. ' xxx ' .. bufnr('Xbuf1')"
+  call assert_fails(cmd, 'E94:')
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, getbufinfo('Xbuf1')[0].loaded)
+  call assert_equal(0, getbufinfo('Xbuf2')[0].loaded)
+
   %bwipe!
 endfunc
 
@@ -166,6 +184,194 @@ func Test_buffer_error()
   call assert_fails('buffer 0', 'E939:')
 
   %bwipe
+endfunc
+
+" Test for the status messages displayed when unloading, deleting or wiping
+" out buffers
+func Test_buffer_statusmsg()
+  CheckEnglish
+  set report=1
+  new Xbuf1
+  new Xbuf2
+  let bnr = bufnr()
+  exe "normal 2\<C-G>"
+  call assert_match('buf ' .. bnr .. ':', v:statusmsg)
+  bunload Xbuf1 Xbuf2
+  call assert_equal('2 buffers unloaded', v:statusmsg)
+  bdel Xbuf1 Xbuf2
+  call assert_equal('2 buffers deleted', v:statusmsg)
+  bwipe Xbuf1 Xbuf2
+  call assert_equal('2 buffers wiped out', v:statusmsg)
+  set report&
+endfunc
+
+" Test for quitting the 'swapfile exists' dialog with the split buffer
+" command.
+func Test_buffer_sbuf_cleanup()
+  call writefile([], 'Xfile')
+  " first open the file in a buffer
+  new Xfile
+  let bnr = bufnr()
+  close
+  " create the swap file
+  call writefile([], '.Xfile.swp')
+  " Remove the catch-all that runtest.vim adds
+  au! SwapExists
+  augroup BufTest
+    au!
+    autocmd SwapExists Xfile let v:swapchoice='q'
+  augroup END
+  exe 'sbuf ' . bnr
+  call assert_equal(1, winnr('$'))
+  call assert_equal(0, getbufinfo('Xfile')[0].loaded)
+
+  " test for :sball
+  sball
+  call assert_equal(1, winnr('$'))
+  call assert_equal(0, getbufinfo('Xfile')[0].loaded)
+
+  %bw!
+  set shortmess+=F
+  let v:statusmsg = ''
+  edit Xfile
+  call assert_equal('', v:statusmsg)
+  call assert_equal(1, winnr('$'))
+  call assert_equal(0, getbufinfo('Xfile')[0].loaded)
+  set shortmess&
+
+  call delete('Xfile')
+  call delete('.Xfile.swp')
+  augroup BufTest
+    au!
+  augroup END
+  augroup! BufTest
+endfunc
+
+" Test for deleting a modified buffer with :confirm
+func Test_bdel_with_confirm()
+  " requires a UI to be active
+  throw 'Skipped: use test/functional/legacy/buffer_spec.lua'
+  CheckUnix
+  CheckNotGui
+  CheckFeature dialog_con
+  new
+  call setline(1, 'test')
+  call assert_fails('bdel', 'E89:')
+  call feedkeys('c', 'L')
+  confirm bdel
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, &modified)
+  call feedkeys('n', 'L')
+  confirm bdel
+  call assert_equal(1, winnr('$'))
+endfunc
+
+" Test for editing another buffer from a modified buffer with :confirm
+func Test_goto_buf_with_confirm()
+  " requires a UI to be active
+  throw 'Skipped: use test/functional/legacy/buffer_spec.lua'
+  CheckUnix
+  CheckNotGui
+  CheckFeature dialog_con
+  new Xfile
+  enew
+  call setline(1, 'test')
+  call assert_fails('b Xfile', 'E37:')
+  call feedkeys('c', 'L')
+  call assert_fails('confirm b Xfile', 'E37:')
+  call assert_equal(1, &modified)
+  call assert_equal('', @%)
+  call feedkeys('y', 'L')
+  call assert_fails('confirm b Xfile', 'E37:')
+  call assert_equal(1, &modified)
+  call assert_equal('', @%)
+  call feedkeys('n', 'L')
+  confirm b Xfile
+  call assert_equal('Xfile', @%)
+  close!
+endfunc
+
+" Test for splitting buffer with 'switchbuf'
+func Test_buffer_switchbuf()
+  new Xfile
+  wincmd w
+  set switchbuf=useopen
+  sbuf Xfile
+  call assert_equal(1, winnr())
+  call assert_equal(2, winnr('$'))
+  set switchbuf=usetab
+  tabnew
+  sbuf Xfile
+  call assert_equal(1, tabpagenr())
+  call assert_equal(2, tabpagenr('$'))
+  set switchbuf&
+  %bw
+endfunc
+
+" Test for BufAdd autocommand wiping out the buffer
+func Test_bufadd_autocmd_bwipe()
+  %bw!
+  augroup BufAdd_Wipe
+    au!
+    autocmd BufAdd Xfile %bw!
+  augroup END
+  edit Xfile
+  call assert_equal('', @%)
+  call assert_equal(0, bufexists('Xfile'))
+  augroup BufAdd_Wipe
+    au!
+  augroup END
+  augroup! BufAdd_Wipe
+endfunc
+
+" Test for trying to load a buffer with text locked
+" <C-\>e in the command line is used to lock the text
+func Test_load_buf_with_text_locked()
+  new Xfile1
+  edit Xfile2
+  let cmd = ":\<C-\>eexecute(\"normal \<C-O>\")\<CR>\<C-C>"
+  call assert_fails("call feedkeys(cmd, 'xt')", 'E565:')
+  %bw!
+endfunc
+
+" Test for using CTRL-^ to edit the alternative file keeping the cursor
+" position with 'nostartofline'. Also test using the 'buf' command.
+func Test_buffer_edit_altfile()
+  call writefile(repeat(['one two'], 50), 'Xfile1')
+  call writefile(repeat(['five six'], 50), 'Xfile2')
+  set nosol
+  edit Xfile1
+  call cursor(25, 5)
+  edit Xfile2
+  call cursor(30, 4)
+  exe "normal \<C-^>"
+  call assert_equal([0, 25, 5, 0], getpos('.'))
+  exe "normal \<C-^>"
+  call assert_equal([0, 30, 4, 0], getpos('.'))
+  buf Xfile1
+  call assert_equal([0, 25, 5, 0], getpos('.'))
+  buf Xfile2
+  call assert_equal([0, 30, 4, 0], getpos('.'))
+  set sol&
+  call delete('Xfile1')
+  call delete('Xfile2')
+endfunc
+
+" Test for running the :sball command with a maximum window count and a
+" modified buffer
+func Test_sball_with_count()
+  %bw!
+  edit Xfile1
+  call setline(1, ['abc'])
+  new Xfile2
+  new Xfile3
+  new Xfile4
+  2sball
+  call assert_equal(bufnr('Xfile4'), winbufnr(1))
+  call assert_equal(bufnr('Xfile1'), winbufnr(2))
+  call assert_equal(0, getbufinfo('Xfile2')[0].loaded)
+  call assert_equal(0, getbufinfo('Xfile3')[0].loaded)
+  %bw!
 endfunc
 
 func Test_badd_options()
