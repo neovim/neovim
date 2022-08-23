@@ -1247,14 +1247,14 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
            ; li != NULL;) {
         listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
         if (item_compare_func_ptr(&prev_li, &li) == 0) {
-          if (info.item_compare_func_err) {  // -V547
-            emsg(_("E882: Uniq compare function failed"));
-            break;
-          }
           li = tv_list_item_remove(l, li);
         } else {
           idx++;
           li = TV_LIST_ITEM_NEXT(l, li);
+        }
+        if (info.item_compare_func_err) {
+          emsg(_("E882: Uniq compare function failed"));
+          break;
         }
       }
     }

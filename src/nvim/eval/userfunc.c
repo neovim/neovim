@@ -1885,6 +1885,8 @@ theend:
   return name;
 }
 
+#define MAX_FUNC_NESTING 50
+
 /// ":function"
 void ex_function(exarg_T *eap)
 {
@@ -2304,8 +2306,12 @@ void ex_function(exarg_T *eap)
         p += eval_fname_script((const char *)p);
         xfree(trans_function_name((char **)&p, true, 0, NULL, NULL));
         if (*skipwhite((char *)p) == '(') {
-          nesting++;
-          indent += 2;
+          if (nesting == MAX_FUNC_NESTING - 1) {
+            emsg(_("E1058: function nesting too deep"));
+          } else {
+            nesting++;
+            indent += 2;
+          }
         }
       }
 

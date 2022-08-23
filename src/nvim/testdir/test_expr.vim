@@ -547,6 +547,7 @@ func Test_funcref()
   call assert_fails('echo funcref("{")', 'E475:')
   let OneByRef = funcref("One", repeat(["foo"], 20))
   call assert_fails('let OneByRef = funcref("One", repeat(["foo"], 21))', 'E118:')
+  call assert_fails('echo function("min") =~ function("min")', 'E694:')
 endfunc
 
 func Test_setmatches()

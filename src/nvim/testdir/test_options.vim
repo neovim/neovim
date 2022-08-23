@@ -234,6 +234,7 @@ func Test_complete()
   new
   call feedkeys("i\<C-N>\<Esc>", 'xt')
   bwipe!
+  call assert_fails('set complete=ix', 'E535:')
   set complete&
 endfun
 
@@ -431,32 +432,37 @@ func Test_copy_context()
 endfunc
 
 func Test_set_ttytype()
-  " Nvim does not support 'ttytype'.
-  if !has('nvim') && !has('gui_running') && has('unix')
-    " Setting 'ttytype' used to cause a double-free when exiting vim and
-    " when vim is compiled with -DEXITFREE.
-    set ttytype=ansi
-    call assert_equal('ansi', &ttytype)
-    call assert_equal(&ttytype, &term)
-    set ttytype=xterm
-    call assert_equal('xterm', &ttytype)
-    call assert_equal(&ttytype, &term)
-    try
-      set ttytype=
-      call assert_report('set ttytype= did not fail')
-    catch /E529/
-    endtry
+  throw "Skipped: Nvim does not support 'ttytype'"
+  CheckUnix
+  CheckNotGui
 
-    " Some systems accept any terminal name and return dumb settings,
-    " check for failure of finding the entry and for missing 'cm' entry.
-    try
-      set ttytype=xxx
-      call assert_report('set ttytype=xxx did not fail')
-    catch /E522\|E437/
-    endtry
+  " Setting 'ttytype' used to cause a double-free when exiting vim and
+  " when vim is compiled with -DEXITFREE.
+  set ttytype=ansi
+  call assert_equal('ansi', &ttytype)
+  call assert_equal(&ttytype, &term)
+  set ttytype=xterm
+  call assert_equal('xterm', &ttytype)
+  call assert_equal(&ttytype, &term)
+  try
+    set ttytype=
+    call assert_report('set ttytype= did not fail')
+  catch /E529/
+  endtry
 
-    set ttytype&
-    call assert_equal(&ttytype, &term)
+  " Some systems accept any terminal name and return dumb settings,
+  " check for failure of finding the entry and for missing 'cm' entry.
+  try
+    set ttytype=xxx
+    call assert_report('set ttytype=xxx did not fail')
+  catch /E522\|E437/
+  endtry
+
+  set ttytype&
+  call assert_equal(&ttytype, &term)
+
+  if has('gui') && !has('gui_running')
+    call assert_fails('set term=gui', 'E531:')
   endif
 endfunc
 

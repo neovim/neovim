@@ -1,5 +1,8 @@
 " Tests for the preview window
 
+source check.vim
+CheckFeature quickfix
+
 func Test_Psearch()
   " this used to cause ml_get errors
   help
@@ -13,6 +16,8 @@ func Test_Psearch()
 endfunc
 
 func Test_window_preview()
+  CheckFeature quickfix
+
   " Open a preview window
   pedit Xa
   call assert_equal(2, winnr('$'))
@@ -32,6 +37,8 @@ func Test_window_preview()
 endfunc
 
 func Test_window_preview_from_help()
+  CheckFeature quickfix
+
   filetype on
   call writefile(['/* some C code */'], 'Xpreview.c')
   help

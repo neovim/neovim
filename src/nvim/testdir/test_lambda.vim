@@ -308,3 +308,21 @@ func Test_lambda_error()
   " This was causing a crash
   call assert_fails('ec{@{->{d->()()', 'E15')
 endfunc
+
+func Test_closure_error()
+  let l =<< trim END
+    func F1() closure
+      return 1
+    endfunc
+  END
+  call writefile(l, 'Xscript')
+  let caught_932 = 0
+  try
+    source Xscript
+  catch /E932:/
+    let caught_932 = 1
+  endtry
+  call assert_equal(1, caught_932)
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

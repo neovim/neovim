@@ -2,6 +2,11 @@
 
 source check.vim
 CheckFeature job
+
+if !has('clientserver')
+  call assert_fails('call remote_startserver("local")', 'E942:')
+endif
+
 CheckFeature clientserver
 
 source shared.vim
@@ -179,6 +184,7 @@ func Test_client_server()
 
   call assert_fails("let x = remote_peek([])", 'E730:')
   call assert_fails("let x = remote_read('vim10')", 'E277:')
+  call assert_fails("call server2client('abc', 'xyz')", 'E258:')
 endfunc
 
 " Uncomment this line to get a debugging log

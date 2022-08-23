@@ -2724,6 +2724,30 @@ func Test_autocmd_FileReadCmd()
   delfunc ReadFileCmd
 endfunc
 
+" Test for passing invalid arguments to autocmd
+func Test_autocmd_invalid_args()
+  " Additional character after * for event
+  call assert_fails('autocmd *a Xfile set ff=unix', 'E215:')
+  augroup Test
+  augroup END
+  " Invalid autocmd event
+  call assert_fails('autocmd Bufabc Xfile set ft=vim', 'E216:')
+  " Invalid autocmd event in a autocmd group
+  call assert_fails('autocmd Test Bufabc Xfile set ft=vim', 'E216:')
+  augroup! Test
+  " Execute all autocmds
+  call assert_fails('doautocmd * BufEnter', 'E217:')
+  call assert_fails('augroup! x1a2b3', 'E367:')
+  call assert_fails('autocmd BufNew <buffer=999> pwd', 'E680:')
+endfunc
+
+" Test for deep nesting of autocmds
+func Test_autocmd_deep_nesting()
+  autocmd BufEnter Xfile doautocmd BufEnter Xfile
+  call assert_fails('doautocmd BufEnter Xfile', 'E218:')
+  autocmd! BufEnter Xfile
+endfunc
+
 " Tests for SigUSR1 autocmd event, which is only available on posix systems.
 func Test_autocmd_sigusr1()
   CheckUnix

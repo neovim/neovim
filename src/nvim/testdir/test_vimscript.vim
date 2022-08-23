@@ -1829,6 +1829,9 @@ func Test_missing_end()
   endtry
   call assert_equal(1, caught_e733)
 
+  " Using endfunc with :if
+  call assert_fails('exe "if 1 | endfunc | endif"', 'E193:')
+
   " Missing 'in' in a :for statement
   call assert_fails('for i range(1) | endfor', 'E690:')
 endfunc
@@ -1875,6 +1878,15 @@ func Test_deep_nest()
       @a
       let @a = ''
     endfunc
+
+    " Deep nesting of function ... endfunction
+    func Test5()
+      let @a = join(repeat(['function X()'], 51), "\n")
+      let @a ..= "\necho v:true\n"
+      let @a ..= join(repeat(['endfunction'], 51), "\n")
+      @a
+      let @a = ''
+    endfunc
   [SCRIPT]
   call writefile(lines, 'Xscript')
 
@@ -1882,19 +1894,30 @@ func Test_deep_nest()
 
   " Deep nesting of if ... endif
   call term_sendkeys(buf, ":call Test1()\n")
+  call term_wait(buf)
   call WaitForAssert({-> assert_match('^E579:', term_getline(buf, 5))})
 
   " Deep nesting of for ... endfor
   call term_sendkeys(buf, ":call Test2()\n")
+  call term_wait(buf)
   call WaitForAssert({-> assert_match('^E585:', term_getline(buf, 5))})
 
   " Deep nesting of while ... endwhile
   call term_sendkeys(buf, ":call Test3()\n")
+  call term_wait(buf)
   call WaitForAssert({-> assert_match('^E585:', term_getline(buf, 5))})
 
   " Deep nesting of try ... endtry
   call term_sendkeys(buf, ":call Test4()\n")
+  call term_wait(buf)
   call WaitForAssert({-> assert_match('^E601:', term_getline(buf, 5))})
+
+  " Deep nesting of function ... endfunction
+  call term_sendkeys(buf, ":call Test5()\n")
+  call term_wait(buf)
+  call WaitForAssert({-> assert_match('^E1058:', term_getline(buf, 4))})
+  call term_sendkeys(buf, "\<C-C>\n")
+  call term_wait(buf)
 
   "let l = ''
   "for i in range(1, 6)
