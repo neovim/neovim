@@ -125,7 +125,7 @@ for i = 1, #events do
         local param = ev.parameters[j]
         local copy = 'copy_'..param[2]
         if param[1] == 'String' then
-          send = send..'  String copy_'..param[2]..' = copy_string('..param[2]..');\n'
+          send = send..'  String copy_'..param[2]..' = copy_string('..param[2]..', NULL);\n'
           argv = argv..', '..copy..'.data, INT2PTR('..copy..'.size)'
           recv = (recv..'  String '..param[2]..
                           ' = (String){.data = argv['..argc..'],'..
@@ -134,7 +134,7 @@ for i = 1, #events do
           recv_cleanup = recv_cleanup..'  api_free_string('..param[2]..');\n'
           argc = argc+2
         elseif param[1] == 'Array' then
-          send = send..'  Array '..copy..' = copy_array('..param[2]..');\n'
+          send = send..'  Array '..copy..' = copy_array('..param[2]..', NULL);\n'
           argv = argv..', '..copy..'.items, INT2PTR('..copy..'.size)'
           recv = (recv..'  Array '..param[2]..
                           ' = (Array){.items = argv['..argc..'],'..
@@ -144,7 +144,7 @@ for i = 1, #events do
           argc = argc+2
         elseif param[1] == 'Object' then
           send = send..'  Object *'..copy..' = xmalloc(sizeof(Object));\n'
-          send = send..'  *'..copy..' = copy_object('..param[2]..');\n'
+          send = send..'  *'..copy..' = copy_object('..param[2]..', NULL);\n'
           argv = argv..', '..copy
           recv = recv..'  Object '..param[2]..' = *(Object *)argv['..argc..'];\n'
           recv_argv = recv_argv..', '..param[2]

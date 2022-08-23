@@ -2051,7 +2051,7 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
 
     if (apc->data) {
-      PUT(data, "data", copy_object(*apc->data));
+      PUT(data, "data", copy_object(*apc->data, NULL));
     }
 
     int group = apc->curpat->group;

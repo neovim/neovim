@@ -644,7 +644,7 @@ void rpc_set_client_info(uint64_t id, Dictionary info)
 
 Dictionary rpc_client_info(Channel *chan)
 {
-  return copy_dictionary(chan->rpc.info);
+  return copy_dictionary(chan->rpc.info, NULL);
 }
 
 const char *rpc_client_name(Channel *chan)

@@ -33,7 +33,6 @@ typedef union {
   void *nullptr;
 } EvalFuncData;
 
-
 typedef handle_T NS;
 
 typedef struct expand expand_T;

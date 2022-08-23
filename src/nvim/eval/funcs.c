@@ -359,7 +359,6 @@ static void f_api_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   Dictionary metadata = api_metadata();
   (void)object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
-  api_free_dictionary(metadata);
 }
 
 /// "append(lnum, string/list)" function

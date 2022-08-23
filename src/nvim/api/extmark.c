@@ -51,7 +51,7 @@ Integer nvim_create_namespace(String name)
   }
   id = next_namespace_id++;
   if (name.size > 0) {
-    String name_alloc = copy_string(name);
+    String name_alloc = copy_string(name, NULL);
     map_put(String, handle_T)(&namespace_ids, name_alloc, id);
   }
   return (Integer)id;

@@ -903,7 +903,7 @@ Dictionary hlattrs2dict(Dictionary *hl_alloc, HlAttrs ae, bool use_rgb)
     *hl_alloc = hl;
     return hl;
   } else {
-    Dictionary allocated = copy_dictionary(hl);
+    Dictionary allocated = copy_dictionary(hl, NULL);
     kv_destroy(hl);
     return allocated;
   }

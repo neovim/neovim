@@ -618,6 +618,7 @@ void api_clear_error(Error *value)
   value->type = kErrorTypeNone;
 }
 
+/// @returns a shared value. caller must not modify it!
 Dictionary api_metadata(void)
 {
   static Dictionary metadata = ARRAY_DICT_INIT;
@@ -630,7 +631,7 @@ Dictionary api_metadata(void)
     init_type_metadata(&metadata);
   }
 
-  return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
+  return metadata;
 }
 
 static void init_function_metadata(Dictionary *metadata)
@@ -715,36 +716,40 @@ static void init_type_metadata(Dictionary *metadata)
   PUT(*metadata, "types", DICTIONARY_OBJ(types));
 }
 
-String copy_string(String str)
+// all the copy_[object] functions allow arena=NULL,
+// then global allocations are used, and the resulting object
+// should be freed with an api_free_[object] function
+
+String copy_string(String str, Arena *arena)
 {
   if (str.data != NULL) {
-    return (String){ .data = xmemdupz(str.data, str.size), .size = str.size };
+    return (String){ .data = arena_memdupz(arena, str.data, str.size), .size = str.size };
   } else {
     return (String)STRING_INIT;
   }
 }
 
-Array copy_array(Array array)
+Array copy_array(Array array, Arena *arena)
 {
-  Array rv = ARRAY_DICT_INIT;
+  Array rv = arena_array(arena, array.size);
   for (size_t i = 0; i < array.size; i++) {
-    ADD(rv, copy_object(array.items[i]));
+    ADD(rv, copy_object(array.items[i], arena));
   }
   return rv;
 }
 
-Dictionary copy_dictionary(Dictionary dict)
+Dictionary copy_dictionary(Dictionary dict, Arena *arena)
 {
-  Dictionary rv = ARRAY_DICT_INIT;
+  Dictionary rv = arena_dict(arena, dict.size);
   for (size_t i = 0; i < dict.size; i++) {
     KeyValuePair item = dict.items[i];
-    PUT(rv, item.key.data, copy_object(item.value));
+    PUT_C(rv, copy_string(item.key, arena).data, copy_object(item.value, arena));
   }
   return rv;
 }
 
 /// Creates a deep clone of an object
-Object copy_object(Object obj)
+Object copy_object(Object obj, Arena *arena)
 {
   switch (obj.type) {
   case kObjectTypeBuffer:
@@ -757,13 +762,13 @@ Object copy_object(Object obj)
     return obj;
 
   case kObjectTypeString:
-    return STRING_OBJ(copy_string(obj.data.string));
+    return STRING_OBJ(copy_string(obj.data.string, arena));
 
   case kObjectTypeArray:
-    return ARRAY_OBJ(copy_array(obj.data.array));
+    return ARRAY_OBJ(copy_array(obj.data.array, arena));
 
   case kObjectTypeDictionary:
-    return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary));
+    return DICTIONARY_OBJ(copy_dictionary(obj.data.dictionary, arena));
 
   case kObjectTypeLuaRef:
     return LUAREF_OBJ(api_new_luaref(obj.data.luaref));
@@ -844,7 +849,7 @@ HlMessage parse_hl_msg(Array chunks, Error *err)
       goto free_exit;
     }
 
-    String str = copy_string(chunk.items[0].data.string);
+    String str = copy_string(chunk.items[0].data.string, NULL);
 
     int attr = 0;
     if (chunk.size == 2) {

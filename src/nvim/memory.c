@@ -575,9 +575,13 @@ void alloc_block(Arena *arena)
   blk->prev = prev_blk;
 }
 
+/// @param arena if NULL, do a global allocation. caller must then free the value!
 /// @param size if zero, will still return a non-null pointer, but not a unique one
 void *arena_alloc(Arena *arena, size_t size, bool align)
 {
+  if (!arena) {
+    return xmalloc(size);
+  }
   if (align) {
     arena->pos = (arena->pos + (ARENA_ALIGN - 1)) & ~(ARENA_ALIGN - 1);
   }
