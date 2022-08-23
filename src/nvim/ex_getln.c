@@ -3154,7 +3154,6 @@ draw_cmdline_no_arabicshape:
 static void ui_ext_cmdline_show(CmdlineInfo *line)
 {
   Arena arena = ARENA_EMPTY;
-  arena_start(&arena, &ui_ext_fixblk);
   Array content;
   if (cmdline_star) {
     content = arena_array(&arena, 1);
@@ -3199,7 +3198,7 @@ static void ui_ext_cmdline_show(CmdlineInfo *line)
                                  line->special_shift,
                                  line->level);
   }
-  arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
+  arena_mem_free(arena_finish(&arena));
 }
 
 void ui_ext_cmdline_block_append(size_t indent, const char *line)

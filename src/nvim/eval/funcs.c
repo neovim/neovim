@@ -114,8 +114,6 @@ static char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static char *e_invalwindow = N_("E957: Invalid window number");
 static char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
 
-static ArenaMem eval_reuse_blk = NULL;
-
 /// Dummy va_list for passing to vim_snprintf
 ///
 /// Used because:
@@ -281,10 +279,6 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   Error err = ERROR_INIT;
   Arena res_arena = ARENA_EMPTY;
-  if (handler.arena_return) {
-    // TODO(bfredl): also use arena for vim_to_object
-    arena_start(&res_arena, &eval_reuse_blk);
-  }
   Object result = handler.fn(VIML_INTERNAL_CALL, args, &res_arena, &err);
 
   if (ERROR_SET(&err)) {
@@ -299,7 +293,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 end:
   api_free_array(args);
   if (handler.arena_return) {
-    arena_mem_free(arena_finish(&res_arena), &eval_reuse_blk);
+    arena_mem_free(arena_finish(&res_arena));
   } else {
     api_free_object(result);
   }
@@ -6885,7 +6879,6 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   uint64_t chan_id = (uint64_t)argvars[0].vval.v_number;
   const char *method = tv_get_string(&argvars[1]);
 
-  // TODO: putta in eval_reuse_blk
   ArenaMem res_mem = NULL;
   Object result = rpc_send_call(chan_id, method, args, &res_mem, &err);
 
@@ -6921,7 +6914,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
 end:
-  arena_mem_free(res_mem, &eval_reuse_blk);
+  arena_mem_free(res_mem);
   api_clear_error(&err);
 }
 

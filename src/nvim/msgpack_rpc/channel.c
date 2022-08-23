@@ -158,7 +158,7 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
     }
 
     // frame.result was allocated in an arena
-    arena_mem_free(frame.result_mem, &rpc->unpacker->reuse_blk);
+    arena_mem_free(frame.result_mem);
     frame.result_mem = NULL;
   }
 
@@ -244,7 +244,7 @@ static void parse_msgpack(Channel *channel)
         ui_client_event_raw_line(p->grid_line_event);
       } else if (p->ui_handler.fn != NULL && p->result.type == kObjectTypeArray) {
         p->ui_handler.fn(p->result.data.array);
-        arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+        arena_mem_free(arena_finish(&p->arena));
       }
     } else if (p->type == kMessageTypeResponse) {
       ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
@@ -295,7 +295,7 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
   if (!p->handler.fn) {
     send_error(channel, p->type, p->request_id, p->unpack_error.msg);
     api_clear_error(&p->unpack_error);
-    arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+    arena_mem_free(arena_finish(&p->arena));
     return;
   }
 
@@ -364,7 +364,7 @@ static void request_event(void **argv)
 
 free_ret:
   // e->args (and possibly result) are allocated in an arena
-  arena_mem_free(arena_finish(&e->used_mem), &channel->rpc.unpacker->reuse_blk);
+  arena_mem_free(arena_finish(&e->used_mem));
   channel_decref(channel);
   xfree(e);
   api_clear_error(&error);

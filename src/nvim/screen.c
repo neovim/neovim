@@ -1094,7 +1094,6 @@ void draw_tabline(void)
 static void ui_ext_tabline_update(void)
 {
   Arena arena = ARENA_EMPTY;
-  arena_start(&arena, &ui_ext_fixblk);
 
   size_t n_tabs = 0;
   FOR_ALL_TABS(tp) {
@@ -1135,7 +1134,7 @@ static void ui_ext_tabline_update(void)
   }
 
   ui_call_tabline_update(curtab->handle, tabs, curbuf->handle, buffers);
-  arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
+  arena_mem_free(arena_finish(&arena));
 }
 
 void get_trans_bufname(buf_T *buf)

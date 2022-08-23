@@ -238,7 +238,7 @@ static void tinput_wait_enqueue(void **argv)
         ArenaMem res_mem = NULL;
         Object result = rpc_send_call(ui_client_channel_id, "nvim_input", args, &res_mem, &err);
         consumed = result.type == kObjectTypeInteger ? (size_t)result.data.integer : 0;
-        arena_mem_free(res_mem, NULL);
+        arena_mem_free(res_mem);
       } else {
         consumed = input_enqueue(keys);
       }

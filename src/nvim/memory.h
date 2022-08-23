@@ -52,7 +52,7 @@ typedef struct {
   size_t pos, size;
 } Arena;
 
-// inits an empty arena. use arena_start() to actually allocate space!
+// inits an empty arena.
 #define ARENA_EMPTY { .cur_blk = NULL, .pos = 0, .size = 0 }
 
 #define kv_fixsize_arena(a, v, s) \

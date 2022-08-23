@@ -60,6 +60,8 @@ void try_to_free_memory(void)
   // Try to save all buffers and release as many blocks as possible
   mf_release_all();
 
+  arena_free_reuse_blks();
+
   trying_to_free = false;
 }
 
@@ -528,23 +530,18 @@ void time_to_bytes(time_t time_, uint8_t buf[8])
 }
 
 #define ARENA_BLOCK_SIZE 4096
+#define REUSE_MAX 4
 
-void arena_start(Arena *arena, ArenaMem *reuse_blk)
+static struct consumed_blk *arena_reuse_blk;
+static size_t arena_reuse_blk_count = 0;
+
+static void arena_free_reuse_blks(void)
 {
-  if (reuse_blk && *reuse_blk) {
-    arena->cur_blk = (char *)(*reuse_blk);
-    *reuse_blk = NULL;
-    arena->size = ARENA_BLOCK_SIZE;
-    arena->pos = 0;
-
-    // address is the same as as (struct consumed_blk *)arena->cur_blk
-    struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
-    assert((char *)blk == (char *)arena->cur_blk);
-    blk->prev = NULL;
-  } else {
-    arena->cur_blk = NULL;
-    arena->size = 0;
-    arena->pos = 0;
+  while (arena_reuse_blk_count > 0) {
+    struct consumed_blk *blk = arena_reuse_blk;
+    arena_reuse_blk = arena_reuse_blk->prev;
+    xfree(blk);
+    arena_reuse_blk_count--;
   }
 }
 
@@ -564,12 +561,18 @@ ArenaMem arena_finish(Arena *arena)
 void alloc_block(Arena *arena)
 {
   struct consumed_blk *prev_blk = (struct consumed_blk *)arena->cur_blk;
-  arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+  if (arena_reuse_blk_count > 0) {
+    arena->cur_blk = (char *)arena_reuse_blk;
+    arena_reuse_blk = arena_reuse_blk->prev;
+    arena_reuse_blk_count--;
+  } else {
+    arena_alloc_count++;
+    arena->cur_blk = xmalloc(ARENA_BLOCK_SIZE);
+  }
   arena->pos = 0;
   arena->size = ARENA_BLOCK_SIZE;
   struct consumed_blk *blk = arena_alloc(arena, sizeof(struct consumed_blk), true);
   blk->prev = prev_blk;
-  arena_alloc_count++;
 }
 
 /// @param size if zero, will still return a non-null pointer, but not a unique one
@@ -606,15 +609,17 @@ void *arena_alloc(Arena *arena, size_t size, bool align)
   return mem;
 }
 
-void arena_mem_free(ArenaMem mem, ArenaMem *reuse_blk)
+void arena_mem_free(ArenaMem mem)
 {
   struct consumed_blk *b = mem;
   // peel of the first block, as it is guaranteed to be ARENA_BLOCK_SIZE,
   // not a custom fix_blk
-  if (reuse_blk && *reuse_blk == NULL && b != NULL) {
-    *reuse_blk = b;
+  if (arena_reuse_blk_count < REUSE_MAX && b != NULL) {
+    struct consumed_blk *reuse_blk = b;
     b = b->prev;
-    (*reuse_blk)->prev = NULL;
+    reuse_blk->prev = arena_reuse_blk;
+    arena_reuse_blk = reuse_blk;
+    arena_reuse_blk_count++;
   }
 
   while (b) {
@@ -815,6 +820,9 @@ void free_all_mem(void)
 
   nlua_free_all_mem();
   ui_free_all_mem();
+
+  // should be last, in case earlier free functions deallocates arenas
+  arena_free_reuse_blks();
 }
 
 #endif

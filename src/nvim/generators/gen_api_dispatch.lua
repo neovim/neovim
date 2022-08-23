@@ -413,8 +413,6 @@ output:write([[
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 
-static ArenaMem lua_reuse_blk = { 0 };
-
 ]])
 include_headers(output, headers)
 output:write('\n')
@@ -496,7 +494,6 @@ local function process_function(fn)
     cparams = cparams .. '&arena, '
     write_shifted_output(output, [[
     Arena arena = ARENA_EMPTY;
-    arena_start(&arena, &lua_reuse_blk);
     ]])
   end
 
@@ -536,7 +533,7 @@ local function process_function(fn)
     end
     local free_retval
     if fn.arena_return then
-      free_retval = "arena_mem_free(arena_finish(&arena), &lua_reuse_blk);"
+      free_retval = "arena_mem_free(arena_finish(&arena));"
     else
       free_retval = "api_free_"..return_type:lower().."(ret);"
     end
