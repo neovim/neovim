@@ -29,7 +29,7 @@ struct AutoCmd_S {
   bool nested;                          // If autocommands nest here
   bool last;                            // last command in list
   int64_t id;                           // ID used for uniquely tracking an autocmd.
-  sctx_T script_ctx;                    // script context where defined
+  sctx_T script_ctx;                    // script context where it is defined
   char *desc;                           // Description for the autocmd.
   AutoCmd *next;                        // Next AutoCmd in list
 };
@@ -59,6 +59,7 @@ struct AutoPatCmd_S {
   char *sfname;             // sfname to match with
   char *tail;               // tail of fname
   event_T event;            // current event
+  sctx_T script_ctx;        // script context where it is defined
   int arg_bufnr;            // initially equal to <abuf>, set to zero when buf is deleted
   Object *data;             // arbitrary data
   AutoPatCmd *next;         // chain of active apc-s for auto-invalidation

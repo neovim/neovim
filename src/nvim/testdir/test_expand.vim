@@ -157,43 +157,52 @@ endfunc
 
 func Test_expand_script_source()
   let lines0 =<< trim [SCRIPT]
-    let g:script_level[0] = expand('<script>:t')
+    call extend(g:script_level, [expand('<script>:t')])
     so Xscript1
     func F0()
-      let g:func_level[0] = expand('<script>:t')
+      call extend(g:func_level, [expand('<script>:t')])
     endfunc
+
+    au User * call extend(g:au_level, [expand('<script>:t')])
   [SCRIPT]
 
   let lines1 =<< trim [SCRIPT]
-    let g:script_level[1] = expand('<script>:t')
+    call extend(g:script_level, [expand('<script>:t')])
     so Xscript2
     func F1()
-      let g:func_level[1] = expand('<script>:t')
+      call extend(g:func_level, [expand('<script>:t')])
     endfunc
+
+    au User * call extend(g:au_level, [expand('<script>:t')])
   [SCRIPT]
 
   let lines2 =<< trim [SCRIPT]
-    let g:script_level[2] = expand('<script>:t')
+    call extend(g:script_level, [expand('<script>:t')])
     func F2()
-      let g:func_level[2] = expand('<script>:t')
+      call extend(g:func_level, [expand('<script>:t')])
     endfunc
+
+    au User * call extend(g:au_level, [expand('<script>:t')])
   [SCRIPT]
 
   call writefile(lines0, 'Xscript0')
   call writefile(lines1, 'Xscript1')
   call writefile(lines2, 'Xscript2')
 
-  " Check the expansion of <script> at script and function level.
-  let g:script_level = ['', '', '']
-  let g:func_level = ['', '', '']
+  " Check the expansion of <script> at different levels.
+  let g:script_level = []
+  let g:func_level = []
+  let g:au_level = []
 
   so Xscript0
   call F0()
   call F1()
   call F2()
+  doautocmd User
 
   call assert_equal(['Xscript0', 'Xscript1', 'Xscript2'], g:script_level)
   call assert_equal(['Xscript0', 'Xscript1', 'Xscript2'], g:func_level)
+  call assert_equal(['Xscript2', 'Xscript1', 'Xscript0'], g:au_level)
 
   unlet g:script_level g:func_level
   delfunc F0
