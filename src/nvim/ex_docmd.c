@@ -249,8 +249,8 @@ void do_exmode(void)
 
   RedrawingDisabled--;
   no_wait_return--;
-  redraw_all_later(NOT_VALID);
-  update_screen(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
+  update_screen(UPD_NOT_VALID);
   need_wait_return = false;
   msg_scroll = save_msg_scroll;
 }
@@ -5059,7 +5059,7 @@ static void ex_tabs(exarg_T *eap)
 static void ex_mode(exarg_T *eap)
 {
   if (*eap->arg == NUL) {
-    must_redraw = CLEAR;
+    must_redraw = UPD_CLEAR;
     ex_redraw(eap);
   } else {
     emsg(_(e_screenmode));
@@ -5151,7 +5151,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
         no_wait_return = 0;
         need_wait_return = false;
         msg_scroll = 0;
-        redraw_all_later(NOT_VALID);
+        redraw_all_later(UPD_NOT_VALID);
         pending_exmode_active = true;
 
         normal_enter(false, true);
@@ -5313,7 +5313,7 @@ static void ex_syncbind(exarg_T *eap)
         scrolldown(-y, true);
       }
       curwin->w_scbind_pos = topline;
-      redraw_later(curwin, VALID);
+      redraw_later(curwin, UPD_VALID);
       cursor_correct();
       curwin->w_redr_status = true;
     }
@@ -5381,7 +5381,7 @@ static void ex_read(exarg_T *eap)
           deleted_lines_mark(lnum, 1L);
         }
       }
-      redraw_curbuf_later(VALID);
+      redraw_curbuf_later(UPD_VALID);
     }
   }
 }
@@ -6052,11 +6052,11 @@ static void ex_redraw(exarg_T *eap)
   validate_cursor();
   update_topline(curwin);
   if (eap->forceit) {
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
     redraw_cmdline = true;
   }
-  update_screen(eap->forceit ? NOT_VALID
-                : VIsual_active ? INVERTED : 0);
+  update_screen(eap->forceit ? UPD_NOT_VALID
+                : VIsual_active ? UPD_INVERTED : 0);
   if (need_maketitle) {
     maketitle();
   }
@@ -6089,7 +6089,7 @@ static void ex_redrawstatus(exarg_T *eap)
   } else {
     status_redraw_curbuf();
   }
-  update_screen(VIsual_active ? INVERTED : 0);
+  update_screen(VIsual_active ? UPD_INVERTED : 0);
   RedrawingDisabled = r;
   p_lz = p;
   ui_flush();
@@ -6492,7 +6492,7 @@ static void ex_pedit(exarg_T *eap)
   if (curwin != curwin_save && win_valid(curwin_save)) {
     // Return cursor to where we were
     validate_cursor();
-    redraw_later(curwin, VALID);
+    redraw_later(curwin, UPD_VALID);
     win_enter(curwin_save, true);
   }
   g_do_tagpreview = 0;
@@ -7134,7 +7134,7 @@ void set_no_hlsearch(bool flag)
 static void ex_nohlsearch(exarg_T *eap)
 {
   set_no_hlsearch(true);
-  redraw_all_later(SOME_VALID);
+  redraw_all_later(UPD_SOME_VALID);
 }
 
 static void ex_fold(exarg_T *eap)

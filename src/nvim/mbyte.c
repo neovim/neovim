@@ -2857,7 +2857,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   xfree(cw_table_save);
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
 }
 
 void f_charclass(typval_T *argvars, typval_T *rettv, FunPtr fptr)

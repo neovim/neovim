@@ -471,7 +471,7 @@ bool leftcol_changed(void)
   if (retval) {
     curwin->w_set_curswant = true;
   }
-  redraw_later(curwin, NOT_VALID);
+  redraw_later(curwin, UPD_NOT_VALID);
   return retval;
 }
 

@@ -1828,7 +1828,7 @@ static void spell_reload_one(char_u *fname, bool added_word)
         // reloading failed, clear the language
         slang_clear(slang);
       }
-      redraw_all_later(SOME_VALID);
+      redraw_all_later(UPD_SOME_VALID);
       didit = true;
     }
   }
@@ -5667,7 +5667,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
       buf_reload(buf, buf->b_orig_mode, false);
     }
 
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
   }
   xfree(fnamebuf);
 }

@@ -1131,7 +1131,7 @@ void msg_end_prompt(void)
 
 /// Wait for the user to hit a key (normally Enter)
 ///
-/// @param redraw  if true, redraw the entire screen NOT_VALID
+/// @param redraw  if true, redraw the entire screen UPD_NOT_VALID
 ///                if false, do a normal redraw
 ///                if -1, don't redraw at all
 void wait_return(int redraw)
@@ -1143,7 +1143,7 @@ void wait_return(int redraw)
   FILE *save_scriptout;
 
   if (redraw == true) {
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
   }
 
   // If using ":silent cmd", don't wait for a return.  Also don't set
@@ -1316,7 +1316,7 @@ void wait_return(int redraw)
     ui_refresh();
   } else if (!skip_redraw) {
     if (redraw == true || (msg_scrolled != 0 && redraw != -1)) {
-      redraw_later(curwin, VALID);
+      redraw_later(curwin, UPD_VALID);
     }
     if (ui_has(kUIMessages)) {
       msg_ext_clear(true);
@@ -2478,7 +2478,7 @@ void msg_reset_scroll(void)
       }
     }
   } else {
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
   }
   msg_scrolled = 0;
   msg_scrolled_at_flush = 0;
@@ -2506,8 +2506,8 @@ static void inc_msg_scrolled(void)
     xfree(tofree);
   }
   msg_scrolled++;
-  if (must_redraw < VALID) {
-    must_redraw = VALID;
+  if (must_redraw < UPD_VALID) {
+    must_redraw = UPD_VALID;
   }
 }
 
@@ -3245,8 +3245,8 @@ void msg_ext_clear_later(void)
 {
   if (msg_ext_is_visible()) {
     msg_ext_need_clear = true;
-    if (must_redraw < VALID) {
-      must_redraw = VALID;
+    if (must_redraw < UPD_VALID) {
+      must_redraw = UPD_VALID;
     }
   }
 }

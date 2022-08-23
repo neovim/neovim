@@ -712,7 +712,7 @@ win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
   win_config_float(wp, fconfig);
   win_set_inner_size(wp, true);
   wp->w_pos_changed = true;
-  redraw_later(wp, VALID);
+  redraw_later(wp, UPD_VALID);
   return wp;
 }
 
@@ -797,12 +797,12 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 
   win_set_inner_size(wp, true);
-  must_redraw = MAX(must_redraw, VALID);
+  must_redraw = MAX(must_redraw, UPD_VALID);
 
   wp->w_pos_changed = true;
   if (change_external || change_border) {
     wp->w_hl_needs_update = true;
-    redraw_later(wp, NOT_VALID);
+    redraw_later(wp, UPD_NOT_VALID);
   }
 
   // compute initial position
@@ -839,7 +839,7 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   // changing border style while keeping border only requires redrawing border
   if (fconfig.border) {
     wp->w_redr_border = true;
-    redraw_later(wp, VALID);
+    redraw_later(wp, UPD_VALID);
   }
 }
 
@@ -928,7 +928,7 @@ void ui_ext_win_position(win_T *wp)
       wp->w_grid_alloc.focusable = wp->w_float_config.focusable;
       if (!valid) {
         wp->w_grid_alloc.valid = false;
-        redraw_later(wp, NOT_VALID);
+        redraw_later(wp, UPD_NOT_VALID);
       }
     }
   } else {
@@ -1474,8 +1474,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
   // Both windows need redrawing.  Update all status lines, in case they
   // show something related to the window count or position.
-  redraw_later(wp, NOT_VALID);
-  redraw_later(oldwin, NOT_VALID);
+  redraw_later(wp, UPD_NOT_VALID);
+  redraw_later(oldwin, UPD_NOT_VALID);
   status_redraw_all();
 
   if (need_status) {
@@ -1837,8 +1837,8 @@ static void win_exchange(long Prenum)
   }
 
   win_enter(wp, true);
-  redraw_later(curwin, NOT_VALID);
-  redraw_later(wp, NOT_VALID);
+  redraw_later(curwin, UPD_NOT_VALID);
+  redraw_later(wp, UPD_NOT_VALID);
 }
 
 // rotate windows: if upwards true the second window becomes the first one
@@ -1922,7 +1922,7 @@ static void win_rotate(bool upwards, int count)
   wp1->w_pos_changed = true;
   wp2->w_pos_changed = true;
 
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
 }
 
 /*
@@ -2034,7 +2034,7 @@ void win_move_after(win_T *win1, win_T *win2)
     frame_append(win2->w_frame, win1->w_frame);
 
     (void)win_comp_pos();  // recompute w_winrow for all windows
-    redraw_later(curwin, NOT_VALID);
+    redraw_later(curwin, UPD_NOT_VALID);
   }
   win_enter(win1, false);
 
@@ -2125,7 +2125,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       frame_new_height(topfr, height, false, false);
       topfr->fr_win->w_wincol = col;
       frame_new_width(topfr, width, false, false);
-      redraw_all_later(NOT_VALID);
+      redraw_all_later(UPD_NOT_VALID);
     }
   } else if (topfr->fr_layout == FR_ROW) {
     topfr->fr_width = width;
@@ -2436,7 +2436,7 @@ void entering_window(win_T *const win)
 
 void win_init_empty(win_T *wp)
 {
-  redraw_later(wp, NOT_VALID);
+  redraw_later(wp, UPD_NOT_VALID);
   wp->w_lines_valid = 0;
   wp->w_cursor.lnum = 1;
   wp->w_curswant = wp->w_cursor.col = 0;
@@ -2935,7 +2935,7 @@ int win_close(win_T *win, bool free_buf, bool force)
   }
 
   curwin->w_pos_changed = true;
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
   return OK;
 }
 
@@ -4115,7 +4115,7 @@ int win_new_tabpage(int after, char_u *filename)
     newtp->tp_topframe = topframe;
     last_status(false);
 
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
 
     tabpage_check_windows(old_curtab);
 
@@ -4373,7 +4373,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
     }
   }
 
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
 }
 
 /// tells external UI that windows and inline floats in old_curtab are invisible
@@ -4867,7 +4867,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
   curwin->w_redr_status = true;
   redraw_tabline = true;
   if (restart_edit) {
-    redraw_later(curwin, VALID);  // causes status line redraw
+    redraw_later(curwin, UPD_VALID);  // causes status line redraw
   }
 
   // change background color according to NormalNC,
@@ -4875,11 +4875,11 @@ static void win_enter_ext(win_T *const wp, const int flags)
   if (curwin->w_hl_attr_normal != curwin->w_hl_attr_normalnc) {
     // TODO(bfredl): eventually we should be smart enough
     // to only recompose the window, not redraw it.
-    redraw_later(curwin, NOT_VALID);
+    redraw_later(curwin, UPD_NOT_VALID);
   }
   if (prevwin) {
     if (prevwin->w_hl_attr_normal != prevwin->w_hl_attr_normalnc) {
-      redraw_later(prevwin, NOT_VALID);
+      redraw_later(prevwin, UPD_NOT_VALID);
     }
   }
 
@@ -5470,7 +5470,7 @@ static void frame_comp_pos(frame_T *topfrp, int *row, int *col)
       // position changed, redraw
       wp->w_winrow = *row;
       wp->w_wincol = *col;
-      redraw_later(wp, NOT_VALID);
+      redraw_later(wp, UPD_NOT_VALID);
       wp->w_redr_status = true;
       wp->w_pos_changed = true;
     }
@@ -5513,7 +5513,7 @@ void win_setheight_win(int height, win_T *win)
   if (win->w_floating) {
     win->w_float_config.height = height;
     win_config_float(win, win->w_float_config);
-    redraw_later(win, NOT_VALID);
+    redraw_later(win, UPD_NOT_VALID);
   } else {
     frame_setheight(win->w_frame, height + win->w_hsep_height + win->w_status_height);
 
@@ -5533,7 +5533,7 @@ void win_setheight_win(int height, win_T *win)
     curtab->tp_ch_used = p_ch;
     msg_row = row;
     msg_col = 0;
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
     redraw_cmdline = true;
   }
 }
@@ -5735,13 +5735,13 @@ void win_setwidth_win(int width, win_T *wp)
   if (wp->w_floating) {
     wp->w_float_config.width = width;
     win_config_float(wp, wp->w_float_config);
-    redraw_later(wp, NOT_VALID);
+    redraw_later(wp, UPD_NOT_VALID);
   } else {
     frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
 
     // recompute the window positions
     (void)win_comp_pos();
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
   }
 }
 
@@ -6046,7 +6046,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
   cmdline_row = row;
   p_ch = MAX(Rows - cmdline_row, p_ch_was_zero ? 0 : 1);
   curtab->tp_ch_used = p_ch;
-  redraw_all_later(SOME_VALID);
+  redraw_all_later(UPD_SOME_VALID);
   showmode();
 }
 
@@ -6153,7 +6153,7 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
     }
   }
   (void)win_comp_pos();
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
 }
 
 #define FRACTION_MULT   16384L
@@ -6291,7 +6291,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   win_comp_scroll(wp);
-  redraw_later(wp, SOME_VALID);
+  redraw_later(wp, UPD_SOME_VALID);
   wp->w_redr_status = true;
   invalidate_botline_win(wp);
 }
@@ -6332,7 +6332,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     if (!exiting && !made_cmdheight_nonzero && valid_cursor) {
       scroll_to_fraction(wp, prev_height);
     }
-    redraw_later(wp, NOT_VALID);  // SOME_VALID??
+    redraw_later(wp, UPD_NOT_VALID);  // UPD_SOME_VALID??
   }
 
   if (width != wp->w_width_inner) {
@@ -6346,7 +6346,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
         curs_columns(wp, true);  // validate w_wrow
       }
     }
-    redraw_later(wp, NOT_VALID);
+    redraw_later(wp, UPD_NOT_VALID);
   }
 
   if (wp->w_buffer->terminal) {
@@ -6766,7 +6766,7 @@ static void last_status_rec(frame_T *fr, bool statusline, bool is_stl_global)
       wp->w_hsep_height = 0;
       comp_col();
     }
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
   } else {
     // For a column or row frame, recursively call this function for all child frames
     FOR_ALL_FRAMES(fp, fr->fr_child) {
@@ -7066,7 +7066,7 @@ void restore_snapshot(int idx, int close_curwin)
     if (wp != NULL && close_curwin) {
       win_goto(wp);
     }
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
   }
   clear_snapshot(curtab, idx);
 }

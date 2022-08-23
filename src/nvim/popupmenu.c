@@ -802,7 +802,7 @@ static bool pum_set_selected(int n, int repeat)
 
             // Return cursor to where we were
             validate_cursor();
-            redraw_later(curwin, SOME_VALID);
+            redraw_later(curwin, UPD_SOME_VALID);
 
             // When the preview window was resized we need to
             // update the view on the buffer.  Only go back to

@@ -120,7 +120,7 @@ void diff_buf_delete(buf_T *buf)
         // don't redraw right away, more might change or buffer state
         // is invalid right now
         need_diff_redraw = true;
-        redraw_later(curwin, VALID);
+        redraw_later(curwin, UPD_VALID);
       }
     }
   }
@@ -659,7 +659,7 @@ void diff_redraw(bool dofold)
       continue;
     }
 
-    redraw_later(wp, SOME_VALID);
+    redraw_later(wp, UPD_SOME_VALID);
     if (wp != curwin) {
       wp_other = wp;
     }
@@ -1448,7 +1448,7 @@ void diff_win_options(win_T *wp, int addbuf)
   if (addbuf) {
     diff_buf_add(wp->w_buffer);
   }
-  redraw_later(wp, NOT_VALID);
+  redraw_later(wp, UPD_NOT_VALID);
 }
 
 /// Set options not to show diffs.  For the current window or all windows.

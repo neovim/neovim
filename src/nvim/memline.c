@@ -1222,7 +1222,7 @@ void ml_recover(bool checkext)
     msg_puts(_("\nYou may want to delete the .swp file now.\n\n"));
     cmdline_row = msg_row;
   }
-  redraw_curbuf_later(NOT_VALID);
+  redraw_curbuf_later(UPD_NOT_VALID);
 
 theend:
   xfree(fname_used);
@@ -2453,7 +2453,7 @@ int ml_replace(linenr_T lnum, char *line, bool copy)
 /// Do not use it after calling ml_replace().
 ///
 /// Check: The caller of this function should probably also call
-/// changed_lines(), unless update_screen(NOT_VALID) is used.
+/// changed_lines(), unless update_screen(UPD_NOT_VALID) is used.
 ///
 /// @return  FAIL for failure, OK otherwise
 int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)

@@ -2621,7 +2621,7 @@ static void internal_format(int textwidth, int second_indent, int flags, int for
 
   if (!format_only && haveto_redraw) {
     update_topline(curwin);
-    redraw_curbuf_later(VALID);
+    redraw_curbuf_later(UPD_VALID);
   }
 }
 
@@ -5024,7 +5024,7 @@ static void ins_up(bool startcol)
     }
     if (old_topline != curwin->w_topline
         || old_topfill != curwin->w_topfill) {
-      redraw_later(curwin, VALID);
+      redraw_later(curwin, UPD_VALID);
     }
     start_arrow(&tpos);
     can_cindent = true;
@@ -5072,7 +5072,7 @@ static void ins_down(bool startcol)
     }
     if (old_topline != curwin->w_topline
         || old_topfill != curwin->w_topfill) {
-      redraw_later(curwin, VALID);
+      redraw_later(curwin, UPD_VALID);
     }
     start_arrow(&tpos);
     can_cindent = true;
@@ -5487,7 +5487,7 @@ static int ins_ctrl_ey(int tc)
     } else {
       scrollup_clamp();
     }
-    redraw_later(curwin, VALID);
+    redraw_later(curwin, UPD_VALID);
   } else {
     c = ins_copychar(curwin->w_cursor.lnum + (c == Ctrl_Y ? -1 : 1));
     if (c != NUL) {

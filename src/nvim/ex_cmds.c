@@ -867,7 +867,7 @@ void ex_retab(exarg_T *eap)
              && tabstop_eq(curbuf->b_p_vts_array, new_vts_array)) {
     // not changed
   } else {
-    redraw_curbuf_later(NOT_VALID);
+    redraw_curbuf_later(UPD_NOT_VALID);
   }
   if (first_line != 0) {
     changed_lines(first_line, 0, last_line + 1, 0L, true);
@@ -1368,7 +1368,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
       xfree(cmd_buf);
       goto error;
     }
-    redraw_curbuf_later(VALID);
+    redraw_curbuf_later(UPD_VALID);
   }
   read_linecount = curbuf->b_ml.ml_line_count;
 
@@ -2910,7 +2910,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     update_topline(curwin);
     curwin->w_scbind_pos = curwin->w_topline;
     *so_ptr = n;
-    redraw_curbuf_later(NOT_VALID);     // redraw this buffer later
+    redraw_curbuf_later(UPD_NOT_VALID);  // redraw this buffer later
   }
 
   // Change directories when the 'acd' option is set.
@@ -3959,9 +3959,9 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
 
               update_topline(curwin);
               validate_cursor();
-              update_screen(SOME_VALID);
+              update_screen(UPD_SOME_VALID);
               highlight_match = false;
-              redraw_later(curwin, SOME_VALID);
+              redraw_later(curwin, UPD_SOME_VALID);
 
               curwin->w_p_fen = save_p_fen;
               if (msg_row == Rows - 1) {

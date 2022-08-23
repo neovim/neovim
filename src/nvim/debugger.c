@@ -275,7 +275,7 @@ void do_debug(char_u *cmd)
 
   RedrawingDisabled--;
   no_wait_return--;
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
   need_wait_return = false;
   msg_scroll = save_msg_scroll;
   lines_left = Rows - 1;

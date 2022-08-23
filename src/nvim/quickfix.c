@@ -3710,7 +3710,7 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
   curwin->w_cursor.coladd = 0;
   curwin->w_curswant = 0;
   update_topline(curwin);              // scroll to show the line
-  redraw_later(curwin, VALID);
+  redraw_later(curwin, UPD_VALID);
   curwin->w_redr_status = true;  // update ruler
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
@@ -3898,7 +3898,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
     // Only redraw when added lines are visible.  This avoids flickering when
     // the added lines are not visible.
     if ((win = qf_find_win(qi)) != NULL && old_line_count < win->w_botline) {
-      redraw_buf_later(buf, NOT_VALID);
+      redraw_buf_later(buf, UPD_NOT_VALID);
     }
   }
 }
@@ -4118,7 +4118,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     curbuf->b_ro_locked--;
 
     // make sure it will be redrawn
-    redraw_curbuf_later(NOT_VALID);
+    redraw_curbuf_later(UPD_NOT_VALID);
   }
 
   // Restore KeyTyped, setting 'filetype' may reset it.

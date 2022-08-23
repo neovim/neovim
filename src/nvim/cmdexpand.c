@@ -2732,7 +2732,7 @@ void wildmenu_cleanup(CmdlineInfo *cclp)
     p_ls = save_p_ls;
     p_wmh = save_p_wmh;
     last_status(false);
-    update_screen(VALID);                 // redraw the screen NOW
+    update_screen(UPD_VALID);  // redraw the screen NOW
     redrawcmd();
     save_p_ls = -1;
     wild_menu_showing = 0;

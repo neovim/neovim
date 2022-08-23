@@ -1749,7 +1749,7 @@ failed:
       linecnt = 0;
     }
     if (newfile || read_buffer) {
-      redraw_curbuf_later(NOT_VALID);
+      redraw_curbuf_later(UPD_NOT_VALID);
       // After reading the text into the buffer the diff info needs to
       // be updated.
       diff_invalidate(curbuf);

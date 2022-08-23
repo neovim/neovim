@@ -1300,7 +1300,7 @@ void set_var_const(const char *name, const size_t name_len, typval_T *const tv, 
           set_search_direction(v->di_tv.vval.v_number ? '/' : '?');
         } else if (strcmp(varname, "hlsearch") == 0) {
           no_hlsearch = !v->di_tv.vval.v_number;
-          redraw_all_later(SOME_VALID);
+          redraw_all_later(UPD_SOME_VALID);
         }
         return;
       } else if (v->di_tv.v_type != tv->v_type) {

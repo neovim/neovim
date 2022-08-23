@@ -198,7 +198,7 @@ void nvim_set_hl_ns(Integer ns_id, Error *err)
 
   ns_hl_global = (NS)ns_id;
   hl_check_ns();
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
 }
 
 /// Set active namespace for highlights while redrawing.

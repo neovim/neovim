@@ -47,7 +47,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   matchitem_T *m;
   int hlg_id;
   regprog_T *regprog = NULL;
-  int rtype = SOME_VALID;
+  int rtype = UPD_SOME_VALID;
 
   if (*grp == NUL || (pat != NULL && *pat == NUL)) {
     return -1;
@@ -193,7 +193,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
       }
       m->pos.toplnum = toplnum;
       m->pos.botlnum = botlnum;
-      rtype = VALID;
+      rtype = UPD_VALID;
     }
   }
 
@@ -227,7 +227,7 @@ static int match_delete(win_T *wp, int id, bool perr)
 {
   matchitem_T *cur = wp->w_match_head;
   matchitem_T *prev = cur;
-  int rtype = SOME_VALID;
+  int rtype = UPD_SOME_VALID;
 
   if (id < 1) {
     if (perr) {
@@ -268,7 +268,7 @@ static int match_delete(win_T *wp, int id, bool perr)
       wp->w_buffer->b_mod_bot = cur->pos.botlnum;
       wp->w_buffer->b_mod_xlines = 0;
     }
-    rtype = VALID;
+    rtype = UPD_VALID;
   }
   xfree(cur);
   redraw_later(wp, rtype);
@@ -287,7 +287,7 @@ void clear_matches(win_T *wp)
     xfree(wp->w_match_head);
     wp->w_match_head = m;
   }
-  redraw_later(wp, SOME_VALID);
+  redraw_later(wp, UPD_SOME_VALID);
 }
 
 /// Get match from ID 'id' in window 'wp'.

@@ -2944,7 +2944,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
         && curwin != curwin_save && win_valid(curwin_save)) {
       // Return cursor to where we were
       validate_cursor();
-      redraw_later(curwin, VALID);
+      redraw_later(curwin, UPD_VALID);
       win_enter(curwin_save, true);
     }
 
