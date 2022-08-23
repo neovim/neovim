@@ -3705,7 +3705,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
     size_t srclen;
     int escaped;
     char *repl = (char *)eval_vars((char_u *)p, (char_u *)eap->arg, &srclen, &(eap->do_ecmd_lnum),
-                                   errormsgp, &escaped);
+                                   errormsgp, &escaped, true);
     if (*errormsgp != NULL) {           // error detected
       return FAIL;
     }
@@ -6634,18 +6634,19 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 /// When an error is detected, "errormsg" is set to a non-NULL pointer (may be
 /// "" for error without a message) and NULL is returned.
 ///
-/// @param src       pointer into commandline
-/// @param srcstart  beginning of valid memory for src
-/// @param usedlen   characters after src that are used
-/// @param lnump     line number for :e command, or NULL
-/// @param errormsg  pointer to error message
-/// @param escaped   return value has escaped white space (can be NULL)
+/// @param src             pointer into commandline
+/// @param srcstart        beginning of valid memory for src
+/// @param usedlen         characters after src that are used
+/// @param lnump           line number for :e command, or NULL
+/// @param errormsg        pointer to error message
+/// @param escaped         return value has escaped white space (can be NULL)
+/// @param empty_is_error  empty result is considered an error
 ///
 /// @return          an allocated string if a valid match was found.
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
 char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnump, char **errormsg,
-                  int *escaped)
+                  int *escaped, bool empty_is_error)
 {
   char *result;
   char *resultbuf = NULL;
@@ -6890,7 +6891,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
     }
   }
 
-  if (resultlen == 0 || valid != VALID_HEAD + VALID_PATH) {
+  if (empty_is_error && (resultlen == 0 || valid != VALID_HEAD + VALID_PATH)) {
     if (valid != VALID_HEAD + VALID_PATH) {
       // xgettext:no-c-format
       *errormsg = _("E499: Empty file name for '%' or '#', only works with \":p:h\"");
@@ -6919,7 +6920,8 @@ char *expand_sfile(char *arg)
       // replace "<sfile>" with the sourced file name, and do ":" stuff
       size_t srclen;
       char *errormsg;
-      char *repl = (char *)eval_vars((char_u *)p, (char_u *)result, &srclen, NULL, &errormsg, NULL);
+      char *repl = (char *)eval_vars((char_u *)p, (char_u *)result, &srclen, NULL, &errormsg, NULL,
+                                     true);
       if (errormsg != NULL) {
         if (*errormsg) {
           emsg(errormsg);

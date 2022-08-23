@@ -1982,7 +1982,7 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     size_t len;
     char *errormsg = NULL;
-    char_u *result = eval_vars((char_u *)s, (char_u *)s, &len, NULL, &errormsg, NULL);
+    char_u *result = eval_vars((char_u *)s, (char_u *)s, &len, NULL, &errormsg, NULL, false);
     if (p_verbose == 0) {
       emsg_off--;
     } else if (errormsg != NULL) {
