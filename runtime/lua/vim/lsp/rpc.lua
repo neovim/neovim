@@ -241,6 +241,35 @@ function default_dispatchers.on_error(code, err)
   local _ = log.error() and log.error('client_error:', client_errors[code], err)
 end
 
+---@private
+local function create_read_loop(handle_body, on_no_chunk, on_error)
+  local parse_chunk = coroutine.wrap(request_parser_loop)
+  parse_chunk()
+  return function(err, chunk)
+    if err then
+      on_error(err)
+      return
+    end
+
+    if not chunk then
+      if on_no_chunk then
+        on_no_chunk()
+      end
+      return
+    end
+
+    while true do
+      local headers, body = parse_chunk(chunk)
+      if headers then
+        handle_body(body)
+        chunk = ''
+      else
+        break
+      end
+    end
+  end
+end
+
 --- Starts an LSP server process and create an LSP RPC client object to
 --- interact with it. Communication with the server is currently limited to stdio.
 ---
@@ -592,31 +621,9 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   local request_parser = coroutine.wrap(request_parser_loop)
   request_parser()
-  stdout:read_start(function(err, chunk)
-    if err then
-      -- TODO better handling. Can these be intermittent errors?
-      on_error(client_errors.READ_ERROR, err)
-      return
-    end
-    -- This should signal that we are done reading from the client.
-    if not chunk then
-      return
-    end
-    -- Flush anything in the parser by looping until we don't get a result
-    -- anymore.
-    while true do
-      local headers, body = request_parser(chunk)
-      -- If we successfully parsed, then handle the response.
-      if headers then
-        handle_body(body)
-        -- Set chunk to empty so that we can call request_parser to get
-        -- anything existing in the parser to flush.
-        chunk = ''
-      else
-        break
-      end
-    end
-  end)
+  stdout:read_start(create_read_loop(handle_body, nil, function(err)
+    on_error(client_errors.READ_ERROR, err)
+  end))
 
   return {
     pid = pid,
