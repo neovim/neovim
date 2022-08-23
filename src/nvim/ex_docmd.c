@@ -6891,12 +6891,14 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
     }
   }
 
-  if (empty_is_error && (resultlen == 0 || valid != VALID_HEAD + VALID_PATH)) {
-    if (valid != VALID_HEAD + VALID_PATH) {
-      // xgettext:no-c-format
-      *errormsg = _("E499: Empty file name for '%' or '#', only works with \":p:h\"");
-    } else {
-      *errormsg = _("E500: Evaluates to an empty string");
+  if (resultlen == 0 || valid != VALID_HEAD + VALID_PATH) {
+    if (empty_is_error) {
+      if (valid != VALID_HEAD + VALID_PATH) {
+        // xgettext:no-c-format
+        *errormsg = _("E499: Empty file name for '%' or '#', only works with \":p:h\"");
+      } else {
+        *errormsg = _("E500: Evaluates to an empty string");
+      }
     }
     result = NULL;
   } else {

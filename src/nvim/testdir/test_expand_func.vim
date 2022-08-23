@@ -107,7 +107,7 @@ endfunc
 
 func Test_expand()
   new
-  call assert_equal("''", expand('%:S'))
+  call assert_equal("", expand('%:S'))
   call assert_equal('3', '<slnum>'->expand())
   call assert_equal(['4'], expand('<slnum>', v:false, v:true))
   " Don't add any line above this, otherwise <slnum> will change.
@@ -115,6 +115,7 @@ func Test_expand()
   set verbose=1
   call assert_equal("", expand('%'))
   set verbose=0
+  call assert_equal("", expand('%:p'))
   quit
 endfunc
 
