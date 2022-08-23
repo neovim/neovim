@@ -1623,7 +1623,7 @@ void enter_buffer(buf_T *buf)
   }
   curbuf->b_last_used = time(NULL);
 
-  redraw_later(curwin, NOT_VALID);
+  redraw_later(curwin, UPD_NOT_VALID);
 }
 
 /// Change to the directory of the current buffer.
@@ -4034,7 +4034,7 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
       buf->b_signcols.max++;
     }
     buf->b_signcols.size++;
-    redraw_buf_later(buf, NOT_VALID);
+    redraw_buf_later(buf, UPD_NOT_VALID);
     return;
   }
 
@@ -4055,7 +4055,7 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
     buf->b_signcols.size = linesum;
     buf->b_signcols.max = linesum;
     buf->b_signcols.sentinel = added->se_lnum;
-    redraw_buf_later(buf, NOT_VALID);
+    redraw_buf_later(buf, UPD_NOT_VALID);
   }
 }
 
@@ -4074,7 +4074,7 @@ int buf_signcols(buf_T *buf, int maximum)
     if (signcols != buf->b_signcols.size) {
       buf->b_signcols.size = signcols;
       buf->b_signcols.max = maximum;
-      redraw_buf_later(buf, NOT_VALID);
+      redraw_buf_later(buf, UPD_NOT_VALID);
     }
 
     buf->b_signcols.valid = true;

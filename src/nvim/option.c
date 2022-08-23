@@ -847,7 +847,7 @@ int do_set(char *arg, int opt_flags)
         didset_options();
         didset_options2();
         ui_refresh_options();
-        redraw_all_later(CLEAR);
+        redraw_all_later(UPD_CLEAR);
       } else {
         showoptions(1, opt_flags);
         did_show = true;
@@ -2089,7 +2089,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     paste_option_changed();
   } else if ((int *)varp == &p_ic && p_hls) {
     // when 'ignorecase' is set or reset and 'hlsearch' is set, redraw
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
   } else if ((int *)varp == &p_hls) {
     // when 'hlsearch' is set or reset: reset no_hlsearch
     set_no_hlsearch(false);
@@ -2184,7 +2184,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
         // Enable Arabic shaping (major part of what Arabic requires)
         if (!p_arshape) {
           p_arshape = true;
-          redraw_all_later(NOT_VALID);
+          redraw_all_later(UPD_NOT_VALID);
         }
       }
 
@@ -2741,15 +2741,15 @@ void check_redraw(uint32_t flags)
     changed_window_setting();
   }
   if (flags & P_RBUF) {
-    redraw_curbuf_later(NOT_VALID);
+    redraw_curbuf_later(UPD_NOT_VALID);
   }
   if (flags & P_RWINONLY) {
-    redraw_later(curwin, NOT_VALID);
+    redraw_later(curwin, UPD_NOT_VALID);
   }
   if (doclear) {
-    redraw_all_later(CLEAR);
+    redraw_all_later(UPD_CLEAR);
   } else if (all) {
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
   }
 }
 
@@ -3817,12 +3817,12 @@ void unset_global_local_option(char *name, void *from)
   case PV_LCS:
     clear_string_option(&((win_T *)from)->w_p_lcs);
     set_chars_option((win_T *)from, &((win_T *)from)->w_p_lcs, true);
-    redraw_later((win_T *)from, NOT_VALID);
+    redraw_later((win_T *)from, UPD_NOT_VALID);
     break;
   case PV_FCS:
     clear_string_option(&((win_T *)from)->w_p_fcs);
     set_chars_option((win_T *)from, &((win_T *)from)->w_p_fcs, true);
-    redraw_later((win_T *)from, NOT_VALID);
+    redraw_later((win_T *)from, UPD_NOT_VALID);
     break;
   case PV_VE:
     clear_string_option(&((win_T *)from)->w_p_ve);

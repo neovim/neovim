@@ -2560,7 +2560,7 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
   {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer == curbuf && wp->w_p_cole > 0) {
-        redraw_later(wp, NOT_VALID);
+        redraw_later(wp, UPD_NOT_VALID);
       }
     }
   }

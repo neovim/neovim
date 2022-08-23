@@ -1353,7 +1353,7 @@ struct window_S {
 
   int w_redr_type;                  // type of redraw to be performed on win
   int w_upd_rows;                   // number of window lines to update when
-                                    // w_redr_type is REDRAW_TOP
+                                    // w_redr_type is UPD_REDRAW_TOP
   linenr_T w_redraw_top;            // when != 0: first line needing redraw
   linenr_T w_redraw_bot;            // when != 0: last line needing redraw
   bool w_redr_status;               // if true statusline/winbar must be redrawn

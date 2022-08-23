@@ -756,7 +756,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 
 update:
   if (!updating_screen) {
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
   }
   need_highlight_changed = true;
 }
@@ -893,7 +893,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         hlgroup->sg_script_ctx.sc_lnum += SOURCING_LNUM;
         nlua_set_sctx(&hlgroup->sg_script_ctx);
         hlgroup->sg_cleared = false;
-        redraw_all_later(SOME_VALID);
+        redraw_all_later(UPD_SOME_VALID);
 
         // Only call highlight changed() once after multiple changes
         need_highlight_changed = true;
@@ -916,7 +916,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
       init_highlight(true, true);
       highlight_changed();
-      redraw_all_later(NOT_VALID);
+      redraw_all_later(UPD_NOT_VALID);
       return;
     }
     name_end = (const char *)skiptowhite((const char_u *)line);
@@ -1270,12 +1270,12 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // changed
       ui_refresh();
     } else {
-      // TUI and newer UIs will repaint the screen themselves. NOT_VALID
+      // TUI and newer UIs will repaint the screen themselves. UPD_NOT_VALID
       // redraw below will still handle usages of guibg=fg etc.
       ui_default_colors_set();
     }
     did_highlight_changed = true;
-    redraw_all_later(NOT_VALID);
+    redraw_all_later(UPD_NOT_VALID);
   } else {
     set_hl_attr(idx);
   }
@@ -1292,7 +1292,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     // redrawing.  This may happen when evaluating 'statusline' changes the
     // StatusLine group.
     if (!updating_screen) {
-      redraw_all_later(NOT_VALID);
+      redraw_all_later(UPD_NOT_VALID);
     }
     need_highlight_changed = true;
   }

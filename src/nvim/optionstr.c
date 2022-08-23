@@ -895,7 +895,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       // Redraw needed when switching to/from "mac": a CR in the text
       // will be displayed differently.
       if (get_fileformat(curbuf) == EOL_MAC || *oldval == 'm') {
-        redraw_curbuf_later(NOT_VALID);
+        redraw_curbuf_later(UPD_NOT_VALID);
       }
     }
   } else if (varp == (char_u **)&p_ffs) {  // 'fileformats'
@@ -962,7 +962,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
         // here, so ignore the return value.
         (void)set_chars_option(wp, &wp->w_p_lcs, true);
       }
-      redraw_all_later(NOT_VALID);
+      redraw_all_later(UPD_NOT_VALID);
     }
   } else if (varp == &curwin->w_p_lcs) {  // local 'listchars'
     errmsg = set_chars_option(curwin, varp, true);
@@ -979,7 +979,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
         // here, so ignore the return value.
         (void)set_chars_option(wp, &wp->w_p_fcs, true);
       }
-      redraw_all_later(NOT_VALID);
+      redraw_all_later(UPD_NOT_VALID);
     }
   } else if (varp == &curwin->w_p_fcs) {  // local 'fillchars'
     errmsg = set_chars_option(curwin, varp, true);
@@ -1158,7 +1158,7 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
     } else {
       if (curwin->w_status_height || global_stl_height()) {
         curwin->w_redr_status = true;
-        redraw_later(curwin, VALID);
+        redraw_later(curwin, UPD_VALID);
       }
       curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
       redraw_titles();

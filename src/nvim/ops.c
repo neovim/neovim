@@ -682,7 +682,7 @@ void op_reindent(oparg_T *oap, Indenter how)
                   oap->is_VIsual ? start_lnum + (linenr_T)oap->line_count :
                   last_changed + 1, 0L, true);
   } else if (oap->is_VIsual) {
-    redraw_curbuf_later(INVERTED);
+    redraw_curbuf_later(UPD_INVERTED);
   }
 
   if (oap->line_count > p_report) {
@@ -909,7 +909,7 @@ int do_record(int c)
       if (!ui_has_messages()) {
         // Enable macro indicator temporarily
         set_option_value("ch", 1L, NULL, 0);
-        update_screen(VALID);
+        update_screen(UPD_VALID);
 
         changed_cmdheight = true;
       }
@@ -963,7 +963,7 @@ int do_record(int c)
     if (changed_cmdheight) {
       // Restore cmdheight
       set_option_value("ch", 0L, NULL, 0);
-      redraw_all_later(CLEAR);
+      redraw_all_later(UPD_CLEAR);
     }
   }
   return retval;
@@ -2143,7 +2143,7 @@ void op_tilde(oparg_T *oap)
 
   if (!did_change && oap->is_VIsual) {
     // No change: need to remove the Visual selection
-    redraw_curbuf_later(INVERTED);
+    redraw_curbuf_later(UPD_INVERTED);
   }
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
@@ -2262,7 +2262,7 @@ void op_insert(oparg_T *oap, long count1)
 
   // vis block is still marked. Get rid of it now.
   curwin->w_cursor.lnum = oap->start.lnum;
-  update_screen(INVERTED);
+  update_screen(UPD_INVERTED);
 
   if (oap->motion_type == kMTBlockWise) {
     // When 'virtualedit' is used, need to insert the extra spaces before
@@ -4309,7 +4309,7 @@ static void op_format(oparg_T *oap, int keep_cursor)
 
   if (oap->is_VIsual) {
     // When there is no change: need to remove the Visual selection
-    redraw_curbuf_later(INVERTED);
+    redraw_curbuf_later(UPD_INVERTED);
   }
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
@@ -4370,7 +4370,7 @@ static void op_formatexpr(oparg_T *oap)
 {
   if (oap->is_VIsual) {
     // When there is no change: need to remove the Visual selection
-    redraw_curbuf_later(INVERTED);
+    redraw_curbuf_later(UPD_INVERTED);
   }
 
   if (fex_format(oap->start.lnum, oap->line_count, NUL) != 0) {
@@ -4962,7 +4962,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
 
     if (!change_cnt && oap->is_VIsual) {
       // No change: need to remove the Visual selection
-      redraw_curbuf_later(INVERTED);
+      redraw_curbuf_later(UPD_INVERTED);
     }
 
     // Set '[ mark if something changed. Keep the last end
@@ -6596,7 +6596,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
             && oap->motion_force == NUL) {
           // Make sure redrawing is correct.
           curwin->w_p_lbr = lbr_saved;
-          redraw_curbuf_later(INVERTED);
+          redraw_curbuf_later(UPD_INVERTED);
         }
       }
     }
@@ -6628,7 +6628,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     if (oap->is_VIsual && (oap->empty || !MODIFIABLE(curbuf)
                            || oap->op_type == OP_FOLD)) {
       curwin->w_p_lbr = lbr_saved;
-      redraw_curbuf_later(INVERTED);
+      redraw_curbuf_later(UPD_INVERTED);
     }
 
     // If the end of an operator is in column one while oap->motion_type

@@ -394,7 +394,7 @@ void opFoldRange(pos_T firstpos, pos_T lastpos, int opening, int recurse, int ha
   }
   // Force a redraw to remove the Visual highlighting.
   if (had_visual) {
-    redraw_curbuf_later(INVERTED);
+    redraw_curbuf_later(UPD_INVERTED);
   }
 }
 
@@ -721,7 +721,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
     emsg(_(e_nofold));
     // Force a redraw to remove the Visual highlighting.
     if (had_visual) {
-      redraw_buf_later(wp->w_buffer, INVERTED);
+      redraw_buf_later(wp->w_buffer, UPD_INVERTED);
     }
   } else {
     // Deleting markers may make cursor column invalid
@@ -819,7 +819,7 @@ void foldUpdateAfterInsert(void)
 void foldUpdateAll(win_T *win)
 {
   win->w_foldinvalid = true;
-  redraw_later(win, NOT_VALID);
+  redraw_later(win, UPD_NOT_VALID);
 }
 
 // foldMoveTo() {{{2

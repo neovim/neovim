@@ -479,7 +479,7 @@ int main(int argc, char **argv)
   if (exmode_active || use_remote_ui || use_builtin_ui) {
     // Don't clear the screen when starting in Ex mode, or when a UI might have
     // displayed messages.
-    redraw_later(curwin, VALID);
+    redraw_later(curwin, UPD_VALID);
   } else {
     screenclear();  // clear screen
     TIME_MSG("clearing screen");
@@ -539,7 +539,7 @@ int main(int argc, char **argv)
   starting = 0;
 
   RedrawingDisabled = 0;
-  redraw_all_later(NOT_VALID);
+  redraw_all_later(UPD_NOT_VALID);
   no_wait_return = false;
 
   // 'autochdir' has been postponed.

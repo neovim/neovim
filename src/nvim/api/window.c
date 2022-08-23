@@ -118,7 +118,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   // make sure cursor is in visible range even if win != curwin
   update_topline_win(win);
 
-  redraw_later(win, VALID);
+  redraw_later(win, UPD_VALID);
   win->w_redr_status = true;
 }
 
@@ -449,5 +449,5 @@ void nvim_win_set_hl_ns(Window window, Integer ns_id, Error *err)
 
   win->w_ns_hl = (NS)ns_id;
   win->w_hl_needs_update = true;
-  redraw_later(win, NOT_VALID);
+  redraw_later(win, UPD_NOT_VALID);
 }

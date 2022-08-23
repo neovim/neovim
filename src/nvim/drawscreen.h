@@ -6,13 +6,13 @@
 /// flags for update_screen()
 /// The higher the value, the higher the priority
 enum {
-  VALID        = 10,  ///< buffer not changed, or changes marked with b_mod_*
-  INVERTED     = 20,  ///< redisplay inverted part that changed
-  INVERTED_ALL = 25,  ///< redisplay whole inverted part
-  REDRAW_TOP   = 30,  ///< display first w_upd_rows screen lines
-  SOME_VALID   = 35,  ///< like NOT_VALID but may scroll
-  NOT_VALID    = 40,  ///< buffer needs complete redraw
-  CLEAR        = 50,  ///< screen messed up, clear it
+  UPD_VALID        = 10,  ///< buffer not changed, or changes marked with b_mod_*
+  UPD_INVERTED     = 20,  ///< redisplay inverted part that changed
+  UPD_INVERTED_ALL = 25,  ///< redisplay whole inverted part
+  UPD_REDRAW_TOP   = 30,  ///< display first w_upd_rows screen lines
+  UPD_SOME_VALID   = 35,  ///< like UPD_NOT_VALID but may scroll
+  UPD_NOT_VALID    = 40,  ///< buffer needs complete redraw
+  UPD_CLEAR        = 50,  ///< screen messed up, clear it
 };
 
 /// While redrawing the screen this flag is set.  It means the screen size

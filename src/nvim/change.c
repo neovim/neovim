@@ -223,8 +223,8 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == curbuf) {
       // Mark this window to be redrawn later.
-      if (wp->w_redr_type < VALID) {
-        wp->w_redr_type = VALID;
+      if (wp->w_redr_type < UPD_VALID) {
+        wp->w_redr_type = UPD_VALID;
       }
 
       // Check if a change in the buffer has invalidated the cached
@@ -301,17 +301,17 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
       // requires a redraw.
       if (wp->w_p_rnu && xtra != 0) {
         wp->w_last_cursor_lnum_rnu = 0;
-        redraw_later(wp, VALID);
+        redraw_later(wp, UPD_VALID);
       }
 
       // Cursor line highlighting probably need to be updated with
-      // "VALID" if it's below the change.
+      // "UPD_VALID" if it's below the change.
       // If the cursor line is inside the change we need to redraw more.
       if (wp->w_p_cul) {
         if (xtra == 0) {
-          redraw_later(wp, VALID);
+          redraw_later(wp, UPD_VALID);
         } else if (lnum <= wp->w_last_cursorline) {
-          redraw_later(wp, SOME_VALID);
+          redraw_later(wp, UPD_SOME_VALID);
         }
       }
     }
@@ -319,8 +319,8 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
 
   // Call update_screen() later, which checks out what needs to be redrawn,
   // since it notices b_mod_set and then uses b_mod_*.
-  if (must_redraw < VALID) {
-    must_redraw = VALID;
+  if (must_redraw < UPD_VALID) {
+    must_redraw = UPD_VALID;
   }
 
   // when the cursor line is changed always trigger CursorMoved
@@ -364,7 +364,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   if (curwin->w_p_diff) {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_later(wp, VALID);
+        redraw_later(wp, UPD_VALID);
         linenr_T wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           changedOneline(wp->w_buffer, wlnum);
@@ -493,7 +493,7 @@ void changed_lines(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T xtra, bo
 
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_diff && wp != curwin) {
-        redraw_later(wp, VALID);
+        redraw_later(wp, UPD_VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           changed_lines_buf(wp->w_buffer, wlnum,

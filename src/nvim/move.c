@@ -105,7 +105,7 @@ void redraw_for_cursorline(win_T *wp)
   if ((wp->w_valid & VALID_CROW) == 0 && !pum_visible()
       && (wp->w_p_rnu || win_cursorline_standout(wp))) {
     // win_line() will redraw the number column and cursorline only.
-    redraw_later(wp, VALID);
+    redraw_later(wp, UPD_VALID);
   }
 }
 
@@ -118,11 +118,11 @@ static void redraw_for_cursorcolumn(win_T *wp)
   if ((wp->w_valid & VALID_VIRTCOL) == 0 && !pum_visible()) {
     if (wp->w_p_cuc || ((HL_ATTR(HLF_LC) || win_hl_attr(wp, HLF_LC)) && using_hlsearch())) {
       // When 'cursorcolumn' is set or "CurSearch" is in use
-      // need to redraw with SOME_VALID.
-      redraw_later(wp, SOME_VALID);
+      // need to redraw with UPD_SOME_VALID.
+      redraw_later(wp, UPD_SOME_VALID);
     } else if (wp->w_p_cul && (wp->w_p_culopt_flags & CULOPT_SCRLINE)) {
-      // When 'cursorlineopt' contains "screenline" need to redraw with VALID.
-      redraw_later(wp, VALID);
+      // When 'cursorlineopt' contains "screenline" need to redraw with UPD_VALID.
+      redraw_later(wp, UPD_VALID);
     }
   }
   // If the cursor moves horizontally when 'concealcursor' is active, then the
@@ -184,7 +184,7 @@ void update_topline(win_T *wp)
   // If the buffer is empty, always set topline to 1.
   if (buf_is_empty(curbuf)) {             // special case - file is empty
     if (wp->w_topline != 1) {
-      redraw_later(wp, NOT_VALID);
+      redraw_later(wp, UPD_NOT_VALID);
     }
     wp->w_topline = 1;
     wp->w_botline = 2;
@@ -336,9 +336,9 @@ void update_topline(win_T *wp)
     dollar_vcol = -1;
     if (wp->w_skipcol != 0) {
       wp->w_skipcol = 0;
-      redraw_later(wp, NOT_VALID);
+      redraw_later(wp, UPD_NOT_VALID);
     } else {
-      redraw_later(wp, VALID);
+      redraw_later(wp, UPD_VALID);
     }
     // May need to set w_skipcol when cursor in w_topline.
     if (wp->w_cursor.lnum == wp->w_topline) {
@@ -450,7 +450,7 @@ void changed_window_setting_win(win_T *wp)
   wp->w_lines_valid = 0;
   changed_line_abv_curs_win(wp);
   wp->w_valid &= ~(VALID_BOTLINE|VALID_BOTLINE_AP|VALID_TOPLINE);
-  redraw_later(wp, NOT_VALID);
+  redraw_later(wp, UPD_NOT_VALID);
 }
 
 /*
@@ -472,7 +472,7 @@ void set_topline(win_T *wp, linenr_T lnum)
   }
   wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_TOPLINE);
   // Don't set VALID_TOPLINE here, 'scrolloff' needs to be checked.
-  redraw_later(wp, VALID);
+  redraw_later(wp, UPD_VALID);
 }
 
 /*
@@ -847,7 +847,7 @@ void curs_columns(win_T *wp, int may_scroll)
         wp->w_leftcol = new_leftcol;
         win_check_anchored_floats(wp);
         // screen has to be redrawn with new wp->w_leftcol
-        redraw_later(wp, NOT_VALID);
+        redraw_later(wp, UPD_NOT_VALID);
       }
     }
     wp->w_wcol -= wp->w_leftcol;
@@ -954,7 +954,7 @@ void curs_columns(win_T *wp, int may_scroll)
     wp->w_skipcol = 0;
   }
   if (prev_skipcol != wp->w_skipcol) {
-    redraw_later(wp, NOT_VALID);
+    redraw_later(wp, UPD_NOT_VALID);
   }
 
   redraw_for_cursorcolumn(curwin);
@@ -2040,7 +2040,7 @@ int onepage(Direction dir, long count)
     }
   }
 
-  redraw_later(curwin, VALID);
+  redraw_later(curwin, UPD_VALID);
   return retval;
 }
 
@@ -2232,7 +2232,7 @@ void halfpage(bool flag, linenr_T Prenum)
   check_topfill(curwin, !flag);
   cursor_correct();
   beginline(BL_SOL | BL_FIX);
-  redraw_later(curwin, VALID);
+  redraw_later(curwin, UPD_VALID);
 }
 
 void do_check_cursorbind(void)
@@ -2284,7 +2284,7 @@ void do_check_cursorbind(void)
       }
       // Correct cursor for multi-byte character.
       mb_adjust_cursor();
-      redraw_later(curwin, VALID);
+      redraw_later(curwin, UPD_VALID);
 
       // Only scroll when 'scrollbind' hasn't done this.
       if (!curwin->w_p_scb) {

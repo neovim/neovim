@@ -3143,7 +3143,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   }
 
   // assume spell checking changed, force a redraw
-  redraw_later(curwin, NOT_VALID);
+  redraw_later(curwin, UPD_NOT_VALID);
 }
 
 /// Handle ":syntax iskeyword" command.
@@ -3183,7 +3183,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       curbuf->b_p_isk = save_isk;
     }
   }
-  redraw_later(curwin, NOT_VALID);
+  redraw_later(curwin, UPD_NOT_VALID);
 }
 
 /*
@@ -3383,7 +3383,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
       arg = (char_u *)skipwhite((char *)arg_end);
     }
   }
-  redraw_curbuf_later(SOME_VALID);
+  redraw_curbuf_later(UPD_SOME_VALID);
   syn_stack_free_all(curwin->w_s);              // Need to recompute all syntax.
 }
 
@@ -4420,7 +4420,7 @@ error:
     semsg(_(e_invarg2), arg);
   }
 
-  redraw_curbuf_later(SOME_VALID);
+  redraw_curbuf_later(UPD_SOME_VALID);
   syn_stack_free_all(curwin->w_s);              // Need to recompute all syntax.
 }
 
@@ -4502,7 +4502,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
           ++curwin->w_s->b_syn_folditems;
         }
 
-        redraw_curbuf_later(SOME_VALID);
+        redraw_curbuf_later(UPD_SOME_VALID);
         syn_stack_free_all(curwin->w_s);          // Need to recompute all syntax.
         return;           // don't free the progs and patterns now
       }
@@ -4718,7 +4718,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
           }
         }
 
-        redraw_curbuf_later(SOME_VALID);
+        redraw_curbuf_later(UPD_SOME_VALID);
         syn_stack_free_all(curwin->w_s);  // Need to recompute all syntax.
         success = true;                   // don't free the progs and patterns now
       }
@@ -5021,7 +5021,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
     }
 
     if (got_clstr) {
-      redraw_curbuf_later(SOME_VALID);
+      redraw_curbuf_later(UPD_SOME_VALID);
       syn_stack_free_all(curwin->w_s);          // Need to recompute all.
     }
   }
@@ -5265,7 +5265,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
     semsg(_("E404: Illegal arguments: %s"), arg_start);
   } else if (!finished) {
     eap->nextcmd = (char *)check_nextcmd(arg_start);
-    redraw_curbuf_later(SOME_VALID);
+    redraw_curbuf_later(UPD_SOME_VALID);
     syn_stack_free_all(curwin->w_s);            // Need to recompute all syntax.
   }
 }

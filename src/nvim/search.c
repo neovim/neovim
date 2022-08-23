@@ -220,7 +220,7 @@ void save_re_pat(int idx, char_u *pat, int magic)
     last_idx = idx;
     // If 'hlsearch' set and search pat changed: need redraw.
     if (p_hls) {
-      redraw_all_later(SOME_VALID);
+      redraw_all_later(UPD_SOME_VALID);
     }
     set_no_hlsearch(false);
   }
@@ -498,7 +498,7 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
   }
   // If 'hlsearch' set and search pat changed: need redraw.
   if (p_hls && idx == last_idx && !no_hlsearch) {
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
   }
 }
 
@@ -1093,7 +1093,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
    * Turn 'hlsearch' highlighting back on.
    */
   if (no_hlsearch && !(options & SEARCH_KEEP)) {
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
     set_no_hlsearch(false);
   }
 
@@ -2414,7 +2414,7 @@ void showmatch(int c)
         dollar_vcol = -1;
       }
       curwin->w_virtcol++;              // do display ')' just before "$"
-      update_screen(VALID);             // show the new char first
+      update_screen(UPD_VALID);         // show the new char first
 
       save_dollar_vcol = dollar_vcol;
       save_state = State;
@@ -3107,7 +3107,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
     if (VIsual_active) {
       // should do something when inclusive == false !
       VIsual = start_pos;
-      redraw_curbuf_later(INVERTED);            // update the inversion
+      redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     } else {
       oap->start = start_pos;
       oap->motion_type = kMTCharWise;
@@ -3362,7 +3362,7 @@ extend:
     VIsual = start_pos;
     VIsual_mode = 'v';
     redraw_cmdline = true;    // show mode later
-    redraw_curbuf_later(INVERTED);      // update the inversion
+    redraw_curbuf_later(UPD_INVERTED);  // update the inversion
   } else {
     // include a newline after the sentence, if there is one
     if (incl(&curwin->w_cursor) == -1) {
@@ -3502,7 +3502,7 @@ int current_block(oparg_T *oap, long count, int include, int what, int other)
     }
     VIsual = start_pos;
     VIsual_mode = 'v';
-    redraw_curbuf_later(INVERTED);      // update the inversion
+    redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     showmode();
   } else {
     oap->start = start_pos;
@@ -3744,7 +3744,7 @@ again:
     }
     VIsual = start_pos;
     VIsual_mode = 'v';
-    redraw_curbuf_later(INVERTED);      // update the inversion
+    redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     showmode();
   } else {
     oap->start = start_pos;
@@ -3924,7 +3924,7 @@ extend:
       VIsual.col = 0;
     }
     VIsual_mode = 'V';
-    redraw_curbuf_later(INVERTED);      // update the inversion
+    redraw_curbuf_later(UPD_INVERTED);  // update the inversion
     showmode();
   } else {
     oap->start.lnum = start_lnum;
@@ -4196,7 +4196,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
                     && (VIsual.col == 0
                         || line[VIsual.col - 1] != quotechar))))) {
       VIsual = curwin->w_cursor;
-      redraw_curbuf_later(INVERTED);
+      redraw_curbuf_later(UPD_INVERTED);
     }
   } else {
     oap->start = curwin->w_cursor;
@@ -4389,7 +4389,7 @@ int current_search(long count, bool forward)
 
   may_start_select('c');
   setmouse();
-  redraw_curbuf_later(INVERTED);
+  redraw_curbuf_later(UPD_INVERTED);
   showmode();
 
   return OK;
@@ -5827,7 +5827,7 @@ search_line:
             && curwin != curwin_save && win_valid(curwin_save)) {
           // Return cursor to where we were
           validate_cursor();
-          redraw_later(curwin, VALID);
+          redraw_later(curwin, UPD_VALID);
           win_enter(curwin_save, true);
         }
         break;

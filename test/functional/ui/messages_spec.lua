@@ -1077,10 +1077,10 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     ]]}
   end)
 
-  it('redraws NOT_VALID correctly after message', function()
-    -- edge case: only one window was set NOT_VALID. Original report
+  it('redraws UPD_NOT_VALID correctly after message', function()
+    -- edge case: only one window was set UPD_NOT_VALID. Original report
     -- used :make, but fake it using one command to set the current
-    -- window NOT_VALID and another to show a long message.
+    -- window UPD_NOT_VALID and another to show a long message.
     command("set more")
     feed(':new<cr><c-w><c-w>')
     screen:expect{grid=[[

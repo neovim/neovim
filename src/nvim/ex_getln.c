@@ -415,7 +415,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
   if (patlen == 0 && !use_last_pat) {
     found = 0;
     set_no_hlsearch(true);  // turn off previous highlight
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
   } else {
     int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
     ui_busy_start();
@@ -488,7 +488,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
     next_char = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
     if (empty_pattern(ccline.cmdbuff) && !no_hlsearch) {
-      redraw_all_later(SOME_VALID);
+      redraw_all_later(UPD_SOME_VALID);
       set_no_hlsearch(true);
     }
     ccline.cmdbuff[skiplen + patlen] = next_char;
@@ -500,7 +500,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
     curwin->w_redr_status = true;
   }
 
-  update_screen(SOME_VALID);
+  update_screen(UPD_SOME_VALID);
   highlight_match = false;
   restore_last_search_pattern();
 
@@ -585,9 +585,9 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
     p_magic = s->magic_save;
 
     validate_cursor();          // needed for TAB
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
     if (call_update_screen) {
-      update_screen(SOME_VALID);
+      update_screen(UPD_SOME_VALID);
     }
   }
 }
@@ -611,7 +611,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
 
     lastwin->w_p_so = 0;
     set_option_value("ch", 1L, NULL, 0);
-    update_screen(VALID);                 // redraw the screen NOW
+    update_screen(UPD_VALID);                 // redraw the screen NOW
 
     made_cmdheight_nonzero = false;
     lastwin->w_p_so = save_so;
@@ -883,7 +883,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
   State = s->save_State;
   if (cmdpreview != save_cmdpreview) {
     cmdpreview = save_cmdpreview;  // restore preview state
-    redraw_all_later(SOME_VALID);
+    redraw_all_later(UPD_SOME_VALID);
   }
   may_trigger_modechanged();
   setmouse();
@@ -916,7 +916,7 @@ theend:
     // Restore cmdheight
     set_option_value("ch", 0L, NULL, 0);
     // Redraw is needed for command line completion
-    redraw_all_later(CLEAR);
+    redraw_all_later(UPD_CLEAR);
 
     made_cmdheight_nonzero = false;
   }
@@ -1395,7 +1395,7 @@ static int may_do_command_line_next_incsearch(int firstc, long count, incsearch_
     validate_cursor();
     highlight_match = true;
     save_viewstate(curwin, &s->old_viewstate);
-    update_screen(NOT_VALID);
+    update_screen(UPD_NOT_VALID);
     highlight_match = false;
     redrawcmdline();
     curwin->w_cursor = s->match_end;
@@ -2343,7 +2343,7 @@ static bool cmdpreview_may_show(CommandLineState *s)
   if (cmdpreview_type != 0) {
     int save_rd = RedrawingDisabled;
     RedrawingDisabled = 0;
-    update_screen(SOME_VALID);
+    update_screen(UPD_SOME_VALID);
     RedrawingDisabled = save_rd;
   }
 
@@ -2405,7 +2405,7 @@ static int command_line_changed(CommandLineState *s)
     // 'inccommand' preview has been shown.
   } else if (cmdpreview) {
     cmdpreview = false;
-    update_screen(SOME_VALID);  // Clear 'inccommand' preview.
+    update_screen(UPD_SOME_VALID);  // Clear 'inccommand' preview.
   } else {
     if (s->xpc.xp_context == EXPAND_NOTHING && (KeyTyped || vpeekc() == NUL)) {
       may_do_incsearch_highlighting(s->firstc, s->count, &s->is_state);
@@ -4128,7 +4128,7 @@ static int open_cmdwin(void)
     ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level);
   }
-  redraw_later(curwin, SOME_VALID);
+  redraw_later(curwin, UPD_SOME_VALID);
 
   // No Ex mode here!
   exmode_active = false;

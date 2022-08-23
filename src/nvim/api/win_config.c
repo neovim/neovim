@@ -202,7 +202,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     if (!win_new_float(win, false, fconfig, err)) {
       return;
     }
-    redraw_later(win, NOT_VALID);
+    redraw_later(win, UPD_NOT_VALID);
   } else {
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
