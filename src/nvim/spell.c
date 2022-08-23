@@ -1125,8 +1125,8 @@ static void find_prefix(matchinf_T *mip, int mode)
 
     // Perform a binary search in the list of accepted bytes.
     int c = ptr[wlen];
-    int lo = arridx;
-    int hi = arridx + len - 1;
+    idx_T lo = arridx;
+    idx_T hi = arridx + len - 1;
     while (lo < hi) {
       idx_T m = (lo + hi) / 2;
       if (byts[m] > c) {
