@@ -94,6 +94,12 @@ static char e_ambiguous_use_of_user_defined_command[]
   = N_("E464: Ambiguous use of user-defined command");
 static char e_not_an_editor_command[]
   = N_("E492: Not an editor command");
+static char e_no_source_file_name_to_substitute_for_sfile[]
+  = N_("E498: no :source file name to substitute for \"<sfile>\"");
+static char e_no_call_stack_to_substitute_for_stack[]
+  = N_("E489: no call stack to substitute for \"<stack>\"");
+static char e_no_script_file_name_to_substitute_for_script[]
+  = N_("E1274: No script file name to substitute for \"<script>\"");
 
 static int quitmore = 0;
 static bool ex_pressedreturn = false;
@@ -3699,7 +3705,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
     size_t srclen;
     int escaped;
     char *repl = (char *)eval_vars((char_u *)p, (char_u *)eap->arg, &srclen, &(eap->do_ecmd_lnum),
-                                   errormsgp, &escaped);
+                                   errormsgp, &escaped, true);
     if (*errormsgp != NULL) {           // error detected
       return FAIL;
     }
@@ -6564,6 +6570,7 @@ enum {
   SPEC_SFILE,
   SPEC_SLNUM,
   SPEC_STACK,
+  SPEC_SCRIPT,
   SPEC_AFILE,
   SPEC_ABUF,
   SPEC_AMATCH,
@@ -6588,6 +6595,7 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
     [SPEC_SFILE] = "<sfile>",           // ":so" file name
     [SPEC_SLNUM] = "<slnum>",           // ":so" file line number
     [SPEC_STACK] = "<stack>",           // call stack
+    [SPEC_SCRIPT] = "<script>",         // script file name
     [SPEC_AFILE] = "<afile>",           // autocommand file name
     [SPEC_ABUF] = "<abuf>",             // autocommand buffer number
     [SPEC_AMATCH] = "<amatch>",         // autocommand match name
@@ -6609,34 +6617,36 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 
 /// Evaluate cmdline variables.
 ///
-/// change '%'       to curbuf->b_ffname
-///        '#'       to curwin->w_alt_fnum
-///        '<cword>' to word under the cursor
-///        '<cWORD>' to WORD under the cursor
-///        '<cexpr>' to C-expression under the cursor
-///        '<cfile>' to path name under the cursor
-///        '<sfile>' to sourced file name
-///        '<stack>' to call stack
-///        '<slnum>' to sourced file line number
-///        '<afile>' to file name for autocommand
-///        '<abuf>'  to buffer number for autocommand
-///        '<amatch>' to matching name for autocommand
+/// change "%"       to curbuf->b_ffname
+///        "#"       to curwin->w_alt_fnum
+///        "<cword>" to word under the cursor
+///        "<cWORD>" to WORD under the cursor
+///        "<cexpr>" to C-expression under the cursor
+///        "<cfile>" to path name under the cursor
+///        "<sfile>" to sourced file name
+///        "<stack>" to call stack
+///        "<script>" to current script name
+///        "<slnum>" to sourced file line number
+///        "<afile>" to file name for autocommand
+///        "<abuf>"  to buffer number for autocommand
+///        "<amatch>" to matching name for autocommand
 ///
 /// When an error is detected, "errormsg" is set to a non-NULL pointer (may be
 /// "" for error without a message) and NULL is returned.
 ///
-/// @param src       pointer into commandline
-/// @param srcstart  beginning of valid memory for src
-/// @param usedlen   characters after src that are used
-/// @param lnump     line number for :e command, or NULL
-/// @param errormsg  pointer to error message
-/// @param escaped   return value has escaped white space (can be NULL)
+/// @param src             pointer into commandline
+/// @param srcstart        beginning of valid memory for src
+/// @param usedlen         characters after src that are used
+/// @param lnump           line number for :e command, or NULL
+/// @param errormsg        pointer to error message
+/// @param escaped         return value has escaped white space (can be NULL)
+/// @param empty_is_error  empty result is considered an error
 ///
 /// @return          an allocated string if a valid match was found.
 ///                  Returns NULL if no match was found.  "usedlen" then still contains the
 ///                  number of characters to skip.
 char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnump, char **errormsg,
-                  int *escaped)
+                  int *escaped, bool empty_is_error)
 {
   char *result;
   char *resultbuf = NULL;
@@ -6801,12 +6811,25 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_SFILE:            // file name for ":so" command
-    case SPEC_STACK:            // call stack
-      result = estack_sfile(spec_idx == SPEC_SFILE ? ESTACK_SFILE : ESTACK_STACK);
+      result = estack_sfile(ESTACK_SFILE);
       if (result == NULL) {
-        *errormsg = spec_idx == SPEC_SFILE
-          ? _("E498: no :source file name to substitute for \"<sfile>\"")
-          : _("E489: no call stack to substitute for \"<stack>\"");
+        *errormsg = _(e_no_source_file_name_to_substitute_for_sfile);
+        return NULL;
+      }
+      resultbuf = result;  // remember allocated string
+      break;
+    case SPEC_STACK:            // call stack
+      result = estack_sfile(ESTACK_STACK);
+      if (result == NULL) {
+        *errormsg = _(e_no_call_stack_to_substitute_for_stack);
+        return NULL;
+      }
+      resultbuf = result;  // remember allocated string
+      break;
+    case SPEC_SCRIPT:           // script file name
+      result = estack_sfile(ESTACK_SCRIPT);
+      if (result == NULL) {
+        *errormsg = _(e_no_script_file_name_to_substitute_for_script);
         return NULL;
       }
       resultbuf = result;  // remember allocated string
@@ -6869,11 +6892,13 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
   }
 
   if (resultlen == 0 || valid != VALID_HEAD + VALID_PATH) {
-    if (valid != VALID_HEAD + VALID_PATH) {
-      // xgettext:no-c-format
-      *errormsg = _("E499: Empty file name for '%' or '#', only works with \":p:h\"");
-    } else {
-      *errormsg = _("E500: Evaluates to an empty string");
+    if (empty_is_error) {
+      if (valid != VALID_HEAD + VALID_PATH) {
+        // xgettext:no-c-format
+        *errormsg = _("E499: Empty file name for '%' or '#', only works with \":p:h\"");
+      } else {
+        *errormsg = _("E500: Evaluates to an empty string");
+      }
     }
     result = NULL;
   } else {
@@ -6897,7 +6922,8 @@ char *expand_sfile(char *arg)
       // replace "<sfile>" with the sourced file name, and do ":" stuff
       size_t srclen;
       char *errormsg;
-      char *repl = (char *)eval_vars((char_u *)p, (char_u *)result, &srclen, NULL, &errormsg, NULL);
+      char *repl = (char *)eval_vars((char_u *)p, (char_u *)result, &srclen, NULL, &errormsg, NULL,
+                                     true);
       if (errormsg != NULL) {
         if (*errormsg) {
           emsg(errormsg);

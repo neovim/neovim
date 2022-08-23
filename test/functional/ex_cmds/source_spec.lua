@@ -166,6 +166,7 @@ describe(':source', function()
       vim.g.sourced_lua = 1
       vim.g.sfile_value = vim.fn.expand('<sfile>')
       vim.g.stack_value = vim.fn.expand('<stack>')
+      vim.g.script_value = vim.fn.expand('<script>')
     ]])
 
     command('set shellslash')
@@ -173,6 +174,7 @@ describe(':source', function()
     eq(1, eval('g:sourced_lua'))
     matches([[/test%.lua$]], meths.get_var('sfile_value'))
     matches([[/test%.lua$]], meths.get_var('stack_value'))
+    matches([[/test%.lua$]], meths.get_var('script_value'))
 
     os.remove(test_file)
   end)
@@ -214,6 +216,7 @@ describe(':source', function()
        "\ 2]=]
       vim.g.sfile_value = vim.fn.expand('<sfile>')
       vim.g.stack_value = vim.fn.expand('<stack>')
+      vim.g.script_value = vim.fn.expand('<script>')
     ]])
 
     command('edit '..test_file)
@@ -223,6 +226,7 @@ describe(':source', function()
     eq('    \\ 1\n   "\\ 2', exec_lua('return _G.a'))
     eq(':source (no file)', meths.get_var('sfile_value'))
     eq(':source (no file)', meths.get_var('stack_value'))
+    eq(':source (no file)', meths.get_var('script_value'))
 
     os.remove(test_file)
   end)

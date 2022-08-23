@@ -2135,7 +2135,8 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
 
   if (*exp_pat == '%' || *exp_pat == '#' || *exp_pat == '<') {
     emsg_off++;
-    eval_pat = eval_vars((char_u *)exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg, NULL);
+    eval_pat = eval_vars((char_u *)exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg, NULL,
+                         true);
     emsg_off--;
     if (eval_pat != NULL) {
       exp_pat = (char *)concat_str(eval_pat, (char_u *)exp_pat + usedlen);

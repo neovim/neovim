@@ -2013,6 +2013,8 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 					a function
 			<SID>		"<SNR>123_"  where "123" is the
 					current script ID  |<SID>|
+			<script>	sourced script file, or script file
+					where the current function was defined
 			<stack>		call stack
 			<cword>		word under the cursor
 			<cWORD>		WORD under the cursor
@@ -2046,6 +2048,9 @@ expand({string} [, {nosuf} [, {list}]])				*expand()*
 		is not defined, an empty string is used.  Using "%:p" in a
 		buffer with no name, results in the current directory, with a
 		'/' added.
+		When 'verbose' is set then expanding '%', '#' and <> items
+		will result in an error message if the argument cannot be
+		expanded.
 
 		When {string} does not start with '%', '#' or '<', it is
 		expanded like a file name is expanded on the command line.
