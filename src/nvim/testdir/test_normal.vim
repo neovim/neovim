@@ -1455,6 +1455,7 @@ func Test_normal21_nv_hat()
   edit Xfoo | %bw
   call assert_fails(':buffer #', 'E86')
   call assert_fails(':execute "normal! \<C-^>"', 'E23')
+  call assert_fails("normal i\<C-R>#", 'E23:')
 
   " Test for the expected behavior when switching between two named buffers.
   edit Xfoo | edit Xbar
