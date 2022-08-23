@@ -116,25 +116,15 @@ char *estack_sfile(estack_arg_T which)
   // where it is defined, at script level the current script path is returned
   // instead.
   if (which == ESTACK_SCRIPT) {
-    assert(entry == ((estack_T *)exestack.ga_data) + exestack.ga_len - 1);
     // Walk the stack backwards, starting from the current frame.
     for (int idx = exestack.ga_len - 1; idx >= 0; idx--, entry--) {
-      if (entry->es_type == ETYPE_UFUNC) {
-        const sctx_T *const def_ctx = &entry->es_info.ufunc->uf_script_ctx;
-
-        if (def_ctx->sc_sid > 0) {
-          return xstrdup((char *)(SCRIPT_ITEM(def_ctx->sc_sid).sn_name));
-        } else {
-          return NULL;
-        }
-      } else if (entry->es_type == ETYPE_AUCMD) {
-        const sctx_T *const def_ctx = &entry->es_info.aucmd->script_ctx;
-
-        if (def_ctx->sc_sid > 0) {
-          return xstrdup((char *)(SCRIPT_ITEM(def_ctx->sc_sid).sn_name));
-        } else {
-          return NULL;
-        }
+      if (entry->es_type == ETYPE_UFUNC || entry->es_type == ETYPE_AUCMD) {
+        const sctx_T *const def_ctx = (entry->es_type == ETYPE_UFUNC
+                                       ? &entry->es_info.ufunc->uf_script_ctx
+                                       : &entry->es_info.aucmd->script_ctx);
+        return def_ctx->sc_sid > 0
+                ? xstrdup((char *)(SCRIPT_ITEM(def_ctx->sc_sid).sn_name))
+                : NULL;
       } else if (entry->es_type == ETYPE_SCRIPT) {
         return xstrdup(entry->es_name);
       }
