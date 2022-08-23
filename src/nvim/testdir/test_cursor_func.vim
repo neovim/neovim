@@ -22,7 +22,7 @@ func Test_move_cursor()
   call cursor(3, 0)
   call assert_equal([3, 1, 0, 1], getcurpos()[1:])
   " below last line goes to last line
-  call cursor(9, 1)
+  eval [9, 1]->cursor()
   call assert_equal([4, 1, 0, 1], getcurpos()[1:])
   " pass string arguments
   call cursor('3', '3')
