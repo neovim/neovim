@@ -28,8 +28,9 @@ endif
 
 " Set up the connection between FileType and Syntax autocommands.
 " This makes the syntax automatically set when the file type is detected.
+" Avoid an error when 'verbose' is set and <amatch> expansion fails.
 augroup syntaxset
-  au! FileType *	exe "set syntax=" . expand("<amatch>")
+  au! FileType *	0verbose exe "set syntax=" . expand("<amatch>")
 augroup END
 
 

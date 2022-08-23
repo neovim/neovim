@@ -568,10 +568,12 @@ endfunc
 
 " Test for the :verbose command
 func Test_verbose_cmd()
-  call assert_equal(['  verbose=1'], split(execute('verbose set vbs'), "\n"))
+  set verbose=3
+  call assert_match('  verbose=1\n\s*Last set from ', execute('verbose set vbs'), "\n")
   call assert_equal(['  verbose=0'], split(execute('0verbose set vbs'), "\n"))
-  let l = execute("4verbose set verbose | set verbose")
-  call assert_equal(['  verbose=4', '  verbose=0'], split(l, "\n"))
+  set verbose=0
+  call assert_match('  verbose=4\n\s*Last set from .*\n  verbose=0',
+        \ execute("4verbose set verbose | set verbose"))
 endfunc
 
 " Test for the :delete command and the related abbreviated commands
