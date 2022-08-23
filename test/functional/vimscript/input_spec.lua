@@ -455,24 +455,24 @@ describe('confirm()', function()
     meths.set_option('more', false)  -- Avoid hit-enter prompt
     meths.set_option('laststatus', 2)
     -- screen:expect() calls are needed to avoid feeding input too early
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
 
     async_meths.command([[let a = confirm('Press O to proceed')]])
     screen:expect({any = '{CONFIRM:.+: }'})
     feed('o')
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
     eq(1, meths.get_var('a'))
 
-    async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
+    async_meths.command([[let a = 'Are you sure?'->confirm("&Yes\n&No")]])
     screen:expect({any = '{CONFIRM:.+: }'})
     feed('y')
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
     eq(1, meths.get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({any = '{CONFIRM:.+: }'})
     feed('n')
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
     eq(2, meths.get_var('a'))
 
     -- Not possible to match Vim's CTRL-C test here as CTRL-C always sets got_int in Nvim.
@@ -481,26 +481,26 @@ describe('confirm()', function()
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({any = '{CONFIRM:.+: }'})
     feed('<Esc>')
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
     eq(0, meths.get_var('a'))
 
     -- Default choice is returned when pressing <CR>.
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
     screen:expect({any = '{CONFIRM:.+: }'})
     feed('<CR>')
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
     eq(1, meths.get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 2)]])
     screen:expect({any = '{CONFIRM:.+: }'})
     feed('<CR>')
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
     eq(2, meths.get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 0)]])
     screen:expect({any = '{CONFIRM:.+: }'})
     feed('<CR>')
-    screen:expect({any = 'No Name'})
+    screen:expect({any = '%[No Name%]'})
     eq(0, meths.get_var('a'))
 
     -- Test with the {type} 4th argument
@@ -508,7 +508,7 @@ describe('confirm()', function()
       async_meths.command(([[let a = confirm('Are you sure?', "&Yes\n&No", 1, '%s')]]):format(type))
       screen:expect({any = '{CONFIRM:.+: }'})
       feed('y')
-      screen:expect({any = 'No Name'})
+      screen:expect({any = '%[No Name%]'})
       eq(1, meths.get_var('a'))
     end
 

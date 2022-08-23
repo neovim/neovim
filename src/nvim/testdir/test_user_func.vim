@@ -169,3 +169,10 @@ endfunc
 func Test_failed_call_in_try()
   try | call UnknownFunc() | catch | endtry
 endfunc
+
+" Test for listing user-defined functions
+func Test_function_list()
+  call assert_fails("function Xabc", 'E123:')
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab
