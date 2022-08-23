@@ -54,6 +54,13 @@ do
   end
 end
 
+---@deprecated
+---@private
+local function is_windows_file_uri(uri)
+  vim.deprecate('is_windows_file_uri', nil, '0.9')
+  return uri:match('^file:/+[a-zA-Z]:') ~= nil
+end
+
 --- Get a URI from a file path.
 ---@param path string Path to file
 ---@return string URI
