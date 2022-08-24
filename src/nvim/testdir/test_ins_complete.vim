@@ -954,5 +954,20 @@ func Test_complete_overrun()
   bwipe!
 endfunc
 
+func Test_infercase_very_long_line()
+  " this was truncating the line when inferring case
+  new
+  let longLine = "blah "->repeat(300)
+  let verylongLine = "blah "->repeat(400)
+  call setline(1, verylongLine)
+  call setline(2, longLine)
+  set ic infercase
+  exe "normal 2Go\<C-X>\<C-L>\<Esc>"
+  call assert_equal(longLine, getline(3))
+
+  bwipe!
+  set noic noinfercase
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab
