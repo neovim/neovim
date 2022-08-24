@@ -79,6 +79,8 @@ typedef struct {
   int sg_rgb_sp_idx;            ///< RGB special color index
 
   int sg_blend;                 ///< blend level (0-100 inclusive), -1 if unset
+
+  int sg_parent;                ///< parent of @nested.group
 } HlGroup;
 
 enum {
@@ -1375,6 +1377,11 @@ static void highlight_list_one(const int id)
     return;
   }
 
+  // don't list specialized groups if a parent is used instead
+  if (sgp->sg_parent && sgp->sg_cleared) {
+    return;
+  }
+
   didh = highlight_list_arg(id, didh, LIST_ATTR,
                             sgp->sg_cterm, NULL, "cterm");
   didh = highlight_list_arg(id, didh, LIST_INT,
@@ -1661,7 +1668,12 @@ static void set_hl_attr(int idx)
 int syn_name2id(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return syn_name2id_len(name, STRLEN(name));
+  if (name[0] == '@') {
+    // if we look up @aaa.bbb, we have to consider @aaa as well
+    return syn_check_group(name, strlen(name));
+  } else {
+    return syn_name2id_len(name, STRLEN(name));
+  }
 }
 
 /// Lookup a highlight group name and return its ID.
@@ -1758,6 +1770,14 @@ static int syn_add_group(const char *name, size_t len)
     }
   }
 
+  int scoped_parent = 0;
+  if (len > 1 && name[0] == '@') {
+    char *delim = xmemrchr(name, '.', len);
+    if (delim) {
+      scoped_parent = syn_check_group(name, (size_t)(delim - name));
+    }
+  }
+
   // First call for this growarray: init growing array.
   if (highlight_ga.ga_data == NULL) {
     highlight_ga.ga_itemsize = sizeof(HlGroup);
@@ -1783,6 +1803,9 @@ static int syn_add_group(const char *name, size_t len)
   hlgp->sg_rgb_sp_idx = kColorIdxNone;
   hlgp->sg_blend = -1;
   hlgp->sg_name_u = arena_memdupz(&highlight_arena, name, len);
+  hlgp->sg_parent = scoped_parent;
+  // will get set to false by caller if settings are added
+  hlgp->sg_cleared = true;
   vim_strup((char_u *)hlgp->sg_name_u);
 
   int id = highlight_ga.ga_len;  // ID is index plus one
@@ -1844,10 +1867,13 @@ int syn_ns_get_final_id(int *ns_id, int hl_id)
       continue;
     }
 
-    if (sgp->sg_link == 0 || sgp->sg_link > highlight_ga.ga_len) {
+    if (sgp->sg_link > 0 && sgp->sg_link <= highlight_ga.ga_len) {
+      hl_id = sgp->sg_link;
+    } else if (sgp->sg_cleared && sgp->sg_parent > 0) {
+      hl_id = sgp->sg_parent;
+    } else {
       break;
     }
-    hl_id = sgp->sg_link;
   }
 
   return hl_id;

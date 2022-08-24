@@ -2059,7 +2059,7 @@ static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char ***fil
     { EXPAND_MENUNAMES, get_menu_names, false, true },
     { EXPAND_SYNTAX, get_syntax_name, true, true },
     { EXPAND_SYNTIME, get_syntime_arg, true, true },
-    { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, true },
+    { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, false },
     { EXPAND_EVENTS, expand_get_event_name, true, false },
     { EXPAND_AUGROUP, expand_get_augroup_name, true, false },
     { EXPAND_CSCOPE, get_cscope_name, true, true },
