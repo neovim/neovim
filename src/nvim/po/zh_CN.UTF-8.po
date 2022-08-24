@@ -5942,9 +5942,9 @@ msgstr "E424: 使用了太多不同的高亮度属性"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: 组名中存在不可显示字符"
 
-#: ../syntax.c:7434
-msgid "W18: Invalid character in group name"
-msgstr "W18: 组名中含有无效字符"
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: 组名中含有无效字符"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"

@@ -5668,8 +5668,8 @@ msgstr "E424: An iomarca tréithe aibhsithe in úsáid"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Carachtar neamhghrafach in ainm grúpa"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Carachtar neamhbhailí in ainm grúpa"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Carachtar neamhbhailí in ainm grúpa"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: An iomarca grúpaí aibhsithe agus comhréire"

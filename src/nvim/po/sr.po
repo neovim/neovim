@@ -6050,8 +6050,8 @@ msgstr "E424: У употреби је превише различитих ат�
 msgid "E669: Unprintable character in group name"
 msgstr "E669: У имену групе је карактер који не може да се штампа"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Неважећи карактер у имену групе"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Неважећи карактер у имену групе"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: Превише синтаксних и група истицања"

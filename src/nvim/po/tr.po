@@ -3054,8 +3054,8 @@ msgstr "E423: İzin verilmeyen argüman: %s"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Grup adında yazdırılamayan karakter"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Grup adında geçersiz karakter"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Grup adında geçersiz karakter"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: Çok fazla vurgulama ve sözdizim grupları"

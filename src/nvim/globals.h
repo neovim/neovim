@@ -1021,6 +1021,8 @@ EXTERN char e_resulting_text_too_long[] INIT(= N_("E1240: Resulting text too lon
 
 EXTERN char e_line_number_out_of_range[] INIT(= N_("E1247: Line number out of range"));
 
+EXTERN char e_highlight_group_name_invalid_char[] INIT(= N_("E5248: Invalid character in group name"));
+
 EXTERN char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 
 EXTERN char e_undobang_cannot_redo_or_move_branch[]

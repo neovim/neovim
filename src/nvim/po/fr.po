@@ -2040,8 +2040,8 @@ msgstr ""
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Caractère non imprimable dans un nom de groupe"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Caractère invalide dans un nom de groupe"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Caractère invalide dans un nom de groupe"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: Trop de groupes de surbrillance et de syntaxe"

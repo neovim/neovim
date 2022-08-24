@@ -5930,9 +5930,9 @@ msgstr "E424: For mange forskjellige uthevingsattributter i bruk"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Ikke-skrivbart tegn i gruppenavn"
 
-#: ../syntax.c:7434
-msgid "W18: Invalid character in group name"
-msgstr "W18: Ugyldig tegn i gruppenavn"
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Ugyldig tegn i gruppenavn"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"

@@ -5378,8 +5378,8 @@ msgstr "E424: Tro da malsamaj atributoj de emfazo uzataj"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Nepresebla signo en nomo de grupo"
 
-msgid "W18: Invalid character in group name"
-msgstr "W18: Nevalida signo en nomo de grupo"
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Nevalida signo en nomo de grupo"
 
 msgid "E849: Too many highlight and syntax groups"
 msgstr "E849: Tro da emfazaj kaj sintaksaj grupoj"

@@ -5908,9 +5908,9 @@ msgstr "E424: Zbyt wiele różnych atrybutów podkreślania w użyciu"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Niedrukowalny znak w nazwie grupy"
 
-#: ../syntax.c:7434
-msgid "W18: Invalid character in group name"
-msgstr "W18: nieprawidłowy znak w nazwie grupy"
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: nieprawidłowy znak w nazwie grupy"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"

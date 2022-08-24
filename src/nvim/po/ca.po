@@ -5983,9 +5983,9 @@ msgstr "E424: Hi ha massa atributs de ressalt diferents en ús"
 msgid "E669: Unprintable character in group name"
 msgstr "E669: Caràcter no imprimible en el nom del grup"
 
-#: ../syntax.c:7434
-msgid "W18: Invalid character in group name"
-msgstr "W18: Hi ha un caràcter no vàlid en el nom del grup"
+#: ../highlight_group.c:1756
+msgid "E5248: Invalid character in group name"
+msgstr "E5248: Hi ha un caràcter no vàlid en el nom del grup"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"
