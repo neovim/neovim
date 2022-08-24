@@ -474,6 +474,52 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
+#if defined(HAVE_ICONV)
+
+/// Convert string from one encoding to another
+static int nlua_iconv(lua_State *lstate)
+{
+  int narg = lua_gettop(lstate);
+
+  if (narg < 3) {
+    return luaL_error(lstate, "Expected at least 3 arguments");
+  }
+
+  for (int i = 1; i <= 3; i++) {
+    if (lua_type(lstate, i) != LUA_TSTRING) {
+      return luaL_argerror(lstate, i, "expected string");
+    }
+  }
+
+  size_t str_len = 0;
+  const char *str = lua_tolstring(lstate, 1, &str_len);
+
+  char_u *from = enc_canonize(enc_skip((char_u *)lua_tolstring(lstate, 2, NULL)));
+  char_u *to   = enc_canonize(enc_skip((char_u *)lua_tolstring(lstate, 3, NULL)));
+
+  vimconv_T vimconv;
+  vimconv.vc_type = CONV_NONE;
+  convert_setup_ext(&vimconv, from, false, to, false);
+
+  char_u *ret = string_convert(&vimconv, (char_u *)str, &str_len);
+
+  convert_setup(&vimconv, NULL, NULL);
+
+  xfree(from);
+  xfree(to);
+
+  if (ret == NULL) {
+    lua_pushnil(lstate);
+  } else {
+    lua_pushlstring(lstate, (char *)ret, str_len);
+    xfree(ret);
+  }
+
+  return 1;
+}
+
+#endif
+
 void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
 {
   if (!is_thread) {
@@ -519,6 +565,13 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // vim.spell
     luaopen_spell(lstate);
     lua_setfield(lstate, -2, "spell");
+
+#if defined(HAVE_ICONV)
+    // vim.iconv
+    // depends on p_ambw, p_emoji
+    lua_pushcfunction(lstate, &nlua_iconv);
+    lua_setfield(lstate, -2, "iconv");
+#endif
   }
 
   // vim.mpack
