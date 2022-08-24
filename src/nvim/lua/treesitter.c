@@ -21,6 +21,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/map.h"
 #include "nvim/memline.h"
 #include "tree_sitter/api.h"
 
@@ -207,6 +208,17 @@ int tslua_add_language(lua_State *L)
   pmap_put(cstr_t)(&langs, xstrdup(lang_name), lang);
 
   lua_pushboolean(L, true);
+  return 1;
+}
+
+int tslua_remove_lang(lua_State *L)
+{
+  const char *lang_name = luaL_checkstring(L, 1);
+  bool present = pmap_has(cstr_t)(&langs, lang_name);
+  if (present) {
+    pmap_del(cstr_t)(&langs, lang_name);
+  }
+  lua_pushboolean(L, present);
   return 1;
 }
 

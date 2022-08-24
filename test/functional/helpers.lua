@@ -761,6 +761,7 @@ function module.pending_c_parser(pending_fn)
     pending_fn 'no C parser, skipping'
     return true
   end
+  module.exec_lua [[vim._ts_remove_language 'c']]
   return false
 end
 
