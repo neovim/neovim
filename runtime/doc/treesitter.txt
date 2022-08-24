@@ -323,16 +323,34 @@ for a buffer with this code: >
     local query2 = [[ ... ]]
     highlighter:set_query(query2)
 
-As mentioned above the supported predicate is currently only `eq?`. `match?`
-predicates behave like matching always fails. As an addition a capture which
-begin with an upper-case letter like `@WarningMsg` will map directly to this
-highlight group, if defined. Also if the predicate begins with upper-case and
-contains a dot only the part before the first will be interpreted as the
-highlight group. As an example, this warns of a binary expression with two
+
+                                             *lua-treesitter-highlight-groups*
+The capture names, with `@` included, are directly usable as highlight groups.
+A fallback system is implemented, so that more specific groups fallback to
+more generic ones. For instance, in a language that has separate doc
+comments, `@comment.doc` could be used. If this group is not defined, the
+highlighting for an ordinary `@comment` is used. This way, existing color
+schemes already work out of the box, but it is possible to add
+more specific variants for queries that make them available.
+
+As an additional rule, captures highlights can always be specialized by
+language, by appending the language name after an additional dot. For
+instance, to highlight comments differently per language: >
+
+    hi @comment.c guifg=Blue
+    hi @comment.lua @guifg=DarkBlue
+    hi link @comment.doc.java String
+<
+It is possible to use custom highlight groups. As an example, if we
+define the `@warning` group: >
+
+    hi link @warning WarningMsg
+<
+the following query warns of a binary expression with two
 identical identifiers, highlighting both as |hl-WarningMsg|: >
 
-    ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right)
-     (eq? @WarningMsg.left @WarningMsg.right))
+    ((binary_expression left: (identifier) @warning.left right: (identifier) @warning.right)
+     (eq? @warning.left @warning.right))
 <
 Treesitter Highlighting Priority            *lua-treesitter-highlight-priority*
 

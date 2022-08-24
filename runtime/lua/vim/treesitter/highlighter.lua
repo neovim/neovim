@@ -12,104 +12,17 @@ TSHighlighterQuery.__index = TSHighlighterQuery
 
 local ns = a.nvim_create_namespace('treesitter/highlighter')
 
-local _default_highlights = {}
-local _link_default_highlight_once = function(from, to)
-  if not _default_highlights[from] then
-    _default_highlights[from] = true
-    a.nvim_set_hl(0, from, { link = to, default = true })
-  end
-
-  return from
-end
-
--- If @definition.special does not exist use @definition instead
-local subcapture_fallback = {
-  __index = function(self, capture)
-    local rtn
-    local shortened = capture
-    while not rtn and shortened do
-      shortened = shortened:match('(.*)%.')
-      rtn = shortened and rawget(self, shortened)
-    end
-    rawset(self, capture, rtn or '__notfound')
-    return rtn
-  end,
-}
-
-TSHighlighter.hl_map = setmetatable({
-  ['error'] = 'Error',
-  ['text.underline'] = 'Underlined',
-  ['todo'] = 'Todo',
-  ['debug'] = 'Debug',
-
-  -- Miscs
-  ['comment'] = 'Comment',
-  ['punctuation.delimiter'] = 'Delimiter',
-  ['punctuation.bracket'] = 'Delimiter',
-  ['punctuation.special'] = 'Delimiter',
-
-  -- Constants
-  ['constant'] = 'Constant',
-  ['constant.builtin'] = 'Special',
-  ['constant.macro'] = 'Define',
-  ['define'] = 'Define',
-  ['macro'] = 'Macro',
-  ['string'] = 'String',
-  ['string.regex'] = 'String',
-  ['string.escape'] = 'SpecialChar',
-  ['character'] = 'Character',
-  ['character.special'] = 'SpecialChar',
-  ['number'] = 'Number',
-  ['boolean'] = 'Boolean',
-  ['float'] = 'Float',
-
-  -- Functions
-  ['function'] = 'Function',
-  ['function.special'] = 'Function',
-  ['function.builtin'] = 'Special',
-  ['function.macro'] = 'Macro',
-  ['parameter'] = 'Identifier',
-  ['method'] = 'Function',
-  ['field'] = 'Identifier',
-  ['property'] = 'Identifier',
-  ['constructor'] = 'Special',
-
-  -- Keywords
-  ['conditional'] = 'Conditional',
-  ['repeat'] = 'Repeat',
-  ['label'] = 'Label',
-  ['operator'] = 'Operator',
-  ['keyword'] = 'Keyword',
-  ['exception'] = 'Exception',
-
-  ['type'] = 'Type',
-  ['type.builtin'] = 'Type',
-  ['type.qualifier'] = 'Type',
-  ['type.definition'] = 'Typedef',
-  ['storageclass'] = 'StorageClass',
-  ['structure'] = 'Structure',
-  ['include'] = 'Include',
-  ['preproc'] = 'PreProc',
-}, subcapture_fallback)
-
----@private
-local function is_highlight_name(capture_name)
-  local firstc = string.sub(capture_name, 1, 1)
-  return firstc ~= string.lower(firstc)
-end
-
 ---@private
 function TSHighlighterQuery.new(lang, query_string)
   local self = setmetatable({}, { __index = TSHighlighterQuery })
 
   self.hl_cache = setmetatable({}, {
     __index = function(table, capture)
-      local hl, is_vim_highlight = self:_get_hl_from_capture(capture)
-      if not is_vim_highlight then
-        hl = _link_default_highlight_once(lang .. hl, hl)
+      local name = self._query.captures[capture]
+      local id = 0
+      if not vim.startswith(name, '_') then
+        id = a.nvim_get_hl_id_by_name('@' .. name .. '.' .. lang)
       end
-
-      local id = a.nvim_get_hl_id_by_name(hl)
 
       rawset(table, capture, id)
       return id
@@ -128,20 +41,6 @@ end
 ---@private
 function TSHighlighterQuery:query()
   return self._query
-end
-
----@private
---- Get the hl from capture.
---- Returns a tuple { highlight_name: string, is_builtin: bool }
-function TSHighlighterQuery:_get_hl_from_capture(capture)
-  local name = self._query.captures[capture]
-
-  if is_highlight_name(name) then
-    -- From "Normal.left" only keep "Normal"
-    return vim.split(name, '.', true)[1], true
-  else
-    return TSHighlighter.hl_map[name] or 0, false
-  end
 end
 
 --- Creates a new highlighter using @param tree

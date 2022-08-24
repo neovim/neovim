@@ -185,6 +185,54 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticSignWarn DiagnosticWarn",
   "default link DiagnosticSignInfo DiagnosticInfo",
   "default link DiagnosticSignHint DiagnosticHint",
+
+  "default link @error Error",
+  "default link @text.underline Underlined",
+  "default link @todo Todo",
+  "default link @debug Debug",
+
+  // Miscs
+  "default link @comment Comment",
+  "default link @punctuation Delimiter",
+
+  // Constants
+  "default link @constant Constant",
+  "default link @constant.builtin Special",
+  "default link @constant.macro Define",
+  "default link @define Define",
+  "default link @macro Macro",
+  "default link @string String",
+  "default link @string.escape SpecialChar",
+  "default link @character Character",
+  "default link @character.special SpecialChar",
+  "default link @number Number",
+  "default link @boolean Boolean",
+  "default link @float Float",
+
+  // Functions
+  "default link @function Function",
+  "default link @function.builtin Special",
+  "default link @function.macro Macro",
+  "default link @parameter Identifier",
+  "default link @method Function",
+  "default link @field Identifier",
+  "default link @property Identifier",
+  "default link @constructor Special",
+
+  // Keywords
+  "default link @conditional Conditional",
+  "default link @repeat Repeat",
+  "default link @label Label",
+  "default link @operator Operator",
+  "default link @keyword Keyword",
+  "default link @exception Exception",
+
+  "default link @type Type",
+  "default link @type.definition Typedef",
+  "default link @storageclass StorageClass",
+  "default link @structure Structure",
+  "default link @include Include",
+  "default link @preproc PreProc",
   NULL
 };
 
