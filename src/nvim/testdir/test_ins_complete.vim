@@ -965,6 +965,13 @@ func Test_infercase_very_long_line()
   exe "normal 2Go\<C-X>\<C-L>\<Esc>"
   call assert_equal(longLine, getline(3))
 
+  " check that the too long text is NUL terminated
+  %del
+  norm o
+  norm 1987ax
+  exec "norm ox\<C-X>\<C-L>"
+  call assert_equal(repeat('x', 1987), getline(3))
+
   bwipe!
   set noic noinfercase
 endfunc
