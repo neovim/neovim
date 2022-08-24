@@ -1005,6 +1005,8 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
   return dict;
 }
 
+/// Trigger the CompleteChanged autocmd event. Invoked each time the Insert mode
+/// completion menu is changed.
 static void trigger_complete_changed_event(int cur)
 {
   static bool recursive = false;
@@ -1181,8 +1183,8 @@ void ins_compl_show_pum(void)
 #define DICT_FIRST      (1)     ///< use just first element in "dict"
 #define DICT_EXACT      (2)     ///< "dict" is the exact name of a file
 
-/// Add any identifiers that match the given pattern in the list of dictionary
-/// files "dict_start" to the list of completions.
+/// Add any identifiers that match the given pattern "pat" in the list of
+/// dictionary files "dict_start" to the list of completions.
 ///
 /// @param flags      DICT_FIRST and/or DICT_EXACT
 /// @param thesaurus  Thesaurus completion
@@ -1283,6 +1285,54 @@ theend:
   xfree(buf);
 }
 
+/// Add all the words in the line "*buf_arg" from the thesaurus file "fname"
+/// skipping the word at 'skip_word'.
+///
+/// @return  OK on success.
+static int thesaurus_add_words_in_line(char *fname, char_u **buf_arg, int dir, char_u *skip_word)
+{
+  int status = OK;
+
+  // Add the other matches on the line
+  char_u *ptr = *buf_arg;
+  while (!got_int) {
+    // Find start of the next word.  Skip white
+    // space and punctuation.
+    ptr = find_word_start(ptr);
+    if (*ptr == NUL || *ptr == NL) {
+      break;
+    }
+    char_u *wstart = ptr;
+
+    // Find end of the word.
+    // Japanese words may have characters in
+    // different classes, only separate words
+    // with single-byte non-word characters.
+    while (*ptr != NUL) {
+      const int l = utfc_ptr2len((const char *)ptr);
+
+      if (l < 2 && !vim_iswordc(*ptr)) {
+        break;
+      }
+      ptr += l;
+    }
+
+    // Add the word. Skip the regexp match.
+    if (wstart != skip_word) {
+      status = ins_compl_add_infercase(wstart, (int)(ptr - wstart), p_ic,
+                                       (char_u *)fname, dir, false);
+      if (status == FAIL) {
+        break;
+      }
+    }
+  }
+
+  *buf_arg = ptr;
+  return status;
+}
+
+/// Process "count" dictionary/thesaurus "files" and add the text matching
+/// "regmatch".
 static void ins_compl_files(int count, char **files, int thesaurus, int flags, regmatch_T *regmatch,
                             char_u *buf, Direction *dir)
   FUNC_ATTR_NONNULL_ARG(2, 7)
@@ -1320,38 +1370,10 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
                                         (int)(ptr - regmatch->startp[0]),
                                         p_ic, (char_u *)files[i], *dir, false);
         if (thesaurus) {
-          char_u *wstart;
-
-          // Add the other matches on the line
+          // For a thesaurus, add all the words in the line
           ptr = buf;
-          while (!got_int) {
-            // Find start of the next word.  Skip white
-            // space and punctuation.
-            ptr = find_word_start(ptr);
-            if (*ptr == NUL || *ptr == NL) {
-              break;
-            }
-            wstart = ptr;
-
-            // Find end of the word.
-            // Japanese words may have characters in
-            // different classes, only separate words
-            // with single-byte non-word characters.
-            while (*ptr != NUL) {
-              const int l = utfc_ptr2len((char *)ptr);
-
-              if (l < 2 && !vim_iswordc(*ptr)) {
-                break;
-              }
-              ptr += l;
-            }
-
-            // Add the word. Skip the regexp match.
-            if (wstart != regmatch->startp[0]) {
-              add_r = ins_compl_add_infercase(wstart, (int)(ptr - wstart),
-                                              p_ic, (char_u *)files[i], *dir, false);
-            }
-          }
+          add_r = thesaurus_add_words_in_line(files[i], &ptr, *dir,
+                                              regmatch->startp[0]);
         }
         if (add_r == OK) {
           // if dir was BACKWARD then honor it just once
@@ -1536,12 +1558,12 @@ int ins_compl_bs(void)
 
   xfree(compl_leader);
   compl_leader = vim_strnsave(line + compl_col, (size_t)(p_off - (ptrdiff_t)compl_col));
+
   ins_compl_new_leader();
   if (compl_shown_match != NULL) {
     // Make sure current match is not a hidden item.
     compl_curr_match = compl_shown_match;
   }
-
   return NUL;
 }
 
@@ -2401,6 +2423,8 @@ static char_u *ins_compl_mode(void)
   return (char_u *)"";
 }
 
+/// Assign the sequence number to all the completion matches which don't have
+/// one assigned yet.
 static void ins_compl_update_sequence_numbers(void)
 {
   int number = 0;
@@ -4154,6 +4178,7 @@ int ins_complete(int c, bool enable_pum)
   return OK;
 }
 
+/// Remove (if needed) and show the popup menu
 static void show_pum(int prev_w_wrow, int prev_w_leftcol)
 {
   // RedrawingDisabled may be set when invoked through complete().

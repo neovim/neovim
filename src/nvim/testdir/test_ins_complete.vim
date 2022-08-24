@@ -682,6 +682,21 @@ func Test_complete_func_error()
   call assert_equal([], complete_info(['items']).items)
 endfunc
 
+" Test for recursively starting completion mode using complete()
+func Test_recursive_complete_func()
+  func ListColors()
+    call complete(5, ["red", "blue"])
+    return ''
+  endfunc
+  new
+  call setline(1, ['a1', 'a2'])
+  set complete=.
+  exe "normal Goa\<C-X>\<C-L>\<C-R>=ListColors()\<CR>\<C-N>"
+  call assert_equal('a2blue', getline(3))
+  delfunc ListColors
+  bw!
+endfunc
+
 " Test for completing words following a completed word in a line
 func Test_complete_wrapscan()
   " complete words from another buffer
@@ -903,6 +918,92 @@ func Test_issue_7021()
 
   let &shellslash = orig_shellslash
   set completeslash=
+endfunc
+
+" Test for 'longest' setting in 'completeopt' with latin1 and utf-8 encodings
+func Test_complete_longest_match()
+  " for e in ['latin1', 'utf-8']
+  for e in ['utf-8']
+    exe 'set encoding=' .. e
+    new
+    set complete=.
+    set completeopt=menu,longest
+    call setline(1, ['pfx_a1', 'pfx_a12', 'pfx_a123', 'pfx_b1'])
+    exe "normal Gopfx\<C-P>"
+    call assert_equal('pfx_', getline(5))
+    bw!
+  endfor
+
+  " Test for completing additional words with longest match set
+  new
+  call setline(1, ['abc1', 'abd2'])
+  exe "normal Goab\<C-P>\<C-X>\<C-P>"
+  call assert_equal('ab', getline(3))
+  bw!
+  set complete& completeopt&
+endfunc
+
+" Test for removing the first displayed completion match and selecting the
+" match just before that.
+func Test_complete_erase_firstmatch()
+  new
+  call setline(1, ['a12', 'a34', 'a56'])
+  set complete=.
+  exe "normal Goa\<C-P>\<BS>\<BS>3\<CR>"
+  call assert_equal('a34', getline('$'))
+  set complete&
+  bw!
+endfunc
+
+" Test for completing whole lines from unloaded buffers
+func Test_complete_wholeline_unloadedbuf()
+  call writefile(['a line1', 'a line2', 'a line3'], "Xfile1")
+  edit Xfile1
+  enew
+  set complete=u
+  exe "normal! ia\<C-X>\<C-L>\<C-P>"
+  call assert_equal('a line2', getline(1))
+  %d
+  " completing from an unlisted buffer should fail
+  bdel Xfile1
+  exe "normal! ia\<C-X>\<C-L>\<C-P>"
+  call assert_equal('a', getline(1))
+  set complete&
+  %bw!
+  call delete("Xfile1")
+endfunc
+
+" Test for completing whole lines from unlisted buffers
+func Test_complete_wholeline_unlistedbuf()
+  call writefile(['a line1', 'a line2', 'a line3'], "Xfile1")
+  edit Xfile1
+  enew
+  set complete=U
+  " completing from a unloaded buffer should fail
+  exe "normal! ia\<C-X>\<C-L>\<C-P>"
+  call assert_equal('a', getline(1))
+  %d
+  bdel Xfile1
+  exe "normal! ia\<C-X>\<C-L>\<C-P>"
+  call assert_equal('a line2', getline(1))
+  set complete&
+  %bw!
+  call delete("Xfile1")
+endfunc
+
+" Test for adding a multibyte character using CTRL-L in completion mode
+func Test_complete_mbyte_char_add()
+  new
+  set complete=.
+  call setline(1, 'abė')
+  exe "normal! oa\<C-P>\<BS>\<BS>\<C-L>\<C-L>"
+  call assert_equal('abė', getline(2))
+  " Test for a leader with multibyte character
+  %d
+  call setline(1, 'abėĕ')
+  exe "normal! oabė\<C-P>"
+  call assert_equal('abėĕ', getline(2))
+  bw!
 endfunc
 
 " Test to ensure 'Scanning...' messages are not recorded in messages history
