@@ -6582,7 +6582,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
 
   /*
    * Search forward for the last char of the file name.
-   * Also allow "://" when ':' is not in 'isfname'.
+   * Also allow ":/" when ':' is not in 'isfname'.
    */
   len = 0;
   while (vim_isfilec(ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
