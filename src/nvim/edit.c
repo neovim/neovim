@@ -5654,7 +5654,7 @@ static char_u *do_insert_char_pre(int c)
   return res;
 }
 
-bool can_cindent_get(void)
+bool get_can_cindent(void)
 {
   return can_cindent;
 }
