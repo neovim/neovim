@@ -274,7 +274,7 @@ You can filter the regeneration based on the target (api, lua, or lsp), or the f
 
 ## Lua docstrings
 
-Lua documentation uses a subset of EmmyLua annotation (see, e.g., https://github.com/sumneko/lua-language-server/wiki/Annotations). A rough outline of a function documentation is
+Lua documentation uses a subset of [EmmyLua] annotations. A rough outline of a function documentation is
 
 ```lua
 --- {Brief}
@@ -327,6 +327,7 @@ as context, use the `-W` argument as well.
 [Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [conventional_commits]: https://www.conventionalcommits.org
+[EmmyLua]: https://github.com/sumneko/lua-language-server/wiki/Annotations
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/
 [git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
