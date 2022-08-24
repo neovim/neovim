@@ -387,16 +387,20 @@ inspect_language({lang})                                  *inspect_language()*
     Parameters: ~
         {lang}  The language.
 
-require_language({lang}, {path}, {silent})                *require_language()*
+                                                          *require_language()*
+require_language({lang}, {path}, {silent}, {symbol_name})
     Asserts that the provided language is installed, and optionally provide a
     path for the parser
 
     Parsers are searched in the `parser` runtime directory.
 
     Parameters: ~
-        {lang}    The language the parser should parse
-        {path}    Optional path the parser is located at
-        {silent}  Don't throw an error if language not found
+        {lang}         (string) The language the parser should parse
+        {path}         (string|nil) Optional path the parser is located at
+        {silent}       (boolean|nil) Don't throw an error if language not
+                       found
+        {symbol_name}  (string|nil) Internal symbol name for the language to
+                       load
 
 
 ==============================================================================

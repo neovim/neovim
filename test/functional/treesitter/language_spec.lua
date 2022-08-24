@@ -10,7 +10,7 @@ local pending_c_parser = helpers.pending_c_parser
 
 before_each(clear)
 
-describe('treesitter API', function()
+describe('treesitter language API', function()
   -- error tests not requiring a parser library
   it('handles missing language', function()
     eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
@@ -26,6 +26,9 @@ describe('treesitter API', function()
 
     eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
+
+    matches("Error executing lua: Failed to load parser: uv_dlsym: .+",
+       pcall_err(exec_lua, "parser = vim.treesitter.require_language('c', nil, false, 'borklang')"))
   end)
 
   it('inspects language', function()
