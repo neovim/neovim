@@ -709,7 +709,7 @@ static int ins_compl_add(char_u *const str, int len, char_u *const fname,
     do {
       if (!match_at_original_text(match)
           && STRNCMP(match->cp_str, str, len) == 0
-          && match->cp_str[len] == NUL) {
+          && ((int)STRLEN(match->cp_str) <= len || match->cp_str[len] == NUL)) {
         FREE_CPTEXT(cptext, cptext_allocated);
         return NOTDONE;
       }
