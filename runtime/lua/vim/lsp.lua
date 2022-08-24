@@ -289,7 +289,12 @@ local function validate_client_config(config)
     'flags.debounce_text_changes must be a number with the debounce time in milliseconds'
   )
 
-  local cmd, cmd_args = lsp._cmd_parts(config.cmd)
+  local cmd, cmd_args
+  if type(config.cmd) == 'function' then
+    cmd = config.cmd
+  else
+    cmd, cmd_args = lsp._cmd_parts(config.cmd)
+  end
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
@@ -855,14 +860,17 @@ end
 ---                            Used on all running clients.
 ---                            The default implementation re-uses a client if name
 ---                            and root_dir matches.
----@return number client_id
+---@return number|nil client_id
 function lsp.start(config, opts)
   opts = opts or {}
   local reuse_client = opts.reuse_client
     or function(client, conf)
       return client.config.root_dir == conf.root_dir and client.name == conf.name
     end
-  config.name = config.name or (config.cmd[1] and vim.fs.basename(config.cmd[1])) or nil
+  config.name = config.name
+  if not config.name and type(config.cmd) == 'table' then
+    config.name = config.cmd[1] and vim.fs.basename(config.cmd[1]) or nil
+  end
   local bufnr = api.nvim_get_current_buf()
   for _, clients in ipairs({ uninitialized_clients, lsp.get_active_clients() }) do
     for _, client in pairs(clients) do
@@ -893,8 +901,13 @@ end
 --- The following parameters describe fields in the {config} table.
 ---
 ---
----@param cmd: (required, string or list treated like |jobstart()|) Base command
---- that initiates the LSP client.
+---@param cmd: (table|string|fun(dispatchers: table):table) command string or
+--- list treated like |jobstart|. The command must launch the language server
+--- process. `cmd` can also be a function that creates an RPC client.
+--- The function receives a dispatchers table and must return a table with the
+--- functions `request`, `notify`, `is_closing` and `terminate`
+--- See |vim.lsp.rpc.request| and |vim.lsp.rpc.notify|
+--- For TCP there is a built-in rpc client factory: |vim.lsp.rpc.connect|
 ---
 ---@param cmd_cwd: (string, default=|getcwd()|) Directory to launch
 --- the `cmd` process. Not related to `root_dir`.
@@ -1164,11 +1177,16 @@ function lsp.start_client(config)
   end
 
   -- Start the RPC client.
-  local rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
-    cwd = config.cmd_cwd,
-    env = config.cmd_env,
-    detached = config.detached,
-  })
+  local rpc
+  if type(cmd) == 'function' then
+    rpc = cmd(dispatch)
+  else
+    rpc = lsp_rpc.start(cmd, cmd_args, dispatch, {
+      cwd = config.cmd_cwd,
+      env = config.cmd_env,
+      detached = config.detached,
+    })
+  end
 
   -- Return nil if client fails to start
   if not rpc then

@@ -3181,4 +3181,32 @@ describe('LSP', function()
       }
     end)
   end)
+
+  describe('cmd', function()
+    it('can connect to lsp server via rpc.connect', function()
+      local result = exec_lua [[
+        local uv = vim.loop
+        local server = uv.new_tcp()
+        local init = nil
+        server:bind('127.0.0.1', 0)
+        server:listen(127, function(err)
+          assert(not err, err)
+          local socket = uv.new_tcp()
+          server:accept(socket)
+          socket:read_start(require('vim.lsp.rpc').create_read_loop(function(body)
+            init = body
+            socket:close()
+          end))
+        end)
+        local port = server:getsockname().port
+        vim.lsp.start({ name = 'dummy', cmd = vim.lsp.rpc.connect('127.0.0.1', port) })
+        vim.wait(1000, function() return init ~= nil end)
+        assert(init, "server must receive `initialize` request")
+        server:close()
+        server:shutdown()
+        return vim.json.decode(init)
+      ]]
+      eq(result.method, "initialize")
+    end)
+  end)
 end)

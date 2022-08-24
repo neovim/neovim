@@ -556,6 +556,84 @@ local function public_client(client)
   return result
 end
 
+---@private
+local function merge_dispatchers(dispatchers)
+  if dispatchers then
+    local user_dispatchers = dispatchers
+    dispatchers = {}
+    for dispatch_name, default_dispatch in pairs(default_dispatchers) do
+      local user_dispatcher = user_dispatchers[dispatch_name]
+      if user_dispatcher then
+        if type(user_dispatcher) ~= 'function' then
+          error(string.format('dispatcher.%s must be a function', dispatch_name))
+        end
+        -- server_request is wrapped elsewhere.
+        if
+          not (dispatch_name == 'server_request' or dispatch_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
+        then
+          user_dispatcher = schedule_wrap(user_dispatcher)
+        end
+        dispatchers[dispatch_name] = user_dispatcher
+      else
+        dispatchers[dispatch_name] = default_dispatch
+      end
+    end
+  else
+    dispatchers = default_dispatchers
+  end
+  return dispatchers
+end
+
+--- Create a LSP RPC client factory that connects via TCP to the given host
+--- and port
+---
+---@param host string
+---@param port number
+---@return function
+local function connect(host, port)
+  return function(dispatchers)
+    dispatchers = merge_dispatchers(dispatchers)
+    local tcp = uv.new_tcp()
+    local closing = false
+    local transport = {
+      write = function(msg)
+        tcp:write(msg)
+      end,
+      is_closing = function()
+        return closing
+      end,
+      terminate = function()
+        if not closing then
+          closing = true
+          tcp:shutdown()
+          tcp:close()
+          dispatchers.on_exit(0, 0)
+        end
+      end,
+    }
+    local client = new_client(dispatchers, transport)
+    tcp:connect(host, port, function(err)
+      if err then
+        vim.schedule(function()
+          vim.notify(
+            string.format('Could not connect to %s:%s, reason: %s', host, port, vim.inspect(err)),
+            vim.log.levels.WARN
+          )
+        end)
+        return
+      end
+      local handle_body = function(body)
+        client:handle_body(body)
+      end
+      tcp:read_start(create_read_loop(handle_body, transport.terminate, function(read_err)
+        client:on_error(client_errors.READ_ERROR, read_err)
+      end))
+    end)
+
+    return public_client(client)
+  end
+end
+
 --- Starts an LSP server process and create an LSP RPC client object to
 --- interact with it. Communication with the server is currently limited to stdio.
 ---
@@ -593,30 +671,8 @@ local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   if extra_spawn_params and extra_spawn_params.cwd then
     assert(is_dir(extra_spawn_params.cwd), 'cwd must be a directory')
   end
-  if dispatchers then
-    local user_dispatchers = dispatchers
-    dispatchers = {}
-    for dispatch_name, default_dispatch in pairs(default_dispatchers) do
-      local user_dispatcher = user_dispatchers[dispatch_name]
-      if user_dispatcher then
-        if type(user_dispatcher) ~= 'function' then
-          error(string.format('dispatcher.%s must be a function', dispatch_name))
-        end
-        -- server_request is wrapped elsewhere.
-        if
-          not (dispatch_name == 'server_request' or dispatch_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
-        then
-          user_dispatcher = schedule_wrap(user_dispatcher)
-        end
-        dispatchers[dispatch_name] = user_dispatcher
-      else
-        dispatchers[dispatch_name] = default_dispatch
-      end
-    end
-  else
-    dispatchers = default_dispatchers
-  end
 
+  dispatchers = merge_dispatchers(dispatchers)
   local stdin = uv.new_pipe(false)
   local stdout = uv.new_pipe(false)
   local stderr = uv.new_pipe(false)
@@ -693,8 +749,10 @@ end
 
 return {
   start = start,
+  connect = connect,
   rpc_response_error = rpc_response_error,
   format_rpc_error = format_rpc_error,
   client_errors = client_errors,
+  create_read_loop = create_read_loop,
 }
 -- vim:sw=2 ts=2 et
