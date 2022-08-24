@@ -9771,7 +9771,7 @@ static void f_winheight(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (wp == NULL) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = wp->w_height;
+    rettv->vval.v_number = wp->w_height_inner;
   }
 }
 
@@ -9909,7 +9909,7 @@ static void f_winwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (wp == NULL) {
     rettv->vval.v_number = -1;
   } else {
-    rettv->vval.v_number = wp->w_width;
+    rettv->vval.v_number = wp->w_width_inner;
   }
 }
 
