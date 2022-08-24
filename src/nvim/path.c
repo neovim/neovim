@@ -663,7 +663,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   // Now we have one wildcard component between "s" and "e".
   /* Remove backslashes between "wildoff" and the start of the wildcard
    * component. */
-  for (p = buf + wildoff; p < s; ++p) {
+  for (p = buf + wildoff; p < s; p++) {
     if (rem_backslash(p)) {
       STRMOVE(p, p + 1);
       e--;
@@ -672,7 +672,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   }
 
   // Check for "**" between "s" and "e".
-  for (p = s; p < e; ++p) {
+  for (p = s; p < e; p++) {
     if (p[0] == '*' && p[1] == '*') {
       starstar = true;
     }

@@ -900,7 +900,7 @@ static int cs_find(exarg_T *eap)
    * Let's replace the NULs written by strtok() with spaces - we need the
    * spaces to correctly display the quickfix/location list window's title.
    */
-  for (int i = 0; i < eap_arg_len; ++i) {
+  for (int i = 0; i < eap_arg_len; i++) {
     if (NUL == eap->arg[i]) {
       eap->arg[i] = ' ';
     }
@@ -1838,7 +1838,7 @@ static void cs_release_csp(size_t i, bool freefnpp)
     // Can't use sigaction(), loop for two seconds.  First yield the CPU
     // to give cscope a chance to exit quickly.
     sleep(0);
-    for (waited = 0; waited < 40; ++waited) {
+    for (waited = 0; waited < 40; waited++) {
       pid = waitpid(csinfo[i].pid, &pstat, WNOHANG);
       waitpid_errno = errno;
       if (pid != 0) {

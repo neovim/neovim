@@ -107,7 +107,7 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars, c
     if (vim_strchr((char *)esc_chars, *p) != NULL || (bsl && rem_backslash(p))) {
       length++;                         // count a backslash
     }
-    ++length;                           // count an ordinary char
+    length++;                           // count an ordinary char
   }
 
   char_u *escaped_string = xmalloc(length);
@@ -222,13 +222,13 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
     }
     if ((*p == '\n' && (csh_like || do_newline))
         || (*p == '!' && (csh_like || do_special))) {
-      ++length;                         // insert backslash
+      length++;                         // insert backslash
       if (csh_like && do_special) {
-        ++length;                       // insert backslash
+        length++;                       // insert backslash
       }
     }
     if (do_special && find_cmdline_var(p, &l) >= 0) {
-      ++length;                         // insert backslash
+      length++;                         // insert backslash
       p += l - 1;
     }
     if (*p == '\\' && fish_like) {
@@ -516,7 +516,7 @@ bool has_non_ascii(const char_u *s)
   const char_u *p;
 
   if (s != NULL) {
-    for (p = s; *p != NUL; ++p) {
+    for (p = s; *p != NUL; p++) {
       if (*p >= 128) {
         return true;
       }

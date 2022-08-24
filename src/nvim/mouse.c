@@ -374,7 +374,7 @@ retnomove:
         if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)) {
           curwin->w_topfill++;
         } else {
-          --curwin->w_topline;
+          curwin->w_topline--;
           curwin->w_topfill = 0;
         }
       }

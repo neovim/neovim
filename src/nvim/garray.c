@@ -131,7 +131,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
         fnames[j - 1] = fnames[j];
       }
 
-      --gap->ga_len;
+      gap->ga_len--;
     }
   }
 }

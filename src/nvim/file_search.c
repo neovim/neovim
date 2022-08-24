@@ -1429,7 +1429,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
     ff_file_to_find = vim_strsave(NameBuff);
     if (options & FNAME_UNESC) {
       // Change all "\ " to " ".
-      for (ptr = ff_file_to_find; *ptr != NUL; ++ptr) {
+      for (ptr = ff_file_to_find; *ptr != NUL; ptr++) {
         if (ptr[0] == '\\' && ptr[1] == ' ') {
           memmove(ptr, ptr + 1, STRLEN(ptr));
         }
@@ -1466,7 +1466,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
 
       /* When FNAME_REL flag given first use the directory of the file.
        * Otherwise or when this fails use the current directory. */
-      for (int run = 1; run <= 2; ++run) {
+      for (int run = 1; run <= 2; run++) {
         size_t l = STRLEN(ff_file_to_find);
         if (run == 1
             && rel_to_curdir

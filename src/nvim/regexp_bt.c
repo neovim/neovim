@@ -4369,7 +4369,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         case BRACE_COMPLEX + 8:
         case BRACE_COMPLEX + 9:
           no = op - BRACE_COMPLEX;
-          ++brace_count[no];
+          brace_count[no]++;
 
           // If not matched enough times yet, try one more
           if (brace_count[no] <= (brace_min[no] <= brace_max[no]

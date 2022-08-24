@@ -420,7 +420,7 @@ void trunc_string(char *s, char *buf, int room_in, int buflen)
   half = room / 2;
 
   // First part: Start of the string.
-  for (e = 0; len < half && e < buflen; ++e) {
+  for (e = 0; len < half && e < buflen; e++) {
     if (s[e] == NUL) {
       // text fits without truncating!
       buf[e] = NUL;
@@ -1641,7 +1641,7 @@ void msg_make(char_u *arg)
   }
   if (i < 0) {
     msg_putchar('\n');
-    for (i = 0; rs[i]; ++i) {
+    for (i = 0; rs[i]; i++) {
       msg_putchar(rs[i] - 3);
     }
   }
@@ -2817,7 +2817,7 @@ static int do_more_prompt(int typed_char)
     // "g<": Find first line on the last page.
     mp_last = msg_sb_start(last_msgchunk);
     for (i = 0; i < Rows - 2 && mp_last != NULL
-         && mp_last->sb_prev != NULL; ++i) {
+         && mp_last->sb_prev != NULL; i++) {
       mp_last = msg_sb_start(mp_last->sb_prev);
     }
   }
@@ -2936,8 +2936,7 @@ static int do_more_prompt(int typed_char)
         }
 
         // go to start of line at top of the screen
-        for (i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL;
-             ++i) {
+        for (i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL; i++) {
           mp = msg_sb_start(mp->sb_prev);
         }
 

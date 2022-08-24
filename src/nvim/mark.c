@@ -704,12 +704,12 @@ void fmarks_check_names(buf_T *buf)
     return;
   }
 
-  for (i = 0; i < NGLOBALMARKS; ++i) {
+  for (i = 0; i < NGLOBALMARKS; i++) {
     fmarks_check_one(&namedfm[i], name, buf);
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    for (i = 0; i < wp->w_jumplistlen; ++i) {
+    for (i = 0; i < wp->w_jumplistlen; i++) {
       fmarks_check_one(&wp->w_jumplist[i], name, buf);
     }
   }
@@ -848,10 +848,10 @@ void ex_marks(exarg_T *eap)
   }
 
   show_one_mark('\'', arg, &curwin->w_pcmark, NULL, true);
-  for (i = 0; i < NMARKS; ++i) {
+  for (i = 0; i < NMARKS; i++) {
     show_one_mark(i + 'a', arg, &curbuf->b_namedm[i].mark, NULL, true);
   }
-  for (i = 0; i < NGLOBALMARKS; ++i) {
+  for (i = 0; i < NGLOBALMARKS; i++) {
     if (namedfm[i].fmark.fnum != 0) {
       name = fm_getname(&namedfm[i].fmark, 15);
     } else {
@@ -975,7 +975,7 @@ void ex_delmarks(exarg_T *eap)
           from = to = *p;
         }
 
-        for (i = from; i <= to; ++i) {
+        for (i = from; i <= to; i++) {
           if (lower) {
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
           } else {
@@ -1027,7 +1027,7 @@ void ex_jumps(exarg_T *eap)
   cleanup_jumplist(curwin, true);
   // Highlight title
   msg_puts_title(_("\n jump line  col file/text"));
-  for (i = 0; i < curwin->w_jumplistlen && !got_int; ++i) {
+  for (i = 0; i < curwin->w_jumplistlen && !got_int; i++) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
       name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
 
@@ -1083,7 +1083,7 @@ void ex_changes(exarg_T *eap)
   // Highlight title
   msg_puts_title(_("\nchange line  col text"));
 
-  for (i = 0; i < curbuf->b_changelistlen && !got_int; ++i) {
+  for (i = 0; i < curbuf->b_changelistlen && !got_int; i++) {
     if (curbuf->b_changelist[i].mark.lnum != 0) {
       msg_putchar('\n');
       if (got_int) {
@@ -1391,7 +1391,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long c
    */
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     // marks in the jumplist
-    for (i = 0; i < win->w_jumplistlen; ++i) {
+    for (i = 0; i < win->w_jumplistlen; i++) {
       if (win->w_jumplist[i].fmark.fnum == fnum) {
         COL_ADJUST(&(win->w_jumplist[i].fmark.mark));
       }
@@ -1493,7 +1493,7 @@ void copy_jumplist(win_T *from, win_T *to)
 {
   int i;
 
-  for (i = 0; i < from->w_jumplistlen; ++i) {
+  for (i = 0; i < from->w_jumplistlen; i++) {
     to->w_jumplist[i] = from->w_jumplist[i];
     if (from->w_jumplist[i].fname != NULL) {
       to->w_jumplist[i].fname = xstrdup(from->w_jumplist[i].fname);
@@ -1717,7 +1717,7 @@ void free_jumplist(win_T *wp)
 {
   int i;
 
-  for (i = 0; i < wp->w_jumplistlen; ++i) {
+  for (i = 0; i < wp->w_jumplistlen; i++) {
     free_xfmark(wp->w_jumplist[i]);
   }
   wp->w_jumplistlen = 0;

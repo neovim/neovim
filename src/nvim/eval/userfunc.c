@@ -852,7 +852,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     saveRedobuff(&save_redo);
     did_save_redo = true;
   }
-  ++fp->uf_calls;
+  fp->uf_calls++;
   // check for CTRL-C hit
   line_breakcheck();
   // prepare the funccall_T structure
@@ -893,7 +893,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     v->di_tv.v_type = VAR_DICT;
     v->di_tv.v_lock = VAR_UNLOCKED;
     v->di_tv.vval.v_dict = selfdict;
-    ++selfdict->dv_refcount;
+    selfdict->dv_refcount++;
   }
 
   // Init a: variables, unless none found (in lambda).
@@ -1071,7 +1071,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
         || (fc->caller != NULL && fc->caller->func->uf_profiling));
 
   if (func_or_func_caller_profiling) {
-    ++fp->uf_tm_count;
+    fp->uf_tm_count++;
     call_start = profile_start();
     fp->uf_tm_children = profile_zero();
   }
@@ -1929,7 +1929,7 @@ void ex_function(exarg_T *eap)
   if (ends_excmd(*eap->arg)) {
     if (!eap->skip) {
       todo = (int)func_hashtab.ht_used;
-      for (hi = func_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
+      for (hi = func_hashtab.ht_array; todo > 0 && !got_int; hi++) {
         if (!HASHITEM_EMPTY(hi)) {
           todo--;
           fp = HI2UF(hi);
@@ -1962,7 +1962,7 @@ void ex_function(exarg_T *eap)
         regmatch.rm_ic = p_ic;
 
         todo = (int)func_hashtab.ht_used;
-        for (hi = func_hashtab.ht_array; todo > 0 && !got_int; ++hi) {
+        for (hi = func_hashtab.ht_array; todo > 0 && !got_int; hi++) {
           if (!HASHITEM_EMPTY(hi)) {
             todo--;
             fp = HI2UF(hi);

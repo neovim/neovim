@@ -1013,7 +1013,7 @@ void draw_tabline(void)
 
       modified = false;
 
-      for (wincount = 0; wp != NULL; wp = wp->w_next, ++wincount) {
+      for (wincount = 0; wp != NULL; wp = wp->w_next, wincount++) {
         if (bufIsChanged(wp->w_buffer)) {
           modified = true;
         }
