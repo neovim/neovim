@@ -1990,6 +1990,22 @@ describe('builtin popupmenu', function()
       efine unplace^                   |
     ]])
 
+    -- Pressing <Left> after that should move the cursor
+    feed('<Left>')
+    screen:expect([[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {4:                                }|
+      :sign define jump list place und|
+      efine unplac^e                   |
+    ]])
+    feed('<End>')
+
     -- Pressing <C-D> when the popup menu is displayed should remove the popup
     -- menu
     feed('<C-U>sign <Tab><C-D>')
