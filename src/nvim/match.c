@@ -859,7 +859,7 @@ static int matchadd_dict_arg(typval_T *tv, const char **conceal_char, win_T **wi
 }
 
 /// "clearmatches()" function
-void f_clearmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_clearmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   win_T *win = get_optional_window(argvars, 0);
 
@@ -869,7 +869,7 @@ void f_clearmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "getmatches()" function
-void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   matchitem_T *cur;
   int i;
@@ -924,7 +924,7 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "setmatches()" function
-void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   dict_T *d;
   list_T *s = NULL;
@@ -1027,7 +1027,7 @@ void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "matchadd()" function
-void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_matchadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char grpbuf[NUMBUFLEN];
   char patbuf[NUMBUFLEN];
@@ -1069,7 +1069,7 @@ void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "matchaddpo()" function
-void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_matchaddpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = -1;
 
@@ -1120,7 +1120,7 @@ void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "matcharg()" function
-void f_matcharg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_matcharg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const int id = (int)tv_get_number(&argvars[0]);
 
@@ -1143,7 +1143,7 @@ void f_matcharg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "matchdelete()" function
-void f_matchdelete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_matchdelete(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   win_T *win = get_optional_window(argvars, 1);
   if (win == NULL) {

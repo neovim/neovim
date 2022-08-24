@@ -887,12 +887,12 @@ static bool check_autocmd_string_array(Array arr, char *k, Error *err)
 static bool unpack_string_or_array(Array *array, Object *v, char *k, bool required, Error *err)
 {
   if (v->type == kObjectTypeString) {
-    ADD(*array, copy_object(*v));
+    ADD(*array, copy_object(*v, NULL));
   } else if (v->type == kObjectTypeArray) {
     if (!check_autocmd_string_array(v->data.array, k, err)) {
       return false;
     }
-    *array = copy_array(v->data.array);
+    *array = copy_array(v->data.array, NULL);
   } else {
     if (required) {
       api_set_error(err,

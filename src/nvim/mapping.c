@@ -1967,7 +1967,7 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod, int abbr, mapb
 }
 
 /// "hasmapto()" function
-void f_hasmapto(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *mode;
   const char *const name = tv_get_string(&argvars[0]);
@@ -2127,7 +2127,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 }
 
 /// "mapset()" function
-void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char buf[NUMBUFLEN];
   const char *which = tv_get_string_buf_chk(&argvars[0], buf);
@@ -2195,13 +2195,13 @@ void f_mapset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "maparg()" function
-void f_maparg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_maparg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   get_maparg(argvars, rettv, true);
 }
 
 /// "mapcheck()" function
-void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_mapcheck(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   get_maparg(argvars, rettv, false);
 }

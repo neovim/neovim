@@ -4637,7 +4637,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
 }
 
 // "searchcount()" function
-void f_searchcount(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   pos_T pos = curwin->w_cursor;
   char_u *pattern = NULL;
@@ -5287,13 +5287,13 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
 }
 
 /// "matchfuzzy()" function
-void f_matchfuzzy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_matchfuzzy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   do_fuzzymatch(argvars, rettv, false);
 }
 
 /// "matchfuzzypos()" function
-void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   do_fuzzymatch(argvars, rettv, true);
 }

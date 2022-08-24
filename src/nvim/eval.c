@@ -4968,7 +4968,7 @@ theend:
   return retval;
 }
 
-void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref, FunPtr fptr)
+void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
 {
   char *s;
   char *name;

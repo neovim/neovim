@@ -345,7 +345,7 @@ Dictionary ctx_to_dict(Context *ctx)
   PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
   PUT(rv, "bufs", ARRAY_OBJ(sbuf_to_array(ctx->bufs)));
   PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
-  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
+  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs, NULL)));
 
   return rv;
 }
@@ -381,7 +381,7 @@ int ctx_from_dict(Dictionary dict, Context *ctx)
       ctx->gvars = array_to_sbuf(item.value.data.array);
     } else if (strequal(item.key.data, "funcs")) {
       types |= kCtxFuncs;
-      ctx->funcs = copy_object(item.value).data.array;
+      ctx->funcs = copy_object(item.value, NULL).data.array;
     }
   }
 

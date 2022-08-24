@@ -194,9 +194,9 @@ static void ui_bridge_suspend_event(void **argv)
 
 static void ui_bridge_option_set(UI *ui, String name, Object value)
 {
-  String copy_name = copy_string(name);
+  String copy_name = copy_string(name, NULL);
   Object *copy_value = xmalloc(sizeof(Object));
-  *copy_value = copy_object(value);
+  *copy_value = copy_object(value, NULL);
   UI_BRIDGE_CALL(ui, option_set, 4, ui, copy_name.data,
                  INT2PTR(copy_name.size), copy_value);
   // TODO(bfredl): when/if TUI/bridge teardown is refactored to use events, the

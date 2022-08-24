@@ -181,13 +181,11 @@ void unpacker_init(Unpacker *p)
   p->unpack_error = (Error)ERROR_INIT;
 
   p->arena = (Arena)ARENA_EMPTY;
-  p->reuse_blk = NULL;
 }
 
 void unpacker_teardown(Unpacker *p)
 {
-  arena_mem_free(p->reuse_blk, NULL);
-  arena_mem_free(arena_finish(&p->arena), NULL);
+  arena_mem_free(arena_finish(&p->arena));
 }
 
 bool unpacker_parse_header(Unpacker *p)
@@ -308,7 +306,7 @@ bool unpacker_advance(Unpacker *p)
       p->state = 10;
     } else {
       p->state = p->type == kMessageTypeResponse ? 1 : 2;
-      arena_start(&p->arena, &p->reuse_blk);
+      p->arena = (Arena)ARENA_EMPTY;
     }
   }
 
@@ -322,7 +320,7 @@ bool unpacker_advance(Unpacker *p)
       goto done;
     } else {
       // unpack other ui events using mpack_parse()
-      arena_start(&p->arena, &p->reuse_blk);
+      p->arena = (Arena)ARENA_EMPTY;
     }
   }
 
@@ -416,13 +414,13 @@ redo:
     if (p->ui_handler.fn != ui_client_event_grid_line) {
       p->state = 12;
       if (p->grid_line_event) {
-        arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+        arena_mem_free(arena_finish(&p->arena));
         p->grid_line_event = NULL;
       }
       return true;
     } else {
       p->state = 13;
-      arena_start(&p->arena, &p->reuse_blk);
+      p->arena = (Arena)ARENA_EMPTY;
       p->grid_line_event = arena_alloc(&p->arena, sizeof *p->grid_line_event, true);
       g = p->grid_line_event;
     }

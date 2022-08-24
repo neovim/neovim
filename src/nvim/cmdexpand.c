@@ -2751,7 +2751,7 @@ void wildmenu_cleanup(CmdlineInfo *cclp)
 }
 
 /// "getcompletion()" function
-void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char_u *pat;
   expand_T xpc;

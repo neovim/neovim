@@ -26,6 +26,7 @@ local c_id = (
 local c_void = P('void')
 local c_param_type = (
   ((P('Error') * fill * P('*') * fill) * Cc('error')) +
+  ((P('Arena') * fill * P('*') * fill) * Cc('arena')) +
   C((P('const ') ^ -1) * (c_id) * (ws ^ 1) * P('*')) +
   (C(c_id) * (ws ^ 1))
   )

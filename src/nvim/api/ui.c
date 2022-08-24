@@ -965,7 +965,7 @@ static Array translate_contents(UI *ui, Array contents)
     } else {
       ADD(new_item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
     }
-    ADD(new_item, copy_object(item.items[1]));
+    ADD(new_item, copy_object(item.items[1], NULL));
     ADD(new_contents, ARRAY_OBJ(new_item));
   }
   return new_contents;
@@ -978,7 +978,7 @@ static Array translate_firstarg(UI *ui, Array args)
 
   ADD(new_args, ARRAY_OBJ(translate_contents(ui, contents)));
   for (size_t i = 1; i < args.size; i++) {
-    ADD(new_args, copy_object(args.items[i]));
+    ADD(new_args, copy_object(args.items[i], NULL));
   }
   return new_args;
 }
@@ -1024,7 +1024,7 @@ static void remote_ui_event(UI *ui, char *name, Array args)
         Array items = args.items[0].data.array;
         Array new_items = ARRAY_DICT_INIT;
         for (size_t i = 0; i < items.size; i++) {
-          ADD(new_items, copy_object(items.items[i].data.array.items[0]));
+          ADD(new_items, copy_object(items.items[i].data.array.items[0], NULL));
         }
         ADD_C(new_args, ARRAY_OBJ(new_items));
         push_call(ui, "wildmenu_show", new_args);

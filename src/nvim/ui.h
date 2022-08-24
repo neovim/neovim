@@ -47,8 +47,6 @@ enum {
 
 typedef int LineFlags;
 
-EXTERN ArenaMem ui_ext_fixblk INIT(= NULL);
-
 struct ui_t {
   bool rgb;
   bool override;  ///< Force highest-requested UI capabilities.

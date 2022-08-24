@@ -801,7 +801,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
 
         prefix = '%s(' % name
         suffix = '%s)' % ', '.join('{%s}' % a[1] for a in params
-                                   if a[0] not in ('void', 'Error'))
+                                   if a[0] not in ('void', 'Error', 'Arena'))
 
         if not fmt_vimhelp:
             c_decl = '%s %s(%s);' % (return_type, name, ', '.join(c_args))

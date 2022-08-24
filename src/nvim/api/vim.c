@@ -1479,14 +1479,14 @@ void nvim_del_keymap(uint64_t channel_id, String mode, String lhs, Error *err)
 /// 1 is the |api-metadata| map (Dictionary).
 ///
 /// @returns 2-tuple [{channel-id}, {api-metadata}]
-Array nvim_get_api_info(uint64_t channel_id)
+Array nvim_get_api_info(uint64_t channel_id, Arena *arena)
   FUNC_API_SINCE(1) FUNC_API_FAST FUNC_API_REMOTE_ONLY
 {
-  Array rv = ARRAY_DICT_INIT;
+  Array rv = arena_array(arena, 2);
 
   assert(channel_id <= INT64_MAX);
-  ADD(rv, INTEGER_OBJ((int64_t)channel_id));
-  ADD(rv, DICTIONARY_OBJ(api_metadata()));
+  ADD_C(rv, INTEGER_OBJ((int64_t)channel_id));
+  ADD_C(rv, DICTIONARY_OBJ(api_metadata()));
 
   return rv;
 }
@@ -1545,9 +1545,9 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
   Dictionary info = ARRAY_DICT_INIT;
-  PUT(info, "name", copy_object(STRING_OBJ(name)));
+  PUT(info, "name", copy_object(STRING_OBJ(name), NULL));
 
-  version = copy_dictionary(version);
+  version = copy_dictionary(version, NULL);
   bool has_major = false;
   for (size_t i = 0; i < version.size; i++) {
     if (strequal(version.items[i].key.data, "major")) {
@@ -1560,9 +1560,9 @@ void nvim_set_client_info(uint64_t channel_id, String name, Dictionary version, 
   }
   PUT(info, "version", DICTIONARY_OBJ(version));
 
-  PUT(info, "type", copy_object(STRING_OBJ(type)));
-  PUT(info, "methods", DICTIONARY_OBJ(copy_dictionary(methods)));
-  PUT(info, "attributes", DICTIONARY_OBJ(copy_dictionary(attributes)));
+  PUT(info, "type", copy_object(STRING_OBJ(type), NULL));
+  PUT(info, "methods", DICTIONARY_OBJ(copy_dictionary(methods, NULL)));
+  PUT(info, "attributes", DICTIONARY_OBJ(copy_dictionary(attributes, NULL)));
 
   rpc_set_client_info(channel_id, info);
 }
@@ -1629,11 +1629,11 @@ Array nvim_list_chans(void)
 /// an error, it is a three-element array with the zero-based index of the call
 /// which resulted in an error, the error type and the error message. If an
 /// error occurred, the values from all preceding calls will still be returned.
-Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
+Array nvim_call_atomic(uint64_t channel_id, Array calls, Arena *arena, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
-  Array rv = ARRAY_DICT_INIT;
-  Array results = ARRAY_DICT_INIT;
+  Array rv = arena_array(arena, 2);
+  Array results = arena_array(arena, calls.size);
   Error nested_error = ERROR_INIT;
 
   size_t i;  // also used for freeing the variables
@@ -1642,21 +1642,21 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
       api_set_error(err,
                     kErrorTypeValidation,
                     "Items in calls array must be arrays");
-      goto validation_error;
+      goto theend;
     }
     Array call = calls.items[i].data.array;
     if (call.size != 2) {
       api_set_error(err,
                     kErrorTypeValidation,
                     "Items in calls array must be arrays of size 2");
-      goto validation_error;
+      goto theend;
     }
 
     if (call.items[0].type != kObjectTypeString) {
       api_set_error(err,
                     kErrorTypeValidation,
                     "Name must be String");
-      goto validation_error;
+      goto theend;
     }
     String name = call.items[0].data.string;
 
@@ -1664,7 +1664,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
       api_set_error(err,
                     kErrorTypeValidation,
                     "Args must be Array");
-      goto validation_error;
+      goto theend;
     }
     Array args = call.items[1].data.array;
 
@@ -1676,29 +1676,32 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     if (ERROR_SET(&nested_error)) {
       break;
     }
-    Object result = handler.fn(channel_id, args, &nested_error);
+
+    Object result = handler.fn(channel_id, args, arena, &nested_error);
     if (ERROR_SET(&nested_error)) {
       // error handled after loop
       break;
     }
-
-    ADD(results, result);
+    // TODO(bfredl): wastefull copy. It could be avoided to encoding to msgpack
+    // directly here. But `result` might become invalid when next api function
+    // is called in the loop.
+    ADD_C(results, copy_object(result, arena));
+    if (!handler.arena_return) {
+      api_free_object(result);
+    }
   }
 
-  ADD(rv, ARRAY_OBJ(results));
+  ADD_C(rv, ARRAY_OBJ(results));
   if (ERROR_SET(&nested_error)) {
-    Array errval = ARRAY_DICT_INIT;
-    ADD(errval, INTEGER_OBJ((Integer)i));
-    ADD(errval, INTEGER_OBJ(nested_error.type));
-    ADD(errval, STRING_OBJ(cstr_to_string(nested_error.msg)));
-    ADD(rv, ARRAY_OBJ(errval));
+    Array errval = arena_array(arena, 3);
+    ADD_C(errval, INTEGER_OBJ((Integer)i));
+    ADD_C(errval, INTEGER_OBJ(nested_error.type));
+    ADD_C(errval, STRING_OBJ(copy_string(cstr_as_string(nested_error.msg), arena)));
+    ADD_C(rv, ARRAY_OBJ(errval));
   } else {
-    ADD(rv, NIL);
+    ADD_C(rv, NIL);
   }
-  goto theend;
 
-validation_error:
-  api_free_array(results);
 theend:
   api_clear_error(&nested_error);
   return rv;
@@ -1751,7 +1754,7 @@ static void write_msg(String message, bool to_err)
 /// @return its argument.
 Object nvim__id(Object obj)
 {
-  return copy_object(obj);
+  return copy_object(obj, NULL);
 }
 
 /// Returns array given as argument.
@@ -1764,7 +1767,7 @@ Object nvim__id(Object obj)
 /// @return its argument.
 Array nvim__id_array(Array arr)
 {
-  return copy_object(ARRAY_OBJ(arr)).data.array;
+  return copy_array(arr, NULL);
 }
 
 /// Returns dictionary given as argument.
@@ -1777,7 +1780,7 @@ Array nvim__id_array(Array arr)
 /// @return its argument.
 Dictionary nvim__id_dictionary(Dictionary dct)
 {
-  return copy_object(DICTIONARY_OBJ(dct)).data.dictionary;
+  return copy_dictionary(dct, NULL);
 }
 
 /// Returns floating-point value given as argument.
@@ -1803,6 +1806,7 @@ Dictionary nvim__stats(void)
   PUT(rv, "log_skip", INTEGER_OBJ(g_stats.log_skip));
   PUT(rv, "lua_refcount", INTEGER_OBJ(nlua_get_global_ref_count()));
   PUT(rv, "redraw", INTEGER_OBJ(g_stats.redraw));
+  PUT(rv, "arena_alloc_count", INTEGER_OBJ((Integer)arena_alloc_count));
   return rv;
 }
 

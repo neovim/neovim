@@ -1086,7 +1086,7 @@ void ex_messages(void *const eap_p)
             HlMessageChunk chunk = kv_A(p->multiattr, i);
             Array content_entry = ARRAY_DICT_INIT;
             ADD(content_entry, INTEGER_OBJ(chunk.attr));
-            ADD(content_entry, STRING_OBJ(copy_string(chunk.text)));
+            ADD(content_entry, STRING_OBJ(copy_string(chunk.text, NULL)));
             ADD(content, ARRAY_OBJ(content_entry));
           }
         } else if (p->msg && p->msg[0]) {

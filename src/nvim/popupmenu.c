@@ -156,7 +156,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     if (pum_external) {
       if (array_changed) {
         Arena arena = ARENA_EMPTY;
-        arena_start(&arena, &ui_ext_fixblk);
         Array arr = arena_array(&arena, (size_t)size);
         for (int i = 0; i < size; i++) {
           Array item = arena_array(&arena, 4);
@@ -168,7 +167,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
         }
         ui_call_popupmenu_show(arr, selected, pum_win_row, cursor_col,
                                pum_anchor_grid);
-        arena_mem_free(arena_finish(&arena), &ui_ext_fixblk);
+        arena_mem_free(arena_finish(&arena));
       } else {
         ui_call_popupmenu_select(selected);
         return;

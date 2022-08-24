@@ -1303,7 +1303,7 @@ void free_highlight(void)
 {
   ga_clear(&highlight_ga);
   map_destroy(cstr_t, int)(&highlight_unames);
-  arena_mem_free(arena_finish(&highlight_arena), NULL);
+  arena_mem_free(arena_finish(&highlight_arena));
 }
 
 #endif

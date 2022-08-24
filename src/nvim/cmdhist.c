@@ -494,7 +494,7 @@ static int del_history_idx(int histype, int idx)
 }
 
 /// "histadd()" function
-void f_histadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_histadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   HistoryType histype;
 
@@ -517,7 +517,7 @@ void f_histadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "histdel()" function
-void f_histdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_histdel(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int n;
   const char *const str = tv_get_string_chk(&argvars[0]);  // NULL on type error
@@ -540,7 +540,7 @@ void f_histdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "histget()" function
-void f_histget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_histget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   HistoryType type;
   int idx;
@@ -562,7 +562,7 @@ void f_histget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "histnr()" function
-void f_histnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_histnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *const histname = tv_get_string_chk(&argvars[0]);
   HistoryType i = histname == NULL

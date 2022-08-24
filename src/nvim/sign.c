@@ -1964,7 +1964,7 @@ static void sign_define_multiple(list_T *l, list_T *retlist)
 }
 
 /// "sign_define()" function
-void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_define(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *name;
 
@@ -1995,7 +1995,7 @@ void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_getdefined()" function
-void f_sign_getdefined(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_getdefined(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *name = NULL;
 
@@ -2009,7 +2009,7 @@ void f_sign_getdefined(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_getplaced()" function
-void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_getplaced(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   buf_T *buf = NULL;
   dict_T *dict;
@@ -2067,7 +2067,7 @@ void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_jump()" function
-void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_jump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int sign_id;
   char *sign_group = NULL;
@@ -2225,7 +2225,7 @@ cleanup:
 }
 
 /// "sign_place()" function
-void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_place(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   dict_T *dict = NULL;
 
@@ -2243,7 +2243,7 @@ void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_placelist()" function.  Place multiple signs.
-void f_sign_placelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_placelist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int sign_id;
 
@@ -2283,7 +2283,7 @@ static void sign_undefine_multiple(list_T *l, list_T *retlist)
 }
 
 /// "sign_undefine()" function
-void f_sign_undefine(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_undefine(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *name;
 
@@ -2373,7 +2373,7 @@ cleanup:
 }
 
 /// "sign_unplace()" function
-void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_unplace(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   dict_T *dict = NULL;
 
@@ -2396,7 +2396,7 @@ void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "sign_unplacelist()" function
-void f_sign_unplacelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sign_unplacelist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int retval;
 

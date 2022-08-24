@@ -2748,7 +2748,7 @@ static int tv_nr_compare(const void *a1, const void *a2)
 }
 
 /// "setcellwidths()" function
-void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
     emsg(_(e_listreq));
@@ -2860,7 +2860,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   redraw_all_later(UPD_NOT_VALID);
 }
 
-void f_charclass(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_charclass(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (tv_check_for_string(&argvars[0]) == FAIL
       || argvars[0].vval.v_string == NULL) {

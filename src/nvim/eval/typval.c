@@ -831,7 +831,7 @@ int tv_list_join(garray_T *const gap, list_T *const l, const char *const sep)
 }
 
 /// "join()" function
-void f_join(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_join(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (argvars[0].v_type != VAR_LIST) {
     emsg(_(e_listreq));
@@ -855,7 +855,7 @@ void f_join(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "list2str()" function
-void f_list2str(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_list2str(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   garray_T ga;
 
@@ -1267,13 +1267,13 @@ theend:
 }
 
 /// "sort"({list})" function
-void f_sort(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_sort(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   do_sort_uniq(argvars, rettv, true);
 }
 
 /// "uniq({list})" function
-void f_uniq(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_uniq(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   do_sort_uniq(argvars, rettv, false);
 }
@@ -2806,25 +2806,25 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
 }
 
 /// "items(dict)" function
-void f_items(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_items(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_dict_list(argvars, rettv, 2);
 }
 
 /// "keys()" function
-void f_keys(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_keys(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_dict_list(argvars, rettv, 0);
 }
 
 /// "values(dict)" function
-void f_values(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_values(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_dict_list(argvars, rettv, 1);
 }
 
 /// "has_key()" function
-void f_has_key(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_has_key(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
     emsg(_(e_dictreq));

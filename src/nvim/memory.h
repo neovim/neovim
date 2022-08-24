@@ -6,6 +6,8 @@
 #include <stdint.h>  // for uint8_t
 #include <time.h>  // for time_t
 
+#include "nvim/macros.h"
+
 /// `malloc()` function signature
 typedef void *(*MemMalloc)(size_t);
 
@@ -37,6 +39,8 @@ extern MemRealloc mem_realloc;
 extern bool entered_free_all_mem;
 #endif
 
+EXTERN size_t arena_alloc_count INIT(=0);
+
 typedef struct consumed_blk {
   struct consumed_blk *prev;
 } *ArenaMem;
@@ -48,7 +52,7 @@ typedef struct {
   size_t pos, size;
 } Arena;
 
-// inits an empty arena. use arena_start() to actually allocate space!
+// inits an empty arena.
 #define ARENA_EMPTY { .cur_blk = NULL, .pos = 0, .size = 0 }
 
 #define kv_fixsize_arena(a, v, s) \

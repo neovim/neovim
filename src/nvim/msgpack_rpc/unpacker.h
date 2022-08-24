@@ -32,8 +32,6 @@ struct Unpacker {
   Error unpack_error;
 
   Arena arena;
-  // one length free-list of reusable blocks
-  ArenaMem reuse_blk;
 
   int nevents;
   int ncalls;

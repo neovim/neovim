@@ -158,7 +158,7 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
     }
 
     // frame.result was allocated in an arena
-    arena_mem_free(frame.result_mem, &rpc->unpacker->reuse_blk);
+    arena_mem_free(frame.result_mem);
     frame.result_mem = NULL;
   }
 
@@ -244,7 +244,7 @@ static void parse_msgpack(Channel *channel)
         ui_client_event_raw_line(p->grid_line_event);
       } else if (p->ui_handler.fn != NULL && p->result.type == kObjectTypeArray) {
         p->ui_handler.fn(p->result.data.array);
-        arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+        arena_mem_free(arena_finish(&p->arena));
       }
     } else if (p->type == kMessageTypeResponse) {
       ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
@@ -295,7 +295,7 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
   if (!p->handler.fn) {
     send_error(channel, p->type, p->request_id, p->unpack_error.msg);
     api_clear_error(&p->unpack_error);
-    arena_mem_free(arena_finish(&p->arena), &p->reuse_blk);
+    arena_mem_free(arena_finish(&p->arena));
     return;
   }
 
@@ -304,7 +304,8 @@ static void handle_request(Channel *channel, Unpacker *p, Array args)
   evdata->channel = channel;
   evdata->handler = p->handler;
   evdata->args = args;
-  evdata->used_mem = arena_finish(&p->arena);
+  evdata->used_mem = p->arena;
+  p->arena = (Arena)ARENA_EMPTY;
   evdata->request_id = p->request_id;
   channel_incref(channel);
   if (p->handler.fast) {
@@ -344,7 +345,8 @@ static void request_event(void **argv)
     // channel was closed, abort any pending requests
     goto free_ret;
   }
-  Object result = handler.fn(channel->id, e->args, &error);
+
+  Object result = handler.fn(channel->id, e->args, &e->used_mem, &error);
   if (e->type == kMessageTypeRequest || ERROR_SET(&error)) {
     // Send the response.
     msgpack_packer response;
@@ -355,13 +357,14 @@ static void request_event(void **argv)
                                               &error,
                                               result,
                                               &out_buffer));
-  } else {
+  }
+  if (!handler.arena_return) {
     api_free_object(result);
   }
 
 free_ret:
-  // e->args is allocated in an arena
-  arena_mem_free(e->used_mem, &channel->rpc.unpacker->reuse_blk);
+  // e->args (and possibly result) are allocated in an arena
+  arena_mem_free(arena_finish(&e->used_mem));
   channel_decref(channel);
   xfree(e);
   api_clear_error(&error);
@@ -624,7 +627,6 @@ static WBuffer *serialize_response(uint64_t channel_id, MessageType type, uint32
                                    1,  // responses only go though 1 channel
                                    xfree);
   msgpack_sbuffer_clear(sbuffer);
-  api_free_object(arg);
   return rv;
 }
 
@@ -642,7 +644,7 @@ void rpc_set_client_info(uint64_t id, Dictionary info)
 
 Dictionary rpc_client_info(Channel *chan)
 {
-  return copy_dictionary(chan->rpc.info);
+  return copy_dictionary(chan->rpc.info, NULL);
 }
 
 const char *rpc_client_name(Channel *chan)

@@ -7169,14 +7169,14 @@ static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg, typval_T *
 }
 
 /// "getloclist()" function
-void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getloclist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   win_T *wp = find_win_by_nr_or_id(&argvars[0]);
   get_qf_loc_list(false, wp, &argvars[1], rettv);
 }
 
 /// "getqflist()" functions
-void f_getqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_getqflist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   get_qf_loc_list(true, NULL, &argvars[0], rettv);
 }
@@ -7263,7 +7263,7 @@ skip_args:
 }
 
 /// "setloclist()" function
-void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setloclist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->vval.v_number = -1;
 
@@ -7274,7 +7274,7 @@ void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// "setqflist()" function
-void f_setqflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+void f_setqflist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   set_qf_ll_list(NULL, argvars, rettv);
 }
