@@ -502,17 +502,18 @@ bool ins_compl_accept_char(int c)
 }
 
 /// Get the completed text by inferring the case of the originally typed text.
-static char_u *ins_compl_infercase_gettext(char_u *str, int actual_len, int actual_compl_length,
-                                           int min_len)
+/// If the result is in allocated memory "tofree" is set to it.
+static char_u *ins_compl_infercase_gettext(char_u *str, int char_len, int compl_char_len,
+                                           int min_len, char **tofree)
 {
   bool has_lower = false;
   bool was_letter = false;
 
   // Allocate wide character array for the completion and fill it.
-  int *const wca = xmalloc((size_t)actual_len * sizeof(*wca));
+  int *const wca = xmalloc((size_t)char_len * sizeof(*wca));
   {
     const char_u *p = str;
-    for (int i = 0; i < actual_len; i++) {
+    for (int i = 0; i < char_len; i++) {
       wca[i] = mb_ptr2char_adv(&p);
     }
   }
@@ -526,7 +527,7 @@ static char_u *ins_compl_infercase_gettext(char_u *str, int actual_len, int actu
         has_lower = true;
         if (mb_isupper(wca[i])) {
           // Rule 1 is satisfied.
-          for (i = actual_compl_length; i < actual_len; i++) {
+          for (i = compl_char_len; i < char_len; i++) {
             wca[i] = mb_tolower(wca[i]);
           }
           break;
@@ -543,7 +544,7 @@ static char_u *ins_compl_infercase_gettext(char_u *str, int actual_len, int actu
       const int c = mb_ptr2char_adv(&p);
       if (was_letter && mb_isupper(c) && mb_islower(wca[i])) {
         // Rule 2 is satisfied.
-        for (i = actual_compl_length; i < actual_len; i++) {
+        for (i = compl_char_len; i < char_len; i++) {
           wca[i] = mb_toupper(wca[i]);
         }
         break;
@@ -566,20 +567,36 @@ static char_u *ins_compl_infercase_gettext(char_u *str, int actual_len, int actu
   }
 
   // Generate encoding specific output from wide character array.
-  // Multi-byte characters can occupy up to five bytes more than
-  // ASCII characters, and we also need one byte for NUL, so stay
-  // six bytes away from the edge of IObuff.
-  {
-    char_u *p = IObuff;
-    int i = 0;
-    while (i < actual_len && (p - IObuff + 6) < IOSIZE) {
-      p += utf_char2bytes(wca[i++], (char *)p);
+  garray_T gap;
+  char *p = (char *)IObuff;
+  int i = 0;
+  ga_init(&gap, 1, 500);
+  while (i < char_len) {
+    if (gap.ga_data != NULL) {
+      ga_grow(&gap, 10);
+      p = (char *)gap.ga_data + gap.ga_len;
+      gap.ga_len += utf_char2bytes(wca[i++], p);
+    } else if ((p - (char *)IObuff) + 6 >= IOSIZE) {
+      // Multi-byte characters can occupy up to five bytes more than
+      // ASCII characters, and we also need one byte for NUL, so when
+      // getting to six bytes from the edge of IObuff switch to using a
+      // growarray.  Add the character in the next round.
+      ga_grow(&gap, IOSIZE);
+      *p = NUL;
+      STRCPY(gap.ga_data, IObuff);
+      gap.ga_len = (int)STRLEN(IObuff);
+    } else {
+      p += utf_char2bytes(wca[i++], p);
     }
-    *p = NUL;
   }
-
   xfree(wca);
 
+  if (gap.ga_data != NULL) {
+    *tofree = gap.ga_data;
+    return gap.ga_data;
+  }
+
+  *p = NUL;
   return IObuff;
 }
 
@@ -594,10 +611,10 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *str = str_arg;
-  int actual_len;                       // Take multi-byte characters
-  int actual_compl_length;              // into account.
-  int min_len;
+  int char_len;  // count multi-byte characters
+  int compl_char_len;
   int flags = 0;
+  char *tofree = NULL;
 
   if (p_ic && curbuf->b_p_inf && len > 0) {
     // Infer case of completed part.
@@ -605,29 +622,28 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     // Find actual length of completion.
     {
       const char_u *p = str;
-      actual_len = 0;
+      char_len = 0;
       while (*p != NUL) {
         MB_PTR_ADV(p);
-        actual_len++;
+        char_len++;
       }
     }
 
     // Find actual length of original text.
     {
       const char_u *p = compl_orig_text;
-      actual_compl_length = 0;
+      compl_char_len = 0;
       while (*p != NUL) {
         MB_PTR_ADV(p);
-        actual_compl_length++;
+        compl_char_len++;
       }
     }
 
-    // "actual_len" may be smaller than "actual_compl_length" when using
+    // "char_len" may be smaller than "compl_char_len" when using
     // thesaurus, only use the minimum when comparing.
-    min_len = actual_len < actual_compl_length
-              ? actual_len : actual_compl_length;
+    int min_len = char_len < compl_char_len ? char_len : compl_char_len;
 
-    str = ins_compl_infercase_gettext(str, actual_len, actual_compl_length, min_len);
+    str = ins_compl_infercase_gettext(str, char_len, compl_char_len, min_len, &tofree);
   }
   if (cont_s_ipos) {
     flags |= CP_CONT_S_IPOS;
@@ -636,7 +652,9 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
     flags |= CP_ICASE;
   }
 
-  return ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false);
+  int res = ins_compl_add(str, len, fname, NULL, false, NULL, dir, flags, false);
+  xfree(tofree);
+  return res;
 }
 
 /// Add a match to the list of matches
@@ -692,7 +710,7 @@ static int ins_compl_add(char_u *const str, int len, char_u *const fname,
     do {
       if (!match_at_original_text(match)
           && STRNCMP(match->cp_str, str, len) == 0
-          && match->cp_str[len] == NUL) {
+          && ((int)STRLEN(match->cp_str) <= len || match->cp_str[len] == NUL)) {
         FREE_CPTEXT(cptext, cptext_allocated);
         return NOTDONE;
       }
@@ -2795,7 +2813,7 @@ static char_u *ins_comp_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_p
   } else {
     char_u *tmp_ptr = ptr;
 
-    if (compl_cont_status & CONT_ADDING) {
+    if (compl_cont_status & CONT_ADDING && compl_length <= (int)STRLEN(tmp_ptr)) {
       tmp_ptr += compl_length;
       // Skip if already inside a word.
       if (vim_iswordp(tmp_ptr)) {
