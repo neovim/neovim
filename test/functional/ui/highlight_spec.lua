@@ -859,7 +859,7 @@ describe('CursorLine and CursorLineNr highlights', function()
                                                         |
     ]])
 
-    command('set fillchars=colorc:.')
+    command('set fillchars=colorcol:.')
     command('set colorcolumn=3')
     feed('i  <esc>')
     screen:expect([[

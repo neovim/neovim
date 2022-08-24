@@ -1176,7 +1176,7 @@ struct window_S {
     int msgsep;
     int eob;
     int lastline;
-    int colorc;
+    int colorcol;
   } w_p_fcs_chars;
 
   // "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for
