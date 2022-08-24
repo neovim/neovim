@@ -216,7 +216,9 @@ int tslua_remove_lang(lua_State *L)
   const char *lang_name = luaL_checkstring(L, 1);
   bool present = pmap_has(cstr_t)(&langs, lang_name);
   if (present) {
+    char *key = (char *)pmap_key(cstr_t)(&langs, lang_name);
     pmap_del(cstr_t)(&langs, lang_name);
+    xfree(key);
   }
   lua_pushboolean(L, present);
   return 1;
