@@ -1839,10 +1839,18 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   // but only do this, if the Popup is still visible
   if (c == Ctrl_E) {
     ins_compl_delete();
+    char_u *p = NULL;
     if (compl_leader != NULL) {
-      ins_bytes(compl_leader + get_compl_len());
+      p = compl_leader;
     } else if (compl_first_match != NULL) {
-      ins_bytes(compl_orig_text + get_compl_len());
+      p = compl_orig_text;
+    }
+    if (p != NULL) {
+      const int compl_len = get_compl_len();
+      const int len = (int)STRLEN(p);
+      if (len > compl_len) {
+        ins_bytes_len(p + compl_len, (size_t)(len - compl_len));
+      }
     }
     retval = true;
   }
