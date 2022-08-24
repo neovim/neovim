@@ -713,23 +713,27 @@ endfunc
 
 func Test_edit_CTRL_N()
   " Check keyword completion
-  new
-  set complete=.
-  call setline(1, ['INFER', 'loWER', '', '', ])
-  call cursor(3, 1)
-  call feedkeys("Ai\<c-n>\<cr>\<esc>", "tnix")
-  call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
-  call assert_equal(['INFER', 'loWER', 'i', 'LO', '', ''], getline(1, '$'))
-  %d
-  call setline(1, ['INFER', 'loWER', '', '', ])
-  call cursor(3, 1)
-  set ignorecase infercase
-  call feedkeys("Ii\<c-n>\<cr>\<esc>", "tnix")
-  call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
-  call assert_equal(['INFER', 'loWER', 'infer', 'LOWER', '', ''], getline(1, '$'))
+  " for e in ['latin1', 'utf-8']
+  for e in ['utf-8']
+    exe 'set encoding=' .. e
+    new
+    set complete=.
+    call setline(1, ['INFER', 'loWER', '', '', ])
+    call cursor(3, 1)
+    call feedkeys("Ai\<c-n>\<cr>\<esc>", "tnix")
+    call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
+    call assert_equal(['INFER', 'loWER', 'i', 'LO', '', ''], getline(1, '$'), e)
+    %d
+    call setline(1, ['INFER', 'loWER', '', '', ])
+    call cursor(3, 1)
+    set ignorecase infercase
+    call feedkeys("Ii\<c-n>\<cr>\<esc>", "tnix")
+    call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
+    call assert_equal(['INFER', 'loWER', 'infer', 'LOWER', '', ''], getline(1, '$'), e)
 
-  set noignorecase noinfercase complete&
-  bw!
+    set noignorecase noinfercase complete&
+    bw!
+  endfor
 endfunc
 
 func Test_edit_CTRL_O()
