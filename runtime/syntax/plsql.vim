@@ -4,12 +4,13 @@
 " Previous Maintainer: Jeff Lanzarotta (jefflanzarotta at yahoo dot com)
 " Previous Maintainer: C. Laurence Gonsalves (clgonsal@kami.com)
 " URL: https://github.com/lee-lindley/vim_plsql_syntax
-" Last Change: April 28, 2022   
+" Last Change: Aug 21, 2022   
 " History  Lee Lindley (lee dot lindley at gmail dot com)
+"               use get with default 0 instead of exists per Bram suggestion
+"               make procedure folding optional
 "               updated to 19c keywords. refined quoting. 
 "               separated reserved, non-reserved keywords and functions
-"               revised folding, giving up on procedure folding due to issue
-"               with multiple ways to enter <begin>.
+"               revised folding
 "          Eugene Lysyonok (lysyonok at inbox ru)
 "               Added folding.
 "          Geoff Evans & Bill Pribyl (bill at plnet dot org)
@@ -23,12 +24,19 @@
 " To enable folding (It does setlocal foldmethod=syntax)
 " let plsql_fold = 1
 "
+" To disable folding procedure/functions (recommended if you habitually
+"  do not put the method name on the END statement)
+" let plsql_disable_procedure_fold = 1
+"
 "     From my vimrc file -- turn syntax and syntax folding on,
 "     associate file suffixes as plsql, open all the folds on file open
+" syntax enable
 " let plsql_fold = 1
 " au BufNewFile,BufRead *.sql,*.pls,*.tps,*.tpb,*.pks,*.pkb,*.pkg,*.trg set filetype=plsql
 " au BufNewFile,BufRead *.sql,*.pls,*.tps,*.tpb,*.pks,*.pkb,*.pkg,*.trg syntax on
 " au Syntax plsql normal zR
+" au Syntax plsql set foldcolumn=2 "optional if you want to see choosable folds on the left
+
 
 if exists("b:current_syntax")
   finish
@@ -49,12 +57,12 @@ syn match   plsqlIdentifier "[a-z][a-z0-9$_#]*"
 syn match   plsqlHostIdentifier ":[a-z][a-z0-9$_#]*"
 
 " When wanted, highlight the trailing whitespace.
-if exists("plsql_space_errors")
-  if !exists("plsql_no_trail_space_error")
+if get(g:,"plsql_space_errors",0) == 1
+  if get(g:,"plsql_no_trail_space_error",0) == 0
     syn match plsqlSpaceError "\s\+$"
   endif
 
-  if !exists("plsql_no_tab_space_error")
+  if get(g:,"plsql_no_tab_space_error",0) == 0
     syn match plsqlSpaceError " \+\t"me=e-1
   endif
 endif
@@ -134,7 +142,8 @@ syn keyword plsqlKeyword CPU_TIME CRASH CREATE_FILE_DEST CREATE_STORED_OUTLINES 
 syn keyword plsqlKeyword CREDENTIALS CRITICAL CROSS CROSSEDITION CSCONVERT CUBE CUBE_AJ CUBE_GB CUBE_SJ
 syn keyword plsqlKeyword CUME_DIST CUME_DISTM CURRENT CURRENTV CURRENT_DATE CURRENT_INSTANCE CURRENT_PARTSET_KEY
 syn keyword plsqlKeyword CURRENT_SCHEMA CURRENT_SHARD_KEY CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER
-syn keyword plsqlKeyword CURSOR CURSOR_SHARING_EXACT CURSOR_SPECIFIC_SEGMENT CV CYCLE DAGG_OPTIM_GSETS
+syn match plsqlKeyword "\<CURSOR\>"
+syn keyword plsqlKeyword CURSOR_SHARING_EXACT CURSOR_SPECIFIC_SEGMENT CV CYCLE DAGG_OPTIM_GSETS
 syn keyword plsqlKeyword DANGLING DATA DATABASE DATABASES DATAFILE DATAFILES DATAMOVEMENT DATAOBJNO
 syn keyword plsqlKeyword DATAOBJ_TO_MAT_PARTITION DATAOBJ_TO_PARTITION DATAPUMP DATASTORE DATA_LINK_DML
 syn keyword plsqlKeyword DATA_SECURITY_REWRITE_LIMIT DATA_VALIDATE DATE_MODE DAYS DBA DBA_RECYCLEBIN
@@ -515,7 +524,7 @@ syn match   plsqlFunction "\.DELETE\>"hs=s+1
 syn match   plsqlFunction "\.PREV\>"hs=s+1
 syn match   plsqlFunction "\.NEXT\>"hs=s+1
 
-if exists("plsql_legacy_sql_keywords")
+if get(g:,"plsql_legacy_sql_keywords",0) == 1
     " Some of Oracle's SQL keywords.
     syn keyword plsqlSQLKeyword ABORT ACCESS ACCESSED ADD AFTER ALL ALTER AND ANY
     syn keyword plsqlSQLKeyword ASC ATTRIBUTE AUDIT AUTHORIZATION AVG BASE_TABLE
@@ -565,7 +574,7 @@ syn keyword plsqlException SUBSCRIPT_OUTSIDE_LIMIT SYS_INVALID_ROWID
 syn keyword plsqlException TIMEOUT_ON_RESOURCE TOO_MANY_ROWS VALUE_ERROR
 syn keyword plsqlException ZERO_DIVIDE
 
-if exists("plsql_highlight_triggers")
+if get(g:,"plsql_highlight_triggers",0) == 1
     syn keyword plsqlTrigger INSERTING UPDATING DELETING
 endif
 
@@ -576,7 +585,7 @@ syn match plsqlISAS "\<\(IS\|AS\)\>"
 
 " Various types of comments.
 syntax region plsqlCommentL start="--" skip="\\$" end="$" keepend extend contains=@plsqlCommentGroup,plsqlSpaceError
-if exists("plsql_fold")
+if get(g:,"plsql_fold",0) == 1
     syntax region plsqlComment
         \ start="/\*" end="\*/"
         \ extend
@@ -612,7 +621,7 @@ syn region plsqlQuotedIdentifier	matchgroup=plsqlOperator start=+n\?"+     end=+
 syn cluster plsqlIdentifiers contains=plsqlIdentifier,plsqlQuotedIdentifier
 
 " quoted string literals
-if exists("plsql_fold")
+if get(g:,"plsql_fold",0) == 1
     syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?'+  skip=+''+    end=+'+ fold keepend extend
     syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'\z([^[(<{]\)+    end=+\z1'+ fold keepend extend
     syn region plsqlStringLiteral	matchgroup=plsqlOperator start=+n\?q'<+   end=+>'+ fold keepend extend
@@ -639,10 +648,10 @@ syn match plsqlAttribute "%\(BULK_EXCEPTIONS\|BULK_ROWCOUNT\|ISOPEN\|FOUND\|NOTF
 " This'll catch mis-matched close-parens.
 syn cluster plsqlParenGroup contains=plsqlParenError,@plsqlCommentGroup,plsqlCommentSkip,plsqlIntLiteral,plsqlFloatLiteral,plsqlNumbersCom
 
-if exists("plsql_bracket_error")
+if get(g:,"plsql_bracket_error",0) == 1
     " I suspect this code was copied from c.vim and never properly considered. Do
     " we even use braces or brackets in sql or pl/sql?
-    if exists("plsql_fold")
+    if get(g:,"plsql_fold",0) == 1
         syn region plsqlParen start='(' end=')' contains=ALLBUT,@plsqlParenGroup,plsqlErrInBracket fold keepend extend transparent
     else
         syn region plsqlParen transparent start='(' end=')' contains=ALLBUT,@plsqlParenGroup,plsqlErrInBracket
@@ -652,7 +661,7 @@ if exists("plsql_bracket_error")
     syn region plsqlBracket transparent start='\[' end=']' contains=ALLBUT,@plsqlParenGroup,plsqlErrInParen
     syn match plsqlErrInBracket contained "[);{}]"
 else
-    if exists("plsql_fold")
+    if get(g:,"plsql_fold",0) == 1
         syn region plsqlParen start='(' end=')' contains=ALLBUT,@plsqlParenGroup,plsqlErrInParen fold keepend extend transparent
     else
         syn region plsqlParen transparent start='(' end=')' contains=ALLBUT,@plsqlParenGroup,plsqlErrInParen
@@ -673,12 +682,12 @@ syn match plsqlConditional "\<END\>\_s\+\<IF\>"
 syn match plsqlCase "\<END\>\_s\+\<CASE\>"
 syn match plsqlCase "\<CASE\>"
 
-if exists("plsql_fold")
+if get(g:,"plsql_fold",0) == 1
     setlocal foldmethod=syntax
     syn sync fromstart
 
     syn cluster plsqlProcedureGroup contains=plsqlProcedure
-    syn cluster plsqlOnlyGroup contains=@plsqlProcedure,plsqlConditionalBlock,plsqlLoopBlock,plsqlBlock
+    syn cluster plsqlOnlyGroup contains=@plsqlProcedure,plsqlConditionalBlock,plsqlLoopBlock,plsqlBlock,plsqlCursor
 
     syntax region plsqlUpdateSet
         \ start="\(\<update\>\_s\+\(\<set\>\)\@![a-z][a-z0-9$_#]*\_s\+\(\(\<set\>\)\@![a-z][a-z0-9$_#]*\_s\+\)\?\)\|\(\<when\>\_s\+\<matched\>\_s\+\<then\>\_s\+\<update\>\_s\+\)\<set\>"
@@ -698,24 +707,40 @@ if exists("plsql_fold")
         \ transparent
         \ contains=ALLBUT,@plsqlOnlyGroup,plsqlUpdateSet
 
-    " this is brute force and requires you have the procedure/function name in the END
-    " statement. ALthough Oracle makes it optional, we cannot. If you do not
-    " have it, then you can fold the BEGIN/END block of the procedure but not
-    " the specification of it (other than a paren group). You also cannot fold
-    " BEGIN/END blocks in the procedure body. Local procedures will fold as
-    " long as the END statement includes the procedure/function name.
-    " As for why we cannot make it work any other way, I don't know. It is
-    " something to do with both plsqlBlock and plsqlProcedure both consuming BEGIN and END,
-    " even if we use a lookahead for one of them.
-    syntax region plsqlProcedure
-        "\ start="\(create\(\_s\+or\_s\+replace\)\?\_s\+\)\?\<\(procedure\|function\)\>\_s\+\z([a-z][a-z0-9$_#]*\)"
-        \ start="\<\(procedure\|function\)\>\_s\+\(\z([a-z][a-z0-9$_#]*\)\)\([^;]\|\n\)\{-}\<\(is\|as\)\>\_.\{-}\(\<end\>\_s\+\2\_s*;\)\@="
-        \ end="\<end\>\_s\+\z1\_s*;"
+    if get(g:,"plsql_disable_procedure_fold",0) == 0
+        " this is brute force and requires you have the procedure/function name in the END
+        " statement. ALthough Oracle makes it optional, we cannot. If you do not
+        " have it, then you can fold the BEGIN/END block of the procedure but not
+        " the specification of it (other than a paren group). You also cannot fold
+        " BEGIN/END blocks in the procedure body. Local procedures will fold as
+        " long as the END statement includes the procedure/function name.
+        " As for why we cannot make it work any other way, I don't know. It is
+        " something to do with both plsqlBlock and plsqlProcedure both consuming BEGIN and END,
+        " even if we use a lookahead for one of them.
+        "
+        " If you habitualy do not put the method name in the END statement,
+        " this can be expensive because it searches to end of file on every
+        " procedure/function declaration
+        "
+            "\ start="\(create\(\_s\+or\_s\+replace\)\?\_s\+\)\?\<\(procedure\|function\)\>\_s\+\z([a-z][a-z0-9$_#]*\)"
+        syntax region plsqlProcedure
+            \ start="\<\(procedure\|function\)\>\_s\+\(\z([a-z][a-z0-9$_#]*\)\)\([^;]\|\n\)\{-}\<\(is\|as\)\>\_.\{-}\(\<end\>\_s\+\2\_s*;\)\@="
+            \ end="\<end\>\_s\+\z1\_s*;"
+            \ fold
+            \ keepend 
+            \ extend
+            \ transparent
+            \ contains=ALLBUT,plsqlBlock
+    endif
+
+    syntax region plsqlCursor
+        \ start="\<cursor\>\_s\+[a-z][a-z0-9$_#]*\(\_s*([^)]\+)\)\?\(\_s\+return\_s\+\S\+\)\?\_s\+is"
+        \ end=";"
         \ fold
         \ keepend 
         \ extend
         \ transparent
-        \ contains=ALLBUT,plsqlBlock
+        \ contains=ALLBUT,@plsqlOnlyGroup
 
     syntax region plsqlBlock
         \ start="\<begin\>"
@@ -802,7 +827,7 @@ hi def link plsqlTrigger	        Function
 hi def link plsqlTypeAttribute      StorageClass
 hi def link plsqlTodo		        Todo
 " to be able to change them after loading, need override whether defined or not
-if exists("plsql_legacy_sql_keywords")
+if get(g:,"plsql_legacy_sql_keywords",0) == 1
     hi link plsqlSQLKeyword         Function
     hi link plsqlSymbol	            Normal
     hi link plsqlParen	            Normal
