@@ -873,6 +873,25 @@ func Test_complete_stop()
   close!
 endfunc
 
+" Test for typing CTRL-R in insert completion mode to insert a register
+" content.
+func Test_complete_reginsert()
+  new
+  call setline(1, ['a1', 'a12', 'a123', 'a1234'])
+
+  " if a valid CTRL-X mode key is returned from <C-R>=, then it should be
+  " processed. Otherwise, CTRL-X mode should be stopped and the key should be
+  " inserted.
+  exe "normal Goa\<C-P>\<C-R>=\"\\<C-P>\"\<CR>"
+  call assert_equal('a123', getline(5))
+  let @r = "\<C-P>\<C-P>"
+  exe "normal GCa\<C-P>\<C-R>r"
+  call assert_equal('a12', getline(5))
+  exe "normal GCa\<C-P>\<C-R>=\"x\"\<CR>"
+  call assert_equal('a1234x', getline(5))
+  bw!
+endfunc
+
 func Test_issue_7021()
   CheckMSWindows
 
