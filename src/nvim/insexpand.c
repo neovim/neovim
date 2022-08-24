@@ -2813,7 +2813,7 @@ static char_u *ins_comp_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_p
   } else {
     char_u *tmp_ptr = ptr;
 
-    if (compl_cont_status & CONT_ADDING) {
+    if (compl_cont_status & CONT_ADDING && compl_length <= (int)STRLEN(tmp_ptr)) {
       tmp_ptr += compl_length;
       // Skip if already inside a word.
       if (vim_iswordp(tmp_ptr)) {
