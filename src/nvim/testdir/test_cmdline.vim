@@ -3,6 +3,7 @@
 source check.vim
 source screendump.vim
 source view_util.vim
+source shared.vim
 
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
@@ -1464,13 +1465,12 @@ func Test_cmdwin_interrupted()
   call writefile(lines, 'XTest_cmdwin')
 
   let buf = RunVimInTerminal('-S XTest_cmdwin', {'rows': 18})
-  call TermWait(buf, 1000)
   " open cmdwin
   call term_sendkeys(buf, "q:")
-  call TermWait(buf, 500)
+  call WaitForAssert({-> assert_match('-- More --', term_getline(buf, 18))})
   " quit more prompt for :smile command
   call term_sendkeys(buf, "q")
-  call TermWait(buf, 500)
+  call WaitForAssert({-> assert_match('^$', term_getline(buf, 18))})
   " execute a simple command
   call term_sendkeys(buf, "aecho 'done'\<CR>")
   call VerifyScreenDump(buf, 'Test_cmdwin_interrupted', {})
