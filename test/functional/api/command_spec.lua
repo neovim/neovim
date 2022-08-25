@@ -114,8 +114,8 @@ describe('nvim_create_user_command', function()
     ]]
 
     eq({
-      args = [[this is    a\ test]],
-      fargs = {"this", "is", "a test"},
+      args = [[this\  is    a\ test]],
+      fargs = {"this ", "is", "a test"},
       bang = false,
       line1 = 1,
       line2 = 1,
@@ -144,7 +144,7 @@ describe('nvim_create_user_command', function()
       count = 2,
       reg = "",
     }, exec_lua [=[
-      vim.api.nvim_command([[CommandWithLuaCallback this is    a\ test]])
+      vim.api.nvim_command([[CommandWithLuaCallback this\  is    a\ test]])
       return result
     ]=])
 
