@@ -224,7 +224,8 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
   // mark cursor position as being invalid
   curwin->w_valid = 0;
 
-  if (curbuf->b_ffname != NULL) {
+  // Read the file if there is one.
+  if (curbuf->b_ffname != NULL && !bt_quickfix(curbuf) && !bt_nofilename(curbuf)) {
 #ifdef UNIX
     int save_bin = curbuf->b_p_bin;
     int perm;

@@ -784,7 +784,8 @@ browsedir({title}, {initdir})
 		browsing is not possible, an empty string is returned.
 
 bufadd({name})						*bufadd()*
-		Add a buffer to the buffer list with String {name}.
+		Add a buffer to the buffer list with name {name} (must be a
+		String).
 		If a buffer for file {name} already exists, return that buffer
 		number.  Otherwise return the buffer number of the newly
 		created buffer.  When {name} is an empty string then a new
@@ -835,7 +836,8 @@ bufload({buf})						*bufload()*
 		Ensure the buffer {buf} is loaded.  When the buffer name
 		refers to an existing file then the file is read.  Otherwise
 		the buffer will be empty.  If the buffer was already loaded
-		then there is no change.
+		then there is no change.  If the buffer is not related to a
+		file the no file is read (e.g., when 'buftype' is "nofile").
 		If there is an existing swap file for the file of the buffer,
 		there will be no dialog, the buffer will be loaded anyway.
 		The {buf} argument is used like with |bufexists()|.
