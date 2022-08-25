@@ -1939,13 +1939,12 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
       || xp->xp_context == EXPAND_FILES_IN_PATH) {
     // Expand file or directory names.
     bool free_pat = false;
-    int i;
 
     // for ":set path=" and ":set tags=" halve backslashes for escaped space
     if (xp->xp_backslash != XP_BS_NONE) {
       free_pat = true;
       pat = vim_strsave(pat);
-      for (i = 0; pat[i]; i++) {
+      for (int i = 0; pat[i]; i++) {
         if (pat[i] == '\\') {
           if (xp->xp_backslash == XP_BS_THREE
               && pat[i + 1] == '\\'
@@ -1979,8 +1978,8 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
     }
 #ifdef BACKSLASH_IN_FILENAME
     if (p_csl[0] != NUL && (options & WILD_IGNORE_COMPLETESLASH) == 0) {
-      for (int i = 0; i < *num_file; i++) {
-        char_u *ptr = (*file)[i];
+      for (int j = 0; j < *num_file; j++) {
+        char_u *ptr = (*file)[j];
         while (*ptr != NUL) {
           if (p_csl[0] == 's' && *ptr == '\\') {
             *ptr = '/';
