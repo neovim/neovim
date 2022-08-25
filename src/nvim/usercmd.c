@@ -1061,11 +1061,11 @@ bool uc_split_args_iter(const char *arg, size_t arglen, size_t *end, char *buf, 
       buf[l++] = arg[++pos];
     } else {
       buf[l++] = arg[pos];
-      if (ascii_iswhite(arg[pos + 1])) {
-        *end = pos + 1;
-        *len = l;
-        return false;
-      }
+    }
+    if (ascii_iswhite(arg[pos + 1])) {
+      *end = pos + 1;
+      *len = l;
+      return false;
     }
   }
 
