@@ -68,6 +68,11 @@ func Test_ins_complete()
   call assert_equal('Xtest11.one', getline('.'))
   normal ddk
 
+  " Test for expanding a non-existing filename
+  exe "normal oa1b2X3Y4\<C-X>\<C-F>"
+  call assert_equal('a1b2X3Y4', getline('.'))
+  normal ddk
+
   set cpt=w
   " checks make_cyclic in other window
   exe "normal oST\<C-N>\<C-P>\<C-P>\<C-P>\<C-P>"
@@ -955,6 +960,27 @@ func Test_complete_erase_firstmatch()
   bw!
 endfunc
 
+" Test for completing words from unloaded buffers
+func Test_complete_from_unloadedbuf()
+  call writefile(['abc'], "Xfile1")
+  call writefile(['def'], "Xfile2")
+  edit Xfile1
+  edit Xfile2
+  new | close
+  enew
+  bunload Xfile1 Xfile2
+  set complete=u
+  " complete from an unloaded buffer
+  exe "normal! ia\<C-P>"
+  call assert_equal('abc', getline(1))
+  exe "normal! od\<C-P>"
+  call assert_equal('def', getline(2))
+  set complete&
+  %bw!
+  call delete("Xfile1")
+  call delete("Xfile2")
+endfunc
+
 " Test for completing whole lines from unloaded buffers
 func Test_complete_wholeline_unloadedbuf()
   call writefile(['a line1', 'a line2', 'a line3'], "Xfile1")
@@ -971,6 +997,26 @@ func Test_complete_wholeline_unloadedbuf()
   set complete&
   %bw!
   call delete("Xfile1")
+endfunc
+
+" Test for completing words from unlisted buffers
+func Test_complete_from_unlistedbuf()
+  call writefile(['abc'], "Xfile1")
+  call writefile(['def'], "Xfile2")
+  edit Xfile1
+  edit Xfile2
+  new | close
+  bdel Xfile1 Xfile2
+  set complete=U
+  " complete from an unlisted buffer
+  exe "normal! ia\<C-P>"
+  call assert_equal('abc', getline(1))
+  exe "normal! od\<C-P>"
+  call assert_equal('def', getline(2))
+  set complete&
+  %bw!
+  call delete("Xfile1")
+  call delete("Xfile2")
 endfunc
 
 " Test for completing whole lines from unlisted buffers
@@ -1004,6 +1050,195 @@ func Test_complete_mbyte_char_add()
   exe "normal! oabė\<C-P>"
   call assert_equal('abėĕ', getline(2))
   bw!
+endfunc
+
+" Test for using <C-X><C-P> for local expansion even if 'complete' is set to
+" not to complete matches from the local buffer. Also test using multiple
+" <C-X> to cancel the current completion mode.
+func Test_complete_local_expansion()
+  new
+  set complete=t
+  call setline(1, ['abc', 'def'])
+  exe "normal! Go\<C-X>\<C-P>"
+  call assert_equal("def", getline(3))
+  exe "normal! Go\<C-P>"
+  call assert_equal("", getline(4))
+  exe "normal! Go\<C-X>\<C-N>"
+  call assert_equal("abc", getline(5))
+  exe "normal! Go\<C-N>"
+  call assert_equal("", getline(6))
+
+  " use multiple <C-X> to cancel the previous completion mode
+  exe "normal! Go\<C-P>\<C-X>\<C-P>"
+  call assert_equal("", getline(7))
+  exe "normal! Go\<C-P>\<C-X>\<C-X>\<C-P>"
+  call assert_equal("", getline(8))
+  exe "normal! Go\<C-P>\<C-X>\<C-X>\<C-X>\<C-P>"
+  call assert_equal("abc", getline(9))
+
+  " interrupt the current completion mode
+  set completeopt=menu,noinsert
+  exe "normal! Go\<C-X>\<C-F>\<C-X>\<C-X>\<C-P>\<C-Y>"
+  call assert_equal("abc", getline(10))
+
+  " when only one <C-X> is used to interrupt, do normal expansion
+  exe "normal! Go\<C-X>\<C-F>\<C-X>\<C-P>"
+  call assert_equal("", getline(11))
+  set completeopt&
+
+  " using two <C-X> in non-completion mode and restarting the same mode
+  exe "normal! God\<C-X>\<C-X>\<C-P>\<C-X>\<C-X>\<C-P>\<C-Y>"
+  call assert_equal("def", getline(12))
+
+  " test for adding a match from the original empty text
+  %d
+  call setline(1, 'abc def g')
+  exe "normal! o\<C-X>\<C-P>\<C-N>\<C-X>\<C-P>"
+  call assert_equal('def', getline(2))
+  exe "normal! 0C\<C-X>\<C-N>\<C-P>\<C-X>\<C-N>"
+  call assert_equal('abc', getline(2))
+
+  bw!
+endfunc
+
+" Test for undoing changes after a insert-mode completion
+func Test_complete_undo()
+  new
+  set complete=.
+  " undo with 'ignorecase'
+  call setline(1, ['ABOVE', 'BELOW'])
+  set ignorecase
+  exe "normal! Goab\<C-G>u\<C-P>"
+  call assert_equal("ABOVE", getline(3))
+  undo
+  call assert_equal("ab", getline(3))
+  set ignorecase&
+  %d
+  " undo with longest match
+  set completeopt=menu,longest
+  call setline(1, ['above', 'about'])
+  exe "normal! Goa\<C-G>u\<C-P>"
+  call assert_equal("abo", getline(3))
+  undo
+  call assert_equal("a", getline(3))
+  set completeopt&
+  %d
+  " undo for line completion
+  call setline(1, ['above that change', 'below that change'])
+  exe "normal! Goabove\<C-G>u\<C-X>\<C-L>"
+  call assert_equal("above that change", getline(3))
+  undo
+  call assert_equal("above", getline(3))
+
+  bw!
+endfunc
+
+" Test for completing a very long word
+func Test_complete_long_word()
+  set complete&
+  new
+  call setline(1, repeat('x', 950) .. ' one two three')
+  exe "normal! Gox\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>"
+  call assert_equal(repeat('x', 950) .. ' one two three', getline(2))
+  %d
+  " should fail when more than 950 characters are in a word
+  call setline(1, repeat('x', 951) .. ' one two three')
+  exe "normal! Gox\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>\<C-X>\<C-P>"
+  call assert_equal(repeat('x', 951), getline(2))
+
+  " Test for adding a very long word to an existing completion
+  %d
+  call setline(1, ['abc', repeat('x', 1016) .. '012345'])
+  exe "normal! Goab\<C-P>\<C-X>\<C-P>"
+  call assert_equal('abc ' .. repeat('x', 1016) .. '0123', getline(3))
+  bw!
+endfunc
+
+" Test for some fields in the complete items used by complete()
+func Test_complete_items()
+  func CompleteItems(idx)
+    let items = [[#{word: "one", dup: 1, user_data: 'u1'}, #{word: "one", dup: 1, user_data: 'u2'}],
+          \ [#{word: "one", dup: 0, user_data: 'u3'}, #{word: "one", dup: 0, user_data: 'u4'}],
+          \ [#{word: "one", icase: 1, user_data: 'u7'}, #{word: "oNE", icase: 1, user_data: 'u8'}],
+          \ [#{user_data: 'u9'}],
+          \ [#{word: "", user_data: 'u10'}],
+          \ [#{word: "", empty: 1, user_data: 'u11'}]]
+    call complete(col('.'), items[a:idx])
+    return ''
+  endfunc
+  new
+  exe "normal! i\<C-R>=CompleteItems(0)\<CR>\<C-N>\<C-Y>"
+  call assert_equal('u2', v:completed_item.user_data)
+  call assert_equal('one', getline(1))
+  exe "normal! o\<C-R>=CompleteItems(1)\<CR>\<C-Y>"
+  call assert_equal('u3', v:completed_item.user_data)
+  call assert_equal('one', getline(2))
+  exe "normal! o\<C-R>=CompleteItems(1)\<CR>\<C-N>"
+  call assert_equal('', getline(3))
+  set completeopt=menu,noinsert
+  exe "normal! o\<C-R>=CompleteItems(2)\<CR>one\<C-N>\<C-Y>"
+  call assert_equal('oNE', getline(4))
+  call assert_equal('u8', v:completed_item.user_data)
+  set completeopt&
+  exe "normal! o\<C-R>=CompleteItems(3)\<CR>"
+  call assert_equal('', getline(5))
+  exe "normal! o\<C-R>=CompleteItems(4)\<CR>"
+  call assert_equal('', getline(6))
+  exe "normal! o\<C-R>=CompleteItems(5)\<CR>"
+  call assert_equal('', getline(7))
+  call assert_equal('u11', v:completed_item.user_data)
+  " pass invalid argument to complete()
+  let cmd = "normal! o\<C-R>=complete(1, [[]])\<CR>"
+  call assert_fails('exe cmd', 'E730:')
+  bw!
+  delfunc CompleteItems
+endfunc
+
+" Test for the "refresh" item in the dict returned by an insert completion
+" function
+func Test_complete_item_refresh_always()
+  let g:CallCount = 0
+  func! Tcomplete(findstart, base)
+    if a:findstart
+      " locate the start of the word
+      let line = getline('.')
+      let start = col('.') - 1
+      while start > 0 && line[start - 1] =~ '\a'
+        let start -= 1
+      endwhile
+      return start
+    else
+      let g:CallCount += 1
+      let res = ["update1", "update12", "update123"]
+      return #{words: res, refresh: 'always'}
+    endif
+  endfunc
+  new
+  set completeopt=menu,longest
+  set completefunc=Tcomplete
+  exe "normal! iup\<C-X>\<C-U>\<BS>\<BS>\<BS>\<BS>\<BS>"
+  call assert_equal('up', getline(1))
+  call assert_equal(2, g:CallCount)
+  set completeopt&
+  set completefunc&
+  bw!
+  delfunc Tcomplete
+endfunc
+
+" Test for completing from a thesaurus file without read permission
+func Test_complete_unreadable_thesaurus_file()
+  CheckUnix
+  CheckNotRoot
+
+  call writefile(['about', 'above'], 'Xfile')
+  call setfperm('Xfile', '---r--r--')
+  new
+  set complete=sXfile
+  exe "normal! ia\<C-P>"
+  call assert_equal('a', getline(1))
+  bw!
+  call delete('Xfile')
+  set complete&
 endfunc
 
 " Test to ensure 'Scanning...' messages are not recorded in messages history

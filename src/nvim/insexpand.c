@@ -659,17 +659,23 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
 
 /// Add a match to the list of matches
 ///
-/// @param[in]  str  Match to add.
-/// @param[in]  len  Match length, -1 to use #STRLEN.
-/// @param[in]  fname  File name match comes from. May be NULL.
-/// @param[in]  cptext  Extra text for popup menu. May be NULL. If not NULL,
-///                     must have exactly #CPT_COUNT items.
+/// @param[in]  str     text of the match to add
+/// @param[in]  len     length of "str". If -1, then the length of "str" is computed.
+/// @param[in]  fname   file name to associate with this match. May be NULL.
+/// @param[in]  cptext  list of strings to use with this match (for abbr, menu, info
+///                     and kind). May be NULL.
+///                     If not NULL, must have exactly #CPT_COUNT items.
 /// @param[in]  cptext_allocated  If true, will not copy cptext strings.
 ///
 ///                               @note Will free strings in case of error.
 ///                                     cptext itself will not be freed.
-/// @param[in]  cdir  Completion direction.
-/// @param[in]  adup  True if duplicate matches are to be accepted.
+/// @param[in]  user_data  user supplied data (any vim type) for this match
+/// @param[in]  cdir       match direction. If 0, use "compl_direction".
+/// @param[in]  flags_arg  match flags (cp_flags)
+/// @param[in]  adup       accept this match even if it is already present.
+///
+/// If "cdir" is FORWARD, then the match is added after the current match.
+/// Otherwise, it is added before the current match.
 ///
 /// @return NOTDONE if the given string is already in the list of completions,
 ///         otherwise it is added to the list and  OK is returned. FAIL will be
@@ -768,7 +774,8 @@ static int ins_compl_add(char_u *const str, int len, char_u *const fname,
     match->cp_user_data = *user_data;
   }
 
-  // Link the new match structure in the list of matches.
+  // Link the new match structure after (FORWARD) or before (BACKWARD) the
+  // current match in the list of matches .
   if (compl_first_match == NULL) {
     match->cp_next = match->cp_prev = NULL;
   } else if (dir == FORWARD) {
@@ -2265,10 +2272,15 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     for (size_t i = 0; i < CPT_COUNT; i++) {
       xfree(cptext[i]);
     }
+    tv_clear(&user_data);
     return FAIL;
   }
-  return ins_compl_add((char_u *)word, -1, NULL,
-                       (char_u **)cptext, true, &user_data, dir, flags, dup);
+  int status = ins_compl_add((char_u *)word, -1, NULL, (char_u **)cptext, true,
+                             &user_data, dir, flags, dup);
+  if (status != OK) {
+    tv_clear(&user_data);
+  }
+  return status;
 }
 
 /// Add completions from a list.
@@ -2606,8 +2618,8 @@ enum {
 ///   st->dict_f - flag specifying whether "dict" is an exact file name or not
 ///
 /// @return  INS_COMPL_CPT_OK if the next value is processed successfully.
-///          INS_COMPL_CPT_CONT to skip the current value and process the next
-///          option value.
+///          INS_COMPL_CPT_CONT to skip the current completion source matching
+///          the "st->e_cpt" option value and process the next matching source.
 ///          INS_COMPL_CPT_END if all the values in "st->e_cpt" are processed.
 static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_arg,
                                   pos_T *start_match_pos)
@@ -3788,7 +3800,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
     return FAIL;
   }
 
-  // Reset extended parameters of completion, when start new
+  // Reset extended parameters of completion, when starting new
   // completion.
   compl_opt_refresh_always = false;
 
