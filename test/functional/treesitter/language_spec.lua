@@ -87,6 +87,7 @@ describe('treesitter language API', function()
   end)
 
   it('retrieve the tree given a range', function ()
+    if pending_c_parser(pending) then return end
     insert([[
       int main() {
         int x = 3;
@@ -101,6 +102,7 @@ describe('treesitter language API', function()
   end)
 
   it('retrieve the node given a range', function ()
+    if pending_c_parser(pending) then return end
     insert([[
       int main() {
         int x = 3;
