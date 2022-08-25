@@ -10,6 +10,15 @@ local last_tick = {}
 --- to throttle refreshes to at most one at a time
 local active_refreshes = {}
 
+--- bufnr -> lnum -> padding
+local padding_cache_by_buf = setmetatable({}, {
+  __index = function(t, b)
+    local key = b > 0 and b or api.nvim_get_current_buf()
+    t[key] = {}
+    return rawget(t, key)
+  end,
+})
+
 --- bufnr -> client_id -> lenses
 local lens_cache_by_buf = setmetatable({}, {
   __index = function(t, b)
@@ -60,6 +69,29 @@ local function execute_lens(lens, bufnr, client_id)
     M.refresh()
     return result
   end, bufnr)
+end
+
+local function get_padding_lnum(bufnr, lnum)
+  if not padding_cache_by_buf[bufnr][lnum] then
+    local num_lines = api.nvim_buf_line_count(bufnr)
+    if lnum >= num_lines then
+      lnum = num_lines - 1
+    end
+
+    local line = vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, false)[1]
+    if not line then
+      -- out of bounds
+      return ''
+    end
+
+    local _, first = line:find('^%s*.')
+    first = first and first - 1 or 0
+
+    local padding = string.rep(' ', first)
+    padding_cache_by_buf[bufnr][lnum] = padding
+  end
+
+  return padding_cache_by_buf[bufnr][lnum]
 end
 
 --- Return all lenses for the given buffer
@@ -134,7 +166,13 @@ local function display_line(line_lenses, bufnr, ns, lnum)
   local chunks = {}
   local num_line_lenses = #line_lenses
   for j, lens in ipairs(line_lenses) do
-    local text = lens.command and lens.command.title or 'Unresolved lens ...'
+    -- TODO make it optional; see vim.lsp.with
+    local padding = ''
+    if j == 1 then
+      padding = get_padding_lnum(bufnr, lnum)
+    end
+
+    local text = padding .. (lens.command and lens.command.title or 'Unresolved lens ...')
     chunks[#chunks + 1] = { text, 'LspCodeLens' }
     if j < num_line_lenses then
       chunks[#chunks + 1] = { ' | ', 'LspCodeLensSeparator' }
@@ -143,9 +181,16 @@ local function display_line(line_lenses, bufnr, ns, lnum)
 
   if #chunks > 0 then
     local opts = {
-      virt_text = chunks,
       hl_mode = 'combine',
     }
+    -- TODO make it optional; see vim.lsp.with
+    if lnum > 1 then
+      -- https://github.com/neovim/neovim/issues/16166
+      opts.virt_lines = { chunks }
+      opts.virt_lines_above = true
+    else
+      opts.virt_text = chunks
+    end
 
     api.nvim_buf_clear_namespace(bufnr, ns, lnum, lnum + 1)
     api.nvim_buf_set_extmark(bufnr, ns, lnum, 0, opts)
@@ -185,6 +230,9 @@ function M.save(lenses, bufnr, client_id)
       on_detach = function(_, b)
         api.nvim_buf_clear_namespace(b, namespaces[client_id], 0, -1)
         lens_cache_by_buf[b] = nil
+      end,
+      on_lines = function(_, b)
+        padding_cache_by_buf[b] = {}
       end,
     })
   end
