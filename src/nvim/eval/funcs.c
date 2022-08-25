@@ -234,7 +234,7 @@ int call_internal_method(const char_u *const fname, const int argcount, typval_T
   return ERROR_NONE;
 }
 
-/// @return  TRUE for a non-zero Number and a non-empty String.
+/// @return  true for a non-zero Number and a non-empty String.
 static int non_zero_arg(typval_T *argvars)
 {
   return ((argvars[0].v_type == VAR_NUMBER
@@ -2548,7 +2548,7 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// Get line or list of lines from buffer "buf" into "rettv".
 ///
-/// @param retlist  if TRUE, then the lines are returned as a Vim List.
+/// @param retlist  if true, then the lines are returned as a Vim List.
 ///
 /// @return  range (from start to end) of lines in rettv from the specified
 ///          buffer.
@@ -7549,7 +7549,7 @@ static void f_setbufline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Set the cursor or mark position.
-/// If 'charpos' is TRUE, then use the column number as a character offset.
+/// If 'charpos' is true, then use the column number as a character offset.
 /// Otherwise use the column number as a byte offset.
 static void set_position(typval_T *argvars, typval_T *rettv, bool charpos)
 {

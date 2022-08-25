@@ -2092,7 +2092,7 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
 ///                                'fillchars'). Treated as single-width even if it isn't.
 ///           - highlights: (boolean) Return highlight information.
 ///           - use_winbar: (boolean) Evaluate winbar instead of statusline.
-///           - use_tabline: (boolean) Evaluate tabline instead of statusline. When |TRUE|, {winid}
+///           - use_tabline: (boolean) Evaluate tabline instead of statusline. When true, {winid}
 ///                                    is ignored. Mutually exclusive with {use_winbar}.
 ///
 /// @param[out] err Error details, if any.
@@ -2100,7 +2100,7 @@ Array nvim_get_mark(String name, Dictionary opts, Error *err)
 ///       - str: (string) Characters that will be displayed on the statusline.
 ///       - width: (number) Display width of the statusline.
 ///       - highlights: Array containing highlight information of the statusline. Only included when
-///                     the "highlights" key in {opts} is |TRUE|. Each element of the array is a
+///                     the "highlights" key in {opts} is true. Each element of the array is a
 ///                     |Dictionary| with these keys:
 ///           - start: (number) Byte index (0-based) of first character that uses the highlight.
 ///           - group: (string) Name of highlight group.

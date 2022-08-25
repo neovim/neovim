@@ -354,10 +354,8 @@ char_u *last_search_pattern(void)
   return spats[RE_SEARCH].pat;
 }
 
-/*
- * Return TRUE when case should be ignored for search pattern "pat".
- * Uses the 'ignorecase' and 'smartcase' options.
- */
+/// Return true when case should be ignored for search pattern "pat".
+/// Uses the 'ignorecase' and 'smartcase' options.
 int ignorecase(char_u *pat)
 {
   return ignorecase_opt(pat, p_ic, p_scs);
@@ -423,7 +421,7 @@ int last_csearch_forward(void)
 
 int last_csearch_until(void)
 {
-  return last_t_cmd == TRUE;
+  return last_t_cmd == true;
 }
 
 void set_last_csearch(int c, char_u *s, int len)
@@ -480,8 +478,8 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
   spats[idx].no_scs = false;
   spats[idx].off.dir = '/';
   set_vv_searchforward();
-  spats[idx].off.line = FALSE;
-  spats[idx].off.end = FALSE;
+  spats[idx].off.line = false;
+  spats[idx].off.end = false;
   spats[idx].off.off = 0;
   if (setlast) {
     last_idx = idx;
@@ -610,11 +608,11 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
 
     start_pos = *pos;           // remember start pos for detecting no match
     found = 0;                  // default: not found
-    at_first_line = TRUE;       // default: start in first line
+    at_first_line = true;       // default: start in first line
     if (pos->lnum == 0) {       // correct lnum for when starting in line 0
       pos->lnum = 1;
       pos->col = 0;
-      at_first_line = FALSE;        // not in first line now
+      at_first_line = false;        // not in first line now
     }
 
     /*
@@ -627,14 +625,14 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
     if (dir == BACKWARD && start_pos.col == 0
         && (options & SEARCH_START) == 0) {
       lnum = pos->lnum - 1;
-      at_first_line = FALSE;
+      at_first_line = false;
     } else {
       lnum = pos->lnum;
     }
 
     for (loop = 0; loop <= 1; loop++) {     // loop twice if 'wrapscan' set
       for (; lnum > 0 && lnum <= buf->b_ml.ml_line_count;
-           lnum += dir, at_first_line = FALSE) {
+           lnum += dir, at_first_line = false) {
         // Stop after checking "stop_lnum", if it's set.
         if (stop_lnum != 0 && (dir == FORWARD
                                ? lnum > stop_lnum : lnum < stop_lnum)) {
@@ -901,7 +899,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           break;                    // if second loop, stop where started
         }
       }
-      at_first_line = FALSE;
+      at_first_line = false;
 
       // vim_regexec_multi() may clear "regprog"
       if (regmatch.regprog == NULL) {
@@ -1006,22 +1004,22 @@ static int first_submatch(regmmatch_T *rp)
 /// Highest level string search function.
 /// Search for the 'count'th occurrence of pattern 'pat' in direction 'dirc'
 ///
-/// Careful: If spats[0].off.line == TRUE and spats[0].off.off == 0 this
+/// Careful: If spats[0].off.line == true and spats[0].off.off == 0 this
 /// makes the movement linewise without moving the match position.
 ///
 /// @param dirc          if 0: use previous dir.
 /// @param pat           NULL or empty : use previous string.
-/// @param options       if TRUE and
-///                      SEARCH_REV   == TRUE : go in reverse of previous dir.
-///                      SEARCH_ECHO  == TRUE : echo the search command and handle options
-///                      SEARCH_MSG   == TRUE : may give error message
-///                      SEARCH_OPT   == TRUE : interpret optional flags
-///                      SEARCH_HIS   == TRUE : put search pattern in history
-///                      SEARCH_NOOF  == TRUE : don't add offset to position
-///                      SEARCH_MARK  == TRUE : set previous context mark
-///                      SEARCH_KEEP  == TRUE : keep previous search pattern
-///                      SEARCH_START == TRUE : accept match at curpos itself
-///                      SEARCH_PEEK  == TRUE : check for typed char, cancel search
+/// @param options       if true and
+///                      SEARCH_REV   == true : go in reverse of previous dir.
+///                      SEARCH_ECHO  == true : echo the search command and handle options
+///                      SEARCH_MSG   == true : may give error message
+///                      SEARCH_OPT   == true : interpret optional flags
+///                      SEARCH_HIS   == true : put search pattern in history
+///                      SEARCH_NOOF  == true : don't add offset to position
+///                      SEARCH_MARK  == true : set previous context mark
+///                      SEARCH_KEEP  == true : keep previous search pattern
+///                      SEARCH_START == true : accept match at curpos itself
+///                      SEARCH_PEEK  == true : check for typed char, cancel search
 /// @param oap           can be NULL
 /// @param dirc          '/' or '?'
 /// @param search_delim  delimiter for search, e.g. '%' in s%regex%replacement
@@ -1137,8 +1135,8 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
         dircp = p;              // remember where we put the NUL
         *p++ = NUL;
       }
-      spats[0].off.line = FALSE;
-      spats[0].off.end = FALSE;
+      spats[0].off.line = false;
+      spats[0].off.end = false;
       spats[0].off.off = 0;
       // Check for a line offset or a character offset.
       // For get_address (echo off) we don't check for a character
@@ -1435,7 +1433,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
     setpcmark();
   }
   curwin->w_cursor = pos;
-  curwin->w_set_curswant = TRUE;
+  curwin->w_set_curswant = true;
 
 end_do_search:
   if ((options & SEARCH_KEEP) || (cmdmod.cmod_flags & CMOD_KEEPPATTERNS)) {
@@ -1519,12 +1517,10 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
  * Character Searches
  */
 
-/*
- * Search for a character in a line.  If "t_cmd" is FALSE, move to the
- * position of the character, otherwise move to just before the char.
- * Do this "cap->count1" times.
- * Return FAIL or OK.
- */
+/// Search for a character in a line.  If "t_cmd" is false, move to the
+/// position of the character, otherwise move to just before the char.
+/// Do this "cap->count1" times.
+/// Return FAIL or OK.
 int searchc(cmdarg_T *cap, int t_cmd)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2520,7 +2516,7 @@ int findsent(Direction dir, long count)
 
     for (;;) {                 // find end of sentence
       c = gchar_pos(&pos);
-      if (c == NUL || (pos.col == 0 && startPS(pos.lnum, NUL, FALSE))) {
+      if (c == NUL || (pos.col == 0 && startPS(pos.lnum, NUL, false))) {
         if (dir == BACKWARD && pos.lnum != startlnum) {
           pos.lnum++;
         }
@@ -2581,11 +2577,11 @@ found:
 /// Paragraphs are currently supposed to be separated by empty lines.
 /// If 'what' is NUL we go to the next paragraph.
 /// If 'what' is '{' or '}' we go to the next section.
-/// If 'both' is TRUE also stop at '}'.
+/// If 'both' is true also stop at '}'.
 ///
 /// @param pincl  Return: true if last char is to be included
 ///
-/// @return       TRUE if the next paragraph or section was found.
+/// @return       true if the next paragraph or section was found.
 bool findpar(bool *pincl, int dir, long count, int what, int both)
 {
   linenr_T curr;
@@ -2676,11 +2672,9 @@ static int inmacro(char_u *opt, char_u *s)
   return macro[0] != NUL;
 }
 
-/*
- * startPS: return TRUE if line 'lnum' is the start of a section or paragraph.
- * If 'para' is '{' or '}' only check for sections.
- * If 'both' is TRUE also stop at '}'
- */
+/// startPS: return true if line 'lnum' is the start of a section or paragraph.
+/// If 'para' is '{' or '}' only check for sections.
+/// If 'both' is true also stop at '}'
 int startPS(linenr_T lnum, int para, int both)
 {
   char_u *s;
@@ -2712,12 +2706,12 @@ int startPS(linenr_T lnum, int para, int both)
  * 2 or higher - keyword characters (letters, digits and underscore)
  */
 
-static int cls_bigword;         // TRUE for "W", "B" or "E"
+static int cls_bigword;         // true for "W", "B" or "E"
 
 /*
  * cls() - returns the class of character at curwin->w_cursor
  *
- * If a 'W', 'B', or 'E' motion is being done (cls_bigword == TRUE), chars
+ * If a 'W', 'B', or 'E' motion is being done (cls_bigword == true), chars
  * from class 2 and higher are reported as class 1 since only white space
  * boundaries are of interest.
  */
@@ -2732,7 +2726,7 @@ static int cls(void)
 
   c = utf_class(c);
 
-  // If cls_bigword is TRUE, report all non-blanks as class 1.
+  // If cls_bigword is true, report all non-blanks as class 1.
   if (c != 0 && cls_bigword) {
     return 1;
   }
@@ -2742,7 +2736,7 @@ static int cls(void)
 /// fwd_word(count, type, eol) - move forward one word
 ///
 /// @return  FAIL if the cursor was already at the end of the file.
-/// If eol is TRUE, last word stops at end of line (for operators).
+/// If eol is true, last word stops at end of line (for operators).
 ///
 /// @param bigword  "W", "E" or "B"
 int fwd_word(long count, int bigword, int eol)
@@ -2809,7 +2803,7 @@ int fwd_word(long count, int bigword, int eol)
 /*
  * bck_word() - move backward 'count' words
  *
- * If stop is TRUE and we are already on the start of a word, move one less.
+ * If stop is true and we are already on the start of a word, move one less.
  *
  * Returns FAIL if top of the file was reached.
  */
@@ -2855,7 +2849,7 @@ int bck_word(long count, int bigword, int stop)
 
     inc_cursor();                       // overshot - forward one
 finished:
-    stop = FALSE;
+    stop = false;
   }
   return OK;
 }
@@ -2872,8 +2866,8 @@ finished:
  *
  * Returns FAIL if end of the file was reached.
  *
- * If stop is TRUE and we are already on the end of a word, move one less.
- * If empty is TRUE stop on an empty line.
+ * If stop is true and we are already on the end of a word, move one less.
+ * If empty is true stop on an empty line.
  */
 int end_word(long count, int bigword, int stop, int empty)
 {
@@ -2906,7 +2900,7 @@ int end_word(long count, int bigword, int stop, int empty)
     } else if (!stop || sclass == 0) {
       /*
        * We were at the end of a word. Go to the end of the next word.
-       * First skip white space, if 'empty' is TRUE, stop at empty line.
+       * First skip white space, if 'empty' is true, stop at empty line.
        */
       while (cls() == 0) {
         if (empty && curwin->w_cursor.col == 0
@@ -2927,14 +2921,14 @@ int end_word(long count, int bigword, int stop, int empty)
     }
     dec_cursor();                       // overshot - one char backward
 finished:
-    stop = FALSE;                       // we move only one word less
+    stop = false;                       // we move only one word less
   }
   return OK;
 }
 
 /// Move back to the end of the word.
 ///
-/// @param bigword  TRUE for "B"
+/// @param bigword  true for "B"
 /// @param eol      if true, then stop at end of line.
 ///
 /// @return         FAIL if start of the file was reached.
@@ -3046,14 +3040,14 @@ static void findsent_forward(long count, bool at_start_sent)
 /// Find word under cursor, cursor at end.
 /// Used while an operator is pending, and in Visual mode.
 ///
-/// @param include  TRUE: include word and white space
-/// @param bigword  FALSE == word, TRUE == WORD
+/// @param include  true: include word and white space
+/// @param bigword  false == word, true == WORD
 int current_word(oparg_T *oap, long count, int include, int bigword)
 {
   pos_T start_pos;
   pos_T pos;
   bool inclusive = true;
-  int include_white = FALSE;
+  int include_white = false;
 
   cls_bigword = bigword;
   clearpos(&start_pos);
@@ -3080,7 +3074,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
      * not be included ("word"), find end of word.
      */
     if ((cls() == 0) == include) {
-      if (end_word(1L, bigword, TRUE, TRUE) == FAIL) {
+      if (end_word(1L, bigword, true, true) == FAIL) {
         return FAIL;
       }
     } else {
@@ -3091,7 +3085,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
        * If we end up in the first column of the next line (single char
        * word) back up to end of the line.
        */
-      fwd_word(1L, bigword, TRUE);
+      fwd_word(1L, bigword, true);
       if (curwin->w_cursor.col == 0) {
         decl(&curwin->w_cursor);
       } else {
@@ -3099,7 +3093,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
       }
 
       if (include) {
-        include_white = TRUE;
+        include_white = true;
       }
     }
 
@@ -3127,7 +3121,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
         return FAIL;
       }
       if (include != (cls() != 0)) {
-        if (bck_word(1L, bigword, TRUE) == FAIL) {
+        if (bck_word(1L, bigword, true) == FAIL) {
           return FAIL;
         }
       } else {
@@ -3144,7 +3138,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
         return FAIL;
       }
       if (include != (cls() == 0)) {
-        if (fwd_word(1L, bigword, TRUE) == FAIL && count > 1) {
+        if (fwd_word(1L, bigword, true) == FAIL && count > 1) {
           return FAIL;
         }
         /*
@@ -3156,7 +3150,7 @@ int current_word(oparg_T *oap, long count, int include, int bigword)
           inclusive = false;
         }
       } else {
-        if (end_word(1L, bigword, TRUE, TRUE) == FAIL) {
+        if (end_word(1L, bigword, true, true) == FAIL) {
           return FAIL;
         }
       }
@@ -3378,7 +3372,7 @@ extend:
 /// Find block under the cursor, cursor at end.
 /// "what" and "other" are two matching parenthesis/brace/etc.
 ///
-/// @param include  TRUE == include white space
+/// @param include  true == include white space
 /// @param what     '(', '{', etc.
 /// @param other    ')', '}', etc.
 int current_block(oparg_T *oap, long count, int include, int what, int other)
@@ -3453,7 +3447,7 @@ int current_block(oparg_T *oap, long count, int include, int what, int other)
   }
   curwin->w_cursor = *end_pos;
 
-  // Try to exclude the '(', '{', ')', '}', etc. when "include" is FALSE.
+  // Try to exclude the '(', '{', ')', '}', etc. when "include" is false.
   // If the ending '}', ')' or ']' is only preceded by indent, skip that
   // indent. But only if the resulting area is not smaller than what we
   // started with.
@@ -3764,7 +3758,7 @@ theend:
   return retval;
 }
 
-/// @param include  TRUE == include white space
+/// @param include  true == include white space
 /// @param type     'p' for paragraph, 'S' for section
 int current_par(oparg_T *oap, long count, int include, int type)
 {
@@ -3775,7 +3769,7 @@ int current_par(oparg_T *oap, long count, int include, int type)
   int start_is_white;
   int prev_start_is_white;
   int retval = OK;
-  int do_white = FALSE;
+  int do_white = false;
   int t;
   int i;
 
@@ -4394,7 +4388,7 @@ int current_search(long count, bool forward)
 /// If move is true, check from the beginning of the buffer,
 /// else from position "cur".
 /// "direction" is FORWARD or BACKWARD.
-/// Returns TRUE, FALSE or -1 for failure.
+/// Returns true, false or -1 for failure.
 static int is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direction)
 {
   regmmatch_T regmatch;
@@ -4451,9 +4445,7 @@ static int is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direct
   return result;
 }
 
-/*
- * return TRUE if line 'lnum' is empty or has white chars only.
- */
+/// return true if line 'lnum' is empty or has white chars only.
 int linewhite(linenr_T lnum)
 {
   char_u *p;
@@ -5377,7 +5369,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
     if (incl_regmatch.regprog == NULL) {
       goto fpip_end;
     }
-    incl_regmatch.rm_ic = FALSE;        // don't ignore case in incl. pat.
+    incl_regmatch.rm_ic = false;        // don't ignore case in incl. pat.
   }
   if (type == FIND_DEFINE && (*curbuf->b_p_def != NUL || *p_def != NUL)) {
     def_regmatch.regprog = vim_regcomp(*curbuf->b_p_def == NUL
@@ -5386,7 +5378,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
     if (def_regmatch.regprog == NULL) {
       goto fpip_end;
     }
-    def_regmatch.rm_ic = FALSE;         // don't ignore case in define pat.
+    def_regmatch.rm_ic = false;         // don't ignore case in define pat.
   }
   files = xcalloc((size_t)max_path_depth, sizeof(SearchedFile));
   old_files = max_path_depth;
@@ -5419,7 +5411,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
         new_fname = file_name_in_line(incl_regmatch.endp[0], 0,
                                       FNAME_EXP|FNAME_INCL|FNAME_REL, 1L, p_fname, NULL);
       }
-      already_searched = FALSE;
+      already_searched = false;
       if (new_fname != NULL) {
         // Check whether we have already searched in this file
         for (i = 0;; i++) {
@@ -5539,7 +5531,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
             bigger[i].fp = NULL;
             bigger[i].name = NULL;
             bigger[i].lnum = 0;
-            bigger[i].matched = FALSE;
+            bigger[i].matched = false;
           }
           for (i = old_files; i < max_path_depth; i++) {
             bigger[i + max_path_depth] = files[i];
@@ -5560,7 +5552,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
           }
           files[depth].name = curr_fname = new_fname;
           files[depth].lnum = 0;
-          files[depth].matched = FALSE;
+          files[depth].matched = false;
           if (action == ACTION_EXPAND) {
             msg_hist_off = true;                // reset in msg_trunc_attr()
             vim_snprintf((char *)IObuff, IOSIZE,
@@ -5814,7 +5806,7 @@ search_line:
         }
         if (action != ACTION_SHOW) {
           curwin->w_cursor.col = (colnr_T)(startp - line);
-          curwin->w_set_curswant = TRUE;
+          curwin->w_set_curswant = true;
         }
 
         if (l_g_do_tagpreview != 0
@@ -5957,7 +5949,7 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
       msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
       msg_puts(" ");
     }
-    msg_prt_line(line, FALSE);
+    msg_prt_line(line, false);
     ui_flush();                        // show one line at a time
 
     // Definition continues until line that doesn't end with '\'

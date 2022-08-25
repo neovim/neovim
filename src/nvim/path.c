@@ -233,10 +233,8 @@ char_u *get_past_head(const char_u *path)
   return (char_u *)retval;
 }
 
-/*
- * Return TRUE if 'c' is a path separator.
- * Note that for MS-Windows this includes the colon.
- */
+/// Return true if 'c' is a path separator.
+/// Note that for MS-Windows this includes the colon.
 int vim_ispathsep(int c)
 {
 #ifdef UNIX
@@ -262,9 +260,7 @@ int vim_ispathsep_nocolon(int c)
   ;
 }
 
-/*
- * return TRUE if 'c' is a path list separator.
- */
+/// return true if 'c' is a path list separator.
 int vim_ispathlistsep(int c)
 {
 #ifdef UNIX
@@ -319,11 +315,9 @@ void shorten_dir(char_u *str)
   shorten_dir_len(str, 1);
 }
 
-/*
- * Return TRUE if the directory of "fname" exists, FALSE otherwise.
- * Also returns TRUE if there is no directory name.
- * "fname" must be writable!.
- */
+/// Return true if the directory of "fname" exists, false otherwise.
+/// Also returns true if there is no directory name.
+/// "fname" must be writable!.
 bool dir_of_file_exists(char_u *fname)
 {
   char *p = path_tail_with_sep((char *)fname);
@@ -806,10 +800,8 @@ static int find_previous_pathsep(char_u *path, char_u **psep)
   return FAIL;
 }
 
-/*
- * Returns TRUE if "maybe_unique" is unique wrt other_paths in "gap".
- * "maybe_unique" is the end portion of "((char_u **)gap->ga_data)[i]".
- */
+/// Returns true if "maybe_unique" is unique wrt other_paths in "gap".
+/// "maybe_unique" is the end portion of "((char_u **)gap->ga_data)[i]".
 static bool is_unique(char_u *maybe_unique, garray_T *gap, int i)
 {
   char_u **other_paths = (char_u **)gap->ga_data;
@@ -1149,10 +1141,8 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
   return gap->ga_len;
 }
 
-/*
- * Return TRUE if "p" contains what looks like an environment variable.
- * Allowing for escaping.
- */
+/// Return true if "p" contains what looks like an environment variable.
+/// Allowing for escaping.
 static bool has_env_var(char_u *p)
 {
   for (; *p; MB_PTR_ADV(p)) {
@@ -1167,7 +1157,7 @@ static bool has_env_var(char_u *p)
 
 #ifdef SPECIAL_WILDCHAR
 
-// Return TRUE if "p" contains a special wildcard character, one that Vim
+// Return true if "p" contains a special wildcard character, one that Vim
 // cannot expand, requires using a shell.
 static bool has_special_wildchar(char_u *p)
 {
@@ -1365,9 +1355,7 @@ void FreeWild(int count, char **files)
   xfree(files);
 }
 
-/*
- * Return TRUE if we can expand this backtick thing here.
- */
+/// Return true if we can expand this backtick thing here.
 static int vim_backtick(char_u *p)
 {
   return *p == '`' && *(p + 1) != NUL && *(p + STRLEN(p) - 1) == '`';
@@ -1726,7 +1714,7 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
         ptr = tofree;
         len = STRLEN(ptr);
         file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-                                      TRUE, rel_fname);
+                                      true, rel_fname);
       }
     }
     if (file_name == NULL && (options & FNAME_MESS)) {
@@ -1740,7 +1728,7 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
      * appears several times in the path. */
     while (file_name != NULL && --count > 0) {
       xfree(file_name);
-      file_name = find_file_in_path(ptr, len, options, FALSE, rel_fname);
+      file_name = find_file_in_path(ptr, len, options, false, rel_fname);
     }
   } else {
     file_name = vim_strnsave(ptr, len);
@@ -1820,9 +1808,7 @@ bool path_with_extension(const char *path, const char *extension)
   return strcmp(last_dot + 1, extension) == 0;
 }
 
-/*
- * Return TRUE if "name" is a full (absolute) path name or URL.
- */
+/// Return true if "name" is a full (absolute) path name or URL.
 bool vim_isAbsName(char_u *name)
 {
   return path_with_url((char *)name) != 0 || path_is_absolute(name);
@@ -1959,21 +1945,17 @@ void path_fix_case(char *name)
   os_closedir(&dir);
 }
 
-/*
- * Return TRUE if "p" points to just after a path separator.
- * Takes care of multi-byte characters.
- * "b" must point to the start of the file name
- */
+/// Return true if "p" points to just after a path separator.
+/// Takes care of multi-byte characters.
+/// "b" must point to the start of the file name
 int after_pathsep(const char *b, const char *p)
 {
   return p > b && vim_ispathsep(p[-1])
          && utf_head_off((char_u *)b, (char_u *)p - 1) == 0;
 }
 
-/*
- * Return TRUE if file names "f1" and "f2" are in the same directory.
- * "f1" may be a short name, "f2" must be a full path.
- */
+/// Return true if file names "f1" and "f2" are in the same directory.
+/// "f1" may be a short name, "f2" must be a full path.
 bool same_directory(char_u *f1, char_u *f2)
 {
   char ffname[MAXPATHL];
@@ -1985,7 +1967,7 @@ bool same_directory(char_u *f1, char_u *f2)
     return false;
   }
 
-  (void)vim_FullName((char *)f1, (char *)ffname, MAXPATHL, FALSE);
+  (void)vim_FullName((char *)f1, (char *)ffname, MAXPATHL, false);
   t1 = path_tail_with_sep(ffname);
   t2 = path_tail_with_sep((char *)f2);
   return t1 - ffname == (char_u *)t2 - f2
@@ -2252,9 +2234,7 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
   return retval;
 }
 
-/*
- * Return TRUE if "fname" matches with an entry in 'suffixes'.
- */
+/// Return true if "fname" matches with an entry in 'suffixes'.
 int match_suffix(char_u *fname)
 {
 #define MAXSUFLEN 30  // maximum length of a file suffix
@@ -2417,7 +2397,7 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int fo
 
 /// Check if file `fname` is a full (absolute) path.
 ///
-/// @return `TRUE` if "fname" is absolute.
+/// @return `true` if "fname" is absolute.
 int path_is_absolute(const char_u *fname)
 {
 #ifdef WIN32

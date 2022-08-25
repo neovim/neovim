@@ -1575,7 +1575,7 @@ static void undisplay_dollar(void)
 /// type == INDENT_DEC   decrease indent (for CTRL-D)
 /// type == INDENT_SET   set indent to "amount"
 ///
-/// @param round               if TRUE, round the indent to 'shiftwidth' (only with _INC and _Dec).
+/// @param round               if true, round the indent to 'shiftwidth' (only with _INC and _Dec).
 /// @param replaced            replaced character, put on replace stack
 /// @param call_changed_bytes  call changed_bytes()
 void change_indent(int type, int amount, int round, int replaced, int call_changed_bytes)
@@ -1599,7 +1599,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
 
   // for the following tricks we don't want list mode
   save_p_list = curwin->w_p_list;
-  curwin->w_p_list = FALSE;
+  curwin->w_p_list = false;
   vc = getvcol_nolist(&curwin->w_cursor);
   vcol = vc;
 
@@ -1718,7 +1718,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
   } else {
     curwin->w_cursor.col = (colnr_T)new_cursor_col;
   }
-  curwin->w_set_curswant = TRUE;
+  curwin->w_set_curswant = true;
   changed_cline_bef_curs();
 
   /*
@@ -1978,7 +1978,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
   // inserted with ins_str(), so as not to replace characters in replace
   // mode.
   // Only use mod_mask for special keys, to avoid things like <S-Space>,
-  // unless 'allow_modmask' is TRUE.
+  // unless 'allow_modmask' is true.
   if (mod_mask & MOD_MASK_CMD) {  // Command-key never produces a normal key.
     allow_modmask = true;
   }
@@ -3086,7 +3086,7 @@ void beginline(int flags)
         curwin->w_cursor.col++;
       }
     }
-    curwin->w_set_curswant = TRUE;
+    curwin->w_set_curswant = true;
   }
 }
 
@@ -3130,7 +3130,7 @@ int oneright(void)
   }
   curwin->w_cursor.col += l;
 
-  curwin->w_set_curswant = TRUE;
+  curwin->w_set_curswant = true;
   return OK;
 }
 
@@ -3165,7 +3165,7 @@ int oneleft(void)
       }
     }
 
-    curwin->w_set_curswant = TRUE;
+    curwin->w_set_curswant = true;
     return OK;
   }
 
@@ -3182,7 +3182,7 @@ int oneleft(void)
   return OK;
 }
 
-/// @oaram upd_topline  When TRUE: update topline
+/// @oaram upd_topline  When true: update topline
 int cursor_up(long n, int upd_topline)
 {
   linenr_T lnum;
@@ -3237,7 +3237,7 @@ int cursor_up(long n, int upd_topline)
 
 /// Cursor down a number of logical lines.
 ///
-/// @param upd_topline  When TRUE: update topline
+/// @param upd_topline  When true: update topline
 int cursor_down(long n, int upd_topline)
 {
   linenr_T lnum;
@@ -4007,13 +4007,13 @@ static void ins_reg(void)
   no_mapping++;
   allow_keys++;
   regname = plain_vgetc();
-  LANGMAP_ADJUST(regname, TRUE);
+  LANGMAP_ADJUST(regname, true);
   if (regname == Ctrl_R || regname == Ctrl_O || regname == Ctrl_P) {
     // Get a third key for literal register insertion
     literally = regname;
     add_to_showcmd_c(literally);
     regname = plain_vgetc();
-    LANGMAP_ADJUST(regname, TRUE);
+    LANGMAP_ADJUST(regname, true);
   }
   no_mapping--;
   allow_keys--;
@@ -4051,7 +4051,7 @@ static void ins_reg(void)
       need_redraw = true;  // remove the '"'
     } else if (stop_insert_mode) {
       // When the '=' register was used and a function was invoked that
-      // did ":stopinsert" then stuff_empty() returns FALSE but we won't
+      // did ":stopinsert" then stuff_empty() returns false but we won't
       // insert anything, need to remove the '"'
       need_redraw = true;
     }
@@ -4202,7 +4202,7 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
       // Repeat the insert
       return false;
     }
-    stop_insert(&curwin->w_cursor, TRUE, nomove);
+    stop_insert(&curwin->w_cursor, true, nomove);
     undisplay_dollar();
   }
 
@@ -4400,9 +4400,9 @@ static void ins_shift(int c, int lastc)
     if (lastc == '^') {
       old_indent = get_indent();        // remember curr. indent
     }
-    change_indent(INDENT_SET, 0, TRUE, 0, TRUE);
+    change_indent(INDENT_SET, 0, true, 0, true);
   } else {
-    change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
+    change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, true, 0, true);
   }
 
   if (did_ai && *skipwhite((char *)get_cursor_line_ptr()) != NUL) {
@@ -4574,7 +4574,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           }
         }
 
-        do_join(2, FALSE, FALSE, FALSE, false);
+        do_join(2, false, false, false, false);
         if (temp == NUL && gchar_cursor() != NUL) {
           inc_cursor();
         }
@@ -4856,7 +4856,7 @@ static void ins_mousescroll(int dir)
     }
   }
 
-  curwin->w_redr_status = TRUE;
+  curwin->w_redr_status = true;
 
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
@@ -5024,7 +5024,7 @@ static void ins_up(bool startcol)
 
   undisplay_dollar();
   tpos = curwin->w_cursor;
-  if (cursor_up(1L, TRUE) == OK) {
+  if (cursor_up(1L, true) == OK) {
     if (startcol) {
       coladvance(getvcol_nolist(&Insstart));
     }
@@ -5072,7 +5072,7 @@ static void ins_down(bool startcol)
 
   undisplay_dollar();
   tpos = curwin->w_cursor;
-  if (cursor_down(1L, TRUE) == OK) {
+  if (cursor_down(1L, true) == OK) {
     if (startcol) {
       coladvance(getvcol_nolist(&Insstart));
     }
@@ -5407,7 +5407,7 @@ static int ins_digraph(void)
 
   if (IS_SPECIAL(c) || mod_mask) {          // special key
     clear_showcmd();
-    insert_special(c, TRUE, FALSE);
+    insert_special(c, true, false);
     return NUL;
   }
   if (c != ESC) {
@@ -5508,7 +5508,7 @@ static int ins_ctrl_ey(int tc)
       }
       tw_save = curbuf->b_p_tw;
       curbuf->b_p_tw = -1;
-      insert_special(c, TRUE, FALSE);
+      insert_special(c, true, false);
       curbuf->b_p_tw = tw_save;
       revins_chars++;
       revins_legal++;
@@ -5557,7 +5557,7 @@ static void ins_try_si(int c)
       i = get_indent();
       curwin->w_cursor = old_pos;
       if (State & VREPLACE_FLAG) {
-        change_indent(INDENT_SET, i, FALSE, NUL, TRUE);
+        change_indent(INDENT_SET, i, false, NUL, true);
       } else {
         (void)set_indent(i, SIN_CHANGED);
       }
@@ -5582,7 +5582,7 @@ static void ins_try_si(int c)
         curwin->w_cursor = old_pos;
       }
       if (temp) {
-        shift_line(TRUE, FALSE, 1, TRUE);
+        shift_line(true, false, 1, true);
       }
     }
   }

@@ -914,7 +914,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
  */
 static vimmenu_T *expand_menu = NULL;
 static int expand_modes = 0x0;
-static int expand_emenu;                // TRUE for ":emenu" command
+static int expand_emenu;                // true for ":emenu" command
 
 /*
  * Work out what to complete when doing command line completion of menu names.
@@ -1056,7 +1056,7 @@ char *get_menu_name(expand_T *xp, int idx)
     } else {
       str = menu->dname;
       if (menu->en_dname == NULL) {
-        should_advance = TRUE;
+        should_advance = true;
       }
     }
   } else {
@@ -1163,10 +1163,8 @@ char *menu_name_skip(char *const name)
   return p;
 }
 
-/*
- * Return TRUE when "name" matches with menu "menu".  The name is compared in
- * two ways: raw menu name and menu name without '&'.  ignore part after a TAB.
- */
+/// Return true when "name" matches with menu "menu".  The name is compared in
+/// two ways: raw menu name and menu name without '&'.  ignore part after a TAB.
 static bool menu_name_equal(const char *const name, const vimmenu_T *const menu)
 {
   if (menu->en_name != NULL
@@ -1405,10 +1403,8 @@ bool menu_is_toolbar(const char *const name)
   return STRNCMP(name, "ToolBar", 7) == 0;
 }
 
-/*
- * Return TRUE if the name is a menu separator identifier: Starts and ends
- * with '-'
- */
+/// Return true if the name is a menu separator identifier: Starts and ends
+/// with '-'
 int menu_is_separator(char *name)
 {
   return name[0] == '-' && name[STRLEN(name) - 1] == '-';

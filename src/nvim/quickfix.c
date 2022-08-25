@@ -67,9 +67,9 @@ struct qfline_S {
   char *qf_module;      ///< module name for this error
   char *qf_pattern;     ///< search pattern for the error
   char *qf_text;        ///< description of the error
-  char qf_viscol;       ///< set to TRUE if qf_col and qf_end_col is
+  char qf_viscol;       ///< set to true if qf_col and qf_end_col is
   //   screen column
-  char qf_cleared;      ///< set to TRUE if line has been deleted
+  char qf_cleared;      ///< set to true if line has been deleted
   char qf_type;         ///< type of the error (mostly 'E'); 1 for :helpgrep
   char qf_valid;        ///< valid error message detected
 };
@@ -100,7 +100,7 @@ typedef struct qf_list_S {
   qfline_T *qf_ptr;          ///< pointer to the current error
   int qf_count;                 ///< number of errors (0 means empty list)
   int qf_index;                 ///< current index in the error list
-  int qf_nonevalid;             ///< TRUE if not a single valid entry found
+  int qf_nonevalid;             ///< true if not a single valid entry found
   char *qf_title;        ///< title derived from the command that created
                          ///< the error list or set by setqflist
   typval_T *qf_ctx;          ///< context set by setqflist/setloclist
@@ -1891,7 +1891,7 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
 /// Get the quickfix/location list stack to use for the specified Ex command.
 /// For a location list command, returns the stack for the current window.  If
 /// the location list is not found, then returns NULL and prints an error
-/// message if 'print_emsg' is TRUE.
+/// message if 'print_emsg' is true.
 static qf_info_T *qf_cmd_get_stack(exarg_T *eap, int print_emsg)
 {
   qf_info_T *qi = &ql_info;
@@ -2511,7 +2511,7 @@ static win_T *qf_find_win_with_normal_buf(void)
 }
 
 // Go to a window in any tabpage containing the specified file.  Returns true
-// if successfully jumped to the window. Otherwise returns FALSE.
+// if successfully jumped to the window. Otherwise returns false.
 static bool qf_goto_tabwin_with_file(int fnum)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
@@ -3393,7 +3393,7 @@ bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
           found_one = true;
           if (qfp->qf_lnum >= line1 && qfp->qf_lnum <= line2) {
             if (amount == MAXLNUM) {
-              qfp->qf_cleared = TRUE;
+              qfp->qf_cleared = true;
             } else {
               qfp->qf_lnum += amount;
             }
@@ -3747,7 +3747,7 @@ linenr_T qf_current_entry(win_T *wp)
 }
 
 /// Update the cursor position in the quickfix window to the current error.
-/// Return TRUE if there is a quickfix window.
+/// Return true if there is a quickfix window.
 ///
 /// @param old_qf_index  previous qf_index or zero
 static bool qf_win_pos_update(qf_info_T *qi, int old_qf_index)
@@ -4175,7 +4175,7 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   }
 }
 
-// Return TRUE when using ":vimgrep" for ":grep".
+// Return true when using ":vimgrep" for ":grep".
 int grep_internal(cmdidx_T cmdidx)
 {
   return (cmdidx == CMD_grep
@@ -4832,7 +4832,7 @@ static void qf_get_nth_below_entry(qfline_T *entry_arg, linenr_T n, bool linewis
 }
 
 /// Get the nth quickfix entry above the specified entry.  Searches backwards in
-/// the list. If linewise is TRUE, then treat multiple entries on a single line
+/// the list. If linewise is true, then treat multiple entries on a single line
 /// as one.
 static void qf_get_nth_above_entry(qfline_T *entry, linenr_T n, bool linewise, int *errornr)
   FUNC_ATTR_NONNULL_ALL
@@ -5609,7 +5609,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     if (readfile_result == OK
         && !got_int
         && !(curbuf->b_flags & BF_NEW)) {
-      failed = FALSE;
+      failed = false;
       if (curbuf != newbuf) {
         // Bloody autocommands changed the buffer!  Can happen when
         // using netrw and editing a remote file.  Use the current
@@ -5677,7 +5677,7 @@ static void wipe_dummy_buffer(buf_T *buf, char *dirname_start)
     cleanup_T cs;
 
     // Reset the error/interrupt/exception state here so that aborting()
-    // returns FALSE when wiping out the buffer.  Otherwise it doesn't
+    // returns false when wiping out the buffer.  Otherwise it doesn't
     // work when got_int is set.
     enter_cleanup(&cs);
 

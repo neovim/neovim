@@ -220,8 +220,8 @@ static char_u e_pathtoolong[] = N_("E854: path too long for completion");
 ///
 /// Upward search is only done on the starting dir.
 ///
-/// If 'free_visited' is TRUE the list of already visited files/directories is
-/// cleared. Set this to FALSE if you just want to search from another
+/// If 'free_visited' is true the list of already visited files/directories is
+/// cleared. Set this to false if you just want to search from another
 /// directory, but want to be sure that no directory from a previous search is
 /// searched again. This is useful if you search for a file at different places.
 /// The list of visited files/dirs can also be cleared with the function
@@ -268,7 +268,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
   ff_clear(search_ctx);
 
   // clear visited list if wanted
-  if (free_visited == TRUE) {
+  if (free_visited == true) {
     vim_findfile_free_visited(search_ctx);
   } else {
     /* Reuse old visited lists. Get the visited list for the given
@@ -301,7 +301,7 @@ void *vim_findfile_init(char_u *path, char_u *filename, char_u *stopdirs, int le
     if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       // Make the start dir an absolute path name.
       STRLCPY(ff_expand_buffer, rel_fname, len + 1);
-      search_ctx->ffsc_start_dir = (char_u *)FullName_save((char *)ff_expand_buffer, FALSE);
+      search_ctx->ffsc_start_dir = (char_u *)FullName_save((char *)ff_expand_buffer, false);
     } else {
       search_ctx->ffsc_start_dir = vim_strnsave(rel_fname, len);
     }
@@ -932,7 +932,7 @@ char_u *vim_findfile(void *search_ctx_arg)
       // is the last starting directory in the stop list?
       if (ff_path_in_stoplist(search_ctx->ffsc_start_dir,
                               (int)(path_end - search_ctx->ffsc_start_dir),
-                              search_ctx->ffsc_stopdirs_v) == TRUE) {
+                              search_ctx->ffsc_stopdirs_v) == true) {
         break;
       }
 
@@ -1276,7 +1276,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
 
 /// check if the given path is in the stopdirs
 ///
-/// @return  TRUE if yes else FALSE
+/// @return  true if yes else false
 static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
 {
   int i = 0;
@@ -1288,7 +1288,7 @@ static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
 
   // if no path consider it as match
   if (path_len == 0) {
-    return TRUE;
+    return true;
   }
 
   for (i = 0; stopdirs_v[i] != NULL; i++) {
@@ -1299,7 +1299,7 @@ static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
        */
       if (FNAMENCMP(stopdirs_v[i], path, path_len) == 0
           && vim_ispathsep(stopdirs_v[i][path_len])) {
-        return TRUE;
+        return true;
       }
     } else {
       if (FNAMECMP(stopdirs_v[i], path) == 0) {
@@ -1307,13 +1307,13 @@ static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
       }
     }
   }
-  return FALSE;
+  return false;
 }
 
 /// Find the file name "ptr[len]" in the path.  Also finds directory names.
 ///
-/// On the first call set the parameter 'first' to TRUE to initialize
-/// the search.  For repeating calls to FALSE.
+/// On the first call set the parameter 'first' to true to initialize
+/// the search.  For repeating calls to false.
 ///
 /// Repeating calls will return other files called 'ptr[len]' from the path.
 ///
@@ -1374,7 +1374,7 @@ void free_findfile(void)
 /// @return  an allocated string for the file name.  NULL for error.
 char_u *find_directory_in_path(char_u *ptr, size_t len, int options, char_u *rel_fname)
 {
-  return find_file_in_path_option(ptr, len, options, TRUE, p_cdpath,
+  return find_file_in_path_option(ptr, len, options, true, p_cdpath,
                                   FINDFILE_DIR, rel_fname, (char_u *)"");
 }
 
@@ -1445,7 +1445,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
      * If this is not a first call, return NULL.  We already returned a
      * filename on the first call.
      */
-    if (first == TRUE) {
+    if (first == true) {
       if (path_with_url((char *)ff_file_to_find)) {
         file_name = vim_strsave(ff_file_to_find);
         goto theend;
@@ -1494,7 +1494,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
      * When "first" is set, first setup to the start of the option.
      * Otherwise continue to find the next match.
      */
-    if (first == TRUE) {
+    if (first == true) {
       // vim_findfile_free_visited can handle a possible NULL pointer
       vim_findfile_free_visited(fdip_search_ctx);
       dir = (char *)path_option;
@@ -1508,7 +1508,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
           break;
         }
 
-        did_findfile_init = FALSE;
+        did_findfile_init = false;
       } else {
         char_u *r_ptr;
 
@@ -1532,14 +1532,14 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
                                             r_ptr, 100, false, find_what,
                                             fdip_search_ctx, false, rel_fname);
         if (fdip_search_ctx != NULL) {
-          did_findfile_init = TRUE;
+          did_findfile_init = true;
         }
         xfree(buf);
       }
     }
   }
   if (file_name == NULL && (options & FNAME_MESS)) {
-    if (first == TRUE) {
+    if (first == true) {
       if (find_what == FINDFILE_DIR) {
         semsg(_("E344: Can't find directory \"%s\" in cdpath"),
               ff_file_to_find);

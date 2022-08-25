@@ -640,7 +640,7 @@ static int color_numbers_8[28] = { 0, 4, 2, 6,
 
 // Lookup the "cterm" value to be used for color with index "idx" in
 // color_names[].
-// "boldp" will be set to TRUE or FALSE for a foreground color when using 8
+// "boldp" will be set to kTrue or kFalse for a foreground color when using 8
 // colors, otherwise it will be unchanged.
 int lookup_color(const int idx, const bool foreground, TriState *const boldp)
 {
@@ -1321,7 +1321,7 @@ void restore_cterm_colors(void)
 
 /// @param check_link  if true also check for an existing link.
 ///
-/// @return TRUE if highlight group "idx" has any settings.
+/// @return true if highlight group "idx" has any settings.
 static int hl_has_settings(int idx, bool check_link)
 {
   return hl_table[idx].sg_cleared == 0
@@ -1701,7 +1701,7 @@ int syn_name2attr(const char_u *name)
   return 0;
 }
 
-/// Return TRUE if highlight group "name" exists.
+/// Return true if highlight group "name" exists.
 int highlight_exists(const char *name)
 {
   return syn_name2id(name) > 0;

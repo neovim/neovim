@@ -277,7 +277,7 @@ static bool use_cursor_line_sign(win_T *wp, linenr_T lnum)
 }
 
 // Get information needed to display the sign in line 'lnum' in window 'wp'.
-// If 'nrcol' is TRUE, the sign is going to be displayed in the number column.
+// If 'nrcol' is true, the sign is going to be displayed in the number column.
 // Otherwise the sign is going to be displayed in the sign column.
 //
 // @param count max number of signs

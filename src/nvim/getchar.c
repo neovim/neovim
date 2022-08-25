@@ -81,11 +81,9 @@ static buffheader_T readbuf2 = { { NULL, { NUL } }, NULL, 0, 0 };
 
 static int typeahead_char = 0;          // typeahead char that's not flushed
 
-/*
- * when block_redo is TRUE redo buffer will not be changed
- * used by edit() to repeat insertions and 'V' command for redoing
- */
-static int block_redo = FALSE;
+// when block_redo is true redo buffer will not be changed
+// used by edit() to repeat insertions and 'V' command for redoing
+static int block_redo = false;
 
 static int KeyNoremap = 0;                  // remapping flags
 
@@ -179,7 +177,7 @@ char_u *get_recorded(void)
   char_u *p;
   size_t len;
 
-  p = get_buffcont(&recordbuff, TRUE);
+  p = get_buffcont(&recordbuff, true);
   free_buff(&recordbuff);
 
   /*
@@ -207,7 +205,7 @@ char_u *get_recorded(void)
 /// K_SPECIAL in the returned string is escaped.
 char_u *get_inserted(void)
 {
-  return get_buffcont(&redobuff, FALSE);
+  return get_buffcont(&redobuff, false);
 }
 
 /// Add string after the current block of the given buffer
@@ -319,7 +317,7 @@ static void add_char_buff(buffheader_T *buf, int c)
 
 /// Get one byte from the read buffers.  Use readbuf1 one first, use readbuf2
 /// if that one is empty.
-/// If advance == TRUE go to the next char.
+/// If advance == true go to the next char.
 /// No translation is done K_SPECIAL is escaped.
 static int read_readbuffers(int advance)
 {
@@ -368,19 +366,15 @@ static void start_stuff(void)
   }
 }
 
-/*
- * Return TRUE if the stuff buffer is empty.
- */
+/// Return true if the stuff buffer is empty.
 int stuff_empty(void)
   FUNC_ATTR_PURE
 {
   return (readbuf1.bh_first.b_next == NULL && readbuf2.bh_first.b_next == NULL);
 }
 
-/*
- * Return TRUE if readbuf1 is empty.  There may still be redo characters in
- * redbuf2.
- */
+/// Return true if readbuf1 is empty.  There may still be redo characters in
+/// redbuf2.
 int readbuf1_empty(void)
   FUNC_ATTR_PURE
 {
@@ -793,7 +787,7 @@ int start_redo_ins(void)
 
 void stop_redo_ins(void)
 {
-  block_redo = FALSE;
+  block_redo = false;
 }
 
 /*
@@ -970,7 +964,7 @@ int ins_char_typebuf(int c, int modifiers)
   return (int)len;
 }
 
-/// Return TRUE if the typeahead buffer was changed (while waiting for a
+/// Return true if the typeahead buffer was changed (while waiting for a
 /// character to arrive).  Happens when a message was received from a client or
 /// from feedkeys().
 /// But check in a more generic way to avoid trouble: When "typebuf.tb_buf"
@@ -986,10 +980,8 @@ bool typebuf_changed(int tb_change_cnt)
                                 || typebuf_was_filled);
 }
 
-/*
- * Return TRUE if there are no characters in the typeahead buffer that have
- * not been typed (result from a mapping or come from ":normal").
- */
+/// Return true if there are no characters in the typeahead buffer that have
+/// not been typed (result from a mapping or come from ":normal").
 int typebuf_typed(void)
   FUNC_ATTR_PURE
 {
@@ -1353,9 +1345,7 @@ void close_all_scripts(void)
 
 #endif
 
-/*
- * Return TRUE when reading keys from a script file.
- */
+/// Return true when reading keys from a script file.
 int using_script(void)
   FUNC_ATTR_PURE
 {
@@ -1686,7 +1676,7 @@ int vpeekc_any(void)
 
 /*
  * Call vpeekc() without causing anything to be mapped.
- * Return TRUE if a character is available, FALSE otherwise.
+ * Return true if a character is available, false otherwise.
  */
 int char_avail(void)
 {
@@ -2363,8 +2353,8 @@ void check_end_reg_executing(bool advance)
 ///
 /// if "advance" is true (vgetc()):
 ///    Really get the character.
-///    KeyTyped is set to TRUE in the case the user typed the key.
-///    KeyStuffed is TRUE if the character comes from the stuff buffer.
+///    KeyTyped is set to true in the case the user typed the key.
+///    KeyStuffed is true if the character comes from the stuff buffer.
 /// if "advance" is false (vpeekc()):
 ///    Just look whether there is a character available.
 ///    Return NUL if not.
@@ -2451,7 +2441,7 @@ static int vgetorpeek(bool advance)
           // flush all input
           c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L);
 
-          // If inchar() returns TRUE (script file was active) or we
+          // If inchar() returns true (script file was active) or we
           // are inside a mapping, get out of Insert mode.
           // Otherwise we behave like having gotten a CTRL-C.
           // As a result typing CTRL-C in insert mode will
@@ -2865,7 +2855,7 @@ int inchar(char_u *buf, int maxlen, long wait_time)
 
   if (read_size <= 0) {  // Did not get a character from script.
     // If we got an interrupt, skip all previously typed characters and
-    // return TRUE if quit reading script file.
+    // return true if quit reading script file.
     // Stop reading typeahead when a single CTRL-C was read,
     // fill_input_buf() returns this when not able to read from stdin.
     // Don't use buf[] here, closescript() may have freed typebuf.tb_buf[]
