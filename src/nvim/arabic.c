@@ -320,22 +320,22 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1, int next_c)
     int backward_combine = !prev_laa && can_join(prev_c, c);
     int forward_combine = can_join(c, next_c);
 
-    if (backward_combine && forward_combine) {
-      curr_c = (int)curr_a->medial;
-    }
-    if (backward_combine && !forward_combine) {
-      curr_c = (int)curr_a->final;
-    }
-    if (!backward_combine && forward_combine) {
-      curr_c = (int)curr_a->initial;
-    }
-    if (!backward_combine && !forward_combine) {
-      curr_c = (int)curr_a->isolated;
+    if (backward_combine) {
+      if (forward_combine) {
+        curr_c = (int)curr_a->medial;
+      } else {
+        curr_c = (int)curr_a->final;
+      }
+    } else {
+      if (forward_combine) {
+        curr_c = (int)curr_a->initial;
+      } else {
+        curr_c = (int)curr_a->isolated;
+      }
     }
   }
 
-  // Sanity check -- curr_c should, in the future, never be 0.
-  // We should, in the future, insert a fatal error here.
+  // Character missing from the table means using original character.
   if (curr_c == NUL) {
     curr_c = c;
   }
