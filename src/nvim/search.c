@@ -1499,16 +1499,15 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
 
     // when adding lines the matching line may be empty but it is not
     // ignored because we are interested in the next line -- Acevedo
-    if ((compl_cont_status & CONT_ADDING)
-        && !(compl_cont_status & CONT_SOL)) {
+    if (compl_status_adding() && !compl_status_sol()) {
       if (mb_strcmp_ic((bool)p_ic, (const char *)p, (const char *)pat) == 0) {
         return OK;
       }
     } else if (*p != NUL) {  // Ignore empty lines.
       // Expanding lines or words.
-      assert(compl_length >= 0);
-      if ((p_ic ? mb_strnicmp(p, pat, (size_t)compl_length)
-                : STRNCMP(p, pat, compl_length)) == 0) {
+      assert(ins_compl_len() >= 0);
+      if ((p_ic ? mb_strnicmp(p, pat, (size_t)ins_compl_len())
+           : STRNCMP(p, pat, ins_compl_len())) == 0) {
         return OK;
       }
     }
@@ -5309,7 +5308,7 @@ static char_u *get_line_and_copy(linenr_T lnum, char_u *buf)
 }
 
 /// Find identifiers or defines in included files.
-/// If p_ic && (compl_cont_status & CONT_SOL) then ptr must be in lowercase.
+/// If p_ic && compl_status_sol() then ptr must be in lowercase.
 ///
 /// @param ptr            pointer to search pattern
 /// @param dir            direction of expansion
@@ -5362,9 +5361,9 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   file_line = xmalloc(LSIZE);
 
   if (type != CHECK_PATH && type != FIND_DEFINE
-      // when CONT_SOL is set compare "ptr" with the beginning of the line
-      // is faster than quote_meta/regcomp/regexec "ptr" -- Acevedo
-      && !(compl_cont_status & CONT_SOL)) {
+      // when CONT_SOL is set compare "ptr" with the beginning of the
+      // line is faster than quote_meta/regcomp/regexec "ptr" -- Acevedo
+      && !compl_status_sol()) {
     pat = xmalloc(len + 5);
     assert(len <= INT_MAX);
     sprintf((char *)pat, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
@@ -5604,8 +5603,7 @@ search_line:
        * define and this line didn't match define_prog above.
        */
       if (def_regmatch.regprog == NULL || define_matched) {
-        if (define_matched
-            || (compl_cont_status & CONT_SOL)) {
+        if (define_matched || compl_status_sol()) {
           // compare the first "len" chars from "ptr"
           startp = (char_u *)skipwhite((char *)p);
           if (p_ic) {
@@ -5671,8 +5669,8 @@ search_line:
         }
         found = true;
         aux = p = startp;
-        if (compl_cont_status & CONT_ADDING) {
-          p += compl_length;
+        if (compl_status_adding()) {
+          p += ins_compl_len();
           if (vim_iswordp(p)) {
             goto exit_matched;
           }
@@ -5681,7 +5679,7 @@ search_line:
         p = find_word_end(p);
         i = (int)(p - aux);
 
-        if ((compl_cont_status & CONT_ADDING) && i == compl_length) {
+        if (compl_status_adding() && i == ins_compl_len()) {
           // IOSIZE > compl_length, so the STRNCPY works
           STRNCPY(IObuff, aux, i);
 
@@ -5728,7 +5726,7 @@ search_line:
           IObuff[i] = NUL;
           aux = IObuff;
 
-          if (i == compl_length) {
+          if (i == ins_compl_len()) {
             goto exit_matched;
           }
         }
@@ -5838,7 +5836,7 @@ exit_matched:
       // are not at the end of it already
       if (def_regmatch.regprog == NULL
           && action == ACTION_EXPAND
-          && !(compl_cont_status & CONT_SOL)
+          && !compl_status_sol()
           && *startp != NUL
           && *(p = startp + utfc_ptr2len((char *)startp)) != NUL) {
         goto search_line;

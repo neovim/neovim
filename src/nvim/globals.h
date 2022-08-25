@@ -159,27 +159,6 @@ EXTERN colnr_T dollar_vcol INIT(= -1);
 
 // Variables for Insert mode completion.
 
-// Length in bytes of the text being completed (this is deleted to be replaced
-// by the match.)
-EXTERN int compl_length INIT(= 0);
-
-// Set when doing something for completion that may call edit() recursively,
-// which is not allowed. Also used to disable folding during completion
-EXTERN bool compl_busy INIT(= false);
-
-// List of flags for method of completion.
-EXTERN int compl_cont_status INIT(= 0);
-#define CONT_ADDING    1       // "normal" or "adding" expansion
-#define CONT_INTRPT   (2 + 4)  // a ^X interrupted the current expansion
-                               // it's set only iff N_ADDS is set
-#define CONT_N_ADDS    4       // next ^X<> will add-new or expand-current
-#define CONT_S_IPOS    8       // next ^X<> will set initial_pos?
-                               // if so, word-wise-expansion will set SOL
-#define CONT_SOL       16      // pattern includes start of line, just for
-                               // word-wise expansion, not set for ^X^L
-#define CONT_LOCAL     32      // for ctrl_x_mode 0, ^X^P/^X^N do a local
-                               // expansion, (eg use complete=.)
-
 EXTERN char_u *edit_submode INIT(= NULL);        // msg for CTRL-X submode
 EXTERN char_u *edit_submode_pre INIT(= NULL);    // prepended to edit_submode
 EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode

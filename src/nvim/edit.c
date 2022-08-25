@@ -92,6 +92,10 @@ typedef struct insert_state {
 #define BACKSPACE_WORD_NOT_SPACE    3
 #define BACKSPACE_LINE              4
 
+/// Set when doing something for completion that may call edit() recursively,
+/// which is not allowed.
+static bool compl_busy = false;
+
 static colnr_T Insstart_textlen;        // length of line when insert started
 static colnr_T Insstart_blank_vcol;     // vcol for first inserted blank
 static bool update_Insstart_orig = true;  // set Insstart_orig to Insstart
@@ -1091,7 +1095,7 @@ check_pum:
     // but it is under other ^X modes
     if (*curbuf->b_p_cpt == NUL
         && (ctrl_x_mode_normal() || ctrl_x_mode_whole_line())
-        && !(compl_cont_status & CONT_LOCAL)) {
+        && !compl_status_local()) {
       goto normalchar;
     }
 
@@ -1177,9 +1181,11 @@ normalchar:
 static void insert_do_complete(InsertState *s)
 {
   compl_busy = true;
+  disable_fold_update++;  // don't redraw folds here
   if (ins_complete(s->c, true) == FAIL) {
-    compl_cont_status = 0;
+    compl_status_clear();
   }
+  disable_fold_update--;
   compl_busy = false;
   can_si = may_do_si();  // allow smartindenting
 }

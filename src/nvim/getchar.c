@@ -1881,7 +1881,7 @@ static bool at_ins_compl_key(void)
     c = p[3] & 0x1f;
   }
   return (ctrl_x_mode_not_default() && vim_is_ctrl_x_key(c))
-         || ((compl_cont_status & CONT_LOCAL) && (c == Ctrl_N || c == Ctrl_P));
+         || (compl_status_local() && (c == Ctrl_N || c == Ctrl_P));
 }
 
 /// Check if typebuf.tb_buf[] contains a modifier plus key that can be changed
