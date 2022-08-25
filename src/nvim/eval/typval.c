@@ -1252,7 +1252,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
           idx++;
           li = TV_LIST_ITEM_NEXT(l, li);
         }
-        if (info.item_compare_func_err) {
+        if (info.item_compare_func_err) {  // -V547
           emsg(_("E882: Uniq compare function failed"));
           break;
         }

@@ -640,6 +640,7 @@ static char_u *ins_compl_infercase_gettext(char_u *str, int char_len, int compl_
   while (i < char_len) {
     if (gap.ga_data != NULL) {
       ga_grow(&gap, 10);
+      assert(gap.ga_data != NULL);  // suppress clang "Dereference of NULL pointer"
       p = (char *)gap.ga_data + gap.ga_len;
       gap.ga_len += utf_char2bytes(wca[i++], p);
     } else if ((p - (char *)IObuff) + 6 >= IOSIZE) {
