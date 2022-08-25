@@ -827,7 +827,7 @@ char_u *vim_findfile(void *search_ctx_arg)
             if (search_ctx->ffsc_tagfile) {
               suf = "";
             } else {
-              suf = (char *)curbuf->b_p_sua;
+              suf = curbuf->b_p_sua;
             }
             for (;;) {
               // if file exists and we didn't already find it
@@ -1355,8 +1355,8 @@ char_u *find_file_in_path(char_u *ptr, size_t len, int options, int first, char_
   return find_file_in_path_option(ptr, len, options, first,
                                   (*curbuf->b_p_path == NUL
                                    ? p_path
-                                   : curbuf->b_p_path),
-                                  FINDFILE_BOTH, rel_fname, curbuf->b_p_sua);
+                                   : (char_u *)curbuf->b_p_path),
+                                  FINDFILE_BOTH, rel_fname, (char_u *)curbuf->b_p_sua);
 }
 
 static char_u *ff_file_to_find = NULL;

@@ -1932,11 +1932,11 @@ void utf_find_illegal(void)
   char_u *tofree = NULL;
 
   vimconv.vc_type = CONV_NONE;
-  if (enc_canon_props(curbuf->b_p_fenc) & ENC_8BIT) {
+  if (enc_canon_props((char_u *)curbuf->b_p_fenc) & ENC_8BIT) {
     // 'encoding' is "utf-8" but we are editing a 8-bit encoded file,
     // possibly a utf-8 file with illegal bytes.  Setup for conversion
     // from utf-8 to 'fileencoding'.
-    convert_setup(&vimconv, p_enc, curbuf->b_p_fenc);
+    convert_setup(&vimconv, p_enc, (char_u *)curbuf->b_p_fenc);
   }
 
   curwin->w_cursor.coladd = 0;

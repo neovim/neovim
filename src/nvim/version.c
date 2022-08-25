@@ -2072,7 +2072,7 @@ void list_in_columns(char **items, int size, int current)
   // Find the length of the longest item, use that + 1 as the column width.
   int i;
   for (i = 0; size < 0 ? items[i] != NULL : i < size; i++) {
-    int l = vim_strsize((char *)items[i]) + (i == current ? 2 : 0);
+    int l = vim_strsize(items[i]) + (i == current ? 2 : 0);
 
     if (l > width) {
       width = l;
@@ -2084,7 +2084,7 @@ void list_in_columns(char **items, int size, int current)
   if (Columns < width) {
     // Not enough screen columns - show one per line
     for (i = 0; i < item_count; i++) {
-      version_msg_wrap((char *)items[i], i == current);
+      version_msg_wrap(items[i], i == current);
       if (msg_col > 0 && i < item_count - 1) {
         msg_putchar('\n');
       }
@@ -2106,7 +2106,7 @@ void list_in_columns(char **items, int size, int current)
       if (idx == current) {
         msg_putchar('[');
       }
-      msg_puts((char *)items[idx]);
+      msg_puts(items[idx]);
       if (idx == current) {
         msg_putchar(']');
       }

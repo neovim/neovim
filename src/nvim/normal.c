@@ -2653,10 +2653,10 @@ void clear_showcmd(void)
 
     if (VIsual_mode == Ctrl_V) {
       char_u *const saved_sbr = p_sbr;
-      char_u *const saved_w_sbr = curwin->w_p_sbr;
+      char *const saved_w_sbr = curwin->w_p_sbr;
 
       // Make 'sbr' empty for a moment to get the correct size.
-      p_sbr = empty_option;
+      p_sbr = (char_u *)empty_option;
       curwin->w_p_sbr = empty_option;
       getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
       p_sbr = saved_sbr;
@@ -4275,7 +4275,7 @@ static void nv_ident(cmdarg_T *cap)
   // Allocate buffer to put the command in.  Inserting backslashes can
   // double the length of the word.  p_kp / curbuf->b_p_kp could be added
   // and some numbers.
-  char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
+  char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : (char_u *)curbuf->b_p_kp;  // 'keywordprg'
   assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
   bool kp_help = (STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
@@ -7075,8 +7075,8 @@ static void nv_object(cmdarg_T *cap)
     include = true;         // "ax" = an object: include white space
   }
   // Make sure (), [], {} and <> are in 'matchpairs'
-  mps_save = curbuf->b_p_mps;
-  curbuf->b_p_mps = (char_u *)"(:),{:},[:],<:>";
+  mps_save = (char_u *)curbuf->b_p_mps;
+  curbuf->b_p_mps = "(:),{:},[:],<:>";
 
   switch (cap->nchar) {
   case 'w':       // "aw" = a word
@@ -7130,7 +7130,7 @@ static void nv_object(cmdarg_T *cap)
     break;
   }
 
-  curbuf->b_p_mps = mps_save;
+  curbuf->b_p_mps = (char *)mps_save;
   if (!flag) {
     clearopbeep(cap->oap);
   }

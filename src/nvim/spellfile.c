@@ -4877,12 +4877,12 @@ void ex_mkspell(exarg_T *eap)
 {
   int fcount;
   char **fnames;
-  char_u *arg = (char_u *)eap->arg;
+  char *arg = eap->arg;
   bool ascii = false;
 
   if (STRNCMP(arg, "-ascii", 6) == 0) {
     ascii = true;
-    arg = (char_u *)skipwhite((char *)arg + 6);
+    arg = skipwhite(arg + 6);
   }
 
   // Expand all the remaining arguments (e.g., $VIMRUNTIME).
@@ -5552,7 +5552,7 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
     }
     fnamebuf = xmalloc(MAXPATHL);
 
-    for (spf = curwin->w_s->b_p_spf, i = 1; *spf != NUL; i++) {
+    for (spf = (char_u *)curwin->w_s->b_p_spf, i = 1; *spf != NUL; i++) {
       copy_option_part((char **)&spf, (char *)fnamebuf, MAXPATHL, ",");
       if (i == idx) {
         break;
@@ -5680,14 +5680,14 @@ static void init_spellfile(void)
   char_u *rtp;
   char_u *lend;
   bool aspath = false;
-  char_u *lstart = curbuf->b_s.b_p_spl;
+  char_u *lstart = (char_u *)curbuf->b_s.b_p_spl;
 
   if (*curwin->w_s->b_p_spl != NUL && !GA_EMPTY(&curwin->w_s->b_langp)) {
     buf = xmalloc(MAXPATHL);
 
     // Find the end of the language name.  Exclude the region.  If there
     // is a path separator remember the start of the tail.
-    for (lend = curwin->w_s->b_p_spl; *lend != NUL
+    for (lend = (char_u *)curwin->w_s->b_p_spl; *lend != NUL
          && vim_strchr(",._", *lend) == NULL; lend++) {
       if (vim_ispathsep(*lend)) {
         aspath = true;
@@ -5702,8 +5702,7 @@ static void init_spellfile(void)
       if (aspath) {
         // Use directory of an entry with path, e.g., for
         // "/dir/lg.utf-8.spl" use "/dir".
-        STRLCPY(buf, curbuf->b_s.b_p_spl,
-                lstart - curbuf->b_s.b_p_spl);
+        STRLCPY(buf, curbuf->b_s.b_p_spl, lstart - (char_u *)curbuf->b_s.b_p_spl);
       } else {
         // Copy the path from 'runtimepath' to buf[].
         copy_option_part((char **)&rtp, (char *)buf, MAXPATHL, ",");
@@ -5712,8 +5711,7 @@ static void init_spellfile(void)
         // Use the first language name from 'spelllang' and the
         // encoding used in the first loaded .spl file.
         if (aspath) {
-          STRLCPY(buf, curbuf->b_s.b_p_spl,
-                  lend - curbuf->b_s.b_p_spl + 1);
+          STRLCPY(buf, curbuf->b_s.b_p_spl, lend - (char_u *)curbuf->b_s.b_p_spl + 1);
         } else {
           // Create the "spell" directory if it doesn't exist yet.
           l = (int)STRLEN(buf);

@@ -1556,7 +1556,7 @@ static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
   }
   parseMarker(wp);
 
-  foldAddMarker(buf, start, wp->w_p_fmr, foldstartmarkerlen);
+  foldAddMarker(buf, start, (char_u *)wp->w_p_fmr, foldstartmarkerlen);
   foldAddMarker(buf, end, foldendmarker, foldendmarkerlen);
 
   // Update both changes here, to avoid all folds after the start are
@@ -1575,9 +1575,9 @@ static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
 /// Add "marker[markerlen]" in 'commentstring' to position `pos`.
 static void foldAddMarker(buf_T *buf, pos_T pos, const char_u *marker, size_t markerlen)
 {
-  char_u *cms = buf->b_p_cms;
+  char_u *cms = (char_u *)buf->b_p_cms;
   char_u *newline;
-  char_u *p = (char_u *)strstr((char *)buf->b_p_cms, "%s");
+  char_u *p = (char_u *)strstr(buf->b_p_cms, "%s");
   bool line_is_comment = false;
   linenr_T lnum = pos.lnum;
 
@@ -1621,7 +1621,7 @@ static void deleteFoldMarkers(win_T *wp, fold_T *fp, int recursive, linenr_T lnu
                         lnum_off + fp->fd_top);
     }
   }
-  foldDelMarker(wp->w_buffer, fp->fd_top + lnum_off, wp->w_p_fmr,
+  foldDelMarker(wp->w_buffer, fp->fd_top + lnum_off, (char_u *)wp->w_p_fmr,
                 foldstartmarkerlen);
   foldDelMarker(wp->w_buffer, fp->fd_top + lnum_off + fp->fd_len - 1,
                 foldendmarker, foldendmarkerlen);
@@ -1639,7 +1639,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char_u *marker, size_t mark
     return;
   }
 
-  char_u *cms = buf->b_p_cms;
+  char_u *cms = (char_u *)buf->b_p_cms;
   char_u *line = ml_get_buf(buf, lnum, false);
   for (char_u *p = line; *p != NUL; p++) {
     if (STRNCMP(p, marker, markerlen) != 0) {
@@ -1729,7 +1729,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldin
 
       emsg_silent++;       // handle exceptions, but don't display errors
       text =
-        (char_u *)eval_to_string_safe((char *)wp->w_p_fdt, NULL,
+        (char_u *)eval_to_string_safe(wp->w_p_fdt, NULL,
                                       was_set_insecurely(wp, "foldtext", OPT_LOCAL));
       emsg_silent--;
 
@@ -1790,7 +1790,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldin
 static void foldtext_cleanup(char_u *str)
 {
   // Ignore leading and trailing white space in 'commentstring'.
-  char_u *cms_start = (char_u *)skipwhite((char *)curbuf->b_p_cms);
+  char_u *cms_start = (char_u *)skipwhite(curbuf->b_p_cms);
   size_t cms_slen = STRLEN(cms_start);
   while (cms_slen > 0 && ascii_iswhite(cms_start[cms_slen - 1])) {
     cms_slen--;
@@ -2854,7 +2854,7 @@ static void foldlevelIndent(fline_T *flp)
 
   // empty line or lines starting with a character in 'foldignore': level
   // depends on surrounding lines
-  if (*s == NUL || vim_strchr((char *)flp->wp->w_p_fdi, *s) != NULL) {
+  if (*s == NUL || vim_strchr(flp->wp->w_p_fdi, *s) != NULL) {
     // first and last line can't be undefined, use level 0
     if (lnum == 1 || lnum == buf->b_ml.ml_line_count) {
       flp->lvl = 0;
@@ -2907,7 +2907,7 @@ static void foldlevelExpr(fline_T *flp)
   const bool save_keytyped = KeyTyped;
 
   int c;
-  const int n = eval_foldexpr((char *)flp->wp->w_p_fde, &c);
+  const int n = eval_foldexpr(flp->wp->w_p_fde, &c);
   KeyTyped = save_keytyped;
 
   switch (c) {
@@ -2985,8 +2985,8 @@ static void foldlevelExpr(fline_T *flp)
 /// Relies on the option value to have been checked for correctness already.
 static void parseMarker(win_T *wp)
 {
-  foldendmarker = (char_u *)vim_strchr((char *)wp->w_p_fmr, ',');
-  foldstartmarkerlen = (size_t)(foldendmarker++ - wp->w_p_fmr);
+  foldendmarker = (char_u *)vim_strchr(wp->w_p_fmr, ',');
+  foldstartmarkerlen = (size_t)(foldendmarker++ - (char_u *)wp->w_p_fmr);
   foldendmarkerlen = STRLEN(foldendmarker);
 }
 
@@ -3003,7 +3003,7 @@ static void foldlevelMarker(fline_T *flp)
   int start_lvl = flp->lvl;
 
   // cache a few values for speed
-  char_u *startmarker = flp->wp->w_p_fmr;
+  char_u *startmarker = (char_u *)flp->wp->w_p_fmr;
   int cstart = *startmarker;
   startmarker++;
   int cend = *foldendmarker;

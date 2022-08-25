@@ -708,7 +708,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
     fenc_alloced = false;
   } else if (*p_fencs == NUL) {
-    fenc = (char *)curbuf->b_p_fenc;            // use format from buffer
+    fenc = curbuf->b_p_fenc;            // use format from buffer
     fenc_alloced = false;
   } else {
     fenc_next = (char *)p_fencs;                // try items in 'fileencodings'
@@ -1948,7 +1948,7 @@ failed:
       if (!au_did_filetype && *curbuf->b_p_ft != NUL) {
         // EVENT_FILETYPE was not triggered but the buffer already has a
         // filetype.  Trigger EVENT_FILETYPE using the existing filetype.
-        apply_autocmds(EVENT_FILETYPE, (char *)curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
+        apply_autocmds(EVENT_FILETYPE, curbuf->b_p_ft, curbuf->b_fname, true, curbuf);
       }
     } else {
       apply_autocmds_exarg(EVENT_FILEREADPOST, sfname, sfname,
@@ -3052,7 +3052,7 @@ nobackup:
     fenc = (char *)enc_canonize((char_u *)fenc);
     fenc_tofree = fenc;
   } else {
-    fenc = (char *)buf->b_p_fenc;
+    fenc = buf->b_p_fenc;
   }
 
   // Check if the file needs to be converted.

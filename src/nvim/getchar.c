@@ -162,7 +162,7 @@ static char_u *get_buffcont(buffheader_T *buffer, int dozero)
     p2 = p;
     for (const buffblock_T *bp = buffer->bh_first.b_next;
          bp != NULL; bp = bp->b_next) {
-      for (const char_u *str = bp->b_str; *str;) {
+      for (const char_u *str = (char_u *)bp->b_str; *str;) {
         *p2++ = *str++;
       }
     }
@@ -341,7 +341,7 @@ static int read_readbuf(buffheader_T *buf, int advance)
   }
 
   buffblock_T *const curr = buf->bh_first.b_next;
-  c = curr->b_str[buf->bh_index];
+  c = (char_u)curr->b_str[buf->bh_index];
 
   if (advance) {
     if (curr->b_str[++buf->bh_index] == NUL) {
@@ -649,7 +649,7 @@ static int read_redo(bool init, bool old_redo)
     if (bp == NULL) {
       return FAIL;
     }
-    p = bp->b_str;
+    p = (char_u *)bp->b_str;
     return OK;
   }
   if ((c = *p) == NUL) {
@@ -670,7 +670,7 @@ static int read_redo(bool init, bool old_redo)
     }
     if (*++p == NUL && bp->b_next != NULL) {
       bp = bp->b_next;
-      p = bp->b_str;
+      p = (char_u *)bp->b_str;
     }
     buf[i] = (char_u)c;
     if (i == n - 1) {         // last byte of a character
@@ -934,7 +934,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
   }
   for (i = 0; i < addlen; i++) {
     typebuf.tb_noremap[typebuf.tb_off + i + offset] =
-      (char_u)((--nrm >= 0) ? val : RM_YES);
+      (uint8_t)((--nrm >= 0) ? val : RM_YES);
   }
 
   // tb_maplen and tb_silent only remember the length of mapped and/or
@@ -2047,12 +2047,11 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
         // - Partly match: mlen == typebuf.tb_len
         keylen = mp->m_keylen;
         if (mlen == keylen || (mlen == typebuf.tb_len && typebuf.tb_len < keylen)) {
-          char_u *s;
           int n;
 
           // If only script-local mappings are allowed, check if the
           // mapping starts with K_SNR.
-          s = typebuf.tb_noremap + typebuf.tb_off;
+          uint8_t *s = typebuf.tb_noremap + typebuf.tb_off;
           if (*s == RM_SCRIPT
               && (mp->m_keys[0] != K_SPECIAL
                   || mp->m_keys[1] != KS_EXTRA
@@ -2248,7 +2247,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
 
       save_m_keys = vim_strsave(mp->m_keys);
       if (save_m_luaref == LUA_NOREF) {
-        save_m_str = vim_strsave(mp->m_str);
+        save_m_str = vim_strsave((char_u *)mp->m_str);
       }
       map_str = eval_map_expr(mp, NUL);
 
@@ -2280,7 +2279,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       vgetc_busy = save_vgetc_busy;
       may_garbage_collect = save_may_garbage_collect;
     } else {
-      map_str = mp->m_str;
+      map_str = (char_u *)mp->m_str;
     }
 
     // Insert the 'to' part in the typebuf.tb_buf.
@@ -2501,7 +2500,7 @@ static int vgetorpeek(bool advance)
                 // write char to script file(s)
                 gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
               }
-              KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
+              KeyNoremap = (unsigned char)typebuf.tb_noremap[typebuf.tb_off];
               del_typebuf(1, 0);
             }
             break;  // got character, break the for loop

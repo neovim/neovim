@@ -1031,7 +1031,7 @@ String nvim_buf_get_name(Buffer buffer, Arena *arena, Error *err)
     return rv;
   }
 
-  return cstr_as_string((char *)buf->b_ffname);
+  return cstr_as_string(buf->b_ffname);
 }
 
 /// Sets the full file name for a buffer

@@ -418,7 +418,7 @@ bool terminal_enter(void)
   // placed at end of buffer to "follow" output. #11072
   handle_T save_curwin = curwin->handle;
   bool save_w_p_cul = curwin->w_p_cul;
-  char_u *save_w_p_culopt = NULL;
+  char *save_w_p_culopt = NULL;
   char_u save_w_p_culopt_flags = curwin->w_p_culopt_flags;
   int save_w_p_cuc = curwin->w_p_cuc;
   long save_w_p_so = curwin->w_p_so;
@@ -426,7 +426,7 @@ bool terminal_enter(void)
   if (curwin->w_p_cul && curwin->w_p_culopt_flags & CULOPT_NBR) {
     if (STRCMP(curwin->w_p_culopt, "number")) {
       save_w_p_culopt = curwin->w_p_culopt;
-      curwin->w_p_culopt = (char_u *)xstrdup("number");
+      curwin->w_p_culopt = xstrdup("number");
     }
     curwin->w_p_culopt_flags = CULOPT_NBR;
   } else {

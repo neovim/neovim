@@ -149,7 +149,7 @@ int buf_init_chartab(buf_T *buf, int global)
       p = p_isf;
     } else {  // i == 3
       // fourth round: 'iskeyword'
-      p = buf->b_p_isk;
+      p = (char_u *)buf->b_p_isk;
     }
 
     while (*p) {

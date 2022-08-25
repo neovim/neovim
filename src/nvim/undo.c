@@ -773,7 +773,7 @@ static bool serialize_header(bufinfo_T *bi, char_u *hash)
   undo_write_bytes(bi, (uintmax_t)buf->b_ml.ml_line_count, 4);
   size_t len = buf->b_u_line_ptr ? STRLEN(buf->b_u_line_ptr) : 0;
   undo_write_bytes(bi, len, 4);
-  if (len > 0 && !undo_write(bi, buf->b_u_line_ptr, len)) {
+  if (len > 0 && !undo_write(bi, (char_u *)buf->b_u_line_ptr, len)) {
     return false;
   }
   undo_write_bytes(bi, (uintmax_t)buf->b_u_line_lnum, 4);
@@ -1593,7 +1593,7 @@ void u_read_undo(char *name, const char_u *hash, const char_u *orig_name FUNC_AT
   curbuf->b_u_oldhead = old_idx < 0 ? NULL : uhp_table[old_idx];
   curbuf->b_u_newhead = new_idx < 0 ? NULL : uhp_table[new_idx];
   curbuf->b_u_curhead = cur_idx < 0 ? NULL : uhp_table[cur_idx];
-  curbuf->b_u_line_ptr = line_ptr;
+  curbuf->b_u_line_ptr = (char *)line_ptr;
   curbuf->b_u_line_lnum = line_lnum;
   curbuf->b_u_line_colnr = line_colnr;
   curbuf->b_u_numhead = num_head;
@@ -2960,7 +2960,7 @@ void u_saveline(linenr_T lnum)
   } else {
     curbuf->b_u_line_colnr = 0;
   }
-  curbuf->b_u_line_ptr = u_save_line(lnum);
+  curbuf->b_u_line_ptr = (char *)u_save_line(lnum);
 }
 
 /// clear the line saved for the "U" command
@@ -2992,12 +2992,12 @@ void u_undoline(void)
   }
 
   char_u *oldp = u_save_line(curbuf->b_u_line_lnum);
-  ml_replace(curbuf->b_u_line_lnum, (char *)curbuf->b_u_line_ptr, true);
+  ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, true);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum - 1, 0, (colnr_T)STRLEN(oldp),
                       (colnr_T)STRLEN(curbuf->b_u_line_ptr), kExtmarkUndo);
   xfree(curbuf->b_u_line_ptr);
-  curbuf->b_u_line_ptr = oldp;
+  curbuf->b_u_line_ptr = (char *)oldp;
 
   colnr_T t = curbuf->b_u_line_colnr;
   if (curwin->w_cursor.lnum == curbuf->b_u_line_lnum) {

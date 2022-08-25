@@ -3162,7 +3162,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
     msg_puts("\n");
     if (curwin->w_s->b_syn_isk != empty_option) {
       msg_puts("syntax iskeyword ");
-      msg_outtrans((char *)curwin->w_s->b_syn_isk);
+      msg_outtrans(curwin->w_s->b_syn_isk);
     } else {
       msg_outtrans(_("syntax iskeyword not set"));
     }
@@ -3172,15 +3172,15 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
       clear_string_option(&curwin->w_s->b_syn_isk);
     } else {
       memmove(save_chartab, curbuf->b_chartab, (size_t)32);
-      save_isk = curbuf->b_p_isk;
-      curbuf->b_p_isk = vim_strsave(arg);
+      save_isk = (char_u *)curbuf->b_p_isk;
+      curbuf->b_p_isk = (char *)vim_strsave(arg);
 
       buf_init_chartab(curbuf, false);
       memmove(curwin->w_s->b_syn_chartab, curbuf->b_chartab, (size_t)32);
       memmove(curbuf->b_chartab, save_chartab, (size_t)32);
       clear_string_option(&curwin->w_s->b_syn_isk);
       curwin->w_s->b_syn_isk = curbuf->b_p_isk;
-      curbuf->b_p_isk = save_isk;
+      curbuf->b_p_isk = (char *)save_isk;
     }
   }
   redraw_later(curwin, UPD_NOT_VALID);
@@ -5070,7 +5070,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
 
   // Make 'cpoptions' empty, to avoid the 'l' flag
   cpo_save = p_cpo;
-  p_cpo = (char *)empty_option;
+  p_cpo = empty_option;
   ci->sp_prog = vim_regcomp((char *)ci->sp_pattern, RE_MAGIC);
   p_cpo = cpo_save;
 
@@ -5226,14 +5226,14 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
       if (!eap->skip) {
         // store the pattern and compiled regexp program
         curwin->w_s->b_syn_linecont_pat =
-          vim_strnsave(next_arg + 1, (size_t)(arg_end - (char *)next_arg) - 1);
+          (char *)vim_strnsave(next_arg + 1, (size_t)(arg_end - (char *)next_arg) - 1);
         curwin->w_s->b_syn_linecont_ic = curwin->w_s->b_syn_ic;
 
         // Make 'cpoptions' empty, to avoid the 'l' flag
         cpo_save = p_cpo;
-        p_cpo = (char *)empty_option;
+        p_cpo = empty_option;
         curwin->w_s->b_syn_linecont_prog =
-          vim_regcomp((char *)curwin->w_s->b_syn_linecont_pat, RE_MAGIC);
+          vim_regcomp(curwin->w_s->b_syn_linecont_pat, RE_MAGIC);
         p_cpo = cpo_save;
         syn_clear_time(&curwin->w_s->b_syn_linecont_time);
 

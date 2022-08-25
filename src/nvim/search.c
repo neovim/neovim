@@ -1696,34 +1696,34 @@ static bool find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
 static void find_mps_values(int *initc, int *findc, bool *backwards, bool switchit)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u *ptr = curbuf->b_p_mps;
+  char *ptr = curbuf->b_p_mps;
 
   while (*ptr != NUL) {
-    if (utf_ptr2char((char *)ptr) == *initc) {
+    if (utf_ptr2char(ptr) == *initc) {
       if (switchit) {
         *findc = *initc;
-        *initc = utf_ptr2char((char *)ptr + utfc_ptr2len((char *)ptr) + 1);
+        *initc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
         *backwards = true;
       } else {
-        *findc = utf_ptr2char((char *)ptr + utfc_ptr2len((char *)ptr) + 1);
+        *findc = utf_ptr2char(ptr + utfc_ptr2len(ptr) + 1);
         *backwards = false;
       }
       return;
     }
-    char_u *prev = ptr;
-    ptr += utfc_ptr2len((char *)ptr) + 1;
-    if (utf_ptr2char((char *)ptr) == *initc) {
+    char *prev = ptr;
+    ptr += utfc_ptr2len(ptr) + 1;
+    if (utf_ptr2char(ptr) == *initc) {
       if (switchit) {
         *findc = *initc;
-        *initc = utf_ptr2char((char *)prev);
+        *initc = utf_ptr2char(prev);
         *backwards = false;
       } else {
-        *findc = utf_ptr2char((char *)prev);
+        *findc = utf_ptr2char(prev);
         *backwards = true;
       }
       return;
     }
-    ptr += utfc_ptr2len((char *)ptr);
+    ptr += utfc_ptr2len(ptr);
     if (*ptr == ',') {
       ptr++;
     }
@@ -2376,7 +2376,7 @@ void showmatch(int c)
    * Only show match for chars in the 'matchpairs' option.
    */
   // 'matchpairs' is "x:y,x:y"
-  for (p = curbuf->b_p_mps; *p != NUL; p++) {
+  for (p = (char_u *)curbuf->b_p_mps; *p != NUL; p++) {
     if (utf_ptr2char((char *)p) == c && (curwin->w_p_rl ^ p_ri)) {
       break;
     }
@@ -4090,8 +4090,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
       if (col_start < 0) {
         goto abort_search;
       }
-      col_end = find_next_quote(line, col_start + 1, quotechar,
-                                curbuf->b_p_qe);
+      col_end = find_next_quote(line, col_start + 1, quotechar, (char_u *)curbuf->b_p_qe);
       if (col_end < 0) {
         // We were on a starting quote perhaps?
         col_end = col_start;
@@ -4102,8 +4101,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
       if (line[col_end] != quotechar) {
         goto abort_search;
       }
-      col_start = find_prev_quote(line, col_end, quotechar,
-                                  curbuf->b_p_qe);
+      col_start = find_prev_quote(line, col_end, quotechar, (char_u *)curbuf->b_p_qe);
       if (line[col_start] != quotechar) {
         // We were on an ending quote perhaps?
         col_start = col_end;
@@ -4132,8 +4130,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
         goto abort_search;
       }
       // Find close quote character.
-      col_end = find_next_quote(line, col_start + 1, quotechar,
-                                curbuf->b_p_qe);
+      col_end = find_next_quote(line, col_start + 1, quotechar, (char_u *)curbuf->b_p_qe);
       if (col_end < 0) {
         goto abort_search;
       }
@@ -4146,7 +4143,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
     }
   } else {
     // Search backward for a starting quote.
-    col_start = find_prev_quote(line, col_start, quotechar, curbuf->b_p_qe);
+    col_start = find_prev_quote(line, col_start, quotechar, (char_u *)curbuf->b_p_qe);
     if (line[col_start] != quotechar) {
       // No quote before the cursor, look after the cursor.
       col_start = find_next_quote(line, col_start, quotechar, NULL);
@@ -4156,8 +4153,7 @@ bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
     }
 
     // Find close quote character.
-    col_end = find_next_quote(line, col_start + 1, quotechar,
-                              curbuf->b_p_qe);
+    col_end = find_next_quote(line, col_start + 1, quotechar, (char_u *)curbuf->b_p_qe);
     if (col_end < 0) {
       goto abort_search;
     }
@@ -5375,7 +5371,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
       goto fpip_end;
     }
   }
-  inc_opt = (*curbuf->b_p_inc == NUL) ? p_inc : curbuf->b_p_inc;
+  inc_opt = (*curbuf->b_p_inc == NUL) ? p_inc : (char_u *)curbuf->b_p_inc;
   if (*inc_opt != NUL) {
     incl_regmatch.regprog = vim_regcomp((char *)inc_opt, p_magic ? RE_MAGIC : 0);
     if (incl_regmatch.regprog == NULL) {
@@ -5385,7 +5381,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   }
   if (type == FIND_DEFINE && (*curbuf->b_p_def != NUL || *p_def != NUL)) {
     def_regmatch.regprog = vim_regcomp(*curbuf->b_p_def == NUL
-                                       ? (char *)p_def : (char *)curbuf->b_p_def,
+                                       ? (char *)p_def : curbuf->b_p_def,
                                        p_magic ? RE_MAGIC : 0);
     if (def_regmatch.regprog == NULL) {
       goto fpip_end;

@@ -4385,23 +4385,20 @@ int fex_format(linenr_T lnum, long count, int c)
 {
   int use_sandbox = was_set_insecurely(curwin, "formatexpr", OPT_LOCAL);
   int r;
-  char_u *fex;
 
-  /*
-   * Set v:lnum to the first line number and v:count to the number of lines.
-   * Set v:char to the character to be inserted (can be NUL).
-   */
+  // Set v:lnum to the first line number and v:count to the number of lines.
+  // Set v:char to the character to be inserted (can be NUL).
   set_vim_var_nr(VV_LNUM, (varnumber_T)lnum);
   set_vim_var_nr(VV_COUNT, (varnumber_T)count);
   set_vim_var_char(c);
 
   // Make a copy, the option could be changed while calling it.
-  fex = vim_strsave(curbuf->b_p_fex);
+  char *fex = xstrdup(curbuf->b_p_fex);
   // Evaluate the function.
   if (use_sandbox) {
     sandbox++;
   }
-  r = (int)eval_to_number((char *)fex);
+  r = (int)eval_to_number(fex);
   if (use_sandbox) {
     sandbox--;
   }
@@ -5008,12 +5005,12 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   pos_T endpos;
   colnr_T save_coladd = 0;
 
-  const bool do_hex = vim_strchr((char *)curbuf->b_p_nf, 'x') != NULL;    // "heX"
-  const bool do_oct = vim_strchr((char *)curbuf->b_p_nf, 'o') != NULL;    // "Octal"
-  const bool do_bin = vim_strchr((char *)curbuf->b_p_nf, 'b') != NULL;    // "Bin"
-  const bool do_alpha = vim_strchr((char *)curbuf->b_p_nf, 'p') != NULL;  // "alPha"
+  const bool do_hex = vim_strchr(curbuf->b_p_nf, 'x') != NULL;    // "heX"
+  const bool do_oct = vim_strchr(curbuf->b_p_nf, 'o') != NULL;    // "Octal"
+  const bool do_bin = vim_strchr(curbuf->b_p_nf, 'b') != NULL;    // "Bin"
+  const bool do_alpha = vim_strchr(curbuf->b_p_nf, 'p') != NULL;  // "alPha"
   // "Unsigned"
-  const bool do_unsigned = vim_strchr((char *)curbuf->b_p_nf, 'u') != NULL;
+  const bool do_unsigned = vim_strchr(curbuf->b_p_nf, 'u') != NULL;
 
   if (virtual_active()) {
     save_coladd = pos->coladd;
@@ -5886,10 +5883,10 @@ void cursor_pos_info(dict_T *dict)
 
       if (l_VIsual_mode == Ctrl_V) {
         char_u *const saved_sbr = p_sbr;
-        char_u *const saved_w_sbr = curwin->w_p_sbr;
+        char *const saved_w_sbr = curwin->w_p_sbr;
 
         // Make 'sbr' empty for a moment to get the correct size.
-        p_sbr = empty_option;
+        p_sbr = (char_u *)empty_option;
         curwin->w_p_sbr = empty_option;
         oparg.is_VIsual = true;
         oparg.motion_type = kMTBlockWise;

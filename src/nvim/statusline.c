@@ -522,7 +522,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       use_sandbox = was_set_insecurely(wp, "rulerformat", 0);
     } else {
       if (*wp->w_p_stl != NUL) {
-        stl = wp->w_p_stl;
+        stl = (char_u *)wp->w_p_stl;
       } else {
         stl = p_stl;
       }

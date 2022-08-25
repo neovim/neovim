@@ -157,7 +157,7 @@ void alist_add(alist_T *al, char *fname, int set_fnum)
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(fname);
 #endif
-  AARGLIST(al)[al->al_ga.ga_len].ae_fname = (char_u *)fname;
+  AARGLIST(al)[al->al_ga.ga_len].ae_fname = fname;
   if (set_fnum > 0) {
     AARGLIST(al)[al->al_ga.ga_len].ae_fnum =
       buflist_add(fname, BLN_LISTED | (set_fnum == 2 ? BLN_CURBUF : 0));
@@ -226,7 +226,7 @@ static char *do_one_arg(char *str)
 /// growarray "gap".
 static void get_arglist(garray_T *gap, char *str, int escaped)
 {
-  ga_init(gap, (int)sizeof(char_u *), 20);
+  ga_init(gap, (int)sizeof(char *), 20);
   while (*str != NUL) {
     GA_APPEND(char *, gap, str);
 
@@ -244,12 +244,12 @@ static void get_arglist(garray_T *gap, char *str, int escaped)
 /// "fnames[fcountp]".  When "wig" is true, removes files matching 'wildignore'.
 ///
 /// @return  FAIL or OK.
-int get_arglist_exp(char_u *str, int *fcountp, char ***fnamesp, bool wig)
+int get_arglist_exp(char *str, int *fcountp, char ***fnamesp, bool wig)
 {
   garray_T ga;
   int i;
 
-  get_arglist(&ga, (char *)str, true);
+  get_arglist(&ga, str, true);
 
   if (wig) {
     i = expand_wildcards(ga.ga_len, ga.ga_data,
@@ -297,7 +297,7 @@ static void alist_add_list(int count, char **files, int after, bool will_edit)
     }
     for (int i = 0; i < count; i++) {
       const int flags = BLN_LISTED | (will_edit ? BLN_CURBUF : 0);
-      ARGLIST[after + i].ae_fname = (char_u *)files[i];
+      ARGLIST[after + i].ae_fname = files[i];
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], flags);
     }
     ALIST(curwin)->al_ga.ga_len += count;
@@ -377,7 +377,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
       vim_regfree(regmatch.regprog);
       xfree(p);
       if (!didone) {
-        semsg(_(e_nomatch2), ((char_u **)new_ga.ga_data)[i]);
+        semsg(_(e_nomatch2), ((char **)new_ga.ga_data)[i]);
       }
     }
     ga_clear(&new_ga);
@@ -472,7 +472,7 @@ void ex_args(exarg_T *eap)
   } else if (eap->cmdidx == CMD_args) {
     // ":args": list arguments.
     if (ARGCOUNT > 0) {
-      char **items = xmalloc(sizeof(char_u *) * (size_t)ARGCOUNT);
+      char **items = xmalloc(sizeof(char *) * (size_t)ARGCOUNT);
       // Overwrite the command, for a short list there is no scrolling
       // required and no wait_return().
       gotocmdline(true);
@@ -489,10 +489,8 @@ void ex_args(exarg_T *eap)
     ga_grow(gap, GARGCOUNT);
     for (int i = 0; i < GARGCOUNT; i++) {
       if (GARGLIST[i].ae_fname != NULL) {
-        AARGLIST(curwin->w_alist)[gap->ga_len].ae_fname =
-          vim_strsave(GARGLIST[i].ae_fname);
-        AARGLIST(curwin->w_alist)[gap->ga_len].ae_fnum =
-          GARGLIST[i].ae_fnum;
+        AARGLIST(curwin->w_alist)[gap->ga_len].ae_fname = xstrdup(GARGLIST[i].ae_fname);
+        AARGLIST(curwin->w_alist)[gap->ga_len].ae_fnum = GARGLIST[i].ae_fnum;
         gap->ga_len++;
       }
     }
@@ -742,7 +740,7 @@ char *alist_name(aentry_T *aep)
   // Use the name from the associated buffer if it exists.
   bp = buflist_findnr(aep->ae_fnum);
   if (bp == NULL || bp->b_fname == NULL) {
-    return (char *)aep->ae_fname;
+    return aep->ae_fname;
   }
   return bp->b_fname;
 }

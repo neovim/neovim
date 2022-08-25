@@ -591,7 +591,7 @@ buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   int save_magic = p_magic;
   p_magic = true;
   char *save_cpo = p_cpo;
-  p_cpo = (char *)empty_option;
+  p_cpo = empty_option;
 
   buf_T *buf = buflist_findnr(buflist_findpat((char *)name, (char *)name + STRLEN(name),
                                               true, false, curtab_only));
@@ -2224,7 +2224,7 @@ static void f_filewritable(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 {
   char_u *fresult = NULL;
-  char_u *path = *curbuf->b_p_path == NUL ? p_path : curbuf->b_p_path;
+  char_u *path = *curbuf->b_p_path == NUL ? p_path : (char_u *)curbuf->b_p_path;
   int count = 1;
   bool first = true;
   bool error = false;
@@ -2265,7 +2265,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
                                          find_what, (char_u *)curbuf->b_ffname,
                                          (find_what == FINDFILE_DIR
                                           ? (char_u *)""
-                                          : curbuf->b_p_sua));
+                                          : (char_u *)curbuf->b_p_sua));
       first = false;
 
       if (fresult != NULL && rettv->v_type == VAR_LIST) {
@@ -4903,7 +4903,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = (char *)empty_option;
+  p_cpo = empty_option;
 
   rettv->vval.v_number = -1;
   switch (type) {
@@ -6312,7 +6312,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       v = os_realpath(fname, v);
     }
   }
-  rettv->vval.v_string = (char_u *)(v == NULL ? xstrdup(fname) : v);
+  rettv->vval.v_string = (v == NULL ? xstrdup(fname) : v);
 #else
 # ifdef HAVE_READLINK
   {
@@ -7293,7 +7293,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = (char *)empty_option;
+  p_cpo = empty_option;
 
   // Set the time limit, if there is one.
   proftime_T tm = profile_setlimit(time_limit);
@@ -7419,7 +7419,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
 
   xfree(pat2);
   xfree(pat3);
-  if ((char_u *)p_cpo == empty_option) {
+  if (p_cpo == empty_option) {
     p_cpo = save_cpo;
   } else {
     // Darn, evaluating the {skip} expression changed the value.
@@ -7428,7 +7428,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
     if (*p_cpo == NUL) {
       set_option_value_give_err("cpo", 0L, save_cpo, 0);
     }
-    free_string_option((char_u *)save_cpo);
+    free_string_option(save_cpo);
   }
 
   return retval;
@@ -8182,7 +8182,7 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *save_cpo = p_cpo;
-  p_cpo = (char *)empty_option;
+  p_cpo = empty_option;
 
   const char *str = tv_get_string(&argvars[0]);
   const char *pat = NULL;
