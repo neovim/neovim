@@ -96,8 +96,7 @@ void changed(void)
 
     // Create a swap file if that is wanted.
     // Don't do this for "nofile" and "nowrite" buffer types.
-    if (curbuf->b_may_swap
-        && !bt_dontwrite(curbuf)) {
+    if (curbuf->b_may_swap && !bt_dontwrite(curbuf)) {
       bool save_need_wait_return = need_wait_return;
 
       need_wait_return = false;

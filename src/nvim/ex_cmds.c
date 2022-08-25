@@ -1880,8 +1880,7 @@ int do_write(exarg_T *eap)
   // Writing to the current file is not allowed in readonly mode
   // and a file name is required.
   // "nofile" and "nowrite" buffers cannot be written implicitly either.
-  if (!other && (bt_dontwrite_msg(curbuf)
-                 || check_fname() == FAIL
+  if (!other && (bt_dontwrite_msg(curbuf) || check_fname() == FAIL
                  || check_readonly(&eap->forceit, curbuf))) {
     goto theend;
   }
