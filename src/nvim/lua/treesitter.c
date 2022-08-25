@@ -623,7 +623,7 @@ void push_tree(lua_State *L, TSTree *tree, bool do_copy)
   lua_setfenv(L, -2);  // [udata]
 }
 
-static TSTree **tree_check(lua_State *L, uint16_t index)
+static TSTree **tree_check(lua_State *L, int index)
 {
   TSTree **ud = luaL_checkudata(L, index, TS_META_TREE);
   return ud;
@@ -1093,22 +1093,13 @@ static int node_named_children(lua_State *L)
 
 static int node_root(lua_State *L)
 {
-  TSNode parent;
-  TSNode result;
-
   TSNode node;
   if (!node_check(L, 1, &node)) {
     return 0;
   }
-  parent = node;
-  result = node;
 
-  while (!ts_node_is_null(parent)){
-    result = parent;
-    parent = ts_node_parent(result);
-  }
-
-  push_node(L, result, 1);
+  TSNode root = ts_tree_root_node(node.tree);
+  push_node(L, root, 1);
   return 1;
 }
 
