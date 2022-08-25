@@ -4868,7 +4868,7 @@ static int fuzzy_match_compute_score(const char_u *const str, const int strSz,
     if (currIdx > 0) {
       // Camel case
       const char_u *p = str;
-      int neighbor;
+      int neighbor = ' ';
 
       for (uint32_t sidx = 0; sidx < currIdx; sidx++) {
         neighbor = utf_ptr2char((char *)p);
