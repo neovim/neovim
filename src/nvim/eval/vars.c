@@ -791,6 +791,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
         semsg(_(e_invarg2), arg - 1);
         return;
       }
+      assert(*lv.ll_name == '$');  // suppress clang "Uninitialized argument value"
       if (!error && !eap->skip && callback(&lv, arg, eap, deep) == FAIL) {
         error = true;
       }
