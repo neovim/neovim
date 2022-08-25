@@ -713,23 +713,32 @@ endfunc
 
 func Test_edit_CTRL_N()
   " Check keyword completion
-  new
-  set complete=.
-  call setline(1, ['INFER', 'loWER', '', '', ])
-  call cursor(3, 1)
-  call feedkeys("Ai\<c-n>\<cr>\<esc>", "tnix")
-  call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
-  call assert_equal(['INFER', 'loWER', 'i', 'LO', '', ''], getline(1, '$'))
-  %d
-  call setline(1, ['INFER', 'loWER', '', '', ])
-  call cursor(3, 1)
-  set ignorecase infercase
-  call feedkeys("Ii\<c-n>\<cr>\<esc>", "tnix")
-  call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
-  call assert_equal(['INFER', 'loWER', 'infer', 'LOWER', '', ''], getline(1, '$'))
-
-  set noignorecase noinfercase complete&
-  bw!
+  " for e in ['latin1', 'utf-8']
+  for e in ['utf-8']
+    exe 'set encoding=' .. e
+    new
+    set complete=.
+    call setline(1, ['INFER', 'loWER', '', '', ])
+    call cursor(3, 1)
+    call feedkeys("Ai\<c-n>\<cr>\<esc>", "tnix")
+    call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
+    call assert_equal(['INFER', 'loWER', 'i', 'LO', '', ''], getline(1, '$'), e)
+    %d
+    call setline(1, ['INFER', 'loWER', '', '', ])
+    call cursor(3, 1)
+    set ignorecase infercase
+    call feedkeys("Ii\<c-n>\<cr>\<esc>", "tnix")
+    call feedkeys("ILO\<c-n>\<cr>\<esc>", 'tnix')
+    call assert_equal(['INFER', 'loWER', 'infer', 'LOWER', '', ''], getline(1, '$'), e)
+    set noignorecase noinfercase
+    %d
+    call setline(1, ['one word', 'two word'])
+    exe "normal! Goo\<C-P>\<C-X>\<C-P>"
+    call assert_equal('one word', getline(3))
+    %d
+    set complete&
+    bw!
+  endfor
 endfunc
 
 func Test_edit_CTRL_O()
@@ -891,6 +900,24 @@ func Test_edit_CTRL_T()
   call assert_equal(['mad'], getline(1, '$'))
   call delete('Xthesaurus')
   bw!
+endfunc
+
+" Test thesaurus completion with different encodings
+func Test_thesaurus_complete_with_encoding()
+  call writefile(['angry furious mad enraged'], 'Xthesaurus')
+  set thesaurus=Xthesaurus
+  " for e in ['latin1', 'utf-8']
+  for e in ['utf-8']
+    exe 'set encoding=' .. e
+    new
+    call setline(1, 'mad')
+    call cursor(1, 1)
+    call feedkeys("A\<c-x>\<c-t>\<cr>\<esc>", 'tnix')
+    call assert_equal(['mad', ''], getline(1, '$'))
+    bw!
+  endfor
+  set thesaurus=
+  call delete('Xthesaurus')
 endfunc
 
 " Test 'thesaurusfunc'

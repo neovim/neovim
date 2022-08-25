@@ -659,17 +659,23 @@ int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
 
 /// Add a match to the list of matches
 ///
-/// @param[in]  str  Match to add.
-/// @param[in]  len  Match length, -1 to use #STRLEN.
-/// @param[in]  fname  File name match comes from. May be NULL.
-/// @param[in]  cptext  Extra text for popup menu. May be NULL. If not NULL,
-///                     must have exactly #CPT_COUNT items.
+/// @param[in]  str     text of the match to add
+/// @param[in]  len     length of "str". If -1, then the length of "str" is computed.
+/// @param[in]  fname   file name to associate with this match. May be NULL.
+/// @param[in]  cptext  list of strings to use with this match (for abbr, menu, info
+///                     and kind). May be NULL.
+///                     If not NULL, must have exactly #CPT_COUNT items.
 /// @param[in]  cptext_allocated  If true, will not copy cptext strings.
 ///
 ///                               @note Will free strings in case of error.
 ///                                     cptext itself will not be freed.
-/// @param[in]  cdir  Completion direction.
-/// @param[in]  adup  True if duplicate matches are to be accepted.
+/// @param[in]  user_data  user supplied data (any vim type) for this match
+/// @param[in]  cdir       match direction. If 0, use "compl_direction".
+/// @param[in]  flags_arg  match flags (cp_flags)
+/// @param[in]  adup       accept this match even if it is already present.
+///
+/// If "cdir" is FORWARD, then the match is added after the current match.
+/// Otherwise, it is added before the current match.
 ///
 /// @return NOTDONE if the given string is already in the list of completions,
 ///         otherwise it is added to the list and  OK is returned. FAIL will be
@@ -768,7 +774,8 @@ static int ins_compl_add(char_u *const str, int len, char_u *const fname,
     match->cp_user_data = *user_data;
   }
 
-  // Link the new match structure in the list of matches.
+  // Link the new match structure after (FORWARD) or before (BACKWARD) the
+  // current match in the list of matches .
   if (compl_first_match == NULL) {
     match->cp_next = match->cp_prev = NULL;
   } else if (dir == FORWARD) {
@@ -1005,6 +1012,8 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
   return dict;
 }
 
+/// Trigger the CompleteChanged autocmd event. Invoked each time the Insert mode
+/// completion menu is changed.
 static void trigger_complete_changed_event(int cur)
 {
   static bool recursive = false;
@@ -1181,8 +1190,8 @@ void ins_compl_show_pum(void)
 #define DICT_FIRST      (1)     ///< use just first element in "dict"
 #define DICT_EXACT      (2)     ///< "dict" is the exact name of a file
 
-/// Add any identifiers that match the given pattern in the list of dictionary
-/// files "dict_start" to the list of completions.
+/// Add any identifiers that match the given pattern "pat" in the list of
+/// dictionary files "dict_start" to the list of completions.
 ///
 /// @param flags      DICT_FIRST and/or DICT_EXACT
 /// @param thesaurus  Thesaurus completion
@@ -1283,6 +1292,54 @@ theend:
   xfree(buf);
 }
 
+/// Add all the words in the line "*buf_arg" from the thesaurus file "fname"
+/// skipping the word at 'skip_word'.
+///
+/// @return  OK on success.
+static int thesaurus_add_words_in_line(char *fname, char_u **buf_arg, int dir, char_u *skip_word)
+{
+  int status = OK;
+
+  // Add the other matches on the line
+  char_u *ptr = *buf_arg;
+  while (!got_int) {
+    // Find start of the next word.  Skip white
+    // space and punctuation.
+    ptr = find_word_start(ptr);
+    if (*ptr == NUL || *ptr == NL) {
+      break;
+    }
+    char_u *wstart = ptr;
+
+    // Find end of the word.
+    // Japanese words may have characters in
+    // different classes, only separate words
+    // with single-byte non-word characters.
+    while (*ptr != NUL) {
+      const int l = utfc_ptr2len((const char *)ptr);
+
+      if (l < 2 && !vim_iswordc(*ptr)) {
+        break;
+      }
+      ptr += l;
+    }
+
+    // Add the word. Skip the regexp match.
+    if (wstart != skip_word) {
+      status = ins_compl_add_infercase(wstart, (int)(ptr - wstart), p_ic,
+                                       (char_u *)fname, dir, false);
+      if (status == FAIL) {
+        break;
+      }
+    }
+  }
+
+  *buf_arg = ptr;
+  return status;
+}
+
+/// Process "count" dictionary/thesaurus "files" and add the text matching
+/// "regmatch".
 static void ins_compl_files(int count, char **files, int thesaurus, int flags, regmatch_T *regmatch,
                             char_u *buf, Direction *dir)
   FUNC_ATTR_NONNULL_ARG(2, 7)
@@ -1320,38 +1377,10 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
                                         (int)(ptr - regmatch->startp[0]),
                                         p_ic, (char_u *)files[i], *dir, false);
         if (thesaurus) {
-          char_u *wstart;
-
-          // Add the other matches on the line
+          // For a thesaurus, add all the words in the line
           ptr = buf;
-          while (!got_int) {
-            // Find start of the next word.  Skip white
-            // space and punctuation.
-            ptr = find_word_start(ptr);
-            if (*ptr == NUL || *ptr == NL) {
-              break;
-            }
-            wstart = ptr;
-
-            // Find end of the word.
-            // Japanese words may have characters in
-            // different classes, only separate words
-            // with single-byte non-word characters.
-            while (*ptr != NUL) {
-              const int l = utfc_ptr2len((char *)ptr);
-
-              if (l < 2 && !vim_iswordc(*ptr)) {
-                break;
-              }
-              ptr += l;
-            }
-
-            // Add the word. Skip the regexp match.
-            if (wstart != regmatch->startp[0]) {
-              add_r = ins_compl_add_infercase(wstart, (int)(ptr - wstart),
-                                              p_ic, (char_u *)files[i], *dir, false);
-            }
-          }
+          add_r = thesaurus_add_words_in_line(files[i], &ptr, *dir,
+                                              regmatch->startp[0]);
         }
         if (add_r == OK) {
           // if dir was BACKWARD then honor it just once
@@ -1536,12 +1565,12 @@ int ins_compl_bs(void)
 
   xfree(compl_leader);
   compl_leader = vim_strnsave(line + compl_col, (size_t)(p_off - (ptrdiff_t)compl_col));
+
   ins_compl_new_leader();
   if (compl_shown_match != NULL) {
     // Make sure current match is not a hidden item.
     compl_curr_match = compl_shown_match;
   }
-
   return NUL;
 }
 
@@ -2243,10 +2272,15 @@ static int ins_compl_add_tv(typval_T *const tv, const Direction dir, bool fast)
     for (size_t i = 0; i < CPT_COUNT; i++) {
       xfree(cptext[i]);
     }
+    tv_clear(&user_data);
     return FAIL;
   }
-  return ins_compl_add((char_u *)word, -1, NULL,
-                       (char_u **)cptext, true, &user_data, dir, flags, dup);
+  int status = ins_compl_add((char_u *)word, -1, NULL, (char_u **)cptext, true,
+                             &user_data, dir, flags, dup);
+  if (status != OK) {
+    tv_clear(&user_data);
+  }
+  return status;
 }
 
 /// Add completions from a list.
@@ -2401,6 +2435,8 @@ static char_u *ins_compl_mode(void)
   return (char_u *)"";
 }
 
+/// Assign the sequence number to all the completion matches which don't have
+/// one assigned yet.
 static void ins_compl_update_sequence_numbers(void)
 {
   int number = 0;
@@ -2582,8 +2618,8 @@ enum {
 ///   st->dict_f - flag specifying whether "dict" is an exact file name or not
 ///
 /// @return  INS_COMPL_CPT_OK if the next value is processed successfully.
-///          INS_COMPL_CPT_CONT to skip the current value and process the next
-///          option value.
+///          INS_COMPL_CPT_CONT to skip the current completion source matching
+///          the "st->e_cpt" option value and process the next matching source.
 ///          INS_COMPL_CPT_END if all the values in "st->e_cpt" are processed.
 static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_arg,
                                   pos_T *start_match_pos)
@@ -3764,7 +3800,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
     return FAIL;
   }
 
-  // Reset extended parameters of completion, when start new
+  // Reset extended parameters of completion, when starting new
   // completion.
   compl_opt_refresh_always = false;
 
@@ -4154,6 +4190,7 @@ int ins_complete(int c, bool enable_pum)
   return OK;
 }
 
+/// Remove (if needed) and show the popup menu
 static void show_pum(int prev_w_wrow, int prev_w_leftcol)
 {
   // RedrawingDisabled may be set when invoked through complete().
