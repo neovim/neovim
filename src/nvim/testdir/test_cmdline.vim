@@ -1453,6 +1453,33 @@ func Test_cmdwin_tabpage()
   tabclose!
 endfunc
 
+func Test_cmdwin_interrupted()
+  CheckScreendump
+
+  " aborting the :smile output caused the cmdline window to use the current
+  " buffer.
+  let lines =<< trim [SCRIPT]
+    au WinNew * smile
+  [SCRIPT]
+  call writefile(lines, 'XTest_cmdwin')
+
+  let buf = RunVimInTerminal('-S XTest_cmdwin', {'rows': 18})
+  call TermWait(buf, 1000)
+  " open cmdwin
+  call term_sendkeys(buf, "q:")
+  call TermWait(buf, 500)
+  " quit more prompt for :smile command
+  call term_sendkeys(buf, "q")
+  call TermWait(buf, 500)
+  " execute a simple command
+  call term_sendkeys(buf, "aecho 'done'\<CR>")
+  call VerifyScreenDump(buf, 'Test_cmdwin_interrupted', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
+  call delete('XTest_cmdwin')
+endfunc
+
 " Test for backtick expression in the command line
 func Test_cmd_backtick()
   CheckNotMSWindows  " FIXME: see #19297
