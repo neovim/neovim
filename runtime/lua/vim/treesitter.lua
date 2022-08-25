@@ -2,7 +2,6 @@ local a = vim.api
 local query = require('vim.treesitter.query')
 local language = require('vim.treesitter.language')
 local LanguageTree = require('vim.treesitter.languagetree')
-local highlighter = require('vim.treesitter.highlighter')
 
 -- TODO(bfredl): currently we retain parsers for the lifetime of the buffer.
 -- Consider use weak references to release parser if all plugins are done with
@@ -155,6 +154,28 @@ function M.get_node_range(node_or_range)
   end
 end
 
+---Determines whether (line, col) position is in node range
+---
+---@param node Node defining the range
+---@param line A line (0-based)
+---@param col A column (0-based)
+function M.is_in_node_range(node, line, col)
+  local start_line, start_col, end_line, end_col = M.get_node_range(node)
+  if line >= start_line and line <= end_line then
+    if line == start_line and line == end_line then
+      return col >= start_col and col < end_col
+    elseif line == start_line then
+      return col >= start_col
+    elseif line == end_line then
+      return col < end_col
+    else
+      return true
+    end
+  else
+    return false
+  end
+end
+
 ---Determines if a node contains a range
 ---@param node table The node
 ---@param range table The range
@@ -168,14 +189,17 @@ function M.node_contains(node, range)
   return start_fits and end_fits
 end
 
----Gets a list of highlight group for a given cursor position
+---Gets a list of captures for a given cursor position
 ---@param bufnr number The buffer number
 ---@param row number The position row
 ---@param col number The position column
 ---
----@returns (table) A table of highlight groups
-function M.get_hl_groups_at_position(bufnr, row, col)
-  local buf_highlighter = highlighter.active[bufnr]
+---@returns (table) A table of captures
+function M.get_captures_at_position(bufnr, row, col)
+  if bufnr == 0 then
+    bufnr = a.nvim_get_current_buf()
+  end
+  local buf_highlighter = M.highlighter.active[bufnr]
 
   if not buf_highlighter then
     return {}
@@ -206,17 +230,10 @@ function M.get_hl_groups_at_position(bufnr, row, col)
     local iter = q:query():iter_captures(root, buf_highlighter.bufnr, row, row + 1)
 
     for capture, node, metadata in iter do
-      local hl = q.hl_cache[capture]
-
-      if hl and M.is_in_node_range(node, row, col) then
+      if M.is_in_node_range(node, row, col) then
         local c = q._query.captures[capture] -- name of the capture in the query
         if c ~= nil then
-          local general_hl, is_vim_hl = q:_get_hl_from_capture(capture)
-          local local_hl = not is_vim_hl and (tree:lang() .. general_hl)
-          table.insert(
-            matches,
-            { capture = c, specific = local_hl, general = general_hl, priority = metadata.priority }
-          )
+          table.insert(matches, { capture = c, priority = metadata.priority })
         end
       end
     end

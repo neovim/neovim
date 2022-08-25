@@ -617,6 +617,11 @@ describe('treesitter highlighting', function()
       -- bold will not be overwritten at the moment
       [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Grey100};
     }}
+
+    eq({
+      {capture='Error', priority='101'};
+      {capture='type'};
+    }, exec_lua [[ return vim.treesitter.get_captures_at_position(0, 0, 2) ]])
     end)
 
   it("allows to use captures with dots (don't use fallback when specialization of foo exists)", function()
