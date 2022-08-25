@@ -352,6 +352,15 @@ attribute: >
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
+get_node_range({node_or_range})                             *get_node_range()*
+    Get the node's range or unpack a range table
+
+    Parameters: ~
+        {node_or_range}  (table)
+
+    Return: ~
+        start_row, start_col, end_row, end_col
+
 get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
     Gets the parser for this bufnr / ft combination.
 
@@ -373,6 +382,26 @@ get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
         {str}   The string to parse
         {lang}  The language of this string
         {opts}  Options to pass to the created language tree
+
+is_ancestor({dest}, {source})                                  *is_ancestor()*
+    Determines whether a node is the ancestor of another
+
+    Parameters: ~
+        {dest}    (table) the possible ancestor
+        {source}  (table) the possible descendant node
+
+    Return: ~
+        (boolean) True if dest is an ancestor of source
+
+node_contains({node}, {range})                               *node_contains()*
+    Determines if a node contains a range
+
+    Parameters: ~
+        {node}   (table) The node
+        {range}  (table) The range
+
+    Return: ~
+        (boolean) True if the node contains the range
 
 
 ==============================================================================
@@ -427,12 +456,16 @@ add_predicate({name}, {handler}, {force})                    *add_predicate()*
         {handler}  the handler function to be used signature will be (match,
                    pattern, bufnr, predicate)
 
-get_node_text({node}, {source})                              *get_node_text()*
+get_node_text({node}, {source}, {opts})                      *get_node_text()*
     Gets the text corresponding to a given node
 
     Parameters: ~
-        {node}    the node
-        {source}  The buffer or string from which the node is extracted
+        {node}    (table) The node
+        {source}  (table) The buffer or string from which the node is
+                  extracted
+        {opts}    (table) Optional parameters.
+                  • concat: (boolean default true) Concatenate result in a
+                    string
 
 get_query({lang}, {query_name})                                  *get_query()*
     Returns the runtime query {query_name} for {lang}.
@@ -680,6 +713,17 @@ LanguageTree:language_for_range({self}, {range})
         {range}  A text range, see |LanguageTree:contains|
         {self}
 
+                                         *LanguageTree:named_node_for_range()*
+LanguageTree:named_node_for_range({self}, {range}, {opts})
+    Gets the smallest named node that contains {range}
+
+    Parameters: ~
+        {range}                   (table) A text range
+        {opts}                    (table) Options table
+        {opts.ignore_injections}  (boolean) (default true) Ignore injected
+                                  languages.
+        {self}
+
 LanguageTree:parse({self})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this
     tree represents. This will run the injection query for this language to
@@ -738,6 +782,17 @@ LanguageTree:source({self})                            *LanguageTree:source()*
     Returns the source content of the language tree (bufnr or string).
 
     Parameters: ~
+        {self}
+
+                                               *LanguageTree:tree_for_range()*
+LanguageTree:tree_for_range({self}, {range}, {opts})
+    Gets the tree that contains {range}
+
+    Parameters: ~
+        {range}                   (table) A text range
+        {opts}                    (table) Options table
+        {opts.ignore_injections}  (boolean) (default true) Ignore injected
+                                  languages.
         {self}
 
 LanguageTree:trees({self})                              *LanguageTree:trees()*

@@ -88,6 +88,10 @@ static struct luaL_Reg node_meta[] = {
   { "prev_sibling", node_prev_sibling },
   { "next_named_sibling", node_next_named_sibling },
   { "prev_named_sibling", node_prev_named_sibling },
+  { "named_children", node_named_children },
+  { "root", node_root },
+  { "byte_length", node_byte_length },
+
   { NULL, NULL }
 };
 
@@ -619,7 +623,7 @@ void push_tree(lua_State *L, TSTree *tree, bool do_copy)
   lua_setfenv(L, -2);  // [udata]
 }
 
-static TSTree **tree_check(lua_State *L, uint16_t index)
+static TSTree **tree_check(lua_State *L, int index)
 {
   TSTree **ud = luaL_checkudata(L, index, TS_META_TREE);
   return ud;
@@ -1059,6 +1063,57 @@ static int node_prev_named_sibling(lua_State *L)
   }
   TSNode sibling = ts_node_prev_named_sibling(node);
   push_node(L, sibling, 1);
+  return 1;
+}
+
+static int node_named_children(lua_State *L)
+{
+  TSNode source;
+  if (!node_check(L, 1, &source)) {
+    return 0;
+  }
+  TSTreeCursor cursor = ts_tree_cursor_new(source);
+
+  lua_newtable(L);
+  int curr_index = 0;
+
+  if (ts_tree_cursor_goto_first_child(&cursor)) {
+    do {
+      TSNode node = ts_tree_cursor_current_node(&cursor);
+      if (ts_node_is_named(node)) {
+        push_node(L, node, 1);
+        lua_rawseti(L, -2, ++curr_index);
+      }
+    } while (ts_tree_cursor_goto_next_sibling(&cursor));
+  }
+
+  ts_tree_cursor_delete(&cursor);
+  return 1;
+}
+
+static int node_root(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  TSNode root = ts_tree_root_node(node.tree);
+  push_node(L, root, 1);
+  return 1;
+}
+
+static int node_byte_length(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, 1, &node)) {
+    return 0;
+  }
+
+  uint32_t start_byte = ts_node_start_byte(node);
+  uint32_t end_byte = ts_node_end_byte(node);
+
+  lua_pushnumber(L, end_byte - start_byte);
   return 1;
 }
 

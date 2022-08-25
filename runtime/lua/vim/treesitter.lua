@@ -118,4 +118,53 @@ function M.get_string_parser(str, lang, opts)
   return LanguageTree.new(str, lang, opts)
 end
 
+--- Determines whether a node is the ancestor of another
+---
+---@param dest table the possible ancestor
+---@param source table the possible descendant node
+---
+---@returns (boolean) True if dest is an ancestor of source
+function M.is_ancestor(dest, source)
+  if not (dest and source) then
+    return false
+  end
+
+  local current = source
+  while current ~= nil do
+    if current == dest then
+      return true
+    end
+
+    current = current:parent()
+  end
+
+  return false
+end
+
+--- Get the node's range or unpack a range table
+---
+---@param node_or_range table
+---
+---@returns start_row, start_col, end_row, end_col
+function M.get_node_range(node_or_range)
+  if type(node_or_range) == 'table' then
+    return unpack(node_or_range)
+  else
+    return node_or_range:range()
+  end
+end
+
+---Determines if a node contains a range
+---@param node table The node
+---@param range table The range
+---
+---@returns (boolean) True if the node contains the range
+function M.node_contains(node, range)
+  local start_row, start_col, end_row, end_col = node:range()
+  local start_fits = start_row < range[1] or (start_row == range[1] and start_col <= range[2])
+  local end_fits = end_row > range[3] or (end_row == range[3] and end_col >= range[4])
+
+  return start_fits and end_fits
+end
+
 return M

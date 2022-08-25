@@ -299,7 +299,7 @@ function LanguageTree:included_regions()
 end
 
 ---@private
-local function get_node_range(node, id, metadata)
+local function get_range_from_metadata(node, id, metadata)
   if metadata[id] and metadata[id].range then
     return metadata[id].range
   end
@@ -362,7 +362,7 @@ function LanguageTree:_get_injections()
         elseif name == 'combined' then
           combined = true
         elseif name == 'content' and #ranges == 0 then
-          table.insert(ranges, get_node_range(node, id, metadata))
+          table.insert(ranges, get_range_from_metadata(node, id, metadata))
           -- Ignore any tags that start with "_"
           -- Allows for other tags to be used in matches
         elseif string.sub(name, 1, 1) ~= '_' then
@@ -371,7 +371,7 @@ function LanguageTree:_get_injections()
           end
 
           if #ranges == 0 then
-            table.insert(ranges, get_node_range(node, id, metadata))
+            table.insert(ranges, get_range_from_metadata(node, id, metadata))
           end
         end
       end
@@ -547,6 +547,44 @@ function LanguageTree:contains(range)
   end
 
   return false
+end
+
+--- Gets the tree that contains {range}
+---
+---@param range table A text range
+---@param opts table Options table
+---@param opts.ignore_injections boolean (default true) Ignore injected languages.
+function LanguageTree:tree_for_range(range, opts)
+  opts = opts or {}
+  local ignore = vim.F.if_nil(opts.ignore_injections, true)
+
+  if not ignore then
+    for _, child in pairs(self._children) do
+      for _, tree in pairs(child:trees()) do
+        if tree_contains(tree, range) then
+          return tree
+        end
+      end
+    end
+  end
+
+  for _, tree in pairs(self._trees) do
+    if tree_contains(tree, range) then
+      return tree
+    end
+  end
+
+  return nil
+end
+
+--- Gets the smallest named node that contains {range}
+---
+---@param range table A text range
+---@param opts table Options table
+---@param opts.ignore_injections boolean (default true) Ignore injected languages.
+function LanguageTree:named_node_for_range(range, opts)
+  local tree = self:tree_for_range(range, opts)
+  return tree:root():named_descendant_for_range(unpack(range))
 end
 
 --- Gets the appropriate language that contains {range}
