@@ -4184,9 +4184,13 @@ void wipe_buffer(buf_T *buf, bool aucmd)
 /// @param bufnr     Buffer to switch to, or 0 to create a new buffer.
 ///
 /// @see curbufIsChanged()
-void buf_open_scratch(handle_T bufnr, char *bufname)
+///
+/// @return  FAIL for failure, OK otherwise
+int buf_open_scratch(handle_T bufnr, char *bufname)
 {
-  (void)do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
+  if (do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL) == FAIL) {
+    return FAIL;
+  }
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   (void)setfname(curbuf, bufname, NULL, true);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
@@ -4194,4 +4198,5 @@ void buf_open_scratch(handle_T bufnr, char *bufname)
   set_option_value_give_err("bt", 0L, "nofile", OPT_LOCAL);
   set_option_value_give_err("swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
+  return OK;
 }
