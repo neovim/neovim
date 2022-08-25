@@ -324,7 +324,7 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
 
     len = (int)(colonp - stringp);
 
-    for (idx = 0; idx < table_size; ++idx) {
+    for (idx = 0; idx < table_size; idx++) {
       if (STRNICMP(stringp, table[idx].name, len) == 0) {
         break;
       }
@@ -526,7 +526,7 @@ int prt_get_unit(int idx)
   static char *(units[4]) = PRT_UNIT_NAMES;
 
   if (printer_opts[idx].present) {
-    for (i = 0; i < 4; ++i) {
+    for (i = 0; i < 4; i++) {
       if (STRNICMP(printer_opts[idx].string, units[i], 2) == 0) {
         u = i;
         break;
@@ -751,11 +751,9 @@ void ex_hardcopy(exarg_T *eap)
     /*
      * Loop over all pages in the print job: 1 2 3 ...
      */
-    for (page_count = 0; prtpos.file_line <= eap->line2; ++page_count) {
-      /*
-       * Loop over uncollated copies: 1 1 1, 2 2 2, 3 3 3, ...
-       * For duplex: 12 12 12 34 34 34, ...
-       */
+    for (page_count = 0; prtpos.file_line <= eap->line2; page_count++) {
+      // Loop over uncollated copies: 1 1 1, 2 2 2, 3 3 3, ...
+      // For duplex: 12 12 12 34 34 34, ...
       for (uncollated_copies = 0;
            uncollated_copies < settings.n_uncollated_copies;
            uncollated_copies++) {
@@ -765,10 +763,8 @@ void ex_hardcopy(exarg_T *eap)
         /*
          * Do front and rear side of a page.
          */
-        for (side = 0; side <= settings.duplex; ++side) {
-          /*
-           * Print one page.
-           */
+        for (side = 0; side <= settings.duplex; side++) {
+          // Print one page.
 
           // Check for interrupt character every page.
           os_breakcheck();
@@ -2298,7 +2294,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     paper_name = "A4";
     paper_strlen = 2;
   }
-  for (i = 0; i < (int)PRT_MEDIASIZE_LEN; ++i) {
+  for (i = 0; i < (int)PRT_MEDIASIZE_LEN; i++) {
     if (STRLEN(prt_mediasize[i].name) == (unsigned)paper_strlen
         && STRNICMP(prt_mediasize[i].name, paper_name,
                     paper_strlen) == 0) {

@@ -2305,7 +2305,7 @@ static void u_undoredo(int undo, bool do_buf_event)
       // delete backwards, it goes faster in most cases
       long i;
       linenr_T lnum;
-      for (lnum = bot - 1, i = oldsize; --i >= 0; --lnum) {
+      for (lnum = bot - 1, i = oldsize; --i >= 0; lnum--) {
         // what can we do when we run out of memory?
         newarray[i] = u_save_line(lnum);
         // remember we deleted the last line in the buffer, and a

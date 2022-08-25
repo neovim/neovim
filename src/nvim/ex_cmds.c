@@ -678,7 +678,7 @@ void ex_sort(exarg_T *eap)
 
   // delete the original lines if appending worked
   if (i == count) {
-    for (i = 0; i < count; ++i) {
+    for (i = 0; i < count; i++) {
       ml_delete(eap->line1, false);
     }
   } else {
@@ -1103,7 +1103,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
     if (curwin->w_cursor.lnum < line2) {
       line2++;
     }
-    ++curwin->w_cursor.lnum;
+    curwin->w_cursor.lnum++;
   }
 
   appended_lines_mark(n, count);
@@ -2601,7 +2601,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
 
           curwin->w_buffer = buf;
           curbuf = buf;
-          ++curbuf->b_nwindows;
+          curbuf->b_nwindows++;
 
           // Set 'fileformat', 'binary' and 'fenc' when forced.
           if (!oldbuf && eap != NULL) {
@@ -3018,7 +3018,7 @@ void ex_append(exarg_T *eap)
 
     // Look for the "." after automatic indent.
     vcol = 0;
-    for (p = theline; indent > vcol; ++p) {
+    for (p = theline; indent > vcol; p++) {
       if (*p == ' ') {
         vcol++;
       } else if (*p == TAB) {
@@ -3098,7 +3098,7 @@ void ex_change(exarg_T *eap)
     append_indent = get_indent_lnum(eap->line1);
   }
 
-  for (lnum = eap->line2; lnum >= eap->line1; --lnum) {
+  for (lnum = eap->line2; lnum >= eap->line1; lnum--) {
     if (curbuf->b_ml.ml_flags & ML_EMPTY) {         // nothing to delete
       break;
     }

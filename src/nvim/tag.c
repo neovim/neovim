@@ -1036,7 +1036,7 @@ void do_tags(exarg_T *eap)
 
   // Highlight title
   msg_puts_title(_("\n  # TO tag         FROM line  in file/text"));
-  for (i = 0; i < tagstacklen; ++i) {
+  for (i = 0; i < tagstacklen; i++) {
     if (tagstack[i].tagname != NULL) {
       name = fm_getname(&(tagstack[i].fmark), 30);
       if (name == NULL) {           // file name not available
@@ -1555,7 +1555,7 @@ int find_tags(char_u *pat, int *num_matches, char ***matchesp, int flags, int mi
   }
   orgpat.regmatch.rm_ic = ((p_ic || !noic)
                            && (findall || orgpat.headlen == 0 || !p_tbs));
-  for (round = 1; round <= 2; ++round) {
+  for (round = 1; round <= 2; round++) {
     linear = (orgpat.headlen == 0 || !p_tbs || round == 2);
 
     // Try tag file names from tags option one by one.
@@ -1601,7 +1601,7 @@ int find_tags(char_u *pat, int *num_matches, char ***matchesp, int flags, int mi
             help_pri = 0;
           } else {
             help_pri = 1;
-            for (s = p_hlg; *s != NUL; ++s) {
+            for (s = p_hlg; *s != NUL; s++) {
               if (STRNICMP(s, help_lang, 2) == 0) {
                 break;
               }
@@ -2366,7 +2366,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
       if (tnp->tn_hf_idx > tag_fnames.ga_len || *p_hf == NUL) {
         return FAIL;
       }
-      ++tnp->tn_hf_idx;
+      tnp->tn_hf_idx++;
       STRCPY(buf, p_hf);
       STRCPY(path_tail((char *)buf), "tags");
 #ifdef BACKSLASH_IN_FILENAME

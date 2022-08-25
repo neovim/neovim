@@ -67,7 +67,7 @@ void hash_clear(hashtab_T *ht)
 void hash_clear_all(hashtab_T *ht, unsigned int off)
 {
   size_t todo = ht->ht_used;
-  for (hashitem_T *hi = ht->ht_array; todo > 0; ++hi) {
+  for (hashitem_T *hi = ht->ht_array; todo > 0; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       xfree(hi->hi_key - off);
       todo--;
@@ -356,7 +356,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   hash_T newmask = newsize - 1;
   size_t todo = ht->ht_used;
 
-  for (hashitem_T *olditem = oldarray; todo > 0; ++olditem) {
+  for (hashitem_T *olditem = oldarray; todo > 0; olditem++) {
     if (HASHITEM_EMPTY(olditem)) {
       continue;
     }

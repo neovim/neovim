@@ -1709,7 +1709,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
   }
 
   arg_idx = 1;
-  for (i = 1; i < parmp->window_count; ++i) {
+  for (i = 1; i < parmp->window_count; i++) {
     if (cwd != NULL) {
       os_chdir((char *)cwd);
     }

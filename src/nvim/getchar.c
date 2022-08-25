@@ -932,7 +932,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
   } else {
     nrm = noremap;
   }
-  for (i = 0; i < addlen; ++i) {
+  for (i = 0; i < addlen; i++) {
     typebuf.tb_noremap[typebuf.tb_off + i + offset] =
       (char_u)((--nrm >= 0) ? val : RM_YES);
   }
@@ -2563,7 +2563,7 @@ static int vgetorpeek(bool advance)
                 curwin->w_wcol += curwin_col_off();
                 col = 0;  // no correction needed
               } else {
-                --curwin->w_wcol;
+                curwin->w_wcol--;
                 col = curwin->w_cursor.col - 1;
               }
             } else if (curwin->w_p_wrap && curwin->w_wrow) {
@@ -2929,7 +2929,7 @@ int fix_input_buffer(char_u *buf, int len)
   // Two characters are special: NUL and K_SPECIAL.
   // Replace       NUL by K_SPECIAL KS_ZERO    KE_FILLER
   // Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
-  for (i = len; --i >= 0; ++p) {
+  for (i = len; --i >= 0; p++) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
             && (i < 2 || p[1] != KS_EXTRA))) {

@@ -234,7 +234,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
       // isn't set or 'cindent' isn't set or '#' isn't in 'cino'.
       shift_line(oap->op_type == OP_LSHIFT, p_sr, amount, false);
     }
-    ++curwin->w_cursor.lnum;
+    curwin->w_cursor.lnum++;
   }
 
   if (oap->motion_type == kMTBlockWise) {
@@ -244,7 +244,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     curwin->w_cursor.lnum = oap->start.lnum;
     beginline(BL_SOL | BL_FIX);       // shift_line() may have set cursor.col
   } else {
-    --curwin->w_cursor.lnum;            // put cursor on last line, for ":>"
+    curwin->w_cursor.lnum--;            // put cursor on last line, for ":>"
   }
   // The cursor line is not in a closed fold
   foldOpenCursor();
@@ -2002,7 +2002,7 @@ static int op_replace(oparg_T *oap, int c)
       curwin->w_cursor.col = 0;
       oap->end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
       if (oap->end.col) {
-        --oap->end.col;
+        oap->end.col--;
       }
     } else if (!oap->inclusive) {
       dec(&(oap->end));
@@ -2116,7 +2116,7 @@ void op_tilde(oparg_T *oap)
       pos.col = 0;
       oap->end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
       if (oap->end.col) {
-        --oap->end.col;
+        oap->end.col--;
       }
     } else if (!oap->inclusive) {
       dec(&(oap->end));
@@ -2282,7 +2282,7 @@ void op_insert(oparg_T *oap, long count1)
       coladvance_force(oap->op_type == OP_APPEND
           ? oap->end_vcol + 1 : getviscol());
       if (oap->op_type == OP_APPEND) {
-        --curwin->w_cursor.col;
+        curwin->w_cursor.col--;
       }
       curwin->w_ve_flags = old_ve_flags;
     }
@@ -2306,7 +2306,7 @@ void op_insert(oparg_T *oap, long count1)
       curwin->w_set_curswant = TRUE;
       while (*get_cursor_pos_ptr() != NUL
              && (curwin->w_cursor.col < bd.textcol + bd.textlen)) {
-        ++curwin->w_cursor.col;
+        curwin->w_cursor.col++;
       }
       if (bd.is_short && !bd.is_MAX) {
         // First line was too short, make it longer and adjust the
@@ -2412,7 +2412,7 @@ void op_insert(oparg_T *oap, long count1)
       if (oap->op_type == OP_APPEND) {
         pre_textlen += bd2.textlen - bd.textlen;
         if (bd2.endspaces) {
-          --bd2.textlen;
+          bd2.textlen--;
         }
       }
       bd.textcol = bd2.textcol;
@@ -3321,7 +3321,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       } else if (vcol > col) {
         bd.endspaces = vcol - col;
         bd.startspaces = incr - bd.endspaces;
-        --bd.textcol;
+        bd.textcol--;
         delcount = 1;
         bd.textcol -= utf_head_off(oldp, oldp + bd.textcol);
         if (oldp[bd.textcol] != TAB) {
@@ -3394,7 +3394,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, bd.textcol,
                           delcount, (int)totlen + lines_appended, kExtmarkUndo);
 
-      ++curwin->w_cursor.lnum;
+      curwin->w_cursor.lnum++;
       if (i == 0) {
         curwin->w_cursor.col += bd.startspaces;
       }
@@ -3698,7 +3698,7 @@ error:
         // put cursor on first non-blank in first inserted line
         curwin->w_cursor.col = 0;
         if (dir == FORWARD) {
-          ++curwin->w_cursor.lnum;
+          curwin->w_cursor.lnum++;
         }
         beginline(BL_WHITE | BL_FIX);
       } else {  // put cursor on first inserted character
@@ -4088,11 +4088,11 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
         if (endcurr1 == ' ') {
           endcurr1 = endcurr2;
         } else {
-          ++spaces[t];
+          spaces[t]++;
         }
         // Extra space when 'joinspaces' set and line ends in '.', '?', or '!'.
         if (p_js && (endcurr1 == '.' || endcurr1 == '?' || endcurr1 == '!')) {
-          ++spaces[t];
+          spaces[t]++;
         }
       }
     }
@@ -4243,7 +4243,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    * some text after it and the second line has the 'm' flag.
    */
   if (leader1_flags != NULL) {
-    for (p = leader1_flags; *p && *p != ':'; ++p) {
+    for (p = leader1_flags; *p && *p != ':'; p++) {
       if (*p == COM_FIRST) {
         return leader2_len == 0;
       }
@@ -4257,7 +4257,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
         if (leader2_flags == NULL || leader2_len == 0) {
           return FALSE;
         }
-        for (p = leader2_flags; *p && *p != ':'; ++p) {
+        for (p = leader2_flags; *p && *p != ':'; p++) {
           if (*p == COM_MIDDLE) {
             return TRUE;
           }
@@ -4274,7 +4274,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
   line1 = vim_strsave(ml_get(lnum));
   for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {}
   line2 = ml_get(lnum + 1);
-  for (idx2 = 0; idx2 < leader2_len; ++idx2) {
+  for (idx2 = 0; idx2 < leader2_len; idx2++) {
     if (!ascii_iswhite(line2[idx2])) {
       if (line1[idx1++] != line2[idx2]) {
         break;
@@ -4331,7 +4331,7 @@ static void op_format(oparg_T *oap, int keep_cursor)
    * line, so "." will do the next lines.
    */
   if (oap->end_adjusted && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-    ++curwin->w_cursor.lnum;
+    curwin->w_cursor.lnum++;
   }
   beginline(BL_WHITE | BL_FIX);
   old_line_count = curbuf->b_ml.ml_line_count - old_line_count;
@@ -4466,10 +4466,8 @@ void format_lines(linenr_T line_count, int avoid_fex)
   }
 
   curwin->w_cursor.lnum--;
-  for (count = line_count; count != 0 && !got_int; --count) {
-    /*
-     * Advance to next paragraph.
-     */
+  for (count = line_count; count != 0 && !got_int; count--) {
+    // Advance to next paragraph.
     if (advance) {
       curwin->w_cursor.lnum++;
       prev_is_end_par = is_end_par;
@@ -5701,18 +5699,18 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
 
   // Count the number of lines within the string
   if (str_list) {
-    for (char_u **ss = (char_u **)str; *ss != NULL; ++ss) {
+    for (char_u **ss = (char_u **)str; *ss != NULL; ss++) {
       newlines++;
     }
   } else {
     newlines = memcnt(str, '\n', len);
     if (yank_type == kMTCharWise || len == 0 || str[len - 1] != '\n') {
       extraline = 1;
-      ++newlines;         // count extra newline at the end
+      newlines++;         // count extra newline at the end
     }
     if (y_ptr->y_size > 0 && y_ptr->y_type == kMTCharWise) {
       append = true;
-      --newlines;         // uncount newline when appending first line
+      newlines--;         // uncount newline when appending first line
     }
   }
 
@@ -5733,7 +5731,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
 
   // Find the end of each line and save it into the array.
   if (str_list) {
-    for (char_u **ss = (char_u **)str; *ss != NULL; ++ss, ++lnum) {
+    for (char_u **ss = (char_u **)str; *ss != NULL; ss++, lnum++) {
       size_t ss_len = STRLEN(*ss);
       pp[lnum] = xmemdupz(*ss, ss_len);
       if (ss_len > maxlen) {
@@ -5883,7 +5881,7 @@ void cursor_pos_info(dict_T *dict)
         max_pos = VIsual;
       }
       if (*p_sel == 'e' && max_pos.col > 0) {
-        --max_pos.col;
+        max_pos.col--;
       }
 
       if (l_VIsual_mode == Ctrl_V) {
@@ -5913,7 +5911,7 @@ void cursor_pos_info(dict_T *dict)
       line_count_selected = max_pos.lnum - min_pos.lnum + 1;
     }
 
-    for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
+    for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
       // Check for a CTRL-C every 100000 characters.
       if (byte_count > last_check) {
         os_breakcheck();

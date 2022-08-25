@@ -3180,7 +3180,7 @@ static void qf_fmt_text(const char *restrict text, char *restrict buf, int bufsi
   int i;
   const char *p = (char *)text;
 
-  for (i = 0; *p != NUL && i < bufsize - 1; ++i) {
+  for (i = 0; *p != NUL && i < bufsize - 1; i++) {
     if (*p == '\n') {
       buf[i] = ' ';
       while (*++p != NUL) {
@@ -3263,13 +3263,13 @@ void qf_age(exarg_T *eap)
         emsg(_("E380: At bottom of quickfix stack"));
         break;
       }
-      --qi->qf_curlist;
+      qi->qf_curlist--;
     } else {
       if (qi->qf_curlist >= qi->qf_listcount - 1) {
         emsg(_("E381: At top of quickfix stack"));
         break;
       }
-      ++qi->qf_curlist;
+      qi->qf_curlist++;
     }
   }
   qf_msg(qi, qi->qf_curlist, "");
@@ -4328,7 +4328,7 @@ static char *get_mef_name(void)
 
   char *p;
 
-  for (p = p_mef; *p; ++p) {
+  for (p = p_mef; *p; p++) {
     if (p[0] == '#' && p[1] == '#') {
       break;
     }

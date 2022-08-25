@@ -419,7 +419,7 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
     p = (call_data == NULL) ? NULL : xstrdup(call_data);
 
     // loop over all modes, may add more than one
-    for (i = 0; i < MENU_MODES; ++i) {
+    for (i = 0; i < MENU_MODES; i++) {
       if (modes & (1 << i)) {
         // free any old menu
         free_menu_string(menu, i);
@@ -933,7 +933,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   xp->xp_context = EXPAND_UNSUCCESSFUL;
 
   // Check for priority numbers, enable and disable
-  for (p = arg; *p; ++p) {
+  for (p = arg; *p; p++) {
     if (!ascii_isdigit(*p) && *p != '.') {
       break;
     }
@@ -957,7 +957,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
 
   arg = after_dot = p;
 
-  for (; *p && !ascii_iswhite(*p); ++p) {
+  for (; *p && !ascii_iswhite(*p); p++) {
     if ((*p == '\\' || *p == Ctrl_V) && p[1] != NUL) {
       p++;
     } else if (*p == '.') {
@@ -1181,7 +1181,7 @@ static bool menu_namecmp(const char *const name, const char *const mname)
 {
   int i;
 
-  for (i = 0; name[i] != NUL && name[i] != TAB; ++i) {
+  for (i = 0; name[i] != NUL && name[i] != TAB; i++) {
     if (name[i] != mname[i]) {
       break;
     }

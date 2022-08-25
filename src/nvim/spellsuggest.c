@@ -3100,7 +3100,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword,
     // being replaced "thes," -> "these" is a different suggestion from
     // "thes" -> "these".
     stp = &SUG(*gap, 0);
-    for (i = gap->ga_len; --i >= 0; ++stp) {
+    for (i = gap->ga_len; --i >= 0; stp++) {
       if (stp->st_wordlen == goodlen
           && stp->st_orglen == badlen
           && STRNCMP(stp->st_word, goodword, goodlen) == 0) {

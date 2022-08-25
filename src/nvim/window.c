@@ -1597,7 +1597,7 @@ static void win_init_some(win_T *newp, win_T *oldp)
 {
   // Use the same argument list.
   newp->w_alist = oldp->w_alist;
-  ++newp->w_alist->al_refcount;
+  newp->w_alist->al_refcount++;
   newp->w_arg_idx = oldp->w_arg_idx;
 
   // copy options from existing window
@@ -1723,7 +1723,7 @@ int make_windows(int count, bool vertical)
   block_autocmds();
 
   // todo is number of windows left to create
-  for (todo = count - 1; todo > 0; --todo) {
+  for (todo = count - 1; todo > 0; todo--) {
     if (vertical) {
       if (win_split(curwin->w_width - (curwin->w_width - todo)
                     / (todo + 1) - 1, WSP_VERT | WSP_ABOVE) == FAIL) {
@@ -2200,7 +2200,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       }
 
       if (has_next_curwin) {
-        --totwincount;                  // don't count curwin
+        totwincount--;                  // don't count curwin
       }
     }
 
@@ -2330,7 +2330,7 @@ static void win_equal_rec(win_T *next_curwin, bool current, frame_T *topfr, int 
       }
 
       if (has_next_curwin) {
-        --totwincount;                  // don't count curwin
+        totwincount--;                  // don't count curwin
       }
     }
 
@@ -3695,7 +3695,7 @@ static void frame_add_vsep(const frame_T *frp)
     wp = frp->fr_win;
     if (wp->w_vsep_width == 0) {
       if (wp->w_width > 0) {            // don't make it negative
-        --wp->w_width;
+        wp->w_width--;
       }
       wp->w_vsep_width = 1;
     }
@@ -4037,7 +4037,7 @@ void free_tabpage(tabpage_T *tp)
 
   pmap_del(handle_T)(&tabpage_handles, tp->handle);
   diff_clear(tp);
-  for (idx = 0; idx < SNAP_COUNT; ++idx) {
+  for (idx = 0; idx < SNAP_COUNT; idx++) {
     clear_snapshot(tp, idx);
   }
   vars_clear(&tp->tp_vars->dv_hashtab);         // free all t: variables
@@ -4173,7 +4173,7 @@ int make_tabpages(int maxcount)
    */
   block_autocmds();
 
-  for (todo = count - 1; todo > 0; --todo) {
+  for (todo = count - 1; todo > 0; todo--) {
     if (win_new_tabpage(0, NULL) == FAIL) {
       break;
     }
@@ -4440,7 +4440,7 @@ void goto_tabpage(int n)
     // "gT": go to previous tab page, wrap around end.  "N gT" repeats
     // this N times.
     ttp = curtab;
-    for (i = n; i < 0; ++i) {
+    for (i = n; i < 0; i++) {
       for (tp = first_tabpage; tp->tp_next != ttp && tp->tp_next != NULL;
            tp = tp->tp_next) {}
       ttp = tp;
@@ -5596,7 +5596,7 @@ static void frame_setheight(frame_T *curfrp, int height)
      * 2: compute the room available and adjust the height to it.
      * Try not to reduce the height of a window with 'winfixheight' set.
      */
-    for (run = 1; run <= 2; ++run) {
+    for (run = 1; run <= 2; run++) {
       room = 0;
       room_reserved = 0;
       FOR_ALL_FRAMES(frp, curfrp->fr_parent->fr_child) {
@@ -5669,7 +5669,7 @@ static void frame_setheight(frame_T *curfrp, int height)
      * that is not enough, takes lines from frames above the current
      * frame.
      */
-    for (run = 0; run < 2; ++run) {
+    for (run = 0; run < 2; run++) {
       if (run == 0) {
         frp = curfrp->fr_next;          // 1st run: start with next window
       } else {
@@ -5788,7 +5788,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
      *    containing frame.
      * 2: compute the room available and adjust the width to it.
      */
-    for (run = 1; run <= 2; ++run) {
+    for (run = 1; run <= 2; run++) {
       room = 0;
       room_reserved = 0;
       FOR_ALL_FRAMES(frp, curfrp->fr_parent->fr_child) {
@@ -5841,7 +5841,7 @@ static void frame_setwidth(frame_T *curfrp, int width)
      * that is not enough, takes lines from frames left of the current
      * frame.
      */
-    for (run = 0; run < 2; ++run) {
+    for (run = 0; run < 2; run++) {
       if (run == 0) {
         frp = curfrp->fr_next;          // 1st run: start with next window
       } else {

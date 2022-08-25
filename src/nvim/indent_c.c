@@ -383,7 +383,7 @@ bool cin_islabel(void)  // XXX
 
   cursor_save = curwin->w_cursor;
   while (curwin->w_cursor.lnum > 1) {
-    --curwin->w_cursor.lnum;
+    curwin->w_cursor.lnum--;
 
     /*
      * If we're in a comment or raw string now, skip to the start of
@@ -434,7 +434,7 @@ static int cin_isinit(void)
   for (;;) {
     int i, l;
 
-    for (i = 0; i < (int)ARRAY_SIZE(skip); ++i) {
+    for (i = 0; i < (int)ARRAY_SIZE(skip); i++) {
       l = (int)strlen(skip[i]);
       if (cin_starts_with(s, skip[i])) {
         s = cin_skipcomment(s + l);
@@ -465,7 +465,7 @@ bool cin_iscase(const char_u *s, bool strict)
 {
   s = cin_skipcomment(s);
   if (cin_starts_with(s, "case")) {
-    for (s += 4; *s; ++s) {
+    for (s += 4; *s; s++) {
       s = cin_skipcomment(s);
       if (*s == NUL) {
         break;
@@ -588,7 +588,7 @@ static bool cin_is_cpp_namespace(const char_u *s)
  */
 static const char_u *after_label(const char_u *l)
 {
-  for (; *l; ++l) {
+  for (; *l; l++) {
     if (*l == ':') {
       if (l[1] == ':') {            // skip over "::" for C++
         l++;
@@ -2330,7 +2330,7 @@ int get_c_indent(void)
               /* look for opening unmatched paren, indent one level
                * for each additional level */
               n = 1;
-              for (col = 0; col < our_paren_pos.col; ++col) {
+              for (col = 0; col < our_paren_pos.col; col++) {
                 switch (l[col]) {
                 case '(':
                 case '{':
@@ -2388,7 +2388,7 @@ int get_c_indent(void)
            * but ignore (void) before the line (ignore_paren_col). */
           col = our_paren_pos.col;
           while ((int)our_paren_pos.col > ignore_paren_col) {
-            --our_paren_pos.col;
+            our_paren_pos.col--;
             switch (*ml_get_pos(&our_paren_pos)) {
             case '(':
               amount += curbuf->b_ind_unclosed2;

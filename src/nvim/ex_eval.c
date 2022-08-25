@@ -830,7 +830,7 @@ void ex_if(exarg_T *eap)
   if (cstack->cs_idx == CSTACK_LEN - 1) {
     eap->errmsg = _("E579: :if nesting too deep");
   } else {
-    ++cstack->cs_idx;
+    cstack->cs_idx++;
     cstack->cs_flags[cstack->cs_idx] = 0;
 
     skip = CHECK_SKIP;
@@ -870,7 +870,7 @@ void ex_endif(exarg_T *eap)
       (void)do_intthrow(eap->cstack);
     }
 
-    --eap->cstack->cs_idx;
+    eap->cstack->cs_idx--;
   }
 }
 
@@ -964,8 +964,8 @@ void ex_while(exarg_T *eap)
      * cstack entry.
      */
     if ((cstack->cs_lflags & CSL_HAD_LOOP) == 0) {
-      ++cstack->cs_idx;
-      ++cstack->cs_looplevel;
+      cstack->cs_idx++;
+      cstack->cs_looplevel++;
       cstack->cs_line[cstack->cs_idx] = -1;
     }
     cstack->cs_flags[cstack->cs_idx] =
@@ -1118,7 +1118,7 @@ void ex_endwhile(exarg_T *eap)
         eap->errmsg = _(e_endtry);
       }
       // Try to find the matching ":while" and report what's missing.
-      for (idx = cstack->cs_idx; idx > 0; --idx) {
+      for (idx = cstack->cs_idx; idx > 0; idx--) {
         fl =  cstack->cs_flags[idx];
         if ((fl & CSF_TRY) && !(fl & CSF_FINALLY)) {
           // Give up at a try conditional not in its finally clause.
@@ -1248,8 +1248,8 @@ void ex_try(exarg_T *eap)
   if (cstack->cs_idx == CSTACK_LEN - 1) {
     eap->errmsg = _("E601: :try nesting too deep");
   } else {
-    ++cstack->cs_idx;
-    ++cstack->cs_trylevel;
+    cstack->cs_idx++;
+    cstack->cs_trylevel++;
     cstack->cs_flags[cstack->cs_idx] = CSF_TRY;
     cstack->cs_pending[cstack->cs_idx] = CSTP_NONE;
 
@@ -1314,7 +1314,7 @@ void ex_catch(exarg_T *eap)
       eap->errmsg = get_end_emsg(cstack);
       skip = true;
     }
-    for (idx = cstack->cs_idx; idx > 0; --idx) {
+    for (idx = cstack->cs_idx; idx > 0; idx--) {
       if (cstack->cs_flags[idx] & CSF_TRY) {
         break;
       }
@@ -1456,7 +1456,7 @@ void ex_finally(exarg_T *eap)
   } else {
     if (!(cstack->cs_flags[cstack->cs_idx] & CSF_TRY)) {
       eap->errmsg = get_end_emsg(cstack);
-      for (idx = cstack->cs_idx - 1; idx > 0; --idx) {
+      for (idx = cstack->cs_idx - 1; idx > 0; idx--) {
         if (cstack->cs_flags[idx] & CSF_TRY) {
           break;
         }
@@ -1906,7 +1906,7 @@ int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
   int idx;
   int stop = FALSE;
 
-  for (idx = cstack->cs_idx; idx >= 0; --idx) {
+  for (idx = cstack->cs_idx; idx >= 0; idx--) {
     if (cstack->cs_flags[idx] & CSF_TRY) {
       /*
        * Discard anything pending in a finally clause and continue the
@@ -2036,7 +2036,7 @@ void rewind_conditionals(cstack_T *cstack, int idx, int cond_type, int *cond_lev
     if (cstack->cs_flags[cstack->cs_idx] & CSF_FOR) {
       free_for_info(cstack->cs_forinfo[cstack->cs_idx]);
     }
-    --cstack->cs_idx;
+    cstack->cs_idx--;
   }
 }
 

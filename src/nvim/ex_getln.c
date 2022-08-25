@@ -1260,7 +1260,7 @@ static int command_line_execute(VimState *state, int key)
     }
 
     if (s->wim_index < 3) {
-      ++s->wim_index;
+      s->wim_index++;
     }
 
     if (s->c == ESC) {
@@ -1477,7 +1477,7 @@ static int command_line_handle_key(CommandLineState *s)
     // delete current character is the same as backspace on next
     // character, except at end of line
     if (s->c == K_DEL && ccline.cmdpos != ccline.cmdlen) {
-      ++ccline.cmdpos;
+      ccline.cmdpos++;
     }
 
     if (s->c == K_DEL) {

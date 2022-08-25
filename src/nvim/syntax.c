@@ -609,7 +609,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
     /*
      * Skip lines that end in a backslash.
      */
-    for (; start_lnum > 1; --start_lnum) {
+    for (; start_lnum > 1; start_lnum--) {
       line = ml_get(start_lnum - 1);
       if (*line == NUL || *(line + STRLEN(line) - 1) != '\\') {
         break;
@@ -687,7 +687,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
        */
       validate_current_state();
 
-      for (current_lnum = lnum; current_lnum < end_lnum; ++current_lnum) {
+      for (current_lnum = lnum; current_lnum < end_lnum; current_lnum++) {
         syn_start_line();
         for (;;) {
           had_sync_point = syn_finish_line(true);
@@ -894,7 +894,7 @@ static void syn_update_ends(bool startofline)
    */
   int i = current_state.ga_len - 1;
   if (keepend_level >= 0) {
-    for (; i > keepend_level; --i) {
+    for (; i > keepend_level; i--) {
       if (CUR_STATE(i).si_flags & HL_EXTEND) {
         break;
       }
@@ -1186,7 +1186,7 @@ static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
   clear_syn_state(p);
   p->sst_next = block->b_sst_firstfree;
   block->b_sst_firstfree = p;
-  ++block->b_sst_freecount;
+  block->b_sst_freecount++;
 }
 
 /*
@@ -1225,7 +1225,7 @@ static synstate_T *store_current_state(void)
    * If the current state contains a start or end pattern that continues
    * from the previous line, we can't use it.  Don't store it then.
    */
-  for (i = current_state.ga_len - 1; i >= 0; --i) {
+  for (i = current_state.ga_len - 1; i >= 0; i--) {
     cur_si = &CUR_STATE(i);
     if (cur_si->si_h_startpos.lnum >= current_lnum
         || cur_si->si_m_endpos.lnum >= current_lnum
@@ -1273,7 +1273,7 @@ static synstate_T *store_current_state(void)
       // list, after *sp
       p = syn_block->b_sst_firstfree;
       syn_block->b_sst_firstfree = p->sst_next;
-      --syn_block->b_sst_freecount;
+      syn_block->b_sst_freecount--;
       if (sp == NULL) {
         // Insert in front of the list
         p->sst_next = syn_block->b_sst_first;
@@ -1302,7 +1302,7 @@ static synstate_T *store_current_state(void)
     } else {
       bp = sp->sst_union.sst_stack;
     }
-    for (i = 0; i < sp->sst_stacksize; ++i) {
+    for (i = 0; i < sp->sst_stacksize; i++) {
       bp[i].bs_idx = CUR_STATE(i).si_idx;
       bp[i].bs_flags = (int)CUR_STATE(i).si_flags;
       bp[i].bs_seqnr = CUR_STATE(i).si_seqnr;
@@ -1336,7 +1336,7 @@ static void load_current_state(synstate_T *from)
     } else {
       bp = from->sst_union.sst_stack;
     }
-    for (i = 0; i < from->sst_stacksize; ++i) {
+    for (i = 0; i < from->sst_stacksize; i++) {
       CUR_STATE(i).si_idx = bp[i].bs_idx;
       CUR_STATE(i).si_flags = bp[i].bs_flags;
       CUR_STATE(i).si_seqnr = bp[i].bs_seqnr;
@@ -2024,7 +2024,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   current_flags = 0;
   current_seqnr = 0;
   if (cur_si != NULL) {
-    for (int idx = current_state.ga_len - 1; idx >= 0; --idx) {
+    for (int idx = current_state.ga_len - 1; idx >= 0; idx--) {
       sip = &CUR_STATE(idx);
       if ((current_lnum > sip->si_h_startpos.lnum
            || (current_lnum == sip->si_h_startpos.lnum
@@ -2406,7 +2406,7 @@ static void check_keepend(void)
    * won't do anything.  If there is no "extend" item "i" will be
    * "keepend_level" and all "keepend" items will work normally.
    */
-  for (i = current_state.ga_len - 1; i > keepend_level; --i) {
+  for (i = current_state.ga_len - 1; i > keepend_level; i--) {
     if (CUR_STATE(i).si_flags & HL_EXTEND) {
       break;
     }
@@ -2416,7 +2416,7 @@ static void check_keepend(void)
   maxpos.col = 0;
   maxpos_h.lnum = 0;
   maxpos_h.col = 0;
-  for (; i < current_state.ga_len; ++i) {
+  for (; i < current_state.ga_len; i++) {
     sip = &CUR_STATE(i);
     if (maxpos.lnum != 0) {
       limit_pos_zero(&sip->si_m_endpos, &maxpos);
@@ -2519,7 +2519,7 @@ static void pop_current_state(void)
 {
   if (!GA_EMPTY(&current_state)) {
     unref_extmatch(CUR_STATE(current_state.ga_len - 1).si_extmatch);
-    --current_state.ga_len;
+    current_state.ga_len--;
   }
   // after the end of a pattern, try matching a keyword or pattern
   next_match_idx = -1;
@@ -2613,7 +2613,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
      * Find end pattern that matches first after "matchcol".
      */
     best_idx = -1;
-    for (idx = start_idx; idx < syn_block->b_syn_patterns.ga_len; ++idx) {
+    for (idx = start_idx; idx < syn_block->b_syn_patterns.ga_len; idx++) {
       int lc_col = matchcol;
 
       spp = &(SYN_ITEMS(syn_block)[idx]);
@@ -2916,9 +2916,9 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     if (profile_cmp(pt, st->slowest) < 0) {
       st->slowest = pt;
     }
-    ++st->count;
+    st->count++;
     if (r > 0) {
-      ++st->match;
+      st->match++;
     }
   }
   if (timed_out && !syn_win->w_s->b_syn_slow) {
@@ -3282,7 +3282,7 @@ static void syn_remove_pattern(synblock_T *block, int idx)
 
   spp = &(SYN_ITEMS(block)[idx]);
   if (spp->sp_flags & HL_FOLD) {
-    --block->b_syn_folditems;
+    block->b_syn_folditems--;
   }
   syn_clear_pattern(block, idx);
   memmove(spp, spp + 1, sizeof(synpat_T) * (size_t)(block->b_syn_patterns.ga_len - idx - 1));
@@ -3526,7 +3526,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
     for (int id = 1; id <= highlight_num_groups() && !got_int; id++) {
       syn_list_one(id, syncing, false);
     }
-    for (int id = 0; id < curwin->w_s->b_syn_clusters.ga_len && !got_int; ++id) {
+    for (int id = 0; id < curwin->w_s->b_syn_clusters.ga_len && !got_int; id++) {
       syn_list_cluster(id);
     }
   } else {
@@ -3702,7 +3702,7 @@ static void syn_list_flags(struct name_list *nlist, int flags, int attr)
 {
   int i;
 
-  for (i = 0; nlist[i].flag != 0; ++i) {
+  for (i = 0; nlist[i].flag != 0; i++) {
     if (flags & nlist[i].flag) {
       msg_puts_attr(nlist[i].name, attr);
       msg_putchar(' ');
@@ -3925,7 +3925,7 @@ static void syn_clear_keyword(int id, hashtab_T *ht)
 
   hash_lock(ht);
   todo = (int)ht->ht_used;
-  for (hi = ht->ht_array; todo > 0; ++hi) {
+  for (hi = ht->ht_array; todo > 0; hi++) {
     if (HASHITEM_EMPTY(hi)) {
       continue;
     }
@@ -3967,7 +3967,7 @@ static void clear_keywtab(hashtab_T *ht)
   keyentry_T *kp_next;
 
   todo = (int)ht->ht_used;
-  for (hi = ht->ht_array; todo > 0; ++hi) {
+  for (hi = ht->ht_array; todo > 0; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       todo--;
       for (kp = HI2KE(hi); kp != NULL; kp = kp_next) {
@@ -4120,7 +4120,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
     for (fidx = ARRAY_SIZE(flagtab); --fidx >= 0;) {
       p = flagtab[fidx].name;
       int i;
-      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len) {
+      for (i = 0, len = 0; p[i] != NUL; i += 2, len++) {
         if (arg[len] != (char_u)p[i] && arg[len] != (char_u)p[i + 1]) {
           break;
         }
@@ -4499,7 +4499,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
           curwin->w_s->b_syn_sync_flags |= SF_MATCH;
         }
         if (syn_opt_arg.flags & HL_FOLD) {
-          ++curwin->w_s->b_syn_folditems;
+          curwin->w_s->b_syn_folditems++;
         }
 
         redraw_curbuf_later(UPD_SOME_VALID);
@@ -4686,7 +4686,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
          * Store the start/skip/end in the syn_items list
          */
         int idx = curwin->w_s->b_syn_patterns.ga_len;
-        for (item = ITEM_START; item <= ITEM_END; ++item) {
+        for (item = ITEM_START; item <= ITEM_END; item++) {
           for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp->pp_next) {
             SYN_ITEMS(curwin->w_s)[idx] = *(ppp->pp_synp);
             SYN_ITEMS(curwin->w_s)[idx].sp_syncing = syncing;
@@ -4713,7 +4713,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
             curwin->w_s->b_syn_patterns.ga_len++;
             idx++;
             if (syn_opt_arg.flags & HL_FOLD) {
-              ++curwin->w_s->b_syn_folditems;
+              curwin->w_s->b_syn_folditems++;
             }
           }
         }
@@ -4728,7 +4728,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
   /*
    * Free the allocated memory.
    */
-  for (item = ITEM_START; item <= ITEM_END; ++item) {
+  for (item = ITEM_START; item <= ITEM_END; item++) {
     for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp_next) {
       if (!success && ppp->pp_synp != NULL) {
         vim_regfree(ppp->pp_synp->sp_prog);
@@ -5927,7 +5927,7 @@ static void syntime_clear(void)
     msg(_(msg_no_items));
     return;
   }
-  for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; ++idx) {
+  for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; idx++) {
     spp = &(SYN_ITEMS(curwin->w_s)[idx]);
     syn_clear_time(&spp->sp_time);
   }
@@ -5976,7 +5976,7 @@ static void syntime_report(void)
   proftime_T total_total = profile_zero();
   int total_count = 0;
   time_entry_T *p;
-  for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; ++idx) {
+  for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; idx++) {
     synpat_T *spp = &(SYN_ITEMS(curwin->w_s)[idx]);
     if (spp->sp_time.count > 0) {
       p = GA_APPEND_VIA_PTR(time_entry_T, &ga);
@@ -6002,7 +6002,7 @@ static void syntime_report(void)
 
   msg_puts_title(_("  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
   msg_puts("\n");
-  for (int idx = 0; idx < ga.ga_len && !got_int; ++idx) {
+  for (int idx = 0; idx < ga.ga_len && !got_int; idx++) {
     p = ((time_entry_T *)ga.ga_data) + idx;
 
     msg_puts(profile_msg(p->total));

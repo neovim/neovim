@@ -1035,7 +1035,7 @@ void ml_recover(bool checkext)
       if (pp->pb_id == PTR_ID) {                // it is a pointer block
         // check line count when using pointer block first time
         if (idx == 0 && line_count != 0) {
-          for (i = 0; i < (int)pp->pb_count; ++i) {
+          for (i = 0; i < (int)pp->pb_count; i++) {
             line_count -= pp->pb_pointer[i].pe_line_count;
           }
           if (line_count != 0) {
@@ -1071,7 +1071,7 @@ void ml_recover(bool checkext)
               ml_append(lnum++, _("???LINES MISSING"),
                         (colnr_T)0, true);
             }
-            ++idx;                  // get same block again for next index
+            idx++;                  // get same block again for next index
             continue;
           }
 
@@ -1131,7 +1131,7 @@ void ml_recover(bool checkext)
             has_error = true;
           }
 
-          for (i = 0; i < dp->db_line_count; ++i) {
+          for (i = 0; i < dp->db_line_count; i++) {
             txt_start = (dp->db_index[i] & DB_INDEX_MASK);
             if (txt_start <= (int)HEADER_SIZE
                 || txt_start >= (int)dp->db_txt_end) {
@@ -1177,7 +1177,7 @@ void ml_recover(bool checkext)
       buf_inc_changedtick(curbuf);
     }
   } else {
-    for (idx = 1; idx <= lnum; ++idx) {
+    for (idx = 1; idx <= lnum; idx++) {
       // Need to copy one line, fetching the other one may flush it.
       p = vim_strsave(ml_get(idx));
       i = STRCMP(p, ml_get(idx + lnum));
@@ -1379,7 +1379,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
           if (--num_files == 0) {
             xfree(files);
           } else {
-            for (; i < num_files; ++i) {
+            for (; i < num_files; i++) {
               files[i] = files[i + 1];
             }
           }
@@ -1406,7 +1406,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
       }
 
       if (num_files) {
-        for (int i = 0; i < num_files; ++i) {
+        for (int i = 0; i < num_files; i++) {
           // print the swap file name
           msg_outnum((long)++file_count);
           msg_puts(".    ");
@@ -1422,7 +1422,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
       file_count += num_files;
     }
 
-    for (int i = 0; i < num_names; ++i) {
+    for (int i = 0; i < num_names; i++) {
       xfree(names[i]);
     }
     if (num_files > 0) {
@@ -2038,7 +2038,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
     dp = hp->bh_data;
   }
 
-  ++buf->b_ml.ml_line_count;
+  buf->b_ml.ml_line_count++;
 
   if ((int)dp->db_free >= space_needed) {       // enough room in data block
     /*
@@ -2286,7 +2286,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
                   &pp->pb_pointer[pb_idx + 1],
                   (size_t)(pp->pb_count - pb_idx - 1) * sizeof(PTR_EN));
         }
-        ++pp->pb_count;
+        pp->pb_count++;
         pp->pb_pointer[pb_idx].pe_line_count = line_count_left;
         pp->pb_pointer[pb_idx].pe_bnum = bnum_left;
         pp->pb_pointer[pb_idx].pe_page_count = page_count_left;
@@ -2561,7 +2561,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 2;
   idx = lnum - buf->b_ml.ml_locked_low;
 
-  --buf->b_ml.ml_line_count;
+  buf->b_ml.ml_line_count--;
 
   line_start = ((dp->db_index[idx]) & DB_INDEX_MASK);
   if (idx == 0) {               // first line in block, text at the end
@@ -2705,7 +2705,7 @@ linenr_T ml_firstmarked(void)
     dp = hp->bh_data;
 
     for (i = lnum - curbuf->b_ml.ml_locked_low;
-         lnum <= curbuf->b_ml.ml_locked_high; ++i, ++lnum) {
+         lnum <= curbuf->b_ml.ml_locked_high; i++, lnum++) {
       if ((dp->db_index[i]) & DB_MARKED) {
         (dp->db_index[i]) &= DB_INDEX_MASK;
         curbuf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
@@ -2745,7 +2745,7 @@ void ml_clearmarked(void)
     dp = hp->bh_data;
 
     for (i = lnum - curbuf->b_ml.ml_locked_low;
-         lnum <= curbuf->b_ml.ml_locked_high; ++i, ++lnum) {
+         lnum <= curbuf->b_ml.ml_locked_high; i++, lnum++) {
       if ((dp->db_index[i]) & DB_MARKED) {
         (dp->db_index[i]) &= DB_INDEX_MASK;
         curbuf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
@@ -2965,7 +2965,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
   high = buf->b_ml.ml_line_count;
 
   if (action == ML_FIND) {      // first try stack entries
-    for (top = buf->b_ml.ml_stack_top - 1; top >= 0; --top) {
+    for (top = buf->b_ml.ml_stack_top - 1; top >= 0; top--) {
       ip = &(buf->b_ml.ml_stack[top]);
       if (ip->ip_low <= lnum && ip->ip_high >= lnum) {
         bnum = ip->ip_bnum;
@@ -3021,8 +3021,8 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
     ip->ip_high = high;
     ip->ip_index = -1;                  // index not known yet
 
-    dirty = FALSE;
-    for (idx = 0; idx < (int)pp->pb_count; ++idx) {
+    dirty = false;
+    for (idx = 0; idx < (int)pp->pb_count; idx++) {
       t = pp->pb_pointer[idx].pe_line_count;
       CHECK(t == 0, _("pe_line_count is zero"));
       if ((low += t) > lnum) {
@@ -3119,7 +3119,7 @@ static void ml_lineadd(buf_T *buf, int count)
   memfile_T *mfp = buf->b_ml.ml_mfp;
   bhdr_T *hp;
 
-  for (idx = buf->b_ml.ml_stack_top - 1; idx >= 0; --idx) {
+  for (idx = buf->b_ml.ml_stack_top - 1; idx >= 0; idx--) {
     ip = &(buf->b_ml.ml_stack[idx]);
     if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
       break;
@@ -3610,10 +3610,10 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         XFREE_CLEAR(fname);
         break;
       }
-      --fname[n - 2];                   // ".svz", ".suz", etc.
+      fname[n - 2]--;                   // ".svz", ".suz", etc.
       fname[n - 1] = 'z' + 1;
     }
-    --fname[n - 1];                     // ".swo", ".swn", etc.
+    fname[n - 1]--;                     // ".swo", ".swn", etc.
   }
 
   if (os_isdir((char_u *)dir_name)) {
