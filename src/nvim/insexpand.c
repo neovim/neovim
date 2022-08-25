@@ -1108,20 +1108,112 @@ static void trigger_complete_changed_event(int cur)
   restore_v_event(v_event, &save_v_event);
 }
 
+/// Build a popup menu to show the completion matches.
+///
+/// @return  the popup menu entry that should be selected,
+///          -1 if nothing should be selected.
+static int ins_compl_build_pum(void)
+{
+  // Need to build the popup menu list.
+  compl_match_arraysize = 0;
+  compl_T *compl = compl_first_match;
+
+  // If it's user complete function and refresh_always,
+  // do not use "compl_leader" as prefix filter.
+  if (ins_compl_need_restart()) {
+    XFREE_CLEAR(compl_leader);
+  }
+
+  const int lead_len = compl_leader != NULL ? (int)STRLEN(compl_leader) : 0;
+
+  do {
+    if (!match_at_original_text(compl)
+        && (compl_leader == NULL
+            || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
+      compl_match_arraysize++;
+    }
+    compl = compl->cp_next;
+  } while (compl != NULL && !is_first_match(compl));
+
+  if (compl_match_arraysize == 0) {
+    return -1;
+  }
+
+  assert(compl_match_arraysize >= 0);
+  compl_match_array = xcalloc((size_t)compl_match_arraysize, sizeof(pumitem_T));
+
+  // If the current match is the original text don't find the first
+  // match after it, don't highlight anything.
+  bool shown_match_ok = match_at_original_text(compl_shown_match);
+
+  compl_T *shown_compl = NULL;
+  bool did_find_shown_match = false;
+  int cur = -1;
+  int i = 0;
+  compl = compl_first_match;
+  do {
+    if (!match_at_original_text(compl)
+        && (compl_leader == NULL
+            || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
+      if (!shown_match_ok) {
+        if (compl == compl_shown_match || did_find_shown_match) {
+          // This item is the shown match or this is the
+          // first displayed item after the shown match.
+          compl_shown_match = compl;
+          did_find_shown_match = true;
+          shown_match_ok = true;
+        } else {
+          // Remember this displayed match for when the
+          // shown match is just below it.
+          shown_compl = compl;
+        }
+        cur = i;
+      }
+
+      if (compl->cp_text[CPT_ABBR] != NULL) {
+        compl_match_array[i].pum_text = compl->cp_text[CPT_ABBR];
+      } else {
+        compl_match_array[i].pum_text = compl->cp_str;
+      }
+      compl_match_array[i].pum_kind = compl->cp_text[CPT_KIND];
+      compl_match_array[i].pum_info = compl->cp_text[CPT_INFO];
+      if (compl->cp_text[CPT_MENU] != NULL) {
+        compl_match_array[i++].pum_extra = compl->cp_text[CPT_MENU];
+      } else {
+        compl_match_array[i++].pum_extra = compl->cp_fname;
+      }
+    }
+
+    if (compl == compl_shown_match) {
+      did_find_shown_match = true;
+
+      // When the original text is the shown match don't set
+      // compl_shown_match.
+      if (match_at_original_text(compl)) {
+        shown_match_ok = true;
+      }
+
+      if (!shown_match_ok && shown_compl != NULL) {
+        // The shown match isn't displayed, set it to the
+        // previously displayed match.
+        compl_shown_match = shown_compl;
+        shown_match_ok = true;
+      }
+    }
+    compl = compl->cp_next;
+  } while (compl != NULL && !is_first_match(compl));
+
+  if (!shown_match_ok) {  // no displayed match at all
+    cur = -1;
+  }
+
+  return cur;
+}
+
 /// Show the popup menu for the list of matches.
 /// Also adjusts "compl_shown_match" to an entry that is actually displayed.
 void ins_compl_show_pum(void)
 {
-  compl_T *compl;
-  compl_T *shown_compl = NULL;
-  bool did_find_shown_match = false;
-  bool shown_match_ok = false;
-  int i;
-  int cur = -1;
-  colnr_T col;
-  int lead_len = 0;
-  bool array_changed = false;
-
   if (!pum_wanted() || !pum_enough_matches()) {
     return;
   }
@@ -1132,108 +1224,26 @@ void ins_compl_show_pum(void)
   // Update the screen before drawing the popup menu over it.
   update_screen(0);
 
+  int cur = -1;
+  bool array_changed = false;
+
   if (compl_match_array == NULL) {
     array_changed = true;
     // Need to build the popup menu list.
-    compl_match_arraysize = 0;
-    compl = compl_first_match;
-    // If it's user complete function and refresh_always,
-    // do not use "compl_leader" as prefix filter.
-    if (ins_compl_need_restart()) {
-      XFREE_CLEAR(compl_leader);
-    }
-    if (compl_leader != NULL) {
-      lead_len = (int)STRLEN(compl_leader);
-    }
-    do {
-      if (!match_at_original_text(compl)
-          && (compl_leader == NULL
-              || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
-        compl_match_arraysize++;
-      }
-      compl = compl->cp_next;
-    } while (compl != NULL && !is_first_match(compl));
-    if (compl_match_arraysize == 0) {
-      return;
-    }
-
-    assert(compl_match_arraysize >= 0);
-    compl_match_array = xcalloc((size_t)compl_match_arraysize, sizeof(pumitem_T));
-    // If the current match is the original text don't find the first
-    // match after it, don't highlight anything.
-    if (match_at_original_text(compl_shown_match)) {
-      shown_match_ok = true;
-    }
-
-    i = 0;
-    compl = compl_first_match;
-    do {
-      if (!match_at_original_text(compl)
-          && (compl_leader == NULL
-              || ins_compl_equal(compl, compl_leader, (size_t)lead_len))) {
-        if (!shown_match_ok) {
-          if (compl == compl_shown_match || did_find_shown_match) {
-            // This item is the shown match or this is the
-            // first displayed item after the shown match.
-            compl_shown_match = compl;
-            did_find_shown_match = true;
-            shown_match_ok = true;
-          } else {
-            // Remember this displayed match for when the
-            // shown match is just below it.
-            shown_compl = compl;
-          }
-          cur = i;
-        }
-
-        if (compl->cp_text[CPT_ABBR] != NULL) {
-          compl_match_array[i].pum_text =
-            compl->cp_text[CPT_ABBR];
-        } else {
-          compl_match_array[i].pum_text = compl->cp_str;
-        }
-        compl_match_array[i].pum_kind = compl->cp_text[CPT_KIND];
-        compl_match_array[i].pum_info = compl->cp_text[CPT_INFO];
-        if (compl->cp_text[CPT_MENU] != NULL) {
-          compl_match_array[i++].pum_extra =
-            compl->cp_text[CPT_MENU];
-        } else {
-          compl_match_array[i++].pum_extra = compl->cp_fname;
-        }
-      }
-
-      if (compl == compl_shown_match) {
-        did_find_shown_match = true;
-
-        // When the original text is the shown match don't set
-        // compl_shown_match.
-        if (match_at_original_text(compl)) {
-          shown_match_ok = true;
-        }
-
-        if (!shown_match_ok && shown_compl != NULL) {
-          // The shown match isn't displayed, set it to the
-          // previously displayed match.
-          compl_shown_match = shown_compl;
-          shown_match_ok = true;
-        }
-      }
-      compl = compl->cp_next;
-    } while (compl != NULL && !is_first_match(compl));
-
-    if (!shown_match_ok) {        // no displayed match at all
-      cur = -1;
-    }
+    cur = ins_compl_build_pum();
   } else {
     // popup menu already exists, only need to find the current item.
-    for (i = 0; i < compl_match_arraysize; i++) {
+    for (int i = 0; i < compl_match_arraysize; i++) {
       if (compl_match_array[i].pum_text == compl_shown_match->cp_str
-          || compl_match_array[i].pum_text
-          == compl_shown_match->cp_text[CPT_ABBR]) {
+          || compl_match_array[i].pum_text == compl_shown_match->cp_text[CPT_ABBR]) {
         cur = i;
         break;
       }
     }
+  }
+
+  if (compl_match_array == NULL) {
+    return;
   }
 
   // In Replace mode when a $ is displayed at the end of the line only
@@ -1242,7 +1252,7 @@ void ins_compl_show_pum(void)
 
   // Compute the screen column of the start of the completed text.
   // Use the cursor to get all wrapping and other settings right.
-  col = curwin->w_cursor.col;
+  const colnr_T col = curwin->w_cursor.col;
   curwin->w_cursor.col = compl_col;
   pum_selected_item = cur;
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
