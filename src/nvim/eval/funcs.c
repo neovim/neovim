@@ -5714,7 +5714,7 @@ static void f_rand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // When no argument is given use the global seed list.
     if (!initialized) {
       // Initialize the global seed list.
-      uint32_t x;
+      uint32_t x = 0;
       init_srand(&x);
 
       gx = splitmix32(&x);
