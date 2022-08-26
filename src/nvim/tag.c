@@ -502,9 +502,9 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         // Find the position of each old match in the new list.  Need
         // to use parse_match() to find the tag line.
         for (j = 0; j < num_matches; j++) {
-          parse_match((char_u *)matches[j], &tagp);
+          parse_match(matches[j], &tagp);
           for (i = idx; i < new_num_matches; i++) {
-            parse_match((char_u *)new_matches[i], &tagp2);
+            parse_match(new_matches[i], &tagp2);
             if (STRCMP(tagp.tagname, tagp2.tagname) == 0) {
               char_u *p = (char_u *)new_matches[i];
               for (k = i; k > idx; k--) {
@@ -585,7 +585,7 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         tagstack[tagstackidx].cur_fnum = cur_fnum;
 
         // store user-provided data originating from tagfunc
-        if (use_tfu && parse_match((char_u *)matches[cur_match], &tagp2) == OK
+        if (use_tfu && parse_match(matches[cur_match], &tagp2) == OK
             && tagp2.user_data) {
           XFREE_CLEAR(tagstack[tagstackidx].user_data);
           tagstack[tagstackidx].user_data = (char *)vim_strnsave(tagp2.user_data,
@@ -705,7 +705,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
 
   // Assume that the first match indicates how long the tags can
   // be, and align the file names to that.
-  parse_match((char_u *)matches[0], &tagp);
+  parse_match(matches[0], &tagp);
   taglen = (int)(tagp.tagname_end - tagp.tagname + 2);
   if (taglen < 18) {
     taglen = 18;
@@ -723,7 +723,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
   msg_puts_attr(_("file\n"), HL_ATTR(HLF_T));
 
   for (i = 0; i < num_matches && !got_int; i++) {
-    parse_match((char_u *)matches[i], &tagp);
+    parse_match(matches[i], &tagp);
     if (!new_tag && (
                      (g_do_tagpreview != 0
                       && i == ptag_entry.cur_match)
@@ -897,7 +897,7 @@ static int add_llist_tags(char_u *tag, int num_matches, char **matches)
     long lnum;
     dict_T *dict;
 
-    parse_match((char_u *)matches[i], &tagp);
+    parse_match(matches[i], &tagp);
 
     // Save the tag name
     len = (int)(tagp.tagname_end - tagp.tagname);
@@ -1957,7 +1957,7 @@ parse_line:
             break;
           } else if (state == TS_SKIP_BACK) {
             assert(cmplen >= 0);
-            if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0) {
+            if (mb_strnicmp((char *)tagp.tagname, (char *)orgpat.head, (size_t)cmplen) != 0) {
               state = TS_STEP_FORWARD;
             } else {
               // Have to skip back more.  Restore the curr_offset
@@ -1967,7 +1967,7 @@ parse_line:
             continue;
           } else if (state == TS_STEP_FORWARD) {
             assert(cmplen >= 0);
-            if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0) {
+            if (mb_strnicmp((char *)tagp.tagname, (char *)orgpat.head, (size_t)cmplen) != 0) {
               if ((off_T)vim_ftell(fp) > search_info.match_offset) {
                 break;                  // past last match
               } else {
@@ -1978,7 +1978,7 @@ parse_line:
             // skip this match if it can't match
             assert(cmplen >= 0);
           }
-          if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0) {
+          if (mb_strnicmp((char *)tagp.tagname, (char *)orgpat.head, (size_t)cmplen) != 0) {
             continue;
           }
 
@@ -2014,7 +2014,7 @@ parse_line:
         } else {
           if (orgpat.regmatch.rm_ic) {
             assert(cmplen >= 0);
-            match = mb_strnicmp(tagp.tagname, orgpat.pat, (size_t)cmplen) == 0;
+            match = mb_strnicmp((char *)tagp.tagname, (char *)orgpat.pat, (size_t)cmplen) == 0;
             if (match) {
               match_no_ic = (STRNCMP(tagp.tagname, orgpat.pat,
                                      cmplen) == 0);
@@ -2552,18 +2552,17 @@ static size_t matching_line_len(const char_u *const lbuf)
 /// @param tagp  output: pointers into the line
 ///
 /// @return  OK or FAIL.
-static int parse_match(char_u *lbuf, tagptrs_T *tagp)
+static int parse_match(char *lbuf, tagptrs_T *tagp)
 {
   int retval;
-  char_u *p;
-  char_u *pc, *pt;
+  char *p;
+  char *pc, *pt;
 
-  tagp->tag_fname = lbuf + 1;
+  tagp->tag_fname = (char_u *)lbuf + 1;
   lbuf += STRLEN(tagp->tag_fname) + 2;
 
   // Find search pattern and the file name for non-etags.
-  retval = parse_tag_line(lbuf,
-                          tagp);
+  retval = parse_tag_line((char_u *)lbuf, tagp);
 
   tagp->tagkind = NULL;
   tagp->user_data = NULL;
@@ -2572,32 +2571,32 @@ static int parse_match(char_u *lbuf, tagptrs_T *tagp)
 
   if (retval == OK) {
     // Try to find a kind field: "kind:<kind>" or just "<kind>"
-    p = tagp->command;
-    if (find_extra(&p) == OK) {
-      tagp->command_end = p;
-      if (p > tagp->command && p[-1] == '|') {
-        tagp->command_end = p - 1;  // drop trailing bar
+    p = (char *)tagp->command;
+    if (find_extra((char_u **)&p) == OK) {
+      tagp->command_end = (char_u *)p;
+      if (p > (char *)tagp->command && p[-1] == '|') {
+        tagp->command_end = (char_u *)p - 1;  // drop trailing bar
       }
       p += 2;  // skip ";\""
       if (*p++ == TAB) {
         // Accept ASCII alphabetic kind characters and any multi-byte
         // character.
-        while (ASCII_ISALPHA(*p) || utfc_ptr2len((char *)p) > 1) {
+        while (ASCII_ISALPHA(*p) || utfc_ptr2len(p) > 1) {
           if (STRNCMP(p, "kind:", 5) == 0) {
-            tagp->tagkind = p + 5;
+            tagp->tagkind = (char_u *)p + 5;
           } else if (STRNCMP(p, "user_data:", 10) == 0) {
-            tagp->user_data = p + 10;
+            tagp->user_data = (char_u *)p + 10;
           } else if (STRNCMP(p, "line:", 5) == 0) {
-            tagp->tagline = atoi((char *)p + 5);
+            tagp->tagline = atoi(p + 5);
           }
           if (tagp->tagkind != NULL && tagp->user_data != NULL) {
             break;
           }
 
-          pc = (char_u *)vim_strchr((char *)p, ':');
-          pt = (char_u *)vim_strchr((char *)p, '\t');
+          pc = vim_strchr(p, ':');
+          pt = vim_strchr(p, '\t');
           if (pc == NULL || (pt != NULL && pc > pt)) {
-            tagp->tagkind = p;
+            tagp->tagkind = (char_u *)p;
           }
           if (pt == NULL) {
             break;
@@ -2608,16 +2607,16 @@ static int parse_match(char_u *lbuf, tagptrs_T *tagp)
       }
     }
     if (tagp->tagkind != NULL) {
-      for (p = tagp->tagkind;
+      for (p = (char *)tagp->tagkind;
            *p && *p != '\t' && *p != '\r' && *p != '\n';
            MB_PTR_ADV(p)) {}
-      tagp->tagkind_end = p;
+      tagp->tagkind_end = (char_u *)p;
     }
     if (tagp->user_data != NULL) {
-      for (p = tagp->user_data;
+      for (p = (char *)tagp->user_data;
            *p && *p != '\t' && *p != '\r' && *p != '\n';
            MB_PTR_ADV(p)) {}
-      tagp->user_data_end = p;
+      tagp->user_data_end = (char_u *)p;
     }
   }
   return retval;
@@ -2671,7 +2670,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
   pbuf = xmalloc(LSIZE);
 
   // parse the match line into the tagp structure
-  if (parse_match(lbuf, &tagp) == FAIL) {
+  if (parse_match((char *)lbuf, &tagp) == FAIL) {
     tagp.fname_end = NULL;
     goto erret;
   }
@@ -3121,7 +3120,7 @@ int expand_tags(int tagnames, char_u *pat, int *num_file, char ***file)
     for (i = 0; i < *num_file; i++) {
       size_t len;
 
-      parse_match((char_u *)(*file)[i], &t_p);
+      parse_match((*file)[i], &t_p);
       len = (size_t)(t_p.tagname_end - t_p.tagname);
       if (len > name_buf_size - 3) {
         char_u *buf;
@@ -3201,7 +3200,7 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
                   TAG_REGEXP | TAG_NOIC, MAXCOL, (char *)buf_fname);
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; i++) {
-      int parse_result = parse_match((char_u *)matches[i], &tp);
+      int parse_result = parse_match(matches[i], &tp);
 
       // Avoid an unused variable warning in release builds.
       (void)parse_result;
@@ -3350,9 +3349,9 @@ static void tagstack_shift(win_T *wp)
   wp->w_tagstacklen--;
 }
 
-// Push a new item to the tag stack
-static void tagstack_push_item(win_T *wp, char_u *tagname, int cur_fnum, int cur_match, pos_T mark,
-                               int fnum, char_u *user_data)
+/// Push a new item to the tag stack
+static void tagstack_push_item(win_T *wp, char *tagname, int cur_fnum, int cur_match, pos_T mark,
+                               int fnum, char *user_data)
 {
   taggy_T *tagstack = wp->w_tagstack;
   int idx = wp->w_tagstacklen;  // top of the stack
@@ -3364,7 +3363,7 @@ static void tagstack_push_item(win_T *wp, char_u *tagname, int cur_fnum, int cur
   }
 
   wp->w_tagstacklen++;
-  tagstack[idx].tagname = (char *)tagname;
+  tagstack[idx].tagname = tagname;
   tagstack[idx].cur_fnum = cur_fnum;
   tagstack[idx].cur_match = cur_match;
   if (tagstack[idx].cur_match < 0) {
@@ -3372,16 +3371,16 @@ static void tagstack_push_item(win_T *wp, char_u *tagname, int cur_fnum, int cur
   }
   tagstack[idx].fmark.mark = mark;
   tagstack[idx].fmark.fnum = fnum;
-  tagstack[idx].user_data = (char *)user_data;
+  tagstack[idx].user_data = user_data;
 }
 
-// Add a list of items to the tag stack in the specified window
+/// Add a list of items to the tag stack in the specified window
 static void tagstack_push_items(win_T *wp, list_T *l)
 {
   listitem_T *li;
   dictitem_T *di;
   dict_T *itemdict;
-  char_u *tagname;
+  char *tagname;
   pos_T mark;
   int fnum;
 
@@ -3400,8 +3399,7 @@ static void tagstack_push_items(win_T *wp, list_T *l)
     if (list2fpos(&di->di_tv, &mark, &fnum, NULL, false) != OK) {
       continue;
     }
-    if ((tagname = (char_u *)tv_dict_get_string(itemdict, "tagname", true))
-        == NULL) {
+    if ((tagname = tv_dict_get_string(itemdict, "tagname", true)) == NULL) {
       continue;
     }
 
@@ -3413,7 +3411,7 @@ static void tagstack_push_items(win_T *wp, list_T *l)
                        (int)tv_dict_get_number(itemdict, "bufnr"),
                        (int)tv_dict_get_number(itemdict, "matchnr") - 1,
                        mark, fnum,
-                       (char_u *)tv_dict_get_string(itemdict, "user_data", true));
+                       tv_dict_get_string(itemdict, "user_data", true));
   }
 }
 

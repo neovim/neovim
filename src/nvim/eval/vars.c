@@ -207,7 +207,7 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       list_func_vars(&first);
       list_vim_vars(&first);
     }
-    eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
+    eap->nextcmd = check_nextcmd(arg);
   } else if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
     // HERE document
     list_T *l = heredoc_get(eap, expr + 3);
@@ -824,7 +824,7 @@ static void ex_unletlock(exarg_T *eap, char *argstart, int deep, ex_unletlock_ca
     arg = skipwhite(name_end);
   } while (!ends_excmd(*arg));
 
-  eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
+  eap->nextcmd = check_nextcmd(arg);
 }
 
 // TODO(ZyX-I): move to eval/ex_cmds

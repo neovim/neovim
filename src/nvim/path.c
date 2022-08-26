@@ -384,7 +384,7 @@ int path_fnamencmp(const char *const fname1, const char *const fname2, size_t le
   return p_fic ? CH_FOLD(c1) - CH_FOLD(c2) : c1 - c2;
 #else
   if (p_fic) {
-    return mb_strnicmp((const char_u *)fname1, (const char_u *)fname2, len);
+    return mb_strnicmp(fname1, fname2, len);
   }
   return strncmp(fname1, fname2, len);
 #endif

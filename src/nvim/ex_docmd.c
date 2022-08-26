@@ -1929,7 +1929,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
   // If we got a line, but no command, then go to the line.
   // If we find a '|' or '\n' we set ea.nextcmd.
   if (*ea.cmd == NUL || *ea.cmd == '"'
-      || (ea.nextcmd = (char *)check_nextcmd((char_u *)ea.cmd)) != NULL) {
+      || (ea.nextcmd = check_nextcmd(ea.cmd)) != NULL) {
     // strange vi behaviour:
     // ":3"     jumps to line 3
     // ":3|..." prints line 3
@@ -3934,7 +3934,7 @@ void separate_nextcmd(exarg_T *eap)
         STRMOVE(p - 1, p);  // remove the '\'
         p--;
       } else {
-        eap->nextcmd = (char *)check_nextcmd((char_u *)p);
+        eap->nextcmd = check_nextcmd(p);
         *p = NUL;
         break;
       }
@@ -4311,12 +4311,12 @@ char *find_nextcmd(const char *p)
 /// Check if *p is a separator between Ex commands, skipping over white space.
 ///
 /// @return  NULL if it isn't, the following character if it is.
-char_u *check_nextcmd(char_u *p)
+char *check_nextcmd(char *p)
 {
-  char *s = skipwhite((char *)p);
+  char *s = skipwhite(p);
 
   if (*s == '|' || *s == '\n') {
-    return (char_u *)(s + 1);
+    return s + 1;
   } else {
     return NULL;
   }
@@ -5674,7 +5674,7 @@ static void ex_wincmd(exarg_T *eap)
     p = eap->arg + 1;
   }
 
-  eap->nextcmd = (char *)check_nextcmd((char_u *)p);
+  eap->nextcmd = check_nextcmd(p);
   p = skipwhite(p);
   if (*p != NUL && *p != '"' && eap->nextcmd == NULL) {
     emsg(_(e_invarg));
@@ -6465,7 +6465,7 @@ static void ex_findpat(exarg_T *eap)
       if (!ends_excmd(*p)) {
         eap->errmsg = ex_errmsg(e_trailing_arg, p);
       } else {
-        eap->nextcmd = (char *)check_nextcmd((char_u *)p);
+        eap->nextcmd = check_nextcmd(p);
       }
     }
   }

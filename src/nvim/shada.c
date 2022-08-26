@@ -4001,7 +4001,7 @@ static bool shada_removable(const char *name)
     if (part[0] == 'r') {
       home_replace(NULL, part + 1, (char *)NameBuff, MAXPATHL, true);
       size_t n = STRLEN(NameBuff);
-      if (mb_strnicmp((char_u *)NameBuff, (char_u *)new_name, n) == 0) {
+      if (mb_strnicmp(NameBuff, new_name, n) == 0) {
         retval = true;
         break;
       }

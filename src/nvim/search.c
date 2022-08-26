@@ -1504,7 +1504,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
     } else if (*p != NUL) {  // Ignore empty lines.
       // Expanding lines or words.
       assert(ins_compl_len() >= 0);
-      if ((p_ic ? mb_strnicmp(p, pat, (size_t)ins_compl_len())
+      if ((p_ic ? mb_strnicmp((char *)p, (char *)pat, (size_t)ins_compl_len())
            : STRNCMP(p, pat, ins_compl_len())) == 0) {
         return OK;
       }
@@ -3792,7 +3792,7 @@ search_line:
           // compare the first "len" chars from "ptr"
           startp = (char_u *)skipwhite((char *)p);
           if (p_ic) {
-            matched = !mb_strnicmp(startp, ptr, len);
+            matched = !mb_strnicmp((char *)startp, (char *)ptr, len);
           } else {
             matched = !STRNCMP(startp, ptr, len);
           }

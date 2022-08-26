@@ -306,7 +306,7 @@ static void get_sign_display_info(bool nrcol, win_T *wp, linenr_T lnum, SignText
   if (row == startrow + filler_lines && filler_todo <= 0) {
     SignTextAttrs *sattr = sign_get_attr(sign_idx, sattrs, wp->w_scwidth);
     if (sattr != NULL) {
-      *pp_extra = sattr->text;
+      *pp_extra = (char_u *)sattr->text;
       if (*pp_extra != NULL) {
         *c_extrap = NUL;
         *c_finalp = NUL;
@@ -1349,7 +1349,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
       memset(buf_fold, ' ', FOLD_TEXT_LEN);
-      p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold);
+      p_extra = (char_u *)get_foldtext(wp, lnum, lnume, foldinfo, (char *)buf_fold);
       n_extra = (int)STRLEN(p_extra);
 
       if (p_extra != buf_fold) {

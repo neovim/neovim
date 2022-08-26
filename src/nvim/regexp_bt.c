@@ -4039,7 +4039,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
             } else {
               // Need to match first byte again for multi-byte.
               len = (int)STRLEN(opnd);
-              if (cstrncmp(opnd, rex.input, &len) != 0) {
+              if (cstrncmp((char *)opnd, (char *)rex.input, &len) != 0) {
                 status = RA_NOMATCH;
               }
             }
@@ -4270,7 +4270,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
             } else {
               // Compare current input with back-ref in the same line.
               len = (int)(rex.reg_endp[no] - rex.reg_startp[no]);
-              if (cstrncmp(rex.reg_startp[no], rex.input, &len) != 0) {
+              if (cstrncmp((char *)rex.reg_startp[no], (char *)rex.input, &len) != 0) {
                 status = RA_NOMATCH;
               }
             }
@@ -4283,8 +4283,8 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
                   && rex.reg_endpos[no].lnum == rex.lnum) {
                 // Compare back-ref within the current line.
                 len = rex.reg_endpos[no].col - rex.reg_startpos[no].col;
-                if (cstrncmp(rex.line + rex.reg_startpos[no].col,
-                             rex.input, &len) != 0) {
+                if (cstrncmp((char *)rex.line + rex.reg_startpos[no].col,
+                             (char *)rex.input, &len) != 0) {
                   status = RA_NOMATCH;
                 }
               } else {
@@ -4320,7 +4320,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
           if (re_extmatch_in != NULL
               && re_extmatch_in->matches[no] != NULL) {
             int len = (int)STRLEN(re_extmatch_in->matches[no]);
-            if (cstrncmp(re_extmatch_in->matches[no], rex.input, &len) != 0) {
+            if (cstrncmp((char *)re_extmatch_in->matches[no], (char *)rex.input, &len) != 0) {
               status = RA_NOMATCH;
             } else {
               rex.input += len;
@@ -5069,14 +5069,14 @@ static long bt_regexec_both(char_u *line, colnr_T col, proftime_T *tm, int *time
     // the loop to avoid overhead of conditions.
     if (!rex.reg_ic) {
       while ((s = (char_u *)vim_strchr((char *)s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
+        if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
         MB_PTR_ADV(s);
       }
     } else {
       while ((s = cstrchr(s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
+        if (cstrncmp((char *)s, (char *)prog->regmust, &prog->regmlen) == 0) {
           break;  // Found it.
         }
         MB_PTR_ADV(s);

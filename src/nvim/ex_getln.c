@@ -328,7 +328,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
     int empty;
 
     *end = NUL;
-    empty = empty_pattern((char_u *)p);
+    empty = empty_pattern(p);
     *end = c;
     if (empty) {
       goto theend;
@@ -489,7 +489,7 @@ static void may_do_incsearch_highlighting(int firstc, long count, incsearch_stat
   if (!use_last_pat) {
     next_char = ccline.cmdbuff[skiplen + patlen];
     ccline.cmdbuff[skiplen + patlen] = NUL;
-    if (empty_pattern(ccline.cmdbuff) && !no_hlsearch) {
+    if (empty_pattern((char *)ccline.cmdbuff) && !no_hlsearch) {
       redraw_all_later(UPD_SOME_VALID);
       set_no_hlsearch(true);
     }
@@ -2027,7 +2027,7 @@ static int command_line_not_changed(CommandLineState *s)
 
 /// Guess that the pattern matches everything.  Only finds specific cases, such
 /// as a trailing \|, which can happen while typing a pattern.
-static int empty_pattern(char_u *p)
+static int empty_pattern(char *p)
 {
   size_t n = STRLEN(p);
 
@@ -3952,8 +3952,9 @@ static int get_cmdline_type(void)
 
 /// Get the current command line in allocated memory.
 /// Only works when the command line is being edited.
-/// Returns NULL when something is wrong.
-static char_u *get_cmdline_str(void)
+///
+/// @return  NULL when something is wrong.
+static char *get_cmdline_str(void)
 {
   if (cmdline_star > 0) {
     return NULL;
@@ -3963,11 +3964,11 @@ static char_u *get_cmdline_str(void)
   if (p == NULL) {
     return NULL;
   }
-  return vim_strnsave(p->cmdbuff, (size_t)p->cmdlen);
+  return (char *)vim_strnsave(p->cmdbuff, (size_t)p->cmdlen);
 }
 
 /// Get the current command-line completion type.
-static char_u *get_cmdline_completion(void)
+static char *get_cmdline_completion(void)
 {
   if (cmdline_star > 0) {
     return NULL;
@@ -3978,7 +3979,7 @@ static char_u *get_cmdline_completion(void)
     set_expand_context(p->xpc);
     char *cmd_compl = get_user_cmd_complete(p->xpc, p->xpc->xp_context);
     if (cmd_compl != NULL) {
-      return vim_strsave((char_u *)cmd_compl);
+      return xstrdup(cmd_compl);
     }
   }
 
@@ -3989,14 +3990,14 @@ static char_u *get_cmdline_completion(void)
 void f_getcmdcompltype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char *)get_cmdline_completion();
+  rettv->vval.v_string = get_cmdline_completion();
 }
 
 /// "getcmdline()" function
 void f_getcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char *)get_cmdline_str();
+  rettv->vval.v_string = get_cmdline_str();
 }
 
 /// "getcmdpos()" function
