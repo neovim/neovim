@@ -743,7 +743,7 @@ void ex_retab(exarg_T *eap)
   curwin->w_p_list = 0;             // don't want list mode here
 
   new_ts_str = eap->arg;
-  if (!tabstop_set((char_u *)eap->arg, &new_vts_array)) {
+  if (!tabstop_set(eap->arg, &new_vts_array)) {
     return;
   }
   while (ascii_isdigit(*(eap->arg)) || *(eap->arg) == ',') {
@@ -1656,7 +1656,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
   }
 #endif
   if (otmp != NULL) {
-    append_redir(buf, len, (char *)p_srr, otmp);
+    append_redir(buf, len, p_srr, otmp);
   }
   return buf;
 }

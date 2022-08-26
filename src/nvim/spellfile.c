@@ -2121,7 +2121,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
     if (itemcnt > 0) {
       if (is_aff_rule(items, itemcnt, "SET", 2) && aff->af_enc == NULL) {
         // Setup for conversion from "ENC" to 'encoding'.
-        aff->af_enc = enc_canonize(items[1]);
+        aff->af_enc = (char_u *)enc_canonize((char *)items[1]);
         if (!spin->si_ascii
             && convert_setup(&spin->si_conv, aff->af_enc, (char_u *)p_enc) == FAIL) {
           smsg(_("Conversion in %s not supported: from %s to %s"),
@@ -2167,9 +2167,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         STRCAT(p, " ");
         STRCAT(p, items[1]);
         spin->si_info = p;
-      } else if (is_aff_rule(items, itemcnt, "MIDWORD", 2)
-                 && midword == NULL) {
-        midword = getroom_save(spin, items[1]);
+      } else if (is_aff_rule(items, itemcnt, "MIDWORD", 2) && midword == NULL) {
+        midword = (char_u *)getroom_save(spin, items[1]);
       } else if (is_aff_rule(items, itemcnt, "TRY", 2)) {
         // ignored, we look in the tree for what chars may appear
       }
@@ -2307,12 +2306,12 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         }
         if (i >= gap->ga_len) {
           ga_grow(gap, 2);
-          ((char **)(gap->ga_data))[gap->ga_len++] = (char *)getroom_save(spin, items[1]);
-          ((char **)(gap->ga_data))[gap->ga_len++] = (char *)getroom_save(spin, items[2]);
+          ((char **)(gap->ga_data))[gap->ga_len++] = getroom_save(spin, items[1]);
+          ((char **)(gap->ga_data))[gap->ga_len++] = getroom_save(spin, items[2]);
         }
       } else if (is_aff_rule(items, itemcnt, "SYLLABLE", 2)
                  && syllable == NULL) {
-        syllable = getroom_save(spin, items[1]);
+        syllable = (char_u *)getroom_save(spin, items[1]);
       } else if (is_aff_rule(items, itemcnt, "NOBREAK", 1)) {
         spin->si_nobreak = true;
       } else if (is_aff_rule(items, itemcnt, "NOSPLITSUGS", 1)) {
@@ -2445,10 +2444,10 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         aff_entry = getroom(spin, sizeof(*aff_entry), true);
 
         if (STRCMP(items[2], "0") != 0) {
-          aff_entry->ae_chop = getroom_save(spin, items[2]);
+          aff_entry->ae_chop = (char_u *)getroom_save(spin, items[2]);
         }
         if (STRCMP(items[3], "0") != 0) {
-          aff_entry->ae_add = getroom_save(spin, items[3]);
+          aff_entry->ae_add = (char_u *)getroom_save(spin, items[3]);
 
           // Recognize flags on the affix: abcd/XYZ
           aff_entry->ae_flags = (char_u *)vim_strchr((char *)aff_entry->ae_add, '/');
@@ -2468,7 +2467,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           if (STRCMP(items[4], ".") != 0) {
             char_u buf[MAXLINELEN];
 
-            aff_entry->ae_cond = getroom_save(spin, items[4]);
+            aff_entry->ae_cond = (char_u *)getroom_save(spin, items[4]);
             if (*items[0] == 'P') {
               sprintf((char *)buf, "^%s", items[4]);
             } else {
@@ -2517,7 +2516,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                   if (aff_entry->ae_cond != NULL) {
                     char_u buf[MAXLINELEN];
                     onecap_copy(items[4], buf, true);
-                    aff_entry->ae_cond = getroom_save(spin, buf);
+                    aff_entry->ae_cond = (char_u *)getroom_save(spin, buf);
                     if (aff_entry->ae_cond != NULL) {
                       sprintf((char *)buf, "^%s",
                               aff_entry->ae_cond);
@@ -2547,7 +2546,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                 idx = spin->si_prefcond.ga_len;
                 pp = GA_APPEND_VIA_PTR(char_u *, &spin->si_prefcond);
                 *pp = (aff_entry->ae_cond == NULL) ?
-                      NULL : getroom_save(spin, aff_entry->ae_cond);
+                      NULL : (char_u *)getroom_save(spin, aff_entry->ae_cond);
               }
 
               // Add the prefix to the prefix tree.
@@ -2673,10 +2672,10 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         }
       } else if (is_aff_rule(items, itemcnt, "SOFOFROM", 2)
                  && sofofrom == NULL) {
-        sofofrom = getroom_save(spin, items[1]);
+        sofofrom = (char_u *)getroom_save(spin, items[1]);
       } else if (is_aff_rule(items, itemcnt, "SOFOTO", 2)
                  && sofoto == NULL) {
-        sofoto = getroom_save(spin, items[1]);
+        sofoto = (char_u *)getroom_save(spin, items[1]);
       } else if (STRCMP(items[0], "COMMON") == 0) {
         int i;
 
@@ -3042,9 +3041,9 @@ static void add_fromto(spellinfo_T *spin, garray_T *gap, char_u *from, char_u *t
 
   fromto_T *ftp = GA_APPEND_VIA_PTR(fromto_T, gap);
   (void)spell_casefold(curwin, from, (int)STRLEN(from), word, MAXWLEN);
-  ftp->ft_from = getroom_save(spin, word);
+  ftp->ft_from = (char_u *)getroom_save(spin, word);
   (void)spell_casefold(curwin, to, (int)STRLEN(to), word, MAXWLEN);
-  ftp->ft_to = getroom_save(spin, word);
+  ftp->ft_to = (char_u *)getroom_save(spin, word);
 }
 
 // Converts a boolean argument in a SAL line to true or false;
@@ -3207,7 +3206,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     }
 
     // Store the word in the hashtable to be able to find duplicates.
-    dw = getroom_save(spin, w);
+    dw = (char_u *)getroom_save(spin, w);
     if (dw == NULL) {
       retval = FAIL;
       xfree(pc);
@@ -3728,7 +3727,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 
           // Setup for conversion to 'encoding'.
           line += 9;
-          enc = enc_canonize(line);
+          enc = (char_u *)enc_canonize((char *)line);
           if (!spin->si_ascii
               && convert_setup(&spin->si_conv, enc, (char_u *)p_enc) == FAIL) {
             smsg(_("Conversion in %s not supported: from %s to %s"),
@@ -3864,9 +3863,10 @@ static void *getroom(spellinfo_T *spin, size_t len, bool align)
   return p;
 }
 
-// Make a copy of a string into memory allocated with getroom().
-// Returns NULL when out of memory.
-static char_u *getroom_save(spellinfo_T *spin, char_u *s)
+/// Make a copy of a string into memory allocated with getroom().
+///
+/// @return  NULL when out of memory.
+static char *getroom_save(spellinfo_T *spin, char_u *s)
 {
   const size_t s_size = STRLEN(s) + 1;
   return memcpy(getroom(spin, s_size, false), s, s_size);

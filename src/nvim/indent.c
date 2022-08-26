@@ -34,12 +34,13 @@
 
 /// Set the integer values corresponding to the string setting of 'vartabstop'.
 /// "array" will be set, caller must free it if needed.
-/// Return false for an error.
-bool tabstop_set(char_u *var, long **array)
+///
+/// @return  false for an error.
+bool tabstop_set(char *var, long **array)
 {
   long valcount = 1;
   int t;
-  char_u *cp;
+  char *cp;
 
   if (var[0] == NUL || (var[0] == '0' && var[1] == NUL)) {
     *array = NULL;
@@ -50,8 +51,8 @@ bool tabstop_set(char_u *var, long **array)
     if (cp == var || cp[-1] == ',') {
       char *end;
 
-      if (strtol((char *)cp, &end, 10) <= 0) {
-        if (cp != (char_u *)end) {
+      if (strtol(cp, &end, 10) <= 0) {
+        if (cp != end) {
           emsg(_(e_positive));
         } else {
           semsg(_(e_invarg2), cp);
@@ -76,7 +77,7 @@ bool tabstop_set(char_u *var, long **array)
 
   t = 1;
   for (cp = var; *cp != NUL;) {
-    int n = atoi((char *)cp);
+    int n = atoi(cp);
 
     // Catch negative values, overflow and ridiculous big values.
     if (n <= 0 || n > TABSTOP_MAX) {

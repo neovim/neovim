@@ -268,7 +268,7 @@ void ins_ctrl_x(void)
     }
     // We're not sure which CTRL-X mode it will be yet
     ctrl_x_mode = CTRL_X_NOT_DEFINED_YET;
-    edit_submode = (char_u *)_(CTRL_X_MSG(ctrl_x_mode));
+    edit_submode = _(CTRL_X_MSG(ctrl_x_mode));
     edit_submode_pre = NULL;
     showmode();
   } else {
@@ -1830,9 +1830,9 @@ static bool set_ctrl_x_mode(const int c)
     // scroll the window one line up or down
     ctrl_x_mode = CTRL_X_SCROLL;
     if (!(State & REPLACE_FLAG)) {
-      edit_submode = (char_u *)_(" (insert) Scroll (^E/^Y)");
+      edit_submode = _(" (insert) Scroll (^E/^Y)");
     } else {
-      edit_submode = (char_u *)_(" (replace) Scroll (^E/^Y)");
+      edit_submode = _(" (replace) Scroll (^E/^Y)");
     }
     edit_submode_pre = NULL;
     showmode();
@@ -2845,10 +2845,10 @@ static void get_next_tag_completion(void)
   g_tag_at_cursor = true;
   char **matches;
   int num_matches;
-  if (find_tags((char_u *)compl_pattern, &num_matches, &matches,
+  if (find_tags(compl_pattern, &num_matches, &matches,
                 TAG_REGEXP | TAG_NAMES | TAG_NOIC | TAG_INS_COMP
                 | (ctrl_x_mode_not_default() ? TAG_VERBOSE : 0),
-                TAG_MANY, (char_u *)curbuf->b_ffname) == OK && num_matches > 0) {
+                TAG_MANY, curbuf->b_ffname) == OK && num_matches > 0) {
     ins_compl_add_matches(num_matches, matches, p_ic);
   }
   g_tag_at_cursor = false;
@@ -4078,7 +4078,7 @@ static int ins_compl_start(void)
   }
 
   if (compl_status_adding()) {
-    edit_submode_pre = (char_u *)_(" Adding");
+    edit_submode_pre = _(" Adding");
     if (ctrl_x_mode_line_or_eval()) {
       // Insert a new line, keep indentation but ignore 'comments'.
       char *old = curbuf->b_p_com;
@@ -4097,9 +4097,9 @@ static int ins_compl_start(void)
   }
 
   if (compl_cont_status & CONT_LOCAL) {
-    edit_submode = (char_u *)_(ctrl_x_msgs[CTRL_X_LOCAL_MSG]);
+    edit_submode = _(ctrl_x_msgs[CTRL_X_LOCAL_MSG]);
   } else {
-    edit_submode = (char_u *)_(CTRL_X_MSG(ctrl_x_mode));
+    edit_submode = _(CTRL_X_MSG(ctrl_x_mode));
   }
 
   // If any of the original typed text has been changed we need to fix
@@ -4123,7 +4123,7 @@ static int ins_compl_start(void)
   // showmode might reset the internal line pointers, so it must
   // be called before line = ml_get(), or when this address is no
   // longer needed.  -- Acevedo.
-  edit_submode_extra = (char_u *)_("-- Searching...");
+  edit_submode_extra = _("-- Searching...");
   edit_submode_highl = HLF_COUNT;
   showmode();
   edit_submode_extra = NULL;
@@ -4137,20 +4137,19 @@ static void ins_compl_show_statusmsg(void)
 {
   // we found no match if the list has only the "compl_orig_text"-entry
   if (is_first_match(compl_first_match->cp_next)) {
-    edit_submode_extra = compl_status_adding() && compl_length > 1
-                         ? (char_u *)_(e_hitend) : (char_u *)_(e_patnotf);
+    edit_submode_extra = compl_status_adding() && compl_length > 1 ? _(e_hitend) : _(e_patnotf);
     edit_submode_highl = HLF_E;
   }
 
   if (edit_submode_extra == NULL) {
     if (match_at_original_text(compl_curr_match)) {
-      edit_submode_extra = (char_u *)_("Back at original");
+      edit_submode_extra = _("Back at original");
       edit_submode_highl = HLF_W;
     } else if (compl_cont_status & CONT_S_IPOS) {
-      edit_submode_extra = (char_u *)_("Word from other line");
+      edit_submode_extra = _("Word from other line");
       edit_submode_highl = HLF_COUNT;
     } else if (compl_curr_match->cp_next == compl_curr_match->cp_prev) {
-      edit_submode_extra = (char_u *)_("The only match");
+      edit_submode_extra = _("The only match");
       edit_submode_highl = HLF_COUNT;
       compl_curr_match->cp_number = 1;
     } else {
@@ -4175,7 +4174,7 @@ static void ins_compl_show_statusmsg(void)
                        _("match %d"),
                        compl_curr_match->cp_number);
         }
-        edit_submode_extra = match_ref;
+        edit_submode_extra = (char *)match_ref;
         edit_submode_highl = HLF_R;
         if (dollar_vcol >= 0) {
           curs_columns(curwin, false);

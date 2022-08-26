@@ -2160,27 +2160,27 @@ char_u *enc_skip(char_u *p)
   return p;
 }
 
-/*
- * Find the canonical name for encoding "enc".
- * When the name isn't recognized, returns "enc" itself, but with all lower
- * case characters and '_' replaced with '-'.
- * Returns an allocated string.
- */
-char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
+/// Find the canonical name for encoding "enc".
+/// When the name isn't recognized, returns "enc" itself, but with all lower
+/// case characters and '_' replaced with '-'.
+///
+/// @return  an allocated string.
+char *enc_canonize(char *enc)
+  FUNC_ATTR_NONNULL_RET
 {
   char_u *p, *s;
   int i;
 
   if (STRCMP(enc, "default") == 0) {
     // Use the default encoding as found by set_init_1().
-    return vim_strsave(fenc_default);
+    return (char *)vim_strsave(fenc_default);
   }
 
   // copy "enc" to allocated memory, with room for two '-'
   char_u *r = xmalloc(STRLEN(enc) + 3);
   // Make it all lower case and replace '_' with '-'.
   p = r;
-  for (s = enc; *s != NUL; s++) {
+  for (s = (char_u *)enc; *s != NUL; s++) {
     if (*s == '_') {
       *p++ = '-';
     } else {
@@ -2224,7 +2224,7 @@ char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
     xfree(r);
     r = vim_strsave((char_u *)enc_canon_table[i].name);
   }
-  return r;
+  return (char *)r;
 }
 
 /// Search for an encoding alias of "name".
@@ -2309,7 +2309,7 @@ enc_locale_copy_enc:
     buf[i] = NUL;
   }
 
-  return enc_canonize((char_u *)buf);
+  return (char_u *)enc_canonize(buf);
 }
 
 #if defined(HAVE_ICONV)

@@ -699,7 +699,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
    * Decide which 'encoding' to use or use first.
    */
   if (eap != NULL && eap->force_enc != 0) {
-    fenc = (char *)enc_canonize((char_u *)eap->cmd + eap->force_enc);
+    fenc = enc_canonize(eap->cmd + eap->force_enc);
     fenc_alloced = true;
     keep_dest_enc = true;
   } else if (curbuf->b_p_bin) {
@@ -2056,8 +2056,8 @@ void set_file_options(int set_options, exarg_T *eap)
 void set_forced_fenc(exarg_T *eap)
 {
   if (eap->force_enc != 0) {
-    char_u *fenc = enc_canonize((char_u *)eap->cmd + eap->force_enc);
-    set_string_option_direct("fenc", -1, (char *)fenc, OPT_FREE|OPT_LOCAL, 0);
+    char *fenc = enc_canonize(eap->cmd + eap->force_enc);
+    set_string_option_direct("fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
     xfree(fenc);
   }
 }
@@ -2081,12 +2081,12 @@ static char_u *next_fenc(char **pp, bool *alloced)
   }
   p = (char_u *)vim_strchr((*pp), ',');
   if (p == NULL) {
-    r = enc_canonize((char_u *)(*pp));
+    r = (char_u *)enc_canonize(*pp);
     *pp += STRLEN(*pp);
   } else {
     r = vim_strnsave((char_u *)(*pp), (size_t)(p - (char_u *)(*pp)));
     *pp = (char *)p + 1;
-    p = enc_canonize(r);
+    p = (char_u *)enc_canonize((char *)r);
     xfree(r);
     r = p;
   }
@@ -3055,7 +3055,7 @@ nobackup:
   // Check for forced 'fileencoding' from "++opt=val" argument.
   if (eap != NULL && eap->force_enc != 0) {
     fenc = eap->cmd + eap->force_enc;
-    fenc = (char *)enc_canonize((char_u *)fenc);
+    fenc = enc_canonize(fenc);
     fenc_tofree = fenc;
   } else {
     fenc = buf->b_p_fenc;

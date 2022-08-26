@@ -703,7 +703,7 @@ void ex_breaklist(exarg_T *eap)
         smsg(_("%3d  %s %s  line %" PRId64),
              bp->dbg_nr,
              bp->dbg_type == DBG_FUNC ? "func" : "file",
-             bp->dbg_type == DBG_FUNC ? bp->dbg_name : NameBuff,
+             bp->dbg_type == DBG_FUNC ? bp->dbg_name : (char_u *)NameBuff,
              (int64_t)bp->dbg_lnum);
       } else {
         smsg(_("%3d  expr %s"), bp->dbg_nr, bp->dbg_name);

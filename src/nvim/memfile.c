@@ -77,7 +77,7 @@
 ///
 /// @return - The open memory file, on success.
 ///         - NULL, on failure (e.g. file does not exist).
-memfile_T *mf_open(char_u *fname, int flags)
+memfile_T *mf_open(char *fname, int flags)
 {
   memfile_T *mfp = xmalloc(sizeof(memfile_T));
 
@@ -148,7 +148,7 @@ memfile_T *mf_open(char_u *fname, int flags)
 ///
 /// @return OK    On success.
 ///         FAIL  If file could not be opened.
-int mf_open_file(memfile_T *mfp, char_u *fname)
+int mf_open_file(memfile_T *mfp, char *fname)
 {
   if (mf_do_open(mfp, fname, O_RDWR | O_CREAT | O_EXCL)) {
     mfp->mf_dirty = true;
@@ -749,9 +749,9 @@ void mf_free_fnames(memfile_T *mfp)
 ///
 /// Only called when creating or renaming the swapfile. Either way it's a new
 /// name so we must work out the full path name.
-void mf_set_fnames(memfile_T *mfp, char_u *fname)
+void mf_set_fnames(memfile_T *mfp, char *fname)
 {
-  mfp->mf_fname = fname;
+  mfp->mf_fname = (char_u *)fname;
   mfp->mf_ffname = (char_u *)FullName_save((char *)mfp->mf_fname, false);
 }
 
@@ -779,7 +779,7 @@ bool mf_need_trans(memfile_T *mfp)
 ///
 /// @param  flags  Flags for open().
 /// @return A bool indicating success of the `open` call.
-static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
+static bool mf_do_open(memfile_T *mfp, char *fname, int flags)
 {
   // fname cannot be NameBuff, because it must have been allocated.
   mf_set_fnames(mfp, fname);

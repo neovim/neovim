@@ -77,7 +77,7 @@ void win_redr_status(win_T *wp)
     width = is_stl_global ? Columns : wp->w_width;
 
     get_trans_bufname(wp->w_buffer);
-    p = NameBuff;
+    p = (char_u *)NameBuff;
     len = (int)STRLEN(p);
 
     if (bt_help(wp->w_buffer)
@@ -138,7 +138,7 @@ void win_redr_status(win_T *wp)
 
     if (get_keymap_str(wp, "<%s>", (char *)NameBuff, MAXPATHL)
         && this_ru_col - len > (int)(STRLEN(NameBuff) + 1)) {
-      grid_puts(&default_grid, NameBuff, row,
+      grid_puts(&default_grid, (char_u *)NameBuff, row,
                 (int)((size_t)this_ru_col - STRLEN(NameBuff) - 1), attr);
     }
 

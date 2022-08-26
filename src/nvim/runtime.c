@@ -2432,7 +2432,7 @@ void ex_scriptencoding(exarg_T *eap)
   }
 
   if (*eap->arg != NUL) {
-    name = (char *)enc_canonize((char_u *)eap->arg);
+    name = enc_canonize(eap->arg);
   } else {
     name = eap->arg;
   }

@@ -1634,11 +1634,9 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   bool zero_width_next_list = false;
   garray_T zero_width_next_ga;
 
-  /*
-   * No character, no attributes!  Past end of line?
-   * Do try matching with an empty line (could be the start of a region).
-   */
-  line = syn_getcurline();
+  // No character, no attributes!  Past end of line?
+  // Do try matching with an empty line (could be the start of a region).
+  line = (char_u *)syn_getcurline();
   if (line[current_col] == NUL && current_col != 0) {
     /*
      * If we found a match after the last column, use it.
@@ -1706,12 +1704,10 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
 
     if (syn_block->b_syn_containedin || cur_si == NULL
         || cur_si->si_cont_list != NULL) {
-      /*
-       * 2. Check for keywords, if on a keyword char after a non-keyword
-       *          char.  Don't do this when syncing.
-       */
+      // 2. Check for keywords, if on a keyword char after a non-keyword
+      //          char.  Don't do this when syncing.
       if (do_keywords) {
-        line = syn_getcurline();
+        line = (char_u *)syn_getcurline();
         const char_u *cur_pos = line + current_col;
         if (vim_iswordp_buf(cur_pos, syn_buf)
             && (current_col == 0
@@ -1979,13 +1975,11 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
      * Handle searching for nextgroup match.
      */
     if (current_next_list != NULL && !keep_next_list) {
-      /*
-       * If a nextgroup was not found, continue looking for one if:
-       * - this is an empty line and the "skipempty" option was given
-       * - we are on white space and the "skipwhite" option was given
-       */
+      // If a nextgroup was not found, continue looking for one if:
+      // - this is an empty line and the "skipempty" option was given
+      // - we are on white space and the "skipwhite" option was given
       if (!found_match) {
-        line = syn_getcurline();
+        line = (char_u *)syn_getcurline();
         if (((current_next_flags & HL_SKIPWHITE)
              && ascii_iswhite(line[current_col]))
             || ((current_next_flags & HL_SKIPEMPTY)
@@ -2108,7 +2102,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
 
   // nextgroup ends at end of line, unless "skipnl" or "skipempty" present
   if (current_next_list != NULL
-      && (line = syn_getcurline())[current_col] != NUL
+      && (line = (char_u *)syn_getcurline())[current_col] != NUL
       && line[current_col + 1] == NUL
       && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))) {
     current_next_list = NULL;
@@ -2874,12 +2868,10 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
   result->col = col;
 }
 
-/*
- * Get current line in syntax buffer.
- */
-static char_u *syn_getcurline(void)
+/// Get current line in syntax buffer.
+static char *syn_getcurline(void)
 {
-  return ml_get_buf(syn_buf, current_lnum, false);
+  return (char *)ml_get_buf(syn_buf, current_lnum, false);
 }
 
 /*
@@ -4059,7 +4051,7 @@ static char *get_group_name(char *arg, char **name_end)
 ///
 /// @return      a pointer to the next argument (which isn't an option).
 ///              Return NULL for any error;
-static char_u *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, int skip)
+static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, int skip)
 {
   char_u *gname_start, *gname;
   int syn_id;
@@ -4205,7 +4197,7 @@ static char_u *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char,
     }
   }
 
-  return (char_u *)arg;
+  return arg;
 }
 
 /*
@@ -4347,7 +4339,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       cnt = 0;
       p = keyword_copy;
       for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
-        rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
         if (rest == NULL || ends_excmd(*rest)) {
           break;
         }
@@ -4442,18 +4434,18 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
   syn_opt_arg.cont_list = NULL;
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
-  rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   // get the pattern.
   init_syn_patterns();
   CLEAR_FIELD(item);
-  rest = (char *)get_syn_pattern((char_u *)rest, &item);
+  rest = get_syn_pattern((char_u *)rest, &item);
   if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
     syn_opt_arg.flags |= HL_HAS_EOL;
   }
 
   // Get options after the pattern
-  rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   if (rest != NULL) {           // all arguments are valid
     /*
@@ -4568,7 +4560,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
   // get the options, patterns and matchgroup.
   while (rest != NULL && !ends_excmd(*rest)) {
     // Check for option arguments
-    rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+    rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
     if (rest == NULL || ends_excmd(*rest)) {
       break;
     }
@@ -4639,7 +4631,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
         assert(item == ITEM_SKIP || item == ITEM_END);
         reg_do_extmatch = REX_USE;
       }
-      rest = (char *)get_syn_pattern((char_u *)rest, ppp->pp_synp);
+      rest = get_syn_pattern((char_u *)rest, ppp->pp_synp);
       reg_do_extmatch = 0;
       if (item == ITEM_END && vim_regcomp_had_eol()
           && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
@@ -5034,12 +5026,11 @@ static void init_syn_patterns(void)
   ga_set_growsize(&curwin->w_s->b_syn_patterns, 10);
 }
 
-/*
- * Get one pattern for a ":syntax match" or ":syntax region" command.
- * Stores the pattern and program in a synpat_T.
- * Returns a pointer to the next argument, or NULL in case of an error.
- */
-static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
+/// Get one pattern for a ":syntax match" or ":syntax region" command.
+/// Stores the pattern and program in a synpat_T.
+///
+/// @return  a pointer to the next argument, or NULL in case of an error.
+static char *get_syn_pattern(char_u *arg, synpat_T *ci)
 {
   char *end;
   int *p;
@@ -5128,7 +5119,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
     semsg(_("E402: Garbage after pattern: %s"), arg);
     return NULL;
   }
-  return (char_u *)skipwhite(end);
+  return skipwhite(end);
 }
 
 /*

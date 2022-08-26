@@ -531,7 +531,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       if (flags & DOCMD_KEEPLINE) {
         xfree(repeat_cmdline);
         if (count == 0) {
-          repeat_cmdline = vim_strsave((char_u *)next_cmdline);
+          repeat_cmdline = (char *)vim_strsave((char_u *)next_cmdline);
         } else {
           repeat_cmdline = NULL;
         }
@@ -3788,8 +3788,8 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
       // if there are still wildcards present.
       if (vim_strchr(eap->arg, '$') != NULL
           || vim_strchr(eap->arg, '~') != NULL) {
-        expand_env_esc((char_u *)eap->arg, NameBuff, MAXPATHL, true, true, NULL);
-        has_wildcards = path_has_wildcard(NameBuff);
+        expand_env_esc((char_u *)eap->arg, (char_u *)NameBuff, MAXPATHL, true, true, NULL);
+        has_wildcards = path_has_wildcard((char_u *)NameBuff);
         p = (char *)NameBuff;
       } else {
         p = NULL;
@@ -4058,7 +4058,7 @@ static int getargopt(exarg_T *eap)
   *arg = NUL;
 
   if (pp == &eap->force_ff) {
-    if (check_ff_value((char_u *)eap->cmd + eap->force_ff) == FAIL) {
+    if (check_ff_value(eap->cmd + eap->force_ff) == FAIL) {
       return FAIL;
     }
     eap->force_ff = (char_u)eap->cmd[eap->force_ff];
@@ -5482,8 +5482,8 @@ bool changedir_func(char *new_dir, CdScope scope)
     new_dir = pdir;
   }
 
-  if (os_dirname(NameBuff, MAXPATHL) == OK) {
-    pdir = (char *)vim_strsave(NameBuff);
+  if (os_dirname((char_u *)NameBuff, MAXPATHL) == OK) {
+    pdir = xstrdup(NameBuff);
   } else {
     pdir = NULL;
   }
@@ -5496,7 +5496,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   if (*new_dir == NUL && p_cdh) {
 #endif
     // Use NameBuff for home directory name.
-    expand_env((char_u *)"$HOME", NameBuff, MAXPATHL);
+    expand_env((char_u *)"$HOME", (char_u *)NameBuff, MAXPATHL);
     new_dir = (char *)NameBuff;
   }
 
@@ -5565,7 +5565,7 @@ void ex_cd(exarg_T *eap)
 /// ":pwd".
 static void ex_pwd(exarg_T *eap)
 {
-  if (os_dirname(NameBuff, MAXPATHL) == OK) {
+  if (os_dirname((char_u *)NameBuff, MAXPATHL) == OK) {
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(NameBuff);
 #endif

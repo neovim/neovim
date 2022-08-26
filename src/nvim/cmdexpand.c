@@ -705,7 +705,7 @@ int showmatches(expand_T *xp, int wildmenu)
             p = (char_u *)L_SHOWFILE(k);
           } else {
             home_replace(NULL, files_found[k], (char *)NameBuff, MAXPATHL, true);
-            p = NameBuff;
+            p = (char_u *)NameBuff;
           }
         } else {
           j = false;

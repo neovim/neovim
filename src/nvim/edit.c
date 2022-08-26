@@ -3282,10 +3282,8 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       }
     }
 
-    /*
-     * Skip over ", ".
-     */
-    look = skip_to_option_part(look);
+    // Skip over ", ".
+    look = (char_u *)skip_to_option_part((char *)look);
   }
   return false;
 }

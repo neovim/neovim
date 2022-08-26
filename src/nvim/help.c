@@ -537,7 +537,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
   if (keep_lang) {
     flags |= TAG_KEEP_LANG;
   }
-  if (find_tags(IObuff, num_matches, matches, flags, MAXCOL, NULL) == OK
+  if (find_tags((char *)IObuff, num_matches, matches, flags, MAXCOL, NULL) == OK
       && *num_matches > 0) {
     // Sort the matches found on the heuristic number that is after the
     // tag name.

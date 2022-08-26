@@ -3426,7 +3426,7 @@ int verbose_open(void)
     // Only give the error message once.
     verbose_did_open = true;
 
-    verbose_fd = os_fopen((char *)p_vfile, "a");
+    verbose_fd = os_fopen(p_vfile, "a");
     if (verbose_fd == NULL) {
       semsg(_(e_notopen), p_vfile);
       return FAIL;

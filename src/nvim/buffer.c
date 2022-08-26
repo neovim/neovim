@@ -2701,7 +2701,7 @@ void buflist_list(exarg_T *eap)
       home_replace(buf, buf->b_fname, (char *)NameBuff, MAXPATHL, true);
     }
 
-    if (message_filtered(NameBuff)) {
+    if (message_filtered((char_u *)NameBuff)) {
       continue;
     }
 
