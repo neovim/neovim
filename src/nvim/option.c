@@ -4250,6 +4250,14 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
   didset_window_options(wp_to, true);
 }
 
+static char *copy_option_val(const char *val)
+{
+  if (val == empty_option) {
+    return empty_option;  // no need to allocate memory
+  }
+  return xstrdup(val);
+}
+
 /// Copy the options from one winopt_T to another.
 /// Doesn't free the old option values in "to", use clear_winopt() for that.
 /// The 'scroll' option is not copied, because it depends on the window height.
@@ -4258,21 +4266,23 @@ void copy_winopt(winopt_T *from, winopt_T *to)
 {
   to->wo_arab = from->wo_arab;
   to->wo_list = from->wo_list;
+  to->wo_lcs = copy_option_val(from->wo_lcs);
+  to->wo_fcs = copy_option_val(from->wo_fcs);
   to->wo_nu = from->wo_nu;
   to->wo_rnu = from->wo_rnu;
-  to->wo_ve = xstrdup(from->wo_ve);
+  to->wo_ve = copy_option_val(from->wo_ve);
   to->wo_ve_flags = from->wo_ve_flags;
   to->wo_nuw = from->wo_nuw;
   to->wo_rl  = from->wo_rl;
-  to->wo_rlc = xstrdup(from->wo_rlc);
-  to->wo_sbr = xstrdup(from->wo_sbr);
-  to->wo_stl = xstrdup(from->wo_stl);
-  to->wo_wbr = xstrdup(from->wo_wbr);
+  to->wo_rlc = copy_option_val(from->wo_rlc);
+  to->wo_sbr = copy_option_val(from->wo_sbr);
+  to->wo_stl = copy_option_val(from->wo_stl);
+  to->wo_wbr = copy_option_val(from->wo_wbr);
   to->wo_wrap = from->wo_wrap;
   to->wo_wrap_save = from->wo_wrap_save;
   to->wo_lbr = from->wo_lbr;
   to->wo_bri = from->wo_bri;
-  to->wo_briopt = xstrdup(from->wo_briopt);
+  to->wo_briopt = copy_option_val(from->wo_briopt);
   to->wo_scb = from->wo_scb;
   to->wo_scb_save = from->wo_scb_save;
   to->wo_crb = from->wo_crb;
@@ -4280,30 +4290,28 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_spell = from->wo_spell;
   to->wo_cuc = from->wo_cuc;
   to->wo_cul = from->wo_cul;
-  to->wo_culopt = xstrdup(from->wo_culopt);
-  to->wo_cc = xstrdup(from->wo_cc);
+  to->wo_culopt = copy_option_val(from->wo_culopt);
+  to->wo_cc = copy_option_val(from->wo_cc);
   to->wo_diff = from->wo_diff;
   to->wo_diff_saved = from->wo_diff_saved;
-  to->wo_cocu = xstrdup(from->wo_cocu);
+  to->wo_cocu = copy_option_val(from->wo_cocu);
   to->wo_cole = from->wo_cole;
-  to->wo_fdc = xstrdup(from->wo_fdc);
+  to->wo_fdc = copy_option_val(from->wo_fdc);
   to->wo_fdc_save = from->wo_diff_saved ? xstrdup(from->wo_fdc_save) : empty_option;
   to->wo_fen = from->wo_fen;
   to->wo_fen_save = from->wo_fen_save;
-  to->wo_fdi = xstrdup(from->wo_fdi);
+  to->wo_fdi = copy_option_val(from->wo_fdi);
   to->wo_fml = from->wo_fml;
   to->wo_fdl = from->wo_fdl;
   to->wo_fdl_save = from->wo_fdl_save;
-  to->wo_fdm = xstrdup(from->wo_fdm);
+  to->wo_fdm = copy_option_val(from->wo_fdm);
   to->wo_fdm_save = from->wo_diff_saved ? xstrdup(from->wo_fdm_save) : empty_option;
   to->wo_fdn = from->wo_fdn;
-  to->wo_fde = xstrdup(from->wo_fde);
-  to->wo_fdt = xstrdup(from->wo_fdt);
-  to->wo_fmr = xstrdup(from->wo_fmr);
-  to->wo_scl = xstrdup(from->wo_scl);
-  to->wo_winhl = xstrdup(from->wo_winhl);
-  to->wo_fcs = xstrdup(from->wo_fcs);
-  to->wo_lcs = xstrdup(from->wo_lcs);
+  to->wo_fde = copy_option_val(from->wo_fde);
+  to->wo_fdt = copy_option_val(from->wo_fdt);
+  to->wo_fmr = copy_option_val(from->wo_fmr);
+  to->wo_scl = copy_option_val(from->wo_scl);
+  to->wo_winhl = copy_option_val(from->wo_winhl);
   to->wo_winbl = from->wo_winbl;
 
   // Copy the script context so that we know were the value was last set.
@@ -4338,8 +4346,8 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_cocu);
   check_string_option(&wop->wo_briopt);
   check_string_option(&wop->wo_winhl);
-  check_string_option(&wop->wo_fcs);
   check_string_option(&wop->wo_lcs);
+  check_string_option(&wop->wo_fcs);
   check_string_option(&wop->wo_ve);
   check_string_option(&wop->wo_wbr);
 }
@@ -4364,8 +4372,8 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_cocu);
   clear_string_option(&wop->wo_briopt);
   clear_string_option(&wop->wo_winhl);
-  clear_string_option(&wop->wo_fcs);
   clear_string_option(&wop->wo_lcs);
+  clear_string_option(&wop->wo_fcs);
   clear_string_option(&wop->wo_ve);
   clear_string_option(&wop->wo_wbr);
 }

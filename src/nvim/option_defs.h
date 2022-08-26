@@ -972,8 +972,8 @@ enum {
   WV_WRAP,
   WV_SCL,
   WV_WINHL,
-  WV_FCS,
   WV_LCS,
+  WV_FCS,
   WV_WINBL,
   WV_WBR,
   WV_COUNT,  // must be the last one

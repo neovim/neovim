@@ -1262,17 +1262,15 @@ int number_width(win_T *wp)
 /// Calls mb_cptr2char_adv(p) and returns the character.
 /// If "p" starts with "\x", "\u" or "\U" the hex or unicode value is used.
 /// Returns 0 for invalid hex or invalid UTF-8 byte.
-static int get_encoded_char_adv(char_u **p)
+static int get_encoded_char_adv(const char_u **p)
 {
-  char_u *s = *p;
+  const char_u *s = *p;
 
   if (s[0] == '\\' && (s[1] == 'x' || s[1] == 'u' || s[1] == 'U')) {
     int64_t num = 0;
-    int bytes;
-    int n;
-    for (bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
+    for (int bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
       *p += 2;
-      n = hexhex2nr(*p);
+      int n = hexhex2nr(*p);
       if (n < 0) {
         return 0;
       }
@@ -1283,8 +1281,8 @@ static int get_encoded_char_adv(char_u **p)
   }
 
   // TODO(bfredl): use schar_T representation and utfc_ptr2len
-  int clen = utf_ptr2len((char *)s);
-  int c = mb_cptr2char_adv((const char_u **)p);
+  int clen = utf_ptr2len((const char *)s);
+  int c = mb_cptr2char_adv(p);
   if (clen == 1 && c > 127) {  // Invalid UTF-8 byte
     return 0;
   }
@@ -1294,26 +1292,22 @@ static int get_encoded_char_adv(char_u **p)
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
-/// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
+/// @param varp   either the global or the window-local value.
+/// @param apply  if false, do not store the flags, only check for errors.
 /// @return error message, NULL if it's OK.
-char *set_chars_option(win_T *wp, char_u **varp, bool set)
+char *set_chars_option(win_T *wp, char_u **varp, bool apply)
 {
-  int round, i, len, len2, entries;
-  char_u *p, *s;
-  int c1;
-  int c2 = 0;
-  int c3 = 0;
-  char_u *last_multispace = NULL;   // Last occurrence of "multispace:"
-  char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
+  const char_u *last_multispace = NULL;   // Last occurrence of "multispace:"
+  const char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
   int multispace_len = 0;           // Length of lcs-multispace string
   int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
+  const bool is_listchars = (varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs);
 
   struct chars_tab {
-    int *cp;    ///< char value
+    int *cp;     ///< char value
     char *name;  ///< char id
-    int def;    ///< default value
+    int def;     ///< default value
   };
-  struct chars_tab *tab;
 
   // XXX: Characters taking 2 columns is forbidden (TUI limitation?). Set old defaults in this case.
   struct chars_tab fcs_tab[] = {
@@ -1335,6 +1329,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
     { &wp->w_p_fcs_chars.msgsep,     "msgsep",    ' ' },
     { &wp->w_p_fcs_chars.eob,        "eob",       '~' },
   };
+
   struct chars_tab lcs_tab[] = {
     { &wp->w_p_lcs_chars.eol,     "eol",      NUL },
     { &wp->w_p_lcs_chars.ext,     "extends",  NUL },
@@ -1347,30 +1342,33 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
     { &wp->w_p_lcs_chars.conceal, "conceal",  NUL },
   };
 
-  if (varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs) {
+  struct chars_tab *tab;
+  int entries;
+  const char_u *value = *varp;
+  if (is_listchars) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
     if (varp == (char_u **)&wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
-      varp = &p_lcs;
+      value = p_lcs;  // local value is empty, use the global value
     }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
     if (varp == (char_u **)&wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
-      varp = &p_fcs;
+      value = p_fcs;  // local value is empty, use the global value
     }
   }
 
   // first round: check for valid value, second round: assign values
-  for (round = 0; round <= (set ? 1 : 0); round++) {
+  for (int round = 0; round <= (apply ? 1 : 0); round++) {
     if (round > 0) {
       // After checking that the value is valid: set defaults
-      for (i = 0; i < entries; i++) {
+      for (int i = 0; i < entries; i++) {
         if (tab[i].cp != NULL) {
           *(tab[i].cp) = tab[i].def;
         }
       }
-      if (varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs) {
+      if (is_listchars) {
         wp->w_p_lcs_chars.tab1 = NUL;
         wp->w_p_lcs_chars.tab3 = NUL;
 
@@ -1392,19 +1390,20 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
         }
       }
     }
-    p = *varp;
+    const char_u *p = value;
     while (*p) {
+      int i;
       for (i = 0; i < entries; i++) {
-        len = (int)STRLEN(tab[i].name);
+        const size_t len = STRLEN(tab[i].name);
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          c2 = c3 = 0;
-          s = p + len + 1;
-          c1 = get_encoded_char_adv(&s);
+          const char_u *s = p + len + 1;
+          int c1 = get_encoded_char_adv(&s);
           if (c1 == 0 || char2cells(c1) > 1) {
             return e_invarg;
           }
+          int c2 = 0, c3 = 0;
           if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
             if (*s == NUL) {
               return e_invarg;
@@ -1437,19 +1436,19 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
       }
 
       if (i == entries) {
-        len = (int)STRLEN("multispace");
-        len2 = (int)STRLEN("leadmultispace");
-        if ((varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs)
+        const size_t len = STRLEN("multispace");
+        const size_t len2 = STRLEN("leadmultispace");
+        if (is_listchars
             && STRNCMP(p, "multispace", len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          s = p + len + 1;
+          const char_u *s = p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
             last_multispace = p;
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (c1 == 0 || char2cells(c1) > 1) {
                 return e_invarg;
               }
@@ -1463,24 +1462,24 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (p == last_multispace) {
                 wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
               }
             }
             p = s;
           }
-        } else if ((varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs)
+        } else if (is_listchars
                    && STRNCMP(p, "leadmultispace", len2) == 0
                    && p[len2] == ':'
                    && p[len2 + 1] != NUL) {
-          s = p + len2 + 1;
+          const char_u *s = p + len2 + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
             lead_multispace_len = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (c1 == 0 || char2cells(c1) > 1) {
                 return e_invarg;
               }
@@ -1494,7 +1493,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
-              c1 = get_encoded_char_adv(&s);
+              int c1 = get_encoded_char_adv(&s);
               if (p == last_lmultispace) {
                 wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
@@ -1505,6 +1504,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool set)
           return e_invarg;
         }
       }
+
       if (*p == ',') {
         p++;
       }

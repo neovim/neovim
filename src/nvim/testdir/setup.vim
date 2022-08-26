@@ -5,7 +5,7 @@ if exists('s:did_load')
   set directory&
   set directory^=.
   set display=
-  set fillchars=vert:\|,fold:-
+  set fillchars=vert:\|,foldsep:\|,fold:-
   set formatoptions=tcq
   set fsync
   set laststatus=1

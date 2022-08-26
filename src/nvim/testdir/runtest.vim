@@ -425,7 +425,7 @@ for s:test in sort(s:tests)
   set belloff=all
   let prev_error = ''
   let total_errors = []
-  let run_nr = 1
+  let g:run_nr = 1
 
   " A test can set g:test_is_flaky to retry running the test.
   let g:test_is_flaky = 0
@@ -444,10 +444,10 @@ for s:test in sort(s:tests)
       call add(s:messages, 'Found errors in ' . s:test . ':')
       call extend(s:messages, v:errors)
 
-      call add(total_errors, 'Run ' . run_nr . ':')
+      call add(total_errors, 'Run ' . g:run_nr . ':')
       call extend(total_errors, v:errors)
 
-      if run_nr == 5 || prev_error == v:errors[0]
+      if g:run_nr >= 5 || prev_error == v:errors[0]
         call add(total_errors, 'Flaky test failed too often, giving up')
         let v:errors = total_errors
         break
@@ -462,7 +462,7 @@ for s:test in sort(s:tests)
 
       let prev_error = v:errors[0]
       let v:errors = []
-      let run_nr += 1
+      let g:run_nr += 1
 
       call RunTheTest(s:test)
 
