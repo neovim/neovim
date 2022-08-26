@@ -1887,6 +1887,13 @@ func Test_bufadd_bufload()
   call bufload(buf)
   call assert_equal([''], getbufline(buf, 1, '$'))
 
+  " when 'buftype' is "acwrite" then bufload() DOES read the file
+  bwipe! XotherName
+  let buf = bufadd('XotherName')
+  call setbufvar(buf, '&bt', 'acwrite')
+  call bufload(buf)
+  call assert_equal(['some', 'text'], getbufline(buf, 1, '$'))
+
   bwipe someName
   bwipe XotherName
   call assert_equal(0, bufexists('someName'))
