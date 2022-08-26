@@ -165,11 +165,12 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
 ///
 /// @param read_stdin  read file from stdin
 /// @param eap  for forced 'ff' and 'fenc' or NULL
-/// @param flags  extra flags for readfile()
+/// @param flags_arg  extra flags for readfile()
 ///
 /// @return  FAIL for failure, OK otherwise.
-int open_buffer(int read_stdin, exarg_T *eap, int flags)
+int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
 {
+  int flags = flags_arg;
   int retval = OK;
   bufref_T old_curbuf;
   long old_tw = curbuf->b_p_tw;
@@ -224,8 +225,14 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
   // mark cursor position as being invalid
   curwin->w_valid = 0;
 
+  // A buffer without an actual file should not use the buffer name to read a
+  // file.
+  if (bt_nofileread(curbuf)) {
+    flags |= READ_NOFILE;
+  }
+
   // Read the file if there is one.
-  if (curbuf->b_ffname != NULL && !bt_quickfix(curbuf) && !bt_nofilename(curbuf)) {
+  if (curbuf->b_ffname != NULL) {
 #ifdef UNIX
     int save_bin = curbuf->b_p_bin;
     int perm;
@@ -805,6 +812,18 @@ static void free_buffer(buf_T *buf)
   }
 }
 
+/// Free the b_wininfo list for buffer "buf".
+static void clear_wininfo(buf_T *buf)
+{
+  wininfo_T *wip;
+
+  while (buf->b_wininfo != NULL) {
+    wip = buf->b_wininfo;
+    buf->b_wininfo = wip->wi_next;
+    free_wininfo(wip, buf);
+  }
+}
+
 /// Free stuff in the buffer for ":bdel" and when wiping out the buffer.
 ///
 /// @param buf  Buffer pointer
@@ -837,18 +856,6 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   XFREE_CLEAR(buf->b_start_fenc);
 
   buf_updates_unload(buf, false);
-}
-
-/// Free the b_wininfo list for buffer "buf".
-static void clear_wininfo(buf_T *buf)
-{
-  wininfo_T *wip;
-
-  while (buf->b_wininfo != NULL) {
-    wip = buf->b_wininfo;
-    buf->b_wininfo = wip->wi_next;
-    free_wininfo(wip, buf);
-  }
 }
 
 /// Go to another buffer.  Handles the result of the ATTENTION dialog.
@@ -3827,13 +3834,25 @@ bool bt_terminal(const buf_T *const buf)
 }
 
 /// @return  true if "buf" is a "nofile", "acwrite", "terminal" or "prompt"
-///          buffer.  This means the buffer name is not a file name.
+///          buffer.  This means the buffer name may not be a file name,
+///          at least not for writing the buffer.
 bool bt_nofilename(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
                          || buf->b_p_bt[0] == 'a'
                          || buf->terminal
+                         || buf->b_p_bt[0] == 'p');
+}
+
+/// @return  true if "buf" is a "nofile", "quickfix", "terminal" or "prompt"
+///          buffer.  This means the buffer is not to be read from a file.
+static bool bt_nofileread(const buf_T *const buf)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
+                         || buf->b_p_bt[0] == 't'
+                         || buf->b_p_bt[0] == 'q'
                          || buf->b_p_bt[0] == 'p');
 }
 

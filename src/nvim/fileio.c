@@ -167,6 +167,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
 /// READ_STDIN   read from stdin instead of a file
 /// READ_BUFFER  read from curbuf instead of a file (converting after reading
 ///              stdin)
+/// READ_NOFILE  do not read a file, only trigger BufReadCmd
 /// READ_DUMMY   read into a dummy buffer (to check if file contents changed)
 /// READ_KEEP_UNDO  don't clear undo info or read it from a file
 /// READ_FIFO    read from fifo/socket instead of a file
@@ -334,6 +335,10 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     }
 
     curbuf->b_op_start = orig_start;
+
+    if (flags & READ_NOFILE) {
+      return NOTDONE;  // so that BufEnter can be triggered
+    }
   }
 
   if ((shortmess(SHM_OVER) || curbuf->b_help) && p_verbose == 0) {
