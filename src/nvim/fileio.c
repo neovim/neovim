@@ -337,7 +337,9 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     curbuf->b_op_start = orig_start;
 
     if (flags & READ_NOFILE) {
-      return NOTDONE;  // so that BufEnter can be triggered
+      // Return NOTDONE instead of FAIL so that BufEnter can be triggered
+      // and other operations don't fail.
+      return NOTDONE;
     }
   }
 
