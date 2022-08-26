@@ -79,6 +79,8 @@ typedef struct {
   int sg_rgb_sp_idx;            ///< RGB special color index
 
   int sg_blend;                 ///< blend level (0-100 inclusive), -1 if unset
+
+  int sg_parent;                ///< parent of @nested.group
 } HlGroup;
 
 enum {
@@ -183,6 +185,54 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticSignWarn DiagnosticWarn",
   "default link DiagnosticSignInfo DiagnosticInfo",
   "default link DiagnosticSignHint DiagnosticHint",
+
+  "default link @error Error",
+  "default link @text.underline Underlined",
+  "default link @todo Todo",
+  "default link @debug Debug",
+
+  // Miscs
+  "default link @comment Comment",
+  "default link @punctuation Delimiter",
+
+  // Constants
+  "default link @constant Constant",
+  "default link @constant.builtin Special",
+  "default link @constant.macro Define",
+  "default link @define Define",
+  "default link @macro Macro",
+  "default link @string String",
+  "default link @string.escape SpecialChar",
+  "default link @character Character",
+  "default link @character.special SpecialChar",
+  "default link @number Number",
+  "default link @boolean Boolean",
+  "default link @float Float",
+
+  // Functions
+  "default link @function Function",
+  "default link @function.builtin Special",
+  "default link @function.macro Macro",
+  "default link @parameter Identifier",
+  "default link @method Function",
+  "default link @field Identifier",
+  "default link @property Identifier",
+  "default link @constructor Special",
+
+  // Keywords
+  "default link @conditional Conditional",
+  "default link @repeat Repeat",
+  "default link @label Label",
+  "default link @operator Operator",
+  "default link @keyword Keyword",
+  "default link @exception Exception",
+
+  "default link @type Type",
+  "default link @type.definition Typedef",
+  "default link @storageclass StorageClass",
+  "default link @structure Structure",
+  "default link @include Include",
+  "default link @preproc PreProc",
   NULL
 };
 
@@ -1375,6 +1425,11 @@ static void highlight_list_one(const int id)
     return;
   }
 
+  // don't list specialized groups if a parent is used instead
+  if (sgp->sg_parent && sgp->sg_cleared) {
+    return;
+  }
+
   didh = highlight_list_arg(id, didh, LIST_ATTR,
                             sgp->sg_cterm, NULL, "cterm");
   didh = highlight_list_arg(id, didh, LIST_INT,
@@ -1661,7 +1716,12 @@ static void set_hl_attr(int idx)
 int syn_name2id(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  return syn_name2id_len(name, STRLEN(name));
+  if (name[0] == '@') {
+    // if we look up @aaa.bbb, we have to consider @aaa as well
+    return syn_check_group(name, strlen(name));
+  } else {
+    return syn_name2id_len(name, STRLEN(name));
+  }
 }
 
 /// Lookup a highlight group name and return its ID.
@@ -1758,6 +1818,14 @@ static int syn_add_group(const char *name, size_t len)
     }
   }
 
+  int scoped_parent = 0;
+  if (len > 1 && name[0] == '@') {
+    char *delim = xmemrchr(name, '.', len);
+    if (delim) {
+      scoped_parent = syn_check_group(name, (size_t)(delim - name));
+    }
+  }
+
   // First call for this growarray: init growing array.
   if (highlight_ga.ga_data == NULL) {
     highlight_ga.ga_itemsize = sizeof(HlGroup);
@@ -1783,6 +1851,9 @@ static int syn_add_group(const char *name, size_t len)
   hlgp->sg_rgb_sp_idx = kColorIdxNone;
   hlgp->sg_blend = -1;
   hlgp->sg_name_u = arena_memdupz(&highlight_arena, name, len);
+  hlgp->sg_parent = scoped_parent;
+  // will get set to false by caller if settings are added
+  hlgp->sg_cleared = true;
   vim_strup((char_u *)hlgp->sg_name_u);
 
   int id = highlight_ga.ga_len;  // ID is index plus one
@@ -1844,10 +1915,13 @@ int syn_ns_get_final_id(int *ns_id, int hl_id)
       continue;
     }
 
-    if (sgp->sg_link == 0 || sgp->sg_link > highlight_ga.ga_len) {
+    if (sgp->sg_link > 0 && sgp->sg_link <= highlight_ga.ga_len) {
+      hl_id = sgp->sg_link;
+    } else if (sgp->sg_cleared && sgp->sg_parent > 0) {
+      hl_id = sgp->sg_parent;
+    } else {
       break;
     }
-    hl_id = sgp->sg_link;
   }
 
   return hl_id;

@@ -188,22 +188,22 @@ func Test_syntax_completion()
   call assert_equal('"syn sync ccomment clear fromstart linebreaks= linecont lines= match maxlines= minlines= region', @:)
 
   " Check that clearing "Aap" avoids it showing up before Boolean.
-  hi Aap ctermfg=blue
+  hi @Aap ctermfg=blue
   call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('^"syn list Aap Boolean Character ', @:)
-  hi clear Aap
+  call assert_match('^"syn list @Aap @boolean @character ', @:)
+  hi clear @Aap
 
   call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('^"syn list Boolean Character ', @:)
+  call assert_match('^"syn list @boolean @character ', @:)
 
   call feedkeys(":syn match \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_match('^"syn match Boolean Character ', @:)
+  call assert_match('^"syn match @boolean @character ', @:)
 endfunc
 
 func Test_echohl_completion()
   call feedkeys(":echohl no\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"echohl NonText Normal none', @:)
-  call assert_equal('"echohl NonText Normal NormalFloat NormalNC none', @:)
+  call assert_equal('"echohl NonText Normal NormalFloat none', @:)
 endfunc
 
 func Test_syntax_arg_skipped()

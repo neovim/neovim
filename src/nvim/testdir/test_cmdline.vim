@@ -244,7 +244,7 @@ func Test_match_completion()
     return
   endif
   hi Aardig ctermfg=green
-  call feedkeys(":match \<Tab>\<Home>\"\<CR>", 'xt')
+  call feedkeys(":match A\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"match Aardig', getreg(':'))
   call feedkeys(":match \<S-Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"match none', getreg(':'))
@@ -255,9 +255,7 @@ func Test_highlight_completion()
     return
   endif
   hi Aardig ctermfg=green
-  call feedkeys(":hi \<Tab>\<Home>\"\<CR>", 'xt')
-  call assert_equal('"hi Aardig', getreg(':'))
-  call feedkeys(":hi default \<Tab>\<Home>\"\<CR>", 'xt')
+  call feedkeys(":hi default A\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"hi default Aardig', getreg(':'))
   call feedkeys(":hi clear Aa\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"hi clear Aardig', getreg(':'))
