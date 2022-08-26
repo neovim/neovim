@@ -3717,8 +3717,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
   case VAR_STRING: {
     varnumber_T n = 0;
     if (tv->vval.v_string != NULL) {
-      vim_str2nr((char_u *)tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0,
-                 false);
+      vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0, false);
     }
     return n;
   }

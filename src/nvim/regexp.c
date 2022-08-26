@@ -1623,14 +1623,14 @@ static int fill_submatch_list(int argc FUNC_ATTR_UNUSED, typval_T *argv, int arg
   // There are always 10 list items in staticList10_T.
   listitem_T *li = tv_list_first(listarg->vval.v_list);
   for (int i = 0; i < 10; i++) {
-    char_u *s = rsm.sm_match->startp[i];
+    char *s = (char *)rsm.sm_match->startp[i];
     if (s == NULL || rsm.sm_match->endp[i] == NULL) {
       s = NULL;
     } else {
-      s = vim_strnsave(s, (size_t)(rsm.sm_match->endp[i] - s));
+      s = xstrnsave(s, (size_t)(rsm.sm_match->endp[i] - (char_u *)s));
     }
     TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-    TV_LIST_ITEM_TV(li)->vval.v_string = (char *)s;
+    TV_LIST_ITEM_TV(li)->vval.v_string = s;
     li = TV_LIST_ITEM_NEXT(argv->vval.v_list, li);
   }
   return argskip + 1;

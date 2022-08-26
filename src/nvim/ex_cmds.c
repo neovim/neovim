@@ -330,7 +330,7 @@ static int linelen(int *has_tab)
 
   // Get the line.  If it's empty bail out early (could be the empty string
   // for an unloaded buffer).
-  line = (char *)get_cursor_line_ptr();
+  line = get_cursor_line_ptr();
   if (*line == NUL) {
     return 0;
   }
@@ -601,7 +601,7 @@ void ex_sort(exarg_T *eap)
           nrs[lnum - eap->line1].st_u.num.value = 0;
         } else {
           nrs[lnum - eap->line1].st_u.num.is_number = true;
-          vim_str2nr((char_u *)s, NULL, NULL, sort_what,
+          vim_str2nr(s, NULL, NULL, sort_what,
                      &nrs[lnum - eap->line1].st_u.num.value, NULL, 0, false);
         }
       } else {
@@ -2808,7 +2808,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     // keep it.  Also when it moves within a line. But not when it moves
     // to the first non-blank.
     if (!equalpos(curwin->w_cursor, orig_pos)) {
-      const char *text = (char *)get_cursor_line_ptr();
+      const char *text = get_cursor_line_ptr();
 
       if (curwin->w_cursor.lnum != orig_pos.lnum
           || curwin->w_cursor.col != (int)(skipwhite(text) - text)) {
@@ -3354,7 +3354,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, char *sub, char *cmd, boo
         save_re_pat(RE_SUBST, (char_u *)pat, p_magic);
       }
       // put pattern in history
-      add_to_history(HIST_SEARCH, (char_u *)pat, true, NUL);
+      add_to_history(HIST_SEARCH, pat, true, NUL);
     }
 
     return true;

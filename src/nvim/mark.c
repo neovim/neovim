@@ -800,31 +800,29 @@ void clrallmarks(buf_T *const buf)
 char_u *fm_getname(fmark_T *fmark, int lead_len)
 {
   if (fmark->fnum == curbuf->b_fnum) {              // current buffer
-    return mark_line(&(fmark->mark), lead_len);
+    return (char_u *)mark_line(&(fmark->mark), lead_len);
   }
   return (char_u *)buflist_nr2name(fmark->fnum, false, true);
 }
 
-/*
- * Return the line at mark "mp".  Truncate to fit in window.
- * The returned string has been allocated.
- */
-static char_u *mark_line(pos_T *mp, int lead_len)
+/// Return the line at mark "mp".  Truncate to fit in window.
+/// The returned string has been allocated.
+static char *mark_line(pos_T *mp, int lead_len)
 {
-  char_u *s, *p;
+  char *s, *p;
   int len;
 
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count) {
-    return vim_strsave((char_u *)"-invalid-");
+    return xstrdup("-invalid-");
   }
   assert(Columns >= 0);
   // Allow for up to 5 bytes per character.
-  s = vim_strnsave((char_u *)skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
+  s = xstrnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
 
   // Truncate the line to fit it in the window
   len = 0;
   for (p = s; *p != NUL; MB_PTR_ADV(p)) {
-    len += ptr2cells((char *)p);
+    len += ptr2cells(p);
     if (len >= Columns - lead_len) {
       break;
     }
@@ -908,7 +906,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
              && p->lnum != 0) {
     // don't output anything if 'q' typed at --more-- prompt
     if (name == NULL && current) {
-      name = mark_line(p, 15);
+      name = (char_u *)mark_line(p, 15);
       mustfree = true;
     }
     if (!message_filtered((char *)name)) {
@@ -1094,7 +1092,7 @@ void ex_changes(exarg_T *eap)
               (long)curbuf->b_changelist[i].mark.lnum,
               curbuf->b_changelist[i].mark.col);
       msg_outtrans((char *)IObuff);
-      name = mark_line(&curbuf->b_changelist[i].mark, 17);
+      name = (char_u *)mark_line(&curbuf->b_changelist[i].mark, 17);
       msg_outtrans_attr((char *)name, HL_ATTR(HLF_D));
       xfree(name);
       os_breakcheck();

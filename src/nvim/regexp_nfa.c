@@ -6643,13 +6643,13 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_KWORD:           //  \k
-        result = vim_iswordp_buf(rex.input, rex.reg_buf);
+        result = vim_iswordp_buf((char *)rex.input, rex.reg_buf);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
       case NFA_SKWORD:          //  \K
         result = !ascii_isdigit(curc)
-                 && vim_iswordp_buf(rex.input, rex.reg_buf);
+                 && vim_iswordp_buf((char *)rex.input, rex.reg_buf);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -7362,15 +7362,15 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *ti
             && mpos->start_lnum == mpos->end_lnum
             && mpos->end_col >= mpos->start_col) {
           re_extmatch_out->matches[i] =
-            vim_strnsave(reg_getline(mpos->start_lnum) + mpos->start_col,
-                         (size_t)(mpos->end_col - mpos->start_col));
+            (char_u *)xstrnsave((char *)reg_getline(mpos->start_lnum) + mpos->start_col,
+                                (size_t)(mpos->end_col - mpos->start_col));
         }
       } else {
         struct linepos *lpos = &subs.synt.list.line[i];
 
         if (lpos->start != NULL && lpos->end != NULL) {
           re_extmatch_out->matches[i] =
-            vim_strnsave(lpos->start, (size_t)(lpos->end - lpos->start));
+            (char_u *)xstrnsave((char *)lpos->start, (size_t)(lpos->end - lpos->start));
         }
       }
     }

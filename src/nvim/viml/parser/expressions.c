@@ -66,8 +66,6 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 
-#define VIM_STR2NR(s, ...) vim_str2nr((const char_u *)(s), __VA_ARGS__)
-
 typedef kvec_withinit_t(ExprASTNode **, 16) ExprASTStack;
 
 /// Which nodes may be wanted
@@ -371,7 +369,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         significand_part = significand_part * 10 + (pline.data[i] - '0');
       }
       if (exp_start) {
-        VIM_STR2NR(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
+        vim_str2nr(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
                    (int)(ret.len - exp_start), false);
       }
       if (exp_negative) {
@@ -389,7 +387,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     } else {
       int len;
       int prep;
-      VIM_STR2NR(pline.data, &prep, &len, STR2NR_ALL, NULL,
+      vim_str2nr(pline.data, &prep, &len, STR2NR_ALL, NULL,
                  &ret.data.num.val.integer, (int)pline.size, false);
       ret.len = (size_t)len;
       const uint8_t bases[] = {
@@ -696,8 +694,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
 
   // Everything else is not valid.
   default:
-    ret.len = (size_t)utfc_ptr2len_len((const char_u *)pline.data,
-                                       (int)pline.size);
+    ret.len = (size_t)utfc_ptr2len_len(pline.data, (int)pline.size);
     ret.type = kExprLexInvalid;
     ret.data.err.type = kExprLexPlainIdentifier;
     ret.data.err.msg = _("E15: Unidentified character: %.*s");

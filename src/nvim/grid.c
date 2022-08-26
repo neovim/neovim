@@ -240,7 +240,7 @@ void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, 
     c = (unsigned char)(*ptr);
     // check if this is the first byte of a multibyte
     mbyte_blen = len > 0
-      ? utfc_ptr2len_len((char_u *)ptr, (int)((text + len) - ptr))
+      ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
       : utfc_ptr2len(ptr);
     u8c = len >= 0
       ? utfc_ptr2char_len((char_u *)ptr, u8cc, (int)((text + len) - ptr))

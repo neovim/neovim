@@ -430,7 +430,7 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         const char ubuf[] = { t[1], t[2], t[3], t[4] };
         t += 4;
         uvarnumber_T ch;
-        vim_str2nr((char_u *)ubuf, NULL, NULL,
+        vim_str2nr(ubuf, NULL, NULL,
                    STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4, true);
         if (ch == 0) {
           hasnul = true;
@@ -600,7 +600,7 @@ parse_json_number_check:
     // Convert integer
     varnumber_T nr;
     int num_len;
-    vim_str2nr((char_u *)s, NULL, &num_len, 0, &nr, NULL, (int)(p - s), true);
+    vim_str2nr(s, NULL, &num_len, 0, &nr, NULL, (int)(p - s), true);
     if ((int)exp_num_len != num_len) {
       semsg(_("E685: internal error: while converting number \"%.*s\" "
               "to integer vim_str2nr consumed %i bytes in place of %zu"),

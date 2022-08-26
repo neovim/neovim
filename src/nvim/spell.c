@@ -2104,8 +2104,8 @@ static void clear_midword(win_T *wp)
   XFREE_CLEAR(wp->w_s->b_spell_ismw_mb);
 }
 
-// Use the "sl_midword" field of language "lp" for buffer "buf".
-// They add up to any currently used midword characters.
+/// Use the "sl_midword" field of language "lp" for buffer "buf".
+/// They add up to any currently used midword characters.
 static void use_midword(slang_T *lp, win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2113,20 +2113,20 @@ static void use_midword(slang_T *lp, win_T *wp)
     return;
   }
 
-  for (char_u *p = lp->sl_midword; *p != NUL;) {
-    const int c = utf_ptr2char((char *)p);
-    const int l = utfc_ptr2len((char *)p);
+  for (char *p = (char *)lp->sl_midword; *p != NUL;) {
+    const int c = utf_ptr2char(p);
+    const int l = utfc_ptr2len(p);
     if (c < 256 && l <= 2) {
       wp->w_s->b_spell_ismw[c] = true;
     } else if (wp->w_s->b_spell_ismw_mb == NULL) {
       // First multi-byte char in "b_spell_ismw_mb".
-      wp->w_s->b_spell_ismw_mb = (char *)vim_strnsave(p, (size_t)l);
+      wp->w_s->b_spell_ismw_mb = xstrnsave(p, (size_t)l);
     } else {
       // Append multi-byte chars to "b_spell_ismw_mb".
       const int n = (int)STRLEN(wp->w_s->b_spell_ismw_mb);
-      char_u *bp = vim_strnsave((char_u *)wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
+      char *bp = xstrnsave(wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
       xfree(wp->w_s->b_spell_ismw_mb);
-      wp->w_s->b_spell_ismw_mb = (char *)bp;
+      wp->w_s->b_spell_ismw_mb = bp;
       STRLCPY(bp + n, p, l + 1);
     }
     p += l;
@@ -2470,7 +2470,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
     return false;
   }
 
-  char_u *line = get_cursor_line_ptr();
+  char_u *line = (char_u *)get_cursor_line_ptr();
   char_u *line_copy = NULL;
   colnr_T endcol = 0;
   if (getwhitecols((char *)line) >= (int)col) {
@@ -2548,7 +2548,7 @@ void ex_spellrepall(exarg_T *eap)
 
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
-    char_u *line = get_cursor_line_ptr();
+    char_u *line = (char_u *)get_cursor_line_ptr();
     if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
                                repl_to, STRLEN(repl_to)) != 0) {
       char_u *p = xmalloc(STRLEN(line) + (size_t)addlen + 1);
@@ -3497,7 +3497,7 @@ int spell_word_start(int startcol)
     return startcol;
   }
 
-  char_u *line = get_cursor_line_ptr();
+  char_u *line = (char_u *)get_cursor_line_ptr();
   char_u *p;
 
   // Find a word character before "startcol".

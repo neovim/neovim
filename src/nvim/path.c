@@ -509,7 +509,7 @@ char *save_abs_path(const char *name)
 /// @param p  The path to expand.
 /// @returns Unix: True if it contains one of "?[{`'$".
 /// @returns Windows: True if it contains one of "*?$[".
-bool path_has_wildcard(const char_u *p)
+bool path_has_wildcard(const char *p)
   FUNC_ATTR_NONNULL_ALL
 {
   for (; *p; MB_PTR_ADV(p)) {
@@ -1252,7 +1252,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     p = (char_u *)pat[i];
 
     if (vim_backtick(p)) {
-      add_pat = expand_backtick(&ga, p, flags);
+      add_pat = expand_backtick(&ga, (char *)p, flags);
       if (add_pat == -1) {
         recursive = false;
         FreeWild(ga.ga_len, ga.ga_data);
@@ -1367,14 +1367,14 @@ static int vim_backtick(char_u *p)
 /// Returns number of file names found, -1 if an error is encountered.
 ///
 /// @param flags  EW_* flags
-static int expand_backtick(garray_T *gap, char_u *pat, int flags)
+static int expand_backtick(garray_T *gap, char *pat, int flags)
 {
   char *p;
   char *buffer;
   int cnt = 0;
 
   // Create the command: lop off the backticks.
-  char *cmd = (char *)vim_strnsave(pat + 1, STRLEN(pat) - 2);
+  char *cmd = xstrnsave(pat + 1, STRLEN(pat) - 2);
 
   if (*cmd == '=') {          // `={expr}`: Expand expression
     buffer = eval_to_string(cmd + 1, &p, true);
@@ -1683,17 +1683,17 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
 /// Otherwise like file_name_at_cursor().
 ///
 /// @param rel_fname  file we are searching relative to
-char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count, char_u *rel_fname)
+char *find_file_name_in_path(char *ptr, size_t len, int options, long count, char *rel_fname)
 {
-  char_u *file_name;
-  char_u *tofree = NULL;
+  char *file_name;
+  char *tofree = NULL;
 
   if (len == 0) {
     return NULL;
   }
 
   if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-    tofree = (char_u *)eval_includeexpr((char *)ptr, len);
+    tofree = eval_includeexpr(ptr, len);
     if (tofree != NULL) {
       ptr = tofree;
       len = STRLEN(ptr);
@@ -1701,8 +1701,8 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
   }
 
   if (options & FNAME_EXP) {
-    file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS, true,
-                                  rel_fname);
+    file_name = (char *)find_file_in_path((char_u *)ptr, len, options & ~FNAME_MESS, true,
+                                          (char_u *)rel_fname);
 
     /*
      * If the file could not be found in a normal way, try applying
@@ -1710,16 +1710,16 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
      */
     if (file_name == NULL
         && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-      tofree = (char_u *)eval_includeexpr((char *)ptr, len);
+      tofree = eval_includeexpr(ptr, len);
       if (tofree != NULL) {
         ptr = tofree;
         len = STRLEN(ptr);
-        file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-                                      true, rel_fname);
+        file_name = (char *)find_file_in_path((char_u *)ptr, len, options & ~FNAME_MESS,
+                                              true, (char_u *)rel_fname);
       }
     }
     if (file_name == NULL && (options & FNAME_MESS)) {
-      char_u c = ptr[len];
+      char c = ptr[len];
       ptr[len] = NUL;
       semsg(_("E447: Can't find file \"%s\" in path"), ptr);
       ptr[len] = c;
@@ -1729,10 +1729,11 @@ char_u *find_file_name_in_path(char_u *ptr, size_t len, int options, long count,
      * appears several times in the path. */
     while (file_name != NULL && --count > 0) {
       xfree(file_name);
-      file_name = find_file_in_path(ptr, len, options, false, rel_fname);
+      file_name =
+        (char *)find_file_in_path((char_u *)ptr, len, options, false, (char_u *)rel_fname);
     }
   } else {
-    file_name = vim_strnsave(ptr, len);
+    file_name = xstrnsave(ptr, len);
   }
 
   xfree(tofree);

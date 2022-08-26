@@ -190,7 +190,7 @@ static void insert_enter(InsertState *s)
     }
   }
 
-  Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
+  Insstart_textlen = (colnr_T)linetabsize((char_u *)get_cursor_line_ptr());
   Insstart_blank_vcol = MAXCOL;
 
   if (!did_ai) {
@@ -274,7 +274,7 @@ static void insert_enter(InsertState *s)
     update_curswant();
     if (((ins_at_eol && curwin->w_cursor.lnum == o_lnum)
          || curwin->w_curswant > curwin->w_virtcol)
-        && *(s->ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
+        && *(s->ptr = (char_u *)get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
       if (s->ptr[1] == NUL) {
         curwin->w_cursor.col++;
       } else {
@@ -1470,7 +1470,7 @@ static void init_prompt(int cmdchar_todo)
   char_u *text;
 
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-  text = get_cursor_line_ptr();
+  text = (char_u *)get_cursor_line_ptr();
   if (STRNCMP(text, prompt, STRLEN(prompt)) != 0) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
@@ -1544,7 +1544,7 @@ void display_dollar(colnr_T col)
   curwin->w_cursor.col = col;
 
   // If on the last byte of a multi-byte move to the first byte.
-  char_u *p = get_cursor_line_ptr();
+  char_u *p = (char_u *)get_cursor_line_ptr();
   curwin->w_cursor.col -= utf_head_off((char *)p, (char *)p + col);
   curs_columns(curwin, false);              // Recompute w_wrow and w_wcol
   if (curwin->w_wcol < curwin->w_grid.cols) {
@@ -1590,7 +1590,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
 
   // MODE_VREPLACE state needs to know what the line was like before changing
   if (State & VREPLACE_FLAG) {
-    orig_line = vim_strsave(get_cursor_line_ptr());   // Deal with NULL below
+    orig_line = vim_strsave((char_u *)get_cursor_line_ptr());   // Deal with NULL below
     orig_col = curwin->w_cursor.col;
   }
 
@@ -1670,7 +1670,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
 
     // Advance the cursor until we reach the right screen column.
     last_vcol = 0;
-    ptr = get_cursor_line_ptr();
+    ptr = (char_u *)get_cursor_line_ptr();
     chartabsize_T cts;
     init_chartabsize_arg(&cts, curwin, 0, 0, (char *)ptr, (char *)ptr);
     while (cts.cts_vcol <= (int)curwin->w_virtcol) {
@@ -1761,7 +1761,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
   // then put it back again the way we wanted it.
   if (State & VREPLACE_FLAG) {
     // Save new line
-    new_line = vim_strsave(get_cursor_line_ptr());
+    new_line = vim_strsave((char_u *)get_cursor_line_ptr());
 
     // We only put back the new line up to the cursor
     new_line[curwin->w_cursor.col] = NUL;
@@ -2082,7 +2082,7 @@ void insertchar(int c, int flags, int second_indent)
 
     // Need to remove existing (middle) comment leader and insert end
     // comment leader.  First, check what comment leader we can find.
-    char_u *line = get_cursor_line_ptr();
+    char_u *line = (char_u *)get_cursor_line_ptr();
     int i = get_leader_len((char *)line, &p, false, true);
     if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {  // Just checking
       // Skip middle-comment string
@@ -2287,7 +2287,7 @@ int stop_arrow(void)
       // right, except when nothing was inserted yet.
       update_Insstart_orig = false;
     }
-    Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
+    Insstart_textlen = (colnr_T)linetabsize((char_u *)get_cursor_line_ptr());
 
     if (u_save_cursor() == OK) {
       arrow_used = false;
@@ -2484,7 +2484,7 @@ void beginline(int flags)
     if (flags & (BL_WHITE | BL_SOL)) {
       char_u *ptr;
 
-      for (ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr)
+      for (ptr = (char_u *)get_cursor_line_ptr(); ascii_iswhite(*ptr)
            && !((flags & BL_FIX) && ptr[1] == NUL); ptr++) {
         curwin->w_cursor.col++;
       }
@@ -2799,7 +2799,7 @@ static bool echeck_abbr(int c)
     return false;
   }
 
-  return check_abbr(c, get_cursor_line_ptr(), curwin->w_cursor.col,
+  return check_abbr(c, (char_u *)get_cursor_line_ptr(), curwin->w_cursor.col,
                     curwin->w_cursor.lnum == Insstart.lnum ? Insstart.col : 0);
 }
 
@@ -3148,7 +3148,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       // cursor.
     } else if (*look == 'e') {
       if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
-        p = get_cursor_line_ptr();
+        p = (char_u *)get_cursor_line_ptr();
         if ((char_u *)skipwhite((char *)p) == p + curwin->w_cursor.col - 4
             && STRNCMP(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
           return true;
@@ -3161,12 +3161,12 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       // class::method for C++).
     } else if (*look == ':') {
       if (try_match && keytyped == ':') {
-        p = get_cursor_line_ptr();
+        p = (char_u *)get_cursor_line_ptr();
         if (cin_iscase(p, false) || cin_isscopedecl(p) || cin_islabel()) {
           return true;
         }
         // Need to get the line again after cin_islabel().
-        p = get_cursor_line_ptr();
+        p = (char_u *)get_cursor_line_ptr();
         if (curwin->w_cursor.col > 2
             && p[curwin->w_cursor.col - 1] == ':'
             && p[curwin->w_cursor.col - 2] == ':') {
@@ -3174,7 +3174,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           const bool i = cin_iscase(p, false)
                          || cin_isscopedecl(p)
                          || cin_islabel();
-          p = get_cursor_line_ptr();
+          p = (char_u *)get_cursor_line_ptr();
           p[curwin->w_cursor.col - 1] = ':';
           if (i) {
             return true;
@@ -3226,7 +3226,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
           /* Just completed a word, check if it starts with "look".
            * search back for the start of a word. */
-          line = get_cursor_line_ptr();
+          line = (char_u *)get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
             n = mb_prevptr(line, s);
             if (!vim_iswordp(n)) {
@@ -3805,7 +3805,7 @@ static void ins_shift(int c, int lastc)
     change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, true, 0, true);
   }
 
-  if (did_ai && *skipwhite((char *)get_cursor_line_ptr()) != NUL) {
+  if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL) {
     did_ai = false;
   }
   did_si = false;
@@ -4609,7 +4609,7 @@ static bool ins_tab(void)
     if (State & VREPLACE_FLAG) {
       pos = curwin->w_cursor;
       cursor = &pos;
-      saved_line = vim_strsave(get_cursor_line_ptr());
+      saved_line = vim_strsave((char_u *)get_cursor_line_ptr());
       ptr = saved_line + pos.col;
     } else {
       ptr = get_cursor_pos_ptr();

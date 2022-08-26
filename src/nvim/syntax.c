@@ -93,7 +93,7 @@ typedef struct syn_pattern {
   int16_t *sp_cont_list;                // cont. group IDs, if non-zero
   int16_t *sp_next_list;                // next group IDs, if non-zero
   struct sp_syn sp_syn;                 // struct passed to in_id_list()
-  char_u *sp_pattern;                   // regexp to match, pattern
+  char *sp_pattern;                     // regexp to match, pattern
   regprog_T *sp_prog;                   // regexp to match, program
   syn_time_T sp_time;
 } synpat_T;
@@ -1709,9 +1709,10 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
       if (do_keywords) {
         line = (char_u *)syn_getcurline();
         const char_u *cur_pos = line + current_col;
-        if (vim_iswordp_buf(cur_pos, syn_buf)
+        if (vim_iswordp_buf((char *)cur_pos, syn_buf)
             && (current_col == 0
-                || !vim_iswordp_buf(cur_pos - 1 - utf_head_off((char *)line, (char *)cur_pos - 1),
+                || !vim_iswordp_buf((char *)cur_pos - 1 -
+                                    utf_head_off((char *)line, (char *)cur_pos - 1),
                                     syn_buf))) {
           syn_id = check_keyword_id((char *)line, (int)current_col, &endcol, &flags,
                                     &next_list, cur_si, &cchar);
@@ -2942,7 +2943,7 @@ static int check_keyword_id(char *const line, const int startcol, int *const end
   int kwlen = 0;
   do {
     kwlen += utfc_ptr2len(kwp + kwlen);
-  } while (vim_iswordp_buf((char_u *)kwp + kwlen, syn_buf));
+  } while (vim_iswordp_buf(kwp + kwlen, syn_buf));
 
   if (kwlen > MAXKEYWLEN) {
     return 0;
@@ -3772,14 +3773,14 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
   msg_putchar(c);
 
   // output the pattern, in between a char that is not in the pattern
-  for (i = 0; vim_strchr((char *)spp->sp_pattern, sepchars[i]) != NULL;) {
+  for (i = 0; vim_strchr(spp->sp_pattern, sepchars[i]) != NULL;) {
     if (sepchars[++i] == NUL) {
       i = 0;            // no good char found, just use the first one
       break;
     }
   }
   msg_putchar(sepchars[i]);
-  msg_outtrans((char *)spp->sp_pattern);
+  msg_outtrans(spp->sp_pattern);
   msg_putchar(sepchars[i]);
 
   // output any pattern options
@@ -4048,7 +4049,7 @@ static char *get_group_name(char *arg, char **name_end)
 ///              Return NULL for any error;
 static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, int skip)
 {
-  char_u *gname_start, *gname;
+  char *gname_start, *gname;
   int syn_id;
   int len = 0;
   char *p;
@@ -4157,16 +4158,16 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
           emsg(_("E393: group[t]here not accepted here"));
           return NULL;
         }
-        gname_start = (char_u *)arg;
+        gname_start = arg;
         arg = skiptowhite(arg);
-        if (gname_start == (char_u *)arg) {
+        if (gname_start == arg) {
           return NULL;
         }
-        gname = vim_strnsave(gname_start, (size_t)((char_u *)arg - gname_start));
+        gname = xstrnsave(gname_start, (size_t)(arg - gname_start));
         if (STRCMP(gname, "NONE") == 0) {
           *opt->sync_idx = NONE_IDX;
         } else {
-          syn_id = syn_name2id((char *)gname);
+          syn_id = syn_name2id(gname);
           int i;
           for (i = curwin->w_s->b_syn_patterns.ga_len; --i >= 0;) {
             if (SYN_ITEMS(curwin->w_s)[i].sp_syn.id == syn_id
@@ -4566,7 +4567,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
       key_end++;
     }
     xfree(key);
-    key = (char *)vim_strnsave_up((char_u *)rest, (size_t)(key_end - rest));
+    key = vim_strnsave_up(rest, (size_t)(key_end - rest));
     if (STRCMP(key, "MATCHGROUP") == 0) {
       item = ITEM_MATCHGROUP;
     } else if (STRCMP(key, "START") == 0) {
@@ -5043,12 +5044,12 @@ static char *get_syn_pattern(char *arg, synpat_T *ci)
     return NULL;
   }
   // store the pattern and compiled regexp program
-  ci->sp_pattern = vim_strnsave((char_u *)arg + 1, (size_t)(end - arg) - 1);
+  ci->sp_pattern = xstrnsave(arg + 1, (size_t)(end - arg) - 1);
 
   // Make 'cpoptions' empty, to avoid the 'l' flag
   cpo_save = p_cpo;
   p_cpo = empty_option;
-  ci->sp_prog = vim_regcomp((char *)ci->sp_pattern, RE_MAGIC);
+  ci->sp_prog = vim_regcomp(ci->sp_pattern, RE_MAGIC);
   p_cpo = cpo_save;
 
   if (ci->sp_prog == NULL) {
@@ -5137,7 +5138,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
     arg_end = skiptowhite(arg_start);
     next_arg = skipwhite(arg_end);
     xfree(key);
-    key = (char *)vim_strnsave_up((char_u *)arg_start, (size_t)(arg_end - arg_start));
+    key = vim_strnsave_up(arg_start, (size_t)(arg_end - arg_start));
     if (STRCMP(key, "CCOMMENT") == 0) {
       if (!eap->skip) {
         curwin->w_s->b_syn_sync_flags |= SF_CCOMMENT;
@@ -5975,7 +5976,7 @@ static void syntime_report(void)
       proftime_T tm = profile_divide(spp->sp_time.total, (int)spp->sp_time.count);
       p->average = tm;
       p->id = spp->sp_syn.id;
-      p->pattern = spp->sp_pattern;
+      p->pattern = (char_u *)spp->sp_pattern;
     }
   }
 

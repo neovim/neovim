@@ -66,11 +66,11 @@ typedef struct tag_pointers {
   char_u *command_end;  // first char after command
   char_u *tag_fname;  // file name of the tags file. This is used
   // when 'tr' is set.
-  char_u *tagkind;  // "kind:" value
-  char_u *tagkind_end;  // end of tagkind
-  char_u *user_data;  // user_data string
+  char_u *tagkind;        // "kind:" value
+  char_u *tagkind_end;    // end of tagkind
+  char *user_data;        // user_data string
   char_u *user_data_end;  // end of user_data
-  linenr_T tagline;        // "line:" value
+  linenr_T tagline;       // "line:" value
 } tagptrs_T;
 
 /*
@@ -588,9 +588,8 @@ bool do_tag(char_u *tag, int type, int count, int forceit, int verbose)
         if (use_tfu && parse_match(matches[cur_match], &tagp2) == OK
             && tagp2.user_data) {
           XFREE_CLEAR(tagstack[tagstackidx].user_data);
-          tagstack[tagstackidx].user_data = (char *)vim_strnsave(tagp2.user_data,
-                                                                 (size_t)(tagp2.user_data_end -
-                                                                          tagp2.user_data));
+          tagstack[tagstackidx].user_data =
+            xstrnsave(tagp2.user_data, (size_t)(tagp2.user_data_end - (char_u *)tagp2.user_data));
         }
 
         tagstackidx++;
@@ -1425,7 +1424,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   int help_pri = 0;
   char_u *help_lang_find = NULL;           // lang to be found
   char_u help_lang[3];                          // lang of current tags file
-  char_u *saved_pat = NULL;                // copy of pat[]
+  char *saved_pat = NULL;                // copy of pat[]
   bool is_txt = false;
 
   pat_T orgpat;                         // holds unconverted pattern info
@@ -1503,9 +1502,9 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
     if (orgpat.len > 3 && pat[orgpat.len - 3] == '@'
         && ASCII_ISALPHA(pat[orgpat.len - 2])
         && ASCII_ISALPHA(pat[orgpat.len - 1])) {
-      saved_pat = vim_strnsave((char_u *)pat, (size_t)orgpat.len - 3);
+      saved_pat = xstrnsave(pat, (size_t)orgpat.len - 3);
       help_lang_find = (char_u *)&pat[orgpat.len - 2];
-      orgpat.pat = saved_pat;
+      orgpat.pat = (char_u *)saved_pat;
       orgpat.len -= 3;
     }
   }
@@ -2430,11 +2429,11 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
       STRMOVE(filename + 1, filename);
       *filename++ = NUL;
 
-      tnp->tn_search_ctx = vim_findfile_init((char_u *)buf, filename,
-                                             (char_u *)r_ptr, 100,
+      tnp->tn_search_ctx = vim_findfile_init(buf, (char *)filename,
+                                             r_ptr, 100,
                                              false,                   // don't free visited list
                                              FINDFILE_FILE,           // we search for a file
-                                             tnp->tn_search_ctx, true, (char_u *)curbuf->b_ffname);
+                                             tnp->tn_search_ctx, true, curbuf->b_ffname);
       if (tnp->tn_search_ctx != NULL) {
         tnp->tn_did_filefind_init = true;
       }
@@ -2584,7 +2583,7 @@ static int parse_match(char *lbuf, tagptrs_T *tagp)
           if (STRNCMP(p, "kind:", 5) == 0) {
             tagp->tagkind = (char_u *)p + 5;
           } else if (STRNCMP(p, "user_data:", 10) == 0) {
-            tagp->user_data = (char_u *)p + 10;
+            tagp->user_data = p + 10;
           } else if (STRNCMP(p, "line:", 5) == 0) {
             tagp->tagline = atoi(p + 5);
           }
@@ -2612,7 +2611,7 @@ static int parse_match(char *lbuf, tagptrs_T *tagp)
       tagp->tagkind_end = (char_u *)p;
     }
     if (tagp->user_data != NULL) {
-      for (p = (char *)tagp->user_data;
+      for (p = tagp->user_data;
            *p && *p != '\t' && *p != '\r' && *p != '\n';
            MB_PTR_ADV(p)) {}
       tagp->user_data_end = (char_u *)p;
@@ -2980,7 +2979,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *const tag_fname, const bo
   /*
    * Expand file name (for environment variables) when needed.
    */
-  if (expand && path_has_wildcard(fname)) {
+  if (expand && path_has_wildcard((char *)fname)) {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_FILES;
     expanded_fname = ExpandOne(&xpc, fname, NULL,

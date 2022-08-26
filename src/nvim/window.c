@@ -6522,7 +6522,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
 
       *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
     }
-    return find_file_name_in_path((char_u *)ptr, len, options, count, (char_u *)curbuf->b_ffname);
+    return (char_u *)find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
   }
   return file_name_at_cursor(options | FNAME_HYP, count, file_lnum);
 }
@@ -6542,7 +6542,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
  */
 char_u *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 {
-  return file_name_in_line(get_cursor_line_ptr(),
+  return file_name_in_line((char_u *)get_cursor_line_ptr(),
                            curwin->w_cursor.col, options, count, (char_u *)curbuf->b_ffname,
                            file_lnum);
 }
@@ -6649,7 +6649,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
     }
   }
 
-  return find_file_name_in_path((char_u *)ptr, len, options, count, rel_fname);
+  return (char_u *)find_file_name_in_path(ptr, len, options, count, (char *)rel_fname);
 }
 
 /// Add or remove a status line from window(s), according to the

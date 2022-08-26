@@ -3689,7 +3689,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
   // Decide to expand wildcards *before* replacing '%', '#', etc.  If
   // the file name contains a wildcard it should not cause expanding.
   // (it will be expanded anyway if there is a wildcard before replacing).
-  int has_wildcards = path_has_wildcard((char_u *)p);
+  int has_wildcards = path_has_wildcard(p);
   while (*p != NUL) {
     // Skip over `=expr`, wildcards in it are not expanded.
     if (p[0] == '`' && p[1] == '=') {
@@ -3794,7 +3794,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
       if (vim_strchr(eap->arg, '$') != NULL
           || vim_strchr(eap->arg, '~') != NULL) {
         expand_env_esc((char_u *)eap->arg, (char_u *)NameBuff, MAXPATHL, true, true, NULL);
-        has_wildcards = path_has_wildcard((char_u *)NameBuff);
+        has_wildcards = path_has_wildcard(NameBuff);
         p = (char *)NameBuff;
       } else {
         p = NULL;

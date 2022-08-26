@@ -3134,7 +3134,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
   } else {
     par_pos = curwin->w_cursor;
     while (curwin->w_cursor.lnum > 1
-           && *skipwhite((char *)get_cursor_line_ptr()) != NUL) {
+           && *skipwhite(get_cursor_line_ptr()) != NUL) {
       curwin->w_cursor.lnum--;
     }
   }
@@ -3171,13 +3171,13 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
       }
       break;
     }
-    if (get_leader_len((char *)get_cursor_line_ptr(), NULL, false, true) > 0) {
+    if (get_leader_len(get_cursor_line_ptr(), NULL, false, true) > 0) {
       // Ignore this line, continue at start of next line.
       curwin->w_cursor.lnum++;
       curwin->w_cursor.col = 0;
       continue;
     }
-    bool valid = is_ident(get_cursor_line_ptr(), curwin->w_cursor.col);
+    bool valid = is_ident((char_u *)get_cursor_line_ptr(), curwin->w_cursor.col);
 
     // If the current position is not a valid identifier and a previous match is
     // present, favor that one instead.
@@ -3232,7 +3232,7 @@ bool find_decl(char_u *ptr, size_t len, bool locally, bool thisblock, int flags_
 /// @return  true if able to move cursor, false otherwise.
 static bool nv_screengo(oparg_T *oap, int dir, long dist)
 {
-  int linelen = linetabsize(get_cursor_line_ptr());
+  int linelen = linetabsize((char_u *)get_cursor_line_ptr());
   bool retval = true;
   bool atend = false;
   int n;
@@ -3303,7 +3303,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           }
           curwin->w_cursor.lnum--;
 
-          linelen = linetabsize(get_cursor_line_ptr());
+          linelen = linetabsize((char_u *)get_cursor_line_ptr());
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
             assert(curwin->w_curswant <= INT_MAX - w);
@@ -3339,7 +3339,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           if (curwin->w_curswant >= width1) {
             curwin->w_curswant -= width2;
           }
-          linelen = linetabsize(get_cursor_line_ptr());
+          linelen = linetabsize((char_u *)get_cursor_line_ptr());
         }
       }
     }
@@ -4294,7 +4294,7 @@ static void nv_ident(cmdarg_T *cap)
     // Call setpcmark() first, so "*``" puts the cursor back where
     // it was.
     setpcmark();
-    curwin->w_cursor.col = (colnr_T)(ptr - (char *)get_cursor_line_ptr());
+    curwin->w_cursor.col = (colnr_T)(ptr - get_cursor_line_ptr());
 
     if (!g_cmd && vim_iswordp((char_u *)ptr)) {
       STRCPY(buf, "\\<");
@@ -4382,13 +4382,13 @@ static void nv_ident(cmdarg_T *cap)
   // Execute the command.
   if (cmdchar == '*' || cmdchar == '#') {
     if (!g_cmd
-        && vim_iswordp(mb_prevptr(get_cursor_line_ptr(), (char_u *)ptr))) {
+        && vim_iswordp(mb_prevptr((char_u *)get_cursor_line_ptr(), (char_u *)ptr))) {
       STRCAT(buf, "\\>");
     }
 
     // put pattern in search history
     init_history();
-    add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
+    add_to_history(HIST_SEARCH, buf, true, NUL);
 
     (void)normal_search(cap, cmdchar == '*' ? '/' : '?', buf, 0, NULL);
   } else {
@@ -4425,7 +4425,7 @@ bool get_visual_text(cmdarg_T *cap, char **pp, size_t *lenp)
     return false;
   }
   if (VIsual_mode == 'V') {
-    *pp = (char *)get_cursor_line_ptr();
+    *pp = get_cursor_line_ptr();
     *lenp = STRLEN(*pp);
   } else {
     if (lt(curwin->w_cursor, VIsual)) {
@@ -6068,7 +6068,7 @@ static void nv_g_underscore_cmd(cmdarg_T *cap)
     return;
   }
 
-  char_u *ptr = get_cursor_line_ptr();
+  char_u *ptr = (char_u *)get_cursor_line_ptr();
 
   // In Visual mode we may end up after the line.
   if (curwin->w_cursor.col > 0 && ptr[curwin->w_cursor.col] == NUL) {
@@ -6279,7 +6279,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case 'M':
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
-    i = linetabsize(get_cursor_line_ptr());
+    i = linetabsize((char_u *)get_cursor_line_ptr());
     if (cap->count0 > 0 && cap->count0 <= 100) {
       coladvance((colnr_T)(i * cap->count0 / 100));
     } else {

@@ -493,9 +493,9 @@ void pchar_cursor(char_u c)
 }
 
 /// @return  pointer to cursor line.
-char_u *get_cursor_line_ptr(void)
+char *get_cursor_line_ptr(void)
 {
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false);
+  return (char *)ml_get_buf(curbuf, curwin->w_cursor.lnum, false);
 }
 
 /// @return  pointer to cursor position.
