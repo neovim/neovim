@@ -493,16 +493,24 @@ func Test_BufReadCmdHelpJump()
   au! BufReadCmd
 endfunc
 
-" BufReadCmd is triggered for a "nofile" buffer
+" BufReadCmd is triggered for a "nofile" buffer. Check all values.
 func Test_BufReadCmdNofile()
-  new somefile
-  set buftype=nofile
-  au BufReadCmd somefile call setline(1, 'triggered')
-  edit
-  call assert_equal('triggered', getline(1))
+  for val in ['nofile',
+            \ 'nowrite',
+            \ 'acwrite',
+            \ 'quickfix',
+            \ 'help',
+            \ 'prompt',
+            \ ]
+    new somefile
+    exe 'set buftype=' .. val
+    au BufReadCmd somefile call setline(1, 'triggered')
+    edit
+    call assert_equal('triggered', getline(1))
 
-  au! BufReadCmd
-  bwipe!
+    au! BufReadCmd
+    bwipe!
+  endfor
 endfunc
 
 func Test_augroup_deleted()
@@ -603,15 +611,22 @@ func Test_BufEnter()
   au! BufEnter
 
   " Editing a "nofile" buffer doesn't read the file but does trigger BufEnter
-  " for historic reasons.
-  new somefile
-  set buftype=nofile
-  au BufEnter somefile call setline(1, 'some text')
-  edit
-  call assert_equal('some text', getline(1))
-
-  bwipe!
-  au! BufEnter
+  " for historic reasons.  Also test other 'buftype' values.
+  for val in ['nofile',
+            \ 'nowrite',
+            \ 'acwrite',
+            \ 'quickfix',
+            \ 'help',
+            \ 'prompt',
+            \ ]
+    new somefile
+    exe 'set buftype=' .. val
+    au BufEnter somefile call setline(1, 'some text')
+    edit
+    call assert_equal('some text', getline(1))
+    bwipe!
+    au! BufEnter
+  endfor
 endfunc
 
 " Closing a window might cause an endless loop

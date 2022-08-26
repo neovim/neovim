@@ -187,4 +187,24 @@ func Test_deletebufline_select_mode()
   bwipe!
 endfunc
 
+func Test_setbufline_startup_nofile()
+  let before =<< trim [CODE]
+    set shortmess+=F
+    file Xresult
+    set buftype=nofile
+    call setbufline('', 1, 'success')
+  [CODE]
+  let after =<< trim [CODE]
+    set buftype=
+    write
+    quit
+  [CODE]
+
+  if !RunVim(before, after, '--clean')
+    return
+  endif
+  call assert_equal(['success'], readfile('Xresult'))
+  call delete('Xresult')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
