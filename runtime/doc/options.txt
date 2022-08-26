@@ -135,6 +135,11 @@ A few examples: >
    :set tags=tags\ /usr/tags	    results in "tags /usr/tags"
    :set tags=tags\\,file	    results in "tags\,file"
    :set tags=tags\\\ file	    results in "tags\ file"
+   
+TLDR: You can handle all edge cases explained below thus: >
+   :s/\v%(\=)\zs(.*)/\=substitute(substitute(submatch(1), '\\', '\\\\', 'g'), '[ "'."'".'|]', '\\\0', 'g')
+Assuming your cursor is on the line containing the option value you need to
+fix.
 
 The "|" character separates a ":set" command from a following command.  To
 include the "|" in the option value, use "\|" instead.  This example sets the
