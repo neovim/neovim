@@ -101,7 +101,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
                  || (VIsual_active && *p_sel != 'o')
                  || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
 
-  char_u *line = ml_get_buf(curbuf, pos->lnum, false);
+  char_u *line = (char_u *)ml_get_buf(curbuf, pos->lnum, false);
 
   if (wcol >= MAXCOL) {
     idx = (int)STRLEN(line) - 1 + one_more;
@@ -308,7 +308,7 @@ void check_pos(buf_T *buf, pos_T *pos)
   }
 
   if (pos->col > 0) {
-    char_u *line = ml_get_buf(buf, pos->lnum, false);
+    char_u *line = (char_u *)ml_get_buf(buf, pos->lnum, false);
     colnr_T len = (colnr_T)STRLEN(line);
     if (pos->col > len) {
       pos->col = len;
@@ -481,7 +481,7 @@ bool leftcol_changed(void)
 
 int gchar_cursor(void)
 {
-  return utf_ptr2char((char *)get_cursor_pos_ptr());
+  return utf_ptr2char(get_cursor_pos_ptr());
 }
 
 /// Write a character at the current cursor position.
@@ -489,18 +489,17 @@ int gchar_cursor(void)
 void pchar_cursor(char_u c)
 {
   *(ml_get_buf(curbuf, curwin->w_cursor.lnum, true)
-    + curwin->w_cursor.col) = c;
+    + curwin->w_cursor.col) = (char)c;
 }
 
 /// @return  pointer to cursor line.
 char *get_cursor_line_ptr(void)
 {
-  return (char *)ml_get_buf(curbuf, curwin->w_cursor.lnum, false);
+  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false);
 }
 
 /// @return  pointer to cursor position.
-char_u *get_cursor_pos_ptr(void)
+char *get_cursor_pos_ptr(void)
 {
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) +
-         curwin->w_cursor.col;
+  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) + curwin->w_cursor.col;
 }

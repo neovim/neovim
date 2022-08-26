@@ -118,7 +118,7 @@ void do_ascii(const exarg_T *const eap)
 {
   char *dig;
   int cc[MAX_MCO];
-  int c = utfc_ptr2char((char *)get_cursor_pos_ptr(), cc);
+  int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
     msg("NUL");
     return;
@@ -1068,7 +1068,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 
   curwin->w_cursor.lnum = n;
   while (line1 <= line2) {
-    // need to use vim_strsave() because the line will be unlocked within
+    // need to use xstrdup() because the line will be unlocked within
     // ml_append()
     p = xstrdup(ml_get(line1));
     ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, false);
@@ -1305,8 +1305,8 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     curbuf->b_op_start.lnum = line1;
     curbuf->b_op_end.lnum = line2;
     curwin->w_cursor.lnum = line2;
-  } else if ((do_in && (itmp = (char *)vim_tempname()) == NULL)
-             || (do_out && (otmp = (char *)vim_tempname()) == NULL)) {
+  } else if ((do_in && (itmp = vim_tempname()) == NULL)
+             || (do_out && (otmp = vim_tempname()) == NULL)) {
     emsg(_(e_notmp));
     goto filterend;
   }
@@ -3291,7 +3291,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, char *sub, char *cmd, boo
 
     if (save) {
       if ((cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
-        save_re_pat(RE_SUBST, (char_u *)pat, p_magic);
+        save_re_pat(RE_SUBST, pat, p_magic);
       }
       // put pattern in history
       add_to_history(HIST_SEARCH, pat, true, NUL);
@@ -3608,7 +3608,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     sub = xstrdup(sub);
     sub_copy = sub;
   } else {
-    char *newsub = (char *)regtilde((char_u *)sub, p_magic, cmdpreview);
+    char *newsub = regtilde(sub, p_magic, cmdpreview);
     if (newsub != sub) {
       // newsub was allocated, free it later.
       sub_copy = newsub;
@@ -4782,7 +4782,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
         if (next_linenr == orig_buf->b_ml.ml_line_count + 1) {
           line = "";
         } else {
-          line = (char *)ml_get_buf(orig_buf, next_linenr, false);
+          line = ml_get_buf(orig_buf, next_linenr, false);
           line_size = strlen(line) + (size_t)col_width + 1;
 
           // Reallocate if line not long enough

@@ -1157,7 +1157,7 @@ again:
 
   // Search for matching "</aaa>".  First isolate the "aaa".
   inc_cursor();
-  p = get_cursor_pos_ptr();
+  p = (char_u *)get_cursor_pos_ptr();
   for (cp = p;
        *cp != NUL && *cp != '>' && !ascii_iswhite(*cp);
        MB_PTR_ADV(cp)) {}
@@ -1196,7 +1196,7 @@ again:
       }
     }
   } else {
-    char_u *c = get_cursor_pos_ptr();
+    char_u *c = (char_u *)get_cursor_pos_ptr();
     // Exclude the '<' of the end tag.
     // If the closing tag is on new line, do not decrement cursor, but make
     // operation exclusive, so that the linefeed will be selected

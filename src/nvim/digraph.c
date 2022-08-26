@@ -1932,9 +1932,9 @@ void f_digraph_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
   int code = digraph_get(digraphs[0], digraphs[1], false);
 
-  char_u buf[NUMBUFLEN];
-  buf[utf_char2bytes(code, (char *)buf)] = NUL;
-  rettv->vval.v_string = (char *)vim_strsave(buf);
+  char buf[NUMBUFLEN];
+  buf[utf_char2bytes(code, buf)] = NUL;
+  rettv->vval.v_string = xstrdup(buf);
 }
 
 /// "digraph_getlist()" function

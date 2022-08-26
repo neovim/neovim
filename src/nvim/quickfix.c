@@ -710,7 +710,7 @@ static int qf_get_next_buf_line(qfstate_T *state)
   if (state->buflnum > state->lnumlast) {
     return QF_END_OF_INPUT;
   }
-  char *p_buf = (char *)ml_get_buf(state->buf, state->buflnum, false);
+  char *p_buf = ml_get_buf(state->buf, state->buflnum, false);
   state->buflnum += 1;
 
   size_t len = STRLEN(p_buf);
@@ -3832,7 +3832,7 @@ static buf_T *qf_find_buf(qf_info_T *qi)
 /// @return  OK or FAIL
 int qf_process_qftf_option(void)
 {
-  return option_set_callback_func((char_u *)p_qftf, &qftf_cb);
+  return option_set_callback_func(p_qftf, &qftf_cb);
 }
 
 /// Update the w:quickfix_title variable in the quickfix/location list window in
@@ -4317,7 +4317,7 @@ static char *get_mef_name(void)
   static int off = 0;
 
   if (*p_mef == NUL) {
-    name = (char *)vim_tempname();
+    name = vim_tempname();
     if (name == NULL) {
       emsg(_(e_notmp));
     }
@@ -5153,7 +5153,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
                          fname,
                          NULL,
                          duplicate_name ? 0 : buf->b_fnum,
-                         (char *)ml_get_buf(buf, regmatch->startpos[0].lnum + lnum, false),
+                         ml_get_buf(buf, regmatch->startpos[0].lnum + lnum, false),
                          regmatch->startpos[0].lnum + lnum,
                          regmatch->endpos[0].lnum + lnum,
                          regmatch->startpos[0].col + 1,
@@ -5180,7 +5180,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
         }
       }
     } else {
-      char *const str = (char *)ml_get_buf(buf, lnum, false);
+      char *const str = ml_get_buf(buf, lnum, false);
       int score;
       uint32_t matches[MAX_FUZZY_MATCHES];
       const size_t sz = sizeof(matches) / sizeof(matches[0]);
@@ -5260,7 +5260,7 @@ static bool existing_swapfile(const buf_T *buf)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
-    const char *const fname = (char *)buf->b_ml.ml_mfp->mf_fname;
+    const char *const fname = buf->b_ml.ml_mfp->mf_fname;
     const size_t len = STRLEN(fname);
 
     return fname[len - 1] != 'p' || fname[len - 2] != 'w';

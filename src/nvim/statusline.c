@@ -426,7 +426,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   int len;
   int fillchar;
   char buf[MAXPATHL];
-  char_u *stl;
+  char *stl;
   char *p;
   stl_hlrec_t *hltab;
   StlClickRecord *tabtab;
@@ -448,14 +448,14 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   // setup environment for the task at hand
   if (wp == NULL) {
     // Use 'tabline'.  Always at the first line of the screen.
-    stl = (char_u *)p_tal;
+    stl = p_tal;
     row = 0;
     fillchar = ' ';
     attr = HL_ATTR(HLF_TPF);
     maxwidth = Columns;
     use_sandbox = was_set_insecurely(wp, "tabline", 0);
   } else if (draw_winbar) {
-    stl = (char_u *)((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
+    stl = ((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
     row = -1;  // row zero is first row of text
     col = 0;
     grid = &wp->w_grid;
@@ -491,19 +491,19 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     }
 
     if (draw_ruler) {
-      stl = (char_u *)p_ruf;
+      stl = p_ruf;
       // advance past any leading group spec - implicit in ru_col
       if (*stl == '%') {
         if (*++stl == '-') {
           stl++;
         }
-        if (atoi((char *)stl)) {
+        if (atoi(stl)) {
           while (ascii_isdigit(*stl)) {
             stl++;
           }
         }
         if (*stl++ != '(') {
-          stl = (char_u *)p_ruf;
+          stl = p_ruf;
         }
       }
       col = ru_col - (Columns - maxwidth);
@@ -522,9 +522,9 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       use_sandbox = was_set_insecurely(wp, "rulerformat", 0);
     } else {
       if (*wp->w_p_stl != NUL) {
-        stl = (char_u *)wp->w_p_stl;
+        stl = wp->w_p_stl;
       } else {
-        stl = (char_u *)p_stl;
+        stl = p_stl;
       }
       use_sandbox = was_set_insecurely(wp, "statusline", *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
@@ -544,9 +544,9 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
   // Make a copy, because the statusline may include a function call that
   // might change the option value and free the memory.
-  stl = vim_strsave(stl);
+  stl = xstrdup(stl);
   width =
-    build_stl_str_hl(ewp, buf, sizeof(buf), (char *)stl, use_sandbox,
+    build_stl_str_hl(ewp, buf, sizeof(buf), stl, use_sandbox,
                      fillchar, maxwidth, &hltab, &tabtab);
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
@@ -711,7 +711,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
   }
 
   // Get line & check if empty (cursorpos will show "0-1").
-  const char *line_ptr = (char *)ml_get_buf(wp->w_buffer, lnum, false);
+  const char *line_ptr = ml_get_buf(wp->w_buffer, lnum, false);
   bool empty_line = (*line_ptr == NUL);
 
   // Get the byte value now, in case we need it below. This is more

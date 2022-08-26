@@ -1708,26 +1708,26 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
 
   rettv->vval.v_number = n;
   if (n != 0 && (IS_SPECIAL(n) || mod_mask != 0)) {
-    char_u temp[10];                // modifier: 3, mbyte-char: 6, NUL: 1
+    char temp[10];                // modifier: 3, mbyte-char: 6, NUL: 1
     int i = 0;
 
     // Turn a special key into three bytes, plus modifier.
     if (mod_mask != 0) {
-      temp[i++] = K_SPECIAL;
-      temp[i++] = KS_MODIFIER;
-      temp[i++] = (char_u)mod_mask;
+      temp[i++] = (char)K_SPECIAL;
+      temp[i++] = (char)KS_MODIFIER;
+      temp[i++] = (char)mod_mask;
     }
     if (IS_SPECIAL(n)) {
-      temp[i++] = K_SPECIAL;
-      temp[i++] = (char_u)K_SECOND(n);
-      temp[i++] = K_THIRD(n);
+      temp[i++] = (char)K_SPECIAL;
+      temp[i++] = (char)K_SECOND(n);
+      temp[i++] = (char)K_THIRD(n);
     } else {
-      i += utf_char2bytes((int)n, (char *)temp + i);
+      i += utf_char2bytes((int)n, temp + i);
     }
     assert(i < 10);
     temp[i++] = NUL;
     rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = (char *)vim_strsave(temp);
+    rettv->vval.v_string = xstrdup(temp);
 
     if (is_mouse_key((int)n)) {
       int row = mouse_row;
@@ -2135,7 +2135,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
 
   // complete match
   if (keylen >= 0 && keylen <= typebuf.tb_len) {
-    char_u *map_str = NULL;
+    char *map_str = NULL;
 
     // Write chars to script file(s).
     // Note: :lmap mappings are written *after* being applied. #5658
@@ -2175,8 +2175,8 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
     char save_m_expr = mp->m_expr;
     int save_m_noremap = mp->m_noremap;
     char save_m_silent = mp->m_silent;
-    char_u *save_m_keys = NULL;  // only saved when needed
-    char_u *save_m_str = NULL;  // only saved when needed
+    char *save_m_keys = NULL;  // only saved when needed
+    char *save_m_str = NULL;  // only saved when needed
     LuaRef save_m_luaref = mp->m_luaref;
 
     // Handle ":map <expr>": evaluate the {rhs} as an
@@ -2193,9 +2193,9 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       vgetc_busy = 0;
       may_garbage_collect = false;
 
-      save_m_keys = vim_strsave(mp->m_keys);
+      save_m_keys = xstrdup((char *)mp->m_keys);
       if (save_m_luaref == LUA_NOREF) {
-        save_m_str = vim_strsave((char_u *)mp->m_str);
+        save_m_str = xstrdup(mp->m_str);
       }
       map_str = eval_map_expr(mp, NUL);
 
@@ -2207,13 +2207,13 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       // If an error was displayed and the expression returns an empty
       // string, generate a <Nop> to allow for a redraw.
       if (prev_did_emsg != did_emsg && (map_str == NULL || *map_str == NUL)) {
-        char_u buf[4];
+        char buf[4];
         xfree(map_str);
-        buf[0] = K_SPECIAL;
-        buf[1] = KS_EXTRA;
+        buf[0] = (char)K_SPECIAL;
+        buf[1] = (char)KS_EXTRA;
         buf[2] = KE_IGNORE;
         buf[3] = NUL;
-        map_str = vim_strsave(buf);
+        map_str = xstrdup(buf);
         if (State & MODE_CMDLINE) {
           // redraw the command below the error
           msg_didout = true;
@@ -2227,7 +2227,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       vgetc_busy = save_vgetc_busy;
       may_garbage_collect = save_may_garbage_collect;
     } else {
-      map_str = (char_u *)mp->m_str;
+      map_str = mp->m_str;
     }
 
     // Insert the 'to' part in the typebuf.tb_buf.
@@ -2242,18 +2242,18 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       // If this is a LANGMAP mapping, then we didn't record the keys
       // at the start of the function and have to record them now.
       if (keylen > typebuf.tb_maplen && (mp->m_mode & MODE_LANGMAP) != 0) {
-        gotchars(map_str, STRLEN(map_str));
+        gotchars((char_u *)map_str, STRLEN(map_str));
       }
 
       if (save_m_noremap != REMAP_YES) {
         noremap = save_m_noremap;
-      } else if (STRNCMP(map_str, save_m_keys != NULL ? save_m_keys : mp->m_keys,
+      } else if (STRNCMP(map_str, save_m_keys != NULL ? save_m_keys : (char *)mp->m_keys,
                          (size_t)keylen) != 0) {
         noremap = REMAP_YES;
       } else {
         noremap = REMAP_SKIP;
       }
-      i = ins_typebuf((char *)map_str, noremap, 0, true, cmd_silent || save_m_silent);
+      i = ins_typebuf(map_str, noremap, 0, true, cmd_silent || save_m_silent);
       if (save_m_expr) {
         xfree(map_str);
       }

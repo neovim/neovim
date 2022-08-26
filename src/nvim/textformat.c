@@ -97,7 +97,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     colnr_T len;
     colnr_T virtcol;
     int orig_col = 0;
-    char_u *saved_text = NULL;
+    char *saved_text = NULL;
     colnr_T col;
     colnr_T end_col;
     bool did_do_comment = false;
@@ -353,7 +353,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state, we will backspace over the text to be
       // wrapped, so save a copy now to put on the next line.
-      saved_text = vim_strsave(get_cursor_pos_ptr());
+      saved_text = xstrdup(get_cursor_pos_ptr());
       curwin->w_cursor.col = orig_col;
       saved_text[startcol] = NUL;
 
@@ -425,7 +425,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
     if (State & VREPLACE_FLAG) {
       // In MODE_VREPLACE state we have backspaced over the text to be
       // moved, now we re-insert it into the new line.
-      ins_bytes((char *)saved_text);
+      ins_bytes(saved_text);
       xfree(saved_text);
     } else {
       // Check if cursor is not past the NUL off the line, cindent
@@ -508,13 +508,13 @@ static bool ends_in_white(linenr_T lnum)
 /// @param lnum  The first line.  White-space is ignored.
 ///
 /// @note the whole of 'leader1' must match 'leader2_len' characters from 'leader2'.
-static bool same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, int leader2_len,
-                        char_u *leader2_flags)
+static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int leader2_len,
+                        char *leader2_flags)
 {
   int idx1 = 0, idx2 = 0;
-  char_u *p;
-  char_u *line1;
-  char_u *line2;
+  char *p;
+  char *line1;
+  char *line2;
 
   if (leader1_len == 0) {
     return leader2_len == 0;
@@ -552,9 +552,9 @@ static bool same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, i
 
   // Get current line and next line, compare the leaders.
   // The first line has to be saved, only one line can be locked at a time.
-  line1 = vim_strsave((char_u *)ml_get(lnum));
+  line1 = xstrdup(ml_get(lnum));
   for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {}
-  line2 = (char_u *)ml_get(lnum + 1);
+  line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; idx2++) {
     if (!ascii_iswhite(line2[idx2])) {
       if (line1[idx1++] != line2[idx2]) {
@@ -605,8 +605,8 @@ static bool paragraph_start(linenr_T lnum)
   if (has_format_option(FO_Q_NUMBER) && (get_number_indent(lnum) > 0)) {
     return true;                // numbered item starts in "lnum".
   }
-  if (!same_leader(lnum - 1, leader_len, leader_flags,
-                   next_leader_len, next_leader_flags)) {
+  if (!same_leader(lnum - 1, leader_len, (char *)leader_flags,
+                   next_leader_len, (char *)next_leader_flags)) {
     return true;                // change of comment leader.
   }
   return false;
@@ -1018,9 +1018,9 @@ void format_lines(linenr_T line_count, bool avoid_fex)
       // When the comment leader changes, it's the end of the paragraph.
       if (curwin->w_cursor.lnum >= curbuf->b_ml.ml_line_count
           || !same_leader(curwin->w_cursor.lnum,
-                          leader_len, leader_flags,
+                          leader_len, (char *)leader_flags,
                           next_leader_len,
-                          next_leader_flags)) {
+                          (char *)next_leader_flags)) {
         // Special case: If the next line starts with a line comment
         // and this line has a line comment after some text, the
         // paragraph doesn't really end.

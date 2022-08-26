@@ -1838,7 +1838,7 @@ int get_c_indent(void)
   int cur_amount = MAXCOL;
   colnr_T col;
   char_u *theline;
-  char_u *linecopy;
+  char *linecopy;
   pos_T *trypos;
   pos_T *comment_pos;
   pos_T *tryposBrace = NULL;
@@ -1893,7 +1893,7 @@ int get_c_indent(void)
   // Get a copy of the current contents of the line.
   // This is required, because only the most recent line obtained with
   // ml_get is valid!
-  linecopy = vim_strsave((char_u *)ml_get(cur_curpos.lnum));
+  linecopy = xstrdup(ml_get(cur_curpos.lnum));
 
   // In insert mode and the cursor is on a ')' truncate the line at the
   // cursor position.  We don't want to line up with the matching '(' when
@@ -1906,7 +1906,7 @@ int get_c_indent(void)
     linecopy[curwin->w_cursor.col] = NUL;
   }
 
-  theline = (char_u *)skipwhite((char *)linecopy);
+  theline = (char_u *)skipwhite(linecopy);
 
   // move the cursor to the start of the line
 

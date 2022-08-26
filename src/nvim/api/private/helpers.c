@@ -466,7 +466,7 @@ bool buf_collect_lines(buf_T *buf, size_t n, int64_t start, bool replace_nl, Arr
       return false;
     }
 
-    const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+    const char *bufstr = ml_get_buf(buf, (linenr_T)lnum, false);
     Object str = STRING_OBJ(cstr_to_string(bufstr));
 
     if (replace_nl) {
@@ -499,7 +499,7 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
     return rv;
   }
 
-  const char *bufstr = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+  const char *bufstr = ml_get_buf(buf, (linenr_T)lnum, false);
   size_t line_length = strlen(bufstr);
 
   start_col = start_col < 0 ? (int64_t)line_length + start_col + 1 : start_col;

@@ -303,7 +303,7 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
       // NB: replace_termcodes may produce an empty string even if orig_rhs is non-empty
       // (e.g. a single ^V, see :h map-empty-rhs)
       mapargs->rhs_is_noop = orig_rhs_len != 0 && mapargs->rhs_len == 0;
-      mapargs->rhs = (char_u *)replaced;
+      mapargs->rhs = replaced;
     }
   } else {
     char tmp_buf[64];
@@ -313,7 +313,7 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
     // stores <lua>ref_no<cr> in map_str
     mapargs->rhs_len = (size_t)vim_snprintf(S_LEN(tmp_buf), "%c%c%c%d\r", K_SPECIAL,
                                             (char_u)KS_EXTRA, KE_LUA, rhs_lua);
-    mapargs->rhs = vim_strsave((char_u *)tmp_buf);
+    mapargs->rhs = xstrdup(tmp_buf);
   }
 }
 
@@ -439,7 +439,7 @@ static int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *ma
 ///              and "desc" fields are used.
 ///              "rhs", "rhs_lua", "orig_rhs" fields are cleared if "simplified" is false.
 /// @param sid  -1 to use current_sctx
-static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table, const char_u *keys,
+static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table, const char *keys,
                     MapArguments *args, int noremap, int mode, bool is_abbr, scid_T sid,
                     linenr_T lnum, bool simplified)
 {
@@ -454,8 +454,8 @@ static void map_add(buf_T *buf, mapblock_T **map_table, mapblock_T **abbr_table,
     }
   }
 
-  mp->m_keys = vim_strsave(keys);
-  mp->m_str = (char *)args->rhs;
+  mp->m_keys = (uint8_t *)xstrdup(keys);
+  mp->m_str = args->rhs;
   mp->m_orig_str = (char *)args->orig_rhs;
   mp->m_luaref = args->rhs_lua;
   if (!simplified) {
@@ -767,7 +767,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                     XFREE_CLEAR(mp->m_str);
                     XFREE_CLEAR(mp->m_orig_str);
                   }
-                  mp->m_str = (char *)args->rhs;
+                  mp->m_str = args->rhs;
                   mp->m_orig_str = (char *)args->orig_rhs;
                   mp->m_luaref = args->rhs_lua;
                   if (!keyround1_simplified) {
@@ -846,7 +846,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
     }
 
     // Get here when adding a new entry to the maphash[] list or abbrlist.
-    map_add(buf, map_table, abbr_table, lhs, args, noremap, mode, is_abbrev,
+    map_add(buf, map_table, abbr_table, (char *)lhs, args, noremap, mode, is_abbrev,
             -1,  // sid
             0,   // lnum
             keyround1_simplified);
@@ -1265,7 +1265,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char ***file)
   int hash;
   int count;
   int round;
-  char_u *p;
+  char *p;
   int i;
 
   *num_file = 0;                    // return values in case of FAIL
@@ -1278,28 +1278,28 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char ***file)
 
     for (i = 0; i < 7; i++) {
       if (i == 0) {
-        p = (char_u *)"<silent>";
+        p = "<silent>";
       } else if (i == 1) {
-        p = (char_u *)"<unique>";
+        p = "<unique>";
       } else if (i == 2) {
-        p = (char_u *)"<script>";
+        p = "<script>";
       } else if (i == 3) {
-        p = (char_u *)"<expr>";
+        p = "<expr>";
       } else if (i == 4 && !expand_buffer) {
-        p = (char_u *)"<buffer>";
+        p = "<buffer>";
       } else if (i == 5) {
-        p = (char_u *)"<nowait>";
+        p = "<nowait>";
       } else if (i == 6) {
-        p = (char_u *)"<special>";
+        p = "<special>";
       } else {
         continue;
       }
 
-      if (vim_regexec(regmatch, (char *)p, (colnr_T)0)) {
+      if (vim_regexec(regmatch, p, (colnr_T)0)) {
         if (round == 1) {
           count++;
         } else {
-          (*file)[count++] = (char *)vim_strsave(p);
+          (*file)[count++] = xstrdup(p);
         }
       }
     }
@@ -1317,12 +1317,12 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char ***file)
       }
       for (; mp; mp = mp->m_next) {
         if (mp->m_mode & expand_mapmodes) {
-          p = translate_mapping(mp->m_keys, CPO_TO_CPO_FLAGS);
-          if (p != NULL && vim_regexec(regmatch, (char *)p, (colnr_T)0)) {
+          p = (char *)translate_mapping(mp->m_keys, CPO_TO_CPO_FLAGS);
+          if (p != NULL && vim_regexec(regmatch, p, (colnr_T)0)) {
             if (round == 1) {
               count++;
             } else {
-              (*file)[count++] = (char *)p;
+              (*file)[count++] = p;
               p = NULL;
             }
           }
@@ -1447,20 +1447,20 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
          mp->m_next == NULL ? (mp = mp2, mp2 = NULL) :
          (mp = mp->m_next)) {
       int qlen = mp->m_keylen;
-      char_u *q = mp->m_keys;
+      char *q = (char *)mp->m_keys;
       int match;
 
       if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
         // Might have K_SPECIAL escaped mp->m_keys.
-        q = vim_strsave(mp->m_keys);
-        vim_unescape_ks(q);
+        q = xstrdup((char *)mp->m_keys);
+        vim_unescape_ks((char_u *)q);
         qlen = (int)STRLEN(q);
       }
       // find entries with right mode and keys
       match = (mp->m_mode & State)
               && qlen == len
               && !STRNCMP(q, ptr, (size_t)len);
-      if (q != mp->m_keys) {
+      if (q != (char *)mp->m_keys) {
         xfree(q);
       }
       if (match) {
@@ -1510,7 +1510,7 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
         (void)ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
       }
       if (mp->m_expr) {
-        s = eval_map_expr(mp, c);
+        s = (char_u *)eval_map_expr(mp, c);
       } else {
         s = (char_u *)mp->m_str;
       }
@@ -1540,16 +1540,16 @@ bool check_abbr(int c, char_u *ptr, int col, int mincol)
 /// special characters.
 ///
 /// @param c  NUL or typed character for abbreviation
-char_u *eval_map_expr(mapblock_T *mp, int c)
+char *eval_map_expr(mapblock_T *mp, int c)
 {
-  char_u *p = NULL;
-  char_u *expr = NULL;
+  char *p = NULL;
+  char *expr = NULL;
 
   // Remove escaping of K_SPECIAL, because "str" is in a format to be used as
   // typeahead.
   if (mp->m_luaref == LUA_NOREF) {
-    expr = vim_strsave((char_u *)mp->m_str);
-    vim_unescape_ks(expr);
+    expr = xstrdup(mp->m_str);
+    vim_unescape_ks((char_u *)expr);
   }
 
   // Forbid changing text or using ":normal" to avoid most of the bad side
@@ -1565,7 +1565,7 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
     Array args = ARRAY_DICT_INIT;
     Object ret = nlua_call_ref(mp->m_luaref, NULL, args, true, &err);
     if (ret.type == kObjectTypeString) {
-      p = (char_u *)xstrndup(ret.data.string.data, ret.data.string.size);
+      p = xstrndup(ret.data.string.data, ret.data.string.size);
     }
     api_free_object(ret);
     if (err.type != kErrorTypeNone) {
@@ -1573,7 +1573,7 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
       api_clear_error(&err);
     }
   } else {
-    p = (char_u *)eval_to_string((char *)expr, NULL, false);
+    p = eval_to_string(expr, NULL, false);
     xfree(expr);
   }
   textlock--;
@@ -1586,13 +1586,13 @@ char_u *eval_map_expr(mapblock_T *mp, int c)
     return NULL;
   }
 
-  char_u *res = NULL;
+  char *res = NULL;
 
   if (mp->m_replace_keycodes) {
-    replace_termcodes((char *)p, STRLEN(p), (char **)&res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+    replace_termcodes(p, STRLEN(p), &res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
   } else {
     // Escape K_SPECIAL in the result to be able to use the string as typeahead.
-    res = (char_u *)vim_strsave_escape_ks((char *)p);
+    res = vim_strsave_escape_ks(p);
   }
   xfree(p);
 
@@ -2204,10 +2204,10 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   xfree(unmap_args.orig_rhs);
 
   if (lhsrawalt != NULL) {
-    map_add(curbuf, map_table, abbr_table, (char_u *)lhsrawalt, &args, noremap, mode, is_abbr,
+    map_add(curbuf, map_table, abbr_table, lhsrawalt, &args, noremap, mode, is_abbr,
             sid, lnum, true);
   }
-  map_add(curbuf, map_table, abbr_table, (char_u *)lhsraw, &args, noremap, mode, is_abbr,
+  map_add(curbuf, map_table, abbr_table, lhsraw, &args, noremap, mode, is_abbr,
           sid, lnum, false);
 }
 

@@ -180,7 +180,7 @@ void ex_help(exarg_T *eap)
   // It is needed for do_tag top open folds under the cursor.
   KeyTyped = old_KeyTyped;
 
-  do_tag((char_u *)tag, DT_HELP, 1, false, true);
+  do_tag(tag, DT_HELP, 1, false, true);
 
   // Delete the empty buffer if we're not using it.  Careful: autocommands
   // may have jumped to another window, check that the buffer is not in a
@@ -658,13 +658,13 @@ void fix_help_buffer(void)
 
   if (!syntax_present(curwin)) {
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
-      line = (char *)ml_get_buf(curbuf, lnum, false);
+      line = ml_get_buf(curbuf, lnum, false);
       const size_t len = STRLEN(line);
       if (in_example && len > 0 && !ascii_iswhite(line[0])) {
         // End of example: non-white or '<' in first column.
         if (line[0] == '<') {
           // blank-out a '<' in the first column
-          line = (char *)ml_get_buf(curbuf, lnum, true);
+          line = ml_get_buf(curbuf, lnum, true);
           line[0] = ' ';
         }
         in_example = false;
@@ -672,12 +672,12 @@ void fix_help_buffer(void)
       if (!in_example && len > 0) {
         if (line[len - 1] == '>' && (len == 1 || line[len - 2] == ' ')) {
           // blank-out a '>' in the last column (start of example)
-          line = (char *)ml_get_buf(curbuf, lnum, true);
+          line = ml_get_buf(curbuf, lnum, true);
           line[len - 1] = ' ';
           in_example = true;
         } else if (line[len - 1] == '~') {
           // blank-out a '~' at the end of line (header marker)
-          line = (char *)ml_get_buf(curbuf, lnum, true);
+          line = ml_get_buf(curbuf, lnum, true);
           line[len - 1] = ' ';
         }
       }
@@ -694,7 +694,7 @@ void fix_help_buffer(void)
           && TOLOWER_ASC(fname[7]) == 'x'
           && fname[8] == NUL)) {
     for (lnum = 1; lnum < curbuf->b_ml.ml_line_count; lnum++) {
-      line = (char *)ml_get_buf(curbuf, lnum, false);
+      line = ml_get_buf(curbuf, lnum, false);
       if (strstr(line, "*local-additions*") == NULL) {
         continue;
       }
@@ -1167,8 +1167,7 @@ void ex_helptags(exarg_T *eap)
   } else {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_DIRECTORIES;
-    dirname = (char *)ExpandOne(&xpc, (char_u *)eap->arg, NULL,
-                                WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
+    dirname = ExpandOne(&xpc, eap->arg, NULL, WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
     if (dirname == NULL || !os_isdir(dirname)) {
       semsg(_("E150: Not a directory: %s"), eap->arg);
     } else {

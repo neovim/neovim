@@ -3909,7 +3909,7 @@ char *partial_name(partial_T *pt)
   FUNC_ATTR_PURE
 {
   if (pt->pt_name != NULL) {
-    return (char *)pt->pt_name;
+    return pt->pt_name;
   }
   return (char *)pt->pt_func->uf_name;
 }
@@ -3924,7 +3924,7 @@ static void partial_free(partial_T *pt)
   xfree(pt->pt_argv);
   tv_dict_unref(pt->pt_dict);
   if (pt->pt_name != NULL) {
-    func_unref(pt->pt_name);
+    func_unref((char_u *)pt->pt_name);
     xfree(pt->pt_name);
   } else {
     func_ptr_unref(pt->pt_func);
@@ -4478,7 +4478,7 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack, list_stack
 
     // A partial does not have a copyID, because it cannot contain itself.
     if (pt != NULL) {
-      abort = set_ref_in_func(pt->pt_name, pt->pt_func, copyID);
+      abort = set_ref_in_func((char_u *)pt->pt_name, pt->pt_func, copyID);
       if (pt->pt_dict != NULL) {
         typval_T dtv;
 
@@ -4846,7 +4846,7 @@ void filter_map(typval_T *argvars, typval_T *rettv, int map)
             break;
           }
 
-          vimvars[VV_KEY].vv_str = (char *)vim_strsave(di->di_key);
+          vimvars[VV_KEY].vv_str = xstrdup((char *)di->di_key);
           int r = filter_map_one(&di->di_tv, expr, map, &rem);
           tv_clear(&vimvars[VV_KEY].vv_tv);
           if (r == FAIL || did_emsg) {
@@ -5113,7 +5113,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
         func_ptr_ref(pt->pt_func);
         xfree(name);
       } else {
-        pt->pt_name = (char_u *)name;
+        pt->pt_name = name;
         func_ref((char_u *)name);
       }
 
@@ -6208,7 +6208,7 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
     buf_T *buf = buflist_findnr((int)tv->vval.v_number);
     if (buf) {
       for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-        for (char *p = (char *)ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+        for (char *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
           *len += 1;
         }
         *len += 1;
@@ -6226,7 +6226,7 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
     char *ret = xmalloc((size_t)(*len) + 1);
     char *end = ret;
     for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-      for (char *p = (char *)ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+      for (char *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
         *end++ = (*p == '\n') ? NUL : *p;
       }
       *end++ = '\n';
@@ -6275,7 +6275,7 @@ int buf_byteidx_to_charidx(buf_T *buf, linenr_T lnum, int byteidx)
     lnum = buf->b_ml.ml_line_count;
   }
 
-  char *str = (char *)ml_get_buf(buf, lnum, false);
+  char *str = ml_get_buf(buf, lnum, false);
 
   if (*str == NUL) {
     return 0;
@@ -6313,7 +6313,7 @@ int buf_charidx_to_byteidx(buf_T *buf, linenr_T lnum, int charidx)
     lnum = buf->b_ml.ml_line_count;
   }
 
-  char *str = (char *)ml_get_buf(buf, lnum, false);
+  char *str = ml_get_buf(buf, lnum, false);
 
   // Convert the character offset to a byte offset
   char *t = str;

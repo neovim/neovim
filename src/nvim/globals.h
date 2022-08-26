@@ -599,7 +599,7 @@ EXTERN int inhibit_delete_count INIT(= 0);
 #define DBCS_DEBUG     (-1)
 
 /// Encoding used when 'fencs' is set to "default"
-EXTERN char_u *fenc_default INIT(= NULL);
+EXTERN char *fenc_default INIT(= NULL);
 
 /// "State" is the main state of Vim.
 /// There are other variables that modify the state:

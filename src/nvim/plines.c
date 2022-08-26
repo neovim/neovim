@@ -102,7 +102,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   unsigned int col;
   int width;
 
-  s = (char *)ml_get_buf(wp->w_buffer, lnum, false);
+  s = ml_get_buf(wp->w_buffer, lnum, false);
   if (*s == NUL) {  // empty line
     return 1;
   }
@@ -144,7 +144,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
     return lines + 1;
   }
 
-  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
+  char_u *line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
 
   colnr_T col = 0;
   chartabsize_T cts;

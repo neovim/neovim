@@ -2292,7 +2292,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
   // If the user didn't specify a file name, use a temp file.
   if (psettings->outfile == NULL) {
-    prt_ps_file_name = vim_tempname();
+    prt_ps_file_name = (char_u *)vim_tempname();
     if (prt_ps_file_name == NULL) {
       emsg(_(e_notmp));
       return FAIL;

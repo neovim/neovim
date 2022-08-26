@@ -1857,14 +1857,14 @@ static char_u *regatom(int *flagp)
       char_u *lp;
 
       ret = regnode(EXACTLY);
-      lp = reg_prev_sub;
+      lp = (char_u *)reg_prev_sub;
       while (*lp != NUL) {
         regc(*lp++);
       }
       regc(NUL);
       if (*reg_prev_sub != NUL) {
         *flagp |= HASWIDTH;
-        if ((lp - reg_prev_sub) == 1) {
+        if ((lp - (char_u *)reg_prev_sub) == 1) {
           *flagp |= SIMPLE;
         }
       }

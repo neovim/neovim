@@ -913,7 +913,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   int ts = (int)wp->w_buffer->b_p_ts;
 
   colnr_T vcol = 0;
-  char *line = ptr = (char *)ml_get_buf(wp->w_buffer, pos->lnum, false);  // start of the line
+  char *line = ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);  // start of the line
 
   if (pos->col == MAXCOL) {
     // continue until the NUL
@@ -1076,7 +1076,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     colnr_T endadd = 0;
 
     // Cannot put the cursor on part of a wide character.
-    char *ptr = (char *)ml_get_buf(wp->w_buffer, pos->lnum, false);
+    char *ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
     if (pos->col < (colnr_T)STRLEN(ptr)) {
       int c = utf_ptr2char(ptr + pos->col);

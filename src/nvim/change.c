@@ -774,7 +774,7 @@ int del_char(bool fixpos)
 int del_chars(long count, int fixpos)
 {
   int bytes = 0;
-  char *p = (char *)get_cursor_pos_ptr();
+  char *p = get_cursor_pos_ptr();
   for (long i = 0; i < count && *p != NUL; i++) {
     int l = utfc_ptr2len(p);
     bytes += l;
@@ -1036,7 +1036,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   colnr_T mincol = curwin->w_cursor.col + 1;
 
   // make a copy of the current line so we can mess with it
-  char *saved_line = (char *)vim_strsave((char_u *)get_cursor_line_ptr());
+  char *saved_line = xstrdup(get_cursor_line_ptr());
 
   if (State & VREPLACE_FLAG) {
     // With MODE_VREPLACE we make a copy of the next line, which we will be

@@ -1536,7 +1536,7 @@ void show_utf8(void)
 
   // Get the byte length of the char under the cursor, including composing
   // characters.
-  line = get_cursor_pos_ptr();
+  line = (char_u *)get_cursor_pos_ptr();
   len = utfc_ptr2len((char *)line);
   if (len == 0) {
     msg("NUL");
@@ -1891,7 +1891,7 @@ void utf_find_illegal(void)
 
   curwin->w_cursor.coladd = 0;
   for (;;) {
-    p = get_cursor_pos_ptr();
+    p = (char_u *)get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
       xfree(tofree);
       tofree = (char_u *)string_convert(&vimconv, (char *)p, NULL);
@@ -1908,12 +1908,12 @@ void utf_find_illegal(void)
       if (*p >= 0x80 && (len == 1
                          || utf_char2len(utf_ptr2char((char *)p)) != len)) {
         if (vimconv.vc_type == CONV_NONE) {
-          curwin->w_cursor.col += (colnr_T)(p - get_cursor_pos_ptr());
+          curwin->w_cursor.col += (colnr_T)(p - (char_u *)get_cursor_pos_ptr());
         } else {
           int l;
 
           len = (int)(p - tofree);
-          for (p = get_cursor_pos_ptr(); *p != NUL && len-- > 0; p += l) {
+          for (p = (char_u *)get_cursor_pos_ptr(); *p != NUL && len-- > 0; p += l) {
             l = utf_ptr2len((char *)p);
             curwin->w_cursor.col += l;
           }
@@ -1980,7 +1980,7 @@ void mb_check_adjust_col(void *win_)
 
   // Column 0 is always valid.
   if (oldcol != 0) {
-    char *p = (char *)ml_get_buf(win->w_buffer, win->w_cursor.lnum, false);
+    char *p = ml_get_buf(win->w_buffer, win->w_cursor.lnum, false);
     colnr_T len = (colnr_T)STRLEN(p);
 
     // Empty line or invalid column?
@@ -2114,27 +2114,27 @@ char *enc_skip(char *p)
 char *enc_canonize(char *enc)
   FUNC_ATTR_NONNULL_RET
 {
-  char_u *p, *s;
+  char *p, *s;
   if (STRCMP(enc, "default") == 0) {
     // Use the default encoding as found by set_init_1().
-    return (char *)vim_strsave(fenc_default);
+    return xstrdup(fenc_default);
   }
 
   // copy "enc" to allocated memory, with room for two '-'
-  char_u *r = xmalloc(STRLEN(enc) + 3);
+  char *r = xmalloc(STRLEN(enc) + 3);
   // Make it all lower case and replace '_' with '-'.
   p = r;
-  for (s = (char_u *)enc; *s != NUL; s++) {
+  for (s = enc; *s != NUL; s++) {
     if (*s == '_') {
       *p++ = '-';
     } else {
-      *p++ = (char_u)TOLOWER_ASC(*s);
+      *p++ = (char)TOLOWER_ASC(*s);
     }
   }
   *p = NUL;
 
   // Skip "2byte-" and "8bit-".
-  p = (char_u *)enc_skip((char *)r);
+  p = enc_skip(r);
 
   // Change "microsoft-cp" to "cp".  Used in some spell files.
   if (STRNCMP(p, "microsoft-cp", 12) == 0) {
@@ -2159,17 +2159,17 @@ char *enc_canonize(char *enc)
   }
 
   int i;
-  if (enc_canon_search(p) >= 0) {
+  if (enc_canon_search((char_u *)p) >= 0) {
     // canonical name can be used unmodified
     if (p != r) {
       STRMOVE(r, p);
     }
-  } else if ((i = enc_alias_search(p)) >= 0) {
+  } else if ((i = enc_alias_search((char_u *)p)) >= 0) {
     // alias recognized, get canonical name
     xfree(r);
-    r = vim_strsave((char_u *)enc_canon_table[i].name);
+    r = xstrdup(enc_canon_table[i].name);
   }
-  return (char *)r;
+  return r;
 }
 
 /// Search for an encoding alias of "name".
@@ -2491,7 +2491,7 @@ char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp
     len = *lenp;
   }
   if (len == 0) {
-    return vim_strsave((char_u *)"");
+    return (char_u *)xstrdup("");
   }
 
   switch (vcp->vc_type) {

@@ -369,7 +369,7 @@ void ml_setname(buf_T *buf)
     if (*dirp == NUL) {             // tried all directories, fail
       break;
     }
-    fname = (char_u *)findswapname(buf, &dirp, (char *)mfp->mf_fname, &found_existing_dir);
+    fname = (char_u *)findswapname(buf, &dirp, mfp->mf_fname, &found_existing_dir);
     // alloc's fname
     if (dirp == NULL) {             // out of memory
       break;
@@ -391,7 +391,7 @@ void ml_setname(buf_T *buf)
     }
 
     // try to rename the swap file
-    if (vim_rename(mfp->mf_fname, fname) == 0) {
+    if (vim_rename((char_u *)mfp->mf_fname, fname) == 0) {
       success = true;
       mf_free_fnames(mfp);
       mf_set_fnames(mfp, (char *)fname);
@@ -402,7 +402,7 @@ void ml_setname(buf_T *buf)
   }
 
   if (mfp->mf_fd == -1) {           // need to (re)open the swap file
-    mfp->mf_fd = os_open((char *)mfp->mf_fname, O_RDWR, 0);
+    mfp->mf_fd = os_open(mfp->mf_fname, O_RDWR, 0);
     if (mfp->mf_fd < 0) {
       // could not (re)open the swap file, what can we do????
       emsg(_("E301: Oops, lost the swap file!!!"));
@@ -445,7 +445,7 @@ void ml_open_file(buf_T *buf)
 
   // For a spell buffer use a temp file name.
   if (buf->b_spell) {
-    fname = vim_tempname();
+    fname = (char_u *)vim_tempname();
     if (fname != NULL) {
       (void)mf_open_file(mfp, (char *)fname);           // consumes fname!
     }
@@ -665,7 +665,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
 /// not set.
 static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
 {
-  if (same_directory(buf->b_ml.ml_mfp->mf_fname, (char_u *)buf->b_ffname)) {
+  if (same_directory((char_u *)buf->b_ml.ml_mfp->mf_fname, (char_u *)buf->b_ffname)) {
     b0p->b0_flags |= B0_SAME_DIR;
   } else {
     b0p->b0_flags &= (uint8_t) ~B0_SAME_DIR;
@@ -765,7 +765,7 @@ void ml_recover(bool checkext)
       }
     }
     // get the swap file name that will be used
-    (void)recover_names((char_u *)fname, false, i, (char_u **)&fname_used);
+    (void)recover_names((char_u *)fname, false, i, &fname_used);
   }
   if (fname_used == NULL) {
     goto theend;  // user chose invalid number.
@@ -809,7 +809,7 @@ void ml_recover(bool checkext)
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
     msg_puts_attr(_("Unable to read block 0 from "), attr | MSG_HIST);
-    msg_outtrans_attr((char *)mfp->mf_fname, attr | MSG_HIST);
+    msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
     msg_puts_attr(_("\nMaybe no changes were made or Vim did not update the swap file."),
                   attr | MSG_HIST);
     msg_end();
@@ -818,7 +818,7 @@ void ml_recover(bool checkext)
   b0p = hp->bh_data;
   if (STRNCMP(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
-    msg_outtrans_attr((char *)mfp->mf_fname, MSG_HIST);
+    msg_outtrans_attr(mfp->mf_fname, MSG_HIST);
     msg_puts_attr(_(" cannot be used with this version of Vim.\n"),
                   MSG_HIST);
     msg_puts_attr(_("Use Vim version 3.0.\n"), MSG_HIST);
@@ -831,7 +831,7 @@ void ml_recover(bool checkext)
   }
   if (b0_magic_wrong(b0p)) {
     msg_start();
-    msg_outtrans_attr((char *)mfp->mf_fname, attr | MSG_HIST);
+    msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
     msg_puts_attr(_(" cannot be used on this computer.\n"),
                   attr | MSG_HIST);
     msg_puts_attr(_("The file was created on "), attr | MSG_HIST);
@@ -851,7 +851,7 @@ void ml_recover(bool checkext)
     mf_new_page_size(mfp, (unsigned)char_to_long(b0p->b0_page_size));
     if (mfp->mf_page_size < previous_page_size) {
       msg_start();
-      msg_outtrans_attr((char *)mfp->mf_fname, attr | MSG_HIST);
+      msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
       msg_puts_attr(_(" has been damaged (page size is smaller than minimum value).\n"),
                     attr | MSG_HIST);
       msg_end();
@@ -880,7 +880,7 @@ void ml_recover(bool checkext)
     }
   }
 
-  home_replace(NULL, (char *)mfp->mf_fname, (char *)NameBuff, MAXPATHL, true);
+  home_replace(NULL, mfp->mf_fname, (char *)NameBuff, MAXPATHL, true);
   smsg(_("Using swap file \"%s\""), NameBuff);
 
   if (buf_spname(curbuf) != NULL) {
@@ -897,7 +897,7 @@ void ml_recover(bool checkext)
   mtime = char_to_long(b0p->b0_mtime);
   if (curbuf->b_ffname != NULL
       && os_fileinfo(curbuf->b_ffname, &org_file_info)
-      && ((os_fileinfo((char *)mfp->mf_fname, &swp_file_info)
+      && ((os_fileinfo(mfp->mf_fname, &swp_file_info)
            && org_file_info.stat.st_mtim.tv_sec
            > swp_file_info.stat.st_mtim.tv_sec)
           || org_file_info.stat.st_mtim.tv_sec != mtime)) {
@@ -1186,7 +1186,7 @@ theend:
 /// @param list  when true, list the swap file names
 /// @param nr  when non-zero, return nr'th swap file name
 /// @param fname_out  result when "nr" > 0
-int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
+int recover_names(char_u *fname, int list, int nr, char **fname_out)
 {
   int num_names;
   char *(names[6]);
@@ -1291,7 +1291,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
 
     // remove swapfile name of the current buffer, it must be ignored
     if (curbuf->b_ml.ml_mfp != NULL
-        && (p = curbuf->b_ml.ml_mfp->mf_fname) != NULL) {
+        && (p = (char_u *)curbuf->b_ml.ml_mfp->mf_fname) != NULL) {
       for (int i = 0; i < num_files; i++) {
         // Do not expand wildcards, on Windows would try to expand
         // "%tmp%" in "%tmp%file"
@@ -1313,7 +1313,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
     if (nr > 0) {
       file_count += num_files;
       if (nr <= file_count) {
-        *fname_out = vim_strsave((char_u *)files[nr - 1 + num_files - file_count]);
+        *fname_out = xstrdup(files[nr - 1 + num_files - file_count]);
         dirp = "";                        // stop searching
       }
     } else if (list) {
@@ -1713,14 +1713,14 @@ theend:
 /// having to check for error everywhere).
 char *ml_get(linenr_T lnum)
 {
-  return (char *)ml_get_buf(curbuf, lnum, false);
+  return ml_get_buf(curbuf, lnum, false);
 }
 
 /// @return  pointer to position "pos".
 char_u *ml_get_pos(const pos_T *pos)
   FUNC_ATTR_NONNULL_ALL
 {
-  return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
+  return (char_u *)ml_get_buf(curbuf, pos->lnum, false) + pos->col;
 }
 
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
@@ -1737,14 +1737,14 @@ int gchar_pos(pos_T *pos)
 /// @param will_change  true mark the buffer dirty (chars in the line will be changed)
 ///
 /// @return  a pointer to a line in a specific buffer
-char_u *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
+char *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
   FUNC_ATTR_NONNULL_ALL
 {
   bhdr_T *hp;
   DATA_BL *dp;
-  char_u *ptr;
+  char *ptr;
   static int recursive = 0;
-  static char_u questions[4];
+  static char questions[4];
 
   if (lnum > buf->b_ml.ml_line_count) {  // invalid line number
     if (recursive == 0) {
@@ -1766,7 +1766,7 @@ errorret:
   }
 
   if (buf->b_ml.ml_mfp == NULL) {       // there are no lines
-    return (char_u *)"";
+    return "";
   }
 
   // See if it is the same line as requested last time.
@@ -1795,9 +1795,9 @@ errorret:
 
     dp = hp->bh_data;
 
-    ptr = (char_u *)dp +
+    ptr = (char *)dp +
           ((dp->db_index[lnum - buf->b_ml.ml_locked_low]) & DB_INDEX_MASK);
-    buf->b_ml.ml_line_ptr = ptr;
+    buf->b_ml.ml_line_ptr = (char_u *)ptr;
     buf->b_ml.ml_line_lnum = lnum;
     buf->b_ml.ml_flags &= ~ML_LINE_DIRTY;
   }
@@ -1806,7 +1806,7 @@ errorret:
     ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
   }
 
-  return buf->b_ml.ml_line_ptr;
+  return (char *)buf->b_ml.ml_line_ptr;
 }
 
 /// Check if a line that was just obtained by a call to ml_get
@@ -2352,7 +2352,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
   }
 
   if (readlen && kv_size(buf->update_callbacks)) {
-    ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum, false), -1);
+    ml_add_deleted_len_buf(buf, (char_u *)ml_get_buf(buf, lnum, false), -1);
   }
 
   buf->b_ml.ml_line_ptr = (char_u *)line;
@@ -3081,7 +3081,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
     return NULL;
   }
 
-  s = get_file_in_dir(r, dir_name);
+  s = (char_u *)get_file_in_dir((char *)r, (char *)dir_name);
   xfree(r);
   return s;
 }
@@ -3098,30 +3098,30 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 /// The return value is an allocated string and can be NULL.
 ///
 /// @param dname  don't use "dirname", it is a global for Alpha
-char_u *get_file_in_dir(char_u *fname, char_u *dname)
+char *get_file_in_dir(char *fname, char *dname)
 {
-  char_u *t;
-  char_u *tail;
-  char_u *retval;
+  char *t;
+  char *tail;
+  char *retval;
   int save_char;
 
-  tail = (char_u *)path_tail((char *)fname);
+  tail = path_tail(fname);
 
   if (dname[0] == '.' && dname[1] == NUL) {
-    retval = vim_strsave(fname);
+    retval = xstrdup(fname);
   } else if (dname[0] == '.' && vim_ispathsep(dname[1])) {
     if (tail == fname) {            // no path before file name
-      retval = (char_u *)concat_fnames((char *)dname + 2, (char *)tail, true);
+      retval = concat_fnames(dname + 2, tail, true);
     } else {
-      save_char = *tail;
+      save_char = (uint8_t)(*tail);
       *tail = NUL;
-      t = (char_u *)concat_fnames((char *)fname, (char *)dname + 2, true);
-      *tail = (uint8_t)save_char;
-      retval = (char_u *)concat_fnames((char *)t, (char *)tail, true);
+      t = concat_fnames(fname, dname + 2, true);
+      *tail = (char)save_char;
+      retval = concat_fnames(t, tail, true);
       xfree(t);
     }
   } else {
-    retval = (char_u *)concat_fnames((char *)dname, (char *)tail, true);
+    retval = concat_fnames(dname, tail, true);
   }
 
   return retval;

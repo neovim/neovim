@@ -2468,7 +2468,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
           break;
         }
 
-        line = ml_get_buf(syn_buf, startpos->lnum, false);
+        line = (char_u *)ml_get_buf(syn_buf, startpos->lnum, false);
         int line_len = (int)STRLEN(line);
 
         // take care of an empty match or negative offset
@@ -2604,7 +2604,7 @@ static void syn_add_end_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *spp
   if (result->lnum > syn_buf->b_ml.ml_line_count) {
     col = 0;
   } else if (off != 0) {
-    base = ml_get_buf(syn_buf, result->lnum, false);
+    base = (char_u *)ml_get_buf(syn_buf, result->lnum, false);
     p = base + col;
     if (off > 0) {
       while (off-- > 0 && *p != NUL) {
@@ -2649,7 +2649,7 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
     col = (int)STRLEN(ml_get_buf(syn_buf, result->lnum, false));
   }
   if (off != 0) {
-    base = ml_get_buf(syn_buf, result->lnum, false);
+    base = (char_u *)ml_get_buf(syn_buf, result->lnum, false);
     p = base + col;
     if (off > 0) {
       while (off-- && *p != NUL) {
@@ -2668,7 +2668,7 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
 /// Get current line in syntax buffer.
 static char *syn_getcurline(void)
 {
-  return (char *)ml_get_buf(syn_buf, current_lnum, false);
+  return ml_get_buf(syn_buf, current_lnum, false);
 }
 
 // Call vim_regexec() to find a match with "rmp" in "syn_buf".

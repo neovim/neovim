@@ -362,7 +362,7 @@ int get_indent_lnum(linenr_T lnum)
 // "buf".
 int get_indent_buf(buf_T *buf, linenr_T lnum)
 {
-  return get_indent_str_vtab((char *)ml_get_buf(buf, lnum, false),
+  return get_indent_str_vtab(ml_get_buf(buf, lnum, false),
                              curbuf->b_p_ts,
                              buf->b_p_vts_array,
                              false);
@@ -874,7 +874,7 @@ bool may_do_si(void)
   return curbuf->b_p_si && !curbuf->b_p_cin && *curbuf->b_p_inde == NUL && !p_paste;
 }
 
-// Get indent level from 'indentexpr'.
+/// Get indent level from 'indentexpr'.
 int get_expr_indent(void)
 {
   int indent = -1;
@@ -898,8 +898,8 @@ int get_expr_indent(void)
 
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.
-  char_u *inde_copy = vim_strsave((char_u *)curbuf->b_p_inde);
-  indent = (int)eval_to_number((char *)inde_copy);
+  char *inde_copy = xstrdup(curbuf->b_p_inde);
+  indent = (int)eval_to_number(inde_copy);
   xfree(inde_copy);
 
   if (use_sandbox) {

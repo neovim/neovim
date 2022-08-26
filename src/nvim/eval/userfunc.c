@@ -142,18 +142,18 @@ static int get_function_args(char **argp, char_u endchar, garray_T *newargs, int
         any_default = true;
         p = skipwhite(p) + 1;
         p = skipwhite(p);
-        char_u *expr = (char_u *)p;
+        char *expr = p;
         if (eval1(&p, &rettv, false) != FAIL) {
           ga_grow(default_args, 1);
 
           // trim trailing whitespace
-          while (p > (char *)expr && ascii_iswhite(p[-1])) {
+          while (p > expr && ascii_iswhite(p[-1])) {
             p--;
           }
           c = (char_u)(*p);
           *p = NUL;
-          expr = vim_strsave(expr);
-          ((char **)(default_args->ga_data))[default_args->ga_len] = (char *)expr;
+          expr = xstrdup(expr);
+          ((char **)(default_args->ga_data))[default_args->ga_len] = expr;
           default_args->ga_len++;
           *p = (char)c;
         } else {
@@ -1680,7 +1680,7 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
 char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, partial_T **partial)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  char_u *name = NULL;
+  char *name = NULL;
   const char_u *start;
   const char_u *end;
   int lead;
@@ -1739,7 +1739,7 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
       fdp->fd_di = lv.ll_di;
     }
     if (lv.ll_tv->v_type == VAR_FUNC && lv.ll_tv->vval.v_string != NULL) {
-      name = vim_strsave((char_u *)lv.ll_tv->vval.v_string);
+      name = xstrdup(lv.ll_tv->vval.v_string);
       *pp = (char *)end;
     } else if (lv.ll_tv->v_type == VAR_PARTIAL
                && lv.ll_tv->vval.v_partial != NULL) {
@@ -1753,7 +1753,7 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
         memcpy(name, end + 1, (size_t)len);
         *pp = (char *)end + 1 + len;
       } else {
-        name = vim_strsave((char_u *)partial_name(lv.ll_tv->vval.v_partial));
+        name = xstrdup(partial_name(lv.ll_tv->vval.v_partial));
         *pp = (char *)end;
       }
       if (partial != NULL) {
@@ -1781,28 +1781,28 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
   // Check if the name is a Funcref.  If so, use the value.
   if (lv.ll_exp_name != NULL) {
     len = (int)strlen(lv.ll_exp_name);
-    name = deref_func_name(lv.ll_exp_name, &len, partial,
-                           flags & TFN_NO_AUTOLOAD);
+    name = (char *)deref_func_name(lv.ll_exp_name, &len, partial,
+                                   flags & TFN_NO_AUTOLOAD);
     if ((const char *)name == lv.ll_exp_name) {
       name = NULL;
     }
   } else if (!(flags & TFN_NO_DEREF)) {
     len = (int)(end - (char_u *)(*pp));
-    name = deref_func_name((const char *)(*pp), &len, partial,
-                           flags & TFN_NO_AUTOLOAD);
-    if (name == (char_u *)(*pp)) {
+    name = (char *)deref_func_name((const char *)(*pp), &len, partial,
+                                   flags & TFN_NO_AUTOLOAD);
+    if (name == *pp) {
       name = NULL;
     }
   }
   if (name != NULL) {
-    name = vim_strsave(name);
+    name = xstrdup(name);
     *pp = (char *)end;
     if (STRNCMP(name, "<SNR>", 5) == 0) {
       // Change "<SNR>" to the byte sequence.
-      name[0] = K_SPECIAL;
-      name[1] = KS_EXTRA;
+      name[0] = (char)K_SPECIAL;
+      name[1] = (char)KS_EXTRA;
       name[2] = KE_SNR;
-      memmove(name + 3, name + 5, strlen((char *)name + 5) + 1);
+      memmove(name + 3, name + 5, strlen(name + 5) + 1);
     }
     goto theend;
   }
@@ -1865,8 +1865,8 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
 
   name = xmalloc((size_t)len + (size_t)lead + 1);
   if (!skip && lead > 0) {
-    name[0] = K_SPECIAL;
-    name[1] = KS_EXTRA;
+    name[0] = (char)K_SPECIAL;
+    name[1] = (char)KS_EXTRA;
     name[2] = KE_SNR;
     if (sid_buf_len > 0) {  // If it's "<SID>"
       memcpy(name + 3, sid_buf, sid_buf_len);
@@ -1878,7 +1878,7 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
 
 theend:
   clear_lval(&lv);
-  return name;
+  return (char_u *)name;
 }
 
 #define MAX_FUNC_NESTING 50
@@ -3104,7 +3104,7 @@ char *get_return_cmd(void *rettv)
     STRCPY(IObuff + IOSIZE - 4, "...");
   }
   xfree(tofree);
-  return (char *)vim_strsave(IObuff);
+  return xstrdup((char *)IObuff);
 }
 
 /// Get next function line.
@@ -3192,7 +3192,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
   } else {
     fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
                                       ? (char_u *)rettv->vval.v_string
-                                      : rettv->vval.v_partial->pt_name;
+                                      : (char_u *)rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
     fname = (char_u *)fname_trans_sid((char *)fname, (char *)fname_buf, (char **)&tofree, &error);
     fp = find_func(fname);
@@ -3208,7 +3208,7 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
     pt->pt_auto = true;
     if (rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING) {
       // Just a function: Take over the function name and use selfdict.
-      pt->pt_name = (char_u *)rettv->vval.v_string;
+      pt->pt_name = rettv->vval.v_string;
     } else {
       partial_T *ret_pt = rettv->vval.v_partial;
       int i;
@@ -3217,8 +3217,8 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
       // args. Can't take over name or args, the partial might
       // be referenced elsewhere.
       if (ret_pt->pt_name != NULL) {
-        pt->pt_name = vim_strsave(ret_pt->pt_name);
-        func_ref(pt->pt_name);
+        pt->pt_name = xstrdup(ret_pt->pt_name);
+        func_ref((char_u *)pt->pt_name);
       } else {
         pt->pt_func = ret_pt->pt_func;
         func_ptr_ref(pt->pt_func);

@@ -34,7 +34,7 @@
 
 // Structure used for get_tagfname().
 typedef struct {
-  char_u *tn_tags;         // value of 'tags' when starting
+  char *tn_tags;           // value of 'tags' when starting
   char *tn_np;             // current position in tn_tags
   int tn_did_filefind_init;
   int tn_hf_idx;

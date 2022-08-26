@@ -829,10 +829,10 @@ static bool is_unique(char_u *maybe_unique, garray_T *gap, int i)
 static void expand_path_option(char_u *curdir, garray_T *gap)
 {
   char_u *path_option = *curbuf->b_p_path == NUL ? p_path : (char_u *)curbuf->b_p_path;
-  char_u *buf = xmalloc(MAXPATHL);
+  char *buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
-    copy_option_part((char **)&path_option, (char *)buf, MAXPATHL, " ,");
+    copy_option_part((char **)&path_option, buf, MAXPATHL, " ,");
 
     if (buf[0] == '.' && (buf[1] == NUL || vim_ispathsep(buf[1]))) {
       // Relative to current buffer:
@@ -852,12 +852,12 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
         STRMOVE(buf + len, buf + 2);
       }
       memmove(buf, curbuf->b_ffname, len);
-      simplify_filename(buf);
+      simplify_filename((char_u *)buf);
     } else if (buf[0] == NUL) {
       STRCPY(buf, curdir);  // relative to current directory
-    } else if (path_with_url((char *)buf)) {
+    } else if (path_with_url(buf)) {
       continue;  // URL can't be used here
-    } else if (!path_is_absolute(buf)) {
+    } else if (!path_is_absolute((char_u *)buf)) {
       // Expand relative path to their full path equivalent
       size_t len = STRLEN(curdir);
       if (len + STRLEN(buf) + 3 > MAXPATHL) {
@@ -866,10 +866,10 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       STRMOVE(buf + len + 1, buf);
       STRCPY(buf, curdir);
       buf[len] = (char_u)PATHSEP;
-      simplify_filename(buf);
+      simplify_filename((char_u *)buf);
     }
 
-    GA_APPEND(char_u *, gap, vim_strsave(buf));
+    GA_APPEND(char *, gap, xstrdup(buf));
   }
 
   xfree(buf);
@@ -919,12 +919,12 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
 // that matches the pattern. Beware, this is at least O(n^2) wrt "gap->ga_len".
 static void uniquefy_paths(garray_T *gap, char_u *pattern)
 {
-  char_u **fnames = (char_u **)gap->ga_data;
+  char **fnames = gap->ga_data;
   bool sort_again = false;
   regmatch_T regmatch;
   garray_T path_ga;
-  char_u **in_curdir = NULL;
-  char_u *short_name;
+  char **in_curdir = NULL;
+  char *short_name;
 
   ga_remove_duplicate_strings(gap);
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
@@ -933,11 +933,11 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   // regex matches anywhere in the path. FIXME: is this valid for all
   // possible patterns?
   size_t len = STRLEN(pattern);
-  char_u *file_pattern = xmalloc(len + 2);
+  char *file_pattern = xmalloc(len + 2);
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
   STRCAT(file_pattern, pattern);
-  char *pat = file_pat_to_reg_pat((char *)file_pattern, NULL, NULL, true);
+  char *pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, true);
   xfree(file_pattern);
   if (pat == NULL) {
     return;
@@ -957,21 +957,21 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   in_curdir = xcalloc((size_t)gap->ga_len, sizeof(char_u *));
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
-    char_u *path = fnames[i];
+    char *path = fnames[i];
     int is_in_curdir;
-    char_u *dir_end = (char_u *)gettail_dir((const char *)path);
-    char_u *pathsep_p;
-    char_u *path_cutoff;
+    char *dir_end = (char *)gettail_dir((const char *)path);
+    char *pathsep_p;
+    char *path_cutoff;
 
     len = STRLEN(path);
     is_in_curdir = FNAMENCMP(curdir, path, dir_end - path) == 0
                    && curdir[dir_end - path] == NUL;
     if (is_in_curdir) {
-      in_curdir[i] = vim_strsave(path);
+      in_curdir[i] = xstrdup(path);
     }
 
     // Shorten the filename while maintaining its uniqueness
-    path_cutoff = get_path_cutoff(path, &path_ga);
+    path_cutoff = (char *)get_path_cutoff((char_u *)path, &path_ga);
 
     // Don't assume all files can be reached without path when search
     // pattern starts with **/, so only remove path_cutoff
@@ -979,17 +979,17 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     if (pattern[0] == '*' && pattern[1] == '*'
         && vim_ispathsep_nocolon(pattern[2])
         && path_cutoff != NULL
-        && vim_regexec(&regmatch, (char *)path_cutoff, (colnr_T)0)
-        && is_unique(path_cutoff, gap, i)) {
+        && vim_regexec(&regmatch, path_cutoff, (colnr_T)0)
+        && is_unique((char_u *)path_cutoff, gap, i)) {
       sort_again = true;
       memmove(path, path_cutoff, STRLEN(path_cutoff) + 1);
     } else {
       // Here all files can be reached without path, so get shortest
       // unique path.  We start at the end of the path. */
       pathsep_p = path + len - 1;
-      while (find_previous_pathsep(path, &pathsep_p)) {
-        if (vim_regexec(&regmatch, (char *)pathsep_p + 1, (colnr_T)0)
-            && is_unique(pathsep_p + 1, gap, i)
+      while (find_previous_pathsep((char_u *)path, (char_u **)&pathsep_p)) {
+        if (vim_regexec(&regmatch, pathsep_p + 1, (colnr_T)0)
+            && is_unique((char_u *)pathsep_p + 1, gap, i)
             && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
           sort_again = true;
           memmove(path, pathsep_p + 1, STRLEN(pathsep_p));
@@ -998,7 +998,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       }
     }
 
-    if (path_is_absolute(path)) {
+    if (path_is_absolute((char_u *)path)) {
       // Last resort: shorten relative to curdir if possible.
       // 'possible' means:
       // 1. It is under the current directory.
@@ -1009,10 +1009,10 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       //     c:\foo\bar\file.txt   c:\foo\bar    .\file.txt
       //     /file.txt             /             /file.txt
       //     c:\file.txt           c:\           .\file.txt
-      short_name = path_shorten_fname(path, curdir);
+      short_name = (char *)path_shorten_fname((char_u *)path, curdir);
       if (short_name != NULL && short_name > path + 1) {
         STRCPY(path, ".");
-        add_pathsep((char *)path);
+        add_pathsep(path);
         STRMOVE(path + STRLEN(path), short_name);
       }
     }
@@ -1021,8 +1021,8 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
   // Shorten filenames in /in/current/directory/{filename}
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
-    char_u *rel_path;
-    char_u *path = in_curdir[i];
+    char *rel_path;
+    char *path = in_curdir[i];
 
     if (path == NULL) {
       continue;
@@ -1030,18 +1030,18 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
     // If the {filename} is not unique, change it to ./{filename}.
     // Else reduce it to {filename}
-    short_name = path_shorten_fname(path, curdir);
+    short_name = (char *)path_shorten_fname((char_u *)path, curdir);
     if (short_name == NULL) {
       short_name = path;
     }
-    if (is_unique(short_name, gap, i)) {
+    if (is_unique((char_u *)short_name, gap, i)) {
       STRCPY(fnames[i], short_name);
       continue;
     }
 
     rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
     STRCPY(rel_path, ".");
-    add_pathsep((char *)rel_path);
+    add_pathsep(rel_path);
     STRCAT(rel_path, short_name);
 
     xfree(fnames[i]);
@@ -2099,11 +2099,11 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 ///                        If FAIL is returned, *num_file and *file are either
 ///                        unchanged or *num_file is set to 0 and *file is set
 ///                        to NULL or points to "".
-int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
+int expand_wildcards_eval(char **pat, int *num_file, char ***file, int flags)
 {
   int ret = FAIL;
-  char_u *eval_pat = NULL;
-  char *exp_pat = (char *)(*pat);
+  char *eval_pat = NULL;
+  char *exp_pat = *pat;
   char *ignored_msg;
   size_t usedlen;
   const bool is_cur_alt_file = *exp_pat == '%' || *exp_pat == '#';
@@ -2111,12 +2111,13 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
 
   if (is_cur_alt_file || *exp_pat == '<') {
     emsg_off++;
-    eval_pat = eval_vars((char_u *)exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg, NULL,
-                         true);
+    eval_pat = (char *)eval_vars((char_u *)exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg,
+                                 NULL,
+                                 true);
     emsg_off--;
     if (eval_pat != NULL) {
       star_follows = strcmp(exp_pat + usedlen, "*") == 0;
-      exp_pat = concat_str((char *)eval_pat, exp_pat + usedlen);
+      exp_pat = concat_str(eval_pat, exp_pat + usedlen);
     }
   }
 
@@ -2130,7 +2131,7 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
       // pattern anyway (without the star) so that this works for remote
       // files and non-file buffer names.
       *file = xmalloc(sizeof(char *));
-      **file = (char *)eval_pat;
+      **file = eval_pat;
       eval_pat = NULL;
       *num_file = 1;
       ret = OK;

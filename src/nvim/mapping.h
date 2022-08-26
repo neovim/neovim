@@ -35,7 +35,7 @@ struct map_arguments {
   char_u alt_lhs[MAXMAPLEN + 1];
   size_t alt_lhs_len;
 
-  char_u *rhs;  /// The {rhs} of the mapping.
+  char *rhs;  /// The {rhs} of the mapping.
   size_t rhs_len;
   LuaRef rhs_lua;  /// lua function as {rhs}
   bool rhs_is_noop;  /// True when the {rhs} should be <Nop>.
