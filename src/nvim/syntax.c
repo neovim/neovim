@@ -5664,7 +5664,8 @@ static enum {
   EXP_SUBCMD,       // expand ":syn" sub-commands
   EXP_CASE,         // expand ":syn case" arguments
   EXP_SPELL,        // expand ":syn spell" arguments
-  EXP_SYNC,  // expand ":syn sync" arguments
+  EXP_SYNC,         // expand ":syn sync" arguments
+  EXP_CLUSTER,      // expand ":syn list @cluster" arguments
 } expand_what;
 
 /*
@@ -5712,10 +5713,16 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
         expand_what = EXP_SPELL;
       } else if (STRNICMP(arg, "sync", p - arg) == 0) {
         expand_what = EXP_SYNC;
+      } else if (STRNICMP(arg, "list", p - arg) == 0) {
+        p = skipwhite(p);
+        if (*p == '@') {
+          expand_what = EXP_CLUSTER;
+        } else {
+          xp->xp_context = EXPAND_HIGHLIGHT;
+        }
       } else if (STRNICMP(arg, "keyword", p - arg) == 0
                  || STRNICMP(arg, "region", p - arg) == 0
-                 || STRNICMP(arg, "match", p - arg) == 0
-                 || STRNICMP(arg, "list", p - arg) == 0) {
+                 || STRNICMP(arg, "match", p - arg) == 0) {
         xp->xp_context = EXPAND_HIGHLIGHT;
       } else {
         xp->xp_context = EXPAND_NOTHING;
@@ -5730,6 +5737,9 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
  */
 char *get_syntax_name(expand_T *xp, int idx)
 {
+#define CBUFFER_LEN 256
+  static char cbuffer[CBUFFER_LEN]; // TODO: better solution
+
   switch (expand_what) {
   case EXP_SUBCMD:
     return subcommands[idx].name;
@@ -5749,6 +5759,14 @@ char *get_syntax_name(expand_T *xp, int idx)
       "maxlines=", "minlines=", "region", NULL };
     return sync_args[idx];
   }
+  case EXP_CLUSTER:
+    if (idx < curwin->w_s->b_syn_clusters.ga_len) {
+      vim_snprintf(cbuffer, CBUFFER_LEN, "@%s",
+                   SYN_CLSTR(curwin->w_s)[idx].scl_name);
+      return cbuffer;
+    } else {
+      return NULL;
+    }
   }
   return NULL;
 }
