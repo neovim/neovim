@@ -5047,17 +5047,6 @@ static int wc_use_keyname(char_u *varp, long *wcp)
   return false;
 }
 
-/// Return true if format option 'x' is in effect.
-/// Take care of no formatting when 'paste' is set.
-bool has_format_option(int x)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (p_paste) {
-    return false;
-  }
-  return vim_strchr(curbuf->b_p_fo, x) != NULL;
-}
-
 /// @returns true if "x" is present in 'shortmess' option, or
 /// 'shortmess' contains 'a' and "x" is present in SHM_ALL_ABBREVIATIONS.
 bool shortmess(int x)

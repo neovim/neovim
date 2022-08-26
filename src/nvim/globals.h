@@ -559,6 +559,8 @@ EXTERN bool can_si INIT(= false);
 // one indent will be removed.
 EXTERN bool can_si_back INIT(= false);
 
+EXTERN int old_indent INIT(= 0);  ///< for ^^D command in insert mode
+
 // w_cursor before formatting text.
 EXTERN pos_T saved_cursor INIT(= { 0, 0, 0 });
 
