@@ -30,6 +30,7 @@
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
+#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/decoration_provider.h"
@@ -71,6 +72,7 @@
 #include "nvim/popupmenu.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
@@ -1600,7 +1602,7 @@ void did_set_option(int opt_idx, int opt_flags, int new_value, int value_checked
 
 /// Convert a key name or string into a key value.
 /// Used for 'wildchar' and 'cedit' options.
-static int string_to_key(char_u *arg)
+int string_to_key(char_u *arg)
 {
   if (*arg == '<') {
     return find_key_option(arg + 1, true);
@@ -1609,24 +1611,6 @@ static int string_to_key(char_u *arg)
     return CTRL_CHR(arg[1]);
   }
   return *arg;
-}
-
-/// Check value of 'cedit' and set cedit_key.
-/// Returns NULL if value is OK, error message otherwise.
-char *check_cedit(void)
-{
-  int n;
-
-  if (*p_cedit == NUL) {
-    cedit_key = -1;
-  } else {
-    n = string_to_key(p_cedit);
-    if (vim_isprintc(n)) {
-      return e_invarg;
-    }
-    cedit_key = n;
-  }
-  return NULL;
 }
 
 // When changing 'title', 'titlestring', 'icon' or 'iconstring', call
@@ -5364,59 +5348,6 @@ int option_set_callback_func(char_u *optval, Callback *optcb)
   return OK;
 }
 
-/// Read the 'wildmode' option, fill wim_flags[].
-int check_opt_wim(void)
-{
-  char_u new_wim_flags[4];
-  char_u *p;
-  int i;
-  int idx = 0;
-
-  for (i = 0; i < 4; i++) {
-    new_wim_flags[i] = 0;
-  }
-
-  for (p = p_wim; *p; p++) {
-    for (i = 0; ASCII_ISALPHA(p[i]); i++) {}
-    if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
-      return FAIL;
-    }
-    if (i == 7 && STRNCMP(p, "longest", 7) == 0) {
-      new_wim_flags[idx] |= WIM_LONGEST;
-    } else if (i == 4 && STRNCMP(p, "full", 4) == 0) {
-      new_wim_flags[idx] |= WIM_FULL;
-    } else if (i == 4 && STRNCMP(p, "list", 4) == 0) {
-      new_wim_flags[idx] |= WIM_LIST;
-    } else if (i == 8 && STRNCMP(p, "lastused", 8) == 0) {
-      new_wim_flags[idx] |= WIM_BUFLASTUSED;
-    } else {
-      return FAIL;
-    }
-    p += i;
-    if (*p == NUL) {
-      break;
-    }
-    if (*p == ',') {
-      if (idx == 3) {
-        return FAIL;
-      }
-      idx++;
-    }
-  }
-
-  // fill remaining entries with last flag
-  while (idx < 3) {
-    new_wim_flags[idx + 1] = new_wim_flags[idx];
-    idx++;
-  }
-
-  // only when there are no errors, wim_flags[] is changed
-  for (i = 0; i < 4; i++) {
-    wim_flags[i] = new_wim_flags[i];
-  }
-  return OK;
-}
-
 /// Check if backspacing over something is allowed.
 /// @param  what  BS_INDENT, BS_EOL, BS_START, or BS_NOSTOP
 bool can_bs(int what)
@@ -5435,98 +5366,6 @@ bool can_bs(int what)
     return false;
   }
   return vim_strchr((char *)p_bs, what) != NULL;
-}
-
-/// Save the current values of 'fileformat' and 'fileencoding', so that we know
-/// the file must be considered changed when the value is different.
-void save_file_ff(buf_T *buf)
-{
-  buf->b_start_ffc = (unsigned char)(*buf->b_p_ff);
-  buf->b_start_eol = buf->b_p_eol;
-  buf->b_start_bomb = buf->b_p_bomb;
-
-  // Only use free/alloc when necessary, they take time.
-  if (buf->b_start_fenc == NULL
-      || STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0) {
-    xfree(buf->b_start_fenc);
-    buf->b_start_fenc = xstrdup(buf->b_p_fenc);
-  }
-}
-
-/// Return true if 'fileformat' and/or 'fileencoding' has a different value
-/// from when editing started (save_file_ff() called).
-/// Also when 'endofline' was changed and 'binary' is set, or when 'bomb' was
-/// changed and 'binary' is not set.
-/// Also when 'endofline' was changed and 'fixeol' is not set.
-/// When "ignore_empty" is true don't consider a new, empty buffer to be
-/// changed.
-bool file_ff_differs(buf_T *buf, bool ignore_empty)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  // In a buffer that was never loaded the options are not valid.
-  if (buf->b_flags & BF_NEVERLOADED) {
-    return false;
-  }
-  if (ignore_empty
-      && (buf->b_flags & BF_NEW)
-      && buf->b_ml.ml_line_count == 1
-      && *ml_get_buf(buf, (linenr_T)1, false) == NUL) {
-    return false;
-  }
-  if (buf->b_start_ffc != *buf->b_p_ff) {
-    return true;
-  }
-  if ((buf->b_p_bin || !buf->b_p_fixeol) && buf->b_start_eol != buf->b_p_eol) {
-    return true;
-  }
-  if (!buf->b_p_bin && buf->b_start_bomb != buf->b_p_bomb) {
-    return true;
-  }
-  if (buf->b_start_fenc == NULL) {
-    return *buf->b_p_fenc != NUL;
-  }
-  return STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0;
-}
-
-/// This is called when 'breakindentopt' is changed and when a window is
-/// initialized
-bool briopt_check(win_T *wp)
-{
-  int bri_shift = 0;
-  int bri_min = 20;
-  bool bri_sbr = false;
-  int bri_list = 0;
-
-  char *p = wp->w_p_briopt;
-  while (*p != NUL) {
-    if (STRNCMP(p, "shift:", 6) == 0
-        && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6]))) {
-      p += 6;
-      bri_shift = getdigits_int(&p, true, 0);
-    } else if (STRNCMP(p, "min:", 4) == 0 && ascii_isdigit(p[4])) {
-      p += 4;
-      bri_min = getdigits_int(&p, true, 0);
-    } else if (STRNCMP(p, "sbr", 3) == 0) {
-      p += 3;
-      bri_sbr = true;
-    } else if (STRNCMP(p, "list:", 5) == 0) {
-      p += 5;
-      bri_list = (int)getdigits(&p, false, 0);
-    }
-    if (*p != ',' && *p != NUL) {
-      return false;
-    }
-    if (*p == ',') {
-      p++;
-    }
-  }
-
-  wp->w_briopt_shift = bri_shift;
-  wp->w_briopt_min = bri_min;
-  wp->w_briopt_sbr = bri_sbr;
-  wp->w_briopt_list  = bri_list;
-
-  return true;
 }
 
 /// Get the local or global value of 'backupcopy'.
