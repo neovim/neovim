@@ -440,7 +440,7 @@ typedef struct {
   garray_T b_syn_clusters;              // table for syntax clusters
   int b_spell_cluster_id;               // @Spell cluster ID or 0
   int b_nospell_cluster_id;             // @NoSpell cluster ID or 0
-  int b_syn_containedin;                // TRUE when there is an item with a
+  int b_syn_containedin;                // true when there is an item with a
                                         // "containedin" argument
   int b_syn_sync_flags;                 // flags about how to sync
   int16_t b_syn_sync_id;                // group to sync on
@@ -600,7 +600,7 @@ struct file_buffer {
 
   fmark_T b_namedm[NMARKS];     // current named marks (mark.c)
 
-  // These variables are set when VIsual_active becomes FALSE
+  // These variables are set when VIsual_active becomes false
   visualinfo_T b_visual;
   int b_visual_mode_eval;            // b_visual.vi_mode for visualmode()
 
@@ -847,7 +847,7 @@ struct file_buffer {
    * spell buffer - used for spell info, never displayed and doesn't have a
    *                file name.
    */
-  bool b_help;                  // TRUE for help file buffer (when set b_p_bt
+  bool b_help;                  // true for help file buffer (when set b_p_bt
                                 // is "help")
   bool b_spell;                 // True for a spell file buffer, most fields
                                 // are not used!  Use the B_SPELL macro to
@@ -972,15 +972,15 @@ struct tabpage_S {
  * When the display is changed (e.g., when clearing the screen) w_lines_valid
  * is changed to exclude invalid entries.
  * When making changes to the buffer, wl_valid is reset to indicate wl_size
- * may not reflect what is actually in the buffer.  When wl_valid is FALSE,
+ * may not reflect what is actually in the buffer.  When wl_valid is false,
  * the entries can only be used to count the number of displayed lines used.
  * wl_lnum and wl_lastlnum are invalid too.
  */
 typedef struct w_line {
   linenr_T wl_lnum;             // buffer line number for logical line
   uint16_t wl_size;             // height in screen lines
-  char wl_valid;                // TRUE values are valid for text in buffer
-  char wl_folded;               // TRUE when this is a range of folded lines
+  char wl_valid;                // true values are valid for text in buffer
+  char wl_folded;               // true when this is a range of folded lines
   linenr_T wl_lastlnum;         // last buffer line number for logical line
 } wline_T;
 
@@ -1227,8 +1227,8 @@ struct window_S {
    */
   linenr_T w_topline;               /* buffer line number of the line at the
                                        top of the window */
-  char w_topline_was_set;           /* flag set to TRUE when topline is set,
-                                       e.g. by winrestview() */
+  char w_topline_was_set;           // flag set to true when topline is set,
+                                    // e.g. by winrestview()
   int w_topfill;                    // number of filler lines above w_topline
   int w_old_topfill;                // w_topfill at last redraw
   bool w_botfill;                   // true when filler lines are actually
@@ -1363,7 +1363,7 @@ struct window_S {
   linenr_T w_ru_topline;            // topline shown in ruler
   linenr_T w_ru_line_count;         // line count used for ruler
   int w_ru_topfill;                 // topfill shown in ruler
-  char w_ru_empty;                  // TRUE if ruler shows 0-1 (empty line)
+  char w_ru_empty;                  // true if ruler shows 0-1 (empty line)
 
   int w_alt_fnum;                   // alternate file (for # and CTRL-^)
 

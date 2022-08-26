@@ -51,20 +51,20 @@
  *
  * int mch_print_begin(prt_settings_T *settings)
  * Called to start the print job.
- * Return FALSE to abort.
+ * Return false to abort.
  *
  * int mch_print_begin_page(char_u *msg)
  * Called at the start of each page.
  * "msg" indicates the progress of the print job, can be NULL.
- * Return FALSE to abort.
+ * Return false to abort.
  *
  * int mch_print_end_page()
  * Called at the end of each page.
- * Return FALSE to abort.
+ * Return false to abort.
  *
  * int mch_print_blank_page()
  * Called to generate a blank page for collated, duplex, multiple copy
- * document.  Return FALSE to abort.
+ * document.  Return false to abort.
  *
  * void mch_print_end(prt_settings_T *psettings)
  * Called at normal end of print job.
@@ -87,36 +87,33 @@
  *
  * mch_print_start_line(int margin, int page_line)
  * Sets the current position at the start of line "page_line".
- * If margin is TRUE start in the left margin (for header and line number).
+ * If margin is true start in the left margin (for header and line number).
  *
  * int mch_print_text_out(char_u *p, size_t len);
  * Output one character of text p[len] at the current position.
- * Return TRUE if there is no room for another character in the same line.
+ * Return true if there is no room for another character in the same line.
  *
  * Note that the generic code has no idea of margins. The machine code should
  * simply make the page look smaller!  The header and the line numbers are
  * printed in the margin.
  */
 
-static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
-  =
-  {
-  { "top",     TRUE, 0, NULL, 0, FALSE },
-  { "bottom",  TRUE, 0, NULL, 0, FALSE },
-  { "left",    TRUE, 0, NULL, 0, FALSE },
-  { "right",   TRUE, 0, NULL, 0, FALSE },
-  { "header",  TRUE, 0, NULL, 0, FALSE },
-  { "syntax",  FALSE, 0, NULL, 0, FALSE },
-  { "number",  FALSE, 0, NULL, 0, FALSE },
-  { "wrap",    FALSE, 0, NULL, 0, FALSE },
-  { "duplex",  FALSE, 0, NULL, 0, FALSE },
-  { "portrait", FALSE, 0, NULL, 0, FALSE },
-  { "paper",   FALSE, 0, NULL, 0, FALSE },
-  { "collate", FALSE, 0, NULL, 0, FALSE },
-  { "jobsplit", FALSE, 0, NULL, 0, FALSE },
-  { "formfeed", FALSE, 0, NULL, 0, FALSE },
-  }
-;
+static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS] = {
+  { "top",     true, 0, NULL, 0, false },
+  { "bottom",  true, 0, NULL, 0, false },
+  { "left",    true, 0, NULL, 0, false },
+  { "right",   true, 0, NULL, 0, false },
+  { "header",  true, 0, NULL, 0, false },
+  { "syntax",  false, 0, NULL, 0, false },
+  { "number",  false, 0, NULL, 0, false },
+  { "wrap",    false, 0, NULL, 0, false },
+  { "duplex",  false, 0, NULL, 0, false },
+  { "portrait", false, 0, NULL, 0, false },
+  { "paper",   false, 0, NULL, 0, false },
+  { "collate", false, 0, NULL, 0, false },
+  { "jobsplit", false, 0, NULL, 0, false },
+  { "formfeed", false, 0, NULL, 0, false },
+};
 
 static const uint32_t cterm_color_8[8] = {
   0x000000, 0xff0000, 0x00ff00, 0xffff00,
@@ -152,12 +149,12 @@ static int page_count;
 
 static option_table_T mbfont_opts[OPT_MBFONT_NUM_OPTIONS] =
 {
-  { "c",       FALSE, 0, NULL, 0, FALSE },
-  { "a",       FALSE, 0, NULL, 0, FALSE },
-  { "r",       FALSE, 0, NULL, 0, FALSE },
-  { "b",       FALSE, 0, NULL, 0, FALSE },
-  { "i",       FALSE, 0, NULL, 0, FALSE },
-  { "o",       FALSE, 0, NULL, 0, FALSE },
+  { "c",       false, 0, NULL, 0, false },
+  { "a",       false, 0, NULL, 0, false },
+  { "r",       false, 0, NULL, 0, false },
+  { "b",       false, 0, NULL, 0, false },
+  { "i",       false, 0, NULL, 0, false },
+  { "o",       false, 0, NULL, 0, false },
 };
 
 /*
@@ -506,9 +503,7 @@ int prt_header_height(void)
   return 2;
 }
 
-/*
- * Return TRUE if using a line number for printing.
- */
+// Return true if using a line number for printing.
 int prt_use_number(void)
 {
   return printer_opts[OPT_PRINT_NUMBER].present
@@ -552,7 +547,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
-    int use_sandbox = FALSE;
+    int use_sandbox = false;
 
     /*
      * Need to (temporarily) set current line number and first/last line
@@ -669,7 +664,7 @@ void ex_hardcopy(exarg_T *eap)
   settings.modec = 'c';
 
   if (!syntax_present(curwin)) {
-    settings.do_syntax = FALSE;
+    settings.do_syntax = false;
   } else if (printer_opts[OPT_PRINT_SYNTAX].present
              && TOLOWER_ASC(printer_opts[OPT_PRINT_SYNTAX].string[0]) != 'a') {
     settings.do_syntax =
@@ -866,7 +861,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
 {
   colnr_T col;
   char_u *line;
-  int need_break = FALSE;
+  int need_break = false;
   int outputlen;
   int tab_spaces;
   int print_pos;
@@ -879,7 +874,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
     if (!ppos->ff && prt_use_number()) {
       prt_line_number(psettings, page_line, ppos->file_line);
     }
-    ppos->ff = FALSE;
+    ppos->ff = false;
   } else {
     // left over from wrap halfway through a tab
     print_pos = ppos->print_pos;
@@ -942,7 +937,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
                && printer_opts[OPT_PRINT_FORMFEED].present
                && TOLOWER_ASC(printer_opts[OPT_PRINT_FORMFEED].string[0])
                == 'y') {
-      ppos->ff = TRUE;
+      ppos->ff = true;
       need_break = 1;
     } else {
       need_break = mch_print_text_out(line + col, (size_t)outputlen);
@@ -1984,7 +1979,7 @@ void mch_print_cleanup(void)
 
   if (prt_do_conv) {
     convert_setup(&prt_conv, NULL, NULL);
-    prt_do_conv = FALSE;
+    prt_do_conv = false;
   }
   if (prt_ps_fd != NULL) {
     fclose(prt_ps_fd);
@@ -2116,11 +2111,11 @@ static int prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap,
   for (mbenc = 0; mbenc < p_cmap->num_encodings; mbenc++) {
     if (STRNICMP(p_mbenc->encoding, p_encoding, enc_len) == 0) {
       *pp_mbenc = p_mbenc;
-      return TRUE;
+      return true;
     }
     p_mbenc++;
   }
-  return FALSE;
+  return false;
 }
 
 static int prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap,
@@ -2139,11 +2134,11 @@ static int prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap,
   for (mbchar = 0; mbchar < p_cmap->num_charsets; mbchar++) {
     if (STRNICMP(p_mbchar->charset, p_charset, char_len) == 0) {
       *pp_mbchar = p_mbchar;
-      return TRUE;
+      return true;
     }
     p_mbchar++;
   }
-  return FALSE;
+  return false;
 }
 
 int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
@@ -2277,7 +2272,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
     prt_ps_font = &prt_ps_mb_font;
   } else {
-    prt_use_courier = FALSE;
+    prt_use_courier = false;
     prt_ps_font = &prt_ps_courier_font;
   }
 
@@ -2379,16 +2374,16 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
    * Set up printer duplex and tumble based on Duplex option setting - default
    * is long sided duplex printing (i.e. no tumble).
    */
-  prt_duplex = TRUE;
-  prt_tumble = FALSE;
+  prt_duplex = true;
+  prt_tumble = false;
   psettings->duplex = 1;
   if (printer_opts[OPT_PRINT_DUPLEX].present) {
     if (STRNICMP(printer_opts[OPT_PRINT_DUPLEX].string, "off", 3) == 0) {
-      prt_duplex = FALSE;
+      prt_duplex = false;
       psettings->duplex = 0;
     } else if (STRNICMP(printer_opts[OPT_PRINT_DUPLEX].string, "short", 5)
                == 0) {
-      prt_tumble = TRUE;
+      prt_tumble = true;
     }
   }
 
@@ -2941,7 +2936,7 @@ int mch_print_begin_page(char_u *str)
 
 int mch_print_blank_page(void)
 {
-  return mch_print_begin_page(NULL) ? (mch_print_end_page()) : FALSE;
+  return mch_print_begin_page(NULL) ? (mch_print_end_page()) : false;
 }
 
 static double prt_pos_x = 0;

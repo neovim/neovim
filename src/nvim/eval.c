@@ -101,7 +101,7 @@ static garray_T ga_loaded = { 0, 0, sizeof(char *), 4, NULL };
 
 /// Info used by a ":for" loop.
 typedef struct {
-  int fi_semicolon;             // TRUE if ending in '; var]'
+  int fi_semicolon;             // true if ending in '; var]'
   int fi_varcount;              // nr of variables in the list
   listwatch_T fi_lw;            // keep an eye on the item used.
   list_T *fi_list;              // list being used
@@ -691,11 +691,11 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
 }
 
 /// Top level evaluation function, returning a boolean.
-/// Sets "error" to TRUE if there was an error.
+/// Sets "error" to true if there was an error.
 ///
 /// @param skip  only parse, don't execute
 ///
-/// @return  TRUE or FALSE.
+/// @return  true or false.
 int eval_to_bool(char *arg, bool *error, char **nextcmd, int skip)
 {
   typval_T tv;
@@ -895,7 +895,7 @@ char *eval_to_string(char *arg, char **nextcmd, bool convert)
 /// Call eval_to_string() without using current local variables and using
 /// textlock.
 ///
-/// @param use_sandbox  when TRUE, use the sandbox.
+/// @param use_sandbox  when true, use the sandbox.
 char *eval_to_string_safe(char *arg, char **nextcmd, int use_sandbox)
 {
   char *retval;
@@ -1812,7 +1812,7 @@ notify:
 /// Evaluate the expression used in a ":for var in expr" command.
 /// "arg" points to "var".
 ///
-/// @param[out] *errp  set to TRUE for an error, FALSE otherwise;
+/// @param[out] *errp  set to true for an error, false otherwise;
 ///
 /// @return  a pointer that holds the info.  Null when there is an error.
 void *eval_for_line(const char *arg, bool *errp, char **nextcmdp, int skip)
@@ -2184,7 +2184,7 @@ char *get_user_var_name(expand_T *xp, int idx)
 
 /// Does not use 'cpo' and always uses 'magic'.
 ///
-/// @return  TRUE if "pat" matches "text".
+/// @return  true if "pat" matches "text".
 int pattern_match(char *pat, char *text, bool ic)
 {
   int matches = 0;
@@ -2263,13 +2263,13 @@ static int eval_func(char **const arg, char *const name, const int name_len, typ
 
 // TODO(ZyX-I): move to eval/expressions
 
-/// The "evaluate" argument: When FALSE, the argument is only parsed but not
+/// The "evaluate" argument: When false, the argument is only parsed but not
 /// executed.  The function may return OK, but the rettv will be of type
 /// VAR_UNKNOWN.  The function still returns FAIL for a syntax error.
 
 /// Handle zero level expression.
 /// This calls eval1() and handles error message and nextcmd.
-/// Put the result in "rettv" when returning OK and "evaluate" is TRUE.
+/// Put the result in "rettv" when returning OK and "evaluate" is true.
 /// Note: "rettv.v_lock" is not set.
 ///
 /// @return OK or FAIL.
@@ -6786,14 +6786,14 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
   return retval;
 }
 
-/// @return  TRUE if character "c" can be used in a variable or function name.
+/// @return  true if character "c" can be used in a variable or function name.
 ///          Does not include '{' or '}' for magic braces.
 int eval_isnamec(int c)
 {
   return ASCII_ISALNUM(c) || c == '_' || c == ':' || c == AUTOLOAD_CHAR;
 }
 
-/// @return  TRUE if character "c" can be used as the first character in a
+/// @return  true if character "c" can be used as the first character in a
 ///          variable or function name (excluding '{' and '}').
 int eval_isnamec1(int c)
 {
@@ -6846,7 +6846,7 @@ void set_vim_var_char(int c)
 
 /// Set v:count to "count" and v:count1 to "count1".
 ///
-/// @param set_prevcount  if TRUE, first set v:prevcount from v:count.
+/// @param set_prevcount  if true, first set v:prevcount from v:count.
 void set_vcount(long count, long count1, int set_prevcount)
 {
   if (set_prevcount) {

@@ -203,19 +203,19 @@ static void do_cscope_general(exarg_T *eap, int make_split)
 /// Implementation of ":cscope" and ":lcscope"
 void ex_cscope(exarg_T *eap)
 {
-  do_cscope_general(eap, FALSE);
+  do_cscope_general(eap, false);
 }
 
 /// Implementation of ":scscope". Same as ex_cscope(), but splits window, too.
 void ex_scscope(exarg_T *eap)
 {
-  do_cscope_general(eap, TRUE);
+  do_cscope_general(eap, true);
 }
 
 /// Implementation of ":cstag"
 void ex_cstag(exarg_T *eap)
 {
-  int ret = FALSE;
+  int ret = false;
 
   if (*eap->arg == NUL) {
     (void)emsg(_("E562: Usage: cstag <ident>"));
@@ -278,7 +278,7 @@ void ex_cstag(exarg_T *eap)
 /// This simulates a vim_fgets(), but for cscope, returns the next line
 /// from the cscope output.  should only be called from find_tags()
 ///
-/// @return true if eof, FALSE otherwise
+/// @return true if eof, false otherwise
 bool cs_fgets(char_u *buf, int size)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -839,7 +839,7 @@ err_closing:
     si.hStdOutput = stdout_wr;
     si.hStdError  = stdout_wr;
     si.hStdInput  = stdin_rd;
-    created = CreateProcess(NULL, cmd, NULL, NULL, TRUE, CREATE_NEW_CONSOLE,
+    created = CreateProcess(NULL, cmd, NULL, NULL, true, CREATE_NEW_CONSOLE,
                             NULL, NULL, &si, &pi);
     xfree(prog);
     xfree(cmd);
@@ -875,7 +875,7 @@ err_closing:
 /// Query cscope using command line interface.  Parse the output and use tselect
 /// to allow choices.  Like Nvi, creates a pipe to send to/from query/cscope.
 ///
-/// @return TRUE if we jump to a tag or abort, FALSE if not.
+/// @return true if we jump to a tag or abort, false if not.
 static int cs_find(exarg_T *eap)
 {
   char *opt, *pat;
@@ -1106,7 +1106,7 @@ static int cs_help(exarg_T *eap)
     cmdp++;
   }
 
-  wait_return(TRUE);
+  wait_return(true);
   return CSCOPE_SUCCESS;
 }
 
@@ -1280,7 +1280,7 @@ static void cs_kill_execute(size_t i, char *cname)
     (void)smsg_attr(HL_ATTR(HLF_R) | MSG_HIST,
                     _("cscope connection %s closed"), cname);
   }
-  cs_release_csp(i, TRUE);
+  cs_release_csp(i, true);
 }
 
 /// Convert the cscope output into a ctags style entry (as might be found
@@ -1932,7 +1932,7 @@ static int cs_reset(exarg_T *eap)
     pplist[i] = csinfo[i].ppath;
     fllist[i] = csinfo[i].flags;
     if (csinfo[i].fname != NULL) {
-      cs_release_csp(i, FALSE);
+      cs_release_csp(i, false);
     }
   }
 
@@ -2035,7 +2035,7 @@ static int cs_show(exarg_T *eap)
     }
   }
 
-  wait_return(TRUE);
+  wait_return(true);
   return CSCOPE_SUCCESS;
 }
 

@@ -36,7 +36,7 @@
 #define MOUSE_X2       0x400  // Mouse-button X2
 
 // Direction for nv_mousescroll() and ins_mousescroll()
-#define MSCR_DOWN       0     // DOWN must be FALSE
+#define MSCR_DOWN       0     // DOWN must be false
 #define MSCR_UP         1
 #define MSCR_LEFT       (-1)
 #define MSCR_RIGHT      (-2)

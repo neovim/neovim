@@ -167,15 +167,6 @@ enum {
 #define MIN_SWAP_PAGE_SIZE 1048
 #define MAX_SWAP_PAGE_SIZE 50000
 
-// Boolean constants
-
-#ifndef TRUE
-# define FALSE  0           // note: this is an int, not a long!
-# define TRUE   1
-#endif
-
-#define MAYBE   2           // sometimes used for a variant on TRUE
-
 #define STATUS_HEIGHT   1       // height of a status line under a window
 #define QF_WINHEIGHT    10      // default height for quickfix window
 

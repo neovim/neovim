@@ -750,7 +750,7 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
                 • highlights: (boolean) Return highlight information.
                 • use_winbar: (boolean) Evaluate winbar instead of statusline.
                 • use_tabline: (boolean) Evaluate tabline instead of
-                  statusline. When |TRUE|, {winid} is ignored. Mutually
+                  statusline. When true, {winid} is ignored. Mutually
                   exclusive with {use_winbar}.
 
     Return: ~
@@ -759,7 +759,7 @@ nvim_eval_statusline({str}, {*opts})                  *nvim_eval_statusline()*
         • width: (number) Display width of the statusline.
         • highlights: Array containing highlight information of the
           statusline. Only included when the "highlights" key in {opts} is
-          |TRUE|. Each element of the array is a |Dictionary| with these keys:
+          true. Each element of the array is a |Dictionary| with these keys:
           • start: (number) Byte index (0-based) of first character that uses
             the highlight.
           • group: (string) Name of highlight group.

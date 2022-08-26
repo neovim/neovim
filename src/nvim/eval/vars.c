@@ -1119,7 +1119,7 @@ void vars_clear(hashtab_T *ht)
   vars_clear_ext(ht, true);
 }
 
-/// Like vars_clear(), but only free the value if "free_val" is TRUE.
+/// Like vars_clear(), but only free the value if "free_val" is true.
 void vars_clear_ext(hashtab_T *ht, int free_val)
 {
   int todo;

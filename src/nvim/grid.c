@@ -475,9 +475,9 @@ static int grid_char_needs_redraw(ScreenGrid *grid, size_t off_from, size_t off_
 /// "endcol" gives the columns where valid characters are.
 /// "clear_width" is the width of the window.  It's > 0 if the rest of the line
 /// needs to be cleared, negative otherwise.
-/// "rlflag" is TRUE in a rightleft window:
-///    When TRUE and "clear_width" > 0, clear columns 0 to "endcol"
-///    When FALSE and "clear_width" > 0, clear columns "endcol" to "clear_width"
+/// "rlflag" is true in a rightleft window:
+///    When true and "clear_width" > 0, clear columns 0 to "endcol"
+///    When false and "clear_width" > 0, clear columns "endcol" to "clear_width"
 /// If "wrap" is true, then hint to the UI that "row" contains a line
 /// which has wrapped into the next row.
 void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int clear_width,

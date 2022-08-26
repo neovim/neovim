@@ -1299,9 +1299,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   } else {
     curfrp = oldwin->w_frame;
     if (flags & WSP_BELOW) {
-      before = FALSE;
+      before = false;
     } else if (flags & WSP_ABOVE) {
-      before = TRUE;
+      before = true;
     } else if (flags & WSP_VERT) {
       before = !p_spr;
     } else {
@@ -3096,7 +3096,7 @@ void win_free_all(void)
   cmdwin_type = 0;
 
   while (first_tabpage->tp_next != NULL) {
-    tabpage_close(TRUE);
+    tabpage_close(true);
   }
 
   while (lastwin != NULL && lastwin->w_floating) {
@@ -4025,7 +4025,7 @@ static tabpage_T *alloc_tabpage(void)
   // Init t: variables.
   tp->tp_vars = tv_dict_alloc();
   init_var_dict(tp->tp_vars, &tp->tp_winvar, VAR_SCOPE);
-  tp->tp_diff_invalid = TRUE;
+  tp->tp_diff_invalid = true;
   tp->tp_ch_used = p_ch;
 
   return tp;
@@ -4836,7 +4836,7 @@ static void win_enter_ext(win_T *const wp, const int flags)
   }
   if (!curwin_invalid) {
     prevwin = curwin;           // remember for CTRL-W p
-    curwin->w_redr_status = TRUE;
+    curwin->w_redr_status = true;
   }
   curwin = wp;
   curbuf = wp->w_buffer;

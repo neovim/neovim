@@ -78,9 +78,9 @@ struct block_def {
   colnr_T textcol;              // index of chars (partially) in block
   colnr_T start_vcol;           // start col of 1st char wholly inside block
   colnr_T end_vcol;             // start col of 1st char wholly after block
-  int is_short;                 // TRUE if line is too short to fit in block
-  int is_MAX;                   // TRUE if curswant==MAXCOL when starting
-  int is_oneChar;               // TRUE if block within one character
+  int is_short;                 // true if line is too short to fit in block
+  int is_MAX;                   // true if curswant==MAXCOL when starting
+  int is_oneChar;               // true if block within one character
   int pre_whitesp;              // screen cols of ws before block
   int pre_whitesp_c;            // chars of ws before block
   colnr_T end_char_vcols;       // number of vcols of post-block char
@@ -181,13 +181,13 @@ int get_op_type(int char1, int char2)
   return i;
 }
 
-/// @return  TRUE if operator "op" always works on whole lines.
+/// @return  true if operator "op" always works on whole lines.
 int op_on_lines(int op)
 {
   return opchars[op][2] & OPF_LINES;
 }
 
-/// @return  TRUE if operator "op" changes text.
+/// @return  true if operator "op" changes text.
 int op_is_change(int op)
 {
   return opchars[op][2] & OPF_CHANGE;
@@ -2090,7 +2090,7 @@ void op_tilde(oparg_T *oap)
 {
   pos_T pos;
   struct block_def bd;
-  int did_change = FALSE;
+  int did_change = false;
 
   if (u_save((linenr_T)(oap->start.lnum - 1),
              (linenr_T)(oap->end.lnum + 1)) == FAIL) {
@@ -2165,7 +2165,7 @@ void op_tilde(oparg_T *oap)
 /// @param length  is rounded up to include the whole last multi-byte character.
 /// Also works correctly when the number of bytes changes.
 ///
-/// @return  TRUE if some character was changed.
+/// @return  true if some character was changed.
 static int swapchars(int op_type, pos_T *pos, int length)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2303,7 +2303,7 @@ void op_insert(oparg_T *oap, long count1)
     if (oap->motion_type == kMTBlockWise
         && curwin->w_cursor.coladd == 0) {
       // Move the cursor to the character right of the block.
-      curwin->w_set_curswant = TRUE;
+      curwin->w_set_curswant = true;
       while (*get_cursor_pos_ptr() != NUL
              && (curwin->w_cursor.col < bd.textcol + bd.textlen)) {
         curwin->w_cursor.col++;
@@ -2463,7 +2463,7 @@ void op_insert(oparg_T *oap, long count1)
 
 /// handle a change operation
 ///
-/// @return  TRUE if edit() returns because of a CTRL-O command
+/// @return  true if edit() returns because of a CTRL-O command
 int op_change(oparg_T *oap)
 {
   colnr_T l;
@@ -2489,10 +2489,10 @@ int op_change(oparg_T *oap)
   // save for undo
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     if (u_save_cursor() == FAIL) {
-      return FALSE;
+      return false;
     }
   } else if (op_delete(oap) == FAIL) {
-    return FALSE;
+    return false;
   }
 
   if ((l > curwin->w_cursor.col) && !LINEEMPTY(curwin->w_cursor.lnum)
@@ -2518,7 +2518,7 @@ int op_change(oparg_T *oap)
     fix_indent();
   }
 
-  retval = edit(NUL, FALSE, (linenr_T)1);
+  retval = edit(NUL, false, (linenr_T)1);
 
   /*
    * In Visual block mode, handle copying the new text to all lines of the
@@ -3708,7 +3708,7 @@ error:
   }
 
   msgmore(nr_lines);
-  curwin->w_set_curswant = TRUE;
+  curwin->w_set_curswant = true;
 
 end:
   if (cmdmod.cmod_flags & CMOD_LOCKMARKS) {
@@ -3722,7 +3722,7 @@ end:
     xfree(y_array);
   }
 
-  VIsual_active = FALSE;
+  VIsual_active = false;
 
   // If the cursor is past the end of the line put it at the end.
   adjust_cursor_eol();
@@ -3751,7 +3751,7 @@ void adjust_cursor_eol(void)
   }
 }
 
-/// @return  TRUE if lines starting with '#' should be left aligned.
+/// @return  true if lines starting with '#' should be left aligned.
 int preprocs_left(void)
 {
   return ((curbuf->b_p_si && !curbuf->b_p_cin)
@@ -4011,8 +4011,8 @@ char_u *skip_comment(char_u *line, bool process, bool include_space, bool *is_co
 }
 
 /// @param count              number of lines (minimal 2) to join at cursor position.
-/// @param save_undo          when TRUE, save lines for undo first.
-/// @param use_formatoptions  set to FALSE when e.g. processing backspace and comment
+/// @param save_undo          when true, save lines for undo first.
+/// @param use_formatoptions  set to false when e.g. processing backspace and comment
 ///                           leaders should not be removed.
 /// @param setmark            when true, sets the '[ and '] mark, else, the caller is expected
 ///                           to set those marks.
@@ -4033,7 +4033,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   colnr_T col = 0;
   int ret = OK;
   int *comments = NULL;
-  int remove_comments = (use_formatoptions == TRUE)
+  int remove_comments = (use_formatoptions == true)
                         && has_format_option(FO_REMOVE_COMS);
   bool prev_was_comment = false;
   assert(count >= 1);
@@ -4208,7 +4208,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   check_cursor_col();
 
   curwin->w_cursor.coladd = 0;
-  curwin->w_set_curswant = TRUE;
+  curwin->w_set_curswant = true;
 
 theend:
   xfree(spaces);
@@ -4218,7 +4218,7 @@ theend:
   return ret;
 }
 
-/// @return  TRUE if the two comment leaders given are the same.
+/// @return  true if the two comment leaders given are the same.
 ///
 /// @param lnum  The first line.  White-space is ignored.
 ///
@@ -4248,21 +4248,21 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
         return leader2_len == 0;
       }
       if (*p == COM_END) {
-        return FALSE;
+        return false;
       }
       if (*p == COM_START) {
         if (*(ml_get(lnum) + leader1_len) == NUL) {
-          return FALSE;
+          return false;
         }
         if (leader2_flags == NULL || leader2_len == 0) {
-          return FALSE;
+          return false;
         }
         for (p = leader2_flags; *p && *p != ':'; p++) {
           if (*p == COM_MIDDLE) {
-            return TRUE;
+            return true;
           }
         }
-        return FALSE;
+        return false;
       }
     }
   }
@@ -4588,7 +4588,7 @@ void format_lines(linenr_T line_count, int avoid_fex)
         // do the formatting, without 'showmode'
         State = MODE_INSERT;         // for open_line()
         smd_save = p_smd;
-        p_smd = FALSE;
+        p_smd = false;
         insertchar(NUL, INSCHAR_FORMAT
                    + (do_comments ? INSCHAR_DO_COM : 0)
                    + (do_comments && do_comments_list
@@ -4635,7 +4635,7 @@ void format_lines(linenr_T line_count, int avoid_fex)
           }
         }
         curwin->w_cursor.lnum--;
-        if (do_join(2, TRUE, FALSE, FALSE, false) == FAIL) {
+        if (do_join(2, true, false, false, false) == FAIL) {
           beep_flush();
           break;
         }
@@ -4652,22 +4652,22 @@ void format_lines(linenr_T line_count, int avoid_fex)
   }
 }
 
-/// @return  TRUE if line "lnum" ends in a white character.
+/// @return  true if line "lnum" ends in a white character.
 static int ends_in_white(linenr_T lnum)
 {
   char_u *s = ml_get(lnum);
   size_t l;
 
   if (*s == NUL) {
-    return FALSE;
+    return false;
   }
   l = STRLEN(s) - 1;
   return ascii_iswhite(s[l]);
 }
 
 /// Blank lines, and lines containing only the comment leader, are left
-/// untouched by the formatting.  The function returns TRUE in this
-/// case.  It also returns TRUE when a line starts with the end of a comment
+/// untouched by the formatting.  The function returns true in this
+/// case.  It also returns true when a line starts with the end of a comment
 /// ('e' in comment flags), so that this line is skipped, and not joined to the
 /// previous line.  A new paragraph starts after a blank line, or when the
 /// comment leader changes.
@@ -4695,13 +4695,13 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
 
   return *skipwhite((char *)ptr + *leader_len) == NUL
          || (*leader_len > 0 && *flags == COM_END)
-         || startPS(lnum, NUL, FALSE);
+         || startPS(lnum, NUL, false);
 }
 
 /// Used for auto-formatting.
 ///
-/// @return  TRUE when a paragraph starts in line "lnum".
-///          FALSE when the previous line is in the same paragraph.
+/// @return  true when a paragraph starts in line "lnum".
+///          false when the previous line is in the same paragraph.
 int paragraph_start(linenr_T lnum)
 {
   char_u *p;
@@ -4711,11 +4711,11 @@ int paragraph_start(linenr_T lnum)
   char_u *next_leader_flags = NULL;  // flags for leader of next line
 
   if (lnum <= 1) {
-    return TRUE;                // start of the file
+    return true;                // start of the file
   }
   p = ml_get(lnum - 1);
   if (*p == NUL) {
-    return TRUE;                // after empty line
+    return true;                // after empty line
   }
   const bool do_comments = has_format_option(FO_Q_COMS);  // format comments
   if (fmt_check_par(lnum - 1, &leader_len, &leader_flags, do_comments)) {
@@ -4727,16 +4727,16 @@ int paragraph_start(linenr_T lnum)
   }
 
   if (has_format_option(FO_WHITE_PAR) && !ends_in_white(lnum - 1)) {
-    return TRUE;                // missing trailing space in previous line.
+    return true;                // missing trailing space in previous line.
   }
   if (has_format_option(FO_Q_NUMBER) && (get_number_indent(lnum) > 0)) {
-    return TRUE;                // numbered item starts in "lnum".
+    return true;                // numbered item starts in "lnum".
   }
   if (!same_leader(lnum - 1, leader_len, leader_flags,
                    next_leader_len, next_leader_flags)) {
-    return TRUE;                // change of comment leader.
+    return true;                // change of comment leader.
   }
-  return FALSE;
+  return false;
 }
 
 /// prepare a few things for block mode yank/delete/tilde
@@ -5606,7 +5606,7 @@ void write_reg_contents_ex(int name, const char_u *str, ssize_t len, bool must_a
 
   // Special case: '/' search pattern
   if (name == '/') {
-    set_last_search_pat(str, RE_SEARCH, TRUE, TRUE);
+    set_last_search_pat(str, RE_SEARCH, true, true);
     return;
   }
 
