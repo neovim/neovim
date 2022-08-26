@@ -952,17 +952,17 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
   } else if (varp == &p_lcs) {  // global 'listchars'
     errmsg = set_chars_option(curwin, varp, false);
     if (errmsg == NULL) {
-      // The current window is set to use the global 'listchars' value.
-      // So clear the window-local value.
+      // If the current window is set to use the global 'listchars'
+      // value, clear the window-local value.
       if (!(opt_flags & OPT_GLOBAL)) {
         clear_string_option(&curwin->w_p_lcs);
       }
       FOR_ALL_TAB_WINDOWS(tp, wp) {
+        // If the current window has a local value need to apply it
+        // again, it was changed when setting the global value.
         // If no error was returned above, we don't expect an error
         // here, so ignore the return value.
-        if (*wp->w_p_lcs == NUL) {
-          (void)set_chars_option(wp, (char_u **)&wp->w_p_lcs, true);
-        }
+        (void)set_chars_option(wp, (char_u **)&wp->w_p_lcs, true);
       }
       redraw_all_later(UPD_NOT_VALID);
     }
@@ -971,17 +971,17 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
   } else if (varp == &p_fcs) {  // global 'fillchars'
     errmsg = set_chars_option(curwin, varp, false);
     if (errmsg == NULL) {
-      // The current window is set to use the global 'fillchars' value.
-      // So clear the window-local value.
+      // If the current window is set to use the global 'fillchars'
+      // value clear the window-local value.
       if (!(opt_flags & OPT_GLOBAL)) {
         clear_string_option(&curwin->w_p_fcs);
       }
       FOR_ALL_TAB_WINDOWS(tp, wp) {
+        // If the current window has a local value need to apply it
+        // again, it was changed when setting the global value.
         // If no error was returned above, we don't expect an error
         // here, so ignore the return value.
-        if (*wp->w_p_fcs == NUL) {
-          (void)set_chars_option(wp, (char_u **)&wp->w_p_fcs, true);
-        }
+        (void)set_chars_option(wp, (char_u **)&wp->w_p_fcs, true);
       }
       redraw_all_later(UPD_NOT_VALID);
     }
