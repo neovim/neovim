@@ -703,7 +703,7 @@ void ex_compiler(exarg_T *eap)
     do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.vim')");  // NOLINT
     do_cmdline_cmd("echo globpath(&rtp, 'compiler/*.lua')");  // NOLINT
   } else {
-    size_t bufsize = STRLEN(eap->arg) + 14;
+    size_t bufsize = strlen(eap->arg) + 14;
     buf = xmalloc(bufsize);
     if (eap->forceit) {
       // ":compiler! {name}" sets global options

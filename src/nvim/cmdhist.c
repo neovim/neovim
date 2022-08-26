@@ -91,7 +91,7 @@ static char *(history_names[]) = {
 char *get_history_arg(expand_T *xp, int idx)
 {
   const char *short_names = ":=@>?/";
-  const int short_names_count = (int)STRLEN(short_names);
+  const int short_names_count = (int)strlen(short_names);
   const int history_name_count = ARRAY_SIZE(history_names) - 1;
 
   if (idx < short_names_count) {
@@ -312,7 +312,7 @@ void add_to_history(int histype, char *new_entry, int in_map, int sep)
     hist_free_entry(hisptr);
 
     // Store the separator after the NUL of the string.
-    size_t len = STRLEN(new_entry);
+    size_t len = strlen(new_entry);
     hisptr->hisstr = xstrnsave(new_entry, len + 2);
     hisptr->timestamp = os_time();
     hisptr->additional_elements = NULL;
@@ -644,8 +644,8 @@ void ex_history(exarg_T *eap)
           snprintf((char *)IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
                    hist[i].hisnum);
           if (vim_strsize(hist[i].hisstr) > Columns - 10) {
-            trunc_string(hist[i].hisstr, (char *)IObuff + STRLEN(IObuff),
-                         Columns - 10, IOSIZE - (int)STRLEN(IObuff));
+            trunc_string(hist[i].hisstr, (char *)IObuff + strlen(IObuff),
+                         Columns - 10, IOSIZE - (int)strlen(IObuff));
           } else {
             STRCAT(IObuff, hist[i].hisstr);
           }

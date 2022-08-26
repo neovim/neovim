@@ -210,7 +210,7 @@ char *get_users(expand_T *xp, int idx)
 ///         2 is name fully matches a user name.
 int match_user(char *name)
 {
-  int n = (int)STRLEN(name);
+  int n = (int)strlen(name);
   int result = 0;
 
   init_users();

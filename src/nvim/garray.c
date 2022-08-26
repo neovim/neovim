@@ -198,7 +198,7 @@ void ga_concat(garray_T *gap, const char *restrict s)
     return;
   }
 
-  ga_concat_len(gap, s, STRLEN(s));
+  ga_concat_len(gap, s, strlen(s));
 }
 
 /// Concatenate a string to a growarray which contains characters

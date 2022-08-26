@@ -1217,7 +1217,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
       }
       // Other elements will be stored as "\tKEY:VALUE"
       // Allocate space for the key and the colon
-      len += STRLEN(dict_key) + 1;
+      len += strlen(dict_key) + 1;
     });
 
     if (has_extra) {

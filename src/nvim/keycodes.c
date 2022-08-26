@@ -539,7 +539,7 @@ char_u *get_special_key_name(int c, int modifiers)
       }
     }
   } else {            // use name of special key
-    size_t len = STRLEN(key_names_table[table_idx].name);
+    size_t len = strlen(key_names_table[table_idx].name);
 
     if ((int)len + idx + 2 <= MAX_KEY_NAME_LEN) {
       STRCPY(string + idx, key_names_table[table_idx].name);
@@ -1050,7 +1050,7 @@ char *vim_strsave_escape_ks(char *p)
   // Need a buffer to hold up to three times as much.  Four in case of an
   // illegal utf-8 byte:
   // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
-  char_u *res = xmalloc(STRLEN(p) * 4 + 1);
+  char_u *res = xmalloc(strlen(p) * 4 + 1);
   char_u *d = res;
   for (char_u *s = (char_u *)p; *s != NUL;) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {

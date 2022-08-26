@@ -376,13 +376,13 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
     *should_free = true;
     mesg = ((msglist_T *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
-      size_t cmdlen = STRLEN(cmdname);
-      ret = xstrnsave("Vim(", 4 + cmdlen + 2 + STRLEN(mesg));
+      size_t cmdlen = strlen(cmdname);
+      ret = xstrnsave("Vim(", 4 + cmdlen + 2 + strlen(mesg));
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
-      ret = xstrnsave("Vim:", 4 + STRLEN(mesg));
+      ret = xstrnsave("Vim:", 4 + strlen(mesg));
       val = ret + 4;
     }
 
@@ -410,7 +410,7 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
 
           STRCAT(val, p);
           p[-2] = NUL;
-          snprintf(val + STRLEN(p), strlen(" (%s)"), " (%s)", &mesg[1]);
+          snprintf(val + strlen(p), strlen(" (%s)"), " (%s)", &mesg[1]);
           p[-2] = '"';
         }
         break;

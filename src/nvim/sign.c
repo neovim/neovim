@@ -78,10 +78,10 @@ static signgroup_T *sign_group_ref(const char *groupname)
   signgroup_T *group;
 
   hash = hash_hash((char_u *)groupname);
-  hi = hash_lookup(&sg_table, (char *)groupname, STRLEN(groupname), hash);
+  hi = hash_lookup(&sg_table, (char *)groupname, strlen(groupname), hash);
   if (HASHITEM_EMPTY(hi)) {
     // new group
-    group = xmalloc(sizeof(signgroup_T) + STRLEN(groupname));
+    group = xmalloc(sizeof(signgroup_T) + strlen(groupname));
 
     STRCPY(group->sg_name, groupname);
     group->sg_refcount = 1;
@@ -868,7 +868,7 @@ static int sign_define_init_text(sign_T *sp, char *text)
   int cells;
   size_t len;
 
-  endp = text + (int)STRLEN(text);
+  endp = text + (int)strlen(text);
   for (s = text; s + 1 < endp; s++) {
     if (*s == '\\') {
       // Remove a backslash, so that it is possible
@@ -951,7 +951,7 @@ static int sign_define_by_name(char *name, char *icon, char *linehl, char *text,
     if (*linehl == NUL) {
       sp->sn_line_hl = 0;
     } else {
-      sp->sn_line_hl = syn_check_group(linehl, STRLEN(linehl));
+      sp->sn_line_hl = syn_check_group(linehl, strlen(linehl));
     }
   }
 
@@ -959,7 +959,7 @@ static int sign_define_by_name(char *name, char *icon, char *linehl, char *text,
     if (*texthl == NUL) {
       sp->sn_text_hl = 0;
     } else {
-      sp->sn_text_hl = syn_check_group(texthl, STRLEN(texthl));
+      sp->sn_text_hl = syn_check_group(texthl, strlen(texthl));
     }
   }
 
@@ -967,7 +967,7 @@ static int sign_define_by_name(char *name, char *icon, char *linehl, char *text,
     if (*culhl == NUL) {
       sp->sn_cul_hl = 0;
     } else {
-      sp->sn_cul_hl = syn_check_group(culhl, STRLEN(culhl));
+      sp->sn_cul_hl = syn_check_group(culhl, strlen(culhl));
     }
   }
 
@@ -975,7 +975,7 @@ static int sign_define_by_name(char *name, char *icon, char *linehl, char *text,
     if (*numhl == NUL) {
       sp->sn_num_hl = 0;
     } else {
-      sp->sn_num_hl = syn_check_group(numhl, STRLEN(numhl));
+      sp->sn_num_hl = syn_check_group(numhl, strlen(numhl));
     }
   }
 
@@ -1139,7 +1139,7 @@ static linenr_T sign_jump(int sign_id, char *sign_group, buf_T *buf)
       emsg(_("E934: Cannot jump to a buffer that does not have a name"));
       return -1;
     }
-    size_t cmdlen = STRLEN(buf->b_fname) + 24;
+    size_t cmdlen = strlen(buf->b_fname) + 24;
     char *cmd = xmallocz(cmdlen);
     snprintf(cmd, cmdlen, "e +%" PRId64 " %s",
              (int64_t)lnum, buf->b_fname);

@@ -250,7 +250,7 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
     while (*rtp != NUL && ((flags & DIP_ALL) || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
       copy_option_part(&rtp, buf, MAXPATHL, ",");
-      size_t buflen = STRLEN(buf);
+      size_t buflen = strlen(buf);
 
       // Skip after or non-after directories.
       if (flags & (DIP_NOAFTER | DIP_AFTER)) {
@@ -265,9 +265,9 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
       if (name == NULL) {
         (*callback)(buf, cookie);
         did_one = true;
-      } else if (buflen + STRLEN(name) + 2 < MAXPATHL) {
+      } else if (buflen + strlen(name) + 2 < MAXPATHL) {
         add_pathsep(buf);
-        tail = buf + STRLEN(buf);
+        tail = buf + strlen(buf);
 
         // Loop over all patterns in "name"
         char *np = name;
@@ -397,10 +397,10 @@ int do_in_cached_path(char *name, int flags, DoInRuntimepathCB callback, void *c
 
     if (name == NULL) {
       (*callback)(item.path, cookie);
-    } else if (buflen + STRLEN(name) + 2 < MAXPATHL) {
+    } else if (buflen + strlen(name) + 2 < MAXPATHL) {
       STRCPY(buf, item.path);
       add_pathsep(buf);
-      tail = buf + STRLEN(buf);
+      tail = buf + strlen(buf);
 
       // Loop over all patterns in "name"
       char *np = name;
@@ -545,7 +545,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
     char *start_dir = "pack/*/start/*/%s%s";  // NOLINT
-    size_t len = STRLEN(start_dir) + STRLEN(name) + 6;
+    size_t len = strlen(start_dir) + strlen(name) + 6;
     char *s = xmallocz(len);  // TODO(bfredl): get rid of random allocations
     char *suffix = (flags & DIP_AFTER) ? "after/" : "";
 
@@ -556,7 +556,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
 
     if (done == FAIL || (flags & DIP_ALL)) {
       start_dir = "start/*/%s%s";  // NOLINT
-      len = STRLEN(start_dir) + STRLEN(name) + 6;
+      len = strlen(start_dir) + strlen(name) + 6;
       s = xmallocz(len);
 
       vim_snprintf(s, len, start_dir, suffix, name);
@@ -568,7 +568,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_OPT)) {
     char *opt_dir = "pack/*/opt/*/%s";  // NOLINT
-    size_t len = STRLEN(opt_dir) + STRLEN(name);
+    size_t len = strlen(opt_dir) + strlen(name);
     char *s = xmallocz(len);
 
     vim_snprintf(s, len, opt_dir, name);
@@ -578,7 +578,7 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
 
     if (done == FAIL || (flags & DIP_ALL)) {
       opt_dir = "opt/*/%s";  // NOLINT
-      len = STRLEN(opt_dir) + STRLEN(name);
+      len = strlen(opt_dir) + strlen(name);
       s = xmallocz(len);
 
       vim_snprintf(s, len, opt_dir, name);
@@ -630,13 +630,13 @@ static void expand_pack_entry(RuntimeSearchPath *search_path, Map(String, handle
   static char buf[MAXPATHL];
   char *(start_pat[]) = { "/pack/*/start/*", "/start/*" };  // NOLINT
   for (int i = 0; i < 2; i++) {
-    if (pack_entry_len + STRLEN(start_pat[i]) + 1 > sizeof buf) {
+    if (pack_entry_len + strlen(start_pat[i]) + 1 > sizeof buf) {
       continue;
     }
     STRLCPY(buf, pack_entry, sizeof buf);
     STRLCPY(buf + pack_entry_len, start_pat[i], sizeof buf - pack_entry_len);
     expand_rtp_entry(search_path, rtp_used, buf, false);
-    size_t after_size = STRLEN(buf) + 7;
+    size_t after_size = strlen(buf) + 7;
     char *after = xmallocz(after_size);
     xstrlcpy(after, buf, after_size);
     xstrlcat(after, "/after", after_size);
@@ -669,7 +669,7 @@ RuntimeSearchPath runtime_search_path_build(void)
     char *cur_entry = entry;
     copy_option_part(&entry, buf, MAXPATHL, ",");
 
-    String the_entry = { .data = cur_entry, .size = STRLEN(buf) };
+    String the_entry = { .data = cur_entry, .size = strlen(buf) };
 
     kv_push(pack_entries, the_entry);
     map_put(String, handle_T)(&pack_used, the_entry, 0);
@@ -679,7 +679,7 @@ RuntimeSearchPath runtime_search_path_build(void)
   for (rtp_entry = p_rtp; *rtp_entry != NUL;) {
     char *cur_entry = rtp_entry;
     copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
-    size_t buflen = STRLEN(buf);
+    size_t buflen = strlen(buf);
 
     if (path_is_after(buf, buflen)) {
       rtp_entry = cur_entry;
@@ -713,7 +713,7 @@ RuntimeSearchPath runtime_search_path_build(void)
   // "after" dirs in rtp
   for (; *rtp_entry != NUL;) {
     copy_option_part(&rtp_entry, buf, MAXPATHL, ",");
-    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, STRLEN(buf)));
+    expand_rtp_entry(&search_path, &rtp_used, buf, path_is_after(buf, strlen(buf)));
   }
 
   // strings are not owned
@@ -891,7 +891,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
 
   if (insp == NULL) {
     // Both "fname" and "after" not found, append at the end.
-    insp = (const char *)p_rtp + STRLEN(p_rtp);
+    insp = (const char *)p_rtp + strlen(p_rtp);
   }
 
   // check if rtp/pack/name/start/name/after exists
@@ -901,8 +901,8 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
     afterlen = strlen(afterdir) + 1;  // add one for comma
   }
 
-  const size_t oldlen = STRLEN(p_rtp);
-  const size_t addlen = STRLEN(fname) + 1;  // add one for comma
+  const size_t oldlen = strlen(p_rtp);
+  const size_t addlen = strlen(fname) + 1;  // add one for comma
   const size_t new_rtp_capacity = oldlen + addlen + afterlen + 1;
   // add one for NUL ------------------------------------------^
   char *const new_rtp = try_malloc(new_rtp_capacity);
@@ -969,7 +969,7 @@ static int load_pack_plugin(bool opt, char *fname)
   static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
 
   char *const ffname = fix_fname(fname);
-  size_t len = strlen(ffname) + STRLEN(ftpat);
+  size_t len = strlen(ffname) + strlen(ftpat);
   char *pat = xmallocz(len);
 
   vim_snprintf(pat, len, "%s/plugin/**/*.vim", ffname);  // NOLINT
@@ -1061,7 +1061,7 @@ static void add_pack_start_dir(char *fname, void *cookie)
   static char buf[MAXPATHL];
   char *(start_pat[]) = { "/start/*", "/pack/*/start/*" };  // NOLINT
   for (int i = 0; i < 2; i++) {
-    if (STRLEN(fname) + STRLEN(start_pat[i]) + 1 > MAXPATHL) {
+    if (strlen(fname) + strlen(start_pat[i]) + 1 > MAXPATHL) {
       continue;
     }
     STRLCPY(buf, fname, MAXPATHL);
@@ -1140,7 +1140,7 @@ void ex_packadd(exarg_T *eap)
       continue;
     }
 
-    const size_t len = STRLEN(plugpat) + STRLEN(eap->arg) + 5;
+    const size_t len = strlen(plugpat) + strlen(eap->arg) + 5;
     char *pat = xmallocz(len);
     vim_snprintf(pat, len, plugpat, round == 1 ? "start" : "opt", eap->arg);
     // The first round don't give a "not found" error, in the second round
@@ -1166,14 +1166,14 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
 {
   *num_file = 0;
   *file = NULL;
-  size_t pat_len = STRLEN(pat);
+  size_t pat_len = strlen(pat);
 
   garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 10);
 
   // TODO(bfredl): this is bullshit, exandpath should not reinvent path logic.
   for (int i = 0; dirnames[i] != NULL; i++) {
-    size_t size = STRLEN(dirnames[i]) + pat_len + 7;
+    size_t size = strlen(dirnames[i]) + pat_len + 7;
     char *s = xmalloc(size);
     snprintf(s, size, "%s/%s*.vim", dirnames[i], pat);
     globpath(p_rtp, s, &ga, 0);
@@ -1186,7 +1186,7 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
 
   if (flags & DIP_START) {
     for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = STRLEN(dirnames[i]) + pat_len + 22;
+      size_t size = strlen(dirnames[i]) + pat_len + 22;
       char *s = xmalloc(size);
       snprintf(s, size, "pack/*/start/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
@@ -1198,7 +1198,7 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
     }
 
     for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = STRLEN(dirnames[i]) + pat_len + 22;
+      size_t size = strlen(dirnames[i]) + pat_len + 22;
       char *s = xmalloc(size);
       snprintf(s, size, "start/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
@@ -1212,7 +1212,7 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
 
   if (flags & DIP_OPT) {
     for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = STRLEN(dirnames[i]) + pat_len + 20;
+      size_t size = strlen(dirnames[i]) + pat_len + 20;
       char *s = xmalloc(size);
       snprintf(s, size, "pack/*/opt/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
@@ -1224,7 +1224,7 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
     }
 
     for (int i = 0; dirnames[i] != NULL; i++) {
-      size_t size = STRLEN(dirnames[i]) + pat_len + 20;
+      size_t size = strlen(dirnames[i]) + pat_len + 20;
       char *s = xmalloc(size);
       snprintf(s, size, "opt/*/%s/%s*.vim", dirnames[i], pat);  // NOLINT
       globpath(p_pp, s, &ga, 0);
@@ -1239,7 +1239,7 @@ int ExpandRTDir(char *pat, int flags, int *num_file, char ***file, char *dirname
   for (int i = 0; i < ga.ga_len; i++) {
     char *match = ((char **)ga.ga_data)[i];
     char *s = match;
-    char *e = s + STRLEN(s);
+    char *e = s + strlen(s);
     if (e - s > 4 && (STRNICMP(e - 4, ".vim", 4) == 0
                       || ((flags & DIP_LUA)
                           && STRNICMP(e - 4, ".lua", 4) == 0))) {
@@ -1277,7 +1277,7 @@ int ExpandPackAddDir(char *pat, int *num_file, char ***file)
 
   *num_file = 0;
   *file = NULL;
-  size_t pat_len = STRLEN(pat);
+  size_t pat_len = strlen(pat);
   ga_init(&ga, (int)sizeof(char *), 10);
 
   size_t buflen = pat_len + 26;
@@ -1291,7 +1291,7 @@ int ExpandPackAddDir(char *pat, int *num_file, char ***file)
   for (int i = 0; i < ga.ga_len; i++) {
     char *match = ((char **)ga.ga_data)[i];
     s = path_tail(match);
-    memmove(match, s, STRLEN(s) + 1);
+    memmove(match, s, strlen(s) + 1);
   }
 
   if (GA_EMPTY(&ga)) {
@@ -1728,7 +1728,7 @@ typedef struct {
 static char *get_str_line(int c, void *cookie, int indent, bool do_concat)
 {
   GetStrLineCookie *p = cookie;
-  if (STRLEN(p->buf) <= p->offset) {
+  if (strlen(p->buf) <= p->offset) {
     return NULL;
   }
   const char *line = p->buf + p->offset;
@@ -2290,7 +2290,7 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
       ga_init(&ga, (int)sizeof(char), 400);
       ga_concat(&ga, line);
       while (sp->nextline != NULL
-             && concat_continued_line(&ga, 400, sp->nextline, STRLEN(sp->nextline))) {
+             && concat_continued_line(&ga, 400, sp->nextline, strlen(sp->nextline))) {
         xfree(sp->nextline);
         sp->nextline = get_one_sourceline(sp);
       }
@@ -2353,7 +2353,7 @@ retry:
 
       break;
     }
-    len = ga.ga_len + (int)STRLEN(buf + ga.ga_len);
+    len = ga.ga_len + (int)strlen(buf + ga.ga_len);
 #ifdef USE_CRNL
     // Ignore a trailing CTRL-Z, when in Dos mode. Only recognize the
     // CTRL-Z by its own, or after a NL.

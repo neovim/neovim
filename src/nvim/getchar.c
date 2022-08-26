@@ -148,7 +148,7 @@ static char_u *get_buffcont(buffheader_T *buffer, int dozero)
   // compute the total length of the string
   for (const buffblock_T *bp = buffer->bh_first.b_next;
        bp != NULL; bp = bp->b_next) {
-    count += STRLEN(bp->b_str);
+    count += strlen(bp->b_str);
   }
 
   if (count || dozero) {
@@ -225,13 +225,13 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
   } else if (buf->bh_index != 0) {
     memmove(buf->bh_first.b_next->b_str,
             buf->bh_first.b_next->b_str + buf->bh_index,
-            STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
+            strlen(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
   }
   buf->bh_index = 0;
 
   size_t len;
   if (buf->bh_space >= (size_t)slen) {
-    len = STRLEN(buf->bh_curr->b_str);
+    len = strlen(buf->bh_curr->b_str);
     STRLCPY(buf->bh_curr->b_str + len, s, slen + 1);
     buf->bh_space -= (size_t)slen;
   } else {
@@ -259,7 +259,7 @@ static void delete_buff_tail(buffheader_T *buf, int slen)
   if (buf->bh_curr == NULL) {
     return;  // nothing to delete
   }
-  len = (int)STRLEN(buf->bh_curr->b_str);
+  len = (int)strlen(buf->bh_curr->b_str);
   if (len >= slen) {
     buf->bh_curr->b_str[len - slen] = NUL;
     buf->bh_space += (size_t)slen;
@@ -845,7 +845,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
     typebuf.tb_change_cnt = 1;
   }
 
-  addlen = (int)STRLEN(str);
+  addlen = (int)strlen(str);
 
   if (offset == 0 && addlen <= typebuf.tb_off) {
     // Easy case: there is room in front of typebuf.tb_buf[typebuf.tb_off]

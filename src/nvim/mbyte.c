@@ -1556,7 +1556,7 @@ void show_utf8(void)
     sprintf((char *)IObuff + rlen, "%02x ",
             (line[i] == NL) ? NUL : line[i]);          // NUL is stored as NL
     clen--;
-    rlen += (int)STRLEN(IObuff + rlen);
+    rlen += (int)strlen(IObuff + rlen);
     if (rlen > IOSIZE - 20) {
       break;
     }

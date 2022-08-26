@@ -66,7 +66,7 @@ typedef struct suginfo_S {
 /// One word suggestion.  Used in "si_ga".
 typedef struct {
   char *st_word;      ///< suggested word, allocated string
-  int st_wordlen;     ///< STRLEN(st_word)
+  int st_wordlen;     ///< strlen(st_word)
   int st_orglen;      ///< length of replaced text
   int st_score;       ///< lower is better
   int st_altscore;    ///< used when st_score compares equal
@@ -1633,7 +1633,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
             if (!try_compound && !fword_ends) {
               STRCAT(preword, " ");
             }
-            sp->ts_prewordlen = (char_u)STRLEN(preword);
+            sp->ts_prewordlen = (char_u)strlen(preword);
             sp->ts_splitoff = sp->ts_twordlen;
             sp->ts_splitfidx = sp->ts_fidx;
 
@@ -3070,7 +3070,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
 
   // Minimize "badlen" for consistency.  Avoids that changing "the the" to
   // "thee the" is added next to changing the first "the" the "thee".
-  const char *pgood = goodword + STRLEN(goodword);
+  const char *pgood = goodword + strlen(goodword);
   char_u *pbad = su->su_badptr + badlenarg;
   for (;;) {
     goodlen = (int)(pgood - goodword);
@@ -3345,8 +3345,8 @@ static int soundalike_score(char *goodstart, char *badstart)
     }
   }
 
-  goodlen = (int)STRLEN(goodsound);
-  badlen = (int)STRLEN(badsound);
+  goodlen = (int)strlen(goodsound);
+  badlen = (int)strlen(badsound);
 
   // Return quickly if the lengths are too different to be fixed by two
   // changes.

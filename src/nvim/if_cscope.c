@@ -415,7 +415,7 @@ static int cs_add_common(char *arg1, char *arg2, char *flags)
   fname = xmalloc(MAXPATHL + 1);
 
   expand_env(arg1, fname, MAXPATHL);
-  size_t len = STRLEN(fname);
+  size_t len = strlen(fname);
   fbuf = fname;
   (void)modify_fname(":p", false, &usedlen, &fname, &fbuf, &len);
   if (fname == NULL) {
@@ -1180,7 +1180,7 @@ static cscmd_T *cs_lookup_cmd(exarg_T *eap)
   }
 
   // Store length of eap->arg before it gets modified by strtok().
-  eap_arg_len = (int)STRLEN(eap->arg);
+  eap_arg_len = (int)strlen(eap->arg);
 
   if ((stok = strtok(eap->arg, (const char *)" ")) == NULL) {  // NOLINT(runtime/threadsafe_fn)
     return NULL;

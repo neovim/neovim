@@ -627,7 +627,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     if (b0p->b0_fname[0] == '~') {
       // If there is no user name or it is too long, don't use "~/"
       int retval = os_get_username(uname, B0_UNAME_SIZE);
-      size_t ulen = STRLEN(uname);
+      size_t ulen = strlen(uname);
       size_t flen = STRLEN(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
         STRLCPY(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
@@ -678,7 +678,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
   int n;
   int size = B0_FNAME_SIZE_NOCRYPT;
 
-  n = (int)STRLEN(buf->b_p_fenc);
+  n = (int)strlen(buf->b_p_fenc);
   if ((int)STRLEN(b0p->b0_fname) + n + 1 > size) {
     b0p->b0_flags &= (uint8_t) ~B0_HAS_FENC;
   } else {
@@ -736,7 +736,7 @@ void ml_recover(bool checkext)
   if (fname == NULL) {              // When there is no file name
     fname = "";
   }
-  len = (int)STRLEN(fname);
+  len = (int)strlen(fname);
   if (checkext && len >= 4
       && STRNICMP(fname + len - 4, ".s", 2) == 0
       && vim_strchr("abcdefghijklmnopqrstuvw", TOLOWER_ASC(fname[len - 2])) != NULL
@@ -1221,7 +1221,7 @@ int recover_names(char_u *fname, int list, int nr, char **fname_out)
 
   // Do the loop for every directory in 'directory'.
   // First allocate some memory to put the directory name in.
-  dir_name = xmalloc(STRLEN(p_dir) + 1);
+  dir_name = xmalloc(strlen(p_dir) + 1);
   dirp = p_dir;
   while (*dirp) {
     // Isolate a directory name from *dirp and put it in dir_name (we know
@@ -3029,7 +3029,7 @@ int resolve_symlink(const char *fname, char *buf)
       STRCPY(tmp, buf);
     } else {
       char_u *tail = (char_u *)path_tail(tmp);
-      if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL) {
+      if (STRLEN(tail) + strlen(buf) >= MAXPATHL) {
         return FAIL;
       }
       STRCPY(tail, buf);

@@ -2295,7 +2295,7 @@ static void update_si_end(stateitem_T *sip, int startcol, bool force)
       // a "oneline" never continues in the next line
       sip->si_ends = true;
       sip->si_m_endpos.lnum = current_lnum;
-      sip->si_m_endpos.col = (colnr_T)STRLEN(syn_getcurline());
+      sip->si_m_endpos.col = (colnr_T)strlen(syn_getcurline());
     } else {
       // continues in the next line
       sip->si_ends = false;
@@ -2646,7 +2646,7 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
   if (result->lnum > syn_buf->b_ml.ml_line_count) {
     // a "\n" at the end of the pattern may take us below the last line
     result->lnum = syn_buf->b_ml.ml_line_count;
-    col = (int)STRLEN(ml_get_buf(syn_buf, result->lnum, false));
+    col = (int)strlen(ml_get_buf(syn_buf, result->lnum, false));
   }
   if (off != 0) {
     base = (char_u *)ml_get_buf(syn_buf, result->lnum, false);
@@ -3734,11 +3734,11 @@ static void add_keyword(char *const name, const int id, const int flags,
 {
   char name_folded[MAXKEYWLEN + 1];
   const char *const name_ic = (curwin->w_s->b_syn_ic)
-      ? (char *)str_foldcase((char_u *)name, (int)STRLEN(name), (char_u *)name_folded,
+      ? (char *)str_foldcase((char_u *)name, (int)strlen(name), (char_u *)name_folded,
                              sizeof(name_folded))
       : name;
 
-  keyentry_T *const kp = xmalloc(sizeof(keyentry_T) + STRLEN(name_ic));
+  keyentry_T *const kp = xmalloc(sizeof(keyentry_T) + strlen(name_ic));
   STRCPY(kp->keyword, name_ic);
   kp->k_syn.id = (int16_t)id;
   kp->k_syn.inc_tag = current_syn_inc_tag;
@@ -4063,7 +4063,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
     }
     if (syn_id != 0) {
       // Allocate a buffer, for removing backslashes in the keyword.
-      keyword_copy = xmalloc(STRLEN(rest) + 1);
+      keyword_copy = xmalloc(strlen(rest) + 1);
     }
     if (keyword_copy != NULL) {
       syn_opt_arg.flags = 0;
@@ -4099,7 +4099,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
 
         // 2: Add an entry for each keyword.
-        for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
+        for (kw = keyword_copy; --cnt >= 0; kw += strlen(kw) + 1) {
           for (p = vim_strchr(kw, '[');;) {
             if (p != NULL) {
               *p = NUL;

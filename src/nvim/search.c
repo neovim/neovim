@@ -817,7 +817,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
             if (endpos.col == 0) {
               if (pos->lnum > 1) {              // just in case
                 pos->lnum--;
-                pos->col = (colnr_T)STRLEN(ml_get_buf(buf, pos->lnum, false));
+                pos->col = (colnr_T)strlen(ml_get_buf(buf, pos->lnum, false));
               }
             } else {
               pos->col--;
@@ -934,7 +934,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   // A pattern like "\n\zs" may go past the last line.
   if (pos->lnum > buf->b_ml.ml_line_count) {
     pos->lnum = buf->b_ml.ml_line_count;
-    pos->col = (int)STRLEN(ml_get_buf(buf, pos->lnum, false));
+    pos->col = (int)strlen(ml_get_buf(buf, pos->lnum, false));
     if (pos->col > 0) {
       pos->col--;
     }
@@ -1085,7 +1085,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
       p = (char_u *)skip_regexp((char *)pat, search_delim, p_magic, &strcopy);
       if (strcopy != (char *)ps) {
         // made a copy of "pat" to change "\?" to "?"
-        searchcmdlen += (int)(STRLEN(pat) - STRLEN(strcopy));
+        searchcmdlen += (int)(STRLEN(pat) - strlen(strcopy));
         pat = (char_u *)strcopy;
         searchstr = (char_u *)strcopy;
       }
@@ -2444,7 +2444,7 @@ int current_search(long count, bool forward)
       } else {  // try again from end of buffer
                 // searching backwards, so set pos to last line and col
         pos.lnum = curwin->w_buffer->b_ml.ml_line_count;
-        pos.col  = (colnr_T)STRLEN(ml_get(curwin->w_buffer->b_ml.ml_line_count));
+        pos.col  = (colnr_T)strlen(ml_get(curwin->w_buffer->b_ml.ml_line_count));
       }
     }
   }

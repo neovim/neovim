@@ -433,7 +433,7 @@ void trunc_string(char *s, char *buf, int room_in, int buflen)
   }
 
   // Last part: End of the string.
-  half = i = (int)STRLEN(s);
+  half = i = (int)strlen(s);
   for (;;) {
     do {
       half = half - utf_head_off(s, s + half - 1) - 1;
@@ -449,7 +449,7 @@ void trunc_string(char *s, char *buf, int room_in, int buflen)
   if (i <= e + 3) {
     // text fits without truncating
     if (s != buf) {
-      len = (int)STRLEN(s);
+      len = (int)strlen(s);
       if (len >= buflen) {
         len = buflen - 1;
       }
@@ -463,7 +463,7 @@ void trunc_string(char *s, char *buf, int room_in, int buflen)
   } else if (e + 3 < buflen) {
     // set the middle and copy the last part
     memmove(buf + e, "...", (size_t)3);
-    len = (int)STRLEN(s + i) + 1;
+    len = (int)strlen(s + i) + 1;
     if (len >= buflen - e - 3) {
       len = buflen - e - 3 - 1;
     }
@@ -553,7 +553,7 @@ static char *get_emsg_source(void)
     }
 
     const char *const p = _("Error detected while processing %s:");
-    const size_t buf_len = STRLEN(sname) + strlen(p) + 1;
+    const size_t buf_len = strlen(sname) + strlen(p) + 1;
     char *const buf = xmalloc(buf_len);
     snprintf(buf, buf_len, p, sname);
     xfree(tofree);
@@ -909,7 +909,7 @@ char *msg_may_trunc(bool force, char *s)
 
   room = (Rows - cmdline_row - 1) * Columns + sc_col - 1;
   if ((force || (shortmess(SHM_TRUNC) && !exmode_active))
-      && (int)STRLEN(s) - room > 0 && p_ch > 0) {
+      && (int)strlen(s) - room > 0 && p_ch > 0) {
     int size = vim_strsize(s);
 
     // There may be room anyway when there are multibyte chars.
@@ -968,7 +968,7 @@ static void add_msg_hist_multiattr(const char *s, int len, int attr, bool multil
   struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
   if (s) {
     if (len < 0) {
-      len = (int)STRLEN(s);
+      len = (int)strlen(s);
     }
     // remove leading and trailing newlines
     while (len > 0 && *s == '\n') {
@@ -1506,7 +1506,7 @@ int msg_outtrans(char *str)
 
 int msg_outtrans_attr(const char *str, int attr)
 {
-  return msg_outtrans_len_attr(str, (int)STRLEN(str), attr);
+  return msg_outtrans_len_attr(str, (int)strlen(str), attr);
 }
 
 int msg_outtrans_len(const char *str, int len)
@@ -1588,7 +1588,7 @@ int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
         }
         plain_start = str + 1;
         msg_puts_attr((const char *)s, attr == 0 ? HL_ATTR(HLF_8) : attr);
-        retval += (int)STRLEN(s);
+        retval += (int)strlen(s);
       } else {
         retval++;
       }
@@ -1819,7 +1819,7 @@ void msg_prt_line(char *s, int list)
   if (list) {
     // find start of trailing whitespace
     if (curwin->w_p_lcs_chars.trail) {
-      trail = s + STRLEN(s);
+      trail = s + strlen(s);
       while (trail > s && ascii_iswhite(trail[-1])) {
         trail--;
       }
@@ -2003,7 +2003,7 @@ void msg_puts_title(const char *s)
 /// Does not handle multi-byte characters!
 void msg_outtrans_long_attr(char *longstr, int attr)
 {
-  msg_outtrans_long_len_attr(longstr, (int)STRLEN(longstr), attr);
+  msg_outtrans_long_len_attr(longstr, (int)strlen(longstr), attr);
 }
 
 void msg_outtrans_long_len_attr(char *longstr, int len, int attr)
@@ -3291,7 +3291,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
       }
     }
 
-    size_t len = maxlen == -1 ? STRLEN(s) : (size_t)maxlen;
+    size_t len = maxlen == -1 ? strlen(s) : (size_t)maxlen;
     if (capture_ga) {
       ga_concat_len(capture_ga, str, len);
     }
@@ -3633,9 +3633,9 @@ static char *console_dialog_alloc(const char *message, char *buttons, bool has_h
     MB_PTR_ADV(r);
   }
 
-  len += (int)(STRLEN(message)
+  len += (int)(strlen(message)
                + 2                          // for the NL's
-               + STRLEN(buttons)
+               + strlen(buttons)
                + 3);                        // for the ": " and NUL
   lenhotkey++;                               // for the NUL
 
@@ -3685,7 +3685,7 @@ static void copy_hotkeys_and_msg(const char *message, char *buttons, int default
   *confirm_msg = '\n';
   STRCPY(confirm_msg + 1, message);
 
-  char *msgp = confirm_msg + 1 + STRLEN(message);
+  char *msgp = confirm_msg + 1 + strlen(message);
 
   // Define first default hotkey. Keep the hotkey string NUL
   // terminated to avoid reading past the end.
@@ -3709,7 +3709,7 @@ static void copy_hotkeys_and_msg(const char *message, char *buttons, int default
       *msgp++ = ' ';                    // '\n' -> ', '
 
       // Advance to next hotkey and set default hotkey
-      hotkeys_ptr += STRLEN(hotkeys_ptr);
+      hotkeys_ptr += strlen(hotkeys_ptr);
       hotkeys_ptr[copy_char(r + 1, hotkeys_ptr, true)] = NUL;
 
       if (default_button_idx) {

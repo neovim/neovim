@@ -407,7 +407,7 @@ void update_ns_hl(int ns_id)
   int *hl_attrs = **alloc;
 
   for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
-    int id = syn_check_group(hlf_names[hlf], STRLEN(hlf_names[hlf]));
+    int id = syn_check_group(hlf_names[hlf], strlen(hlf_names[hlf]));
     bool optional = (hlf == HLF_INACTIVE || hlf == HLF_NFLOAT);
     hl_attrs[hlf] = hl_get_ui_attr(ns_id, hlf, id, optional);
   }

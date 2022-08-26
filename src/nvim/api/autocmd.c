@@ -240,7 +240,7 @@ Array nvim_get_autocmds(Dict(get_autocmds) *opts, Error *err)
           assert(pattern_filters[i]);
 
           char *pat = pattern_filters[i];
-          int patlen = (int)STRLEN(pat);
+          int patlen = (int)strlen(pat);
 
           if (aupat_is_buflocal(pat, patlen)) {
             aupat_normalize_buflocal_pat(pattern_buflocal,

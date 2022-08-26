@@ -5594,7 +5594,7 @@ static char_u *regprop(char_u *op)
   case MOPEN + 7:
   case MOPEN + 8:
   case MOPEN + 9:
-    sprintf(buf + STRLEN(buf), "MOPEN%d", OP(op) - MOPEN);
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "MOPEN%d", OP(op) - MOPEN);
     p = NULL;
     break;
   case MCLOSE + 0:
@@ -5609,7 +5609,7 @@ static char_u *regprop(char_u *op)
   case MCLOSE + 7:
   case MCLOSE + 8:
   case MCLOSE + 9:
-    sprintf(buf + STRLEN(buf), "MCLOSE%d", OP(op) - MCLOSE);
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "MCLOSE%d", OP(op) - MCLOSE);
     p = NULL;
     break;
   case BACKREF + 1:
@@ -5621,7 +5621,7 @@ static char_u *regprop(char_u *op)
   case BACKREF + 7:
   case BACKREF + 8:
   case BACKREF + 9:
-    sprintf(buf + STRLEN(buf), "BACKREF%d", OP(op) - BACKREF);
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "BACKREF%d", OP(op) - BACKREF);
     p = NULL;
     break;
   case NOPEN:
@@ -5639,7 +5639,7 @@ static char_u *regprop(char_u *op)
   case ZOPEN + 7:
   case ZOPEN + 8:
   case ZOPEN + 9:
-    sprintf(buf + STRLEN(buf), "ZOPEN%d", OP(op) - ZOPEN);
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "ZOPEN%d", OP(op) - ZOPEN);
     p = NULL;
     break;
   case ZCLOSE + 1:
@@ -5651,7 +5651,7 @@ static char_u *regprop(char_u *op)
   case ZCLOSE + 7:
   case ZCLOSE + 8:
   case ZCLOSE + 9:
-    sprintf(buf + STRLEN(buf), "ZCLOSE%d", OP(op) - ZCLOSE);
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "ZCLOSE%d", OP(op) - ZCLOSE);
     p = NULL;
     break;
   case ZREF + 1:
@@ -5663,7 +5663,7 @@ static char_u *regprop(char_u *op)
   case ZREF + 7:
   case ZREF + 8:
   case ZREF + 9:
-    sprintf(buf + STRLEN(buf), "ZREF%d", OP(op) - ZREF);
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "ZREF%d", OP(op) - ZREF);
     p = NULL;
     break;
   case STAR:
@@ -5703,7 +5703,8 @@ static char_u *regprop(char_u *op)
   case BRACE_COMPLEX + 7:
   case BRACE_COMPLEX + 8:
   case BRACE_COMPLEX + 9:
-    sprintf(buf + STRLEN(buf), "BRACE_COMPLEX%d", OP(op) - BRACE_COMPLEX);
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "BRACE_COMPLEX%d",
+             OP(op) - BRACE_COMPLEX);
     p = NULL;
     break;
   case MULTIBYTECODE:
@@ -5713,7 +5714,7 @@ static char_u *regprop(char_u *op)
     p = "NEWL";
     break;
   default:
-    sprintf(buf + STRLEN(buf), "corrupt %d", OP(op));
+    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "corrupt %d", OP(op));
     p = NULL;
     break;
   }

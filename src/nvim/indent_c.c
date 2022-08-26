@@ -204,7 +204,7 @@ bool cin_is_cinword(const char *line)
 {
   bool retval = false;
 
-  size_t cinw_len = STRLEN(curbuf->b_p_cinw) + 1;
+  size_t cinw_len = strlen(curbuf->b_p_cinw) + 1;
   char_u *cinw_buf = xmalloc(cinw_len);
   line = skipwhite((char *)line);
 
@@ -485,7 +485,7 @@ bool cin_isscopedecl(const char_u *p)
 {
   const char_u *s = cin_skipcomment(p);
 
-  const size_t cinsd_len = STRLEN(curbuf->b_p_cinsd) + 1;
+  const size_t cinsd_len = strlen(curbuf->b_p_cinsd) + 1;
   char_u *cinsd_buf = xmalloc(cinsd_len);
 
   bool found = false;
@@ -1322,7 +1322,7 @@ static int cin_ends_in(const char_u *s, const char_u *find, const char_u *ignore
 /// Return true when "s" starts with "word" and then a non-ID character.
 static int cin_starts_with(const char_u *s, const char *word)
 {
-  int l = (int)STRLEN(word);
+  int l = (int)strlen(word);
 
   return STRNCMP(s, word, l) == 0 && !vim_isIDc(s[l]);
 }
@@ -1901,7 +1901,7 @@ int get_c_indent(void)
   // For unknown reasons the cursor might be past the end of the line, thus
   // check for that.
   if ((State & MODE_INSERT)
-      && curwin->w_cursor.col < (colnr_T)STRLEN(linecopy)
+      && curwin->w_cursor.col < (colnr_T)strlen(linecopy)
       && linecopy[curwin->w_cursor.col] == ')') {
     linecopy[curwin->w_cursor.col] = NUL;
   }
@@ -2010,17 +2010,17 @@ int get_c_indent(void)
       (void)copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
       if (what == COM_START) {
         STRCPY(lead_start, lead_end);
-        lead_start_len = (int)STRLEN(lead_start);
+        lead_start_len = (int)strlen(lead_start);
         start_off = off;
         start_align = align;
       } else if (what == COM_MIDDLE) {
         STRCPY(lead_middle, lead_end);
-        lead_middle_len = (int)STRLEN(lead_middle);
+        lead_middle_len = (int)strlen(lead_middle);
       } else if (what == COM_END) {
         // If our line starts with the middle comment string, line it
         // up with the comment opener per the 'comments' option.
         if (STRNCMP(theline, lead_middle, lead_middle_len) == 0
-            && STRNCMP(theline, lead_end, STRLEN(lead_end)) != 0) {
+            && STRNCMP(theline, lead_end, strlen(lead_end)) != 0) {
           done = true;
           if (curwin->w_cursor.lnum > 1) {
             // If the start comment string matches in the previous
@@ -2051,7 +2051,7 @@ int get_c_indent(void)
         // If our line starts with the end comment string, line it up
         // with the middle comment
         if (STRNCMP(theline, lead_middle, lead_middle_len) != 0
-            && STRNCMP(theline, lead_end, STRLEN(lead_end)) == 0) {
+            && STRNCMP(theline, lead_end, strlen(lead_end)) == 0) {
           amount = get_indent_lnum(curwin->w_cursor.lnum - 1);
           // XXX
           if (off != 0) {

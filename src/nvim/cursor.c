@@ -67,7 +67,7 @@ int coladvance_force(colnr_T wcol)
 /// Try to advance the Cursor to the specified screen column.
 /// If virtual editing: fine tune the cursor position.
 /// Note that all virtual positions off the end of a line should share
-/// a curwin->w_cursor.col value (n.b. this is equal to STRLEN(line)),
+/// a curwin->w_cursor.col value (n.b. this is equal to strlen(line)),
 /// beginning at coladd 0.
 ///
 /// @return  OK if desired column is reached, FAIL if not
@@ -346,7 +346,7 @@ void check_cursor_col_win(win_T *win)
   colnr_T oldcoladd = win->w_cursor.col + win->w_cursor.coladd;
   unsigned int cur_ve_flags = get_ve_flags();
 
-  colnr_T len = (colnr_T)STRLEN(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
+  colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
   if (len == 0) {
     win->w_cursor.col = 0;
   } else if (win->w_cursor.col >= len) {
@@ -412,7 +412,7 @@ void check_visual_pos(void)
     VIsual.col = 0;
     VIsual.coladd = 0;
   } else {
-    int len = (int)STRLEN(ml_get(VIsual.lnum));
+    int len = (int)strlen(ml_get(VIsual.lnum));
 
     if (VIsual.col > len) {
       VIsual.col = len;

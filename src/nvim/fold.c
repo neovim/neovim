@@ -996,7 +996,7 @@ void foldAdjustVisual(void)
   }
   if (hasFolding(end->lnum, NULL, &end->lnum)) {
     ptr = ml_get(end->lnum);
-    end->col = (colnr_T)STRLEN(ptr);
+    end->col = (colnr_T)strlen(ptr);
     if (end->col > 0 && *p_sel == 'o') {
       end->col--;
     }
@@ -1589,7 +1589,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
   if (u_save(lnum - 1, lnum + 1) == OK) {
     // Check if the line ends with an unclosed comment
     skip_comment(line, false, false, &line_is_comment);
-    newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
+    newline = xmalloc(line_len + markerlen + strlen(cms) + 1);
     STRCPY(newline, line);
     // Append the marker to the end of the line
     if (p == NULL || line_is_comment) {
@@ -1599,7 +1599,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
       STRCPY(newline + line_len, cms);
       memcpy(newline + line_len + (p - cms), marker, markerlen);
       STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
-      added = markerlen + STRLEN(cms) - 2;
+      added = markerlen + strlen(cms) - 2;
     }
     ml_replace_buf(buf, lnum, newline, false);
     if (added) {
@@ -1655,14 +1655,14 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
       char *cms2 = strstr(cms, "%s");
       if (p - line >= cms2 - cms
           && STRNCMP(p - (cms2 - cms), cms, cms2 - cms) == 0
-          && STRNCMP(p + len, cms2 + 2, STRLEN(cms2 + 2)) == 0) {
+          && STRNCMP(p + len, cms2 + 2, strlen(cms2 + 2)) == 0) {
         p -= cms2 - cms;
-        len += STRLEN(cms) - 2;
+        len += strlen(cms) - 2;
       }
     }
     if (u_save(lnum - 1, lnum + 1) == OK) {
       // Make new line: text-before-marker + text-after-marker
-      char *newline = xmalloc(STRLEN(line) - len + 1);
+      char *newline = xmalloc(strlen(line) - len + 1);
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
@@ -1789,7 +1789,7 @@ static void foldtext_cleanup(char *str)
 {
   // Ignore leading and trailing white space in 'commentstring'.
   char *cms_start = skipwhite(curbuf->b_p_cms);
-  size_t cms_slen = STRLEN(cms_start);
+  size_t cms_slen = strlen(cms_start);
   while (cms_slen > 0 && ascii_iswhite(cms_start[cms_slen - 1])) {
     cms_slen--;
   }
@@ -2985,7 +2985,7 @@ static void parseMarker(win_T *wp)
 {
   foldendmarker = vim_strchr(wp->w_p_fmr, ',');
   foldstartmarkerlen = (size_t)(foldendmarker++ - wp->w_p_fmr);
-  foldendmarkerlen = STRLEN(foldendmarker);
+  foldendmarkerlen = strlen(foldendmarker);
 }
 
 // foldlevelMarker() {{{2
@@ -3262,13 +3262,13 @@ void f_foldtext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     int count = foldend - foldstart + 1;
     char *txt = NGETTEXT("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
-    size_t len = STRLEN(txt)
-                 + STRLEN(dashes)  // for %s
+    size_t len = strlen(txt)
+                 + strlen(dashes)  // for %s
                  + 20              // for %3ld
                  + STRLEN(s);      // concatenated
     char *r = xmalloc(len);
     snprintf(r, len, txt, dashes, count);
-    len = STRLEN(r);
+    len = strlen(r);
     STRCAT(r, s);
     // remove 'foldmarker' and 'commentstring'
     foldtext_cleanup(r + len);

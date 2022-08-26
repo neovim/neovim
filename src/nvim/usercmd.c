@@ -435,7 +435,7 @@ static void uc_list(char *name, size_t name_len)
       }
 
       msg_outtrans_attr(cmd->uc_name, HL_ATTR(HLF_D));
-      len = (int)STRLEN(cmd->uc_name) + 4;
+      len = (int)strlen(cmd->uc_name) + 4;
 
       do {
         msg_putchar(' ');
@@ -476,14 +476,14 @@ static void uc_list(char *name, size_t name_len)
           // -count=N
           snprintf((char *)IObuff + len, IOSIZE, "%" PRId64 "c",
                    (int64_t)cmd->uc_def);
-          len += (int)STRLEN(IObuff + len);
+          len += (int)strlen(IObuff + len);
         } else if (a & EX_DFLALL) {
           IObuff[len++] = '%';
         } else if (cmd->uc_def >= 0) {
           // -range=N
           snprintf((char *)IObuff + len, IOSIZE, "%" PRId64 "",
                    (int64_t)cmd->uc_def);
-          len += (int)STRLEN(IObuff + len);
+          len += (int)strlen(IObuff + len);
         } else {
           IObuff[len++] = '.';
         }
@@ -498,7 +498,7 @@ static void uc_list(char *name, size_t name_len)
         if (addr_type_complete[j].expand != ADDR_LINES
             && addr_type_complete[j].expand == cmd->uc_addr_type) {
           STRCPY(IObuff + len, addr_type_complete[j].shortname);
-          len += (int)STRLEN(IObuff + len);
+          len += (int)strlen(IObuff + len);
           break;
         }
       }
@@ -511,7 +511,7 @@ static void uc_list(char *name, size_t name_len)
       char *cmd_compl = get_command_complete(cmd->uc_compl);
       if (cmd_compl != NULL) {
         STRCPY(IObuff + len, get_command_complete(cmd->uc_compl));
-        len += (int)STRLEN(IObuff + len);
+        len += (int)strlen(IObuff + len);
       }
 
       do {
@@ -559,7 +559,7 @@ int parse_addr_type_arg(char *value, int vallen, cmd_addr_T *addr_type_arg)
   int i, a, b;
 
   for (i = 0; addr_type_complete[i].expand != ADDR_NONE; i++) {
-    a = (int)STRLEN(addr_type_complete[i].name) == vallen;
+    a = (int)strlen(addr_type_complete[i].name) == vallen;
     b = STRNCMP(value, addr_type_complete[i].name, vallen) == 0;
     if (a && b) {
       *addr_type_arg = addr_type_complete[i].expand;
@@ -607,7 +607,7 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
     if (get_command_complete(i) == NULL) {
       continue;
     }
-    if ((int)STRLEN(command_complete[i]) == valend
+    if ((int)strlen(command_complete[i]) == valend
         && STRNCMP(value, command_complete[i], valend) == 0) {
       *complp = i;
       if (i == EXPAND_BUFFERS) {
@@ -816,7 +816,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
   char *rep_buf = NULL;
   garray_T *gap;
 
-  replace_termcodes(rep, STRLEN(rep), &rep_buf, 0, NULL, CPO_TO_CPO_FLAGS);
+  replace_termcodes(rep, strlen(rep), &rep_buf, 0, NULL, CPO_TO_CPO_FLAGS);
   if (rep_buf == NULL) {
     // Can't replace termcodes - try using the string as is
     rep_buf = xstrdup(rep);
@@ -837,7 +837,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
     size_t len;
 
     cmd = USER_CMD_GA(gap, i);
-    len = STRLEN(cmd->uc_name);
+    len = strlen(cmd->uc_name);
     cmp = STRNCMP(name, cmd->uc_name, name_len);
     if (cmp == 0) {
       if (name_len < len) {
@@ -1198,7 +1198,7 @@ static char *uc_split_args(char *arg, char **args, size_t *arglens, size_t argc,
 
 static size_t add_cmd_modifier(char *buf, char *mod_str, bool *multi_mods)
 {
-  size_t result = STRLEN(mod_str);
+  size_t result = strlen(mod_str);
   if (*multi_mods) {
     result++;
   }
@@ -1405,13 +1405,13 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
 
     switch (quote) {
     case 0:     // No quoting, no splitting
-      result = STRLEN(eap->arg);
+      result = strlen(eap->arg);
       if (buf != NULL) {
         STRCPY(buf, eap->arg);
       }
       break;
     case 1:     // Quote, but don't split
-      result = STRLEN(eap->arg) + 2;
+      result = strlen(eap->arg) + 2;
       for (p = eap->arg; *p; p++) {
         if (*p == '\\' || *p == '"') {
           result++;
@@ -1475,7 +1475,7 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
     size_t num_len;
 
     snprintf(num_buf, sizeof(num_buf), "%" PRId64, (int64_t)num);
-    num_len = STRLEN(num_buf);
+    num_len = strlen(num_buf);
     result = num_len;
 
     if (quote) {
@@ -1637,7 +1637,7 @@ int do_ucmd(exarg_T *eap, bool preview)
       break;
     }
 
-    totlen += STRLEN(p);            // Add on the trailing characters
+    totlen += strlen(p);            // Add on the trailing characters
     buf = xmalloc(totlen + 1);
   }
 

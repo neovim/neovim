@@ -178,7 +178,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // STYLE_ECHO:       space separated.
   //       A shell we don't know, stay safe and use "echo".
   if (num_pat == 1 && *pat[0] == '`'
-      && (len = STRLEN(pat[0])) > 2
+      && (len = strlen(pat[0])) > 2
       && *(pat[0] + len - 1) == '`') {
     shell_style = STYLE_BT;
   } else if ((len = STRLEN(p_sh)) >= 3) {
@@ -198,7 +198,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // Worst case: "unset nonomatch; print -N >" plus two is 29
   len = STRLEN(tempname) + 29;
   if (shell_style == STYLE_VIMGLOB) {
-    len += STRLEN(sh_vimglob_func);
+    len += strlen(sh_vimglob_func);
   }
 
   for (i = 0; i < num_pat; i++) {
@@ -519,7 +519,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       continue;
     }
 
-    p = xmalloc(STRLEN((*file)[i]) + 1 + dir);
+    p = xmalloc(strlen((*file)[i]) + 1 + dir);
     STRCPY(p, (*file)[i]);
     if (dir) {
       add_pathsep((char *)p);             // add '/' to a directory name
@@ -1319,7 +1319,7 @@ static char *shell_xescape_xquote(const char *cmd)
   if (*p_sxe != NUL && strcmp(p_sxq, "(") == 0) {
     ecmd = (char *)vim_strsave_escaped_ext((char_u *)cmd, p_sxe, '^', false);
   }
-  size_t ncmd_size = strlen(ecmd) + STRLEN(p_sxq) * 2 + 1;
+  size_t ncmd_size = strlen(ecmd) + strlen(p_sxq) * 2 + 1;
   char *ncmd = xmalloc(ncmd_size);
 
   // When 'shellxquote' is ( append ).

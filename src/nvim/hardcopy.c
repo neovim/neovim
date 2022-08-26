@@ -663,7 +663,7 @@ void ex_hardcopy(exarg_T *eap)
 
   // Estimate the total lines to be printed
   for (lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    bytes_to_print += STRLEN(skipwhite((char *)ml_get(lnum)));
+    bytes_to_print += strlen(skipwhite(ml_get(lnum)));
   }
   if (bytes_to_print == 0) {
     msg(_("No text to be printed"));
@@ -739,10 +739,10 @@ void ex_hardcopy(exarg_T *eap)
           }
 
           if (settings.n_collated_copies > 1) {
-            sprintf((char *)IObuff + STRLEN(IObuff),
-                    _(" Copy %d of %d"),
-                    collated_copies + 1,
-                    settings.n_collated_copies);
+            snprintf(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff),
+                     _(" Copy %d of %d"),
+                     collated_copies + 1,
+                     settings.n_collated_copies);
           }
           prt_message((char_u *)IObuff);
 
@@ -759,7 +759,7 @@ void ex_hardcopy(exarg_T *eap)
             if (prtpos.column == 0) {
               // finished a file line
               prtpos.bytes_printed +=
-                STRLEN(skipwhite((char *)ml_get(prtpos.file_line)));
+                strlen(skipwhite(ml_get(prtpos.file_line)));
               if (++prtpos.file_line > eap->line2) {
                 break;                 // reached the end
               }
@@ -1278,7 +1278,7 @@ static void prt_write_file_raw_len(char_u *buffer, size_t bytes)
 
 static void prt_write_file(char *buffer)
 {
-  prt_write_file_len((char_u *)buffer, STRLEN(buffer));
+  prt_write_file_len((char_u *)buffer, strlen(buffer));
 }
 
 static void prt_write_file_len(char_u *buffer, size_t bytes)
@@ -1475,7 +1475,7 @@ static void prt_resource_name(char *filename, void *cookie)
 {
   char_u *resource_filename = cookie;
 
-  if (STRLEN(filename) >= MAXPATHL) {
+  if (strlen(filename) >= MAXPATHL) {
     *resource_filename = NUL;
   } else {
     STRCPY(resource_filename, filename);
@@ -1653,14 +1653,14 @@ static bool prt_open_resource(struct prt_ps_resource_S *resource)
   int offset = 0;
 
   if (prt_resfile_strncmp(offset, PRT_RESOURCE_HEADER,
-                          (int)STRLEN(PRT_RESOURCE_HEADER)) != 0) {
+                          (int)strlen(PRT_RESOURCE_HEADER)) != 0) {
     semsg(_("E618: file \"%s\" is not a PostScript resource file"),
           resource->filename);
     return false;
   }
 
   // Skip over any version numbers and following ws
-  offset += (int)STRLEN(PRT_RESOURCE_HEADER);
+  offset += (int)strlen(PRT_RESOURCE_HEADER);
   offset = prt_resfile_skip_nonws(offset);
   if (offset == -1) {
     return false;
@@ -1670,22 +1670,22 @@ static bool prt_open_resource(struct prt_ps_resource_S *resource)
     return false;
   }
   if (prt_resfile_strncmp(offset, PRT_RESOURCE_RESOURCE,
-                          (int)STRLEN(PRT_RESOURCE_RESOURCE)) != 0) {
+                          (int)strlen(PRT_RESOURCE_RESOURCE)) != 0) {
     semsg(_("E619: file \"%s\" is not a supported PostScript resource file"),
           resource->filename);
     return false;
   }
-  offset += (int)STRLEN(PRT_RESOURCE_RESOURCE);
+  offset += (int)strlen(PRT_RESOURCE_RESOURCE);
 
   // Decide type of resource in the file
   if (prt_resfile_strncmp(offset, PRT_RESOURCE_PROCSET,
-                          (int)STRLEN(PRT_RESOURCE_PROCSET)) == 0) {
+                          (int)strlen(PRT_RESOURCE_PROCSET)) == 0) {
     resource->type = PRT_RESOURCE_TYPE_PROCSET;
   } else if (prt_resfile_strncmp(offset, PRT_RESOURCE_ENCODING,
-                                 (int)STRLEN(PRT_RESOURCE_ENCODING)) == 0) {
+                                 (int)strlen(PRT_RESOURCE_ENCODING)) == 0) {
     resource->type = PRT_RESOURCE_TYPE_ENCODING;
   } else if (prt_resfile_strncmp(offset, PRT_RESOURCE_CMAP,
-                                 (int)STRLEN(PRT_RESOURCE_CMAP)) == 0) {
+                                 (int)strlen(PRT_RESOURCE_CMAP)) == 0) {
     resource->type = PRT_RESOURCE_TYPE_CMAP;
   } else {
     semsg(_("E619: file \"%s\" is not a supported PostScript resource file"),
@@ -2021,7 +2021,7 @@ static int prt_match_encoding(char *p_encoding, struct prt_ps_mbfont_S *p_cmap,
 
   *pp_mbenc = NULL;
   // Look for recognised encoding
-  enc_len = (int)STRLEN(p_encoding);
+  enc_len = (int)strlen(p_encoding);
   p_mbenc = p_cmap->encodings;
   for (mbenc = 0; mbenc < p_cmap->num_encodings; mbenc++) {
     if (STRNICMP(p_mbenc->encoding, p_encoding, enc_len) == 0) {
@@ -2044,7 +2044,7 @@ static int prt_match_charset(char *p_charset, struct prt_ps_mbfont_S *p_cmap,
   if (*p_charset == NUL) {
     p_charset = p_cmap->defcs;
   }
-  char_len = (int)STRLEN(p_charset);
+  char_len = (int)strlen(p_charset);
   p_mbchar = p_cmap->charsets;
   for (mbchar = 0; mbchar < p_cmap->num_charsets; mbchar++) {
     if (STRNICMP(p_mbchar->charset, p_charset, char_len) == 0) {
@@ -2135,8 +2135,8 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     }
 
     // CMap name ends with (optional) encoding name and -H for horizontal
-    if (p_mbenc->cmap_encoding != NULL && STRLEN(prt_cmap)
-        + STRLEN(p_mbenc->cmap_encoding) + 3 < sizeof(prt_cmap)) {
+    if (p_mbenc->cmap_encoding != NULL && strlen(prt_cmap)
+        + strlen(p_mbenc->cmap_encoding) + 3 < sizeof(prt_cmap)) {
       STRCAT(prt_cmap, p_mbenc->cmap_encoding);
       STRCAT(prt_cmap, "-");
     }
@@ -2200,7 +2200,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     paper_strlen = 2;
   }
   for (i = 0; i < (int)PRT_MEDIASIZE_LEN; i++) {
-    if (STRLEN(prt_mediasize[i].name) == (unsigned)paper_strlen
+    if (strlen(prt_mediasize[i].name) == (unsigned)paper_strlen
         && STRNICMP(prt_mediasize[i].name, paper_name,
                     paper_strlen) == 0) {
       break;

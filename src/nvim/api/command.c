@@ -105,7 +105,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
 
   // Parse arguments
   Array args = ARRAY_DICT_INIT;
-  size_t length = STRLEN(ea.arg);
+  size_t length = strlen(ea.arg);
 
   // For nargs = 1 or '?', pass the entire argument list as a single argument,
   // otherwise split arguments by whitespace.

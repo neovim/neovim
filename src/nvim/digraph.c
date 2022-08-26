@@ -1926,7 +1926,7 @@ void f_digraph_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (digraphs == NULL) {
     return;
   }
-  if (STRLEN(digraphs) != 2) {
+  if (strlen(digraphs) != 2) {
     semsg(_(e_digraph_must_be_just_two_characters_str), digraphs);
     return;
   }
@@ -2036,7 +2036,7 @@ char *keymap_init(void)
 
     // Source the keymap file.  It will contain a ":loadkeymap" command
     // which will call ex_loadkeymap() below.
-    buflen = STRLEN(curbuf->b_p_keymap) + STRLEN(p_enc) + 14;
+    buflen = strlen(curbuf->b_p_keymap) + strlen(p_enc) + 14;
     buf = xmalloc(buflen);
 
     // try finding "keymap/'keymap'_'encoding'.vim"  in 'runtimepath'
@@ -2102,7 +2102,7 @@ void ex_loadkeymap(exarg_T *eap)
       s = skiptowhite(p);
       kp->to = xstrnsave(p, (size_t)(s - p));
 
-      if ((STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
+      if ((strlen(kp->from) + strlen(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)
           || (*kp->to == NUL)) {
         if (*kp->to == NUL) {

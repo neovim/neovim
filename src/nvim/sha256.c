@@ -17,7 +17,7 @@
 #include <stdio.h>         // for snprintf().
 
 #include "nvim/sha256.h"   // for context_sha256_T
-#include "nvim/vim.h"      // for STRCPY()/STRLEN().
+#include "nvim/vim.h"      // for STRCPY()/strlen().
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "sha256.c.generated.h"

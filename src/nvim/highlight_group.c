@@ -1084,7 +1084,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         int i;
         while (arg[off] != NUL) {
           for (i = ARRAY_SIZE(hl_attr_table); --i >= 0;) {
-            len = (int)STRLEN(hl_name_table[i]);
+            len = (int)strlen(hl_name_table[i]);
             if (STRNICMP(arg + off, hl_name_table[i], len) == 0) {
               attr |= hl_attr_table[i];
               off += len;
@@ -1519,7 +1519,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
       }
     }
 
-    (void)syn_list_header(didh, vim_strsize((char *)ts) + (int)STRLEN(name) + 1, id, false);
+    (void)syn_list_header(didh, vim_strsize((char *)ts) + (int)strlen(name) + 1, id, false);
     didh = true;
     if (!got_int) {
       if (*name != NUL) {
@@ -1723,7 +1723,7 @@ int syn_name2id(const char *name)
     // if we look up @aaa.bbb, we have to consider @aaa as well
     return syn_check_group(name, strlen(name));
   } else {
-    return syn_name2id_len(name, STRLEN(name));
+    return syn_name2id_len(name, strlen(name));
   }
 }
 
@@ -2007,7 +2007,7 @@ void highlight_changed(void)
 
   /// Translate builtin highlight groups into attributes for quick lookup.
   for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
-    id = syn_check_group(hlf_names[hlf], STRLEN(hlf_names[hlf]));
+    id = syn_check_group(hlf_names[hlf], strlen(hlf_names[hlf]));
     if (id == 0) {
       abort();
     }

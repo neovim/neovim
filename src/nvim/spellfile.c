@@ -2157,8 +2157,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       } else if (spell_info_item(items[0]) && itemcnt > 1) {
         p = getroom(spin,
                     (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
-                    + STRLEN(items[0])
-                    + STRLEN(items[1]) + 3, false);
+                    + strlen(items[0])
+                    + strlen(items[1]) + 3, false);
         if (spin->si_info != NULL) {
           STRCPY(p, spin->si_info);
           STRCAT(p, "\n");
@@ -2231,7 +2231,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                  && compflags == NULL) {
         // Turn flag "c" into COMPOUNDRULE compatible string "c+",
         // "Na" into "Na+", "1234" into "1234+".
-        p = getroom(spin, STRLEN(items[1]) + 2, false);
+        p = getroom(spin, strlen(items[1]) + 2, false);
         STRCPY(p, items[1]);
         STRCAT(p, "+");
         compflags = (char_u *)p;
@@ -2247,7 +2247,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         if (compflags != NULL || *skipdigits((char *)items[1]) != NUL) {
           // Concatenate this string to previously defined ones,
           // using a slash to separate them.
-          l = (int)STRLEN(items[1]) + 1;
+          l = (int)strlen(items[1]) + 1;
           if (compflags != NULL) {
             l += (int)STRLEN(compflags) + 1;
           }
@@ -2358,7 +2358,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           cur_aff = getroom(spin, sizeof(*cur_aff), true);
           cur_aff->ah_flag = affitem2flag(aff->af_flagtype, (char_u *)items[1],
                                           fname, lnum);
-          if (cur_aff->ah_flag == 0 || STRLEN(items[1]) >= AH_KEY_LEN) {
+          if (cur_aff->ah_flag == 0 || strlen(items[1]) >= AH_KEY_LEN) {
             break;
           }
           if (cur_aff->ah_flag == aff->af_bad
@@ -4640,7 +4640,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
     size_t l = STRLEN(spin->si_compflags);
     assert(spin->si_comppat.ga_len >= 0);
     for (size_t i = 0; i < (size_t)spin->si_comppat.ga_len; i++) {
-      l += STRLEN(((char **)(spin->si_comppat.ga_data))[i]) + 1;
+      l += strlen(((char **)(spin->si_comppat.ga_data))[i]) + 1;
     }
     put_bytes(fd, l + 7, 4);                            // <sectionlen>
 
@@ -4652,9 +4652,9 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
     put_bytes(fd, (uintmax_t)spin->si_comppat.ga_len, 2);  // <comppatcount>
     for (size_t i = 0; i < (size_t)spin->si_comppat.ga_len; i++) {
       char *p = ((char **)(spin->si_comppat.ga_data))[i];
-      assert(STRLEN(p) < INT_MAX);
-      putc((int)STRLEN(p), fd);                         // <comppatlen>
-      fwv &= fwrite(p, STRLEN(p), 1, fd);               // <comppattext>
+      assert(strlen(p) < INT_MAX);
+      putc((int)strlen(p), fd);                         // <comppatlen>
+      fwv &= fwrite(p, strlen(p), 1, fd);               // <comppattext>
     }
     // <compflags>
     fwv &= fwrite(spin->si_compflags, STRLEN(spin->si_compflags), 1, fd);
@@ -5355,8 +5355,8 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
       afile[i] = NULL;
 
       if (incount > 1) {
-        len = (int)STRLEN(innames[i]);
-        if (STRLEN(path_tail((char *)innames[i])) < 5
+        len = (int)strlen(innames[i]);
+        if (strlen(path_tail(innames[i])) < 5
             || innames[i][len - 3] != '_') {
           semsg(_("E755: Invalid region in %s"), innames[i]);
           goto theend;
