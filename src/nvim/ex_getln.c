@@ -1704,8 +1704,8 @@ static int command_line_handle_key(CommandLineState *s)
     do {
       ccline.cmdpos--;
       // Move to first byte of possibly multibyte char.
-      ccline.cmdpos -= utf_head_off(ccline.cmdbuff,
-                                    ccline.cmdbuff + ccline.cmdpos);
+      ccline.cmdpos -= utf_head_off((char *)ccline.cmdbuff,
+                                    (char *)ccline.cmdbuff + ccline.cmdpos);
       ccline.cmdspos -= cmdline_charsize(ccline.cmdpos);
     } while (ccline.cmdpos > 0
              && (s->c == K_S_LEFT || s->c == K_C_LEFT
@@ -3208,7 +3208,7 @@ draw_cmdline_no_arabicshape:
           continue;
         }
         const int chunk_start = MAX(chunk.start, start);
-        msg_outtrans_len_attr(ccline.cmdbuff + chunk_start,
+        msg_outtrans_len_attr((char *)ccline.cmdbuff + chunk_start,
                               chunk.end - chunk_start,
                               chunk.attr);
       }
@@ -3442,14 +3442,14 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     i = 0;
     c = utf_ptr2char((char *)ccline.cmdbuff + ccline.cmdpos);
     while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
-      i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      i = utf_head_off((char *)ccline.cmdbuff, (char *)ccline.cmdbuff + ccline.cmdpos - 1) + 1;
       ccline.cmdpos -= i;
       len += i;
       c = utf_ptr2char((char *)ccline.cmdbuff + ccline.cmdpos);
     }
     if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
       // Check the previous character for Arabic combining pair.
-      i = utf_head_off(ccline.cmdbuff, ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      i = utf_head_off((char *)ccline.cmdbuff, (char *)ccline.cmdbuff + ccline.cmdpos - 1) + 1;
       if (arabic_combine(utf_ptr2char((char *)ccline.cmdbuff + ccline.cmdpos - i), c)) {
         ccline.cmdpos -= i;
         len += i;
@@ -3581,7 +3581,7 @@ static bool cmdline_paste(int regname, bool literally, bool remcr)
 
       // Locate start of last word in the cmd buffer.
       for (w = ccline.cmdbuff + ccline.cmdpos; w > ccline.cmdbuff;) {
-        len = utf_head_off(ccline.cmdbuff, w - 1) + 1;
+        len = utf_head_off((char *)ccline.cmdbuff, (char *)w - 1) + 1;
         if (!vim_iswordc(utf_ptr2char((char *)w - len))) {
           break;
         }

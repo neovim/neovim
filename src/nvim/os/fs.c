@@ -821,10 +821,10 @@ int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 /// Check if a path exists.
 ///
 /// @return `true` if `path` exists
-bool os_path_exists(const char_u *path)
+bool os_path_exists(const char *path)
 {
   uv_stat_t statbuf;
-  return os_stat((char *)path, &statbuf) == kLibuvSuccess;
+  return os_stat(path, &statbuf) == kLibuvSuccess;
 }
 
 /// Sets file access and modification times.

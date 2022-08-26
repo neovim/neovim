@@ -2215,12 +2215,12 @@ static void find_start_of_word(pos_T *pos)
   int cclass;
   int col;
 
-  line = ml_get(pos->lnum);
+  line = (char_u *)ml_get(pos->lnum);
   cclass = get_mouse_class(line + pos->col);
 
   while (pos->col > 0) {
     col = pos->col - 1;
-    col -= utf_head_off(line, line + col);
+    col -= utf_head_off((char *)line, (char *)line + col);
     if (get_mouse_class(line + col) != cclass) {
       break;
     }
@@ -2236,10 +2236,10 @@ static void find_end_of_word(pos_T *pos)
   int cclass;
   int col;
 
-  line = ml_get(pos->lnum);
+  line = (char_u *)ml_get(pos->lnum);
   if (*p_sel == 'e' && pos->col > 0) {
     pos->col--;
-    pos->col -= utf_head_off(line, line + pos->col);
+    pos->col -= utf_head_off((char *)line, (char *)line + pos->col);
   }
   cclass = get_mouse_class(line + pos->col);
   while (line[pos->col] != NUL) {
@@ -2445,7 +2445,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
       this_class = mb_get_class(ptr + col);
     }
     while (col > 0 && this_class != 0) {
-      prevcol = col - 1 - utf_head_off(ptr, ptr + col - 1);
+      prevcol = col - 1 - utf_head_off((char *)ptr, (char *)ptr + col - 1);
       prev_class = mb_get_class(ptr + prevcol);
       if (this_class != prev_class
           && (i == 0

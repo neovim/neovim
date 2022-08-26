@@ -2177,7 +2177,7 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
     p = compl_orig_text;
     for (len = 0; p[len] != NUL && p[len] == ptr[len]; len++) {}
     if (len > 0) {
-      len -= utf_head_off(p, p + len);
+      len -= utf_head_off((char *)p, (char *)p + len);
     }
     for (p += len; *p != NUL; MB_PTR_ADV(p)) {
       AppendCharToRedobuff(K_BS);
@@ -3726,16 +3726,16 @@ static int get_normal_compl_info(char_u *line, int startcol, colnr_T curs_col)
   } else if (--startcol < 0
              || !vim_iswordp(mb_prevptr(line, line + startcol + 1))) {
     // Match any word of at least two chars
-    compl_pattern = (char *)vim_strsave((char_u *)"\\<\\k\\k");
+    compl_pattern = xstrdup("\\<\\k\\k");
     compl_col += curs_col;
     compl_length = 0;
   } else {
     // Search the point of change class of multibyte character
     // or not a word single byte character backward.
-    startcol -= utf_head_off(line, line + startcol);
+    startcol -= utf_head_off((char *)line, (char *)line + startcol);
     int base_class = mb_get_class(line + startcol);
     while (--startcol >= 0) {
-      int head_off = utf_head_off(line, line + startcol);
+      int head_off = utf_head_off((char *)line, (char *)line + startcol);
       if (base_class != mb_get_class(line + startcol - head_off)) {
         break;
       }
@@ -3893,7 +3893,7 @@ static int get_userdefined_compl_info(colnr_T curs_col)
 
   // Setup variables for completion.  Need to obtain "line" again,
   // it may have become invalid.
-  char_u *line = ml_get(curwin->w_cursor.lnum);
+  char_u *line = (char_u *)ml_get(curwin->w_cursor.lnum);
   compl_length = curs_col - compl_col;
   compl_pattern = (char *)vim_strnsave(line + compl_col, (size_t)compl_length);
 
@@ -3919,7 +3919,7 @@ static int get_spell_compl_info(int startcol, colnr_T curs_col)
     compl_length = (int)curs_col - compl_col;
   }
   // Need to obtain "line" again, it may have become invalid.
-  char_u *line = ml_get(curwin->w_cursor.lnum);
+  char_u *line = (char_u *)ml_get(curwin->w_cursor.lnum);
   compl_pattern = (char *)vim_strnsave(line + compl_col, (size_t)compl_length);
 
   return OK;
@@ -4036,7 +4036,7 @@ static int ins_compl_start(void)
     return FAIL;
   }
 
-  char_u *line = ml_get(curwin->w_cursor.lnum);
+  char_u *line = (char_u *)ml_get(curwin->w_cursor.lnum);
   colnr_T curs_col = curwin->w_cursor.col;
   compl_pending = 0;
 
@@ -4074,7 +4074,7 @@ static int ins_compl_start(void)
   }
   // If "line" was changed while getting completion info get it again.
   if (line_invalid) {
-    line = ml_get(curwin->w_cursor.lnum);
+    line = (char_u *)ml_get(curwin->w_cursor.lnum);
   }
 
   if (compl_status_adding()) {

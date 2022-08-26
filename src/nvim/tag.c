@@ -742,7 +742,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
                        (int)(tagp.tagkind_end - tagp.tagkind));
     }
     msg_advance(13);
-    msg_outtrans_len_attr(tagp.tagname,
+    msg_outtrans_len_attr((char *)tagp.tagname,
                           (int)(tagp.tagname_end - tagp.tagname),
                           HL_ATTR(HLF_T));
     msg_putchar(' ');
@@ -1230,7 +1230,7 @@ static int find_tagfunc_tags(char_u *pat, garray_T *ga, int *match_count, int fl
         continue;
       }
 
-      len += STRLEN(tv->vval.v_string) + 1;   // Space for "\tVALUE"
+      len += strlen(tv->vval.v_string) + 1;   // Space for "\tVALUE"
       if (!STRCMP(dict_key, "name")) {
         res_name = (char_u *)tv->vval.v_string;
         continue;
@@ -1497,7 +1497,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
     curbuf->b_help = false;
   }
 
-  orgpat.len = (int)STRLEN(pat);
+  orgpat.len = (int)strlen(pat);
   if (curbuf->b_help) {
     // When "@ab" is specified use only the "ab" language, otherwise
     // search all languages.
@@ -1550,7 +1550,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   if ((flags & TAG_KEEP_LANG)
       && help_lang_find == NULL
       && curbuf->b_fname != NULL
-      && (i = (int)STRLEN(curbuf->b_fname)) > 4
+      && (i = (int)strlen(curbuf->b_fname)) > 4
       && STRICMP(curbuf->b_fname + i - 4, ".txt") == 0) {
     is_txt = true;
   }
@@ -1595,7 +1595,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
           if ((flags & TAG_KEEP_LANG)
               && help_lang_find == NULL
               && curbuf->b_fname != NULL
-              && (i = (int)STRLEN(curbuf->b_fname)) > 4
+              && (i = (int)strlen(curbuf->b_fname)) > 4
               && curbuf->b_fname[i - 1] == 'x'
               && curbuf->b_fname[i - 4] == '.'
               && STRNICMP(curbuf->b_fname + i - 3, help_lang, 2) == 0) {
@@ -2174,7 +2174,7 @@ parse_line:
               hash = hash_hash((char_u *)mfp);
             }
             hi = hash_lookup(&ht_match[mtt], (const char *)mfp,
-                             STRLEN(mfp), hash);
+                             strlen(mfp), hash);
             if (HASHITEM_EMPTY(hi)) {
               hash_add_item(&ht_match[mtt], hi, (char_u *)mfp, hash);
               ga_grow(&ga_match[mtt], 1);
@@ -2713,7 +2713,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
    * file.  Also accept a file name for which there is a matching BufReadCmd
    * autocommand event (e.g., http://sys/file).
    */
-  if (!os_path_exists(fname)
+  if (!os_path_exists((char *)fname)
       && !has_autocmd(EVENT_BUFREADCMD, (char *)fname,
                       NULL)) {
     retval = NOTAGFILE;
@@ -3168,7 +3168,7 @@ static int add_tag_field(dict_T *dict, const char *field_name, const char *start
   char_u *buf = xmalloc(MAXPATHL);
   if (start != NULL) {
     if (end == NULL) {
-      end = start + STRLEN(start);
+      end = start + strlen(start);
       while (end > start && (end[-1] == '\r' || end[-1] == '\n')) {
         end--;
       }
@@ -3180,7 +3180,7 @@ static int add_tag_field(dict_T *dict, const char *field_name, const char *start
     STRLCPY(buf, start, len + 1);
   }
   buf[len] = NUL;
-  retval = tv_dict_add_str(dict, field_name, STRLEN(field_name),
+  retval = tv_dict_add_str(dict, field_name, strlen(field_name),
                            (const char *)buf);
   xfree(buf);
   return retval;

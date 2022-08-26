@@ -1914,9 +1914,9 @@ static bool do_user_initialization(void)
   char_u *user_vimrc = (char_u *)stdpaths_user_conf_subpath("init.vim");
 
   // init.lua
-  if (os_path_exists(init_lua_path)
+  if (os_path_exists((char *)init_lua_path)
       && do_source((char *)init_lua_path, true, DOSO_VIMRC)) {
-    if (os_path_exists(user_vimrc)) {
+    if (os_path_exists((char *)user_vimrc)) {
       semsg(_("E5422: Conflicting configs: \"%s\" \"%s\""), init_lua_path,
             user_vimrc);
     }

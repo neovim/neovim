@@ -6578,7 +6578,7 @@ char_u *file_name_in_line(char_u *line, int col, int options, long count, char_u
    * Go one char back to ":" before "//" even when ':' is not in 'isfname'.
    */
   while ((char_u *)ptr > line) {
-    if ((len = (size_t)(utf_head_off(line, (char_u *)ptr - 1))) > 0) {
+    if ((len = (size_t)(utf_head_off((char *)line, ptr - 1))) > 0) {
       ptr -= len + 1;
     } else if (vim_isfilec(ptr[-1]) || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
       ptr--;

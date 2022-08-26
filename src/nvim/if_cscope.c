@@ -446,7 +446,7 @@ staterr:
   if (arg2 != NULL) {
     ppath = xmalloc(MAXPATHL + 1);
     expand_env(arg2, ppath, MAXPATHL);
-    if (!os_path_exists((char_u *)ppath)) {
+    if (!os_path_exists(ppath)) {
       goto staterr;
     }
   }
@@ -1651,7 +1651,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
     }
     (void)snprintf(buf, bufsize, csfmt_str, i + 1, lno);
     msg_puts_attr(buf, HL_ATTR(HLF_CM));
-    msg_outtrans_long_attr((char_u *)cs_pathcomponents(fname), HL_ATTR(HLF_CM));
+    msg_outtrans_long_attr(cs_pathcomponents(fname), HL_ATTR(HLF_CM));
 
     // compute the required space for the context
     char *context = cntxts[i] ? cntxts[i] : globalcntx;
@@ -1673,11 +1673,11 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
       msg_putchar('\n');
     }
     msg_advance(12);
-    msg_outtrans_long_attr((char_u *)buf, 0);
+    msg_outtrans_long_attr(buf, 0);
     msg_putchar('\n');
     if (extra != NULL) {
       msg_advance(13);
-      msg_outtrans_long_attr((char_u *)extra, 0);
+      msg_outtrans_long_attr(extra, 0);
     }
 
     // restore matches[i]

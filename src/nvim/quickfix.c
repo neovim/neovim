@@ -1250,7 +1250,7 @@ static int qf_parse_fmt_f(regmatch_T *rmp, int midx, qffields_T *fields, int pre
   // For separate filename patterns (%O, %P and %Q), the specified file
   // should exist.
   if (vim_strchr("OPQ", prefix) != NULL
-      && !os_path_exists((char_u *)fields->namebuf)) {
+      && !os_path_exists(fields->namebuf)) {
     return QF_FAIL;
   }
 
@@ -1564,7 +1564,7 @@ static int qf_parse_dir_pfx(int idx, qffields_T *fields, qf_list_T *qfl)
 static int qf_parse_file_pfx(int idx, qffields_T *fields, qf_list_T *qfl, char *tail)
 {
   fields->valid = false;
-  if (*fields->namebuf == NUL || os_path_exists((char_u *)fields->namebuf)) {
+  if (*fields->namebuf == NUL || os_path_exists(fields->namebuf)) {
     if (*fields->namebuf && idx == 'P') {
       qfl->qf_currfile = qf_push_dir(fields->namebuf, &qfl->qf_file_stack, true);
     } else if (idx == 'Q') {
@@ -2069,7 +2069,7 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
     // This should normally be true, but if make works without
     // "leaving directory"-messages we might have missed a
     // directory change.
-    if (!os_path_exists((char_u *)ptr)) {
+    if (!os_path_exists(ptr)) {
       xfree(ptr);
       directory = qf_guess_filepath(qfl, fname);
       if (directory) {
@@ -2223,7 +2223,7 @@ static char *qf_guess_filepath(qf_list_T *qfl, char *filename)
     xfree(fullname);
     fullname = concat_fnames(ds_ptr->dirname, filename, true);
 
-    if (os_path_exists((char_u *)fullname)) {
+    if (os_path_exists(fullname)) {
       break;
     }
 
@@ -3089,7 +3089,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   qf_fmt_text((fname != NULL || qfp->qf_lnum != 0)
               ? skipwhite(qfp->qf_text) : qfp->qf_text,
               (char *)tbuf, (int)tbuflen);
-  msg_prt_line(tbuf, false);
+  msg_prt_line((char *)tbuf, false);
 
   if (tbuf != IObuff) {
     xfree(tbuf);
@@ -5075,7 +5075,7 @@ static void vgr_init_regmatch(regmmatch_T *regmatch, char *s)
 static void vgr_display_fname(char *fname)
 {
   msg_start();
-  char *p = (char *)msg_strtrunc((char_u *)fname, true);
+  char *p = msg_strtrunc(fname, true);
   if (p == NULL) {
     msg_outtrans(fname);
   } else {

@@ -710,8 +710,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
         }
       }
       if (p != NULL) {
-        write_reg_contents(*arg == '@' ? '"' : *arg,
-                           (const char_u *)p, (ssize_t)STRLEN(p), false);
+        write_reg_contents(*arg == '@' ? '"' : *arg, p, (ssize_t)STRLEN(p), false);
         arg_end = arg + 1;
       }
       xfree(ptofree);

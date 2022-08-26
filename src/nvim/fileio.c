@@ -143,7 +143,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   msg_scroll = msg_scroll_save;
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
-  msg_outtrans_attr((char *)msg_may_trunc(false, IObuff), attr);
+  msg_outtrans_attr(msg_may_trunc(false, (char *)IObuff), attr);
   msg_clr_eos();
   ui_flush();
   msg_scrolled_ign = false;
@@ -1011,7 +1011,7 @@ retry:
 
             tlen = 0;
             for (;;) {
-              p = ml_get(read_buf_lnum) + read_buf_col;
+              p = (char_u *)ml_get(read_buf_lnum) + read_buf_col;
               n = (int)STRLEN(p);
               if ((int)tlen + n + 1 > size) {
                 // Filled up to "size", append partial line.
@@ -1371,7 +1371,7 @@ retry:
             if (*--p < 0x80) {
               u8c = *p;
             } else {
-              len = utf_head_off((char_u *)ptr, p);
+              len = utf_head_off(ptr, (char *)p);
               p -= len;
               u8c = (unsigned)utf_ptr2char((char *)p);
               if (len == 0) {
@@ -2970,13 +2970,13 @@ nobackup:
            * delete an existing one, try to use another name.
            * Change one character, just before the extension.
            */
-          if (!p_bk && os_path_exists((char_u *)backup)) {
+          if (!p_bk && os_path_exists(backup)) {
             p = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
             if (p < backup) {           // empty file name ???
               p = backup;
             }
             *p = 'z';
-            while (*p > 'a' && os_path_exists((char_u *)backup)) {
+            while (*p > 'a' && os_path_exists(backup)) {
               (*p)--;
             }
             // They all exist??? Must be something wrong!
@@ -3211,11 +3211,11 @@ restore_backup:
               // This may not work if the vim_rename() fails.
               // In that case we leave the copy around.
               // If file does not exist, put the copy in its place
-              if (!os_path_exists((char_u *)fname)) {
+              if (!os_path_exists(fname)) {
                 vim_rename((char_u *)backup, (char_u *)fname);
               }
               // if original file does exist throw away the copy
-              if (os_path_exists((char_u *)fname)) {
+              if (os_path_exists(fname)) {
                 os_remove(backup);
               }
             } else {
@@ -3225,7 +3225,7 @@ restore_backup:
           }
 
           // if original file no longer exists give an extra warning
-          if (!newfile && !os_path_exists((char_u *)fname)) {
+          if (!newfile && !os_path_exists(fname)) {
             end = 0;
           }
         }
@@ -3588,7 +3588,7 @@ restore_backup:
        */
       if (org == NULL) {
         emsg(_("E205: Patchmode: can't save original file"));
-      } else if (!os_path_exists((char_u *)org)) {
+      } else if (!os_path_exists(org)) {
         vim_rename((char_u *)backup, (char_u *)org);
         XFREE_CLEAR(backup);                   // don't delete the file
 #ifdef UNIX
@@ -4677,7 +4677,7 @@ int vim_rename(const char_u *from, const char_u *to)
       char *tail = path_tail((char *)tempname);
       snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - (char *)tempname - 1)), "%d", n);
 
-      if (!os_path_exists(tempname)) {
+      if (!os_path_exists((char *)tempname)) {
         if (os_rename(from, tempname) == OK) {
           if (os_rename(tempname, to) == OK) {
             return 0;
@@ -5028,7 +5028,7 @@ int buf_check_timestamp(buf_T *buf)
       }
     }
   } else if ((buf->b_flags & BF_NEW) && !(buf->b_flags & BF_NEW_W)
-             && os_path_exists((char_u *)buf->b_ffname)) {
+             && os_path_exists(buf->b_ffname)) {
     retval = 1;
     mesg = _("W13: Warning: File \"%s\" has been created after editing started");
     buf->b_flags |= BF_NEW_W;
@@ -5051,8 +5051,8 @@ int buf_check_timestamp(buf_T *buf)
         xstrlcat(tbuf, "\n", tbuf_len - 1);
         xstrlcat(tbuf, mesg2, tbuf_len - 1);
       }
-      switch (do_dialog(VIM_WARNING, (char_u *)_("Warning"), (char_u *)tbuf,
-                        (char_u *)_("&OK\n&Load File\nLoad File &and Options"),
+      switch (do_dialog(VIM_WARNING, _("Warning"), tbuf,
+                        _("&OK\n&Load File\nLoad File &and Options"),
                         1, NULL, true)) {
       case 2:
         reload = RELOAD_NORMAL;

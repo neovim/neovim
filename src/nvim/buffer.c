@@ -3701,7 +3701,7 @@ static int chk_modeline(linenr_T lnum, int flags)
   int retval = OK;
 
   prev = -1;
-  for (s = (char *)ml_get(lnum); *s != NUL; s++) {
+  for (s = ml_get(lnum); *s != NUL; s++) {
     if (prev == -1 || ascii_isspace(prev)) {
       if ((prev != -1 && STRNCMP(s, "ex:", (size_t)3) == 0)
           || STRNCMP(s, "vi:", (size_t)3) == 0) {

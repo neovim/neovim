@@ -4765,8 +4765,8 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
                 reg_getline(rp->rs_un.regsave.rs_u.pos.lnum);
 
               rp->rs_un.regsave.rs_u.pos.col -=
-                utf_head_off(line,
-                             line + rp->rs_un.regsave.rs_u.pos.col - 1)
+                utf_head_off((char *)line,
+                             (char *)line + rp->rs_un.regsave.rs_u.pos.col - 1)
                 + 1;
             }
           } else {

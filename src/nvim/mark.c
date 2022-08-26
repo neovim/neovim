@@ -819,7 +819,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   }
   assert(Columns >= 0);
   // Allow for up to 5 bytes per character.
-  s = vim_strnsave((char_u *)skipwhite((char *)ml_get(mp->lnum)), (size_t)Columns * 5);
+  s = vim_strnsave((char_u *)skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
 
   // Truncate the line to fit it in the window
   len = 0;
@@ -1758,7 +1758,7 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
     if (*p == NUL || (int)STRLEN(p) < lp->col) {
       lp->col = 0;
     } else {
-      lp->col -= utf_head_off(p, p + lp->col);
+      lp->col -= utf_head_off((char *)p, (char *)p + lp->col);
     }
     // Reset "coladd" when the cursor would be on the right half of a
     // double-wide character.

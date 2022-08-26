@@ -104,7 +104,7 @@
 // MB_PTR_BACK(): backup a pointer to the previous character, taking care of
 // multi-byte characters if needed. Only use with "p" > "s" !
 #define MB_PTR_BACK(s, p) \
-  (p -= utf_head_off((char_u *)(s), (char_u *)(p) - 1) + 1)
+  (p -= utf_head_off((char *)(s), (char *)(p) - 1) + 1)
 
 // MB_CHAR2BYTES(): convert character to bytes and advance pointer to bytes
 #define MB_CHAR2BYTES(c, b) ((b) += utf_char2bytes((c), ((char *)b)))

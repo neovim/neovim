@@ -5595,7 +5595,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
       }
       if ((int)(rex.input - rex.line) >= state->val) {
         rex.input -= state->val;
-        rex.input -= utf_head_off(rex.line, rex.input);
+        rex.input -= utf_head_off((char *)rex.line, (char *)rex.input);
       } else {
         rex.input = rex.line;
       }

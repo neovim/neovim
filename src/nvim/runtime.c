@@ -1822,7 +1822,7 @@ static void cmd_source_buffer(const exarg_T *const eap)
     if (ga.ga_len > 400) {
       ga_set_growsize(&ga, MIN(ga.ga_len, 8000));
     }
-    ga_concat(&ga, (char *)ml_get(curr_lnum));
+    ga_concat(&ga, ml_get(curr_lnum));
     ga_append(&ga, NL);
   }
   ((char *)ga.ga_data)[ga.ga_len - 1] = NUL;
