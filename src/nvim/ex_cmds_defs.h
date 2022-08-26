@@ -237,6 +237,8 @@ struct expand {
   int xp_col;                   // cursor position in line
   char **xp_files;              // list of files
   char *xp_line;                // text being completed
+#define EXPAND_BUF_LEN 256
+  char xp_buf[EXPAND_BUF_LEN];  // buffer for returned match
 };
 
 // values for xp_backslash

@@ -5737,9 +5737,6 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
  */
 char *get_syntax_name(expand_T *xp, int idx)
 {
-#define CBUFFER_LEN 256
-  static char cbuffer[CBUFFER_LEN]; // TODO: better solution
-
   switch (expand_what) {
   case EXP_SUBCMD:
     return subcommands[idx].name;
@@ -5761,9 +5758,9 @@ char *get_syntax_name(expand_T *xp, int idx)
   }
   case EXP_CLUSTER:
     if (idx < curwin->w_s->b_syn_clusters.ga_len) {
-      vim_snprintf(cbuffer, CBUFFER_LEN, "@%s",
+      vim_snprintf(xp->xp_buf, EXPAND_BUF_LEN, "@%s",
                    SYN_CLSTR(curwin->w_s)[idx].scl_name);
-      return cbuffer;
+      return xp->xp_buf;
     } else {
       return NULL;
     }
