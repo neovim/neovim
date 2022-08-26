@@ -757,7 +757,7 @@ err_closing:
 #endif
     // expand the cscope exec for env var's
     prog = xmalloc(MAXPATHL + 1);
-    expand_env(p_csprg, (char_u *)prog, MAXPATHL);
+    expand_env((char_u *)p_csprg, (char_u *)prog, MAXPATHL);
 
     // alloc space to hold the cscope command
     size_t len = strlen(prog) + strlen(csinfo[i].fname) + 32;
@@ -953,7 +953,7 @@ static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool 
     cmdletter = opt[0];
   }
 
-  qfpos = vim_strchr((char *)p_csqf, cmdletter);
+  qfpos = vim_strchr(p_csqf, cmdletter);
   if (qfpos != NULL) {
     qfpos++;
     // next symbol must be + or -

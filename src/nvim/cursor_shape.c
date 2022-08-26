@@ -120,7 +120,7 @@ char *parse_shape_opt(int what)
       }
     }
     // Repeat for all comma separated parts.
-    char *modep = (char *)p_guicursor;
+    char *modep = p_guicursor;
     while (modep != NULL && *modep != NUL) {
       colonp = vim_strchr(modep, ':');
       commap = vim_strchr(modep, ',');

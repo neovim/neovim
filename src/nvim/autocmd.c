@@ -686,7 +686,7 @@ const char *event_nr2name(event_T event)
 static bool event_ignored(event_T event)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char *p = (char *)p_ei;
+  char *p = p_ei;
 
   while (*p != NUL) {
     if (STRNICMP(p, "all", 3) == 0 && (p[3] == NUL || p[3] == ',')) {
@@ -703,7 +703,7 @@ static bool event_ignored(event_T event)
 // Return OK when the contents of p_ei is valid, FAIL otherwise.
 int check_ei(void)
 {
-  char *p = (char *)p_ei;
+  char *p = p_ei;
 
   while (*p) {
     if (STRNICMP(p, "all", 3) == 0 && (p[3] == NUL || p[3] == ',')) {
@@ -724,8 +724,8 @@ int check_ei(void)
 // Returns the old value of 'eventignore' in allocated memory.
 char *au_event_disable(char *what)
 {
-  char *save_ei = (char *)vim_strsave(p_ei);
-  char *new_ei = (char *)vim_strnsave(p_ei, STRLEN(p_ei) + STRLEN(what));
+  char *save_ei = xstrdup(p_ei);
+  char *new_ei = xstrnsave(p_ei, STRLEN(p_ei) + STRLEN(what));
   if (*what == ',' && *p_ei == NUL) {
     STRCPY(new_ei, what + 1);
   } else {

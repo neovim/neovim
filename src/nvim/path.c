@@ -2195,7 +2195,7 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
       ffname = (char_u *)FullName_save((*files)[i], false);
       assert((*files)[i] != NULL);
       assert(ffname != NULL);
-      if (match_file_list(p_wig, (char_u *)(*files)[i], ffname)) {
+      if (match_file_list((char_u *)p_wig, (char_u *)(*files)[i], ffname)) {
         // remove this matching file from the list
         xfree((*files)[i]);
         for (j = i; j + 1 < *num_files; j++) {

@@ -137,7 +137,7 @@ void ex_help(exarg_T *eap)
     } else {
       // There is no help window yet.
       // Try to open the file specified by the "helpfile" option.
-      if ((helpfd = os_fopen((char *)p_hf, READBIN)) == NULL) {
+      if ((helpfd = os_fopen(p_hf, READBIN)) == NULL) {
         smsg(_("Sorry, help file \"%s\" not found"), p_hf);
         goto erret;
       }
@@ -701,7 +701,7 @@ void fix_help_buffer(void)
 
       // Go through all directories in 'runtimepath', skipping
       // $VIMRUNTIME.
-      char *p = (char *)p_rtp;
+      char *p = p_rtp;
       while (*p != NUL) {
         copy_option_part(&p, (char *)NameBuff, MAXPATHL, ",");
         char *const rt = vim_getenv("VIMRUNTIME");
@@ -804,7 +804,7 @@ void fix_help_buffer(void)
                 vc.vc_type = CONV_NONE;
                 convert_setup(&vc,
                               (char_u *)(this_utf == kTrue ? "utf-8" : "latin1"),
-                              p_enc);
+                              (char_u *)p_enc);
                 if (vc.vc_type == CONV_NONE) {
                   // No conversion needed.
                   cp = (char *)IObuff;
@@ -1163,7 +1163,7 @@ void ex_helptags(exarg_T *eap)
   }
 
   if (STRCMP(eap->arg, "ALL") == 0) {
-    do_in_path(p_rtp, "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
+    do_in_path((char_u *)p_rtp, "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
   } else {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_DIRECTORIES;

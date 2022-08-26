@@ -1301,7 +1301,7 @@ char *set_chars_option(win_T *wp, char_u **varp, bool apply)
   const char_u *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
   int multispace_len = 0;           // Length of lcs-multispace string
   int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
-  const bool is_listchars = (varp == &p_lcs || varp == (char_u **)&wp->w_p_lcs);
+  const bool is_listchars = (varp == (char_u **)&p_lcs || varp == (char_u **)&wp->w_p_lcs);
 
   struct chars_tab {
     int *cp;     ///< char value
@@ -1349,13 +1349,13 @@ char *set_chars_option(win_T *wp, char_u **varp, bool apply)
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
     if (varp == (char_u **)&wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
-      value = p_lcs;  // local value is empty, use the global value
+      value = (char_u *)p_lcs;  // local value is empty, use the global value
     }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
     if (varp == (char_u **)&wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
-      value = p_fcs;  // local value is empty, use the global value
+      value = (char_u *)p_fcs;  // local value is empty, use the global value
     }
   }
 
@@ -1520,10 +1520,10 @@ char *set_chars_option(win_T *wp, char_u **varp, bool apply)
 /// @return  an untranslated error message if any of them is invalid, NULL otherwise.
 char *check_chars_options(void)
 {
-  if (set_chars_option(curwin, &p_lcs, false) != NULL) {
+  if (set_chars_option(curwin, (char_u **)&p_lcs, false) != NULL) {
     return e_conflicts_with_value_of_listchars;
   }
-  if (set_chars_option(curwin, &p_fcs, false) != NULL) {
+  if (set_chars_option(curwin, (char_u **)&p_fcs, false) != NULL) {
     return e_conflicts_with_value_of_fillchars;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {

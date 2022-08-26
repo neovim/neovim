@@ -8379,7 +8379,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     conv.vc_type = CONV_NONE;
     enc = enc_locale();
-    convert_setup(&conv, p_enc, enc);
+    convert_setup(&conv, (char_u *)p_enc, enc);
     if (conv.vc_type != CONV_NONE) {
       p = (char *)string_convert(&conv, (char_u *)p, NULL);
     }
@@ -8393,7 +8393,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (conv.vc_type != CONV_NONE) {
       xfree(p);
     }
-    convert_setup(&conv, enc, p_enc);
+    convert_setup(&conv, enc, (char_u *)p_enc);
     if (conv.vc_type != CONV_NONE) {
       rettv->vval.v_string = (char *)string_convert(&conv, (char_u *)result_buf, NULL);
     } else {
@@ -8639,7 +8639,7 @@ static void f_strptime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     .vc_type = CONV_NONE,
   };
   char_u *enc = enc_locale();
-  convert_setup(&conv, p_enc, enc);
+  convert_setup(&conv, (char_u *)p_enc, enc);
   if (conv.vc_type != CONV_NONE) {
     fmt = (char *)string_convert(&conv, (char_u *)fmt, NULL);
   }

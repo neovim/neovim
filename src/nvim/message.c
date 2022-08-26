@@ -640,8 +640,8 @@ void msg_source(int attr)
 ///            If "emsg_skip" is set: never do error messages.
 int emsg_not_now(void)
 {
-  if ((emsg_off > 0 && vim_strchr((char *)p_debug, 'm') == NULL
-       && vim_strchr((char *)p_debug, 't') == NULL)
+  if ((emsg_off > 0 && vim_strchr(p_debug, 'm') == NULL
+       && vim_strchr(p_debug, 't') == NULL)
       || emsg_skip > 0) {
     return true;
   }
@@ -665,7 +665,7 @@ static bool emsg_multiline(const char *s, bool multiline)
   bool severe = emsg_severe;
   emsg_severe = false;
 
-  if (!emsg_off || vim_strchr((char *)p_debug, 't') != NULL) {
+  if (!emsg_off || vim_strchr(p_debug, 't') != NULL) {
     // Cause a throw of an error exception if appropriate.  Don't display
     // the error message in this case.  (If no matching catch clause will
     // be found, the message will be displayed later on.)  "ignore" is set

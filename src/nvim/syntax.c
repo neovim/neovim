@@ -4035,17 +4035,13 @@ static void add_keyword(char_u *const name, const int id, const int flags,
 ///
 /// @return          a pointer to the first argument.
 ///                  Return NULL if the end of the command was found instead of further args.
-static char_u *get_group_name(char_u *arg, char_u **name_end)
+static char *get_group_name(char *arg, char **name_end)
 {
-  char_u *rest;
+  *name_end = (char *)skiptowhite((char_u *)arg);
+  char *rest = skipwhite(*name_end);
 
-  *name_end = skiptowhite(arg);
-  rest = (char_u *)skipwhite((char *)(*name_end));
-
-  /*
-   * Check if there are enough arguments.  The first argument may be a
-   * pattern, where '|' is allowed, so only check for NUL.
-   */
+  // Check if there are enough arguments.  The first argument may be a
+  // pattern, where '|' is allowed, so only check for NUL.
   if (ends_excmd(*arg) || *rest == NUL) {
     return NULL;
   }
@@ -4063,7 +4059,7 @@ static char_u *get_group_name(char_u *arg, char_u **name_end)
 ///
 /// @return      a pointer to the next argument (which isn't an option).
 ///              Return NULL for any error;
-static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_char, int skip)
+static char_u *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, int skip)
 {
   char_u *gname_start, *gname;
   int syn_id;
@@ -4117,7 +4113,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
       p = flagtab[fidx].name;
       int i;
       for (i = 0, len = 0; p[i] != NUL; i += 2, len++) {
-        if (arg[len] != (char_u)p[i] && arg[len] != (char_u)p[i + 1]) {
+        if (arg[len] != p[i] && arg[len] != p[i + 1]) {
           break;
         }
       }
@@ -4157,16 +4153,16 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
       }
     } else if (flagtab[fidx].argtype == 11 && arg[5] == '=') {
       // cchar=?
-      *conceal_char = utf_ptr2char((char *)arg + 6);
-      arg += utfc_ptr2len((char *)arg + 6) - 1;
+      *conceal_char = utf_ptr2char(arg + 6);
+      arg += utfc_ptr2len(arg + 6) - 1;
       if (!vim_isprintc_strict(*conceal_char)) {
         emsg(_("E844: invalid cchar value"));
         return NULL;
       }
-      arg = (char_u *)skipwhite((char *)arg + 7);
+      arg = skipwhite(arg + 7);
     } else {
       opt->flags |= flagtab[fidx].flags;
-      arg = (char_u *)skipwhite((char *)arg + len);
+      arg = skipwhite(arg + len);
 
       if (flagtab[fidx].flags == HL_SYNC_HERE
           || flagtab[fidx].flags == HL_SYNC_THERE) {
@@ -4174,12 +4170,12 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
           emsg(_("E393: group[t]here not accepted here"));
           return NULL;
         }
-        gname_start = arg;
-        arg = skiptowhite(arg);
-        if (gname_start == arg) {
+        gname_start = (char_u *)arg;
+        arg = (char *)skiptowhite((char_u *)arg);
+        if (gname_start == (char_u *)arg) {
           return NULL;
         }
-        gname = vim_strnsave(gname_start, (size_t)(arg - gname_start));
+        gname = vim_strnsave(gname_start, (size_t)((char_u *)arg - gname_start));
         if (STRCMP(gname, "NONE") == 0) {
           *opt->sync_idx = NONE_IDX;
         } else {
@@ -4200,7 +4196,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
         }
 
         xfree(gname);
-        arg = (char_u *)skipwhite((char *)arg);
+        arg = skipwhite(arg);
       } else if (flagtab[fidx].flags == HL_FOLD
                  && foldmethodIsSyntax(curwin)) {
         // Need to update folds later.
@@ -4209,7 +4205,7 @@ static char_u *get_syn_options(char_u *arg, syn_opt_arg_T *opt, int *conceal_cha
     }
   }
 
-  return arg;
+  return (char_u *)arg;
 }
 
 /*
@@ -4240,16 +4236,16 @@ static void syn_incl_toplevel(int id, int *flagsp)
  */
 static void syn_cmd_include(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
+  char *arg = eap->arg;
   int sgl_id = 1;
-  char_u *group_name_end;
-  char_u *rest;
+  char *group_name_end;
+  char *rest;
   char *errormsg = NULL;
   int prev_toplvl_grp;
   int prev_syn_inc_tag;
   bool source = false;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd((char_u *)arg);
   if (eap->skip) {
     return;
   }
@@ -4261,12 +4257,12 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
       emsg(_("E397: Filename required"));
       return;
     }
-    sgl_id = syn_check_cluster(arg, (int)(group_name_end - arg));
+    sgl_id = syn_check_cluster((char_u *)arg, (int)(group_name_end - arg));
     if (sgl_id == 0) {
       return;
     }
     // separate_nextcmd() and expand_filename() depend on this
-    eap->arg = (char *)rest;
+    eap->arg = rest;
   }
 
   /*
@@ -4314,13 +4310,13 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
  */
 static void syn_cmd_keyword(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *group_name_end;
+  char *arg = eap->arg;
+  char *group_name_end;
   int syn_id;
-  char_u *rest;
-  char_u *keyword_copy = NULL;
-  char_u *p;
-  char_u *kw;
+  char *rest;
+  char *keyword_copy = NULL;
+  char *p;
+  char *kw;
   syn_opt_arg_T syn_opt_arg;
   int cnt;
   int conceal_char = NUL;
@@ -4331,7 +4327,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
     if (eap->skip) {
       syn_id = -1;
     } else {
-      syn_id = syn_check_group((char *)arg, (size_t)(group_name_end - arg));
+      syn_id = syn_check_group(arg, (size_t)(group_name_end - arg));
     }
     if (syn_id != 0) {
       // Allocate a buffer, for removing backslashes in the keyword.
@@ -4350,8 +4346,8 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       // 1: collect the options and copy the keywords to keyword_copy.
       cnt = 0;
       p = keyword_copy;
-      for (; rest != NULL && !ends_excmd(*rest); rest = (char_u *)skipwhite((char *)rest)) {
-        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+      for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
+        rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
         if (rest == NULL || ends_excmd(*rest)) {
           break;
         }
@@ -4372,11 +4368,11 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
 
         // 2: Add an entry for each keyword.
         for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
-          for (p = (char_u *)vim_strchr((char *)kw, '[');;) {
+          for (p = vim_strchr(kw, '[');;) {
             if (p != NULL) {
               *p = NUL;
             }
-            add_keyword(kw, syn_id, syn_opt_arg.flags,
+            add_keyword((char_u *)kw, syn_id, syn_opt_arg.flags,
                         syn_opt_arg.cont_in_list,
                         syn_opt_arg.next_list, conceal_char);
             if (p == NULL) {
@@ -4395,7 +4391,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
               kw = p + 1;
               break;   // skip over the "]"
             }
-            const int l = utfc_ptr2len((char *)p + 1);
+            const int l = utfc_ptr2len(p + 1);
 
             memmove(p, p + 1, (size_t)l);
             p += l;
@@ -4411,7 +4407,7 @@ error:
   }
 
   if (rest != NULL) {
-    eap->nextcmd = (char *)check_nextcmd(rest);
+    eap->nextcmd = (char *)check_nextcmd((char_u *)rest);
   } else {
     semsg(_(e_invarg2), arg);
   }
@@ -4427,9 +4423,8 @@ error:
 /// @param syncing  true for ":syntax sync match .. "
 static void syn_cmd_match(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *group_name_end;
-  char_u *rest;
+  char *arg = eap->arg;
+  char *group_name_end;
   synpat_T item;                // the item found in the line
   int syn_id;
   syn_opt_arg_T syn_opt_arg;
@@ -4437,7 +4432,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
   int conceal_char = NUL;
 
   // Isolate the group name, check for validity
-  rest = get_group_name(arg, &group_name_end);
+  char *rest = get_group_name(arg, &group_name_end);
 
   // Get options before the pattern
   syn_opt_arg.flags = 0;
@@ -4447,28 +4442,28 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
   syn_opt_arg.cont_list = NULL;
   syn_opt_arg.cont_in_list = NULL;
   syn_opt_arg.next_list = NULL;
-  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+  rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   // get the pattern.
   init_syn_patterns();
   CLEAR_FIELD(item);
-  rest = get_syn_pattern(rest, &item);
+  rest = (char *)get_syn_pattern((char_u *)rest, &item);
   if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
     syn_opt_arg.flags |= HL_HAS_EOL;
   }
 
   // Get options after the pattern
-  rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+  rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   if (rest != NULL) {           // all arguments are valid
     /*
      * Check for trailing command and illegal trailing arguments.
      */
-    eap->nextcmd = (char *)check_nextcmd(rest);
+    eap->nextcmd = (char *)check_nextcmd((char_u *)rest);
     if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
     } else {
-      if ((syn_id = syn_check_group((char *)arg, (size_t)(group_name_end - arg))) != 0) {
+      if ((syn_id = syn_check_group(arg, (size_t)(group_name_end - arg))) != 0) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
         /*
          * Store the pattern in the syn_items list
@@ -4525,12 +4520,12 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
 /// @param syncing  true for ":syntax sync region .."
 static void syn_cmd_region(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *group_name_end;
-  char_u *rest;                    // next arg, NULL on error
-  char_u *key_end;
-  char_u *key = NULL;
-  char_u *p;
+  char *arg = eap->arg;
+  char *group_name_end;
+  char *rest;                    // next arg, NULL on error
+  char *key_end;
+  char *key = NULL;
+  char *p;
   int item;
 #define ITEM_START          0
 #define ITEM_SKIP           1
@@ -4573,7 +4568,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
   // get the options, patterns and matchgroup.
   while (rest != NULL && !ends_excmd(*rest)) {
     // Check for option arguments
-    rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
+    rest = (char *)get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
     if (rest == NULL || ends_excmd(*rest)) {
       break;
     }
@@ -4584,7 +4579,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
       key_end++;
     }
     xfree(key);
-    key = vim_strnsave_up(rest, (size_t)(key_end - rest));
+    key = (char *)vim_strnsave_up((char_u *)rest, (size_t)(key_end - rest));
     if (STRCMP(key, "MATCHGROUP") == 0) {
       item = ITEM_MATCHGROUP;
     } else if (STRCMP(key, "START") == 0) {
@@ -4600,30 +4595,30 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
     } else {
       break;
     }
-    rest = (char_u *)skipwhite((char *)key_end);
+    rest = skipwhite(key_end);
     if (*rest != '=') {
       rest = NULL;
       semsg(_("E398: Missing '=': %s"), arg);
       break;
     }
-    rest = (char_u *)skipwhite((char *)rest + 1);
+    rest = skipwhite(rest + 1);
     if (*rest == NUL) {
       not_enough = true;
       break;
     }
 
     if (item == ITEM_MATCHGROUP) {
-      p = skiptowhite(rest);
+      p = (char *)skiptowhite((char_u *)rest);
       if ((p - rest == 4 && STRNCMP(rest, "NONE", 4) == 0) || eap->skip) {
         matchgroup_id = 0;
       } else {
-        matchgroup_id = syn_check_group((char *)rest, (size_t)(p - rest));
+        matchgroup_id = syn_check_group(rest, (size_t)(p - rest));
         if (matchgroup_id == 0) {
           illegal = true;
           break;
         }
       }
-      rest = (char_u *)skipwhite((char *)p);
+      rest = skipwhite(p);
     } else {
       /*
        * Allocate room for a syn_pattern, and link it in the list of
@@ -4644,7 +4639,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
         assert(item == ITEM_SKIP || item == ITEM_END);
         reg_do_extmatch = REX_USE;
       }
-      rest = get_syn_pattern(rest, ppp->pp_synp);
+      rest = (char *)get_syn_pattern((char_u *)rest, ppp->pp_synp);
       reg_do_extmatch = 0;
       if (item == ITEM_END && vim_regcomp_had_eol()
           && !(syn_opt_arg.flags & HL_EXCLUDENL)) {
@@ -4671,12 +4666,12 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
      * Check for trailing garbage or command.
      * If OK, add the item.
      */
-    eap->nextcmd = (char *)check_nextcmd(rest);
+    eap->nextcmd = (char *)check_nextcmd((char_u *)rest);
     if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
     } else {
       ga_grow(&(curwin->w_s->b_syn_patterns), pat_count);
-      if ((syn_id = syn_check_group((char *)arg, (size_t)(group_name_end - arg))) != 0) {
+      if ((syn_id = syn_check_group(arg, (size_t)(group_name_end - arg))) != 0) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
         /*
          * Store the start/skip/end in the syn_items list
@@ -4964,14 +4959,14 @@ static int syn_add_cluster(char_u *name)
  */
 static void syn_cmd_cluster(exarg_T *eap, int syncing)
 {
-  char_u *arg = (char_u *)eap->arg;
-  char_u *group_name_end;
-  char_u *rest;
+  char *arg = eap->arg;
+  char *group_name_end;
+  char *rest;
   bool got_clstr = false;
   int opt_len;
   int list_op;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = (char *)find_nextcmd((char_u *)arg);
   if (eap->skip) {
     return;
   }
@@ -4979,7 +4974,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
   rest = get_group_name(arg, &group_name_end);
 
   if (rest != NULL) {
-    int scl_id = syn_check_cluster(arg, (int)(group_name_end - arg));
+    int scl_id = syn_check_cluster((char_u *)arg, (int)(group_name_end - arg));
     if (scl_id == 0) {
       return;
     }
@@ -5275,7 +5270,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 /// @param list    where to store the resulting list, if not NULL, the list is silently skipped!
 ///
 /// @return        FAIL for some error, OK for success.
-static int get_id_list(char_u **const arg, const int keylen, int16_t **const list, const bool skip)
+static int get_id_list(char **const arg, const int keylen, int16_t **const list, const bool skip)
 {
   char *p = NULL;
   char *end;
@@ -5292,7 +5287,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
   // grow when a regexp is used.  In that case round 1 is done once again.
   for (int round = 1; round <= 2; round++) {
     // skip "contains"
-    p = skipwhite((char *)(*arg) + keylen);
+    p = skipwhite(*arg + keylen);
     if (*p != '=') {
       semsg(_("E405: Missing equal sign: %s"), *arg);
       break;
@@ -5417,7 +5412,7 @@ static int get_id_list(char_u **const arg, const int keylen, int16_t **const lis
     }
   }
 
-  *arg = (char_u *)p;
+  *arg = p;
   if (failed || retval == NULL) {
     xfree(retval);
     return FAIL;

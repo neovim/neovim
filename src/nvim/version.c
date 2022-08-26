@@ -2200,7 +2200,7 @@ void maybe_intro_message(void)
   if (buf_is_empty(curbuf)
       && (curbuf->b_fname == NULL)
       && (firstwin->w_next == NULL)
-      && (vim_strchr((char *)p_shm, SHM_INTRO) == NULL)) {
+      && (vim_strchr(p_shm, SHM_INTRO) == NULL)) {
     intro_message(false);
   }
 }

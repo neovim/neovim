@@ -2653,11 +2653,11 @@ void clear_showcmd(void)
     lines = bot - top + 1;
 
     if (VIsual_mode == Ctrl_V) {
-      char_u *const saved_sbr = p_sbr;
+      char *const saved_sbr = p_sbr;
       char *const saved_w_sbr = curwin->w_p_sbr;
 
       // Make 'sbr' empty for a moment to get the correct size.
-      p_sbr = (char_u *)empty_option;
+      p_sbr = empty_option;
       curwin->w_p_sbr = empty_option;
       getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
       p_sbr = saved_sbr;
@@ -4567,9 +4567,9 @@ static void nv_right(cmdarg_T *cap)
       //    <Space> wraps to next line if 'whichwrap' has 's'.
       //        'l' wraps to next line if 'whichwrap' has 'l'.
       // CURS_RIGHT wraps to next line if 'whichwrap' has '>'.
-      if (((cap->cmdchar == ' ' && vim_strchr((char *)p_ww, 's') != NULL)
-           || (cap->cmdchar == 'l' && vim_strchr((char *)p_ww, 'l') != NULL)
-           || (cap->cmdchar == K_RIGHT && vim_strchr((char *)p_ww, '>') != NULL))
+      if (((cap->cmdchar == ' ' && vim_strchr(p_ww, 's') != NULL)
+           || (cap->cmdchar == 'l' && vim_strchr(p_ww, 'l') != NULL)
+           || (cap->cmdchar == K_RIGHT && vim_strchr(p_ww, '>') != NULL))
           && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
         // When deleting we also count the NL as a character.
         // Set cap->oap->inclusive when last char in the line is
@@ -4637,9 +4637,9 @@ static void nv_left(cmdarg_T *cap)
       //                 'h' wraps to previous line if 'whichwrap' has 'h'.
       //           CURS_LEFT wraps to previous line if 'whichwrap' has '<'.
       if ((((cap->cmdchar == K_BS || cap->cmdchar == Ctrl_H)
-            && vim_strchr((char *)p_ww, 'b') != NULL)
-           || (cap->cmdchar == 'h' && vim_strchr((char *)p_ww, 'h') != NULL)
-           || (cap->cmdchar == K_LEFT && vim_strchr((char *)p_ww, '<') != NULL))
+            && vim_strchr(p_ww, 'b') != NULL)
+           || (cap->cmdchar == 'h' && vim_strchr(p_ww, 'h') != NULL)
+           || (cap->cmdchar == K_LEFT && vim_strchr(p_ww, '<') != NULL))
           && curwin->w_cursor.lnum > 1) {
         curwin->w_cursor.lnum--;
         coladvance(MAXCOL);
@@ -5553,7 +5553,7 @@ static void n_swapchar(cmdarg_T *cap)
     return;
   }
 
-  if (LINEEMPTY(curwin->w_cursor.lnum) && vim_strchr((char *)p_ww, '~') == NULL) {
+  if (LINEEMPTY(curwin->w_cursor.lnum) && vim_strchr(p_ww, '~') == NULL) {
     clearopbeep(cap->oap);
     return;
   }
@@ -5569,7 +5569,7 @@ static void n_swapchar(cmdarg_T *cap)
     did_change |= swapchar(cap->oap->op_type, &curwin->w_cursor);
     inc_cursor();
     if (gchar_cursor() == NUL) {
-      if (vim_strchr((char *)p_ww, '~') != NULL
+      if (vim_strchr(p_ww, '~') != NULL
           && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
         curwin->w_cursor.lnum++;
         curwin->w_cursor.col = 0;
@@ -5901,7 +5901,7 @@ void start_selection(void)
 void may_start_select(int c)
 {
   VIsual_select = (c == 'o' || (stuff_empty() && typebuf_typed()))
-                  && vim_strchr((char *)p_slm, c) != NULL;
+                  && vim_strchr(p_slm, c) != NULL;
 }
 
 /// Start Visual mode "c".

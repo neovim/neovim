@@ -2580,7 +2580,7 @@ static void apply_cmdmod(cmdmod_T *cmod)
   if ((cmod->cmod_flags & CMOD_NOAUTOCMD) && cmod->cmod_save_ei == NULL) {
     // Set 'eventignore' to "all".
     // First save the existing option value for restoring it later.
-    cmod->cmod_save_ei = (char *)vim_strsave(p_ei);
+    cmod->cmod_save_ei = xstrdup(p_ei);
     set_string_option_direct("ei", -1, "all", OPT_FREE, SID_NONE);
   }
 }
@@ -6954,16 +6954,16 @@ char *expand_sfile(char *arg)
 /// ":rshada" and ":wshada".
 static void ex_shada(exarg_T *eap)
 {
-  char *save_shada = (char *)p_shada;
+  char *save_shada = p_shada;
   if (*p_shada == NUL) {
-    p_shada = (char_u *)"'100";
+    p_shada = "'100";
   }
   if (eap->cmdidx == CMD_rviminfo || eap->cmdidx == CMD_rshada) {
     (void)shada_read_everything(eap->arg, eap->forceit, false);
   } else {
     shada_write_file(eap->arg, eap->forceit);
   }
-  p_shada = (char_u *)save_shada;
+  p_shada = save_shada;
 }
 
 /// Make a dialog message in "buff[DIALOG_MSG_SIZE]".

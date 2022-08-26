@@ -1863,7 +1863,7 @@ static long compress_added = 500000;    // word count
 // Sets "sps_flags".
 int spell_check_msm(void)
 {
-  char *p = (char *)p_msm;
+  char *p = p_msm;
   long start = 0;
   long incr = 0;
   long added = 0;
@@ -2123,8 +2123,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         // Setup for conversion from "ENC" to 'encoding'.
         aff->af_enc = enc_canonize(items[1]);
         if (!spin->si_ascii
-            && convert_setup(&spin->si_conv, aff->af_enc,
-                             p_enc) == FAIL) {
+            && convert_setup(&spin->si_conv, aff->af_enc, (char_u *)p_enc) == FAIL) {
           smsg(_("Conversion in %s not supported: from %s to %s"),
                fname, aff->af_enc, p_enc);
         }
@@ -3731,8 +3730,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
           line += 9;
           enc = enc_canonize(line);
           if (!spin->si_ascii
-              && convert_setup(&spin->si_conv, enc,
-                               p_enc) == FAIL) {
+              && convert_setup(&spin->si_conv, enc, (char_u *)p_enc) == FAIL) {
             smsg(_("Conversion in %s not supported: from %s to %s"),
                  fname, line, p_enc);
           }
@@ -5697,7 +5695,7 @@ static void init_spellfile(void)
 
     // Loop over all entries in 'runtimepath'.  Use the first one where we
     // are allowed to write.
-    rtp = p_rtp;
+    rtp = (char_u *)p_rtp;
     while (*rtp != NUL) {
       if (aspath) {
         // Use directory of an entry with path, e.g., for

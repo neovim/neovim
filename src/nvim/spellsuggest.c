@@ -360,7 +360,7 @@ int spell_check_sps(void)
   sps_flags = 0;
   sps_limit = 9999;
 
-  for (p = (char *)p_sps; *p != NUL;) {
+  for (p = p_sps; *p != NUL;) {
     copy_option_part(&p, (char *)buf, MAXPATHL, ",");
 
     f = 0;
@@ -758,7 +758,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   }
 
   // Make a copy of 'spellsuggest', because the expression may change it.
-  sps_copy = vim_strsave(p_sps);
+  sps_copy = vim_strsave((char_u *)p_sps);
 
   // Loop over the items in 'spellsuggest'.
   for (p = (char *)sps_copy; *p != NUL;) {

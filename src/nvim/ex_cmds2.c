@@ -543,7 +543,7 @@ void ex_listdo(exarg_T *eap)
         if (curwin->w_arg_idx != i || !editing_arg_idx(curwin)) {
           // Clear 'shm' to avoid that the file message overwrites
           // any output from the command.
-          p_shm_save = (char *)vim_strsave(p_shm);
+          p_shm_save = xstrdup(p_shm);
           set_option_value_give_err("shm", 0L, "", 0);
           do_argfile(eap, i);
           set_option_value_give_err("shm", 0L, p_shm_save, 0);
@@ -612,7 +612,7 @@ void ex_listdo(exarg_T *eap)
 
         // Go to the next buffer.  Clear 'shm' to avoid that the file
         // message overwrites any output from the command.
-        p_shm_save = (char *)vim_strsave(p_shm);
+        p_shm_save = xstrdup(p_shm);
         set_option_value_give_err("shm", 0L, "", 0);
         goto_buffer(eap, DOBUF_FIRST, FORWARD, next_fnum);
         set_option_value_give_err("shm", 0L, p_shm_save, 0);
@@ -635,7 +635,7 @@ void ex_listdo(exarg_T *eap)
 
         // Clear 'shm' to avoid that the file message overwrites
         // any output from the command.
-        p_shm_save = (char *)vim_strsave(p_shm);
+        p_shm_save = xstrdup(p_shm);
         set_option_value_give_err("shm", 0L, "", 0);
         ex_cnext(eap);
         set_option_value_give_err("shm", 0L, p_shm_save, 0);

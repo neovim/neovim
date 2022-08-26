@@ -2683,7 +2683,7 @@ int startPS(linenr_T lnum, int para, int both)
   if (*s == para || *s == '\f' || (both && *s == '}')) {
     return true;
   }
-  if (*s == '.' && (inmacro(p_sections, s + 1)
+  if (*s == '.' && (inmacro((char_u *)p_sections, s + 1)
                     || (!para && inmacro(p_para, s + 1)))) {
     return true;
   }
@@ -5363,7 +5363,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
       goto fpip_end;
     }
   }
-  inc_opt = (*curbuf->b_p_inc == NUL) ? p_inc : (char_u *)curbuf->b_p_inc;
+  inc_opt = (*curbuf->b_p_inc == NUL) ? (char_u *)p_inc : (char_u *)curbuf->b_p_inc;
   if (*inc_opt != NUL) {
     incl_regmatch.regprog = vim_regcomp((char *)inc_opt, p_magic ? RE_MAGIC : 0);
     if (incl_regmatch.regprog == NULL) {
@@ -5373,7 +5373,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   }
   if (type == FIND_DEFINE && (*curbuf->b_p_def != NUL || *p_def != NUL)) {
     def_regmatch.regprog = vim_regcomp(*curbuf->b_p_def == NUL
-                                       ? (char *)p_def : curbuf->b_p_def,
+                                       ? p_def : curbuf->b_p_def,
                                        p_magic ? RE_MAGIC : 0);
     if (def_regmatch.regprog == NULL) {
       goto fpip_end;

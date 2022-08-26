@@ -2040,7 +2040,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
         STRCPY(dir, ".");
       } else {
         dir = xmalloc(MAXPATHL);
-        p = (char *)p_dir;
+        p = p_dir;
         copy_option_part(&p, dir, MAXPATHL, ",");
       }
       swapname = (char *)makeswapname((char_u *)fname, (char_u *)ffname, curbuf, (char_u *)dir);
@@ -4787,7 +4787,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
                     long cmdpreview_ns, handle_T cmdpreview_bufnr)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *save_shm_p = (char *)vim_strsave(p_shm);
+  char *save_shm_p = xstrdup(p_shm);
   PreviewLines lines = *preview_lines;
   buf_T *orig_buf = curbuf;
   // We keep a special-purpose buffer around, but don't assume it exists.
