@@ -1262,7 +1262,7 @@ int recover_names(char_u *fname, int list, int nr, char **fname_out)
         names[2] = concat_fnames(dir_name, ".sw?", true);
         num_names = 3;
       } else {
-        int len = (int)STRLEN(dir_name);
+        int len = (int)strlen(dir_name);
         p = dir_name + len;
         if (after_pathsep(dir_name, p)
             && len > 1
@@ -1745,10 +1745,10 @@ char *ml_get(linenr_T lnum)
 }
 
 /// @return  pointer to position "pos".
-char_u *ml_get_pos(const pos_T *pos)
+char *ml_get_pos(const pos_T *pos)
   FUNC_ATTR_NONNULL_ALL
 {
-  return (char_u *)ml_get_buf(curbuf, pos->lnum, false) + pos->col;
+  return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
 }
 
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
@@ -1759,7 +1759,7 @@ int gchar_pos(pos_T *pos)
   if (pos->col == MAXCOL) {
     return NUL;
   }
-  return utf_ptr2char((char *)ml_get_pos(pos));
+  return utf_ptr2char(ml_get_pos(pos));
 }
 
 /// @param will_change  true mark the buffer dirty (chars in the line will be changed)
@@ -1828,7 +1828,7 @@ errorret:
   }
   if (will_change) {
     buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
-    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
+    ml_add_deleted_len_buf(buf, (char *)buf->b_ml.ml_line_ptr, -1);
   }
 
   return (char *)buf->b_ml.ml_line_ptr;
@@ -2304,10 +2304,10 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
 
 void ml_add_deleted_len(char *ptr, ssize_t len)
 {
-  ml_add_deleted_len_buf(curbuf, (char_u *)ptr, len);
+  ml_add_deleted_len_buf(curbuf, ptr, len);
 }
 
-void ml_add_deleted_len_buf(buf_T *buf, char_u *ptr, ssize_t len)
+void ml_add_deleted_len_buf(buf_T *buf, char *ptr, ssize_t len)
 {
   if (inhibit_delete_count) {
     return;
@@ -2319,7 +2319,7 @@ void ml_add_deleted_len_buf(buf_T *buf, char_u *ptr, ssize_t len)
   curbuf->deleted_bytes += (size_t)len + 1;
   curbuf->deleted_bytes2 += (size_t)len + 1;
   if (curbuf->update_need_codepoints) {
-    mb_utflen(ptr, (size_t)len, &curbuf->deleted_codepoints,
+    mb_utflen((char_u *)ptr, (size_t)len, &curbuf->deleted_codepoints,
               &curbuf->deleted_codeunits);
     curbuf->deleted_codepoints++;  // NL char
     curbuf->deleted_codeunits++;
@@ -2362,14 +2362,14 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
   if (buf->b_ml.ml_line_lnum != lnum) {  // other line buffered
     ml_flush_line(buf);  // flush it
   } else if (buf->b_ml.ml_flags & ML_LINE_DIRTY) {  // same line allocated
-    ml_add_deleted_len_buf(buf, buf->b_ml.ml_line_ptr, -1);
+    ml_add_deleted_len_buf(buf, (char *)buf->b_ml.ml_line_ptr, -1);
     readlen = false;  // already added the length
 
     xfree(buf->b_ml.ml_line_ptr);  // free it
   }
 
   if (readlen && kv_size(buf->update_callbacks)) {
-    ml_add_deleted_len_buf(buf, (char_u *)ml_get_buf(buf, lnum, false), -1);
+    ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum, false), -1);
   }
 
   buf->b_ml.ml_line_ptr = (char_u *)line;
@@ -2446,7 +2446,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   // Line should always have an NL char internally (represented as NUL),
   // even if 'noeol' is set.
   assert(line_size >= 1);
-  ml_add_deleted_len_buf(buf, (char_u *)dp + line_start, line_size - 1);
+  ml_add_deleted_len_buf(buf, (char *)dp + line_start, line_size - 1);
 
   // special case: If there is only one line in the data block it becomes empty.
   // Then we have to remove the entry, pointing to this data block, from the
@@ -3003,8 +3003,8 @@ int resolve_symlink(const char *fname, char *buf)
     if (path_is_absolute((char_u *)buf)) {
       STRCPY(tmp, buf);
     } else {
-      char_u *tail = (char_u *)path_tail(tmp);
-      if (STRLEN(tail) + strlen(buf) >= MAXPATHL) {
+      char *tail = path_tail(tmp);
+      if (strlen(tail) + strlen(buf) >= MAXPATHL) {
         return FAIL;
       }
       STRCPY(tail, buf);
@@ -3968,7 +3968,7 @@ int inc(pos_T *lp)
 {
   // when searching position may be set to end of a line
   if (lp->col != MAXCOL) {
-    const char_u *const p = ml_get_pos(lp);
+    const char *const p = ml_get_pos(lp);
     if (*p != NUL) {  // still within line, move to next char (may be NUL)
       const int l = utfc_ptr2len((char *)p);
 

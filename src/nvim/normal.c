@@ -1832,11 +1832,11 @@ void clear_showcmd(void)
       int chars = 0;
 
       if (cursor_bot) {
-        s = ml_get_pos(&VIsual);
+        s = (char_u *)ml_get_pos(&VIsual);
         e = (char_u *)get_cursor_pos_ptr();
       } else {
         s = (char_u *)get_cursor_pos_ptr();
-        e = ml_get_pos(&VIsual);
+        e = (char_u *)ml_get_pos(&VIsual);
       }
       while ((*p_sel != 'e') ? s <= e : s < e) {
         l = utfc_ptr2len((char *)s);
@@ -2740,7 +2740,7 @@ static int nv_zg_zw(cmdarg_T *cap, int nchar)
     len = spell_move_to(curwin, FORWARD, true, true, NULL);
     emsg_off--;
     if (len != 0 && curwin->w_cursor.col <= pos.col) {
-      ptr = (char *)ml_get_pos(&curwin->w_cursor);
+      ptr = ml_get_pos(&curwin->w_cursor);
     }
     curwin->w_cursor = pos;
   }
@@ -3586,10 +3586,10 @@ bool get_visual_text(cmdarg_T *cap, char **pp, size_t *lenp)
     *lenp = strlen(*pp);
   } else {
     if (lt(curwin->w_cursor, VIsual)) {
-      *pp = (char *)ml_get_pos(&curwin->w_cursor);
+      *pp = ml_get_pos(&curwin->w_cursor);
       *lenp = (size_t)VIsual.col - (size_t)curwin->w_cursor.col + 1;
     } else {
-      *pp = (char *)ml_get_pos(&VIsual);
+      *pp = ml_get_pos(&VIsual);
       *lenp = (size_t)curwin->w_cursor.col - (size_t)VIsual.col + 1;
     }
     if (**pp == NUL) {
@@ -4006,7 +4006,7 @@ static int normal_search(cmdarg_T *cap, int dir, char *pat, int opt, int *wrappe
   curwin->w_set_curswant = true;
 
   CLEAR_FIELD(sia);
-  int i = do_search(cap->oap, dir, dir, (char_u *)pat, cap->count1,
+  int i = do_search(cap->oap, dir, dir, pat, cap->count1,
                     opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, &sia);
   if (wrapped != NULL) {
     *wrapped = sia.sa_wrapped;

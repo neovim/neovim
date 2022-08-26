@@ -120,15 +120,15 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 {
   int i;
   size_t len;
-  char_u *p;
+  char *p;
   bool dir;
   char_u *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   int j;
-  char_u *tempname;
-  char_u *command;
+  char *tempname;
+  char *command;
   FILE *fd;
-  char_u *buffer;
+  char *buffer;
 #define STYLE_ECHO      0       // use "echo", the default
 #define STYLE_GLOB      1       // use "glob", for csh
 #define STYLE_VIMGLOB   2       // use "vimglob", for Posix sh
@@ -175,7 +175,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   // get a name for the temp file
-  if ((tempname = (char_u *)vim_tempname()) == NULL) {
+  if ((tempname = vim_tempname()) == NULL) {
     emsg(_(e_notmp));
     return FAIL;
   }
@@ -196,7 +196,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       && (len = strlen(pat[0])) > 2
       && *(pat[0] + len - 1) == '`') {
     shell_style = STYLE_BT;
-  } else if ((len = STRLEN(p_sh)) >= 3) {
+  } else if ((len = strlen(p_sh)) >= 3) {
     if (strcmp(p_sh + len - 3, "csh") == 0) {
       shell_style = STYLE_GLOB;
     } else if (strcmp(p_sh + len - 3, "zsh") == 0) {
@@ -211,7 +211,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // Compute the length of the command.  We need 2 extra bytes: for the
   // optional '&' and for the NUL.
   // Worst case: "unset nonomatch; print -N >" plus two is 29
-  len = STRLEN(tempname) + 29;
+  len = strlen(tempname) + 29;
   if (shell_style == STYLE_VIMGLOB) {
     len += strlen(sh_vimglob_func);
   }
@@ -248,7 +248,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       STRCPY(command, "(");
     }
     STRCAT(command, pat[0] + 1);                // exclude first backtick
-    p = command + STRLEN(command) - 1;
+    p = command + strlen(command) - 1;
     if (is_fish_shell) {
       *p-- = ';';
       STRCAT(command, " end");
@@ -294,7 +294,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       // characters, except inside ``.
       bool intick = false;
 
-      p = command + STRLEN(command);
+      p = command + strlen(command);
       *p++ = ' ';
       for (j = 0; pat[i][j] != NUL; j++) {
         if (pat[i][j] == '`') {
@@ -319,7 +319,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
         }
 
         // Copy one character.
-        *p++ = (char_u)pat[i][j];
+        *p++ = pat[i][j];
       }
       *p = NUL;
     }
@@ -347,7 +347,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   // execute the shell command
-  i = call_shell(command, shellopts, extra_shell_arg);
+  i = call_shell((char_u *)command, shellopts, extra_shell_arg);
 
   // When running in the background, give it some time to create the temp
   // file, but don't wait for it to finish.
@@ -358,7 +358,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   xfree(command);
 
   if (i) {                         // os_call_shell() failed
-    os_remove((char *)tempname);
+    os_remove(tempname);
     xfree(tempname);
     // With interactive completion, the error message is not printed.
     if (!(flags & EW_SILENT)) {
@@ -377,7 +377,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   // read the names from the file into memory
-  fd = fopen((char *)tempname, READBIN);
+  fd = fopen(tempname, READBIN);
   if (fd == NULL) {
     // Something went wrong, perhaps a file name with a special char.
     if (!(flags & EW_SILENT)) {
@@ -407,9 +407,9 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   buffer = xmalloc(len + 1);
   // fread() doesn't terminate buffer with NUL;
   // appropriate termination (not always NUL) is done below.
-  size_t readlen = fread((char *)buffer, 1, len, fd);
+  size_t readlen = fread(buffer, 1, len, fd);
   fclose(fd);
-  os_remove((char *)tempname);
+  os_remove(tempname);
   if (readlen != len) {
     // unexpected read error
     semsg(_(e_notread), tempname);
@@ -427,7 +427,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       while (*p != ' ' && *p != '\n') {
         p++;
       }
-      p = (char_u *)skipwhite((char *)p);                 // skip to next entry
+      p = skipwhite(p);                 // skip to next entry
     }
     // file names are separated with NL
   } else if (shell_style == STYLE_BT || shell_style == STYLE_VIMGLOB) {
@@ -440,7 +440,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       if (*p != NUL) {
         p++;
       }
-      p = (char_u *)skipwhite((char *)p);                 // skip leading white space
+      p = skipwhite(p);                 // skip leading white space
     }
     // file names are separated with NUL
   } else {
@@ -454,7 +454,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     if (shell_style == STYLE_PRINT && !did_find_nul) {
       // If there is a NUL, set did_find_nul, else set check_spaces
       buffer[len] = NUL;
-      if (len && (int)STRLEN(buffer) < (int)len) {
+      if (len && (int)strlen(buffer) < (int)len) {
         did_find_nul = true;
       } else {
         check_spaces = true;
@@ -493,7 +493,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // Isolate the individual file names.
   p = buffer;
   for (i = 0; i < *num_file; i++) {
-    (*file)[i] = (char *)p;
+    (*file)[i] = p;
     // Space or NL separates
     if (shell_style == STYLE_ECHO || shell_style == STYLE_BT
         || shell_style == STYLE_VIMGLOB) {
@@ -505,7 +505,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
         *p = NUL;
       } else {
         *p++ = NUL;
-        p = (char_u *)skipwhite((char *)p);                       // skip to next entry
+        p = skipwhite(p);                       // skip to next entry
       }
     } else {          // NUL separates
       while (*p && p < buffer + len) {          // skip entry
@@ -537,9 +537,9 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     p = xmalloc(strlen((*file)[i]) + 1 + dir);
     STRCPY(p, (*file)[i]);
     if (dir) {
-      add_pathsep((char *)p);             // add '/' to a directory name
+      add_pathsep(p);             // add '/' to a directory name
     }
-    (*file)[j++] = (char *)p;
+    (*file)[j++] = p;
   }
   xfree(buffer);
   *num_file = j;

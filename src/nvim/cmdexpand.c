@@ -180,7 +180,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
   CmdlineInfo *const ccline = get_cmdline_info();
   int i, j;
   char_u *p1;
-  char_u *p2;
+  char *p2;
   int difflen;
 
   if (xp->xp_numfiles == -1) {
@@ -210,7 +210,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (type == WILD_NEXT || type == WILD_PREV || type == WILD_PUM_WANT) {
     // Get next/previous match for a previous expanded pattern.
-    p2 = (char_u *)ExpandOne(xp, NULL, NULL, 0, type);
+    p2 = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
     // Translate string into pattern and expand it.
     p1 = (char_u *)addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
@@ -220,8 +220,8 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
                              | WILD_SILENT
                              | (escape ? WILD_ESCAPE : 0)
                              | (p_wic ? WILD_ICASE : 0));
-    p2 = (char_u *)ExpandOne(xp, (char *)p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
-                             use_options, type);
+    p2 = ExpandOne(xp, (char *)p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
+                   use_options, type);
     xfree(p1);
 
     // xp->xp_pattern might have been modified by ExpandOne (for example,
@@ -237,14 +237,14 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
           break;
         }
       }
-      if ((int)STRLEN(p2) < j) {
+      if ((int)strlen(p2) < j) {
         XFREE_CLEAR(p2);
       }
     }
   }
 
   if (p2 != NULL && !got_int) {
-    difflen = (int)STRLEN(p2) - (int)(xp->xp_pattern_len);
+    difflen = (int)strlen(p2) - (int)(xp->xp_pattern_len);
     if (ccline->cmdlen + difflen + 4 > ccline->cmdbufflen) {
       realloc_cmdbuff(ccline->cmdlen + difflen + 4);
       xp->xp_pattern = ccline->cmdbuff + i;
@@ -253,7 +253,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     memmove(&ccline->cmdbuff[ccline->cmdpos + difflen],
             &ccline->cmdbuff[ccline->cmdpos],
             (size_t)ccline->cmdlen - (size_t)ccline->cmdpos + 1);
-    memmove(&ccline->cmdbuff[i], p2, STRLEN(p2));
+    memmove(&ccline->cmdbuff[i], p2, strlen(p2));
     ccline->cmdlen += difflen;
     ccline->cmdpos += difflen;
   }
@@ -588,7 +588,7 @@ static char *ExpandOne_start(int mode, expand_T *xp, char *str, int options)
   char *ss = NULL;
 
   // Do the expansion.
-  if (ExpandFromContext(xp, (char_u *)str, &xp->xp_numfiles, &xp->xp_files, options) == FAIL) {
+  if (ExpandFromContext(xp, str, &xp->xp_numfiles, &xp->xp_files, options) == FAIL) {
 #ifdef FNAME_ILLEGAL
     // Illegal file name has been silently skipped.  But when there
     // are wildcards, the real problem is that there was no match,
@@ -1600,13 +1600,13 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_doautoall:
     return (const char *)set_context_in_autocmd(xp, (char *)arg, true);
   case CMD_set:
-    set_context_in_set_cmd(xp, (char_u *)arg, 0);
+    set_context_in_set_cmd(xp, (char *)arg, 0);
     break;
   case CMD_setglobal:
-    set_context_in_set_cmd(xp, (char_u *)arg, OPT_GLOBAL);
+    set_context_in_set_cmd(xp, (char *)arg, OPT_GLOBAL);
     break;
   case CMD_setlocal:
-    set_context_in_set_cmd(xp, (char_u *)arg, OPT_LOCAL);
+    set_context_in_set_cmd(xp, (char *)arg, OPT_LOCAL);
     break;
   case CMD_tag:
   case CMD_stag:
@@ -2163,7 +2163,7 @@ int expand_cmdline(expand_T *xp, const char_u *str, int col, int *matchcount, ch
   }
 
   // find all files that match the description
-  if (ExpandFromContext(xp, file_str, matchcount, matches, options) == FAIL) {
+  if (ExpandFromContext(xp, (char *)file_str, matchcount, matches, options) == FAIL) {
     *matchcount = 0;
     *matches = NULL;
   }
@@ -2352,7 +2352,7 @@ static int ExpandOther(expand_T *xp, regmatch_T *rmp, int *num_file, char ***fil
 /// Do the expansion based on xp->xp_context and "pat".
 ///
 /// @param options  WILD_ flags
-static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***file, int options)
+static int ExpandFromContext(expand_T *xp, char *pat, int *num_file, char ***file, int options)
 {
   regmatch_T regmatch;
   int ret;
@@ -2381,7 +2381,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
       || xp->xp_context == EXPAND_FILES_IN_PATH) {
-    return expand_files_and_dirs(xp, (char *)pat, file, num_file, flags, options);
+    return expand_files_and_dirs(xp, pat, file, num_file, flags, options);
   }
 
   *file = NULL;
@@ -2389,7 +2389,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
   if (xp->xp_context == EXPAND_HELP) {
     // With an empty argument we would get all the help tags, which is
     // very slow.  Get matches for "help" instead.
-    if (find_help_tags(*pat == NUL ? "help" : (char *)pat,
+    if (find_help_tags(*pat == NUL ? "help" : pat,
                        num_file, file, false) == OK) {
       cleanup_help_tags(*num_file, *file);
       return OK;
@@ -2399,7 +2399,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
 
   if (xp->xp_context == EXPAND_SHELLCMD) {
     *file = NULL;
-    expand_shellcmd((char *)pat, num_file, file, flags);
+    expand_shellcmd(pat, num_file, file, flags);
     return OK;
   }
   if (xp->xp_context == EXPAND_OLD_SETTING) {
@@ -2407,30 +2407,30 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
     return OK;
   }
   if (xp->xp_context == EXPAND_BUFFERS) {
-    return ExpandBufnames((char *)pat, num_file, file, options);
+    return ExpandBufnames(pat, num_file, file, options);
   }
   if (xp->xp_context == EXPAND_DIFF_BUFFERS) {
-    return ExpandBufnames((char *)pat, num_file, file, options | BUF_DIFF_FILTER);
+    return ExpandBufnames(pat, num_file, file, options | BUF_DIFF_FILTER);
   }
   if (xp->xp_context == EXPAND_TAGS
       || xp->xp_context == EXPAND_TAGS_LISTFILES) {
-    return expand_tags(xp->xp_context == EXPAND_TAGS, pat, num_file, file);
+    return expand_tags(xp->xp_context == EXPAND_TAGS, (char_u *)pat, num_file, file);
   }
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = { "colors", NULL };
-    return ExpandRTDir((char *)pat, DIP_START + DIP_OPT + DIP_LUA, num_file, file, directories);
+    return ExpandRTDir(pat, DIP_START + DIP_OPT + DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_COMPILER) {
     char *directories[] = { "compiler", NULL };
-    return ExpandRTDir((char *)pat, DIP_LUA, num_file, file, directories);
+    return ExpandRTDir(pat, DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_OWNSYNTAX) {
     char *directories[] = { "syntax", NULL };
-    return ExpandRTDir((char *)pat, 0, num_file, file, directories);
+    return ExpandRTDir(pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_FILETYPE) {
     char *directories[] = { "syntax", "indent", "ftplugin", NULL };
-    return ExpandRTDir((char *)pat, DIP_LUA, num_file, file, directories);
+    return ExpandRTDir(pat, DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, num_file, file);
@@ -2439,32 +2439,32 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
     return ExpandUserLua(xp, num_file, file);
   }
   if (xp->xp_context == EXPAND_PACKADD) {
-    return ExpandPackAddDir((char *)pat, num_file, file);
+    return ExpandPackAddDir(pat, num_file, file);
   }
 
   // When expanding a function name starting with s:, match the <SNR>nr_
   // prefix.
   char *tofree = NULL;
   if (xp->xp_context == EXPAND_USER_FUNC && STRNCMP(pat, "^s:", 3) == 0) {
-    const size_t len = STRLEN(pat) + 20;
+    const size_t len = strlen(pat) + 20;
 
     tofree = xmalloc(len);
     snprintf(tofree, len, "^<SNR>\\d\\+_%s", pat + 3);
-    pat = (char_u *)tofree;
+    pat = tofree;
   }
 
   if (xp->xp_context == EXPAND_LUA) {
     ILOG("PAT %s", pat);
-    return nlua_expand_pat(xp, (char *)pat, num_file, file);
+    return nlua_expand_pat(xp, pat, num_file, file);
   }
 
-  regmatch.regprog = vim_regcomp((char *)pat, p_magic ? RE_MAGIC : 0);
+  regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
   if (regmatch.regprog == NULL) {
     return FAIL;
   }
 
   // set ignore-case according to p_ic, p_scs and pat
-  regmatch.rm_ic = ignorecase(pat);
+  regmatch.rm_ic = ignorecase((char_u *)pat);
 
   if (xp->xp_context == EXPAND_SETTINGS
       || xp->xp_context == EXPAND_BOOL_SETTINGS) {
@@ -2651,19 +2651,19 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
       ga_grow(&ga, *num_file);
       {
         for (i = 0; i < *num_file; i++) {
-          char_u *name = (char_u *)(*file)[i];
+          char *name = (*file)[i];
 
-          if (STRLEN(name) > l) {
+          if (strlen(name) > l) {
             // Check if this name was already found.
-            hash_T hash = hash_hash(name + l);
+            hash_T hash = hash_hash((char_u *)name + l);
             hashitem_T *hi =
               hash_lookup(&found_ht, (const char *)(name + l),
-                          STRLEN(name + l), hash);
+                          strlen(name + l), hash);
             if (HASHITEM_EMPTY(hi)) {
               // Remove the path that was prepended.
               STRMOVE(name, name + l);
-              ((char_u **)ga.ga_data)[ga.ga_len++] = name;
-              hash_add_item(&found_ht, hi, name, hash);
+              ((char **)ga.ga_data)[ga.ga_len++] = name;
+              hash_add_item(&found_ht, hi, (char_u *)name, hash);
               name = NULL;
             }
           }
@@ -2834,14 +2834,14 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options)
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;
 
-  char_u *buf = xmalloc(MAXPATHL);
+  char *buf = xmalloc(MAXPATHL);
 
   // Loop over all entries in {path}.
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
-    copy_option_part(&path, (char *)buf, MAXPATHL, ",");
-    if (STRLEN(buf) + strlen(file) + 2 < MAXPATHL) {
-      add_pathsep((char *)buf);
+    copy_option_part(&path, buf, MAXPATHL, ",");
+    if (strlen(buf) + strlen(file) + 2 < MAXPATHL) {
+      add_pathsep(buf);
       STRCAT(buf, file);  // NOLINT
 
       char **p;
@@ -2849,7 +2849,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options)
       (void)ExpandFromContext(&xpc, buf, &num_p, &p,
                               WILD_SILENT | expand_options);
       if (num_p > 0) {
-        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT | expand_options);
+        ExpandEscape(&xpc, (char_u *)buf, num_p, p, WILD_SILENT | expand_options);
 
         // Concatenate new results to previous ones.
         ga_grow(ga, num_p);

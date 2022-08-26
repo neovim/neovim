@@ -702,14 +702,14 @@ void set_helplang_default(const char *lang)
   int idx = findoption("hlg");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     if (options[idx].flags & P_ALLOCED) {
-      free_string_option((char *)p_hlg);
+      free_string_option(p_hlg);
     }
-    p_hlg = (char_u *)xmemdupz(lang, lang_len);
+    p_hlg = xmemdupz(lang, lang_len);
     // zh_CN becomes "cn", zh_TW becomes "tw".
-    if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
-      p_hlg[0] = (char_u)TOLOWER_ASC(p_hlg[3]);
-      p_hlg[1] = (char_u)TOLOWER_ASC(p_hlg[4]);
-    } else if (STRLEN(p_hlg) >= 1 && *p_hlg == 'C') {
+    if (STRNICMP(p_hlg, "zh_", 3) == 0 && strlen(p_hlg) >= 5) {
+      p_hlg[0] = (char)TOLOWER_ASC(p_hlg[3]);
+      p_hlg[1] = (char)TOLOWER_ASC(p_hlg[4]);
+    } else if (strlen(p_hlg) >= 1 && *p_hlg == 'C') {
       // any C like setting, such as C.UTF-8, becomes "en"
       p_hlg[0] = 'e';
       p_hlg[1] = 'n';
@@ -1686,9 +1686,9 @@ static char *option_expand(int opt_idx, char *val)
   // Escape spaces when expanding 'tags', they are used to separate file
   // names.
   // For 'spellsuggest' expand after "file:".
-  expand_env_esc((char_u *)val, (char_u *)NameBuff, MAXPATHL,
+  expand_env_esc(val, NameBuff, MAXPATHL,
                  (char_u **)options[opt_idx].var == &p_tags, false,
-                 (char_u **)options[opt_idx].var == (char_u **)&p_sps ? (char_u *)"file:" :
+                 (char_u **)options[opt_idx].var == (char_u **)&p_sps ? "file:" :
                  NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
@@ -4565,13 +4565,13 @@ static char_u expand_option_name[5] = { 't', '_', NUL, NUL, NUL };
 static int expand_option_flags = 0;
 
 /// @param opt_flags  OPT_GLOBAL and/or OPT_LOCAL
-void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
+void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
 {
-  char_u nextchar;
+  char nextchar;
   uint32_t flags = 0;           // init for GCC
   int opt_idx = 0;              // init for GCC
-  char_u *p;
-  char_u *s;
+  char *p;
+  char *s;
   int is_term_option = false;
   int key;
 
@@ -4579,12 +4579,12 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
 
   xp->xp_context = EXPAND_SETTINGS;
   if (*arg == NUL) {
-    xp->xp_pattern = (char *)arg;
+    xp->xp_pattern = arg;
     return;
   }
-  p = arg + STRLEN(arg) - 1;
+  p = arg + strlen(arg) - 1;
   if (*p == ' ' && *(p - 1) != '\\') {
-    xp->xp_pattern = (char *)p + 1;
+    xp->xp_pattern = p + 1;
     return;
   }
   while (p > arg) {
@@ -4610,7 +4610,7 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
     xp->xp_context = EXPAND_BOOL_SETTINGS;
     p += 3;
   }
-  xp->xp_pattern = (char *)p;
+  xp->xp_pattern = p;
   arg = p;
   if (*arg == '<') {
     while (*p != '>') {
@@ -4618,7 +4618,7 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
         return;
       }
     }
-    key = get_special_key_code(arg + 1);
+    key = get_special_key_code((char_u *)arg + 1);
     if (key == 0) {                 // unknown name
       xp->xp_context = EXPAND_NOTHING;
       return;
@@ -4638,8 +4638,8 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
       }
       nextchar = *++p;
       is_term_option = true;
-      expand_option_name[2] = p[-2];
-      expand_option_name[3] = p[-1];
+      expand_option_name[2] = (char_u)p[-2];
+      expand_option_name[3] = (char_u)p[-1];
     } else {
       // Allow * wildcard.
       while (ASCII_ISALNUM(*p) || *p == '_' || *p == '*') {
@@ -4678,7 +4678,7 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
     } else {
       expand_option_idx = opt_idx;
     }
-    xp->xp_pattern = (char *)p + 1;
+    xp->xp_pattern = p + 1;
     return;
   }
   xp->xp_context = EXPAND_NOTHING;
@@ -4686,29 +4686,29 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
     return;
   }
 
-  xp->xp_pattern = (char *)p + 1;
+  xp->xp_pattern = p + 1;
 
   if (flags & P_EXPAND) {
-    p = options[opt_idx].var;
-    if (p == (char_u *)&p_bdir
-        || p == (char_u *)&p_dir
-        || p == (char_u *)&p_path
-        || p == (char_u *)&p_pp
-        || p == (char_u *)&p_rtp
-        || p == (char_u *)&p_cdpath
-        || p == (char_u *)&p_vdir) {
+    p = (char *)options[opt_idx].var;
+    if (p == (char *)&p_bdir
+        || p == (char *)&p_dir
+        || p == (char *)&p_path
+        || p == (char *)&p_pp
+        || p == (char *)&p_rtp
+        || p == (char *)&p_cdpath
+        || p == (char *)&p_vdir) {
       xp->xp_context = EXPAND_DIRECTORIES;
-      if (p == (char_u *)&p_path || p == (char_u *)&p_cdpath) {
+      if (p == (char *)&p_path || p == (char *)&p_cdpath) {
         xp->xp_backslash = XP_BS_THREE;
       } else {
         xp->xp_backslash = XP_BS_ONE;
       }
-    } else if (p == (char_u *)&p_ft) {
+    } else if (p == (char *)&p_ft) {
       xp->xp_context = EXPAND_FILETYPE;
     } else {
       xp->xp_context = EXPAND_FILES;
       // for 'tags' need three backslashes for a space
-      if (p == (char_u *)&p_tags) {
+      if (p == (char *)&p_tags) {
         xp->xp_backslash = XP_BS_THREE;
       } else {
         xp->xp_backslash = XP_BS_ONE;
@@ -4718,16 +4718,16 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
 
   // For an option that is a list of file names, find the start of the
   // last file name.
-  for (p = arg + STRLEN(arg) - 1; p > (char_u *)xp->xp_pattern; p--) {
+  for (p = arg + strlen(arg) - 1; p > xp->xp_pattern; p--) {
     // count number of backslashes before ' ' or ','
     if (*p == ' ' || *p == ',') {
       s = p;
-      while (s > (char_u *)xp->xp_pattern && *(s - 1) == '\\') {
+      while (s > xp->xp_pattern && *(s - 1) == '\\') {
         s--;
       }
       if ((*p == ' ' && (xp->xp_backslash == XP_BS_THREE && (p - s) < 3))
           || (*p == ',' && (flags & P_COMMA) && ((p - s) & 1) == 0)) {
-        xp->xp_pattern = (char *)p + 1;
+        xp->xp_pattern = p + 1;
         break;
       }
     }
@@ -4735,7 +4735,7 @@ void set_context_in_set_cmd(expand_T *xp, char_u *arg, int opt_flags)
     // for 'spellsuggest' start at "file:"
     if (options[opt_idx].var == (char_u *)&p_sps
         && STRNCMP(p, "file:", 5) == 0) {
-      xp->xp_pattern = (char *)p + 5;
+      xp->xp_pattern = p + 5;
       break;
     }
   }

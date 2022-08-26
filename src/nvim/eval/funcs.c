@@ -2343,13 +2343,13 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
       if (rettv->v_type == VAR_STRING || rettv->v_type == VAR_LIST) {
         xfree(fresult);
       }
-      fresult = find_file_in_path_option(first ? (char_u *)fname : NULL,
-                                         first ? strlen(fname) : 0,
-                                         0, first, path,
-                                         find_what, (char_u *)curbuf->b_ffname,
-                                         (find_what == FINDFILE_DIR
-                                          ? (char_u *)""
-                                          : (char_u *)curbuf->b_p_sua));
+      fresult = (char_u *)find_file_in_path_option(first ? (char *)fname : NULL,
+                                                   first ? strlen(fname) : 0,
+                                                   0, first, (char *)path,
+                                                   find_what, curbuf->b_ffname,
+                                                   (find_what == FINDFILE_DIR
+                                                    ? ""
+                                                    : curbuf->b_p_sua));
       first = false;
 
       if (fresult != NULL && rettv->v_type == VAR_LIST) {

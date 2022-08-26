@@ -73,7 +73,7 @@ typedef struct soffset {
 
 /// Structure containing last search pattern and its attributes.
 typedef struct spat {
-  char_u *pat;          ///< The pattern (in allocated memory) or NULL.
+  char *pat;            ///< The pattern (in allocated memory) or NULL.
   bool magic;           ///< Magicness of the pattern.
   bool no_scs;          ///< No smartcase for this pattern.
   Timestamp timestamp;  ///< Time of the last change.

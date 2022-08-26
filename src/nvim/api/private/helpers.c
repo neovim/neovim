@@ -505,7 +505,7 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
     return rv;
   }
 
-  return cstrn_as_string((char *)&bufstr[start_col], (size_t)(end_col - start_col));
+  return cstrn_as_string(&bufstr[start_col], (size_t)(end_col - start_col));
 }
 
 void api_free_string(String value)

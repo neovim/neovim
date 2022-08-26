@@ -570,7 +570,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
 void cleanup_help_tags(int num_file, char **file)
 {
   char buf[4];
-  char_u *p = (char_u *)buf;
+  char *p = buf;
 
   if (p_hlg[0] != NUL && (p_hlg[0] != 'e' || p_hlg[1] != 'n')) {
     *p++ = '@';
@@ -785,7 +785,7 @@ void fix_help_buffer(void)
               if (fd == NULL) {
                 continue;
               }
-              vim_fgets((char_u *)IObuff, IOSIZE, fd);
+              vim_fgets(IObuff, IOSIZE, fd);
               if (IObuff[0] == '*'
                   && (s = vim_strchr((char *)IObuff + 1, '*'))
                   != NULL) {
@@ -944,7 +944,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     const char *const fname = files[fi] + dirlen + 1;
 
     bool firstline = true;
-    while (!vim_fgets((char_u *)IObuff, IOSIZE, fd) && !got_int) {
+    while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
       if (firstline) {
         // Detect utf-8 file by a non-ASCII char in the first line.
         TriState this_utf8 = kNone;

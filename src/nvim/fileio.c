@@ -993,7 +993,7 @@ retry:
             tlen = 0;
             for (;;) {
               p = (char_u *)ml_get(read_buf_lnum) + read_buf_col;
-              n = (int)STRLEN(p);
+              n = (int)strlen((char *)p);
               if ((int)tlen + n + 1 > size) {
                 // Filled up to "size", append partial line.
                 // Change NL to NUL to reverse the effect done
@@ -3737,22 +3737,22 @@ static bool msg_add_fileformat(int eol_type)
 /// Append line and character count to IObuff.
 void msg_add_lines(int insert_space, long lnum, off_T nchars)
 {
-  char_u *p;
+  char *p;
 
-  p = (char_u *)IObuff + STRLEN(IObuff);
+  p = IObuff + strlen(IObuff);
 
   if (insert_space) {
     *p++ = ' ';
   }
   if (shortmess(SHM_LINES)) {
-    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - (char_u *)IObuff)), "%" PRId64 "L, %" PRId64 "B",
+    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)), "%" PRId64 "L, %" PRId64 "B",
                  (int64_t)lnum, (int64_t)nchars);
   } else {
-    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - (char_u *)IObuff)),
+    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)),
                  NGETTEXT("%" PRId64 " line, ", "%" PRId64 " lines, ", lnum),
                  (int64_t)lnum);
-    p += STRLEN(p);
-    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - (char_u *)IObuff)),
+    p += strlen(p);
+    vim_snprintf(p, (size_t)(IOSIZE - (p - IObuff)),
                  NGETTEXT("%" PRId64 " byte", "%" PRId64 " bytes", nchars),
                  (int64_t)nchars);
   }
@@ -4342,7 +4342,8 @@ char *modname(const char *fname, const char *ext, bool prepend_dot)
 /// @param fp file to read from
 ///
 /// @return true for EOF or error
-bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
+bool vim_fgets(char *buf, int size, FILE *fp)
+  FUNC_ATTR_NONNULL_ALL
 {
   char *retval;
 
@@ -4351,7 +4352,7 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
 
   do {
     errno = 0;
-    retval = fgets((char *)buf, size, fp);
+    retval = fgets(buf, size, fp);
   } while (retval == NULL && errno == EINTR && ferror(fp));
 
   if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
