@@ -659,7 +659,7 @@ void fix_help_buffer(void)
   if (!syntax_present(curwin)) {
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
       line = ml_get_buf(curbuf, lnum, false);
-      const size_t len = STRLEN(line);
+      const size_t len = strlen(line);
       if (in_example && len > 0 && !ascii_iswhite(line[0])) {
         // End of example: non-white or '<' in first column.
         if (line[0] == '<') {

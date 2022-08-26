@@ -203,7 +203,7 @@ static int in_history(int type, char *str, int move_to_front, int sep)
     // well.
     char *p = history[type][i].hisstr;
     if (strcmp(str, p) == 0
-        && (type != HIST_SEARCH || sep == p[STRLEN(p) + 1])) {
+        && (type != HIST_SEARCH || sep == p[strlen(p) + 1])) {
       if (!move_to_front) {
         return true;
       }

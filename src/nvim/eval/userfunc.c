@@ -206,12 +206,12 @@ char_u *get_lambda_name(void)
   return name;
 }
 
-static void set_ufunc_name(ufunc_T *fp, char_u *name)
+static void set_ufunc_name(ufunc_T *fp, char *name)
 {
   STRCPY(fp->uf_name, name);
 
-  if (name[0] == K_SPECIAL) {
-    fp->uf_name_exp = xmalloc(STRLEN(name) + 3);
+  if ((uint8_t)name[0] == K_SPECIAL) {
+    fp->uf_name_exp = xmalloc(strlen(name) + 3);
     STRCPY(fp->uf_name_exp, "<SNR>");
     STRCAT(fp->uf_name_exp, fp->uf_name + 3);
   }
@@ -275,9 +275,9 @@ int get_lambda_tv(char **arg, typval_T *rettv, bool evaluate)
     char_u *p;
     garray_T newlines;
 
-    char_u *name = get_lambda_name();
+    char *name = (char *)get_lambda_name();
 
-    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
+    fp = xcalloc(1, offsetof(ufunc_T, uf_name) + strlen(name) + 1);
     pt = xcalloc(1, sizeof(partial_T));
 
     ga_init(&newlines, (int)sizeof(char_u *), 1);
@@ -378,9 +378,9 @@ char_u *deref_func_name(const char *name, int *lenp, partial_T **const partialp,
     if (partialp != NULL) {
       *partialp = pt;
     }
-    char_u *s = (char_u *)partial_name(pt);
-    *lenp = (int)STRLEN(s);
-    return s;
+    char *s = partial_name(pt);
+    *lenp = (int)strlen(s);
+    return (char_u *)s;
   }
 
   return (char_u *)name;
@@ -2476,8 +2476,8 @@ void ex_function(exarg_T *eap)
       if (SOURCING_NAME != NULL) {
         scriptname = (char_u *)autoload_name((const char *)name, strlen(name));
         p = vim_strchr((char *)scriptname, '/');
-        plen = (int)STRLEN(p);
-        slen = (int)STRLEN(SOURCING_NAME);
+        plen = (int)strlen(p);
+        slen = (int)strlen(SOURCING_NAME);
         if (slen > plen && path_fnamecmp(p, SOURCING_NAME + slen - plen) == 0) {
           j = OK;
         }
@@ -2513,7 +2513,7 @@ void ex_function(exarg_T *eap)
     }
 
     // insert the new function in the function list
-    set_ufunc_name(fp, (char_u *)name);
+    set_ufunc_name(fp, name);
     if (overwrite) {
       hi = hash_find(&func_hashtab, name);
       hi->hi_key = UF2HIKEY(fp);
@@ -2887,7 +2887,7 @@ void ex_call(exarg_T *eap)
   char_u *arg = (char_u *)eap->arg;
   char_u *startarg;
   char_u *name;
-  char_u *tofree;
+  char *tofree;
   int len;
   typval_T rettv;
   linenr_T lnum;
@@ -2908,7 +2908,7 @@ void ex_call(exarg_T *eap)
     return;
   }
 
-  tofree = trans_function_name((char **)&arg, false, TFN_INT, &fudi, &partial);
+  tofree = (char *)trans_function_name((char **)&arg, false, TFN_INT, &fudi, &partial);
   if (fudi.fd_newkey != NULL) {
     // Still need to give an error message for missing key.
     semsg(_(e_dictkey), fudi.fd_newkey);
@@ -2927,9 +2927,8 @@ void ex_call(exarg_T *eap)
   // If it is the name of a variable of type VAR_FUNC or VAR_PARTIAL use its
   // contents. For VAR_PARTIAL get its partial, unless we already have one
   // from trans_function_name().
-  len = (int)STRLEN(tofree);
-  name = deref_func_name((const char *)tofree, &len,
-                         partial != NULL ? NULL : &partial, false);
+  len = (int)strlen(tofree);
+  name = deref_func_name(tofree, &len, partial != NULL ? NULL : &partial, false);
 
   // Skip white space to allow ":call func ()".  Not good, but required for
   // backward compatibility.
@@ -3556,8 +3555,8 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
 /// Registers a luaref as a lambda.
 char_u *register_luafunc(LuaRef ref)
 {
-  char_u *name = get_lambda_name();
-  ufunc_T *fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
+  char *name = (char *)get_lambda_name();
+  ufunc_T *fp = xcalloc(1, offsetof(ufunc_T, uf_name) + strlen(name) + 1);
 
   fp->uf_refcount = 1;
   fp->uf_varargs = true;

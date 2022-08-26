@@ -2192,7 +2192,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
 
   if (xp->xp_context == EXPAND_LUA) {
     ILOG("PAT %s", pat);
-    return nlua_expand_pat(xp, pat, num_file, file);
+    return nlua_expand_pat(xp, (char *)pat, num_file, file);
   }
 
   regmatch.regprog = vim_regcomp((char *)pat, p_magic ? RE_MAGIC : 0);

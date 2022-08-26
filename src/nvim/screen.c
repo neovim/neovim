@@ -237,12 +237,12 @@ size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
 
 /// Mirror text "str" for right-left displaying.
 /// Only works for single-byte characters (e.g., numbers).
-void rl_mirror(char_u *str)
+void rl_mirror(char *str)
 {
-  char_u *p1, *p2;
-  char_u t;
+  char *p1, *p2;
+  char t;
 
-  for (p1 = str, p2 = str + STRLEN(str) - 1; p1 < p2; p1++, p2--) {
+  for (p1 = str, p2 = str + strlen(str) - 1; p1 < p2; p1++, p2--) {
     t = *p1;
     *p1 = *p2;
     *p2 = t;

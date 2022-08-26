@@ -533,7 +533,7 @@ void spell_suggest(int count)
       }
       vim_snprintf((char *)IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl) {
-        rl_mirror((char_u *)IObuff);
+        rl_mirror(IObuff);
       }
       msg_puts((const char *)IObuff);
 
@@ -559,7 +559,7 @@ void spell_suggest(int count)
         }
         if (cmdmsg_rl) {
           // Mirror the numbers, but keep the leading space.
-          rl_mirror((char_u *)IObuff + 1);
+          rl_mirror(IObuff + 1);
         }
         msg_advance(30);
         msg_puts((const char *)IObuff);

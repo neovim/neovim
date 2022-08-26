@@ -81,7 +81,7 @@ typedef struct insert_state {
   int did_restart_edit;              // remember if insert mode was restarted
                                      // after a ctrl+o
   bool nomove;
-  char_u *ptr;
+  char *ptr;
 } InsertState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -143,14 +143,14 @@ static void insert_enter(InsertState *s)
     pos_T save_cursor = curwin->w_cursor;
 
     if (s->cmdchar == 'R') {
-      s->ptr = (char_u *)"r";
+      s->ptr = "r";
     } else if (s->cmdchar == 'V') {
-      s->ptr = (char_u *)"v";
+      s->ptr = "v";
     } else {
-      s->ptr = (char_u *)"i";
+      s->ptr = "i";
     }
 
-    set_vim_var_string(VV_INSERTMODE, (char *)s->ptr, 1);
+    set_vim_var_string(VV_INSERTMODE, s->ptr, 1);
     set_vim_var_string(VV_CHAR, NULL, -1);
     ins_apply_autocmds(EVENT_INSERTENTER);
 
@@ -272,11 +272,11 @@ static void insert_enter(InsertState *s)
     update_curswant();
     if (((ins_at_eol && curwin->w_cursor.lnum == o_lnum)
          || curwin->w_curswant > curwin->w_virtcol)
-        && *(s->ptr = (char_u *)get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
+        && *(s->ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
       if (s->ptr[1] == NUL) {
         curwin->w_cursor.col++;
       } else {
-        s->i = utfc_ptr2len((char *)s->ptr);
+        s->i = utfc_ptr2len(s->ptr);
         if (s->ptr[s->i] == NUL) {
           curwin->w_cursor.col += s->i;
         }
@@ -317,11 +317,11 @@ static void insert_enter(InsertState *s)
 
   // Get the current length of the redo buffer, those characters have to be
   // skipped if we want to get to the inserted characters.
-  s->ptr = get_inserted();
+  s->ptr = (char *)get_inserted();
   if (s->ptr == NULL) {
     new_insert_skip = 0;
   } else {
-    new_insert_skip = (int)STRLEN(s->ptr);
+    new_insert_skip = (int)strlen(s->ptr);
     xfree(s->ptr);
   }
 
@@ -1449,28 +1449,28 @@ char *buf_prompt_text(const buf_T *const buf)
   return buf->b_prompt_text;
 }
 
-// Return the effective prompt for the current buffer.
-char_u *prompt_text(void)
+/// @return  the effective prompt for the current buffer.
+char *prompt_text(void)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
-  return (char_u *)buf_prompt_text(curbuf);
+  return buf_prompt_text(curbuf);
 }
 
 // Prepare for prompt mode: Make sure the last line has the prompt text.
 // Move the cursor to this line.
 static void init_prompt(int cmdchar_todo)
 {
-  char_u *prompt = prompt_text();
-  char_u *text;
+  char *prompt = prompt_text();
+  char *text;
 
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-  text = (char_u *)get_cursor_line_ptr();
-  if (STRNCMP(text, prompt, STRLEN(prompt)) != 0) {
+  text = get_cursor_line_ptr();
+  if (STRNCMP(text, prompt, strlen(prompt)) != 0) {
     // prompt is missing, insert it or append a line with it
     if (*text == NUL) {
-      ml_replace(curbuf->b_ml.ml_line_count, (char *)prompt, true);
+      ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
     } else {
-      ml_append(curbuf->b_ml.ml_line_count, (char *)prompt, 0, false);
+      ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
     }
     curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
     coladvance(MAXCOL);
@@ -1478,9 +1478,9 @@ static void init_prompt(int cmdchar_todo)
   }
 
   // Insert always starts after the prompt, allow editing text after it.
-  if (Insstart_orig.lnum != curwin->w_cursor.lnum || Insstart_orig.col != (colnr_T)STRLEN(prompt)) {
+  if (Insstart_orig.lnum != curwin->w_cursor.lnum || Insstart_orig.col != (colnr_T)strlen(prompt)) {
     Insstart.lnum = curwin->w_cursor.lnum;
-    Insstart.col = (colnr_T)STRLEN(prompt);
+    Insstart.col = (colnr_T)strlen(prompt);
     Insstart_orig = Insstart;
     Insstart_textlen = Insstart.col;
     Insstart_blank_vcol = MAXCOL;
@@ -1490,8 +1490,8 @@ static void init_prompt(int cmdchar_todo)
   if (cmdchar_todo == 'A') {
     coladvance(MAXCOL);
   }
-  if (curwin->w_cursor.col < (colnr_T)STRLEN(prompt)) {
-    curwin->w_cursor.col = (colnr_T)STRLEN(prompt);
+  if (curwin->w_cursor.col < (colnr_T)strlen(prompt)) {
+    curwin->w_cursor.col = (colnr_T)strlen(prompt);
   }
   // Make sure the cursor is in a valid position.
   check_cursor();
@@ -1502,7 +1502,7 @@ bool prompt_curpos_editable(void)
   FUNC_ATTR_PURE
 {
   return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
-         && curwin->w_cursor.col >= (int)STRLEN(prompt_text());
+         && curwin->w_cursor.col >= (int)strlen(prompt_text());
 }
 
 // Undo the previous edit_putchar().
@@ -1940,7 +1940,7 @@ int get_literal(bool no_simplify)
 /// @param ctrlv `c` was typed after CTRL-V
 static void insert_special(int c, int allow_modmask, int ctrlv)
 {
-  char_u *p;
+  char *p;
   int len;
 
   // Special function key, translate into "<Key>". Up to the last '>' is
@@ -1952,16 +1952,16 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
     allow_modmask = true;
   }
   if (IS_SPECIAL(c) || (mod_mask && allow_modmask)) {
-    p = get_special_key_name(c, mod_mask);
-    len = (int)STRLEN(p);
-    c = p[len - 1];
+    p = (char *)get_special_key_name(c, mod_mask);
+    len = (int)strlen(p);
+    c = (uint8_t)p[len - 1];
     if (len > 2) {
       if (stop_arrow() == FAIL) {
         return;
       }
       p[len - 1] = NUL;
-      ins_str((char *)p);
-      AppendToRedobuffLit((char *)p, -1);
+      ins_str(p);
+      AppendToRedobuffLit(p, -1);
       ctrlv = false;
     }
   }
@@ -2286,7 +2286,7 @@ int stop_arrow(void)
 static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
 {
   int cc;
-  char_u *ptr;
+  char *ptr;
 
   stop_redo_ins();
   replace_flush();              // abandon replace stack
@@ -2294,11 +2294,11 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
   // Save the inserted text for later redo with ^@ and CTRL-A.
   // Don't do it when "restart_edit" was set and nothing was inserted,
   // otherwise CTRL-O w and then <Left> will clear "last_insert".
-  ptr = get_inserted();
+  ptr = (char *)get_inserted();
   if (did_restart_edit == 0 || (ptr != NULL
-                                && (int)STRLEN(ptr) > new_insert_skip)) {
+                                && (int)strlen(ptr) > new_insert_skip)) {
     xfree(last_insert);
-    last_insert = ptr;
+    last_insert = (char_u *)ptr;
     last_insert_skip = new_insert_skip;
   } else {
     xfree(ptr);
@@ -2742,7 +2742,7 @@ char_u *get_last_insert_save(void)
     return NULL;
   }
   s = xstrdup((char *)last_insert + last_insert_skip);
-  len = (int)STRLEN(s);
+  len = (int)strlen(s);
   if (len > 0 && s[len - 1] == ESC) {         // remove trailing ESC
     s[len - 1] = NUL;
   }
@@ -2938,7 +2938,7 @@ static void replace_do_bs(int limit_col)
   int ins_len;
   int orig_vcols = 0;
   colnr_T start_vcol;
-  char_u *p;
+  char *p;
   int i;
   int vcol;
   const int l_State = State;
@@ -2960,12 +2960,12 @@ static void replace_do_bs(int limit_col)
 
     if (l_State & VREPLACE_FLAG) {
       // Get the number of screen cells used by the inserted characters
-      p = (char_u *)get_cursor_pos_ptr();
-      ins_len = (int)STRLEN(p) - orig_len;
+      p = get_cursor_pos_ptr();
+      ins_len = (int)strlen(p) - orig_len;
       vcol = start_vcol;
       for (i = 0; i < ins_len; i++) {
-        vcol += win_chartabsize(curwin, (char *)p + i, vcol);
-        i += utfc_ptr2len((char *)p) - 1;
+        vcol += win_chartabsize(curwin, p + i, vcol);
+        i += utfc_ptr2len(p) - 1;
       }
       vcol -= start_vcol;
 
@@ -3036,11 +3036,11 @@ void fix_indent(void)
 /// @param  line_is_empty  when true, accept keys with '0' before them.
 bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 {
-  char_u *look;
+  uint8_t *look;
   int try_match;
   int try_match_word;
-  char_u *p;
-  char_u *line;
+  uint8_t *p;
+  uint8_t *line;
   bool icase;
 
   if (keytyped == NUL) {
@@ -3049,9 +3049,9 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
   }
 
   if (*curbuf->b_p_inde != NUL) {
-    look = (char_u *)curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
+    look = (uint8_t *)curbuf->b_p_indk;            // 'indentexpr' set: use 'indentkeys'
   } else {
-    look = (char_u *)curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
+    look = (uint8_t *)curbuf->b_p_cink;            // 'indentexpr' empty: use 'cinkeys'
   }
   while (*look) {
     // Find out if we want to try a match with this key, depending on
@@ -3104,8 +3104,8 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       // cursor.
     } else if (*look == 'e') {
       if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
-        p = (char_u *)get_cursor_line_ptr();
-        if ((char_u *)skipwhite((char *)p) == p + curwin->w_cursor.col - 4
+        p = (uint8_t *)get_cursor_line_ptr();
+        if ((uint8_t *)skipwhite((char *)p) == p + curwin->w_cursor.col - 4
             && STRNCMP(p + curwin->w_cursor.col - 4, "else", 4) == 0) {
           return true;
         }
@@ -3117,20 +3117,20 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       // class::method for C++).
     } else if (*look == ':') {
       if (try_match && keytyped == ':') {
-        p = (char_u *)get_cursor_line_ptr();
-        if (cin_iscase(p, false) || cin_isscopedecl(p) || cin_islabel()) {
+        p = (uint8_t *)get_cursor_line_ptr();
+        if (cin_iscase((char_u *)p, false) || cin_isscopedecl((char_u *)p) || cin_islabel()) {
           return true;
         }
         // Need to get the line again after cin_islabel().
-        p = (char_u *)get_cursor_line_ptr();
+        p = (uint8_t *)get_cursor_line_ptr();
         if (curwin->w_cursor.col > 2
             && p[curwin->w_cursor.col - 1] == ':'
             && p[curwin->w_cursor.col - 2] == ':') {
           p[curwin->w_cursor.col - 1] = ' ';
-          const bool i = cin_iscase(p, false)
-                         || cin_isscopedecl(p)
+          const bool i = cin_iscase((char_u *)p, false)
+                         || cin_isscopedecl((char_u *)p)
                          || cin_islabel();
-          p = (char_u *)get_cursor_line_ptr();
+          p = (uint8_t *)get_cursor_line_ptr();
           p[curwin->w_cursor.col - 1] = ':';
           if (i) {
             return true;
@@ -3150,7 +3150,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           return true;
         }
 
-        if (keytyped == get_special_key_code(look + 1)) {
+        if (keytyped == get_special_key_code((char_u *)look + 1)) {
           return true;
         }
       }
@@ -3169,23 +3169,23 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
       } else {
         icase = false;
       }
-      p = (char_u *)vim_strchr((char *)look, ',');
+      p = (uint8_t *)vim_strchr((char *)look, ',');
       if (p == NULL) {
-        p = look + STRLEN(look);
+        p = look + strlen((char *)look);
       }
       if ((try_match || try_match_word)
           && curwin->w_cursor.col >= (colnr_T)(p - look)) {
         bool match = false;
 
         if (keytyped == KEY_COMPLETE) {
-          char_u *n, *s;
+          uint8_t *n, *s;
 
           // Just completed a word, check if it starts with "look".
           // search back for the start of a word.
-          line = (char_u *)get_cursor_line_ptr();
+          line = (uint8_t *)get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
-            n = mb_prevptr(line, s);
-            if (!vim_iswordp(n)) {
+            n = mb_prevptr((char_u *)line, (char_u *)s);
+            if (!vim_iswordp((char_u *)n)) {
               break;
             }
           }
@@ -3201,7 +3201,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           if (keytyped == (int)p[-1]
               || (icase && keytyped < 256
                   && TOLOWER_LOC(keytyped) == TOLOWER_LOC((int)p[-1]))) {
-            line = (char_u *)get_cursor_pos_ptr();
+            line = (uint8_t *)get_cursor_pos_ptr();
             assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
             if ((curwin->w_cursor.col == (colnr_T)(p - look)
                  || !vim_iswordc(line[-(p - look) - 1]))
@@ -3237,7 +3237,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
     }
 
     // Skip over ", ".
-    look = (char_u *)skip_to_option_part((char *)look);
+    look = (uint8_t *)skip_to_option_part((char *)look);
   }
   return false;
 }
@@ -3895,10 +3895,10 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // again when auto-formatting.
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
-          char_u *ptr = (char_u *)ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
+          char *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
           int len;
 
-          len = (int)STRLEN(ptr);
+          len = (int)strlen(ptr);
           if (len > 0 && ptr[len - 1] == ' ') {
             ptr[len - 1] = NUL;
           }

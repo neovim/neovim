@@ -43,7 +43,7 @@ void win_redr_status(win_T *wp)
 {
   int row;
   int col;
-  char_u *p;
+  char *p;
   int len;
   int fillchar;
   int attr;
@@ -77,8 +77,8 @@ void win_redr_status(win_T *wp)
     width = is_stl_global ? Columns : wp->w_width;
 
     get_trans_bufname(wp->w_buffer);
-    p = (char_u *)NameBuff;
-    len = (int)STRLEN(p);
+    p = NameBuff;
+    len = (int)strlen(p);
 
     if ((bt_help(wp->w_buffer)
          || wp->w_p_pvw
@@ -88,19 +88,19 @@ void win_redr_status(win_T *wp)
       *(p + len++) = ' ';
     }
     if (bt_help(wp->w_buffer)) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", _("[Help]"));
-      len += (int)STRLEN(p + len);
+      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Help]"));
+      len += (int)strlen(p + len);
     }
     if (wp->w_p_pvw) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", _("[Preview]"));
-      len += (int)STRLEN(p + len);
+      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[Preview]"));
+      len += (int)strlen(p + len);
     }
     if (bufIsChanged(wp->w_buffer)) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", "[+]");
-      len += (int)STRLEN(p + len);
+      snprintf(p + len, MAXPATHL - (size_t)len, "%s", "[+]");
+      len += (int)strlen(p + len);
     }
     if (wp->w_buffer->b_p_ro) {
-      snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
+      snprintf(p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
       // len += (int)strlen(p + len);  // dead assignment
     }
 
@@ -109,19 +109,19 @@ void win_redr_status(win_T *wp)
       this_ru_col = (width + 1) / 2;
     }
     if (this_ru_col <= 1) {
-      p = (char_u *)"<";                // No room for file name!
+      p = "<";                // No room for file name!
       len = 1;
     } else {
       int clen = 0, i;
 
       // Count total number of display cells.
-      clen = (int)mb_string2cells((char *)p);
+      clen = (int)mb_string2cells(p);
 
       // Find first character that will fit.
       // Going from start to end is much faster for DBCS.
       for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
-           i += utfc_ptr2len((char *)p + i)) {
-        clen -= utf_ptr2cells((char *)p + i);
+           i += utfc_ptr2len(p + i)) {
+        clen -= utf_ptr2cells(p + i);
       }
       len = clen;
       if (i > 0) {
@@ -133,7 +133,7 @@ void win_redr_status(win_T *wp)
 
     row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
     col = is_stl_global ? 0 : wp->w_wincol;
-    grid_puts(&default_grid, (char *)p, row, col, attr);
+    grid_puts(&default_grid, p, row, col, attr);
     grid_fill(&default_grid, row, row + 1, len + col,
               this_ru_col + col, fillchar, fillchar, attr);
 

@@ -1314,7 +1314,7 @@ static int read_words_section(FILE *fd, slang_T *lp, int len)
     }
 
     // Init the count to 10.
-    count_common_word(lp, word, -1, 10);
+    count_common_word(lp, (char *)word, -1, 10);
     done += i + 1;
   }
   return 0;

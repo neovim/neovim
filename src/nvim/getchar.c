@@ -170,15 +170,15 @@ static char_u *get_buffcont(buffheader_T *buffer, int dozero)
 /// K_SPECIAL in the returned string is escaped.
 char_u *get_recorded(void)
 {
-  char_u *p;
+  char *p;
   size_t len;
 
-  p = get_buffcont(&recordbuff, true);
+  p = (char *)get_buffcont(&recordbuff, true);
   free_buff(&recordbuff);
 
   // Remove the characters that were added the last time, these must be the
   // (possibly mapped) characters that stopped the recording.
-  len = STRLEN(p);
+  len = strlen(p);
   if (len >= last_recorded_len) {
     len -= last_recorded_len;
     p[len] = NUL;
@@ -190,7 +190,7 @@ char_u *get_recorded(void)
     p[len - 1] = NUL;
   }
 
-  return p;
+  return (char_u *)p;
 }
 
 /// Return the contents of the redo buffer as a single string.
@@ -2237,7 +2237,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
       // If this is a LANGMAP mapping, then we didn't record the keys
       // at the start of the function and have to record them now.
       if (keylen > typebuf.tb_maplen && (mp->m_mode & MODE_LANGMAP) != 0) {
-        gotchars((char_u *)map_str, STRLEN(map_str));
+        gotchars((char_u *)map_str, strlen(map_str));
       }
 
       if (save_m_noremap != REMAP_YES) {

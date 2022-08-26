@@ -219,7 +219,7 @@ void set_init_1(bool clean_arg)
         xstrlcpy(item, p, len);
         add_pathsep(item);
         xstrlcat(item, "*", len);
-        if (find_dup_item(ga.ga_data, (char_u *)item, options[opt_idx].flags)
+        if (find_dup_item(ga.ga_data, item, options[opt_idx].flags)
             == NULL) {
           ga_grow(&ga, (int)len);
           if (!GA_EMPTY(&ga)) {
@@ -242,15 +242,15 @@ void set_init_1(bool clean_arg)
   }
 
   {
-    char_u *cdpath;
-    char_u *buf;
+    char *cdpath;
+    char *buf;
     int i;
     int j;
 
     // Initialize the 'cdpath' option's default value.
-    cdpath = (char_u *)vim_getenv("CDPATH");
+    cdpath = vim_getenv("CDPATH");
     if (cdpath != NULL) {
-      buf = xmalloc(2 * STRLEN(cdpath) + 2);
+      buf = xmalloc(2 * strlen(cdpath) + 2);
       {
         buf[0] = ',';               // start with ",", current dir first
         j = 1;
@@ -267,7 +267,7 @@ void set_init_1(bool clean_arg)
         buf[j] = NUL;
         opt_idx = findoption("cdpath");
         if (opt_idx >= 0) {
-          options[opt_idx].def_val = (char *)buf;
+          options[opt_idx].def_val = buf;
           options[opt_idx].flags |= P_DEF_ALLOCED;
         } else {
           xfree(buf);           // cannot happen
@@ -515,9 +515,9 @@ static void set_string_default(const char *name, char *val, bool allocated)
   }
 }
 
-// For an option value that contains comma separated items, find "newval" in
-// "origval".  Return NULL if not found.
-static char_u *find_dup_item(char_u *origval, const char_u *newval, uint32_t flags)
+/// For an option value that contains comma separated items, find "newval" in
+/// "origval".  Return NULL if not found.
+static char *find_dup_item(char *origval, const char *newval, uint32_t flags)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   int bs = 0;
@@ -526,8 +526,8 @@ static char_u *find_dup_item(char_u *origval, const char_u *newval, uint32_t fla
     return NULL;
   }
 
-  const size_t newlen = STRLEN(newval);
-  for (char_u *s = origval; *s != NUL; s++) {
+  const size_t newlen = strlen(newval);
+  for (char *s = origval; *s != NUL; s++) {
     if ((!(flags & P_COMMA) || s == origval || (s[-1] == ',' && !(bs & 1)))
         && STRNCMP(s, newval, newlen) == 0
         && (!(flags & P_COMMA) || s[newlen] == ',' || s[newlen] == NUL)) {
@@ -948,7 +948,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     int len = 0;
     if (op == OP_REMOVING || (flags & P_NODUP)) {
       len = (int)STRLEN(newval);
-      s = (char *)find_dup_item(origval, (char_u *)newval, flags);
+      s = find_dup_item((char *)origval, newval, flags);
 
       // do not add if already there
       if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
@@ -1182,7 +1182,7 @@ int do_set(char *arg, int opt_flags)
         }
         len++;
         if (opt_idx == -1) {
-          key = find_key_option((char_u *)arg + 1, true);
+          key = find_key_option(arg + 1, true);
         }
       } else {
         len = 0;
@@ -1196,7 +1196,7 @@ int do_set(char *arg, int opt_flags)
         }
         opt_idx = findoption_len((const char *)arg, (size_t)len);
         if (opt_idx == -1) {
-          key = find_key_option((char_u *)arg, false);
+          key = find_key_option(arg, false);
         }
       }
 
@@ -1543,7 +1543,7 @@ void did_set_option(int opt_idx, int opt_flags, int new_value, int value_checked
 int string_to_key(char_u *arg)
 {
   if (*arg == '<') {
-    return find_key_option(arg + 1, true);
+    return find_key_option((char *)arg + 1, true);
   }
   if (*arg == '^') {
     return CTRL_CHR(arg[1]);
@@ -3151,9 +3151,9 @@ int find_key_option_len(const char_u *arg_arg, size_t len, bool has_lt)
   return key;
 }
 
-static int find_key_option(const char_u *arg, bool has_lt)
+static int find_key_option(const char *arg, bool has_lt)
 {
-  return find_key_option_len(arg, STRLEN(arg), has_lt);
+  return find_key_option_len((char_u *)arg, strlen(arg), has_lt);
 }
 
 /// if 'all' == 0: show changed options
