@@ -2698,12 +2698,12 @@ int cursor_down(long n, int upd_topline)
 /// @param no_esc  Don't add an ESC at the end
 int stuff_inserted(int c, long count, int no_esc)
 {
-  char_u *esc_ptr;
-  char_u *ptr;
-  char_u *last_ptr;
-  char_u last = NUL;
+  char *esc_ptr;
+  char *ptr;
+  char *last_ptr;
+  char last = NUL;
 
-  ptr = get_last_insert();
+  ptr = (char *)get_last_insert();
   if (ptr == NULL) {
     emsg(_(e_noinstext));
     return FAIL;
@@ -2713,7 +2713,7 @@ int stuff_inserted(int c, long count, int no_esc)
   if (c != NUL) {
     stuffcharReadbuff(c);
   }
-  if ((esc_ptr = STRRCHR(ptr, ESC)) != NULL) {
+  if ((esc_ptr = strrchr(ptr, ESC)) != NULL) {
     // remove the ESC.
     *esc_ptr = NUL;
   }

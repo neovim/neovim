@@ -409,7 +409,7 @@ void emsg_funcname(char *ermsg, const char_u *name)
   char_u *p;
 
   if (*name == K_SPECIAL) {
-    p = concat_str((char_u *)"<SNR>", name + 3);
+    p = (char_u *)concat_str("<SNR>", (char *)name + 3);
   } else {
     p = (char_u *)name;
   }
@@ -863,7 +863,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   fc->rettv = rettv;
   fc->level = ex_nesting_level;
   // Check if this function has a breakpoint.
-  fc->breakpoint = dbg_find_breakpoint(false, fp->uf_name, (linenr_T)0);
+  fc->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, (linenr_T)0);
   fc->dbg_tick = debug_tick;
 
   // Set up fields for closure.
@@ -1058,7 +1058,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
 
   bool func_not_yet_profiling_but_should =
     do_profiling_yes
-    && !fp->uf_profiling && has_profiling(false, fp->uf_name, NULL);
+    && !fp->uf_profiling && has_profiling(false, (char *)fp->uf_name, NULL);
 
   if (func_not_yet_profiling_but_should) {
     started_profiling = true;
@@ -2332,7 +2332,7 @@ void ex_function(exarg_T *eap)
       }
 
       // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
-      arg = (char_u *)skipwhite((char *)skiptowhite(p));
+      arg = (char_u *)skipwhite(skiptowhite((char *)p));
       if (arg[0] == '<' && arg[1] == '<'
           && ((p[0] == 'p' && p[1] == 'y'
                && (!ASCII_ISALNUM(p[2]) || p[2] == 't'
@@ -2359,12 +2359,12 @@ void ex_function(exarg_T *eap)
 
       // Check for ":let v =<< [trim] EOF"
       //       and ":let [a, b] =<< [trim] EOF"
-      arg = (char_u *)skipwhite((char *)skiptowhite(p));
+      arg = (char_u *)skipwhite(skiptowhite((char *)p));
       if (*arg == '[') {
         arg = (char_u *)vim_strchr((char *)arg, ']');
       }
       if (arg != NULL) {
-        arg = (char_u *)skipwhite((char *)skiptowhite(arg));
+        arg = (char_u *)skipwhite(skiptowhite((char *)arg));
         if (arg[0] == '='
             && arg[1] == '<'
             && arg[2] == '<'
@@ -2379,7 +2379,7 @@ void ex_function(exarg_T *eap)
             heredoc_trimmed =
               vim_strnsave(theline, (size_t)((char_u *)skipwhite((char *)theline) - theline));
           }
-          skip_until = vim_strnsave(p, (size_t)(skiptowhite(p) - p));
+          skip_until = vim_strnsave(p, (size_t)((char_u *)skiptowhite((char *)p) - p));
           do_concat = false;
           is_heredoc = true;
         }
@@ -3105,16 +3105,17 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
 
 /// Generate a return command for producing the value of "rettv".  The result
 /// is an allocated string.  Used by report_pending() for verbose messages.
-char_u *get_return_cmd(void *rettv)
+char *get_return_cmd(void *rettv)
 {
-  char_u *s = NULL;
-  char_u *tofree = NULL;
+  char *s = NULL;
+  char *tofree = NULL;
 
   if (rettv != NULL) {
-    tofree = s = (char_u *)encode_tv2echo((typval_T *)rettv, NULL);
+    tofree = encode_tv2echo((typval_T *)rettv, NULL);
+    s = encode_tv2echo((typval_T *)rettv, NULL);
   }
   if (s == NULL) {
-    s = (char_u *)"";
+    s = "";
   }
 
   STRCPY(IObuff, ":return ");
@@ -3123,7 +3124,7 @@ char_u *get_return_cmd(void *rettv)
     STRCPY(IObuff + IOSIZE - 4, "...");
   }
   xfree(tofree);
-  return vim_strsave(IObuff);
+  return (char *)vim_strsave(IObuff);
 }
 
 /// Get next function line.
@@ -3134,12 +3135,12 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 {
   funccall_T *fcp = (funccall_T *)cookie;
   ufunc_T *fp = fcp->func;
-  char_u *retval;
+  char *retval;
   garray_T *gap;    // growarray with function lines
 
   // If breakpoints have been added/deleted need to check for it.
   if (fcp->dbg_tick != debug_tick) {
-    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name, SOURCING_LNUM);
+    fcp->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
   if (do_profiling == PROF_YES) {
@@ -3159,7 +3160,7 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
     if (fcp->linenr >= gap->ga_len) {
       retval = NULL;
     } else {
-      retval = (char_u *)xstrdup(((char **)(gap->ga_data))[fcp->linenr++]);
+      retval = xstrdup(((char **)(gap->ga_data))[fcp->linenr++]);
       SOURCING_LNUM = fcp->linenr;
       if (do_profiling == PROF_YES) {
         func_line_start(cookie);
@@ -3169,13 +3170,13 @@ char *get_func_line(int c, void *cookie, int indent, bool do_concat)
 
   // Did we encounter a breakpoint?
   if (fcp->breakpoint != 0 && fcp->breakpoint <= SOURCING_LNUM) {
-    dbg_breakpoint(fp->uf_name, SOURCING_LNUM);
+    dbg_breakpoint((char *)fp->uf_name, SOURCING_LNUM);
     // Find next breakpoint.
-    fcp->breakpoint = dbg_find_breakpoint(false, fp->uf_name, SOURCING_LNUM);
+    fcp->breakpoint = dbg_find_breakpoint(false, (char *)fp->uf_name, SOURCING_LNUM);
     fcp->dbg_tick = debug_tick;
   }
 
-  return (char *)retval;
+  return retval;
 }
 
 /// @return  true if the currently active function should be ended, because a

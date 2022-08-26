@@ -765,12 +765,12 @@ static char *vim_version_dir(const char *vimdir)
     return NULL;
   }
   char *p = concat_fnames(vimdir, VIM_VERSION_NODOT, true);
-  if (os_isdir((char_u *)p)) {
+  if (os_isdir(p)) {
     return p;
   }
   xfree(p);
   p = concat_fnames(vimdir, RUNTIME_DIRNAME, true);
-  if (os_isdir((char_u *)p)) {
+  if (os_isdir(p)) {
     return p;
   }
   xfree(p);
@@ -976,7 +976,7 @@ char *vim_getenv(const char *name)
       assert(vim_path_end >= vim_path);
       vim_path = xstrndup(vim_path, (size_t)(vim_path_end - vim_path));
 
-      if (!os_isdir((char_u *)vim_path)) {
+      if (!os_isdir(vim_path)) {
         xfree(vim_path);
         vim_path = NULL;
       }

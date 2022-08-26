@@ -129,10 +129,10 @@ bool os_isrealdir(const char *name)
 /// Check if the given path exists and is a directory.
 ///
 /// @return `true` if `name` is a directory.
-bool os_isdir(const char_u *name)
+bool os_isdir(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm((const char *)name);
+  int32_t mode = os_getperm(name);
   if (mode < 0) {
     return false;
   }
@@ -865,7 +865,7 @@ int os_file_is_writable(const char *name)
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_access, name, W_OK, NULL);
   if (r == 0) {
-    return os_isdir((char_u *)name) ? 2 : 1;
+    return os_isdir(name) ? 2 : 1;
   }
   return 0;
 }
@@ -915,7 +915,7 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
   char *e = curdir + dirlen;
   const char *const real_end = e;
   const char past_head_save = *past_head;
-  while (!os_isdir((char_u *)curdir)) {
+  while (!os_isdir(curdir)) {
     e = path_tail_with_sep(curdir);
     if (e <= past_head) {
       *past_head = NUL;

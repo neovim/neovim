@@ -586,11 +586,11 @@ void ex_sort(exarg_T *eap)
       p = s + start_col;
       if (sort_nr) {
         if (sort_what & STR2NR_HEX) {
-          s = (char *)skiptohex((char_u *)p);
+          s = skiptohex(p);
         } else if (sort_what & STR2NR_BIN) {
           s = (char *)skiptobin(p);
         } else {
-          s = (char *)skiptodigit((char_u *)p);
+          s = skiptodigit(p);
         }
         if (s > p && s[-1] == '-') {
           s--;  // include preceding negative sign
@@ -2006,7 +2006,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX
       // It is possible to open a directory on Unix.
-      if (os_isdir((char_u *)ffname)) {
+      if (os_isdir(ffname)) {
         semsg(_(e_isadir2), ffname);
         return FAIL;
       }
@@ -3940,8 +3940,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
                 // what matches.  Temporarily replace the line
                 // and change it back afterwards.
                 orig_line = (char *)vim_strsave(ml_get(lnum));
-                char *new_line = (char *)concat_str((char_u *)new_start,
-                                                    (char_u *)sub_firstline + copycol);
+                char *new_line = concat_str(new_start, sub_firstline + copycol);
 
                 // Position the cursor relative to the end of the line, the
                 // previous substitute may have inserted or deleted characters
@@ -4939,7 +4938,7 @@ char *skip_vimgrep_pat(char *p, char **s, int *flags)
     if (s != NULL) {
       *s = p;
     }
-    p = (char *)skiptowhite((char_u *)p);
+    p = skiptowhite(p);
     if (s != NULL && *p != NUL) {
       *p++ = NUL;
     }

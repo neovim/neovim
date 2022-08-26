@@ -653,9 +653,9 @@ void ins_char_bytes(char *buf, size_t charlen)
       // cells.  May result in adding spaces to fill a gap.
       colnr_T vcol;
       getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL);
-      colnr_T new_vcol = vcol + win_chartabsize(curwin, (char *)buf, vcol);
+      colnr_T new_vcol = vcol + win_chartabsize(curwin, buf, vcol);
       while (oldp[col + oldlen] != NUL && vcol < new_vcol) {
-        vcol += win_chartabsize(curwin, (char *)oldp + col + oldlen, vcol);
+        vcol += win_chartabsize(curwin, oldp + col + oldlen, vcol);
         // Don't need to remove a TAB that takes us to the right
         // position.
         if (vcol > new_vcol && oldp[col + oldlen] == TAB) {

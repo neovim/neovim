@@ -3198,7 +3198,7 @@ static void draw_cmdline(int start, int len)
       }
     }
 
-    msg_outtrans_len((char_u *)arshape_buf, newlen);
+    msg_outtrans_len(arshape_buf, newlen);
   } else {
 draw_cmdline_no_arabicshape:
     if (kv_size(ccline.last_colors.colors)) {
@@ -3213,7 +3213,7 @@ draw_cmdline_no_arabicshape:
                               chunk.attr);
       }
     } else {
-      msg_outtrans_len(ccline.cmdbuff + start, len);
+      msg_outtrans_len((char *)ccline.cmdbuff + start, len);
     }
   }
 }

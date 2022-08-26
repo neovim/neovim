@@ -243,7 +243,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     if (*ptr == '0' && (ptr[1] == 'b' || ptr[1] == 'B')) {
       mi.mi_end = (char_u *)skipbin((char *)ptr + 2);
     } else if (*ptr == '0' && (ptr[1] == 'x' || ptr[1] == 'X')) {
-      mi.mi_end = skiphex(ptr + 2);
+      mi.mi_end = (char_u *)skiphex((char *)ptr + 2);
     } else {
       mi.mi_end = (char_u *)skipdigits((char *)ptr);
     }
@@ -1258,10 +1258,10 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
     // For checking first word with a capital skip white space.
     if (capcol == 0) {
-      capcol = (int)getwhitecols(line);
+      capcol = (int)getwhitecols((char *)line);
     } else if (curline && wp == curwin) {
       // For spellbadword(): check if first word needs a capital.
-      col = (int)getwhitecols(line);
+      col = (int)getwhitecols((char *)line);
       if (check_need_cap(lnum, col)) {
         capcol = col;
       }
@@ -1876,7 +1876,7 @@ char *did_set_spelllang(win_T *wp)
 
       // Check if we loaded this language before.
       for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-        if (path_full_compare((char *)lang, (char *)slang->sl_fname, false, true)
+        if (path_full_compare((char *)lang, slang->sl_fname, false, true)
             == kEqualFiles) {
           break;
         }
@@ -1925,7 +1925,7 @@ char *did_set_spelllang(win_T *wp)
     // Loop over the languages, there can be several files for "lang".
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
       if (filename
-          ? path_full_compare((char *)lang, (char *)slang->sl_fname, false, true) == kEqualFiles
+          ? path_full_compare((char *)lang, slang->sl_fname, false, true) == kEqualFiles
           : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -1981,7 +1981,7 @@ char *did_set_spelllang(win_T *wp)
 
       // If it was already found above then skip it.
       for (c = 0; c < ga.ga_len; c++) {
-        p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
+        p = (char_u *)LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
         if (p != NULL
             && path_full_compare((char *)spf_name, (char *)p, false, true) == kEqualFiles) {
           break;
@@ -1994,7 +1994,7 @@ char *did_set_spelllang(win_T *wp)
 
     // Check if it was loaded already.
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-      if (path_full_compare((char *)spf_name, (char *)slang->sl_fname, false, true)
+      if (path_full_compare((char *)spf_name, slang->sl_fname, false, true)
           == kEqualFiles) {
         break;
       }
@@ -2473,7 +2473,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
   char_u *line = get_cursor_line_ptr();
   char_u *line_copy = NULL;
   colnr_T endcol = 0;
-  if (getwhitecols(line) >= (int)col) {
+  if (getwhitecols((char *)line) >= (int)col) {
     // At start of line, check if previous line is empty or sentence
     // ends there.
     if (lnum == 1) {
@@ -2484,7 +2484,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
         need_cap = true;
       } else {
         // Append a space in place of the line break.
-        line_copy = concat_str(line, (char_u *)" ");
+        line_copy = (char_u *)concat_str((char *)line, " ");
         line = line_copy;
         endcol = (colnr_T)STRLEN(line);
       }
@@ -3599,8 +3599,8 @@ char *compile_cap_prog(synblock_T *synblock)
     synblock->b_cap_prog = NULL;
   } else {
     // Prepend a ^ so that we only match at one column
-    char_u *re = concat_str((char_u *)"^", (char_u *)synblock->b_p_spc);
-    synblock->b_cap_prog = vim_regcomp((char *)re, RE_MAGIC);
+    char *re = concat_str("^", synblock->b_p_spc);
+    synblock->b_cap_prog = vim_regcomp(re, RE_MAGIC);
     xfree(re);
     if (synblock->b_cap_prog == NULL) {
       synblock->b_cap_prog = rp;         // restore the previous program

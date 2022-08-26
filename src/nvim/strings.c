@@ -503,7 +503,7 @@ static int sort_compare(const void *s1, const void *s2)
 
 void sort_strings(char **files, int count)
 {
-  qsort((void *)files, (size_t)count, sizeof(char_u *), sort_compare);
+  qsort((void *)files, (size_t)count, sizeof(char *), sort_compare);
 }
 
 /*
@@ -540,14 +540,12 @@ bool has_non_ascii_len(const char *const s, const size_t len)
   return false;
 }
 
-/*
- * Concatenate two strings and return the result in allocated memory.
- */
-char_u *concat_str(const char_u *restrict str1, const char_u *restrict str2)
+/// Concatenate two strings and return the result in allocated memory.
+char *concat_str(const char *restrict str1, const char *restrict str2)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   size_t l = STRLEN(str1);
-  char_u *dest = xmalloc(l + STRLEN(str2) + 1);
+  char *dest = xmalloc(l + STRLEN(str2) + 1);
   STRCPY(dest, str1);
   STRCPY(dest + l, str2);
   return dest;
@@ -1511,15 +1509,15 @@ int kv_do_printf(StringBuilder *str, const char *fmt, ...)
 /// Reverse text into allocated memory.
 ///
 /// @return  the allocated string.
-char_u *reverse_text(char_u *s)
+char *reverse_text(char *s)
   FUNC_ATTR_NONNULL_RET
 {
   // Reverse the pattern.
   size_t len = STRLEN(s);
-  char_u *rev = xmalloc(len + 1);
+  char *rev = xmalloc(len + 1);
   size_t rev_i = len;
   for (size_t s_i = 0; s_i < len; s_i++) {
-    const int mb_len = utfc_ptr2len((char *)s + s_i);
+    const int mb_len = utfc_ptr2len(s + s_i);
     rev_i -= (size_t)mb_len;
     memmove(rev + rev_i, s + s_i, (size_t)mb_len);
     s_i += (size_t)mb_len - 1;

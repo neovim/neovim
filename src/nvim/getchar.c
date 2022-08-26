@@ -1280,7 +1280,7 @@ void restore_typeahead(tasave_T *tp)
 /// Open a new script file for the ":source!" command.
 ///
 /// @param directly  when true execute directly
-void openscript(char_u *name, bool directly)
+void openscript(char *name, bool directly)
 {
   if (curscript + 1 == NSCRIPT) {
     emsg(_(e_nesting));
@@ -1302,7 +1302,7 @@ void openscript(char_u *name, bool directly)
     curscript++;
   }
   // use NameBuff for expanded name
-  expand_env((char *)name, NameBuff, MAXPATHL);
+  expand_env(name, NameBuff, MAXPATHL);
   int error;
   if ((scriptin[curscript] = file_open_new(&error, (char *)NameBuff,
                                            kFileReadOnly, 0)) == NULL) {

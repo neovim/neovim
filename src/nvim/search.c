@@ -170,7 +170,7 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
   }
 
   if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-    mr_pattern = reverse_text(pat);
+    mr_pattern = (char_u *)reverse_text((char *)pat);
     mr_pattern_alloced = true;
   } else {
     mr_pattern = pat;
@@ -1261,7 +1261,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
         // it would be blanked out again very soon.  Show it on the
         // left, but do reverse the text.
         if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-          char_u *r = reverse_text(trunc != NULL ? trunc : msgbuf);
+          char_u *r = (char_u *)reverse_text(trunc != NULL ? (char *)trunc : (char *)msgbuf);
           xfree(msgbuf);
           msgbuf = r;
           // move reversed text to beginning of buffer
@@ -3666,7 +3666,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
           if (new_fname != NULL) {
             // using "new_fname" is more reliable, e.g., when
             // 'includeexpr' is set.
-            msg_outtrans_attr(new_fname, HL_ATTR(HLF_D));
+            msg_outtrans_attr((char *)new_fname, HL_ATTR(HLF_D));
           } else {
             /*
              * Isolate the file name.
@@ -3702,7 +3702,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
             }
             save_char = p[i];
             p[i] = NUL;
-            msg_outtrans_attr(p, HL_ATTR(HLF_D));
+            msg_outtrans_attr((char *)p, HL_ATTR(HLF_D));
             p[i] = save_char;
           }
 

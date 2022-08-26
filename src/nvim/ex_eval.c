@@ -726,14 +726,14 @@ static void report_pending(int action, int pending, void *value)
     break;
   case CSTP_RETURN:
     // ":return" command producing value, allocated
-    s = (char *)get_return_cmd(value);
+    s = get_return_cmd(value);
     break;
 
   default:
     if (pending & CSTP_THROW) {
       vim_snprintf((char *)IObuff, IOSIZE,
                    mesg, _("Exception"));
-      mesg = (char *)concat_str(IObuff, (char_u *)": %s");
+      mesg = concat_str((char *)IObuff, ": %s");
       s = ((except_T *)value)->value;
     } else if ((pending & CSTP_ERROR) && (pending & CSTP_INTERRUPT)) {
       s = _("Error and interrupt");

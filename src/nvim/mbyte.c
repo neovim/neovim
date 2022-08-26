@@ -1942,7 +1942,7 @@ void utf_find_illegal(void)
     p = get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
       xfree(tofree);
-      tofree = string_convert(&vimconv, p, NULL);
+      tofree = (char_u *)string_convert(&vimconv, (char *)p, NULL);
       if (tofree == NULL) {
         break;
       }
@@ -2521,16 +2521,14 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8, c
   return OK;
 }
 
-/*
- * Convert text "ptr[*lenp]" according to "vcp".
- * Returns the result in allocated memory and sets "*lenp".
- * When "lenp" is NULL, use NUL terminated strings.
- * Illegal chars are often changed to "?", unless vcp->vc_fail is set.
- * When something goes wrong, NULL is returned and "*lenp" is unchanged.
- */
-char_u *string_convert(const vimconv_T *const vcp, char_u *ptr, size_t *lenp)
+/// Convert text "ptr[*lenp]" according to "vcp".
+/// Returns the result in allocated memory and sets "*lenp".
+/// When "lenp" is NULL, use NUL terminated strings.
+/// Illegal chars are often changed to "?", unless vcp->vc_fail is set.
+/// When something goes wrong, NULL is returned and "*lenp" is unchanged.
+char *string_convert(const vimconv_T *const vcp, char *ptr, size_t *lenp)
 {
-  return string_convert_ext(vcp, ptr, lenp, NULL);
+  return (char *)string_convert_ext(vcp, (char_u *)ptr, lenp, NULL);
 }
 
 /*

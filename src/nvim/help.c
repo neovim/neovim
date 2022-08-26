@@ -741,8 +741,8 @@ void fix_help_buffer(void)
                 const char *const f2 = fnames[i2];
                 const char *const t1 = path_tail(f1);
                 const char *const t2 = path_tail(f2);
-                const char *const e1 = (char *)STRRCHR(t1, '.');
-                const char *const e2 = (char *)STRRCHR(t2, '.');
+                const char *const e1 = strrchr(t1, '.');
+                const char *const e2 = strrchr(t2, '.');
                 if (e1 == NULL || e2 == NULL) {
                   continue;
                 }
@@ -811,7 +811,7 @@ void fix_help_buffer(void)
                 } else {
                   // Do the conversion.  If it fails
                   // use the unconverted text.
-                  cp = (char *)string_convert(&vc, IObuff, NULL);
+                  cp = string_convert(&vc, (char *)IObuff, NULL);
                   if (cp == NULL) {
                     cp = (char *)IObuff;
                   }
@@ -1163,13 +1163,13 @@ void ex_helptags(exarg_T *eap)
   }
 
   if (STRCMP(eap->arg, "ALL") == 0) {
-    do_in_path((char_u *)p_rtp, "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
+    do_in_path(p_rtp, "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
   } else {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_DIRECTORIES;
     dirname = (char *)ExpandOne(&xpc, (char_u *)eap->arg, NULL,
                                 WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
-    if (dirname == NULL || !os_isdir((char_u *)dirname)) {
+    if (dirname == NULL || !os_isdir(dirname)) {
       semsg(_("E150: Not a directory: %s"), eap->arg);
     } else {
       do_helptags(dirname, add_help_tags, false);

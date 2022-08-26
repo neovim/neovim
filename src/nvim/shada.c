@@ -3023,7 +3023,7 @@ shada_write_file_nomerge: {}
     if (tail != fname) {
       const char tail_save = *tail;
       *tail = NUL;
-      if (!os_isdir((char_u *)fname)) {
+      if (!os_isdir(fname)) {
         int ret;
         char *failed_dir;
         if ((ret = os_mkdir_recurse(fname, 0700, &failed_dir)) != 0) {

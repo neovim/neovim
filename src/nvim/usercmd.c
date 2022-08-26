@@ -216,7 +216,7 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
   // Check for attributes
   while (*arg == '-') {
     arg++;  // Skip "-".
-    p = (const char *)skiptowhite((const char_u *)arg);
+    p = (const char *)skiptowhite(arg);
     if (*p == NUL) {
       // Cursor is still in the attribute.
       p = strchr(arg, '=');
@@ -248,7 +248,7 @@ const char *set_context_in_user_cmd(expand_T *xp, const char *arg_in)
   }
 
   // After the attributes comes the new command name.
-  p = (const char *)skiptowhite((const char_u *)arg);
+  p = (const char *)skiptowhite(arg);
   if (*p == NUL) {
     xp->xp_context = EXPAND_USER_COMMANDS;
     xp->xp_pattern = (char *)arg;
@@ -434,7 +434,7 @@ static void uc_list(char *name, size_t name_len)
         msg_putchar(' ');
       }
 
-      msg_outtrans_attr((char_u *)cmd->uc_name, HL_ATTR(HLF_D));
+      msg_outtrans_attr(cmd->uc_name, HL_ATTR(HLF_D));
       len = (int)STRLEN(cmd->uc_name) + 4;
 
       do {
@@ -930,7 +930,7 @@ void ex_command(exarg_T *eap)
   // Check for attributes
   while (*p == '-') {
     p++;
-    end = (char *)skiptowhite((char_u *)p);
+    end = skiptowhite(p);
     if (uc_scan_attr(p, (size_t)(end - p), &argt, &def, &flags, &compl, (char_u **)&compl_arg,
                      &addr_type_arg) == FAIL) {
       return;

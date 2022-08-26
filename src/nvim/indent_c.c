@@ -676,10 +676,10 @@ static int cin_first_id_amount(void)
 
   line = get_cursor_line_ptr();
   p = (char_u *)skipwhite((char *)line);
-  len = (int)(skiptowhite(p) - p);
+  len = (int)((char_u *)skiptowhite((char *)p) - p);
   if (len == 6 && STRNCMP(p, "static", 6) == 0) {
     p = (char_u *)skipwhite((char *)p + 6);
-    len = (int)(skiptowhite(p) - p);
+    len = (int)((char_u *)skiptowhite((char *)p) - p);
   }
   if (len == 6 && STRNCMP(p, "struct", 6) == 0) {
     p = (char_u *)skipwhite((char *)p + 6);

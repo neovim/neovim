@@ -3062,7 +3062,8 @@ int mch_print_text_out(char_u *const textp, size_t len)
 
   if (prt_do_conv) {
     // Convert from multi-byte to 8-bit encoding
-    tofree = p = string_convert(&prt_conv, p, &len);
+    p = (char_u *)string_convert(&prt_conv, (char *)p, &len);
+    tofree = p;
     if (p == NULL) {
       p = (char_u *)"";
       len = 0;

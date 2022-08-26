@@ -2500,7 +2500,7 @@ int op_change(oparg_T *oap)
     }
     firstline = ml_get(oap->start.lnum);
     pre_textlen = (long)STRLEN(firstline);
-    pre_indent = (long)getwhitecols(firstline);
+    pre_indent = (long)getwhitecols((char *)firstline);
     bd.textcol = curwin->w_cursor.col;
   }
 
@@ -2521,7 +2521,7 @@ int op_change(oparg_T *oap)
     // the indent, exclude that indent change from the inserted text.
     firstline = ml_get(oap->start.lnum);
     if (bd.textcol > (colnr_T)pre_indent) {
-      long new_indent = (long)getwhitecols(firstline);
+      long new_indent = (long)getwhitecols((char *)firstline);
 
       pre_textlen += new_indent - pre_indent;
       bd.textcol += (colnr_T)(new_indent - pre_indent);
@@ -3860,7 +3860,7 @@ void ex_display(exarg_T *eap)
           for (p = (char_u *)yb->y_array[j];
                *p != NUL && (n -= ptr2cells((char *)p)) >= 0; p++) {  // -V1019
             clen = utfc_ptr2len((char *)p);
-            msg_outtrans_len(p, clen);
+            msg_outtrans_len((char *)p, clen);
             p += clen - 1;
           }
         }
@@ -3938,10 +3938,10 @@ static void dis_msg(const char_u *p, bool skip_esc)
          && !(*p == ESC && skip_esc && *(p + 1) == NUL)
          && (n -= ptr2cells((char *)p)) >= 0) {
     if ((l = utfc_ptr2len((char *)p)) > 1) {
-      msg_outtrans_len(p, l);
+      msg_outtrans_len((char *)p, l);
       p += l;
     } else {
-      msg_outtrans_len(p++, 1);
+      msg_outtrans_len((char *)p++, 1);
     }
   }
   os_breakcheck();

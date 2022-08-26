@@ -922,7 +922,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
         snprintf((char *)IObuff, IOSIZE, " %c %6" PRIdLINENR " %4d ", c, p->lnum, p->col);
         msg_outtrans((char *)IObuff);
         if (name != NULL) {
-          msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
+          msg_outtrans_attr((char *)name, current ? HL_ATTR(HLF_D) : 0);
         }
       }
       ui_flush();  // show one line at a time
@@ -1052,7 +1052,7 @@ void ex_jumps(exarg_T *eap)
                i > curwin->w_jumplistidx ? i - curwin->w_jumplistidx : curwin->w_jumplistidx - i,
                curwin->w_jumplist[i].fmark.mark.lnum, curwin->w_jumplist[i].fmark.mark.col);
       msg_outtrans((char *)IObuff);
-      msg_outtrans_attr(name,
+      msg_outtrans_attr((char *)name,
                         curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
                         ? HL_ATTR(HLF_D) : 0);
       xfree(name);
@@ -1097,7 +1097,7 @@ void ex_changes(exarg_T *eap)
               curbuf->b_changelist[i].mark.col);
       msg_outtrans((char *)IObuff);
       name = mark_line(&curbuf->b_changelist[i].mark, 17);
-      msg_outtrans_attr(name, HL_ATTR(HLF_D));
+      msg_outtrans_attr((char *)name, HL_ATTR(HLF_D));
       xfree(name);
       os_breakcheck();
     }

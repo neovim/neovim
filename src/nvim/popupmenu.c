@@ -524,7 +524,7 @@ void pum_redraw(void)
             }
 
             if (pum_rl) {
-              char *rt = (char *)reverse_text(st);
+              char *rt = reverse_text((char *)st);
               char *rt_start = rt;
               int size = vim_strsize(rt);
 

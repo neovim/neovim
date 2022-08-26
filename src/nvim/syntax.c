@@ -3013,7 +3013,7 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
     return;
   }
 
-  next = skiptowhite(arg);
+  next = (char_u *)skiptowhite((char *)arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_conceal) {
       msg("syntax conceal on");
@@ -3042,7 +3042,7 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
     return;
   }
 
-  next = skiptowhite(arg);
+  next = (char_u *)skiptowhite((char *)arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_ic) {
       msg("syntax case ignore");
@@ -3081,7 +3081,7 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
     return;
   }
 
-  arg_end = skiptowhite(arg);
+  arg_end = (char_u *)skiptowhite((char *)arg);
   if (STRNICMP(arg, "start", 5) == 0 && arg_end - arg == 5) {
     curwin->w_s->b_syn_foldlevel = SYNFLD_START;
   } else if (STRNICMP(arg, "minimum", 7) == 0 && arg_end - arg == 7) {
@@ -3110,7 +3110,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
     return;
   }
 
-  next = skiptowhite(arg);
+  next = (char_u *)skiptowhite((char *)arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_spell == SYNSPL_TOP) {
       msg("syntax spell toplevel");
@@ -3345,7 +3345,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
      * Clear the group IDs that are in the argument.
      */
     while (!ends_excmd(*arg)) {
-      arg_end = skiptowhite(arg);
+      arg_end = (char_u *)skiptowhite((char *)arg);
       if (*arg == '@') {
         id = syn_scl_namen2id(arg + 1, (int)(arg_end - arg - 1));
         if (id == 0) {
@@ -3522,7 +3522,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
      * List the group IDs and syntax clusters that are in the argument.
      */
     while (!ends_excmd(*arg) && !got_int) {
-      arg_end = skiptowhite(arg);
+      arg_end = (char_u *)skiptowhite((char *)arg);
       if (*arg == '@') {
         int id = syn_scl_namen2id(arg + 1, (int)(arg_end - arg - 1));
         if (id == 0) {
@@ -4029,7 +4029,7 @@ static void add_keyword(char_u *const name, const int id, const int flags,
 ///                  Return NULL if the end of the command was found instead of further args.
 static char *get_group_name(char *arg, char **name_end)
 {
-  *name_end = (char *)skiptowhite((char_u *)arg);
+  *name_end = skiptowhite(arg);
   char *rest = skipwhite(*name_end);
 
   // Check if there are enough arguments.  The first argument may be a
@@ -4163,7 +4163,7 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
           return NULL;
         }
         gname_start = (char_u *)arg;
-        arg = (char *)skiptowhite((char_u *)arg);
+        arg = skiptowhite(arg);
         if (gname_start == (char_u *)arg) {
           return NULL;
         }
@@ -4600,7 +4600,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
     }
 
     if (item == ITEM_MATCHGROUP) {
-      p = (char *)skiptowhite((char_u *)rest);
+      p = skiptowhite(rest);
       if ((p - rest == 4 && STRNCMP(rest, "NONE", 4) == 0) || eap->skip) {
         matchgroup_id = 0;
       } else {
@@ -5141,7 +5141,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   }
 
   while (!ends_excmd(*arg_start)) {
-    arg_end = (char *)skiptowhite(arg_start);
+    arg_end = skiptowhite((char *)arg_start);
     next_arg = (char_u *)skipwhite(arg_end);
     xfree(key);
     key = vim_strnsave_up(arg_start, (size_t)(arg_end - (char *)arg_start));
@@ -5150,7 +5150,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         curwin->w_s->b_syn_sync_flags |= SF_CCOMMENT;
       }
       if (!ends_excmd(*next_arg)) {
-        arg_end = (char *)skiptowhite(next_arg);
+        arg_end = skiptowhite((char *)next_arg);
         if (!eap->skip) {
           curwin->w_s->b_syn_sync_id =
             (int16_t)syn_check_group((char *)next_arg, (size_t)(arg_end - (char *)next_arg));
@@ -5693,10 +5693,10 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
 
   // (part of) subcommand already typed
   if (*arg != NUL) {
-    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    const char *p = (const char *)skiptowhite(arg);
     if (*p != NUL) {  // Past first word.
       xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite((char_u *)xp->xp_pattern) != NUL) {
+      if (*skiptowhite(xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
       } else if (STRNICMP(arg, "case", p - arg) == 0) {
         expand_what = EXP_CASE;
@@ -6028,7 +6028,7 @@ static void syntime_report(void)
     if (len > (int)STRLEN(p->pattern)) {
       len = (int)STRLEN(p->pattern);
     }
-    msg_outtrans_len(p->pattern, len);
+    msg_outtrans_len((char *)p->pattern, len);
     msg_puts("\n");
   }
   ga_clear(&ga);

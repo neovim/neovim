@@ -387,7 +387,7 @@ static char_u *ExpandOne_start(int mode, expand_T *xp, char_u *str, int options)
 }
 
 /// Return the longest common part in the list of cmdline completion matches.
-static char_u *find_longest_match(expand_T *xp, int options)
+static char *find_longest_match(expand_T *xp, int options)
 {
   size_t len = 0;
 
@@ -417,7 +417,7 @@ static char_u *find_longest_match(expand_T *xp, int options)
     }
   }
 
-  return (char_u *)xstrndup(xp->xp_files[0], len);
+  return xstrndup(xp->xp_files[0], len);
 }
 
 /// Do wildcard expansion on the string 'str'.
@@ -500,7 +500,7 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
 
   // Find longest common part
   if (mode == WILD_LONGEST && xp->xp_numfiles > 0) {
-    ss = find_longest_match(xp, options);
+    ss = (char_u *)find_longest_match(xp, options);
     findex = -1;  // next p_wc gets first one
   }
 
@@ -670,7 +670,7 @@ int showmatches(expand_T *xp, int wildmenu)
       lastlen = 999;
       for (k = i; k < num_files; k += lines) {
         if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-          msg_outtrans_attr((char_u *)files_found[k], HL_ATTR(HLF_D));
+          msg_outtrans_attr(files_found[k], HL_ATTR(HLF_D));
           p = (char_u *)files_found[k] + STRLEN(files_found[k]) + 1;
           msg_advance(maxlen + 1);
           msg_puts((const char *)p);
@@ -691,15 +691,15 @@ int showmatches(expand_T *xp, int wildmenu)
             // $HOME has been replaced with ~/.
             char_u *exp_path = expand_env_save_opt((char_u *)files_found[k], true);
             char_u *path = exp_path != NULL ? exp_path : (char_u *)files_found[k];
-            char_u *halved_slash = backslash_halve_save(path);
-            j = os_isdir(halved_slash);
+            char_u *halved_slash = (char_u *)backslash_halve_save((char *)path);
+            j = os_isdir((char *)halved_slash);
             xfree(exp_path);
             if (halved_slash != path) {
               xfree(halved_slash);
             }
           } else {
             // Expansion was done here, file names are literal.
-            j = os_isdir((char_u *)files_found[k]);
+            j = os_isdir(files_found[k]);
           }
           if (showtail) {
             p = (char_u *)L_SHOWFILE(k);
@@ -711,7 +711,7 @@ int showmatches(expand_T *xp, int wildmenu)
           j = false;
           p = (char_u *)L_SHOWFILE(k);
         }
-        lastlen = msg_outtrans_attr(p, j ? attr : 0);
+        lastlen = msg_outtrans_attr((char *)p, j ? attr : 0);
       }
       if (msg_col > 0) {        // when not wrapped around
         msg_clr_eos();
@@ -1239,7 +1239,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
     if (*arg == NUL || !ends_excmd(*arg)) {
       // also complete "None"
       set_context_in_echohl_cmd(xp, arg);
-      arg = (const char *)skipwhite((char *)skiptowhite((const char_u *)arg));
+      arg = (const char *)skipwhite(skiptowhite(arg));
       if (*arg != NUL) {
         xp->xp_context = EXPAND_NOTHING;
         arg = (const char *)skip_regexp((char *)arg + 1, (uint8_t)(*arg), p_magic, NULL);
@@ -1592,7 +1592,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
 
 #ifdef HAVE_WORKING_LIBINTL
   case CMD_language:
-    p = (const char *)skiptowhite((const char_u *)arg);
+    p = (const char *)skiptowhite(arg);
     if (*p == NUL) {
       xp->xp_context = EXPAND_LANGUAGE;
       xp->xp_pattern = (char *)arg;
@@ -2161,19 +2161,19 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
   }
   if (xp->xp_context == EXPAND_COLORS) {
     char *directories[] = { "colors", NULL };
-    return ExpandRTDir(pat, DIP_START + DIP_OPT + DIP_LUA, num_file, file, directories);
+    return ExpandRTDir((char *)pat, DIP_START + DIP_OPT + DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_COMPILER) {
     char *directories[] = { "compiler", NULL };
-    return ExpandRTDir(pat, DIP_LUA, num_file, file, directories);
+    return ExpandRTDir((char *)pat, DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_OWNSYNTAX) {
     char *directories[] = { "syntax", NULL };
-    return ExpandRTDir(pat, 0, num_file, file, directories);
+    return ExpandRTDir((char *)pat, 0, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_FILETYPE) {
     char *directories[] = { "syntax", "indent", "ftplugin", NULL };
-    return ExpandRTDir(pat, DIP_LUA, num_file, file, directories);
+    return ExpandRTDir((char *)pat, DIP_LUA, num_file, file, directories);
   }
   if (xp->xp_context == EXPAND_USER_LIST) {
     return ExpandUserList(xp, num_file, file);
@@ -2182,7 +2182,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
     return ExpandUserLua(xp, num_file, file);
   }
   if (xp->xp_context == EXPAND_PACKADD) {
-    return ExpandPackAddDir(pat, num_file, file);
+    return ExpandPackAddDir((char *)pat, num_file, file);
   }
 
   // When expanding a function name starting with s:, match the <SNR>nr_
@@ -2573,7 +2573,7 @@ static int ExpandUserLua(expand_T *xp, int *num_file, char ***file)
 
 /// Expand `file` for all comma-separated directories in `path`.
 /// Adds matches to `ga`.
-void globpath(char *path, char_u *file, garray_T *ga, int expand_options)
+void globpath(char *path, char *file, garray_T *ga, int expand_options)
 {
   expand_T xpc;
   ExpandInit(&xpc);

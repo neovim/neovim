@@ -1270,7 +1270,7 @@ static int get_encoded_char_adv(const char_u **p)
     int64_t num = 0;
     for (int bytes = s[1] == 'x' ? 1 : s[1] == 'u' ? 2 : 4; bytes > 0; bytes--) {
       *p += 2;
-      int n = hexhex2nr(*p);
+      int n = hexhex2nr((char *)(*p));
       if (n < 0) {
         return 0;
       }

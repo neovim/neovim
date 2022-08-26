@@ -870,7 +870,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   if (has_spell && !number_only) {
     // For checking first word with a capital skip white space.
     if (cap_col == 0) {
-      cap_col = (int)getwhitecols(line);
+      cap_col = (int)getwhitecols((char *)line);
     }
 
     // To be able to spell-check over line boundaries copy the end of the
@@ -1171,7 +1171,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               if (wp->w_p_rl) {                       // reverse line numbers
                 // like rl_mirror(), but keep the space at the end
                 char_u *p2 = (char_u *)skipwhite((char *)extra);
-                p2 = skiptowhite(p2) - 1;
+                p2 = (char_u *)skiptowhite((char *)p2) - 1;
                 for (char_u *p1 = (char_u *)skipwhite((char *)extra); p1 < p2; p1++, p2--) {
                   const char_u t = *p1;
                   *p1 = *p2;

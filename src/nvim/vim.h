@@ -230,10 +230,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 # endif
 #endif
 
-#define STRRCHR(s, c)       (char_u *)strrchr((const char *)(s), (c))
-
-#define STRCAT(d, s)        strcat((char *)(d), (char *)(s))
-#define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
+#define STRCAT(d, s)        strcat((char *)(d), (char *)(s))  // NOLINT(runtime/printf)
 #define STRLCAT(d, s, n)    xstrlcat((char *)(d), (char *)(s), (size_t)(n))
 
 // Character used as separated in autoload function/variable names.
