@@ -493,6 +493,18 @@ func Test_BufReadCmdHelpJump()
   au! BufReadCmd
 endfunc
 
+" BufReadCmd is triggered for a "nofile" buffer
+func Test_BufReadCmdNofile()
+  new somefile
+  set buftype=nofile
+  au BufReadCmd somefile call setline(1, 'triggered')
+  edit
+  call assert_equal('triggered', getline(1))
+
+  au! BufReadCmd
+  bwipe!
+endfunc
+
 func Test_augroup_deleted()
   " This caused a crash before E936 was introduced
   augroup x

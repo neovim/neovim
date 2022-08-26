@@ -165,11 +165,12 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
 ///
 /// @param read_stdin  read file from stdin
 /// @param eap  for forced 'ff' and 'fenc' or NULL
-/// @param flags  extra flags for readfile()
+/// @param flags_arg  extra flags for readfile()
 ///
 /// @return  FAIL for failure, OK otherwise.
-int open_buffer(int read_stdin, exarg_T *eap, int flags)
+int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
 {
+  int flags = flags_arg;
   int retval = OK;
   bufref_T old_curbuf;
   long old_tw = curbuf->b_p_tw;
@@ -224,8 +225,14 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags)
   // mark cursor position as being invalid
   curwin->w_valid = 0;
 
+  // A buffer without an actual file should not use the buffer name to read a
+  // file.
+  if (bt_quickfix(curbuf) || bt_nofilename(curbuf)) {
+    flags |= READ_NOFILE;
+  }
+
   // Read the file if there is one.
-  if (curbuf->b_ffname != NULL && !bt_quickfix(curbuf) && !bt_nofilename(curbuf)) {
+  if (curbuf->b_ffname != NULL) {
 #ifdef UNIX
     int save_bin = curbuf->b_p_bin;
     int perm;
