@@ -1,0 +1,242 @@
+name: Release
+on:
+  schedule:
+    - cron: '5 5 * * *'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for release'
+        required: false
+        default: nightly
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+
+# Build on the oldest supported images, so we have broader compatibility
+# Build with gcc-10 to prevent triggering #14150 (default is still gcc-9 on 20.04)
+jobs:
+  linux:
+    runs-on: ubuntu-20.04
+    outputs:
+      version: ${{ steps.build.outputs.version }}
+      release: ${{ steps.build.outputs.release }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake build-essential cmake gettext libtool-bin locales ninja-build pkg-config unzip
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
+      - name: Build release
+        id: build
+        run: |
+          CC=gcc-10 make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH="
+          printf '::set-output name=version::%s\n' "$(./build/bin/nvim --version | head -n 3 | sed -z 's/\n/%0A/g')"
+          printf '::set-output name=release::%s\n' "$(./build/bin/nvim --version | head -n 1)"
+          make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-linux64" install
+          cd "$GITHUB_WORKSPACE/build/"
+          cpack -C $NVIM_BUILD_TYPE
+      - uses: actions/upload-artifact@v3
+        with:
+          name: nvim-linux64
+          path: |
+            build/nvim-linux64.tar.gz
+            build/nvim-linux64.deb
+          retention-days: 1
+
+  appimage:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake build-essential cmake gettext libtool-bin locales ninja-build pkg-config unzip
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: CC=gcc-10 make appimage-latest
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: CC=gcc-10 make appimage-nightly
+      - uses: actions/upload-artifact@v3
+        with:
+          name: appimage
+          path: |
+            build/bin/nvim.appimage
+            build/bin/nvim.appimage.zsync
+          retention-days: 1
+
+  macOS:
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install brew packages
+        run: |
+          brew update --quiet
+          brew install automake ninja
+      - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
+      - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
+        run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
+      - name: Provision universal `libintl`
+        run: |
+          GETTEXT_PREFIX="$(brew --prefix gettext)"
+          printf 'GETTEXT_PREFIX=%s\n' "$GETTEXT_PREFIX" >> $GITHUB_ENV
+          bottle_tag="arm64_big_sur"
+          brew fetch --bottle-tag="$bottle_tag" gettext
+          cd "$(mktemp -d)"
+          tar xf "$(brew --cache)"/**/*gettext*${bottle_tag}*.tar.gz
+          lipo gettext/*/lib/libintl.a "${GETTEXT_PREFIX}/lib/libintl.a" -create -output libintl.a
+          mv -f libintl.a /usr/local/lib/
+      - name: Ensure static linkage to `libintl`
+        run: |
+          # We're about to mangle `gettext`, so let's remove any potentially broken
+          # installs (e.g. curl, git) as those could interfere with our build.
+          brew uninstall $(brew uses --installed --recursive gettext)
+          brew unlink gettext
+          ln -sf "$(brew --prefix)/opt/$(readlink "${GETTEXT_PREFIX}")/bin"/* /usr/local/bin/
+          ln -sf "$(brew --prefix)/opt/$(readlink "${GETTEXT_PREFIX}")/include"/* /usr/local/include/
+          rm -f "$GETTEXT_PREFIX"
+      - name: Build release
+        run: |
+          export MACOSX_DEPLOYMENT_TARGET="$(sw_vers -productVersion | cut -f1 -d.)"
+          OSX_FLAGS="-DCMAKE_OSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET} -DCMAKE_OSX_ARCHITECTURES=arm64\;x86_64"
+          make CMAKE_BUILD_TYPE=${NVIM_BUILD_TYPE} \
+               CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX:PATH= $OSX_FLAGS" \
+               DEPS_CMAKE_FLAGS="$OSX_FLAGS"
+          make DESTDIR="$GITHUB_WORKSPACE/build/release/nvim-macos" install
+          cd "$GITHUB_WORKSPACE/build/"
+          cpack -C "$NVIM_BUILD_TYPE"
+      - uses: actions/upload-artifact@v3
+        with:
+          name: nvim-macos
+          path: build/nvim-macos.tar.gz
+          retention-days: 1
+
+  windows:
+    runs-on: windows-2019
+    env:
+      DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
+      DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
+      CMAKE_BUILD_TYPE: "RelWithDebInfo"
+    strategy:
+      matrix:
+        include:
+          - config: MSVC_64
+            archive: nvim-win64
+    name: windows (${{ matrix.config }})
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Build deps
+        run: .\ci\build.ps1 -BuildDeps
+      - name: build package
+        run: .\ci\build.ps1 -Package
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.archive }}
+          path: |
+            build/${{ matrix.archive }}.msi
+            build/${{ matrix.archive }}.zip
+          retention-days: 1
+
+  publish:
+    needs: [linux, appimage, macOS, windows]
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+    steps:
+      # Must perform checkout first, since it deletes the target directory
+      # before running, and would therefore delete the downloaded artifacts
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y gettext-base
+
+      - if: github.event_name == 'workflow_dispatch'
+        run: echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+      - if: github.event_name == 'schedule'
+        run: echo 'TAG_NAME=nightly' >> $GITHUB_ENV
+      - if: github.event_name == 'push'
+        run: |
+          TAG_NAME=${{ github.ref }}
+          echo "TAG_NAME=${TAG_NAME#refs/tags/}" >> $GITHUB_ENV
+      - if: env.TAG_NAME == 'nightly'
+        run: |
+          (echo 'SUBJECT=Nvim development (prerelease) build';
+           echo 'PRERELEASE=--prerelease') >> $GITHUB_ENV
+          gh release delete nightly --yes || true
+          git push origin :nightly || true
+      - if: env.TAG_NAME != 'nightly'
+        run: |
+          (echo 'SUBJECT=Nvim release build';
+           echo 'PRERELEASE=') >> $GITHUB_ENV
+          gh release delete stable --yes || true
+          git push origin :stable || true
+      # `sha256sum` outputs <sha> <path>, so we cd into each dir to drop the
+      # containing folder from the output.
+      - name: Generate Linux64 SHA256 checksums
+        run: |
+          cd ./nvim-linux64
+          sha256sum nvim-linux64.tar.gz > nvim-linux64.tar.gz.sha256sum
+          echo "SHA_LINUX_64_TAR=$(cat nvim-linux64.tar.gz.sha256sum)" >> $GITHUB_ENV
+          sha256sum nvim-linux64.deb > nvim-linux64.deb.sha256sum
+          echo "SHA_LINUX_64_DEB=$(cat nvim-linux64.deb.sha256sum)" >> $GITHUB_ENV
+      - name: Generate App Image SHA256 checksums
+        run: |
+          cd ./appimage
+          sha256sum nvim.appimage > nvim.appimage.sha256sum
+          echo "SHA_APP_IMAGE=$(cat nvim.appimage.sha256sum)" >> $GITHUB_ENV
+      - name: Generate App Image Zsync SHA256 checksums
+        run: |
+          cd ./appimage
+          sha256sum nvim.appimage.zsync > nvim.appimage.zsync.sha256sum
+          echo "SHA_APP_IMAGE_ZSYNC=$(cat nvim.appimage.zsync.sha256sum)" >> $GITHUB_ENV
+      - name: Generate macOS SHA256 checksums
+        run: |
+          cd ./nvim-macos
+          sha256sum nvim-macos.tar.gz > nvim-macos.tar.gz.sha256sum
+          echo "SHA_MACOS=$(cat nvim-macos.tar.gz.sha256sum)" >> $GITHUB_ENV
+      - name: Generate Win64 SHA256 checksums
+        run: |
+          cd ./nvim-win64
+          sha256sum nvim-win64.zip > nvim-win64.zip.sha256sum
+          echo "SHA_WIN_64_ZIP=$(cat nvim-win64.zip.sha256sum)" >> $GITHUB_ENV
+          sha256sum nvim-win64.msi > nvim-win64.msi.sha256sum
+          echo "SHA_WIN_64_MSI=$(cat nvim-win64.msi.sha256sum)" >> $GITHUB_ENV
+      - name: Publish release
+        env:
+          NVIM_VERSION: ${{ needs.linux.outputs.version }}
+          DEBUG: api
+        run: |
+          envsubst < "$GITHUB_WORKSPACE/.github/workflows/notes.md" > "$RUNNER_TEMP/notes.md"
+          gh release create $TAG_NAME $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
+          if [ "$TAG_NAME" != "nightly" ]; then
+            gh release create stable $PRERELEASE --notes-file "$RUNNER_TEMP/notes.md" --title "$SUBJECT" --target $GITHUB_SHA nvim-macos/* nvim-linux64/* appimage/* nvim-win64/*
+          fi
+  publish-winget:
+    needs: publish # run after publish job is finished
+    # publish to winget only on stable releases
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
+    runs-on: windows-latest # action can only be run on windows
+    steps:
+      - uses: vedantmgoyal2009/winget-releaser@latest
+        with:
+          identifier: Neovim.Neovim
+          # the latter one is a fallback value, reference:
+          # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
+          release-tag: ${{ github.event.inputs.tag_name || github.ref }}
+          token: ${{ secrets.WINGET_TOKEN }}

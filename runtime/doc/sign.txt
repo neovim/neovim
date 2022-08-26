@@ -1,0 +1,757 @@
+*sign.txt*      Nvim
+
+
+		  VIM REFERENCE MANUAL    by Gordon Prieur
+					  and Bram Moolenaar
+
+
+Sign Support Features				*sign-support*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+1. Introduction					*sign-intro* *signs*
+
+When a debugger or other IDE tool is driving an editor it needs to be able
+to give specific highlights which quickly tell the user useful information
+about the file.  One example of this would be a debugger which had an icon
+in the left-hand column denoting a breakpoint.  Another example might be an
+arrow representing the Program Counter (PC).  The sign features allow both
+placement of a sign, or icon, in the left-hand side of the window and
+definition of a highlight which will be applied to that line.  Displaying the
+sign as an image is most likely only feasible in gvim (although Sun
+Microsystem's dtterm does support this it's the only terminal emulator I know
+of which does).  A text sign and the highlight should be feasible in any color
+terminal emulator.
+
+Signs and highlights are not useful just for debuggers.  There are plugins
+that use signs to mark build errors or display version control status.
+
+There are two steps in using signs:
+
+1. Define the sign.  This specifies the image, text and highlighting.  For
+   example, you can define a "break" sign with an image of a stop roadsign and
+   text "!!".
+
+2. Place the sign.  This specifies the file and line number where the sign is
+   displayed.  A defined sign can be placed several times in different lines
+   and files.
+
+							*sign-column*
+When signs are defined for a file, Vim will automatically add a column of two
+characters to display them in.  When the last sign is unplaced the column
+disappears again.  This behavior can be changed with the 'signcolumn' option.
+
+The color of the column is set with the SignColumn highlight group
+|hl-SignColumn|.  Example to set the color: >
+
+	:highlight SignColumn guibg=darkgrey
+<
+If 'cursorline' is enabled, then the CursorLineSign highlight group is used
+|hl-CursorLineSign|.
+							*sign-identifier*
+Each placed sign is identified by a number called the sign identifier. This
+identifier is used to jump to the sign or to remove the sign. The identifier
+is assigned when placing the sign using the |:sign-place| command or the
+|sign_place()| function. Each sign identifier should be a unique number. If
+multiple placed signs use the same identifier, then jumping to or removing a
+sign becomes unpredictable. To avoid overlapping identifiers, sign groups can
+be used. The |sign_place()| function can be called with a zero sign identifier
+to allocate the next available identifier.
+
+							*sign-group*
+Each placed sign can be assigned to either the global group or a named group.
+When placing a sign, if a group name is not supplied, or an empty string is
+used, then the sign is placed in the global group. Otherwise the sign is
+placed in the named group. The sign identifier is unique within a group. The
+sign group allows Vim plugins to use unique signs without interfering with
+other plugins using signs.
+
+							*sign-priority*
+Each placed sign is assigned a priority value. When multiple signs are placed
+on the same line, the attributes of the sign with the highest priority is used
+independently of the sign group. The default priority for a sign is 10. The
+priority is assigned at the time of placing a sign.
+
+When two signs with the same priority are present, and one has an icon or text
+in the signcolumn while the other has line highlighting, then both are
+displayed.
+
+When the line on which the sign is placed is deleted, the sign is moved to the
+next line (or the last line of the buffer, if there is no next line).  When
+the delete is undone the sign does not move back.
+
+==============================================================================
+2. Commands					*sign-commands* *:sig* *:sign*
+
+Here is an example that places a sign "piet", displayed with the text ">>", in
+line 23 of the current file: >
+	:sign define piet text=>> texthl=Search
+	:exe ":sign place 2 line=23 name=piet file=" .. expand("%:p")
+
+And here is the command to delete it again: >
+	:sign unplace 2
+
+Note that the ":sign" command cannot be followed by another command or a
+comment.  If you do need that, use the |:execute| command.
+
+
+DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
+
+See |sign_define()| for the equivalent Vim script function.
+
+:sign define {name} {argument}...
+		Define a new sign or set attributes for an existing sign.
+		The {name} can either be a number (all digits) or a name
+		starting with a non-digit.  Leading zeros are ignored, thus
+		"0012", "012" and "12" are considered the same name.
+		About 120 different signs can be defined.
+
+		Accepted arguments:
+
+	icon={bitmap}
+		Define the file name where the bitmap can be found.  Should be
+		a full path.  The bitmap should fit in the place of two
+		characters.  This is not checked.  If the bitmap is too big it
+		will cause redraw problems.
+			toolkit		supports ~
+			Win32		.bmp, .ico, .cur
+
+	linehl={group}
+		Highlighting group used for the whole line the sign is placed
+		in.  Most useful is defining a background color.
+
+	numhl={group}
+		Highlighting group used for the line number on the line where
+		the sign is placed.  Overrides |hl-LineNr|, |hl-LineNrAbove|,
+		|hl-LineNrBelow|, and |hl-CursorLineNr|.
+
+	text={text}						*E239*
+		Define the text that is displayed when there is no icon or the
+		GUI is not being used.  Only printable characters are allowed
+		and they must occupy one or two display cells.
+
+	texthl={group}
+		Highlighting group used for the text item.
+
+	culhl={group}
+		Highlighting group used for the text item when the cursor is
+		on the same line as the sign and 'cursorline' is enabled.
+
+	Example: >
+		:sign define MySign text=>> texthl=Search linehl=DiffText
+<
+
+DELETING A SIGN						*:sign-undefine* *E155*
+
+See |sign_undefine()| for the equivalent Vim script function.
+
+:sign undefine {name}
+		Deletes a previously defined sign.  If signs with this {name}
+		are still placed this will cause trouble.
+
+		Example: >
+			:sign undefine MySign
+<
+
+LISTING SIGNS						*:sign-list* *E156*
+
+See |sign_getdefined()| for the equivalent Vim script function.
+
+:sign list	Lists all defined signs and their attributes.
+
+:sign list {name}
+		Lists one defined sign and its attributes.
+
+
+PLACING SIGNS						*:sign-place* *E158*
+
+See |sign_place()| for the equivalent Vim script function.
+
+:sign place {id} line={lnum} name={name} file={fname}
+		Place sign defined as {name} at line {lnum} in file {fname}.
+							*:sign-fname*
+		The file {fname} must already be loaded in a buffer.  The
+		exact file name must be used, wildcards, $ENV and ~ are not
+		expanded, white space must not be escaped.  Trailing white
+		space is ignored.
+
+		The sign is remembered under {id}, this can be used for
+		further manipulation.  {id} must be a number.
+		It's up to the user to make sure the {id} is used only once in
+		each file (if it's used several times unplacing will also have
+		to be done several times and making changes may not work as
+		expected).
+
+		The following optional sign attributes can be specified before
+		"file=":
+			group={group}	Place sign in sign group {group}
+			priority={prio}	Assign priority {prio} to sign
+
+		By default, the sign is placed in the global sign group.
+
+		By default, the sign is assigned a default priority of 10. To
+		assign a different priority value, use "priority={prio}" to
+		specify a value.  The priority is used to determine the sign
+		that is displayed when multiple signs are placed on the same
+		line.
+
+		Examples: >
+			:sign place 5 line=3 name=sign1 file=a.py
+			:sign place 6 group=g2 line=2 name=sign2 file=x.py
+			:sign place 9 group=g2 priority=50 line=5
+							\ name=sign1 file=a.py
+<
+:sign place {id} line={lnum} name={name} [buffer={nr}]
+		Same, but use buffer {nr}.  If the buffer argument is not
+		given, place the sign in the current buffer.
+
+		Example: >
+			:sign place 10 line=99 name=sign3
+			:sign place 10 line=99 name=sign3 buffer=3
+<
+							*E885*
+:sign place {id} name={name} file={fname}
+		Change the placed sign {id} in file {fname} to use the defined
+		sign {name}.  See remark above about {fname} |:sign-fname|.
+		This can be used to change the displayed sign without moving
+		it (e.g., when the debugger has stopped at a breakpoint).
+
+		The optional "group={group}" attribute can be used before
+		"file=" to select a sign in a particular group.  The optional
+		"priority={prio}" attribute can be used to change the priority
+		of an existing sign.
+
+		Example: >
+			:sign place 23 name=sign1 file=/path/to/edit.py
+<
+:sign place {id} name={name} [buffer={nr}]
+		Same, but use buffer {nr}.  If the buffer argument is not
+		given, use the current buffer.
+
+		Example: >
+			:sign place 23 name=sign1
+			:sign place 23 name=sign1 buffer=7
+<
+
+REMOVING SIGNS						*:sign-unplace* *E159*
+
+See |sign_unplace()| for the equivalent Vim script function.
+
+:sign unplace {id} file={fname}
+		Remove the previously placed sign {id} from file {fname}.
+		See remark above about {fname} |:sign-fname|.
+
+:sign unplace {id} group={group} file={fname}
+		Same but remove the sign {id} in sign group {group}.
+
+:sign unplace {id} group=* file={fname}
+		Same but remove the sign {id} from all the sign groups.
+
+:sign unplace * file={fname}
+		Remove all placed signs in file {fname}.
+
+:sign unplace * group={group} file={fname}
+		Remove all placed signs in group {group} from file {fname}.
+
+:sign unplace * group=* file={fname}
+		Remove all placed signs in all the groups from file {fname}.
+
+:sign unplace {id} buffer={nr}
+		Remove the previously placed sign {id} from buffer {nr}.
+
+:sign unplace {id} group={group} buffer={nr}
+		Remove the previously placed sign {id} in group {group} from
+		buffer {nr}.
+
+:sign unplace {id} group=* buffer={nr}
+		Remove the previously placed sign {id} in all the groups from
+		buffer {nr}.
+
+:sign unplace * buffer={nr}
+		Remove all placed signs in buffer {nr}.
+
+:sign unplace * group={group} buffer={nr}
+		Remove all placed signs in group {group} from buffer {nr}.
+
+:sign unplace * group=* buffer={nr}
+		Remove all placed signs in all the groups from buffer {nr}.
+
+:sign unplace {id}
+		Remove the previously placed sign {id} from all files it
+		appears in.
+
+:sign unplace {id} group={group}
+		Remove the previously placed sign {id} in group {group} from
+		all files it appears in.
+
+:sign unplace {id} group=*
+		Remove the previously placed sign {id} in all the groups from
+		all the files it appears in.
+
+:sign unplace *
+		Remove all placed signs in the global group from all the files.
+
+:sign unplace * group={group}
+		Remove all placed signs in group {group} from all the files.
+
+:sign unplace * group=*
+		Remove all placed signs in all the groups from all the files.
+
+:sign unplace
+		Remove a placed sign at the cursor position. If multiple signs
+		are placed in the line, then only one is removed.
+
+:sign unplace group={group}
+		Remove a placed sign in group {group} at the cursor
+		position.
+
+:sign unplace group=*
+		Remove a placed sign in any group at the cursor position.
+
+
+LISTING PLACED SIGNS					*:sign-place-list*
+
+See |sign_getplaced()| for the equivalent Vim script function.
+
+:sign place file={fname}
+		List signs placed in file {fname}.
+		See remark above about {fname} |:sign-fname|.
+
+:sign place group={group} file={fname}
+		List signs in group {group} placed in file {fname}.
+
+:sign place group=* file={fname}
+		List signs in all the groups placed in file {fname}.
+
+
+:sign place buffer={nr}
+		List signs placed in buffer {nr}.
+
+:sign place group={group} buffer={nr}
+		List signs in group {group} placed in buffer {nr}.
+
+:sign place group=* buffer={nr}
+		List signs in all the groups placed in buffer {nr}.
+
+:sign place group={group}
+		List placed signs in all sign groups in all the files.
+
+:sign place group=*
+		List placed signs in all sign groups in all files.
+
+
+JUMPING TO A SIGN					*:sign-jump* *E157*
+
+See |sign_jump()| for the equivalent Vim script function.
+
+:sign jump {id} file={fname}
+		Open the file {fname} or jump to the window that contains
+		{fname} and position the cursor at sign {id}.
+		See remark above about {fname} |:sign-fname|.
+		If the file isn't displayed in window and the current file can
+		not be |abandon|ed this fails.
+
+:sign jump {id} group={group} file={fname}
+		Same but jump to the sign in group {group}
+
+:sign jump {id} [buffer={nr}]					*E934*
+		Same, but use buffer {nr}.  This fails if buffer {nr} does not
+		have a name. If the buffer argument is not given, use the
+		current buffer.
+
+:sign jump {id} group={group} [buffer={nr}]
+		Same but jump to the sign in group {group}
+
+
+==============================================================================
+3. Functions					*sign-functions-details*
+
+sign_define({name} [, {dict}])				*sign_define()*
+sign_define({list})
+		Define a new sign named {name} or modify the attributes of an
+		existing sign.  This is similar to the |:sign-define| command.
+
+		Prefix {name} with a unique text to avoid name collisions.
+		There is no {group} like with placing signs.
+
+		The {name} can be a String or a Number.  The optional {dict}
+		argument specifies the sign attributes.  The following values
+		are supported:
+		   icon		full path to the bitmap file for the sign.
+		   linehl	highlight group used for the whole line the
+				sign is placed in.
+		   text		text that is displayed when there is no icon
+				or the GUI is not being used.
+		   texthl	highlight group used for the text item
+		   culhl	highlight group used for the text item when
+				the cursor is on the same line as the sign and
+				'cursorline' is enabled.
+		   numhl	highlight group used for 'number' column at the
+				associated line. Overrides |hl-LineNr|,
+				|hl-CursorLineNr|.
+
+		If the sign named {name} already exists, then the attributes
+		of the sign are updated.
+
+		The one argument {list} can be used to define a list of signs.
+		Each list item is a dictionary with the above items in {dict}
+		and a "name" item for the sign name.
+
+		Returns 0 on success and -1 on failure.  When the one argument
+		{list} is used, then returns a List of values one for each
+		defined sign.
+
+		Examples: >
+			call sign_define("mySign", {
+				\ "text" : "=>",
+				\ "texthl" : "Error",
+				\ "linehl" : "Search"})
+			call sign_define([
+				\ {'name' : 'sign1',
+				\  'text' : '=>'},
+				\ {'name' : 'sign2',
+				\  'text' : '!!'}
+				\ ])
+<
+		Can also be used as a |method|: >
+			GetSignList()->sign_define()
+
+sign_getdefined([{name}])				*sign_getdefined()*
+		Get a list of defined signs and their attributes.
+		This is similar to the |:sign-list| command.
+
+		If the {name} is not supplied, then a list of all the defined
+		signs is returned. Otherwise the attribute of the specified
+		sign is returned.
+
+		Each list item in the returned value is a dictionary with the
+		following entries:
+		   icon		full path to the bitmap file of the sign
+		   linehl	highlight group used for the whole line the
+				sign is placed in; not present if not set.
+		   name		name of the sign
+		   text		text that is displayed when there is no icon
+				or the GUI is not being used.
+		   texthl	highlight group used for the text item; not
+				present if not set.
+		   culhl	highlight group used for the text item when
+				the cursor is on the same line as the sign and
+				'cursorline' is enabled; not present if not
+				set.
+		   numhl	highlight group used for 'number' column at the
+				associated line. Overrides |hl-LineNr|,
+				|hl-CursorLineNr|; not present if not set.
+
+		Returns an empty List if there are no signs and when {name} is
+		not found.
+
+		Examples: >
+			" Get a list of all the defined signs
+			echo sign_getdefined()
+
+			" Get the attribute of the sign named mySign
+			echo sign_getdefined("mySign")
+<
+		Can also be used as a |method|: >
+			GetSignList()->sign_getdefined()
+
+sign_getplaced([{buf} [, {dict}]])			*sign_getplaced()*
+		Return a list of signs placed in a buffer or all the buffers.
+		This is similar to the |:sign-place-list| command.
+
+		If the optional buffer name {buf} is specified, then only the
+		list of signs placed in that buffer is returned.  For the use
+		of {buf}, see |bufname()|. The optional {dict} can contain
+		the following entries:
+		   group	select only signs in this group
+		   id		select sign with this identifier
+		   lnum		select signs placed in this line. For the use
+				of {lnum}, see |line()|.
+		If {group} is '*', then signs in all the groups including the
+		global group are returned. If {group} is not supplied or is an
+		empty string, then only signs in the global group are
+		returned.  If no arguments are supplied, then signs in the
+		global group placed in all the buffers are returned.
+		See |sign-group|.
+
+		Each list item in the returned value is a dictionary with the
+		following entries:
+			bufnr	number of the buffer with the sign
+			signs	list of signs placed in {bufnr}. Each list
+				item is a dictionary with the below listed
+				entries
+
+		The dictionary for each sign contains the following entries:
+			group	 sign group. Set to '' for the global group.
+			id	 identifier of the sign
+			lnum	 line number where the sign is placed
+			name	 name of the defined sign
+			priority sign priority
+
+		The returned signs in a buffer are ordered by their line
+		number and priority.
+
+		Returns an empty list on failure or if there are no placed
+		signs.
+
+		Examples: >
+			" Get a List of signs placed in eval.c in the
+			" global group
+			echo sign_getplaced("eval.c")
+
+			" Get a List of signs in group 'g1' placed in eval.c
+			echo sign_getplaced("eval.c", {'group' : 'g1'})
+
+			" Get a List of signs placed at line 10 in eval.c
+			echo sign_getplaced("eval.c", {'lnum' : 10})
+
+			" Get sign with identifier 10 placed in a.py
+			echo sign_getplaced("a.py", {'id' : 10})
+
+			" Get sign with id 20 in group 'g1' placed in a.py
+			echo sign_getplaced("a.py", {'group' : 'g1',
+							\  'id' : 20})
+
+			" Get a List of all the placed signs
+			echo sign_getplaced()
+<
+		Can also be used as a |method|: >
+			GetBufname()->sign_getplaced()
+<
+							*sign_jump()*
+sign_jump({id}, {group}, {buf})
+		Open the buffer {buf} or jump to the window that contains
+		{buf} and position the cursor at sign {id} in group {group}.
+		This is similar to the |:sign-jump| command.
+
+		For the use of {buf}, see |bufname()|.
+
+		Returns the line number of the sign. Returns -1 if the
+		arguments are invalid.
+
+		Example: >
+			" Jump to sign 10 in the current buffer
+			call sign_jump(10, '', '')
+<
+		Can also be used as a |method|: >
+			GetSignid()->sign_jump()
+<
+							*sign_place()*
+sign_place({id}, {group}, {name}, {buf} [, {dict}])
+		Place the sign defined as {name} at line {lnum} in file or
+		buffer {buf} and assign {id} and {group} to sign.  This is
+		similar to the |:sign-place| command.
+
+		If the sign identifier {id} is zero, then a new identifier is
+		allocated.  Otherwise the specified number is used. {group} is
+		the sign group name. To use the global sign group, use an
+		empty string.  {group} functions as a namespace for {id}, thus
+		two groups can use the same IDs. Refer to |sign-identifier|
+		and |sign-group| for more information.
+
+		{name} refers to a defined sign.
+		{buf} refers to a buffer name or number. For the accepted
+		values, see |bufname()|.
+
+		The optional {dict} argument supports the following entries:
+			lnum		line number in the file or buffer
+					{buf} where the sign is to be placed.
+					For the accepted values, see |line()|.
+			priority	priority of the sign. See
+					|sign-priority| for more information.
+
+		If the optional {dict} is not specified, then it modifies the
+		placed sign {id} in group {group} to use the defined sign
+		{name}.
+
+		Returns the sign identifier on success and -1 on failure.
+
+		Examples: >
+			" Place a sign named sign1 with id 5 at line 20 in
+			" buffer json.c
+			call sign_place(5, '', 'sign1', 'json.c',
+							\ {'lnum' : 20})
+
+			" Updates sign 5 in buffer json.c to use sign2
+			call sign_place(5, '', 'sign2', 'json.c')
+
+			" Place a sign named sign3 at line 30 in
+			" buffer json.c with a new identifier
+			let id = sign_place(0, '', 'sign3', 'json.c',
+							\ {'lnum' : 30})
+
+			" Place a sign named sign4 with id 10 in group 'g3'
+			" at line 40 in buffer json.c with priority 90
+			call sign_place(10, 'g3', 'sign4', 'json.c',
+					\ {'lnum' : 40, 'priority' : 90})
+<
+		Can also be used as a |method|: >
+			GetSignid()->sign_place(group, name, expr)
+<
+							*sign_placelist()*
+sign_placelist({list})
+		Place one or more signs.  This is similar to the
+		|sign_place()| function.  The {list} argument specifies the
+		List of signs to place. Each list item is a dict with the
+		following sign attributes:
+		    buffer	buffer name or number. For the accepted
+				values, see |bufname()|.
+		    group	sign group. {group} functions as a namespace
+				for {id}, thus two groups can use the same
+				IDs. If not specified or set to an empty
+				string, then the global group is used.   See
+				|sign-group| for more information.
+		    id		sign identifier. If not specified or zero,
+				then a new unique identifier is allocated.
+				Otherwise the specified number is used. See
+				|sign-identifier| for more information.
+		    lnum	line number in the buffer {buf} where the
+				sign is to be placed. For the accepted values,
+				see |line()|.
+		    name	name of the sign to place. See |sign_define()|
+		    		for more information.
+		    priority	priority of the sign. When multiple signs are
+				placed on a line, the sign with the highest
+				priority is used. If not specified, the
+				default value of 10 is used. See
+				|sign-priority| for more information.
+
+		If {id} refers to an existing sign, then the existing sign is
+		modified to use the specified {name} and/or {priority}.
+
+		Returns a List of sign identifiers. If failed to place a
+		sign, the corresponding list item is set to -1.
+
+		Examples: >
+			" Place sign s1 with id 5 at line 20 and id 10 at line
+			" 30 in buffer a.c
+			let [n1, n2] = sign_placelist([
+				\ {'id' : 5,
+				\  'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 20},
+				\ {'id' : 10,
+				\  'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 30}
+				\ ])
+
+			" Place sign s1 in buffer a.c at line 40 and 50
+			" with auto-generated identifiers
+			let [n1, n2] = sign_placelist([
+				\ {'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 40},
+				\ {'name' : 's1',
+				\  'buffer' : 'a.c',
+				\  'lnum' : 50}
+				\ ])
+<
+		Can also be used as a |method|: >
+			GetSignlist()->sign_placelist()
+
+sign_undefine([{name}])					*sign_undefine()*
+sign_undefine({list})
+		Deletes a previously defined sign {name}. This is similar to
+		the |:sign-undefine| command. If {name} is not supplied, then
+		deletes all the defined signs.
+
+		The one argument {list} can be used to undefine a list of
+		signs. Each list item is the name of a sign.
+
+		Returns 0 on success and -1 on failure.  For the one argument
+		{list} call, returns a list of values one for each undefined
+		sign.
+
+		Examples: >
+			" Delete a sign named mySign
+			call sign_undefine("mySign")
+
+			" Delete signs 'sign1' and 'sign2'
+			call sign_undefine(["sign1", "sign2"])
+
+			" Delete all the signs
+			call sign_undefine()
+<
+		Can also be used as a |method|: >
+			GetSignlist()->sign_undefine()
+
+sign_unplace({group} [, {dict}])			*sign_unplace()*
+		Remove a previously placed sign in one or more buffers.  This
+		is similar to the |:sign-unplace| command.
+
+		{group} is the sign group name. To use the global sign group,
+		use an empty string.  If {group} is set to '*', then all the
+		groups including the global group are used.
+		The signs in {group} are selected based on the entries in
+		{dict}.  The following optional entries in {dict} are
+		supported:
+			buffer	buffer name or number. See |bufname()|.
+			id	sign identifier
+		If {dict} is not supplied, then all the signs in {group} are
+		removed.
+
+		Returns 0 on success and -1 on failure.
+
+		Examples: >
+			" Remove sign 10 from buffer a.vim
+			call sign_unplace('', {'buffer' : "a.vim", 'id' : 10})
+
+			" Remove sign 20 in group 'g1' from buffer 3
+			call sign_unplace('g1', {'buffer' : 3, 'id' : 20})
+
+			" Remove all the signs in group 'g2' from buffer 10
+			call sign_unplace('g2', {'buffer' : 10})
+
+			" Remove sign 30 in group 'g3' from all the buffers
+			call sign_unplace('g3', {'id' : 30})
+
+			" Remove all the signs placed in buffer 5
+			call sign_unplace('*', {'buffer' : 5})
+
+			" Remove the signs in group 'g4' from all the buffers
+			call sign_unplace('g4')
+
+			" Remove sign 40 from all the buffers
+			call sign_unplace('*', {'id' : 40})
+
+			" Remove all the placed signs from all the buffers
+			call sign_unplace('*')
+
+<		Can also be used as a |method|: >
+			GetSigngroup()->sign_unplace()
+<
+sign_unplacelist({list})				*sign_unplacelist()*
+		Remove previously placed signs from one or more buffers.  This
+		is similar to the |sign_unplace()| function.
+
+		The {list} argument specifies the List of signs to remove.
+		Each list item is a dict with the following sign attributes:
+		    buffer	buffer name or number. For the accepted
+				values, see |bufname()|. If not specified,
+				then the specified sign is removed from all
+				the buffers.
+		    group	sign group name. If not specified or set to an
+				empty string, then the global sign group is
+				used. If set to '*', then all the groups
+				including the global group are used.
+		    id		sign identifier. If not specified, then all
+				the signs in the specified group are removed.
+
+		Returns a List where an entry is set to 0 if the corresponding
+		sign was successfully removed or -1 on failure.
+
+		Example: >
+			" Remove sign with id 10 from buffer a.vim and sign
+			" with id 20 from buffer b.vim
+			call sign_unplacelist([
+				\ {'id' : 10, 'buffer' : "a.vim"},
+				\ {'id' : 20, 'buffer' : 'b.vim'},
+				\ ])
+<
+		Can also be used as a |method|: >
+			GetSignlist()->sign_unplacelist()
+<
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

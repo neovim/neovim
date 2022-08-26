@@ -1,0 +1,358 @@
+name: CI
+on:
+  push:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+    paths-ignore:
+      - 'runtime/doc/*'
+
+# Cancel any in-progress CI runs for a PR if it is updated
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    env:
+      CC: gcc
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup common environment variables
+        run: ./.github/workflows/env.sh lint
+
+      - name: Install apt packages
+        run: |
+          sudo add-apt-repository ppa:neovim-ppa/stable
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            build-essential \
+            cmake \
+            flake8 \
+            gettext \
+            libluajit-5.1-dev \
+            libmsgpack-dev \
+            libtermkey-dev \
+            libtool-bin \
+            libtree-sitter-dev \
+            libunibilium-dev \
+            libuv1-dev \
+            libvterm-dev \
+            locales \
+            lua-busted \
+            lua-check \
+            lua-filesystem \
+            lua-inspect \
+            lua-lpeg \
+            lua-luv-dev \
+            lua-nvim \
+            luajit \
+            ninja-build \
+            pkg-config
+
+      - name: Cache uncrustify
+        id: cache-uncrustify
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.CACHE_UNCRUSTIFY }}
+          key: ${{ env.UNCRUSTIFY_VERSION }}
+
+      - name: Clone uncrustify
+        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: uncrustify/uncrustify
+          ref: ${{ env.UNCRUSTIFY_VERSION }}
+          path: uncrustify
+
+      - name: Install uncrustify
+        if: steps.cache-uncrustify.outputs.cache-hit != 'true'
+        run: |
+          source_dir=uncrustify
+          build_dir=uncrustify/build
+          cmake -S $source_dir -B $build_dir -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build $build_dir
+          mkdir -p $HOME/.cache
+          cp $build_dir/uncrustify ${{ env.CACHE_UNCRUSTIFY }}
+
+      - name: Cache artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.CACHE_NVIM_DEPS_DIR }}
+          key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
+
+      - name: Build third-party deps
+        run: ./ci/before_script.sh
+
+      - if: "!cancelled()"
+        name: lintstylua
+        uses: JohnnyMorganz/stylua-action@1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --check runtime/
+
+      - if: "!cancelled()"
+        name: lintlua
+        run: make lintlua
+
+      - if: "!cancelled()"
+        name: lintpy
+        run: make lintpy
+
+      - if: "!cancelled()"
+        name: lintsh
+        run: make lintsh
+
+      - if: "!cancelled()"
+        name: uncrustify
+        run: |
+          ${{ env.CACHE_UNCRUSTIFY }} -c ./src/uncrustify.cfg -q --replace --no-backup $(find ./src/nvim -name "*.[ch]")
+
+      - if: "!cancelled()"
+        name: suggester / uncrustify
+        uses: reviewdog/action-suggester@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tool_name: uncrustify
+          cleanup: false
+
+      - if: "!cancelled()"
+        name: check uncrustify
+        run: |
+          git diff --color --exit-code
+
+      - name: Cache dependencies
+        run: ./ci/before_cache.sh
+
+  lintc:
+    # This job tests two things: it lints the code but also builds neovim using
+    # system dependencies instead of bundled dependencies. This is to make sure
+    # we are able to build neovim without pigeonholing ourselves into specifics
+    # of the bundled dependencies.
+
+    if: (github.event_name == 'pull_request' && github.base_ref == 'master') || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    env:
+      CC: gcc
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup common environment variables
+        run: ./.github/workflows/env.sh lint
+
+      - name: Install apt packages
+        run: |
+          sudo add-apt-repository ppa:neovim-ppa/stable
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            build-essential \
+            cmake \
+            gettext \
+            libluajit-5.1-dev \
+            libmsgpack-dev \
+            libtermkey-dev \
+            libtool-bin \
+            libtree-sitter-dev \
+            libunibilium-dev \
+            libuv1-dev \
+            libvterm-dev \
+            locales \
+            lua-busted \
+            lua-check \
+            lua-filesystem \
+            lua-inspect \
+            lua-lpeg \
+            lua-luv-dev \
+            lua-nvim \
+            luajit \
+            ninja-build \
+            pkg-config
+
+      - name: Cache artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.CACHE_NVIM_DEPS_DIR }}
+          key: lint-${{ hashFiles('cmake/*', '**/CMakeLists.txt', '!cmake.deps/**CMakeLists.txt') }}-${{ github.base_ref }}
+
+      - name: Build third-party deps
+        run: ./ci/before_script.sh
+
+      - name: Build nvim
+        run: ./ci/run_tests.sh build_nvim
+
+      - if: "!cancelled()"
+        name: lintc
+        run: make lintc
+
+      - if: "!cancelled()"
+        name: check-single-includes
+        run: make check-single-includes
+
+      - name: Cache dependencies
+        run: ./ci/before_cache.sh
+
+  posix:
+    name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: asan
+            cc: clang-13
+            runner: ubuntu-20.04
+            os: linux
+          - flavor: tsan
+            cc: clang-13
+            runner: ubuntu-20.04
+            os: linux
+          - flavor: uchar
+            cc: gcc
+            runner: ubuntu-20.04
+            os: linux
+          - cc: clang
+            runner: macos-11
+            os: osx
+
+            # functionaltest-lua is our dumping ground for non-mainline configurations.
+            # 1. Check that the tests pass with PUC Lua instead of LuaJIT.
+            # 2. Use as oldest/minimum versions of dependencies/build tools we
+            #    still explicitly support so we don't accidentally rely on
+            #    features that is only available on later versions.
+            # 3. No treesitter parsers installed.
+          - flavor: functionaltest-lua
+            cc: gcc
+            runner: ubuntu-20.04
+            os: linux
+            cmake: minimum_required
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      CC: ${{ matrix.cc }}
+      CI_OS_NAME: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup common environment variables
+        run: ./.github/workflows/env.sh ${{ matrix.flavor }}
+
+      - name: Install apt packages
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake build-essential cmake cpanminus cscope gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+
+      - name: Install minimum required version of cmake
+        if: matrix.cmake == 'minimum_required'
+        env:
+          CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
+          CMAKE_VERSION: '3.10.0'
+        shell: bash
+        run: |
+          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
+          mkdir -p "$HOME/.local/bin" /opt/cmake-custom
+          chmod a+x /tmp/cmake-installer.sh
+          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
+          ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
+          cmake_version="$(cmake --version | head -1)"
+          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
+            echo "Unexpected CMake version: $cmake_version"
+            exit 1
+          }
+
+      - name: Install new clang
+        if: matrix.flavor == 'asan' || matrix.flavor == 'tsan'
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod a+x llvm.sh
+          sudo ./llvm.sh 13
+          rm llvm.sh
+
+      - name: Install brew packages
+        if: matrix.os == 'osx'
+        run: |
+          brew update --quiet
+          brew install automake cpanminus ninja
+
+      - name: Setup interpreter packages
+        run: ./ci/install.sh
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.CACHE_NVIM_DEPS_DIR }}
+          key: ${{ matrix.runner }}-${{ matrix.flavor }}-${{ matrix.cc }}-${{ hashFiles('cmake/*', 'cmake.deps/**', '**/CMakeLists.txt') }}-${{ github.base_ref }}
+
+      - name: Build third-party deps
+        run: ./ci/before_script.sh
+
+      - name: Build
+        run: ./ci/run_tests.sh build_nvim
+
+      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && !cancelled()
+        name: Unittests
+        run: ./ci/run_tests.sh unittests
+
+      - if: matrix.flavor != 'tsan' && !cancelled()
+        name: Functionaltests
+        run: ./ci/run_tests.sh functionaltests
+
+      - if: "!cancelled()"
+        name: Oldtests
+        run: ./ci/run_tests.sh oldtests
+
+      - if: "!cancelled()"
+        name: Install nvim
+        run: ./ci/run_tests.sh install_nvim
+
+      - name: Cache dependencies
+        run: ./ci/before_cache.sh
+
+  windows:
+    runs-on: windows-2019
+    timeout-minutes: 45
+    env:
+      DEPS_BUILD_DIR: ${{ format('{0}/nvim-deps', github.workspace) }}
+      DEPS_PREFIX: ${{ format('{0}/nvim-deps/usr', github.workspace) }}
+      CMAKE_BUILD_TYPE: "RelWithDebInfo"
+    name: windows (MSVC_64)
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        with:
+          path: ${{ env.DEPS_BUILD_DIR }}
+          key: ${{ hashFiles('cmake.deps\**') }}
+
+      - name: Build deps
+        run: .\ci\build.ps1 -BuildDeps
+
+      - name: Build nvim
+        run: .\ci\build.ps1 -Build
+
+      - name: Install test deps
+        continue-on-error: false
+        run: .\ci\build.ps1 -EnsureTestDeps
+
+      - if: "!cancelled()"
+        name: Run tests
+        run: .\ci\build.ps1 -Test
+
+      - if: "!cancelled()"
+        name: Run old tests
+        run: .\ci\build.ps1 -TestOld

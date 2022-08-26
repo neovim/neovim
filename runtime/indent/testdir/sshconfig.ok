@@ -1,0 +1,53 @@
+# vim: set filetype=sshconfig shiftwidth=4 expandtab :
+
+# START_INDENT
+Host myhost
+    User myuser
+    PasswordAuthentication no
+# END_INDENT
+
+# START_INDENT
+Host aaa
+    User bbb
+Host ccc
+Host ddd
+# END_INDENT
+
+# START_INDENT
+host aaa
+HOST bbb
+hoSt ccc
+match ddd
+MATCH eee
+MatCH fff
+# END_INDENT
+
+# START_INDENT
+Host aaa
+    User host
+    PasswordAuthentication no
+Host *
+    User user
+    PasswordAuthentication no
+Host match
+    User bbb
+# END_INDENT
+
+# START_INDENT
+Host	tab
+    User myuser
+# END_INDENT
+
+# START_INDENT
+Host 	 mix
+    User myuser
+# END_INDENT
+
+# START_INDENT
+Host aaa
+    User bbb
+Match ccc
+    User ddd
+    HostKeyAlgorithms ssh-ed25519
+Match eee
+# END_INDENT

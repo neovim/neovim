@@ -1,0 +1,45 @@
+image: freebsd/latest
+
+packages:
+- cmake
+- gmake
+- ninja
+- libtool
+- automake
+- pkgconf
+- unzip
+- wget
+- gettext
+- python
+- libffi
+- gdb
+
+sources:
+- https://github.com/neovim/neovim
+
+environment:
+  SOURCEHUT: 1
+  LANG: en_US.UTF-8
+  CMAKE_EXTRA_FLAGS: -DCI_BUILD=ON -DMIN_LOG_LEVEL=3
+
+tasks:
+- should-run: |
+    if ! git -C neovim diff --name-only HEAD^! | grep -E -v "^(.github|runtime/doc/.*)" >/dev/null; then
+      echo "Skipping build because only ignored files were changed"
+      complete-build
+    fi
+- build-deps: |
+    cd neovim
+    gmake deps
+- build: |
+    cd neovim
+    gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+- functionaltest: |
+    cd neovim
+    gmake functionaltest
+- unittest: |
+    cd neovim
+    gmake unittest
+- oldtest: |
+    cd neovim
+    gmake oldtest

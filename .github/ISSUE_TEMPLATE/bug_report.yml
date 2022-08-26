@@ -1,0 +1,75 @@
+name: Bug Report
+description: Report a problem in Neovim
+labels: [bug]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        _Before reporting:_ search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Usage questions such as "How do I...?" belong on the [Neovim Discourse](https://neovim.discourse.group/c/7-category/7) and will be closed.
+
+  - type: input
+    attributes:
+      label: "Neovim version (nvim -v)"
+      placeholder: "0.6.0 commit db1b0ee3b30f"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Vim (not Nvim) behaves the same?"
+      description: "Does `vim -u DEFAULTS` have the same issue? Note the exact Vim version (`8.x.yyyy`)."
+      placeholder: "no, vim 7.3.432"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Operating system/version"
+      placeholder: "macOS 11.5"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Terminal name/version"
+      placeholder: "xterm 3.1"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "$TERM environment variable"
+      placeholder: "xterm-256color"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: "Installation"
+      description: "How did you install neovim: build from repo / system package manager / appimage / homebrew / snap / chocolatey / other (describe)?"
+      placeholder: "Arch User Repository (AUR)"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "How to reproduce the issue"
+      description: |
+        - Steps to reproduce using `nvim --clean` ("factory defaults").
+        - For build failures: list the exact steps including CMake flags (if any).
+        - For shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
+      placeholder: |
+        nvim --clean
+        :edit foo
+        yiwp
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: "Expected behavior"
+      description: "Describe the behavior you expect. May include logs, images, or videos."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Actual behavior"
+    validations:
+      required: true

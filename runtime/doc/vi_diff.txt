@@ -1,0 +1,373 @@
+*vi_diff.txt*   Nvim
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Differences between Vim and Vi				*vi-differences*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+1. Limits						*limits*
+
+Vim has only a few limits for the files that can be edited {Vi: can not handle
+<Nul> characters and characters above 128, has limited line length, many other
+limits}.
+
+Maximum line length	   2147483647 characters
+Maximum number of lines	   2147483647 lines
+Maximum file size	   2147483647 bytes (2 Gbyte) when a long integer is
+			   32 bits.  Much more for 64 bit longs.  Also limited
+			   by available disk space for the |swap-file|.
+							*E75*
+Length of a file path	   Unix and Win32: 1024 characters, otherwise 256
+			   characters (or as much as the system supports).
+Length of an expanded string option
+			   Unix and Win32: 1024 characters, otherwise 256
+			   characters
+Maximum display width	   Unix and Win32: 1024 characters, otherwise 255
+			   characters
+Maximum lhs of a mapping   50 characters.
+Number of different highlighting types: over 30000
+Range of a Number variable:  -2147483648 to 2147483647 (might be more on 64
+			   bit systems)
+Maximum length of a line in a tags file: 512 bytes.
+
+Information for undo and text in registers is kept in memory, thus when making
+(big) changes the amount of (virtual) memory available limits the number of
+undo levels and the text that can be kept in registers.  Other things are also
+kept in memory:  Command-line history, error messages for Quickfix mode, etc.
+
+==============================================================================
+2. The most interesting additions			*vim-additions*
+
+Support for different systems.
+	Vim can be used on:
+	- Modern Unix systems (*BSD, Linux, etc.)
+	- Windows (XP SP 2 or greater)
+	- OS X
+
+Multi level persistent undo.					|undo|
+	'u' goes backward in time, 'CTRL-R' goes forward again.  Set option
+	'undolevels' to the number of changes to be remembered (default 1000).
+	Set 'undolevels' to 0 for a Vi-compatible one level undo.  Set it to
+	-1 for no undo at all.
+	When all changes in a buffer have been undone, the buffer is not
+	considered changed anymore.  You can exit it with :q, without <!>.
+	When undoing a few changes and then making a new change Vim will
+	create a branch in the undo tree.  This means you can go back to any
+	state of the text, there is no risk of a change causing text to be
+	lost forever. |undo-tree|
+	The undo information is stored in a file when the 'undofile' option is
+	set.  This means you can exit Vim, start Vim on a previously edited
+	file and undo changes that were made before exiting Vim.
+
+Graphical User Interface (GUI).				|gui|
+	Included support for GUI: menu's, mouse, scrollbars, etc.  You can
+	define your own menus.  Better support for CTRL/SHIFT/ALT keys in
+	combination with special keys and mouse.  Supported for various
+	platforms such as Win32.
+
+Multiple windows and buffers.				|windows.txt|
+	Vim can split the screen into several windows, each editing a
+	different buffer or the same buffer at a different location.  Buffers
+	can still be loaded (and changed) but not displayed in a window.  This
+	is called a hidden buffer.  Many commands and options have been added
+	for this facility.
+	Vim can also use multiple tab pages, each with one or more windows.  A
+	line with tab labels can be used to quickly switch between these pages.
+	|tab-page|
+
+Syntax highlighting.					|:syntax|
+	Vim can highlight keywords, patterns and other things.  This is
+	defined by a number of |:syntax| commands, and can be made to
+	highlight most languages and file types.  A number of files are
+	included for highlighting the most common languages, like C, C++,
+	Java, Pascal, Makefiles, shell scripts, etc.  The colors used for
+	highlighting can be defined for ordinary terminals, color terminals
+	and the GUI with the |:highlight| command.  A convenient way to do
+	this is using a |:colorscheme| command.
+	The highlighted text can be exported as HTML. |convert-to-HTML|
+	Other items that can be highlighted are matches with the search string
+	|'hlsearch'|, matching parens |matchparen| and the cursor line and
+	column |'cursorline'| |'cursorcolumn'|.
+
+Spell checking.						|spell|
+	When the 'spell' option is set Vim will highlight spelling mistakes.
+	About 50 languages are currently supported, selected with the
+	'spelllang' option.  In source code only comments and strings are
+	checked for spelling.
+
+Folding.						|folding|
+	A range of lines can be shown as one "folded" line.  This allows
+	overviewing a file and moving blocks of text around quickly.
+	Folds can be created manually, from the syntax of the file, by indent,
+	etc.
+
+Diff mode.						|diff-mode|
+	Vim can show two versions of a file with the differences highlighted.
+	Parts of the text that are equal are folded away.  Commands can be
+	used to move text from one version to the other.
+
+Plugins.						|add-plugin|
+	The functionality can be extended by dropping a plugin file in the
+	right directory.  That's an easy way to start using Vim scripts
+	written by others.  Plugins can be for all kind of files, or
+	specifically for a filetype.
+	Packages make this even easier. |packages|
+
+Asynchronous communication and timers.			|job-control| |timer|
+	Vim can exchange messages with other processes in the background.
+	Vim can start a job, communicate with it and stop it. |job-control|
+	Timers can fire once or repeatedly and invoke a function to do any
+	work. |timer|
+
+Repeat a series of commands.				|q|
+	"q{c}" starts recording typed characters into named register {c}.
+	A subsequent "q" stops recording.  The register can then be executed
+	with the "@{c}" command.  This is very useful to repeat a complex
+	action.
+
+Flexible insert mode.					|ins-special-special|
+	The arrow keys can be used in insert mode to move around in the file.
+	This breaks the insert in two parts as far as undo and redo is
+	concerned.
+
+	CTRL-O can be used to execute a single Normal mode command.  This is
+	almost the same as hitting <Esc>, typing the command and doing |a|.
+
+Visual mode.						|Visual-mode|
+	Visual mode can be used to first highlight a piece of text and then
+	give a command to do something with it.  This is an (easy to use)
+	alternative to first giving the operator and then moving to the end of
+	the text to be operated upon.
+	|v| and |V| are used to start Visual mode.  |v| works on characters
+	and |V| on lines.  Move the cursor to extend the Visual area.  It is
+	shown highlighted on the screen.  By typing "o" the other end of the
+	Visual area can be moved.  The Visual area can be affected by an
+	operator:
+		d	delete
+		c	change
+		y	yank
+		> or <	insert or delete indent
+		!	filter through external program
+		=	filter through indent
+		:	start |:| command for the Visual lines.
+		gq	format text to 'textwidth' columns
+		J	join lines
+		~	swap case
+		u	make lowercase
+		U	make uppercase
+
+Block operators.					|visual-block|
+	With Visual mode a rectangular block of text can be selected.  Start
+	Visual mode with CTRL-V.  The block can be deleted ("d"), yanked ("y")
+	or its case can be changed ("~", "u" and "U").  A deleted or yanked
+	block can be put into the text with the "p" and "P" commands.
+
+Help system.						|:help|
+	Help is displayed in a window.  The usual commands can be used to
+	move around, search for a string, etc.  Tags can be used to jump
+	around in the help files, just like hypertext links.  The |:help|
+	command takes an argument to quickly jump to the info on a subject.
+	<F1> is the quick access to the help system.  The name of the help
+	index file can be set with the 'helpfile' option.
+
+Command-line editing and history.			|cmdline-editing|
+	You can insert or delete at any place in the command-line using the
+	cursor keys.  The right/left cursor keys can be used to move
+	forward/backward one character.  The shifted right/left cursor keys
+	can be used to move forward/backward one word.  CTRL-B/CTRL-E can be
+	used to go to the begin/end of the command-line.
+	{Vi: can only alter the last character in the line}
+	{Vi: when hitting <Esc> the command-line is executed.  This is
+	unexpected for most people; therefore it was changed in Vim.  But when
+	the <Esc> is part of a mapping, the command-line is executed.  If you
+	want the Vi behaviour also when typing <Esc>, use ":cmap ^V<Esc>
+	^V^M"}
+							|cmdline-history|
+	The command-lines are remembered.  The up/down cursor keys can be used
+	to recall previous command-lines.  The 'history' option can be set to
+	the number of lines that will be remembered.  There is a separate
+	history for commands and for search patterns.
+
+Command-line completion.				|cmdline-completion|
+	While entering a command-line (on the bottom line of the screen)
+	<Tab> can be typed to complete
+	   what		example		~
+	- command	:e<Tab>
+	- tag		:ta scr<Tab>
+	- option	:set sc<Tab>
+	- option value  :set hf=<Tab>
+	- file name	:e ve<Tab>
+	- etc.
+
+	If there are multiple matches, CTRL-N (next) and CTRL-P (previous)
+	will walk through the matches.  <Tab> works like CTRL-N, but wraps
+	around to the first match.
+
+	The 'wildchar' option can be set to the character for command-line
+	completion, <Tab> is the default.  CTRL-D can be typed after an
+	(incomplete) wildcard; all matches will be listed.  CTRL-A will insert
+	all matches.  CTRL-L will insert the longest common part of the
+	matches.
+
+Insert-mode completion.					|ins-completion|
+	In Insert mode the CTRL-N and CTRL-P keys can be used to complete a
+	word that appears elsewhere.	|i_CTRL-N|
+	With CTRL-X another mode is entered, through which completion can be
+	done for:
+	|i_CTRL-X_CTRL-F|	file names
+	|i_CTRL-X_CTRL-K|	words from 'dictionary' files
+	|i_CTRL-X_CTRL-T|	words from 'thesaurus' files
+	|i_CTRL-X_CTRL-I|	words from included files
+	|i_CTRL-X_CTRL-L|	whole lines
+	|i_CTRL-X_CTRL-]|	words from the tags file
+	|i_CTRL-X_CTRL-D|	definitions or macros
+	|i_CTRL-X_CTRL-O|	Omni completion: clever completion
+				specifically for a file type
+	etc.
+
+Long line support.					|'wrap'| |'linebreak'|
+	If the 'wrap' option is off, long lines will not wrap and only part
+	of them will be shown.  When the cursor is moved to a part that is not
+	shown, the screen will scroll horizontally.  The minimum number of
+	columns to scroll can be set with the 'sidescroll' option.  The |zh|
+	and |zl| commands can be used to scroll sideways.
+	Alternatively, long lines are broken in between words when the
+	'linebreak' option is set.  This allows editing a single-line
+	paragraph conveniently (e.g. when the text is later read into a DTP
+	program).  Move the cursor up/down with the |gk| and |gj| commands.
+
+Text formatting.					|formatting|
+	The 'textwidth' option can be used to automatically limit the line
+	length.  This supplements the 'wrapmargin' option of Vi, which was not
+	very useful.  The |gq| operator can be used to format a piece of text
+	(for example, |gqap| formats the current paragraph).  Commands for
+	text alignment: |:center|, |:left| and |:right|.
+
+Extended search patterns.				|pattern|
+	There are many extra items to match various text items.  Examples:
+	A "\n" can be used in a search pattern to match a line break.
+	"x\{2,4}" matches "x" 2 to 4 times.
+	"\s" matches a white space character.
+
+Directory, remote and archive browsing.			|netrw|
+	Vim can browse the file system.  Simply edit a directory.  Move around
+	in the list with the usual commands and press <Enter> to go to the
+	directory or file under the cursor.
+	This also works for remote files over ftp, http, ssh, etc.
+	Zip and tar archives can also be browsed. |tar| |zip|
+
+Edit-compile-edit speedup.				|quickfix|
+	The |:make| command can be used to run the compilation and jump to the
+	first error.  A file with compiler error messages is interpreted.  Vim
+	jumps to the first error.
+
+	Each line in the error file is scanned for the name of a file, line
+	number and error message.  The 'errorformat' option can be set to a
+	list of scanf-like strings to handle output from many compilers.
+
+	The |:cn| command can be used to jump to the next error.
+	|:cl| lists all the error messages.  Other commands are available.
+	The 'makeef' option has the name of the file with error messages.
+	The 'makeprg' option contains the name of the program to be executed
+	with the |:make| command.
+	The 'shellpipe' option contains the string to be used to put the
+	output of the compiler into the errorfile.
+
+Finding matches in files.				|:vimgrep|
+	Vim can search for a pattern in multiple files.  This uses the
+	advanced Vim regexp pattern, works on all systems and also works to
+	search in compressed files.
+
+Improved indenting for programs.			|'cindent'|
+	When the 'cindent' option is on the indent of each line is
+	automatically adjusted.  C syntax is mostly recognized.  The indent
+	for various styles can be set with 'cinoptions'.  The keys to trigger
+	indenting can be set with 'cinkeys'.
+
+	Comments can be automatically formatted.  The 'comments' option can be
+	set to the characters that start and end a comment.  This works best
+	for C code, but also works for e-mail (">" at start of the line) and
+	other types of text.  The |=| operator can be used to re-indent
+	lines.
+
+	For many other languages an indent plugin is present to support
+	automatic indenting. |30.3|
+
+Searching for words in included files.			|include-search|
+	The |[i| command can be used to search for a match of the word under
+	the cursor in the current and included files.  The 'include' option
+	can be set to a pattern that describes a command to include a file
+	(the default is for C programs).
+	The |[I| command lists all matches, the |[_CTRL-I| command jumps to
+	a match.
+	The |[d|, |[D| and |[_CTRL-D| commands do the same, but only for
+	lines where the pattern given with the 'define' option matches.
+
+Automatic commands.					|autocommand|
+	Commands can be automatically executed when reading a file, writing a
+	file, jumping to another buffer, etc., depending on the file name.
+	This is useful to set options and mappings for C programs,
+	documentation, plain text, e-mail, etc.  This also makes it possible
+	to edit compressed files.
+
+Scripts and Expressions.				|expression|
+	Commands have been added to form up a powerful script language.
+	|:if|		Conditional execution, which can be used for example
+			to set options depending on the value of $TERM.
+	|:while|	Repeat a number of commands.
+	|:for|		Loop over a list.
+	|:echo|		Print the result of an expression.
+	|:let|		Assign a value to an internal variable, option, etc.
+			Variable types are Number, String, List and Dictionary.
+	|:execute|	Execute a command formed by an expression.
+	|:try|		Catch exceptions.
+	etc., etc.  See |eval|.
+	Debugging and profiling are supported. |debug-scripts| |profile|
+	If this is not enough, an interface is provided to |Python|.
+
+Viminfo.
+	The command-line history, marks and registers can be stored in a file
+	that is read on startup.  This can be used to repeat a search command
+	or command-line command after exiting and restarting Vim.  It is also
+	possible to jump right back to where the last edit stopped with |'0|.
+	The 'viminfo' option can be set to select which items to store in the
+	.viminfo file.  This is off by default.
+
+Printing.						|printing|
+	The |:hardcopy| command sends text to the printer.  This can include
+	syntax highlighting.
+
+Mouse support.						|mouse-using|
+	The mouse is supported in the GUI version, in an xterm for Unix, for
+	BSDs with sysmouse, for Linux with gpm, and for Win32.  It can be used
+	to position the cursor, select the visual area, paste a register, etc.
+
+Usage of key names.					|<>| |key-notation|
+	Special keys now all have a name like <Up>, <End>, etc.
+	This name can be used in mappings, to make it easy to edit them.
+
+Editing binary files.					|edit-binary|
+	Vim can edit binary files.  You can change a few characters in an
+	executable file, without corrupting it.  Vim doesn't remove NUL
+	characters (they are represented as <NL> internally).
+	|-b|		command-line argument to start editing a binary file
+	|'binary'|	Option set by |-b|.  Prevents adding an <EOL> for the
+			last line in the file.
+
+Multi-language support.					|multi-lang|
+	Files in double-byte or multibyte encodings can be edited.  There is
+	UTF-8 support to be able to edit various languages at the same time,
+	without switching fonts. |UTF-8|
+	Messages and menus are available in different languages.
+
+Move cursor beyond lines.
+	When the 'virtualedit' option is set the cursor can move all over the
+	screen, also where there is no text.  This is useful to edit tables
+	and figures easily.
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

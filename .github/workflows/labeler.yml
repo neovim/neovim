@@ -1,0 +1,49 @@
+name: "Pull Request Labeler"
+on:
+  pull_request_target:
+    types: [opened]
+jobs:
+
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+    - uses: actions/labeler@v4
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        sync-labels: ""
+
+  type-scope:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+    steps:
+    - name: "Extract commit type and add as label"
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
+    - name: "Extract commit scope and add as label"
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
+    - name: "Extract if the PR is a breaking change and add it as label"
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
+
+  request-reviewer:
+    if: github.event.pull_request.state == 'open' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    needs: ["triage", "type-scope"]
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Request reviewers'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const script = require('./.github/scripts/reviews.js')
+            await script({github, context})

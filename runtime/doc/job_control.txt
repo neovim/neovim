@@ -1,0 +1,147 @@
+*job_control.txt*    Nvim
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Nvim job control					*job* *job-control*
+
+Job control is a way to perform multitasking in Nvim, so scripts can spawn and
+control multiple processes without blocking the current Nvim instance.
+
+				      Type |gO| to see the table of contents.
+
+==============================================================================
+Concepts
+
+Job Id							*job-id*
+
+Each job is identified by an integer id, unique for the life of the current
+Nvim session. Each job-id is a valid |channel-id|: they share the same "key
+space". Functions like |jobstart()| return job ids; functions like
+|jobstop()|, |chansend()|, |rpcnotify()|, and |rpcrequest()| take job ids.
+
+Job stdio streams form a |channel| which can send and receive raw bytes or
+|msgpack-rpc| messages.
+
+==============================================================================
+Usage							*job-control-usage*
+
+To control jobs, use the "job…" family of functions: |jobstart()|,
+|jobstop()|, etc.
+
+Example: >
+
+    function! s:OnEvent(job_id, data, event) dict
+      if a:event == 'stdout'
+        let str = self.shell.' stdout: '.join(a:data)
+      elseif a:event == 'stderr'
+        let str = self.shell.' stderr: '.join(a:data)
+      else
+        let str = self.shell.' exited'
+      endif
+
+      call append(line('$'), str)
+    endfunction
+    let s:callbacks = {
+    \ 'on_stdout': function('s:OnEvent'),
+    \ 'on_stderr': function('s:OnEvent'),
+    \ 'on_exit': function('s:OnEvent')
+    \ }
+    let job1 = jobstart(['bash'], extend({'shell': 'shell 1'}, s:callbacks))
+    let job2 = jobstart(['bash', '-c', 'for i in {1..10}; do echo hello $i!; sleep 1; done'], extend({'shell': 'shell 2'}, s:callbacks))
+
+To test the above script, copy it to a file ~/foo.vim and run it: >
+    nvim -u ~/foo.vim
+<
+Description of what happens:
+  - Two bash shells are spawned by |jobstart()| with their stdin/stdout/stderr
+    streams connected to nvim.
+  - The first shell is idle, waiting to read commands from its stdin.
+  - The second shell is started with -c which executes the command (a for-loop
+    printing 0 through 9) and then exits.
+  - `OnEvent()` callback is passed to |jobstart()| to handle various job
+    events. It displays stdout/stderr data received from the shells.
+
+For |on_stdout| and |on_stderr| see |channel-callback|.
+							*on_exit*
+Arguments passed to on_exit callback:
+  0: |job-id|
+  1: Exit-code of the process, or 128+SIGNUM if by signal (e.g. 143 on SIGTERM).
+  2: Event type: "exit"
+
+
+  Note: Buffered stdout/stderr data which has not been flushed by the sender
+	will not trigger the on_stdout/on_stderr callback (but if the process
+	ends, the on_exit callback will be invoked).
+        For example, "ruby -e" buffers output, so small strings will be
+        buffered unless "auto-flushing" ($stdout.sync=true) is enabled. >
+          function! Receive(job_id, data, event)
+            echom printf('%s: %s',a:event,string(a:data))
+          endfunction
+          call jobstart(['ruby', '-e',
+            \ '$stdout.sync = true; 5.times do sleep 1 and puts "Hello Ruby!" end'],
+            \ {'on_stdout': 'Receive'})
+<       https://github.com/neovim/neovim/issues/1592
+
+  Note 2:
+	Job event handlers may receive partial (incomplete) lines. For a given
+	invocation of on_stdout/on_stderr, `a:data` is not guaranteed to end
+	with a newline.
+	  - `abcdefg` may arrive as `['abc']`, `['defg']`.
+	  - `abc\nefg` may arrive as `['abc', '']`, `['efg']` or `['abc']`,
+	    `['','efg']`, or even `['ab']`, `['c','efg']`.
+	Easy way to deal with this: initialize a list as `['']`, then append
+	to it as follows: >
+	  let s:chunks = ['']
+	  func! s:on_stdout(job_id, data, event) dict
+	    let s:chunks[-1] .= a:data[0]
+	    call extend(s:chunks, a:data[1:])
+	  endf
+<
+
+The |jobstart-options| dictionary is passed as |self| to the callback.
+The above example could be written in this "object-oriented" style: >
+
+    let Shell = {}
+
+    function Shell.on_stdout(_job_id, data, event)
+      call append(line('$'),
+            \ printf('[%s] %s: %s', a:event, self.name, join(a:data[:-2])))
+    endfunction
+
+    let Shell.on_stderr = function(Shell.on_stdout)
+
+    function Shell.on_exit(job_id, _data, event)
+      let msg = printf('job %d ("%s") finished', a:job_id, self.name)
+      call append(line('$'), printf('[%s] BOOM!', a:event))
+      call append(line('$'), printf('[%s] %s!', a:event, msg))
+    endfunction
+
+    function Shell.new(name, cmd)
+      let object = extend(copy(g:Shell), {'name': a:name})
+      let object.cmd = ['sh', '-c', a:cmd]
+      let object.id = jobstart(object.cmd, object)
+      $
+      return object
+    endfunction
+
+    let instance = Shell.new('bomb',
+          \ 'for i in $(seq 9 -1 1); do echo $i 1>&$((i % 2 + 1)); sleep 1; done')
+<
+To send data to the job's stdin, use |chansend()|: >
+    :call chansend(job1, "ls\n")
+    :call chansend(job1, "invalid-command\n")
+    :call chansend(job1, "exit\n")
+<
+A job may be killed with |jobstop()|: >
+    :call jobstop(job1)
+<
+A job may be killed at any time with the |jobstop()| function:
+>
+    :call jobstop(job1)
+<
+Individual streams can be closed without killing the job, see |chanclose()|.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

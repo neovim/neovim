@@ -1,0 +1,247 @@
+# CREATING A VIM TUTORIAL WITH VIM-TUTOR-MODE
+
+This tutorial will guide you through the steps required to create a tutorial
+file for vim-tutor-mode. It is also meant as a demo of vim-tutor-mode
+capabilities.
+
+Table of contents:
+
+- [Setting up](*setting-up*)
+- [vim-tutor-mode's markup](*markup*)
+    - [emphasis](*emphasis*)
+    - [headers](*headers*)
+    - [links](*links*)
+    - [codeblocks](*codeblocks*)
+- [Interactive elements](*interactive*)
+    - [expect](*expect*)
+
+## SETTING UP *setting-up*
+
+First, you'll need to enable "debug" mode
+~~~ cmd
+    :let g:tutor_debug = 1
+~~~
+This will allow saving changes to the tutor files and will disable conceals, so
+you can more easily check your changes.
+
+After this, create a new .tutor file (we will be practicing on this very file, so you
+don't need to do this now):
+~~~ cmd
+    :e new-tutorial.tutor
+~~~
+
+## VIM-TUTOR-MODE's MARKDOWN *markup*
+
+vim-tutor-mode uses a subset of markdown's syntax to format the tutorials. The
+subset supported should be enough for most tutorials and the maintainers will
+try to keep it as small as possible (if regular markdown allows for several
+ways to do the same thing, tutor markdown will only provide the one the
+maintainers think is easier to handle).
+
+### Emphasis *emphasis*
+
+For emphasized text (italics), as in normal markdown, you use \*. E.g.:
+
+    \*text\*
+
+is displayed like
+
+    *text*
+
+Note: The underscores variant is not supported.
+
+For strong emphasis (bold), you use \*\*. E.g.:
+
+    \*\*this\*\*
+
+is displayed like
+
+    **this**
+
+1. Format the line below so it becomes a lesson description:
+
+This is text with important information
+This is text with **important information**
+
+Note: Some words (e.g., NOTE, IMPORTANT, tip, ATTENTION, etc.) will also be
+highlighted. You don't need to mark them specially.
+
+2. Turn the line below into a TODO item:
+
+Document '&variable'
+TODO: Document '&variable'
+
+### Headers *headers*
+
+3. Practice fixing the lines below:
+
+This is a level 1 header
+# This is a level 1 header
+This is a level 3 header
+### This is a level 3 header
+This is a header with a label
+# This is a header with a label {*label*}
+
+4. Now, create a 4th level section here, and add a label like in the previous
+exercise:
+
+
+
+   ATTENTION We will use this label later, so remember it.
+
+### Links *links*
+
+It is good practice to include links in your tutorials to reference materials,
+like vim's own help or external documents. You can also link to other parts of
+the document.
+
+Links have the syntax
+
+    \[label\]\(target\)
+
+#### Help links
+
+If the target of a link matches a help topic, opening it will open it.
+
+5. Fix the following line:
+
+A link to help for the 'breakindent' option
+A link to help for the ['breakindent']('breakindent') option
+
+#### Anchor links
+
+A link can also lead to a place in the file itself. Anchors are written
+
+    \*anchor\*
+
+and are hidden by default. Links to them look like
+
+    \[label\]\(\*anchor\*\)
+
+6. Add the appropriate link:
+
+A link to the Links section
+A link to the [Links](*links*) section
+
+7. Now, create a link to the section you created on exercise 4
+   above.
+
+
+
+# Tutorial links
+
+You can also have links to other tutorials. For this, you'll write the anchor in the format
+
+    @tutor:TUTORIAL
+
+7. Create a link to this tutorial:
+
+A link to the vim-tutor-mode tutorial
+A link to [the vim-tutor-mode tutorial](@tutor:tutor)
+
+### Codeblocks *codeblocks*
+
+vim-tutor-mode tutorials can include viml sections
+
+    ~~~ cmd
+    echom "hello"
+    ~~~
+
+is displayed as
+~~~ cmd
+echom "hello"
+~~~
+
+8. Copy the viml section below
+
+
+
+
+
+~~~ viml
+echom 'the value of &number is'.string(&number)
+~~~
+
+You can inline viml code using "\`" and "\`{vim}":
+
+    \`call myFunction()\`{vim}
+
+is displayed as
+
+    `call myFunction()`{vim}
+
+[normal](Normal-mode) commands can also be embedded in tutorials.
+
+    ~~~ normal
+    ftdaW
+    ~~~
+
+is displayed as
+~~~ normal
+ftdaW
+~~~
+
+Note: you can also write `norm` or `normal`.
+
+9. Copy the normal section below
+
+
+
+
+
+~~~ normal
+d2w
+~~~
+
+You can also inline normal commands by using "\`" and "\`{normal}":
+
+    \`gq\`{normal} is very useful.
+
+is displayed:
+
+    `gq`{normal} is very useful.
+
+10. Complete the line as shown
+
+d
+`d2w`{normal}
+
+Commands to run in the system shell can be highlighted by indenting a line
+starting with "$".
+
+~~~ sh
+    $ vim --version
+~~~
+
+## INTERACTIVE ELEMENTS *interactive*
+
+As visible in this very document, vim-tutor-mode includes some interactive
+elements to provide feedback to the user about their progress. If the text in
+these elements satisfies some set condition, a ✓ sign will appear in the gutter
+to the left. Otherwise, a ✗ sign is displayed.
+
+### expect *expect*
+
+"expect" lines check that the contents of the line are identical to some preset text
+(like in the exercises above).
+
+These elements are specified in separate JSON files like this
+
+~~~ json
+{
+    "expect": {
+	"1": "This is how this line should look.",
+	"2": "This is how this line should look.",
+	"3": -1
+    }
+}
+~~~
+
+These files contain an "expect" dictionary, for which the keys are line numbers and 
+the values are the expected text. A value of -1 means that the condition for the line
+will always be satisfied, no matter what (this is useful for letting the user play a bit).
+
+This is an "expect" line that is always satisfied. Try changing it.
+
+These files conventionally have the same name as the tutorial document with the `.json`
+extension appended (for a full example, see the file that corresponds to this tutorial).

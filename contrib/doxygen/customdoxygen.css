@@ -1,0 +1,757 @@
+
+/*
+ * Title, should be H1
+ */
+
+.title {
+  font-family: 'Lato', sans-serif;
+  font-size: 2em;
+  margin: 0.67em 0 0;
+}
+
+dt {
+	font-weight: bold;
+}
+
+div.multicol {
+	-moz-column-gap: 1em;
+	-webkit-column-gap: 1em;
+	-moz-column-count: 3;
+	-webkit-column-count: 3;
+}
+
+
+div.qindex, div.navtab {
+	background-color: #EBEFF6;
+	border: 1px solid #A3B4D7;
+	text-align: center;
+}
+
+div.line {
+  font-family: monospace, fixed;
+  min-height: 13px;
+  line-height: 1.0;
+  text-wrap: unrestricted;
+  white-space: -moz-pre-wrap; /* Moz */
+  white-space: -pre-wrap;     /* Opera 4-6 */
+  white-space: -o-pre-wrap;   /* Opera 7 */
+  white-space: pre-wrap;      /* CSS3  */
+  word-wrap: break-word;      /* IE 5.5+ */
+  text-indent: -53px;
+  padding-left: 53px;
+  padding-bottom: 0px;
+  margin: 0px;
+}
+
+span.lineno {
+  padding-right: 4px;
+  text-align: right;
+  border-right: 2px solid #0F0;
+  white-space: pre;
+}
+
+/* @group Code Colorization */
+
+span.keyword {
+	color: #008000
+}
+
+span.keywordtype {
+	color: #604020
+}
+
+span.keywordflow {
+	color: #e08000
+}
+
+span.comment {
+	color: #800000
+}
+
+span.preprocessor {
+	color: #806020
+}
+
+span.stringliteral {
+	color: #002080
+}
+
+span.charliteral {
+	color: #008080
+}
+
+span.vhdldigit {
+	color: #ff00ff
+}
+
+span.vhdlchar {
+	color: #000000
+}
+
+span.vhdlkeyword {
+	color: #700070
+}
+
+span.vhdllogic {
+	color: #ff0000
+}
+
+blockquote {
+  background-color: #F7F8FB;
+  border-left: 2px solid #9CAFD4;
+  margin: 0 24px 0 4px;
+  padding: 0 12px 0 16px;
+}
+
+/* @end */
+
+hr {
+	height: 0px;
+	border: none;
+  display: none;
+}
+
+dl {
+  padding: 0 0 0 10px;
+}
+
+/* dl.note, dl.warning, dl.attention, dl.pre, dl.post, dl.invariant, dl.deprecated, dl.todo, dl.test, dl.bug */
+dl.section {
+	margin-left: 0px;
+	padding-left: 0px;
+}
+
+dl.note {
+  margin-left:-7px;
+  padding-left: 3px;
+  border-left:4px solid;
+  border-color: #D0C000;
+}
+
+dl.warning, dl.attention {
+  margin-left:-7px;
+  padding-left: 3px;
+  border-left:4px solid;
+  border-color: #FF0000;
+}
+
+dl.pre, dl.post, dl.invariant {
+  margin-left:-7px;
+  padding-left: 3px;
+  border-left:4px solid;
+  border-color: #00D000;
+}
+
+dl.deprecated {
+  margin-left:-7px;
+  padding-left: 3px;
+  border-left:4px solid;
+  border-color: #505050;
+}
+
+dl.todo {
+  margin-left:-7px;
+  padding-left: 3px;
+  border-left:4px solid;
+  border-color: #00C0E0;
+}
+
+dl.test {
+  margin-left:-7px;
+  padding-left: 3px;
+  border-left:4px solid;
+  border-color: #3030E0;
+}
+
+dl.bug {
+  margin-left:-7px;
+  padding-left: 3px;
+  border-left:4px solid;
+  border-color: #C08050;
+}
+
+dl.section dd {
+	margin-bottom: 6px;
+}
+
+/* tooltip related style info */
+
+.ttc {
+        position: absolute;
+        display: none;
+}
+
+#powerTip {
+	cursor: default;
+	white-space: nowrap;
+	background-color: white;
+	border: 1px solid gray;
+	border-radius: 4px 4px 4px 4px;
+	box-shadow: 1px 1px 7px gray;
+	display: none;
+	font-size: smaller;
+	max-width: 80%;
+	opacity: 0.9;
+	padding: 1ex 1em 1em;
+	position: absolute;
+	z-index: 2147483647;
+}
+
+#powerTip div.ttdoc {
+        color: grey;
+	font-style: italic;
+}
+
+#powerTip div.ttname a {
+        font-weight: bold;
+}
+
+#powerTip div.ttname {
+        font-weight: bold;
+}
+
+#powerTip div.ttdeci {
+        color: #006318;
+}
+
+#powerTip div {
+        margin: 0px;
+        padding: 0px;
+        font: 12px/16px Roboto,sans-serif;
+}
+
+#powerTip:before, #powerTip:after {
+	content: "";
+	position: absolute;
+	margin: 0px;
+}
+
+#powerTip.n:after,  #powerTip.n:before,
+#powerTip.s:after,  #powerTip.s:before,
+#powerTip.w:after,  #powerTip.w:before,
+#powerTip.e:after,  #powerTip.e:before,
+#powerTip.ne:after, #powerTip.ne:before,
+#powerTip.se:after, #powerTip.se:before,
+#powerTip.nw:after, #powerTip.nw:before,
+#powerTip.sw:after, #powerTip.sw:before {
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+}
+
+#powerTip.n:after,  #powerTip.s:after,
+#powerTip.w:after,  #powerTip.e:after,
+#powerTip.nw:after, #powerTip.ne:after,
+#powerTip.sw:after, #powerTip.se:after {
+	border-color: rgba(255, 255, 255, 0);
+}
+
+#powerTip.n:before,  #powerTip.s:before,
+#powerTip.w:before,  #powerTip.e:before,
+#powerTip.nw:before, #powerTip.ne:before,
+#powerTip.sw:before, #powerTip.se:before {
+	border-color: rgba(128, 128, 128, 0);
+}
+
+#powerTip.n:after,  #powerTip.n:before,
+#powerTip.ne:after, #powerTip.ne:before,
+#powerTip.nw:after, #powerTip.nw:before {
+	top: 100%;
+}
+
+#powerTip.n:after, #powerTip.ne:after, #powerTip.nw:after {
+	border-top-color: #ffffff;
+	border-width: 10px;
+	margin: 0px -10px;
+}
+#powerTip.n:before {
+	border-top-color: #808080;
+	border-width: 11px;
+	margin: 0px -11px;
+}
+#powerTip.n:after, #powerTip.n:before {
+	left: 50%;
+}
+
+#powerTip.nw:after, #powerTip.nw:before {
+	right: 14px;
+}
+
+#powerTip.ne:after, #powerTip.ne:before {
+	left: 14px;
+}
+
+#powerTip.s:after,  #powerTip.s:before,
+#powerTip.se:after, #powerTip.se:before,
+#powerTip.sw:after, #powerTip.sw:before {
+	bottom: 100%;
+}
+
+#powerTip.s:after, #powerTip.se:after, #powerTip.sw:after {
+	border-bottom-color: #ffffff;
+	border-width: 10px;
+	margin: 0px -10px;
+}
+
+#powerTip.s:before, #powerTip.se:before, #powerTip.sw:before {
+	border-bottom-color: #808080;
+	border-width: 11px;
+	margin: 0px -11px;
+}
+
+#powerTip.s:after, #powerTip.s:before {
+	left: 50%;
+}
+
+#powerTip.sw:after, #powerTip.sw:before {
+	right: 14px;
+}
+
+#powerTip.se:after, #powerTip.se:before {
+	left: 14px;
+}
+
+#powerTip.e:after, #powerTip.e:before {
+	left: 100%;
+}
+#powerTip.e:after {
+	border-left-color: #ffffff;
+	border-width: 10px;
+	top: 50%;
+	margin-top: -10px;
+}
+#powerTip.e:before {
+	border-left-color: #808080;
+	border-width: 11px;
+	top: 50%;
+	margin-top: -11px;
+}
+
+#powerTip.w:after, #powerTip.w:before {
+	right: 100%;
+}
+#powerTip.w:after {
+	border-right-color: #ffffff;
+	border-width: 10px;
+	top: 50%;
+	margin-top: -10px;
+}
+#powerTip.w:before {
+	border-right-color: #808080;
+	border-width: 11px;
+	top: 50%;
+	margin-top: -11px;
+}
+
+/*
+ * Centered container for all content
+ */
+
+div.contents,
+div.header > *,
+ul.tablist,
+.navpath ul {
+  margin:0 15px;
+}
+@media (min-width: 568px) {
+  div.contents,
+  div.header > *,
+  ul.tablist,
+  .navpath ul {
+    margin: 0 auto;
+    width: 90%;
+    max-width: 1200px;
+  }
+}
+
+/*
+ * padding inside content
+ */
+
+div.contents > * {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+@media (min-width: 568px) {
+  div.contents > h2,
+  div.contents > div.textblock,
+  div.contents > div.memitem,
+  div.contents > table.memberdecls h2,
+  div.contents > p {
+    padding-top: 30px;
+  }
+}
+
+div.contents h2 {
+  margin-top: 0px;
+}
+
+div.summary {
+  display: none;
+}
+
+/*
+ * Tabs
+ *
+ * Based on doxygen tabs.css
+ */
+
+.tabs, .tabs2, .tabs3 {
+  width: 100%;
+  background-color: #f4f4f4;
+  border-top: solid 1px #ececec;
+}
+
+.tablist {
+  margin: 0;
+  padding: 0;
+  display: table;
+}
+
+.tablist li {
+  float: left;
+  display: table-cell;
+  line-height: 36px;
+  list-style: none;
+}
+
+.tablist a {
+  display: block;
+  padding: 0 30px 0 0;
+}
+
+.tabs3 .tablist a {
+  padding: 0 20px 0 0;
+}
+
+.tablist li.current a {
+  color: #54a23d;
+}
+
+/*
+ * Navpath
+ */
+
+.navpath ul
+{
+	padding:20px 0px;
+}
+
+.navpath li
+{
+	list-style-type:none;
+	padding-right: 10px;
+	float:left;
+}
+
+.navpath li.navelem a
+{
+  padding-left: 10px;
+}
+
+.navpath li.navelem:before {
+  content: "/";
+  color: #777;
+}
+
+/*
+ * Member
+ *
+ * Styles for detailed member documentation
+ */
+
+.memitem {
+  border-top: solid 1px #c9c9c9;
+}
+
+.memname {
+  font-weight: bold;
+  font-family: monospace;
+}
+
+td.memname {
+  color: #54a23d;
+}
+
+.memname td {
+  vertical-align: bottom;
+}
+
+.memproto, dl.reflist dt {
+  font-weight: bold;
+}
+
+.memdoc, dl.reflist dd {
+}
+
+/*
+ * Parameters
+ */
+
+.paramkey {
+  text-align: right;
+}
+
+.paramtype {
+  white-space: nowrap;
+}
+
+.paramname {
+  color: #aa0e0e;
+  white-space: nowrap;
+}
+
+.paramname em {
+  font-style: normal;
+}
+
+.params, .retval, .exception, .tparams {
+  margin-left: 0px;
+  padding-left: 0px;
+}
+
+.params td {
+  padding-right: 1em;
+  padding-bottom: 0.5em;
+}
+
+.params .paramname, .retval .paramname {
+  font-weight: bold;
+  vertical-align: top;
+}
+
+.params .paramtype {
+  font-style: italic;
+  vertical-align: top;
+}
+
+/*
+ * Inline Label etc.
+ */
+
+table.mlabels {
+  border-spacing: 0px;
+}
+
+td.mlabels-left {
+  width: 100%;
+  padding: 0px;
+}
+
+td.mlabels-right {
+  vertical-align: bottom;
+  padding: 0px;
+  white-space: nowrap;
+}
+
+span.mlabels {
+  margin-left: 8px;
+}
+
+/*
+ * Member Descriptions
+ */
+
+table.memberdecls {
+  font-family: monospace;
+	border-spacing: 0px;
+	padding: 0px;
+}
+
+.memSeparator {
+  line-height: 1px;
+  margin: 0px;
+  padding: 0 0 0.2em 0;
+}
+
+.memItemLeft, .memTemplItemLeft {
+  white-space: nowrap;
+}
+
+.memItemRight {
+	width: 100%;
+}
+
+.memTemplParams {
+	color: #4665A2;
+  white-space: nowrap;
+	font-size: 80%;
+}
+
+/*
+ * Fieldtable (Enums)
+ */
+
+.fieldtable td, .fieldtable th {
+  padding: 0 1em 0.2em 0;
+}
+
+.fieldtable td.fieldtype, .fieldtable td.fieldname {
+        white-space: nowrap;
+        vertical-align: top;
+}
+
+/*
+ * Directory
+ */
+
+.directory table {
+  border-collapse:collapse;
+}
+
+.directory td {
+  margin: 0px;
+  padding: 0px;
+	vertical-align: top;
+}
+
+.directory td.entry {
+  white-space: nowrap;
+  padding-right: 6px;
+	padding-top: 3px;
+}
+
+.directory td.entry a {
+  outline:none;
+}
+
+.directory td.entry a img {
+  border: none;
+}
+
+.directory td.desc {
+  width: 100%;
+  padding-left: 6px;
+	padding-right: 6px;
+	padding-top: 3px;
+}
+
+.directory tr.even {
+	padding-left: 6px;
+}
+
+.directory img {
+	vertical-align: -30%;
+}
+
+.directory .levels {
+  white-space: nowrap;
+  width: 100%;
+  text-align: right;
+}
+
+.directory .levels span {
+  cursor: pointer;
+  padding-left: 2px;
+  padding-right: 2px;
+	color: #3c92d1;
+}
+
+.arrow {
+    color: #9CAFD4;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: pointer;
+    font-size: 80%;
+    display: inline-block;
+    width: 16px;
+    height: 22px;
+}
+
+.icon {
+    font-family: Arial, Helvetica;
+    font-weight: bold;
+    font-size: 12px;
+    height: 14px;
+    width: 16px;
+    display: inline-block;
+    background-color: #54a23d;
+    color: white;
+    text-align: center;
+    border-radius: 4px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.icona {
+    width: 24px;
+    height: 22px;
+    display: inline-block;
+}
+
+.iconfopen {
+    width: 24px;
+    height: 18px;
+    margin-bottom: 4px;
+    background-image:url('ftv2folderopen.png');
+    background-position: 0px 0px;
+    background-repeat: repeat-y;
+    vertical-align:top;
+    display: inline-block;
+}
+
+.iconfclosed {
+    width: 24px;
+    height: 18px;
+    margin-bottom: 4px;
+    background-image:url('ftv2folderclosed.png');
+    background-position: 0px 0px;
+    background-repeat: repeat-y;
+    vertical-align:top;
+    display: inline-block;
+}
+
+.icondoc {
+    width: 24px;
+    height: 18px;
+    margin-bottom: 4px;
+    background-image:url('ftv2doc.png');
+    background-position: 0px -1px;
+    background-repeat: repeat-y;
+    vertical-align:top;
+    display: inline-block;
+}
+
+/*
+ * Data Structure Index
+ *
+ * Hardcoded style attribute
+ */
+
+.contents > table[style] {
+   margin: 20px auto !important;
+}
+
+/*
+ * Search Box
+ */
+
+#MSearchBox {
+  right: 4%;
+}
+
+@media print
+{
+  #top { display: none; }
+  #side-nav { display: none; }
+  #nav-path { display: none; }
+  body { overflow:visible; }
+  h1, h2, h3, h4, h5, h6 { page-break-after: avoid; }
+  .summary { display: none; }
+  .memitem { page-break-inside: avoid; }
+  #doc-content
+  {
+    margin-left:0 !important;
+    height:auto !important;
+    width:auto !important;
+    overflow:inherit;
+    display:inline;
+  }
+}
+

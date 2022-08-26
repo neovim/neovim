@@ -1,0 +1,203 @@
+*testing.txt*	Nvim
+
+
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
+
+
+Testing Vim and Vim script			*testing-support*
+
+Expression evaluation is explained in |eval.txt|.  This file goes into details
+about writing tests in Vim script.  This can be used for testing Vim itself
+and for testing plugins.
+
+1. Testing Vim				|testing|
+2. Test functions			|test-functions-details|
+3. Assert functions			|assert-functions-details|
+
+==============================================================================
+1. Testing Vim						*testing*
+
+Vim can be tested after building it, usually with "make test".
+The tests are located in the directory "src/testdir".
+
+There are several types of tests added over time:
+	test33.in		oldest, don't add any of these
+	test_something.in	old style tests
+	test_something.vim	new style tests
+
+						*new-style-testing*
+New tests should be added as new style tests.  These use functions such as
+|assert_equal()| to keep the test commands and the expected result in one
+place.
+						*old-style-testing*
+In some cases an old style test needs to be used.
+
+Find more information in the file src/testdir/README.txt.
+
+==============================================================================
+2. Test functions				*test-functions-details*
+
+test_garbagecollect_now()			 *test_garbagecollect_now()*
+		Like garbagecollect(), but executed right away.  This must
+		only be called directly to avoid any structure to exist
+		internally, and |v:testing| must have been set before calling
+		any function.
+
+==============================================================================
+3. Assert functions				*assert-functions-details*
+
+
+assert_beeps({cmd})					*assert_beeps()*
+		Run {cmd} and add an error message to |v:errors| if it does
+		NOT produce a beep or visual bell.
+		Also see |assert_fails()|, |assert_nobeep()| and
+		|assert-return|.
+
+		Can also be used as a |method|: >
+			GetCmd()->assert_beeps()
+<
+							*assert_equal()*
+assert_equal({expected}, {actual} [, {msg}])
+		When {expected} and {actual} are not equal an error message is
+		added to |v:errors| and 1 is returned.  Otherwise zero is
+		returned |assert-return|.
+		There is no automatic conversion, the String "4" is different
+		from the Number 4.  And the number 4 is different from the
+		Float 4.0.  The value of 'ignorecase' is not used here, case
+		always matters.
+		When {msg} is omitted an error in the form "Expected
+		{expected} but got {actual}" is produced.
+		Example: >
+	assert_equal('foo', 'bar')
+<		Will result in a string to be added to |v:errors|:
+	test.vim line 12: Expected 'foo' but got 'bar' ~
+
+		Can also be used as a |method|: >
+			mylist->assert_equal([1, 2, 3])
+
+<							*assert_equalfile()*
+assert_equalfile({fname-one}, {fname-two})
+		When the files {fname-one} and {fname-two} do not contain
+		exactly the same text an error message is added to |v:errors|.
+		Also see |assert-return|.
+		When {fname-one} or {fname-two} does not exist the error will
+		mention that.
+
+		Can also be used as a |method|: >
+			GetLog()->assert_equalfile('expected.log')
+
+assert_exception({error} [, {msg}])			*assert_exception()*
+		When v:exception does not contain the string {error} an error
+		message is added to |v:errors|.  Also see |assert-return|.
+		This can be used to assert that a command throws an exception.
+		Using the error number, followed by a colon, avoids problems
+		with translations: >
+			try
+			  commandthatfails
+			  call assert_false(1, 'command should have failed')
+			catch
+			  call assert_exception('E492:')
+			endtry
+
+assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
+		Run {cmd} and add an error message to |v:errors| if it does
+		NOT produce an error.  Also see |assert-return|.
+		When {error} is given it must match in |v:errmsg|.
+		Note that beeping is not considered an error, and some failing
+		commands only beep.  Use |assert_beeps()| for those.
+
+		Can also be used as a |method|: >
+			GetCmd()->assert_fails('E99:')
+
+assert_false({actual} [, {msg}])				*assert_false()*
+		When {actual} is not false an error message is added to
+		|v:errors|, like with |assert_equal()|.
+		Also see |assert-return|.
+		A value is false when it is zero. When {actual} is not a
+		number the assert fails.
+		When {msg} is omitted an error in the form
+		"Expected False but got {actual}" is produced.
+
+		Can also be used as a |method|: >
+			GetResult()->assert_false()
+
+assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
+		This asserts number and |Float| values.  When {actual}  is lower
+		than {lower} or higher than {upper} an error message is added
+		to |v:errors|.  Also see |assert-return|.
+		When {msg} is omitted an error in the form
+		"Expected range {lower} - {upper}, but got {actual}" is
+		produced.
+
+								*assert_match()*
+assert_match({pattern}, {actual} [, {msg}])
+		When {pattern} does not match {actual} an error message is
+		added to |v:errors|.  Also see |assert-return|.
+
+		{pattern} is used as with |=~|: The matching is always done
+		like 'magic' was set and 'cpoptions' is empty, no matter what
+		the actual value of 'magic' or 'cpoptions' is.
+
+		{actual} is used as a string, automatic conversion applies.
+		Use "^" and "$" to match with the start and end of the text.
+		Use both to match the whole text.
+
+		When {msg} is omitted an error in the form
+		"Pattern {pattern} does not match {actual}" is produced.
+		Example: >
+	assert_match('^f.*o$', 'foobar')
+<		Will result in a string to be added to |v:errors|:
+	test.vim line 12: Pattern '^f.*o$' does not match 'foobar' ~
+
+		Can also be used as a |method|: >
+			getFile()->assert_match('foo.*')
+<
+assert_nobeep({cmd})					*assert_nobeep()*
+		Run {cmd} and add an error message to |v:errors| if it
+		produces a beep or visual bell.
+		Also see |assert_beeps()|.
+
+		Can also be used as a |method|: >
+			GetCmd()->assert_nobeep()
+<
+							*assert_notequal()*
+assert_notequal({expected}, {actual} [, {msg}])
+		The opposite of `assert_equal()`: add an error message to
+		|v:errors| when {expected} and {actual} are equal.
+		Also see |assert-return|.
+
+		Can also be used as a |method|: >
+			mylist->assert_notequal([1, 2, 3])
+
+<							*assert_notmatch()*
+assert_notmatch({pattern}, {actual} [, {msg}])
+		The opposite of `assert_match()`: add an error message to
+		|v:errors| when {pattern} matches {actual}.
+		Also see |assert-return|.
+
+		Can also be used as a |method|: >
+			getFile()->assert_notmatch('bar.*')
+
+
+assert_report({msg})					*assert_report()*
+		Report a test failure directly, using String {msg}.
+		Always returns one.
+
+		Can also be used as a |method|: >
+			GetMessage()->assert_report()
+
+
+assert_true({actual} [, {msg}])				*assert_true()*
+		When {actual} is not true an error message is added to
+		|v:errors|, like with |assert_equal()|.
+		Also see |assert-return|.
+		A value is |TRUE| when it is a non-zero number or |v:true|.
+		When {actual} is not a number or |v:true| the assert fails.
+		When {msg} is omitted an error in the form "Expected True but
+		got {actual}" is produced.
+
+		Can also be used as a |method|: >
+			GetResult()->assert_true()
+<
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

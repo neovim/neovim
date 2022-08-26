@@ -1,0 +1,26 @@
+%!PS-Adobe-3.0 Resource-ProcSet
+%%Title: VIM-CIDFont
+%%Version: 1.0 0
+%%EndComments
+% Editing of this file is NOT RECOMMENDED.  You run a very good risk of causing
+% all PostScript printing from VIM failing if you do.  PostScript is not called
+% a write-only language for nothing!
+/CP currentpacking d T setpacking
+/SB 256 string d
+/CIDN? systemdict/composefont known d /GS? systemdict/.makeoperator known d
+CIDN?{
+GS?{/vim_findresource{2 copy resourcestatus not{1 index SB cvs runlibfile}{
+pop pop}ifelse findresource}bd/vim_composefont{0 get/CIDFont vim_findresource
+exch/CMap vim_findresource exch[exch]composefont pop}bd}{/vim_findresource
+/findresource ld/vim_composefont{composefont pop}bd}ifelse
+}{
+/vim_fontname{0 get SB cvs length dup SB exch(-)putinterval 1 add dup SB exch
+dup 256 exch sub getinterval 3 -1 roll exch cvs length add SB exch 0 exch
+getinterval cvn}bd/vim_composefont{vim_fontname findfont d}bd
+} ifelse
+/cfs{exch scalefont d}bd
+/sffs{findfont 3 1 roll 1 index mul exch 2 index/FontMatrix get matrix copy
+scale makefont d}bd
+CP setpacking
+% vim:ff=unix:
+%%EOF

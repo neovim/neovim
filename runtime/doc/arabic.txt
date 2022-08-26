@@ -1,0 +1,323 @@
+*arabic.txt*	Nvim
+
+
+		  VIM REFERENCE MANUAL	  by Nadim Shaikli
+
+
+Arabic Language support (options & mappings) for Vim		*Arabic*
+
+These functions have been created by Nadim Shaikli <nadim-at-arabeyes.org>
+
+It is best to view this file with these settings within VIM's GUI: >
+
+	:set encoding=utf-8
+	:set arabicshape
+
+
+Introduction
+------------
+Arabic is a rather demanding language in which a number of special
+features are required.	Characters are right-to-left oriented and
+ought to appear as such on the screen (i.e. from right to left).
+Arabic also requires shaping of its characters, meaning the same
+character has a different visual form based on its relative location
+within a word (initial, medial, final or stand-alone).	Arabic also
+requires two different forms of combining and the ability, in
+certain instances, to either superimpose up to two characters on top
+of another (composing) or the actual substitution of two characters
+into one (combining).  Lastly, to display Arabic properly one will
+require not only ISO-8859-6 (U+0600-U+06FF) fonts, but will also
+require Presentation Form-B (U+FE70-U+FEFF) fonts both of which are
+subsets within a so-called ISO-10646-1 font.
+
+The commands, prompts and help files are not in Arabic, therefore
+the user interface remains the standard Vi interface.
+
+
+Highlights
+----------
+o  Editing left-to-right files as in the original Vim hasn't changed.
+
+o  Viewing and editing files in right-to-left windows.	 File
+   orientation is per window, so it is possible to view the same
+   file in right-to-left and left-to-right modes, simultaneously.
+
+o  No special terminal with right-to-left capabilities is required.
+   The right-to-left changes are completely hardware independent.
+   Only Arabic fonts are necessary.
+
+o  Compatible with the original Vim.   Almost all features work in
+   right-to-left mode (there are liable to be bugs).
+
+o  Changing keyboard mapping and reverse insert modes using a single
+   command.
+
+o  Toggling complete Arabic support via a single command.
+
+o  While in Arabic mode, numbers are entered from left to right.  Upon
+   entering a none number character, that character will be inserted
+   just into the left of the last number.
+
+o  Arabic keymapping on the command line in reverse insert mode.
+
+o  Proper Bidirectional functionality is possible given Vim is
+   started within a Bidi capable terminal emulator.
+
+
+Arabic Fonts						*arabicfonts*
+------------
+
+Vim requires monospaced fonts of which there are many out there.
+Arabic requires ISO-8859-6 as well as Presentation Form-B fonts
+(without Form-B, Arabic will _NOT_ be usable).	It is highly
+recommended that users search for so-called 'ISO-10646-1' fonts.
+Do an Internet search or check www.arabeyes.org for further
+info on where to obtain the necessary Arabic fonts.
+
+
+Font Installation
+-----------------
+
+o  Installation of fonts for X Window systems (Unix/Linux)
+
+   Depending on your system, copy your_ARABIC_FONT file into a
+   directory of your choice.  Change to the directory containing
+   the Arabic fonts and execute the following commands:
+
+     %	mkfontdir
+     %	xset +fp path_name_of_arabic_fonts_directory
+
+
+Usage
+-----
+Prior to the actual usage of Arabic within Vim, a number of settings
+need to be accounted for and invoked.
+
+o  Setting the Arabic fonts
+
+   +  For Vim GUI set the 'guifont' to your_ARABIC_FONT.  This is done
+      by entering the following command in the Vim window.
+>
+		:set guifont=your_ARABIC_FONT
+<
+      NOTE: the string 'your_ARABIC_FONT' is used to denote a complete
+	    font name akin to that used in Linux/Unix systems.
+	    (e.g. -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1)
+
+      You can append the 'guifont' set command to your vimrc file
+      in order to get the same above noted results.  In other words,
+      you can include ':set guifont=your_ARABIC_FONT' to your vimrc
+      file.
+
+   +  Under the X Window environment, you can also start Vim with
+      '-fn your_ARABIC_FONT' option.
+
+o  Setting the appropriate character Encoding
+   To enable the correct Arabic encoding the following command needs
+   to be appended,
+>
+		:set encoding=utf-8
+<
+   to your vimrc file (entering the command manually into your Vim
+   window is highly discouraged).  In short, include ':set
+   encoding=utf-8' to your vimrc file.
+
+   Attempts to use Arabic without UTF-8 will result the following
+   warning message,
+
+								*W17*  >
+     Arabic requires UTF-8, do ':set encoding=utf-8'
+
+o  Enable Arabic settings [short-cut]
+
+   In order to simplify and streamline things, you can either invoke
+   Vim with the command-line option,
+
+     % vim -A my_utf8_arabic_file ...
+
+   or enable 'arabic' via the following command within Vim
+>
+		:set arabic
+<
+   The two above noted possible invocations are the preferred manner
+   in which users are instructed to proceed.  Barring an enabled 'termbidi'
+   setting, both command options:
+
+     1. set the appropriate keymap
+     2. enable the deletion of a single combined pair character
+     3. enable rightleft    mode
+     4. enable rightleftcmd mode (affecting the command-line)
+     5. enable arabicshape  mode (do visual character alterations)
+
+   You may also append the command to your vimrc file and simply
+   include ':set arabic' to it.
+
+   You are also capable of disabling Arabic support via
+>
+		:set noarabic
+<
+   which resets everything that the command had enabled without touching
+   the global settings as they could affect other possible open buffers.
+   In short the 'noarabic' command,
+
+     1. resets to the alternate keymap
+     2. disables the deletion of a single combined pair character
+     3. disables rightleft mode
+
+   NOTE: the 'arabic' command takes into consideration 'termbidi' for
+	 possible external bi-directional (bidi) support from the
+	 terminal ("mlterm" for instance offers such support).
+	 'termbidi', if available, is superior to rightleft support
+	 and its support is preferred due to its level of offerings.
+	 'arabic' when 'termbidi' is enabled only sets the keymap.
+
+	 For vertical window isolation while setting 'termbidi' an LTR
+	 vertical separator like "l" or "𝖨" may be used.  It may also be
+	 hidden by changing its color to the foreground color: >
+		:set fillchars=vert:l
+		:hi WinSeparator ctermbg=White
+<	Note that this is a workaround, not a proper solution.
+
+   If, on the other hand, you'd like to be verbose and explicit and
+   are opting not to use the 'arabic' short-cut command, here's what
+   is needed (i.e. if you use ':set arabic' you can skip this section) -
+
+   +  Arabic Keymapping Activation
+
+      To activate the Arabic keymap (i.e. to remap your English/Latin
+      keyboard to look-n-feel like a standard Arabic one), set the
+      'keymap' command to "arabic".  This is done by entering
+>
+		:set keymap=arabic
+<
+      in your VIM window.  You can also append the 'keymap' set command to
+      your vimrc file.  In other words, you can include ':set keymap=arabic'
+      to your vimrc file.
+
+      To turn toggle (or switch) your keymapping between Arabic and the
+      default mapping (English), it is advised that users use the 'CTRL-^'
+      key press while in insert (or add/replace) mode.	The command-line
+      will display your current mapping by displaying an "Arabic" string
+      next to your insertion mode (e.g. -- INSERT Arabic --) indicating
+      your current keymap.
+
+   +  Arabic deletion of a combined pair character
+
+      By default Vim has the 'delcombine' option disabled.  This option
+      allows the deletion of ALEF in a LAM_ALEF (LAA) combined character
+      and still retain the LAM (i.e. it reverts to treating the combined
+      character as its natural two characters form -- this also pertains
+      to harakat and their combined forms).  You can enable this option
+      by entering
+>
+		:set delcombine
+<
+      in our VIM window.  You can also append the 'delcombine' set command
+      to your vimrc file.  In other words, you can include ':set delcombine'
+      to your vimrc file.
+
+   +  Arabic right-to-left Mode
+
+      By default VIM starts in Left-to-right mode.  'rightleft' is the
+      command that allows one to alter a window's orientation - that can
+      be accomplished via,
+
+      - Toggling between left-to-right and right-to-left modes is
+	accomplished through ':set rightleft' and ':set norightleft'.
+
+      - While in Left-to-right mode, enter ':set rl' in the command line
+	('rl' is the abbreviation for rightleft).
+
+      - Put the ':set rl' line in your vimrc file to start Vim in 
+        right-to-left mode permanently.
+
+   +  Arabic right-to-left command-line Mode
+
+      For certain commands the editing can be done in right-to-left mode.
+      Currently this is only applicable to search commands.
+
+      This is controlled with the 'rightleftcmd' option.  The default is
+      "search", which means that windows in which 'rightleft' is set will
+      edit search commands in right-left mode.	To disable this behavior,
+>
+		:set rightleftcmd=
+<
+      To enable right-left editing of search commands again,
+>
+		:set rightleftcmd&
+<
+   +  Arabic Shaping Mode
+
+      To activate the required visual characters alterations (shaping,
+      composing, combining) which the Arabic language requires, enable
+      the 'arabicshape' command.  This is done by entering
+>
+		:set arabicshape
+<
+      in our VIM window.  You can also append the 'arabicshape' set
+      command to your vimrc file.  In other words, you can include
+      ':set arabicshape' to your vimrc file.
+
+
+Keymap/Keyboard						*arabickeymap*
+---------------
+
+The character/letter encoding used in Vim is the standard UTF-8.
+It is widely discouraged that any other encoding be used or even
+attempted.
+
+Note: UTF-8 is an all encompassing encoding and as such is
+      the only supported (and encouraged) encoding with
+      regard to Arabic (all other proprietary encodings
+      should be discouraged and frowned upon).
+
+o  Keyboard
+
+   +  CTRL-^ in insert/replace mode toggles between Arabic/Latin mode
+
+   +  Keyboard mapping is based on the Microsoft's Arabic keymap (the
+      de facto standard in the Arab world):
+
+  +---------------------------------------------------------------------+
+  |!   |@   |#   |$   |%   |^   |&   |*   |(   |)   |_   |+   ||   |~  ّ |
+  |1 ١ |2 ٢ |3 ٣ |4 ٤ |5 ٥ |6 ٦ |7 ٧ |8 ٨ |9 ٩ |0 ٠ |-   |=   |\   |` ذ |
+  +---------------------------------------------------------------------+
+       |Q  َ |W  ً |E  ُ |R  ٌ |T لإ |Y إ |U ` |I ÷ |O x |P ؛ |{ < |} > |
+       |q ض |w ص |e ث |r ق |t ف |y غ |u ع |i ه |o خ |p ح |[ ج |] د |
+       +-----------------------------------------------------------+
+	 |A  ِ |S  ٍ |D [ |F ] |G لأ |H أ |J ـ |K ، |L / |:   |"   |
+	 |a ش |s س |d ي |f ب |g ل |h ا |j ت |k ن |l م |; ك |' ط |
+	 +------------------------------------------------------+
+	   |Z ~ |X  ْ |C { |V } |B لآ |N آ |M ' |< , |> . |? ؟ |
+	   |z ئ |x ء |c ؤ |v ر |b لا |n ى |m ة |, و |. ز |/ ظ |
+	   +-------------------------------------------------+
+
+Restrictions
+------------
+
+o  Vim in its GUI form does not currently support Bi-directionality
+   (i.e. the ability to see both Arabic and Latin intermixed within
+   the same line).
+
+
+Known Bugs
+----------
+
+There is one known minor bug,
+
+ 1. If you insert a haraka (e.g. Fatha (U+064E)) after a LAM (U+0644)
+    and then insert an ALEF (U+0627), the appropriate combining will
+    not happen due to the sandwiched haraka resulting in something
+    that will NOT be displayed correctly.
+
+    WORK-AROUND: Don't include harakats between LAM and ALEF combos.
+		 In general, don't anticipate to see correct visual
+		 representation with regard to harakats and LAM+ALEF
+		 combined characters (even those entered after both
+		 characters).  The problem noted is strictly a visual
+		 one, meaning saving such a file will contain all the
+		 appropriate info/encodings - nothing is lost.
+
+No other bugs are known to exist.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

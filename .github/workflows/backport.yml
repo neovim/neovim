@@ -1,0 +1,27 @@
+name: Backport
+on:
+  pull_request_target:
+    types: [closed, labeled]
+jobs:
+  backport:
+    permissions:
+      contents: write
+      pull-requests: write
+    name: Backport Pull Request
+    if: >
+      github.repository_owner == 'neovim' && (
+        github.event_name == 'pull_request_target' &&
+        github.event.pull_request.merged
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # required to find all branches
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Create backport PRs
+        uses: zeebe-io/backport-action@v0.0.7
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_workspace: ${{ github.workspace }}

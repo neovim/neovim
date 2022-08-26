@@ -1,0 +1,42 @@
+name: "CodeQL"
+
+on:
+  schedule:
+    - cron: '42 0 * * 0'
+  workflow_dispatch:
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp', 'python' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup common environment variables
+      run: ./.github/workflows/env.sh
+
+    - name: Install apt packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y autoconf automake build-essential cmake cpanminus cscope gcc-multilib gdb gettext language-pack-tr libtool-bin locales ninja-build pkg-config python3 python3-pip python3-setuptools unzip valgrind xclip
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+
+    - if: matrix.language == 'cpp'
+      run: make
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2

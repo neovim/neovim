@@ -1,0 +1,194 @@
+{
+  "ref": "refs/heads/master",
+  "before": "66b136c43c12df3dcf8f19ff48f206ad2e4f43fc",
+  "after": "1bf69c32217cc455603ce8aa2b5415d9717f0fa2",
+  "repository": {
+    "id": 292861950,
+    "node_id": "MDEwOlJlcG9zaXRvcnkyOTI4NjE5NTA=",
+    "name": "neovim-snap",
+    "full_name": "hurricanehrndz/neovim-snap",
+    "private": false,
+    "owner": {
+      "name": "hurricanehrndz",
+      "email": "hurricanehrndz@users.noreply.github.com",
+      "login": "hurricanehrndz",
+      "id": 5804237,
+      "node_id": "MDQ6VXNlcjU4MDQyMzc=",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/5804237?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/hurricanehrndz",
+      "html_url": "https://github.com/hurricanehrndz",
+      "followers_url": "https://api.github.com/users/hurricanehrndz/followers",
+      "following_url": "https://api.github.com/users/hurricanehrndz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/hurricanehrndz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/hurricanehrndz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/hurricanehrndz/subscriptions",
+      "organizations_url": "https://api.github.com/users/hurricanehrndz/orgs",
+      "repos_url": "https://api.github.com/users/hurricanehrndz/repos",
+      "events_url": "https://api.github.com/users/hurricanehrndz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/hurricanehrndz/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/hurricanehrndz/neovim-snap",
+    "description": "snap build for neovim",
+    "fork": false,
+    "url": "https://github.com/hurricanehrndz/neovim-snap",
+    "forks_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/forks",
+    "keys_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/keys{/key_id}",
+    "collaborators_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/collaborators{/collaborator}",
+    "teams_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/teams",
+    "hooks_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/hooks",
+    "issue_events_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/issues/events{/number}",
+    "events_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/events",
+    "assignees_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/assignees{/user}",
+    "branches_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/branches{/branch}",
+    "tags_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/tags",
+    "blobs_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/git/blobs{/sha}",
+    "git_tags_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/git/tags{/sha}",
+    "git_refs_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/git/refs{/sha}",
+    "trees_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/git/trees{/sha}",
+    "statuses_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/statuses/{sha}",
+    "languages_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/languages",
+    "stargazers_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/stargazers",
+    "contributors_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/contributors",
+    "subscribers_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/subscribers",
+    "subscription_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/subscription",
+    "commits_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/commits{/sha}",
+    "git_commits_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/git/commits{/sha}",
+    "comments_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/comments{/number}",
+    "issue_comment_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/issues/comments{/number}",
+    "contents_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/contents/{+path}",
+    "compare_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/compare/{base}...{head}",
+    "merges_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/merges",
+    "archive_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/{archive_format}{/ref}",
+    "downloads_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/downloads",
+    "issues_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/issues{/number}",
+    "pulls_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/pulls{/number}",
+    "milestones_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/milestones{/number}",
+    "notifications_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/notifications{?since,all,participating}",
+    "labels_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/labels{/name}",
+    "releases_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/releases{/id}",
+    "deployments_url": "https://api.github.com/repos/hurricanehrndz/neovim-snap/deployments",
+    "created_at": 1599227980,
+    "updated_at": "2020-09-04T14:02:38Z",
+    "pushed_at": 1599228352,
+    "git_url": "git://github.com/hurricanehrndz/neovim-snap.git",
+    "ssh_url": "git@github.com:hurricanehrndz/neovim-snap.git",
+    "clone_url": "https://github.com/hurricanehrndz/neovim-snap.git",
+    "svn_url": "https://github.com/hurricanehrndz/neovim-snap",
+    "homepage": null,
+    "size": 0,
+    "stargazers_count": 0,
+    "watchers_count": 0,
+    "language": null,
+    "has_issues": true,
+    "has_projects": true,
+    "has_downloads": true,
+    "has_wiki": true,
+    "has_pages": false,
+    "forks_count": 0,
+    "mirror_url": null,
+    "archived": false,
+    "disabled": false,
+    "open_issues_count": 0,
+    "license": {
+      "key": "mit",
+      "name": "MIT License",
+      "spdx_id": "MIT",
+      "url": "https://api.github.com/licenses/mit",
+      "node_id": "MDc6TGljZW5zZTEz"
+    },
+    "forks": 0,
+    "open_issues": 0,
+    "watchers": 0,
+    "default_branch": "master",
+    "stargazers": 0,
+    "master_branch": "master"
+  },
+  "pusher": {
+    "name": "hurricanehrndz",
+    "email": "hurricanehrndz@users.noreply.github.com"
+  },
+  "sender": {
+    "login": "hurricanehrndz",
+    "id": 5804237,
+    "node_id": "MDQ6VXNlcjU4MDQyMzc=",
+    "avatar_url": "https://avatars0.githubusercontent.com/u/5804237?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/hurricanehrndz",
+    "html_url": "https://github.com/hurricanehrndz",
+    "followers_url": "https://api.github.com/users/hurricanehrndz/followers",
+    "following_url": "https://api.github.com/users/hurricanehrndz/following{/other_user}",
+    "gists_url": "https://api.github.com/users/hurricanehrndz/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/hurricanehrndz/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/hurricanehrndz/subscriptions",
+    "organizations_url": "https://api.github.com/users/hurricanehrndz/orgs",
+    "repos_url": "https://api.github.com/users/hurricanehrndz/repos",
+    "events_url": "https://api.github.com/users/hurricanehrndz/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/hurricanehrndz/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/hurricanehrndz/neovim-snap/compare/66b136c43c12...1bf69c32217c",
+  "commits": [
+    {
+      "id": "1bf69c32217cc455603ce8aa2b5415d9717f0fa2",
+      "tree_id": "62ea83a2349be8c930c45fdc199f71b08bf5927e",
+      "distinct": true,
+      "message": "Build of latest tag",
+      "timestamp": "2020-09-04T14:05:40Z",
+      "url": "https://github.com/hurricanehrndz/neovim-snap/commit/1bf69c32217cc455603ce8aa2b5415d9717f0fa2",
+      "author": {
+        "name": "Carlos Hernandez",
+        "email": "carlos@techbyte.ca",
+        "username": "hurricanehrndz"
+      },
+      "committer": {
+        "name": "Carlos Hernandez",
+        "email": "carlos@techbyte.ca",
+        "username": "hurricanehrndz"
+      },
+      "added": [
+
+      ],
+      "removed": [
+
+      ],
+      "modified": [
+        "snap/snapcraft.yaml"
+      ]
+    }
+  ],
+  "head_commit": {
+    "id": "1bf69c32217cc455603ce8aa2b5415d9717f0fa2",
+    "tree_id": "62ea83a2349be8c930c45fdc199f71b08bf5927e",
+    "distinct": true,
+    "message": "Build of latest tag",
+    "timestamp": "2020-09-04T14:05:40Z",
+    "url": "https://github.com/hurricanehrndz/neovim-snap/commit/1bf69c32217cc455603ce8aa2b5415d9717f0fa2",
+    "author": {
+      "name": "Carlos Hernandez",
+      "email": "carlos@techbyte.ca",
+      "username": "hurricanehrndz"
+    },
+    "committer": {
+      "name": "Carlos Hernandez",
+      "email": "carlos@techbyte.ca",
+      "username": "hurricanehrndz"
+    },
+    "added": [
+
+    ],
+    "removed": [
+
+    ],
+    "modified": [
+      "snap/snapcraft.yaml"
+    ]
+  }
+}

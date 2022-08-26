@@ -1,0 +1,159 @@
+*deprecated.txt*       Nvim
+
+
+                             NVIM REFERENCE MANUAL
+
+
+Nvim                                                             *deprecated*
+
+The items listed below are deprecated: they will be removed in the future.
+They should not be used in new scripts, and old scripts should be updated.
+
+==============================================================================
+
+API ~
+*nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
+*nvim_buf_set_virtual_text()*	Use |nvim_buf_set_extmark()| instead.
+*nvim_command_output()*		Use |nvim_exec()| instead.
+*nvim_execute_lua()*		Use |nvim_exec_lua()| instead.
+
+Commands ~
+*:rv*
+*:rviminfo*		Deprecated alias to |:rshada| command.
+*:wv*
+*:wviminfo*		Deprecated alias to |:wshada| command.
+
+Environment Variables ~
+*$NVIM_LISTEN_ADDRESS*	Deprecated way to
+			* set the server name (use |--listen| instead)
+			* get the server name (use |v:servername| instead)
+			* detect a parent Nvim (use |$NVIM| instead)
+			Unset by |terminal| and |jobstart()| (unless explicitly
+			given by the "env" option). Ignored if --listen is given.
+
+Events ~
+*BufCreate*		Use |BufAdd| instead.
+*EncodingChanged*	Never fired; 'encoding' is always "utf-8".
+*FileEncoding*		Never fired; equivalent to |EncodingChanged|.
+*GUIEnter*		Never fired; use |UIEnter| instead.
+*GUIFailed*		Never fired.
+
+Keycodes ~
+*<MouseDown>*		Use <ScrollWheelUp> instead.
+*<MouseUp>*		Use <ScrollWheelDown> instead.
+
+Functions ~
+*buffer_exists()*	Obsolete name for |bufexists()|.
+*buffer_name()*		Obsolete name for |bufname()|.
+*buffer_number()*	Obsolete name for |bufnr()|.
+*file_readable()*	Obsolete name for |filereadable()|.
+*highlight_exists()*	Obsolete name for |hlexists()|.
+*highlightID()*		Obsolete name for |hlID()|.
+*inputdialog()*		Use |input()| instead.
+*jobclose()*		Obsolete name for |chanclose()|
+*jobsend()*		Obsolete name for |chansend()|
+*last_buffer_nr()*	Obsolete name for bufnr("$").
+*rpcstop()*		Deprecated. Instead use |jobstop()| to stop any job,
+			or chanclose(id, "rpc") to close RPC communication
+			without stopping the job. Use chanclose(id) to close
+			any socket.
+
+Highlights ~
+
+*hl-VertSplit*		Use |hl-WinSeparator| instead.
+
+LSP Diagnostics ~
+
+For each of the functions below, use the corresponding function in
+|vim.diagnostic| instead (unless otherwise noted). For example, use
+|vim.diagnostic.get()| instead of |vim.lsp.diagnostic.get()|.
+
+*vim.lsp.diagnostic.clear()*		Use |vim.diagnostic.hide()| instead.
+*vim.lsp.diagnostic.disable()*
+*vim.lsp.diagnostic.display()*		Use |vim.diagnostic.show()| instead.
+*vim.lsp.diagnostic.enable()*
+*vim.lsp.diagnostic.get()*
+*vim.lsp.diagnostic.get_all()*		Use |vim.diagnostic.get()| instead.
+*vim.lsp.diagnostic.get_count()*	Use |vim.diagnostic.get()| instead.
+*vim.lsp.diagnostic.get_line_diagnostics()*
+					Use |vim.diagnostic.get()| instead.
+*vim.lsp.diagnostic.get_next()*
+*vim.lsp.diagnostic.get_next_pos()*
+*vim.lsp.diagnostic.get_prev()*
+*vim.lsp.diagnostic.get_prev_pos()*
+*vim.lsp.diagnostic.get_virtual_text_chunks_for_line()*
+				No replacement. Use options provided by
+				|vim.diagnostic.config()| to customize
+				virtual text.
+*vim.lsp.diagnostic.goto_next()*
+*vim.lsp.diagnostic.goto_prev()*
+*vim.lsp.diagnostic.redraw()*		Use |vim.diagnostic.show()| instead.
+*vim.lsp.diagnostic.reset()*
+*vim.lsp.diagnostic.save()*		Use |vim.diagnostic.set()| instead.
+*vim.lsp.diagnostic.set_loclist()*	Use |vim.diagnostic.setloclist()| instead.
+*vim.lsp.diagnostic.set_qflist()*	Use |vim.diagnostic.setqflist()| instead.
+
+The following have been replaced by |vim.diagnostic.open_float()|.
+
+*vim.lsp.diagnostic.show_line_diagnostics()*
+*vim.lsp.diagnostic.show_position_diagnostics()*
+
+The following are deprecated without replacement. These functions are moved
+internally and are no longer exposed as part of the API. Instead, use
+|vim.diagnostic.config()| and |vim.diagnostic.show()|.
+
+*vim.lsp.diagnostic.set_signs()*
+*vim.lsp.diagnostic.set_underline()*
+*vim.lsp.diagnostic.set_virtual_text()*
+
+LSP Functions ~
+
+*vim.lsp.util.diagnostics_to_items()*	Use |vim.diagnostic.toqflist()| instead.
+*vim.lsp.util.set_qflist()*		Use |setqflist()| instead.
+*vim.lsp.util.set_loclist()*		Use |setloclist()| instead.
+*vim.lsp.buf_get_clients()*		Use |vim.lsp.get_active_clients()| with
+                                        {buffer = bufnr} instead.
+
+Lua ~
+*vim.register_keystroke_callback()* Use |vim.on_key()| instead.
+
+Modifiers ~
+*cpo-<*
+*:menu-<special>*
+*:menu-special*		<> notation is always enabled.
+*:map-<special>*
+*:map-special*		<> notation is always enabled.
+
+Normal commands ~
+*]f*
+*[f*			Same as "gf".
+
+Options ~
+*'cscopeverbose'*	Enabled by default. Use |:silent| instead.
+*'exrc'* *'ex'*		Security risk: downloaded files could include
+			a malicious .nvimrc or .exrc file. See 'secure'.
+			Recommended alternative: define an autocommand in your
+			|vimrc| to set options for a matching directory.
+'gd'
+'gdefault'		Enables the |:substitute| flag 'g' by default.
+*'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.
+*'highlight'* *'hl'*	Names of builtin |highlight-groups| cannot be changed.
+*'langnoremap'*		Deprecated alias to 'nolangremap'.
+'sessionoptions'	Flags "unix", "slash" are ignored and always enabled.
+*'vi'*
+'viewoptions'		Flags "unix", "slash" are ignored and always enabled.
+*'viminfo'*		Deprecated alias to 'shada' option.
+*'viminfofile'*		Deprecated alias to 'shadafile' option.
+
+UI extensions~
+*ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled
+			by the `ext_wildmenu` |ui-option|. Emits these events:
+				["wildmenu_show", items]
+				["wildmenu_select", selected]
+				["wildmenu_hide"]
+
+Variables~
+*b:terminal_job_pid*	PID of the top-level process in a |:terminal|.
+			Use `jobpid(&channel)` instead.
+
+ vim:noet:tw=78:ts=8:ft=help:norl:

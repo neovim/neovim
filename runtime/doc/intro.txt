@@ -1,0 +1,779 @@
+*intro.txt*     Nvim
+
+
+			    NVIM REFERENCE MANUAL
+
+
+Nvim							*ref* *reference*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+Introduction						*intro*
+
+Vim is a text editor which includes most commands from the Unix program "Vi"
+and many new ones.
+
+An overview of this manual can be found in the file "help.txt", |help.txt|.
+It can be accessed from within Vim with the <Help> or <F1> key and with the
+|:help| command (just type ":help", without the bars or quotes).
+   The 'helpfile' option can be set to the name of the help file, in case it
+is not located in the default place.  You can jump to subjects like with tags:
+Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
+
+							*pronounce*
+Vim is pronounced as one word, like Jim.  So Nvim is N-Jim, which sounds like
+"Ninja".  Starting Nvim is like performing a roundhouse kick.
+
+This manual is a reference for all Nvim editor and API features.  It is not an
+introduction; instead for beginners, there is a hands-on |tutor| and a user
+manual |usr_toc.txt|.
+
+							*book*
+There are many books on Vi and Vim.  We recommend:
+
+	"Practical Vim" by Drew Neil
+	"Modern Vim" by Drew Neil
+	https://vimcasts.org/publications/
+
+"Practical Vim" is acclaimed for its focus on quickly learning common editing
+tasks with Vim.  "Modern Vim" explores new features in Nvim and Vim 8.
+
+	"Vim - Vi Improved" by Steve Oualline
+
+This was the first book dedicated to Vim.  Parts of it were included in the
+user manual. |frombook|  ISBN: 0735710015
+For more information try one of these:
+	https://iccf-holland.org/click5.html
+	https://www.vim.org/iccf/click5.html
+
+==============================================================================
+Nvim on the interwebs					*internet*
+
+			*www* *faq* *distribution* *download*
+
+	Nvim home page:	  https://neovim.io/
+	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
+	Downloads:	  https://github.com/neovim/neovim/releases
+	Vim FAQ:	  https://vimhelp.org/vim_faq.txt.html
+
+
+			*bugs* *bug-report*
+Report bugs and request features here:
+https://github.com/neovim/neovim/issues
+
+Be brief, yet complete.  Always give a reproducible example and try to find
+out which settings or other things trigger the bug.
+
+If Nvim crashes, try to get a backtrace.  See |debug.txt|.
+
+==============================================================================
+Sponsor Vim/Nvim development				*sponsor* *register*
+
+Fixing bugs and adding new features takes a lot of time and effort.  To show
+your appreciation for the work and motivate Bram and others to continue
+working on Vim please send a donation.
+
+Since Bram is back to a paid job the money will now be used to help children
+in Uganda.  See |uganda|.  But at the same time donations increase Bram's
+motivation to keep working on Vim!
+
+For the most recent information about sponsoring look on the Vim web site:
+
+	https://www.vim.org/sponsor/
+
+
+Neovim development is funded separately from Vim:
+
+	https://neovim.io/#sponsor
+
+==============================================================================
+Credits				*credits*
+
+Most of Vim was written by Bram Moolenaar <Bram@vim.org>.
+
+Parts of the documentation come from several Vi manuals, written by:
+	W.N. Joy
+	Alan P.W. Hewett
+	Mark Horton
+
+The Vim editor is based on Stevie and includes (ideas from) other software,
+worked on by the people mentioned here.  Other people helped by sending me
+patches, suggestions and giving feedback about what is good and bad in Vim.
+
+Vim would never have become what it is now, without the help of these people!
+
+	Ron Aaron		Win32 GUI changes
+	Mohsin Ahmed		encryption
+	Zoltan Arpadffy		work on VMS port
+	Tony Andrews		Stevie
+	Gert van Antwerpen	changes for DJGPP on MS-DOS
+	Berkeley DB(3)		ideas for swap file implementation
+	Keith Bostic		Nvi
+	Walter Briscoe		Makefile updates, various patches
+	Ralf Brown		SPAWNO library for MS-DOS
+	Robert Colon		many useful remarks
+	Marcin Dalecki		GTK+ GUI port, toolbar icons, gettext()
+	Kayhan Demirel		sent me news in Uganda
+	Chris & John Downey	xvi (ideas for multi-windows version)
+	Henk Elbers		first VMS port
+	Daniel Elstner		GTK+ 2 port
+	Eric Fischer		Mac port, 'cindent', and other improvements
+	Benji Fisher		Answering lots of user questions
+	Bill Foster		Athena GUI port (later removed)
+	Google			Lets me work on Vim one day a week
+	Loic Grenie		xvim (ideas for multi windows version)
+	Sven Guckes		Vim promoter and previous WWW page maintainer
+	Darren Hiebert		Exuberant ctags
+	Jason Hildebrand	GTK+ 2 port
+	Bruce Hunsaker		improvements for VMS port
+	Andy Kahn		Cscope support, GTK+ GUI port
+	Oezguer Kesim		Maintainer of Vim Mailing Lists
+	Axel Kielhorn		work on the Macintosh port
+	Steve Kirkendall	Elvis
+	Roger Knobbe		original port to Windows NT
+	Sergey Laskavy		Vim's help from Moscow
+	Felix von Leitner	Previous maintainer of Vim Mailing Lists
+	David Leonard		Port of Python extensions to Unix
+	Avner Lottem		Edit in right-to-left windows
+	Flemming Madsen		X11 client-server, various features and patches
+	Tony Mechelynck		answers many user questions
+	Paul Moore		Python interface extensions, many patches
+	Katsuhito Nagano	Work on multibyte versions
+	Sung-Hyun Nam		Work on multibyte versions
+	Vince Negri		Win32 GUI and generic console enhancements
+	Steve Oualline		Author of the first Vim book |frombook|
+	Dominique Pelle		Valgrind reports and many fixes
+	A.Politz		Many bug reports and some fixes
+	George V. Reilly	Win32 port, Win32 GUI start-off
+	Stephen Riehm		bug collector
+	Stefan Roemer		various patches and help to users
+	Ralf Schandl		IBM OS/390 port
+	Olaf Seibert		DICE and BeBox version, regexp improvements
+	Mortaza Shiran		Farsi patches
+	Peter da Silva		termlib
+	Paul Slootman		OS/2 port
+	Henry Spencer		regular expressions
+	Dany St-Amant		Macintosh port
+	Tim Thompson		Stevie
+	G. R. (Fred) Walter	Stevie
+	Sven Verdoolaege	Perl interface
+	Robert Webb		Command-line completion, GUI versions, and
+				lots of patches
+	Ingo Wilken		Tcl interface
+	Mike Williams		PostScript printing
+	Juergen Weigert		Lattice version, AUX improvements, Unix and
+				MS-DOS ports, autoconf
+	Stefan 'Sec' Zehl	Maintainer of vim.org
+	Yasuhiro Matsumoto	many MS-Windows improvements
+	Ken Takata		fixes and features
+	Kazunobu Kuriyama	GTK 3
+	Christian Brabandt	many fixes, features, user support, etc.
+	Yegappan Lakshmanan	many quickfix features
+
+I wish to thank all the people that sent me bug reports and suggestions.  The
+list is too long to mention them all here.  Vim would not be the same without
+the ideas from all these people: They keep Vim alive!
+*love* *peace* *friendship* *gross-national-happiness*
+
+
+Documentation may refer to other versions of Vi:
+							*Vi* *vi*
+Vi	"the original".  Without further remarks this is the version
+	of Vi that appeared in Sun OS 4.x.  ":version" returns
+	"Version 3.7, 6/7/85".  Source code only available with a license.
+							*Nvi*
+Nvi	The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
+	Very good compatibility with the original Vi, with a few extensions.
+	The version used is 1.79.  ":version" returns "Version 1.79
+	(10/23/96)".  Source code is freely available.
+							*Elvis*
+Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
+	as flexible as Vim.  Source code is freely available.
+
+Vim	Nvim is based on Vim.  https://www.vim.org/
+
+==============================================================================
+Notation						*notation*
+
+When syntax highlighting is used to read this, text that is not typed
+literally is often highlighted with the Special group.  These are items in [],
+{} and <>, and CTRL-X.
+
+Note that Vim uses all possible characters in commands.  Sometimes the [], {}
+and <> are part of what you type, the context should make this clear.
+
+
+[]		Characters in square brackets are optional.
+
+						    *count* *[count]*
+[count]		An optional number that may precede the command to multiply
+		or iterate the command.  If no number is given, a count of one
+		is used, unless otherwise noted.  Note that in this manual the
+		[count] is not mentioned in the description of the command,
+		but only in the explanation.  This was done to make the
+		commands easier to look up.  If the 'showcmd' option is on,
+		the (partially) entered count is shown at the bottom of the
+		window.  You can use <Del> to erase the last digit (|N<Del>|).
+
+							*[quotex]*
+["x]		An optional register designation where text can be stored.
+		See |registers|.  The x is a single character between 'a' and
+		'z' or 'A' and 'Z' or '"', and in some cases (with the put
+		command) between '0' and '9', '%', '#', or others.  The
+		uppercase and lowercase letter designate the same register,
+		but the lowercase letter is used to overwrite the previous
+		register contents, while the uppercase letter is used to
+		append to the previous register contents.  Without the ""x" or
+		with """" the stored text is put into the unnamed register.
+
+							*{}*
+{}		Curly braces denote parts of the command which must appear,
+		but which can take a number of different values.  The
+		differences between Vim and Vi are also given in curly braces
+		(this will be clear from the context).
+
+							*{char1-char2}*
+{char1-char2}	A single character from the range char1 to char2.  For
+		example: {a-z} is a lowercase letter.  Multiple ranges may be
+		concatenated.  For example, {a-zA-Z0-9} is any alphanumeric
+		character.
+
+						*{motion}* *movement*
+{motion}	A command that moves the cursor.  These are explained in
+		|motion.txt|.  Examples:
+			w		to start of next word
+			b		to begin of current word
+			4j		four lines down
+			/The<CR>	to next occurrence of "The"
+		This is used after an |operator| command to move over the text
+		that is to be operated upon.
+		- If the motion includes a count and the operator also has a
+		  count, the two counts are multiplied.  For example: "2d3w"
+		  deletes six words.
+		- The motion can be backwards, e.g. "db" to delete to the
+		  start of the word.
+		- The motion can also be a mouse click.  The mouse is not
+		  supported in every terminal though.
+		- The ":omap" command can be used to map characters while an
+		  operator is pending.
+		- Ex commands can be used to move the cursor.  This can be
+		  used to call a function that does some complicated motion.
+		  The motion is always charwise exclusive, no matter
+		  what ":" command is used.  This means it's impossible to
+		  include the last character of a line without the line break
+		  (unless 'virtualedit' is set).
+		  If the Ex command changes the text before where the operator
+		  starts or jumps to another buffer the result is
+		  unpredictable.  It is possible to change the text further
+		  down.  Jumping to another buffer is possible if the current
+		  buffer is not unloaded.
+
+							*{Visual}*
+{Visual}	A selected text area.  It is started with the "v", "V", or
+		CTRL-V command, then any cursor movement command can be used
+		to change the end of the selected text.
+		This is used before an |operator| command to highlight the
+		text that is to be operated upon.
+		See |Visual-mode|.
+
+							*<character>*
+<character>	A special character from the table below, optionally with
+		modifiers, or a single ASCII character with modifiers.
+
+							*'character'*
+'c'		A single ASCII character.
+
+							*CTRL-{char}*
+CTRL-{char}	{char} typed as a control character; that is, typing {char}
+		while holding the CTRL key down.  The case of {char} is
+		ignored; thus CTRL-A and CTRL-a are equivalent.  But in
+		some terminals and environments, using the SHIFT key will
+		produce a distinct code (e.g. CTRL-SHIFT-a); in these
+		environments using the SHIFT key will not trigger commands
+		such as CTRL-A.
+
+							*'option'*
+'option'	An option, or parameter, that can be set to a value, is
+		enclosed in single quotes.  See |options|.
+
+							*quotecommandquote*
+"command"	A reference to a command that you can type is enclosed in
+		double quotes.
+`command`	New style command, this distinguishes it from other quoted
+		text and strings.
+
+					*key-notation* *key-codes* *keycodes*
+These names for keys are used in the documentation.  They can also be used
+with the ":map" command.
+
+notation	meaning		    equivalent	decimal value(s)	~
+-----------------------------------------------------------------------
+<Nul>		zero			CTRL-@	  0 (stored as 10) *<Nul>*
+<BS>		backspace		CTRL-H	  8	*backspace*
+<Tab>		tab			CTRL-I	  9	*tab* *Tab*
+							*linefeed*
+<NL>		linefeed		CTRL-J	 10 (used for <Nul>)
+<CR>		carriage return		CTRL-M	 13	*carriage-return*
+<Return>	same as <CR>				*<Return>*
+<Enter>		same as <CR>				*<Enter>*
+<Esc>		escape			CTRL-[	 27	*escape* *<Esc>*
+<Space>		space				 32	*space*
+<lt>		less-than		<	 60	*<lt>*
+<Bslash>	backslash		\	 92	*backslash* *<Bslash>*
+<Bar>		vertical bar		|	124	*<Bar>*
+<Del>		delete				127
+<CSI>		command sequence intro  ALT-Esc 155	*<CSI>*
+
+<EOL>		end-of-line (can be <CR>, <NL> or <CR><NL>,
+		depends on system and 'fileformat')	*<EOL>*
+<Ignore>	cancel wait-for-character		*<Ignore>*
+<NOP>		no-op: do nothing (useful in mappings)	*<Nop>*
+
+<Up>		cursor-up			*cursor-up* *cursor_up*
+<Down>		cursor-down			*cursor-down* *cursor_down*
+<Left>		cursor-left			*cursor-left* *cursor_left*
+<Right>		cursor-right			*cursor-right* *cursor_right*
+<S-Up>		shift-cursor-up
+<S-Down>	shift-cursor-down
+<S-Left>	shift-cursor-left
+<S-Right>	shift-cursor-right
+<C-Left>	control-cursor-left
+<C-Right>	control-cursor-right
+<F1> - <F12>	function keys 1 to 12		*function_key* *function-key*
+<S-F1> - <S-F12> shift-function keys 1 to 12	*<S-F1>*
+<Help>		help key
+<Undo>		undo key
+<Insert>	insert key
+<Home>		home				*home*
+<End>		end				*end*
+<PageUp>	page-up				*page_up* *page-up*
+<PageDown>	page-down			*page_down* *page-down*
+<kUp>		keypad cursor-up		*keypad-cursor-up*
+<kDown>		keypad cursor-down		*keypad-cursor-down*
+<kLeft>		keypad cursor-left		*keypad-cursor-left*
+<kRight>	keypad cursor-right		*keypad-cursor-right*
+<kHome>		keypad home (upper left)	*keypad-home*
+<kEnd>		keypad end (lower left)		*keypad-end*
+<kOrigin>	keypad origin (middle)		*keypad-origin*
+<kPageUp>	keypad page-up (upper right)	*keypad-page-up*
+<kPageDown>	keypad page-down (lower right)	*keypad-page-down*
+<kDel>		keypad delete 			*keypad-delete*
+<kPlus>		keypad +			*keypad-plus*
+<kMinus>	keypad -			*keypad-minus*
+<kMultiply>	keypad *			*keypad-multiply*
+<kDivide>	keypad /			*keypad-divide*
+<kPoint>	keypad .			*keypad-point*
+<kComma>	keypad ,			*keypad-comma*
+<kEqual>	keypad =			*keypad-equal*
+<kEnter>	keypad Enter			*keypad-enter*
+<k0> - <k9>	keypad 0 to 9			*keypad-0* *keypad-9*
+<S-…>		shift-key			*shift* *<S-*
+<C-…>		control-key			*control* *ctrl* *<C-*
+<M-…>		alt-key or meta-key		*META* *ALT* *<M-*
+<A-…>		same as <M-…>			*<A-*
+<D-…>		command-key or "super" key	*<D-*
+-----------------------------------------------------------------------
+
+Note:
+
+- Availability of some keys (<Help>, <S-Right>, …) depends on the UI or host
+  terminal.
+- If numlock is on the |TUI| receives plain ASCII values, so mapping <k0>,
+  <k1>, ..., <k9> and <kPoint> will not work.
+- Nvim supports mapping multibyte chars with modifiers such as `<M-ä>`. Which
+  combinations actually work depends on the the UI or host terminal.
+- When a key is pressed using a meta or alt modifier and no mapping exists for
+  that keypress, Nvim may behave as though <Esc> was pressed before the key.
+- It is possible to notate combined modifiers (e.g. <C-A-T> for CTRL-ALT-T),
+  but your terminal must encode the input for that to work. |tui-input|
+
+								*<>*
+Examples are often given in the <> notation.  Sometimes this is just to make
+clear what you need to type, but often it can be typed literally, e.g., with
+the ":map" command.  The rules are:
+ 1.  Printable characters are typed directly, except backslash and "<"
+ 2.  Backslash is represented with "\\", double backslash, or "<Bslash>".
+ 3.  Literal "<" is represented with "\<" or "<lt>".  When there is no
+     confusion possible, "<" can be used directly.
+ 4.  "<key>" means the special key typed (see the table above).  Examples:
+	   <Esc>		Escape key
+	   <C-G>		CTRL-G
+	   <Up>			cursor up key
+	   <C-LeftMouse>	Control- left mouse click
+	   <S-F11>		Shifted function key 11
+	   <M-a>		Meta- a  ('a' with bit 8 set)
+	   <M-A>		Meta- A  ('A' with bit 8 set)
+
+The <> notation uses <lt> to escape the special meaning of key names.  Using a
+backslash also works, but only when 'cpoptions' does not include the 'B' flag.
+
+Examples for mapping CTRL-H to the six characters "<Home>": >
+	:imap <C-H> \<Home>
+	:imap <C-H> <lt>Home>
+The first one only works when the 'B' flag is not in 'cpoptions'.  The second
+one always works.
+To get a literal "<lt>" in a mapping: >
+	:map <C-L> <lt>lt>
+
+==============================================================================
+Modes, introduction				*vim-modes-intro* *vim-modes*
+
+Vim has seven BASIC modes:
+
+					*Normal* *Normal-mode* *command-mode*
+Normal mode		In Normal mode you can enter all the normal editor
+			commands.  If you start the editor you are in this
+			mode.  This is also known as command mode.
+
+Visual mode		This is like Normal mode, but the movement commands
+			extend a highlighted area.  When a non-movement
+			command is used, it is executed for the highlighted
+			area.  See |Visual-mode|.
+			If the 'showmode' option is on "-- VISUAL --" is shown
+			at the bottom of the window.
+
+Select mode		This looks most like the MS-Windows selection mode.
+			Typing a printable character deletes the selection
+			and starts Insert mode.  See |Select-mode|.
+			If the 'showmode' option is on "-- SELECT --" is shown
+			at the bottom of the window.
+
+Insert mode		In Insert mode the text you type is inserted into the
+			buffer.  See |Insert-mode|.
+			If the 'showmode' option is on "-- INSERT --" is shown
+			at the bottom of the window.
+
+Command-line mode	In Command-line mode (also called Cmdline mode) you
+Cmdline mode		can enter one line of text at the bottom of the
+			window.  This is for the Ex commands, ":", the pattern
+			search commands, "?" and "/", and the filter command,
+			"!".  |Cmdline-mode|
+
+Ex mode			Like Command-line mode, but after entering a command
+			you remain in Ex mode.  Very limited editing of the
+			command line.  |Ex-mode|
+
+							*Terminal-mode*
+Terminal mode		In Terminal mode all input (except CTRL-\) is sent to
+			the process running in the current |terminal| buffer.
+			If CTRL-\ is pressed, the next key is sent unless it
+			is CTRL-N (|CTRL-\_CTRL-N|) or CTRL-O (|t_CTRL-\_CTRL-O|).
+			If the 'showmode' option is on "-- TERMINAL --" is shown
+			at the bottom of the window.
+
+There are six ADDITIONAL modes.  These are variants of the BASIC modes:
+
+				*Operator-pending* *Operator-pending-mode*
+Operator-pending mode	This is like Normal mode, but after an operator
+			command has started, and Vim is waiting for a {motion}
+			to specify the text that the operator will work on.
+
+Replace mode		Replace mode is a special case of Insert mode.  You
+			can do the same things as in Insert mode, but for
+			each character you enter, one character of the existing
+			text is deleted.  See |Replace-mode|.
+			If the 'showmode' option is on "-- REPLACE --" is
+			shown at the bottom of the window.
+
+Virtual Replace mode	Virtual Replace mode is similar to Replace mode, but
+			instead of file characters you are replacing screen
+			real estate.  See |Virtual-Replace-mode|.
+			If the 'showmode' option is on "-- VREPLACE --" is
+			shown at the bottom of the window.
+
+Insert Normal mode	Entered when CTRL-O is typed in Insert mode (see
+			|i_CTRL-O|).  This is like Normal mode, but after
+			executing one command Vim returns to Insert mode.
+			If the 'showmode' option is on "-- (insert) --" is
+			shown at the bottom of the window.
+
+Insert Visual mode	Entered when starting a Visual selection from Insert
+			mode, e.g., by using CTRL-O and then "v", "V" or
+			CTRL-V.  When the Visual selection ends, Vim returns
+			to Insert mode.
+			If the 'showmode' option is on "-- (insert) VISUAL --"
+			is shown at the bottom of the window.
+
+Insert Select mode	Entered when starting Select mode from Insert mode.
+			E.g., by dragging the mouse or <S-Right>.
+			When the Select mode ends, Vim returns to Insert mode.
+			If the 'showmode' option is on "-- (insert) SELECT --"
+			is shown at the bottom of the window.
+
+==============================================================================
+Switching from mode to mode				*mode-switching*
+
+If for any reason you do not know which mode you are in, you can always get
+back to Normal mode by typing <Esc> twice.  This doesn't work for Ex mode
+though, use ":visual".
+You will know you are back in Normal mode when you see the screen flash or
+hear the bell after you type <Esc>.  However, when pressing <Esc> after using
+CTRL-O in Insert mode you get a beep but you are still in Insert mode, type
+<Esc> again.
+
+							*i_esc*
+		TO mode						    ~
+		Normal	Visual	Select	Insert	  Replace   Cmd-line  Ex ~
+FROM mode								 ~
+Normal			v V ^V	  *4	 *1	   R gR     : / ? !   Q
+Visual		 *2		  ^G	 c C	    --	      :       --
+Select		 *5	^O ^G		 *6	    --	      --      --
+Insert		 <Esc>	  --	  --		  <Insert>    --      --
+Replace		 <Esc>	  --	  --	<Insert>	      --      --
+Command-line	 *3	  --	  --	 :start	    --		      --
+Ex		 :vi	  --	  --	 --	    --	      --
+
+-- not possible
+
+*1 Go from Normal mode to Insert mode by giving the command "i", "I", "a",
+   "A", "o", "O", "c", "C", "s" or S".
+*2 Go from Visual mode to Normal mode by giving a non-movement command, which
+   causes the command to be executed, or by hitting <Esc> "v", "V" or "CTRL-V"
+   (see |v_v|), which just stops Visual mode without side effects.
+*3 Go from Command-line mode to Normal mode by:
+   - Hitting <CR> or <NL>, which causes the entered command to be executed.
+   - Deleting the complete line (e.g., with CTRL-U) and giving a final <BS>.
+   - Hitting CTRL-C or <Esc>, which quits the command-line without executing
+     the command.
+   In the last case <Esc> may be the character defined with the 'wildchar'
+   option, in which case it will start command-line completion.  You can
+   ignore that and type <Esc> again.
+*4 Go from Normal to Select mode by:
+   - use the mouse to select text while 'selectmode' contains "mouse"
+   - use a non-printable command to move the cursor while keeping the Shift
+     key pressed, and the 'selectmode' option contains "key"
+   - use "v", "V" or "CTRL-V" while 'selectmode' contains "cmd"
+   - use "gh", "gH" or "g CTRL-H"  |g_CTRL-H|
+*5 Go from Select mode to Normal mode by using a non-printable command to move
+   the cursor, without keeping the Shift key pressed.
+*6 Go from Select mode to Insert mode by typing a printable character.  The
+   selection is deleted and the character is inserted.
+
+			*CTRL-\_CTRL-N* *i_CTRL-\_CTRL-N* *c_CTRL-\_CTRL-N*
+				      *v_CTRL-\_CTRL-N* *t_CTRL-\_CTRL-N*
+Additionally the command CTRL-\ CTRL-N or <C-\><C-N> can be used to go to
+Normal mode from any other mode.  This can be used to make sure Vim is in
+Normal mode, without causing a beep like <Esc> would.  However, this does not
+work in Ex mode.  When used after a command that takes an argument, such as
+|f| or |m|, the timeout set with 'ttimeoutlen' applies.
+
+	*CTRL-\_CTRL-G* *i_CTRL-\_CTRL-G* *c_CTRL-\_CTRL-G* *v_CTRL-\_CTRL-G*
+CTRL-\ CTRL-G works the same as |CTRL-\_CTRL-N| for backward compatibility.
+
+				*gQ* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
+gQ			Switch to Ex mode.  This is like typing ":" commands
+			one after another, except:
+			- You don't have to keep pressing ":".
+			- The screen doesn't get updated after each command.
+			Use the `:vi` command (|:visual|) to exit this mode.
+
+==============================================================================
+Window contents						*window-contents*
+
+In Normal mode and Insert/Replace mode the screen window will show the current
+contents of the buffer: What You See Is What You Get.  There are two
+exceptions:
+- When the 'cpoptions' option contains '$', and the change is within one line,
+  the text is not directly deleted, but a '$' is put at the last deleted
+  character.
+- When inserting text in one window, other windows on the same text are not
+  updated until the insert is finished.
+
+Lines longer than the window width will wrap, unless the 'wrap' option is off
+(see below).  The 'linebreak' option can be set to wrap at a blank character.
+
+If the window has room after the last line of the buffer, Vim will show '~' in
+the first column of the last lines in the window, like this:
+
+	+-----------------------+
+	|some line		|
+	|last line		|
+	|~			|
+	|~			|
+	+-----------------------+
+
+Thus the '~' lines indicate that the end of the buffer was reached.
+
+If the last line in a window doesn't fit, Vim will indicate this with a '@' in
+the first column of the last lines in the window, like this:
+
+	+-----------------------+
+	|first line		|
+	|second line		|
+	|@			|
+	|@			|
+	+-----------------------+
+
+Thus the '@' lines indicate that there is a line that doesn't fit in the
+window.
+
+When the "lastline" flag is present in the 'display' option, you will not see
+'@' characters at the left side of window.  If the last line doesn't fit
+completely, only the part that fits is shown, and the last three characters of
+the last line are replaced with "@@@", like this:
+
+	+-----------------------+
+	|first line		|
+	|second line		|
+	|a very long line that d|
+	|oesn't fit in the wi@@@|
+	+-----------------------+
+
+If there is a single line that is too long to fit in the window, this is a
+special situation.  Vim will show only part of the line, around where the
+cursor is.  There are no special characters shown, so that you can edit all
+parts of this line.
+
+The |hl-NonText| highlight group can be used to set special highlighting
+for the '@' and '~' characters.  This makes it possible to distinguish them
+from real characters in the buffer.
+
+The 'showbreak' option contains the string to put in front of wrapped lines.
+
+							*wrap-off*
+If the 'wrap' option is off, long lines will not wrap.  Only the part that
+fits on the screen is shown.  If the cursor is moved to a part of the line
+that is not shown, the screen is scrolled horizontally.  The advantage of
+this method is that columns are shown as they are and lines that cannot fit
+on the screen can be edited.  The disadvantage is that you cannot see all the
+characters of a line at once.  The 'sidescroll' option can be set to the
+minimal number of columns to scroll.
+
+All normal ASCII characters are displayed directly on the screen.  The <Tab>
+is replaced with the number of spaces that it represents.  Other non-printing
+characters are replaced with "^{char}", where {char} is the non-printing
+character with 64 added.  Thus character 7 (bell) will be shown as "^G".
+Characters between 127 and 160 are replaced with "~{char}", where {char} is
+the character with 64 subtracted.  These characters occupy more than one
+position on the screen.  The cursor can only be positioned on the first one.
+
+If you set the 'number' option, all lines will be preceded with their
+number.  Tip: If you don't like wrapping lines to mix with the line numbers,
+set the 'showbreak' option to eight spaces:
+	":set showbreak=\ \ \ \ \ \ \ \ "
+
+If you set the 'list' option, <Tab> characters will not be shown as several
+spaces, but as "^I".  A '$' will be placed at the end of the line, so you can
+find trailing blanks.
+
+In Command-line mode only the command-line itself is shown correctly.  The
+display of the buffer contents is updated as soon as you go back to Command
+mode.
+
+The last line of the window is used for status and other messages.  The
+status messages will only be used if an option is on:
+
+status message			option	     default	Unix default	~
+current mode			'showmode'	on	    on
+command characters		'showcmd'	on	    off
+cursor position			'ruler'		off	    off
+
+The current mode is "-- INSERT --" or "-- REPLACE --", see |'showmode'|.  The
+command characters are those that you typed but were not used yet.
+
+If you have a slow terminal you can switch off the status messages to speed
+up editing:
+	:set nosc noru nosm
+
+If there is an error, an error message will be shown for at least one second
+(in reverse video).
+
+Some commands show how many lines were affected.  Above which threshold this
+happens can be controlled with the 'report' option (default 2).
+
+The name Vim and the full name of the current file name will be shown in the
+title bar.  When the window is resized, Vim will automatically redraw the
+window.  You may make the window as small as you like, but if it gets too
+small not a single line will fit in it.  Make it at least 40 characters wide
+to be able to read most messages on the last line.
+
+==============================================================================
+Definitions						*definitions* *jargon*
+
+  buffer		Contains lines of text, usually from a file.
+  screen		The whole area that Nvim uses to display things.
+  window		A view on a buffer.  There can be multiple windows for
+			one buffer.
+  frame			Windows are kept in a tree of frames.  Each frame
+			contains a column, row, or window ("leaf" frame).
+
+A screen contains one or more windows, separated by status lines and with the
+command line at the bottom.
+
+	+-------------------------------+
+screen	| window 1	| window 2	|
+	|		|		|
+	|		|		|
+	|= status line =|= status line =|
+	| window 3			|
+	|				|
+	|				|
+	|==== status line ==============|
+	|command line			|
+	+-------------------------------+
+
+The command line is also used for messages.  It scrolls up the screen when
+there is not enough room in the command line.
+
+A difference is made between four types of lines:
+
+  buffer lines		The lines in the buffer.  This is the same as the
+			lines as they are read from/written to a file.  They
+			can be thousands of characters long.
+  logical lines		The buffer lines with folding applied.  Buffer lines
+			in a closed fold are changed to a single logical line:
+			"+-- 99 lines folded".  They can be thousands of
+			characters long.
+  window lines		The lines displayed in a window: A range of logical
+			lines with wrapping, line breaks, etc.  applied.  They
+			can only be as long as the width of the window allows,
+			longer lines are wrapped or truncated.
+  screen lines		The lines of the screen that Nvim uses.  Consists of
+			the window lines of all windows, with status lines
+			and the command line added.  They can only be as long
+			as the width of the screen allows.  When the command
+			line gets longer it wraps and lines are scrolled to
+			make room.
+
+buffer lines	logical lines	window lines	screen lines ~
+
+1. one		1. one		1. +-- folded   1.  +-- folded
+2. two		2. +-- folded	2. five		2.  five
+3. three	3. five		3. six		3.  six
+4. four		4. six		4. seven	4.  seven
+5. five		5. seven			5.  === status line ===
+6. six						6.  aaa
+7. seven					7.  bbb
+						8.  ccc ccc c
+1. aaa		1. aaa		1. aaa		9.  cc
+2. bbb		2. bbb		2. bbb		10. ddd
+3. ccc ccc ccc	3. ccc ccc ccc	3. ccc ccc c	11. ~ 
+4. ddd		4. ddd		4. cc		12. === status line ===
+				5. ddd		13. (command line)
+				6. ~ 
+
+
+API client ~
+All external UIs and remote plugins (as opposed to regular Vim plugins) are
+"clients" in general; but we call something an "API client" if its purpose is
+to abstract or wrap the RPC API for the convenience of other applications
+(just like a REST client or SDK such as boto3 for AWS: you can speak AWS REST
+using an HTTP client like curl, but boto3 wraps that in a convenient python
+interface). For example, the Nvim lua-client is an API client:
+    https://github.com/neovim/lua-client
+
+
+Host ~
+A plugin "host" is both a client (of the Nvim API) and a server (of an
+external platform, e.g. python). It is a remote plugin that hosts other
+plugins.
+
+
+Remote plugin ~
+Arbitrary code registered via |:UpdateRemotePlugins|, that runs in a separate
+process and communicates with Nvim via the |api|.
+
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

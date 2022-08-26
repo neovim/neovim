@@ -1,0 +1,89 @@
+name: nvim
+base: core18
+adopt-info: nvim
+summary: Vim-fork focused on extensibility and agility.
+description: |
+ Neovim is a project that seeks to aggressively refactor Vim in order to:
+
+ Simplify maintenance and encourage contributions
+ Split the work between multiple developers
+ Enable the implementation of new/modern user interfaces without any modifications to the core source
+ Improve extensibility with a new plugin architecture
+ For lots more details, see the wiki!
+
+grade: stable  # must be 'stable' to release into candidate/stable channels
+confinement: classic
+
+apps:
+    nvim:
+        command: usr/bin/nvim
+        environment:
+            HOME: /home/$USER
+            VIM: $SNAP/usr/share/nvim
+            VIMRUNTIME: $SNAP/usr/share/nvim/runtime
+        desktop: usr/share/applications/nvim.desktop
+
+parts:
+    nvim:
+        source: https://github.com/neovim/neovim.git
+        override-pull: |
+          snapcraftctl pull
+          latest_tag="$(git tag -l --sort=refname|head -1)"
+          git checkout "${latest_tag}"
+          major="$(awk '/NVIM_VERSION_MAJOR/{gsub(")","",$2); print $2}' CMakeLists.txt)"
+          minor="$(awk '/NVIM_VERSION_MINOR/{gsub(")","",$2); print $2}' CMakeLists.txt)"
+          patch="$(awk '/NVIM_VERSION_PATCH/{gsub(")","",$2); print $2}' CMakeLists.txt)"
+          version_prefix="v$major.$minor.$patch"
+          git_described="$(git describe --first-parent --dirty 2> /dev/null | perl -lpe 's/v\d.\d.\d-//g')"
+          git_described="${git_described:-$(git describe --first-parent --tags --always --dirty)}"
+          if [ "${version_prefix}" != "${git_described}" ]; then
+            VERSION="${version_prefix}-${git_described}-${latest_tag}"
+          else
+            VERSION="${version_prefix}-${latest_tag}"
+          fi
+          snapcraftctl set-version "${VERSION}"
+        plugin: make
+        make-parameters:
+            - CMAKE_BUILD_TYPE=RelWithDebInfo
+            - CMAKE_INSTALL_PREFIX=/usr
+            - CMAKE_FLAGS=-DPREFER_LUA=ON
+            - DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUA=ON -DUSE_BUNDLED_LUAJIT=OFF"
+        override-build: |
+            echo "Building on $SNAP_ARCH"
+            set -x
+            case "$SNAP_ARCH" in
+              "arm64" | "ppc64el"  | "s390x")
+              make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" \
+                CMAKE_BUILD_TYPE=RelWithDebInfo \
+                CMAKE_INSTALL_PREFIX=/usr \
+                CMAKE_FLAGS=-DPREFER_LUA=ON \
+                DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LUA=ON -DUSE_BUNDLED_LUAJIT=OFF"
+              ;;
+              *)
+              make -j"${SNAPCRAFT_PARALLEL_BUILD_COUNT}" \
+                CMAKE_BUILD_TYPE=RelWithDebInfo \
+                CMAKE_INSTALL_PREFIX=/usr
+              ;;
+            esac
+            make DESTDIR="$SNAPCRAFT_PART_INSTALL" install
+            # Fix Desktop file
+            sed -i 's|^Exec=nvim|Exec=/snap/bin/nvim.nvim|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
+            sed -i 's|^TryExec=nvim|TryExec=/snap/bin/nvim.nvim|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
+            sed -i 's|^Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/nvim.png|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
+        build-packages:
+            - ninja-build
+            - libtool
+            - libtool-bin
+            - autoconf
+            - automake
+            - cmake
+            - gawk
+            - g++
+            - git
+            - gettext
+            - pkg-config
+            - unzip
+            - wget
+        prime:
+            - -usr/share/man
+
