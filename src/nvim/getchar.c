@@ -623,6 +623,34 @@ void stuffnumReadbuff(long n)
   add_num_buff(&readbuf1, n);
 }
 
+/// Stuff a string into the typeahead buffer, such that edit() will insert it
+/// literally ("literally" true) or interpret is as typed characters.
+void stuffescaped(const char *arg, bool literally)
+{
+  while (*arg != NUL) {
+    // Stuff a sequence of normal ASCII characters, that's fast.  Also
+    // stuff K_SPECIAL to get the effect of a special key when "literally"
+    // is true.
+    const char *const start = arg;
+    while ((*arg >= ' ' && *arg < DEL) || ((uint8_t)(*arg) == K_SPECIAL
+                                           && !literally)) {
+      arg++;
+    }
+    if (arg > start) {
+      stuffReadbuffLen(start, (arg - start));
+    }
+
+    // stuff a single special character
+    if (*arg != NUL) {
+      const int c = mb_cptr2char_adv((const char_u **)&arg);
+      if (literally && ((c < ' ' && c != TAB) || c == DEL)) {
+        stuffcharReadbuff(Ctrl_V);
+      }
+      stuffcharReadbuff(c);
+    }
+  }
+}
+
 /// Read a character from the redo buffer.  Translates K_SPECIAL and
 /// multibyte characters.
 /// The redo buffer is left as it is.
