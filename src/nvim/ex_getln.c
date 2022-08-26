@@ -1808,6 +1808,7 @@ static int command_line_handle_key(CommandLineState *s)
       // menu (if present)
       cmdline_pum_cleanup(&ccline);
     }
+
     if (nextwild(&s->xpc, WILD_ALL, 0, s->firstc != '@') == FAIL) {
       break;
     }

@@ -6940,12 +6940,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'wildmenu'* *'wmnu'* *'nowildmenu'* *'nowmnu'*
 'wildmenu' 'wmnu'	boolean	(default on)
 			global
-	Enables "enhanced mode" of command-line completion. When user hits
-	<Tab> (or 'wildchar') to invoke completion, the possible matches are
-	shown in a menu just above the command-line (see 'wildoptions'), with
-	the first match highlighted (overwriting the statusline).  Keys that
-	show the previous/next match (<Tab>/CTRL-P/CTRL-N) highlight the
-	match.
+	When 'wildmenu' is on, command-line completion operates in an enhanced
+	mode.  On pressing 'wildchar' (usually <Tab>) to invoke completion,
+	the possible matches are shown.
+	When 'wildoptions' contains "pum", then the completion matches are
+	shown in a popup menu.  Otherwise they are displayed just above the
+	command line, with the first match highlighted (overwriting the status
+	line, if there is one).
+	Keys that show the previous/next match, such as <Tab> or
+	CTRL-P/CTRL-N, cause the highlight to move to the appropriate match.
 	'wildmode' must specify "full": "longest" and "list" do not start
 	'wildmenu' mode. You can check the current mode with |wildmenumode()|.
 	The menu is canceled when a key is hit that is not used for selecting
