@@ -1732,7 +1732,7 @@ void ins_compl_addleader(int c)
 
     utf_char2bytes(c, (char *)buf);
     buf[cc] = NUL;
-    ins_char_bytes((char_u *)buf, (size_t)cc);
+    ins_char_bytes(buf, (size_t)cc);
   } else {
     ins_char(c);
   }
@@ -2014,7 +2014,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
       const int compl_len = get_compl_len();
       const int len = (int)STRLEN(p);
       if (len > compl_len) {
-        ins_bytes_len(p + compl_len, (size_t)(len - compl_len));
+        ins_bytes_len((char *)p + compl_len, (size_t)(len - compl_len));
       }
     }
     retval = true;

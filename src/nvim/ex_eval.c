@@ -1333,10 +1333,10 @@ void ex_catch(exarg_T *eap)
   if (ends_excmd(*eap->arg)) {  // no argument, catch all errors
     pat = ".*";
     end = NULL;
-    eap->nextcmd = (char *)find_nextcmd((char_u *)eap->arg);
+    eap->nextcmd = find_nextcmd(eap->arg);
   } else {
     pat = eap->arg + 1;
-    end = (char *)skip_regexp((char_u *)pat, *eap->arg, true, NULL);
+    end = skip_regexp(pat, *eap->arg, true, NULL);
   }
 
   if (!give_up) {
@@ -1439,7 +1439,7 @@ void ex_catch(exarg_T *eap)
   }
 
   if (end != NULL) {
-    eap->nextcmd = (char *)find_nextcmd((char_u *)end);
+    eap->nextcmd = find_nextcmd(end);
   }
 }
 

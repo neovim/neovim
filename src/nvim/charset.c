@@ -313,7 +313,7 @@ size_t transstr_len(const char *const s, bool untab)
     const size_t l = (size_t)utfc_ptr2len(p);
     if (l > 1) {
       int pcc[MAX_MCO + 1];
-      pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
+      pcc[0] = utfc_ptr2char(p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         len += l;
@@ -359,7 +359,7 @@ size_t transstr_buf(const char *const s, char *const buf, const size_t len, bool
         break;  // Exceeded `buf` size.
       }
       int pcc[MAX_MCO + 1];
-      pcc[0] = utfc_ptr2char((const char_u *)p, &pcc[1]);
+      pcc[0] = utfc_ptr2char(p, &pcc[1]);
 
       if (vim_isprintc(pcc[0])) {
         memmove(buf_p, p, l);
@@ -709,7 +709,7 @@ int ptr2cells(const char *p_in)
 /// @return number of character cells.
 int vim_strsize(char *s)
 {
-  return vim_strnsize((char_u *)s, MAXCOL);
+  return vim_strnsize(s, MAXCOL);
 }
 
 /// Return the number of character cells string "s[len]" will take on the
@@ -721,13 +721,13 @@ int vim_strsize(char *s)
 /// @param len
 ///
 /// @return Number of character cells.
-int vim_strnsize(char_u *s, int len)
+int vim_strnsize(char *s, int len)
 {
   assert(s != NULL);
   int size = 0;
   while (*s != NUL && --len >= 0) {
-    int l = utfc_ptr2len((char *)s);
-    size += ptr2cells((char *)s);
+    int l = utfc_ptr2len(s);
+    size += ptr2cells(s);
     s += l;
     len -= l - 1;
   }
@@ -1687,12 +1687,12 @@ int hexhex2nr(const char_u *p)
 /// characters.
 ///
 /// @param  str  file path string to check
-bool rem_backslash(const char_u *str)
+bool rem_backslash(const char *str)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
 #ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\'
-         && str[1] < 0x80
+         && (uint8_t)str[1] < 0x80
          && (str[1] == ' '
              || (str[1] != NUL
                  && str[1] != '*'
@@ -1710,7 +1710,7 @@ bool rem_backslash(const char_u *str)
 void backslash_halve(char_u *p)
 {
   for (; *p; p++) {
-    if (rem_backslash(p)) {
+    if (rem_backslash((char *)p)) {
       STRMOVE(p, p + 1);
     }
   }

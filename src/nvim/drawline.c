@@ -116,7 +116,7 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
   if (cells > maxcells) {
     return -1;
   }
-  u8c = utfc_ptr2char(p, u8cc);
+  u8c = utfc_ptr2char((char *)p, u8cc);
   if (*p == TAB) {
     cells = MIN(tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array), maxcells);
     for (int c = 0; c < cells; c++) {
@@ -141,7 +141,7 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
         nc = utf_ptr2char((char *)p + c_len);
         s->prev_c1 = u8cc[0];
       } else {
-        pc = utfc_ptr2char(p + c_len, pcc);
+        pc = utfc_ptr2char((char *)p + c_len, pcc);
         nc = s->prev_c;
         pc1 = pcc[0];
       }
@@ -1489,7 +1489,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         if (mb_l > n_extra) {
           mb_l = 1;
         } else if (mb_l > 1) {
-          mb_c = utfc_ptr2char(p_extra, u8cc);
+          mb_c = utfc_ptr2char((char *)p_extra, u8cc);
           mb_utf8 = true;
           c = 0xc0;
         }
@@ -1540,7 +1540,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       mb_l = utfc_ptr2len((char *)ptr);
       mb_utf8 = false;
       if (mb_l > 1) {
-        mb_c = utfc_ptr2char(ptr, u8cc);
+        mb_c = utfc_ptr2char((char *)ptr, u8cc);
         // Overlong encoded ASCII or ASCII with composing char
         // is displayed normally, except a NUL.
         if (mb_c < 0x80) {
@@ -1598,7 +1598,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           nc = utf_ptr2char((char *)ptr + mb_l);
           prev_c1 = u8cc[0];
         } else {
-          pc = utfc_ptr2char(ptr + mb_l, pcc);
+          pc = utfc_ptr2char((char *)ptr + mb_l, pcc);
           nc = prev_c;
           pc1 = pcc[0];
         }

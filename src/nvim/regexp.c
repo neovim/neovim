@@ -488,10 +488,10 @@ static char_u *skip_anyof(char *p)
 /// When "newp" is not NULL and "dirc" is '?', make an allocated copy of the
 /// expression and change "\?" to "?".  If "*newp" is not NULL the expression
 /// is changed in-place.
-char_u *skip_regexp(char_u *startp, int dirc, int magic, char **newp)
+char *skip_regexp(char *startp, int dirc, int magic, char **newp)
 {
   int mymagic;
-  char_u *p = startp;
+  char *p = startp;
 
   if (magic) {
     mymagic = MAGIC_ON;
@@ -506,7 +506,7 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char **newp)
     }
     if ((p[0] == '[' && mymagic >= MAGIC_ON)
         || (p[0] == '\\' && p[1] == '[' && mymagic <= MAGIC_OFF)) {
-      p = skip_anyof((char *)p + 1);
+      p = (char *)skip_anyof(p + 1);
       if (p[0] == NUL) {
         break;
       }
@@ -514,8 +514,8 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char **newp)
       if (dirc == '?' && newp != NULL && p[1] == '?') {
         // change "\?" to "?", make a copy first.
         if (*newp == NULL) {
-          *newp = (char *)vim_strsave(startp);
-          p = (char_u *)(*newp) + (p - startp);
+          *newp = xstrdup(startp);
+          p = *newp + (p - startp);
         }
         STRMOVE(p, p + 1);
       } else {

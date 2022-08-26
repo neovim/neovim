@@ -1000,7 +1000,7 @@ static int qf_setup_state(qfstate_T *pstate, char *restrict enc, const char *res
 {
   pstate->vc.vc_type = CONV_NONE;
   if (enc != NULL && *enc != NUL) {
-    convert_setup(&pstate->vc, (char_u *)enc, (char_u *)p_enc);
+    convert_setup(&pstate->vc, enc, p_enc);
   }
 
   if (efile != NULL
@@ -1244,7 +1244,7 @@ static int qf_parse_fmt_f(regmatch_T *rmp, int midx, qffields_T *fields, int pre
   // Expand ~/file and $HOME/file to full path.
   char c = (char)(*rmp->endp[midx]);
   *rmp->endp[midx] = NUL;
-  expand_env(rmp->startp[midx], (char_u *)fields->namebuf, CMDBUFFSIZE);
+  expand_env((char *)rmp->startp[midx], fields->namebuf, CMDBUFFSIZE);
   *rmp->endp[midx] = (char_u)c;
 
   // For separate filename patterns (%O, %P and %Q), the specified file
@@ -3038,16 +3038,16 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   // text of the entry.
   bool filter_entry = true;
   if (qfp->qf_module != NULL && *qfp->qf_module != NUL) {
-    filter_entry &= message_filtered((char_u *)qfp->qf_module);
+    filter_entry &= message_filtered(qfp->qf_module);
   }
   if (filter_entry && fname != NULL) {
-    filter_entry &= message_filtered((char_u *)fname);
+    filter_entry &= message_filtered(fname);
   }
   if (filter_entry && qfp->qf_pattern != NULL) {
-    filter_entry &= message_filtered((char_u *)qfp->qf_pattern);
+    filter_entry &= message_filtered(qfp->qf_pattern);
   }
   if (filter_entry) {
-    filter_entry &= message_filtered((char_u *)qfp->qf_text);
+    filter_entry &= message_filtered(qfp->qf_text);
   }
   if (filter_entry) {
     return;

@@ -212,16 +212,14 @@ int is_pos_in_string(const char_u *line, colnr_T col)
  * Below "XXX" means that this function may unlock the current line.
  */
 
-/*
- * Return true if the string "line" starts with a word from 'cinwords'.
- */
-bool cin_is_cinword(const char_u *line)
+/// @return  true if the string "line" starts with a word from 'cinwords'.
+bool cin_is_cinword(const char *line)
 {
   bool retval = false;
 
   size_t cinw_len = STRLEN(curbuf->b_p_cinw) + 1;
   char_u *cinw_buf = xmalloc(cinw_len);
-  line = (char_u *)skipwhite((char *)line);
+  line = skipwhite((char *)line);
 
   for (char *cinw = curbuf->b_p_cinw; *cinw;) {
     size_t len = copy_option_part(&cinw, (char *)cinw_buf, cinw_len, ",");
@@ -2021,7 +2019,7 @@ int get_c_indent(void)
     if (trypos == NULL && curwin->w_cursor.lnum > 1) {
       // There may be a statement before the comment, search from the end
       // of the line for a comment start.
-      linecomment_pos.col = check_linecomment(ml_get(curwin->w_cursor.lnum - 1));
+      linecomment_pos.col = check_linecomment((char *)ml_get(curwin->w_cursor.lnum - 1));
       if (linecomment_pos.col != MAXCOL) {
         trypos = &linecomment_pos;
         trypos->lnum = curwin->w_cursor.lnum - 1;
@@ -2854,7 +2852,7 @@ int get_c_indent(void)
             if (n) {
               amount = n;
               l = after_label(get_cursor_line_ptr());
-              if (l != NULL && cin_is_cinword(l)) {
+              if (l != NULL && cin_is_cinword((char *)l)) {
                 if (theline[0] == '{') {
                   amount += curbuf->b_ind_open_extra;
                 } else {
@@ -3108,7 +3106,7 @@ int get_c_indent(void)
              * Check if we are after an "if", "while", etc.
              * Also allow "   } else".
              */
-            if (cin_is_cinword(l) || cin_iselse((char_u *)skipwhite((char *)l))) {
+            if (cin_is_cinword((char *)l) || cin_iselse((char_u *)skipwhite((char *)l))) {
               // Found an unterminated line after an if (), line up
               // with the last one.
               //   if (cond)

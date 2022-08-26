@@ -3299,7 +3299,7 @@ static void showoptions(int all, int opt_flags)
     item_count = 0;
     for (p = &options[0]; p->fullname != NULL; p++) {
       // apply :filter /pat/
-      if (message_filtered((char_u *)p->fullname)) {
+      if (message_filtered(p->fullname)) {
         continue;
       }
 

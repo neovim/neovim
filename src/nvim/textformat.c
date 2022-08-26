@@ -121,7 +121,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       leader_len = get_leader_len((char *)line, NULL, false, true);
       if (leader_len == 0 && curbuf->b_p_cin) {
         // Check for a line comment after code.
-        int comment_start = check_linecomment(line);
+        int comment_start = check_linecomment((char *)line);
         if (comment_start != MAXCOL) {
           leader_len = get_leader_len((char *)line + comment_start, NULL, false, true);
           if (leader_len != 0) {
@@ -411,7 +411,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
             // add the additional whitespace needed after the
             // comment leader for the numbered list.
             for (int i = 0; i < padding; i++) {
-              ins_str((char_u *)" ");
+              ins_str(" ");
             }
             changed_bytes(curwin->w_cursor.lnum, leader_len);
           } else {
@@ -1026,7 +1026,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         // paragraph doesn't really end.
         if (next_leader_flags == NULL
             || STRNCMP(next_leader_flags, "://", 3) != 0
-            || check_linecomment(get_cursor_line_ptr()) == MAXCOL) {
+            || check_linecomment((char *)get_cursor_line_ptr()) == MAXCOL) {
           is_end_par = true;
         }
       }

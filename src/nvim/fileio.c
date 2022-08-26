@@ -2024,7 +2024,7 @@ void prep_exarg(exarg_T *eap, const buf_T *buf)
   snprintf(eap->cmd, cmd_len, "e ++enc=%s", buf->b_p_fenc);
   eap->force_enc = 8;
   eap->bad_char = buf->b_bad_char;
-  eap->force_ff = *buf->b_p_ff;
+  eap->force_ff = (unsigned char)(*buf->b_p_ff);
 
   eap->force_bin = buf->b_p_bin ? FORCE_BIN : FORCE_NOBIN;
   eap->read_edit = false;
@@ -5317,7 +5317,7 @@ static void vim_mktempdir(void)
   mode_t umask_save = umask(0077);
   for (size_t i = 0; i < ARRAY_SIZE(temp_dirs); i++) {
     // Expand environment variables, leave room for "/tmp/nvim.<user>/XXXXXX/999999999".
-    expand_env((char_u *)temp_dirs[i], (char_u *)tmp, TEMP_FILE_PATH_MAXLEN - 64);
+    expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
     if (!os_isdir((char_u *)tmp)) {
       continue;
     }

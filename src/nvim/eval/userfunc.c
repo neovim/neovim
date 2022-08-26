@@ -1933,7 +1933,7 @@ void ex_function(exarg_T *eap)
         if (!HASHITEM_EMPTY(hi)) {
           todo--;
           fp = HI2UF(hi);
-          if (message_filtered(fp->uf_name)) {
+          if (message_filtered((char *)fp->uf_name)) {
             continue;
           }
           if (!func_name_refcount(fp->uf_name)) {
@@ -1950,7 +1950,7 @@ void ex_function(exarg_T *eap)
    * ":function /pat": list functions matching pattern.
    */
   if (*eap->arg == '/') {
-    p = skip_regexp((char_u *)eap->arg + 1, '/', true, NULL);
+    p = (char_u *)skip_regexp(eap->arg + 1, '/', true, NULL);
     if (!eap->skip) {
       regmatch_T regmatch;
 

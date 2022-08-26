@@ -573,9 +573,9 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
       if (dir == BACKWARD) {
         off_org = dp->df_count[i_org] - 1;
       }
-      char_u *line_org = vim_strsave(ml_get_buf(tp->tp_diffbuf[i_org],
-                                                dp->df_lnum[i_org] + off_org,
-                                                false));
+      char *line_org = (char *)vim_strsave(ml_get_buf(tp->tp_diffbuf[i_org],
+                                                      dp->df_lnum[i_org] + off_org,
+                                                      false));
 
       int i_new;
       for (i_new = i_org + 1; i_new < DB_COUNT; i_new++) {
@@ -592,9 +592,9 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
           break;
         }
 
-        if (diff_cmp(line_org, ml_get_buf(tp->tp_diffbuf[i_new],
-                                          dp->df_lnum[i_new] + off_new,
-                                          false)) != 0) {
+        if (diff_cmp((char_u *)line_org, ml_get_buf(tp->tp_diffbuf[i_new],
+                                                    dp->df_lnum[i_new] + off_new,
+                                                    false)) != 0) {
           break;
         }
       }
@@ -1539,8 +1539,8 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
   diff_T *dp = curtab->tp_first_diff;
   diff_T *dn, *dpl;
   diffout_T *dout = &dio->dio_diff;
-  char_u linebuf[LBUFLEN];  // only need to hold the diff line
-  char_u *line;
+  char linebuf[LBUFLEN];  // only need to hold the diff line
+  char *line;
   linenr_T off;
   int i;
   int notset = true;  // block "*dp" not set yet
@@ -1576,9 +1576,9 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         if (line_idx >= dout->dout_ga.ga_len) {
           break;      // did last line
         }
-        line = ((char_u **)dout->dout_ga.ga_data)[line_idx++];
+        line = ((char **)dout->dout_ga.ga_data)[line_idx++];
       } else {
-        if (vim_fgets(linebuf, LBUFLEN, fd)) {
+        if (vim_fgets((char_u *)linebuf, LBUFLEN, fd)) {
           break;      // end of file
         }
         line = linebuf;
@@ -1600,9 +1600,9 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         } else if ((STRNCMP(line, "@@ ", 3) == 0)) {
           diffstyle = DIFF_UNIFIED;
         } else if ((STRNCMP(line, "--- ", 4) == 0)  // -V501
-                   && (vim_fgets(linebuf, LBUFLEN, fd) == 0)  // -V501
+                   && (vim_fgets((char_u *)linebuf, LBUFLEN, fd) == 0)  // -V501
                    && (STRNCMP(line, "+++ ", 4) == 0)
-                   && (vim_fgets(linebuf, LBUFLEN, fd) == 0)  // -V501
+                   && (vim_fgets((char_u *)linebuf, LBUFLEN, fd) == 0)  // -V501
                    && (STRNCMP(line, "@@ ", 3) == 0)) {
           diffstyle = DIFF_UNIFIED;
         } else {
@@ -1616,7 +1616,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         if (!isdigit(*line)) {
           continue;   // not the start of a diff block
         }
-        if (parse_diff_ed(line, hunk) == FAIL) {
+        if (parse_diff_ed((char_u *)line, hunk) == FAIL) {
           continue;
         }
       } else {
@@ -1624,7 +1624,7 @@ static void diff_read(int idx_orig, int idx_new, diffio_T *dio)
         if (STRNCMP(line, "@@ ", 3) != 0) {
           continue;   // not the start of a diff block
         }
-        if (parse_diff_unified(line, hunk) == FAIL) {
+        if (parse_diff_unified((char_u *)line, hunk) == FAIL) {
           continue;
         }
       }
@@ -1920,11 +1920,11 @@ static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
   }
 
   for (int i = 0; i < dp->df_count[idx1]; i++) {
-    char_u *line = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx1],
-                                          dp->df_lnum[idx1] + i, false));
+    char *line = (char *)vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx1],
+                                                dp->df_lnum[idx1] + i, false));
 
-    int cmp = diff_cmp(line, ml_get_buf(curtab->tp_diffbuf[idx2],
-                                        dp->df_lnum[idx2] + i, false));
+    int cmp = diff_cmp((char_u *)line, ml_get_buf(curtab->tp_diffbuf[idx2],
+                                                  dp->df_lnum[idx2] + i, false));
     xfree(line);
 
     if (cmp != 0) {
@@ -2281,7 +2281,7 @@ bool diffopt_filler(void)
 bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  char_u *line_new;
+  char *line_new;
   int si_org;
   int si_new;
   int ei_org;
@@ -2290,7 +2290,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   int l;
 
   // Make a copy of the line, the next ml_get() will invalidate it.
-  char_u *line_org = vim_strsave(ml_get_buf(wp->w_buffer, lnum, false));
+  char *line_org = (char *)vim_strsave(ml_get_buf(wp->w_buffer, lnum, false));
 
   int idx = diff_buf_idx(wp->w_buffer);
   if (idx == DB_COUNT) {
@@ -2322,8 +2322,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
         continue;
       }
       added = false;
-      line_new = ml_get_buf(curtab->tp_diffbuf[i],
-                            dp->df_lnum[i] + off, false);
+      line_new = (char *)ml_get_buf(curtab->tp_diffbuf[i],
+                                    dp->df_lnum[i] + off, false);
 
       // Search for start of difference
       si_org = si_new = 0;
@@ -2335,10 +2335,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
             || ((diff_flags & DIFF_IWHITEALL)
                 && (ascii_iswhite(line_org[si_org])
                     || ascii_iswhite(line_new[si_new])))) {
-          si_org = (int)((char_u *)skipwhite((char *)line_org + si_org) - line_org);
-          si_new = (int)((char_u *)skipwhite((char *)line_new + si_new) - line_new);
+          si_org = (int)(skipwhite(line_org + si_org) - line_org);
+          si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
-          if (!diff_equal_char(line_org + si_org, line_new + si_new, &l)) {
+          if (!diff_equal_char((char_u *)line_org + si_org, (char_u *)line_new + si_new, &l)) {
             break;
           }
           si_org += l;
@@ -2348,8 +2348,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
       // Move back to first byte of character in both lines (may
       // have "nn^" in line_org and "n^ in line_new).
-      si_org -= utf_head_off(line_org, line_org + si_org);
-      si_new -= utf_head_off(line_new, line_new + si_new);
+      si_org -= utf_head_off((char_u *)line_org, (char_u *)line_org + si_org);
+      si_new -= utf_head_off((char_u *)line_new, (char_u *)line_new + si_new);
 
       if (*startp > si_org) {
         *startp = si_org;
@@ -2378,11 +2378,11 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
               ei_new--;
             }
           } else {
-            const char_u *p1 = line_org + ei_org;
-            const char_u *p2 = line_new + ei_new;
+            const char_u *p1 = (char_u *)line_org + ei_org;
+            const char_u *p2 = (char_u *)line_new + ei_new;
 
-            p1 -= utf_head_off(line_org, p1);
-            p2 -= utf_head_off(line_new, p2);
+            p1 -= utf_head_off((char_u *)line_org, p1);
+            p2 -= utf_head_off((char_u *)line_new, p2);
 
             if (!diff_equal_char(p1, p2, &l)) {
               break;
@@ -2511,7 +2511,7 @@ void ex_diffgetput(exarg_T *eap)
   diff_T *dfree;
   int i;
   int added;
-  char_u *p;
+  char *p;
   aco_save_T aco;
   buf_T *buf;
   linenr_T start_skip;
@@ -2565,18 +2565,18 @@ void ex_diffgetput(exarg_T *eap)
     }
   } else {
     // Buffer number or pattern given. Ignore trailing white space.
-    p = (char_u *)eap->arg + STRLEN(eap->arg);
-    while (p > (char_u *)eap->arg && ascii_iswhite(p[-1])) {
+    p = eap->arg + STRLEN(eap->arg);
+    while (p > eap->arg && ascii_iswhite(p[-1])) {
       p--;
     }
 
-    for (i = 0; ascii_isdigit(eap->arg[i]) && (char_u *)eap->arg + i < p; i++) {}
+    for (i = 0; ascii_isdigit(eap->arg[i]) && eap->arg + i < p; i++) {}
 
-    if ((char_u *)eap->arg + i == p) {
+    if (eap->arg + i == p) {
       // digits only
       i = (int)atol(eap->arg);
     } else {
-      i = buflist_findpat(eap->arg, (char *)p, false, true, false);
+      i = buflist_findpat(eap->arg, p, false, true, false);
 
       if (i < 0) {
         // error message already given
@@ -2718,8 +2718,8 @@ void ex_diffgetput(exarg_T *eap)
         if (nr > curtab->tp_diffbuf[idx_from]->b_ml.ml_line_count) {
           break;
         }
-        p = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx_from], nr, false));
-        ml_append(lnum + i - 1, (char *)p, 0, false);
+        p = (char *)vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx_from], nr, false));
+        ml_append(lnum + i - 1, p, 0, false);
         xfree(p);
         added++;
         if (buf_empty && (curbuf->b_ml.ml_line_count == 2)) {

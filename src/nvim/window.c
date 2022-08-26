@@ -215,7 +215,7 @@ newwindow:
   case Ctrl_Q:
   case 'q':
     reset_VIsual_and_resel();                   // stop Visual mode
-    cmd_with_count("quit", (char_u *)cbuf, sizeof(cbuf), Prenum);
+    cmd_with_count("quit", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -223,7 +223,7 @@ newwindow:
   case Ctrl_C:
   case 'c':
     reset_VIsual_and_resel();                   // stop Visual mode
-    cmd_with_count("close", (char_u *)cbuf, sizeof(cbuf), Prenum);
+    cmd_with_count("close", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -256,7 +256,7 @@ newwindow:
   case 'o':
     CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
-    cmd_with_count("only", (char_u *)cbuf, sizeof(cbuf), Prenum);
+    cmd_with_count("only", cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -622,12 +622,12 @@ wingotofile:
   }
 }
 
-static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize, int64_t Prenum)
+static void cmd_with_count(char *cmd, char *bufp, size_t bufsize, int64_t Prenum)
 {
   size_t len = STRLCPY(bufp, cmd, bufsize);
 
   if (Prenum > 0 && len < bufsize) {
-    vim_snprintf((char *)bufp + len, bufsize - len, "%" PRId64, Prenum);
+    vim_snprintf(bufp + len, bufsize - len, "%" PRId64, Prenum);
   }
 }
 
@@ -2082,7 +2082,7 @@ static int get_maximum_wincount(frame_T *fr, int height)
 void win_equal(win_T *next_curwin, bool current, int dir)
 {
   if (dir == 0) {
-    dir = *p_ead;
+    dir = (unsigned char)(*p_ead);
   }
   win_equal_rec(next_curwin == NULL ? curwin : next_curwin, current,
                 topframe, dir, 0, tabline_height(),

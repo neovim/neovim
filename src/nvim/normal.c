@@ -2718,8 +2718,6 @@ void clear_showcmd(void)
 /// @return  true if output has been written (and setcursor() has been called).
 bool add_to_showcmd(int c)
 {
-  char_u *p;
-  int i;
   static int ignore[] = {
     K_IGNORE,
     K_LEFTMOUSE, K_LEFTDRAG, K_LEFTRELEASE, K_MOUSEMOVE,
@@ -2742,14 +2740,14 @@ bool add_to_showcmd(int c)
 
   // Ignore keys that are scrollbar updates and mouse clicks
   if (IS_SPECIAL(c)) {
-    for (i = 0; ignore[i] != 0; i++) {
+    for (int i = 0; ignore[i] != 0; i++) {
       if (ignore[i] == c) {
         return false;
       }
     }
   }
 
-  p = transchar(c);
+  char *p = (char *)transchar(c);
   if (*p == ' ') {
     STRCPY(p, "<20>");
   }
@@ -2845,12 +2843,12 @@ static void display_showcmd(void)
   grid_puts_line_start(&msg_grid_adj, showcmd_row);
 
   if (!showcmd_is_clear) {
-    grid_puts(&msg_grid_adj, showcmd_buf, showcmd_row, sc_col,
+    grid_puts(&msg_grid_adj, (char *)showcmd_buf, showcmd_row, sc_col,
               HL_ATTR(HLF_MSG));
   }
 
   // clear the rest of an old message by outputting up to SHOWCMD_COLS spaces
-  grid_puts(&msg_grid_adj, (char_u *)"          " + len, showcmd_row,
+  grid_puts(&msg_grid_adj, (char *)"          " + len, showcmd_row,
             sc_col + len, HL_ATTR(HLF_MSG));
 
   grid_puts_line_flush(false);
@@ -4392,8 +4390,7 @@ static void nv_ident(cmdarg_T *cap)
     init_history();
     add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
 
-    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0,
-                        NULL);
+    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', buf, 0, NULL);
   } else {
     g_tag_at_cursor = true;
     do_cmdline_cmd(buf);
@@ -4813,7 +4810,7 @@ static void nv_search(cmdarg_T *cap)
     return;
   }
 
-  (void)normal_search(cap, cap->cmdchar, (char_u *)cap->searchbuf,
+  (void)normal_search(cap, cap->cmdchar, cap->searchbuf,
                       (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
                       ? 0 : SEARCH_MARK, NULL);
 }
@@ -4842,9 +4839,8 @@ static void nv_next(cmdarg_T *cap)
 /// @param opt  extra flags for do_search()
 ///
 /// @return 0 for failure, 1 for found, 2 for found and line offset added.
-static int normal_search(cmdarg_T *cap, int dir, char_u *pat, int opt, int *wrapped)
+static int normal_search(cmdarg_T *cap, int dir, char *pat, int opt, int *wrapped)
 {
-  int i;
   searchit_arg_T sia;
 
   cap->oap->motion_type = kMTCharWise;
@@ -4853,8 +4849,8 @@ static int normal_search(cmdarg_T *cap, int dir, char_u *pat, int opt, int *wrap
   curwin->w_set_curswant = true;
 
   CLEAR_FIELD(sia);
-  i = do_search(cap->oap, dir, dir, pat, cap->count1,
-                opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, &sia);
+  int i = do_search(cap->oap, dir, dir, (char_u *)pat, cap->count1,
+                    opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, &sia);
   if (wrapped != NULL) {
     *wrapped = sia.sa_wrapped;
   }
@@ -5625,7 +5621,7 @@ static MarkMoveRes nv_mark_move_to(cmdarg_T *cap, MarkMove flags, fmark_T *fm)
 /// Handle commands that are operators in Visual mode.
 static void v_visop(cmdarg_T *cap)
 {
-  static char_u trans[] = "YyDdCcxdXdAAIIrr";
+  static char trans[] = "YyDdCcxdXdAAIIrr";
 
   // Uppercase means linewise, except in block mode, then "D" deletes till
   // the end of the line, and "C" replaces till EOL
@@ -5637,7 +5633,7 @@ static void v_visop(cmdarg_T *cap)
       curwin->w_curswant = MAXCOL;
     }
   }
-  cap->cmdchar = (uint8_t)(*(vim_strchr((char *)trans, cap->cmdchar) + 1));
+  cap->cmdchar = (uint8_t)(*(vim_strchr(trans, cap->cmdchar) + 1));
   nv_operator(cap);
 }
 

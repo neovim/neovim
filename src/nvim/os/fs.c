@@ -911,7 +911,7 @@ int os_mkdir_recurse(const char *const dir, int32_t mode, char **const failed_di
   // We're done when it's "/" or "c:/".
   const size_t dirlen = strlen(dir);
   char *const curdir = xmemdupz(dir, dirlen);
-  char *const past_head = (char *)get_past_head((char_u *)curdir);
+  char *const past_head = get_past_head(curdir);
   char *e = curdir + dirlen;
   const char *const real_end = e;
   const char past_head_save = *past_head;

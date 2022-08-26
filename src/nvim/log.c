@@ -60,7 +60,7 @@ static bool log_try_create(char *fname)
 static void log_path_init(void)
 {
   size_t size = sizeof(log_file_path);
-  expand_env((char_u *)"$" ENV_LOGFILE, (char_u *)log_file_path, (int)size - 1);
+  expand_env("$" ENV_LOGFILE, log_file_path, (int)size - 1);
   if (strequal("$" ENV_LOGFILE, log_file_path)
       || log_file_path[0] == '\0'
       || os_isdir((char_u *)log_file_path)

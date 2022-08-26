@@ -851,7 +851,8 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       if (virtual_active() && fp == &curwin->w_cursor) {
         char *p = (char *)get_cursor_pos_ptr();
         if (curwin->w_cursor.coladd >=
-            (colnr_T)win_chartabsize(curwin, p, curwin->w_virtcol - curwin->w_cursor.coladd)) {
+            (colnr_T)win_chartabsize(curwin, p,
+                                     curwin->w_virtcol - curwin->w_cursor.coladd)) {
           int l;
           if (*p != NUL && p[(l = utfc_ptr2len(p))] == NUL) {
             col += l;
@@ -3896,12 +3897,12 @@ static void f_iconv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *const str = tv_get_string(&argvars[0]);
   char buf1[NUMBUFLEN];
   char_u *const from =
-    (char_u *)enc_canonize((char *)enc_skip((char_u *)tv_get_string_buf(&argvars[1], buf1)));
+    (char_u *)enc_canonize(enc_skip((char *)tv_get_string_buf(&argvars[1], buf1)));
   char buf2[NUMBUFLEN];
   char_u *const to =
-    (char_u *)enc_canonize((char *)enc_skip((char_u *)tv_get_string_buf(&argvars[2], buf2)));
+    (char_u *)enc_canonize(enc_skip((char *)tv_get_string_buf(&argvars[2], buf2)));
   vimconv.vc_type = CONV_NONE;
-  convert_setup(&vimconv, from, to);
+  convert_setup(&vimconv, (char *)from, (char *)to);
 
   // If the encodings are equal, no conversion needed.
   if (vimconv.vc_type == CONV_NONE) {
@@ -7072,7 +7073,7 @@ static void f_screenchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
   int pcc[MAX_MCO];
-  int c = utfc_ptr2char(grid->chars[grid->line_offset[row] + (size_t)col], pcc);
+  int c = utfc_ptr2char((char *)grid->chars[grid->line_offset[row] + (size_t)col], pcc);
   int composing_len = 0;
   while (pcc[composing_len] != 0) {
     composing_len++;
@@ -7605,7 +7606,7 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
     char_u *const csearch = (char_u *)tv_dict_get_string(d, "char", false);
     if (csearch != NULL) {
       int pcc[MAX_MCO];
-      const int c = utfc_ptr2char(csearch, pcc);
+      const int c = utfc_ptr2char((char *)csearch, pcc);
       set_last_csearch(c, csearch, utfc_ptr2len((char *)csearch));
     }
 
@@ -8402,11 +8403,10 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_string = xstrdup(_("(Invalid)"));
   } else {
     vimconv_T conv;
-    char_u *enc;
 
     conv.vc_type = CONV_NONE;
-    enc = enc_locale();
-    convert_setup(&conv, (char_u *)p_enc, enc);
+    char *enc = (char *)enc_locale();
+    convert_setup(&conv, p_enc, enc);
     if (conv.vc_type != CONV_NONE) {
       p = (char *)string_convert(&conv, (char_u *)p, NULL);
     }
@@ -8420,7 +8420,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (conv.vc_type != CONV_NONE) {
       xfree(p);
     }
-    convert_setup(&conv, enc, (char_u *)p_enc);
+    convert_setup(&conv, enc, p_enc);
     if (conv.vc_type != CONV_NONE) {
       rettv->vval.v_string = (char *)string_convert(&conv, (char_u *)result_buf, NULL);
     } else {
@@ -8665,8 +8665,8 @@ static void f_strptime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   vimconv_T conv = {
     .vc_type = CONV_NONE,
   };
-  char_u *enc = enc_locale();
-  convert_setup(&conv, (char_u *)p_enc, enc);
+  char *enc = (char *)enc_locale();
+  convert_setup(&conv, p_enc, enc);
   if (conv.vc_type != CONV_NONE) {
     fmt = (char *)string_convert(&conv, (char_u *)fmt, NULL);
   }

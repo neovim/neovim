@@ -127,7 +127,7 @@ char *find_ucmd(exarg_T *eap, char *p, int *full, expand_T *xp, int *complp)
     for (j = 0; j < gap->ga_len; j++) {
       uc = USER_CMD_GA(gap, j);
       cp = eap->cmd;
-      np = (char *)uc->uc_name;
+      np = uc->uc_name;
       k = 0;
       while (k < len && *np != NUL && *cp++ == *np++) {
         k++;
@@ -167,7 +167,7 @@ char *find_ucmd(exarg_T *eap, char *p, int *full, expand_T *xp, int *complp)
           }
           if (xp != NULL) {
             xp->xp_luaref = uc->uc_compl_luaref;
-            xp->xp_arg = (char *)uc->uc_compl_arg;
+            xp->xp_arg = uc->uc_compl_arg;
             xp->xp_script_ctx = uc->uc_script_ctx;
             xp->xp_script_ctx.sc_lnum += SOURCING_LNUM;
           }
@@ -272,12 +272,12 @@ char *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   const buf_T *const buf = prevwin_curwin()->w_buffer;
 
   if (idx < buf->b_ucmds.ga_len) {
-    return (char *)USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
+    return USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
   }
 
   idx -= buf->b_ucmds.ga_len;
   if (idx < ucmds.ga_len) {
-    char *name = (char *)USER_CMD(idx)->uc_name;
+    char *name = USER_CMD(idx)->uc_name;
 
     for (int i = 0; i < buf->b_ucmds.ga_len; i++) {
       if (STRCMP(name, USER_CMD_GA(&buf->b_ucmds, i)->uc_name) == 0) {
@@ -297,14 +297,14 @@ char *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 char *get_user_command_name(int idx, int cmdidx)
 {
   if (cmdidx == CMD_USER && idx < ucmds.ga_len) {
-    return (char *)USER_CMD(idx)->uc_name;
+    return USER_CMD(idx)->uc_name;
   }
   if (cmdidx == CMD_USER_BUF) {
     // In cmdwin, the alternative buffer should be used.
     const buf_T *const buf = prevwin_curwin()->w_buffer;
 
     if (idx < buf->b_ucmds.ga_len) {
-      return (char *)USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
+      return USER_CMD_GA(&buf->b_ucmds, idx)->uc_name;
     }
   }
   return NULL;
@@ -434,7 +434,7 @@ static void uc_list(char *name, size_t name_len)
         msg_putchar(' ');
       }
 
-      msg_outtrans_attr(cmd->uc_name, HL_ATTR(HLF_D));
+      msg_outtrans_attr((char_u *)cmd->uc_name, HL_ATTR(HLF_D));
       len = (int)STRLEN(cmd->uc_name) + 4;
 
       do {
@@ -531,7 +531,7 @@ static void uc_list(char *name, size_t name_len)
         }
       }
 
-      msg_outtrans_special(cmd->uc_rep, false,
+      msg_outtrans_special((char_u *)cmd->uc_rep, false,
                            name_len == 0 ? Columns - 47 : 0);
       if (p_verbose > 0) {
         last_set_msg(cmd->uc_script_ctx);
@@ -883,17 +883,17 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
 
     gap->ga_len++;
 
-    cmd->uc_name = (char_u *)p;
+    cmd->uc_name = p;
   }
 
-  cmd->uc_rep = (char_u *)rep_buf;
+  cmd->uc_rep = rep_buf;
   cmd->uc_argt = argt;
   cmd->uc_def = def;
   cmd->uc_compl = compl;
   cmd->uc_script_ctx = current_sctx;
   cmd->uc_script_ctx.sc_lnum += SOURCING_LNUM;
   nlua_set_sctx(&cmd->uc_script_ctx);
-  cmd->uc_compl_arg = (char_u *)compl_arg;
+  cmd->uc_compl_arg = compl_arg;
   cmd->uc_compl_luaref = compl_luaref;
   cmd->uc_preview_luaref = preview_luaref;
   cmd->uc_addr_type = addr_type;
@@ -1569,7 +1569,7 @@ int do_ucmd(exarg_T *eap, bool preview)
   // Second round: copy result into "buf".
   buf = NULL;
   for (;;) {
-    p = (char *)cmd->uc_rep;        // source
+    p = cmd->uc_rep;        // source
     q = buf;                // destination
     totlen = 0;
 

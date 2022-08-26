@@ -1889,7 +1889,7 @@ win_update_start:
       int scr_row = wp->w_grid.rows - 1;
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      grid_puts_len(&wp->w_grid, (char_u *)"@@", MIN(wp->w_grid.cols, 2), scr_row, 0, at_attr);
+      grid_puts_len(&wp->w_grid, "@@", MIN(wp->w_grid.cols, 2), scr_row, 0, at_attr);
 
       grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.cols,
                 '@', ' ', at_attr);

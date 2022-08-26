@@ -787,7 +787,7 @@ static bool expand_showtail(expand_T *xp)
   for (s = (char_u *)xp->xp_pattern; s < end; s++) {
     // Skip escaped wildcards.  Only when the backslash is not a path
     // separator, on DOS the '*' "path\*\file" must not be skipped.
-    if (rem_backslash(s)) {
+    if (rem_backslash((char *)s)) {
       s++;
     } else if (vim_strchr("*?[", *s) != NULL) {
       return false;
@@ -1242,11 +1242,10 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
       arg = (const char *)skipwhite((char *)skiptowhite((const char_u *)arg));
       if (*arg != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-        arg = (const char *)skip_regexp((char_u *)arg + 1, (uint8_t)(*arg),
-                                        p_magic, NULL);
+        arg = (const char *)skip_regexp((char *)arg + 1, (uint8_t)(*arg), p_magic, NULL);
       }
     }
-    return (const char *)find_nextcmd((char_u *)arg);
+    return (const char *)find_nextcmd(arg);
 
   // All completion for the +cmdline_compl feature goes here.
 
@@ -1282,7 +1281,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
     if (delim) {
       // Skip "from" part.
       arg++;
-      arg = (const char *)skip_regexp((char_u *)arg, delim, p_magic, NULL);
+      arg = (const char *)skip_regexp((char *)arg, delim, p_magic, NULL);
     }
     // Skip "to" part.
     while (arg[0] != NUL && (uint8_t)arg[0] != delim) {

@@ -150,8 +150,8 @@ static void showmap(mapblock_T *mp, bool local)
 {
   size_t len = 1;
 
-  if (message_filtered(mp->m_keys) && message_filtered((char_u *)mp->m_str)
-      && (mp->m_desc == NULL || message_filtered((char_u *)mp->m_desc))) {
+  if (message_filtered((char *)mp->m_keys) && message_filtered(mp->m_str)
+      && (mp->m_desc == NULL || message_filtered(mp->m_desc))) {
     return;
   }
 

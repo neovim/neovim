@@ -2274,7 +2274,7 @@ void intro_message(int colon)
       }
 
       if (*p != NUL) {
-        do_intro_line(row, (char_u *)_(p), 0);
+        do_intro_line(row, _(p), 0);
       }
       row++;
     }
@@ -2287,15 +2287,14 @@ void intro_message(int colon)
   }
 }
 
-static void do_intro_line(long row, char_u *mesg, int attr)
+static void do_intro_line(long row, char *mesg, int attr)
 {
-  long col;
-  char_u *p;
+  char *p;
   int l;
   int clen;
 
   // Center the message horizontally.
-  col = vim_strsize((char *)mesg);
+  long col = vim_strsize(mesg);
 
   col = (Columns - col) / 2;
 
@@ -2310,8 +2309,8 @@ static void do_intro_line(long row, char_u *mesg, int attr)
     for (l = 0;
          p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
          l++) {
-      clen += ptr2cells((char *)p + l);
-      l += utfc_ptr2len((char *)p + l) - 1;
+      clen += ptr2cells(p + l);
+      l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
     grid_puts_len(&default_grid, p, l, (int)row, (int)col,

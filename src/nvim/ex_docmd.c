@@ -851,8 +851,8 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
          || getline_equal(fgetline, cookie, get_func_line))
         && ex_nesting_level + 1 <= debug_break_level) {
       do_debug(getline_equal(fgetline, cookie, getsourceline)
-               ? (char_u *)_("End of sourced file")
-               : (char_u *)_("End of function"));
+               ? _("End of sourced file")
+               : _("End of function"));
     }
   }
 
@@ -3310,7 +3310,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         goto error;
       }
       if (skip) {                       // skip "/pat/"
-        cmd = (char *)skip_regexp((char_u *)cmd, c, p_magic, NULL);
+        cmd = skip_regexp(cmd, c, p_magic, NULL);
         if (*cmd == c) {
           cmd++;
         }
@@ -4295,7 +4295,7 @@ int ends_excmd(int c) FUNC_ATTR_CONST
 
 /// @return  the next command, after the first '|' or '\n' or,
 ///          NULL if not found.
-char_u *find_nextcmd(const char_u *p)
+char *find_nextcmd(const char *p)
 {
   while (*p != '|' && *p != '\n') {
     if (*p == NUL) {
@@ -4303,7 +4303,7 @@ char_u *find_nextcmd(const char_u *p)
     }
     p++;
   }
-  return (char_u *)p + 1;
+  return (char *)p + 1;
 }
 
 /// Check if *p is a separator between Ex commands, skipping over white space.
@@ -5499,7 +5499,7 @@ bool changedir_func(char *new_dir, CdScope scope)
   if (*new_dir == NUL && p_cdh) {
 #endif
     // Use NameBuff for home directory name.
-    expand_env((char_u *)"$HOME", (char_u *)NameBuff, MAXPATHL);
+    expand_env("$HOME", NameBuff, MAXPATHL);
     new_dir = (char *)NameBuff;
   }
 
@@ -6454,7 +6454,7 @@ static void ex_findpat(exarg_T *eap)
   if (*eap->arg == '/') {   // Match regexp, not just whole words
     whole = false;
     eap->arg++;
-    char *p = (char *)skip_regexp((char_u *)eap->arg, '/', p_magic, NULL);
+    char *p = skip_regexp(eap->arg, '/', p_magic, NULL);
     if (*p) {
       *p++ = NUL;
       p = skipwhite(p);

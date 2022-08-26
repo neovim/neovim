@@ -1421,7 +1421,7 @@ static void highlight_list_one(const int id)
   const HlGroup *sgp = &hl_table[id - 1];  // index is ID minus one
   bool didh = false;
 
-  if (message_filtered(sgp->sg_name)) {
+  if (message_filtered((char *)sgp->sg_name)) {
     return;
   }
 

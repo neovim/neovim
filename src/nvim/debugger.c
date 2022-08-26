@@ -47,7 +47,7 @@ struct debuggy {
 
 /// Debug mode. Repeatedly get Ex commands, until told to continue normal
 /// execution.
-void do_debug(char_u *cmd)
+void do_debug(char *cmd)
 {
   int save_msg_scroll = msg_scroll;
   int save_State = State;
@@ -239,11 +239,11 @@ void do_debug(char_u *cmd)
           last_cmd = CMD_STEP;
           break;
         case CMD_BACKTRACE:
-          do_showbacktrace(cmd);
+          do_showbacktrace((char_u *)cmd);
           continue;
         case CMD_FRAME:
           if (*p == NUL) {
-            do_showbacktrace(cmd);
+            do_showbacktrace((char_u *)cmd);
           } else {
             p = skipwhite(p);
             do_setdebugtracelevel((char_u *)p);
@@ -414,7 +414,7 @@ void dbg_check_breakpoint(exarg_T *eap)
            debug_breakpoint_name + (*p == NUL ? 0 : 3),
            (int64_t)debug_breakpoint_lnum);
       debug_breakpoint_name = NULL;
-      do_debug((char_u *)eap->cmd);
+      do_debug(eap->cmd);
     } else {
       debug_skipped = true;
       debug_skipped_name = debug_breakpoint_name;
@@ -422,7 +422,7 @@ void dbg_check_breakpoint(exarg_T *eap)
     }
   } else if (ex_nesting_level <= debug_break_level) {
     if (!eap->skip) {
-      do_debug((char_u *)eap->cmd);
+      do_debug(eap->cmd);
     } else {
       debug_skipped = true;
       debug_skipped_name = NULL;

@@ -1124,7 +1124,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
        * If there is a matching '/' or '?', toss it.
        */
       ps = (char_u *)strcopy;
-      p = skip_regexp(pat, search_delim, p_magic, &strcopy);
+      p = (char_u *)skip_regexp((char *)pat, search_delim, p_magic, &strcopy);
       if (strcopy != (char *)ps) {
         // made a copy of "pat" to change "\?" to "?"
         searchcmdlen += (int)(STRLEN(pat) - STRLEN(strcopy));
@@ -1977,7 +1977,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 
   // backward search: Check if this line contains a single-line comment
   if ((backwards && comment_dir) || lisp) {
-    comment_col = check_linecomment(linep);
+    comment_col = check_linecomment((char *)linep);
   }
   if (lisp && comment_col != MAXCOL && pos.col > (colnr_T)comment_col) {
     lispcomm = true;        // find match inside this comment
@@ -2010,7 +2010,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 
         // Check if this line contains a single-line comment
         if (comment_dir || lisp) {
-          comment_col = check_linecomment(linep);
+          comment_col = check_linecomment((char *)linep);
         }
         // skip comment
         if (lisp && comment_col != MAXCOL) {
@@ -2043,7 +2043,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         do_quotes = -1;
         line_breakcheck();
         if (lisp) {         // find comment pos in new line
-          comment_col = check_linecomment(linep);
+          comment_col = check_linecomment((char *)linep);
         }
       } else {
         pos.col += utfc_ptr2len((char *)linep + pos.col);
@@ -2301,15 +2301,15 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 
 /// Check if line[] contains a / / comment.
 /// @returns MAXCOL if not, otherwise return the column.
-int check_linecomment(const char_u *line)
+int check_linecomment(const char *line)
 {
-  const char_u *p = line;  // scan from start
+  const char *p = line;  // scan from start
   // skip Lispish one-line comments
   if (curbuf->b_p_lisp) {
     if (vim_strchr((char *)p, ';') != NULL) {   // there may be comments
       bool in_str = false;       // inside of string
 
-      while ((p = (char_u *)strpbrk((char *)p, "\";")) != NULL) {
+      while ((p = strpbrk((char *)p, "\";")) != NULL) {
         if (*p == '"') {
           if (in_str) {
             if (*(p - 1) != '\\') {             // skip escaped quote
@@ -2322,7 +2322,7 @@ int check_linecomment(const char_u *line)
           }
         } else if (!in_str && ((p - line) < 2
                                || (*(p - 1) != '\\' && *(p - 2) != '#'))
-                   && !is_pos_in_string(line, (colnr_T)(p - line))) {
+                   && !is_pos_in_string((char_u *)line, (colnr_T)(p - line))) {
           break;                // found!
         }
         p++;
@@ -2331,12 +2331,12 @@ int check_linecomment(const char_u *line)
       p = NULL;
     }
   } else {
-    while ((p = (char_u *)vim_strchr((char *)p, '/')) != NULL) {
+    while ((p = vim_strchr((char *)p, '/')) != NULL) {
       // Accept a double /, unless it's preceded with * and followed by *,
       // because * / / * is an end and start of a C comment.  Only
       // accept the position if it is not inside a string.
       if (p[1] == '/' && (p == line || p[-1] != '*' || p[2] != '*')
-          && !is_pos_in_string(line, (colnr_T)(p - line))) {
+          && !is_pos_in_string((char_u *)line, (colnr_T)(p - line))) {
         break;
       }
       p++;
@@ -3536,7 +3536,6 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
   int i;
   char_u *already = NULL;
   char_u *startp = NULL;
-  char_u *inc_opt = NULL;
   win_T *curwin_save = NULL;
   const int l_g_do_tagpreview = g_do_tagpreview;
 
@@ -3561,9 +3560,9 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
       goto fpip_end;
     }
   }
-  inc_opt = (*curbuf->b_p_inc == NUL) ? (char_u *)p_inc : (char_u *)curbuf->b_p_inc;
+  char *inc_opt = (*curbuf->b_p_inc == NUL) ? p_inc : curbuf->b_p_inc;
   if (*inc_opt != NUL) {
-    incl_regmatch.regprog = vim_regcomp((char *)inc_opt, p_magic ? RE_MAGIC : 0);
+    incl_regmatch.regprog = vim_regcomp(inc_opt, p_magic ? RE_MAGIC : 0);
     if (incl_regmatch.regprog == NULL) {
       goto fpip_end;
     }
@@ -3597,7 +3596,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
       char_u *p_fname = (curr_fname == (char_u *)curbuf->b_fname)
                         ? (char_u *)curbuf->b_ffname : curr_fname;
 
-      if (inc_opt != NULL && strstr((char *)inc_opt, "\\zs") != NULL) {
+      if (inc_opt != NULL && strstr(inc_opt, "\\zs") != NULL) {
         // Use text from '\zs' to '\ze' (or end) of 'include'.
         new_fname = find_file_name_in_path(incl_regmatch.startp[0],
                                            (size_t)(incl_regmatch.endp[0]
@@ -3674,7 +3673,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
              * Include the surrounding "" or <> if present.
              */
             if (inc_opt != NULL
-                && strstr((char *)inc_opt, "\\zs") != NULL) {
+                && strstr(inc_opt, "\\zs") != NULL) {
               // pattern contains \zs, use the match
               p = incl_regmatch.startp[0];
               i = (int)(incl_regmatch.endp[0]

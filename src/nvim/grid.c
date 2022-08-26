@@ -125,7 +125,7 @@ void grid_putchar(ScreenGrid *grid, int c, int row, int col, int attr)
   char buf[MB_MAXBYTES + 1];
 
   buf[utf_char2bytes(c, buf)] = NUL;
-  grid_puts(grid, (char_u *)buf, row, col, attr);
+  grid_puts(grid, buf, row, col, attr);
 }
 
 /// get a single character directly from grid.chars into "bytes[]".
@@ -148,7 +148,7 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes, int *attrp
 /// attributes 'attr', and update chars[] and attrs[].
 /// Note: only outputs within one row, message is truncated at grid boundary!
 /// Note: if grid, row and/or col is invalid, nothing is done.
-void grid_puts(ScreenGrid *grid, char_u *text, int row, int col, int attr)
+void grid_puts(ScreenGrid *grid, char *text, int row, int col, int attr)
 {
   grid_puts_len(grid, text, -1, row, col, attr);
 }
@@ -187,10 +187,10 @@ void grid_put_schar(ScreenGrid *grid, int row, int col, char_u *schar, int attr)
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
 /// a NUL.
-void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col, int attr)
+void grid_puts_len(ScreenGrid *grid, char *text, int textlen, int row, int col, int attr)
 {
   size_t off;
-  char_u *ptr = text;
+  char *ptr = text;
   int len = textlen;
   int c;
   size_t max_off;
@@ -237,13 +237,13 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
   while (col < grid->cols
          && (len < 0 || (int)(ptr - text) < len)
          && *ptr != NUL) {
-    c = *ptr;
+    c = (unsigned char)(*ptr);
     // check if this is the first byte of a multibyte
     mbyte_blen = len > 0
-      ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
-      : utfc_ptr2len((char *)ptr);
+      ? utfc_ptr2len_len((char_u *)ptr, (int)((text + len) - ptr))
+      : utfc_ptr2len(ptr);
     u8c = len >= 0
-      ? utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr))
+      ? utfc_ptr2char_len((char_u *)ptr, u8cc, (int)((text + len) - ptr))
       : utfc_ptr2char(ptr, u8cc);
     mbyte_cells = utf_char2cells(u8c);
     if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
@@ -254,7 +254,8 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
         nc1 = NUL;
       } else {
         nc = len >= 0
-          ? utfc_ptr2char_len(ptr + mbyte_blen, pcc, (int)((text + len) - ptr - mbyte_blen))
+          ? utfc_ptr2char_len((char_u *)ptr + mbyte_blen, pcc,
+                              (int)((text + len) - ptr - mbyte_blen))
           : utfc_ptr2char(ptr + mbyte_blen, pcc);
         nc1 = pcc[0];
       }
@@ -320,7 +321,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row, int col
     ptr += mbyte_blen;
     if (clear_next_cell) {
       // This only happens at the end, display one space next.
-      ptr = (char_u *)" ";
+      ptr = " ";
       len = -1;
     }
   }
@@ -393,11 +394,11 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
     // double wide-char clear out the right half.  Only needed in a
     // terminal.
     if (start_col > 0 && grid_fix_col(grid, start_col, row) != start_col) {
-      grid_puts_len(grid, (char_u *)" ", 1, row, start_col - 1, 0);
+      grid_puts_len(grid, " ", 1, row, start_col - 1, 0);
     }
     if (end_col < grid->cols
         && grid_fix_col(grid, end_col, row) != end_col) {
-      grid_puts_len(grid, (char_u *)" ", 1, row, end_col, 0);
+      grid_puts_len(grid, " ", 1, row, end_col, 0);
     }
 
     // if grid was resized (in ext_multigrid mode), the UI has no redraw updates

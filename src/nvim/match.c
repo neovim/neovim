@@ -1194,7 +1194,7 @@ void ex_match(exarg_T *eap)
       semsg(_(e_invarg2), eap->arg);
       return;
     }
-    end = skip_regexp(p + 1, *p, true, NULL);
+    end = (char_u *)skip_regexp((char *)p + 1, *p, true, NULL);
     if (!eap->skip) {
       if (*end != NUL && !ends_excmd(*skipwhite((char *)end + 1))) {
         xfree(g);
@@ -1215,5 +1215,5 @@ void ex_match(exarg_T *eap)
       *end = (char_u)c;
     }
   }
-  eap->nextcmd = (char *)find_nextcmd(end);
+  eap->nextcmd = find_nextcmd((char *)end);
 }
