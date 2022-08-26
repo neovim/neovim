@@ -599,8 +599,18 @@ func Test_BufEnter()
   " On MS-Windows we can't edit the directory, make sure we wipe the right
   " buffer.
   bwipe! Xdir
-
   call delete('Xdir', 'd')
+  au! BufEnter
+
+  " Editing a "nofile" buffer doesn't read the file but does trigger BufEnter
+  " for historic reasons.
+  new somefile
+  set buftype=nofile
+  au BufEnter somefile call setline(1, 'some text')
+  edit
+  call assert_equal('some text', getline(1))
+
+  bwipe!
   au! BufEnter
 endfunc
 
