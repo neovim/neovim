@@ -111,7 +111,7 @@
     (v).size = (v).size + len; \
   } while (0)
 
-#define kv_concat(v, str) kv_concat_len(v, str, STRLEN(str))
+#define kv_concat(v, str) kv_concat_len(v, str, strlen(str))
 #define kv_splice(v1, v0) kv_concat_len(v1, (v0).items, (v0).size)
 
 #define kv_pushp(v) \

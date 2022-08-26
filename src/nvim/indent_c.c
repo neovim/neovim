@@ -242,7 +242,7 @@ static const char_u *cin_skipcomment(const char_u *s)
     // Perl/shell # comment comment continues until eol.  Require a space
     // before # to avoid recognizing $#array.
     if (curbuf->b_ind_hash_comment != 0 && s != prev_s && *s == '#') {
-      s += STRLEN(s);
+      s += strlen((char *)s);
       break;
     }
     if (*s != '/') {
@@ -250,7 +250,7 @@ static const char_u *cin_skipcomment(const char_u *s)
     }
     s++;
     if (*s == '/') {            // slash-slash comment continues till eol
-      s += STRLEN(s);
+      s += strlen((char *)s);
       break;
     }
     if (*s != '*') {
@@ -697,7 +697,7 @@ static int cin_get_equal_amount(linenr_T lnum)
 
   if (lnum > 1) {
     line = (char_u *)ml_get(lnum - 1);
-    if (*line != NUL && line[STRLEN(line) - 1] == '\\') {
+    if (*line != NUL && line[strlen((char *)line) - 1] == '\\') {
       return -1;
     }
   }
@@ -750,7 +750,7 @@ static int cin_ispreproc_cont(const char_u **pp, linenr_T *lnump, int *amount)
   int retval = false;
   int candidate_amount = *amount;
 
-  if (*line != NUL && line[STRLEN(line) - 1] == '\\') {
+  if (*line != NUL && line[strlen((char *)line) - 1] == '\\') {
     candidate_amount = get_indent_lnum(lnum);
   }
 
@@ -764,7 +764,7 @@ static int cin_ispreproc_cont(const char_u **pp, linenr_T *lnump, int *amount)
       break;
     }
     line = (char_u *)ml_get(--lnum);
-    if (*line == NUL || line[STRLEN(line) - 1] != '\\') {
+    if (*line == NUL || line[strlen((char *)line) - 1] != '\\') {
       break;
     }
   }
@@ -915,7 +915,7 @@ static int cin_isfuncdecl(const char_u **sp, linenr_T first_lnum, linenr_T min_l
       //           defined(y)
       lnum = first_lnum - 1;
       s = (char_u *)ml_get(lnum);
-      if (*s == NUL || s[STRLEN(s) - 1] != '\\') {
+      if (*s == NUL || s[strlen((char *)s) - 1] != '\\') {
         retval = true;
       }
       goto done;
@@ -1306,14 +1306,14 @@ static int cin_ends_in(const char_u *s, const char_u *find, const char_u *ignore
 {
   const char_u *p = s;
   const char_u *r;
-  int len = (int)STRLEN(find);
+  int len = (int)strlen((char *)find);
 
   while (*p != NUL) {
     p = cin_skipcomment(p);
     if (STRNCMP(p, find, len) == 0) {
       r = (char_u *)skipwhite((char *)p + len);
-      if (ignore != NULL && STRNCMP(r, ignore, STRLEN(ignore)) == 0) {
-        r = (char_u *)skipwhite((char *)r + STRLEN(ignore));
+      if (ignore != NULL && STRNCMP(r, ignore, strlen((char *)ignore)) == 0) {
+        r = (char_u *)skipwhite((char *)r + strlen((char *)ignore));
       }
       if (cin_nocode(r)) {
         return true;
@@ -2897,7 +2897,7 @@ int get_c_indent(void)
           if (terminated == 0 || (lookfor != LOOKFOR_UNTERM
                                   && terminated == ',')) {
             if (lookfor != LOOKFOR_ENUM_OR_INIT
-                && (*skipwhite((char *)l) == '[' || l[STRLEN(l) - 1] == '[')) {
+                && (*skipwhite((char *)l) == '[' || l[strlen((char *)l) - 1] == '[')) {
               amount += ind_continuation;
             }
             // If we're in the middle of a paren thing, Go back to the line
@@ -2945,7 +2945,7 @@ int get_c_indent(void)
             if (terminated == ',') {
               while (curwin->w_cursor.lnum > 1) {
                 l = (char_u *)ml_get(curwin->w_cursor.lnum - 1);
-                if (*l == NUL || l[STRLEN(l) - 1] != '\\') {
+                if (*l == NUL || l[strlen((char *)l) - 1] != '\\') {
                   break;
                 }
                 curwin->w_cursor.lnum--;
@@ -3104,7 +3104,7 @@ int get_c_indent(void)
                 l = (char_u *)get_cursor_line_ptr();
                 amount = cur_amount;
 
-                n = (int)STRLEN(l);
+                n = (int)strlen((char *)l);
                 if (terminated == ','
                     && (*skipwhite((char *)l) == ']'
                         || (n >= 2 && l[n - 2] == ']'))) {
@@ -3153,7 +3153,7 @@ int get_c_indent(void)
                 } else {
                   if (lookfor == LOOKFOR_INITIAL
                       && *l != NUL
-                      && l[STRLEN(l) - 1] == '\\') {
+                      && l[strlen((char *)l) - 1] == '\\') {
                     // XXX
                     cont_amount = cin_get_equal_amount(curwin->w_cursor.lnum);
                   }
@@ -3435,7 +3435,7 @@ term_again:
     // } foo,
     //   bar;
     if (cin_ends_in(l, (char_u *)",", NULL)
-        || (*l != NUL && (n = l[STRLEN(l) - 1]) == '\\')) {
+        || (*l != NUL && (n = l[strlen((char *)l) - 1]) == '\\')) {
       // take us back to opening paren
       if (find_last_paren(l, '(', ')')
           && (trypos = find_match_paren(curbuf->b_ind_maxparen)) != NULL) {
@@ -3449,7 +3449,7 @@ term_again:
       //      here;
       while (n == 0 && curwin->w_cursor.lnum > 1) {
         l = (char_u *)ml_get(curwin->w_cursor.lnum - 1);
-        if (*l == NUL || l[STRLEN(l) - 1] != '\\') {
+        if (*l == NUL || l[strlen((char *)l) - 1] != '\\') {
           break;
         }
         curwin->w_cursor.lnum--;
@@ -3535,7 +3535,7 @@ term_again:
     if (cin_ends_in(l, (char_u *)";", NULL)) {
       l = (char_u *)ml_get(curwin->w_cursor.lnum - 1);
       if (cin_ends_in(l, (char_u *)",", NULL)
-          || (*l != NUL && l[STRLEN(l) - 1] == '\\')) {
+          || (*l != NUL && l[strlen((char *)l) - 1] == '\\')) {
         break;
       }
       l = (char_u *)get_cursor_line_ptr();
@@ -3567,7 +3567,7 @@ term_again:
   //                     here";
   if (cur_curpos.lnum > 1) {
     l = (char_u *)ml_get(cur_curpos.lnum - 1);
-    if (*l != NUL && l[STRLEN(l) - 1] == '\\') {
+    if (*l != NUL && l[strlen((char *)l) - 1] == '\\') {
       cur_amount = cin_get_equal_amount(cur_curpos.lnum - 1);
       if (cur_amount > 0) {
         amount = cur_amount;

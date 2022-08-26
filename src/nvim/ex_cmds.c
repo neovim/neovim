@@ -825,7 +825,7 @@ void ex_retab(exarg_T *eap)
             }
             if (ml_replace(lnum, new_line, false) == OK) {
               // "new_line" may have been copied
-              new_line = (char *)curbuf->b_ml.ml_line_ptr;
+              new_line = curbuf->b_ml.ml_line_ptr;
               extmark_splice_cols(curbuf, lnum - 1, 0, (colnr_T)old_len,
                                   (colnr_T)new_len - 1, kExtmarkUndo);
             }
@@ -1214,7 +1214,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   }
   // Add quotes around the command, for shells that need them.
   if (*p_shq != NUL) {
-    newcmd = xmalloc(strlen(prevcmd) + 2 * STRLEN(p_shq) + 1);
+    newcmd = xmalloc(strlen(prevcmd) + 2 * strlen(p_shq) + 1);
     STRCPY(newcmd, p_shq);
     STRCAT(newcmd, prevcmd);
     STRCAT(newcmd, p_shq);
@@ -2033,7 +2033,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
         p = p_dir;
         copy_option_part(&p, dir, MAXPATHL, ",");
       }
-      swapname = (char *)makeswapname((char_u *)fname, (char_u *)ffname, curbuf, (char_u *)dir);
+      swapname = makeswapname(fname, ffname, curbuf, dir);
       xfree(dir);
       if (os_path_exists(swapname)) {
         if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {

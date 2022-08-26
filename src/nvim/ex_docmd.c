@@ -3980,7 +3980,7 @@ void separate_nextcmd(exarg_T *eap)
   }
 
   if (!(eap->argt & EX_NOTRLCOM)) {  // remove trailing spaces
-    del_trailing_spaces((char_u *)eap->arg);
+    del_trailing_spaces(eap->arg);
   }
 }
 
@@ -4425,7 +4425,7 @@ static void ex_colorscheme(exarg_T *eap)
     } else {
       msg("default");
     }
-  } else if (load_colors((char_u *)eap->arg) == FAIL) {
+  } else if (load_colors(eap->arg) == FAIL) {
     semsg(_("E185: Cannot find color scheme '%s'"), eap->arg);
   }
 }
@@ -6715,7 +6715,7 @@ char_u *eval_vars(char_u *src, const char_u *srcstart, size_t *usedlen, linenr_T
   // Note: In "\\%" the % is also not recognized!
   if (src > srcstart && src[-1] == '\\') {
     *usedlen = 0;
-    STRMOVE(src - 1, src);      // remove backslash
+    STRMOVE(src - 1, (char *)src);      // remove backslash
     return NULL;
   }
 

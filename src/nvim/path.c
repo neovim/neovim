@@ -1521,7 +1521,7 @@ void simplify_filename(char_u *filename)
     // At this point "p" is pointing to the char following a single "/"
     // or "p" is at the "start" of the (absolute or relative) path name.
     if (vim_ispathsep(*p)) {
-      STRMOVE(p, p + 1);                // remove duplicate "/"
+      STRMOVE(p, (char *)p + 1);                // remove duplicate "/"
     } else if (p[0] == '.'
                && (vim_ispathsep(p[1]) || p[1] == NUL)) {
       if (p == start && relative) {
@@ -1539,7 +1539,7 @@ void simplify_filename(char_u *filename)
         } else if (p > start) {
           p--;                          // strip preceding path separator
         }
-        STRMOVE(p, tail);
+        STRMOVE(p, (char *)tail);
       }
     } else if (p[0] == '.' && p[1] == '.'
                && (vim_ispathsep(p[2]) || p[2] == NUL)) {
@@ -1638,16 +1638,16 @@ void simplify_filename(char_u *filename)
             if (p > start && tail[-1] == '.') {
               p--;
             }
-            STRMOVE(p, tail);                   // strip previous component
+            STRMOVE(p, (char *)tail);                   // strip previous component
           }
 
           components--;
         }
       } else if (p == start && !relative) {     // leading "/.." or "/../"
-        STRMOVE(p, tail);                       // strip ".." or "../"
+        STRMOVE(p, (char *)tail);                       // strip ".." or "../"
       } else {
         if (p == start + 2 && p[-2] == '.') {           // leading "./../"
-          STRMOVE(p - 2, p);                            // strip leading "./"
+          STRMOVE(p - 2, (char *)p);                            // strip leading "./"
           tail -= 2;
         }
         p = tail;                       // skip to char after ".." or "../"

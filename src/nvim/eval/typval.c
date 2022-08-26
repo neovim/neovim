@@ -2098,7 +2098,7 @@ char **tv_dict_to_env(dict_T *denv)
   TV_DICT_ITER(denv, var, {
     const char *str = tv_get_string(&var->di_tv);
     assert(str);
-    size_t len = STRLEN(var->di_key) + strlen(str) + strlen("=") + 1;
+    size_t len = strlen((char *)var->di_key) + strlen(str) + strlen("=") + 1;
     env[i] = xmalloc(len);
     snprintf(env[i], len, "%s=%s", (char *)var->di_key, str);
     i++;
@@ -2230,7 +2230,7 @@ int tv_dict_add(dict_T *const d, dictitem_T *const item)
   if (tv_dict_wrong_func_name(d, &item->di_tv, (const char *)item->di_key)) {
     return FAIL;
   }
-  return hash_add(&d->dv_hashtab, item->di_key);
+  return hash_add(&d->dv_hashtab, (char *)item->di_key);
 }
 
 /// Add a list entry to dictionary
@@ -2586,7 +2586,7 @@ dict_T *tv_dict_copy(const vimconv_T *const conv, dict_T *const orig, const bool
     if (conv == NULL || conv->vc_type == CONV_NONE) {
       new_di = tv_dict_item_alloc((const char *)di->di_key);
     } else {
-      size_t len = STRLEN(di->di_key);
+      size_t len = strlen((char *)di->di_key);
       char *const key = (char *)string_convert(conv, (char *)di->di_key, &len);
       if (key == NULL) {
         new_di = tv_dict_item_alloc_len((const char *)di->di_key, len);

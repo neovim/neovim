@@ -771,7 +771,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   char *s = NULL;
   char_u *oldval = NULL;  // previous value if *varp
   char *newval;
-  char_u *origval = NULL;
+  char *origval = NULL;
   char_u *origval_l = NULL;
   char_u *origval_g = NULL;
   char *saved_origval = NULL;
@@ -807,9 +807,9 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   // When setting the local value of a global option, the old value may be
   // the global value.
   if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
-    origval = *(char_u **)get_varp(&options[opt_idx]);
+    origval = *(char **)get_varp(&options[opt_idx]);
   } else {
-    origval = oldval;
+    origval = (char *)oldval;
   }
 
   if (nextchar == '&') {  // set to default val
@@ -857,8 +857,8 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
         break;
       }
       xfree(oldval);
-      if (origval == oldval) {
-        origval = *(char_u **)varp;
+      if ((char_u *)origval == oldval) {
+        origval = *(char **)varp;
       }
       if (origval_l == oldval) {
         origval_l = *(char_u **)varp;
@@ -905,7 +905,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     // get a bit too much
     newlen = (unsigned)strlen(arg) + 1;
     if (op != OP_NONE) {
-      newlen += (unsigned)STRLEN(origval) + 1;
+      newlen += (unsigned)strlen(origval) + 1;
     }
     newval = xmalloc(newlen);
     s = newval;
@@ -947,7 +947,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
         xfree(newval);
         newlen = (unsigned)strlen(s) + 1;
         if (op != OP_NONE) {
-          newlen += (unsigned)STRLEN(origval) + 1;
+          newlen += (unsigned)strlen(origval) + 1;
         }
         newval = xmalloc(newlen);
         STRCPY(newval, s);
@@ -958,8 +958,8 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     // and when adding to avoid duplicates
     int len = 0;
     if (op == OP_REMOVING || (flags & P_NODUP)) {
-      len = (int)STRLEN(newval);
-      s = find_dup_item((char *)origval, newval, flags);
+      len = (int)strlen(newval);
+      s = find_dup_item(origval, newval, flags);
 
       // do not add if already there
       if ((op == OP_ADDING || op == OP_PREPENDING) && s != NULL) {
@@ -969,7 +969,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
 
       // if no duplicate, move pointer to end of original value
       if (s == NULL) {
-        s = (char *)origval + (int)STRLEN(origval);
+        s = origval + (int)strlen(origval);
       }
     }
 
@@ -977,7 +977,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
     if (op == OP_ADDING || op == OP_PREPENDING) {
       comma = ((flags & P_COMMA) && *origval != NUL && *newval != NUL);
       if (op == OP_ADDING) {
-        len = (int)STRLEN(origval);
+        len = (int)strlen(origval);
         // Strip a trailing comma, would get 2.
         if (comma && len > 1
             && (flags & P_ONECOMMA) == P_ONECOMMA
@@ -1003,7 +1003,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
       if (*s) {
         // may need to remove a comma
         if (flags & P_COMMA) {
-          if (s == (char *)origval) {
+          if (s == origval) {
             // include comma after string
             if (s[len] == ',') {
               len++;
@@ -1014,7 +1014,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
             len++;
           }
         }
-        STRMOVE(newval + (s - (char *)origval), s + len);
+        STRMOVE(newval + (s - origval), s + len);
       }
     }
 
@@ -1050,7 +1050,7 @@ static int do_set_string(int opt_idx, int opt_flags, char **argp, int nextchar, 
   *(char_u **)(varp) = (char_u *)newval;
 
   // origval may be freed by did_set_string_option(), make a copy.
-  saved_origval = (origval != NULL) ? xstrdup((char *)origval) : NULL;
+  saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
   saved_origval_l = (origval_l != NULL) ? xstrdup((char *)origval_l) : NULL;
   saved_origval_g = (origval_g != NULL) ? xstrdup((char *)origval_g) : NULL;
 

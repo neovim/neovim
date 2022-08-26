@@ -30,7 +30,7 @@ static size_t line_len(const char *s)
   if (end) {
     return (size_t)(end - s);
   }
-  return STRLEN(s);
+  return strlen(s);
 }
 
 /// Same as matching_chars but ignore whitespace

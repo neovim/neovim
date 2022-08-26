@@ -144,7 +144,7 @@ typedef struct {
   proftime_T slowest;
   proftime_T average;
   int id;
-  char_u *pattern;
+  char *pattern;
 } time_entry_T;
 
 struct name_list {
@@ -228,7 +228,7 @@ static int running_syn_inc_tag = 0;
 // HI2KE() converts a hashitem pointer to a var pointer.
 static keyentry_T dumkey;
 #define KE2HIKEY(kp)  ((kp)->keyword)
-#define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char_u *)&dumkey)))
+#define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char *)&dumkey)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
 
 // -V:HI2KE:782
@@ -2754,7 +2754,7 @@ static int check_keyword_id(char *const line, const int startcol, int *const end
 
   // ignoring case
   if (kp == NULL && syn_block->b_keywtab_ic.ht_used != 0) {
-    str_foldcase((char_u *)kwp, kwlen, keyword, MAXKEYWLEN + 1);
+    str_foldcase((char_u *)kwp, kwlen, (char *)keyword, MAXKEYWLEN + 1);
     kp = match_keyword((char *)keyword, &syn_block->b_keywtab_ic, cur_si);
   }
 
@@ -3599,7 +3599,7 @@ static bool syn_list_keywords(const int id, const hashtab_T *const ht, bool did_
             || prev_next_list != kp->next_list) {
           force_newline = true;
         } else {
-          outlen = (int)STRLEN(kp->keyword);
+          outlen = (int)strlen(kp->keyword);
         }
         // output "contained" and "nextgroup" on each line
         if (syn_list_header(did_header, outlen, id, force_newline)) {
@@ -3672,7 +3672,7 @@ static void syn_clear_keyword(int id, hashtab_T *ht)
           if (kp_next == NULL) {
             hash_remove(ht, hi);
           } else {
-            hi->hi_key = KE2HIKEY(kp_next);
+            hi->hi_key = (char *)KE2HIKEY(kp_next);
           }
         } else {
           kp_prev->ke_next = kp_next;
@@ -3727,7 +3727,7 @@ static void add_keyword(char *const name, const int id, const int flags,
 {
   char name_folded[MAXKEYWLEN + 1];
   const char *const name_ic = (curwin->w_s->b_syn_ic)
-      ? (char *)str_foldcase((char_u *)name, (int)strlen(name), (char_u *)name_folded,
+      ? (char *)str_foldcase((char_u *)name, (int)strlen(name), name_folded,
                              sizeof(name_folded))
       : name;
 
@@ -3743,12 +3743,12 @@ static void add_keyword(char *const name, const int id, const int flags,
   }
   kp->next_list = copy_id_list(next_list);
 
-  const hash_T hash = hash_hash(kp->keyword);
+  const hash_T hash = hash_hash((char_u *)kp->keyword);
   hashtab_T *const ht = (curwin->w_s->b_syn_ic)
       ? &curwin->w_s->b_keywtab_ic
       : &curwin->w_s->b_keywtab;
   hashitem_T *const hi = hash_lookup(ht, (const char *)kp->keyword,
-                                     STRLEN(kp->keyword), hash);
+                                     strlen(kp->keyword), hash);
 
   // even though it looks like only the kp->keyword member is
   // being used here, vim uses some pointer trickery to get the original
@@ -3757,11 +3757,11 @@ static void add_keyword(char *const name, const int id, const int flags,
   if (HASHITEM_EMPTY(hi)) {
     // new keyword, add to hashtable
     kp->ke_next = NULL;
-    hash_add_item(ht, hi, kp->keyword, hash);
+    hash_add_item(ht, hi, (char_u *)kp->keyword, hash);
   } else {
     // keyword already exists, prepend to list
     kp->ke_next = HI2KE(hi);
-    hi->hi_key = KE2HIKEY(kp);
+    hi->hi_key = (char *)KE2HIKEY(kp);
   }
 }
 
@@ -5646,7 +5646,7 @@ static void syntime_report(void)
       proftime_T tm = profile_divide(spp->sp_time.total, (int)spp->sp_time.count);
       p->average = tm;
       p->id = spp->sp_syn.id;
-      p->pattern = (char_u *)spp->sp_pattern;
+      p->pattern = spp->sp_pattern;
     }
   }
 
@@ -5687,10 +5687,10 @@ static void syntime_report(void)
     } else {
       len = Columns - 70;
     }
-    if (len > (int)STRLEN(p->pattern)) {
-      len = (int)STRLEN(p->pattern);
+    if (len > (int)strlen(p->pattern)) {
+      len = (int)strlen(p->pattern);
     }
-    msg_outtrans_len((char *)p->pattern, len);
+    msg_outtrans_len(p->pattern, len);
     msg_puts("\n");
   }
   ga_clear(&ga);

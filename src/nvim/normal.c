@@ -1911,7 +1911,7 @@ bool add_to_showcmd(int c)
   if (*p == ' ') {
     STRCPY(p, "<20>");
   }
-  size_t old_len = STRLEN(showcmd_buf);
+  size_t old_len = strlen(showcmd_buf);
   size_t extra_len = strlen(p);
   size_t limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN - 1 : SHOWCMD_COLS;
   if (old_len + extra_len > limit) {
@@ -3498,7 +3498,7 @@ static void nv_ident(cmdarg_T *cap)
       p = vim_strsave_fnameescape((const char *)ptr, VSE_NONE);
     } else {
       // Escape the argument properly for a shell command
-      p = (char *)vim_strsave_shellescape((char_u *)ptr, true, true);
+      p = vim_strsave_shellescape(ptr, true, true);
     }
     xfree(ptr);
     char *newbuf = xrealloc(buf, strlen(buf) + strlen(p) + 1);

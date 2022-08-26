@@ -808,7 +808,7 @@ void draw_tabline(void)
           len = Columns - col - 1;
         }
 
-        grid_puts_len(&default_grid, (char *)p, (int)STRLEN(p), 0, col, attr);
+        grid_puts_len(&default_grid, (char *)p, (int)strlen((char *)p), 0, col, attr);
         col += len;
       }
       grid_putchar(&default_grid, ' ', 0, col++, attr);

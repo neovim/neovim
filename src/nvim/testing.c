@@ -188,7 +188,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
           if (item2 == NULL
               || !tv_equal(&TV_DICT_HI2DI(hi)->di_tv, &item2->di_tv, false, false)) {
             // item of exp_d not present in got_d or values differ.
-            const size_t key_len = STRLEN(hi->hi_key);
+            const size_t key_len = strlen(hi->hi_key);
             tv_dict_add_tv(exp_tv->vval.v_dict, (const char *)hi->hi_key, key_len,
                            &TV_DICT_HI2DI(hi)->di_tv);
             if (item2 != NULL) {
@@ -209,7 +209,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, char_u *exp_s
           dictitem_T *item2 = tv_dict_find(exp_d, (const char *)hi->hi_key, -1);
           if (item2 == NULL) {
             // item of got_d not present in exp_d
-            const size_t key_len = STRLEN(hi->hi_key);
+            const size_t key_len = strlen(hi->hi_key);
             tv_dict_add_tv(got_tv->vval.v_dict, (const char *)hi->hi_key, key_len,
                            &TV_DICT_HI2DI(hi)->di_tv);
           }

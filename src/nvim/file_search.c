@@ -512,7 +512,7 @@ char_u *vim_findfile_stopdir(char_u *buf)
     if (r_ptr[0] == '\\' && r_ptr[1] == ';') {
       // Overwrite the escape char,
       // use strlen(r_ptr) to move the trailing '\0'.
-      STRMOVE(r_ptr, r_ptr + 1);
+      STRMOVE(r_ptr, (char *)r_ptr + 1);
       r_ptr++;
     }
     r_ptr++;
