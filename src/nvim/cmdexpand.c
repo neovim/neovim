@@ -361,7 +361,7 @@ static char *ExpandOne_start(int mode, expand_T *xp, char *str, int options)
         // expand_wildcards, only need to check the first two.
         non_suf_match = 0;
         for (int i = 0; i < 2; i++) {
-          if (match_suffix((char_u *)xp->xp_files[i])) {
+          if (match_suffix(xp->xp_files[i])) {
             non_suf_match++;
           }
         }

@@ -7402,8 +7402,8 @@ static long nfa_regexec_both(char_u *line, colnr_T startcol, proftime_T *tm, int
     rex.reg_endpos = rex.reg_mmatch->endpos;
   } else {
     prog = (nfa_regprog_T *)rex.reg_match->regprog;
-    rex.reg_startp = rex.reg_match->startp;
-    rex.reg_endp = rex.reg_match->endp;
+    rex.reg_startp = (char_u **)rex.reg_match->startp;
+    rex.reg_endp = (char_u **)rex.reg_match->endp;
   }
 
   // Be paranoid...

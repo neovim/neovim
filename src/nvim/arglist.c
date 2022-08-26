@@ -633,7 +633,7 @@ void ex_argdedupe(exarg_T *eap FUNC_ATTR_UNUSED)
 {
   for (int i = 0; i < ARGCOUNT; i++) {
     for (int j = i + 1; j < ARGCOUNT; j++) {
-      if (FNAMECMP(ARGLIST[i].ae_fname, ARGLIST[j].ae_fname) == 0) {
+      if (path_fnamecmp(ARGLIST[i].ae_fname, ARGLIST[j].ae_fname) == 0) {
         xfree(ARGLIST[j].ae_fname);
         memmove(ARGLIST + j, ARGLIST + j + 1,
                 (size_t)(ARGCOUNT - j - 1) * sizeof(aentry_T));

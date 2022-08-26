@@ -60,8 +60,8 @@ static int regex_match(lua_State *lstate, regprog_T **prog, char_u *str)
   *prog = rm.regprog;
 
   if (match) {
-    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - str));
-    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.startp[0] - (char *)str));
+    lua_pushinteger(lstate, (lua_Integer)(rm.endp[0] - (char *)str));
     return 2;
   }
   return 0;

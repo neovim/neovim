@@ -8117,7 +8117,7 @@ repeat:
 
         // Do not call shorten_fname() here since it removes the prefix
         // even though the path does not have a prefix.
-        if (FNAMENCMP(p, dirname, namelen) == 0) {
+        if (path_fnamencmp(p, dirname, namelen) == 0) {
           p += namelen;
           if (vim_ispathsep(*p)) {
             while (*p && vim_ispathsep(*p)) {
@@ -8329,7 +8329,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
     while (vim_regexec_nl(&regmatch, (char_u *)str, (colnr_T)(tail - str))) {
       // Skip empty match except for first match.
       if (regmatch.startp[0] == regmatch.endp[0]) {
-        if ((char_u *)zero_width == regmatch.startp[0]) {
+        if (zero_width == regmatch.startp[0]) {
           // avoid getting stuck on a match with an empty string
           int i = utfc_ptr2len(tail);
           memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
@@ -8337,7 +8337,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
           tail += i;
           continue;
         }
-        zero_width = (char *)regmatch.startp[0];
+        zero_width = regmatch.startp[0];
       }
 
       // Get some space for a temporary buffer to do the substitution
@@ -8350,14 +8350,14 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
                          (regmatch.endp[0] - regmatch.startp[0])));
 
       // copy the text up to where the match is
-      int i = (int)(regmatch.startp[0] - (char_u *)tail);
+      int i = (int)(regmatch.startp[0] - tail);
       memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       // add the substituted text
       (void)vim_regsub(&regmatch, (char_u *)sub, expr,
                        (char_u *)ga.ga_data + ga.ga_len + i, sublen,
                        REGSUB_COPY | REGSUB_MAGIC);
       ga.ga_len += i + sublen - 1;
-      tail = (char *)regmatch.endp[0];
+      tail = regmatch.endp[0];
       if (*tail == NUL) {
         break;
       }

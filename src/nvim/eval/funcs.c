@@ -4984,9 +4984,9 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         li = TV_LIST_ITEM_NEXT(l, li);
         idx++;
       } else {
-        startcol = (colnr_T)(regmatch.startp[0]
-                             + utfc_ptr2len((char *)regmatch.startp[0]) - str);
-        if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
+        startcol = (colnr_T)((char_u *)regmatch.startp[0]
+                             + utfc_ptr2len(regmatch.startp[0]) - str);
+        if (startcol > (colnr_T)len || str + startcol <= (char_u *)regmatch.startp[0]) {
           match = false;
           break;
         }
@@ -5005,8 +5005,8 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
 
         const size_t rd = (size_t)(regmatch.endp[0] - regmatch.startp[0]);
         TV_LIST_ITEM_TV(li1)->vval.v_string = xmemdupz((const char *)regmatch.startp[0], rd);
-        TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)(regmatch.startp[0] - expr);
-        TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(regmatch.endp[0] - expr);
+        TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)((char_u *)regmatch.startp[0] - expr);
+        TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(regmatch.endp[0] - (char *)expr);
         if (l != NULL) {
           TV_LIST_ITEM_TV(li2)->vval.v_number = (varnumber_T)idx;
         }
@@ -5041,10 +5041,10 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         } else {
           if (type == kSomeMatch) {
             rettv->vval.v_number =
-              (varnumber_T)(regmatch.startp[0] - str);
+              (varnumber_T)((char_u *)regmatch.startp[0] - str);
           } else {
             rettv->vval.v_number =
-              (varnumber_T)(regmatch.endp[0] - str);
+              (varnumber_T)(regmatch.endp[0] - (char *)str);
           }
           rettv->vval.v_number += (varnumber_T)(str - expr);
         }
@@ -6225,8 +6225,8 @@ static void f_rename(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     rettv->vval.v_number = -1;
   } else {
     char buf[NUMBUFLEN];
-    rettv->vval.v_number = vim_rename((const char_u *)tv_get_string(&argvars[0]),
-                                      (const char_u *)tv_get_string_buf(&argvars[1], buf));
+    rettv->vval.v_number = vim_rename(tv_get_string(&argvars[0]),
+                                      tv_get_string_buf(&argvars[1], buf));
   }
 }
 
@@ -8193,11 +8193,11 @@ static void f_split(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         break;
       }
       // Advance to just after the match.
-      if (regmatch.endp[0] > (char_u *)str) {
+      if (regmatch.endp[0] > str) {
         col = 0;
       } else {
         // Don't get stuck at the same match.
-        col = utfc_ptr2len((char *)regmatch.endp[0]);
+        col = utfc_ptr2len(regmatch.endp[0]);
       }
       str = (const char *)regmatch.endp[0];
     }

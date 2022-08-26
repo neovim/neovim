@@ -1242,10 +1242,10 @@ static int qf_parse_fmt_f(regmatch_T *rmp, int midx, qffields_T *fields, int pre
   }
 
   // Expand ~/file and $HOME/file to full path.
-  char c = (char)(*rmp->endp[midx]);
+  char c = *rmp->endp[midx];
   *rmp->endp[midx] = NUL;
-  expand_env((char *)rmp->startp[midx], fields->namebuf, CMDBUFFSIZE);
-  *rmp->endp[midx] = (char_u)c;
+  expand_env(rmp->startp[midx], fields->namebuf, CMDBUFFSIZE);
+  *rmp->endp[midx] = c;
 
   // For separate filename patterns (%O, %P and %Q), the specified file
   // should exist.
@@ -1264,7 +1264,7 @@ static int qf_parse_fmt_n(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->enr = (int)atol((char *)rmp->startp[midx]);
+  fields->enr = (int)atol(rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1275,7 +1275,7 @@ static int qf_parse_fmt_l(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->lnum = (linenr_T)atol((char *)rmp->startp[midx]);
+  fields->lnum = (linenr_T)atol(rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1286,7 +1286,7 @@ static int qf_parse_fmt_e(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->end_lnum = (linenr_T)atol((char *)rmp->startp[midx]);
+  fields->end_lnum = (linenr_T)atol(rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1297,7 +1297,7 @@ static int qf_parse_fmt_c(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->col = (int)atol((char *)rmp->startp[midx]);
+  fields->col = (int)atol(rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1308,7 +1308,7 @@ static int qf_parse_fmt_k(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->end_col = (int)atol((char *)rmp->startp[midx]);
+  fields->end_col = (int)atol(rmp->startp[midx]);
   return QF_OK;
 }
 
@@ -1319,7 +1319,7 @@ static int qf_parse_fmt_t(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->type = (char)(*rmp->startp[midx]);
+  fields->type = *rmp->startp[midx];
   return QF_OK;
 }
 
@@ -1360,7 +1360,7 @@ static int qf_parse_fmt_r(regmatch_T *rmp, int midx, char **tail)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  *tail = (char *)rmp->startp[midx];
+  *tail = rmp->startp[midx];
   return QF_OK;
 }
 
@@ -1372,7 +1372,7 @@ static int qf_parse_fmt_p(regmatch_T *rmp, int midx, qffields_T *fields)
     return QF_FAIL;
   }
   fields->col = 0;
-  for (char *match_ptr = (char *)rmp->startp[midx]; (char_u *)match_ptr != rmp->endp[midx];
+  for (char *match_ptr = rmp->startp[midx]; match_ptr != rmp->endp[midx];
        match_ptr++) {
     fields->col++;
     if (*match_ptr == TAB) {
@@ -1392,7 +1392,7 @@ static int qf_parse_fmt_v(regmatch_T *rmp, int midx, qffields_T *fields)
   if (rmp->startp[midx] == NULL) {
     return QF_FAIL;
   }
-  fields->col = (int)atol((char *)rmp->startp[midx]);
+  fields->col = (int)atol(rmp->startp[midx]);
   fields->use_viscol = true;
   return QF_OK;
 }
@@ -1409,7 +1409,7 @@ static int qf_parse_fmt_s(regmatch_T *rmp, int midx, qffields_T *fields)
     len = CMDBUFFSIZE - 5;
   }
   STRCPY(fields->pattern, "^\\V");
-  STRLCAT(fields->pattern, rmp->startp[midx], len + 4);
+  xstrlcat(fields->pattern, rmp->startp[midx], len + 4);
   fields->pattern[len + 3] = '\\';
   fields->pattern[len + 4] = '$';
   fields->pattern[len + 5] = NUL;
@@ -1428,7 +1428,7 @@ static int qf_parse_fmt_o(regmatch_T *rmp, int midx, qffields_T *fields)
   if (dsize > CMDBUFFSIZE) {
     dsize = CMDBUFFSIZE;
   }
-  STRLCAT(fields->module, rmp->startp[midx], dsize);
+  xstrlcat(fields->module, rmp->startp[midx], dsize);
   return QF_OK;
 }
 
@@ -3074,7 +3074,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
   msg_puts(" ");
 
-  char_u *tbuf = IObuff;
+  char *tbuf = IObuff;
   size_t tbuflen = IOSIZE;
   size_t len = STRLEN(qfp->qf_text) + 3;
 
@@ -3088,8 +3088,8 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   // with ^^^^.
   qf_fmt_text((fname != NULL || qfp->qf_lnum != 0)
               ? skipwhite(qfp->qf_text) : qfp->qf_text,
-              (char *)tbuf, (int)tbuflen);
-  msg_prt_line((char *)tbuf, false);
+              tbuf, (int)tbuflen);
+  msg_prt_line(tbuf, false);
 
   if (tbuf != IObuff) {
     xfree(tbuf);
@@ -3236,7 +3236,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
       memset(buf + len, ' ', 34 - len);
       buf[34] = NUL;
     }
-    STRLCAT(buf, title, IOSIZE);
+    xstrlcat(buf, title, IOSIZE);
   }
   trunc_string(buf, buf, Columns - 1, IOSIZE);
   msg(buf);
@@ -3965,7 +3965,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
                 (char *)IObuff + len, IOSIZE - len);
   }
 
-  if (ml_append_buf(buf, lnum, IObuff,
+  if (ml_append_buf(buf, lnum, (char_u *)IObuff,
                     (colnr_T)STRLEN(IObuff) + 1, false) == FAIL) {
     return FAIL;
   }
@@ -6948,7 +6948,7 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
   }
 
   linenr_T lnum = 1;
-  while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
+  while (!vim_fgets((char_u *)IObuff, IOSIZE, fd) && !got_int) {
     char *line = (char *)IObuff;
 
     if (vim_regexec(p_regmatch, line, (colnr_T)0)) {
@@ -6967,8 +6967,8 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
                        line,
                        lnum,
                        0,
-                       (int)(p_regmatch->startp[0] - (char_u *)line) + 1,  // col
-                       (int)(p_regmatch->endp[0] - (char_u *)line)
+                       (int)(p_regmatch->startp[0] - line) + 1,  // col
+                       (int)(p_regmatch->endp[0] - line)
                        + 1,    // end_col
                        false,  // vis_col
                        NULL,   // search pattern
@@ -6977,13 +6977,13 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
                        true)    // valid
           == QF_FAIL) {
         got_int = true;
-        if ((char_u *)line != IObuff) {
+        if (line != IObuff) {
           xfree(line);
         }
         break;
       }
     }
-    if ((char_u *)line != IObuff) {
+    if (line != IObuff) {
       xfree(line);
     }
     lnum++;

@@ -117,7 +117,7 @@ struct bw_info {
 
 static char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buffer name");
 
-void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
+void filemess(buf_T *buf, char *name, char *s, int attr)
 {
   int msg_scroll_save;
 
@@ -126,7 +126,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   }
   add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)name);
   // Avoid an over-long translation to cause trouble.
-  STRLCAT(IObuff, s, IOSIZE);
+  xstrlcat(IObuff, s, IOSIZE);
   // For the first message may have to start a new line.
   // For further ones overwrite the previous one, reset msg_scroll before
   // calling filemess().
@@ -350,7 +350,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
     // If the name is too long we might crash further on, quit here.
     if (namelen >= MAXPATHL) {
-      filemess(curbuf, (char_u *)fname, (char_u *)_("Illegal file name"), 0);
+      filemess(curbuf, fname, _("Illegal file name"), 0);
       msg_end();
       msg_scroll = msg_save;
       return FAIL;
@@ -361,7 +361,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     // swap file may destroy it!  Reported on MS-DOS and Win 95.
     if (after_pathsep(fname, fname + namelen)) {
       if (!silent) {
-        filemess(curbuf, (char_u *)fname, (char_u *)_(msg_is_a_directory), 0);
+        filemess(curbuf, fname, _(msg_is_a_directory), 0);
       }
       msg_end();
       msg_scroll = msg_save;
@@ -383,10 +383,10 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
         ) {
       if (S_ISDIR(perm)) {
         if (!silent) {
-          filemess(curbuf, (char_u *)fname, (char_u *)_(msg_is_a_directory), 0);
+          filemess(curbuf, fname, _(msg_is_a_directory), 0);
         }
       } else {
-        filemess(curbuf, (char_u *)fname, (char_u *)_("is not a file"), 0);
+        filemess(curbuf, fname, _("is not a file"), 0);
       }
       msg_end();
       msg_scroll = msg_save;
@@ -475,9 +475,9 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       }
       if (!silent) {
         if (dir_of_file_exists((char_u *)fname)) {
-          filemess(curbuf, (char_u *)sfname, (char_u *)new_file_message(), 0);
+          filemess(curbuf, sfname, new_file_message(), 0);
         } else {
-          filemess(curbuf, (char_u *)sfname, (char_u *)_("[New DIRECTORY]"), 0);
+          filemess(curbuf, sfname, _("[New DIRECTORY]"), 0);
         }
       }
       // Even though this is a new file, it might have been
@@ -497,15 +497,15 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       }
       return OK;                  // a new file is not an error
     } else {
-      filemess(curbuf, (char_u *)sfname, (char_u *)((fd == UV_EFBIG) ? _("[File too big]") :
+      filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") :
 #if defined(UNIX) && defined(EOVERFLOW)
-                                                    // libuv only returns -errno
-                                                    // in Unix and in Windows
-                                                    // open() does not set
-                                                    // EOVERFLOW
-                                                    (fd == -EOVERFLOW) ? _("[File too big]") :
+                                // libuv only returns -errno
+                                // in Unix and in Windows
+                                // open() does not set
+                                // EOVERFLOW
+                                (fd == -EOVERFLOW) ? _("[File too big]") :
 #endif
-                                                    _("[Permission Denied]")), 0);
+                                _("[Permission Denied]")), 0);
       curbuf->b_p_ro = true;                  // must use "w!" now
     }
 
@@ -661,7 +661,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
 
   if (!recoverymode && !filtering && !(flags & READ_DUMMY) && !silent) {
     if (!read_stdin && !read_buffer) {
-      filemess(curbuf, (char_u *)sfname, (char_u *)"", 0);
+      filemess(curbuf, sfname, "", 0);
     }
   }
 
@@ -1728,7 +1728,7 @@ failed:
 
     if (got_int) {
       if (!(flags & READ_DUMMY)) {
-        filemess(curbuf, (char_u *)sfname, (char_u *)_(e_interr), 0);
+        filemess(curbuf, sfname, _(e_interr), 0);
         if (newfile) {
           curbuf->b_p_ro = true;                // must use "w!" now
         }
@@ -2253,7 +2253,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   fname = sfname;
 #endif
 
-  if (buf->b_ffname != NULL && FNAMECMP(ffname, buf->b_ffname) == 0) {
+  if (buf->b_ffname != NULL && path_fnamecmp(ffname, buf->b_ffname) == 0) {
     overwriting = true;
   } else {
     overwriting = false;
@@ -2455,9 +2455,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #ifndef UNIX
              (char_u *)sfname,
 #else
-             (char_u *)fname,
+             fname,
 #endif
-             (char_u *)"", 0);               // show that we are busy
+             "", 0);               // show that we are busy
   }
   msg_scroll = false;               // always overwrite the file message now
 
@@ -2596,7 +2596,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         STRCPY(IObuff, fname);
         for (i = 4913;; i += 123) {
           char *tail = path_tail((char *)IObuff);
-          size_t size = (size_t)((char_u *)tail - IObuff);
+          size_t size = (size_t)(tail - IObuff);
           snprintf(tail, IOSIZE - size, "%d", i);
           if (!os_fileinfo_link((char *)IObuff, &file_info)) {
             break;
@@ -2884,7 +2884,7 @@ nobackup:
           // If the renaming of the original file to the backup file
           // works, quit here.
           ///
-          if (vim_rename((char_u *)fname, (char_u *)backup) == 0) {
+          if (vim_rename(fname, backup) == 0) {
             break;
           }
 
@@ -3100,7 +3100,7 @@ restore_backup:
               // In that case we leave the copy around.
               // If file does not exist, put the copy in its place
               if (!os_path_exists(fname)) {
-                vim_rename((char_u *)backup, (char_u *)fname);
+                vim_rename(backup, fname);
               }
               // if original file does exist throw away the copy
               if (os_path_exists(fname)) {
@@ -3108,7 +3108,7 @@ restore_backup:
               }
             } else {
               // try to put the original file back
-              vim_rename((char_u *)backup, (char_u *)fname);
+              vim_rename(backup, fname);
             }
           }
 
@@ -3375,7 +3375,7 @@ restore_backup:
           end = 1;  // success
         }
       } else {
-        if (vim_rename((char_u *)backup, (char_u *)fname) == 0) {
+        if (vim_rename(backup, fname) == 0) {
           end = 1;
         }
       }
@@ -3471,7 +3471,7 @@ restore_backup:
       if (org == NULL) {
         emsg(_("E205: Patchmode: can't save original file"));
       } else if (!os_path_exists(org)) {
-        vim_rename((char_u *)backup, (char_u *)org);
+        vim_rename(backup, org);
         XFREE_CLEAR(backup);                   // don't delete the file
 #ifdef UNIX
         os_file_settime(org,
@@ -3716,20 +3716,20 @@ void msg_add_lines(int insert_space, long lnum, off_T nchars)
 {
   char_u *p;
 
-  p = IObuff + STRLEN(IObuff);
+  p = (char_u *)IObuff + STRLEN(IObuff);
 
   if (insert_space) {
     *p++ = ' ';
   }
   if (shortmess(SHM_LINES)) {
-    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - IObuff)), "%" PRId64 "L, %" PRId64 "B",
+    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - (char_u *)IObuff)), "%" PRId64 "L, %" PRId64 "B",
                  (int64_t)lnum, (int64_t)nchars);
   } else {
-    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - IObuff)),
+    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - (char_u *)IObuff)),
                  NGETTEXT("%" PRId64 " line, ", "%" PRId64 " lines, ", lnum),
                  (int64_t)lnum);
     p += STRLEN(p);
-    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - IObuff)),
+    vim_snprintf((char *)p, (size_t)(IOSIZE - (p - (char_u *)IObuff)),
                  NGETTEXT("%" PRId64 " byte", "%" PRId64 " bytes", nchars),
                  (int64_t)nchars);
   }
@@ -4189,7 +4189,7 @@ void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
     if (buf->b_sfname != buf->b_ffname) {
       XFREE_CLEAR(buf->b_sfname);
     }
-    p = (char *)path_shorten_fname((char_u *)buf->b_ffname, dirname);
+    p = path_shorten_fname(buf->b_ffname, (char *)dirname);
     if (p != NULL) {
       buf->b_sfname = xstrdup(p);
       buf->b_fname = buf->b_sfname;
@@ -4481,7 +4481,7 @@ int put_time(FILE *fd, time_t time_)
 /// function will (attempts to?) copy the file across if rename fails -- webb
 ///
 /// @return  -1 for failure, 0 for success
-int vim_rename(const char_u *from, const char_u *to)
+int vim_rename(const char *from, const char *to)
   FUNC_ATTR_NONNULL_ALL
 {
   int fd_in;
@@ -4498,7 +4498,7 @@ int vim_rename(const char_u *from, const char_u *to)
   // When the names are identical, there is nothing to do.  When they refer
   // to the same file (ignoring case and slash/backslash differences) but
   // the file name differs we need to go through a temp file.
-  if (FNAMECMP(from, to) == 0) {
+  if (path_fnamecmp(from, to) == 0) {
     if (p_fic && (strcmp(path_tail((char *)from), path_tail((char *)to))
                   != 0)) {
       use_tmp_file = true;
@@ -4536,13 +4536,13 @@ int vim_rename(const char_u *from, const char_u *to)
       snprintf(tail, (size_t)((MAXPATHL + 1) - (tail - (char *)tempname - 1)), "%d", n);
 
       if (!os_path_exists((char *)tempname)) {
-        if (os_rename(from, tempname) == OK) {
-          if (os_rename(tempname, to) == OK) {
+        if (os_rename((char_u *)from, tempname) == OK) {
+          if (os_rename(tempname, (char_u *)to) == OK) {
             return 0;
           }
           // Strange, the second step failed.  Try moving the
           // file back and return failure.
-          (void)os_rename(tempname, from);
+          (void)os_rename(tempname, (char_u *)from);
           return -1;
         }
         // If it fails for one temp name it will most likely fail
@@ -4560,15 +4560,15 @@ int vim_rename(const char_u *from, const char_u *to)
   os_remove((char *)to);
 
   // First try a normal rename, return if it works.
-  if (os_rename(from, to) == OK) {
+  if (os_rename((char_u *)from, (char_u *)to) == OK) {
     return 0;
   }
 
   // Rename() failed, try copying the file.
-  perm = os_getperm((const char *)from);
+  perm = os_getperm(from);
 #ifdef HAVE_ACL
   // For systems that support ACL: get the ACL from the original file.
-  acl = mch_get_acl(from);
+  acl = mch_get_acl((char_u *)from);
 #endif
   fd_in = os_open((char *)from, O_RDONLY, 0);
   if (fd_in < 0) {
@@ -4621,7 +4621,7 @@ int vim_rename(const char_u *from, const char_u *to)
   os_setperm((const char *)to, perm);
 #endif
 #ifdef HAVE_ACL
-  mch_set_acl(to, acl);
+  mch_set_acl((char_u *)to, acl);
   mch_free_acl(acl);
 #endif
   if (errmsg != NULL) {

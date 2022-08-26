@@ -2005,7 +2005,7 @@ static int command_line_handle_key(CommandLineState *s)
   } else {
     int j = utf_char2bytes(s->c, (char *)IObuff);
     IObuff[j] = NUL;                // exclude composing chars
-    put_on_cmdline(IObuff, j, true);
+    put_on_cmdline((char_u *)IObuff, j, true);
   }
   return command_line_changed(s);
 }

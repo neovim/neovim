@@ -112,7 +112,7 @@ typedef struct ff_visited {
   FileID file_id;
   // The memory for this struct is allocated according to the length of
   // ffv_fname.
-  char_u ffv_fname[1];                  // actually longer
+  char ffv_fname[1];                  // actually longer
 } ff_visited_T;
 
 // We might have to manage several visited lists during a search.
@@ -463,7 +463,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
           xfree(buf);
           goto error_return;
         }
-        STRLCAT(ff_expand_buffer, search_ctx->ffsc_fix_path, eb_len + (size_t)len + 1);
+        xstrlcat(ff_expand_buffer, search_ctx->ffsc_fix_path, eb_len + (size_t)len + 1);
         add_pathsep(ff_expand_buffer);
       } else {
         len = (int)STRLEN(search_ctx->ffsc_fix_path);
@@ -813,8 +813,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                 }
                 if (os_dirname((char_u *)ff_expand_buffer, MAXPATHL)
                     == OK) {
-                  p = path_shorten_fname(file_path,
-                                         (char_u *)ff_expand_buffer);
+                  p = (char_u *)path_shorten_fname((char *)file_path, ff_expand_buffer);
                   if (p != NULL) {
                     STRMOVE(file_path, p);
                   }
@@ -859,8 +858,8 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (STRNCMP(stackp->ffs_wc_path, "**", 2) == 0) {
         for (int i = stackp->ffs_filearray_cur;
              i < stackp->ffs_filearray_size; i++) {
-          if (FNAMECMP(stackp->ffs_filearray[i],
-                       stackp->ffs_fix_path) == 0) {
+          if (path_fnamecmp(stackp->ffs_filearray[i],
+                            (char *)stackp->ffs_fix_path) == 0) {
             continue;             // don't repush same directory
           }
           if (!os_isdir(stackp->ffs_filearray[i])) {
@@ -883,9 +882,9 @@ char_u *vim_findfile(void *search_ctx_arg)
       ff_stack_T *sptr;
 
       // is the last starting directory in the stop list?
-      if (ff_path_in_stoplist((char_u *)search_ctx->ffsc_start_dir,
+      if (ff_path_in_stoplist(search_ctx->ffsc_start_dir,
                               (int)(path_end - (char_u *)search_ctx->ffsc_start_dir),
-                              (char_u **)search_ctx->ffsc_stopdirs_v) == true) {
+                              search_ctx->ffsc_stopdirs_v) == true) {
         break;
       }
 
@@ -981,7 +980,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char *filename,
   if (*list_headp != NULL) {
     retptr = *list_headp;
     while (retptr != NULL) {
-      if (FNAMECMP(filename, retptr->ffvl_filename) == 0) {
+      if (path_fnamecmp(filename, retptr->ffvl_filename) == 0) {
 #ifdef FF_VERBOSE
         if (p_verbose >= 5) {
           verbose_enter_scroll();
@@ -1080,7 +1079,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, char *wc_p
 
   // check against list of already visited files
   for (vp = *visited_list; vp != NULL; vp = vp->ffv_next) {
-    if ((url && FNAMECMP(vp->ffv_fname, ff_expand_buffer) == 0)
+    if ((url && path_fnamecmp(vp->ffv_fname, ff_expand_buffer) == 0)
         || (!url && vp->file_id_valid
             && os_fileid_equal(&(vp->file_id), &file_id))) {
       // are the wildcard parts equal
@@ -1224,7 +1223,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
 /// check if the given path is in the stopdirs
 ///
 /// @return  true if yes else false
-static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
+static int ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
 {
   int i = 0;
 
@@ -1243,12 +1242,12 @@ static int ff_path_in_stoplist(char_u *path, int path_len, char_u **stopdirs_v)
       // match for parent directory. So '/home' also matches
       // '/home/rks'. Check for PATHSEP in stopdirs_v[i], else
       // '/home/r' would also match '/home/rks'
-      if (FNAMENCMP(stopdirs_v[i], path, path_len) == 0
+      if (path_fnamencmp(stopdirs_v[i], path, (size_t)path_len) == 0
           && vim_ispathsep(stopdirs_v[i][path_len])) {
         return true;
       }
     } else {
-      if (FNAMECMP(stopdirs_v[i], path) == 0) {
+      if (path_fnamecmp(stopdirs_v[i], path) == 0) {
         return true;
       }
     }

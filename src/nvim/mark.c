@@ -665,8 +665,8 @@ static void fname2fnum(xfmark_T *fm)
     }
 
     // Try to shorten the file name.
-    os_dirname(IObuff, IOSIZE);
-    p = path_shorten_fname((char_u *)NameBuff, IObuff);
+    os_dirname((char_u *)IObuff, IOSIZE);
+    p = (char_u *)path_shorten_fname(NameBuff, (char *)IObuff);
 
     // buflist_new() will call fmarks_check_names()
     (void)buflist_new((char *)NameBuff, (char *)p, (linenr_T)1, 0);
@@ -686,21 +686,21 @@ void fmarks_check_names(buf_T *buf)
   }
 
   for (i = 0; i < NGLOBALMARKS; i++) {
-    fmarks_check_one(&namedfm[i], name, buf);
+    fmarks_check_one(&namedfm[i], (char *)name, buf);
   }
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     for (i = 0; i < wp->w_jumplistlen; i++) {
-      fmarks_check_one(&wp->w_jumplist[i], name, buf);
+      fmarks_check_one(&wp->w_jumplist[i], (char *)name, buf);
     }
   }
 }
 
-static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf)
+static void fmarks_check_one(xfmark_T *fm, char *name, buf_T *buf)
 {
   if (fm->fmark.fnum == 0
       && fm->fname != NULL
-      && FNAMECMP(name, fm->fname) == 0) {
+      && path_fnamecmp(name, fm->fname) == 0) {
     fm->fmark.fnum = buf->b_fnum;
     XFREE_CLEAR(fm->fname);
   }

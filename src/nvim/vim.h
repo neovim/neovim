@@ -230,7 +230,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #endif
 
 #define STRCAT(d, s)        strcat((char *)(d), (char *)(s))  // NOLINT(runtime/printf)
-#define STRLCAT(d, s, n)    xstrlcat((char *)(d), (char *)(s), (size_t)(n))
 
 // Character used as separated in autoload function/variable names.
 #define AUTOLOAD_CHAR '#'
@@ -244,23 +243,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #define SHOWCMD_COLS 10                 // columns needed by shown command
 
 #include "nvim/path.h"
-
-/// Compare file names
-///
-/// On some systems case in a file name does not matter, on others it does.
-///
-/// @note Does not account for maximum name lengths and things like "../dir",
-///       thus it is not 100% accurate. OS may also use different algorithm for
-///       case-insensitive comparison.
-///
-/// @param[in]  x  First file name to compare.
-/// @param[in]  y  Second file name to compare.
-///
-/// @return 0 for equal file names, non-zero otherwise.
-#define FNAMECMP(x, y) path_fnamecmp((const char *)(x), (const char *)(y))
-#define FNAMENCMP(x, y, n) path_fnamencmp((const char *)(x), \
-                                          (const char *)(y), \
-                                          (size_t)(n))
 
 // Enums need a typecast to be used as array index.
 #define HL_ATTR(n)      hl_attr_active[(int)(n)]

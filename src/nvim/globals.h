@@ -670,7 +670,7 @@ EXTERN bool cmd_silent INIT(= false);    // don't echo the command line
 EXTERN int swap_exists_action INIT(= SEA_NONE);  ///< For dialog when swap file already exists.
 EXTERN bool swap_exists_did_quit INIT(= false);  ///< Selected "quit" at the dialog.
 
-EXTERN char_u IObuff[IOSIZE];               ///< Buffer for sprintf, I/O, etc.
+EXTERN char IObuff[IOSIZE];                 ///< Buffer for sprintf, I/O, etc.
 EXTERN char NameBuff[MAXPATHL];             ///< Buffer for expanding file names
 EXTERN char msg_buf[MSG_BUF_LEN];           ///< Small buffer for messages
 EXTERN char os_buf[                         ///< Buffer for the os/ layer

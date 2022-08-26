@@ -428,7 +428,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
         // completion.
         // Insert a backslash before '~', '$' and '.' to avoid their
         // special meaning.
-        if ((char_u *)d - IObuff > IOSIZE - 10) {           // getting too long!?
+        if (d - IObuff > IOSIZE - 10) {           // getting too long!?
           break;
         }
         switch (*s) {
@@ -459,7 +459,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
         if (*s < ' '
             || (*s == '^' && s[1]
                 && (ASCII_ISALPHA(s[1]) || vim_strchr("?@[\\]^", s[1]) != NULL))) {
-          if ((char_u *)d > IObuff && d[-1] != '_' && d[-1] != '\\') {
+          if (d > IObuff && d[-1] != '_' && d[-1] != '\\') {
             *d++ = '_';                 // prepend a '_' to make x_CTRL-x
           }
           STRCPY(d, "CTRL-");
@@ -513,15 +513,15 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
       *d = NUL;
 
       if (*IObuff == '`') {
-        if ((char_u *)d > IObuff + 2 && d[-1] == '`') {
+        if (d > IObuff + 2 && d[-1] == '`') {
           // remove the backticks from `command`
           memmove(IObuff, IObuff + 1, STRLEN(IObuff));
           d[-2] = NUL;
-        } else if ((char_u *)d > IObuff + 3 && d[-2] == '`' && d[-1] == ',') {
+        } else if (d > IObuff + 3 && d[-2] == '`' && d[-1] == ',') {
           // remove the backticks and comma from `command`,
           memmove(IObuff, IObuff + 1, STRLEN(IObuff));
           d[-3] = NUL;
-        } else if ((char_u *)d > IObuff + 4 && d[-3] == '`'
+        } else if (d > IObuff + 4 && d[-3] == '`'
                    && d[-2] == '\\' && d[-1] == '.') {
           // remove the backticks and dot from `command`\.
           memmove(IObuff, IObuff + 1, STRLEN(IObuff));
@@ -687,8 +687,8 @@ void fix_help_buffer(void)
   // In the "help.txt" and "help.abx" file, add the locally added help
   // files.  This uses the very first line in the help file.
   char *const fname = path_tail(curbuf->b_fname);
-  if (FNAMECMP(fname, "help.txt") == 0
-      || (FNAMENCMP(fname, "help.", 5) == 0
+  if (path_fnamecmp(fname, "help.txt") == 0
+      || (path_fnamencmp(fname, "help.", 5) == 0
           && ASCII_ISALPHA(fname[5])
           && ASCII_ISALPHA(fname[6])
           && TOLOWER_ASC(fname[7]) == 'x'
@@ -715,8 +715,8 @@ void fix_help_buffer(void)
 
           // Find all "doc/ *.txt" files in this directory.
           if (!add_pathsep((char *)NameBuff)
-              || STRLCAT(NameBuff, "doc/*.??[tx]",  // NOLINT
-                         sizeof(NameBuff)) >= MAXPATHL) {
+              || xstrlcat(NameBuff, "doc/*.??[tx]",  // NOLINT
+                          sizeof(NameBuff)) >= MAXPATHL) {
             emsg(_(e_fnametoolong));
             continue;
           }
@@ -746,18 +746,18 @@ void fix_help_buffer(void)
                 if (e1 == NULL || e2 == NULL) {
                   continue;
                 }
-                if (FNAMECMP(e1, ".txt") != 0
-                    && FNAMECMP(e1, fname + 4) != 0) {
+                if (path_fnamecmp(e1, ".txt") != 0
+                    && path_fnamecmp(e1, fname + 4) != 0) {
                   // Not .txt and not .abx, remove it.
                   XFREE_CLEAR(fnames[i1]);
                   continue;
                 }
                 if (e1 - f1 != e2 - f2
-                    || FNAMENCMP(f1, f2, e1 - f1) != 0) {
+                    || path_fnamencmp(f1, f2, (size_t)(e1 - f1)) != 0) {
                   continue;
                 }
-                if (FNAMECMP(e1, ".txt") == 0
-                    && FNAMECMP(e2, fname + 4) == 0) {
+                if (path_fnamecmp(e1, ".txt") == 0
+                    && path_fnamecmp(e2, fname + 4) == 0) {
                   // use .abx instead of .txt
                   XFREE_CLEAR(fnames[i1]);
                 }
@@ -772,7 +772,7 @@ void fix_help_buffer(void)
               if (fd == NULL) {
                 continue;
               }
-              vim_fgets(IObuff, IOSIZE, fd);
+              vim_fgets((char_u *)IObuff, IOSIZE, fd);
               if (IObuff[0] == '*'
                   && (s = vim_strchr((char *)IObuff + 1, '*'))
                   != NULL) {
@@ -819,7 +819,7 @@ void fix_help_buffer(void)
                 convert_setup(&vc, NULL, NULL);
 
                 ml_append(lnum, cp, (colnr_T)0, false);
-                if ((char_u *)cp != IObuff) {
+                if (cp != IObuff) {
                   xfree(cp);
                 }
                 lnum++;
@@ -871,8 +871,8 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   // Find all *.txt files.
   size_t dirlen = STRLCPY(NameBuff, dir, sizeof(NameBuff));
   if (dirlen >= MAXPATHL
-      || STRLCAT(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
-      || STRLCAT(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
+      || xstrlcat(NameBuff, "/**/*", sizeof(NameBuff)) >= MAXPATHL  // NOLINT
+      || xstrlcat(NameBuff, ext, sizeof(NameBuff)) >= MAXPATHL) {
     emsg(_(e_fnametoolong));
     return;
   }
@@ -896,7 +896,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   // Do this before scanning through all the files.
   memcpy(NameBuff, dir, dirlen + 1);
   if (!add_pathsep((char *)NameBuff)
-      || STRLCAT(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
+      || xstrlcat(NameBuff, tagfname, sizeof(NameBuff)) >= MAXPATHL) {
     emsg(_(e_fnametoolong));
     return;
   }
@@ -931,7 +931,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
     const char *const fname = files[fi] + dirlen + 1;
 
     bool firstline = true;
-    while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
+    while (!vim_fgets((char_u *)IObuff, IOSIZE, fd) && !got_int) {
       if (firstline) {
         // Detect utf-8 file by a non-ASCII char in the first line.
         TriState this_utf8 = kNone;
@@ -974,7 +974,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
           // characters, there is white space before it and is
           // followed by a white character or end-of-line.
           if (s == p2
-              && ((char_u *)p1 == IObuff || p1[-1] == ' ' || p1[-1] == '\t')
+              && (p1 == IObuff || p1[-1] == ' ' || p1[-1] == '\t')
               && (vim_strchr(" \t\n\r", s[1]) != NULL
                   || s[1] == '\0')) {
             *p2 = '\0';
@@ -1067,7 +1067,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   // Get a list of all files in the help directory and in subdirectories.
   STRLCPY(NameBuff, dirname, sizeof(NameBuff));
   if (!add_pathsep((char *)NameBuff)
-      || STRLCAT(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
+      || xstrlcat(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
     emsg(_(e_fnametoolong));
     return;
   }
