@@ -591,15 +591,15 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
 
       if (*mods.split.data.string.data == NUL) {
         // Empty string, do nothing.
-      } else if (STRCMP(mods.split.data.string.data, "aboveleft") == 0
-                 || STRCMP(mods.split.data.string.data, "leftabove") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "aboveleft") == 0
+                 || strcmp(mods.split.data.string.data, "leftabove") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_ABOVE;
-      } else if (STRCMP(mods.split.data.string.data, "belowright") == 0
-                 || STRCMP(mods.split.data.string.data, "rightbelow") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "belowright") == 0
+                 || strcmp(mods.split.data.string.data, "rightbelow") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_BELOW;
-      } else if (STRCMP(mods.split.data.string.data, "topleft") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "topleft") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_TOP;
-      } else if (STRCMP(mods.split.data.string.data, "botright") == 0) {
+      } else if (strcmp(mods.split.data.string.data, "botright") == 0) {
         cmdinfo.cmdmod.cmod_split |= WSP_BOT;
       } else {
         VALIDATION_ERROR("Invalid value for 'mods.split'");
@@ -938,7 +938,7 @@ void nvim_buf_del_user_command(Buffer buffer, String name, Error *err)
 
   for (int i = 0; i < gap->ga_len; i++) {
     ucmd_T *cmd = USER_CMD_GA(gap, i);
-    if (!STRCMP(name.data, cmd->uc_name)) {
+    if (!strcmp(name.data, cmd->uc_name)) {
       free_ucmd(cmd);
 
       gap->ga_len -= 1;

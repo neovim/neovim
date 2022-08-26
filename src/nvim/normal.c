@@ -1807,7 +1807,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
         return false;
       }
       jump_flags = 0;
-      if (STRCMP(p_mousem, "popup_setpos") == 0) {
+      if (strcmp(p_mousem, "popup_setpos") == 0) {
         // First set the cursor position before showing the popup
         // menu.
         if (VIsual_active) {
@@ -4164,7 +4164,7 @@ void do_nv_ident(int c1, int c2)
 
 /// 'K' normal-mode command. Get the command to lookup the keyword under the
 /// cursor.
-static size_t nv_K_getcmd(cmdarg_T *cap, char_u *kp, bool kp_help, bool kp_ex, char **ptr_arg,
+static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, char **ptr_arg,
                           size_t n, char *buf, size_t buf_size)
 {
   if (kp_help) {
@@ -4201,8 +4201,8 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char_u *kp, bool kp_help, bool kp_ex, c
 
   // When a count is given, turn it into a range.  Is this
   // really what we want?
-  bool isman = (STRCMP(kp, "man") == 0);
-  bool isman_s = (STRCMP(kp, "man -s") == 0);
+  bool isman = (strcmp(kp, "man") == 0);
+  bool isman_s = (strcmp(kp, "man -s") == 0);
   if (cap->count0 != 0 && !(isman || isman_s)) {
     snprintf(buf, buf_size, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
   }
@@ -4234,12 +4234,12 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char_u *kp, bool kp_help, bool kp_ex, c
 static void nv_ident(cmdarg_T *cap)
 {
   char *ptr = NULL;
-  char_u *p;
+  char *p;
   size_t n = 0;                 // init for GCC
   int cmdchar;
   bool g_cmd;                   // "g" command
   bool tag_cmd = false;
-  char_u *aux_ptr;
+  char *aux_ptr;
 
   if (cap->cmdchar == 'g') {    // "g*", "g#", "g]" and "gCTRL-]"
     cmdchar = cap->nchar;
@@ -4275,8 +4275,8 @@ static void nv_ident(cmdarg_T *cap)
   // Allocate buffer to put the command in.  Inserting backslashes can
   // double the length of the word.  p_kp / curbuf->b_p_kp could be added
   // and some numbers.
-  char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : (char_u *)curbuf->b_p_kp;  // 'keywordprg'
-  bool kp_help = (*kp == NUL || STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
+  char *kp = *curbuf->b_p_kp == NUL ? (char *)p_kp : curbuf->b_p_kp;  // 'keywordprg'
+  bool kp_help = (*kp == NUL || strcmp(kp, ":he") == 0 || strcmp(kp, ":help") == 0);
   if (kp_help && *skipwhite(ptr) == NUL) {
     emsg(_(e_noident));   // found white space only
     return;
@@ -4336,10 +4336,10 @@ static void nv_ident(cmdarg_T *cap)
     ptr = xstrnsave(ptr, n);
     if (kp_ex) {
       // Escape the argument properly for an Ex command
-      p = (char_u *)vim_strsave_fnameescape((const char *)ptr, VSE_NONE);
+      p = vim_strsave_fnameescape((const char *)ptr, VSE_NONE);
     } else {
       // Escape the argument properly for a shell command
-      p = vim_strsave_shellescape((char_u *)ptr, true, true);
+      p = (char *)vim_strsave_shellescape((char_u *)ptr, true, true);
     }
     xfree(ptr);
     char *newbuf = xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
@@ -4348,33 +4348,33 @@ static void nv_ident(cmdarg_T *cap)
     xfree(p);
   } else {
     if (cmdchar == '*') {
-      aux_ptr = (char_u *)(p_magic ? "/.*~[^$\\" : "/^$\\");
+      aux_ptr = (p_magic ? "/.*~[^$\\" : "/^$\\");
     } else if (cmdchar == '#') {
-      aux_ptr = (char_u *)(p_magic ? "/?.*~[^$\\" : "/?^$\\");
+      aux_ptr = (p_magic ? "/?.*~[^$\\" : "/?^$\\");
     } else if (tag_cmd) {
       if (curbuf->b_help) {
         // ":help" handles unescaped argument
-        aux_ptr = (char_u *)"";
+        aux_ptr = "";
       } else {
-        aux_ptr = (char_u *)"\\|\"\n[";
+        aux_ptr = "\\|\"\n[";
       }
     } else {
-      aux_ptr = (char_u *)"\\|\"\n*?[";
+      aux_ptr = "\\|\"\n*?[";
     }
 
-    p = (char_u *)buf + STRLEN(buf);
+    p = buf + STRLEN(buf);
     while (n-- > 0) {
       // put a backslash before \ and some others
-      if (vim_strchr((char *)aux_ptr, *ptr) != NULL) {
+      if (vim_strchr(aux_ptr, *ptr) != NULL) {
         *p++ = '\\';
       }
       // When current byte is a part of multibyte character, copy all
       // bytes of that character.
       const size_t len = (size_t)(utfc_ptr2len(ptr) - 1);
       for (size_t i = 0; i < len && n > 0; i++, n--) {
-        *p++ = (char_u)(*ptr++);
+        *p++ = *ptr++;
       }
-      *p++ = (char_u)(*ptr++);
+      *p++ = *ptr++;
     }
     *p = NUL;
   }

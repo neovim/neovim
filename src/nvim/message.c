@@ -321,7 +321,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
       || (*s != '<'
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
-          && STRCMP(s, last_msg_hist->msg))) {
+          && strcmp(s, last_msg_hist->msg))) {
     add_msg_hist(s, -1, attr, multiline);
   }
 
@@ -978,7 +978,7 @@ static void add_msg_hist_multiattr(const char *s, int len, int attr, bool multil
     while (len > 0 && s[len - 1] == '\n') {
       len--;
     }
-    p->msg = (char_u *)xmemdupz(s, (size_t)len);
+    p->msg = xmemdupz(s, (size_t)len);
   } else {
     p->msg = NULL;
   }
@@ -1028,7 +1028,7 @@ void ex_messages(void *const eap_p)
   struct msg_hist *p;
   int c = 0;
 
-  if (STRCMP(eap->arg, "clear") == 0) {
+  if (strcmp(eap->arg, "clear") == 0) {
     int keep = eap->addr_count == 0 ? 0 : eap->line2;
 
     while (msg_hist_len > keep) {
@@ -1095,7 +1095,7 @@ void ex_messages(void *const eap_p)
       if (kv_size(p->multiattr)) {
         msg_multiattr(p->multiattr, p->kind, false);
       } else if (p->msg != NULL) {
-        msg_attr_keep((char *)p->msg, p->attr, false, p->multiline);
+        msg_attr_keep(p->msg, p->attr, false, p->multiline);
       }
     }
     msg_hist_off = false;

@@ -177,7 +177,7 @@ void ex_menu(exarg_T *eap)
     // Change sensitivity of the menu.
     // For the PopUp menu, remove a menu for each mode separately.
     // Careful: menu_enable_recurse() changes menu_path.
-    if (STRCMP(menu_path, "*") == 0) {          // meaning: do all menus
+    if (strcmp(menu_path, "*") == 0) {          // meaning: do all menus
       menu_path = "";
     }
 
@@ -193,7 +193,7 @@ void ex_menu(exarg_T *eap)
     menu_enable_recurse(*root_menu_ptr, menu_path, modes, enable);
   } else if (unmenu) {
     // Delete menu(s).
-    if (STRCMP(menu_path, "*") == 0) {          // meaning: remove all menus
+    if (strcmp(menu_path, "*") == 0) {          // meaning: remove all menus
       menu_path = "";
     }
 

@@ -544,7 +544,7 @@ void save_file_ff(buf_T *buf)
 
   // Only use free/alloc when necessary, they take time.
   if (buf->b_start_fenc == NULL
-      || STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0) {
+      || strcmp(buf->b_start_fenc, buf->b_p_fenc) != 0) {
     xfree(buf->b_start_fenc);
     buf->b_start_fenc = xstrdup(buf->b_p_fenc);
   }
@@ -582,7 +582,7 @@ bool file_ff_differs(buf_T *buf, bool ignore_empty)
   if (buf->b_start_fenc == NULL) {
     return *buf->b_p_fenc != NUL;
   }
-  return STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0;
+  return strcmp(buf->b_start_fenc, buf->b_p_fenc) != 0;
 }
 
 /// Insert string "p" at the cursor position.  Stops at a NUL byte.

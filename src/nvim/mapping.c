@@ -971,12 +971,12 @@ static int get_map_mode(char **cmdp, bool forceit)
 /// Clear all mappings (":mapclear") or abbreviations (":abclear").
 /// "abbr" should be false for mappings, true for abbreviations.
 /// This function used to be called map_clear().
-static void do_mapclear(char *cmdp, char_u *arg, int forceit, int abbr)
+static void do_mapclear(char *cmdp, char *arg, int forceit, int abbr)
 {
   int mode;
   int local;
 
-  local = (STRCMP(arg, "<buffer>") == 0);
+  local = (strcmp(arg, "<buffer>") == 0);
   if (!local && *arg != NUL) {
     emsg(_(e_invarg));
     return;
@@ -1350,7 +1350,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char ***file)
     char **ptr3 = ptr1 + count;
 
     while (ptr2 < ptr3) {
-      if (STRCMP(*ptr1, *ptr2)) {
+      if (strcmp(*ptr1, *ptr2)) {
         *++ptr1 = *ptr2++;
       } else {
         xfree(*ptr2++);
@@ -2457,13 +2457,13 @@ void ex_unmap(exarg_T *eap)
 /// ":mapclear" and friends.
 void ex_mapclear(exarg_T *eap)
 {
-  do_mapclear(eap->cmd, (char_u *)eap->arg, eap->forceit, false);
+  do_mapclear(eap->cmd, eap->arg, eap->forceit, false);
 }
 
 /// ":abclear" and friends.
 void ex_abclear(exarg_T *eap)
 {
-  do_mapclear(eap->cmd, (char_u *)eap->arg, true, true);
+  do_mapclear(eap->cmd, eap->arg, true, true);
 }
 
 /// Set, tweak, or remove a mapping in a mode. Acts as the implementation for

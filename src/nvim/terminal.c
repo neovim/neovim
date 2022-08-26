@@ -234,7 +234,7 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
   if (buf->b_ffname != NULL) {
-    buf_set_term_title(buf, buf->b_ffname, strlen((char *)buf->b_ffname));
+    buf_set_term_title(buf, buf->b_ffname, strlen(buf->b_ffname));
   }
   RESET_BINDING(curwin);
   // Reset cursor in current window.
@@ -428,7 +428,7 @@ bool terminal_enter(void)
   long save_w_p_so = curwin->w_p_so;
   long save_w_p_siso = curwin->w_p_siso;
   if (curwin->w_p_cul && curwin->w_p_culopt_flags & CULOPT_NBR) {
-    if (STRCMP(curwin->w_p_culopt, "number")) {
+    if (strcmp(curwin->w_p_culopt, "number")) {
       save_w_p_culopt = curwin->w_p_culopt;
       curwin->w_p_culopt = xstrdup("number");
     }

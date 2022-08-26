@@ -98,7 +98,7 @@ typedef struct syn_pattern {
 
 typedef struct syn_cluster_S {
   char_u *scl_name;         // syntax cluster name
-  char_u *scl_name_u;       // uppercase of scl_name
+  char *scl_name_u;         // uppercase of scl_name
   int16_t *scl_list;        // IDs in this syntax cluster
 } syn_cluster_T;
 
@@ -3918,7 +3918,7 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
           return NULL;
         }
         gname = xstrnsave(gname_start, (size_t)(arg - gname_start));
-        if (STRCMP(gname, "NONE") == 0) {
+        if (strcmp(gname, "NONE") == 0) {
           *opt->sync_idx = NONE_IDX;
         } else {
           syn_id = syn_name2id(gname);
@@ -4306,13 +4306,13 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
     }
     xfree(key);
     key = vim_strnsave_up(rest, (size_t)(key_end - rest));
-    if (STRCMP(key, "MATCHGROUP") == 0) {
+    if (strcmp(key, "MATCHGROUP") == 0) {
       item = ITEM_MATCHGROUP;
-    } else if (STRCMP(key, "START") == 0) {
+    } else if (strcmp(key, "START") == 0) {
       item = ITEM_START;
-    } else if (STRCMP(key, "END") == 0) {
+    } else if (strcmp(key, "END") == 0) {
       item = ITEM_END;
-    } else if (STRCMP(key, "SKIP") == 0) {
+    } else if (strcmp(key, "SKIP") == 0) {
       if (pat_ptrs[ITEM_SKIP] != NULL) {  // One skip pattern allowed.
         illegal = true;
         break;
@@ -4584,7 +4584,7 @@ static int syn_scl_name2id(char *name)
   int i;
   for (i = curwin->w_s->b_syn_clusters.ga_len; --i >= 0;) {
     if (SYN_CLSTR(curwin->w_s)[i].scl_name_u != NULL
-        && STRCMP(name_u, SYN_CLSTR(curwin->w_s)[i].scl_name_u) == 0) {
+        && strcmp(name_u, SYN_CLSTR(curwin->w_s)[i].scl_name_u) == 0) {
       break;
     }
   }
@@ -4642,7 +4642,7 @@ static int syn_add_cluster(char *name)
                                          &curwin->w_s->b_syn_clusters);
   CLEAR_POINTER(scp);
   scp->scl_name = (char_u *)name;
-  scp->scl_name_u = vim_strsave_up((char_u *)name);
+  scp->scl_name_u = (char *)vim_strsave_up((char_u *)name);
   scp->scl_list = NULL;
 
   if (STRICMP(name, "Spell") == 0) {
@@ -4847,7 +4847,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
     next_arg = skipwhite(arg_end);
     xfree(key);
     key = vim_strnsave_up(arg_start, (size_t)(arg_end - arg_start));
-    if (STRCMP(key, "CCOMMENT") == 0) {
+    if (strcmp(key, "CCOMMENT") == 0) {
       if (!eap->skip) {
         curwin->w_s->b_syn_sync_flags |= SF_CCOMMENT;
       }
@@ -4886,12 +4886,12 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
           curwin->w_s->b_syn_sync_minlines = n;
         }
       }
-    } else if (STRCMP(key, "FROMSTART") == 0) {
+    } else if (strcmp(key, "FROMSTART") == 0) {
       if (!eap->skip) {
         curwin->w_s->b_syn_sync_minlines = MAXLNUM;
         curwin->w_s->b_syn_sync_maxlines = 0;
       }
-    } else if (STRCMP(key, "LINECONT") == 0) {
+    } else if (strcmp(key, "LINECONT") == 0) {
       if (*next_arg == NUL) {  // missing pattern
         illegal = true;
         break;
@@ -4930,11 +4930,11 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
       next_arg = skipwhite(arg_end + 1);
     } else {
       eap->arg = next_arg;
-      if (STRCMP(key, "MATCH") == 0) {
+      if (strcmp(key, "MATCH") == 0) {
         syn_cmd_match(eap, true);
-      } else if (STRCMP(key, "REGION") == 0) {
+      } else if (strcmp(key, "REGION") == 0) {
         syn_cmd_region(eap, true);
-      } else if (STRCMP(key, "CLEAR") == 0) {
+      } else if (strcmp(key, "CLEAR") == 0) {
         syn_cmd_clear(eap, true);
       } else {
         illegal = true;
@@ -4997,10 +4997,10 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
       for (end = p; *end && !ascii_iswhite(*end) && *end != ','; end++) {}
       char *const name = xmalloc((size_t)(end - p) + 3);   // leave room for "^$"
       STRLCPY(name + 1, p, end - p + 1);
-      if (STRCMP(name + 1, "ALLBUT") == 0
-          || STRCMP(name + 1, "ALL") == 0
-          || STRCMP(name + 1, "TOP") == 0
-          || STRCMP(name + 1, "CONTAINED") == 0) {
+      if (strcmp(name + 1, "ALLBUT") == 0
+          || strcmp(name + 1, "ALL") == 0
+          || strcmp(name + 1, "TOP") == 0
+          || strcmp(name + 1, "CONTAINED") == 0) {
         if (TOUPPER_ASC(**arg) != 'C') {
           semsg(_("E407: %s not allowed here"), name + 1);
           failed = true;
@@ -5280,7 +5280,7 @@ void ex_syntax(exarg_T *eap)
       semsg(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
       break;
     }
-    if (STRCMP(subcmd_name, subcommands[i].name) == 0) {
+    if (strcmp(subcmd_name, subcommands[i].name) == 0) {
       eap->arg = skipwhite(subcmd_end);
       (subcommands[i].func)(eap, false);
       break;
@@ -5566,13 +5566,13 @@ int syn_get_foldlevel(win_T *wp, linenr_T lnum)
 // ":syntime".
 void ex_syntime(exarg_T *eap)
 {
-  if (STRCMP(eap->arg, "on") == 0) {
+  if (strcmp(eap->arg, "on") == 0) {
     syn_time_on = true;
-  } else if (STRCMP(eap->arg, "off") == 0) {
+  } else if (strcmp(eap->arg, "off") == 0) {
     syn_time_on = false;
-  } else if (STRCMP(eap->arg, "clear") == 0) {
+  } else if (strcmp(eap->arg, "clear") == 0) {
     syntime_clear();
-  } else if (STRCMP(eap->arg, "report") == 0) {
+  } else if (strcmp(eap->arg, "report") == 0) {
     syntime_report();
   } else {
     semsg(_(e_invarg2), eap->arg);

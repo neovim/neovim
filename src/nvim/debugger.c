@@ -646,7 +646,7 @@ void ex_breakdel(exarg_T *eap)
     for (int i = 0; i < gap->ga_len; i++) {
       bpi = &DEBUGGY(gap, i);
       if (bp->dbg_type == bpi->dbg_type
-          && STRCMP(bp->dbg_name, bpi->dbg_name) == 0
+          && strcmp(bp->dbg_name, bpi->dbg_name) == 0
           && (bp->dbg_lnum == bpi->dbg_lnum
               || (bp->dbg_lnum == 0
                   && (best_lnum == 0

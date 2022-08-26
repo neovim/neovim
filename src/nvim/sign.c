@@ -86,7 +86,7 @@ static signgroup_T *sign_group_ref(const char *groupname)
     STRCPY(group->sg_name, groupname);
     group->sg_refcount = 1;
     group->sg_next_sign_id = 1;
-    hash_add_item(&sg_table, hi, group->sg_name, hash);
+    hash_add_item(&sg_table, hi, (char_u *)group->sg_name, hash);
   } else {
     // existing group
     group = HI2SG(hi);
@@ -119,10 +119,10 @@ static void sign_group_unref(char *groupname)
 /// or in a named group. If 'group' is '*', then the sign is part of the group.
 static bool sign_in_group(sign_entry_T *sign, const char *group)
 {
-  return ((group != NULL && STRCMP(group, "*") == 0)
+  return ((group != NULL && strcmp(group, "*") == 0)
           || (group == NULL && sign->se_group == NULL)
           || (group != NULL && sign->se_group != NULL
-              && STRCMP(group, sign->se_group->sg_name) == 0));
+              && strcmp(group, sign->se_group->sg_name) == 0));
 }
 
 /// Get the next free sign identifier in the specified group
@@ -784,7 +784,7 @@ static int sign_cmd_idx(char *begin_cmd, char *end_cmd)
 
   *end_cmd = NUL;
   for (idx = 0;; idx++) {
-    if (cmds[idx] == NULL || STRCMP(begin_cmd, cmds[idx]) == 0) {
+    if (cmds[idx] == NULL || strcmp(begin_cmd, cmds[idx]) == 0) {
       break;
     }
   }
@@ -801,7 +801,7 @@ static sign_T *sign_find(const char *name, sign_T **sp_prev)
     *sp_prev = NULL;
   }
   for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-    if (STRCMP(sp->sn_name, name) == 0) {
+    if (strcmp(sp->sn_name, name) == 0) {
       break;
     }
     if (sp_prev != NULL) {
@@ -1034,7 +1034,7 @@ static int sign_place(int *sign_id, const char *sign_group, const char *sign_nam
   }
 
   for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-    if (STRCMP(sp->sn_name, sign_name) == 0) {
+    if (strcmp(sp->sn_name, sign_name) == 0) {
       break;
     }
   }

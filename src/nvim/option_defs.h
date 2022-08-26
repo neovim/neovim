@@ -503,7 +503,7 @@ EXTERN int p_eb;                // 'errorbells'
 EXTERN char_u *p_ef;            // 'errorfile'
 EXTERN char *p_efm;             // 'errorformat'
 EXTERN char *p_gefm;            // 'grepformat'
-EXTERN char_u *p_gp;            // 'grepprg'
+EXTERN char *p_gp;              // 'grepprg'
 EXTERN int p_eol;               ///< 'endofline'
 EXTERN char *p_ei;              // 'eventignore'
 EXTERN int p_et;                ///< 'expandtab'
@@ -684,11 +684,11 @@ EXTERN unsigned ssop_flags;
 #define SSOP_TERMINAL          0x10000
 #define SSOP_SKIP_RTP          0x20000
 
-EXTERN char_u *p_sh;            // 'shell'
+EXTERN char *p_sh;              // 'shell'
 EXTERN char_u *p_shcf;          // 'shellcmdflag'
 EXTERN char *p_sp;              // 'shellpipe'
 EXTERN char_u *p_shq;           // 'shellquote'
-EXTERN char_u *p_sxq;           // 'shellxquote'
+EXTERN char *p_sxq;             // 'shellxquote'
 EXTERN char_u *p_sxe;           // 'shellxescape'
 EXTERN char *p_srr;             // 'shellredir'
 EXTERN int p_stmp;              // 'shelltemp'

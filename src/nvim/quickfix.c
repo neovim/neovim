@@ -1098,7 +1098,7 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
 
   // If the errorformat didn't change between calls, then reuse the previously
   // parsed values.
-  if (last_efm == NULL || (STRCMP(last_efm, efm) != 0)) {
+  if (last_efm == NULL || (strcmp(last_efm, efm) != 0)) {
     // free the previously parsed data
     XFREE_CLEAR(last_efm);
     free_efm_list(&fmt_first);
@@ -2085,7 +2085,7 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
   }
 
   if (qf_last_bufname != NULL
-      && STRCMP(bufname, qf_last_bufname) == 0
+      && strcmp(bufname, qf_last_bufname) == 0
       && bufref_valid(&qf_last_bufref)) {
     buf = qf_last_bufref.br_buf;
     xfree(ptr);
@@ -4180,8 +4180,7 @@ int grep_internal(cmdidx_T cmdidx)
           || cmdidx == CMD_lgrep
           || cmdidx == CMD_grepadd
           || cmdidx == CMD_lgrepadd)
-         && STRCMP("internal",
-                   *curbuf->b_p_gp == NUL ? p_gp : (char_u *)curbuf->b_p_gp) == 0;
+         && strcmp("internal", *curbuf->b_p_gp == NUL ? p_gp : curbuf->b_p_gp) == 0;
 }
 
 // Return the make/grep autocmd name.
@@ -5417,7 +5416,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
           // directory we jumped to below.
           if (buf == *first_match_buf
               && *target_dir == NULL
-              && STRCMP(dirname_start, dirname_now) != 0) {
+              && strcmp(dirname_start, dirname_now) != 0) {
             *target_dir = xstrdup(dirname_now);
           }
 
@@ -5540,7 +5539,7 @@ static void restore_start_dir(char *dirname_start)
   char *dirname_now = xmalloc(MAXPATHL);
 
   os_dirname((char_u *)dirname_now, MAXPATHL);
-  if (STRCMP(dirname_start, dirname_now) != 0) {
+  if (strcmp(dirname_start, dirname_now) != 0) {
     // If the directory has changed, change it back by building up an
     // appropriate ex command and executing it.
     exarg_T ea = {
@@ -6498,7 +6497,7 @@ static int qf_setprop_curidx(qf_info_T *qi, qf_list_T *qfl, const dictitem_T *di
   // If the specified index is '$', then use the last entry
   if (di->di_tv.v_type == VAR_STRING
       && di->di_tv.vval.v_string != NULL
-      && STRCMP(di->di_tv.vval.v_string, "$") == 0) {
+      && strcmp(di->di_tv.vval.v_string, "$") == 0) {
     newidx = qfl->qf_count;
   } else {
     // Otherwise use the specified index

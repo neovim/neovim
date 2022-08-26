@@ -115,7 +115,7 @@ local value_dumpers = {
 }
 
 local get_value = function(v)
-  return '(char_u *) ' .. value_dumpers[type(v)](v)
+  return '(char *) ' .. value_dumpers[type(v)](v)
 end
 
 local get_defaults = function(d,n)

@@ -683,7 +683,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       }
     }
   } else if (varp == &p_bex || varp == &p_pm) {  // 'backupext' and 'patchmode'
-    if (STRCMP(*p_bex == '.' ? p_bex + 1 : p_bex,
+    if (strcmp(*p_bex == '.' ? p_bex + 1 : p_bex,
                *p_pm == '.' ? p_pm + 1 : p_pm) == 0) {
       errmsg = e_backupext_and_patchmode_are_equal;
     }
@@ -731,7 +731,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
       }
     }
   } else if (varp == &p_hl) {  // 'highlight'
-    if (STRCMP(*varp, HIGHLIGHT_INIT) != 0) {
+    if (strcmp(*varp, HIGHLIGHT_INIT) != 0) {
       errmsg = e_unsupportedoption;
     }
   } else if (varp == &p_jop) {  // 'jumpoptions'
@@ -823,13 +823,13 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
 
     if (errmsg == NULL) {
-      // canonize the value, so that STRCMP() can be used on it
+      // canonize the value, so that strcmp() can be used on it
       p = enc_canonize(*varp);
       xfree(*varp);
       *varp = p;
       if (varp == &p_enc) {
         // only encoding=utf-8 allowed
-        if (STRCMP(p_enc, "utf-8") != 0) {
+        if (strcmp(p_enc, "utf-8") != 0) {
           errmsg = e_unsupportedoption;
         } else {
           spell_reload();
@@ -1358,7 +1358,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     } else {
       if (opt_strings_flags(ve, p_ve_values, flags, true) != OK) {
         errmsg = e_invarg;
-      } else if (STRCMP(p_ve, oldval) != 0) {
+      } else if (strcmp(p_ve, oldval) != 0) {
         // Recompute cursor position in case the new 've' setting
         // changes something.
         validate_virtcol();
@@ -1393,7 +1393,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
-      value_changed = STRCMP(oldval, *varp) != 0;
+      value_changed = strcmp(oldval, *varp) != 0;
 
       // Since we check the value, there is no need to set P_INSECURE,
       // even when the value comes from a modeline.
@@ -1403,7 +1403,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
-      value_changed = STRCMP(oldval, *varp) != 0;
+      value_changed = strcmp(oldval, *varp) != 0;
 
       // Since we check the value, there is no need to set P_INSECURE,
       // even when the value comes from a modeline.

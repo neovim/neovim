@@ -379,7 +379,7 @@ static int string_compare(const void *s1, const void *s2) FUNC_ATTR_NONNULL_ALL
   if (sort_lc) {
     return strcoll((char *)s1, (char *)s2);
   }
-  return sort_ic ? STRICMP(s1, s2) : STRCMP(s1, s2);
+  return sort_ic ? STRICMP(s1, s2) : strcmp(s1, s2);
 }
 
 static int sort_compare(const void *s1, const void *s2)
@@ -1535,12 +1535,12 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 {
   bool is_fish_shell =
 #if defined(UNIX)
-    STRNCMP(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
+    STRNCMP(invocation_path_tail((char_u *)p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
-  bool is_pwsh = STRNCMP(invocation_path_tail(p_sh, NULL), "pwsh", 4) == 0
-                 || STRNCMP(invocation_path_tail(p_sh, NULL), "powershell", 10) == 0;
+  bool is_pwsh = STRNCMP(invocation_path_tail((char_u *)p_sh, NULL), "pwsh", 4) == 0
+                 || STRNCMP(invocation_path_tail((char_u *)p_sh, NULL), "powershell", 10) == 0;
 
   size_t len = STRLEN(cmd) + 1;  // At least enough space for cmd + NULL.
 
@@ -3258,7 +3258,7 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, char *sub, char *cmd, boo
   // TODO(vim): find a generic solution to make line-joining operations more
   // efficient, avoid allocating a string that grows in size.
   if (pat != NULL
-      && STRCMP(pat, "\\n") == 0
+      && strcmp(pat, "\\n") == 0
       && *sub == NUL
       && (*cmd == NUL || (cmd[1] == NUL
                           && (*cmd == 'g'

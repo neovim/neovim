@@ -651,7 +651,7 @@ static bool path_is_after(char *buf, size_t buflen)
   // "after" dir in SOME codepaths not not in ALL codepaths.
   return buflen >= 5
          && (!(buflen >= 6) || vim_ispathsep(buf[buflen - 6]))
-         && STRCMP(buf + buflen - 5, "after") == 0;
+         && strcmp(buf + buflen - 5, "after") == 0;
 }
 
 RuntimeSearchPath runtime_search_path_build(void)

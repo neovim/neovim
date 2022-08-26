@@ -355,12 +355,12 @@ struct affentry_S {
 
 // Affix header from ".aff" file.  Used for af_pref and af_suff.
 typedef struct affheader_S {
-  char_u ah_key[AH_KEY_LEN];    // key for hashtab == name of affix
+  char ah_key[AH_KEY_LEN];      // key for hashtab == name of affix
   unsigned ah_flag;             // affix name as number, uses "af_flagtype"
   int ah_newID;                 // prefix ID after renumbering; 0 if not used
   int ah_combine;               // suffix may combine with prefix
   int ah_follows;               // another affix block should be following
-  affentry_T *ah_first;        // first affix entry
+  affentry_T *ah_first;         // first affix entry
 } affheader_T;
 
 #define HI2AH(hi)   ((affheader_T *)(hi)->hi_key)
@@ -2102,7 +2102,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       }
       items[itemcnt++] = p;
       // A few items have arbitrary text argument, don't split them.
-      if (itemcnt == 2 && spell_info_item((char_u *)items[0])) {
+      if (itemcnt == 2 && spell_info_item(items[0])) {
         while ((uint8_t)(*p) >= ' ' || *p == TAB) {  // skip until CR/NL
           p++;
         }
@@ -2130,11 +2130,11 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         spin->si_conv.vc_fail = true;
       } else if (is_aff_rule(items, itemcnt, "FLAG", 2)
                  && aff->af_flagtype == AFT_CHAR) {
-        if (STRCMP(items[1], "long") == 0) {
+        if (strcmp(items[1], "long") == 0) {
           aff->af_flagtype = AFT_LONG;
-        } else if (STRCMP(items[1], "num") == 0) {
+        } else if (strcmp(items[1], "num") == 0) {
           aff->af_flagtype = AFT_NUM;
-        } else if (STRCMP(items[1], "caplong") == 0) {
+        } else if (strcmp(items[1], "caplong") == 0) {
           aff->af_flagtype = AFT_CAPLONG;
         } else {
           smsg(_("Invalid value for FLAG in %s line %d: %s"),
@@ -2154,7 +2154,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           smsg(_("FLAG after using flags in %s line %d: %s"),
                fname, lnum, items[1]);
         }
-      } else if (spell_info_item((char_u *)items[0]) && itemcnt > 1) {
+      } else if (spell_info_item(items[0]) && itemcnt > 1) {
         p = getroom(spin,
                     (spin->si_info == NULL ? 0 : STRLEN(spin->si_info))
                     + STRLEN(items[0])
@@ -2299,8 +2299,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 
         // Only add the couple if it isn't already there.
         for (i = 0; i < gap->ga_len - 1; i += 2) {
-          if (STRCMP(((char **)(gap->ga_data))[i], items[1]) == 0
-              && STRCMP(((char **)(gap->ga_data))[i + 1], items[2]) == 0) {
+          if (strcmp(((char **)(gap->ga_data))[i], items[1]) == 0
+              && strcmp(((char **)(gap->ga_data))[i + 1], items[2]) == 0) {
             break;
           }
         }
@@ -2324,8 +2324,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         aff->af_pfxpostpone = true;
       } else if (is_aff_rule(items, itemcnt, "IGNOREEXTRA", 1)) {
         aff->af_ignoreextra = true;
-      } else if ((STRCMP(items[0], "PFX") == 0
-                  || STRCMP(items[0], "SFX") == 0)
+      } else if ((strcmp(items[0], "PFX") == 0
+                  || strcmp(items[0], "SFX") == 0)
                  && aff_todo == 0
                  && itemcnt >= 4) {
         int lasti = 4;
@@ -2375,14 +2375,14 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                  fname, lnum, items[1]);
           }
           STRCPY(cur_aff->ah_key, items[1]);
-          hash_add(tp, cur_aff->ah_key);
+          hash_add(tp, (char_u *)cur_aff->ah_key);
 
           cur_aff->ah_combine = (*items[2] == 'Y');
         }
 
         // Check for the "S" flag, which apparently means that another
         // block with the same affix name is following.
-        if (itemcnt > lasti && STRCMP(items[lasti], "S") == 0) {
+        if (itemcnt > lasti && strcmp(items[lasti], "S") == 0) {
           lasti++;
           cur_aff->ah_follows = true;
         } else {
@@ -2398,7 +2398,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           smsg(_(e_afftrailing), fname, lnum, items[lasti]);
         }
 
-        if (STRCMP(items[2], "Y") != 0 && STRCMP(items[2], "N") != 0) {
+        if (strcmp(items[2], "Y") != 0 && strcmp(items[2], "N") != 0) {
           smsg(_("Expected Y or N in %s line %d: %s"),
                fname, lnum, items[2]);
         }
@@ -2421,10 +2421,10 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         }
 
         aff_todo = atoi((char *)items[3]);
-      } else if ((STRCMP(items[0], "PFX") == 0
-                  || STRCMP(items[0], "SFX") == 0)
+      } else if ((strcmp(items[0], "PFX") == 0
+                  || strcmp(items[0], "SFX") == 0)
                  && aff_todo > 0
-                 && STRCMP(cur_aff->ah_key, items[1]) == 0
+                 && strcmp(cur_aff->ah_key, items[1]) == 0
                  && itemcnt >= 5) {
         affentry_T *aff_entry;
         bool upper = false;
@@ -2434,7 +2434,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         // mean mistakes go unnoticed.  Require a comment-starter.
         // Hunspell uses a "-" item.
         if (itemcnt > lasti && *items[lasti] != '#'
-            && (STRCMP(items[lasti], "-") != 0
+            && (strcmp(items[lasti], "-") != 0
                 || itemcnt != lasti + 1)) {
           smsg(_(e_afftrailing), fname, lnum, items[lasti]);
         }
@@ -2443,10 +2443,10 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         aff_todo--;
         aff_entry = getroom(spin, sizeof(*aff_entry), true);
 
-        if (STRCMP(items[2], "0") != 0) {
+        if (strcmp(items[2], "0") != 0) {
           aff_entry->ae_chop = (char_u *)getroom_save(spin, (char_u *)items[2]);
         }
-        if (STRCMP(items[3], "0") != 0) {
+        if (strcmp(items[3], "0") != 0) {
           aff_entry->ae_add = (char_u *)getroom_save(spin, (char_u *)items[3]);
 
           // Recognize flags on the affix: abcd/XYZ
@@ -2464,7 +2464,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           aff_entry->ae_next = cur_aff->ah_first;
           cur_aff->ah_first = aff_entry;
 
-          if (STRCMP(items[4], ".") != 0) {
+          if (strcmp(items[4], ".") != 0) {
             char_u buf[MAXLINELEN];
 
             aff_entry->ae_cond = (char_u *)getroom_save(spin, (char_u *)items[4]);
@@ -2536,7 +2536,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
               // Find a previously used condition.
               for (idx = spin->si_prefcond.ga_len - 1; idx >= 0; idx--) {
                 p = ((char **)spin->si_prefcond.ga_data)[idx];
-                if (str_equal((char_u *)p, aff_entry->ae_cond)) {
+                if (str_equal(p, (char *)aff_entry->ae_cond)) {
                   break;
                 }
               }
@@ -2595,8 +2595,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           smsg(_("Expected REP(SAL) count in %s line %d"),
                fname, lnum);
         }
-      } else if ((STRCMP(items[0], "REP") == 0
-                  || STRCMP(items[0], "REPSAL") == 0)
+      } else if ((strcmp(items[0], "REP") == 0
+                  || strcmp(items[0], "REPSAL") == 0)
                  && itemcnt >= 3) {
         // REP/REPSAL item
         // Myspell ignores extra arguments, we require it starts with
@@ -2656,16 +2656,16 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         if (do_sal) {
           // SAL item (sounds-a-like)
           // Either one of the known keys or a from-to pair.
-          if (STRCMP(items[1], "followup") == 0) {
-            spin->si_followup = sal_to_bool((char_u *)items[2]);
-          } else if (STRCMP(items[1], "collapse_result") == 0) {
-            spin->si_collapse = sal_to_bool((char_u *)items[2]);
-          } else if (STRCMP(items[1], "remove_accents") == 0) {
-            spin->si_rem_accents = sal_to_bool((char_u *)items[2]);
+          if (strcmp(items[1], "followup") == 0) {
+            spin->si_followup = sal_to_bool(items[2]);
+          } else if (strcmp(items[1], "collapse_result") == 0) {
+            spin->si_collapse = sal_to_bool(items[2]);
+          } else if (strcmp(items[1], "remove_accents") == 0) {
+            spin->si_rem_accents = sal_to_bool(items[2]);
           } else {
             // when "to" is "_" it means empty
             add_fromto(spin, &spin->si_sal, (char_u *)items[1],
-                       STRCMP(items[2], "_") == 0 ? (char_u *)""
+                       strcmp(items[2], "_") == 0 ? (char_u *)""
                        : (char_u *)items[2]);
           }
         }
@@ -2675,7 +2675,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       } else if (is_aff_rule(items, itemcnt, "SOFOTO", 2)
                  && sofoto == NULL) {
         sofoto = (char_u *)getroom_save(spin, (char_u *)items[1]);
-      } else if (STRCMP(items[0], "COMMON") == 0) {
+      } else if (strcmp(items[0], "COMMON") == 0) {
         int i;
 
         for (i = 1; i < itemcnt; i++) {
@@ -2744,7 +2744,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   }
 
   if (syllable != NULL) {
-    aff_check_string(spin->si_syllable, syllable, "SYLLABLE");
+    aff_check_string((char *)spin->si_syllable, (char *)syllable, "SYLLABLE");
     spin->si_syllable = syllable;
   }
 
@@ -2755,15 +2755,15 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
     } else if (!GA_EMPTY(&spin->si_sal)) {
       smsg(_("Both SAL and SOFO lines in %s"), fname);
     } else {
-      aff_check_string(spin->si_sofofr, sofofrom, "SOFOFROM");
-      aff_check_string(spin->si_sofoto, sofoto, "SOFOTO");
+      aff_check_string((char *)spin->si_sofofr, (char *)sofofrom, "SOFOFROM");
+      aff_check_string((char *)spin->si_sofoto, (char *)sofoto, "SOFOTO");
       spin->si_sofofr = sofofrom;
       spin->si_sofoto = sofoto;
     }
   }
 
   if (midword != NULL) {
-    aff_check_string(spin->si_midword, midword, "MIDWORD");
+    aff_check_string((char *)spin->si_midword, (char *)midword, "MIDWORD");
     spin->si_midword = midword;
   }
 
@@ -2776,7 +2776,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 ///          a comment is following after item "mincount".
 static bool is_aff_rule(char **items, int itemcnt, char *rulename, int mincount)
 {
-  return STRCMP(items[0], rulename) == 0
+  return strcmp(items[0], rulename) == 0
          && (itemcnt == mincount
              || (itemcnt > mincount && items[mincount][0] == '#'));
 }
@@ -2813,15 +2813,15 @@ static void aff_process_flags(afffile_T *affile, affentry_T *entry)
   }
 }
 
-// Returns true if "s" is the name of an info item in the affix file.
-static bool spell_info_item(char_u *s)
+/// @return  true if "s" is the name of an info item in the affix file.
+static bool spell_info_item(char *s)
 {
-  return STRCMP(s, "NAME") == 0
-         || STRCMP(s, "HOME") == 0
-         || STRCMP(s, "VERSION") == 0
-         || STRCMP(s, "AUTHOR") == 0
-         || STRCMP(s, "EMAIL") == 0
-         || STRCMP(s, "COPYRIGHT") == 0;
+  return strcmp(s, "NAME") == 0
+         || strcmp(s, "HOME") == 0
+         || strcmp(s, "VERSION") == 0
+         || strcmp(s, "AUTHOR") == 0
+         || strcmp(s, "EMAIL") == 0
+         || strcmp(s, "COPYRIGHT") == 0;
 }
 
 // Turn an affix flag name into a number, according to the FLAG type.
@@ -3013,23 +3013,23 @@ static void aff_check_number(int spinval, int affval, char *name)
   }
 }
 
-// Give a warning when "spinval" and "affval" strings are set and not the same.
-static void aff_check_string(char_u *spinval, char_u *affval, char *name)
+/// Give a warning when "spinval" and "affval" strings are set and not the same.
+static void aff_check_string(char *spinval, char *affval, char *name)
 {
-  if (spinval != NULL && STRCMP(spinval, affval) != 0) {
+  if (spinval != NULL && strcmp(spinval, affval) != 0) {
     smsg(_("%s value differs from what is used in another .aff file"),
          name);
   }
 }
 
-// Returns true if strings "s1" and "s2" are equal.  Also consider both being
-// NULL as equal.
-static bool str_equal(char_u *s1, char_u *s2)
+/// @return  true if strings "s1" and "s2" are equal.  Also consider both being
+///          NULL as equal.
+static bool str_equal(char *s1, char *s2)
 {
   if (s1 == NULL || s2 == NULL) {
     return s1 == s2;
   }
-  return STRCMP(s1, s2) == 0;
+  return strcmp(s1, s2) == 0;
 }
 
 // Add a from-to item to "gap".  Used for REP and SAL items.
@@ -3045,10 +3045,10 @@ static void add_fromto(spellinfo_T *spin, garray_T *gap, char_u *from, char_u *t
   ftp->ft_to = (char_u *)getroom_save(spin, word);
 }
 
-// Converts a boolean argument in a SAL line to true or false;
-static bool sal_to_bool(char_u *s)
+/// Converts a boolean argument in a SAL line to true or false;
+static bool sal_to_bool(char *s)
 {
-  return STRCMP(s, "1") == 0 || STRCMP(s, "true") == 0;
+  return strcmp(s, "1") == 0 || strcmp(s, "true") == 0;
 }
 
 // Free the structure filled by spell_read_aff().
@@ -4337,13 +4337,13 @@ static bool node_equal(wordnode_T *n1, wordnode_T *n2)
   return p1 == NULL && p2 == NULL;
 }
 
-// Function given to qsort() to sort the REP items on "from" string.
+/// Function given to qsort() to sort the REP items on "from" string.
 static int rep_compare(const void *s1, const void *s2)
 {
   fromto_T *p1 = (fromto_T *)s1;
   fromto_T *p2 = (fromto_T *)s2;
 
-  return STRCMP(p1->ft_from, p2->ft_from);
+  return strcmp((char *)p1->ft_from, (char *)p2->ft_from);
 }
 
 /// Write the Vim .spl file "fname".
@@ -5299,7 +5299,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
 
   if (fcount >= 1) {
     len = (int)STRLEN(fnames[0]);
-    if (fcount == 1 && len > 4 && STRCMP(fnames[0] + len - 4, ".add") == 0) {
+    if (fcount == 1 && len > 4 && strcmp(fnames[0] + len - 4, ".add") == 0) {
       // For ":mkspell path/en.latin1.add" output file is
       // "path/en.latin1.add.spl".
       incount = 1;
@@ -5309,7 +5309,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
       incount = 1;
       vim_snprintf(wfname, MAXPATHL, SPL_FNAME_TMPL,
                    fnames[0], spin.si_ascii ? (char_u *)"ascii" : spell_enc());
-    } else if (len > 4 && STRCMP(fnames[0] + len - 4, ".spl") == 0) {
+    } else if (len > 4 && strcmp(fnames[0] + len - 4, ".spl") == 0) {
       // Name ends in ".spl", use as the file name.
       STRLCPY(wfname, fnames[0], MAXPATHL);
     } else {

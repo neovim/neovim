@@ -1044,7 +1044,7 @@ static int nlua_debug(lua_State *lstate)
     if (input.v_type != VAR_STRING
         || input.vval.v_string == NULL
         || *input.vval.v_string == NUL
-        || STRCMP(input.vval.v_string, "cont") == 0) {
+        || strcmp(input.vval.v_string, "cont") == 0) {
       tv_clear(&input);
       return 0;
     }

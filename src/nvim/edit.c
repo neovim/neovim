@@ -4951,7 +4951,7 @@ static char_u *do_insert_char_pre(int c)
     // Get the value of v:char.  It may be empty or more than one
     // character.  Only use it when changed, otherwise continue with the
     // original character to avoid breaking autoindent.
-    if (STRCMP(buf, get_vim_var_str(VV_CHAR)) != 0) {
+    if (strcmp(buf, get_vim_var_str(VV_CHAR)) != 0) {
       res = xstrdup(get_vim_var_str(VV_CHAR));
     }
   }

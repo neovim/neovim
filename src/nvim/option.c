@@ -156,7 +156,7 @@ typedef struct vimoption {
                            // buffer-local option: global value
   idopt_T indir;                // global option: PV_NONE;
                                 // local option: indirect option index
-  char_u *def_val;         // default values for variable (neovim!!)
+  char *def_val;         // default values for variable (neovim!!)
   LastSet last_set;             // script in which the option was last set
 } vimoption_T;
 
@@ -290,7 +290,7 @@ void set_init_1(bool clean_arg)
         buf[j] = NUL;
         opt_idx = findoption("cdpath");
         if (opt_idx >= 0) {
-          options[opt_idx].def_val = buf;
+          options[opt_idx].def_val = (char *)buf;
           options[opt_idx].flags |= P_DEF_ALLOCED;
         } else {
           xfree(buf);           // cannot happen
@@ -384,7 +384,7 @@ void set_init_1(bool clean_arg)
         && options[opt_idx].var != NULL) {
       p = _(*(char **)options[opt_idx].var);
     } else {
-      p = (char *)option_expand(opt_idx, NULL);
+      p = option_expand(opt_idx, NULL);
     }
     if (p != NULL) {
       p = xstrdup(p);
@@ -392,7 +392,7 @@ void set_init_1(bool clean_arg)
       if (options[opt_idx].flags & P_DEF_ALLOCED) {
         xfree(options[opt_idx].def_val);
       }
-      options[opt_idx].def_val = (char_u *)p;
+      options[opt_idx].def_val = p;
       options[opt_idx].flags |= P_DEF_ALLOCED;
     }
   }
@@ -449,12 +449,12 @@ static void set_option_default(int opt_idx, int opt_flags)
       // freeing and allocating the value.
       if (options[opt_idx].indir != PV_NONE) {
         set_string_option_direct(NULL, opt_idx,
-                                 (char *)options[opt_idx].def_val, opt_flags, 0);
+                                 options[opt_idx].def_val, opt_flags, 0);
       } else {
         if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED)) {
           free_string_option(*(char **)(varp));
         }
-        *(char_u **)varp = options[opt_idx].def_val;
+        *(char **)varp = options[opt_idx].def_val;
         options[opt_idx].flags &= ~P_ALLOCED;
       }
     } else if (flags & P_NUM) {
@@ -533,9 +533,7 @@ static void set_string_default(const char *name, char *val, bool allocated)
       xfree(options[opt_idx].def_val);
     }
 
-    options[opt_idx].def_val = allocated
-        ? (char_u *)val
-        : (char_u *)xstrdup(val);
+    options[opt_idx].def_val = allocated ? val : xstrdup(val);
     options[opt_idx].flags |= P_DEF_ALLOCED;
   }
 }
@@ -579,7 +577,7 @@ void set_number_default(char *name, long val)
 
   opt_idx = findoption(name);
   if (opt_idx >= 0) {
-    options[opt_idx].def_val = (char_u *)(intptr_t)val;
+    options[opt_idx].def_val = (char *)(intptr_t)val;
   }
 }
 
@@ -594,7 +592,7 @@ void free_all_options(void)
         free_string_option(*(char **)options[i].var);
       }
       if (options[i].flags & P_DEF_ALLOCED) {
-        free_string_option((char *)options[i].def_val);
+        free_string_option(options[i].def_val);
       }
     } else if (options[i].var != VAR_WIN && (options[i].flags & P_STRING)) {
       // buffer-local option: free global value
@@ -648,7 +646,7 @@ void set_init_3(void)
     : !(options[idx_sp].flags & P_WAS_SET);
 
   size_t len = 0;
-  char *p = (char *)invocation_path_tail(p_sh, &len);
+  char *p = (char *)invocation_path_tail((char_u *)p_sh, &len);
   p = xstrnsave(p, len);
 
   {
@@ -660,11 +658,11 @@ void set_init_3(void)
         || FNAMECMP(p, "tcsh") == 0) {
       if (do_sp) {
         p_sp = "|& tee";
-        options[idx_sp].def_val = (char_u *)p_sp;
+        options[idx_sp].def_val = p_sp;
       }
       if (do_srr) {
         p_srr = ">&";
-        options[idx_srr].def_val = (char_u *)p_srr;
+        options[idx_srr].def_val = p_srr;
       }
     } else if (FNAMECMP(p, "sh") == 0
                || FNAMECMP(p, "ksh") == 0
@@ -679,11 +677,11 @@ void set_init_3(void)
       // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = "2>&1| tee";
-        options[idx_sp].def_val = (char_u *)p_sp;
+        options[idx_sp].def_val = p_sp;
       }
       if (do_srr) {
         p_srr = ">%s 2>&1";
-        options[idx_srr].def_val = (char_u *)p_srr;
+        options[idx_srr].def_val = p_srr;
       }
     }
     xfree(p);
@@ -747,12 +745,12 @@ void set_title_defaults(void)
   // not need to be contacted.
   idx1 = findoption("title");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
-    options[idx1].def_val = (char_u *)(intptr_t)0;
+    options[idx1].def_val = 0;
     p_title = 0;
   }
   idx1 = findoption("icon");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
-    options[idx1].def_val = (char_u *)(intptr_t)0;
+    options[idx1].def_val = 0;
     p_icon = 0;
   }
 }
@@ -1175,7 +1173,7 @@ int do_set(char *arg, int opt_flags)
             }
 
             if (nextchar == '&') {  // set to default val
-              newval = (char *)options[opt_idx].def_val;
+              newval = options[opt_idx].def_val;
               // expand environment variables and ~ since the
               // default value was already expanded, only
               // required when an environment variable was set
@@ -1183,7 +1181,7 @@ int do_set(char *arg, int opt_flags)
               if (newval == NULL) {
                 newval = empty_option;
               } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
-                s = (char *)option_expand(opt_idx, (char_u *)newval);
+                s = option_expand(opt_idx, newval);
                 if (s == NULL) {
                   s = newval;
                 }
@@ -1311,7 +1309,7 @@ int do_set(char *arg, int opt_flags)
               // comma.
               if (!(adding || prepending || removing)
                   || (flags & P_COMMA)) {
-                s = (char *)option_expand(opt_idx, (char_u *)newval);
+                s = option_expand(opt_idx, newval);
                 if (s != NULL) {
                   xfree(newval);
                   newlen = (unsigned)STRLEN(s) + 1;
@@ -1683,7 +1681,7 @@ char_u *find_shada_parameter(int type)
 /// These string options cannot be indirect!
 /// If "val" is NULL expand the current value of the option.
 /// Return pointer to NameBuff, or NULL when not expanded.
-static char_u *option_expand(int opt_idx, char_u *val)
+static char *option_expand(int opt_idx, char *val)
 {
   // if option doesn't need expansion nothing to do
   if (!(options[opt_idx].flags & P_EXPAND) || options[opt_idx].var == NULL) {
@@ -1691,7 +1689,7 @@ static char_u *option_expand(int opt_idx, char_u *val)
   }
 
   if (val == NULL) {
-    val = *(char_u **)options[opt_idx].var;
+    val = *(char **)options[opt_idx].var;
   }
 
   // If val is longer than MAXPATHL no meaningful expansion can be done,
@@ -1704,15 +1702,15 @@ static char_u *option_expand(int opt_idx, char_u *val)
   // Escape spaces when expanding 'tags', they are used to separate file
   // names.
   // For 'spellsuggest' expand after "file:".
-  expand_env_esc(val, (char_u *)NameBuff, MAXPATHL,
+  expand_env_esc((char_u *)val, (char_u *)NameBuff, MAXPATHL,
                  (char_u **)options[opt_idx].var == &p_tags, false,
                  (char_u **)options[opt_idx].var == (char_u **)&p_sps ? (char_u *)"file:" :
                  NULL);
-  if (STRCMP(NameBuff, val) == 0) {   // they are the same
+  if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
   }
 
-  return (char_u *)NameBuff;
+  return NameBuff;
 }
 
 /// After setting various option values: recompute variables that depend on
@@ -2133,7 +2131,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
 
       // Arabic requires a utf-8 encoding, inform the user if it's not
       // set.
-      if (STRCMP(p_enc, "utf-8") != 0) {
+      if (strcmp(p_enc, "utf-8") != 0) {
         static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
 
         msg_source(HL_ATTR(HLF_W));
@@ -2758,7 +2756,7 @@ int findoption_len(const char *const arg, const size_t len)
       if (STRLEN(options[opt_idx].fullname) == 7) {
         return findoption_len("shada", 5);
       }
-      assert(STRCMP(options[opt_idx].fullname, "viminfofile") == 0);
+      assert(strcmp(options[opt_idx].fullname, "viminfofile") == 0);
       return findoption_len("shadafile", 9);
     }
   }
@@ -3329,7 +3327,7 @@ static int optval_default(vimoption_T *p, char_u *varp)
     return *(int *)varp == (int)(intptr_t)p->def_val;
   }
   // P_STRING
-  return STRCMP(*(char_u **)varp, p->def_val) == 0;
+  return strcmp(*(char **)varp, p->def_val) == 0;
 }
 
 /// Send update to UIs with values of UI relevant options
@@ -5309,7 +5307,7 @@ char_u *get_showbreak_value(win_T *const win)
   if (win->w_p_sbr == NULL || *win->w_p_sbr == NUL) {
     return (char_u *)p_sbr;
   }
-  if (STRCMP(win->w_p_sbr, "NONE") == 0) {
+  if (strcmp(win->w_p_sbr, "NONE") == 0) {
     return (char_u *)empty_option;
   }
   return (char_u *)win->w_p_sbr;
@@ -5455,13 +5453,13 @@ size_t copy_option_part(char **option, char *buf, size_t maxlen, char *sep_chars
 /// Return true when 'shell' has "csh" in the tail.
 int csh_like_shell(void)
 {
-  return strstr(path_tail((char *)p_sh), "csh") != NULL;
+  return strstr(path_tail(p_sh), "csh") != NULL;
 }
 
 /// Return true when 'shell' has "fish" in the tail.
 bool fish_like_shell(void)
 {
-  return strstr(path_tail((char *)p_sh), "fish") != NULL;
+  return strstr(path_tail(p_sh), "fish") != NULL;
 }
 
 /// Return the number of requested sign columns, based on current
@@ -5619,7 +5617,7 @@ static Dictionary vimoption2dict(vimoption_T *opt)
   const char *type;
   Object def;
   // TODO(bfredl): do you even nocp?
-  char_u *def_val = opt->def_val;
+  char_u *def_val = (char_u *)opt->def_val;
   if (opt->flags & P_STRING) {
     type = "string";
     def = CSTR_TO_OBJ(def_val ? (char *)def_val : "");

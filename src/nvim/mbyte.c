@@ -338,13 +338,13 @@ enc_alias_table[] =
   { NULL,              0 }
 };
 
-// Find encoding "name" in the list of canonical encoding names.
-// Returns -1 if not found.
-static int enc_canon_search(const char_u *name)
+/// Find encoding "name" in the list of canonical encoding names.
+/// Returns -1 if not found.
+static int enc_canon_search(const char *name)
   FUNC_ATTR_PURE
 {
   for (int i = 0; i < IDX_COUNT; i++) {
-    if (STRCMP(name, enc_canon_table[i].name) == 0) {
+    if (strcmp(name, enc_canon_table[i].name) == 0) {
       return i;
     }
   }
@@ -356,7 +356,7 @@ static int enc_canon_search(const char_u *name)
 int enc_canon_props(const char_u *name)
   FUNC_ATTR_PURE
 {
-  int i = enc_canon_search(name);
+  int i = enc_canon_search((char *)name);
   if (i >= 0) {
     return enc_canon_table[i].prop;
   } else if (STRNCMP(name, "2byte-", 6) == 0) {
@@ -379,7 +379,7 @@ int bomb_size(void)
 
   if (curbuf->b_p_bomb && !curbuf->b_p_bin) {
     if (*curbuf->b_p_fenc == NUL
-        || STRCMP(curbuf->b_p_fenc, "utf-8") == 0) {
+        || strcmp(curbuf->b_p_fenc, "utf-8") == 0) {
       n = 3;
     } else if (STRNCMP(curbuf->b_p_fenc, "ucs-2", 5) == 0
                || STRNCMP(curbuf->b_p_fenc, "utf-16", 6) == 0) {
@@ -2115,7 +2115,7 @@ char *enc_canonize(char *enc)
   FUNC_ATTR_NONNULL_RET
 {
   char *p, *s;
-  if (STRCMP(enc, "default") == 0) {
+  if (strcmp(enc, "default") == 0) {
     // Use the default encoding as found by set_init_1().
     return xstrdup(fenc_default);
   }
@@ -2159,12 +2159,12 @@ char *enc_canonize(char *enc)
   }
 
   int i;
-  if (enc_canon_search((char_u *)p) >= 0) {
+  if (enc_canon_search(p) >= 0) {
     // canonical name can be used unmodified
     if (p != r) {
       STRMOVE(r, p);
     }
-  } else if ((i = enc_alias_search((char_u *)p)) >= 0) {
+  } else if ((i = enc_alias_search(p)) >= 0) {
     // alias recognized, get canonical name
     xfree(r);
     r = xstrdup(enc_canon_table[i].name);
@@ -2174,12 +2174,12 @@ char *enc_canonize(char *enc)
 
 /// Search for an encoding alias of "name".
 /// Returns -1 when not found.
-static int enc_alias_search(const char_u *name)
+static int enc_alias_search(const char *name)
 {
   int i;
 
   for (i = 0; enc_alias_table[i].name != NULL; i++) {
-    if (STRCMP(name, enc_alias_table[i].name) == 0) {
+    if (strcmp(name, enc_alias_table[i].name) == 0) {
       return enc_alias_table[i].canon;
     }
   }
@@ -2390,12 +2390,12 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
 /// @return  FAIL when conversion is not supported, OK otherwise.
 int convert_setup(vimconv_T *vcp, char *from, char *to)
 {
-  return convert_setup_ext(vcp, (char_u *)from, true, (char_u *)to, true);
+  return convert_setup_ext(vcp, from, true, to, true);
 }
 
 /// As convert_setup(), but only when from_unicode_is_utf8 is true will all
 /// "from" unicode charsets be considered utf-8.  Same for "to".
-int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8, char_u *to,
+int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, char *to,
                       bool to_unicode_is_utf8)
 {
   int from_prop;
@@ -2413,12 +2413,12 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8, c
 
   // No conversion when one of the names is empty or they are equal.
   if (from == NULL || *from == NUL || to == NULL || *to == NUL
-      || STRCMP(from, to) == 0) {
+      || strcmp(from, to) == 0) {
     return OK;
   }
 
-  from_prop = enc_canon_props(from);
-  to_prop = enc_canon_props(to);
+  from_prop = enc_canon_props((char_u *)from);
+  to_prop = enc_canon_props((char_u *)to);
   if (from_unicode_is_utf8) {
     from_is_utf8 = from_prop & ENC_UNICODE;
   } else {
@@ -2448,8 +2448,8 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8, c
 #ifdef HAVE_ICONV
   else {  // NOLINT(readability/braces)
     // Use iconv() for conversion.
-    vcp->vc_fd = (iconv_t)my_iconv_open(to_is_utf8 ? (char_u *)"utf-8" : to,
-                                        from_is_utf8 ? (char_u *)"utf-8" : from);
+    vcp->vc_fd = (iconv_t)my_iconv_open(to_is_utf8 ? (char_u *)"utf-8" : (char_u *)to,
+                                        from_is_utf8 ? (char_u *)"utf-8" : (char_u *)from);
     if (vcp->vc_fd != (iconv_t)-1) {
       vcp->vc_type = CONV_ICONV;
       vcp->vc_factor = 4;       // could be longer too...
