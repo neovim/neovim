@@ -2454,28 +2454,30 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	string	(default "")
 			global or local to window |global-local|
-	Characters to fill the statuslines and vertical separators.
-	It is a comma-separated list of items:
+	Characters to fill the statuslines, vertical separators and special
+	lines in the window.
+	It is a comma-separated list of items.  Each item has a name, a colon
+	and the value of that item:
 
 	  item		default		Used for ~
-	  stl:c		' ' or '^'	statusline of the current window
-	  stlnc:c	' ' or '='	statusline of the non-current windows
-	  wbr:c		' '		window bar
-	  horiz:c	'─' or '-'	horizontal separators |:split|
-	  horizup:c	'┴' or '-'	upwards facing horizontal separator
-	  horizdown:c	'┬' or '-'	downwards facing horizontal separator
-	  vert:c	'│' or '|'	vertical separators |:vsplit|
-	  vertleft:c	'┤' or '|'	left facing vertical separator
-	  vertright:c	'├' or '|'	right facing vertical separator
-	  verthoriz:c	'┼' or '+'	overlapping vertical and horizontal
+	  stl		' ' or '^'	statusline of the current window
+	  stlnc		' ' or '='	statusline of the non-current windows
+	  wbr		' '		window bar
+	  horiz		'─' or '-'	horizontal separators |:split|
+	  horizup	'┴' or '-'	upwards facing horizontal separator
+	  horizdown	'┬' or '-'	downwards facing horizontal separator
+	  vert		'│' or '|'	vertical separators |:vsplit|
+	  vertleft	'┤' or '|'	left facing vertical separator
+	  vertright	'├' or '|'	right facing vertical separator
+	  verthoriz	'┼' or '+'	overlapping vertical and horizontal
 					separator
-	  fold:c	'·' or '-'	filling 'foldtext'
-	  foldopen:c	'-'		mark the beginning of a fold
-	  foldclose:c	'+'		show a closed fold
-	  foldsep:c	'│' or '|'      open fold middle marker
-	  diff:c	'-'		deleted lines of the 'diff' option
-	  msgsep:c	' '		message separator 'display'
-	  eob:c		'~'		empty lines at the end of a buffer
+	  fold		'·' or '-'	filling 'foldtext'
+	  foldopen	'-'		mark the beginning of a fold
+	  foldclose	'+'		show a closed fold
+	  foldsep	'│' or '|'      open fold middle marker
+	  diff		'-'		deleted lines of the 'diff' option
+	  msgsep	' '		message separator 'display'
+	  eob		'~'		empty lines at the end of a buffer
 
 	Any one that is omitted will fall back to the default.  For "stl" and
 	"stlnc" the space will be used when there is highlighting, '^' or '='
@@ -2500,19 +2502,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The highlighting used for these items:
 	  item		highlight group ~
-	  stl:c		StatusLine		|hl-StatusLine|
-	  stlnc:c	StatusLineNC		|hl-StatusLineNC|
-	  wbr:c		WinBar			|hl-WinBar| or |hl-WinBarNC|
-	  horiz:c	WinSeparator		|hl-WinSeparator|
-	  horizup:c	WinSeparator		|hl-WinSeparator|
-	  horizdown:c	WinSeparator		|hl-WinSeparator|
-	  vert:c	WinSeparator		|hl-WinSeparator|
-	  vertleft:c	WinSeparator		|hl-WinSeparator|
-	  vertright:c	WinSeparator		|hl-WinSeparator|
-	  verthoriz:c	WinSeparator		|hl-WinSeparator|
-	  fold:c	Folded			|hl-Folded|
-	  diff:c	DiffDelete		|hl-DiffDelete|
-	  eob:c		EndOfBuffer		|hl-EndOfBuffer|
+	  stl		StatusLine		|hl-StatusLine|
+	  stlnc		StatusLineNC		|hl-StatusLineNC|
+	  wbr		WinBar			|hl-WinBar| or |hl-WinBarNC|
+	  horiz		WinSeparator		|hl-WinSeparator|
+	  horizup	WinSeparator		|hl-WinSeparator|
+	  horizdown	WinSeparator		|hl-WinSeparator|
+	  vert		WinSeparator		|hl-WinSeparator|
+	  vertleft	WinSeparator		|hl-WinSeparator|
+	  vertright	WinSeparator		|hl-WinSeparator|
+	  verthoriz	WinSeparator		|hl-WinSeparator|
+	  fold		Folded			|hl-Folded|
+	  diff		DiffDelete		|hl-DiffDelete|
+	  eob		EndOfBuffer		|hl-EndOfBuffer|
 
 		*'fixendofline'* *'fixeol'* *'nofixendofline'* *'nofixeol'*
 'fixendofline' 'fixeol'	boolean	(default on)

@@ -1247,7 +1247,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           }
           char_attr = 0;
         } else if (filler_todo > 0) {
-          // draw "deleted" diff line(s)
+          // Draw "deleted" diff line(s)
           if (char2cells(wp->w_p_fcs_chars.diff) > 1) {
             c_extra = '-';
             c_final = NUL;

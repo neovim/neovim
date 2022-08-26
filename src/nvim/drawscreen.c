@@ -1920,8 +1920,9 @@ win_update_start:
       wp->w_botline = lnum;
     }
 
-    // make sure the rest of the screen is blank
-    // write the 'eob' character to rows that aren't part of the file.
+    // Make sure the rest of the screen is blank.
+    // write the "eob" character from 'fillchars' to rows that aren't part
+    // of the file.
     win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, row, wp->w_grid.rows,
                  HLF_EOB);
   }

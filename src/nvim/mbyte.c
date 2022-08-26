@@ -1989,8 +1989,7 @@ theend:
 }
 
 /// @return  true if string "s" is a valid utf-8 string.
-/// When "end" is NULL stop at the first NUL.
-/// When "end" is positive stop there.
+/// When "end" is NULL stop at the first NUL.  Otherwise stop at "end".
 bool utf_valid_string(const char_u *s, const char_u *end)
 {
   const char_u *p = s;

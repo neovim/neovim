@@ -960,7 +960,9 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         // If no error was returned above, we don't expect an error
         // here, so ignore the return value.
-        (void)set_chars_option(wp, (char_u **)&wp->w_p_lcs, true);
+        if (*wp->w_p_lcs == NUL) {
+          (void)set_chars_option(wp, (char_u **)&wp->w_p_lcs, true);
+        }
       }
       redraw_all_later(UPD_NOT_VALID);
     }
@@ -977,7 +979,9 @@ char *did_set_string_option(int opt_idx, char_u **varp, char_u *oldval, char *er
       FOR_ALL_TAB_WINDOWS(tp, wp) {
         // If no error was returned above, we don't expect an error
         // here, so ignore the return value.
-        (void)set_chars_option(wp, (char_u **)&wp->w_p_fcs, true);
+        if (*wp->w_p_fcs == NUL) {
+          (void)set_chars_option(wp, (char_u **)&wp->w_p_fcs, true);
+        }
       }
       redraw_all_later(UPD_NOT_VALID);
     }
