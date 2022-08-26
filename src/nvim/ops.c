@@ -5334,17 +5334,16 @@ void cursor_pos_info(dict_T *dict)
       }
 
       if (l_VIsual_mode == Ctrl_V) {
-        char_u *const saved_sbr = p_sbr;
+        char *const saved_sbr = p_sbr;
         char *const saved_w_sbr = curwin->w_p_sbr;
 
         // Make 'sbr' empty for a moment to get the correct size.
-        p_sbr = (char_u *)empty_option;
+        p_sbr = empty_option;
         curwin->w_p_sbr = empty_option;
         oparg.is_VIsual = true;
         oparg.motion_type = kMTBlockWise;
         oparg.op_type = OP_NOP;
-        getvcols(curwin, &min_pos, &max_pos,
-                 &oparg.start_vcol, &oparg.end_vcol);
+        getvcols(curwin, &min_pos, &max_pos, &oparg.start_vcol, &oparg.end_vcol);
         p_sbr = saved_sbr;
         curwin->w_p_sbr = saved_w_sbr;
         if (curwin->w_curswant == MAXCOL) {
@@ -5507,14 +5506,14 @@ void cursor_pos_info(dict_T *dict)
     }
     if (dict == NULL) {
       // Don't shorten this message, the user asked for it.
-      p = p_shm;
-      p_shm = (char_u *)"";
+      p = (char_u *)p_shm;
+      p_shm = "";
       if (p_ch < 1) {
         msg_start();
         msg_scroll = true;
       }
       msg((char *)IObuff);
-      p_shm = p;
+      p_shm = (char *)p;
     }
   }
 
@@ -5589,7 +5588,7 @@ static Callback opfunc_cb;
 /// @return  OK or FAIL
 int set_operatorfunc_option(void)
 {
-  return option_set_callback_func(p_opfunc, &opfunc_cb);
+  return option_set_callback_func((char_u *)p_opfunc, &opfunc_cb);
 }
 
 #if defined(EXITFREE)

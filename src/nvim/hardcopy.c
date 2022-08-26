@@ -264,7 +264,7 @@ struct prt_resfile_buffer_S {
  */
 char *parse_printoptions(void)
 {
-  return parse_list_options(p_popt, printer_opts, OPT_PRINT_NUM_OPTIONS);
+  return parse_list_options((char_u *)p_popt, printer_opts, OPT_PRINT_NUM_OPTIONS);
 }
 
 /*
@@ -273,7 +273,7 @@ char *parse_printoptions(void)
  */
 char *parse_printmbfont(void)
 {
-  return parse_list_options(p_pmfn, mbfont_opts, OPT_MBFONT_NUM_OPTIONS);
+  return parse_list_options((char_u *)p_pmfn, mbfont_opts, OPT_MBFONT_NUM_OPTIONS);
 }
 
 /*
@@ -2158,9 +2158,9 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   /*
    * Set up font and encoding.
    */
-  p_encoding = enc_skip(p_penc);
+  p_encoding = enc_skip((char_u *)p_penc);
   if (*p_encoding == NUL) {
-    p_encoding = enc_skip(p_enc);
+    p_encoding = enc_skip((char_u *)p_enc);
   }
 
   // Look for a multi-byte font that matches the encoding and character set.
@@ -2179,7 +2179,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
           p_mbenc_first = p_mbenc;
           effective_cmap = cmap;
         }
-        if (prt_match_charset((char *)p_pmcs, &prt_ps_mbfonts[cmap], &p_mbchar)) {
+        if (prt_match_charset(p_pmcs, &prt_ps_mbfonts[cmap], &p_mbchar)) {
           break;
         }
       }
@@ -2330,7 +2330,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
    * Set up the font size.
    */
   fontsize = PRT_PS_DEFAULT_FONTSIZE;
-  for (p = p_pfn; (p = (char_u *)vim_strchr((char *)p, ':')) != NULL; p++) {
+  for (p = (char_u *)p_pfn; (p = (char_u *)vim_strchr((char *)p, ':')) != NULL; p++) {
     if (p[1] == 'h' && ascii_isdigit(p[2])) {
       fontsize = atoi((char *)p + 2);
     }
@@ -2594,13 +2594,13 @@ bool mch_print_begin(prt_settings_T *psettings)
   // that cannot be found then default to "latin1".
   // Note: VIM specific encoding header is always skipped.
   if (!prt_out_mbyte) {
-    p_encoding = (char *)enc_skip(p_penc);
+    p_encoding = (char *)enc_skip((char_u *)p_penc);
     if (*p_encoding == NUL
         || !prt_find_resource(p_encoding, &res_encoding)) {
       // 'printencoding' not set or not supported - find alternate
       int props;
 
-      p_encoding = (char *)enc_skip(p_enc);
+      p_encoding = (char *)enc_skip((char_u *)p_enc);
       props = enc_canon_props((char_u *)p_encoding);
       if (!(props & ENC_8BIT)
           || !prt_find_resource(p_encoding, &res_encoding)) {
@@ -2620,9 +2620,9 @@ bool mch_print_begin(prt_settings_T *psettings)
     // For the moment there are no checks on encoding resource files to
     // perform
   } else {
-    p_encoding = (char *)enc_skip(p_penc);
+    p_encoding = (char *)enc_skip((char_u *)p_penc);
     if (*p_encoding == NUL) {
-      p_encoding = (char *)enc_skip(p_enc);
+      p_encoding = (char *)enc_skip((char_u *)p_enc);
     }
     if (prt_use_courier) {
       // Include ASCII range encoding vector
@@ -2640,9 +2640,9 @@ bool mch_print_begin(prt_settings_T *psettings)
   }
 
   prt_conv.vc_type = CONV_NONE;
-  if (!(enc_canon_props(p_enc) & enc_canon_props((char_u *)p_encoding) & ENC_8BIT)) {
+  if (!(enc_canon_props((char_u *)p_enc) & enc_canon_props((char_u *)p_encoding) & ENC_8BIT)) {
     // Set up encoding conversion if required
-    if (convert_setup(&prt_conv, p_enc, (char_u *)p_encoding) == FAIL) {
+    if (convert_setup(&prt_conv, (char_u *)p_enc, (char_u *)p_encoding) == FAIL) {
       semsg(_("E620: Unable to convert to print encoding \"%s\""),
             p_encoding);
       return false;

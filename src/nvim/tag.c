@@ -1780,7 +1780,7 @@ line_read_in:
               // encoding to 'encoding'.
               for (p = lbuf + 20; *p > ' ' && *p < 127; p++) {}
               *p = NUL;
-              convert_setup(&vimconv, lbuf + 20, p_enc);
+              convert_setup(&vimconv, lbuf + 20, (char_u *)p_enc);
             }
 
             // Read the next line.  Unrecognized flags are ignored.

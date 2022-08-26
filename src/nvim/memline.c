@@ -399,7 +399,7 @@ void ml_setname(buf_T *buf)
   }
 
   // Try all directories in the 'directory' option.
-  dirp = (char *)p_dir;
+  dirp = p_dir;
   bool found_existing_dir = false;
   for (;;) {
     if (*dirp == NUL) {             // tried all directories, fail
@@ -490,7 +490,7 @@ void ml_open_file(buf_T *buf)
   }
 
   // Try all directories in 'directory' option.
-  dirp = (char *)p_dir;
+  dirp = p_dir;
   bool found_existing_dir = false;
   for (;;) {
     if (*dirp == NUL) {
@@ -1294,7 +1294,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
   // Do the loop for every directory in 'directory'.
   // First allocate some memory to put the directory name in.
   dir_name = xmalloc(STRLEN(p_dir) + 1);
-  dirp = (char *)p_dir;
+  dirp = p_dir;
   while (*dirp) {
     // Isolate a directory name from *dirp and put it in dir_name (we know
     // it is large enough, so use 31000 for length).
@@ -3494,7 +3494,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         // give the ATTENTION message when there is an old swap file
         // for the current file, and the buffer was not recovered.
         if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
-            && vim_strchr((char *)p_shm, SHM_ATTENTION) == NULL) {
+            && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
           int choice = 0;
 
           process_still_running = false;

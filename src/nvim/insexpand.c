@@ -1008,10 +1008,10 @@ void completeopt_was_set(void)
 {
   compl_no_insert = false;
   compl_no_select = false;
-  if (strstr((char *)p_cot, "noselect") != NULL) {
+  if (strstr(p_cot, "noselect") != NULL) {
     compl_no_select = true;
   }
-  if (strstr((char *)p_cot, "noinsert") != NULL) {
+  if (strstr(p_cot, "noinsert") != NULL) {
     compl_no_insert = true;
   }
 }
@@ -1037,7 +1037,7 @@ bool pum_wanted(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // "completeopt" must contain "menu" or "menuone"
-  return vim_strchr((char *)p_cot, 'm') != NULL;
+  return vim_strchr(p_cot, 'm') != NULL;
 }
 
 /// Check that there are two or more matches to be shown in the popup menu.
@@ -1056,7 +1056,7 @@ static bool pum_enough_matches(void)
     compl = compl->cp_next;
   } while (!is_first_match(compl));
 
-  if (strstr((char *)p_cot, "menuone") != NULL) {
+  if (strstr(p_cot, "menuone") != NULL) {
     return i >= 1;
   }
   return i >= 2;
@@ -2105,7 +2105,7 @@ bool ins_compl_prep(int c)
   // Set "compl_get_longest" when finding the first matches.
   if (ctrl_x_mode_not_defined_yet()
       || (ctrl_x_mode_normal() && !compl_started)) {
-    compl_get_longest = (strstr((char *)p_cot, "longest") != NULL);
+    compl_get_longest = (strstr(p_cot, "longest") != NULL);
     compl_used_match = true;
   }
 
@@ -2229,7 +2229,7 @@ static char_u *get_complete_funcname(int type)
   case CTRL_X_OMNI:
     return (char_u *)curbuf->b_p_ofu;
   case CTRL_X_THESAURUS:
-    return *curbuf->b_p_tsrfu == NUL ? p_tsrfu : (char_u *)curbuf->b_p_tsrfu;
+    return *curbuf->b_p_tsrfu == NUL ? (char_u *)p_tsrfu : (char_u *)curbuf->b_p_tsrfu;
   default:
     return (char_u *)"";
   }
@@ -2825,7 +2825,8 @@ static void get_next_dict_tsr_completion(int compl_type, char_u *dict, int dict_
     ins_compl_dictionaries(dict != NULL ? dict
                            : (compl_type == CTRL_X_THESAURUS
                               ? (*curbuf->b_p_tsr == NUL ? p_tsr : (char_u *)curbuf->b_p_tsr)
-                              : (*curbuf->b_p_dict == NUL ? p_dict : (char_u *)curbuf->b_p_dict)),
+                              : (*curbuf->b_p_dict ==
+                                 NUL ? (char_u *)p_dict : (char_u *)curbuf->b_p_dict)),
                            (char_u *)compl_pattern,
                            dict != NULL ? dict_f : 0,
                            compl_type == CTRL_X_THESAURUS);

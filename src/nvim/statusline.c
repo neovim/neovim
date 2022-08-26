@@ -448,7 +448,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   // setup environment for the task at hand
   if (wp == NULL) {
     // Use 'tabline'.  Always at the first line of the screen.
-    stl = p_tal;
+    stl = (char_u *)p_tal;
     row = 0;
     fillchar = ' ';
     attr = HL_ATTR(HLF_TPF);
@@ -491,7 +491,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     }
 
     if (draw_ruler) {
-      stl = p_ruf;
+      stl = (char_u *)p_ruf;
       // advance past any leading group spec - implicit in ru_col
       if (*stl == '%') {
         if (*++stl == '-') {
@@ -503,7 +503,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
           }
         }
         if (*stl++ != '(') {
-          stl = p_ruf;
+          stl = (char_u *)p_ruf;
         }
       }
       col = ru_col - (Columns - maxwidth);
@@ -524,7 +524,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
       if (*wp->w_p_stl != NUL) {
         stl = (char_u *)wp->w_p_stl;
       } else {
-        stl = p_stl;
+        stl = (char_u *)p_stl;
       }
       use_sandbox = was_set_insecurely(wp, "statusline", *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }

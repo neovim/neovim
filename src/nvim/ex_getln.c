@@ -634,7 +634,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     .ignore_drag_release = true,
   };
   CommandLineState *s = &state;
-  s->save_p_icm = vim_strsave(p_icm);
+  s->save_p_icm = vim_strsave((char_u *)p_icm);
   init_incsearch_state(&s->is_state);
   CmdlineInfo save_ccline;
   bool did_save_ccline = false;
@@ -2538,7 +2538,6 @@ char_u *get_cmdprompt(void)
 int check_opt_wim(void)
 {
   char_u new_wim_flags[4];
-  char_u *p;
   int i;
   int idx = 0;
 
@@ -2546,7 +2545,7 @@ int check_opt_wim(void)
     new_wim_flags[i] = 0;
   }
 
-  for (p = p_wim; *p; p++) {
+  for (char *p = p_wim; *p; p++) {
     for (i = 0; ASCII_ISALPHA(p[i]); i++) {}
     if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
       return FAIL;
@@ -4090,7 +4089,7 @@ char *check_cedit(void)
   if (*p_cedit == NUL) {
     cedit_key = -1;
   } else {
-    n = string_to_key(p_cedit);
+    n = string_to_key((char_u *)p_cedit);
     if (vim_isprintc(n)) {
       return e_invarg;
     }

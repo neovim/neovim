@@ -1000,7 +1000,7 @@ static int qf_setup_state(qfstate_T *pstate, char *restrict enc, const char *res
 {
   pstate->vc.vc_type = CONV_NONE;
   if (enc != NULL && *enc != NUL) {
-    convert_setup(&pstate->vc, (char_u *)enc, p_enc);
+    convert_setup(&pstate->vc, (char_u *)enc, (char_u *)p_enc);
   }
 
   if (efile != NULL
@@ -2534,7 +2534,7 @@ static int qf_open_new_file_win(qf_info_T *ll_ref)
   if (win_split(0, flags) == FAIL) {
     return FAIL;  // not enough room for window
   }
-  p_swb = (char_u *)empty_option;  // don't split again
+  p_swb = empty_option;  // don't split again
   swb_flags = 0;
   RESET_BINDING(curwin);
   if (ll_ref != NULL) {
@@ -2923,7 +2923,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
 // If 'newwin' is true, then open the file in a new window.
 static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, bool newwin)
 {
-  char *old_swb = (char *)p_swb;
+  char *old_swb = p_swb;
   unsigned old_swb_flags = swb_flags;
   const bool old_KeyTyped = KeyTyped;           // getting file may reset it
 
@@ -2994,10 +2994,10 @@ theend:
     qfl->qf_ptr = qf_ptr;
     qfl->qf_index = qf_index;
   }
-  if (p_swb != (char_u *)old_swb && p_swb == (char_u *)empty_option) {
+  if (p_swb != old_swb && p_swb == empty_option) {
     // Restore old 'switchbuf' value, but not when an autocommand or
     // modeline has changed the value.
-    p_swb = (char_u *)old_swb;
+    p_swb = old_swb;
     swb_flags = old_swb_flags;
   }
   decr_quickfix_busy();
@@ -3834,7 +3834,7 @@ static buf_T *qf_find_buf(qf_info_T *qi)
 /// @return  OK or FAIL
 int qf_process_qftf_option(void)
 {
-  return option_set_callback_func(p_qftf, &qftf_cb);
+  return option_set_callback_func((char_u *)p_qftf, &qftf_cb);
 }
 
 /// Update the w:quickfix_title variable in the quickfix/location list window in
@@ -7033,7 +7033,7 @@ static void hgr_search_in_rtp(qf_list_T *qfl, regmatch_T *p_regmatch, const char
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   // Go through all directories in 'runtimepath'
-  char *p = (char *)p_rtp;
+  char *p = p_rtp;
   while (*p != NUL && !got_int) {
     copy_option_part(&p, (char *)NameBuff, MAXPATHL, ",");
 

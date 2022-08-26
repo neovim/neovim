@@ -3167,14 +3167,14 @@ void maketitle(void)
 
         use_sandbox = was_set_insecurely(curwin, "titlestring", 0);
         build_stl_str_hl(curwin, buf, sizeof(buf),
-                         (char *)p_titlestring, use_sandbox,
+                         p_titlestring, use_sandbox,
                          0, maxlen, NULL, NULL);
         title_str = buf;
         if (called_emsg > called_emsg_before) {
           set_string_option_direct("titlestring", -1, "", OPT_FREE, SID_ERROR);
         }
       } else {
-        title_str = (char *)p_titlestring;
+        title_str = p_titlestring;
       }
     } else {
       // Format: "fname + (path) (1 of 2) - VIM".
@@ -3281,13 +3281,13 @@ void maketitle(void)
 
         use_sandbox = was_set_insecurely(curwin, "iconstring", 0);
         build_stl_str_hl(curwin, icon_str, sizeof(buf),
-                         (char *)p_iconstring, use_sandbox,
+                         p_iconstring, use_sandbox,
                          0, 0, NULL, NULL);
         if (called_emsg > called_emsg_before) {
           set_string_option_direct("iconstring", -1, "", OPT_FREE, SID_ERROR);
         }
       } else {
-        icon_str = (char *)p_iconstring;
+        icon_str = p_iconstring;
       }
     } else {
       char *buf_p;

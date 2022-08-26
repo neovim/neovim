@@ -439,7 +439,7 @@ void set_init_1(bool clean_arg)
 #ifdef HAVE_WORKING_LIBINTL
   // GNU gettext 0.10.37 supports this feature: set the codeset used for
   // translated messages independently from the current locale.
-  (void)bind_textdomain_codeset(PROJECT_NAME, (char *)p_enc);
+  (void)bind_textdomain_codeset(PROJECT_NAME, p_enc);
 #endif
 
   // Set the default for 'helplang'.
@@ -1483,7 +1483,7 @@ int do_set(char *arg, int opt_flags)
               // for ":set" on local options. Note: when setting
               // 'syntax' or 'filetype' autocommands may be
               // triggered that can cause havoc.
-              errmsg = did_set_string_option(opt_idx, (char_u **)varp, oldval,
+              errmsg = did_set_string_option(opt_idx, (char **)varp, (char *)oldval,
                                              errbuf, sizeof(errbuf),
                                              opt_flags, &value_checked);
 
@@ -1699,16 +1699,14 @@ int get_shada_parameter(int type)
 /// Return NULL if the parameter is not specified in the string.
 char_u *find_shada_parameter(int type)
 {
-  char_u *p;
-
-  for (p = p_shada; *p; p++) {
+  for (char *p = p_shada; *p; p++) {
     if (*p == type) {
-      return p + 1;
+      return (char_u *)p + 1;
     }
     if (*p == 'n') {                // 'n' is always the last one
       break;
     }
-    p = (char_u *)vim_strchr((char *)p, ',');         // skip until next ','
+    p = vim_strchr(p, ',');         // skip until next ','
     if (p == NULL) {                // hit the end without finding parameter
       break;
     }
@@ -1745,7 +1743,7 @@ static char_u *option_expand(int opt_idx, char_u *val)
    */
   expand_env_esc(val, NameBuff, MAXPATHL,
                  (char_u **)options[opt_idx].var == &p_tags, false,
-                 (char_u **)options[opt_idx].var == &p_sps ? (char_u *)"file:" :
+                 (char_u **)options[opt_idx].var == (char_u **)&p_sps ? (char_u *)"file:" :
                  NULL);
   if (STRCMP(NameBuff, val) == 0) {   // they are the same
     return NULL;
@@ -2883,7 +2881,7 @@ bool set_tty_option(const char *name, char *value)
 
 void set_tty_background(const char *value)
 {
-  if (option_was_set("bg") || strequal((char *)p_bg, value)) {
+  if (option_was_set("bg") || strequal(p_bg, value)) {
     // background is already set... ignore
     return;
   }
@@ -4449,7 +4447,7 @@ void buf_copy_options(buf_T *buf, int flags)
       if (!buf->b_p_initialized) {
         free_buf_options(buf, true);
         buf->b_p_ro = false;                    // don't copy readonly
-        buf->b_p_fenc = (char *)vim_strsave(p_fenc);
+        buf->b_p_fenc = xstrdup(p_fenc);
         switch (*p_ffs) {
         case 'm':
           buf->b_p_ff = xstrdup(FF_MAC);
@@ -4461,7 +4459,7 @@ void buf_copy_options(buf_T *buf, int flags)
           buf->b_p_ff = xstrdup(FF_UNIX);
           break;
         default:
-          buf->b_p_ff = (char *)vim_strsave(p_ff);
+          buf->b_p_ff = xstrdup(p_ff);
           break;
         }
         buf->b_p_bh = empty_option;
@@ -4512,9 +4510,9 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_csl = vim_strsave(p_csl);
       COPY_OPT_SCTX(buf, BV_CSL);
 #endif
-      buf->b_p_cfu = (char *)vim_strsave(p_cfu);
+      buf->b_p_cfu = xstrdup(p_cfu);
       COPY_OPT_SCTX(buf, BV_CFU);
-      buf->b_p_ofu = (char *)vim_strsave(p_ofu);
+      buf->b_p_ofu = xstrdup(p_ofu);
       COPY_OPT_SCTX(buf, BV_OFU);
       buf->b_p_tfu = (char *)vim_strsave(p_tfu);
       COPY_OPT_SCTX(buf, BV_TFU);
@@ -4531,7 +4529,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_vsts_nopaste = p_vsts_nopaste
                                 ? (char *)vim_strsave(p_vsts_nopaste)
                                 : NULL;
-      buf->b_p_com = (char *)vim_strsave(p_com);
+      buf->b_p_com = xstrdup(p_com);
       COPY_OPT_SCTX(buf, BV_COM);
       buf->b_p_cms = (char *)vim_strsave(p_cms);
       COPY_OPT_SCTX(buf, BV_CMS);
@@ -4551,18 +4549,18 @@ void buf_copy_options(buf_T *buf, int flags)
       COPY_OPT_SCTX(buf, BV_CI);
       buf->b_p_cin = p_cin;
       COPY_OPT_SCTX(buf, BV_CIN);
-      buf->b_p_cink = (char *)vim_strsave(p_cink);
+      buf->b_p_cink = xstrdup(p_cink);
       COPY_OPT_SCTX(buf, BV_CINK);
-      buf->b_p_cino = (char *)vim_strsave(p_cino);
+      buf->b_p_cino = xstrdup(p_cino);
       COPY_OPT_SCTX(buf, BV_CINO);
-      buf->b_p_cinsd = (char *)vim_strsave(p_cinsd);
+      buf->b_p_cinsd = xstrdup(p_cinsd);
       COPY_OPT_SCTX(buf, BV_CINSD);
 
       // Don't copy 'filetype', it must be detected
       buf->b_p_ft = empty_option;
       buf->b_p_pi = p_pi;
       COPY_OPT_SCTX(buf, BV_PI);
-      buf->b_p_cinw = (char *)vim_strsave(p_cinw);
+      buf->b_p_cinw = xstrdup(p_cinw);
       COPY_OPT_SCTX(buf, BV_CINW);
       buf->b_p_lisp = p_lisp;
       COPY_OPT_SCTX(buf, BV_LISP);
@@ -4587,7 +4585,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_fp = empty_option;
       buf->b_p_fex = (char *)vim_strsave(p_fex);
       COPY_OPT_SCTX(buf, BV_FEX);
-      buf->b_p_sua = (char *)vim_strsave(p_sua);
+      buf->b_p_sua = xstrdup(p_sua);
       COPY_OPT_SCTX(buf, BV_SUA);
       buf->b_p_keymap = (char *)vim_strsave(p_keymap);
       COPY_OPT_SCTX(buf, BV_KMAP);
@@ -4642,7 +4640,7 @@ void buf_copy_options(buf_T *buf, int flags)
           buf->b_p_vts_array = NULL;
         }
       } else {
-        buf->b_p_isk = (char *)vim_strsave(p_isk);
+        buf->b_p_isk = xstrdup(p_isk);
         COPY_OPT_SCTX(buf, BV_ISK);
         did_isk = true;
         buf->b_p_ts = p_ts;
@@ -5052,8 +5050,8 @@ static int wc_use_keyname(char_u *varp, long *wcp)
 bool shortmess(int x)
 {
   return (p_shm != NULL
-          && (vim_strchr((char *)p_shm, x) != NULL
-              || (vim_strchr((char *)p_shm, 'a') != NULL
+          && (vim_strchr(p_shm, x) != NULL
+              || (vim_strchr(p_shm, 'a') != NULL
                   && vim_strchr((char *)SHM_ALL_ABBREVIATIONS, x) != NULL)));
 }
 
@@ -5354,7 +5352,7 @@ bool can_bs(int what)
   case '0':
     return false;
   }
-  return vim_strchr((char *)p_bs, what) != NULL;
+  return vim_strchr(p_bs, what) != NULL;
 }
 
 /// Get the local or global value of 'backupcopy'.
@@ -5379,7 +5377,7 @@ char_u *get_showbreak_value(win_T *const win)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (win->w_p_sbr == NULL || *win->w_p_sbr == NUL) {
-    return p_sbr;
+    return (char_u *)p_sbr;
   }
   if (STRCMP(win->w_p_sbr, "NONE") == 0) {
     return (char_u *)empty_option;

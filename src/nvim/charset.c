@@ -140,13 +140,13 @@ int buf_init_chartab(buf_T *buf, int global)
     const char_u *p;
     if (i == 0) {
       // first round: 'isident'
-      p = p_isi;
+      p = (char_u *)p_isi;
     } else if (i == 1) {
       // second round: 'isprint'
-      p = p_isp;
+      p = (char_u *)p_isp;
     } else if (i == 2) {
       // third round: 'isfname'
-      p = p_isf;
+      p = (char_u *)p_isf;
     } else {  // i == 3
       // fourth round: 'iskeyword'
       p = (char_u *)buf->b_p_isk;

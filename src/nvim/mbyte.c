@@ -1936,7 +1936,7 @@ void utf_find_illegal(void)
     // 'encoding' is "utf-8" but we are editing a 8-bit encoded file,
     // possibly a utf-8 file with illegal bytes.  Setup for conversion
     // from utf-8 to 'fileencoding'.
-    convert_setup(&vimconv, p_enc, (char_u *)curbuf->b_p_fenc);
+    convert_setup(&vimconv, (char_u *)p_enc, (char_u *)curbuf->b_p_fenc);
   }
 
   curwin->w_cursor.coladd = 0;
