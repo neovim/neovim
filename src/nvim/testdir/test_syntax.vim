@@ -198,6 +198,10 @@ func Test_syntax_completion()
 
   call feedkeys(":syn match \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"syn match @boolean @character ', @:)
+
+  syn cluster Aax contains=Aap
+  call feedkeys(":syn list @A\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('^"syn list @Aax', @:)
 endfunc
 
 func Test_echohl_completion()

@@ -90,14 +90,14 @@ static char *(history_names[]) = {
 /// arguments of the ":history command.
 char *get_history_arg(expand_T *xp, int idx)
 {
-  static char_u compl[2] = { NUL, NUL };
-  char *short_names = ":=@>?/";
-  int short_names_count = (int)STRLEN(short_names);
-  int history_name_count = ARRAY_SIZE(history_names) - 1;
+  const char *short_names = ":=@>?/";
+  const int short_names_count = (int)STRLEN(short_names);
+  const int history_name_count = ARRAY_SIZE(history_names) - 1;
 
   if (idx < short_names_count) {
-    compl[0] = (char_u)short_names[idx];
-    return (char *)compl;
+    xp->xp_buf[0] = short_names[idx];
+    xp->xp_buf[1] = NUL;
+    return xp->xp_buf;
   }
   if (idx < short_names_count + history_name_count) {
     return history_names[idx - short_names_count];
