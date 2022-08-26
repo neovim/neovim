@@ -18,6 +18,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/vars.h"
+#include "nvim/ex_getln.h"
 #include "nvim/hardcopy.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"

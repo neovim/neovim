@@ -170,6 +170,8 @@ static Array cmdline_block = ARRAY_DICT_INIT;
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
+static int cedit_key = -1;  ///< key value of 'cedit' option
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
 #endif
@@ -2532,6 +2534,59 @@ char_u *get_cmdprompt(void)
   return ccline.cmdprompt;
 }
 
+/// Read the 'wildmode' option, fill wim_flags[].
+int check_opt_wim(void)
+{
+  char_u new_wim_flags[4];
+  char_u *p;
+  int i;
+  int idx = 0;
+
+  for (i = 0; i < 4; i++) {
+    new_wim_flags[i] = 0;
+  }
+
+  for (p = p_wim; *p; p++) {
+    for (i = 0; ASCII_ISALPHA(p[i]); i++) {}
+    if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
+      return FAIL;
+    }
+    if (i == 7 && STRNCMP(p, "longest", 7) == 0) {
+      new_wim_flags[idx] |= WIM_LONGEST;
+    } else if (i == 4 && STRNCMP(p, "full", 4) == 0) {
+      new_wim_flags[idx] |= WIM_FULL;
+    } else if (i == 4 && STRNCMP(p, "list", 4) == 0) {
+      new_wim_flags[idx] |= WIM_LIST;
+    } else if (i == 8 && STRNCMP(p, "lastused", 8) == 0) {
+      new_wim_flags[idx] |= WIM_BUFLASTUSED;
+    } else {
+      return FAIL;
+    }
+    p += i;
+    if (*p == NUL) {
+      break;
+    }
+    if (*p == ',') {
+      if (idx == 3) {
+        return FAIL;
+      }
+      idx++;
+    }
+  }
+
+  // fill remaining entries with last flag
+  while (idx < 3) {
+    new_wim_flags[idx + 1] = new_wim_flags[idx];
+    idx++;
+  }
+
+  // only when there are no errors, wim_flags[] is changed
+  for (i = 0; i < 4; i++) {
+    wim_flags[i] = new_wim_flags[i];
+  }
+  return OK;
+}
+
 /// Return true when the text must not be changed and we can't switch to
 /// another window or buffer.  True when editing the command line etc.
 bool text_locked(void)
@@ -4024,6 +4079,24 @@ int get_list_range(char **str, int *num1, int *num2)
 void cmdline_init(void)
 {
   CLEAR_FIELD(ccline);
+}
+
+/// Check value of 'cedit' and set cedit_key.
+/// Returns NULL if value is OK, error message otherwise.
+char *check_cedit(void)
+{
+  int n;
+
+  if (*p_cedit == NUL) {
+    cedit_key = -1;
+  } else {
+    n = string_to_key(p_cedit);
+    if (vim_isprintc(n)) {
+      return e_invarg;
+    }
+    cedit_key = n;
+  }
+  return NULL;
 }
 
 /// Open a window on the current command line and history.  Allow editing in
