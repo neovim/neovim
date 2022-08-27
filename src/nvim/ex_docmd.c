@@ -47,6 +47,7 @@
 #include "nvim/if_cscope.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"
+#include "nvim/locale.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"

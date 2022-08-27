@@ -25,23 +25,19 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/garray.h"
+#include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
 #include "nvim/insexpand.h"
+#include "nvim/locale.h"
+#include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
-#include "nvim/ui_client.h"
-#include "nvim/vim.h"
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
-#include "nvim/garray.h"
-#include "nvim/grid.h"
-#include "nvim/log.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -70,8 +66,10 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/version.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 #ifdef WIN32
 # include "nvim/os/os_win_console.h"
@@ -800,30 +798,6 @@ static int get_number_arg(const char *p, int *idx, int def)
   }
   return def;
 }
-
-#if defined(HAVE_LOCALE_H)
-/// Setup to use the current locale (for ctype() and many other things).
-static void init_locale(void)
-{
-  setlocale(LC_ALL, "");
-
-# ifdef LC_NUMERIC
-  // Make sure strtod() uses a decimal point, not a comma.
-  setlocale(LC_NUMERIC, "C");
-# endif
-
-  char localepath[MAXPATHL] = { 0 };
-  snprintf(localepath, sizeof(localepath), "%s", get_vim_var_str(VV_PROGPATH));
-  char *tail = path_tail_with_sep(localepath);
-  *tail = NUL;
-  tail = path_tail(localepath);
-  xstrlcpy(tail, "share/locale",
-           sizeof(localepath) - (size_t)(tail - localepath));
-  bindtextdomain(PROJECT_NAME, localepath);
-  textdomain(PROJECT_NAME);
-  TIME_MSG("locale set");
-}
-#endif
 
 static uint64_t server_connect(char *server_addr, const char **errmsg)
 {
