@@ -1240,9 +1240,10 @@ struct window_S {
   colnr_T w_skipcol;                // starting column when a single line
                                     // doesn't fit in the window
 
-  // four fields that are only used when there is a WinScrolled autocommand
+  // five fields that are only used when there is a WinScrolled autocommand
   linenr_T w_last_topline;          ///< last known value for w_topline
   colnr_T w_last_leftcol;           ///< last known value for w_leftcol
+  colnr_T w_last_skipcol;           ///< last known value for w_skipcol
   int w_last_width;                 ///< last known value for w_width
   int w_last_height;                ///< last known value for w_height
 
