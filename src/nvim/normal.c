@@ -66,6 +66,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/textformat.h"
+#include "nvim/textobject.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/vim.h"
