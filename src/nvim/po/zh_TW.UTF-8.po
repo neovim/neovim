@@ -4380,11 +4380,11 @@ msgstr "W10: 注意: 你正在修改一個唯讀檔"
 
 #: ../misc1.c:2537
 msgid "Type number and <Enter> or click with mouse (empty cancels): "
-msgstr "請輸入數字或點擊鼠標 (<Enter> 取消): "
+msgstr "請輸入數字並<Enter>或點擊鼠標（空白取消）: "
 
 #: ../misc1.c:2539
 msgid "Type number and <Enter> (empty cancels): "
-msgstr "請選擇數字 (<Enter> 取消): "
+msgstr "請選擇數字並(<Enter> 取消): "
 
 #: ../misc1.c:2585
 msgid "1 more line"
@@ -5490,7 +5490,7 @@ msgstr "%s 中缺少 SOFO%s 行"
 #: ../spell.c:5253
 #, c-format
 msgid "Both SAL and SOFO lines in %s"
-msgstr "%s 同時出現 SQL 和 SOFO 行"
+msgstr "%s 同時出現 SAL 和 SOFO 行"
 
 #: ../spell.c:5331
 #, c-format
@@ -6172,11 +6172,11 @@ msgstr "不能寫入撤銷文件，不可讀取: %s"
 #: ../undo.c:1092
 #, c-format
 msgid "Will not overwrite, this is not an undo file: %s"
-msgstr "不能重寫撤銷文件，不可能讀取: %s"
+msgstr "不會覆蓋，這不是撤銷文件: %s"
 
 #: ../undo.c:1108
 msgid "Skipping undo file write, nothing to undo"
-msgstr ""
+msgstr "跳過撤消文件寫入，沒有可撤消的內容"
 
 #: ../undo.c:1121
 #, fuzzy, c-format
