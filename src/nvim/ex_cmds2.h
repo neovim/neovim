@@ -1,8 +1,6 @@
 #ifndef NVIM_EX_CMDS2_H
 #define NVIM_EX_CMDS2_H
 
-#include <stdbool.h>
-
 #include "nvim/ex_cmds_defs.h"
 
 //

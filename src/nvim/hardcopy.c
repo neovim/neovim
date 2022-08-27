@@ -10,10 +10,6 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
-#include "nvim/vim.h"
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
@@ -38,6 +34,7 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
+#include "nvim/vim.h"
 
 /*
  * To implement printing on a platform, the following functions must be

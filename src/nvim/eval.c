@@ -6,12 +6,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "auto/config.h"
-
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
-
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -36,6 +30,7 @@
 #include "nvim/ex_session.h"
 #include "nvim/getchar.h"
 #include "nvim/highlight_group.h"
+#include "nvim/locale.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"

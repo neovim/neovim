@@ -23,6 +23,7 @@
 #include "nvim/help.h"
 #include "nvim/highlight_group.h"
 #include "nvim/if_cscope.h"
+#include "nvim/locale.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mapping.h"
 #include "nvim/menu.h"
