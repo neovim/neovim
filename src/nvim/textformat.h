@@ -1,8 +1,6 @@
 #ifndef NVIM_TEXTFORMAT_H
 #define NVIM_TEXTFORMAT_H
 
-#include <stdbool.h>
-
 #include "nvim/normal.h"  // for oparg_T
 #include "nvim/pos.h"  // for linenr_T
 

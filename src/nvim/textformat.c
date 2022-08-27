@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 
+#include "nvim/ascii.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -15,14 +16,18 @@
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/move.h"
+#include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
+#include "nvim/pos.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/textformat.h"
+#include "nvim/textobject.h"
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"

@@ -33,9 +33,9 @@
 #include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/quickfix.h"
-#include "nvim/search.h"
 #include "nvim/sign.h"
 #include "nvim/strings.h"
+#include "nvim/textobject.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
