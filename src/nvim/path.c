@@ -1751,17 +1751,17 @@ bool path_has_drive_letter(const char *p)
          && (strlen(p) == 2 || ((p[2] == '/') | (p[2] == '\\') | (p[2] == '?') | (p[2] == '#')));
 }
 
-// Check if the ":/" of a URL is at the pointer, return URL_SLASH.
-// Also check for ":\\", which MS Internet Explorer accepts, return
+// Check for ":\\", which MS Internet Explorer accepts, return
 // URL_BACKSLASH.
+// Also check if the ":" of a URL is at the pointer, return URL_SLASH.
 int path_is_url(const char *p)
 {
   // In the spec ':' is enough to recognize a scheme
   // https://url.spec.whatwg.org/#scheme-state
-  if (strncmp(p, ":/", 2) == 0) {
-    return URL_SLASH;
-  } else if (strncmp(p, ":\\\\", 3) == 0) {
+  if (strncmp(p, ":\\\\", 3) == 0) {
     return URL_BACKSLASH;
+  } else if (strncmp(p, ":", 1) == 0) {
+    return URL_SLASH;
   }
   return 0;
 }
@@ -1795,7 +1795,7 @@ int path_with_url(const char *fname)
     return 0;
   }
 
-  // ":/" or ":\\" must follow
+  // ":" or ":\\" must follow
   return path_is_url(p);
 }
 
