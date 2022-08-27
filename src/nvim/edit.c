@@ -1665,28 +1665,28 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
   } else if (!(State & MODE_INSERT)) {
     new_cursor_col = curwin->w_cursor.col;
   } else {
-    /*
-     * Compute the screen column where the cursor should be.
-     */
+    // Compute the screen column where the cursor should be.
     vcol = get_indent() - vcol;
     curwin->w_virtcol = (colnr_T)((vcol < 0) ? 0 : vcol);
 
-    /*
-     * Advance the cursor until we reach the right screen column.
-     */
-    vcol = last_vcol = 0;
-    new_cursor_col = -1;
+    // Advance the cursor until we reach the right screen column.
+    last_vcol = 0;
     ptr = get_cursor_line_ptr();
-    while (vcol <= (int)curwin->w_virtcol) {
-      last_vcol = vcol;
-      if (new_cursor_col >= 0) {
-        new_cursor_col += utfc_ptr2len((char *)ptr + new_cursor_col);
-      } else {
-        new_cursor_col++;
+    chartabsize_T cts;
+    init_chartabsize_arg(&cts, curwin, 0, 0, ptr, ptr);
+    while (cts.cts_vcol <= (int)curwin->w_virtcol) {
+      last_vcol = cts.cts_vcol;
+      if (cts.cts_vcol > 0) {
+        MB_PTR_ADV(cts.cts_ptr);
       }
-      vcol += lbr_chartabsize(ptr, ptr + new_cursor_col, (colnr_T)vcol);
+      if (*cts.cts_ptr == NUL) {
+        break;
+      }
+      cts.cts_vcol += lbr_chartabsize(&cts);
     }
     vcol = last_vcol;
+    new_cursor_col = (int)(cts.cts_ptr - cts.cts_line);
+    clear_chartabsize_arg(&cts);
 
     /*
      * May need to insert spaces to be able to position the cursor on
@@ -2991,7 +2991,7 @@ static void replace_do_bs(int limit_col)
       // Get the number of screen cells used by the character we are
       // going to delete.
       getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
-      orig_vcols = win_chartabsize(curwin, get_cursor_pos_ptr(), start_vcol);
+      orig_vcols = win_chartabsize(curwin, (char *)get_cursor_pos_ptr(), start_vcol);
     }
     (void)del_char_after_col(limit_col);
     if (l_State & VREPLACE_FLAG) {
@@ -3006,7 +3006,7 @@ static void replace_do_bs(int limit_col)
       ins_len = (int)STRLEN(p) - orig_len;
       vcol = start_vcol;
       for (i = 0; i < ins_len; i++) {
-        vcol += win_chartabsize(curwin, p + i, vcol);
+        vcol += win_chartabsize(curwin, (char *)p + i, vcol);
         i += utfc_ptr2len((char *)p) - 1;
       }
       vcol -= start_vcol;
@@ -4644,11 +4644,15 @@ static bool ins_tab(void)
     getvcol(curwin, &fpos, &vcol, NULL, NULL);
     getvcol(curwin, cursor, &want_vcol, NULL, NULL);
 
+    char_u *tab = (char_u *)"\t";
+    chartabsize_T cts;
+    init_chartabsize_arg(&cts, curwin, 0, vcol, tab, tab);
+
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
     while (ascii_iswhite(*ptr)) {
-      i = lbr_chartabsize(NULL, (char_u *)"\t", vcol);
-      if (vcol + i > want_vcol) {
+      i = lbr_chartabsize(&cts);
+      if (cts.cts_vcol + i > want_vcol) {
         break;
       }
       if (*ptr != TAB) {
@@ -4663,19 +4667,24 @@ static bool ins_tab(void)
       }
       fpos.col++;
       ptr++;
-      vcol += i;
+      cts.cts_vcol += i;
     }
+    vcol = cts.cts_vcol;
+    clear_chartabsize_arg(&cts);
 
     if (change_col >= 0) {
       int repl_off = 0;
-      char_u *line = ptr;
-
       // Skip over the spaces we need.
-      while (vcol < want_vcol && *ptr == ' ') {
-        vcol += lbr_chartabsize(line, ptr, vcol);
-        ptr++;
+      init_chartabsize_arg(&cts, curwin, 0, vcol, ptr, ptr);
+      while (cts.cts_vcol < want_vcol && *cts.cts_ptr == ' ') {
+        cts.cts_vcol += lbr_chartabsize(&cts);
+        cts.cts_ptr++;
         repl_off++;
       }
+      ptr = (char_u *)cts.cts_ptr;
+      vcol = cts.cts_vcol;
+      clear_chartabsize_arg(&cts);
+
       if (vcol > want_vcol) {
         // Must have a char with 'showbreak' just before it.
         ptr--;
@@ -4855,7 +4864,6 @@ static int ins_digraph(void)
 int ins_copychar(linenr_T lnum)
 {
   int c;
-  int temp;
   char_u *ptr, *prev_ptr;
   char_u *line;
 
@@ -4865,17 +4873,23 @@ int ins_copychar(linenr_T lnum)
   }
 
   // try to advance to the cursor column
-  temp = 0;
-  line = ptr = ml_get(lnum);
-  prev_ptr = ptr;
+  line = ml_get(lnum);
+  prev_ptr = line;
   validate_virtcol();
-  while ((colnr_T)temp < curwin->w_virtcol && *ptr != NUL) {
-    prev_ptr = ptr;
-    temp += lbr_chartabsize_adv(line, &ptr, (colnr_T)temp);
+
+  chartabsize_T cts;
+  init_chartabsize_arg(&cts, curwin, lnum, 0, line, line);
+  while (cts.cts_vcol < curwin->w_virtcol && *cts.cts_ptr != NUL) {
+    prev_ptr = (char_u *)cts.cts_ptr;
+    cts.cts_vcol += lbr_chartabsize_adv(&cts);
   }
-  if ((colnr_T)temp > curwin->w_virtcol) {
+
+  if (cts.cts_vcol > curwin->w_virtcol) {
     ptr = prev_ptr;
+  } else {
+    ptr = (char_u *)cts.cts_ptr;
   }
+  clear_chartabsize_arg(&cts);
 
   c = utf_ptr2char((char *)ptr);
   if (c == NUL) {

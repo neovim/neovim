@@ -3764,6 +3764,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
         case RE_VCOL:
           if (!re_num_cmp(win_linetabsize(rex.reg_win == NULL
                                           ? curwin : rex.reg_win,
+                                          rex.reg_firstlnum + rex.lnum,
                                           rex.line,
                                           (colnr_T)(rex.input - rex.line)) + 1,
                           scan)) {

@@ -2547,7 +2547,7 @@ static int vgetorpeek(bool advance)
             && (State & MODE_INSERT)
             && (p_timeout || (keylen == KEYLEN_PART_KEY && p_ttimeout))
             && (c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len, 3, 25L)) == 0) {
-          colnr_T col = 0, vcol;
+          colnr_T col = 0;
           char_u *ptr;
 
           if (mode_displayed) {
@@ -2565,15 +2565,20 @@ static int vgetorpeek(bool advance)
                 // We are expecting to truncate the trailing
                 // white-space, so find the last non-white
                 // character -- webb
-                col = vcol = curwin->w_wcol = 0;
+                curwin->w_wcol = 0;
                 ptr = get_cursor_line_ptr();
-                while (col < curwin->w_cursor.col) {
-                  if (!ascii_iswhite(ptr[col])) {
-                    curwin->w_wcol = vcol;
+                chartabsize_T cts;
+                init_chartabsize_arg(&cts, curwin,
+                                     curwin->w_cursor.lnum, 0, ptr, ptr);
+                while ((char_u *)cts.cts_ptr < ptr + curwin->w_cursor.col) {
+                  if (!ascii_iswhite(*cts.cts_ptr)) {
+                    curwin->w_wcol = cts.cts_vcol;
                   }
-                  vcol += lbr_chartabsize(ptr, ptr + col, vcol);
-                  col += utfc_ptr2len((char *)ptr + col);
+                  cts.cts_vcol += lbr_chartabsize(&cts);
+                  cts.cts_ptr += utfc_ptr2len(cts.cts_ptr);
                 }
+                clear_chartabsize_arg(&cts);
+
                 curwin->w_wrow = curwin->w_cline_row
                                  + curwin->w_wcol / curwin->w_width_inner;
                 curwin->w_wcol %= curwin->w_width_inner;

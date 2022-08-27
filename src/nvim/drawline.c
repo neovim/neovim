@@ -940,12 +940,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   }
   if (v > 0 && !number_only) {
     char_u *prev_ptr = ptr;
-    while (vcol < v && *ptr != NUL) {
-      c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
-      vcol += c;
-      prev_ptr = ptr;
-      MB_PTR_ADV(ptr);
+    chartabsize_T cts;
+    int charsize;
+
+    init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, line, ptr);
+    while (cts.cts_vcol < v && *cts.cts_ptr != NUL) {
+      charsize = win_lbr_chartabsize(&cts, NULL);
+      cts.cts_vcol += charsize;
+      prev_ptr = (char_u *)cts.cts_ptr;
+      MB_PTR_ADV(cts.cts_ptr);
     }
+    vcol = cts.cts_vcol;
+    ptr = (char_u *)cts.cts_ptr;
+    clear_chartabsize_arg(&cts);
 
     // When:
     // - 'cuc' is set, or
@@ -963,11 +970,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     // Handle a character that's not completely on the screen: Put ptr at
     // that character but skip the first few screen characters.
     if (vcol > v) {
-      vcol -= c;
+      vcol -= charsize;
       ptr = prev_ptr;
       // If the character fits on the screen, don't need to skip it.
       // Except for a TAB.
-      if (utf_ptr2cells((char *)ptr) >= c || *ptr == TAB) {
+      if (utf_ptr2cells((char *)ptr) >= charsize || *ptr == TAB) {
         n_skip = (int)(v - vcol);
       }
     }
@@ -1798,8 +1805,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
             && !vim_isbreak((int)(*ptr))) {
           int mb_off = utf_head_off(line, ptr - 1);
           char_u *p = ptr - (mb_off + 1);
-          // TODO(neovim): is passing p for start of the line OK?
-          n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
+          chartabsize_T cts;
+
+          init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, line, p);
+          n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
 
           // We have just drawn the showbreak value, no need to add
           // space for it again.
@@ -1825,6 +1834,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
               c = ' ';
             }
           }
+          clear_chartabsize_arg(&cts);
         }
 
         in_multispace = c == ' ' && ((ptr > line + 1 && ptr[-2] == ' ') || *ptr == ' ');
