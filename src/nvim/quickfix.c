@@ -2932,7 +2932,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
   }
 
   if (qf_stack_empty(qi) || qf_list_empty(qf_get_curlist(qi))) {
-    emsg(_(e_quickfix));
+    emsg(_(e_no_errors));
     return;
   }
 
@@ -3111,7 +3111,7 @@ void qf_list(exarg_T *eap)
   }
 
   if (qf_stack_empty(qi) || qf_list_empty(qf_get_curlist(qi))) {
-    emsg(_(e_quickfix));
+    emsg(_(e_no_errors));
     return;
   }
 
@@ -3467,7 +3467,7 @@ void qf_view_result(bool split)
     qi = GET_LOC_LIST(curwin);
   }
   if (qf_list_empty(qf_get_curlist(qi))) {
-    emsg(_(e_quickfix));
+    emsg(_(e_no_errors));
     return;
   }
 
@@ -4898,7 +4898,7 @@ void ex_cbelow(exarg_T *eap)
                       || eap->cmdidx == CMD_cafter) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
 
   if (!(curbuf->b_has_qf_entry & buf_has_flag)) {
-    emsg(_(e_quickfix));
+    emsg(_(e_no_errors));
     return;
   }
 
@@ -4910,7 +4910,7 @@ void ex_cbelow(exarg_T *eap)
   qf_list_T *qfl = qf_get_curlist(qi);
   // check if the list has valid errors
   if (!qf_list_has_valid_entries(qfl)) {
-    emsg(_(e_quickfix));
+    emsg(_(e_no_errors));
     return;
   }
 
