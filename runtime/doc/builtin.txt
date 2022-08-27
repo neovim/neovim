@@ -1029,7 +1029,7 @@ chanclose({id} [, {stream}])				*chanclose()*
 		are closed. If the channel is a pty, this will then close the
 		pty master, sending SIGHUP to the job process.
 		For a socket, there is only one stream, and {stream} should be
-		ommited.
+		omitted.
 
 chansend({id}, {data})					*chansend()*
 		Send data to channel {id}. For a job, it writes it to the
@@ -4973,7 +4973,7 @@ matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
 		highlighted matches. The dict can have the following members:
 
 			conceal	    Special character to show instead of the
-				    match (only for |hl-Conceal| highlighed
+				    match (only for |hl-Conceal| highlighted
 				    matches, see |:syn-cchar|)
 			window	    Instead of the current window use the
 				    window with this number or window ID.
@@ -7709,14 +7709,13 @@ stdpath({what})					*stdpath()* *E6100*
 		config       String  User configuration directory. |init.vim|
 		                     is stored here.
 		config_dirs  List    Other configuration directories.
-		data         String  User data directory. The |shada-file|
-		                     is stored here.
+		data         String  User data directory.
 		data_dirs    List    Other data directories.
 		log          String  Logs directory (for use by plugins too).
 		run          String  Run directory: temporary, local storage
 				     for sockets, named pipes, etc.
 		state        String  Session state directory: storage for file
-				     drafts, undo, shada, etc.
+				     drafts, undo, |shada|, etc.
 
 		Example: >
 			:echo stdpath("config")
