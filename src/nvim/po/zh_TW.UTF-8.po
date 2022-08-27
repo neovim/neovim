@@ -616,7 +616,7 @@ msgstr "E138: 無法寫入 viminfo 檔案 %s !"
 
 #: ../eval.c:2391
 msgid "E689: Can only index a List or Dictionary"
-msgstr "E69: 只能索引一個列表或者字典"
+msgstr "E689: 只能索引一個列表或者字典"
 
 #: ../eval.c:2396
 msgid "E708: [:] must come last"
@@ -814,16 +814,16 @@ msgstr "E227: %s 的 mapping 已經存在"
 
 #: ../eval.c:8692
 msgid "extend() argument"
-msgstr "--cmd 參數"
+msgstr "extend() 參數"
 
 #: ../eval.c:8915
 #, fuzzy
 msgid "map() argument"
-msgstr "vim [參數] "
+msgstr "map() 參數"
 
 #: ../eval.c:8916
 msgid "filter() argument"
-msgstr "-c 參數"
+msgstr "filter() 參數"
 
 #: ../eval.c:9229
 #, c-format
@@ -2877,7 +2877,7 @@ msgstr "E42: 沒有錯誤"
 
 #: ../globals.h:1067
 msgid "E776: No location list"
-msgstr "E776: 沒有本地列表"
+msgstr "E776: 沒有位置列表"
 
 #: ../globals.h:1068
 msgid "E43: Damaged match string"
@@ -4241,7 +4241,7 @@ msgstr "E329: 沒有那樣的選單"
 #. Only a mnemonic or accelerator is not valid.
 #: ../menu.c:329
 msgid "E792: Empty menu name"
-msgstr "E749: 空的菜單名稱"
+msgstr "E792: 空的菜單名稱"
 
 #: ../menu.c:340
 msgid "E330: Menu path must not lead to a sub-menu"
@@ -4656,7 +4656,7 @@ msgstr "E834: 與'listchars'中的值發生衝突"
 
 #: ../option.c:3966
 msgid "E835: Conflicts with value of 'fillchars'"
-msgstr "E834: 與'fillchars'中的值發生衝突"
+msgstr "E835: 與'fillchars'中的值發生衝突"
 
 #: ../option.c:4163
 msgid "E524: Missing colon"
@@ -5061,7 +5061,7 @@ msgstr ""
 #: ../regexp_nfa.c:1802
 #, c-format
 msgid "E869: (NFA) Unknown operator '\\@%c'"
-msgstr "E867: (NFA) 未知的操作符 '\\%%%c'"
+msgstr "E869: (NFA) 未知的操作符 '\\%%%c'"
 
 #: ../regexp_nfa.c:1831
 msgid "E870: (NFA regexp) Error reading repetition limits"
@@ -6148,7 +6148,7 @@ msgstr "Vim: 讀取輸入錯誤，離開中...\n"
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
 msgid "E881: Line count changed unexpectedly"
-msgstr "E881: 行數意外的改變了"
+msgstr "E881: 行數意外地改變了"
 
 #: ../undo.c:627
 #, fuzzy, c-format
@@ -6289,7 +6289,7 @@ msgstr "沒有這個 mapping 對應"
 
 #: ../undo.c:2330
 msgid "number changes  when               saved"
-msgstr "數字改變當        保存"
+msgstr " 編號    改變  時間                 保存"
 
 #: ../undo.c:2360
 #, fuzzy, c-format

@@ -768,17 +768,17 @@ msgstr "E737: 键已存在: %s"
 #: ../eval.c:8692
 #, fuzzy
 msgid "extend() argument"
-msgstr "--cmd 参数"
+msgstr "extend() 参数"
 
 #: ../eval.c:8915
 #, fuzzy
 msgid "map() argument"
-msgstr "-c 参数"
+msgstr "map() 参数"
 
 #: ../eval.c:8916
 #, fuzzy
 msgid "filter() argument"
-msgstr "-c 参数"
+msgstr "filter() 参数"
 
 #: ../eval.c:9229
 #, c-format
@@ -864,7 +864,7 @@ msgstr "E677: 写临时文件出错"
 #: ../eval.c:16159
 #, fuzzy
 msgid "E805: Using a Float as a Number"
-msgstr "E745: 将浮点数当做数字使用"
+msgstr "E805: 将浮点数当做数字使用"
 
 #: ../eval.c:16162
 msgid "E703: Using a Funcref as a Number"
@@ -4206,7 +4206,7 @@ msgstr "E329: 没有菜单 \"%s\""
 #: ../menu.c:329
 #, fuzzy
 msgid "E792: Empty menu name"
-msgstr "E749: 空的菜单名称"
+msgstr "E792: 空的菜单名称"
 
 #: ../menu.c:340
 msgid "E330: Menu path must not lead to a sub-menu"
@@ -6106,7 +6106,7 @@ msgstr "Vim: 读错误，退出中...\n"
 #: ../undo.c:379
 #, fuzzy
 msgid "E881: Line count changed unexpectedly"
-msgstr "E881: 行数意外的改变了"
+msgstr "E881: 行数意外地改变了"
 
 #: ../undo.c:627
 #, fuzzy, c-format
