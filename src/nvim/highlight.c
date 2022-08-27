@@ -223,7 +223,7 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
       }
     }
 
-    it.attr_id = fallback ? -1 : hl_get_syn_attr((int)ns_id, hl_id, attrs);
+    it.attr_id = fallback ? -1 : hl_get_syn_attr(ns_id, hl_id, attrs);
     it.version = p->hl_valid - tmp;
     it.is_default = attrs.rgb_ae_attr & HL_DEFAULT;
     it.link_global = attrs.rgb_ae_attr & HL_GLOBAL;
@@ -406,7 +406,7 @@ void update_ns_hl(int ns_id)
   }
   int *hl_attrs = **alloc;
 
-  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+  for (int hlf = 0; hlf < HLF_COUNT; hlf++) {
     int id = syn_check_group(hlf_names[hlf], STRLEN(hlf_names[hlf]));
     bool optional = (hlf == HLF_INACTIVE || hlf == HLF_NFLOAT);
     hl_attrs[hlf] = hl_get_ui_attr(ns_id, hlf, id, optional);

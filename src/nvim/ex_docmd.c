@@ -3088,7 +3088,7 @@ cmdidx_T excmd_get_cmdidx(const char *cmd, size_t len)
 {
   cmdidx_T idx;
 
-  for (idx = (cmdidx_T)0; (int)idx < (int)CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
+  for (idx = (cmdidx_T)0; (int)idx < CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
     if (strncmp(cmdnames[(int)idx].cmd_name, cmd, len) == 0) {
       break;
     }

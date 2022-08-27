@@ -702,8 +702,8 @@ static linenr_T find_longest_lnum(void)
         max = len;
         ret = lnum;
       } else if (len == (colnr_T)max
-                 && abs((int)(lnum - curwin->w_cursor.lnum))
-                 < abs((int)(ret - curwin->w_cursor.lnum))) {
+                 && abs(lnum - curwin->w_cursor.lnum)
+                 < abs(ret - curwin->w_cursor.lnum)) {
         ret = lnum;
       }
     }

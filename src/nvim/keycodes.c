@@ -57,15 +57,15 @@ static char_u modifier_keys_table[] =
   MOD_MASK_SHIFT, '*', '4',                   'k', 'D',         // delete char
   MOD_MASK_SHIFT, '*', '5',                   'k', 'L',         // delete line
   MOD_MASK_SHIFT, '*', '7',                   '@', '7',         // end
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_END,    '@', '7',         // end
+  MOD_MASK_CTRL,  KS_EXTRA, KE_C_END,         '@', '7',         // end
   MOD_MASK_SHIFT, '*', '9',                   '@', '9',         // exit
   MOD_MASK_SHIFT, '*', '0',                   '@', '0',         // find
   MOD_MASK_SHIFT, '#', '1',                   '%', '1',         // help
   MOD_MASK_SHIFT, '#', '2',                   'k', 'h',         // home
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_HOME,   'k', 'h',         // home
+  MOD_MASK_CTRL,  KS_EXTRA, KE_C_HOME,        'k', 'h',         // home
   MOD_MASK_SHIFT, '#', '3',                   'k', 'I',         // insert
   MOD_MASK_SHIFT, '#', '4',                   'k', 'l',         // left arrow
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_LEFT,   'k', 'l',         // left arrow
+  MOD_MASK_CTRL,  KS_EXTRA, KE_C_LEFT,        'k', 'l',         // left arrow
   MOD_MASK_SHIFT, '%', 'a',                   '%', '3',         // message
   MOD_MASK_SHIFT, '%', 'b',                   '%', '4',         // move
   MOD_MASK_SHIFT, '%', 'c',                   '%', '5',         // next
@@ -75,63 +75,63 @@ static char_u modifier_keys_table[] =
   MOD_MASK_SHIFT, '%', 'g',                   '%', '0',         // redo
   MOD_MASK_SHIFT, '%', 'h',                   '&', '3',         // replace
   MOD_MASK_SHIFT, '%', 'i',                   'k', 'r',         // right arr.
-  MOD_MASK_CTRL,  KS_EXTRA, (int)KE_C_RIGHT,  'k', 'r',         // right arr.
+  MOD_MASK_CTRL,  KS_EXTRA, KE_C_RIGHT,       'k', 'r',         // right arr.
   MOD_MASK_SHIFT, '%', 'j',                   '&', '5',         // resume
   MOD_MASK_SHIFT, '!', '1',                   '&', '6',         // save
   MOD_MASK_SHIFT, '!', '2',                   '&', '7',         // suspend
   MOD_MASK_SHIFT, '!', '3',                   '&', '8',         // undo
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_UP,     'k', 'u',         // up arrow
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_DOWN,   'k', 'd',         // down arrow
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_UP,          'k', 'u',         // up arrow
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_DOWN,        'k', 'd',         // down arrow
 
   // vt100 F1
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF1,    KS_EXTRA, (int)KE_XF1,
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF2,    KS_EXTRA, (int)KE_XF2,
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF3,    KS_EXTRA, (int)KE_XF3,
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_XF4,    KS_EXTRA, (int)KE_XF4,
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_XF1,         KS_EXTRA, KE_XF1,
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_XF2,         KS_EXTRA, KE_XF2,
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_XF3,         KS_EXTRA, KE_XF3,
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_XF4,         KS_EXTRA, KE_XF4,
 
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F1,     'k', '1',         // F1
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F2,     'k', '2',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F3,     'k', '3',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F4,     'k', '4',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F5,     'k', '5',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F6,     'k', '6',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F7,     'k', '7',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F8,     'k', '8',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F9,     'k', '9',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F10,    'k', ';',         // F10
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F1,          'k', '1',         // F1
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F2,          'k', '2',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F3,          'k', '3',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F4,          'k', '4',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F5,          'k', '5',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F6,          'k', '6',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F7,          'k', '7',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F8,          'k', '8',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F9,          'k', '9',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F10,         'k', ';',         // F10
 
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F11,    'F', '1',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F12,    'F', '2',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F13,    'F', '3',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F14,    'F', '4',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F15,    'F', '5',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F16,    'F', '6',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F17,    'F', '7',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F18,    'F', '8',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F19,    'F', '9',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F20,    'F', 'A',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F11,         'F', '1',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F12,         'F', '2',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F13,         'F', '3',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F14,         'F', '4',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F15,         'F', '5',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F16,         'F', '6',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F17,         'F', '7',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F18,         'F', '8',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F19,         'F', '9',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F20,         'F', 'A',
 
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F21,    'F', 'B',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F22,    'F', 'C',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F23,    'F', 'D',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F24,    'F', 'E',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F25,    'F', 'F',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F26,    'F', 'G',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F27,    'F', 'H',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F28,    'F', 'I',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F29,    'F', 'J',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F30,    'F', 'K',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F21,         'F', 'B',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F22,         'F', 'C',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F23,         'F', 'D',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F24,         'F', 'E',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F25,         'F', 'F',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F26,         'F', 'G',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F27,         'F', 'H',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F28,         'F', 'I',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F29,         'F', 'J',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F30,         'F', 'K',
 
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F31,    'F', 'L',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F32,    'F', 'M',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F33,    'F', 'N',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F34,    'F', 'O',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F35,    'F', 'P',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F36,    'F', 'Q',
-  MOD_MASK_SHIFT, KS_EXTRA, (int)KE_S_F37,    'F', 'R',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F31,         'F', 'L',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F32,         'F', 'M',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F33,         'F', 'N',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F34,         'F', 'O',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F35,         'F', 'P',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F36,         'F', 'Q',
+  MOD_MASK_SHIFT, KS_EXTRA, KE_S_F37,         'F', 'R',
 
   // TAB pseudo code
-  MOD_MASK_SHIFT, 'k', 'B',                   KS_EXTRA, (int)KE_TAB,
+  MOD_MASK_SHIFT, 'k', 'B',                   KS_EXTRA, KE_TAB,
 
   NUL
 };
@@ -349,26 +349,26 @@ static struct mousetable {
   bool is_drag;               // Is it a mouse drag event?
 } mouse_table[] =
 {
-  { (int)KE_LEFTMOUSE,        MOUSE_LEFT,     true,   false },
-  { (int)KE_LEFTDRAG,         MOUSE_LEFT,     false,  true },
-  { (int)KE_LEFTRELEASE,      MOUSE_LEFT,     false,  false },
-  { (int)KE_MIDDLEMOUSE,      MOUSE_MIDDLE,   true,   false },
-  { (int)KE_MIDDLEDRAG,       MOUSE_MIDDLE,   false,  true },
-  { (int)KE_MIDDLERELEASE,    MOUSE_MIDDLE,   false,  false },
-  { (int)KE_RIGHTMOUSE,       MOUSE_RIGHT,    true,   false },
-  { (int)KE_RIGHTDRAG,        MOUSE_RIGHT,    false,  true },
-  { (int)KE_RIGHTRELEASE,     MOUSE_RIGHT,    false,  false },
-  { (int)KE_X1MOUSE,          MOUSE_X1,       true,   false },
-  { (int)KE_X1DRAG,           MOUSE_X1,       false,  true },
-  { (int)KE_X1RELEASE,        MOUSE_X1,       false,  false },
-  { (int)KE_X2MOUSE,          MOUSE_X2,       true,   false },
-  { (int)KE_X2DRAG,           MOUSE_X2,       false,  true },
-  { (int)KE_X2RELEASE,        MOUSE_X2,       false,  false },
+  { KE_LEFTMOUSE,        MOUSE_LEFT,     true,   false },
+  { KE_LEFTDRAG,         MOUSE_LEFT,     false,  true },
+  { KE_LEFTRELEASE,      MOUSE_LEFT,     false,  false },
+  { KE_MIDDLEMOUSE,      MOUSE_MIDDLE,   true,   false },
+  { KE_MIDDLEDRAG,       MOUSE_MIDDLE,   false,  true },
+  { KE_MIDDLERELEASE,    MOUSE_MIDDLE,   false,  false },
+  { KE_RIGHTMOUSE,       MOUSE_RIGHT,    true,   false },
+  { KE_RIGHTDRAG,        MOUSE_RIGHT,    false,  true },
+  { KE_RIGHTRELEASE,     MOUSE_RIGHT,    false,  false },
+  { KE_X1MOUSE,          MOUSE_X1,       true,   false },
+  { KE_X1DRAG,           MOUSE_X1,       false,  true },
+  { KE_X1RELEASE,        MOUSE_X1,       false,  false },
+  { KE_X2MOUSE,          MOUSE_X2,       true,   false },
+  { KE_X2DRAG,           MOUSE_X2,       false,  true },
+  { KE_X2RELEASE,        MOUSE_X2,       false,  false },
   // DRAG without CLICK
-  { (int)KE_MOUSEMOVE,        MOUSE_RELEASE,  false,  true },
+  { KE_MOUSEMOVE,        MOUSE_RELEASE,  false,  true },
   // RELEASE without CLICK
-  { (int)KE_IGNORE,           MOUSE_RELEASE,  false,  false },
-  { 0,                        0,              0,      0 },
+  { KE_IGNORE,           MOUSE_RELEASE,  false,  false },
+  { 0,                   0,              0,      0 },
 };
 
 /// Return the modifier mask bit (#MOD_MASK_*) corresponding to mod name
@@ -926,8 +926,8 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
         } else {
           src += 5;
           result[dlen++] = K_SPECIAL;
-          result[dlen++] = (int)KS_EXTRA;
-          result[dlen++] = (int)KE_SNR;
+          result[dlen++] = KS_EXTRA;
+          result[dlen++] = KE_SNR;
           snprintf((char *)result + dlen, buf_len - dlen, "%" PRId64,
                    (int64_t)current_sctx.sc_sid);
           dlen += STRLEN(result + dlen);

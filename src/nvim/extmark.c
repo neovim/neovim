@@ -510,11 +510,11 @@ void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
   bcount_t old_byte = 0, new_byte = 0;
   int old_row, new_row;
   if (amount == MAXLNUM) {
-    old_row = (int)(line2 - line1 + 1);
+    old_row = line2 - line1 + 1;
     // TODO(bfredl): ej kasta?
     old_byte = (bcount_t)buf->deleted_bytes2;
 
-    new_row = (int)(amount_after + old_row);
+    new_row = amount_after + old_row;
   } else {
     // A region is either deleted (amount == MAXLNUM) or
     // added (line2 == MAXLNUM). The only other case is :move
