@@ -85,6 +85,12 @@ func s:setup_commands(cchar)
   endif
 endfunc
 
+" This must be run before any error lists are created.
+func Test_AA_cc_no_errors()
+  call assert_fails('cc', 'E42:')
+  call assert_fails('ll', 'E42:')
+endfunc
+
 " Tests for the :clist and :llist commands
 func XlistTests(cchar)
   call s:setup_commands(a:cchar)

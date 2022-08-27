@@ -920,7 +920,7 @@ EXTERN char e_patnotf2[] INIT(= N_("E486: Pattern not found: %s"));
 EXTERN char e_positive[] INIT(= N_("E487: Argument must be positive"));
 EXTERN char e_prev_dir[] INIT(= N_("E459: Cannot go back to previous directory"));
 
-EXTERN char e_quickfix[] INIT(= N_("E42: No Errors"));
+EXTERN char e_no_errors[] INIT(= N_("E42: No Errors"));
 EXTERN char e_loclist[] INIT(= N_("E776: No location list"));
 EXTERN char e_re_damg[] INIT(= N_("E43: Damaged match string"));
 EXTERN char e_re_corr[] INIT(= N_("E44: Corrupted regexp program"));
