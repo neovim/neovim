@@ -190,6 +190,7 @@ specification. These LSP requests/notifications are defined by default:
     textDocument/typeDefinition*
     window/logMessage
     window/showMessage
+    window/showDocument
     window/showMessageRequest
     workspace/applyEdit
     workspace/symbol
@@ -1499,12 +1500,12 @@ jump_to_location({location}, {offset_encoding}, {reuse_win})
 
     Parameters: ~
       • {location}         (table) (`Location`|`LocationLink`)
-      • {offset_encoding}  (string) utf-8|utf-16|utf-32 (required)
+      • {offset_encoding}  "utf-8" | "utf-16" | "utf-32"
       • {reuse_win}        (boolean) Jump to existing window if buffer is
-                           already opened.
+                           already open.
 
     Return: ~
-        `true` if the jump succeeded
+        (boolean) `true` if the jump succeeded
 
                                            *vim.lsp.util.locations_to_items()*
 locations_to_items({locations}, {offset_encoding})
@@ -1714,6 +1715,22 @@ set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
 
     Return: ~
         (table) The modified {lines} object
+
+                                                *vim.lsp.util.show_document()*
+show_document({location}, {offset_encoding}, {opts})
+    Shows document and optionally jumps to the location.
+
+    Parameters: ~
+      • {location}         (table) (`Location`|`LocationLink`)
+      • {offset_encoding}  "utf-8" | "utf-16" | "utf-32"
+      • {opts}             (table) options
+                           • reuse_win (boolean) Jump to existing window if
+                             buffer is already open.
+                           • focus (boolean) Whether to focus/jump to location
+                             if possible. Defaults to true.
+
+    Return: ~
+        (boolean) `true` if succeeded
 
                                              *vim.lsp.util.stylize_markdown()*
 stylize_markdown({bufnr}, {contents}, {opts})
