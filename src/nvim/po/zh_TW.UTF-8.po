@@ -869,7 +869,7 @@ msgstr "<空>"
 
 #: ../eval.c:12282
 msgid "remove() argument"
-msgstr "--cmd 參數"
+msgstr "remove() 參數"
 
 #: ../eval.c:12466
 msgid "E655: Too many symbolic links (cycle?)"
@@ -877,11 +877,11 @@ msgstr "E655: 太多層的符號鏈結(symlink) (循環?)"
 
 #: ../eval.c:12593
 msgid "reverse() argument"
-msgstr "--cmd 參數"
+msgstr "reverse() 參數"
 
 #: ../eval.c:13721
 msgid "sort() argument"
-msgstr "--cmd 參數"
+msgstr "sort() 參數"
 
 #: ../eval.c:13721
 #, fuzzy
@@ -3105,7 +3105,7 @@ msgstr "E674: printmbcharset 在多字節編碼下不能為空"
 
 #: ../hardcopy.c:2254
 msgid "E675: No default font specified for multi-byte printing."
-msgstr "E675: 沒有指定多字節打印的默認值"
+msgstr "E675: 沒有指定多字節打印的默認字型"
 
 #: ../hardcopy.c:2426
 msgid "E324: Can't open PostScript output file"
