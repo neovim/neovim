@@ -3095,7 +3095,7 @@ msgstr "E621: \"%s\" 資源檔版本錯誤"
 
 #: ../hardcopy.c:2225
 msgid "E673: Incompatible multi-byte encoding and character set."
-msgstr "E673: 不兼容的多字節編碼和字符集"
+msgstr "E673: 不兼容的多字節編碼和字元集"
 
 #: ../hardcopy.c:2238
 msgid "E674: printmbcharset cannot be empty with multi-byte encoding."
@@ -5045,7 +5045,7 @@ msgstr "E866: (NFA regexp) %c 放錯了位置"
 #: ../regexp_nfa.c:242
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
-msgstr "E877: (NFA regexp) 不可用的字符類: %<PRId64>"
+msgstr "E877: (NFA regexp) 不可用的字元類: %<PRId64>"
 
 #: ../regexp_nfa.c:1261
 #, c-format
@@ -5300,7 +5300,7 @@ msgstr "E431: Tag 檔 \"%s\" 格式錯誤"
 
 #: ../spell.c:957
 msgid "E762: Character in FOL, LOW or UPP is out of range"
-msgstr "E762: FOL、LOW 或 UPP 中字符超出範圍"
+msgstr "E762: FOL、LOW 或 UPP 中字元超出範圍"
 
 #: ../spell.c:958
 msgid "Compressing word tree..."
@@ -5451,7 +5451,7 @@ msgstr "%s 第 %d 行，此處需要 MAP 計數"
 #: ../spell.c:5132
 #, c-format
 msgid "Duplicate character in MAP in %s line %d"
-msgstr "%s 第 %d 行，MAP 中存在重複的字符"
+msgstr "%s 第 %d 行，MAP 中存在重複的字元"
 
 #: ../spell.c:5176
 #, c-format
@@ -5539,7 +5539,7 @@ msgstr "存在 %d 个重複的單詞，在 %s 中"
 #: ../spell.c:5748
 #, c-format
 msgid "Ignored %d word(s) with non-ASCII characters in %s"
-msgstr "忽略了含有非 ASCII 字符的 %d 个單詞，在 %s 中"
+msgstr "忽略了含有非 ASCII 字元的 %d 个單詞，在 %s 中"
 
 #: ../spell.c:6115
 #, fuzzy, c-format
@@ -5584,7 +5584,7 @@ msgstr "%s 第 %d 行，不可識別的標誌: %s"
 #: ../spell.c:6257
 #, c-format
 msgid "Ignored %d words with non-ASCII characters"
-msgstr "忽略了含有非 ASCII 字符的 %d 个單詞"
+msgstr "忽略了含有非 ASCII 字元的 %d 个單詞"
 
 #: ../spell.c:6656
 #, c-format
@@ -5665,7 +5665,7 @@ msgstr "向 %s 中添加了單詞"
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
-msgstr "E763: 拼寫文件之間的字符不相同"
+msgstr "E763: 拼寫文件之間的字元不相同"
 
 #: ../spell.c:8684
 msgid "Sorry, no suggestions"
@@ -5727,7 +5727,7 @@ msgstr "E782: 當讀取.sug 文件時錯誤"
 #. file.
 #: ../spell.c:11575
 msgid "E783: duplicate char in MAP entry"
-msgstr "E783: MAP 條目中有重複的字符"
+msgstr "E783: MAP 條目中有重複的字元"
 
 #: ../syntax.c:266
 msgid "No Syntax items defined for this buffer"
