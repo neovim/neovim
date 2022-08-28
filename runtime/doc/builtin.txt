@@ -6920,9 +6920,9 @@ setcharsearch({dict})					*setcharsearch()*
 setcmdline({str} [, {pos}])					*setcmdline()*
 		Set the command line to {str} and set the cursor position to
 		{pos}.
-		If {pos} is omitted, the last position is used.
-		Returns FALSE when successful, TRUE when not editing the
-		command line.
+		If {pos} is omitted, the cursor is positioned after the text.
+		Returns 0 when successful, 1 when not editing the command
+		line.
 
 		Can also be used as a |method|: >
 			SetCmdline()->setcmdline()
@@ -6939,8 +6939,8 @@ setcmdpos({pos})					*setcmdpos()*
 		before inserting the resulting text.
 		When the number is too big the cursor is put at the end of the
 		line.  A number smaller than one has undefined results.
-		Returns FALSE when successful, TRUE when not editing the
-		command line.
+		Returns 0 when successful, 1 when not editing the command
+		line.
 
 		Can also be used as a |method|: >
 			GetPos()->setcmdpos()
