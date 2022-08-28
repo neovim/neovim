@@ -2119,6 +2119,11 @@ au BufNewFile,BufRead *.vim,*.vba,.exrc,_exrc	setf vim
 " Viminfo file
 au BufNewFile,BufRead .viminfo,_viminfo		setf viminfo
 
+" VDM
+au BufRead,BufNewFile *.vdmsl,*.vdm		setfiletype vdmsl
+au BufRead,BufNewFile *.vdmpp,*.vpp		setfiletype vdmpp
+au BufRead,BufNewFile *.vdmrt		setfiletype vdmrt
+
 " Virata Config Script File or Drupal module
 au BufRead,BufNewFile *.hw,*.module,*.pkg
 	\ if getline(1) =~ '<?php' |
