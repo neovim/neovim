@@ -434,11 +434,11 @@ msgstr "已到段落結尾"
 
 #: ../edit.c:101
 msgid "E839: Completion function changed window"
-msgstr "E839: 補全函數更改了窗口"
+msgstr "E839: 補全函式更改了窗口"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr "E840: 補全函數刪除了文本"
+msgstr "E840: 補全函式刪除了文本"
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
@@ -581,7 +581,7 @@ msgstr "E360: 不能用 -f 選項執行 shell"
 #: ../eval.c:154
 #, c-format
 msgid "E734: Wrong variable type for %s="
-msgstr "E734: 錯誤的變量類型: %s="
+msgstr "E734: 錯誤的變數類型: %s="
 
 #: ../eval.c:155
 #, fuzzy, c-format
@@ -607,7 +607,7 @@ msgstr "E688: 目標比列表項數多"
 
 #: ../eval.c:1906
 msgid "Double ; in list of variables"
-msgstr "變量列表出現兩個 ;"
+msgstr "變數列表出現兩個 ;"
 
 #: ../eval.c:2078
 #, fuzzy, c-format
@@ -651,7 +651,7 @@ msgstr "E108: 無此變數: \"%s\""
 
 #: ../eval.c:3333
 msgid "E743: variable nested too deep for (un)lock"
-msgstr "E743: (un)lock 的變量嵌套過深"
+msgstr "E743: (un)lock 的變數嵌套過深"
 
 #: ../eval.c:3630
 msgid "E109: Missing ':' after '?'"
@@ -781,7 +781,7 @@ msgstr "E120: <SID> 不能在 script 本文外使用: %s"
 #: ../eval.c:7391
 #, c-format
 msgid "E725: Calling dict function without Dictionary: %s"
-msgstr "E725: Dictionary 中缺少冒號: %s"
+msgstr "E725: 調用字典函式但是沒有字典: %s"
 
 #: ../eval.c:7453
 #, fuzzy
@@ -894,7 +894,7 @@ msgstr "E237: 無法選擇此印表機"
 
 #: ../eval.c:13806
 msgid "E882: Uniq compare function failed"
-msgstr "E882: Uniq 比較函數失敗"
+msgstr "E882: Uniq 比較函式失敗"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -911,7 +911,7 @@ msgstr "E805: 將浮點數當做數字使用"
 
 #: ../eval.c:16162
 msgid "E703: Using a Funcref as a Number"
-msgstr "E703: 將函數當做數字使用"
+msgstr "E703: 將函式當做數字使用"
 
 #: ../eval.c:16170
 msgid "E745: Using a List as a Number"
@@ -923,7 +923,7 @@ msgstr "E728: 將字典當做數字使用"
 
 #: ../eval.c:16259
 msgid "E729: using Funcref as a String"
-msgstr "E729: 將函數當做字串使用"
+msgstr "E729: 將函式當做字串使用"
 
 #: ../eval.c:16262
 msgid "E730: using List as a String"
@@ -951,7 +951,7 @@ msgstr "E128: 函式名稱第一個字母必須大寫: %s"
 #: ../eval.c:16732
 #, c-format
 msgid "E705: Variable name conflicts with existing function: %s"
-msgstr "E705: 變量名與已有函數名衝突: %s"
+msgstr "E705: 變數名與已有函式名衝突: %s"
 
 #: ../eval.c:16763
 #, c-format
@@ -969,7 +969,7 @@ msgstr "E284: 不能設定 IC 數值"
 
 #: ../eval.c:16838
 msgid "E698: variable nested too deep for making a copy"
-msgstr "E698: 變量嵌套過深無法複製"
+msgstr "E698: 變數嵌套過深無法複製"
 
 #: ../eval.c:17249
 #, c-format
@@ -1553,7 +1553,7 @@ msgstr "vim [參數] "
 
 #: ../ex_cmds2.c:2771
 msgid "environment variable"
-msgstr "環境變量"
+msgstr "環境變數"
 
 #: ../ex_cmds2.c:2773
 #, fuzzy
@@ -3277,14 +3277,14 @@ msgid ""
 msgstr ""
 "\n"
 "       a: 搜索對此符號的賦值\n"
-"       c: 搜索調用此函數的函數\n"
-"       d: 搜索此函數調用的函數\n"
+"       c: 搜索調用此函式的函式\n"
+"       d: 搜索此函式調用的函式\n"
 "       e: 搜索此 egrep 模式\n"
 "       f: 搜索此文件\n"
 "       g: 搜索此定義\n"
 "       i: 搜索包含此文件的文件\n"
 "       s: 搜索此 C 符号\n"
-"       t: 搜索此文本字符串\n"
+"       t: 搜索此文本字串\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
