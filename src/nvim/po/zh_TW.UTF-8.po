@@ -2097,7 +2097,7 @@ msgstr "[未命名]"
 
 #: ../fileio.c:511
 msgid "[New DIRECTORY]"
-msgstr "[新 字典]"
+msgstr "[新目錄]"
 
 #: ../fileio.c:529 ../fileio.c:532
 msgid "[File too big]"
