@@ -184,7 +184,7 @@ end
 
 --- Normalize a path to a standard format. A tilde (~) character at the
 --- beginning of the path is expanded to the user's home directory and any
---- backslash (\\) characters are converted to forward slashes (/). Environment
+--- backslash (\\) characters are converted to forward slashes (/) when in windows. Environment
 --- variables are also expanded.
 ---
 --- Example:
@@ -203,7 +203,11 @@ end
 ---@return (string) Normalized path
 function M.normalize(path)
   vim.validate({ path = { path, 's' } })
-  return (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env):gsub('\\', '/'))
+  path = (path:gsub('^~/', vim.env.HOME .. '/'):gsub('%$([%w_]+)', vim.env))
+  if vim.fn.has('win32') == 1 then
+    return path:gsub('\\', '/')
+  end
+  return path
 end
 
 return M

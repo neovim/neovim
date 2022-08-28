@@ -82,7 +82,11 @@ describe('vim.fs', function()
 
   describe('normalize()', function()
     it('works with backward slashes', function()
-      eq('C:/Users/jdoe', exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
+        local expected = [[C:\Users\jdoe]]
+        if iswin() then
+          expected = 'C:/Users/jdoe'
+        end
+      eq(expected, exec_lua [[ return vim.fs.normalize('C:\\Users\\jdoe') ]])
     end)
     it('works with ~', function()
       if iswin() then
