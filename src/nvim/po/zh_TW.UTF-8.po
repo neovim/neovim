@@ -595,7 +595,7 @@ msgstr "E461: 不合法的變數名稱: %s"
 
 #: ../eval.c:157
 msgid "E806: using Float as a String"
-msgstr "E806: 使用浮點數作為字符串"
+msgstr "E806: 使用浮點數作為字串"
 
 #: ../eval.c:1830
 msgid "E687: Less targets than List items"
@@ -817,7 +817,6 @@ msgid "extend() argument"
 msgstr "extend() 參數"
 
 #: ../eval.c:8915
-#, fuzzy
 msgid "map() argument"
 msgstr "map() 參數"
 
@@ -924,16 +923,15 @@ msgstr "E728: 將字典當做數字使用"
 
 #: ../eval.c:16259
 msgid "E729: using Funcref as a String"
-msgstr "E729: 將函數當做字符串使用"
+msgstr "E729: 將函數當做字串使用"
 
 #: ../eval.c:16262
-#, fuzzy
 msgid "E730: using List as a String"
-msgstr "E374: 格式化字串裡少了 ]"
+msgstr "E730: 將列表當做字串使用"
 
 #: ../eval.c:16265
 msgid "E731: using Dictionary as a String"
-msgstr "E731: 將字典當做字符串使用"
+msgstr "E731: 將字典當做字串使用"
 
 #: ../eval.c:16619
 #, fuzzy, c-format
@@ -3267,6 +3265,7 @@ msgstr "%-5s: %-30s (用法: %s)"
 #: ../if_cscope.c:1155
 msgid ""
 "\n"
+"       a: Find assignments to this symbol\n"
 "       c: Find functions calling this function\n"
 "       d: Find functions called by this function\n"
 "       e: Find this egrep pattern\n"
@@ -5287,7 +5286,7 @@ msgstr "E758: 已截斷的拼寫文件"
 #: ../spell.c:953
 #, c-format
 msgid "Trailing text in %s line %d: %s"
-msgstr "%s 第 %d 行，多餘的後續字符: %s"
+msgstr "%s 第 %d 行，多餘的後續文本: %s"
 
 #: ../spell.c:954
 #, c-format
@@ -6151,7 +6150,7 @@ msgid "E881: Line count changed unexpectedly"
 msgstr "E881: 行數意外地改變了"
 
 #: ../undo.c:627
-#, fuzzy, c-format
+#, c-format
 msgid "E828: Cannot open undo file for writing: %s"
 msgstr "E828: 無法打開撤銷文件去寫入"
 

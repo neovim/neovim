@@ -734,9 +734,9 @@ msgid "E120: Using <SID> not in a script context: %s"
 msgstr "E120: <SID> 不能在 script 上下文外使用: %s"
 
 #: ../eval.c:7391
-#, fuzzy, c-format
+#, c-format
 msgid "E725: Calling dict function without Dictionary: %s"
-msgstr "E725: Dictionary 中缺少冒号: %s"
+msgstr "E725: 调用字典函数但是没有字典：%s"
 
 #: ../eval.c:7453
 #, fuzzy
@@ -766,17 +766,14 @@ msgid "E737: Key already exists: %s"
 msgstr "E737: 键已存在: %s"
 
 #: ../eval.c:8692
-#, fuzzy
 msgid "extend() argument"
 msgstr "extend() 参数"
 
 #: ../eval.c:8915
-#, fuzzy
 msgid "map() argument"
 msgstr "map() 参数"
 
 #: ../eval.c:8916
-#, fuzzy
 msgid "filter() argument"
 msgstr "filter() 参数"
 
@@ -849,7 +846,6 @@ msgid "E702: Sort compare function failed"
 msgstr "E702: Sort 比较函数失败"
 
 #: ../eval.c:13806
-#, fuzzy
 msgid "E882: Uniq compare function failed"
 msgstr "E882: Uniq 比较函数失败"
 
@@ -4204,7 +4200,6 @@ msgstr "E329: 没有菜单 \"%s\""
 
 #. Only a mnemonic or accelerator is not valid.
 #: ../menu.c:329
-#, fuzzy
 msgid "E792: Empty menu name"
 msgstr "E792: 空的菜单名称"
 
@@ -4329,7 +4324,6 @@ msgid "E766: Insufficient arguments for printf()"
 msgstr "E766: printf() 的参数不足"
 
 #: ../message.c:3119
-#, fuzzy
 msgid "E807: Expected Float argument for printf()"
 msgstr "E807: 期盼浮点数作为printf()参数"
 
@@ -5675,7 +5669,7 @@ msgid "E781: .sug file doesn't match .spl file: %s"
 msgstr "E781: .sug 文件不能匹配 .spl 文件: %s"
 
 #: ../spell.c:9305
-#, fuzzy, c-format
+#,  c-format
 msgid "E782: error while reading .sug file: %s"
 msgstr "E782: 当读取.sug 文件时错误"
 
@@ -6104,12 +6098,11 @@ msgstr "Vim: 读错误，退出中...\n"
 #. This happens when the FileChangedRO autocommand changes the
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
-#, fuzzy
 msgid "E881: Line count changed unexpectedly"
 msgstr "E881: 行数意外地改变了"
 
 #: ../undo.c:627
-#, fuzzy, c-format
+#, c-format
 msgid "E828: Cannot open undo file for writing: %s"
 msgstr "E828: 无法打开撤销文件去写入"
 
