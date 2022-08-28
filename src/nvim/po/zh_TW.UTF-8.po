@@ -5619,7 +5619,7 @@ msgstr "寫入 viminfo 檔案 \"%s\" 中"
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
-msgstr "估計運行時的內存用量: %d 字节"
+msgstr "估計運行時的內存用量: %d 位元"
 
 #: ../spell.c:7820
 msgid "E751: Output file name must not have region name"
