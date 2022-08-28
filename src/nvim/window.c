@@ -5362,6 +5362,7 @@ void may_trigger_winscrolled(void)
   win_T *wp = curwin;
   if (wp->w_last_topline != wp->w_topline
       || wp->w_last_leftcol != wp->w_leftcol
+      || wp->w_last_skipcol != wp->w_skipcol
       || wp->w_last_width != wp->w_width
       || wp->w_last_height != wp->w_height) {
     char winid[NUMBUFLEN];
@@ -5375,6 +5376,7 @@ void may_trigger_winscrolled(void)
     if (win_valid_any_tab(wp)) {
       wp->w_last_topline = wp->w_topline;
       wp->w_last_leftcol = wp->w_leftcol;
+      wp->w_last_skipcol = wp->w_skipcol;
       wp->w_last_width = wp->w_width;
       wp->w_last_height = wp->w_height;
     }
