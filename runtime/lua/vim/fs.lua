@@ -94,6 +94,10 @@ end
 ---                       - limit (number, default 1): Stop the search after
 ---                               finding this many matches. Use `math.huge` to
 ---                               place no limit on the number of matches.
+---                       - ignore (function): Predicate used to ignore paths.
+---                               Receives file path as its single argument. If
+---                               the function returns true then the given path
+---                               will not be searched recursively.
 ---@return (table) The paths of all matching files or directories
 function M.find(names, opts)
   opts = opts or {}
@@ -104,6 +108,7 @@ function M.find(names, opts)
     stop = { opts.stop, 's', true },
     type = { opts.type, 's', true },
     limit = { opts.limit, 'n', true },
+    ignore = { opts.ignore, 'f', true },
   })
 
   names = type(names) == 'string' and { names } or names
@@ -126,11 +131,13 @@ function M.find(names, opts)
     ---@private
     local function test(p)
       local t = {}
-      for _, name in ipairs(names) do
-        local f = p .. '/' .. name
-        local stat = vim.loop.fs_stat(f)
-        if stat and (not opts.type or opts.type == stat.type) then
-          t[#t + 1] = f
+      if opts.ignore == nil or not opts.ignore(p) then
+        for _, name in ipairs(names) do
+          local f = p .. '/' .. name
+          local stat = vim.loop.fs_stat(f)
+          if stat and (not opts.type or opts.type == stat.type) then
+            t[#t + 1] = f
+          end
         end
       end
 
@@ -164,16 +171,18 @@ function M.find(names, opts)
 
       for other, type in M.dir(dir) do
         local f = dir .. '/' .. other
-        for _, name in ipairs(names) do
-          if name == other and (not opts.type or opts.type == type) then
-            if add(f) then
-              return matches
+        if opts.ignore == nil or not opts.ignore(f) then
+          for _, name in ipairs(names) do
+            if name == other and (not opts.type or opts.type == type) then
+              if add(f) then
+                return matches
+              end
             end
           end
-        end
 
-        if type == 'directory' then
-          dirs[#dirs + 1] = f
+          if type == 'directory' then
+            dirs[#dirs + 1] = f
+          end
         end
       end
     end
