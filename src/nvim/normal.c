@@ -4278,13 +4278,12 @@ static void nv_ident(cmdarg_T *cap)
   // double the length of the word.  p_kp / curbuf->b_p_kp could be added
   // and some numbers.
   char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : (char_u *)curbuf->b_p_kp;  // 'keywordprg'
-  assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
-  bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
-  bool kp_help = (STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
+  bool kp_help = (*kp == NUL || STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
   if (kp_help && *skipwhite(ptr) == NUL) {
     emsg(_(e_noident));   // found white space only
     return;
   }
+  bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
   size_t buf_size = n * 2 + 30 + STRLEN(kp);
   char *buf = xmalloc(buf_size);
   buf[0] = NUL;

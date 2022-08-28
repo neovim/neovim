@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, feed, retry =
-  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.retry
+local eq, clear, eval, feed, meths, retry =
+  helpers.eq, helpers.clear, helpers.eval, helpers.feed, helpers.meths, helpers.retry
 
 describe('K', function()
   local test_file = 'K_spec_out'
@@ -56,6 +56,13 @@ describe('K', function()
     feed('<esc>')
     eq('n', eval('mode()'))
     helpers.neq(bufnr, eval('bufnr()'))
+  end)
+
+  it('empty string falls back to :help #19298', function()
+    meths.set_option('keywordprg', '')
+    meths.buf_set_lines(0, 0, -1, true, {'doesnotexist'})
+    feed('K')
+    eq('E149: Sorry, no help for doesnotexist', meths.get_vvar('errmsg'))
   end)
 
 end)
