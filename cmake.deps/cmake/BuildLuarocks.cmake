@@ -9,39 +9,6 @@
 
 option(USE_BUNDLED_BUSTED "Use the bundled version of busted to run tests." ON)
 
-# BuildLuarocks(CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
-# Reusable function to build luarocks, wraps ExternalProject_Add.
-# Failing to pass a command argument will result in no command being run
-function(BuildLuarocks)
-  cmake_parse_arguments(_luarocks
-    ""
-    ""
-    "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
-    ${ARGN})
-
-  if(NOT _luarocks_CONFIGURE_COMMAND AND NOT _luarocks_BUILD_COMMAND
-        AND NOT _luarocks_INSTALL_COMMAND)
-    message(FATAL_ERROR "Must pass at least one of CONFIGURE_COMMAND, BUILD_COMMAND, INSTALL_COMMAND")
-  endif()
-
-  ExternalProject_Add(luarocks
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LUAROCKS_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luarocks
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luarocks
-      -DURL=${LUAROCKS_URL}
-      -DEXPECTED_SHA256=${LUAROCKS_SHA256}
-      -DTARGET=luarocks
-      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND "${_luarocks_CONFIGURE_COMMAND}"
-    BUILD_COMMAND "${_luarocks_BUILD_COMMAND}"
-    INSTALL_COMMAND "${_luarocks_INSTALL_COMMAND}")
-endfunction()
-
 # The luarocks binary location
 set(LUAROCKS_BINARY ${HOSTDEPS_BIN_DIR}/luarocks)
 
@@ -90,10 +57,9 @@ if(UNIX)
     endif()
   endif()
 
-  BuildLuarocks(
-    CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
-      --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
-    INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
+  set(LUAROCKS_CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
+      --prefix=${HOSTDEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS})
+  set(LUAROCKS_INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
 elseif(MSVC OR MINGW)
 
   if(MINGW)
@@ -103,7 +69,7 @@ elseif(MSVC OR MINGW)
   endif()
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
-  BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
+  set(LUAROCKS_INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
     /LUA ${DEPS_INSTALL_DIR}
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
@@ -118,6 +84,23 @@ elseif(MSVC OR MINGW)
 else()
   message(FATAL_ERROR "Trying to build luarocks in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
+
+ExternalProject_Add(luarocks
+  PREFIX ${DEPS_BUILD_DIR}
+  URL ${LUAROCKS_URL}
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luarocks
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+    -DPREFIX=${DEPS_BUILD_DIR}
+    -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luarocks
+    -DURL=${LUAROCKS_URL}
+    -DEXPECTED_SHA256=${LUAROCKS_SHA256}
+    -DTARGET=luarocks
+    -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+  BUILD_IN_SOURCE 1
+  CONFIGURE_COMMAND "${LUAROCKS_CONFIGURE_COMMAND}"
+  BUILD_COMMAND ""
+  INSTALL_COMMAND "${LUAROCKS_INSTALL_COMMAND}")
 
 list(APPEND THIRD_PARTY_DEPS luarocks)
 

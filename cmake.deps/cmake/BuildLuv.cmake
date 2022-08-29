@@ -1,57 +1,3 @@
-# BuildLuv(PATCH_COMMAND ... CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
-# Reusable function to build luv, wraps ExternalProject_Add.
-# Failing to pass a command argument will result in no command being run
-function(BuildLuv)
-  cmake_parse_arguments(_luv
-    ""
-    ""
-    "PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
-    ${ARGN})
-
-  if(NOT _luv_CONFIGURE_COMMAND AND NOT _luv_BUILD_COMMAND
-       AND NOT _luv_INSTALL_COMMAND)
-    message(FATAL_ERROR "Must pass at least one of CONFIGURE_COMMAND, BUILD_COMMAND, INSTALL_COMMAND")
-  endif()
-
-  ExternalProject_Add(lua-compat-5.3
-    PREFIX ${DEPS_BUILD_DIR}
-    URL ${LUA_COMPAT53_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
-      -DURL=${LUA_COMPAT53_URL}
-      -DEXPECTED_SHA256=${LUA_COMPAT53_SHA256}
-      -DTARGET=lua-compat-5.3
-      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    PATCH_COMMAND ""
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND "")
-
-  ExternalProject_Add(luv-static
-    PREFIX ${DEPS_BUILD_DIR}
-    DEPENDS lua-compat-5.3
-    URL ${LUV_URL}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luv
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
-      -DPREFIX=${DEPS_BUILD_DIR}
-      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luv
-      -DURL=${LUV_URL}
-      -DEXPECTED_SHA256=${LUV_SHA256}
-      -DTARGET=luv-static
-      # The source is shared with BuildLuarocks (with USE_BUNDLED_LUV).
-      -DSRC_DIR=${DEPS_BUILD_DIR}/src/luv
-      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
-      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    PATCH_COMMAND "${_luv_PATCH_COMMAND}"
-    CONFIGURE_COMMAND "${_luv_CONFIGURE_COMMAND}"
-    BUILD_COMMAND "${_luv_BUILD_COMMAND}"
-    INSTALL_COMMAND "${_luv_INSTALL_COMMAND}"
-    LIST_SEPARATOR |)
-endfunction()
-
 set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
   "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
@@ -110,13 +56,41 @@ else()
   endif()
 endif()
 
-set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>)
-set(LUV_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>)
+ExternalProject_Add(lua-compat-5.3
+  PREFIX ${DEPS_BUILD_DIR}
+  URL ${LUA_COMPAT53_URL}
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+    -DPREFIX=${DEPS_BUILD_DIR}
+    -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
+    -DURL=${LUA_COMPAT53_URL}
+    -DEXPECTED_SHA256=${LUA_COMPAT53_SHA256}
+    -DTARGET=lua-compat-5.3
+    -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND "")
 
-BuildLuv(PATCH_COMMAND ${LUV_PATCH_COMMAND}
-  CONFIGURE_COMMAND ${LUV_CONFIGURE_COMMAND}
-  BUILD_COMMAND ${LUV_BUILD_COMMAND}
-  INSTALL_COMMAND ${LUV_INSTALL_COMMAND})
+ExternalProject_Add(luv-static
+  PREFIX ${DEPS_BUILD_DIR}
+  DEPENDS lua-compat-5.3
+  URL ${LUV_URL}
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luv
+  DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+    -DPREFIX=${DEPS_BUILD_DIR}
+    -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luv
+    -DURL=${LUV_URL}
+    -DEXPECTED_SHA256=${LUV_SHA256}
+    -DTARGET=luv-static
+    # The source is shared with BuildLuarocks (with USE_BUNDLED_LUV).
+    -DSRC_DIR=${DEPS_BUILD_DIR}/src/luv
+    -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+  CONFIGURE_COMMAND "${LUV_CONFIGURE_COMMAND}"
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>
+  INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>
+  LIST_SEPARATOR |)
 
 list(APPEND THIRD_PARTY_DEPS luv-static)
 if(USE_BUNDLED_LUAJIT)
