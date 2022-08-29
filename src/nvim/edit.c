@@ -1523,8 +1523,7 @@ void edit_unputchar(void)
     if (pc_status == PC_STATUS_RIGHT || pc_status == PC_STATUS_LEFT) {
       redrawWinline(curwin, curwin->w_cursor.lnum);
     } else {
-      grid_puts(&curwin->w_grid, pc_bytes, pc_row - msg_scrolled, pc_col,
-                pc_attr);
+      grid_puts(&curwin->w_grid, (char *)pc_bytes, pc_row - msg_scrolled, pc_col, pc_attr);
     }
   }
 }
@@ -1698,7 +1697,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
       ptr = xmallocz(i);
       memset(ptr, ' ', i);
       new_cursor_col += (int)i;
-      ins_str(ptr);
+      ins_str((char *)ptr);
       xfree(ptr);
     }
 
@@ -1797,7 +1796,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
 /// Truncate the space at the end of a line.  This is to be used only in an
 /// insert mode.  It handles fixing the replace stack for MODE_REPLACE and
 /// MODE_VREPLACE modes.
-void truncate_spaces(char_u *line)
+void truncate_spaces(char *line)
 {
   int i;
 
@@ -1989,7 +1988,7 @@ static void insert_special(int c, int allow_modmask, int ctrlv)
         return;
       }
       p[len - 1] = NUL;
-      ins_str(p);
+      ins_str((char *)p);
       AppendToRedobuffLit((char *)p, -1);
       ctrlv = false;
     }
@@ -2117,7 +2116,7 @@ void insertchar(int c, int flags, int second_indent)
 
         // Insert the end-comment string, except for the last
         // character, which will get inserted as normal later.
-        ins_bytes_len(lead_end, (size_t)(end_len - 1));
+        ins_bytes_len((char *)lead_end, (size_t)(end_len - 1));
       }
     }
   }
@@ -2177,7 +2176,7 @@ void insertchar(int c, int flags, int second_indent)
     do_digraph(-1);                     // clear digraphs
     do_digraph(buf[i - 1]);               // may be the start of a digraph
     buf[i] = NUL;
-    ins_str(buf);
+    ins_str((char *)buf);
     if (flags & INSCHAR_CTRLV) {
       redo_literal(*buf);
       i = 1;
@@ -2195,7 +2194,7 @@ void insertchar(int c, int flags, int second_indent)
 
       utf_char2bytes(c, (char *)buf);
       buf[cc] = NUL;
-      ins_char_bytes((char_u *)buf, (size_t)cc);
+      ins_char_bytes(buf, (size_t)cc);
       AppendCharToRedobuff(c);
     } else {
       ins_char(c);
@@ -2848,14 +2847,13 @@ void replace_push(int c)
   replace_stack_nr++;
 }
 
-/*
- * Push a character onto the replace stack.  Handles a multi-byte character in
- * reverse byte order, so that the first byte is popped off first.
- * Return the number of bytes done (includes composing characters).
- */
-int replace_push_mb(char_u *p)
+/// Push a character onto the replace stack.  Handles a multi-byte character in
+/// reverse byte order, so that the first byte is popped off first.
+///
+/// @return  the number of bytes done (includes composing characters).
+int replace_push_mb(char *p)
 {
-  int l = utfc_ptr2len((char *)p);
+  int l = utfc_ptr2len(p);
   int j;
 
   for (j = l - 1; j >= 0; j--) {
@@ -2919,7 +2917,7 @@ static void mb_replace_pop_ins(int cc)
     for (i = 1; i < n; i++) {
       buf[i] = (char_u)replace_pop();
     }
-    ins_bytes_len(buf, (size_t)n);
+    ins_bytes_len((char *)buf, (size_t)n);
   } else {
     ins_char(cc);
   }
@@ -2942,7 +2940,7 @@ static void mb_replace_pop_ins(int cc)
       buf[i] = (char_u)replace_pop();
     }
     if (utf_iscomposing(utf_ptr2char((char *)buf))) {
-      ins_bytes_len(buf, (size_t)n);
+      ins_bytes_len((char *)buf, (size_t)n);
     } else {
       // Not a composing char, put it back.
       for (i = n - 1; i >= 0; i--) {
@@ -4078,7 +4076,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         if (State & VREPLACE_FLAG) {
           ins_char(' ');
         } else {
-          ins_str((char_u *)" ");
+          ins_str(" ");
           if ((State & REPLACE_FLAG)) {
             replace_push(NUL);
           }
@@ -4122,7 +4120,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         } else {
           const int l_p_deco = p_deco;
           if (l_p_deco) {
-            (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
+            (void)utfc_ptr2char((char *)get_cursor_pos_ptr(), cpc);
           }
           (void)del_char(false);
           // If there are combining characters and 'delcombine' is set
@@ -4584,7 +4582,7 @@ static bool ins_tab(void)
     if (State & VREPLACE_FLAG) {
       ins_char(' ');
     } else {
-      ins_str((char_u *)" ");
+      ins_str(" ");
       if (State & REPLACE_FLAG) {            // no char replaced
         replace_push(NUL);
       }
@@ -4718,7 +4716,7 @@ static bool ins_tab(void)
 
         // Insert each char in saved_line from changed_col to
         // ptr-cursor
-        ins_bytes_len(saved_line + change_col, (size_t)(cursor->col - change_col));
+        ins_bytes_len((char *)saved_line + change_col, (size_t)(cursor->col - change_col));
       }
     }
 

@@ -343,7 +343,7 @@ int get_sts_value(void)
 // Count the size (in window cells) of the indent in the current line.
 int get_indent(void)
 {
-  return get_indent_str_vtab(get_cursor_line_ptr(),
+  return get_indent_str_vtab((char *)get_cursor_line_ptr(),
                              curbuf->b_p_ts,
                              curbuf->b_p_vts_array,
                              false);
@@ -352,7 +352,7 @@ int get_indent(void)
 // Count the size (in window cells) of the indent in line "lnum".
 int get_indent_lnum(linenr_T lnum)
 {
-  return get_indent_str_vtab(ml_get(lnum),
+  return get_indent_str_vtab((char *)ml_get(lnum),
                              curbuf->b_p_ts,
                              curbuf->b_p_vts_array,
                              false);
@@ -362,7 +362,7 @@ int get_indent_lnum(linenr_T lnum)
 // "buf".
 int get_indent_buf(buf_T *buf, linenr_T lnum)
 {
-  return get_indent_str_vtab(ml_get_buf(buf, lnum, false),
+  return get_indent_str_vtab((char *)ml_get_buf(buf, lnum, false),
                              curbuf->b_p_ts,
                              buf->b_p_vts_array,
                              false);
@@ -400,7 +400,7 @@ int get_indent_str(const char_u *ptr, int ts, bool list)
 /// Count the size (in window cells) of the indent in line "ptr", using
 /// variable tabstops.
 /// if "list" is true, count only screen size for tabs.
-int get_indent_str_vtab(const char_u *ptr, long ts, long *vts, bool list)
+int get_indent_str_vtab(const char *ptr, long ts, long *vts, bool list)
 {
   int count = 0;
 
@@ -800,7 +800,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
     prev_ts = wp->w_buffer->b_p_ts;
     prev_tick = buf_get_changedtick(wp->w_buffer);
     prev_vts = wp->w_buffer->b_p_vts_array;
-    prev_indent = get_indent_str_vtab(line,
+    prev_indent = get_indent_str_vtab((char *)line,
                                       wp->w_buffer->b_p_ts,
                                       wp->w_buffer->b_p_vts_array,
                                       wp->w_p_list);

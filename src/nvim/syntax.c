@@ -3008,7 +3008,7 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
   char_u *arg = (char_u *)eap->arg;
   char_u *next;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = find_nextcmd((char *)arg);
   if (eap->skip) {
     return;
   }
@@ -3037,7 +3037,7 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
   char_u *arg = (char_u *)eap->arg;
   char_u *next;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = find_nextcmd((char *)arg);
   if (eap->skip) {
     return;
   }
@@ -3064,7 +3064,7 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
   char_u *arg = (char_u *)eap->arg;
   char_u *arg_end;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = find_nextcmd((char *)arg);
   if (eap->skip) {
     return;
   }
@@ -3105,7 +3105,7 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   char_u *arg = (char_u *)eap->arg;
   char_u *next;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = find_nextcmd((char *)arg);
   if (eap->skip) {
     return;
   }
@@ -3312,7 +3312,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
   char_u *arg_end;
   int id;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = find_nextcmd((char *)arg);
   if (eap->skip) {
     return;
   }
@@ -3465,7 +3465,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
   char_u *arg = (char_u *)eap->arg;
   char_u *arg_end;
 
-  eap->nextcmd = (char *)find_nextcmd(arg);
+  eap->nextcmd = find_nextcmd((char *)arg);
   if (eap->skip) {
     return;
   }
@@ -4237,7 +4237,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   int prev_syn_inc_tag;
   bool source = false;
 
-  eap->nextcmd = (char *)find_nextcmd((char_u *)arg);
+  eap->nextcmd = find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -4958,7 +4958,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
   int opt_len;
   int list_op;
 
-  eap->nextcmd = (char *)find_nextcmd((char_u *)arg);
+  eap->nextcmd = find_nextcmd(arg);
   if (eap->skip) {
     return;
   }
@@ -5042,7 +5042,7 @@ static char *get_syn_pattern(char_u *arg, synpat_T *ci)
     return NULL;
   }
 
-  end = (char *)skip_regexp(arg + 1, *arg, true, NULL);
+  end = skip_regexp((char *)arg + 1, *arg, true, NULL);
   if (*end != (char)(*arg)) {                       // end delimiter not found
     semsg(_("E401: Pattern delimiter not found: %s"), arg);
     return NULL;
@@ -5199,7 +5199,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         finished = true;
         break;
       }
-      arg_end = (char *)skip_regexp(next_arg + 1, *next_arg, true, NULL);
+      arg_end = skip_regexp((char *)next_arg + 1, *next_arg, true, NULL);
       if (*arg_end != (char)(*next_arg)) {          // end delimiter not found
         illegal = true;
         break;

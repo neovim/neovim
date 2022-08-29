@@ -120,7 +120,7 @@ void do_ascii(const exarg_T *const eap)
 {
   char *dig;
   int cc[MAX_MCO];
-  int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
+  int c = utfc_ptr2char((char *)get_cursor_pos_ptr(), cc);
   if (c == NUL) {
     msg("NUL");
     return;
@@ -513,7 +513,7 @@ void ex_sort(exarg_T *eap)
       eap->nextcmd = (char *)check_nextcmd((char_u *)p);
       break;
     } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
-      s = (char *)skip_regexp((char_u *)p + 1, *p, true, NULL);
+      s = skip_regexp(p + 1, *p, true, NULL);
       if (*s != *p) {
         emsg(_(e_invalpat));
         goto sortend;
@@ -1709,7 +1709,7 @@ void print_line(linenr_T lnum, int use_number, int list)
   int save_silent = silent_mode;
 
   // apply :filter /pat/
-  if (message_filtered(ml_get(lnum))) {
+  if (message_filtered((char *)ml_get(lnum))) {
     return;
   }
 
@@ -3546,7 +3546,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = (char_u)(*cmd++);                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
-      cmd = (char *)skip_regexp((char_u *)cmd, delimiter, p_magic, &eap->arg);
+      cmd = skip_regexp(cmd, delimiter, p_magic, &eap->arg);
       if (cmd[0] == delimiter) {            // end delimiter found
         *cmd++ = NUL;                       // replace it with a NUL
         has_second_delim = true;
@@ -4631,7 +4631,7 @@ void ex_global(exarg_T *eap)
     delim = *cmd;               // get the delimiter
     cmd++;                      // skip delimiter if there is one
     pat = cmd;                  // remember start of pattern
-    cmd = (char *)skip_regexp((char_u *)cmd, delim, p_magic, &eap->arg);
+    cmd = skip_regexp(cmd, delim, p_magic, &eap->arg);
     if (cmd[0] == delim) {                  // end delimiter found
       *cmd++ = NUL;                         // replace it with a NUL
     }
@@ -4948,7 +4948,7 @@ char *skip_vimgrep_pat(char *p, char **s, int *flags)
       *s = p + 1;
     }
     c = (char_u)(*p);
-    p = (char *)skip_regexp((char_u *)p + 1, c, true, NULL);
+    p = skip_regexp(p + 1, c, true, NULL);
     if (*p != c) {
       return NULL;
     }
@@ -4993,7 +4993,7 @@ void ex_oldfiles(exarg_T *eap)
       }
       nr++;
       const char *fname = tv_get_string(TV_LIST_ITEM_TV(li));
-      if (!message_filtered((char_u *)fname)) {
+      if (!message_filtered((char *)fname)) {
         msg_outnum(nr);
         msg_puts(": ");
         msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));

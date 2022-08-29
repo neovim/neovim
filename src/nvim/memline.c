@@ -922,11 +922,9 @@ void ml_recover(bool checkext)
     b0p = hp->bh_data;
   }
 
-  /*
-   * If .swp file name given directly, use name from swap file for buffer.
-   */
+  // If .swp file name given directly, use name from swap file for buffer.
   if (directly) {
-    expand_env(b0p->b0_fname, (char_u *)NameBuff, MAXPATHL);
+    expand_env((char *)b0p->b0_fname, NameBuff, MAXPATHL);
     if (setfname(curbuf, (char *)NameBuff, NULL, true) == FAIL) {
       goto theend;
     }
@@ -1873,7 +1871,7 @@ errorret:
         // when the GUI redraws part of the text.
         recursive++;
         get_trans_bufname(buf);
-        shorten_dir((char_u *)NameBuff);
+        shorten_dir(NameBuff);
         siemsg(_("E316: ml_get: cannot find line %" PRId64 " in buffer %d %s"),
                (int64_t)lnum, buf->b_fnum, NameBuff);
         recursive--;
@@ -3472,7 +3470,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the
                 // inode too.
-                expand_env(b0.b0_fname, (char_u *)NameBuff, MAXPATHL);
+                expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
                 if (fnamecmp_ino((char_u *)buf->b_ffname, (char_u *)NameBuff,
                                  char_to_long(b0.b0_ino))) {
                   differ = true;
@@ -3481,7 +3479,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             } else {
               // The name in the swap file may be
               // "~user/path/file".  Expand it first.
-              expand_env(b0.b0_fname, (char_u *)NameBuff, MAXPATHL);
+              expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
               if (fnamecmp_ino((char_u *)buf->b_ffname, (char_u *)NameBuff,
                                char_to_long(b0.b0_ino))) {
                 differ = true;

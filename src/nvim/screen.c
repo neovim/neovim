@@ -277,7 +277,7 @@ static int wildmenu_match_len(expand_T *xp, char_u *s)
 /// These are backslashes used for escaping.  Do show backslashes in help tags.
 static int skip_wildmenu_char(expand_T *xp, char_u *s)
 {
-  if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
+  if ((rem_backslash((char *)s) && xp->xp_context != EXPAND_HELP)
       || ((xp->xp_context == EXPAND_MENUS
            || xp->xp_context == EXPAND_MENUNAMES)
           && (s[0] == '\t'
@@ -469,10 +469,10 @@ void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, i
     ScreenGrid *grid = (wild_menu_showing == WM_SCROLLED)
                         ? &msg_grid_adj : &default_grid;
 
-    grid_puts(grid, buf, row, 0, attr);
+    grid_puts(grid, (char *)buf, row, 0, attr);
     if (selstart != NULL && highlight) {
       *selend = NUL;
-      grid_puts(grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
+      grid_puts(grid, (char *)selstart, row, selstart_col, HL_ATTR(HLF_WM));
     }
 
     grid_fill(grid, row, row + 1, clen, Columns,
@@ -1026,12 +1026,12 @@ void draw_tabline(void)
           if (col + len >= Columns - 3) {
             break;
           }
-          grid_puts_len(&default_grid, (char_u *)NameBuff, len, 0, col,
+          grid_puts_len(&default_grid, NameBuff, len, 0, col,
                         hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
           col += len;
         }
         if (modified) {
-          grid_puts_len(&default_grid, (char_u *)"+", 1, 0, col++, attr);
+          grid_puts_len(&default_grid, "+", 1, 0, col++, attr);
         }
         grid_putchar(&default_grid, ' ', 0, col++, attr);
       }
@@ -1040,7 +1040,7 @@ void draw_tabline(void)
       if (room > 0) {
         // Get buffer name in NameBuff[]
         get_trans_bufname(cwp->w_buffer);
-        shorten_dir((char_u *)NameBuff);
+        shorten_dir(NameBuff);
         len = vim_strsize((char *)NameBuff);
         p = (char_u *)NameBuff;
         while (len > room) {
@@ -1051,7 +1051,7 @@ void draw_tabline(void)
           len = Columns - col - 1;
         }
 
-        grid_puts_len(&default_grid, p, (int)STRLEN(p), 0, col, attr);
+        grid_puts_len(&default_grid, (char *)p, (int)STRLEN(p), 0, col, attr);
         col += len;
       }
       grid_putchar(&default_grid, ' ', 0, col++, attr);

@@ -803,8 +803,8 @@ void fix_help_buffer(void)
                 // 'encoding' may be required.
                 vc.vc_type = CONV_NONE;
                 convert_setup(&vc,
-                              (char_u *)(this_utf == kTrue ? "utf-8" : "latin1"),
-                              (char_u *)p_enc);
+                              (this_utf == kTrue ? "utf-8" : "latin1"),
+                              p_enc);
                 if (vc.vc_type == CONV_NONE) {
                   // No conversion needed.
                   cp = (char *)IObuff;

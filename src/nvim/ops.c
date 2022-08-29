@@ -3839,7 +3839,7 @@ void ex_display(exarg_T *eap)
       bool do_show = false;
 
       for (size_t j = 0; !do_show && j < yb->y_size; j++) {
-        do_show = !message_filtered((char_u *)yb->y_array[j]);
+        do_show = !message_filtered(yb->y_array[j]);
       }
 
       if (do_show || yb->y_size == 0) {
@@ -3876,14 +3876,14 @@ void ex_display(exarg_T *eap)
   // display last inserted text
   if ((p = get_last_insert()) != NULL
       && (arg == NULL || vim_strchr((char *)arg, '.') != NULL) && !got_int
-      && !message_filtered(p)) {
+      && !message_filtered((char *)p)) {
     msg_puts("\n  c  \".   ");
     dis_msg(p, true);
   }
 
   // display last command line
   if (last_cmdline != NULL && (arg == NULL || vim_strchr((char *)arg, ':') != NULL)
-      && !got_int && !message_filtered((char_u *)last_cmdline)) {
+      && !got_int && !message_filtered(last_cmdline)) {
     msg_puts("\n  c  \":   ");
     dis_msg((char_u *)last_cmdline, false);
   }
@@ -3891,7 +3891,7 @@ void ex_display(exarg_T *eap)
   // display current file name
   if (curbuf->b_fname != NULL
       && (arg == NULL || vim_strchr((char *)arg, '%') != NULL) && !got_int
-      && !message_filtered((char_u *)curbuf->b_fname)) {
+      && !message_filtered(curbuf->b_fname)) {
     msg_puts("\n  c  \"%   ");
     dis_msg((char_u *)curbuf->b_fname, false);
   }
@@ -3901,7 +3901,7 @@ void ex_display(exarg_T *eap)
     char *fname;
     linenr_T dummy;
 
-    if (buflist_name_nr(0, &fname, &dummy) != FAIL && !message_filtered((char_u *)fname)) {
+    if (buflist_name_nr(0, &fname, &dummy) != FAIL && !message_filtered(fname)) {
       msg_puts("\n  c  \"#   ");
       dis_msg((char_u *)fname, false);
     }
@@ -3910,14 +3910,14 @@ void ex_display(exarg_T *eap)
   // display last search pattern
   if (last_search_pat() != NULL
       && (arg == NULL || vim_strchr((char *)arg, '/') != NULL) && !got_int
-      && !message_filtered(last_search_pat())) {
+      && !message_filtered((char *)last_search_pat())) {
     msg_puts("\n  c  \"/   ");
     dis_msg(last_search_pat(), false);
   }
 
   // display last used expression
   if (expr_line != NULL && (arg == NULL || vim_strchr((char *)arg, '=') != NULL)
-      && !got_int && !message_filtered(expr_line)) {
+      && !got_int && !message_filtered((char *)expr_line)) {
     msg_puts("\n  c  \"=   ");
     dis_msg(expr_line, false);
   }
@@ -4802,7 +4802,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     }
     *ptr = NUL;
     STRCAT(buf1, buf2);
-    ins_str(buf1);              // insert the new number
+    ins_str((char *)buf1);              // insert the new number
     endpos = curwin->w_cursor;
     if (curwin->w_cursor.col) {
       curwin->w_cursor.col--;

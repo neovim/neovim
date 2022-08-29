@@ -305,7 +305,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
 
   // Skip messages not match ":filter pattern".
   // Don't filter when there is an error.
-  if (!emsg_on_display && message_filtered((char_u *)s)) {
+  if (!emsg_on_display && message_filtered((char *)s)) {
     return true;
   }
 
@@ -1990,7 +1990,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
     return s;
   }
 
-  grid_puts_len(&msg_grid_adj, s, l, msg_row, msg_col, attr);
+  grid_puts_len(&msg_grid_adj, (char *)s, l, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
@@ -2353,13 +2353,13 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
 
 /// @return  true when ":filter pattern" was used and "msg" does not match
 ///          "pattern".
-bool message_filtered(char_u *msg)
+bool message_filtered(char *msg)
 {
   if (cmdmod.cmod_filter_regmatch.regprog == NULL) {
     return false;
   }
 
-  bool match = vim_regexec(&cmdmod.cmod_filter_regmatch, (char *)msg, (colnr_T)0);
+  bool match = vim_regexec(&cmdmod.cmod_filter_regmatch, msg, (colnr_T)0);
   return cmdmod.cmod_filter_force ? match : !match;
 }
 
@@ -2703,8 +2703,7 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), attr);
   // Output postponed text.
   msg_didout = true;  // Remember that line is not empty.
-  grid_puts_len(&msg_grid_adj, (char_u *)t_s, (int)(s - t_s), msg_row, msg_col,
-                attr);
+  grid_puts_len(&msg_grid_adj, (char *)t_s, (int)(s - t_s), msg_row, msg_col, attr);
   msg_col += *t_col;
   *t_col = 0;
   // If the string starts with a composing character don't increment the
@@ -3083,10 +3082,9 @@ void msg_moremsg(int full)
   char_u *s = (char_u *)_("-- More --");
 
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
-  grid_puts(&msg_grid_adj, s, Rows - 1, 0, attr);
+  grid_puts(&msg_grid_adj, (char *)s, Rows - 1, 0, attr);
   if (full) {
-    grid_puts(&msg_grid_adj, (char_u *)
-              _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
+    grid_puts(&msg_grid_adj, _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
               Rows - 1, vim_strsize((char *)s), attr);
   }
 }

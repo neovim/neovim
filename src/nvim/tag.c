@@ -1781,7 +1781,7 @@ line_read_in:
               // encoding to 'encoding'.
               for (p = lbuf + 20; *p > ' ' && *p < 127; p++) {}
               *p = NUL;
-              convert_setup(&vimconv, lbuf + 20, (char_u *)p_enc);
+              convert_setup(&vimconv, (char *)lbuf + 20, p_enc);
             }
 
             // Read the next line.  Unrecognized flags are ignored.
@@ -2055,8 +2055,9 @@ parse_line:
             mtt = MT_GL_OTH;
           } else {
             // Decide in which array to store this match.
-            is_current = test_for_current(tagp.fname, tagp.fname_end, tag_fname,
-                                          (char_u *)buf_ffname);
+            is_current = test_for_current((char *)tagp.fname, (char *)tagp.fname_end,
+                                          (char *)tag_fname,
+                                          buf_ffname);
             is_static = test_for_static(&tagp);
 
             // Decide in which of the sixteen tables to store this match.
@@ -2826,7 +2827,7 @@ static int jumpto_tag(const char_u *lbuf_arg, int forceit, int keep_help)
      */
     str = pbuf;
     if (pbuf[0] == '/' || pbuf[0] == '?') {
-      str = skip_regexp(pbuf + 1, pbuf[0], false, NULL) + 1;
+      str = (char_u *)skip_regexp((char *)pbuf + 1, pbuf[0], false, NULL) + 1;
     }
     if (str > pbuf_end - 1) {   // search command with nothing following
       save_p_ws = p_ws;
@@ -3012,27 +3013,25 @@ static char_u *expand_tag_fname(char_u *fname, char_u *const tag_fname, const bo
   return retval;
 }
 
-/*
- * Check if we have a tag for the buffer with name "buf_ffname".
- * This is a bit slow, because of the full path compare in path_full_compare().
- * Return true if tag for file "fname" if tag file "tag_fname" is for current
- * file.
- */
-static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname, char_u *buf_ffname)
+/// Check if we have a tag for the buffer with name "buf_ffname".
+/// This is a bit slow, because of the full path compare in path_full_compare().
+///
+/// @return  true if tag for file "fname" if tag file "tag_fname" is for current
+///          file.
+static int test_for_current(char *fname, char *fname_end, char *tag_fname, char *buf_ffname)
 {
   int c;
   int retval = false;
-  char_u *fullname;
 
   if (buf_ffname != NULL) {     // if the buffer has a name
     {
-      c = *fname_end;
+      c = (unsigned char)(*fname_end);
       *fname_end = NUL;
     }
-    fullname = expand_tag_fname(fname, tag_fname, true);
-    retval = (path_full_compare((char *)fullname, (char *)buf_ffname, true, true) & kEqualFiles);
+    char *fullname = (char *)expand_tag_fname((char_u *)fname, (char_u *)tag_fname, true);
+    retval = (path_full_compare(fullname, buf_ffname, true, true) & kEqualFiles);
     xfree(fullname);
-    *fname_end = (char_u)c;
+    *fname_end = (char)c;
   }
 
   return retval;
@@ -3052,7 +3051,7 @@ static int find_extra(char_u **pp)
     if (ascii_isdigit(*str)) {
       str = (char_u *)skipdigits((char *)str + 1);
     } else if (*str == '/' || *str == '?') {
-      str = skip_regexp(str + 1, *str, false, NULL);
+      str = (char_u *)skip_regexp((char *)str + 1, *str, false, NULL);
       if (*str != first_char) {
         str = NULL;
       } else {

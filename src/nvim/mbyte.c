@@ -754,21 +754,19 @@ bool utf_composinglike(const char_u *p1, const char_u *p2)
 ///                   space at least for #MAX_MCO + 1 elements.
 ///
 /// @return leading character.
-int utfc_ptr2char(const char_u *p, int *pcc)
+int utfc_ptr2char(const char *p_in, int *pcc)
 {
-  int len;
-  int c;
-  int cc;
+  uint8_t *p = (uint8_t *)p_in;
   int i = 0;
 
-  c = utf_ptr2char((char *)p);
-  len = utf_ptr2len((char *)p);
+  int c = utf_ptr2char((char *)p);
+  int len = utf_ptr2len((char *)p);
 
   // Only accept a composing char when the first char isn't illegal.
   if ((len > 1 || *p < 0x80)
       && p[len] >= 0x80
       && utf_composinglike(p, p + len)) {
-    cc = utf_ptr2char((char *)p + len);
+    int cc = utf_ptr2char((char *)p + len);
     for (;;) {
       pcc[i++] = cc;
       if (i == MAX_MCO) {
@@ -1936,7 +1934,7 @@ void utf_find_illegal(void)
     // 'encoding' is "utf-8" but we are editing a 8-bit encoded file,
     // possibly a utf-8 file with illegal bytes.  Setup for conversion
     // from utf-8 to 'fileencoding'.
-    convert_setup(&vimconv, (char_u *)p_enc, (char_u *)curbuf->b_p_fenc);
+    convert_setup(&vimconv, p_enc, curbuf->b_p_fenc);
   }
 
   curwin->w_cursor.coladd = 0;
@@ -2146,10 +2144,8 @@ const char *mb_unescape(const char **const pp)
   return NULL;
 }
 
-/*
- * Skip the Vim specific head of a 'encoding' name.
- */
-char_u *enc_skip(char_u *p)
+/// Skip the Vim specific head of a 'encoding' name.
+char *enc_skip(char *p)
 {
   if (STRNCMP(p, "2byte-", 6) == 0) {
     return p + 6;
@@ -2169,8 +2165,6 @@ char *enc_canonize(char *enc)
   FUNC_ATTR_NONNULL_RET
 {
   char_u *p, *s;
-  int i;
-
   if (STRCMP(enc, "default") == 0) {
     // Use the default encoding as found by set_init_1().
     return (char *)vim_strsave(fenc_default);
@@ -2190,7 +2184,7 @@ char *enc_canonize(char *enc)
   *p = NUL;
 
   // Skip "2byte-" and "8bit-".
-  p = enc_skip(r);
+  p = (char_u *)enc_skip((char *)r);
 
   // Change "microsoft-cp" to "cp".  Used in some spell files.
   if (STRNCMP(p, "microsoft-cp", 12) == 0) {
@@ -2214,6 +2208,7 @@ char *enc_canonize(char *enc)
     STRMOVE(p + 5, p + 6);
   }
 
+  int i;
   if (enc_canon_search(p) >= 0) {
     // canonical name can be used unmodified
     if (p != r) {
@@ -2332,7 +2327,7 @@ void *my_iconv_open(char_u *to, char_u *from)
   if (iconv_working == kBroken) {
     return (void *)-1;          // detected a broken iconv() previously
   }
-  fd = iconv_open((char *)enc_skip(to), (char *)enc_skip(from));
+  fd = iconv_open(enc_skip((char *)to), enc_skip((char *)from));
 
   if (fd != (iconv_t)-1 && iconv_working == kUnknown) {
     /*
@@ -2443,18 +2438,17 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
 
 #endif  // HAVE_ICONV
 
-/*
- * Setup "vcp" for conversion from "from" to "to".
- * The names must have been made canonical with enc_canonize().
- * vcp->vc_type must have been initialized to CONV_NONE.
- * Note: cannot be used for conversion from/to ucs-2 and ucs-4 (will use utf-8
- * instead).
- * Afterwards invoke with "from" and "to" equal to NULL to cleanup.
- * Return FAIL when conversion is not supported, OK otherwise.
- */
-int convert_setup(vimconv_T *vcp, char_u *from, char_u *to)
+/// Setup "vcp" for conversion from "from" to "to".
+/// The names must have been made canonical with enc_canonize().
+/// vcp->vc_type must have been initialized to CONV_NONE.
+/// Note: cannot be used for conversion from/to ucs-2 and ucs-4 (will use utf-8
+/// instead).
+/// Afterwards invoke with "from" and "to" equal to NULL to cleanup.
+///
+/// @return  FAIL when conversion is not supported, OK otherwise.
+int convert_setup(vimconv_T *vcp, char *from, char *to)
 {
-  return convert_setup_ext(vcp, from, true, to, true);
+  return convert_setup_ext(vcp, (char_u *)from, true, (char_u *)to, true);
 }
 
 /// As convert_setup(), but only when from_unicode_is_utf8 is true will all

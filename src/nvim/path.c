@@ -62,7 +62,7 @@ FileComparison path_full_compare(char *const s1, char *const s2, const bool chec
   FileID file_id_1, file_id_2;
 
   if (expandenv) {
-    expand_env((char_u *)s1, (char_u *)exp1, MAXPATHL);
+    expand_env(s1, exp1, MAXPATHL);
   } else {
     STRLCPY(exp1, s1, MAXPATHL);
   }
@@ -104,7 +104,7 @@ char *path_tail(const char *fname)
     return "";
   }
 
-  const char *tail = (char *)get_past_head((char_u *)fname);
+  const char *tail = get_past_head(fname);
   const char *p = tail;
   // Find last part of path.
   while (*p != NUL) {
@@ -130,7 +130,7 @@ char *path_tail_with_sep(char *fname)
   assert(fname != NULL);
 
   // Don't remove the '/' from "c:/file".
-  char *past_head = (char *)get_past_head((char_u *)fname);
+  char *past_head = get_past_head(fname);
   char *tail = path_tail(fname);
   while (tail > past_head && after_pathsep(fname, tail)) {
     tail--;
@@ -150,7 +150,7 @@ char *path_tail_with_sep(char *fname)
 const char_u *invocation_path_tail(const char_u *invocation, size_t *len)
     FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char_u *tail = get_past_head((char_u *)invocation);
+  const char_u *tail = (char_u *)get_past_head((char *)invocation);
   const char_u *p = tail;
   while (*p != NUL && *p != ' ') {
     bool was_sep = vim_ispathsep_nocolon(*p);
@@ -215,13 +215,13 @@ bool is_path_head(const char_u *path)
 /// Get a pointer to one character past the head of a path name.
 /// Unix: after "/"; Win: after "c:\"
 /// If there is no head, path is returned.
-char_u *get_past_head(const char_u *path)
+char *get_past_head(const char *path)
 {
-  const char_u *retval = path;
+  const char *retval = path;
 
 #ifdef WIN32
   // May skip "c:"
-  if (is_path_head(path)) {
+  if (is_path_head((char_u *)path)) {
     retval = path + 2;
   }
 #endif
@@ -230,7 +230,7 @@ char_u *get_past_head(const char_u *path)
     retval++;
   }
 
-  return (char_u *)retval;
+  return (char *)retval;
 }
 
 /// Return true if 'c' is a path separator.
@@ -310,9 +310,9 @@ void shorten_dir_len(char_u *str, int trim_len)
 
 /// Shorten the path of a file from "~/foo/../.bar/fname" to "~/f/../.b/fname"
 /// It's done in-place.
-void shorten_dir(char_u *str)
+void shorten_dir(char *str)
 {
-  shorten_dir_len(str, 1);
+  shorten_dir_len((char_u *)str, 1);
 }
 
 /// Return true if the directory of "fname" exists, false otherwise.
@@ -631,7 +631,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   while (*path_end != NUL) {
     /* May ignore a wildcard that has a backslash before it; it will
      * be removed by rem_backslash() or file_pat_to_reg_pat() below. */
-    if (path_end >= path + wildoff && rem_backslash(path_end)) {
+    if (path_end >= path + wildoff && rem_backslash((char *)path_end)) {
       *p++ = *path_end++;
     } else if (vim_ispathsep_nocolon(*path_end)) {
       if (e != NULL) {
@@ -658,7 +658,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   /* Remove backslashes between "wildoff" and the start of the wildcard
    * component. */
   for (p = buf + wildoff; p < s; p++) {
-    if (rem_backslash(p)) {
+    if (rem_backslash((char *)p)) {
       STRMOVE(p, p + 1);
       e--;
       s--;

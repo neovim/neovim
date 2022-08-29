@@ -132,13 +132,13 @@ void win_redr_status(win_T *wp)
 
     row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
     col = is_stl_global ? 0 : wp->w_wincol;
-    grid_puts(&default_grid, p, row, col, attr);
+    grid_puts(&default_grid, (char *)p, row, col, attr);
     grid_fill(&default_grid, row, row + 1, len + col,
               this_ru_col + col, fillchar, fillchar, attr);
 
     if (get_keymap_str(wp, "<%s>", (char *)NameBuff, MAXPATHL)
         && this_ru_col - len > (int)(STRLEN(NameBuff) + 1)) {
-      grid_puts(&default_grid, (char_u *)NameBuff, row,
+      grid_puts(&default_grid, NameBuff, row,
                 (int)((size_t)this_ru_col - STRLEN(NameBuff) - 1), attr);
     }
 
@@ -342,7 +342,7 @@ void win_redr_ruler(win_T *wp, bool always)
       }
 
       ScreenGrid *grid = part_of_status ? &default_grid : &msg_grid_adj;
-      grid_puts(grid, (char_u *)buffer, row, this_ru_col + off, attr);
+      grid_puts(grid, buffer, row, this_ru_col + off, attr);
       grid_fill(grid, row, row + 1,
                 this_ru_col + off + (int)STRLEN(buffer), off + width, fillchar,
                 fillchar, attr);
@@ -571,8 +571,8 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(grid, (char_u *)p, textlen, row, col, curattr);
-    col += vim_strnsize((char_u *)p, textlen);
+    grid_puts_len(grid, p, textlen, row, col, curattr);
+    col += vim_strnsize(p, textlen);
     p = hltab[n].start;
 
     if (hltab[n].userhl == 0) {
@@ -586,8 +586,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     }
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(grid, p >= buf + len ? (char_u *)"" : (char_u *)p, row, col,
-            curattr);
+  grid_puts(grid, p >= buf + len ? "" : p, row, col, curattr);
 
   grid_puts_line_flush(false);
 
@@ -608,7 +607,7 @@ void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     .type = kStlClickDisabled,
   };
   for (n = 0; tabtab[n].start != NULL; n++) {
-    len += vim_strnsize((char_u *)p, (int)(tabtab[n].start - p));
+    len += vim_strnsize(p, (int)(tabtab[n].start - p));
     while (col < len) {
       click_defs[col++] = cur_click_def;
     }

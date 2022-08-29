@@ -1302,7 +1302,7 @@ void openscript(char_u *name, bool directly)
     curscript++;
   }
   // use NameBuff for expanded name
-  expand_env(name, (char_u *)NameBuff, MAXPATHL);
+  expand_env((char *)name, NameBuff, MAXPATHL);
   int error;
   if ((scriptin[curscript] = file_open_new(&error, (char *)NameBuff,
                                            kFileReadOnly, 0)) == NULL) {

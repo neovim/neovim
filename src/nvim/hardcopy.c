@@ -613,7 +613,7 @@ static void prt_message(char_u *s)
 {
   // TODO(bfredl): delete this
   grid_fill(&default_grid, Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
-  grid_puts(&default_grid, s, Rows - 1, 0, HL_ATTR(HLF_R));
+  grid_puts(&default_grid, (char *)s, Rows - 1, 0, HL_ATTR(HLF_R));
   ui_flush();
 }
 
@@ -2147,17 +2147,14 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   char_u *p;
   int props;
   int cmap = 0;
-  char_u *p_encoding;
   struct prt_ps_encoding_S *p_mbenc;
   struct prt_ps_encoding_S *p_mbenc_first;
   struct prt_ps_charset_S *p_mbchar = NULL;
 
-  /*
-   * Set up font and encoding.
-   */
-  p_encoding = enc_skip((char_u *)p_penc);
+  // Set up font and encoding.
+  char_u *p_encoding = (char_u *)enc_skip(p_penc);
   if (*p_encoding == NUL) {
-    p_encoding = enc_skip((char_u *)p_enc);
+    p_encoding = (char_u *)enc_skip(p_enc);
   }
 
   // Look for a multi-byte font that matches the encoding and character set.
@@ -2591,13 +2588,13 @@ bool mch_print_begin(prt_settings_T *psettings)
   // that cannot be found then default to "latin1".
   // Note: VIM specific encoding header is always skipped.
   if (!prt_out_mbyte) {
-    p_encoding = (char *)enc_skip((char_u *)p_penc);
+    p_encoding = enc_skip(p_penc);
     if (*p_encoding == NUL
         || !prt_find_resource(p_encoding, &res_encoding)) {
       // 'printencoding' not set or not supported - find alternate
       int props;
 
-      p_encoding = (char *)enc_skip((char_u *)p_enc);
+      p_encoding = enc_skip(p_enc);
       props = enc_canon_props((char_u *)p_encoding);
       if (!(props & ENC_8BIT)
           || !prt_find_resource(p_encoding, &res_encoding)) {
@@ -2617,9 +2614,9 @@ bool mch_print_begin(prt_settings_T *psettings)
     // For the moment there are no checks on encoding resource files to
     // perform
   } else {
-    p_encoding = (char *)enc_skip((char_u *)p_penc);
+    p_encoding = enc_skip(p_penc);
     if (*p_encoding == NUL) {
-      p_encoding = (char *)enc_skip((char_u *)p_enc);
+      p_encoding = enc_skip(p_enc);
     }
     if (prt_use_courier) {
       // Include ASCII range encoding vector
@@ -2639,7 +2636,7 @@ bool mch_print_begin(prt_settings_T *psettings)
   prt_conv.vc_type = CONV_NONE;
   if (!(enc_canon_props((char_u *)p_enc) & enc_canon_props((char_u *)p_encoding) & ENC_8BIT)) {
     // Set up encoding conversion if required
-    if (convert_setup(&prt_conv, (char_u *)p_enc, (char_u *)p_encoding) == FAIL) {
+    if (convert_setup(&prt_conv, p_enc, p_encoding) == FAIL) {
       semsg(_("E620: Unable to convert to print encoding \"%s\""),
             p_encoding);
       return false;

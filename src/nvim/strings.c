@@ -104,7 +104,7 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars, c
       p += l - 1;
       continue;
     }
-    if (vim_strchr((char *)esc_chars, *p) != NULL || (bsl && rem_backslash(p))) {
+    if (vim_strchr((char *)esc_chars, *p) != NULL || (bsl && rem_backslash((char *)p))) {
       length++;                         // count a backslash
     }
     length++;                           // count an ordinary char
@@ -120,7 +120,7 @@ char_u *vim_strsave_escaped_ext(const char_u *string, const char_u *esc_chars, c
       p += l - 1;                     // skip multibyte char
       continue;
     }
-    if (vim_strchr((char *)esc_chars, *p) != NULL || (bsl && rem_backslash(p))) {
+    if (vim_strchr((char *)esc_chars, *p) != NULL || (bsl && rem_backslash((char *)p))) {
       *p2++ = cc;
     }
     *p2++ = *p;

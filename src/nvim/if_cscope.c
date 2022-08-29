@@ -423,7 +423,7 @@ static int cs_add_common(char *arg1, char *arg2, char *flags)
   // get the filename (arg1), expand it, and try to stat it
   fname = xmalloc(MAXPATHL + 1);
 
-  expand_env((char_u *)arg1, (char_u *)fname, MAXPATHL);
+  expand_env(arg1, fname, MAXPATHL);
   size_t len = STRLEN(fname);
   fbuf = fname;
   (void)modify_fname(":p", false, &usedlen, &fname, &fbuf, &len);
@@ -445,7 +445,7 @@ staterr:
   // get the prepend path (arg2), expand it, and see if it exists
   if (arg2 != NULL) {
     ppath = xmalloc(MAXPATHL + 1);
-    expand_env((char_u *)arg2, (char_u *)ppath, MAXPATHL);
+    expand_env(arg2, ppath, MAXPATHL);
     if (!os_path_exists((char_u *)ppath)) {
       goto staterr;
     }
@@ -757,14 +757,14 @@ err_closing:
 #endif
     // expand the cscope exec for env var's
     prog = xmalloc(MAXPATHL + 1);
-    expand_env((char_u *)p_csprg, (char_u *)prog, MAXPATHL);
+    expand_env(p_csprg, prog, MAXPATHL);
 
     // alloc space to hold the cscope command
     size_t len = strlen(prog) + strlen(csinfo[i].fname) + 32;
     if (csinfo[i].ppath) {
       // expand the prepend path for env var's
       ppath = xmalloc(MAXPATHL + 1);
-      expand_env((char_u *)csinfo[i].ppath, (char_u *)ppath, MAXPATHL);
+      expand_env(csinfo[i].ppath, ppath, MAXPATHL);
 
       len += strlen(ppath);
     }

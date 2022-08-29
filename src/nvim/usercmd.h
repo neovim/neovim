@@ -4,14 +4,14 @@
 #include "nvim/ex_cmds_defs.h"
 
 typedef struct ucmd {
-  char_u *uc_name;              // The command name
+  char *uc_name;                // The command name
   uint32_t uc_argt;             // The argument type
-  char_u *uc_rep;               // The command's replacement string
+  char *uc_rep;                 // The command's replacement string
   long uc_def;                  // The default value for a range/count
   int uc_compl;                 // completion type
   cmd_addr_T uc_addr_type;      // The command's address type
   sctx_T uc_script_ctx;         // SCTX where the command was defined
-  char_u *uc_compl_arg;         // completion argument if any
+  char *uc_compl_arg;           // completion argument if any
   LuaRef uc_compl_luaref;       // Reference to Lua completion function
   LuaRef uc_preview_luaref;     // Reference to Lua preview function
   LuaRef uc_luaref;             // Reference to Lua function

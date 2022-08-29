@@ -815,15 +815,21 @@ static void source_all_matches(char *pat)
 /// @param is_pack whether the added dir is a "pack/*/start/*/" style package
 static int add_pack_dir_to_rtp(char_u *fname, bool is_pack)
 {
-  char_u *p4, *p3, *p2, *p1, *p;
-  char_u *buf = NULL;
+  char *p;
+  char *buf = NULL;
   char *afterdir = NULL;
   int retval = FAIL;
 
-  p4 = p3 = p2 = p1 = get_past_head(fname);
+  char *p1 = get_past_head((char *)fname);
+  char *p2 = p1;
+  char *p3 = p1;
+  char *p4 = p1;
   for (p = p1; *p; MB_PTR_ADV(p)) {
     if (vim_ispathsep_nocolon(*p)) {
-      p4 = p3; p3 = p2; p2 = p1; p1 = p;
+      p4 = p3;
+      p3 = p2;
+      p2 = p1;
+      p1 = p;
     }
   }
 
@@ -833,7 +839,7 @@ static int add_pack_dir_to_rtp(char_u *fname, bool is_pack)
   //
   // find the part up to "pack" in 'runtimepath'
   p4++;  // append pathsep in order to expand symlink
-  char_u c = *p4;
+  char c = *p4;
   *p4 = NUL;
   char *const ffname = fix_fname((char *)fname);
   *p4 = c;
@@ -854,10 +860,10 @@ static int add_pack_dir_to_rtp(char_u *fname, bool is_pack)
   for (const char *entry = (const char *)p_rtp; *entry != NUL;) {
     const char *cur_entry = entry;
 
-    copy_option_part((char **)&entry, (char *)buf, MAXPATHL, ",");
+    copy_option_part((char **)&entry, buf, MAXPATHL, ",");
     if (insp == NULL) {
-      add_pathsep((char *)buf);
-      char *const rtp_ffname = fix_fname((char *)buf);
+      add_pathsep(buf);
+      char *const rtp_ffname = fix_fname(buf);
       if (rtp_ffname == NULL) {
         goto theend;
       }
@@ -869,7 +875,7 @@ static int add_pack_dir_to_rtp(char_u *fname, bool is_pack)
       }
     }
 
-    if ((p = (char_u *)strstr((char *)buf, "after")) != NULL
+    if ((p = strstr(buf, "after")) != NULL
         && p > buf
         && vim_ispathsep(p[-1])
         && (vim_ispathsep(p[5]) || p[5] == NUL || p[5] == ',')) {
@@ -2018,7 +2024,7 @@ int do_source(char *fname, int check_other, int is_vimrc)
     if (firstline != NULL && STRLEN(firstline) >= 3 && firstline[0] == 0xef
         && firstline[1] == 0xbb && firstline[2] == 0xbf) {
       // Found BOM; setup conversion, skip over BOM and recode the line.
-      convert_setup(&cookie.conv, (char_u *)"utf-8", (char_u *)p_enc);
+      convert_setup(&cookie.conv, "utf-8", p_enc);
       p = (char *)string_convert(&cookie.conv, (char_u *)firstline + 3, NULL);
       if (p == NULL) {
         p = xstrdup((char *)firstline + 3);
@@ -2149,7 +2155,7 @@ void ex_scriptnames(exarg_T *eap)
     if (SCRIPT_ITEM(i).sn_name != NULL) {
       home_replace(NULL, (char *)SCRIPT_ITEM(i).sn_name, (char *)NameBuff, MAXPATHL, true);
       vim_snprintf((char *)IObuff, IOSIZE, "%3d: %s", i, NameBuff);
-      if (!message_filtered(IObuff)) {
+      if (!message_filtered((char *)IObuff)) {
         msg_putchar('\n');
         msg_outtrans((char *)IObuff);
         line_breakcheck();
@@ -2439,7 +2445,7 @@ void ex_scriptencoding(exarg_T *eap)
 
   // Setup for conversion from the specified encoding to 'encoding'.
   sp = (struct source_cookie *)getline_cookie(eap->getline, eap->cookie);
-  convert_setup(&sp->conv, (char_u *)name, (char_u *)p_enc);
+  convert_setup(&sp->conv, name, p_enc);
 
   if (name != eap->arg) {
     xfree(name);

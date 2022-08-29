@@ -542,14 +542,13 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_puts_len(&pum_grid, (char_u *)rt, (int)STRLEN(rt), row,
-                            grid_col - size + 1, attr);
+              grid_puts_len(&pum_grid, rt, (int)STRLEN(rt), row, grid_col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
               // use grid_puts_len() to truncate the text
-              grid_puts(&pum_grid, st, row, grid_col, attr);
+              grid_puts(&pum_grid, (char *)st, row, grid_col, attr);
               xfree(st);
               grid_col += width;
             }
@@ -560,11 +559,11 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (pum_rl) {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col - 1,
+              grid_puts_len(&pum_grid, "  ", 2, row, grid_col - 1,
                             attr);
               grid_col -= 2;
             } else {
-              grid_puts_len(&pum_grid, (char_u *)"  ", 2, row, grid_col, attr);
+              grid_puts_len(&pum_grid, "  ", 2, row, grid_col, attr);
               grid_col += 2;
             }
             totwidth += 2;

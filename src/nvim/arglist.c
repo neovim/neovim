@@ -202,7 +202,7 @@ static char *do_one_arg(char *str)
   for (p = str; *str; str++) {
     // When the backslash is used for escaping the special meaning of a
     // character we need to keep it until wildcard expansion.
-    if (rem_backslash((char_u *)str)) {
+    if (rem_backslash(str)) {
       *p++ = *str++;
       *p++ = *str;
     } else {
