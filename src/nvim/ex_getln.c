@@ -918,7 +918,7 @@ theend:
     // Restore cmdheight
     set_option_value("ch", 0L, NULL, 0);
     // Redraw is needed for command line completion
-    redraw_all_later(UPD_CLEAR);
+    redraw_all_later(UPD_NOT_VALID);
 
     made_cmdheight_nonzero = false;
   }
