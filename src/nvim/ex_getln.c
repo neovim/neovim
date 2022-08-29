@@ -2376,34 +2376,32 @@ end:
 /// Trigger CmdlineChanged autocommands.
 static void do_autocmd_cmdlinechanged(int firstc)
 {
-  if (!has_event(EVENT_CMDLINECHANGED)) {
-    return;
-  }
+  if (has_event(EVENT_CMDLINECHANGED)) {
+    TryState tstate;
+    Error err = ERROR_INIT;
+    save_v_event_T save_v_event;
+    dict_T *dict = get_v_event(&save_v_event);
 
-  TryState tstate;
-  Error err = ERROR_INIT;
-  save_v_event_T save_v_event;
-  dict_T *dict = get_v_event(&save_v_event);
+    char firstcbuf[2];
+    firstcbuf[0] = (char)firstc;
+    firstcbuf[1] = 0;
 
-  char firstcbuf[2];
-  firstcbuf[0] = (char)firstc;
-  firstcbuf[1] = 0;
+    // set v:event to a dictionary with information about the commandline
+    tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
+    tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
+    tv_dict_set_keys_readonly(dict);
+    try_enter(&tstate);
 
-  // set v:event to a dictionary with information about the commandline
-  tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
-  tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
-  tv_dict_set_keys_readonly(dict);
-  try_enter(&tstate);
+    apply_autocmds(EVENT_CMDLINECHANGED, firstcbuf, firstcbuf, false, curbuf);
+    restore_v_event(dict, &save_v_event);
 
-  apply_autocmds(EVENT_CMDLINECHANGED, firstcbuf, firstcbuf, false, curbuf);
-  restore_v_event(dict, &save_v_event);
-
-  bool tl_ret = try_leave(&tstate, &err);
-  if (!tl_ret && ERROR_SET(&err)) {
-    msg_putchar('\n');
-    msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
-    api_clear_error(&err);
-    redrawcmd();
+    bool tl_ret = try_leave(&tstate, &err);
+    if (!tl_ret && ERROR_SET(&err)) {
+      msg_putchar('\n');
+      msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      api_clear_error(&err);
+      redrawcmd();
+    }
   }
 }
 
