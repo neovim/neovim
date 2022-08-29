@@ -911,7 +911,7 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     out_data_ring(NULL, SIZE_MAX);
   }
   if (forward_output) {
-    // caller should decide if wait_return is invoked
+    // caller should decide if wait_return() is invoked
     no_wait_return++;
     msg_end();
     no_wait_return--;

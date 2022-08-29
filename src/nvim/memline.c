@@ -523,7 +523,7 @@ void ml_open_file(buf_T *buf)
   }
 
   if (*p_dir != NUL && mfp->mf_fname == NULL) {
-    need_wait_return = true;  // call wait_return later
+    need_wait_return = true;  // call wait_return() later
     no_wait_return++;
     (void)semsg(_("E303: Unable to open swap file for \"%s\", recovery impossible"),
                 buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname);

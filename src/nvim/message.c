@@ -215,7 +215,7 @@ void msg_grid_validate(void)
 /// Displays the string 's' on the status line
 /// When terminal not initialized (yet) mch_errmsg(..) is used.
 ///
-/// @return  true if wait_return not called
+/// @return  true if wait_return() not called
 int msg(char *s)
 {
   return msg_attr_keep(s, 0, false, false);
@@ -745,7 +745,7 @@ static bool emsg_multiline(const char *s, bool multiline)
   attr = HL_ATTR(HLF_E);      // set highlight mode for error messages
   if (msg_scrolled != 0) {
     need_wait_return = true;  // needed in case emsg() is called after
-  }                           // wait_return has reset need_wait_return
+  }                           // wait_return() has reset need_wait_return
                               // and a redraw is expected because
                               // msg_scrolled is non-zero
   if (msg_ext_kind == NULL) {
@@ -766,7 +766,7 @@ static bool emsg_multiline(const char *s, bool multiline)
 /// Rings the bell, if appropriate, and calls message() to do the real work
 /// When terminal not initialized (yet) mch_errmsg(..) is used.
 ///
-/// @return true if wait_return not called
+/// @return true if wait_return() not called
 bool emsg(const char *s)
 {
   return emsg_multiline(s, false);
@@ -2243,7 +2243,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
       }
 
       inc_msg_scrolled();
-      need_wait_return = true;       // may need wait_return in main()
+      need_wait_return = true;       // may need wait_return() in main()
       redraw_cmdline = true;
       if (cmdline_row > 0 && !exmode_active) {
         cmdline_row--;
@@ -3164,9 +3164,9 @@ void msg_clr_cmdline(void)
 }
 
 /// end putting a message on the screen
-/// call wait_return if the message does not fit in the available space
+/// call wait_return() if the message does not fit in the available space
 ///
-/// @return  true if wait_return not called.
+/// @return  true if wait_return() not called.
 int msg_end(void)
 {
   /*

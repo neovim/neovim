@@ -1347,7 +1347,8 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     msg_putchar('\n');  // Keep message from buf_write().
     no_wait_return--;
     if (!aborting()) {
-      semsg(_("E482: Can't create file %s"), itmp);  // Will call wait_return.
+      // will call wait_return()
+      semsg(_("E482: Can't create file %s"), itmp);
     }
     goto filterend;
   }

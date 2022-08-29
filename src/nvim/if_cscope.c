@@ -2035,7 +2035,7 @@ static int cs_show(exarg_T *eap)
     }
   }
 
-  wait_return(true);
+  wait_return(false);
   return CSCOPE_SUCCESS;
 }
 
