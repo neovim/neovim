@@ -7641,7 +7641,7 @@ static void f_setcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  rettv->vval.v_number = set_cmdline_str(tv_get_string_chk(&argvars[0]), pos);
+  rettv->vval.v_number = set_cmdline_str(argvars[0].vval.v_string, pos);
 }
 
 /// "setcmdpos()" function

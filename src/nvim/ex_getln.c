@@ -3971,7 +3971,7 @@ int get_cmdline_screen_pos(void)
 // Returns 1 when failed, 0 when OK.
 int set_cmdline_str(const char *str, int pos)
 {
-  struct cmdline_info *p = get_ccline_ptr();
+  CmdlineInfo *p = get_ccline_ptr();
 
   if (p == NULL) {
     return 1;
@@ -3982,7 +3982,7 @@ int set_cmdline_str(const char *str, int pos)
   p->cmdlen = len;
   STRCPY(p->cmdbuff, str);
 
-  p->cmdpos = pos < 0 ? p->cmdlen : pos;
+  p->cmdpos = pos < 0 || pos > p->cmdlen ? p->cmdlen : pos;
   new_cmdpos = p->cmdpos;
 
   redrawcmd();

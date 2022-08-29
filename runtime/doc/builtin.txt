@@ -6925,7 +6925,7 @@ setcmdline({str} [, {pos}])					*setcmdline()*
 		line.
 
 		Can also be used as a |method|: >
-			SetCmdline()->setcmdline()
+			GetText()->setcmdline()
 
 setcmdpos({pos})					*setcmdpos()*
 		Set the cursor position in the command line to byte position
