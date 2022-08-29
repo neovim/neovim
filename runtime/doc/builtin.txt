@@ -2912,7 +2912,8 @@ getcmdscreenpos()					*getcmdscreenpos()*
 		Only works when editing the command line, thus requires use of
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 		Returns 0 otherwise.
-		Also see |getcmdpos()|, |setcmdpos()|.
+		Also see |getcmdpos()|, |setcmdpos()|, |getcmdline()| and
+		|setcmdline()|.
 
 getcmdtype()						*getcmdtype()*
 		Return the current command-line type. Possible return values
@@ -2927,8 +2928,7 @@ getcmdtype()						*getcmdtype()*
 		Only works when editing the command line, thus requires use of
 		|c_CTRL-\_e| or |c_CTRL-R_=| or an expression mapping.
 		Returns an empty string otherwise.
-		Also see |getcmdpos()|, |setcmdpos()|, |getcmdline()| and
-		|setcmdline()|.
+		Also see |getcmdpos()|, |setcmdpos()| and |getcmdline()|.
 
 getcmdwintype()						*getcmdwintype()*
 		Return the current |command-line-window| type. Possible return
