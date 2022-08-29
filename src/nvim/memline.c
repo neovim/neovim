@@ -430,7 +430,7 @@ void ml_setname(buf_T *buf)
     if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = true;
       mf_free_fnames(mfp);
-      mf_set_fnames(mfp, fname);
+      mf_set_fnames(mfp, (char *)fname);
       ml_upd_block0(buf, UB_SAME_DIR);
       break;
     }
@@ -483,7 +483,7 @@ void ml_open_file(buf_T *buf)
   if (buf->b_spell) {
     fname = vim_tempname();
     if (fname != NULL) {
-      (void)mf_open_file(mfp, fname);           // consumes fname!
+      (void)mf_open_file(mfp, (char *)fname);           // consumes fname!
     }
     buf->b_may_swap = false;
     return;
@@ -506,7 +506,7 @@ void ml_open_file(buf_T *buf)
     if (fname == NULL) {
       continue;
     }
-    if (mf_open_file(mfp, fname) == OK) {       // consumes fname!
+    if (mf_open_file(mfp, (char *)fname) == OK) {       // consumes fname!
       ml_upd_block0(buf, UB_SAME_DIR);
 
       // Flush block zero, so others can read it
@@ -835,7 +835,7 @@ void ml_recover(bool checkext)
    */
   p = vim_strsave(fname_used);  // save "fname_used" for the message:
                                 // mf_open() will consume "fname_used"!
-  mfp = mf_open(fname_used, O_RDONLY);
+  mfp = mf_open((char *)fname_used, O_RDONLY);
   fname_used = p;
   if (mfp == NULL || mfp->mf_fd < 0) {
     semsg(_("E306: Cannot open %s"), fname_used);
@@ -926,7 +926,7 @@ void ml_recover(bool checkext)
    * If .swp file name given directly, use name from swap file for buffer.
    */
   if (directly) {
-    expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
+    expand_env(b0p->b0_fname, (char_u *)NameBuff, MAXPATHL);
     if (setfname(curbuf, (char *)NameBuff, NULL, true) == FAIL) {
       goto theend;
     }
@@ -1873,7 +1873,7 @@ errorret:
         // when the GUI redraws part of the text.
         recursive++;
         get_trans_bufname(buf);
-        shorten_dir(NameBuff);
+        shorten_dir((char_u *)NameBuff);
         siemsg(_("E316: ml_get: cannot find line %" PRId64 " in buffer %d %s"),
                (int64_t)lnum, buf->b_fnum, NameBuff);
         recursive--;
@@ -3472,8 +3472,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the
                 // inode too.
-                expand_env(b0.b0_fname, NameBuff, MAXPATHL);
-                if (fnamecmp_ino((char_u *)buf->b_ffname, NameBuff,
+                expand_env(b0.b0_fname, (char_u *)NameBuff, MAXPATHL);
+                if (fnamecmp_ino((char_u *)buf->b_ffname, (char_u *)NameBuff,
                                  char_to_long(b0.b0_ino))) {
                   differ = true;
                 }
@@ -3481,8 +3481,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             } else {
               // The name in the swap file may be
               // "~user/path/file".  Expand it first.
-              expand_env(b0.b0_fname, NameBuff, MAXPATHL);
-              if (fnamecmp_ino((char_u *)buf->b_ffname, NameBuff,
+              expand_env(b0.b0_fname, (char_u *)NameBuff, MAXPATHL);
+              if (fnamecmp_ino((char_u *)buf->b_ffname, (char_u *)NameBuff,
                                char_to_long(b0.b0_ino))) {
                 differ = true;
               }

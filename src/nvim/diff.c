@@ -1148,7 +1148,7 @@ static int diff_file(diffio_T *dio)
                  (diff_flags & DIFF_IBLANK) ? "-B " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
                  tmp_orig, tmp_new);
-    append_redir(cmd, len, (char *)p_srr, tmp_diff);
+    append_redir(cmd, len, p_srr, tmp_diff);
     block_autocmds();  // Avoid ShellCmdPost stuff
     (void)call_shell((char_u *)cmd,
                      kShellOptFilter | kShellOptSilent | kShellOptDoOut,

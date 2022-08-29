@@ -159,10 +159,10 @@ EXTERN colnr_T dollar_vcol INIT(= -1);
 
 // Variables for Insert mode completion.
 
-EXTERN char_u *edit_submode INIT(= NULL);        // msg for CTRL-X submode
-EXTERN char_u *edit_submode_pre INIT(= NULL);    // prepended to edit_submode
-EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
-EXTERN hlf_T edit_submode_highl;                 // highl. method for extra info
+EXTERN char *edit_submode INIT(= NULL);         // msg for CTRL-X submode
+EXTERN char *edit_submode_pre INIT(= NULL);     // prepended to edit_submode
+EXTERN char *edit_submode_extra INIT(= NULL);   // appended to edit_submode
+EXTERN hlf_T edit_submode_highl;                // highl. method for extra info
 
 // state for putting characters in the message area
 EXTERN int cmdmsg_rl INIT(= false);  // cmdline is drawn right to left
@@ -667,7 +667,7 @@ EXTERN int swap_exists_action INIT(= SEA_NONE);  ///< For dialog when swap file 
 EXTERN bool swap_exists_did_quit INIT(= false);  ///< Selected "quit" at the dialog.
 
 EXTERN char_u IObuff[IOSIZE];               ///< Buffer for sprintf, I/O, etc.
-EXTERN char_u NameBuff[MAXPATHL];           ///< Buffer for expanding file names
+EXTERN char NameBuff[MAXPATHL];             ///< Buffer for expanding file names
 EXTERN char msg_buf[MSG_BUF_LEN];           ///< Small buffer for messages
 EXTERN char os_buf[                         ///< Buffer for the os/ layer
 #if MAXPATHL > IOSIZE
@@ -731,9 +731,9 @@ EXTERN bool need_start_insertmode INIT(= false);  ///< start insert mode soon
                                 // including the terminating NUL
 
 EXTERN char last_mode[MODE_MAX_LENGTH] INIT(= "n");
-EXTERN char_u *last_cmdline INIT(= NULL);      // last command line (for ":)
-EXTERN char_u *repeat_cmdline INIT(= NULL);    // command line for "."
-EXTERN char_u *new_last_cmdline INIT(= NULL);  // new value for last_cmdline
+EXTERN char *last_cmdline INIT(= NULL);        // last command line (for ":)
+EXTERN char *repeat_cmdline INIT(= NULL);      // command line for "."
+EXTERN char *new_last_cmdline INIT(= NULL);    // new value for last_cmdline
 EXTERN char *autocmd_fname INIT(= NULL);       // fname for <afile> on cmdline
 EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char *autocmd_match INIT(= NULL);       // name for <amatch> on cmdline

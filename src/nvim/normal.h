@@ -57,7 +57,7 @@ typedef struct oparg_S {
  * Arguments for Normal mode commands.
  */
 typedef struct cmdarg_S {
-  oparg_T *oap;             // Operator arguments
+  oparg_T *oap;                 // Operator arguments
   int prechar;                  // prefix character (optional, always 'g')
   int cmdchar;                  // command character
   int nchar;                    // next command character (optional)
@@ -69,7 +69,7 @@ typedef struct cmdarg_S {
   long count1;                  // count before command, default 1
   int arg;                      // extra argument from nv_cmds[]
   int retval;                   // return: CA_* values
-  char_u *searchbuf;       // return: pointer to search pattern or NULL
+  char *searchbuf;              // return: pointer to search pattern or NULL
 } cmdarg_T;
 
 // values for retval:

@@ -1848,7 +1848,7 @@ char *did_set_spelllang(win_T *wp)
     region = NULL;
     len = (int)STRLEN(lang);
 
-    if (!valid_spelllang(lang)) {
+    if (!valid_spelllang((char *)lang)) {
       continue;
     }
 
@@ -3545,18 +3545,18 @@ int expand_spelling(linenr_T lnum, char_u *pat, char ***matchp)
   return ga.ga_len;
 }
 
-/// Return true if "val" is a valid 'spelllang' value.
-bool valid_spelllang(const char_u *val)
+/// @return  true if "val" is a valid 'spelllang' value.
+bool valid_spelllang(const char *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return valid_name(val, ".-_,@");
 }
 
-/// Return true if "val" is a valid 'spellfile' value.
-bool valid_spellfile(const char_u *val)
+/// @return  true if "val" is a valid 'spellfile' value.
+bool valid_spellfile(const char *val)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  for (const char_u *s = val; *s != NUL; s++) {
+  for (const char_u *s = (char_u *)val; *s != NUL; s++) {
     if (!vim_isfilec(*s) && *s != ',' && *s != ' ') {
       return false;
     }

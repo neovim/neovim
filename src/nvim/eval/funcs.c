@@ -3895,9 +3895,11 @@ static void f_iconv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   const char *const str = tv_get_string(&argvars[0]);
   char buf1[NUMBUFLEN];
-  char_u *const from = enc_canonize(enc_skip((char_u *)tv_get_string_buf(&argvars[1], buf1)));
+  char_u *const from =
+    (char_u *)enc_canonize((char *)enc_skip((char_u *)tv_get_string_buf(&argvars[1], buf1)));
   char buf2[NUMBUFLEN];
-  char_u *const to = enc_canonize(enc_skip((char_u *)tv_get_string_buf(&argvars[2], buf2)));
+  char_u *const to =
+    (char_u *)enc_canonize((char *)enc_skip((char_u *)tv_get_string_buf(&argvars[2], buf2)));
   vimconv.vc_type = CONV_NONE;
   convert_setup(&vimconv, from, to);
 

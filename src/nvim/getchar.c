@@ -1302,7 +1302,7 @@ void openscript(char_u *name, bool directly)
     curscript++;
   }
   // use NameBuff for expanded name
-  expand_env(name, NameBuff, MAXPATHL);
+  expand_env(name, (char_u *)NameBuff, MAXPATHL);
   int error;
   if ((scriptin[curscript] = file_open_new(&error, (char *)NameBuff,
                                            kFileReadOnly, 0)) == NULL) {
@@ -2120,7 +2120,7 @@ static int handle_mapping(int *keylenp, bool *timedout, int *mapdepth)
 
   // Check for match with 'pastetoggle'
   if (*p_pt != NUL && mp == NULL && (State & (MODE_INSERT | MODE_NORMAL))) {
-    bool match = typebuf_match_len(p_pt, &mlen);
+    bool match = typebuf_match_len((char_u *)p_pt, &mlen);
     if (match) {
       // write chars to script file(s)
       if (mlen > typebuf.tb_maplen) {

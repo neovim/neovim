@@ -1409,11 +1409,11 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
     // copy file name into NameBuff, expanding environment variables
     save_char = ptr[len];
     ptr[len] = NUL;
-    expand_env_esc(ptr, NameBuff, MAXPATHL, false, true, NULL);
+    expand_env_esc(ptr, (char_u *)NameBuff, MAXPATHL, false, true, NULL);
     ptr[len] = save_char;
 
     xfree(ff_file_to_find);
-    ff_file_to_find = vim_strsave(NameBuff);
+    ff_file_to_find = vim_strsave((char_u *)NameBuff);
     if (options & FNAME_UNESC) {
       // Change all "\ " to " ".
       for (ptr = ff_file_to_find; *ptr != NUL; ptr++) {
@@ -1473,11 +1473,11 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
         buf = (char *)suffixes;
         for (;;) {
           if (
-              (os_path_exists(NameBuff)
+              (os_path_exists((char_u *)NameBuff)
                && (find_what == FINDFILE_BOTH
                    || ((find_what == FINDFILE_DIR)
-                       == os_isdir(NameBuff))))) {
-            file_name = vim_strsave(NameBuff);
+                       == os_isdir((char_u *)NameBuff))))) {
+            file_name = vim_strsave((char_u *)NameBuff);
             goto theend;
           }
           if (*buf == NUL) {
@@ -1641,7 +1641,7 @@ int vim_chdirfile(char *fname, CdCause cause)
   STRLCPY(dir, fname, MAXPATHL);
   *path_tail_with_sep(dir) = NUL;
 
-  if (os_dirname(NameBuff, sizeof(NameBuff)) != OK) {
+  if (os_dirname((char_u *)NameBuff, sizeof(NameBuff)) != OK) {
     NameBuff[0] = NUL;
   }
 

@@ -607,7 +607,7 @@ static efm_T *parse_efm_option(char *efm)
       goto parse_efm_error;
     }
     // Advance to next part
-    efm = (char *)skip_to_option_part((char_u *)efm + len);       // skip comma and spaces
+    efm = skip_to_option_part(efm + len);       // skip comma and spaces
   }
 
   if (fmt_first == NULL) {      // nothing found
@@ -4222,7 +4222,7 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
 
   // If 'shellpipe' empty: don't redirect to 'errorfile'.
   if (*p_sp != NUL) {
-    append_redir(cmd, len, (char *)p_sp, (char *)fname);
+    append_redir(cmd, len, p_sp, (char *)fname);
   }
 
   // Display the fully formed command.  Output a newline if there's something
@@ -4241,7 +4241,7 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
 // Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
 void ex_make(exarg_T *eap)
 {
-  char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : (char *)p_menc;
+  char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
 
   // Redirect ":grep" to ":vimgrep" if 'grepprg' is "internal".
   if (grep_internal(eap->cmdidx)) {
@@ -4981,7 +4981,7 @@ void ex_cfile(exarg_T *eap)
     set_string_option_direct("ef", -1, eap->arg, OPT_FREE, 0);
   }
 
-  char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : (char *)p_menc;
+  char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
 
   if (is_loclist_cmd(eap->cmdidx)) {
     wp = curwin;

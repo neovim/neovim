@@ -246,7 +246,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       c = *p;
-      p = skip_to_option_part(p);
+      p = (char_u *)skip_to_option_part((char *)p);
 
       if ((c == ',') && (*p == NUL)) {
         // Trailing comma is not allowed.

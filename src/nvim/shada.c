@@ -1477,7 +1477,7 @@ static char *shada_filename(const char *file)
       //     because various expansions must have already be done by the shell.
       //     If shell is not performing them then they should be done in main.c
       //     where arguments are parsed, *not here*.
-      expand_env((char_u *)file, &(NameBuff[0]), MAXPATHL);
+      expand_env((char_u *)file, (char_u *)&(NameBuff[0]), MAXPATHL);
       file = (const char *)&(NameBuff[0]);
     }
   }

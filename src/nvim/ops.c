@@ -1127,7 +1127,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
     // don't keep the cmdline containing @:
     XFREE_CLEAR(new_last_cmdline);
     // Escape all control characters with a CTRL-V
-    p = vim_strsave_escaped_ext(last_cmdline,
+    p = vim_strsave_escaped_ext((char_u *)last_cmdline,
                                 (char_u *)"\001\002\003\004\005\006\007"
                                 "\010\011\012\013\014\015\016\017"
                                 "\020\021\022\023\024\025\026\027"
@@ -1362,7 +1362,7 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
     if (last_cmdline == NULL && errmsg) {
       emsg(_(e_nolastcmd));
     }
-    *argp = (char *)last_cmdline;
+    *argp = last_cmdline;
     return true;
 
   case '/':                     // last search-pattern
@@ -3883,9 +3883,9 @@ void ex_display(exarg_T *eap)
 
   // display last command line
   if (last_cmdline != NULL && (arg == NULL || vim_strchr((char *)arg, ':') != NULL)
-      && !got_int && !message_filtered(last_cmdline)) {
+      && !got_int && !message_filtered((char_u *)last_cmdline)) {
     msg_puts("\n  c  \":   ");
-    dis_msg(last_cmdline, false);
+    dis_msg((char_u *)last_cmdline, false);
   }
 
   // display current file name
@@ -5840,7 +5840,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         // If 'cpoptions' does not contain 'r', insert the search
         // pattern to really repeat the same command.
         if (vim_strchr(p_cpo, CPO_REDO) == NULL) {
-          AppendToRedobuffLit((char *)cap->searchbuf, -1);
+          AppendToRedobuffLit(cap->searchbuf, -1);
         }
         AppendToRedobuff(NL_STR);
       } else if (cap->cmdchar == ':' || cap->cmdchar == K_COMMAND) {
@@ -5850,7 +5850,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         if (repeat_cmdline == NULL) {
           ResetRedobuff();
         } else {
-          AppendToRedobuffLit((char *)repeat_cmdline, -1);
+          AppendToRedobuffLit(repeat_cmdline, -1);
           AppendToRedobuff(NL_STR);
           XFREE_CLEAR(repeat_cmdline);
         }

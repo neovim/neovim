@@ -854,7 +854,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
                      s->histype == HIST_SEARCH ? s->firstc : NUL);
       if (s->firstc == ':') {
         xfree(new_last_cmdline);
-        new_last_cmdline = vim_strsave(ccline.cmdbuff);
+        new_last_cmdline = (char *)vim_strsave(ccline.cmdbuff);
       }
     }
 
