@@ -2721,40 +2721,6 @@ static void f_getcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   tv_dict_add_nr(dict, S_LEN("until"), last_csearch_until());
 }
 
-/// "getcmdcompltype()" function
-static void f_getcmdcompltype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char *)get_cmdline_completion();
-}
-
-/// "getcmdline()" function
-static void f_getcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char *)get_cmdline_str();
-}
-
-/// "getcmdpos()" function
-static void f_getcmdpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->vval.v_number = get_cmdline_pos() + 1;
-}
-
-/// "getcmdscreenpos()" function
-static void f_getcmdscreenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->vval.v_number = get_cmdline_screen_pos() + 1;
-}
-
-/// "getcmdtype()" function
-static void f_getcmdtype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xmallocz(1);
-  rettv->vval.v_string[0] = (char)get_cmdline_type();
-}
-
 /// "getcmdwintype()" function
 static void f_getcmdwintype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -7619,41 +7585,6 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
     if (di != NULL) {
       set_csearch_until(!!tv_get_number(&di->di_tv));
     }
-  }
-}
-
-/// "setcmdline()" function
-static void f_setcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  if (argvars[0].v_type != VAR_STRING || argvars[0].vval.v_string == NULL) {
-    emsg(_(e_stringreq));
-    return;
-  }
-
-  int pos = -1;
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    bool error = false;
-
-    pos = (int)tv_get_number_chk(&argvars[1], &error) - 1;
-    if (error) {
-      return;
-    }
-    if (pos < 0) {
-      emsg(_(e_positive));
-      return;
-    }
-  }
-
-  rettv->vval.v_number = set_cmdline_str(argvars[0].vval.v_string, pos);
-}
-
-/// "setcmdpos()" function
-static void f_setcmdpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  const int pos = (int)tv_get_number(&argvars[0]) - 1;
-
-  if (pos >= 0) {
-    rettv->vval.v_number = set_cmdline_pos(pos);
   }
 }
 

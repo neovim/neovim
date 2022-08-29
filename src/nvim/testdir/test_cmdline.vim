@@ -2187,9 +2187,13 @@ endfunc
 
 func Test_setcmdline()
   func SetText(text, pos)
+    autocmd CmdlineChanged * let g:cmdtype = expand('<afile>')
     call assert_equal(0, setcmdline(a:text))
     call assert_equal(a:text, getcmdline())
     call assert_equal(len(a:text) + 1, getcmdpos())
+    call assert_equal(getcmdtype(), g:cmdtype)
+    unlet g:cmdtype
+    autocmd! CmdlineChanged
 
     call assert_equal(0, setcmdline(a:text, a:pos))
     call assert_equal(a:text, getcmdline())
@@ -2205,6 +2209,13 @@ func Test_setcmdline()
   call feedkeys(":\<C-R>=SetText('set rtp?', 2)\<CR>\<CR>", 'xt')
   call assert_equal('set rtp?', @:)
 
+  call feedkeys(":let g:str = input('? ')\<CR>", 't')
+  call feedkeys("\<C-R>=SetText('foo', 4)\<CR>\<CR>", 'xt')
+  call assert_equal('foo', g:str)
+  unlet g:str
+
+  delfunc SetText
+
   " setcmdline() returns 1 when not editing the command line.
   call assert_equal(1, 'foo'->setcmdline())
 
@@ -2217,6 +2228,8 @@ func Test_setcmdline()
   com! -nargs=* -complete=custom,CustomComplete DoCmd :
   call feedkeys(":DoCmd \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"DoCmd January February Mars', @:)
+  delcom DoCmd
+  delfunc CustomComplete
 
   " Called in <expr>
   cnoremap <expr>a setcmdline('let foo=')
