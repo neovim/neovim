@@ -516,7 +516,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
                                       cstack.cs_idx <
                                       0 ? 0 : (cstack.cs_idx + 1) * 2,
                                       true)) == NULL) {
-        // Don't call wait_return for aborted command line.  The NULL
+        // Don't call wait_return() for aborted command line.  The NULL
         // returned for the end of a sourced file or executed function
         // doesn't do this.
         if (KeyTyped && !(flags & DOCMD_REPEAT)) {
@@ -888,7 +888,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       need_wait_return = false;
       msg_didany = false;               // don't wait when restarting edit
     } else if (need_wait_return) {
-      // The msg_start() above clears msg_didout. The wait_return we do
+      // The msg_start() above clears msg_didout. The wait_return() we do
       // here should not overwrite the command that may be shown before
       // doing that.
       msg_didout |= msg_didout_before_start;

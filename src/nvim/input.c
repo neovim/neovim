@@ -46,7 +46,7 @@ int ask_yesno(const char *const str, const bool direct)
 
   int r = ' ';
   while (r != 'y' && r != 'n') {
-    // Same highlighting as for wait_return.
+    // same highlighting as for wait_return()
     smsg_attr(HL_ATTR(HLF_R), "%s (y/n)?", str);
     if (direct) {
       r = get_keystroke(NULL);
