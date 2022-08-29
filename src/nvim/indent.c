@@ -1034,13 +1034,15 @@ int get_lisp_indent(void)
         amount = 2;
       } else {
         char_u *line = that;
-
-        amount = 0;
-
-        while (*that && col) {
-          amount += lbr_chartabsize_adv(line, &that, (colnr_T)amount);
+        chartabsize_T cts;
+        init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
+        while (*cts.cts_ptr != NUL && col > 0) {
+          cts.cts_vcol += lbr_chartabsize_adv(&cts);
           col--;
         }
+        amount = cts.cts_vcol;
+        that = (char_u *)cts.cts_ptr;
+        clear_chartabsize_arg(&cts);
 
         // Some keywords require "body" indenting rules (the
         // non-standard-lisp ones are Scheme special forms):
@@ -1056,10 +1058,15 @@ int get_lisp_indent(void)
           }
           firsttry = amount;
 
-          while (ascii_iswhite(*that)) {
-            amount += lbr_chartabsize(line, that, (colnr_T)amount);
-            that++;
+          init_chartabsize_arg(&cts, curwin, (colnr_T)(that - line),
+                               amount, line, that);
+          while (ascii_iswhite(*cts.cts_ptr)) {
+            cts.cts_vcol += lbr_chartabsize(&cts);
+            cts.cts_ptr++;
           }
+          that = (char_u *)cts.cts_ptr;
+          amount = cts.cts_vcol;
+          clear_chartabsize_arg(&cts);
 
           if (*that && (*that != ';')) {
             // Not a comment line.
@@ -1072,33 +1079,38 @@ int get_lisp_indent(void)
             parencount = 0;
             quotecount = 0;
 
+            init_chartabsize_arg(&cts, curwin,
+                                 (colnr_T)(that - line), amount, line, that);
             if (vi_lisp || ((*that != '"') && (*that != '\'')
                             && (*that != '#') && ((*that < '0') || (*that > '9')))) {
-              while (*that
-                     && (!ascii_iswhite(*that) || quotecount || parencount)
-                     && (!((*that == '(' || *that == '[')
+              while (*cts.cts_ptr
+                     && (!ascii_iswhite(*cts.cts_ptr) || quotecount || parencount)
+                     && (!((*cts.cts_ptr == '(' || *cts.cts_ptr == '[')
                            && !quotecount && !parencount && vi_lisp))) {
-                if (*that == '"') {
+                if (*cts.cts_ptr == '"') {
                   quotecount = !quotecount;
                 }
-                if (((*that == '(') || (*that == '[')) && !quotecount) {
+                if (((*cts.cts_ptr == '(') || (*cts.cts_ptr == '[')) && !quotecount) {
                   parencount++;
                 }
-                if (((*that == ')') || (*that == ']')) && !quotecount) {
+                if (((*cts.cts_ptr == ')') || (*cts.cts_ptr == ']')) && !quotecount) {
                   parencount--;
                 }
-                if ((*that == '\\') && (*(that + 1) != NUL)) {
-                  amount += lbr_chartabsize_adv(line, &that, (colnr_T)amount);
+                if ((*cts.cts_ptr == '\\') && (*(cts.cts_ptr + 1) != NUL)) {
+                  cts.cts_vcol += lbr_chartabsize_adv(&cts);
                 }
 
-                amount += lbr_chartabsize_adv(line, &that, (colnr_T)amount);
+                cts.cts_vcol += lbr_chartabsize_adv(&cts);
               }
             }
 
-            while (ascii_iswhite(*that)) {
-              amount += lbr_chartabsize(line, that, (colnr_T)amount);
-              that++;
+            while (ascii_iswhite(*cts.cts_ptr)) {
+              cts.cts_vcol += lbr_chartabsize(&cts);
+              cts.cts_ptr++;
             }
+            that = (char_u *)cts.cts_ptr;
+            amount = cts.cts_vcol;
+            clear_chartabsize_arg(&cts);
 
             if (!*that || (*that == ';')) {
               amount = firsttry;

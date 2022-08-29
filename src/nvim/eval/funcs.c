@@ -849,11 +849,11 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       // col(".") when the cursor is on the NUL at the end of the line
       // because of "coladd" can be seen as an extra column.
       if (virtual_active() && fp == &curwin->w_cursor) {
-        char_u *p = get_cursor_pos_ptr();
+        char *p = (char *)get_cursor_pos_ptr();
         if (curwin->w_cursor.coladd >=
             (colnr_T)win_chartabsize(curwin, p, curwin->w_virtcol - curwin->w_cursor.coladd)) {
           int l;
-          if (*p != NUL && p[(l = utfc_ptr2len((char *)p))] == NUL) {
+          if (*p != NUL && p[(l = utfc_ptr2len(p))] == NUL) {
             col += l;
           }
         }
@@ -8537,7 +8537,7 @@ static void f_strdisplaywidth(typval_T *argvars, typval_T *rettv, EvalFuncData f
     col = (int)tv_get_number(&argvars[1]);
   }
 
-  rettv->vval.v_number = (varnumber_T)(linetabsize_col(col, (char_u *)s) - col);
+  rettv->vval.v_number = (varnumber_T)(linetabsize_col(col, (char *)s) - col);
 }
 
 /// "strwidth()" function

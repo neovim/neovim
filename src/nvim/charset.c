@@ -930,14 +930,18 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
     posptr -= utf_head_off(line, posptr);
   }
 
+  chartabsize_T cts;
+  init_chartabsize_arg(&cts, wp, pos->lnum, 0, line, line);
+
   // This function is used very often, do some speed optimizations.
   // When 'list', 'linebreak', 'showbreak' and 'breakindent' are not set
-  // use a simple loop.
+  // and there are no virtual text use a simple loop.
   // Also use this when 'list' is set but tabs take their normal size.
   if ((!wp->w_p_list || (wp->w_p_lcs_chars.tab1 != NUL))
       && !wp->w_p_lbr
       && *get_showbreak_value(wp) == NUL
-      && !wp->w_p_bri) {
+      && !wp->w_p_bri
+      && !cts.cts_has_virt_text) {
     for (;;) {
       head = 0;
       int c = *ptr;
@@ -984,25 +988,29 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   } else {
     for (;;) {
       // A tab gets expanded, depending on the current column
+      // Other things also take up space.
       head = 0;
-      incr = win_lbr_chartabsize(wp, line, ptr, vcol, &head);
+      incr = win_lbr_chartabsize(&cts, &head);
 
       // make sure we don't go past the end of the line
-      if (*ptr == NUL) {
+      if (*cts.cts_ptr == NUL) {
         // NUL at end of line only takes one column
         incr = 1;
         break;
       }
 
-      if ((posptr != NULL) && (ptr >= posptr)) {
+      if ((posptr != NULL) && ((char_u *)cts.cts_ptr >= posptr)) {
         // character at pos->col
         break;
       }
 
-      vcol += incr;
-      MB_PTR_ADV(ptr);
+      cts.cts_vcol += incr;
+      MB_PTR_ADV(cts.cts_ptr);
     }
+    vcol = cts.cts_vcol;
+    ptr = (char_u *)cts.cts_ptr;
   }
+  clear_chartabsize_arg(&cts);
 
   if (start != NULL) {
     *start = vcol + head;
@@ -1013,6 +1021,8 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   }
 
   if (cursor != NULL) {
+    // cursor is after inserted text
+    vcol += cts.cts_cur_text_width;
     if ((*ptr == TAB)
         && (State & MODE_NORMAL)
         && !wp->w_p_list

@@ -841,7 +841,7 @@ void ex_retab(exarg_T *eap)
       if (ptr[col] == NUL) {
         break;
       }
-      vcol += win_chartabsize(curwin, (char_u *)ptr + col, (colnr_T)vcol);
+      vcol += win_chartabsize(curwin, ptr + col, (colnr_T)vcol);
       if (vcol >= MAXCOL) {
         emsg(_(e_resulting_text_too_long));
         break;

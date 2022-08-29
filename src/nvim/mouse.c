@@ -631,14 +631,16 @@ colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // try to advance to the specified column
-  char_u *ptr = ml_get_buf(wp->w_buffer, lnum, false);
-  char_u *const line = ptr;
-  colnr_T count = 0;
-  while (count < vcol && *ptr != NUL) {
-    count += win_lbr_chartabsize(wp, line, ptr, count, NULL);
-    MB_PTR_ADV(ptr);
+  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
+  chartabsize_T cts;
+  init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
+  while (cts.cts_vcol < vcol && *cts.cts_ptr != NUL) {
+    cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
+    MB_PTR_ADV(cts.cts_ptr);
   }
-  return (colnr_T)(ptr - line);
+  clear_chartabsize_arg(&cts);
+
+  return (colnr_T)((char_u *)cts.cts_ptr - line);
 }
 
 /// Set UI mouse depending on current mode and 'mouse'.
@@ -667,7 +669,7 @@ static colnr_T scroll_line_len(linenr_T lnum)
   char_u *line = ml_get(lnum);
   if (*line != NUL) {
     for (;;) {
-      int numchar = win_chartabsize(curwin, line, col);
+      int numchar = win_chartabsize(curwin, (char *)line, col);
       MB_PTR_ADV(line);
       if (*line == NUL) {    // don't count the last character
         break;
@@ -790,7 +792,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
     // checked for concealed characters.
     vcol = 0;
     while (vcol < offset && *ptr != NUL) {
-      vcol += win_chartabsize(curwin, ptr, vcol);
+      vcol += win_chartabsize(curwin, (char *)ptr, vcol);
       ptr += utfc_ptr2len((char *)ptr);
     }
 
@@ -801,7 +803,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   vcol = offset;
   ptr_end = ptr_row_offset;
   while (vcol < col && *ptr_end != NUL) {
-    vcol += win_chartabsize(curwin, ptr_end, vcol);
+    vcol += win_chartabsize(curwin, (char *)ptr_end, vcol);
     ptr_end += utfc_ptr2len((char *)ptr_end);
   }
 
@@ -816,7 +818,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
 #define DECR() nudge--; ptr_end -= utfc_ptr2len((char *)ptr_end)
 
   while (ptr < ptr_end && *ptr != NUL) {
-    cwidth = win_chartabsize(curwin, ptr, vcol);
+    cwidth = win_chartabsize(curwin, (char *)ptr, vcol);
     vcol += cwidth;
     if (cwidth > 1 && *ptr == '\t' && nudge > 0) {
       // A tab will "absorb" any previous adjustments.

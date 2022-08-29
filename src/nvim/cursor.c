@@ -137,14 +137,18 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
       }
     }
 
-    char_u *ptr = line;
-    while (col <= wcol && *ptr != NUL) {
+    chartabsize_T cts;
+    init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
+    while (cts.cts_vcol <= wcol && *cts.cts_ptr != NUL) {
       // Count a tab for what it's worth (if list mode not on)
-      csize = win_lbr_chartabsize(curwin, line, ptr, col, &head);
-      MB_PTR_ADV(ptr);
-      col += csize;
+      csize = win_lbr_chartabsize(&cts, &head);
+      MB_PTR_ADV(cts.cts_ptr);
+      cts.cts_vcol += csize;
     }
-    idx = (int)(ptr - line);
+    col = cts.cts_vcol;
+    idx = (int)(cts.cts_ptr - (char *)line);
+    clear_chartabsize_arg(&cts);
+
     // Handle all the special cases.  The virtual_active() check
     // is needed to ensure that a virtual position off the end of
     // a line has the correct indexing.  The one_more comparison
