@@ -4343,6 +4343,11 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, bool trigger_enter_a
   // Use the stored value of p_ch, so that it can be different for each tab page.
   if (p_ch != curtab->tp_ch_used) {
     clear_cmdline = true;
+    if (msg_grid.chars && p_ch < curtab->tp_ch_used) {
+      // TODO(bfredl): a bit expensive, should be enough to invalidate the
+      // region between the old and the new p_ch.
+      grid_invalidate(&msg_grid);
+    }
   }
   p_ch = curtab->tp_ch_used;
 

@@ -19,8 +19,6 @@ describe('cmdline', function()
       [3] = {reverse = true};
       [4] = {bold = true, foreground = Screen.colors.Blue1};
     }
-    -- TODO(bfredl): redraw with tabs is severly broken. fix it
-    feed_command [[ set display-=msgsep ]]
 
     feed_command([[call setline(1, range(30))]])
     screen:expect([[
@@ -61,7 +59,7 @@ describe('cmdline', function()
       {4:~                             }|
                                     |
                                     |
-      :tabnew                       |
+                                    |
     ]]}
 
     feed [[gt]]
