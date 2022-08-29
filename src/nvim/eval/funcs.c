@@ -7619,6 +7619,31 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
   }
 }
 
+/// "setcmdline()" function
+static void f_setcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  if (argvars[0].v_type != VAR_STRING || argvars[0].vval.v_string == NULL) {
+    emsg(_(e_stringreq));
+    return;
+  }
+
+  int pos = -1;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    bool error = false;
+
+    pos = (int)tv_get_number_chk(&argvars[1], &error) - 1;
+    if (error) {
+      return;
+    }
+    if (pos < 0) {
+      emsg(_(e_positive));
+      return;
+    }
+  }
+
+  rettv->vval.v_number = set_cmdline_str(argvars[0].vval.v_string, pos);
+}
+
 /// "setcmdpos()" function
 static void f_setcmdpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

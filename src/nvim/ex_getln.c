@@ -2373,9 +2373,9 @@ end:
   return cmdpreview_type != 0;
 }
 
-static int command_line_changed(CommandLineState *s)
+/// Trigger CmdlineChanged autocommands.
+static void do_autocmd_cmdlinechanged(int firstc)
 {
-  // Trigger CmdlineChanged autocommands.
   if (has_event(EVENT_CMDLINECHANGED)) {
     TryState tstate;
     Error err = ERROR_INIT;
@@ -2383,7 +2383,7 @@ static int command_line_changed(CommandLineState *s)
     dict_T *dict = get_v_event(&save_v_event);
 
     char firstcbuf[2];
-    firstcbuf[0] = (char)(s->firstc > 0 ? s->firstc : '-');
+    firstcbuf[0] = (char)firstc;
     firstcbuf[1] = 0;
 
     // set v:event to a dictionary with information about the commandline
@@ -2403,6 +2403,12 @@ static int command_line_changed(CommandLineState *s)
       redrawcmd();
     }
   }
+}
+
+static int command_line_changed(CommandLineState *s)
+{
+  // Trigger CmdlineChanged autocommands.
+  do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
 
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
@@ -3989,6 +3995,32 @@ int get_cmdline_screen_pos(void)
     return -1;
   }
   return p->cmdspos;
+}
+
+/// Set the command line str to "str".
+/// @return  1 when failed, 0 when OK.
+int set_cmdline_str(const char *str, int pos)
+{
+  CmdlineInfo *p = get_ccline_ptr();
+
+  if (p == NULL) {
+    return 1;
+  }
+
+  int len = (int)STRLEN(str);
+  realloc_cmdbuff(len + 1);
+  p->cmdlen = len;
+  STRCPY(p->cmdbuff, str);
+
+  p->cmdpos = pos < 0 || pos > p->cmdlen ? p->cmdlen : pos;
+  new_cmdpos = p->cmdpos;
+
+  redrawcmd();
+
+  // Trigger CmdlineChanged autocommands.
+  do_autocmd_cmdlinechanged(ccline.cmdfirstc == NUL ? '-' : ccline.cmdfirstc);
+
+  return 0;
 }
 
 /*

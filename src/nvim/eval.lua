@@ -332,6 +332,7 @@ return {
     setcharpos={args=2, base=2},
     setcharsearch={args=1, base=1},
     setcmdpos={args=1, base=1},
+    setcmdline={args={1, 2}, base=1},
     setcursorcharpos={args={1, 3}, base=1},
     setenv={args=2, base=2},
     setfperm={args=2, base=1},
