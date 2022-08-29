@@ -2169,6 +2169,7 @@ local pattern = {
   ['XF86Config.*'] = starsetf(function(path, bufnr)
     return require('vim.filetype.detect').xfree86()
   end),
+  ['.*/.kube/config'] = 'yaml',
   ['%.zcompdump.*'] = starsetf('zsh'),
   -- .zlog* and zlog*
   ['%.?zlog.*'] = starsetf('zsh'),
