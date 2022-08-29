@@ -2373,8 +2373,13 @@ end:
   return cmdpreview_type != 0;
 }
 
+/// Trigger CmdlineChanged autocommands.
 static void do_autocmd_cmdlinechanged(int firstc)
 {
+  if (!has_event(EVENT_CMDLINECHANGED)) {
+    return;
+  }
+
   TryState tstate;
   Error err = ERROR_INIT;
   save_v_event_T save_v_event;
@@ -2405,9 +2410,7 @@ static void do_autocmd_cmdlinechanged(int firstc)
 static int command_line_changed(CommandLineState *s)
 {
   // Trigger CmdlineChanged autocommands.
-  if (has_event(EVENT_CMDLINECHANGED)) {
-    do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
-  }
+  do_autocmd_cmdlinechanged(s->firstc > 0 ? s->firstc : '-');
 
   if (s->firstc == ':'
       && current_sctx.sc_sid == 0    // only if interactive
@@ -4017,9 +4020,7 @@ int set_cmdline_str(const char *str, int pos)
   redrawcmd();
 
   // Trigger CmdlineChanged autocommands.
-  if (has_event(EVENT_CMDLINECHANGED)) {
-    do_autocmd_cmdlinechanged(ccline.cmdfirstc);
-  }
+  do_autocmd_cmdlinechanged(ccline.cmdfirstc == NUL ? '-' : ccline.cmdfirstc);
 
   return 0;
 }
