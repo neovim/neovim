@@ -4042,7 +4042,7 @@ static int set_cmdline_str(const char *str, int pos)
   redrawcmd();
 
   // Trigger CmdlineChanged autocommands.
-  do_autocmd_cmdlinechanged(ccline.cmdfirstc == NUL ? '-' : ccline.cmdfirstc);
+  do_autocmd_cmdlinechanged(get_cmdline_type());
 
   return 0;
 }
