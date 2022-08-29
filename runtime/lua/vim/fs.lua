@@ -184,7 +184,7 @@ end
 
 --- Normalize a path to a standard format. A tilde (~) character at the
 --- beginning of the path is expanded to the user's home directory and any
---- backslash (\\) characters are converted to forward slashes (/) when in windows. Environment
+--- backslash (\\) characters are converted to forward slashes (/) on Windows platforms. Environment
 --- variables are also expanded.
 ---
 --- Example:
