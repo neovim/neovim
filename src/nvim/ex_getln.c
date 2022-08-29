@@ -3933,8 +3933,41 @@ static CmdlineInfo *get_ccline_ptr(void)
   }
 }
 
+/// Get the current command-line type.
+/// Returns ':' or '/' or '?' or '@' or '>' or '-'
+/// Only works when the command line is being edited.
+/// Returns NUL when something is wrong.
+static int get_cmdline_type(void)
+{
+  CmdlineInfo *p = get_ccline_ptr();
+
+  if (p == NULL) {
+    return NUL;
+  }
+  if (p->cmdfirstc == NUL) {
+    return (p->input_fn) ? '@' : '-';
+  }
+  return p->cmdfirstc;
+}
+
+/// Get the current command line in allocated memory.
+/// Only works when the command line is being edited.
+/// Returns NULL when something is wrong.
+static char_u *get_cmdline_str(void)
+{
+  if (cmdline_star > 0) {
+    return NULL;
+  }
+  CmdlineInfo *p = get_ccline_ptr();
+
+  if (p == NULL) {
+    return NULL;
+  }
+  return vim_strnsave(p->cmdbuff, (size_t)p->cmdlen);
+}
+
 /// Get the current command-line completion type.
-char_u *get_cmdline_completion(void)
+static char_u *get_cmdline_completion(void)
 {
   if (cmdline_star > 0) {
     return NULL;
@@ -3952,54 +3985,45 @@ char_u *get_cmdline_completion(void)
   return NULL;
 }
 
-/*
- * Get the current command line in allocated memory.
- * Only works when the command line is being edited.
- * Returns NULL when something is wrong.
- */
-char_u *get_cmdline_str(void)
+/// "getcmdcompltype()" function
+void f_getcmdcompltype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (cmdline_star > 0) {
-    return NULL;
-  }
-  CmdlineInfo *p = get_ccline_ptr();
-
-  if (p == NULL) {
-    return NULL;
-  }
-  return vim_strnsave(p->cmdbuff, (size_t)p->cmdlen);
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char *)get_cmdline_completion();
 }
 
-/*
- * Get the current command line position, counted in bytes.
- * Zero is the first position.
- * Only works when the command line is being edited.
- * Returns -1 when something is wrong.
- */
-int get_cmdline_pos(void)
+/// "getcmdline()" function
+void f_getcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  CmdlineInfo *p = get_ccline_ptr();
-
-  if (p == NULL) {
-    return -1;
-  }
-  return p->cmdpos;
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = (char *)get_cmdline_str();
 }
 
-/// Get the command line cursor screen position.
-int get_cmdline_screen_pos(void)
+/// "getcmdpos()" function
+void f_getcmdpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   CmdlineInfo *p = get_ccline_ptr();
+  rettv->vval.v_number = p != NULL ? p->cmdpos + 1 : 0;
+}
 
-  if (p == NULL) {
-    return -1;
-  }
-  return p->cmdspos;
+/// "getcmdscreenpos()" function
+void f_getcmdscreenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  CmdlineInfo *p = get_ccline_ptr();
+  rettv->vval.v_number = p != NULL ? p->cmdspos + 1 : 0;
+}
+
+/// "getcmdtype()" function
+void f_getcmdtype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = xmallocz(1);
+  rettv->vval.v_string[0] = (char)get_cmdline_type();
 }
 
 /// Set the command line str to "str".
 /// @return  1 when failed, 0 when OK.
-int set_cmdline_str(const char *str, int pos)
+static int set_cmdline_str(const char *str, int pos)
 {
   CmdlineInfo *p = get_ccline_ptr();
 
@@ -4023,12 +4047,10 @@ int set_cmdline_str(const char *str, int pos)
   return 0;
 }
 
-/*
- * Set the command line byte position to "pos".  Zero is the first position.
- * Only works when the command line is being edited.
- * Returns 1 when failed, 0 when OK.
- */
-int set_cmdline_pos(int pos)
+/// Set the command line byte position to "pos".  Zero is the first position.
+/// Only works when the command line is being edited.
+/// @return  1 when failed, 0 when OK.
+static int set_cmdline_pos(int pos)
 {
   CmdlineInfo *p = get_ccline_ptr();
 
@@ -4046,23 +4068,39 @@ int set_cmdline_pos(int pos)
   return 0;
 }
 
-/*
- * Get the current command-line type.
- * Returns ':' or '/' or '?' or '@' or '>' or '-'
- * Only works when the command line is being edited.
- * Returns NUL when something is wrong.
- */
-int get_cmdline_type(void)
+/// "setcmdline()" function
+void f_setcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  CmdlineInfo *p = get_ccline_ptr();
+  if (argvars[0].v_type != VAR_STRING || argvars[0].vval.v_string == NULL) {
+    emsg(_(e_stringreq));
+    return;
+  }
 
-  if (p == NULL) {
-    return NUL;
+  int pos = -1;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    bool error = false;
+
+    pos = (int)tv_get_number_chk(&argvars[1], &error) - 1;
+    if (error) {
+      return;
+    }
+    if (pos < 0) {
+      emsg(_(e_positive));
+      return;
+    }
   }
-  if (p->cmdfirstc == NUL) {
-    return (p->input_fn) ? '@' : '-';
+
+  rettv->vval.v_number = set_cmdline_str(argvars[0].vval.v_string, pos);
+}
+
+/// "setcmdpos()" function
+void f_setcmdpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  const int pos = (int)tv_get_number(&argvars[0]) - 1;
+
+  if (pos >= 0) {
+    rettv->vval.v_number = set_cmdline_pos(pos);
   }
-  return p->cmdfirstc;
 }
 
 /// Return the first character of the current command line.
