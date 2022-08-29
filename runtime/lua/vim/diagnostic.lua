@@ -45,18 +45,24 @@ local bufnr_and_namespace_cacher_mt = {
   end,
 }
 
-local diagnostic_cache = setmetatable({}, {
-  __index = function(t, bufnr)
-    assert(bufnr > 0, 'Invalid buffer number')
-    vim.api.nvim_buf_attach(bufnr, false, {
-      on_detach = function()
-        rawset(t, bufnr, nil) -- clear cache
-      end,
-    })
-    t[bufnr] = {}
-    return t[bufnr]
-  end,
-})
+local diagnostic_cache
+do
+  local group = vim.api.nvim_create_augroup('DiagnosticBufDelete', {})
+  diagnostic_cache = setmetatable({}, {
+    __index = function(t, bufnr)
+      assert(bufnr > 0, 'Invalid buffer number')
+      vim.api.nvim_create_autocmd('BufDelete', {
+        group = group,
+        buffer = bufnr,
+        callback = function()
+          rawset(t, bufnr, nil)
+        end,
+      })
+      t[bufnr] = {}
+      return t[bufnr]
+    end,
+  })
+end
 
 local diagnostic_cache_extmarks = setmetatable({}, bufnr_and_namespace_cacher_mt)
 local diagnostic_attached_buffers = {}

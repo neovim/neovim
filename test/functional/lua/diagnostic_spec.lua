@@ -128,6 +128,28 @@ describe('vim.diagnostic', function()
     eq('Diagnostic #1', result[1].message)
   end)
 
+  it('removes diagnostics from the cache when a buffer is removed', function()
+    eq(2, exec_lua [[
+      vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
+      local other_bufnr = vim.fn.bufadd('test | test')
+      local lines = vim.api.nvim_buf_get_lines(diagnostic_bufnr, 0, -1, true)
+      vim.api.nvim_buf_set_lines(other_bufnr, 0, 1, false, lines)
+      vim.cmd('bunload! ' .. other_bufnr)
+
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Diagnostic #1', 1, 1, 1, 1),
+        make_error('Diagnostic #2', 2, 1, 2, 1),
+      })
+      vim.diagnostic.set(diagnostic_ns, other_bufnr, {
+        make_error('Diagnostic #3', 3, 1, 3, 1),
+      })
+      vim.api.nvim_set_current_buf(other_bufnr)
+      vim.opt_local.buflisted = true
+      vim.cmd('bwipeout!')
+      return #vim.diagnostic.get()
+    ]])
+  end)
+
   it('resolves buffer number 0 to the current buffer', function()
     eq(2, exec_lua [[
       vim.api.nvim_set_current_buf(diagnostic_bufnr)
