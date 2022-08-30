@@ -5,6 +5,7 @@ local command = helpers.command
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local exec = helpers.exec
+local pesc = helpers.pesc
 
 describe('cmdline', function()
   before_each(clear)
@@ -158,7 +159,7 @@ describe('cmdwin', function()
     command('set more')
     command('autocmd WinNew * highlight')
     feed('q:')
-    screen:expect({any = '{3:%-%- More %-%-}^'})
+    screen:expect({any = pesc('{3:-- More --}^')})
     feed('q')
     screen:expect([[
                                     |
