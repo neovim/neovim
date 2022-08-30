@@ -3111,8 +3111,7 @@ char *get_return_cmd(void *rettv)
   char *tofree = NULL;
 
   if (rettv != NULL) {
-    tofree = encode_tv2echo((typval_T *)rettv, NULL);
-    s = encode_tv2echo((typval_T *)rettv, NULL);
+    tofree = s = encode_tv2echo((typval_T *)rettv, NULL);
   }
   if (s == NULL) {
     s = "";

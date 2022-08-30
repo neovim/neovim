@@ -2027,14 +2027,177 @@ func Test_try_catch_verbose()
   endtry
   redir END
   let expected = [
-        \ 'Exception thrown: Vim(echo):E121: Undefined variable: i',
-        \ '',
-        \ 'Exception caught: Vim(echo):E121: Undefined variable: i',
-        \ '',
-        \ 'Exception finished: Vim(echo):E121: Undefined variable: i'
-        \ ]
+        \ 'Exception thrown: Vim(echo):E121: Undefined variable: i', '',
+        \ 'Exception caught: Vim(echo):E121: Undefined variable: i', '',
+        \ 'Exception finished: Vim(echo):E121: Undefined variable: i']
   call assert_equal(expected, split(msg, "\n"))
+
+  " Test for verbose messages displayed when an exception is discarded
+  redir => msg
+  try
+    try
+      throw 'abc'
+    finally
+      throw 'xyz'
+    endtry
+  catch
+  endtry
+  redir END
+  let expected = [
+        \ 'Exception thrown: abc', '',
+        \ 'Exception made pending: abc', '',
+        \ 'Exception thrown: xyz', '',
+        \ 'Exception discarded: abc', '',
+        \ 'Exception caught: xyz', '',
+        \ 'Exception finished: xyz']
+  call assert_equal(expected, split(msg, "\n"))
+
+  " Test for messages displayed when :throw is resumed after :finally
+  redir => msg
+  try
+    try
+      throw 'abc'
+    finally
+    endtry
+  catch
+  endtry
+  redir END
+  let expected = [
+        \ 'Exception thrown: abc', '',
+        \ 'Exception made pending: abc', '',
+        \ 'Exception resumed: abc', '',
+        \ 'Exception caught: abc', '',
+        \ 'Exception finished: abc']
+  call assert_equal(expected, split(msg, "\n"))
+
+  " Test for messages displayed when :break is resumed after :finally
+  redir => msg
+  for i in range(1)
+    try
+      break
+    finally
+    endtry
+  endfor
+  redir END
+  let expected = [':break made pending', '', ':break resumed']
+  call assert_equal(expected, split(msg, "\n"))
+
+  " Test for messages displayed when :continue is resumed after :finally
+  redir => msg
+  for i in range(1)
+    try
+      continue
+    finally
+    endtry
+  endfor
+  redir END
+  let expected = [':continue made pending', '', ':continue resumed']
+  call assert_equal(expected, split(msg, "\n"))
+
+  " Test for messages displayed when :return is resumed after :finally
+  func Xtest()
+    try
+      return 'vim'
+    finally
+    endtry
+  endfunc
+  redir => msg
+  call Xtest()
+  redir END
+  let expected = [
+        \ 'calling Xtest()', '',
+        \ ':return vim made pending', '',
+        \ ':return vim resumed', '',
+        \ 'Xtest returning ''vim''', '',
+        \ 'continuing in Test_try_catch_verbose']
+  call assert_equal(expected, split(msg, "\n"))
+  delfunc Xtest
+
+  " Test for messages displayed when :finish is resumed after :finally
+  call writefile(['try', 'finish', 'finally', 'endtry'], 'Xscript')
+  redir => msg
+  source Xscript
+  redir END
+  let expected = [
+        \ ':finish made pending', '',
+        \ ':finish resumed', '',
+        \ 'finished sourcing Xscript',
+        \ 'continuing in Test_try_catch_verbose']
+  call assert_equal(expected, split(msg, "\n")[1:])
+  call delete('Xscript')
+
+  " Test for messages displayed when a pending :continue is discarded by an
+  " exception in a finally handler
+  redir => msg
+  try
+    for i in range(1)
+      try
+        continue
+      finally
+        throw 'abc'
+      endtry
+    endfor
+  catch
+  endtry
+  redir END
+  let expected = [
+        \ ':continue made pending', '',
+        \ 'Exception thrown: abc', '',
+        \ ':continue discarded', '',
+        \ 'Exception caught: abc', '',
+        \ 'Exception finished: abc']
+  call assert_equal(expected, split(msg, "\n"))
+
   set verbose&
+endfunc
+
+" Test for throwing an exception from a BufEnter autocmd                   {{{1
+func Test_BufEnter_exception()
+  augroup bufenter_exception
+    au!
+    autocmd BufEnter Xfile1 throw 'abc'
+  augroup END
+
+  let caught_abc = 0
+  try
+    sp Xfile1
+  catch /^abc/
+    let caught_abc = 1
+  endtry
+  call assert_equal(1, caught_abc)
+  call assert_equal(1, winnr('$'))
+
+  augroup bufenter_exception
+    au!
+  augroup END
+  augroup! bufenter_exception
+  %bwipe!
+
+  " Test for recursively throwing exceptions in autocmds
+  augroup bufenter_exception
+    au!
+    autocmd BufEnter Xfile1 throw 'bufenter'
+    autocmd BufLeave Xfile1 throw 'bufleave'
+  augroup END
+
+  let ex_count = 0
+  try
+    try
+      sp Xfile1
+    catch /^bufenter/
+      let ex_count += 1
+    endtry
+  catch /^bufleave/
+      let ex_count += 10
+  endtry
+  call assert_equal(10, ex_count)
+  call assert_equal(2, winnr('$'))
+
+  augroup bufenter_exception
+    au!
+  augroup END
+  augroup! bufenter_exception
+  %bwipe!
 endfunc
 
 " Test for using throw in a called function with following error    {{{1
