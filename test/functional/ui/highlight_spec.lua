@@ -2333,6 +2333,51 @@ describe("'winhighlight' highlight", function()
 
     helpers.assert_alive()
   end)
+
+  it('can redraw statusline on cursor movement', function()
+    screen:try_resize(40, 8)
+    exec [[
+      set statusline=%f%=%#Background1#%l,%c%V\ %P
+      split
+    ]]
+    insert [[
+      some text
+      more text]]
+    screen:expect{grid=[[
+      some text                               |
+      more tex^t                               |
+      {0:~                                       }|
+      {3:[No Name]                        }{1:2,9 All}|
+      some text                               |
+      more text                               |
+      {4:[No Name]                        }{1:1,1 All}|
+                                              |
+    ]]}
+
+    command 'set winhl=Background1:Background2'
+    screen:expect{grid=[[
+      some text                               |
+      more tex^t                               |
+      {0:~                                       }|
+      {3:[No Name]                        }{5:2,9 All}|
+      some text                               |
+      more text                               |
+      {4:[No Name]                        }{1:1,1 All}|
+                                              |
+    ]]}
+
+    feed 'k'
+    screen:expect{grid=[[
+      some tex^t                               |
+      more text                               |
+      {0:~                                       }|
+      {3:[No Name]                        }{5:1,9 All}|
+      some text                               |
+      more text                               |
+      {4:[No Name]                        }{1:1,1 All}|
+                                              |
+    ]]}
+  end)
 end)
 
 describe('highlight namespaces', function()
