@@ -137,7 +137,7 @@ Object nvim_eval(String expr, Error *err)
     if (!recursive) {
       force_abort = false;
       suppress_errthrow = false;
-      current_exception = NULL;
+      did_throw = false;
       // `did_emsg` is set by emsg(), which cancels execution.
       did_emsg = false;
     }
@@ -196,7 +196,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     if (!recursive) {
       force_abort = false;
       suppress_errthrow = false;
-      current_exception = NULL;
+      did_throw = false;
       // `did_emsg` is set by emsg(), which cancels execution.
       did_emsg = false;
     }

@@ -134,6 +134,7 @@ struct dbg_stuff {
   char *vv_throwpoint;
   int did_emsg;
   int got_int;
+  bool did_throw;
   int need_rethrow;
   int check_cstack;
   except_T *current_exception;
@@ -165,6 +166,7 @@ static void save_dbg_stuff(struct dbg_stuff *dsp)
   // Necessary for debugging an inactive ":catch", ":finally", ":endtry".
   dsp->did_emsg       = did_emsg;             did_emsg     = false;
   dsp->got_int        = got_int;              got_int      = false;
+  dsp->did_throw      = did_throw;            did_throw    = false;
   dsp->need_rethrow   = need_rethrow;         need_rethrow = false;
   dsp->check_cstack   = check_cstack;         check_cstack = false;
   dsp->current_exception = current_exception; current_exception = NULL;
@@ -180,6 +182,7 @@ static void restore_dbg_stuff(struct dbg_stuff *dsp)
   (void)v_throwpoint(dsp->vv_throwpoint);
   did_emsg = dsp->did_emsg;
   got_int = dsp->got_int;
+  did_throw = dsp->did_throw;
   need_rethrow = dsp->need_rethrow;
   check_cstack = dsp->check_cstack;
   current_exception = dsp->current_exception;
@@ -397,7 +400,8 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
   initial_trylevel = trylevel;
 
-  current_exception = NULL;
+  // "did_throw" will be set to true when an exception is being thrown.
+  did_throw = false;
   // "did_emsg" will be set to true when emsg() is used, in which case we
   // cancel the whole command line, and any if/endif or loop.
   // If force_abort is set, we cancel everything.
@@ -625,7 +629,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         // not to use a cs_line[] from an entry that isn't a ":while"
         // or ":for": It would make "current_line" invalid and can
         // cause a crash.
-        if (!did_emsg && !got_int && !current_exception
+        if (!did_emsg && !got_int && !did_throw
             && cstack.cs_idx >= 0
             && (cstack.cs_flags[cstack.cs_idx]
                 & (CSF_WHILE | CSF_FOR))
@@ -666,7 +670,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       current_line = 0;
     }
 
-    // A ":finally" makes did_emsg, got_int and current_exception pending for
+    // A ":finally" makes did_emsg, got_int and did_throw pending for
     // being restored at the ":endtry".  Reset them here and set the
     // ACTIVE and FINALLY flags, so that the finally clause gets executed.
     // This includes the case where a missing ":endif", ":endwhile" or
@@ -675,9 +679,8 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       cstack.cs_lflags &= ~CSL_HAD_FINA;
       report_make_pending((cstack.cs_pending[cstack.cs_idx]
                            & (CSTP_ERROR | CSTP_INTERRUPT | CSTP_THROW)),
-                          current_exception);
-      did_emsg = got_int = false;
-      current_exception = NULL;
+                          did_throw ? current_exception : NULL);
+      did_emsg = got_int = did_throw = false;
       cstack.cs_flags[cstack.cs_idx] |= CSF_ACTIVE | CSF_FINALLY;
     }
 
@@ -690,7 +693,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     // exception, cancel everything.  If it is left normally, reset
     // force_abort to get the non-EH compatible abortion behavior for
     // the rest of the script.
-    if (trylevel == 0 && !did_emsg && !got_int && !current_exception) {
+    if (trylevel == 0 && !did_emsg && !got_int && !did_throw) {
       force_abort = false;
     }
 
@@ -704,7 +707,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     // - didn't get an error message or lines are not typed
     // - there is a command after '|', inside a :if, :while, :for or :try, or
     //   looping for ":source" command or function call.
-  } while (!((got_int || (did_emsg && force_abort) || current_exception)
+  } while (!((got_int || (did_emsg && force_abort) || did_throw)
              && cstack.cs_trylevel == 0)
            && !(did_emsg
                 // Keep going when inside try/catch, so that the error can be
@@ -724,7 +727,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   if (cstack.cs_idx >= 0) {
     // If a sourced file or executed function ran to its end, report the
     // unclosed conditional.
-    if (!got_int && !current_exception
+    if (!got_int && !did_throw
         && ((getline_equal(fgetline, cookie, getsourceline)
              && !source_finished(fgetline, cookie))
             || (getline_equal(fgetline, cookie, get_func_line)
@@ -767,7 +770,8 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     // conditional, discard the uncaught exception, disable the conversion
     // of interrupts or errors to exceptions, and ensure that no more
     // commands are executed.
-    if (current_exception) {
+    if (did_throw) {
+      assert(current_exception != NULL);
       char *p = NULL;
       msglist_T *messages = NULL;
       msglist_T *next;
@@ -829,14 +833,14 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   // cstack belongs to the same function or, respectively, script file, it
   // will have to be checked for finally clauses to be executed due to the
   // ":return" or ":finish".  This is done in do_one_cmd().
-  if (current_exception) {
+  if (did_throw) {
     need_rethrow = true;
   }
   if ((getline_equal(fgetline, cookie, getsourceline)
        && ex_nesting_level > source_level(real_cookie))
       || (getline_equal(fgetline, cookie, get_func_line)
           && ex_nesting_level > func_level(real_cookie) + 1)) {
-    if (!current_exception) {
+    if (!did_throw) {
       check_cstack = true;
     }
   } else {
@@ -1675,7 +1679,7 @@ static void profile_cmd(const exarg_T *eap, cstack_T *cstack, LineGetter fgetlin
       && (!eap->skip || cstack->cs_idx == 0
           || (cstack->cs_idx > 0
               && (cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))) {
-    int skip = did_emsg || got_int || current_exception;
+    bool skip = did_emsg || got_int || did_throw;
 
     if (eap->cmdidx == CMD_catch) {
       skip = !skip && !(cstack->cs_idx >= 0
@@ -1872,7 +1876,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
 
   ea.skip = (did_emsg
              || got_int
-             || current_exception
+             || did_throw
              || (cstack->cs_idx >= 0
                  && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)));
 

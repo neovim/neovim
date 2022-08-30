@@ -6,6 +6,12 @@ local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local matches = helpers.matches
 
+clear()
+if funcs.executable('man') == 0 then
+  pending('missing "man" command', function() end)
+  return
+end
+
 describe(':Man', function()
   before_each(function()
     clear()

@@ -5985,7 +5985,7 @@ void timer_due_cb(TimeWatcher *tw, void *data)
   // Handle error message
   if (called_emsg > called_emsg_before && did_emsg) {
     timer->emsg_count++;
-    if (current_exception != NULL) {
+    if (did_throw) {
       discard_current_exception();
     }
   }

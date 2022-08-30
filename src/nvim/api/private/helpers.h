@@ -134,6 +134,7 @@ typedef struct {
   const msglist_T *const *msg_list;
   int trylevel;
   int got_int;
+  bool did_throw;
   int need_rethrow;
   int did_emsg;
 } TryState;
