@@ -7396,19 +7396,6 @@ int win_getid(typval_T *argvars)
   return 0;
 }
 
-int win_gotoid(typval_T *argvars)
-{
-  int id = (int)tv_get_number(&argvars[0]);
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp->handle == id) {
-      goto_tabpage_win(tp, wp);
-      return 1;
-    }
-  }
-  return 0;
-}
-
 void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
 {
   *tabnr = 0;

@@ -9659,7 +9659,19 @@ static void f_win_gettype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "win_gotoid()" function
 static void f_win_gotoid(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  rettv->vval.v_number = win_gotoid(argvars);
+  int id = (int)tv_get_number(&argvars[0]);
+
+  if (cmdwin_type != 0) {
+    emsg(_(e_cmdwin));
+    return;
+  }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->handle == id) {
+      goto_tabpage_win(tp, wp);
+      rettv->vval.v_number = 1;
+      return;
+    }
+  }
 }
 
 /// "win_id2tabwin()" function
