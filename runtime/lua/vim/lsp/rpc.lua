@@ -654,11 +654,8 @@ end
 ---@returns Methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
----
----@returns Members:
---- - {pid} (number) The LSP server's PID.
---- - {handle} A handle for low-level interaction with the LSP server process
----   |vim.loop|.
+--- - `is_closing()` returns a boolean indicating if the RPC is closing.
+--- - `terminate()` terminates the RPC client.
 local function start(cmd, cmd_args, dispatchers, extra_spawn_params)
   local _ = log.info()
     and log.info('Starting RPC client', { cmd = cmd, args = cmd_args, extra = extra_spawn_params })
