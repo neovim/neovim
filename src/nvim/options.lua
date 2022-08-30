@@ -1455,6 +1455,13 @@ return {
       defaults={if_true=true}
     },
     {
+      full_name='luaintchkfreq', abbreviation='licf',
+      short_desc=N_("how often lua should check for interrupts"),
+      type='number', scope={'global'},
+      varname='p_licf',
+      defaults={if_true=100}
+    },
+    {
       full_name='magic',
       short_desc=N_("special characters in search patterns"),
       type='bool', scope={'global'},
