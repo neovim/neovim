@@ -5,10 +5,8 @@
 #include "nvim/os/time.h"
 #include "nvim/pos.h"
 
-/*
- * marks: positions in a file
- * (a normal mark is a lnum/col pair, the same as a file position)
- */
+// marks: positions in a file
+// (a normal mark is a lnum/col pair, the same as a file position)
 
 /// Flags for outcomes when moving to a mark.
 typedef enum {

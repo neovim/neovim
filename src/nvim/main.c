@@ -1390,10 +1390,9 @@ scripterror:
   TIME_MSG("parsing arguments");
 }
 
-/*
- * Many variables are in "params" so that we can pass them to invoked
- * functions without a lot of arguments.  "argc" and "argv" are also
- * copied, so that they can be changed. */
+// Many variables are in "params" so that we can pass them to invoked
+// functions without a lot of arguments.  "argc" and "argv" are also
+// copied, so that they can be changed.
 static void init_params(mparm_T *paramp, int argc, char **argv)
 {
   CLEAR_POINTER(paramp);
@@ -1465,9 +1464,7 @@ static char_u *get_fname(mparm_T *parmp, char_u *cwd)
   return (char_u *)alist_name(&GARGLIST[0]);
 }
 
-/*
- * Decide about window layout for diff mode after reading vimrc.
- */
+// Decide about window layout for diff mode after reading vimrc.
 static void set_window_layout(mparm_T *paramp)
 {
   if (paramp->diff_mode && paramp->window_layout == 0) {
@@ -1479,10 +1476,8 @@ static void set_window_layout(mparm_T *paramp)
   }
 }
 
-/*
- * "-q errorfile": Load the error file now.
- * If the error file can't be read, exit before doing anything else.
- */
+// "-q errorfile": Load the error file now.
+// If the error file can't be read, exit before doing anything else.
 static void handle_quickfix(mparm_T *paramp)
 {
   if (paramp->edit_type == EDIT_QF) {
@@ -1498,10 +1493,8 @@ static void handle_quickfix(mparm_T *paramp)
   }
 }
 
-/*
- * Need to jump to the tag before executing the '-c command'.
- * Makes "vim -c '/return' -t main" work.
- */
+// Need to jump to the tag before executing the '-c command'.
+// Makes "vim -c '/return' -t main" work.
 static void handle_tag(char_u *tagname)
 {
   if (tagname != NULL) {
@@ -1540,18 +1533,14 @@ static void read_stdin(void)
   check_swap_exists_action();
 }
 
-/*
- * Create the requested number of windows and edit buffers in them.
- * Also does recovery if "recoverymode" set.
- */
+// Create the requested number of windows and edit buffers in them.
+// Also does recovery if "recoverymode" set.
 static void create_windows(mparm_T *parmp)
 {
   int dorewind;
   int done = 0;
 
-  /*
-   * Create the number of windows that was requested.
-   */
+  // Create the number of windows that was requested.
   if (parmp->window_count == -1) {      // was not set
     parmp->window_count = 1;
   }
@@ -1670,9 +1659,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
   win_T *win;
   char *p_shm_save = NULL;
 
-  /*
-   * Don't execute Win/Buf Enter/Leave autocommands here
-   */
+  // Don't execute Win/Buf Enter/Leave autocommands here
   autocmd_no_enter++;
   autocmd_no_leave++;
 
@@ -1781,9 +1768,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
   }
 }
 
-/*
- * Execute the commands from --cmd arguments "cmds[cnt]".
- */
+// Execute the commands from --cmd arguments "cmds[cnt]".
 static void exe_pre_commands(mparm_T *parmp)
 {
   char **cmds = parmp->pre_commands;
@@ -1803,18 +1788,14 @@ static void exe_pre_commands(mparm_T *parmp)
   }
 }
 
-/*
- * Execute "+", "-c" and "-S" arguments.
- */
+// Execute "+", "-c" and "-S" arguments.
 static void exe_commands(mparm_T *parmp)
 {
   int i;
 
-  /*
-   * We start commands on line 0, make "vim +/pat file" match a
-   * pattern on line 1.  But don't move the cursor when an autocommand
-   * with g`" was used.
-   */
+  // We start commands on line 0, make "vim +/pat file" match a
+  // pattern on line 1.  But don't move the cursor when an autocommand
+  // with g`" was used.
   msg_scroll = true;
   if (parmp->tagname == NULL && curwin->w_cursor.lnum <= 1) {
     curwin->w_cursor.lnum = 0;
@@ -2137,11 +2118,9 @@ static void usage(void)
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
 }
 
-/*
- * Check the result of the ATTENTION dialog:
- * When "Quit" selected, exit Vim.
- * When "Recover" selected, recover the file.
- */
+// Check the result of the ATTENTION dialog:
+// When "Quit" selected, exit Vim.
+// When "Recover" selected, recover the file.
 static void check_swap_exists_action(void)
 {
   if (swap_exists_action == SEA_QUIT) {

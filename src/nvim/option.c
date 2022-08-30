@@ -106,14 +106,12 @@ static char e_number_required_after_equal[]
 static char e_preview_window_already_exists[]
   = N_("E590: A preview window already exists");
 
-/*
- * The options that are local to a window or buffer have "indir" set to one of
- * these values.  Special values:
- * PV_NONE: global option.
- * PV_WIN is added: window-local option
- * PV_BUF is added: buffer-local option
- * PV_BOTH is added: global option which also has a local value.
- */
+// The options that are local to a window or buffer have "indir" set to one of
+// these values.  Special values:
+// PV_NONE: global option.
+// PV_WIN is added: window-local option
+// PV_BUF is added: buffer-local option
+// PV_BOTH is added: global option which also has a local value.
 #define PV_BOTH 0x1000
 #define PV_WIN  0x2000
 #define PV_BUF  0x4000
@@ -128,10 +126,8 @@ typedef enum {
   PV_MAXVAL = 0xffff,  // to avoid warnings for value out of range
 } idopt_T;
 
-/*
- * Options local to a window have a value local to a buffer and global to all
- * buffers.  Indicate this by setting "var" to VAR_WIN.
- */
+// Options local to a window have a value local to a buffer and global to all
+// buffers.  Indicate this by setting "var" to VAR_WIN.
 #define VAR_WIN ((char_u *)-1)
 
 static char *p_term = NULL;
@@ -164,14 +160,12 @@ typedef struct vimoption {
   LastSet last_set;             // script in which the option was last set
 } vimoption_T;
 
-/*
- * options[] is initialized here.
- * The order of the options MUST be alphabetic for ":set all" and findoption().
- * All option names MUST start with a lowercase letter (for findoption()).
- * Exception: "t_" options are at the end.
- * The options with a NULL variable are 'hidden': a set command for them is
- * ignored and they are not printed.
- */
+// options[] is initialized here.
+// The order of the options MUST be alphabetic for ":set all" and findoption().
+// All option names MUST start with a lowercase letter (for findoption()).
+// Exception: "t_" options are at the end.
+// The options with a NULL variable are 'hidden': a set command for them is
+// ignored and they are not printed.
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "options.generated.h"
@@ -197,10 +191,8 @@ void set_init_1(bool clean_arg)
 
   langmap_init();
 
-  /*
-   * Find default value for 'shell' option.
-   * Don't use it if it is empty.
-   */
+  // Find default value for 'shell' option.
+  // Don't use it if it is empty.
   {
     const char *shell = os_getenv("SHELL");
     if (shell != NULL) {
@@ -215,10 +207,8 @@ void set_init_1(bool clean_arg)
     }
   }
 
-  /*
-   * Set the default for 'backupskip' to include environment variables for
-   * temp files.
-   */
+  // Set the default for 'backupskip' to include environment variables for
+  // temp files.
   {
 #ifdef UNIX
     static char *(names[4]) = { "", "TMPDIR", "TEMP", "TMP" };
@@ -354,10 +344,8 @@ void set_init_1(bool clean_arg)
     rtp = NULL;  // ownership taken
   }
 
-  /*
-   * Set all the options (except the terminal options) to their default
-   * value.  Also set the global value for local options.
-   */
+  // Set all the options (except the terminal options) to their default
+  // value.  Also set the global value for local options.
   set_options_default(0);
 
   curbuf->b_p_initialized = true;
@@ -380,15 +368,13 @@ void set_init_1(bool clean_arg)
   // didset_options() because it only depends on 'encoding'.
   init_spell_chartab();
 
-  /*
-   * Expand environment variables and things like "~" for the defaults.
-   * If option_expand() returns non-NULL the variable is expanded.  This can
-   * only happen for non-indirect options.
-   * Also set the default to the expanded value, so ":set" does not list
-   * them.
-   * Don't set the P_ALLOCED flag, because we don't want to free the
-   * default.
-   */
+  // Expand environment variables and things like "~" for the defaults.
+  // If option_expand() returns non-NULL the variable is expanded.  This can
+  // only happen for non-indirect options.
+  // Also set the default to the expanded value, so ":set" does not list
+  // them.
+  // Don't set the P_ALLOCED flag, because we don't want to free the
+  // default.
   for (opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
     if (options[opt_idx].flags & P_NO_DEF_EXP) {
       continue;
@@ -635,10 +621,8 @@ void set_init_2(bool headless)
   }
   comp_col();
 
-  /*
-   * 'window' is only for backwards compatibility with Vi.
-   * Default is Rows - 1.
-   */
+  // 'window' is only for backwards compatibility with Vi.
+  // Default is Rows - 1.
   if (!option_was_set("window")) {
     p_window = Rows - 1;
   }
@@ -758,11 +742,9 @@ void set_title_defaults(void)
 {
   int idx1;
 
-  /*
-   * If GUI is (going to be) used, we can always set the window title and
-   * icon name.  Saves a bit of time, because the X11 display server does
-   * not need to be contacted.
-   */
+  // If GUI is (going to be) used, we can always set the window title and
+  // icon name.  Saves a bit of time, because the X11 display server does
+  // not need to be contacted.
   idx1 = findoption("title");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
     options[idx1].def_val = (char_u *)(intptr_t)0;
@@ -837,10 +819,8 @@ int do_set(char *arg, int opt_flags)
 
     if (STRNCMP(arg, "all", 3) == 0 && !isalpha(arg[3])
         && !(opt_flags & OPT_MODELINE)) {
-      /*
-       * ":set all"  show all options.
-       * ":set all&" set all options to their default value.
-       */
+      // ":set all"  show all options.
+      // ":set all&" set all options to their default value.
       arg += 3;
       if (*arg == '&') {
         arg++;
@@ -1016,9 +996,7 @@ int do_set(char *arg, int opt_flags)
           || (prefix == 1
               && vim_strchr("=:&<", nextchar) == NULL
               && !(flags & P_BOOL))) {
-        /*
-         * print value
-         */
+        // print value
         if (did_show) {
           msg_putchar('\n');                // cursor below last one
         } else {
@@ -1057,11 +1035,9 @@ int do_set(char *arg, int opt_flags)
             goto skip;
           }
 
-          /*
-           * ":set opt!": invert
-           * ":set opt&": reset to default value
-           * ":set opt<": reset to global value
-           */
+          // ":set opt!": invert
+          // ":set opt&": reset to default value
+          // ":set opt<": reset to global value
           if (nextchar == '!') {
             value = *(int *)(varp) ^ 1;
           } else if (nextchar == '&') {
@@ -1076,10 +1052,8 @@ int do_set(char *arg, int opt_flags)
                                              OPT_GLOBAL);
             }
           } else {
-            /*
-             * ":set invopt": invert
-             * ":set opt" or ":set noopt": set or reset
-             */
+            // ":set invopt": invert
+            // ":set opt" or ":set noopt": set or reset
             if (nextchar != NUL && !ascii_iswhite(afterchar)) {
               errmsg = e_trailing;
               goto skip;
@@ -1289,11 +1263,10 @@ int do_set(char *arg, int opt_flags)
                 arg++;
               }
 
-              /*
-               * Copy the new string into allocated memory.
-               * Can't use set_string_option_direct(), because
-               * we need to remove the backslashes.
-               */
+              // Copy the new string into allocated memory.
+              // Can't use set_string_option_direct(), because
+              // we need to remove the backslashes.
+
               // get a bit too much
               newlen = (unsigned)STRLEN(arg) + 1;
               if (adding || prepending || removing) {
@@ -1302,14 +1275,12 @@ int do_set(char *arg, int opt_flags)
               newval = xmalloc(newlen);
               s = newval;
 
-              /*
-               * Copy the string, skip over escaped chars.
-               * For WIN32 backslashes before normal
-               * file name characters are not removed, and keep
-               * backslash at start, for "\\machine\path", but
-               * do remove it for "\\\\machine\\path".
-               * The reverse is found in ExpandOldSetting().
-               */
+              // Copy the string, skip over escaped chars.
+              // For WIN32 backslashes before normal
+              // file name characters are not removed, and keep
+              // backslash at start, for "\\machine\path", but
+              // do remove it for "\\\\machine\\path".
+              // The reverse is found in ExpandOldSetting().
               while (*arg && !ascii_iswhite(*arg)) {
                 if (*arg == '\\' && arg[1] != NUL
 #ifdef BACKSLASH_IN_FILENAME
@@ -1335,11 +1306,9 @@ int do_set(char *arg, int opt_flags)
               }
               *s = NUL;
 
-              /*
-               * Expand environment variables and ~.
-               * Don't do it when adding without inserting a
-               * comma.
-               */
+              // Expand environment variables and ~.
+              // Don't do it when adding without inserting a
+              // comma.
               if (!(adding || prepending || removing)
                   || (flags & P_COMMA)) {
                 s = option_expand(opt_idx, newval);
@@ -1521,12 +1490,10 @@ int do_set(char *arg, int opt_flags)
       }
 
 skip:
-      /*
-       * Advance to next argument.
-       * - skip until a blank found, taking care of backslashes
-       * - skip blanks
-       * - skip one "=val" argument (for hidden options ":set gfn =xx")
-       */
+      // Advance to next argument.
+      // - skip until a blank found, taking care of backslashes
+      // - skip blanks
+      // - skip one "=val" argument (for hidden options ":set gfn =xx")
       for (i = 0; i < 2; i++) {
         while (*arg != NUL && !ascii_iswhite(*arg)) {
           if (*arg++ == '\\' && *arg != NUL) {
@@ -1629,10 +1596,8 @@ void did_set_title(void)
 /// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
 void set_options_bin(int oldval, int newval, int opt_flags)
 {
-  /*
-   * The option values that are changed when 'bin' changes are
-   * copied when 'bin is set and restored when 'bin' is reset.
-   */
+  // The option values that are changed when 'bin' changes are
+  // copied when 'bin is set and restored when 'bin' is reset.
   if (newval) {
     if (!oldval) {              // switched on
       if (!(opt_flags & OPT_GLOBAL)) {
@@ -1735,12 +1700,10 @@ static char_u *option_expand(int opt_idx, char_u *val)
     return NULL;
   }
 
-  /*
-   * Expanding this with NameBuff, expand_env() must not be passed IObuff.
-   * Escape spaces when expanding 'tags', they are used to separate file
-   * names.
-   * For 'spellsuggest' expand after "file:".
-   */
+  // Expanding this with NameBuff, expand_env() must not be passed IObuff.
+  // Escape spaces when expanding 'tags', they are used to separate file
+  // names.
+  // For 'spellsuggest' expand after "file:".
   expand_env_esc(val, (char_u *)NameBuff, MAXPATHL,
                  (char_u **)options[opt_idx].var == &p_tags, false,
                  (char_u **)options[opt_idx].var == (char_u **)&p_sps ? (char_u *)"file:" :
@@ -2153,9 +2116,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
 
   if ((int *)varp == &curwin->w_p_arab) {
     if (curwin->w_p_arab) {
-      /*
-       * 'arabic' is set, handle various sub-settings.
-       */
+      // 'arabic' is set, handle various sub-settings.
       if (!p_tbidi) {
         // set rightleft mode
         if (!curwin->w_p_rl) {
@@ -2186,9 +2147,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
       // Force-set the necessary keymap for arabic.
       errmsg = set_option_value("keymap", 0L, "arabic", OPT_LOCAL);
     } else {
-      /*
-       * 'arabic' is reset, handle various sub-settings.
-       */
+      // 'arabic' is reset, handle various sub-settings.
       if (!p_tbidi) {
         // reset rightleft mode
         if (curwin->w_p_rl) {
@@ -2209,9 +2168,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp, const int va
     }
   }
 
-  /*
-   * End of handling side effects for bool options.
-   */
+  // End of handling side effects for bool options.
 
   // after handling side effects, call autocommand
 
@@ -3328,9 +3285,7 @@ static void showoptions(int all, int opt_flags)
       }
     }
 
-    /*
-     * display the items
-     */
+    // display the items
     if (run == 1) {
       assert(Columns <= INT_MAX - GAP
              && Columns + GAP >= INT_MIN + 3
@@ -3467,15 +3422,13 @@ int makeset(FILE *fd, int opt_flags, int local_only)
   int round;
   int pri;
 
-  /*
-   * Some options are never written:
-   * - Options that don't have a default (terminal name, columns, lines).
-   * - Terminal options.
-   * - Hidden options.
-   *
-   * Do the loop over "options[]" twice: once for options with the
-   * P_PRI_MKRC flag and once without.
-   */
+  // Some options are never written:
+  // - Options that don't have a default (terminal name, columns, lines).
+  // - Terminal options.
+  // - Hidden options.
+  //
+  // Do the loop over "options[]" twice: once for options with the
+  // P_PRI_MKRC flag and once without.
   for (pri = 1; pri >= 0; pri--) {
     for (p = &options[0]; p->fullname; p++) {
       if (!(p->flags & P_NO_MKRC)
@@ -4400,10 +4353,8 @@ void buf_copy_options(buf_T *buf, int flags)
   int dont_do_help;
   int did_isk = false;
 
-  /*
-   * Skip this when the option defaults have not been set yet.  Happens when
-   * main() allocates the first buffer.
-   */
+  // Skip this when the option defaults have not been set yet.  Happens when
+  // main() allocates the first buffer.
   if (p_cpo != NULL) {
     //
     // Always copy when entering and 'cpo' contains 'S'.
@@ -4617,12 +4568,10 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_lw = empty_option;
       buf->b_p_menc = empty_option;
 
-      /*
-       * Don't copy the options set by ex_help(), use the saved values,
-       * when going from a help buffer to a non-help buffer.
-       * Don't touch these at all when BCO_NOHELP is used and going from
-       * or to a help buffer.
-       */
+      // Don't copy the options set by ex_help(), use the saved values,
+      // when going from a help buffer to a non-help buffer.
+      // Don't touch these at all when BCO_NOHELP is used and going from
+      // or to a help buffer.
       if (dont_do_help) {
         buf->b_p_isk = (char *)save_p_isk;
         if (p_vts && p_vts != empty_option && !buf->b_p_vts_array) {
@@ -4652,10 +4601,8 @@ void buf_copy_options(buf_T *buf, int flags)
       }
     }
 
-    /*
-     * When the options should be copied (ignoring BCO_ALWAYS), set the
-     * flag that indicates that the options have been initialized.
-     */
+    // When the options should be copied (ignoring BCO_ALWAYS), set the
+    // flag that indicates that the options have been initialized.
     if (should_copy) {
       buf->b_p_initialized = true;
     }
@@ -4947,9 +4894,7 @@ void ExpandOldSetting(int *num_file, char ***file)
   *num_file = 0;
   *file = xmalloc(sizeof(char_u *));
 
-  /*
-   * For a terminal key code expand_option_idx is < 0.
-   */
+  // For a terminal key code expand_option_idx is < 0.
   if (expand_option_idx < 0) {
     expand_option_idx = findoption((const char *)expand_option_name);
   }
@@ -5055,10 +5000,8 @@ static void paste_option_changed(void)
   static int save_hkmap = 0;
 
   if (p_paste) {
-    /*
-     * Paste switched from off to on.
-     * Save the current values, so they can be restored later.
-     */
+    // Paste switched from off to on.
+    // Save the current values, so they can be restored later.
     if (!old_p_paste) {
       // save options for each buffer
       FOR_ALL_BUFFERS(buf) {

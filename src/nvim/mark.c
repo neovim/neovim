@@ -1,9 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * mark.c: functions for setting marks and jumping to them
- */
+// mark.c: functions for setting marks and jumping to them
 
 #include <assert.h>
 #include <inttypes.h>
@@ -39,17 +37,13 @@
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
-/*
- * This file contains routines to maintain and manipulate marks.
- */
+// This file contains routines to maintain and manipulate marks.
 
-/*
- * If a named file mark's lnum is non-zero, it is valid.
- * If a named file mark's fnum is non-zero, it is for an existing buffer,
- * otherwise it is from .shada and namedfm[n].fname is the file name.
- * There are marks 'A - 'Z (set by user) and '0 to '9 (set when writing
- * shada).
- */
+// If a named file mark's lnum is non-zero, it is valid.
+// If a named file mark's fnum is non-zero, it is for an existing buffer,
+// otherwise it is from .shada and namedfm[n].fname is the file name.
+// There are marks 'A - 'Z (set by user) and '0 to '9 (set when writing
+// shada).
 
 /// Global marks (marks with file number or name)
 static xfmark_T namedfm[NGLOBALMARKS];
@@ -57,10 +51,9 @@ static xfmark_T namedfm[NGLOBALMARKS];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mark.c.generated.h"
 #endif
-/*
- * Set named mark "c" at current cursor position.
- * Returns OK on success, FAIL if bad name given.
- */
+
+// Set named mark "c" at current cursor position.
+// Returns OK on success, FAIL if bad name given.
 int setmark(int c)
 {
   fmarkv_T view = mark_view_make(curwin->w_topline, curwin->w_cursor);
@@ -88,11 +81,9 @@ void clear_fmark(fmark_T *fm)
   CLEAR_POINTER(fm);
 }
 
-/*
- * Set named mark "c" to position "pos".
- * When "c" is upper case use file "fnum".
- * Returns OK on success, FAIL if bad name given.
- */
+// Set named mark "c" to position "pos".
+// When "c" is upper case use file "fnum".
+// Returns OK on success, FAIL if bad name given.
 int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
 {
   int i;
@@ -166,10 +157,8 @@ int setmark_pos(int c, pos_T *pos, int fnum, fmarkv_T *view_pt)
   return FAIL;
 }
 
-/*
- * Set the previous context mark to the current position and add it to the
- * jump list.
- */
+// Set the previous context mark to the current position and add it to the
+// jump list.
 void setpcmark(void)
 {
   xfmark_T *fm;
@@ -210,12 +199,10 @@ void setpcmark(void)
   SET_XFMARK(fm, curwin->w_pcmark, curbuf->b_fnum, view, NULL);
 }
 
-/*
- * To change context, call setpcmark(), then move the current position to
- * where ever, then call checkpcmark().  This ensures that the previous
- * context will only be changed if the cursor moved to a different line.
- * If pcmark was deleted (with "dG") the previous mark is restored.
- */
+// To change context, call setpcmark(), then move the current position to
+// where ever, then call checkpcmark().  This ensures that the previous
+// context will only be changed if the cursor moved to a different line.
+// If pcmark was deleted (with "dG") the previous mark is restored.
 void checkpcmark(void)
 {
   if (curwin->w_prev_pcmark.lnum != 0
@@ -653,20 +640,16 @@ fmark_T *getnextmark(pos_T *startpos, int dir, int begin_line)
   return result;
 }
 
-/*
- * For an xtended filemark: set the fnum from the fname.
- * This is used for marks obtained from the .shada file.  It's postponed
- * until the mark is used to avoid a long startup delay.
- */
+// For an xtended filemark: set the fnum from the fname.
+// This is used for marks obtained from the .shada file.  It's postponed
+// until the mark is used to avoid a long startup delay.
 static void fname2fnum(xfmark_T *fm)
 {
   char_u *p;
 
   if (fm->fname != NULL) {
-    /*
-     * First expand "~/" in the file name to the home directory.
-     * Don't expand the whole name, it may contain other '~' chars.
-     */
+    // First expand "~/" in the file name to the home directory.
+    // Don't expand the whole name, it may contain other '~' chars.
     if (fm->fname[0] == '~' && (fm->fname[1] == '/'
 #ifdef BACKSLASH_IN_FILENAME
                                 || fm->fname[1] == '\\'
@@ -690,11 +673,9 @@ static void fname2fnum(xfmark_T *fm)
   }
 }
 
-/*
- * Check all file marks for a name that matches the file name in buf.
- * May replace the name with an fnum.
- * Used for marks that come from the .shada file.
- */
+// Check all file marks for a name that matches the file name in buf.
+// May replace the name with an fnum.
+// Used for marks that come from the .shada file.
 void fmarks_check_names(buf_T *buf)
 {
   char_u *name = (char_u *)buf->b_ffname;
@@ -792,11 +773,9 @@ void clrallmarks(buf_T *const buf)
   buf->b_changelistlen = 0;
 }
 
-/*
- * Get name of file from a filemark.
- * When it's in the current buffer, return the text at the mark.
- * Returns an allocated string.
- */
+// Get name of file from a filemark.
+// When it's in the current buffer, return the text at the mark.
+// Returns an allocated string.
 char_u *fm_getname(fmark_T *fmark, int lead_len)
 {
   if (fmark->fnum == curbuf->b_fnum) {              // current buffer
@@ -831,9 +810,7 @@ static char *mark_line(pos_T *mp, int lead_len)
   return s;
 }
 
-/*
- * print the marks
- */
+// print the marks
 void ex_marks(exarg_T *eap)
 {
   char_u *arg = (char_u *)eap->arg;
@@ -930,9 +907,7 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
   }
 }
 
-/*
- * ":delmarks[!] [marks]"
- */
+// ":delmarks[!] [marks]"
 void ex_delmarks(exarg_T *eap)
 {
   char_u *p;
@@ -1013,9 +988,7 @@ void ex_delmarks(exarg_T *eap)
   }
 }
 
-/*
- * print the jumplist
- */
+// print the jumplist
 void ex_jumps(exarg_T *eap)
 {
   int i;
@@ -1068,9 +1041,7 @@ void ex_clearjumps(exarg_T *eap)
   curwin->w_jumplistidx = 0;
 }
 
-/*
- * print the changelist
- */
+// print the changelist
 void ex_changes(exarg_T *eap)
 {
   int i;
@@ -1132,17 +1103,15 @@ void ex_changes(exarg_T *eap)
     *lp += amount_after; \
   }
 
-/*
- * Adjust marks between line1 and line2 (inclusive) to move 'amount' lines.
- * Must be called before changed_*(), appended_lines() or deleted_lines().
- * May be called before or after changing the text.
- * When deleting lines line1 to line2, use an 'amount' of MAXLNUM: The marks
- * within this range are made invalid.
- * If 'amount_after' is non-zero adjust marks after line2.
- * Example: Delete lines 34 and 35: mark_adjust(34, 35, MAXLNUM, -2);
- * Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
- *                                 or: mark_adjust(56, 55, MAXLNUM, 2);
- */
+// Adjust marks between line1 and line2 (inclusive) to move 'amount' lines.
+// Must be called before changed_*(), appended_lines() or deleted_lines().
+// May be called before or after changing the text.
+// When deleting lines line1 to line2, use an 'amount' of MAXLNUM: The marks
+// within this range are made invalid.
+// If 'amount_after' is non-zero adjust marks after line2.
+// Example: Delete lines 34 and 35: mark_adjust(34, 35, MAXLNUM, -2);
+// Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
+//                                 or: mark_adjust(56, 55, MAXLNUM, 2);
 void mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after,
                  ExtmarkOp op)
 {
@@ -1237,9 +1206,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
     ONE_ADJUST_NODEL(&(saved_cursor.lnum));
   }
 
-  /*
-   * Adjust items in all windows related to the current buffer.
-   */
+  // Adjust items in all windows related to the current buffer.
   FOR_ALL_TAB_WINDOWS(tab, win) {
     if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       // Marks in the jumplist.  When deleting lines, this may create
@@ -1381,9 +1348,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long c
   // saved cursor for formatting
   COL_ADJUST(&saved_cursor);
 
-  /*
-   * Adjust items in all windows related to the current buffer.
-   */
+  // Adjust items in all windows related to the current buffer.
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     // marks in the jumplist
     for (i = 0; i < win->w_jumplistlen; i++) {
@@ -1481,9 +1446,7 @@ void cleanup_jumplist(win_T *wp, bool checktail)
   }
 }
 
-/*
- * Copy the jumplist from window "from" to window "to".
- */
+// Copy the jumplist from window "from" to window "to".
 void copy_jumplist(win_T *from, win_T *to)
 {
   int i;
@@ -1705,9 +1668,7 @@ bool mark_set_local(const char name, buf_T *const buf, const fmark_T fm, const b
   return true;
 }
 
-/*
- * Free items in the jumplist of window "wp".
- */
+// Free items in the jumplist of window "wp".
 void free_jumplist(win_T *wp)
 {
   int i;

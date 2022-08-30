@@ -1,10 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * Code for menus.  Used for the GUI and 'wildmenu'.
- * GUI/Motif support by Robert Webb
- */
+// Code for menus.  Used for the GUI and 'wildmenu'.
+// GUI/Motif support by Robert Webb
 
 #include <assert.h>
 #include <inttypes.h>
@@ -141,9 +139,7 @@ void ex_menu(exarg_T *eap)
   }
   pri_tab[MENUDEPTH] = -1;              // mark end of the table
 
-  /*
-   * Check for "disable" or "enable" argument.
-   */
+  // Check for "disable" or "enable" argument.
   if (STRNCMP(arg, "enable", 6) == 0 && ascii_iswhite(arg[6])) {
     enable = kTrue;
     arg = skipwhite(arg + 6);
@@ -152,9 +148,7 @@ void ex_menu(exarg_T *eap)
     arg = skipwhite(arg + 7);
   }
 
-  /*
-   * If there is no argument, display all menus.
-   */
+  // If there is no argument, display all menus.
   if (*arg == NUL) {
     show_menus(arg, modes);
     return;
@@ -168,9 +162,7 @@ void ex_menu(exarg_T *eap)
 
   map_to = menu_translate_tab_and_shift(arg);
 
-  /*
-   * If there is only a menu name, display menus with that name.
-   */
+  // If there is only a menu name, display menus with that name.
   if (*map_to == NUL && !unmenu && enable == kNone) {
     show_menus(menu_path, modes);
     goto theend;
@@ -200,16 +192,12 @@ void ex_menu(exarg_T *eap)
     }
     menu_enable_recurse(*root_menu_ptr, menu_path, modes, enable);
   } else if (unmenu) {
-    /*
-     * Delete menu(s).
-     */
+    // Delete menu(s).
     if (STRCMP(menu_path, "*") == 0) {          // meaning: remove all menus
       menu_path = "";
     }
 
-    /*
-     * For the PopUp menu, remove a menu for each mode separately.
-     */
+    // For the PopUp menu, remove a menu for each mode separately.
     if (menu_is_popup(menu_path)) {
       for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
@@ -223,10 +211,8 @@ void ex_menu(exarg_T *eap)
     // Careful: remove_menu() changes menu_path
     remove_menu(root_menu_ptr, menu_path, modes, false);
   } else {
-    /*
-     * Add menu(s).
-     * Replace special key codes.
-     */
+    // Add menu(s).
+    // Replace special key codes.
     if (STRICMP(map_to, "<nop>") == 0) {        // "<Nop>" means nothing
       map_to = "";
       map_buf = NULL;
@@ -242,9 +228,7 @@ void ex_menu(exarg_T *eap)
     menuarg.silent[0] = silent;
     add_menu_path(menu_path, &menuarg, pri_tab, map_to);
 
-    /*
-     * For the PopUp menu, add a menu for each mode separately.
-     */
+    // For the PopUp menu, add a menu for each mode separately.
     if (menu_is_popup(menu_path)) {
       for (i = 0; i < MENU_INDEX_TIP; i++) {
         if (modes & (1 << i)) {
@@ -384,11 +368,9 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
     } else {
       old_modes = menu->modes;
 
-      /*
-       * If this menu option was previously only available in other
-       * modes, then make sure it's available for this one now
-       * Also enable a menu when it's created or changed.
-       */
+      // If this menu option was previously only available in other
+      // modes, then make sure it's available for this one now
+      // Also enable a menu when it's created or changed.
       {
         menu->modes |= modes;
         menu->enabled |= modes;
@@ -405,10 +387,8 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
   }
   xfree(path_name);
 
-  /*
-   * Only add system menu items which have not been defined yet.
-   * First check if this was an ":amenu".
-   */
+  // Only add system menu items which have not been defined yet.
+  // First check if this was an ":amenu".
   amenu = ((modes & (MENU_NORMAL_MODE | MENU_INSERT_MODE)) ==
            (MENU_NORMAL_MODE | MENU_INSERT_MODE));
   if (sys_menu) {
@@ -491,10 +471,8 @@ erret:
   return FAIL;
 }
 
-/*
- * Set the (sub)menu with the given name to enabled or disabled.
- * Called recursively.
- */
+// Set the (sub)menu with the given name to enabled or disabled.
+// Called recursively.
 static int menu_enable_recurse(vimmenu_T *menu, char *name, int modes, int enable)
 {
   char *p;
@@ -522,11 +500,9 @@ static int menu_enable_recurse(vimmenu_T *menu, char *name, int modes, int enabl
         menu->enabled &= ~modes;
       }
 
-      /*
-       * When name is empty, we are doing all menu items for the given
-       * modes, so keep looping, otherwise we are just doing the named
-       * menu item (which has been found) so break here.
-       */
+      // When name is empty, we are doing all menu items for the given
+      // modes, so keep looping, otherwise we are just doing the named
+      // menu item (which has been found) so break here.
       if (*name != NUL && *name != '*') {
         break;
       }
@@ -577,11 +553,9 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
         return FAIL;
       }
 
-      /*
-       * When name is empty, we are removing all menu items for the given
-       * modes, so keep looping, otherwise we are just removing the named
-       * menu item (which has been found) so break here.
-       */
+      // When name is empty, we are removing all menu items for the given
+      // modes, so keep looping, otherwise we are just removing the named
+      // menu item (which has been found) so break here.
       if (*name != NUL) {
         break;
       }
@@ -628,9 +602,7 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
   return OK;
 }
 
-/*
- * Free the given menu structure and remove it from the linked list.
- */
+// Free the given menu structure and remove it from the linked list.
 static void free_menu(vimmenu_T **menup)
 {
   int i;
@@ -652,9 +624,7 @@ static void free_menu(vimmenu_T **menup)
   xfree(menu);
 }
 
-/*
- * Free the menu->string with the given index.
- */
+// Free the menu->string with the given index.
 static void free_menu_string(vimmenu_T *menu, int idx)
 {
   int count = 0;
@@ -909,16 +879,12 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
   }
 }
 
-/*
- * Used when expanding menu names.
- */
+// Used when expanding menu names.
 static vimmenu_T *expand_menu = NULL;
 static int expand_modes = 0x0;
 static int expand_emenu;                // true for ":emenu" command
 
-/*
- * Work out what to complete when doing command line completion of menu names.
- */
+// Work out what to complete when doing command line completion of menu names.
 char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool forceit)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -994,10 +960,8 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
           // Found menu
           if ((*p != NUL && menu->children == NULL)
               || ((menu->modes & expand_modes) == 0x0)) {
-            /*
-             * Menu path continues, but we have reached a leaf.
-             * Or menu exists only in another mode.
-             */
+            // Menu path continues, but we have reached a leaf.
+            // Or menu exists only in another mode.
             xfree(path_name);
             return NULL;
           }
@@ -1024,10 +988,8 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   return NULL;
 }
 
-/*
- * Function given to ExpandGeneric() to obtain the list of (sub)menus (not
- * entries).
- */
+// Function given to ExpandGeneric() to obtain the list of (sub)menus (not
+// entries).
 char *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T *menu = NULL;
@@ -1073,10 +1035,8 @@ char *get_menu_name(expand_T *xp, int idx)
   return str;
 }
 
-/*
- * Function given to ExpandGeneric() to obtain the list of menus and menu
- * entries.
- */
+// Function given to ExpandGeneric() to obtain the list of menus and menu
+// entries.
 char *get_menu_names(expand_T *xp, int idx)
 {
   static vimmenu_T *menu = NULL;
@@ -1312,10 +1272,8 @@ static char *get_menu_mode_str(int modes)
   return "";
 }
 
-/*
- * Modify a menu name starting with "PopUp" to include the mode character.
- * Returns the name in allocated memory.
- */
+// Modify a menu name starting with "PopUp" to include the mode character.
+// Returns the name in allocated memory.
 static char *popup_mode_name(char *name, int idx)
 {
   size_t len = STRLEN(name);
@@ -1730,9 +1688,7 @@ theend:
   return menu;
 }
 
-/*
- * Translation of menu names.  Just a simple lookup table.
- */
+// Translation of menu names.  Just a simple lookup table.
 
 typedef struct {
   char *from;            // English name
@@ -1748,11 +1704,9 @@ static garray_T menutrans_ga = GA_EMPTY_INIT_VALUE;
   xfree(_mt->from_noamp); \
   xfree(_mt->to)
 
-/*
- * ":menutrans".
- * This function is also defined without the +multi_lang feature, in which
- * case the commands are ignored.
- */
+// ":menutrans".
+// This function is also defined without the +multi_lang feature, in which
+// case the commands are ignored.
 void ex_menutranslate(exarg_T *eap)
 {
   char *arg = eap->arg;
@@ -1762,9 +1716,7 @@ void ex_menutranslate(exarg_T *eap)
     ga_init(&menutrans_ga, (int)sizeof(menutrans_T), 5);
   }
 
-  /*
-   * ":menutrans clear": clear all translations.
-   */
+  // ":menutrans clear": clear all translations.
   if (STRNCMP(arg, "clear", 5) == 0 && ends_excmd(*skipwhite(arg + 5))) {
     GA_DEEP_CLEAR(&menutrans_ga, menutrans_T, FREE_MENUTRANS);
 
@@ -1796,9 +1748,7 @@ void ex_menutranslate(exarg_T *eap)
   }
 }
 
-/*
- * Find the character just after one part of a menu name.
- */
+// Find the character just after one part of a menu name.
 static char *menu_skip_part(char *p)
 {
   while (*p != NUL && *p != '.' && !ascii_iswhite(*p)) {
@@ -1810,10 +1760,8 @@ static char *menu_skip_part(char *p)
   return p;
 }
 
-/*
- * Lookup part of a menu name in the translations.
- * Return a pointer to the translation or NULL if not found.
- */
+// Lookup part of a menu name in the translations.
+// Return a pointer to the translation or NULL if not found.
 static char *menutrans_lookup(char *name, int len)
 {
   menutrans_T *tp = (menutrans_T *)menutrans_ga.ga_data;
@@ -1841,9 +1789,7 @@ static char *menutrans_lookup(char *name, int len)
   return NULL;
 }
 
-/*
- * Unescape the name in the translate dictionary table.
- */
+// Unescape the name in the translate dictionary table.
 static void menu_unescape_name(char *name)
 {
   char *p;
@@ -1855,10 +1801,8 @@ static void menu_unescape_name(char *name)
   }
 }
 
-/*
- * Isolate the menu name.
- * Skip the menu name, and translate <Tab> into a real TAB.
- */
+// Isolate the menu name.
+// Skip the menu name, and translate <Tab> into a real TAB.
 static char *menu_translate_tab_and_shift(char *arg_start)
 {
   char *arg = arg_start;

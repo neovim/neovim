@@ -379,9 +379,7 @@ enum {
 #define LISPWORD_VALUE \
   "defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object"
 
-/*
- * The following are actual variables for the options
- */
+// The following are actual variables for the options
 
 EXTERN long p_aleph;            // 'aleph'
 EXTERN char *p_ambw;            ///< 'ambiwidth'
@@ -924,11 +922,9 @@ enum {
   BV_COUNT,  // must be the last one
 };
 
-/*
- * "indir" values for window-local options.
- * These need to be defined globally, so that the WV_COUNT can be used in the
- * window structure.
- */
+// "indir" values for window-local options.
+// These need to be defined globally, so that the WV_COUNT can be used in the
+// window structure.
 enum {
   WV_LIST = 0,
   WV_ARAB,

@@ -1576,16 +1576,14 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
       // Find the function name in the table, call its implementation.
       error = call_internal_func((char_u *)fname, argcount, argvars, rettv);
     }
-    /*
-     * The function call (or "FuncUndefined" autocommand sequence) might
-     * have been aborted by an error, an interrupt, or an explicitly thrown
-     * exception that has not been caught so far.  This situation can be
-     * tested for by calling aborting().  For an error in an internal
-     * function or for the "E132" error in call_user_func(), however, the
-     * throw point at which the "force_abort" flag (temporarily reset by
-     * emsg()) is normally updated has not been reached yet. We need to
-     * update that flag first to make aborting() reliable.
-     */
+    // The function call (or "FuncUndefined" autocommand sequence) might
+    // have been aborted by an error, an interrupt, or an explicitly thrown
+    // exception that has not been caught so far.  This situation can be
+    // tested for by calling aborting().  For an error in an internal
+    // function or for the "E132" error in call_user_func(), however, the
+    // throw point at which the "force_abort" flag (temporarily reset by
+    // emsg()) is normally updated has not been reached yet. We need to
+    // update that flag first to make aborting() reliable.
     update_force_abort();
   }
   if (error == ERROR_NONE) {
@@ -1720,11 +1718,9 @@ char_u *trans_function_name(char **pp, bool skip, int flags, funcdict_T *fdp, pa
     goto theend;
   }
   if (end == NULL || (lv.ll_tv != NULL && (lead > 2 || lv.ll_range))) {
-    /*
-     * Report an invalid expression in braces, unless the expression
-     * evaluation has been cancelled due to an aborting error, an
-     * interrupt, or an exception.
-     */
+    // Report an invalid expression in braces, unless the expression
+    // evaluation has been cancelled due to an aborting error, an
+    // interrupt, or an exception.
     if (!aborting()) {
       if (end != NULL) {
         semsg(_(e_invarg2), start);
@@ -1923,9 +1919,7 @@ void ex_function(exarg_T *eap)
   bool show_block = false;
   bool do_concat = true;
 
-  /*
-   * ":function" without argument: list functions.
-   */
+  // ":function" without argument: list functions.
   if (ends_excmd(*eap->arg)) {
     if (!eap->skip) {
       todo = (int)func_hashtab.ht_used;
@@ -1946,9 +1940,7 @@ void ex_function(exarg_T *eap)
     return;
   }
 
-  /*
-   * ":function /pat": list functions matching pattern.
-   */
+  // ":function /pat": list functions matching pattern.
   if (*eap->arg == '/') {
     p = skip_regexp(eap->arg + 1, '/', true, NULL);
     if (!eap->skip) {
@@ -2000,11 +1992,9 @@ void ex_function(exarg_T *eap)
   name = (char *)trans_function_name(&p, eap->skip, TFN_NO_AUTOLOAD, &fudi, NULL);
   paren = (vim_strchr(p, '(') != NULL);
   if (name == NULL && (fudi.fd_dict == NULL || !paren) && !eap->skip) {
-    /*
-     * Return on an invalid expression in braces, unless the expression
-     * evaluation has been cancelled due to an aborting error, an
-     * interrupt, or an exception.
-     */
+    // Return on an invalid expression in braces, unless the expression
+    // evaluation has been cancelled due to an aborting error, an
+    // interrupt, or an exception.
     if (!aborting()) {
       if (fudi.fd_newkey != NULL) {
         semsg(_(e_dictkey), fudi.fd_newkey);
@@ -2069,9 +2059,7 @@ void ex_function(exarg_T *eap)
     goto ret_free;
   }
 
-  /*
-   * ":function name(arg1, arg2)" Define function.
-   */
+  // ":function name(arg1, arg2)" Define function.
   p = skipwhite(p);
   if (*p != '(') {
     if (!eap->skip) {
@@ -2154,9 +2142,7 @@ void ex_function(exarg_T *eap)
     semsg(_(e_trailing_arg), p);
   }
 
-  /*
-   * Read the body of the function, until ":endfunction" is found.
-   */
+  // Read the body of the function, until ":endfunction" is found.
   if (KeyTyped) {
     // Check if the function already exists, don't let the user type the
     // whole function before telling him it doesn't work!  For a script we
@@ -2410,9 +2396,7 @@ void ex_function(exarg_T *eap)
     goto erret;
   }
 
-  /*
-   * If there are no errors, add the function
-   */
+  // If there are no errors, add the function
   if (fudi.fd_dict == NULL) {
     v = find_var((const char *)name, STRLEN(name), &ht, false);
     if (v != NULL && v->di_tv.v_type == VAR_FUNC) {
