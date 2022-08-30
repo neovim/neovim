@@ -1260,6 +1260,16 @@ func Test_cmdline_overstrike()
   let &encoding = encoding_save
 endfunc
 
+func Test_cmdwin_bug()
+  let winid = win_getid()
+  sp
+  try
+    call feedkeys("q::call win_gotoid(" .. winid .. ")\<CR>:q\<CR>", 'x!')
+  catch /^Vim\%((\a\+)\)\=:E11/
+  endtry
+  bw!
+endfunc
+
 func Test_cmdwin_restore()
   CheckScreendump
 
