@@ -326,7 +326,7 @@ bool dir_of_file_exists(char_u *fname)
   }
   char c = *p;
   *p = NUL;
-  bool retval = os_isdir(fname);
+  bool retval = os_isdir((char *)fname);
   *p = c;
   return retval;
 }
@@ -752,7 +752,7 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
           // no more wildcards, check if there is a match
           // remove backslashes for the remaining components only
           if (*path_end != NUL) {
-            backslash_halve(buf + len + 1);
+            backslash_halve((char *)buf + len + 1);
           }
           // add existing file or symbolic link
           if ((flags & EW_ALLLINKS) ? os_fileinfo_link((char *)buf, &file_info)
@@ -1135,7 +1135,7 @@ static int expand_in_path(garray_T *const gap, char_u *const pattern, const int 
   if (flags & EW_ADDSLASH) {
     glob_flags |= WILD_ADD_SLASH;
   }
-  globpath((char *)paths, pattern, gap, glob_flags);
+  globpath((char *)paths, (char *)pattern, gap, glob_flags);
   xfree(paths);
 
   return gap->ga_len;
@@ -1312,7 +1312,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     }
 
     if (add_pat == -1 || (add_pat == 0 && (flags & EW_NOTFOUND))) {
-      char_u *t = backslash_halve_save(p);
+      char_u *t = (char_u *)backslash_halve_save((char *)p);
 
       /* When EW_NOTFOUND is used, always add files and dirs.  Makes
        * "vim c:/" work. */
@@ -1472,7 +1472,7 @@ void addfile(garray_T *gap, char_u *f, int flags)
   }
 #endif
 
-  isdir = os_isdir(f);
+  isdir = os_isdir((char *)f);
   if ((isdir && !(flags & EW_DIR)) || (!isdir && !(flags & EW_FILE))) {
     return;
   }
@@ -1845,7 +1845,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
     return OK;
   }
 
-  int rv = path_to_absolute((char_u *)fname, (char_u *)buf, len, force);
+  int rv = path_to_absolute(fname, buf, len, force);
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
@@ -1904,7 +1904,7 @@ void path_fix_case(char *name)
   }
 
   // Open the directory where the file is located.
-  char *slash = (char *)STRRCHR(name, '/');
+  char *slash = strrchr(name, '/');
   char *tail;
   Directory dir;
   bool ok;
@@ -2139,7 +2139,7 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
                          true);
     emsg_off--;
     if (eval_pat != NULL) {
-      exp_pat = (char *)concat_str(eval_pat, (char_u *)exp_pat + usedlen);
+      exp_pat = concat_str((char *)eval_pat, exp_pat + usedlen);
     }
   }
 
@@ -2353,20 +2353,20 @@ int append_path(char *path, const char *to_append, size_t max_len)
 /// @param  force  also expand when "fname" is already absolute.
 ///
 /// @return FAIL for failure, OK for success.
-static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int force)
+static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
 {
-  char_u *p;
+  char *p;
   *buf = NUL;
 
   char *relative_directory = xmalloc(len);
   char *end_of_path = (char *)fname;
 
   // expand it if forced or not an absolute path
-  if (force || !path_is_absolute(fname)) {
-    p = STRRCHR(fname, '/');
+  if (force || !path_is_absolute((char_u *)fname)) {
+    p = strrchr(fname, '/');
 #ifdef WIN32
     if (p == NULL) {
-      p = STRRCHR(fname, '\\');
+      p = strrchr(fname, '\\');
     }
 #endif
     if (p != NULL) {
@@ -2380,19 +2380,19 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len, int fo
         memcpy(relative_directory, fname, (size_t)(p - fname));
         relative_directory[p - fname] = NUL;
       }
-      end_of_path = (char *)(p + 1);
+      end_of_path = p + 1;
     } else {
       relative_directory[0] = NUL;
       end_of_path = (char *)fname;
     }
 
-    if (FAIL == path_full_dir_name(relative_directory, (char *)buf, len)) {
+    if (FAIL == path_full_dir_name(relative_directory, buf, len)) {
       xfree(relative_directory);
       return FAIL;
     }
   }
   xfree(relative_directory);
-  return append_path((char *)buf, end_of_path, len);
+  return append_path(buf, end_of_path, len);
 }
 
 /// Check if file `fname` is a full (absolute) path.

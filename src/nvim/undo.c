@@ -685,7 +685,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
         *p-- = NUL;
       }
 
-      bool has_directory = os_isdir((char_u *)dir_name);
+      bool has_directory = os_isdir(dir_name);
       if (!has_directory && *dirp == NUL && !reading) {
         // Last directory in the list does not exist, create it.
         int ret;

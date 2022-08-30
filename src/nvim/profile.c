@@ -279,7 +279,7 @@ void ex_profile(exarg_T *eap)
   char *e;
   int len;
 
-  e = (char *)skiptowhite((char_u *)eap->arg);
+  e = skiptowhite(eap->arg);
   len = (int)(e - eap->arg);
   e = skipwhite(e);
 
@@ -354,7 +354,7 @@ void set_context_in_profile_cmd(expand_T *xp, const char *arg)
   pexpand_what = PEXP_SUBCMD;
   xp->xp_pattern = (char *)arg;
 
-  char_u *const end_subcmd = skiptowhite((const char_u *)arg);
+  char_u *const end_subcmd = (char_u *)skiptowhite(arg);
   if (*end_subcmd == NUL) {
     return;
   }
@@ -612,7 +612,7 @@ static void func_dump_profile(FILE *fd)
             .script_ctx = fp->uf_script_ctx,
             .channel_id = 0,
           };
-          char *p = (char *)get_scriptname(last_set, &should_free);
+          char *p = get_scriptname(last_set, &should_free);
           fprintf(fd, "    Defined: %s:%" PRIdLINENR "\n",
                   p, fp->uf_script_ctx.sc_lnum);
           if (should_free) {
@@ -721,7 +721,7 @@ static void script_dump_profile(FILE *fd)
       fprintf(fd, "\n");
       fprintf(fd, "count  total (s)   self (s)\n");
 
-      sfd = os_fopen((char *)si->sn_name, "r");
+      sfd = os_fopen(si->sn_name, "r");
       if (sfd == NULL) {
         fprintf(fd, "Cannot open file!\n");
       } else {

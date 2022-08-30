@@ -2210,7 +2210,7 @@ static void f_filereadable(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 {
   const char *const p = tv_get_string(&argvars[0]);
   rettv->vval.v_number =
-    (*p && !os_isdir((const char_u *)p) && os_file_is_readable(p));
+    (*p && !os_isdir(p) && os_file_is_readable(p));
 }
 
 /// @return  0 for not writable
@@ -2888,7 +2888,7 @@ static void f_getfsize(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   FileInfo file_info;
   if (os_fileinfo(fname, &file_info)) {
     uint64_t filesize = os_fileinfo_size(&file_info);
-    if (os_isdir((const char_u *)fname)) {
+    if (os_isdir(fname)) {
       rettv->vval.v_number = 0;
     } else {
       rettv->vval.v_number = (varnumber_T)filesize;
@@ -3491,7 +3491,7 @@ static void f_globpath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (file != NULL && !error) {
     garray_T ga;
     ga_init(&ga, (int)sizeof(char_u *), 10);
-    globpath((char *)tv_get_string(&argvars[0]), (char_u *)file, &ga, flags);
+    globpath((char *)tv_get_string(&argvars[0]), (char *)file, &ga, flags);
 
     if (rettv->v_type == VAR_STRING) {
       rettv->vval.v_string = ga_concat_strings_sep(&ga, "\n");
@@ -3874,7 +3874,7 @@ static void f_iconv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (vimconv.vc_type == CONV_NONE) {
     rettv->vval.v_string = xstrdup(str);
   } else {
-    rettv->vval.v_string = (char *)string_convert(&vimconv, (char_u *)str, NULL);
+    rettv->vval.v_string = string_convert(&vimconv, (char *)str, NULL);
   }
 
   convert_setup(&vimconv, NULL, NULL);
@@ -4131,7 +4131,7 @@ static void f_invert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "isdirectory()" function
 static void f_isdirectory(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  rettv->vval.v_number = os_isdir((const char_u *)tv_get_string(&argvars[0]));
+  rettv->vval.v_number = os_isdir(tv_get_string(&argvars[0]));
 }
 
 /// "islocked()" function
@@ -4458,7 +4458,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (new_cwd && *new_cwd != NUL) {
       cwd = new_cwd;
       // The new cwd must be a directory.
-      if (!os_isdir((const char_u *)cwd)) {
+      if (!os_isdir(cwd)) {
         semsg(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;
@@ -5891,7 +5891,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   // their own about CR-LF conversion.
   const char *const fname = tv_get_string(&argvars[0]);
 
-  if (os_isdir((const char_u *)fname)) {
+  if (os_isdir(fname)) {
     semsg(_(e_isadir2), fname);
     return;
   }
@@ -6343,7 +6343,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         if (*q != NUL) {
           cpy = remain;
           remain = (remain
-                    ? (char *)concat_str((char_u *)q - 1, (char_u *)remain)
+                    ? concat_str(q - 1, remain)
                     : xstrdup(q - 1));
           xfree(cpy);
           q[-1] = NUL;
@@ -6402,7 +6402,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                        && (p[2] == NUL
                            || vim_ispathsep(p[2])))))) {
         // Prepend "./".
-        cpy = (char *)concat_str((const char_u *)"./", (const char_u *)p);
+        cpy = concat_str("./", p);
         xfree(p);
         p = cpy;
       } else if (!is_relative_to_current) {
@@ -8339,7 +8339,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     char *enc = (char *)enc_locale();
     convert_setup(&conv, p_enc, enc);
     if (conv.vc_type != CONV_NONE) {
-      p = (char *)string_convert(&conv, (char_u *)p, NULL);
+      p = string_convert(&conv, p, NULL);
     }
     char result_buf[256];
     if (p != NULL) {
@@ -8353,7 +8353,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     convert_setup(&conv, enc, p_enc);
     if (conv.vc_type != CONV_NONE) {
-      rettv->vval.v_string = (char *)string_convert(&conv, (char_u *)result_buf, NULL);
+      rettv->vval.v_string = string_convert(&conv, result_buf, NULL);
     } else {
       rettv->vval.v_string = xstrdup(result_buf);
     }
@@ -8599,7 +8599,7 @@ static void f_strptime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char *enc = (char *)enc_locale();
   convert_setup(&conv, p_enc, enc);
   if (conv.vc_type != CONV_NONE) {
-    fmt = (char *)string_convert(&conv, (char_u *)fmt, NULL);
+    fmt = string_convert(&conv, fmt, NULL);
   }
   if (fmt == NULL
       || os_strptime(str, fmt, &tmval) == NULL
@@ -9070,7 +9070,7 @@ static void f_tagfiles(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   bool first = true;
   tagname_T tn;
-  while (get_tagfname(&tn, first, (char_u *)fname) == OK) {
+  while (get_tagfname(&tn, first, fname) == OK) {
     tv_list_append_string(rettv->vval.v_list, fname, -1);
     first = false;
   }
@@ -9148,7 +9148,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (new_cwd && *new_cwd != NUL) {
       cwd = new_cwd;
       // The new cwd must be a directory.
-      if (!os_isdir((const char_u *)cwd)) {
+      if (!os_isdir(cwd)) {
         semsg(_(e_invarg2), "expected valid directory");
         shell_free_argv(argv);
         return;

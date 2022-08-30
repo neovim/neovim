@@ -462,7 +462,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       if (breakpoint != NULL && dbg_tick != NULL
           && *dbg_tick != debug_tick) {
         *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
-                                          (char_u *)fname, SOURCING_LNUM);
+                                          fname, SOURCING_LNUM);
         *dbg_tick = debug_tick;
       }
 
@@ -471,10 +471,10 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
       // Did we encounter a breakpoint?
       if (breakpoint != NULL && *breakpoint != 0 && *breakpoint <= SOURCING_LNUM) {
-        dbg_breakpoint((char_u *)fname, SOURCING_LNUM);
+        dbg_breakpoint(fname, SOURCING_LNUM);
         // Find next breakpoint.
         *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
-                                          (char_u *)fname, SOURCING_LNUM);
+                                          fname, SOURCING_LNUM);
         *dbg_tick = debug_tick;
       }
       if (do_profiling == PROF_YES) {
@@ -639,8 +639,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
           // Check for the next breakpoint at or after the ":while"
           // or ":for".
           if (breakpoint != NULL) {
-            *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline),
-                                              (char_u *)fname,
+            *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline), fname,
                                               ((wcmd_T *)lines_ga.ga_data)[current_line].lnum - 1);
             *dbg_tick = debug_tick;
           }
@@ -3665,7 +3664,7 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
       STRCAT(new_cmdline, arg);
     }
 
-    msg_make((char_u *)arg);
+    msg_make(arg);
 
     // 'eap->cmd' is not set here, because it is not used at CMD_make
     xfree(*cmdlinep);
@@ -3807,7 +3806,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
     // done by ExpandOne() below.
 #ifdef UNIX
     if (!has_wildcards) {
-      backslash_halve((char_u *)eap->arg);
+      backslash_halve(eap->arg);
     }
 #else
     backslash_halve((char_u *)eap->arg);
@@ -5032,7 +5031,7 @@ static void ex_tabs(exarg_T *eap)
 
     msg_putchar('\n');
     vim_snprintf((char *)IObuff, IOSIZE, _("Tab page %d"), tabcount++);
-    msg_outtrans_attr(IObuff, HL_ATTR(HLF_T));
+    msg_outtrans_attr((char *)IObuff, HL_ATTR(HLF_T));
     ui_flush();            // output one line at a time
     os_breakcheck();
 
@@ -6154,7 +6153,7 @@ FILE *open_exfile(char_u *fname, int forceit, char *mode)
 {
 #ifdef UNIX
   // with Unix it is possible to open a directory
-  if (os_isdir(fname)) {
+  if (os_isdir((char *)fname)) {
     semsg(_(e_isadir2), fname);
     return NULL;
   }
@@ -6881,7 +6880,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
     if (src[*usedlen] == '<') {
       (*usedlen)++;
       char *s;
-      if ((s = (char *)STRRCHR(result, '.')) != NULL
+      if ((s = strrchr(result, '.')) != NULL
           && s >= path_tail(result)) {
         resultlen = (size_t)(s - result);
       }

@@ -501,7 +501,7 @@ static int nlua_iconv(lua_State *lstate)
   vimconv.vc_type = CONV_NONE;
   convert_setup_ext(&vimconv, from, false, to, false);
 
-  char_u *ret = string_convert(&vimconv, (char_u *)str, &str_len);
+  char_u *ret = (char_u *)string_convert(&vimconv, (char *)str, &str_len);
 
   convert_setup(&vimconv, NULL, NULL);
 

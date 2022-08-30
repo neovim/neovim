@@ -143,7 +143,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   msg_scroll = msg_scroll_save;
   msg_scrolled_ign = true;
   // may truncate the message to avoid a hit-return prompt
-  msg_outtrans_attr(msg_may_trunc(false, IObuff), attr);
+  msg_outtrans_attr((char *)msg_may_trunc(false, IObuff), attr);
   msg_clr_eos();
   ui_flush();
   msg_scrolled_ign = false;
@@ -2775,7 +2775,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         if (trailing_pathseps) {
           IObuff[dir_len - 2] = NUL;
         }
-        if (*dirp == NUL && !os_isdir(IObuff)) {
+        if (*dirp == NUL && !os_isdir((char *)IObuff)) {
           int ret;
           char *failed_dir;
           if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
@@ -2936,7 +2936,7 @@ nobackup:
         if (trailing_pathseps) {
           IObuff[dir_len - 2] = NUL;
         }
-        if (*dirp == NUL && !os_isdir(IObuff)) {
+        if (*dirp == NUL && !os_isdir((char *)IObuff)) {
           int ret;
           char *failed_dir;
           if ((ret = os_mkdir_recurse((char *)IObuff, 0755, &failed_dir)) != 0) {
@@ -4948,7 +4948,7 @@ int buf_check_timestamp(buf_T *buf)
       buf_store_file_info(buf, &file_info);
     }
 
-    if (os_isdir((char_u *)buf->b_fname)) {
+    if (os_isdir(buf->b_fname)) {
       // Don't do anything for a directory.  Might contain the file explorer.
     } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
                && !bufIsChanged(buf) && file_info_ok) {
@@ -5318,7 +5318,7 @@ static void vim_mktempdir(void)
   for (size_t i = 0; i < ARRAY_SIZE(temp_dirs); i++) {
     // Expand environment variables, leave room for "/tmp/nvim.<user>/XXXXXX/999999999".
     expand_env((char *)temp_dirs[i], tmp, TEMP_FILE_PATH_MAXLEN - 64);
-    if (!os_isdir((char_u *)tmp)) {
+    if (!os_isdir(tmp)) {
       continue;
     }
 
@@ -5328,7 +5328,7 @@ static void vim_mktempdir(void)
     xstrlcat(tmp, user, sizeof(tmp));
     (void)os_mkdir(tmp, 0700);  // Always create, to avoid a race.
     bool owned = os_file_owned(tmp);
-    bool isdir = os_isdir((char_u *)tmp);
+    bool isdir = os_isdir(tmp);
 #ifdef UNIX
     int perm = os_getperm(tmp);  // XDG_RUNTIME_DIR must be owned by the user, mode 0700.
     bool valid = isdir && owned && 0700 == (perm & 0777);

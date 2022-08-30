@@ -115,9 +115,9 @@ typedef struct slang_S slang_T;
 
 struct slang_S {
   slang_T *sl_next;         // next language
-  char_u *sl_name;         // language name "en", "en.rare", "nl", etc.
-  char_u *sl_fname;        // name of .spl file
-  bool sl_add;                  // true if it's a .add file.
+  char_u *sl_name;          // language name "en", "en.rare", "nl", etc.
+  char *sl_fname;           // name of .spl file
+  bool sl_add;              // true if it's a .add file.
 
   char_u *sl_fbyts;        // case-folded word bytes
   long sl_fbyts_len;     // length of sl_fbyts

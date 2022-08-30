@@ -3767,7 +3767,7 @@ static int get_normal_compl_info(char_u *line, int startcol, colnr_T curs_col)
 /// Sets the global variables: compl_col, compl_length and compl_pattern.
 static int get_wholeline_compl_info(char_u *line, colnr_T curs_col)
 {
-  compl_col = (colnr_T)getwhitecols(line);
+  compl_col = (colnr_T)getwhitecols((char *)line);
   compl_length = (int)curs_col - (int)compl_col;
   if (compl_length < 0) {  // cursor in indent: empty pattern
     compl_length = 0;
@@ -3985,7 +3985,7 @@ static void ins_compl_continue_search(char_u *line)
       // first non_blank in the line, if it is not a wordchar
       // include it to get a better pattern, but then we don't
       // want the "\\<" prefix, check it below.
-      compl_col = (colnr_T)getwhitecols(line);
+      compl_col = (colnr_T)getwhitecols((char *)line);
       compl_startpos.col = compl_col;
       compl_startpos.lnum = curwin->w_cursor.lnum;
       compl_cont_status &= ~CONT_SOL;  // clear SOL if present

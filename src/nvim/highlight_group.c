@@ -852,14 +852,14 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
 
   // Isolate the name.
-  name_end = (const char *)skiptowhite((const char_u *)line);
+  name_end = (const char *)skiptowhite(line);
   linep = (const char *)skipwhite(name_end);
 
   // Check for "default" argument.
   if (strncmp(line, "default", (size_t)(name_end - line)) == 0) {
     dodefault = true;
     line = linep;
-    name_end = (const char *)skiptowhite((const char_u *)line);
+    name_end = (const char *)skiptowhite(line);
     linep = (const char *)skipwhite(name_end);
   }
 
@@ -891,9 +891,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     int to_id;
     HlGroup *hlgroup = NULL;
 
-    from_end = (const char *)skiptowhite((const char_u *)from_start);
+    from_end = (const char *)skiptowhite(from_start);
     to_start = (const char *)skipwhite(from_end);
-    to_end   = (const char *)skiptowhite((const char_u *)to_start);
+    to_end   = (const char *)skiptowhite(to_start);
 
     if (ends_excmd((uint8_t)(*from_start))
         || ends_excmd((uint8_t)(*to_start))) {
@@ -969,7 +969,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       redraw_all_later(UPD_NOT_VALID);
       return;
     }
-    name_end = (const char *)skiptowhite((const char_u *)line);
+    name_end = (const char *)skiptowhite(line);
     linep = (const char *)skipwhite(name_end);
   }
 
@@ -1054,7 +1054,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         }
       } else {
         arg_start = linep;
-        linep = (const char *)skiptowhite((const char_u *)linep);
+        linep = (const char *)skiptowhite(linep);
       }
       if (linep == arg_start) {
         semsg(_("E417: missing argument: %s"), key_start);
@@ -2074,13 +2074,13 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 
   // (part of) subcommand already typed
   if (*arg != NUL) {
-    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    const char *p = (const char *)skiptowhite(arg);
     if (*p != NUL) {  // Past "default" or group name.
       include_default = 0;
       if (strncmp("default", arg, (unsigned)(p - arg)) == 0) {
         arg = (const char *)skipwhite(p);
         xp->xp_pattern = (char *)arg;
-        p = (const char *)skiptowhite((const char_u *)arg);
+        p = (const char *)skiptowhite(arg);
       }
       if (*p != NUL) {                          // past group name
         include_link = 0;
@@ -2090,10 +2090,10 @@ void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
         if (strncmp("link", arg, (unsigned)(p - arg)) == 0
             || strncmp("clear", arg, (unsigned)(p - arg)) == 0) {
           xp->xp_pattern = skipwhite(p);
-          p = (const char *)skiptowhite((char_u *)xp->xp_pattern);
+          p = (const char *)skiptowhite(xp->xp_pattern);
           if (*p != NUL) {  // Past first group name.
             xp->xp_pattern = skipwhite(p);
-            p = (const char *)skiptowhite((char_u *)xp->xp_pattern);
+            p = (const char *)skiptowhite(xp->xp_pattern);
           }
         }
         if (*p != NUL) {  // Past group name(s).

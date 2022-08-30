@@ -51,7 +51,7 @@ typedef enum {
 } estack_arg_T;
 
 typedef struct scriptitem_S {
-  char_u *sn_name;
+  char *sn_name;
   bool sn_prof_on;              ///< true when script is/was profiled
   bool sn_pr_force;             ///< forceit: profile functions in this script
   proftime_T sn_pr_child;       ///< time set when going into first child

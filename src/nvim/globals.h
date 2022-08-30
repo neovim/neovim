@@ -177,7 +177,7 @@ EXTERN bool msg_scrolled_ign INIT(= false);
 // is reset before the screen is redrawn, so we need to keep track of this.
 EXTERN bool msg_did_scroll INIT(= false);
 
-EXTERN char_u *keep_msg INIT(= NULL);       // msg to be shown after redraw
+EXTERN char *keep_msg INIT(= NULL);         // msg to be shown after redraw
 EXTERN int keep_msg_attr INIT(= 0);         // highlight attr for keep_msg
 EXTERN bool need_fileinfo INIT(= false);    // do fileinfo() after redraw
 EXTERN int msg_scroll INIT(= false);        // msg_start() will scroll

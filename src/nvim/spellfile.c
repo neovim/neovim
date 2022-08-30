@@ -604,7 +604,7 @@ slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp, bool sile
     lp = slang_alloc(lang);
 
     // Remember the file name, used to reload the file when it's updated.
-    lp->sl_fname = vim_strsave(fname);
+    lp->sl_fname = (char *)vim_strsave(fname);
 
     // Check for .add.spl.
     lp->sl_add = strstr(path_tail((char *)fname), SPL_FNAME_ADD) != NULL;
@@ -869,12 +869,12 @@ static void tree_count_words(char_u *byts, idx_T *idxs)
   }
 }
 
-// Load the .sug files for languages that have one and weren't loaded yet.
+/// Load the .sug files for languages that have one and weren't loaded yet.
 void suggest_load_files(void)
 {
   langp_T *lp;
   slang_T *slang;
-  char_u *dotp;
+  char *dotp;
   FILE *fd;
   char_u buf[MAXWLEN];
   int i;
@@ -894,12 +894,12 @@ void suggest_load_files(void)
       // don't try again and again.
       slang->sl_sugloaded = true;
 
-      dotp = STRRCHR(slang->sl_fname, '.');
+      dotp = strrchr(slang->sl_fname, '.');
       if (dotp == NULL || FNAMECMP(dotp, ".spl") != 0) {
         continue;
       }
       STRCPY(dotp, ".sug");
-      fd = os_fopen((char *)slang->sl_fname, "r");
+      fd = os_fopen(slang->sl_fname, "r");
       if (fd == NULL) {
         goto nextone;
       }
@@ -1822,7 +1822,7 @@ static void spell_reload_one(char_u *fname, bool added_word)
   bool didit = false;
 
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare((char *)fname, (char *)slang->sl_fname, false, true) == kEqualFiles) {
+    if (path_full_compare((char *)fname, slang->sl_fname, false, true) == kEqualFiles) {
       slang_clear(slang);
       if (spell_load_file(fname, NULL, slang, false) == NULL) {
         // reloading failed, clear the language
@@ -2075,7 +2075,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
     // Convert from "SET" to 'encoding' when needed.
     xfree(pc);
     if (spin->si_conv.vc_type != CONV_NONE) {
-      pc = string_convert(&spin->si_conv, rline, NULL);
+      pc = (char_u *)string_convert(&spin->si_conv, (char *)rline, NULL);
       if (pc == NULL) {
         smsg(_("Conversion failure for word in %s line %d: %s"),
              fname, lnum, rline);
@@ -3155,7 +3155,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
 
     // Convert from "SET" to 'encoding' when needed.
     if (spin->si_conv.vc_type != CONV_NONE) {
-      pc = string_convert(&spin->si_conv, line, NULL);
+      pc = (char_u *)string_convert(&spin->si_conv, (char *)line, NULL);
       if (pc == NULL) {
         smsg(_("Conversion failure for word in %s line %d: %s"),
              fname, lnum, line);
@@ -3701,7 +3701,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     // Convert from "/encoding={encoding}" to 'encoding' when needed.
     xfree(pc);
     if (spin->si_conv.vc_type != CONV_NONE) {
-      pc = string_convert(&spin->si_conv, rline, NULL);
+      pc = (char_u *)string_convert(&spin->si_conv, (char *)rline, NULL);
       if (pc == NULL) {
         smsg(_("Conversion failure for word in %s line %ld: %s"),
              fname, lnum, rline);
@@ -4907,7 +4907,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char *wfname)
   // of the code for the soundfolding stuff.
   // It might have been done already by spell_reload_one().
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (path_full_compare(wfname, (char *)slang->sl_fname, false, true)
+    if (path_full_compare(wfname, slang->sl_fname, false, true)
         == kEqualFiles) {
       break;
     }
@@ -5343,7 +5343,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
       emsg(_(e_exists));
       goto theend;
     }
-    if (os_isdir((char_u *)wfname)) {
+    if (os_isdir(wfname)) {
       semsg(_(e_isadir2), wfname);
       goto theend;
     }
@@ -5723,7 +5723,7 @@ static void init_spellfile(void)
                        "/%.*s", (int)(lend - lstart), lstart);
         }
         l = (int)STRLEN(buf);
-        fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)
+        fname = (char_u *)LANGP_ENTRY(curwin->w_s->b_langp, 0)
                 ->lp_slang->sl_fname;
         vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".%s.add",
                      ((fname != NULL

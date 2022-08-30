@@ -972,7 +972,7 @@ static void suggest_try_special(suginfo_T *su)
   char_u word[MAXWLEN];
 
   // Recognize a word that is repeated: "the the".
-  char_u *p = skiptowhite(su->su_fbadword);
+  char_u *p = (char_u *)skiptowhite((char *)su->su_fbadword);
   size_t len = (size_t)(p - su->su_fbadword);
   p = (char_u *)skipwhite((char *)p);
   if (STRLEN(p) == len && STRNCMP(su->su_fbadword, p, len) == 0) {
@@ -1369,8 +1369,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
           if (compound_ok) {
             p = preword;
-            while (*skiptowhite(p) != NUL) {
-              p = (char_u *)skipwhite((char *)skiptowhite(p));
+            while (*skiptowhite((char *)p) != NUL) {
+              p = (char_u *)skipwhite(skiptowhite((char *)p));
             }
             if (fword_ends && !can_compound(slang, p,
                                             compflags + sp->ts_compsplit)) {
@@ -1590,8 +1590,8 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
               break;
             }
             p = preword;
-            while (*skiptowhite(p) != NUL) {
-              p = (char_u *)skipwhite((char *)skiptowhite(p));
+            while (*skiptowhite((char *)p) != NUL) {
+              p = (char_u *)skipwhite(skiptowhite((char *)p));
             }
             if (sp->ts_complen > sp->ts_compsplit
                 && !can_compound(slang, p,
@@ -2636,8 +2636,8 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
     // removing the space.  Don't do it when the good word also contains a
     // space.
     if (ascii_iswhite(su->su_badptr[su->su_badlen])
-        && *skiptowhite(stp->st_word) == NUL) {
-      for (p = fword; *(p = skiptowhite(p)) != NUL;) {
+        && *skiptowhite((char *)stp->st_word) == NUL) {
+      for (p = fword; *(p = (char_u *)skiptowhite((char *)p)) != NUL;) {
         STRMOVE(p, p + 1);
       }
     }

@@ -2042,7 +2042,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
        || cmdidx == CMD_echomsg)
       && xp->xp_context == EXPAND_EXPRESSION) {
     for (;;) {
-      char *const n = (char *)skiptowhite((char_u *)arg);
+      char *const n = skiptowhite(arg);
 
       if (n == arg || ascii_iswhite_or_nul(*skipwhite(n))) {
         break;
@@ -2658,7 +2658,7 @@ static int eval5(char **arg, typval_T *rettv, int evaluate)
           tv_clear(&var2);
           return FAIL;
         }
-        p = (char *)concat_str((const char_u *)s1, (const char_u *)s2);
+        p = concat_str(s1, s2);
         tv_clear(rettv);
         rettv->v_type = VAR_STRING;
         rettv->vval.v_string = p;
@@ -7400,7 +7400,7 @@ hashtab_T *find_var_ht_dict(const char *name, const size_t name_len, const char 
         bool should_free;
         // should_free is ignored as script_sctx will be resolved to a fnmae
         // & new_script_item will consume it.
-        char *sc_name = (char *)get_scriptname(last_set, &should_free);
+        char *sc_name = get_scriptname(last_set, &should_free);
         new_script_item(sc_name, &current_sctx.sc_sid);
       }
     }
@@ -7527,9 +7527,9 @@ int var_item_copy(const vimconv_T *const conv, typval_T *const from, typval_T *c
     } else {
       to->v_type = VAR_STRING;
       to->v_lock = VAR_UNLOCKED;
-      if ((to->vval.v_string = (char *)string_convert((vimconv_T *)conv,
-                                                      (char_u *)from->vval.v_string,
-                                                      NULL))
+      if ((to->vval.v_string = string_convert((vimconv_T *)conv,
+                                              from->vval.v_string,
+                                              NULL))
           == NULL) {
         to->vval.v_string = xstrdup(from->vval.v_string);
       }
@@ -7980,7 +7980,7 @@ void option_last_set_msg(LastSet last_set)
 {
   if (last_set.script_ctx.sc_sid != 0) {
     bool should_free;
-    char *p = (char *)get_scriptname(last_set, &should_free);
+    char *p = get_scriptname(last_set, &should_free);
     verbose_enter();
     msg_puts(_("\n\tLast set from "));
     msg_puts(p);
@@ -8077,7 +8077,7 @@ repeat:
     }
 
     // Append a path separator to a directory.
-    if (os_isdir((char_u *)(*fnamep))) {
+    if (os_isdir(*fnamep)) {
       // Make room for one or two extra characters.
       *fnamep = xstrnsave(*fnamep, STRLEN(*fnamep) + 2);
       xfree(*bufp);          // free any allocated file name

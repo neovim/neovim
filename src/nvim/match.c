@@ -1183,7 +1183,7 @@ void ex_match(exarg_T *eap)
               && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4])))) {
     end = (char_u *)eap->arg + 4;
   } else {
-    p = skiptowhite((char_u *)eap->arg);
+    p = (char_u *)skiptowhite(eap->arg);
     if (!eap->skip) {
       g = vim_strnsave((char_u *)eap->arg, (size_t)(p - (char_u *)eap->arg));
     }

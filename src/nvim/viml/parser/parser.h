@@ -142,9 +142,7 @@ static inline void viml_preader_get_line(ParserInputReader *const preader,
       .allocated = true,
       .size = pline.size,
     };
-    cpline.data = (char *)string_convert(&preader->conv,
-                                         (char_u *)pline.data,
-                                         &cpline.size);
+    cpline.data = string_convert(&preader->conv, (char *)pline.data, &cpline.size);
     if (pline.allocated) {
       xfree((void *)pline.data);
     }

@@ -1695,7 +1695,7 @@ static void digraph_header(const char *msg)
   if (msg_col > 0) {
     msg_putchar('\n');
   }
-  msg_outtrans_attr((const char_u *)msg, HL_ATTR(HLF_CM));
+  msg_outtrans_attr(msg, HL_ATTR(HLF_CM));
   msg_putchar('\n');
 }
 
@@ -1856,7 +1856,7 @@ static void printdigraph(const digr_T *dp, result_T *previous)
     p += utf_char2bytes(dp->result, (char *)p);
 
     *p = NUL;
-    msg_outtrans_attr(buf, HL_ATTR(HLF_8));
+    msg_outtrans_attr((char *)buf, HL_ATTR(HLF_8));
     p = buf;
     if (char2cells(dp->result) == 1) {
       *p++ = ' ';
@@ -2096,10 +2096,10 @@ void ex_loadkeymap(exarg_T *eap)
 
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
-      s = skiptowhite(p);
+      s = (char_u *)skiptowhite((char *)p);
       kp->from = vim_strnsave(p, (size_t)(s - p));
       p = (char_u *)skipwhite((char *)s);
-      s = skiptowhite(p);
+      s = (char_u *)skiptowhite((char *)p);
       kp->to = vim_strnsave(p, (size_t)(s - p));
 
       if ((STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)

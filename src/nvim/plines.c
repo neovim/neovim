@@ -262,7 +262,7 @@ int linetabsize_col(int startcol, char *s)
     cts.cts_vcol += lbr_chartabsize_adv(&cts);
   }
   clear_chartabsize_arg(&cts);
-  return (int)cts.cts_vcol;
+  return cts.cts_vcol;
 }
 
 /// Like linetabsize(), but for a given window instead of the current one.
@@ -530,7 +530,7 @@ static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp)
                            wp->w_buffer->b_p_ts,
                            wp->w_buffer->b_p_vts_array);
   }
-  n = ptr2cells((char *)s);
+  n = ptr2cells(s);
 
   // Add one cell for a double-width character in the last column of the
   // window, displayed with a ">".

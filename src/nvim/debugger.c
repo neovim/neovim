@@ -718,9 +718,9 @@ void ex_breaklist(exarg_T *eap)
 /// @param file  true for a file, false for a function
 /// @param fname  file or function name
 /// @param after  after this line number
-linenr_T dbg_find_breakpoint(bool file, char_u *fname, linenr_T after)
+linenr_T dbg_find_breakpoint(bool file, char *fname, linenr_T after)
 {
-  return debuggy_find(file, fname, after, &dbg_breakp, NULL);
+  return debuggy_find(file, (char_u *)fname, after, &dbg_breakp, NULL);
 }
 
 /// @param file     true for a file, false for a function
@@ -728,9 +728,9 @@ linenr_T dbg_find_breakpoint(bool file, char_u *fname, linenr_T after)
 /// @param fp[out]  forceit
 ///
 /// @returns true if profiling is on for a function or sourced file.
-bool has_profiling(bool file, char_u *fname, bool *fp)
+bool has_profiling(bool file, char *fname, bool *fp)
 {
-  return debuggy_find(file, fname, (linenr_T)0, &prof_ga, fp)
+  return debuggy_find(file, (char_u *)fname, (linenr_T)0, &prof_ga, fp)
          != (linenr_T)0;
 }
 
@@ -825,9 +825,9 @@ static linenr_T debuggy_find(bool file, char_u *fname, linenr_T after, garray_T 
 }
 
 /// Called when a breakpoint was encountered.
-void dbg_breakpoint(char_u *name, linenr_T lnum)
+void dbg_breakpoint(char *name, linenr_T lnum)
 {
   // We need to check if this line is actually executed in do_one_cmd()
-  debug_breakpoint_name = name;
+  debug_breakpoint_name = (char_u *)name;
   debug_breakpoint_lnum = lnum;
 }

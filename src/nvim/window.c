@@ -730,7 +730,7 @@ void win_set_minimal_style(win_T *wp)
     char_u *old = (char_u *)wp->w_p_fcs;
     wp->w_p_fcs = ((*old == NUL)
                    ? xstrdup("eob: ")
-                   : (char *)concat_str(old, (char_u *)",eob: "));
+                   : concat_str((char *)old, ",eob: "));
     free_string_option((char *)old);
   }
 
@@ -739,7 +739,7 @@ void win_set_minimal_style(win_T *wp)
   char_u *old = (char_u *)wp->w_p_winhl;
   wp->w_p_winhl = ((*old == NUL)
                    ? xstrdup("EndOfBuffer:")
-                   : (char *)concat_str(old, (char_u *)",EndOfBuffer:"));
+                   : concat_str((char *)old, ",EndOfBuffer:"));
   free_string_option((char *)old);
   parse_winhl_opt(wp);
 

@@ -265,7 +265,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
   // Print the rest of the message. We know there is no special
   // character because strpbrk returned NULL
   if (*s != NUL) {
-    msg_outtrans_attr((char_u *)s, attr);
+    msg_outtrans_attr(s, attr);
   }
 }
 
@@ -325,7 +325,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
 
   // Add message to history (unless it's a repeated kept message or a
   // truncated message)
-  if ((const char_u *)s != keep_msg
+  if (s != keep_msg
       || (*s != '<'
           && last_msg_hist != NULL
           && last_msg_hist->msg != NULL
@@ -344,7 +344,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   if (multiline) {
     msg_multiline_attr(s, attr, false, &need_clear);
   } else {
-    msg_outtrans_attr((char_u *)s, attr);
+    msg_outtrans_attr(s, attr);
   }
   if (need_clear) {
     msg_clr_eos();
@@ -1307,7 +1307,7 @@ void wait_return(int redraw)
   emsg_on_display = false;      // can delete error message now
   lines_left = -1;              // reset lines_left at next msg_start()
   reset_last_sourcing();
-  if (keep_msg != NULL && vim_strsize((char *)keep_msg) >=
+  if (keep_msg != NULL && vim_strsize(keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
     XFREE_CLEAR(keep_msg);          // don't redisplay message, it's too long
   }
@@ -1350,7 +1350,7 @@ void set_keep_msg(char *s, int attr)
 {
   xfree(keep_msg);
   if (s != NULL && msg_silent == 0) {
-    keep_msg = vim_strsave((char_u *)s);
+    keep_msg = xstrdup(s);
   } else {
     keep_msg = NULL;
   }
@@ -1510,7 +1510,7 @@ void msg_home_replace_hl(char_u *fname)
 static void msg_home_replace_attr(char_u *fname, int attr)
 {
   char *name = home_replace_save(NULL, (char *)fname);
-  msg_outtrans_attr((char_u *)name, attr);
+  msg_outtrans_attr(name, attr);
   xfree(name);
 }
 
@@ -1521,29 +1521,29 @@ static void msg_home_replace_attr(char_u *fname, int attr)
 /// @return  the number of characters it takes on the screen.
 int msg_outtrans(char *str)
 {
-  return msg_outtrans_attr((char_u *)str, 0);
+  return msg_outtrans_attr(str, 0);
 }
 
-int msg_outtrans_attr(const char_u *str, int attr)
+int msg_outtrans_attr(const char *str, int attr)
 {
-  return msg_outtrans_len_attr(str, (int)STRLEN(str), attr);
+  return msg_outtrans_len_attr((char_u *)str, (int)STRLEN(str), attr);
 }
 
-int msg_outtrans_len(const char_u *str, int len)
+int msg_outtrans_len(const char *str, int len)
 {
-  return msg_outtrans_len_attr(str, len, 0);
+  return msg_outtrans_len_attr((char_u *)str, len, 0);
 }
 
 /// Output one character at "p".
 /// Handles multi-byte characters.
 ///
 /// @return  pointer to the next character.
-char_u *msg_outtrans_one(char_u *p, int attr)
+char *msg_outtrans_one(char *p, int attr)
 {
   int l;
 
-  if ((l = utfc_ptr2len((char *)p)) > 1) {
-    msg_outtrans_len_attr(p, l, attr);
+  if ((l = utfc_ptr2len(p)) > 1) {
+    msg_outtrans_len_attr((char_u *)p, l, attr);
     return p + l;
   }
   msg_puts_attr((const char *)transchar_byte(*p), attr);
@@ -1628,12 +1628,13 @@ int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
   return retval;
 }
 
-void msg_make(char_u *arg)
+void msg_make(char *arg)
 {
   int i;
-  static char_u *str = (char_u *)"eeffoc", *rs = (char_u *)"Plon#dqg#vxjduB";
+  static char *str = "eeffoc";
+  static char *rs = "Plon#dqg#vxjduB";
 
-  arg = (char_u *)skipwhite((char *)arg);
+  arg = skipwhite(arg);
   for (i = 5; *arg && i >= 0; i--) {
     if (*arg++ != str[i]) {
       break;
@@ -1976,13 +1977,13 @@ void msg_prt_line(char_u *s, int list)
 /// Use grid_puts() to output one multi-byte character.
 ///
 /// @return  the pointer "s" advanced to the next character.
-static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
+static char *screen_puts_mbyte(char *s, int l, int attr)
 {
   int cw;
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), attr);
 
   msg_didout = true;            // remember that line is not empty
-  cw = utf_ptr2cells((char *)s);
+  cw = utf_ptr2cells(s);
   if (cw > 1
       && (cmdmsg_rl ? msg_col <= 1 : msg_col == Columns - 1)) {
     // Doesn't fit, print a highlighted '>' to fill it up.
@@ -1990,7 +1991,7 @@ static char_u *screen_puts_mbyte(char_u *s, int l, int attr)
     return s;
   }
 
-  grid_puts_len(&msg_grid_adj, (char *)s, l, msg_row, msg_col, attr);
+  grid_puts_len(&msg_grid_adj, s, l, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
@@ -2197,7 +2198,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
       // ourselves).
       if (t_col > 0) {
         // output postponed text
-        t_puts(&t_col, t_s, s, attr);
+        t_puts(&t_col, (char *)t_s, (char *)s, attr);
       }
 
       // When no more prompt and no more room, truncate here
@@ -2222,7 +2223,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
         } else {
           l = utfc_ptr2len((char *)s);
         }
-        s = screen_puts_mbyte((char_u *)s, l, attr);
+        s = (char_u *)screen_puts_mbyte((char *)s, l, attr);
         did_last_char = true;
       } else {
         did_last_char = false;
@@ -2281,7 +2282,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
     if (t_col > 0 && (wrap || *s == '\r' || *s == '\b'
                       || *s == '\t' || *s == BELL)) {
       // Output any postponed text.
-      t_puts(&t_col, t_s, s, attr);
+      t_puts(&t_col, (char *)t_s, (char *)s, attr);
     }
 
     if (wrap && p_more && !recurse) {
@@ -2324,7 +2325,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
       // characters and draw them all at once later.
       if (cmdmsg_rl || (cw > 1 && msg_col + t_col >= Columns - 1)) {
         if (l > 1) {
-          s = screen_puts_mbyte((char_u *)s, l, attr) - 1;
+          s = (char_u *)screen_puts_mbyte((char *)s, l, attr) - 1;
         } else {
           msg_screen_putchar(*s, attr);
         }
@@ -2342,7 +2343,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr, int recurs
 
   // Output any postponed text.
   if (t_col > 0) {
-    t_puts(&t_col, t_s, s, attr);
+    t_puts(&t_col, (char *)t_s, (char *)s, attr);
   }
   if (p_more && !recurse) {
     store_sb_text((char **)&sb_str, (char *)s, attr, &sb_col, false);
@@ -2698,7 +2699,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
 }
 
 /// Output any postponed text for msg_puts_attr_len().
-static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
+static void t_puts(int *t_col, const char *t_s, const char *s, int attr)
 {
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), attr);
   // Output postponed text.
@@ -2708,7 +2709,7 @@ static void t_puts(int *t_col, const char_u *t_s, const char_u *s, int attr)
   *t_col = 0;
   // If the string starts with a composing character don't increment the
   // column position for it.
-  if (utf_iscomposing(utf_ptr2char((char *)t_s))) {
+  if (utf_iscomposing(utf_ptr2char(t_s))) {
     msg_col--;
   }
   if (msg_col >= Columns) {

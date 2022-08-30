@@ -1157,7 +1157,7 @@ char *skipwhite(const char *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
-  return (char *)skipwhite_len((char_u *)p, STRLEN(p));
+  return skipwhite_len(p, STRLEN(p));
 }
 
 /// Like `skipwhite`, but skip up to `len` characters.
@@ -1168,27 +1168,27 @@ char *skipwhite(const char *const p)
 ///
 /// @return Pointer to character after the skipped whitespace, or the `len`-th
 ///         character in the string.
-char_u *skipwhite_len(const char_u *p, size_t len)
+char *skipwhite_len(const char *p, size_t len)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
   for (; len > 0 && ascii_iswhite(*p); len--) {
     p++;
   }
-  return (char_u *)p;
+  return (char *)p;
 }
 
 // getwhitecols: return the number of whitespace
 // columns (bytes) at the start of a given line
 intptr_t getwhitecols_curline(void)
 {
-  return getwhitecols(get_cursor_line_ptr());
+  return getwhitecols((char *)get_cursor_line_ptr());
 }
 
-intptr_t getwhitecols(const char_u *p)
+intptr_t getwhitecols(const char *p)
   FUNC_ATTR_PURE
 {
-  return (char_u *)skipwhite((char *)p) - p;
+  return skipwhite(p) - p;
 }
 
 /// Skip over digits
@@ -1232,10 +1232,10 @@ const char *skipbin(const char *q)
 ///
 /// @return Pointer to the character after the skipped digits and hex
 ///         characters.
-char_u *skiphex(char_u *q)
+char *skiphex(char *q)
   FUNC_ATTR_PURE
 {
-  char_u *p = q;
+  char *p = q;
   while (ascii_isxdigit(*p)) {
     // skip to next non-digit
     p++;
@@ -1248,10 +1248,10 @@ char_u *skiphex(char_u *q)
 /// @param q
 ///
 /// @return Pointer to the digit or (NUL after the string).
-char_u *skiptodigit(char_u *q)
+char *skiptodigit(char *q)
   FUNC_ATTR_PURE
 {
-  char_u *p = q;
+  char *p = q;
   while (*p != NUL && !ascii_isdigit(*p)) {
     // skip to next digit
     p++;
@@ -1282,10 +1282,10 @@ const char *skiptobin(const char *q)
 /// @param q
 ///
 /// @return Pointer to the hex character or (NUL after the string).
-char_u *skiptohex(char_u *q)
+char *skiptohex(char *q)
   FUNC_ATTR_PURE
 {
-  char_u *p = q;
+  char *p = q;
   while (*p != NUL && !ascii_isxdigit(*p)) {
     // skip to next digit
     p++;
@@ -1298,13 +1298,13 @@ char_u *skiptohex(char_u *q)
 /// @param[in]  p  Text to skip over.
 ///
 /// @return Pointer to the next whitespace or NUL character.
-char_u *skiptowhite(const char_u *p)
+char *skiptowhite(const char *p)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     p++;
   }
-  return (char_u *)p;
+  return (char *)p;
 }
 
 /// skiptowhite_esc: Like skiptowhite(), but also skip escaped chars
@@ -1329,11 +1329,11 @@ char *skiptowhite_esc(char *p)
 /// @param[in]  p  Text to skip over.
 ///
 /// @return Pointer to the next '\n' or NUL character.
-char_u *skip_to_newline(const char_u *const p)
+char *skip_to_newline(const char *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
-  return (char_u *)xstrchrnul((const char *)p, NL);
+  return xstrchrnul(p, NL);
 }
 
 /// Gets a number from a string and skips over it, signalling overflow.
@@ -1422,10 +1422,10 @@ int32_t getdigits_int32(char **pp, bool strict, long def)
 /// Check that "lbuf" is empty or only contains blanks.
 ///
 /// @param  lbuf  line buffer to check
-bool vim_isblankline(char_u *lbuf)
+bool vim_isblankline(char *lbuf)
   FUNC_ATTR_PURE
 {
-  char_u *p = (char_u *)skipwhite((char *)lbuf);
+  char *p = skipwhite(lbuf);
   return *p == NUL || *p == '\r' || *p == '\n';
 }
 
@@ -1664,8 +1664,9 @@ int hex2nr(int c)
 }
 
 /// Convert two hex characters to a byte.
-/// Return -1 if one of the characters is not hex.
-int hexhex2nr(const char_u *p)
+///
+/// @return  -1 if one of the characters is not hex.
+int hexhex2nr(const char *p)
   FUNC_ATTR_PURE
 {
   if (!ascii_isxdigit(p[0]) || !ascii_isxdigit(p[1])) {
@@ -1707,10 +1708,10 @@ bool rem_backslash(const char *str)
 /// Halve the number of backslashes in a file name argument.
 ///
 /// @param p
-void backslash_halve(char_u *p)
+void backslash_halve(char *p)
 {
   for (; *p; p++) {
-    if (rem_backslash((char *)p)) {
+    if (rem_backslash(p)) {
       STRMOVE(p, p + 1);
     }
   }
@@ -1721,11 +1722,11 @@ void backslash_halve(char_u *p)
 /// @param p
 ///
 /// @return String with the number of backslashes halved.
-char_u *backslash_halve_save(const char_u *p)
+char *backslash_halve_save(const char *p)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   // TODO(philix): simplify and improve backslash_halve_save algorithm
-  char_u *res = vim_strsave(p);
+  char *res = xstrdup(p);
   backslash_halve(res);
   return res;
 }

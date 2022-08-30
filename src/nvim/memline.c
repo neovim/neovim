@@ -857,7 +857,7 @@ void ml_recover(bool checkext)
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
     msg_puts_attr(_("Unable to read block 0 from "), attr | MSG_HIST);
-    msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
+    msg_outtrans_attr((char *)mfp->mf_fname, attr | MSG_HIST);
     msg_puts_attr(_("\nMaybe no changes were made or Vim did not update the swap file."),
                   attr | MSG_HIST);
     msg_end();
@@ -866,7 +866,7 @@ void ml_recover(bool checkext)
   b0p = hp->bh_data;
   if (STRNCMP(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
-    msg_outtrans_attr(mfp->mf_fname, MSG_HIST);
+    msg_outtrans_attr((char *)mfp->mf_fname, MSG_HIST);
     msg_puts_attr(_(" cannot be used with this version of Vim.\n"),
                   MSG_HIST);
     msg_puts_attr(_("Use Vim version 3.0.\n"), MSG_HIST);
@@ -879,7 +879,7 @@ void ml_recover(bool checkext)
   }
   if (b0_magic_wrong(b0p)) {
     msg_start();
-    msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
+    msg_outtrans_attr((char *)mfp->mf_fname, attr | MSG_HIST);
     msg_puts_attr(_(" cannot be used on this computer.\n"),
                   attr | MSG_HIST);
     msg_puts_attr(_("The file was created on "), attr | MSG_HIST);
@@ -901,7 +901,7 @@ void ml_recover(bool checkext)
     mf_new_page_size(mfp, (unsigned)char_to_long(b0p->b0_page_size));
     if (mfp->mf_page_size < previous_page_size) {
       msg_start();
-      msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
+      msg_outtrans_attr((char *)mfp->mf_fname, attr | MSG_HIST);
       msg_puts_attr(_(" has been damaged (page size is smaller than minimum value).\n"),
                     attr | MSG_HIST);
       msg_end();
@@ -3614,7 +3614,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
     fname[n - 1]--;                     // ".swo", ".swn", etc.
   }
 
-  if (os_isdir((char_u *)dir_name)) {
+  if (os_isdir(dir_name)) {
     *found_existing_dir = true;
   } else if (!*found_existing_dir && **dirp == NUL) {
     int ret;

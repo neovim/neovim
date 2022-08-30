@@ -188,7 +188,7 @@ void ex_language(exarg_T *eap)
   // Check for "messages {name}", "ctype {name}" or "time {name}" argument.
   // Allow abbreviation, but require at least 3 characters to avoid
   // confusion with a two letter language name "me" or "ct".
-  p = (char *)skiptowhite((char_u *)eap->arg);
+  p = skiptowhite(eap->arg);
   if ((*p == NUL || ascii_iswhite(*p)) && p - eap->arg >= 3) {
     if (STRNICMP(eap->arg, "messages", p - eap->arg) == 0) {
       what = VIM_LC_MESSAGES;

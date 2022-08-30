@@ -81,7 +81,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
   // The marker is the next word.
   if (*cmd != NUL && *cmd != '"') {
     marker = skipwhite(cmd);
-    p = (char *)skiptowhite((char_u *)marker);
+    p = skiptowhite(marker);
     if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
       semsg(_(e_trailing_arg), p);
       return NULL;
@@ -587,7 +587,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           char *s = vim_getenv(name);
 
           if (s != NULL) {
-            tofree = (char *)concat_str((const char_u *)s, (const char_u *)p);
+            tofree = concat_str(s, p);
             p = (const char *)tofree;
             xfree(s);
           }
@@ -663,8 +663,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
           } else if (opt_type == gov_string && stringval != NULL && s != NULL) {
             // string
             char *const oldstringval = stringval;
-            stringval = (char *)concat_str((const char_u *)stringval,
-                                           (const char_u *)s);
+            stringval = concat_str(stringval, s);
             xfree(oldstringval);
             s = stringval;
           }
@@ -705,7 +704,7 @@ static char *ex_let_one(char *arg, typval_T *const tv, const bool copy, const bo
       if (p != NULL && op != NULL && *op == '.') {
         s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
         if (s != NULL) {
-          ptofree = (char *)concat_str((char_u *)s, (const char_u *)p);
+          ptofree = concat_str(s, p);
           p = (const char *)ptofree;
           xfree(s);
         }

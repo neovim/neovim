@@ -799,7 +799,7 @@ retry:
 
   // Convert a line if it contains a non-ASCII character
   if (state->vc.vc_type != CONV_NONE && has_non_ascii((char_u *)state->linebuf)) {
-    char *line = (char *)string_convert(&state->vc, (char_u *)state->linebuf, &state->linelen);
+    char *line = string_convert(&state->vc, state->linebuf, &state->linelen);
     if (line != NULL) {
       if (state->linelen < IOSIZE) {
         STRLCPY(state->linebuf, line, state->linelen + 1);
@@ -2129,7 +2129,7 @@ static char *qf_push_dir(char *dirbuf, struct dir_stack_T **stackptr, bool is_fi
     while (ds_new) {
       xfree((*stackptr)->dirname);
       (*stackptr)->dirname = concat_fnames(ds_new->dirname, dirbuf, true);
-      if (os_isdir((char_u *)(*stackptr)->dirname)) {
+      if (os_isdir((*stackptr)->dirname)) {
         break;
       }
 
@@ -3054,7 +3054,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
 
   msg_putchar('\n');
-  msg_outtrans_attr(IObuff, cursel ? HL_ATTR(HLF_QFL) : qfFileAttr);
+  msg_outtrans_attr((char *)IObuff, cursel ? HL_ATTR(HLF_QFL) : qfFileAttr);
 
   if (qfp->qf_lnum != 0) {
     msg_puts_attr(":", qfSepAttr);

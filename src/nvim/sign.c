@@ -858,7 +858,7 @@ static void sign_define_init_icon(sign_T *sp, char_u *icon)
 {
   xfree(sp->sn_icon);
   sp->sn_icon = vim_strsave(icon);
-  backslash_halve(sp->sn_icon);
+  backslash_halve((char *)sp->sn_icon);
 }
 
 /// Initialize the text for a new sign
@@ -1353,7 +1353,7 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
     if (STRNCMP(arg, "line=", 5) == 0) {
       arg += 5;
       *lnum = atoi((char *)arg);
-      arg = skiptowhite(arg);
+      arg = (char_u *)skiptowhite((char *)arg);
       lnum_arg = true;
     } else if (STRNCMP(arg, "*", 1) == 0 && cmd == SIGNCMD_UNPLACE) {
       if (*signid != -1) {
@@ -1361,11 +1361,11 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
         return FAIL;
       }
       *signid = -2;
-      arg = skiptowhite(arg + 1);
+      arg = (char_u *)skiptowhite((char *)arg + 1);
     } else if (STRNCMP(arg, "name=", 5) == 0) {
       arg += 5;
       name = arg;
-      arg = skiptowhite(arg);
+      arg = (char_u *)skiptowhite((char *)arg);
       if (*arg != NUL) {
         *arg++ = NUL;
       }
@@ -1376,14 +1376,14 @@ static int parse_sign_cmd_args(int cmd, char_u *arg, char_u **sign_name, int *si
     } else if (STRNCMP(arg, "group=", 6) == 0) {
       arg += 6;
       *group = arg;
-      arg = skiptowhite(arg);
+      arg = (char_u *)skiptowhite((char *)arg);
       if (*arg != NUL) {
         *arg++ = NUL;
       }
     } else if (STRNCMP(arg, "priority=", 9) == 0) {
       arg += 9;
       *prio = atoi((char *)arg);
-      arg = skiptowhite(arg);
+      arg = (char_u *)skiptowhite((char *)arg);
     } else if (STRNCMP(arg, "file=", 5) == 0) {
       arg += 5;
       filename = arg;
@@ -1427,7 +1427,7 @@ void ex_sign(exarg_T *eap)
   sign_T *sp;
 
   // Parse the subcommand.
-  p = skiptowhite(arg);
+  p = (char_u *)skiptowhite((char *)arg);
   idx = sign_cmd_idx(arg, p);
   if (idx == SIGNCMD_LAST) {
     semsg(_("E160: Unknown sign command: %s"), arg);
@@ -1449,7 +1449,7 @@ void ex_sign(exarg_T *eap)
 
       // Isolate the sign name.  If it's a number skip leading zeroes,
       // so that "099" and "99" are the same sign.  But keep "0".
-      p = skiptowhite(arg);
+      p = (char_u *)skiptowhite((char *)arg);
       if (*p != NUL) {
         *p++ = NUL;
       }
@@ -1789,7 +1789,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   expand_what = EXP_SUBCMD;
   xp->xp_pattern = (char *)arg;
 
-  end_subcmd = skiptowhite(arg);
+  end_subcmd = (char_u *)skiptowhite((char *)arg);
   if (*end_subcmd == NUL) {
     // expand subcmd name
     // :sign {subcmd}<CTRL-D>
@@ -1814,7 +1814,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   do {
     p = (char_u *)skipwhite((char *)p);
     last = p;
-    p = skiptowhite(p);
+    p = (char_u *)skiptowhite((char *)p);
   } while (*p != NUL);
 
   p = (char_u *)vim_strchr((char *)last, '=');

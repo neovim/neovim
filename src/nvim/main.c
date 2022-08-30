@@ -1342,8 +1342,8 @@ scripterror:
       ga_grow(&global_alist.al_ga, 1);
       char *p = xstrdup(argv[0]);
 
-      if (parmp->diff_mode && os_isdir((char_u *)p) && GARGCOUNT > 0
-          && !os_isdir((char_u *)alist_name(&GARGLIST[0]))) {
+      if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
+          && !os_isdir(alist_name(&GARGLIST[0]))) {
         char *r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), true);
         xfree(p);
         p = r;

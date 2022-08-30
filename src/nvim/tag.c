@@ -738,7 +738,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
                  mt_names[matches[i][0] & MT_MASK]);
     msg_puts((char *)IObuff);
     if (tagp.tagkind != NULL) {
-      msg_outtrans_len(tagp.tagkind,
+      msg_outtrans_len((char *)tagp.tagkind,
                        (int)(tagp.tagkind_end - tagp.tagkind));
     }
     msg_advance(13);
@@ -752,7 +752,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
     // it and put "..." in the middle
     p = tag_full_fname(&tagp);
     if (p != NULL) {
-      msg_outtrans_attr(p, HL_ATTR(HLF_D));
+      msg_outtrans_attr((char *)p, HL_ATTR(HLF_D));
       XFREE_CLEAR(p);
     }
     if (msg_col > 0) {
@@ -794,7 +794,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
             }
             msg_advance(15);
           }
-          p = msg_outtrans_one(p, attr);
+          p = (char_u *)msg_outtrans_one((char *)p, attr);
           if (*p == TAB) {
             msg_puts_attr(" ", attr);
             break;
@@ -852,7 +852,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
         msg_putchar(' ');
         p++;
       } else {
-        p = msg_outtrans_one(p, 0);
+        p = (char_u *)msg_outtrans_one((char *)p, 0);
       }
 
       // don't display the "$/;\"" and "$?;\""
@@ -1052,7 +1052,7 @@ void do_tags(exarg_T *eap)
                    tagstack[i].tagname,
                    tagstack[i].fmark.mark.lnum);
       msg_outtrans((char *)IObuff);
-      msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
+      msg_outtrans_attr((char *)name, tagstack[i].fmark.fnum == curbuf->b_fnum
                         ? HL_ATTR(HLF_D) : 0);
       xfree(name);
     }
@@ -1561,7 +1561,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
 
     // Try tag file names from tags option one by one.
     for (first_file = true;
-         use_cscope || get_tagfname(&tn, first_file, tag_fname) == OK;
+         use_cscope || get_tagfname(&tn, first_file, (char *)tag_fname) == OK;
          first_file = false) {
       // A file that doesn't exist is silently ignored.  Only when not a
       // single file is found, an error message is given (further on).
@@ -1705,7 +1705,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
             eof = vim_fgets(lbuf, lbuf_size, fp);
           }
           // skip empty and blank lines
-          while (!eof && vim_isblankline(lbuf)) {
+          while (!eof && vim_isblankline((char *)lbuf)) {
             search_info.curr_offset = vim_ftell(fp);
             eof = vim_fgets(lbuf, lbuf_size, fp);
           }
@@ -1726,7 +1726,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
             eof = use_cscope
               ? cs_fgets(lbuf, lbuf_size)
               : vim_fgets(lbuf, lbuf_size, fp);
-          } while (!eof && vim_isblankline(lbuf));
+          } while (!eof && vim_isblankline((char *)lbuf));
 
           if (eof) {
             break;                                  // end of file
@@ -1741,7 +1741,7 @@ line_read_in:
           // Convert every line.  Converting the pattern from 'enc' to
           // the tags file encoding doesn't work, because characters are
           // not recognized.
-          conv_line = string_convert(&vimconv, lbuf, NULL);
+          conv_line = (char_u *)string_convert(&vimconv, (char *)lbuf, NULL);
           if (conv_line != NULL) {
             // Copy or swap lbuf and conv_line.
             len = (int)STRLEN(conv_line) + 1;
@@ -2340,10 +2340,10 @@ void free_tag_stuff(void)
 /// @param buf  pointer to buffer of MAXPATHL chars
 ///
 /// @return  FAIL if no more tag file names, OK otherwise.
-int get_tagfname(tagname_T *tnp, int first, char_u *buf)
+int get_tagfname(tagname_T *tnp, int first, char *buf)
 {
-  char_u *fname = NULL;
-  char_u *r_ptr;
+  char *fname = NULL;
+  char *r_ptr;
 
   if (first) {
     CLEAR_POINTER(tnp);
@@ -2374,7 +2374,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
 #ifdef BACKSLASH_IN_FILENAME
       slash_adjust(buf);
 #endif
-      simplify_filename(buf);
+      simplify_filename((char_u *)buf);
 
       for (int i = 0; i < tag_fnames.ga_len; i++) {
         if (STRCMP(buf, ((char **)(tag_fnames.ga_data))[i]) == 0) {
@@ -2402,7 +2402,7 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
    */
   for (;;) {
     if (tnp->tn_did_filefind_init) {
-      fname = vim_findfile(tnp->tn_search_ctx);
+      fname = (char *)vim_findfile(tnp->tn_search_ctx);
       if (fname != NULL) {
         break;
       }
@@ -2422,17 +2422,17 @@ int get_tagfname(tagname_T *tnp, int first, char_u *buf)
        * Copy next file name into buf.
        */
       buf[0] = NUL;
-      (void)copy_option_part(&tnp->tn_np, (char *)buf, MAXPATHL - 1, " ,");
+      (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
 
-      r_ptr = vim_findfile_stopdir(buf);
+      r_ptr = (char *)vim_findfile_stopdir((char_u *)buf);
       // move the filename one char forward and truncate the
       // filepath with a NUL
-      filename = (char_u *)path_tail((char *)buf);
+      filename = (char_u *)path_tail(buf);
       STRMOVE(filename + 1, filename);
       *filename++ = NUL;
 
-      tnp->tn_search_ctx = vim_findfile_init(buf, filename,
-                                             r_ptr, 100,
+      tnp->tn_search_ctx = vim_findfile_init((char_u *)buf, filename,
+                                             (char_u *)r_ptr, 100,
                                              false,                   // don't free visited list
                                              FINDFILE_FILE,           // we search for a file
                                              tnp->tn_search_ctx, true, (char_u *)curbuf->b_ffname);
