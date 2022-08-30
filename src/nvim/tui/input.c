@@ -398,6 +398,14 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     button = last_pressed_button;
   }
 
+  if (ev == TERMKEY_MOUSE_UNKNOWN && !(key->code.mouse[0] & 0x20)) {
+    int code = key->code.mouse[0] & ~0x3c;
+    if (code == 66 || code == 67) {
+      ev = TERMKEY_MOUSE_PRESS;
+      button = code - 60;
+    }
+  }
+
   if (button == 0 || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
                       && ev != TERMKEY_MOUSE_RELEASE)) {
     return;
@@ -431,8 +439,11 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     if (button == 4) {
       len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelUp");
     } else if (button == 5) {
-      len += (size_t)snprintf(buf + len, sizeof(buf) - len,
-                              "ScrollWheelDown");
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelDown");
+    } else if (button == 6) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelLeft");
+    } else if (button == 7) {
+      len += (size_t)snprintf(buf + len, sizeof(buf) - len, "ScrollWheelRight");
     } else {
       len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Mouse");
       last_pressed_button = button;
