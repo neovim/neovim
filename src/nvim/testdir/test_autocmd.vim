@@ -1836,6 +1836,21 @@ func Test_BufReadCmd()
   au! BufWriteCmd
 endfunc
 
+func Test_BufWriteCmd()
+  autocmd BufWriteCmd Xbufwritecmd let g:written = 1
+  new
+  file Xbufwritecmd
+  set buftype=acwrite
+  call mkdir('Xbufwritecmd')
+  write
+  " BufWriteCmd should be triggered even if a directory has the same name
+  call assert_equal(1, g:written)
+  call delete('Xbufwritecmd', 'd')
+  unlet g:written
+  au! BufWriteCmd
+  bwipe!
+endfunc
+
 func SetChangeMarks(start, end)
   exe a:start .. 'mark ['
   exe a:end .. 'mark ]'
