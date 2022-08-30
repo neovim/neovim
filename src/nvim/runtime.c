@@ -165,7 +165,6 @@ char *estack_sfile(estack_arg_T which)
         // it is used in <slnum>.  Also leave it out when the number is
         // not set.
         vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s%s",
-
                      type_name, entry->es_name, dots);
       } else {
         vim_snprintf((char *)ga.ga_data + ga.ga_len, len, "%s%s[%" PRIdLINENR "]%s",
