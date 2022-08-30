@@ -209,6 +209,7 @@ let s:filename_checks = {
     \ 'gdmo': ['file.mo', 'file.gdmo'],
     \ 'gdresource': ['file.tscn', 'file.tres'],
     \ 'gdscript': ['file.gd'],
+    \ 'gdshader': ['file.gdshader', 'file.shader'],
     \ 'gedcom': ['file.ged', 'lltxxxxx.txt', '/tmp/lltmp', '/tmp/lltmp-file', 'any/tmp/lltmp', 'any/tmp/lltmp-file'],
     \ 'gemtext': ['file.gmi', 'file.gemini'],
     \ 'gift': ['file.gift'],

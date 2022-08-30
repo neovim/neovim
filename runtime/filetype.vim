@@ -697,7 +697,10 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 au BufNewFile,BufRead *.gd			setf gdscript
 
 " Godot resource
-au BufRead,BufNewFile *.tscn,*.tres			setf gdresource
+au BufRead,BufNewFile *.tscn,*.tres		setf gdresource
+
+" Godot shader
+au BufRead,BufNewFile *.gdshader,*.shader	setf gdshader
 
 " Gedcom
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
