@@ -697,7 +697,10 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 au BufNewFile,BufRead *.gd			setf gdscript
 
 " Godot resource
-au BufRead,BufNewFile *.tscn,*.tres			setf gdresource
+au BufRead,BufNewFile *.tscn,*.tres		setf gdresource
+
+" Godot shader
+au BufRead,BufNewFile *.gdshader,*.shader	setf gdshader
 
 " Gedcom
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
@@ -2094,6 +2097,11 @@ au BufNewFile,BufRead */.config/upstart/*.override	       setf upstart
 
 " Vala
 au BufNewFile,BufRead *.vala			setf vala
+
+" VDM
+au BufRead,BufNewFile *.vdmpp,*.vpp		setf vdmpp
+au BufRead,BufNewFile *.vdmrt			setf vdmrt
+au BufRead,BufNewFile *.vdmsl,*.vdm		setf vdmsl
 
 " Vera
 au BufNewFile,BufRead *.vr,*.vri,*.vrh		setf vera
