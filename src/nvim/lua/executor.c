@@ -7,6 +7,7 @@
 #include <tree_sitter/api.h>
 
 #include "luv/luv.h"
+#include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -40,6 +41,9 @@
 #include "nvim/os/os.h"
 #include "nvim/profile.h"
 #include "nvim/runtime.h"
+#include "nvim/screen.h"
+#include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
 #include "nvim/usercmd.h"
 #include "nvim/version.h"
@@ -589,6 +593,71 @@ static bool nlua_init_packages(lua_State *lstate)
   return true;
 }
 
+/// "vim.ui_attach(ns_id, {ext_foo=true}, cb)" function
+static int nlua_ui_attach(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint32_t ns_id = (uint32_t)luaL_checkinteger(lstate, 1);
+
+  if (!ns_initialized(ns_id)) {
+    return luaL_error(lstate, "invalid ns_id");
+  }
+  if (!lua_istable(lstate, 2)) {
+    return luaL_error(lstate, "ext_widgets must be a table");
+  }
+  if (!lua_isfunction(lstate, 3)) {
+    return luaL_error(lstate, "callback must be a Lua function");
+  }
+
+  bool ext_widgets[kUIGlobalCount] = { false };
+  bool tbl_has_true_val = false;
+
+  lua_pushvalue(lstate, 2);
+  lua_pushnil(lstate);
+  while (lua_next(lstate, -2)) {
+    // [dict, key, val]
+    size_t len;
+    const char *s = lua_tolstring(lstate, -2, &len);
+    bool val = lua_toboolean(lstate, -1);
+
+    for (size_t i = 0; i < kUIGlobalCount; i++) {
+      if (strequal(s, ui_ext_names[i])) {
+        if (val) {
+          tbl_has_true_val = true;
+        }
+        ext_widgets[i] = val;
+        goto ok;
+      }
+    }
+
+    return luaL_error(lstate, "Unexpected key: %s", s);
+ok:
+    lua_pop(lstate, 1);
+  }
+
+  if (!tbl_has_true_val) {
+    return luaL_error(lstate, "ext_widgets table must contain at least one 'true' value");
+  }
+
+  LuaRef ui_event_cb = nlua_ref_global(lstate, 3);
+  ui_comp_add_cb(ns_id, ui_event_cb, ext_widgets);
+  return 0;
+}
+
+/// "vim.ui_detach(ns_id)" function
+static int nlua_ui_detach(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint32_t ns_id = (uint32_t)luaL_checkinteger(lstate, 1);
+
+  if (!ns_initialized(ns_id)) {
+    return luaL_error(lstate, "invalid ns_id");
+  }
+
+  ui_comp_remove_cb(ns_id);
+  return 0;
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -648,6 +717,14 @@ static bool nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // wait
   lua_pushcfunction(lstate, &nlua_wait);
   lua_setfield(lstate, -2, "wait");
+
+  // ui_attach
+  lua_pushcfunction(lstate, &nlua_ui_attach);
+  lua_setfield(lstate, -2, "ui_attach");
+
+  // ui_detach
+  lua_pushcfunction(lstate, &nlua_ui_detach);
+  lua_setfield(lstate, -2, "ui_detach");
 
   nlua_common_vim_init(lstate, false);
 
@@ -1422,9 +1499,10 @@ bool nlua_ref_is_function(LuaRef ref)
 /// @param name    if non-NULL, sent to callback as first arg
 ///                if NULL, only args are used
 /// @param retval  if true, convert return value to Object
-///                if false, discard return value
+///                if false, only check if return value is truthy
 /// @param err     Error details, if any (if NULL, errors are echoed)
-/// @return        Return value of function, if retval was set. Otherwise NIL.
+/// @return        Return value of function, if retval was set. Otherwise
+/// BOOLEAN_OBJ(true) or NIL.
 Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Error *err)
 {
   lua_State *const lstate = global_lstate;
@@ -1438,7 +1516,7 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Erro
     nlua_push_Object(lstate, args.items[i], false);
   }
 
-  if (nlua_pcall(lstate, nargs, retval ? 1 : 0)) {
+  if (nlua_pcall(lstate, nargs, 1)) {
     // if err is passed, the caller will deal with the error.
     if (err) {
       size_t len;
@@ -1458,7 +1536,10 @@ Object nlua_call_ref(LuaRef ref, const char *name, Array args, bool retval, Erro
     }
     return nlua_pop_Object(lstate, false, err);
   } else {
-    return NIL;
+    bool value = lua_toboolean(lstate, -1);
+    lua_pop(lstate, 1);
+
+    return value ? BOOLEAN_OBJ(true) : NIL;
   }
 }
 

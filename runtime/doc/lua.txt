@@ -967,6 +967,37 @@ vim.wait({time} [, {callback}, {interval}, {fast_only}])          *vim.wait()*
     end
 <
 
+vim.ui_attach({ns}, {options}, {callback})                *vim.ui_attach()*
+    Attach to ui events, similar to |nvim_ui_attach()| but receive events
+    as lua callback. Can be used to implement screen elements like
+    popupmenu or message handling in lua.
+
+    {options} should be a dictionary-like table, where `ext_...` options should
+    be set to true to receive events for the respective external element.
+
+    {callback} receives event name plus additional parameters. See |ui-popupmenu|
+    and the sections below for event format for respective events.
+
+    Example (stub for a |ui-popupmenu| implementation): >
+
+      ns = vim.api.nvim_create_namespace('my_fancy_pum')
+
+      vim.ui_attach(ns, {ext_popupmenu=true}, function(event, ...)
+        if event == "popupmenu_show" then
+          local items, selected, row, col, grid = ...
+          print("display pum ", #items)
+        elseif event == "popupmenu_select" then
+          local selected = ...
+          print("selected", selected)
+        elseif event == "popupmenu_hide" then
+          print("FIN")
+        end
+      end)
+
+vim.ui_detach({ns})                                           *vim.ui_detach()*
+    Detach a callback previously attached with |vim.ui_attach()| for the
+    given namespace {ns}.
+
 vim.type_idx                                                    *vim.type_idx*
     Type index for use in |lua-special-tbl|. Specifying one of the values from
     |vim.types| allows typing the empty table (it is unclear whether empty Lua

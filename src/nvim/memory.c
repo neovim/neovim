@@ -23,6 +23,7 @@
 #include "nvim/message.h"
 #include "nvim/sign.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
 
 #ifdef UNIT_TESTING
@@ -824,6 +825,7 @@ void free_all_mem(void)
 
   nlua_free_all_mem();
   ui_free_all_mem();
+  ui_comp_free_all_mem();
 
   // should be last, in case earlier free functions deallocates arenas
   arena_free_reuse_blks();
