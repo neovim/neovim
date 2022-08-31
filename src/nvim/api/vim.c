@@ -79,7 +79,7 @@
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_id
-Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
+Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
 {
   Dictionary result = ARRAY_DICT_INIT;
@@ -89,8 +89,7 @@ Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
     api_set_error(err, kErrorTypeException, "Invalid highlight name: %s", name.data);
     return result;
   }
-  result = nvim_get_hl_by_id(id, rgb, err);
-  return result;
+  return nvim_get_hl_by_id(id, rgb, arena, err);
 }
 
 /// Gets a highlight definition by id. |hlID()|
@@ -99,7 +98,7 @@ Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
 /// @param[out] err Error details, if any
 /// @return Highlight definition map
 /// @see nvim_get_hl_by_name
-Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
+Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Arena *arena, Error *err)
   FUNC_API_SINCE(3)
 {
   Dictionary dic = ARRAY_DICT_INIT;
@@ -108,7 +107,7 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
     return dic;
   }
   int attrcode = syn_id2attr((int)hl_id);
-  return hl_get_attr_by_id(attrcode, rgb, err);
+  return hl_get_attr_by_id(attrcode, rgb, arena, err);
 }
 
 /// Gets a highlight group by name
@@ -120,10 +119,10 @@ Integer nvim_get_hl_id_by_name(String name)
   return syn_check_group(name.data, name.size);
 }
 
-Dictionary nvim__get_hl_defs(Integer ns_id, Error *err)
+Dictionary nvim__get_hl_defs(Integer ns_id, Arena *arena, Error *err)
 {
   if (ns_id == 0) {
-    return get_global_hl_defs();
+    return get_global_hl_defs(arena);
   }
   abort();
 }
@@ -1934,7 +1933,7 @@ void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Di
 }
 
 /// NB: if your UI doesn't use hlstate, this will not return hlstate first time
-Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
+Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, Error *err)
 {
   Array ret = ARRAY_DICT_INIT;
 
@@ -1958,13 +1957,14 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
       || col < 0 || col >= g->cols) {
     return ret;
   }
+  ret = arena_array(arena, 3);
   size_t off = g->line_offset[(size_t)row] + (size_t)col;
-  ADD(ret, STRING_OBJ(cstr_to_string((char *)g->chars[off])));
+  ADD_C(ret, STRING_OBJ(cstr_as_string((char *)g->chars[off])));
   int attr = g->attrs[off];
-  ADD(ret, DICTIONARY_OBJ(hl_get_attr_by_id(attr, true, err)));
+  ADD_C(ret, DICTIONARY_OBJ(hl_get_attr_by_id(attr, true, arena, err)));
   // will not work first time
   if (!highlight_use_hlstate()) {
-    ADD(ret, ARRAY_OBJ(hl_inspect(attr)));
+    ADD_C(ret, ARRAY_OBJ(hl_inspect(attr)));
   }
   return ret;
 }

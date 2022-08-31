@@ -1466,19 +1466,21 @@ static void highlight_list_one(const int id)
   }
 }
 
-Dictionary get_global_hl_defs(void)
+Dictionary get_global_hl_defs(Arena *arena)
 {
-  Dictionary rv = ARRAY_DICT_INIT;
-  for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
+  Dictionary rv = arena_dict(arena, (size_t)highlight_ga.ga_len);
+  for (int i = 1; i <= highlight_ga.ga_len; i++) {
     Dictionary attrs = ARRAY_DICT_INIT;
     HlGroup *h = &hl_table[i - 1];
     if (h->sg_attr > 0) {
-      attrs = hlattrs2dict(NULL, syn_attr2entry(h->sg_attr), true);
+      attrs = arena_dict(arena, HLATTRS_DICT_SIZE);
+      hlattrs2dict(&attrs, syn_attr2entry(h->sg_attr), true);
     } else if (h->sg_link > 0) {
-      const char *link = (const char *)hl_table[h->sg_link - 1].sg_name;
-      PUT(attrs, "link", STRING_OBJ(cstr_to_string(link)));
+      attrs = arena_dict(arena, 1);
+      char *link = (char *)hl_table[h->sg_link - 1].sg_name;
+      PUT_C(attrs, "link", STRING_OBJ(cstr_as_string(link)));
     }
-    PUT(rv, (const char *)h->sg_name, DICTIONARY_OBJ(attrs));
+    PUT_C(rv, (char *)h->sg_name, DICTIONARY_OBJ(attrs));
   }
 
   return rv;
