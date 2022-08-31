@@ -6,6 +6,7 @@ local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq, neq = helpers.eq, helpers.neq
 local exec_lua = helpers.exec_lua
+local exec = helpers.exec
 local feed = helpers.feed
 local funcs = helpers.funcs
 local meths = helpers.meths
@@ -336,21 +337,26 @@ describe('nvim_get_keymap', function()
   end)
 
   it('can handle lua mappings', function()
-    eq(0, exec_lua [[
+    eq(0, exec_lua([[
       GlobalCount = 0
-      vim.api.nvim_set_keymap ('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]))
 
     feed('asdf\n')
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua([[return GlobalCount]]))
 
-    eq(2, exec_lua[[
+    eq(2, exec_lua([[
       vim.api.nvim_get_keymap('n')[1].callback()
       return GlobalCount
+    ]]))
+
+    exec([[
+      call nvim_get_keymap('n')[0].callback()
     ]])
+    eq(3, exec_lua([[return GlobalCount]]))
+
     local mapargs = meths.get_keymap('n')
-    assert(type(mapargs[1].callback) == 'number', 'callback is not luaref number')
     mapargs[1].callback = nil
     eq({
       lhs='asdf',
@@ -834,17 +840,29 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it ('maparg() returns lua mapping correctly', function()
-    exec_lua [[
-      vim.api.nvim_set_keymap ('n', 'asdf', '', {callback = function() print('jkl;') end })
-    ]]
-    assert.truthy(string.match(funcs.maparg('asdf', 'n'),
-                  "^<Lua %d+>"))
+    eq(0, exec_lua([[
+      GlobalCount = 0
+      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      return GlobalCount
+    ]]))
+
+    assert.truthy(string.match(funcs.maparg('asdf', 'n'), "^<Lua %d+>"))
+
     local mapargs = funcs.maparg('asdf', 'n', false, true)
-    assert(type(mapargs.callback) == 'number', 'callback is not luaref number')
     mapargs.callback = nil
     mapargs.lhsraw = nil
     mapargs.lhsrawalt = nil
     eq(generate_mapargs('n', 'asdf', nil, {sid=sid_lua}), mapargs)
+
+    eq(1, exec_lua([[
+      vim.fn.maparg('asdf', 'n', false, true).callback()
+      return GlobalCount
+    ]]))
+
+    exec([[
+      call maparg('asdf', 'n', v:false, v:true).callback()
+    ]])
+    eq(2, exec_lua([[return GlobalCount]]))
   end)
 
   it('can make lua expr mappings replacing keycodes', function()

@@ -1989,16 +1989,18 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-/// Fill a dictionary with all applicable maparg() like dictionaries
+/// Fill a Dictionary with all applicable maparg() like dictionaries
 ///
-/// @param dict          The dictionary to be filled
 /// @param mp            The maphash that contains the mapping information
 /// @param buffer_value  The "buffer" value
 /// @param compatible    True for compatible with old maparg() dict
-static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp,
-                               const char *lhsrawalt, long buffer_value, bool compatible)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+///
+/// @return  A Dictionary.
+static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt,
+                                     const long buffer_value, const bool compatible)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
+  Dictionary dict = ARRAY_DICT_INIT;
   char *const lhs = str2special_save((const char *)mp->m_keys,
                                      compatible, !compatible);
   char *const mapmode = map_mode_to_chars(mp->m_mode);
@@ -2015,37 +2017,35 @@ static void mapblock_fill_dict(dict_T *const dict, const mapblock_T *const mp,
   }
 
   if (mp->m_luaref != LUA_NOREF) {
-    tv_dict_add_nr(dict, S_LEN("callback"), mp->m_luaref);
+    PUT(dict, "callback", LUAREF_OBJ(api_new_luaref(mp->m_luaref)));
   } else {
-    if (compatible) {
-      tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
-    } else {
-      tv_dict_add_allocated_str(dict, S_LEN("rhs"),
-                                str2special_save((const char *)mp->m_str, false,
-                                                 true));
-    }
+    PUT(dict, "rhs", STRING_OBJ(compatible
+                                ? cstr_to_string(mp->m_orig_str)
+                                : cstr_as_string(str2special_save(mp->m_str, false, true))));
   }
   if (mp->m_desc != NULL) {
-    tv_dict_add_allocated_str(dict, S_LEN("desc"), xstrdup(mp->m_desc));
+    PUT(dict, "desc", STRING_OBJ(cstr_to_string(mp->m_desc)));
   }
-  tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
-  tv_dict_add_str(dict, S_LEN("lhsraw"), (const char *)mp->m_keys);
+  PUT(dict, "lhs", STRING_OBJ(cstr_as_string(lhs)));
+  PUT(dict, "lhsraw", STRING_OBJ(cstr_to_string((const char *)mp->m_keys)));
   if (lhsrawalt != NULL) {
     // Also add the value for the simplified entry.
-    tv_dict_add_str(dict, S_LEN("lhsrawalt"), lhsrawalt);
+    PUT(dict, "lhsrawalt", STRING_OBJ(cstr_to_string(lhsrawalt)));
   }
-  tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
-  tv_dict_add_nr(dict, S_LEN("script"), mp->m_noremap == REMAP_SCRIPT ? 1 : 0);
-  tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
-  tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
-  tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ctx.sc_sid);
-  tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)mp->m_script_ctx.sc_lnum);
-  tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
-  tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
+  PUT(dict, "noremap", INTEGER_OBJ(noremap_value));
+  PUT(dict, "script", INTEGER_OBJ(mp->m_noremap == REMAP_SCRIPT ? 1 : 0));
+  PUT(dict, "expr", INTEGER_OBJ(mp->m_expr ? 1 : 0));
+  PUT(dict, "silent", INTEGER_OBJ(mp->m_silent ? 1 : 0));
+  PUT(dict, "sid", INTEGER_OBJ((varnumber_T)mp->m_script_ctx.sc_sid));
+  PUT(dict, "lnum", INTEGER_OBJ((varnumber_T)mp->m_script_ctx.sc_lnum));
+  PUT(dict, "buffer", INTEGER_OBJ((varnumber_T)buffer_value));
+  PUT(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
   if (mp->m_replace_keycodes) {
-    tv_dict_add_nr(dict, S_LEN("replace_keycodes"), 1);
+    PUT(dict, "replace_keycodes", INTEGER_OBJ(1));
   }
-  tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
+  PUT(dict, "mode", STRING_OBJ(cstr_as_string(mapmode)));
+
+  return dict;
 }
 
 static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
@@ -2114,11 +2114,14 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       rettv->vval.v_string = nlua_funcref_str(mp->m_luaref);
     }
   } else {
+    // Return a dictionary.
     tv_dict_alloc_ret(rettv);
     if (mp != NULL && (rhs != NULL || rhs_lua != LUA_NOREF)) {
-      // Return a dictionary.
-      mapblock_fill_dict(rettv->vval.v_dict, mp, did_simplify ? (char *)keys_simplified : NULL,
-                         buffer_local, true);
+      Dictionary dict = mapblock_fill_dict(mp,
+                                           did_simplify ? (char *)keys_simplified : NULL,
+                                           buffer_local, true);
+      (void)object_to_vim(DICTIONARY_OBJ(dict), rettv, NULL);
+      api_free_dictionary(dict);
     }
   }
 
@@ -2599,12 +2602,10 @@ fail_and_free:
 ///
 /// @param  mode  The abbreviation for the mode
 /// @param  buf  The buffer to get the mapping array. NULL for global
-/// @param  from_lua  Whether it is called from internal Lua api.
 /// @returns Array of maparg()-like dictionaries describing mappings
-ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
+ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 {
   Array mappings = ARRAY_DICT_INIT;
-  dict_T *const dict = tv_dict_alloc();
 
   // Convert the string mode to the integer mode
   // that is stored within each mapblock
@@ -2623,25 +2624,11 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf, bool from_lua)
       }
       // Check for correct mode
       if (int_mode & current_maphash->m_mode) {
-        mapblock_fill_dict(dict, current_maphash, NULL, buffer_value, false);
-        Object api_dict = vim_to_object((typval_T[]) { { .v_type = VAR_DICT,
-                                                         .vval.v_dict = dict } });
-        if (from_lua) {
-          Dictionary d = api_dict.data.dictionary;
-          for (size_t j = 0; j < d.size; j++) {
-            if (strequal("callback", d.items[j].key.data)) {
-              d.items[j].value.type = kObjectTypeLuaRef;
-              d.items[j].value.data.luaref = api_new_luaref((LuaRef)d.items[j].value.data.integer);
-              break;
-            }
-          }
-        }
-        ADD(mappings, api_dict);
-        tv_dict_clear(dict);
+        ADD(mappings,
+            DICTIONARY_OBJ(mapblock_fill_dict(current_maphash, NULL, buffer_value, false)));
       }
     }
   }
-  tv_dict_free(dict);
 
   return mappings;
 }
