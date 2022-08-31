@@ -2348,8 +2348,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
       // Move back to first byte of character in both lines (may
       // have "nn^" in line_org and "n^ in line_new).
-      si_org -= utf_head_off((char_u *)line_org, (char_u *)line_org + si_org);
-      si_new -= utf_head_off((char_u *)line_new, (char_u *)line_new + si_new);
+      si_org -= utf_head_off(line_org, line_org + si_org);
+      si_new -= utf_head_off(line_new, line_new + si_new);
 
       if (*startp > si_org) {
         *startp = si_org;
@@ -2381,8 +2381,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
             const char_u *p1 = (char_u *)line_org + ei_org;
             const char_u *p2 = (char_u *)line_new + ei_new;
 
-            p1 -= utf_head_off((char_u *)line_org, p1);
-            p2 -= utf_head_off((char_u *)line_new, p2);
+            p1 -= utf_head_off(line_org, (char *)p1);
+            p2 -= utf_head_off(line_new, (char *)p2);
 
             if (!diff_equal_char(p1, p2, &l)) {
               break;

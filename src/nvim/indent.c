@@ -352,7 +352,7 @@ int get_indent(void)
 // Count the size (in window cells) of the indent in line "lnum".
 int get_indent_lnum(linenr_T lnum)
 {
-  return get_indent_str_vtab((char *)ml_get(lnum),
+  return get_indent_str_vtab(ml_get(lnum),
                              curbuf->b_p_ts,
                              curbuf->b_p_vts_array,
                              false);
@@ -710,7 +710,7 @@ int get_number_indent(linenr_T lnum)
 
   // In format_lines() (i.e. not insert mode), fo+=q is needed too...
   if ((State & MODE_INSERT) || has_format_option(FO_Q_COMS)) {
-    lead_len = get_leader_len((char *)ml_get(lnum), NULL, false, true);
+    lead_len = get_leader_len(ml_get(lnum), NULL, false, true);
   }
   regmatch.regprog = vim_regcomp(curbuf->b_p_flp, RE_MAGIC);
 
@@ -719,9 +719,9 @@ int get_number_indent(linenr_T lnum)
 
     // vim_regexec() expects a pointer to a line.  This lets us
     // start matching for the flp beyond any comment leader...
-    if (vim_regexec(&regmatch, (char *)ml_get(lnum) + lead_len, (colnr_T)0)) {
+    if (vim_regexec(&regmatch, ml_get(lnum) + lead_len, (colnr_T)0)) {
       pos.lnum = lnum;
-      pos.col = (colnr_T)(*regmatch.endp - ml_get(lnum));
+      pos.col = (colnr_T)(*regmatch.endp - (char_u *)ml_get(lnum));
       pos.coladd = 0;
     }
     vim_regfree(regmatch.regprog);
@@ -1036,7 +1036,7 @@ int get_lisp_indent(void)
       } else {
         char_u *line = that;
         chartabsize_T cts;
-        init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
+        init_chartabsize_arg(&cts, curwin, pos->lnum, 0, (char *)line, (char *)line);
         while (*cts.cts_ptr != NUL && col > 0) {
           cts.cts_vcol += lbr_chartabsize_adv(&cts);
           col--;
@@ -1060,7 +1060,7 @@ int get_lisp_indent(void)
           firsttry = amount;
 
           init_chartabsize_arg(&cts, curwin, (colnr_T)(that - line),
-                               amount, line, that);
+                               amount, (char *)line, (char *)that);
           while (ascii_iswhite(*cts.cts_ptr)) {
             cts.cts_vcol += lbr_chartabsize(&cts);
             cts.cts_ptr++;
@@ -1081,7 +1081,7 @@ int get_lisp_indent(void)
             quotecount = 0;
 
             init_chartabsize_arg(&cts, curwin,
-                                 (colnr_T)(that - line), amount, line, that);
+                                 (colnr_T)(that - line), amount, (char *)line, (char *)that);
             if (vi_lisp || ((*that != '"') && (*that != '\'')
                             && (*that != '#') && ((*that < '0') || (*that > '9')))) {
               while (*cts.cts_ptr

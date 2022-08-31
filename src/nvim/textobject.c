@@ -213,13 +213,13 @@ bool findpar(bool *pincl, int dir, long count, int what, bool both)
   }
   curwin->w_cursor.lnum = curr;
   if (curr == curbuf->b_ml.ml_line_count && what != '}') {
-    char_u *line = ml_get(curr);
+    char_u *line = (char_u *)ml_get(curr);
 
     // Put the cursor on the last character in the last line and make the
     // motion inclusive.
     if ((curwin->w_cursor.col = (colnr_T)STRLEN(line)) != 0) {
       curwin->w_cursor.col--;
-      curwin->w_cursor.col -= utf_head_off(line, line + curwin->w_cursor.col);
+      curwin->w_cursor.col -= utf_head_off((char *)line, (char *)line + curwin->w_cursor.col);
       *pincl = true;
     }
   } else {
@@ -260,7 +260,7 @@ bool startPS(linenr_T lnum, int para, bool both)
 {
   char_u *s;
 
-  s = ml_get(lnum);
+  s = (char_u *)ml_get(lnum);
   if (*s == para || *s == '\f' || (both && *s == '}')) {
     return true;
   }
@@ -1467,7 +1467,7 @@ static int find_prev_quote(char_u *line, int col_start, int quotechar, char_u *e
 
   while (col_start > 0) {
     col_start--;
-    col_start -= utf_head_off(line, line + col_start);
+    col_start -= utf_head_off((char *)line, (char *)line + col_start);
     n = 0;
     if (escape != NULL) {
       while (col_start - n > 0 && vim_strchr((char *)escape,

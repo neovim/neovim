@@ -174,7 +174,7 @@ static void showmap(mapblock_T *mp, bool local)
   }
 
   // Display the LHS.  Get length of what we write.
-  len = (size_t)msg_outtrans_special(mp->m_keys, true, 0);
+  len = (size_t)msg_outtrans_special((char *)mp->m_keys, true, 0);
   do {
     msg_putchar(' ');                   // padd with blanks
     len++;
@@ -203,7 +203,7 @@ static void showmap(mapblock_T *mp, bool local)
   } else if (mp->m_str[0] == NUL) {
     msg_puts_attr("<Nop>", HL_ATTR(HLF_8));
   } else {
-    msg_outtrans_special((char_u *)mp->m_str, false, 0);
+    msg_outtrans_special(mp->m_str, false, 0);
   }
 
   if (mp->m_desc != NULL) {

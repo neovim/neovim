@@ -189,7 +189,7 @@ void terminfo_info_msg(const unibi_term *const ut)
       msg_printf_attr(0, "  %-25s %-10s = ", unibi_name_str(i),
                       unibi_short_name_str(i));
       // Most of these strings will contain escape sequences.
-      msg_outtrans_special((char_u *)s, false, 0);
+      msg_outtrans_special(s, false, 0);
       msg_putchar('\n');
     }
   }
@@ -216,7 +216,7 @@ void terminfo_info_msg(const unibi_term *const ut)
     msg_puts("Extended string capabilities:\n");
     for (size_t i = 0; i < unibi_count_ext_str(ut); i++) {
       msg_printf_attr(0, "  %-25s = ", unibi_get_ext_str_name(ut, i));
-      msg_outtrans_special((char_u *)unibi_get_ext_str(ut, i), false, 0);
+      msg_outtrans_special(unibi_get_ext_str(ut, i), false, 0);
       msg_putchar('\n');
     }
   }

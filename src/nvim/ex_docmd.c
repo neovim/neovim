@@ -535,7 +535,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
       if (flags & DOCMD_KEEPLINE) {
         xfree(repeat_cmdline);
         if (count == 0) {
-          repeat_cmdline = (char *)vim_strsave((char_u *)next_cmdline);
+          repeat_cmdline = xstrdup(next_cmdline);
         } else {
           repeat_cmdline = NULL;
         }
@@ -2826,7 +2826,7 @@ static void append_command(char *cmd)
   if (len > IOSIZE - 100) {
     // Not enough space, truncate and put in "...".
     d = (char *)IObuff + IOSIZE - 100;
-    d -= utf_head_off(IObuff, (const char_u *)d);
+    d -= utf_head_off((char *)IObuff, d);
     STRCPY(d, "...");
   }
   STRCAT(IObuff, ": ");
@@ -3081,10 +3081,9 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  rettv->vval.v_string = (char *)vim_strsave(IS_USER_CMDIDX(ea.cmdidx)
-                                             ? (char_u *)get_user_command_name(ea.useridx,
-                                                                               ea.cmdidx)
-                                             : (char_u *)cmdnames[ea.cmdidx].cmd_name);
+  rettv->vval.v_string = xstrdup(IS_USER_CMDIDX(ea.cmdidx)
+                                 ? get_user_command_name(ea.useridx, ea.cmdidx)
+                                 : cmdnames[ea.cmdidx].cmd_name);
 }
 
 cmdidx_T excmd_get_cmdidx(const char *cmd, size_t len)
@@ -4344,7 +4343,7 @@ static int check_more(int message, bool forceit)
         vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
                      NGETTEXT("%d more file to edit.  Quit anyway?",
                               "%d more files to edit.  Quit anyway?", (unsigned long)n), n);
-        if (vim_dialog_yesno(VIM_QUESTION, NULL, (char_u *)buff, 1) == VIM_YES) {
+        if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 1) == VIM_YES) {
           return OK;
         }
         return FAIL;
@@ -6007,7 +6006,7 @@ static void ex_redir(exarg_T *eap)
           // Make register empty when not using @A-@Z and the
           // command is valid.
           if (*arg == NUL && !isupper(redir_reg)) {
-            write_reg_contents(redir_reg, (char_u *)"", 0, false);
+            write_reg_contents(redir_reg, "", 0, false);
           }
         }
       }
@@ -6162,7 +6161,7 @@ FILE *open_exfile(char_u *fname, int forceit, char *mode)
     return NULL;
   }
 #endif
-  if (!forceit && *mode != 'a' && os_path_exists(fname)) {
+  if (!forceit && *mode != 'a' && os_path_exists((char *)fname)) {
     semsg(_("E189: \"%s\" exists (add ! to override)"), fname);
     return NULL;
   }

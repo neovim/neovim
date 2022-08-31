@@ -200,9 +200,9 @@ void dialog_changed(buf_T *buf, bool checkall)
 
   dialog_msg((char *)buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
-    ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, (char_u *)buff, 1);
+    ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
-    ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, (char_u *)buff, 1);
+    ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
   }
 
   if (ret == VIM_YES) {
@@ -252,7 +252,7 @@ bool dialog_close_terminal(buf_T *buf)
   dialog_msg(buff, _("Close \"%s\"?"),
              (buf->b_fname != NULL) ? buf->b_fname : "?");
 
-  int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, (char_u *)buff, 1);
+  int ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
 
   return ret == VIM_YES;
 }

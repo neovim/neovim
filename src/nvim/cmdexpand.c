@@ -675,7 +675,7 @@ int showmatches(expand_T *xp, int wildmenu)
           msg_advance(maxlen + 1);
           msg_puts((const char *)p);
           msg_advance(maxlen + 3);
-          msg_outtrans_long_attr(p + 2, HL_ATTR(HLF_D));
+          msg_outtrans_long_attr((char *)p + 2, HL_ATTR(HLF_D));
           break;
         }
         for (j = maxlen - lastlen; --j >= 0;) {
@@ -2720,7 +2720,7 @@ int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
       int j = cclp->cmdpos;
       int i = (int)((char_u *)xp->xp_pattern - cclp->cmdbuff);
       while (--j > i) {
-        j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
+        j -= utf_head_off((char *)cclp->cmdbuff, (char *)cclp->cmdbuff + j);
         if (vim_ispathsep(cclp->cmdbuff[j])) {
           found = true;
           break;
@@ -2741,7 +2741,7 @@ int wildmenu_process_key(CmdlineInfo *cclp, int key, expand_T *xp)
       int j = cclp->cmdpos - 1;
       int i = (int)((char_u *)xp->xp_pattern - cclp->cmdbuff);
       while (--j > i) {
-        j -= utf_head_off(cclp->cmdbuff, cclp->cmdbuff + j);
+        j -= utf_head_off((char *)cclp->cmdbuff, (char *)cclp->cmdbuff + j);
         if (vim_ispathsep(cclp->cmdbuff[j])
 #ifdef BACKSLASH_IN_FILENAME
             && vim_strchr((const char_u *)" *?[{`$%#", cclp->cmdbuff[j + 1])

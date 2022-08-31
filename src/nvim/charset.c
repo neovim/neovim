@@ -927,11 +927,11 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       }
     }
     posptr = ptr + pos->col;
-    posptr -= utf_head_off(line, posptr);
+    posptr -= utf_head_off((char *)line, (char *)posptr);
   }
 
   chartabsize_T cts;
-  init_chartabsize_arg(&cts, wp, pos->lnum, 0, line, line);
+  init_chartabsize_arg(&cts, wp, pos->lnum, 0, (char *)line, (char *)line);
 
   // This function is used very often, do some speed optimizations.
   // When 'list', 'linebreak', 'showbreak' and 'breakindent' are not set

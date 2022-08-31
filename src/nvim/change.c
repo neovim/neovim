@@ -631,7 +631,7 @@ void ins_char_bytes(char *buf, size_t charlen)
 
   size_t col = (size_t)curwin->w_cursor.col;
   linenr_T lnum = curwin->w_cursor.lnum;
-  char *oldp = (char *)ml_get(lnum);
+  char *oldp = ml_get(lnum);
   size_t linelen = STRLEN(oldp) + 1;  // length of old line including NUL
 
   // The lengths default to the values for when not replacing.
@@ -739,7 +739,7 @@ void ins_str(char *s)
   }
 
   colnr_T col = curwin->w_cursor.col;
-  char *oldp = (char *)ml_get(lnum);
+  char *oldp = ml_get(lnum);
   int oldlen = (int)STRLEN(oldp);
 
   char *newp = xmalloc((size_t)oldlen + (size_t)newlen + 1);
@@ -797,7 +797,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   linenr_T lnum = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
   bool fixpos = fixpos_arg;
-  char *oldp = (char *)ml_get(lnum);
+  char *oldp = ml_get(lnum);
   colnr_T oldlen = (colnr_T)STRLEN(oldp);
 
   // Can't do anything when the cursor is on the NUL after the line.
@@ -843,7 +843,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
         && (get_ve_flags() & VE_ONEMORE) == 0) {
       curwin->w_cursor.col--;
       curwin->w_cursor.coladd = 0;
-      curwin->w_cursor.col -= utf_head_off((char_u *)oldp, (char_u *)oldp + curwin->w_cursor.col);
+      curwin->w_cursor.col -= utf_head_off(oldp, oldp + curwin->w_cursor.col);
     }
     count = oldlen - col;
     movelen = 1;
@@ -854,7 +854,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   bool was_alloced = ml_line_alloced();     // check if oldp was allocated
   char *newp;
   if (was_alloced) {
-    ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, oldlen);
+    ml_add_deleted_len((char *)curbuf->b_ml.ml_line_ptr, oldlen);
     newp = oldp;                            // use same allocated memory
   } else {                                  // need to allocate a new line
     newp = xmalloc((size_t)(oldlen + 1 - count));
@@ -1047,7 +1047,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     // the line, replacing what was there before and pushing the right
     // stuff onto the replace stack.  -- webb.
     if (curwin->w_cursor.lnum < orig_line_count) {
-      next_line = (char *)vim_strsave(ml_get(curwin->w_cursor.lnum + 1));
+      next_line = xstrdup(ml_get(curwin->w_cursor.lnum + 1));
     } else {
       next_line = xstrdup("");
     }
@@ -1119,7 +1119,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         // Skip preprocessor directives, unless they are recognised as comments.
         if (lead_len == 0 && ptr[0] == '#') {
           while (ptr[0] == '#' && curwin->w_cursor.lnum > 1) {
-            ptr = (char *)ml_get(--curwin->w_cursor.lnum);
+            ptr = ml_get(--curwin->w_cursor.lnum);
           }
           newindent = get_indent();
         }
@@ -1210,7 +1210,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             } else {
               was_backslashed = false;
             }
-            ptr = (char *)ml_get(++curwin->w_cursor.lnum);
+            ptr = ml_get(++curwin->w_cursor.lnum);
           }
           if (was_backslashed) {
             newindent = 0;  // Got to end of file
@@ -1465,7 +1465,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 
           // blank-out any other chars from the old leader.
           while (--p >= leader) {
-            int l = utf_head_off((char_u *)leader, (char_u *)p);
+            int l = utf_head_off(leader, p);
 
             if (l > 1) {
               p -= l;
@@ -1872,7 +1872,7 @@ void truncate_line(int fixpos)
   if (col == 0) {
     newp = xstrdup("");
   } else {
-    newp = (char *)vim_strnsave(ml_get(lnum), (size_t)col);
+    newp = xstrnsave(ml_get(lnum), (size_t)col);
   }
   ml_replace(lnum, newp, false);
 

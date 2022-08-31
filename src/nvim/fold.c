@@ -995,7 +995,7 @@ void foldAdjustVisual(void)
     start->col = 0;
   }
   if (hasFolding(end->lnum, NULL, &end->lnum)) {
-    ptr = ml_get(end->lnum);
+    ptr = (char_u *)ml_get(end->lnum);
     end->col = (colnr_T)STRLEN(ptr);
     if (end->col > 0 && *p_sel == 'o') {
       end->col--;
@@ -1588,7 +1588,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char_u *marker, size_t ma
 
   if (u_save(lnum - 1, lnum + 1) == OK) {
     // Check if the line ends with an unclosed comment
-    skip_comment(line, false, false, &line_is_comment);
+    skip_comment((char *)line, false, false, &line_is_comment);
     newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
     STRCPY(newline, line);
     // Append the marker to the end of the line
@@ -1601,7 +1601,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char_u *marker, size_t ma
       STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
       added = markerlen + STRLEN(cms) - 2;
     }
-    ml_replace_buf(buf, lnum, newline, false);
+    ml_replace_buf(buf, lnum, (char *)newline, false);
     if (added) {
       extmark_splice_cols(buf, (int)lnum - 1, (int)line_len,
                           0, (int)added, kExtmarkUndo);
@@ -1666,7 +1666,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char_u *marker, size_t mark
       assert(p >= line);
       memcpy(newline, line, (size_t)(p - line));
       STRCPY(newline + (p - line), p + len);
-      ml_replace_buf(buf, lnum, newline, false);
+      ml_replace_buf(buf, lnum, (char *)newline, false);
       extmark_splice_cols(buf, (int)lnum - 1, (int)(p - line),
                           (int)len, 0, kExtmarkUndo);
     }
@@ -3251,12 +3251,12 @@ void f_foldtext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
 
     // Find interesting text in this line.
-    char_u *s = (char_u *)skipwhite((char *)ml_get(lnum));
+    char_u *s = (char_u *)skipwhite(ml_get(lnum));
     // skip C comment-start
     if (s[0] == '/' && (s[1] == '*' || s[1] == '/')) {
       s = (char_u *)skipwhite((char *)s + 2);
       if (*skipwhite((char *)s) == NUL && lnum + 1 < foldend) {
-        s = (char_u *)skipwhite((char *)ml_get(lnum + 1));
+        s = (char_u *)skipwhite(ml_get(lnum + 1));
         if (*s == '*') {
           s = (char_u *)skipwhite((char *)s + 1);
         }

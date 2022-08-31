@@ -633,7 +633,7 @@ colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
   // try to advance to the specified column
   char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
   chartabsize_T cts;
-  init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
+  init_chartabsize_arg(&cts, wp, lnum, 0, (char *)line, (char *)line);
   while (cts.cts_vcol < vcol && *cts.cts_ptr != NUL) {
     cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
     MB_PTR_ADV(cts.cts_ptr);
@@ -666,7 +666,7 @@ void set_mouse_topline(win_T *wp)
 static colnr_T scroll_line_len(linenr_T lnum)
 {
   colnr_T col = 0;
-  char_u *line = ml_get(lnum);
+  char_u *line = (char_u *)ml_get(lnum);
   if (*line != NUL) {
     for (;;) {
       int numchar = win_chartabsize(curwin, (char *)line, col);
@@ -771,7 +771,7 @@ static int mouse_adjust_click(win_T *wp, int row, int col)
   // highlighting the second byte, not the ninth.
 
   linenr_T lnum = wp->w_cursor.lnum;
-  char_u *line = ml_get(lnum);
+  char_u *line = (char_u *)ml_get(lnum);
   char_u *ptr = line;
   char_u *ptr_end;
   char_u *ptr_row_offset = line;  // Where we begin adjusting `ptr_end`

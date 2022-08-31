@@ -2569,7 +2569,7 @@ static int vgetorpeek(bool advance)
                 ptr = get_cursor_line_ptr();
                 chartabsize_T cts;
                 init_chartabsize_arg(&cts, curwin,
-                                     curwin->w_cursor.lnum, 0, ptr, ptr);
+                                     curwin->w_cursor.lnum, 0, (char *)ptr, (char *)ptr);
                 while ((char_u *)cts.cts_ptr < ptr + curwin->w_cursor.col) {
                   if (!ascii_iswhite(*cts.cts_ptr)) {
                     curwin->w_wcol = cts.cts_vcol;
@@ -2597,7 +2597,7 @@ static int vgetorpeek(bool advance)
               // Correct when the cursor is on the right halve
               // of a double-wide character.
               ptr = get_cursor_line_ptr();
-              col -= utf_head_off(ptr, ptr + col);
+              col -= utf_head_off((char *)ptr, (char *)ptr + col);
               if (utf_ptr2cells((char *)ptr + col) > 1) {
                 curwin->w_wcol--;
               }

@@ -943,7 +943,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     chartabsize_T cts;
     int charsize;
 
-    init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, line, ptr);
+    init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, (char *)line, (char *)ptr);
     while (cts.cts_vcol < v && *cts.cts_ptr != NUL) {
       charsize = win_lbr_chartabsize(&cts, NULL);
       cts.cts_vcol += charsize;
@@ -1803,11 +1803,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         // Found last space before word: check for line break.
         if (wp->w_p_lbr && c0 == c && vim_isbreak(c)
             && !vim_isbreak((int)(*ptr))) {
-          int mb_off = utf_head_off(line, ptr - 1);
+          int mb_off = utf_head_off((char *)line, (char *)ptr - 1);
           char_u *p = ptr - (mb_off + 1);
           chartabsize_T cts;
 
-          init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, line, p);
+          init_chartabsize_arg(&cts, wp, lnum, (colnr_T)vcol, (char *)line, (char *)p);
           n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
 
           // We have just drawn the showbreak value, no need to add

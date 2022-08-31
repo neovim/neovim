@@ -531,7 +531,7 @@ static void uc_list(char *name, size_t name_len)
         }
       }
 
-      msg_outtrans_special((char_u *)cmd->uc_rep, false,
+      msg_outtrans_special(cmd->uc_rep, false,
                            name_len == 0 ? Columns - 47 : 0);
       if (p_verbose > 0) {
         last_set_msg(cmd->uc_script_ctx);

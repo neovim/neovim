@@ -853,7 +853,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
               pos->col--;
               if (pos->lnum <= buf->b_ml.ml_line_count) {
                 ptr = ml_get_buf(buf, pos->lnum, false);
-                pos->col -= utf_head_off(ptr, ptr + pos->col);
+                pos->col -= utf_head_off((char *)ptr, (char *)ptr + pos->col);
               }
             }
             if (end_pos != NULL) {
@@ -1250,7 +1250,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char_u *pat, long count,
           memmove(msgbuf + STRLEN(p) + 1, off_buf, off_len);
         }
 
-        trunc = msg_strtrunc(msgbuf, true);
+        trunc = (char_u *)msg_strtrunc((char *)msgbuf, true);
         if (trunc != NULL) {
           xfree(msgbuf);
           msgbuf = trunc;
@@ -1589,7 +1589,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
         if (col == 0) {
           return FAIL;
         }
-        col -= utf_head_off(p, p + col - 1) + 1;
+        col -= utf_head_off((char *)p, (char *)p + col - 1) + 1;
       }
       if (lastc_bytelen == 1) {
         if (p[col] == c && stop) {
@@ -1610,7 +1610,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
       col += lastc_bytelen - 1;
     } else {
       // To previous char, which may be multi-byte.
-      col -= utf_head_off(p, p + col);
+      col -= utf_head_off((char *)p, (char *)p + col);
     }
   }
   curwin->w_cursor.col = col;
@@ -1641,7 +1641,7 @@ static bool check_prevcol(char_u *linep, int col, int ch, int *prevcol)
 {
   col--;
   if (col > 0) {
-    col -= utf_head_off(linep, linep + col);
+    col -= utf_head_off((char *)linep, (char *)linep + col);
   }
   if (prevcol) {
     *prevcol = col;
@@ -1664,7 +1664,7 @@ static bool find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
   char_u *delim_copy = vim_strnsave(linep + startpos->col + 1, delim_len);
   bool found = false;
   for (lnum = startpos->lnum; lnum <= endpos->lnum; lnum++) {
-    char_u *line = ml_get(lnum);
+    char_u *line = (char_u *)ml_get(lnum);
 
     for (p = line + (lnum == startpos->lnum ? startpos->col + 1 : 0); *p; p++) {
       if (lnum == endpos->lnum && (colnr_T)(p - line) >= endpos->col) {
@@ -1768,7 +1768,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
 
   pos = curwin->w_cursor;
   pos.coladd = 0;
-  char_u *linep = ml_get(pos.lnum);     // pointer to current line
+  char_u *linep = (char_u *)ml_get(pos.lnum);     // pointer to current line
 
   // vi compatible matching
   bool cpo_match = (vim_strchr(p_cpo, CPO_MATCH) != NULL);
@@ -1923,7 +1923,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           break;
         }
         pos.lnum += hash_dir;
-        linep = ml_get(pos.lnum);
+        linep = (char_u *)ml_get(pos.lnum);
         line_breakcheck();              // check for CTRL-C typed
         ptr = (char_u *)skipwhite((char *)linep);
         if (*ptr != '#') {
@@ -2003,7 +2003,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           break;
         }
 
-        linep = ml_get(pos.lnum);
+        linep = (char_u *)ml_get(pos.lnum);
         pos.col = (colnr_T)STRLEN(linep);         // pos.col on trailing NUL
         do_quotes = -1;
         line_breakcheck();
@@ -2018,7 +2018,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
         }
       } else {
         pos.col--;
-        pos.col -= utf_head_off(linep, linep + pos.col);
+        pos.col -= utf_head_off((char *)linep, (char *)linep + pos.col);
       }
     } else {                          // forward search
       if (linep[pos.col] == NUL
@@ -2038,7 +2038,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           break;
         }
 
-        linep = ml_get(pos.lnum);
+        linep = (char_u *)ml_get(pos.lnum);
         pos.col = 0;
         do_quotes = -1;
         line_breakcheck();
@@ -2088,7 +2088,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
               match_pos = pos;
               match_pos.col--;
             }
-            linep = ml_get(pos.lnum);  // may have been released
+            linep = (char_u *)ml_get(pos.lnum);  // may have been released
           }
         } else if (linep[pos.col - 1] == '/'
                    && linep[pos.col] == '*'
@@ -2158,7 +2158,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           }
         }
         if (pos.lnum > 1) {
-          ptr = ml_get(pos.lnum - 1);
+          ptr = (char_u *)ml_get(pos.lnum - 1);
           if (*ptr && *(ptr + STRLEN(ptr) - 1) == '\\') {
             do_quotes = 1;
             if (start_in_quotes == kNone) {
@@ -2172,7 +2172,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
           }
 
           // ml_get() only keeps one line, need to get linep again
-          linep = ml_get(pos.lnum);
+          linep = (char_u *)ml_get(pos.lnum);
         }
       }
     }
@@ -2648,7 +2648,7 @@ int linewhite(linenr_T lnum)
 {
   char_u *p;
 
-  p = (char_u *)skipwhite((char *)ml_get(lnum));
+  p = (char_u *)skipwhite(ml_get(lnum));
   return *p == NUL;
 }
 
@@ -3488,7 +3488,7 @@ void f_matchfuzzypos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// mark.
 static char_u *get_line_and_copy(linenr_T lnum, char_u *buf)
 {
-  char_u *line = ml_get(lnum);
+  char_u *line = (char_u *)ml_get(lnum);
   STRLCPY(buf, line, LSIZE);
   return buf;
 }
@@ -3625,7 +3625,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
               msg_putchar('\n');  // cursor below last one */
               if (!got_int) {  // don't display if 'q' typed at "--more--"
                                // message
-                msg_home_replace_hl(new_fname);
+                msg_home_replace_hl((char *)new_fname);
                 msg_puts(_(" (includes previously listed match)"));
                 prev_fname = NULL;
               }
@@ -3655,7 +3655,7 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
           for (i = 0; i < depth_displayed; i++) {
             msg_puts("  ");
           }
-          msg_home_replace(files[depth_displayed].name);
+          msg_home_replace((char *)files[depth_displayed].name);
           msg_puts(" -->\n");
         }
         if (!got_int) {                     // don't display if 'q' typed
@@ -3937,7 +3937,7 @@ search_line:
           }
           if (!got_int) {             // don't display if 'q' typed
                                       // at "--more--" message
-            msg_home_replace_hl(curr_fname);
+            msg_home_replace_hl((char *)curr_fname);
           }
           prev_fname = curr_fname;
         }
@@ -4146,7 +4146,7 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
       msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
       msg_puts(" ");
     }
-    msg_prt_line(line, false);
+    msg_prt_line((char *)line, false);
     ui_flush();                        // show one line at a time
 
     // Definition continues until line that doesn't end with '\'
@@ -4163,7 +4163,7 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
       if (++*lnum > curbuf->b_ml.ml_line_count) {
         break;
       }
-      line = ml_get(*lnum);
+      line = (char_u *)ml_get(*lnum);
     }
     msg_putchar('\n');
   }

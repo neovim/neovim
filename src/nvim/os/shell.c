@@ -503,7 +503,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // Move the file names to allocated memory.
   for (j = 0, i = 0; i < *num_file; i++) {
     // Require the files to exist. Helps when using /bin/sh
-    if (!(flags & EW_NOTFOUND) && !os_path_exists((char_u *)(*file)[i])) {
+    if (!(flags & EW_NOTFOUND) && !os_path_exists((*file)[i])) {
       continue;
     }
 
@@ -1112,7 +1112,7 @@ static void out_data_append_to_screen(char *output, size_t *count, bool eof)
         goto end;
       }
 
-      (void)msg_outtrans_len_attr((char_u *)p, i, 0);
+      (void)msg_outtrans_len_attr(p, i, 0);
       p += i;
     }
   }
@@ -1208,7 +1208,7 @@ static void read_input(DynamicBuffer *buf)
 {
   size_t written = 0, l = 0, len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
-  char_u *lp = ml_get(lnum);
+  char_u *lp = (char_u *)ml_get(lnum);
 
   for (;;) {
     l = strlen((char *)lp + written);
@@ -1240,7 +1240,7 @@ static void read_input(DynamicBuffer *buf)
       if (lnum > curbuf->b_op_end.lnum) {
         break;
       }
-      lp = ml_get(lnum);
+      lp = (char_u *)ml_get(lnum);
       written = 0;
     } else if (len > 0) {
       written += len;

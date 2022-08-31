@@ -1034,7 +1034,7 @@ static void f_confirm(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (!error) {
-    rettv->vval.v_number = do_dialog(type, NULL, (char_u *)message, (char_u *)buttons, def, NULL,
+    rettv->vval.v_number = do_dialog(type, NULL, (char *)message, (char *)buttons, def, NULL,
                                      false);
   }
 }
@@ -3849,7 +3849,7 @@ static void f_hostname(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   os_get_hostname(hostname, 256);
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char *)vim_strsave((char_u *)hostname);
+  rettv->vval.v_string = xstrdup(hostname);
 }
 
 /// iconv() function
@@ -5385,7 +5385,7 @@ static void f_nextnonblank(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
       lnum = 0;
       break;
     }
-    if (*skipwhite((char *)ml_get(lnum)) != NUL) {
+    if (*skipwhite(ml_get(lnum)) != NUL) {
       break;
     }
   }
@@ -5473,7 +5473,7 @@ static void f_prevnonblank(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {
     lnum = 0;
   } else {
-    while (lnum >= 1 && *skipwhite((char *)ml_get(lnum)) == NUL) {
+    while (lnum >= 1 && *skipwhite(ml_get(lnum)) == NUL) {
       lnum--;
     }
   }
@@ -7810,7 +7810,7 @@ free_lstval:
     if (strval == NULL) {
       return;
     }
-    write_reg_contents_ex(regname, (const char_u *)strval, (ssize_t)STRLEN(strval),
+    write_reg_contents_ex(regname, strval, (ssize_t)STRLEN(strval),
                           append, yank_type, (colnr_T)block_len);
   }
   if (pointreg != 0) {
@@ -9639,7 +9639,7 @@ static void f_win_gettype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (argvars[0].v_type != VAR_UNKNOWN) {
     wp = find_win_by_nr_or_id(&argvars[0]);
     if (wp == NULL) {
-      rettv->vval.v_string = (char *)vim_strsave((char_u *)"unknown");
+      rettv->vval.v_string = xstrdup("unknown");
       return;
     }
   }

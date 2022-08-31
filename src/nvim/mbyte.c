@@ -1618,21 +1618,24 @@ void show_utf8(void)
 /// "base" must be the start of the string, which must be NUL terminated.
 /// If "p" points to the NUL at the end of the string return 0.
 /// Returns 0 when already at the first byte of a character.
-int utf_head_off(const char_u *base, const char_u *p)
+int utf_head_off(const char *base_in, const char *p_in)
 {
   int c;
   int len;
 
-  if (*p < 0x80) {              // be quick for ASCII
+  if ((uint8_t)(*p_in) < 0x80) {              // be quick for ASCII
     return 0;
   }
 
+  const uint8_t *base = (uint8_t *)base_in;
+  const uint8_t *p = (uint8_t *)p_in;
+
   // Skip backwards over trailing bytes: 10xx.xxxx
   // Skip backwards again if on a composing char.
-  const char_u *q;
+  const uint8_t *q;
   for (q = p;; q--) {
     // Move s to the last byte of this char.
-    const char_u *s;
+    const uint8_t *s;
     for (s = q; (s[1] & 0xc0) == 0x80; s++) {}
 
     // Move q to the first byte of this char.
@@ -1657,7 +1660,7 @@ int utf_head_off(const char_u *base, const char_u *p)
 
     if (arabic_maycombine(c)) {
       // Advance to get a sneak-peak at the next char
-      const char_u *j = q;
+      const uint8_t *j = q;
       j--;
       // Move j to the first byte of this char.
       while (j > base && (*j & 0xc0) == 0x80) {
@@ -2042,7 +2045,7 @@ void mb_check_adjust_col(void *win_)
         win->w_cursor.col = len - 1;
       }
       // Move the cursor to the head byte.
-      win->w_cursor.col -= utf_head_off((char_u *)p, (char_u *)p + win->w_cursor.col);
+      win->w_cursor.col -= utf_head_off(p, p + win->w_cursor.col);
     }
 
     // Reset `coladd` when the cursor would be on the right half of a

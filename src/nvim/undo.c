@@ -651,7 +651,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
   char fname_buf[MAXPATHL];
   // Expand symlink in the file name, so that we put the undo file with the
   // actual file instead of with the symlink.
-  if (resolve_symlink((const char_u *)ffname, (char_u *)fname_buf) == OK) {
+  if (resolve_symlink(ffname, fname_buf) == OK) {
     ffname = fname_buf;
   }
 #endif
@@ -713,7 +713,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
 
     // When reading check if the file exists.
     if (undo_file_name != NULL
-        && (!reading || os_path_exists((char_u *)undo_file_name))) {
+        && (!reading || os_path_exists(undo_file_name))) {
       break;
     }
     XFREE_CLEAR(undo_file_name);
@@ -1177,7 +1177,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
 
   // If the undo file already exists, verify that it actually is an undo
   // file, and delete it.
-  if (os_path_exists((char_u *)file_name)) {
+  if (os_path_exists(file_name)) {
     if (name == NULL || !forceit) {
       // Check we can read it and it's an undo file.
       fd = os_open(file_name, O_RDONLY, 0);

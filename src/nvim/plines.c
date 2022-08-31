@@ -149,7 +149,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   colnr_T col = 0;
   chartabsize_T cts;
 
-  init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
+  init_chartabsize_arg(&cts, wp, lnum, 0, (char *)line, (char *)line);
   while (*cts.cts_ptr != NUL && --column >= 0) {
     cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
     MB_PTR_ADV(cts.cts_ptr);
@@ -257,7 +257,7 @@ int linetabsize(char_u *s)
 int linetabsize_col(int startcol, char *s)
 {
   chartabsize_T cts;
-  init_chartabsize_arg(&cts, curwin, 0, startcol, (char_u *)s, (char_u *)s);
+  init_chartabsize_arg(&cts, curwin, 0, startcol, s, s);
   while (*cts.cts_ptr != NUL) {
     cts.cts_vcol += lbr_chartabsize_adv(&cts);
   }
@@ -275,7 +275,7 @@ int linetabsize_col(int startcol, char *s)
 unsigned int win_linetabsize(win_T *wp, linenr_T lnum, char_u *line, colnr_T len)
 {
   chartabsize_T cts;
-  init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
+  init_chartabsize_arg(&cts, wp, lnum, 0, (char *)line, (char *)line);
   for (; *cts.cts_ptr != NUL && (len == MAXCOL || cts.cts_ptr < (char *)line + len);
        MB_PTR_ADV(cts.cts_ptr)) {
     cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
@@ -288,14 +288,14 @@ unsigned int win_linetabsize(win_T *wp, linenr_T lnum, char_u *line, colnr_T len
 ///
 /// "line" is the start of the line, "ptr" is the first relevant character.
 /// When "lnum" is zero do not use text properties that insert text.
-void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T col, char_u *line,
-                          char_u *ptr)
+void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T col, char *line,
+                          char *ptr)
 {
   cts->cts_win = wp;
   cts->cts_lnum = lnum;
   cts->cts_vcol = col;
-  cts->cts_line = (char *)line;
-  cts->cts_ptr = (char *)ptr;
+  cts->cts_line = line;
+  cts->cts_ptr = ptr;
   cts->cts_cur_text_width = 0;
   // TODO(bfredl): actually lookup inline virtual text here
   cts->cts_has_virt_text = false;

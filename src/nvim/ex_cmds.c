@@ -557,7 +557,7 @@ void ex_sort(exarg_T *eap)
   // matching and number conversion only has to be done once per line.
   // Also get the longest line length for allocating "sortbuf".
   for (lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    s = (char *)ml_get(lnum);
+    s = ml_get(lnum);
     len = (int)STRLEN(s);
     if (maxlen < len) {
       maxlen = len;
@@ -658,7 +658,7 @@ void ex_sort(exarg_T *eap)
       change_occurred = true;
     }
 
-    s = (char *)ml_get(get_lnum);
+    s = ml_get(get_lnum);
     size_t bytelen = STRLEN(s) + 1;  // include EOL in bytelen
     old_count += (bcount_t)bytelen;
     if (!unique || i == 0 || string_compare(s, sortbuf1) != 0) {
@@ -760,7 +760,7 @@ void ex_retab(exarg_T *eap)
     new_ts_str = xstrnsave(new_ts_str, (size_t)(eap->arg - new_ts_str));
   }
   for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
-    ptr = (char *)ml_get(lnum);
+    ptr = ml_get(lnum);
     col = 0;
     vcol = 0;
     did_undo = false;
@@ -941,7 +941,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     return FAIL;
   }
   for (extra = 0, l = line1; l <= line2; l++) {
-    str = (char *)vim_strsave(ml_get(l + extra));
+    str = xstrdup(ml_get(l + extra));
     ml_append(dest + l - line1, str, (colnr_T)0, false);
     xfree(str);
     if (dest < line1) {
@@ -1088,7 +1088,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
   while (line1 <= line2) {
     // need to use vim_strsave() because the line will be unlocked within
     // ml_append()
-    p = (char *)vim_strsave(ml_get(line1));
+    p = xstrdup(ml_get(line1));
     ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, false);
     xfree(p);
 
@@ -1710,7 +1710,7 @@ void print_line(linenr_T lnum, int use_number, int list)
   int save_silent = silent_mode;
 
   // apply :filter /pat/
-  if (message_filtered((char *)ml_get(lnum))) {
+  if (message_filtered(ml_get(lnum))) {
     return;
   }
 
@@ -1897,7 +1897,7 @@ int do_write(exarg_T *eap)
         && !p_wa) {
       if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
         if (vim_dialog_yesno(VIM_QUESTION, NULL,
-                             (char_u *)_("Write partial file?"), 2) != VIM_YES) {
+                             _("Write partial file?"), 2) != VIM_YES) {
           goto theend;
         }
         eap->forceit = true;
@@ -2007,7 +2007,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
                    && vim_strchr(p_cpo, CPO_OVERNEW) == NULL)
                || (buf->b_flags & BF_READERR))))
       && !p_wa
-      && os_path_exists((char_u *)ffname)) {
+      && os_path_exists(ffname)) {
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX
       // It is possible to open a directory on Unix.
@@ -2020,7 +2020,7 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
         char buff[DIALOG_MSG_SIZE];
 
         dialog_msg((char *)buff, _("Overwrite existing file \"%s\"?"), fname);
-        if (vim_dialog_yesno(VIM_QUESTION, NULL, (char_u *)buff, 2) != VIM_YES) {
+        if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) != VIM_YES) {
           return FAIL;
         }
         eap->forceit = true;
@@ -2051,14 +2051,14 @@ int check_overwrite(exarg_T *eap, buf_T *buf, char *fname, char *ffname, int oth
       }
       swapname = (char *)makeswapname((char_u *)fname, (char_u *)ffname, curbuf, (char_u *)dir);
       xfree(dir);
-      if (os_path_exists((char_u *)swapname)) {
+      if (os_path_exists(swapname)) {
         if (p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) {
           char buff[DIALOG_MSG_SIZE];
 
           dialog_msg((char *)buff,
                      _("Swap file \"%s\" exists, overwrite anyway?"),
                      swapname);
-          if (vim_dialog_yesno(VIM_QUESTION, NULL, (char_u *)buff, 2)
+          if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2)
               != VIM_YES) {
             xfree(swapname);
             return FAIL;
@@ -2171,7 +2171,7 @@ static int check_readonly(int *forceit, buf_T *buf)
   // Handle a file being readonly when the 'readonly' option is set or when
   // the file exists and permissions are read-only.
   if (!*forceit && (buf->b_p_ro
-                    || (os_path_exists((char_u *)buf->b_ffname)
+                    || (os_path_exists(buf->b_ffname)
                         && !os_file_is_writable(buf->b_ffname)))) {
     if ((p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM)) && buf->b_fname != NULL) {
       char buff[DIALOG_MSG_SIZE];
@@ -2187,7 +2187,7 @@ static int check_readonly(int *forceit, buf_T *buf)
                    buf->b_fname);
       }
 
-      if (vim_dialog_yesno(VIM_QUESTION, NULL, (char_u *)buff, 2) == VIM_YES) {
+      if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) == VIM_YES) {
         // Set forceit, to force the writing of a readonly file
         *forceit = true;
         return false;
@@ -2678,7 +2678,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     }
     buf = curbuf;
     if (buf->b_fname != NULL) {
-      new_name = (char *)vim_strsave((char_u *)buf->b_fname);
+      new_name = xstrdup(buf->b_fname);
     } else {
       new_name = NULL;
     }
@@ -3803,7 +3803,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           break;
         }
         if (sub_firstline == NULL) {
-          sub_firstline = (char *)vim_strsave(ml_get(sub_firstlnum));
+          sub_firstline = xstrdup(ml_get(sub_firstlnum));
         }
 
         // Save the line number of the last change for the final
@@ -3944,7 +3944,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
                 // really update the line, it would change
                 // what matches.  Temporarily replace the line
                 // and change it back afterwards.
-                orig_line = (char *)vim_strsave(ml_get(lnum));
+                orig_line = xstrdup(ml_get(lnum));
                 char *new_line = concat_str(new_start, sub_firstline + copycol);
 
                 // Position the cursor relative to the end of the line, the
@@ -4072,7 +4072,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
     if (nmatch > 1) { \
       sub_firstlnum += (linenr_T)nmatch - 1; \
       xfree(sub_firstline); \
-      sub_firstline = (char *)vim_strsave(ml_get(sub_firstlnum)); \
+      sub_firstline = xstrdup(ml_get(sub_firstlnum)); \
       /* When going beyond the last line, stop substituting. */ \
       if (sub_firstlnum <= line2) { \
         do_again = true; \
@@ -4148,7 +4148,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
           if (nmatch == 1) {
             p1 = sub_firstline;
           } else {
-            p1 = (char *)ml_get(sub_firstlnum + (linenr_T)nmatch - 1);
+            p1 = ml_get(sub_firstlnum + (linenr_T)nmatch - 1);
             nmatch_tl += nmatch - 1;
           }
           size_t copy_len = (size_t)(regmatch.startpos[0].col - copycol);

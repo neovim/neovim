@@ -879,7 +879,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   }
 
   mch_print_start_line(false, page_line);
-  line = ml_get(ppos->file_line);
+  line = (char_u *)ml_get(ppos->file_line);
 
   /*
    * Loop over the columns until the end of the file line or right margin.
@@ -897,7 +897,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
         id = 0;
       }
       // Get the line again, a multi-line regexp may invalidate it.
-      line = ml_get(ppos->file_line);
+      line = (char_u *)ml_get(ppos->file_line);
 
       if (id != current_syn_id) {
         current_syn_id = id;

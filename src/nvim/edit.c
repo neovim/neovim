@@ -1545,7 +1545,7 @@ void display_dollar(colnr_T col)
 
   // If on the last byte of a multi-byte move to the first byte.
   char_u *p = get_cursor_line_ptr();
-  curwin->w_cursor.col -= utf_head_off(p, p + col);
+  curwin->w_cursor.col -= utf_head_off((char *)p, (char *)p + col);
   curs_columns(curwin, false);              // Recompute w_wrow and w_wcol
   if (curwin->w_wcol < curwin->w_grid.cols) {
     edit_putchar('$', false);
@@ -1672,7 +1672,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
     last_vcol = 0;
     ptr = get_cursor_line_ptr();
     chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, 0, 0, ptr, ptr);
+    init_chartabsize_arg(&cts, curwin, 0, 0, (char *)ptr, (char *)ptr);
     while (cts.cts_vcol <= (int)curwin->w_virtcol) {
       last_vcol = cts.cts_vcol;
       if (cts.cts_vcol > 0) {
@@ -4642,7 +4642,7 @@ static bool ins_tab(void)
 
     char_u *tab = (char_u *)"\t";
     chartabsize_T cts;
-    init_chartabsize_arg(&cts, curwin, 0, vcol, tab, tab);
+    init_chartabsize_arg(&cts, curwin, 0, vcol, (char *)tab, (char *)tab);
 
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
@@ -4671,7 +4671,7 @@ static bool ins_tab(void)
     if (change_col >= 0) {
       int repl_off = 0;
       // Skip over the spaces we need.
-      init_chartabsize_arg(&cts, curwin, 0, vcol, ptr, ptr);
+      init_chartabsize_arg(&cts, curwin, 0, vcol, (char *)ptr, (char *)ptr);
       while (cts.cts_vcol < want_vcol && *cts.cts_ptr == ' ') {
         cts.cts_vcol += lbr_chartabsize(&cts);
         cts.cts_ptr++;
@@ -4869,12 +4869,12 @@ int ins_copychar(linenr_T lnum)
   }
 
   // try to advance to the cursor column
-  line = ml_get(lnum);
+  line = (char_u *)ml_get(lnum);
   prev_ptr = line;
   validate_virtcol();
 
   chartabsize_T cts;
-  init_chartabsize_arg(&cts, curwin, lnum, 0, line, line);
+  init_chartabsize_arg(&cts, curwin, lnum, 0, (char *)line, (char *)line);
   while (cts.cts_vcol < curwin->w_virtcol && *cts.cts_ptr != NUL) {
     prev_ptr = (char_u *)cts.cts_ptr;
     cts.cts_vcol += lbr_chartabsize_adv(&cts);
@@ -4958,7 +4958,7 @@ static void ins_try_si(int c)
        * case where an "if (..\n..) {" statement continues over multiple
        * lines -- webb
        */
-      ptr = ml_get(pos->lnum);
+      ptr = (char_u *)ml_get(pos->lnum);
       i = pos->col;
       if (i > 0) {              // skip blanks before '{'
         while (--i > 0 && ascii_iswhite(ptr[i])) {}
@@ -4983,7 +4983,7 @@ static void ins_try_si(int c)
         old_pos = curwin->w_cursor;
         i = get_indent();
         while (curwin->w_cursor.lnum > 1) {
-          ptr = (char_u *)skipwhite((char *)ml_get(--(curwin->w_cursor.lnum)));
+          ptr = (char_u *)skipwhite(ml_get(--(curwin->w_cursor.lnum)));
 
           // ignore empty lines and lines starting with '#'.
           if (*ptr != '#' && *ptr != NUL) {

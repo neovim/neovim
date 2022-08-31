@@ -571,7 +571,7 @@ static void find_word(matchinf_T *mip, int mode)
     arridx = endidx[endidxcnt];
     wlen = endlen[endidxcnt];
 
-    if (utf_head_off(ptr, ptr + wlen) > 0) {
+    if (utf_head_off((char *)ptr, (char *)ptr + wlen) > 0) {
       continue;             // not at first byte of character
     }
     if (spell_iswordp(ptr + wlen, mip->mi_win)) {
@@ -2479,7 +2479,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
     if (lnum == 1) {
       need_cap = true;
     } else {
-      line = ml_get(lnum - 1);
+      line = (char_u *)ml_get(lnum - 1);
       if (*skipwhite((char *)line) == NUL) {
         need_cap = true;
       } else {

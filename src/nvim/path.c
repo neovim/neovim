@@ -755,8 +755,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
             backslash_halve((char *)buf + len + 1);
           }
           // add existing file or symbolic link
-          if ((flags & EW_ALLLINKS) ? os_fileinfo_link((char *)buf, &file_info)
-                                    : os_path_exists(buf)) {
+          if ((flags & EW_ALLLINKS)
+              ? os_fileinfo_link((char *)buf, &file_info)
+              : os_path_exists((char *)buf)) {
             addfile(gap, buf, flags);
           }
         }
@@ -1461,7 +1462,7 @@ void addfile(garray_T *gap, char_u *f, int flags)
   if (!(flags & EW_NOTFOUND)
       && ((flags & EW_ALLLINKS)
           ? !os_fileinfo_link((char *)f, &file_info)
-          : !os_path_exists(f))) {
+          : !os_path_exists((char *)f))) {
     return;
   }
 
@@ -1926,7 +1927,7 @@ void path_fix_case(char *name)
   while ((entry = (char *)os_scandir_next(&dir))) {
     // Only accept names that differ in case and are the same byte
     // length. TODO: accept different length name.
-    if (STRICMP(tail, entry) == 0 && STRLEN(tail) == STRLEN(entry)) {
+    if (STRICMP(tail, entry) == 0 && strlen(tail) == strlen(entry)) {
       char_u newname[MAXPATHL + 1];
 
       // Verify the inode is equal.
@@ -1951,7 +1952,7 @@ void path_fix_case(char *name)
 int after_pathsep(const char *b, const char *p)
 {
   return p > b && vim_ispathsep(p[-1])
-         && utf_head_off((char_u *)b, (char_u *)p - 1) == 0;
+         && utf_head_off(b, p - 1) == 0;
 }
 
 /// Return true if file names "f1" and "f2" are in the same directory.
@@ -2272,7 +2273,7 @@ int path_full_dir_name(char *directory, char *buffer, size_t len)
   int SUCCESS = 0;
   int retval = OK;
 
-  if (STRLEN(directory) == 0) {
+  if (strlen(directory) == 0) {
     return os_dirname((char_u *)buffer, len);
   }
 

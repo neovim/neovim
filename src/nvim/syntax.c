@@ -610,7 +610,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
      * Skip lines that end in a backslash.
      */
     for (; start_lnum > 1; start_lnum--) {
-      line = ml_get(start_lnum - 1);
+      line = (char_u *)ml_get(start_lnum - 1);
       if (*line == NUL || *(line + STRLEN(line) - 1) != '\\') {
         break;
       }
@@ -1711,7 +1711,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
         const char_u *cur_pos = line + current_col;
         if (vim_iswordp_buf(cur_pos, syn_buf)
             && (current_col == 0
-                || !vim_iswordp_buf(cur_pos - 1 - utf_head_off(line, cur_pos - 1),
+                || !vim_iswordp_buf(cur_pos - 1 - utf_head_off((char *)line, (char *)cur_pos - 1),
                                     syn_buf))) {
           syn_id = check_keyword_id(line, (int)current_col, &endcol, &flags,
                                     &next_list, cur_si, &cchar);

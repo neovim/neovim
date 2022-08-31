@@ -3197,7 +3197,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
                      _("line %6d, word %6ld - %s"),
                      lnum, spin->si_foldwcount + spin->si_keepwcount, w);
         msg_start();
-        msg_outtrans_long_attr(message, 0);
+        msg_outtrans_long_attr((char *)message, 0);
         msg_clr_eos();
         msg_didout = false;
         msg_col = 0;
@@ -5339,7 +5339,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
   } else {
     // Check for overwriting before doing things that may take a lot of
     // time.
-    if (!over_write && os_path_exists((char_u *)wfname)) {
+    if (!over_write && os_path_exists(wfname)) {
       emsg(_(e_exists));
       goto theend;
     }
@@ -5389,7 +5389,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
       spin.si_region = 1 << i;
 
       vim_snprintf((char *)fname, MAXPATHL, "%s.aff", innames[i]);
-      if (os_path_exists(fname)) {
+      if (os_path_exists((char *)fname)) {
         // Read the .aff file.  Will init "spin->si_conv" based on the
         // "SET" line.
         afile[i] = spell_read_aff(&spin, fname);
@@ -5500,7 +5500,7 @@ static void spell_message(const spellinfo_T *spin, char *str)
 // ":[count]spellrare  {word}"
 void ex_spell(exarg_T *eap)
 {
-  spell_add_word((char_u *)eap->arg, (int)STRLEN(eap->arg),
+  spell_add_word((char_u *)eap->arg, (int)strlen(eap->arg),
                  eap->cmdidx == CMD_spellwrong ? SPELL_ADD_BAD :
                  eap->cmdidx == CMD_spellrare ? SPELL_ADD_RARE : SPELL_ADD_GOOD,
                  eap->forceit ? 0 : (int)eap->line2,
@@ -5810,7 +5810,7 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap, size_t *fwv)
     // <prefcond> : <condlen> <condstr>
     char *p = ((char **)gap->ga_data)[i];
     if (p != NULL) {
-      size_t len = STRLEN(p);
+      size_t len = strlen(p);
       if (fd != NULL) {
         assert(len <= INT_MAX);
         fputc((int)len, fd);
@@ -5873,7 +5873,7 @@ static void set_map_str(slang_T *lp, char_u *map)
         utf_char2bytes(headc, b + cl + 1);
         b[cl + 1 + headcl] = NUL;
         hash = hash_hash((char_u *)b);
-        hi = hash_lookup(&lp->sl_map_hash, (const char *)b, STRLEN(b), hash);
+        hi = hash_lookup(&lp->sl_map_hash, (const char *)b, strlen(b), hash);
         if (HASHITEM_EMPTY(hi)) {
           hash_add_item(&lp->sl_map_hash, hi, (char_u *)b, hash);
         } else {

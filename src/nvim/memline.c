@@ -1177,7 +1177,7 @@ void ml_recover(bool checkext)
   } else {
     for (idx = 1; idx <= lnum; idx++) {
       // Need to copy one line, fetching the other one may flush it.
-      p = vim_strsave(ml_get(idx));
+      p = vim_strsave((char_u *)ml_get(idx));
       i = STRCMP(p, ml_get(idx + lnum));
       xfree(p);
       if (i != 0) {
@@ -1276,7 +1276,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
 #ifdef HAVE_READLINK
     // Expand symlink in the file name, because the swap file is created
     // with the actual file instead of with the symlink.
-    if (resolve_symlink(fname, fname_buf) == OK) {
+    if (resolve_symlink((char *)fname, (char *)fname_buf) == OK) {
       fname_res = fname_buf;
     } else
 #endif
@@ -1351,7 +1351,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
       char_u *swapname = (char_u *)modname((char *)fname_res, ".swp", true);
       if (swapname != NULL) {
-        if (os_path_exists(swapname)) {
+        if (os_path_exists((char *)swapname)) {
           files = xmalloc(sizeof(char_u *));
           files[0] = (char *)swapname;
           swapname = NULL;
@@ -1399,7 +1399,7 @@ int recover_names(char_u *fname, int list, int nr, char_u **fname_out)
         }
       } else {
         msg_puts(_("   In directory "));
-        msg_home_replace(dir_name);
+        msg_home_replace((char *)dir_name);
         msg_puts(":\n");
       }
 
@@ -1592,7 +1592,7 @@ static bool swapfile_unchanged(char *fname)
   int ret = true;
 
   // Swap file must exist.
-  if (!os_path_exists((char_u *)fname)) {
+  if (!os_path_exists(fname)) {
     return false;
   }
 
@@ -1793,9 +1793,9 @@ theend:
 ///
 /// On failure an error message is given and IObuff is returned (to avoid
 /// having to check for error everywhere).
-char_u *ml_get(linenr_T lnum)
+char *ml_get(linenr_T lnum)
 {
-  return ml_get_buf(curbuf, lnum, false);
+  return (char *)ml_get_buf(curbuf, lnum, false);
 }
 
 /// @return  pointer to position "pos".
@@ -2414,9 +2414,9 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char_u *line, colnr_T len, b
   return OK;
 }
 
-void ml_add_deleted_len(char_u *ptr, ssize_t len)
+void ml_add_deleted_len(char *ptr, ssize_t len)
 {
-  ml_add_deleted_len_buf(curbuf, ptr, len);
+  ml_add_deleted_len_buf(curbuf, (char_u *)ptr, len);
 }
 
 void ml_add_deleted_len_buf(buf_T *buf, char_u *ptr, ssize_t len)
@@ -2439,7 +2439,7 @@ void ml_add_deleted_len_buf(buf_T *buf, char_u *ptr, ssize_t len)
 
 int ml_replace(linenr_T lnum, char *line, bool copy)
 {
-  return ml_replace_buf(curbuf, lnum, (char_u *)line, copy);
+  return ml_replace_buf(curbuf, lnum, line, copy);
 }
 
 /// Replace line "lnum", with buffering, in current buffer.
@@ -2454,7 +2454,7 @@ int ml_replace(linenr_T lnum, char *line, bool copy)
 /// changed_lines(), unless update_screen(UPD_NOT_VALID) is used.
 ///
 /// @return  FAIL for failure, OK otherwise
-int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
+int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
 {
   if (line == NULL) {           // just checking...
     return FAIL;
@@ -2468,7 +2468,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
   bool readlen = true;
 
   if (copy) {
-    line = vim_strsave(line);
+    line = xstrdup(line);
   }
   if (buf->b_ml.ml_line_lnum != lnum) {  // other line buffered
     ml_flush_line(buf);  // flush it
@@ -2483,7 +2483,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char_u *line, bool copy)
     ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum, false), -1);
   }
 
-  buf->b_ml.ml_line_ptr = line;
+  buf->b_ml.ml_line_ptr = (char_u *)line;
   buf->b_ml.ml_line_lnum = lnum;
   buf->b_ml.ml_flags = (buf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
 
@@ -3142,9 +3142,9 @@ static void ml_lineadd(buf_T *buf, int count)
 ///
 /// @return  OK if it worked and the resolved link in "buf[MAXPATHL]",
 ///          FAIL otherwise
-int resolve_symlink(const char_u *fname, char_u *buf)
+int resolve_symlink(const char *fname, char *buf)
 {
-  char_u tmp[MAXPATHL];
+  char tmp[MAXPATHL];
   int ret;
   int depth = 0;
 
@@ -3162,7 +3162,7 @@ int resolve_symlink(const char_u *fname, char_u *buf)
       return FAIL;
     }
 
-    ret = (int)readlink((char *)tmp, (char *)buf, MAXPATHL - 1);
+    ret = (int)readlink(tmp, buf, MAXPATHL - 1);
     if (ret <= 0) {
       if (errno == EINVAL || errno == ENOENT) {
         // Found non-symlink or not existing file, stop here.
@@ -3185,10 +3185,10 @@ int resolve_symlink(const char_u *fname, char_u *buf)
     // If it's relative, build a new path based on the directory
     // portion of the filename (if any) and the path the symlink
     // points to.
-    if (path_is_absolute(buf)) {
+    if (path_is_absolute((char_u *)buf)) {
       STRCPY(tmp, buf);
     } else {
-      char_u *tail = (char_u *)path_tail((char *)tmp);
+      char_u *tail = (char_u *)path_tail(tmp);
       if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL) {
         return FAIL;
       }
@@ -3201,7 +3201,7 @@ int resolve_symlink(const char_u *fname, char_u *buf)
    * be consistent even when opening a relative symlink from different
    * working directories.
    */
-  return vim_FullName((char *)tmp, (char *)buf, MAXPATHL, true);
+  return vim_FullName(tmp, buf, MAXPATHL, true);
 }
 #endif
 
@@ -3217,7 +3217,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 
   // Expand symlink in the file name, so that we put the swap file with the
   // actual file instead of with the symlink.
-  if (resolve_symlink(fname, fname_buf) == OK) {
+  if (resolve_symlink((char *)fname, (char *)fname_buf) == OK) {
     fname_res = fname_buf;
   }
 #endif
@@ -3300,7 +3300,7 @@ static void attention_message(buf_T *buf, char_u *fname)
   no_wait_return++;
   (void)emsg(_("E325: ATTENTION"));
   msg_puts(_("\nFound a swap file by the name \""));
-  msg_home_replace(fname);
+  msg_home_replace((char *)fname);
   msg_puts("\"\n");
   const time_t swap_mtime = swapfile_info(fname);
   msg_puts(_("While opening file \""));
@@ -3499,7 +3499,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
           // It's safe to delete the swap file if all these are true:
           // - the edited file exists
           // - the swap file has no changes and looks OK
-          if (os_path_exists((char_u *)buf->b_fname) && swapfile_unchanged(fname)) {
+          if (os_path_exists(buf->b_fname) && swapfile_unchanged(fname)) {
             choice = 4;
             if (p_verbose > 0) {
               verb_msg(_("Found a swap file that is not useful, deleting it"));
@@ -3541,13 +3541,13 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             memcpy(name, sw_msg_1, sw_msg_1_len + 1);
             home_replace(NULL, fname, &name[sw_msg_1_len], fname_len, true);
             xstrlcat(name, sw_msg_2, name_len);
-            choice = do_dialog(VIM_WARNING, (char_u *)_("VIM - ATTENTION"),
-                               (char_u *)name,
+            choice = do_dialog(VIM_WARNING, _("VIM - ATTENTION"),
+                               name,
                                process_still_running
-                               ? (char_u *)_("&Open Read-Only\n&Edit anyway\n&Recover"
-                                             "\n&Quit\n&Abort") :
-                               (char_u *)_("&Open Read-Only\n&Edit anyway\n&Recover"
-                                           "\n&Delete it\n&Quit\n&Abort"),
+                               ? _("&Open Read-Only\n&Edit anyway\n&Recover"
+                                   "\n&Quit\n&Abort") :
+                               _("&Open Read-Only\n&Edit anyway\n&Recover"
+                                 "\n&Delete it\n&Quit\n&Abort"),
                                1, NULL, false);
 
             if (process_still_running && choice >= 4) {
@@ -3582,7 +3582,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             }
 
             // If the file was deleted this fname can be used.
-            if (!os_path_exists((char_u *)fname)) {
+            if (!os_path_exists(fname)) {
               break;
             }
           } else {
@@ -4212,8 +4212,8 @@ int dec(pos_T *lp)
   lp->coladd = 0;
   if (lp->col == MAXCOL) {
     // past end of line
-    char_u *p = ml_get(lp->lnum);
-    lp->col = (colnr_T)STRLEN(p);
+    char *p = ml_get(lp->lnum);
+    lp->col = (colnr_T)strlen(p);
     lp->col -= utf_head_off(p, p + lp->col);
     return 0;
   }
@@ -4221,15 +4221,15 @@ int dec(pos_T *lp)
   if (lp->col > 0) {
     // still within line
     lp->col--;
-    char_u *p = ml_get(lp->lnum);
+    char *p = ml_get(lp->lnum);
     lp->col -= utf_head_off(p, p + lp->col);
     return 0;
   }
   if (lp->lnum > 1) {
     // there is a prior line
     lp->lnum--;
-    char_u *p = ml_get(lp->lnum);
-    lp->col = (colnr_T)STRLEN(p);
+    char *p = ml_get(lp->lnum);
+    lp->col = (colnr_T)strlen(p);
     lp->col -= utf_head_off(p, p + lp->col);
     return 1;
   }
