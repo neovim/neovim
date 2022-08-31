@@ -3,6 +3,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
+local exec = helpers.exec
+local exec_lua = helpers.exec_lua
 local expect = helpers.expect
 local feed = helpers.feed
 local funcs = helpers.funcs
@@ -10,6 +12,7 @@ local meths = helpers.meths
 local nvim = helpers.nvim
 local source = helpers.source
 local command = helpers.command
+local pcall_err = helpers.pcall_err
 
 describe('maparg()', function()
   before_each(clear)
@@ -193,5 +196,44 @@ describe('mapset()', function()
     funcs.mapset('i', false, mapargs)
     feed('foo')
     expect('<<lt><')
+  end)
+
+  it('can restore Lua callback from the dict returned by maparg()', function()
+    eq(0, exec_lua([[
+      GlobalCount = 0
+      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
+      return GlobalCount
+    ]]))
+    feed('asdf')
+    eq(1, exec_lua([[return GlobalCount]]))
+
+    exec_lua([[
+      _G.saved_asdf_map = vim.fn.maparg('asdf', 'n', false, true)
+      vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 10 end })
+    ]])
+    feed('asdf')
+    eq(11, exec_lua([[return GlobalCount]]))
+
+    exec_lua([[vim.fn.mapset('n', false, _G.saved_asdf_map)]])
+    feed('asdf')
+    eq(12, exec_lua([[return GlobalCount]]))
+
+    exec([[
+      let g:saved_asdf_map = maparg('asdf', 'n', v:false, v:true)
+      lua vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 10 end })
+    ]])
+    feed('asdf')
+    eq(22, exec_lua([[return GlobalCount]]))
+
+    command([[call mapset('n', v:false, g:saved_asdf_map)]])
+    feed('asdf')
+    eq(23, exec_lua([[return GlobalCount]]))
+  end)
+
+  it('does not leak memory if lhs is missing', function()
+    eq('Error executing lua: Vim:E460: entries missing in mapset() dict argument',
+       pcall_err(exec_lua, [[vim.fn.mapset('n', false, {rhs = 'foo'})]]))
+    eq('Error executing lua: Vim:E460: entries missing in mapset() dict argument',
+       pcall_err(exec_lua, [[vim.fn.mapset('n', false, {callback = function() end})]]))
   end)
 end)

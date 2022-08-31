@@ -158,11 +158,11 @@ func Test_range_map()
   call assert_equal("abcd", getline(1))
 endfunc
 
-func One_mapset_test(keys)
-  exe 'nnoremap ' .. a:keys .. ' original<CR>'
+func One_mapset_test(keys, rhs)
+  exe 'nnoremap ' .. a:keys .. ' ' .. a:rhs
   let orig = maparg(a:keys, 'n', 0, 1)
   call assert_equal(a:keys, orig.lhs)
-  call assert_equal('original<CR>', orig.rhs)
+  call assert_equal(a:rhs, orig.rhs)
   call assert_equal('n', orig.mode)
 
   exe 'nunmap ' .. a:keys
@@ -172,15 +172,16 @@ func One_mapset_test(keys)
   call mapset('n', 0, orig)
   let d = maparg(a:keys, 'n', 0, 1)
   call assert_equal(a:keys, d.lhs)
-  call assert_equal('original<CR>', d.rhs)
+  call assert_equal(a:rhs, d.rhs)
   call assert_equal('n', d.mode)
 
   exe 'nunmap ' .. a:keys
 endfunc
 
 func Test_mapset()
-  call One_mapset_test('K')
-  call One_mapset_test('<F3>')
+  call One_mapset_test('K', 'original<CR>')
+  call One_mapset_test('<F3>', 'original<CR>')
+  call One_mapset_test('<F3>', '<lt>Nop>')
 
   " Check <> key conversion
   new
@@ -200,6 +201,26 @@ func Test_mapset()
   call mapset('i', 0, orig)
   call feedkeys("SK\<Esc>", 'xt')
   call assert_equal('onxe', getline(1))
+
+  iunmap K
+
+  " Test that <Nop> is restored properly
+  inoremap K <Nop>
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('', getline(1))
+
+  let orig = maparg('K', 'i', 0, 1)
+  call assert_equal('K', orig.lhs)
+  call assert_equal('<Nop>', orig.rhs)
+  call assert_equal('i', orig.mode)
+
+  inoremap K foo
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('foo', getline(1))
+
+  call mapset('i', 0, orig)
+  call feedkeys("SK\<Esc>", 'xt')
+  call assert_equal('', getline(1))
 
   iunmap K
 
