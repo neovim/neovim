@@ -3167,6 +3167,9 @@ text...
 			iterate over.  Unlike with |List|, modifying the
 			|Blob| does not affect the iteration.
 
+			When {object} is a |String| each item is a string with
+			one character, plus any combining characters.
+
 :for [{var1}, {var2}, ...] in {listlist}
 :endfo[r]
 			Like `:for` above, but each item in {listlist} must be
