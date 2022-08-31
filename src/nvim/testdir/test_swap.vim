@@ -375,24 +375,26 @@ func Test_swap_prompt_splitwin()
   call WaitForAssert({-> assert_match('^1$', term_getline(buf, 20))})
   call StopVimInTerminal(buf)
 
-  " This caused Vim to crash when typing "q".
-  " TODO: it does not actually reproduce the crash.
-  call writefile(['au BufAdd * set virtualedit=all'], 'Xvimrc')
-
-  let buf = RunVimInTerminal('-u Xvimrc Xfile1', {'rows': 20, 'wait_for_ruler': 0})
-  call TermWait(buf)
-  call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort:', term_getline(buf, 20))})
+  " This caused Vim to crash when typing "q" at the swap file prompt.
+  let buf = RunVimInTerminal('-c "au bufadd * let foo_w = wincol()"', {'rows': 18})
+  call term_sendkeys(buf, ":e Xfile1\<CR>")
+  call WaitForAssert({-> assert_match('More', term_getline(buf, 18))})
+  call term_sendkeys(buf, " ")
+  call WaitForAssert({-> assert_match('^\[O\]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort:', term_getline(buf, 18))})
   call term_sendkeys(buf, "q")
+  call TermWait(buf)
+  " check that Vim is still running
+  call term_sendkeys(buf, ":echo 'hello'\<CR>")
+  call WaitForAssert({-> assert_match('^hello', term_getline(buf, 18))})
+  call term_sendkeys(buf, ":%bwipe!\<CR>")
+  call StopVimInTerminal(buf)
 
   %bwipe!
   call delete('Xfile1')
-  call delete('Xvimrc')
 endfunc
 
 func Test_swap_symlink()
-  if !has("unix")
-    return
-  endif
+  CheckUnix
 
   call writefile(['text'], 'Xtestfile')
   silent !ln -s -f Xtestfile Xtestlink
