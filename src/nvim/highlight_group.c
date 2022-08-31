@@ -632,7 +632,9 @@ int load_colors(char_u *name)
     retval = source_runtime((char *)buf, DIP_START + DIP_OPT);
   }
   xfree(buf);
-  apply_autocmds(EVENT_COLORSCHEME, (char *)name, curbuf->b_fname, false, curbuf);
+  if (retval == OK) {
+    apply_autocmds(EVENT_COLORSCHEME, (char *)name, curbuf->b_fname, false, curbuf);
+  }
 
   recursive = false;
 
