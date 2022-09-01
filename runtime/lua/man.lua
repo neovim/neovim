@@ -268,7 +268,7 @@ local function get_path(sect, name, silent)
   -- Finally, we can avoid relying on -S or -s here since they are very
   -- inconsistently supported. Instead, call -w with a section and a name.
   local cmd
-  if not sect or sect == '' then
+  if sect == '' then
     cmd = { 'man', find_arg, name }
   else
     cmd = { 'man', find_arg, sect, name }
@@ -279,7 +279,7 @@ local function get_path(sect, name, silent)
     return nil
   end
 
-  local results = vim.split(lines, '\n')
+  local results = vim.split(lines, '\n', { trimempty = true })
 
   if #results == 0 then
     return
@@ -353,7 +353,7 @@ local function verify_exists(sect, name)
   end
 
   if vim.b.man_default_sects ~= nil then
-    local sects = vim.split(vim.b.man_default_sects, ',', { plain = true })
+    local sects = vim.split(vim.b.man_default_sects, ',', { plain = true, trimempty = true })
     for _, sec in ipairs(sects) do
       local ret = get_path(sec, name, true)
       if ret then
@@ -483,7 +483,8 @@ end
 local function get_paths(sect, name, do_fallback)
   -- callers must try-catch this, as some `man` implementations don't support `s:find_arg`
   local ok, ret = pcall(function()
-    local mandirs = table.concat(vim.split(man_system({ 'man', find_arg }), '[:\n]'), ',')
+    local mandirs =
+      table.concat(vim.split(man_system({ 'man', find_arg }), '[:\n]', { trimempty = true }), ',')
     local paths = fn.globpath(mandirs, 'man?/' .. name .. '*.' .. sect .. '*', false, true)
     pcall(function()
       -- Prioritize the result from verify_exists as it obeys b:man_default_sects.
@@ -519,35 +520,42 @@ end
 
 -- see extract_sect_and_name_ref on why tolower(sect)
 function M.man_complete(arg_lead, cmd_line, _)
-  -- TODO(lewis6991): for some reason using vim.fn.split here makes completion very laggy
-  local args = vim.split(cmd_line, '%s+')
+  local args = vim.split(cmd_line, '%s+', { trimempty = true })
   local cmd_offset = fn.index(args, 'Man')
   if cmd_offset > 0 then
     -- Prune all arguments up to :Man itself. Otherwise modifier commands like
     -- :tab, :vertical, etc. would lead to a wrong length.
     args = vim.list_slice(args, cmd_offset + 1)
   end
+
   if #args > 3 then
     return {}
   end
 
-  local name, sect
   if #args == 1 then
-    name = ''
-    sect = ''
-  elseif arg_lead:match('^[^()]+%([^()]*$') then
+    -- returning full completion is laggy. Require some arg_lead to complete
+    -- return complete('', '', '')
+    return {}
+  end
+
+  if arg_lead:match('^[^()]+%([^()]*$') then
     -- cursor (|) is at ':Man printf(|' or ':Man 1 printf(|'
     -- The later is is allowed because of ':Man pri<TAB>'.
     -- It will offer 'priclass.d(1m)' even though section is specified as 1.
     local tmp = vim.split(arg_lead, '(', { plain = true })
-    name = tmp[1]
-    sect = tmp[2]:lower()
+    local name = tmp[1]
+    local sect = (tmp[2] or ''):lower()
     return complete(sect, '', name)
-  elseif not args[2]:match('^[^()]+$') then
+  end
+
+  if not args[2]:match('^[^()]+$') then
     -- cursor (|) is at ':Man 3() |' or ':Man (3|' or ':Man 3() pri|'
     -- or ':Man 3() pri |'
     return {}
-  elseif #args == 2 then
+  end
+
+  if #args == 2 then
+    local name, sect
     if arg_lead == '' then
       -- cursor (|) is at ':Man 1 |'
       name = ''
@@ -562,14 +570,17 @@ function M.man_complete(arg_lead, cmd_line, _)
       name = arg_lead
       sect = ''
     end
-  elseif not arg_lead:match('[^()]+$') then
+    return complete(sect, sect, name)
+  end
+
+  if not arg_lead:match('[^()]+$') then
     -- cursor (|) is at ':Man 3 printf |' or ':Man 3 (pr)i|'
     return {}
-  else
-    -- cursor (|) is at ':Man 3 pri|'
-    name = arg_lead
-    sect = args[2]:lower()
   end
+
+  -- cursor (|) is at ':Man 3 pri|'
+  local name = arg_lead
+  local sect = args[2]:lower()
   return complete(sect, sect, name)
 end
 
