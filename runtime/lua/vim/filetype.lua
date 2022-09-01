@@ -900,7 +900,9 @@ local extension = {
   sig = function(path, bufnr)
     return require('vim.filetype.detect').sig(bufnr)
   end,
-  sil = 'sil',
+  sil = function(path, bufnr)
+    return require('vim.filetype.detect').sil(bufnr)
+  end,
   sim = 'simula',
   ['s85'] = 'sinda',
   sin = 'sinda',
