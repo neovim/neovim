@@ -1541,17 +1541,16 @@ ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool us
   return -1;
 }
 
-/*
- * Version of strnicmp() that handles multi-byte characters.
- * Needed for Big5, Shift-JIS and UTF-8 encoding.  Other DBCS encodings can
- * probably use strnicmp(), because there are no ASCII characters in the
- * second byte.
- * Returns zero if s1 and s2 are equal (ignoring case), the difference between
- * two characters otherwise.
- */
-int mb_strnicmp(const char_u *s1, const char_u *s2, const size_t nn)
+/// Version of strnicmp() that handles multi-byte characters.
+/// Needed for Big5, Shift-JIS and UTF-8 encoding.  Other DBCS encodings can
+/// probably use strnicmp(), because there are no ASCII characters in the
+/// second byte.
+///
+/// @return  zero if s1 and s2 are equal (ignoring case), the difference between
+///          two characters otherwise.
+int mb_strnicmp(const char *s1, const char *s2, const size_t nn)
 {
-  return utf_strnicmp(s1, s2, nn, nn);
+  return utf_strnicmp((char_u *)s1, (char_u *)s2, nn, nn);
 }
 
 /// Compare strings case-insensitively
@@ -1568,7 +1567,7 @@ int mb_strnicmp(const char_u *s1, const char_u *s2, const size_t nn)
 /// @return 0 if strings are equal, <0 if s1 < s2, >0 if s1 > s2.
 int mb_stricmp(const char *s1, const char *s2)
 {
-  return mb_strnicmp((const char_u *)s1, (const char_u *)s2, MAXCOL);
+  return mb_strnicmp(s1, s2, MAXCOL);
 }
 
 /*

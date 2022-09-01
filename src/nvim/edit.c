@@ -3236,7 +3236,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
           if (s + (p - look) <= line + curwin->w_cursor.col
               && (icase
-                  ? mb_strnicmp(s, look, (size_t)(p - look))
+                  ? mb_strnicmp((char *)s, (char *)look, (size_t)(p - look))
                   : STRNCMP(s, look, p - look)) == 0) {
             match = true;
           }
@@ -3250,7 +3250,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
             if ((curwin->w_cursor.col == (colnr_T)(p - look)
                  || !vim_iswordc(line[-(p - look) - 1]))
                 && (icase
-                    ? mb_strnicmp(line - (p - look), look, (size_t)(p - look))
+                    ? mb_strnicmp((char *)line - (p - look), (char *)look, (size_t)(p - look))
                     : STRNCMP(line - (p - look), look, p - look)) == 0) {
               match = true;
             }

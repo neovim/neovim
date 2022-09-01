@@ -1065,7 +1065,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         const size_t len = STRLEN(expr);
 
         while (*p != NUL) {
-          if (mb_strnicmp(p, expr, len) == 0) {
+          if (mb_strnicmp((char *)p, (char *)expr, len) == 0) {
             n++;
             p += len;
           } else {
@@ -8687,7 +8687,7 @@ static void f_submatch(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (retList == 0) {
     rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = (char *)reg_submatch(no);
+    rettv->vval.v_string = reg_submatch(no);
   } else {
     rettv->v_type = VAR_LIST;
     rettv->vval.v_list = reg_submatch_list(no);

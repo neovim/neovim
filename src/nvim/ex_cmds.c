@@ -509,8 +509,8 @@ void ex_sort(exarg_T *eap)
     } else if (*p == '"') {
       // comment start
       break;
-    } else if (check_nextcmd((char_u *)p) != NULL) {
-      eap->nextcmd = (char *)check_nextcmd((char_u *)p);
+    } else if (check_nextcmd(p) != NULL) {
+      eap->nextcmd = check_nextcmd(p);
       break;
     } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
       s = skip_regexp(p + 1, *p, true, NULL);
@@ -3625,7 +3625,7 @@ static int do_sub(exarg_T *eap, proftime_T timeout, long cmdpreview_ns, handle_T
    */
   cmd = skipwhite(cmd);
   if (*cmd && *cmd != '"') {        // if not end-of-line or comment
-    eap->nextcmd = (char *)check_nextcmd((char_u *)cmd);
+    eap->nextcmd = check_nextcmd(cmd);
     if (eap->nextcmd == NULL) {
       semsg(_(e_trailing_arg), cmd);
       return 0;

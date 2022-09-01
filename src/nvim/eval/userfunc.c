@@ -1942,7 +1942,7 @@ void ex_function(exarg_T *eap)
         }
       }
     }
-    eap->nextcmd = (char *)check_nextcmd((char_u *)eap->arg);
+    eap->nextcmd = check_nextcmd(eap->arg);
     return;
   }
 
@@ -1978,7 +1978,7 @@ void ex_function(exarg_T *eap)
     if (*p == '/') {
       p++;
     }
-    eap->nextcmd = (char *)check_nextcmd(p);
+    eap->nextcmd = check_nextcmd((char *)p);
     return;
   }
 
@@ -2032,7 +2032,7 @@ void ex_function(exarg_T *eap)
       semsg(_(e_trailing_arg), p);
       goto ret_free;
     }
-    eap->nextcmd = (char *)check_nextcmd(p);
+    eap->nextcmd = check_nextcmd((char *)p);
     if (eap->nextcmd != NULL) {
       *p = NUL;
     }
@@ -2590,8 +2590,8 @@ int eval_fname_script(const char *const p)
   // Use mb_strnicmp() because in Turkish comparing the "I" may not work with
   // the standard library function.
   if (p[0] == '<'
-      && (mb_strnicmp((char_u *)p + 1, (char_u *)"SID>", 4) == 0
-          || mb_strnicmp((char_u *)p + 1, (char_u *)"SNR>", 4) == 0)) {
+      && (mb_strnicmp(p + 1, "SID>", 4) == 0
+          || mb_strnicmp(p + 1, "SNR>", 4) == 0)) {
     return 5;
   }
   if (p[0] == 's' && p[1] == ':') {
@@ -2700,7 +2700,7 @@ void ex_delfunction(exarg_T *eap)
     semsg(_(e_trailing_arg), p);
     return;
   }
-  eap->nextcmd = (char *)check_nextcmd(p);
+  eap->nextcmd = check_nextcmd((char *)p);
   if (eap->nextcmd != NULL) {
     *p = NUL;
   }
@@ -2889,7 +2889,7 @@ void ex_return(exarg_T *eap)
   if (returning) {
     eap->nextcmd = NULL;
   } else if (eap->nextcmd == NULL) {          // no argument
-    eap->nextcmd = (char *)check_nextcmd(arg);
+    eap->nextcmd = check_nextcmd((char *)arg);
   }
 
   if (eap->skip) {
@@ -3018,7 +3018,7 @@ void ex_call(exarg_T *eap)
         semsg(_(e_trailing_arg), arg);
       }
     } else {
-      eap->nextcmd = (char *)check_nextcmd(arg);
+      eap->nextcmd = check_nextcmd((char *)arg);
     }
   }
 

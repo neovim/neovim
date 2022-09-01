@@ -1282,7 +1282,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       len = (int)STRLEN(p + ccol);
     }
 
-    if (cstrncmp(p + ccol, rex.input, &len) != 0) {
+    if (cstrncmp((char *)p + ccol, (char *)rex.input, &len) != 0) {
       return RA_NOMATCH;  // doesn't match
     }
     if (bytelen != NULL) {
@@ -1395,10 +1395,10 @@ static void mb_decompose(int c, int *c1, int *c2, int *c3)
   }
 }
 
-// Compare two strings, ignore case if rex.reg_ic set.
-// Return 0 if strings match, non-zero otherwise.
-// Correct the length "*n" when composing characters are ignored.
-static int cstrncmp(char_u *s1, char_u *s2, int *n)
+/// Compare two strings, ignore case if rex.reg_ic set.
+/// Return 0 if strings match, non-zero otherwise.
+/// Correct the length "*n" when composing characters are ignored.
+static int cstrncmp(char *s1, char *s2, int *n)
 {
   int result;
 
@@ -1406,12 +1406,12 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
     result = STRNCMP(s1, s2, *n);
   } else {
     assert(*n >= 0);
-    result = mb_strnicmp(s1, s2, (size_t)*n);
+    result = mb_strnicmp(s1, s2, (size_t)(*n));
   }
 
   // if it failed and it's utf8 and we want to combineignore:
   if (result != 0 && rex.reg_icombine) {
-    char_u *str1, *str2;
+    char *str1, *str2;
     int c1, c2, c11, c12;
     int junk;
 
@@ -2112,36 +2112,33 @@ exit:
   return (int)((dst - dest) + 1);
 }
 
-/*
- * Call reg_getline() with the line numbers from the submatch.  If a
- * substitute() was used the reg_maxline and other values have been
- * overwritten.
- */
-static char_u *reg_getline_submatch(linenr_T lnum)
+/// Call reg_getline() with the line numbers from the submatch.  If a
+/// substitute() was used the reg_maxline and other values have been
+/// overwritten.
+static char *reg_getline_submatch(linenr_T lnum)
 {
-  char_u *s;
+  char *s;
   linenr_T save_first = rex.reg_firstlnum;
   linenr_T save_max = rex.reg_maxline;
 
   rex.reg_firstlnum = rsm.sm_firstlnum;
   rex.reg_maxline = rsm.sm_maxline;
 
-  s = reg_getline(lnum);
+  s = (char *)reg_getline(lnum);
 
   rex.reg_firstlnum = save_first;
   rex.reg_maxline = save_max;
   return s;
 }
 
-/*
- * Used for the submatch() function: get the string from the n'th submatch in
- * allocated memory.
- * Returns NULL when not in a ":s" command and for a non-existing submatch.
- */
-char_u *reg_submatch(int no)
+/// Used for the submatch() function: get the string from the n'th submatch in
+/// allocated memory.
+///
+/// @return  NULL when not in a ":s" command and for a non-existing submatch.
+char *reg_submatch(int no)
 {
-  char_u *retval = NULL;
-  char_u *s;
+  char *retval = NULL;
+  char *s;
   int round;
   linenr_T lnum;
 
@@ -2211,11 +2208,11 @@ char_u *reg_submatch(int no)
       }
     }
   } else {
-    s = rsm.sm_match->startp[no];
+    s = (char *)rsm.sm_match->startp[no];
     if (s == NULL || rsm.sm_match->endp[no] == NULL) {
       retval = NULL;
     } else {
-      retval = vim_strnsave(s, (size_t)(rsm.sm_match->endp[no] - s));
+      retval = xstrnsave(s, (size_t)(rsm.sm_match->endp[no] - (char_u *)s));
     }
   }
 
@@ -2250,16 +2247,16 @@ list_T *reg_submatch_list(int no)
 
     list = tv_list_alloc(elnum - slnum + 1);
 
-    s = (const char *)reg_getline_submatch(slnum) + scol;
+    s = reg_getline_submatch(slnum) + scol;
     if (slnum == elnum) {
       tv_list_append_string(list, s, ecol - scol);
     } else {
       tv_list_append_string(list, s, -1);
       for (int i = 1; i < elnum - slnum; i++) {
-        s = (const char *)reg_getline_submatch(slnum + i);
+        s = reg_getline_submatch(slnum + i);
         tv_list_append_string(list, s, -1);
       }
-      s = (const char *)reg_getline_submatch(elnum);
+      s = reg_getline_submatch(elnum);
       tv_list_append_string(list, s, ecol);
     }
   } else {

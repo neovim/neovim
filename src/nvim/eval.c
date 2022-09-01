@@ -2292,7 +2292,7 @@ int eval0(char *arg, typval_T *rettv, char **nextcmd, int evaluate)
     ret = FAIL;
   }
   if (nextcmd != NULL) {
-    *nextcmd = (char *)check_nextcmd((char_u *)p);
+    *nextcmd = check_nextcmd(p);
   }
 
   return ret;
@@ -7634,7 +7634,7 @@ void ex_echo(exarg_T *eap)
     tv_clear(&rettv);
     arg = skipwhite(arg);
   }
-  eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
+  eap->nextcmd = check_nextcmd(arg);
 
   if (eap->skip) {
     emsg_skip--;
@@ -7731,7 +7731,7 @@ void ex_execute(exarg_T *eap)
     emsg_skip--;
   }
 
-  eap->nextcmd = (char *)check_nextcmd((char_u *)arg);
+  eap->nextcmd = check_nextcmd(arg);
 }
 
 /// Skip over the name of an option: "&option", "&g:option" or "&l:option".

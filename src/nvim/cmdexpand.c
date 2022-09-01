@@ -1423,7 +1423,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
     set_context_in_cscope_cmd(xp, arg, cmdidx);
     break;
   case CMD_sign:
-    set_context_in_sign_cmd(xp, (char_u *)arg);
+    set_context_in_sign_cmd(xp, (char *)arg);
     break;
   case CMD_bdelete:
   case CMD_bwipeout:
@@ -2889,7 +2889,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (xpc.xp_context == EXPAND_SIGN) {
-    set_context_in_sign_cmd(&xpc, (char_u *)xpc.xp_pattern);
+    set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
     xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 

@@ -5421,8 +5421,8 @@ retempty:
         && sub->list.multi[subidx].end_lnum == rex.lnum) {
       len = sub->list.multi[subidx].end_col
             - sub->list.multi[subidx].start_col;
-      if (cstrncmp(rex.line + sub->list.multi[subidx].start_col,
-                   rex.input, &len) == 0) {
+      if (cstrncmp((char *)rex.line + sub->list.multi[subidx].start_col,
+                   (char *)rex.input, &len) == 0) {
         *bytelen = len;
         return true;
       }
@@ -5441,7 +5441,7 @@ retempty:
       goto retempty;
     }
     len = (int)(sub->list.line[subidx].end - sub->list.line[subidx].start);
-    if (cstrncmp(sub->list.line[subidx].start, rex.input, &len) == 0) {
+    if (cstrncmp((char *)sub->list.line[subidx].start, (char *)rex.input, &len) == 0) {
       *bytelen = len;
       return true;
     }
@@ -5466,7 +5466,7 @@ static int match_zref(int subidx, int *bytelen)
   }
 
   len = (int)STRLEN(re_extmatch_in->matches[subidx]);
-  if (cstrncmp(re_extmatch_in->matches[subidx], rex.input, &len) == 0) {
+  if (cstrncmp((char *)re_extmatch_in->matches[subidx], (char *)rex.input, &len) == 0) {
     *bytelen = len;
     return true;
   }
