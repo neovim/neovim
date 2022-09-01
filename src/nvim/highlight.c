@@ -788,7 +788,7 @@ HlAttrs syn_attr2entry(int attr)
 }
 
 /// Gets highlight description for id `attr_id` as a map.
-Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
+Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *err)
 {
   Dictionary dic = ARRAY_DICT_INIT;
 
@@ -801,25 +801,21 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
                   "Invalid attribute id: %" PRId64, attr_id);
     return dic;
   }
-
-  return hlattrs2dict(NULL, syn_attr2entry((int)attr_id), rgb);
+  Dictionary retval = arena_dict(arena, HLATTRS_DICT_SIZE);
+  hlattrs2dict(&retval, syn_attr2entry((int)attr_id), rgb);
+  return retval;
 }
 
 /// Converts an HlAttrs into Dictionary
 ///
-/// @param[out] hl optional pre-allocated dictionary for return value
-///                if present, must be allocated with at least 16 elements!
+/// @param[in/out] hl Dictionary with pre-allocated space for HLATTRS_DICT_SIZE elements
 /// @param[in] aep data to convert
 /// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
-Dictionary hlattrs2dict(Dictionary *hl_alloc, HlAttrs ae, bool use_rgb)
+void hlattrs2dict(Dictionary *dict, HlAttrs ae, bool use_rgb)
 {
+  assert(dict->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
+  Dictionary hl = *dict;
   int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
-  Dictionary hl = ARRAY_DICT_INIT;
-  if (hl_alloc) {
-    hl = *hl_alloc;
-  } else {
-    kv_ensure_space(hl, 16);
-  }
 
   if (mask & HL_BOLD) {
     PUT_C(hl, "bold", BOOLEAN_OBJ(true));
@@ -899,14 +895,7 @@ Dictionary hlattrs2dict(Dictionary *hl_alloc, HlAttrs ae, bool use_rgb)
     PUT_C(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
-  if (hl_alloc) {
-    *hl_alloc = hl;
-    return hl;
-  } else {
-    Dictionary allocated = copy_dictionary(hl, NULL);
-    kv_destroy(hl);
-    return allocated;
-  }
+  *dict = hl;
 }
 
 HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
@@ -1086,6 +1075,7 @@ int object_to_color(Object val, char *key, bool rgb, Error *err)
 
 Array hl_inspect(int attr)
 {
+  // TODO(bfredl): use arena allocation
   Array ret = ARRAY_DICT_INIT;
   if (hlstate_active) {
     hl_inspect_impl(&ret, attr);
