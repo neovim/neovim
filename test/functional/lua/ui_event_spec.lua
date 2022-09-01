@@ -89,9 +89,16 @@ describe('vim.ui_attach', function()
     }
 
     -- ui_detach stops events, and reenables builtin pum
-    exec_lua [[ vim.ui_detach(ns) ]]
+    -- UI refresh is scheduled twice, so builtin pum is enabled after two main loop iterations
+    exec_lua [[
+      vim.ui_detach(ns)
+      vim.schedule(function()
+        vim.schedule(function()
+          vim.fn.complete(1, {'food', 'foobar', 'foo'})
+        end)
+      end)
+    ]]
 
-    funcs.complete(1, {'food', 'foobar', 'foo'})
     screen:expect{grid=[[
       food^                                    |
       {3:food           }{1:                         }|
