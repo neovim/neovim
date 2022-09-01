@@ -1203,6 +1203,7 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, cons
   case CMD_folddoclosed:
   case CMD_folddoopen:
   case CMD_hide:
+  case CMD_horizontal:
   case CMD_keepalt:
   case CMD_keepjumps:
   case CMD_keepmarks:
