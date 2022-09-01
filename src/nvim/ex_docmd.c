@@ -4833,7 +4833,6 @@ static void ex_print(exarg_T *eap)
       if (++eap->line1 > eap->line2) {
         break;
       }
-      ui_flush();                  // show one line at a time
     }
     setpcmark();
     // put cursor at last line
@@ -5035,7 +5034,6 @@ static void ex_tabs(exarg_T *eap)
     msg_putchar('\n');
     vim_snprintf((char *)IObuff, IOSIZE, _("Tab page %d"), tabcount++);
     msg_outtrans_attr((char *)IObuff, HL_ATTR(HLF_T));
-    ui_flush();            // output one line at a time
     os_breakcheck();
 
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
@@ -5054,7 +5052,6 @@ static void ex_tabs(exarg_T *eap)
         home_replace(wp->w_buffer, wp->w_buffer->b_fname, (char *)IObuff, IOSIZE, true);
       }
       msg_outtrans((char *)IObuff);
-      ui_flush();                  // output one line at a time
       os_breakcheck();
     }
   }

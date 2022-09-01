@@ -717,7 +717,6 @@ int showmatches(expand_T *xp, int wildmenu)
         msg_clr_eos();
         msg_putchar('\n');
       }
-      ui_flush();                          // show one line at a time
       if (got_int) {
         got_int = false;
         break;

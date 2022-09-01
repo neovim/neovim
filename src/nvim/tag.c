@@ -1056,7 +1056,6 @@ void do_tags(exarg_T *eap)
                         ? HL_ATTR(HLF_D) : 0);
       xfree(name);
     }
-    ui_flush();                    // show one line at a time
   }
   if (tagstackidx == tagstacklen) {     // idx at top of stack
     msg_puts("\n>");

@@ -5004,7 +5004,6 @@ void ex_oldfiles(exarg_T *eap)
         msg_outtrans((char *)tv_get_string(TV_LIST_ITEM_TV(li)));
         msg_clr_eos();
         msg_putchar('\n');
-        ui_flush();                  // output one line at a time
         os_breakcheck();
       }
     });

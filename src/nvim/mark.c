@@ -925,7 +925,6 @@ static void show_one_mark(int c, char_u *arg, pos_T *p, char_u *name_arg, int cu
           msg_outtrans_attr((char *)name, current ? HL_ATTR(HLF_D) : 0);
         }
       }
-      ui_flush();  // show one line at a time
     }
     if (mustfree) {
       xfree(name);
@@ -1058,7 +1057,6 @@ void ex_jumps(exarg_T *eap)
       xfree(name);
       os_breakcheck();
     }
-    ui_flush();
   }
   if (curwin->w_jumplistidx == curwin->w_jumplistlen) {
     msg_puts("\n>");
@@ -1101,7 +1099,6 @@ void ex_changes(exarg_T *eap)
       xfree(name);
       os_breakcheck();
     }
-    ui_flush();
   }
   if (curwin->w_changelistidx == curbuf->b_changelistlen) {
     msg_puts("\n>");
