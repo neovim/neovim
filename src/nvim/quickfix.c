@@ -3094,8 +3094,6 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   if (tbuf != IObuff) {
     xfree(tbuf);
   }
-
-  ui_flush();  // show one line at a time
 }
 
 // ":clist": list all errors

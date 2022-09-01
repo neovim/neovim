@@ -3714,7 +3714,6 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
             }
           }
         }
-        ui_flush();                // output each line directly
       }
 
       if (new_fname != NULL) {
@@ -4147,7 +4146,6 @@ static void show_pat_in_path(char_u *line, int type, bool did_show, int action, 
       msg_puts(" ");
     }
     msg_prt_line((char *)line, false);
-    ui_flush();                        // show one line at a time
 
     // Definition continues until line that doesn't end with '\'
     if (got_int || type != FIND_DEFINE || p < line || *p != '\\') {

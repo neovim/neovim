@@ -650,7 +650,6 @@ void ex_history(exarg_T *eap)
             STRCAT(IObuff, hist[i].hisstr);
           }
           msg_outtrans((char *)IObuff);
-          ui_flush();
         }
         if (i == idx) {
           break;

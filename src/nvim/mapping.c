@@ -214,7 +214,6 @@ static void showmap(mapblock_T *mp, bool local)
     last_set_msg(mp->m_script_ctx);
   }
   msg_clr_eos();
-  ui_flush();                          // show one line at a time
 }
 
 /// Replace termcodes in the given LHS and RHS and store the results into the

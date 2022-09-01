@@ -3866,7 +3866,6 @@ void ex_display(exarg_T *eap)
         if (n > 1 && yb->y_type == kMTLineWise) {
           msg_puts_attr("^J", attr);
         }
-        ui_flush();  // show one line at a time
       }
       os_breakcheck();
     }

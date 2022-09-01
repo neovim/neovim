@@ -3355,7 +3355,6 @@ static void showoptions(int all, int opt_flags)
         showoneopt(items[i], opt_flags);
         col += INC;
       }
-      ui_flush();
       os_breakcheck();
     }
   }
