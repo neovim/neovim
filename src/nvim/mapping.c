@@ -2008,8 +2008,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   FUNC_ATTR_NONNULL_ARG(1)
 {
   Dictionary dict = ARRAY_DICT_INIT;
-  char *const lhs = str2special_save((const char *)mp->m_keys,
-                                     compatible, !compatible);
+  char *const lhs = str2special_save((const char *)mp->m_keys, compatible, !compatible);
   char *const mapmode = map_mode_to_chars(mp->m_mode);
   varnumber_T noremap_value;
 
@@ -2122,13 +2121,15 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     }
   } else {
     // Return a dictionary.
-    tv_dict_alloc_ret(rettv);
     if (mp != NULL && (rhs != NULL || rhs_lua != LUA_NOREF)) {
       Dictionary dict = mapblock_fill_dict(mp,
                                            did_simplify ? (char *)keys_simplified : NULL,
                                            buffer_local, true);
       (void)object_to_vim(DICTIONARY_OBJ(dict), rettv, NULL);
       api_free_dictionary(dict);
+    } else {
+      // Return an empty dictionary.
+      tv_dict_alloc_ret(rettv);
     }
   }
 
@@ -2164,12 +2165,12 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     Object callback_obj = vim_to_object(&callback_di->di_tv);
     if (callback_obj.type == kObjectTypeLuaRef && callback_obj.data.luaref != LUA_NOREF) {
       rhs_lua = callback_obj.data.luaref;
-      orig_rhs = "";  // need non-NULL for strlen()
+      orig_rhs = "";
       callback_obj.data.luaref = LUA_NOREF;
     }
     api_free_object(callback_obj);
   }
-  if (lhs == NULL || lhsraw == NULL || (orig_rhs == NULL && rhs_lua == LUA_NOREF)) {
+  if (lhs == NULL || lhsraw == NULL || orig_rhs == NULL) {
     emsg(_("E460: entries missing in mapset() dict argument"));
     api_free_luaref(rhs_lua);
     return;
