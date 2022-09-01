@@ -1141,6 +1141,12 @@ module.cmds = {
     func='ex_history',
   },
   {
+    command='horizontal',
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    addr_type='ADDR_NONE',
+    func='ex_wrongmodifier',
+  },
+  {
     command='insert',
     flags=bit.bor(BANG, RANGE, TRLBAR, CMDWIN, LOCK_OK, MODIFY),
     addr_type='ADDR_LINES',

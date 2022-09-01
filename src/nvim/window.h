@@ -17,14 +17,15 @@
 #define FNAME_UNESC     32      // remove backslashes used for escaping
 
 // arguments for win_split()
-#define WSP_ROOM        1       // require enough room
-#define WSP_VERT        2       // split vertically
-#define WSP_TOP         4       // window at top-left of shell
-#define WSP_BOT         8       // window at bottom-right of shell
-#define WSP_HELP        16      // creating the help window
-#define WSP_BELOW       32      // put new window below/right
-#define WSP_ABOVE       64      // put new window above/left
-#define WSP_NEWLOC      128     // don't copy location list
+#define WSP_ROOM        0x01    // require enough room
+#define WSP_VERT        0x02    // split/equalize vertically
+#define WSP_HOR         0x04    // equalize horizontally
+#define WSP_TOP         0x08    // window at top-left of shell
+#define WSP_BOT         0x10    // window at bottom-right of shell
+#define WSP_HELP        0x20    // creating the help window
+#define WSP_BELOW       0x40    // put new window below/right
+#define WSP_ABOVE       0x80    // put new window above/left
+#define WSP_NEWLOC      0x100   // don't copy location list
 
 // Minimum screen size
 #define MIN_COLUMNS     12      // minimal columns for screen

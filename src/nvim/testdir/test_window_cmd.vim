@@ -343,6 +343,46 @@ func Test_window_height()
   bw Xa Xb Xc
 endfunc
 
+func Test_wincmd_equal()
+  edit Xone
+  below split Xtwo
+  rightbelow vsplit Xthree
+  call assert_equal('Xone', bufname(winbufnr(1)))
+  call assert_equal('Xtwo', bufname(winbufnr(2)))
+  call assert_equal('Xthree', bufname(winbufnr(3)))
+
+  " Xone and Xtwo should be about the same height
+  let [wh1, wh2] = [winheight(1), winheight(2)]
+  call assert_inrange(wh1 - 1, wh1 + 1, wh2)
+  " Xtwo and Xthree should be about the same width
+  let [ww2, ww3] = [winwidth(2), winwidth(3)]
+  call assert_inrange(ww2 - 1, ww2 + 1, ww3)
+
+  1wincmd w
+  10wincmd _
+  2wincmd w
+  20wincmd |
+  call assert_equal(10, winheight(1))
+  call assert_equal(20, winwidth(2))
+
+  " equalizing horizontally doesn't change the heights
+  hor wincmd =
+  call assert_equal(10, winheight(1))
+  let [ww2, ww3] = [winwidth(2), winwidth(3)]
+  call assert_inrange(ww2 - 1, ww2 + 1, ww3)
+
+  2wincmd w
+  20wincmd |
+  call assert_equal(20, winwidth(2))
+  " equalizing vertically doesn't change the widths
+  vert wincmd =
+  call assert_equal(20, winwidth(2))
+  let [wh1, wh2] = [winheight(1), winheight(2)]
+  call assert_inrange(wh1 - 1, wh1 + 1, wh2)
+
+  bwipe Xone Xtwo Xthree
+endfunc
+
 func Test_window_width()
   e Xa
   vsplit Xb

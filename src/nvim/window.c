@@ -417,10 +417,12 @@ newwindow:
               | ((nchar == 'H' || nchar == 'K') ? WSP_TOP : WSP_BOT));
     break;
 
-  // make all windows the same height
-  case '=':
-    win_equal(NULL, false, 'b');
+  // make all windows the same width and/or height
+  case '=': {
+    int mod = cmdmod.cmod_split & (WSP_VERT | WSP_HOR);
+    win_equal(NULL, false, mod == WSP_VERT ? 'v' : mod == WSP_HOR ? 'h' : 'b');
     break;
+  }
 
   // increase current window height
   case '+':
