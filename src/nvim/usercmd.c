@@ -1247,6 +1247,10 @@ size_t add_win_cmd_modifers(char *buf, const cmdmod_T *cmod, bool *multi_mods)
   if (cmod->cmod_split & WSP_VERT) {
     result += add_cmd_modifier(buf, "vertical", multi_mods);
   }
+  // :horizontal
+  if (cmod->cmod_split & WSP_HOR) {
+    result += add_cmd_modifier(buf, "horizontal", multi_mods);
+  }
   return result;
 }
 

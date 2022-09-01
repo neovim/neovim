@@ -926,6 +926,10 @@ func Test_cmdline_complete_various()
   call feedkeys(":all abc\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"all abc\<C-A>", @:)
 
+  " completion for :wincmd with :horizontal modifier
+  call feedkeys(":horizontal wincm\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"horizontal wincmd", @:)
+
   " completion for a command with a command modifier
   call feedkeys(":topleft new\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"topleft new", @:)

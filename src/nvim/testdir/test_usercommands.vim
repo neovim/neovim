@@ -101,6 +101,10 @@ function Test_cmdmods()
   call assert_equal('vertical', g:mods)
   vert MyCmd
   call assert_equal('vertical', g:mods)
+  horizontal MyCmd
+  call assert_equal('horizontal', g:mods)
+  hor MyCmd
+  call assert_equal('horizontal', g:mods)
 
   aboveleft belowright botright browse confirm hide keepalt keepjumps
 	      \ keepmarks keeppatterns lockmarks noautocmd noswapfile silent

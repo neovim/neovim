@@ -1757,6 +1757,7 @@ static bool skip_cmd(const exarg_T *eap)
     case CMD_filter:
     case CMD_help:
     case CMD_hide:
+    case CMD_horizontal:
     case CMD_ijump:
     case CMD_ilist:
     case CMD_isearch:
@@ -2438,8 +2439,12 @@ int parse_command_modifiers(exarg_T *eap, char **errormsg, cmdmod_T *cmod, bool 
       continue;
     }
 
-    // ":hide" and ":hide | cmd" are not modifiers
     case 'h':
+      if (checkforcmd(&eap->cmd, "horizontal", 3)) {
+        cmod->cmod_split |= WSP_HOR;
+        continue;
+      }
+      // ":hide" and ":hide | cmd" are not modifiers
       if (p != eap->cmd || !checkforcmd(&p, "hide", 3)
           || *p == NUL || ends_excmd(*p)) {
         break;
