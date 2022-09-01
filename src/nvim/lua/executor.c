@@ -2103,6 +2103,8 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 
   lua_pushboolean(lstate, cmdmod.cmod_split & WSP_VERT);
   lua_setfield(lstate, -2, "vertical");
+  lua_pushboolean(lstate, cmdmod.cmod_split & WSP_HOR);
+  lua_setfield(lstate, -2, "horizontal");
   lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_SILENT);
   lua_setfield(lstate, -2, "silent");
   lua_pushboolean(lstate, cmdmod.cmod_flags & CMOD_ERRSILENT);

@@ -1839,6 +1839,7 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
           • browse: (boolean) |:browse|.
           • confirm: (boolean) |:confirm|.
           • hide: (boolean) |:hide|.
+          • horizontal: (boolean) |:horizontal|.
           • keepalt: (boolean) |:keepalt|.
           • keepjumps: (boolean) |:keepjumps|.
           • keepmarks: (boolean) |:keepmarks|.

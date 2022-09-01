@@ -62,6 +62,7 @@
 ///             - browse: (boolean) |:browse|.
 ///             - confirm: (boolean) |:confirm|.
 ///             - hide: (boolean) |:hide|.
+///             - horizontal: (boolean) |:horizontal|.
 ///             - keepalt: (boolean) |:keepalt|.
 ///             - keepjumps: (boolean) |:keepjumps|.
 ///             - keepmarks: (boolean) |:keepmarks|.
@@ -250,6 +251,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(mods, "lockmarks", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_LOCKMARKS));
   PUT(mods, "noswapfile", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOSWAPFILE));
   PUT(mods, "vertical", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_VERT));
+  PUT(mods, "horizontal", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_split & WSP_HOR));
 
   const char *split;
   if (cmdinfo.cmdmod.cmod_split & WSP_BOT) {
@@ -576,6 +578,10 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     OBJ_TO_BOOL(vertical, mods.vertical, false, "'mods.vertical'");
     cmdinfo.cmdmod.cmod_split |= (vertical ? WSP_VERT : 0);
 
+    bool horizontal;
+    OBJ_TO_BOOL(horizontal, mods.horizontal, false, "'mods.horizontal'");
+    cmdinfo.cmdmod.cmod_split |= (horizontal ? WSP_HOR : 0);
+
     if (HAS_KEY(mods.split)) {
       if (mods.split.type != kObjectTypeString) {
         VALIDATION_ERROR("'mods.split' must be a String");
@@ -753,6 +759,7 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
   } while (0)
 
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_split & WSP_VERT, "vertical ");
+  CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_split & WSP_HOR, "horizontal ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_SANDBOX, "sandbox ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_NOAUTOCMD, "noautocmd ");
   CMDLINE_APPEND_IF(cmdinfo->cmdmod.cmod_flags & CMOD_BROWSE, "browse ");

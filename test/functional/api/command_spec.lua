@@ -125,6 +125,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -160,6 +161,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -195,6 +197,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -224,12 +227,13 @@ describe('nvim_create_user_command', function()
       bang = true,
       line1 = 10,
       line2 = 10,
-      mods = "confirm unsilent botright",
+      mods = "confirm unsilent botright horizontal",
       smods = {
         browse = false,
         confirm = true,
         emsg_silent = false,
         hide = false,
+        horizontal = true,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -249,7 +253,7 @@ describe('nvim_create_user_command', function()
       count = 10,
       reg = "",
     }, exec_lua [=[
-      vim.api.nvim_command('unsilent botright confirm 10CommandWithLuaCallback! h\tey ')
+      vim.api.nvim_command('unsilent horizontal botright confirm 10CommandWithLuaCallback! h\tey ')
       return result
     ]=])
 
@@ -265,6 +269,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -300,6 +305,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -347,6 +353,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -383,6 +390,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,
@@ -429,6 +437,7 @@ describe('nvim_create_user_command', function()
         confirm = false,
         emsg_silent = false,
         hide = false,
+        horizontal = false,
         keepalt = false,
         keepjumps = false,
         keepmarks = false,

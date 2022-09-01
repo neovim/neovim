@@ -188,6 +188,7 @@ return {
     "browse";
     "confirm";
     "hide";
+    "horizontal";
     "keepalt";
     "keepjumps";
     "keepmarks";

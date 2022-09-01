@@ -3195,6 +3195,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3236,6 +3237,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3277,6 +3279,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3318,6 +3321,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3359,6 +3363,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3400,6 +3405,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3441,6 +3447,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = true,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3456,7 +3463,7 @@ describe('API', function()
           verbose = 15,
           vertical = false,
         },
-      }, meths.parse_cmd('15verbose silent! aboveleft topleft tab filter /foo/ split foo.txt', {}))
+      }, meths.parse_cmd('15verbose silent! horizontal topleft tab filter /foo/ split foo.txt', {}))
       eq({
         cmd = 'split',
         args = { 'foo.txt' },
@@ -3480,6 +3487,7 @@ describe('API', function()
               force = true
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3522,6 +3530,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3563,6 +3572,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3605,6 +3615,7 @@ describe('API', function()
               force = false
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3697,6 +3708,7 @@ describe('API', function()
             force = false,
           },
           hide = false,
+          horizontal = false,
           keepalt = false,
           keepjumps = false,
           keepmarks = false,
@@ -3798,10 +3810,20 @@ describe('API', function()
       eq('1',
          meths.cmd({ cmd = 'echomsg', args = { '1' }, mods = { silent = true } },
                    { output = true }))
-      -- with :silent message isn't added to message history
+      -- but message isn't added to message history
       eq('', meths.cmd({ cmd = 'messages' }, { output = true }))
       meths.create_user_command("Foo", 'set verbose', {})
       eq("  verbose=1", meths.cmd({ cmd = "Foo", mods = { verbose = 1 } }, { output = true }))
+      meths.create_user_command("Mods", "echo '<mods>'", {})
+      eq('keepmarks keeppatterns silent 3verbose aboveleft horizontal',
+         meths.cmd({ cmd = "Mods", mods = {
+           horizontal = true,
+           keepmarks = true,
+           keeppatterns = true,
+           silent = true,
+           split = 'aboveleft',
+           verbose = 3,
+         } }, { output = true }))
       eq(0, meths.get_option_value("verbose", {}))
       command('edit foo.txt | edit bar.txt')
       eq('  1 #h   "foo.txt"                      line 1',
