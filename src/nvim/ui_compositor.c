@@ -749,7 +749,7 @@ void ui_comp_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
   *item = event_cb;
 
   ui_comp_update_ext();
-  ui_schedule_refresh();
+  ui_refresh();
 }
 
 void ui_comp_remove_cb(uint32_t ns_id)
@@ -759,5 +759,5 @@ void ui_comp_remove_cb(uint32_t ns_id)
     pmap_del(uint32_t)(&ui_event_cbs, ns_id);
   }
   ui_comp_update_ext();
-  ui_schedule_refresh();
+  ui_refresh();
 }
