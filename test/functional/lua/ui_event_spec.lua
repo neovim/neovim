@@ -88,10 +88,12 @@ describe('vim.ui_attach', function()
        { "popupmenu_hide" };
     }
 
-    -- ui_detach stops events, and reenables builtin pum
-    exec_lua [[ vim.ui_detach(ns) ]]
+    -- vim.ui_detach() stops events, and reenables builtin pum immediately
+    exec_lua [[
+      vim.ui_detach(ns)
+      vim.fn.complete(1, {'food', 'foobar', 'foo'})
+    ]]
 
-    funcs.complete(1, {'food', 'foobar', 'foo'})
     screen:expect{grid=[[
       food^                                    |
       {3:food           }{1:                         }|
@@ -101,7 +103,6 @@ describe('vim.ui_attach', function()
     ]]}
     expect_events {
     }
-
 
   end)
 end)
