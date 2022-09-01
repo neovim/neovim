@@ -382,6 +382,19 @@ get_captures_at_position({bufnr}, {row}, {col})
     Return: ~
         (table) A table of captures
 
+get_node_at_cursor({winnr}, {opts})                     *get_node_at_cursor()*
+    Gets the smallest named node under the cursor
+
+    Parameters: ~
+        {winnr}                   (number) Window handle or 0 for current
+                                  window
+        {opts}                    (table) Options table
+        {opts.ignore_injections}  (boolean) (default true) Ignore injected
+                                  languages.
+
+    Return: ~
+        (table) The named node under the cursor
+
 get_node_range({node_or_range})                             *get_node_range()*
     Get the node's range or unpack a range table
 
@@ -413,6 +426,49 @@ get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
         {lang}  The language of this string
         {opts}  Options to pass to the created language tree
 
+get_vim_range({bufnr}, {range})                              *get_vim_range()*
+    Gets a compatible vim range (1 index based) from a TS node range.
+
+    TS nodes start with 0 and the end col is ending exclusive. They also treat
+    a EOF/EOL char as a char ending in the first col of the next row.
+
+    Parameters: ~
+        {bufnr}  (number) The buffer handle from which the range is from
+        {range}  (table) The treesitter range to transform
+
+    Return: ~
+        start_row, starcol, end_row, end_col
+
+goto_node({node}, {opts})                                        *goto_node()*
+    • Call to `nvim_replace_termcodes()` is needed for sending appropriate
+    • command to enter blockwise mode Goes to the given node
+
+    Parameters: ~
+        {node}           (table) The node to go to
+        {opts}           (table) Options table
+        {opts.goto_end}  (boolean) (default false) set cursor at the end of
+                         the node
+        {opts.set_jump}  (boolean) (default false) mark current position
+                         before moving the cursor
+
+highlight_node({bufnr}, {node}, {ns}, {hlgroup})            *highlight_node()*
+    Highlights the given node
+
+    Parameters: ~
+        {bufnr}    (number) The buffer number
+        {node}     (table) The node to highlight
+        {ns}       (number) The namespace id
+        {hlgroup}  (string) The highlight group name
+
+highlight_range({bufnr}, {range}, {ns}, {hlgroup})         *highlight_range()*
+    Highlights the given range
+
+    Parameters: ~
+        {bufnr}    (number) The buffer number
+        {range}    (table) The treesitter range to highlight
+        {ns}       (number) The namespace id
+        {hlgroup}  (string) The highlight group name
+
 is_ancestor({dest}, {source})                                  *is_ancestor()*
     Determines whether a node is the ancestor of another
 
@@ -440,6 +496,40 @@ node_contains({node}, {range})                               *node_contains()*
 
     Return: ~
         (boolean) True if the node contains the range
+
+node_to_lsp_range({node})                                *node_to_lsp_range()*
+    Gets the node range in the lsp range format
+
+    Parameters: ~
+        {node}  (table) The node to convert
+
+    Return: ~
+        { start =`start_position`, end = `end_position` }
+
+                                                                *swap_nodes()*
+swap_nodes({bufnr}, {node_or_range1}, {node_or_range2}, {opts})
+    Swaps the two given nodes
+
+    Parameters: ~
+        {bufnr}                  (number) The buffer number
+        {node_or_range1}         (table) The 1st node or its range
+        {node_or_range2}         (table) The 2nd node or its range
+        {opts}                   (table) Options table
+        {opts.cursor_to_second}  (boolean) (default false) set cursor on the
+                                 second node after the swap
+
+update_selection({bufnr}, {node}, {opts})                 *update_selection()*
+    Sets visual selection for node
+
+    Parameters: ~
+        {bufnr}                (number) The buffer number
+        {node}                 (table) The node to visually select select
+        {opts}                 (table) Options table
+        {opts.selection_mode}  (string) (default 'charwise') Set the selection
+                               mode:
+                               • 'charwise'(or 'v')
+                               • 'linewise'(or 'V')
+                               • 'blockwise'(or '<C-v>')
 
 
 ==============================================================================
