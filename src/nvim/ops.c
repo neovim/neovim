@@ -1,10 +1,8 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * ops.c: implementation of various operators: op_shift, op_delete, op_tilde,
- *        op_change, op_yank, do_put, do_join
- */
+// ops.c: implementation of various operators: op_shift, op_delete, op_tilde,
+//        op_change, op_yank, do_put, do_join
 
 #include <assert.h>
 #include <inttypes.h>
@@ -67,10 +65,8 @@ static bool clipboard_delay_update = false;  // delay clipboard update
 static bool clipboard_needs_update = false;  // clipboard was updated
 static bool clipboard_didwarn = false;
 
-/*
- * structure used by block_prep, op_delete and op_yank for blockwise operators
- * also op_change, op_shift, op_insert, op_replace - AKelly
- */
+// structure used by block_prep, op_delete and op_yank for blockwise operators
+// also op_change, op_shift, op_insert, op_replace - AKelly
 struct block_def {
   int startspaces;              // 'extra' cols before first char
   int endspaces;                // 'extra' cols after last char
@@ -96,11 +92,9 @@ struct block_def {
 #define OPF_LINES  1  // operator always works on lines
 #define OPF_CHANGE 2  // operator changes text
 
-/*
- * The names of operators.
- * IMPORTANT: Index must correspond with defines in vim.h!!!
- * The third field indicates whether the operator always works on lines.
- */
+// The names of operators.
+// IMPORTANT: Index must correspond with defines in vim.h!!!
+// The third field indicates whether the operator always works on lines.
 static char opchars[][3] =
 {
   { NUL, NUL, 0 },                       // OP_NOP
@@ -361,12 +355,10 @@ static void shift_block(oparg_T *oap, int amount)
   int startcol, oldlen, newlen;
 
   if (!left) {
-    /*
-     *  1. Get start vcol
-     *  2. Total ws vcols
-     *  3. Divvy into TABs & spp
-     *  4. Construct new string
-     */
+    //  1. Get start vcol
+    //  2. Total ws vcols
+    //  3. Divvy into TABs & spp
+    //  4. Construct new string
     total += bd.pre_whitesp;    // all virtual WS up to & incl a split TAB
     colnr_T ws_vcol = bd.start_vcol - bd.pre_whitesp;
     char_u *old_textstart = bd.textstart;
@@ -428,13 +420,11 @@ static void shift_block(oparg_T *oap, int amount)
                                   // block shift
     char_u *non_white = bd.textstart;
 
-    /*
-     * Firstly, let's find the first non-whitespace character that is
-     * displayed after the block's start column and the character's column
-     * number. Also, let's calculate the width of all the whitespace
-     * characters that are displayed in the block and precede the searched
-     * non-whitespace character.
-     */
+    // Firstly, let's find the first non-whitespace character that is
+    // displayed after the block's start column and the character's column
+    // number. Also, let's calculate the width of all the whitespace
+    // characters that are displayed in the block and precede the searched
+    // non-whitespace character.
 
     // If "bd.startspaces" is set, "bd.textstart" points to the character,
     // the part of which is displayed at the block's beginning. Let's start
@@ -715,9 +705,7 @@ void op_reindent(oparg_T *oap, Indenter how)
   }
 }
 
-/*
- * Keep the last expression line here, for repeating.
- */
+// Keep the last expression line here, for repeating.
 static char_u *expr_line = NULL;
 
 /// Get an expression for the "\"=expr1" or "CTRL-R =expr1"
@@ -1165,9 +1153,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
     // Disallow remapping for ":@r".
     int remap = colon ? REMAP_NONE : REMAP_YES;
 
-    /*
-     * Insert lines into typeahead buffer, from last one to first one.
-     */
+    // Insert lines into typeahead buffer, from last one to first one.
     put_reedit_in_typebuf(silent);
     char *escaped;
     for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
@@ -1277,11 +1263,9 @@ int insert_reg(int regname, bool literally_arg)
   bool allocated;
   const bool literally = literally_arg || is_literal_register(regname);
 
-  /*
-   * It is possible to get into an endless loop by having CTRL-R a in
-   * register a and then, in insert mode, doing CTRL-R a.
-   * If you hit CTRL-C, the loop will be broken here.
-   */
+  // It is possible to get into an endless loop by having CTRL-R a in
+  // register a and then, in insert mode, doing CTRL-R a.
+  // If you hit CTRL-C, the loop will be broken here.
   os_breakcheck();
   if (got_int) {
     return FAIL;
@@ -1503,11 +1487,9 @@ int op_delete(oparg_T *oap)
 
   mb_adjust_opend(oap);
 
-  /*
-   * Imitate the strange Vi behaviour: If the delete spans more than one
-   * line and motion_type == kMTCharWise and the result is a blank line, make the
-   * delete linewise.  Don't do this for the change command or Visual mode.
-   */
+  // Imitate the strange Vi behaviour: If the delete spans more than one
+  // line and motion_type == kMTCharWise and the result is a blank line, make the
+  // delete linewise.  Don't do this for the change command or Visual mode.
   if (oap->motion_type == kMTCharWise
       && !oap->is_VIsual
       && oap->line_count > 1
@@ -1523,10 +1505,8 @@ int op_delete(oparg_T *oap)
     }
   }
 
-  /*
-   * Check for trying to delete (e.g. "D") in an empty line.
-   * Note: For the change operator it is ok.
-   */
+  // Check for trying to delete (e.g. "D") in an empty line.
+  // Note: For the change operator it is ok.
   if (oap->motion_type != kMTLineWise
       && oap->line_count == 1
       && oap->op_type == OP_DELETE
@@ -1544,11 +1524,9 @@ int op_delete(oparg_T *oap)
     return OK;
   }
 
-  /*
-   * Do a yank of whatever we're about to delete.
-   * If a yank register was specified, put the deleted text into that
-   * register.  For the black hole register '_' don't yank anything.
-   */
+  // Do a yank of whatever we're about to delete.
+  // If a yank register was specified, put the deleted text into that
+  // register.  For the black hole register '_' don't yank anything.
   if (oap->regname != '_') {
     yankreg_T *reg = NULL;
     int did_yank = false;
@@ -1592,9 +1570,7 @@ int op_delete(oparg_T *oap)
     }
   }
 
-  /*
-   * block mode delete
-   */
+  // block mode delete
   if (oap->motion_type == kMTBlockWise) {
     if (u_save((linenr_T)(oap->start.lnum - 1),
                (linenr_T)(oap->end.lnum + 1)) == FAIL) {
@@ -1873,9 +1849,7 @@ static int op_replace(oparg_T *oap, int c)
     return FAIL;
   }
 
-  /*
-   * block mode replace
-   */
+  // block mode replace
   if (oap->motion_type == kMTBlockWise) {
     bd.is_MAX = (curwin->w_curswant == MAXCOL);
     for (; curwin->w_cursor.lnum <= oap->end.lnum; curwin->w_cursor.lnum++) {
@@ -2409,10 +2383,8 @@ void op_insert(oparg_T *oap, long count1)
       bd.textlen = bd2.textlen;
     }
 
-    /*
-     * Subsequent calls to ml_get() flush the firstline data - take a
-     * copy of the required string.
-     */
+    // Subsequent calls to ml_get() flush the firstline data - take a
+    // copy of the required string.
     firstline = ml_get(oap->start.lnum);
     const size_t len = STRLEN(firstline);
     colnr_T add = bd.textcol;
@@ -2510,11 +2482,9 @@ int op_change(oparg_T *oap)
 
   retval = edit(NUL, false, (linenr_T)1);
 
-  /*
-   * In Visual block mode, handle copying the new text to all lines of the
-   * block.
-   * Don't repeat the insert when Insert mode ended with CTRL-C.
-   */
+  // In Visual block mode, handle copying the new text to all lines of the
+  // block.
+  // Don't repeat the insert when Insert mode ended with CTRL-C.
   if (oap->motion_type == kMTBlockWise
       && oap->start.lnum != oap->end.lnum && !got_int) {
     // Auto-indenting may have changed the indent.  If the cursor was past
@@ -2973,10 +2943,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   curbuf->b_op_start = curwin->w_cursor;        // default for '[ mark
   curbuf->b_op_end = curwin->w_cursor;          // default for '] mark
 
-  /*
-   * Using inserted text works differently, because the register includes
-   * special characters (newlines, etc.).
-   */
+  // Using inserted text works differently, because the register includes
+  // special characters (newlines, etc.).
   if (regname == '.' && !reg) {
     bool non_linewise_vis = (VIsual_active && VIsual_mode != 'V');
 
@@ -3056,10 +3024,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     return;
   }
 
-  /*
-   * For special registers '%' (file name), '#' (alternate file name) and
-   * ':' (last command line), etc. we have to create a fake yank register.
-   */
+  // For special registers '%' (file name), '#' (alternate file name) and
+  // ':' (last command line), etc. we have to create a fake yank register.
   if (!reg && get_spec_reg(regname, &insert_string, &allocated, true)) {
     if (insert_string == NULL) {
       return;
@@ -3232,9 +3198,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   lnum = curwin->w_cursor.lnum;
   col = curwin->w_cursor.col;
 
-  /*
-   * Block mode
-   */
+  // Block mode
   if (y_type == kMTBlockWise) {
     int c = gchar_cursor();
     colnr_T endcol2 = 0;
@@ -4129,13 +4093,11 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   cend = newp + sumsize;
   *cend = 0;
 
-  /*
-   * Move affected lines to the new long one.
-   *
-   * Move marks from each deleted line to the joined line, adjusting the
-   * column.  This is not Vi compatible, but Vi deletes the marks, thus that
-   * should not really be a problem.
-   */
+  // Move affected lines to the new long one.
+  //
+  // Move marks from each deleted line to the joined line, adjusting the
+  // column.  This is not Vi compatible, but Vi deletes the marks, thus that
+  // should not really be a problem.
 
   curbuf_splice_pending++;
 
@@ -4185,11 +4147,9 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   changed_lines(curwin->w_cursor.lnum, currsize,
                 curwin->w_cursor.lnum + 1, 0L, true);
 
-  /*
-   * Delete following lines. To do this we move the cursor there
-   * briefly, and then move it back. After del_lines() the cursor may
-   * have moved up (last line deleted), so the current lnum is kept in t.
-   */
+  // Delete following lines. To do this we move the cursor there
+  // briefly, and then move it back. After del_lines() the cursor may
+  // have moved up (last line deleted), so the current lnum is kept in t.
   t = curwin->w_cursor.lnum;
   curwin->w_cursor.lnum++;
   del_lines((long)count - 1, false);
@@ -4197,11 +4157,9 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   curbuf_splice_pending--;
   curbuf->deleted_bytes2 = 0;
 
-  /*
-   * Set the cursor column:
-   * Vi compatible: use the column of the first join
-   * vim:             use the column of the last join
-   */
+  // Set the cursor column:
+  // Vi compatible: use the column of the first join
+  // vim:             use the column of the last join
   curwin->w_cursor.col =
     (vim_strchr(p_cpo, CPO_JOINCOL) != NULL ? currsize : col);
   check_cursor_col();
@@ -4963,16 +4921,12 @@ void *get_reg_contents(int regname, int flags)
     return list;
   }
 
-  /*
-   * Compute length of resulting string.
-   */
+  // Compute length of resulting string.
   size_t len = 0;
   for (size_t i = 0; i < reg->y_size; i++) {
     len += STRLEN(reg->y_array[i]);
-    /*
-     * Insert a newline between lines and after last line if
-     * y_type is kMTLineWise.
-     */
+    // Insert a newline between lines and after last line if
+    // y_type is kMTLineWise.
     if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
       len++;
     }
@@ -4980,18 +4934,14 @@ void *get_reg_contents(int regname, int flags)
 
   retval = xmalloc(len + 1);
 
-  /*
-   * Copy the lines of the yank register into the string.
-   */
+  // Copy the lines of the yank register into the string.
   len = 0;
   for (size_t i = 0; i < reg->y_size; i++) {
     STRCPY(retval + len, reg->y_array[i]);
     len += STRLEN(retval + len);
 
-    /*
-     * Insert a NL between lines and after the last line if y_type is
-     * kMTLineWise.
-     */
+    // Insert a NL between lines and after the last line if y_type is
+    // kMTLineWise.
     if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
       retval[len++] = '\n';
     }

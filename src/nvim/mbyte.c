@@ -132,10 +132,8 @@ const uint8_t utf8len_tab_zero[] = {
   4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 0, 0,  // F?
 };
 
-/*
- * Canonical encoding names and their properties.
- * "iso-8859-n" is handled by enc_canonize() directly.
- */
+// Canonical encoding names and their properties.
+// "iso-8859-n" is handled by enc_canonize() directly.
 static struct
 {   const char *name;   int prop;              int codepage; }
 enc_canon_table[] =
@@ -269,9 +267,7 @@ enc_canon_table[] =
 #define IDX_COUNT       59
 };
 
-/*
- * Aliases for encoding names.
- */
+// Aliases for encoding names.
 static struct
 {   const char *name; int canon; }
 enc_alias_table[] =
@@ -342,10 +338,8 @@ enc_alias_table[] =
   { NULL,              0 }
 };
 
-/*
- * Find encoding "name" in the list of canonical encoding names.
- * Returns -1 if not found.
- */
+// Find encoding "name" in the list of canonical encoding names.
+// Returns -1 if not found.
 static int enc_canon_search(const char_u *name)
   FUNC_ATTR_PURE
 {
@@ -357,10 +351,8 @@ static int enc_canon_search(const char_u *name)
   return -1;
 }
 
-/*
- * Find canonical encoding "name" in the list and return its properties.
- * Returns 0 if not found.
- */
+// Find canonical encoding "name" in the list and return its properties.
+// Returns 0 if not found.
 int enc_canon_props(const char_u *name)
   FUNC_ATTR_PURE
 {
@@ -375,13 +367,11 @@ int enc_canon_props(const char_u *name)
   return 0;
 }
 
-/*
- * Return the size of the BOM for the current buffer:
- * 0 - no BOM
- * 2 - UCS-2 or UTF-16 BOM
- * 4 - UCS-4 BOM
- * 3 - UTF-8 BOM
- */
+// Return the size of the BOM for the current buffer:
+// 0 - no BOM
+// 2 - UCS-2 or UTF-16 BOM
+// 4 - UCS-4 BOM
+// 3 - UTF-8 BOM
 int bomb_size(void)
   FUNC_ATTR_PURE
 {
@@ -401,9 +391,7 @@ int bomb_size(void)
   return n;
 }
 
-/*
- * Remove all BOM from "s" by moving remaining text.
- */
+// Remove all BOM from "s" by moving remaining text.
 void remove_bom(char_u *s)
 {
   char *p = (char *)s;
@@ -417,13 +405,11 @@ void remove_bom(char_u *s)
   }
 }
 
-/*
- * Get class of pointer:
- * 0 for blank or NUL
- * 1 for punctuation
- * 2 for an (ASCII) word character
- * >2 for other word characters
- */
+// Get class of pointer:
+// 0 for blank or NUL
+// 1 for punctuation
+// 2 for an (ASCII) word character
+// >2 for other word characters
 int mb_get_class(const char_u *p)
   FUNC_ATTR_PURE
 {
@@ -445,9 +431,7 @@ int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
   return utf_class_tab(utf_ptr2char((char *)p), chartab);
 }
 
-/*
- * Return true if "c" is in "table".
- */
+// Return true if "c" is in "table".
 static bool intable(const struct interval *table, size_t n_items, int c)
   FUNC_ATTR_PURE
 {
@@ -646,22 +630,20 @@ int utf_ptr2char(const char *const p_in)
   return p[0];
 }
 
-/*
- * Convert a UTF-8 byte sequence to a wide character.
- * String is assumed to be terminated by NUL or after "n" bytes, whichever
- * comes first.
- * The function is safe in the sense that it never accesses memory beyond the
- * first "n" bytes of "s".
- *
- * On success, returns decoded codepoint, advances "s" to the beginning of
- * next character and decreases "n" accordingly.
- *
- * If end of string was reached, returns 0 and, if "n" > 0, advances "s" past
- * NUL byte.
- *
- * If byte sequence is illegal or incomplete, returns -1 and does not advance
- * "s".
- */
+// Convert a UTF-8 byte sequence to a wide character.
+// String is assumed to be terminated by NUL or after "n" bytes, whichever
+// comes first.
+// The function is safe in the sense that it never accesses memory beyond the
+// first "n" bytes of "s".
+//
+// On success, returns decoded codepoint, advances "s" to the beginning of
+// next character and decreases "n" accordingly.
+//
+// If end of string was reached, returns 0 and, if "n" > 0, advances "s" past
+// NUL byte.
+//
+// If byte sequence is illegal or incomplete, returns -1 and does not advance
+// "s".
 static int utf_safe_read_char_adv(const char_u **s, size_t *n)
 {
   int c;
@@ -701,10 +683,8 @@ static int utf_safe_read_char_adv(const char_u **s, size_t *n)
   return -1;
 }
 
-/*
- * Get character at **pp and advance *pp to the next character.
- * Note: composing characters are skipped!
- */
+// Get character at **pp and advance *pp to the next character.
+// Note: composing characters are skipped!
 int mb_ptr2char_adv(const char_u **const pp)
 {
   int c;
@@ -714,10 +694,8 @@ int mb_ptr2char_adv(const char_u **const pp)
   return c;
 }
 
-/*
- * Get character at **pp and advance *pp to the next character.
- * Note: composing characters are returned as separate characters.
- */
+// Get character at **pp and advance *pp to the next character.
+// Note: composing characters are returned as separate characters.
 int mb_cptr2char_adv(const char_u **pp)
 {
   int c;
@@ -784,12 +762,10 @@ int utfc_ptr2char(const char *p_in, int *pcc)
   return c;
 }
 
-/*
- * Convert a UTF-8 byte string to a wide character.  Also get up to MAX_MCO
- * composing characters.  Use no more than p[maxlen].
- *
- * @param [out] pcc: composing chars, last one is 0
- */
+// Convert a UTF-8 byte string to a wide character.  Also get up to MAX_MCO
+// composing characters.  Use no more than p[maxlen].
+//
+// @param [out] pcc: composing chars, last one is 0
 int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
 {
   assert(maxlen > 0);
@@ -845,24 +821,20 @@ int utf_ptr2len(const char *const p_in)
   return len;
 }
 
-/*
- * Return length of UTF-8 character, obtained from the first byte.
- * "b" must be between 0 and 255!
- * Returns 1 for an invalid first byte value.
- */
+// Return length of UTF-8 character, obtained from the first byte.
+// "b" must be between 0 and 255!
+// Returns 1 for an invalid first byte value.
 int utf_byte2len(int b)
 {
   return utf8len_tab[b];
 }
 
-/*
- * Get the length of UTF-8 byte sequence "p[size]".  Does not include any
- * following composing characters.
- * Returns 1 for "".
- * Returns 1 for an illegal byte sequence (also in incomplete byte seq.).
- * Returns number > "size" for an incomplete byte sequence.
- * Never returns zero.
- */
+// Get the length of UTF-8 byte sequence "p[size]".  Does not include any
+// following composing characters.
+// Returns 1 for "".
+// Returns 1 for an illegal byte sequence (also in incomplete byte seq.).
+// Returns number > "size" for an incomplete byte sequence.
+// Never returns zero.
 int utf_ptr2len_len(const char_u *p, int size)
 {
   int len;
@@ -948,10 +920,8 @@ int utfc_ptr2len_len(const char *p, int size)
     return 1;
   }
 
-  /*
-   * Check for composing characters.  We can handle only the first six, but
-   * skip all of them (otherwise the cursor would get stuck).
-   */
+  // Check for composing characters.  We can handle only the first six, but
+  // skip all of them (otherwise the cursor would get stuck).
   prevlen = 0;
   while (len < size) {
     int len_next_char;
@@ -960,10 +930,8 @@ int utfc_ptr2len_len(const char *p, int size)
       break;
     }
 
-    /*
-     * Next character length should not go beyond size to ensure that
-     * utf_composinglike(...) does not read beyond size.
-     */
+    // Next character length should not go beyond size to ensure that
+    // utf_composinglike(...) does not read beyond size.
     len_next_char = utf_ptr2len_len((char_u *)p + len, size - len);
     if (len_next_char > size - len) {
       break;
@@ -1042,20 +1010,16 @@ int utf_char2bytes(const int c, char *const buf)
   }
 }
 
-/*
- * Return true if "c" is a composing UTF-8 character.  This means it will be
- * drawn on top of the preceding character.
- * Based on code from Markus Kuhn.
- */
+// Return true if "c" is a composing UTF-8 character.  This means it will be
+// drawn on top of the preceding character.
+// Based on code from Markus Kuhn.
 bool utf_iscomposing(int c)
 {
   return intable(combining, ARRAY_SIZE(combining), c);
 }
 
-/*
- * Return true for characters that can be displayed in a normal way.
- * Only for characters of 0x100 and above!
- */
+// Return true for characters that can be displayed in a normal way.
+// Only for characters of 0x100 and above!
 bool utf_printable(int c)
 {
   // Sorted list of non-overlapping intervals.
@@ -1070,12 +1034,10 @@ bool utf_printable(int c)
   return !intable(nonprint, ARRAY_SIZE(nonprint), c);
 }
 
-/*
- * Get class of a Unicode character.
- * 0: white space
- * 1: punctuation
- * 2 or bigger: some class of word character.
- */
+// Get class of a Unicode character.
+// 0: white space
+// 1: punctuation
+// 2 or bigger: some class of word character.
 int utf_class(const int c)
 {
   return utf_class_tab(c, curbuf->b_chartab);
@@ -1204,11 +1166,9 @@ bool utf_ambiguous_width(int c)
                        || intable(emoji_all, ARRAY_SIZE(emoji_all), c));
 }
 
-/*
- * Generic conversion function for case operations.
- * Return the converted equivalent of "a", which is a UCS-4 character.  Use
- * the given conversion "table".  Uses binary search on "table".
- */
+// Generic conversion function for case operations.
+// Return the converted equivalent of "a", which is a UCS-4 character.  Use
+// the given conversion "table".  Uses binary search on "table".
 static int utf_convert(int a, const convertStruct *const table, size_t n_items)
 {
   size_t start, mid, end;   // indices into table
@@ -1234,10 +1194,8 @@ static int utf_convert(int a, const convertStruct *const table, size_t n_items)
   }
 }
 
-/*
- * Return the folded-case equivalent of "a", which is a UCS-4 character.  Uses
- * simple case folding.
- */
+// Return the folded-case equivalent of "a", which is a UCS-4 character.  Uses
+// simple case folding.
 int utf_fold(int a)
 {
   if (a < 0x80) {
@@ -1566,10 +1524,8 @@ int mb_stricmp(const char *s1, const char *s2)
   return mb_strnicmp(s1, s2, MAXCOL);
 }
 
-/*
- * "g8": show bytes of the UTF-8 char under the cursor.  Doesn't matter what
- * 'encoding' has been set to.
- */
+// "g8": show bytes of the UTF-8 char under the cursor.  Doesn't matter what
+// 'encoding' has been set to.
 void show_utf8(void)
 {
   int len;
@@ -1916,9 +1872,7 @@ int utf_cp_head_off(const char_u *base, const char_u *p)
   return i;
 }
 
-/*
- * Find the next illegal byte sequence.
- */
+// Find the next illegal byte sequence.
 void utf_find_illegal(void)
 {
   pos_T pos = curwin->w_cursor;
@@ -2008,10 +1962,8 @@ bool utf_valid_string(const char_u *s, const char_u *end)
   return true;
 }
 
-/*
- * If the cursor moves on an trail byte, set the cursor on the lead byte.
- * Thus it moves left if necessary.
- */
+// If the cursor moves on an trail byte, set the cursor on the lead byte.
+// Thus it moves left if necessary.
 void mb_adjust_cursor(void)
 {
   mark_mb_adjustpos(curbuf, &curwin->w_cursor);
@@ -2238,10 +2190,8 @@ static int enc_alias_search(const char_u *name)
 # include <langinfo.h>
 #endif
 
-/*
- * Get the canonicalized encoding of the current locale.
- * Returns an allocated string when successful, NULL when not.
- */
+// Get the canonicalized encoding of the current locale.
+// Returns an allocated string when successful, NULL when not.
 char_u *enc_locale(void)
 {
   int i;
@@ -2307,12 +2257,10 @@ enc_locale_copy_enc:
 
 #if defined(HAVE_ICONV)
 
-/*
- * Call iconv_open() with a check if iconv() works properly (there are broken
- * versions).
- * Returns (void *)-1 if failed.
- * (should return iconv_t, but that causes problems with prototypes).
- */
+// Call iconv_open() with a check if iconv() works properly (there are broken
+// versions).
+// Returns (void *)-1 if failed.
+// (should return iconv_t, but that causes problems with prototypes).
 void *my_iconv_open(char_u *to, char_u *from)
 {
   iconv_t fd;
@@ -2328,13 +2276,11 @@ void *my_iconv_open(char_u *to, char_u *from)
   fd = iconv_open(enc_skip((char *)to), enc_skip((char *)from));
 
   if (fd != (iconv_t)-1 && iconv_working == kUnknown) {
-    /*
-     * Do a dummy iconv() call to check if it actually works.  There is a
-     * version of iconv() on Linux that is broken.  We can't ignore it,
-     * because it's wide-spread.  The symptoms are that after outputting
-     * the initial shift state the "to" pointer is NULL and conversion
-     * stops for no apparent reason after about 8160 characters.
-     */
+    // Do a dummy iconv() call to check if it actually works.  There is a
+    // version of iconv() on Linux that is broken.  We can't ignore it,
+    // because it's wide-spread.  The symptoms are that after outputting
+    // the initial shift state the "to" pointer is NULL and conversion
+    // stops for no apparent reason after about 8160 characters.
     p = (char *)tobuf;
     tolen = ICONV_TESTLEN;
     (void)iconv(fd, NULL, NULL, &p, &tolen);
@@ -2350,13 +2296,11 @@ void *my_iconv_open(char_u *to, char_u *from)
   return (void *)fd;
 }
 
-/*
- * Convert the string "str[slen]" with iconv().
- * If "unconvlenp" is not NULL handle the string ending in an incomplete
- * sequence and set "*unconvlenp" to the length of it.
- * Returns the converted string in allocated memory.  NULL for an error.
- * If resultlenp is not NULL, sets it to the result length in bytes.
- */
+// Convert the string "str[slen]" with iconv().
+// If "unconvlenp" is not NULL handle the string ending in an incomplete
+// sequence and set "*unconvlenp" to the length of it.
+// Returns the converted string in allocated memory.  NULL for an error.
+// If resultlenp is not NULL, sets it to the result length in bytes.
 static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen,
                             size_t *unconvlenp, size_t *resultlenp)
 {
@@ -2529,11 +2473,9 @@ char *string_convert(const vimconv_T *const vcp, char *ptr, size_t *lenp)
   return (char *)string_convert_ext(vcp, (char_u *)ptr, lenp, NULL);
 }
 
-/*
- * Like string_convert(), but when "unconvlenp" is not NULL and there are is
- * an incomplete sequence at the end it is not converted and "*unconvlenp" is
- * set to the number of remaining bytes.
- */
+// Like string_convert(), but when "unconvlenp" is not NULL and there are is
+// an incomplete sequence at the end it is not converted and "*unconvlenp" is
+// set to the number of remaining bytes.
 char_u *string_convert_ext(const vimconv_T *const vcp, char_u *ptr, size_t *lenp,
                            size_t *unconvlenp)
 {

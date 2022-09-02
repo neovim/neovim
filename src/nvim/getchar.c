@@ -87,25 +87,23 @@ static int block_redo = false;
 
 static int KeyNoremap = 0;                  // remapping flags
 
-/*
- * Variables used by vgetorpeek() and flush_buffers()
- *
- * typebuf.tb_buf[] contains all characters that are not consumed yet.
- * typebuf.tb_buf[typebuf.tb_off] is the first valid character.
- * typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len - 1] is the last valid char.
- * typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len] must be NUL.
- * The head of the buffer may contain the result of mappings, abbreviations
- * and @a commands.  The length of this part is typebuf.tb_maplen.
- * typebuf.tb_silent is the part where <silent> applies.
- * After the head are characters that come from the terminal.
- * typebuf.tb_no_abbr_cnt is the number of characters in typebuf.tb_buf that
- * should not be considered for abbreviations.
- * Some parts of typebuf.tb_buf may not be mapped. These parts are remembered
- * in typebuf.tb_noremap[], which is the same length as typebuf.tb_buf and
- * contains RM_NONE for the characters that are not to be remapped.
- * typebuf.tb_noremap[typebuf.tb_off] is the first valid flag.
- * (typebuf has been put in globals.h, because check_termcode() needs it).
- */
+// Variables used by vgetorpeek() and flush_buffers()
+//
+// typebuf.tb_buf[] contains all characters that are not consumed yet.
+// typebuf.tb_buf[typebuf.tb_off] is the first valid character.
+// typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len - 1] is the last valid char.
+// typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len] must be NUL.
+// The head of the buffer may contain the result of mappings, abbreviations
+// and @a commands.  The length of this part is typebuf.tb_maplen.
+// typebuf.tb_silent is the part where <silent> applies.
+// After the head are characters that come from the terminal.
+// typebuf.tb_no_abbr_cnt is the number of characters in typebuf.tb_buf that
+// should not be considered for abbreviations.
+// Some parts of typebuf.tb_buf may not be mapped. These parts are remembered
+// in typebuf.tb_noremap[], which is the same length as typebuf.tb_buf and
+// contains RM_NONE for the characters that are not to be remapped.
+// typebuf.tb_noremap[typebuf.tb_off] is the first valid flag.
+// (typebuf has been put in globals.h, because check_termcode() needs it).
 #define RM_YES          0       // tb_noremap: remap
 #define RM_NONE         1       // tb_noremap: don't remap
 #define RM_SCRIPT       2       // tb_noremap: remap local script mappings
@@ -124,9 +122,7 @@ static size_t last_recorded_len = 0;      // number of last recorded chars
 # include "getchar.c.generated.h"
 #endif
 
-/*
- * Free and clear a buffer.
- */
+// Free and clear a buffer.
 void free_buff(buffheader_T *buf)
 {
   buffblock_T *p, *np;
@@ -180,20 +176,16 @@ char_u *get_recorded(void)
   p = get_buffcont(&recordbuff, true);
   free_buff(&recordbuff);
 
-  /*
-   * Remove the characters that were added the last time, these must be the
-   * (possibly mapped) characters that stopped the recording.
-   */
+  // Remove the characters that were added the last time, these must be the
+  // (possibly mapped) characters that stopped the recording.
   len = STRLEN(p);
   if (len >= last_recorded_len) {
     len -= last_recorded_len;
     p[len] = NUL;
   }
 
-  /*
-   * When stopping recording from Insert mode with CTRL-O q, also remove the
-   * CTRL-O.
-   */
+  // When stopping recording from Insert mode with CTRL-O q, also remove the
+  // CTRL-O.
   if (len > 0 && restart_edit != 0 && p[len - 1] == Ctrl_O) {
     p[len - 1] = NUL;
   }
@@ -351,9 +343,7 @@ static int read_readbuf(buffheader_T *buf, int advance)
   return c;
 }
 
-/*
- * Prepare the read buffers for reading (if they contain something).
- */
+// Prepare the read buffers for reading (if they contain something).
 static void start_stuff(void)
 {
   if (readbuf1.bh_first.b_next != NULL) {
@@ -381,19 +371,15 @@ int readbuf1_empty(void)
   return (readbuf1.bh_first.b_next == NULL);
 }
 
-/*
- * Set a typeahead character that won't be flushed.
- */
+// Set a typeahead character that won't be flushed.
 void typeahead_noflush(int c)
 {
   typeahead_char = c;
 }
 
-/*
- * Remove the contents of the stuff buffer and the mapped characters in the
- * typeahead buffer (used in case of an error).  If "flush_typeahead" is true,
- * flush all typeahead characters (used when interrupted by a CTRL-C).
- */
+// Remove the contents of the stuff buffer and the mapped characters in the
+// typeahead buffer (used in case of an error).  If "flush_typeahead" is true,
+// flush all typeahead characters (used when interrupted by a CTRL-C).
 void flush_buffers(flush_buffers_T flush_typeahead)
 {
   init_typebuf();
@@ -437,10 +423,8 @@ void beep_flush(void)
   }
 }
 
-/*
- * The previous contents of the redo buffer is kept in old_redobuffer.
- * This is used for the CTRL-O <.> command in insert mode.
- */
+// The previous contents of the redo buffer is kept in old_redobuffer.
+// This is used for the CTRL-O <.> command in insert mode.
 void ResetRedobuff(void)
 {
   if (!block_redo) {
@@ -450,10 +434,8 @@ void ResetRedobuff(void)
   }
 }
 
-/*
- * Discard the contents of the redo buffer and restore the previous redo
- * buffer.
- */
+// Discard the contents of the redo buffer and restore the previous redo
+// buffer.
 void CancelRedo(void)
 {
   if (!block_redo) {
@@ -559,9 +541,7 @@ void AppendCharToRedobuff(int c)
   }
 }
 
-/*
- * Append a number to the redo buffer.
- */
+// Append a number to the redo buffer.
 void AppendNumberToRedobuff(long n)
 {
   if (!block_redo) {
@@ -615,9 +595,7 @@ void stuffcharReadbuff(int c)
   add_char_buff(&readbuf1, c);
 }
 
-/*
- * Append a number to the stuff buffer.
- */
+// Append a number to the stuff buffer.
 void stuffnumReadbuff(long n)
 {
   add_num_buff(&readbuf1, n);
@@ -783,11 +761,9 @@ int start_redo(long count, bool old_redo)
   return OK;
 }
 
-/*
- * Repeat the last insert (R, o, O, a, A, i or I command) by stuffing
- * the redo buffer into readbuf2.
- * return FAIL for failure, OK otherwise
- */
+// Repeat the last insert (R, o, O, a, A, i or I command) by stuffing
+// the redo buffer into readbuf2.
+// return FAIL for failure, OK otherwise
 int start_redo_ins(void)
 {
   int c;
@@ -818,11 +794,9 @@ void stop_redo_ins(void)
   block_redo = false;
 }
 
-/*
- * Initialize typebuf.tb_buf to point to typebuf_init.
- * alloc() cannot be used here: In out-of-memory situations it would
- * be impossible to type anything.
- */
+// Initialize typebuf.tb_buf to point to typebuf_init.
+// alloc() cannot be used here: In out-of-memory situations it would
+// be impossible to type anything.
 static void init_typebuf(void)
 {
   if (typebuf.tb_buf == NULL) {
@@ -939,14 +913,12 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
     val = RM_NONE;
   }
 
-  /*
-   * Adjust typebuf.tb_noremap[] for the new characters:
-   * If noremap == REMAP_NONE or REMAP_SCRIPT: new characters are
-   *                    (sometimes) not remappable
-   * If noremap == REMAP_YES: all the new characters are mappable
-   * If noremap  > 0: "noremap" characters are not remappable, the rest
-   *                    mappable
-   */
+  // Adjust typebuf.tb_noremap[] for the new characters:
+  // If noremap == REMAP_NONE or REMAP_SCRIPT: new characters are
+  //                    (sometimes) not remappable
+  // If noremap == REMAP_YES: all the new characters are mappable
+  // If noremap  > 0: "noremap" characters are not remappable, the rest
+  //                    mappable
   if (noremap == REMAP_SKIP) {
     nrm = 1;
   } else if (noremap < 0) {
@@ -1016,18 +988,14 @@ int typebuf_typed(void)
   return typebuf.tb_maplen == 0;
 }
 
-/*
- * Return the number of characters that are mapped (or not typed).
- */
+// Return the number of characters that are mapped (or not typed).
 int typebuf_maplen(void)
   FUNC_ATTR_PURE
 {
   return typebuf.tb_maplen;
 }
 
-/*
- * remove "len" characters from typebuf.tb_buf[typebuf.tb_off + offset]
- */
+// remove "len" characters from typebuf.tb_buf[typebuf.tb_off + offset]
 void del_typebuf(int len, int offset)
 {
   int i;
@@ -1038,21 +1006,14 @@ void del_typebuf(int len, int offset)
 
   typebuf.tb_len -= len;
 
-  /*
-   * Easy case: Just increase typebuf.tb_off.
-   */
+  // Easy case: Just increase typebuf.tb_off.
   if (offset == 0 && typebuf.tb_buflen - (typebuf.tb_off + len)
       >= 3 * MAXMAPLEN + 3) {
     typebuf.tb_off += len;
-  }
-  /*
-   * Have to move the characters in typebuf.tb_buf[] and typebuf.tb_noremap[]
-   */
-  else {
+  } else {
+    // Have to move the characters in typebuf.tb_buf[] and typebuf.tb_noremap[]
     i = typebuf.tb_off + offset;
-    /*
-     * Leave some extra room at the end to avoid reallocation.
-     */
+    // Leave some extra room at the end to avoid reallocation.
     if (typebuf.tb_off > MAXMAPLEN) {
       memmove(typebuf.tb_buf + MAXMAPLEN,
               typebuf.tb_buf + typebuf.tb_off, (size_t)offset);
@@ -1101,10 +1062,8 @@ void del_typebuf(int len, int offset)
   }
 }
 
-/*
- * Write typed characters to script file.
- * If recording is on put the character in the recordbuffer.
- */
+// Write typed characters to script file.
+// If recording is on put the character in the recordbuffer.
 static void gotchars(const char_u *chars, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1161,14 +1120,12 @@ void ungetchars(int len)
   }
 }
 
-/*
- * Sync undo.  Called when typed characters are obtained from the typeahead
- * buffer, or when a menu is used.
- * Do not sync:
- * - In Insert mode, unless cursor key has been used.
- * - While reading a script file.
- * - When no_u_sync is non-zero.
- */
+// Sync undo.  Called when typed characters are obtained from the typeahead
+// buffer, or when a menu is used.
+// Do not sync:
+// - In Insert mode, unless cursor key has been used.
+// - While reading a script file.
+// - When no_u_sync is non-zero.
 void may_sync_undo(void)
 {
   if ((!(State & (MODE_INSERT | MODE_CMDLINE)) || arrow_used)
@@ -1177,9 +1134,7 @@ void may_sync_undo(void)
   }
 }
 
-/*
- * Make "typebuf" empty and allocate new buffers.
- */
+// Make "typebuf" empty and allocate new buffers.
 void alloc_typebuf(void)
 {
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
@@ -1195,9 +1150,7 @@ void alloc_typebuf(void)
   }
 }
 
-/*
- * Free the buffers of "typebuf".
- */
+// Free the buffers of "typebuf".
 void free_typebuf(void)
 {
   if (typebuf.tb_buf == typebuf_init) {
@@ -1212,10 +1165,8 @@ void free_typebuf(void)
   }
 }
 
-/*
- * When doing ":so! file", the current typeahead needs to be saved, and
- * restored when "file" has been read completely.
- */
+// When doing ":so! file", the current typeahead needs to be saved, and
+// restored when "file" has been read completely.
 static typebuf_T saved_typebuf[NSCRIPT];
 
 void save_typebuf(void)
@@ -1239,9 +1190,7 @@ static bool can_get_old_char(void)
   return old_char != -1 && (old_KeyStuffed || stuff_empty());
 }
 
-/*
- * Save all three kinds of typeahead, so that the user must type at a prompt.
- */
+// Save all three kinds of typeahead, so that the user must type at a prompt.
 void save_typeahead(tasave_T *tp)
 {
   tp->save_typebuf = typebuf;
@@ -1257,10 +1206,8 @@ void save_typeahead(tasave_T *tp)
   readbuf2.bh_first.b_next = NULL;
 }
 
-/*
- * Restore the typeahead to what it was before calling save_typeahead().
- * The allocated memory is freed, can only be called once!
- */
+// Restore the typeahead to what it was before calling save_typeahead().
+// The allocated memory is freed, can only be called once!
 void restore_typeahead(tasave_T *tp)
 {
   if (tp->typebuf_valid) {
@@ -1314,12 +1261,10 @@ void openscript(char *name, bool directly)
   }
   save_typebuf();
 
-  /*
-   * Execute the commands from the file right now when using ":source!"
-   * after ":global" or ":argdo" or in a loop.  Also when another command
-   * follows.  This means the display won't be updated.  Don't do this
-   * always, "make test" would fail.
-   */
+  // Execute the commands from the file right now when using ":source!"
+  // after ":global" or ":argdo" or in a loop.  Also when another command
+  // follows.  This means the display won't be updated.  Don't do this
+  // always, "make test" would fail.
   if (directly) {
     oparg_T oa;
     int oldcurscript;
@@ -1348,9 +1293,7 @@ void openscript(char *name, bool directly)
   }
 }
 
-/*
- * Close the currently active input script.
- */
+// Close the currently active input script.
 static void closescript(void)
 {
   free_typebuf();
@@ -1452,10 +1395,8 @@ int vgetc(void)
     garbage_collect(false);
   }
 
-  /*
-   * If a character was put back with vungetc, it was already processed.
-   * Return it directly.
-   */
+  // If a character was put back with vungetc, it was already processed.
+  // Return it directly.
   if (can_get_old_char()) {
     c = old_char;
     old_char = -1;
@@ -1628,11 +1569,9 @@ int vgetc(void)
     last_vgetc_recorded_len = last_recorded_len;
   }
 
-  /*
-   * In the main loop "may_garbage_collect" can be set to do garbage
-   * collection in the first next vgetc().  It's disabled after that to
-   * avoid internally used Lists and Dicts to be freed.
-   */
+  // In the main loop "may_garbage_collect" can be set to do garbage
+  // collection in the first next vgetc().  It's disabled after that to
+  // avoid internally used Lists and Dicts to be freed.
   may_garbage_collect = false;
 
   // Execute Lua on_key callbacks.
@@ -1641,10 +1580,8 @@ int vgetc(void)
   return c;
 }
 
-/*
- * Like vgetc(), but never return a NUL when called recursively, get a key
- * directly from the user (ignoring typeahead).
- */
+// Like vgetc(), but never return a NUL when called recursively, get a key
+// directly from the user (ignoring typeahead).
 int safe_vgetc(void)
 {
   int c;
@@ -1656,10 +1593,8 @@ int safe_vgetc(void)
   return c;
 }
 
-/*
- * Like safe_vgetc(), but loop to handle K_IGNORE.
- * Also ignore scrollbar events.
- */
+// Like safe_vgetc(), but loop to handle K_IGNORE.
+// Also ignore scrollbar events.
 int plain_vgetc(void)
 {
   int c;
@@ -1672,12 +1607,10 @@ int plain_vgetc(void)
   return c;
 }
 
-/*
- * Check if a character is available, such that vgetc() will not block.
- * If the next character is a special character or multi-byte, the returned
- * character is not valid!.
- * Returns NUL if no character is available.
- */
+// Check if a character is available, such that vgetc() will not block.
+// If the next character is a special character or multi-byte, the returned
+// character is not valid!.
+// Returns NUL if no character is available.
 int vpeekc(void)
 {
   if (can_get_old_char()) {
@@ -1686,11 +1619,9 @@ int vpeekc(void)
   return vgetorpeek(false);
 }
 
-/*
- * Check if any character is available, also half an escape sequence.
- * Trick: when no typeahead found, but there is something in the typeahead
- * buffer, it must be an ESC that is recognized as the start of a key code.
- */
+// Check if any character is available, also half an escape sequence.
+// Trick: when no typeahead found, but there is something in the typeahead
+// buffer, it must be an ESC that is recognized as the start of a key code.
 int vpeekc_any(void)
 {
   int c;
@@ -1702,10 +1633,8 @@ int vpeekc_any(void)
   return c;
 }
 
-/*
- * Call vpeekc() without causing anything to be mapped.
- * Return true if a character is available, false otherwise.
- */
+// Call vpeekc() without causing anything to be mapped.
+// Return true if a character is available, false otherwise.
 int char_avail(void)
 {
   int retval;
@@ -2851,11 +2780,9 @@ int inchar(char_u *buf, int maxlen, long wait_time)
     ui_flush();
   }
 
-  /*
-   * Don't reset these when at the hit-return prompt, otherwise an endless
-   * recursive loop may result (write error in swapfile, hit-return, timeout
-   * on char wait, flush swapfile, write error....).
-   */
+  // Don't reset these when at the hit-return prompt, otherwise an endless
+  // recursive loop may result (write error in swapfile, hit-return, timeout
+  // on char wait, flush swapfile, write error....).
   if (State != MODE_HITRETURN) {
     did_outofmem_msg = false;       // display out of memory message (again)
     did_swapwrite_msg = false;      // display swap file write error again

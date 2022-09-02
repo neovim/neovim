@@ -248,9 +248,7 @@ int vim_ispathsep(int c)
 #endif
 }
 
-/*
- * Like vim_ispathsep(c), but exclude the colon for MS-Windows.
- */
+// Like vim_ispathsep(c), but exclude the colon for MS-Windows.
 int vim_ispathsep_nocolon(int c)
 {
   return vim_ispathsep(c)
@@ -532,9 +530,7 @@ bool path_has_wildcard(const char *p)
   return false;
 }
 
-/*
- * Unix style wildcard expansion code.
- */
+// Unix style wildcard expansion code.
 static int pstrcmp(const void *a, const void *b)
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
@@ -779,10 +775,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   return matches;
 }
 
-/*
- * Moves "*psep" back to the previous path separator in "path".
- * Returns FAIL is "*psep" ends up at the beginning of "path".
- */
+// Moves "*psep" back to the previous path separator in "path".
+// Returns FAIL is "*psep" ends up at the beginning of "path".
 static int find_previous_pathsep(char_u *path, char_u **psep)
 {
   // skip the current separator
@@ -825,15 +819,13 @@ static bool is_unique(char_u *maybe_unique, garray_T *gap, int i)
   return true;  // no match found
 }
 
-/*
- * Split the 'path' option into an array of strings in garray_T.  Relative
- * paths are expanded to their equivalent fullpath.  This includes the "."
- * (relative to current buffer directory) and empty path (relative to current
- * directory) notations.
- *
- * TODO: handle upward search (;) and path limiter (**N) notations by
- * expanding each into their equivalent path(s).
- */
+// Split the 'path' option into an array of strings in garray_T.  Relative
+// paths are expanded to their equivalent fullpath.  This includes the "."
+// (relative to current buffer directory) and empty path (relative to current
+// directory) notations.
+//
+// TODO(vim): handle upward search (;) and path limiter (**N) notations by
+// expanding each into their equivalent path(s).
 static void expand_path_option(char_u *curdir, garray_T *gap)
 {
   char_u *path_option = *curbuf->b_p_path == NUL ? p_path : (char_u *)curbuf->b_p_path;
@@ -883,14 +875,12 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
   xfree(buf);
 }
 
-/*
- * Returns a pointer to the file or directory name in "fname" that matches the
- * longest path in "ga"p, or NULL if there is no match. For example:
- *
- *    path: /foo/bar/baz
- *   fname: /foo/bar/baz/quux.txt
- * returns:              ^this
- */
+// Returns a pointer to the file or directory name in "fname" that matches the
+// longest path in "ga"p, or NULL if there is no match. For example:
+//
+//    path: /foo/bar/baz
+//   fname: /foo/bar/baz/quux.txt
+// returns:              ^this
 static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
 {
   int maxlen = 0;
@@ -924,11 +914,9 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
   return cutoff;
 }
 
-/*
- * Sorts, removes duplicates and modifies all the fullpath names in "gap" so
- * that they are unique with respect to each other while conserving the part
- * that matches the pattern. Beware, this is at least O(n^2) wrt "gap->ga_len".
- */
+// Sorts, removes duplicates and modifies all the fullpath names in "gap" so
+// that they are unique with respect to each other while conserving the part
+// that matches the pattern. Beware, this is at least O(n^2) wrt "gap->ga_len".
 static void uniquefy_paths(garray_T *gap, char_u *pattern)
 {
   char_u **fnames = (char_u **)gap->ga_data;
@@ -1212,26 +1200,23 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
   int add_pat;
   bool did_expand_in_path = false;
 
-  /*
-   * expand_env() is called to expand things like "~user".  If this fails,
-   * it calls ExpandOne(), which brings us back here.  In this case, always
-   * call the machine specific expansion function, if possible.  Otherwise,
-   * return FAIL.
-   */
-  if (recursive)
+  // expand_env() is called to expand things like "~user".  If this fails,
+  // it calls ExpandOne(), which brings us back here.  In this case, always
+  // call the machine specific expansion function, if possible.  Otherwise,
+  // return FAIL.
+  if (recursive) {
 #ifdef SPECIAL_WILDCHAR
-  { return os_expand_wildcards(num_pat, pat, num_file, file, flags); }
+    return os_expand_wildcards(num_pat, pat, num_file, file, flags);
 #else
-  { return FAIL; }
+    return FAIL;
 #endif
+  }
 
 #ifdef SPECIAL_WILDCHAR
-  /*
-   * If there are any special wildcard characters which we cannot handle
-   * here, call machine specific function for all the expansion.  This
-   * avoids starting the shell for each argument separately.
-   * For `=expr` do use the internal function.
-   */
+  // If there are any special wildcard characters which we cannot handle
+  // here, call machine specific function for all the expansion.  This
+  // avoids starting the shell for each argument separately.
+  // For `=expr` do use the internal function.
   for (int i = 0; i < num_pat; i++) {
     if (has_special_wildchar((char_u *)pat[i])
         && !(vim_backtick((char_u *)pat[i]) && pat[i][1] == '=')) {
@@ -1242,9 +1227,7 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
 
   recursive = true;
 
-  /*
-   * The matching file names are stored in a growarray.  Init it empty.
-   */
+  // The matching file names are stored in a growarray.  Init it empty.
   ga_init(&ga, (int)sizeof(char_u *), 30);
 
   for (int i = 0; i < num_pat && !got_int; i++) {
@@ -1266,31 +1249,28 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
         p = expand_env_save_opt(p, true);
         if (p == NULL) {
           p = (char_u *)pat[i];
-        }
+        } else {
 #ifdef UNIX
-        /*
-         * On Unix, if expand_env() can't expand an environment
-         * variable, use the shell to do that.  Discard previously
-         * found file names and start all over again.
-         */
-        else if (has_env_var(p) || *p == '~') {
-          xfree(p);
-          ga_clear_strings(&ga);
-          i = os_expand_wildcards(num_pat, pat, num_file, file,
-                                  flags | EW_KEEPDOLLAR);
-          recursive = false;
-          return i;
-        }
+          // On Unix, if expand_env() can't expand an environment
+          // variable, use the shell to do that.  Discard previously
+          // found file names and start all over again.
+          if (has_env_var(p) || *p == '~') {
+            xfree(p);
+            ga_clear_strings(&ga);
+            i = os_expand_wildcards(num_pat, pat, num_file, file,
+                                    flags | EW_KEEPDOLLAR);
+            recursive = false;
+            return i;
+          }
 #endif
+        }
       }
 
-      /*
-       * If there are wildcards: Expand file names and add each match to
-       * the list.  If there is no match, and EW_NOTFOUND is given, add
-       * the pattern.
-       * If there are no wildcards: Add the file name if it exists or
-       * when EW_NOTFOUND is given.
-       */
+      // If there are wildcards: Expand file names and add each match to
+      // the list.  If there is no match, and EW_NOTFOUND is given, add
+      // the pattern.
+      // If there are no wildcards: Add the file name if it exists or
+      // when EW_NOTFOUND is given.
       if (path_has_exp_wildcard(p)) {
         if ((flags & EW_PATH)
             && !path_is_absolute(p)
@@ -1491,21 +1471,17 @@ void addfile(garray_T *gap, char_u *f, int flags)
 #ifdef BACKSLASH_IN_FILENAME
   slash_adjust(p);
 #endif
-  /*
-   * Append a slash or backslash after directory names if none is present.
-   */
+  // Append a slash or backslash after directory names if none is present.
   if (isdir && (flags & EW_ADDSLASH)) {
     add_pathsep((char *)p);
   }
   GA_APPEND(char_u *, gap, p);
 }
 
-/*
- * Converts a file name into a canonical form. It simplifies a file name into
- * its simplest form by stripping out unneeded components, if any.  The
- * resulting file name is simplified in place and will either be the same
- * length as that supplied, or shorter.
- */
+// Converts a file name into a canonical form. It simplifies a file name into
+// its simplest form by stripping out unneeded components, if any.  The
+// resulting file name is simplified in place and will either be the same
+// length as that supplied, or shorter.
 void simplify_filename(char_u *filename)
 {
   int components = 0;
@@ -1704,10 +1680,8 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     file_name = (char *)find_file_in_path((char_u *)ptr, len, options & ~FNAME_MESS, true,
                                           (char_u *)rel_fname);
 
-    /*
-     * If the file could not be found in a normal way, try applying
-     * 'includeexpr' (unless done already).
-     */
+    // If the file could not be found in a normal way, try applying
+    // 'includeexpr' (unless done already).
     if (file_name == NULL
         && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
       tofree = eval_includeexpr(ptr, len);
@@ -1976,11 +1950,9 @@ bool same_directory(char_u *f1, char_u *f2)
          && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
 }
 
-/*
- * Compare path "p[]" to "q[]".
- * If "maxlen" >= 0 compare "p[maxlen]" to "q[maxlen]"
- * Return value like strcmp(p, q), but consider path separators.
- */
+// Compare path "p[]" to "q[]".
+// If "maxlen" >= 0 compare "p[maxlen]" to "q[maxlen]"
+// Return value like strcmp(p, q), but consider path separators.
 int pathcmp(const char *p, const char *q, int maxlen)
 {
   int i, j;
@@ -2185,9 +2157,7 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
     return retval;
   }
 
-  /*
-   * Remove names that match 'wildignore'.
-   */
+  // Remove names that match 'wildignore'.
   if (*p_wig) {
     char_u *ffname;
 

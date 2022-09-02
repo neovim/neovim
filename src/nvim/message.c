@@ -1,9 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * message.c: functions for displaying messages on the command line
- */
+// message.c: functions for displaying messages on the command line
 
 #include <assert.h>
 #include <inttypes.h>
@@ -48,10 +46,8 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
 
-/*
- * To be able to scroll back at the "more" and "hit-enter" prompts we need to
- * store the displayed text and remember where screen lines start.
- */
+// To be able to scroll back at the "more" and "hit-enter" prompts we need to
+// store the displayed text and remember where screen lines start.
 typedef struct msgchunk_S msgchunk_T;
 struct msgchunk_S {
   msgchunk_T *sb_next;
@@ -82,41 +78,39 @@ static int verbose_did_open = false;
 
 bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
-/*
- * When writing messages to the screen, there are many different situations.
- * A number of variables is used to remember the current state:
- * msg_didany       true when messages were written since the last time the
- *                  user reacted to a prompt.
- *                  Reset: After hitting a key for the hit-return prompt,
- *                  hitting <CR> for the command line or input().
- *                  Set: When any message is written to the screen.
- * msg_didout       true when something was written to the current line.
- *                  Reset: When advancing to the next line, when the current
- *                  text can be overwritten.
- *                  Set: When any message is written to the screen.
- * msg_nowait       No extra delay for the last drawn message.
- *                  Used in normal_cmd() before the mode message is drawn.
- * emsg_on_display  There was an error message recently.  Indicates that there
- *                  should be a delay before redrawing.
- * msg_scroll       The next message should not overwrite the current one.
- * msg_scrolled     How many lines the screen has been scrolled (because of
- *                  messages).  Used in update_screen() to scroll the screen
- *                  back.  Incremented each time the screen scrolls a line.
- * msg_scrolled_ign  true when msg_scrolled is non-zero and msg_puts_attr()
- *                  writes something without scrolling should not make
- *                  need_wait_return to be set.  This is a hack to make ":ts"
- *                  work without an extra prompt.
- * lines_left       Number of lines available for messages before the
- *                  more-prompt is to be given.  -1 when not set.
- * need_wait_return true when the hit-return prompt is needed.
- *                  Reset: After giving the hit-return prompt, when the user
- *                  has answered some other prompt.
- *                  Set: When the ruler or typeahead display is overwritten,
- *                  scrolling the screen for some message.
- * keep_msg         Message to be displayed after redrawing the screen, in
- *                  main_loop().
- *                  This is an allocated string or NULL when not used.
- */
+// When writing messages to the screen, there are many different situations.
+// A number of variables is used to remember the current state:
+// msg_didany       true when messages were written since the last time the
+//                  user reacted to a prompt.
+//                  Reset: After hitting a key for the hit-return prompt,
+//                  hitting <CR> for the command line or input().
+//                  Set: When any message is written to the screen.
+// msg_didout       true when something was written to the current line.
+//                  Reset: When advancing to the next line, when the current
+//                  text can be overwritten.
+//                  Set: When any message is written to the screen.
+// msg_nowait       No extra delay for the last drawn message.
+//                  Used in normal_cmd() before the mode message is drawn.
+// emsg_on_display  There was an error message recently.  Indicates that there
+//                  should be a delay before redrawing.
+// msg_scroll       The next message should not overwrite the current one.
+// msg_scrolled     How many lines the screen has been scrolled (because of
+//                  messages).  Used in update_screen() to scroll the screen
+//                  back.  Incremented each time the screen scrolls a line.
+// msg_scrolled_ign  true when msg_scrolled is non-zero and msg_puts_attr()
+//                  writes something without scrolling should not make
+//                  need_wait_return to be set.  This is a hack to make ":ts"
+//                  work without an extra prompt.
+// lines_left       Number of lines available for messages before the
+//                  more-prompt is to be given.  -1 when not set.
+// need_wait_return true when the hit-return prompt is needed.
+//                  Reset: After giving the hit-return prompt, when the user
+//                  has answered some other prompt.
+//                  Set: When the ruler or typeahead display is overwritten,
+//                  scrolling the screen for some message.
+// keep_msg         Message to be displayed after redrawing the screen, in
+//                  main_loop().
+//                  This is an allocated string or NULL when not used.
 
 // Extended msg state, currently used for external UIs with ext_messages
 static const char *msg_ext_kind = NULL;
@@ -313,11 +307,9 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
     set_vim_var_string(VV_STATUSMSG, s, -1);
   }
 
-  /*
-   * It is possible that displaying a messages causes a problem (e.g.,
-   * when redrawing the window), which causes another message, etc..    To
-   * break this loop, limit the recursiveness to 3 levels.
-   */
+  // It is possible that displaying a messages causes a problem (e.g.,
+  // when redrawing the window), which causes another message, etc..    To
+  // break this loop, limit the recursiveness to 3 levels.
   if (entered >= 3) {
     return true;
   }
@@ -483,10 +475,8 @@ void trunc_string(char *s, char *buf, int room_in, int buflen)
   }
 }
 
-/*
- * Note: Caller of smsg() and smsg_attr() must check the resulting string is
- * shorter than IOSIZE!!!
- */
+// Note: Caller of smsg() and smsg_attr() must check the resulting string is
+// shorter than IOSIZE!!!
 
 int smsg(const char *s, ...)
   FUNC_ATTR_PRINTF(1, 2)
@@ -522,10 +512,8 @@ int smsg_attr_keep(int attr, const char *s, ...)
   return msg_attr_keep((const char *)IObuff, attr, true, false);
 }
 
-/*
- * Remember the last sourcing name/lnum used in an error message, so that it
- * isn't printed each time when it didn't change.
- */
+// Remember the last sourcing name/lnum used in an error message, so that it
+// isn't printed each time when it didn't change.
 static int last_sourcing_lnum = 0;
 static char *last_sourcing_name = NULL;
 
@@ -681,10 +669,8 @@ static bool emsg_multiline(const char *s, bool multiline)
     // set "v:errmsg", also when using ":silent! cmd"
     set_vim_var_string(VV_ERRMSG, s, -1);
 
-    /*
-     * When using ":silent! cmd" ignore error messages.
-     * But do write it to the redirection file.
-     */
+    // When using ":silent! cmd" ignore error messages.
+    // But do write it to the redirection file.
     if (emsg_silent != 0) {
       if (!emsg_noredir) {
         msg_start();
@@ -1156,12 +1142,10 @@ void wait_return(int redraw)
     return;
   }
 
-  /*
-   * When inside vgetc(), we can't wait for a typed character at all.
-   * With the global command (and some others) we only need one return at
-   * the end. Adjust cmdline_row to avoid the next message overwriting the
-   * last one.
-   */
+  // When inside vgetc(), we can't wait for a typed character at all.
+  // With the global command (and some others) we only need one return at
+  // the end. Adjust cmdline_row to avoid the next message overwriting the
+  // last one.
   if (vgetc_busy > 0) {
     return;
   }
@@ -1226,12 +1210,10 @@ void wait_return(int redraw)
       reg_recording = save_reg_recording;
       scriptout = save_scriptout;
 
-      /*
-       * Allow scrolling back in the messages.
-       * Also accept scroll-down commands when messages fill the screen,
-       * to avoid that typing one 'j' too many makes the messages
-       * disappear.
-       */
+      // Allow scrolling back in the messages.
+      // Also accept scroll-down commands when messages fill the screen,
+      // to avoid that typing one 'j' too many makes the messages
+      // disappear.
       if (p_more) {
         if (c == 'b' || c == 'k' || c == 'u' || c == 'g'
             || c == K_UP || c == K_PAGEUP) {
@@ -1268,9 +1250,7 @@ void wait_return(int redraw)
              || c == K_MOUSEDOWN || c == K_MOUSEUP
              || c == K_MOUSEMOVE);
     os_breakcheck();
-    /*
-     * Avoid that the mouse-up event causes visual mode to start.
-     */
+    // Avoid that the mouse-up event causes visual mode to start.
     if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
         || c == K_X1MOUSE || c == K_X2MOUSE) {
       (void)jump_to_mouse(MOUSE_SETPOS, NULL, 0);
@@ -1575,10 +1555,8 @@ int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
     msg_puts_attr(" ", attr);
   }
 
-  /*
-   * Go over the string.  Special characters are translated and printed.
-   * Normal characters are printed several at a time.
-   */
+  // Go over the string.  Special characters are translated and printed.
+  // Normal characters are printed several at a time.
   while (--len >= 0 && !got_int) {
     // Don't include composing chars after the end.
     mb_l = utfc_ptr2len_len(str, len + 1);
@@ -2250,10 +2228,8 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
         cmdline_row--;
       }
 
-      /*
-       * If screen is completely filled and 'more' is set then wait
-       * for a character.
-       */
+      // If screen is completely filled and 'more' is set then wait
+      // for a character.
       if (lines_left > 0) {
         lines_left--;
       }
@@ -2828,9 +2804,7 @@ static int do_more_prompt(int typed_char)
     msg_moremsg(false);
   }
   for (;;) {
-    /*
-     * Get a typed character directly from the user.
-     */
+    // Get a typed character directly from the user.
     if (used_typed_char != NUL) {
       c = used_typed_char;              // was typed at hit-enter prompt
       used_typed_char = NUL;
@@ -3170,12 +3144,10 @@ void msg_clr_cmdline(void)
 /// @return  true if wait_return() not called.
 int msg_end(void)
 {
-  /*
-   * If the string is larger than the window,
-   * or the ruler option is set and we run into it,
-   * we have to redraw the window.
-   * Do not do this if we are abandoning the file or editing the command line.
-   */
+  // If the string is larger than the window,
+  // or the ruler option is set and we run into it,
+  // we have to redraw the window.
+  // Do not do this if we are abandoning the file or editing the command line.
   if (!exiting && need_wait_return && !(State & MODE_CMDLINE)) {
     wait_return(false);
     return false;
@@ -3545,10 +3517,8 @@ int do_dialog(int type, char *title, char *message, char *buttons, int dfltbutto
   State = MODE_CONFIRM;
   setmouse();
 
-  /*
-   * Since we wait for a keypress, don't make the
-   * user press RETURN as well afterwards.
-   */
+  // Since we wait for a keypress, don't make the
+  // user press RETURN as well afterwards.
   no_wait_return++;
   hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 

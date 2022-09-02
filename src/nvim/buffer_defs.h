@@ -48,25 +48,23 @@ typedef struct {
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
 
-/*
- * Flags for w_valid.
- * These are set when something in a window structure becomes invalid, except
- * when the cursor is moved.  Call check_cursor_moved() before testing one of
- * the flags.
- * These are reset when that thing has been updated and is valid again.
- *
- * Every function that invalidates one of these must call one of the
- * invalidate_* functions.
- *
- * w_valid is supposed to be used only in screen.c.  From other files, use the
- * functions that set or reset the flags.
- *
- * VALID_BOTLINE    VALID_BOTLINE_AP
- *     on       on      w_botline valid
- *     off      on      w_botline approximated
- *     off      off     w_botline not valid
- *     on       off     not possible
- */
+// Flags for w_valid.
+// These are set when something in a window structure becomes invalid, except
+// when the cursor is moved.  Call check_cursor_moved() before testing one of
+// the flags.
+// These are reset when that thing has been updated and is valid again.
+//
+// Every function that invalidates one of these must call one of the
+// invalidate_* functions.
+//
+// w_valid is supposed to be used only in screen.c.  From other files, use the
+// functions that set or reset the flags.
+//
+// VALID_BOTLINE    VALID_BOTLINE_AP
+//     on       on      w_botline valid
+//     off      on      w_botline approximated
+//     off      off     w_botline not valid
+//     on       off     not possible
 #define VALID_WROW      0x01    // w_wrow (window row) is valid
 #define VALID_WCOL      0x02    // w_wcol (window col) is valid
 #define VALID_VIRTCOL   0x04    // w_virtcol (file col) is valid
@@ -112,9 +110,7 @@ typedef uint64_t disptick_T;  // display tick type
 #include "nvim/sign_defs.h"
 #include "nvim/terminal.h"      // for Terminal
 
-/*
- * The taggy struct is used to store the information about a :tag command.
- */
+// The taggy struct is used to store the information about a :tag command.
 typedef struct taggy {
   char *tagname;                // tag name
   fmark_T fmark;                // cursor position BEFORE ":tag"
@@ -126,17 +122,13 @@ typedef struct taggy {
 typedef struct buffblock buffblock_T;
 typedef struct buffheader buffheader_T;
 
-/*
- * structure used to store one block of the stuff/redo/recording buffers
- */
+// structure used to store one block of the stuff/redo/recording buffers
 struct buffblock {
   buffblock_T *b_next;  // pointer to next buffblock
   char b_str[1];        // contents (actually longer)
 };
 
-/*
- * header used for the stuff buffer and the redo buffer
- */
+// header used for the stuff buffer and the redo buffer
 struct buffheader {
   buffblock_T bh_first;  // first (dummy) block of list
   buffblock_T *bh_curr;  // buffblock for appending
@@ -149,11 +141,9 @@ typedef struct {
   buffheader_T sr_old_redobuff;
 } save_redo_T;
 
-/*
- * Structure that contains all options that are local to a window.
- * Used twice in a window: for the current buffer and for all buffers.
- * Also used in wininfo_T.
- */
+// Structure that contains all options that are local to a window.
+// Used twice in a window: for the current buffer and for all buffers.
+// Also used in wininfo_T.
 typedef struct {
   int wo_arab;
 #define w_p_arab w_onebuf_opt.wo_arab  // 'arabic'
@@ -268,16 +258,14 @@ typedef struct {
 #define w_p_script_ctx w_onebuf_opt.wo_script_ctx
 } winopt_T;
 
-/*
- * Window info stored with a buffer.
- *
- * Two types of info are kept for a buffer which are associated with a
- * specific window:
- * 1. Each window can have a different line number associated with a buffer.
- * 2. The window-local options for a buffer work in a similar way.
- * The window-info is kept in a list at b_wininfo.  It is kept in
- * most-recently-used order.
- */
+// Window info stored with a buffer.
+//
+// Two types of info are kept for a buffer which are associated with a
+// specific window:
+// 1. Each window can have a different line number associated with a buffer.
+// 2. The window-local options for a buffer work in a similar way.
+// The window-info is kept in a list at b_wininfo.  It is kept in
+// most-recently-used order.
 struct wininfo_S {
   wininfo_T *wi_next;         // next entry or NULL for last entry
   wininfo_T *wi_prev;         // previous entry or NULL for first entry
@@ -290,12 +278,10 @@ struct wininfo_S {
   int wi_changelistidx;         // copy of w_changelistidx
 };
 
-/*
- * Argument list: Array of file names.
- * Used for the global argument list and the argument lists local to a window.
- *
- * TODO: move struct arglist to another header
- */
+// Argument list: Array of file names.
+// Used for the global argument list and the argument lists local to a window.
+//
+// TODO(neovim): move struct arglist to another header
 typedef struct arglist {
   garray_T al_ga;               // growarray with the array of file names
   int al_refcount;              // number of windows using this arglist
@@ -321,9 +307,7 @@ typedef struct argentry {
 #define ARGCOUNT        (ALIST(curwin)->al_ga.ga_len)
 #define WARGCOUNT(wp)   (ALIST(wp)->al_ga.ga_len)
 
-/*
- * Used for the typeahead buffer: typebuf.
- */
+// Used for the typeahead buffer: typebuf.
 typedef struct {
   uint8_t *tb_buf;              // buffer for typed characters
   uint8_t *tb_noremap;          // mapping flags for characters in tb_buf[]
@@ -347,9 +331,7 @@ typedef struct {
   String save_inputbuf;
 } tasave_T;
 
-/*
- * Structure used for mappings and abbreviations.
- */
+// Structure used for mappings and abbreviations.
 typedef struct mapblock mapblock_T;
 struct mapblock {
   mapblock_T *m_next;           // next mapblock in list
@@ -414,9 +396,7 @@ struct stl_item {
 
 typedef struct qf_info_S qf_info_T;
 
-/*
- * Used for :syntime: timing of executing a syntax pattern.
- */
+// Used for :syntime: timing of executing a syntax pattern.
 typedef struct {
   proftime_T total;             // total time used
   proftime_T slowest;           // time of slowest call
@@ -424,10 +404,8 @@ typedef struct {
   long match;                   // nr of times matched
 } syn_time_T;
 
-/*
- * These are items normally related to a buffer.  But when using ":ownsyntax"
- * a window may have its own instance.
- */
+// These are items normally related to a buffer.  But when using ":ownsyntax"
+// a window may have its own instance.
 typedef struct {
   hashtab_T b_keywtab;                  // syntax keywords hash table
   hashtab_T b_keywtab_ic;               // idem, ignore case
@@ -514,13 +492,11 @@ EXTERN int curbuf_splice_pending INIT(= 0);
 // Maximum number of maphash blocks we will have
 #define MAX_MAPHASH 256
 
-/*
- * buffer: structure that holds information about one file
- *
- * Several windows can share a single Buffer
- * A buffer is unallocated if there is no memfile for it.
- * A buffer is new if the associated file has never been loaded yet.
- */
+// buffer: structure that holds information about one file
+//
+// Several windows can share a single Buffer
+// A buffer is unallocated if there is no memfile for it.
+// A buffer is new if the associated file has never been loaded yet.
 
 struct file_buffer {
   handle_T handle;              // unique id for the buffer (buffer number)
@@ -570,15 +546,13 @@ struct file_buffer {
   varnumber_T b_last_changedtick_pum;   // b:changedtick when TextChangedP was
                                         // last triggered.
 
-  bool b_saving;                /* Set to true if we are in the middle of
-                                   saving the buffer. */
+  bool b_saving;                // Set to true if we are in the middle of
+                                // saving the buffer.
 
-  /*
-   * Changes to a buffer require updating of the display.  To minimize the
-   * work, remember changes made and update everything at once.
-   */
-  bool b_mod_set;               /* true when there are changes since the last
-                                   time the display was updated */
+  // Changes to a buffer require updating of the display.  To minimize the
+  // work, remember changes made and update everything at once.
+  bool b_mod_set;               // true when there are changes since the last
+                                // time the display was updated
   linenr_T b_mod_top;           // topmost lnum that was changed
   linenr_T b_mod_bot;           // lnum below last changed line, AFTER the
                                 // change
@@ -609,17 +583,13 @@ struct file_buffer {
   fmark_T b_last_insert;        // where Insert mode was left
   fmark_T b_last_change;        // position of last change: '. mark
 
-  /*
-   * the changelist contains old change positions
-   */
+  // the changelist contains old change positions
   fmark_T b_changelist[JUMPLISTSIZE];
   int b_changelistlen;                  // number of active entries
   bool b_new_change;                    // set by u_savecommon()
 
-  /*
-   * Character table, only used in charset.c for 'iskeyword'
-   * bitset with 4*64=256 bits: 1 bit per character 0-255.
-   */
+  // Character table, only used in charset.c for 'iskeyword'
+  // bitset with 4*64=256 bits: 1 bit per character 0-255.
   uint64_t b_chartab[4];
 
   // Table used for mappings local to a buffer.
@@ -629,18 +599,14 @@ struct file_buffer {
   mapblock_T *b_first_abbr;
   // User commands local to the buffer.
   garray_T b_ucmds;
-  /*
-   * start and end of an operator, also used for '[ and ']
-   */
+  // start and end of an operator, also used for '[ and ']
   pos_T b_op_start;
   pos_T b_op_start_orig;  // used for Insstart_orig
   pos_T b_op_end;
 
   bool b_marks_read;            // Have we read ShaDa marks yet?
 
-  /*
-   * The following only used in undo.c.
-   */
+  // The following only used in undo.c.
   u_header_T *b_u_oldhead;     // pointer to oldest header
   u_header_T *b_u_newhead;     // pointer to newest header; may not be valid
                                // if b_u_curhead is not NULL
@@ -673,11 +639,9 @@ struct file_buffer {
 #define KEYMAP_LOADED  2       // 'keymap' mappings have been loaded
   garray_T b_kmap_ga;           // the keymap table
 
-  /*
-   * Options local to a buffer.
-   * They are here because their value depends on the type of file
-   * or contents of the file being edited.
-   */
+  // Options local to a buffer.
+  // They are here because their value depends on the type of file
+  // or contents of the file being edited.
   bool b_p_initialized;                 // set when options initialized
 
   LastSet b_p_script_ctx[BV_COUNT];     // SCTXs for buffer-local options
@@ -834,19 +798,17 @@ struct file_buffer {
   ScopeDictDictItem b_bufvar;  ///< Variable for "b:" Dictionary.
   dict_T *b_vars;  ///< b: scope dictionary.
 
-  /* When a buffer is created, it starts without a swap file.  b_may_swap is
-   * then set to indicate that a swap file may be opened later.  It is reset
-   * if a swap file could not be opened.
-   */
+  // When a buffer is created, it starts without a swap file.  b_may_swap is
+  // then set to indicate that a swap file may be opened later.  It is reset
+  // if a swap file could not be opened.
   bool b_may_swap;
   bool b_did_warn;              /* Set to true if user has been warned on first
                                    change of a read-only file */
 
-  /* Two special kinds of buffers:
-   * help buffer  - used for help files, won't use a swap file.
-   * spell buffer - used for spell info, never displayed and doesn't have a
-   *                file name.
-   */
+  // Two special kinds of buffers:
+  // help buffer  - used for help files, won't use a swap file.
+  // spell buffer - used for spell info, never displayed and doesn't have a
+  //                file name.
   bool b_help;                  // true for help file buffer (when set b_p_bt
                                 // is "help")
   bool b_spell;                 // True for a spell file buffer, most fields
@@ -906,25 +868,21 @@ struct file_buffer {
   int b_diff_failed;    // internal diff failed for this buffer
 };
 
-/*
- * Stuff for diff mode.
- */
+// Stuff for diff mode.
 #define DB_COUNT 8     // up to four buffers can be diff'ed
 
-/*
- * Each diffblock defines where a block of lines starts in each of the buffers
- * and how many lines it occupies in that buffer.  When the lines are missing
- * in the buffer the df_count[] is zero.  This is all counted in
- * buffer lines.
- * There is always at least one unchanged line in between the diffs.
- * Otherwise it would have been included in the diff above or below it.
- * df_lnum[] + df_count[] is the lnum below the change.  When in one buffer
- * lines have been inserted, in the other buffer df_lnum[] is the line below
- * the insertion and df_count[] is zero.  When appending lines at the end of
- * the buffer, df_lnum[] is one beyond the end!
- * This is using a linked list, because the number of differences is expected
- * to be reasonable small.  The list is sorted on lnum.
- */
+// Each diffblock defines where a block of lines starts in each of the buffers
+// and how many lines it occupies in that buffer.  When the lines are missing
+// in the buffer the df_count[] is zero.  This is all counted in
+// buffer lines.
+// There is always at least one unchanged line in between the diffs.
+// Otherwise it would have been included in the diff above or below it.
+// df_lnum[] + df_count[] is the lnum below the change.  When in one buffer
+// lines have been inserted, in the other buffer df_lnum[] is the line below
+// the insertion and df_count[] is zero.  When appending lines at the end of
+// the buffer, df_lnum[] is one beyond the end!
+// This is using a linked list, because the number of differences is expected
+// to be reasonable small.  The list is sorted on lnum.
 typedef struct diffblock_S diff_T;
 struct diffblock_S {
   diff_T *df_next;
@@ -964,18 +922,16 @@ struct tabpage_S {
   char *tp_prevdir;        ///< Previous directory.
 };
 
-/*
- * Structure to cache info for displayed lines in w_lines[].
- * Each logical line has one entry.
- * The entry tells how the logical line is currently displayed in the window.
- * This is updated when displaying the window.
- * When the display is changed (e.g., when clearing the screen) w_lines_valid
- * is changed to exclude invalid entries.
- * When making changes to the buffer, wl_valid is reset to indicate wl_size
- * may not reflect what is actually in the buffer.  When wl_valid is false,
- * the entries can only be used to count the number of displayed lines used.
- * wl_lnum and wl_lastlnum are invalid too.
- */
+// Structure to cache info for displayed lines in w_lines[].
+// Each logical line has one entry.
+// The entry tells how the logical line is currently displayed in the window.
+// This is updated when displaying the window.
+// When the display is changed (e.g., when clearing the screen) w_lines_valid
+// is changed to exclude invalid entries.
+// When making changes to the buffer, wl_valid is reset to indicate wl_size
+// may not reflect what is actually in the buffer.  When wl_valid is false,
+// the entries can only be used to count the number of displayed lines used.
+// wl_lnum and wl_lastlnum are invalid too.
 typedef struct w_line {
   linenr_T wl_lnum;             // buffer line number for logical line
   uint16_t wl_size;             // height in screen lines
@@ -984,10 +940,8 @@ typedef struct w_line {
   linenr_T wl_lastlnum;         // last buffer line number for logical line
 } wline_T;
 
-/*
- * Windows are kept in a tree of frames.  Each frame has a column (FR_COL)
- * or row (FR_ROW) layout or is a leaf, which has a window.
- */
+// Windows are kept in a tree of frames.  Each frame has a column (FR_COL)
+// or row (FR_ROW) layout or is a leaf, which has a window.
 struct frame_S {
   char fr_layout;               // FR_LEAF, FR_COL or FR_ROW
   int fr_width;
@@ -1008,12 +962,10 @@ struct frame_S {
 #define FR_ROW  1       // frame with a row of windows
 #define FR_COL  2       // frame with a column of windows
 
-/*
- * Struct used for highlighting 'hlsearch' matches, matches defined by
- * ":match" and matches defined by match functions.
- * For 'hlsearch' there is one pattern for all windows.  For ":match" and the
- * match functions there is a different pattern for each window.
- */
+// Struct used for highlighting 'hlsearch' matches, matches defined by
+// ":match" and matches defined by match functions.
+// For 'hlsearch' there is one pattern for all windows.  For ":match" and the
+// match functions there is a different pattern for each window.
 typedef struct {
   regmmatch_T rm;       // points to the regexp program; contains last found
                         // match (may continue in next line)
@@ -1049,10 +1001,8 @@ struct posmatch {
   linenr_T botlnum;            ///< bottom buffer line
 };
 
-/*
- * matchitem_T provides a linked list for storing match items for ":match" and
- * the match functions.
- */
+// matchitem_T provides a linked list for storing match items for ":match" and
+// the match functions.
 typedef struct matchitem matchitem_T;
 struct matchitem {
   matchitem_T *next;
@@ -1221,12 +1171,10 @@ struct window_S {
     int eob;
   } w_p_fcs_chars;
 
-  /*
-   * "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for
-   * displaying the buffer.
-   */
-  linenr_T w_topline;               /* buffer line number of the line at the
-                                       top of the window */
+  // "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for
+  // displaying the buffer.
+  linenr_T w_topline;               // buffer line number of the line at the
+                                    // top of the window
   char w_topline_was_set;           // flag set to true when topline is set,
                                     // e.g. by winrestview()
   int w_topfill;                    // number of filler lines above w_topline
@@ -1279,15 +1227,12 @@ struct window_S {
   int w_height_outer;
   int w_width_outer;
 
-  /*
-   * === start of cached values ====
-   */
-  /*
-   * Recomputing is minimized by storing the result of computations.
-   * Use functions in screen.c to check if they are valid and to update.
-   * w_valid is a bitfield of flags, which indicate if specific values are
-   * valid or need to be recomputed.
-   */
+  // === start of cached values ====
+
+  // Recomputing is minimized by storing the result of computations.
+  // Use functions in screen.c to check if they are valid and to update.
+  // w_valid is a bitfield of flags, which indicate if specific values are
+  // valid or need to be recomputed.
   int w_valid;
   pos_T w_valid_cursor;             /* last known position of w_cursor, used
                                        to adjust w_valid */
@@ -1295,10 +1240,8 @@ struct window_S {
 
   bool w_viewport_invalid;
 
-  /*
-   * w_cline_height is the number of physical lines taken by the buffer line
-   * that the cursor is on.  We use this to avoid extra calls to plines_win().
-   */
+  // w_cline_height is the number of physical lines taken by the buffer line
+  // that the cursor is on.  We use this to avoid extra calls to plines_win().
   int w_cline_height;               // current size of cursor line
   bool w_cline_folded;              // cursor line is folded
 
@@ -1311,11 +1254,9 @@ struct window_S {
                                     // more than one screen line or when
                                     // w_leftcol is non-zero
 
-  /*
-   * w_wrow and w_wcol specify the cursor position in the window.
-   * This is related to positions in the window, not in the display or
-   * buffer, thus w_wrow is relative to w_winrow.
-   */
+  // w_wrow and w_wcol specify the cursor position in the window.
+  // This is related to positions in the window, not in the display or
+  // buffer, thus w_wrow is relative to w_winrow.
   int w_wrow, w_wcol;               // cursor position in window
 
   linenr_T w_botline;               // number of the line below the bottom of
@@ -1324,16 +1265,14 @@ struct window_S {
   int w_filler_rows;                // number of filler rows at the end of the
                                     // window
 
-  /*
-   * Info about the lines currently in the window is remembered to avoid
-   * recomputing it every time.  The allocated size of w_lines[] is Rows.
-   * Only the w_lines_valid entries are actually valid.
-   * When the display is up-to-date w_lines[0].wl_lnum is equal to w_topline
-   * and w_lines[w_lines_valid - 1].wl_lnum is equal to w_botline.
-   * Between changing text and updating the display w_lines[] represents
-   * what is currently displayed.  wl_valid is reset to indicated this.
-   * This is used for efficient redrawing.
-   */
+  // Info about the lines currently in the window is remembered to avoid
+  // recomputing it every time.  The allocated size of w_lines[] is Rows.
+  // Only the w_lines_valid entries are actually valid.
+  // When the display is up-to-date w_lines[0].wl_lnum is equal to w_topline
+  // and w_lines[w_lines_valid - 1].wl_lnum is equal to w_botline.
+  // Between changing text and updating the display w_lines[] represents
+  // what is currently displayed.  wl_valid is reset to indicated this.
+  // This is used for efficient redrawing.
   int w_lines_valid;                // number of valid entries
   wline_T *w_lines;
 
@@ -1346,9 +1285,7 @@ struct window_S {
                                     // column being used
   int w_scwidth;                    // width of 'signcolumn'
 
-  /*
-   * === end of cached values ===
-   */
+  // === end of cached values ===
 
   int w_redr_type;                  // type of redraw to be performed on win
   int w_upd_rows;                   // number of window lines to update when
@@ -1406,17 +1343,13 @@ struct window_S {
   ScopeDictDictItem w_winvar;  ///< Variable for "w:" dictionary.
   dict_T *w_vars;  ///< Dictionary with w: variables.
 
-  /*
-   * The w_prev_pcmark field is used to check whether we really did jump to
-   * a new line after setting the w_pcmark.  If not, then we revert to
-   * using the previous w_pcmark.
-   */
+  // The w_prev_pcmark field is used to check whether we really did jump to
+  // a new line after setting the w_pcmark.  If not, then we revert to
+  // using the previous w_pcmark.
   pos_T w_pcmark;               // previous context mark
   pos_T w_prev_pcmark;          // previous w_pcmark
 
-  /*
-   * the jumplist contains old cursor positions
-   */
+  // the jumplist contains old cursor positions
   xfmark_T w_jumplist[JUMPLISTSIZE];
   int w_jumplistlen;                    // number of active entries
   int w_jumplistidx;                    // current position
@@ -1426,12 +1359,10 @@ struct window_S {
   matchitem_T *w_match_head;            // head of match list
   int w_next_match_id;                  // next match ID
 
-  /*
-   * the tagstack grows from 0 upwards:
-   * entry 0: older
-   * entry 1: newer
-   * entry 2: newest
-   */
+  // the tagstack grows from 0 upwards:
+  // entry 0: older
+  // entry 1: newer
+  // entry 2: newest
   taggy_T w_tagstack[TAGSTACKSIZE];     // the tag stack
   int w_tagstackidx;                    // idx just below active entry
   int w_tagstacklen;                    // number of tags on stack
@@ -1442,12 +1373,10 @@ struct window_S {
   bool w_floating;                       ///< whether the window is floating
   FloatConfig w_float_config;
 
-  /*
-   * w_fraction is the fractional row of the cursor within the window, from
-   * 0 at the top row to FRACTION_MULT at the last row.
-   * w_prev_fraction_row was the actual cursor row when w_fraction was last
-   * calculated.
-   */
+  // w_fraction is the fractional row of the cursor within the window, from
+  // 0 at the top row to FRACTION_MULT at the last row.
+  // w_prev_fraction_row was the actual cursor row when w_fraction was last
+  // calculated.
   int w_fraction;
   int w_prev_fraction_row;
 

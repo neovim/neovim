@@ -71,9 +71,7 @@
 
 static char_u *ff_expand_buffer = NULL;  // used for expanding filenames
 
-/*
- * type for the directory search stack
- */
+// type for the directory search stack
 typedef struct ff_stack {
   struct ff_stack *ffs_prev;
 
@@ -104,9 +102,7 @@ typedef struct ff_stack {
   int ffs_star_star_empty;
 } ff_stack_T;
 
-/*
- * type for already visited directories or files.
- */
+// type for already visited directories or files.
 typedef struct ff_visited {
   struct ff_visited *ffv_next;
 
@@ -122,20 +118,18 @@ typedef struct ff_visited {
   char_u ffv_fname[1];                  // actually longer
 } ff_visited_T;
 
-/*
- * We might have to manage several visited lists during a search.
- * This is especially needed for the tags option. If tags is set to:
- *      "./++/tags,./++/TAGS,++/tags"  (replace + with *)
- * So we have to do 3 searches:
- *   1) search from the current files directory downward for the file "tags"
- *   2) search from the current files directory downward for the file "TAGS"
- *   3) search from Vims current directory downwards for the file "tags"
- * As you can see, the first and the third search are for the same file, so for
- * the third search we can use the visited list of the first search. For the
- * second search we must start from an empty visited list.
- * The struct ff_visited_list_hdr is used to manage a linked list of already
- * visited lists.
- */
+// We might have to manage several visited lists during a search.
+// This is especially needed for the tags option. If tags is set to:
+//      "./++/tags,./++/TAGS,++/tags"  (replace + with *)
+// So we have to do 3 searches:
+//   1) search from the current files directory downward for the file "tags"
+//   2) search from the current files directory downward for the file "TAGS"
+//   3) search from Vims current directory downwards for the file "tags"
+// As you can see, the first and the third search are for the same file, so for
+// the third search we can use the visited list of the first search. For the
+// second search we must start from an empty visited list.
+// The struct ff_visited_list_hdr is used to manage a linked list of already
+// visited lists.
 typedef struct ff_visited_list_hdr {
   struct ff_visited_list_hdr *ffvl_next;
 
@@ -145,29 +139,25 @@ typedef struct ff_visited_list_hdr {
   ff_visited_T *ffvl_visited_list;
 } ff_visited_list_hdr_T;
 
-/*
- * '**' can be expanded to several directory levels.
- * Set the default maximum depth.
- */
+// '**' can be expanded to several directory levels.
+// Set the default maximum depth.
 #define FF_MAX_STAR_STAR_EXPAND ((char_u)30)
 
-/*
- * The search context:
- *   ffsc_stack_ptr:    the stack for the dirs to search
- *   ffsc_visited_list: the currently active visited list
- *   ffsc_dir_visited_list: the currently active visited list for search dirs
- *   ffsc_visited_lists_list: the list of all visited lists
- *   ffsc_dir_visited_lists_list: the list of all visited lists for search dirs
- *   ffsc_file_to_search:     the file to search for
- *   ffsc_start_dir:    the starting directory, if search path was relative
- *   ffsc_fix_path:     the fix part of the given path (without wildcards)
- *                      Needed for upward search.
- *   ffsc_wc_path:      the part of the given path containing wildcards
- *   ffsc_level:        how many levels of dirs to search downwards
- *   ffsc_stopdirs_v:   array of stop directories for upward search
- *   ffsc_find_what:    FINDFILE_BOTH, FINDFILE_DIR or FINDFILE_FILE
- *   ffsc_tagfile:      searching for tags file, don't use 'suffixesadd'
- */
+// The search context:
+//   ffsc_stack_ptr:    the stack for the dirs to search
+//   ffsc_visited_list: the currently active visited list
+//   ffsc_dir_visited_list: the currently active visited list for search dirs
+//   ffsc_visited_lists_list: the list of all visited lists
+//   ffsc_dir_visited_lists_list: the list of all visited lists for search dirs
+//   ffsc_file_to_search:     the file to search for
+//   ffsc_start_dir:    the starting directory, if search path was relative
+//   ffsc_fix_path:     the fix part of the given path (without wildcards)
+//                      Needed for upward search.
+//   ffsc_wc_path:      the part of the given path containing wildcards
+//   ffsc_level:        how many levels of dirs to search downwards
+//   ffsc_stopdirs_v:   array of stop directories for upward search
+//   ffsc_find_what:    FINDFILE_BOTH, FINDFILE_DIR or FINDFILE_FILE
+//   ffsc_tagfile:      searching for tags file, don't use 'suffixesadd'
 typedef struct ff_search_ctx_T {
   ff_stack_T *ffsc_stack_ptr;
   ff_visited_list_hdr_T *ffsc_visited_list;
@@ -341,15 +331,13 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
 #endif
   }
 
-  /*
-   * If stopdirs are given, split them into an array of pointers.
-   * If this fails (mem allocation), there is no upward search at all or a
-   * stop directory is not recognized -> continue silently.
-   * If stopdirs just contains a ";" or is empty,
-   * search_ctx->ffsc_stopdirs_v will only contain a  NULL pointer. This
-   * is handled as unlimited upward search.  See function
-   * ff_path_in_stoplist() for details.
-   */
+  // If stopdirs are given, split them into an array of pointers.
+  // If this fails (mem allocation), there is no upward search at all or a
+  // stop directory is not recognized -> continue silently.
+  // If stopdirs just contains a ";" or is empty,
+  // search_ctx->ffsc_stopdirs_v will only contain a  NULL pointer. This
+  // is handled as unlimited upward search.  See function
+  // ff_path_in_stoplist() for details.
   if (stopdirs != NULL) {
     char *walker = stopdirs;
 
@@ -401,15 +389,13 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
     assert(wc_part - path >= 0);
     search_ctx->ffsc_fix_path = xstrnsave(path, (size_t)(wc_part - path));
 
-    /*
-     * copy wc_path and add restricts to the '**' wildcard.
-     * The octet after a '**' is used as a (binary) counter.
-     * So '**3' is transposed to '**^C' ('^C' is ASCII value 3)
-     * or '**76' is transposed to '**N'( 'N' is ASCII value 76).
-     * If no restrict is given after '**' the default is used.
-     * Due to this technique the path looks awful if you print it as a
-     * string.
-     */
+    // copy wc_path and add restricts to the '**' wildcard.
+    // The octet after a '**' is used as a (binary) counter.
+    // So '**3' is transposed to '**^C' ('^C' is ASCII value 3)
+    // or '**76' is transposed to '**N'( 'N' is ASCII value 76).
+    // If no restrict is given after '**' the default is used.
+    // Due to this technique the path looks awful if you print it as a
+    // string.
     len = 0;
     while (*wc_part != NUL) {
       if (len + 5 >= MAXPATHL) {
@@ -513,11 +499,9 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
   return search_ctx;
 
 error_return:
-  /*
-   * We clear the search context now!
-   * Even when the caller gave us a (perhaps valid) context we free it here,
-   * as we might have already destroyed it.
-   */
+  // We clear the search context now!
+  // Even when the caller gave us a (perhaps valid) context we free it here,
+  // as we might have already destroyed it.
   vim_findfile_cleanup(search_ctx);
   return NULL;
 }
@@ -587,10 +571,8 @@ char_u *vim_findfile(void *search_ctx_arg)
 
   search_ctx = (ff_search_ctx_T *)search_ctx_arg;
 
-  /*
-   * filepath is used as buffer for various actions and as the storage to
-   * return a found filename.
-   */
+  // filepath is used as buffer for various actions and as the storage to
+  // return a found filename.
   file_path = xmalloc(MAXPATHL);
 
   // store the end of the start dir -- needed for upward search
@@ -614,25 +596,23 @@ char_u *vim_findfile(void *search_ctx_arg)
         break;
       }
 
-      /*
-       * TODO: decide if we leave this test in
-       *
-       * GOOD: don't search a directory(-tree) twice.
-       * BAD:  - check linked list for every new directory entered.
-       *       - check for double files also done below
-       *
-       * Here we check if we already searched this directory.
-       * We already searched a directory if:
-       * 1) The directory is the same.
-       * 2) We would use the same wildcard string.
-       *
-       * Good if you have links on same directory via several ways
-       *  or you have selfreferences in directories (e.g. SuSE Linux 6.3:
-       *  /etc/rc.d/init.d is linked to /etc/rc.d -> endless loop)
-       *
-       * This check is only needed for directories we work on for the
-       * first time (hence stackp->ff_filearray == NULL)
-       */
+      // TODO(vim): decide if we leave this test in
+      //
+      // GOOD: don't search a directory(-tree) twice.
+      // BAD:  - check linked list for every new directory entered.
+      //       - check for double files also done below
+      //
+      // Here we check if we already searched this directory.
+      // We already searched a directory if:
+      // 1) The directory is the same.
+      // 2) We would use the same wildcard string.
+      //
+      // Good if you have links on same directory via several ways
+      //  or you have selfreferences in directories (e.g. SuSE Linux 6.3:
+      //  /etc/rc.d/init.d is linked to /etc/rc.d -> endless loop)
+      //
+      // This check is only needed for directories we work on for the
+      // first time (hence stackp->ff_filearray == NULL)
       if (stackp->ffs_filearray == NULL
           && ff_check_visited(&search_ctx->ffsc_dir_visited_list->ffvl_visited_list,
                               stackp->ffs_fix_path, stackp->ffs_wc_path) == FAIL) {
@@ -666,12 +646,10 @@ char_u *vim_findfile(void *search_ctx_arg)
 
       file_path[0] = NUL;
 
-      /*
-       * If no filearray till now expand wildcards
-       * The function expand_wildcards() can handle an array of paths
-       * and all possible expands are returned in one array. We use this
-       * to handle the expansion of '**' into an empty string.
-       */
+      // If no filearray till now expand wildcards
+      // The function expand_wildcards() can handle an array of paths
+      // and all possible expands are returned in one array. We use this
+      // to handle the expansion of '**' into an empty string.
       if (stackp->ffs_filearray == NULL) {
         char *dirptrs[2];
 
@@ -737,13 +715,11 @@ char_u *vim_findfile(void *search_ctx_arg)
             }
           }
 
-          /*
-           * Here we copy until the next path separator or the end of
-           * the path. If we stop at a path separator, there is
-           * still something else left. This is handled below by
-           * pushing every directory returned from expand_wildcards()
-           * on the stack again for further search.
-           */
+          // Here we copy until the next path separator or the end of
+          // the path. If we stop at a path separator, there is
+          // still something else left. This is handled below by
+          // pushing every directory returned from expand_wildcards()
+          // on the stack again for further search.
           while (*rest_of_wildcards
                  && !vim_ispathsep(*rest_of_wildcards)) {
             if (len + 1 >= MAXPATHL) {
@@ -759,10 +735,8 @@ char_u *vim_findfile(void *search_ctx_arg)
           }
         }
 
-        /*
-         * Expand wildcards like "*" and "$VAR".
-         * If the path is a URL don't try this.
-         */
+        // Expand wildcards like "*" and "$VAR".
+        // If the path is a URL don't try this.
         if (path_with_url(dirptrs[0])) {
           stackp->ffs_filearray = xmalloc(sizeof(char *));
           stackp->ffs_filearray[0] = xstrdup(dirptrs[0]);
@@ -786,10 +760,8 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (stackp->ffs_stage == 0) {
         // this is the first time we work on this directory
         if (*rest_of_wildcards == NUL) {
-          /*
-           * We don't have further wildcards to expand, so we have to
-           * check for the final file now.
-           */
+          // We don't have further wildcards to expand, so we have to
+          // check for the final file now.
           for (int i = stackp->ffs_filearray_cur; i < stackp->ffs_filearray_size; i++) {
             if (!path_with_url(stackp->ffs_filearray[i])
                 && !os_isdir(stackp->ffs_filearray[i])) {
@@ -808,10 +780,8 @@ char_u *vim_findfile(void *search_ctx_arg)
             }
             STRCAT(file_path, search_ctx->ffsc_file_to_search);
 
-            /*
-             * Try without extra suffix and then with suffixes
-             * from 'suffixesadd'.
-             */
+            // Try without extra suffix and then with suffixes
+            // from 'suffixesadd'.
             len = STRLEN(file_path);
             if (search_ctx->ffsc_tagfile) {
               suf = "";
@@ -894,10 +864,8 @@ char_u *vim_findfile(void *search_ctx_arg)
         stackp->ffs_stage = 1;
       }
 
-      /*
-       * if wildcards contains '**' we have to descent till we reach the
-       * leaves of the directory tree.
-       */
+      // if wildcards contains '**' we have to descent till we reach the
+      // leaves of the directory tree.
       if (STRNCMP(stackp->ffs_wc_path, "**", 2) == 0) {
         for (int i = stackp->ffs_filearray_cur;
              i < stackp->ffs_filearray_size; i++) {
@@ -1048,9 +1016,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename,
   }
 #endif
 
-  /*
-   * if we reach this we didn't find a list and we have to allocate new list
-   */
+  // if we reach this we didn't find a list and we have to allocate new list
   retptr = xmalloc(sizeof(*retptr));
 
   retptr->ffvl_visited_list = NULL;
@@ -1136,9 +1102,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
     }
   }
 
-  /*
-   * New file/dir.  Add it to the list of visited files/dirs.
-   */
+  // New file/dir.  Add it to the list of visited files/dirs.
   vp = xmalloc(sizeof(ff_visited_T) + STRLEN(ff_expand_buffer));
 
   if (!url) {
@@ -1434,11 +1398,9 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
       || (ff_file_to_find[0] != NUL && ff_file_to_find[1] == ':')
 #endif
       ) {
-    /*
-     * Absolute path, no need to use "path_option".
-     * If this is not a first call, return NULL.  We already returned a
-     * filename on the first call.
-     */
+    // Absolute path, no need to use "path_option".
+    // If this is not a first call, return NULL.  We already returned a
+    // filename on the first call.
     if (first == true) {
       if (path_with_url((char *)ff_file_to_find)) {
         file_name = vim_strsave(ff_file_to_find);
@@ -1483,11 +1445,9 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
       }
     }
   } else {
-    /*
-     * Loop over all paths in the 'path' or 'cdpath' option.
-     * When "first" is set, first setup to the start of the option.
-     * Otherwise continue to find the next match.
-     */
+    // Loop over all paths in the 'path' or 'cdpath' option.
+    // When "first" is set, first setup to the start of the option.
+    // Otherwise continue to find the next match.
     if (first == true) {
       // vim_findfile_free_visited can handle a possible NULL pointer
       vim_findfile_free_visited(fdip_search_ctx);

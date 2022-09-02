@@ -8,10 +8,8 @@
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
-/*
- * Info used to pass info about a fold from the fold-detection code to the
- * code that displays the foldcolumn.
- */
+// Info used to pass info about a fold from the fold-detection code to the
+// code that displays the foldcolumn.
 typedef struct foldinfo {
   linenr_T fi_lnum;             // line number where fold starts
   int fi_level;                 // level of the fold; when this is zero the

@@ -1,9 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * hardcopy.c: printing to paper
- */
+// hardcopy.c: printing to paper
 
 #include <assert.h>
 #include <inttypes.h>
@@ -36,64 +34,62 @@
 #include "nvim/version.h"
 #include "nvim/vim.h"
 
-/*
- * To implement printing on a platform, the following functions must be
- * defined:
- *
- * int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
- * Called once.  Code should display printer dialogue (if appropriate) and
- * determine printer font and margin settings.  Reset has_color if the printer
- * doesn't support colors at all.
- * Returns FAIL to abort.
- *
- * int mch_print_begin(prt_settings_T *settings)
- * Called to start the print job.
- * Return false to abort.
- *
- * int mch_print_begin_page(char_u *msg)
- * Called at the start of each page.
- * "msg" indicates the progress of the print job, can be NULL.
- * Return false to abort.
- *
- * int mch_print_end_page()
- * Called at the end of each page.
- * Return false to abort.
- *
- * int mch_print_blank_page()
- * Called to generate a blank page for collated, duplex, multiple copy
- * document.  Return false to abort.
- *
- * void mch_print_end(prt_settings_T *psettings)
- * Called at normal end of print job.
- *
- * void mch_print_cleanup()
- * Called if print job ends normally or is abandoned. Free any memory, close
- * devices and handles.  Also called when mch_print_begin() fails, but not
- * when mch_print_init() fails.
- *
- * void mch_print_set_font(int Bold, int Italic, int Underline);
- * Called whenever the font style changes.
- *
- * void mch_print_set_bg(uint32_t bgcol);
- * Called to set the background color for the following text. Parameter is an
- * RGB value.
- *
- * void mch_print_set_fg(uint32_t fgcol);
- * Called to set the foreground color for the following text. Parameter is an
- * RGB value.
- *
- * mch_print_start_line(int margin, int page_line)
- * Sets the current position at the start of line "page_line".
- * If margin is true start in the left margin (for header and line number).
- *
- * int mch_print_text_out(char_u *p, size_t len);
- * Output one character of text p[len] at the current position.
- * Return true if there is no room for another character in the same line.
- *
- * Note that the generic code has no idea of margins. The machine code should
- * simply make the page look smaller!  The header and the line numbers are
- * printed in the margin.
- */
+// To implement printing on a platform, the following functions must be
+// defined:
+//
+// int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
+// Called once.  Code should display printer dialogue (if appropriate) and
+// determine printer font and margin settings.  Reset has_color if the printer
+// doesn't support colors at all.
+// Returns FAIL to abort.
+//
+// int mch_print_begin(prt_settings_T *settings)
+// Called to start the print job.
+// Return false to abort.
+//
+// int mch_print_begin_page(char_u *msg)
+// Called at the start of each page.
+// "msg" indicates the progress of the print job, can be NULL.
+// Return false to abort.
+//
+// int mch_print_end_page()
+// Called at the end of each page.
+// Return false to abort.
+//
+// int mch_print_blank_page()
+// Called to generate a blank page for collated, duplex, multiple copy
+// document.  Return false to abort.
+//
+// void mch_print_end(prt_settings_T *psettings)
+// Called at normal end of print job.
+//
+// void mch_print_cleanup()
+// Called if print job ends normally or is abandoned. Free any memory, close
+// devices and handles.  Also called when mch_print_begin() fails, but not
+// when mch_print_init() fails.
+//
+// void mch_print_set_font(int Bold, int Italic, int Underline);
+// Called whenever the font style changes.
+//
+// void mch_print_set_bg(uint32_t bgcol);
+// Called to set the background color for the following text. Parameter is an
+// RGB value.
+//
+// void mch_print_set_fg(uint32_t fgcol);
+// Called to set the foreground color for the following text. Parameter is an
+// RGB value.
+//
+// mch_print_start_line(int margin, int page_line)
+// Sets the current position at the start of line "page_line".
+// If margin is true start in the left margin (for header and line number).
+//
+// int mch_print_text_out(char_u *p, size_t len);
+// Output one character of text p[len] at the current position.
+// Return true if there is no room for another character in the same line.
+//
+// Note that the generic code has no idea of margins. The machine code should
+// simply make the page look smaller!  The header and the line numbers are
+// printed in the margin.
 
 static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS] = {
   { "top",     true, 0, NULL, 0, false },
@@ -154,9 +150,7 @@ static option_table_T mbfont_opts[OPT_MBFONT_NUM_OPTIONS] =
   { "o",       false, 0, NULL, 0, false },
 };
 
-/*
- * These values determine the print position on a page.
- */
+// These values determine the print position on a page.
 typedef struct {
   int lead_spaces;                  // remaining spaces for a TAB
   int print_pos;                    // virtual column for computing TABs
@@ -255,33 +249,27 @@ struct prt_resfile_buffer_S {
 # include "hardcopy.c.generated.h"
 #endif
 
-/*
- * Parse 'printoptions' and set the flags in "printer_opts".
- * Returns an error message or NULL;
- */
+// Parse 'printoptions' and set the flags in "printer_opts".
+// Returns an error message or NULL;
 char *parse_printoptions(void)
 {
   return parse_list_options((char_u *)p_popt, printer_opts, OPT_PRINT_NUM_OPTIONS);
 }
 
-/*
- * Parse 'printoptions' and set the flags in "printer_opts".
- * Returns an error message or NULL;
- */
+// Parse 'printoptions' and set the flags in "printer_opts".
+// Returns an error message or NULL;
 char *parse_printmbfont(void)
 {
   return parse_list_options((char_u *)p_pmfn, mbfont_opts, OPT_MBFONT_NUM_OPTIONS);
 }
 
-/*
- * Parse a list of options in the form
- * option:value,option:value,option:value
- *
- * "value" can start with a number which is parsed out, e.g.  margin:12mm
- *
- * Returns an error message for an illegal option, NULL otherwise.
- * Only used for the printer at the moment...
- */
+// Parse a list of options in the form
+// option:value,option:value,option:value
+//
+// "value" can start with a number which is parsed out, e.g.  margin:12mm
+//
+// Returns an error message for an illegal option, NULL otherwise.
+// Only used for the printer at the moment...
 static char *parse_list_options(char_u *option_str, option_table_T *table, size_t table_size)
 {
   option_table_T *old_opts;
@@ -301,9 +289,7 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
     table[idx].present = false;
   }
 
-  /*
-   * Repeat for all comma separated parts.
-   */
+  // Repeat for all comma separated parts.
   stringp = option_str;
   while (*stringp) {
     colonp = (char_u *)vim_strchr((char *)stringp, ':');
@@ -361,10 +347,8 @@ static char *parse_list_options(char_u *option_str, option_table_T *table, size_
   return ret;
 }
 
-/*
- * If using a dark background, the colors will probably be too bright to show
- * up well on white paper, so reduce their brightness.
- */
+// If using a dark background, the colors will probably be too bright to show
+// up well on white paper, so reduce their brightness.
 static uint32_t darken_rgb(uint32_t rgb)
 {
   return ((rgb >> 17) << 16)
@@ -489,9 +473,7 @@ static void prt_line_number(prt_settings_T *const psettings, const int page_line
   }
 }
 
-/*
- * Get the currently effective header height.
- */
+// Get the currently effective header height.
 int prt_header_height(void)
 {
   if (printer_opts[OPT_PRINT_HEADERHEIGHT].present) {
@@ -507,10 +489,8 @@ int prt_use_number(void)
          && TOLOWER_ASC(printer_opts[OPT_PRINT_NUMBER].string[0]) == 'y';
 }
 
-/*
- * Return the unit used in a margin item in 'printoptions'.
- * Returns PRT_UNIT_NONE if not recognized.
- */
+// Return the unit used in a margin item in 'printoptions'.
+// Returns PRT_UNIT_NONE if not recognized.
 int prt_get_unit(int idx)
 {
   int u = PRT_UNIT_NONE;
@@ -546,12 +526,10 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
     int use_sandbox = false;
 
-    /*
-     * Need to (temporarily) set current line number and first/last line
-     * number on the 'window'.  Since we don't know how long the page is,
-     * set the first and current line number to the top line, and guess
-     * that the page length is 64.
-     */
+    // Need to (temporarily) set current line number and first/last line
+    // number on the 'window'.  Since we don't know how long the page is,
+    // set the first and current line number to the top line, and guess
+    // that the page length is 64.
     tmp_lnum = curwin->w_cursor.lnum;
     tmp_topline = curwin->w_topline;
     tmp_botline = curwin->w_botline;
@@ -606,9 +584,7 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum, const
   }
 }
 
-/*
- * Display a print status message.
- */
+// Display a print status message.
 static void prt_message(char_u *s)
 {
   // TODO(bfredl): delete this
@@ -644,13 +620,11 @@ void ex_hardcopy(exarg_T *eap)
     settings.arguments = (char_u *)eap->arg;
   }
 
-  /*
-   * Initialise for printing.  Ask the user for settings, unless forceit is
-   * set.
-   * The mch_print_init() code should set up margins if applicable. (It may
-   * not be a real printer - for example the engine might generate HTML or
-   * PS.)
-   */
+  // Initialise for printing.  Ask the user for settings, unless forceit is
+  // set.
+  // The mch_print_init() code should set up margins if applicable. (It may
+  // not be a real printer - for example the engine might generate HTML or
+  // PS.)
   if (mch_print_init(&settings,
                      curbuf->b_fname == NULL ? (char_u *)buf_spname(curbuf) : curbuf->b_sfname ==
                      NULL ? (char_u *)curbuf->b_fname : (char_u *)curbuf->b_sfname,
@@ -687,9 +661,7 @@ void ex_hardcopy(exarg_T *eap)
     prt_get_attr(id, &settings.number, settings.modec);
   }
 
-  /*
-   * Estimate the total lines to be printed
-   */
+  // Estimate the total lines to be printed
   for (lnum = eap->line1; lnum <= eap->line2; lnum++) {
     bytes_to_print += STRLEN(skipwhite((char *)ml_get(lnum)));
   }
@@ -717,9 +689,7 @@ void ex_hardcopy(exarg_T *eap)
     goto print_fail_no_begin;
   }
 
-  /*
-   * Loop over collated copies: 1 2 3, 1 2 3, ...
-   */
+  // Loop over collated copies: 1 2 3, 1 2 3, ...
   page_count = 0;
   for (collated_copies = 0;
        collated_copies < settings.n_collated_copies;
@@ -740,9 +710,7 @@ void ex_hardcopy(exarg_T *eap)
       }
     }
 
-    /*
-     * Loop over all pages in the print job: 1 2 3 ...
-     */
+    // Loop over all pages in the print job: 1 2 3 ...
     for (page_count = 0; prtpos.file_line <= eap->line2; page_count++) {
       // Loop over uncollated copies: 1 1 1, 2 2 2, 3 3 3, ...
       // For duplex: 12 12 12 34 34 34, ...
@@ -752,9 +720,7 @@ void ex_hardcopy(exarg_T *eap)
         // Set the print position to the start of this page.
         prtpos = page_prtpos;
 
-        /*
-         * Do front and rear side of a page.
-         */
+        // Do front and rear side of a page.
         for (side = 0; side <= settings.duplex; side++) {
           // Print one page.
 
@@ -780,9 +746,7 @@ void ex_hardcopy(exarg_T *eap)
           }
           prt_message(IObuff);
 
-          /*
-           * Output header if required
-           */
+          // Output header if required
           if (prt_header_height() > 0) {
             prt_header(&settings, page_count + 1 + side,
                        prtpos.file_line);
@@ -814,10 +778,8 @@ void ex_hardcopy(exarg_T *eap)
           }
         }
 
-        /*
-         * Extra blank page for duplexing with odd number of pages and
-         * more copies to come.
-         */
+        // Extra blank page for duplexing with odd number of pages and
+        // more copies to come.
         if (prtpos.file_line > eap->line2 && settings.duplex
             && side == 0
             && uncollated_copies + 1 < settings.n_uncollated_copies) {
@@ -850,10 +812,8 @@ print_fail_no_begin:
   mch_print_cleanup();
 }
 
-/*
- * Print one page line.
- * Return the next column to print, or zero if the line is finished.
- */
+// Print one page line.
+// Return the next column to print, or zero if the line is finished.
 static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T *ppos)
 {
   colnr_T col;
@@ -881,9 +841,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   mch_print_start_line(false, page_line);
   line = (char_u *)ml_get(ppos->file_line);
 
-  /*
-   * Loop over the columns until the end of the file line or right margin.
-   */
+  // Loop over the columns until the end of the file line or right margin.
   for (col = ppos->column; line[col] != NUL && !need_break; col += outputlen) {
     if ((outputlen = utfc_ptr2len((char *)line + col)) < 1) {
       outputlen = 1;
@@ -908,9 +866,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
       }
     }
 
-    /*
-     * Appropriately expand any tabs to spaces.
-     */
+    // Appropriately expand any tabs to spaces.
     if (line[col] == TAB || tab_spaces != 0) {
       if (tab_spaces == 0) {
         tab_spaces = tabstop_padding(print_pos,
@@ -945,10 +901,8 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   ppos->lead_spaces = tab_spaces;
   ppos->print_pos = print_pos;
 
-  /*
-   * Start next line of file if we clip lines, or have reached end of the
-   * line, unless we are doing a formfeed.
-   */
+  // Start next line of file if we clip lines, or have reached end of the
+  // line, unless we are doing a formfeed.
   if (!ppos->ff
       && (line[col] == NUL
           || (printer_opts[OPT_PRINT_WRAP].present
@@ -959,34 +913,32 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   return col;
 }
 
-/*
- * PS printer stuff.
- *
- * Sources of information to help maintain the PS printing code:
- *
- * 1. PostScript Language Reference, 3rd Edition,
- *      Addison-Wesley, 1999, ISBN 0-201-37922-8
- * 2. PostScript Language Program Design,
- *      Addison-Wesley, 1988, ISBN 0-201-14396-8
- * 3. PostScript Tutorial and Cookbook,
- *      Addison Wesley, 1985, ISBN 0-201-10179-3
- * 4. PostScript Language Document Structuring Conventions Specification,
- *    version 3.0,
- *      Adobe Technote 5001, 25th September 1992
- * 5. PostScript Printer Description File Format Specification, Version 4.3,
- *      Adobe technote 5003, 9th February 1996
- * 6. Adobe Font Metrics File Format Specification, Version 4.1,
- *      Adobe Technote 5007, 7th October 1998
- * 7. Adobe CMap and CIDFont Files Specification, Version 1.0,
- *      Adobe Technote 5014, 8th October 1996
- * 8. Adobe CJKV Character Collections and CMaps for CID-Keyed Fonts,
- *      Adoboe Technote 5094, 8th September, 2001
- * 9. CJKV Information Processing, 2nd Edition,
- *      O'Reilly, 2002, ISBN 1-56592-224-7
- *
- * Some of these documents can be found in PDF form on Adobe's web site -
- * http://www.adobe.com
- */
+// PS printer stuff.
+//
+// Sources of information to help maintain the PS printing code:
+//
+// 1. PostScript Language Reference, 3rd Edition,
+//      Addison-Wesley, 1999, ISBN 0-201-37922-8
+// 2. PostScript Language Program Design,
+//      Addison-Wesley, 1988, ISBN 0-201-14396-8
+// 3. PostScript Tutorial and Cookbook,
+//      Addison Wesley, 1985, ISBN 0-201-10179-3
+// 4. PostScript Language Document Structuring Conventions Specification,
+//    version 3.0,
+//      Adobe Technote 5001, 25th September 1992
+// 5. PostScript Printer Description File Format Specification, Version 4.3,
+//      Adobe technote 5003, 9th February 1996
+// 6. Adobe Font Metrics File Format Specification, Version 4.1,
+//      Adobe Technote 5007, 7th October 1998
+// 7. Adobe CMap and CIDFont Files Specification, Version 1.0,
+//      Adobe Technote 5014, 8th October 1996
+// 8. Adobe CJKV Character Collections and CMaps for CID-Keyed Fonts,
+//      Adoboe Technote 5094, 8th September, 2001
+// 9. CJKV Information Processing, 2nd Edition,
+//      O'Reilly, 2002, ISBN 1-56592-224-7
+//
+// Some of these documents can be found in PDF form on Adobe's web site -
+// http://www.adobe.com
 
 #define PRT_PS_DEFAULT_DPI          (72)    // Default user space resolution
 #define PRT_PS_DEFAULT_FONTSIZE     (10)
@@ -1251,17 +1203,13 @@ static struct prt_dsc_comment_S prt_dsc_table[] =
     PRT_DSC_ENDCOMMENTS_TYPE }
 };
 
-/*
- * Variables for the output PostScript file.
- */
+// Variables for the output PostScript file.
 static FILE *prt_ps_fd;
 static bool prt_file_error;
 static char_u *prt_ps_file_name = NULL;
 
-/*
- * Various offsets and dimensions in default PostScript user space (points).
- * Used for text positioning calculations
- */
+// Various offsets and dimensions in default PostScript user space (points).
+// Used for text positioning calculations
 static double prt_page_width;
 static double prt_page_height;
 static double prt_left_margin;
@@ -1276,10 +1224,8 @@ static double prt_bgcol_offset;
 static double prt_pos_x_moveto = 0.0;
 static double prt_pos_y_moveto = 0.0;
 
-/*
- * Various control variables used to decide when and how to change the
- * PostScript graphics state.
- */
+// Various control variables used to decide when and how to change the
+// PostScript graphics state.
 static bool prt_need_moveto;
 static bool prt_do_moveto;
 static bool prt_need_font;
@@ -1298,9 +1244,7 @@ static double prt_text_run;
 static int prt_page_num;
 static int prt_bufsiz;
 
-/*
- * Variables controlling physical printing.
- */
+// Variables controlling physical printing.
 static int prt_media;
 static int prt_portrait;
 static int prt_num_copies;
@@ -1308,9 +1252,7 @@ static int prt_duplex;
 static int prt_tumble;
 static int prt_collate;
 
-/*
- * Buffers used when generating PostScript output
- */
+// Buffers used when generating PostScript output
 static char prt_line_buffer[257];
 static garray_T prt_ps_buffer = GA_EMPTY_INIT_VALUE;
 
@@ -1345,36 +1287,28 @@ static void prt_write_file_len(char_u *buffer, size_t bytes)
   prt_write_file_raw_len(buffer, bytes);
 }
 
-/*
- * Write a string.
- */
+// Write a string.
 static void prt_write_string(char *s)
 {
   vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%s", s);
   prt_write_file(prt_line_buffer);
 }
 
-/*
- * Write an int and a space.
- */
+// Write an int and a space.
 static void prt_write_int(int i)
 {
   snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%d ", i);
   prt_write_file(prt_line_buffer);
 }
 
-/*
- * Write a boolean and a space.
- */
+// Write a boolean and a space.
 static void prt_write_boolean(int b)
 {
   snprintf(prt_line_buffer, sizeof(prt_line_buffer), "%s ", (b ? "T" : "F"));
   prt_write_file(prt_line_buffer);
 }
 
-/*
- * Write PostScript to re-encode and define the font.
- */
+// Write PostScript to re-encode and define the font.
 static void prt_def_font(char *new_name, char *encoding, int height, char *font)
 {
   vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
@@ -1390,9 +1324,7 @@ static void prt_def_font(char *new_name, char *encoding, int height, char *font)
   prt_write_file(prt_line_buffer);
 }
 
-/*
- * Write a line to define the CID font.
- */
+// Write a line to define the CID font.
 static void prt_def_cidfont(char *new_name, int height, char *cidfont)
 {
   vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
@@ -1403,9 +1335,7 @@ static void prt_def_cidfont(char *new_name, int height, char *cidfont)
   prt_write_file(prt_line_buffer);
 }
 
-/*
- * Write a line to define a duplicate of a CID font
- */
+// Write a line to define a duplicate of a CID font
 static void prt_dup_cidfont(char *original_name, char *new_name)
 {
   vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
@@ -1413,11 +1343,9 @@ static void prt_dup_cidfont(char *original_name, char *new_name)
   prt_write_file(prt_line_buffer);
 }
 
-/*
- * Convert a real value into an integer and fractional part as integers, with
- * the fractional part being in the range [0,10^precision).  The fractional part
- * is also rounded based on the precision + 1'th fractional digit.
- */
+// Convert a real value into an integer and fractional part as integers, with
+// the fractional part being in the range [0,10^precision).  The fractional part
+// is also rounded based on the precision + 1'th fractional digit.
 static void prt_real_bits(double real, int precision, int *pinteger, int *pfraction)
 {
   int integer = (int)real;
@@ -1433,11 +1361,9 @@ static void prt_real_bits(double real, int precision, int *pinteger, int *pfract
   *pfraction = (int)(fraction + 0.5);
 }
 
-/*
- * Write a real and a space.  Save bytes if real value has no fractional part!
- * We use prt_real_bits() as %f in sprintf uses the locale setting to decide
- * what decimal point character to use, but PS always requires a '.'.
- */
+// Write a real and a space.  Save bytes if real value has no fractional part!
+// We use prt_real_bits() as %f in sprintf uses the locale setting to decide
+// what decimal point character to use, but PS always requires a '.'.
 static void prt_write_real(double val, int prec)
 {
   int integer;
@@ -1463,9 +1389,7 @@ static void prt_write_real(double val, int prec)
   prt_write_file(prt_line_buffer);
 }
 
-/*
- * Write a line to define a numeric variable.
- */
+// Write a line to define a numeric variable.
 static void prt_def_var(char *name, double value, int prec)
 {
   vim_snprintf(prt_line_buffer, sizeof(prt_line_buffer),
@@ -2020,9 +1944,7 @@ static double to_device_units(int idx, double physsize, int def_number)
   return ret;
 }
 
-/*
- * Calculate margins for given width and height from printoptions settings.
- */
+// Calculate margins for given width and height from printoptions settings.
 static void prt_page_margins(double width, double height, double *left, double *right, double *top,
                              double *bottom)
 {
@@ -2062,18 +1984,14 @@ static void prt_build_cid_fontname(int font, char_u *name, int name_len)
   prt_ps_mb_font.ps_fontname[font] = fontname;
 }
 
-/*
- * Get number of lines of text that fit on a page (excluding the header).
- */
+// Get number of lines of text that fit on a page (excluding the header).
 static int prt_get_lpp(void)
 {
   int lpp;
 
-  /*
-   * Calculate offset to lower left corner of background rect based on actual
-   * font height (based on its bounding box) and the line height, handling the
-   * case where the font height can exceed the line height.
-   */
+  // Calculate offset to lower left corner of background rect based on actual
+  // font height (based on its bounding box) and the line height, handling the
+  // case where the font height can exceed the line height.
   prt_bgcol_offset = PRT_PS_FONT_TO_USER(prt_line_height,
                                          prt_ps_font->bbox_min_y);
   if ((prt_ps_font->bbox_max_y - prt_ps_font->bbox_min_y) < 1000.0) {
@@ -2270,9 +2188,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     prt_ps_font = &prt_ps_courier_font;
   }
 
-  /*
-   * Find the size of the paper and set the margins.
-   */
+  // Find the size of the paper and set the margins.
   prt_portrait = (!printer_opts[OPT_PRINT_PORTRAIT].present
                   || TOLOWER_ASC(printer_opts[OPT_PRINT_PORTRAIT].string[0]) ==
                   'y');
@@ -2295,13 +2211,11 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   }
   prt_media = i;
 
-  /*
-   * Set PS pagesize based on media dimensions and print orientation.
-   * Note: Media and page sizes have defined meanings in PostScript and should
-   * be kept distinct.  Media is the paper (or transparency, or ...) that is
-   * printed on, whereas the page size is the area that the PostScript
-   * interpreter renders into.
-   */
+  // Set PS pagesize based on media dimensions and print orientation.
+  // Note: Media and page sizes have defined meanings in PostScript and should
+  // be kept distinct.  Media is the paper (or transparency, or ...) that is
+  // printed on, whereas the page size is the area that the PostScript
+  // interpreter renders into.
   if (prt_portrait) {
     prt_page_width = prt_mediasize[i].width;
     prt_page_height = prt_mediasize[i].height;
@@ -2320,9 +2234,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   prt_top_margin = top;
   prt_bottom_margin = bottom;
 
-  /*
-   * Set up the font size.
-   */
+  // Set up the font size.
   fontsize = PRT_PS_DEFAULT_FONTSIZE;
   for (p = (char_u *)p_pfn; (p = (char_u *)vim_strchr((char *)p, ':')) != NULL; p++) {
     if (p[1] == 'h' && ascii_isdigit(p[2])) {
@@ -2331,10 +2243,8 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
   }
   prt_font_metrics(fontsize);
 
-  /*
-   * Return the number of characters per line, and lines per page for the
-   * generic print code.
-   */
+  // Return the number of characters per line, and lines per page for the
+  // generic print code.
   psettings->chars_per_line = prt_get_cpl();
   psettings->lines_per_page = prt_get_lpp();
 
@@ -2343,12 +2253,10 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     return FAIL;
   }
 
-  /*
-   * Sort out the number of copies to be printed.  PS by default will do
-   * uncollated copies for you, so once we know how many uncollated copies are
-   * wanted cache it away and lie to the generic code that we only want one
-   * uncollated copy.
-   */
+  // Sort out the number of copies to be printed.  PS by default will do
+  // uncollated copies for you, so once we know how many uncollated copies are
+  // wanted cache it away and lie to the generic code that we only want one
+  // uncollated copy.
   psettings->n_collated_copies = 1;
   psettings->n_uncollated_copies = 1;
   prt_num_copies = 1;
@@ -2364,10 +2272,8 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
   psettings->jobname = jobname;
 
-  /*
-   * Set up printer duplex and tumble based on Duplex option setting - default
-   * is long sided duplex printing (i.e. no tumble).
-   */
+  // Set up printer duplex and tumble based on Duplex option setting - default
+  // is long sided duplex printing (i.e. no tumble).
   prt_duplex = true;
   prt_tumble = false;
   psettings->duplex = 1;
@@ -2491,9 +2397,7 @@ bool mch_print_begin(prt_settings_T *psettings)
   struct prt_ps_resource_S res_cidfont;
   struct prt_ps_resource_S res_cmap;
 
-  /*
-   * PS DSC Header comments - no PS code!
-   */
+  // PS DSC Header comments - no PS code!
   prt_dsc_start();
   prt_dsc_textline("Title", (char *)psettings->jobname);
   if (os_get_username(buffer, 256) == FAIL) {
@@ -2685,9 +2589,7 @@ bool mch_print_begin(prt_settings_T *psettings)
                        prt_num_copies);
   prt_dsc_noarg("EndComments");
 
-  /*
-   * PS Document page defaults
-   */
+  // PS Document page defaults
   prt_dsc_noarg("BeginDefaults");
 
   // List font resources most likely common to all pages
@@ -2707,9 +2609,7 @@ bool mch_print_begin(prt_settings_T *psettings)
 
   prt_dsc_noarg("EndDefaults");
 
-  /*
-   * PS Document prolog inclusion - all required procsets.
-   */
+  // PS Document prolog inclusion - all required procsets.
   prt_dsc_noarg("BeginProlog");
 
   // Add required procsets - NOTE: order is important!
@@ -2736,9 +2636,7 @@ bool mch_print_begin(prt_settings_T *psettings)
 
   prt_dsc_noarg("EndProlog");
 
-  /*
-   * PS Document setup - must appear after the prolog
-   */
+  // PS Document setup - must appear after the prolog
   prt_dsc_noarg("BeginSetup");
 
   // Device setup - page size and number of uncollated copies
@@ -2847,9 +2745,7 @@ void mch_print_end(prt_settings_T *psettings)
 {
   prt_dsc_noarg("Trailer");
 
-  /*
-   * Output any info we don't know in toto until we finish
-   */
+  // Output any info we don't know in toto until we finish
   prt_dsc_ints("Pages", 1, &prt_page_num);
 
   prt_dsc_noarg("EOF");

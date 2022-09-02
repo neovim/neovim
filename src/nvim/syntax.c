@@ -1,9 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * syntax.c: code for syntax highlighting
- */
+// syntax.c: code for syntax highlighting
 
 #include <assert.h>
 #include <ctype.h>
@@ -104,11 +102,9 @@ typedef struct syn_cluster_S {
   int16_t *scl_list;        // IDs in this syntax cluster
 } syn_cluster_T;
 
-/*
- * For the current state we need to remember more than just the idx.
- * When si_m_endpos.lnum is 0, the items other than si_idx are unknown.
- * (The end positions have the column number of the next char)
- */
+// For the current state we need to remember more than just the idx.
+// When si_m_endpos.lnum is 0, the items other than si_idx are unknown.
+// (The end positions have the column number of the next char)
 typedef struct state_item {
   int si_idx;                           // index of syntax pattern or
                                         // KEYWORD_IDX
@@ -133,10 +129,8 @@ typedef struct state_item {
                                         // pattern
 } stateitem_T;
 
-/*
- * Struct to reduce the number of arguments to get_syn_options(), it's used
- * very often.
- */
+// Struct to reduce the number of arguments to get_syn_options(), it's used
+// very often.
 typedef struct {
   int flags;                   // flags for contained and transparent
   bool keyword;                // true for ":syn keyword"
@@ -184,9 +178,7 @@ static char *(spo_name_tab[SPO_COUNT]) =
 
 #define NONE_IDX        (-2)    // value of sp_sync_idx for "NONE"
 
-/*
- * Flags for b_syn_sync_flags:
- */
+// Flags for b_syn_sync_flags:
 #define SF_CCOMMENT     0x01    // sync on a C-style comment
 #define SF_MATCH        0x02    // sync by matching a pattern
 
@@ -194,9 +186,7 @@ static char *(spo_name_tab[SPO_COUNT]) =
 
 #define MAXKEYWLEN      80          // maximum length of a keyword
 
-/*
- * The attributes of the syntax item that has been recognized.
- */
+// The attributes of the syntax item that has been recognized.
 static int current_attr = 0;        // attr of current syntax word
 static int current_id = 0;          // ID of current char for syn_get_id()
 static int current_trans_id = 0;    // idem, transparency removed
@@ -204,23 +194,19 @@ static int current_flags = 0;
 static int current_seqnr = 0;
 static int current_sub_char = 0;
 
-/*
- * Methods of combining two clusters
- */
+// Methods of combining two clusters
 #define CLUSTER_REPLACE     1   // replace first list with second
 #define CLUSTER_ADD         2   // add second list to first
 #define CLUSTER_SUBTRACT    3   // subtract second list from first
 
 #define SYN_CLSTR(buf)  ((syn_cluster_T *)((buf)->b_syn_clusters.ga_data))
 
-/*
- * Syntax group IDs have different types:
- *     0 - 19999  normal syntax groups
- * 20000 - 20999  ALLBUT indicator (current_syn_inc_tag added)
- * 21000 - 21999  TOP indicator (current_syn_inc_tag added)
- * 22000 - 22999  CONTAINED indicator (current_syn_inc_tag added)
- * 23000 - 32767  cluster IDs (subtract SYNID_CLUSTER for the cluster ID)
- */
+// Syntax group IDs have different types:
+//     0 - 19999  normal syntax groups
+// 20000 - 20999  ALLBUT indicator (current_syn_inc_tag added)
+// 21000 - 21999  TOP indicator (current_syn_inc_tag added)
+// 22000 - 22999  CONTAINED indicator (current_syn_inc_tag added)
+// 23000 - 32767  cluster IDs (subtract SYNID_CLUSTER for the cluster ID)
 #define SYNID_ALLBUT    MAX_HL_ID   // syntax group ID for contains=ALLBUT
 #define SYNID_TOP       21000       // syntax group ID for contains=TOP
 #define SYNID_CONTAINED 22000       // syntax group ID for contains=CONTAINED
@@ -234,21 +220,17 @@ static int current_sub_char = 0;
 // instead of passing it to them, we stow it here.
 static char **syn_cmdlinep;
 
-/*
- * Another Annoying Hack(TM):  To prevent rules from other ":syn include"'d
- * files from leaking into ALLBUT lists, we assign a unique ID to the
- * rules in each ":syn include"'d file.
- */
+// Another Annoying Hack(TM):  To prevent rules from other ":syn include"'d
+// files from leaking into ALLBUT lists, we assign a unique ID to the
+// rules in each ":syn include"'d file.
 static int current_syn_inc_tag = 0;
 static int running_syn_inc_tag = 0;
 
-/*
- * In a hashtable item "hi_key" points to "keyword" in a keyentry.
- * This avoids adding a pointer to the hashtable item.
- * KE2HIKEY() converts a var pointer to a hashitem key pointer.
- * HIKEY2KE() converts a hashitem key pointer to a var pointer.
- * HI2KE() converts a hashitem pointer to a var pointer.
- */
+// In a hashtable item "hi_key" points to "keyword" in a keyentry.
+// This avoids adding a pointer to the hashtable item.
+// KE2HIKEY() converts a var pointer to a hashitem key pointer.
+// HIKEY2KE() converts a hashitem key pointer to a var pointer.
+// HI2KE() converts a hashitem pointer to a var pointer.
 static keyentry_T dumkey;
 #define KE2HIKEY(kp)  ((kp)->keyword)
 #define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char_u *)&dumkey)))
@@ -256,11 +238,9 @@ static keyentry_T dumkey;
 
 // -V:HI2KE:782
 
-/*
- * To reduce the time spent in keepend(), remember at which level in the state
- * stack the first item with "keepend" is present.  When "-1", there is no
- * "keepend" on the stack.
- */
+// To reduce the time spent in keepend(), remember at which level in the state
+// stack the first item with "keepend" is present.  When "-1", there is no
+// "keepend" on the stack.
 static int keepend_level = -1;
 
 static char msg_no_items[] = N_("No Syntax items defined for this buffer");
@@ -272,13 +252,11 @@ static char msg_no_items[] = N_("No Syntax items defined for this buffer");
 
 static int next_seqnr = 1;              // value to use for si_seqnr
 
-/*
- * The next possible match in the current line for any pattern is remembered,
- * to avoid having to try for a match in each column.
- * If next_match_idx == -1, not tried (in this line) yet.
- * If next_match_col == MAXCOL, no match found in this line.
- * (All end positions have the column of the char after the end)
- */
+// The next possible match in the current line for any pattern is remembered,
+// to avoid having to try for a match in each column.
+// If next_match_idx == -1, not tried (in this line) yet.
+// If next_match_col == MAXCOL, no match found in this line.
+// (All end positions have the column of the char after the end)
 static int next_match_col;              // column for start of next match
 static lpos_T next_match_m_endpos;      // position for end of next match
 static lpos_T next_match_h_startpos;    // pos. for highl. start of next match
@@ -290,17 +268,13 @@ static lpos_T next_match_eoe_pos;       // pos. for end of end pattern
 static int next_match_end_idx;          // ID of group for end pattn or zero
 static reg_extmatch_T *next_match_extmatch = NULL;
 
-/*
- * A state stack is an array of integers or stateitem_T, stored in a
- * garray_T.  A state stack is invalid if its itemsize entry is zero.
- */
+// A state stack is an array of integers or stateitem_T, stored in a
+// garray_T.  A state stack is invalid if its itemsize entry is zero.
 #define INVALID_STATE(ssp)  ((ssp)->ga_itemsize == 0)
 #define VALID_STATE(ssp)    ((ssp)->ga_itemsize != 0)
 
-/*
- * The current state (within the line) of the recognition engine.
- * When current_state.ga_itemsize is 0 the current state is invalid.
- */
+// The current state (within the line) of the recognition engine.
+// When current_state.ga_itemsize is 0 the current state is invalid.
 static win_T *syn_win;                  // current window for highlighting
 static buf_T *syn_buf;                  // current buffer for highlighting
 static synblock_T *syn_block;              // current buffer for highlighting
@@ -328,13 +302,11 @@ void syn_set_timeout(proftime_T *tm)
   syn_tm = tm;
 }
 
-/*
- * Start the syntax recognition for a line.  This function is normally called
- * from the screen updating, once for each displayed line.
- * The buffer is remembered in syn_buf, because get_syntax_attr() doesn't get
- * it.  Careful: curbuf and curwin are likely to point to another buffer and
- * window.
- */
+// Start the syntax recognition for a line.  This function is normally called
+// from the screen updating, once for each displayed line.
+// The buffer is remembered in syn_buf, because get_syntax_attr() doesn't get
+// it.  Careful: curbuf and curwin are likely to point to another buffer and
+// window.
 void syntax_start(win_T *wp, linenr_T lnum)
 {
   synstate_T *p;
@@ -348,11 +320,9 @@ void syntax_start(win_T *wp, linenr_T lnum)
 
   current_sub_char = NUL;
 
-  /*
-   * After switching buffers, invalidate current_state.
-   * Also do this when a change was made, the current state may be invalid
-   * then.
-   */
+  // After switching buffers, invalidate current_state.
+  // Also do this when a change was made, the current state may be invalid
+  // then.
   if (syn_block != wp->w_s
       || syn_buf != wp->w_buffer
       || changedtick != buf_get_changedtick(syn_buf)) {
@@ -363,18 +333,14 @@ void syntax_start(win_T *wp, linenr_T lnum)
   changedtick = buf_get_changedtick(syn_buf);
   syn_win = wp;
 
-  /*
-   * Allocate syntax stack when needed.
-   */
+  // Allocate syntax stack when needed.
   syn_stack_alloc();
   if (syn_block->b_sst_array == NULL) {
     return;             // out of memory
   }
   syn_block->b_sst_lasttick = display_tick;
 
-  /*
-   * If the state of the end of the previous line is useful, store it.
-   */
+  // If the state of the end of the previous line is useful, store it.
   if (VALID_STATE(&current_state)
       && current_lnum < lnum
       && current_lnum < syn_buf->b_ml.ml_line_count) {
@@ -384,11 +350,9 @@ void syntax_start(win_T *wp, linenr_T lnum)
       (void)store_current_state();
     }
 
-    /*
-     * If the current_lnum is now the same as "lnum", keep the current
-     * state (this happens very often!).  Otherwise invalidate
-     * current_state and figure it out below.
-     */
+    // If the current_lnum is now the same as "lnum", keep the current
+    // state (this happens very often!).  Otherwise invalidate
+    // current_state and figure it out below.
     if (current_lnum != lnum) {
       invalidate_current_state();
     }
@@ -396,10 +360,8 @@ void syntax_start(win_T *wp, linenr_T lnum)
     invalidate_current_state();
   }
 
-  /*
-   * Try to synchronize from a saved state in b_sst_array[].
-   * Only do this if lnum is not before and not to far beyond a saved state.
-   */
+  // Try to synchronize from a saved state in b_sst_array[].
+  // Only do this if lnum is not before and not to far beyond a saved state.
   if (INVALID_STATE(&current_state) && syn_block->b_sst_array != NULL) {
     // Find last valid saved state before start_lnum.
     for (p = syn_block->b_sst_first; p != NULL; p = p->sst_next) {
@@ -418,10 +380,8 @@ void syntax_start(win_T *wp, linenr_T lnum)
     }
   }
 
-  /*
-   * If "lnum" is before or far beyond a line with a saved state, need to
-   * re-synchronize.
-   */
+  // If "lnum" is before or far beyond a line with a saved state, need to
+  // re-synchronize.
   if (INVALID_STATE(&current_state)) {
     syn_sync(wp, lnum, last_valid);
     if (current_lnum == 1) {
@@ -436,10 +396,8 @@ void syntax_start(win_T *wp, linenr_T lnum)
     first_stored = current_lnum;
   }
 
-  /*
-   * Advance from the sync point or saved state until the current line.
-   * Save some entries for syncing with later on.
-   */
+  // Advance from the sync point or saved state until the current line.
+  // Save some entries for syncing with later on.
   if (syn_block->b_sst_len <= Rows) {
     dist = 999999;
   } else {
@@ -506,10 +464,8 @@ void syntax_start(win_T *wp, linenr_T lnum)
   syn_start_line();
 }
 
-/*
- * We cannot simply discard growarrays full of state_items or buf_states; we
- * have to manually release their extmatch pointers first.
- */
+// We cannot simply discard growarrays full of state_items or buf_states; we
+// have to manually release their extmatch pointers first.
 static void clear_syn_state(synstate_T *p)
 {
   if (p->sst_stacksize > SST_FIX_STATES) {
@@ -522,24 +478,20 @@ static void clear_syn_state(synstate_T *p)
   }
 }
 
-/*
- * Cleanup the current_state stack.
- */
+// Cleanup the current_state stack.
 static void clear_current_state(void)
 {
 #define UNREF_STATEITEM_EXTMATCH(si) unref_extmatch((si)->si_extmatch)
   GA_DEEP_CLEAR(&current_state, stateitem_T, UNREF_STATEITEM_EXTMATCH);
 }
 
-/*
- * Try to find a synchronisation point for line "lnum".
- *
- * This sets current_lnum and the current state.  One of three methods is
- * used:
- * 1. Search backwards for the end of a C-comment.
- * 2. Search backwards for given sync patterns.
- * 3. Simply start on a given number of lines above "lnum".
- */
+// Try to find a synchronisation point for line "lnum".
+//
+// This sets current_lnum and the current state.  One of three methods is
+// used:
+// 1. Search backwards for the end of a C-comment.
+// 2. Search backwards for given sync patterns.
+// 3. Simply start on a given number of lines above "lnum".
 static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
 {
   buf_T *curbuf_save;
@@ -560,19 +512,15 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
   lpos_T found_m_endpos;
   colnr_T prev_current_col;
 
-  /*
-   * Clear any current state that might be hanging around.
-   */
+  // Clear any current state that might be hanging around.
   invalidate_current_state();
 
-  /*
-   * Start at least "minlines" back.  Default starting point for parsing is
-   * there.
-   * Start further back, to avoid that scrolling backwards will result in
-   * resyncing for every line.  Now it resyncs only one out of N lines,
-   * where N is minlines * 1.5, or minlines * 2 if minlines is small.
-   * Watch out for overflow when minlines is MAXLNUM.
-   */
+  // Start at least "minlines" back.  Default starting point for parsing is
+  // there.
+  // Start further back, to avoid that scrolling backwards will result in
+  // resyncing for every line.  Now it resyncs only one out of N lines,
+  // where N is minlines * 1.5, or minlines * 2 if minlines is small.
+  // Watch out for overflow when minlines is MAXLNUM.
   if (syn_block->b_syn_sync_minlines > start_lnum) {
     start_lnum = 1;
   } else {
@@ -595,9 +543,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
   }
   current_lnum = start_lnum;
 
-  /*
-   * 1. Search backwards for the end of a C-style comment.
-   */
+  // 1. Search backwards for the end of a C-style comment.
   if (syn_block->b_syn_sync_flags & SF_CCOMMENT) {
     // Need to make syn_buf the current buffer for a moment, to be able to
     // use find_start_comment().
@@ -606,9 +552,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
     curbuf_save = curbuf;
     curbuf = syn_buf;
 
-    /*
-     * Skip lines that end in a backslash.
-     */
+    // Skip lines that end in a backslash.
     for (; start_lnum > 1; start_lnum--) {
       line = (char_u *)ml_get(start_lnum - 1);
       if (*line == NUL || *(line + STRLEN(line) - 1) != '\\') {
@@ -622,11 +566,9 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
     wp->w_cursor.lnum = start_lnum;
     wp->w_cursor.col = 0;
 
-    /*
-     * If the line is inside a comment, need to find the syntax item that
-     * defines the comment.
-     * Restrict the search for the end of a comment to b_syn_sync_maxlines.
-     */
+    // If the line is inside a comment, need to find the syntax item that
+    // defines the comment.
+    // Restrict the search for the end of a comment to b_syn_sync_maxlines.
     if (find_start_comment((int)syn_block->b_syn_sync_maxlines) != NULL) {
       for (idx = syn_block->b_syn_patterns.ga_len; --idx >= 0;) {
         if (SYN_ITEMS(syn_block)[idx].sp_syn.id
@@ -644,11 +586,8 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
     wp->w_cursor = cursor_save;
     curwin = curwin_save;
     curbuf = curbuf_save;
-  }
-  /*
-   * 2. Search backwards for given sync patterns.
-   */
-  else if (syn_block->b_syn_sync_flags & SF_MATCH) {
+  } else if (syn_block->b_syn_sync_flags & SF_MATCH) {
+    // 2. Search backwards for given sync patterns.
     if (syn_block->b_syn_sync_maxlines != 0
         && start_lnum > syn_block->b_syn_sync_maxlines) {
       break_lnum = start_lnum - syn_block->b_syn_sync_maxlines;
@@ -675,16 +614,12 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
         break;
       }
 
-      /*
-       * Check if the previous line has the line-continuation pattern.
-       */
+      // Check if the previous line has the line-continuation pattern.
       if (lnum > 1 && syn_match_linecont(lnum - 1)) {
         continue;
       }
 
-      /*
-       * Start with nothing on the state stack
-       */
+      // Start with nothing on the state stack
       validate_current_state();
 
       for (current_lnum = lnum; current_lnum < end_lnum; current_lnum++) {
@@ -712,10 +647,8 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
             found_current_lnum = current_lnum;
             found_current_col = current_col;
             found_m_endpos = cur_si->si_m_endpos;
-            /*
-             * Continue after the match (be aware of a zero-length
-             * match).
-             */
+            // Continue after the match (be aware of a zero-length
+            // match).
             if (found_m_endpos.lnum > current_lnum) {
               current_lnum = found_m_endpos.lnum;
               current_col = found_m_endpos.col;
@@ -743,27 +676,21 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
         }
       }
 
-      /*
-       * If a sync point was encountered, break here.
-       */
+      // If a sync point was encountered, break here.
       if (found_flags) {
-        /*
-         * Put the item that was specified by the sync point on the
-         * state stack.  If there was no item specified, make the
-         * state stack empty.
-         */
+        // Put the item that was specified by the sync point on the
+        // state stack.  If there was no item specified, make the
+        // state stack empty.
         clear_current_state();
         if (found_match_idx >= 0) {
           push_current_state(found_match_idx);
           update_si_attr(current_state.ga_len - 1);
         }
 
-        /*
-         * When using "grouphere", continue from the sync point
-         * match, until the end of the line.  Parsing starts at
-         * the next line.
-         * For "groupthere" the parsing starts at start_lnum.
-         */
+        // When using "grouphere", continue from the sync point
+        // match, until the end of the line.  Parsing starts at
+        // the next line.
+        // For "groupthere" the parsing starts at start_lnum.
         if (found_flags & HL_SYNC_HERE) {
           if (!GA_EMPTY(&current_state)) {
             cur_si = &CUR_STATE(current_state.ga_len - 1);
@@ -833,18 +760,14 @@ static int syn_match_linecont(linenr_T lnum)
   return false;
 }
 
-/*
- * Prepare the current state for the start of a line.
- */
+// Prepare the current state for the start of a line.
 static void syn_start_line(void)
 {
   current_finished = false;
   current_col = 0;
 
-  /*
-   * Need to update the end of a start/skip/end that continues from the
-   * previous line and regions that have "keepend".
-   */
+  // Need to update the end of a start/skip/end that continues from the
+  // previous line and regions that have "keepend".
   if (!GA_EMPTY(&current_state)) {
     syn_update_ends(true);
     check_state_ends();
@@ -881,15 +804,13 @@ static void syn_update_ends(bool startofline)
     }
   }
 
-  /*
-   * Need to update the end of a start/skip/end that continues from the
-   * previous line.  And regions that have "keepend", because they may
-   * influence contained items.  If we've just removed "extend"
-   * (startofline == 0) then we should update ends of normal regions
-   * contained inside "keepend" because "extend" could have extended
-   * these "keepend" regions as well as contained normal regions.
-   * Then check for items ending in column 0.
-   */
+  // Need to update the end of a start/skip/end that continues from the
+  // previous line.  And regions that have "keepend", because they may
+  // influence contained items.  If we've just removed "extend"
+  // (startofline == 0) then we should update ends of normal regions
+  // contained inside "keepend" because "extend" could have extended
+  // these "keepend" regions as well as contained normal regions.
+  // Then check for items ending in column 0.
   int i = current_state.ga_len - 1;
   if (keepend_level >= 0) {
     for (; i > keepend_level; i--) {
@@ -923,37 +844,35 @@ static void syn_update_ends(bool startofline)
 /////////////////////////////////////////
 // Handling of the state stack cache.
 
-/*
- * EXPLANATION OF THE SYNTAX STATE STACK CACHE
- *
- * To speed up syntax highlighting, the state stack for the start of some
- * lines is cached.  These entries can be used to start parsing at that point.
- *
- * The stack is kept in b_sst_array[] for each buffer.  There is a list of
- * valid entries.  b_sst_first points to the first one, then follow sst_next.
- * The entries are sorted on line number.  The first entry is often for line 2
- * (line 1 always starts with an empty stack).
- * There is also a list for free entries.  This construction is used to avoid
- * having to allocate and free memory blocks too often.
- *
- * When making changes to the buffer, this is logged in b_mod_*.  When calling
- * update_screen() to update the display, it will call
- * syn_stack_apply_changes() for each displayed buffer to adjust the cached
- * entries.  The entries which are inside the changed area are removed,
- * because they must be recomputed.  Entries below the changed have their line
- * number adjusted for deleted/inserted lines, and have their sst_change_lnum
- * set to indicate that a check must be made if the changed lines would change
- * the cached entry.
- *
- * When later displaying lines, an entry is stored for each line.  Displayed
- * lines are likely to be displayed again, in which case the state at the
- * start of the line is needed.
- * For not displayed lines, an entry is stored for every so many lines.  These
- * entries will be used e.g., when scrolling backwards.  The distance between
- * entries depends on the number of lines in the buffer.  For small buffers
- * the distance is fixed at SST_DIST, for large buffers there is a fixed
- * number of entries SST_MAX_ENTRIES, and the distance is computed.
- */
+// EXPLANATION OF THE SYNTAX STATE STACK CACHE
+//
+// To speed up syntax highlighting, the state stack for the start of some
+// lines is cached.  These entries can be used to start parsing at that point.
+//
+// The stack is kept in b_sst_array[] for each buffer.  There is a list of
+// valid entries.  b_sst_first points to the first one, then follow sst_next.
+// The entries are sorted on line number.  The first entry is often for line 2
+// (line 1 always starts with an empty stack).
+// There is also a list for free entries.  This construction is used to avoid
+// having to allocate and free memory blocks too often.
+//
+// When making changes to the buffer, this is logged in b_mod_*.  When calling
+// update_screen() to update the display, it will call
+// syn_stack_apply_changes() for each displayed buffer to adjust the cached
+// entries.  The entries which are inside the changed area are removed,
+// because they must be recomputed.  Entries below the changed have their line
+// number adjusted for deleted/inserted lines, and have their sst_change_lnum
+// set to indicate that a check must be made if the changed lines would change
+// the cached entry.
+//
+// When later displaying lines, an entry is stored for each line.  Displayed
+// lines are likely to be displayed again, in which case the state at the
+// start of the line is needed.
+// For not displayed lines, an entry is stored for every so many lines.  These
+// entries will be used e.g., when scrolling backwards.  The distance between
+// entries depends on the number of lines in the buffer.  For small buffers
+// the distance is fixed at SST_DIST, for large buffers there is a fixed
+// number of entries SST_MAX_ENTRIES, and the distance is computed.
 
 static void syn_stack_free_block(synblock_T *block)
 {
@@ -968,10 +887,8 @@ static void syn_stack_free_block(synblock_T *block)
     block->b_sst_len = 0;
   }
 }
-/*
- * Free b_sst_array[] for buffer "buf".
- * Used when syntax items changed to force resyncing everywhere.
- */
+// Free b_sst_array[] for buffer "buf".
+// Used when syntax items changed to force resyncing everywhere.
 void syn_stack_free_all(synblock_T *block)
 {
   syn_stack_free_block(block);
@@ -984,12 +901,10 @@ void syn_stack_free_all(synblock_T *block)
   }
 }
 
-/*
- * Allocate the syntax state stack for syn_buf when needed.
- * If the number of entries in b_sst_array[] is much too big or a bit too
- * small, reallocate it.
- * Also used to allocate b_sst_array[] for the first time.
- */
+// Allocate the syntax state stack for syn_buf when needed.
+// If the number of entries in b_sst_array[] is much too big or a bit too
+// small, reallocate it.
+// Also used to allocate b_sst_array[] for the first time.
 static void syn_stack_alloc(void)
 {
   synstate_T *to, *from;
@@ -1056,12 +971,10 @@ static void syn_stack_alloc(void)
   }
 }
 
-/*
- * Check for changes in a buffer to affect stored syntax states.  Uses the
- * b_mod_* fields.
- * Called from update_screen(), before screen is being updated, once for each
- * displayed buffer.
- */
+// Check for changes in a buffer to affect stored syntax states.  Uses the
+// b_mod_* fields.
+// Called from update_screen(), before screen is being updated, once for each
+// displayed buffer.
 void syn_stack_apply_changes(buf_T *buf)
 {
   syn_stack_apply_changes_block(&buf->b_s, buf);
@@ -1137,11 +1050,9 @@ static bool syn_stack_cleanup(void)
     dist = syn_buf->b_ml.ml_line_count / (syn_block->b_sst_len - Rows) + 1;
   }
 
-  /*
-   * Go through the list to find the "tick" for the oldest entry that can
-   * be removed.  Set "above" when the "tick" for the oldest entry is above
-   * "b_sst_lasttick" (the display tick wraps around).
-   */
+  // Go through the list to find the "tick" for the oldest entry that can
+  // be removed.  Set "above" when the "tick" for the oldest entry is above
+  // "b_sst_lasttick" (the display tick wraps around).
   tick = syn_block->b_sst_lasttick;
   bool above = false;
   prev = syn_block->b_sst_first;
@@ -1158,10 +1069,8 @@ static bool syn_stack_cleanup(void)
     }
   }
 
-  /*
-   * Go through the list to make the entries for the oldest tick at an
-   * interval of several lines.
-   */
+  // Go through the list to make the entries for the oldest tick at an
+  // interval of several lines.
   prev = syn_block->b_sst_first;
   for (p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
     if (p->sst_tick == tick && prev->sst_lnum + dist > p->sst_lnum) {
@@ -1175,10 +1084,8 @@ static bool syn_stack_cleanup(void)
   return retval;
 }
 
-/*
- * Free the allocated memory for a syn_state item.
- * Move the entry into the free list.
- */
+// Free the allocated memory for a syn_state item.
+// Move the entry into the free list.
 static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
 {
   clear_syn_state(p);
@@ -1187,10 +1094,8 @@ static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
   block->b_sst_freecount++;
 }
 
-/*
- * Find an entry in the list of state stacks at or before "lnum".
- * Returns NULL when there is no entry or the first entry is after "lnum".
- */
+// Find an entry in the list of state stacks at or before "lnum".
+// Returns NULL when there is no entry or the first entry is after "lnum".
 static synstate_T *syn_stack_find_entry(linenr_T lnum)
 {
   synstate_T *p, *prev;
@@ -1207,10 +1112,8 @@ static synstate_T *syn_stack_find_entry(linenr_T lnum)
   return prev;
 }
 
-/*
- * Try saving the current state in b_sst_array[].
- * The current state must be valid for the start of the current_lnum line!
- */
+// Try saving the current state in b_sst_array[].
+// The current state must be valid for the start of the current_lnum line!
 static synstate_T *store_current_state(void)
 {
   int i;
@@ -1219,10 +1122,8 @@ static synstate_T *store_current_state(void)
   stateitem_T *cur_si;
   synstate_T *sp = syn_stack_find_entry(current_lnum);
 
-  /*
-   * If the current state contains a start or end pattern that continues
-   * from the previous line, we can't use it.  Don't store it then.
-   */
+  // If the current state contains a start or end pattern that continues
+  // from the previous line, we can't use it.  Don't store it then.
   for (i = current_state.ga_len - 1; i >= 0; i--) {
     cur_si = &CUR_STATE(i);
     if (cur_si->si_h_startpos.lnum >= current_lnum
@@ -1254,9 +1155,7 @@ static synstate_T *store_current_state(void)
       sp = NULL;
     }
   } else if (sp == NULL || sp->sst_lnum != current_lnum) {
-    /*
-     * Add a new entry
-     */
+    // Add a new entry
     // If no free items, cleanup the array first.
     if (syn_block->b_sst_freecount == 0) {
       (void)syn_stack_cleanup();
@@ -1316,9 +1215,7 @@ static synstate_T *store_current_state(void)
   return sp;
 }
 
-/*
- * Copy a state stack from "from" in b_sst_array[] to current_state;
- */
+// Copy a state stack from "from" in b_sst_array[] to current_state;
 static void load_current_state(synstate_T *from)
 {
   int i;
@@ -1422,16 +1319,14 @@ static bool syn_stack_equal(synstate_T *sp)
   return i < 0 ? true : false;
 }
 
-/*
- * We stop parsing syntax above line "lnum".  If the stored state at or below
- * this line depended on a change before it, it now depends on the line below
- * the last parsed line.
- * The window looks like this:
- *          line which changed
- *          displayed line
- *          displayed line
- * lnum ->  line below window
- */
+// We stop parsing syntax above line "lnum".  If the stored state at or below
+// this line depended on a change before it, it now depends on the line below
+// the last parsed line.
+// The window looks like this:
+//          line which changed
+//          displayed line
+//          displayed line
+// lnum ->  line below window
 void syntax_end_parsing(linenr_T lnum)
 {
   synstate_T *sp;
@@ -1446,9 +1341,8 @@ void syntax_end_parsing(linenr_T lnum)
   }
 }
 
-/*
- * End of handling of the state stack.
- ****************************************/
+// End of handling of the state stack.
+// **************************************
 
 static void invalidate_current_state(void)
 {
@@ -1473,33 +1367,25 @@ bool syntax_check_changed(linenr_T lnum)
   bool retval = true;
   synstate_T *sp;
 
-  /*
-   * Check the state stack when:
-   * - lnum is just below the previously syntaxed line.
-   * - lnum is not before the lines with saved states.
-   * - lnum is not past the lines with saved states.
-   * - lnum is at or before the last changed line.
-   */
+  // Check the state stack when:
+  // - lnum is just below the previously syntaxed line.
+  // - lnum is not before the lines with saved states.
+  // - lnum is not past the lines with saved states.
+  // - lnum is at or before the last changed line.
   if (VALID_STATE(&current_state) && lnum == current_lnum + 1) {
     sp = syn_stack_find_entry(lnum);
     if (sp != NULL && sp->sst_lnum == lnum) {
-      /*
-       * finish the previous line (needed when not all of the line was
-       * drawn)
-       */
+      // finish the previous line (needed when not all of the line was
+      // drawn)
       (void)syn_finish_line(false);
 
-      /*
-       * Compare the current state with the previously saved state of
-       * the line.
-       */
+      // Compare the current state with the previously saved state of
+      // the line.
       if (syn_stack_equal(sp)) {
         retval = false;
       }
 
-      /*
-       * Store the current state in b_sst_array[] for later use.
-       */
+      // Store the current state in b_sst_array[] for later use.
       current_lnum++;
       (void)store_current_state();
     }
@@ -1587,9 +1473,7 @@ int get_syntax_attr(const colnr_T col, bool *const can_spell, const bool keep_st
     validate_current_state();
   }
 
-  /*
-   * Skip from the current column to "col", get the attributes for "col".
-   */
+  // Skip from the current column to "col", get the attributes for "col".
   while (current_col <= col) {
     attr = syn_current_attr(false, true, can_spell,
                             current_col == col ? keep_state : false);
@@ -1638,9 +1522,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   // Do try matching with an empty line (could be the start of a region).
   line = (char_u *)syn_getcurline();
   if (line[current_col] == NUL && current_col != 0) {
-    /*
-     * If we found a match after the last column, use it.
-     */
+    // If we found a match after the last column, use it.
     if (next_match_idx >= 0 && next_match_col >= (int)current_col
         && next_match_col != MAXCOL) {
       (void)push_next_match();
@@ -1657,11 +1539,9 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
     current_state_stored = false;
   }
 
-  /*
-   * When in the previous column there was a match but it could not be used
-   * (empty match or already matched in this column) need to try again in
-   * the next column.
-   */
+  // When in the previous column there was a match but it could not be used
+  // (empty match or already matched in this column) need to try again in
+  // the next column.
   if (try_next_column) {
     next_match_idx = -1;
     try_next_column = false;
@@ -1679,23 +1559,19 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   // use syntax iskeyword option
   save_chartab((char *)buf_chartab);
 
-  /*
-   * Repeat matching keywords and patterns, to find contained items at the
-   * same column.  This stops when there are no extra matches at the current
-   * column.
-   */
+  // Repeat matching keywords and patterns, to find contained items at the
+  // same column.  This stops when there are no extra matches at the current
+  // column.
   do {
     found_match = false;
     keep_next_list = false;
     int syn_id = 0;
 
-    /*
-     * 1. Check for a current state.
-     *    Only when there is no current state, or if the current state may
-     *    contain other things, we need to check for keywords and patterns.
-     *    Always need to check for contained items if some item has the
-     *    "containedin" argument (takes extra time!).
-     */
+    // 1. Check for a current state.
+    //    Only when there is no current state, or if the current state may
+    //    contain other things, we need to check for keywords and patterns.
+    //    Always need to check for contained items if some item has the
+    //    "containedin" argument (takes extra time!).
     if (current_state.ga_len) {
       cur_si = &CUR_STATE(current_state.ga_len - 1);
     } else {
@@ -1758,21 +1634,15 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
         }
       }
 
-      /*
-       * 3. Check for patterns (only if no keyword found).
-       */
+      // 3. Check for patterns (only if no keyword found).
       if (syn_id == 0 && syn_block->b_syn_patterns.ga_len) {
-        /*
-         * If we didn't check for a match yet, or we are past it, check
-         * for any match with a pattern.
-         */
+        // If we didn't check for a match yet, or we are past it, check
+        // for any match with a pattern.
         if (next_match_idx < 0 || next_match_col < (int)current_col) {
-          /*
-           * Check all relevant patterns for a match at this
-           * position.  This is complicated, because matching with a
-           * pattern takes quite a bit of time, thus we want to
-           * avoid doing it when it's not needed.
-           */
+          // Check all relevant patterns for a match at this
+          // position.  This is complicated, because matching with a
+          // pattern takes quite a bit of time, thus we want to
+          // avoid doing it when it's not needed.
           next_match_idx = 0;                   // no match in this line yet
           next_match_col = MAXCOL;
           for (int idx = syn_block->b_syn_patterns.ga_len; --idx >= 0;) {
@@ -1814,9 +1684,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
                 continue;
               }
 
-              /*
-               * Compute the first column of the match.
-               */
+              // Compute the first column of the match.
               syn_add_start_off(&pos, &regmatch,
                                 spp, SPO_MS_OFF, -1);
               if (pos.lnum > current_lnum) {
@@ -1831,19 +1699,15 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
               // matches in the current line
               spp->sp_startcol = startcol;
 
-              /*
-               * If a previously found match starts at a lower
-               * column number, don't use this one.
-               */
+              // If a previously found match starts at a lower
+              // column number, don't use this one.
               if (startcol >= next_match_col) {
                 continue;
               }
 
-              /*
-               * If we matched this pattern at this position
-               * before, skip it.  Must retry in the next
-               * column, because it may match from there.
-               */
+              // If we matched this pattern at this position
+              // before, skip it.  Must retry in the next
+              // column, because it may match from there.
               if (did_match_already(idx, &zero_width_next_ga)) {
                 try_next_column = true;
                 continue;
@@ -1861,10 +1725,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
               syn_add_end_off(&eos_pos, &regmatch,
                               spp, SPO_RS_OFF, 0);
 
-              /*
-               * Grab the external submatches before they get
-               * overwritten.  Reference count doesn't change.
-               */
+              // Grab the external submatches before they get
+              // overwritten.  Reference count doesn't change.
               unref_extmatch(cur_extmatch);
               cur_extmatch = re_extmatch_out;
               re_extmatch_out = NULL;
@@ -1875,12 +1737,10 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
               end_idx = 0;
               hl_endpos.lnum = 0;
 
-              /*
-               * For a "oneline" the end must be found in the
-               * same line too.  Search for it after the end of
-               * the match with the start pattern.  Set the
-               * resulting end positions at the same time.
-               */
+              // For a "oneline" the end must be found in the
+              // same line too.  Search for it after the end of
+              // the match with the start pattern.  Set the
+              // resulting end positions at the same time.
               if (spp->sp_type == SPTYPE_START
                   && (spp->sp_flags & HL_ONELINE)) {
                 lpos_T startpos;
@@ -1891,23 +1751,18 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
                 if (endpos.lnum == 0) {
                   continue;                         // not found
                 }
-              }
-              /*
-               * For a "match" the size must be > 0 after the
-               * end offset needs has been added.  Except when
-               * syncing.
-               */
-              else if (spp->sp_type == SPTYPE_MATCH) {
+              } else if (spp->sp_type == SPTYPE_MATCH) {
+                // For a "match" the size must be > 0 after the
+                // end offset needs has been added.  Except when
+                // syncing.
                 syn_add_end_off(&hl_endpos, &regmatch, spp,
                                 SPO_HE_OFF, 0);
                 syn_add_end_off(&endpos, &regmatch, spp,
                                 SPO_ME_OFF, 0);
                 if (endpos.lnum == current_lnum
                     && (int)endpos.col + syncing < startcol) {
-                  /*
-                   * If an empty string is matched, may need
-                   * to try matching again at next column.
-                   */
+                  // If an empty string is matched, may need
+                  // to try matching again at next column.
                   if (regmatch.startpos[0].col == regmatch.endpos[0].col) {
                     try_next_column = true;
                   }
@@ -1915,9 +1770,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
                 }
               }
 
-              /*
-               * keep the best match so far in next_match_*
-               */
+              // keep the best match so far in next_match_*
+
               // Highlighting must start after startpos and end
               // before endpos.
               if (hl_startpos.lnum == current_lnum
@@ -1942,9 +1796,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
           }
         }
 
-        /*
-         * If we found a match at the current column, use it.
-         */
+        // If we found a match at the current column, use it.
         if (next_match_idx >= 0 && next_match_col == (int)current_col) {
           synpat_T *lspp;
 
@@ -1972,9 +1824,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
       }
     }
 
-    /*
-     * Handle searching for nextgroup match.
-     */
+    // Handle searching for nextgroup match.
     if (current_next_list != NULL && !keep_next_list) {
       // If a nextgroup was not found, continue looking for one if:
       // - this is an empty line and the "skipempty" option was given
@@ -1989,14 +1839,12 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
         }
       }
 
-      /*
-       * If a nextgroup was found: Use it, and continue looking for
-       * contained matches.
-       * If a nextgroup was not found: Continue looking for a normal
-       * match.
-       * When did set current_next_list for a zero-width item and no
-       * match was found don't loop (would get stuck).
-       */
+      // If a nextgroup was found: Use it, and continue looking for
+      // contained matches.
+      // If a nextgroup was not found: Continue looking for a normal
+      // match.
+      // When did set current_next_list for a zero-width item and no
+      // match was found don't loop (would get stuck).
       current_next_list = NULL;
       next_match_idx = -1;
       if (!zero_width_next_list) {
@@ -2007,10 +1855,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
 
   restore_chartab((char *)buf_chartab);
 
-  /*
-   * Use attributes from the current state, if within its highlighting.
-   * If not, use attributes from the current-but-one state, etc.
-   */
+  // Use attributes from the current state, if within its highlighting.
+  // If not, use attributes from the current-but-one state, etc.
   current_attr = 0;
   current_id = 0;
   current_trans_id = 0;
@@ -2076,14 +1922,12 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
       }
     }
 
-    /*
-     * Check for end of current state (and the states before it) at the
-     * next column.  Don't do this for syncing, because we would miss a
-     * single character match.
-     * First check if the current state ends at the current column.  It
-     * may be for an empty match and a containing item might end in the
-     * current column.
-     */
+    // Check for end of current state (and the states before it) at the
+    // next column.  Don't do this for syncing, because we would miss a
+    // single character match.
+    // First check if the current state ends at the current column.  It
+    // may be for an empty match and a containing item might end in the
+    // current column.
     if (!syncing && !keep_state) {
       check_state_ends();
       if (!GA_EMPTY(&current_state)
@@ -2143,9 +1987,7 @@ static bool did_match_already(int idx, garray_T *gap)
   return false;
 }
 
-/*
- * Push the next match onto the stack.
- */
+// Push the next match onto the stack.
 static stateitem_T *push_next_match(void)
 {
   stateitem_T *cur_si;
@@ -2154,15 +1996,11 @@ static stateitem_T *push_next_match(void)
 
   spp = &(SYN_ITEMS(syn_block)[next_match_idx]);
 
-  /*
-   * Push the item in current_state stack;
-   */
+  // Push the item in current_state stack;
   push_current_state(next_match_idx);
   {
-    /*
-     * If it's a start-skip-end type that crosses lines, figure out how
-     * much it continues in this line.  Otherwise just fill in the length.
-     */
+    // If it's a start-skip-end type that crosses lines, figure out how
+    // much it continues in this line.  Otherwise just fill in the length.
     cur_si = &CUR_STATE(current_state.ga_len - 1);
     cur_si->si_h_startpos = next_match_h_startpos;
     cur_si->si_m_startcol = current_col;
@@ -2195,10 +2033,8 @@ static stateitem_T *push_next_match(void)
     update_si_attr(current_state.ga_len - 1);
 
     save_flags = cur_si->si_flags & (HL_CONCEAL | HL_CONCEALENDS);
-    /*
-     * If the start pattern has another highlight group, push another item
-     * on the stack for the start pattern.
-     */
+    // If the start pattern has another highlight group, push another item
+    // on the stack for the start pattern.
     if (spp->sp_type == SPTYPE_START && spp->sp_syn_match_id != 0) {
       push_current_state(next_match_idx);
       cur_si = &CUR_STATE(current_state.ga_len - 1);
@@ -2226,9 +2062,7 @@ static stateitem_T *push_next_match(void)
   return cur_si;
 }
 
-/*
- * Check for end of current state (and the states before it).
- */
+// Check for end of current state (and the states before it).
 static void check_state_ends(void)
 {
   stateitem_T *cur_si;
@@ -2240,12 +2074,10 @@ static void check_state_ends(void)
         && (cur_si->si_m_endpos.lnum < current_lnum
             || (cur_si->si_m_endpos.lnum == current_lnum
                 && cur_si->si_m_endpos.col <= current_col))) {
-      /*
-       * If there is an end pattern group ID, highlight the end pattern
-       * now.  No need to pop the current item from the stack.
-       * Only do this if the end pattern continues beyond the current
-       * position.
-       */
+      // If there is an end pattern group ID, highlight the end pattern
+      // now.  No need to pop the current item from the stack.
+      // Only do this if the end pattern continues beyond the current
+      // position.
       if (cur_si->si_end_idx
           && (cur_si->si_eoe_pos.lnum > current_lnum
               || (cur_si->si_eoe_pos.lnum == current_lnum
@@ -2322,10 +2154,8 @@ static void check_state_ends(void)
   }
 }
 
-/*
- * Update an entry in the current_state stack for a match or region.  This
- * fills in si_attr, si_next_list and si_cont_list.
- */
+// Update an entry in the current_state stack for a match or region.  This
+// fills in si_attr, si_next_list and si_cont_list.
 static void update_si_attr(int idx)
 {
   stateitem_T *sip = &CUR_STATE(idx);
@@ -2350,11 +2180,9 @@ static void update_si_attr(int idx)
     sip->si_cont_list = spp->sp_cont_list;
   }
 
-  /*
-   * For transparent items, take attr from outer item.
-   * Also take cont_list, if there is none.
-   * Don't do this for the matchgroup of a start or end pattern.
-   */
+  // For transparent items, take attr from outer item.
+  // Also take cont_list, if there is none.
+  // Don't do this for the matchgroup of a start or end pattern.
   if ((spp->sp_flags & HL_TRANSP) && !(sip->si_flags & HL_MATCH)) {
     if (idx == 0) {
       sip->si_attr = 0;
@@ -2373,10 +2201,8 @@ static void update_si_attr(int idx)
   }
 }
 
-/*
- * Check the current stack for patterns with "keepend" flag.
- * Propagate the match-end to contained items, until a "skipend" item is found.
- */
+// Check the current stack for patterns with "keepend" flag.
+// Propagate the match-end to contained items, until a "skipend" item is found.
 static void check_keepend(void)
 {
   int i;
@@ -2384,19 +2210,15 @@ static void check_keepend(void)
   lpos_T maxpos_h;
   stateitem_T *sip;
 
-  /*
-   * This check can consume a lot of time; only do it from the level where
-   * there really is a keepend.
-   */
+  // This check can consume a lot of time; only do it from the level where
+  // there really is a keepend.
   if (keepend_level < 0) {
     return;
   }
 
-  /*
-   * Find the last index of an "extend" item.  "keepend" items before that
-   * won't do anything.  If there is no "extend" item "i" will be
-   * "keepend_level" and all "keepend" items will work normally.
-   */
+  // Find the last index of an "extend" item.  "keepend" items before that
+  // won't do anything.  If there is no "extend" item "i" will be
+  // "keepend_level" and all "keepend" items will work normally.
   for (i = current_state.ga_len - 1; i > keepend_level; i--) {
     if (CUR_STATE(i).si_flags & HL_EXTEND) {
       break;
@@ -2456,10 +2278,8 @@ static void update_si_end(stateitem_T *sip, int startcol, bool force)
     return;
   }
 
-  /*
-   * We need to find the end of the region.  It may continue in the next
-   * line.
-   */
+  // We need to find the end of the region.  It may continue in the next
+  // line.
   int end_idx = 0;
   lpos_T startpos = {
     .lnum = current_lnum,
@@ -2492,10 +2312,8 @@ static void update_si_end(stateitem_T *sip, int startcol, bool force)
   }
 }
 
-/*
- * Add a new state to the current state stack.
- * It is cleared and the index set to "idx".
- */
+// Add a new state to the current state stack.
+// It is cleared and the index set to "idx".
 static void push_current_state(int idx)
 {
   stateitem_T *p = GA_APPEND_VIA_PTR(stateitem_T, &current_state);
@@ -2503,9 +2321,7 @@ static void push_current_state(int idx)
   p->si_idx = idx;
 }
 
-/*
- * Remove a state from the current_state stack.
- */
+// Remove a state from the current_state stack.
 static void pop_current_state(void)
 {
   if (!GA_EMPTY(&current_state)) {
@@ -2556,20 +2372,16 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
     return;
   }
 
-  /*
-   * Check for being called with a START pattern.
-   * Can happen with a match that continues to the next line, because it
-   * contained a region.
-   */
+  // Check for being called with a START pattern.
+  // Can happen with a match that continues to the next line, because it
+  // contained a region.
   spp = &(SYN_ITEMS(syn_block)[idx]);
   if (spp->sp_type != SPTYPE_START) {
     *hl_endpos = *startpos;
     return;
   }
 
-  /*
-   * Find the SKIP or first END pattern after the last START pattern.
-   */
+  // Find the SKIP or first END pattern after the last START pattern.
   for (;;) {
     spp = &(SYN_ITEMS(syn_block)[idx]);
     if (spp->sp_type != SPTYPE_START) {
@@ -2578,9 +2390,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
     idx++;
   }
 
-  /*
-   *    Lookup the SKIP pattern (if present)
-   */
+  //    Lookup the SKIP pattern (if present)
   if (spp->sp_type == SPTYPE_SKIP) {
     spp_skip = spp;
     idx++;
@@ -2600,9 +2410,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   save_chartab((char *)buf_chartab);
 
   for (;;) {
-    /*
-     * Find end pattern that matches first after "matchcol".
-     */
+    // Find end pattern that matches first after "matchcol".
     best_idx = -1;
     for (idx = start_idx; idx < syn_block->b_syn_patterns.ga_len; idx++) {
       int lc_col = matchcol;
@@ -2631,18 +2439,14 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
       }
     }
 
-    /*
-     * If all end patterns have been tried, and there is no match, the
-     * item continues until end-of-line.
-     */
+    // If all end patterns have been tried, and there is no match, the
+    // item continues until end-of-line.
     if (best_idx == -1) {
       break;
     }
 
-    /*
-     * If the skip pattern matches before the end pattern,
-     * continue searching after the skip pattern.
-     */
+    // If the skip pattern matches before the end pattern,
+    // continue searching after the skip pattern.
     if (spp_skip != NULL) {
       int lc_col = matchcol - spp_skip->sp_offsets[SPO_LC_OFF];
 
@@ -2688,10 +2492,8 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
       }
     }
 
-    /*
-     * Match from start pattern to end pattern.
-     * Correct for match and highlight offset of end pattern.
-     */
+    // Match from start pattern to end pattern.
+    // Correct for match and highlight offset of end pattern.
     spp = &(SYN_ITEMS(syn_block)[best_idx]);
     syn_add_end_off(m_endpos, &best_regmatch, spp, SPO_ME_OFF, 1);
     // can't end before the start
@@ -2708,9 +2510,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
     // can't end after the match
     limit_pos(end_endpos, m_endpos);
 
-    /*
-     * If the end group is highlighted differently, adjust the pointers.
-     */
+    // If the end group is highlighted differently, adjust the pointers.
     if (spp->sp_syn_match_id != spp->sp_syn.id && spp->sp_syn_match_id != 0) {
       *end_idx = best_idx;
       if (spp->sp_off_flags & (1 << (SPO_RE_OFF + SPO_COUNT))) {
@@ -2755,9 +2555,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   re_extmatch_in = NULL;
 }
 
-/*
- * Limit "pos" not to be after "limit".
- */
+// Limit "pos" not to be after "limit".
 static void limit_pos(lpos_T *pos, lpos_T *limit)
 {
   if (pos->lnum > limit->lnum) {
@@ -2767,9 +2565,7 @@ static void limit_pos(lpos_T *pos, lpos_T *limit)
   }
 }
 
-/*
- * Limit "pos" not to be after "limit", unless pos->lnum is zero.
- */
+// Limit "pos" not to be after "limit", unless pos->lnum is zero.
 static void limit_pos_zero(lpos_T *pos, lpos_T *limit)
 {
   if (pos->lnum == 0) {
@@ -2875,10 +2671,8 @@ static char *syn_getcurline(void)
   return (char *)ml_get_buf(syn_buf, current_lnum, false);
 }
 
-/*
- * Call vim_regexec() to find a match with "rmp" in "syn_buf".
- * Returns true when there is a match.
- */
+// Call vim_regexec() to find a match with "rmp" in "syn_buf".
+// Returns true when there is a match.
 static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
 {
   int timed_out = 0;
@@ -3001,9 +2795,7 @@ static keyentry_T *match_keyword(char *keyword, hashtab_T *ht, stateitem_T *cur_
   return NULL;
 }
 
-/*
- * Handle ":syntax conceal" command.
- */
+// Handle ":syntax conceal" command.
 static void syn_cmd_conceal(exarg_T *eap, int syncing)
 {
   char_u *arg = (char_u *)eap->arg;
@@ -3171,9 +2963,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
   redraw_later(curwin, UPD_NOT_VALID);
 }
 
-/*
- * Clear all syntax info for one buffer.
- */
+// Clear all syntax info for one buffer.
 void syntax_clear(synblock_T *block)
 {
   block->b_syn_error = false;           // clear previous error
@@ -3221,9 +3011,7 @@ void syntax_clear(synblock_T *block)
   running_syn_inc_tag = 0;
 }
 
-/*
- * Get rid of ownsyntax for window "wp".
- */
+// Get rid of ownsyntax for window "wp".
 void reset_synblock(win_T *wp)
 {
   if (wp->w_s != &wp->w_buffer->b_s) {
@@ -3233,9 +3021,7 @@ void reset_synblock(win_T *wp)
   }
 }
 
-/*
- * Clear syncing info for one buffer.
- */
+// Clear syncing info for one buffer.
 static void syntax_sync_clear(void)
 {
   // free the syntax patterns
@@ -3258,9 +3044,7 @@ static void syntax_sync_clear(void)
   syn_stack_free_all(curwin->w_s);              // Need to recompute all syntax.
 }
 
-/*
- * Remove one pattern from the buffer's pattern list.
- */
+// Remove one pattern from the buffer's pattern list.
 static void syn_remove_pattern(synblock_T *block, int idx)
 {
   synpat_T *spp;
@@ -3274,10 +3058,8 @@ static void syn_remove_pattern(synblock_T *block, int idx)
   block->b_syn_patterns.ga_len--;
 }
 
-/*
- * Clear and free one syntax pattern.  When clearing all, must be called from
- * last to first!
- */
+// Clear and free one syntax pattern.  When clearing all, must be called from
+// last to first!
 static void syn_clear_pattern(synblock_T *block, int i)
 {
   xfree(SYN_ITEMS(block)[i].sp_pattern);
@@ -3290,9 +3072,7 @@ static void syn_clear_pattern(synblock_T *block, int i)
   }
 }
 
-/*
- * Clear and free one syntax cluster.
- */
+// Clear and free one syntax cluster.
 static void syn_clear_cluster(synblock_T *block, int i)
 {
   xfree(SYN_CLSTR(block)[i].scl_name);
@@ -3312,20 +3092,16 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
     return;
   }
 
-  /*
-   * We have to disable this within ":syn include @group filename",
-   * because otherwise @group would get deleted.
-   * Only required for Vim 5.x syntax files, 6.0 ones don't contain ":syn
-   * clear".
-   */
+  // We have to disable this within ":syn include @group filename",
+  // because otherwise @group would get deleted.
+  // Only required for Vim 5.x syntax files, 6.0 ones don't contain ":syn
+  // clear".
   if (curwin->w_s->b_syn_topgrp != 0) {
     return;
   }
 
   if (ends_excmd(*arg)) {
-    /*
-     * No argument: Clear all syntax items.
-     */
+    // No argument: Clear all syntax items.
     if (syncing) {
       syntax_sync_clear();
     } else {
@@ -3336,9 +3112,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
       do_unlet(S_LEN("w:current_syntax"), true);
     }
   } else {
-    /*
-     * Clear the group IDs that are in the argument.
-     */
+    // Clear the group IDs that are in the argument.
     while (!ends_excmd(*arg)) {
       arg_end = skiptowhite(arg);
       if (*arg == '@') {
@@ -3370,9 +3144,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
   syn_stack_free_all(curwin->w_s);              // Need to recompute all syntax.
 }
 
-/*
- * Clear one syntax group for the current buffer.
- */
+// Clear one syntax group for the current buffer.
 static void syn_clear_one(const int id, const bool syncing)
 {
   synpat_T *spp;
@@ -3393,18 +3165,14 @@ static void syn_clear_one(const int id, const bool syncing)
   }
 }
 
-/*
- * Handle ":syntax on" command.
- */
+// Handle ":syntax on" command.
 static void syn_cmd_on(exarg_T *eap, int syncing)
 {
   syn_cmd_onoff(eap, "syntax");
 }
 
-/*
- * Handle ":syntax reset" command.
- * It actually resets highlighting, not syntax.
- */
+// Handle ":syntax reset" command.
+// It actually resets highlighting, not syntax.
 static void syn_cmd_reset(exarg_T *eap, int syncing)
 {
   eap->nextcmd = check_nextcmd(eap->arg);
@@ -3413,17 +3181,13 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
   }
 }
 
-/*
- * Handle ":syntax manual" command.
- */
+// Handle ":syntax manual" command.
 static void syn_cmd_manual(exarg_T *eap, int syncing)
 {
   syn_cmd_onoff(eap, "manual");
 }
 
-/*
- * Handle ":syntax off" command.
- */
+// Handle ":syntax off" command.
 static void syn_cmd_off(exarg_T *eap, int syncing)
 {
   syn_cmd_onoff(eap, "nosyntax");
@@ -3503,9 +3267,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
     msg_puts_title(_("\n--- Syntax items ---"));
   }
   if (ends_excmd(*arg)) {
-    /*
-     * No argument: List all group IDs and all syntax clusters.
-     */
+    // No argument: List all group IDs and all syntax clusters.
     for (int id = 1; id <= highlight_num_groups() && !got_int; id++) {
       syn_list_one(id, syncing, false);
     }
@@ -3513,9 +3275,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
       syn_list_cluster(id);
     }
   } else {
-    /*
-     * List the group IDs and syntax clusters that are in the argument.
-     */
+    // List the group IDs and syntax clusters that are in the argument.
     while (!ends_excmd(*arg) && !got_int) {
       arg_end = (char_u *)skiptowhite((char *)arg);
       if (*arg == '@') {
@@ -3693,9 +3453,7 @@ static void syn_list_flags(struct name_list *nlist, int flags, int attr)
   }
 }
 
-/*
- * List one syntax cluster, for ":syntax" or "syntax list syntax_name".
- */
+// List one syntax cluster, for ":syntax" or "syntax list syntax_name".
 static void syn_list_cluster(int id)
 {
   int endcol = 15;
@@ -3939,9 +3697,7 @@ static void syn_clear_keyword(int id, hashtab_T *ht)
   hash_unlock(ht);
 }
 
-/*
- * Clear a whole keyword table.
- */
+// Clear a whole keyword table.
 static void clear_keywtab(hashtab_T *ht)
 {
   hashitem_T *hi;
@@ -4088,11 +3844,9 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
   }
 
   for (;;) {
-    /*
-     * This is used very often when a large number of keywords is defined.
-     * Need to skip quickly when no option name is found.
-     * Also avoid tolower(), it's slow.
-     */
+    // This is used very often when a large number of keywords is defined.
+    // Need to skip quickly when no option name is found.
+    // Also avoid tolower(), it's slow.
     if (strchr(first_letters, *arg) == NULL) {
       break;
     }
@@ -4196,11 +3950,9 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
   return arg;
 }
 
-/*
- * Adjustments to syntax item when declared in a ":syn include"'d file.
- * Set the contained flag, and if the item is not already contained, add it
- * to the specified top-level group, if any.
- */
+// Adjustments to syntax item when declared in a ":syn include"'d file.
+// Set the contained flag, and if the item is not already contained, add it
+// to the specified top-level group, if any.
 static void syn_incl_toplevel(int id, int *flagsp)
 {
   if ((*flagsp & HL_CONTAINED) || curwin->w_s->b_syn_topgrp == 0) {
@@ -4219,9 +3971,7 @@ static void syn_incl_toplevel(int id, int *flagsp)
   }
 }
 
-/*
- * Handle ":syntax include [@{group-name}] filename" command.
- */
+// Handle ":syntax include [@{group-name}] filename" command.
 static void syn_cmd_include(exarg_T *eap, int syncing)
 {
   char *arg = eap->arg;
@@ -4253,10 +4003,8 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
     eap->arg = rest;
   }
 
-  /*
-   * Everything that's left, up to the next command, should be the
-   * filename to include.
-   */
+  // Everything that's left, up to the next command, should be the
+  // filename to include.
   eap->argt |= (EX_XFILE | EX_NOSPC);
   separate_nextcmd(eap);
   if (*eap->arg == '<' || *eap->arg == '$' || path_is_absolute((char_u *)eap->arg)) {
@@ -4272,10 +4020,8 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
     }
   }
 
-  /*
-   * Save and restore the existing top-level grouplist id and ":syn
-   * include" tag around the actual inclusion.
-   */
+  // Save and restore the existing top-level grouplist id and ":syn
+  // include" tag around the actual inclusion.
   if (running_syn_inc_tag >= MAX_SYN_INC_TAG) {
     emsg(_("E847: Too many syntax includes"));
     return;
@@ -4293,9 +4039,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   current_syn_inc_tag = prev_syn_inc_tag;
 }
 
-/*
- * Handle ":syntax keyword {group-name} [{option}] keyword .." command.
- */
+// Handle ":syntax keyword {group-name} [{option}] keyword .." command.
 static void syn_cmd_keyword(exarg_T *eap, int syncing)
 {
   char *arg = eap->arg;
@@ -4444,18 +4188,14 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
   rest = get_syn_options(rest, &syn_opt_arg, &conceal_char, eap->skip);
 
   if (rest != NULL) {           // all arguments are valid
-    /*
-     * Check for trailing command and illegal trailing arguments.
-     */
+    // Check for trailing command and illegal trailing arguments.
     eap->nextcmd = check_nextcmd(rest);
     if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
     } else {
       if ((syn_id = syn_check_group(arg, (size_t)(group_name_end - arg))) != 0) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-        /*
-         * Store the pattern in the syn_items list
-         */
+        // Store the pattern in the syn_items list
         synpat_T *spp = GA_APPEND_VIA_PTR(synpat_T,
                                           &curwin->w_s->b_syn_patterns);
         *spp = item;
@@ -4488,9 +4228,7 @@ static void syn_cmd_match(exarg_T *eap, int syncing)
     }
   }
 
-  /*
-   * Something failed, free the allocated memory.
-   */
+  // Something failed, free the allocated memory.
   vim_regfree(item.sp_prog);
   xfree(item.sp_pattern);
   xfree(syn_opt_arg.cont_list);
@@ -4608,11 +4346,9 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
       }
       rest = skipwhite(p);
     } else {
-      /*
-       * Allocate room for a syn_pattern, and link it in the list of
-       * syn_patterns for this item, at the start (because the list is
-       * used from end to start).
-       */
+      // Allocate room for a syn_pattern, and link it in the list of
+      // syn_patterns for this item, at the start (because the list is
+      // used from end to start).
       ppp = xmalloc(sizeof(struct pat_ptr));
       ppp->pp_next = pat_ptrs[item];
       pat_ptrs[item] = ppp;
@@ -4650,10 +4386,8 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
   }
 
   if (rest != NULL) {
-    /*
-     * Check for trailing garbage or command.
-     * If OK, add the item.
-     */
+    // Check for trailing garbage or command.
+    // If OK, add the item.
     eap->nextcmd = check_nextcmd(rest);
     if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
@@ -4661,9 +4395,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
       ga_grow(&(curwin->w_s->b_syn_patterns), pat_count);
       if ((syn_id = syn_check_group(arg, (size_t)(group_name_end - arg))) != 0) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-        /*
-         * Store the start/skip/end in the syn_items list
-         */
+        // Store the start/skip/end in the syn_items list
         int idx = curwin->w_s->b_syn_patterns.ga_len;
         for (item = ITEM_START; item <= ITEM_END; item++) {
           for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp->pp_next) {
@@ -4704,9 +4436,7 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
     }
   }
 
-  /*
-   * Free the allocated memory.
-   */
+  // Free the allocated memory.
   for (item = ITEM_START; item <= ITEM_END; item++) {
     for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp_next) {
       if (!success && ppp->pp_synp != NULL) {
@@ -4750,9 +4480,7 @@ static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2, con
   const int16_t *g2;
   int16_t *clstr = NULL;
 
-  /*
-   * Handle degenerate cases.
-   */
+  // Handle degenerate cases.
   if (*clstr2 == NULL) {
     return;
   }
@@ -4788,13 +4516,9 @@ static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2, con
     g2 = *clstr2;
     int count = 0;
 
-    /*
-     * First, loop through the lists until one of them is empty.
-     */
+    // First, loop through the lists until one of them is empty.
     while (*g1 && *g2) {
-      /*
-       * We always want to add from the first list.
-       */
+      // We always want to add from the first list.
       if (*g1 < *g2) {
         if (round == 2) {
           clstr[count] = *g1;
@@ -4803,10 +4527,8 @@ static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2, con
         g1++;
         continue;
       }
-      /*
-       * We only want to add from the second list if we're adding the
-       * lists.
-       */
+      // We only want to add from the second list if we're adding the
+      // lists.
       if (list_op == CLUSTER_ADD) {
         if (round == 2) {
           clstr[count] = *g2;
@@ -4819,11 +4541,9 @@ static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2, con
       g2++;
     }
 
-    /*
-     * Now add the leftovers from whichever list didn't get finished
-     * first.  As before, we only want to add from the second list if
-     * we're adding the lists.
-     */
+    // Now add the leftovers from whichever list didn't get finished
+    // first.  As before, we only want to add from the second list if
+    // we're adding the lists.
     for (; *g1; g1++, count++) {
       if (round == 2) {
         clstr[count] = *g1;
@@ -4838,10 +4558,8 @@ static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2, con
     }
 
     if (round == 1) {
-      /*
-       * If the group ended up empty, we don't need to allocate any
-       * space for it.
-       */
+      // If the group ended up empty, we don't need to allocate any
+      // space for it.
       if (count == 0) {
         clstr = NULL;
         break;
@@ -4851,9 +4569,7 @@ static void syn_combine_list(int16_t **const clstr1, int16_t **const clstr2, con
     }
   }
 
-  /*
-   * Finally, put the new list in place.
-   */
+  // Finally, put the new list in place.
   xfree(*clstr1);
   xfree(*clstr2);
   *clstr1 = clstr;
@@ -4909,9 +4625,7 @@ static int syn_check_cluster(char *pp, int len)
 /// @return  0 for failure.
 static int syn_add_cluster(char *name)
 {
-  /*
-   * First call for this growarray: init growing array.
-   */
+  // First call for this growarray: init growing array.
   if (curwin->w_s->b_syn_clusters.ga_data == NULL) {
     curwin->w_s->b_syn_clusters.ga_itemsize = sizeof(syn_cluster_T);
     ga_set_growsize(&curwin->w_s->b_syn_clusters, 10);
@@ -4941,10 +4655,8 @@ static int syn_add_cluster(char *name)
   return len + SYNID_CLUSTER;
 }
 
-/*
- * Handle ":syntax cluster {cluster-name} [contains={groupname},..]
- *              [add={groupname},..] [remove={groupname},..]".
- */
+// Handle ":syntax cluster {cluster-name} [contains={groupname},..]
+//              [add={groupname},..] [remove={groupname},..]".
 static void syn_cmd_cluster(exarg_T *eap, int syncing)
 {
   char *arg = eap->arg;
@@ -5013,9 +4725,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
   }
 }
 
-/*
- * On first call for current buffer: Init growing array.
- */
+// On first call for current buffer: Init growing array.
 static void init_syn_patterns(void)
 {
   curwin->w_s->b_syn_patterns.ga_itemsize = sizeof(synpat_T);
@@ -5058,9 +4768,7 @@ static char *get_syn_pattern(char *arg, synpat_T *ci)
   ci->sp_ic = curwin->w_s->b_syn_ic;
   syn_clear_time(&ci->sp_time);
 
-  /*
-   * Check for a match, highlight or region offset.
-   */
+  // Check for a match, highlight or region offset.
   end++;
   do {
     for (idx = SPO_COUNT; --idx >= 0;) {
@@ -5324,9 +5032,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
           id = syn_check_cluster(name + 2, (int)(end - p - 1));
         }
       } else {
-        /*
-         * Handle full group name.
-         */
+        // Handle full group name.
         if (strpbrk(name + 1, "\\.*^$~[") == NULL) {
           id = syn_check_group((name + 1), (size_t)(end - p));
         } else {
@@ -5411,9 +5117,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
   return OK;
 }
 
-/*
- * Make a copy of an ID list.
- */
+// Make a copy of an ID list.
 static int16_t *copy_id_list(const int16_t *const list)
 {
   if (list == NULL) {
@@ -5470,10 +5174,8 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
     return false;
   }
 
-  /*
-   * If list is ID_LIST_ALL, we are in a transparent item that isn't
-   * inside anything.  Only allow not-contained groups.
-   */
+  // If list is ID_LIST_ALL, we are in a transparent item that isn't
+  // inside anything.  Only allow not-contained groups.
   if (list == ID_LIST_ALL) {
     return !contained;
   }
@@ -5505,9 +5207,7 @@ static int in_id_list(stateitem_T *cur_si, int16_t *list, struct sp_syn *ssp, in
     retval = true;
   }
 
-  /*
-   * Return "retval" if id is in the contains list.
-   */
+  // Return "retval" if id is in the contains list.
   while (item != 0) {
     if (item == id) {
       return retval;
@@ -5651,19 +5351,15 @@ static enum {
   EXP_CLUSTER,      // expand ":syn list @cluster" arguments
 } expand_what;
 
-/*
- * Reset include_link, include_default, include_none to 0.
- * Called when we are done expanding.
- */
+// Reset include_link, include_default, include_none to 0.
+// Called when we are done expanding.
 void reset_expand_highlight(void)
 {
   include_link = include_default = include_none = 0;
 }
 
-/*
- * Handle command line completion for :match and :echohl command: Add "None"
- * as highlight group.
- */
+// Handle command line completion for :match and :echohl command: Add "None"
+// as highlight group.
 void set_context_in_echohl_cmd(expand_T *xp, const char *arg)
 {
   xp->xp_context = EXPAND_HIGHLIGHT;
@@ -5671,9 +5367,7 @@ void set_context_in_echohl_cmd(expand_T *xp, const char *arg)
   include_none = 1;
 }
 
-/*
- * Handle command line completion for :syntax command.
- */
+// Handle command line completion for :syntax command.
 void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
 {
   // Default: expand subcommands.
@@ -5714,10 +5408,8 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   }
 }
 
-/*
- * Function given to ExpandGeneric() to obtain the list syntax names for
- * expansion.
- */
+// Function given to ExpandGeneric() to obtain the list syntax names for
+// expansion.
 char *get_syntax_name(expand_T *xp, int idx)
 {
   switch (expand_what) {
@@ -5773,12 +5465,10 @@ int syn_get_id(win_T *wp, linenr_T lnum, colnr_T col, int trans, bool *spellp, i
   return trans ? current_trans_id : current_id;
 }
 
-/*
- * Get extra information about the syntax item.  Must be called right after
- * get_syntax_attr().
- * Stores the current item sequence nr in "*seqnrp".
- * Returns the current flags.
- */
+// Get extra information about the syntax item.  Must be called right after
+// get_syntax_attr().
+// Stores the current item sequence nr in "*seqnrp".
+// Returns the current flags.
 int get_syntax_info(int *seqnrp)
 {
   *seqnrp = current_seqnr;
@@ -5802,19 +5492,15 @@ int syn_get_concealed_id(win_T *wp, linenr_T lnum, colnr_T col)
   return 0;
 }
 
-/*
- * Return conceal substitution character
- */
+// Return conceal substitution character
 int syn_get_sub_char(void)
 {
   return current_sub_char;
 }
 
-/*
- * Return the syntax ID at position "i" in the current stack.
- * The caller must have called syn_get_id() before to fill the stack.
- * Returns -1 when "i" is out of range.
- */
+// Return the syntax ID at position "i" in the current stack.
+// The caller must have called syn_get_id() before to fill the stack.
+// Returns -1 when "i" is out of range.
 int syn_get_stack_item(int i)
 {
   if (i >= current_state.ga_len) {
@@ -5877,9 +5563,7 @@ int syn_get_foldlevel(win_T *wp, linenr_T lnum)
   return level;
 }
 
-/*
- * ":syntime".
- */
+// ":syntime".
 void ex_syntime(exarg_T *eap)
 {
   if (STRCMP(eap->arg, "on") == 0) {
@@ -5903,9 +5587,7 @@ static void syn_clear_time(syn_time_T *st)
   st->match = 0;
 }
 
-/*
- * Clear the syntax timing for the current buffer.
- */
+// Clear the syntax timing for the current buffer.
 static void syntime_clear(void)
 {
   synpat_T *spp;
@@ -5920,10 +5602,8 @@ static void syntime_clear(void)
   }
 }
 
-/*
- * Function given to ExpandGeneric() to obtain the possible arguments of the
- * ":syntime {on,off,clear,report}" command.
- */
+// Function given to ExpandGeneric() to obtain the possible arguments of the
+// ":syntime {on,off,clear,report}" command.
 char *get_syntime_arg(expand_T *xp, int idx)
 {
   switch (idx) {
@@ -5947,9 +5627,7 @@ static int syn_compare_syntime(const void *v1, const void *v2)
   return profile_cmp(s1->total, s2->total);
 }
 
-/*
- * Clear the syntax timing for the current buffer.
- */
+// Clear the syntax timing for the current buffer.
 static void syntime_report(void)
 {
   if (!syntax_present(curwin)) {

@@ -11,9 +11,7 @@
 #include "nvim/macros.h"
 #include "nvim/types.h"
 
-/*
- * Types of dialogs passed to do_dialog().
- */
+// Types of dialogs passed to do_dialog().
 #define VIM_GENERIC     0
 #define VIM_ERROR       1
 #define VIM_WARNING     2
@@ -21,9 +19,7 @@
 #define VIM_QUESTION    4
 #define VIM_LAST_TYPE   4       // sentinel value
 
-/*
- * Return values for functions like vim_dialogyesno()
- */
+// Return values for functions like vim_dialogyesno()
 #define VIM_YES         2
 #define VIM_NO          3
 #define VIM_CANCEL      4
