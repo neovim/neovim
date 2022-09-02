@@ -5819,7 +5819,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'spelllang'* *'spl'*
-'spelllang' 'spl'	string	(default "en")
+'spelllang' 'spl'	string	(default locale's language or "en")
 			local to buffer
 	A comma-separated list of word list names.  When the 'spell' option is
 	on spellchecking will be done for these languages.  Example: >

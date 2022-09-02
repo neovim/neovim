@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
@@ -211,6 +212,29 @@ void set_init_1(bool clean_arg)
         set_string_default("sh", cmd, true);
       } else {
         set_string_default("sh", (char *)shell, false);
+      }
+    }
+  }
+
+  /*
+   * Find default value for 'spelllang' option.
+   * Don't use it if it is empty.
+   */
+  {
+    const char *lang = os_getenv("LANG");
+    if (lang != NULL) {
+      int n = (lang[2] == '_') ? 5 : 3;
+      char spelllang[n];
+      for (int i = 0; i < n; i++) spelllang[i] = tolower(lang[i]);
+      spelllang[n] = '\0';
+
+      if (vim_strchr(spelllang, ' ') != NULL) {
+        const size_t len = strlen(spelllang) + 3;
+        char *const cmd = xmalloc(len);
+        snprintf(cmd, len, "\"%s\"", spelllang);
+        set_string_default("spelllang", cmd, true);
+      } else {
+        set_string_default("spelllang", (char *)spelllang, false);
       }
     }
   }
