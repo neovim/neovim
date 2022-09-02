@@ -1194,6 +1194,19 @@ function M.shell(path, contents, name)
   return name
 end
 
+-- Swift Intermediate Language or SILE
+function M.sil(bufnr)
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    if line:find('^%s*[\\%%]') then
+      return 'sile'
+    elseif line:find('^%s*%S') then
+      return 'sil'
+    end
+  end
+  -- No clue, default to "sil"
+  return 'sil'
+end
+
 -- SMIL or SNMP MIB file
 function M.smi(bufnr)
   local line = getlines(bufnr, 1)

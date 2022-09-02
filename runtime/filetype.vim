@@ -1823,7 +1823,7 @@ au BufNewFile,BufRead *.score			setf slrnsc
 au BufNewFile,BufRead *.st			setf st
 
 " Smalltalk (and Rexx, TeX, and Visual Basic)
-au BufNewFile,BufRead *.cls                     call dist#ft#FTcls()
+au BufNewFile,BufRead *.cls			call dist#ft#FTcls()
 
 " Smarty templates
 au BufNewFile,BufRead *.tpl			setf smarty
@@ -1930,8 +1930,8 @@ au BufNewFile,BufRead *.cm			setf voscm
 au BufNewFile,BufRead *.swift			setf swift
 au BufNewFile,BufRead *.swift.gyb		setf swiftgyb
 
-" Swift Intermediate Language
-au BufNewFile,BufRead *.sil			setf sil
+" Swift Intermediate Language or SILE
+au BufNewFile,BufRead *.sil			call dist#ft#FTsil()
 
 " Sysctl
 au BufNewFile,BufRead */etc/sysctl.conf,*/etc/sysctl.d/*.conf	setf sysctl
