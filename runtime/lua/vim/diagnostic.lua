@@ -621,21 +621,30 @@ end
 ---                its severity. Otherwise, all signs use the same priority.
 ---                * sign_text: (table) Table of vim.diagnostic.severity symbol pairs.
 ---                Text values in this table take priority over existing sign definitions
----                but will not be prioritized over a sign_text field for an individual
+---                but will not be prioritized over a sign_text field in the user data of an individual
 ---                diagnostic. Individual diagnostic's sign_text can be set within a function
 ---                passed to the filter parameter.
 ---                * filter: (function) A function which will be run prior to determining the signs
----                This function takes the diagnostics table as a parameter and can be used to filter
----                or otherwise customize how signs will appear. Example
+---                This function takes an individual diagnostic as a parameter and can be used to filter
+---                or otherwise customize how signs will appear by setting the sign_text, sign_hl_group or
+---                priority fields for the diagnostic. If a diagnostic is not returned, no sign will be created
 ---                <pre>
 ---                  function(diagnostic)
----                    -- Replace signs for diagnostics relating to <symbol> being unused with 'U'
----                    if string.lower(diagnostic.message):find('unused') then
----                       diagnostic.sign_text = 'U'
----                    end
 ---                    -- do not show signs for any INFO severity diagnostic
 ---                    if diagnostic.severity == vim.diagnostic.severity.INFO then
----                      return
+---                       return
+---                    end
+---                    -- Replace signs for diagnostics relating to <symbol> being unused with 'U'
+---                    if string.lower(diagnostic.message):find('unused') then
+---                        diagnostic.user_data.sign_text = 'U'
+---                    end
+---                    -- Make all Non-Error Diagnostics be highlighted as 'DiagnosticSignInfo'
+---                    if diagnostic.severity ~= vim.diagnostic.severity.ERROR then
+---                       diagnostic.user_data.sign_hl_group = 'DiagnosticSignInfo'
+---                    end
+---                    -- Increase priority of signs for HINT severity diagnostics
+---                    if diagnostic.severity == vim.diagnostic.severity.HINT then
+---                       diagnostic.user_data.priority = 15
 ---                    end
 ---                    return diagnostic
 ---                  end
@@ -856,9 +865,10 @@ function M.goto_next(opts)
   return diagnostic_move_pos(opts, M.get_next_pos(opts))
 end
 
-local get_fallback_sign = function (severity)
+---@private
+local function get_fallback_sign(severity)
   local sign = vim.fn.sign_getdefined(sign_highlight_map[severity])
-  if sign and sign[1] and not vim.tbl_isempty(sign[1]) then
+  if sign[1] then
     return sign[1].text
   end
 end
@@ -879,12 +889,12 @@ M.handlers.signs = {
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
 
-    if opts.filter then
-      diagnostics = vim.tbl_map(opts.filter, diagnostics)
-    end
-
     if opts.signs and opts.signs.severity then
       diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
+    end
+
+    if opts.signs and opts.signs.filter then
+      diagnostics = vim.tbl_map(opts.signs.filter, diagnostics)
     end
 
     -- 10 is the default sign priority when none is explicitly specified
@@ -908,21 +918,44 @@ M.handlers.signs = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.sign_ns then
-      local sign_ns = string.format('vim.diagnostic.%s', ns.name)
-      ns.user_data.sign_ns = vim.api.nvim_create_namespace(sign_ns)
+      local _sign_ns = string.format('vim.diagnostic.%s', ns.name)
+      ns.user_data.sign_ns = vim.api.nvim_create_namespace(_sign_ns)
     end
 
     local sign_ns = ns.user_data.sign_ns
+
+    local function resolve_sign(diagnostic)
+    end
+
     for _, diagnostic in ipairs(diagnostics) do
-      local lnum = diagnostic.lnum
-      local sign_text = diagnostic.sign_text or opts.sign_text and opts.sign_text[diagnostic.severity]
-        sign_text = sign_text or get_fallback_sign(diagnostic.severity) or M.severity[diagnostic.severity]:sub(1,1)
+      local sign_text
+      if diagnostic.user_data.sign_text then
+        sign_text = diagnostic.user_data.sign_text
+      elseif opts.sign_text and opts.sign_text[diagnostic.severity] then
+        sign_text = opts.sign_text[diagnostic.severity]
+      else
+        sign_text = get_fallback_sign(diagnostic.severity) or M.severity[diagnostic.severity]:sub(1,1)
+      end
+
+      local sign_hl_group
+      if diagnostic.user_data.sign_hl_group then
+        sign_hl_group = diagnostic.user_data.sign_hl_group
+      else
+        sign_hl_group = sign_highlight_map[diagnostic.severity]
+      end
+
+      if diagnostic.user_data.priority then
+        priority = diagnostic.user_data.priority
+      else
+        priority = get_priority(diagnostic.severity)
+      end
+
       local sign_opts = {
         sign_text = sign_text,
-        sign_hl_group = sign_highlight_map[diagnostic.severity],
-        priority = get_priority(diagnostic.severity),
+        sign_hl_group = sign_hl_group,
+        priority = priority,
       }
-      vim.api.nvim_buf_set_extmark(bufnr, sign_ns, lnum, 0, sign_opts)
+      vim.api.nvim_buf_set_extmark(bufnr, sign_ns, diagnostic.lnum, 0, sign_opts)
     end
     save_extmarks(sign_ns, bufnr)
   end,
@@ -958,7 +991,8 @@ M.handlers.underline = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.underline_ns then
-      ns.user_data.underline_ns = vim.api.nvim_create_namespace('')
+      local _underline_ns = string.format('vim.diagnostic.%s', ns.name)
+      ns.user_data.underline_ns = vim.api.nvim_create_namespace(_underline_ns)
     end
 
     local underline_ns = ns.user_data.underline_ns
@@ -1024,7 +1058,8 @@ M.handlers.virtual_text = {
 
     local ns = M.get_namespace(namespace)
     if not ns.user_data.virt_text_ns then
-      ns.user_data.virt_text_ns = vim.api.nvim_create_namespace('')
+      local _virt_text_ns = string.format('vim.diagnostic.%s', ns.name)
+      ns.user_data.virt_text_ns = vim.api.nvim_create_namespace(_virt_text_ns)
     end
 
     local virt_text_ns = ns.user_data.virt_text_ns

@@ -377,6 +377,41 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                          for signs. When {severity_sort} is used, the priority
                          of a sign is adjusted based on its severity.
                          Otherwise, all signs use the same priority.
+                       • sign_text: (table) Table of vim.diagnostic.severity
+                         symbol pairs. Text values in this table take priority
+                         over existing sign definitions but will not be
+                         prioritized over a sign_text field in the user data
+                         of an individual diagnostic. Individual diagnostic's
+                         sign_text can be set within a function passed to the
+                         filter parameter.
+                       • filter: (function) A function which will be run prior
+                         to determining the signs This function takes an
+                         individual diagnostic as a parameter and can be used
+                         to filter or otherwise customize how signs will
+                         appear by setting the sign_text, sign_hl_group or
+                         priority fields for the diagnostic. If a diagnostic
+                         is not returned, no sign will be created >
+
+                      function(diagnostic)
+                        -- do not show signs for any INFO severity diagnostic
+                        if diagnostic.severity == vim.diagnostic.severity.INFO then
+                           return
+                        end
+                        -- Replace signs for diagnostics relating to <symbol> being unused with 'U'
+                        if string.lower(diagnostic.message):find('unused') then
+                            diagnostic.user_data.sign_text = 'U'
+                        end
+                        -- Make all Non-Error Diagnostics be highlighted as 'DiagnosticSignInfo'
+                        if diagnostic.severity ~= vim.diagnostic.severity.ERROR then
+                           diagnostic.user_data.sign_hl_group = 'DiagnosticSignInfo'
+                        end
+                        -- Increase priority of signs for HINT severity diagnostics
+                        if diagnostic.severity == vim.diagnostic.severity.HINT then
+                           diagnostic.user_data.priority = 15
+                        end
+                        return diagnostic
+                      end
+<
 
                      • float: Options for floating windows. See
                        |vim.diagnostic.open_float()|.
@@ -627,6 +662,9 @@ reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
                      diagnostics from all namespaces.
         {bufnr}      (number|nil) Remove diagnostics for the given buffer.
                      When omitted, diagnostics are removed for all buffers.
+
+resolve_sign({diagnostic})                     *vim.diagnostic.resolve_sign()*
+    TODO: Documentation
 
 set({namespace}, {bufnr}, {diagnostics}, {opts})        *vim.diagnostic.set()*
     Set diagnostics for the given namespace and buffer.
