@@ -333,8 +333,8 @@ static int qf_init_process_nextline(qf_list_T *qfl, efm_T *fmt_first, qfstate_T 
 /// @params  enc  If non-NULL, encoding used to parse errors
 ///
 /// @returns -1 for error, number of errors for success.
-int qf_init(win_T *wp, const char *restrict efile, char *restrict errorformat, int newlist,
-            const char *restrict qf_title, char *restrict enc)
+int qf_init(win_T *wp, const char *restrict efile, const char *restrict errorformat, int newlist,
+            const char *restrict qf_title, const char *restrict enc)
 {
   qf_info_T *qi = &ql_info;
 
@@ -562,7 +562,7 @@ static void free_efm_list(efm_T **efm_first)
 
 /// Compute the size of the buffer used to convert a 'errorformat' pattern into
 /// a regular expression pattern.
-static size_t efm_regpat_bufsz(char *efm)
+static size_t efm_regpat_bufsz(const char *efm)
 {
   size_t sz = (FMT_PATTERNS * 3) + (strlen(efm) << 2);
   for (int i = FMT_PATTERNS - 1; i >= 0;) {
@@ -594,7 +594,7 @@ static int efm_option_part_len(const char *efm)
 /// Parse the 'errorformat' option. Multiple parts in the 'errorformat' option
 /// are parsed and converted to regular expressions. Returns information about
 /// the parsed 'errorformat' option.
-static efm_T *parse_efm_option(char *efm)
+static efm_T *parse_efm_option(const char *efm)
 {
   efm_T *fmt_first = NULL;
   efm_T *fmt_last = NULL;
@@ -1010,7 +1010,7 @@ static void qf_free_fields(qffields_T *pfields)
 
 // Setup the state information used for parsing lines and populating a
 // quickfix list.
-static int qf_setup_state(qfstate_T *pstate, char *restrict enc, const char *restrict efile,
+static int qf_setup_state(qfstate_T *pstate, const char *restrict enc, const char *restrict efile,
                           typval_T *tv, buf_T *buf, linenr_T lnumfirst, linenr_T lnumlast)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -1068,8 +1068,9 @@ static void qf_cleanup_state(qfstate_T *pstate)
 ///
 /// @return  -1 for error, number of errors for success.
 static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, buf_T *buf,
-                       typval_T *tv, char *restrict errorformat, bool newlist, linenr_T lnumfirst,
-                       linenr_T lnumlast, const char *restrict qf_title, char *restrict enc)
+                       typval_T *tv, const char *restrict errorformat, bool newlist,
+                       linenr_T lnumfirst, linenr_T lnumlast, const char *restrict qf_title,
+                       const char *restrict enc)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   qfstate_T state = { 0 };
@@ -1103,7 +1104,7 @@ static int qf_init_ext(qf_info_T *qi, int qf_idx, const char *restrict efile, bu
     }
   }
 
-  char *efm;
+  const char *efm;
 
   // Use the local value of 'errorformat' if it's set.
   if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
@@ -4277,8 +4278,6 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
 // Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
 void ex_make(exarg_T *eap)
 {
-  char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
-
   // Redirect ":grep" to ":vimgrep" if 'grepprg' is "internal".
   if (grep_internal(eap->cmdidx)) {
     ex_vimgrep(eap);
@@ -4293,6 +4292,7 @@ void ex_make(exarg_T *eap)
     }
   }
 
+  // Quickfix list or location list?
   win_T *wp = NULL;
   if (is_loclist_cmd(eap->cmdidx)) {
     wp = curwin;
@@ -4311,16 +4311,9 @@ void ex_make(exarg_T *eap)
 
   incr_quickfix_busy();
 
-  char *errorformat = p_efm;
-  bool newlist = true;
-
-  if (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) {
-    errorformat = p_gefm;
-  }
-  if (eap->cmdidx == CMD_grepadd || eap->cmdidx == CMD_lgrepadd) {
-    newlist = false;
-  }
-
+  bool newlist = (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd);
+  const char *errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm;
+  const char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
   int res = qf_init(wp, fname, errorformat, newlist, qf_cmdtitle(*eap->cmdlinep), enc);
 
   qf_info_T *qi = &ql_info;
