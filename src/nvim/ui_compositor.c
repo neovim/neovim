@@ -98,7 +98,7 @@ void ui_comp_free_all_mem(void)
 {
   UIEventCallback *event_cb;
   map_foreach_value(&ui_event_cbs, event_cb, {
-    xfree(event_cb);
+    free_ui_event_callback(event_cb);
   })
   pmap_destroy(uint32_t)(&ui_event_cbs);
 }
