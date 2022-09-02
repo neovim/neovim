@@ -343,7 +343,7 @@ int get_sts_value(void)
 // Count the size (in window cells) of the indent in the current line.
 int get_indent(void)
 {
-  return get_indent_str_vtab((char *)get_cursor_line_ptr(),
+  return get_indent_str_vtab(get_cursor_line_ptr(),
                              curbuf->b_p_ts,
                              curbuf->b_p_vts_array,
                              false);
@@ -454,7 +454,7 @@ int set_indent(int size, int flags)
   // characters needed for the indent.
   todo = size;
   ind_len = 0;
-  p = oldline = get_cursor_line_ptr();
+  p = oldline = (char_u *)get_cursor_line_ptr();
 
   // Calculate the buffer size for the new indent, and check to see if it
   // isn't already set.
@@ -857,7 +857,7 @@ int inindent(int extra)
   char_u *ptr;
   colnr_T col;
 
-  for (col = 0, ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr); col++) {
+  for (col = 0, ptr = (char_u *)get_cursor_line_ptr(); ascii_iswhite(*ptr); col++) {
     ptr++;
   }
 
@@ -979,7 +979,7 @@ int get_lisp_indent(void)
         continue;
       }
 
-      for (that = get_cursor_line_ptr(); *that != NUL; that++) {
+      for (that = (char_u *)get_cursor_line_ptr(); *that != NUL; that++) {
         if (*that == ';') {
           while (*(that + 1) != NUL) {
             that++;
@@ -1029,7 +1029,7 @@ int get_lisp_indent(void)
       curwin->w_cursor.col = pos->col;
       col = pos->col;
 
-      that = get_cursor_line_ptr();
+      that = (char_u *)get_cursor_line_ptr();
 
       if (vi_lisp && (get_indent() == 0)) {
         amount = 2;

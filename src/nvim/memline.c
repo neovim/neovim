@@ -735,12 +735,12 @@ void ml_recover(bool checkext)
 {
   buf_T *buf = NULL;
   memfile_T *mfp = NULL;
-  char_u *fname;
-  char_u *fname_used = NULL;
+  char *fname;
+  char *fname_used = NULL;
   bhdr_T *hp = NULL;
   ZERO_BL *b0p;
   int b0_ff;
-  char_u *b0_fenc = NULL;
+  char *b0_fenc = NULL;
   PTR_BL *pp;
   DATA_BL *dp;
   infoptr_T *ip;
@@ -748,7 +748,7 @@ void ml_recover(bool checkext)
   int len;
   bool directly;
   linenr_T lnum;
-  char_u *p;
+  char *p;
   int i;
   long error;
   bool cannot_open;
@@ -770,9 +770,9 @@ void ml_recover(bool checkext)
 
   // If the file name ends in ".s[a-w][a-z]" we assume this is the swap file.
   // Otherwise a search is done to find the swap file(s).
-  fname = (char_u *)curbuf->b_fname;
+  fname = curbuf->b_fname;
   if (fname == NULL) {              // When there is no file name
-    fname = (char_u *)"";
+    fname = "";
   }
   len = (int)STRLEN(fname);
   if (checkext && len >= 4
@@ -780,12 +780,12 @@ void ml_recover(bool checkext)
       && vim_strchr("abcdefghijklmnopqrstuvw", TOLOWER_ASC(fname[len - 2])) != NULL
       && ASCII_ISALPHA(fname[len - 1])) {
     directly = true;
-    fname_used = vim_strsave(fname);     // make a copy for mf_open()
+    fname_used = xstrdup(fname);     // make a copy for mf_open()
   } else {
     directly = false;
 
     // count the number of matching swap files
-    len = recover_names(fname, false, 0, NULL);
+    len = recover_names((char_u *)fname, false, 0, NULL);
     if (len == 0) {                 // no swap files found
       semsg(_("E305: No swap file found for %s"), fname);
       goto theend;
@@ -794,7 +794,7 @@ void ml_recover(bool checkext)
       i = 1;
     } else {                          // several swap files found, choose
       // list the names of the swap files
-      (void)recover_names(fname, true, 0, NULL);
+      (void)recover_names((char_u *)fname, true, 0, NULL);
       msg_putchar('\n');
       msg_puts(_("Enter number of swap file to use (0 to quit): "));
       i = get_number(false, NULL);
@@ -803,7 +803,7 @@ void ml_recover(bool checkext)
       }
     }
     // get the swap file name that will be used
-    (void)recover_names(fname, false, i, &fname_used);
+    (void)recover_names((char_u *)fname, false, i, (char_u **)&fname_used);
   }
   if (fname_used == NULL) {
     goto theend;  // user chose invalid number.
@@ -833,9 +833,9 @@ void ml_recover(bool checkext)
   /*
    * open the memfile from the old swap file
    */
-  p = vim_strsave(fname_used);  // save "fname_used" for the message:
-                                // mf_open() will consume "fname_used"!
-  mfp = mf_open((char *)fname_used, O_RDONLY);
+  p = xstrdup(fname_used);  // save "fname_used" for the message:
+  // mf_open() will consume "fname_used"!
+  mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
   if (mfp == NULL || mfp->mf_fd < 0) {
     semsg(_("E306: Cannot open %s"), fname_used);
@@ -962,8 +962,8 @@ void ml_recover(bool checkext)
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
 
-    for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; p--) {}
-    b0_fenc = vim_strnsave(p, (size_t)(b0p->b0_fname + fnsize - p));
+    for (p = (char *)b0p->b0_fname + fnsize; (char_u *)p > b0p->b0_fname && p[-1] != NUL; p--) {}
+    b0_fenc = xstrnsave(p, (size_t)(b0p->b0_fname + fnsize - (char_u *)p));
   }
 
   mf_put(mfp, hp, false, false);        // release block 0
@@ -991,7 +991,7 @@ void ml_recover(bool checkext)
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   }
   if (b0_fenc != NULL) {
-    set_option_value_give_err("fenc", 0L, (char *)b0_fenc, OPT_LOCAL);
+    set_option_value_give_err("fenc", 0L, b0_fenc, OPT_LOCAL);
     xfree(b0_fenc);
   }
   unchanged(curbuf, true, true);
@@ -1133,12 +1133,12 @@ void ml_recover(bool checkext)
             txt_start = (dp->db_index[i] & DB_INDEX_MASK);
             if (txt_start <= (int)HEADER_SIZE
                 || txt_start >= (int)dp->db_txt_end) {
-              p = (char_u *)"???";
+              p = "???";
               error++;
             } else {
-              p = (char_u *)dp + txt_start;
+              p = (char *)dp + txt_start;
             }
-            ml_append(lnum++, (char *)p, (colnr_T)0, true);
+            ml_append(lnum++, p, (colnr_T)0, true);
           }
           if (has_error) {
             ml_append(lnum++, _("???END"), (colnr_T)0, true);
@@ -1177,7 +1177,7 @@ void ml_recover(bool checkext)
   } else {
     for (idx = 1; idx <= lnum; idx++) {
       // Need to copy one line, fetching the other one may flush it.
-      p = vim_strsave((char_u *)ml_get(idx));
+      p = xstrdup(ml_get(idx));
       i = STRCMP(p, ml_get(idx + lnum));
       xfree(p);
       if (i != 0) {

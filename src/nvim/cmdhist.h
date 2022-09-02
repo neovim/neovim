@@ -22,7 +22,7 @@ typedef enum {
 /// History entry definition
 typedef struct hist_entry {
   int hisnum;           ///< Entry identifier number.
-  char_u *hisstr;       ///< Actual entry, separator char after the NUL.
+  char *hisstr;         ///< Actual entry, separator char after the NUL.
   Timestamp timestamp;  ///< Time when entry was added.
   list_T *additional_elements;  ///< Additional entries from ShaDa file.
 } histentry_T;

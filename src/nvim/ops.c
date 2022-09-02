@@ -225,7 +225,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
   }
 
   for (i = oap->line_count - 1; i >= 0; i--) {
-    first_char = *get_cursor_line_ptr();
+    first_char = (uint8_t)(*get_cursor_line_ptr());
     if (first_char == NUL) {  // empty line
       curwin->w_cursor.col = 0;
     } else if (oap->motion_type == kMTBlockWise) {
@@ -356,7 +356,7 @@ static void shift_block(oparg_T *oap, int amount)
     return;   // multiplication overflow
   }
 
-  char_u *const oldp = get_cursor_line_ptr();
+  char_u *const oldp = (char_u *)get_cursor_line_ptr();
 
   int startcol, oldlen, newlen;
 
@@ -668,7 +668,7 @@ void op_reindent(oparg_T *oap, Indenter how)
       // indented, unless there is only one line.
       if (i != oap->line_count - 1 || oap->line_count == 1
           || how != get_lisp_indent) {
-        l = (char_u *)skipwhite((char *)get_cursor_line_ptr());
+        l = (char_u *)skipwhite(get_cursor_line_ptr());
         if (*l == NUL) {                      // empty or blank line
           amount = 0;
         } else {
@@ -1735,7 +1735,7 @@ int op_delete(oparg_T *oap)
       if (virtual_op) {
         // fix up things for virtualedit-delete:
         // break the tabs which are going to get in our way
-        char_u *curline = get_cursor_line_ptr();
+        char_u *curline = (char_u *)get_cursor_line_ptr();
         int len = (int)STRLEN(curline);
 
         if (oap->end.coladd != 0
@@ -1926,7 +1926,7 @@ static int op_replace(oparg_T *oap, int c)
       num_chars = numc;
       numc *= utf_char2len(c);
 
-      oldp = get_cursor_line_ptr();
+      oldp = (char_u *)get_cursor_line_ptr();
       oldlen = (int)STRLEN(oldp);
 
       size_t newp_size = (size_t)bd.textcol + (size_t)bd.startspaces;
@@ -2240,7 +2240,7 @@ bool swapchar(int op_type, pos_T *pos)
 void op_insert(oparg_T *oap, long count1)
 {
   long ins_len, pre_textlen = 0;
-  char_u *firstline, *ins_text;
+  char *firstline, *ins_text;
   colnr_T ind_pre_col = 0, ind_post_col;
   int ind_pre_vcol = 0, ind_post_vcol = 0;
   struct block_def bd;
@@ -2281,7 +2281,7 @@ void op_insert(oparg_T *oap, long count1)
     // Get indent information
     ind_pre_col = (colnr_T)getwhitecols_curline();
     ind_pre_vcol = get_indent();
-    firstline = (char_u *)ml_get(oap->start.lnum) + bd.textcol;
+    firstline = ml_get(oap->start.lnum) + bd.textcol;
 
     if (oap->op_type == OP_APPEND) {
       firstline += bd.textlen;
@@ -2413,7 +2413,7 @@ void op_insert(oparg_T *oap, long count1)
      * Subsequent calls to ml_get() flush the firstline data - take a
      * copy of the required string.
      */
-    firstline = (char_u *)ml_get(oap->start.lnum);
+    firstline = ml_get(oap->start.lnum);
     const size_t len = STRLEN(firstline);
     colnr_T add = bd.textcol;
     colnr_T offset = 0;  // offset when cursor was moved in insert mode
@@ -2438,10 +2438,10 @@ void op_insert(oparg_T *oap, long count1)
     }
     ins_len = (long)STRLEN(firstline) - pre_textlen - offset;
     if (pre_textlen >= 0 && ins_len > 0) {
-      ins_text = vim_strnsave(firstline, (size_t)ins_len);
+      ins_text = xstrnsave(firstline, (size_t)ins_len);
       // block handled here
       if (u_save(oap->start.lnum, (linenr_T)(oap->end.lnum + 1)) == OK) {
-        block_insert(oap, ins_text, (oap->op_type == OP_INSERT), &bd);
+        block_insert(oap, (char_u *)ins_text, (oap->op_type == OP_INSERT), &bd);
       }
 
       curwin->w_cursor.col = oap->start.col;
@@ -2934,9 +2934,9 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
 /// @param dir    BACKWARD for 'P', FORWARD for 'p'
 void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 {
-  char_u *ptr;
-  char_u *newp;
-  char_u *oldp;
+  char *ptr;
+  char *newp;
+  char *oldp;
   int yanklen;
   size_t totlen = 0;  // init for gcc
   linenr_T lnum = 0;
@@ -3082,13 +3082,13 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
        * Loop twice: count the number of lines and save them. */
       for (;;) {
         y_size = 0;
-        ptr = (char_u *)insert_string;
+        ptr = insert_string;
         while (ptr != NULL) {
           if (y_array != NULL) {
-            y_array[y_size] = (char *)ptr;
+            y_array[y_size] = ptr;
           }
           y_size++;
-          ptr = (char_u *)vim_strchr((char *)ptr, '\n');
+          ptr = vim_strchr(ptr, '\n');
           if (ptr != NULL) {
             if (y_array != NULL) {
               *ptr = NUL;
@@ -3136,12 +3136,12 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       if (u_save_cursor() == FAIL) {
         goto end;
       }
-      char_u *p = get_cursor_pos_ptr();
+      char *p = (char *)get_cursor_pos_ptr();
       if (dir == FORWARD && *p != NUL) {
         MB_PTR_ADV(p);
       }
-      ptr = vim_strsave(p);
-      ml_append(curwin->w_cursor.lnum, (char *)ptr, (colnr_T)0, false);
+      ptr = xstrdup(p);
+      ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, false);
       xfree(ptr);
 
       oldp = get_cursor_line_ptr();
@@ -3149,8 +3149,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       if (dir == FORWARD && *p != NUL) {
         MB_PTR_ADV(p);
       }
-      ptr = vim_strnsave(oldp, (size_t)(p - oldp));
-      ml_replace(curwin->w_cursor.lnum, (char *)ptr, false);
+      ptr = xstrnsave(oldp, (size_t)(p - oldp));
+      ml_replace(curwin->w_cursor.lnum, ptr, false);
       nr_lines++;
       dir = FORWARD;
     }
@@ -3298,8 +3298,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       oldp = get_cursor_line_ptr();
       oldlen = STRLEN(oldp);
       chartabsize_T cts;
-      init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum, 0,
-                           (char *)oldp, (char *)oldp);
+      init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum, 0, oldp, oldp);
 
       while (cts.cts_vcol < col && *cts.cts_ptr != NUL) {
         // Count a tab for what it's worth (if list mode not on)
@@ -3307,7 +3306,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         cts.cts_vcol += incr;
       }
       vcol = cts.cts_vcol;
-      ptr = (char_u *)cts.cts_ptr;
+      ptr = cts.cts_ptr;
       bd.textcol = (colnr_T)(ptr - oldp);
       clear_chartabsize_arg(&cts);
 
@@ -3320,7 +3319,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         bd.startspaces = incr - bd.endspaces;
         bd.textcol--;
         delcount = 1;
-        bd.textcol -= utf_head_off((char *)oldp, (char *)oldp + bd.textcol);
+        bd.textcol -= utf_head_off(oldp, oldp + bd.textcol);
         if (oldp[bd.textcol] != TAB) {
           /* Only a Tab can be split into spaces.  Other
            * characters will have to be moved to after the
@@ -3356,9 +3355,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         break;
       }
 
-      totlen = (size_t)(count * (yanklen + spaces)
-                        + bd.startspaces + bd.endspaces);
-      newp = (char_u *)xmalloc(totlen + oldlen + 1);
+      totlen = (size_t)(count * (yanklen + spaces) + bd.startspaces + bd.endspaces);
+      newp = xmalloc(totlen + oldlen + 1);
 
       // copy part up to cursor to new line
       ptr = newp;
@@ -3391,7 +3389,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       int columns = (int)oldlen - bd.textcol - delcount + 1;
       assert(columns >= 0);
       memmove(ptr, oldp + bd.textcol + delcount, (size_t)columns);
-      ml_replace(curwin->w_cursor.lnum, (char *)newp, false);
+      ml_replace(curwin->w_cursor.lnum, newp, false);
       extmark_splice_cols(curbuf, (int)curwin->w_cursor.lnum - 1, bd.textcol,
                           delcount, (int)totlen + lines_appended, kExtmarkUndo);
 
@@ -3482,7 +3480,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       } else {
         totlen = (size_t)(count * yanklen);
         do {
-          oldp = (char_u *)ml_get(lnum);
+          oldp = ml_get(lnum);
           oldlen = STRLEN(oldp);
           if (lnum > start_lnum) {
             pos_T pos = {
@@ -3498,7 +3496,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             lnum++;
             continue;
           }
-          newp = (char_u *)xmalloc(totlen + oldlen + 1);
+          newp = xmalloc(totlen + oldlen + 1);
           memmove(newp, oldp, (size_t)col);
           ptr = newp + col;
           for (i = 0; i < (size_t)count; i++) {
@@ -3506,10 +3504,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             ptr += yanklen;
           }
           STRMOVE(ptr, oldp + col);
-          ml_replace(lnum, (char *)newp, false);
+          ml_replace(lnum, newp, false);
 
           // compute the byte offset for the last character
-          first_byte_off = utf_head_off((char *)newp, (char *)ptr - 1);
+          first_byte_off = utf_head_off(newp, ptr - 1);
 
           // Place cursor on last putted char.
           if (lnum == curwin->w_cursor.lnum) {
@@ -3553,23 +3551,23 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           // First insert y_array[size - 1] in front of second line.
           // Then append y_array[0] to first line.
           lnum = new_cursor.lnum;
-          ptr = (char_u *)ml_get(lnum) + col;
+          ptr = ml_get(lnum) + col;
           totlen = STRLEN(y_array[y_size - 1]);
-          newp = (char_u *)xmalloc((size_t)(STRLEN(ptr) + totlen + 1));
+          newp = xmalloc((size_t)(STRLEN(ptr) + totlen + 1));
           STRCPY(newp, y_array[y_size - 1]);
           STRCAT(newp, ptr);
           // insert second line
-          ml_append(lnum, (char *)newp, (colnr_T)0, false);
+          ml_append(lnum, newp, (colnr_T)0, false);
           new_lnum++;
           xfree(newp);
 
-          oldp = (char_u *)ml_get(lnum);
-          newp = (char_u *)xmalloc((size_t)col + (size_t)yanklen + 1);
+          oldp = ml_get(lnum);
+          newp = xmalloc((size_t)col + (size_t)yanklen + 1);
           // copy first part of line
           memmove(newp, oldp, (size_t)col);
           // append to first line
           memmove(newp + col, y_array[0], (size_t)yanklen + 1);
-          ml_replace(lnum, (char *)newp, false);
+          ml_replace(lnum, newp, false);
 
           curwin->w_cursor.lnum = lnum;
           i = 1;
@@ -3587,7 +3585,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           if (flags & PUT_FIXINDENT) {
             old_pos = curwin->w_cursor;
             curwin->w_cursor.lnum = lnum;
-            ptr = (char_u *)ml_get(lnum);
+            ptr = ml_get(lnum);
             if (cnt == count && i == y_size - 1) {
               lendiff = (int)STRLEN(ptr);
             }
@@ -4656,7 +4654,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
                 : length);
     }
 
-    vim_str2nr(ptr + col, &pre, &length,
+    vim_str2nr((char *)ptr + col, &pre, &length,
                0 + (do_bin ? STR2NR_BIN : 0)
                + (do_oct ? STR2NR_OCT : 0)
                + (do_hex ? STR2NR_HEX : 0),
@@ -5504,7 +5502,7 @@ void cursor_pos_info(dict_T *dict)
                        (int64_t)byte_count_cursor, (int64_t)byte_count);
         }
       } else {
-        p = get_cursor_line_ptr();
+        p = (char_u *)get_cursor_line_ptr();
         validate_virtcol();
         col_print((char *)buf1, sizeof(buf1), (int)curwin->w_cursor.col + 1,
                   (int)curwin->w_virtcol + 1);

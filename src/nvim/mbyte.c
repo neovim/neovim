@@ -587,7 +587,7 @@ size_t mb_string2cells_len(const char *str, size_t size)
   size_t clen = 0;
 
   for (const char_u *p = (char_u *)str; *p != NUL && p < (char_u *)str + size;
-       p += utfc_ptr2len_len(p, (int)size + (int)(p - (char_u *)str))) {
+       p += utfc_ptr2len_len((char *)p, (int)size + (int)(p - (char_u *)str))) {
     clen += (size_t)utf_ptr2cells((char *)p);
   }
 
@@ -727,12 +727,10 @@ int mb_cptr2char_adv(const char_u **pp)
   return c;
 }
 
-/*
- * Check if the character pointed to by "p2" is a composing character when it
- * comes after "p1".  For Arabic sometimes "ab" is replaced with "c", which
- * behaves like a composing character.
- */
-bool utf_composinglike(const char_u *p1, const char_u *p2)
+/// Check if the character pointed to by "p2" is a composing character when it
+/// comes after "p1".  For Arabic sometimes "ab" is replaced with "c", which
+/// behaves like a composing character.
+bool utf_composinglike(const char *p1, const char *p2)
 {
   int c2;
 
@@ -765,7 +763,7 @@ int utfc_ptr2char(const char *p_in, int *pcc)
   // Only accept a composing char when the first char isn't illegal.
   if ((len > 1 || *p < 0x80)
       && p[len] >= 0x80
-      && utf_composinglike(p, p + len)) {
+      && utf_composinglike((char *)p, (char *)p + len)) {
     int cc = utf_ptr2char((char *)p + len);
     for (;;) {
       pcc[i++] = cc;
@@ -809,7 +807,7 @@ int utfc_ptr2char_len(const char_u *p, int *pcc, int maxlen)
       int len_cc = utf_ptr2len_len(p + len, maxlen - len);
       safe = len_cc > 1 && len_cc <= maxlen - len;
       if (!safe || (pcc[i] = utf_ptr2char((char *)p + len)) < 0x80
-          || !(i == 0 ? utf_composinglike(p, p + len) : utf_iscomposing(pcc[i]))) {
+          || !(i == 0 ? utf_composinglike((char *)p, (char *)p + len) : utf_iscomposing(pcc[i]))) {
         break;
       }
       len += len_cc;
@@ -916,7 +914,7 @@ int utfc_ptr2len(const char *const p_in)
   // skip all of them (otherwise the cursor would get stuck).
   int prevlen = 0;
   for (;;) {
-    if (p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len)) {
+    if (p[len] < 0x80 || !utf_composinglike((char *)p + prevlen, (char *)p + len)) {
       return len;
     }
 
@@ -926,13 +924,11 @@ int utfc_ptr2len(const char *const p_in)
   }
 }
 
-/*
- * Return the number of bytes the UTF-8 encoding of the character at "p[size]"
- * takes.  This includes following composing characters.
- * Returns 0 for an empty string.
- * Returns 1 for an illegal char or an incomplete byte sequence.
- */
-int utfc_ptr2len_len(const char_u *p, int size)
+/// Return the number of bytes the UTF-8 encoding of the character at "p[size]"
+/// takes.  This includes following composing characters.
+/// Returns 0 for an empty string.
+/// Returns 1 for an illegal char or an incomplete byte sequence.
+int utfc_ptr2len_len(const char *p, int size)
 {
   int len;
   int prevlen;
@@ -940,15 +936,15 @@ int utfc_ptr2len_len(const char_u *p, int size)
   if (size < 1 || *p == NUL) {
     return 0;
   }
-  if (p[0] < 0x80 && (size == 1 || p[1] < 0x80)) {  // be quick for ASCII
+  if ((uint8_t)p[0] < 0x80 && (size == 1 || (uint8_t)p[1] < 0x80)) {  // be quick for ASCII
     return 1;
   }
 
   // Skip over first UTF-8 char, stopping at a NUL byte.
-  len = utf_ptr2len_len(p, size);
+  len = utf_ptr2len_len((char_u *)p, size);
 
   // Check for illegal byte and incomplete byte sequence.
-  if ((len == 1 && p[0] >= 0x80) || len > size) {
+  if ((len == 1 && (uint8_t)p[0] >= 0x80) || len > size) {
     return 1;
   }
 
@@ -960,7 +956,7 @@ int utfc_ptr2len_len(const char_u *p, int size)
   while (len < size) {
     int len_next_char;
 
-    if (p[len] < 0x80) {
+    if ((uint8_t)p[len] < 0x80) {
       break;
     }
 
@@ -968,7 +964,7 @@ int utfc_ptr2len_len(const char_u *p, int size)
      * Next character length should not go beyond size to ensure that
      * utf_composinglike(...) does not read beyond size.
      */
-    len_next_char = utf_ptr2len_len(p + len, size - len);
+    len_next_char = utf_ptr2len_len((char_u *)p + len, size - len);
     if (len_next_char > size - len) {
       break;
     }
@@ -2420,7 +2416,7 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str, size_t slen
       if (utf_ptr2cells(from) > 1) {
         *to++ = '?';
       }
-      l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
+      l = utfc_ptr2len_len(from, (int)fromlen);
       from += l;
       fromlen -= (size_t)l;
     } else if (ICONV_ERRNO != ICONV_E2BIG) {

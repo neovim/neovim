@@ -2010,8 +2010,8 @@ void f_digraph_setlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 /// structure used for b_kmap_ga.ga_data
 typedef struct {
-  char_u *from;
-  char_u *to;
+  char *from;
+  char *to;
 } kmap_T;
 
 #define KMAP_MAXLEN 20  // maximum length of "from" or "to"
@@ -2064,10 +2064,10 @@ char *keymap_init(void)
 /// @param eap
 void ex_loadkeymap(exarg_T *eap)
 {
-  char_u *s;
+  char *s;
 
 #define KMAP_LLEN 200  // max length of "to" and "from" together
-  char_u buf[KMAP_LLEN + 11];
+  char buf[KMAP_LLEN + 11];
   char *save_cpo = p_cpo;
 
   if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
@@ -2092,15 +2092,15 @@ void ex_loadkeymap(exarg_T *eap)
       break;
     }
 
-    char_u *p = (char_u *)skipwhite(line);
+    char *p = skipwhite(line);
 
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
-      s = (char_u *)skiptowhite((char *)p);
-      kp->from = vim_strnsave(p, (size_t)(s - p));
-      p = (char_u *)skipwhite((char *)s);
-      s = (char_u *)skiptowhite((char *)p);
-      kp->to = vim_strnsave(p, (size_t)(s - p));
+      s = skiptowhite(p);
+      kp->from = xstrnsave(p, (size_t)(s - p));
+      p = skipwhite(s);
+      s = skiptowhite(p);
+      kp->to = xstrnsave(p, (size_t)(s - p));
 
       if ((STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)
@@ -2118,10 +2118,10 @@ void ex_loadkeymap(exarg_T *eap)
 
   // setup ":lmap" to map the keys
   for (int i = 0; i < curbuf->b_kmap_ga.ga_len; i++) {
-    vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s %s",
+    vim_snprintf(buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
-    (void)do_map(MAPTYPE_MAP, buf, MODE_LANGMAP, false);
+    (void)do_map(MAPTYPE_MAP, (char_u *)buf, MODE_LANGMAP, false);
   }
 
   p_cpo = save_cpo;

@@ -1159,9 +1159,9 @@ void f_matchdelete(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// skipping commands to find the next command.
 void ex_match(exarg_T *eap)
 {
-  char_u *p;
-  char_u *g = NULL;
-  char_u *end;
+  char *p;
+  char *g = NULL;
+  char *end;
   int c;
   int id;
 
@@ -1178,25 +1178,25 @@ void ex_match(exarg_T *eap)
   }
 
   if (ends_excmd(*eap->arg)) {
-    end = (char_u *)eap->arg;
+    end = eap->arg;
   } else if ((STRNICMP(eap->arg, "none", 4) == 0
               && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4])))) {
-    end = (char_u *)eap->arg + 4;
+    end = eap->arg + 4;
   } else {
-    p = (char_u *)skiptowhite(eap->arg);
+    p = skiptowhite(eap->arg);
     if (!eap->skip) {
-      g = vim_strnsave((char_u *)eap->arg, (size_t)(p - (char_u *)eap->arg));
+      g = xstrnsave(eap->arg, (size_t)(p - eap->arg));
     }
-    p = (char_u *)skipwhite((char *)p);
+    p = skipwhite(p);
     if (*p == NUL) {
       // There must be two arguments.
       xfree(g);
       semsg(_(e_invarg2), eap->arg);
       return;
     }
-    end = (char_u *)skip_regexp((char *)p + 1, *p, true, NULL);
+    end = skip_regexp(p + 1, *p, true, NULL);
     if (!eap->skip) {
-      if (*end != NUL && !ends_excmd(*skipwhite((char *)end + 1))) {
+      if (*end != NUL && !ends_excmd(*skipwhite(end + 1))) {
         xfree(g);
         eap->errmsg = ex_errmsg(e_trailing_arg, (const char *)end);
         return;
@@ -1207,13 +1207,13 @@ void ex_match(exarg_T *eap)
         return;
       }
 
-      c = *end;
+      c = (uint8_t)(*end);
       *end = NUL;
       match_add(curwin, (const char *)g, (const char *)p + 1, 10, id,
                 NULL, NULL);
       xfree(g);
-      *end = (char_u)c;
+      *end = (char)c;
     }
   }
-  eap->nextcmd = find_nextcmd((char *)end);
+  eap->nextcmd = find_nextcmd(end);
 }

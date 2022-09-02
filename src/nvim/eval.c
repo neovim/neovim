@@ -2995,7 +2995,7 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
       *arg = bp;
     } else {
       // decimal, hex or octal number
-      vim_str2nr((char_u *)(*arg), NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
+      vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
       if (len == 0) {
         semsg(_(e_invexpr2), *arg);
         ret = FAIL;
@@ -6450,7 +6450,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     } else {
       pos.lnum = curwin->w_cursor.lnum;
       if (charcol) {
-        pos.col = (colnr_T)mb_charlen(get_cursor_line_ptr());
+        pos.col = (colnr_T)mb_charlen((char_u *)get_cursor_line_ptr());
       } else {
         pos.col = (colnr_T)STRLEN(get_cursor_line_ptr());
       }

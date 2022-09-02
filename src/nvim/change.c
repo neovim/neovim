@@ -599,7 +599,7 @@ void ins_bytes_len(char *p, size_t len)
   size_t n;
   for (size_t i = 0; i < len; i += n) {
     // avoid reading past p[len]
-    n = (size_t)utfc_ptr2len_len((char_u *)p + i, (int)(len - i));
+    n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
     ins_char_bytes(p + i, n);
   }
 }
@@ -828,7 +828,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
         col = n;
         count = utf_ptr2len(oldp + n);
         n += count;
-      } while (utf_composinglike((char_u *)oldp + col, (char_u *)oldp + n));
+      } while (utf_composinglike(oldp + col, oldp + n));
       fixpos = false;
     }
   }
@@ -1036,7 +1036,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   colnr_T mincol = curwin->w_cursor.col + 1;
 
   // make a copy of the current line so we can mess with it
-  char *saved_line = (char *)vim_strsave(get_cursor_line_ptr());
+  char *saved_line = (char *)vim_strsave((char_u *)get_cursor_line_ptr());
 
   if (State & VREPLACE_FLAG) {
     // With MODE_VREPLACE we make a copy of the next line, which we will be
@@ -1181,7 +1181,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             if ((pos = findmatch(NULL, '(')) != NULL) {
               curwin->w_cursor.lnum = pos->lnum;
               newindent = get_indent();
-              ptr = (char *)get_cursor_line_ptr();
+              ptr = get_cursor_line_ptr();
             }
           }
           // If last character is '{' do indent, without
@@ -1838,7 +1838,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // stuff onto the replace stack (via ins_char()).
   if (State & VREPLACE_FLAG) {
     // Put new line in p_extra
-    p_extra = (char *)vim_strsave(get_cursor_line_ptr());
+    p_extra = xstrdup(get_cursor_line_ptr());
 
     // Put back original line
     ml_replace(curwin->w_cursor.lnum, next_line, false);

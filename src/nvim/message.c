@@ -1581,7 +1581,7 @@ int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
    */
   while (--len >= 0 && !got_int) {
     // Don't include composing chars after the end.
-    mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
+    mb_l = utfc_ptr2len_len(str, len + 1);
     if (mb_l > 1) {
       c = utf_ptr2char(str);
       if (vim_isprintc(c)) {
@@ -2219,7 +2219,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
       if (has_last_char) {
         if (maxlen >= 0) {
           // Avoid including composing chars after the end.
-          l = utfc_ptr2len_len((char_u *)s, (int)((str + maxlen) - s));
+          l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
         } else {
           l = utfc_ptr2len(s);
         }
@@ -2316,7 +2316,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
       cw = utf_ptr2cells(s);
       if (maxlen >= 0) {
         // avoid including composing chars after the end
-        l = utfc_ptr2len_len((char_u *)s, (int)((str + maxlen) - s));
+        l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
       } else {
         l = utfc_ptr2len(s);
       }

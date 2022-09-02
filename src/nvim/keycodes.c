@@ -650,7 +650,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
     if (*bp == '-') {
       last_dash = bp;
       if (bp + 1 <= end) {
-        l = utfc_ptr2len_len(bp + 1, (int)(end - bp) + 1);
+        l = utfc_ptr2len_len((char *)bp + 1, (int)(end - bp) + 1);
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
@@ -665,7 +665,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
     if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
       bp += 3;  // skip t_xx, xx may be '-' or '>'
     } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
-      vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
+      vim_str2nr((char *)bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0, true);
       if (l == 0) {
         emsg(_(e_invarg));
         return 0;
@@ -695,7 +695,7 @@ int find_special_key(const char_u **const srcp, const size_t src_len, int *const
       if (STRNICMP(last_dash + 1, "char-", 5) == 0
           && ascii_isdigit(last_dash[6])) {
         // <Char-123> or <Char-033> or <Char-0x33>
-        vim_str2nr(last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true);
+        vim_str2nr((char *)last_dash + 6, NULL, &l, STR2NR_ALL, NULL, &n, 0, true);
         if (l == 0) {
           emsg(_(e_invarg));
           return 0;
@@ -993,7 +993,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
     }
 
     // skip multibyte char correctly
-    for (i = utfc_ptr2len_len(src, (int)(end - src) + 1); i > 0; i--) {
+    for (i = utfc_ptr2len_len((char *)src, (int)(end - src) + 1); i > 0; i--) {
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
       if (*src == K_SPECIAL) {

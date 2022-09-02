@@ -5869,9 +5869,9 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool binary = false;
   bool blob = false;
   FILE *fd;
-  char_u buf[(IOSIZE/256) * 256];  // rounded to avoid odd + 1
+  char buf[(IOSIZE/256) * 256];    // rounded to avoid odd + 1
   int io_size = sizeof(buf);
-  char_u *prev = NULL;             // previously read bytes, if any
+  char *prev = NULL;               // previously read bytes, if any
   long prevlen  = 0;               // length of data in prev
   long prevsize = 0;               // size of prev buffer
   long maxline  = MAXLNUM;
@@ -5922,13 +5922,13 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     // - an incomplete line gets written
     // - a "binary" file gets an empty line at the end if it ends in a
     //   newline.
-    char_u *p;  // Position in buf.
-    char_u *start;  // Start of current line.
+    char *p;  // Position in buf.
+    char *start;  // Start of current line.
     for (p = buf, start = buf;
          p < buf + readlen || (readlen <= 0 && (prevlen > 0 || binary));
          p++) {
       if (*p == '\n' || readlen <= 0) {
-        char_u *s  = NULL;
+        char *s  = NULL;
         size_t len = (size_t)(p - start);
 
         // Finished a line.  Remove CRs before NL.
@@ -5945,7 +5945,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
         if (prevlen == 0) {
           assert(len < INT_MAX);
-          s = vim_strnsave(start, len);
+          s = xstrnsave(start, len);
         } else {
           // Change "prev" buffer to be the right size.  This way
           // the bytes are only copied once, and very long lines are
@@ -5960,7 +5960,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         tv_list_append_owned_tv(l, (typval_T) {
           .v_type = VAR_STRING,
           .v_lock = VAR_UNLOCKED,
-          .vval.v_string = (char *)s,
+          .vval.v_string = s,
         });
 
         start = p + 1;  // Step over newline.
@@ -5980,18 +5980,18 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         *p = '\n';
         // Check for utf8 "bom"; U+FEFF is encoded as EF BB BF.  Do this
         // when finding the BF and check the previous two bytes.
-      } else if (*p == 0xbf && !binary) {
+      } else if ((uint8_t)(*p) == 0xbf && !binary) {
         // Find the two bytes before the 0xbf.  If p is at buf, or buf + 1,
         // these may be in the "prev" string.
-        char_u back1 = p >= buf + 1 ? p[-1]
+        char back1 = p >= buf + 1 ? p[-1]
                                     : prevlen >= 1 ? prev[prevlen - 1] : NUL;
-        char_u back2 = p >= buf + 2 ? p[-2]
+        char back2 = p >= buf + 2 ? p[-2]
                                     : p == buf + 1 && prevlen >= 1 ? prev[prevlen - 1]
                                                                    : prevlen >=
-                       2 ? prev[prevlen - 2] : NUL;
+                     2 ? prev[prevlen - 2] : NUL;
 
-        if (back2 == 0xef && back1 == 0xbb) {
-          char_u *dest = p - 2;
+        if ((uint8_t)back2 == 0xef && (uint8_t)back1 == 0xbb) {
+          char *dest = p - 2;
 
           // Usually a BOM is at the beginning of a file, and so at
           // the beginning of a line; then we can just step over it.
@@ -8304,7 +8304,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     break;
   }
   varnumber_T n;
-  vim_str2nr(p, NULL, NULL, what, &n, NULL, 0, false);
+  vim_str2nr((char *)p, NULL, NULL, what, &n, NULL, 0, false);
   // Text after the number is silently ignored.
   if (isneg) {
     rettv->vval.v_number = -n;
@@ -9416,10 +9416,10 @@ static void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
-  const char_u *head = (const char_u *)tv_get_string_buf_chk(&argvars[0], buf1);
-  const char_u *mask = NULL;
-  const char_u *prev;
-  const char_u *p;
+  const char *head = tv_get_string_buf_chk(&argvars[0], buf1);
+  const char *mask = NULL;
+  const char *prev;
+  const char *p;
   int dir = 0;
 
   rettv->v_type = VAR_STRING;
@@ -9434,7 +9434,7 @@ static void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (argvars[1].v_type == VAR_STRING) {
-    mask = (const char_u *)tv_get_string_buf_chk(&argvars[1], buf2);
+    mask = tv_get_string_buf_chk(&argvars[1], buf2);
     if (argvars[2].v_type != VAR_UNKNOWN) {
       bool error = false;
       // leading or trailing characters to trim
@@ -9472,7 +9472,7 @@ static void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  const char_u *tail = head + STRLEN(head);
+  const char *tail = head + STRLEN(head);
   if (dir == 0 || dir == 2) {
     // Trim trailing characters
     for (; tail > head; tail = prev) {
@@ -9495,7 +9495,7 @@ static void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       }
     }
   }
-  rettv->vval.v_string = (char *)vim_strnsave(head, (size_t)(tail - head));
+  rettv->vval.v_string = xstrnsave(head, (size_t)(tail - head));
 }
 
 /// "type(expr)" function

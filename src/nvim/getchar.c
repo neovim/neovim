@@ -2566,7 +2566,7 @@ static int vgetorpeek(bool advance)
                 // white-space, so find the last non-white
                 // character -- webb
                 curwin->w_wcol = 0;
-                ptr = get_cursor_line_ptr();
+                ptr = (char_u *)get_cursor_line_ptr();
                 chartabsize_T cts;
                 init_chartabsize_arg(&cts, curwin,
                                      curwin->w_cursor.lnum, 0, (char *)ptr, (char *)ptr);
@@ -2596,7 +2596,7 @@ static int vgetorpeek(bool advance)
             if (col > 0 && curwin->w_wcol > 0) {
               // Correct when the cursor is on the right halve
               // of a double-wide character.
-              ptr = get_cursor_line_ptr();
+              ptr = (char_u *)get_cursor_line_ptr();
               col -= utf_head_off((char *)ptr, (char *)ptr + col);
               if (utf_ptr2cells((char *)ptr + col) > 1) {
                 curwin->w_wcol--;

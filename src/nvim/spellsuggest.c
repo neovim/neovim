@@ -65,7 +65,7 @@ typedef struct suginfo_S {
 
 /// One word suggestion.  Used in "si_ga".
 typedef struct {
-  char_u *st_word;    ///< suggested word, allocated string
+  char *st_word;      ///< suggested word, allocated string
   int st_wordlen;     ///< STRLEN(st_word)
   int st_orglen;      ///< length of replaced text
   int st_score;       ///< lower is better
@@ -453,7 +453,7 @@ void spell_suggest(int count)
     // No bad word or it starts after the cursor: use the word under the
     // cursor.
     curwin->w_cursor = prev_cursor;
-    line = get_cursor_line_ptr();
+    line = (char_u *)get_cursor_line_ptr();
     p = line + curwin->w_cursor.col;
     // Backup to before start of word.
     while (p > line && spell_iswordp_nmw(p, curwin)) {
@@ -477,7 +477,7 @@ void spell_suggest(int count)
   need_cap = check_need_cap(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
   // Make a copy of current line since autocommands may free the line.
-  line = vim_strsave(get_cursor_line_ptr());
+  line = vim_strsave((char_u *)get_cursor_line_ptr());
   spell_suggest_timeout = 5000;
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
@@ -593,15 +593,15 @@ void spell_suggest(int count)
     if (sug.su_badlen > stp->st_orglen) {
       // Replacing less than "su_badlen", append the remainder to
       // repl_to.
-      repl_from = vim_strnsave(sug.su_badptr, (size_t)sug.su_badlen);
+      repl_from = (char_u *)xstrnsave((char *)sug.su_badptr, (size_t)sug.su_badlen);
       vim_snprintf((char *)IObuff, IOSIZE, "%s%.*s", stp->st_word,
                    sug.su_badlen - stp->st_orglen,
                    sug.su_badptr + stp->st_orglen);
       repl_to = vim_strsave(IObuff);
     } else {
       // Replacing su_badlen or more, use the whole word.
-      repl_from = vim_strnsave(sug.su_badptr, (size_t)stp->st_orglen);
-      repl_to = vim_strsave(stp->st_word);
+      repl_from = (char_u *)xstrnsave((char *)sug.su_badptr, (size_t)stp->st_orglen);
+      repl_to = vim_strsave((char_u *)stp->st_word);
     }
 
     // Replace the word.
@@ -748,7 +748,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   c = utf_ptr2char((char *)su->su_badptr);
   if (!SPELL_ISUPPER(c) && attr == HLF_COUNT) {
     make_case_word(su->su_badword, buf, WF_ONECAP);
-    add_suggestion(su, &su->su_ga, buf, su->su_badlen, SCORE_ICASE,
+    add_suggestion(su, &su->su_ga, (char *)buf, su->su_badlen, SCORE_ICASE,
                    0, true, su->su_sallang, false);
   }
 
@@ -814,7 +814,7 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
         // Get the word and the score from the items.
         score = get_spellword(TV_LIST_ITEM_TV(li)->vval.v_list, &p);
         if (score >= 0 && score <= su->su_maxscore) {
-          add_suggestion(su, &su->su_ga, (const char_u *)p, su->su_badlen,
+          add_suggestion(su, &su->su_ga, p, su->su_badlen,
                          score, 0, true, su->su_sallang, false);
         }
       }
@@ -864,7 +864,7 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
         p = cword;
       }
 
-      add_suggestion(su, &su->su_ga, p, su->su_badlen,
+      add_suggestion(su, &su->su_ga, (char *)p, su->su_badlen,
                      SCORE_FILE, 0, true, su->su_sallang, false);
     }
   }
@@ -985,7 +985,7 @@ static void suggest_try_special(suginfo_T *su)
 
     // Give a soundalike score of 0, compute the score as if deleting one
     // character.
-    add_suggestion(su, &su->su_ga, word, su->su_badlen,
+    add_suggestion(su, &su->su_ga, (char *)word, su->su_badlen,
                    RESCORE(SCORE_REP, 0), 0, true, su->su_sallang, false);
   }
 }
@@ -1330,7 +1330,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                                            sp->ts_prewordlen > 0);
             // Add the suggestion if the score isn't too bad.
             if (newscore <= su->su_maxscore) {
-              add_suggestion(su, &su->su_ga, preword,
+              add_suggestion(su, &su->su_ga, (char *)preword,
                              sp->ts_splitfidx - repextra,
                              newscore, 0, false,
                              lp->lp_sallang, false);
@@ -1492,7 +1492,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
           // Add the suggestion if the score isn't too bad.
           if (score <= su->su_maxscore) {
-            add_suggestion(su, &su->su_ga, preword,
+            add_suggestion(su, &su->su_ga, (char *)preword,
                            sp->ts_fidx - repextra,
                            score, 0, false, lp->lp_sallang, false);
 
@@ -1505,7 +1505,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                                preword + sp->ts_prewordlen,
                                c == 0 ? WF_ALLCAP : 0);
 
-                add_suggestion(su, &su->su_ga, preword,
+                add_suggestion(su, &su->su_ga, (char *)preword,
                                sp->ts_fidx - repextra,
                                score + SCORE_ICASE, 0, false,
                                lp->lp_sallang, false);
@@ -2494,7 +2494,7 @@ static void score_comp_sal(suginfo_T *su)
         if (score < SCORE_MAXMAX) {
           // Add the suggestion.
           sstp = &SUG(su->su_sga, su->su_sga.ga_len);
-          sstp->st_word = vim_strsave(stp->st_word);
+          sstp->st_word = xstrdup(stp->st_word);
           sstp->st_wordlen = stp->st_wordlen;
           sstp->st_score = score;
           sstp->st_altscore = 0;
@@ -2551,8 +2551,7 @@ static void score_combine(suginfo_T *su)
   // Add the alternate score to su_sga.
   for (int i = 0; i < su->su_sga.ga_len; i++) {
     stp = &SUG(su->su_sga, i);
-    stp->st_altscore = spell_edit_score(slang,
-                                        su->su_badword, stp->st_word);
+    stp->st_altscore = spell_edit_score(slang, su->su_badword, (char_u *)stp->st_word);
     if (stp->st_score == SCORE_MAXMAX) {
       stp->st_score = (SCORE_BIG * 7 + stp->st_altscore) / 8;
     } else {
@@ -2579,7 +2578,7 @@ static void score_combine(suginfo_T *su)
       gap = round == 1 ? &su->su_ga : &su->su_sga;
       if (i < gap->ga_len) {
         // Don't add a word if it's already there.
-        p = SUG(*gap, i).st_word;
+        p = (char_u *)SUG(*gap, i).st_word;
         int j;
         for (j = 0; j < ga.ga_len; j++) {
           if (STRCMP(stp[j].st_word, p) == 0) {
@@ -2636,7 +2635,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
     // removing the space.  Don't do it when the good word also contains a
     // space.
     if (ascii_iswhite(su->su_badptr[su->su_badlen])
-        && *skiptowhite((char *)stp->st_word) == NUL) {
+        && *skiptowhite(stp->st_word) == NUL) {
       for (p = fword; *(p = (char_u *)skiptowhite((char *)p)) != NUL;) {
         STRMOVE(p, p + 1);
       }
@@ -2654,7 +2653,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
             su->su_badptr + su->su_badlen - lendiff, lendiff + 1);
     pgood = goodword;
   } else {
-    pgood = stp->st_word;
+    pgood = (char_u *)stp->st_word;
   }
 
   // Sound-fold the word and compute the score for the difference.
@@ -2883,7 +2882,7 @@ badword:
       if (sps_flags & SPS_DOUBLE) {
         // Add the suggestion if the score isn't too bad.
         if (score <= su->su_maxscore) {
-          add_suggestion(su, &su->su_sga, p, su->su_badlen,
+          add_suggestion(su, &su->su_sga, (char *)p, su->su_badlen,
                          score, 0, false, slang, false);
         }
       } else {
@@ -2931,7 +2930,7 @@ badword:
           // Add the suggestion if the score isn't too bad.
           goodscore = RESCORE(goodscore, score);
           if (goodscore <= su->su_sfmaxscore) {
-            add_suggestion(su, &su->su_ga, p, su->su_badlen,
+            add_suggestion(su, &su->su_ga, (char *)p, su->su_badlen,
                            goodscore, score, true, slang, true);
           }
         }
@@ -3061,7 +3060,7 @@ static bool similar_chars(slang_T *slang, int c1, int c2)
 /// @param had_bonus  value for st_had_bonus
 /// @param slang  language for sound folding
 /// @param maxsf  su_maxscore applies to soundfold score, su_sfmaxscore to the total score.
-static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword, int badlenarg,
+static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, int badlenarg,
                            int score, int altscore, bool had_bonus, slang_T *slang, bool maxsf)
 {
   int goodlen;                  // len of goodword changed
@@ -3071,7 +3070,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword,
 
   // Minimize "badlen" for consistency.  Avoids that changing "the the" to
   // "thee the" is added next to changing the first "the" the "thee".
-  const char_u *pgood = goodword + STRLEN(goodword);
+  const char *pgood = goodword + STRLEN(goodword);
   char_u *pbad = su->su_badptr + badlenarg;
   for (;;) {
     goodlen = (int)(pgood - goodword);
@@ -3144,7 +3143,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char_u *goodword,
   if (i < 0) {
     // Add a suggestion.
     stp = GA_APPEND_VIA_PTR(suggest_T, gap);
-    stp->st_word = vim_strnsave(goodword, (size_t)goodlen);
+    stp->st_word = xstrnsave(goodword, (size_t)goodlen);
     stp->st_wordlen = goodlen;
     stp->st_score = score;
     stp->st_altscore = altscore;

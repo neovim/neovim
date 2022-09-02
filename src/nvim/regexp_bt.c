@@ -2469,7 +2469,7 @@ do_multibyte:
           // Need to get composing character too.
           for (;;) {
             l = utf_ptr2len((char *)regparse);
-            if (!utf_composinglike((char_u *)regparse, (char_u *)regparse + l)) {
+            if (!utf_composinglike(regparse, regparse + l)) {
               break;
             }
             regmbc(utf_ptr2char((char *)regparse));
@@ -3192,7 +3192,7 @@ static int regrepeat(char_u *p, long maxcount)
   case SKWORD:
   case SKWORD + ADD_NL:
     while (count < maxcount) {
-      if (vim_iswordp_buf(scan, rex.reg_buf)
+      if (vim_iswordp_buf((char *)scan, rex.reg_buf)
           && (testval || !ascii_isdigit(*scan))) {
         MB_PTR_ADV(scan);
       } else if (*scan == NUL) {
@@ -3829,7 +3829,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
           break;
 
         case KWORD:
-          if (!vim_iswordp_buf(rex.input, rex.reg_buf)) {
+          if (!vim_iswordp_buf((char *)rex.input, rex.reg_buf)) {
             status = RA_NOMATCH;
           } else {
             ADVANCE_REGINPUT();
@@ -3838,7 +3838,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
 
         case SKWORD:
           if (ascii_isdigit(*rex.input)
-              || !vim_iswordp_buf(rex.input, rex.reg_buf)) {
+              || !vim_iswordp_buf((char *)rex.input, rex.reg_buf)) {
             status = RA_NOMATCH;
           } else {
             ADVANCE_REGINPUT();
@@ -4046,7 +4046,7 @@ static bool regmatch(char_u *scan, proftime_T *tm, int *timed_out)
             // Check for following composing character, unless %C
             // follows (skips over all composing chars).
             if (status != RA_NOMATCH
-                && utf_composinglike(rex.input, rex.input + len)
+                && utf_composinglike((char *)rex.input, (char *)rex.input + len)
                 && !rex.reg_icombine
                 && OP(next) != RE_COMPOSING) {
               // raaron: This code makes a composing character get
@@ -4975,13 +4975,13 @@ static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_o
             && reg_endzpos[i].lnum == reg_startzpos[i].lnum
             && reg_endzpos[i].col >= reg_startzpos[i].col) {
           re_extmatch_out->matches[i] =
-            vim_strnsave(reg_getline(reg_startzpos[i].lnum) + reg_startzpos[i].col,
-                         (size_t)(reg_endzpos[i].col - reg_startzpos[i].col));
+            (char_u *)xstrnsave((char *)reg_getline(reg_startzpos[i].lnum) + reg_startzpos[i].col,
+                                (size_t)(reg_endzpos[i].col - reg_startzpos[i].col));
         }
       } else {
         if (reg_startzp[i] != NULL && reg_endzp[i] != NULL) {
           re_extmatch_out->matches[i] =
-            vim_strnsave(reg_startzp[i], (size_t)(reg_endzp[i] - reg_startzp[i]));
+            (char_u *)xstrnsave((char *)reg_startzp[i], (size_t)(reg_endzp[i] - reg_startzp[i]));
         }
       }
     }

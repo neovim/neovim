@@ -1032,7 +1032,7 @@ int current_block(oparg_T *oap, long count, bool include, int what, int other)
 /// @return         true if the cursor is on a "<aaa>" tag.  Ignore "<aaa/>".
 static bool in_html_tag(bool end_tag)
 {
-  char_u *line = get_cursor_line_ptr();
+  char_u *line = (char_u *)get_cursor_line_ptr();
   char_u *p;
   int c;
   int lc = NUL;
@@ -1493,7 +1493,7 @@ static int find_prev_quote(char_u *line, int col_start, int quotechar, char_u *e
 bool current_quote(oparg_T *oap, long count, bool include, int quotechar)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u *line = get_cursor_line_ptr();
+  char_u *line = (char_u *)get_cursor_line_ptr();
   int col_end;
   int col_start = curwin->w_cursor.col;
   bool inclusive = false;

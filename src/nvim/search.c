@@ -161,7 +161,7 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
     magic = spats[i].magic;
     no_smartcase = spats[i].no_scs;
   } else if (options & SEARCH_HIS) {      // put new pattern in history
-    add_to_history(HIST_SEARCH, pat, true, NUL);
+    add_to_history(HIST_SEARCH, (char *)pat, true, NUL);
   }
 
   if (mr_pattern_alloced) {
@@ -1574,7 +1574,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
     cap->oap->inclusive = true;
   }
 
-  p = get_cursor_line_ptr();
+  p = (char_u *)get_cursor_line_ptr();
   col = curwin->w_cursor.col;
   len = (int)STRLEN(p);
 
@@ -1649,22 +1649,21 @@ static bool check_prevcol(char_u *linep, int col, int ch, int *prevcol)
   return col >= 0 && linep[col] == ch;
 }
 
-/*
- * Raw string start is found at linep[startpos.col - 1].
- * Return true if the matching end can be found between startpos and endpos.
- */
-static bool find_rawstring_end(char_u *linep, pos_T *startpos, pos_T *endpos)
+/// Raw string start is found at linep[startpos.col - 1].
+///
+/// @return  true if the matching end can be found between startpos and endpos.
+static bool find_rawstring_end(char *linep, pos_T *startpos, pos_T *endpos)
 {
-  char_u *p;
+  char *p;
   linenr_T lnum;
 
   for (p = linep + startpos->col + 1; *p && *p != '('; p++) {}
 
   size_t delim_len = (size_t)((p - linep) - startpos->col - 1);
-  char_u *delim_copy = vim_strnsave(linep + startpos->col + 1, delim_len);
+  char *delim_copy = xstrnsave(linep + startpos->col + 1, delim_len);
   bool found = false;
   for (lnum = startpos->lnum; lnum <= endpos->lnum; lnum++) {
-    char_u *line = (char_u *)ml_get(lnum);
+    char *line = ml_get(lnum);
 
     for (p = line + (lnum == startpos->lnum ? startpos->col + 1 : 0); *p; p++) {
       if (lnum == endpos->lnum && (colnr_T)(p - line) >= endpos->col) {
@@ -2082,7 +2081,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
             // delimiter we can check if it ends before where we
             // started searching, or before the previously found
             // raw string start.
-            if (!find_rawstring_end(linep, &pos,
+            if (!find_rawstring_end((char *)linep, &pos,
                                     count > 0 ? &match_pos : &curwin->w_cursor)) {
               count++;
               match_pos = pos;
@@ -3598,11 +3597,11 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
 
       if (inc_opt != NULL && strstr(inc_opt, "\\zs") != NULL) {
         // Use text from '\zs' to '\ze' (or end) of 'include'.
-        new_fname = find_file_name_in_path(incl_regmatch.startp[0],
-                                           (size_t)(incl_regmatch.endp[0]
-                                                    - incl_regmatch.startp[0]),
-                                           FNAME_EXP|FNAME_INCL|FNAME_REL,
-                                           1L, p_fname);
+        new_fname = (char_u *)find_file_name_in_path((char *)incl_regmatch.startp[0],
+                                                     (size_t)(incl_regmatch.endp[0]
+                                                              - incl_regmatch.startp[0]),
+                                                     FNAME_EXP|FNAME_INCL|FNAME_REL,
+                                                     1L, (char *)p_fname);
       } else {
         // Use text after match with 'include'.
         new_fname = file_name_in_line(incl_regmatch.endp[0], 0,

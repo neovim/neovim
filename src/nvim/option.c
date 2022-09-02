@@ -664,8 +664,8 @@ void set_init_3(void)
     : !(options[idx_sp].flags & P_WAS_SET);
 
   size_t len = 0;
-  char_u *p = (char_u *)invocation_path_tail(p_sh, &len);
-  p = vim_strnsave(p, len);
+  char *p = (char *)invocation_path_tail(p_sh, &len);
+  p = xstrnsave(p, len);
 
   {
     //
@@ -1131,7 +1131,7 @@ int do_set(char *arg, int opt_flags)
               }
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
               // Allow negative, octal and hex numbers.
-              vim_str2nr((char_u *)arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
+              vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true);
               if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
                 errmsg = e_number_required_after_equal;
                 goto skip;
