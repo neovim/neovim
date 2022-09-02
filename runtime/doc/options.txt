@@ -5388,12 +5388,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	there, the 'shellpipe' option changes automatically, unless it was
 	explicitly set before.
 	When 'shellpipe' is set to an empty string, no redirection of the
-	":make" output will be done.  This is useful if you use a 'makeprg'
-	that writes to 'makeef' by itself.  If you want no piping, but do
-	want to include the 'makeef', set 'shellpipe' to a single space.
-	Don't forget to precede the space with a backslash: ":set sp=\ ".
-	In the future pipes may be used for filtering and this option will
-	become obsolete (at least for Unix).
+	":make" output will be done.  This is useful (a) if you use a 'makeprg'
+	that writes to 'makeef' by itself or (b) to avoid the use of temporary
+	files when both 'shellpipe' and 'makeef' are unset.  If you want no
+	piping, but do want to include the 'makeef', set 'shellpipe' to a single
+	space. Don't forget to precede the space with a backslash: ":set sp=\ ".
+	While this option is still respected if set, it may become a no-op in
+	the future, with pipes being used for communication unless 'makeef' is
+	set.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 

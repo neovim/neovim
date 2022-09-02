@@ -906,19 +906,20 @@ To get the number of the current list in the stack: >
 			   executed.
 			2. If the 'autowrite' option is on, write any changed
 			   buffers
-			3. An errorfile name is made from 'makeef'.  If
-			   'makeef' doesn't contain "##", and a file with this
-			   name already exists, it is deleted.
+			3. If 'shellpipe' or 'makeef' are set, an errorfile name
+			   is made from 'makeef'.  If 'makeef' doesn't contain
+			   "##", and a file with this name already exists, it is
+			   deleted.
 			4. The program given with the 'makeprg' option is
 			   started (default "make") with the optional
 			   [arguments] and the output is saved in the
 			   errorfile (for Unix it is also echoed on the
 			   screen).
-			5. The errorfile is read using 'errorformat'.
+			5. The errorfile or stdout is read using 'errorformat'.
 			6. All relevant |QuickFixCmdPost| autocommands are
 			   executed.  See example below.
 			7. If [!] is not given the first error is jumped to.
-			8. The errorfile is deleted.
+			8. The errorfile (if used, see step 3) is deleted.
 			9. You can now move through the errors with commands
 			   like |:cnext| and |:cprevious|, see above.
 			This command does not accept a comment, any "
@@ -966,6 +967,9 @@ on the screen and saved in a file the same time.  Depending on the shell used
 
 If 'shellpipe' is empty, the {errorfile} part will be omitted.  This is useful
 for compilers that write to an errorfile themselves.
+
+If 'shellpipe' and 'errorfile' are both empty, output is read from the process'
+stdout.
 
 
 Using QuickFixCmdPost to fix the encoding ~
@@ -1017,6 +1021,14 @@ the |:grep| command doesn't jump to the first match automatically.  These
 commands can be combined to create a NewGrep command: >
 
         command! -nargs=+ NewGrep execute 'silent grep! <args>' | copen 42
+
+Alternatively, unset 'makeef' (default empty) and 'shellpipe' to suppress the
+grep output and define an autocommand to open the quickfix window when the
+command is done. |:grep| then behaves similarly to the command above: >
+
+	set shellpipe=
+	autocmd QuickFixCmdPost [^l]* cwindow
+	:grep! /myfunc/ **/*.c
 
 
 5.1 using Vim's internal grep

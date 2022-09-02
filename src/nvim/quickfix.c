@@ -4294,35 +4294,69 @@ void ex_make(exarg_T *eap)
 
   // Quickfix list or location list?
   win_T *wp = NULL;
+  qf_info_T *qi = &ql_info;
   if (is_loclist_cmd(eap->cmdidx)) {
     wp = curwin;
+    qi = ll_get_or_alloc_list(wp);
   }
 
-  autowrite_all();
-  char *fname = get_mef_name();
-  if (fname == NULL) {
-    return;
-  }
-  os_remove(fname);  // in case it's not unique
-
-  char *const cmd = make_get_fullcmd(eap->arg, fname);
-
-  do_shell(cmd, 0);
-
+  autowrite_all();  // Flush all buffers.
   incr_quickfix_busy();
 
   bool newlist = (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd);
   const char *errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm;
   const char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
-  int res = qf_init(wp, fname, errorformat, newlist, qf_cmdtitle(*eap->cmdlinep), enc);
+  int res = 0;
+  if (*p_mef == NUL && *p_sp == NUL) {  // Read from stdout.
+    size_t nread = 0;
+    char *out = NULL;
+    char **argv = shell_build_argv((const char *)eap->arg, NULL);
+    int status = os_system(argv, NULL, 0, &out, &nread);  // Consumes `argv`.
+    set_vim_var_nr(VV_SHELL_ERROR, (varnumber_T)status);
+    if (status == -1) {
+      char buf[IOSIZE];
+      snprintf(buf, sizeof(buf), "failed to run: %s", eap->arg);
+      semsg(_(e_invargNval), "cmd", buf);
 
-  qf_info_T *qi = &ql_info;
-  if (wp != NULL) {
-    qi = GET_LOC_LIST(wp);
-    if (qi == NULL) {
+      xfree(out);
       goto cleanup;
     }
+
+    // To load the quickfix/loclist with values, `qf_init_ext` accepts either a
+    // file, a buffer or a VimL variable (string or list). The latter is easiest
+    // in case we have a char array. Ideally we'd stream the jobs output
+    // directly to the quickfix list [1], saving a copy. This is more
+    // complicated though.
+    //
+    // [1]: For example, :vimgrep adds items to the quicklist/loclist as it
+    //      finds them (vgr_match_buflines()).
+    typval_T tv = { 0 };
+    tv.v_type = VAR_STRING;
+    tv.vval.v_string = out;
+
+    res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, &tv, errorformat,
+                      newlist, (linenr_T)0, (linenr_T)0, qf_cmdtitle(*eap->cmdlinep), enc);
+
+    xfree(out);
+  } else {  // Read from 'makeef' file.
+    char *fname = get_mef_name();
+    if (fname == NULL) {
+      goto cleanup;
+    }
+    os_remove(fname);  // in case it's not unique
+
+    char *const cmd = make_get_fullcmd(eap->arg, fname);
+
+    do_shell(cmd, 0);
+
+    res = qf_init_ext(qi, qi->qf_curlist, fname, curbuf, NULL, errorformat,
+                      newlist, (linenr_T)0, (linenr_T)0, qf_cmdtitle(*eap->cmdlinep), enc);
+
+    os_remove(fname);
+    xfree(fname);
+    xfree(cmd);
   }
+
   if (res >= 0) {
     qf_list_changed(qf_get_curlist(qi));
   }
@@ -4340,9 +4374,6 @@ void ex_make(exarg_T *eap)
 
 cleanup:
   decr_quickfix_busy();
-  os_remove(fname);
-  xfree(fname);
-  xfree(cmd);
 }
 
 // Return the name for the errorfile, in allocated memory.
