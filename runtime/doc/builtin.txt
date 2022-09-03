@@ -2510,7 +2510,8 @@ funcref({name} [, {arglist}] [, {dict}])
 				       *function()* *E700* *E922* *E923*
 function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
-		{name} can be a user defined function or an internal function.
+		{name} can be the name of a user defined function or an
+		internal function.
 
 		{name} can also be a Funcref or a partial. When it is a
 		partial the dict stored in it will be used and the {dict}
@@ -2536,6 +2537,18 @@ function({name} [, {arglist}] [, {dict}])
 <		Invokes the function as with: >
 			call Callback('one', 'two', 'name')
 
+<		The function() call can be nested to add more arguments to the
+		Funcref.  The extra arguments are appended to the list of
+		arguments.  Example: >
+			func Callback(arg1, arg2, name)
+			...
+			let Func = function('Callback', ['one'])
+			let Func2 = function(Func, ['two'])
+			...
+			call Func2('name')
+<		Invokes the function as with: >
+			call Callback('one', 'two', 'name')
+
 <		The Dictionary is only useful when calling a "dict" function.
 		In that case the {dict} is passed in as "self". Example: >
 			function Callback() dict
@@ -2546,6 +2559,10 @@ function({name} [, {arglist}] [, {dict}])
 			let Func = function('Callback', context)
 			...
 			call Func()	" will echo: called for example
+<		The use of function() is not needed when there are no extra
+		arguments, these two are equivalent: >
+			let Func = function('Callback', context)
+			let Func = context.Callback
 
 <		The argument list and the Dictionary can be combined: >
 			function Callback(arg1, count) dict
