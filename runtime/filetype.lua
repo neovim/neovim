@@ -6,7 +6,7 @@ vim.g.did_load_filetypes = 1
 
 vim.api.nvim_create_augroup('filetypedetect', { clear = false })
 
-vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
   group = 'filetypedetect',
   callback = function(args)
     local ft, on_detect = vim.filetype.match({ filename = args.match, buf = args.buf })
