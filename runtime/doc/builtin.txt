@@ -2507,7 +2507,7 @@ funcref({name} [, {arglist}] [, {dict}])
 		Can also be used as a |method|: >
 			GetFuncname()->funcref([arg])
 <
-				       *function()* *E700* *E922* *E923*
+				*function()* *partial* *E700* *E922* *E923*
 function({name} [, {arglist}] [, {dict}])
 		Return a |Funcref| variable that refers to function {name}.
 		{name} can be the name of a user defined function or an
@@ -2536,6 +2536,15 @@ function({name} [, {arglist}] [, {dict}])
 			call Partial('name')
 <		Invokes the function as with: >
 			call Callback('one', 'two', 'name')
+
+<		With a |method|: >
+			func Callback(one, two, three)
+			...
+			let Partial = function('Callback', ['two'])
+			...
+			eval 'one'->Partial('three')
+<		Invokes the function as with: >
+			call Callback('one', 'two', 'three')
 
 <		The function() call can be nested to add more arguments to the
 		Funcref.  The extra arguments are appended to the list of
