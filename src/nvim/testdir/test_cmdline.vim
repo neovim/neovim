@@ -1055,6 +1055,18 @@ func Test_cmdline_write_alternatefile()
   bw!
 endfunc
 
+func Test_cmdline_expand_cur_alt_file()
+  enew
+  file http://some.com/file.txt
+  call feedkeys(":e %\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e http://some.com/file.txt', @:)
+  edit another
+  call feedkeys(":e #\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e http://some.com/file.txt', @:)
+  bwipe
+  bwipe http://some.com/file.txt
+endfunc
+
 " using a leading backslash here
 set cpo+=C
 

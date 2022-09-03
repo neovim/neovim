@@ -2106,13 +2106,16 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
   char *exp_pat = (char *)(*pat);
   char *ignored_msg;
   size_t usedlen;
+  const bool is_cur_alt_file = *exp_pat == '%' || *exp_pat == '#';
+  bool star_follows = false;
 
-  if (*exp_pat == '%' || *exp_pat == '#' || *exp_pat == '<') {
+  if (is_cur_alt_file || *exp_pat == '<') {
     emsg_off++;
     eval_pat = eval_vars((char_u *)exp_pat, (char_u *)exp_pat, &usedlen, NULL, &ignored_msg, NULL,
                          true);
     emsg_off--;
     if (eval_pat != NULL) {
+      star_follows = strcmp(exp_pat + usedlen, "*") == 0;
       exp_pat = concat_str((char *)eval_pat, exp_pat + usedlen);
     }
   }
@@ -2122,6 +2125,16 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char ***file, int flags)
   }
 
   if (eval_pat != NULL) {
+    if (*num_file == 0 && is_cur_alt_file && star_follows) {
+      // Expanding "%" or "#" and the file does not exist: Add the
+      // pattern anyway (without the star) so that this works for remote
+      // files and non-file buffer names.
+      *file = xmalloc(sizeof(char *));
+      **file = (char *)eval_pat;
+      eval_pat = NULL;
+      *num_file = 1;
+      ret = OK;
+    }
     xfree(exp_pat);
     xfree(eval_pat);
   }

@@ -642,7 +642,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
           // Check for the next breakpoint at or after the ":while"
           // or ":for".
-          if (breakpoint != NULL) {
+          if (breakpoint != NULL && lines_ga.ga_len > current_line) {
             *breakpoint = dbg_find_breakpoint(getline_equal(fgetline, cookie, getsourceline), fname,
                                               ((wcmd_T *)lines_ga.ga_data)[current_line].lnum - 1);
             *dbg_tick = debug_tick;

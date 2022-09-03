@@ -2015,6 +2015,25 @@ func Test_getmousepos()
   bwipe!
 endfunc
 
+" Test for glob()
+func Test_glob()
+  call assert_equal('', glob(v:_null_string))
+  call assert_equal('', globpath(v:_null_string, v:_null_string))
+
+  call writefile([], 'Xglob1')
+  call writefile([], 'XGLOB2')
+  set wildignorecase
+  " Sort output of glob() otherwise we end up with different
+  " ordering depending on whether file system is case-sensitive.
+  call assert_equal(['XGLOB2', 'Xglob1'], sort(glob('Xglob[12]', 0, 1)))
+  set wildignorecase&
+
+  call delete('Xglob1')
+  call delete('XGLOB2')
+
+  call assert_fails("call glob('*', 0, {})", 'E728:')
+endfunc
+
 func HasDefault(msg = 'msg')
   return a:msg
 endfunc
