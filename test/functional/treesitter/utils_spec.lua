@@ -32,6 +32,8 @@ describe('treesitter utils', function()
   end)
 
   it('can convert a ts range to a vim range', function()
+    if pending_c_parser(pending) then return end
+
     insert([[
       int main() {
         int x = 3;
