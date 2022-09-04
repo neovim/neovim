@@ -9,7 +9,6 @@ module.exports = async ({github, context}) => {
   const reviewers = new Set()
   if (labels.includes('api')) {
     reviewers.add("bfredl")
-    reviewers.add("gpanders")
     reviewers.add("muniter")
   }
 
