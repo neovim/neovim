@@ -579,9 +579,9 @@ describe('treesitter highlighting', function()
     -- expect everything to have Error highlight
     screen:expect{grid=[[
       {12:int}{8: x = INT_MAX;}                                                 |
-      {8:#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))}|
-      {8:#define foo void main() { \}                                      |
-      {8:              return 42;  \}                                      |
+      {8:#define READ_STRING(x, y) (}{12:char_u}{8: *)read_string((x), (}{12:size_t}{8:)(y))}|
+      {8:#define foo }{12:void}{8: main() { \}                                      |
+      {8:              }{12:return}{8: 42;  \}                                      |
       {8:            }}                                                    |
       ^                                                                 |
       {1:~                                                                }|
