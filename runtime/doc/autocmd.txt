@@ -412,6 +412,8 @@ CmdwinLeave			Before leaving the command-line window.
 				|cmdwin-char|
 							*ColorScheme*
 ColorScheme			After loading a color scheme. |:colorscheme|
+				Not triggered if the color scheme is not
+				found.
 				The pattern is matched against the
 				colorscheme name. <afile> can be used for the
 				name of the actual file where this option was

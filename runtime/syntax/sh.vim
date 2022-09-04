@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Jun 29, 2022
-" Version:		202
+" Last Change:		Jul 08, 2022
+" Version:		203
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr) and heredoc fixes from Felipe Contreras
@@ -141,7 +141,7 @@ endif
 syn cluster shArithParenList	contains=shArithmetic,shArithParen,shCaseEsac,shComment,shDeref,shDo,shDerefSimple,shEcho,shEscape,shNumber,shOperator,shPosnParm,shExSingleQuote,shExDoubleQuote,shHereString,shRedir,shSingleQuote,shDoubleQuote,shStatement,shVariable,shAlias,shTest,shCtrlSeq,shSpecial,shParen,bashSpecialVariables,bashStatement,shIf,shFor,shFunctionKey,shFunctionOne,shFunctionTwo
 syn cluster shArithList	contains=@shArithParenList,shParenError
 syn cluster shCaseEsacList	contains=shCaseStart,shCaseLabel,shCase,shCaseBar,shCaseIn,shComment,shDeref,shDerefSimple,shCaseCommandSub,shCaseExSingleQuote,shCaseSingleQuote,shCaseDoubleQuote,shCtrlSeq,@shErrorList,shStringSpecial,shCaseRange
-syn cluster shCaseList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shCommandSubBQ,shComment,shDo,shEcho,shExpr,shFor,shHereDoc,shIf,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq
+syn cluster shCaseList	contains=@shCommandSubList,shCaseEsac,shColon,shCommandSub,shCommandSubBQ,shComment,shDblBrace,shDo,shEcho,shExpr,shFor,shHereDoc,shIf,shHereString,shRedir,shSetList,shSource,shStatement,shVariable,shCtrlSeq
 if exists("b:is_kornshell") || exists("b:is_bash")
  syn cluster shCaseList	add=shForPP
 endif

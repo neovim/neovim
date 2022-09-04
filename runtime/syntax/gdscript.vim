@@ -1,13 +1,14 @@
 " Vim syntax file for Godot gdscript
 " Language:     gdscript
 " Maintainer:   Maxim Kim <habamax@gmail.com>
+" Website:      https://github.com/habamax/vim-gdscript
 " Filenames:    *.gd
 
 if exists("b:current_syntax")
     finish
 endif
 
-let s:keepcpo= &cpo
+let s:keepcpo = &cpo
 set cpo&vim
 
 syntax sync maxlines=100
