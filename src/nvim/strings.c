@@ -180,10 +180,10 @@ char_u *vim_strsave_shellescape(const char_u *string, bool do_special, bool do_n
   int csh_like;
   bool fish_like;
 
-  /* Only csh and similar shells expand '!' within single quotes.  For sh and
-   * the like we must not put a backslash before it, it will be taken
-   * literally.  If do_special is set the '!' will be escaped twice.
-   * Csh also needs to have "\n" escaped twice when do_special is set. */
+  // Only csh and similar shells expand '!' within single quotes.  For sh and
+  // the like we must not put a backslash before it, it will be taken
+  // literally.  If do_special is set the '!' will be escaped twice.
+  // Csh also needs to have "\n" escaped twice when do_special is set.
   csh_like = csh_like_shell();
 
   // Fish shell uses '\' as an escape character within single quotes, so '\'

@@ -82,12 +82,12 @@
 #define FIO_UCSBOM     0x4000  // check for BOM at start of file
 #define FIO_ALL        (-1)    // allow all formats
 
-/* When converting, a read() or write() may leave some bytes to be converted
- * for the next call.  The value is guessed... */
+// When converting, a read() or write() may leave some bytes to be converted
+// for the next call.  The value is guessed...
 #define CONV_RESTLEN 30
 
-/* We have to guess how much a sequence of bytes may expand when converting
- * with iconv() to be able to allocate a buffer. */
+// We have to guess how much a sequence of bytes may expand when converting
+// with iconv() to be able to allocate a buffer.
 #define ICONV_MULT 8
 
 // Structure to pass arguments from buf_write() to buf_write_bytes().
@@ -2091,8 +2091,8 @@ static void check_marks_read(void)
     shada_read_marks();
   }
 
-  /* Always set b_marks_read; needed when 'shada' is changed to include
-   * the ' parameter after opening a buffer. */
+  // Always set b_marks_read; needed when 'shada' is changed to include
+  // the ' parameter after opening a buffer.
   curbuf->b_marks_read = true;
 }
 
@@ -2177,8 +2177,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   int wb_flags = 0;
 #endif
 #ifdef HAVE_ACL
-  vim_acl_T acl = NULL;                 /* ACL copied from original file to
-                                           backup or new file */
+  vim_acl_T acl = NULL;                 // ACL copied from original file to
+                                        // backup or new file
 #endif
   int write_undo_file = false;
   context_sha256_T sha_ctx;
@@ -2190,8 +2190,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     return FAIL;
   }
   if (buf->b_ml.ml_mfp == NULL) {
-    /* This can happen during startup when there is a stray "w" in the
-     * vimrc file. */
+    // This can happen during startup when there is a stray "w" in the
+    // vimrc file.
     emsg(_(e_emptybuf));
     return FAIL;
   }
@@ -2217,8 +2217,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   write_info.bw_iconv_fd = (iconv_t)-1;
 #endif
 
-  /* After writing a file changedtick changes but we don't want to display
-   * the line. */
+  // After writing a file changedtick changes but we don't want to display
+  // the line.
   ex_no_reprint = true;
 
   // If there is no file name yet, use the one for the written file.
@@ -2318,9 +2318,9 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
                                      sfname, sfname, false, curbuf, eap);
       if (did_cmd) {
         if (was_changed && !curbufIsChanged()) {
-          /* Written everything correctly and BufWriteCmd has reset
-           * 'modified': Correct the undo information so that an
-           * undo now sets 'modified'. */
+          // Written everything correctly and BufWriteCmd has reset
+          // 'modified': Correct the undo information so that an
+          // undo now sets 'modified'.
           u_unchanged(curbuf);
           u_update_save_nr(curbuf);
         }
@@ -2371,14 +2371,14 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 
       if (nofile_err
           || aborting()) {
-        /* An aborting error, interrupt or exception in the
-         * autocommands. */
+        // An aborting error, interrupt or exception in the
+        // autocommands.
         return FAIL;
       }
       if (did_cmd) {
         if (buf == NULL) {
-          /* The buffer was deleted.  We assume it was written
-           * (can't retry anyway). */
+          // The buffer was deleted.  We assume it was written
+          // (can't retry anyway).
           return OK;
         }
         if (overwriting) {
@@ -2488,8 +2488,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
         SET_ERRMSG_NUM("E503", _("is not a file or writable device"));
         goto fail;
       }
-      /* It's a device of some kind (or a fifo) which we can write to
-       * but for which we can't make a backup. */
+      // It's a device of some kind (or a fifo) which we can write to
+      // but for which we can't make a backup.
       device = true;
       newfile = true;
       perm = -1;
@@ -2616,8 +2616,8 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
             backup_copy = true;
           }
 #endif
-          /* Close the file before removing it, on MS-Windows we
-           * can't delete an open file. */
+          // Close the file before removing it, on MS-Windows we
+          // can't delete an open file.
           close(fd);
           os_remove((char *)IObuff);
         }
@@ -3433,8 +3433,8 @@ restore_backup:
     set_keep_msg(msg_trunc_attr((char *)IObuff, false, 0), 0);
   }
 
-  /* When written everything correctly: reset 'modified'.  Unless not
-   * writing to the original file and '+' is not in 'cpoptions'. */
+  // When written everything correctly: reset 'modified'.  Unless not
+  // writing to the original file and '+' is not in 'cpoptions'.
   if (reset_changed && whole && !append
       && !write_info.bw_conv_error
       && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
@@ -3815,9 +3815,9 @@ static int buf_write_bytes(struct bw_info *ip)
         if (wlen == 0 && ip->bw_restlen != 0) {
           int l;
 
-          /* Use remainder of previous call.  Append the start of
-           * buf[] to get a full sequence.  Might still be too
-           * short! */
+          // Use remainder of previous call.  Append the start of
+          // buf[] to get a full sequence.  Might still be too
+          // short!
           l = CONV_RESTLEN - ip->bw_restlen;
           if (l > len) {
             l = len;
@@ -3825,9 +3825,9 @@ static int buf_write_bytes(struct bw_info *ip)
           memmove(ip->bw_rest + ip->bw_restlen, buf, (size_t)l);
           n = utf_ptr2len_len(ip->bw_rest, ip->bw_restlen + l);
           if (n > ip->bw_restlen + len) {
-            /* We have an incomplete byte sequence at the end to
-             * be written.  We can't convert it without the
-             * remaining bytes.  Keep them for the next call. */
+            // We have an incomplete byte sequence at the end to
+            // be written.  We can't convert it without the
+            // remaining bytes.  Keep them for the next call.
             if (ip->bw_restlen + len > CONV_RESTLEN) {
               return FAIL;
             }
@@ -3851,9 +3851,9 @@ static int buf_write_bytes(struct bw_info *ip)
         } else {
           n = utf_ptr2len_len(buf + wlen, len - wlen);
           if (n > len - wlen) {
-            /* We have an incomplete byte sequence at the end to
-             * be written.  We can't convert it without the
-             * remaining bytes.  Keep them for the next call. */
+            // We have an incomplete byte sequence at the end to
+            // be written.  We can't convert it without the
+            // remaining bytes.  Keep them for the next call.
             if (len - wlen > CONV_RESTLEN) {
               return FAIL;
             }
@@ -3896,9 +3896,9 @@ static int buf_write_bytes(struct bw_info *ip)
       if (ip->bw_restlen > 0) {
         char *fp;
 
-        /* Need to concatenate the remainder of the previous call and
-         * the bytes of the current call.  Use the end of the
-         * conversion buffer for this. */
+        // Need to concatenate the remainder of the previous call and
+        // the bytes of the current call.  Use the end of the
+        // conversion buffer for this.
         fromlen = (size_t)len + (size_t)ip->bw_restlen;
         fp = (char *)ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
         memmove(fp, ip->bw_rest, (size_t)ip->bw_restlen);
@@ -3918,9 +3918,8 @@ static int buf_write_bytes(struct bw_info *ip)
         // output the initial shift state sequence
         (void)iconv(ip->bw_iconv_fd, NULL, NULL, &to, &tolen);
 
-        /* There is a bug in iconv() on Linux (which appears to be
-         * wide-spread) which sets "to" to NULL and messes up "tolen".
-         */
+        // There is a bug in iconv() on Linux (which appears to be
+        // wide-spread) which sets "to" to NULL and messes up "tolen".
         if (to == NULL) {
           to = (char *)ip->bw_conv_buf;
           tolen = save_len;
@@ -3984,8 +3983,8 @@ static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
   } else if (flags & (FIO_UCS2 | FIO_UTF16)) {
     if (c >= 0x10000) {
       if (flags & FIO_UTF16) {
-        /* Make two words, ten bits of the character in each.  First
-         * word is 0xd800 - 0xdbff, second one 0xdc00 - 0xdfff */
+        // Make two words, ten bits of the character in each.  First
+        // word is 0xd800 - 0xdbff, second one 0xdc00 - 0xdfff
         c -= 0x10000;
         if (c >= 0x100000) {
           error = true;

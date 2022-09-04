@@ -681,9 +681,9 @@ void op_reindent(oparg_T *oap, Indenter how)
   curwin->w_cursor.lnum = start_lnum;
   beginline(BL_SOL | BL_FIX);
 
-  /* Mark changed lines so that they will be redrawn.  When Visual
-   * highlighting was present, need to continue until the last line.  When
-   * there is no change still need to remove the Visual highlighting. */
+  // Mark changed lines so that they will be redrawn.  When Visual
+  // highlighting was present, need to continue until the last line.  When
+  // there is no change still need to remove the Visual highlighting.
   if (last_changed != 0) {
     changed_lines(first_changed, 0,
                   oap->is_VIsual ? start_lnum + (linenr_T)oap->line_count :
@@ -748,12 +748,12 @@ char_u *get_expr_line(void)
     return NULL;
   }
 
-  /* Make a copy of the expression, because evaluating it may cause it to be
-   * changed. */
+  // Make a copy of the expression, because evaluating it may cause it to be
+  // changed.
   expr_copy = vim_strsave(expr_line);
 
-  /* When we are invoked recursively limit the evaluation to 10 levels.
-   * Then return the string as-is. */
+  // When we are invoked recursively limit the evaluation to 10 levels.
+  // Then return the string as-is.
   if (nested >= 10) {
     return expr_copy;
   }
@@ -1431,8 +1431,8 @@ bool cmdline_paste_reg(int regname, bool literally_arg, bool remcr)
       cmdline_paste_str((char_u *)"\r", literally);
     }
 
-    /* Check for CTRL-C, in case someone tries to paste a few thousand
-     * lines and gets bored. */
+    // Check for CTRL-C, in case someone tries to paste a few thousand
+    // lines and gets bored.
     os_breakcheck();
     if (got_int) {
       return FAIL;
@@ -2677,8 +2677,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         if (virtual_op) {
           getvcol(curwin, &oap->start, &cs, NULL, &ce);
           if (ce != cs && oap->start.coladd > 0) {
-            /* Part of a tab selected -- but don't
-             * double-count it. */
+            // Part of a tab selected -- but don't double-count it.
             bd.startspaces = (ce - cs + 1)
                              - oap->start.coladd;
             startcol++;
@@ -3043,9 +3042,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   if (insert_string != NULL) {
     y_type = kMTCharWise;
     if (regname == '=') {
-      /* For the = register we need to split the string at NL
-       * characters.
-       * Loop twice: count the number of lines and save them. */
+      // For the = register we need to split the string at NL
+      // characters.
+      // Loop twice: count the number of lines and save them.
       for (;;) {
         y_size = 0;
         ptr = insert_string;
@@ -3285,9 +3284,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         delcount = 1;
         bd.textcol -= utf_head_off(oldp, oldp + bd.textcol);
         if (oldp[bd.textcol] != TAB) {
-          /* Only a Tab can be split into spaces.  Other
-           * characters will have to be moved to after the
-           * block, causing misalignment. */
+          // Only a Tab can be split into spaces.  Other
+          // characters will have to be moved to after the
+          // block, causing misalignment.
           delcount = 0;
           bd.endspaces = 0;
         }

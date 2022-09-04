@@ -1994,7 +1994,7 @@ static void spell_print_tree(wordnode_T *root)
   }
 }
 
-#endif // SPELL_PRINTTREE
+#endif  // SPELL_PRINTTREE
 
 // Reads the affix file "fname".
 // Returns an afffile_T, NULL for complete failure.

@@ -989,4 +989,4 @@ typedef struct {
   uint64_t channel_id;     /// Only used when script_id is SID_API_CLIENT.
 } LastSet;
 
-#endif // NVIM_OPTION_DEFS_H
+#endif  // NVIM_OPTION_DEFS_H

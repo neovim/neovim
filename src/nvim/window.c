@@ -2048,7 +2048,7 @@ static int get_maximum_wincount(frame_T *fr, int height)
 }
 
 /// Make all windows the same height.
-///'next_curwin' will soon be the current window, make sure it has enough rows.
+/// 'next_curwin' will soon be the current window, make sure it has enough rows.
 ///
 /// @param next_curwin  pointer to current window to be or NULL
 /// @param current  do only frame with current window
@@ -5524,7 +5524,7 @@ static void frame_setheight(frame_T *curfrp, int height)
       }
       frame_setheight(curfrp->fr_parent, height
                       + frame_minheight(curfrp->fr_parent, NOWIN) - (int)p_wmh - 1);
-      //NOTREACHED
+      // NOTREACHED
     }
 
     // Compute the number of lines we will take from others frames (can be

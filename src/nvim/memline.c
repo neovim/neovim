@@ -1161,7 +1161,7 @@ theend:
     }
     mf_close(mfp, false);           // will also xfree(mfp->mf_fname)
   }
-  if (buf != NULL) {  //may be NULL if swap file not found.
+  if (buf != NULL) {  // may be NULL if swap file not found.
     xfree(buf->b_ml.ml_stack);
     xfree(buf);
   }
