@@ -1644,6 +1644,7 @@ function lsp.buf_attach_client(bufnr, client_id)
           if vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
             client.notify('textDocument/didClose', params)
           end
+          client.attached_buffers[bufnr] = nil
         end)
         util.buf_versions[bufnr] = nil
         all_buffer_active_clients[bufnr] = nil
