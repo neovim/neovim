@@ -5,7 +5,6 @@ local clear = helpers.clear
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local pending_c_parser = helpers.pending_c_parser
 local command = helpers.command
 local meths = helpers.meths
 local eq = helpers.eq
@@ -111,8 +110,6 @@ describe('treesitter highlighting', function()
   end)
 
   it('is updated with edits', function()
-    if pending_c_parser(pending) then return end
-
     insert(hl_text)
     screen:expect{grid=[[
       /// Schedule Lua callback on main loop's event queue             |
@@ -276,8 +273,6 @@ describe('treesitter highlighting', function()
   end)
 
   it('is updated with :sort', function()
-    if pending_c_parser(pending) then return end
-
     insert(test_text)
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c")
@@ -351,8 +346,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports with custom parser", function()
-    if pending_c_parser(pending) then return end
-
     screen:set_default_attr_ids {
       [1] = {bold = true, foreground = Screen.colors.SeaGreen4};
     }
@@ -417,8 +410,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports injected languages", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     int x = INT_MAX;
     #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
@@ -479,8 +470,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports overriding queries, like ", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     int x = INT_MAX;
     #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
@@ -520,8 +509,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports highlighting with custom highlight groups", function()
-    if pending_c_parser(pending) then return end
-
     insert(hl_text)
 
     exec_lua [[
@@ -577,8 +564,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports highlighting with priority", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     int x = INT_MAX;
     #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
@@ -625,8 +610,6 @@ describe('treesitter highlighting', function()
     end)
 
   it("allows to use captures with dots (don't use fallback when specialization of foo exists)", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     char* x = "Will somebody ever read this?";
     ]])
@@ -708,7 +691,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports conceal attribute", function()
-    if pending_c_parser(pending) then return end
     insert(hl_text)
 
     -- conceal can be empty or a single cchar.

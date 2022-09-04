@@ -4,7 +4,6 @@ local clear = helpers.clear
 local insert = helpers.insert
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
-local pending_c_parser = helpers.pending_c_parser
 
 before_each(clear)
 
@@ -12,7 +11,6 @@ describe('treesitter utils', function()
   before_each(clear)
 
   it('can find an ancestor', function()
-    if pending_c_parser(pending) then return end
 
     insert([[
       int main() {
