@@ -293,7 +293,8 @@ static uint8_t check_multiclick(int code, int grid, int row, int col)
       || code == KE_MOUSEDOWN
       || code == KE_MOUSEUP
       || code == KE_MOUSELEFT
-      || code == KE_MOUSERIGHT) {
+      || code == KE_MOUSERIGHT
+      || code == KE_MOUSEMOVE) {
     return 0;
   }
   uint64_t mouse_time = os_hrtime();    // time of current mouse click (ns)
@@ -347,7 +348,8 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf, unsigned int bu
 
   if (type != KS_EXTRA
       || !((mouse_code >= KE_LEFTMOUSE && mouse_code <= KE_RIGHTRELEASE)
-           || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT))) {
+           || (mouse_code >= KE_MOUSEDOWN && mouse_code <= KE_MOUSERIGHT)
+           || mouse_code == KE_MOUSEMOVE)) {
     return bufsize;
   }
 

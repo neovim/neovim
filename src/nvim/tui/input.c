@@ -406,8 +406,8 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     }
   }
 
-  if (button == 0 || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG
-                      && ev != TERMKEY_MOUSE_RELEASE)) {
+  if ((button == 0 && ev != TERMKEY_MOUSE_RELEASE)
+      || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG && ev != TERMKEY_MOUSE_RELEASE)) {
     return;
   }
 
@@ -453,7 +453,8 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Drag");
     break;
   case TERMKEY_MOUSE_RELEASE:
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "Release");
+    len += (size_t)snprintf(buf + len, sizeof(buf) - len, button ? "Release" : "MouseMove");
+    last_pressed_button = 0;
     break;
   case TERMKEY_MOUSE_UNKNOWN:
     abort();

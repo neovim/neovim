@@ -4231,6 +4231,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The 'mousemodel' option is set by the |:behave| command.
 
+						*'mousemoveevent'* *'mousemev'*
+'mousemoveevent' 'mousemev'  boolean	(default off)
+			global
+	When on, mouse move events are delivered to the input queue and are
+	available for mapping. The default, off, avoids the mouse movement
+	overhead except when needed.
+	Warning: Setting this option can make pending mappings to be aborted
+	when the mouse is moved.
+
 						*'mousescroll'*
 'mousescroll'		string	(default "ver:3,hor:6")
 			global

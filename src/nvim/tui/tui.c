@@ -103,6 +103,7 @@ struct TUIData {
   bool immediate_wrap_after_last_column;
   bool bce;
   bool mouse_enabled;
+  bool mouse_move_enabled;
   bool busy, is_invisible, want_invisible;
   bool cork, overflow;
   bool cursor_color_changed;
@@ -117,6 +118,7 @@ struct TUIData {
   ModeShape showing_mode;
   struct {
     int enable_mouse, disable_mouse;
+    int enable_mouse_move, disable_mouse_move;
     int enable_bracketed_paste, disable_bracketed_paste;
     int enable_lr_margin, disable_lr_margin;
     int enter_strikethrough_mode;
@@ -236,6 +238,8 @@ static void terminfo_start(UI *ui)
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
+  data->unibi_ext.enable_mouse_move = -1;
+  data->unibi_ext.disable_mouse_move = -1;
   data->unibi_ext.set_cursor_color = -1;
   data->unibi_ext.reset_cursor_color = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
@@ -1138,6 +1142,9 @@ static void tui_mouse_on(UI *ui)
   TUIData *data = ui->data;
   if (!data->mouse_enabled) {
     unibi_out_ext(ui, data->unibi_ext.enable_mouse);
+    if (data->mouse_move_enabled) {
+      unibi_out_ext(ui, data->unibi_ext.enable_mouse_move);
+    }
     data->mouse_enabled = true;
   }
 }
@@ -1146,6 +1153,9 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   if (data->mouse_enabled) {
+    if (data->mouse_move_enabled) {
+      unibi_out_ext(ui, data->unibi_ext.disable_mouse_move);
+    }
     unibi_out_ext(ui, data->unibi_ext.disable_mouse);
     data->mouse_enabled = false;
   }
@@ -1457,9 +1467,18 @@ static void tui_screenshot(UI *ui, String path)
 static void tui_option_set(UI *ui, String name, Object value)
 {
   TUIData *data = ui->data;
-  if (strequal(name.data, "termguicolors")) {
+  if (strequal(name.data, "mousemoveevent")) {
+    if (data->mouse_move_enabled != value.data.boolean) {
+      if (data->mouse_enabled) {
+        tui_mouse_off(ui);
+        data->mouse_move_enabled = value.data.boolean;
+        tui_mouse_on(ui);
+      } else {
+        data->mouse_move_enabled = value.data.boolean;
+      }
+    }
+  } else if (strequal(name.data, "termguicolors")) {
     ui->rgb = value.data.boolean;
-
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
   } else if (strequal(name.data, "ttimeout")) {
@@ -2135,6 +2154,10 @@ static void augment_terminfo(TUIData *data, const char *term, long vte_version, 
                                                         "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, "ext.disable_mouse",
                                                          "\x1b[?1002l\x1b[?1006l");
+  data->unibi_ext.enable_mouse_move = (int)unibi_add_ext_str(ut, "ext.enable_mouse_move",
+                                                             "\x1b[?1003h");
+  data->unibi_ext.disable_mouse_move = (int)unibi_add_ext_str(ut, "ext.disable_mouse_move",
+                                                              "\x1b[?1003l");
 
   // Extended underline.
   // terminfo will have Smulx for this (but no support for colors yet).

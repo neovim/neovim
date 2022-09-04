@@ -1622,6 +1622,14 @@ return {
       defaults={if_true="popup_setpos"}
     },
     {
+      full_name='mousemoveevent', abbreviation='mousemev',
+      short_desc=N_("deliver mouse move events to input queue"),
+      type='bool', scope={'global'},
+      redraw={'ui_option'},
+      varname='p_mousemev',
+      defaults={if_true=false}
+    },
+    {
       full_name='mousescroll',
       short_desc=N_("amount to scroll by when scrolling with a mouse"),
       type='string', list='comma', scope={'global'},

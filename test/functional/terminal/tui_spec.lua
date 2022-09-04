@@ -21,6 +21,7 @@ local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
 local funcs = helpers.funcs
+local meths = helpers.meths
 
 if helpers.pending_win32(pending) then return end
 
@@ -664,6 +665,57 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]], attrs)
+  end)
+
+  it('mouse events work with right-click menu', function()
+    child_session:request('nvim_command', [[
+      call setline(1, 'popup menu test')
+      set mouse=a mousemodel=popup
+
+      aunmenu PopUp
+      menu PopUp.foo :let g:menustr = 'foo'<CR>
+      menu PopUp.bar :let g:menustr = 'bar'<CR>
+      menu PopUp.baz :let g:menustr = 'baz'<CR>
+      highlight Pmenu ctermbg=NONE ctermfg=NONE cterm=underline,reverse
+      highlight PmenuSel ctermbg=NONE ctermfg=NONE cterm=underline,reverse,bold
+    ]])
+    local attrs = screen:get_default_attr_ids()
+    attrs[11] = {underline = true, reverse = true}
+    attrs[12] = {underline = true, reverse = true, bold = true}
+    meths.input_mouse('right', 'press', '', 0, 0, 4)
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{11: foo }{4:                                          }|
+      {4:~  }{11: bar }{4:                                          }|
+      {4:~  }{11: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    meths.input_mouse('right', 'release', '', 0, 0, 4)
+    screen:expect_unchanged()
+    meths.input_mouse('move', '', '', 0, 3, 6)
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~  }{11: foo }{4:                                          }|
+      {4:~  }{11: bar }{4:                                          }|
+      {4:~  }{12: baz }{4:                                          }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    meths.input_mouse('left', 'press', '', 0, 2, 6)
+    screen:expect([[
+      {1:p}opup menu test                                   |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      :let g:menustr = 'bar'                            |
+      {3:-- TERMINAL --}                                    |
+    ]], attrs)
+    meths.input_mouse('left', 'release', '', 0, 2, 6)
+    screen:expect_unchanged()
   end)
 
   it('paste: Insert mode', function()
