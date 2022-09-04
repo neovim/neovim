@@ -205,8 +205,8 @@ set(GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47
 set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz)
 set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
 
-set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.20.1.tar.gz)
-set(TREESITTER_C_SHA256 ffcc2ef0eded59ad1acec9aec4f9b0c7dd209fc1a85d85f8b0e81298e3dddcc2)
+set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/v0.20.2.tar.gz)
+set(TREESITTER_C_SHA256 af66fde03feb0df4faf03750102a0d265b007e5d957057b6b293c13116a70af2 )
 
 set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/v0.20.7.tar.gz)
 set(TREESITTER_SHA256 b355e968ec2d0241bbd96748e00a9038f83968f85d822ecb9940cbe4c42e182e)
