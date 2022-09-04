@@ -27,3 +27,4 @@ endfunction()
 
 BuildTSParser(c ${TREESITTER_C_URL} ${TREESITTER_C_SHA256} TreesitterParserCMakeLists.txt)
 BuildTSParser(lua ${TREESITTER_LUA_URL} ${TREESITTER_LUA_SHA256} TreesitterParserCMakeLists.txt)
+BuildTSParser(vim ${TREESITTER_VIM_URL} ${TREESITTER_VIM_SHA256} TreesitterParserCMakeLists.txt)
