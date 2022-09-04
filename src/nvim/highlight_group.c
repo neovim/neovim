@@ -186,7 +186,6 @@ static const char *highlight_init_both[] = {
   "default link DiagnosticSignInfo DiagnosticInfo",
   "default link DiagnosticSignHint DiagnosticHint",
 
-  "default link @error Error",
   "default link @text.underline Underlined",
   "default link @todo Todo",
   "default link @debug Debug",

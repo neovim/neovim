@@ -106,6 +106,7 @@ describe('treesitter highlighting', function()
     }
 
     exec_lua([[ hl_query = ... ]], hl_query)
+    command [[ hi link @error ErrorMsg ]]
     command [[ hi link @warning WarningMsg ]]
   end)
 
