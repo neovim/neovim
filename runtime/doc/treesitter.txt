@@ -460,7 +460,8 @@ highlight_node({bufnr}, {node}, {ns}, {hlgroup})            *highlight_node()*
         {ns}       (number) The namespace id
         {hlgroup}  (string) The highlight group name
 
-highlight_range({bufnr}, {range}, {ns}, {hlgroup})         *highlight_range()*
+                                                           *highlight_range()*
+highlight_range({bufnr}, {range}, {ns}, {hlgroup}, {opts})
     Highlights the given range
 
     Parameters: ~
@@ -468,6 +469,7 @@ highlight_range({bufnr}, {range}, {ns}, {hlgroup})         *highlight_range()*
         {range}    (table) The treesitter range to highlight
         {ns}       (number) The namespace id
         {hlgroup}  (string) The highlight group name
+        {opts}     (table) Options to pass to |vim.highlight.range()|
 
 is_ancestor({dest}, {source})                                  *is_ancestor()*
     Determines whether a node is the ancestor of another
