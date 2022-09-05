@@ -177,8 +177,7 @@ end
 ---
 ---     - async boolean|nil
 ---         If true the method won't block. Defaults to false.
----         Editing the buffer while formatting asynchronous can lead to unexpected
----         changes.
+---         Editing the buffer while formatting asynchronous will invalidate the formatting result.
 ---
 ---     - id (number|nil):
 ---         Restrict formatting to the client with ID (client.id) matching this field.
@@ -188,6 +187,7 @@ end
 function M.format(options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
+  local undotime = vim.fn.getbufinfo(bufnr)[1].undotimecurrent
   local clients = vim.lsp.get_active_clients({
     id = options.id,
     bufnr = bufnr,
@@ -213,10 +213,19 @@ function M.format(options)
         return
       end
       local params = util.make_formatting_params(options.formatting_options)
-      client.request('textDocument/formatting', params, function(...)
+      client.request('textDocument/formatting', params, function(err, result, ctx, config)
         local handler = client.handlers['textDocument/formatting']
           or vim.lsp.handlers['textDocument/formatting']
-        handler(...)
+
+        if undotime ~= vim.fn.getbufinfo(bufnr)[1].undotimecurrent then
+          vim.notify(
+            '[LSP] Format request aborted, buffer content has changed.',
+            vim.log.levels.WARN
+          )
+          return
+        end
+        handler(err, result, ctx, config)
+        undotime = vim.fn.getbufinfo(bufnr)[1].undotimecurrent
         do_format(next(clients, idx))
       end, bufnr)
     end

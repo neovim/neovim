@@ -2663,6 +2663,9 @@ getbufinfo([{dict}])
 			lastused	Timestamp in seconds, like
 					|localtime()|, when the buffer was
 					last used.
+			undotimecurrent	Timestamp in seconds, like
+					|localtime()|, when the last  change
+					was made to the buffer.
 			listed		TRUE if the buffer is listed.
 			lnum		Line number used for the buffer when
 					opened in the current window.

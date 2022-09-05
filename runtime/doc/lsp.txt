@@ -1131,7 +1131,7 @@ format({options})                                       *vim.lsp.buf.format()*
 <
                    • async boolean|nil If true the method won't block.
                      Defaults to false. Editing the buffer while formatting
-                     asynchronous can lead to unexpected changes.
+                     asynchronous will invalidate the formatting result.
                    • id (number|nil): Restrict formatting to the client with
                      ID (client.id) matching this field.
                    • name (string|nil): Restrict formatting to the client with
