@@ -10,7 +10,7 @@ low-risk/isolated tasks:
 - Try a [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
-- [Improve documentation][wiki-contribute-help]
+- [Improve documentation](#documenting)
 - [Merge a Vim patch] (familiarity with Vim is *strongly* recommended)
 
 Reporting problems
