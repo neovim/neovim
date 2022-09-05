@@ -32,9 +32,11 @@ setmetatable(M, {
 ---
 --- It is not recommended to use this, use vim.treesitter.get_parser() instead.
 ---
----@param bufnr The buffer the parser will be tied to
----@param lang The language of the parser
----@param opts Options to pass to the created language tree
+---@param bufnr string Buffer the parser will be tied to (0 for current buffer)
+---@param lang string Language of the parser
+---@param opts table|nil Options to pass to the created language tree
+---
+---@returns table Created parser object
 function M._create_parser(bufnr, lang, opts)
   language.require_language(lang)
   if bufnr == 0 then
@@ -79,11 +81,11 @@ end
 --- If needed this will create the parser.
 --- Unconditionally attach the provided callback
 ---
----@param bufnr The buffer the parser should be tied to
----@param lang The filetype of this parser
----@param opts Options object to pass to the created language tree
+---@param bufnr number|nil Buffer the parser should be tied to: (default current buffer)
+---@param lang string |nil Filetype of this parser (default: buffer filetype)
+---@param opts table|nil Options to pass to the created language tree
 ---
----@returns The parser
+---@returns table Parser object
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
@@ -120,8 +122,8 @@ end
 
 --- Determines whether a node is the ancestor of another
 ---
----@param dest table the possible ancestor
----@param source table the possible descendant node
+---@param dest table Possible ancestor
+---@param source table Possible descendant node
 ---
 ---@returns (boolean) True if dest is an ancestor of source
 function M.is_ancestor(dest, source)
@@ -156,9 +158,11 @@ end
 
 ---Determines whether (line, col) position is in node range
 ---
----@param node Node defining the range
----@param line A line (0-based)
----@param col A column (0-based)
+---@param node table Node defining the range
+---@param line number Line (0-based)
+---@param col number Column (0-based)
+---
+---@returns (boolean) True if the position is in node range
 function M.is_in_node_range(node, line, col)
   local start_line, start_col, end_line, end_col = M.get_node_range(node)
   if line >= start_line and line <= end_line then
@@ -177,8 +181,8 @@ function M.is_in_node_range(node, line, col)
 end
 
 ---Determines if a node contains a range
----@param node table The node
----@param range table The range
+---@param node table
+---@param range table
 ---
 ---@returns (boolean) True if the node contains the range
 function M.node_contains(node, range)
@@ -190,9 +194,9 @@ function M.node_contains(node, range)
 end
 
 ---Gets a list of captures for a given cursor position
----@param bufnr number The buffer number
----@param row number The position row
----@param col number The position column
+---@param bufnr number Buffer number (0 for current buffer)
+---@param row number Position row
+---@param col number Position column
 ---
 ---@returns (table) A table of captures
 function M.get_captures_at_position(bufnr, row, col)
@@ -239,6 +243,54 @@ function M.get_captures_at_position(bufnr, row, col)
     end
   end, true)
   return matches
+end
+
+--- Start treesitter highlighting for a buffer
+---
+--- Can be used in an ftplugin or FileType autocommand
+---
+--- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
+--- In this case, add `{ syntax = true }`.
+---
+--- Example:
+---
+--- <pre>
+--- vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
+---     callback = function(args)
+---         vim.treesitter.start(args.buf, 'latex', { syntax = true })
+---     end
+--- })
+--- </pre>
+---
+---@param bufnr number|nil Buffer to be highlighted (default: current buffer)
+---@param lang string|nil Language of the parser (default: buffer filetype)
+---@param opts table|nil Optional keyword arguments:
+---             - `syntax` boolean Run regex syntax highlighting (default false)
+function M.start(bufnr, lang, opts)
+  bufnr = bufnr or a.nvim_get_current_buf()
+
+  local parser = M.get_parser(bufnr, lang)
+
+  M.highlighter.new(parser)
+
+  vim.b[bufnr].ts_highlight = true
+
+  if opts and opts.syntax then
+    vim.bo[bufnr].syntax = 'on'
+  end
+end
+
+---Stop treesitter highlighting for a buffer
+---
+---@param bufnr number|nil Buffer to stop highlighting (default: current buffer)
+function M.stop(bufnr)
+  bufnr = bufnr or a.nvim_get_current_buf()
+
+  if M.highlighter.active[bufnr] then
+    M.highlighter.active[bufnr]:destroy()
+  end
+
+  vim.bo[bufnr].syntax = 'on'
 end
 
 return M
