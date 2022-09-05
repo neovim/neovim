@@ -79,11 +79,12 @@ void alist_expand(int *fnum_list, int fnum_len)
 {
   char *save_p_su = p_su;
 
+  char **old_arg_files = xmalloc(sizeof(*old_arg_files) * GARGCOUNT);
+
   // Don't use 'suffixes' here.  This should work like the shell did the
   // expansion.  Also, the vimrc file isn't read yet, thus the user
   // can't set the options.
   p_su = empty_option;
-  char **old_arg_files = xmalloc(sizeof(*old_arg_files) * GARGCOUNT);
   for (int i = 0; i < GARGCOUNT; i++) {
     old_arg_files[i] = vim_strsave(GARGLIST[i].ae_fname);
   }
@@ -308,6 +309,50 @@ static void alist_add_list(int count, char **files, int after, bool will_edit)
   }
 }
 
+/// Delete the file names in "alist_ga" from the argument list.
+static void arglist_del_files(garray_T *alist_ga)
+{
+  regmatch_T regmatch;
+
+  // Delete the items: use each item as a regexp and find a match in the
+  // argument list.
+  regmatch.rm_ic = p_fic;     // ignore case when 'fileignorecase' is set
+  for (int i = 0; i < alist_ga->ga_len && !got_int; i++) {
+    char *p = ((char **)alist_ga->ga_data)[i];
+    p = file_pat_to_reg_pat(p, NULL, NULL, false);
+    if (p == NULL) {
+      break;
+    }
+    regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
+    if (regmatch.regprog == NULL) {
+      xfree(p);
+      break;
+    }
+
+    bool didone = false;
+    for (int match = 0; match < ARGCOUNT; match++) {
+      if (vim_regexec(&regmatch, alist_name(&ARGLIST[match]), (colnr_T)0)) {
+        didone = true;
+        xfree(ARGLIST[match].ae_fname);
+        memmove(ARGLIST + match, ARGLIST + match + 1,
+                (size_t)(ARGCOUNT - match - 1) * sizeof(aentry_T));
+        ALIST(curwin)->al_ga.ga_len--;
+        if (curwin->w_arg_idx > match) {
+          curwin->w_arg_idx--;
+        }
+        match--;
+      }
+    }
+
+    vim_regfree(regmatch.regprog);
+    xfree(p);
+    if (!didone) {
+      semsg(_(e_nomatch2), ((char **)alist_ga->ga_data)[i]);
+    }
+  }
+  ga_clear(alist_ga);
+}
+
 /// @param str
 /// @param what
 ///         AL_SET: Redefine the argument list to 'str'.
@@ -324,8 +369,6 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
   garray_T new_ga;
   int exp_count;
   char **exp_files;
-  char *p;
-  int match;
   int arg_escaped = true;
 
   // Set default argument for ":argadd" command.
@@ -341,46 +384,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
   get_arglist(&new_ga, str, arg_escaped);
 
   if (what == AL_DEL) {
-    regmatch_T regmatch;
-    bool didone;
-
-    // Delete the items: use each item as a regexp and find a match in the
-    // argument list.
-    regmatch.rm_ic = p_fic;     // ignore case when 'fileignorecase' is set
-    for (int i = 0; i < new_ga.ga_len && !got_int; i++) {
-      p = ((char **)new_ga.ga_data)[i];
-      p = file_pat_to_reg_pat(p, NULL, NULL, false);
-      if (p == NULL) {
-        break;
-      }
-      regmatch.regprog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
-      if (regmatch.regprog == NULL) {
-        xfree(p);
-        break;
-      }
-
-      didone = false;
-      for (match = 0; match < ARGCOUNT; match++) {
-        if (vim_regexec(&regmatch, alist_name(&ARGLIST[match]), (colnr_T)0)) {
-          didone = true;
-          xfree(ARGLIST[match].ae_fname);
-          memmove(ARGLIST + match, ARGLIST + match + 1,
-                  (size_t)(ARGCOUNT - match - 1) * sizeof(aentry_T));
-          ALIST(curwin)->al_ga.ga_len--;
-          if (curwin->w_arg_idx > match) {
-            curwin->w_arg_idx--;
-          }
-          match--;
-        }
-      }
-
-      vim_regfree(regmatch.regprog);
-      xfree(p);
-      if (!didone) {
-        semsg(_(e_nomatch2), ((char **)new_ga.ga_data)[i]);
-      }
-    }
-    ga_clear(&new_ga);
+    arglist_del_files(&new_ga);
   } else {
     int i = expand_wildcards(new_ga.ga_len, new_ga.ga_data,
                              &exp_count, &exp_files,
@@ -471,22 +475,27 @@ void ex_args(exarg_T *eap)
     ex_next(eap);
   } else if (eap->cmdidx == CMD_args) {
     // ":args": list arguments.
-    if (ARGCOUNT > 0) {
-      char **items = xmalloc(sizeof(char *) * (size_t)ARGCOUNT);
-      // Overwrite the command, for a short list there is no scrolling
-      // required and no wait_return().
-      gotocmdline(true);
-      for (int i = 0; i < ARGCOUNT; i++) {
-        items[i] = alist_name(&ARGLIST[i]);
-      }
-      list_in_columns(items, ARGCOUNT, curwin->w_arg_idx);
-      xfree(items);
+    if (ARGCOUNT <= 0) {
+      return;
     }
+
+    char **items = xmalloc(sizeof(char *) * (size_t)ARGCOUNT);
+
+    // Overwrite the command, for a short list there is no scrolling
+    // required and no wait_return().
+    gotocmdline(true);
+
+    for (int i = 0; i < ARGCOUNT; i++) {
+      items[i] = alist_name(&ARGLIST[i]);
+    }
+    list_in_columns(items, ARGCOUNT, curwin->w_arg_idx);
+    xfree(items);
   } else if (eap->cmdidx == CMD_arglocal) {
     garray_T *gap = &curwin->w_alist->al_ga;
 
     // ":argslocal": make a local copy of the global argument list.
     ga_grow(gap, GARGCOUNT);
+
     for (int i = 0; i < GARGCOUNT; i++) {
       if (GARGLIST[i].ae_fname != NULL) {
         AARGLIST(curwin->w_alist)[gap->ga_len].ae_fname = xstrdup(GARGLIST[i].ae_fname);
@@ -1126,31 +1135,33 @@ void f_argv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   aentry_T *arglist = NULL;
   int argcount = -1;
 
-  if (argvars[0].v_type != VAR_UNKNOWN) {
-    if (argvars[1].v_type == VAR_UNKNOWN) {
-      arglist = ARGLIST;
-      argcount = ARGCOUNT;
-    } else if (argvars[1].v_type == VAR_NUMBER
-               && tv_get_number(&argvars[1]) == -1) {
-      arglist = GARGLIST;
-      argcount = GARGCOUNT;
-    } else {
-      win_T *wp = find_win_by_nr_or_id(&argvars[1]);
-      if (wp != NULL) {
-        // Use the argument list of the specified window
-        arglist = WARGLIST(wp);
-        argcount = WARGCOUNT(wp);
-      }
-    }
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
-    int idx = (int)tv_get_number_chk(&argvars[0], NULL);
-    if (arglist != NULL && idx >= 0 && idx < argcount) {
-      rettv->vval.v_string = xstrdup((const char *)alist_name(&arglist[idx]));
-    } else if (idx == -1) {
-      get_arglist_as_rettv(arglist, argcount, rettv);
-    }
-  } else {
+  if (argvars[0].v_type == VAR_UNKNOWN) {
     get_arglist_as_rettv(ARGLIST, ARGCOUNT, rettv);
+    return;
+  }
+
+  if (argvars[1].v_type == VAR_UNKNOWN) {
+    arglist = ARGLIST;
+    argcount = ARGCOUNT;
+  } else if (argvars[1].v_type == VAR_NUMBER
+             && tv_get_number(&argvars[1]) == -1) {
+    arglist = GARGLIST;
+    argcount = GARGCOUNT;
+  } else {
+    win_T *wp = find_win_by_nr_or_id(&argvars[1]);
+    if (wp != NULL) {
+      // Use the argument list of the specified window
+      arglist = WARGLIST(wp);
+      argcount = WARGCOUNT(wp);
+    }
+  }
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  int idx = (int)tv_get_number_chk(&argvars[0], NULL);
+  if (arglist != NULL && idx >= 0 && idx < argcount) {
+    rettv->vval.v_string = xstrdup((const char *)alist_name(&arglist[idx]));
+  } else if (idx == -1) {
+    get_arglist_as_rettv(arglist, argcount, rettv);
   }
 }

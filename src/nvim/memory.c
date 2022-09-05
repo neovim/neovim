@@ -506,16 +506,18 @@ bool striequal(const char *a, const char *b)
 // Did_outofmem_msg is reset when a character is read.
 void do_outofmem_msg(size_t size)
 {
-  if (!did_outofmem_msg) {
-    // Don't hide this message
-    emsg_silent = 0;
-
-    /* Must come first to avoid coming back here when printing the error
-     * message fails, e.g. when setting v:errmsg. */
-    did_outofmem_msg = true;
-
-    semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
+  if (did_outofmem_msg) {
+    return;
   }
+
+  // Don't hide this message
+  emsg_silent = 0;
+
+  // Must come first to avoid coming back here when printing the error
+  // message fails, e.g. when setting v:errmsg.
+  did_outofmem_msg = true;
+
+  semsg(_("E342: Out of memory!  (allocating %" PRIu64 " bytes)"), (uint64_t)size);
 }
 
 /// Writes time_t to "buf[8]".
