@@ -127,6 +127,15 @@ describe('decorations providers', function()
     }
   end)
 
+  it('can handle provider errors', function()
+    setup_provider [[
+      function on_do(event, ...)
+        error('bad provider')
+      end
+    ]]
+    insert(mulholland)
+  end)
+
   it('can have single provider', function()
     insert(mulholland)
     setup_provider [[

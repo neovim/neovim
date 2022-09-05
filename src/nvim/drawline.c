@@ -659,6 +659,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     if (*provider_err) {
       provider_err_virt_text(lnum, *provider_err);
       has_decor = true;
+      // xfree(provider_err);
       *provider_err = NULL;
     }
 
