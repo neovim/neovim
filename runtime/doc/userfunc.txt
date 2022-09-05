@@ -1,4 +1,4 @@
-*userfunc.txt*	For Vim version 9.0.  Last change: 2022 Jun 17
+*userfunc.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -8,9 +8,7 @@ Defining and using functions.
 
 This is introduced in section |41.7| of the user manual.
 
-1. Defining a fuction			|define-function|
-2. Calling a fuction			|:call|
-3. Automatically loading functions	|autoload-functions|
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 
@@ -253,7 +251,10 @@ arguments.
 
 							*local-variables*
 Inside a function local variables can be used.  These will disappear when the
-function returns. Global variables need to be accessed with "g:".
+function returns. Global variables need to be accessed with "g:". Inside
+functions local variables are accessed without prepending anything. But you
+can also prepend "l:" if you like.  This is required for some reserved names,
+such as "version".
 
 Example: >
   :function Table(title, ...)
@@ -422,7 +423,7 @@ other and vice versa, before the used function is defined, it won't work.
 Avoid using the autoload functionality at the toplevel.
 
 Hint: If you distribute a bunch of scripts you can pack them together with the
- |vimball| utility.  Also read the user manual |distribute-script|.
+|vimball| utility.  Also read the user manual |distribute-script|.
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

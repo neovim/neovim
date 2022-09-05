@@ -16,7 +16,7 @@ let g:colors_name = 'evening'
 let s:t_Co = exists('&t_Co') && !has('gui_running') ? (&t_Co ? &t_Co : 0) : -1
 
 if (has('termguicolors') && &termguicolors) || has('gui_running')
-  let g:terminal_ansi_colors = ['#000000', '#ffa500', '#2e8b57', '#ffff00', '#006faf', '#8b008b', '#008b8b', '#bebebe', '#4d4d4d', '#ff5f5f', '#00ff00', '#ffff60', '#0087ff', '#ff80ff', '#00ffff', '#ffffff']
+  let g:terminal_ansi_colors = ['#000000', '#cd0000', '#00cd00', '#cdcd00', '#0087ff', '#cd00cd', '#00cdcd', '#e5e5e5', '#7f7f7f', '#ff0000', '#00ff00', '#ffff00', '#5c5cff', '#ff00ff', '#00ffff', '#ffffff']
 endif
 hi! link VertSplit StatusLineNC
 hi! link StatusLineTerm StatusLine

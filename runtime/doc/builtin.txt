@@ -6,9 +6,7 @@
 
 Builtin functions				*builtin-functions*
 
-1. Overview				|builtin-function-list|
-2. Details				|builtin-function-details|
-3. Matching a pattern in a String	|string-match|
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Overview					*builtin-function-list*
@@ -2539,9 +2537,9 @@ function({name} [, {arglist}] [, {dict}])
 
 <		With a |method|: >
 			func Callback(one, two, three)
-			...
+			"...
 			let Partial = function('Callback', ['two'])
-			...
+			"...
 			eval 'one'->Partial('three')
 <		Invokes the function as with: >
 			call Callback('one', 'two', 'three')
@@ -2550,10 +2548,10 @@ function({name} [, {arglist}] [, {dict}])
 		Funcref.  The extra arguments are appended to the list of
 		arguments.  Example: >
 			func Callback(arg1, arg2, name)
-			...
+			"...
 			let Func = function('Callback', ['one'])
 			let Func2 = function(Func, ['two'])
-			...
+			"...
 			call Func2('name')
 <		Invokes the function as with: >
 			call Callback('one', 'two', 'name')
@@ -2569,7 +2567,8 @@ function({name} [, {arglist}] [, {dict}])
 			"...
 			call Func()	" will echo: called for example
 <		The use of function() is not needed when there are no extra
-		arguments, these two are equivalent: >
+		arguments, these two are equivalent, if Callback() is defined
+		as context.Callback(): >
 			let Func = function('Callback', context)
 			let Func = context.Callback
 
