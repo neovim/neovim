@@ -5544,27 +5544,26 @@ void ex_cd(exarg_T *eap)
   // for non-UNIX ":cd" means: print current directory unless 'cdhome' is set
   if (*new_dir == NUL && !p_cdh) {
     ex_pwd(NULL);
-  } else
+    return;
+  }
 #endif
-  {
-    CdScope scope = kCdScopeGlobal;
-    switch (eap->cmdidx) {
-    case CMD_tcd:
-    case CMD_tchdir:
-      scope = kCdScopeTabpage;
-      break;
-    case CMD_lcd:
-    case CMD_lchdir:
-      scope = kCdScopeWindow;
-      break;
-    default:
-      break;
-    }
-    if (changedir_func(new_dir, scope)) {
-      // Echo the new current directory if the command was typed.
-      if (KeyTyped || p_verbose >= 5) {
-        ex_pwd(eap);
-      }
+  CdScope scope = kCdScopeGlobal;
+  switch (eap->cmdidx) {
+  case CMD_tcd:
+  case CMD_tchdir:
+    scope = kCdScopeTabpage;
+    break;
+  case CMD_lcd:
+  case CMD_lchdir:
+    scope = kCdScopeWindow;
+    break;
+  default:
+    break;
+  }
+  if (changedir_func(new_dir, scope)) {
+    // Echo the new current directory if the command was typed.
+    if (KeyTyped || p_verbose >= 5) {
+      ex_pwd(eap);
     }
   }
 }

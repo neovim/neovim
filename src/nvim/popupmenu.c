@@ -1042,13 +1042,13 @@ void pum_show_popupmenu(vimmenu_T *menu)
   pum_scrollbar = 0;
   pum_height = pum_size;
   pum_position_at_mouse(20);
+
+  pum_selected = -1;
+  pum_first = 0;
   if (!p_mousemev) {
     // Pretend 'mousemoveevent' is set.
     ui_call_option_set(STATIC_CSTR_AS_STRING("mousemoveevent"), BOOLEAN_OBJ(true));
   }
-
-  pum_selected = -1;
-  pum_first = 0;
 
   for (;;) {
     pum_is_visible = true;
