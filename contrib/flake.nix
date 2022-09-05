@@ -79,6 +79,7 @@
       rec {
 
         packages = with pkgs; {
+          default = neovim;
           inherit neovim neovim-debug neovim-developer;
         };
 
@@ -96,14 +97,8 @@
             } "make -C ${./..} shlint > $out";
         };
 
+        # kept for backwards-compatibility
         defaultPackage = pkgs.neovim;
-
-        apps = {
-          nvim = flake-utils.lib.mkApp { drv = pkgs.neovim; name = "nvim"; };
-          nvim-debug = flake-utils.lib.mkApp { drv = pkgs.neovim-debug; name = "nvim"; };
-        };
-
-        defaultApp = apps.nvim;
 
         devShells = {
           default = pkgs.neovim-developer.overrideAttrs (oa: {
