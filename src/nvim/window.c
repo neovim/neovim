@@ -6270,12 +6270,6 @@ void command_height(void)
   // p_ch was changed in another tab page.
   curtab->tp_ch_used = p_ch;
 
-  // If the space for the command line is already more than 'cmdheight' there
-  // is nothing to do (window size must have decreased).
-  if (p_ch > old_p_ch && cmdline_row <= Rows - p_ch) {
-    return;
-  }
-
   // If cmdline_row is smaller than what it is supposed to be for 'cmdheight'
   // then set old_p_ch to what it would be, so that the windows get resized
   // properly for the new value.
