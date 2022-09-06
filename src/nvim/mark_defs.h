@@ -86,4 +86,4 @@ typedef struct xfilemark {
 
 #define INIT_XFMARK { INIT_FMARK, NULL }
 
-#endif // NVIM_MARK_DEFS_H
+#endif  // NVIM_MARK_DEFS_H

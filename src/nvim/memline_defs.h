@@ -69,4 +69,4 @@ typedef struct memline {
   int ml_usedchunks;
 } memline_T;
 
-#endif // NVIM_MEMLINE_DEFS_H
+#endif  // NVIM_MEMLINE_DEFS_H

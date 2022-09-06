@@ -176,8 +176,8 @@ struct prt_ps_font_S {
   char *(ps_fontname[4]);
 };
 
-/* Structures to map user named encoding and mapping to PS equivalents for
- * building CID font name */
+// Structures to map user named encoding and mapping to PS equivalents for
+// building CID font name
 struct prt_ps_encoding_S {
   char *encoding;
   char *cmap_encoding;
@@ -235,8 +235,8 @@ struct prt_dsc_line_S {
   int len;
 };
 
-/* Static buffer to read initial comments in a resource file, some can have a
- * couple of KB of comments! */
+// Static buffer to read initial comments in a resource file, some can have a
+// couple of KB of comments!
 #define PRT_FILE_BUFFER_LEN (2048)
 struct prt_resfile_buffer_S {
   char_u buffer[PRT_FILE_BUFFER_LEN];
@@ -1162,16 +1162,15 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
   }
 };
 
-/* The PS prolog file version number has to match - if the prolog file is
- * updated, increment the number in the file and here.  Version checking was
- * added as of VIM 6.2.
- * The CID prolog file version number behaves as per PS prolog.
- * Table of VIM and prolog versions:
- *
- * VIM      Prolog  CIDProlog
- * 6.2      1.3
- * 7.0      1.4     1.0
- */
+// The PS prolog file version number has to match - if the prolog file is
+// updated, increment the number in the file and here.  Version checking was
+// added as of VIM 6.2.
+// The CID prolog file version number behaves as per PS prolog.
+// Table of VIM and prolog versions:
+//
+// VIM      Prolog  CIDProlog
+// 6.2      1.3
+// 7.0      1.4     1.0
 #define PRT_PROLOG_VERSION  ((char_u *)"1.4")
 #define PRT_CID_PROLOG_VERSION  ((char_u *)"1.0")
 
@@ -1182,8 +1181,8 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
 #define PRT_RESOURCE_ENCODING       "Encoding"
 #define PRT_RESOURCE_CMAP           "CMap"
 
-/* Data for table based DSC comment recognition, easy to extend if VIM needs to
- * read more comments. */
+// Data for table based DSC comment recognition, easy to extend if VIM needs to
+// read more comments.
 #define PRT_DSC_MISC_TYPE           (-1)
 #define PRT_DSC_TITLE_TYPE          (1)
 #define PRT_DSC_VERSION_TYPE        (2)
@@ -1573,8 +1572,9 @@ static int prt_resfile_skip_ws(int offset)
   return -1;
 }
 
-/* prt_next_dsc() - returns detail on next DSC comment line found.  Returns true
- * if a DSC comment is found, else false */
+/// Returns detail on next DSC comment line found.
+///
+/// @return  true if a DSC comment is found, else false
 static bool prt_next_dsc(struct prt_dsc_line_S *p_dsc_line)
   FUNC_ATTR_NONNULL_ALL
 {

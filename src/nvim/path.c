@@ -625,8 +625,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   char_u *e = NULL;
   const char_u *path_end = path;
   while (*path_end != NUL) {
-    /* May ignore a wildcard that has a backslash before it; it will
-     * be removed by rem_backslash() or file_pat_to_reg_pat() below. */
+    // May ignore a wildcard that has a backslash before it; it will
+    // be removed by rem_backslash() or file_pat_to_reg_pat() below.
     if (path_end >= path + wildoff && rem_backslash((char *)path_end)) {
       *p++ = *path_end++;
     } else if (vim_ispathsep_nocolon(*path_end)) {
@@ -651,8 +651,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
   *e = NUL;
 
   // Now we have one wildcard component between "s" and "e".
-  /* Remove backslashes between "wildoff" and the start of the wildcard
-   * component. */
+  // Remove backslashes between "wildoff" and the start of the wildcard
+  // component.
   for (p = buf + wildoff; p < s; p++) {
     if (rem_backslash((char *)p)) {
       STRMOVE(p, p + 1);
@@ -698,8 +698,8 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
     return 0;
   }
 
-  /* If "**" is by itself, this is the first time we encounter it and more
-   * is following then find matches without any directory. */
+  // If "**" is by itself, this is the first time we encounter it and more
+  // is following then find matches without any directory.
   if (!didstar && stardepth < 100 && starstar && e - s == 2
       && *path_end == '/') {
     STRCPY(s, path_end + 1);
@@ -728,9 +728,9 @@ static size_t do_path_expand(garray_T *gap, const char_u *path, size_t wildoff, 
         len = STRLEN(buf);
 
         if (starstar && stardepth < 100) {
-          /* For "**" in the pattern first go deeper in the tree to
-           * find matches. */
-          STRCPY(buf + len, "/**");
+          // For "**" in the pattern first go deeper in the tree to
+          // find matches.
+          STRCPY(buf + len, "/**");  // NOLINT
           STRCPY(buf + len + 3, path_end);
           stardepth++;
           (void)do_path_expand(gap, buf, len + 1, flags, true);
@@ -835,9 +835,9 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     copy_option_part((char **)&path_option, (char *)buf, MAXPATHL, " ,");
 
     if (buf[0] == '.' && (buf[1] == NUL || vim_ispathsep(buf[1]))) {
-      /* Relative to current buffer:
-       * "/path/file" + "." -> "/path/"
-       * "/path/file"  + "./subdir" -> "/path/subdir" */
+      // Relative to current buffer:
+      // "/path/file" + "." -> "/path/"
+      // "/path/file"  + "./subdir" -> "/path/subdir"
       if (curbuf->b_ffname == NULL) {
         continue;
       }
@@ -1028,8 +1028,8 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       continue;
     }
 
-    /* If the {filename} is not unique, change it to ./{filename}.
-     * Else reduce it to {filename} */
+    // If the {filename} is not unique, change it to ./{filename}.
+    // Else reduce it to {filename}
     short_name = path_shorten_fname(path, curdir);
     if (short_name == NULL) {
       short_name = path;
@@ -1278,8 +1278,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.'
                          && vim_ispathsep(p[2]))))) {
-          /* :find completion where 'path' is used.
-           * Recursiveness is OK here. */
+          // :find completion where 'path' is used.
+          // Recursiveness is OK here.
           recursive = false;
           add_pat = expand_in_path(&ga, p, flags);
           recursive = true;
@@ -1295,8 +1295,8 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
     if (add_pat == -1 || (add_pat == 0 && (flags & EW_NOTFOUND))) {
       char_u *t = (char_u *)backslash_halve_save((char *)p);
 
-      /* When EW_NOTFOUND is used, always add files and dirs.  Makes
-       * "vim c:/" work. */
+      // When EW_NOTFOUND is used, always add files and dirs.  Makes
+      // "vim c:/" work.
       if (flags & EW_NOTFOUND) {
         addfile(&ga, t, flags | EW_DIR | EW_FILE);
       } else {
@@ -1505,8 +1505,8 @@ void simplify_filename(char_u *filename)
   start = p;        // remember start after "c:/" or "/" or "///"
 
   do {
-    /* At this point "p" is pointing to the char following a single "/"
-     * or "p" is at the "start" of the (absolute or relative) path name. */
+    // At this point "p" is pointing to the char following a single "/"
+    // or "p" is at the "start" of the (absolute or relative) path name.
     if (vim_ispathsep(*p)) {
       STRMOVE(p, p + 1);                // remove duplicate "/"
     } else if (p[0] == '.'
@@ -1514,10 +1514,10 @@ void simplify_filename(char_u *filename)
       if (p == start && relative) {
         p += 1 + (p[1] != NUL);         // keep single "." or leading "./"
       } else {
-        /* Strip "./" or ".///".  If we are at the end of the file name
-         * and there is no trailing path separator, either strip "/." if
-         * we are after "start", or strip "." if we are at the beginning
-         * of an absolute path name . */
+        // Strip "./" or ".///".  If we are at the end of the file name
+        // and there is no trailing path separator, either strip "/." if
+        // we are after "start", or strip "." if we are at the beginning
+        // of an absolute path name.
         tail = p + 1;
         if (p[1] != NUL) {
           while (vim_ispathsep(*tail)) {
@@ -1542,9 +1542,9 @@ void simplify_filename(char_u *filename)
 
         // Don't strip for an erroneous file name.
         if (!stripping_disabled) {
-          /* If the preceding component does not exist in the file
-           * system, we strip it.  On Unix, we don't accept a symbolic
-           * link that refers to a non-existent file. */
+          // If the preceding component does not exist in the file
+          // system, we strip it.  On Unix, we don't accept a symbolic
+          // link that refers to a non-existent file.
           saved_char = p[-1];
           p[-1] = NUL;
           FileInfo file_info;
@@ -1560,16 +1560,16 @@ void simplify_filename(char_u *filename)
           }
 
           if (!do_strip) {
-            /* If the component exists in the file system, check
-             * that stripping it won't change the meaning of the
-             * file name.  First get information about the
-             * unstripped file name.  This may fail if the component
-             * to strip is not a searchable directory (but a regular
-             * file, for instance), since the trailing "/.." cannot
-             * be applied then.  We don't strip it then since we
-             * don't want to replace an erroneous file name by
-             * a valid one, and we disable stripping of later
-             * components. */
+            // If the component exists in the file system, check
+            // that stripping it won't change the meaning of the
+            // file name.  First get information about the
+            // unstripped file name.  This may fail if the component
+            // to strip is not a searchable directory (but a regular
+            // file, for instance), since the trailing "/.." cannot
+            // be applied then.  We don't strip it then since we
+            // don't want to replace an erroneous file name by
+            // a valid one, and we disable stripping of later
+            // components.
             saved_char = *tail;
             *tail = NUL;
             if (os_fileinfo((char *)filename, &file_info)) {
@@ -1579,13 +1579,13 @@ void simplify_filename(char_u *filename)
             }
             *tail = saved_char;
             if (do_strip) {
-              /* The check for the unstripped file name
-               * above works also for a symbolic link pointing to
-               * a searchable directory.  But then the parent of
-               * the directory pointed to by the link must be the
-               * same as the stripped file name.  (The latter
-               * exists in the file system since it is the
-               * component's parent directory.) */
+              // The check for the unstripped file name
+              // above works also for a symbolic link pointing to
+              // a searchable directory.  But then the parent of
+              // the directory pointed to by the link must be the
+              // same as the stripped file name.  (The latter
+              // exists in the file system since it is the
+              // component's parent directory.)
               FileInfo new_file_info;
               if (p == start && relative) {
                 os_fileinfo(".", &new_file_info);
@@ -1598,26 +1598,26 @@ void simplify_filename(char_u *filename)
 
               if (!os_fileinfo_id_equal(&file_info, &new_file_info)) {
                 do_strip = false;
-                /* We don't disable stripping of later
-                 * components since the unstripped path name is
-                 * still valid. */
+                // We don't disable stripping of later
+                // components since the unstripped path name is
+                // still valid.
               }
             }
           }
         }
 
         if (!do_strip) {
-          /* Skip the ".." or "../" and reset the counter for the
-           * components that might be stripped later on. */
+          // Skip the ".." or "../" and reset the counter for the
+          // components that might be stripped later on.
           p = tail;
           components = 0;
         } else {
-          /* Strip previous component.  If the result would get empty
-           * and there is no trailing path separator, leave a single
-           * "." instead.  If we are at the end of the file name and
-           * there is no trailing path separator and a preceding
-           * component is left after stripping, strip its trailing
-           * path separator as well. */
+          // Strip previous component.  If the result would get empty
+          // and there is no trailing path separator, leave a single
+          // "." instead.  If we are at the end of the file name and
+          // there is no trailing path separator and a preceding
+          // component is left after stripping, strip its trailing
+          // path separator as well.
           if (p == start && relative && tail[-1] == '.') {
             *p++ = '.';
             *p = NUL;
@@ -1699,8 +1699,8 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
       ptr[len] = c;
     }
 
-    /* Repeat finding the file "count" times.  This matters when it
-     * appears several times in the path. */
+    // Repeat finding the file "count" times.  This matters when it
+    // appears several times in the path.
     while (file_name != NULL && --count > 0) {
       xfree(file_name);
       file_name =

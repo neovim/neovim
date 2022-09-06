@@ -2330,8 +2330,8 @@ static void stop_insert(pos_T *end_insert_pos, int esc, int nomove)
         if (gchar_cursor() != NUL) {
           inc_cursor();
         }
-        /* If the cursor is still at the same character, also keep
-         * the "coladd". */
+        // If the cursor is still at the same character, also keep
+        // the "coladd".
         if (gchar_cursor() == NUL
             && curwin->w_cursor.lnum == tpos.lnum
             && curwin->w_cursor.col == tpos.col) {
@@ -3165,8 +3165,8 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
         if (keytyped == KEY_COMPLETE) {
           char_u *n, *s;
 
-          /* Just completed a word, check if it starts with "look".
-           * search back for the start of a word. */
+          // Just completed a word, check if it starts with "look".
+          // search back for the start of a word.
           line = (char_u *)get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
             n = mb_prevptr(line, s);
@@ -3198,8 +3198,8 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           }
         }
         if (match && try_match_word && !try_match) {
-          /* "0=word": Check if there are only blanks before the
-           * word. */
+          // "0=word": Check if there are only blanks before the
+          // word.
           if (getwhitecols_curline() !=
               (int)(curwin->w_cursor.col - (p - look))) {
             match = false;
