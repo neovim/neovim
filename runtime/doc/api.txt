@@ -1848,7 +1848,7 @@ nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
           • keeppatterns: (boolean) |:keeppatterns|.
           • lockmarks: (boolean) |:lockmarks|.
           • noswapfile: (boolean) |:noswapfile|.
-          • tab: (integer) |:tab|.
+          • tab: (integer) |:tab|. -1 when omitted.
           • verbose: (integer) |:verbose|. -1 when omitted.
           • vertical: (boolean) |:vertical|.
           • split: (string) Split modifier string, is an empty string when

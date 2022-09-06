@@ -2082,7 +2082,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 
   lua_newtable(lstate);  // smods table
 
-  lua_pushinteger(lstate, cmdmod.cmod_tab);
+  lua_pushinteger(lstate, cmdmod.cmod_tab - 1);
   lua_setfield(lstate, -2, "tab");
 
   lua_pushinteger(lstate, cmdmod.cmod_verbose - 1);

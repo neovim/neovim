@@ -69,7 +69,7 @@
 ///             - keeppatterns: (boolean) |:keeppatterns|.
 ///             - lockmarks: (boolean) |:lockmarks|.
 ///             - noswapfile: (boolean) |:noswapfile|.
-///             - tab: (integer) |:tab|.
+///             - tab: (integer) |:tab|. -1 when omitted.
 ///             - verbose: (integer) |:verbose|. -1 when omitted.
 ///             - vertical: (boolean) |:vertical|.
 ///             - split: (string) Split modifier string, is an empty string when there's no split
@@ -239,7 +239,7 @@ Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
   PUT(mods, "unsilent", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_UNSILENT));
   PUT(mods, "sandbox", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_SANDBOX));
   PUT(mods, "noautocmd", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_NOAUTOCMD));
-  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab));
+  PUT(mods, "tab", INTEGER_OBJ(cmdinfo.cmdmod.cmod_tab - 1));
   PUT(mods, "verbose", INTEGER_OBJ(cmdinfo.cmdmod.cmod_verbose - 1));
   PUT(mods, "browse", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_BROWSE));
   PUT(mods, "confirm", BOOLEAN_OBJ(cmdinfo.cmdmod.cmod_flags & CMOD_CONFIRM));
@@ -559,15 +559,17 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     }
 
     if (HAS_KEY(mods.tab)) {
-      if (mods.tab.type != kObjectTypeInteger || mods.tab.data.integer < 0) {
-        VALIDATION_ERROR("'mods.tab' must be a non-negative Integer");
+      if (mods.tab.type != kObjectTypeInteger) {
+        VALIDATION_ERROR("'mods.tab' must be an Integer");
+      } else if ((int)mods.tab.data.integer >= 0) {
+        // Silently ignore negative integers to allow mods.tab to be set to -1.
+        cmdinfo.cmdmod.cmod_tab = (int)mods.tab.data.integer + 1;
       }
-      cmdinfo.cmdmod.cmod_tab = (int)mods.tab.data.integer + 1;
     }
 
     if (HAS_KEY(mods.verbose)) {
       if (mods.verbose.type != kObjectTypeInteger) {
-        VALIDATION_ERROR("'mods.verbose' must be a Integer");
+        VALIDATION_ERROR("'mods.verbose' must be an Integer");
       } else if ((int)mods.verbose.data.integer >= 0) {
         // Silently ignore negative integers to allow mods.verbose to be set to -1.
         cmdinfo.cmdmod.cmod_verbose = (int)mods.verbose.data.integer + 1;

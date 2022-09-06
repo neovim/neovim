@@ -136,7 +136,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -172,7 +172,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -208,7 +208,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -244,7 +244,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "botright",
-        tab = 0,
+        tab = -1,
         unsilent = true,
         verbose = -1,
         vertical = false,
@@ -280,7 +280,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -316,7 +316,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -364,7 +364,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -401,7 +401,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -448,7 +448,7 @@ describe('nvim_create_user_command', function()
         sandbox = false,
         silent = false,
         split = "",
-        tab = 0,
+        tab = -1,
         unsilent = false,
         verbose = -1,
         vertical = false,
@@ -523,8 +523,29 @@ describe('nvim_create_user_command', function()
         vim.api.nvim_cmd({ cmd = 'echo', args = { '&verbose' }, mods = opts.smods }, {})
       end, {})
     ]]
-
     eq("3", meths.cmd({ cmd = 'MyEcho', mods = { verbose = 3 } }, { output = true }))
+
+    eq(1, #meths.list_tabpages())
+    exec_lua[[
+      vim.api.nvim_create_user_command('MySplit', function(opts)
+        vim.api.nvim_cmd({ cmd = 'split', mods = opts.smods }, {})
+      end, {})
+    ]]
+    meths.cmd({ cmd = 'MySplit' }, {})
+    eq(1, #meths.list_tabpages())
+    eq(2, #meths.list_wins())
+    meths.cmd({ cmd = 'MySplit', mods = { tab = 1 } }, {})
+    eq(2, #meths.list_tabpages())
+    eq(2, funcs.tabpagenr())
+    meths.cmd({ cmd = 'MySplit', mods = { tab = 1 } }, {})
+    eq(3, #meths.list_tabpages())
+    eq(2, funcs.tabpagenr())
+    meths.cmd({ cmd = 'MySplit', mods = { tab = 3 } }, {})
+    eq(4, #meths.list_tabpages())
+    eq(4, funcs.tabpagenr())
+    meths.cmd({ cmd = 'MySplit', mods = { tab = 0 } }, {})
+    eq(5, #meths.list_tabpages())
+    eq(1, funcs.tabpagenr())
   end)
 end)
 
