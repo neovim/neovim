@@ -43,7 +43,7 @@ local function _setup()
   win_options = get_scoped_options('win')
 end
 
-local function make_meta_accessor(get, set, del, validator)
+local function make_meta_accessor(get, set, validator)
   validator = validator or function()
     return true
   end
@@ -51,7 +51,6 @@ local function make_meta_accessor(get, set, del, validator)
   validate({
     get = { get, 'f' },
     set = { set, 'f' },
-    del = { del, 'f', true },
     validator = { validator, 'f' },
   })
 
@@ -61,9 +60,6 @@ local function make_meta_accessor(get, set, del, validator)
       return
     end
 
-    if del and v == nil then
-      return del(k)
-    end
     return set(k, v)
   end
   function mt:__index(k)
@@ -98,7 +94,7 @@ do -- buffer option accessor
       return a.nvim_set_option_value(k, v, { buf = bufnr or 0 })
     end
 
-    return make_meta_accessor(get, set, nil, function(k)
+    return make_meta_accessor(get, set, function(k)
       if type(k) == 'string' then
         _setup()
         if win_options[k] then
@@ -132,7 +128,7 @@ do -- window option accessor
       return a.nvim_set_option_value(k, v, { win = winnr or 0 })
     end
 
-    return make_meta_accessor(get, set, nil, function(k)
+    return make_meta_accessor(get, set, function(k)
       if type(k) == 'string' then
         _setup()
         if buf_options[k] then
