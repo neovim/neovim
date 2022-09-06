@@ -31,6 +31,8 @@ describe('decorations providers', function()
       [12] = {foreground = tonumber('0x990000')};
       [13] = {background = Screen.colors.LightBlue};
       [14] = {background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue};
+      [15] = {special = Screen.colors.Blue1, undercurl = true},
+      [16] = {special = Screen.colors.Red, undercurl = true},
     }
   end)
 
@@ -56,7 +58,7 @@ describe('decorations providers', function()
       a.nvim_set_decoration_provider(_G.ns1, {
         on_start = on_do; on_buf = on_do;
         on_win = on_do; on_line = on_do;
-        on_end = on_do;
+        on_end = on_do; _on_spell_nav = on_do;
       })
       return _G.ns1
     ]])
@@ -95,7 +97,7 @@ describe('decorations providers', function()
                                               |
     ]]}
     check_trace {
-      { "start", 4, 40 };
+      { "start", 4 };
       { "win", 1000, 1, 0, 8 };
       { "line", 1000, 1, 0 };
       { "line", 1000, 1, 1 };
@@ -119,7 +121,7 @@ describe('decorations providers', function()
                                               |
     ]]}
     check_trace {
-      { "start", 5, 10 };
+      { "start", 5 };
       { "buf", 1 };
       { "win", 1000, 1, 0, 8 };
       { "line", 1000, 1, 6 };
@@ -153,6 +155,84 @@ describe('decorations providers', function()
       posp {2:=} getmark(mark, false);            |
       restor{2:e}_buffer(&save_buf);^              |
                                               |
+    ]]}
+  end)
+
+  it('can indicate spellchecked points', function()
+    exec [[
+    set spell
+    set spelloptions=noplainbuffer
+    syntax off
+    ]]
+
+    insert [[
+    I am well written text.
+    i am not capitalized.
+    I am a speling mistakke.
+    ]]
+
+    setup_provider [[
+      local ns = a.nvim_create_namespace "spell"
+      beamtrace = {}
+      local function on_do(kind, ...)
+        if kind == 'win' or kind == 'spell' then
+          a.nvim_buf_set_extmark(0, ns, 0, 0, { end_row = 2, end_col = 23, spell = true, ephemeral = true })
+        end
+        table.insert(beamtrace, {kind, ...})
+      end
+    ]]
+
+    check_trace {
+      { "start", 5 };
+      { "win", 1000, 1, 0, 5 };
+      { "line", 1000, 1, 0 };
+      { "line", 1000, 1, 1 };
+      { "line", 1000, 1, 2 };
+      { "line", 1000, 1, 3 };
+      { "end", 5 };
+    }
+
+    feed "gg0"
+
+    screen:expect{grid=[[
+    ^I am well written text.                 |
+    {15:i} am not capitalized.                   |
+    I am a {16:speling} {16:mistakke}.                |
+                                            |
+    {1:~                                       }|
+    {1:~                                       }|
+    {1:~                                       }|
+                                            |
+    ]]}
+
+    feed "]s"
+    check_trace {
+      { "spell", 1000, 1, 1, 0, 1, -1 };
+    }
+    screen:expect{grid=[[
+    I am well written text.                 |
+    {15:^i} am not capitalized.                   |
+    I am a {16:speling} {16:mistakke}.                |
+                                            |
+    {1:~                                       }|
+    {1:~                                       }|
+    {1:~                                       }|
+                                            |
+    ]]}
+
+    feed "]s"
+    check_trace {
+      { "spell", 1000, 1, 2, 7, 2, -1 };
+    }
+    screen:expect{grid=[[
+    I am well written text.                 |
+    {15:i} am not capitalized.                   |
+    I am a {16:^speling} {16:mistakke}.                |
+                                            |
+    {1:~                                       }|
+    {1:~                                       }|
+    {1:~                                       }|
+                                            |
     ]]}
   end)
 

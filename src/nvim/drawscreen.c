@@ -539,7 +539,7 @@ int update_screen(int type)
   ui_comp_set_screen_valid(true);
 
   DecorProviders providers;
-  decor_providers_start(&providers, type, &provider_err);
+  decor_providers_start(&providers, &provider_err);
 
   // "start" callback could have changed highlights for global elements
   if (win_check_ns_hl(NULL)) {

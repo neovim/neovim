@@ -162,9 +162,11 @@
 ;; Literals
 
 (string_literal) @string
+(string_literal) @spell
 (integer_literal) @number
 (float_literal) @float
 (comment) @comment
+(comment) @spell
 (pattern) @string.special
 (pattern_multi) @string.regex
 (filename) @string

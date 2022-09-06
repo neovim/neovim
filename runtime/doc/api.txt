@@ -2646,6 +2646,8 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                     When a character is supplied it is used as |:syn-cchar|.
                     "hl_group" is used as highlight for the cchar if provided,
                     otherwise it defaults to |hl-Conceal|.
+                  • spell: boolean indicating that spell checking should be
+                    performed within this extmark
                   • ui_watched: boolean that indicates the mark should be
                     drawn by a UI. When set, the UI will receive win_extmark
                     events. Note: the mark is positioned by virt_text
@@ -2677,7 +2679,7 @@ nvim_get_namespaces()                                  *nvim_get_namespaces()*
         dict that maps from names to namespace ids.
 
                                               *nvim_set_decoration_provider()*
-nvim_set_decoration_provider({ns_id}, {opts})
+nvim_set_decoration_provider({ns_id}, {*opts})
     Set or change decoration provider for a namespace
 
     This is a very general purpose interface for having lua callbacks being
@@ -2709,7 +2711,7 @@ nvim_set_decoration_provider({ns_id}, {opts})
 
     Parameters: ~
         {ns_id}  Namespace id from |nvim_create_namespace()|
-        {opts}   Callbacks invoked during redraw:
+        {opts}   Table of callbacks:
                  • on_start: called first on each screen redraw ["start",
                    tick]
                  • on_buf: called for each buffer being redrawn (before window

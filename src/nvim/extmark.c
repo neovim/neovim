@@ -70,7 +70,8 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
         || kv_size(decor->virt_lines)
         || decor->conceal
         || decor_has_sign(decor)
-        || decor->ui_watched) {
+        || decor->ui_watched
+        || decor->spell) {
       decor_full = true;
       decor = xmemdup(decor, sizeof *decor);
     }
