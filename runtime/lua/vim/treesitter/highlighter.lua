@@ -86,7 +86,7 @@ function TSHighlighter.new(tree, opts)
     end
   end
 
-  a.nvim_buf_set_option(self.bufnr, 'syntax', '')
+  vim.bo[self.bufnr].syntax = ''
 
   TSHighlighter.active[self.bufnr] = self
 
@@ -95,9 +95,12 @@ function TSHighlighter.new(tree, opts)
   -- syntax FileType autocmds. Later on we should integrate with the
   -- `:syntax` and `set syntax=...` machinery properly.
   if vim.g.syntax_on ~= 1 then
-    vim.api.nvim_command('runtime! syntax/synload.vim')
+    vim.cmd.runtime({ 'syntax/synload.vim', bang = true })
   end
-  vim.bo[self.bufnr].spelloptions = 'noplainbuffer'
+
+  a.nvim_buf_call(self.bufnr, function()
+    vim.opt_local.spelloptions:append('noplainbuffer')
+  end)
 
   self.tree:parse()
 
