@@ -286,12 +286,6 @@ typedef struct {
 /// Number of fixed variables used for arguments
 #define FIXVAR_CNT 12
 
-/// Callback interface for C function reference>
-///     Used for managing functions that were registered with |register_cfunc|
-typedef int (*cfunc_T)(int argcount, typval_T *argvars, typval_T *rettv, void *state);  // NOLINT
-/// Callback to clear cfunc_T and any associated state.
-typedef void (*cfunc_free_T)(void *state);
-
 // Structure to hold info for a function that is currently being executed.
 typedef struct funccall_S funccall_T;
 
@@ -330,10 +324,7 @@ struct ufunc {
   garray_T uf_lines;         ///< function lines
   int uf_profiling;     ///< true when func is being profiled
   int uf_prof_initialized;
-  // Managing cfuncs
-  cfunc_T uf_cb;            ///< C function extension callback
-  cfunc_free_T uf_cb_free;       ///< C function extension free callback
-  void *uf_cb_state;      ///< State of C function extension.
+  LuaRef uf_luaref;      ///< lua callback, used if (uf_flags & FC_LUAREF)
   // Profiling the function as a whole.
   int uf_tm_count;      ///< nr of calls
   proftime_T uf_tm_total;      ///< time spent in function + children

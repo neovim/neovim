@@ -385,12 +385,9 @@ nlua_pop_typval_table_processing_end:
       break;
     }
     case LUA_TFUNCTION: {
-      LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
-      state->lua_callable.func_ref = nlua_ref_global(lstate, -1);
+      LuaRef func = nlua_ref_global(lstate, -1);
 
-      char *name = (char *)register_cfunc(&nlua_CFunction_func_call,
-                                          &nlua_CFunction_func_free,
-                                          state);
+      char *name = (char *)register_luafunc(func);
 
       cur.tv->v_type = VAR_FUNC;
       cur.tv->vval.v_string = xstrdup(name);
@@ -476,8 +473,8 @@ static bool typval_conv_special = false;
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
     ufunc_T *fp = find_func(fun); \
-    if (fp != NULL && fp->uf_cb == nlua_CFunction_func_call) { \
-      nlua_pushref(lstate, ((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref); \
+    if (fp != NULL && fp->uf_flags & FC_LUAREF) { \
+      nlua_pushref(lstate, fp->uf_luaref); \
     } else { \
       TYPVAL_ENCODE_CONV_NIL(tv); \
     } \

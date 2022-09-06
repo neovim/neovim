@@ -65,8 +65,8 @@ typedef struct {
 #define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
   do { \
     ufunc_T *fp = find_func(fun); \
-    if (fp != NULL && fp->uf_cb == nlua_CFunction_func_call) { \
-      LuaRef ref = api_new_luaref(((LuaCFunctionState *)fp->uf_cb_state)->lua_callable.func_ref); \
+    if (fp != NULL && (fp->uf_flags & FC_LUAREF)) { \
+      LuaRef ref = api_new_luaref(fp->uf_luaref); \
       kvi_push(edata->stack, LUAREF_OBJ(ref)); \
     } else { \
       TYPVAL_ENCODE_CONV_NIL(tv); \
@@ -351,10 +351,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
   }
 
   case kObjectTypeLuaRef: {
-    LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
-    state->lua_callable.func_ref = api_new_luaref(obj.data.luaref);
-    char *name =
-      (char *)register_cfunc(&nlua_CFunction_func_call, &nlua_CFunction_func_free, state);
+    char *name = (char *)register_luafunc(api_new_luaref(obj.data.luaref));
     tv->v_type = VAR_FUNC;
     tv->vval.v_string = xstrdup(name);
     break;
