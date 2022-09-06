@@ -375,9 +375,9 @@ get_captures_at_position({bufnr}, {row}, {col})
     Gets a list of captures for a given cursor position
 
     Parameters: ~
-        {bufnr}  (number) The buffer number
-        {row}    (number) The position row
-        {col}    (number) The position column
+        {bufnr}  (number) Buffer number (0 for current buffer)
+        {row}    (number) Position row
+        {col}    (number) Position column
 
     Return: ~
         (table) A table of captures
@@ -398,12 +398,14 @@ get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
     callback
 
     Parameters: ~
-        {bufnr}  The buffer the parser should be tied to
-        {lang}   The filetype of this parser
-        {opts}   Options object to pass to the created language tree
+        {bufnr}  (number|nil) Buffer the parser should be tied to: (default
+                 current buffer)
+        {lang}   (string) |nil Filetype of this parser (default: buffer
+                 filetype)
+        {opts}   (table|nil) Options to pass to the created language tree
 
     Return: ~
-        The parser
+        (table) Parser object
 
 get_string_parser({str}, {lang}, {opts})                 *get_string_parser()*
     Gets a string parser
@@ -417,8 +419,8 @@ is_ancestor({dest}, {source})                                  *is_ancestor()*
     Determines whether a node is the ancestor of another
 
     Parameters: ~
-        {dest}    (table) the possible ancestor
-        {source}  (table) the possible descendant node
+        {dest}    (table) Possible ancestor
+        {source}  (table) Possible descendant node
 
     Return: ~
         (boolean) True if dest is an ancestor of source
@@ -427,19 +429,56 @@ is_in_node_range({node}, {line}, {col})                   *is_in_node_range()*
     Determines whether (line, col) position is in node range
 
     Parameters: ~
-        {node}  Node defining the range
-        {line}  A line (0-based)
-        {col}   A column (0-based)
+        {node}  (table) Node defining the range
+        {line}  (number) Line (0-based)
+        {col}   (number) Column (0-based)
+
+    Return: ~
+        (boolean) True if the position is in node range
 
 node_contains({node}, {range})                               *node_contains()*
     Determines if a node contains a range
 
     Parameters: ~
-        {node}   (table) The node
-        {range}  (table) The range
+        {node}   (table)
+        {range}  (table)
 
     Return: ~
         (boolean) True if the node contains the range
+
+start({bufnr}, {lang}, {opts})                                       *start()*
+    Start treesitter highlighting for a buffer
+
+    Can be used in an ftplugin or FileType autocommand
+
+    Note: By default, disables regex syntax highlighting, which may be
+    required for some plugins. In this case, add `{ syntax = true }`.
+
+    Example:
+>
+
+    vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
+        callback = function(args)
+            vim.treesitter.start(args.buf, 'latex', { syntax = true })
+        end
+    })
+<
+
+    Parameters: ~
+        {bufnr}  (number|nil) Buffer to be highlighted (default: current
+                 buffer)
+        {lang}   (string|nil) Language of the parser (default: buffer
+                 filetype)
+        {opts}   (table|nil) Optional keyword arguments:
+                 • `syntax` boolean Run regex syntax highlighting (default
+                   false)
+
+stop({bufnr})                                                         *stop()*
+    Stop treesitter highlighting for a buffer
+
+    Parameters: ~
+        {bufnr}  (number|nil) Buffer to stop highlighting (default: current
+                 buffer)
 
 
 ==============================================================================

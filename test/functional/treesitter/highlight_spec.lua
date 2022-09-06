@@ -5,7 +5,6 @@ local clear = helpers.clear
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
 local feed = helpers.feed
-local pending_c_parser = helpers.pending_c_parser
 local command = helpers.command
 local meths = helpers.meths
 local eq = helpers.eq
@@ -107,12 +106,11 @@ describe('treesitter highlighting', function()
     }
 
     exec_lua([[ hl_query = ... ]], hl_query)
+    command [[ hi link @error ErrorMsg ]]
     command [[ hi link @warning WarningMsg ]]
   end)
 
   it('is updated with edits', function()
-    if pending_c_parser(pending) then return end
-
     insert(hl_text)
     screen:expect{grid=[[
       /// Schedule Lua callback on main loop's event queue             |
@@ -276,8 +274,6 @@ describe('treesitter highlighting', function()
   end)
 
   it('is updated with :sort', function()
-    if pending_c_parser(pending) then return end
-
     insert(test_text)
     exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c")
@@ -351,8 +347,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports with custom parser", function()
-    if pending_c_parser(pending) then return end
-
     screen:set_default_attr_ids {
       [1] = {bold = true, foreground = Screen.colors.SeaGreen4};
     }
@@ -417,8 +411,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports injected languages", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     int x = INT_MAX;
     #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
@@ -479,8 +471,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports overriding queries, like ", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     int x = INT_MAX;
     #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
@@ -520,8 +510,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports highlighting with custom highlight groups", function()
-    if pending_c_parser(pending) then return end
-
     insert(hl_text)
 
     exec_lua [[
@@ -577,8 +565,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports highlighting with priority", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     int x = INT_MAX;
     #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
@@ -594,9 +580,9 @@ describe('treesitter highlighting', function()
     -- expect everything to have Error highlight
     screen:expect{grid=[[
       {12:int}{8: x = INT_MAX;}                                                 |
-      {8:#define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))}|
-      {8:#define foo void main() { \}                                      |
-      {8:              return 42;  \}                                      |
+      {8:#define READ_STRING(x, y) (}{12:char_u}{8: *)read_string((x), (}{12:size_t}{8:)(y))}|
+      {8:#define foo }{12:void}{8: main() { \}                                      |
+      {8:              }{12:return}{8: 42;  \}                                      |
       {8:            }}                                                    |
       ^                                                                 |
       {1:~                                                                }|
@@ -625,8 +611,6 @@ describe('treesitter highlighting', function()
     end)
 
   it("allows to use captures with dots (don't use fallback when specialization of foo exists)", function()
-    if pending_c_parser(pending) then return end
-
     insert([[
     char* x = "Will somebody ever read this?";
     ]])
@@ -708,7 +692,6 @@ describe('treesitter highlighting', function()
   end)
 
   it("supports conceal attribute", function()
-    if pending_c_parser(pending) then return end
     insert(hl_text)
 
     -- conceal can be empty or a single cchar.

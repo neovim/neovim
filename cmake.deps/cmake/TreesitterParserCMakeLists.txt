@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
-# some parsers have c++ scanner, problem?
-project(parser C) # CXX
+project(parser C)
+
+file(GLOB source_files src/*.c)
 
 add_library(parser
   MODULE
-  src/parser.c
+  ${source_files}
 )
 set_target_properties(
   parser

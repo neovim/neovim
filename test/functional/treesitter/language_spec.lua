@@ -6,7 +6,6 @@ local command = helpers.command
 local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 local matches = helpers.matches
-local pending_c_parser = helpers.pending_c_parser
 local insert = helpers.insert
 
 before_each(clear)
@@ -28,15 +27,11 @@ describe('treesitter language API', function()
     eq("Error executing lua: .../language.lua:0: no parser for 'borklang' language, see :help treesitter-parsers",
        pcall_err(exec_lua, "parser = vim.treesitter.inspect_language('borklang')"))
 
-    if not pending_c_parser(pending) then
-      matches("Error executing lua: Failed to load parser: uv_dlsym: .+",
-         pcall_err(exec_lua, 'vim.treesitter.require_language("c", nil, false, "borklang")'))
-   end
+    matches("Error executing lua: Failed to load parser: uv_dlsym: .+",
+       pcall_err(exec_lua, 'vim.treesitter.require_language("c", nil, false, "borklang")'))
   end)
 
   it('inspects language', function()
-    if pending_c_parser(pending) then return end
-
     local keys, fields, symbols = unpack(exec_lua([[
       local lang = vim.treesitter.inspect_language('c')
       local keys, symbols = {}, {}
@@ -76,7 +71,6 @@ describe('treesitter language API', function()
   end)
 
   it('checks if vim.treesitter.get_parser tries to create a new parser on filetype change', function ()
-    if pending_c_parser(pending) then return end
     command("set filetype=c")
     -- Should not throw an error when filetype is c
     eq('c', exec_lua("return vim.treesitter.get_parser(0):lang()"))
@@ -87,7 +81,6 @@ describe('treesitter language API', function()
   end)
 
   it('retrieve the tree given a range', function ()
-    if pending_c_parser(pending) then return end
     insert([[
       int main() {
         int x = 3;
@@ -102,7 +95,6 @@ describe('treesitter language API', function()
   end)
 
   it('retrieve the node given a range', function ()
-    if pending_c_parser(pending) then return end
     insert([[
       int main() {
         int x = 3;
