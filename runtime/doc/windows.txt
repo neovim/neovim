@@ -236,13 +236,13 @@ and 'winminwidth' are relevant.
 :vert[ical] {cmd}
 		Execute {cmd}.  If it contains a command that splits a window,
 		it will be split vertically.  For `vertical wincmd =` windows
-		will be equialized only vertically.
+		will be equalized only vertically.
 		Doesn't work for |:execute| and |:normal|.
 
 						*:hor* *:horizontal*
 :hor[izontal] {cmd}
 		Execute {cmd}.  Currently only makes a difference for
-		`horizontal wincmd =`, which will equal windows only
+		`horizontal wincmd =`, which will equalize windows only
 		horizontally.
 
 :lefta[bove] {cmd}				*:lefta* *:leftabove*

@@ -2,12 +2,13 @@
 " Language:     gdresource
 " Maintainer:   Maxim Kim <habamax@gmail.com>
 " Filenames:    *.tscn, *.tres
+" Website:      https://github.com/habamax/vim-gdscript
 
 if exists("b:current_syntax")
     finish
 endif
 
-let s:keepcpo= &cpo
+let s:keepcpo = &cpo
 set cpo&vim
 
 syn match gdResourceNumber "\<0x\%(_\=\x\)\+\>"
