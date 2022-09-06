@@ -446,20 +446,21 @@ node_contains({node}, {range})                               *node_contains()*
     Return: ~
         (boolean) True if the node contains the range
 
-start({bufnr}, {lang}, {opts})                                       *start()*
+start({bufnr}, {lang})                                               *start()*
     Start treesitter highlighting for a buffer
 
     Can be used in an ftplugin or FileType autocommand
 
     Note: By default, disables regex syntax highlighting, which may be
-    required for some plugins. In this case, add `{ syntax = true }`.
+    required for some plugins. In this case, add vim.bo.syntax = 'on `after the call to` start`.
 
     Example:
 >
 
     vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
         callback = function(args)
-            vim.treesitter.start(args.buf, 'latex', { syntax = true })
+            vim.treesitter.start(args.buf, 'latex')
+            vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
         end
     })
 <
@@ -469,9 +470,6 @@ start({bufnr}, {lang}, {opts})                                       *start()*
                  buffer)
         {lang}   (string|nil) Language of the parser (default: buffer
                  filetype)
-        {opts}   (table|nil) Optional keyword arguments:
-                 • `syntax` boolean Run regex syntax highlighting (default
-                   false)
 
 stop({bufnr})                                                         *stop()*
     Stop treesitter highlighting for a buffer
