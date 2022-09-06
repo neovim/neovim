@@ -147,7 +147,7 @@ end
 ---
 ---@param node_or_range table
 ---
----@returns start_row, start_col, end_row, end_col
+---@returns table start_row, start_col, end_row, end_col
 function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
     return unpack(node_or_range)
@@ -198,7 +198,11 @@ end
 ---@param row number Position row
 ---@param col number Position column
 ---
----@returns (table) A table of captures
+---@param bufnr number Buffer number (0 for current buffer)
+---@param row number Position row
+---@param col number Position column
+---
+---@returns (table) Table of captures
 function M.get_captures_at_position(bufnr, row, col)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -245,25 +249,62 @@ function M.get_captures_at_position(bufnr, row, col)
   return matches
 end
 
---- Gets the smallest named node under the cursor
+---Gets a list of captures under the cursor
 ---
----@param winnr number Window handle or 0 for current window
----@param opts table Options table
----@param opts.ignore_injections boolean (default true) Ignore injected languages.
+---@param winnr number|nil Window handle or 0 for current window (default)
 ---
----@returns (table) The named node under the cursor
-function M.get_node_at_cursor(winnr, opts)
+---@returns (table) Named node under the cursor
+function M.get_captures_at_cursor(winnr)
   winnr = winnr or 0
+  local bufnr = a.nvim_win_get_buf(winnr)
   local cursor = a.nvim_win_get_cursor(winnr)
-  local ts_cursor_range = { cursor[1] - 1, cursor[2], cursor[1] - 1, cursor[2] }
 
-  local buf = a.nvim_win_get_buf(winnr)
-  local root_lang_tree = M.get_parser(buf)
+  local data = M.get_captures_at_position(bufnr, cursor[1] - 1, cursor[2])
+
+  local captures = {}
+
+  for _, capture in ipairs(data) do
+    table.insert(captures, capture.capture)
+  end
+
+  return captures
+end
+
+--- Gets the smallest named node at position
+---
+---@param bufnr number Buffer number (0 for current buffer)
+---@param row number Position row
+---@param col number Position column
+---@param opts table Optional keyword arguments:
+---             - ignore_injections boolean Ignore injected languages (default true)
+---
+---@returns (table) Named node under the cursor
+function M.get_node_at_position(bufnr, row, col, opts)
+  if bufnr == 0 then
+    bufnr = a.nvim_get_current_buf()
+  end
+  local ts_range = { row, col, row, col }
+
+  local root_lang_tree = M.get_parser(bufnr)
   if not root_lang_tree then
     return
   end
 
-  return root_lang_tree:named_node_for_range(ts_cursor_range, opts)
+  return root_lang_tree:named_node_for_range(ts_range, opts)
+end
+
+--- Gets the smallest named node under the cursor
+---
+---@param winnr number|nil Window handle or 0 for current window (default)
+---
+---@returns (string) Named node under the cursor
+function M.get_node_at_cursor(winnr)
+  winnr = winnr or 0
+  local bufnr = a.nvim_win_get_buf(winnr)
+  local cursor = a.nvim_win_get_cursor(winnr)
+
+  return M.get_node_at_position(bufnr, cursor[1] - 1, cursor[2], { ignore_injections = false })
+    :type()
 end
 
 --- Start treesitter highlighting for a buffer
