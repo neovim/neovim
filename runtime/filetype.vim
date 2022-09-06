@@ -941,7 +941,7 @@ au BufNewFile,BufRead *.java,*.jav		setf java
 au BufNewFile,BufRead *.jj,*.jjt		setf javacc
 
 " JavaScript, ECMAScript, ES module script, CommonJS script
-au BufNewFile,BufRead *.js,*.javascript,*.es,*.mjs,*.cjs   setf javascript
+au BufNewFile,BufRead *.js,*.jsm,*.javascript,*.es,*.mjs,*.cjs   setf javascript
 
 " JavaScript with React
 au BufNewFile,BufRead *.jsx			setf javascriptreact
