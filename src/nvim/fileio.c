@@ -2049,7 +2049,7 @@ static char_u *readfile_charconvert(char_u *fname, char_u *fenc, int *fdp)
   char_u *tmpname;
   char *errmsg = NULL;
 
-  tmpname = vim_tempname();
+  tmpname = (char_u *)vim_tempname();
   if (tmpname == NULL) {
     errmsg = _("Can't find temp file for conversion");
   } else {
@@ -2697,7 +2697,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
           }
         }
 
-        rootname = (char *)get_file_in_dir((char_u *)fname, IObuff);
+        rootname = get_file_in_dir(fname, (char *)IObuff);
         if (rootname == NULL) {
           some_error = true;                // out of memory
           goto nobackup;
@@ -2847,7 +2847,7 @@ nobackup:
         }
 
         if (backup == NULL) {
-          rootname = (char *)get_file_in_dir((char_u *)fname, IObuff);
+          rootname = get_file_in_dir(fname, (char *)IObuff);
           if (rootname == NULL) {
             backup = NULL;
           } else {
@@ -2993,7 +2993,7 @@ nobackup:
     // writing, write to a temp file instead and let the conversion
     // overwrite the original file.
     if (*p_ccv != NUL) {
-      wfname = (char *)vim_tempname();
+      wfname = vim_tempname();
       if (wfname == NULL) {  // Can't write without a tempfile!
         SET_ERRMSG(_("E214: Can't find temp file for writing"));
         goto restore_backup;
@@ -3170,7 +3170,7 @@ restore_backup:
     for (lnum = start; lnum <= end; lnum++) {
       // The next while loop is done once for each character written.
       // Keep it fast!
-      ptr = (char *)ml_get_buf(buf, lnum, false) - 1;
+      ptr = ml_get_buf(buf, lnum, false) - 1;
       if (write_undo_file) {
         sha256_update(&sha_ctx, (char_u *)ptr + 1, (uint32_t)(STRLEN(ptr + 1) + 1));
       }
@@ -4704,13 +4704,13 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   buf_T *tbuf = curbuf;
   int retval = OK;
   linenr_T lnum;
-  char_u *p;
+  char *p;
 
   // Copy the lines in "frombuf" to "tobuf".
   curbuf = tobuf;
   for (lnum = 1; lnum <= frombuf->b_ml.ml_line_count; lnum++) {
-    p = vim_strsave(ml_get_buf(frombuf, lnum, false));
-    if (ml_append(lnum - 1, (char *)p, 0, false) == FAIL) {
+    p = xstrdup(ml_get_buf(frombuf, lnum, false));
+    if (ml_append(lnum - 1, p, 0, false) == FAIL) {
       xfree(p);
       retval = FAIL;
       break;
@@ -5358,7 +5358,7 @@ static bool vim_settempdir(char *tempdir)
 ///
 /// @return  pointer to the temp file name or NULL if Nvim can't create
 ///          temporary directory for its own temporary files.
-char_u *vim_tempname(void)
+char *vim_tempname(void)
 {
   // Temp filename counter.
   static uint64_t temp_count;
@@ -5370,10 +5370,10 @@ char_u *vim_tempname(void)
 
   // There is no need to check if the file exists, because we own the directory
   // and nobody else creates a file in it.
-  char_u template[TEMP_FILE_PATH_MAXLEN];
-  snprintf((char *)template, TEMP_FILE_PATH_MAXLEN,
+  char template[TEMP_FILE_PATH_MAXLEN];
+  snprintf(template, TEMP_FILE_PATH_MAXLEN,
            "%s%" PRIu64, tempdir, temp_count++);
-  return vim_strsave(template);
+  return xstrdup(template);
 }
 
 /// Tries matching a filename with a "pattern" ("prog" is NULL), or use the

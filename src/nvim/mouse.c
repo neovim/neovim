@@ -631,7 +631,7 @@ colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // try to advance to the specified column
-  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
+  char_u *line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
   chartabsize_T cts;
   init_chartabsize_arg(&cts, wp, lnum, 0, (char *)line, (char *)line);
   while (cts.cts_vcol < vcol && *cts.cts_ptr != NUL) {

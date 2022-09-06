@@ -253,7 +253,7 @@ void check_buf_options(buf_T *buf)
 
 /// Free the string allocated for an option.
 /// Checks for the string being empty_option. This may happen if we're out of
-/// memory, vim_strsave() returned NULL, which was replaced by empty_option by
+/// memory, xstrdup() returned NULL, which was replaced by empty_option by
 /// check_options().
 /// Does NOT check for P_ALLOCED flag!
 void free_string_option(char *p)

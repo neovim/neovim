@@ -1582,7 +1582,7 @@ static void foldAddMarker(buf_T *buf, pos_T pos, const char *marker, size_t mark
   linenr_T lnum = pos.lnum;
 
   // Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end
-  char *line = (char *)ml_get_buf(buf, lnum, false);
+  char *line = ml_get_buf(buf, lnum, false);
   size_t line_len = STRLEN(line);
   size_t added = 0;
 
@@ -1640,7 +1640,7 @@ static void foldDelMarker(buf_T *buf, linenr_T lnum, char *marker, size_t marker
   }
 
   char *cms = buf->b_p_cms;
-  char *line = (char *)ml_get_buf(buf, lnum, false);
+  char *line = ml_get_buf(buf, lnum, false);
   for (char *p = line; *p != NUL; p++) {
     if (STRNCMP(p, marker, markerlen) != 0) {
       continue;
@@ -2848,7 +2848,7 @@ static void foldlevelIndent(fline_T *flp)
   linenr_T lnum = flp->lnum + flp->off;
 
   buf_T *buf = flp->wp->w_buffer;
-  char *s = skipwhite((char *)ml_get_buf(buf, lnum, false));
+  char *s = skipwhite(ml_get_buf(buf, lnum, false));
 
   // empty line or lines starting with a character in 'foldignore': level
   // depends on surrounding lines
@@ -3010,7 +3010,7 @@ static void foldlevelMarker(fline_T *flp)
   flp->start = 0;
   flp->lvl_next = flp->lvl;
 
-  char *s = (char *)ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, false);
+  char *s = ml_get_buf(flp->wp->w_buffer, flp->lnum + flp->off, false);
   while (*s) {
     if (*s == cstart
         && STRNCMP(s + 1, startmarker, foldstartmarkerlen - 1) == 0) {

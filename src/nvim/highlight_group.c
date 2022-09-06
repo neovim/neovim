@@ -553,12 +553,12 @@ void init_highlight(bool both, bool reset)
 
   // Try finding the color scheme file.  Used when a color file was loaded
   // and 'background' or 't_Co' is changed.
-  char_u *p = get_var_value("g:colors_name");
+  char *p = (char *)get_var_value("g:colors_name");
   if (p != NULL) {
     // Value of g:colors_name could be freed in load_colors() and make
     // p invalid, so copy it.
-    char_u *copy_p = vim_strsave(p);
-    bool okay = load_colors(copy_p);
+    char *copy_p = xstrdup(p);
+    bool okay = load_colors((char_u *)copy_p);
     xfree(copy_p);
     if (okay) {
       return;

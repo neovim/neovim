@@ -529,7 +529,7 @@ static void discard_exception(except_T *excp, bool was_finished)
   if (p_verbose >= 13 || debug_break_level > 0) {
     int save_msg_silent = msg_silent;
 
-    saved_IObuff = (char *)vim_strsave(IObuff);
+    saved_IObuff = xstrdup((char *)IObuff);
     if (debug_break_level > 0) {
       msg_silent = false;               // display messages
     } else {

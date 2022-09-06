@@ -388,12 +388,12 @@ nlua_pop_typval_table_processing_end:
       LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
       state->lua_callable.func_ref = nlua_ref_global(lstate, -1);
 
-      char_u *name = register_cfunc(&nlua_CFunction_func_call,
-                                    &nlua_CFunction_func_free,
-                                    state);
+      char *name = (char *)register_cfunc(&nlua_CFunction_func_call,
+                                          &nlua_CFunction_func_free,
+                                          state);
 
       cur.tv->v_type = VAR_FUNC;
-      cur.tv->vval.v_string = (char *)vim_strsave(name);
+      cur.tv->vval.v_string = xstrdup(name);
       break;
     }
     case LUA_TUSERDATA: {

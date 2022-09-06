@@ -567,7 +567,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
         u_freeentry(uep, i);
         return FAIL;
       }
-      uep->ue_array[i] = u_save_line_buf(buf, lnum++);
+      uep->ue_array[i] = (char_u *)u_save_line_buf(buf, lnum++);
     }
   } else {
     uep->ue_array = NULL;
@@ -621,7 +621,7 @@ void u_compute_hash(buf_T *buf, char_u *hash)
   context_sha256_T ctx;
   sha256_start(&ctx);
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    char_u *p = ml_get_buf(buf, lnum, false);
+    char_u *p = (char_u *)ml_get_buf(buf, lnum, false);
     sha256_update(&ctx, p, (uint32_t)(STRLEN(p) + 1));
   }
   sha256_finish(&ctx, hash);
@@ -2643,7 +2643,7 @@ void ex_undolist(exarg_T *eap)
         }
         vim_snprintf_add((char *)IObuff, IOSIZE, "  %3ld", uhp->uh_save_nr);
       }
-      GA_APPEND(char_u *, &ga, vim_strsave(IObuff));
+      GA_APPEND(char *, &ga, xstrdup((char *)IObuff));
     }
 
     uhp->uh_walk = mark;
@@ -3027,16 +3027,16 @@ void u_blockfree(buf_T *buf)
 /// @param lnum the line to copy
 static char_u *u_save_line(linenr_T lnum)
 {
-  return u_save_line_buf(curbuf, lnum);
+  return (char_u *)u_save_line_buf(curbuf, lnum);
 }
 
 /// Allocate memory and copy line into it
 ///
 /// @param lnum line to copy
 /// @param buf buffer to copy from
-static char_u *u_save_line_buf(buf_T *buf, linenr_T lnum)
+static char *u_save_line_buf(buf_T *buf, linenr_T lnum)
 {
-  return vim_strsave(ml_get_buf(buf, lnum, false));
+  return xstrdup(ml_get_buf(buf, lnum, false));
 }
 
 /// Check if the 'modified' flag is set, or 'ff' has changed (only need to

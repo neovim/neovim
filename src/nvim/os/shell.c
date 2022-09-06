@@ -52,11 +52,11 @@ static void save_patterns(int num_pat, char **pat, int *num_file, char ***file)
 {
   *file = xmalloc((size_t)num_pat * sizeof(char_u *));
   for (int i = 0; i < num_pat; i++) {
-    char_u *s = vim_strsave((char_u *)pat[i]);
+    char *s = xstrdup(pat[i]);
     // Be compatible with expand_filename(): halve the number of
     // backslashes.
-    backslash_halve((char *)s);
-    (*file)[i] = (char *)s;
+    backslash_halve(s);
+    (*file)[i] = s;
   }
   *num_file = num_pat;
 }
@@ -160,7 +160,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   // get a name for the temp file
-  if ((tempname = vim_tempname()) == NULL) {
+  if ((tempname = (char_u *)vim_tempname()) == NULL) {
     emsg(_(e_notmp));
     return FAIL;
   }
@@ -746,7 +746,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags, size_t *ret
   }
 
   // get a name for the temp file
-  char_u *tempname = vim_tempname();
+  char_u *tempname = (char_u *)vim_tempname();
   if (tempname == NULL) {
     emsg(_(e_notmp));
     return NULL;

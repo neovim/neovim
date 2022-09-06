@@ -360,15 +360,14 @@ struct ufunc {
 };
 
 struct partial_S {
-  int pt_refcount;  ///< Reference count.
-  char_u *pt_name;  ///< Function name; when NULL use pt_func->name.
-  ufunc_T *pt_func;  ///< Function pointer; when NULL lookup function with
-                     ///< pt_name.
-  bool pt_auto;  ///< When true the partial was created by using dict.member
-                 ///< in handle_subscript().
-  int pt_argc;  ///< Number of arguments.
+  int pt_refcount;    ///< Reference count.
+  char *pt_name;      ///< Function name; when NULL use pt_func->name.
+  ufunc_T *pt_func;   ///< Function pointer; when NULL lookup function with pt_name.
+  bool pt_auto;       ///< When true the partial was created by using dict.member
+                      ///< in handle_subscript().
+  int pt_argc;        ///< Number of arguments.
   typval_T *pt_argv;  ///< Arguments in allocated array.
-  dict_T *pt_dict;  ///< Dict for "self".
+  dict_T *pt_dict;    ///< Dict for "self".
 };
 
 /// Structure used for explicit stack while garbage collecting hash tables

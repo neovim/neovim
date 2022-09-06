@@ -420,7 +420,7 @@ void set_init_1(bool clean_arg)
     // use utf-8 as 'default' if locale encoding can't be detected.
     p = (char_u *)xmemdupz(S_LEN("utf-8"));
   }
-  fenc_default = p;
+  fenc_default = (char *)p;
 
 #ifdef HAVE_WORKING_LIBINTL
   // GNU gettext 0.10.37 supports this feature: set the codeset used for
@@ -1129,9 +1129,9 @@ int do_set(char *arg, int opt_flags)
                                     opt_flags);
           } else if (opt_idx >= 0) {  // String.
             char_u *save_arg = NULL;
-            char_u *s = NULL;
+            char *s = NULL;
             char_u *oldval = NULL;         // previous value if *varp
-            char_u *newval;
+            char *newval;
             char_u *origval = NULL;
             char_u *origval_l = NULL;
             char_u *origval_g = NULL;
@@ -1175,24 +1175,24 @@ int do_set(char *arg, int opt_flags)
             }
 
             if (nextchar == '&') {  // set to default val
-              newval = options[opt_idx].def_val;
+              newval = (char *)options[opt_idx].def_val;
               // expand environment variables and ~ since the
               // default value was already expanded, only
               // required when an environment variable was set
               // later
               if (newval == NULL) {
-                newval = (char_u *)empty_option;
+                newval = empty_option;
               } else if (!(options[opt_idx].flags & P_NO_DEF_EXP)) {
-                s = option_expand(opt_idx, newval);
+                s = (char *)option_expand(opt_idx, (char_u *)newval);
                 if (s == NULL) {
                   s = newval;
                 }
-                newval = vim_strsave(s);
+                newval = xstrdup(s);
               } else {
-                newval = (char_u *)xstrdup((char *)newval);
+                newval = xstrdup(newval);
               }
             } else if (nextchar == '<') {  // set to global val
-              newval = vim_strsave(*(char_u **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
+              newval = xstrdup(*(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
             } else {
               arg++;                    // jump to after the '=' or ':'
 
@@ -1212,13 +1212,13 @@ int do_set(char *arg, int opt_flags)
                   *(char **)varp = empty_option;
                   break;
                 case 1:
-                  *(char_u **)varp = vim_strsave((char_u *)"indent,eol");
+                  *(char_u **)varp = (char_u *)xstrdup("indent,eol");
                   break;
                 case 2:
-                  *(char_u **)varp = vim_strsave((char_u *)"indent,eol,start");
+                  *(char_u **)varp = (char_u *)xstrdup("indent,eol,start");
                   break;
                 case 3:
-                  *(char_u **)varp = vim_strsave((char_u *)"indent,eol,nostop");
+                  *(char_u **)varp = (char_u *)xstrdup("indent,eol,nostop");
                   break;
                 }
                 xfree(oldval);
@@ -1301,7 +1301,7 @@ int do_set(char *arg, int opt_flags)
                   arg += i;
                   s += i;
                 } else {
-                  *s++ = (uint8_t)(*arg++);
+                  *s++ = *arg++;
                 }
               }
               *s = NUL;
@@ -1311,7 +1311,7 @@ int do_set(char *arg, int opt_flags)
               // comma.
               if (!(adding || prepending || removing)
                   || (flags & P_COMMA)) {
-                s = option_expand(opt_idx, newval);
+                s = (char *)option_expand(opt_idx, (char_u *)newval);
                 if (s != NULL) {
                   xfree(newval);
                   newlen = (unsigned)STRLEN(s) + 1;
@@ -1328,7 +1328,7 @@ int do_set(char *arg, int opt_flags)
               i = 0;                    // init for GCC
               if (removing || (flags & P_NODUP)) {
                 i = (int)STRLEN(newval);
-                s = find_dup_item(origval, newval, flags);
+                s = (char *)find_dup_item(origval, (char_u *)newval, flags);
 
                 // do not add if already there
                 if ((adding || prepending) && s != NULL) {
@@ -1340,7 +1340,7 @@ int do_set(char *arg, int opt_flags)
                 // if no duplicate, move pointer to end of
                 // original value
                 if (s == NULL) {
-                  s = origval + (int)STRLEN(origval);
+                  s = (char *)origval + (int)STRLEN(origval);
                 }
               }
 
@@ -1377,7 +1377,7 @@ int do_set(char *arg, int opt_flags)
                 if (*s) {
                   // may need to remove a comma
                   if (flags & P_COMMA) {
-                    if (s == origval) {
+                    if (s == (char *)origval) {
                       // include comma after string
                       if (s[i] == ',') {
                         i++;
@@ -1388,7 +1388,7 @@ int do_set(char *arg, int opt_flags)
                       i++;
                     }
                   }
-                  STRMOVE(newval + (s - origval), s + i);
+                  STRMOVE(newval + (s - (char *)origval), s + i);
                 }
               }
 
@@ -1399,14 +1399,14 @@ int do_set(char *arg, int opt_flags)
                   // 'whichwrap'
                   if (flags & P_ONECOMMA) {
                     if (*s != ',' && *(s + 1) == ','
-                        && vim_strchr((char *)s + 2, *s) != NULL) {
+                        && vim_strchr(s + 2, *s) != NULL) {
                       // Remove the duplicated value and the next comma.
                       STRMOVE(s, s + 2);
                       continue;
                     }
                   } else {
                     if ((!(flags & P_COMMA) || *s != ',')
-                        && vim_strchr((char *)s + 1, *s) != NULL) {
+                        && vim_strchr(s + 1, *s) != NULL) {
                       STRMOVE(s, s + 1);
                       continue;
                     }
@@ -1421,7 +1421,7 @@ int do_set(char *arg, int opt_flags)
             }
 
             // Set the new value.
-            *(char_u **)(varp) = newval;
+            *(char_u **)(varp) = (char_u *)newval;
 
             // origval may be freed by
             // did_set_string_option(), make a copy.
@@ -1431,7 +1431,7 @@ int do_set(char *arg, int opt_flags)
 
             // newval (and varp) may become invalid if the
             // buffer is closed by autocommands.
-            saved_newval = (newval != NULL) ? xstrdup((char *)newval) : 0;
+            saved_newval = (newval != NULL) ? xstrdup(newval) : 0;
 
             {
               uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
@@ -4451,7 +4451,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_cpt = xstrdup(p_cpt);
       COPY_OPT_SCTX(buf, BV_CPT);
 #ifdef BACKSLASH_IN_FILENAME
-      buf->b_p_csl = vim_strsave(p_csl);
+      buf->b_p_csl = xstrdup(p_csl);
       COPY_OPT_SCTX(buf, BV_CSL);
 #endif
       buf->b_p_cfu = xstrdup(p_cfu);
@@ -4826,7 +4826,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char ***fi
   int num_normal = 0;  // Nr of matching non-term-code settings
   int match;
   int count = 0;
-  char_u *str;
+  char *str;
   int loop;
   static char *(names[]) = { "all" };
   int ic = regmatch->rm_ic;  // remember the ignore-case flag
@@ -4848,7 +4848,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char ***fi
         }
       }
     }
-    for (size_t opt_idx = 0; (str = (char_u *)options[opt_idx].fullname) != NULL;
+    for (size_t opt_idx = 0; (str = options[opt_idx].fullname) != NULL;
          opt_idx++) {
       if (options[opt_idx].var == NULL) {
         continue;
@@ -4858,7 +4858,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char ***fi
         continue;
       }
       match = false;
-      if (vim_regexec(regmatch, (char *)str, (colnr_T)0)
+      if (vim_regexec(regmatch, str, (colnr_T)0)
           || (options[opt_idx].shortname != NULL
               && vim_regexec(regmatch,
                              options[opt_idx].shortname,
@@ -4870,7 +4870,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char ***fi
         if (loop == 0) {
           num_normal++;
         } else {
-          (*file)[count++] = (char *)vim_strsave(str);
+          (*file)[count++] = xstrdup(str);
         }
       }
     }
@@ -4881,7 +4881,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char ***fi
       } else {
         return OK;
       }
-      *file = xmalloc((size_t)(*num_file) * sizeof(char_u *));
+      *file = xmalloc((size_t)(*num_file) * sizeof(char *));
     }
   }
   return OK;
@@ -5230,7 +5230,7 @@ int fill_culopt_flags(char *val, win_T *wp)
 /// Set the callback function value for an option that accepts a function name,
 /// lambda, et al. (e.g. 'operatorfunc', 'tagfunc', etc.)
 /// @return  OK if the option is successfully set to a function, otherwise FAIL
-int option_set_callback_func(char_u *optval, Callback *optcb)
+int option_set_callback_func(char *optval, Callback *optcb)
 {
   if (optval == NULL || *optval == NUL) {
     callback_free(optcb);
@@ -5242,7 +5242,7 @@ int option_set_callback_func(char_u *optval, Callback *optcb)
       || (STRNCMP(optval, "function(", 9) == 0)
       || (STRNCMP(optval, "funcref(", 8) == 0)) {
     // Lambda expression or a funcref
-    tv = eval_expr((char *)optval);
+    tv = eval_expr(optval);
     if (tv == NULL) {
       return FAIL;
     }
@@ -5250,7 +5250,7 @@ int option_set_callback_func(char_u *optval, Callback *optcb)
     // treat everything else as a function name string
     tv = xcalloc(1, sizeof(*tv));
     tv->v_type = VAR_STRING;
-    tv->vval.v_string = (char *)vim_strsave(optval);
+    tv->vval.v_string = xstrdup(optval);
   }
 
   Callback cb;

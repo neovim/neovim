@@ -570,7 +570,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   char *str_at_end = NULL;
 
   // Another call to ml_get_buf() may free the line, so make a copy.
-  str_at_start = xstrdup((char *)ml_get_buf(buf, (linenr_T)start_row, false));
+  str_at_start = xstrdup(ml_get_buf(buf, (linenr_T)start_row, false));
   size_t len_at_start = strlen(str_at_start);
   if (start_col < 0 || (size_t)start_col > len_at_start) {
     api_set_error(err, kErrorTypeValidation, "start_col out of bounds");
@@ -578,7 +578,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   }
 
   // Another call to ml_get_buf() may free the line, so make a copy.
-  str_at_end = xstrdup((char *)ml_get_buf(buf, (linenr_T)end_row, false));
+  str_at_end = xstrdup(ml_get_buf(buf, (linenr_T)end_row, false));
   size_t len_at_end = strlen(str_at_end);
   if (end_col < 0 || (size_t)end_col > len_at_end) {
     api_set_error(err, kErrorTypeValidation, "end_col out of bounds");
@@ -608,7 +608,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     for (int64_t i = 1; i < end_row - start_row; i++) {
       int64_t lnum = start_row + i;
 
-      const char *bufline = (char *)ml_get_buf(buf, (linenr_T)lnum, false);
+      const char *bufline = ml_get_buf(buf, (linenr_T)lnum, false);
       old_byte += (bcount_t)(strlen(bufline)) + 1;
     }
     old_byte += (bcount_t)end_col + 1;

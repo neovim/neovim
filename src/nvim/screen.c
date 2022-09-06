@@ -620,7 +620,7 @@ void setcursor_mayforce(bool force)
       // With 'rightleft' set and the cursor on a double-wide character,
       // position it on the leftmost column.
       col = curwin->w_width_inner - curwin->w_wcol
-            - ((utf_ptr2cells((char *)get_cursor_pos_ptr()) == 2
+            - ((utf_ptr2cells(get_cursor_pos_ptr()) == 2
                 && vim_isprintc(gchar_cursor())) ? 2 : 1);
     }
 

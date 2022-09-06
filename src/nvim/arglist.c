@@ -86,7 +86,7 @@ void alist_expand(int *fnum_list, int fnum_len)
   // can't set the options.
   p_su = empty_option;
   for (int i = 0; i < GARGCOUNT; i++) {
-    old_arg_files[i] = vim_strsave(GARGLIST[i].ae_fname);
+    old_arg_files[i] = xstrdup(GARGLIST[i].ae_fname);
   }
   int old_arg_count = GARGCOUNT;
   char **new_arg_files;

@@ -2777,7 +2777,7 @@ static void tv_dict_list(typval_T *const tv, typval_T *const rettv, const DictLi
     switch (what) {
       case kDictListKeys:
         tv_item.v_type = VAR_STRING;
-        tv_item.vval.v_string = (char *)vim_strsave(di->di_key);
+        tv_item.vval.v_string = xstrdup((char *)di->di_key);
         break;
       case kDictListValues:
         tv_copy(&di->di_tv, &tv_item);

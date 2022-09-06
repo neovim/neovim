@@ -849,7 +849,7 @@ static void get_col(typval_T *argvars, typval_T *rettv, bool charcol)
       // col(".") when the cursor is on the NUL at the end of the line
       // because of "coladd" can be seen as an extra column.
       if (virtual_active() && fp == &curwin->w_cursor) {
-        char *p = (char *)get_cursor_pos_ptr();
+        char *p = get_cursor_pos_ptr();
         if (curwin->w_cursor.coladd >=
             (colnr_T)win_chartabsize(curwin, p,
                                      curwin->w_virtcol - curwin->w_cursor.coladd)) {
@@ -930,12 +930,12 @@ static void f_chdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   // Return the current directory
-  char_u *cwd = xmalloc(MAXPATHL);
-  if (os_dirname(cwd, MAXPATHL) != FAIL) {
+  char *cwd = xmalloc(MAXPATHL);
+  if (os_dirname((char_u *)cwd, MAXPATHL) != FAIL) {
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(cwd);
 #endif
-    rettv->vval.v_string = (char *)vim_strsave(cwd);
+    rettv->vval.v_string = xstrdup(cwd);
   }
   xfree(cwd);
 
@@ -2016,10 +2016,9 @@ static void f_expand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         options += WILD_ICASE;
       }
       if (rettv->v_type == VAR_STRING) {
-        rettv->vval.v_string = (char *)ExpandOne(&xpc, (char_u *)s, NULL, options,
-                                                 WILD_ALL);
+        rettv->vval.v_string = ExpandOne(&xpc, (char *)s, NULL, options, WILD_ALL);
       } else {
-        ExpandOne(&xpc, (char_u *)s, NULL, options, WILD_ALL_KEEP);
+        ExpandOne(&xpc, (char *)s, NULL, options, WILD_ALL_KEEP);
         tv_list_alloc_ret(rettv, xpc.xp_numfiles);
         for (int i = 0; i < xpc.xp_numfiles; i++) {
           tv_list_append_string(rettv->vval.v_list,
@@ -2437,7 +2436,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       pt = argvars[0].vval.v_partial;
     } else {
       CLEAR_FIELD(fref_pt);
-      fref_pt.pt_name = (char_u *)argvars[0].vval.v_string;
+      fref_pt.pt_name = argvars[0].vval.v_string;
       pt = &fref_pt;
     }
 
@@ -2579,9 +2578,8 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retli
     }
   } else {
     rettv->v_type = VAR_STRING;
-    rettv->vval.v_string =
-      (char *)((start >= 1 && start <= buf->b_ml.ml_line_count)
-               ? vim_strsave(ml_get_buf(buf, start, false)) : NULL);
+    rettv->vval.v_string = ((start >= 1 && start <= buf->b_ml.ml_line_count)
+                            ? xstrdup(ml_get_buf(buf, start, false)) : NULL);
   }
 }
 
@@ -2919,7 +2917,7 @@ static void f_getftime(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "getftype({fname})" function
 static void f_getftype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  char_u *type = NULL;
+  char *type = NULL;
   char *t;
 
   const char *fname = tv_get_string(&argvars[0]);
@@ -2945,9 +2943,9 @@ static void f_getftype(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     } else {
       t = "other";
     }
-    type = vim_strsave((char_u *)t);
+    type = xstrdup(t);
   }
-  rettv->vval.v_string = (char *)type;
+  rettv->vval.v_string = type;
 }
 
 /// "getjumplist()" function
@@ -3441,11 +3439,11 @@ static void f_glob(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       options += WILD_ICASE;
     }
     if (rettv->v_type == VAR_STRING) {
-      rettv->vval.v_string = (char *)ExpandOne(&xpc, (char_u *)
-                                               tv_get_string(&argvars[0]), NULL, options,
-                                               WILD_ALL);
+      rettv->vval.v_string = ExpandOne(&xpc, (char *)
+                                       tv_get_string(&argvars[0]), NULL, options,
+                                       WILD_ALL);
     } else {
-      ExpandOne(&xpc, (char_u *)tv_get_string(&argvars[0]), NULL, options,
+      ExpandOne(&xpc, (char *)tv_get_string(&argvars[0]), NULL, options,
                 WILD_ALL_KEEP);
       tv_list_alloc_ret(rettv, xpc.xp_numfiles);
       for (int i = 0; i < xpc.xp_numfiles; i++) {
@@ -5443,11 +5441,11 @@ static void f_pathshorten(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   rettv->v_type = VAR_STRING;
-  const char_u *p = (char_u *)tv_get_string_chk(&argvars[0]);
+  const char *p = tv_get_string_chk(&argvars[0]);
   if (p == NULL) {
     rettv->vval.v_string = NULL;
   } else {
-    rettv->vval.v_string = (char *)vim_strsave(p);
+    rettv->vval.v_string = xstrdup(p);
     shorten_dir_len((char_u *)rettv->vval.v_string, trim_len);
   }
 }
@@ -5565,7 +5563,7 @@ static void f_prompt_getprompt(typval_T *argvars, typval_T *rettv, EvalFuncData 
     return;
   }
 
-  rettv->vval.v_string = (char *)vim_strsave(buf_prompt_text(buf));
+  rettv->vval.v_string = xstrdup(buf_prompt_text(buf));
 }
 
 /// "prompt_setprompt({buffer}, {text})" function
@@ -7107,7 +7105,7 @@ static void f_screenstring(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     return;
   }
 
-  rettv->vval.v_string = (char *)vim_strsave(grid->chars[grid->line_offset[row] + (size_t)col]);
+  rettv->vval.v_string = xstrdup((char *)grid->chars[grid->line_offset[row] + (size_t)col]);
 }
 
 /// "search()" function
@@ -8052,7 +8050,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     // Find the start and length of the badly spelled word.
     len = spell_move_to(curwin, FORWARD, true, true, &attr);
     if (len != 0) {
-      word = (char *)get_cursor_pos_ptr();
+      word = get_cursor_pos_ptr();
       curwin->w_set_curswant = true;
     }
   } else if (*curbuf->b_s.b_p_spl != NUL) {
@@ -8740,7 +8738,7 @@ static void f_swapname(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       || buf->b_ml.ml_mfp->mf_fname == NULL) {
     rettv->vval.v_string = NULL;
   } else {
-    rettv->vval.v_string = (char *)vim_strsave(buf->b_ml.ml_mfp->mf_fname);
+    rettv->vval.v_string = xstrdup(buf->b_ml.ml_mfp->mf_fname);
   }
 }
 
@@ -9101,7 +9099,7 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_tempname(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char *)vim_tempname();
+  rettv->vval.v_string = vim_tempname();
 }
 
 /// "termopen(cmd[, cwd])" function
@@ -9595,12 +9593,12 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "visualmode()" function
 static void f_visualmode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  char_u str[2];
+  char str[2];
 
   rettv->v_type = VAR_STRING;
-  str[0] = (char_u)curbuf->b_visual_mode_eval;
+  str[0] = (char)curbuf->b_visual_mode_eval;
   str[1] = NUL;
-  rettv->vval.v_string = (char *)vim_strsave(str);
+  rettv->vval.v_string = xstrdup(str);
 
   // A non-zero number or non-empty string argument: reset mode.
   if (non_zero_arg(&argvars[0])) {

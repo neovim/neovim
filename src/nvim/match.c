@@ -446,7 +446,7 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
       char_u *ml;
 
       matchcol = shl->rm.startpos[0].col;
-      ml = ml_get_buf(shl->buf, lnum, false) + matchcol;
+      ml = (char_u *)ml_get_buf(shl->buf, lnum, false) + matchcol;
       if (*ml == NUL) {
         matchcol++;
         shl->lnum = 0;
@@ -613,7 +613,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char_u **l
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
-    *line = ml_get_buf(wp->w_buffer, lnum, false);
+    *line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
 
     if (shl->lnum != 0 && shl->lnum <= lnum) {
       if (shl->lnum == lnum) {
@@ -721,7 +721,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char_u **line, match
 
         // Need to get the line again, a multi-line regexp
         // may have made it invalid.
-        *line = ml_get_buf(wp->w_buffer, lnum, false);
+        *line = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
 
         if (shl->lnum == lnum) {
           shl->startcol = shl->rm.startpos[0].col;

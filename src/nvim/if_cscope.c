@@ -228,16 +228,16 @@ void ex_cstag(exarg_T *eap)
         }
 
         if (cs_check_for_tags()) {
-          ret = do_tag((char_u *)eap->arg, DT_JUMP, 0, eap->forceit, false);
+          ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, false);
         }
       }
     } else if (cs_check_for_tags()) {
-      ret = do_tag((char_u *)eap->arg, DT_JUMP, 0, eap->forceit, false);
+      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, false);
     }
     break;
   case 1:
     if (cs_check_for_tags()) {
-      ret = do_tag((char_u *)eap->arg, DT_JUMP, 0, eap->forceit, false);
+      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, false);
       if (ret == false) {
         if (msg_col) {
           msg_putchar('\n');
@@ -1003,7 +1003,7 @@ static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool 
   if (qfpos != NULL && *qfpos != '0') {
     // Fill error list.
     FILE *f;
-    char_u *tmp = vim_tempname();
+    char_u *tmp = (char_u *)vim_tempname();
     qf_info_T *qi = NULL;
     win_T *wp = NULL;
 
@@ -1053,7 +1053,7 @@ static bool cs_find_common(char *opt, char *pat, int forceit, int verbose, bool 
 
     (void)cs_manage_matches(matches, contexts, matched, Store);
 
-    return do_tag((char_u *)pat, DT_CSCOPE, 0, forceit, verbose);
+    return do_tag(pat, DT_CSCOPE, 0, forceit, verbose);
   }
 }
 

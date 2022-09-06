@@ -127,7 +127,7 @@ typedef struct {
   int has_zend;                         // pattern contains \ze
   int has_backref;                      // pattern contains \1 .. \9
   int reghasz;
-  char_u *pattern;
+  char *pattern;
   int nsubexp;                          // number of ()
   int nstate;
   nfa_state_T state[1];                 // actually longer..

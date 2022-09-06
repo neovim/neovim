@@ -382,13 +382,13 @@ static int calc_hist_idx(int histype, int num)
 /// Get a history entry by its index.
 ///
 /// @param histype  may be one of the HIST_ values.
-static char_u *get_history_entry(int histype, int idx)
+static char *get_history_entry(int histype, int idx)
 {
   idx = calc_hist_idx(histype, idx);
   if (idx >= 0) {
-    return (char_u *)history[histype][idx].hisstr;
+    return history[histype][idx].hisstr;
   } else {
-    return (char_u *)"";
+    return "";
   }
 }
 
@@ -556,7 +556,7 @@ void f_histget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       idx = (int)tv_get_number_chk(&argvars[1], NULL);
     }
     // -1 on type error
-    rettv->vval.v_string = (char *)vim_strsave(get_history_entry(type, idx));
+    rettv->vval.v_string = xstrdup(get_history_entry(type, idx));
   }
   rettv->v_type = VAR_STRING;
 }

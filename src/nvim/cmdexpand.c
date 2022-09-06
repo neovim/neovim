@@ -183,7 +183,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 
   if (type == WILD_NEXT || type == WILD_PREV) {
     // Get next/previous match for a previous expanded pattern.
-    p2 = ExpandOne(xp, NULL, NULL, 0, type);
+    p2 = (char_u *)ExpandOne(xp, NULL, NULL, 0, type);
   } else {
     // Translate string into pattern and expand it.
     p1 = (char_u *)addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
@@ -193,8 +193,8 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
                              | WILD_SILENT
                              | (escape ? WILD_ESCAPE : 0)
                              | (p_wic ? WILD_ICASE : 0));
-    p2 = ExpandOne(xp, p1, (char_u *)xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
-                   use_options, type);
+    p2 = (char_u *)ExpandOne(xp, (char *)p1, xstrnsave(&ccline->cmdbuff[i], xp->xp_pattern_len),
+                             use_options, type);
     xfree(p1);
 
     // xp->xp_pattern might have been modified by ExpandOne (for example,
@@ -278,7 +278,7 @@ void cmdline_pum_cleanup(CmdlineInfo *cclp)
 
 /// Get the next or prev cmdline completion match. The index of the match is set
 /// in "p_findex"
-static char_u *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, char_u *orig_save)
+static char *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, char *orig_save)
 {
   if (xp->xp_numfiles <= 0) {
     return NULL;
@@ -318,17 +318,17 @@ static char_u *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, cha
   }
   *p_findex = findex;
 
-  return vim_strsave(findex == -1 ? orig_save : (char_u *)xp->xp_files[findex]);
+  return xstrdup(findex == -1 ? orig_save : xp->xp_files[findex]);
 }
 
 /// Start the command-line expansion and get the matches.
-static char_u *ExpandOne_start(int mode, expand_T *xp, char_u *str, int options)
+static char *ExpandOne_start(int mode, expand_T *xp, char *str, int options)
 {
   int non_suf_match;  // number without matching suffix
-  char_u *ss = NULL;
+  char *ss = NULL;
 
   // Do the expansion.
-  if (ExpandFromContext(xp, str, &xp->xp_numfiles, &xp->xp_files, options) == FAIL) {
+  if (ExpandFromContext(xp, (char_u *)str, &xp->xp_numfiles, &xp->xp_files, options) == FAIL) {
 #ifdef FNAME_ILLEGAL
     // Illegal file name has been silently skipped.  But when there
     // are wildcards, the real problem is that there was no match,
@@ -343,7 +343,7 @@ static char_u *ExpandOne_start(int mode, expand_T *xp, char_u *str, int options)
     }
   } else {
     // Escape the matches for use on the command line.
-    ExpandEscape(xp, str, xp->xp_numfiles, xp->xp_files, options);
+    ExpandEscape(xp, (char_u *)str, xp->xp_numfiles, xp->xp_files, options);
 
     // Check for matching suffixes in file names.
     if (mode != WILD_ALL && mode != WILD_ALL_KEEP
@@ -378,7 +378,7 @@ static char_u *ExpandOne_start(int mode, expand_T *xp, char_u *str, int options)
         }
       }
       if (!(non_suf_match != 1 && mode == WILD_EXPAND_FREE)) {
-        ss = vim_strsave((char_u *)xp->xp_files[0]);
+        ss = xstrdup(xp->xp_files[0]);
       }
     }
   }
@@ -458,11 +458,11 @@ static char *find_longest_match(expand_T *xp, int options)
 /// The variables xp->xp_context and xp->xp_backslash must have been set!
 ///
 /// @param orig  allocated copy of original of expanded string
-char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode)
+char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 {
-  char_u *ss = NULL;
+  char *ss = NULL;
   static int findex;
-  static char_u *orig_save = NULL;      // kept value of orig
+  static char *orig_save = NULL;      // kept value of orig
   int orig_saved = false;
   int i;
 
@@ -472,10 +472,11 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
   }
 
   if (mode == WILD_CANCEL) {
-    ss = vim_strsave(orig_save ? orig_save : (char_u *)"");
+    ss = xstrdup(orig_save ? orig_save : "");
   } else if (mode == WILD_APPLY) {
-    ss = vim_strsave(findex == -1 ? (orig_save ? orig_save : (char_u *)"")
-                     : (char_u *)xp->xp_files[findex]);
+    ss = xstrdup(findex == -1
+                 ? (orig_save ? orig_save : "")
+                 : xp->xp_files[findex]);
   }
 
   // free old names
@@ -500,7 +501,7 @@ char_u *ExpandOne(expand_T *xp, char_u *str, char_u *orig, int options, int mode
 
   // Find longest common part
   if (mode == WILD_LONGEST && xp->xp_numfiles > 0) {
-    ss = (char_u *)find_longest_match(xp, options);
+    ss = find_longest_match(xp, options);
     findex = -1;  // next p_wc gets first one
   }
 
@@ -1915,7 +1916,7 @@ int expand_cmdline(expand_T *xp, char_u *str, int col, int *matchcount, char ***
 }
 
 /// Expand file or directory names.
-static int expand_files_and_dirs(expand_T *xp, char_u *pat, char ***file, int *num_file, int flags,
+static int expand_files_and_dirs(expand_T *xp, char *pat, char ***file, int *num_file, int flags,
                                  int options)
 {
   bool free_pat = false;
@@ -1923,7 +1924,7 @@ static int expand_files_and_dirs(expand_T *xp, char_u *pat, char ***file, int *n
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
   if (xp->xp_backslash != XP_BS_NONE) {
     free_pat = true;
-    pat = vim_strsave(pat);
+    pat = xstrdup(pat);
     for (int i = 0; pat[i]; i++) {
       if (pat[i] == '\\') {
         if (xp->xp_backslash == XP_BS_THREE
@@ -2124,7 +2125,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
   if (xp->xp_context == EXPAND_FILES
       || xp->xp_context == EXPAND_DIRECTORIES
       || xp->xp_context == EXPAND_FILES_IN_PATH) {
-    return expand_files_and_dirs(xp, pat, file, num_file, flags, options);
+    return expand_files_and_dirs(xp, (char *)pat, file, num_file, flags, options);
   }
 
   *file = NULL;
@@ -2142,7 +2143,7 @@ static int ExpandFromContext(expand_T *xp, char_u *pat, int *num_file, char ***f
 
   if (xp->xp_context == EXPAND_SHELLCMD) {
     *file = NULL;
-    expand_shellcmd(pat, num_file, file, flags);
+    expand_shellcmd((char *)pat, num_file, file, flags);
     return OK;
   }
   if (xp->xp_context == EXPAND_OLD_SETTING) {
@@ -2238,18 +2239,18 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
 {
   int i;
   size_t count = 0;
-  char_u *str;
+  char *str;
 
   // count the number of matching names
   for (i = 0;; i++) {
-    str = (char_u *)(*func)(xp, i);
+    str = (*func)(xp, i);
     if (str == NULL) {  // end of list
       break;
     }
     if (*str == NUL) {  // skip empty strings
       continue;
     }
-    if (vim_regexec(regmatch, (char *)str, (colnr_T)0)) {
+    if (vim_regexec(regmatch, str, (colnr_T)0)) {
       count++;
     }
   }
@@ -2263,20 +2264,20 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
   // copy the matching names into allocated memory
   count = 0;
   for (i = 0;; i++) {
-    str = (char_u *)(*func)(xp, i);
+    str = (*func)(xp, i);
     if (str == NULL) {  // End of list.
       break;
     }
     if (*str == NUL) {  // Skip empty strings.
       continue;
     }
-    if (vim_regexec(regmatch, (char *)str, (colnr_T)0)) {
+    if (vim_regexec(regmatch, str, (colnr_T)0)) {
       if (escaped) {
-        str = vim_strsave_escaped(str, (char_u *)" \t\\.");
+        str = (char *)vim_strsave_escaped((char_u *)str, (char_u *)" \t\\.");
       } else {
-        str = vim_strsave(str);
+        str = xstrdup(str);
       }
-      (*file)[count++] = (char *)str;
+      (*file)[count++] = str;
       if (func == get_menu_names) {
         // Test for separator added by get_menu_names().
         str += STRLEN(str) - 1;
@@ -2313,22 +2314,22 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
 ///                      *file will either be set to NULL or point to
 ///                      allocated memory.
 /// @param      flagsarg is a combination of EW_* flags.
-static void expand_shellcmd(char_u *filepat, int *num_file, char ***file, int flagsarg)
+static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flagsarg)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u *pat;
+  char *pat;
   int i;
-  char_u *path = NULL;
+  char *path = NULL;
   garray_T ga;
   char *buf = xmalloc(MAXPATHL);
   size_t l;
-  char_u *s, *e;
+  char *s, *e;
   int flags = flagsarg;
   int ret;
   bool did_curdir = false;
 
   // for ":set path=" and ":set tags=" halve backslashes for escaped space
-  pat = vim_strsave(filepat);
+  pat = xstrdup(filepat);
   for (i = 0; pat[i]; i++) {
     if (pat[i] == '\\' && pat[i + 1] == ' ') {
       STRMOVE(pat + i, pat + i + 1);
@@ -2340,14 +2341,14 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char ***file, int fl
   bool mustfree = false;  // Track memory allocation for *path.
   if (pat[0] == '.' && (vim_ispathsep(pat[1])
                         || (pat[1] == '.' && vim_ispathsep(pat[2])))) {
-    path = (char_u *)".";
+    path = ".";
   } else {
     // For an absolute name we don't use $PATH.
-    if (!path_is_absolute(pat)) {
-      path = (char_u *)vim_getenv("PATH");
+    if (!path_is_absolute((char_u *)pat)) {
+      path = vim_getenv("PATH");
     }
     if (path == NULL) {
-      path = (char_u *)"";
+      path = "";
     } else {
       mustfree = true;
     }
@@ -2360,7 +2361,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char ***file, int fl
   hashtab_T found_ht;
   hash_init(&found_ht);
   for (s = path;; s = e) {
-    e = (char_u *)vim_strchr((char *)s, ENV_SEPCHAR);
+    e = vim_strchr(s, ENV_SEPCHAR);
     if (e == NULL) {
       e = s + STRLEN(s);
     }
@@ -2895,7 +2896,7 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 theend:
   pat = (char_u *)addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
-  ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
+  ExpandOne(&xpc, (char *)pat, NULL, options, WILD_ALL_KEEP);
   tv_list_alloc_ret(rettv, xpc.xp_numfiles);
 
   for (int i = 0; i < xpc.xp_numfiles; i++) {

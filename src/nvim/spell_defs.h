@@ -115,7 +115,7 @@ typedef struct slang_S slang_T;
 
 struct slang_S {
   slang_T *sl_next;         // next language
-  char_u *sl_name;          // language name "en", "en.rare", "nl", etc.
+  char *sl_name;            // language name "en", "en.rare", "nl", etc.
   char *sl_fname;           // name of .spl file
   bool sl_add;              // true if it's a .add file.
 
@@ -252,7 +252,7 @@ typedef struct wordcount_S {
 #define MAXWORDCOUNT 0xffff
 
 // Remember what "z?" replaced.
-extern char_u *repl_from;
-extern char_u *repl_to;
+extern char *repl_from;
+extern char *repl_to;
 
 #endif  // NVIM_SPELL_DEFS_H

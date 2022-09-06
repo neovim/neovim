@@ -407,7 +407,7 @@ int spell_check_sps(void)
 /// When "count" is non-zero use that suggestion.
 void spell_suggest(int count)
 {
-  char_u *line;
+  char *line;
   pos_T prev_cursor = curwin->w_cursor;
   char_u wcopy[MAXWLEN + 2];
   char_u *p;
@@ -453,10 +453,10 @@ void spell_suggest(int count)
     // No bad word or it starts after the cursor: use the word under the
     // cursor.
     curwin->w_cursor = prev_cursor;
-    line = (char_u *)get_cursor_line_ptr();
-    p = line + curwin->w_cursor.col;
+    line = get_cursor_line_ptr();
+    p = (char_u *)line + curwin->w_cursor.col;
     // Backup to before start of word.
-    while (p > line && spell_iswordp_nmw(p, curwin)) {
+    while (p > (char_u *)line && spell_iswordp_nmw(p, curwin)) {
       MB_PTR_BACK(line, p);
     }
     // Forward to start of word.
@@ -468,7 +468,7 @@ void spell_suggest(int count)
       beep_flush();
       return;
     }
-    curwin->w_cursor.col = (colnr_T)(p - line);
+    curwin->w_cursor.col = (colnr_T)(p - (char_u *)line);
   }
 
   // Get the word and its length.
@@ -477,7 +477,7 @@ void spell_suggest(int count)
   need_cap = check_need_cap(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
   // Make a copy of current line since autocommands may free the line.
-  line = vim_strsave((char_u *)get_cursor_line_ptr());
+  line = xstrdup(get_cursor_line_ptr());
   spell_suggest_timeout = 5000;
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
@@ -487,7 +487,7 @@ void spell_suggest(int count)
   } else {
     limit = sps_limit;
   }
-  spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
+  spell_find_suggest((char_u *)line + curwin->w_cursor.col, badlen, &sug, limit,
                      true, need_cap, true);
 
   if (GA_EMPTY(&sug.su_ga)) {
@@ -593,20 +593,20 @@ void spell_suggest(int count)
     if (sug.su_badlen > stp->st_orglen) {
       // Replacing less than "su_badlen", append the remainder to
       // repl_to.
-      repl_from = (char_u *)xstrnsave((char *)sug.su_badptr, (size_t)sug.su_badlen);
+      repl_from = xstrnsave((char *)sug.su_badptr, (size_t)sug.su_badlen);
       vim_snprintf((char *)IObuff, IOSIZE, "%s%.*s", stp->st_word,
                    sug.su_badlen - stp->st_orglen,
                    sug.su_badptr + stp->st_orglen);
-      repl_to = vim_strsave(IObuff);
+      repl_to = xstrdup((char *)IObuff);
     } else {
       // Replacing su_badlen or more, use the whole word.
-      repl_from = (char_u *)xstrnsave((char *)sug.su_badptr, (size_t)stp->st_orglen);
-      repl_to = vim_strsave((char_u *)stp->st_word);
+      repl_from = xstrnsave((char *)sug.su_badptr, (size_t)stp->st_orglen);
+      repl_to = xstrdup(stp->st_word);
     }
 
     // Replace the word.
     p = xmalloc(STRLEN(line) - (size_t)stp->st_orglen + (size_t)stp->st_wordlen + 1);
-    c = (int)(sug.su_badptr - line);
+    c = (int)(sug.su_badptr - (char_u *)line);
     memmove(p, line, (size_t)c);
     STRCPY(p + c, stp->st_word);
     STRCAT(p, sug.su_badptr + stp->st_orglen);
@@ -678,7 +678,7 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   char_u buf[MAXPATHL];
   char *p;
   bool do_combine = false;
-  char_u *sps_copy;
+  char *sps_copy;
   static bool expr_busy = false;
   int c;
   langp_T *lp;
@@ -758,10 +758,10 @@ static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su, int ma
   }
 
   // Make a copy of 'spellsuggest', because the expression may change it.
-  sps_copy = vim_strsave((char_u *)p_sps);
+  sps_copy = xstrdup(p_sps);
 
   // Loop over the items in 'spellsuggest'.
-  for (p = (char *)sps_copy; *p != NUL;) {
+  for (p = sps_copy; *p != NUL;) {
     copy_option_part(&p, (char *)buf, MAXPATHL, ",");
 
     if (STRNCMP(buf, "expr:", 5) == 0) {
@@ -2806,7 +2806,7 @@ static void add_sound_suggest(suginfo_T *su, char_u *goodword, int score, langp_
   }
 
   // Go over the list of good words that produce this soundfold word
-  nrline = ml_get_buf(slang->sl_sugbuf, (linenr_T)sfwordnr + 1, false);
+  nrline = (char_u *)ml_get_buf(slang->sl_sugbuf, (linenr_T)sfwordnr + 1, false);
   orgnr = 0;
   while (*nrline != NUL) {
     // The wordnr was stored in a minimal nr of bytes as an offset to the

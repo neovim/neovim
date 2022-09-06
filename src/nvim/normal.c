@@ -629,18 +629,18 @@ static void normal_redraw_mode_message(NormalState *s)
   // If need to redraw, and there is a "keep_msg", redraw before the
   // delay
   if (must_redraw && keep_msg != NULL && !emsg_on_display) {
-    char_u *kmsg;
+    char *kmsg;
 
-    kmsg = (char_u *)keep_msg;
+    kmsg = keep_msg;
     keep_msg = NULL;
     // Showmode() will clear keep_msg, but we want to use it anyway.
     // First update w_topline.
     setcursor();
     update_screen(0);
     // now reset it, otherwise it's put in the history again
-    keep_msg = (char *)kmsg;
+    keep_msg = kmsg;
 
-    kmsg = vim_strsave((char_u *)keep_msg);
+    kmsg = xstrdup(keep_msg);
     msg_attr((const char *)kmsg, keep_msg_attr);
     xfree(kmsg);
   }
@@ -2180,7 +2180,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, long count, bool fixindent)
           find_start_of_word(&VIsual);
           if (*p_sel == 'e' && *get_cursor_pos_ptr() != NUL) {
             curwin->w_cursor.col +=
-              utfc_ptr2len((char *)get_cursor_pos_ptr());
+              utfc_ptr2len(get_cursor_pos_ptr());
           }
           find_end_of_word(&curwin->w_cursor);
         }
@@ -2416,7 +2416,7 @@ size_t find_ident_at_pos(win_T *wp, linenr_T lnum, colnr_T startcol, char **text
 
   // if i == 0: try to find an identifier
   // if i == 1: try to find any non-white text
-  char_u *ptr = ml_get_buf(wp->w_buffer, lnum, false);
+  char_u *ptr = (char_u *)ml_get_buf(wp->w_buffer, lnum, false);
   for (i = (find_type & FIND_IDENT) ? 0 : 1; i < 2; i++) {
     // 1. skip to start of identifier/text
     col = startcol;
@@ -2675,9 +2675,9 @@ void clear_showcmd(void)
 
       if (cursor_bot) {
         s = ml_get_pos(&VIsual);
-        e = get_cursor_pos_ptr();
+        e = (char_u *)get_cursor_pos_ptr();
       } else {
-        s = get_cursor_pos_ptr();
+        s = (char_u *)get_cursor_pos_ptr();
         e = ml_get_pos(&VIsual);
       }
       while ((*p_sel != 'e') ? s <= e : s < e) {
@@ -3361,7 +3361,7 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
       virtcol -= vim_strsize((char *)get_showbreak_value(curwin));
     }
 
-    int c = utf_ptr2char((char *)get_cursor_pos_ptr());
+    int c = utf_ptr2char(get_cursor_pos_ptr());
     if (dir == FORWARD && virtcol < curwin->w_curswant
         && (curwin->w_curswant <= (colnr_T)width1)
         && !vim_isprintc(c) && c > 255) {
@@ -4451,7 +4451,7 @@ bool get_visual_text(cmdarg_T *cap, char **pp, size_t *lenp)
 static void nv_tagpop(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)) {
-    do_tag((char_u *)"", DT_POP, (int)cap->count1, false, true);
+    do_tag("", DT_POP, (int)cap->count1, false, true);
   }
 }
 
@@ -4600,7 +4600,7 @@ static void nv_right(cmdarg_T *cap)
       if (virtual_active()) {
         oneright();
       } else {
-        curwin->w_cursor.col += utfc_ptr2len((char *)get_cursor_pos_ptr());
+        curwin->w_cursor.col += utfc_ptr2len(get_cursor_pos_ptr());
       }
     }
   }
@@ -4648,7 +4648,7 @@ static void nv_left(cmdarg_T *cap)
         // Don't adjust op_end now, otherwise it won't work.
         if ((cap->oap->op_type == OP_DELETE || cap->oap->op_type == OP_CHANGE)
             && !LINEEMPTY(curwin->w_cursor.lnum)) {
-          char_u *cp = get_cursor_pos_ptr();
+          char_u *cp = (char_u *)get_cursor_pos_ptr();
 
           if (*cp != NUL) {
             curwin->w_cursor.col += utfc_ptr2len((char *)cp);
@@ -5360,7 +5360,7 @@ static void nv_replace(cmdarg_T *cap)
   }
 
   // Abort if not enough characters to replace.
-  ptr = get_cursor_pos_ptr();
+  ptr = (char_u *)get_cursor_pos_ptr();
   if (STRLEN(ptr) < (unsigned)cap->count1
       || (mb_charlen(ptr) < cap->count1)) {
     clearopbeep(cap->oap);

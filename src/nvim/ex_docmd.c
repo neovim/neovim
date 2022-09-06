@@ -785,7 +785,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
         vim_snprintf((char *)IObuff, IOSIZE,
                      _("E605: Exception not caught: %s"),
                      current_exception->value);
-        p = (char *)vim_strsave(IObuff);
+        p = xstrdup((char *)IObuff);
         break;
       case ET_ERROR:
         messages = current_exception->messages;
@@ -1300,7 +1300,7 @@ static void parse_register(exarg_T *eap)
       // for '=' register: accept the rest of the line as an expression
       if (eap->arg[-1] == '=' && eap->arg[0] != NUL) {
         if (!eap->skip) {
-          set_expr_line(vim_strsave((char_u *)eap->arg));
+          set_expr_line(xstrdup(eap->arg));
         }
         eap->arg += STRLEN(eap->arg);
       }
@@ -3829,7 +3829,7 @@ int expand_filename(exarg_T *eap, char **cmdlinep, char **errormsgp)
       if (p_wic) {
         options += WILD_ICASE;
       }
-      p = (char *)ExpandOne(&xpc, (char_u *)eap->arg, NULL, options, WILD_EXPAND_FREE);
+      p = ExpandOne(&xpc, eap->arg, NULL, options, WILD_EXPAND_FREE);
       if (p == NULL) {
         return FAIL;
       }
@@ -5274,7 +5274,7 @@ static void ex_swapname(exarg_T *eap)
   if (curbuf->b_ml.ml_mfp == NULL || curbuf->b_ml.ml_mfp->mf_fname == NULL) {
     msg(_("No swap file"));
   } else {
-    msg((char *)curbuf->b_ml.ml_mfp->mf_fname);
+    msg(curbuf->b_ml.ml_mfp->mf_fname);
   }
 }
 
@@ -6563,7 +6563,7 @@ static void ex_tag_cmd(exarg_T *eap, char *name)
     cmd = DT_LTAG;
   }
 
-  do_tag((char_u *)eap->arg, cmd, eap->addr_count > 0 ? (int)eap->line2 : 1,
+  do_tag(eap->arg, cmd, eap->addr_count > 0 ? (int)eap->line2 : 1,
          eap->forceit, true);
 }
 

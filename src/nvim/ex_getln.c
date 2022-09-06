@@ -105,7 +105,7 @@ typedef struct command_line_state {
   int c;
   int gotesc;                           // true when <ESC> just typed
   int do_abbr;                          // when true check for abbr.
-  char_u *lookfor;                      // string to match
+  char *lookfor;                        // string to match
   int hiscnt;                           // current history line in use
   int save_hiscnt;                      // history line before attempting
                                         // to jump to next match
@@ -116,7 +116,7 @@ typedef struct command_line_state {
   int res;
   int save_msg_scroll;
   int save_State;                 // remember State when called
-  char_u *save_p_icm;
+  char *save_p_icm;
   int some_key_typed;                   // one of the keys was typed
   // mouse drag and release events are ignored, unless they are
   // preceded with a mouse down event
@@ -632,7 +632,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     .ignore_drag_release = true,
   };
   CommandLineState *s = &state;
-  s->save_p_icm = vim_strsave((char_u *)p_icm);
+  s->save_p_icm = xstrdup(p_icm);
   init_incsearch_state(&s->is_state);
   CmdlineInfo save_ccline;
   bool did_save_ccline = false;
@@ -879,7 +879,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent, bool init
     need_wait_return = false;
   }
 
-  set_string_option_direct("icm", -1, (char *)s->save_p_icm, OPT_FREE, SID_NONE);
+  set_string_option_direct("icm", -1, s->save_p_icm, OPT_FREE, SID_NONE);
   State = s->save_State;
   if (cmdpreview != save_cmdpreview) {
     cmdpreview = save_cmdpreview;  // restore preview state
@@ -1087,7 +1087,7 @@ static int command_line_execute(VimState *state, int key)
       s->c = get_expr_register();
       if (s->c == '=') {
         textlock++;
-        p = get_expr_line();
+        p = (char_u *)get_expr_line();
         textlock--;
 
         if (p != NULL) {
@@ -1853,7 +1853,7 @@ static int command_line_handle_key(CommandLineState *s)
 
     // save current command string so it can be restored later
     if (s->lookfor == NULL) {
-      s->lookfor = vim_strsave((char_u *)ccline.cmdbuff);
+      s->lookfor = xstrdup(ccline.cmdbuff);
       s->lookfor[ccline.cmdpos] = NUL;
     }
 
@@ -1870,13 +1870,13 @@ static int command_line_handle_key(CommandLineState *s)
       XFREE_CLEAR(ccline.cmdbuff);
       s->xpc.xp_context = EXPAND_NOTHING;
       if (s->hiscnt == get_hislen()) {
-        p = s->lookfor;                  // back to the old one
+        p = (char_u *)s->lookfor;                  // back to the old one
       } else {
         p = (char_u *)get_histentry(s->histype)[s->hiscnt].hisstr;
       }
 
       if (s->histype == HIST_SEARCH
-          && p != s->lookfor
+          && p != (char_u *)s->lookfor
           && (old_firstc = p[STRLEN(p) + 1]) != s->firstc) {
         // Correct for the separator character used when
         // adding the history entry vs the one used now.

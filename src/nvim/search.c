@@ -175,11 +175,11 @@ int search_regcomp(char_u *pat, int pat_save, int pat_use, int options, regmmatc
   if (!(options & SEARCH_KEEP) && (cmdmod.cmod_flags & CMOD_KEEPPATTERNS) == 0) {
     // search or global command
     if (pat_save == RE_SEARCH || pat_save == RE_BOTH) {
-      save_re_pat(RE_SEARCH, pat, magic);
+      save_re_pat(RE_SEARCH, (char *)pat, magic);
     }
     // substitute or global command
     if (pat_save == RE_SUBST || pat_save == RE_BOTH) {
-      save_re_pat(RE_SUBST, pat, magic);
+      save_re_pat(RE_SUBST, (char *)pat, magic);
     }
   }
 
@@ -198,11 +198,11 @@ char_u *get_search_pat(void)
   return mr_pattern;
 }
 
-void save_re_pat(int idx, char_u *pat, int magic)
+void save_re_pat(int idx, char *pat, int magic)
 {
-  if (spats[idx].pat != pat) {
+  if (spats[idx].pat != (char_u *)pat) {
     free_spat(&spats[idx]);
-    spats[idx].pat = vim_strsave(pat);
+    spats[idx].pat = (char_u *)xstrdup(pat);
     spats[idx].magic = magic;
     spats[idx].no_scs = no_smartcase;
     spats[idx].timestamp = os_time();
@@ -225,11 +225,11 @@ void save_search_patterns(void)
   if (save_level++ == 0) {
     saved_spats[0] = spats[0];
     if (spats[0].pat != NULL) {
-      saved_spats[0].pat = vim_strsave(spats[0].pat);
+      saved_spats[0].pat = (char_u *)xstrdup((char *)spats[0].pat);
     }
     saved_spats[1] = spats[1];
     if (spats[1].pat != NULL) {
-      saved_spats[1].pat = vim_strsave(spats[1].pat);
+      saved_spats[1].pat = (char_u *)xstrdup((char *)spats[1].pat);
     }
     saved_spats_last_idx = last_idx;
     saved_spats_no_hlsearch = no_hlsearch;
@@ -296,7 +296,7 @@ void save_last_search_pattern(void)
 
   saved_last_search_spat = spats[RE_SEARCH];
   if (spats[RE_SEARCH].pat != NULL) {
-    saved_last_search_spat.pat = vim_strsave(spats[RE_SEARCH].pat);
+    saved_last_search_spat.pat = (char_u *)xstrdup((char *)spats[RE_SEARCH].pat);
   }
   saved_last_idx = last_idx;
   saved_no_hlsearch = no_hlsearch;
@@ -474,7 +474,7 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
     if (spats[idx].pat == NULL) {
       saved_spats[idx].pat = NULL;
     } else {
-      saved_spats[idx].pat = vim_strsave(spats[idx].pat);
+      saved_spats[idx].pat = (char_u *)xstrdup((char *)spats[idx].pat);
     }
     saved_spats_last_idx = last_idx;
   }
@@ -571,7 +571,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                && pos->lnum <= buf->b_ml.ml_line_count
                && pos->col < MAXCOL - 2) {
       // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
-      ptr = ml_get_buf(buf, pos->lnum, false);
+      ptr = (char_u *)ml_get_buf(buf, pos->lnum, false);
       if ((int)STRLEN(ptr) <= pos->col) {
         start_char_len = 1;
       } else {
@@ -642,7 +642,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           if (lnum + matchpos.lnum > buf->b_ml.ml_line_count) {
             ptr = (char_u *)"";
           } else {
-            ptr = ml_get_buf(buf, lnum + matchpos.lnum, false);
+            ptr = (char_u *)ml_get_buf(buf, lnum + matchpos.lnum, false);
           }
 
           // Forward search in the first line: match should be after
@@ -711,7 +711,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
               }
               // Need to get the line pointer again, a multi-line search may
               // have made it invalid.
-              ptr = ml_get_buf(buf, lnum, false);
+              ptr = (char_u *)ml_get_buf(buf, lnum, false);
             }
             if (!match_ok) {
               continue;
@@ -794,7 +794,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
               }
               // Need to get the line pointer again, a
               // multi-line search may have made it invalid.
-              ptr = ml_get_buf(buf, lnum + matchpos.lnum, false);
+              ptr = (char_u *)ml_get_buf(buf, lnum + matchpos.lnum, false);
             }
 
             // If there is only a match after the cursor, skip
@@ -822,7 +822,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
             } else {
               pos->col--;
               if (pos->lnum <= buf->b_ml.ml_line_count) {
-                ptr = ml_get_buf(buf, pos->lnum, false);
+                ptr = (char_u *)ml_get_buf(buf, pos->lnum, false);
                 pos->col -= utf_head_off((char *)ptr, (char *)ptr + pos->col);
               }
             }
@@ -1443,7 +1443,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char_u *pat)
     if (start == 0) {
       start = pos->lnum;
     }
-    ptr = ml_get_buf(buf, pos->lnum, false);
+    ptr = (char_u *)ml_get_buf(buf, pos->lnum, false);
     p = (char_u *)skipwhite((char *)ptr);
     pos->col = (colnr_T)(p - ptr);
 
@@ -2717,7 +2717,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
     }
     if (done_search) {
       xfree(lastpat);
-      lastpat = vim_strsave(spats[last_idx].pat);
+      lastpat = (char_u *)xstrdup((char *)spats[last_idx].pat);
       chgtick = (int)buf_get_changedtick(curbuf);
       lbuf = curbuf;
       lastpos = p;
@@ -2827,7 +2827,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       goto the_end;
     }
     xfree(spats[last_idx].pat);
-    spats[last_idx].pat = vim_strsave(pattern);
+    spats[last_idx].pat = (char_u *)xstrdup((char *)pattern);
   }
   if (spats[last_idx].pat == NULL || *spats[last_idx].pat == NUL) {
     goto the_end;  // the previous pattern was never defined
@@ -3103,7 +3103,7 @@ bool fuzzy_match(char_u *const str, const char_u *const pat_arg, const bool matc
 
   *outScore = 0;
 
-  char_u *const save_pat = vim_strsave(pat_arg);
+  char_u *const save_pat = (char_u *)xstrdup((char *)pat_arg);
   char_u *pat = save_pat;
   char_u *p = pat;
 
