@@ -25,8 +25,8 @@ ExternalProject_Add(libtermkey
       -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
       -DUNIBILIUM_INCLUDE_DIRS=${DEPS_INSTALL_DIR}/include
       -DUNIBILIUM_LIBRARIES=${DEPS_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}unibilium${CMAKE_STATIC_LIBRARY_SUFFIX}
-  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-  INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
+  BUILD_COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>
+  INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>)
 else()
 find_package(PkgConfig REQUIRED)
 

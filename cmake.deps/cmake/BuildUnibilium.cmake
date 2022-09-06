@@ -21,8 +21,8 @@ if(WIN32)
         -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM}
         ${BUILD_TYPE_STRING}
         -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
-    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config $<CONFIG>
+    INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>)
 else()
   ExternalProject_Add(unibilium
     PREFIX ${DEPS_BUILD_DIR}
