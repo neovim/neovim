@@ -15,10 +15,37 @@ static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
   { ns_id, false, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, LUA_NOREF, LUA_NOREF, \
-    LUA_NOREF, -1, false, false }
+    LUA_NOREF, LUA_NOREF, LUA_NOREF, -1, false }
 
-static bool decor_provider_invoke(NS ns_id, const char *name, LuaRef ref, Array args,
-                                  bool default_true, char **perr)
+static void decor_provider_error(DecorProvider *p, const char *name, Error err)
+{
+  const char *ns_name = describe_ns(p->ns_id);
+  ELOG("error in provider %s:%s: %s", ns_name, name, err.msg);
+
+  if (p->error != LUA_NOREF) {
+    Error cberr = ERROR_INIT;
+    MAXSIZE_TEMP_ARRAY(eargs, 2);
+    ADD_C(eargs, CSTR_TO_OBJ(name));
+    ADD_C(eargs, CSTR_TO_OBJ(err.msg));
+    textlock++;
+    provider_active = true;
+    nlua_call_ref(p->error, "error", eargs, false, &cberr);
+    provider_active = false;
+    textlock--;
+    if (ERROR_SET(&cberr)) {
+      char cberrbuf[IOSIZE];
+      snprintf(cberrbuf, sizeof cberrbuf, "%s:%s: %s", ns_name, "error", cberr.msg);
+      emsg(cberrbuf);
+    }
+  } else {
+    char errbuf[IOSIZE];
+    snprintf(errbuf, sizeof errbuf, "%s:%s: %s", ns_name, name, err.msg);
+    emsg(errbuf);
+  }
+}
+
+static bool decor_provider_invoke(DecorProvider *p, const char *name, LuaRef ref, Array args,
+                                  bool default_true)
 {
   Error err = ERROR_INIT;
 
@@ -34,22 +61,14 @@ static bool decor_provider_invoke(NS ns_id, const char *name, LuaRef ref, Array 
   }
 
   if (ERROR_SET(&err)) {
-    const char *ns_name = describe_ns(ns_id);
-    ELOG("error in provider %s:%s: %s", ns_name, name, err.msg);
-    bool verbose_errs = true;  // TODO(bfredl):
-    if (verbose_errs && perr && *perr == NULL) {
-      static char errbuf[IOSIZE];
-      snprintf(errbuf, sizeof errbuf, "%s: %s", ns_name, err.msg);
-      *perr = xstrdup(errbuf);
-    }
+    decor_provider_error(p, name, err);
   }
 
   api_free_object(ret);
   return false;
 }
 
-void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int end_row, int end_col,
-                                  char **err)
+void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int end_row, int end_col)
 {
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
@@ -65,7 +84,7 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
       ADD_C(args, INTEGER_OBJ(start_col));
       ADD_C(args, INTEGER_OBJ(end_row));
       ADD_C(args, INTEGER_OBJ(end_col));
-      decor_provider_invoke(p->ns_id, "spell", p->spell_nav, args, true, err);
+      decor_provider_invoke(p, "spell", p->spell_nav, args, true);
     }
   }
 }
@@ -74,7 +93,7 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
 ///
 /// @param[out] providers Decoration providers
 /// @param[out] err       Provider err
-void decor_providers_start(DecorProviders *providers, char **err)
+void decor_providers_start(DecorProviders *providers)
 {
   kvi_init(*providers);
 
@@ -88,7 +107,7 @@ void decor_providers_start(DecorProviders *providers, char **err)
     if (p->redraw_start != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 2);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
-      active = decor_provider_invoke(p->ns_id, "start", p->redraw_start, args, true, err);
+      active = decor_provider_invoke(p, "start", p->redraw_start, args, true);
     } else {
       active = true;
     }
@@ -107,7 +126,7 @@ void decor_providers_start(DecorProviders *providers, char **err)
 /// @param[out] line_providers Enabled line providers to invoke in win_line
 /// @param[out] err            Provider error
 void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
-                                DecorProviders *line_providers, char **err)
+                                DecorProviders *line_providers)
 {
   kvi_init(*line_providers);
 
@@ -124,7 +143,7 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
       // TODO(bfredl): we are not using this, but should be first drawn line?
       ADD_C(args, INTEGER_OBJ(wp->w_topline - 1));
       ADD_C(args, INTEGER_OBJ(knownmax));
-      if (decor_provider_invoke(p->ns_id, "win", p->redraw_win, args, true, err)) {
+      if (decor_provider_invoke(p, "win", p->redraw_win, args, true)) {
         kvi_push(*line_providers, p);
       }
     }
@@ -138,8 +157,7 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 /// @param      row       Row to invoke line callback for
 /// @param[out] has_decor Set when at least one provider invokes a line callback
 /// @param[out] err       Provider error
-void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor,
-                                 char **err)
+void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor)
 {
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
@@ -148,7 +166,7 @@ void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, 
       ADD_C(args, WINDOW_OBJ(wp->handle));
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      if (decor_provider_invoke(p->ns_id, "line", p->redraw_line, args, true, err)) {
+      if (decor_provider_invoke(p, "line", p->redraw_line, args, true)) {
         *has_decor = true;
       } else {
         // return 'false' or error: skip rest of this window
@@ -165,14 +183,14 @@ void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, 
 /// @param      buf       Buffer
 /// @param      providers Decoration providers
 /// @param[out] err       Provider error
-void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers, char **err)
+void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers)
 {
   for (size_t i = 0; i < kv_size(*providers); i++) {
     DecorProvider *p = kv_A(*providers, i);
     if (p && p->redraw_buf != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 1);
       ADD_C(args, BUFFER_OBJ(buf->handle));
-      decor_provider_invoke(p->ns_id, "buf", p->redraw_buf, args, true, err);
+      decor_provider_invoke(p, "buf", p->redraw_buf, args, true);
     }
   }
 }
@@ -182,14 +200,14 @@ void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers, char **er
 /// @param      providers   Decoration providers
 /// @param      displaytick Display tick
 /// @param[out] err         Provider error
-void decor_providers_invoke_end(DecorProviders *providers, char **err)
+void decor_providers_invoke_end(DecorProviders *providers)
 {
   for (size_t i = 0; i < kv_size(*providers); i++) {
     DecorProvider *p = kv_A(*providers, i);
     if (p && p->active && p->redraw_end != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 1);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
-      decor_provider_invoke(p->ns_id, "end", p->redraw_end, args, true, err);
+      decor_provider_invoke(p, "end", p->redraw_end, args, true);
     }
   }
 }
@@ -238,6 +256,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_line);
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
+  NLUA_CLEAR_REF(p->error);
   p->active = false;
 }
 

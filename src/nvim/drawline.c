@@ -476,7 +476,7 @@ static bool check_mb_utf8(int *c, int *u8cc)
 ///
 /// @return             the number of last row the line occupies.
 int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, bool number_only,
-             foldinfo_T foldinfo, DecorProviders *providers, char **provider_err)
+             foldinfo_T foldinfo, DecorProviders *providers)
 {
   int c = 0;                          // init for GCC
   long vcol = 0;                      // virtual column (for tabs)
@@ -656,13 +656,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
     has_decor = decor_redraw_line(buf, lnum - 1, &decor_state);
 
-    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor, provider_err);
-
-    if (*provider_err) {
-      provider_err_virt_text(lnum, *provider_err);
-      has_decor = true;
-      *provider_err = NULL;
-    }
+    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor);
 
     if (has_decor) {
       extra_check = true;

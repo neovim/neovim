@@ -8,6 +8,7 @@ return {
     "on_win";
     "on_line";
     "on_end";
+    "on_error";
     "_on_hl_def";
     "_on_spell_nav";
   };

@@ -993,6 +993,8 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 ///                 ["win", winid, bufnr, row]
 ///             - on_end: called at the end of a redraw cycle
 ///                 ["end", tick]
+///             - on_error: called when any other callback errors
+///                 ["end", callback_name, message]
 void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *opts, Error *err)
   FUNC_API_SINCE(7) FUNC_API_LUA_ONLY
 {
@@ -1013,6 +1015,7 @@ void nvim_set_decoration_provider(Integer ns_id, Dict(set_decoration_provider) *
     { "on_win", &opts->on_win, &p->redraw_win },
     { "on_line", &opts->on_line, &p->redraw_line },
     { "on_end", &opts->on_end, &p->redraw_end },
+    { "on_error", &opts->on_error, &p->error },
     { "_on_hl_def", &opts->_on_hl_def, &p->hl_def },
     { "_on_spell_nav", &opts->_on_spell_nav, &p->spell_nav },
     { NULL, NULL, NULL },
