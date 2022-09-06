@@ -148,6 +148,15 @@ describe('vim.diagnostic', function()
       vim.cmd('bwipeout!')
       return #vim.diagnostic.get()
     ]])
+    eq(2, exec_lua [[
+      vim.api.nvim_set_current_buf(diagnostic_bufnr)
+      vim.opt_local.buflisted = false
+      return #vim.diagnostic.get()
+    ]])
+    eq(0, exec_lua [[
+      vim.cmd('bwipeout!')
+      return #vim.diagnostic.get()
+    ]])
   end)
 
   it('resolves buffer number 0 to the current buffer', function()

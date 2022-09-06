@@ -47,11 +47,11 @@ local bufnr_and_namespace_cacher_mt = {
 
 local diagnostic_cache
 do
-  local group = vim.api.nvim_create_augroup('DiagnosticBufDelete', {})
+  local group = vim.api.nvim_create_augroup('DiagnosticBufWipeout', {})
   diagnostic_cache = setmetatable({}, {
     __index = function(t, bufnr)
       assert(bufnr > 0, 'Invalid buffer number')
-      vim.api.nvim_create_autocmd('BufDelete', {
+      vim.api.nvim_create_autocmd('BufWipeout', {
         group = group,
         buffer = bufnr,
         callback = function()
