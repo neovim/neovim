@@ -4,12 +4,6 @@ local vim = assert(vim)
 local a = vim.api
 local validate = vim.validate
 
-local SET_TYPES = setmetatable({
-  SET = 0,
-  LOCAL = 1,
-  GLOBAL = 2,
-}, { __index = error })
-
 local options_info = nil
 local buf_options = nil
 local glb_options = nil
@@ -201,51 +195,30 @@ local key_value_options = {
   winhl = true,
 }
 
----@class OptionTypes
---- Option Type Enum
-local OptionTypes = setmetatable({
-  BOOLEAN = 0,
-  NUMBER = 1,
-  STRING = 2,
-  ARRAY = 3,
-  MAP = 4,
-  SET = 5,
-}, {
-  __index = function(_, k)
-    error('Not a valid OptionType: ' .. k)
-  end,
-  __newindex = function(_, k)
-    error('Cannot set a new OptionType: ' .. k)
-  end,
-})
-
 --- Convert a vimoption_T style dictionary to the correct OptionType associated with it.
----@return OptionType
+---@return string
 local get_option_type = function(name, info)
   if info.type == 'boolean' then
-    return OptionTypes.BOOLEAN
+    return 'boolean'
   elseif info.type == 'number' then
-    return OptionTypes.NUMBER
+    return 'number'
   elseif info.type == 'string' then
     if not info.commalist and not info.flaglist then
-      return OptionTypes.STRING
+      return 'string'
     end
 
     if key_value_options[name] then
       assert(info.commalist, 'Must be a comma list to use key:value style')
-      return OptionTypes.MAP
+      return 'map'
     end
 
     if info.flaglist then
-      return OptionTypes.SET
+      return 'set'
     elseif info.commalist then
-      return OptionTypes.ARRAY
+      return 'array'
     end
-
-    error('Fallthrough in OptionTypes')
-  else
-    error('Not a known info.type:' .. info.type)
   end
+  error('Not a known info.type:' .. info.type)
 end
 
 -- Check whether the OptionTypes is allowed for vim.opt
@@ -269,12 +242,12 @@ local function assert_valid_value(name, value, types)
 end
 
 local valid_types = {
-  [OptionTypes.BOOLEAN] = { 'boolean' },
-  [OptionTypes.NUMBER] = { 'number' },
-  [OptionTypes.STRING] = { 'string' },
-  [OptionTypes.SET] = { 'string', 'table' },
-  [OptionTypes.ARRAY] = { 'string', 'table' },
-  [OptionTypes.MAP] = { 'string', 'table' },
+  boolean = { 'boolean' },
+  number = { 'number' },
+  string = { 'string' },
+  set = { 'string', 'table' },
+  array = { 'string', 'table' },
+  map = { 'string', 'table' },
 }
 
 --- Convert a lua value to a vimoption_T value
@@ -282,17 +255,17 @@ local convert_value_to_vim = (function()
   -- Map of functions to take a Lua style value and convert to vimoption_T style value.
   -- Each function takes (info, lua_value) -> vim_value
   local to_vim_value = {
-    [OptionTypes.BOOLEAN] = function(_, value)
+    boolean = function(_, value)
       return value
     end,
-    [OptionTypes.NUMBER] = function(_, value)
+    number = function(_, value)
       return value
     end,
-    [OptionTypes.STRING] = function(_, value)
+    string = function(_, value)
       return value
     end,
 
-    [OptionTypes.SET] = function(info, value)
+    set = function(info, value)
       if type(value) == 'string' then
         return value
       end
@@ -319,7 +292,7 @@ local convert_value_to_vim = (function()
       end
     end,
 
-    [OptionTypes.ARRAY] = function(info, value)
+    array = function(info, value)
       if type(value) == 'string' then
         return value
       end
@@ -329,7 +302,7 @@ local convert_value_to_vim = (function()
       return table.concat(value, ',')
     end,
 
-    [OptionTypes.MAP] = function(_, value)
+    map = function(_, value)
       if type(value) == 'string' then
         return value
       end
@@ -361,17 +334,17 @@ local convert_value_to_lua = (function()
   -- Map of OptionType to functions that take vimoption_T values and convert to lua values.
   -- Each function takes (info, vim_value) -> lua_value
   local to_lua_value = {
-    [OptionTypes.BOOLEAN] = function(_, value)
+    boolean = function(_, value)
       return value
     end,
-    [OptionTypes.NUMBER] = function(_, value)
+    number = function(_, value)
       return value
     end,
-    [OptionTypes.STRING] = function(_, value)
+    string = function(_, value)
       return value
     end,
 
-    [OptionTypes.ARRAY] = function(info, value)
+    array = function(info, value)
       if type(value) == 'table' then
         if not info.allows_duplicates then
           value = remove_duplicate_values(value)
@@ -420,7 +393,7 @@ local convert_value_to_lua = (function()
       return vim.split(value, ',')
     end,
 
-    [OptionTypes.SET] = function(info, value)
+    set = function(info, value)
       if type(value) == 'table' then
         return value
       end
@@ -451,7 +424,7 @@ local convert_value_to_lua = (function()
       end
     end,
 
-    [OptionTypes.MAP] = function(info, raw_value)
+    map = function(info, raw_value)
       if type(raw_value) == 'table' then
         return raw_value
       end
@@ -485,15 +458,15 @@ end
 --- Handles the '^' operator
 local prepend_value = (function()
   local methods = {
-    [OptionTypes.NUMBER] = function()
+    number = function()
       error("The '^' operator is not currently supported for")
     end,
 
-    [OptionTypes.STRING] = function(left, right)
+    string = function(left, right)
       return right .. left
     end,
 
-    [OptionTypes.ARRAY] = function(left, right)
+    array = function(left, right)
       for i = #right, 1, -1 do
         table.insert(left, 1, right[i])
       end
@@ -501,11 +474,11 @@ local prepend_value = (function()
       return left
     end,
 
-    [OptionTypes.MAP] = function(left, right)
+    map = function(left, right)
       return vim.tbl_extend('force', left, right)
     end,
 
-    [OptionTypes.SET] = function(left, right)
+    set = function(left, right)
       return vim.tbl_extend('force', left, right)
     end,
   }
@@ -524,15 +497,15 @@ end)()
 --- Handles the '+' operator
 local add_value = (function()
   local methods = {
-    [OptionTypes.NUMBER] = function(left, right)
+    number = function(left, right)
       return left + right
     end,
 
-    [OptionTypes.STRING] = function(left, right)
+    string = function(left, right)
       return left .. right
     end,
 
-    [OptionTypes.ARRAY] = function(left, right)
+    array = function(left, right)
       for _, v in ipairs(right) do
         table.insert(left, v)
       end
@@ -540,11 +513,11 @@ local add_value = (function()
       return left
     end,
 
-    [OptionTypes.MAP] = function(left, right)
+    map = function(left, right)
       return vim.tbl_extend('force', left, right)
     end,
 
-    [OptionTypes.SET] = function(left, right)
+    set = function(left, right)
       return vim.tbl_extend('force', left, right)
     end,
   }
@@ -580,15 +553,15 @@ local remove_value = (function()
   end
 
   local methods = {
-    [OptionTypes.NUMBER] = function(left, right)
+    number = function(left, right)
       return left - right
     end,
 
-    [OptionTypes.STRING] = function()
+    string = function()
       error('Subtraction not supported for strings.')
     end,
 
-    [OptionTypes.ARRAY] = function(left, right)
+    array = function(left, right)
       if type(right) == 'string' then
         remove_one_item(left, right)
       else
@@ -600,7 +573,7 @@ local remove_value = (function()
       return left
     end,
 
-    [OptionTypes.MAP] = function(left, right)
+    map = function(left, right)
       if type(right) == 'string' then
         left[right] = nil
       else
@@ -612,7 +585,7 @@ local remove_value = (function()
       return left
     end,
 
-    [OptionTypes.SET] = function(left, right)
+    set = function(left, right)
       if type(right) == 'string' then
         left[right] = nil
       else
@@ -630,7 +603,7 @@ local remove_value = (function()
   end
 end)()
 
-local create_option_metatable = function(set_type)
+local create_option_metatable = function(scope)
   local set_mt, option_mt
 
   local make_option = function(name, value)
@@ -648,13 +621,6 @@ local create_option_metatable = function(set_type)
       _value = value,
       _info = info,
     }, option_mt)
-  end
-
-  local scope
-  if set_type == SET_TYPES.GLOBAL then
-    scope = 'global'
-  elseif set_type == SET_TYPES.LOCAL then
-    scope = 'local'
   end
 
   option_mt = {
@@ -711,6 +677,6 @@ local create_option_metatable = function(set_type)
   return set_mt
 end
 
-vim.opt = setmetatable({}, create_option_metatable(SET_TYPES.SET))
-vim.opt_local = setmetatable({}, create_option_metatable(SET_TYPES.LOCAL))
-vim.opt_global = setmetatable({}, create_option_metatable(SET_TYPES.GLOBAL))
+vim.opt = setmetatable({}, create_option_metatable())
+vim.opt_local = setmetatable({}, create_option_metatable('local'))
+vim.opt_global = setmetatable({}, create_option_metatable('global'))
