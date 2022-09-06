@@ -250,23 +250,22 @@ end
 --- Can be used in an ftplugin or FileType autocommand
 ---
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
---- In this case, add `{ syntax = true }`.
+--- In this case, add `vim.bo.syntax = 'on'` after the call to `start`.
 ---
 --- Example:
 ---
 --- <pre>
 --- vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
 ---     callback = function(args)
----         vim.treesitter.start(args.buf, 'latex', { syntax = true })
+---         vim.treesitter.start(args.buf, 'latex')
+---         vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
 ---     end
 --- })
 --- </pre>
 ---
 ---@param bufnr number|nil Buffer to be highlighted (default: current buffer)
 ---@param lang string|nil Language of the parser (default: buffer filetype)
----@param opts table|nil Optional keyword arguments:
----             - `syntax` boolean Run regex syntax highlighting (default false)
-function M.start(bufnr, lang, opts)
+function M.start(bufnr, lang)
   bufnr = bufnr or a.nvim_get_current_buf()
 
   local parser = M.get_parser(bufnr, lang)
@@ -274,10 +273,6 @@ function M.start(bufnr, lang, opts)
   M.highlighter.new(parser)
 
   vim.b[bufnr].ts_highlight = true
-
-  if opts and opts.syntax then
-    vim.bo[bufnr].syntax = 'on'
-  end
 end
 
 ---Stop treesitter highlighting for a buffer
