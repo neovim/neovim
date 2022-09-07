@@ -140,12 +140,9 @@ function M.get_query(lang, query_name)
   end
 end
 
-local query_cache = setmetatable({}, {
-  __index = function(tbl, key)
-    rawset(tbl, key, {})
-    return rawget(tbl, key)
-  end,
-})
+local query_cache = vim.defaulttable(function()
+  return setmetatable({}, { __mode = 'v' })
+end)
 
 --- Parse {query} as a string. (If the query is in a file, the caller
 --- should read the contents into a string before calling).

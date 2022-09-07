@@ -715,5 +715,30 @@ function vim.is_callable(f)
   return type(m.__call) == 'function'
 end
 
+--- Creates a table whose members are automatically created when accessed, if they don't already
+--- exist.
+---
+--- They mimic defaultdict in python.
+---
+--- If @p create is @c nil, this will create a defaulttable whose constructor function is
+--- this function, effectively allowing to create nested tables on the fly:
+---
+--- <pre>
+--- local a = vim.defaulttable()
+--- a.b.c = 1
+--- </pre>
+---
+---@param create function|nil The function called to create a missing value.
+---@return table Empty table with metamethod
+function vim.defaulttable(create)
+  create = create or vim.defaulttable
+  return setmetatable({}, {
+    __index = function(tbl, key)
+      rawset(tbl, key, create())
+      return rawget(tbl, key)
+    end,
+  })
+end
+
 return vim
 -- vim:sw=2 ts=2 et

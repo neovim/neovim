@@ -1581,6 +1581,28 @@ deepcopy({orig})                                              *vim.deepcopy()*
     Return: ~
         (table) Table of copied keys and (nested) values.
 
+defaulttable({create})                                    *vim.defaulttable()*
+    Creates a table whose members are automatically created when accessed, if
+    they don't already exist.
+
+    They mimic defaultdict in python.
+
+    If `create` is `nil`, this will create a defaulttable whose constructor
+    function is this function, effectively allowing to create nested tables on
+    the fly:
+>
+
+    local a = vim.defaulttable()
+    a.b.c = 1
+<
+
+    Parameters: ~
+        {create}  (function|nil) The function called to create a missing
+                  value.
+
+    Return: ~
+        (table) Empty table with metamethod
+
 endswith({s}, {suffix})                                       *vim.endswith()*
     Tests if `s` ends with `suffix`.
 
