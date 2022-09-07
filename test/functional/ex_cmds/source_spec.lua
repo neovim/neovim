@@ -104,7 +104,7 @@ describe(':source', function()
     eq("0zBEEFCAFE", meths.exec('echo d', true))
 
     exec('set cpoptions+=C')
-    eq('Vim(let):E15: Invalid expression: #{', exc_exec('source'))
+    eq('Vim(let):E723: Missing end of Dictionary \'}\': ', exc_exec('source'))
   end)
 
   it('selection in current buffer', function()
@@ -138,7 +138,7 @@ describe(':source', function()
     eq('Vim(echo):E117: Unknown function: s:C', exc_exec('echo D()'))
 
     exec('set cpoptions+=C')
-    eq('Vim(let):E15: Invalid expression: #{', exc_exec("'<,'>source"))
+    eq('Vim(let):E723: Missing end of Dictionary \'}\': ', exc_exec("'<,'>source"))
   end)
 
   it('does not break if current buffer is modified while sourced', function()

@@ -4587,12 +4587,14 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
   char *curly_expr = skipwhite(*arg + 1);
   char buf[NUMBUFLEN];
 
-  // First check if it's not a curly-braces thing: {expr}.
+  // First check if it's not a curly-braces expression: {expr}.
   // Must do this without evaluating, otherwise a function may be called
   // twice.  Unfortunately this means we need to call eval1() twice for the
   // first item.
-  // But {} is an empty Dictionary.
+  // "{}" is an empty Dictionary.
+  // "#{abc}" is never a curly-braces expression.
   if (*curly_expr != '}'
+      && !literal
       && eval1(&curly_expr, &tv, false) == OK
       && *skipwhite(curly_expr) == '}') {
     return NOTDONE;
