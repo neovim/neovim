@@ -2732,8 +2732,8 @@ describe('API', function()
 
     it('should have information about window options', function()
       eq({
-        allows_duplicates = true,
-        commalist = false;
+        allows_duplicates = false,
+        commalist = true;
         default = "";
         flaglist = false;
         global_local = false;
