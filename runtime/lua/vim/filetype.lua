@@ -540,6 +540,7 @@ local extension = {
   mjs = 'javascript',
   javascript = 'javascript',
   js = 'javascript',
+  jsm = 'javascript',
   cjs = 'javascript',
   jsx = 'javascriptreact',
   clp = 'jess',
