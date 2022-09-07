@@ -1464,4 +1464,19 @@ func Test_win_move_statusline()
   %bwipe!
 endfunc
 
+func Test_win_equal_last_status()
+  let save_lines = &lines
+  set lines=20
+  set splitbelow
+  set laststatus=0
+
+  split | split | quit
+  call assert_equal(winheight(1), winheight(2))
+
+  let &lines = save_lines
+  set splitbelow&
+  set laststatus&
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
