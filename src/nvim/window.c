@@ -2849,6 +2849,11 @@ int win_close(win_T *win, bool free_buf, bool force)
     check_cursor();
   }
 
+  // If last window has a status line now and we don't want one,
+  // remove the status line. Do this before win_equal(), because
+  // it may change the height of a window.
+  last_status(false);
+
   if (!was_floating) {
     if (!curwin->w_floating && p_ea && (*p_ead == 'b' || *p_ead == dir)) {
       // If the frame of the closed window contains the new current window,
@@ -2869,10 +2874,6 @@ int win_close(win_T *win, bool free_buf, bool force)
   }
 
   split_disallowed--;
-
-  // If last window has a status line now and we don't want one,
-  // remove the status line.
-  last_status(false);
 
   // After closing the help window, try restoring the window layout from
   // before it was opened.
