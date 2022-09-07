@@ -1425,12 +1425,11 @@ int nlua_source_using_linegetter(LineGetter fgetline, void *cookie, char *name)
 /// @param[in]  argcount Count of typval arguments
 /// @param[in]  argvars Typval Arguments
 /// @param[out] rettv The return value from the called function.
-int typval_exec_lua_callable(lua_State *lstate, LuaCallable lua_cb, int argcount, typval_T *argvars,
-                             typval_T *rettv)
+int typval_exec_lua_callable(LuaRef lua_cb, int argcount, typval_T *argvars, typval_T *rettv)
 {
-  LuaRef cb = lua_cb.func_ref;
+  lua_State *lstate = global_lstate;
 
-  nlua_pushref(lstate, cb);
+  nlua_pushref(lstate, lua_cb);
 
   PUSH_ALL_TYPVALS(lstate, argvars, argcount, false);
 
@@ -1833,26 +1832,6 @@ static int nlua_is_thread(lua_State *lstate)
   return 1;
 }
 
-// Required functions for lua c functions as VimL callbacks
-
-int nlua_CFunction_func_call(int argcount, typval_T *argvars, typval_T *rettv, void *state)
-{
-  lua_State *const lstate = global_lstate;
-  LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
-
-  return typval_exec_lua_callable(lstate, funcstate->lua_callable,
-                                  argcount, argvars, rettv);
-}
-
-void nlua_CFunction_func_free(void *state)
-{
-  lua_State *const lstate = global_lstate;
-  LuaCFunctionState *funcstate = (LuaCFunctionState *)state;
-
-  nlua_unref_global(lstate, funcstate->lua_callable.func_ref);
-  xfree(funcstate);
-}
-
 bool nlua_is_table_from_lua(typval_T *const arg)
 {
   if (arg->v_type == VAR_DICT) {
@@ -1898,11 +1877,9 @@ char_u *nlua_register_table_as_callable(typval_T *const arg)
   }
   lua_pop(lstate, 2);  // [table]
 
-  LuaCFunctionState *state = xmalloc(sizeof(LuaCFunctionState));
-  state->lua_callable.func_ref = nlua_ref_global(lstate, -1);
+  LuaRef func = nlua_ref_global(lstate, -1);
 
-  char_u *name = register_cfunc(&nlua_CFunction_func_call,
-                                &nlua_CFunction_func_free, state);
+  char_u *name = register_luafunc(func);
 
   lua_pop(lstate, 1);  // []
   assert(top == lua_gettop(lstate));

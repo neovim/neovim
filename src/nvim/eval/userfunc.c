@@ -28,20 +28,6 @@
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 
-// flags used in uf_flags
-#define FC_ABORT    0x01          // abort function on error
-#define FC_RANGE    0x02          // function accepts range
-#define FC_DICT     0x04          // Dict function, uses "self"
-#define FC_CLOSURE  0x08          // closure, uses outer scope variables
-#define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
-#define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
-#define FC_SANDBOX  0x40          // function defined in the sandbox
-#define FC_DEAD     0x80          // function kept only for reference to dfunc
-#define FC_EXPORT   0x100         // "export def Func()"
-#define FC_NOARGS   0x200         // no a: variables in lambda
-#define FC_VIM9     0x400         // defined in vim9 script file
-#define FC_CFUNC    0x800         // C function extension
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/userfunc.c.generated.h"
 #endif
@@ -758,9 +744,9 @@ static void func_clear_items(ufunc_T *fp)
   ga_clear_strings(&(fp->uf_lines));
   XFREE_CLEAR(fp->uf_name_exp);
 
-  if (fp->uf_cb_free != NULL) {
-    fp->uf_cb_free(fp->uf_cb_state);
-    fp->uf_cb_free = NULL;
+  if (fp->uf_flags & FC_LUAREF) {
+    api_free_luaref(fp->uf_luaref);
+    fp->uf_luaref = LUA_NOREF;
   }
 
   XFREE_CLEAR(fp->uf_tml_count);
@@ -1538,9 +1524,8 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
 
       if (fp != NULL && (fp->uf_flags & FC_DELETED)) {
         error = ERROR_DELETED;
-      } else if (fp != NULL && (fp->uf_flags & FC_CFUNC)) {
-        cfunc_T cb = fp->uf_cb;
-        error = (*cb)(argcount, argvars, rettv, fp->uf_cb_state);
+      } else if (fp != NULL && (fp->uf_flags & FC_LUAREF)) {
+        error = typval_exec_lua_callable(fp->uf_luaref, argcount, argvars, rettv);
       } else if (fp != NULL) {
         if (funcexe->argv_func != NULL) {
           // postponed filling in the arguments, do it now
@@ -3552,20 +3537,18 @@ bool set_ref_in_func(char_u *name, ufunc_T *fp_in, int copyID)
   return abort;
 }
 
-/// Registers a C extension user function.
-char_u *register_cfunc(cfunc_T cb, cfunc_free_T cb_free, void *state)
+/// Registers a luaref as a lambda.
+char_u *register_luafunc(LuaRef ref)
 {
   char_u *name = get_lambda_name();
   ufunc_T *fp = xcalloc(1, offsetof(ufunc_T, uf_name) + STRLEN(name) + 1);
 
   fp->uf_refcount = 1;
   fp->uf_varargs = true;
-  fp->uf_flags = FC_CFUNC;
+  fp->uf_flags = FC_LUAREF;
   fp->uf_calls = 0;
   fp->uf_script_ctx = current_sctx;
-  fp->uf_cb = cb;
-  fp->uf_cb_free = cb_free;
-  fp->uf_cb_state = state;
+  fp->uf_luaref = ref;
 
   STRCPY(fp->uf_name, name);
   hash_add(&func_hashtab, UF2HIKEY(fp));
