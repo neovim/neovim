@@ -194,6 +194,32 @@ and predicates. A `capture` allows you to associate names with a specific
 node in a pattern. A `predicate` adds arbitrary metadata and conditional data
 to a match.
 
+Neovim supports to customize the behavior of the queries using a set of
+"modelines", that is comments in the queries starting with `;`. Here are the
+currently supported modeline alternatives:
+
+    `inherits: {lang}...`
+        Specifies that this query should inherit the queries from {lang}.
+        This will recursively descend in the queries of {lang} unless wrapped
+        in parentheses: `({lang})`.
+
+    `extends`
+        Specifies that this query should be used as an extension for the
+        query, i.e. that it should be merged with the others.
+        Note: the order of the extensions, and the query that will be used as
+        a base depends on your 'runtimepath' value.
+
+Note: these modeline comments must be at the top of the query, but can be
+repeated, for example, the following modeline blocks are all valid:
+>
+    ;; inherits: foo,bar
+    ;; extends
+
+    ;; extends
+    ;;
+    ;; inherits: baz
+<
+
 Treesitter Query Predicates                         *lua-treesitter-predicates*
 
 When writing queries for treesitter, one might use `predicates`, that is,

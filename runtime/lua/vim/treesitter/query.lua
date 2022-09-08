@@ -47,6 +47,9 @@ function M.get_query_files(lang, query_name, is_included)
     return {}
   end
 
+  local base_query = nil
+  local extensions = {}
+
   local base_langs = {}
 
   -- Now get the base languages by looking at the first line of every file
@@ -55,13 +58,26 @@ function M.get_query_files(lang, query_name, is_included)
   --
   -- {language} ::= {lang} | ({lang})
   local MODELINE_FORMAT = '^;+%s*inherits%s*:?%s*([a-z_,()]+)%s*$'
+  local EXTENDS_FORMAT = '^;+%s*extends%s*$'
 
-  for _, file in ipairs(lang_files) do
-    local modeline = safe_read(file, '*l')
+  for _, filename in ipairs(lang_files) do
+    local file, err = io.open(filename, 'r')
+    if not file then
+      error(err)
+    end
 
-    if modeline then
+    local extension = false
+
+    for modeline in
+      function()
+        return file:read('*l')
+      end
+    do
+      if not vim.startswith(modeline, ';') then
+        break
+      end
+
       local langlist = modeline:match(MODELINE_FORMAT)
-
       if langlist then
         for _, incllang in ipairs(vim.split(langlist, ',', true)) do
           local is_optional = incllang:match('%(.*%)')
@@ -74,16 +90,25 @@ function M.get_query_files(lang, query_name, is_included)
             table.insert(base_langs, incllang)
           end
         end
+      elseif modeline:match(EXTENDS_FORMAT) then
+        extension = true
       end
     end
+
+    if extension then
+      table.insert(extensions, filename)
+    else
+      base_query = filename
+    end
+    io.close(file)
   end
 
-  local query_files = {}
+  local query_files = { base_query }
   for _, base_lang in ipairs(base_langs) do
     local base_files = M.get_query_files(base_lang, query_name, true)
     vim.list_extend(query_files, base_files)
   end
-  vim.list_extend(query_files, lang_files)
+  vim.list_extend(query_files, extensions)
 
   return query_files
 end
