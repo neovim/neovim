@@ -418,6 +418,42 @@ describe('LSP', function()
       }
     end)
 
+    it('should detach buffer on bufwipe', function()
+      local result = exec_lua([[
+        local server = function(dispatchers)
+          local closing = false
+          return {
+            request = function(method, params, callback)
+              if method == 'initialize' then
+                callback(nil, { capabilities = {} })
+              end
+            end,
+            notify = function(...)
+            end,
+            is_closing = function() return closing end,
+            terminate = function() closing = true end
+          }
+        end
+        local bufnr = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_set_current_buf(bufnr)
+        local client_id = vim.lsp.start({ name = 'detach-dummy', cmd = server })
+        assert(client_id, "lsp.start must return client_id")
+        local client = vim.lsp.get_client_by_id(client_id)
+        local num_attached_before = vim.tbl_count(client.attached_buffers)
+        vim.api.nvim_buf_delete(bufnr, { force = true })
+        local num_attached_after = vim.tbl_count(client.attached_buffers)
+        return {
+          bufnr = bufnr,
+          client_id = client_id,
+          num_attached_before = num_attached_before,
+          num_attached_after = num_attached_after,
+        }
+      ]])
+      eq(true, result ~= nil, "exec_lua must return result")
+      eq(1, result.num_attached_before)
+      eq(0, result.num_attached_after)
+    end)
+
     it('client should return settings via workspace/configuration handler', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
