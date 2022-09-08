@@ -5,7 +5,7 @@
 
 # Version should match the tested CMAKE_URL in .github/workflows/ci.yml.
 cmake_minimum_required(VERSION 3.10)
-project(nvim C)
+project(nvim C CXX)
 
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
@@ -503,6 +503,11 @@ endif()
 
 find_package(LIBVTERM 0.3 REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
+
+find_package(Hunspell REQUIRED)
+include_directories(SYSTEM ${Hunspell_INCLUDE_DIRS})
+list(APPEND CMAKE_REQUIRED_INCLUDES "${Hunspell_INCLUDE_DIRS}")
+list(APPEND CMAKE_REQUIRED_LIBRARIES "${Hunspell_LIBRARIES}")
 
 option(CLANG_ASAN_UBSAN "Enable Clang address & undefined behavior sanitizer for nvim binary." OFF)
 option(CLANG_MSAN "Enable Clang memory sanitizer for nvim binary." OFF)

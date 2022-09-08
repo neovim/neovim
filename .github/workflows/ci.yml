@@ -48,6 +48,7 @@ jobs:
             libunibilium-dev \
             libuv1-dev \
             libvterm-dev \
+            libhunspell-dev \
             locales \
             lua-busted \
             lua-check \

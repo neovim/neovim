@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "hunspell/hunspell_wrapper.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/garray.h"
 #include "nvim/regexp_defs.h"
@@ -111,10 +112,8 @@ typedef int salfirst_T;
 // Exception: when the byte is zero, the word may end here and "idxs" holds
 // the flags, region mask and affixID for the word.  There may be several
 // zeros in sequence for alternative flag/region/affixID combinations.
-typedef struct slang_S slang_T;
-
-struct slang_S {
-  slang_T *sl_next;         // next language
+typedef struct slang_S {
+  struct slang_S *sl_next;         // next language
   char *sl_name;            // language name "en", "en.rare", "nl", etc.
   char *sl_fname;           // name of .spl file
   bool sl_add;              // true if it's a .add file.
@@ -183,7 +182,8 @@ struct slang_S {
   int sl_map_array[256];        // MAP for first 256 chars
   hashtab_T sl_sounddone;       // table with soundfolded words that have
                                 // handled, see add_sound_suggest()
-};
+  hunspell_T *sl_hunspell;
+} slang_T;
 
 // Structure used in "b_langp", filled from 'spelllang'.
 typedef struct langp_S {

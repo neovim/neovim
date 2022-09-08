@@ -64,6 +64,7 @@
 #include <stdio.h>                // for snprintf
 #include <string.h>               // for memmove, strstr, memcpy, memset
 
+#include "hunspell/hunspell_wrapper.h"
 #include "nvim/ascii.h"           // for NUL, ascii_isdigit, ascii_iswhite
 #include "nvim/autocmd.h"         // for apply_autocmds
 #include "nvim/buffer.h"          // for bufref_valid, set_bufref, buf_is_empty
@@ -321,32 +322,41 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
 
     // If reloading fails the language is still in the list but everything
     // has been cleared.
-    if (mi.mi_lp->lp_slang->sl_fidxs == NULL) {
-      continue;
-    }
+    if (mi.mi_lp->lp_slang->sl_hunspell != NULL
+        && wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+      int spell_flags = 0;
+      if (hunspell_spell_flags(mi.mi_lp->lp_slang->sl_hunspell, (char *)mi.mi_word,
+                               (size_t)(mi.mi_end - mi.mi_word), &spell_flags)) {
+        mi.mi_result =
+          (spell_flags & HSPELL_FORBIDDEN) ? SP_BANNED :
+          (spell_flags & HSPELL_WARN) ? SP_RARE : SP_OK;
+      } else {
+        mi.mi_result = SP_BAD;
+      }
+    } else if (mi.mi_lp->lp_slang->sl_fidxs != NULL) {
+      // Check for a matching word in case-folded words.
+      find_word(&mi, FIND_FOLDWORD);
 
-    // Check for a matching word in case-folded words.
-    find_word(&mi, FIND_FOLDWORD);
+      // Check for a matching word in keep-case words.
+      find_word(&mi, FIND_KEEPWORD);
 
-    // Check for a matching word in keep-case words.
-    find_word(&mi, FIND_KEEPWORD);
+      // Check for matching prefixes.
+      find_prefix(&mi, FIND_FOLDWORD);
 
-    // Check for matching prefixes.
-    find_prefix(&mi, FIND_FOLDWORD);
+      // For a NOBREAK language, may want to use a word without a following
+      // word as a backup.
+      if (mi.mi_lp->lp_slang->sl_nobreak && mi.mi_result == SP_BAD
+          && mi.mi_result2 != SP_BAD) {
+        mi.mi_result = mi.mi_result2;
+        mi.mi_end = mi.mi_end2;
+      }
 
-    // For a NOBREAK language, may want to use a word without a following
-    // word as a backup.
-    if (mi.mi_lp->lp_slang->sl_nobreak && mi.mi_result == SP_BAD
-        && mi.mi_result2 != SP_BAD) {
-      mi.mi_result = mi.mi_result2;
-      mi.mi_end = mi.mi_end2;
-    }
-
-    // Count the word in the first language where it's found to be OK.
-    if (count_word && mi.mi_result == SP_OK) {
-      count_common_word(mi.mi_lp->lp_slang, ptr,
-                        (int)(mi.mi_end - ptr), 1);
-      count_word = false;
+      // Count the word in the first language where it's found to be OK.
+      if (count_word && mi.mi_result == SP_OK) {
+        count_common_word(mi.mi_lp->lp_slang, ptr,
+                          (int)(mi.mi_end - ptr), 1);
+        count_word = false;
+      }
     }
   }
 
@@ -1497,9 +1507,26 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
   }
 }
 
+static void spell_hunspell_cb(char *path, void *ud)
+{
+  spelload_T *sl = (spelload_T *)ud;
+
+  size_t path_len = STRLEN(path);
+  char *aff_path = xstrdup(path);
+  aff_path[path_len - 3] = 'a';
+  aff_path[path_len - 2] = 'f';
+  aff_path[path_len - 1] = 'f';
+
+  hunspell_T *h = hunspell_create(aff_path, path);
+  sl->sl_slang = slang_alloc((char *)sl->sl_lang);
+  sl->sl_slang->sl_hunspell = h;
+
+  xfree(aff_path);
+}
+
 // Load word list(s) for "lang" from Vim spell file(s).
 // "lang" must be the language without the region: e.g., "en".
-static void spell_load_lang(char_u *lang)
+static void spell_load_lang(win_T *wp, char *lang)
 {
   char fname_enc[85];
   int r;
@@ -1515,22 +1542,25 @@ static void spell_load_lang(char_u *lang)
   // autocommand may load it then.
   for (int round = 1; round <= 2; round++) {
     // Find the first spell file for "lang" in 'runtimepath' and load it.
-    vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-                 "spell/%s.%s.spl", lang, spell_enc());
-    r = do_in_runtimepath((char *)fname_enc, 0, spell_load_cb, &sl);
-
-    if (r == FAIL && *sl.sl_lang != NUL) {
-      // Try loading the ASCII version.
+    if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+      vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5, "spell/%s.dic", lang);
+      r = do_in_runtimepath((char *)fname_enc, 0, spell_hunspell_cb, &sl);
+    } else {
       vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
-                   "spell/%s.ascii.spl", lang);
+                   "spell/%s.%s.spl", lang, spell_enc());
       r = do_in_runtimepath((char *)fname_enc, 0, spell_load_cb, &sl);
-
-      if (r == FAIL && *sl.sl_lang != NUL && round == 1
-          && apply_autocmds(EVENT_SPELLFILEMISSING, (char *)lang,
-                            curbuf->b_fname, false, curbuf)) {
-        continue;
+      if (r == FAIL && *sl.sl_lang != NUL) {
+        // Try loading the ASCII version.
+        vim_snprintf((char *)fname_enc, sizeof(fname_enc) - 5,
+                     "spell/%s.ascii.spl", lang);
+        r = do_in_runtimepath((char *)fname_enc, 0, spell_load_cb, &sl);
       }
-      break;
+    }
+
+    if (r == FAIL && *sl.sl_lang != NUL && round == 1
+        && apply_autocmds(EVENT_SPELLFILEMISSING, (char *)lang,
+                          curbuf->b_fname, false, curbuf)) {
+      continue;
     }
     break;
   }
@@ -1550,8 +1580,14 @@ static void spell_load_lang(char_u *lang)
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
-    STRCPY(fname_enc + strlen(fname_enc) - 3, "add.spl");
-    do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_load_cb, &sl);
+    if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+      // TODO(vigoux): probably not right and we'll have to load the .add files
+      sl.sl_slang->sl_next = first_lang;
+      first_lang = sl.sl_slang;
+    } else {
+      STRCPY(fname_enc + strlen(fname_enc) - 3, "add.spl");
+      do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_load_cb, &sl);
+    }
   }
 }
 
@@ -1675,6 +1711,8 @@ void slang_clear(slang_T *lp)
   lp->sl_compminlen = 0;
   lp->sl_compsylmax = MAXWLEN;
   lp->sl_regions[0] = NUL;
+
+  hunspell_destroy(lp->sl_hunspell);
 }
 
 // Clear the info from the .sug file in "lp".
@@ -1954,7 +1992,7 @@ char *did_set_spelllang(win_T *wp)
       if (filename) {
         (void)spell_load_file((char *)lang, (char *)lang, NULL, false);
       } else {
-        spell_load_lang((char_u *)lang);
+        spell_load_lang(wp, lang);
         // SpellFileMissing autocommands may do anything, including
         // destroying the buffer we are using...
         if (!bufref_valid(&bufref)) {
@@ -2391,6 +2429,24 @@ bool spell_iswordp(const char_u *p, const win_T *wp)
 {
   const int l = utfc_ptr2len((char *)p);
   const char_u *s = p;
+
+  // TODO(vigoux): there is a lot more variants of iswordp
+  if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+    for (int lpi = 0; lpi < wp->w_s->b_langp.ga_len; lpi++) {
+      langp_T *lp = LANGP_ENTRY(wp->w_s->b_langp, lpi);
+
+      if (lp->lp_slang->sl_hunspell != NULL) {
+        // TODO(vigoux): correctly handle multibyte characters here
+        if (hunspell_is_wordchar(lp->lp_slang->sl_hunspell, (const char *)s)) {
+          return true;
+        }
+      }
+    }
+    int c = utf_ptr2char((char *)p);
+    // TODO(vigoux): that's certainly not right
+    return iswalnum(c);
+  }
+
   if (l == 1) {
     // be quick for ASCII
     if (wp->w_s->b_spell_ismw[*p]) {

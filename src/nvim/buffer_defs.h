@@ -462,8 +462,9 @@ typedef struct {
   char *b_p_spf;              // 'spellfile'
   char *b_p_spl;              // 'spelllang'
   char *b_p_spo;              // 'spelloptions'
-#define SPO_CAMEL  0x1
-#define SPO_NPBUFFER 0x2
+#define SPO_CAMEL  (1 << 0)
+#define SPO_NPBUFFER (1 << 1)
+#define SPO_HUNSPELL (1 << 2)
   unsigned b_p_spo_flags;      // 'spelloptions' flags
   int b_cjk;                  // all CJK letters as OK
   uint8_t b_syn_chartab[32];  // syntax iskeyword option

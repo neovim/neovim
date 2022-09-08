@@ -96,8 +96,8 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 glob_wrapper(NVIM_SOURCES *.c)
 glob_wrapper(NVIM_HEADERS *.h)
-glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
-glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
+glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../hunspell/*.cpp)
+glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../hunspell/*.h)
 
 foreach(subdir
         os
@@ -429,6 +429,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${UNIBILIUM_LIBRARIES}
   ${UTF8PROC_LIBRARIES}
   ${TreeSitter_LIBRARIES}
+  ${Hunspell_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
