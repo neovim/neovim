@@ -2,7 +2,6 @@
 local vim = assert(vim)
 
 local a = vim.api
-local validate = vim.validate
 
 -- TODO(tjdevries): Improve option metadata so that this doesn't have to be hardcoded.
 --                  Can be done in a separate PR.
@@ -41,107 +40,85 @@ local options_info = setmetatable({}, {
   end,
 })
 
-local function make_meta_accessor(get, set, validator)
-  validator = validator or function()
-    return true
-  end
-
-  validate({
-    get = { get, 'f' },
-    set = { set, 'f' },
-    validator = { validator, 'f' },
-  })
-
-  local mt = {}
-  function mt:__newindex(k, v)
-    if not validator(k) then
-      return
+vim.env = setmetatable({}, {
+  __index = function(_, k)
+    local v = vim.fn.getenv(k)
+    if v == vim.NIL then
+      return nil
     end
+    return v
+  end,
 
-    return set(k, v)
-  end
-  function mt:__index(k)
-    if not validator(k) then
-      return
-    end
-
-    return get(k)
-  end
-  return setmetatable({}, mt)
-end
-
-vim.env = make_meta_accessor(function(k)
-  local v = vim.fn.getenv(k)
-  if v == vim.NIL then
-    return nil
-  end
-  return v
-end, vim.fn.setenv)
+  __newindex = function(_, k, v)
+    vim.fn.setenv(k, v)
+  end,
+})
 
 do -- buffer option accessor
+  local function buf_opt_validate(k)
+    local scope = options_info[k].scope
+    if scope == 'win' then
+      error(
+        string.format([['%s' is a window option, not a buffer option. See ":help %s"]], k, k)
+      )
+    elseif scope == 'global' then
+      error(
+        string.format([['%s' is a global option, not a buffer option. See ":help %s"]], k, k)
+      )
+    end
+  end
+
   local function new_buf_opt_accessor(bufnr)
-    local function get(k)
-      if bufnr == nil and type(k) == 'number' then
-        return new_buf_opt_accessor(k)
-      end
-
-      return a.nvim_get_option_value(k, { buf = bufnr or 0 })
-    end
-
-    local function set(k, v)
-      return a.nvim_set_option_value(k, v, { buf = bufnr or 0 })
-    end
-
-    return make_meta_accessor(get, set, function(k)
-      if type(k) == 'string' then
-        local scope = options_info[k].scope
-        if scope == 'win' then
-          error(
-            string.format([['%s' is a window option, not a buffer option. See ":help %s"]], k, k)
-          )
-        elseif scope == 'global' then
-          error(
-            string.format([['%s' is a global option, not a buffer option. See ":help %s"]], k, k)
-          )
+    return setmetatable({},{
+      __index = function(_, k)
+        if bufnr == nil and type(k) == 'number' then
+          return new_buf_opt_accessor(k)
         end
-      end
+        buf_opt_validate(k)
 
-      return true
-    end)
+        return a.nvim_get_option_value(k, { buf = bufnr or 0 })
+      end,
+
+      __newindex = function(_, k, v)
+        buf_opt_validate(k)
+        return a.nvim_set_option_value(k, v, { buf = bufnr or 0 })
+      end,
+    })
+
   end
 
   vim.bo = new_buf_opt_accessor(nil)
 end
 
 do -- window option accessor
+  local function win_opt_validate(k)
+    local scope = options_info[k].scope
+    if scope == 'buf' then
+      error(
+        string.format([['%s' is a buffer option, not a window option. See ":help %s"]], k, k)
+      )
+    elseif scope == 'global' then
+      error(
+        string.format([['%s' is a global option, not a window option. See ":help %s"]], k, k)
+      )
+    end
+  end
+
   local function new_win_opt_accessor(winnr)
-    local function get(k)
-      if winnr == nil and type(k) == 'number' then
-        return new_win_opt_accessor(k)
-      end
-      return a.nvim_get_option_value(k, { win = winnr or 0 })
-    end
-
-    local function set(k, v)
-      return a.nvim_set_option_value(k, v, { win = winnr or 0 })
-    end
-
-    return make_meta_accessor(get, set, function(k)
-      if type(k) == 'string' then
-        local scope = options_info[k].scope
-        if scope == 'buf' then
-          error(
-            string.format([['%s' is a buffer option, not a window option. See ":help %s"]], k, k)
-          )
-        elseif scope == 'global' then
-          error(
-            string.format([['%s' is a global option, not a window option. See ":help %s"]], k, k)
-          )
+    return setmetatable({}, {
+      __index = function(_, k)
+        if winnr == nil and type(k) == 'number' then
+          return new_win_opt_accessor(k)
         end
-      end
+        win_opt_validate(k)
+        return a.nvim_get_option_value(k, { win = winnr or 0 })
+      end,
 
-      return true
-    end)
+      __newindex = function(_, k, v)
+        win_opt_validate(k)
+        return a.nvim_set_option_value(k, v, { win = winnr or 0 })
+      end,
+    })
   end
 
   vim.wo = new_win_opt_accessor(nil)
@@ -149,19 +126,25 @@ end
 
 -- vim global option
 --  this ONLY sets the global option. like `setglobal`
-vim.go = make_meta_accessor(function(k)
-  return a.nvim_get_option_value(k, { scope = 'global' })
-end, function(k, v)
-  return a.nvim_set_option_value(k, v, { scope = 'global' })
-end)
+vim.go = setmetatable({}, {
+  __index = function(_, k)
+    return a.nvim_get_option_value(k, { scope = 'global' })
+  end,
+  __newindex = function(_, k, v)
+    return a.nvim_set_option_value(k, v, { scope = 'global' })
+  end,
+})
 
 -- vim `set` style options.
 --  it has no additional metamethod magic.
-vim.o = make_meta_accessor(function(k)
-  return a.nvim_get_option_value(k, {})
-end, function(k, v)
-  return a.nvim_set_option_value(k, v, {})
-end)
+vim.o = setmetatable({}, {
+  __index = function(_, k)
+    return a.nvim_get_option_value(k, {})
+  end,
+  __newindex = function(_, k, v)
+    return a.nvim_set_option_value(k, v, {})
+  end,
+})
 
 ---@brief [[
 --- vim.opt, vim.opt_local and vim.opt_global implementation
