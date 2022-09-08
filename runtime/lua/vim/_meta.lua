@@ -365,11 +365,6 @@ local convert_value_to_lua = (function()
   end
 end)()
 
---- Handles the mutation of various different values.
-local value_mutator = function(info, current, new, mutator)
-  return mutator[info.metatype](current, new)
-end
-
 --- Handles the '^' operator
 local prepend_value = (function()
   local methods = {
@@ -399,11 +394,9 @@ local prepend_value = (function()
   }
 
   return function(info, current, new)
-    return value_mutator(
-      info,
+    methods[info.metatype](
       convert_value_to_lua(info, current),
-      convert_value_to_lua(info, new),
-      methods
+      convert_value_to_lua(info, new)
     )
   end
 end)()
@@ -437,11 +430,9 @@ local add_value = (function()
   }
 
   return function(info, current, new)
-    return value_mutator(
-      info,
+    methods[info.metatype](
       convert_value_to_lua(info, current),
-      convert_value_to_lua(info, new),
-      methods
+      convert_value_to_lua(info, new)
     )
   end
 end)()
@@ -512,7 +503,7 @@ local remove_value = (function()
   }
 
   return function(info, current, new)
-    return value_mutator(info, convert_value_to_lua(info, current), new, methods)
+    return methods[info.metatype](convert_value_to_lua(info, current), new)
   end
 end)()
 
