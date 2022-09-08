@@ -13,6 +13,7 @@
   - src/nvim/lua/treesitter.*
   - runtime/lua/vim/treesitter.lua
   - runtime/lua/vim/treesitter/*
+  - runtime/queries/**/*
 
 "diagnostic":
   - runtime/lua/vim/diagnostic.lua
