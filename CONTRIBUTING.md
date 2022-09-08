@@ -111,7 +111,7 @@ the VCS/git logs more valuable. The general structure of a commit message is:
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [GitHub Actions].
+Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Actions].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
@@ -307,6 +307,7 @@ as context, use the `-W` argument as well.
 [1820]: https://github.com/neovim/neovim/pull/1820
 [3174]: https://github.com/neovim/neovim/issues/3174
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
+[Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [GitHub Actions]: https://github.com/neovim/neovim/actions
 [clangd]: https://clangd.llvm.org
@@ -331,7 +332,6 @@ as context, use the `-W` argument as well.
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
-[sourcehut]: https://builds.sr.ht/~jmk
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [uncrustify]: http://uncrustify.sourceforge.net/
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
