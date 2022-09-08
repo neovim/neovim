@@ -123,9 +123,6 @@ vim.o = setmetatable({}, {
 --- Preserves the order and does not mutate the original list
 local remove_duplicate_values = function(t)
   local result, seen = {}, {}
-  if type(t) == 'function' then
-    error(debug.traceback('asdf'))
-  end
   for _, v in ipairs(t) do
     if not seen[v] then
       table.insert(result, v)
@@ -157,6 +154,26 @@ local function assert_valid_value(name, value, types)
   )
 end
 
+local function passthrough(_, x)
+  return x
+end
+
+local function tbl_merge(left, right)
+  return vim.tbl_extend('force', left, right)
+end
+
+local function tbl_remove(t, value)
+  if type(value) == 'string' then
+    t[value] = nil
+  else
+    for _, v in ipairs(value) do
+      t[v] = nil
+    end
+  end
+
+  return t
+end
+
 local valid_types = {
   boolean = { 'boolean' },
   number = { 'number' },
@@ -171,15 +188,9 @@ local convert_value_to_vim = (function()
   -- Map of functions to take a Lua style value and convert to vimoption_T style value.
   -- Each function takes (info, lua_value) -> vim_value
   local to_vim_value = {
-    boolean = function(_, value)
-      return value
-    end,
-    number = function(_, value)
-      return value
-    end,
-    string = function(_, value)
-      return value
-    end,
+    boolean = passthrough,
+    number = passthrough,
+    string = passthrough,
 
     set = function(info, value)
       if type(value) == 'string' then
@@ -249,15 +260,9 @@ local convert_value_to_lua = (function()
   -- Map of OptionType to functions that take vimoption_T values and convert to lua values.
   -- Each function takes (info, vim_value) -> lua_value
   local to_lua_value = {
-    boolean = function(_, value)
-      return value
-    end,
-    number = function(_, value)
-      return value
-    end,
-    string = function(_, value)
-      return value
-    end,
+    boolean = passthrough,
+    number = passthrough,
+    string = passthrough,
 
     array = function(info, value)
       if type(value) == 'table' then
@@ -276,9 +281,7 @@ local convert_value_to_lua = (function()
 
       -- Handles unescaped commas in a list.
       if string.find(value, ',,,') then
-        local comma_split = vim.split(value, ',,,')
-        local left = comma_split[1]
-        local right = comma_split[2]
+        local left, right = unpack(vim.split(value, ',,,'))
 
         local result = {}
         vim.list_extend(result, vim.split(left, ','))
@@ -291,9 +294,7 @@ local convert_value_to_lua = (function()
       end
 
       if string.find(value, ',^,,', 1, true) then
-        local comma_split = vim.split(value, ',^,,', true)
-        local left = comma_split[1]
-        local right = comma_split[2]
+        local left, right = unpack(vim.split(value, ',^,,', true))
 
         local result = {}
         vim.list_extend(result, vim.split(left, ','))
@@ -384,13 +385,8 @@ local prepend_value = (function()
       return left
     end,
 
-    map = function(left, right)
-      return vim.tbl_extend('force', left, right)
-    end,
-
-    set = function(left, right)
-      return vim.tbl_extend('force', left, right)
-    end,
+    map = tbl_merge,
+    set = tbl_merge,
   }
 
   return function(info, current, new)
@@ -420,13 +416,8 @@ local add_value = (function()
       return left
     end,
 
-    map = function(left, right)
-      return vim.tbl_extend('force', left, right)
-    end,
-
-    set = function(left, right)
-      return vim.tbl_extend('force', left, right)
-    end,
+    map = tbl_merge,
+    set = tbl_merge,
   }
 
   return function(info, current, new)
@@ -477,29 +468,8 @@ local remove_value = (function()
       return left
     end,
 
-    map = function(left, right)
-      if type(right) == 'string' then
-        left[right] = nil
-      else
-        for _, v in ipairs(right) do
-          left[v] = nil
-        end
-      end
-
-      return left
-    end,
-
-    set = function(left, right)
-      if type(right) == 'string' then
-        left[right] = nil
-      else
-        for _, v in ipairs(right) do
-          left[v] = nil
-        end
-      end
-
-      return left
-    end,
+    map = tbl_remove,
+    set = tbl_remove,
   }
 
   return function(info, current, new)
@@ -507,8 +477,8 @@ local remove_value = (function()
   end
 end)()
 
-local create_option_metatable = function(scope)
-  local set_mt, option_mt
+local create_option_accessor = function(scope)
+  local option_mt
 
   local make_option = function(name, value)
     local info = assert(options_info[name], 'Not a valid option name: ' .. name)
@@ -566,20 +536,17 @@ local create_option_metatable = function(scope)
   }
   option_mt.__index = option_mt
 
-  set_mt = {
+  return setmetatable({}, {
     __index = function(_, k)
       return make_option(k, a.nvim_get_option_value(k, { scope = scope }))
     end,
 
     __newindex = function(_, k, v)
-      local opt = make_option(k, v)
-      opt:_set()
+      make_option(k, v):_set()
     end,
-  }
-
-  return set_mt
+  })
 end
 
-vim.opt = setmetatable({}, create_option_metatable())
-vim.opt_local = setmetatable({}, create_option_metatable('local'))
-vim.opt_global = setmetatable({}, create_option_metatable('global'))
+vim.opt = create_option_accessor()
+vim.opt_local = create_option_accessor('local')
+vim.opt_global = create_option_accessor('global')
