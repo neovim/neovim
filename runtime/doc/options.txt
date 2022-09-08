@@ -5875,7 +5875,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			separate word: every upper-case character in a word
 			that comes after a lower case character indicates the
 			start of a new word.
-	noplainbuffer	Only spellcheck a buffer when 'syntax' is enabled, or
+	noplainbuffer	Only spellcheck a buffer when 'syntax' is enabled,
 			or when extmarks are set within the buffer. Only
 			designated regions of the buffer are spellchecked in
 			this case.
