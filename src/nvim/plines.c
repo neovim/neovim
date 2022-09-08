@@ -288,11 +288,10 @@ unsigned int win_linetabsize(win_T *wp, linenr_T lnum, char_u *line, colnr_T len
 ///
 /// "line" is the start of the line, "ptr" is the first relevant character.
 /// When "lnum" is zero do not use text properties that insert text.
-void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T col, char *line,
-                          char *ptr)
+void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum FUNC_ATTR_UNUSED,
+                          colnr_T col, char *line, char *ptr)
 {
   cts->cts_win = wp;
-  cts->cts_lnum = lnum;
   cts->cts_vcol = col;
   cts->cts_line = line;
   cts->cts_ptr = ptr;
