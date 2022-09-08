@@ -443,6 +443,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     }
   end)()
 
+  local is_windows = vim.loop.os_uname().sysname == 'Windows'
   -- Apply text edits.
   local is_cursor_fixed = false
   local has_eol_text_edit = false
@@ -456,8 +457,13 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       start_col = get_line_byte_from_position(bufnr, text_edit.range.start, offset_encoding),
       end_row = text_edit.range['end'].line,
       end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
-      text = split(text_edit.newText, '\n', true),
     }
+
+    if not is_windows then
+      e.text = split(text_edit.newText, '\n', true)
+    else
+      e.text = split(text_edit.newText, '\\r\\n', true)
+    end
 
     -- Some LSP servers may return +1 range of the buffer content but nvim_buf_set_text can't accept it so we should fix it here.
     local max = api.nvim_buf_line_count(bufnr)
