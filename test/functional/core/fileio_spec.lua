@@ -85,7 +85,7 @@ describe('fileio', function()
 
   it('backup #9709', function()
     if uname() == 'freebsd' then
-      pending('FIXME: Failing FreeBSD test')
+      pending('Failing FreeBSD test')
     end
     clear({ args={ '-i', 'Xtest_startup_shada',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
@@ -107,7 +107,7 @@ describe('fileio', function()
 
   it('backup with full path #11214', function()
     if uname() == 'freebsd' then
-      pending('FIXME: Failing FreeBSD test')
+      pending('Failing FreeBSD test')
     end
     clear()
     mkdir('Xtest_backupdir')

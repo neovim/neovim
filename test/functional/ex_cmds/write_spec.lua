@@ -54,7 +54,7 @@ describe(':write', function()
 
   it('&backupcopy=no replaces symlink with new file', function()
     if uname() == 'freebsd' then
-      pending('FIXME: Failing FreeBSD test')
+      pending('Failing FreeBSD test')
     end
     command('set backupcopy=no')
     write_file('test_bkc_file.txt', 'content0')
@@ -96,7 +96,7 @@ describe(':write', function()
 
   it('errors out correctly', function()
     if uname() == 'freebsd' then
-      pending('FIXME: Failing FreeBSD test')
+      pending('Failing FreeBSD test')
     end
     command('let $HOME=""')
     eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))

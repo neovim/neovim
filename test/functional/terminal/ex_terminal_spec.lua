@@ -47,7 +47,7 @@ describe(':terminal', function()
 
   it("reads output buffer on terminal reporting #4151", function()
     if uname() == 'freebsd' then
-      pending('FIXME: Failing FreeBSD test')
+      pending('Failing FreeBSD test')
     end
     if helpers.pending_win32(pending) then return end
     if iswin() then

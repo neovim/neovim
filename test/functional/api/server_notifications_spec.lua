@@ -80,7 +80,7 @@ describe('notify', function()
 
   it('cancels stale events on channel close', function()
     if uname() == 'freebsd' then
-      pending('FIXME: Failing FreeBSD test')
+      pending('Failing FreeBSD test')
     end
     if isCI() then
       pending('hangs on CI #14083 #15251')
