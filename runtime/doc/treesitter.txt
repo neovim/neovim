@@ -187,6 +187,11 @@ Note: The predicates listed in the web page above differ from those Neovim
 supports. See |lua-treesitter-predicates| for a complete list of predicates
 supported by Neovim.
 
+By default, the first query on `runtimepath` is used (which usually implies
+that user config takes precedence over plugins, which take precedence over
+queries bundled with Neovim). If a query should extend other queries instead
+of replacing them, use the `; extends` modeline below.
+
 A `query` consists of one or more patterns. A `pattern` is defined over node
 types in the syntax tree.  A `match` corresponds to specific elements of the
 syntax tree which match a pattern. Patterns may optionally define captures

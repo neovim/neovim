@@ -97,7 +97,7 @@ function M.get_query_files(lang, query_name, is_included)
 
     if extension then
       table.insert(extensions, filename)
-    else
+    elseif base_query == nil then
       base_query = filename
     end
     io.close(file)
