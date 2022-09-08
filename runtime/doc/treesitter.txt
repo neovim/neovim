@@ -401,6 +401,15 @@ attribute: >
 ==============================================================================
 Lua module: vim.treesitter                               *lua-treesitter-core*
 
+get_captures_at_cursor({winnr})                     *get_captures_at_cursor()*
+    Gets a list of captures under the cursor
+
+    Parameters: ~
+        {winnr}  (number|nil) Window handle or 0 for current window (default)
+
+    Return: ~
+        (table) Named node under the cursor
+
                                                   *get_captures_at_position()*
 get_captures_at_position({bufnr}, {row}, {col})
     Gets a list of captures for a given cursor position
@@ -411,7 +420,31 @@ get_captures_at_position({bufnr}, {row}, {col})
         {col}    (number) Position column
 
     Return: ~
-        (table) A table of captures
+        (table) Table of captures
+
+get_node_at_cursor({winnr})                             *get_node_at_cursor()*
+    Gets the smallest named node under the cursor
+
+    Parameters: ~
+        {winnr}  (number|nil) Window handle or 0 for current window (default)
+
+    Return: ~
+        (string) Named node under the cursor
+
+                                                      *get_node_at_position()*
+get_node_at_position({bufnr}, {row}, {col}, {opts})
+    Gets the smallest named node at position
+
+    Parameters: ~
+        {bufnr}  (number) Buffer number (0 for current buffer)
+        {row}    (number) Position row
+        {col}    (number) Position column
+        {opts}   (table) Optional keyword arguments:
+                 • ignore_injections boolean Ignore injected languages
+                   (default true)
+
+    Return: ~
+        (table) Named node under the cursor
 
 get_node_range({node_or_range})                             *get_node_range()*
     Get the node's range or unpack a range table
@@ -420,7 +453,7 @@ get_node_range({node_or_range})                             *get_node_range()*
         {node_or_range}  (table)
 
     Return: ~
-        start_row, start_col, end_row, end_col
+        (table) start_row, start_col, end_row, end_col
 
 get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
     Gets the parser for this bufnr / ft combination.
@@ -429,7 +462,7 @@ get_parser({bufnr}, {lang}, {opts})                             *get_parser()*
     callback
 
     Parameters: ~
-        {bufnr}  (number|nil) Buffer the parser should be tied to: (default
+        {bufnr}  (number|nil) Buffer the parser should be tied to (default:
                  current buffer)
         {lang}   (string) |nil Filetype of this parser (default: buffer
                  filetype)
