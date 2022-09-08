@@ -126,6 +126,7 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
   neighbors_, to encourage incrementally updating the legacy style to meet our
   [style](#style). (See [#3174][3174] for background.)
 
+- CI for FreeBSD runs on [Cirrus CI].
 ### Clang scan-build
 
 View the [Clang report] to see potential bugs found by the Clang
