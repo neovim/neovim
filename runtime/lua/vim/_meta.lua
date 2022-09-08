@@ -183,299 +183,289 @@ local valid_types = {
   map = { 'string', 'table' },
 }
 
---- Convert a lua value to a vimoption_T value
-local convert_value_to_vim = (function()
-  -- Map of functions to take a Lua style value and convert to vimoption_T style value.
-  -- Each function takes (info, lua_value) -> vim_value
-  local to_vim_value = {
-    boolean = passthrough,
-    number = passthrough,
-    string = passthrough,
+-- Map of functions to take a Lua style value and convert to vimoption_T style value.
+-- Each function takes (info, lua_value) -> vim_value
+local to_vim_value = {
+  boolean = passthrough,
+  number = passthrough,
+  string = passthrough,
 
-    set = function(info, value)
-      if type(value) == 'string' then
-        return value
-      end
-
-      if info.flaglist and info.commalist then
-        local keys = {}
-        for k, v in pairs(value) do
-          if v then
-            table.insert(keys, k)
-          end
-        end
-
-        table.sort(keys)
-        return table.concat(keys, ',')
-      else
-        local result = ''
-        for k, v in pairs(value) do
-          if v then
-            result = result .. k
-          end
-        end
-
-        return result
-      end
-    end,
-
-    array = function(info, value)
-      if type(value) == 'string' then
-        return value
-      end
-      if not info.allows_duplicates then
-        value = remove_duplicate_values(value)
-      end
-      return table.concat(value, ',')
-    end,
-
-    map = function(_, value)
-      if type(value) == 'string' then
-        return value
-      end
-
-      local result = {}
-      for opt_key, opt_value in pairs(value) do
-        table.insert(result, string.format('%s:%s', opt_key, opt_value))
-      end
-
-      table.sort(result)
-      return table.concat(result, ',')
-    end,
-  }
-
-  return function(name, info, value)
-    if value == nil then
-      return vim.NIL
+  set = function(info, value)
+    if type(value) == 'string' then
+      return value
     end
 
-    assert_valid_value(name, value, valid_types[info.metatype])
-
-    return to_vim_value[info.metatype](info, value)
-  end
-end)()
-
---- Converts a vimoption_T style value to a Lua value
-local convert_value_to_lua = (function()
-  -- Map of OptionType to functions that take vimoption_T values and convert to lua values.
-  -- Each function takes (info, vim_value) -> lua_value
-  local to_lua_value = {
-    boolean = passthrough,
-    number = passthrough,
-    string = passthrough,
-
-    array = function(info, value)
-      if type(value) == 'table' then
-        if not info.allows_duplicates then
-          value = remove_duplicate_values(value)
+    if info.flaglist and info.commalist then
+      local keys = {}
+      for k, v in pairs(value) do
+        if v then
+          table.insert(keys, k)
         end
-
-        return value
       end
 
-      -- Empty strings mean that there is nothing there,
-      -- so empty table should be returned.
-      if value == '' then
-        return {}
-      end
-
-      -- Handles unescaped commas in a list.
-      if string.find(value, ',,,') then
-        local left, right = unpack(vim.split(value, ',,,'))
-
-        local result = {}
-        vim.list_extend(result, vim.split(left, ','))
-        table.insert(result, ',')
-        vim.list_extend(result, vim.split(right, ','))
-
-        table.sort(result)
-
-        return result
-      end
-
-      if string.find(value, ',^,,', 1, true) then
-        local left, right = unpack(vim.split(value, ',^,,', true))
-
-        local result = {}
-        vim.list_extend(result, vim.split(left, ','))
-        table.insert(result, '^,')
-        vim.list_extend(result, vim.split(right, ','))
-
-        table.sort(result)
-
-        return result
-      end
-
-      return vim.split(value, ',')
-    end,
-
-    set = function(info, value)
-      if type(value) == 'table' then
-        return value
-      end
-
-      -- Empty strings mean that there is nothing there,
-      -- so empty table should be returned.
-      if value == '' then
-        return {}
-      end
-
-      assert(info.flaglist, 'That is the only one I know how to handle')
-
-      if info.flaglist and info.commalist then
-        local split_value = vim.split(value, ',')
-        local result = {}
-        for _, v in ipairs(split_value) do
-          result[v] = true
+      table.sort(keys)
+      return table.concat(keys, ',')
+    else
+      local result = ''
+      for k, v in pairs(value) do
+        if v then
+          result = result .. k
         end
-
-        return result
-      else
-        local result = {}
-        for i = 1, #value do
-          result[value:sub(i, i)] = true
-        end
-
-        return result
-      end
-    end,
-
-    map = function(info, raw_value)
-      if type(raw_value) == 'table' then
-        return raw_value
-      end
-
-      assert(info.commalist, 'Only commas are supported currently')
-
-      local result = {}
-
-      local comma_split = vim.split(raw_value, ',')
-      for _, key_value_str in ipairs(comma_split) do
-        local key, value = unpack(vim.split(key_value_str, ':'))
-        key = vim.trim(key)
-
-        result[key] = value
       end
 
       return result
-    end,
-  }
+    end
+  end,
 
-  return function(info, option_value)
-    return to_lua_value[info.metatype](info, option_value)
+  array = function(info, value)
+    if type(value) == 'string' then
+      return value
+    end
+    if not info.allows_duplicates then
+      value = remove_duplicate_values(value)
+    end
+    return table.concat(value, ',')
+  end,
+
+  map = function(_, value)
+    if type(value) == 'string' then
+      return value
+    end
+
+    local result = {}
+    for opt_key, opt_value in pairs(value) do
+      table.insert(result, string.format('%s:%s', opt_key, opt_value))
+    end
+
+    table.sort(result)
+    return table.concat(result, ',')
+  end,
+}
+
+--- Convert a lua value to a vimoption_T value
+local function convert_value_to_vim(name, info, value)
+  if value == nil then
+    return vim.NIL
   end
-end)()
+
+  assert_valid_value(name, value, valid_types[info.metatype])
+
+  return to_vim_value[info.metatype](info, value)
+end
+
+-- Map of OptionType to functions that take vimoption_T values and convert to lua values.
+-- Each function takes (info, vim_value) -> lua_value
+local to_lua_value = {
+  boolean = passthrough,
+  number = passthrough,
+  string = passthrough,
+
+  array = function(info, value)
+    if type(value) == 'table' then
+      if not info.allows_duplicates then
+        value = remove_duplicate_values(value)
+      end
+
+      return value
+    end
+
+    -- Empty strings mean that there is nothing there,
+    -- so empty table should be returned.
+    if value == '' then
+      return {}
+    end
+
+    -- Handles unescaped commas in a list.
+    if string.find(value, ',,,') then
+      local left, right = unpack(vim.split(value, ',,,'))
+
+      local result = {}
+      vim.list_extend(result, vim.split(left, ','))
+      table.insert(result, ',')
+      vim.list_extend(result, vim.split(right, ','))
+
+      table.sort(result)
+
+      return result
+    end
+
+    if string.find(value, ',^,,', 1, true) then
+      local left, right = unpack(vim.split(value, ',^,,', true))
+
+      local result = {}
+      vim.list_extend(result, vim.split(left, ','))
+      table.insert(result, '^,')
+      vim.list_extend(result, vim.split(right, ','))
+
+      table.sort(result)
+
+      return result
+    end
+
+    return vim.split(value, ',')
+  end,
+
+  set = function(info, value)
+    if type(value) == 'table' then
+      return value
+    end
+
+    -- Empty strings mean that there is nothing there,
+    -- so empty table should be returned.
+    if value == '' then
+      return {}
+    end
+
+    assert(info.flaglist, 'That is the only one I know how to handle')
+
+    if info.flaglist and info.commalist then
+      local split_value = vim.split(value, ',')
+      local result = {}
+      for _, v in ipairs(split_value) do
+        result[v] = true
+      end
+
+      return result
+    else
+      local result = {}
+      for i = 1, #value do
+        result[value:sub(i, i)] = true
+      end
+
+      return result
+    end
+  end,
+
+  map = function(info, raw_value)
+    if type(raw_value) == 'table' then
+      return raw_value
+    end
+
+    assert(info.commalist, 'Only commas are supported currently')
+
+    local result = {}
+
+    local comma_split = vim.split(raw_value, ',')
+    for _, key_value_str in ipairs(comma_split) do
+      local key, value = unpack(vim.split(key_value_str, ':'))
+      key = vim.trim(key)
+
+      result[key] = value
+    end
+
+    return result
+  end,
+}
+
+--- Converts a vimoption_T style value to a Lua value
+local function convert_value_to_lua(info, option_value)
+  return to_lua_value[info.metatype](info, option_value)
+end
+
+local prepend_methods = {
+  number = function()
+    error("The '^' operator is not currently supported for")
+  end,
+
+  string = function(left, right)
+    return right .. left
+  end,
+
+  array = function(left, right)
+    for i = #right, 1, -1 do
+      table.insert(left, 1, right[i])
+    end
+
+    return left
+  end,
+
+  map = tbl_merge,
+  set = tbl_merge,
+}
 
 --- Handles the '^' operator
-local prepend_value = (function()
-  local methods = {
-    number = function()
-      error("The '^' operator is not currently supported for")
-    end,
+local function prepend_value(info, current, new)
+  return prepend_methods[info.metatype](
+    convert_value_to_lua(info, current),
+    convert_value_to_lua(info, new)
+  )
+end
 
-    string = function(left, right)
-      return right .. left
-    end,
+local add_methods = {
+  number = function(left, right)
+    return left + right
+  end,
 
-    array = function(left, right)
-      for i = #right, 1, -1 do
-        table.insert(left, 1, right[i])
-      end
+  string = function(left, right)
+    return left .. right
+  end,
 
-      return left
-    end,
+  array = function(left, right)
+    for _, v in ipairs(right) do
+      table.insert(left, v)
+    end
 
-    map = tbl_merge,
-    set = tbl_merge,
-  }
+    return left
+  end,
 
-  return function(info, current, new)
-    methods[info.metatype](
-      convert_value_to_lua(info, current),
-      convert_value_to_lua(info, new)
-    )
-  end
-end)()
+  map = tbl_merge,
+  set = tbl_merge,
+}
 
 --- Handles the '+' operator
-local add_value = (function()
-  local methods = {
-    number = function(left, right)
-      return left + right
-    end,
+local function add_value(info, current, new)
+  return add_methods[info.metatype](
+    convert_value_to_lua(info, current),
+    convert_value_to_lua(info, new)
+  )
+end
 
-    string = function(left, right)
-      return left .. right
-    end,
-
-    array = function(left, right)
-      for _, v in ipairs(right) do
-        table.insert(left, v)
+local function remove_one_item(t, val)
+  if vim.tbl_islist(t) then
+    local remove_index = nil
+    for i, v in ipairs(t) do
+      if v == val then
+        remove_index = i
       end
+    end
 
-      return left
-    end,
-
-    map = tbl_merge,
-    set = tbl_merge,
-  }
-
-  return function(info, current, new)
-    methods[info.metatype](
-      convert_value_to_lua(info, current),
-      convert_value_to_lua(info, new)
-    )
+    if remove_index then
+      table.remove(t, remove_index)
+    end
+  else
+    t[val] = nil
   end
-end)()
+end
+
+local remove_methods = {
+  number = function(left, right)
+    return left - right
+  end,
+
+  string = function()
+    error('Subtraction not supported for strings.')
+  end,
+
+  array = function(left, right)
+    if type(right) == 'string' then
+      remove_one_item(left, right)
+    else
+      for _, v in ipairs(right) do
+        remove_one_item(left, v)
+      end
+    end
+
+    return left
+  end,
+
+  map = tbl_remove,
+  set = tbl_remove,
+}
 
 --- Handles the '-' operator
-local remove_value = (function()
-  local function remove_one_item(t, val)
-    if vim.tbl_islist(t) then
-      local remove_index = nil
-      for i, v in ipairs(t) do
-        if v == val then
-          remove_index = i
-        end
-      end
-
-      if remove_index then
-        table.remove(t, remove_index)
-      end
-    else
-      t[val] = nil
-    end
-  end
-
-  local methods = {
-    number = function(left, right)
-      return left - right
-    end,
-
-    string = function()
-      error('Subtraction not supported for strings.')
-    end,
-
-    array = function(left, right)
-      if type(right) == 'string' then
-        remove_one_item(left, right)
-      else
-        for _, v in ipairs(right) do
-          remove_one_item(left, v)
-        end
-      end
-
-      return left
-    end,
-
-    map = tbl_remove,
-    set = tbl_remove,
-  }
-
-  return function(info, current, new)
-    return methods[info.metatype](convert_value_to_lua(info, current), new)
-  end
-end)()
+local function remove_value(info, current, new)
+  return remove_methods[info.metatype](convert_value_to_lua(info, current), new)
+end
 
 local function create_option_accessor(scope)
   local option_mt
