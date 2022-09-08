@@ -165,6 +165,13 @@ func Test_dict()
   call assert_equal({'c': 'ccc', '1': 99, 'b': [1, 2, function('strlen')], '3': 33, '-1': {'a': 1}}, d)
   call filter(d, 'v:key =~ ''[ac391]''')
   call assert_equal({'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}, d)
+
+  " allow key starting with number at the start, not a curly expression
+  call assert_equal({'1foo': 77}, #{1foo: 77})
+
+  " #{expr} is not a curly expression
+  let x = 'x'
+  call assert_equal(#{g: x}, #{g:x})
 endfunc
 
 " Dictionary identity
