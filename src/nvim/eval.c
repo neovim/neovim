@@ -2997,7 +2997,9 @@ static int eval7(char **arg, typval_T *rettv, int evaluate, int want_string)
       // decimal, hex or octal number
       vim_str2nr(*arg, NULL, &len, STR2NR_ALL, &n, NULL, 0, true);
       if (len == 0) {
-        semsg(_(e_invexpr2), *arg);
+        if (evaluate) {
+          semsg(_(e_invexpr2), *arg);
+        }
         ret = FAIL;
         break;
       }
@@ -4582,7 +4584,7 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
 {
   typval_T tv;
   char *key = NULL;
-  char *start = skipwhite(*arg + 1);
+  char *curly_expr = skipwhite(*arg + 1);
   char buf[NUMBUFLEN];
 
   // First check if it's not a curly-braces thing: {expr}.
@@ -4590,13 +4592,10 @@ static int dict_get_tv(char **arg, typval_T *rettv, int evaluate, bool literal)
   // twice.  Unfortunately this means we need to call eval1() twice for the
   // first item.
   // But {} is an empty Dictionary.
-  if (*start != '}') {
-    if (eval1(&start, &tv, false) == FAIL) {    // recursive!
-      return FAIL;
-    }
-    if (*skipwhite(start) == '}') {
-      return NOTDONE;
-    }
+  if (*curly_expr != '}'
+      && eval1(&curly_expr, &tv, false) == OK
+      && *skipwhite(curly_expr) == '}') {
+    return NOTDONE;
   }
 
   dict_T *d = NULL;
