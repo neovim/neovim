@@ -18,27 +18,18 @@ local key_value_options = {
 --- Convert a vimoption_T style dictionary to the correct OptionType associated with it.
 ---@return string
 local function get_option_metatype(name, info)
-  if info.type == 'boolean' then
-    return 'boolean'
-  elseif info.type == 'number' then
-    return 'number'
-  elseif info.type == 'string' then
-    if not info.commalist and not info.flaglist then
-      return 'string'
-    end
-
-    if key_value_options[name] then
-      assert(info.commalist, 'Must be a comma list to use key:value style')
-      return 'map'
-    end
-
+  if info.type == 'string' then
     if info.flaglist then
       return 'set'
     elseif info.commalist then
+      if key_value_options[name] then
+        return 'map'
+      end
       return 'array'
     end
+    return 'string'
   end
-  error('Not a known info.type:' .. info.type)
+  return info.type
 end
 
 local options_info = setmetatable({}, {
