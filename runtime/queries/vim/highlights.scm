@@ -40,7 +40,7 @@
 (parameters (identifier) @parameter)
 (default_parameter (identifier) @parameter)
 
-[ (bang) (spread) (at) ] @punctuation.special
+[ (bang) (spread) ] @punctuation.special
 
 [ (no_option) (inv_option) (default_option) (option_name) ] @variable.builtin
 [
@@ -92,6 +92,12 @@
   "topleft"
   "botright"
   (unknown_command_name)
+  "edit"
+  "enew"
+  "find"
+  "ex"
+  "visual"
+  "view"
 ] @keyword
 (map_statement cmd: _ @keyword)
 (command_name) @function.macro
@@ -125,17 +131,18 @@
   "<unique>"
 ] @constant.builtin
 
-(hl_attribute
-  key: _ @property
-  val: _ @constant)
-
-(hl_group) @variable
 (augroup_name) @namespace
 
 (au_event) @constant
 (normal_statement (commands) @constant)
 
 ;; Highlight command
+
+(hl_attribute
+  key: _ @property
+  val: _ @constant)
+
+(hl_group) @type
 
 (highlight_statement [
   "default"
@@ -145,11 +152,18 @@
 
 ;; Command command
 
+(command) @string
+
 (command_attribute
   name: _ @property
   val: (behavior
     name: _ @constant
     val: (identifier)? @function)?)
+
+;; Edit command
+(plus_plus_opt
+  val: _? @constant) @property
+(plus_cmd "+" @property) @property
 
 ;; Runtime command
 
@@ -161,12 +175,10 @@
 
 ;; Literals
 
-(string_literal) @string
-(string_literal) @spell
+(string_literal) @string @spell
 (integer_literal) @number
 (float_literal) @float
-(comment) @comment
-(comment) @spell
+(comment) @comment @spell
 (pattern) @string.special
 (pattern_multi) @string.regex
 (filename) @string
