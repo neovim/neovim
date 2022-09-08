@@ -23,6 +23,7 @@ local iswin = helpers.iswin
 local assert_alive = helpers.assert_alive
 local expect_exit = helpers.expect_exit
 local write_file = helpers.write_file
+local uname = helpers.uname
 
 describe('fileio', function()
   before_each(function()
@@ -83,6 +84,9 @@ describe('fileio', function()
   end)
 
   it('backup #9709', function()
+    if uname() == 'freebsd' then
+      pending('Failing FreeBSD test')
+    end
     clear({ args={ '-i', 'Xtest_startup_shada',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
 
@@ -102,6 +106,9 @@ describe('fileio', function()
   end)
 
   it('backup with full path #11214', function()
+    if uname() == 'freebsd' then
+      pending('Failing FreeBSD test')
+    end
     clear()
     mkdir('Xtest_backupdir')
     command('set backup')

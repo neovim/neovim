@@ -1,0 +1,29 @@
+env:
+  CIRRUS_CLONE_DEPTH: '1'
+  LANG: en_US.UTF-8
+  CMAKE_EXTRA_FLAGS: -DCI_BUILD=ON -DMIN_LOG_LEVEL=3
+
+freebsd_task:
+  name: FreeBSD
+  only_if: $BRANCH != "master"
+  freebsd_instance:
+    image_family: freebsd-13-1
+  timeout_in: 30m
+  install_script:
+    - pkg update -f
+    - pkg install -y cmake gmake ninja libtool automake pkgconf unzip wget gettext python libffi git
+  build_deps_script:
+    - gmake deps
+  build_script:
+    - gmake CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+  workaround_script:
+    # Run tests as user "cirrus" instead of root. This is required for the
+    # permission-related tests to work correctly.
+    - pw useradd cirrus -m
+    - chown -R cirrus:cirrus .
+  functionaltest_script:
+    - sudo -u cirrus gmake functionaltest
+  unittest_script:
+    - sudo -u cirrus gmake unittest
+  oldtest_script:
+    - sudo -u cirrus gmake oldtest

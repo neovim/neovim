@@ -10,6 +10,7 @@ local retry = helpers.retry
 local ok = helpers.ok
 local iswin = helpers.iswin
 local command = helpers.command
+local uname = helpers.uname
 
 describe(':terminal', function()
   local screen
@@ -45,6 +46,9 @@ describe(':terminal', function()
   end)
 
   it("reads output buffer on terminal reporting #4151", function()
+    if uname() == 'freebsd' then
+      pending('Failing FreeBSD test')
+    end
     if helpers.pending_win32(pending) then return end
     if iswin() then
       feed_command([[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]])

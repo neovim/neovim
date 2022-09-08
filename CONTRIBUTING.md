@@ -111,7 +111,7 @@ the VCS/git logs more valuable. The general structure of a commit message is:
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [sourcehut] and [GitHub Actions].
+Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Actions].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
@@ -125,20 +125,7 @@ Each pull request must pass the automated builds on [sourcehut] and [GitHub Acti
 - The [lint](#lint) build checks modified lines _and their immediate
   neighbors_, to encourage incrementally updating the legacy style to meet our
   [style](#style). (See [#3174][3174] for background.)
-- CI for freebsd and openbsd runs on [sourcehut].
-    - To get a backtrace on freebsd (after connecting via ssh):
-      ```sh
-      sudo pkg install tmux  # If you want tmux.
-      lldb build/bin/nvim -c nvim.core
-
-      # To get a full backtrace:
-      #   1. Rebuild with debug info.
-      rm -rf nvim.core build
-      gmake CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCI_BUILD=ON -DMIN_LOG_LEVEL=3" nvim
-      #   2. Run the failing test to generate a new core file.
-      TEST_FILE=test/functional/foo.lua gmake functionaltest
-      lldb build/bin/nvim -c nvim.core
-      ```
+- CI for FreeBSD runs on [Cirrus CI].
 
 ### Clang scan-build
 
@@ -321,6 +308,7 @@ as context, use the `-W` argument as well.
 [1820]: https://github.com/neovim/neovim/pull/1820
 [3174]: https://github.com/neovim/neovim/issues/3174
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
+[Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [GitHub Actions]: https://github.com/neovim/neovim/actions
 [clangd]: https://clangd.llvm.org
@@ -345,7 +333,6 @@ as context, use the `-W` argument as well.
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
-[sourcehut]: https://builds.sr.ht/~jmk
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
 [uncrustify]: http://uncrustify.sourceforge.net/
 [wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
