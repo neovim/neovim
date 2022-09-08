@@ -121,7 +121,7 @@ vim.o = setmetatable({}, {
 ---@brief ]]
 
 --- Preserves the order and does not mutate the original list
-local remove_duplicate_values = function(t)
+local function remove_duplicate_values(t)
   local result, seen = {}, {}
   for _, v in ipairs(t) do
     if not seen[v] then
@@ -430,7 +430,7 @@ end)()
 
 --- Handles the '-' operator
 local remove_value = (function()
-  local remove_one_item = function(t, val)
+  local function remove_one_item(t, val)
     if vim.tbl_islist(t) then
       local remove_index = nil
       for i, v in ipairs(t) do
@@ -477,10 +477,10 @@ local remove_value = (function()
   end
 end)()
 
-local create_option_accessor = function(scope)
+local function create_option_accessor(scope)
   local option_mt
 
-  local make_option = function(name, value)
+  local function make_option(name, value)
     local info = assert(options_info[name], 'Not a valid option name: ' .. name)
 
     if type(value) == 'table' and getmetatable(value) == option_mt then
