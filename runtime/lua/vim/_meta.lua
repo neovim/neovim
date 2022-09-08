@@ -502,8 +502,6 @@ local create_option_accessor = function(scope)
     _set = function(self)
       local value = convert_value_to_vim(self._name, self._info, self._value)
       a.nvim_set_option_value(self._name, value, { scope = scope })
-
-      return self
     end,
 
     get = function(self)
@@ -511,7 +509,8 @@ local create_option_accessor = function(scope)
     end,
 
     append = function(self, right)
-      return self:__add(right):_set()
+      self._value = add_value(self._info, self._value, right)
+      self:_set()
     end,
 
     __add = function(self, right)
@@ -519,7 +518,8 @@ local create_option_accessor = function(scope)
     end,
 
     prepend = function(self, right)
-      return self:__pow(right):_set()
+      self._value = prepend_value(self._info, self._value, right)
+      self:_set()
     end,
 
     __pow = function(self, right)
@@ -527,7 +527,8 @@ local create_option_accessor = function(scope)
     end,
 
     remove = function(self, right)
-      return self:__sub(right):_set()
+      self._value = remove_value(self._info, self._value, right)
+      self:_set()
     end,
 
     __sub = function(self, right)
