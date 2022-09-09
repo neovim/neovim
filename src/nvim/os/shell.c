@@ -129,7 +129,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 
   bool is_fish_shell =
 #if defined(UNIX)
-    STRNCMP(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
+    STRNCMP(invocation_path_tail((char_u *)p_sh, NULL), "fish", 4) == 0;
 #else
     false;
 #endif
@@ -182,14 +182,14 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       && *(pat[0] + len - 1) == '`') {
     shell_style = STYLE_BT;
   } else if ((len = STRLEN(p_sh)) >= 3) {
-    if (STRCMP(p_sh + len - 3, "csh") == 0) {
+    if (strcmp(p_sh + len - 3, "csh") == 0) {
       shell_style = STYLE_GLOB;
-    } else if (STRCMP(p_sh + len - 3, "zsh") == 0) {
+    } else if (strcmp(p_sh + len - 3, "zsh") == 0) {
       shell_style = STYLE_PRINT;
     }
   }
   if (shell_style == STYLE_ECHO
-      && strstr(path_tail((char *)p_sh), "sh") != NULL) {
+      && strstr(path_tail(p_sh), "sh") != NULL) {
     shell_style = STYLE_VIMGLOB;
   }
 
@@ -555,11 +555,11 @@ notfound:
 char **shell_build_argv(const char *cmd, const char *extra_args)
   FUNC_ATTR_NONNULL_RET
 {
-  size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
+  size_t argc = tokenize((char_u *)p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
 
   // Split 'shell'
-  size_t i = tokenize(p_sh, rv);
+  size_t i = tokenize((char_u *)p_sh, rv);
 
   if (extra_args) {
     rv[i++] = xstrdup(extra_args);        // Push a copy of `extra_args`
@@ -700,7 +700,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
   if (p_verbose > 3) {
     verbose_enter();
-    smsg(_("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
+    smsg(_("Executing command: \"%s\""), cmd == NULL ? p_sh : (char *)cmd);
     msg_putchar('\n');
     verbose_leave();
   }
@@ -1316,7 +1316,7 @@ static char *shell_xescape_xquote(const char *cmd)
   }
 
   const char *ecmd = cmd;
-  if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
+  if (*p_sxe != NUL && strcmp(p_sxq, "(") == 0) {
     ecmd = (char *)vim_strsave_escaped_ext((char_u *)cmd, p_sxe, '^', false);
   }
   size_t ncmd_size = strlen(ecmd) + STRLEN(p_sxq) * 2 + 1;
@@ -1324,9 +1324,9 @@ static char *shell_xescape_xquote(const char *cmd)
 
   // When 'shellxquote' is ( append ).
   // When 'shellxquote' is "( append )".
-  if (STRCMP(p_sxq, "(") == 0) {
+  if (strcmp(p_sxq, "(") == 0) {
     vim_snprintf(ncmd, ncmd_size, "(%s)", ecmd);
-  } else if (STRCMP(p_sxq, "\"(") == 0) {
+  } else if (strcmp(p_sxq, "\"(") == 0) {
     vim_snprintf(ncmd, ncmd_size, "\"(%s)\"", ecmd);
   } else {
     vim_snprintf(ncmd, ncmd_size, "%s%s%s", p_sxq, ecmd, p_sxq);

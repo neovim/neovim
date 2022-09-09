@@ -111,7 +111,7 @@ static int get_function_args(char **argp, char_u endchar, garray_T *newargs, int
 
         // Check for duplicate argument name.
         for (i = 0; i < newargs->ga_len; i++) {
-          if (STRCMP(((char **)(newargs->ga_data))[i], arg) == 0) {
+          if (strcmp(((char **)(newargs->ga_data))[i], arg) == 0) {
             semsg(_("E853: Duplicate argument name: %s"), arg);
             xfree(arg);
             goto err_ret;
@@ -2218,7 +2218,7 @@ void ex_function(exarg_T *eap)
         } else {
           p = theline + STRLEN(heredoc_trimmed);
         }
-        if (STRCMP(p, skip_until) == 0) {
+        if (strcmp(p, skip_until) == 0) {
           XFREE_CLEAR(skip_until);
           XFREE_CLEAR(heredoc_trimmed);
           do_concat = true;

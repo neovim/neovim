@@ -811,7 +811,7 @@ static int ins_compl_add(char *const str, int len, char *const fname, char *cons
   if (fname != NULL
       && compl_curr_match != NULL
       && compl_curr_match->cp_fname != NULL
-      && STRCMP(fname, compl_curr_match->cp_fname) == 0) {
+      && strcmp(fname, compl_curr_match->cp_fname) == 0) {
     match->cp_fname = compl_curr_match->cp_fname;
   } else if (fname != NULL) {
     match->cp_fname = xstrdup(fname);
@@ -1332,7 +1332,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
       // backticks (for security, the 'dict' option may have been set in
       // a modeline).
       copy_option_part(&dict, buf, LSIZE, ",");
-      if (!thesaurus && STRCMP(buf, "spell") == 0) {
+      if (!thesaurus && strcmp(buf, "spell") == 0) {
         count = -1;
       } else if (vim_strchr(buf, '`') != NULL
                  || expand_wildcards(1, &buf, &count, &files,
@@ -1349,7 +1349,7 @@ static void ins_compl_dictionaries(char_u *dict_start, char_u *pat, int flags, i
       } else {
         ptr = pat;
       }
-      spell_dump_compl(ptr, regmatch.rm_ic, &dir, 0);
+      spell_dump_compl((char *)ptr, regmatch.rm_ic, &dir, 0);
     } else if (count > 0) {  // avoid warning for using "files" uninit
       ins_compl_files(count, files, thesaurus, flags,
                       &regmatch, (char_u *)buf, &dir);
@@ -2588,15 +2588,15 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
          ; item = TV_LIST_ITEM_NEXT(what_list, item)) {
       const char *what = tv_get_string(TV_LIST_ITEM_TV(item));
 
-      if (STRCMP(what, "mode") == 0) {
+      if (strcmp(what, "mode") == 0) {
         what_flag |= CI_WHAT_MODE;
-      } else if (STRCMP(what, "pum_visible") == 0) {
+      } else if (strcmp(what, "pum_visible") == 0) {
         what_flag |= CI_WHAT_PUM_VISIBLE;
-      } else if (STRCMP(what, "items") == 0) {
+      } else if (strcmp(what, "items") == 0) {
         what_flag |= CI_WHAT_ITEMS;
-      } else if (STRCMP(what, "selected") == 0) {
+      } else if (strcmp(what, "selected") == 0) {
         what_flag |= CI_WHAT_SELECTED;
-      } else if (STRCMP(what, "inserted") == 0) {
+      } else if (strcmp(what, "inserted") == 0) {
         what_flag |= CI_WHAT_INSERTED;
       }
     }

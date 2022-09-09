@@ -752,7 +752,7 @@ static int open_shada_file_for_reading(const char *const fname, ShaDaReadDef *sd
     return error;
   }
 
-  assert(STRCMP(p_enc, "utf-8") == 0);
+  assert(strcmp(p_enc, "utf-8") == 0);
 
   return 0;
 }
@@ -1313,9 +1313,9 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         MERGE_JUMPS(curwin->w_jumplistlen, curwin->w_jumplist, xfmark_T,
                     fmark.timestamp, fmark.mark, cur_entry,
                     (buf == NULL
-                       ? (jl_entry.fname != NULL
-                          && STRCMP(fm.fname, jl_entry.fname) == 0)
-                       : fm.fmark.fnum == jl_entry.fmark.fnum),
+                     ? (jl_entry.fname != NULL
+                        && strcmp(fm.fname, jl_entry.fname) == 0)
+                     : fm.fmark.fnum == jl_entry.fmark.fnum),
                     free_xfmark, SDE_TO_XFMARK, ADJUST_IDX, DUMMY_AFTERFREE);
 #undef SDE_TO_XFMARK
 #undef ADJUST_IDX

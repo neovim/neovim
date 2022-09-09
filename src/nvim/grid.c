@@ -46,14 +46,14 @@ void grid_adjust(ScreenGrid **grid, int *row_off, int *col_off)
 }
 
 /// Put a unicode char, and up to MAX_MCO composing chars, in a screen cell.
-int schar_from_cc(char_u *p, int c, int u8cc[MAX_MCO])
+int schar_from_cc(char *p, int c, int u8cc[MAX_MCO])
 {
-  int len = utf_char2bytes(c, (char *)p);
+  int len = utf_char2bytes(c, p);
   for (int i = 0; i < MAX_MCO; i++) {
     if (u8cc[i] == 0) {
       break;
     }
-    len += utf_char2bytes(u8cc[i], (char *)p + len);
+    len += utf_char2bytes(u8cc[i], p + len);
   }
   p[len] = 0;
   return len;
@@ -140,7 +140,7 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char_u *bytes, int *attrp
   if (grid->chars != NULL && row < grid->rows && col < grid->cols) {
     off = grid->line_offset[row] + (size_t)col;
     *attrp = grid->attrs[off];
-    schar_copy(bytes, grid->chars[off]);
+    schar_copy((char *)bytes, grid->chars[off]);
   }
 }
 
@@ -171,7 +171,7 @@ void grid_puts_line_start(ScreenGrid *grid, int row)
   put_dirty_grid = grid;
 }
 
-void grid_put_schar(ScreenGrid *grid, int row, int col, char_u *schar, int attr)
+void grid_put_schar(ScreenGrid *grid, int row, int col, char *schar, int attr)
 {
   assert(put_dirty_row == row);
   size_t off = grid->line_offset[row] + (size_t)col;

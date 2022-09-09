@@ -367,7 +367,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     // the table, it is taken literally (but ~ is escaped).  Otherwise '?'
     // is recognized as a wildcard.
     for (i = (int)ARRAY_SIZE(expr_table); --i >= 0;) {
-      if (STRCMP(arg + 5, expr_table[i]) == 0) {
+      if (strcmp(arg + 5, expr_table[i]) == 0) {
         for (int si = 0, di = 0;; si++) {
           if (arg[si] == '~') {
             d[di++] = '\\';
@@ -384,7 +384,7 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
     // Recognize a few exceptions to the rule.  Some strings that contain
     // '*'are changed to "star", otherwise '*' is recognized as a wildcard.
     for (i = 0; except_tbl[i][0] != NULL; i++) {
-      if (STRCMP(arg, except_tbl[i][0]) == 0) {
+      if (strcmp(arg, except_tbl[i][0]) == 0) {
         STRCPY(d, except_tbl[i][1]);
         break;
       }
@@ -556,8 +556,8 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
 /// tag matches it.  Otherwise remove "@en" if "en" is the only language.
 void cleanup_help_tags(int num_file, char **file)
 {
-  char_u buf[4];
-  char_u *p = buf;
+  char buf[4];
+  char_u *p = (char_u *)buf;
 
   if (p_hlg[0] != NUL && (p_hlg[0] != 'e' || p_hlg[1] != 'n')) {
     *p++ = '@';
@@ -571,7 +571,7 @@ void cleanup_help_tags(int num_file, char **file)
     if (len <= 0) {
       continue;
     }
-    if (STRCMP(file[i] + len, "@en") == 0) {
+    if (strcmp(file[i] + len, "@en") == 0) {
       // Sorting on priority means the same item in another language may
       // be anywhere.  Search all items for a match up to the "@en".
       int j;
@@ -595,7 +595,7 @@ void cleanup_help_tags(int num_file, char **file)
       if (len <= 0) {
         continue;
       }
-      if (STRCMP(file[i] + len, buf) == 0) {
+      if (strcmp(file[i] + len, buf) == 0) {
         // remove the default language
         file[i][len] = NUL;
       }
@@ -615,7 +615,7 @@ void prepare_help_buffer(void)
   // latin1 word characters (for translated help files).
   // Only set it when needed, buf_init_chartab() is some work.
   char *p = "!-~,^*,^|,^\",192-255";
-  if (STRCMP(curbuf->b_p_isk, p) != 0) {
+  if (strcmp(curbuf->b_p_isk, p) != 0) {
     set_string_option_direct("isk", -1, p, OPT_FREE|OPT_LOCAL, 0);
     check_buf_options(curbuf);
     (void)buf_init_chartab(curbuf, false);
@@ -650,7 +650,7 @@ void fix_help_buffer(void)
   bool in_example = false;
 
   // Set filetype to "help".
-  if (STRCMP(curbuf->b_p_ft, "help") != 0) {
+  if (strcmp(curbuf->b_p_ft, "help") != 0) {
     curbuf->b_ro_locked++;
     set_option_value_give_err("ft", 0L, "help", OPT_LOCAL);
     curbuf->b_ro_locked--;
@@ -1162,7 +1162,7 @@ void ex_helptags(exarg_T *eap)
     eap->arg = skipwhite(eap->arg + 3);
   }
 
-  if (STRCMP(eap->arg, "ALL") == 0) {
+  if (strcmp(eap->arg, "ALL") == 0) {
     do_in_path(p_rtp, "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
   } else {
     ExpandInit(&xpc);

@@ -45,8 +45,8 @@ typedef struct {
   do { \
     win_T *const wp_ = (wp); \
     const pos_T curpos_ = wp_->w_cursor; \
-    char_u cwd_[MAXPATHL]; \
-    char_u autocwd_[MAXPATHL]; \
+    char cwd_[MAXPATHL]; \
+    char autocwd_[MAXPATHL]; \
     bool apply_acd_ = false; \
     int cwd_status_ = FAIL; \
     /* Getting and setting directory can be slow on some systems, only do */ \
@@ -56,13 +56,13 @@ typedef struct {
         && (curwin->w_localdir != NULL || wp->w_localdir != NULL \
             || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL)) \
             || p_acd)) { \
-      cwd_status_ = os_dirname(cwd_, MAXPATHL); \
+      cwd_status_ = os_dirname((char_u *)cwd_, MAXPATHL); \
     } \
     /* If 'acd' is set, check we are using that directory.  If yes, then */ \
     /* apply 'acd' afterwards, otherwise restore the current directory. */ \
     if (cwd_status_ == OK && p_acd) { \
       do_autochdir(); \
-      apply_acd_ = os_dirname(autocwd_, MAXPATHL) == OK && STRCMP(cwd_, autocwd_) == 0; \
+      apply_acd_ = os_dirname((char_u *)autocwd_, MAXPATHL) == OK && strcmp(cwd_, autocwd_) == 0; \
     } \
     switchwin_T switchwin_; \
     if (switch_win_noblock(&switchwin_, wp_, (tp), true) == OK) { \
@@ -73,7 +73,7 @@ typedef struct {
     if (apply_acd_) { \
       do_autochdir(); \
     } else if (cwd_status_ == OK) { \
-      os_chdir((char *)cwd_); \
+      os_chdir(cwd_); \
     } \
     /* Update the status line if the cursor moved. */ \
     if (win_valid(wp_) && !equalpos(curpos_, wp_->w_cursor)) { \

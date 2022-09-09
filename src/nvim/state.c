@@ -237,7 +237,7 @@ void may_trigger_modechanged(void)
   char pattern_buf[2 * MODE_MAX_LENGTH];
 
   get_mode(curr_mode);
-  if (STRCMP(curr_mode, last_mode) == 0) {
+  if (strcmp(curr_mode, last_mode) == 0) {
     return;
   }
 

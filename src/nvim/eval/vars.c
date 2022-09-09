@@ -113,7 +113,7 @@ static list_T *heredoc_get(exarg_T *eap, char *cmd)
         && STRNCMP(theline, *eap->cmdlinep, marker_indent_len) == 0) {
       mi = marker_indent_len;
     }
-    if (STRCMP(marker, theline + mi) == 0) {
+    if (strcmp(marker, theline + mi) == 0) {
       xfree(theline);
       break;
     }

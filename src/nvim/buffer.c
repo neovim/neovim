@@ -3335,7 +3335,7 @@ static bool value_change(char *str, char **last)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if ((str == NULL) != (*last == NULL)
-      || (str != NULL && *last != NULL && STRCMP(str, *last) != 0)) {
+      || (str != NULL && *last != NULL && strcmp(str, *last) != 0)) {
     xfree(*last);
     if (str == NULL) {
       *last = NULL;
@@ -4159,7 +4159,7 @@ bool buf_contents_changed(buf_T *buf)
     if (buf->b_ml.ml_line_count == curbuf->b_ml.ml_line_count) {
       differ = false;
       for (linenr_T lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
-        if (STRCMP(ml_get_buf(buf, lnum, false), ml_get(lnum)) != 0) {
+        if (strcmp(ml_get_buf(buf, lnum, false), ml_get(lnum)) != 0) {
           differ = true;
           break;
         }

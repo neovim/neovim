@@ -3657,7 +3657,7 @@ char *replace_makeprg(exarg_T *eap, char *arg, char **cmdlinep)
   // Don't do it when ":vimgrep" is used for ":grep".
   if ((eap->cmdidx == CMD_make || eap->cmdidx == CMD_lmake || isgrep)
       && !grep_internal(eap->cmdidx)) {
-    const char *program = isgrep ? (*curbuf->b_p_gp == NUL ? (char *)p_gp : curbuf->b_p_gp)
+    const char *program = isgrep ? (*curbuf->b_p_gp == NUL ? p_gp : curbuf->b_p_gp)
                                  : (*curbuf->b_p_mp == NUL ? (char *)p_mp : curbuf->b_p_mp);
 
     arg = skipwhite(arg);
@@ -4114,9 +4114,9 @@ static int get_tabpage_arg(exarg_T *eap)
     tab_number = (int)getdigits(&p, false, tab_number);
 
     if (relative == 0) {
-      if (STRCMP(p, "$") == 0) {
+      if (strcmp(p, "$") == 0) {
         tab_number = LAST_TAB_NR;
-      } else if (STRCMP(p, "#") == 0) {
+      } else if (strcmp(p, "#") == 0) {
         if (valid_tabpage(lastused_tabpage)) {
           tab_number = tabpage_index(lastused_tabpage);
         } else {
@@ -5480,7 +5480,7 @@ bool changedir_func(char *new_dir, CdScope scope)
 
   char *pdir = NULL;
   // ":cd -": Change to previous directory
-  if (STRCMP(new_dir, "-") == 0) {
+  if (strcmp(new_dir, "-") == 0) {
     pdir = get_prevdir(scope);
     if (pdir == NULL) {
       emsg(_("E186: No previous directory"));
@@ -6712,7 +6712,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
         valid = 0;                  // Must have ":p:h" to be valid
       } else {
         result = curbuf->b_fname;
-        tilde_file = STRCMP(result, "~") == 0;
+        tilde_file = strcmp(result, "~") == 0;
       }
       break;
 
@@ -6766,7 +6766,7 @@ char_u *eval_vars(char_u *src, char_u *srcstart, size_t *usedlen, linenr_T *lnum
           valid = 0;                        // Must have ":p:h" to be valid
         } else {
           result = buf->b_fname;
-          tilde_file = STRCMP(result, "~") == 0;
+          tilde_file = strcmp(result, "~") == 0;
         }
       }
       break;
@@ -6986,12 +6986,12 @@ void dialog_msg(char *buff, char *format, char *fname)
 /// ":behave {mswin,xterm}"
 static void ex_behave(exarg_T *eap)
 {
-  if (STRCMP(eap->arg, "mswin") == 0) {
+  if (strcmp(eap->arg, "mswin") == 0) {
     set_option_value_give_err("selection", 0L, "exclusive", 0);
     set_option_value_give_err("selectmode", 0L, "mouse,key", 0);
     set_option_value_give_err("mousemodel", 0L, "popup", 0);
     set_option_value_give_err("keymodel", 0L, "startsel,stopsel", 0);
-  } else if (STRCMP(eap->arg, "xterm") == 0) {
+  } else if (strcmp(eap->arg, "xterm") == 0) {
     set_option_value_give_err("selection", 0L, "inclusive", 0);
     set_option_value_give_err("selectmode", 0L, "", 0);
     set_option_value_give_err("mousemodel", 0L, "extend", 0);
@@ -7041,7 +7041,7 @@ static void ex_filetype(exarg_T *eap)
     }
     break;
   }
-  if (STRCMP(arg, "on") == 0 || STRCMP(arg, "detect") == 0) {
+  if (strcmp(arg, "on") == 0 || strcmp(arg, "detect") == 0) {
     if (*arg == 'o' || !filetype_detect) {
       source_runtime(FILETYPE_FILE, DIP_ALL);
       filetype_detect = kTrue;
@@ -7058,7 +7058,7 @@ static void ex_filetype(exarg_T *eap)
       (void)do_doautocmd("filetypedetect BufRead", true, NULL);
       do_modelines(0);
     }
-  } else if (STRCMP(arg, "off") == 0) {
+  } else if (strcmp(arg, "off") == 0) {
     if (plugin || indent) {
       if (plugin) {
         source_runtime(FTPLUGOF_FILE, DIP_ALL);

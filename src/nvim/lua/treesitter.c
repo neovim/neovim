@@ -834,7 +834,7 @@ static int node_field(lua_State *L)
     do {
       const char *current_field = ts_tree_cursor_current_field_name(&cursor);
 
-      if (current_field != NULL && !STRCMP(field_name, current_field)) {
+      if (current_field != NULL && !strcmp(field_name, current_field)) {
         push_node(L, ts_tree_cursor_current_node(&cursor), 1);  // [table, node]
         lua_rawseti(L, -2, (int)++curr_index);
       }

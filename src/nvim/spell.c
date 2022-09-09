@@ -1559,7 +1559,7 @@ static void spell_load_lang(char_u *lang)
 // use "latin1" for "latin9".  And limit to 60 characters (just in case).
 char_u *spell_enc(void)
 {
-  if (STRLEN(p_enc) < 60 && STRCMP(p_enc, "iso-8859-15") != 0) {
+  if (STRLEN(p_enc) < 60 && strcmp(p_enc, "iso-8859-15") != 0) {
     return (char_u *)p_enc;
   }
   return (char_u *)"latin1";
@@ -1843,19 +1843,19 @@ char *did_set_spelllang(win_T *wp)
 {
   garray_T ga;
   char *splp;
-  char_u *region;
-  char_u region_cp[3];
+  char *region;
+  char region_cp[3];
   bool filename;
   int region_mask;
   slang_T *slang;
   int c;
-  char_u lang[MAXWLEN + 1];
-  char_u spf_name[MAXPATHL];
+  char lang[MAXWLEN + 1];
+  char spf_name[MAXPATHL];
   int len;
-  char_u *p;
+  char *p;
   int round;
   char *spf;
-  char_u *use_region = NULL;
+  char *use_region = NULL;
   bool dont_use_region = false;
   bool nobreak = false;
   langp_T *lp, *lp2;
@@ -1894,7 +1894,7 @@ char *did_set_spelllang(win_T *wp)
       continue;
     }
 
-    if (STRCMP(lang, "cjk") == 0) {
+    if (strcmp(lang, "cjk") == 0) {
       wp->w_s->b_cjk = 1;
       continue;
     }
@@ -1906,7 +1906,7 @@ char *did_set_spelllang(win_T *wp)
       filename = true;
 
       // Locate a region and remove it from the file name.
-      p = (char_u *)vim_strchr(path_tail((char *)lang), '_');
+      p = vim_strchr(path_tail((char *)lang), '_');
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
         STRLCPY(region_cp, p + 1, 3);
@@ -1943,7 +1943,7 @@ char *did_set_spelllang(win_T *wp)
     if (region != NULL) {
       // If the region differs from what was used before then don't
       // use it for 'spellfile'.
-      if (use_region != NULL && STRCMP(region, use_region) != 0) {
+      if (use_region != NULL && strcmp(region, use_region) != 0) {
         dont_use_region = true;
       }
       use_region = region;
@@ -1954,7 +1954,7 @@ char *did_set_spelllang(win_T *wp)
       if (filename) {
         (void)spell_load_file((char *)lang, (char *)lang, NULL, false);
       } else {
-        spell_load_lang(lang);
+        spell_load_lang((char_u *)lang);
         // SpellFileMissing autocommands may do anything, including
         // destroying the buffer we are using...
         if (!bufref_valid(&bufref)) {
@@ -1972,7 +1972,7 @@ char *did_set_spelllang(win_T *wp)
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
           // find region in sl_regions
-          c = find_region(slang->sl_regions, region);
+          c = find_region(slang->sl_regions, (char_u *)region);
           if (c == REGION_ALL) {
             if (slang->sl_add) {
               if (*slang->sl_regions != NUL) {
@@ -2015,7 +2015,7 @@ char *did_set_spelllang(win_T *wp)
       if (int_wordlist == NULL) {
         continue;
       }
-      int_wordlist_spl(spf_name);
+      int_wordlist_spl((char_u *)spf_name);
     } else {
       // One entry in 'spellfile'.
       copy_option_part(&spf, (char *)spf_name, MAXPATHL - 5, ",");
@@ -2023,9 +2023,9 @@ char *did_set_spelllang(win_T *wp)
 
       // If it was already found above then skip it.
       for (c = 0; c < ga.ga_len; c++) {
-        p = (char_u *)LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
+        p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
         if (p != NULL
-            && path_full_compare((char *)spf_name, (char *)p, false, true) == kEqualFiles) {
+            && path_full_compare((char *)spf_name, p, false, true) == kEqualFiles) {
           break;
         }
       }
@@ -2049,7 +2049,7 @@ char *did_set_spelllang(win_T *wp)
         STRCPY(lang, "internal wordlist");
       } else {
         STRLCPY(lang, path_tail((char *)spf_name), MAXWLEN + 1);
-        p = (char_u *)vim_strchr((char *)lang, '.');
+        p = vim_strchr((char *)lang, '.');
         if (p != NULL) {
           *p = NUL;             // truncate at ".encoding.add"
         }
@@ -2066,7 +2066,7 @@ char *did_set_spelllang(win_T *wp)
       region_mask = REGION_ALL;
       if (use_region != NULL && !dont_use_region) {
         // find region in sl_regions
-        c = find_region(slang->sl_regions, use_region);
+        c = find_region(slang->sl_regions, (char_u *)use_region);
         if (c != REGION_ALL) {
           region_mask = 1 << c;
         } else if (*slang->sl_regions != NUL) {
@@ -3171,23 +3171,23 @@ void ex_spelldump(exarg_T *eap)
 /// @param ic  ignore case
 /// @param dir  direction for adding matches
 /// @param dumpflags_arg  DUMPFLAG_*
-void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
+void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
 {
   langp_T *lp;
   slang_T *slang;
   idx_T arridx[MAXWLEN];
   int curi[MAXWLEN];
-  char_u word[MAXWLEN];
+  char word[MAXWLEN];
   int c;
-  char_u *byts;
+  char *byts;
   idx_T *idxs;
   linenr_T lnum = 0;
   int depth;
   int n;
   int flags;
-  char_u *region_names = NULL;         // region names being used
+  char *region_names = NULL;         // region names being used
   bool do_region = true;                    // dump region names and numbers
-  char_u *p;
+  char *p;
   int dumpflags = dumpflags_arg;
   int patlen;
 
@@ -3197,11 +3197,11 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
     if (ic) {
       dumpflags |= DUMPFLAG_ICASE;
     } else {
-      n = captype(pat, NULL);
+      n = captype((char_u *)pat, NULL);
       if (n == WF_ONECAP) {
         dumpflags |= DUMPFLAG_ONECAP;
       } else if (n == WF_ALLCAP
-                 && (int)STRLEN(pat) > utfc_ptr2len((char *)pat)) {
+                 && (int)STRLEN(pat) > utfc_ptr2len(pat)) {
         dumpflags |= DUMPFLAG_ALLCAP;
       }
     }
@@ -3211,11 +3211,11 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
   // regions or none at all.
   for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-    p = lp->lp_slang->sl_regions;
+    p = (char *)lp->lp_slang->sl_regions;
     if (p[0] != 0) {
       if (region_names == NULL) {           // first language with regions
         region_names = p;
-      } else if (STRCMP(region_names, p) != 0) {
+      } else if (strcmp(region_names, p) != 0) {
         do_region = false;                  // region names are different
         break;
       }
@@ -3257,11 +3257,11 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
     for (int round = 1; round <= 2; round++) {
       if (round == 1) {
         dumpflags &= ~DUMPFLAG_KEEPCASE;
-        byts = slang->sl_fbyts;
+        byts = (char *)slang->sl_fbyts;
         idxs = slang->sl_fidxs;
       } else {
         dumpflags |= DUMPFLAG_KEEPCASE;
-        byts = slang->sl_kbyts;
+        byts = (char *)slang->sl_kbyts;
         idxs = slang->sl_kidxs;
       }
       if (byts == NULL) {
@@ -3281,7 +3281,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
           // Do one more byte at this node.
           n = arridx[depth] + curi[depth];
           curi[depth]++;
-          c = byts[n];
+          c = (uint8_t)byts[n];
           if (c == 0 || depth >= MAXWLEN - 1) {
             // End of word or reached maximum length, deal with the
             // word.
@@ -3304,7 +3304,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
               // when it's the first one.
               c = (int)((unsigned)flags >> 24);
               if (c == 0 || curi[depth] == 2) {
-                dump_word(slang, word, pat, dir,
+                dump_word(slang, (char_u *)word, (char_u *)pat, dir,
                           dumpflags, flags, lnum);
                 if (pat == NULL) {
                   lnum++;
@@ -3313,13 +3313,13 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
 
               // Apply the prefix, if there is one.
               if (c != 0) {
-                lnum = dump_prefixes(slang, word, pat, dir,
+                lnum = dump_prefixes(slang, (char_u *)word, (char_u *)pat, dir,
                                      dumpflags, flags, lnum);
               }
             }
           } else {
             // Normal char, go one level deeper.
-            word[depth++] = (char_u)c;
+            word[depth++] = (char)c;
             arridx[depth] = idxs[n];
             curi[depth] = 1;
 
@@ -3331,7 +3331,7 @@ void spell_dump_compl(char_u *pat, int ic, Direction *dir, int dumpflags_arg)
             // ignore case...
             assert(depth >= 0);
             if (depth <= patlen
-                && mb_strnicmp((char *)word, (char *)pat, (size_t)depth) != 0) {
+                && mb_strnicmp((char *)word, pat, (size_t)depth) != 0) {
               depth--;
             }
           }
@@ -3613,7 +3613,7 @@ char *did_set_spell_option(bool is_spellfile)
   if (is_spellfile) {
     int l = (int)STRLEN(curwin->w_s->b_p_spf);
     if (l > 0
-        && (l < 4 || STRCMP(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
+        && (l < 4 || strcmp(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
       errmsg = e_invarg;
     }
   }

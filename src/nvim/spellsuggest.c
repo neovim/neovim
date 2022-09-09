@@ -354,7 +354,7 @@ int spell_check_sps(void)
 {
   char *p;
   char *s;
-  char_u buf[MAXPATHL];
+  char buf[MAXPATHL];
   int f;
 
   sps_flags = 0;
@@ -370,11 +370,11 @@ int spell_check_sps(void)
       if (*s != NUL && !ascii_isdigit(*s)) {
         f = -1;
       }
-    } else if (STRCMP(buf, "best") == 0) {
+    } else if (strcmp(buf, "best") == 0) {
       f = SPS_BEST;
-    } else if (STRCMP(buf, "fast") == 0) {
+    } else if (strcmp(buf, "fast") == 0) {
       f = SPS_FAST;
-    } else if (STRCMP(buf, "double") == 0) {
+    } else if (strcmp(buf, "double") == 0) {
       f = SPS_DOUBLE;
     } else if (STRNCMP(buf, "expr:", 5) != 0
                && STRNCMP(buf, "file:", 5) != 0
@@ -1114,7 +1114,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 {
   char_u tword[MAXWLEN];            // good word collected so far
   trystate_T stack[MAXWLEN];
-  char_u preword[MAXWLEN * 3] = { 0 };  // word found with proper case;
+  char preword[MAXWLEN * 3] = { 0 };  // word found with proper case;
   // concatenation of prefix compound
   // words and split word.  NUL terminated
   // when going deeper but not when coming
@@ -1241,7 +1241,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
           // and make find_keepcap_word() works.
           tword[sp->ts_twordlen] = NUL;
           make_case_word(tword + sp->ts_splitoff,
-                         preword + sp->ts_prewordlen, flags);
+                         (char_u *)preword + sp->ts_prewordlen, flags);
           sp->ts_prewordlen = (char_u)STRLEN(preword);
           sp->ts_splitoff = sp->ts_twordlen;
         }
@@ -1326,7 +1326,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                          sp->ts_fidx - sp->ts_splitfidx) == 0) {
             preword[sp->ts_prewordlen] = NUL;
             newscore = score_wordcount_adj(slang, sp->ts_score,
-                                           preword + sp->ts_prewordlen,
+                                           (char_u *)preword + sp->ts_prewordlen,
                                            sp->ts_prewordlen > 0);
             // Add the suggestion if the score isn't too bad.
             if (newscore <= su->su_maxscore) {
@@ -1362,13 +1362,13 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                   sp->ts_twordlen - sp->ts_splitoff + 1);
 
           // Verify CHECKCOMPOUNDPATTERN  rules.
-          if (match_checkcompoundpattern(preword,  sp->ts_prewordlen,
+          if (match_checkcompoundpattern((char_u *)preword,  sp->ts_prewordlen,
                                          &slang->sl_comppat)) {
             compound_ok = false;
           }
 
           if (compound_ok) {
-            p = preword;
+            p = (char_u *)preword;
             while (*skiptowhite((char *)p) != NUL) {
               p = (char_u *)skipwhite(skiptowhite((char *)p));
             }
@@ -1381,7 +1381,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
           }
 
           // Get pointer to last char of previous word.
-          p = preword + sp->ts_prewordlen;
+          p = (char_u *)preword + sp->ts_prewordlen;
           MB_PTR_BACK(preword, p);
         }
       }
@@ -1394,7 +1394,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       } else if (flags & WF_KEEPCAP) {
         // Must find the word in the keep-case tree.
         find_keepcap_word(slang, tword + sp->ts_splitoff,
-                          preword + sp->ts_prewordlen);
+                          (char_u *)preword + sp->ts_prewordlen);
       } else {
         // Include badflags: If the badword is onecap or allcap
         // use that for the goodword too.  But if the badword is
@@ -1413,14 +1413,14 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
           c &= ~WF_ONECAP;
         }
         make_case_word(tword + sp->ts_splitoff,
-                       preword + sp->ts_prewordlen, c);
+                       (char_u *)preword + sp->ts_prewordlen, c);
       }
 
       if (!soundfold) {
         // Don't use a banned word.  It may appear again as a good
         // word, thus remember it.
         if (flags & WF_BANNED) {
-          add_banned(su, preword + sp->ts_prewordlen);
+          add_banned(su, (char_u *)preword + sp->ts_prewordlen);
           break;
         }
         if ((sp->ts_complen == sp->ts_compsplit
@@ -1445,7 +1445,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         }
 
         if (!spell_valid_case(su->su_badflags,
-                              captype(preword + sp->ts_prewordlen, NULL))) {
+                              captype((char_u *)preword + sp->ts_prewordlen, NULL))) {
           newscore += SCORE_ICASE;
         }
       }
@@ -1457,7 +1457,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
           && compound_ok) {
         // The badword also ends: add suggestions.
 #ifdef DEBUG_TRIEWALK
-        if (soundfold && STRCMP(preword, "smwrd") == 0) {
+        if (soundfold && strcmp(preword, "smwrd") == 0) {
           int j;
 
           // print the stack of changes that brought us here
@@ -1470,14 +1470,14 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         if (soundfold) {
           // For soundfolded words we need to find the original
           // words, the edit distance and then add them.
-          add_sound_suggest(su, preword, sp->ts_score, lp);
+          add_sound_suggest(su, (char_u *)preword, sp->ts_score, lp);
         } else if (sp->ts_fidx > 0) {
           // Give a penalty when changing non-word char to word
           // char, e.g., "thes," -> "these".
           p = fword + sp->ts_fidx;
           MB_PTR_BACK(fword, p);
           if (!spell_iswordp(p, curwin) && *preword != NUL) {
-            p = preword + STRLEN(preword);
+            p = (char_u *)preword + STRLEN(preword);
             MB_PTR_BACK(preword, p);
             if (spell_iswordp(p, curwin)) {
               newscore += SCORE_NONWORD;
@@ -1487,7 +1487,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
           // Give a bonus to words seen before.
           score = score_wordcount_adj(slang,
                                       sp->ts_score + newscore,
-                                      preword + sp->ts_prewordlen,
+                                      (char_u *)preword + sp->ts_prewordlen,
                                       sp->ts_prewordlen > 0);
 
           // Add the suggestion if the score isn't too bad.
@@ -1499,10 +1499,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
             if (su->su_badflags & WF_MIXCAP) {
               // We really don't know if the word should be
               // upper or lower case, add both.
-              c = captype(preword, NULL);
+              c = captype((char_u *)preword, NULL);
               if (c == 0 || c == WF_ALLCAP) {
                 make_case_word(tword + sp->ts_splitoff,
-                               preword + sp->ts_prewordlen,
+                               (char_u *)preword + sp->ts_prewordlen,
                                c == 0 ? WF_ALLCAP : 0);
 
                 add_suggestion(su, &su->su_ga, (char *)preword,
@@ -1589,7 +1589,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 && (flags & WF_NEEDCOMP)) {
               break;
             }
-            p = preword;
+            p = (char_u *)preword;
             while (*skiptowhite((char *)p) != NUL) {
               p = (char_u *)skipwhite(skiptowhite((char *)p));
             }
@@ -1607,7 +1607,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
             // Give a bonus to words seen before.
             newscore = score_wordcount_adj(slang, newscore,
-                                           preword + sp->ts_prewordlen, true);
+                                           (char_u *)preword + sp->ts_prewordlen, true);
           }
 
           if (TRY_DEEPER(su, stack, depth, newscore)) {
@@ -2515,8 +2515,8 @@ static void score_combine(suginfo_T *su)
   garray_T *gap;
   langp_T *lp;
   suggest_T *stp;
-  char_u *p;
-  char_u badsound[MAXWLEN];
+  char *p;
+  char badsound[MAXWLEN];
   int round;
   slang_T *slang = NULL;
 
@@ -2526,11 +2526,11 @@ static void score_combine(suginfo_T *su)
     if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
       // soundfold the bad word
       slang = lp->lp_slang;
-      spell_soundfold(slang, su->su_fbadword, true, badsound);
+      spell_soundfold(slang, su->su_fbadword, true, (char_u *)badsound);
 
       for (int i = 0; i < su->su_ga.ga_len; i++) {
         stp = &SUG(su->su_ga, i);
-        stp->st_altscore = stp_sal_score(stp, su, slang, badsound);
+        stp->st_altscore = stp_sal_score(stp, su, slang, (char_u *)badsound);
         if (stp->st_altscore == SCORE_MAXMAX) {
           stp->st_score = (stp->st_score * 3 + SCORE_BIG) / 4;
         } else {
@@ -2578,10 +2578,10 @@ static void score_combine(suginfo_T *su)
       gap = round == 1 ? &su->su_ga : &su->su_sga;
       if (i < gap->ga_len) {
         // Don't add a word if it's already there.
-        p = (char_u *)SUG(*gap, i).st_word;
+        p = SUG(*gap, i).st_word;
         int j;
         for (j = 0; j < ga.ga_len; j++) {
-          if (STRCMP(stp[j].st_word, p) == 0) {
+          if (strcmp(stp[j].st_word, p) == 0) {
             break;
           }
         }
@@ -2659,7 +2659,7 @@ static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang, char_u *
   // Sound-fold the word and compute the score for the difference.
   spell_soundfold(slang, pgood, false, goodsound);
 
-  return soundalike_score(goodsound, pbad);
+  return soundalike_score((char *)goodsound, (char *)pbad);
 }
 
 /// structure used to store soundfolded words that add_sound_suggest() has
@@ -3306,15 +3306,15 @@ static int cleanup_suggestions(garray_T *gap, int maxscore, int keep)
 ///
 /// @param goodstart  sound-folded good word
 /// @param badstart  sound-folded bad word
-static int soundalike_score(char_u *goodstart, char_u *badstart)
+static int soundalike_score(char *goodstart, char *badstart)
 {
-  char_u *goodsound = goodstart;
-  char_u *badsound = badstart;
+  char *goodsound = goodstart;
+  char *badsound = badstart;
   int goodlen;
   int badlen;
   int n;
-  char_u *pl, *ps;
-  char_u *pl2, *ps2;
+  char *pl, *ps;
+  char *pl2, *ps2;
   int score = 0;
 
   // Adding/inserting "*" at the start (word starts with vowel) shouldn't be
@@ -3379,7 +3379,7 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
       ps++;
     }
     // strings must be equal after second delete
-    if (STRCMP(pl + 1, ps) == 0) {
+    if (strcmp(pl + 1, ps) == 0) {
       return score + SCORE_DEL * 2;
     }
 
@@ -3403,12 +3403,12 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
 
     // 2: delete then swap, then rest must be equal
     if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-        && STRCMP(pl2 + 2, ps2 + 2) == 0) {
+        && strcmp(pl2 + 2, ps2 + 2) == 0) {
       return score + SCORE_DEL + SCORE_SWAP;
     }
 
     // 3: delete then substitute, then the rest must be equal
-    if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
+    if (strcmp(pl2 + 1, ps2 + 1) == 0) {
       return score + SCORE_DEL + SCORE_SUBST;
     }
 
@@ -3421,7 +3421,7 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
         ps2++;
       }
       // delete a char and then strings must be equal
-      if (STRCMP(pl2 + 1, ps2) == 0) {
+      if (strcmp(pl2 + 1, ps2) == 0) {
         return score + SCORE_SWAP + SCORE_DEL;
       }
     }
@@ -3434,7 +3434,7 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
       ps2++;
     }
     // delete a char and then strings must be equal
-    if (STRCMP(pl2 + 1, ps2) == 0) {
+    if (strcmp(pl2 + 1, ps2) == 0) {
       return score + SCORE_SUBST + SCORE_DEL;
     }
 
@@ -3462,12 +3462,12 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
       }
       // 3: swap and swap again
       if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-          && STRCMP(pl2 + 2, ps2 + 2) == 0) {
+          && strcmp(pl2 + 2, ps2 + 2) == 0) {
         return score + SCORE_SWAP + SCORE_SWAP;
       }
 
       // 4: swap and substitute
-      if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
+      if (strcmp(pl2 + 1, ps2 + 1) == 0) {
         return score + SCORE_SWAP + SCORE_SUBST;
       }
     }
@@ -3485,12 +3485,12 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
 
     // 6: substitute and swap
     if (pl2[0] == ps2[1] && pl2[1] == ps2[0]
-        && STRCMP(pl2 + 2, ps2 + 2) == 0) {
+        && strcmp(pl2 + 2, ps2 + 2) == 0) {
       return score + SCORE_SUBST + SCORE_SWAP;
     }
 
     // 7: substitute and substitute
-    if (STRCMP(pl2 + 1, ps2 + 1) == 0) {
+    if (strcmp(pl2 + 1, ps2 + 1) == 0) {
       return score + SCORE_SUBST + SCORE_SUBST;
     }
 
@@ -3501,7 +3501,7 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
       pl2++;
       ps2++;
     }
-    if (STRCMP(pl2 + 1, ps2) == 0) {
+    if (strcmp(pl2 + 1, ps2) == 0) {
       return score + SCORE_INS + SCORE_DEL;
     }
 
@@ -3512,7 +3512,7 @@ static int soundalike_score(char_u *goodstart, char_u *badstart)
       pl2++;
       ps2++;
     }
-    if (STRCMP(pl2, ps2 + 1) == 0) {
+    if (strcmp(pl2, ps2 + 1) == 0) {
       return score + SCORE_INS + SCORE_DEL;
     }
 

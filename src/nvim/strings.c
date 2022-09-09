@@ -460,7 +460,7 @@ char *vim_strchr(const char *const string, const int c)
 static int sort_compare(const void *s1, const void *s2)
   FUNC_ATTR_NONNULL_ALL
 {
-  return STRCMP(*(char **)s1, *(char **)s2);
+  return strcmp(*(char **)s1, *(char **)s2);
 }
 
 void sort_strings(char **files, int count)

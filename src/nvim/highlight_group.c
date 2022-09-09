@@ -791,7 +791,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   g->sg_attr = hl_get_syn_attr(0, id, attrs);
 
   // 'Normal' is special
-  if (STRCMP(g->sg_name_u, "NORMAL") == 0) {
+  if (strcmp(g->sg_name_u, "NORMAL") == 0) {
     cterm_normal_fg_color = g->sg_cterm_fg;
     cterm_normal_bg_color = g->sg_cterm_bg;
     normal_fg = g->sg_rgb_fg;
@@ -988,7 +988,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // Make a copy so we can check if any attribute actually changed
   item_before = hl_table[idx];
-  is_normal_group = (STRCMP(hl_table[idx].sg_name_u, "NORMAL") == 0);
+  is_normal_group = (strcmp(hl_table[idx].sg_name_u, "NORMAL") == 0);
 
   // Clear the highlighting for ":hi clear {group}" and ":hi clear".
   if (doclear || (forceit && init)) {
@@ -1119,9 +1119,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             hl_table[idx].sg_gui = attr;
           }
         }
-      } else if (STRCMP(key, "FONT") == 0) {
+      } else if (strcmp(key, "FONT") == 0) {
         // in non-GUI fonts are simply ignored
-      } else if (STRCMP(key, "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0) {
+      } else if (strcmp(key, "CTERMFG") == 0 || strcmp(key, "CTERMBG") == 0) {
         if (!init || !(hl_table[idx].sg_set & SG_CTERM)) {
           if (!init) {
             hl_table[idx].sg_set |= SG_CTERM;
@@ -1239,7 +1239,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
         if (is_normal_group) {
           normal_fg = hl_table[idx].sg_rgb_fg;
         }
-      } else if (STRCMP(key, "GUIBG") == 0) {
+      } else if (strcmp(key, "GUIBG") == 0) {
         int *indexp = &hl_table[idx].sg_rgb_bg_idx;
 
         if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
@@ -1250,7 +1250,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           RgbValue old_color = hl_table[idx].sg_rgb_bg;
           int old_idx = hl_table[idx].sg_rgb_bg_idx;
 
-          if (STRCMP(arg, "NONE") != 0) {
+          if (strcmp(arg, "NONE") != 0) {
             hl_table[idx].sg_rgb_bg = name_to_color(arg, indexp);
           } else {
             hl_table[idx].sg_rgb_bg = -1;

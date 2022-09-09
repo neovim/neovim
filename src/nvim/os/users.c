@@ -93,7 +93,7 @@ int os_get_usernames(garray_T *users)
       for (i = 0; i < users->ga_len; i++) {
         char *local_user = ((char **)users->ga_data)[i];
 
-        if (STRCMP(local_user, user_env) == 0) {
+        if (strcmp(local_user, user_env) == 0) {
           break;
         }
       }
@@ -208,14 +208,14 @@ char *get_users(expand_T *xp, int idx)
 /// @return 0 if name does not match any user name.
 ///         1 if name partially matches the beginning of a user name.
 ///         2 is name fully matches a user name.
-int match_user(char_u *name)
+int match_user(char *name)
 {
   int n = (int)STRLEN(name);
   int result = 0;
 
   init_users();
   for (int i = 0; i < ga_users.ga_len; i++) {
-    if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0) {
+    if (strcmp(((char **)ga_users.ga_data)[i], name) == 0) {
       return 2;       // full match
     }
     if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0) {

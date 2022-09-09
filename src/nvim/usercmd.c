@@ -280,7 +280,7 @@ char *get_user_commands(expand_T *xp FUNC_ATTR_UNUSED, int idx)
     char *name = USER_CMD(idx)->uc_name;
 
     for (int i = 0; i < buf->b_ucmds.ga_len; i++) {
-      if (STRCMP(name, USER_CMD_GA(&buf->b_ucmds, i)->uc_name) == 0) {
+      if (strcmp(name, USER_CMD_GA(&buf->b_ucmds, i)->uc_name) == 0) {
         // global command is overruled by buffer-local one
         return "";
       }
@@ -1006,7 +1006,7 @@ void ex_delcommand(exarg_T *eap)
   for (;;) {
     for (i = 0; i < gap->ga_len; i++) {
       cmd = USER_CMD_GA(gap, i);
-      res = STRCMP(arg, cmd->uc_name);
+      res = strcmp(arg, cmd->uc_name);
       if (res <= 0) {
         break;
       }

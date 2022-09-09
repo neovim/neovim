@@ -66,8 +66,8 @@ static int compl_selected;
 
 static int sort_func_compare(const void *s1, const void *s2)
 {
-  char_u *p1 = *(char_u **)s1;
-  char_u *p2 = *(char_u **)s2;
+  char *p1 = *(char **)s1;
+  char *p2 = *(char **)s2;
 
   if (*p1 != '<' && *p2 == '<') {
     return -1;
@@ -75,7 +75,7 @@ static int sort_func_compare(const void *s1, const void *s2)
   if (*p1 == '<' && *p2 != '<') {
     return 1;
   }
-  return STRCMP(p1, p2);
+  return strcmp(p1, p2);
 }
 
 static void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char **files, int options)
@@ -1148,7 +1148,7 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
     // A full match ~user<Tab> will be replaced by user's home
     // directory i.e. something like ~user<Tab> -> /home/user/
     if (*p == NUL && p > (const char *)xp->xp_pattern + 1
-        && match_user((char_u *)xp->xp_pattern + 1) >= 1) {
+        && match_user(xp->xp_pattern + 1) >= 1) {
       xp->xp_context = EXPAND_USER;
       xp->xp_pattern++;
     }
@@ -2294,8 +2294,7 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
         || xp->xp_context == EXPAND_FUNCTIONS
         || xp->xp_context == EXPAND_USER_FUNC) {
       // <SNR> functions should be sorted to the end.
-      qsort((void *)(*file), (size_t)(*num_file), sizeof(char_u *),
-            sort_func_compare);
+      qsort((void *)(*file), (size_t)(*num_file), sizeof(char *), sort_func_compare);
     } else {
       sort_strings(*file, *num_file);
     }

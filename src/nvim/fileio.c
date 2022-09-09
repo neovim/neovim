@@ -806,11 +806,11 @@ retry:
   // Conversion may be required when the encoding of the file is different
   // from 'encoding' or 'encoding' is UTF-16, UCS-2 or UCS-4.
   fio_flags = 0;
-  converted = need_conversion((char_u *)fenc);
+  converted = need_conversion(fenc);
   if (converted) {
     // "ucs-bom" means we need to check the first bytes of the file
     // for a BOM.
-    if (STRCMP(fenc, ENC_UCSBOM) == 0) {
+    if (strcmp(fenc, ENC_UCSBOM) == 0) {
       fio_flags = FIO_UCSBOM;
     } else {
       // Check if UCS-2/4 or Latin1 to UTF-8 conversion needs to be
@@ -2952,7 +2952,7 @@ nobackup:
   }
 
   // Check if the file needs to be converted.
-  converted = need_conversion((char_u *)fenc);
+  converted = need_conversion(fenc);
 
   // Check if UTF-8 to UCS-2/4 or Latin1 conversion needs to be done.  Or
   // Latin1 to Unicode conversion.  This is handled in buf_write_bytes().
@@ -4028,21 +4028,21 @@ static bool ucs2bytes(unsigned c, char_u **pp, int flags) FUNC_ATTR_NONNULL_ALL
 /// @param fenc file encoding to check
 ///
 /// @return true if conversion is required
-static bool need_conversion(const char_u *fenc)
+static bool need_conversion(const char *fenc)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int same_encoding;
   int enc_flags;
   int fenc_flags;
 
-  if (*fenc == NUL || STRCMP(p_enc, fenc) == 0) {
+  if (*fenc == NUL || strcmp(p_enc, fenc) == 0) {
     same_encoding = true;
     fenc_flags = 0;
   } else {
     // Ignore difference between "ansi" and "latin1", "ucs-4" and
     // "ucs-4be", etc.
     enc_flags = get_fio_flags((char_u *)p_enc);
-    fenc_flags = get_fio_flags(fenc);
+    fenc_flags = get_fio_flags((char_u *)fenc);
     same_encoding = (enc_flags != 0 && fenc_flags == enc_flags);
   }
   if (same_encoding) {
@@ -4499,7 +4499,7 @@ int vim_rename(const char_u *from, const char_u *to)
   // to the same file (ignoring case and slash/backslash differences) but
   // the file name differs we need to go through a temp file.
   if (FNAMECMP(from, to) == 0) {
-    if (p_fic && (STRCMP(path_tail((char *)from), path_tail((char *)to))
+    if (p_fic && (strcmp(path_tail((char *)from), path_tail((char *)to))
                   != 0)) {
       use_tmp_file = true;
     } else {
@@ -4745,7 +4745,7 @@ int buf_check_timestamp(buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
   int retval = 0;
-  char_u *path;
+  char *path;
   char *mesg = NULL;
   char *mesg2 = "";
   bool helpmesg = false;
@@ -4760,7 +4760,7 @@ int buf_check_timestamp(buf_T *buf)
   uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;
   static bool busy = false;
-  char_u *s;
+  char *s;
   char *reason;
 
   bufref_T bufref;
@@ -4835,12 +4835,12 @@ int buf_check_timestamp(buf_T *buf)
         if (!bufref_valid(&bufref)) {
           emsg(_("E246: FileChangedShell autocommand deleted buffer"));
         }
-        s = (char_u *)get_vim_var_str(VV_FCS_CHOICE);
-        if (STRCMP(s, "reload") == 0 && *reason != 'd') {
+        s = get_vim_var_str(VV_FCS_CHOICE);
+        if (strcmp(s, "reload") == 0 && *reason != 'd') {
           reload = RELOAD_NORMAL;
-        } else if (STRCMP(s, "edit") == 0) {
+        } else if (strcmp(s, "edit") == 0) {
           reload = RELOAD_DETECT;
-        } else if (STRCMP(s, "ask") == 0) {
+        } else if (strcmp(s, "ask") == 0) {
           n = false;
         } else {
           return 2;
@@ -4888,7 +4888,7 @@ int buf_check_timestamp(buf_T *buf)
   }
 
   if (mesg != NULL) {
-    path = (char_u *)home_replace_save(buf, buf->b_fname);
+    path = home_replace_save(buf, buf->b_fname);
     if (!helpmesg) {
       mesg2 = "";
     }

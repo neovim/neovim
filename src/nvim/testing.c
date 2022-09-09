@@ -419,7 +419,7 @@ static int assert_equalfile(typval_T *argvars)
       line2[lineidx] = NUL;
       ga_concat(&ga, " after \"");
       ga_concat(&ga, line1);
-      if (STRCMP(line1, line2) != 0) {
+      if (strcmp(line1, line2) != 0) {
         ga_concat(&ga, "\" vs \"");
         ga_concat(&ga, line2);
       }

@@ -592,9 +592,9 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
           break;
         }
 
-        if (diff_cmp((char_u *)line_org, (char_u *)ml_get_buf(tp->tp_diffbuf[i_new],
-                                                              dp->df_lnum[i_new] + off_new,
-                                                              false)) != 0) {
+        if (diff_cmp(line_org, ml_get_buf(tp->tp_diffbuf[i_new],
+                                          dp->df_lnum[i_new] + off_new,
+                                          false)) != 0) {
           break;
         }
       }
@@ -1923,8 +1923,8 @@ static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
     char *line = xstrdup(ml_get_buf(curtab->tp_diffbuf[idx1],
                                     dp->df_lnum[idx1] + i, false));
 
-    int cmp = diff_cmp((char_u *)line, (char_u *)ml_get_buf(curtab->tp_diffbuf[idx2],
-                                                            dp->df_lnum[idx2] + i, false));
+    int cmp = diff_cmp(line, ml_get_buf(curtab->tp_diffbuf[idx2],
+                                        dp->df_lnum[idx2] + i, false));
     xfree(line);
 
     if (cmp != 0) {
@@ -1968,23 +1968,23 @@ static bool diff_equal_char(const char_u *const p1, const char_u *const p2, int 
 /// @param s2 The second string
 ///
 /// @return on-zero if the two strings are different.
-static int diff_cmp(char_u *s1, char_u *s2)
+static int diff_cmp(char *s1, char *s2)
 {
   if ((diff_flags & DIFF_IBLANK)
-      && (*(char_u *)skipwhite((char *)s1) == NUL || *skipwhite((char *)s2) == NUL)) {
+      && (*(char_u *)skipwhite(s1) == NUL || *skipwhite(s2) == NUL)) {
     return 0;
   }
 
   if ((diff_flags & (DIFF_ICASE | ALL_WHITE_DIFF)) == 0) {
-    return STRCMP(s1, s2);
+    return strcmp(s1, s2);
   }
 
   if ((diff_flags & DIFF_ICASE) && !(diff_flags & ALL_WHITE_DIFF)) {
     return mb_stricmp((const char *)s1, (const char *)s2);
   }
 
-  char *p1 = (char *)s1;
-  char *p2 = (char *)s2;
+  char *p1 = s1;
+  char *p2 = s2;
 
   // Ignore white space changes and possibly ignore case.
   while (*p1 != NUL && *p2 != NUL) {

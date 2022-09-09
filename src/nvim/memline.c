@@ -1110,7 +1110,7 @@ void ml_recover(bool checkext)
     for (idx = 1; idx <= lnum; idx++) {
       // Need to copy one line, fetching the other one may flush it.
       p = xstrdup(ml_get(idx));
-      i = STRCMP(p, ml_get(idx + lnum));
+      i = strcmp(p, ml_get(idx + lnum));
       xfree(p);
       if (i != 0) {
         changed_internal();
@@ -1238,7 +1238,7 @@ int recover_names(char_u *fname, int list, int nr, char **fname_out)
         names[2] = xstrdup(".sw?");
         num_names = 3;
       } else {
-        num_names = recov_file_names(names, fname_res, true);
+        num_names = recov_file_names(names, (char *)fname_res, true);
       }
     } else {                      // check directory dir_name
       if (fname == NULL) {
@@ -1261,7 +1261,7 @@ int recover_names(char_u *fname, int list, int nr, char **fname_out)
           tail = (char_u *)path_tail((char *)fname_res);
           tail = (char_u *)concat_fnames((char *)dir_name, (char *)tail, true);
         }
-        num_names = recov_file_names(names, tail, false);
+        num_names = recov_file_names(names, (char *)tail, false);
         xfree(tail);
       }
     }
@@ -1553,7 +1553,7 @@ static bool swapfile_unchanged(char *fname)
   return ret;
 }
 
-static int recov_file_names(char **names, char_u *path, int prepend_dot)
+static int recov_file_names(char **names, char *path, int prepend_dot)
   FUNC_ATTR_NONNULL_ALL
 {
   int num_names = 0;
@@ -1561,7 +1561,7 @@ static int recov_file_names(char **names, char_u *path, int prepend_dot)
   // May also add the file name with a dot prepended, for swap file in same
   // dir as original file.
   if (prepend_dot) {
-    names[num_names] = modname((char *)path, ".sw?", true);
+    names[num_names] = modname(path, ".sw?", true);
     if (names[num_names] == NULL) {
       return num_names;
     }
@@ -1569,14 +1569,14 @@ static int recov_file_names(char **names, char_u *path, int prepend_dot)
   }
 
   // Form the normal swap file name pattern by appending ".sw?".
-  names[num_names] = concat_fnames((char *)path, ".sw?", false);
+  names[num_names] = concat_fnames(path, ".sw?", false);
   if (num_names >= 1) {     // check if we have the same name twice
-    char_u *p = (char_u *)names[num_names - 1];
+    char *p = names[num_names - 1];
     int i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
     if (i > 0) {
       p += i;               // file name has been expanded to full path
     }
-    if (STRCMP(p, names[num_names]) != 0) {
+    if (strcmp(p, names[num_names]) != 0) {
       num_names++;
     } else {
       xfree(names[num_names]);
@@ -3305,7 +3305,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
                 // when the name differs, need to check the
                 // inode too.
                 expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
-                if (fnamecmp_ino((char_u *)buf->b_ffname, (char_u *)NameBuff,
+                if (fnamecmp_ino(buf->b_ffname, NameBuff,
                                  char_to_long(b0.b0_ino))) {
                   differ = true;
                 }
@@ -3314,7 +3314,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
               // The name in the swap file may be
               // "~user/path/file".  Expand it first.
               expand_env((char *)b0.b0_fname, NameBuff, MAXPATHL);
-              if (fnamecmp_ino((char_u *)buf->b_ffname, (char_u *)NameBuff,
+              if (fnamecmp_ino(buf->b_ffname, NameBuff,
                                char_to_long(b0.b0_ino))) {
                 differ = true;
               }
@@ -3519,24 +3519,24 @@ static int b0_magic_wrong(ZERO_BL *b0p)
 ///
 /// @param fname_c  current file name
 /// @param fname_s  file name from swap file
-static bool fnamecmp_ino(char_u *fname_c, char_u *fname_s, long ino_block0)
+static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 {
   uint64_t ino_c = 0;               // ino of current file
   uint64_t ino_s;                   // ino of file from swap file
-  char_u buf_c[MAXPATHL];           // full path of fname_c
-  char_u buf_s[MAXPATHL];           // full path of fname_s
+  char buf_c[MAXPATHL];             // full path of fname_c
+  char buf_s[MAXPATHL];             // full path of fname_s
   int retval_c;                     // flag: buf_c valid
   int retval_s;                     // flag: buf_s valid
 
   FileInfo file_info;
-  if (os_fileinfo((char *)fname_c, &file_info)) {
+  if (os_fileinfo(fname_c, &file_info)) {
     ino_c = os_fileinfo_inode(&file_info);
   }
 
   // First we try to get the inode from the file name, because the inode in
   // the swap file may be outdated.  If that fails (e.g. this path is not
   // valid on this machine), use the inode from block 0.
-  if (os_fileinfo((char *)fname_s, &file_info)) {
+  if (os_fileinfo(fname_s, &file_info)) {
     ino_s = os_fileinfo_inode(&file_info);
   } else {
     ino_s = (uint64_t)ino_block0;
@@ -3548,17 +3548,17 @@ static bool fnamecmp_ino(char_u *fname_c, char_u *fname_s, long ino_block0)
 
   // One of the inode numbers is unknown, try a forced vim_FullName() and
   // compare the file names.
-  retval_c = vim_FullName((char *)fname_c, (char *)buf_c, MAXPATHL, true);
-  retval_s = vim_FullName((char *)fname_s, (char *)buf_s, MAXPATHL, true);
+  retval_c = vim_FullName(fname_c, (char *)buf_c, MAXPATHL, true);
+  retval_s = vim_FullName(fname_s, (char *)buf_s, MAXPATHL, true);
   if (retval_c == OK && retval_s == OK) {
-    return STRCMP(buf_c, buf_s) != 0;
+    return strcmp(buf_c, buf_s) != 0;
   }
 
   // Can't compare inodes or file names, guess that the files are different,
   // unless both appear not to exist at all, then compare with the file name
   // in the swap file.
   if (ino_s == 0 && ino_c == 0 && retval_c == FAIL && retval_s == FAIL) {
-    return STRCMP(fname_c, fname_s) != 0;
+    return strcmp(fname_c, fname_s) != 0;
   }
   return true;
 }

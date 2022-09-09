@@ -567,7 +567,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
         u_freeentry(uep, i);
         return FAIL;
       }
-      uep->ue_array[i] = (char_u *)u_save_line_buf(buf, lnum++);
+      uep->ue_array[i] = u_save_line_buf(buf, lnum++);
     }
   } else {
     uep->ue_array = NULL;
@@ -1038,7 +1038,7 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
     if (!undo_write_bytes(bi, len, 4)) {
       return false;
     }
-    if (len > 0 && !undo_write(bi, uep->ue_array[i], len)) {
+    if (len > 0 && !undo_write(bi, (char_u *)uep->ue_array[i], len)) {
       return false;
     }
   }
@@ -1064,7 +1064,7 @@ static u_entry_T *unserialize_uep(bufinfo_T *bi, bool *error, const char *file_n
       memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
     }
   }
-  uep->ue_array = array;
+  uep->ue_array = (char **)array;
 
   for (size_t i = 0; i < (size_t)uep->ue_size; i++) {
     int line_len = undo_read_4c(bi);
@@ -2283,7 +2283,7 @@ static void u_undoredo(int undo, bool do_buf_event)
         // line.
         long i;
         for (i = 0; i < newsize && i < oldsize; i++) {
-          if (STRCMP(uep->ue_array[i], ml_get(top + 1 + (linenr_T)i)) != 0) {
+          if (strcmp(uep->ue_array[i], ml_get(top + 1 + (linenr_T)i)) != 0) {
             break;
           }
         }
@@ -2327,9 +2327,9 @@ static void u_undoredo(int undo, bool do_buf_event)
         // If the file is empty, there is an empty line 1 that we
         // should get rid of, by replacing it with the new line
         if (empty_buffer && lnum == 0) {
-          ml_replace((linenr_T)1, (char *)uep->ue_array[i], true);
+          ml_replace((linenr_T)1, uep->ue_array[i], true);
         } else {
-          ml_append(lnum, (char *)uep->ue_array[i], (colnr_T)0, false);
+          ml_append(lnum, uep->ue_array[i], (colnr_T)0, false);
         }
         xfree(uep->ue_array[i]);
       }
@@ -2363,7 +2363,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     u_newcount += newsize;
     u_oldcount += oldsize;
     uep->ue_size = oldsize;
-    uep->ue_array = newarray;
+    uep->ue_array = (char **)newarray;
     uep->ue_bot = top + newsize + 1;
 
     // insert this entry in front of the new entry list
@@ -2744,7 +2744,7 @@ void u_find_first_changed(void)
   linenr_T lnum;
   for (lnum = 1; lnum < curbuf->b_ml.ml_line_count
        && lnum <= uep->ue_size; lnum++) {
-    if (STRCMP(ml_get_buf(curbuf, lnum, false), uep->ue_array[lnum - 1]) != 0) {
+    if (strcmp(ml_get_buf(curbuf, lnum, false), uep->ue_array[lnum - 1]) != 0) {
       clearpos(&(uhp->uh_cursor));
       uhp->uh_cursor.lnum = lnum;
       return;

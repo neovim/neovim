@@ -1016,7 +1016,7 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
     if (sortinfo->item_compare_lc) {
       res = strcoll(p1, p2);
     } else {
-      res = sortinfo->item_compare_ic ? STRICMP(p1, p2): STRCMP(p1, p2);
+      res = sortinfo->item_compare_ic ? STRICMP(p1, p2): strcmp(p1, p2);
     }
   } else {
     double n1, n2;
@@ -1568,7 +1568,7 @@ bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
   }
   switch (cb1->type) {
   case kCallbackFuncref:
-    return STRCMP(cb1->data.funcref, cb2->data.funcref) == 0;
+    return strcmp(cb1->data.funcref, cb2->data.funcref) == 0;
   case kCallbackPartial:
     // FIXME: this is inconsistent with tv_equal but is needed for precision
     // maybe change dictwatcheradd to return a watcher id instead?

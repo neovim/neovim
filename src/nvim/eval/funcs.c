@@ -423,7 +423,7 @@ static buf_T *find_buffer(typval_T *avar)
       FOR_ALL_BUFFERS(bp) {
         if (bp->b_fname != NULL
             && (path_with_url(bp->b_fname) || bt_nofilename(bp))
-            && STRCMP(bp->b_fname, avar->vval.v_string) == 0) {
+            && strcmp(bp->b_fname, avar->vval.v_string) == 0) {
           buf = bp;
           break;
         }
