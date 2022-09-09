@@ -721,7 +721,11 @@ au BufNewFile,BufRead *.git/worktrees/*/config.worktree		setf gitconfig
 au BufNewFile,BufRead .gitmodules,*.git/modules/*/config	setf gitconfig
 if !empty($XDG_CONFIG_HOME)
   au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config		setf gitconfig
+  au BufNewFile,BufRead $XDG_CONFIG_HOME/git/attributes		setf gitattributes
 endif
+au BufNewFile,BufRead .gitattributes,*.git/info/attributes	setf gitattributes
+au BufNewFile,BufRead */.config/git/attributes  		setf gitattributes
+au BufNewFile,BufRead */etc/gitattributes  			setf gitattributes
 au BufNewFile,BufRead git-rebase-todo		setf gitrebase
 au BufRead,BufNewFile .gitsendemail.msg.??????	setf gitsendemail
 au BufNewFile,BufRead *.git/*
