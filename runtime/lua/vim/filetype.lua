@@ -746,6 +746,7 @@ local extension = {
   php = 'php',
   phpt = 'php',
   phtml = 'php',
+  theme = 'php',
   pike = 'pike',
   pmod = 'pike',
   rcp = 'pilrc',
