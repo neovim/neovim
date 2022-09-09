@@ -474,7 +474,31 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       end
       has_eol_text_edit = true
     end
-    api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+
+    -- If the replacement is over the end of a line (i.e. e.end_col is out of bounds and the
+    -- replacement text ends with a newline We can likely assume that the replacement is assumed to
+    -- be meant to replace the newline with another newline and we need to make sure this doens't
+    -- add an extra empty line. E.g. when the last line to be replaced contains a '\r' in the file
+    -- some servers (clangd on windows) will include that character in the line while
+    -- nvim_buf_set_lines doesn't count it as part of the line.
+    local last_line = get_line(bufnr, e.end_row)
+    if
+      e.end_col > #last_line
+      and #text_edit.newText > 0
+      and string.sub(text_edit.newText, -1) == '\n'
+    then
+      table.remove(e.text, #e.text)
+    end
+    -- Make sure we don't go out of bounds for e.end_col
+    e.end_col = math.min(#last_line, e.end_col)
+
+    -- If the replacement is over full lines it is recommended to use nvim_buf_set_lines
+    -- see. https://neovim.io/doc/user/api.html#nvim_buf_set_test()
+    if e.end_col == #last_line and e.start_col == 0 then
+      api.nvim_buf_set_lines(bufnr, e.start_row, e.end_row + 1, false, e.text)
+    else
+      api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
+    end
 
     -- Fix cursor position.
     local row_count = (e.end_row - e.start_row) + 1
