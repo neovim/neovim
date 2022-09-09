@@ -440,7 +440,7 @@ return {
     win_splitmove={args={2, 3}, base=1},
     winbufnr={args=1, base=1},
     wincol={},
-    windowsversion={},
+    windowsversion={fast=true},
     winheight={args=1, base=1},
     winlayout={args={0, 1}, base=1},
     winline={},
