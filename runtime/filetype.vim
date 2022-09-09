@@ -1324,7 +1324,7 @@ au BufNewFile,BufRead *.or				setf openroad
 au BufNewFile,BufRead *.[Oo][Pp][Ll]			setf opl
 
 " OpenSCAD
-au BufNewFile,BufRead *.scad				setf openscad		
+au BufNewFile,BufRead *.scad				setf openscad
 
 " Oracle config file
 au BufNewFile,BufRead *.ora				setf ora
@@ -1399,7 +1399,8 @@ au BufNewFile,BufRead *.pod			setf pod
 " Also Phtml (was used for PHP 2 in the past).
 " Also .ctp for Cake template file.
 " Also .phpt for php tests.
-au BufNewFile,BufRead *.php,*.php\d,*.phtml,*.ctp,*.phpt	setf php
+" Also .theme for Drupal theme files.
+au BufNewFile,BufRead *.php,*.php\d,*.phtml,*.ctp,*.phpt,*.theme	setf php
 
 " PHP config
 au BufNewFile,BufRead php.ini-*			setf dosini

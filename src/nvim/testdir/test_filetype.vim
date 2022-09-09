@@ -409,7 +409,7 @@ let s:filename_checks = {
     \ 'perl': ['file.plx', 'file.al', 'file.psgi', 'gitolite.rc', '.gitolite.rc', 'example.gitolite.rc'],
     \ 'pf': ['pf.conf'],
     \ 'pfmain': ['main.cf'],
-    \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp', 'file.phpt'],
+    \ 'php': ['file.php', 'file.php9', 'file.phtml', 'file.ctp', 'file.phpt', 'file.theme'],
     \ 'pike': ['file.pike', 'file.pmod'],
     \ 'pilrc': ['file.rcp'],
     \ 'pine': ['.pinerc', 'pinerc', '.pinercex', 'pinercex'],
@@ -534,7 +534,7 @@ let s:filename_checks = {
     \ 'stata': ['file.ado', 'file.do', 'file.imata', 'file.mata'],
     \ 'stp': ['file.stp'],
     \ 'sudoers': ['any/etc/sudoers', 'sudoers.tmp', '/etc/sudoers', 'any/etc/sudoers.d/file'],
-    \ 'supercollider': ['file.quark'], 
+    \ 'supercollider': ['file.quark'],
     \ 'surface': ['file.sface'],
     \ 'svelte': ['file.svelte'],
     \ 'svg': ['file.svg'],
@@ -1352,7 +1352,7 @@ func Test_mod_file()
   unlet g:filetype_mod
   bwipe!
 
-  " RAPID header start with a line containing only "%%%", 
+  " RAPID header start with a line containing only "%%%",
   " but is not always present.
   call writefile(['%%%'], 'modfile.mod')
   split modfile.mod
@@ -1368,7 +1368,7 @@ func Test_mod_file()
   bwipe!
   call delete('modfile.Mod')
 
-  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " RAPID is not case sensitive, embedded spaces, sysmodule,
   " file starts with empty line(s).
   call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'modfile.MOD')
   split modfile.MOD
@@ -1496,7 +1496,7 @@ func Test_prg_file()
   unlet g:filetype_prg
   bwipe!
 
-  " RAPID header start with a line containing only "%%%", 
+  " RAPID header start with a line containing only "%%%",
   " but is not always present.
   call writefile(['%%%'], 'prgfile.prg')
   split prgfile.prg
@@ -1512,7 +1512,7 @@ func Test_prg_file()
   bwipe!
   call delete('prgfile.Prg')
 
-  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " RAPID is not case sensitive, embedded spaces, sysmodule,
   " file starts with empty line(s).
   call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'prgfile.PRG')
   split prgfile.PRG
@@ -1623,7 +1623,7 @@ func Test_sys_file()
   unlet g:filetype_sys
   bwipe!
 
-  " RAPID header start with a line containing only "%%%", 
+  " RAPID header start with a line containing only "%%%",
   " but is not always present.
   call writefile(['%%%'], 'sysfile.sys')
   split sysfile.sys
@@ -1639,7 +1639,7 @@ func Test_sys_file()
   bwipe!
   call delete('sysfile.Sys')
 
-  " RAPID is not case sensitive, embedded spaces, sysmodule, 
+  " RAPID is not case sensitive, embedded spaces, sysmodule,
   " file starts with empty line(s).
   call writefile(['', 'MODULE  rapidmödüle  (SYSMODULE,NOSTEPIN)'], 'sysfile.SYS')
   split sysfile.SYS
