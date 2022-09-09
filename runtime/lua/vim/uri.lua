@@ -3,7 +3,7 @@
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
-local is_windows = #vim.fn.windowsversion() == 0
+local is_windows = #vim.fn.windowsversion() > 0
 
 local uri_decode
 do
