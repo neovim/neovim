@@ -443,7 +443,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     }
   end)()
 
-  local is_windows = vim.loop.os_uname().sysname == 'Windows'
+  local is_windows = vim.fn.windowsversion()
   -- Apply text edits.
   local is_cursor_fixed = false
   local has_eol_text_edit = false
@@ -459,7 +459,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       end_col = get_line_byte_from_position(bufnr, text_edit.range['end'], offset_encoding),
     }
 
-    if not is_windows then
+    if string.len(is_windows) == 0 then
       e.text = split(text_edit.newText, '\n', true)
     else
       e.text = split(text_edit.newText, '\\r\\n', true)
