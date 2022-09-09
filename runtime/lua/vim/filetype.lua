@@ -1383,6 +1383,7 @@ local filename = {
   ['EDIT_DESCRIPTION'] = 'gitcommit',
   ['.gitconfig'] = 'gitconfig',
   ['.gitmodules'] = 'gitconfig',
+  ['.gitattributes'] = 'gitattributes',
   ['gitolite.conf'] = 'gitolite',
   ['git-rebase-todo'] = 'gitrebase',
   gkrellmrc = 'gkrellmrc',
@@ -1823,6 +1824,14 @@ local pattern = {
   ['.*/git/config'] = function(path, bufnr)
     if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/config') then
       return 'gitconfig'
+    end
+  end,
+  ['.*%.git/info/attributes'] = 'gitattributes',
+  ['.*/etc/gitattributes'] = 'gitattributes',
+  ['.*/%.config/git/attributes'] = 'gitattributes',
+  ['.*/git/attributes'] = function(path, bufnr)
+    if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/attributes') then
+      return 'gitattributes'
     end
   end,
   ['%.gitsendemail%.msg%.......'] = 'gitsendemail',
