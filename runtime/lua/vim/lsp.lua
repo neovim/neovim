@@ -1175,7 +1175,6 @@ function lsp.start_client(config)
         vim.notify(msg, vim.log.levels.WARN)
       end
     end)
-
   end
 
   -- Start the RPC client.
