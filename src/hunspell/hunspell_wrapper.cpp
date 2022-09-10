@@ -16,6 +16,11 @@ void hunspell_destroy(hunspell_T *pHunspell) {
   delete reinterpret_cast<Hunspell *>(pHunspell);
 }
 
+void hunspell_add_dic(hunspell_T *pHunspell, const char *dicpath)
+{
+  reinterpret_cast<Hunspell*>(pHunspell)->add_dic(dicpath);
+}
+
 bool hunspell_is_wordchar(hunspell_T *handle, const char *p)
 {
   if (!handle || !p) {

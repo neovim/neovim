@@ -63,6 +63,7 @@
 #include <stddef.h>               // for NULL, size_t, ptrdiff_t
 #include <stdio.h>                // for snprintf
 #include <string.h>               // for memmove, strstr, memcpy, memset
+#include <wctype.h>
 
 #include "hunspell/hunspell_wrapper.h"
 #include "nvim/ascii.h"           // for NUL, ascii_isdigit, ascii_iswhite
@@ -1511,17 +1512,22 @@ static void spell_hunspell_cb(char *path, void *ud)
 {
   spelload_T *sl = (spelload_T *)ud;
 
-  size_t path_len = STRLEN(path);
   char *aff_path = xstrdup(path);
-  aff_path[path_len - 3] = 'a';
-  aff_path[path_len - 2] = 'f';
-  aff_path[path_len - 1] = 'f';
+  STRCPY(aff_path + STRLEN(path) - 3, "aff");
 
   hunspell_T *h = hunspell_create(aff_path, path);
   sl->sl_slang = slang_alloc((char *)sl->sl_lang);
   sl->sl_slang->sl_hunspell = h;
 
   xfree(aff_path);
+}
+
+static void spell_hunspell_add_cb(char *path, void *ud)
+{
+  spelload_T *sl = (spelload_T *)ud;
+  if (sl->sl_slang->sl_hunspell != NULL) {
+    hunspell_add_dic(sl->sl_slang->sl_hunspell, path);
+  }
 }
 
 // Load word list(s) for "lang" from Vim spell file(s).
@@ -1582,6 +1588,8 @@ static void spell_load_lang(win_T *wp, char *lang)
     // At least one file was loaded, now load ALL the additions.
     if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
       // TODO(vigoux): probably not right and we'll have to load the .add files
+      STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add");
+      do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_hunspell_add_cb, &sl);
       sl.sl_slang->sl_next = first_lang;
       first_lang = sl.sl_slang;
     } else {

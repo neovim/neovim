@@ -23,6 +23,8 @@ hunspell_T * hunspell_create(const char *affpath, const char *dicpath);
 
 void hunspell_destroy(hunspell_T *pHunspell);
 
+void hunspell_add_dic(hunspell_T *pHunspell, const char *dicpath);
+
 bool hunspell_is_wordchar(hunspell_T *handle, const char *p);
 
 bool hunspell_spell_flags(hunspell_T *handle, const char *word, size_t len, int *flags);
