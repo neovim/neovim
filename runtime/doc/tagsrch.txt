@@ -829,10 +829,10 @@ CTRL-W d		Open a new window, with the cursor on the first
 			(default: whole file).
 			See |:search-args| for [/] and [!].
 
-					*:che* *:chec* *:check* *:checkpath*
-:che[ckpath]		List all the included files that could not be found.
+							*:checkp* *:checkpath*
+:checkp[ath]		List all the included files that could not be found.
 
-:che[ckpath]!		List all the included files.
+:checkp[ath]!		List all the included files.
 
 								*:search-args*
 Common arguments for the commands above:
