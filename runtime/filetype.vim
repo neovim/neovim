@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2022 Jul 5
+" Last Change:	2022 Sep 09
 
 " Only run this if enabled
 if !exists("do_legacy_filetype")
