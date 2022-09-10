@@ -75,7 +75,7 @@ vim.health.report_error({msg} [, {advice}])             *vim.health.report_error
 Create a healthcheck                                    *health-dev*
 
 Healthchecks are functions that check the user environment, configuration, or
-any other prerequisities that a plugin cares about. Nvim ships with
+any other prerequisites that a plugin cares about. Nvim ships with
 healthchecks in:
         - $VIMRUNTIME/autoload/health/
         - $VIMRUNTIME/lua/vim/lsp/health.lua

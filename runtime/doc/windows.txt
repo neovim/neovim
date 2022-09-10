@@ -148,7 +148,7 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 		Note: CTRL-S does not work on all terminals and might block
 		further input, use CTRL-Q to get going again.
 		Also see |++opt| and |+cmd|.
-							*E242*
+							*E242* *E1159*
 		Be careful when splitting a window in an autocommand, it may
 		mess up the window layout if this happens while making other
 		window layout changes.
@@ -291,9 +291,8 @@ Closing a window
 :{count}q[uit]						*:count_quit*
 CTRL-W q						*CTRL-W_q*
 CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
-		Without {count}: Quit the current window. If {count} is
-		given quit the {count} window
-
+		Without {count}: Quit the current window.  If {count} is
+		given quit the {count} window.
 							*edit-window*
 		When quitting the last edit window (not counting help or
 		preview windows), exit Vim.
@@ -352,7 +351,7 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
 		window, but that does not work, because the CTRL-C cancels the
 		command.
 
-                                                                *:hide*
+							*:hide*
 :hid[e]
 :{count}hid[e]
 		Without {count}: Quit the current window, unless it is the
@@ -751,6 +750,7 @@ can also get to them with the buffer list commands, like ":bnext".
 			the current window.
 			{cmd} can contain '|' to concatenate several commands.
 			{cmd} must not open or close windows or reorder them.
+
 			Also see |:tabdo|, |:argdo|, |:bufdo|, |:cdo|, |:ldo|,
 			|:cfdo| and |:lfdo|.
 
@@ -778,6 +778,7 @@ can also get to them with the buffer list commands, like ":bnext".
 			autocommand event is disabled by adding it to
 			'eventignore'.  This considerably speeds up editing
 			each buffer.
+
 			Also see |:tabdo|, |:argdo|, |:windo|, |:cdo|, |:ldo|,
 			|:cfdo| and |:lfdo|.
 

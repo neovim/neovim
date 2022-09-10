@@ -214,7 +214,7 @@ It is allowed to define another function inside a function body.
 You can provide default values for positional named arguments.  This makes
 them optional for function calls.  When a positional argument is not
 specified at a call, the default expression is used to initialize it.
-This only works for functions declared with |:function|, not for
+This only works for functions declared with `:function`, not for
 lambda expressions |expr-lambda|.
 
 Example: >

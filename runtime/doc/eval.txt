@@ -457,7 +457,7 @@ String automatically.  Thus the String '4' and the number 4 will find the same
 entry.  Note that the String '04' and the Number 04 are different, since the
 Number will be converted to the String '4', leading zeros are dropped.  The
 empty string can also be used as a key.
-						*literal-Dict*
+						*literal-Dict* *#{}*
 To avoid having to put quotes around every key the #{} form can be used.  This
 does require the key to consist only of ASCII letters, digits, '-' and '_'.
 Example: >
@@ -681,7 +681,7 @@ similar to -1. >
 	:let shortblob = myblob[2:2]	" Blob with one byte: 0z22
 	:let otherblob = myblob[:]	" make a copy of the Blob
 
-If the first index is beyond the last byte of the Blob or the second byte is
+If the first index is beyond the last byte of the Blob or the second index is
 before the first index, the result is an empty Blob.  There is no error
 message.
 
@@ -704,8 +704,8 @@ The length of the replaced bytes must be exactly the same as the value
 provided. *E972*
 
 To change part of a blob you can specify the first and last byte to be
-modified.  The value must at least have the number of bytes in the range: >
-	:let blob[3:5] = [3, 4, 5]
+modified.  The value must have the same number of bytes in the range: >
+	:let blob[3:5] = 0z334455
 
 You can also use the functions |add()|, |remove()| and |insert()|.
 
@@ -1228,7 +1228,10 @@ And NOT: >
 	\ ->map(mapexpr)
 	\ ->sort()
 	\ ->join()
-<
+
+When using the lambda form there must be no white space between the } and the
+(.
+
 
 							*expr9*
 number

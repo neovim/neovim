@@ -861,10 +861,9 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// @param[in]  from  What characters to replace.
 /// @param[in]  from_len  Length of the "from" argument.
 /// @param[out]  bufp  Location where results were saved in case of success (allocated).
-///                    if *bufp is non-NULL, it will be used directly. it is
-///                    assumed to be 128 bytes long (enough for transcoding LHS
-///                    of mapping)
-///                    Will be set to NULL in case of failure.
+///                    If `*bufp` is non-NULL, it will be used directly,
+///                    and is assumed to be 128 bytes long (enough for transcoding LHS of mapping),
+///                    and will be set to NULL in case of failure.
 /// @param[in]  flags  REPTERM_FROM_PART    see above
 ///                    REPTERM_DO_LT        also translate <lt>
 ///                    REPTERM_NO_SPECIAL   do not accept <key> notation
@@ -872,7 +871,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// @param[out]  did_simplify  set when some <C-H> code was simplied, unless it is NULL.
 /// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see CPO_TO_CPO_FLAGS.
 ///
-/// @return  Pointer to an allocated memory, which is also saved to "bufp".
+/// @return  The same as what `*bufp` is set to.
 char *replace_termcodes(const char *const from, const size_t from_len, char **const bufp,
                         const int flags, bool *const did_simplify, const int cpo_flags)
   FUNC_ATTR_NONNULL_ARG(1, 3)

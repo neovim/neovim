@@ -128,7 +128,7 @@ void do_debug(char *cmd)
       ignore_script = true;
     }
 
-    // don't debug any function call, e.g. from an expresion mapping
+    // don't debug any function call, e.g. from an expression mapping
     n = debug_break_level;
     debug_break_level = -1;
 

@@ -220,7 +220,7 @@ a tab page share this directory except for windows with a window-local
 directory. Any new windows opened in this tab page will use this directory as
 the current working directory. Using a `:cd` command in a tab page will not
 change the working directory of tab pages which have a tab local directory.
-When the global working directory is changed using the ":cd" command in a tab
+When the global working directory is changed using the `:cd` command in a tab
 page, it will also change the current tab page working directory.
 
 

@@ -176,15 +176,12 @@ describe('mapset()', function()
 
   it('can restore mapping description from the dict returned by maparg()', function()
     meths.set_keymap('n', 'lhs', 'rhs', {desc = 'map description'})
-    eq('\nn  lhs           rhs\n                 map description',
-       helpers.exec_capture("nmap lhs"))
+    eq('\nn  lhs           rhs\n                 map description', exec_capture("nmap lhs"))
     local mapargs = funcs.maparg('lhs', 'n', false, true)
     meths.set_keymap('n', 'lhs', 'rhs', {desc = 'MAP DESCRIPTION'})
-    eq('\nn  lhs           rhs\n                 MAP DESCRIPTION',
-       helpers.exec_capture("nmap lhs"))
+    eq('\nn  lhs           rhs\n                 MAP DESCRIPTION', exec_capture("nmap lhs"))
     funcs.mapset('n', false, mapargs)
-    eq('\nn  lhs           rhs\n                 map description',
-       helpers.exec_capture("nmap lhs"))
+    eq('\nn  lhs           rhs\n                 map description', exec_capture("nmap lhs"))
   end)
 
   it('can restore "replace_keycodes" from the dict returned by maparg()', function()
