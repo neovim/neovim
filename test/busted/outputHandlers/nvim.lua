@@ -173,7 +173,14 @@ return function(options)
     if randomseed then
       io.write(randomizeString:format(randomseed))
     end
-    io.write(globalSetup)
+    if os.getenv('DEBUG') then
+      io.write(globalSetup)
+      io.write('\n')
+      local buf = io.popen('env', 'r')
+      local output = buf:read('*a')
+      io.write(output)
+      io.write('\n')
+    end
     io.flush()
 
     return nil, true

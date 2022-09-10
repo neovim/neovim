@@ -73,3 +73,6 @@ tags
 
 # vim patches
 /vim-*.patch
+
+# ctest artifcats
+Testing
