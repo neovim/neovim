@@ -1385,6 +1385,7 @@ local filename = {
   ['.gitconfig'] = 'gitconfig',
   ['.gitmodules'] = 'gitconfig',
   ['.gitattributes'] = 'gitattributes',
+  ['.gitignore'] = 'gitignore',
   ['gitolite.conf'] = 'gitolite',
   ['git-rebase-todo'] = 'gitrebase',
   gkrellmrc = 'gkrellmrc',
@@ -1833,6 +1834,13 @@ local pattern = {
   ['.*/git/attributes'] = function(path, bufnr)
     if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/attributes') then
       return 'gitattributes'
+    end
+  end,
+  ['.*%.git/info/exclude'] = 'gitignore',
+  ['.*/%.config/git/ignore'] = 'gitignore',
+  ['.*/git/ignore'] = function(path, bufnr)
+    if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/ignore') then
+      return 'gitignore'
     end
   end,
   ['%.gitsendemail%.msg%.......'] = 'gitsendemail',
