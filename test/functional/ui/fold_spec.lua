@@ -1895,6 +1895,93 @@ describe("folded lines", function()
         ]])
       end
     end)
+
+    it('disables fold level digits #17446', function()
+      funcs.setline(1, 'function a() {')
+      funcs.setline(2, '	function b() {')
+      funcs.setline(3, '		function c() {')
+      funcs.setline(4, '			function d() {')
+      funcs.setline(5, '			}')
+      funcs.setline(6, '		}')
+      funcs.setline(7, '	}')
+      funcs.setline(8, '}')
+
+      command('set foldcolumn=auto foldlevel=999 foldmethod=indent')
+      if multigrid then
+        screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [3:---------------------------------------------]|
+          ## grid 2
+            {7: }^function a() {                              |
+            {7:-}        function b() {                      |
+            {7:-}                function c() {              |
+            {7:-}                        function d() {      |
+            {7:3}                        }                   |
+            {7:2}                }                           |
+            {7:│}        }                                   |
+
+          ## grid 3
+                                                         |
+        ]])
+      else
+        screen:expect([[
+          {7: }^function a() {                              |
+          {7:-}        function b() {                      |
+          {7:-}                function c() {              |
+          {7:-}                        function d() {      |
+          {7:3}                        }                   |
+          {7:2}                }                           |
+          {7:│}        }                                   |
+                                                       |
+        ]])
+      end
+
+      command('set foldoptions=nodigits')
+      if multigrid then
+        screen:expect([[
+          ## grid 1
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [2:---------------------------------------------]|
+            [3:---------------------------------------------]|
+          ## grid 2
+            {7: }^function a() {                              |
+            {7:-}        function b() {                      |
+            {7:-}                function c() {              |
+            {7:-}                        function d() {      |
+            {7:│}                        }                   |
+            {7:│}                }                           |
+            {7:│}        }                                   |
+
+          ## grid 3
+                                                         |
+        ]])
+      else
+        screen:expect([[
+          {7: }^function a() {                              |
+          {7:-}        function b() {                      |
+          {7:-}                function c() {              |
+          {7:-}                        function d() {      |
+          {7:│}                        }                   |
+          {7:│}                }                           |
+          {7:│}        }                                   |
+                                                       |
+        ]])
+      end
+
+      assert_alive()
+    end)
   end
 
   describe("with ext_multigrid", function()

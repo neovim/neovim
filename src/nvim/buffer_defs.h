@@ -183,6 +183,8 @@ typedef struct {
 #define w_p_fdt w_onebuf_opt.wo_fdt   // 'foldtext'
   char *wo_fmr;
 #define w_p_fmr w_onebuf_opt.wo_fmr    // 'foldmarker'
+  char *wo_fop;
+#define w_p_fop w_onebuf_opt.wo_fop    // 'foldoptions'
   int wo_lbr;
 #define w_p_lbr w_onebuf_opt.wo_lbr    // 'linebreak'
   int wo_list;
@@ -1327,6 +1329,7 @@ struct window_S {
   uint32_t w_p_wbr_flags;           // flags for 'winbar'
   uint32_t w_p_fde_flags;           // flags for 'foldexpr'
   uint32_t w_p_fdt_flags;           // flags for 'foldtext'
+  uint32_t w_p_fop_flags;           // flags for 'foldoptions'
   int *w_p_cc_cols;                 // array of columns to highlight or NULL
   uint8_t w_p_culopt_flags;         // flags for cursorline highlighting
   long w_p_siso;                    // 'sidescrolloff' local value

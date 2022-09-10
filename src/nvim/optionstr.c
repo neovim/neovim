@@ -112,6 +112,7 @@ static char *(p_icm_values[]) = { "nosplit", "split", NULL };
 static char *(p_jop_values[]) = { "stack", "view", NULL };
 static char *(p_tpf_values[]) = { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NULL };
 static char *(p_rdb_values[]) = { "compositor", "nothrottle", "invalid", "nodelta", NULL };
+static char *(p_fop_values[]) = { "nodigits", NULL };
 
 /// All possible flags for 'shm'.
 static char SHM_ALL[] = { SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW,
@@ -740,6 +741,10 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     }
   } else if (gvarp == &p_nf) {  // 'nrformats'
     if (check_opt_strings(*varp, p_nf_values, true) != OK) {
+      errmsg = e_invarg;
+    }
+  } else if (varp == &curwin->w_p_fop) {  // 'foldoptions'
+    if (opt_strings_flags(curwin->w_p_fop, p_fop_values, &curwin->w_p_fop_flags, true) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_ssop) {  // 'sessionoptions'

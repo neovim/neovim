@@ -534,6 +534,7 @@ EXTERN unsigned fdo_flags;
 EXTERN char *p_fex;             ///< 'formatexpr'
 EXTERN char *p_flp;             ///< 'formatlistpat'
 EXTERN char *p_fo;              ///< 'formatoptions'
+#define FOP_NODIGITS           0x01
 EXTERN char_u *p_fp;            // 'formatprg'
 EXTERN int p_fs;                // 'fsync'
 EXTERN int p_gd;                // 'gdefault'
@@ -943,6 +944,7 @@ enum {
   WV_FDM,
   WV_FML,
   WV_FDN,
+  WV_FOP,
   WV_FDE,
   WV_FDT,
   WV_FMR,

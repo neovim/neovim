@@ -862,6 +862,14 @@ return {
       defaults={if_true="0"}
     },
     {
+      full_name='foldoptions', abbreviation='fop',
+      short_desc=N_("fold column options"),
+      type='string', list='onecomma', scope={'window'},
+      deny_duplicates=true,
+      redraw={'current_window'},
+      defaults={if_true=''}
+    },
+    {
       full_name='foldenable', abbreviation='fen',
       short_desc=N_("set to display all folds open"),
       type='bool', scope={'window'},

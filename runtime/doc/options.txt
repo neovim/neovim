@@ -2671,6 +2671,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	To close folds you can re-apply 'foldlevel' with the |zx| command or
 	set the 'foldclose' option to "all".
 
+    						      *'foldoptions'* *'fop'*
+'foldoptions' 'fop'	string (default "")
+			local to window
+	List of words that change the behavor of the |foldcolumn|.
+          nodigits      Disable digits shown to indicate the nesting level.
+
 						*'foldtext'* *'fdt'*
 'foldtext' 'fdt'	string (default: "foldtext()")
 			local to window

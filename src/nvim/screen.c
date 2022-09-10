@@ -192,6 +192,7 @@ size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
   int symbol = 0;
   int len = 0;
   bool closed = foldinfo.fi_lines > 0;
+  bool no_digits = wp->w_p_fop_flags & FOP_NODIGITS;
   // Init to all spaces.
   memset(p, ' ', MAX_MCO * (size_t)fdc + 1);
 
@@ -208,7 +209,7 @@ size_t fill_foldcolumn(char_u *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
     if (foldinfo.fi_lnum == lnum
         && first_level + i >= foldinfo.fi_low_level) {
       symbol = wp->w_p_fcs_chars.foldopen;
-    } else if (first_level == 1) {
+    } else if (first_level == 1 || (first_level >= 1 && no_digits)) {
       symbol = wp->w_p_fcs_chars.foldsep;
     } else if (first_level + i <= 9) {
       symbol = '0' + first_level + i;

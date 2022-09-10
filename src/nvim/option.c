@@ -3534,6 +3534,8 @@ int makefoldset(FILE *fd)
       || put_setnum(fd, "setlocal", "fdl", &curwin->w_p_fdl) == FAIL
       || put_setnum(fd, "setlocal", "fml", &curwin->w_p_fml) == FAIL
       || put_setnum(fd, "setlocal", "fdn", &curwin->w_p_fdn) == FAIL
+      || put_setstring(fd, "setlocal", "fop", &curwin->w_p_fop, 0)
+      == FAIL
       || put_setbool(fd, "setlocal", "fen", curwin->w_p_fen) == FAIL) {
     return FAIL;
   }
@@ -3962,6 +3964,8 @@ static char_u *get_varp(vimoption_T *p)
     return (char_u *)&(curwin->w_p_fml);
   case PV_FDN:
     return (char_u *)&(curwin->w_p_fdn);
+  case PV_FOP:
+    return (char_u *)&(curwin->w_p_fop);
   case PV_FDE:
     return (char_u *)&(curwin->w_p_fde);
   case PV_FDT:
@@ -4235,6 +4239,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdn = from->wo_fdn;
   to->wo_fde = copy_option_val(from->wo_fde);
   to->wo_fdt = copy_option_val(from->wo_fdt);
+  to->wo_fop = copy_option_val(from->wo_fop);
   to->wo_fmr = copy_option_val(from->wo_fmr);
   to->wo_scl = copy_option_val(from->wo_scl);
   to->wo_winhl = copy_option_val(from->wo_winhl);
@@ -4263,6 +4268,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_fde);
   check_string_option(&wop->wo_fdt);
   check_string_option(&wop->wo_fmr);
+  check_string_option(&wop->wo_fop);
   check_string_option(&wop->wo_scl);
   check_string_option(&wop->wo_rlc);
   check_string_option(&wop->wo_sbr);
@@ -4289,6 +4295,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_fde);
   clear_string_option(&wop->wo_fdt);
   clear_string_option(&wop->wo_fmr);
+  clear_string_option(&wop->wo_fop);
   clear_string_option(&wop->wo_scl);
   clear_string_option(&wop->wo_rlc);
   clear_string_option(&wop->wo_sbr);
