@@ -1163,20 +1163,19 @@ function lsp.start_client(config)
         or uninitialized_clients[client_id]
       active_clients[client_id] = nil
       uninitialized_clients[client_id] = nil
+
+      -- Client can be absent if executable starts, but initialize fails
+      -- init/attach won't have happened
+      if client then
+        changetracking.reset(client)
+      end
+      if code ~= 0 or (signal ~= 0 and signal ~= 15) then
+        local msg =
+          string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
+        vim.notify(msg, vim.log.levels.WARN)
+      end
     end)
 
-    -- Client can be absent if executable starts, but initialize fails
-    -- init/attach won't have happened
-    if client then
-      changetracking.reset(client)
-    end
-    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-      local msg =
-        string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
-      vim.schedule(function()
-        vim.notify(msg, vim.log.levels.WARN)
-      end)
-    end
   end
 
   -- Start the RPC client.
