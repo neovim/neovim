@@ -20,7 +20,7 @@ commands can be executed with the |:normal| command.
 
 The function name must start with an uppercase letter, to avoid confusion with
 builtin functions.  To prevent from using the same name in different scripts
-make them script-local.  If you do use a global function the avoid obvious,
+make them script-local.  If you do use a global function then avoid obvious,
 short names.  A good habit is to start the function name with the name of the
 script, e.g., "HTMLcolor()".
 

@@ -3,6 +3,7 @@
 " Maintainer:		Eli Parra <eli@elzr.com> https://github.com/elzr/vim-json
 " Last Change:          2020 Aug 30
 "   https://github.com/jakar/vim-json/commit/20b650e22aa750c4ab6a66aa646bdd95d7cd548a#diff-e81fc111b2052e306d126bd9989f7b7c
+"                       2022 Sep 07: b:undo_indent added by Doug Kearns
 " Original Author:	Rogerz Zhang <rogerz.zhang at gmail.com> http://github.com/rogerz/vim-json
 " Acknowledgement:      Based off of vim-javascript maintained by Darrick Wiebe 
 "                       http://www.vim.org/scripts/script.php?script_id=2765
@@ -21,6 +22,8 @@ setlocal nosmartindent
 " Now, set up our indentation expression and keys that trigger it.
 setlocal indentexpr=GetJSONIndent(v:lnum)
 setlocal indentkeys=0{,0},0),0[,0],!^F,o,O,e
+
+let b:undo_indent = "setl inde< indk< si<"
 
 " Only define the function once.
 if exists("*GetJSONIndent")
