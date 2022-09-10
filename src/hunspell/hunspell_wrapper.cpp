@@ -21,6 +21,11 @@ void hunspell_add_dic(hunspell_T *pHunspell, const char *dicpath)
   reinterpret_cast<Hunspell*>(pHunspell)->add_dic(dicpath);
 }
 
+void hunspell_add_word(hunspell_T *pHunspell, const char *word)
+{
+  reinterpret_cast<Hunspell*>(pHunspell)->add(string(word));
+}
+
 bool hunspell_is_wordchar(hunspell_T *handle, const char *p)
 {
   if (!handle || !p) {

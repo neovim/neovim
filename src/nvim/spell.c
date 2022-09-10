@@ -325,6 +325,10 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
     // has been cleared.
     if (mi.mi_lp->lp_slang->sl_hunspell != NULL
         && wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+      if (mi.mi_end == mi.mi_word) {
+        MB_PTR_ADV(mi.mi_end);
+      }
+
       int spell_flags = 0;
       if (hunspell_spell_flags(mi.mi_lp->lp_slang->sl_hunspell, (char *)mi.mi_word,
                                (size_t)(mi.mi_end - mi.mi_word), &spell_flags)) {
@@ -1529,6 +1533,7 @@ static void spell_hunspell_add_cb(char *path, void *ud)
 {
   spelload_T *sl = (spelload_T *)ud;
   if (sl->sl_slang->sl_hunspell != NULL) {
+    DLOG("Adding %s", path);
     hunspell_add_dic(sl->sl_slang->sl_hunspell, path);
   }
 }
@@ -1592,6 +1597,7 @@ static void spell_load_lang(win_T *wp, char *lang)
     if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
       // TODO(vigoux): probably not right and we'll have to load the .add files
       STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add");
+      DLOG("Will try to load %s", fname_enc);
       do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_hunspell_add_cb, &sl);
       sl.sl_slang->sl_next = first_lang;
       first_lang = sl.sl_slang;
@@ -2485,6 +2491,10 @@ bool spell_iswordp(const char_u *p, const win_T *wp)
 bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 {
   int c = utf_ptr2char((char *)p);
+  if (wp->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+    return iswalnum(c);
+  }
+
   if (c > 255) {
     return spell_mb_isword_class(mb_get_class(p), wp);
   }

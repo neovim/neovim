@@ -226,17 +226,22 @@
 //                          stored as an offset to the previous number in as
 //                          few bytes as possible, see offset2bytes())
 
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <wctype.h>
 
+#include "hunspell/hunspell_wrapper.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/fileio.h"
+#include "nvim/globals.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
@@ -5506,6 +5511,41 @@ void ex_spell(exarg_T *eap)
                  eap->cmdidx == CMD_spellundo);
 }
 
+void spell_hunspell_format_dic(const char *path)
+{
+  kvec_t(char *) words = KV_INITIAL_VALUE;
+  char line[MAXWLEN * 2];
+  FILE *fd = os_fopen(path, "r+");
+
+  bool first_line = true;
+  if (fd != NULL) {
+    // First read the amount of lines
+    while (!vim_fgets((char_u *)line, MAXWLEN * 2, fd)) {
+      if (first_line && *line >= '0' && *line <= '9') {
+        // Ignore the first line
+        // TODO(vigoux): maybe use that to reserve the correct amount of memory
+        // for the words array ?
+        first_line = false;
+      } else if (STRLEN(line) > 1 && *line != '#') {
+        kv_push(words, xstrdup(line));
+      }
+    }
+
+    if (fseek(fd, 0, SEEK_SET) != 0) {
+      PERROR(_("Seek error in spellfile"));
+      return;
+    }
+    fprintf(fd, "%lu\n", kv_size(words));
+    for (size_t i = 0; i < kv_size(words); i++) {
+      fprintf(fd, "%s", kv_A(words, i));
+      xfree(kv_A(words, i));
+    }
+
+    fclose(fd);
+    kv_destroy(words);
+  }
+}
+
 /// Add "word[len]" to 'spellfile' as a good or bad word.
 ///
 /// @param what  SPELL_ADD_ values
@@ -5640,6 +5680,8 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
     if (fd == NULL) {
       semsg(_(e_notopen), fname);
     } else {
+      // TODO(vigoux): for spo=hunspell the ?/! is recognized only if it is set
+      // accordingly in the affix file. So either we'll have to
       if (what == SPELL_ADD_BAD) {
         fprintf(fd, "%.*s/!\n", len, word);
       } else if (what == SPELL_ADD_RARE) {
@@ -5655,8 +5697,28 @@ void spell_add_word(char_u *word, int len, SpellAddType what, int idx, bool undo
   }
 
   if (fd != NULL) {
-    // Update the .add.spl file.
-    mkspell(1, &fname, false, true, true);
+    // Update the spellchecking
+    // For hunspell, just add the word to the runtime session to save time
+    // For legacy engine, perform mkspell, which reloads all the spellchecking
+    if (curwin->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+      if (idx == 0) {
+        // When `zG` or `zW` add the word to the internal word list
+        for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
+          langp_T *lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
+          if (lp->lp_slang->sl_hunspell != NULL) {
+            // TODO(vigoux): When adding a bad word, we'll have to remove
+            // instead of add
+            hunspell_add_word(lp->lp_slang->sl_hunspell, (char *)word);
+          }
+        }
+      } else {
+        spell_hunspell_format_dic(fname);
+        spell_reload();
+      }
+    } else {
+      // Update the .add.spl file.
+      mkspell(1, &fname, false, true, true);
+    }
 
     // If the .add file is edited somewhere, reload it.
     if (buf != NULL) {
@@ -5722,13 +5784,19 @@ static void init_spellfile(void)
                        "/%.*s", (int)(lend - lstart), lstart);
         }
         l = (int)STRLEN(buf);
-        fname = (char_u *)LANGP_ENTRY(curwin->w_s->b_langp, 0)
-                ->lp_slang->sl_fname;
-        vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".%s.add",
-                     ((fname != NULL
-                       && strstr(path_tail((char *)fname), ".ascii.") != NULL)
-                      ? "ascii"
-                      : (const char *)spell_enc()));
+        slang_T *sl = LANGP_ENTRY(curwin->w_s->b_langp, 0)
+                      ->lp_slang;
+        if (sl->sl_hunspell != NULL && curwin->w_s->b_p_spo_flags & SPO_HUNSPELL) {
+          // When using hunspell, only output the word on <lang>.add
+          vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".add");
+        } else {
+          fname = (char_u *)sl->sl_fname;
+          vim_snprintf((char *)buf + l, MAXPATHL - (size_t)l, ".%s.add",
+                       ((fname != NULL
+                         && strstr(path_tail((char *)fname), ".ascii.") != NULL)
+                        ? "ascii"
+                        : (const char *)spell_enc()));
+        }
         set_option_value_give_err("spellfile", 0L, (const char *)buf, OPT_LOCAL);
         break;
       }
