@@ -1137,8 +1137,9 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
   } else if (varp == &(curwin->w_s->b_p_spo)) {  // 'spelloptions'
     if (opt_strings_flags(curwin->w_s->b_p_spo, p_spo_values, &(curwin->w_s->b_p_spo_flags),
                           true) != OK) {
-      spell_reload();
       errmsg = e_invarg;
+    } else {
+      spell_reload();
     }
   } else if (varp == &p_sps) {  // 'spellsuggest'
     if (spell_check_sps() != OK) {

@@ -1516,8 +1516,11 @@ static void spell_hunspell_cb(char *path, void *ud)
   STRCPY(aff_path + STRLEN(path) - 3, "aff");
 
   hunspell_T *h = hunspell_create(aff_path, path);
-  sl->sl_slang = slang_alloc((char *)sl->sl_lang);
-  sl->sl_slang->sl_hunspell = h;
+  if (h != NULL) {
+    sl->sl_slang = slang_alloc((char *)sl->sl_lang);
+    sl->sl_slang->sl_hunspell = h;
+    sl->sl_slang->sl_fname = xstrdup(aff_path);
+  }
 
   xfree(aff_path);
 }
