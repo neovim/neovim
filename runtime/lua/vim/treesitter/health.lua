@@ -3,7 +3,7 @@ local ts = vim.treesitter
 
 --- Lists the parsers currently installed
 ---
----@return A list of parsers
+---@return string[] list of parser files
 function M.list_parsers()
   return vim.api.nvim_get_runtime_file('parser/*', true)
 end

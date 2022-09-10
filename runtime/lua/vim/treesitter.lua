@@ -25,15 +25,15 @@ setmetatable(M, {
   end,
 })
 
---- Creates a new parser.
+--- Creates a new parser
 ---
---- It is not recommended to use this, use vim.treesitter.get_parser() instead.
+--- It is not recommended to use this; use |get_parser()| instead.
 ---
 ---@param bufnr string Buffer the parser will be tied to (0 for current buffer)
 ---@param lang string Language of the parser
----@param opts table|nil Options to pass to the created language tree
+---@param opts (table|nil) Options to pass to the created language tree
 ---
----@returns table Created parser object
+---@return LanguageTree |LanguageTree| object to use for parsing
 function M._create_parser(bufnr, lang, opts)
   language.require_language(lang)
   if bufnr == 0 then
@@ -73,16 +73,15 @@ function M._create_parser(bufnr, lang, opts)
   return self
 end
 
---- Gets the parser for this bufnr / ft combination.
+--- Returns the parser for a specific buffer and filetype and attaches it to the buffer
 ---
---- If needed this will create the parser.
---- Unconditionally attach the provided callback
+--- If needed, this will create the parser.
 ---
----@param bufnr number|nil Buffer the parser should be tied to (default: current buffer)
----@param lang string |nil Filetype of this parser (default: buffer filetype)
----@param opts table|nil Options to pass to the created language tree
+---@param bufnr (number|nil) Buffer the parser should be tied to (default: current buffer)
+---@param lang (string|nil) Filetype of this parser (default: buffer filetype)
+---@param opts (table|nil) Options to pass to the created language tree
 ---
----@returns table Parser object
+---@return LanguageTree |LanguageTree| object to use for parsing
 function M.get_parser(bufnr, lang, opts)
   opts = opts or {}
 
@@ -102,11 +101,13 @@ function M.get_parser(bufnr, lang, opts)
   return parsers[bufnr]
 end
 
---- Gets a string parser
+--- Returns a string parser
 ---
----@param str The string to parse
----@param lang The language of this string
----@param opts Options to pass to the created language tree
+---@param str string Text to parse
+---@param lang string Language of this string
+---@param opts (table|nil) Options to pass to the created language tree
+---
+---@return LanguageTree |LanguageTree| object to use for parsing
 function M.get_string_parser(str, lang, opts)
   vim.validate({
     str = { str, 'string' },
@@ -119,10 +120,10 @@ end
 
 --- Determines whether a node is the ancestor of another
 ---
----@param dest table Possible ancestor
----@param source table Possible descendant node
+---@param dest userdata Possible ancestor |tsnode|
+---@param source userdata Possible descendant |tsnode|
 ---
----@returns (boolean) True if dest is an ancestor of source
+---@return boolean True if {dest} is an ancestor of {source}
 function M.is_ancestor(dest, source)
   if not (dest and source) then
     return false
@@ -140,11 +141,11 @@ function M.is_ancestor(dest, source)
   return false
 end
 
---- Get the node's range or unpack a range table
+--- Returns the node's range or an unpacked range table
 ---
----@param node_or_range table
+---@param node_or_range (userdata|table) |tsnode| or table of positions
 ---
----@returns table start_row, start_col, end_row, end_col
+---@return table `{ start_row, start_col, end_row, end_col }`
 function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
     return unpack(node_or_range)
@@ -155,11 +156,11 @@ end
 
 ---Determines whether (line, col) position is in node range
 ---
----@param node table Node defining the range
+---@param node userdata |tsnode| defining the range
 ---@param line number Line (0-based)
 ---@param col number Column (0-based)
 ---
----@returns (boolean) True if the position is in node range
+---@return boolean True if the position is in node range
 function M.is_in_node_range(node, line, col)
   local start_line, start_col, end_line, end_col = M.get_node_range(node)
   if line >= start_line and line <= end_line then
@@ -178,10 +179,10 @@ function M.is_in_node_range(node, line, col)
 end
 
 ---Determines if a node contains a range
----@param node table
+---@param node userdata |tsnode|
 ---@param range table
 ---
----@returns (boolean) True if the node contains the range
+---@return boolean True if the {node} contains the {range}
 function M.node_contains(node, range)
   local start_row, start_col, end_row, end_col = node:range()
   local start_fits = start_row < range[1] or (start_row == range[1] and start_col <= range[2])
@@ -190,7 +191,8 @@ function M.node_contains(node, range)
   return start_fits and end_fits
 end
 
----Gets a list of captures for a given cursor position
+---Returns a list of highlight captures at the given position
+--
 ---@param bufnr number Buffer number (0 for current buffer)
 ---@param row number Position row
 ---@param col number Position column
@@ -199,7 +201,7 @@ end
 ---@param row number Position row
 ---@param col number Position column
 ---
----@returns (table) Table of captures
+---@return table[] Captures of the form `{ capture = "capture name", priority = capture priority }`
 function M.get_captures_at_position(bufnr, row, col)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -246,11 +248,11 @@ function M.get_captures_at_position(bufnr, row, col)
   return matches
 end
 
----Gets a list of captures under the cursor
+---Returns a list of highlight capture names under the cursor
 ---
----@param winnr number|nil Window handle or 0 for current window (default)
+---@param winnr (number|nil) Window handle or 0 for current window (default)
 ---
----@returns (table) Named node under the cursor
+---@return string[] List of capture names
 function M.get_captures_at_cursor(winnr)
   winnr = winnr or 0
   local bufnr = a.nvim_win_get_buf(winnr)
@@ -267,7 +269,7 @@ function M.get_captures_at_cursor(winnr)
   return captures
 end
 
---- Gets the smallest named node at position
+--- Returns the smallest named node at the given position
 ---
 ---@param bufnr number Buffer number (0 for current buffer)
 ---@param row number Position row
@@ -275,7 +277,7 @@ end
 ---@param opts table Optional keyword arguments:
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
----@returns (table) Named node under the cursor
+---@return userdata |tsnode| under the cursor
 function M.get_node_at_position(bufnr, row, col, opts)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
@@ -290,11 +292,11 @@ function M.get_node_at_position(bufnr, row, col, opts)
   return root_lang_tree:named_node_for_range(ts_range, opts)
 end
 
---- Gets the smallest named node under the cursor
+--- Returns the smallest named node under the cursor
 ---
----@param winnr number|nil Window handle or 0 for current window (default)
+---@param winnr (number|nil) Window handle or 0 for current window (default)
 ---
----@returns (string) Named node under the cursor
+---@return string Name of node under the cursor
 function M.get_node_at_cursor(winnr)
   winnr = winnr or 0
   local bufnr = a.nvim_win_get_buf(winnr)
@@ -304,15 +306,14 @@ function M.get_node_at_cursor(winnr)
     :type()
 end
 
---- Start treesitter highlighting for a buffer
+--- Starts treesitter highlighting for a buffer
 ---
---- Can be used in an ftplugin or FileType autocommand
+--- Can be used in an ftplugin or FileType autocommand.
 ---
 --- Note: By default, disables regex syntax highlighting, which may be required for some plugins.
 --- In this case, add ``vim.bo.syntax = 'on'`` after the call to `start`.
 ---
 --- Example:
----
 --- <pre>
 --- vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
 ---     callback = function(args)
@@ -322,8 +323,8 @@ end
 --- })
 --- </pre>
 ---
----@param bufnr number|nil Buffer to be highlighted (default: current buffer)
----@param lang string|nil Language of the parser (default: buffer filetype)
+---@param bufnr (number|nil) Buffer to be highlighted (default: current buffer)
+---@param lang (string|nil) Language of the parser (default: buffer filetype)
 function M.start(bufnr, lang)
   bufnr = bufnr or a.nvim_get_current_buf()
 
@@ -334,9 +335,9 @@ function M.start(bufnr, lang)
   vim.b[bufnr].ts_highlight = true
 end
 
----Stop treesitter highlighting for a buffer
+--- Stops treesitter highlighting for a buffer
 ---
----@param bufnr number|nil Buffer to stop highlighting (default: current buffer)
+---@param bufnr (number|nil) Buffer to stop highlighting (default: current buffer)
 function M.stop(bufnr)
   bufnr = bufnr or a.nvim_get_current_buf()
 
