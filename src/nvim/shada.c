@@ -1053,7 +1053,7 @@ static buf_T *find_buffer(khash_t(fnamebufs) *const fname_bufs, const char *cons
   kh_key(fname_bufs, k) = xstrdup(fname);
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ffname != NULL) {
-      if (FNAMECMP(fname, buf->b_ffname) == 0) {
+      if (path_fnamecmp(fname, buf->b_ffname) == 0) {
         kh_val(fname_bufs, k) = buf;
         return buf;
       }
@@ -3098,7 +3098,7 @@ shada_write_file_nomerge: {}
         }
       }
 #endif
-      if (vim_rename((char_u *)tempname, (char_u *)fname) == -1) {
+      if (vim_rename(tempname, fname) == -1) {
         semsg(_(RNERR "Can't rename ShaDa file from %s to %s!"),
               tempname, fname);
       } else {

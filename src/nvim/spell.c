@@ -369,7 +369,7 @@ size_t spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol, bool docou
         int r = vim_regexec(&regmatch, (char *)ptr, 0);
         wp->w_s->b_cap_prog = regmatch.regprog;
         if (r) {
-          *capcol = (int)(regmatch.endp[0] - ptr);
+          *capcol = (int)(regmatch.endp[0] - (char *)ptr);
         }
       }
 
@@ -1902,7 +1902,7 @@ char *did_set_spelllang(win_T *wp)
     // If the name ends in ".spl" use it as the name of the spell file.
     // If there is a region name let "region" point to it and remove it
     // from the name.
-    if (len > 4 && FNAMECMP(lang + len - 4, ".spl") == 0) {
+    if (len > 4 && path_fnamecmp(lang + len - 4, ".spl") == 0) {
       filename = true;
 
       // Locate a region and remove it from the file name.
@@ -2548,7 +2548,7 @@ bool check_need_cap(linenr_T lnum, colnr_T col)
         break;
       }
       if (vim_regexec(&regmatch, (char *)p, 0)
-          && regmatch.endp[0] == line + endcol) {
+          && (char_u *)regmatch.endp[0] == line + endcol) {
         need_cap = true;
         break;
       }
@@ -3407,7 +3407,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, Direction *dir,
       if (!HASHITEM_EMPTY(hi)) {
         vim_snprintf((char *)IObuff, IOSIZE, "%s\t%d",
                      tw, HI2WC(hi)->wc_count);
-        p = IObuff;
+        p = (char_u *)IObuff;
       }
     }
 

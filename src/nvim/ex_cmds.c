@@ -559,10 +559,10 @@ void ex_sort(exarg_T *eap)
     end_col = len;
     if (regmatch.regprog != NULL && vim_regexec(&regmatch, s, 0)) {
       if (sort_rx) {
-        start_col = (colnr_T)(regmatch.startp[0] - (char_u *)s);
-        end_col = (colnr_T)(regmatch.endp[0] - (char_u *)s);
+        start_col = (colnr_T)(regmatch.startp[0] - s);
+        end_col = (colnr_T)(regmatch.endp[0] - s);
       } else {
-        start_col = (colnr_T)(regmatch.endp[0] - (char_u *)s);
+        start_col = (colnr_T)(regmatch.endp[0] - s);
       }
     } else if (regmatch.regprog != NULL) {
       end_col = 0;

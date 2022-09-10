@@ -349,7 +349,7 @@ void ml_setname(buf_T *buf)
 {
   bool success = false;
   memfile_T *mfp;
-  char_u *fname;
+  char *fname;
   char *dirp;
 
   mfp = buf->b_ml.ml_mfp;
@@ -369,7 +369,7 @@ void ml_setname(buf_T *buf)
     if (*dirp == NUL) {             // tried all directories, fail
       break;
     }
-    fname = (char_u *)findswapname(buf, &dirp, mfp->mf_fname, &found_existing_dir);
+    fname = findswapname(buf, &dirp, mfp->mf_fname, &found_existing_dir);
     // alloc's fname
     if (dirp == NULL) {             // out of memory
       break;
@@ -379,7 +379,7 @@ void ml_setname(buf_T *buf)
     }
 
     // if the file name is the same we don't have to do anything
-    if (FNAMECMP(fname, mfp->mf_fname) == 0) {
+    if (path_fnamecmp(fname, mfp->mf_fname) == 0) {
       xfree(fname);
       success = true;
       break;
@@ -391,10 +391,10 @@ void ml_setname(buf_T *buf)
     }
 
     // try to rename the swap file
-    if (vim_rename((char_u *)mfp->mf_fname, fname) == 0) {
+    if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = true;
       mf_free_fnames(mfp);
-      mf_set_fnames(mfp, (char *)fname);
+      mf_set_fnames(mfp, fname);
       ml_upd_block0(buf, UB_SAME_DIR);
       break;
     }
@@ -3273,7 +3273,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
     }
 
     // A file name equal to old_fname is OK to use.
-    if (old_fname != NULL && FNAMECMP(fname, old_fname) == 0) {
+    if (old_fname != NULL && path_fnamecmp(fname, old_fname) == 0) {
       break;
     }
 
@@ -3298,8 +3298,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             // buffer don't compare the directory names, they can
             // have a different mountpoint.
             if (b0.b0_flags & B0_SAME_DIR) {
-              if (FNAMECMP(path_tail((char *)buf->b_ffname),
-                           path_tail((char *)b0.b0_fname)) != 0
+              if (path_fnamecmp(path_tail(buf->b_ffname),
+                                path_tail((char *)b0.b0_fname)) != 0
                   || !same_directory((char_u *)fname, (char_u *)buf->b_ffname)) {
                 // Symlinks may point to the same file even
                 // when the name differs, need to check the

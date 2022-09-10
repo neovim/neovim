@@ -665,7 +665,7 @@ static char_u *ins_compl_infercase_gettext(char_u *str, int char_len, int compl_
   }
 
   *p = NUL;
-  return IObuff;
+  return (char_u *)IObuff;
 }
 
 /// This is like ins_compl_add(), but if 'ic' and 'inf' are set, then the
@@ -1443,20 +1443,20 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
     while (!got_int && !compl_interrupted && !vim_fgets(buf, LSIZE, fp)) {
       ptr = buf;
       while (vim_regexec(regmatch, (char *)buf, (colnr_T)(ptr - buf))) {
-        ptr = regmatch->startp[0];
+        ptr = (char_u *)regmatch->startp[0];
         if (ctrl_x_mode_line_or_eval()) {
           ptr = find_line_end(ptr);
         } else {
           ptr = find_word_end(ptr);
         }
-        add_r = ins_compl_add_infercase(regmatch->startp[0],
-                                        (int)(ptr - regmatch->startp[0]),
+        add_r = ins_compl_add_infercase((char_u *)regmatch->startp[0],
+                                        (int)(ptr - (char_u *)regmatch->startp[0]),
                                         p_ic, (char_u *)files[i], *dir, false);
         if (thesaurus) {
           // For a thesaurus, add all the words in the line
           ptr = buf;
           add_r = thesaurus_add_words_in_line(files[i], &ptr, *dir,
-                                              regmatch->startp[0]);
+                                              (char_u *)regmatch->startp[0]);
         }
         if (add_r == OK) {
           // if dir was BACKWARD then honor it just once
@@ -2980,7 +2980,7 @@ static char_u *ins_comp_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_p
           *cont_s_ipos = true;
         }
         IObuff[len] = NUL;
-        ptr = IObuff;
+        ptr = (char_u *)IObuff;
       }
       if (len == compl_length) {
         return NULL;

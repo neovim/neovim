@@ -734,7 +734,7 @@ void ex_hardcopy(exarg_T *eap)
           sprintf((char *)IObuff, _("Printing page %d (%zu%%)"),
                   page_count + 1 + side,
                   prtpos.bytes_printed * 100 / bytes_to_print);
-          if (!mch_print_begin_page(IObuff)) {
+          if (!mch_print_begin_page((char_u *)IObuff)) {
             goto print_fail;
           }
 
@@ -744,7 +744,7 @@ void ex_hardcopy(exarg_T *eap)
                     collated_copies + 1,
                     settings.n_collated_copies);
           }
-          prt_message(IObuff);
+          prt_message((char_u *)IObuff);
 
           // Output header if required
           if (prt_header_height() > 0) {
@@ -798,13 +798,13 @@ void ex_hardcopy(exarg_T *eap)
 
     vim_snprintf((char *)IObuff, IOSIZE, _("Printed: %s"),
                  settings.jobname);
-    prt_message(IObuff);
+    prt_message((char_u *)IObuff);
   }
 
 print_fail:
   if (got_int || settings.user_abort) {
-    sprintf((char *)IObuff, "%s", _("Printing aborted"));
-    prt_message(IObuff);
+    snprintf(IObuff, IOSIZE, "%s", _("Printing aborted"));
+    prt_message((char_u *)IObuff);
   }
   mch_print_end(&settings);
 
@@ -1493,8 +1493,8 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   // Look for named resource file in runtimepath
   STRCPY(buffer, "print");
   add_pathsep(buffer);
-  STRLCAT(buffer, name, MAXPATHL);
-  STRLCAT(buffer, ".ps", MAXPATHL);
+  xstrlcat(buffer, name, MAXPATHL);
+  xstrlcat(buffer, ".ps", MAXPATHL);
   resource->filename[0] = NUL;
   retval = (do_in_runtimepath(buffer, 0, prt_resource_name, resource->filename)
             && resource->filename[0] != NUL);

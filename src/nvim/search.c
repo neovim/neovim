@@ -3508,14 +3508,14 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
 
       if (inc_opt != NULL && strstr(inc_opt, "\\zs") != NULL) {
         // Use text from '\zs' to '\ze' (or end) of 'include'.
-        new_fname = (char_u *)find_file_name_in_path((char *)incl_regmatch.startp[0],
+        new_fname = (char_u *)find_file_name_in_path(incl_regmatch.startp[0],
                                                      (size_t)(incl_regmatch.endp[0]
                                                               - incl_regmatch.startp[0]),
                                                      FNAME_EXP|FNAME_INCL|FNAME_REL,
                                                      1L, (char *)p_fname);
       } else {
         // Use text after match with 'include'.
-        new_fname = file_name_in_line(incl_regmatch.endp[0], 0,
+        new_fname = file_name_in_line((char_u *)incl_regmatch.endp[0], 0,
                                       FNAME_EXP|FNAME_INCL|FNAME_REL, 1L, p_fname, NULL);
       }
       already_searched = false;
@@ -3583,19 +3583,19 @@ void find_pattern_in_path(char_u *ptr, Direction dir, size_t len, bool whole, bo
             if (inc_opt != NULL
                 && strstr(inc_opt, "\\zs") != NULL) {
               // pattern contains \zs, use the match
-              p = incl_regmatch.startp[0];
+              p = (char_u *)incl_regmatch.startp[0];
               i = (int)(incl_regmatch.endp[0]
                         - incl_regmatch.startp[0]);
             } else {
               // find the file name after the end of the match
-              for (p = incl_regmatch.endp[0];
+              for (p = (char_u *)incl_regmatch.endp[0];
                    *p && !vim_isfilec(*p); p++) {}
               for (i = 0; vim_isfilec(p[i]); i++) {}
             }
 
             if (i == 0) {
               // Nothing found, use the rest of the line.
-              p = incl_regmatch.endp[0];
+              p = (char_u *)incl_regmatch.endp[0];
               i = (int)STRLEN(p);
             } else if (p > line) {
               // Avoid checking before the start of the line, can
@@ -3681,7 +3681,7 @@ search_line:
         // Pattern must be first identifier after 'define', so skip
         // to that position before checking for match of pattern.  Also
         // don't let it match beyond the end of this identifier.
-        p = def_regmatch.endp[0];
+        p = (char_u *)def_regmatch.endp[0];
         while (*p && !vim_iswordc(*p)) {
           p++;
         }
@@ -3706,7 +3706,7 @@ search_line:
         } else if (regmatch.regprog != NULL
                    && vim_regexec(&regmatch, (char *)line, (colnr_T)(p - line))) {
           matched = true;
-          startp = regmatch.startp[0];
+          startp = (char_u *)regmatch.startp[0];
           // Check if the line is not a comment line (unless we are
           // looking for a define).  A line starting with "# define"
           // is not considered to be a comment line.
@@ -3810,7 +3810,7 @@ search_line:
             cont_s_ipos = true;
           }
           IObuff[i] = NUL;
-          aux = IObuff;
+          aux = (char_u *)IObuff;
 
           if (i == ins_compl_len()) {
             goto exit_matched;

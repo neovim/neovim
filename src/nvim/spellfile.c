@@ -895,7 +895,7 @@ void suggest_load_files(void)
       slang->sl_sugloaded = true;
 
       dotp = strrchr(slang->sl_fname, '.');
-      if (dotp == NULL || FNAMECMP(dotp, ".spl") != 0) {
+      if (dotp == NULL || path_fnamecmp(dotp, ".spl") != 0) {
         continue;
       }
       STRCPY(dotp, ".sug");

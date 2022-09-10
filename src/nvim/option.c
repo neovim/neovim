@@ -654,8 +654,8 @@ void set_init_3(void)
     // Default for p_sp is "| tee", for p_srr is ">".
     // For known shells it is changed here to include stderr.
     //
-    if (FNAMECMP(p, "csh") == 0
-        || FNAMECMP(p, "tcsh") == 0) {
+    if (path_fnamecmp(p, "csh") == 0
+        || path_fnamecmp(p, "tcsh") == 0) {
       if (do_sp) {
         p_sp = "|& tee";
         options[idx_sp].def_val = p_sp;
@@ -664,16 +664,16 @@ void set_init_3(void)
         p_srr = ">&";
         options[idx_srr].def_val = p_srr;
       }
-    } else if (FNAMECMP(p, "sh") == 0
-               || FNAMECMP(p, "ksh") == 0
-               || FNAMECMP(p, "mksh") == 0
-               || FNAMECMP(p, "pdksh") == 0
-               || FNAMECMP(p, "zsh") == 0
-               || FNAMECMP(p, "zsh-beta") == 0
-               || FNAMECMP(p, "bash") == 0
-               || FNAMECMP(p, "fish") == 0
-               || FNAMECMP(p, "ash") == 0
-               || FNAMECMP(p, "dash") == 0) {
+    } else if (path_fnamecmp(p, "sh") == 0
+               || path_fnamecmp(p, "ksh") == 0
+               || path_fnamecmp(p, "mksh") == 0
+               || path_fnamecmp(p, "pdksh") == 0
+               || path_fnamecmp(p, "zsh") == 0
+               || path_fnamecmp(p, "zsh-beta") == 0
+               || path_fnamecmp(p, "bash") == 0
+               || path_fnamecmp(p, "fish") == 0
+               || path_fnamecmp(p, "ash") == 0
+               || path_fnamecmp(p, "dash") == 0) {
       // Always use POSIX shell style redirection if we reach this
       if (do_sp) {
         p_sp = "2>&1| tee";
@@ -1237,19 +1237,19 @@ int do_set(char *arg, int opt_flags)
                 *errbuf = NUL;
                 i = getdigits_int(&arg, true, 0);
                 if (i & 1) {
-                  STRLCAT(errbuf, "b,", sizeof(errbuf));
+                  xstrlcat(errbuf, "b,", sizeof(errbuf));
                 }
                 if (i & 2) {
-                  STRLCAT(errbuf, "s,", sizeof(errbuf));
+                  xstrlcat(errbuf, "s,", sizeof(errbuf));
                 }
                 if (i & 4) {
-                  STRLCAT(errbuf, "h,l,", sizeof(errbuf));
+                  xstrlcat(errbuf, "h,l,", sizeof(errbuf));
                 }
                 if (i & 8) {
-                  STRLCAT(errbuf, "<,>,", sizeof(errbuf));
+                  xstrlcat(errbuf, "<,>,", sizeof(errbuf));
                 }
                 if (i & 16) {
-                  STRLCAT(errbuf, "[,],", sizeof(errbuf));
+                  xstrlcat(errbuf, "[,],", sizeof(errbuf));
                 }
                 save_arg = (char_u *)arg;
                 arg = errbuf;

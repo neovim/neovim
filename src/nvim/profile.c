@@ -728,7 +728,7 @@ static void script_dump_profile(FILE *fd)
         // Keep going till the end of file, so that trailing
         // continuation lines are listed.
         for (int i = 0;; i++) {
-          if (vim_fgets(IObuff, IOSIZE, sfd)) {
+          if (vim_fgets((char_u *)IObuff, IOSIZE, sfd)) {
             break;
           }
           // When a line has been truncated, append NL, taking care

@@ -721,7 +721,7 @@ int get_number_indent(linenr_T lnum)
     // start matching for the flp beyond any comment leader...
     if (vim_regexec(&regmatch, ml_get(lnum) + lead_len, (colnr_T)0)) {
       pos.lnum = lnum;
-      pos.col = (colnr_T)(*regmatch.endp - (char_u *)ml_get(lnum));
+      pos.col = (colnr_T)(*regmatch.endp - ml_get(lnum));
       pos.coladd = 0;
     }
     vim_regfree(regmatch.regprog);

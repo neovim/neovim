@@ -1971,7 +1971,7 @@ parse_line:
           *tagp.tagname_end = NUL;
           match = vim_regexec(&orgpat.regmatch, tagp.tagname, (colnr_T)0);
           if (match) {
-            matchoff = (int)(orgpat.regmatch.startp[0] - (char_u *)tagp.tagname);
+            matchoff = (int)(orgpat.regmatch.startp[0] - tagp.tagname);
             if (orgpat.regmatch.rm_ic) {
               orgpat.regmatch.rm_ic = false;
               match_no_ic = vim_regexec(&orgpat.regmatch, tagp.tagname, (colnr_T)0);
