@@ -1291,7 +1291,6 @@ local filename = {
   WORKSPACE = 'bzl',
   BUILD = 'bzl',
   ['cabal.project'] = 'cabalproject',
-  [vim.env.HOME .. '/cabal.config'] = 'cabalconfig',
   ['cabal.config'] = 'cabalconfig',
   calendar = 'calendar',
   catalog = 'catalog',
@@ -1699,6 +1698,7 @@ local pattern = {
   ['.*/meta%-.*/conf/.*%.conf'] = 'bitbake',
   ['bzr_log%..*'] = 'bzr',
   ['.*enlightenment/.*%.cfg'] = 'c',
+  ['${HOME}/cabal%.config'] = 'cabalconfig',
   ['cabal%.project%..*'] = starsetf('cabalproject'),
   ['.*/%.calendar/.*'] = starsetf('calendar'),
   ['.*/share/calendar/.*/calendar%..*'] = starsetf('calendar'),
@@ -1823,41 +1823,21 @@ local pattern = {
   ['.*/%.config/git/config'] = 'gitconfig',
   ['.*%.git/config%.worktree'] = 'gitconfig',
   ['.*%.git/worktrees/.*/config%.worktree'] = 'gitconfig',
-  ['.*/git/config'] = function(path, bufnr)
-    if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/config') then
-      return 'gitconfig'
-    end
-  end,
+  ['${XDG_CONFIG_HOME}/git/config'] = 'gitconfig',
   ['.*%.git/info/attributes'] = 'gitattributes',
   ['.*/etc/gitattributes'] = 'gitattributes',
   ['.*/%.config/git/attributes'] = 'gitattributes',
-  ['.*/git/attributes'] = function(path, bufnr)
-    if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/attributes') then
-      return 'gitattributes'
-    end
-  end,
+  ['${XDG_CONFIG_HOME}/git/attributes'] = 'gitattributes',
   ['.*%.git/info/exclude'] = 'gitignore',
   ['.*/%.config/git/ignore'] = 'gitignore',
-  ['.*/git/ignore'] = function(path, bufnr)
-    if vim.env.XDG_CONFIG_HOME and path:find(vim.env.XDG_CONFIG_HOME .. '/git/ignore') then
-      return 'gitignore'
-    end
-  end,
+  ['${XDG_CONFIG_HOME}/git/ignore'] = 'gitignore',
   ['%.gitsendemail%.msg%.......'] = 'gitsendemail',
   ['gkrellmrc_.'] = 'gkrellmrc',
   ['.*/usr/.*/gnupg/options%.skel'] = 'gpg',
   ['.*/%.gnupg/options'] = 'gpg',
   ['.*/%.gnupg/gpg%.conf'] = 'gpg',
-  ['.*/options'] = function(path, bufnr)
-    if vim.env.GNUPGHOME and path:find(vim.env.GNUPGHOME .. '/options') then
-      return 'gpg'
-    end
-  end,
-  ['.*/gpg%.conf'] = function(path, bufnr)
-    if vim.env.GNUPGHOME and path:find(vim.env.GNUPGHOME .. '/gpg%.conf') then
-      return 'gpg'
-    end
-  end,
+  ['${GNUPGHOME}/options'] = 'gpg',
+  ['${GNUPGHOME}/gpg%.conf'] = 'gpg',
   ['.*/etc/group'] = 'group',
   ['.*/etc/gshadow'] = 'group',
   ['.*/etc/group%.edit'] = 'group',
@@ -1871,7 +1851,7 @@ local pattern = {
   ['.*/etc/grub%.conf'] = 'grub',
   -- gtkrc* and .gtkrc*
   ['%.?gtkrc.*'] = starsetf('gtkrc'),
-  [vim.env.VIMRUNTIME .. '/doc/.*%.txt'] = 'help',
+  ['${VIMRUNTIME}/doc/.*%.txt'] = 'help',
   ['hg%-editor%-.*%.txt'] = 'hgcommit',
   ['.*/etc/host%.conf'] = 'hostconf',
   ['.*/etc/hosts%.deny'] = 'hostsaccess',
@@ -2275,6 +2255,9 @@ end
 --- Filename patterns can specify an optional priority to resolve cases when a
 --- file path matches multiple patterns. Higher priorities are matched first.
 --- When omitted, the priority defaults to 0.
+--- A pattern can contain environment variables of the form "${SOME_VAR}" that will
+--- be automatically expanded. If the environment variable is not set, the pattern
+--- won't be matched.
 ---
 --- See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
 ---
@@ -2303,6 +2286,8 @@ end
 ---      ['.*/etc/foo/.*'] = 'fooscript',
 ---      -- Using an optional priority
 ---      ['.*/etc/foo/.*%.conf'] = { 'dosini', { priority = 10 } },
+---      -- A pattern containing an environment variable
+---      ['${XDG_CONFIG_HOME}/foo/git'] = 'git',
 ---      ['README.(%a+)$'] = function(path, bufnr, ext)
 ---        if ext == 'md' then
 ---          return 'markdown'
@@ -2376,8 +2361,28 @@ local function dispatch(ft, path, bufnr, ...)
   end
 end
 
+-- Lookup table/cache for patterns that contain an environment variable pattern, e.g. ${SOME_VAR}.
+local expand_env_lookup = {}
+
 ---@private
 local function match_pattern(name, path, tail, pat)
+  if expand_env_lookup[pat] == nil then
+    expand_env_lookup[pat] = pat:find('%${') ~= nil
+  end
+  if expand_env_lookup[pat] then
+    local return_early
+    pat = pat:gsub('%${(%S-)}', function(env)
+      -- If an environment variable is present in the pattern but not set, there is no match
+      if not vim.env[env] then
+        return_early = true
+        return nil
+      end
+      return vim.env[env]
+    end)
+    if return_early then
+      return false
+    end
+  end
   -- If the pattern contains a / match against the full path, otherwise just the tail
   local fullpat = '^' .. pat .. '$'
   local matches
