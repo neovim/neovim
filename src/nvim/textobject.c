@@ -4,8 +4,11 @@
 // textobject.c: functions for text objects
 
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -13,14 +16,19 @@
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
+#include "nvim/macros.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/normal.h"
+#include "nvim/option_defs.h"
 #include "nvim/pos.h"
+#include "nvim/screen.h"
 #include "nvim/search.h"
-#include "nvim/textformat.h"
+#include "nvim/strings.h"
 #include "nvim/textobject.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -2,11 +2,14 @@
 #define NVIM_GRID_H
 
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/grid_defs.h"
+#include "nvim/macros.h"
 #include "nvim/mbyte.h"
+#include "nvim/memory.h"
 
 /// By default, all windows are drawn on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own

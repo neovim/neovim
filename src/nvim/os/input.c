@@ -3,25 +3,33 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/rstream.h"
+#include "nvim/event/stream.h"
 #include "nvim/getchar.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/keycodes.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
-#include "nvim/mbyte.h"
-#include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/input.h"
+#include "nvim/os/time.h"
 #include "nvim/profile.h"
-#include "nvim/screen.h"
+#include "nvim/rbuffer.h"
 #include "nvim/state.h"
-#include "nvim/ui.h"
 #include "nvim/vim.h"
 
 #define READ_BUFFER_SIZE 0xfff

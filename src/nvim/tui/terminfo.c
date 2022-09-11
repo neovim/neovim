@@ -8,13 +8,15 @@
 #include <unibilium.h>
 
 #include "nvim/globals.h"
-#include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
-#include "nvim/os/os.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/terminfo_defs.h"
+
+#ifdef __FreeBSD__
+# include "nvim/os/os.h"
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/terminfo.c.generated.h"

@@ -2,7 +2,7 @@
 #define NVIM_OS_UNIX_H
 
 #include "nvim/os/shell.h"
-#include "nvim/types.h"  // for vim_acl_T
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os_unix.h.generated.h"

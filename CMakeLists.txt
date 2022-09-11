@@ -186,6 +186,20 @@ if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 endif()
 
+option(ENABLE_IWYU "Run include-what-you-use with the compiler." OFF)
+if(ENABLE_IWYU)
+  find_program(IWYU_PRG NAMES include-what-you-use iwyu)
+  if(NOT IWYU_PRG)
+    message(FATAL_ERROR "ENABLE_IWYU is ON but include-what-you-use is not found!")
+  endif()
+  set(CMAKE_C_INCLUDE_WHAT_YOU_USE ${IWYU_PRG}
+    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/mapping.imp
+    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.libc.imp
+    -Xiwyu --mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/gcc.symbols.imp
+    -Xiwyu --no_default_mappings)
+  add_definitions(-DEXITFREE)
+endif()
+
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
 # https://github.com/neovim/neovim/issues/223

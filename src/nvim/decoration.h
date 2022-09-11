@@ -1,9 +1,17 @@
 #ifndef NVIM_DECORATION_H
 #define NVIM_DECORATION_H
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "klib/kvec.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/extmark_defs.h"
+#include "nvim/macros.h"
+#include "nvim/marktree.h"
 #include "nvim/pos.h"
+#include "nvim/types.h"
 
 // actual Decoration data is in extmark_defs.h
 

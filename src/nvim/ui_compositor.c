@@ -7,25 +7,30 @@
 // Layer-based compositing: https://en.wikipedia.org/wiki/Digital_compositing
 
 #include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "klib/kvec.h"
-#include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
-#include "nvim/main.h"
+#include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/os/os.h"
-#include "nvim/popupmenu.h"
-#include "nvim/ugrid.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/time.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"

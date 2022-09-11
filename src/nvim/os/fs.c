@@ -5,11 +5,23 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #include "auto/config.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/fs_defs.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 
 #ifdef HAVE_SYS_UIO_H
 # include <sys/uio.h>
@@ -18,14 +30,12 @@
 #include <uv.h>
 
 #include "nvim/ascii.h"
-#include "nvim/assert.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option.h"
 #include "nvim/os/os.h"
-#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
-#include "nvim/strings.h"
+
+struct iovec;
 
 #ifdef MSWIN
 # include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8

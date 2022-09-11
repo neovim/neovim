@@ -2,23 +2,24 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <stdint.h>
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <uv.h>
 
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
-#include "nvim/event/wstream.h"
+#include "nvim/event/stream.h"
+#include "nvim/gettext.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
-#include "nvim/strings.h"
-#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/socket.c.generated.h"

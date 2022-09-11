@@ -4,16 +4,25 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
-#include "nvim/edit.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/keycodes.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

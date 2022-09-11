@@ -2,15 +2,16 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
+#include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/rbuffer.h"
-#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "rbuffer.c.generated.h"
+# include "rbuffer.c.generated.h"  // IWYU pragma: export
 #endif
 
 /// Creates a new `RBuffer` instance.

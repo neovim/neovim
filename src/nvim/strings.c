@@ -6,48 +6,29 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "auto/config.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
-#include "nvim/buffer.h"
 #include "nvim/charset.h"
-#include "nvim/diff.h"
-#include "nvim/edit.h"
-#include "nvim/eval.h"
 #include "nvim/eval/encode.h"
-#include "nvim/ex_cmds.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/ex_getln.h"
-#include "nvim/file_search.h"
-#include "nvim/fileio.h"
-#include "nvim/fold.h"
-#include "nvim/func_attr.h"
-#include "nvim/getchar.h"
-#include "nvim/mark.h"
+#include "nvim/gettext.h"
+#include "nvim/macros.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
-#include "nvim/memfile.h"
-#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/move.h"
-#include "nvim/ops.h"
 #include "nvim/option.h"
-#include "nvim/os/os.h"
-#include "nvim/os/shell.h"
-#include "nvim/os_unix.h"
-#include "nvim/path.h"
-#include "nvim/quickfix.h"
-#include "nvim/regexp.h"
-#include "nvim/screen.h"
-#include "nvim/search.h"
-#include "nvim/spell.h"
 #include "nvim/strings.h"
-#include "nvim/syntax.h"
-#include "nvim/tag.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
-#include "nvim/window.h"
 
 /// Copy up to `len` bytes of `string` into newly allocated memory and
 /// terminate with a NUL. The allocated memory always has size `len + 1`, even

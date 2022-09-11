@@ -6,7 +6,7 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/normal.h"
-#include "nvim/pos.h"      // for linenr_T
+#include "nvim/pos.h"
 #include "nvim/regexp_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

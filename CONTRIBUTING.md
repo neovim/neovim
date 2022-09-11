@@ -247,9 +247,15 @@ You can lint a single file (but this will _not_ exclude legacy errors):
 For managing includes in C files, use [include-what-you-use].
 
 - [Install include-what-you-use][include-what-you-use-install]
-- Run with:
+- To see which includes needs fixing just use the cmake preset `iwyu`:
   ```
-  make CMAKE_EXTRA_FLAGS=-DCMAKE_C_INCLUDE_WHAT_YOU_USE=include-what-you-use | tee iwyu.txt
+  cmake --preset iwyu
+  cmake --build --preset iwyu
+  ```
+- There's also a make target that automatically fixes the suggestions from
+  IWYU:
+  ```
+  make iwyu
   ```
 
 See [#549][549] for more details.

@@ -8,8 +8,8 @@
 #include "nvim/eval/typval.h"
 #include "nvim/func_attr.h"
 #include "nvim/mbyte_defs.h"
-#include "nvim/os/os_defs.h"  // For indirect
-#include "nvim/types.h"  // for char_u
+#include "nvim/os/os_defs.h"
+#include "nvim/types.h"
 
 // Return byte length of character that starts with byte "b".
 // Returns 1 for a single-byte character.

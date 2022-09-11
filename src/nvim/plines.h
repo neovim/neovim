@@ -1,6 +1,9 @@
 #ifndef NVIM_PLINES_H
 #define NVIM_PLINES_H
 
+#include <stdbool.h>
+
+#include "nvim/buffer_defs.h"
 #include "nvim/vim.h"
 
 // Argument for lbr_chartabsize().

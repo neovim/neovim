@@ -4,31 +4,35 @@
 // Terminal UI functions. Invoked (by ui_bridge.c) on the TUI thread.
 
 #include <assert.h>
-#include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unibilium.h>
 #include <uv.h>
-#if defined(HAVE_TERMIOS_H)
-# include <termios.h>
-#endif
 
+#include "auto/config.h"
 #include "klib/kvec.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/signal.h"
-#include "nvim/highlight.h"
+#include "nvim/event/stream.h"
+#include "nvim/globals.h"
+#include "nvim/grid_defs.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
-#include "nvim/map.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/signal.h"
-#include "nvim/os/tty.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 #ifdef MSWIN
@@ -36,8 +40,6 @@
 #endif
 #include "nvim/cursor_shape.h"
 #include "nvim/macros.h"
-#include "nvim/strings.h"
-#include "nvim/syntax.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/tui.h"

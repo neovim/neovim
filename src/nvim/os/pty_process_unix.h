@@ -1,8 +1,10 @@
 #ifndef NVIM_OS_PTY_PROCESS_UNIX_H
 #define NVIM_OS_PTY_PROCESS_UNIX_H
 
+#include <stdint.h>
 #include <sys/ioctl.h>
 
+#include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 
 typedef struct pty_process {

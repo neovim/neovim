@@ -43,19 +43,26 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/fileio.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/macros.h"
 #include "nvim/memfile.h"
+#include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #define MEMFILE_PAGE_SIZE 4096       /// default page size

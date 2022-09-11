@@ -4,6 +4,9 @@
 #include <uv.h>
 
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
+
+struct signal_watcher;
 
 typedef struct signal_watcher SignalWatcher;
 typedef void (*signal_cb)(SignalWatcher *watcher, int signum, void *data);

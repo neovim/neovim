@@ -39,19 +39,31 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <uv.h>
 
+#include "auto/config.h"
+#include "klib/kvec.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
-#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/input.h"
+#include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -60,19 +72,21 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/process.h"
-#include "nvim/os_unix.h"
+#include "nvim/os/time.h"
 #include "nvim/path.h"
-#include "nvim/sha256.h"
+#include "nvim/pos.h"
+#include "nvim/screen.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
-#include "nvim/window.h"
 
 #ifndef UNIX            // it's in os/unix_defs.h for Unix
 # include <time.h>

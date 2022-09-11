@@ -189,6 +189,35 @@ funcs_metadata_output:close()
 -- start building the dispatch wrapper output
 local output = io.open(dispatch_outputf, 'wb')
 
+
+-- ===========================================================================
+-- NEW API FILES MUST GO HERE.
+--
+--  When creating a new API file, you must include it here,
+--  so that the dispatcher can find the C functions that you are creating!
+-- ===========================================================================
+output:write([[
+#include "nvim/log.h"
+#include "nvim/map.h"
+#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/vim.h"
+
+#include "nvim/api/autocmd.h"
+#include "nvim/api/buffer.h"
+#include "nvim/api/command.h"
+#include "nvim/api/deprecated.h"
+#include "nvim/api/extmark.h"
+#include "nvim/api/options.h"
+#include "nvim/api/tabpage.h"
+#include "nvim/api/ui.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/vimscript.h"
+#include "nvim/api/win_config.h"
+#include "nvim/api/window.h"
+#include "nvim/ui_client.h"
+
+]])
+
 local function real_type(type)
   local rv = type
   local rmatch = string.match(type, "Dict%(([_%w]+)%)")

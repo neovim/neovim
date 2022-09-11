@@ -1,9 +1,15 @@
 #ifndef NVIM_EX_GETLN_H
 #define NVIM_EX_GETLN_H
 
+#include <stdbool.h>
+
+#include "klib/kvec.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/types.h"
+
+struct cmdline_info;
 
 /// Command-line colors: one chunk
 ///

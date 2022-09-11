@@ -1,10 +1,10 @@
 #ifndef NVIM_MEMORY_H
 #define NVIM_MEMORY_H
 
-#include <stdbool.h>  // for bool
-#include <stddef.h>  // for size_t
-#include <stdint.h>  // for uint8_t
-#include <time.h>  // for time_t
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
 
 #include "nvim/macros.h"
 

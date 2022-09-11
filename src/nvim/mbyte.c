@@ -25,36 +25,55 @@
 /// Vim scripts may contain an ":scriptencoding" command. This has an effect
 /// for some commands, like ":menutrans".
 
-#include <inttypes.h>
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <iconv.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 #include <wctype.h>
 
-#include "nvim/ascii.h"
-#include "nvim/vim.h"
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif
+#include "auto/config.h"
 #include "nvim/arabic.h"
+#include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
-#include "nvim/eval.h"
-#include "nvim/fileio.h"
-#include "nvim/func_attr.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/getchar.h"
+#include "nvim/gettext.h"
+#include "nvim/globals.h"
+#include "nvim/grid_defs.h"
 #include "nvim/iconv.h"
+#include "nvim/keycodes.h"
+#include "nvim/macros.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/os.h"
-#include "nvim/path.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/pos.h"
 #include "nvim/screen.h"
-#include "nvim/spell.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
+
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
+
+#ifdef __STDC_ISO_10646__
+# include <stdc-predef.h>
+#endif
 
 typedef struct {
   int rangeStart;
@@ -68,11 +87,12 @@ struct interval {
   long last;
 };
 
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.c.generated.h"
-
 # include "unicode_tables.generated.h"
 #endif
+// uncrustify:on
 
 static char e_list_item_nr_is_not_list[]
   = N_("E1109: List item %d is not a List");

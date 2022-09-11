@@ -13,11 +13,13 @@
 /// Vim specific notes:
 /// sha256_self_test() is implicitly called once.
 
-#include <stddef.h>        // for size_t
-#include <stdio.h>         // for snprintf().
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
-#include "nvim/sha256.h"   // for context_sha256_T
-#include "nvim/vim.h"      // for STRCPY()/strlen().
+#include "nvim/sha256.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "sha256.c.generated.h"

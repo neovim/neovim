@@ -6,8 +6,10 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/channel.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
+#include "nvim/macros.h"
 #include "nvim/vim.h"
 
 #define METHOD_MAXLEN 512

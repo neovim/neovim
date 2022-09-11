@@ -3,8 +3,12 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
+#include <msgpack/unpack.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,28 +16,24 @@
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/assert.h"
-#include "nvim/buffer.h"
-#include "nvim/charset.h"
-#include "nvim/eval.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
-#include "nvim/ex_cmds_defs.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval.h"
-#include "nvim/extmark.h"
+#include "nvim/garray.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
-#include "nvim/map_defs.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/pos.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
-#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/funcs_metadata.generated.h"

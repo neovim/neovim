@@ -2,13 +2,15 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 // Some of the code came from pangoterm and libuv
-#include <stdbool.h>
+
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <termios.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -31,13 +33,16 @@
 
 #include <uv.h>
 
+#include "auto/config.h"
 #include "klib/klist.h"
+#include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/wstream.h"
+#include "nvim/event/stream.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/os/pty_process.h"
 #include "nvim/os/pty_process_unix.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

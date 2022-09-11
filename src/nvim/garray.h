@@ -1,9 +1,11 @@
 #ifndef NVIM_GARRAY_H
 #define NVIM_GARRAY_H
 
-#include <stddef.h>  // for size_t
+#include <stdbool.h>
+#include <stddef.h>
 
 #include "nvim/log.h"
+#include "nvim/memory.h"
 #include "nvim/types.h"
 
 /// Structure used for growing arrays.

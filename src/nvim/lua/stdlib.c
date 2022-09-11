@@ -1,50 +1,39 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
 #include <lauxlib.h>
 #include <lua.h>
-#include <lualib.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/types.h>
 
+#include "auto/config.h"
 #include "cjson/lua_cjson.h"
-#include "luv/luv.h"
 #include "mpack/lmpack.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/assert.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/change.h"
-#include "nvim/cursor.h"
 #include "nvim/eval.h"
-#include "nvim/eval/userfunc.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/time.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval.h"
-#include "nvim/ex_getln.h"
-#include "nvim/extmark.h"
-#include "nvim/func_attr.h"
-#include "nvim/garray.h"
-#include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/lua/converter.h"
-#include "nvim/lua/executor.h"
 #include "nvim/lua/spell.h"
 #include "nvim/lua/stdlib.h"
-#include "nvim/lua/treesitter.h"
 #include "nvim/lua/xdiff.h"
-#include "nvim/macros.h"
 #include "nvim/map.h"
+#include "nvim/mbyte.h"
 #include "nvim/memline.h"
-#include "nvim/message.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/os/os.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
 #include "nvim/regexp.h"
-#include "nvim/regexp_defs.h"
-#include "nvim/screen.h"
 #include "nvim/types.h"
-#include "nvim/undo.h"
-#include "nvim/version.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

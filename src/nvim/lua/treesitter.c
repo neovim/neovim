@@ -6,23 +6,28 @@
 // trees and nodes, and could be broken out as a reusable lua package
 
 #include <assert.h>
-#include <inttypes.h>
 #include <lauxlib.h>
+#include <limits.h>
 #include <lua.h>
-#include <lualib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <uv.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/buffer.h"
-#include "nvim/log.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/globals.h"
 #include "nvim/lua/treesitter.h"
+#include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
+#include "nvim/strings.h"
+#include "nvim/types.h"
 #include "tree_sitter/api.h"
 
 #define TS_META_PARSER "treesitter_parser"

@@ -28,9 +28,9 @@
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
+#include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/os/fileio.h"
 #include "nvim/os/input.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
@@ -3150,6 +3150,7 @@ static inline void _nothing_conv_dict_end(typval_T *const tv, dict_T **const dic
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE const void *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME ignored
 #include "nvim/eval/typval_encode.c.h"
+
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE

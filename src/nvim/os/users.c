@@ -3,6 +3,9 @@
 
 // users.c -- operating system user information
 
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <uv.h>
 
 #include "auto/config.h"
@@ -10,7 +13,8 @@
 #include "nvim/garray.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
-#include "nvim/strings.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif

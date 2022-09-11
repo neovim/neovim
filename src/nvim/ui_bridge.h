@@ -3,10 +3,13 @@
 #ifndef NVIM_UI_BRIDGE_H
 #define NVIM_UI_BRIDGE_H
 
+#include <stdbool.h>
 #include <uv.h>
 
 #include "nvim/event/defs.h"
 #include "nvim/ui.h"
+
+struct ui_bridge_data;
 
 typedef struct ui_bridge_data UIBridgeData;
 typedef void (*ui_main_fn)(UIBridgeData *bridge, UI *ui);

@@ -17,10 +17,11 @@
 #define REX_ALL       (REX_SET | REX_USE)
 
 // regexp.c
+// uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "regexp.h.generated.h"
-
 # include "regexp_bt.h.generated.h"
 #endif
+// uncrustify:on
 
 #endif  // NVIM_REGEXP_H

@@ -6,10 +6,21 @@
 /// psutil is a good reference for cross-platform syscall voodoo:
 /// https://github.com/giampaolo/psutil/tree/master/psutil/arch
 
-#include <uv.h>  // for HANDLE (win32)
+#include <assert.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <uv.h>
+
+#include "nvim/log.h"
+#include "nvim/memory.h"
+#include "nvim/os/process.h"
 
 #ifdef MSWIN
-# include <tlhelp32.h>  // for CreateToolhelp32Snapshot
+# include <tlhelp32.h>
+
+# include "nvim/api/private/helpers.h"
 #endif
 
 #if defined(__FreeBSD__)  // XXX: OpenBSD ?
@@ -27,15 +38,8 @@
 # include <sys/sysctl.h>
 #endif
 
-#include "nvim/api/private/helpers.h"
-#include "nvim/globals.h"
-#include "nvim/log.h"
-#include "nvim/os/os.h"
-#include "nvim/os/os_defs.h"
-#include "nvim/os/process.h"
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/process.c.generated.h"
+# include "os/process.c.generated.h"  // IWYU pragma: export
 #endif
 
 #ifdef MSWIN

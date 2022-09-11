@@ -1,6 +1,8 @@
 #ifndef NVIM_MAIN_H
 #define NVIM_MAIN_H
 
+#include <stdbool.h>
+
 #include "nvim/event/loop.h"
 
 // Maximum number of commands from + or -c arguments.

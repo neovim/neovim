@@ -6,6 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/option_defs.h"
 #include "nvim/ui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

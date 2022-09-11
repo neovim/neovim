@@ -3,25 +3,30 @@
 
 // Some of this code was adapted from 'if_py_both.h' from the original
 // vim source
-#include <lauxlib.h>
-#include <limits.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 
+#include <assert.h>
+#include <lauxlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "klib/kvec.h"
+#include "lua.h"
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
-#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/ex_cmds.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
+#include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
@@ -29,9 +34,10 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
+#include "nvim/pos.h"
+#include "nvim/types.h"
 #include "nvim/undo.h"
 #include "nvim/vim.h"
-#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/buffer.c.generated.h"

@@ -2,11 +2,14 @@
 #define NVIM_EVAL_ENCODE_H
 
 #include <msgpack.h>
+#include <msgpack/pack.h>
 #include <stddef.h>
 
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/garray.h"
-#include "nvim/vim.h"  // For STRLEN
+#include "nvim/vim.h"
 
 /// Convert VimL value to msgpack string
 ///

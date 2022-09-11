@@ -1,9 +1,17 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+
+#include "klib/kvec.h"
+#include "mpack/conv.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/log.h"
+#include "nvim/ascii.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
+#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/ui_client.h"

@@ -67,6 +67,17 @@
       "inherits": [
         "base"
       ]
+    },
+    {
+      "name": "iwyu",
+      "displayName": "IWYU",
+      "description": "Run include-what-you-use with the compiler",
+      "cacheVariables": {
+        "ENABLE_IWYU": "ON"
+      },
+      "inherits": [
+        "base"
+      ]
     }
   ],
   "buildPresets": [
@@ -90,6 +101,10 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
+    },
+    {
+      "name": "iwyu",
+      "configurePreset": "iwyu"
     }
   ]
 }

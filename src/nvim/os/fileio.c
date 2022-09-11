@@ -11,22 +11,19 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-#include "auto/config.h"
-
-#ifdef HAVE_SYS_UIO_H
-# include <sys/uio.h>
-#endif
-
+#include <stdint.h>
 #include <uv.h>
 
-#include "nvim/globals.h"
+#include "auto/config.h"
+#include "nvim/gettext.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
+#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"

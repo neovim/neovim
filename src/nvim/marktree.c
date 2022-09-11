@@ -48,10 +48,15 @@
 // at the repo root.
 
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "klib/kvec.h"
 #include "nvim/garray.h"
 #include "nvim/marktree.h"
+#include "nvim/memory.h"
+#include "nvim/pos.h"
 
 #define T MT_BRANCH_FACTOR
 #define ILEN (sizeof(mtnode_t) + (2 * T) * sizeof(void *))

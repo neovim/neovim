@@ -3,8 +3,10 @@
 
 // locale.c: functions for language/locale configuration
 
-#include "auto/config.h"
+#include <stdbool.h>
+#include <stdio.h>
 
+#include "auto/config.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
@@ -13,8 +15,11 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
+#include "nvim/gettext.h"
 #include "nvim/locale.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
@@ -23,6 +28,7 @@
 #include "nvim/path.h"
 #include "nvim/profile.h"
 #include "nvim/types.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "locale.c.generated.h"

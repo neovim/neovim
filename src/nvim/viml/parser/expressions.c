@@ -53,6 +53,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "klib/kvec.h"
@@ -60,6 +62,10 @@
 #include "nvim/assert.h"
 #include "nvim/charset.h"
 #include "nvim/eval/typval.h"
+#include "nvim/gettext.h"
+#include "nvim/keycodes.h"
+#include "nvim/macros.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/types.h"
 #include "nvim/vim.h"

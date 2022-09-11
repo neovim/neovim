@@ -6,6 +6,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/fold.h"
 #include "nvim/grid_defs.h"
+#include "nvim/macros.h"
 
 EXTERN match_T screen_search_hl;       // used for 'hlsearch' highlight matching
 
