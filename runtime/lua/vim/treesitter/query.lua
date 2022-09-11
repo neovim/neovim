@@ -208,11 +208,33 @@ end
 ---@param opts table Optional parameters.
 ---          - concat: (boolean default true) Concatenate result in a string
 function M.get_node_text(node, source, opts)
-  opts = opts or {}
-  local concat = vim.F.if_nil(opts.concat, true)
 
   local start_row, start_col, start_byte = node:start()
   local end_row, end_col, end_byte = node:end_()
+
+  return M.get_range_text({start_row, start_col, start_byte, end_row, end_col, end_byte}, source, opts)
+end
+
+--- Gets the text corresponding to a given range
+--- This may be for example the range of a node or its offset metadata.range
+---
+---@param range table The range
+---@param source table The buffer or string from which the node is extracted
+---@param opts table Optional parameters.
+---          - concat: (boolean default true) Concatenate result in a string
+function M.get_range_text(range, source, opts)
+  opts = opts or {}
+  local concat = vim.F.if_nil(opts.concat, true)
+
+  local start_row, start_col, start_byte, end_row, end_col, end_byte
+  if #range == 4 then
+    start_row, start_col, end_row, end_col = unpack(range)
+  elseif #range == 6 then
+    start_row, start_col, start_byte, end_row, end_col, end_byte = unpack(range)
+  else
+    error(string.format('Expected range to have 4 or 6 entries, got %d', #range))
+    return nil
+  end
 
   if type(source) == 'number' then
     local lines
