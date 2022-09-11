@@ -47,6 +47,11 @@ Functions ~
 *buffer_name()*		Obsolete name for |bufname()|.
 *buffer_number()*	Obsolete name for |bufnr()|.
 *file_readable()*	Obsolete name for |filereadable()|.
+*health#report_error*	Use Lua |vim.health.report_error()| instead.
+*health#report_info*	Use Lua |vim.health.report_info()| instead.
+*health#report_ok*	Use Lua |vim.health.report_ok()| instead.
+*health#report_start*	Use Lua |vim.health.report_start()| instead.
+*health#report_warn*	Use Lua |vim.health.report_warn()| instead.
 *highlight_exists()*	Obsolete name for |hlexists()|.
 *highlightID()*		Obsolete name for |hlID()|.
 *inputdialog()*		Use |input()| instead.
