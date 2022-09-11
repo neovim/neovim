@@ -190,7 +190,7 @@ supported by Neovim.
 By default, the first query on `runtimepath` is used (which usually implies
 that user config takes precedence over plugins, which take precedence over
 queries bundled with Neovim). If a query should extend other queries instead
-of replacing them, use the `; extends` modeline below.
+of replacing them, use |ts-modeline-extends|.
 
 A `query` consists of one or more patterns. A `pattern` is defined over node
 types in the syntax tree.  A `match` corresponds to specific elements of the
@@ -199,16 +199,20 @@ and predicates. A `capture` allows you to associate names with a specific
 node in a pattern. A `predicate` adds arbitrary metadata and conditional data
 to a match.
 
+                                                           *ts-query-modeline*
 Neovim supports to customize the behavior of the queries using a set of
 "modelines", that is comments in the queries starting with `;`. Here are the
 currently supported modeline alternatives:
 
-    `inherits: {lang}...`
+    `inherits: {lang}...`                                 *ts-modeline-inherits*
         Specifies that this query should inherit the queries from {lang}.
         This will recursively descend in the queries of {lang} unless wrapped
         in parentheses: `({lang})`.
+        Note: this is meant to be used to include queries from another
+        language. If you want your query to extend the queries of the same
+        language, use `extends`.
 
-    `extends`
+    `extends`                                              *ts-modeline-extends*
         Specifies that this query should be used as an extension for the
         query, i.e. that it should be merged with the others.
         Note: the order of the extensions, and the query that will be used as
