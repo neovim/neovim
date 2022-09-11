@@ -114,25 +114,13 @@ function module.assert_nolog(pat, logfile, nrlines)
   return module.assert_log(pat, logfile, nrlines, true)
 end
 
--- Invokes `fn` and returns the error string (with truncated paths), or raises
--- an error if `fn` succeeds.
---
--- Replaces line/column numbers with zero:
---     shared.lua:0: in function 'gsplit'
---     shared.lua:0: in function <shared.lua:0>'
---
--- Usage:
---    -- Match exact string.
---    eq('e', pcall_err(function(a, b) error('e') end, 'arg1', 'arg2'))
---    -- Match Lua pattern.
---    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
---
-function module.pcall_err_withfile(fn, ...)
+function module.pcall(fn, ...)
   assert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)
-  if status == true then
-    error('expected failure, but got success')
+  if status then
+    return status, rv
   end
+
   -- From:
   --    C:/long/path/foo.lua:186: Expected string, got number
   -- to:
@@ -150,13 +138,37 @@ function module.pcall_err_withfile(fn, ...)
   --    We remove this so that the tests are not lua dependent.
   errmsg = errmsg:gsub('%s*%(tail call%): %?', '')
 
-  return errmsg
+  return status, errmsg
+end
+
+-- Invokes `fn` and returns the error string (with truncated paths), or raises
+-- an error if `fn` succeeds.
+--
+-- Replaces line/column numbers with zero:
+--     shared.lua:0: in function 'gsplit'
+--     shared.lua:0: in function <shared.lua:0>'
+--
+-- Usage:
+--    -- Match exact string.
+--    eq('e', pcall_err(function(a, b) error('e') end, 'arg1', 'arg2'))
+--    -- Match Lua pattern.
+--    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
+--
+function module.pcall_err_withfile(fn, ...)
+  assert(type(fn) == 'function')
+  local status, rv = module.pcall(fn, ...)
+  if status == true then
+    error('expected failure, but got success')
+  end
+  return rv
 end
 
 function module.pcall_err_withtrace(fn, ...)
   local errmsg = module.pcall_err_withfile(fn, ...)
 
-  return errmsg:gsub('.../helpers.lua:0: ', '')
+  return errmsg:gsub('^%.%.%./helpers%.lua:0: ', '')
+               :gsub('^Error executing lua:- ' ,'')
+               :gsub('^%[string "<nvim>"%]:0: ' ,'')
 end
 
 function module.pcall_err(...)

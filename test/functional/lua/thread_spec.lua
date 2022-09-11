@@ -272,7 +272,7 @@ describe('threadpool', function()
       work:queue({})
     ]])
 
-    eq([[Error executing lua: [string "<nvim>"]:0: Error: thread arg not support type 'function' at 1]],
+    eq([[Error: thread arg not support type 'function' at 1]],
        status)
   end)
 

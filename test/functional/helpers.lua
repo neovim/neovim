@@ -112,6 +112,10 @@ function module.request(method, ...)
   return rv
 end
 
+function module.request_lua(method, ...)
+  return module.exec_lua([[return vim.api[...](select(2, ...))]], method, ...)
+end
+
 function module.next_msg(timeout)
   return session:next_message(timeout and timeout or 10000)
 end
@@ -299,10 +303,16 @@ function module.eval(expr)
   return module.request('nvim_eval', expr)
 end
 
--- Executes a VimL function.
+-- Executes a VimL function via RPC.
 -- Fails on VimL error, but does not update v:errmsg.
 function module.call(name, ...)
   return module.request('nvim_call_function', name, {...})
+end
+
+-- Executes a VimL function via Lua.
+-- Fails on VimL error, but does not update v:errmsg.
+function module.call_lua(name, ...)
+  return module.exec_lua([[return vim.call(...)]], name, ...)
 end
 
 -- Sends user input to Nvim.
@@ -575,8 +585,16 @@ function module.set_shell_powershell(fake)
   return found
 end
 
-function module.nvim(method, ...)
-  return module.request('nvim_'..method, ...)
+function module.create_callindex(func)
+  local table = {}
+  setmetatable(table, {
+    __index = function(tbl, arg1)
+      local ret = function(...) return func(arg1, ...) end
+      tbl[arg1] = ret
+      return ret
+    end,
+  })
+  return table
 end
 
 local function ui(method, ...)
@@ -587,23 +605,83 @@ function module.nvim_async(method, ...)
   session:notify('nvim_'..method, ...)
 end
 
-function module.buffer(method, ...)
-  return module.request('nvim_buf_'..method, ...)
-end
+module.async_meths = module.create_callindex(module.nvim_async)
+module.uimeths = module.create_callindex(ui)
 
-function module.window(method, ...)
-  return module.request('nvim_win_'..method, ...)
-end
-
-function module.tabpage(method, ...)
-  return module.request('nvim_tabpage_'..method, ...)
-end
-
-function module.curbuf(method, ...)
-  if not method then
-    return module.nvim('get_current_buf')
+local function create_api(request, call)
+  local m = {}
+  function m.nvim(method, ...)
+    return request('nvim_'..method, ...)
   end
-  return module.buffer(method, 0, ...)
+
+  function m.buffer(method, ...)
+    return request('nvim_buf_'..method, ...)
+  end
+
+  function m.window(method, ...)
+    return request('nvim_win_'..method, ...)
+  end
+
+  function m.tabpage(method, ...)
+    return request('nvim_tabpage_'..method, ...)
+  end
+
+  function m.curbuf(method, ...)
+    if not method then
+      return m.nvim('get_current_buf')
+    end
+    return m.buffer(method, 0, ...)
+  end
+
+  function m.curwin(method, ...)
+    if not method then
+      return m.nvim('get_current_win')
+    end
+    return m.window(method, 0, ...)
+  end
+
+  function m.curtab(method, ...)
+    if not method then
+      return m.nvim('get_current_tabpage')
+    end
+    return m.tabpage(method, 0, ...)
+  end
+
+  m.funcs = module.create_callindex(call)
+  m.meths = module.create_callindex(m.nvim)
+  m.bufmeths = module.create_callindex(m.buffer)
+  m.winmeths = module.create_callindex(m.window)
+  m.tabmeths = module.create_callindex(m.tabpage)
+  m.curbufmeths = module.create_callindex(m.curbuf)
+  m.curwinmeths = module.create_callindex(m.curwin)
+  m.curtabmeths = module.create_callindex(m.curtab)
+
+  return m
+end
+
+module.rpc = {
+  api = create_api(module.request, module.call),
+}
+
+module.lua = {
+  api = create_api(module.request_lua, module.call_lua),
+}
+
+module.describe_lua_and_rpc = function(describe)
+  return function(what, tests)
+    local function d(flavour)
+      describe(string.format('%s (%s)', what, flavour), function(...)
+        return tests(module[flavour].api, ...)
+      end)
+    end
+
+    d('rpc')
+    d('lua')
+  end
+end
+
+for name, fn in pairs(module.rpc.api) do
+  module[name] = fn
 end
 
 function module.poke_eventloop()
@@ -620,20 +698,6 @@ end
 function module.curbuf_contents()
   module.poke_eventloop()  -- Before inspecting the buffer, do whatever.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
-end
-
-function module.curwin(method, ...)
-  if not method then
-    return module.nvim('get_current_win')
-  end
-  return module.window(method, 0, ...)
-end
-
-function module.curtab(method, ...)
-  if not method then
-    return module.nvim('get_current_tabpage')
-  end
-  return module.tabpage(method, 0, ...)
 end
 
 function module.expect(contents)
@@ -751,18 +815,6 @@ function module.exc_exec(cmd)
   return ret
 end
 
-function module.create_callindex(func)
-  local table = {}
-  setmetatable(table, {
-    __index = function(tbl, arg1)
-      local ret = function(...) return func(arg1, ...) end
-      tbl[arg1] = ret
-      return ret
-    end,
-  })
-  return table
-end
-
 function module.skip(cond, reason)
   if cond then
     local pending = getfenv(2).pending
@@ -788,17 +840,6 @@ function module.skip_fragile(pending_fn, cond)
   end
   return false
 end
-
-module.funcs = module.create_callindex(module.call)
-module.meths = module.create_callindex(module.nvim)
-module.async_meths = module.create_callindex(module.nvim_async)
-module.uimeths = module.create_callindex(ui)
-module.bufmeths = module.create_callindex(module.buffer)
-module.winmeths = module.create_callindex(module.window)
-module.tabmeths = module.create_callindex(module.tabpage)
-module.curbufmeths = module.create_callindex(module.curbuf)
-module.curwinmeths = module.create_callindex(module.curwin)
-module.curtabmeths = module.create_callindex(module.curtab)
 
 function module.exec(code)
   return module.meths.exec(code, false)
