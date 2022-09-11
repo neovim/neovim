@@ -1147,33 +1147,34 @@ function lsp.start_client(config)
 
           local namespace = vim.lsp.diagnostic.get_namespace(client_id)
           vim.diagnostic.reset(namespace, bufnr)
-        end)
 
-        client_ids[client_id] = nil
-      end
-      if vim.tbl_isempty(client_ids) then
-        vim.schedule(function()
-          unset_defaults(bufnr)
+          client_ids[client_id] = nil
+          if vim.tbl_isempty(client_ids) then
+            unset_defaults(bufnr)
+          end
         end)
       end
     end
-    local client = active_clients[client_id] and active_clients[client_id]
-      or uninitialized_clients[client_id]
-    active_clients[client_id] = nil
-    uninitialized_clients[client_id] = nil
 
-    -- Client can be absent if executable starts, but initialize fails
-    -- init/attach won't have happened
-    if client then
-      changetracking.reset(client)
-    end
-    if code ~= 0 or (signal ~= 0 and signal ~= 15) then
-      local msg =
-        string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
-      vim.schedule(function()
+    -- Schedule the deletion of the client object so that it exists in the execution of LspDetach
+    -- autocommands
+    vim.schedule(function()
+      local client = active_clients[client_id] and active_clients[client_id]
+        or uninitialized_clients[client_id]
+      active_clients[client_id] = nil
+      uninitialized_clients[client_id] = nil
+
+      -- Client can be absent if executable starts, but initialize fails
+      -- init/attach won't have happened
+      if client then
+        changetracking.reset(client)
+      end
+      if code ~= 0 or (signal ~= 0 and signal ~= 15) then
+        local msg =
+          string.format('Client %s quit with exit code %s and signal %s', client_id, code, signal)
         vim.notify(msg, vim.log.levels.WARN)
-      end)
-    end
+      end
+    end)
   end
 
   -- Start the RPC client.
