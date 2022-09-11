@@ -2,14 +2,6 @@ function(get_compile_flags _compile_flags)
   # Create template akin to CMAKE_C_COMPILE_OBJECT.
   set(compile_flags "<CMAKE_C_COMPILER> <CFLAGS> <BUILD_TYPE_CFLAGS> <COMPILE_OPTIONS><COMPILE_DEFINITIONS> <INCLUDES>")
 
-  # Get C compiler.
-  if(CMAKE_C_COMPILER_ARG1)
-    string(REPLACE
-      "<CMAKE_C_COMPILER>"
-      "<CMAKE_C_COMPILER> ${CMAKE_C_COMPILER_ARG1}"
-      compile_flags
-      "${compile_flags}")
-  endif()
   string(REPLACE
     "<CMAKE_C_COMPILER>"
     "${CMAKE_C_COMPILER}"

@@ -28,7 +28,7 @@ if(CLANG_ASAN_UBSAN)
 endif()
 
 set(LUA_CONFIGURE_COMMAND
-  sed -e "/^CC/s@gcc@${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}@"
+  sed -e "/^CC/s@gcc@${CMAKE_C_COMPILER}@"
       -e "/^CFLAGS/s@-O2@${LUA_CFLAGS}@"
       -e "/^MYLDFLAGS/s@$@${LUA_LDFLAGS}@"
       -e "s@-lreadline@@g"
