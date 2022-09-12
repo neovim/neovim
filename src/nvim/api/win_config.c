@@ -10,6 +10,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/highlight_group.h"
 #include "nvim/option.h"
@@ -330,7 +331,65 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
+static bool parse_border_title(Object title, FloatConfig *fconfig, Error *err)
+{
+  const char *pos = "left";
+
+  if (HAS_KEY(title)) {
+    if (title.type != kObjectTypeDictionary
+        && (title.type == kObjectTypeArray && title.data.array.size == 0))  {
+      api_set_error(err, kErrorTypeValidation, "title must be a dictionary");
+      return false;
+    }
+
+    Dictionary title_data = title.data.dictionary;
+
+    for(size_t i = 0; i < title_data.size; i++){
+      String k = title_data.items[i].key;
+      Object *v = &title_data.items[i].value;
+
+      if (striequal(k.data, "title_text")) {
+        if (v->type != kObjectTypeString) {
+          api_set_error(err, kErrorTypeValidation, "invalid title_text");
+          return false;
+        }
+        fconfig->title_text = v->data.string.data;
+      }
+
+      if (striequal(k.data, "title_pos")) {
+        if (v->type != kObjectTypeString) {
+          api_set_error(err, kErrorTypeValidation, "title_pos must be a string");
+          return false;
+        }
+        pos = v->data.string.data;
+      }
+
+      if (striequal(k.data, "title_hl")) {
+        if (v->type != kObjectTypeString) {
+          api_set_error(err, kErrorTypeValidation, "title_hl must be a string");
+          return false;
+        }
+        int hl_id = object_to_hl_id(*v,"border title highlight",err);
+        fconfig->title_hi_id = hl_id;
+      }
+    }
+
+    if (striequal(pos, "left")) {
+      fconfig->title_pos = kBorderTitleLeft;
+    }else if (striequal(pos, "center")) {
+      fconfig->title_pos = kBorderTitleCenter;
+    }else if (striequal(pos, "right")) {
+      fconfig->title_pos = kBorderTitleRight;
+    }else {
+      api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
+      return false;
+    }
+  }
+  fconfig->title = true;
+  return true;
+}
+
+static void parse_border_style(Object style, Object title, FloatConfig *fconfig, Error *err)
 {
   struct {
     const char *name;
@@ -344,6 +403,10 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
     { "solid", { " ", " ", " ", " ", " ", " ", " ", " " }, false },
     { NULL, { { NUL } }, false },
   };
+
+  if (!parse_border_title(title, fconfig, err)) {
+    return;
+  }
 
   schar_T *chars = fconfig->border_chars;
   int *hl_ids = fconfig->border_hl_ids;
@@ -414,6 +477,8 @@ static void parse_border_style(Object style, FloatConfig *fconfig, Error *err)
     String str = style.data.string;
     if (str.size == 0 || strequal(str.data, "none")) {
       fconfig->border = false;
+      // title should not work with border equal none
+      fconfig->title = false;
       return;
     }
     for (size_t i = 0; defaults[i].name; i++) {
@@ -603,8 +668,16 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
     return false;
   }
 
+  if (HAS_KEY(config->title)) {
+    // title only work with border
+    if (!HAS_KEY(config->border)) {
+      api_set_error(err, kErrorTypeException, "title must set with border");
+      return false;
+    }
+  }
+
   if (HAS_KEY(config->border)) {
-    parse_border_style(config->border, fconfig, err);
+    parse_border_style(config->border, config->title, fconfig, err);
     if (ERROR_SET(err)) {
       return false;
     }

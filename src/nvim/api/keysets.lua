@@ -81,6 +81,7 @@ return {
     "focusable";
     "zindex";
     "border";
+    "title";
     "style";
     "noautocmd";
   };

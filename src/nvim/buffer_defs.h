@@ -1048,6 +1048,12 @@ typedef enum {
   kWinStyleMinimal,  /// Minimal UI: no number column, eob markers, etc
 } WinStyle;
 
+typedef enum {
+  kBorderTitleLeft   = 0,
+  kBorderTitleCenter = 1,
+  kBorderTitleRight  = 2,
+} BorderTitlePos;
+
 typedef struct {
   Window window;
   lpos_T bufpos;
@@ -1060,10 +1066,15 @@ typedef struct {
   int zindex;
   WinStyle style;
   bool border;
+  bool title;
   bool shadow;
   schar_T border_chars[8];
   int border_hl_ids[8];
-  int border_attr[8];
+  int border_attr[9];
+  BorderTitlePos title_pos;
+  char *title_text;
+  int title_hi_id;
+  int title_attr;
   bool noautocmd;
 } FloatConfig;
 

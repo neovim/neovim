@@ -115,6 +115,7 @@ typedef enum {
   HLF_WBRNC,      // Window bars of not-current windows
   HLF_CU,         // Cursor
   HLF_COUNT,      // MUST be the last one
+  HLF_BORDER_TITLE// Float Border TItle
 } hlf_T;
 
 EXTERN const char *hlf_names[] INIT(= {
@@ -178,6 +179,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_WBR] = "WinBar",
   [HLF_WBRNC] = "WinBarNC",
   [HLF_CU] = "Cursor",
+  [HLF_BORDER_TITLE] = "FloatBorderTitle",
 });
 
 EXTERN int highlight_attr[HLF_COUNT + 1];     // Highl. attr for each context.

@@ -629,13 +629,50 @@ static void win_redr_border(win_T *wp)
   int *adj = wp->w_border_adj;
   int irow = wp->w_height_inner + wp->w_winbar_height, icol = wp->w_width_inner;
 
+  bool title = wp->w_float_config.title;
+  int title_pos = (int)wp->w_float_config.title_pos;
+  char *title_text = wp->w_float_config.title_text;
+
   if (adj[0]) {
     grid_puts_line_start(grid, 0);
     if (adj[3]) {
       grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
     }
     for (int i = 0; i < icol; i++) {
-      grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
+      if (title) {
+        int len = sizeof(title_text) - 1;
+
+        // title in left
+        if (title_pos == 1) {
+          if (i > 0 && i <= len) {
+            grid_put_schar(grid, 0, i + adj[3], title_text + 1, attrs[1]);
+          } else {
+            grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
+          }
+        }
+
+        // title in center
+        if (title_pos == 2) {
+          int text_center = len >> 1;
+          int col_center = icol >> 1;
+          if (i >= col_center - text_center && i <= col_center + text_center) {
+            grid_put_schar(grid, 0, i + adj[3], title_text + 1, attrs[1]);
+          }else {
+            grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
+          }
+        }
+
+        // title in right
+        if (title_pos == 3 ) {
+          if ( i >= i + len){
+            grid_put_schar(grid, 0, i + adj[3], title_text + 1, attrs[1]);
+          } else {
+            grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
+          }
+        }
+      } else {
+        grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
+      }
     }
     if (adj[1]) {
       grid_put_schar(grid, 0, icol + adj[3], chars[2], attrs[2]);

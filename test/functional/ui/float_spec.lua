@@ -8521,6 +8521,10 @@ describe('float window', function()
     end)
   end
 
+  -- TODO: add test for float border title
+  describe('float window border with title', function()
+  end)
+
   describe('with ext_multigrid', function()
     with_ext_multigrid(true)
   end)
