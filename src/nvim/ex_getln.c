@@ -4050,8 +4050,8 @@ static int set_cmdline_pos(int pos)
 /// "setcmdline()" function
 void f_setcmdline(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (argvars[0].v_type != VAR_STRING || argvars[0].vval.v_string == NULL) {
-    emsg(_(e_stringreq));
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
+      || tv_check_for_opt_number_arg(argvars, 1) == FAIL) {
     return;
   }
 
