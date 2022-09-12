@@ -604,6 +604,8 @@ String manipulation:					*string-functions*
 	fnameescape()		escape a file name for use with a Vim command
 	tr()			translate characters from one set to another
 	strtrans()		translate a string to make it printable
+	keytrans()		translate internal keycodes to a form that
+				can be used by |:map|
 	tolower()		turn a string to lowercase
 	toupper()		turn a string to uppercase
 	charclass()		class of a character
