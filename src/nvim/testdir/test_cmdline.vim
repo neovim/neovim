@@ -2226,8 +2226,8 @@ func Test_setcmdline()
     call assert_equal(a:pos, getcmdpos())
 
     call assert_fails('call setcmdline("' .. a:text .. '", -1)', 'E487:')
-    call assert_fails('call setcmdline({}, 0)', 'E928:')
-    call assert_fails('call setcmdline("' .. a:text .. '", {})', 'E728:')
+    call assert_fails('call setcmdline({}, 0)', 'E1174:')
+    call assert_fails('call setcmdline("' .. a:text .. '", {})', 'E1210:')
 
     return ''
   endfunc

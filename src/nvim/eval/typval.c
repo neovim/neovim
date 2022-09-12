@@ -3843,6 +3843,14 @@ int tv_check_for_number_arg(const typval_T *const args, const int idx)
   return OK;
 }
 
+/// Check for an optional number argument at "idx"
+int tv_check_for_opt_number_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  return (args[idx].v_type == VAR_UNKNOWN
+          || tv_check_for_number_arg(args, idx) != FAIL) ? OK : FAIL;
+}
+
 /// Get the string value of a "stringish" VimL object.
 ///
 /// @param[in]  tv  Object to get value of.
