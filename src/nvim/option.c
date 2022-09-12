@@ -3558,9 +3558,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_
     if (valuep == &p_pt) {
       s = (char_u *)(*valuep);
       while (*s != NUL) {
-        if (put_escstr(fd, (char_u *)str2special((const char **)&s, false,
-                                                 false), 2)
-            == FAIL) {
+        if (put_escstr(fd, (char_u *)str2special((const char **)&s, false, false), 2) == FAIL) {
           return FAIL;
         }
       }
