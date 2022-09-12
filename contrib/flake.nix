@@ -23,24 +23,25 @@
           });
 
           # a development binary to help debug issues
-          neovim-debug = let
-            stdenv = if pkgs.stdenv.isLinux then pkgs.llvmPackages_latest.stdenv else pkgs.stdenv;
-          in
+          neovim-debug =
+            let
+              stdenv = if pkgs.stdenv.isLinux then pkgs.llvmPackages_latest.stdenv else pkgs.stdenv;
+            in
             ((neovim.override {
-            lua = pkgs.luajit;
-            inherit stdenv;
-          }).overrideAttrs (oa: {
+              lua = pkgs.luajit;
+              inherit stdenv;
+            }).overrideAttrs (oa: {
 
-            dontStrip = true;
-            NIX_CFLAGS_COMPILE = " -ggdb -Og";
+              dontStrip = true;
+              NIX_CFLAGS_COMPILE = " -ggdb -Og";
 
-            cmakeBuildType = "Debug";
-            cmakeFlags = oa.cmakeFlags ++ [
-              "-DMIN_LOG_LEVEL=0"
-            ];
+              cmakeBuildType = "Debug";
+              cmakeFlags = oa.cmakeFlags ++ [
+                "-DMIN_LOG_LEVEL=0"
+              ];
 
-            disallowedReferences = [];
-          }));
+              disallowedReferences = [ ];
+            }));
 
           # for neovim developers, beware of the slow binary
           neovim-developer =
@@ -68,70 +69,71 @@
           inherit system;
         };
 
-        pythonEnv = pkgs.python3.withPackages(ps: [
+        lua = pkgs.lua5_1;
+
+        pythonEnv = pkgs.python3.withPackages (ps: [
           ps.msgpack
-          ps.flake8  # for 'make pylint'
+          ps.flake8 # for 'make pylint'
         ]);
       in
       rec {
 
         packages = with pkgs; {
+          default = neovim;
           inherit neovim neovim-debug neovim-developer;
         };
 
         checks = {
-          pylint = pkgs.runCommandNoCC "pylint" {
-            nativeBuildInputs = [ pythonEnv ];
-            preferLocalBuild = true;
+          pylint = pkgs.runCommandNoCC "pylint"
+            {
+              nativeBuildInputs = [ pythonEnv ];
+              preferLocalBuild = true;
             } "make -C ${./..} pylint > $out";
 
-          shlint = pkgs.runCommandNoCC "shlint" {
-            nativeBuildInputs = [ pkgs.shellcheck ];
-            preferLocalBuild = true;
+          shlint = pkgs.runCommandNoCC "shlint"
+            {
+              nativeBuildInputs = [ pkgs.shellcheck ];
+              preferLocalBuild = true;
             } "make -C ${./..} shlint > $out";
         };
 
+        # kept for backwards-compatibility
         defaultPackage = pkgs.neovim;
 
-        apps = {
-          nvim = flake-utils.lib.mkApp { drv = pkgs.neovim; name = "nvim"; };
-          nvim-debug = flake-utils.lib.mkApp { drv = pkgs.neovim-debug; name = "nvim"; };
+        devShells = {
+          default = pkgs.neovim-developer.overrideAttrs (oa: {
+
+            buildInputs = with pkgs; oa.buildInputs ++ [
+              cmake
+              lua.pkgs.luacheck
+              sumneko-lua-language-server
+              pythonEnv
+              include-what-you-use # for scripts/check-includes.py
+              jq # jq for scripts/vim-patch.sh -r
+              shellcheck # for `make shlint`
+              doxygen # for script/gen_vimdoc.py
+              clang-tools # for clangd to find the correct headers
+            ];
+
+            shellHook = oa.shellHook + ''
+              export NVIM_PYTHON_LOG_LEVEL=DEBUG
+              export NVIM_LOG_FILE=/tmp/nvim.log
+              export ASAN_SYMBOLIZER_PATH=${pkgs.llvm_11}/bin/llvm-symbolizer
+
+              # ASAN_OPTIONS=detect_leaks=1
+              export ASAN_OPTIONS="log_path=./test.log:abort_on_error=1"
+              export UBSAN_OPTIONS=print_stacktrace=1
+              mkdir -p build/runtime/parser
+              # nvim looks into CMAKE_INSTALL_DIR. Hack to avoid errors
+              # when running the functionaltests
+              mkdir -p outputs/out/share/nvim/syntax
+              touch outputs/out/share/nvim/syntax/syntax.vim
+
+              # for treesitter functionaltests
+              mkdir -p runtime/parser
+              cp -f ${pkgs.tree-sitter.builtGrammars.tree-sitter-c}/parser runtime/parser/c.so
+            '';
+          });
         };
-
-        defaultApp = apps.nvim;
-
-        devShell = let
-          in
-            pkgs.neovim-developer.overrideAttrs(oa: {
-
-              buildInputs = with pkgs; oa.buildInputs ++ [
-                cmake
-                pythonEnv
-                include-what-you-use # for scripts/check-includes.py
-                jq # jq for scripts/vim-patch.sh -r
-                shellcheck # for `make shlint`
-                doxygen    # for script/gen_vimdoc.py
-                clang-tools # for clangd to find the correct headers
-              ];
-
-              shellHook = oa.shellHook + ''
-                export NVIM_PYTHON_LOG_LEVEL=DEBUG
-                export NVIM_LOG_FILE=/tmp/nvim.log
-                export ASAN_SYMBOLIZER_PATH=${pkgs.llvm_11}/bin/llvm-symbolizer
-
-                # ASAN_OPTIONS=detect_leaks=1
-                export ASAN_OPTIONS="log_path=./test.log:abort_on_error=1"
-                export UBSAN_OPTIONS=print_stacktrace=1
-                mkdir -p build/runtime/parser
-                # nvim looks into CMAKE_INSTALL_DIR. Hack to avoid errors
-                # when running the functionaltests
-                mkdir -p outputs/out/share/nvim/syntax
-                touch outputs/out/share/nvim/syntax/syntax.vim
-
-                # for treesitter functionaltests
-                mkdir -p runtime/parser
-                cp -f ${pkgs.tree-sitter.builtGrammars.tree-sitter-c}/parser runtime/parser/c.so
-              '';
-            });
-    });
+      });
 }
