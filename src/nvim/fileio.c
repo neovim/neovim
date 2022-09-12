@@ -346,7 +346,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   }
   // If the name is too long we might crash further on, quit here.
   if (fname != NULL && *fname != NUL) {
-    size_t namelen = STRLEN(fname);
+    size_t namelen = strlen(fname);
 
     // If the name is too long we might crash further on, quit here.
     if (namelen >= MAXPATHL) {
@@ -1782,12 +1782,12 @@ failed:
         c = true;
       }
       if (conv_error != 0) {
-        sprintf((char *)IObuff + STRLEN(IObuff),
-                _("[CONVERSION ERROR in line %" PRId64 "]"), (int64_t)conv_error);
+        snprintf(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff),
+                 _("[CONVERSION ERROR in line %" PRId64 "]"), (int64_t)conv_error);
         c = true;
       } else if (illegal_byte > 0) {
-        sprintf((char *)IObuff + STRLEN(IObuff),
-                _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
+        snprintf(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff),
+                 _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
         c = true;
       } else if (error) {
         STRCAT(IObuff, _("[READ ERRORS]"));
@@ -1958,7 +1958,7 @@ static linenr_T readfile_linenr(linenr_T linecnt, char_u *p, char_u *endp)
 void prep_exarg(exarg_T *eap, const buf_T *buf)
   FUNC_ATTR_NONNULL_ALL
 {
-  const size_t cmd_len = 15 + STRLEN(buf->b_p_fenc);
+  const size_t cmd_len = 15 + strlen(buf->b_p_fenc);
   eap->cmd = xmalloc(cmd_len);
 
   snprintf(eap->cmd, cmd_len, "e ++enc=%s", buf->b_p_fenc);
@@ -2022,7 +2022,7 @@ static char *next_fenc(char **pp, bool *alloced)
   p = vim_strchr((*pp), ',');
   if (p == NULL) {
     r = enc_canonize(*pp);
-    *pp += STRLEN(*pp);
+    *pp += strlen(*pp);
   } else {
     r = xstrnsave(*pp, (size_t)(p - *pp));
     *pp = p + 1;
@@ -2203,7 +2203,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 
   // Avoid a crash for a long name.
-  if (STRLEN(fname) >= MAXPATHL) {
+  if (strlen(fname) >= MAXPATHL) {
     emsg(_(e_longname));
     return FAIL;
   }
@@ -2733,7 +2733,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
               // delete an existing one, and try to use another name instead.
               // Change one character, just before the extension.
               //
-              wp = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
+              wp = backup + strlen(backup) - 1 - strlen(backup_ext);
               if (wp < backup) {                // empty file name ???
                 wp = backup;
               }
@@ -2861,7 +2861,7 @@ nobackup:
           // delete an existing one, try to use another name.
           // Change one character, just before the extension.
           if (!p_bk && os_path_exists(backup)) {
-            p = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
+            p = backup + strlen(backup) - 1 - strlen(backup_ext);
             if (p < backup) {           // empty file name ???
               p = backup;
             }
@@ -3172,7 +3172,7 @@ restore_backup:
       // Keep it fast!
       ptr = ml_get_buf(buf, lnum, false) - 1;
       if (write_undo_file) {
-        sha256_update(&sha_ctx, (char_u *)ptr + 1, (uint32_t)(STRLEN(ptr + 1) + 1));
+        sha256_update(&sha_ctx, (char_u *)ptr + 1, (uint32_t)(strlen(ptr + 1) + 1));
       }
       while ((c = *++ptr) != NUL) {
         if (c == NL) {
@@ -4527,7 +4527,7 @@ int vim_rename(const char *from, const char *to)
 
     // Find a name that doesn't exist and is in the same directory.
     // Rename "from" to "tempname" and then rename "tempname" to "to".
-    if (STRLEN(from) >= MAXPATHL - 5) {
+    if (strlen(from) >= MAXPATHL - 5) {
       return -1;
     }
     STRCPY(tempname, from);
@@ -4892,7 +4892,7 @@ int buf_check_timestamp(buf_T *buf)
     if (!helpmesg) {
       mesg2 = "";
     }
-    const size_t tbuf_len = STRLEN(path) + STRLEN(mesg) + STRLEN(mesg2) + 2;
+    const size_t tbuf_len = strlen(path) + strlen(mesg) + strlen(mesg2) + 2;
     char *const tbuf = xmalloc(tbuf_len);
     snprintf(tbuf, tbuf_len, mesg, path);
     // Set warningmsg here, before the unimportant and output-specific
@@ -5489,7 +5489,7 @@ char *file_pat_to_reg_pat(const char *pat, const char *pat_end, char *allow_dirs
     *allow_dirs = false;
   }
   if (pat_end == NULL) {
-    pat_end = pat + STRLEN(pat);
+    pat_end = pat + strlen(pat);
   }
 
   if (pat_end == pat) {

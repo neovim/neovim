@@ -341,7 +341,7 @@ char *strcase_save(const char *const orig, bool upper)
     int newl = utf_char2len(uc);
     if (newl != l) {
       // TODO(philix): use xrealloc() in strcase_save()
-      char *s = xmalloc(STRLEN(res) + (size_t)(1 + newl - l));
+      char *s = xmalloc(strlen(res) + (size_t)(1 + newl - l));
       memcpy(s, res, (size_t)(p - res));
       STRCPY(s + (p - res) + newl, p + l);
       p = s + (p - res);
@@ -504,8 +504,8 @@ bool has_non_ascii_len(const char *const s, const size_t len)
 char *concat_str(const char *restrict str1, const char *restrict str2)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  size_t l = STRLEN(str1);
-  char *dest = xmalloc(l + STRLEN(str2) + 1);
+  size_t l = strlen(str1);
+  char *dest = xmalloc(l + strlen(str2) + 1);
   STRCPY(dest, str1);
   STRCPY(dest + l, str2);
   return dest;
@@ -1473,7 +1473,7 @@ char *reverse_text(char *s)
   FUNC_ATTR_NONNULL_RET
 {
   // Reverse the pattern.
-  size_t len = STRLEN(s);
+  size_t len = strlen(s);
   char *rev = xmalloc(len + 1);
   size_t rev_i = len;
   for (size_t s_i = 0; s_i < len; s_i++) {
@@ -1498,7 +1498,7 @@ char *reverse_text(char *s)
 char *strrep(const char *src, const char *what, const char *rep)
 {
   char *pos = (char *)src;
-  size_t whatlen = STRLEN(what);
+  size_t whatlen = strlen(what);
 
   // Count occurrences
   size_t count = 0;
@@ -1511,8 +1511,8 @@ char *strrep(const char *src, const char *what, const char *rep)
     return NULL;
   }
 
-  size_t replen = STRLEN(rep);
-  char *ret = xmalloc(STRLEN(src) + count * (replen - whatlen) + 1);
+  size_t replen = strlen(rep);
+  char *ret = xmalloc(strlen(src) + count * (replen - whatlen) + 1);
   char *ptr = ret;
   while ((pos = strstr(src, what)) != NULL) {
     size_t idx = (size_t)(pos - src);

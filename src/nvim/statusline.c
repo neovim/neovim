@@ -100,7 +100,7 @@ void win_redr_status(win_T *wp)
     }
     if (wp->w_buffer->b_p_ro) {
       snprintf((char *)p + len, MAXPATHL - (size_t)len, "%s", _("[RO]"));
-      // len += (int)STRLEN(p + len);  // dead assignment
+      // len += (int)strlen(p + len);  // dead assignment
     }
 
     this_ru_col = ru_col - (Columns - width);
@@ -137,9 +137,9 @@ void win_redr_status(win_T *wp)
               this_ru_col + col, fillchar, fillchar, attr);
 
     if (get_keymap_str(wp, "<%s>", (char *)NameBuff, MAXPATHL)
-        && this_ru_col - len > (int)(STRLEN(NameBuff) + 1)) {
+        && this_ru_col - len > (int)(strlen(NameBuff) + 1)) {
       grid_puts(&default_grid, NameBuff, row,
-                (int)((size_t)this_ru_col - STRLEN(NameBuff) - 1), attr);
+                (int)((size_t)this_ru_col - strlen(NameBuff) - 1), attr);
     }
 
     win_redr_ruler(wp, true);
@@ -286,7 +286,7 @@ void win_redr_ruler(win_T *wp, bool always)
     vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
                  (wp->w_buffer->b_ml.ml_flags &
                   ML_EMPTY) ? (int64_t)0L : (int64_t)wp->w_cursor.lnum);
-    size_t len = STRLEN(buffer);
+    size_t len = strlen(buffer);
     col_print(buffer + len, RULER_BUF_LEN - len,
               empty_line ? 0 : (int)wp->w_cursor.col + 1,
               (int)virtcol + 1);
@@ -294,7 +294,7 @@ void win_redr_ruler(win_T *wp, bool always)
     // Add a "50%" if there is room for it.
     // On the last line, don't print in the last column (scrolls the
     // screen up on some terminals).
-    int i = (int)STRLEN(buffer);
+    int i = (int)strlen(buffer);
     get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
     int o = i + vim_strsize(buffer + i + 1);
     if (wp->w_status_height == 0 && !is_stl_global) {  // can't use last char of screen
@@ -344,7 +344,7 @@ void win_redr_ruler(win_T *wp, bool always)
       ScreenGrid *grid = part_of_status ? &default_grid : &msg_grid_adj;
       grid_puts(grid, buffer, row, this_ru_col + off, attr);
       grid_fill(grid, row, row + 1,
-                this_ru_col + off + (int)STRLEN(buffer), off + width, fillchar,
+                this_ru_col + off + (int)strlen(buffer), off + width, fillchar,
                 fillchar, attr);
     }
 
@@ -717,7 +717,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
   // Get the byte value now, in case we need it below. This is more
   // efficient than making a copy of the line.
   int byteval;
-  const size_t len = STRLEN(line_ptr);
+  const size_t len = strlen(line_ptr);
   if (wp->w_cursor.col > (colnr_T)len) {
     // Line may have changed since checking the cursor column, or the lnum
     // was adjusted above.
@@ -1190,8 +1190,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
           && strchr((const char *)str, '%') != NULL
           && evaldepth < MAX_STL_EVAL_DEPTH) {
         size_t parsed_usefmt = (size_t)(block_start - usefmt);
-        size_t str_length = STRLEN(str);
-        size_t fmt_length = STRLEN(fmt_p);
+        size_t str_length = strlen(str);
+        size_t fmt_length = strlen(fmt_p);
         size_t new_fmt_len = parsed_usefmt + str_length + fmt_length + 3;
         char *new_fmt = xmalloc(new_fmt_len * sizeof(char));
         char *new_fmt_p = new_fmt;
@@ -1328,7 +1328,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
       // in the temporary buffer
       // (including the brackets and null terminating character)
       if (*wp->w_buffer->b_p_ft != NUL
-          && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 3) {
+          && strlen(wp->w_buffer->b_p_ft) < TMPLEN - 3) {
         vim_snprintf(buf_tmp, sizeof(buf_tmp), "[%s]",
                      wp->w_buffer->b_p_ft);
         str = buf_tmp;
@@ -1341,7 +1341,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
       // in the temporary buffer
       // (including the comma and null terminating character)
       if (*wp->w_buffer->b_p_ft != NUL
-          && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 2) {
+          && strlen(wp->w_buffer->b_p_ft) < TMPLEN - 2) {
         vim_snprintf(buf_tmp, sizeof(buf_tmp), ",%s", wp->w_buffer->b_p_ft);
         // Uppercase the file extension
         for (char *t = buf_tmp; *t != 0; t++) {
@@ -1561,7 +1561,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
 
       // Advance the output buffer position to the end of the
       // number we just printed
-      out_p += STRLEN(out_p);
+      out_p += strlen(out_p);
 
       // Otherwise, there was nothing to print so mark the item as empty
     } else {
@@ -1669,7 +1669,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
 
       if (width + 1 < maxwidth) {
         // Advance the pointer to the end of the string
-        trunc_p = trunc_p + STRLEN(trunc_p);
+        trunc_p = trunc_p + strlen(trunc_p);
       }
 
       // Fill up for half a double-wide character.
@@ -1705,7 +1705,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int use_san
     // add characters at the separate marker (if there is one) to
     // fill up the available space.
   } else if (width < maxwidth
-             && STRLEN(out) + (size_t)(maxwidth - width) + 1 < outlen) {
+             && strlen(out) + (size_t)(maxwidth - width) + 1 < outlen) {
     // Find how many separators there are, which we will use when
     // figuring out how many groups there are.
     int num_separators = 0;

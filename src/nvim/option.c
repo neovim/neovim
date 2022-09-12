@@ -1266,7 +1266,7 @@ int do_set(char *arg, int opt_flags)
               // we need to remove the backslashes.
 
               // get a bit too much
-              newlen = (unsigned)STRLEN(arg) + 1;
+              newlen = (unsigned)strlen(arg) + 1;
               if (adding || prepending || removing) {
                 newlen += (unsigned)STRLEN(origval) + 1;
               }
@@ -1312,7 +1312,7 @@ int do_set(char *arg, int opt_flags)
                 s = option_expand(opt_idx, newval);
                 if (s != NULL) {
                   xfree(newval);
-                  newlen = (unsigned)STRLEN(s) + 1;
+                  newlen = (unsigned)strlen(s) + 1;
                   if (adding || prepending || removing) {
                     newlen += (unsigned)STRLEN(origval) + 1;
                   }
@@ -1357,10 +1357,10 @@ int do_set(char *arg, int opt_flags)
                     i--;
                   }
                   memmove(newval + i + comma, newval,
-                          STRLEN(newval) + 1);
+                          strlen(newval) + 1);
                   memmove(newval, origval, (size_t)i);
                 } else {
-                  i = (int)STRLEN(newval);
+                  i = (int)strlen(newval);
                   STRMOVE(newval + i + comma, origval);
                 }
                 if (comma) {
@@ -1507,7 +1507,7 @@ skip:
 
     if (errmsg != NULL) {
       STRLCPY(IObuff, _(errmsg), IOSIZE);
-      i = (int)STRLEN(IObuff) + 2;
+      i = (int)strlen(IObuff) + 2;
       if (i + (arg - startarg) < IOSIZE) {
         // append the argument with the error
         STRCAT(IObuff, ": ");
@@ -1694,7 +1694,7 @@ static char *option_expand(int opt_idx, char *val)
 
   // If val is longer than MAXPATHL no meaningful expansion can be done,
   // expand_env() would truncate the string.
-  if (val == NULL || STRLEN(val) > MAXPATHL) {
+  if (val == NULL || strlen(val) > MAXPATHL) {
     return NULL;
   }
 
@@ -2753,7 +2753,7 @@ int findoption_len(const char *const arg, const size_t len)
   } else {
     // Nvim: handle option aliases.
     if (STRNCMP(options[opt_idx].fullname, "viminfo", 7) == 0) {
-      if (STRLEN(options[opt_idx].fullname) == 7) {
+      if (strlen(options[opt_idx].fullname) == 7) {
         return findoption_len("shada", 5);
       }
       assert(strcmp(options[opt_idx].fullname, "viminfofile") == 0);
@@ -3274,7 +3274,7 @@ static void showoptions(int all, int opt_flags)
           len = 1;                      // a toggle option fits always
         } else {
           option_value2string(p, opt_flags);
-          len = (int)STRLEN(p->fullname) + vim_strsize((char *)NameBuff) + 1;
+          len = (int)strlen(p->fullname) + vim_strsize((char *)NameBuff) + 1;
         }
         if ((len <= INC - GAP && run == 1)
             || (len > INC - GAP && run == 2)) {
@@ -3565,7 +3565,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_
         }
       }
     } else if ((flags & P_EXPAND) != 0) {
-      size_t size = (size_t)STRLEN(*valuep) + 1;
+      size_t size = (size_t)strlen(*valuep) + 1;
 
       // replace home directory in the whole option value into "buf"
       buf = xmalloc(size);

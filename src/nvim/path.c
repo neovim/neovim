@@ -811,8 +811,8 @@ static bool is_unique(char *maybe_unique, garray_T *gap, int i)
     if (j == i) {
       continue;  // don't compare it with itself
     }
-    size_t candidate_len = STRLEN(maybe_unique);
-    size_t other_path_len = STRLEN(other_paths[j]);
+    size_t candidate_len = strlen(maybe_unique);
+    size_t other_path_len = strlen(other_paths[j]);
     if (other_path_len < candidate_len) {
       continue;  // it's different when it's shorter
     }
@@ -849,7 +849,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       }
       char_u *p = (char_u *)path_tail(curbuf->b_ffname);
       size_t len = (size_t)(p - (char_u *)curbuf->b_ffname);
-      if (len + STRLEN(buf) >= MAXPATHL) {
+      if (len + strlen(buf) >= MAXPATHL) {
         continue;
       }
       if (buf[1] == NUL) {
@@ -866,7 +866,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     } else if (!path_is_absolute((char_u *)buf)) {
       // Expand relative path to their full path equivalent
       size_t len = STRLEN(curdir);
-      if (len + STRLEN(buf) + 3 > MAXPATHL) {
+      if (len + strlen(buf) + 3 > MAXPATHL) {
         continue;
       }
       STRMOVE(buf + len + 1, buf);
@@ -988,7 +988,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
         && vim_regexec(&regmatch, path_cutoff, (colnr_T)0)
         && is_unique(path_cutoff, gap, i)) {
       sort_again = true;
-      memmove(path, path_cutoff, STRLEN(path_cutoff) + 1);
+      memmove(path, path_cutoff, strlen(path_cutoff) + 1);
     } else {
       // Here all files can be reached without path, so get shortest
       // unique path.  We start at the end of the path. */
@@ -998,7 +998,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
             && is_unique(pathsep_p + 1, gap, i)
             && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
           sort_again = true;
-          memmove(path, pathsep_p + 1, STRLEN(pathsep_p));
+          memmove(path, pathsep_p + 1, strlen(pathsep_p));
           break;
         }
       }
@@ -1045,7 +1045,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       continue;
     }
 
-    rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
+    rel_path = xmalloc(strlen(short_name) + strlen(PATHSEPSTR) + 2);
     STRCPY(rel_path, ".");
     add_pathsep(rel_path);
     STRCAT(rel_path, short_name);
@@ -1360,7 +1360,7 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
   int cnt = 0;
 
   // Create the command: lop off the backticks.
-  char *cmd = xstrnsave(pat + 1, STRLEN(pat) - 2);
+  char *cmd = xstrnsave(pat + 1, strlen(pat) - 2);
 
   if (*cmd == '=') {          // `={expr}`: Expand expression
     buffer = eval_to_string(cmd + 1, &p, true);
@@ -1415,7 +1415,7 @@ void slash_adjust(char_u *p)
 
   if (*p == '`') {
     // don't replace backslash in backtick quoted strings
-    const size_t len = STRLEN(p);
+    const size_t len = strlen(p);
     if (len > 2 && *(p + len - 1) == '`') {
       return;
     }
@@ -1678,7 +1678,7 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
     tofree = eval_includeexpr(ptr, len);
     if (tofree != NULL) {
       ptr = tofree;
-      len = STRLEN(ptr);
+      len = strlen(ptr);
     }
   }
 
@@ -1693,7 +1693,7 @@ char *find_file_name_in_path(char *ptr, size_t len, int options, long count, cha
       tofree = eval_includeexpr(ptr, len);
       if (tofree != NULL) {
         ptr = tofree;
-        len = STRLEN(ptr);
+        len = strlen(ptr);
         file_name = (char *)find_file_in_path((char_u *)ptr, len, options & ~FNAME_MESS,
                                               true, (char_u *)rel_fname);
       }
@@ -2066,7 +2066,7 @@ char *path_shorten_fname(char *full_path, char *dir_name)
   }
 
   assert(dir_name != NULL);
-  size_t len = STRLEN(dir_name);
+  size_t len = strlen(dir_name);
 
   // If dir_name is a path head, full_path can always be made relative.
   if (len == (size_t)path_head_length() && is_path_head((char_u *)dir_name)) {
@@ -2232,7 +2232,7 @@ int match_suffix(char *fname)
 #define MAXSUFLEN 30  // maximum length of a file suffix
   char suf_buf[MAXSUFLEN];
 
-  size_t fnamelen = STRLEN(fname);
+  size_t fnamelen = strlen(fname);
   size_t setsuflen = 0;
   for (char_u *setsuf = p_su; *setsuf;) {
     setsuflen = copy_option_part((char **)&setsuf, (char *)suf_buf, MAXSUFLEN, ".,");

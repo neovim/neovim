@@ -109,7 +109,7 @@
 #include "nvim/syntax.h"          // for syn_get_id, syntax_present
 #include "nvim/types.h"           // for char_u
 #include "nvim/undo.h"            // for u_save_cursor
-#include "nvim/vim.h"             // for curwin, STRLEN, STRLCPY, STRNCMP
+#include "nvim/vim.h"             // for curwin, strlen, STRLCPY, STRNCMP
 
 // Result values.  Lower number is accepted over higher one.
 #define SP_BANNED       (-1)
@@ -1550,7 +1550,7 @@ static void spell_load_lang(char_u *lang)
     }
   } else if (sl.sl_slang != NULL) {
     // At least one file was loaded, now load ALL the additions.
-    STRCPY(fname_enc + STRLEN(fname_enc) - 3, "add.spl");
+    STRCPY(fname_enc + strlen(fname_enc) - 3, "add.spl");
     do_in_runtimepath((char *)fname_enc, DIP_ALL, spell_load_cb, &sl);
   }
 }
@@ -1888,7 +1888,7 @@ char *did_set_spelllang(win_T *wp)
     // Get one language name.
     copy_option_part(&splp, (char *)lang, MAXWLEN, ",");
     region = NULL;
-    len = (int)STRLEN(lang);
+    len = (int)strlen(lang);
 
     if (!valid_spelllang((char *)lang)) {
       continue;
@@ -2165,7 +2165,7 @@ static void use_midword(slang_T *lp, win_T *wp)
       wp->w_s->b_spell_ismw_mb = xstrnsave(p, (size_t)l);
     } else {
       // Append multi-byte chars to "b_spell_ismw_mb".
-      const int n = (int)STRLEN(wp->w_s->b_spell_ismw_mb);
+      const int n = (int)strlen(wp->w_s->b_spell_ismw_mb);
       char *bp = xstrnsave(wp->w_s->b_spell_ismw_mb, (size_t)n + (size_t)l);
       xfree(wp->w_s->b_spell_ismw_mb);
       wp->w_s->b_spell_ismw_mb = bp;
@@ -2572,9 +2572,9 @@ void ex_spellrepall(exarg_T *eap)
     emsg(_("E752: No previous spell replacement"));
     return;
   }
-  int addlen = (int)(STRLEN(repl_to) - STRLEN(repl_from));
+  int addlen = (int)(strlen(repl_to) - strlen(repl_from));
 
-  size_t frompatlen = STRLEN(repl_from) + 7;
+  size_t frompatlen = strlen(repl_from) + 7;
   char_u *frompat = xmalloc(frompatlen);
   snprintf((char *)frompat, frompatlen, "\\V\\<%s\\>", repl_from);
   p_ws = false;
@@ -2592,11 +2592,11 @@ void ex_spellrepall(exarg_T *eap)
     // when changing "etc" to "etc.".
     char_u *line = (char_u *)get_cursor_line_ptr();
     if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
-                               repl_to, STRLEN(repl_to)) != 0) {
+                               repl_to, strlen(repl_to)) != 0) {
       char_u *p = xmalloc(STRLEN(line) + (size_t)addlen + 1);
       memmove(p, line, (size_t)curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
-      STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
+      STRCAT(p, line + curwin->w_cursor.col + strlen(repl_from));
       ml_replace(curwin->w_cursor.lnum, (char *)p, false);
       changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
@@ -2606,7 +2606,7 @@ void ex_spellrepall(exarg_T *eap)
       }
       sub_nsubs++;
     }
-    curwin->w_cursor.col += (colnr_T)STRLEN(repl_to);
+    curwin->w_cursor.col += (colnr_T)strlen(repl_to);
   }
 
   p_ws = save_ws;
@@ -3247,7 +3247,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
     // When matching with a pattern and there are no prefixes only use
     // parts of the tree that match "pat".
     if (pat != NULL && slang->sl_pbyts == NULL) {
-      patlen = (int)STRLEN(pat);
+      patlen = (int)strlen(pat);
     } else {
       patlen = -1;
     }
@@ -3611,7 +3611,7 @@ char *did_set_spell_option(bool is_spellfile)
   char *errmsg = NULL;
 
   if (is_spellfile) {
-    int l = (int)STRLEN(curwin->w_s->b_p_spf);
+    int l = (int)strlen(curwin->w_s->b_p_spf);
     if (l > 0
         && (l < 4 || strcmp(curwin->w_s->b_p_spf + l - 4, ".add") != 0)) {
       errmsg = e_invarg;

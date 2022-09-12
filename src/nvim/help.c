@@ -75,7 +75,7 @@ void ex_help(exarg_T *eap)
   }
 
   // remove trailing blanks
-  p = arg + STRLEN(arg) - 1;
+  p = arg + strlen(arg) - 1;
   while (p > arg && ascii_iswhite(*p) && p[-1] != '\\') {
     *p-- = NUL;
   }
@@ -95,7 +95,7 @@ void ex_help(exarg_T *eap)
   if (n != FAIL && lang != NULL) {
     // Find first item with the requested language.
     for (i = 0; i < num_matches; i++) {
-      len = (int)STRLEN(matches[i]);
+      len = (int)strlen(matches[i]);
       if (len > 3 && matches[i][len - 3] == '@'
           && STRICMP(matches[i] + len - 2, lang) == 0) {
         break;
@@ -219,7 +219,7 @@ void ex_helpclose(exarg_T *eap)
 /// @return  NULL if not found.
 char *check_help_lang(char *arg)
 {
-  int len = (int)STRLEN(arg);
+  int len = (int)strlen(arg);
 
   if (len >= 3 && arg[len - 3] == '@' && ASCII_ISALPHA(arg[len - 2])
       && ASCII_ISALPHA(arg[len - 1])) {
@@ -278,7 +278,7 @@ int help_heuristic(char *matched_string, int offset, int wrong_case)
   if (matched_string[0] == '+' && matched_string[1] != NUL) {
     offset += 100;
   }
-  return 100 * num_letters + (int)STRLEN(matched_string) + offset;
+  return 100 * num_letters + (int)strlen(matched_string) + offset;
 }
 
 /// Compare functions for qsort() below, that checks the help heuristics number
@@ -515,16 +515,16 @@ int find_help_tags(const char *arg, int *num_matches, char ***matches, bool keep
       if (*IObuff == '`') {
         if (d > IObuff + 2 && d[-1] == '`') {
           // remove the backticks from `command`
-          memmove(IObuff, IObuff + 1, STRLEN(IObuff));
+          memmove(IObuff, IObuff + 1, strlen(IObuff));
           d[-2] = NUL;
         } else if (d > IObuff + 3 && d[-2] == '`' && d[-1] == ',') {
           // remove the backticks and comma from `command`,
-          memmove(IObuff, IObuff + 1, STRLEN(IObuff));
+          memmove(IObuff, IObuff + 1, strlen(IObuff));
           d[-3] = NUL;
         } else if (d > IObuff + 4 && d[-3] == '`'
                    && d[-2] == '\\' && d[-1] == '.') {
           // remove the backticks and dot from `command`\.
-          memmove(IObuff, IObuff + 1, STRLEN(IObuff));
+          memmove(IObuff, IObuff + 1, strlen(IObuff));
           d[-4] = NUL;
         }
       }
@@ -567,7 +567,7 @@ void cleanup_help_tags(int num_file, char **file)
   *p = NUL;
 
   for (int i = 0; i < num_file; i++) {
-    int len = (int)STRLEN(file[i]) - 3;
+    int len = (int)strlen(file[i]) - 3;
     if (len <= 0) {
       continue;
     }
@@ -577,7 +577,7 @@ void cleanup_help_tags(int num_file, char **file)
       int j;
       for (j = 0; j < num_file; j++) {
         if (j != i
-            && (int)STRLEN(file[j]) == len + 3
+            && (int)strlen(file[j]) == len + 3
             && STRNCMP(file[i], file[j], len + 1) == 0) {
           break;
         }
@@ -591,7 +591,7 @@ void cleanup_help_tags(int num_file, char **file)
 
   if (*buf != NUL) {
     for (int i = 0; i < num_file; i++) {
-      int len = (int)STRLEN(file[i]) - 3;
+      int len = (int)strlen(file[i]) - 3;
       if (len <= 0) {
         continue;
       }
@@ -915,7 +915,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags
       || path_full_compare("$VIMRUNTIME/doc", dir, false, true) == kEqualFiles) {
-    size_t s_len = 18 + STRLEN(tagfname);
+    size_t s_len = 18 + strlen(tagfname);
     s = xmalloc(s_len);
     snprintf(s, s_len, "help-tags\t%s\t1\n", tagfname);
     GA_APPEND(char *, &ga, s);
@@ -979,7 +979,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
                   || s[1] == '\0')) {
             *p2 = '\0';
             p1++;
-            size_t s_len= (size_t)(p2 - p1) + STRLEN(fname) + 2;
+            size_t s_len= (size_t)(p2 - p1) + strlen(fname) + 2;
             s = xmalloc(s_len);
             GA_APPEND(char *, &ga, s);
             snprintf(s, s_len, "%s\t%s", p1, fname);
@@ -1087,7 +1087,7 @@ static void do_helptags(char *dirname, bool add_help_tags, bool ignore_writeerr)
   int j;
   ga_init(&ga, 1, 10);
   for (int i = 0; i < filecount; i++) {
-    len = (int)STRLEN(files[i]);
+    len = (int)strlen(files[i]);
     if (len <= 4) {
       continue;
     }

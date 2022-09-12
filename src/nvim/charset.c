@@ -268,7 +268,7 @@ int buf_init_chartab(buf_T *buf, int global)
 void trans_characters(char *buf, int bufsize)
 {
   char_u *trs;                 // translated character
-  int len = (int)STRLEN(buf);  // length of string needing translation
+  int len = (int)strlen(buf);  // length of string needing translation
   int room = bufsize - len;    // room in buffer after string
 
   while (*buf != 0) {
@@ -1078,7 +1078,7 @@ void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *e
     // Cannot put the cursor on part of a wide character.
     char *ptr = ml_get_buf(wp->w_buffer, pos->lnum, false);
 
-    if (pos->col < (colnr_T)STRLEN(ptr)) {
+    if (pos->col < (colnr_T)strlen(ptr)) {
       int c = utf_ptr2char(ptr + pos->col);
       if ((c != TAB) && vim_isprintc(c)) {
         endadd = (colnr_T)(char2cells(c) - 1);
@@ -1157,7 +1157,7 @@ char *skipwhite(const char *const p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
-  return skipwhite_len(p, STRLEN(p));
+  return skipwhite_len(p, strlen(p));
 }
 
 /// Like `skipwhite`, but skip up to `len` characters.

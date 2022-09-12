@@ -122,7 +122,7 @@ static char *mpack_array_dyn16(char **buf)
 static void mpack_str(char **buf, const char *str)
 {
   assert(sizeof(schar_T) - 1 < 0x20);
-  size_t len = STRLEN(str);
+  size_t len = strlen(str);
   mpack_w(buf, 0xa0 | len);
   memcpy(*buf, str, len);
   *buf += len;

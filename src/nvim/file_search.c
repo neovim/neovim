@@ -433,16 +433,16 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
   }
 
   // create an absolute path
-  if (STRLEN(search_ctx->ffsc_start_dir)
-      + STRLEN(search_ctx->ffsc_fix_path) + 3 >= MAXPATHL) {
+  if (strlen(search_ctx->ffsc_start_dir)
+      + strlen(search_ctx->ffsc_fix_path) + 3 >= MAXPATHL) {
     emsg(_(e_pathtoolong));
     goto error_return;
   }
   STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);
   add_pathsep(ff_expand_buffer);
   {
-    size_t eb_len = STRLEN(ff_expand_buffer);
-    char_u *buf = xmalloc(eb_len + STRLEN(search_ctx->ffsc_fix_path) + 1);
+    size_t eb_len = strlen(ff_expand_buffer);
+    char_u *buf = xmalloc(eb_len + strlen(search_ctx->ffsc_fix_path) + 1);
 
     STRCPY(buf, ff_expand_buffer);
     STRCPY(buf + eb_len, search_ctx->ffsc_fix_path);
@@ -466,13 +466,13 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
         xstrlcat(ff_expand_buffer, search_ctx->ffsc_fix_path, eb_len + (size_t)len + 1);
         add_pathsep(ff_expand_buffer);
       } else {
-        len = (int)STRLEN(search_ctx->ffsc_fix_path);
+        len = (int)strlen(search_ctx->ffsc_fix_path);
       }
 
       if (search_ctx->ffsc_wc_path != NULL) {
         wc_path = xstrdup(search_ctx->ffsc_wc_path);
-        temp = xmalloc(STRLEN(search_ctx->ffsc_wc_path)
-                       + STRLEN(search_ctx->ffsc_fix_path + len)
+        temp = xmalloc(strlen(search_ctx->ffsc_wc_path)
+                       + strlen(search_ctx->ffsc_fix_path + len)
                        + 1);
         STRCPY(temp, search_ctx->ffsc_fix_path + len);
         STRCAT(temp, search_ctx->ffsc_wc_path);
@@ -569,7 +569,7 @@ char_u *vim_findfile(void *search_ctx_arg)
 
   // store the end of the start dir -- needed for upward search
   if (search_ctx->ffsc_start_dir != NULL) {
-    path_end = (char_u *)&search_ctx->ffsc_start_dir[STRLEN(search_ctx->ffsc_start_dir)];
+    path_end = (char_u *)&search_ctx->ffsc_start_dir[strlen(search_ctx->ffsc_start_dir)];
   }
 
   // upward search loop
@@ -652,7 +652,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         // if we have a start dir copy it in
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
-          if (STRLEN(search_ctx->ffsc_start_dir) + 1 >= MAXPATHL) {
+          if (strlen(search_ctx->ffsc_start_dir) + 1 >= MAXPATHL) {
             ff_free_stack_element(stackp);
             goto fail;
           }
@@ -758,8 +758,8 @@ char_u *vim_findfile(void *search_ctx_arg)
               continue;                 // not a directory
             }
             // prepare the filename to be checked for existence below
-            if (STRLEN(stackp->ffs_filearray[i]) + 1
-                + STRLEN(search_ctx->ffsc_file_to_search) >= MAXPATHL) {
+            if (strlen(stackp->ffs_filearray[i]) + 1
+                + strlen(search_ctx->ffsc_file_to_search) >= MAXPATHL) {
               ff_free_stack_element(stackp);
               goto fail;
             }
@@ -902,8 +902,8 @@ char_u *vim_findfile(void *search_ctx_arg)
         break;
       }
 
-      if (STRLEN(search_ctx->ffsc_start_dir) + 1
-          + STRLEN(search_ctx->ffsc_fix_path) >= MAXPATHL) {
+      if (strlen(search_ctx->ffsc_start_dir) + 1
+          + strlen(search_ctx->ffsc_fix_path) >= MAXPATHL) {
         goto fail;
       }
       STRCPY(file_path, search_ctx->ffsc_start_dir);
@@ -1091,7 +1091,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char *fname, char *wc_p
   }
 
   // New file/dir.  Add it to the list of visited files/dirs.
-  vp = xmalloc(sizeof(ff_visited_T) + STRLEN(ff_expand_buffer));
+  vp = xmalloc(sizeof(ff_visited_T) + strlen(ff_expand_buffer));
 
   if (!url) {
     vp->file_id_valid = true;
@@ -1397,7 +1397,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
       // When FNAME_REL flag given first use the directory of the file.
       // Otherwise or when this fails use the current directory.
       for (int run = 1; run <= 2; run++) {
-        size_t l = STRLEN(ff_file_to_find);
+        size_t l = strlen(ff_file_to_find);
         if (run == 1
             && rel_to_curdir
             && (options & FNAME_REL)
@@ -1405,7 +1405,7 @@ char_u *find_file_in_path_option(char_u *ptr, size_t len, int options, int first
             && STRLEN(rel_fname) + l < MAXPATHL) {
           STRCPY(NameBuff, rel_fname);
           STRCPY(path_tail((char *)NameBuff), ff_file_to_find);
-          l = STRLEN(NameBuff);
+          l = strlen(NameBuff);
         } else {
           STRCPY(NameBuff, ff_file_to_find);
           run = 2;

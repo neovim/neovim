@@ -1049,7 +1049,7 @@ static int nlua_debug(lua_State *lstate)
       return 0;
     }
     if (luaL_loadbuffer(lstate, (const char *)input.vval.v_string,
-                        STRLEN(input.vval.v_string), "=(debug command)")) {
+                        strlen(input.vval.v_string), "=(debug command)")) {
       nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
     } else if (nlua_pcall(lstate, 0, 0)) {
       nlua_error(lstate, _("E5116: Error while calling debug string: %.*s"));
@@ -1641,7 +1641,7 @@ void ex_luado(exarg_T *const eap)
       break;
     }
     if (lua_isstring(lstate, -1)) {
-      size_t old_line_len = STRLEN(old_line);
+      size_t old_line_len = strlen(old_line);
 
       size_t new_line_len;
       const char *const new_line = lua_tolstring(lstate, -1, &new_line_len);
@@ -2001,7 +2001,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
 
   // Split args by unescaped whitespace |<f-args>| (nargs dependent)
   if (cmd->uc_argt & EX_NOSPC) {
-    if ((cmd->uc_argt & EX_NEEDARG) || STRLEN(eap->arg)) {
+    if ((cmd->uc_argt & EX_NEEDARG) || strlen(eap->arg)) {
       // For commands where nargs is 1 or "?" and argument is passed, fargs = { args }
       lua_rawseti(lstate, -2, 1);
     } else {
@@ -2011,7 +2011,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   } else if (eap->args == NULL) {
     // For commands with more than one possible argument, split if argument list isn't available.
     lua_pop(lstate, 1);  // Pop the reference of opts.args
-    size_t length = STRLEN(eap->arg);
+    size_t length = strlen(eap->arg);
     size_t end = 0;
     size_t len = 0;
     int i = 1;

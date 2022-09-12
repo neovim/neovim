@@ -729,7 +729,7 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
 
   // xdiff requires one big block of memory with all the text.
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    len += (long)STRLEN(ml_get_buf(buf, lnum, false)) + 1;
+    len += (long)strlen(ml_get_buf(buf, lnum, false)) + 1;
   }
   char_u *ptr = try_malloc((size_t)len);
   if (ptr == NULL) {
@@ -1128,7 +1128,7 @@ static int diff_file(diffio_T *dio)
     return diff_file_internal(dio);
   } else {
     const size_t len = (strlen(tmp_orig) + strlen(tmp_new) + strlen(tmp_diff)
-                        + STRLEN(p_srr) + 27);
+                        + strlen(p_srr) + 27);
     char *const cmd = xmalloc(len);
 
     // We don't want $DIFF_OPTIONS to get in the way.
@@ -1267,7 +1267,7 @@ void ex_diffpatch(exarg_T *eap)
     emsg(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {
-      newname = xstrnsave(curbuf->b_fname, STRLEN(curbuf->b_fname) + 4);
+      newname = xstrnsave(curbuf->b_fname, strlen(curbuf->b_fname) + 4);
       STRCAT(newname, ".new");
     }
 
@@ -1429,7 +1429,7 @@ void diff_win_options(win_T *wp, int addbuf)
   free_string_option(wp->w_p_fdc);
   wp->w_p_fdc = xstrdup("2");
   assert(diff_foldcolumn >= 0 && diff_foldcolumn <= 9);
-  snprintf(wp->w_p_fdc, STRLEN(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
+  snprintf(wp->w_p_fdc, strlen(wp->w_p_fdc) + 1, "%d", diff_foldcolumn);
   wp->w_p_fen = true;
   wp->w_p_fdl = 0;
   foldUpdateAll(wp);
@@ -2356,8 +2356,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
       // Search for end of difference, if any.
       if ((line_org[si_org] != NUL) || (line_new[si_new] != NUL)) {
-        ei_org = (int)STRLEN(line_org);
-        ei_new = (int)STRLEN(line_new);
+        ei_org = (int)strlen(line_org);
+        ei_new = (int)strlen(line_new);
 
         while (ei_org >= *startp
                && ei_new >= si_new
@@ -2564,7 +2564,7 @@ void ex_diffgetput(exarg_T *eap)
     }
   } else {
     // Buffer number or pattern given. Ignore trailing white space.
-    p = eap->arg + STRLEN(eap->arg);
+    p = eap->arg + strlen(eap->arg);
     while (p > eap->arg && ascii_iswhite(p[-1])) {
       p--;
     }

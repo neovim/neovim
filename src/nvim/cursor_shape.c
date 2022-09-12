@@ -220,7 +220,7 @@ char *parse_shape_opt(int what)
               endp = vim_strchr(p, '-');
               if (commap == NULL) {                       // last part
                 if (endp == NULL) {
-                  endp = p + STRLEN(p);                  // find end of part
+                  endp = p + strlen(p);                  // find end of part
                 }
               } else if (endp > commap || endp == NULL) {
                 endp = commap;

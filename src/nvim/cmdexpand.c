@@ -511,7 +511,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   if (mode == WILD_ALL && xp->xp_numfiles > 0 && !got_int) {
     size_t len = 0;
     for (i = 0; i < xp->xp_numfiles; i++) {
-      len += STRLEN(xp->xp_files[i]) + 1;
+      len += strlen(xp->xp_files[i]) + 1;
     }
     ss = xmalloc(len);
     *ss = NUL;
@@ -672,7 +672,7 @@ int showmatches(expand_T *xp, int wildmenu)
       for (k = i; k < num_files; k += lines) {
         if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
           msg_outtrans_attr(files_found[k], HL_ATTR(HLF_D));
-          p = (char_u *)files_found[k] + STRLEN(files_found[k]) + 1;
+          p = (char_u *)files_found[k] + strlen(files_found[k]) + 1;
           msg_advance(maxlen + 1);
           msg_puts((const char *)p);
           msg_advance(maxlen + 3);
@@ -2280,7 +2280,7 @@ static void ExpandGeneric(expand_T *xp, regmatch_T *regmatch, int *num_file, cha
       (*file)[count++] = str;
       if (func == get_menu_names) {
         // Test for separator added by get_menu_names().
-        str += STRLEN(str) - 1;
+        str += strlen(str) - 1;
         if (*str == '\001') {
           *str = '.';
         }
@@ -2362,7 +2362,7 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
   for (s = path;; s = e) {
     e = vim_strchr(s, ENV_SEPCHAR);
     if (e == NULL) {
-      e = s + STRLEN(s);
+      e = s + strlen(s);
     }
 
     if (*s == NUL) {
@@ -2386,7 +2386,7 @@ static void expand_shellcmd(char *filepat, int *num_file, char ***file, int flag
     }
     STRLCPY(buf, s, l + 1);
     add_pathsep(buf);
-    l = STRLEN(buf);
+    l = strlen(buf);
     STRLCPY(buf + l, pat, MAXPATHL - l);
 
     // Expand matches in one directory of $PATH.
@@ -2493,7 +2493,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
   for (char *s = retstr; *s != NUL; s = e) {
     e = vim_strchr(s, '\n');
     if (e == NULL) {
-      e = s + STRLEN(s);
+      e = s + strlen(s);
     }
     const char keep = *e;
     *e = NUL;
@@ -2584,7 +2584,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options)
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
     copy_option_part(&path, (char *)buf, MAXPATHL, ",");
-    if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
+    if (STRLEN(buf) + strlen(file) + 2 < MAXPATHL) {
       add_pathsep((char *)buf);
       STRCAT(buf, file);  // NOLINT
 
@@ -2864,14 +2864,14 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (strcmp(type, "cmdline") == 0) {
     set_one_cmd_context(&xpc, pattern);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
-    xpc.xp_col = (int)STRLEN(pattern);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+    xpc.xp_col = (int)strlen(pattern);
     goto theend;
   }
 
   ExpandInit(&xpc);
   xpc.xp_pattern = (char *)pattern;
-  xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+  xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   xpc.xp_context = cmdcomplete_str_to_type(type);
   if (xpc.xp_context == EXPAND_NOTHING) {
     semsg(_(e_invarg2), type);
@@ -2880,17 +2880,17 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (xpc.xp_context == EXPAND_MENUS) {
     set_context_in_menu_cmd(&xpc, "menu", xpc.xp_pattern, false);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
 
   if (xpc.xp_context == EXPAND_CSCOPE) {
     set_context_in_cscope_cmd(&xpc, (const char *)xpc.xp_pattern, CMD_cscope);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
 
   if (xpc.xp_context == EXPAND_SIGN) {
     set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
-    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = strlen(xpc.xp_pattern);
   }
 
 theend:

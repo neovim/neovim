@@ -431,7 +431,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
       // Check if cursor is not past the NUL off the line, cindent
       // may have added or removed indent.
       curwin->w_cursor.col += startcol;
-      len = (colnr_T)STRLEN(get_cursor_line_ptr());
+      len = (colnr_T)strlen(get_cursor_line_ptr());
       if (curwin->w_cursor.col > len) {
         curwin->w_cursor.col = len;
       }
@@ -644,7 +644,7 @@ void auto_format(bool trailblank, bool prev_line)
   // in 'formatoptions' and there is a single character before the cursor.
   // Otherwise the line would be broken and when typing another non-white
   // next they are not joined back together.
-  wasatend = (pos.col == (colnr_T)STRLEN(old));
+  wasatend = (pos.col == (colnr_T)strlen(old));
   if (*old != NUL && !trailblank && wasatend) {
     dec_cursor();
     cc = gchar_cursor();
@@ -698,7 +698,7 @@ void auto_format(bool trailblank, bool prev_line)
   // formatted.
   if (!wasatend && has_format_option(FO_WHITE_PAR)) {
     new = get_cursor_line_ptr();
-    len = (colnr_T)STRLEN(new);
+    len = (colnr_T)strlen(new);
     if (curwin->w_cursor.col == len) {
       pnew = xstrnsave(new, (size_t)len + 2);
       pnew[len] = ' ';
@@ -1115,7 +1115,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         }
         first_par_line = false;
         // If the line is getting long, format it next time
-        if (STRLEN(get_cursor_line_ptr()) > (size_t)max_len) {
+        if (strlen(get_cursor_line_ptr()) > (size_t)max_len) {
           force_format = true;
         } else {
           force_format = false;

@@ -464,7 +464,7 @@ static char *check_mousescroll(char *string)
 
   for (;;) {
     char *end = vim_strchr(string, ',');
-    size_t length = end ? (size_t)(end - string) : STRLEN(string);
+    size_t length = end ? (size_t)(end - string) : strlen(string);
 
     // Both "ver:" and "hor:" are 4 bytes long.
     // They should be followed by at least one digit.
@@ -532,7 +532,7 @@ static int check_signcolumn(char *val)
   }
 
   // check for 'auto:<NUMBER>-<NUMBER>'
-  if (STRLEN(val) == 8
+  if (strlen(val) == 8
       && !STRNCMP(val, "auto:", 5)
       && ascii_isdigit(val[5])
       && val[6] == '-'
@@ -1258,7 +1258,7 @@ char *did_set_string_option(int opt_idx, char **varp, char *oldval, char *errbuf
     if (*p_pt) {
       p = NULL;
       (void)replace_termcodes(p_pt,
-                              STRLEN(p_pt),
+                              strlen(p_pt),
                               &p, REPTERM_FROM_PART | REPTERM_DO_LT, NULL,
                               CPO_TO_CPO_FLAGS);
       if (p != NULL) {
@@ -1641,7 +1641,7 @@ static int opt_strings_flags(char *val, char **values, unsigned *flagp, bool lis
         return FAIL;
       }
 
-      size_t len = STRLEN(values[i]);
+      size_t len = strlen(values[i]);
       if (STRNCMP(values[i], val, len) == 0
           && ((list && val[len] == ',') || val[len] == NUL)) {
         val += len + (val[len] == ',');

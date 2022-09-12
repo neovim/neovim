@@ -2260,7 +2260,7 @@ void op_insert(oparg_T *oap, long count1)
     if (oap->op_type == OP_APPEND) {
       firstline += bd.textlen;
     }
-    pre_textlen = (long)STRLEN(firstline);
+    pre_textlen = (long)strlen(firstline);
   }
 
   if (oap->op_type == OP_APPEND) {
@@ -2386,7 +2386,7 @@ void op_insert(oparg_T *oap, long count1)
     // Subsequent calls to ml_get() flush the firstline data - take a
     // copy of the required string.
     firstline = ml_get(oap->start.lnum);
-    const size_t len = STRLEN(firstline);
+    const size_t len = strlen(firstline);
     colnr_T add = bd.textcol;
     colnr_T offset = 0;  // offset when cursor was moved in insert mode
     if (oap->op_type == OP_APPEND) {
@@ -2408,7 +2408,7 @@ void op_insert(oparg_T *oap, long count1)
     } else {
       firstline += add;
     }
-    ins_len = (long)STRLEN(firstline) - pre_textlen - offset;
+    ins_len = (long)strlen(firstline) - pre_textlen - offset;
     if (pre_textlen >= 0 && ins_len > 0) {
       ins_text = xstrnsave(firstline, (size_t)ins_len);
       // block handled here
@@ -2992,7 +2992,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
         // curwin->w_cursor.col marks the byte position of the cursor in the
         // currunt line. It increases up to a max of
-        // STRLEN(ml_get(curwin->w_cursor.lnum)). With 'virtualedit' and the
+        // strlen(ml_get(curwin->w_cursor.lnum)). With 'virtualedit' and the
         // cursor past the end of the line, curwin->w_cursor.coladd is
         // incremented instead of curwin->w_cursor.col.
         char_u *cursor_pos = (char_u *)get_cursor_pos_ptr();
@@ -3174,7 +3174,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
     goto end;
   }
 
-  yanklen = (int)STRLEN(y_array[0]);
+  yanklen = (int)strlen(y_array[0]);
 
   if (cur_ve_flags == VE_ALL && y_type == kMTCharWise) {
     if (gchar_cursor() == TAB) {
@@ -3259,7 +3259,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       }
       // get the old line and advance to the position to insert at
       oldp = get_cursor_line_ptr();
-      oldlen = STRLEN(oldp);
+      oldlen = strlen(oldp);
       chartabsize_T cts;
       init_chartabsize_arg(&cts, curwin, curwin->w_cursor.lnum, 0, oldp, oldp);
 
@@ -3292,7 +3292,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         }
       }
 
-      yanklen = (int)STRLEN(y_array[i]);
+      yanklen = (int)strlen(y_array[i]);
 
       if ((flags & PUT_BLOCK_INNER) == 0) {
         // calculate number of spaces required to fill right side of
@@ -3380,7 +3380,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       curwin->w_cursor.col++;
 
       // in Insert mode we might be after the NUL, correct for that
-      len = (colnr_T)STRLEN(get_cursor_line_ptr());
+      len = (colnr_T)strlen(get_cursor_line_ptr());
       if (curwin->w_cursor.col > len) {
         curwin->w_cursor.col = len;
       }
@@ -3444,7 +3444,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         totlen = (size_t)(count * yanklen);
         do {
           oldp = ml_get(lnum);
-          oldlen = STRLEN(oldp);
+          oldlen = strlen(oldp);
           if (lnum > start_lnum) {
             pos_T pos = {
               .lnum = lnum,
@@ -3515,8 +3515,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           // Then append y_array[0] to first line.
           lnum = new_cursor.lnum;
           ptr = ml_get(lnum) + col;
-          totlen = STRLEN(y_array[y_size - 1]);
-          newp = xmalloc((size_t)(STRLEN(ptr) + totlen + 1));
+          totlen = strlen(y_array[y_size - 1]);
+          newp = xmalloc((size_t)(strlen(ptr) + totlen + 1));
           STRCPY(newp, y_array[y_size - 1]);
           STRCAT(newp, ptr);
           // insert second line
@@ -3550,7 +3550,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             curwin->w_cursor.lnum = lnum;
             ptr = ml_get(lnum);
             if (cnt == count && i == y_size - 1) {
-              lendiff = (int)STRLEN(ptr);
+              lendiff = (int)strlen(ptr);
             }
             if (*ptr == '#' && preprocs_left()) {
               indent = 0;                   // Leave # lines at start
@@ -3567,7 +3567,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
             curwin->w_cursor = old_pos;
             // remember how many chars were removed
             if (cnt == count && i == y_size - 1) {
-              lendiff -= (int)STRLEN(ml_get(lnum));
+              lendiff -= (int)strlen(ml_get(lnum));
             }
           }
         }
@@ -3577,9 +3577,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
         if (y_type == kMTCharWise
             || (y_type == kMTLineWise && flags & PUT_LINE_SPLIT)) {
           for (i = 0; i < y_size - 1; i++) {
-            totsize += (bcount_t)STRLEN(y_array[i]) + 1;
+            totsize += (bcount_t)strlen(y_array[i]) + 1;
           }
-          lastsize = (int)STRLEN(y_array[y_size - 1]);
+          lastsize = (int)strlen(y_array[y_size - 1]);
           totsize += lastsize;
         }
         if (y_type == kMTCharWise) {
@@ -3623,7 +3623,7 @@ error:
       // Put the '] mark on the first byte of the last inserted character.
       // Correct the length for change in indent.
       curbuf->b_op_end.lnum = new_lnum;
-      len = STRLEN(y_array[y_size - 1]);
+      len = strlen(y_array[y_size - 1]);
       col = (colnr_T)len - lendiff;
       if (col > 1) {
         curbuf->b_op_end.col = col - 1;
@@ -4019,7 +4019,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     if (t == 0 && setmark && (cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
       // Set the '[ mark.
       curwin->w_buffer->b_op_start.lnum = curwin->w_cursor.lnum;
-      curwin->w_buffer->b_op_start.col = (colnr_T)STRLEN(curr);
+      curwin->w_buffer->b_op_start.col = (colnr_T)strlen(curr);
     }
     if (remove_comments) {
       // We don't want to remove the comment leader if the
@@ -4065,7 +4065,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
                      0, spaces[t], spaces[t],
                      kExtmarkUndo);
     }
-    currsize = (int)STRLEN(curr);
+    currsize = (int)strlen(curr);
     sumsize += currsize + spaces[t];
     endcurr1 = endcurr2 = NUL;
     if (insert_space && currsize > 0) {
@@ -4130,7 +4130,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     if (insert_space && t > 1) {
       curr = skipwhite(curr);
     }
-    currsize = (int)STRLEN(curr);
+    currsize = (int)strlen(curr);
   }
 
   ml_replace(curwin->w_cursor.lnum, newp, false);
@@ -4362,20 +4362,20 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
       } else if (oap->motion_type == kMTLineWise) {
         curwin->w_cursor.col = 0;
         pos.col = 0;
-        length = (colnr_T)STRLEN(ml_get(pos.lnum));
+        length = (colnr_T)strlen(ml_get(pos.lnum));
       } else {
         // oap->motion_type == kMTCharWise
         if (pos.lnum == oap->start.lnum && !oap->inclusive) {
           dec(&(oap->end));
         }
-        length = (colnr_T)STRLEN(ml_get(pos.lnum));
+        length = (colnr_T)strlen(ml_get(pos.lnum));
         pos.col = 0;
         if (pos.lnum == oap->start.lnum) {
           pos.col += oap->start.col;
           length -= oap->start.col;
         }
         if (pos.lnum == oap->end.lnum) {
-          length = (int)STRLEN(ml_get(oap->end.lnum));
+          length = (int)strlen(ml_get(oap->end.lnum));
           if (oap->end.col >= length) {
             oap->end.col = length - 1;
           }
@@ -4923,7 +4923,7 @@ void *get_reg_contents(int regname, int flags)
   // Compute length of resulting string.
   size_t len = 0;
   for (size_t i = 0; i < reg->y_size; i++) {
-    len += STRLEN(reg->y_array[i]);
+    len += strlen(reg->y_array[i]);
     // Insert a newline between lines and after last line if
     // y_type is kMTLineWise.
     if (reg->y_type == kMTLineWise || i < reg->y_size - 1) {
@@ -4937,7 +4937,7 @@ void *get_reg_contents(int regname, int flags)
   len = 0;
   for (size_t i = 0; i < reg->y_size; i++) {
     STRCPY(retval + len, reg->y_array[i]);
-    len += STRLEN(retval + len);
+    len += strlen(retval + len);
 
     // Insert a NL between lines and after the last line if y_type is
     // kMTLineWise.
@@ -5039,7 +5039,7 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
                            MotionType yank_type, colnr_T block_len)
 {
   if (len < 0) {
-    len = (ssize_t)STRLEN(str);
+    len = (ssize_t)strlen(str);
   }
 
   // Special case: '/' search pattern
@@ -5059,7 +5059,7 @@ void write_reg_contents_ex(int name, const char *str, ssize_t len, bool must_app
         semsg(_(e_nobufnr), (int64_t)num);
       }
     } else {
-      buf = buflist_findnr(buflist_findpat(str, str + STRLEN(str),
+      buf = buflist_findnr(buflist_findpat(str, str + strlen(str),
                                            true, false, false));
     }
     if (buf == NULL) {
@@ -5186,7 +5186,7 @@ static void str_to_reg(yankreg_T *y_ptr, MotionType yank_type, const char *str, 
       }
 
       // When appending, copy the previous line and free it after.
-      size_t extra = append ? STRLEN(pp[--lnum]) : 0;
+      size_t extra = append ? strlen(pp[--lnum]) : 0;
       char *s = xmallocz(line_len + extra);
       if (extra > 0) {
         memcpy(s, pp[lnum], extra);
@@ -5486,7 +5486,7 @@ void cursor_pos_info(dict_T *dict)
 
     bom_count = bomb_size();
     if (dict == NULL && bom_count > 0) {
-      const size_t len = STRLEN(IObuff);
+      const size_t len = strlen(IObuff);
       vim_snprintf((char *)IObuff + len, IOSIZE - len,
                    _("(+%" PRId64 " for BOM)"), (int64_t)bom_count);
     }
@@ -5845,10 +5845,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         if (lt(VIsual, curwin->w_cursor)) {
           VIsual.col = 0;
           curwin->w_cursor.col =
-            (colnr_T)STRLEN(ml_get(curwin->w_cursor.lnum));
+            (colnr_T)strlen(ml_get(curwin->w_cursor.lnum));
         } else {
           curwin->w_cursor.col = 0;
-          VIsual.col = (colnr_T)STRLEN(ml_get(VIsual.lnum));
+          VIsual.col = (colnr_T)strlen(ml_get(VIsual.lnum));
         }
         VIsual_mode = 'v';
       } else if (VIsual_mode == 'v') {
@@ -5878,7 +5878,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
              || oap->motion_type == kMTLineWise)
             && hasFolding(curwin->w_cursor.lnum, NULL,
                           &curwin->w_cursor.lnum)) {
-          curwin->w_cursor.col = (colnr_T)STRLEN(get_cursor_line_ptr());
+          curwin->w_cursor.col = (colnr_T)strlen(get_cursor_line_ptr());
         }
       }
       oap->end = curwin->w_cursor;
@@ -5896,7 +5896,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           curwin->w_cursor.col = 0;
         }
         if (hasFolding(oap->start.lnum, NULL, &oap->start.lnum)) {
-          oap->start.col = (colnr_T)STRLEN(ml_get(oap->start.lnum));
+          oap->start.col = (colnr_T)strlen(ml_get(oap->start.lnum));
         }
       }
       oap->end = oap->start;
@@ -6080,7 +6080,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (inindent(0)) {
         oap->motion_type = kMTLineWise;
       } else {
-        oap->end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
+        oap->end.col = (colnr_T)strlen(ml_get(oap->end.lnum));
         if (oap->end.col) {
           oap->end.col--;
           oap->inclusive = true;
@@ -6474,7 +6474,7 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
 
 void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
 {
-  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size - 1]) == 0) {
+  if (reg->y_size > 0 && strlen(reg->y_array[reg->y_size - 1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
     // but otherwise there is no line after the final newline
     if (reg->y_type != kMTCharWise) {
@@ -6495,7 +6495,7 @@ void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
   if (reg->y_type == kMTBlockWise) {
     size_t maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
-      size_t rowlen = STRLEN(reg->y_array[i]);
+      size_t rowlen = strlen(reg->y_array[i]);
       if (rowlen > maxlen) {
         maxlen = rowlen;
       }
@@ -6582,7 +6582,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_array[tv_idx++] = xstrdupnul((const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 
-  if (reg->y_size > 0 && STRLEN(reg->y_array[reg->y_size - 1]) == 0) {
+  if (reg->y_size > 0 && strlen(reg->y_array[reg->y_size - 1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak
     // but otherwise there is no line after the final newline
     if (reg->y_type != kMTCharWise) {
@@ -6601,7 +6601,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   if (reg->y_type == kMTBlockWise) {
     size_t maxlen = 0;
     for (size_t i = 0; i < reg->y_size; i++) {
-      size_t rowlen = STRLEN(reg->y_array[i]);
+      size_t rowlen = strlen(reg->y_array[i]);
       if (rowlen > maxlen) {
         maxlen = rowlen;
       }
@@ -6851,13 +6851,13 @@ bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum, linenr_T end_lnum
     return end_col - start_col;
   }
   const char *first = (const char *)ml_get_buf(buf, start_lnum, false);
-  bcount_t deleted_bytes = (bcount_t)STRLEN(first) - start_col + 1;
+  bcount_t deleted_bytes = (bcount_t)strlen(first) - start_col + 1;
 
   for (linenr_T i = 1; i <= end_lnum - start_lnum - 1; i++) {
     if (start_lnum + i > max_lnum) {
       return deleted_bytes;
     }
-    deleted_bytes += (bcount_t)STRLEN(ml_get_buf(buf, start_lnum + i, false)) + 1;
+    deleted_bytes += (bcount_t)strlen(ml_get_buf(buf, start_lnum + i, false)) + 1;
   }
   if (end_lnum > max_lnum) {
     return deleted_bytes;

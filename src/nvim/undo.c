@@ -771,7 +771,7 @@ static bool serialize_header(bufinfo_T *bi, char_u *hash)
 
   // Write buffer-specific data.
   undo_write_bytes(bi, (uintmax_t)buf->b_ml.ml_line_count, 4);
-  size_t len = buf->b_u_line_ptr ? STRLEN(buf->b_u_line_ptr) : 0;
+  size_t len = buf->b_u_line_ptr ? strlen(buf->b_u_line_ptr) : 0;
   undo_write_bytes(bi, len, 4);
   if (len > 0 && !undo_write(bi, (char_u *)buf->b_u_line_ptr, len)) {
     return false;
@@ -1034,7 +1034,7 @@ static bool serialize_uep(bufinfo_T *bi, u_entry_T *uep)
   undo_write_bytes(bi, (uintmax_t)uep->ue_size, 4);
 
   for (size_t i = 0; i < (size_t)uep->ue_size; i++) {
-    size_t len = STRLEN(uep->ue_array[i]);
+    size_t len = strlen(uep->ue_array[i]);
     if (!undo_write_bytes(bi, len, 4)) {
       return false;
     }
@@ -2638,7 +2638,7 @@ void ex_undolist(exarg_T *eap)
       vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ", uhp->uh_seq, changes);
       undo_fmt_time((char_u *)IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff), uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
-        while (STRLEN(IObuff) < 33) {
+        while (strlen(IObuff) < 33) {
           STRCAT(IObuff, " ");
         }
         vim_snprintf_add((char *)IObuff, IOSIZE, "  %3ld", uhp->uh_save_nr);
@@ -2995,7 +2995,7 @@ void u_undoline(void)
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, true);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   extmark_splice_cols(curbuf, (int)curbuf->b_u_line_lnum - 1, 0, (colnr_T)STRLEN(oldp),
-                      (colnr_T)STRLEN(curbuf->b_u_line_ptr), kExtmarkUndo);
+                      (colnr_T)strlen(curbuf->b_u_line_ptr), kExtmarkUndo);
   xfree(curbuf->b_u_line_ptr);
   curbuf->b_u_line_ptr = (char *)oldp;
 

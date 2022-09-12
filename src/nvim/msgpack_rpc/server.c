@@ -173,7 +173,7 @@ int server_start(const char *addr)
   ((SocketWatcher **)watchers.ga_data)[watchers.ga_len++] = watcher;
 
   // Update v:servername, if not set.
-  if (STRLEN(get_vim_var_str(VV_SEND_SERVER)) == 0) {
+  if (strlen(get_vim_var_str(VV_SEND_SERVER)) == 0) {
     set_vservername(&watchers);
   }
 

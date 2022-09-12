@@ -2752,7 +2752,7 @@ bool add_to_showcmd(int c)
     STRCPY(p, "<20>");
   }
   size_t old_len = STRLEN(showcmd_buf);
-  size_t extra_len = STRLEN(p);
+  size_t extra_len = strlen(p);
   size_t limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN - 1 : SHOWCMD_COLS;
   if (old_len + extra_len > limit) {
     size_t overflow = old_len + extra_len - limit;
@@ -4057,7 +4057,7 @@ static void nv_colon(cmdarg_T *cap)
     } else if (cap->oap->op_type != OP_NOP
                && (cap->oap->start.lnum > curbuf->b_ml.ml_line_count
                    || cap->oap->start.col >
-                   (colnr_T)STRLEN(ml_get(cap->oap->start.lnum))
+                   (colnr_T)strlen(ml_get(cap->oap->start.lnum))
                    || did_emsg)) {
       // The start of the operator has become invalid by the Ex command.
       clearopbeep(cap->oap);
@@ -4216,7 +4216,7 @@ static size_t nv_K_getcmd(cmdarg_T *cap, char *kp, bool kp_help, bool kp_ex, cha
   }
   STRCAT(buf, " ");
   if (cap->count0 != 0 && (isman || isman_s)) {
-    snprintf(buf + STRLEN(buf), buf_size - STRLEN(buf), "%" PRId64,
+    snprintf(buf + strlen(buf), buf_size - strlen(buf), "%" PRId64,
              (int64_t)cap->count0);
     STRCAT(buf, " ");
   }
@@ -4282,7 +4282,7 @@ static void nv_ident(cmdarg_T *cap)
     return;
   }
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
-  size_t buf_size = n * 2 + 30 + STRLEN(kp);
+  size_t buf_size = n * 2 + 30 + strlen(kp);
   char *buf = xmalloc(buf_size);
   buf[0] = NUL;
 
@@ -4342,7 +4342,7 @@ static void nv_ident(cmdarg_T *cap)
       p = (char *)vim_strsave_shellescape((char_u *)ptr, true, true);
     }
     xfree(ptr);
-    char *newbuf = xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
+    char *newbuf = xrealloc(buf, strlen(buf) + strlen(p) + 1);
     buf = newbuf;
     STRCAT(buf, p);
     xfree(p);
@@ -4426,7 +4426,7 @@ bool get_visual_text(cmdarg_T *cap, char **pp, size_t *lenp)
   }
   if (VIsual_mode == 'V') {
     *pp = get_cursor_line_ptr();
-    *lenp = STRLEN(*pp);
+    *lenp = strlen(*pp);
   } else {
     if (lt(curwin->w_cursor, VIsual)) {
       *pp = (char *)ml_get_pos(&curwin->w_cursor);
@@ -6151,7 +6151,7 @@ static void nv_gi_cmd(cmdarg_T *cap)
   if (curbuf->b_last_insert.mark.lnum != 0) {
     curwin->w_cursor = curbuf->b_last_insert.mark;
     check_cursor_lnum();
-    int i = (int)STRLEN(get_cursor_line_ptr());
+    int i = (int)strlen(get_cursor_line_ptr());
     if (curwin->w_cursor.col > (colnr_T)i) {
       if (virtual_active()) {
         curwin->w_cursor.coladd += curwin->w_cursor.col - i;
@@ -6834,7 +6834,7 @@ bool unadjust_for_sel(void)
       mark_mb_adjustpos(curbuf, pp);
     } else if (pp->lnum > 1) {
       pp->lnum--;
-      pp->col = (colnr_T)STRLEN(ml_get(pp->lnum));
+      pp->col = (colnr_T)strlen(ml_get(pp->lnum));
       return true;
     }
   }
@@ -6971,7 +6971,7 @@ void set_cursor_for_append_to_line(void)
     coladvance(MAXCOL);
     State = save_State;
   } else {
-    curwin->w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
+    curwin->w_cursor.col += (colnr_T)strlen(get_cursor_pos_ptr());
   }
 }
 

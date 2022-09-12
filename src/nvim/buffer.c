@@ -2170,7 +2170,7 @@ int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted,
     if (pat == NULL) {
       return -1;
     }
-    patend = pat + STRLEN(pat) - 1;
+    patend = pat + strlen(pat) - 1;
     toggledollar = (patend > pat && *patend == '$');
 
     // First try finding a listed buffer.  If not found and "unlisted"
@@ -2284,7 +2284,7 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
 
   // Make a copy of "pat" and change "^" to "\(^\|[\/]\)".
   if (*pat == '^') {
-    patc = xmalloc(STRLEN(pat) + 11);
+    patc = xmalloc(strlen(pat) + 11);
     STRCPY(patc, "\\(^\\|[\\/]\\)");
     STRCPY(patc + 11, pat + 1);
   } else {
@@ -3037,7 +3037,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
 
   if (fullname > 1) {       // 2 CTRL-G: include buffer number
     vim_snprintf(buffer, IOSIZE, "buf %d: ", curbuf->b_fnum);
-    p = buffer + STRLEN(buffer);
+    p = buffer + strlen(buffer);
   } else {
     p = buffer;
   }
@@ -3096,7 +3096,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
                      (int64_t)curbuf->b_ml.ml_line_count,
                      n);
     validate_virtcol();
-    len = STRLEN(buffer);
+    len = strlen(buffer);
     col_print(buffer + len, IOSIZE - len,
               (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
@@ -3305,7 +3305,7 @@ void maketitle(void)
       }
       *icon_str = NUL;
       // Truncate name at 100 bytes.
-      len = (int)STRLEN(buf_p);
+      len = (int)strlen(buf_p);
       if (len > 100) {
         len -= 100;
         len += utf_cp_tail_off(buf_p, buf_p + len) + 1;
@@ -3412,7 +3412,7 @@ bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
     return false;
   }
 
-  char *p = buf + STRLEN(buf);  // go to the end of the buffer
+  char *p = buf + strlen(buf);  // go to the end of the buffer
 
   // Early out if the string is getting too long
   if (p - buf + 35 >= buflen) {

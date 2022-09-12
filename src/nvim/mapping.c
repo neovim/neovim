@@ -262,7 +262,7 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
   if (replaced == NULL) {
     return false;
   }
-  mapargs->lhs_len = STRLEN(replaced);
+  mapargs->lhs_len = strlen(replaced);
   STRLCPY(mapargs->lhs, replaced, sizeof(mapargs->lhs));
   if (did_simplify) {
     replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, flags | REPTERM_NO_SIMPLIFY,
@@ -270,7 +270,7 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
     if (replaced == NULL) {
       return false;
     }
-    mapargs->alt_lhs_len = STRLEN(replaced);
+    mapargs->alt_lhs_len = strlen(replaced);
     STRLCPY(mapargs->alt_lhs, replaced, sizeof(mapargs->alt_lhs));
   } else {
     mapargs->alt_lhs_len = 0;
@@ -299,7 +299,7 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
       char *rhs_buf = NULL;
       char *replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, REPTERM_DO_LT, NULL,
                                          cpo_flags);
-      mapargs->rhs_len = STRLEN(replaced);
+      mapargs->rhs_len = strlen(replaced);
       // NB: replace_termcodes may produce an empty string even if orig_rhs is non-empty
       // (e.g. a single ^V, see :h map-empty-rhs)
       mapargs->rhs_is_noop = orig_rhs_len != 0 && mapargs->rhs_len == 0;
@@ -709,7 +709,7 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
             }
           } else {                          // do we have a match?
             if (round) {              // second round: Try unmap "rhs" string
-              n = (int)STRLEN(mp->m_str);
+              n = (int)strlen(mp->m_str);
               p = (char_u *)mp->m_str;
             } else {
               n = mp->m_keylen;
@@ -2091,7 +2091,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   const int mode = get_map_mode((char **)&which, 0);
 
   char_u *keys_simplified
-    = (char_u *)replace_termcodes(keys, STRLEN(keys), &keys_buf, flags, &did_simplify,
+    = (char_u *)replace_termcodes(keys, strlen(keys), &keys_buf, flags, &did_simplify,
                                   CPO_TO_CPO_FLAGS);
   mapblock_T *mp = NULL;
   int buffer_local;
@@ -2101,7 +2101,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
     (void)replace_termcodes(keys,
-                            STRLEN(keys),
+                            strlen(keys),
                             &alt_keys_buf, flags | REPTERM_NO_SIMPLIFY, NULL,
                             CPO_TO_CPO_FLAGS);
     rhs = check_map((char_u *)alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);

@@ -542,7 +542,7 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_puts_len(&pum_grid, rt, (int)STRLEN(rt), row, grid_col - size + 1, attr);
+              grid_puts_len(&pum_grid, rt, (int)strlen(rt), row, grid_col - size + 1, attr);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;

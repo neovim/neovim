@@ -1156,7 +1156,7 @@ static void command_line_scan(mparm_T *parmp)
         p_verbose = get_number_arg(argv[0], &argv_idx, 10);
         if (argv[0][argv_idx] != NUL) {
           set_option_value_give_err("verbosefile", 0L, argv[0] + argv_idx, 0);
-          argv_idx = (int)STRLEN(argv[0]);
+          argv_idx = (int)strlen(argv[0]);
         }
         break;
       case 'w':    // "-w{number}" set window height
@@ -1226,7 +1226,7 @@ static void command_line_scan(mparm_T *parmp)
               a = argv[0];
             }
 
-            size_t s_size = STRLEN(a) + 9;
+            size_t s_size = strlen(a) + 9;
             char *s = xmalloc(s_size);
             snprintf(s, s_size, "so %s", a);
             parmp->cmds_tofree[parmp->n_commands] = true;
@@ -1375,7 +1375,7 @@ scripterror:
 
   // If there is a "+123" or "-c" command, set v:swapcommand to the first one.
   if (parmp->n_commands > 0) {
-    const size_t swcmd_len = STRLEN(parmp->commands[0]) + 3;
+    const size_t swcmd_len = strlen(parmp->commands[0]) + 3;
     char *const swcmd = xmalloc(swcmd_len);
     snprintf(swcmd, swcmd_len, ":%s\r", parmp->commands[0]);
     set_vim_var_string(VV_SWAPCOMMAND, swcmd, -1);

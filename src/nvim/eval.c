@@ -358,7 +358,7 @@ void eval_init(void)
 
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     struct vimvar *p = &vimvars[i];
-    assert(STRLEN(p->vv_name) <= VIMVAR_KEY_LEN);
+    assert(strlen(p->vv_name) <= VIMVAR_KEY_LEN);
     STRCPY(p->vv_di.di_key, p->vv_name);
     if (p->vv_flags & VV_RO) {
       p->vv_di.di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
@@ -578,7 +578,7 @@ void var_redir_str(char *value, int value_len)
 
   int len;
   if (value_len == -1) {
-    len = (int)STRLEN(value);           // Append the entire string
+    len = (int)strlen(value);           // Append the entire string
   } else {
     len = value_len;                    // Append only "value_len" characters
   }
@@ -1078,7 +1078,7 @@ int call_vim_function(const char *func, int argc, typval_T *argv, typval_T *rett
   FUNC_ATTR_NONNULL_ALL
 {
   int ret;
-  int len = (int)STRLEN(func);
+  int len = (int)strlen(func);
   partial_T *pt = NULL;
 
   if (len >= 6 && !memcmp(func, "v:lua.", 6)) {
@@ -1667,7 +1667,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
 
       // handle +=, -=, *=, /=, %= and .=
       di = NULL;
-      if (get_var_tv(lp->ll_name, (int)STRLEN(lp->ll_name),
+      if (get_var_tv(lp->ll_name, (int)strlen(lp->ll_name),
                      &tv, &di, true, false) == OK) {
         if ((di == NULL
              || (!var_check_ro(di->di_flags, lp->ll_name, TV_CSTRING)
@@ -1960,7 +1960,7 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
     xp->xp_context = EXPAND_USER_VARS;
     if (strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#") == NULL) {
       // ":let var1 var2 ...": find last space.
-      for (p = arg + STRLEN(arg); p >= arg;) {
+      for (p = arg + strlen(arg); p >= arg;) {
         xp->xp_pattern = p;
         MB_PTR_BACK(arg, p);
         if (ascii_iswhite(*p)) {
@@ -2077,7 +2077,7 @@ static size_t varnamebuflen = 0;
 char *cat_prefix_varname(int prefix, const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  size_t len = STRLEN(name) + 3;
+  size_t len = strlen(name) + 3;
 
   if (len > varnamebuflen) {
     xfree(varnamebuf);
@@ -3828,7 +3828,7 @@ static int get_string_tv(char **arg, typval_T *rettv, int evaluate)
         if (p[1] != '*') {
           flags |= FSK_SIMPLIFY;
         }
-        extra = trans_special((const char_u **)&p, STRLEN(p), (char_u *)name, flags, false, NULL);
+        extra = trans_special((const char_u **)&p, strlen(p), (char_u *)name, flags, false, NULL);
         if (extra != 0) {
           name += extra;
           if (name >= rettv->vval.v_string + len) {
@@ -5019,7 +5019,7 @@ void common_function(typval_T *argvars, typval_T *rettv, bool is_funcref)
       // printable text.
       snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
                (int64_t)current_sctx.sc_sid);
-      name = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
+      name = xmalloc(strlen(sid_buf) + strlen(s + off) + 1);
       STRCPY(name, sid_buf);
       STRCAT(name, s + off);
     } else {
@@ -5594,10 +5594,10 @@ void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, const typval_T
 
     if (!append && lnum <= curbuf->b_ml.ml_line_count) {
       // Existing line, replace it.
-      int old_len = (int)STRLEN(ml_get(lnum));
+      int old_len = (int)strlen(ml_get(lnum));
       if (u_savesub(lnum) == OK
           && ml_replace(lnum, (char *)line, true) == OK) {
-        inserted_bytes(lnum, 0, old_len, (int)STRLEN(line));
+        inserted_bytes(lnum, 0, old_len, (int)strlen(line));
         if (is_curbuf && lnum == curwin->w_cursor.lnum) {
           check_cursor_col();
         }
@@ -5838,7 +5838,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   switch (callback->type) {
   case kCallbackFuncref:
     name = callback->data.funcref;
-    int len = (int)STRLEN(name);
+    int len = (int)strlen(name);
     if (len >= 6 && !memcmp(name, "v:lua.", 6)) {
       name += 6;
       len = check_luafunc_name(name, false);
@@ -6365,7 +6365,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     if (charcol) {
       len = mb_charlen((char_u *)ml_get(pos.lnum));
     } else {
-      len = (int)STRLEN(ml_get(pos.lnum));
+      len = (int)strlen(ml_get(pos.lnum));
     }
 
     // We accept "$" for the column number: last column.
@@ -6451,7 +6451,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
       if (charcol) {
         pos.col = (colnr_T)mb_charlen((char_u *)get_cursor_line_ptr());
       } else {
-        pos.col = (colnr_T)STRLEN(get_cursor_line_ptr());
+        pos.col = (colnr_T)strlen(get_cursor_line_ptr());
       }
     }
     return &pos;
@@ -6621,7 +6621,7 @@ int get_name_len(const char **const arg, char **alias, bool evaluate, bool verbo
     }
     *alias = temp_string;
     *arg = (const char *)skipwhite(p);
-    return (int)STRLEN(temp_string);
+    return (int)strlen(temp_string);
   }
 
   len += get_id_len(arg);
@@ -6747,7 +6747,7 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
 
   char *temp_result = eval_to_string(expr_start + 1, &nextcmd, false);
   if (temp_result != NULL && nextcmd == NULL) {
-    retval = xmalloc(STRLEN(temp_result) + (size_t)(expr_start - in_start)
+    retval = xmalloc(strlen(temp_result) + (size_t)(expr_start - in_start)
                      + (size_t)(in_end - expr_end) + 1);
     STRCPY(retval, in_start);
     STRCAT(retval, temp_result);
@@ -7015,7 +7015,7 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
     len += 10;  // " ++ff=unix"
   }
   if (eap->force_enc != 0) {
-    len += STRLEN(eap->cmd + eap->force_enc) + 7;
+    len += strlen(eap->cmd + eap->force_enc) + 7;
   }
   if (eap->bad_char != 0) {
     len += 7 + 4;  // " ++bad=" + "keep" or "drop"
@@ -7037,20 +7037,20 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
   }
 
   if (eap->force_ff != 0) {
-    snprintf(newval + STRLEN(newval), newval_len, " ++ff=%s",
+    snprintf(newval + strlen(newval), newval_len, " ++ff=%s",
              eap->force_ff == 'u' ? "unix" :
              eap->force_ff == 'd' ? "dos" : "mac");
   }
   if (eap->force_enc != 0) {
-    snprintf(newval + STRLEN(newval), newval_len, " ++enc=%s",
+    snprintf(newval + strlen(newval), newval_len, " ++enc=%s",
              eap->cmd + eap->force_enc);
   }
   if (eap->bad_char == BAD_KEEP) {
-    STRCPY(newval + STRLEN(newval), " ++bad=keep");
+    STRCPY(newval + strlen(newval), " ++bad=keep");
   } else if (eap->bad_char == BAD_DROP) {
-    STRCPY(newval + STRLEN(newval), " ++bad=drop");
+    STRCPY(newval + strlen(newval), " ++bad=drop");
   } else if (eap->bad_char != 0) {
-    snprintf(newval + STRLEN(newval), newval_len, " ++bad=%c",
+    snprintf(newval + strlen(newval), newval_len, " ++bad=%c",
              eap->bad_char);
   }
   vimvars[VV_CMDARG].vv_str = newval;
@@ -8073,7 +8073,7 @@ repeat:
     // Append a path separator to a directory.
     if (os_isdir(*fnamep)) {
       // Make room for one or two extra characters.
-      *fnamep = xstrnsave(*fnamep, STRLEN(*fnamep) + 2);
+      *fnamep = xstrnsave(*fnamep, strlen(*fnamep) + 2);
       xfree(*bufp);          // free any allocated file name
       *bufp = *fnamep;
       add_pathsep(*fnamep);
@@ -8113,7 +8113,7 @@ repeat:
           home_replace(NULL, s, dirname, MAXPATHL, true);
           xfree(s);
         }
-        size_t namelen = STRLEN(dirname);
+        size_t namelen = strlen(dirname);
 
         // Do not call shorten_fname() here since it removes the prefix
         // even though the path does not have a prefix.
@@ -8149,7 +8149,7 @@ repeat:
   }
 
   char *tail = path_tail(*fnamep);
-  *fnamelen = STRLEN(*fnamep);
+  *fnamelen = strlen(*fnamep);
 
   // ":h" - head, remove "/file_name", can be repeated
   // Don't remove the first "/" or "c:\"
@@ -8266,7 +8266,7 @@ repeat:
           *usedlen = (size_t)(p + 1 - src);
           s = do_string_sub(str, pat, sub, NULL, flags);
           *fnamep = s;
-          *fnamelen = STRLEN(s);
+          *fnamelen = strlen(s);
           xfree(*bufp);
           *bufp = s;
           didit = true;
@@ -8294,7 +8294,7 @@ repeat:
     }
     xfree(*bufp);
     *bufp = *fnamep = p;
-    *fnamelen = STRLEN(p);
+    *fnamelen = strlen(p);
     *usedlen += 2;
   }
 
@@ -8325,7 +8325,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, char *flags
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     char *tail = str;
-    char *end = str + STRLEN(str);
+    char *end = str + strlen(str);
     while (vim_regexec_nl(&regmatch, (char_u *)str, (colnr_T)(tail - str))) {
       // Skip empty match except for first match.
       if (regmatch.startp[0] == regmatch.endp[0]) {
@@ -8600,7 +8600,7 @@ void ex_checkhealth(exarg_T *eap)
     return;
   }
 
-  size_t bufsize = STRLEN(eap->arg) + sizeof("call health#check('')");
+  size_t bufsize = strlen(eap->arg) + sizeof("call health#check('')");
   char *buf = xmalloc(bufsize);
   snprintf(buf, bufsize, "call health#check('%s')", eap->arg);
 
@@ -8626,8 +8626,8 @@ void invoke_prompt_callback(void)
   }
   char *text = ml_get(lnum);
   char *prompt = (char *)prompt_text();
-  if (STRLEN(text) >= STRLEN(prompt)) {
-    text += STRLEN(prompt);
+  if (strlen(text) >= strlen(prompt)) {
+    text += strlen(prompt);
   }
   argv[0].v_type = VAR_STRING;
   argv[0].vval.v_string = xstrdup(text);

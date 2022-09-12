@@ -658,7 +658,7 @@ static void fname2fnum(xfmark_T *fm)
       int len;
 
       expand_env("~/", NameBuff, MAXPATHL);
-      len = (int)STRLEN(NameBuff);
+      len = (int)strlen(NameBuff);
       STRLCPY(NameBuff + len, fm->fname + 2, MAXPATHL - len);
     } else {
       STRLCPY(NameBuff, fm->fname, MAXPATHL);

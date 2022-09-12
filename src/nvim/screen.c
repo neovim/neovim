@@ -1022,7 +1022,7 @@ void draw_tabline(void)
       if (modified || wincount > 1) {
         if (wincount > 1) {
           vim_snprintf((char *)NameBuff, MAXPATHL, "%d", wincount);
-          len = (int)STRLEN(NameBuff);
+          len = (int)strlen(NameBuff);
           if (col + len >= Columns - 3) {
             break;
           }
@@ -1394,7 +1394,7 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
     while (*p) {
       int i;
       for (i = 0; i < entries; i++) {
-        const size_t len = STRLEN(tab[i].name);
+        const size_t len = strlen(tab[i].name);
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
@@ -1436,8 +1436,8 @@ char *set_chars_option(win_T *wp, char **varp, bool apply)
       }
 
       if (i == entries) {
-        const size_t len = STRLEN("multispace");
-        const size_t len2 = STRLEN("leadmultispace");
+        const size_t len = strlen("multispace");
+        const size_t len2 = strlen("leadmultispace");
         if (is_listchars
             && STRNCMP(p, "multispace", len) == 0
             && p[len] == ':'

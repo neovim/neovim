@@ -1448,7 +1448,7 @@ win_update_start:
                  pos.lnum += cursor_above ? 1 : -1) {
               colnr_T t;
 
-              pos.col = (colnr_T)STRLEN(ml_get_buf(wp->w_buffer, pos.lnum, false));
+              pos.col = (colnr_T)strlen(ml_get_buf(wp->w_buffer, pos.lnum, false));
               getvvcol(wp, &pos, NULL, NULL, &t);
               if (toc < t) {
                 toc = t;
