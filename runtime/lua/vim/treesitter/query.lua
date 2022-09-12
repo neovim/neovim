@@ -34,6 +34,18 @@ local function safe_read(filename, read_quantifier)
   return content
 end
 
+---@private
+--- Adds @p ilang to @p base_langs, only if @p ilang is different than @lang
+---
+---@return boolean true it lang == ilang
+local function add_included_lang(base_langs, lang, ilang)
+  if lang == ilang then
+    return true
+  end
+  table.insert(base_langs, ilang)
+  return false
+end
+
 --- Gets the list of files used to make up a query
 ---
 ---@param lang The language
@@ -84,10 +96,14 @@ function M.get_query_files(lang, query_name, is_included)
 
           if is_optional then
             if not is_included then
-              table.insert(base_langs, incllang:sub(2, #incllang - 1))
+              if add_included_lang(base_langs, lang, incllang:sub(2, #incllang - 1)) then
+                extension = true
+              end
             end
           else
-            table.insert(base_langs, incllang)
+            if add_included_lang(base_langs, lang, incllang) then
+              extension = true
+            end
           end
         end
       elseif modeline:match(EXTENDS_FORMAT) then
