@@ -22,12 +22,14 @@
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/plines.h"
@@ -1002,6 +1004,36 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_nr(dict, S_LEN("col"), scol);
   tv_dict_add_nr(dict, S_LEN("curscol"), ccol);
   tv_dict_add_nr(dict, S_LEN("endcol"), ecol);
+}
+
+/// "virtcol2col({winid}, {lnum}, {col})" function
+void f_virtcol2col(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->vval.v_number = -1;
+
+  if (tv_check_for_number_arg(argvars, 0) == FAIL
+      || tv_check_for_number_arg(argvars, 1) == FAIL
+      || tv_check_for_number_arg(argvars, 2) == FAIL) {
+    return;
+  }
+
+  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+  if (wp == NULL) {
+    return;
+  }
+
+  bool error = false;
+  linenr_T lnum = (linenr_T)tv_get_number_chk(&argvars[1], &error);
+  if (error || lnum < 0 || lnum > wp->w_buffer->b_ml.ml_line_count) {
+    return;
+  }
+
+  int screencol = (int)tv_get_number_chk(&argvars[2], &error);
+  if (error || screencol < 0) {
+    return;
+  }
+
+  rettv->vval.v_number = vcol2col(wp, lnum, screencol);
 }
 
 /// Scroll the current window down by "line_count" logical lines.  "CTRL-Y"

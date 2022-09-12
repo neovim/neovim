@@ -425,6 +425,7 @@ return {
     uniq={args={1, 3}, base=1},
     values={args=1, base=1},
     virtcol={args=1, base=1},
+    virtcol2col={args=3, base=1},
     visualmode={args={0, 1}},
     wait={args={2,3}},
     wildmenumode={},
