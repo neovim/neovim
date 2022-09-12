@@ -731,7 +731,7 @@ static void win_redr_border(win_T *wp)
 
         // title in right
         if (title_pos == 3 ) {
-          if ( i >= i + len){
+          if ( i >= icol - len){
             grid_put_schar(grid, 0, i + adj[3], title_text + 1, attrs[1]);
           } else {
             grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
