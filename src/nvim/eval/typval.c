@@ -44,6 +44,8 @@ static char e_string_required_for_argument_nr[]
   = N_("E1174: String required for argument %d");
 static char e_non_empty_string_required_for_argument_nr[]
   = N_("E1142: Non-empty string required for argument %d");
+static char e_number_required_for_argument_nr[]
+  = N_("E1210: Number required for argument %d");
 
 bool tv_in_free_unref_items = false;
 
@@ -3825,6 +3827,17 @@ int tv_check_for_nonempty_string_arg(const typval_T *const args, const int idx)
   }
   if (args[idx].vval.v_string == NULL || *args[idx].vval.v_string == NUL) {
     semsg(_(e_non_empty_string_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Give an error and return FAIL unless "args[idx]" is a number.
+int tv_check_for_number_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_NUMBER) {
+    semsg(_(e_number_required_for_argument_nr), idx + 1);
     return FAIL;
   }
   return OK;

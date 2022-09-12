@@ -7057,32 +7057,6 @@ static void f_screencol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = ui_current_col() + 1;
 }
 
-/// "screenpos({winid}, {lnum}, {col})" function
-static void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  tv_dict_alloc_ret(rettv);
-  dict_T *dict = rettv->vval.v_dict;
-
-  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
-  if (wp == NULL) {
-    return;
-  }
-
-  pos_T pos = {
-    .lnum   = (linenr_T)tv_get_number(&argvars[1]),
-    .col    = (colnr_T)tv_get_number(&argvars[2]) - 1,
-    .coladd = 0
-  };
-  int row = 0;
-  int scol = 0, ccol = 0, ecol = 0;
-  textpos2screenpos(wp, &pos, &row, &scol, &ccol, &ecol, false);
-
-  tv_dict_add_nr(dict, S_LEN("row"), row);
-  tv_dict_add_nr(dict, S_LEN("col"), scol);
-  tv_dict_add_nr(dict, S_LEN("curscol"), ccol);
-  tv_dict_add_nr(dict, S_LEN("endcol"), ecol);
-}
-
 /// "screenrow()" function
 static void f_screenrow(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

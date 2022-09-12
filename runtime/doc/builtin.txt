@@ -526,6 +526,8 @@ uniq({list} [, {func} [, {dict}]])
 				List	remove adjacent duplicates from a list
 values({dict})			List	values in {dict}
 virtcol({expr})			Number	screen column of cursor or mark
+virtcol2col({winid}, {lnum}, {col})
+				Number  byte index of a character on screen
 visualmode([expr])		String	last visual mode used
 wait({timeout}, {condition} [, {interval}])
 				Number	Wait until {condition} is satisfied
@@ -5620,12 +5622,19 @@ nvim_...({...})					*E5555* *nvim_...()* *eval-api*
 or({expr}, {expr})					*or()*
 		Bitwise OR on the two arguments.  The arguments are converted
 		to a number.  A List, Dict or Float argument causes an error.
+		Also see `and()` and `xor()`.
 		Example: >
 			:let bits = or(bits, 0x80)
 <		Can also be used as a |method|: >
 			:let bits = bits->or(0x80)
 
-pathshorten({expr} [, {len}])				*pathshorten()*
+<		Rationale: The reason this is a function and not using the "|"
+		character like many languages, is that Vi has always used "|"
+		to separate commands.  In many places it would not be clear if
+		"|" is an operator or a command separator.
+
+
+pathshorten({path} [, {len}])				*pathshorten()*
 		Shorten directory names in the path {path} and return the
 		result.  The tail, the file name, is kept as-is.  The other
 		components in the path are reduced to {len} letters in length.
@@ -8831,6 +8840,26 @@ virtcol({expr})						*virtcol()*
 <		Can also be used as a |method|: >
 			GetPos()->virtcol()
 
+virtcol2col({winid}, {lnum}, {col})			*virtcol2col()*
+		The result is a Number, which is the byte index of the
+		character in window {winid} at buffer line {lnum} and virtual
+		column {col}.
+
+		If {col} is greater than the last virtual column in line
+		{lnum}, then the byte index of the character at the last
+		virtual column is returned.
+
+		The {winid} argument can be the window number or the
+		|window-ID|. If this is zero, then the current window is used.
+
+		Returns -1 if the window {winid} doesn't exist or the buffer
+		line {lnum} or virtual column {col} is invalid.
+
+		See also |screenpos()|, |virtcol()| and |col()|.
+
+		Can also be used as a |method|: >
+			GetWinid()->virtcol2col(lnum, col)
+
 visualmode([{expr}])						*visualmode()*
 		The result is a String, which describes the last Visual mode
 		used in the current buffer.  Initially it returns an empty
@@ -9262,6 +9291,7 @@ writefile({object}, {fname} [, {flags}])
 xor({expr}, {expr})					*xor()*
 		Bitwise XOR on the two arguments.  The arguments are converted
 		to a number.  A List, Dict or Float argument causes an error.
+		Also see `and()` and `or()`.
 		Example: >
 			:let bits = xor(bits, 0x80)
 <

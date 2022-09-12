@@ -745,6 +745,7 @@ Cursor and mark position:		*cursor-functions* *mark-functions*
 	screencol()		get screen column of the cursor
 	screenrow()		get screen row of the cursor
 	screenpos()		screen row and col of a text character
+	virtcol2col()		byte index of a text character on screen
 	getcurpos()		get position of the cursor
 	getpos()		get position of cursor, mark, etc.
 	setpos()		set position of cursor, mark, etc.
