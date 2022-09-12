@@ -959,6 +959,7 @@ local extension = {
   srec = 'srec',
   mot = 'srec',
   ['s19'] = 'srec',
+  srt = 'srt',
   st = 'st',
   imata = 'stata',
   ['do'] = 'stata',
