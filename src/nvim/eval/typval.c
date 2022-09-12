@@ -3805,34 +3805,26 @@ float_T tv_get_float(const typval_T *const tv)
   return 0;
 }
 
-/// Give an error and return FAIL unless "tv" is a string.
-int tv_check_for_string(const typval_T *const tv, const int arg)
+/// Give an error and return FAIL unless "args[idx]" is a string.
+int tv_check_for_string_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
-  if (tv->v_type != VAR_STRING) {
-    if (arg > 0) {
-      semsg(_(e_string_required_for_argument_nr), arg);
-    } else {
-      emsg(_(e_stringreq));
-    }
+  if (args[idx].v_type != VAR_STRING) {
+    semsg(_(e_string_required_for_argument_nr), idx + 1);
     return FAIL;
   }
   return OK;
 }
 
-/// Give an error and return FAIL unless "tv" is a non-empty string.
-int tv_check_for_nonempty_string(const typval_T *const tv, const int arg)
+/// Give an error and return FAIL unless "args[idx]" is a non-empty string.
+int tv_check_for_nonempty_string_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
-  if (tv_check_for_string(tv, arg) == FAIL) {
+  if (tv_check_for_string_arg(args, idx) == FAIL) {
     return FAIL;
   }
-  if (tv->vval.v_string == NULL || *tv->vval.v_string == NUL) {
-    if (arg > 0) {
-      semsg(_(e_non_empty_string_required_for_argument_nr), arg);
-    } else {
-      emsg(_(e_non_empty_string_required));
-    }
+  if (args[idx].vval.v_string == NULL || *args[idx].vval.v_string == NUL) {
+    semsg(_(e_non_empty_string_required_for_argument_nr), idx + 1);
     return FAIL;
   }
   return OK;

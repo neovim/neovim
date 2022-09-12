@@ -2793,7 +2793,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
 void f_charclass(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (tv_check_for_string(&argvars[0], 1) == FAIL
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
       || argvars[0].vval.v_string == NULL) {
     return;
   }
