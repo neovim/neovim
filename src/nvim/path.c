@@ -1272,12 +1272,12 @@ int gen_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, i
         }
       }
 
-      // If there are wildcards: Expand file names and add each match to
-      // the list.  If there is no match, and EW_NOTFOUND is given, add
-      // the pattern.
-      // If there are no wildcards: Add the file name if it exists or
-      // when EW_NOTFOUND is given.
-      if (path_has_exp_wildcard(p)) {
+      // If there are wildcards or case-insensitive expansion is
+      // required: Expand file names and add each match to the list.  If
+      // there is no match, and EW_NOTFOUND is given, add the pattern.
+      // Otherwise: Add the file name if it exists or when EW_NOTFOUND is
+      // given.
+      if (path_has_exp_wildcard(p) || (flags & EW_ICASE)) {
         if ((flags & EW_PATH)
             && !path_is_absolute(p)
             && !(p[0] == '.'
