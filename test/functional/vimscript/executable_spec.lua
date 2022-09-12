@@ -34,11 +34,13 @@ describe('executable()', function()
 
   it('fails for invalid values', function()
     for _, input in ipairs({'v:null', 'v:true', 'v:false', '{}', '[]'}) do
-      eq('Vim(call):E928: String required', exc_exec('call executable('..input..')'))
+      eq('Vim(call):E1174: String required for argument 1',
+         exc_exec('call executable('..input..')'))
     end
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
     for _, input in ipairs({'v:null', 'v:true', 'v:false'}) do
-      eq('Vim(call):E928: String required', exc_exec('call executable('..input..')'))
+      eq('Vim(call):E1174: String required for argument 1',
+         exc_exec('call executable('..input..')'))
     end
   end)
 

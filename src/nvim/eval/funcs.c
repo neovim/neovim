@@ -1772,7 +1772,7 @@ static void f_eventhandler(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 /// "executable()" function
 static void f_executable(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (tv_check_for_string(&argvars[0]) == FAIL) {
+  if (tv_check_for_string_arg(argvars, 0) == FAIL) {
     return;
   }
 
@@ -1901,7 +1901,7 @@ static void f_win_execute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "exepath()" function
 static void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (tv_check_for_nonempty_string(&argvars[0]) == FAIL) {
+  if (tv_check_for_nonempty_string_arg(argvars, 0) == FAIL) {
     return;
   }
 
