@@ -419,6 +419,7 @@ describe('LSP', function()
     end)
 
     it('should detach buffer on bufwipe', function()
+      clear()
       local result = exec_lua([[
         local server = function(dispatchers)
           local closing = false
