@@ -372,8 +372,16 @@ void update_window_hl(win_T *wp, bool invalid)
         if (a.hl_blend) {
           wp->w_float_config.shadow = true;
         }
+
       }
       wp->w_float_config.border_attr[i] = attr;
+    }
+
+    if (wp->w_float_config.title) {
+      int attr = hl_def[HLF_BORDER_TITLE];
+      attr = hl_get_ui_attr(ns_id, HLF_BORDER_TITLE,
+                            wp->w_float_config.title_hi_id,false);
+      wp->w_float_config.title_attr = attr;
     }
   }
 
