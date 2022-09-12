@@ -1457,7 +1457,7 @@ void mb_utflen(const char_u *s, size_t len, size_t *codepoints, size_t *codeunit
 {
   size_t count = 0, extra = 0;
   size_t clen;
-  for (size_t i = 0; i < len && s[i] != NUL; i += clen) {
+  for (size_t i = 0; i < len; i += clen) {
     clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
@@ -1479,7 +1479,7 @@ ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len, size_t index, bool us
   if (index == 0) {
     return 0;
   }
-  for (i = 0; i < len && s[i] != NUL; i += clen) {
+  for (i = 0; i < len; i += clen) {
     clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
