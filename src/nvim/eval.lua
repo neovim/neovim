@@ -236,6 +236,7 @@ return {
     json_decode={args=1, base=1},
     json_encode={args=1, base=1},
     keys={args=1, base=1},
+    keytrans={args=1, base=1},
     last_buffer_nr={},  -- obsolete
     len={args=1, base=1},
     libcall={args=3, base=3},

@@ -1681,8 +1681,8 @@ int msg_outtrans_special(const char *strstart, bool from, int maxlen)
 /// Used for lhs or rhs of mappings.
 ///
 /// @param[in]  str  String to convert.
-/// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used fo
-///                             lhs, but not rhs.
+/// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used for
+///                             lhs of mapping and keytrans(), but not rhs.
 /// @param[in]  replace_lt  Convert `<` into `<lt>`.
 ///
 /// @return [allocated] Converted string.
@@ -1704,8 +1704,8 @@ char *str2special_save(const char *const str, const bool replace_spaces, const b
 /// Convert character, replacing key with printable representation.
 ///
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.
-/// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
-///                             lhs, but not rhs.
+/// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used for
+///                             lhs of mapping and keytrans(), but not rhs.
 /// @param[in]  replace_lt  Convert `<` into `<lt>`.
 ///
 /// @return Converted key code, in a static buffer. Buffer is always one and the

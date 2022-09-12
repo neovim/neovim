@@ -4673,6 +4673,20 @@ static void f_json_encode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_string = encode_tv2json(&argvars[0], NULL);
 }
 
+/// "keytrans()" function
+static void f_keytrans(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  rettv->v_type = VAR_STRING;
+  if (tv_check_for_string_arg(argvars, 0) == FAIL
+      || argvars[0].vval.v_string == NULL) {
+    return;
+  }
+  // Need to escape K_SPECIAL for mb_unescape().
+  char *escaped = vim_strsave_escape_ks(argvars[0].vval.v_string);
+  rettv->vval.v_string = str2special_save(escaped, true, true);
+  xfree(escaped);
+}
+
 /// "last_buffer_nr()" function.
 static void f_last_buffer_nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

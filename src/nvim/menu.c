@@ -685,8 +685,7 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
       if ((menu->modes & modes & (1 << bit)) != 0) {
         dict_T *impl = tv_dict_alloc();
         tv_dict_add_allocated_str(impl, S_LEN("rhs"),
-                                  str2special_save(menu->strings[bit],
-                                                   false, false));
+                                  str2special_save(menu->strings[bit], false, false));
         tv_dict_add_nr(impl, S_LEN("silent"), menu->silent[bit]);
         tv_dict_add_nr(impl, S_LEN("enabled"),
                        (menu->enabled & (1 << bit)) ? 1 : 0);

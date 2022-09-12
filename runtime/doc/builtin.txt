@@ -277,6 +277,8 @@ join({list} [, {sep}])		String	join {list} items into one String
 json_decode({expr})		any	Convert {expr} from JSON
 json_encode({expr})		String	Convert {expr} to JSON
 keys({dict})			List	keys in {dict}
+keytrans({string})		String	translate internal keycodes to a form
+					that can be used by |:map|
 len({expr})			Number	the length of {expr}
 libcall({lib}, {func}, {arg})	String	call {func} in library {lib} with {arg}
 libcallnr({lib}, {func}, {arg})	Number	idem, but return a Number
@@ -4536,6 +4538,16 @@ keys({dict})						*keys()*
 
 		Can also be used as a |method|: >
 			mydict->keys()
+
+keytrans({string})					*keytrans()*
+		Turn the internal byte representation of keys into a form that
+		can be used for |:map|.  E.g. >
+			:let xx = "\<C-Home>"
+			:echo keytrans(xx)
+<			<C-Home>
+
+		Can also be used as a |method|: >
+			"\<C-Home>"->keytrans()
 
 <							*len()* *E701*
 len({expr})	The result is a Number, which is the length of the argument.
