@@ -1983,19 +1983,26 @@ end)
     end)
 
     it('triggers the autocommand when diagnostics are set', function()
-      eq(true, exec_lua [[
+      eq({true, true}, exec_lua [[
         -- Set a different buffer as current to test that <abuf> is being set properly in
         -- DiagnosticChanged callbacks
         local tmp = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_set_current_buf(tmp)
 
-        vim.g.diagnostic_autocmd_triggered = 0
-        vim.cmd('autocmd DiagnosticChanged * let g:diagnostic_autocmd_triggered = +expand("<abuf>")')
+        local triggered = {}
+        vim.api.nvim_create_autocmd('DiagnosticChanged', {
+          callback = function(args)
+            triggered = {args.buf, #args.data.diagnostics}
+          end,
+        })
         vim.api.nvim_buf_set_name(diagnostic_bufnr, "test | test")
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error('Diagnostic', 0, 0, 0, 0)
         })
-        return vim.g.diagnostic_autocmd_triggered == diagnostic_bufnr
+        return {
+          triggered[1] == diagnostic_bufnr,
+          triggered[2] == 1,
+        }
       ]])
       end)
 

@@ -295,10 +295,18 @@ option in the "signs" table of |vim.diagnostic.config()| or 10 if unset).
 EVENTS                                                  *diagnostic-events*
 
                                                         *DiagnosticChanged*
-DiagnosticChanged       After diagnostics have changed.
+DiagnosticChanged       After diagnostics have changed. When used from Lua,
+                        the new diagnostics are passed to the autocmcd
+                        callback in the "data" table.
 
 Example: >
-    autocmd DiagnosticChanged * lua vim.diagnostic.setqflist({ open = false })
+
+    vim.api.nvim_create_autocmd('DiagnosticChanged', {
+      callback = function(args)
+        local diagnostics = args.data.diagnostics
+        vim.pretty_print(diagnostics)
+      end,
+    })
 <
 ==============================================================================
 Lua module: vim.diagnostic                                    *diagnostic-api*
