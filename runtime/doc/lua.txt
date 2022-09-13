@@ -2339,6 +2339,9 @@ find({names}, {opts})                                          *vim.fs.find()*
                  • limit (number, default 1): Stop the search after finding
                    this many matches. Use `math.huge` to place no limit on the
                    number of matches.
+                 • ignore (function): Predicate used to ignore paths. Receives
+                   file path as its single argument. If the function returns
+                   true then the given path will not be searched recursively.
 
     Return: ~
         (table) The paths of all matching files or directories

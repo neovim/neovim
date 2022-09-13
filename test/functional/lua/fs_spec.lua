@@ -9,6 +9,7 @@ local nvim_dir = helpers.nvim_dir
 local test_build_dir = helpers.test_build_dir
 local iswin = helpers.iswin
 local nvim_prog = helpers.nvim_prog
+local exec = helpers.exec_capture
 
 local nvim_prog_basename = iswin() and 'nvim.exe' or 'nvim'
 
@@ -77,6 +78,16 @@ describe('vim.fs', function()
         local dir, nvim = ...
         return vim.fs.find(nvim, { path = dir, type = 'file' })
       ]], test_build_dir, nvim_prog_basename))
+    end)
+    it('works with ignore()', function()
+      eq({exec('pwd')..'/test/unit/os/fs_spec.lua'}, exec_lua([[
+        return vim.fs.find('fs_spec.lua', {
+          type = 'file',
+          ignore = function (path)
+            return not path:match('test$') and path:match('test/functional.*')
+          end
+        })
+      ]]))
     end)
   end)
 
