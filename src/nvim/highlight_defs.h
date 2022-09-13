@@ -114,8 +114,8 @@ typedef enum {
   HLF_WBR,        // Window bars
   HLF_WBRNC,      // Window bars of not-current windows
   HLF_CU,         // Cursor
+  HLF_BORDER_TITLE,// Float Border TItle
   HLF_COUNT,      // MUST be the last one
-  HLF_BORDER_TITLE// Float Border TItle
 } hlf_T;
 
 EXTERN const char *hlf_names[] INIT(= {

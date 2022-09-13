@@ -10,6 +10,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/highlight_group.h"
 #include "nvim/option.h"
