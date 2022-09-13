@@ -128,10 +128,15 @@ void do_debug(char *cmd)
       ignore_script = true;
     }
 
+    // don't debug any function call, e.g. from an expresion mapping
+    n = debug_break_level;
+    debug_break_level = -1;
+
     xfree(cmdline);
     cmdline = getcmdline_prompt('>', NULL, 0, EXPAND_NOTHING, NULL,
                                 CALLBACK_NONE);
 
+    debug_break_level = n;
     if (typeahead_saved) {
       restore_typeahead(&typeaheadbuf);
       ignore_script = save_ignore_script;
