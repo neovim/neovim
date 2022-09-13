@@ -46,7 +46,7 @@ struct Decoration {
   bool hl_eol;
   bool virt_lines_above;
   bool conceal;
-  bool spell;
+  TriState spell;
   // TODO(bfredl): style, etc
   DecorPriority priority;
   int col;  // fixed col value, like win_col
@@ -62,7 +62,7 @@ struct Decoration {
   bool ui_watched;  // watched for win_extmark
 };
 #define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, \
-                          kHlModeUnknown, false, false, false, false, false, \
+                          kHlModeUnknown, false, false, false, false, kNone, \
                           DECOR_PRIORITY_BASE, 0, 0, NULL, 0, 0, 0, 0, 0, false }
 
 typedef struct {
@@ -92,7 +92,7 @@ typedef struct {
   int conceal_char;
   int conceal_attr;
 
-  bool spell;
+  TriState spell;
 } DecorState;
 
 EXTERN DecorState decor_state INIT(= { 0 });
